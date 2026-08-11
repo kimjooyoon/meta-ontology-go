@@ -559,3 +559,200 @@ evidence. A missing host executable or missing comparison result is `blocked`,
 not `passed`. This keeps self-hosting progress falsifiable and prevents the
 future projection from being reported as implemented merely because its
 contract is documented.
+
+## Falsifiable hypotheses and implementation contracts
+
+The fixtures above become useful engineering evidence when each one tests a
+hypothesis with a measurable result. A green parser unit test alone is not
+enough: the same fixture must expose whether AST recovery, IR lowering,
+bidirectional reconciliation, projections, editor state, cache reuse, and CI
+evidence agree.
+
+### Measurement record
+
+Every fixture run should be representable by a deterministic record with this
+shape. Hashes are placeholders in this research note; an implementation must
+write real SHA-256 values over canonical bytes.
+
+```json
+{
+  "fixture": "S1",
+  "host": "go",
+  "grammarVersion": "gooo/v1",
+  "sourceSHA256": "<sha256(source bytes)>",
+  "diagnostics": [
+    {"phase": "parse", "severity": "error", "code": "<code>", "span": "<file:line:column>"}
+  ],
+  "diagnosticFingerprint": "<sha256(canonical diagnostics)>",
+  "astFingerprint": "<sha256(canonical valid AST)>",
+  "irFingerprint": "<sha256(sorted IDs and facts)>",
+  "bx": {"deltaKind": "rename|add-remove|none", "requiresMigration": false},
+  "projection": {"formattedSHA256": "<sha256 or null>", "generatedRegionSHA256": "<sha256 or null>"},
+  "lsp": {"diagnosticsStable": true},
+  "cache": {"key": "<content-addressed key>", "hit": false},
+  "provenance": {"evidenceIDs": ["<stable evidence ID>"]},
+  "gate": "pass|fail|deferred"
+}
+```
+
+The following normalization rules make measurements comparable:
+
+- `diagnosticFingerprint` sorts by phase order, source offset, severity, and
+  code, then hashes code/span/severity. Human messages are excluded.
+- `astFingerprint` includes declaration kind, display name, explicit/inferred
+  ID, resolved reference IDs, validity, and declaration order. Source spans are
+  recorded separately so recovery locality can be checked without making
+  semantic equality depend on file offsets.
+- `irFingerprint` sorts `(subject ID, predicate, object ID)` facts and includes
+  declaration kind. It excludes display names, generated Go symbols, and
+  source spans.
+- A missing value is `null` only when the relevant projection is explicitly
+  `deferred`; a missing value must never be silently treated as a passing hash.
+- `gate=deferred` means the implementation is not available or the contract is
+  intentionally not executable yet. It is not an alias for `gate=pass`.
+
+### Hypotheses and negative cases
+
+#### H1: recovery suffix invariance
+
+Hypothesis: a syntax error before a synchronization boundary cannot change the
+valid AST/IR suffix after that boundary. R1 is the positive fixture: the
+`entity Payment` and `activity Healthy` suffix must survive the malformed
+`Broken` parameter list.
+
+Measure `suffixASTFingerprint` and, when whole-file lowering is permitted,
+`suffixIRFingerprint` for the declarations after the recovery point. Pass when
+the suffix fingerprints match a control file containing only the valid suffix,
+the only syntax error is `parse.expected-comma` at `4:23-4:30`, and no fact is
+lowered for `Broken`. Fail if recovery consumes `Healthy`, loops, or creates a
+fact from the malformed signature. Deferred if the parser has no partial-AST
+API yet.
+
+Counterexample fixture C1:
+
+```gooo
+package billing
+namespace billing
+activity Broken(Order Payment) -> Payment
+activity Healthy() -> Payment
+```
+
+An implementation that accepts `Order Payment` as two parameters, reports an
+error after `Healthy`, or lowers `Broken used Payment` fails H1. This negative
+case is intentionally expected to fail semantic lowering, not to become a
+second accepted grammar.
+
+#### H2: version gates are monotonic safety barriers
+
+Hypothesis: a parser that does not understand a declared grammar version never
+lowers the file under an older grammar. E1's legacy and explicit-v1 inputs must
+produce compatible models in a version-aware parser. The unknown-version
+fixture must produce `parse.unsupported-version`, retain optional editor AST,
+and produce no IR or generated output.
+
+Measure diagnostic and IR fingerprints for the same source under parser
+versions `v1` and `v9`. Pass when `v9` is rejected before lowering and no cache
+entry or provenance claim says it was compiled successfully. Fail if the parser
+silently falls back to v1, generates code, or reuses a v1 cache result for v9.
+Deferred until the version header is implemented.
+
+Counterexample fixture C2:
+
+```gooo
+package billing
+version "gooo/v9"
+namespace billing
+entity Order id "billing://entity/order"
+activity PayOrder(Order) -> Order
+```
+
+The expected result is `gate=fail` for compilation, one unsupported-version
+error, and `irFingerprint=null`. A test that reports `gate=pass` because the
+v1 subset happens to parse is a version-skew bug.
+
+#### H3: stable-ID rename is a semantic no-op
+
+Hypothesis: changing a display name while keeping the explicit ID preserves IR
+meaning and produces a BX rename delta rather than an ID-keyed delete/add. S1
+measures this with `semanticEquivalent(A, B) = true`.
+
+Pass when `irFingerprint(A) == irFingerprint(B)`, the delta is
+`deltaKind=rename`, `requiresMigration=false`, and generated/source-map
+locality contains only the renamed node. Fail if the old ID disappears, a
+provenance edge changes, or an unrelated node is regenerated. Deferred until
+the BX/reconciliation layer emits explicit delta kinds.
+
+Counterexample fixture C3:
+
+```gooo
+package billing
+version "gooo/v1"
+namespace billing
+entity Order id "billing://entity/order"
+entity Payment id "billing://entity/payment"
+activity AuthorizePayment id "billing://activity/authorize-payment" (Order) -> Payment
+```
+
+Compared with S1, C3 must not be semantically equivalent: the activity ID
+changed. Expected BX output is `deltaKind=add-remove`,
+`requiresMigration=true`, with an explicit replacement/migration record. A
+name-based comparer that treats C3 as a rename fails H3.
+
+#### H4: formatting reaches a semantic fixed point
+
+Hypothesis: formatting is deterministic and idempotent without changing IDs,
+declaration kinds, or IR facts. F1 is the positive fixture. Measure
+`formattedSHA256`, then format the result again and compare both bytes and
+`irFingerprint`.
+
+Pass when `F(F(source)) = F(source)`, formatting preserves the IR fingerprint,
+and a second run produces no unrelated source-map or generated-region changes.
+Fail if whitespace oscillates, IDs are normalized, or formatting a valid file
+changes semantic facts. Deferred until a formatter exists.
+
+Counterexample fixture C4:
+
+```gooo
+package billing
+namespace billing
+entity Broken id "billing://entity/\q"
+```
+
+The lexer must emit `lex.invalid-escape`; the formatter must return a
+diagnostic-bearing result (or an explicit no-format result), not claim a fixed
+point by rewriting an invalid ID. A formatter that drops the bad escape and
+then reports `gate=pass` fails H4.
+
+#### H5: host parity is evidence, not aspiration
+
+Hypothesis: when both hosts exist, the Go-hosted and gooo-hosted compiler runs
+produce equal diagnostic and canonical IR fingerprints for the same fixture.
+The current Go-hosted stage can collect the left side of this comparison. The
+gooo-hosted side is not implemented and must remain `deferred`.
+
+Pass only when both host executables, source hashes, grammar versions, and
+evidence chains are present and the required fingerprints match. Fail on any
+unexplained diagnostic, ID, fact, formatter, or provenance difference. Deferred
+when the second host or its independent evidence is absent; no documentation
+fixture can promote that state to pass.
+
+### Reusable component contracts
+
+The experiment record is designed as an adapter boundary for later lanes:
+
+| Component | Input contract | Output contract | Required negative behavior |
+| --- | --- | --- | --- |
+| AST/parser | source bytes, filename, grammar version | partial AST, ordered diagnostics, stable spans | never panic/loop; unknown version blocks trust |
+| Semantic IR | parse result with no errors | canonical IDs, kinds, resolved facts, source evidence | no facts from invalid declarations or inferred IDs without policy |
+| BX/reconcile | old/new authoritative views plus IDs | add/remove/rename delta, locality, migration flag | changed ID is not a display rename |
+| Go codegen | canonical IR and handwritten slots | deterministic generated regions and semantic source map | no unrelated regions change; no generated claim without IR |
+| LSP | partial parse result and source version | diagnostics, recovery AST, stable document version | serve partial syntax without pretending invalid IR is valid |
+| Cache | source hash, grammar version, host, projection version | hit/miss, key, artifact hash, freshness evidence | never reuse a result across grammar/host/version skew |
+| Provenance | fixture run, source/IR/projection hashes | append-only activity/entity/evidence chain | missing evidence is deferred or failed, never silently passed |
+| CI gate | measurement records plus allowed scope | pass/fail/deferred decision and reason | deferred is visible; CI policy cannot be weakened by the fixture |
+
+The CI policy currently has no grammar-research ownership alias. This change
+does not touch protected CI files or request a new exception. Before a
+scope-specific grammar gate is introduced, the CI owner should register an
+ownership alias and review its boundary; until then, the default changed-path
+policy remains authoritative.
