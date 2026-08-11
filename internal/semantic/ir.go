@@ -16,6 +16,7 @@ type IR struct {
 	Package   string
 	Namespace Namespace
 	Graph     Graph
+	evidence  map[ID]Evidence
 }
 
 // SemanticIR is an alias for callers that want the full name in APIs.
@@ -27,6 +28,7 @@ func NewIR(packageName string, namespace Namespace) IR {
 		Package:   strings.TrimSpace(packageName),
 		Namespace: namespace,
 		Graph:     NewGraph(),
+		evidence:  make(map[ID]Evidence),
 	}
 }
 
@@ -58,7 +60,10 @@ func (ir IR) Validate() error {
 			return err
 		}
 	}
-	return ir.Graph.Validate()
+	if err := ir.Graph.Validate(); err != nil {
+		return err
+	}
+	return ir.validateEvidence()
 }
 
 func (ir IR) Normalized() (IR, error) {
@@ -82,7 +87,16 @@ func (ir IR) Normalized() (IR, error) {
 	if err != nil {
 		return IR{}, err
 	}
-	return IR{Version: version, Package: packageName, Namespace: namespace, Graph: graph}, nil
+	out := IR{Version: version, Package: packageName, Namespace: namespace, Graph: graph, evidence: make(map[ID]Evidence)}
+	for _, evidence := range ir.Evidence() {
+		if err := out.AddEvidence(evidence); err != nil {
+			return IR{}, err
+		}
+	}
+	if err := out.validateEvidence(); err != nil {
+		return IR{}, err
+	}
+	return out, nil
 }
 
 func (ir *IR) Normalize() error {
@@ -105,6 +119,7 @@ func (ir IR) Canonical() string {
 	b.WriteString(namespace)
 	b.WriteByte('\n')
 	b.WriteString(ir.Graph.Canonical())
+	b.WriteString(ir.EvidenceCanonical())
 	return b.String()
 }
 
