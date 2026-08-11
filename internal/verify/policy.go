@@ -146,7 +146,11 @@ func CheckPathScope(paths, allowedPrefixes []string) error {
 	allowed := normalizePrefixes(allowedPrefixes)
 	violations := make([]string, 0)
 	for _, path := range sortedUnique(paths) {
-		path = filepath.ToSlash(filepath.Clean(path))
+		canonical := filepath.ToSlash(filepath.Clean(path))
+		if path == "" || path != canonical || strings.Contains(path, "\\") || strings.HasPrefix(path, "/") {
+			violations = append(violations, path)
+			continue
+		}
 		if path == "." || isAllowed(path, allowed) {
 			continue
 		}
