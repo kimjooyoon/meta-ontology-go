@@ -92,6 +92,12 @@ evidence that the CLI or a self-hosted verifier is supported. Advancing the
 verifier requires parity, independent evidence, reproducible bootstrap, and
 rollback evidence from the [conformance plan](../../.github/conformance-plan.md).
 
+For a pull request, the `pull_request` event is the authoritative check source.
+An `agent/**` push run may be reduced to cap-only advisory validation to remove
+duplicate work, but `integration` and `main` push events and every promotion
+PR event must retain all six full jobs. A successful push-only run, even on the
+same SHA, never satisfies promotion evidence.
+
 Required checks are an allowlist, not a minimum count. A new job is not
 required until branch protection names it; removing or weakening a job requires
 a separate reviewed CI policy change and an equivalent replacement.
@@ -223,7 +229,9 @@ local review date 2026-08-12):
 - The same PR/check surface produced duplicate check names for push and
   pull-request events. Recent integration history also showed a cancelled run
   for `7abcbc8` after `6c6208e` arrived; the concurrency cancellation is a
-  reason to gate by SHA, not by the latest green-looking name.
+  reason to gate by SHA and the PR-event source, not by the latest green-looking
+  name. For PR #63, the push run passed all six jobs while the PR run failed
+  only `CI policy`; the push-only pass was not promotion evidence.
 - The latest observed `integration` push run for `6c6208e` succeeded at
   [Actions run 31536951443](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/31536951443).
   The latest observed `main` push run for `c557daf1` was failing at
@@ -271,9 +279,11 @@ the policy. A separate, minimal CI/settings change is required:
 2. Extend the verifier to allow only the exact promotion pair
    `(head=integration, base=main)` in addition to the existing agent-to-
    integration rule, with regression tests. All other main PRs remain rejected.
-3. Remove or rename the agent-push duplicate gate after confirming PR checks
-   cover every agent change; do not leave two authoritative checks with the
-   same name. If a merge queue is adopted, add merge-group CI first.
+3. Optimize duplicate CI without reducing the gate: `agent/**` push may become
+   cap-only/advisory, while `integration`/`main` push and PR-event runs retain
+   all six full jobs. Mark the PR-event checks authoritative and reject
+   push-only evidence for promotion. If a merge queue is adopted, add
+   merge-group CI first.
 4. Configure and API-verify the branch protections listed in section 7. This
    is an administrative change, not a reason to weaken workflow assertions.
 
