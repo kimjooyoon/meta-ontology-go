@@ -41,12 +41,20 @@ The ownership map for `agent/*` branches is explicit and lives in
 `internal/verify/scope.go`. Unknown agent branches fail closed. The map assigns
 each feature branch to its package, maps research branches to their individual
 `docs/research/<slug>.md` file, and reserves shared CI paths for
-`agent/ci-workflow`. The `agent/go-version` maintenance branch is the sole
+`agent/ci-workflow`. The review table of registered aliases is maintained in
+`.github/agent-scope-table.md`; the Go map remains the executable policy. The
+`agent/go-version` maintenance branch is the sole
 toolchain exception: it may change `go.mod` only when the diff contains `go` or
 `toolchain` directives. Dependency, module, `go.sum`, and other source changes
 remain outside that exception.
 
 Pushes run the Go caps without using the push event's `before` SHA, because a
-rebased-before revision may not exist in the checkout. Pull-request events retain
-the complete base-to-head changed-path and branch-ownership check; the verifier
-also reports unavailable revisions deterministically.
+rebased-before revision may not exist in the checkout. An `agent/**` push is a
+cap-only auxiliary run; it never substitutes for the six-job full matrix. Pushes
+to `integration` or `main` run all six full jobs. Pull-request events also run
+all six jobs, and their check names are marked `PR authoritative`; these are the
+branch-protection and merge-gate checks. The corresponding push names are marked
+`push full` or `agent push caps-only`, so an auxiliary push result cannot be
+mistaken for the authoritative PR result. Pull-request events retain the
+complete base-to-head changed-path and branch-ownership check; the verifier also
+reports unavailable revisions deterministically.

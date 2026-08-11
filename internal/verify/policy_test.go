@@ -89,6 +89,7 @@ func TestBranchScopeAllowlist(t *testing.T) {
 		{"agent/prototype-detection", "internal/detection/prototype.go"},
 		{"agent/fuzz-conformance", "internal/conformance/fuzz/fuzz_test.go"},
 		{"agent/conformance-fuzz", "internal/conformance/fuzz/fuzz_test.go"},
+		{"agent/conformance-fuzz", "internal/syntax/parser.go"},
 		{"agent/protected-regions", "internal/detection/protectedregions/markers.go"},
 		{"agent/formatter", "internal/formatter/format.go"},
 		{"agent/prototype-formatter", "internal/formatter/prototype.go"},
@@ -155,5 +156,142 @@ func TestGoCapsRejectOversizedFileAndFunction(t *testing.T) {
 	}
 	if err := CheckGoCaps(root, []string{path}, 300, 75); err == nil {
 		t.Fatal("oversized function was accepted")
+	}
+}
+
+func TestFollowUpBranchScopeAliases(t *testing.T) {
+	cases := []struct {
+		branch string
+		path   string
+	}{
+		{"agent/analyzer-contract", "internal/analyzer/hosting.go"},
+		{"agent/bidir-followup", "internal/bidir/hosting_contract.go"},
+		{"agent/bidirectional-experiment-contract", "docs/research/bidirectional.md"},
+		{"agent/bidirectional-property-matrix", "docs/research/bidirectional.md"},
+		{"agent/cache-experiment-followup", "docs/research/cache.md"},
+		{"agent/ci-ownership-audit", ".github/agent-scope-table.md"},
+		{"agent/ci-scope-triage", "internal/verify/scope.go"},
+		{"agent/cli-bootstrap-contract", "cmd/gooo/evidence_adapter.go"},
+		{"agent/cli-check", "cmd/gooo/main.go"},
+		{"agent/codegen-followup", "docs/research/codegen-reproducibility.md"},
+		{"agent/codegen-hypotheses", "docs/research/codegen-experiments.md"},
+		{"agent/codegen-fixture-adapter", "docs/research/codegen-fixture-adapter.md"},
+		{"agent/freshness-research", "internal/research/freshness/contract.go"},
+		{"agent/grammar-followup", "docs/research/grammar.md"},
+		{"agent/integration-governance", "docs/governance/integration-promotion.md"},
+		{"agent/lsp-contracts", "docs/research/lsp.md"},
+		{"agent/lsp-experiments", "docs/research/lsp.md"},
+		{"agent/testing-research-contracts", "docs/research/testing.md"},
+		{"agent/testing-research-followup", "docs/research/testing.md"},
+		{"agent/zerolang-experiments", "docs/research/zerolang.md"},
+	}
+	for _, test := range cases {
+		if err := CheckPathScopeForBranch([]string{test.path}, test.branch); err != nil {
+			t.Errorf("%s should allow %s: %v", test.branch, test.path, err)
+		}
+	}
+}
+
+func TestFollowUpScopeBoundariesAndUnknowns(t *testing.T) {
+	cases := []struct {
+		branch string
+		path   string
+	}{
+		{"agent/codegen-hypotheses", "docs/research/codegen.md"},
+		{"agent/codegen-fixture-adapter", "docs/research/codegen-experiments.md"},
+		{"agent/freshness-research", "internal/research/other/contract.go"},
+		{"agent/integration-governance", "docs/research/integration-promotion.md"},
+		{"agent/lsp-contracts", "docs/research/grammar.md"},
+		{"agent/testing-research-contracts", "docs/research/security.md"},
+		{"agent/ci-ownership-audit", "internal/semantic/graph.go"},
+		{"agent/cli-check", "internal/semantic/graph.go"},
+	}
+	for _, test := range cases {
+		if err := CheckPathScopeForBranch([]string{test.path}, test.branch); err == nil {
+			t.Errorf("%s incorrectly allowed %s", test.branch, test.path)
+		}
+	}
+	for _, branch := range []string{"agent/unknown-followup", "agent/freshness-unknown"} {
+		if err := CheckPathScopeForBranch([]string{"docs/research/unknown.md"}, branch); err == nil {
+			t.Errorf("unknown branch %s was not rejected", branch)
+		}
+	}
+}
+
+func TestAllowlistKeysAndSelfHostingPathsAreUnique(t *testing.T) {
+	branches := ConfiguredBranches()
+	if len(branches) != len(sortedUnique(branches)) {
+		t.Fatalf("duplicate branch keys detected: %#v", branches)
+	}
+	for _, branch := range branches {
+		if strings.ContainsAny(branch, "*?") {
+			t.Fatalf("wildcard branch key weakens fail-closed policy: %q", branch)
+		}
+	}
+	paths, ok := BranchScope("agent/self-hosting-bootstrap")
+	if !ok || len(paths) != len(sortedUnique(paths)) {
+		t.Fatalf("duplicate self-hosting alias paths detected: %#v", paths)
+	}
+}
+
+func TestScopeTableMatchesAllowlist(t *testing.T) {
+	table, err := os.ReadFile(filepath.Join("..", "..", ".github", "agent-scope-table.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	registered := make(map[string]bool)
+	for _, line := range strings.Split(string(table), "\n") {
+		cells := strings.Split(line, "|")
+		if len(cells) < 3 {
+			continue
+		}
+		branch := strings.Trim(strings.TrimSpace(cells[1]), "`")
+		if !strings.HasPrefix(branch, "agent/") {
+			continue
+		}
+		if registered[branch] {
+			t.Fatalf("duplicate branch row in scope table: %q", branch)
+		}
+		registered[branch] = true
+		if _, ok := BranchScope(branch); !ok {
+			t.Fatalf("scope table contains unconfigured branch: %q", branch)
+		}
+	}
+	for _, branch := range ConfiguredBranches() {
+		if !registered[branch] {
+			t.Errorf("scope table is missing configured branch: %q", branch)
+		}
+	}
+}
+
+func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(workflow)
+	guard := "if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')"
+	if strings.Count(text, guard) != 5 {
+		t.Fatalf("expected five full-check push guards, got %d", strings.Count(text, guard))
+	}
+	for _, condition := range []string{"if: github.event_name == 'pull_request'", "if: github.event_name == 'push'"} {
+		if !strings.Contains(text, condition) {
+			t.Fatalf("workflow lost event condition %q", condition)
+		}
+	}
+	fullJobs := []string{"format:", "vet:", "test:", "race:", "semantic:", "policy:"}
+	for _, job := range fullJobs {
+		if !strings.Contains(text, "  "+job) {
+			t.Fatalf("workflow lost required full job %q", job)
+		}
+	}
+	if !strings.Contains(text, "PR authoritative") || !strings.Contains(text, "push full") {
+		t.Fatal("full-matrix check names do not identify their event source")
+	}
+	if !strings.Contains(text, "agent push caps-only") {
+		t.Fatal("agent push policy check is not identified as caps-only")
+	}
+	if strings.Count(text, "PR authoritative") != 6 {
+		t.Fatalf("expected six PR-authoritative check names, got %d", strings.Count(text, "PR authoritative"))
 	}
 }
