@@ -20,16 +20,17 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	from := flag.String("from", os.Getenv("GOOO_SCOPE_FROM"), "base revision for scope checks")
 	to := flag.String("to", os.Getenv("GOOO_SCOPE_TO"), "head revision for scope checks")
+	branch := flag.String("branch", os.Getenv("GOOO_SCOPE_BRANCH"), "scope branch")
 	head := flag.String("head", os.Getenv("GOOO_PR_HEAD"), "pull-request head branch")
 	base := flag.String("base", os.Getenv("GOOO_PR_BASE"), "pull-request base branch")
 	flag.Parse()
-	if err := run(*root, *from, *to, *head, *base); err != nil {
+	if err := run(*root, *from, *to, *head, *base, *branch); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(root, from, to, head, base string) error {
+func run(root, from, to, head, base, branch string) error {
 	files, err := trackedGoFiles(root)
 	if err != nil {
 		return err
@@ -42,8 +43,21 @@ func run(root, from, to, head, base string) error {
 		if err != nil {
 			return err
 		}
-		if err := verify.CheckPathScope(changed, []string{".github", "scripts", "internal/verify"}); err != nil {
+		scopeBranch := branch
+		if scopeBranch == "" {
+			scopeBranch = head
+		}
+		if err := verify.CheckPathScopeForBranch(changed, []string{".github", "scripts", "internal/verify"}, scopeBranch); err != nil {
 			return err
+		}
+		if scopeBranch == "agent/go-version" {
+			diff, err := changedDiff(root, from, to, "go.mod")
+			if err != nil {
+				return err
+			}
+			if err := verify.CheckGoModToolchainDiff(diff); err != nil {
+				return err
+			}
 		}
 	}
 	if base != "" || head != "" {
@@ -83,6 +97,10 @@ func changedPaths(root, from, to string) ([]string, error) {
 		return nil, nil
 	}
 	return lines, nil
+}
+
+func changedDiff(root, from, to, path string) (string, error) {
+	return runGit(root, "diff", "--unified=0", from, to, "--", path)
 }
 
 func runGit(root string, args ...string) (string, error) {
