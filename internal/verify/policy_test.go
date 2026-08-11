@@ -185,6 +185,7 @@ func TestFollowUpBranchScopeAliases(t *testing.T) {
 		{"agent/freshness-research", "internal/research/freshness/contract.go"},
 		{"agent/grammar-followup", "docs/research/grammar.md"},
 		{"agent/integration-governance", "docs/governance/integration-promotion.md"},
+		{"agent/integration-governance-followup", "docs/governance/integration-promotion.md"},
 		{"agent/lsp-contracts", "docs/research/lsp.md"},
 		{"agent/lsp-experiments", "docs/research/lsp.md"},
 		{"agent/testing-research-contracts", "docs/research/testing.md"},
@@ -219,7 +220,6 @@ func TestFollowUpScopeBoundariesAndUnknowns(t *testing.T) {
 		{"agent/generator-fixtures-current", "internal/semantic/graph.go"},
 		{"agent/generator-fixtures-current2", "internal/semantic/graph.go"},
 		{"agent/generator-fixtures-current5", "internal/semantic/graph.go"},
-		{"agent/integration-governance-followup", "docs/governance/other.md"},
 	}
 	for _, test := range cases {
 		if err := CheckPathScopeForBranch([]string{test.path}, test.branch); err == nil {
