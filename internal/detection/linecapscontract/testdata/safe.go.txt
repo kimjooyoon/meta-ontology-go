@@ -1,0 +1,5 @@
+package fixture
+
+func Safe() {
+	_ = 1
+}

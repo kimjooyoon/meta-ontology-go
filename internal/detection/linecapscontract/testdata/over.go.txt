@@ -1,0 +1,6 @@
+package fixture
+
+func TooLong() {
+	_ = 1
+	_ = 2
+}
