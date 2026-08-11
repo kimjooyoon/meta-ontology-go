@@ -1,0 +1,53 @@
+{
+  "schema": "gooo/formatter-contract/v1",
+  "stage": "formatter-contract-only",
+  "evidence_status": "deferred",
+  "promotion_eligible": false,
+  "hypothesis": "parse-format-parse preserves stable IDs and semantic relations",
+  "positive_fixture": {
+    "input": "positive.gooo",
+    "expected_output": "positive.golden.gooo",
+    "expected_measurements": {
+      "input_bytes": 166,
+      "expected_output_bytes": 164,
+      "semantic_nodes": 3,
+      "prov_used_relations": 1,
+      "prov_wasGeneratedBy_relations": 1,
+      "semantic_relations": 2,
+      "unrelated_rewrites": 0,
+      "diagnostic_count": 0
+    },
+    "expected_result": "semantic_fingerprint_equal"
+  },
+  "counterexamples": [
+    {
+      "id": "stable-id-drift",
+      "input": "positive.drifted.gooo",
+      "expected_result": "semantic_fingerprint_mismatch"
+    },
+    {
+      "id": "unknown-reference",
+      "input": "negative-unknown-reference.gooo",
+      "expected_diagnostic": "formatter.invalid-document",
+      "expected_output": "empty"
+    },
+    {
+      "id": "custom-activity-identity",
+      "input": "adapter-document.json",
+      "expected_diagnostic": "formatter.unsupported-identity",
+      "expected_output": "empty"
+    },
+    {
+      "id": "missing-ast",
+      "input": null,
+      "expected_diagnostic": "formatter.missing-ast",
+      "expected_output": "empty"
+    }
+  ],
+  "follow_up_contract": {
+    "adapter_method": "Adapt(ast any) (*Document, Diagnostics)",
+    "semantic_projection": "Entity + Activity + prov:used + prov:wasGeneratedBy",
+    "error_output_rule": "error diagnostics imply empty source",
+    "host_comparison": "Go-hosted result is authoritative; gooo-hosted is shadow evidence"
+  }
+}

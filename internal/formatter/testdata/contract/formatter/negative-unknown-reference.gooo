@@ -1,0 +1,6 @@
+package formatter
+namespace formatter
+
+entity Output id "formatter://entity/output"
+
+activity Transform(Missing) -> Output

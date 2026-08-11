@@ -1,0 +1,18 @@
+{
+  "package": "formatter",
+  "namespace": "formatter",
+  "declarations": [
+    {
+      "kind": "entity",
+      "name": "Output",
+      "id": "formatter://entity/output"
+    },
+    {
+      "kind": "activity",
+      "name": "Transform",
+      "id": "formatter://activity/custom-transform",
+      "inputs": [],
+      "output": "Output"
+    }
+  ]
+}
