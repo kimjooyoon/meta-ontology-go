@@ -23,4 +23,9 @@
 // HostingContract records which host phase is actually evidenced. The
 // gooo-hosted phase is represented as a planned target until its checks are
 // verified; naming a future phase never makes it complete.
+//
+// ReconciliationFixture is the adapter contract for parser-neutral BX
+// experiments. MeasureBXFixture emits stable golden evidence, while the
+// package benchmarks exercise the same contract without importing a parser or
+// generator implementation.
 package bidir
