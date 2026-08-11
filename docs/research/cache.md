@@ -643,6 +643,213 @@ a provenance edge back to the Go-hosted bootstrap artifact. No gooo-hosted
 capability is claimed by this research document; its status remains planned
 until an independent replay and evidence chain pass.
 
+## Falsifiable hypotheses and minimum fixtures
+
+The following hypotheses are deliberately stated so an implementation can
+disprove them. A green unit test is evidence for one fixture, not proof that
+the hypothesis holds for all IR shapes.
+
+| ID | Hypothesis | Minimal falsifier | Pass condition | Current status |
+| --- | --- | --- | --- | --- |
+| H1 | A meaning-bearing semantic mutation changes `SemanticHash` and every affected projection key, while an evidence-only mutation does not change `SemanticHash`. | Add one relation endpoint, then change only evidence observation time. | Expected digest changes and unchanged values match the mutation matrix; 0 false exact hits. | Partially measured; dependency graph/freshness evaluator deferred. |
+| H2 | Canonicalization is representation-independent for declared equivalences. | Reorder a map/set, format source differently, or rename a display-only alias. | Equal meaning yields byte-identical canonical bytes and digest on every supported host. | Map/order fixture passes; UTC/KST same-instant counterexample remains. |
+| H3 | Every output-affecting dependency is in the key directly or through `DependencyRoot`. | Omit policy, toolchain, generator, or target from a test key, then mutate it. | The completeness test fails for the intentionally incomplete key and passes for the complete key. | Contract only; no dependency index implementation yet. |
+| H4 | Same-key concurrent computation is safe even when lock scheduling changes. | Start 16 workers on one miss; kill one writer during publication; run separate processes. | No partial object, no divergent bytes, and one compute/op for one in-process cache. | In-process baseline passes; cross-process and kill-point runs deferred. |
+| H5 | A stale or corrupt cache object can never become a fresh projection or evidence result. | Flip data bytes, metadata bytes, policy digest, predecessor evidence, or remove the index. | Result is miss/corrupt/stale with a reason, followed by explicit recompute or verification. | 300/300 local tamper/recovery runs pass; freshness graph deferred. |
+| H6 | Invalidation is precise for disjoint semantic subgraphs. | Mutate `billing://` while querying an unrelated `fraud://` projection. | Unrelated exact hit remains valid; affected closure is recomputed. | Fixture contract only; reverse-edge index deferred. |
+| H7 | GitHub Actions `restore-keys` partial matches are useful warm seeds but never semantic fresh hits. | Restore a prefix entry after a semantic or toolchain mutation. | `cache-hit`/manifest classification is partial or miss and forces exact validation/recompute. | Workflow experiment not executed; current CI only observes `setup-go` cache. |
+| H8 | Go-hosted and future gooo-hosted stages can share the same cache/evidence contract. | Run the same vector set through two hosts and compare digests and decisions. | 100% vector parity plus a bootstrap provenance edge; otherwise the future host is deferred. | Future host is explicitly deferred. |
+
+### Fixture manifest
+
+Every fixture should have a stable ID and a small manifest that can be consumed
+by tests, benchmark runners, CI, and future host implementations. The manifest
+is input data, not an assertion hidden in a test body:
+
+```text
+Fixture {
+  id: "cache-split-001"
+  schema: "cache-contract-v1"
+  semantic_closure: canonical facts and stable IDs
+  dependency_edges: sorted direct semantic/policy/toolchain edges
+  projection_request: artifact kind, projection, target, options
+  evidence_chain: optional append-only predecessor records
+  mutation: one named change or "base"
+  expected: semantic hash/key/freshness/status/reasons
+}
+```
+
+The minimum fixture set is:
+
+| Fixture ID | Contents | Negative/counterexample variant | Expected output |
+| --- | --- | --- | --- |
+| `cache-split-001` | Two entities, one activity, one `uses` relation, one evidence record. | Add a relation; change only policy; change only observation time; rename display alias. | Semantic/projection/evidence digest transitions match H1; stale evidence is not fresh. |
+| `canonical-vectors-001` | Map/set order, nil/empty, signed zero, float edge values, Unicode, URI IDs, `time.Time`, nested qualifiers. | Same instant in UTC and fixed KST; omitted policy default; duplicate canonical map keys. | Declared equivalences share a digest; ambiguous or unsupported values fail or are explicitly distinct. |
+| `dependency-closure-001` | `billing` and `fraud` namespaces with disjoint projection roots and one shared policy node. | Mutate one namespace; delete one edge; introduce unknown dependency. | Only reverse closure invalidates; unknown dependency is miss/blocked, never fresh. |
+| `lock-stampede-001` | One key, 16 workers, 1 ms compute, deterministic output. | 0/100 ms compute, 32 workers, separate processes, writer killed at each publication stage. | Compute count, p50/p95/p99, lock wait, byte equality, and recovery status are recorded. |
+| `stale-object-001` | Complete data/metadata pair and append-only evidence. | Data flip, metadata flip, missing file, stale policy, stale predecessor, orphan temp directory. | `corrupt`, `miss`, or `stale` with reason; no false fresh result. |
+| `actions-cache-001` | Exact key, older prefix key, semantic mutation, toolchain mutation, trusted and low-trust runs. | Treat prefix restore as exact hit; restore from an untrusted branch; exceed key schema. | Exact hit only after manifest verification; partial/low-trust paths recompute or remain read-only. |
+| `host-parity-001` | Shared canonical vectors and expected contract version. | Go-hosted output differs from future gooo-hosted output or lacks bootstrap edge. | `PASS` only on full parity and evidence; current future stage remains `DEFERRED`. |
+
+Fixtures must include a negative expected result. A fixture that can only pass
+does not test the safety boundary. For example, `canonical-vectors-001` must
+retain the UTC/KST case until the IR makes the timestamp policy explicit; the
+current candidate's differing digest is a useful falsifier, not a flaky test.
+
+## Shared implementation contracts
+
+The cache contract is useful only if each compiler surface consumes the same
+typed facts. These records are language-neutral names for the first Go
+implementation; fields may be serialized as canonical JSON or the versioned
+binary form, but their meaning and omission rules must stay stable.
+
+### Input records
+
+```text
+CanonicalClosureInput {
+  schema_version
+  stable_roots[]
+  entities[]
+  activities[]
+  relations[]
+  explicit_assertions[]
+  dependency_edges[]
+  canonicalizer_version
+}
+
+ProjectionRequest {
+  artifact_kind
+  projection
+  semantic_hash
+  dependency_root
+  policy_hash
+  compiler_version
+  toolchain
+  target
+  options
+}
+
+EvidenceFreshnessInput {
+  subject_digest
+  semantic_hash
+  dependency_root
+  policy_hash
+  schema_version
+  toolchain
+  target
+  verifier_identity
+  predecessor_evidence_ids[]
+  expires_at?
+}
+```
+
+Rules:
+
+- AST source spans and display names may be carried for diagnostics, but must
+  not enter `CanonicalClosureInput` unless the requested artifact is a source
+  map or diagnostic projection.
+- `dependency_edges` are sorted and include edge kind and qualifiers; an
+  unresolved edge is an explicit error/unknown state, not an empty list.
+- Defaults are normalized before hashing. “Absent” and “empty” are equal only
+  when the IR schema says they are semantically equal.
+- `ProjectionRequest` contains every value that can alter output. A caller may
+  not silently add ambient environment variables after key construction.
+- Evidence freshness is evaluated against the current request and all required
+  predecessors; a matching leaf digest alone is insufficient.
+
+### Output records
+
+```text
+CanonicalClosureOutput {
+  canonical_bytes_digest
+  semantic_hash
+  dependency_root
+  normalized_facts[]
+  direct_edges[]
+  source_map_digest?
+}
+
+ProjectionResult {
+  status: exact_hit | miss | partial_seed | corrupt | stale | error
+  projection_key
+  content_digest?
+  bytes?
+  manifest
+  recomputed: boolean
+  reasons[]
+}
+
+FreshnessResult {
+  status: fresh | stale | invalid | deferred
+  subject_digest?
+  evidence_id?
+  reasons[]
+  checked_predecessors[]
+}
+
+VerificationDecision {
+  status: pass | fail | deferred | blocked
+  semantic_delta
+  evidence_ids[]
+  scope_result
+  reasons[]
+}
+```
+
+`partial_seed` is intentionally not an exact cache hit. `deferred` means the
+requested check is not executable in the current host or fixture environment;
+it must retain a command, reason, and required follow-up. `blocked` means an
+external owner or dependency is required. Neither status may be rendered as
+`pass` by a CI adapter or evidence publisher.
+
+### Consumer mapping
+
+| Consumer | Reads | Produces | Must preserve |
+| --- | --- | --- | --- |
+| AST/parser | `.gooo` source, spans, declarations | source facts and diagnostics | Stable IDs and authority annotations; spans remain diagnostic metadata. |
+| Semantic IR | normalized facts, explicit assertions, dependency edges | `CanonicalClosureOutput` | Deterministic ordering, namespace isolation, candidate-vs-authoritative fact distinction. |
+| BX/lifting | AST/Go symbol facts, stable semantic registry | semantic delta with `added/removed/changed`, authority, spans | No promotion of ambiguous calls to business truth without an assertion. |
+| Codegen | `ProjectionRequest`, canonical closure, handwritten slots | `ProjectionResult`, generated-region manifest, source map | Locality, generated markers, exact key, content digest. |
+| LSP | document version, semantic hash, projection/freshness status | diagnostics, cache hints, stale reasons | Never hide stale/blocked status behind a successful completion response. |
+| Cache | `ProjectionRequest`, object bytes, metadata | `ProjectionResult` | Immutable publication, integrity verification, reconstructability. |
+| Provenance | activity inputs/outputs, evidence predecessors | append-only `FreshnessResult` and evidence records | `used`/`wasGeneratedBy` links, no mutation of history, verifier identity. |
+| CI/gate | semantic delta, scope, `VerificationDecision`, evidence | pass/fail/deferred/blocked decision and machine-readable report | Protected policy, no cache-only approval, no unimplemented-stage success. |
+
+This mapping is the reuse contract for later AST, IR, BX, generator, LSP,
+cache, provenance, and CI work. An implementation can add fields, but it must
+not change the meaning of an existing status or omit a reason required by a
+negative fixture.
+
+## Pass, fail, deferred, and blocked semantics
+
+Each experiment and implementation stage must publish one of four statuses:
+
+| Status | Meaning | Evidence required | Merge implication |
+| --- | --- | --- | --- |
+| `PASS` | The fixture and acceptance budget ran and all hard invariants held. | Command, environment, fixture IDs, measurements, and output digest. | May be considered by the gate if scope and policy also pass. |
+| `FAIL` | A falsifier or hard invariant was observed. | Counterexample, expected/actual output, reproduction command, and severity. | Must not be hidden by fallback or cache reuse. |
+| `DEFERRED` | The check is not executable yet or a supported host is unavailable. | Explicit reason, exact follow-up command, owner, and no-success disclaimer. | Cannot satisfy a required gate by itself. |
+| `BLOCKED` | Work depends on an external owner, branch, service, or policy registration. | Dependency, owner/thread, and unblock condition. | Do not weaken the gate; continue independent scope. |
+
+Current classifications for this research are:
+
+- `PASS`: local Go-hosted semantic/evidence mutation fixture, stale-object
+  recovery fixture, in-process same-key compute-once check, and repository
+  `gofmt`/vet/test/race checks.
+- `FAIL`: the current candidate's same-instant UTC/KST digest equality
+  hypothesis, because it produces different digests before timestamp semantics
+  are normalized or declared location-bearing.
+- `DEFERRED`: Linux/Windows runtime vector parity, cross-process lease behavior,
+  the `.gooo` projection Actions cache job, the freshness evaluator, and the
+  gooo-hosted stage.
+- `BLOCKED`: CI ownership registration for `docs/research/cache.md`; it has
+  been delegated to the CI workflow owner because no ownership alias exists in
+  the current repository.
+
+No status above claims that the unimplemented `cmd/gooo check` or future
+gooo-hosted compiler exists. The status is part of the evidence contract and
+must be checked by reviewers and automation.
+
 ## Phased implementation plan
 
 1. **Contract fixtures**: add canonical IR fixtures and the C1–C5 mutation
