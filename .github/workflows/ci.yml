@@ -1,4 +1,5 @@
 name: CI
+run-name: "CI [${{ github.event_name == 'pull_request' && 'PR authoritative' || github.event_name == 'push' && startsWith(github.ref, 'refs/heads/agent/') && 'agent push cap-only' || 'push full' }}]"
 
 on:
   push:
@@ -10,6 +11,7 @@ on:
     branches:
       - integration
       - main
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
@@ -21,6 +23,7 @@ concurrency:
 jobs:
   format:
     name: gofmt
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +39,7 @@ jobs:
 
   vet:
     name: go vet
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,6 +54,7 @@ jobs:
 
   test:
     name: go test
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,6 +69,7 @@ jobs:
 
   race:
     name: go test -race
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -78,6 +84,7 @@ jobs:
 
   semantic:
     name: Semantic conformance
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,7 +95,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Semantic CLI conformance (transitions from deferred to required)
+      - name: Semantic conformance (staged verifier promotion)
+        env:
+          # Stage 0 is the current trust boundary. Advancing it is a reviewed
+          # governance change documented in .github/conformance-plan.md.
+          GOOO_CONFORMANCE_STAGE: "0"
         run: ./scripts/semantic-conformance.sh
 
   policy:
@@ -103,6 +114,24 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Record CI event source
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          CI_REF: ${{ github.ref }}
+        run: |
+          if [ "$CI_EVENT" = "pull_request" ]; then
+            source="PR authoritative"
+          elif [ "$CI_EVENT" = "push" ] && [[ "$CI_REF" == refs/heads/agent/* ]]; then
+            source="agent push cap-only"
+          else
+            source="push full"
+          fi
+          {
+            echo "### CI event source"
+            echo "- run source: $source"
+            echo "- event: $CI_EVENT"
+            echo "- ref: $CI_REF"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Check changed-file scope, Go size caps, and PR target
         if: github.event_name == 'pull_request'
         env:

@@ -24,6 +24,15 @@ throughout this transition. Once the CLI exists, the same step automatically run
 round-trip, evidence, scope, and generated-region checks under the
 `semantic_conformance` build tag.
 
+## Staged verifier promotion
+
+Self-hosting is an explicit CI migration, not a replacement of the trust root
+with a single self-checking compiler. The workflow currently pins
+`GOOO_CONFORMANCE_STAGE=0`: the Go verifier is authoritative and the existing
+format, vet, test, race, scope, DAMP/DRY, and deferred-CLI gates remain
+required. Promotion criteria are documented in `.github/conformance-plan.md`
+and require a reviewed CI-owned change.
+
 The CI/verification change itself is intentionally scoped to `.github/**`,
 `scripts/**`, and `internal/verify/**`. A change outside those paths needs its owning
 agent and its own review boundary.
@@ -32,12 +41,34 @@ The ownership map for `agent/*` branches is explicit and lives in
 `internal/verify/scope.go`. Unknown agent branches fail closed. The map assigns
 each feature branch to its package, maps research branches to their individual
 `docs/research/<slug>.md` file, and reserves shared CI paths for
-`agent/ci-workflow`. The `agent/go-version` maintenance branch is the sole
+`agent/ci-workflow`. The review table of registered aliases is maintained in
+`.github/agent-scope-table.md`; the Go map remains the executable policy. The
+`agent/go-version` maintenance branch is the sole
 toolchain exception: it may change `go.mod` only when the diff contains `go` or
 `toolchain` directives. Dependency, module, `go.sum`, and other source changes
 remain outside that exception.
 
 Pushes run the Go caps without using the push event's `before` SHA, because a
-rebased-before revision may not exist in the checkout. Pull-request events retain
-the complete base-to-head changed-path and branch-ownership check; the verifier
-also reports unavailable revisions deterministically.
+rebased-before revision may not exist in the checkout. An `agent/**` push is a
+cap-only auxiliary run; it never substitutes for the six-job full matrix. Pushes
+to `integration` or `main` run all six full jobs. Pull-request events also run
+all six jobs; the existing required check names remain canonical (`gofmt`, `go
+vet`, `go test`, `go test -race`, `Semantic conformance`, and `CI policy`) so
+branch protection does not break during ownership updates. The workflow run name
+and the CI policy step summary identify `PR authoritative`, `push full`, or
+`agent push cap-only`, so an auxiliary push result cannot be mistaken for the
+authoritative PR result. Pull-request events retain the complete base-to-head
+changed-path and branch-ownership check; the verifier also reports unavailable
+revisions deterministically.
+
+The pull-request trigger explicitly includes `ready_for_review`, ensuring a
+draft-to-review transition receives the same six-job authoritative matrix.
+
+This current-base follow-up records the integration evidence used for the new
+audit PR: `integration` is `f066d61`, and the PR policy step passes the base SHA
+through `GOOO_SCOPE_FROM` while using the head SHA as `GOOO_SCOPE_TO`. The
+existing `agent/bidir-followup` alias was checked against that same base; its
+only allowed prefix remains `internal/bidir`. The stale PRs #77 and #84 are
+not bases for this branch and must not be merged as the audit result. The
+observed generator fixture follow-ups use exact `internal/generator` aliases;
+unknown generator branch names remain rejected.
