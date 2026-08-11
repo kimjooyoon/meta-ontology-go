@@ -463,6 +463,312 @@ Before implementation, add fixtures (in a future semantic/conformance scope) for
 9. a design Activity that cannot be mistaken for a runtime occurrence;
 10. a blank-node import that is rejected or marked non-portable until anchored.
 
+## 12. Comparative evidence experiment: Go-hosted versus `.gooo`-hosted
+
+This experiment compares two ways of hosting the same compiler/CI provenance contract.
+It is a fixture and measurement design, not an implementation claim. The comparison
+must keep the runner, Go toolchain, source payload, policy revision, and evidence
+capture budget equal; otherwise a richer capture path could be mistaken for a better
+semantic model.
+
+### 12.1 Define the two lanes
+
+“Hosted” names the authoritative evidence boundary, not the programming language used
+to implement the compiler.
+
+| Lane | Authoritative source view | Compiler/CI Activities | Typical Agents |
+| --- | --- | --- | --- |
+| **Go-hosted** | Go source, `go.mod`, workflow configuration, and command receipts | `go test`, `go vet`, `go build`, workflow gate, artifact publication | developer, Go toolchain, CI runner, review gate |
+| **`.gooo`-hosted** | `.gooo` declarations, normalized Semantic IR, policy, and explicit handwritten slots | parse/lower, normalize, generate, Go-symbol lift, semantic reconcile, verification, Go build, artifact publication | DSL author, `.gooo` compiler, semantic gate, CI runner, review gate |
+
+The Go-hosted lane is not a strawman: it may emit structured PROV evidence and signed
+receipts. The question is whether the evidence contract can preserve semantic identity,
+relation direction, dependency freshness, and authority boundaries without the `.gooo`
+IR. Conversely, the `.gooo` lane receives no automatic trust benefit merely because its
+records use PROV names.
+
+Implementation status is an explicit control: this repository's initial stage is
+Go-hosted, while `.gooo`-hosted compiler/CI is a self-hosting target. Until the target
+pipeline exists, its fixture verdict is `not-run`, not pass or fail. The tables below
+specify expected observations and acceptance criteria; they are not evidence that the
+future lane has already succeeded. This follow-up remains documentation-only.
+
+### 12.2 Common scenario and evidence contract
+
+Both lanes process the same small billing change: an input source is compiled, tests
+run, a verification result is produced, and an artifact is published. The common
+logical IDs are intentionally explicit and stable:
+
+```text
+exp://prov-compare/entity/source
+exp://prov-compare/entity/policy
+exp://prov-compare/entity/ast
+exp://prov-compare/entity/ir
+exp://prov-compare/entity/generated-go
+exp://prov-compare/entity/test-report
+exp://prov-compare/entity/build-artifact
+exp://prov-compare/entity/verification
+
+exp://prov-compare/activity/compile
+exp://prov-compare/activity/parse
+exp://prov-compare/activity/lower
+exp://prov-compare/activity/generate
+exp://prov-compare/activity/test
+exp://prov-compare/activity/verify
+exp://prov-compare/activity/build
+exp://prov-compare/activity/publish
+
+exp://prov-compare/agent/author
+exp://prov-compare/agent/compiler
+exp://prov-compare/agent/ci-runner
+exp://prov-compare/agent/gate
+```
+
+These are comparison role slots, not a claim that both lanes contain the same literal
+Entity or Activity. The Go-hosted lane may have no IR or generated-Go Entity; the
+`.gooo`-hosted lane is expected to have both. A missing slot is measured as missing
+evidence only when the lane's declared contract requires it. Any cross-lane equivalence
+must be an explicit mapping from the lane-local ID to a comparison role.
+
+The `.gooo` lane uses parse, lower, and generate Activity IDs; a future lift Activity
+may be added when Go analysis is part of the run. The Go lane may collapse equivalent
+implementation steps into a compiler receipt, but it must declare the collapse rather
+than pretending the steps were observed. Both lanes must export
+the following minimum evidence fields for each artifact or relation occurrence:
+
+| Field | Purpose |
+| --- | --- |
+| `stableID` | Semantic identity; never a display label or path alone. |
+| `kind` | Entity, Activity, or Agent primary role plus explicit types. |
+| `digest` | Content or canonical-record hash for the observed object. |
+| `inputs` | Ordered only for display; semantically a set of referenced input IDs and digests. |
+| `toolchainID` | Compiler/runner identity and version or digest. |
+| `policyID` | Verification policy/ontology revision used by the Activity. |
+| `relationID` | Stable identity for a qualified Usage, Generation, Derivation, Association, or Attribution. |
+| `bundleID` | Named evidence context and normalized content digest. |
+| `status` | Declared, deterministic, or candidate. |
+| `attestation` | Optional signature/proof binding Agent, Activity, inputs, outputs, and policy. |
+
+The Entity/Activity/Agent evidence comparison is:
+
+| Evidence role | Go-hosted observation | `.gooo`-hosted observation | Comparison invariant |
+| --- | --- | --- | --- |
+| Source Entity | Go source revision, `go.mod`, workflow file, and content digests | `.gooo` source, policy, handwritten slot, and content digests | Same canonical source digest contract; paths are labels only. |
+| Semantic Entity | Usually absent or inferred from symbol/package names | Normalized IR node with stable ID, kind, and source span | Missing semantic nodes are measured as missing evidence, not guessed. |
+| Generated Entity | Compiler output or binary tied to command receipt | Generated Go, source map, and binary tied to projection Activities | Output digest and generator inputs must bind identically. |
+| Compiler Activity | One or more `go` command receipts | Named parse/lower/normalize/generate/lift Activities | Collapsed Go steps must declare their observation granularity. |
+| CI Activity | Workflow job, test, vet, build, and publish steps | Semantic verification, scope, freshness, build, and publish steps | Each pass is bound to the same input, policy, and toolchain tuple. |
+| Human/automation Agent | Commit author, Go toolchain, runner, reviewer | DSL author, `.gooo` compiler, runner, semantic gate, reviewer | Names/aliases do not establish identity; attestation rules are shared. |
+| Evidence Entity | Logs, receipts, test report, artifact metadata | IR snapshot, semantic delta, generated source map, evidence Bundle | Both lanes use append-only records and content-addressed freshness. |
+
+The minimum semantic obligations are represented by these lane-specific paths:
+
+```text
+Go-hosted:
+used(compile, source)
+used(test, source)
+wasGeneratedBy(test-report, test)
+used(verify, test-report)
+used(verify, policy)
+wasGeneratedBy(verification, verify)
+used(build, source)
+used(build, verification)
+wasGeneratedBy(build-artifact, build)
+wasAssociatedWith(compile, compiler)
+wasAssociatedWith(test, ci-runner)
+wasAssociatedWith(verify, gate)
+wasAssociatedWith(build, ci-runner)
+
+.gooo-hosted:
+used(parse, source)
+wasGeneratedBy(ast, parse)
+used(lower, ast)
+wasGeneratedBy(ir, lower)
+used(generate, ir)
+wasGeneratedBy(generated-go, generate)
+used(test, generated-go)
+wasGeneratedBy(test-report, test)
+used(verify, test-report)
+used(verify, policy)
+wasGeneratedBy(verification, verify)
+used(build, generated-go)
+used(build, verification)
+wasGeneratedBy(build-artifact, build)
+wasAssociatedWith(parse, compiler)
+wasAssociatedWith(lower, compiler)
+wasAssociatedWith(generate, compiler)
+wasAssociatedWith(test, ci-runner)
+wasAssociatedWith(verify, gate)
+wasAssociatedWith(build, ci-runner)
+```
+
+The `.gooo` lane therefore tests the design chain `source.gooo -> IR -> generated-go`,
+while the Go lane records the directly observed Go-source-to-build chain. The comparison
+normalizes both paths into the same required build and verification obligations without
+inventing a Go IR node. `wasDerivedFrom` is added only where the lane's evidence
+contract asserts an actual dependency, not merely because two files appear in one
+directory. `wasAttributedTo(build-artifact, gate)` is an optional final edge and is
+valid only when an explicit attribution policy says the gate is responsible for the
+published artifact; association with the gate alone is insufficient.
+
+### 12.3 Hypotheses
+
+Each hypothesis is falsifiable. A result is not a win for one lane if the other lane was
+given a weaker evidence schema or a different verification policy.
+
+| ID | Hypothesis | Measurement | Falsifier |
+| --- | --- | --- | --- |
+| H1 | A typed Semantic IR makes relation-direction errors easier to reject than path/log-only evidence. | Direction-mutant rejection rate and diagnostic precision. | Go-hosted lane matches or exceeds `.gooo` lane under the same typed contract. |
+| H2 | Stable semantic IDs reduce false identity churn under label rename and declaration reorder. | ID continuity and unrelated-node churn after equivalent edits. | Both lanes preserve the same IDs, or `.gooo` churn is not lower. |
+| H3 | Explicit dependency digests and projection closure reduce stale evidence acceptance. | Freshness-mutant rejection rate and time-to-diagnosis. | Equal rejection rates and diagnosis quality, or `.gooo` misses stale closure. |
+| H4 | PROV vocabulary alone does not prevent provenance spoofing; authenticated binding is the differentiator. | Forged/replayed claim rejection with and without attestations. | A lane accepts an unsigned or digest-mismatched trusted-agent claim, or either lane claims authenticity from PROV triples alone. |
+| H5 | `.gooo` produces a more inspectable semantic path, at the cost of more evidence records and possibly more build time. | Required-edge coverage, path length, record count, bytes, and wall time. | No coverage improvement, or overhead exceeds the pre-declared budget without a locality benefit. |
+
+### 12.4 Counterexample fixture catalogue
+
+Every fixture has a clean case and one mutation. The clean case MUST be accepted by
+both lanes with semantically equivalent normalized facts. Mutants MUST produce a stable
+failure class; a generic “build failed” is insufficient evidence.
+
+#### Relation direction fixtures
+
+| Fixture | Mutation | Expected result |
+| --- | --- | --- |
+| `direction-used-reversed` | Replace `used(test, generated-go)` with `used(generated-go, test)`. | Reject: subject must be Activity and object Entity. |
+| `direction-generated-reversed` | Replace `wasGeneratedBy(test-report, test)` with `wasGeneratedBy(test, test-report)`. | Reject: subject must be Entity and object Activity. |
+| `direction-derived-reversed` | Replace `wasDerivedFrom(build-artifact, generated-go)` with the inverse. | Reject or classify as a different claim; never normalize silently. |
+| `direction-associated-reversed` | Replace `wasAssociatedWith(verify, gate)` with `wasAssociatedWith(gate, verify)`. | Reject: Agent cannot be the Activity subject. |
+| `direction-qualified-counterpart` | Keep the host `qualifiedGeneration` but set `Generation.activity` to another Activity. | Reject: qualified and unqualified edges disagree. |
+| `direction-inverse-view` | Add `generatedBy(build, artifact)` as a canonical fact instead of a query view. | Reject duplicate authority or normalize to the canonical direction with evidence. |
+
+The fixture output must identify the exact subject, predicate, object, qualified relation
+ID, and expected domain/range violation. It must not rely on a human reading a graph
+visualization.
+
+#### Stable identity fixtures
+
+| Fixture | Mutation | Expected result |
+| --- | --- | --- |
+| `identity-label-rename` | Rename `PayOrder` to `AuthorizePayment`, retain the Activity ID. | Accept; same node and relation IDs; only label evidence changes. |
+| `identity-declaration-reorder` | Reorder declarations and input ports without changing semantic IDs/roles. | Accept; normalized graph and relation IDs unchanged. |
+| `identity-namespace-collision` | Add `fraud://entity/Payment` beside `billing://entity/Payment`. | Accept as distinct IDs; reject any implicit merge. |
+| `identity-source-span-shift` | Reformat the source so every span moves. | Accept; spans may change, identity and semantic delta must not. |
+| `identity-qualified-duplicate` | Create two same-base Usage occurrences with different roles. | Preserve two relation IDs; do not deduplicate by base triple. |
+| `identity-unauthorized-rekey` | Change a stable ID but keep the display name and content. | Reject as an identity migration unless an explicit migration record exists. |
+
+For the Go-hosted lane, the baseline fixture uses a path/Go-symbol label in addition to
+the explicit stable ID. A result that passes only because a path happened not to change
+does not count as stable identity.
+
+#### Freshness fixtures
+
+Freshness is content- and dependency-based. Timestamps are diagnostic metadata, not the
+sole freshness proof. A record is fresh only if its source, transitive input, toolchain,
+policy, output, and bundle digests match the observed state.
+
+| Fixture | Mutation | Expected result |
+| --- | --- | --- |
+| `freshness-source-replay` | Change source bytes while replaying the old test/build evidence. | Reject: source digest mismatch. |
+| `freshness-ir-replay` | Change `.gooo` or Go semantic input while retaining the old IR digest. | Reject: IR input closure mismatch. |
+| `freshness-generated-replay` | Replace generated Go but retain the previous generation receipt. | Reject: generated-output digest mismatch. |
+| `freshness-policy-drift` | Change ontology/verifier policy revision but reuse an old pass. | Reject: policy digest mismatch. |
+| `freshness-toolchain-drift` | Change Go compiler/toolchain digest without rebuilding. | Reject or mark stale according to policy; never report fresh. |
+| `freshness-bundle-edit` | Remove one assertion from a named Bundle but retain its content digest. | Reject: Bundle digest mismatch. |
+| `freshness-cache-key-alias` | Reuse a cache result whose key has the same label but a different canonical input tuple. | Reject: cache key is not semantic identity. |
+
+The `.gooo` lane is expected to expose more projection edges (`DSL -> IR -> generated
+Go -> verification`) and therefore more freshness checkpoints. The Go lane may pass if
+it records an equivalent digest closure; the experiment must measure the contract, not
+reward record count.
+
+#### Provenance spoofing fixtures
+
+PROV statements describe responsibility; they do not authenticate who wrote the
+statement. These fixtures distinguish structural validity from trust. An unsigned
+claim may be structurally well-typed but MUST be reported as `untrusted`, not as a
+verified pass.
+
+| Fixture | Attack | Expected result |
+| --- | --- | --- |
+| `spoof-trusted-agent` | Forge `wasAssociatedWith(build, ci-runner)` using a trusted Agent ID but no valid attestation. | Reject as untrusted; an ID collision is not identity proof. |
+| `spoof-output-relabel` | Copy a real build receipt and replace the artifact digest while retaining the old Activity and Agent. | Reject: output digest is not bound to the receipt. |
+| `spoof-ci-pass-replay` | Attach a previous commit's signed CI pass to a new source digest. | Reject: signature is valid for the wrong input tuple. |
+| `spoof-bundle-rewrite` | Add a “verified” assertion to a Bundle without updating its digest/signature. | Reject: named-set digest and attestation mismatch. |
+| `spoof-candidate-promotion` | Promote an ambiguous Go call to deterministic without a DSL assertion or policy decision. | Reject: status transition lacks authority and evidence. |
+| `spoof-agent-alias` | Use a display alias or email that resembles the gate Agent ID. | Reject or keep candidate; aliases cannot establish Agent identity. |
+| `spoof-generated-marker` | Add a generated-region marker to handwritten Go without a generator receipt. | Reject: text marker is not generation evidence. |
+
+For each spoof, run two subcases: (a) no cryptographic attestation, and (b) an
+attestation with a deliberately wrong input/output/policy digest. The pass criterion is
+not “the parser rejects malformed RDF”; it is “the gate refuses a well-typed but
+unauthorized claim.”
+
+### 12.5 Run protocol and measures
+
+1. Freeze the source payload, Go version, compiler build, CI image, policy revision, and
+   fixture seed. Record them as Entities or Agent/toolchain metadata.
+2. Run 10 clean repetitions per lane to detect nondeterminism. Run each mutation 10
+   times per lane with the same mutation ID. A deterministic verifier must produce the
+   same normalized verdict and failure class each time.
+3. Export both lanes to the same canonical fact format. Map lane-local Activity IDs to
+   a declared comparison ID only when the mapping is explicit and evidence-backed.
+4. Normalize before measuring. Do not compare file order, log order, labels, timestamps,
+   or generated text as semantic differences.
+5. Record raw evidence separately from the derived comparison report. The report is a
+   projection and must not overwrite the raw append-only evidence.
+
+The minimum metrics are:
+
+```text
+direction_detection = rejected_direction_mutants / direction_mutants
+identity_continuity  = equivalent_edits_preserving_ids / equivalent_edits
+freshness_detection  = rejected_stale_mutants / stale_mutants
+spoof_rejection      = rejected_unauthorized_claims / spoof_mutants
+clean_acceptance     = accepted_clean_runs / clean_runs
+edge_coverage        = present_required_edges / expected_required_edges
+false_acceptance     = accepted_invalid_runs / invalid_runs
+```
+
+Also record median and p95 verification time, evidence record count, evidence bytes,
+and the number of diagnostics needed to identify the first invalid edge. Report these
+as secondary tradeoffs, not as semantic correctness scores.
+
+### 12.6 Pass criteria
+
+The experiment passes only if all of the following hold for both lanes, unless a lane's
+declared capability explicitly excludes a fixture:
+
+- clean acceptance is 100% and normalized evidence is equivalent;
+- every relation-direction mutant is rejected with a typed direction/range failure;
+- label, declaration-order, and source-span changes preserve stable IDs and do not
+  widen unrelated semantic locality;
+- every freshness mutation is rejected or marked stale, including old evidence replay;
+- every spoofed claim is rejected as invalid or untrusted; no PROV-only claim is treated
+  as authenticated identity;
+- candidate facts cannot satisfy an authoritative required edge or merge gate;
+- repeated runs produce the same normalized verdict, failure class, and digest chain;
+- Bundle content digests change when assertions change and remain stable when only
+  serialization order changes.
+
+For a comparative claim that `.gooo` is better, it must additionally show a predeclared
+improvement in at least one primary metric (direction detection, identity continuity,
+freshness detection, spoof rejection, or edge coverage) without a clean false-acceptance
+regression and without exceeding the agreed evidence/time budget. Otherwise the correct
+conclusion is “equivalent under this contract,” “inconclusive,” or “regressed.”
+
+### 12.7 Interpretation limits
+
+The experiment must not conclude that PROV-O itself provides signatures, access control,
+or authorship. It provides a shared vocabulary and a model for influence and
+responsibility; an independent attestation layer must bind an Agent to the exact
+Activity, input digests, output digests, policy, and Bundle. This follows the separation
+between provenance semantics and trust policy in the repository's authority model.
+
+The most important negative result is therefore useful: if both lanes reject structural
+mutants but accept forged trusted-Agent claims without attestation, the ontology mapping
+works while the trust boundary is incomplete. That is a failed spoof-resistance gate,
+not evidence that the two lanes are semantically equivalent.
+
 ## References
 
 - [W3C PROV-O: The PROV Ontology](https://www.w3.org/TR/prov-o/)
