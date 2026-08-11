@@ -324,6 +324,10 @@ fixture를 분리하고 해당 command contract를 먼저 고정한다. silent o
 authority/reconciliation policy를 수정하기 전까지 downstream generator/test를 확장하지
 않는다.
 
+**후속 구현 계약.** `ProjectionSyncReport`는 `before_hash`, `after_hash`, `changed_paths`,
+`changed_regions`, `state`, `repair`를 반환하고, `PatchResult`와 `QueryResult`는 같은
+`input_fingerprint`를 echo한다. `state=deferred`는 성공으로 집계하지 않는다.
+
 ### EXP-GRAPH-02 — stale patch와 concurrent edit
 
 **가설.** graph/IR fingerprint와 node/field expected value를 compare-and-swap처럼
@@ -347,6 +351,10 @@ relation closure를 추가한다. partial write면 atomic staging/rollback을 �
 conflict code가 재현되지 않으면 query snapshot과 repair schema를 먼저 contract test로
 고정한다.
 
+**후속 구현 계약.** `PatchRequest`는 `base_fingerprint`, `target_id`, `expected_node_hash`,
+`expected_fields`, `operations`, `allowed_scope`를 필수로 하고, 실패 `ConflictResult`는
+`reason_code`, `observed`, `expected`, `retry_query`만 반환하며 store를 변경하지 않는다.
+
 ### EXP-GRAPH-03 — query completeness와 결정성
 
 **가설.** Agent가 필요한 neighborhood만 query해도 전체 IR을 읽은 reference evaluator와
@@ -367,6 +375,11 @@ canonical JSON hash, bounded depth/size, query latency, candidate 누출·누락
 **실패 시 다음 조치.** 누락이 vocabulary/derived-rule 정의 문제인지 query 구현 문제인지
 분리한다. vocabulary가 모호하면 rule을 추가하기보다 query를 unsupported로 명시하고,
 구현 오류면 해당 smallest graph를 regression fixture로 고정한다.
+
+**후속 구현 계약.** `QueryRequest`는 `snapshot_fingerprint`, selector, relation direction,
+namespace, depth/limit, candidate policy를 명시한다. `QueryResult`는 stable sort된 facts,
+`result_hash`, `truncated`, `unsupported_relations`를 반환하며 입력 fact 순서에 의존하지
+않는다.
 
 ### EXP-LOCAL-01 — locality counterexamples
 
@@ -390,6 +403,11 @@ handwritten body를 잃지 않는다.
 **실패 시 다음 조치.** 실패를 identity matcher, generator ordering, marker parser,
 source-map 중 한 층의 최소 counterexample로 축소하고 그 fixture를 영구 conformance에
 추가한다. locality assertion을 완화하거나 “전체 파일 재생성”으로 숨기지 않는다.
+
+**후속 구현 계약.** `LocalityReport`는 `semantic_delta`, `changed_regions`,
+`preserved_ids`, `retired_ids`, `preserved_slots`, `source_map_delta`, `ambiguities`를
+반환한다. 모호성이 있으면 `accepted=true`와 함께 숨기지 않고 명시적인 conflict/candidate
+상태를 낸다.
 
 ### EXP-EVIDENCE-01 — closed-loop Agent evidence
 
@@ -416,6 +434,11 @@ stale, generated-drift fixture는 merge 전에 reject된다. 같은 snapshot과 
 cache key에 포함한다. 역할 분리가 깨지면 해당 Gate를 보호된 kernel 경계로 옮기고
 independent Guardian 검토를 요구한다.
 
+**후속 구현 계약.** `GateInput`은 `request_id`, `allowed_scope`, `actual_delta`,
+`projection_digest`, `evidence_refs`, `actor_roles`, `policy_version`을 포함한다.
+`GateDecision`은 `status`, `reason_codes`, `missing_evidence`, `scope_violation`만으로
+결정 근거를 재현할 수 있어야 하며 Gate가 입력을 수정하지 않는다.
+
 ### EXP-EVIDENCE-02 — provenance와 cache freshness
 
 **가설.** reconstructable cache는 재사용할 수 있지만 provenance/evidence는 append-only
@@ -437,6 +460,11 @@ reject하고 새 receipt를 append한다. cache purge는 durable evidence를 삭
 발생하면 append-only storage/sequence 검사를 먼저 고친다. cache와 provenance의 수명이
 불명확하면 두 저장소를 분리한 뒤 다시 측정한다.
 
+**후속 구현 계약.** `CacheKey`는 semantic input hash, relevant imports, compiler/generator/
+verifier version, target options를 canonicalize한다. `EvidenceReceipt`는 `sequence`,
+`input_digest`, `artifact_digest`, `policy_digest`, `created_by`, `prev_receipt_digest`를
+append-only로 기록하며 cache eviction은 receipt를 삭제할 수 없다.
+
 ### 실행 순서와 backlog 완료 조건
 
 1. `EXP-GRAPH-01`로 command/result schema를 고정한다.
@@ -449,7 +477,82 @@ regression case, 담당 역할(Builder/Guardian/Gate)을 갖기 전에는 완료
 command가 아직 구현되지 않은 경우도 실패로 위장하지 않고 `blocked: missing contract`
 로 남긴다.
 
-## 8. 출처와 재현 경로
+## 8. 구현 재사용 계약 catalog
+
+### EXP-CONTRACT-01 — cross-layer envelope 보존
+
+**가설.** 하나의 versioned envelope와 digest 규칙을 AST→IR→BX→codegen/query/LSP→
+cache/provenance→CI로 전달하면 각 구현이 임의의 필드를 재해석하지 않고 동일한 의미와
+검증 상태를 보존할 수 있다.
+
+**최소 fixture.** `billing` clean case, namespace collision case, stale patch case,
+malformed marker case, 아직 구현되지 않은 CLI command case를 각각 같은 envelope으로
+통과시킨다.
+
+**측정값.** layer별 schema version, required field 보존율, source/semantic/artifact digest
+일치율, status mapping, span/semantic ID 보존율, unknown-field 처리, adapter count를
+기록한다.
+
+**통과 기준.** supported path에서 required field와 digest가 100% 보존되고, AST span·IR
+semantic ID·generated marker·evidence reference가 연결된다. `deferred`/`blocked`는
+`accepted`/`success`로 변환되지 않으며, 같은 envelope을 두 번 처리한 결과가 같다.
+
+**실패 시 다음 조치.** 누락이 구현 bug면 최소 layer adapter를 추가하고 regression을
+고정한다. schema 변경이 필요하면 `v2`를 별도 계약으로 만들며, 기존 필드에 조용한
+기본값을 넣어 compatibility를 가장하지 않는다.
+
+**후속 구현 계약.** 모든 cross-layer result는 다음 공통 envelope을 포함한다.
+
+```json
+{
+  "schema": "gooo.contract/v1",
+  "request_id": "req-opaque",
+  "status": "accepted|rejected|deferred",
+  "input_fingerprint": "sha256:...",
+  "semantic_fingerprint": "sha256:...",
+  "diagnostics": [],
+  "evidence_refs": []
+}
+```
+
+`status=deferred`에는 반드시 `reason_code`와 `next_action`이 있어야 하며 CI green으로
+집계하지 않는다. 입력에 있는 `semantic_id`, `source_span`, `node_handle`, `node_hash`는
+각 layer가 삭제하거나 display name으로 대체할 수 없다.
+
+### 8.1 Layer별 입력·출력 계약
+
+| producer → consumer | 입력 계약 | 출력 계약 | 보존/실패 불변식 |
+| --- | --- | --- | --- |
+| lexer/parser → AST | source bytes, source digest, URI, dialect/version | `ASTDocument`: tokens, declarations, source spans, recoverable diagnostics | span은 source digest에 귀속된다. malformed input은 partial AST+diagnostic이지 성공 AST가 아니다. |
+| AST → Semantic IR | `ASTDocument`, namespace registry, ontology version | `IRSnapshot`: semantic IDs, typed nodes, canonical facts, candidates, semantic fingerprint | display rename/whitespace는 ID를 바꾸지 않는다. namespace 충돌과 missing ID는 reject/candidate다. |
+| IR ↔ BX/reconcile | source document, current model, `FactDelta`, provenance spans | `BidirResult`: normalized model, accepted delta, conflicts, equivalence, locality | Get-Put/Put-Get/transactionality를 보고하며 conflict 시 model을 부분 반영하지 않는다. |
+| IR → codegen | IR fingerprint, target profile, prior generated file, slot index | `GeneratedArtifact`: bytes, marker index, semantic source map, `LocalityReport` | generator는 generated region만 소유한다. slot/외부 text 보존과 deterministic bytes를 검사한다. |
+| IR → query | `QueryRequest`: snapshot fingerprint, selector, relation direction, namespace, depth/limit, candidate policy | `QueryResult`: sorted facts, result hash, truncation, unsupported relations | query는 입력 snapshot을 바꾸지 않고, 결과 순서·hash가 입력 fact order에 의존하지 않는다. |
+| IR/Go snapshot → patch | `PatchRequest`: base fingerprint, target ID, expected node/fields, operations, allowed scope | `PatchResult` 또는 `ConflictResult`: new fingerprint, semantic delta, changed regions, retry query | stale/mismatch/invalid shape는 write 전에 reject하며 changed bytes/evidence가 0이어야 한다. |
+| IR/LSP snapshot → LSP | URI, document version, snapshot fingerprint, method/params | `LSPResponse`: diagnostics, symbols, hover, completion, definition, optional edit plan | LSP read path는 IR 권위를 우회하지 않으며 document version이 stale이면 edit plan을 내지 않는다. |
+| semantic inputs → cache | semantic input hash, relevant imports, compiler/generator/verifier versions, target options | `CacheResult`: hit/miss, key digest, invalidation reason, artifact digest | unrelated edit만 hit 후보이고 semantic/policy/version 변경은 miss다. cache hit는 evidence freshness를 면제하지 않는다. |
+| activity 결과 → provenance | request, input/artifact/policy digests, actor role, parent receipt | append-only `EvidenceReceipt`: sequence, hashes, source refs, result, verifier | receipt overwrite/tamper는 reject다. cache eviction은 durable receipt를 삭제하지 않는다. |
+| delta+evidence → CI Gate | `GateInput`: allowed scope, actual delta, projection digest, evidence refs, actor roles, policy version | `GateDecision`: accepted/rejected/deferred, reason codes, missing evidence, scope violations | Gate는 input을 수정하지 않고 동일 input에 동일 decision을 낸다. deferred는 merge success가 아니다. |
+
+### 8.2 공통 negative/deferred contract
+
+다음 상태는 모든 consumer가 같은 의미로 처리해야 한다.
+
+| 상태 | 요구 결과 |
+| --- | --- |
+| missing semantic ID/source span | semantic truth로 승격하지 않고 `rejected` 또는 `candidate` |
+| stale base/node/field hash | no-write `rejected` + 재조회용 repair action |
+| duplicate/ambiguous generated marker | regeneration 중단 + `conflict` |
+| candidate fact only | IR authority를 변경하지 않고 evidence에만 기록 |
+| nondeterministic ordering/hash | `rejected`; seed나 입력 순서로 숨기지 않음 |
+| unimplemented CLI/layer | `deferred`/`blocked` + reason/next action; 절대 success 아님 |
+| missing or stale evidence | Gate `rejected`; 새 receipt 생성 전 merge 불가 |
+
+이 catalog는 구현 PR이 API를 임의로 발명하지 않도록 하는 연구 계약이다. 실제 Go
+package가 추가될 때는 이 문서의 field 이름·status semantics와 fixture 결과를 먼저
+계약 테스트로 고정하고, 지원되지 않는 field는 명시적인 adapter/version bump로 다룬다.
+
+## 9. 출처와 재현 경로
 
 모든 zerolang 관찰은 위 snapshot의 공식 저장소 파일을 기준으로 했다.
 
