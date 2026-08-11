@@ -21,8 +21,20 @@ var (
 // ReadMessage reads one LSP payload, including its Content-Length framing.
 func ReadMessage(input io.Reader) ([]byte, error) {
 	// A one-byte buffer avoids consuming the next frame when callers invoke
-	// this convenience function repeatedly on the same stream.
-	return readFrame(bufio.NewReaderSize(input, 1))
+	// this convenience function repeatedly on the same stream. bufio enforces
+	// a larger minimum, so constrain the underlying reader instead.
+	return readFrame(bufio.NewReader(singleByteReader{input: input}))
+}
+
+type singleByteReader struct {
+	input io.Reader
+}
+
+func (r singleByteReader) Read(p []byte) (int, error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
+	return r.input.Read(p[:1])
 }
 
 func readFrame(input *bufio.Reader) ([]byte, error) {
