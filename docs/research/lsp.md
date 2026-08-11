@@ -287,6 +287,40 @@ This adapter should be introduced behind an interface so the LSP transport does 
 depend on the Go loader or make network/filesystem calls for every hover. The Go tool
 process and all filesystem reads must be cancellable, bounded, and reproducible in CI.
 
+## Hosting stages and self-hosting contract
+
+Self-hosting is a staged target, not an assumption about the current implementation.
+The initial server is Go-hosted: Go owns the process, transport, parser adapter,
+snapshot scheduler, and projection interfaces, while `.gooo` owns business meaning.
+The future gooo-hosted stage may express more of the compiler/LSP topology in `.gooo`
+and regenerate its Go host, but it must preserve the same protocol and semantic
+contracts. The future stage is not implemented and must not be reported as passing
+until the evidence below exists.
+
+| Dimension | Go-hosted initial stage | gooo-hosted future stage | Required comparable evidence |
+| --- | --- | --- | --- |
+| Authority | `.gooo` declarations and stable IDs; handwritten Go owns irreducible logic | Same authorities; `.gooo` may also describe compiler/LSP topology | Identity and authority classification is identical on the fixture corpus. |
+| Runtime host | `cmd/gooo` and `internal/lsp` compiled by Go | A verified `.gooo` projection bootstraps the same Go runtime or a later host | Framed protocol traces, diagnostics, tokens, locations, and edits are semantically equivalent. |
+| Bootstrap | Handwritten/generated Go is the trusted execution seed | Previous verified compiler builds the next host; a small Go seed remains for recovery | Two independent bootstrap paths produce matching normalized IR and generated-region maps. |
+| Navigation | Go source maps connect generated regions to `.gooo` | Self-described source maps add compiler/LSP declarations as targets | `LocationLink` targets, stable IDs, and locality checks match across hosts. |
+| Verification | Go unit/vet/race tests plus conformance fixtures | The same tests plus self-build, reproducibility, and bootstrap-delta evidence | No policy or verifier is weakened by the new host. |
+| Failure handling | Fall back to the Go host when a projection is unavailable | Fall back to the last verified host; do not claim self-hosting from a partial build | A failed bootstrap is observable, bounded, and never promoted to a successful artifact. |
+
+The transition gate should compare hosts on the same input snapshot, client
+capabilities, toolchain metadata, and fixture manifest. Required evidence includes:
+
+- semantic IR equivalence, not textual equality, for parse, lower, and lifted facts;
+- identical diagnostic sets, result-ID behavior, UTF-16 ranges, `LocationLink`s, token
+  streams, and workspace edits after canonical ordering;
+- generated-region and source-map locality, including an unchanged handwritten slot;
+- reproducible generated output and a recorded provenance chain for the bootstrap
+  compiler, host binary, test run, and evidence artifacts; and
+- a negative test proving that a future-host failure remains “not implemented” or
+  “not verified,” rather than being mislabeled as a passing self-hosted stage.
+
+Until those comparisons pass, the status of gooo-hosted operation is **planned**, and
+the Go-hosted server remains the only implementation claim in this research note.
+
 ## `internal/lsp` conformance checklist
 
 The checklist is intentionally explicit so a future guardian can verify behavior
@@ -337,6 +371,308 @@ protocol invariant.
 | LSP-T14 | `go list` failure, type error, and canceled Go subprocess | Diagnostics are actionable, stderr is retained as evidence, and cancellation terminates the work. |
 | LSP-T15 | Parallel hover/completion/diagnostics over changing snapshots | Results are tied to snapshot hashes; `go test -race` remains clean. |
 
+## Experiment design: correctness before optimization
+
+The following experiments turn the checklist into falsifiable hypotheses. Each
+experiment has a fixture, an observable, and a pass criterion. A passing measurement
+does not prove protocol conformance by itself: correctness fixtures must pass first,
+and performance budgets are only meaningful when the fixture, toolchain, CPU, and
+cache state are recorded with the result.
+
+### UTF-8 storage versus UTF-16 LSP positions
+
+**Hypothesis H-UTF16:** keeping source spans as UTF-8 byte offsets and converting only
+at the LSP boundary is lossless for every valid position that does not split an encoded
+character. It is both safer and cheaper than storing editor columns in the parser or
+semantic IR.
+
+**Fixture U-01** is a valid `.gooo` document containing ASCII, Korean identifiers,
+non-BMP text in a semantic ID, combining marks, `\r\n` line endings, an empty line,
+and a token immediately after each of those cases. For example, the semantic ID may
+contain `😀` while the declaration name is `주문`; the fixture must not rely on emoji
+being a valid identifier. The harness records the byte range of every token and the
+LSP range returned for it.
+
+Measure both directions for every safe boundary:
+
+```text
+byte offset -> (line, UTF-16 character) -> byte offset
+LSP range  -> byte range -> apply edit -> expected UTF-8 text
+```
+
+The expected result is exact equality for safe boundaries, monotonicity within a line,
+and no slicing in the middle of a UTF-8 sequence. A requested position beyond the
+line clamps to the line end as specified. A position inside a surrogate pair is not a
+valid semantic boundary; the server must clamp deterministically and must never panic
+or silently address the following character. The same converter must be used by
+diagnostics, `LocationLink`, completion edits, semantic tokens, and workspace edits.
+
+**Pass criteria:** 100% of fixture round trips match; all returned ranges are valid
+for the exact snapshot that produced them; the UTF-16 implementation agrees with a
+reference converter for ASCII, BMP, non-BMP, and combining-mark cases; no test reports
+an invalid UTF-8 slice. Add a regression case whenever a client reports a position
+encoding mismatch.
+
+### Incremental diagnostics and invalidation
+
+There are two different meanings of “incremental diagnostics” and they should not be
+confused:
+
+1. **Incremental computation:** after a change, reuse snapshots and semantic
+   dependencies so only the affected closure is re-lexed, lowered, type-checked, and
+   diagnosed.
+2. **Incremental protocol result:** in LSP 3.17+, `textDocument/diagnostic` can carry
+   `previousResultId`; the server returns a full report with a new `resultId` or an
+   `unchanged` report with the existing one. Push diagnostics still replace the full
+   URI set; they are not item-level patches.
+
+The [pull diagnostics specification](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/language/pullDiagnostics.md)
+also allows workspace reports to carry per-document versions and previous result IDs.
+That is a better fit for the semantic graph than inventing a custom diagnostic delta.
+The initial implementation can keep push diagnostics, but its internal result cache
+should use the same model so a later pull provider is a projection change rather than
+a second diagnostic engine.
+
+**Hypothesis H-DIAG:** for an edit that changes one declaration, the affected
+diagnostic closure is exactly the declaration's dependency closure; unaffected
+documents reuse their prior diagnostic result ID; a clean full rebuild produces the
+same diagnostics and ordering as incremental computation.
+
+**Fixture D-01** has ten `.gooo` documents: one declaration file, several activities
+that use it, one namespace collision, and unrelated documents. Run these steps:
+
+1. Open all files at version 1 and compute a clean baseline.
+2. Change only the declaration's display name, then only its stable ID, then only an
+   unrelated comment.
+3. Repeat each change with the dependency index warm and cold.
+4. Race an older slow diagnostic job against a newer version and record which
+   publication wins.
+
+Record `snapshotVersion`, `snapshotHash`, `affectedURIs`, `parseCount`,
+`lowerCount`, `diagnosticCount`, `publishedCount`, `staleDroppedCount`, cache hits,
+and the result ID for each URI. A result ID should be derived from the diagnostic
+inputs and verifier/generator version, not from wall-clock time.
+
+**Pass criteria:**
+
+- Incremental diagnostics are byte-for-byte and order-for-order equivalent to a clean
+  full rebuild for the same snapshot.
+- The affected URI set is neither smaller than the semantic dependency closure nor
+  larger than the declared policy allows; unrelated comment edits do not invalidate
+  semantic diagnostics.
+- An unchanged pull returns `kind: "unchanged"` only when the client supplied the
+  matching previous result ID; an unknown or evicted ID returns a full report.
+- An older job never publishes over a newer snapshot. Push mode publishes an empty
+  array when all diagnostics disappear; pull mode returns a full report with zero
+  items.
+- A workspace report never wins over a newer document-pull report for the same URI.
+
+### Workspace edits and semantic rename
+
+**Hypothesis H-EDIT:** a workspace edit derived from one stable semantic ID is
+deterministic, non-overlapping, version-safe, and local. Reapplying the edit to the
+same snapshots yields the same semantic IR after normalization, while stable IDs and
+unrelated generated regions remain unchanged.
+
+**Fixture E-01** contains:
+
+- an open `.gooo` file declaring `billing://entity/order`;
+- an unopened `.gooo` file referring to the same ID;
+- a generated Go file with a marked generated region and a source-map entry;
+- a handwritten Go slot that mentions the display name only as a comment; and
+- a second namespace with a same-spelled but different semantic ID.
+
+Exercise both client capability branches: `WorkspaceEdit.changes` for a client that
+does not support versioned document changes, and `documentChanges` with versions for a
+client that does. Apply edits in a test client in descending range order per document
+only after validating that the server-provided ranges are non-overlapping and within
+the snapshot version. The descending application is a harness detail; the wire edit
+itself must remain a set of valid, non-overlapping `TextEdit`s.
+
+Measure URI count, edit count, ranges, changed bytes, semantic IDs touched, generated
+regions touched, compute latency, and apply latency. Re-run the request after a
+version bump and after a same-spelled symbol is added to another namespace.
+
+**Pass criteria:**
+
+- The expected declaration and identity-resolved references change, and no other
+  semantic declaration changes.
+- The stable `id "..."` literal is never an edit target.
+- An edit with a stale document version is rejected or recomputed; it is never
+  silently applied.
+- Applying the edit and then regenerating Go gives the same normalized IR and the
+  same generated-region boundaries as a clean regeneration.
+- Serialized workspace edits are deterministic across repeated runs and contain no
+  overlapping ranges, duplicate URI operations, or edits outside the source snapshot.
+- The capability branch is truthful: versioned `documentChanges` are not sent to a
+  client that did not advertise support.
+
+### Generated-region navigation
+
+Generated regions are a projection boundary, not an authority boundary. Navigation
+should make the relationship visible without encouraging edits directly in generated
+text. LSP's [`LocationLink`](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/types/locationLink.md)
+provides exactly the needed shape:
+
+```text
+originSelectionRange   generated Go symbol or call
+targetUri              .gooo source URI
+targetRange            complete declaration span
+targetSelectionRange   declaration name/ID to reveal
+```
+
+**Hypothesis H-GEN:** with a source map keyed by stable semantic ID and generated
+region marker, definition and hover can navigate from generated Go to the authoritative
+DSL declaration and from DSL to its generated projection without relying on line
+numbers or display-name coincidence.
+
+**Fixture G-01** has two generated activities, two handwritten slots, one regenerated
+region shifted by inserted lines, and one intentionally stale/missing source-map
+entry. Query definition at the generated declaration, the generated call site, the
+DSL declaration, and the handwritten slot. Then regenerate with an unrelated DSL
+declaration added.
+
+**Pass criteria:**
+
+- Every valid mapped query returns the expected URI and ranges; `targetSelectionRange`
+  is contained by `targetRange` and points at the semantic declaration name.
+- Adding or removing lines in a generated region does not change the target DSL range
+  or stable identity.
+- A stale source map returns no fabricated target and emits a diagnosable stale-map
+  result; it never navigates to a neighboring symbol with the same display name.
+- Regeneration changes only the expected generated region. Handwritten slots and
+  unrelated generated regions remain byte-stable.
+- The reverse projection is explicit: if a DSL declaration has no generated target,
+  definition returns `null` rather than a guessed file location.
+
+### Cancellation and timeout behavior
+
+LSP cancellation is a notification, but the canceled request still needs a response;
+the server must not leave it pending. The protocol distinguishes client cancellation
+(`RequestCancelled`, `-32800`) from server cancellation (`ServerCancelled`, `-32802`)
+and content modified (`ContentModified`, `-32801`). For diagnostic pull, a server
+cancel response can carry `retriggerRequest` so the client knows whether to retry.
+
+The current baseline processes one framed message synchronously. Therefore a
+`$/cancelRequest` queued behind a slow parse cannot be observed until that parse
+returns. This is a measured architectural limitation, not a reason to pretend the
+request was canceled. A future concurrent dispatcher must preserve one writer for
+responses and must correlate cancellation by request ID.
+
+**Hypothesis H-CANCEL:** every cancellable phase reaches a cancellation checkpoint
+within a bounded interval, returns exactly one response, releases temporary state,
+and cannot publish diagnostics/tokens/edits from the canceled snapshot. A server
+timeout behaves like explicit server cancellation, with a feature-appropriate error
+and no leaked child process or goroutine.
+
+**Fixture C-01** uses an injectable blocking parser, a blocking semantic index, and a
+blocking `go list` runner. Each dependency has barriers before work, during work, and
+immediately before publication. Run cancellation at every barrier and run a deadline
+that expires at each barrier. Also cancel after the result has been queued but before
+the single writer emits it.
+
+Record request ID, snapshot version, cancellation source, checkpoint, elapsed time to
+acknowledgment, response code, child-process status, goroutine count, and publication
+count. Use `exec.CommandContext` for Go subprocesses and check `ctx.Err()` before
+expensive phases and immediately before publishing a result.
+
+**Pass criteria:**
+
+- A client-canceled request returns one response with `RequestCancelled` (or a
+  successful partial result where the feature explicitly permits it), never zero or
+  two responses.
+- A server deadline returns `ServerCancelled` with a documented retry policy; a
+  diagnostic pull includes `retriggerRequest` when appropriate.
+- No canceled result is published, no newer result is overwritten, and no child
+  process or goroutine remains after the bounded cleanup window.
+- On the reference runner, a cancellation already observed at a checkpoint is
+  acknowledged within 100 ms p95 and 250 ms p99. This is an initial budget to be
+  measured, not a protocol guarantee for a blocked OS call.
+- The synchronous baseline is marked non-conformant for mid-request cancellation
+  until the dispatcher can read and route cancellation concurrently.
+
+## Conformance fixture contract
+
+The future LSP test harness should be an in-memory client/server conversation over the
+real Content-Length framing. Fixtures must be data, not test-specific control flow, so
+they can be replayed against alternative transports or a guardian implementation.
+
+Each fixture should define these logical files:
+
+```text
+fixture/
+  manifest.json       protocol version, position encoding, scale, feature flags
+  workspace/          .gooo, generated Go, handwritten Go, and source-map inputs
+  steps.json           ordered requests, notifications, delays, edits, cancellations
+  expected.json        responses, notifications, diagnostics, tokens, edits, metrics
+```
+
+`manifest.json` records the toolchain, OS/architecture, `GOMAXPROCS`, and whether the
+run is cold-cache or warm-cache. `steps.json` may use named barriers for cancellation
+and timeout experiments but must not encode implementation-private function names.
+`expected.json` uses canonical ordering for diagnostics, tokens, locations, and edit
+operations. It also records messages that must not appear, which is essential for
+notification and stale-publication conformance.
+
+| Fixture | Primary assertion | Scale variants |
+| --- | --- | --- |
+| U-01 `unicode-boundary` | UTF-8 byte storage and UTF-16 LSP ranges agree | tiny, long line, CRLF |
+| D-01 `incremental-diagnostics` | dependency closure and result IDs are correct | 10 files, 100 files |
+| E-01 `semantic-rename` | versioned workspace edits preserve identity/locality | open-only, open+disk |
+| G-01 `generated-navigation` | source-map `LocationLink` survives regeneration | one region, many regions |
+| C-01 `cancel-timeout` | cancellation/timeout response and cleanup are bounded | parser, index, subprocess |
+| S-01 `interactive-small` | editor requests meet interactive budgets | 1 file, 10 files |
+| S-02 `workspace-medium` | indexing and cross-file features stay bounded | 100 files, 20k lines |
+
+The harness should compare protocol messages after normalizing only nondeterministic
+fields explicitly listed in the manifest (for example a server version). It must not
+normalize URI, range, semantic ID, result ID, diagnostic order, or edit order. A
+fixture passes only when both the semantic result and the protocol trace pass.
+
+## Latency and allocation budgets
+
+These are starting hypotheses for a reference runner, not promises about every editor
+or workspace. The reference run should use a pinned Go toolchain, a fixed OS/arch,
+`GOMAXPROCS=1`, no race instrumentation, and ten or more repetitions. Report warm and
+cold cache separately. A regression is actionable when p95 exceeds the absolute
+budget or is more than 20% slower than the checked-in baseline for the same fixture.
+Do not turn a noisy cross-machine measurement into a merge gate without recording the
+environment and variance.
+
+| Operation | Fixture | Initial p95 hypothesis | Initial allocation hypothesis |
+| --- | --- | ---: | ---: |
+| UTF-16 range conversion | U-01, 100 KiB longest line | ≤ 100 µs/op | ≤ 2 allocs/op |
+| Parse + lower one open document | S-01, 2k source lines | ≤ 20 ms/op | ≤ 2× input bytes/op |
+| Incremental diagnostics, one affected of 100 docs | D-01/S-02 | ≤ 50 ms/op | ≤ 1 MB/op |
+| No-change diagnostic pull | D-01 warm cache | ≤ 10 ms/op | ≤ 32 KB/op |
+| Completion, hover, same-workspace definition | S-02 warm index | ≤ 20 ms/op | ≤ 64 KB/op |
+| Full semantic tokens | S-02, 20k source lines | ≤ 100 ms/op | ≤ 4× encoded token payload/op |
+| Cross-file semantic rename edit | E-01/S-02 | ≤ 100 ms/op | ≤ 1 MB/op |
+| Generated-region navigation lookup | G-01 warm source map | ≤ 5 ms/op | ≤ 16 KB/op |
+| Go discovery/type bridge, warm subprocess data | S-02 | ≤ 500 ms/op | report, do not gate initially |
+| Cancellation after checkpoint | C-01 | ≤ 100 ms p95 / 250 ms p99 ack | zero retained work after cleanup |
+
+Measure benchmarks with Go's `testing.B`, `b.ReportAllocs()`, `-benchmem`,
+`-count=10`, and a fixed `-benchtime` such as `200ms`. Use `testing.AllocsPerRun`
+for focused converters and edit application where a stable allocation count is more
+useful than a broad benchmark. Keep setup (fixture loading, index construction, and
+cache warming) outside the timed operation unless the operation explicitly includes
+it. For investigation rather than gating, capture CPU and heap profiles with
+[`runtime/pprof`](https://pkg.go.dev/runtime/pprof); do not commit profiles or make a
+profile-dependent pass criterion.
+
+Latency evidence should include p50, p95, p99, min/max, `ns/op`, `B/op`,
+`allocs/op`, cache hit rate, affected URI count, and stale/canceled work count. A
+benchmark that passes latency while recomputing the entire workspace is not a pass:
+the semantic closure and cache counters are part of the acceptance result. Run
+`-race` separately because race instrumentation changes latency and allocation
+profiles; it remains a correctness gate, not a performance baseline.
+
+The budgets deliberately separate deterministic in-process features from `go list`
+and type-check subprocesses. If Go tool startup dominates the latter, measure warm
+and cold startup as separate evidence and improve cancellation/timeout behavior before
+attempting to tighten the numeric budget.
+
 ## Source references
 
 - [LSP 3.18 specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/)
@@ -346,7 +682,10 @@ protocol invariant.
 - [Semantic tokens](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/language/semanticTokens.md)
 - [Diagnostics](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/language/publishDiagnostics.md)
 - [Workspace edits](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/types/workspaceEdit.md)
+- [Pull diagnostics and result IDs](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/language/pullDiagnostics.md)
+- [Location links](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/types/locationLink.md)
 - [Completion](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/language/completion.md), [definition](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/language/definition.md), and [hover](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.18/language/hover.md)
 - Go standard library: [`go/parser`](https://pkg.go.dev/go/parser), [`go/ast`](https://pkg.go.dev/go/ast), [`go/token`](https://pkg.go.dev/go/token), [`go/types`](https://pkg.go.dev/go/types), and [`go/importer`](https://pkg.go.dev/go/importer)
 - Go workspace discovery: [`go list`](https://pkg.go.dev/cmd/go#hdr-List_packages)
+- Go benchmark allocation and profiling APIs: [`testing.B.ReportAllocs`](https://pkg.go.dev/testing#B.ReportAllocs), [`testing.AllocsPerRun`](https://pkg.go.dev/testing#AllocsPerRun), [`go test` benchmark flags](https://pkg.go.dev/cmd/go#hdr-Testing_flags), and [`runtime/pprof`](https://pkg.go.dev/runtime/pprof)
 - [`gopls` behavior and workspace model](https://go.dev/gopls/) and [workspace setup](https://go.dev/gopls/workspace)
