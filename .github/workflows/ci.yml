@@ -88,7 +88,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Semantic CLI conformance (transitions from deferred to required)
+      - name: Semantic conformance (staged verifier promotion)
+        env:
+          # Stage 0 is the current trust boundary. Advancing it is a reviewed
+          # governance change documented in .github/conformance-plan.md.
+          GOOO_CONFORMANCE_STAGE: "0"
         run: ./scripts/semantic-conformance.sh
 
   policy:
