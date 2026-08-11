@@ -480,6 +480,169 @@ The first performance review should answer:
 - Does metadata verification dominate warm-hit latency for small projections?
 - Does a GitHub Actions cache hit still save time after exact-key validation?
 
+### Measured local baseline
+
+The following is an observed baseline, not an acceptance decision. It was run
+on 2026-08-12 against `agent/cache` commit `1f225a0`, with Go 1.26.5 on
+`darwin/arm64` Apple M4. The benchmark command was:
+
+```sh
+go test ./internal/cache \
+  -bench 'Benchmark(CanonicalSemanticHash|EvidenceHash|CacheHit|SameKeyStampede)$' \
+  -benchmem -benchtime=200ms -count=3
+```
+
+| Experiment | Observed result | Interpretation |
+| --- | --- | --- |
+| Canonical hash, 10 facts | 8.4–10.1 µs/op; 15,344 B/op; 81 allocs/op | Small closure overhead is measurable but bounded. |
+| Canonical hash, 100 facts | 75.2–82.7 µs/op; 125,680 B/op; 624 allocs/op | Approximately linear growth at this size. |
+| Canonical hash, 1,000 facts | 742–781 µs/op; 1,107,314 B/op; 6,027 allocs/op | Allocation cost is already material. |
+| Canonical hash, 10,000 facts | 7.36–8.06 ms/op; 14,161,788 B/op; 60,031 allocs/op | Current reflection encoder is not yet a large-graph budget winner. |
+| Evidence envelope hash | 1.0–1.17 µs/op; 1,952 B/op; 16 allocs/op | Evidence metadata is cheap relative to semantic closure hashing. |
+| Warm exact cache hit | 40.6–46.1 µs/op; 12,453–12,470 B/op; 103 allocs/op | Includes filesystem metadata/content verification. |
+| Same-key stampede, 16 workers, 1 ms compute | 14.0–14.8 ms/op; exactly 1.000 compute/op | Same-instance lock coalesces the miss, but `Clear` and publication dominate the batch. |
+| Same-key latency, 100 rounds, 16 workers | p50 13.62 ms; p95 19.59 ms; max 26.00 ms; average computes 1.00 | Current local contention baseline; not a cross-process result. |
+| Stale/corrupt recovery | 300/300 test invocations passed in 6.34 s wall time | Data and metadata tampering were rejected and recomputed. This is a correctness observation, not a latency SLO. |
+
+The measurements use a temporary fixture and are not committed as production
+tests. They must be reproduced by a future benchmark package with stable
+machine-readable output before becoming a CI performance gate.
+
+### Semantic versus evidence invalidation result
+
+The four-case mutation fixture separates meaning invalidation from evidence
+invalidation:
+
+| Mutation | Semantic digest | Evidence digest | Required decision |
+| --- | --- | --- | --- |
+| Same canonical closure replay / display-only change | unchanged | unchanged | Cache may hit; existing evidence remains eligible. |
+| Semantic fact added | changed | unchanged until evidence is regenerated | Projection key must miss; old evidence must be `stale`, never silently fresh. |
+| Policy hash changed | unchanged | changed | Semantic projection may remain reusable, but verification evidence must be rechecked. |
+| Evidence observation time changed | unchanged | changed | Projection may hit; evidence record is a new append-only observation. |
+
+This is the intended split: evidence must bind the semantic/output digest and
+its policy context, but an unchanged evidence record must not be rewritten just
+because a cache object was recomputed. The current fixture records the expected
+digest transitions; it does not yet implement a provenance graph or freshness
+verifier, so those rows are contract evidence rather than feature completion.
+
+### Acceptance budgets
+
+Budgets are explicit gates for the future implementation. A measured value that
+does not meet a budget is a performance or design failure to investigate, not a
+reason to weaken correctness or accept stale output.
+
+| Area | Acceptance budget | Current status |
+| --- | --- | --- |
+| Semantic invalidation | 100% of the mutation matrix produces the expected semantic/projection decision; 0 false exact hits. | Fixture transitions pass; projection dependency graph is not implemented yet. |
+| Evidence freshness | 0 stale or policy-mismatched evidence accepted as fresh; every stale result has a machine-readable reason. | Hash transition fixture passes; freshness evaluator is not implemented yet. |
+| Canonical determinism | 100% identical digests for the same vector on each supported OS/architecture; 100% expected digest changes for meaning-bearing mutations. | Native Darwin vector passes; Linux/Windows were compile-only, so runtime parity is unverified. |
+| Canonical hash latency | p95 ≤1 ms for 1,000 facts and p95 ≤10 ms for 10,000 facts on the reference runner, with an allocation budget tracked separately. | Current 1,000/10,000 means are below targets; p95 and allocation reduction are not yet gated. |
+| Warm exact hit | p95 ≤100 µs for a ≤64 KiB local projection on the reference SSD. | Current means are 40.6–46.1 µs; p95 is not yet emitted by the benchmark harness. |
+| Same-key stampede | Exactly 1 compute/op for one process; 16-worker p95 ≤25 ms with a 1 ms compute; no wrong bytes. | 1.000 compute/op and 19.59 ms p95 observed locally; cross-process behavior is unverified. |
+| Stale/corrupt entries | 100% of data, metadata, missing-file, and interrupted-publication faults become miss/recompute or an explicit error; 0 false accepts. | 300/300 repeated candidate tests pass. |
+| Cross-platform publication | No partial visible object; supported-platform runtime tests pass; unsupported filesystem behavior is explicit. | Linux/Windows test binaries compile; they were not executed here. |
+| GitHub Actions exact hit | 10/10 unchanged warm runs report an exact hit and pass manifest verification; 0 partial restores are treated as fresh. | No `.gooo` Actions cache job exists yet. |
+| GitHub Actions value | For projections larger than 5 MiB, warm validated runs should be at least 30% faster than cold recomputation in 8/10 runs; otherwise retain the cache only as a measured optimization. | Not measured. A prior PR run only exercised `setup-go` cache and warned that `go.sum` was absent, so it is not a projection-cache result. |
+| Cache safety | No secret or durable evidence in cache paths; untrusted restores are locally verified before use. | Design rule only; workflow fixture pending. |
+
+### Experiment protocols
+
+#### 1. Semantic/evidence mutation matrix
+
+Use one fixed normalized closure and one evidence envelope. Apply one mutation
+at a time: display name, stable ID, relation endpoint, policy digest, verifier
+identity, observation time, toolchain, and output bytes. Record semantic hash,
+projection key, evidence hash, freshness result, and stale reason. Run the same
+matrix before and after each canonicalizer or verifier change. The hard gate is
+zero false fresh results, not a minimum hash-change percentage.
+
+#### 2. Lock contention and crash safety
+
+Run 1, 2, 4, 8, 16, and 32 workers against one missing key and against disjoint
+keys. Repeat 100 batches per worker count, with compute delays of 0 ms, 1 ms,
+and 100 ms. Record p50/p95/p99 batch latency, lock wait, compute count,
+publication errors, and byte equality. Repeat with separate OS processes to
+expose the fact that a process-local mutex is not a cross-process lock. Kill a
+writer at staging, after data sync, and after metadata sync; reopen the cache
+and require either the old complete object or a clean miss.
+
+The acceptance budget is one compute for same-key calls within one cache
+instance, no partial objects, and no divergent bytes under one key. A
+cross-process lease may reduce duplicate work, but duplicate work is safer than
+unsafe stale-lock reclamation when the filesystem cannot provide a portable
+lease.
+
+#### 3. Stale-cache and evidence fault injection
+
+For each cached object, independently mutate or remove data, metadata, the
+dependency index, policy digest, semantic digest, and predecessor evidence.
+Also leave a temporary directory or lock record behind and restart the reader.
+The expected outcomes are `miss`, `corrupt`, or an explicit freshness failure;
+never a fresh projection or fresh evidence result. Keep the original evidence
+record append-only and emit a new recovery/verification record after rebuild.
+
+#### 4. Cross-platform canonicalization
+
+Publish a versioned vector set containing map order permutations, empty versus
+absent values, Unicode strings without implicit normalization, signed zero,
+float edge cases, URI/ID values, `time.Time`, and nested relation sets. Execute
+the same vectors on Darwin, Linux, and Windows with the same Go and
+canonicalizer versions, then compare digest files byte-for-byte. Compile-only
+cross builds are useful smoke checks but do not satisfy this experiment.
+
+The current candidate already exposes one policy decision: the same instant
+represented as UTC and as a fixed KST location produces different digests. If
+semantic timestamps mean instants, canonicalization must normalize to UTC; if
+location is meaning-bearing, the distinction must be explicit in the IR. This
+must be decided before declaring cross-platform canonicalization complete.
+Go also documents that `os.Rename` is not atomic on every platform, so the
+publication portion of this experiment must report filesystem support
+separately ([`os.Rename`](https://go.dev/pkg/os/#Rename)).
+
+#### 5. GitHub Actions cache hit/miss
+
+The future workflow experiment should be a manually triggered, read-only-safe
+matrix over Linux/macOS/Windows and the supported Go versions. For each cell,
+run at least 10 cold keys, 10 unchanged warm keys, 10 semantic mutations, 10
+policy/toolchain mutations, and 10 partial-restore cases. The primary key must
+include OS, architecture, toolchain, cache schema, projection, semantic hash,
+and dependency root. A restored manifest must contain the expected exact key
+and content digest before the projection is used.
+
+Record `cache-hit`, primary versus prefix match, lookup/download/upload time,
+manifest validation, recomputation time, total job time, cache size, and whether
+the run is trusted or low-trust. GitHub defines `cache-hit` for an exact key;
+prefix/`restore-keys` matches are a different condition and can return the most
+recent matching cache ([dependency caching reference](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching)).
+Therefore a partial match may seed dependencies but must count as a semantic
+miss. The current workflow's `setup-go@v5 cache: true` warning about absent
+`go.sum` is recorded as an ordinary dependency-cache miss, not as evidence
+about a future `.gooo` projection cache.
+
+Workflow concurrency is also measured separately from cache locking. The
+existing `cancel-in-progress: true` can suppress duplicate CI runs, but it
+does not prove object publication safety. GitHub describes concurrency groups
+as scheduler controls that cancel or queue runs, with at most one running job
+per group by default ([workflow concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)).
+
+### Hosting transition contract
+
+The cache/evidence contract must survive the transition from a Go-hosted
+compiler to a future gooo-hosted compiler:
+
+| Phase | Host contract | Required evidence |
+| --- | --- | --- |
+| Go-hosted initial | Go parser, canonicalizer, verifier, and generator are the executable host. | Host language/version, toolchain digest, canonicalizer schema, semantic vectors, and verifier identity. |
+| gooo-hosted future | A `.gooo` compiler can parse/lower/build the same contract and, where applicable, host the next compiler stage. | Bootstrap parent artifact digest, host semantic hash, conformance-suite digest, toolchain/policy digests, and replay result. |
+
+The transition gate is vector parity, not a label: both hosts must produce the
+same canonical semantic hashes, invalidation decisions, freshness decisions,
+and projection keys for the shared fixture set. The future host must also emit
+a provenance edge back to the Go-hosted bootstrap artifact. No gooo-hosted
+capability is claimed by this research document; its status remains planned
+until an independent replay and evidence chain pass.
+
 ## Phased implementation plan
 
 1. **Contract fixtures**: add canonical IR fixtures and the C1–C5 mutation
