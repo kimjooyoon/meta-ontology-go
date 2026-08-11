@@ -160,6 +160,25 @@ func TestOracleNW006RejectsTempArtifactAddRemoveRenameAndMetadata(t *testing.T) 
 	}
 }
 
+func TestOracleNW006RejectsTempRootReplacement(t *testing.T) {
+	request := sampleRequest(StatusFail)
+	request.Expected.FailureCode = "marker-overlap"
+	observer := newStableObserver(t, request)
+	oldRoot := observer.paths.TempRoot + ".old"
+	if err := os.Rename(observer.paths.TempRoot, oldRoot); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(observer.paths.TempRoot, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	observation, err := observer.Finish()
+	if err != nil {
+		t.Fatal(err)
+	}
+	evaluation := EvaluateObserved(request, sampleResponse(StatusFail, false), &observation)
+	assertOracleFailure(t, evaluation, OracleNW006)
+}
+
 func TestOracleFAIL001RejectsMissingFailureProof(t *testing.T) {
 	request := sampleRequest(StatusFail)
 	response := sampleResponse(StatusFail, false)

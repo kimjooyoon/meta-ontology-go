@@ -3,12 +3,10 @@ package adapter
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 )
 
@@ -47,6 +45,7 @@ type FileObservation struct {
 
 // TempArtifactSnapshot is a canonical recursive snapshot rooted at TempRoot.
 type TempArtifactSnapshot struct {
+	Root    LstatIdentity     `json:"root"`
 	Digest  string            `json:"digest"`
 	Entries []FileObservation `json:"entries"`
 }
@@ -209,38 +208,6 @@ func capturePath(path string) (FileObservation, error) {
 	return observation, nil
 }
 
-func captureTemp(root string) (TempArtifactSnapshot, error) {
-	entries := make([]FileObservation, 0)
-	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if path == root {
-			return nil
-		}
-		relative, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
-		}
-		observation, err := capturePath(path)
-		if err != nil {
-			return err
-		}
-		observation.Path = filepath.ToSlash(relative)
-		entries = append(entries, observation)
-		return nil
-	})
-	if err != nil {
-		return TempArtifactSnapshot{}, err
-	}
-	sort.Slice(entries, func(i, j int) bool { return entries[i].Path < entries[j].Path })
-	digest, err := digestEntries(entries)
-	if err != nil {
-		return TempArtifactSnapshot{}, err
-	}
-	return TempArtifactSnapshot{Digest: digest, Entries: entries}, nil
-}
-
 func fileKind(info os.FileInfo) string {
 	switch {
 	case info.Mode().IsRegular():
@@ -289,12 +256,4 @@ func statNumber(value any, fieldName string) string {
 func digestBytes(data []byte) string {
 	digest := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(digest[:])
-}
-
-func digestEntries(entries []FileObservation) (string, error) {
-	data, err := json.Marshal(entries)
-	if err != nil {
-		return "", err
-	}
-	return digestBytes(data), nil
 }

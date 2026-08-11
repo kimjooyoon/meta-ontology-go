@@ -54,7 +54,7 @@ func (o *NoWriteObservation) VerifyNoWrite(request Request) error {
 	if err := comparePrimary(o.Before.Output, o.After.Output, "output"); err != nil {
 		return err
 	}
-	if o.Before.Temp.Digest != o.After.Temp.Digest {
+	if o.Before.Temp.Root != o.After.Temp.Root || o.Before.Temp.Digest != o.After.Temp.Digest {
 		return oracleError(OracleNW006, "temporary artifact snapshot changed")
 	}
 	current, err := captureState(o.Paths)
@@ -141,6 +141,12 @@ func validateFileObservation(observation FileObservation, requireFile bool) erro
 }
 
 func validateTempSnapshot(snapshot TempArtifactSnapshot) error {
+	if snapshot.Root.Exists && snapshot.Root.Mode == "" {
+		return fmt.Errorf("temp root lstat identity is incomplete")
+	}
+	if !snapshot.Root.Exists && snapshot.Root != (LstatIdentity{}) {
+		return fmt.Errorf("missing temp root has contradictory identity")
+	}
 	if !validDigest(snapshot.Digest) {
 		return fmt.Errorf("snapshot digest is incomplete")
 	}
@@ -159,7 +165,7 @@ func validateTempSnapshot(snapshot TempArtifactSnapshot) error {
 			return err
 		}
 	}
-	computed, err := digestEntries(entries)
+	computed, err := digestTempSnapshot(snapshot.Root, entries)
 	if err != nil || computed != snapshot.Digest {
 		return fmt.Errorf("snapshot digest does not match entries")
 	}
