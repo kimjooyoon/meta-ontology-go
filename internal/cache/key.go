@@ -25,19 +25,22 @@ type KeySpec struct {
 	HostStage   HostStage
 	Inputs      any
 	Options     any
+	Freshness   FreshnessSpec
 }
 
 // Key is the content address of one projection computation. The digest is the
 // only part used in a filesystem path; the remaining fields make metadata and
 // invalidation inspectable.
 type Key struct {
-	Digest        Digest
-	Version       string
-	Namespace     string
-	ToolVersion   string
-	HostStage     HostStage
-	InputDigest   Digest
-	OptionsDigest Digest
+	Digest           Digest
+	Version          string
+	Namespace        string
+	ToolVersion      string
+	HostStage        HostStage
+	InputDigest      Digest
+	OptionsDigest    Digest
+	DependencyDigest Digest
+	ProvenanceDigest Digest
 }
 
 // NewKey creates a versioned content-addressed key.
@@ -71,21 +74,29 @@ func NewKey(spec KeySpec) (Key, error) {
 	if err != nil {
 		return Key{}, fmt.Errorf("hash options: %w", err)
 	}
+	freshness, err := NewFreshness(spec.Freshness)
+	if err != nil {
+		return Key{}, err
+	}
 
-	digest := digestForKey(hostStage, version, spec.Namespace, spec.ToolVersion, inputDigest, optionsDigest)
+	digest := digestForKey(hostStage, version, spec.Namespace, spec.ToolVersion, inputDigest,
+		optionsDigest, freshness.DependencyDigest, freshness.ProvenanceDigest)
 
 	return Key{
-		Digest:        digest,
-		Version:       version,
-		Namespace:     spec.Namespace,
-		ToolVersion:   spec.ToolVersion,
-		HostStage:     hostStage,
-		InputDigest:   inputDigest,
-		OptionsDigest: optionsDigest,
+		Digest:           digest,
+		Version:          version,
+		Namespace:        spec.Namespace,
+		ToolVersion:      spec.ToolVersion,
+		HostStage:        hostStage,
+		InputDigest:      inputDigest,
+		OptionsDigest:    optionsDigest,
+		DependencyDigest: freshness.DependencyDigest,
+		ProvenanceDigest: freshness.ProvenanceDigest,
 	}, nil
 }
 
-func digestForKey(hostStage HostStage, version, namespace, toolVersion string, inputDigest, optionsDigest Digest) Digest {
+func digestForKey(hostStage HostStage, version, namespace, toolVersion string, inputDigest, optionsDigest,
+	dependencyDigest, provenanceDigest Digest) Digest {
 	hasher := sha256.New()
 	_, _ = hasher.Write([]byte(keyDomain))
 	writeKeyPart(hasher, hostStage.String())
@@ -94,6 +105,8 @@ func digestForKey(hostStage HostStage, version, namespace, toolVersion string, i
 	writeKeyPart(hasher, toolVersion)
 	writeKeyPart(hasher, inputDigest.String())
 	writeKeyPart(hasher, optionsDigest.String())
+	writeKeyPart(hasher, dependencyDigest.String())
+	writeKeyPart(hasher, provenanceDigest.String())
 	return Digest(fmt.Sprintf("%x", hasher.Sum(nil)))
 }
 
@@ -114,6 +127,11 @@ func (k Key) Valid() bool { return k.Digest.Valid() }
 
 // String returns the stable serialized key digest.
 func (k Key) String() string { return k.Digest.String() }
+
+// Freshness returns the dependency and provenance identity carried by the key.
+func (k Key) Freshness() Freshness {
+	return Freshness{DependencyDigest: k.DependencyDigest, ProvenanceDigest: k.ProvenanceDigest}
+}
 
 func writeKeyPart(hasher hash.Hash, value string) {
 	var length [binary.MaxVarintLen64]byte

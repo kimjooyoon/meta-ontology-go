@@ -68,20 +68,22 @@ func (c *Cache) writeObject(path string, key Key, data []byte, info EntryInfo) e
 
 func makeMetadata(key Key, data []byte, info EntryInfo) Metadata {
 	metadata := Metadata{
-		FormatVersion:   metadataVersion,
-		Key:             key.String(),
-		KeyVersion:      key.Version,
-		Namespace:       key.Namespace,
-		ToolVersion:     key.ToolVersion,
-		HostStage:       key.HostStage,
-		InputDigest:     key.InputDigest,
-		OptionsDigest:   key.OptionsDigest,
-		ArtifactType:    info.ArtifactType,
-		Projection:      info.Projection,
-		Reconstructable: true,
-		Size:            int64(len(data)),
-		ContentDigest:   HashBytes(data),
-		CreatedAt:       time.Now().UTC(),
+		FormatVersion:    metadataVersion,
+		Key:              key.String(),
+		KeyVersion:       key.Version,
+		Namespace:        key.Namespace,
+		ToolVersion:      key.ToolVersion,
+		HostStage:        key.HostStage,
+		InputDigest:      key.InputDigest,
+		OptionsDigest:    key.OptionsDigest,
+		DependencyDigest: key.DependencyDigest,
+		ProvenanceDigest: key.ProvenanceDigest,
+		ArtifactType:     info.ArtifactType,
+		Projection:       info.Projection,
+		Reconstructable:  true,
+		Size:             int64(len(data)),
+		ContentDigest:    HashBytes(data),
+		CreatedAt:        time.Now().UTC(),
 	}
 	metadata.MetadataDigest = digestMetadata(metadata)
 	return metadata

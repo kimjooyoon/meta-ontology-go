@@ -18,6 +18,8 @@ var (
 	ErrCorrupt = errors.New("cache entry corrupt")
 
 	ErrInvalidKey         = errors.New("invalid cache key")
+	ErrInvalidFreshness   = errors.New("invalid cache freshness")
+	ErrStale              = errors.New("cache entry stale")
 	ErrEmptyFilter        = errors.New("cache invalidation filter is empty")
 	ErrNotReconstructable = errors.New("cache entries must be reconstructable projections")
 	ErrEntryTooLarge      = errors.New("cache entry exceeds configured size limit")
@@ -46,21 +48,23 @@ type EntryInfo struct {
 // Metadata is the integrity and provenance envelope for a cached projection.
 // CreatedAt is observational metadata and is not part of the content address.
 type Metadata struct {
-	FormatVersion   string    `json:"format_version"`
-	Key             string    `json:"key"`
-	KeyVersion      string    `json:"key_version"`
-	Namespace       string    `json:"namespace"`
-	ToolVersion     string    `json:"tool_version"`
-	HostStage       HostStage `json:"host_stage"`
-	InputDigest     Digest    `json:"input_digest"`
-	OptionsDigest   Digest    `json:"options_digest"`
-	ArtifactType    string    `json:"artifact_type,omitempty"`
-	Projection      string    `json:"projection,omitempty"`
-	Reconstructable bool      `json:"reconstructable"`
-	Size            int64     `json:"size"`
-	ContentDigest   Digest    `json:"content_digest"`
-	MetadataDigest  Digest    `json:"metadata_digest"`
-	CreatedAt       time.Time `json:"created_at"`
+	FormatVersion    string    `json:"format_version"`
+	Key              string    `json:"key"`
+	KeyVersion       string    `json:"key_version"`
+	Namespace        string    `json:"namespace"`
+	ToolVersion      string    `json:"tool_version"`
+	HostStage        HostStage `json:"host_stage"`
+	InputDigest      Digest    `json:"input_digest"`
+	OptionsDigest    Digest    `json:"options_digest"`
+	DependencyDigest Digest    `json:"dependency_digest"`
+	ProvenanceDigest Digest    `json:"provenance_digest"`
+	ArtifactType     string    `json:"artifact_type,omitempty"`
+	Projection       string    `json:"projection,omitempty"`
+	Reconstructable  bool      `json:"reconstructable"`
+	Size             int64     `json:"size"`
+	ContentDigest    Digest    `json:"content_digest"`
+	MetadataDigest   Digest    `json:"metadata_digest"`
+	CreatedAt        time.Time `json:"created_at"`
 }
 
 // InvalidationFilter selects cached projections to remove. Empty fields are

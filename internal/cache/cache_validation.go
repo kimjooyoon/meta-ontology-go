@@ -24,7 +24,8 @@ func (c *Cache) validatePathKey(key Key) error {
 
 func validateFullKey(key Key) error {
 	if !key.Valid() || key.Version == "" || key.Namespace == "" || !key.HostStage.Valid() ||
-		!key.InputDigest.Valid() || !key.OptionsDigest.Valid() {
+		!key.InputDigest.Valid() || !key.OptionsDigest.Valid() || !key.DependencyDigest.Valid() ||
+		!key.ProvenanceDigest.Valid() {
 		return fmt.Errorf("%w: key must be created by NewKey", ErrInvalidKey)
 	}
 	if err := validateKeyComponent("key version", key.Version, true); err != nil {
@@ -40,7 +41,7 @@ func validateFullKey(key Key) error {
 		return fmt.Errorf("%w: %v", ErrInvalidKey, err)
 	}
 	expected := digestForKey(key.HostStage, key.Version, key.Namespace, key.ToolVersion,
-		key.InputDigest, key.OptionsDigest)
+		key.InputDigest, key.OptionsDigest, key.DependencyDigest, key.ProvenanceDigest)
 	if key.Digest != expected {
 		return fmt.Errorf("%w: key digest does not match key fields", ErrInvalidKey)
 	}
@@ -79,6 +80,12 @@ func validateMetadataForKey(metadata Metadata, key Key) error {
 	if key.OptionsDigest.Valid() && metadata.OptionsDigest != key.OptionsDigest {
 		return fmt.Errorf("options digest mismatch")
 	}
+	if key.DependencyDigest.Valid() && metadata.DependencyDigest != key.DependencyDigest {
+		return fmt.Errorf("dependency digest mismatch")
+	}
+	if key.ProvenanceDigest.Valid() && metadata.ProvenanceDigest != key.ProvenanceDigest {
+		return fmt.Errorf("provenance digest mismatch")
+	}
 	return nil
 }
 
@@ -86,7 +93,9 @@ func metadataSane(metadata Metadata) bool {
 	if metadata.FormatVersion != metadataVersion || metadata.Key == "" || !isDigestName(metadata.Key) {
 		return false
 	}
-	if !metadata.InputDigest.Valid() || !metadata.OptionsDigest.Valid() || !metadata.ContentDigest.Valid() {
+	if !metadata.InputDigest.Valid() || !metadata.OptionsDigest.Valid() ||
+		!metadata.DependencyDigest.Valid() || !metadata.ProvenanceDigest.Valid() ||
+		!metadata.ContentDigest.Valid() {
 		return false
 	}
 	if !metadata.Reconstructable || metadata.Size < 0 || metadata.CreatedAt.IsZero() {
@@ -100,7 +109,8 @@ func metadataSane(metadata Metadata) bool {
 		return false
 	}
 	if metadata.Key != digestForKey(metadata.HostStage, metadata.KeyVersion, metadata.Namespace,
-		metadata.ToolVersion, metadata.InputDigest, metadata.OptionsDigest).String() {
+		metadata.ToolVersion, metadata.InputDigest, metadata.OptionsDigest,
+		metadata.DependencyDigest, metadata.ProvenanceDigest).String() {
 		return false
 	}
 	return metadata.MetadataDigest.Valid() && digestMetadata(metadata) == metadata.MetadataDigest
