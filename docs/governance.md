@@ -223,6 +223,11 @@ future protected workflow should promote in separate, auditable steps:
 Until those steps are implemented in protected CI, candidate verifier results are
 append-only research evidence and cannot change the required gate.
 
+The field-level comparison envelope and non-success fixture states are defined
+in the [bootstrap evidence bridge](bootstrap-evidence.md). A fixture with
+`deferred`, `not-run`, or `promotion_eligible: false` is evidence of an
+unimplemented or non-promotable stage, never evidence of success.
+
 ## 8. Review line caps
 
 These are soft review policy, not language or compiler limits, and are not
