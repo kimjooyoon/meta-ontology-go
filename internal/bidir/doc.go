@@ -19,4 +19,8 @@
 // Reconcile is transactional. A caller can therefore run it in a CI gate and
 // reject the complete update when one fact violates identity, locality, or
 // provenance policy.
+//
+// HostingContract records which host phase is actually evidenced. The
+// gooo-hosted phase is represented as a planned target until its checks are
+// verified; naming a future phase never makes it complete.
 package bidir
