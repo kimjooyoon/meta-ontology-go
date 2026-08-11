@@ -99,6 +99,7 @@ func TestBranchScopeAllowlist(t *testing.T) {
 		{"agent/self-hosting-bootstrap", "docs/research/self-hosting.md"},
 		{"agent/self-hosting-bootstrap", "internal/bootstrap/bootstrap.go"},
 		{"agent/ci-workflow", ".github/workflows/ci.yml"},
+		{"agent/ci-evidence-contract", "internal/verify/evidence.go"},
 	}
 	for _, test := range cases {
 		if err := CheckPathScopeForBranch([]string{test.path}, test.branch); err != nil {
