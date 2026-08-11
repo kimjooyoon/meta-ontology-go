@@ -64,8 +64,9 @@ revisions deterministically.
 The pull-request trigger explicitly includes `ready_for_review`, ensuring a
 draft-to-review transition receives the same six-job authoritative matrix.
 
-PR #77 records the current-base evidence used for this audit: `integration`
-resolved to `ee547c7`, and the PR policy step passed that base SHA through
-`GOOO_SCOPE_FROM` while using the head SHA as `GOOO_SCOPE_TO`. The existing
-`agent/bidir-followup` alias was checked against that same base; its only
-allowed prefix remains `internal/bidir`.
+This current-base follow-up records the integration evidence used for the new
+audit PR: `integration` is `60cf2ce`, and the PR policy step passes the base SHA
+through `GOOO_SCOPE_FROM` while using the head SHA as `GOOO_SCOPE_TO`. The
+existing `agent/bidir-followup` alias was checked against that same base; its
+only allowed prefix remains `internal/bidir`. The stale PR #77 is not a base
+for this branch and must not be merged as the audit result.
