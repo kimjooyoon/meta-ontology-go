@@ -30,6 +30,7 @@ var branchScopeAllowlist = map[string][]string{
 	"agent/cli":                               {"cmd/gooo"},
 	"agent/cli-check":                         {"cmd/gooo"},
 	"agent/cli-check-current":                 {"cmd/gooo"},
+	"agent/cli-check-current2":                {"cmd/gooo"},
 	"agent/cli-bootstrap-contract":            {"cmd/gooo"},
 	"agent/codegen-followup":                  {"docs/research/codegen-reproducibility.md"},
 	"agent/codegen-fixture-adapter":           {"docs/research/codegen-fixture-adapter.md"},
