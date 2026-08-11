@@ -1,0 +1,31 @@
+{
+  "version": "semanticdelta/v1",
+  "allowed": {
+    "ids": [
+      "billing://activity/pay-order",
+      "billing://entity/order"
+    ],
+    "predicates": [
+      "prov:used"
+    ]
+  },
+  "delta": {
+    "addedNodes": [
+      {
+        "id": "billing://activity/pay-order",
+        "kind": "Activity"
+      },
+      {
+        "id": "billing://entity/order",
+        "kind": "Entity"
+      }
+    ],
+    "addedFacts": [
+      {
+        "subject": "billing://activity/pay-order",
+        "predicate": "prov:used",
+        "object": "billing://entity/order"
+      }
+    ]
+  }
+}
