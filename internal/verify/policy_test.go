@@ -89,6 +89,7 @@ func TestBranchScopeAllowlist(t *testing.T) {
 		{"agent/prototype-detection", "internal/detection/prototype.go"},
 		{"agent/fuzz-conformance", "internal/conformance/fuzz/fuzz_test.go"},
 		{"agent/conformance-fuzz", "internal/conformance/fuzz/fuzz_test.go"},
+		{"agent/conformance-fuzz", "internal/syntax/parser.go"},
 		{"agent/protected-regions", "internal/detection/protectedregions/markers.go"},
 		{"agent/formatter", "internal/formatter/format.go"},
 		{"agent/prototype-formatter", "internal/formatter/prototype.go"},
@@ -155,5 +156,129 @@ func TestGoCapsRejectOversizedFileAndFunction(t *testing.T) {
 	}
 	if err := CheckGoCaps(root, []string{path}, 300, 75); err == nil {
 		t.Fatal("oversized function was accepted")
+	}
+}
+
+func TestFollowUpBranchScopeAliases(t *testing.T) {
+	cases := []struct {
+		branch string
+		path   string
+	}{
+		{"agent/analyzer-contract", "internal/analyzer/hosting.go"},
+		{"agent/bidir-followup", "internal/bidir/hosting_contract.go"},
+		{"agent/bidirectional-experiment-contract", "docs/research/bidirectional.md"},
+		{"agent/bidirectional-property-matrix", "docs/research/bidirectional.md"},
+		{"agent/cache-experiment-followup", "docs/research/cache.md"},
+		{"agent/ci-ownership-audit", ".github/agent-scope-table.md"},
+		{"agent/ci-ownership-audit-current", "internal/verify/scope.go"},
+		{"agent/ci-ownership-audit-current2", "internal/verify/scope.go"},
+		{"agent/ci-scope-triage", "internal/verify/scope.go"},
+		{"agent/cli-bootstrap-contract", "cmd/gooo/evidence_adapter.go"},
+		{"agent/cli-check", "cmd/gooo/main.go"},
+		{"agent/codegen-followup", "docs/research/codegen-reproducibility.md"},
+		{"agent/codegen-hypotheses", "docs/research/codegen-experiments.md"},
+		{"agent/codegen-fixture-adapter", "docs/research/codegen-fixture-adapter.md"},
+		{"agent/generator-fixtures-current", "internal/generator/fixture_contract_test.go"},
+		{"agent/generator-fixtures-current2", "internal/generator/fixture_contract_test.go"},
+		{"agent/freshness-research", "internal/research/freshness/contract.go"},
+		{"agent/grammar-followup", "docs/research/grammar.md"},
+		{"agent/integration-governance", "docs/governance/integration-promotion.md"},
+		{"agent/lsp-contracts", "docs/research/lsp.md"},
+		{"agent/lsp-experiments", "docs/research/lsp.md"},
+		{"agent/testing-research-contracts", "docs/research/testing.md"},
+		{"agent/testing-research-followup", "docs/research/testing.md"},
+		{"agent/zerolang-experiments", "docs/research/zerolang.md"},
+	}
+	for _, test := range cases {
+		if err := CheckPathScopeForBranch([]string{test.path}, test.branch); err != nil {
+			t.Errorf("%s should allow %s: %v", test.branch, test.path, err)
+		}
+	}
+}
+
+func TestFollowUpScopeBoundariesAndUnknowns(t *testing.T) {
+	cases := []struct {
+		branch string
+		path   string
+	}{
+		{"agent/codegen-hypotheses", "docs/research/codegen.md"},
+		{"agent/codegen-fixture-adapter", "docs/research/codegen-experiments.md"},
+		{"agent/bidir-followup", "internal/semantic/graph.go"},
+		{"agent/freshness-research", "internal/research/other/contract.go"},
+		{"agent/integration-governance", "docs/research/integration-promotion.md"},
+		{"agent/lsp-contracts", "docs/research/grammar.md"},
+		{"agent/testing-research-contracts", "docs/research/security.md"},
+		{"agent/ci-ownership-audit", "internal/semantic/graph.go"},
+		{"agent/ci-ownership-audit-current", "internal/semantic/graph.go"},
+		{"agent/ci-ownership-audit-current2", "internal/semantic/graph.go"},
+		{"agent/cli-check", "internal/semantic/graph.go"},
+		{"agent/generator-fixtures-current", "internal/semantic/graph.go"},
+		{"agent/generator-fixtures-current2", "internal/semantic/graph.go"},
+	}
+	for _, test := range cases {
+		if err := CheckPathScopeForBranch([]string{test.path}, test.branch); err == nil {
+			t.Errorf("%s incorrectly allowed %s", test.branch, test.path)
+		}
+	}
+	for _, branch := range []string{"agent/unknown-followup", "agent/freshness-unknown"} {
+		if err := CheckPathScopeForBranch([]string{"docs/research/unknown.md"}, branch); err == nil {
+			t.Errorf("unknown branch %s was not rejected", branch)
+		}
+	}
+}
+
+func TestBidirFollowUpAliasIsExact(t *testing.T) {
+	paths, ok := BranchScope("agent/bidir-followup")
+	if !ok || len(paths) != 1 || paths[0] != "internal/bidir" {
+		t.Fatalf("unexpected bidir-followup ownership: %#v", paths)
+	}
+	if err := CheckPathScopeForBranch([]string{"internal/bidir/hosting_contract.go"}, "agent/bidir-followup"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAllowlistKeysAndSelfHostingPathsAreUnique(t *testing.T) {
+	branches := ConfiguredBranches()
+	if len(branches) != len(sortedUnique(branches)) {
+		t.Fatalf("duplicate branch keys detected: %#v", branches)
+	}
+	for _, branch := range branches {
+		if strings.ContainsAny(branch, "*?") {
+			t.Fatalf("wildcard branch key weakens fail-closed policy: %q", branch)
+		}
+	}
+	paths, ok := BranchScope("agent/self-hosting-bootstrap")
+	if !ok || len(paths) != len(sortedUnique(paths)) {
+		t.Fatalf("duplicate self-hosting alias paths detected: %#v", paths)
+	}
+}
+
+func TestScopeTableMatchesAllowlist(t *testing.T) {
+	table, err := os.ReadFile(filepath.Join("..", "..", ".github", "agent-scope-table.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	registered := make(map[string]bool)
+	for _, line := range strings.Split(string(table), "\n") {
+		cells := strings.Split(line, "|")
+		if len(cells) < 3 {
+			continue
+		}
+		branch := strings.Trim(strings.TrimSpace(cells[1]), "`")
+		if !strings.HasPrefix(branch, "agent/") {
+			continue
+		}
+		if registered[branch] {
+			t.Fatalf("duplicate branch row in scope table: %q", branch)
+		}
+		registered[branch] = true
+		if _, ok := BranchScope(branch); !ok {
+			t.Fatalf("scope table contains unconfigured branch: %q", branch)
+		}
+	}
+	for _, branch := range ConfiguredBranches() {
+		if !registered[branch] {
+			t.Errorf("scope table is missing configured branch: %q", branch)
+		}
 	}
 }

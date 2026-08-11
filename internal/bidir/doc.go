@@ -1,11 +1,11 @@
-// Package bidir contains the dependency-free core of the .gooo bidirectional
+// Package bidir contains the parser-neutral core of the .gooo bidirectional
 // transformation.
 //
-// The package intentionally does not import syntax, semantic, Go AST, or
-// generator packages. Those packages can adapt their own representations to
-// Document, Model, and FactSet at the boundary. Business intent is represented
-// by Document, stable semantic identity is represented by ID, and a Model is
-// the normalized semantic IR.
+// Document, Model, and FactSet are stable boundaries for DSL, syntax, analyzer,
+// and generator adapters. The syntax and semantic IR adapters stay at the
+// boundary; the lens and reconciliation core operates only on neutral types.
+// Business intent is represented by Document, stable semantic identity is
+// represented by ID, and a Model is the normalized semantic IR.
 //
 // There are three fact layers:
 //
@@ -23,4 +23,9 @@
 // HostingContract records which host phase is actually evidenced. The
 // gooo-hosted phase is represented as a planned target until its checks are
 // verified; naming a future phase never makes it complete.
+//
+// ReconciliationFixture is the adapter contract for parser-neutral BX
+// experiments. MeasureBXFixture emits stable golden evidence, while the
+// package benchmarks exercise the same contract without importing a parser or
+// generator implementation.
 package bidir
