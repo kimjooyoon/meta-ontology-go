@@ -20,6 +20,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/cache-research` | `docs/research/cache.md` |
 | `agent/ci-evidence-contract` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-ownership-audit` | `.github/**`, `scripts/**`, `internal/verify/**` |
+| `agent/ci-ownership-audit-current` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-scope-triage` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-workflow` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-workflow-stage` | `.github/**`, `scripts/**`, `internal/verify/**` |
