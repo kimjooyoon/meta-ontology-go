@@ -103,6 +103,11 @@ The research note owns experiment history, alternatives, and stage-specific
 measurements. This architecture owns the boundary rules that any implementation
 must satisfy before those measurements can support promotion.
 
+The comparable evidence shape and paired fixtures are defined in the
+[bootstrap evidence bridge](bootstrap-evidence.md). It is the contract between
+the Go-hosted seed and a future gooo-hosted candidate; it does not promote the
+candidate or replace the research note.
+
 ## Current CI baseline
 
 The integration workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
