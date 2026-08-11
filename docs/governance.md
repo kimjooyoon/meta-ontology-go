@@ -1,0 +1,259 @@
+# Project governance contract
+
+This document is the compact contract for changing the semantic compiler. It
+defines source-of-truth (SSOT) boundaries, provenance policy, bidirectional (BX)
+laws, agent roles, review caps, and evidence requirements. It is intentionally
+more conservative than the future design: an internal type or comment is not a
+supported feature until a user-facing entry point and runnable evidence exist.
+
+## 1. SSOT boundaries
+
+| Concern | Single source of truth | What other views may do |
+| --- | --- | --- |
+| Business intent | `.gooo` declarations and explicit assertions | Lower, project, query, and document it |
+| Semantic identity | Stable URI-like IDs | Display names and aliases may refer to it |
+| Normalized meaning | Semantic IR for the current compilation | Project it and compare semantic fingerprints |
+| Irreducible logic | Handwritten Go slots | Call it from generated structure; preserve it |
+| Structural Go | Generated regions | Compile and inspect it; never edit it directly |
+| Observations | Parser/analyzer evidence with source spans | Classify as syntactic, candidate, or deterministic |
+| Build history | Append-only provenance and verification records | Explain, review, and gate the build |
+| Policy | Ontology vocabulary, verifier semantics, and CI workflow | Enforce it; do not weaken it locally |
+
+Three boundaries prevent accidental authority inversion:
+
+1. A display rename cannot change an ID or merge two namespaces.
+2. A generated file cannot become a new intent source. Structural changes go to
+   the DSL or generator owner and are regenerated.
+3. A Go observation cannot become semantic truth without an explicit, accepted,
+   source-backed delta. Ambiguous observations remain candidates.
+
+The semantic IR is an interchange representation, not a second business SSOT.
+Its normalized form makes projections comparable; it does not authorize a tool to
+invent domain meaning. Provenance is evidence, not a write-back channel.
+
+## 2. Bootstrap history and trust boundary
+
+The long-form bootstrap history and experiments live in the
+[self-hosting research note](research/self-hosting.md), owned by the
+self-hosting-bootstrap workstream. The note is research input, not a policy
+override. This contract defines the authority transition that the research must
+respect as `meta-ontology-go` incrementally re-expresses its own compiler and
+verifier in `.gooo`.
+
+The proposed stages are:
+
+1. **Seed:** a handwritten Go kernel parses, lowers, projects, and verifies a
+   small `.gooo` fixture.
+2. **Semantic mirror:** `.gooo` declares the compiler ontology, contracts, and
+   verifier vocabulary while the Go kernel remains the execution authority.
+3. **Structural self-host:** `.gooo` drives generated structure for compiler
+   components; only irreducible logic remains in handwritten slots.
+4. **Shadow verifier:** a `.gooo`-described verifier runs beside the trusted seed
+   verifier and produces candidate evidence.
+5. **Promotion:** CI accepts the self-hosted verifier only after independent
+   comparison and reproducible bootstrap gates pass; the previous verifier stays
+   available for rollback.
+
+The trust boundary is explicit:
+
+```text
+trusted seed verifier ──compares──> candidate .gooo verifier
+        │                                  │
+        ├── rollback authority             └── evidence only until promotion
+        └── protected CI policy
+```
+
+Self-hosting is therefore not an SSOT change by itself. `.gooo` owns declared
+intent and IDs at every stage; IR is the comparison form; generated Go is derived;
+and verifier output is evidence until CI promotes the candidate. A candidate must
+not decide its own promotion, weaken its own checks, or delete the seed evidence.
+
+## 3. Provenance policy
+
+Every semantic delta must answer four questions:
+
+- what stable subject/predicate/object triple changed;
+- which source view produced the observation;
+- which source span or equivalent evidence locates it;
+- why the fact is deterministic rather than merely plausible.
+
+Strict reconciliation rejects a semantic addition, removal, or change without a
+source span. A syntactic fact may be retained for diagnostics. A candidate fact
+may be retained for review. Neither changes the semantic model. A deterministic
+fact with the same triple shadows a candidate; it does not erase the historical
+observation from the evidence record.
+
+Analyzer snapshots are often partial. Therefore absence is not deletion. A
+removal must be represented explicitly in the fact delta, and reconciliation must
+be transactional: if one fact conflicts, the model remains unchanged and the
+conflict is reported with its kind and source evidence.
+
+## 4. BX laws
+
+Let `s` be a parser-neutral DSL document, `m` a semantic model, `Get(s)` the
+lowering function, and `Put(s, m)` the representable write-back. `≈` means
+semantic equivalence after normalization; it does not mean byte-for-byte text
+identity.
+
+### Get-Put
+
+```text
+Put(s, Get(s)) ≈ s
+```
+
+Reading a source view and writing it back must not create a new semantic fact,
+change a stable identity, or drop an unrelated declaration. Formatting and
+ordering may be normalized.
+
+### Put-Get
+
+```text
+Get(Put(s, m')) ≈ m'
+```
+
+For an accepted and representable semantic update `m'`, the next source read must
+show that update. Unrepresentable or unproven updates are rejected rather than
+silently approximated.
+
+### Semantic round-trip
+
+```text
+s ──Get──> m ──project/lift──> m'
+m' ≈ m
+```
+
+Generating a structural Go projection and lifting its facts must not create a new
+semantic relation. Generated facts are already represented; only an accepted
+source-backed delta may change the model.
+
+### Locality
+
+An implementation-only edit, or a change to one semantic region, must not rewrite
+unrelated semantic nodes, generated regions, marker-outside handwritten text, or
+handwritten slot bodies. Stable IDs define the comparison boundary.
+
+### Normalization and provenance
+
+Normalization is deterministic and idempotent: repeated normalization has the
+same semantic fingerprint. Every accepted semantic delta carries provenance, and
+failed reconciliation is transactional. These are guard laws for the four
+round-trip laws above.
+
+## 5. Generated boundaries
+
+Generated Go uses stable markers such as:
+
+```go
+//gooo:generated:start id="billing://activity/pay-order" kind="activity"
+//gooo:slot:start id="billing://activity/pay-order/implementation"
+//gooo:slot:end id="billing://activity/pay-order/implementation"
+//gooo:generated:end id="billing://activity/pay-order"
+```
+
+The generator owns text between generated markers. The implementation slot is
+the only intentional handwritten region inside that boundary. Regeneration must
+preserve slot bodies, reject malformed or duplicate markers, and keep unrelated
+text stable. Generated output is not a place to fix a source-model problem.
+
+## 6. Agent roles and separation of duties
+
+- **Builder:** changes the assigned authority view, keeps the diff within scope,
+  and supplies tests or runnable examples.
+- **Guardian:** verifies semantic scope, stable IDs, provenance, BX laws, marker
+  integrity, and evidence freshness; they do not implement the feature.
+- **Approver:** makes the final acceptance decision after the Guardian's review
+  and required CI checks.
+- **Docs/example Builder:** owns only `docs/**`, `examples/**`, and the root
+  governance Markdown files for documentation work. Core package source belongs
+  to its implementing Builder.
+
+No single agent should implement a change, weaken its verifier, and approve it.
+When a worktree contains another Builder's uncommitted source, stage only the
+explicit paths owned by the current task.
+
+## 7. Branch, PR, and CI workflow
+
+Use `agent/<area>` branches, one semantic concern per PR. A documentation change
+uses `agent/docs`. Inspect status before editing, keep unrelated work unstaged,
+push with tracking, and open a draft PR unless the owner requests ready-for-review.
+The PR body should state:
+
+- the authority view changed and the SSOT boundary it respects;
+- affected IDs or example contracts;
+- generated/provenance implications;
+- checks run and any known environmental blocker;
+- unsupported features deliberately not claimed.
+
+The integration GitHub Actions workflow in
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) currently runs:
+
+```text
+format: gofmt -l .
+vet:    go vet ./...
+test:   go test ./...
+race:   go test -race ./...
+semantic: ./scripts/semantic-conformance.sh
+policy: go run ./scripts/verify
+```
+
+The semantic script intentionally has a deferred path that exits successfully
+when the baseline has no `gooo check` command; that status is not evidence that a
+semantic CLI or self-hosted verifier is supported. When the command is present,
+the script runs the CLI check, semantic/generated tests, and generated-freshness
+checks. The policy job enforces changed-path ownership, Go size caps, and the
+integration pull-request target. Static analysis, cache conformance, LSP
+behavior, and durable provenance publishing are not current CI gates.
+
+The workflow is a seed/candidate safety baseline. It is not yet a self-hosted
+verifier promotion gate.
+
+### Verifier promotion plan
+
+The existing jobs are the baseline gate, not a self-hosting promotion gate. A
+future protected workflow should promote in separate, auditable steps:
+
+- **shadow:** run the candidate verifier without allowing it to determine status;
+- **compare:** compare seed and candidate decisions, semantic fingerprints,
+  generated output, locality, and provenance manifests on pinned fixtures;
+- **bootstrap:** rebuild the compiler from the pinned source and verify that the
+  next result is equivalent to the prior result;
+- **promote:** require an independent Guardian/Approver decision, record the
+  source/tool/verifier digests, and retain the previous verifier for rollback.
+
+Until those steps are implemented in protected CI, candidate verifier results are
+append-only research evidence and cannot change the required gate.
+
+The field-level comparison envelope and non-success fixture states are defined
+in the [bootstrap evidence bridge](bootstrap-evidence.md). A fixture with
+`deferred`, `not-run`, or `promotion_eligible: false` is evidence of an
+unimplemented or non-promotable stage, never evidence of success.
+
+## 8. Review line caps
+
+These are soft review policy, not language or compiler limits, and are not
+machine-enforced today:
+
+- ordinary source and Markdown lines: 120 columns;
+- one handwritten implementation slot: 40 non-blank lines;
+- one normal PR: 400 changed lines, excluding generated output;
+- generated output: no manual line cap; its cap is marker integrity and
+  deterministic regeneration.
+
+URLs, tables, generated markers, and mechanically formatted output may exceed the
+soft column cap. If a change exceeds a review cap, explain the exception and split
+the evidence by authority boundary where possible.
+
+## 9. Evidence checklist
+
+A change is ready for review when the author can point to:
+
+- a minimal diff scoped to the owning paths;
+- the relevant source example or regression test;
+- stable IDs and any semantic delta;
+- source spans/provenance for accepted observations;
+- generated-region and locality evidence when projection changes;
+- local commands and their results;
+- a clear statement of what remains unsupported.
+
+The example commands in [conformance.md](conformance.md) are the smallest
+repeatable evidence for the checked-in DSL fixtures.
