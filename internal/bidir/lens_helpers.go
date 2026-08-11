@@ -89,9 +89,36 @@ func declarationFromNode(node Node, model Model) Declaration {
 			}
 		}
 	}
-	sort.Slice(declaration.Inputs, func(i, j int) bool { return declaration.Inputs[i].ID < declaration.Inputs[j].ID })
+	sort.SliceStable(declaration.Inputs, func(i, j int) bool {
+		return referenceSourceOrderLess(declaration.Inputs[i], declaration.Inputs[j])
+	})
 	sort.Slice(declaration.Outputs, func(i, j int) bool { return declaration.Outputs[i].ID < declaration.Outputs[j].ID })
 	return declaration
+}
+
+func referenceSourceOrderLess(left, right Reference) bool {
+	leftValid, rightValid := left.Span.Valid(), right.Span.Valid()
+	if leftValid != rightValid {
+		return leftValid
+	}
+	if leftValid {
+		if left.Span.File != right.Span.File {
+			return left.Span.File < right.Span.File
+		}
+		if left.Span.Start != right.Span.Start {
+			return left.Span.Start < right.Span.Start
+		}
+		if left.Span.StartLine != right.Span.StartLine {
+			return left.Span.StartLine < right.Span.StartLine
+		}
+		if left.Span.StartColumn != right.Span.StartColumn {
+			return left.Span.StartColumn < right.Span.StartColumn
+		}
+		if left.Span.End != right.Span.End {
+			return left.Span.End < right.Span.End
+		}
+	}
+	return left.ID < right.ID
 }
 
 func (m Model) node(id ID) (Node, bool) {

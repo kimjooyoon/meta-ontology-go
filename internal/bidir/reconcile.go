@@ -180,15 +180,7 @@ func ensureEndpoint(model *Model, id ID, hintedKind Kind, fact Fact, subject boo
 		}
 		return nil
 	}
-	kind := hintedKind
-	if kind == "" {
-		kind = inferredEndpointKind(fact.Predicate, subject)
-	}
-	if kind == "" {
-		return &Conflict{Kind: ConflictUnknownEndpoint, Fact: fact, Message: fmt.Sprintf("%s %q is not registered in the base model", endpointLabel(subject), id)}
-	}
-	model.Nodes = append(model.Nodes, Node{ID: id, Kind: kind, Name: defaultName(id), Namespace: model.Namespace, Span: fact.Source})
-	return nil
+	return &Conflict{Kind: ConflictUnknownEndpoint, Fact: fact, Message: fmt.Sprintf("%s %q is not registered in the base model", endpointLabel(subject), id)}
 }
 
 func endpointLabel(subject bool) string {
@@ -196,24 +188,4 @@ func endpointLabel(subject bool) string {
 		return "subject"
 	}
 	return "object"
-}
-
-func inferredEndpointKind(predicate Predicate, subject bool) Kind {
-	switch predicate {
-	case PredicateUsed:
-		if subject {
-			return ActivityKind
-		}
-		return EntityKind
-	case PredicateWasGeneratedBy:
-		if subject {
-			return EntityKind
-		}
-		return ActivityKind
-	case PredicateWasDerivedFrom:
-		return EntityKind
-	case PredicateInvokes:
-		return ActivityKind
-	}
-	return ""
 }
