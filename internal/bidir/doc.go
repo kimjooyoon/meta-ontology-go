@@ -31,7 +31,8 @@
 //
 // Source-order preservation is currently defined for source-backed activity
 // input ports. Generic gooo:invokes lifting, Go-side port inference, and
-// three-way merge reconciliation remain explicitly deferred.
+// three-way merge reconciliation remain explicitly deferred. CLI delta
+// atomicity belongs to the CLI ownership boundary and is also deferred here.
 //
 // Deterministic facts must reference registered model endpoints. Partial
 // observations never imply relation removal, and explicit removals remain

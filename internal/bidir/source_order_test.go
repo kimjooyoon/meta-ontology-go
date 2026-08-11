@@ -22,6 +22,10 @@ func TestPutPreservesDSLInputPortSourceOrderWhenIDsDisagree(t *testing.T) {
 	if got := inputIDs(written); !reflect.DeepEqual(got, want) {
 		t.Fatalf("Put reordered source ports by lexical ID: got %v want %v", got, want)
 	}
+	wantSpans := []SourceSpan{{File: "ports.gooo", Start: 10, End: 15}, {File: "ports.gooo", Start: 20, End: 25}}
+	if got := inputSpans(written); !reflect.DeepEqual(got, wantSpans) {
+		t.Fatalf("Put dropped input evidence spans: got %#v want %#v", got, wantSpans)
+	}
 }
 
 func sourceOrderedInputDocument() Document {
@@ -51,6 +55,20 @@ func inputIDs(document Document) []ID {
 			ids[index] = input.ID
 		}
 		return ids
+	}
+	return nil
+}
+
+func inputSpans(document Document) []SourceSpan {
+	for _, declaration := range document.Declarations {
+		if declaration.ID != "billing://activity/process" {
+			continue
+		}
+		spans := make([]SourceSpan, len(declaration.Inputs))
+		for index, input := range declaration.Inputs {
+			spans[index] = input.Span
+		}
+		return spans
 	}
 	return nil
 }
