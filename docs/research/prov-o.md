@@ -769,6 +769,119 @@ mutants but accept forged trusted-Agent claims without attestation, the ontology
 works while the trust boundary is incomplete. That is a failed spoof-resistance gate,
 not evidence that the two lanes are semantically equivalent.
 
+## 13. Reusable implementation contracts
+
+The experiment is useful only if its fixtures can be consumed by the future compiler
+pieces without reinterpreting the evidence. The following contracts are intentionally
+small and language-neutral. They are proposed interfaces, not implemented APIs.
+
+### 13.1 Layer input/output contract
+
+| Layer | Required input | Required output | Non-negotiable invariant |
+| --- | --- | --- | --- |
+| AST adapter | Parsed declarations, explicit IDs, relation syntax, and source spans | Lossless-ish AST plus diagnostics and source references | A display rename or span shift cannot change an explicit stable ID. |
+| AST → IR lowering | AST document and namespace bindings | Canonical IR nodes, facts, qualified relations, and lowering evidence | Only declared or deterministic facts enter the authoritative set; ambiguous references are candidates. |
+| IR normalizer | IR nodes/facts with statuses and bundle context | Sorted, deduplicated canonical IR and diagnostics | Relation direction, node kind, qualified counterpart, and identity scope are validated before sorting. |
+| BX / semantic delta | IR, registered Go symbol facts, and source evidence | Delta with added/removed/changed facts plus locality | `candidate` observations cannot be promoted without an explicit assertion or policy. |
+| Go codegen | Canonical IR and projection options | Go source, generated-region map, semantic source map, and generation receipt | Identical input/policy/toolchain yields byte-identical output; handwritten regions remain local. |
+| LSP | URI, document version, AST/IR snapshot, and query position | Diagnostics, hover, completion, and relation navigation with stable IDs | LSP output is a projection; it cannot mutate authoritative facts or invent an Agent. |
+| Cache | Projection kind, canonical input digest, policy/toolchain IDs, and dependency manifest | Artifact, cache key, output digest, and freshness metadata | A label-equivalent but semantically different input is a cache miss. |
+| Provenance store | Append-only evidence record with input/output digests and Bundle ID | Ordered records, chain diagnostics, and Bundle digest | Existing records are never rewritten to make a stale or forged chain pass. |
+| CI gate | Semantic delta, allowed scope, freshness result, evidence status, and policy ID | `PASS`, `FAIL`, or `DEFERRED` with stable reason code | `DEFERRED` is never converted to `PASS`, and candidate facts cannot authorize merge. |
+
+The canonical record envelope should be serializable without depending on a specific
+store:
+
+```text
+EvidenceRecord {
+  recordID, bundleID, status,
+  agentID, activityID,
+  inputIDs[], outputIDs[], relationIDs[],
+  inputDigests[], outputDigests[],
+  toolchainID, policyID, sourceRefs[],
+  attestationRef, createdAt
+}
+```
+
+`createdAt` is useful for diagnosis but is not a freshness proof. Freshness derives from
+the complete content-addressed dependency tuple. `attestationRef` may be empty for a
+structural experiment; in that case a trust-sensitive assertion must be `DEFERRED` or
+`UNTRUSTED`, never a verified pass.
+
+### 13.2 Minimum executable fixture set
+
+The first implementation can be validated with six fixtures, each available to both
+lanes. A fixture runner must accept a canonical input, apply one named mutation, and
+emit a normalized verdict plus reason code.
+
+| ID | Clean input / mutation | Expected verdict | Primary measurement |
+| --- | --- | --- | --- |
+| `min-clean` | Valid source, IR, generated output, and signed/unsigned evidence according to lane capability | `PASS` for implemented lanes | Clean acceptance and normalized graph equivalence |
+| `min-direction` | Reverse `used(test, source)` or `wasGeneratedBy(report, test)` | `FAIL: relation-direction` | Direction detection |
+| `min-identity` | Rename a label and shift source spans, retaining stable IDs | `PASS`; unchanged IDs | Identity continuity and locality |
+| `min-stale` | Change source digest while replaying the old cache/evidence tuple | `FAIL: stale-input` | Freshness detection |
+| `min-spoof` | Use a trusted Agent ID with a missing or wrong attestation | `FAIL: untrusted-provenance` or `DEFERRED: no-attestation-backend` | Spoof rejection without false trust |
+| `min-candidate` | Add an unresolved Go semantic call without DSL assertion | `FAIL: candidate-authority` | Candidate containment |
+
+For the not-yet-implemented `.gooo`-hosted lane, `min-clean` and all mutations are
+`DEFERRED: lane-not-implemented`. A fixture runner MUST preserve this reason instead of
+returning a successful placeholder. Once the lane exists, the same fixture IDs and
+expected reason classes are reused; only lane-local input/output adapters differ.
+
+### 13.3 Verdict protocol
+
+Every fixture result has this shape:
+
+```text
+FixtureResult {
+  fixtureID, lane, implementationRevision,
+  verdict: PASS | FAIL | DEFERRED,
+  reasonCode, observedFacts[], expectedFacts[],
+  inputDigest, outputDigest, bundleDigest,
+  diagnostics[], evidenceRefs[]
+}
+```
+
+Use the following decision table:
+
+| Condition | Verdict | Merge/evidence meaning |
+| --- | --- | --- |
+| Clean fixture is accepted, all required facts are deterministic, and digests close | `PASS` | Evidence may support the lane's declared claim. |
+| Direction, identity, freshness, scope, or candidate-authority invariant is violated | `FAIL` | The claim is invalid; do not repair by rewriting evidence. |
+| Required lane, attestation backend, or dependency package is not implemented | `DEFERRED` | No success claim; create the next adapter/contract task. |
+| A PROV graph is well-typed but Agent/output binding is absent | `DEFERRED` or `FAIL` | Structural validity is not authenticated provenance. |
+| Fixture result differs across identical repetitions | `FAIL: nondeterministic-verdict` | Reproducibility contract is broken. |
+
+`DEFERRED` is a first-class negative result. CI may report a non-blocking deferred
+research job while the production gate requires `PASS` for any evidence path it uses.
+The gate must never treat an absent fixture runner as a passing empty result.
+
+### 13.4 Follow-up implementation order
+
+The contracts can be implemented independently and then connected at narrow boundaries:
+
+1. AST adapter and IR normalizer: implement `min-direction`, `min-identity`, and
+   canonical graph diagnostics without a Go generator.
+2. BX/semantic delta: implement `min-candidate` and locality against a small registered
+   symbol fixture; keep unresolved calls candidate.
+3. Codegen: emit generated-region and semantic source maps, then bind generation
+   receipts to the IR and output digest.
+4. LSP: expose stable-ID hover/navigation and the same diagnostics; do not add a second
+   normalization algorithm.
+5. Cache: use the canonical IR/policy/toolchain tuple as the key and implement
+   `min-stale` before optimizing hit rates.
+6. Provenance store: append `EvidenceRecord`, compute Bundle digests, and make replay
+   diagnostics deterministic.
+7. CI adapter: consume `FixtureResult`, semantic scope, and freshness evidence; enforce
+   `PASS`/`FAIL`/`DEFERRED` without changing upstream facts.
+8. Self-hosting adapter: add `.gooo`-hosted parse/lower/generate/verify Activities only
+   after the Go-hosted contract passes the clean and negative fixtures.
+
+The toolchain fixture is pinned to Go 1.26.5. A different `go version` is recorded as a
+toolchain-drift input; the lane must either fail freshness or explicitly defer the run.
+No implementation step may mark a future self-hosting Activity as observed merely because
+the contract has been written.
+
 ## References
 
 - [W3C PROV-O: The PROV Ontology](https://www.w3.org/TR/prov-o/)
