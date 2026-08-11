@@ -185,7 +185,10 @@ The minimum GitHub configuration is:
 The CI manager verifies the settings through the GitHub API after every change.
 Until `protected: true`, required checks, and review rules are observable,
 passing Actions runs are advisory evidence and no operator may merge on the
-assumption that branch protection exists.
+assumption that branch protection exists. This is a deferred proposal, not a
+request to change settings in this governance PR: first keep the policy and
+canonical check names stable, then propose the settings as a separately
+reviewed administrative change.
 
 ## 8. Hotfix, rollback, and recovery
 
@@ -213,30 +216,28 @@ certify its own promotion.
 
 ## 9. Current evidence and quantified risks
 
-Snapshot observed during this policy review (GitHub timestamps 2026-08-11 UTC;
-local review date 2026-08-12):
+Snapshot observed after CI audit #85 (GitHub timestamps 2026-08-11 UTC; local
+review date 2026-08-12):
 
-- `integration` was `6c6208ebf1d2f8181efdee1c126e3daf280d5267`; `main` was
-  `c557daf1fd6748b2e61afca10fb632792683061f`. They were divergent: main was
+- `integration` is `17d6b7a2dc4a96cf85c024763bd923942d9b72b6`; `main` is
+  `c557daf1fd6748b2e61afca10fb632792683061f`. They remain divergent: main is
   not an ancestor of integration.
 - GitHub reported both branches unprotected, zero repository rulesets, and
-  automatic merge disabled. The six CI names above exist in
-  [.github/workflows/ci.yml](../../.github/workflows/ci.yml), but are not
-  configured as required checks by the repository settings.
-- There were 37 open draft PRs targeting `integration`, no ready PRs in that
-  snapshot, and no promotion PR targeting `main`. This is a queue, not a
-  release candidate.
-- The same PR/check surface produced duplicate check names for push and
-  pull-request events. Recent integration history also showed a cancelled run
-  for `7abcbc8` after `6c6208e` arrived; the concurrency cancellation is a
-  reason to gate by SHA and the PR-event source, not by the latest green-looking
-  name. For PR #63, the push run passed all six jobs while the PR run failed
-  only `CI policy`; the push-only pass was not promotion evidence.
-- The latest observed `integration` push run for `6c6208e` succeeded at
-  [Actions run 31536951443](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/31536951443).
-  The latest observed `main` push run for `c557daf1` was failing at
-  [Actions run 31532418884](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/31532418884),
-  so main is not evidence of a green release baseline yet.
+  automatic merge disabled. The six canonical CI names exist in
+  [.github/workflows/ci.yml](../../.github/workflows/ci.yml), but are not yet
+  configured as required checks by repository settings.
+- There were 65 open PRs targeting `integration`: 64 drafts and one ready PR.
+  There was no promotion PR targeting `main` in this snapshot. This is a
+  queue, not a release candidate.
+- Audit #85 now labels PR-event runs as authoritative, labels agent pushes
+  cap-only, and retains all six full jobs for `integration`/`main` pushes and
+  PR events. The latest `integration` push run for `17d6b7a` succeeded on all
+  six jobs at [Actions run 31540055891](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/31540055891).
+- PR #63 remains an open draft with base `6c6208e` and head `0a494e6`; it is
+  stale and must not be force-pushed or reused as the current candidate.
+- The current `agent/integration-governance` alias is present in the ownership
+  map, but a fresh branch name needs its own exact alias. A missing alias must
+  fail closed rather than be solved with a wildcard.
 
 Reproduce the snapshot before acting; never treat these counts as permanent:
 
@@ -269,24 +270,25 @@ gh api repos/kimjooyoon/meta-ontology-go/branches/main/protection
 - [ ] After merge, the main push run succeeds; the merge SHA is recorded as the
       release or rollback reference.
 
-## 11. Required follow-up enforcement PR
+## 11. Remaining enforcement and administrative follow-up
 
-This document intentionally does not claim that the current repository enforces
-the policy. A separate, minimal CI/settings change is required:
+Audit #85 already implemented the event-source metadata, agent push cap-only
+behavior, and the exact ownership alias for the original governance branch.
+This fresh follow-up intentionally does not modify CI policy or branch
+protection. Remaining work is:
 
-1. Add an exact `agent/integration-governance` ownership alias for this document
-   and tests, without broadening the allowlist.
+1. Add an exact ownership alias for this fresh branch name, or select an
+   already-registered branch name. Do not broaden the allowlist and do not
+   force-push PR #63.
 2. Extend the verifier to allow only the exact promotion pair
    `(head=integration, base=main)` in addition to the existing agent-to-
    integration rule, with regression tests. All other main PRs remain rejected.
-3. Optimize duplicate CI without reducing the gate: `agent/**` push may become
-   cap-only/advisory, while `integration`/`main` push and PR-event runs retain
-   all six full jobs. Mark the PR-event checks authoritative and reject
-   push-only evidence for promotion. If a merge queue is adopted, add
-   merge-group CI first.
-4. Configure and API-verify the branch protections listed in section 7. This
-   is an administrative change, not a reason to weaken workflow assertions.
+3. Observe the canonical six names across fresh PR-event and
+   `integration`/`main` push runs for a stable review window. Only then propose
+   and API-verify branch protection in a separate administrative change.
+4. If a merge queue is adopted, add merge-group CI and synthetic-SHA evidence
+   before enabling it.
 
-Until those items land, the existing verifier correctly rejects a promotion
-PR and rejects this new branch name as unknown. The promotion operator must
-report that block rather than merge around it.
+Until the exact fresh-branch alias and promotion-pair verifier exception land,
+the promotion operator must report the block rather than merge around it. Main
+direct pushes and early promotion remain prohibited.
