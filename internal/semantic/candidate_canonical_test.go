@@ -125,6 +125,9 @@ func TestRejectedFactAndNodeOperationsDoNotMutateGraph(t *testing.T) {
 		{"name collision", func(g *Graph) error {
 			return g.AddNode(Node{ID: MustIdentity("candidate-hash://entity/other"), Kind: Entity, Namespace: ns, Name: "Source"})
 		}, ErrNameCollision},
+		{"alias collision", func(g *Graph) error {
+			return g.AddNode(Node{ID: MustIdentity("candidate-hash://entity/alias"), Kind: Entity, Namespace: ns, Name: "Other", Aliases: []string{"Source"}})
+		}, ErrNameCollision},
 	}
 	for _, test := range cases {
 		graph := NewGraph()
@@ -216,8 +219,8 @@ func TestCandidateEvidenceRemainsCandidateAfterGraphPromotion(t *testing.T) {
 	if len(ir.Evidence()) != 1 || ir.Evidence()[0].Status != FactCandidate {
 		t.Fatal("candidate evidence was erased or silently reclassified")
 	}
-	if err := ir.Validate(); !errors.Is(err, ErrGraphInvalid) {
-		t.Fatalf("promoted graph accepted stale candidate evidence: %v", err)
+	if err := ir.Validate(); err != nil {
+		t.Fatalf("retained candidate evidence invalidated promoted graph: %v", err)
 	}
 }
 
