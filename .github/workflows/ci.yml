@@ -2,44 +2,111 @@ name: CI
 
 on:
   push:
+    branches:
+      - integration
+      - main
+      - 'agent/**'
   pull_request:
+    branches:
+      - integration
+      - main
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  go:
-    name: Go ${{ matrix.check }}
+  format:
+    name: gofmt
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        check: [test, vet]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
-      - run: gofmt -l .
-        if: matrix.check == 'test'
-      - run: go test ./...
-        if: matrix.check == 'test'
+      - name: Require formatted Go
+        run: test -z "$(gofmt -l .)"
+
+  vet:
+    name: go vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
       - run: go vet ./...
-        if: matrix.check == 'vet'
+
+  test:
+    name: go test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go test ./...
+
+  race:
+    name: go test -race
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go test -race ./...
 
   semantic:
     name: Semantic conformance
     runs-on: ubuntu-latest
-    needs: go
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
-      - run: go run ./cmd/gooo check examples/billing/main.gooo
+      - name: Semantic CLI conformance (transitions from deferred to required)
+        run: ./scripts/semantic-conformance.sh
+
+  policy:
+    name: CI policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Check changed-file scope, Go size caps, and PR target
+        env:
+          GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          GOOO_SCOPE_TO: ${{ github.sha }}
+          GOOO_PR_HEAD: ${{ github.head_ref }}
+          GOOO_PR_BASE: ${{ github.base_ref }}
+        run: go run ./scripts/verify
