@@ -22,6 +22,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/ci-ownership-audit` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-ownership-audit-current` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-ownership-audit-current2` | `.github/**`, `scripts/**`, `internal/verify/**` |
+| `agent/ci-governance-followup` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-scope-triage` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-workflow` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-workflow-stage` | `.github/**`, `scripts/**`, `internal/verify/**` |
@@ -50,6 +51,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/grammar-research` | `docs/research/grammar.md` |
 | `agent/grammar-review` | `docs/research/grammar.md` |
 | `agent/integration-governance` | `docs/governance/**` |
+| `agent/integration-governance-followup` | `docs/governance/integration-promotion.md` |
 | `agent/line-cap-detector` | `internal/detection/linecaps/**` |
 | `agent/linecaps` | `internal/detection/linecaps/**` |
 | `agent/lsp` | `internal/lsp/**` |
