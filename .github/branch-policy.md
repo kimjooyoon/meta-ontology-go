@@ -28,6 +28,16 @@ The CI/verification change itself is intentionally scoped to `.github/**`,
 `scripts/**`, and `internal/verify/**`. A change outside those paths needs its owning
 agent and its own review boundary.
 
-The `agent/go-version` maintenance branch is the sole exception: it may change
-`go.mod` only when the diff contains `go` or `toolchain` directives. Dependency,
-module, `go.sum`, and other source changes remain outside that exception.
+The ownership map for `agent/*` branches is explicit and lives in
+`internal/verify/scope.go`. Unknown agent branches fail closed. The map assigns
+each feature branch to its package, maps research branches to their individual
+`docs/research/<slug>.md` file, and reserves shared CI paths for
+`agent/ci-workflow`. The `agent/go-version` maintenance branch is the sole
+toolchain exception: it may change `go.mod` only when the diff contains `go` or
+`toolchain` directives. Dependency, module, `go.sum`, and other source changes
+remain outside that exception.
+
+Pushes run the Go caps without using the push event's `before` SHA, because a
+rebased-before revision may not exist in the checkout. Pull-request events retain
+the complete base-to-head changed-path and branch-ownership check; the verifier
+also reports unavailable revisions deterministically.

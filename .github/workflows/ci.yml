@@ -104,10 +104,23 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Check changed-file scope, Go size caps, and PR target
+        if: github.event_name == 'pull_request'
         env:
           GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           GOOO_SCOPE_TO: ${{ github.sha }}
           GOOO_SCOPE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           GOOO_PR_HEAD: ${{ github.head_ref }}
           GOOO_PR_BASE: ${{ github.base_ref }}
+        run: go run ./scripts/verify
+      - name: Check Go caps on branch push
+        if: github.event_name == 'push'
+        env:
+          # A rebase can make github.event.before unavailable to checkout. Push
+          # validation therefore keeps the local size caps while PR events run
+          # the complete changed-path scope and ownership check.
+          GOOO_SCOPE_FROM: ""
+          GOOO_SCOPE_TO: ""
+          GOOO_SCOPE_BRANCH: ${{ github.ref_name }}
+          GOOO_PR_HEAD: ""
+          GOOO_PR_BASE: ""
         run: go run ./scripts/verify
