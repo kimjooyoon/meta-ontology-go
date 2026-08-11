@@ -63,6 +63,7 @@ func TestBranchScopeAllowlist(t *testing.T) {
 		{"agent/docs", "docs/spec.md"},
 		{"agent/docs", "examples/conformance/main.gooo"},
 		{"agent/zerolang-research", "docs/research/zerolang.md"},
+		{"agent/zerolang-experiments", "docs/research/zerolang.md"},
 		{"agent/grammar-research", "docs/research/grammar.md"},
 		{"agent/grammar-review", "docs/research/grammar.md"},
 		{"agent/lsp-research", "docs/research/lsp.md"},
@@ -132,6 +133,9 @@ func TestBranchScopeBoundaries(t *testing.T) {
 		{"agent/semanticdelta", "internal/provenance/store.go"},
 		{"agent/self-hosting-bootstrap", "docs/research/other.md"},
 		{"agent/self-hosting-bootstrap", "internal/semantic/graph.go"},
+		{"agent/zerolang-experiments", "docs/research/lsp.md"},
+		{"agent/lsp-research", "docs/research/grammar.md"},
+		{"agent/formatter", "internal/query/engine.go"},
 	}
 	for _, boundary := range boundaries {
 		if err := CheckPathScopeForBranch([]string{boundary.path}, boundary.branch); err == nil {
@@ -142,6 +146,22 @@ func TestBranchScopeBoundaries(t *testing.T) {
 		if err := CheckPathScopeForBranch([]string{"internal/syntax/parser.go"}, branch); err == nil {
 			t.Errorf("unknown agent branch %s was not rejected", branch)
 		}
+	}
+}
+
+func TestSelfHostingScopeHasOneCanonicalEntry(t *testing.T) {
+	paths, ok := BranchScope("agent/self-hosting-bootstrap")
+	if !ok || len(paths) != 2 || len(sortedUnique(paths)) != 2 {
+		t.Fatalf("self-hosting scope is missing or duplicated: %#v", paths)
+	}
+	count := 0
+	for _, branch := range ConfiguredBranches() {
+		if branch == "agent/self-hosting-bootstrap" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("self-hosting branch configured %d times", count)
 	}
 }
 

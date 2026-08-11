@@ -15,6 +15,7 @@ var branchScopeAllowlist = map[string][]string{
 	"agent/bidirectional-research":        {"docs/research/bidirectional.md"},
 	"agent/cache":                         {"internal/cache"},
 	"agent/cache-research":                {"docs/research/cache.md"},
+	"agent/ci-scope-triage":               {".github", "scripts", "internal/verify"},
 	"agent/ci-workflow":                   {".github", "scripts", "internal/verify"},
 	"agent/ci-workflow-stage":             {".github", "scripts", "internal/verify"},
 	"agent/cli":                           {"cmd/gooo"},
@@ -59,6 +60,7 @@ var branchScopeAllowlist = map[string][]string{
 	"agent/syntax":                        {"internal/syntax"},
 	"agent/self-hosting-bootstrap":        {"docs/research/self-hosting.md", "internal/bootstrap"},
 	"agent/testing-research":              {"docs/research/testing.md"},
+	"agent/zerolang-experiments":          {"docs/research/zerolang.md"},
 	"agent/zerolang-research":             {"docs/research/zerolang.md"},
 }
 
