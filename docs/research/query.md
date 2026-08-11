@@ -767,6 +767,190 @@ work after their boundary is reached, candidate filtering does not alter the
 deterministic digest, and the Go-hosted/future gooo-hosted hosts agree on logical
 cost even if their physical timings differ.
 
+## 19. Falsifiable hypotheses and minimal fixture
+
+The following hypotheses are deliberately falsifiable:
+
+| ID | Hypothesis | Observation that would falsify it |
+| --- | --- | --- |
+| H1 | `edgeScans` is bounded | extra scan/work after exhaustion |
+| H2 | Ordering is input-independent | insertion permutations differ in digest |
+| H3 | Candidate facts do not affect default results | candidate-only edge changes output |
+| H4 | Finite cycles terminate | unbounded work, hang, or repeated expansion |
+| H5 | Exact zoom round-trips; lossy zoom cannot claim it | focus loss or false round-trip success |
+| H6 | Equivalent hosts have equal logical cost | counters or budget errors differ |
+
+The smallest fixture that exercises H1-H5 is:
+
+```text
+fixture query-min/v1
+
+node min://activity/root Activity
+node min://activity/producer Activity
+node min://entity/left Entity
+node min://entity/right Entity
+node min://entity/base Entity
+node min://agent/verifier Agent
+
+fact min://activity/root used min://entity/left
+fact min://activity/root used min://entity/right
+fact min://entity/left wasDerivedFrom min://entity/base
+fact min://entity/right wasDerivedFrom min://entity/base
+fact min://entity/left wasDerivedFrom min://entity/right
+fact min://entity/right wasDerivedFrom min://entity/left
+fact min://activity/producer used min://entity/base
+fact min://entity/base wasGeneratedBy min://activity/producer
+fact min://activity/root wasAssociatedWith min://agent/verifier
+candidate min://entity/right wasDerivedFrom billing://entity/order
+    reason "unreviewed analyzer shortcut"
+
+view min://context/billing contains min://activity/root exact
+view min://activity/root implements go://billing/root exact
+view min://activity/root suggests go://billing/Root lossy
+```
+
+The fixture runner must use a fixed canonical cost convention: an expansion is
+charged only when outgoing edges are inspected; an edge scan is charged before
+matching that edge; a direct walk result is one canonical edge row; and a cycle
+boundary is a diagnostic row, not a recursive expansion. The baseline query is:
+
+```text
+query min_walk {
+    focus min://activity/root
+    walk used direction out depth 1
+    include deterministic
+    budget expansions 1 edges 2 rules 0 results 2
+}
+```
+
+Expected baseline measurements are `expansions=1` (root), `edgeScans=2`,
+`results=2`, `cycleBoundaries=0`, `Complete=true`, and one stable result digest.
+The cycle, diamond, and candidate cases use separate query plans below. A different
+cost convention must version the fixture rather than silently changing these
+numbers.
+
+The negative cases use the same fixture:
+
+| Case | Input change | Expected observation |
+| --- | --- | --- |
+| under-budget | `MaxEdgeScans=1` | `ErrBudgetExceeded(edge-scans)`, `Complete=false`, no second scan |
+| candidate default | add candidate edge only | deterministic digest and rows unchanged |
+| candidate opt-in | `include candidate` | candidate row is marked; deterministic digest remains unchanged |
+| cycle report | left derivation cycle | bounded boundary; no depth-three repeat |
+| promotion without authority | promote candidate with only a rule proof | rejected, graph hash unchanged |
+| exact zoom | `contains` then declared inverse | original stable ID recovered |
+| lossy zoom | follow `suggests` then zoom out | `lossy=true`; round-trip assertion is deferred or fails, never passes |
+
+The fixture is minimal enough to run in an AST/IR unit test, a CLI conformance
+test, an LSP request test, and a cache replay test without a graph database.
+
+## 20. Measurement and gate criteria
+
+Every run emits these measurements, even when the query fails:
+
+```text
+fixture, query, host, Go version
+snapshotHash, ruleHash, adapterHash, planHash, budget
+resultDigest, complete, errorKind
+expansions, edgeScans, ruleFirings, results, proofs, cycleBoundaries
+candidateRows, candidateDependentRows, cacheHit
+```
+
+The status vocabulary is intentionally strict:
+
+| Status | Meaning | Allowed evidence |
+| --- | --- | --- |
+| `pass` | Rows, counters, order, and safety match | complete digest and counters |
+| `fail` | An implemented contract is violated | failure kind, first mismatch, and input hashes |
+| `deferred` | Host, adapter, or runner is missing | capability gap; no success digest |
+
+`deferred` is not a weaker `pass`. In particular, a missing gooo-hosted evaluator,
+query CLI, or runtime adapter must produce `deferred`, not an empty successful
+result. A CI job may accept a deferred experiment only when its policy explicitly
+labels that stage as deferred; it must not use the status as proof of semantic
+correctness.
+
+The minimum pass gate for `query-min/v1` is:
+
+1. H1-H5 pass with the exact measurements above and 100 insertion-order
+   permutations.
+2. The input graph semantic hash is unchanged after every read, inverse, zoom,
+   budget failure, and rejected promotion.
+3. The candidate default and opt-in runs have distinct candidate counters but the
+   same deterministic result digest.
+4. The under-budget run reports the named exhausted dimension and is not complete.
+5. Exact zoom recovers identity; lossy zoom is explicitly marked.
+
+H6 is `deferred` until a second host exists. Once a gooo-hosted evaluator exists,
+the same fixture becomes a parity gate and any mismatch is `fail` rather than a
+new deferred result.
+
+## 21. Reusable cross-layer input/output contract
+
+The query proposal should be consumable by existing and future compiler layers
+through versioned, canonical records rather than package-private assumptions.
+
+| Consumer | Canonical input | Required output |
+| --- | --- | --- |
+| AST/parser | query text, rule text, source URI | normalized AST, source spans, diagnostics, canonical query text |
+| Semantic IR | typed AST, snapshot IDs, fact statuses | normalized `FactKey` set, candidate set, type errors, IR hash |
+| BX/reconcile | plan, delta, expected IR hash | decision, locality, provenance, new IR hash |
+| codegen/source map | plan ID, stable semantic IDs | region ID, source-map edge, locality |
+| LSP | URI/position, focus, budget, view | matches, spans, `Complete`, cost, error |
+| cache | IR/rule/query/adapter hashes, budget, host ID | result digest, canonical rows, cost report, cache metadata |
+| provenance | activity, snapshot/rule/adapter IDs, digest | append-only PROV evidence and proofs |
+| CI/gate | fixture, contract version, host, evidence | status and scope-safe diagnostics |
+
+The shared evidence envelope is:
+
+```json
+{
+  "schema": "gooo.query.evidence/v1",
+  "fixture": "query-min/v1",
+  "query": "min_walk",
+  "host": "go-hosted",
+  "goVersion": "go1.26.5",
+  "snapshotHash": "sha256:...",
+  "ruleHash": "sha256:...",
+  "adapterHash": "sha256:...",
+  "planHash": "sha256:...",
+  "resultDigest": "sha256:...",
+  "status": "pass|fail|deferred",
+  "complete": true,
+  "errorKind": "",
+  "cost": {"expansions": 1, "edgeScans": 2, "results": 2},
+  "candidateRows": 0,
+  "candidateDependentRows": 0
+}
+```
+
+AST and LSP may add source spans; cache may add storage metadata; provenance may
+add activity/evidence IDs. None may remove the stable IDs, hashes, status, order,
+or cost fields. Codegen must not treat a query result as new business intent, and
+CI must reject malformed or stale evidence instead of repairing it.
+
+## 22. Follow-up implementation contracts
+
+The first implementation can remain Go-hosted and standard-library-only if it
+honors these contracts:
+
+1. `Query(snapshot, plan)` is read-only and returns canonical rows plus a complete
+   cost report or a typed budget error.
+2. `Walk` uses explicit bounds and cycle policy; it never relies on map iteration
+   or wall-clock time for semantic behavior.
+3. `Promote` is transactional, source-backed, hash-checked, and append-only in
+   evidence; a rule cannot call it implicitly.
+4. `Zoom` consumes adapter descriptors with declared inverse/lossy behavior and
+   returns every step's stable identity and evidence source.
+5. `Cache` keys include every semantic input and never turns a stale or deferred
+   result into a pass.
+6. `CI` compares the evidence envelope and scope rather than trusting printed
+   prose; unimplemented hosts remain deferred.
+
+The gooo-hosted stage can later lower these same records and contracts from `.gooo`.
+Its first proof obligation is host equivalence on `query-min/v1`, not a larger
+feature surface. Until that evidence exists, the future stage remains deferred.
+
 ## References
 
 - [W3C PROV-O](https://www.w3.org/TR/prov-o/) — Entity, Activity, Agent, core PROV
