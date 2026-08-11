@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -71,6 +72,20 @@ type CorruptionError struct {
 	Kind   string
 	Detail string
 }
+
+// ErrDuplicateID is the stable identity-conflict sentinel for Append.
+var ErrDuplicateID = errors.New("duplicate evidence id")
+
+// DuplicateError identifies an append rejected by the store's unique-ID rule.
+type DuplicateError struct {
+	ID string
+}
+
+func (e *DuplicateError) Error() string {
+	return fmt.Sprintf("evidence ID %q already exists", e.ID)
+}
+
+func (e *DuplicateError) Unwrap() error { return ErrDuplicateID }
 
 func (e *CorruptionError) Error() string {
 	return fmt.Sprintf("provenance corruption at %s:%d (byte %d, %s): %s", e.Path, e.Line, e.Offset, e.Kind, e.Detail)

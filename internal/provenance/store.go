@@ -58,7 +58,7 @@ func (s *Store) Append(records ...Evidence) error {
 			return fmt.Errorf("evidence %d: %w", index, err)
 		}
 		if _, exists := known[normalized.ID]; exists {
-			return fmt.Errorf("evidence ID %q already exists", normalized.ID)
+			return &DuplicateError{ID: normalized.ID}
 		}
 		known[normalized.ID] = struct{}{}
 		batch = append(batch, normalized)
