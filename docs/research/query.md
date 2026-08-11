@@ -87,6 +87,8 @@ type Query struct {
 	Resolution  Resolution
 	Include     IncludeSet // deterministic, derived, candidate
 	Derive      bool
+	Traversal   TraversalSpec
+	Budget      CostBudget
 	MaxDepth    int
 	MaxFacts    int
 }
@@ -107,11 +109,17 @@ type Match struct {
 type Result struct {
 	Bindings []Binding
 	Matches  []Match
+	Complete bool
+	Cost     CostReport
 }
 
 func (e Engine) Query(ctx context.Context, query Query) (Result, error)
 func (r Result) Trace(fact FactKey) []Support
 ```
+
+`MaxDepth` and `MaxFacts` are compatibility shorthands for the traversal and
+result budget. If both a shorthand and a nested configuration are supplied, the
+parser should reject conflicting values rather than silently choosing one.
 
 The implementation can use only `context`, ordinary Go maps, slices, and `sort`.
 A compiled query may index facts by subject, predicate,
@@ -212,8 +220,10 @@ query Name {
     focus ID*
     match Term Predicate Term
     derive Predicate(Variable*) <= Atom (, Atom)*
+    walk Predicate (| Predicate)* direction in|out|both depth Integer
     view Perspective Resolution
     include deterministic|derived|candidate|inverse*
+    budget expansions Integer edges Integer rules Integer results Integer
     limit Integer
 }
 ```
@@ -376,7 +386,7 @@ The fixture must assert more than row counts:
 7. A missing source span, unsafe rule, invalid PROV type signature, or exceeded
    limit is a deterministic conformance error rather than an empty result.
 
-## 8. Implementation sequence and non-goals
+## 8. Initial runtime sequence and non-goals
 
 The recommended implementation order is: (1) a snapshot-based query boundary with
 exact matching, inverse views, namespace checks, and stable ordering; (2) bounded
@@ -389,6 +399,373 @@ full-SPARQL implementation, unrestricted Datalog, fuzzy text search, or automati
 candidate promotion. A text index may later accelerate name search, but the
 semantic query result must still be explained by stable IDs, canonical facts, rules,
 and evidence.
+
+## 9. Experimental contract
+
+Each experiment runs against an immutable semantic snapshot and a canonical query
+program. The record must include the snapshot hash, canonical query, rule-program
+hash, selected fact statuses, zoom configuration, budget, ordered result digest,
+`Complete`, and the cost report. Wall-clock time is useful for performance charts
+but is not a conformance oracle.
+
+There are two kinds of assertions:
+
+| Assertion | Required behavior |
+| --- | --- |
+| semantic | exact fact keys, statuses, origins, proof traces, and order |
+| safety | termination, no mutation of the input graph, no silent truncation, and no candidate promotion |
+
+An exhausted traversal or rule budget returns a typed budget error and
+`Complete=false`. A caller may request a diagnostic partial result, but it must be
+marked incomplete and must never be mistaken for a complete answer. Re-running the
+same query with a larger budget must preserve the prefix already emitted under the
+same ordering key.
+
+## 10. Bounded traversal and cycle handling
+
+Traversal is an explicit, bounded operation rather than an implicit transitive
+closure. A proposed configuration is:
+
+```go
+type TraversalSpec struct {
+	Predicates []Predicate
+	Direction  Direction // in, out, both
+	MaxDepth   int       // depth zero returns only the focus
+	MaxNodes   int
+	MaxPaths   int
+	OnCycle    CyclePolicy // stop, report, or error
+}
+```
+
+The engine starts each focus at depth zero, expands breadth-first, and charges the
+budget before inspecting an edge. `MaxDepth=2` permits edges at depths one and two;
+it does not mean two intermediate nodes. Inverse predicates are traversable only
+when requested by the query. Candidate edges are excluded unless explicitly
+included, and never enter a normal derived closure.
+
+The default traversal is a simple-path walk. It keeps a visited set per focus and
+reports a repeated destination at most once. `report` additionally emits a
+cycle-boundary match containing the closing edge and the path prefix; it does not
+expand that edge again. `stop` omits the boundary match. `error` is reserved for
+callers that require an acyclic graph. A self-loop is therefore one boundary event,
+not an infinite result stream. PROV validity checking remains a separate concern: a
+query cycle must terminate even when a provenance validator later rejects the
+history.
+
+For reachability, the visited key is `(focus, node ID)` because the query plan fixes
+the predicate set and direction. For zoom traversal, the key additionally contains
+`perspective` and `resolution`; the same ID at two resolutions is not the same
+traversal state. Path enumeration uses the full path prefix so that two distinct
+simple paths can be retained without re-opening a cycle.
+
+The traversal result order is breadth-first by depth, then by the canonical edge
+key `(subject, predicate, object)`, then by the lexicographic path of edge keys.
+Maps may index adjacency, but map iteration must never determine output order.
+
+### Traversal counterexamples
+
+The following cases are mandatory regression experiments:
+
+1. **Diamond:** `root used left`, `root used right`, `left wasDerivedFrom base`,
+   and `right wasDerivedFrom base`. `base` is returned once at the first reachable
+   depth, with two optional proof paths ordered identically on every run.
+2. **Entity cycle:** `left wasDerivedFrom right` and `right wasDerivedFrom left`.
+   A depth-two walk terminates; `report` emits each closing edge at most once and
+   never emits a depth-three repeat.
+3. **Inverse cycle:** `activity used entity` plus `entity wasGeneratedBy activity`.
+   A walk allowing `used|generated` terminates under the same visited-state rule.
+4. **Candidate shortcut:** a candidate edge creates a shorter path than the
+   deterministic graph. The default answer must not use that path; opt-in output
+   must mark every candidate-dependent match.
+5. **Zero bound:** `MaxDepth=0` returns the focus only and performs no edge scan.
+   A result limit of zero is distinct: it returns no rows without implying that the
+   graph was empty.
+
+## 11. Deterministic ordering and duplicate policy
+
+Every result has a total order. The proposed key for a fact match is:
+
+```text
+(focus ordinal, distance, subject ID, predicate, object ID,
+ origin rank, rule ID, support-key vector)
+```
+
+The origin rank is fixed by the query contract (`declared`, `inverse`, `derived`,
+then `observed`), not by enum layout or map order. Traversal paths append their
+edge-key vector after distance. Bindings sort by variable name followed by bound
+stable ID. Proofs sort by their complete support-key vector.
+
+The same canonical triple has one visible deterministic result. A rule-derived
+duplicate is shadowed by the canonical fact but remains available through its proof
+and evidence diagnostics. A candidate with the same triple is also shadowed in a
+normal read and remains in append-only observation history. Distinct origins with
+different query-local predicates, such as `used` and `usedBy`, are not duplicates.
+
+The ordering experiment inserts the same facts in at least 100 permutations,
+executes the same query, serializes canonical result rows, and compares a SHA-256
+digest. All digests must match. A second run changes only the hash-map insertion
+order. Any changed row order is a conformance failure even when the set of rows is
+equal. This catches the common mistake of sorting only at the outer result level
+while leaving support paths or bindings map-dependent.
+
+## 12. Candidate promotion experiment
+
+Promotion is a write-side reconciliation operation, not a query rule and not a
+convenience flag on `include candidate`. A proposed operation is:
+
+```go
+type PromotionRequest struct {
+	Key             FactKey
+	ExpectedIRHash  string
+	AssertionID     ID
+	Evidence        []ID
+}
+
+func (r Reconciler) Promote(ctx context.Context, request PromotionRequest) error
+```
+
+Promotion is accepted only when the exact candidate key exists, its source span is
+valid, the assertion and evidence are source-backed, the PROV type signature is
+valid, and `ExpectedIRHash` still matches the snapshot being reconciled. The
+operation is transactional. It adds a deterministic fact, records a promotion
+activity/evidence event, and retains the original candidate observation. A stale
+hash, conflicting deterministic fact, or missing authority rejects the operation
+without changing the graph.
+
+| Input | Expected outcome |
+| --- | --- |
+| candidate + explicit `.gooo` assertion + valid evidence | promote once; repeat is idempotent |
+| candidate + query-derived proof only | reject; rules cannot self-authorize |
+| candidate without source span | reject with missing-evidence error |
+| candidate whose triple is already deterministic | no duplicate fact; retain observation and record no-op |
+| candidate with invalid subject/object kinds | reject before mutation |
+| valid candidate against stale IR hash | reject and require a fresh snapshot |
+| candidate-dependent derived result | never eligible as promotion evidence by itself |
+
+After a successful promotion, the IR hash changes and all query caches keyed by the
+old hash become stale. Promotion must not rewrite or delete the original candidate
+record; it creates an append-only explanation of why the status changed.
+
+## 13. Zoom-in and zoom-out experiment
+
+Zoom adapters expose explicit mapping edges between `(perspective, resolution)`
+pairs. A zoom-in edge has a declared inverse or is marked lossy. Zoom-out must use
+that declared inverse; it must not guess a parent by matching display names.
+
+```text
+business/context/billing
+  --contains--> business/activity/pay-order
+  --implements--> implementation/go/billing.PayOrder
+  --evidenceFor<-- verification/evidence/build-123
+```
+
+The zoom experiment checks these laws:
+
+1. An exact zoom-in followed by zoom-out contains the original focus and preserves
+   its stable ID.
+2. A many-to-one mapping returns all children or parents in canonical order; it
+   does not select an arbitrary representative.
+3. A lossy mapping reports `lossy=true` and cannot claim a round-trip identity.
+4. An unresolved name-based suggestion is a candidate view and is excluded from a
+   deterministic zoom result.
+5. A cross-resolution cycle terminates on `(ID, perspective, resolution)` and is
+   reported with the same cycle policy as graph traversal.
+6. `MaxHops` and the cost budget apply across the entire zoom path, not separately
+   at each resolution.
+
+The result must identify the adapter and mapping edge for every step. This lets a
+provenance perspective explain a path through evidence while an implementation
+perspective explains a path through source maps, without conflating either with a
+new canonical PROV relation.
+
+## 14. Deterministic query cost budget
+
+Budgets use logical work units, not wall-clock deadlines. This keeps results
+reproducible across machines and makes a cached and uncached evaluation semantically
+equivalent. The initial dimensions are:
+
+| Dimension | Charge |
+| --- | --- |
+| expansions | one node or zoom state dequeued |
+| edge scans | one adjacency edge inspected |
+| rule firings | one rule-body match attempt |
+| results | one materialized binding or path |
+| proofs | one support proof materialized |
+
+```go
+type CostBudget struct {
+	MaxExpansions int
+	MaxEdgeScans  int
+	MaxRuleFirings int
+	MaxResults    int
+	MaxProofs     int
+}
+
+type CostReport struct {
+	Expansions int
+	EdgeScans  int
+	RuleFirings int
+	Results    int
+	Proofs     int
+	Complete   bool
+}
+```
+
+The engine reserves a unit before doing the corresponding work. If the next unit
+would exceed a dimension, it returns `ErrBudgetExceeded` with the dimension,
+requested unit, used amount, configured limit, and a stable frontier digest. It
+must not return a partial result as complete. An explicit diagnostic mode may
+return the partial prefix with `Complete=false`; the prefix must be identical to
+the prefix from an adequately funded run.
+
+Budget experiments include an exact boundary run, a one-unit-underfunded run, and
+a one-unit-overfunded run. They assert that increasing `MaxEdgeScans` by one either
+admits exactly the next canonical edge or still fails at the next exhausted
+dimension. Recursive rules and zoom paths must charge the same dimensions as direct
+traversal. A time limit may be used by an application as an outer cancellation,
+but it is not part of semantic conformance or cache keys.
+
+## 15. Extended fixture and expected counterexamples
+
+The earlier `billing-query/v1` fixture remains the basic DSL/PROV case. Add the
+following supplemental graph as a proposed `query-experiments/v1` section of the
+same future fixture file; it is not checked in by this research document:
+
+```text
+fixture query-experiments/v1
+
+node query://activity/root Activity
+node query://entity/left Entity
+node query://entity/right Entity
+node query://entity/base Entity
+
+fact query://activity/root used query://entity/left
+fact query://activity/root used query://entity/right
+fact query://entity/left wasDerivedFrom query://entity/base
+fact query://entity/right wasDerivedFrom query://entity/base
+fact query://entity/left wasDerivedFrom query://entity/right
+fact query://entity/right wasDerivedFrom query://entity/left
+candidate query://entity/right wasDerivedFrom billing://entity/order
+    reason "unreviewed analyzer shortcut"
+
+query bounded_cycle {
+    focus query://activity/root
+    walk used|wasDerivedFrom direction out depth 2
+    include deterministic
+    budget expansions 8 edges 12 rules 0 results 12
+}
+
+query candidate_shortcut {
+    focus query://entity/right
+    walk wasDerivedFrom direction out depth 2
+    include deterministic
+    limit 20
+}
+```
+
+The fixture asserts that `base` is reached once through the diamond, the two
+left/right cycle edges are at most one cycle-boundary event each, and no depth-three
+repeat appears. `candidate_shortcut` must not traverse into `billing://entity/order`
+under its default fact universe. Re-running after `include candidate` may expose the
+shortcut, but every affected result is candidate-dependent and the deterministic
+result digest is unchanged.
+
+The fixture also runs the promotion matrix above, 100 insertion-order permutations,
+zoom round-trips for exact and lossy mappings, and the three budget boundary cases.
+The expected evidence is a canonical result digest plus a machine-readable failure
+kind; a timeout, map-order difference, silent truncation, or graph mutation is a
+conformance failure.
+
+## 16. Go-hosted and gooo-hosted phases
+
+Self-hosting is a staged contract, not a claim that the current repository already
+executes queries. The initial host and the future self-hosted host must produce
+comparable semantic evidence.
+
+| Phase | Authority and execution | Required parity evidence | Status |
+| --- | --- | --- | --- |
+| Go-hosted bootstrap | Go evaluator; `.gooo` owns facts | proposed, not implemented |
+| gooo-hosted future | `.gooo` declares query rules; Go bootstraps them | future design, not implemented |
+
+Both phases require plan hash, result digest, proof traces, cost report, and host
+parity evidence. The future phase additionally requires bootstrap round-trip and
+Go-hosted vs gooo-hosted plan/result/error equivalence.
+
+For every query representable in both hosts, the parity law is:
+
+```text
+EvalGo(snapshot, q) ≈ EvalGooo(snapshot, q)
+```
+
+`≈` compares canonical plans, ordered result rows, statuses, origins, proof
+traces, `Complete`, error kind, and logical cost dimensions. It does not require
+the same allocation count or wall-clock time. A host may optimize storage, but it
+must not change query meaning or hide an incomplete result.
+
+The evidence envelope should be host-neutral:
+
+```text
+host ID + snapshot hash + query/program hash + plan hash
+result digest + complete/error status + logical cost report + fixture IDs
+```
+
+The current CLI does not implement `check` or query execution, so no host parity
+evidence is claimed by this proposal. A future self-hosting milestone is complete
+only after both hosts pass the same fixtures and the equivalence artifact is
+independently verified.
+
+## 17. Adapter contract
+
+An adapter is a deterministic, read-only provider of mapping edges. It must declare
+its identity and authority before a zoom query can use it:
+
+```text
+adapter ID
+perspective + source resolution + target resolution
+forward relation + declared inverse or lossy marker
+source snapshot/hash + stable ID policy
+candidate policy + evidence/provenance provider
+```
+
+An exact adapter must satisfy `inverse(forward(x))` contains `x` for every mapped
+stable ID. A lossy adapter must return the lost identity set and set `lossy=true`;
+it cannot be used to prove a round-trip law. Adapters that infer links from display
+names, file proximity, or text similarity may expose candidate edges but cannot
+provide deterministic zoom results.
+
+Adapter conformance runs the same mapping in forward and reverse insertion orders,
+checks the declared inverse, applies cycle and budget limits across adapter calls,
+and verifies that the input graph remains unchanged. Adapter output is sorted by
+the query ordering key before it is joined with PROV facts.
+
+## 18. Benchmark protocol
+
+Benchmarks are experiments, not semantic evidence. Each benchmark records the
+fixture hash, host ID, Go version, query/rule hash, budget, result digest, and
+logical counters. Wall-clock and allocation measurements are secondary and must
+never decide whether a result is correct.
+
+The initial corpus should include generated snapshots with these shapes:
+
+| Workload | Shape and purpose |
+| --- | --- |
+| chain | one path of 16, 64, and 256 Entities; measures depth and cycle guards |
+| diamond | repeated joins with shared leaves; measures duplicate suppression and proof fan-out |
+| cycle | one self-loop and one strongly connected component; measures termination |
+| rule closure | recursive positive rule with a fixed point; measures rule firings |
+| zoom fan-out | one context with many activities and source/evidence mappings; measures adapter joins |
+| candidate mix | 0%, 1%, and 10% candidate edges; measures filtering and taint propagation |
+
+For each workload, run an exact-budget case, a one-unit-under-budget case, and a
+two-times-budget case. Record expansions, edge scans, rule firings, results, proofs,
+`Complete`, and the canonical digest. Use Go's `testing.B` and `-benchmem` only when
+the query implementation exists; this document contains no benchmark result.
+
+The useful comparison is not only throughput. The benchmark must show that larger
+graphs do not cause unbounded work under a fixed budget, cycles do not increase
+work after their boundary is reached, candidate filtering does not alter the
+deterministic digest, and the Go-hosted/future gooo-hosted hosts agree on logical
+cost even if their physical timings differ.
 
 ## References
 
