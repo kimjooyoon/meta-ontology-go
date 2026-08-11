@@ -1,0 +1,58 @@
+fixture query-contract/v1
+source gooo://fixture/query-contract/v1
+namespace billing
+
+[nodes]
+entity billing://entity/order
+entity billing://entity/payment
+entity billing://entity/receipt
+activity billing://activity/pay-order
+activity billing://activity/issue-receipt
+agent billing://agent/billing
+
+[deterministic]
+billing://activity/pay-order | used | billing://entity/order
+billing://entity/payment | wasGeneratedBy | billing://activity/pay-order
+billing://activity/issue-receipt | used | billing://entity/payment
+billing://entity/receipt | wasGeneratedBy | billing://activity/issue-receipt
+billing://activity/issue-receipt | wasAssociatedWith | billing://agent/billing
+
+[candidate]
+billing://entity/payment | wasDerivedFrom | billing://entity/order | reason=ambiguous_dependency
+billing://activity/pay-order | used | settlement://entity/order | reason=namespace_collision_observation
+
+[queries]
+exact_input subject=billing://activity/pay-order predicate=used object=billing://entity/order
+exact_candidate subject=billing://entity/payment predicate=wasDerivedFrom object=billing://entity/order
+bounded_neighborhood start=billing://entity/receipt direction=both predicate=* max_depth=3
+negative_namespace subject=billing://activity/pay-order predicate=used object=settlement://entity/order
+negative_unbounded start=billing://entity/receipt direction=both predicate=* max_depth=0
+
+[counterexample.cycle]
+urn:cycle:a | wasDerivedFrom | urn:cycle:b
+urn:cycle:b | wasDerivedFrom | urn:cycle:c
+urn:cycle:c | wasDerivedFrom | urn:cycle:a
+
+[oracle.queries]
+exact_input deterministic=1 candidate=0
+exact_candidate deterministic=0 candidate=1
+bounded_neighborhood deterministic_paths=4 candidate_paths=1 max_depth=3
+negative_namespace deterministic=0 candidate=1
+negative_unbounded error=invalid-max-depth
+counterexample.cycle max_emitted_depth=3 repeated_ids=false
+
+[oracle.canonical]
+D billing://activity/issue-receipt | used | billing://entity/payment
+D billing://activity/issue-receipt | wasAssociatedWith | billing://agent/billing
+D billing://activity/pay-order | used | billing://entity/order
+D billing://entity/payment | wasGeneratedBy | billing://activity/pay-order
+D billing://entity/receipt | wasGeneratedBy | billing://activity/issue-receipt
+C billing://activity/pay-order | used | settlement://entity/order
+C billing://entity/payment | wasDerivedFrom | billing://entity/order
+
+[measurements]
+fixture_lines 58
+deterministic_facts 5
+candidate_facts 2
+oracle_rows 7
+oracle_sha256 8f1e1fb345ab1131272edddb60a0dd6c22599fc5feb2cfa9743cd90a66b7a3c7
