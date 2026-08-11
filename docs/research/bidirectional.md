@@ -816,6 +816,232 @@ Until that trace exists, any gooo-hosted row is a planned contract and must be
 reported as unimplemented. The current Go-hosted checks remain the evidence for
 the current stage and are not retroactively upgraded by the vision.
 
+## Falsifiable hypotheses and implementation contracts
+
+The previous matrix names the laws and counterexamples. This section makes them
+experimentally falsifiable and gives each implementation layer the same small
+input/output vocabulary. A result is not a pass merely because a parser,
+generator, or future self-hosting stage is absent: an unavailable capability is
+recorded as deferred.
+
+### Hypotheses
+
+Each hypothesis has one observable assertion. The fixture identifier, input
+revision, and policy revision must be included in the receipt so that a failed
+result can be reproduced without relying on wall-clock order.
+
+| ID | Falsifiable hypothesis | Minimal fixture | Measurement | Pass | Fail | Deferred |
+| --- | --- | --- | --- | --- | --- | --- |
+| H1 | Semantic identity is independent of presentation. | F0, then rename a display name and reformat without changing stable IDs or relations. | Hsem before/after; changed semantic facts. | Hsem is equal and changed facts are zero. | Hsem changes, or a semantic fact changes. | The canonical semantic serializer is not available. |
+| H2 | Evidence identity is separate from semantic identity. | F1, then add a second source span supporting the same accepted edge. | Hsem, Hevid, evidence-record count, provenance IDs. | Hsem stays equal; Hevid changes; both evidence records remain. | Hevid is collapsed into Hsem, or one record is lost. | Provenance records or evidence hashing are not implemented. |
+| H3 | Get-Put is a no-op on a normalized view. | F0 loaded into an unchanged view and written back. | Semantic hash, accepted delta cardinality, generated-region hashes. | Hsem is equal, accepted delta is zero, and every generated region is equal. | A no-op changes semantics, emits a non-empty update, or rewrites an unrelated region. | The reverse adapter cannot produce a write result. |
+| H4 | Put-Get exposes every accepted update and no candidate update. | F1 plus F2's unknown call: one registered call and one ambiguous call. | Accepted, candidate, rejected, and conflict counts; re-read Hsem. | Registered edge is visible after Get; ambiguous edge is still candidate; no rejected fact appears. | An accepted fact disappears, a candidate is promoted, or an unknown endpoint is invented. | The analyzer or candidate-state representation is missing. |
+| H5 | Locality is bounded by the semantic dependency closure. | F5: edit PayOrder while AuditPayment is unrelated. | Changed semantic IDs and Hgen for each generated region. | Only the PayOrder closure changes; unrelated Hgen values and bytes are equal. | An unrelated region changes, or a changed dependency is omitted. | Generated-region markers or dependency closure are unavailable. |
+| H6 | Partial information is monotone and absence is not deletion. | F2 first has an unknown endpoint, then receives a registry entry. | Fact state transition, accepted/candidate counts, Hsem and Hevid. | Unknown remains candidate; registry completion promotes exactly that fact; no other fact is deleted. | Missing information deletes an accepted fact, or a candidate is silently accepted. | The implementation has no explicit partial-information state. |
+| H7 | Three-way merge is deterministic and conservative. | F3 with disjoint, same-value, and overlapping left/right edits. | Merge decision, conflict count, merged semantic hash, replay order. | Disjoint edits commute; equal edits deduplicate; overlap emits a conflict and no partial winner. | Output depends on replay order, or an overlap is silently chosen. | Three-way merge is not implemented in the current lane. |
+| H8 | Ordered semantic ports survive both directions. | F4 with two input ports whose types differ and whose order is significant. | Port sequence, positional IDs, Hsem, generated signature. | The exact port sequence is preserved; a reorder is an explicit semantic delta. | Ports are alphabetized, matched by display name, or reordered without a delta. | Port-order metadata is not represented by the IR. |
+| H9 | Adapters fail closed on unsupported information. | F6 includes an unsupported predicate and malformed generated markers. | Diagnostic code, accepted/candidate/rejected counts, mutation count. | Unsupported input has a stable diagnostic and causes no silent mutation. | It is dropped, guessed, or emitted as valid Go/IR. | The adapter contract or diagnostic taxonomy is not available. |
+| H10 | Cache reuse is valid only for the complete semantic/evidence input. | F0/F1 with one semantic-only edit and one evidence-only edit. | Cache key, hit/miss, Hsem, Hevid, policy revision. | A semantic change misses; an evidence-policy change misses; an exact input hits. | A stale artifact is returned, or evidence changes are ignored when policy requires them. | Cache receipts and invalidation policy are not implemented. |
+| H11 | Source-facing diagnostics remain aligned after a local edit. | F7 edits one span in PayOrder while preserving AuditPayment. | Diagnostic set hash, source ranges, semantic IDs, changed URI/ranges. | Diagnostics refer to the edited span/ID only; unrelated ranges and IDs are stable. | A diagnostic moves to an unrelated span, or the same error loses its stable ID. | LSP/source-map output is not present. |
+| H12 | Go-hosted and future gooo-hosted stages have comparable evidence, not implied parity. | F0 plus a bootstrap declaration that names the hosting stage. | Host stage, receipt schema version, Hsem, Hevid, implementation status. | Go-hosted output passes only its implemented checks and records the stage. | A future stage is reported as passing without an implementation. | gooo-hosted execution is not implemented; this is the required result today. |
+
+The pass assertions are exact for semantic and provenance relations. Performance
+is a separate measurement, not a substitute for a law: record parse, analyze,
+normalize, generate, and receipt-write durations as milliseconds and report
+count, minimum, median, p95, and maximum over at least five repetitions when a
+benchmark exists. No latency threshold is claimed until a repository baseline
+and fixture-size class are agreed.
+
+### Minimal fixture catalog
+
+The fixtures are intentionally smaller than a billing example. They contain
+stable IDs, a display name, one ordered activity signature, one unrelated
+activity, and one source-backed observation. A test may serialize the same
+fixture as DSL, Go, or IR, but the stable IDs and relation keys must remain
+identical.
+
+~~~text
+fixture F0
+  namespace billing
+  entity order   id billing:Order
+  entity payment id billing:Payment
+  activity pay_order id billing:PayOrder
+    input  payment id billing:Payment
+    input  order   id billing:Order
+    output payment id billing:Payment
+  source: examples/billing/main.gooo
+  expected: accepted=1 candidate=0 rejected=0 conflict=0
+
+fixture F1
+  F0 plus source observation:
+    billing:PayOrder calls billing:PaymentRepository.Save
+  second observation may use a different URI/range
+  expected: accepted=1 candidate=0 rejected=0 conflict=0
+
+fixture F2
+  F0 plus:
+    billing:PayOrder calls billing:UnknownRepository.Save
+  expected: accepted=1 candidate=1 rejected=0 conflict=0
+  completion input: registry adds billing:UnknownRepository
+
+fixture F3
+  base: F0
+  left:  add relation billing:PayOrder -> billing:PaymentRepository.Save
+  right: add relation billing:PayOrder -> billing:Audit.Log
+  overlap: both sides change the same relation with different attributes
+  expected: disjoint merge succeeds; overlap is a conflict
+
+fixture F4
+  F0 with input port order [payment, order], then [order, payment]
+  expected: a reorder is visible in the ordered semantic delta
+
+fixture F5
+  F0 plus unrelated activity:
+    activity audit_payment id billing:AuditPayment
+      input payment id billing:Payment
+  edit: only the PayOrder body or its accepted relation
+  expected: AuditPayment region is unchanged
+
+fixture F6
+  F0 with an unsupported predicate and a malformed generated-region marker
+  expected: stable diagnostic; no silent acceptance or destructive rewrite
+
+fixture F7
+  F0 with source spans for PayOrder and AuditPayment
+  edit: one token inside PayOrder only
+  expected: diagnostics and source mapping retain the unrelated activity span
+~~~
+
+The fixture catalog is a contract, not a claim that every fixture is executable
+today. A conformance runner must report an unavailable fixture adapter as
+deferred with its missing capability, rather than converting it to pass.
+
+### Shared experiment receipt
+
+Every layer should be able to emit or consume the following logical record.
+Field names may be adapted to a package's native type, but their meaning and
+presence are not optional once that layer claims support for the experiment.
+
+~~~text
+receipt
+  schema_version: string
+  fixture_id: string
+  host_stage: go-hosted | gooo-hosted
+  source_revision: hash
+  policy_revision: hash
+  input:
+    ast_hash: hash or absent
+    ir_hash: hash or absent
+    semantic_hash: Hsem
+    evidence_hash: Hevid
+    generated_region_hashes: map[region_id]hash
+  delta:
+    added_semantic_ids: ordered set
+    removed_semantic_ids: ordered set
+    candidate_ids: ordered set
+    rejected_ids: ordered set
+    conflict_ids: ordered set
+  output:
+    semantic_hash: Hsem
+    evidence_hash: Hevid
+    generated_region_hashes: map[region_id]hash
+    diagnostic_hash: hash or absent
+    cache_key: hash or absent
+  decision: accepted | candidate | rejected | conflict | deferred
+  measurements:
+    parse_ms: number or absent
+    analyze_ms: number or absent
+    normalize_ms: number or absent
+    generate_ms: number or absent
+    receipt_ms: number or absent
+  status: pass | fail | deferred
+  reason: stable code
+~~~
+
+The input and output hashes are deliberately separate. Hsem answers whether the
+meaning changed. Hevid answers whether the supporting observations or decisions
+changed. Generated-region hashes answer locality. A diagnostic hash answers
+source-facing behavior. A cache key answers reuse eligibility. Combining these
+values into one opaque digest would make it impossible to distinguish a semantic
+regression from an evidence refresh or a permitted local rewrite.
+
+### Measurement and decision protocol
+
+For each fixture, run the baseline, one mutation, and the relevant negative
+case. Record exact cardinalities before and after the operation:
+
+| Measurement | Required interpretation |
+| --- | --- |
+| accepted/candidate/rejected/conflict | State counts after normalization; candidates never count as accepted facts. |
+| added/removed semantic IDs | Set delta over stable IDs, not display names or source line numbers. |
+| Hsem | Canonical semantic output; equal means semantic equivalence under the declared scope. |
+| Hevid | Canonical provenance/evidence output; equality is required only when observations and policy are unchanged. |
+| Hgen by region | Byte or canonical-region hash owned by a stable region ID; changed IDs must equal the locality closure. |
+| diagnostic hash and ranges | Source-facing diagnostics plus stable IDs/ranges; absent means the LSP layer is not in scope. |
+| cache hit/miss and key | Hit only when all declared semantic, evidence, policy, and generator inputs match. |
+| durations | Milliseconds with repetition statistics; informational until a baseline exists. |
+
+Use these decision rules:
+
+1. Pass only when every exact assertion for the fixture holds and the receipt
+   has no missing required field for the claimed layer.
+2. Fail on false promotion, false deletion, evidence loss, nondeterministic
+   merge output, unrelated-region change, stale cache reuse, or an unsupported
+   input silently becoming valid.
+3. Defer only when the missing capability is named in reason and the fixture
+   still has a deterministic receipt. Deferred is not evidence that the law
+   holds.
+4. A mixed run is fail if any required assertion fails, even if an unrelated
+   optional layer is deferred. The report must preserve both statuses.
+5. Re-run a failure with the same fixture, source revision, and policy revision.
+   If the receipt differs without an input change, classify the result as
+   nondeterminism before investigating the individual law.
+
+### Reusable layer contracts
+
+These contracts define the follow-up implementation seam. They are deliberately
+directional: the DSL remains authoritative for business intent, stable IDs
+remain authoritative for identity, and observations never become business
+facts merely because an adapter can parse them.
+
+| Layer | Input | Output | Required invariant | Current status |
+| --- | --- | --- | --- | --- |
+| AST/parser | DSL or Go text, URI, version | AST, spans, syntax diagnostics, ast_hash | Preserve source ranges and stable declaration IDs where present; syntax errors are not semantic facts. | Existing parser surface must be measured; exact receipt adapter is follow-up. |
+| Analyzer/LSP | AST, registry, generated markers, source map | accepted observations, candidates, diagnostics, source-to-ID links | Unknown or ambiguous symbols stay explicit candidates; diagnostics do not mutate authority. | Candidate and LSP adapters may be absent; report deferred. |
+| Semantic IR | normalized declarations and accepted relations | canonical IR, Hsem, ordered semantic delta | Normalize display-only changes; preserve ordered ports and stable relation keys. | Contract proposed; implementation conformance is follow-up. |
+| BX/lens | view, accepted delta, partial state, merge base | updated source/view, decision, delta, conflicts, Hevid | Get-Put no-op; Put-Get accepted visibility; no implicit deletion; three-way overlap is explicit. | Research contract; do not infer implementation from this document. |
+| Codegen | IR, previous generated regions, locality closure | Go text, region hashes, source map, generator receipt | Change only owned regions and retain stable markers; implementation-only code is not semantic evidence. | Generator/CLI risks are documented; exact receipt is follow-up. |
+| Provenance/evidence | observations, source ranges, candidate and conflict decisions | append-only evidence records, Hevid | Distinct observations remain distinct; promotion records explain why a fact was accepted. | Evidence model is a target contract; no passing result until records are emitted. |
+| Cache | source, Hsem, Hevid, policy, generator and tool revisions | artifact, cache key, hit/miss receipt | Never reuse an artifact for a changed declared input; evidence policy participates when evidence is consumed. | Deferred until cache invalidation is implemented. |
+| CI/gate | receipts, allowed scope, branch and policy metadata | pass/fail/deferred gate result | Never weaken a check; deferred capability is visible; docs-only scope cannot claim code conformance. | Existing verification can run; ownership alias registration is delegated. |
+| Hosting stage | Go-hosted or gooo-hosted compiler inputs | stage-labelled artifacts and receipts | Host stage is explicit; future gooo-hosted work cannot be marked implemented in advance. | Go-hosted is current baseline; gooo-hosted is deferred. |
+
+The minimum implementation order is AST/IR receipt serialization, BX decision
+and locality reporting, provenance hashing, then codegen/source-map and cache
+adapters. LSP and gooo-hosted execution consume the same receipt rather than
+inventing a second equivalence relation. CI should gate only on receipts emitted
+by implemented layers and should preserve deferred statuses for the rest.
+
+### Negative-case fixtures that must remain visible
+
+The following cases are intentionally non-passing outcomes:
+
+| Case | Expected result | Regression if |
+| --- | --- | --- |
+| Unknown endpoint in F2 | candidate plus diagnostic; no accepted edge | the endpoint is guessed or omitted |
+| Same semantic edge with two source spans | one semantic edge plus two evidence records | evidence is deduplicated by edge key |
+| Delete versus modify in F3 | explicit conflict and unchanged base for that edge | either side wins by replay order |
+| Ordered-port reorder in F4 | semantic delta or declared positional conflict | names are sorted and the reorder disappears |
+| Malformed marker in F6 | diagnostic and no generated-region mutation | the generator rewrites outside ownership |
+| Evidence-only refresh | Hsem equal and Hevid changed | one combined hash hides the distinction |
+| Missing cache invalidation input | miss or deferred | stale artifact is a hit |
+| gooo-hosted stage without executor | deferred | CI reports self-hosting success |
+
+These negative cases are useful as mutation tests: remove one guard from a
+prototype and require the corresponding fixture to fail. A mutation that still
+passes indicates that the experiment does not observe the intended law and the
+hypothesis or fixture must be tightened.
+
 ## Integration cautions
 
 Before integrating this research with PR #7, generator, and CLI work:
