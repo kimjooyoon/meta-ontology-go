@@ -60,3 +60,9 @@ and the CI policy step summary identify `PR authoritative`, `push full`, or
 authoritative PR result. Pull-request events retain the complete base-to-head
 changed-path and branch-ownership check; the verifier also reports unavailable
 revisions deterministically.
+
+PR #77 records the current-base evidence used for this audit: `integration`
+resolved to `ee547c7`, and the PR policy step passed that base SHA through
+`GOOO_SCOPE_FROM` while using the head SHA as `GOOO_SCOPE_TO`. The existing
+`agent/bidir-followup` alias was checked against that same base; its only
+allowed prefix remains `internal/bidir`.

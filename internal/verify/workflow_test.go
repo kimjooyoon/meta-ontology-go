@@ -52,6 +52,8 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 		"source=\"agent push cap-only\"",
 		"source=\"push full\"",
 		"GITHUB_STEP_SUMMARY",
+		"GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}",
+		"GOOO_SCOPE_TO: ${{ github.sha }}",
 	} {
 		if !strings.Contains(text, marker) {
 			t.Fatalf("workflow lost event-source evidence marker %q", marker)
