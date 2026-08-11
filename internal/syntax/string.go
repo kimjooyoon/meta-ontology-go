@@ -3,6 +3,7 @@ package syntax
 import (
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 func (l *Lexer) lexString(start Position) {
@@ -10,7 +11,7 @@ func (l *Lexer) lexString(start Position) {
 	l.advanceRune() // opening quote
 	terminated := false
 	for l.offset < len(l.source) {
-		r, _ := l.peekRune()
+		r, size := l.peekRune()
 		switch {
 		case r == '"':
 			l.advanceRune()
@@ -23,6 +24,11 @@ func (l *Lexer) lexString(start Position) {
 			if l.lexEscape(&value, start) {
 				terminated = true
 			}
+		case r == utf8.RuneError && size == 1:
+			invalidStart := l.position()
+			l.advanceRune()
+			value.WriteRune(utf8.RuneError)
+			l.addDiagnostic(DiagInvalidUTF8, startSpan(l.filename, invalidStart, l.position()), "invalid UTF-8 byte in string literal")
 		default:
 			value.WriteRune(l.advanceRune())
 		}

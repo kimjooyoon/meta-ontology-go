@@ -30,6 +30,7 @@ const (
 	DiagUnterminatedComment   DiagnosticCode = "lex.unterminated-comment"
 	DiagUnterminatedString    DiagnosticCode = "lex.unterminated-string"
 	DiagInvalidEscape         DiagnosticCode = "lex.invalid-escape"
+	DiagInvalidUTF8           DiagnosticCode = "lex.invalid-utf8"
 	DiagExpectedPackage       DiagnosticCode = "parse.expected-package"
 	DiagExpectedNamespace     DiagnosticCode = "parse.expected-namespace"
 	DiagExpectedIdentifier    DiagnosticCode = "parse.expected-identifier"
@@ -86,17 +87,46 @@ func (d Diagnostics) Errors() Diagnostics {
 	return errors
 }
 
-// SortBySpan returns a copy sorted by source position. Parse results preserve
-// phase order; callers that need one globally ordered view can use this method.
+// SortBySpan returns a copy sorted by source position with deterministic
+// span, severity, code, and message tie-breaks. Parse results preserve phase
+// order; callers that need one globally ordered view can use this method.
 func (d Diagnostics) SortBySpan() Diagnostics {
 	result := append(Diagnostics(nil), d...)
 	sort.SliceStable(result, func(i, j int) bool {
 		if result[i].Span.Filename != result[j].Span.Filename {
 			return result[i].Span.Filename < result[j].Span.Filename
 		}
-		return result[i].Span.Start.Offset < result[j].Span.Start.Offset
+		return diagnosticLess(result[i], result[j])
 	})
 	return result
+}
+
+func diagnosticLess(left, right Diagnostic) bool {
+	if left.Span.Start.Offset != right.Span.Start.Offset {
+		return left.Span.Start.Offset < right.Span.Start.Offset
+	}
+	if left.Span.Start.Line != right.Span.Start.Line {
+		return left.Span.Start.Line < right.Span.Start.Line
+	}
+	if left.Span.Start.Column != right.Span.Start.Column {
+		return left.Span.Start.Column < right.Span.Start.Column
+	}
+	if left.Span.End.Offset != right.Span.End.Offset {
+		return left.Span.End.Offset < right.Span.End.Offset
+	}
+	if left.Span.End.Line != right.Span.End.Line {
+		return left.Span.End.Line < right.Span.End.Line
+	}
+	if left.Span.End.Column != right.Span.End.Column {
+		return left.Span.End.Column < right.Span.End.Column
+	}
+	if left.Severity != right.Severity {
+		return left.Severity < right.Severity
+	}
+	if left.Code != right.Code {
+		return left.Code < right.Code
+	}
+	return left.Message < right.Message
 }
 
 // Error returns all diagnostics as one deterministic error value. It returns
