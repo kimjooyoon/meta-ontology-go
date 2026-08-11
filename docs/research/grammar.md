@@ -340,3 +340,222 @@ cover:
 The semantic layer should then decide whether inferred legacy IDs are acceptable
 for a project policy. The generator and bidirectional layers must use the ID,
 not the display name, as their join key.
+
+## Experiment matrix
+
+The following experiments turn the proposal into small conformance fixtures.
+They are intentionally embedded in this research note so the syntax agent can
+lift them into focused tests without waiting for another PR to merge.
+
+Each fixture has three observable results:
+
+1. `Parse`: ordered diagnostics identified by stable code and primary span;
+2. `AST`: declaration names and source spans retained after recovery; and
+3. `IR`: a canonical set of IDs and facts, compared after sorting by
+   `(subject, predicate, object)`.
+
+`Parse` errors prevent `IR` lowering. A partial AST is still useful to an editor,
+but it must not be treated as an accepted semantic model. For successful
+fixtures, semantic equivalence ignores display names, declaration order where
+the IR is set-like, and source spans; it compares stable IDs, declaration kinds,
+resolved references, and derived facts.
+
+### R1: recovery at an activity parameter boundary
+
+Input:
+
+```gooo
+package billing
+namespace billing
+
+activity Broken(Order Payment) -> Payment
+entity Payment id "billing://entity/payment"
+activity Healthy() -> Payment
+```
+
+Expected result:
+
+- `Parse` emits exactly one `parse.expected-comma` diagnostic at the `Payment`
+  parameter on line 4, column 23 (span `4:23-4:30`), in the parser phase.
+- `AST` retains the later `entity Payment` and `activity Healthy` declarations;
+  the malformed `Broken` declaration may remain as a partial node but is
+  marked unusable for lowering.
+- `IR` is not produced for `Broken`. If the implementation lowers valid
+  declarations from a partial file, it may lower `Healthy` only after explicit
+  policy approval; the default conformance mode rejects the file as a whole.
+- Repeating the parse produces byte-for-byte equal diagnostics and an equivalent
+  partial AST. The parser must not loop or report a second comma/arrow error for
+  the same missing separator.
+
+This fixture tests recovery without depending on an implementation-specific
+error message. A companion test may delete `entity Payment` and assert that an
+unresolved-reference diagnostic is semantic and occurs only after syntax is
+valid.
+
+### E1: grammar evolution and version skew
+
+Legacy input, produced by the current example shape:
+
+```gooo
+package billing
+namespace billing
+entity Order id "billing://entity/order"
+entity Payment id "billing://entity/payment"
+activity PayOrder(Order) -> Payment
+```
+
+Versioned input, using the proposed additive clauses:
+
+```gooo
+package billing
+version "gooo/v1"
+namespace billing
+entity Order id "billing://entity/order"
+entity Payment id "billing://entity/payment"
+activity PayOrder id "billing://activity/pay-order" (Order) -> Payment
+```
+
+Expected compatibility matrix:
+
+| Producer source | Consumer parser | Expected diagnostics | IR result |
+| --- | --- | --- | --- |
+| Legacy input | version-aware parser | none; missing version is implicit `gooo/v1` | accepted v1 model; activity ID is inferred |
+| Versioned input | version-aware parser | none | accepted v1 model; activity ID is explicit |
+| Versioned input | baseline parser | rejection at the version/extended clause boundaries | no trusted IR; partial AST only |
+| `version "gooo/v9"` | v1 parser | one `parse.unsupported-version` at the version literal; no feature guessing | no IR |
+
+For the unknown-version case, use this minimal input:
+
+```gooo
+package billing
+version "gooo/v9"
+namespace billing
+entity Order id "billing://entity/order"
+```
+
+The diagnostic must point to the quoted version literal on line 2, and parsing
+must not silently fall back to v1. The version-aware parser may continue to
+produce a syntax tree for editor services, but `IR` lowering is blocked. This
+is the safety boundary for a newer producer and older compiler: rejecting an
+unknown grammar is preferable to accepting a different meaning.
+
+### S1: stable-ID rename
+
+Source A:
+
+```gooo
+package billing
+version "gooo/v1"
+namespace billing
+entity Order id "billing://entity/order"
+entity Payment id "billing://entity/payment"
+activity PayOrder id "billing://activity/pay-order" (Order) -> Payment
+```
+
+Source B:
+
+```gooo
+package billing
+version "gooo/v1"
+namespace billing
+entity Order id "billing://entity/order"
+entity Payment id "billing://entity/payment"
+activity AuthorizePayment id "billing://activity/pay-order" (Order) -> Payment
+```
+
+Expected result:
+
+- Both parses have no errors.
+- `IR(A)` and `IR(B)` contain the same declaration IDs and kinds:
+  `billing://entity/order` (`Entity`), `billing://entity/payment` (`Entity`),
+  and `billing://activity/pay-order` (`Activity`).
+- Their canonical fact sets are equal:
+  `billing://activity/pay-order uses billing://entity/order` and
+  `billing://entity/payment wasGeneratedBy billing://activity/pay-order`.
+- `semanticEquivalent(A, B) = true`, while textual equality is false.
+- The semantic delta is a display-name rename only. It must contain no
+  ID-keyed remove/add pair, no changed provenance edge, and no unrelated
+  locality expansion. Go symbol names, documentation labels, and source spans
+  may change.
+
+This fixture catches the most dangerous identity regression: treating the
+activity's display name as the graph join key. A rename with a changed ID is a
+different fixture and must instead be reported as a migration.
+
+### F1: formatter idempotence
+
+Input with intentionally irregular whitespace:
+
+```gooo
+package   billing
+namespace billing
+entity Order id "billing://entity/order"
+entity PaymentMethod id "billing://entity/payment-method"
+entity Payment id "billing://entity/payment"
+activity PayOrder( Order,PaymentMethod )->Payment
+```
+
+Proposed canonical output:
+
+```gooo
+package billing
+namespace billing
+
+entity Order id "billing://entity/order"
+entity PaymentMethod id "billing://entity/payment-method"
+entity Payment id "billing://entity/payment"
+activity PayOrder(Order, PaymentMethod) -> Payment
+```
+
+Expected result:
+
+- `format(input)` equals the canonical output byte-for-byte.
+- `format(canonical output)` equals the same canonical output, establishing
+  `F(F(source)) = F(source)`.
+- Parsing the input and canonical output yields no diagnostics and equivalent
+  IR, including exact decoded IDs and declaration order.
+- Formatting never rewrites ID contents, changes declaration kind, or uses a
+  display-name-derived ID as a replacement for an explicit ID.
+
+The current AST does not retain comment trivia, so this fixture deliberately
+contains no comments. Comment-preserving formatting needs a separate contract:
+either trivia must be retained losslessly, or the formatter must document that
+comments are not round-tripped. That choice must not be made implicitly while
+claiming formatter idempotence.
+
+### Experiment acceptance table
+
+| Fixture | Primary invariant | Failure meaning |
+| --- | --- | --- |
+| R1 | Recovery is bounded and preserves later declarations | Parser may cascade, loop, or lower malformed facts |
+| E1 | Newer parsers accept legacy input; unknown versions never guess | Version skew can silently change semantics |
+| S1 | Stable IDs survive display-name changes | Identity is coupled to presentation |
+| F1 | Formatter reaches a canonical fixed point without semantic drift | Repeated formatting creates noisy or meaning-changing diffs |
+
+These fixtures should be run at the syntax boundary first, then again after
+lowering and generation. The second pass must compare semantic IDs and facts,
+not generated text alone; generated text is allowed to change when a display
+name changes, provided locality and stable-ID source maps remain correct.
+
+## Self-hosting evidence boundary
+
+Self-hosting is a roadmap, not a current success claim. The present stage is
+Go-hosted: Go owns lexing, parsing, diagnostics, lowering, and any formatter
+implementation, while `.gooo` is the authored source view. A future gooo-hosted
+stage may describe those compiler components in `.gooo`, but that stage is not
+implemented by this repository state.
+
+The stages should share one comparable contract rather than a narrative claim:
+
+| Host stage | Authoritative implementation | Required evidence | Status in this note |
+| --- | --- | --- | --- |
+| Go-hosted bootstrap | Go lexer/parser/lowering/formatter | R1/E1/S1/F1 diagnostics, canonical IR, and formatter fixed-point results | Current target; syntax implementation exists on a separate lane |
+| Transitional dual host | Go implementation plus a `.gooo` declaration of the same contract | Same fixtures produce equivalent diagnostics and IR; differences are explicit deltas | Future experiment; not implemented |
+| gooo-hosted compiler | `.gooo` compiler declarations bootstrap the compiler projection | Independent host runs agree on IDs, facts, diagnostics, formatter output, and provenance of the build | Future goal; no success evidence yet |
+
+For each future host, record `host`, source hash, grammar version, fixture ID,
+diagnostic list, canonical IR hash, formatter output hash, and provenance
+evidence. A missing host executable or missing comparison result is `blocked`,
+not `passed`. This keeps self-hosting progress falsifiable and prevents the
+future projection from being reported as implemented merely because its
+contract is documented.
