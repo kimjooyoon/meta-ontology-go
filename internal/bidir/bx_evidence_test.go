@@ -55,7 +55,11 @@ func TestBXEvidenceMatchesBillingGolden(t *testing.T) {
 }
 
 func TestBXEvidenceSortsLocalityIDsBeforeCanonicalization(t *testing.T) {
-	evidence := BXEvidence{Fixture: "order", Locality: Locality{Touched: []ID{"b", "a"}, Affected: []ID{"d", "c"}}}
+	evidence := BXEvidence{
+		Fixture:         "order",
+		Locality:        Locality{Touched: []ID{"b", "a"}, Affected: []ID{"d", "c"}},
+		PartialConflict: BXConflictEvidence{Transactional: true},
+	}
 	want := "fixture=order\n" +
 		"get_put=fail\n" +
 		"put_get=fail\n" +
