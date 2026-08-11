@@ -3,23 +3,23 @@ package generator
 import "fmt"
 
 func normalizePorts(activity *Activity, entityTypes map[string]string) error {
-	seen := make(map[string]string, len(activity.Inputs)+len(activity.Outputs))
-	if err := normalizePortList(activity, &activity.Inputs, entityTypes, "input", seen); err != nil {
+	if err := normalizePortList(activity, &activity.Inputs, entityTypes, "input"); err != nil {
 		return err
 	}
-	return normalizePortList(activity, &activity.Outputs, entityTypes, "output", seen)
+	return normalizePortList(activity, &activity.Outputs, entityTypes, "output")
 }
 
-func normalizePortList(activity *Activity, ports *[]Port, entityTypes map[string]string, direction string, seen map[string]string) error {
+func normalizePortList(activity *Activity, ports *[]Port, entityTypes map[string]string, direction string) error {
+	seen := make(map[string]struct{}, len(*ports))
 	for index := range *ports {
 		port := &(*ports)[index]
 		if err := normalizePort(port, entityTypes, activity.ID, direction, index); err != nil {
 			return err
 		}
-		if previous, exists := seen[port.GoName]; exists {
-			return fmt.Errorf("generator: activity %q %s name %q conflicts with %s name", activity.ID, direction, port.GoName, previous)
+		if _, exists := seen[port.GoName]; exists {
+			return fmt.Errorf("generator: activity %q has duplicate %s name %q", activity.ID, direction, port.GoName)
 		}
-		seen[port.GoName] = direction
+		seen[port.GoName] = struct{}{}
 	}
 	return nil
 }
