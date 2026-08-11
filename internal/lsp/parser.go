@@ -46,6 +46,7 @@ type ParseResult struct {
 
 type Symbol struct {
 	Name           string
+	Aliases        []string
 	ID             string
 	Kind           SymbolKind
 	Detail         string

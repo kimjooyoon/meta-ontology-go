@@ -74,6 +74,34 @@ func TestDocumentOverlaysRemainURILocal(t *testing.T) {
 	}
 }
 
+func TestSymbolAliasesResolveToCanonicalFeatures(t *testing.T) {
+	uri := "file:///aliases.gooo"
+	symbol := Symbol{
+		Name: "Order", Aliases: []string{"Purchase"}, ID: "billing://entity/order",
+		Kind: symbolClass, Detail: "billing://entity/order",
+		SelectionRange: Range{Start: Position{}, End: Position{Character: 5}},
+	}
+	server := &Server{documents: map[string]*document{
+		uri: {text: "Purchase", result: ParseResult{Symbols: []Symbol{symbol}}},
+	}}
+	params := TextDocumentPositionParams{TextDocument: TextDocumentIdentifier{URI: uri}, Position: Position{Character: 3}}
+	hover, ok := server.hover(params)
+	if !ok || hover.Contents.Value != "billing://entity/order" {
+		t.Fatalf("hover = %#v, found = %v", hover, ok)
+	}
+	locations := server.definition(params)
+	if len(locations) != 1 || locations[0].Range.End.Character != 5 {
+		t.Fatalf("definitions = %#v", locations)
+	}
+	items := server.completion(uri).Items
+	for _, item := range items {
+		if item.Label == "Purchase" && item.Detail == "alias of Order" {
+			return
+		}
+	}
+	t.Fatalf("alias completion missing: %#v", items)
+}
+
 func TestRequestResponseRetainsStringID(t *testing.T) {
 	var input, output bytes.Buffer
 	writeFrameForTest(t, &input, []byte(`{"jsonrpc":"2.0","id":"request-1","method":"shutdown"}`))

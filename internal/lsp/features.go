@@ -34,7 +34,7 @@ func (s *Server) completion(uri string) *CompletionList {
 	}
 	if document, ok := s.documents[uri]; ok {
 		for _, symbol := range document.result.Symbols {
-			items = append(items, CompletionItem{Label: symbol.Name, Kind: int(symbolCompletionKind(symbol.Kind)), Detail: symbol.Detail})
+			items = append(items, symbolCompletions(symbol)...)
 		}
 	}
 	sort.SliceStable(items, func(i, j int) bool { return items[i].Label < items[j].Label })
@@ -59,11 +59,29 @@ func (s *Server) definition(params TextDocumentPositionParams) []Location {
 
 func symbolNamed(symbols []Symbol, name string) (Symbol, bool) {
 	for _, symbol := range symbols {
-		if symbol.Name == name {
+		if symbol.Name == name || symbolAliasNamed(symbol.Aliases, name) {
 			return symbol, true
 		}
 	}
 	return Symbol{}, false
+}
+
+func symbolAliasNamed(aliases []string, name string) bool {
+	for _, alias := range aliases {
+		if alias == name {
+			return true
+		}
+	}
+	return false
+}
+
+func symbolCompletions(symbol Symbol) []CompletionItem {
+	kind := int(symbolCompletionKind(symbol.Kind))
+	items := []CompletionItem{{Label: symbol.Name, Kind: kind, Detail: symbol.Detail}}
+	for _, alias := range symbol.Aliases {
+		items = append(items, CompletionItem{Label: alias, Kind: kind, Detail: "alias of " + symbol.Name})
+	}
+	return items
 }
 
 func uniqueCompletions(items []CompletionItem) []CompletionItem {
