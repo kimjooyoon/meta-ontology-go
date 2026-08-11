@@ -199,6 +199,7 @@ func TestFollowUpScopeBoundariesAndUnknowns(t *testing.T) {
 	}{
 		{"agent/codegen-hypotheses", "docs/research/codegen.md"},
 		{"agent/codegen-fixture-adapter", "docs/research/codegen-experiments.md"},
+		{"agent/bidir-followup", "internal/semantic/graph.go"},
 		{"agent/freshness-research", "internal/research/other/contract.go"},
 		{"agent/integration-governance", "docs/research/integration-promotion.md"},
 		{"agent/lsp-contracts", "docs/research/grammar.md"},
@@ -215,6 +216,16 @@ func TestFollowUpScopeBoundariesAndUnknowns(t *testing.T) {
 		if err := CheckPathScopeForBranch([]string{"docs/research/unknown.md"}, branch); err == nil {
 			t.Errorf("unknown branch %s was not rejected", branch)
 		}
+	}
+}
+
+func TestBidirFollowUpAliasIsExact(t *testing.T) {
+	paths, ok := BranchScope("agent/bidir-followup")
+	if !ok || len(paths) != 1 || paths[0] != "internal/bidir" {
+		t.Fatalf("unexpected bidir-followup ownership: %#v", paths)
+	}
+	if err := CheckPathScopeForBranch([]string{"internal/bidir/hosting_contract.go"}, "agent/bidir-followup"); err != nil {
+		t.Fatal(err)
 	}
 }
 
