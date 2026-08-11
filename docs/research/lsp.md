@@ -673,6 +673,206 @@ and type-check subprocesses. If Go tool startup dominates the latter, measure wa
 and cold startup as separate evidence and improve cancellation/timeout behavior before
 attempting to tighten the numeric budget.
 
+## Cross-layer contract pack
+
+The LSP harness must be able to replay the same source snapshot through syntax,
+semantic IR, bidirectional analysis, code generation, cache, provenance, and CI. This
+section makes that replay contract explicit. It is an implementation target, not a
+claim that the future `gooo-hosted` stage or every listed feature already exists.
+
+### Shared envelope and status vocabulary
+
+Every adapter should exchange a versioned envelope rather than an untyped value. The
+following fields are the smallest common contract; concrete Go types may be split by
+package as long as their serialized meaning remains stable.
+
+```text
+ContractEnvelope {
+  schema: "gooo.contract/1"
+  contractID: string
+  authority: "dsl" | "go" | "derived" | "policy"
+  snapshot: { uri, version, contentHash, toolchain, policyHash }
+  inputs: [{ kind, stableID?, hash, span? }]
+  outputs: [{ kind, stableID?, hash, span? }]
+  evidence: [{ activityID, entityID, agentID, generatedAt, digest }]
+  status: "pass" | "fail" | "deferred" | "not-run"
+  reason?: string
+}
+```
+
+`fail` means a falsifiable invariant was observed; `deferred` means the invariant
+could not yet be evaluated because a named implementation or fixture dependency is
+missing; `not-run` means no evidence was collected. Neither `deferred` nor `not-run`
+may be promoted to `pass` by an adapter or CI formatter. A deferred record must name
+an owner, the missing dependency, and a recheck command or fixture.
+
+The canonical source location is a byte span:
+
+```text
+Span { uri, contentHash, startByte, endByte, startLine, endLine }
+```
+
+Byte offsets are authoritative because the parser and Go token files operate on the
+source bytes. LSP `Position` values are a protocol projection selected during
+`initialize`; they must be derived from the same snapshot and never become a second
+identity. A span at an invalid UTF-8 or UTF-16 boundary is a contract violation, not
+an opportunity to silently clamp a semantic result. Clamping may be used only for a
+recoverable editor request and must emit a diagnostic/test trace explaining it.
+
+### Adapter input/output contracts
+
+| Layer | Required input | Required output | Invariants and negative case |
+| --- | --- | --- | --- |
+| AST parse | `SourceSnapshot{uri, version, bytes, contentHash}` | `ASTResult{root, nodes, byteSpans, parseDiagnostics, snapshotHash}` | All nodes point into the same snapshot. A parser that reports a node from a previous version fails. |
+| Semantic IR | AST result, vocabulary version, provenance policy | `IRResult{stableNodes, typedEdges, sourceRefs, semanticHash, diagnostics}` | IDs come from explicit DSL identity, not display-name coincidence. Renaming `Order` while retaining its ID must not create a new node. |
+| BX/lift | IR, Go AST/type facts, registered semantic markers, source map | `SemanticDelta{authority, additions, removals, locality, lawEvidence}` | A Go helper with no registered identity is implementation detail. Treating `strings.TrimSpace` or a same-named symbol in another package as a semantic delta fails. |
+| Codegen | IR, projection profile, generated-region markers, handwritten slots | `ProjectionResult{files, regions, sourceMap, semanticHash}` | Only affected generated regions may change; handwritten slots survive. Missing, duplicated, or edited markers fail closed. |
+| LSP | JSON-RPC trace, capabilities, snapshot store, IR/index evidence | `LSPResult{responses, notifications, positions, edits, advertisedFeatures, trace}` | Responses use request IDs, UTF-16 ranges are snapshot-safe, stale work is not published, and unimplemented features are not advertised. |
+| Cache | content hash, dependency hashes, toolchain, schema, generator, policy, position encoding | `CacheResult{hit, artifact, key, invalidationReason}` | A hit is valid only for the complete key. Omitting policy or generator version is a stale-hit failure. |
+| Provenance | activity/entity/agent IDs, derivation inputs, evidence digest | append-only `EvidenceRecord` with `wasDerivedFrom` links | Existing evidence is never overwritten or re-used for a different input hash. A mutable “latest” row fails auditability. |
+| CI gate | candidate scope, policy hash, contract results, evidence records | `Decision{status, failedChecks, deferredChecks, scope, evidenceRefs}` | A deferred check remains visible and non-passing. A builder cannot alter the policy entity used to verify its own candidate. |
+
+Adapters should preserve `contentHash`, stable IDs, byte spans, and evidence references
+when forwarding an envelope. An output that cannot be traced back to an input entity is
+incomplete even if its text or graph happens to look correct. Canonical serialization
+must sort URI, stable ID, span, diagnostic, token, edit, and evidence collections by
+their specified keys; map iteration order is never observable output.
+
+### Minimal replay fixture X-01
+
+X-01 is the smallest cross-layer fixture that exercises one activity, two input
+entities, one generated result, one handwritten implementation slot, one Unicode
+identifier, and one generated navigation edge. The `.gooo` source uses the syntax
+defined in `docs/spec.md`; the generated Go and source-map snippets below are fixture
+expectations for a future generator, not current generated files.
+
+```text
+fixtures/x01-cross-layer/
+  manifest.json       schema, Go 1.26.5, UTF-16, cold/warm mode, feature flags
+  workspace/main.gooo  authoritative DSL source
+  workspace/billing.go generated regions plus handwritten slot
+  steps.json           parse, lower, project, open, hover, edit, cancel, gate
+  expected.json        hashes, IR facts, ranges, edits, evidence, decisions
+```
+
+`workspace/main.gooo`:
+
+```gooo
+package billing
+namespace billing
+
+entity 주문 id "billing://entity/order"
+entity PaymentMethod id "billing://entity/payment-method"
+entity Payment id "billing://entity/payment"
+
+activity PayOrder(주문, PaymentMethod) -> Payment
+```
+
+The fixture intentionally combines a Korean display name with an ASCII stable ID.
+The expected normalized IR has stable nodes `billing://entity/order`,
+`billing://entity/payment-method`, `billing://entity/payment`, and an activity ID
+chosen by the DSL identity rule. It has `used(PayOrder, 주문)`,
+`used(PayOrder, PaymentMethod)`, and `wasGeneratedBy(Payment, PayOrder)` facts, each
+with a byte source span and the same `contentHash`.
+
+The expected replay trace is:
+
+1. Parse the snapshot and return AST spans plus a parse diagnostic list.
+2. Lower to deterministic IR and append a parse/lower evidence record.
+3. Project one generated activity boundary and retain a handwritten implementation
+   slot; return generated-region markers and a source map.
+4. Open the document, request hover and definition on `주문`, and return UTF-16
+   ranges that map back to the same byte spans and stable ID.
+5. Edit only the display name `주문` to `주문서`; preserve the stable ID, change the
+   affected source spans, and produce a local workspace edit.
+6. Start a dependent diagnostic request, cancel it at a named barrier, and prove that
+   no old result ID or notification is published after the cancellation.
+7. Re-run with the same complete cache key and record a hit; change the policy hash
+   and record a miss with an explicit invalidation reason.
+8. Emit append-only provenance and a CI decision. Any unimplemented feature is
+   `deferred`, never `pass`.
+
+`expected.json` must compare at least: source and semantic hashes, stable IDs, byte
+spans, UTF-16 ranges, generated region IDs, preserved slot bytes, cache key fields,
+evidence links, result IDs, stale-publication count, and the final status. It may
+normalize only a manifest-declared server timestamp.
+
+### Falsifiable hypotheses and counterexamples
+
+The following hypotheses are testable with X-01 plus the existing U/D/E/G/C fixtures.
+Each counterexample is a deliberately failing input; a test harness must produce
+`fail` evidence rather than quietly repairing it.
+
+| ID and hypothesis | Minimal measurement | Counterexample / expected result |
+| --- | --- | --- |
+| H-X1: identical complete inputs produce identical AST, IR, Go projection, trace, and evidence digests | Repeat X-01 10 times, compare canonical hashes and sorted records | Random map iteration or URI spelling changes a digest: `fail`, with first differing record. |
+| H-X2: stable IDs preserve identity across display renames | Count IR node additions/removals and compare ID set before/after `주문` → `주문서` | Re-keying by display name adds/removes an entity: `fail`; locality is not enough to pass. |
+| H-X3: one byte-span authority yields correct UTF-16 navigation | Round-trip every fixture boundary byte → UTF-16 → byte under UTF-16 negotiation | Cursor inside an emoji/combining sequence or CRLF is accepted as an exact semantic span: `fail` (recoverable clamp must be separately traced). |
+| H-X4: incremental diagnostics are bounded by dependency closure | Compare reparsed URI count, affected diagnostic IDs, and stale drops after one edit | Unrelated files receive changed diagnostics, or a pre-cancel result is published: `fail`. |
+| H-X5: BX lifting is conservative and law-preserving | Count accepted Go facts and run Get-Put, Put-Get, round-trip, locality assertions | A same-named unregistered helper becomes an IR fact: `fail`; an ambiguous candidate is `deferred`. |
+| H-X6: codegen changes only affected regions and preserves slots | Hash each generated region and handwritten slot before/after the X-01 rename | Marker deletion, overlapping region, or slot rewrite: `fail` and no generated output is accepted. |
+| H-X7: cache hits imply semantic freshness | Record key tuple, hit/miss, invalidation reason, and output hash | Same content with changed policy/generator/position schema hits: `fail` as stale cache. |
+| H-X8: provenance is append-only and input-specific | Verify unique evidence receipt IDs and `wasDerivedFrom` digest chain | A later build overwrites an earlier record or points to a different snapshot: `fail`. |
+| H-X9: CI status reflects implementation reality | Reconcile each contract status with policy and evidence references | Missing implementation is rendered green, or `deferred` disappears from the decision: `fail`. |
+
+### Measurement and acceptance protocol
+
+Run X-01 on Go 1.26.5 with fixed OS/architecture, `GOMAXPROCS=1`, race disabled for
+latency baselines, and both cold and warm cache modes. Record a run manifest containing
+commit, fixture hash, toolchain, position encoding, policy hash, and environment. The
+measurement tuple is:
+
+```text
+(p50, p95, p99, ns/op, B/op, allocs/op,
+ reparsedURIs, affectedDiagnostics, staleDrops, cacheHits,
+ generatedRegionChanges, preservedSlotBytes, evidenceCount)
+```
+
+Use the operation budgets above as initial hypotheses. A performance result passes
+only when its semantic assertions pass, p95 is within budget or no more than 20% over
+the checked-in baseline, allocation counts are reported, and the closure counters
+show that the whole workspace was not recomputed for a local edit. Race runs are a
+separate correctness gate. A missing benchmark or unavailable Go-hosted adapter is
+`deferred`, not a passing zero.
+
+The fixture outcome is `pass` only if every required assertion passes and every
+required artifact has evidence. It is `fail` if any negative case is accepted, any
+stale result is published, or any scope/identity invariant is violated. It is
+`deferred` only when the manifest names the unavailable stage, owner, dependency, and
+recheck command; the CI decision must still remain non-passing. This distinction keeps
+the Go-hosted initial stage honest while leaving comparable evidence ready for the
+future gooo-hosted stage.
+
+### Follow-up implementation contracts
+
+The eventual packages can choose different concrete names, but their boundaries must
+be equivalent to these contracts:
+
+```text
+ParseSnapshot(snapshot) -> ASTResult | DiagnosticResult
+LowerAST(ast, vocabulary, policy) -> IRResult | DiagnosticResult
+Reconcile(view, authority, registeredFacts) -> SemanticDelta
+GenerateProjection(ir, profile, slots) -> ProjectionResult
+ServeLSP(request, snapshotStore, index) -> LSPResult
+LoadArtifact(cacheKey) -> CacheResult
+AppendEvidence(record) -> EvidenceReceipt
+EvaluateGate(scope, policy, results, evidence) -> Decision
+```
+
+`ParseSnapshot` and `LowerAST` must carry snapshot hashes and source references;
+`Reconcile` must return explicit authority and locality; `GenerateProjection` must
+return region/source-map hashes; `ServeLSP` must return a trace suitable for protocol
+replay; `LoadArtifact` must expose why a key missed; `AppendEvidence` must reject
+duplicate receipt IDs or input-digest mismatches; and `EvaluateGate` must preserve
+`fail`/`deferred` distinctions. These are contracts for future implementation and
+independent tests, not an excuse to add placeholder success paths.
+
+The Go-hosted bootstrap can implement these boundaries in standard-library packages
+and record which contracts are active. A later gooo-hosted compiler may regenerate the
+same adapters, but it must replay X-01 and produce equivalent semantic hashes,
+source-map locality, protocol results, cache decisions, and provenance links before
+its stage is considered implemented.
+
 ## Source references
 
 - [LSP 3.18 specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/)
