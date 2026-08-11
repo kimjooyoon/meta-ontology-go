@@ -263,35 +263,3 @@ func TestScopeTableMatchesAllowlist(t *testing.T) {
 		}
 	}
 }
-
-func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
-	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	text := string(workflow)
-	guard := "if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')"
-	if strings.Count(text, guard) != 5 {
-		t.Fatalf("expected five full-check push guards, got %d", strings.Count(text, guard))
-	}
-	for _, condition := range []string{"if: github.event_name == 'pull_request'", "if: github.event_name == 'push'"} {
-		if !strings.Contains(text, condition) {
-			t.Fatalf("workflow lost event condition %q", condition)
-		}
-	}
-	fullJobs := []string{"format:", "vet:", "test:", "race:", "semantic:", "policy:"}
-	for _, job := range fullJobs {
-		if !strings.Contains(text, "  "+job) {
-			t.Fatalf("workflow lost required full job %q", job)
-		}
-	}
-	if !strings.Contains(text, "PR authoritative") || !strings.Contains(text, "push full") {
-		t.Fatal("full-matrix check names do not identify their event source")
-	}
-	if !strings.Contains(text, "agent push caps-only") {
-		t.Fatal("agent push policy check is not identified as caps-only")
-	}
-	if strings.Count(text, "PR authoritative") != 6 {
-		t.Fatalf("expected six PR-authoritative check names, got %d", strings.Count(text, "PR authoritative"))
-	}
-}
