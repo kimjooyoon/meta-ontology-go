@@ -59,7 +59,7 @@ func ParseFile(filename, source string) (*File, Diagnostics) {
 
 func (p *Parser) parseFile() *File {
 	start := Position{Offset: 0, Line: 1, Column: 1}
-	end := p.peek().Span.End
+	end := p.tokens[len(p.tokens)-1].Span.End
 	file := &File{Span: startSpan(p.filename, start, end)}
 
 	p.skipIllegal()
