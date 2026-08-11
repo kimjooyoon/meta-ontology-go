@@ -170,6 +170,7 @@ func TestFollowUpBranchScopeAliases(t *testing.T) {
 		{"agent/bidirectional-property-matrix", "docs/research/bidirectional.md"},
 		{"agent/cache-experiment-followup", "docs/research/cache.md"},
 		{"agent/ci-ownership-audit", ".github/agent-scope-table.md"},
+		{"agent/ci-ownership-audit-current", "internal/verify/scope.go"},
 		{"agent/ci-scope-triage", "internal/verify/scope.go"},
 		{"agent/cli-bootstrap-contract", "cmd/gooo/evidence_adapter.go"},
 		{"agent/cli-check", "cmd/gooo/main.go"},
@@ -205,6 +206,7 @@ func TestFollowUpScopeBoundariesAndUnknowns(t *testing.T) {
 		{"agent/lsp-contracts", "docs/research/grammar.md"},
 		{"agent/testing-research-contracts", "docs/research/security.md"},
 		{"agent/ci-ownership-audit", "internal/semantic/graph.go"},
+		{"agent/ci-ownership-audit-current", "internal/semantic/graph.go"},
 		{"agent/cli-check", "internal/semantic/graph.go"},
 	}
 	for _, test := range cases {
