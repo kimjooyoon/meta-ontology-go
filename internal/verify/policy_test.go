@@ -80,7 +80,9 @@ func TestBranchScopeAllowlist(t *testing.T) {
 		{"agent/freshness-detection", "internal/detection/freshness/check.go"},
 		{"agent/roundtrip-detector", "internal/detection/roundtrip/compare.go"},
 		{"agent/roundtrip-detection", "internal/detection/roundtrip/compare.go"},
+		{"agent/linecaps", "internal/detection/linecaps/check.go"},
 		{"agent/line-cap-detector", "internal/detection/linecaps/check.go"},
+		{"agent/performance", "internal/detection/performance/benchmark.go"},
 		{"agent/performance-regression", "internal/detection/performance/benchmark.go"},
 		{"agent/semantic-delta-detector", "internal/detection/semanticdelta/detect.go"},
 		{"agent/semanticdelta", "internal/detection/semanticdelta/detect.go"},
@@ -94,7 +96,10 @@ func TestBranchScopeAllowlist(t *testing.T) {
 		{"agent/prototype-query", "internal/query/prototype.go"},
 		{"agent/provenance-store", "internal/provenance/store.go"},
 		{"agent/prototype-provenance", "internal/provenance/prototype.go"},
+		{"agent/self-hosting-bootstrap", "docs/research/self-hosting.md"},
+		{"agent/self-hosting-bootstrap", "internal/bootstrap/bootstrap.go"},
 		{"agent/ci-workflow", ".github/workflows/ci.yml"},
+		{"agent/ci-evidence-contract", "internal/verify/evidence.go"},
 	}
 	for _, test := range cases {
 		if err := CheckPathScopeForBranch([]string{test.path}, test.branch); err != nil {
@@ -119,11 +124,15 @@ func TestBranchScopeBoundaries(t *testing.T) {
 		{"agent/roundtrip-detector", "internal/detection/cycles/detect.go"},
 		{"agent/dependency-cycle-detector", "internal/detection/linecaps/check.go"},
 		{"agent/line-cap-detector", "internal/detection/performance/benchmark.go"},
+		{"agent/linecaps", "internal/detection/performance/benchmark.go"},
 		{"agent/fuzz-conformance", "internal/conformance/markers.go"},
 		{"agent/provenance-store", "internal/query/engine.go"},
 		{"agent/performance-regression", "internal/detection/linecaps/check.go"},
+		{"agent/performance", "internal/detection/linecaps/check.go"},
 		{"agent/protected-regions", "internal/conformance/markers.go"},
 		{"agent/semanticdelta", "internal/provenance/store.go"},
+		{"agent/self-hosting-bootstrap", "docs/research/other.md"},
+		{"agent/self-hosting-bootstrap", "internal/semantic/graph.go"},
 	}
 	for _, boundary := range boundaries {
 		if err := CheckPathScopeForBranch([]string{boundary.path}, boundary.branch); err == nil {
