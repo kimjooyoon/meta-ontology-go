@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
@@ -18,44 +19,84 @@ func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout
 		return exitUsage
 	}
 	filename, outputDir := args[0], args[2]
-	source, err := reader.ReadFile(filename)
+	deadline := time.Now().Add(commandDeadline)
+	source, err := readSourceWithDeadline(reader, filename, remainingDeadline(deadline))
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: %s: read error: %v\n", filename, err)
 		return exitFailure
 	}
-	file, diagnostics := parser.ParseFile(filename, string(source))
-	for _, diagnostic := range diagnostics.SortBySpan() {
-		fmt.Fprintln(stderr, diagnostic.String())
+	file, diagnostics, err := parseWithDeadline(parser, filename, string(source), remainingDeadline(deadline))
+	if err != nil {
+		fmt.Fprintf(stderr, "gooo: %s: parse error: %v\n", filename, err)
+		return exitFailure
+	}
+	if !reportDiagnostics(diagnostics, stderr) {
+		return exitFailure
 	}
 	if diagnostics.HasErrors() {
 		return exitFailure
 	}
-	ir, err := bidir.Lower(file)
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: semantic lowering failed: %v\n", filename, err)
-		return exitFailure
-	}
-	model, err := projectionIR(ir)
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: generator adapter failed: %v\n", filename, err)
-		return exitFailure
-	}
-	result, err := generator.Generate(model, nil)
+	generated, err := generateWithDeadline(file, remainingDeadline(deadline))
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: %s: generation failed: %v\n", filename, err)
 		return exitFailure
 	}
-	if err := os.MkdirAll(outputDir, 0o755); err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: create output directory: %v\n", outputDir, err)
+	root, err := canonicalOutputRoot(outputDir)
+	if err != nil {
+		fmt.Fprintf(stderr, "gooo: %s: output root: %v\n", outputDir, err)
 		return exitFailure
 	}
-	output := filepath.Join(outputDir, "semantic.gooo.go")
-	if err := os.WriteFile(output, result.Source, 0o644); err != nil {
+	output, err := resolveOutputPath(root, generatedFileName)
+	if err != nil {
+		fmt.Fprintf(stderr, "gooo: %s: output path: %v\n", outputDir, err)
+		return exitFailure
+	}
+	if err := writeGeneratedOutput(output, generated); err != nil {
 		fmt.Fprintf(stderr, "gooo: %s: write generated source: %v\n", output, err)
 		return exitFailure
 	}
-	fmt.Fprintf(stdout, "generated: %s\n", output)
+	fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(outputDir, generatedFileName))
 	return exitOK
+}
+
+type generationResult struct {
+	source []byte
+	err    error
+}
+
+func generateWithDeadline(file *syntax.File, timeout time.Duration) ([]byte, error) {
+	if timeout <= 0 {
+		return nil, errCommandDeadline
+	}
+	result := make(chan generationResult, 1)
+	go func() {
+		source, err := generateSource(file)
+		result <- generationResult{source: source, err: err}
+	}()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case generated := <-result:
+		return generated.source, generated.err
+	case <-timer.C:
+		return nil, errCommandDeadline
+	}
+}
+
+func generateSource(file *syntax.File) ([]byte, error) {
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return nil, fmt.Errorf("semantic lowering failed: %w", err)
+	}
+	model, err := projectionIR(ir)
+	if err != nil {
+		return nil, fmt.Errorf("generator adapter failed: %w", err)
+	}
+	result, err := generator.Generate(model, nil)
+	if err != nil {
+		return nil, err
+	}
+	return result.Source, nil
 }
 
 func projectionIR(ir semantic.IR) (generator.SemanticIR, error) {

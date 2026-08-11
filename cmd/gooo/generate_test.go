@@ -43,3 +43,30 @@ func TestRunGenerateRejectsInvalidUsage(t *testing.T) {
 		t.Fatalf("usage = code %d, stderr %q", code, stderr.String())
 	}
 }
+
+func TestGenerateDigestMatchSkipsWrite(t *testing.T) {
+	outputDir := t.TempDir()
+	args := []string{"billing.gooo", "--out", outputDir}
+	if code := runGenerate(args, fixtureReader{source: validSource}, SyntaxSourceParser{}, &bytes.Buffer{}, &bytes.Buffer{}); code != exitOK {
+		t.Fatalf("initial generate code = %d", code)
+	}
+	path := filepath.Join(outputDir, generatedFileName)
+	before, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(outputDir, 0o555); err != nil {
+		t.Skipf("cannot make output root read-only: %v", err)
+	}
+	defer os.Chmod(outputDir, 0o755)
+	if code := runGenerate(args, fixtureReader{source: validSource}, SyntaxSourceParser{}, &bytes.Buffer{}, &bytes.Buffer{}); code != exitOK {
+		t.Fatalf("digest-only generate code = %d", code)
+	}
+	after, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !os.SameFile(before, after) || before.Mode() != after.Mode() || !before.ModTime().Equal(after.ModTime()) {
+		t.Fatal("digest match rewrote the generated file")
+	}
+}

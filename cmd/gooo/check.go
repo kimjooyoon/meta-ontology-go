@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
+	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -25,7 +25,7 @@ type SourceParser interface {
 type OSFileReader struct{}
 
 func (OSFileReader) ReadFile(filename string) ([]byte, error) {
-	return os.ReadFile(filename)
+	return readRegularFile(filename, maxInputBytes)
 }
 
 // SyntaxSourceParser delegates parsing to the repository syntax contract.
@@ -41,14 +41,19 @@ func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, s
 		return exitUsage
 	}
 	filename := args[0]
-	source, err := reader.ReadFile(filename)
+	deadline := time.Now().Add(commandDeadline)
+	source, err := readSourceWithDeadline(reader, filename, remainingDeadline(deadline))
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: %s: read error: %v\n", filename, err)
 		return exitFailure
 	}
-	_, diagnostics := parser.ParseFile(filename, string(source))
-	for _, diagnostic := range diagnostics.SortBySpan() {
-		fmt.Fprintln(stderr, diagnostic.String())
+	_, diagnostics, err := parseWithDeadline(parser, filename, string(source), remainingDeadline(deadline))
+	if err != nil {
+		fmt.Fprintf(stderr, "gooo: %s: parse error: %v\n", filename, err)
+		return exitFailure
+	}
+	if !reportDiagnostics(diagnostics, stderr) {
+		return exitFailure
 	}
 	if diagnostics.HasErrors() {
 		return exitFailure
