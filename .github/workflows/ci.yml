@@ -20,7 +20,8 @@ concurrency:
 
 jobs:
   format:
-    name: gofmt
+    name: "gofmt [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +36,8 @@ jobs:
         run: test -z "$(gofmt -l .)"
 
   vet:
-    name: go vet
+    name: "go vet [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +51,8 @@ jobs:
       - run: go vet ./...
 
   test:
-    name: go test
+    name: "go test [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +66,8 @@ jobs:
       - run: go test ./...
 
   race:
-    name: go test -race
+    name: "go test -race [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -77,7 +81,8 @@ jobs:
       - run: go test -race ./...
 
   semantic:
-    name: Semantic conformance
+    name: "Semantic conformance [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +101,7 @@ jobs:
         run: ./scripts/semantic-conformance.sh
 
   policy:
-    name: CI policy
+    name: "CI policy [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'agent push caps-only' }}]"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
