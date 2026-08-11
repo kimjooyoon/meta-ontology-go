@@ -490,6 +490,82 @@ an expected failure or fixed regression test. A finding is closed only after an
 independent replay proves the property, not merely after the original run stops
 crashing.
 
+## Falsifiable implementation contracts
+
+The security research is useful only if a future AST/IR/BX/codegen/LSP/cache/
+provenance/CI implementation can run the same fixture and produce comparable
+evidence. The contracts below are proposals for measurement, not measurements of
+the current skeleton. An absent entry point is `deferred`; it must not be reported as
+a successful implementation.
+
+### Shared experiment record
+
+Every fixture and fuzz finding should have one normalized record. The record may be
+serialized as JSON, but its fields and meanings must remain stable across Go-hosted
+and future gooo-hosted stages.
+
+| Field | Input/output contract |
+| --- | --- |
+| `fixture_id` | Stable ID such as `ast/truncated-string-001`; never derive identity from a display name |
+| `stage` | `ast`, `ir`, `bx`, `codegen`, `lsp`, `cache`, `provenance`, `ci`, or `fuzz` |
+| `input_digest` | Digest of exact input bytes plus declared workspace/options; no normalized-only digest |
+| `policy_digest` | Digest/version of limits, ontology, verifier, and security policy used |
+| `expected_class` | `accept`, `reject`, `candidate`, `blocked`, or `deferred` |
+| `observed_class` | Same vocabulary; unknown or missing is a failure of the harness |
+| `metrics` | Wall/CPU time, peak memory, allocations, size counts, process count, path counts, and output bytes |
+| `semantic_output` | Canonical IR/fingerprint or a bounded diagnostic; no implicit semantic fact from absence |
+| `side_effects` | Read/write paths, generated manifest, evidence delta, cache delta, child processes, and network attempts |
+| `oracle` | Deterministic predicate comparing expected and observed class, metrics, semantics, and side effects |
+| `rollback_code` | One of R0–R4 when the oracle fails; empty only for a passing, side-effect-free fixture |
+| `evidence_digest` | Digest of the record and referenced artifacts; never a claim that the record was independently verified |
+
+The minimum measurement set is: `wall_ns`, `cpu_ns` when available, `peak_bytes`,
+`alloc_bytes`, token/AST-node/declaration/fact counts, generated file/byte counts,
+LSP queue depth, cache hit/miss, `processes_started`, `paths_read`,
+`paths_written`, `paths_outside_root`, `network_attempts`, diagnostic digest,
+semantic fingerprint, accepted/rejected evidence count, and rollback result. A
+security pass requires `processes_started == 0` for compiler-only fixtures,
+`paths_outside_root == 0`, `network_attempts == 0` unless explicitly allowed, and
+all observed counts within the declared budget.
+
+### Hypothesis and counterexample matrix
+
+Each hypothesis is falsifiable: the listed counterexample must fail the gate even if
+the returned error text looks reasonable. The fixture is the smallest proposed
+reproducer, not a claim that the corresponding implementation exists today.
+
+| Hypothesis | Minimal fixture and counterexample | Measurements | Pass / fail / deferred | Follow-up implementation contract |
+| --- | --- | --- | --- | --- |
+| H-AST-1: parsing is total and bounded | `ast/truncated-string-001`: valid billing prefix ending inside a quoted ID, plus invalid UTF-8 and NUL variants. Counterexample: panic, partial valid AST, or input-dependent hang | Input bytes, tokens, AST nodes, diagnostics digest, wall/peak memory, outside paths/processes | Pass if deterministic bounded rejection and zero side effects; fail on panic, hang, or accepted partial semantics; deferred if parser API is absent | `Parse(bytes, source_span, limits) -> {AST|diagnostics, source_digest, metrics}`; never execute workspace data |
+| H-IR-1: canonicalization is idempotent and namespace-safe | `ir/namespace-collision-001`: two `Payment` display names with distinct stable IDs, alias rename, and duplicate-ID negative case. Counterexample: same fingerprint for distinct IDs or alias creates a new ID | Canonical node/fact counts, ID map, fingerprint before/after canonicalization, diagnostics | Pass if `canon(canon(IR)) == canon(IR)` and distinct IDs remain distinct; fail on name-based merge or silent duplicate acceptance; deferred if canonical IR is absent | `Lower(AST, policy) -> canonical IR + diagnostics + source-backed facts`; ID/namespace validation precedes derivation |
+| H-BX-1: round-trip does not invent semantic facts | `bx/helper-boundary-001`: registered semantic call plus `strings.TrimSpace` helper and missing-source-span observation. Counterexample: helper lifted as a semantic relation or source-less fact accepted | Added/removed delta, candidate count, locality set, source-span validity, semantic fingerprint | Pass if DSL→IR→Go→lift preserves semantic equivalence and helper remains implementation detail; fail on spurious/unsupported promotion; deferred if analyzer/BX boundary is absent | `Lift(GoObservation) -> {deterministic delta|candidate|syntactic}`; `Reconcile` accepts only source-backed deterministic facts |
+| H-CG-1: generation plans before it mutates and preserves locality | `codegen/marker-collision-001`: one changed activity, unrelated handwritten slot, forged markers, symlink target, and pre-existing non-generated file. Counterexample: partial write, marker-based overwrite, or unrelated digest change | Plan count, target manifest, generated bytes, slot hash, files/bytes written, paths outside root, two-run digest | Pass if conflict aborts before writes and valid run is deterministic/local; fail on unsafe overwrite or unrelated change; deferred if generator is absent | `Plan(IR, prior_manifest) -> plan`; `Commit(plan) -> manifest`; commit is atomic and provenance-bound |
+| H-LSP-1: URI containment and cancellation are observable | `lsp/outside-uri-cancel-001`: outside-root `file:` URI, oversized request, duplicate request ID, cancellation immediately before response. Counterexample: outside read, stale response after cancel, or unbounded queue | Request bytes, queue depth, wall/CPU time, response digest, paths read, cancellation latency, diagnostics size | Pass if rejected or cancelled within budget with no outside access/stale response; fail on leaked path/result; deferred if LSP transport is absent | `Handle(ctx, workspace_roots, request) -> bounded response/diagnostic`; every read requires an authorized root and context |
+| H-CACHE-1: security-relevant inputs are complete cache keys | `cache/policy-toolchain-miss-001`: one-at-a-time changes to policy, generator, toolchain, options, and source bytes. Counterexample: stale hit after any change | Key component digests, hit/miss, recompute count, artifact digest, stale-entry handling | Pass if every security-relevant change misses and recomputes; fail on stale hit or authoritative-source eviction; deferred if cache is absent | `Lookup(tuple) -> hit(artifact_digest)|miss`; tuple includes schema/source/IR/generator/policy/toolchain/options |
+| H-PROV-1: evidence cannot self-authorize | `provenance/old-receipt-001`: old receipt plus changed input, forged span, candidate fact marked verified, duplicate evidence, mismatched policy digest. Counterexample: accepted claim, merge scope, or release receipt | Accepted/rejected evidence, lineage mismatch count, current input/output digests, accepted delta count, freshness result | Pass if only current source-backed evidence is accepted; fail if stale/forged/candidate evidence authorizes anything; deferred if store/verifier is absent | `VerifyClaim(claim, evidence, current_inputs) -> verdict + append-only receipt`; candidate evidence never grants authority |
+| H-CI-1: trusted gate cannot be rewritten by its candidate | `ci/protected-kernel-edit-001`: PR modifies verifier, workflow, ontology, or allowed-scope policy. Counterexample: trusted job executes candidate verifier or accepts candidate policy | Protected-file diff, candidate-policy process count, token permissions, artifact/cache trust label, gate verdict | Pass if trusted base detects edit and candidate-policy execution in trusted gate is zero; fail on self-approval; deferred until trusted-base execution exists | `Gate(base, head, trusted_verifier, evidence) -> verdict`; verifier/policy/workflow identity comes from protected base |
+| H-FZ-1: malicious DSL fuzz preserves stage invariants | `fuzz/dsl-seed-001`: billing seed mutated by truncation, invalid bytes, deep nesting, duplicate IDs, path-shaped IDs, fan-out, marker injection. Counterexample: panic, timeout, outside path, process, non-deterministic error, or forged fact accepted | Cases, corpus revision, crash/timeout count, p95/max wall time, peak memory, paths/processes, evidence/cache deltas, minimized-seed digest | Pass if seed replay and bounded smoke fuzz have zero untriaged violations; fail on any security side effect; deferred if fuzz target/harness is absent | Fuzz runner returns the shared experiment record, isolates temp roots, persists minimized seeds, and replays failures in ordinary CI |
+
+The negative fixture must be tested in both directions where applicable: a malicious
+input must be rejected without side effects, while a minimally repaired input must
+reach the intended stage and produce the expected semantic/output fingerprint. This
+prevents a gate from passing only because it rejects all input.
+
+### Decision semantics
+
+Use four explicit outcomes in CI and evidence:
+
+| Outcome | Meaning | Merge/release consequence |
+| --- | --- | --- |
+| `pass` | The entry point ran, the oracle passed, and all required evidence is present | May satisfy only the named gate and scope |
+| `fail` | The entry point ran and an invariant, budget, or oracle failed | Block; execute rollback and retain evidence |
+| `blocked` | A required protected dependency or independent verifier rejected the operation | Block; do not substitute a candidate result |
+| `deferred` | The entry point is not implemented or intentionally not run | Never counts as pass; only documents a scaffold baseline |
+
+The current CLI `check` behavior belongs to `deferred`, not `pass`. A future CI
+adapter must carry this outcome in its evidence rather than converting a missing
+implementation into a green security result.
+
 ## Self-hosting contract and evidence
 
 Self-hosting is a separate security milestone, not an implication of having a Go
