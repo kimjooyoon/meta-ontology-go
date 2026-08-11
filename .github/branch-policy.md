@@ -52,9 +52,11 @@ Pushes run the Go caps without using the push event's `before` SHA, because a
 rebased-before revision may not exist in the checkout. An `agent/**` push is a
 cap-only auxiliary run; it never substitutes for the six-job full matrix. Pushes
 to `integration` or `main` run all six full jobs. Pull-request events also run
-all six jobs, and their check names are marked `PR authoritative`; these are the
-branch-protection and merge-gate checks. The corresponding push names are marked
-`push full` or `agent push caps-only`, so an auxiliary push result cannot be
-mistaken for the authoritative PR result. Pull-request events retain the
-complete base-to-head changed-path and branch-ownership check; the verifier also
-reports unavailable revisions deterministically.
+all six jobs; the existing required check names remain canonical (`gofmt`, `go
+vet`, `go test`, `go test -race`, `Semantic conformance`, and `CI policy`) so
+branch protection does not break during ownership updates. The workflow run name
+and the CI policy step summary identify `PR authoritative`, `push full`, or
+`agent push cap-only`, so an auxiliary push result cannot be mistaken for the
+authoritative PR result. Pull-request events retain the complete base-to-head
+changed-path and branch-ownership check; the verifier also reports unavailable
+revisions deterministically.

@@ -1,4 +1,5 @@
 name: CI
+run-name: "CI [${{ github.event_name == 'pull_request' && 'PR authoritative' || github.event_name == 'push' && startsWith(github.ref, 'refs/heads/agent/') && 'agent push cap-only' || 'push full' }}]"
 
 on:
   push:
@@ -20,7 +21,7 @@ concurrency:
 
 jobs:
   format:
-    name: "gofmt [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    name: gofmt
     if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
@@ -36,7 +37,7 @@ jobs:
         run: test -z "$(gofmt -l .)"
 
   vet:
-    name: "go vet [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    name: go vet
     if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
@@ -51,7 +52,7 @@ jobs:
       - run: go vet ./...
 
   test:
-    name: "go test [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    name: go test
     if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
@@ -66,7 +67,7 @@ jobs:
       - run: go test ./...
 
   race:
-    name: "go test -race [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    name: go test -race
     if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
@@ -81,7 +82,7 @@ jobs:
       - run: go test -race ./...
 
   semantic:
-    name: "Semantic conformance [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
+    name: Semantic conformance
     if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')
     runs-on: ubuntu-latest
     steps:
@@ -101,7 +102,7 @@ jobs:
         run: ./scripts/semantic-conformance.sh
 
   policy:
-    name: "CI policy [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'agent push caps-only' }}]"
+    name: CI policy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -112,6 +113,24 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Record CI event source
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          CI_REF: ${{ github.ref }}
+        run: |
+          if [ "$CI_EVENT" = "pull_request" ]; then
+            source="PR authoritative"
+          elif [ "$CI_EVENT" = "push" ] && [[ "$CI_REF" == refs/heads/agent/* ]]; then
+            source="agent push cap-only"
+          else
+            source="push full"
+          fi
+          {
+            echo "### CI event source"
+            echo "- run source: $source"
+            echo "- event: $CI_EVENT"
+            echo "- ref: $CI_REF"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Check changed-file scope, Go size caps, and PR target
         if: github.event_name == 'pull_request'
         env:
