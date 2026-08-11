@@ -1,0 +1,20 @@
+{
+  "schema": "gooo/bootstrap-evidence/v1",
+  "stage": "gooo-hosted-candidate",
+  "producer": "gooo://host/compiler/gooo",
+  "verifier": "gooo://host/verifier/go",
+  "source_digest": null,
+  "semantic_digest": null,
+  "provenance_digest": null,
+  "decision": "not-run",
+  "evidence_status": "not-run",
+  "promotion_eligible": false,
+  "checks": {
+    "format": "not-run",
+    "vet": "not-run",
+    "test": "not-run",
+    "race": "not-run",
+    "semantic_cli": "not-run",
+    "bootstrap_compare": "not-run"
+  }
+}

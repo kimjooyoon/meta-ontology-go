@@ -24,6 +24,15 @@ throughout this transition. Once the CLI exists, the same step automatically run
 round-trip, evidence, scope, and generated-region checks under the
 `semantic_conformance` build tag.
 
+## Staged verifier promotion
+
+Self-hosting is an explicit CI migration, not a replacement of the trust root
+with a single self-checking compiler. The workflow currently pins
+`GOOO_CONFORMANCE_STAGE=0`: the Go verifier is authoritative and the existing
+format, vet, test, race, scope, DAMP/DRY, and deferred-CLI gates remain
+required. Promotion criteria are documented in `.github/conformance-plan.md`
+and require a reviewed CI-owned change.
+
 The CI/verification change itself is intentionally scoped to `.github/**`,
 `scripts/**`, and `internal/verify/**`. A change outside those paths needs its owning
 agent and its own review boundary.
