@@ -48,6 +48,40 @@ func TestFixtureCorruptionRejectsWithoutChangingPrevious(t *testing.T) {
 	}
 }
 
+func TestFixtureStrictMarkersRejectUnknownAttributesAndKindMismatch(t *testing.T) {
+	result := mustAcceptanceResult(t, acceptanceFixture(), nil)
+	corruptions := []string{
+		strings.Replace(string(result.Source), `kind="entity"`, `kind="entity" extra="x"`, 1),
+		strings.Replace(string(result.Source), `//gooo:generated:end id="gooo://activity/compile" kind="activity"`, `//gooo:generated:end id="gooo://activity/compile" kind="entity"`, 1),
+		strings.Replace(string(result.Source), `//gooo:generated:end id="gooo://activity/compile" kind="activity"`, `//gooo:generated:end kind="activity"`, 1),
+		strings.Replace(string(result.Source), `//gooo:slot:start id="gooo://slot/compile-implementation"`, `//gooo:slot:start id="gooo://slot/compile-implementation" extra="x"`, 1),
+	}
+	for index, corrupted := range corruptions {
+		previous := []byte(corrupted)
+		_, err := Generate(acceptanceFixture(), previous)
+		if err == nil {
+			t.Fatalf("corruption %d was accepted", index)
+		}
+		if !bytes.Equal(previous, []byte(corrupted)) {
+			t.Fatalf("corruption %d changed caller-owned previous source", index)
+		}
+	}
+}
+
+func TestFixtureRegionAndSlotStableIDCollisionRejectsWithoutMutation(t *testing.T) {
+	result := mustAcceptanceResult(t, acceptanceFixture(), nil)
+	corrupted := strings.Replace(string(result.Source), `//gooo:slot:start id="gooo://slot/compile-implementation"`, `//gooo:slot:start id="gooo://entity/source"`, 1)
+	corrupted = strings.Replace(corrupted, `//gooo:slot:end id="gooo://slot/compile-implementation"`, `//gooo:slot:end id="gooo://entity/source"`, 1)
+	previous := []byte(corrupted)
+	_, err := Generate(acceptanceFixture(), previous)
+	if err == nil || !strings.Contains(err.Error(), "stable ID") {
+		t.Fatalf("expected stable-ID collision rejection, got %v", err)
+	}
+	if !bytes.Equal(previous, []byte(corrupted)) {
+		t.Fatal("stable-ID rejection changed caller-owned previous source")
+	}
+}
+
 func TestFixtureSourceMapKeepsStableSemanticSource(t *testing.T) {
 	ir := acceptanceFixture()
 	ir.Activities[0].Source = SourceSpan{URI: "main.gooo", Start: Position{Line: 4, Column: 1}, End: Position{Line: 9, Column: 1}}

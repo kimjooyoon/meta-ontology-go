@@ -14,6 +14,7 @@ import (
 const acceptanceFingerprint = "305585aa913a5d9af8409af08c83e3bc1a86192caa9228fb9bafe054e9906e6d"
 
 func TestAcceptanceFixtureReproducibility(t *testing.T) {
+	// GEN-DET-001: repeated projection bytes and evidence hashes are stable.
 	ir := acceptanceFixture()
 	first := mustAcceptanceResult(t, ir, nil)
 	second := mustAcceptanceResult(t, ir, nil)
