@@ -77,9 +77,12 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 			t.Fatalf("workflow lost event-source evidence marker %q", marker)
 		}
 	}
+	if strings.Count(text, "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}") != 7 {
+		t.Fatalf("expected seven immutable checkout refs, got %d", strings.Count(text, "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"))
+	}
 }
 
-func TestCIWorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
+func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
 	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
 	if err != nil {
 		t.Fatal(err)

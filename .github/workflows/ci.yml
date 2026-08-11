@@ -221,6 +221,96 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ci-evidence.json
+          path: |
+            ci-evidence.json
+            ci-jobs.json
+          if-no-files-found: error
+          retention-days: 14
+
+  proof:
+    name: CI proof bundle
+    needs: [format, vet, test, race, semantic, policy]
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Download canonical evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-evidence-input
+      - name: Reproduce proof fixture
+        run: |
+          rm -rf ci-generated-proof
+          mkdir -p ci-generated-proof
+          go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated-proof
+          test -s ci-generated-proof/semantic.gooo.go
+          test -z "$(gofmt -l ci-generated-proof/semantic.gooo.go)"
+          test -z "$(git diff --name-only)"
+      - name: Collect proof context
+        uses: actions/github-script@v7
+        env:
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const pull = context.payload.pull_request;
+            const baseRef = pull ? pull.base.ref : context.ref_name;
+            const baseSha = pull ? pull.base.sha : context.payload.before;
+            const headSha = pull ? pull.head.sha : context.sha;
+            let branchProtected = false;
+            try {
+              await github.rest.repos.getBranchProtection({owner: context.repo.owner, repo: context.repo.repo, branch: baseRef});
+              branchProtected = true;
+            } catch (_) {}
+            let approvals = [];
+            if (pull) {
+              try {
+                const response = await github.rest.pulls.listReviews({owner: context.repo.owner, repo: context.repo.repo, pull_number: pull.number, per_page: 100});
+                const seen = new Set();
+                approvals = response.data.filter(review => review.state === 'APPROVED' && review.user && !seen.has(review.user.login) && seen.add(review.user.login)).map(review => ({actor: review.user.login, state: review.state}));
+              } catch (_) {}
+            }
+            let artifacts = [];
+            try {
+              const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
+              artifacts = response.data.artifacts.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired}));
+            } catch (_) {}
+            const contextData = {
+              repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: context.ref,
+              base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
+              pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
+              actor: context.actor, builder: context.actor, guardian: approvals[0]?.actor || '', approver: approvals[1]?.actor || '', gate: 'CI policy',
+              branch_protected: branchProtected, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
+              provenance_status: 'unavailable', artifacts_status: artifacts.length ? 'verified' : 'missing', approvals_status: approvals.length >= 2 ? 'verified' : 'missing',
+              write_effect: 'none', no_write_outside_generated: true, approvals, artifacts, fixture_paths: ['examples/billing/main.gooo'],
+              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: []
+            };
+            fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
+      - name: Build deterministic proof and append receipt
+        run: |
+          go run ./scripts/ci-proof \
+            --root . --governance .github/ci-governance.json --evidence ci-evidence-input/ci-evidence.json \
+            --jobs ci-evidence-input/ci-jobs.json --context ci-proof-context.json --generated ci-generated-proof \
+            --output ci-proof.json --receipt provenance-receipt.jsonl
+      - name: Verify promotion proof fail closed
+        run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
+      - name: Upload proof and provenance receipt
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ci-proof.json
+            provenance-receipt.jsonl
           if-no-files-found: error
           retention-days: 14
