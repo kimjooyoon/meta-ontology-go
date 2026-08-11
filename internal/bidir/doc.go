@@ -1,11 +1,11 @@
-// Package bidir contains the dependency-free core of the .gooo bidirectional
+// Package bidir contains the parser-neutral core of the .gooo bidirectional
 // transformation.
 //
-// The package intentionally does not import syntax, semantic, Go AST, or
-// generator packages. Those packages can adapt their own representations to
-// Document, Model, and FactSet at the boundary. Business intent is represented
-// by Document, stable semantic identity is represented by ID, and a Model is
-// the normalized semantic IR.
+// Document, Model, and FactSet are stable boundaries for DSL, syntax, analyzer,
+// and generator adapters. The syntax and semantic IR adapters stay at the
+// boundary; the lens and reconciliation core operates only on neutral types.
+// Business intent is represented by Document, stable semantic identity is
+// represented by ID, and a Model is the normalized semantic IR.
 //
 // There are three fact layers:
 //
