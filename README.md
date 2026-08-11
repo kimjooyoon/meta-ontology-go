@@ -28,26 +28,30 @@ and [the language sketch](docs/spec.md).
 Run the repository checks from the project root:
 
 ```sh
-gofmt -l .
-go test ./...
+test -z "$(gofmt -l .)"
 go vet ./...
-go run ./cmd/gooo check examples/billing/main.gooo
+go test ./...
+go test -race ./...
+GOOO_CONFORMANCE_STAGE=0 ./scripts/semantic-conformance.sh
+go run ./scripts/verify
 ```
 
 The conformance walkthrough in [docs/conformance.md](docs/conformance.md) uses
 the checked-in examples and shows the expected command shapes. It also calls out
-which CLI surfaces are not yet supported. The current GitHub Actions workflow is
-documented in [CONTRIBUTING.md](CONTRIBUTING.md); it should be treated as the
-source of truth for required CI, not as a promise of future compiler features.
+which CLI surfaces are not yet supported. The semantic wrapper reports the
+current `cmd/gooo check` stub as deferred; that output is not a semantic pass.
+The current GitHub Actions workflow is documented in [CONTRIBUTING.md](CONTRIBUTING.md)
+and the implementation/deferred ledger is in [docs/contracts.md](docs/contracts.md).
 
 ## Project status
 
 This is an experimental language, not a stable application framework. In
 particular, the repository does not currently promise a production LSP, a stable
-`analyze` CLI, automatic promotion of ambiguous Go observations, or durable
-provenance publishing. Internal packages and design notes may describe those
-directions, but a feature is supported only when its command/API and conformance
-evidence are present.
+`check`, `generate`, or `analyze` CLI, automatic promotion of ambiguous Go
+observations, a code generator, a projection cache, or durable provenance
+publishing. Internal research contracts may describe those directions, but a
+feature is supported only when its command/API and conformance evidence are
+present.
 
 ## Governance
 

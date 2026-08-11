@@ -1,8 +1,10 @@
 # Runnable conformance examples
 
 Run these commands from the repository root. They exercise the narrow `.gooo`
-surface and the current CLI check/generation path; they do not imply that the
-unstable `analyze` or `lsp` CLI surfaces exist.
+surface and the current Go-authoritative verifier. The CLI command names are
+present for bootstrap planning, but the current `cmd/gooo` implementation is a
+stub, so direct `check` and `generate` commands are deferred rather than passing
+examples.
 
 ## Billing fixture
 
@@ -10,42 +12,36 @@ The canonical fixture is [examples/billing/main.gooo](../examples/billing/main.g
 Its activity should derive two `used` facts and one `wasGeneratedBy` fact from
 the declared activity contract.
 
-```sh
-go run ./cmd/gooo check examples/billing/main.gooo
-```
-
-The command should exit zero and print an `ok:` line. The repository-wide checks
-are also part of the expected evidence:
+The repository-wide checks and staged semantic wrapper are the expected evidence:
 
 ```sh
+test -z "$(gofmt -l .)"
 go test ./...
 go vet ./...
+go test -race ./...
+GOOO_CONFORMANCE_STAGE=0 ./scripts/semantic-conformance.sh
+go run ./scripts/verify
 ```
 
 ## Small independent fixture
 
 The [conformance fixture](../examples/conformance/main.gooo) is intentionally
-independent of the billing names. Run its check and generate a temporary
-projection:
+independent of the billing names. It is a source fixture for the semantic kernel
+and future CLI conformance; it is not currently executable through `cmd/gooo`.
 
 ```sh
-go run ./cmd/gooo check examples/conformance/main.gooo
-out="$(mktemp -d)"
-go run ./cmd/gooo generate examples/conformance/main.gooo --out "$out"
-test -s "$out/semantic.gooo.go"
+go test ./internal/syntax ./internal/semantic ./internal/verify
 ```
 
-The generated file is temporary output and must not be committed. Its stable
-generated markers are evidence for the projection boundary; handwritten logic
-belongs in a slot or in the owning example package, not in generated text.
+Generated Go, LSP, cache, and Go-analysis execution remain deferred. Their
+reusable contracts are recorded in [docs/contracts.md](contracts.md).
 
 ## What these examples prove
 
 - parsing and lowering accept the current compact grammar;
 - declared IDs and namespace-qualified names resolve deterministically;
-- the CLI can report a semantic check and write a generated projection when that
-  command is present;
-- the examples provide a stable input for CI and future BX regression tests.
+- the Go verifier can run the current policy and evidence checks;
+- the examples provide stable inputs for future BX and bootstrap regression tests.
 
 They do not prove a production LSP, automatic Go-to-DSL synchronization, cache
 durability, or provenance publishing. Those require separate supported entry

@@ -22,6 +22,11 @@ free text:
 | Future gooo-hosted compiler | `gooo://host/compiler/gooo` | Proposed candidate; not promoted |
 | Go verifier / recovery authority | `gooo://host/verifier/go` | Current independent verifier |
 
+The semantic IR uses the URI identities above. The smaller CI comparison
+envelope uses the validated producer tokens `go` and `gooo` and keeps producer
+identity out of the canonical payload. An adapter records the URI identity in
+its surrounding semantic evidence rather than inventing a new payload field.
+
 The semantic evidence model also distinguishes `compiler-run`, `verification`,
 and `comparison` records. Evidence is append-only. Producer identity, source
 span, and audit metadata may differ between hosts; the normalized semantic claim
@@ -29,38 +34,36 @@ must still be comparable.
 
 ## Comparable evidence envelope
 
-Each host emits one envelope for the same pinned source, toolchain, fixture set,
-and policy revision. The following is a contract shape, not a claim that the
-current CLI already emits JSON:
+Each host emits an `internal/verify.EvidenceArtifact` for the same pinned source,
+toolchain, fixture set, and policy revision. The implemented schema is
+`gooo/evidence/v1`; the old `gooo/bootstrap-evidence/v1` shape with free-form
+check fields is not a valid comparison contract.
+
+The artifact has a producer and a producer-independent bundle:
 
 ```json
 {
-  "schema": "gooo/bootstrap-evidence/v1",
-  "stage": "go-hosted-baseline",
-  "producer": "gooo://host/compiler/go",
-  "verifier": "gooo://host/verifier/go",
-  "source_digest": null,
-  "semantic_digest": null,
-  "provenance_digest": null,
-  "decision": "deferred",
-  "evidence_status": "deferred",
-  "promotion_eligible": false,
-  "checks": {
-    "format": "pass",
-    "vet": "pass",
-    "test": "pass",
-    "race": "pass",
-    "semantic_cli": "deferred",
-    "bootstrap_compare": "not-run"
+  "producer": "go",
+  "bundle": {
+    "schema": "gooo/evidence/v1",
+    "stage": 0,
+    "fixture": "examples/bootstrap/main.gooo",
+    "decision": "deferred",
+    "facts": []
   }
 }
 ```
 
-`null`, `deferred`, `not-run`, `candidate`, or `mismatch` is never equivalent to
-`pass` for promotion. The Go-hosted fixture records the current baseline shape:
-ordinary Go checks can pass while the semantic CLI remains explicitly deferred.
-The gooo-hosted fixture uses `not-run` and `promotion_eligible: false` because
-that stage is not implemented here.
+The allowed producer values are `go` and `gooo`. Stage values are `0` Go
+baseline, `1` dual evidence, `2` gooo fallback, and `3` gooo authoritative.
+Facts require a non-empty stable ID and kind, are sorted by `id/kind/value`, and
+duplicate fact IDs fail closed. A derived manifest records the schema, producer,
+stage, fixture, decision, and SHA-256 of the canonical bundle JSONL payload.
+
+`deferred`, `not-run`, `candidate`, `mismatch`, and a missing digest are never
+equivalent to `pass` for promotion. The checked-in Go fixture records a valid
+Stage 0 artifact while the semantic CLI is deferred. The gooo fixture records a
+Stage 1 candidate with `not-run`; neither fixture grants promotion authority.
 
 ## Comparison rules
 
@@ -95,6 +98,39 @@ Promotion is a state transition in CI, not a field a fixture may set to true.
 The promotion job must reject the candidate whenever any required evidence is
 deferred or absent.
 
+## Failure classification
+
+Every non-promoting result is assigned one primary class. The raw artifact and
+logs remain append-only even when the class is corrected later.
+
+| Class | Examples | Required action |
+| --- | --- | --- |
+| `schema-invalid` | Unknown schema/producer/stage, empty fixture, duplicate fact ID. | Fail closed; preserve the rejected payload. |
+| `semantic-mismatch` | Canonical bundles or normalized facts differ. | Keep Go authoritative; compare the smallest differing fact set. |
+| `provenance-mismatch` | Manifest digest, evidence digest, or source binding differs. | Reject promotion; retain both attestations. |
+| `deferred-capability` | CLI stub, disabled stage, unavailable candidate host. | Record `deferred`/`not-run`; retain the prior stage. |
+| `reproducibility-drift` | Same pinned inputs produce different payload or artifact digests. | Quarantine the candidate and rerun from a clean checkout. |
+| `policy-scope` | Wrong PR base, branch owner, changed-path escape, or Go cap. | Fail the policy job; do not reinterpret as semantic evidence. |
+| `trust-boundary` | Candidate self-approves, edits the policy, or omits a required rule. | Require the independent Go verifier and a protected review. |
+| `rollback-failure` | Last-known-good artifact or manifest cannot be verified. | Stop promotion until recovery is restored. |
+
+## Reusable verification checklist
+
+Before comparing or promoting a host, record:
+
+1. The exact branch, base revision, source/fixture digest, toolchain, policy
+   revision, and `GOOO_CONFORMANCE_STAGE`.
+2. Format, vet, unit-test, race-test, policy-scope, and Go-cap results.
+3. A normalized `EvidenceArtifact`, its derived manifest, and the canonical
+   payload SHA-256. `deferred` and `not-run` must remain visible.
+4. Independent comparison of canonical bundles, including facts and decisions,
+   not only a final boolean.
+5. Fallback artifact, rollback verification, and the failure class if any gate
+   is missing or mismatched.
+
+Promotion is a CI policy transition. It cannot be enabled by changing a fixture's
+decision field or by a candidate verifier writing its own manifest.
+
 ## Fixtures and execution
 
 The common semantic input is
@@ -114,5 +150,5 @@ Run the repository's current semantic entry point with:
 
 If the baseline CLI is still a stub, the script's explicit deferred result is
 expected and is not a self-hosting pass. Once both hosts exist, the same fixture
-set must produce two envelopes and an independent comparison before any
-gooo-hosted result can become authoritative.
+set must produce two `EvidenceArtifact` values and an independent comparison
+before any gooo-hosted result can become authoritative.

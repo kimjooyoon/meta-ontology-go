@@ -1,20 +1,10 @@
 {
-  "schema": "gooo/bootstrap-evidence/v1",
-  "stage": "go-hosted-baseline",
-  "producer": "gooo://host/compiler/go",
-  "verifier": "gooo://host/verifier/go",
-  "source_digest": null,
-  "semantic_digest": null,
-  "provenance_digest": null,
-  "decision": "deferred",
-  "evidence_status": "deferred",
-  "promotion_eligible": false,
-  "checks": {
-    "format": "pass",
-    "vet": "pass",
-    "test": "pass",
-    "race": "pass",
-    "semantic_cli": "deferred",
-    "bootstrap_compare": "not-run"
+  "producer": "go",
+  "bundle": {
+    "schema": "gooo/evidence/v1",
+    "stage": 0,
+    "fixture": "examples/bootstrap/main.gooo",
+    "decision": "deferred",
+    "facts": []
   }
 }

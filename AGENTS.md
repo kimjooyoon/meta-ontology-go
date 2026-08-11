@@ -45,20 +45,25 @@ must not change stable IDs or unrelated semantic facts.
 ## Required checks
 
 ```sh
-gofmt -w .
+test -z "$(gofmt -l .)"
 go vet ./...
 go test ./...
-go run ./cmd/gooo check examples/billing/main.gooo
+go test -race ./...
+GOOO_CONFORMANCE_STAGE=0 ./scripts/semantic-conformance.sh
+go run ./scripts/verify
 ```
 
 Do not claim that a command or subsystem is supported unless it has an implemented
-entry point and runnable evidence. In particular, `analyze` and `lsp` are not
-stable CLI features yet, and the current CI does not enforce race, cache, or
-provenance-publishing checks.
+entry point and runnable evidence. The semantic wrapper records `cmd/gooo check`
+as deferred while the current CLI is a stub; `generate`, `analyze`, and `lsp` are
+also deferred. The current CI runs the race job and the Go evidence verifier, but
+does not yet enforce cache, LSP, generated-projection, or durable evidence
+publishing checks.
 
 ## Review caps
 
-The current governance caps are soft review policy: 120 columns for ordinary
-lines, 40 non-blank lines per handwritten slot, and 400 changed lines per normal
-PR excluding generated output. Exceptions belong in the PR description; CI does
-not enforce these caps yet.
+The CI-enforced Go caps are 300 lines per file and 75 lines per function or
+method. Review guidance also covers 120 columns for ordinary lines, 40 non-blank
+lines per handwritten slot, and 400 changed lines per normal PR excluding
+generated output. Exceptions belong in the PR description. See
+[docs/contracts.md](docs/contracts.md) for the complete status ledger.

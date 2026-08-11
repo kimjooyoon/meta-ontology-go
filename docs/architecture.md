@@ -27,23 +27,22 @@ generated Go ── marker regions ──> handwritten implementation slots
 
 ## Package boundaries
 
-The current implementation is dependency-free and keeps adapters at the edges:
+The current integration kernel is dependency-free and keeps adapters at the
+edges:
 
-- `internal/syntax` owns tokens, parsing, AST nodes, spans, and diagnostics;
+- `internal/syntax` owns tokens, parsing, recoverable AST nodes, spans, and
+  diagnostics;
 - `internal/semantic` owns IDs, namespaces, PROV-inspired node/relation kinds,
-  normalization, validation, and canonical fingerprints;
-- `internal/bidir` owns parser-neutral `Get`/`Put`, fact layers, reconciliation,
-  source requirements, deltas, locality, and BX checks;
-- `internal/generator` owns deterministic Go projection, generated markers,
-  handwritten slots, and source maps;
-- `internal/analyzer` observes registered semantic Go symbols and emits facts;
-- `internal/cache` stores reconstructable projections only, addressed by input and
-  option digests;
-- `cmd/gooo` is the command-line adapter.
+  normalization, validation, canonical fingerprints, and append-only evidence;
+- `internal/verify` owns the repository policy checks and the
+  `gooo/evidence/v1` producer-independent comparison envelope;
+- `cmd/gooo` is the command-line adapter, but its named commands are currently
+  stubs and are not supported user interfaces.
 
-These are internal package boundaries, not promises that every package has a
-stable public API. The CLI is the supported user boundary. `analyze` and `lsp`
-are not stable CLI commands, and no documentation should imply that they are.
+BX, codegen, analyzer, cache, and LSP boundaries are documented in the
+[contract ledger](contracts.md) and research lanes. They are not packages or
+  runnable guarantees on the current `integration` tree. Internal package names
+  are never by themselves a public API claim.
 
 ## SSOT and provenance matrix
 
@@ -72,13 +71,15 @@ implicit deletion; removals must be explicit.
 3. Normalize names, aliases, insertion order, facts, and canonical identity
    spelling. Presentation metadata may change without changing the semantic
    fingerprint.
-4. Project structural Go with stable `//gooo:generated:*` markers and explicit
-   handwritten slots. Preserve marker-outside text and slot bodies on regeneration.
-5. If Go is analyzed, classify observations before reconciliation. Deterministic,
-   source-backed facts may produce a semantic delta; ambiguous facts remain
-   candidates; syntactic facts never change the model.
-6. Record locality, source spans, hashes, and command results as evidence for the
-   reviewer and CI.
+4. A future projection may emit structural Go with stable markers and explicit
+   handwritten slots. Until its owning implementation lands, generated Go is a
+   contract-only boundary, not a current pipeline step.
+5. A future Go adapter may classify observations before reconciliation.
+   Deterministic, source-backed facts may produce a semantic delta; ambiguous
+   facts remain candidates; syntactic facts never change the model.
+6. Record source spans, hashes, and command results as evidence for the reviewer
+   and CI. The current CI evidence envelope is implemented; semantic CLI and
+   generated-freshness execution remain deferred while `cmd/gooo` is a stub.
 
 ## Bootstrap path to self-hosting
 
@@ -103,6 +104,10 @@ The research note owns experiment history, alternatives, and stage-specific
 measurements. This architecture owns the boundary rules that any implementation
 must satisfy before those measurements can support promotion.
 
+The cross-cutting implementation/research inventory is kept in the
+[reusable contract ledger](contracts.md). It explicitly marks BX, codegen, LSP,
+and cache as contracts without current integration support.
+
 The comparable evidence shape and paired fixtures are defined in the
 [bootstrap evidence bridge](bootstrap-evidence.md). It is the contract between
 the Go-hosted seed and a future gooo-hosted candidate; it does not promote the
@@ -116,15 +121,18 @@ and CI-policy jobs. The semantic job delegates to
 [`scripts/semantic-conformance.sh`](../scripts/semantic-conformance.sh); its
 explicit deferred path is evidence that the CLI is not yet available, not proof
 of self-hosting. The policy job checks branch ownership, Go size caps, and the
-integration PR target. These checks protect the seed and candidate boundaries;
-they are not yet the self-hosted verifier promotion gate.
+integration PR target. `internal/verify/evidence.go` validates
+`gooo/evidence/v1`, canonicalizes facts, and compares Go/gooo payloads, but the
+workflow currently runs only the Go-authoritative Stage 0 path. These checks
+protect the seed and candidate boundaries; they are not yet the self-hosted
+verifier promotion gate.
 
 ## What is not part of the current contract
 
-The architecture leaves room for richer relations, a production LSP, a stable Go
-analysis CLI, durable evidence publishing, and self-hosted verifier promotion.
-Those are design directions only until they have a supported entry point and
-runnable conformance evidence. The current required CI is documented in
-[CONTRIBUTING.md](../CONTRIBUTING.md) and the integration workflow. Self-hosting
-and verifier promotion are future capabilities until the staged gates above are
-wired into protected CI.
+The architecture leaves room for richer PROV relations, a production LSP, a
+stable Go analysis CLI, generated Go projection, durable cache/evidence
+publishing, and self-hosted verifier promotion. Those are design directions only
+until they have a supported entry point and runnable conformance evidence. The
+current required CI is documented in [CONTRIBUTING.md](../CONTRIBUTING.md) and
+the integration workflow. Self-hosting and verifier promotion are future
+capabilities until the staged gates above are wired into protected CI.

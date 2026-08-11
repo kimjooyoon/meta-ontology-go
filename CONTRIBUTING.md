@@ -46,40 +46,50 @@ For documentation or example work, the allowed ownership is `docs/**`,
 
 ## Required local checks
 
-Run the checks that match the files changed:
+For Go changes, run the repository gate:
 
 ```sh
-gofmt -w .
+test -z "$(gofmt -l .)"
 go vet ./...
 go test ./...
-go run ./cmd/gooo check examples/billing/main.gooo
+go test -race ./...
+GOOO_CONFORMANCE_STAGE=0 ./scripts/semantic-conformance.sh
+go run ./scripts/verify
 ```
 
-For a documentation-only change, `gofmt -l .` is a non-mutating equivalent for
-the formatting check when another agent owns dirty Go files. The current workflow
-in `.github/workflows/ci.yml` runs exactly these CI steps:
+For a documentation-only change, `gofmt -l .` remains a non-mutating formatting
+check. Do not use `gofmt -w .` to include unrelated Go edits in a docs PR. The
+current workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs
+these jobs:
 
-- `gofmt -l .` and `go test ./...` in the Go test job;
-- `go vet ./...` in the Go vet job;
-- `go run ./cmd/gooo check examples/billing/main.gooo` in the semantic job.
+- `gofmt -l .`;
+- `go vet ./...`;
+- `go test ./...`;
+- `go test -race ./...`;
+- `./scripts/semantic-conformance.sh` with `GOOO_CONFORMANCE_STAGE=0`;
+- `go run ./scripts/verify` for pull-request scope, branch target, and Go caps.
 
-CI does not currently run race tests, static analysis, LSP checks, cache checks,
-generated-output snapshots, or automatic provenance publishing. Those are future
-work, not current guarantees.
+The semantic script first runs the Go verifier. Because `cmd/gooo` currently
+contains only a command stub, it prints an explicit deferred message for
+`check` and exits without claiming semantic parity. `generate`, `analyze`, and
+`lsp` are also deferred; none is a successful local check until its entry point,
+tests, and CI evidence exist. Stages 1--3 are rejected until a reviewed CI
+promotion change enables them.
 
 ## Line caps and review size
 
-These are review-policy caps, not compiler features, and are not currently
-machine-enforced:
+The CI verifier enforces the Go caps; the other limits are review policy:
 
+- keep Go files at or below 300 lines;
+- keep Go functions and methods at or below 75 lines;
 - keep ordinary source and Markdown lines within 120 columns; URLs, tables, and
   generated markers may exceed the soft cap when wrapping would reduce clarity;
-- keep a handwritten implementation slot to 40 non-blank lines; extract named
-  logic or write a design note when it grows beyond that boundary;
-- keep a normal PR to 400 changed lines excluding generated output; split larger
-  changes by authority boundary or semantic concern;
+- keep a handwritten implementation slot to 40 non-blank lines;
+- keep a normal PR to 400 changed lines excluding generated output;
 - do not impose a line cap on generated output by hand. Its contract is marker
   integrity and deterministic regeneration.
 
-If a change must exceed a cap, explain why in the PR description and add the
-focused evidence that makes the larger review safe.
+If a review limit must be exceeded, explain why in the PR description and add the
+focused evidence that makes the larger review safe. A Go cap failure is a CI
+failure. See [contracts.md](docs/contracts.md) for the implemented/deferred
+status of AST, semantic, PROV, BX, codegen, LSP, cache, and self-hosting.

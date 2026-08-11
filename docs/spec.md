@@ -18,6 +18,32 @@ The checked-in [billing example](../examples/billing/main.gooo) is the canonical
 small input. It is a conformance fixture, not a promise that all future syntax
 will remain source-compatible.
 
+## Implementation status
+
+The current integration tree implements the syntax and semantic kernel plus the
+Go-authoritative CI evidence verifier. The following command names are present
+in the CLI usage text but currently return an explicit not-implemented error:
+`check`, `generate`, `analyze`, and `lsp`. They are deferred capabilities, not
+successful conformance steps. Run the staged wrapper in
+[`scripts/semantic-conformance.sh`](../scripts/semantic-conformance.sh) to
+record the deferred status without treating it as a semantic pass.
+
+The reusable boundary inventory, including research-only BX, codegen, LSP, and
+cache contracts, is in [contracts.md](contracts.md).
+
+## Syntax and AST contract
+
+The lexer preserves exact token spelling and emits one EOF token. Tokens,
+declarations, names, IDs, and diagnostics carry half-open source spans with
+UTF-8 byte offsets and one-based line/column positions. The parser retains
+ordered declarations and activity input order and may return a partial AST with
+deterministic diagnostics while an edit is incomplete.
+
+The AST is a source view, not semantic authority. A parser error or a name
+occurrence does not create a semantic node or relation. Lowering must validate
+stable IDs, namespaces, declaration collisions, and relation kinds before the
+IR can accept a fact.
+
 ## Bootstrap and self-hosting boundary
 
 `meta-ontology-go` is intended to progressively re-express its own compiler and
@@ -83,7 +109,9 @@ Facts have separate statuses:
 
 ## Bidirectional contract
 
-The parser-neutral BX boundary exposes two directions:
+The parser-neutral BX boundary is the target contract for a future adapter; it is
+not an end-to-end CLI feature in the current integration tree. It exposes two
+directions:
 
 1. `Get` lowers a DSL document to canonical semantic IR.
 2. `Put` writes an accepted semantic model back to a representable DSL document.
@@ -91,7 +119,8 @@ The parser-neutral BX boundary exposes two directions:
 Go adapters use the same boundary by emitting an explicit fact delta. Reconcile
 requires provenance for strict semantic updates, is transactional on conflict,
 and requires explicit removals rather than interpreting an incomplete analysis as
-deletion.
+deletion. The research contract also keeps source complement, generated slots,
+and evidence separate from semantic equivalence.
 
 The laws are specified in [docs/governance.md](governance.md): Get-Put, Put-Get,
 semantic round-trip, locality, and provenance. Textual equality is not required;

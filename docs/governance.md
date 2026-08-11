@@ -5,6 +5,8 @@ defines source-of-truth (SSOT) boundaries, provenance policy, bidirectional (BX)
 laws, agent roles, review caps, and evidence requirements. It is intentionally
 more conservative than the future design: an internal type or comment is not a
 supported feature until a user-facing entry point and runnable evidence exist.
+The [reusable contract ledger](contracts.md) records which boundaries are
+implemented on `integration` and which remain research-only or deferred.
 
 ## 1. SSOT boundaries
 
@@ -225,14 +227,17 @@ append-only research evidence and cannot change the required gate.
 
 The field-level comparison envelope and non-success fixture states are defined
 in the [bootstrap evidence bridge](bootstrap-evidence.md). A fixture with
-`deferred`, `not-run`, or `promotion_eligible: false` is evidence of an
-unimplemented or non-promotable stage, never evidence of success.
+`decision: deferred` or `decision: not-run` is evidence of an unimplemented or
+non-promotable stage, never evidence of success. Promotion eligibility is a
+protected CI decision, not a fixture field.
 
 ## 8. Review line caps
 
-These are soft review policy, not language or compiler limits, and are not
-machine-enforced today:
+The CI policy currently enforces the Go size caps below. The other limits are
+review guidance rather than language or compiler limits:
 
+- one Go file: at most 300 lines;
+- one Go function or method: at most 75 lines;
 - ordinary source and Markdown lines: 120 columns;
 - one handwritten implementation slot: 40 non-blank lines;
 - one normal PR: 400 changed lines, excluding generated output;
@@ -240,8 +245,9 @@ machine-enforced today:
   deterministic regeneration.
 
 URLs, tables, generated markers, and mechanically formatted output may exceed the
-soft column cap. If a change exceeds a review cap, explain the exception and split
-the evidence by authority boundary where possible.
+soft column cap. If a review cap is exceeded, explain the exception and split the
+evidence by authority boundary where possible. A Go cap failure is a CI failure,
+not a documentation waiver.
 
 ## 9. Evidence checklist
 
@@ -252,6 +258,10 @@ A change is ready for review when the author can point to:
 - stable IDs and any semantic delta;
 - source spans/provenance for accepted observations;
 - generated-region and locality evidence when projection changes;
+- a normalized `gooo/evidence/v1` bundle or an explicit `deferred`/`not-run`
+  status with its fallback stage;
+- a failure classification when evidence is missing, stale, mismatched, or
+  outside the branch scope;
 - local commands and their results;
 - a clear statement of what remains unsupported.
 
