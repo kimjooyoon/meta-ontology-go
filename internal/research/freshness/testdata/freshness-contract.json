@@ -1,0 +1,101 @@
+{
+  "version": "freshness-contract/v1",
+  "name": "billing-projection-freshness",
+  "hypothesis": "A canonical source/projection/evidence graph detects source, projection, provenance, and missing-record mutations without time-dependent measurements.",
+  "source": {
+    "id": "billing://source/main.gooo",
+    "kind": "source",
+    "content": "package billing\nactivity PayOrder(Order) -> Payment\n"
+  },
+  "records": [
+    {
+      "id": "billing://projection/semantic.gooo.go",
+      "kind": "generated-projection",
+      "content": "// generated\nfunc PayOrder() {}\n",
+      "input_ids": ["billing://source/main.gooo"],
+      "provenance": {
+        "activity_id": "billing://activity/generate",
+        "entity_id": "billing://projection/semantic.gooo.go",
+        "used_ids": ["billing://source/main.gooo"]
+      }
+    },
+    {
+      "id": "billing://evidence/generate-test",
+      "kind": "evidence",
+      "content": "test:pass\n",
+      "input_ids": ["billing://projection/semantic.gooo.go"],
+      "provenance": {
+        "activity_id": "billing://activity/verify",
+        "entity_id": "billing://evidence/generate-test",
+        "used_ids": ["billing://projection/semantic.gooo.go"]
+      }
+    }
+  ],
+  "required": [
+    "billing://projection/semantic.gooo.go",
+    "billing://evidence/generate-test"
+  ],
+  "cases": [
+    {
+      "id": "baseline",
+      "mutation": {"kind": "none"},
+      "expected_verdict": "pass",
+      "expected": [
+        {"id": "billing://projection/semantic.gooo.go", "kind": "generated-projection", "status": "fresh"},
+        {"id": "billing://evidence/generate-test", "kind": "evidence", "status": "fresh"}
+      ]
+    },
+    {
+      "id": "source-change",
+      "mutation": {
+        "kind": "content",
+        "record_id": "billing://source/main.gooo",
+        "content": "package billing\nactivity PayOrder(Order, PaymentMethod) -> Payment\n"
+      },
+      "expected_verdict": "pass",
+      "expected": [
+        {"id": "billing://projection/semantic.gooo.go", "kind": "generated-projection", "status": "stale"},
+        {"id": "billing://evidence/generate-test", "kind": "evidence", "status": "stale"}
+      ]
+    },
+    {
+      "id": "projection-change",
+      "mutation": {
+        "kind": "content",
+        "record_id": "billing://projection/semantic.gooo.go",
+        "content": "// generated\nfunc PayOrderV2() {}\n"
+      },
+      "expected_verdict": "pass",
+      "expected": [
+        {"id": "billing://projection/semantic.gooo.go", "kind": "generated-projection", "status": "stale"},
+        {"id": "billing://evidence/generate-test", "kind": "evidence", "status": "stale"}
+      ]
+    },
+    {
+      "id": "missing-evidence",
+      "mutation": {"kind": "remove", "remove_id": "billing://evidence/generate-test"},
+      "expected_verdict": "pass",
+      "expected": [
+        {"id": "billing://evidence/generate-test", "kind": "evidence", "status": "missing"}
+      ]
+    },
+    {
+      "id": "broken-provenance",
+      "mutation": {
+        "kind": "used-ids",
+        "record_id": "billing://evidence/generate-test",
+        "used_ids": ["billing://missing/input"]
+      },
+      "expected_verdict": "pass",
+      "expected": [
+        {"id": "billing://evidence/generate-test", "kind": "evidence", "status": "invalid"}
+      ]
+    },
+    {
+      "id": "future-gooo-hosted-generator",
+      "mutation": {"kind": "future-self-hosted"},
+      "expected_verdict": "deferred",
+      "reason": "Requires a gooo-hosted generator to emit and verify its own projection boundary."
+    }
+  ]
+}
