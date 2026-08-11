@@ -23,6 +23,9 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 	if err := normalizeActivities(&result, types); err != nil {
 		return SemanticIR{}, err
 	}
+	if err := validateTopLevelNames(result); err != nil {
+		return SemanticIR{}, err
+	}
 	return result, nil
 }
 
@@ -44,6 +47,7 @@ func copyIR(input SemanticIR) SemanticIR {
 
 func normalizeImports(ir *SemanticIR) error {
 	seen := make(map[string]struct{}, len(ir.Imports))
+	seenPaths := make(map[string]struct{}, len(ir.Imports))
 	for index := range ir.Imports {
 		item := &ir.Imports[index]
 		if item.Path == "" {
@@ -52,11 +56,15 @@ func normalizeImports(ir *SemanticIR) error {
 		if item.Name != "" && !isGoIdentifier(item.Name) {
 			return fmt.Errorf("generator: invalid import name %q", item.Name)
 		}
+		if _, exists := seenPaths[item.Path]; exists {
+			return fmt.Errorf("generator: duplicate import path %q", item.Path)
+		}
 		key := item.Name + "\x00" + item.Path
 		if _, exists := seen[key]; exists {
 			return fmt.Errorf("generator: duplicate import %q", item.Path)
 		}
 		seen[key] = struct{}{}
+		seenPaths[item.Path] = struct{}{}
 	}
 	sort.Slice(ir.Imports, func(i, j int) bool {
 		if ir.Imports[i].Path != ir.Imports[j].Path {
@@ -190,6 +198,23 @@ func normalizeSlots(activity *Activity) error {
 			return fmt.Errorf("generator: activity %q has duplicate slot ID %q", activity.ID, slot.ID)
 		}
 		seen[slot.ID] = struct{}{}
+	}
+	return nil
+}
+
+func validateTopLevelNames(ir SemanticIR) error {
+	names := make(map[string]string, len(ir.Entities)+len(ir.Activities))
+	for _, entity := range ir.Entities {
+		if previous, exists := names[entity.GoName]; exists {
+			return fmt.Errorf("generator: Go name %q is used by %s and entity %q", entity.GoName, previous, entity.ID)
+		}
+		names[entity.GoName] = "entity " + entity.ID
+	}
+	for _, activity := range ir.Activities {
+		if previous, exists := names[activity.GoName]; exists {
+			return fmt.Errorf("generator: Go name %q is used by %s and activity %q", activity.GoName, previous, activity.ID)
+		}
+		names[activity.GoName] = "activity " + activity.ID
 	}
 	return nil
 }
