@@ -1,0 +1,37 @@
+{
+  "name": "minimal-invalid-provenance",
+  "hypothesis": "A cycle, reverse relation, unresolved ID, and same-namespace name collision each produce one deterministic diagnostic.",
+  "counterexample": "Removing any one defect must remove only its corresponding diagnostic code.",
+  "graph": {
+    "nodes": [
+      {"id": "billing://entity/order", "kind": "Entity", "namespace": "billing", "name": "Order"},
+      {"id": "billing://entity/duplicate", "kind": "Entity", "namespace": "billing", "name": "Order"},
+      {"id": "billing://activity/pay", "kind": "Activity", "namespace": "billing", "name": "PayOrder"}
+    ],
+    "edges": [
+      {"subject": "billing://activity/pay", "predicate": "used", "object": "billing://entity/order"},
+      {"subject": "billing://entity/order", "predicate": "wasGeneratedBy", "object": "billing://activity/pay"},
+      {"subject": "billing://entity/order", "predicate": "used", "object": "billing://entity/duplicate"},
+      {"subject": "billing://activity/pay", "predicate": "used", "object": "billing://entity/missing"}
+    ]
+  },
+  "expected": {
+    "cycle": 1,
+    "illegal-relation-direction": 1,
+    "namespace-collision": 1,
+    "unresolved-stable-id": 1
+  },
+  "criteria": {
+    "pass": ["exact diagnostic code counts match", "measurement digest is stable"],
+    "fail": ["any expected code is missing or any unexpected code appears"],
+    "deferred": ["gooo-hosted detector must reproduce the same evidence before promotion"]
+  },
+  "follow_up": {
+    "current_host": "go-hosted",
+    "future_host": "gooo-hosted",
+    "input": "semantic.Graph through FromSemanticGraph or serialized Graph fixture",
+    "output": "sorted Diagnostics plus Measurement digest",
+    "invariants": ["stable IDs remain canonical", "diagnostic order is input-order independent"],
+    "deferred": ["gooo-hosted implementation and cross-host equivalence evidence"]
+  }
+}

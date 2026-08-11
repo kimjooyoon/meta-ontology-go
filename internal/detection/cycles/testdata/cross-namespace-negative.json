@@ -1,0 +1,26 @@
+{
+  "name": "same-name-different-namespace",
+  "hypothesis": "Equal display names in different namespaces do not collide when stable IDs differ.",
+  "counterexample": "Treating display-name equality as global identity would falsely report a namespace collision.",
+  "graph": {
+    "nodes": [
+      {"id": "billing://entity/payment", "kind": "Entity", "namespace": "billing", "name": "Payment"},
+      {"id": "fraud://entity/payment", "kind": "Entity", "namespace": "fraud", "name": "Payment"}
+    ],
+    "edges": []
+  },
+  "expected": {},
+  "criteria": {
+    "pass": ["no namespace collision is emitted"],
+    "fail": ["same-name nodes across namespaces are treated as one identity"],
+    "deferred": ["namespace alias policy remains subject to semantic-kernel integration review"]
+  },
+  "follow_up": {
+    "current_host": "go-hosted",
+    "future_host": "gooo-hosted",
+    "input": "semantic.Graph through FromSemanticGraph or serialized Graph fixture",
+    "output": "sorted Diagnostics plus Measurement digest",
+    "invariants": ["namespace-qualified names do not become stable IDs"],
+    "deferred": ["gooo-hosted implementation and cross-host equivalence evidence"]
+  }
+}
