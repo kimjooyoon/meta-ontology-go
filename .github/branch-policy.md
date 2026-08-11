@@ -61,6 +61,9 @@ authoritative PR result. Pull-request events retain the complete base-to-head
 changed-path and branch-ownership check; the verifier also reports unavailable
 revisions deterministically.
 
+The pull-request trigger explicitly includes `ready_for_review`, ensuring a
+draft-to-review transition receives the same six-job authoritative matrix.
+
 PR #77 records the current-base evidence used for this audit: `integration`
 resolved to `ee547c7`, and the PR policy step passed that base SHA through
 `GOOO_SCOPE_FROM` while using the head SHA as `GOOO_SCOPE_TO`. The existing
