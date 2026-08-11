@@ -85,19 +85,32 @@ func TestCanonicalValidatorRejectsProtectedBoundaryCollisions(t *testing.T) {
 	}
 }
 
-func TestNegativeOracleRequiresNoWriteEvidence(t *testing.T) {
+func TestOracleNW001NegativeOracleRequiresIndependentObserver(t *testing.T) {
 	request := sampleRequest(StatusFail)
 	request.Expected.FailureCode = "marker-overlap"
 	response := sampleResponse(StatusFail, false)
+	claim := true
+	response.ProducerClaims.NoWrite = &claim
 	evaluation := Evaluate(request, response)
-	if !evaluation.Matched || evaluation.ExitCode != ExitOK || evaluation.FailureCode != "marker-overlap" {
-		t.Fatalf("valid negative result was rejected: %+v", evaluation)
+	if evaluation.Matched || evaluation.OracleCode != OracleNW001 || evaluation.PromotionEligible {
+		t.Fatalf("producer-only negative result was accepted: %+v", evaluation)
 	}
-	response.Failure.NoWrite = false
-	response.Measurements.NoWrite = false
-	evaluation = Evaluate(request, response)
-	if evaluation.Matched || evaluation.ExitCode != ExitMismatch {
-		t.Fatalf("false negative acceptance: %+v", evaluation)
+	observer := newStableObserver(t, request)
+	observation, err := observer.Finish()
+	if err != nil {
+		t.Fatal(err)
+	}
+	evaluation = EvaluateObserved(request, response, &observation)
+	if !evaluation.Matched || evaluation.ExitCode != ExitOK || evaluation.FailureCode != "marker-overlap" || evaluation.PromotionEligible {
+		t.Fatalf("valid independent negative result was rejected: %+v", evaluation)
+	}
+}
+
+func TestRequestValidationRequiresRunBinding(t *testing.T) {
+	request := sampleRequest(StatusPass)
+	request.RunID = ""
+	if err := request.Validate(); err == nil || !strings.Contains(err.Error(), "run_id") {
+		t.Fatalf("blank run binding was accepted: %v", err)
 	}
 }
 
@@ -151,7 +164,7 @@ func TestEvidenceProjectionIgnoresProducerAndFactOrder(t *testing.T) {
 
 func sampleRequest(status Status) Request {
 	return Request{
-		Schema: ProtocolSchema, Fixture: "billing/main", Operation: OperationGenerate,
+		Schema: ProtocolSchema, Fixture: "billing/main", Operation: OperationGenerate, RunID: "run-001",
 		Input:    Input{DSL: "entity billing", IR: []byte(`{"type":"entity"}`), SourceURI: "examples/billing/main.gooo"},
 		Contract: Contract{AST: "ast/v1", IR: "ir/v1", Generator: "generator/v1", Marker: "marker/v1", PolicyHash: "policy"},
 		Options:  Options{CanonicalOutput: true}, Expected: Expectation{Status: status},
@@ -169,21 +182,21 @@ func sampleResponse(status Status, reverse bool) Response {
 		imports[0], imports[1] = imports[1], imports[0]
 	}
 	response := Response{
-		Schema: ProtocolSchema, Fixture: "billing/main", Operation: OperationGenerate, Status: status,
+		Schema: ProtocolSchema, Fixture: "billing/main", Operation: OperationGenerate, RunID: "run-001", Status: status,
 		PromotionEligible: status == StatusPass,
 		Observed: Observed{
 			SemanticDigest: "sha256:semantic", SourceDigest: "sha256:source",
 			Regions: regions, Slots: slots, Imports: imports, SourceMap: mappings,
 			Delta: &Delta{Locality: []string{"billing.total", "billing.id"}},
 		},
-		Measurements: Measurements{RepeatCount: 2, CanonicalEqualCount: 2, SourceEqualCount: 2, SemanticEqualCount: 2, RegionEqualCount: 2, NoWrite: status == StatusFail},
+		Measurements: Measurements{RepeatCount: 2, CanonicalEqualCount: 2, SourceEqualCount: 2, SemanticEqualCount: 2, RegionEqualCount: 2},
 		Evidence: EvidenceArtifact{Producer: "go", Bundle: EvidenceBundle{
 			Schema: EvidenceSchema, Stage: StageGoBaseline, Fixture: "billing/main", Decision: string(status),
 			Facts: []EvidenceFact{{ID: "billing/main/status", Kind: "status", Value: string(status)}, {ID: "billing/main/scope", Kind: "scope", Value: "billing"}},
 		}},
 	}
 	if status == StatusFail {
-		response.Failure = &Failure{Code: "marker-overlap", Detail: "protected marker changed", NoWrite: true}
+		response.Failure = &Failure{Code: "marker-overlap", Detail: "protected marker changed"}
 	}
 	if reverse {
 		response.Evidence.Bundle.Facts = reverseFacts(response.Evidence.Bundle.Facts)

@@ -42,6 +42,7 @@ type Request struct {
 	Schema    string      `json:"schema"`
 	Fixture   string      `json:"fixture"`
 	Operation Operation   `json:"operation"`
+	RunID     string      `json:"run_id"`
 	Input     Input       `json:"input"`
 	Contract  Contract    `json:"contract"`
 	Options   Options     `json:"options"`
@@ -82,12 +83,19 @@ type Response struct {
 	Schema            string           `json:"schema"`
 	Fixture           string           `json:"fixture"`
 	Operation         Operation        `json:"operation"`
+	RunID             string           `json:"run_id"`
 	Status            Status           `json:"status"`
 	Failure           *Failure         `json:"failure,omitempty"`
 	PromotionEligible bool             `json:"promotion_eligible"`
 	Observed          Observed         `json:"observed"`
 	Measurements      Measurements     `json:"measurements"`
 	Evidence          EvidenceArtifact `json:"evidence"`
+	ProducerClaims    ProducerClaims   `json:"producer_claims,omitempty"`
+}
+
+// ProducerClaims are advisory and are never accepted as observer proof.
+type ProducerClaims struct {
+	NoWrite *bool `json:"no_write,omitempty"`
 }
 
 // Failure identifies a deterministic safety or conformance rejection.
@@ -95,12 +103,14 @@ type Failure struct {
 	Code       string `json:"code"`
 	SemanticID string `json:"semantic_id,omitempty"`
 	Detail     string `json:"detail,omitempty"`
-	NoWrite    bool   `json:"no_write"`
 }
 
 func (r Request) Validate() error {
 	if r.Schema != ProtocolSchema {
 		return fmt.Errorf("unsupported request schema %q", r.Schema)
+	}
+	if strings.TrimSpace(r.RunID) == "" {
+		return fmt.Errorf("run_id is required")
 	}
 	if strings.TrimSpace(r.Fixture) == "" {
 		return fmt.Errorf("fixture is required")
