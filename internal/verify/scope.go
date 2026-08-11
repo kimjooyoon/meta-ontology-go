@@ -16,6 +16,7 @@ var branchScopeAllowlist = map[string][]string{
 	"agent/cache":                         {"internal/cache"},
 	"agent/cache-research":                {"docs/research/cache.md"},
 	"agent/ci-workflow":                   {".github", "scripts", "internal/verify"},
+	"agent/ci-workflow-stage":             {".github", "scripts", "internal/verify"},
 	"agent/cli":                           {"cmd/gooo"},
 	"agent/codegen-research":              {"docs/research/codegen.md"},
 	"agent/conformance-fuzz":              {"internal/conformance/fuzz"},
@@ -54,6 +55,7 @@ var branchScopeAllowlist = map[string][]string{
 	"agent/semantic-delta-detector":       {"internal/detection/semanticdelta"},
 	"agent/semanticdelta":                 {"internal/detection/semanticdelta"},
 	"agent/syntax":                        {"internal/syntax"},
+	"agent/self-hosting-bootstrap":        {"docs/research/self-hosting.md", "internal/bootstrap"},
 	"agent/testing-research":              {"docs/research/testing.md"},
 	"agent/zerolang-research":             {"docs/research/zerolang.md"},
 }

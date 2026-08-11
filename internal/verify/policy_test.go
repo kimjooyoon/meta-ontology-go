@@ -94,6 +94,8 @@ func TestBranchScopeAllowlist(t *testing.T) {
 		{"agent/prototype-query", "internal/query/prototype.go"},
 		{"agent/provenance-store", "internal/provenance/store.go"},
 		{"agent/prototype-provenance", "internal/provenance/prototype.go"},
+		{"agent/self-hosting-bootstrap", "docs/research/self-hosting.md"},
+		{"agent/self-hosting-bootstrap", "internal/bootstrap/bootstrap.go"},
 		{"agent/ci-workflow", ".github/workflows/ci.yml"},
 	}
 	for _, test := range cases {
@@ -124,6 +126,8 @@ func TestBranchScopeBoundaries(t *testing.T) {
 		{"agent/performance-regression", "internal/detection/linecaps/check.go"},
 		{"agent/protected-regions", "internal/conformance/markers.go"},
 		{"agent/semanticdelta", "internal/provenance/store.go"},
+		{"agent/self-hosting-bootstrap", "docs/research/other.md"},
+		{"agent/self-hosting-bootstrap", "internal/semantic/graph.go"},
 	}
 	for _, boundary := range boundaries {
 		if err := CheckPathScopeForBranch([]string{boundary.path}, boundary.branch); err == nil {
