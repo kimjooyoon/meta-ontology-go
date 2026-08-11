@@ -18,7 +18,7 @@ func TestCachePutGetMetadataAndImmutableFirstWriter(t *testing.T) {
 		t.Fatal(err)
 	}
 	key := makeTestKey(t, "v1", "billing")
-	if err := cache.PutWithInfo(key, []byte("first"), EntryInfo{ArtifactType: "go", Projection: "source"}); err != nil {
+	if err := cache.PutWithInfo(key, []byte("first"), EntryInfo{ArtifactType: "go", Projection: "default"}); err != nil {
 		t.Fatal(err)
 	}
 	if err := cache.Put(key, []byte("second")); err != nil {
@@ -28,7 +28,7 @@ func TestCachePutGetMetadataAndImmutableFirstWriter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(data) != "first" || metadata.ArtifactType != "go" || metadata.Projection != "source" {
+	if string(data) != "first" || metadata.ArtifactType != "go" || metadata.Projection != "default" {
 		t.Fatalf("unexpected cache entry: %q %+v", data, metadata)
 	}
 	if ok, err := cache.Has(key); err != nil || !ok {
@@ -95,7 +95,7 @@ func TestCacheDetectsMetadataTampering(t *testing.T) {
 		t.Fatal(err)
 	}
 	key := makeTestKey(t, "v1", "billing")
-	if err := cache.PutWithInfo(key, []byte("valid"), EntryInfo{Projection: "go"}); err != nil {
+	if err := cache.PutWithInfo(key, []byte("valid"), EntryInfo{Projection: "default"}); err != nil {
 		t.Fatal(err)
 	}
 	object, err := cache.objectPath(key)
@@ -177,7 +177,7 @@ func TestCacheInvalidationClearAndTemporaryCleanup(t *testing.T) {
 	for _, item := range []struct {
 		key  Key
 		info EntryInfo
-	}{{billing, EntryInfo{ArtifactType: "go"}}, {other, EntryInfo{}}, {versioned, EntryInfo{Projection: "docs"}}} {
+	}{{billing, EntryInfo{ArtifactType: "go"}}, {other, EntryInfo{}}, {versioned, EntryInfo{Projection: "default"}}} {
 		if err := cache.PutWithInfo(item.key, []byte(item.key.Namespace), item.info); err != nil {
 			t.Fatal(err)
 		}

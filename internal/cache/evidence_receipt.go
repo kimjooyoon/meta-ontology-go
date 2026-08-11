@@ -1,0 +1,256 @@
+package cache
+
+import (
+	"errors"
+	"fmt"
+	"sort"
+)
+
+const (
+	cacheReceiptSchemaVersion     = "v1"
+	benchmarkReceiptSchemaVersion = "v1"
+)
+
+var (
+	ErrInvalidReceipt = errors.New("invalid cache evidence receipt")
+	ErrReceiptReplay  = errors.New("cache evidence receipt replay")
+)
+
+// EvidenceRef identifies immutable external evidence included in a receipt.
+type EvidenceRef struct {
+	Name   string `json:"name"`
+	Digest Digest `json:"digest"`
+}
+
+// EvidenceFreshness is separate from ProjectionKey and records the exact
+// source, verifier, policy, and CI evidence used for a cache decision.
+type EvidenceFreshness struct {
+	BaseDigest         Digest        `json:"base_digest"`
+	HeadDigest         Digest        `json:"head_digest"`
+	RunID              string        `json:"run_id"`
+	PredecessorDigests []Digest      `json:"predecessor_digests"`
+	SourceDigest       Digest        `json:"source_digest"`
+	IRDigest           Digest        `json:"ir_digest"`
+	PolicyDigest       Digest        `json:"policy_digest"`
+	ToolchainDigest    Digest        `json:"toolchain_digest"`
+	TargetDigest       Digest        `json:"target_digest"`
+	BundleDigest       Digest        `json:"bundle_digest"`
+	EvidenceRefs       []EvidenceRef `json:"evidence_refs"`
+}
+
+// Validate rejects missing, zero, duplicated, or malformed evidence.
+func (e EvidenceFreshness) Validate() error {
+	for _, item := range []struct {
+		label string
+		value Digest
+	}{
+		{"base", e.BaseDigest}, {"head", e.HeadDigest}, {"source", e.SourceDigest},
+		{"IR", e.IRDigest}, {"policy", e.PolicyDigest}, {"toolchain", e.ToolchainDigest},
+		{"target", e.TargetDigest}, {"bundle", e.BundleDigest},
+	} {
+		if !item.value.Known() {
+			return fmt.Errorf("%w: unknown %s digest", ErrInvalidReceipt, item.label)
+		}
+	}
+	if e.RunID == "" {
+		return fmt.Errorf("%w: missing run ID", ErrInvalidReceipt)
+	}
+	if e.PredecessorDigests == nil || hasDuplicateDigests(e.PredecessorDigests) {
+		return fmt.Errorf("%w: missing or replayed predecessors", ErrInvalidReceipt)
+	}
+	if len(e.EvidenceRefs) == 0 || hasDuplicateEvidenceRefs(e.EvidenceRefs) {
+		return fmt.Errorf("%w: missing or duplicated evidence refs", ErrInvalidReceipt)
+	}
+	for _, digest := range e.PredecessorDigests {
+		if !digest.Known() {
+			return fmt.Errorf("%w: unknown predecessor digest", ErrInvalidReceipt)
+		}
+	}
+	for _, ref := range e.EvidenceRefs {
+		if err := validateKeyComponent("evidence ref", ref.Name, true); err != nil || !ref.Digest.Known() {
+			return fmt.Errorf("%w: malformed evidence ref %q", ErrInvalidReceipt, ref.Name)
+		}
+	}
+	return nil
+}
+
+// Equal reports whether two evidence bundles identify the same immutable run.
+func (e EvidenceFreshness) Equal(other EvidenceFreshness) bool {
+	left, right := canonicalEvidence(e), canonicalEvidence(other)
+	return left.BaseDigest == right.BaseDigest && left.HeadDigest == right.HeadDigest &&
+		left.RunID == right.RunID && left.SourceDigest == right.SourceDigest &&
+		left.IRDigest == right.IRDigest && left.PolicyDigest == right.PolicyDigest &&
+		left.ToolchainDigest == right.ToolchainDigest && left.TargetDigest == right.TargetDigest &&
+		left.BundleDigest == right.BundleDigest && digestSliceEqual(left.PredecessorDigests, right.PredecessorDigests) &&
+		evidenceRefsEqual(left.EvidenceRefs, right.EvidenceRefs)
+}
+
+// Matches reports whether evidence belongs to the requested current base,
+// head, run, and predecessor tuple.
+func (e EvidenceFreshness) Matches(current EvidenceFreshness) bool {
+	return e.Equal(current)
+}
+
+// CacheReceipt is an append-only immutable record of one cache decision.
+type CacheReceipt struct {
+	SchemaVersion         string            `json:"schema_version"`
+	CacheKey              Digest            `json:"cache_key"`
+	ArtifactKind          string            `json:"artifact_kind"`
+	SemanticClosureDigest Digest            `json:"semantic_closure_digest"`
+	DependencyRoot        Digest            `json:"dependency_root"`
+	DirectDependencies    []Digest          `json:"direct_dependencies"`
+	PolicySchemaDigest    Digest            `json:"policy_schema_digest"`
+	Toolchain             string            `json:"toolchain"`
+	Target                string            `json:"target"`
+	BuildTagsDigest       Digest            `json:"build_tags_digest"`
+	EvidenceRefs          []EvidenceRef     `json:"evidence_refs"`
+	ProducerHost          string            `json:"producer_host"`
+	Status                ReceiptStatus     `json:"status"`
+	Evidence              EvidenceFreshness `json:"evidence"`
+	ReceiptDigest         Digest            `json:"receipt_digest"`
+}
+
+// ReceiptStatus describes the observed cache outcome, never feature proof.
+type ReceiptStatus string
+
+const (
+	ReceiptHit        ReceiptStatus = "hit"
+	ReceiptMiss       ReceiptStatus = "miss"
+	ReceiptRecomputed ReceiptStatus = "recomputed"
+	ReceiptStale      ReceiptStatus = "stale"
+	ReceiptCorrupt    ReceiptStatus = "corrupt"
+)
+
+// Validate checks the required cache receipt schema before it is sealed.
+func (r CacheReceipt) Validate() error {
+	if r.SchemaVersion != cacheReceiptSchemaVersion || !r.CacheKey.Known() || r.ArtifactKind == "" ||
+		!r.SemanticClosureDigest.Known() || !r.DependencyRoot.Known() || r.DirectDependencies == nil ||
+		!r.PolicySchemaDigest.Known() || r.Toolchain == "" || r.Target == "" || !r.BuildTagsDigest.Known() ||
+		r.ProducerHost == "" || !validReceiptStatus(r.Status) {
+		return fmt.Errorf("%w: required cache receipt field missing", ErrInvalidReceipt)
+	}
+	if err := validateEvidenceRefs(r.EvidenceRefs); err != nil {
+		return err
+	}
+	if err := r.Evidence.Validate(); err != nil {
+		return err
+	}
+	if !evidenceRefsEqual(r.EvidenceRefs, r.Evidence.EvidenceRefs) {
+		return fmt.Errorf("%w: evidence refs disagree", ErrInvalidReceipt)
+	}
+	for _, digest := range r.DirectDependencies {
+		if !digest.Known() {
+			return fmt.Errorf("%w: unknown direct dependency", ErrInvalidReceipt)
+		}
+	}
+	return nil
+}
+
+// ValidateForKey prevents metadata-only artifact or projection aliases from
+// being accepted as a different content-addressed projection.
+func (r CacheReceipt) ValidateForKey(key Key) error {
+	if err := r.Validate(); err != nil {
+		return err
+	}
+	if err := validateFullKey(key); err != nil {
+		return err
+	}
+	if r.CacheKey != key.Digest || r.ArtifactKind != key.ArtifactKind ||
+		r.SemanticClosureDigest != key.SemanticClosureDigest || r.DependencyRoot != key.DependencyRoot ||
+		r.PolicySchemaDigest != key.PolicySchemaDigest || r.Toolchain != key.Toolchain ||
+		r.Target != key.Target || r.BuildTagsDigest != key.BuildTagsDigest {
+		return fmt.Errorf("%w: receipt identity differs from key", ErrInvalidReceipt)
+	}
+	return nil
+}
+
+// Seal validates and computes the immutable receipt digest.
+func (r CacheReceipt) Seal() (CacheReceipt, error) {
+	if err := r.Validate(); err != nil {
+		return CacheReceipt{}, err
+	}
+	r.Evidence = canonicalEvidence(r.Evidence)
+	r.EvidenceRefs = append([]EvidenceRef(nil), r.Evidence.EvidenceRefs...)
+	provided := r.ReceiptDigest
+	r.ReceiptDigest = ""
+	digest, err := DigestOf(r)
+	if err != nil {
+		return CacheReceipt{}, fmt.Errorf("%w: hash receipt: %v", ErrInvalidReceipt, err)
+	}
+	if provided != "" && provided != digest {
+		return CacheReceipt{}, fmt.Errorf("%w: receipt digest mismatch", ErrInvalidReceipt)
+	}
+	r.ReceiptDigest = digest
+	return r, nil
+}
+
+func validReceiptStatus(status ReceiptStatus) bool {
+	return status == ReceiptHit || status == ReceiptMiss || status == ReceiptRecomputed ||
+		status == ReceiptStale || status == ReceiptCorrupt
+}
+
+func validateEvidenceRefs(refs []EvidenceRef) error {
+	if len(refs) == 0 || hasDuplicateEvidenceRefs(refs) {
+		return fmt.Errorf("%w: missing or duplicated evidence refs", ErrInvalidReceipt)
+	}
+	for _, ref := range refs {
+		if err := validateKeyComponent("evidence ref", ref.Name, true); err != nil || !ref.Digest.Known() {
+			return fmt.Errorf("%w: malformed evidence ref %q", ErrInvalidReceipt, ref.Name)
+		}
+	}
+	return nil
+}
+
+func canonicalEvidence(e EvidenceFreshness) EvidenceFreshness {
+	e.PredecessorDigests = append([]Digest(nil), e.PredecessorDigests...)
+	sort.Slice(e.PredecessorDigests, func(i, j int) bool { return e.PredecessorDigests[i] < e.PredecessorDigests[j] })
+	e.EvidenceRefs = append([]EvidenceRef(nil), e.EvidenceRefs...)
+	sort.Slice(e.EvidenceRefs, func(i, j int) bool { return e.EvidenceRefs[i].Name < e.EvidenceRefs[j].Name })
+	return e
+}
+
+func hasDuplicateDigests(values []Digest) bool {
+	seen := make(map[Digest]struct{}, len(values))
+	for _, value := range values {
+		if _, exists := seen[value]; exists {
+			return true
+		}
+		seen[value] = struct{}{}
+	}
+	return false
+}
+
+func hasDuplicateEvidenceRefs(values []EvidenceRef) bool {
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		if _, exists := seen[value.Name]; exists {
+			return true
+		}
+		seen[value.Name] = struct{}{}
+	}
+	return false
+}
+
+func digestSliceEqual(left, right []Digest) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func evidenceRefsEqual(left, right []EvidenceRef) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
+}

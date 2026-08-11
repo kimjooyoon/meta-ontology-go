@@ -11,11 +11,19 @@ func makeTestKey(t *testing.T, version, namespace string) Key {
 	key, err := NewKey(KeySpec{
 		Version: version, Namespace: namespace, ToolVersion: "compiler-1",
 		Inputs: map[string]any{"source": "main.gooo"}, Options: map[string]any{"mode": "fast"},
+		Freshness: testFreshnessSpec(),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	return key
+}
+
+func testFreshnessSpec() FreshnessSpec {
+	return FreshnessSpec{
+		Dependencies: map[string]any{"revision": "known"},
+		Provenance:   map[string]any{"evidence": "known"},
+	}
 }
 
 func TestNewKeyIsCanonicalAndVersioned(t *testing.T) {

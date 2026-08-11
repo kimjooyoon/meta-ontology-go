@@ -28,6 +28,12 @@ func (d Digest) Valid() bool {
 	return err == nil
 }
 
+// Known reports whether d is valid and not the zero sentinel used for
+// missing evidence.
+func (d Digest) Known() bool {
+	return d.Valid() && d != Digest(strings.Repeat("0", digestLength))
+}
+
 // HashBytes returns the SHA-256 digest of data. The result is safe to use as a
 // content-addressed filename.
 func HashBytes(data []byte) Digest {

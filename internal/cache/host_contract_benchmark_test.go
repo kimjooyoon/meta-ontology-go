@@ -6,7 +6,7 @@ func BenchmarkNewKeyPerHostStage(b *testing.B) {
 	spec := KeySpec{
 		Version: "v1", Namespace: "billing", ToolVersion: "compiler-1",
 		HostStage: GoHostedStage, Inputs: map[string]any{"source": "main.gooo"},
-		Options: map[string]any{"mode": "fast"},
+		Options: map[string]any{"mode": "fast"}, Freshness: testFreshnessSpec(),
 	}
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {

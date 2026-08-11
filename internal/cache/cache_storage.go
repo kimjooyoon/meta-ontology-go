@@ -30,6 +30,9 @@ func (c *Cache) putLocked(key Key, data []byte, info EntryInfo) error {
 	if err := validateEntryInfo(info); err != nil {
 		return err
 	}
+	if info.Projection != "" && info.Projection != key.Projection {
+		return fmt.Errorf("%w: EntryInfo projection is not key identity", ErrInvalidKey)
+	}
 	path, err := c.objectPath(key)
 	if err != nil {
 		return err
@@ -68,22 +71,30 @@ func (c *Cache) writeObject(path string, key Key, data []byte, info EntryInfo) e
 
 func makeMetadata(key Key, data []byte, info EntryInfo) Metadata {
 	metadata := Metadata{
-		FormatVersion:    metadataVersion,
-		Key:              key.String(),
-		KeyVersion:       key.Version,
-		Namespace:        key.Namespace,
-		ToolVersion:      key.ToolVersion,
-		HostStage:        key.HostStage,
-		InputDigest:      key.InputDigest,
-		OptionsDigest:    key.OptionsDigest,
-		DependencyDigest: key.DependencyDigest,
-		ProvenanceDigest: key.ProvenanceDigest,
-		ArtifactType:     info.ArtifactType,
-		Projection:       info.Projection,
-		Reconstructable:  true,
-		Size:             int64(len(data)),
-		ContentDigest:    HashBytes(data),
-		CreatedAt:        time.Now().UTC(),
+		FormatVersion:         metadataVersion,
+		Key:                   key.String(),
+		KeyVersion:            key.Version,
+		Domain:                key.Domain,
+		Namespace:             key.Namespace,
+		ArtifactKind:          key.ArtifactKind,
+		ToolVersion:           key.ToolVersion,
+		Toolchain:             key.Toolchain,
+		Target:                key.Target,
+		HostStage:             key.HostStage,
+		InputDigest:           key.InputDigest,
+		SemanticClosureDigest: key.SemanticClosureDigest,
+		DependencyRoot:        key.DependencyRoot,
+		PolicySchemaDigest:    key.PolicySchemaDigest,
+		BuildTagsDigest:       key.BuildTagsDigest,
+		OptionsDigest:         key.OptionsDigest,
+		DependencyDigest:      key.DependencyDigest,
+		ProvenanceDigest:      key.ProvenanceDigest,
+		ArtifactType:          info.ArtifactType,
+		Projection:            key.Projection,
+		Reconstructable:       true,
+		Size:                  int64(len(data)),
+		ContentDigest:         HashBytes(data),
+		CreatedAt:             time.Now().UTC(),
 	}
 	metadata.MetadataDigest = digestMetadata(metadata)
 	return metadata
