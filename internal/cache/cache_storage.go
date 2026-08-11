@@ -73,6 +73,7 @@ func makeMetadata(key Key, data []byte, info EntryInfo) Metadata {
 		KeyVersion:      key.Version,
 		Namespace:       key.Namespace,
 		ToolVersion:     key.ToolVersion,
+		HostStage:       key.HostStage,
 		InputDigest:     key.InputDigest,
 		OptionsDigest:   key.OptionsDigest,
 		ArtifactType:    info.ArtifactType,

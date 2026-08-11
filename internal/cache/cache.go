@@ -51,6 +51,7 @@ type Metadata struct {
 	KeyVersion      string    `json:"key_version"`
 	Namespace       string    `json:"namespace"`
 	ToolVersion     string    `json:"tool_version"`
+	HostStage       HostStage `json:"host_stage"`
 	InputDigest     Digest    `json:"input_digest"`
 	OptionsDigest   Digest    `json:"options_digest"`
 	ArtifactType    string    `json:"artifact_type,omitempty"`

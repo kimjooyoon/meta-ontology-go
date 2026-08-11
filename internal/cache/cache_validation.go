@@ -23,7 +23,8 @@ func (c *Cache) validatePathKey(key Key) error {
 }
 
 func validateFullKey(key Key) error {
-	if !key.Valid() || key.Version == "" || key.Namespace == "" || !key.InputDigest.Valid() || !key.OptionsDigest.Valid() {
+	if !key.Valid() || key.Version == "" || key.Namespace == "" || !key.HostStage.Valid() ||
+		!key.InputDigest.Valid() || !key.OptionsDigest.Valid() {
 		return fmt.Errorf("%w: key must be created by NewKey", ErrInvalidKey)
 	}
 	if err := validateKeyComponent("key version", key.Version, true); err != nil {
@@ -32,10 +33,14 @@ func validateFullKey(key Key) error {
 	if err := validateKeyComponent("namespace", key.Namespace, true); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidKey, err)
 	}
+	if !key.HostStage.Valid() {
+		return fmt.Errorf("%w: %q", ErrInvalidHostStage, key.HostStage)
+	}
 	if err := validateKeyComponent("tool version", key.ToolVersion, false); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidKey, err)
 	}
-	expected := digestForKey(key.Version, key.Namespace, key.ToolVersion, key.InputDigest, key.OptionsDigest)
+	expected := digestForKey(key.HostStage, key.Version, key.Namespace, key.ToolVersion,
+		key.InputDigest, key.OptionsDigest)
 	if key.Digest != expected {
 		return fmt.Errorf("%w: key digest does not match key fields", ErrInvalidKey)
 	}
@@ -65,6 +70,9 @@ func validateMetadataForKey(metadata Metadata, key Key) error {
 	if key.ToolVersion != "" && metadata.ToolVersion != key.ToolVersion {
 		return fmt.Errorf("tool version mismatch")
 	}
+	if key.HostStage != "" && metadata.HostStage != key.HostStage {
+		return fmt.Errorf("host stage mismatch")
+	}
 	if key.InputDigest.Valid() && metadata.InputDigest != key.InputDigest {
 		return fmt.Errorf("input digest mismatch")
 	}
@@ -84,15 +92,15 @@ func metadataSane(metadata Metadata) bool {
 	if !metadata.Reconstructable || metadata.Size < 0 || metadata.CreatedAt.IsZero() {
 		return false
 	}
-	if validateKeyComponent("key version", metadata.KeyVersion, true) != nil ||
+	if !metadata.HostStage.Valid() || validateKeyComponent("key version", metadata.KeyVersion, true) != nil ||
 		validateKeyComponent("namespace", metadata.Namespace, true) != nil ||
 		validateKeyComponent("tool version", metadata.ToolVersion, false) != nil ||
 		validateKeyComponent("artifact type", metadata.ArtifactType, false) != nil ||
 		validateKeyComponent("projection", metadata.Projection, false) != nil {
 		return false
 	}
-	if metadata.Key != digestForKey(metadata.KeyVersion, metadata.Namespace, metadata.ToolVersion,
-		metadata.InputDigest, metadata.OptionsDigest).String() {
+	if metadata.Key != digestForKey(metadata.HostStage, metadata.KeyVersion, metadata.Namespace,
+		metadata.ToolVersion, metadata.InputDigest, metadata.OptionsDigest).String() {
 		return false
 	}
 	return metadata.MetadataDigest.Valid() && digestMetadata(metadata) == metadata.MetadataDigest

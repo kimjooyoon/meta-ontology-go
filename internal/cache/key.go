@@ -22,6 +22,7 @@ type KeySpec struct {
 	Version     string
 	Namespace   string
 	ToolVersion string
+	HostStage   HostStage
 	Inputs      any
 	Options     any
 }
@@ -34,6 +35,7 @@ type Key struct {
 	Version       string
 	Namespace     string
 	ToolVersion   string
+	HostStage     HostStage
 	InputDigest   Digest
 	OptionsDigest Digest
 }
@@ -44,8 +46,15 @@ func NewKey(spec KeySpec) (Key, error) {
 	if version == "" {
 		version = DefaultKeyVersion
 	}
+	hostStage := spec.HostStage
+	if hostStage == "" {
+		hostStage = DefaultHostStage
+	}
 	if err := validateKeyComponent("key version", version, false); err != nil {
 		return Key{}, err
+	}
+	if !hostStage.Valid() {
+		return Key{}, fmt.Errorf("%w: %q", ErrInvalidHostStage, hostStage)
 	}
 	if err := validateKeyComponent("namespace", spec.Namespace, true); err != nil {
 		return Key{}, err
@@ -63,21 +72,23 @@ func NewKey(spec KeySpec) (Key, error) {
 		return Key{}, fmt.Errorf("hash options: %w", err)
 	}
 
-	digest := digestForKey(version, spec.Namespace, spec.ToolVersion, inputDigest, optionsDigest)
+	digest := digestForKey(hostStage, version, spec.Namespace, spec.ToolVersion, inputDigest, optionsDigest)
 
 	return Key{
 		Digest:        digest,
 		Version:       version,
 		Namespace:     spec.Namespace,
 		ToolVersion:   spec.ToolVersion,
+		HostStage:     hostStage,
 		InputDigest:   inputDigest,
 		OptionsDigest: optionsDigest,
 	}, nil
 }
 
-func digestForKey(version, namespace, toolVersion string, inputDigest, optionsDigest Digest) Digest {
+func digestForKey(hostStage HostStage, version, namespace, toolVersion string, inputDigest, optionsDigest Digest) Digest {
 	hasher := sha256.New()
 	_, _ = hasher.Write([]byte(keyDomain))
+	writeKeyPart(hasher, hostStage.String())
 	writeKeyPart(hasher, version)
 	writeKeyPart(hasher, namespace)
 	writeKeyPart(hasher, toolVersion)
