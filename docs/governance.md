@@ -184,18 +184,28 @@ The PR body should state:
 - checks run and any known environmental blocker;
 - unsupported features deliberately not claimed.
 
-The current GitHub Actions workflow runs:
+The integration GitHub Actions workflow in
+[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) currently runs:
 
 ```text
-Go test job: gofmt -l .; go test ./...
-Go vet job:  go vet ./...
-Semantic job: go run ./cmd/gooo check examples/billing/main.gooo
+format: gofmt -l .
+vet:    go vet ./...
+test:   go test ./...
+race:   go test -race ./...
+semantic: ./scripts/semantic-conformance.sh
+policy: go run ./scripts/verify
 ```
 
-The semantic job waits for the Go job. The workflow does not currently enforce
-race tests, static analysis, generated-output snapshots, cache conformance, LSP
-behavior, or durable provenance publishing. Do not describe those as CI gates
-until the workflow changes and has passed evidence.
+The semantic script intentionally has a deferred path that exits successfully
+when the baseline has no `gooo check` command; that status is not evidence that a
+semantic CLI or self-hosted verifier is supported. When the command is present,
+the script runs the CLI check, semantic/generated tests, and generated-freshness
+checks. The policy job enforces changed-path ownership, Go size caps, and the
+integration pull-request target. Static analysis, cache conformance, LSP
+behavior, and durable provenance publishing are not current CI gates.
+
+The workflow is a seed/candidate safety baseline. It is not yet a self-hosted
+verifier promotion gate.
 
 ### Verifier promotion plan
 

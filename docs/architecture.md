@@ -103,11 +103,23 @@ The research note owns experiment history, alternatives, and stage-specific
 measurements. This architecture owns the boundary rules that any implementation
 must satisfy before those measurements can support promotion.
 
+## Current CI baseline
+
+The integration workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
+currently has separate format, vet, unit-test, race-test, semantic-conformance,
+and CI-policy jobs. The semantic job delegates to
+[`scripts/semantic-conformance.sh`](../scripts/semantic-conformance.sh); its
+explicit deferred path is evidence that the CLI is not yet available, not proof
+of self-hosting. The policy job checks branch ownership, Go size caps, and the
+integration PR target. These checks protect the seed and candidate boundaries;
+they are not yet the self-hosted verifier promotion gate.
+
 ## What is not part of the current contract
 
 The architecture leaves room for richer relations, a production LSP, a stable Go
-analysis CLI, durable evidence publishing, and broader CI gates. Those are design
-directions only until they have a supported entry point and runnable conformance
-evidence. The current required CI is documented in
-[CONTRIBUTING.md](../CONTRIBUTING.md). Self-hosting and verifier promotion are
-also future capabilities until the staged gates above are wired into protected CI.
+analysis CLI, durable evidence publishing, and self-hosted verifier promotion.
+Those are design directions only until they have a supported entry point and
+runnable conformance evidence. The current required CI is documented in
+[CONTRIBUTING.md](../CONTRIBUTING.md) and the integration workflow. Self-hosting
+and verifier promotion are future capabilities until the staged gates above are
+wired into protected CI.
