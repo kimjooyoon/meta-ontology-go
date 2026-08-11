@@ -68,8 +68,6 @@ func TestBranchScopeAllowlist(t *testing.T) {
 		{"agent/lsp-research", "docs/research/lsp.md"},
 		{"agent/security", "docs/research/security.md"},
 		{"agent/security-research", "docs/research/security.md"},
-		{"agent/self-hosting-bootstrap", "docs/research/self-hosting.md"},
-		{"agent/self-hosting-bootstrap", "internal/bootstrap/model.go"},
 		{"agent/testing-research", "docs/research/testing.md"},
 		{"agent/prov-o-research", "docs/research/prov-o.md"},
 		{"agent/codegen-research", "docs/research/codegen.md"},

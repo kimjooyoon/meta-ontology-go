@@ -53,7 +53,6 @@ var branchScopeAllowlist = map[string][]string{
 	"agent/semantic":                      {"internal/semantic"},
 	"agent/semantic-delta-detector":       {"internal/detection/semanticdelta"},
 	"agent/semanticdelta":                 {"internal/detection/semanticdelta"},
-	"agent/self-hosting-bootstrap":        {"docs/research/self-hosting.md", "internal/bootstrap", "internal/verify/scope.go", "internal/verify/policy_test.go"},
 	"agent/syntax":                        {"internal/syntax"},
 	"agent/testing-research":              {"docs/research/testing.md"},
 	"agent/zerolang-research":             {"docs/research/zerolang.md"},
