@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"unicode"
@@ -19,6 +20,23 @@ type DocumentParser = Parser
 type ParserFunc func(uri, source string) ParseResult
 
 func (f ParserFunc) Parse(uri, source string) ParseResult { return f(uri, source) }
+
+// ContextParser can stop parsing when the request's context is canceled.
+type ContextParser interface {
+	ParseContext(ctx context.Context, uri, source string) (ParseResult, error)
+}
+
+// ContextParserFunc adapts a cancellable parser function.
+type ContextParserFunc func(ctx context.Context, uri, source string) (ParseResult, error)
+
+func (f ContextParserFunc) ParseContext(ctx context.Context, uri, source string) (ParseResult, error) {
+	return f(ctx, uri, source)
+}
+
+func (f ContextParserFunc) Parse(uri, source string) ParseResult {
+	result, _ := f(context.Background(), uri, source)
+	return result
+}
 
 type ParseResult struct {
 	Symbols     []Symbol

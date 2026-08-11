@@ -154,7 +154,7 @@ func positionOffset(source string, position Position) int {
 		return lineStart
 	}
 	offset, units := lineStart, 0
-	for offset < len(source) && source[offset] != '\n' {
+	for offset < len(source) && source[offset] != '\n' && source[offset] != '\r' {
 		runeValue, size := utf8.DecodeRuneInString(source[offset:])
 		length := utf16.RuneLen(runeValue)
 		if length < 0 {

@@ -57,7 +57,7 @@ func (s *Server) ServeContext(ctx context.Context, input io.Reader, output io.Wr
 		if err != nil {
 			return err
 		}
-		response, notifications, dispatchErr := s.dispatch(payload)
+		response, notifications, dispatchErr := s.dispatch(ctx, payload)
 		if dispatchErr != nil {
 			return dispatchErr
 		}
@@ -80,7 +80,7 @@ func (s *Server) ServeContext(ctx context.Context, input io.Reader, output io.Wr
 	}
 }
 
-func (s *Server) dispatch(payload []byte) (*responseEnvelope, [][]byte, error) {
+func (s *Server) dispatch(ctx context.Context, payload []byte) (*responseEnvelope, [][]byte, error) {
 	var request requestEnvelope
 	if err := json.Unmarshal(payload, &request); err != nil {
 		return errorResponse(nil, parseError, "Parse error"), nil, nil
@@ -102,9 +102,9 @@ func (s *Server) dispatch(payload []byte) (*responseEnvelope, [][]byte, error) {
 		s.exited = true
 		return nil, nil, nil
 	case "textDocument/didOpen":
-		return s.didOpen(request)
+		return s.didOpen(ctx, request)
 	case "textDocument/didChange":
-		return s.didChange(request)
+		return s.didChange(ctx, request)
 	case "textDocument/didClose":
 		return s.didClose(request)
 	case "textDocument/hover":
@@ -147,19 +147,23 @@ func (s *Server) shutdownRequest(request requestEnvelope) *responseEnvelope {
 	return resultResponse(request.ID, nil)
 }
 
-func (s *Server) didOpen(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
+func (s *Server) didOpen(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params DidOpenTextDocumentParams
 	if err := decodeParams(request.Params, &params); err != nil || params.TextDocument.URI == "" {
 		return responseOrNil(request.ID, invalidParams, "Invalid didOpen parameters"), nil, nil
 	}
 	document := &document{version: params.TextDocument.Version, text: params.TextDocument.Text}
-	document.result = s.parser.Parse(params.TextDocument.URI, document.text)
+	result, err := s.parse(ctx, params.TextDocument.URI, document.text)
+	if err != nil {
+		return s.parseFailure(request.ID, ctx, err), nil, parseDispatchError(ctx, err)
+	}
+	document.result = result
 	s.documents[params.TextDocument.URI] = document
 	notification, err := diagnosticsNotification(params.TextDocument.URI, document.result.Diagnostics)
 	return nil, oneNotification(notification, err), err
 }
 
-func (s *Server) didChange(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
+func (s *Server) didChange(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params DidChangeTextDocumentParams
 	if err := decodeParams(request.Params, &params); err != nil || params.TextDocument.URI == "" {
 		return responseOrNil(request.ID, invalidParams, "Invalid didChange parameters"), nil, nil
@@ -174,7 +178,11 @@ func (s *Server) didChange(request requestEnvelope) (*responseEnvelope, [][]byte
 	}
 	document.version = params.TextDocument.Version
 	document.text = text
-	document.result = s.parser.Parse(params.TextDocument.URI, text)
+	result, err := s.parse(ctx, params.TextDocument.URI, text)
+	if err != nil {
+		return s.parseFailure(request.ID, ctx, err), nil, parseDispatchError(ctx, err)
+	}
+	document.result = result
 	notification, err := diagnosticsNotification(params.TextDocument.URI, document.result.Diagnostics)
 	return nil, oneNotification(notification, err), err
 }
@@ -212,6 +220,27 @@ func (s *Server) definitionRequest(request requestEnvelope) (*responseEnvelope, 
 		return errorResponse(request.ID, invalidParams, "Invalid definition parameters"), nil, nil
 	}
 	return resultResponse(request.ID, s.definition(params)), nil, nil
+}
+
+func (s *Server) parse(ctx context.Context, uri, source string) (ParseResult, error) {
+	if parser, ok := s.parser.(ContextParser); ok {
+		return parser.ParseContext(ctx, uri, source)
+	}
+	return s.parser.Parse(uri, source), nil
+}
+
+func (s *Server) parseFailure(id json.RawMessage, ctx context.Context, err error) *responseEnvelope {
+	if ctx.Err() != nil {
+		return nil
+	}
+	return responseOrNil(id, internalError, err.Error())
+}
+
+func parseDispatchError(ctx context.Context, err error) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return nil
 }
 
 func decodeParams(raw json.RawMessage, target any) error {
