@@ -23,11 +23,11 @@ func TestGraphValidationRequiresDeclaredNodesAndPROVKinds(t *testing.T) {
 	if err := g.AddNode(mustEntity(t, entity, Namespace("billing"), "Order")); err != nil {
 		t.Fatal(err)
 	}
-	if err := g.AddFact(NewUsedFact(activity, entity)); err != nil {
-		t.Fatal(err)
+	if err := g.AddFact(NewUsedFact(activity, entity)); !errors.Is(err, ErrInvalidFact) {
+		t.Fatalf("reversed used edge error = %v, want ErrInvalidFact", err)
 	}
-	if err := g.Validate(); err == nil {
-		t.Fatal("used(Entity, Entity) unexpectedly validated")
+	if err := g.Validate(); err != nil {
+		t.Fatalf("rejected edge mutated graph: %v", err)
 	}
 }
 

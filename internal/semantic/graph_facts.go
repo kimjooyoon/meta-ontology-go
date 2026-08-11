@@ -10,6 +10,13 @@ func (g *Graph) AddFact(fact Fact) error {
 	if err != nil {
 		return err
 	}
+	// Candidate observations may be type-incomplete until review. They remain
+	// outside authoritative hashes, while Validate and promotion fail closed.
+	if normalized.Status == FactDeterministic {
+		if err := g.validateDeclaredFactKinds(normalized); err != nil {
+			return err
+		}
+	}
 	g.ensure()
 	key := normalized.Key()
 	if normalized.Status == FactCandidate {
@@ -21,6 +28,15 @@ func (g *Graph) AddFact(fact Fact) error {
 	g.facts[key] = normalized
 	delete(g.candidates, key)
 	return nil
+}
+
+func (g Graph) validateDeclaredFactKinds(fact Fact) error {
+	subject, subjectOK := g.nodes[fact.Subject]
+	object, objectOK := g.nodes[fact.Object]
+	if !subjectOK || !objectOK {
+		return nil
+	}
+	return fact.Predicate.ValidateKinds(subject.Kind, object.Kind)
 }
 
 func (g *Graph) AddCandidate(fact Fact) error {
