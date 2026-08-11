@@ -1,0 +1,14 @@
+{
+  "allowed": false,
+  "violations": [
+    {
+      "operation": "add",
+      "change": "fact",
+      "subject": "billing://activity/pay-order",
+      "predicate": "prov:used",
+      "object": "fraud://entity/charge",
+      "endpoint": "object",
+      "reason": "fact object is outside allowed scope"
+    }
+  ]
+}

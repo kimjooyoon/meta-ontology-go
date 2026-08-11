@@ -1,0 +1,7 @@
+version	semanticdelta/v1
+scope	id	billing://activity/pay-order
+scope	id	billing://entity/order
+scope	predicate	prov:used
+delta	add-node	Activity	billing://activity/pay-order
+delta	add-node	Entity	billing://entity/order
+delta	add-fact	prov:used	billing://activity/pay-order	billing://entity/order

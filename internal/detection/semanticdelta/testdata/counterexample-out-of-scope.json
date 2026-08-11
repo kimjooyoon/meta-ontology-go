@@ -1,0 +1,21 @@
+{
+  "version": "semanticdelta/v1",
+  "allowed": {
+    "ids": [
+      "billing://activity/pay-order",
+      "billing://entity/order"
+    ],
+    "predicates": [
+      "prov:used"
+    ]
+  },
+  "delta": {
+    "addedFacts": [
+      {
+        "subject": "billing://activity/pay-order",
+        "predicate": "prov:used",
+        "object": "fraud://entity/charge"
+      }
+    ]
+  }
+}
