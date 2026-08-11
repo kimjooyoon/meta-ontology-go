@@ -6,6 +6,12 @@ Go projection is structural output; handwritten slots are the implementation
 escape hatch. Evidence records describe what a build observed and do not become
 new intent by themselves.
 
+The proposed history from a handwritten seed to a self-hosted compiler is tracked
+in the [self-hosting research note](research/self-hosting.md), owned by the
+self-hosting-bootstrap workstream. This document connects that research to the
+normative architecture without making the research note, or a future self-hosted
+verifier, authoritative by itself.
+
 ```text
 main.gooo
    │ parse: syntax tree + source spans
@@ -74,10 +80,34 @@ implicit deletion; removals must be explicit.
 6. Record locality, source spans, hashes, and command results as evidence for the
    reviewer and CI.
 
+## Bootstrap path to self-hosting
+
+Self-hosting is a staged trust transition, not a single generator feature. The
+following sequence is the proposed bootstrap history; a stage is current only
+after its evidence is present in protected CI.
+
+| Stage | Implementation shape | Trust boundary | Promotion evidence |
+| --- | --- | --- | --- |
+| Seed | Handwritten Go kernel plus a small `.gooo` fixture | Go parser, IR, generator, and verifier are trusted; DSL is intent input | Reproducible Go checks and the example semantic check |
+| Semantic mirror | `.gooo` describes the compiler ontology, contracts, and verifier vocabulary | Go remains authoritative for execution; `.gooo` is a reviewed semantic mirror | Stable IDs, source spans, canonical IR, and BX tests agree |
+| Structural self-host | `.gooo` drives structural Go for compiler components; handwritten slots retain irreducible logic | Generated Go is replaceable output; the seed remains the rollback implementation | Marker/locality checks, deterministic regeneration, and build equivalence |
+| Shadow verifier | A `.gooo`-described verifier runs beside the seed verifier | Candidate verifier is evidence only and cannot approve itself | Seed/candidate decision and evidence streams match on pinned fixtures |
+| Promoted self-host | The promoted verifier checks the next bootstrap and can rebuild the compiler | Previous verifier and source digest remain the rollback authority | Reproducible bootstrap, BX/provenance/locality gates, and independent approval |
+
+At every stage, `.gooo` remains the SSOT for declared intent and stable IDs;
+semantic IR remains the normalized comparison form; generated Go remains derived;
+and provenance remains append-only evidence. A bootstrap artifact cannot grant
+itself authority merely because it generated or verified itself.
+
+The research note owns experiment history, alternatives, and stage-specific
+measurements. This architecture owns the boundary rules that any implementation
+must satisfy before those measurements can support promotion.
+
 ## What is not part of the current contract
 
 The architecture leaves room for richer relations, a production LSP, a stable Go
 analysis CLI, durable evidence publishing, and broader CI gates. Those are design
 directions only until they have a supported entry point and runnable conformance
 evidence. The current required CI is documented in
-[CONTRIBUTING.md](../CONTRIBUTING.md).
+[CONTRIBUTING.md](../CONTRIBUTING.md). Self-hosting and verifier promotion are
+also future capabilities until the staged gates above are wired into protected CI.

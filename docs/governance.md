@@ -31,7 +31,44 @@ The semantic IR is an interchange representation, not a second business SSOT.
 Its normalized form makes projections comparable; it does not authorize a tool to
 invent domain meaning. Provenance is evidence, not a write-back channel.
 
-## 2. Provenance policy
+## 2. Bootstrap history and trust boundary
+
+The long-form bootstrap history and experiments live in the
+[self-hosting research note](research/self-hosting.md), owned by the
+self-hosting-bootstrap workstream. The note is research input, not a policy
+override. This contract defines the authority transition that the research must
+respect as `meta-ontology-go` incrementally re-expresses its own compiler and
+verifier in `.gooo`.
+
+The proposed stages are:
+
+1. **Seed:** a handwritten Go kernel parses, lowers, projects, and verifies a
+   small `.gooo` fixture.
+2. **Semantic mirror:** `.gooo` declares the compiler ontology, contracts, and
+   verifier vocabulary while the Go kernel remains the execution authority.
+3. **Structural self-host:** `.gooo` drives generated structure for compiler
+   components; only irreducible logic remains in handwritten slots.
+4. **Shadow verifier:** a `.gooo`-described verifier runs beside the trusted seed
+   verifier and produces candidate evidence.
+5. **Promotion:** CI accepts the self-hosted verifier only after independent
+   comparison and reproducible bootstrap gates pass; the previous verifier stays
+   available for rollback.
+
+The trust boundary is explicit:
+
+```text
+trusted seed verifier ──compares──> candidate .gooo verifier
+        │                                  │
+        ├── rollback authority             └── evidence only until promotion
+        └── protected CI policy
+```
+
+Self-hosting is therefore not an SSOT change by itself. `.gooo` owns declared
+intent and IDs at every stage; IR is the comparison form; generated Go is derived;
+and verifier output is evidence until CI promotes the candidate. A candidate must
+not decide its own promotion, weaken its own checks, or delete the seed evidence.
+
+## 3. Provenance policy
 
 Every semantic delta must answer four questions:
 
@@ -51,7 +88,7 @@ removal must be represented explicitly in the fact delta, and reconciliation mus
 be transactional: if one fact conflicts, the model remains unchanged and the
 conflict is reported with its kind and source evidence.
 
-## 3. BX laws
+## 4. BX laws
 
 Let `s` be a parser-neutral DSL document, `m` a semantic model, `Get(s)` the
 lowering function, and `Put(s, m)` the representable write-back. `≈` means
@@ -102,7 +139,7 @@ same semantic fingerprint. Every accepted semantic delta carries provenance, and
 failed reconciliation is transactional. These are guard laws for the four
 round-trip laws above.
 
-## 4. Generated boundaries
+## 5. Generated boundaries
 
 Generated Go uses stable markers such as:
 
@@ -118,7 +155,7 @@ the only intentional handwritten region inside that boundary. Regeneration must
 preserve slot bodies, reject malformed or duplicate markers, and keep unrelated
 text stable. Generated output is not a place to fix a source-model problem.
 
-## 5. Agent roles and separation of duties
+## 6. Agent roles and separation of duties
 
 - **Builder:** changes the assigned authority view, keeps the diff within scope,
   and supplies tests or runnable examples.
@@ -134,7 +171,7 @@ No single agent should implement a change, weaken its verifier, and approve it.
 When a worktree contains another Builder's uncommitted source, stage only the
 explicit paths owned by the current task.
 
-## 6. Branch, PR, and CI workflow
+## 7. Branch, PR, and CI workflow
 
 Use `agent/<area>` branches, one semantic concern per PR. A documentation change
 uses `agent/docs`. Inspect status before editing, keep unrelated work unstaged,
@@ -160,7 +197,23 @@ race tests, static analysis, generated-output snapshots, cache conformance, LSP
 behavior, or durable provenance publishing. Do not describe those as CI gates
 until the workflow changes and has passed evidence.
 
-## 7. Review line caps
+### Verifier promotion plan
+
+The existing jobs are the baseline gate, not a self-hosting promotion gate. A
+future protected workflow should promote in separate, auditable steps:
+
+- **shadow:** run the candidate verifier without allowing it to determine status;
+- **compare:** compare seed and candidate decisions, semantic fingerprints,
+  generated output, locality, and provenance manifests on pinned fixtures;
+- **bootstrap:** rebuild the compiler from the pinned source and verify that the
+  next result is equivalent to the prior result;
+- **promote:** require an independent Guardian/Approver decision, record the
+  source/tool/verifier digests, and retain the previous verifier for rollback.
+
+Until those steps are implemented in protected CI, candidate verifier results are
+append-only research evidence and cannot change the required gate.
+
+## 8. Review line caps
 
 These are soft review policy, not language or compiler limits, and are not
 machine-enforced today:
@@ -175,7 +228,7 @@ URLs, tables, generated markers, and mechanically formatted output may exceed th
 soft column cap. If a change exceeds a review cap, explain the exception and split
 the evidence by authority boundary where possible.
 
-## 8. Evidence checklist
+## 9. Evidence checklist
 
 A change is ready for review when the author can point to:
 
