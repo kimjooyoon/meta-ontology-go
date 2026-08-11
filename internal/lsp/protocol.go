@@ -12,7 +12,7 @@ const (
 	internalError  = -32603
 )
 
-// Position is a zero-based LSP UTF-16 position.
+// Position is a zero-based LSP position measured in UTF-16 code units.
 type Position struct {
 	Line      int `json:"line"`
 	Character int `json:"character"`
@@ -24,7 +24,6 @@ type Range struct {
 	End   Position `json:"end"`
 }
 
-// DiagnosticSeverity follows the LSP diagnostic severity values.
 type DiagnosticSeverity int
 
 const (
@@ -44,16 +43,16 @@ type TextDocumentIdentifier struct {
 	URI string `json:"uri"`
 }
 
-type VersionedTextDocumentIdentifier struct {
-	URI     string `json:"uri"`
-	Version int    `json:"version"`
-}
-
 type TextDocumentItem struct {
 	URI        string `json:"uri"`
 	LanguageID string `json:"languageId,omitempty"`
 	Version    int    `json:"version"`
 	Text       string `json:"text"`
+}
+
+type VersionedTextDocumentIdentifier struct {
+	URI     string `json:"uri"`
+	Version int    `json:"version"`
 }
 
 type TextDocumentContentChangeEvent struct {
@@ -75,11 +74,13 @@ type CompletionOptions struct {
 	TriggerCharacters []string `json:"triggerCharacters,omitempty"`
 }
 
+// ServerCapabilities intentionally contains no workspace or source-map
+// capabilities. Those features are deferred until they have an implementation.
 type ServerCapabilities struct {
 	TextDocumentSync   TextDocumentSyncOptions `json:"textDocumentSync"`
-	HoverProvider      bool                    `json:"hoverProvider"`
-	CompletionProvider CompletionOptions       `json:"completionProvider"`
-	DefinitionProvider bool                    `json:"definitionProvider"`
+	HoverProvider      bool                    `json:"hoverProvider,omitempty"`
+	CompletionProvider *CompletionOptions      `json:"completionProvider,omitempty"`
+	DefinitionProvider bool                    `json:"definitionProvider,omitempty"`
 }
 
 type InitializeResult struct {
@@ -142,37 +143,12 @@ type Location struct {
 	Range Range  `json:"range"`
 }
 
-// SymbolKind is the LSP symbol/completion kind used by the parser seam.
-type SymbolKind int
-
-const (
-	symbolFile      SymbolKind = 1
-	symbolNamespace SymbolKind = 3
-	symbolClass     SymbolKind = 5
-	symbolFunction  SymbolKind = 12
-	symbolString    SymbolKind = 15
-	symbolKeyword   SymbolKind = 14
-	symbolText      SymbolKind = 1
-)
-
-const (
-	SymbolFile      = symbolFile
-	SymbolNamespace = symbolNamespace
-	SymbolClass     = symbolClass
-	SymbolFunction  = symbolFunction
-	SymbolKeyword   = symbolKeyword
-	SymbolText      = symbolText
-)
-
 type requestEnvelope struct {
 	JSONRPC string          `json:"jsonrpc"`
 	ID      json.RawMessage `json:"id"`
 	Method  string          `json:"method"`
 	Params  json.RawMessage `json:"params"`
 }
-
-// Request is the JSON-RPC request shape accepted by the server.
-type Request = requestEnvelope
 
 type responseEnvelope struct {
 	JSONRPC string          `json:"jsonrpc"`

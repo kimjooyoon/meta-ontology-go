@@ -2,27 +2,29 @@ package lsp
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 )
 
-func TestServeLifecycleDiagnosticsAndFeatures(t *testing.T) {
+func TestServerLifecycleDiagnosticsAndFeatures(t *testing.T) {
 	uri := "file:///billing.gooo"
 	source := "package billing\nnamespace billing\nentity Order id \"billing://entity/order\"\nactivity PayOrder(Order) -> Order\n"
 	var input bytes.Buffer
 	writeRequest(t, &input, 1, "initialize", map[string]any{})
 	writeNotification(t, &input, "textDocument/didOpen", map[string]any{
-		"textDocument": map[string]any{"uri": uri, "languageId": "gooo", "version": 1, "text": source},
+		"textDocument": map[string]any{"uri": uri, "version": 1, "text": source},
 	})
 	writeRequest(t, &input, 2, "textDocument/hover", map[string]any{
 		"textDocument": map[string]any{"uri": uri}, "position": map[string]any{"line": 2, "character": 8},
 	})
 	writeRequest(t, &input, 3, "textDocument/completion", map[string]any{
-		"textDocument": map[string]any{"uri": uri}, "position": map[string]any{"line": 3, "character": 18},
+		"textDocument": map[string]any{"uri": uri}, "position": map[string]any{"line": 3, "character": 14},
 	})
 	writeRequest(t, &input, 4, "textDocument/definition", map[string]any{
-		"textDocument": map[string]any{"uri": uri}, "position": map[string]any{"line": 3, "character": 19},
+		"textDocument": map[string]any{"uri": uri}, "position": map[string]any{"line": 3, "character": 14},
 	})
 	writeNotification(t, &input, "textDocument/didChange", map[string]any{
 		"textDocument":   map[string]any{"uri": uri, "version": 2},
@@ -37,64 +39,127 @@ func TestServeLifecycleDiagnosticsAndFeatures(t *testing.T) {
 	}
 	messages := readFrames(t, output.Bytes())
 	if len(messages) != 7 {
-		t.Fatalf("got %d output messages, want 7", len(messages))
+		t.Fatalf("output messages = %d, want 7", len(messages))
 	}
-	assertInitializeResult(t, messages[0])
-	assertDiagnostics(t, messages[1], uri, 0)
-	assertHover(t, messages[2], "billing://entity/order")
+	assertInitialize(t, messages[0])
+	assertDiagnostics(t, messages[1], uri, "")
+	assertHover(t, messages[2], "entity Order")
 	assertCompletion(t, messages[3], "Order")
 	assertDefinition(t, messages[4], uri)
-	assertDiagnostics(t, messages[5], uri, 1)
+	assertDiagnostics(t, messages[5], uri, "lex.unterminated-string")
 	assertResultID(t, messages[6], 5)
 }
 
-func TestRangeChangesUseUTF16Positions(t *testing.T) {
-	source, err := applyChanges("😀x", []TextDocumentContentChangeEvent{{
-		Range: &Range{Start: Position{Character: 2}, End: Position{Character: 3}}, Text: "y",
-	}})
-	if err != nil || source != "😀y" {
-		t.Fatalf("applyChanges() = %q, error = %v", source, err)
+func TestInitializeDefersWorkspaceAndSourceMapFeatures(t *testing.T) {
+	var input, output bytes.Buffer
+	writeRequest(t, &input, 1, "initialize", nil)
+	writeRequest(t, &input, 2, "workspace/symbol", map[string]any{"query": "Order"})
+	writeRequest(t, &input, 3, "textDocument/references", map[string]any{})
+	writeRequest(t, &input, 4, "shutdown", nil)
+	writeNotification(t, &input, "exit", nil)
+	if err := NewServer().Serve(&input, &output); err != nil {
+		t.Fatalf("Serve() error = %v", err)
+	}
+	messages := readFrames(t, output.Bytes())
+	if len(messages) != 4 || responseCode(t, messages[1]) != methodNotFound || responseCode(t, messages[2]) != methodNotFound {
+		t.Fatalf("messages = %d, codes = %d/%d", len(messages), responseCode(t, messages[1]), responseCode(t, messages[2]))
+	}
+	var envelope struct {
+		Result struct {
+			Capabilities map[string]json.RawMessage `json:"capabilities"`
+		} `json:"result"`
+	}
+	decodeJSON(t, messages[0], &envelope)
+	for _, unsupported := range []string{"workspaceSymbolProvider", "sourceMapProvider"} {
+		if _, advertised := envelope.Result.Capabilities[unsupported]; advertised {
+			t.Fatalf("unsupported capability %q was advertised", unsupported)
+		}
 	}
 }
 
-func TestParserSeamIsUsedForDiagnostics(t *testing.T) {
-	called := false
-	parser := ParserFunc(func(uri, source string) ParseResult {
-		called = uri == "file:///test.gooo" && source == "source"
-		return ParseResult{Diagnostics: []Diagnostic{{Message: "stub", Range: Range{}}}}
-	})
-	server := NewServer(parser)
+func TestDocumentVersionAndRangeValidationPreserveOverlay(t *testing.T) {
+	uri := "file:///version.gooo"
+	source := "package p\nnamespace n\nentity A id \"urn:a\""
 	var input, output bytes.Buffer
 	writeNotification(t, &input, "textDocument/didOpen", map[string]any{
-		"textDocument": map[string]any{"uri": "file:///test.gooo", "version": 1, "text": "source"},
+		"textDocument": map[string]any{"uri": uri, "version": 1, "text": source},
 	})
+	writeNotification(t, &input, "textDocument/didChange", map[string]any{
+		"textDocument":   map[string]any{"uri": uri, "version": 1},
+		"contentChanges": []map[string]any{{"text": "stale"}},
+	})
+	writeNotification(t, &input, "textDocument/didChange", map[string]any{
+		"textDocument": map[string]any{"uri": uri, "version": 2},
+		"contentChanges": []map[string]any{{
+			"range": map[string]any{"start": map[string]any{"line": 0, "character": 0}, "end": map[string]any{"line": 0, "character": 99}},
+			"text":  "bad",
+		}},
+	})
+	writeRequest(t, &input, 1, "shutdown", nil)
 	writeNotification(t, &input, "exit", nil)
-	_ = server.Serve(&input, &output)
-	if !called {
-		t.Fatal("parser was not called")
+	server := NewServer()
+	if err := server.Serve(&input, &output); err != nil {
+		t.Fatalf("Serve() error = %v", err)
+	}
+	document := server.documents[uri]
+	if document == nil || document.version != 1 || document.text != source {
+		t.Fatalf("overlay changed after invalid updates: %#v", document)
+	}
+	if messages := readFrames(t, output.Bytes()); len(messages) != 2 {
+		t.Fatalf("output messages = %d, want open diagnostics and shutdown response", len(messages))
 	}
 }
 
-func assertInitializeResult(t *testing.T, payload []byte) {
+func TestContextParserStopsOnCancellation(t *testing.T) {
+	started := make(chan struct{})
+	parser := ContextParserFunc(func(ctx context.Context, uri, source string) (ParseResult, error) {
+		close(started)
+		<-ctx.Done()
+		return ParseResult{}, ctx.Err()
+	})
+	var input, output bytes.Buffer
+	writeNotification(t, &input, "textDocument/didOpen", map[string]any{
+		"textDocument": map[string]any{"uri": "file:///cancel.gooo", "version": 1, "text": "source"},
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- NewServer(parser).ServeContext(ctx, &input, &output) }()
+	<-started
+	cancel()
+	if err := <-done; !errors.Is(err, context.Canceled) {
+		t.Fatalf("ServeContext() error = %v, want context.Canceled", err)
+	}
+	if output.Len() != 0 {
+		t.Fatalf("canceled parse produced output: %q", output.Bytes())
+	}
+}
+
+func assertInitialize(t *testing.T, payload []byte) {
 	t.Helper()
 	var message struct {
 		Result InitializeResult `json:"result"`
 	}
-	decode(t, payload, &message)
+	decodeJSON(t, payload, &message)
 	if !message.Result.Capabilities.HoverProvider || !message.Result.Capabilities.DefinitionProvider {
 		t.Fatalf("capabilities = %#v", message.Result.Capabilities)
 	}
 }
 
-func assertDiagnostics(t *testing.T, payload []byte, uri string, want int) {
+func assertDiagnostics(t *testing.T, payload []byte, uri, code string) {
 	t.Helper()
 	var message struct {
 		Method string                   `json:"method"`
 		Params PublishDiagnosticsParams `json:"params"`
 	}
-	decode(t, payload, &message)
-	if message.Method != "textDocument/publishDiagnostics" || message.Params.URI != uri || len(message.Params.Diagnostics) != want {
-		t.Fatalf("diagnostics = %#v", message)
+	decodeJSON(t, payload, &message)
+	if message.Method != "textDocument/publishDiagnostics" || message.Params.URI != uri {
+		t.Fatalf("diagnostic notification = %#v", message)
+	}
+	if code == "" && len(message.Params.Diagnostics) != 0 {
+		t.Fatalf("unexpected diagnostics = %#v", message.Params.Diagnostics)
+	}
+	if code != "" && (len(message.Params.Diagnostics) != 1 || message.Params.Diagnostics[0].Code != code) {
+		t.Fatalf("diagnostics = %#v", message.Params.Diagnostics)
 	}
 }
 
@@ -103,7 +168,7 @@ func assertHover(t *testing.T, payload []byte, want string) {
 	var message struct {
 		Result *Hover `json:"result"`
 	}
-	decode(t, payload, &message)
+	decodeJSON(t, payload, &message)
 	if message.Result == nil || !strings.Contains(message.Result.Contents.Value, want) {
 		t.Fatalf("hover = %#v", message.Result)
 	}
@@ -114,7 +179,7 @@ func assertCompletion(t *testing.T, payload []byte, want string) {
 	var message struct {
 		Result CompletionList `json:"result"`
 	}
-	decode(t, payload, &message)
+	decodeJSON(t, payload, &message)
 	for _, item := range message.Result.Items {
 		if item.Label == want {
 			return
@@ -128,7 +193,7 @@ func assertDefinition(t *testing.T, payload []byte, uri string) {
 	var message struct {
 		Result []Location `json:"result"`
 	}
-	decode(t, payload, &message)
+	decodeJSON(t, payload, &message)
 	if len(message.Result) != 1 || message.Result[0].URI != uri {
 		t.Fatalf("definition = %#v", message.Result)
 	}
@@ -140,15 +205,8 @@ func assertResultID(t *testing.T, payload []byte, want int) {
 		ID     int             `json:"id"`
 		Result json.RawMessage `json:"result"`
 	}
-	decode(t, payload, &message)
+	decodeJSON(t, payload, &message)
 	if message.ID != want || string(message.Result) != "null" {
 		t.Fatalf("response = %#v", message)
-	}
-}
-
-func decode(t *testing.T, payload []byte, target any) {
-	t.Helper()
-	if err := json.Unmarshal(payload, target); err != nil {
-		t.Fatalf("decode %s: %v", payload, err)
 	}
 }

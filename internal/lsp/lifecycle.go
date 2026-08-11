@@ -6,15 +6,23 @@ import (
 )
 
 func applyChanges(source string, changes []TextDocumentContentChangeEvent) (string, error) {
+	if len(changes) == 0 {
+		return "", ErrInvalidRange
+	}
 	for _, change := range changes {
 		if change.Range == nil {
+			if change.RangeLength != nil && (*change.RangeLength < 0 || *change.RangeLength != utf16Length(source)) {
+				return "", ErrInvalidRange
+			}
 			source = change.Text
 			continue
 		}
-		start := positionOffset(source, change.Range.Start)
-		end := positionOffset(source, change.Range.End)
-		if start > end {
-			return "", fmt.Errorf("change range starts after it ends")
+		start, end, err := ValidateRange(source, *change.Range)
+		if err != nil {
+			return "", err
+		}
+		if change.RangeLength != nil && (*change.RangeLength < 0 || *change.RangeLength != utf16Length(source[start:end])) {
+			return "", ErrInvalidRange
 		}
 		source = source[:start] + change.Text + source[end:]
 	}

@@ -2,51 +2,60 @@ package lsp
 
 import (
 	"context"
-	"strconv"
-	"strings"
-	"unicode"
-	"unicode/utf8"
+	"fmt"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-// Parser is the small integration seam between the LSP and a .gooo parser.
+// Parser is the small integration seam used by the LSP document store.
 type Parser interface {
 	Parse(uri, source string) ParseResult
 }
 
-// DocumentParser is a descriptive alias for Parser.
 type DocumentParser = Parser
 
-// ParserFunc adapts a function to Parser.
 type ParserFunc func(uri, source string) ParseResult
 
-func (f ParserFunc) Parse(uri, source string) ParseResult { return f(uri, source) }
+func (function ParserFunc) Parse(uri, source string) ParseResult {
+	return function(uri, source)
+}
 
-// ContextParser can stop parsing when the request's context is canceled.
+// ContextParser is an optional parser seam for cancellation-aware adapters.
 type ContextParser interface {
 	ParseContext(ctx context.Context, uri, source string) (ParseResult, error)
 }
 
-// ContextParserFunc adapts a cancellable parser function.
 type ContextParserFunc func(ctx context.Context, uri, source string) (ParseResult, error)
 
-func (f ContextParserFunc) ParseContext(ctx context.Context, uri, source string) (ParseResult, error) {
-	return f(ctx, uri, source)
+func (function ContextParserFunc) ParseContext(ctx context.Context, uri, source string) (ParseResult, error) {
+	return function(ctx, uri, source)
 }
 
-func (f ContextParserFunc) Parse(uri, source string) ParseResult {
-	result, _ := f(context.Background(), uri, source)
+func (function ContextParserFunc) Parse(uri, source string) ParseResult {
+	result, _ := function(context.Background(), uri, source)
 	return result
 }
 
 type ParseResult struct {
+	File        *syntax.File
 	Symbols     []Symbol
 	References  []Reference
 	Diagnostics []Diagnostic
 }
 
+type SymbolKind int
+
+const (
+	SymbolFile      SymbolKind = 1
+	SymbolNamespace SymbolKind = 3
+	SymbolClass     SymbolKind = 5
+	SymbolFunction  SymbolKind = 12
+	SymbolKeyword   SymbolKind = 14
+	SymbolText      SymbolKind = 1
+)
+
 type Symbol struct {
 	Name           string
-	Aliases        []string
 	ID             string
 	Kind           SymbolKind
 	Detail         string
@@ -59,165 +68,132 @@ type Reference struct {
 	Range Range
 }
 
-// SyntaxParser is a compact standard-library parser for the .gooo editor view.
+// SyntaxParser consumes internal/syntax directly; it does not duplicate its
+// lexer, parser, AST, source spans, or diagnostic codes.
 type SyntaxParser struct{}
 
 func (SyntaxParser) Parse(uri, source string) ParseResult {
-	parser := sourceParser{uri: uri, source: source}
-	parser.tokens, parser.result.Diagnostics = lexSource(source)
-	return parser.parse()
+	result, _ := (SyntaxParser{}).ParseContext(context.Background(), uri, source)
+	return result
 }
 
-type tokenKind uint8
-
-const (
-	tokenEOF tokenKind = iota
-	tokenIdentifier
-	tokenString
-	tokenPackage
-	tokenNamespace
-	tokenEntity
-	tokenID
-	tokenActivity
-	tokenLParen
-	tokenRParen
-	tokenComma
-	tokenArrow
-)
-
-type parserToken struct {
-	kind       tokenKind
-	text       string
-	value      string
-	start, end int
-}
-
-type sourceLexer struct {
-	source      string
-	offset      int
-	tokens      []parserToken
-	diagnostics []Diagnostic
-}
-
-func lexSource(source string) ([]parserToken, []Diagnostic) {
-	lexer := &sourceLexer{source: source}
-	for lexer.offset < len(source) {
-		if lexer.skipSpaceOrComment() {
-			continue
+func (SyntaxParser) ParseContext(ctx context.Context, uri, source string) (ParseResult, error) {
+	if err := ctx.Err(); err != nil {
+		return ParseResult{}, err
+	}
+	file, diagnostics := syntax.ParseFile(uri, source)
+	result := ParseResult{File: file}
+	for _, diagnostic := range diagnostics {
+		mapped, err := syntaxDiagnostic(source, diagnostic)
+		if err != nil {
+			return ParseResult{}, err
 		}
-		lexer.lexToken()
+		result.Diagnostics = append(result.Diagnostics, mapped)
 	}
-	lexer.tokens = append(lexer.tokens, parserToken{kind: tokenEOF, start: len(source), end: len(source)})
-	return lexer.tokens, lexer.diagnostics
-}
-
-func (l *sourceLexer) skipSpaceOrComment() bool {
-	if strings.ContainsRune(" \t\r\n", rune(l.source[l.offset])) {
-		l.offset++
-		return true
-	}
-	if strings.HasPrefix(l.source[l.offset:], "//") {
-		l.offset += 2
-		for l.offset < len(l.source) && l.source[l.offset] != '\n' {
-			l.offset++
+	for _, declaration := range syntaxDeclarations(file) {
+		if err := appendDeclaration(&result, source, declaration); err != nil {
+			return ParseResult{}, err
 		}
-		return true
 	}
-	return false
+	return result, nil
 }
 
-func (l *sourceLexer) lexToken() {
-	start := l.offset
-	runeValue, size := utf8.DecodeRuneInString(l.source[start:])
-	switch {
-	case isIdentifierStart(runeValue):
-		l.lexIdentifier(start)
-	case runeValue == '"':
-		l.lexString(start)
-	case runeValue == '(':
-		l.emit(tokenLParen, start, start+size, "(")
-	case runeValue == ')':
-		l.emit(tokenRParen, start, start+size, ")")
-	case runeValue == ',':
-		l.emit(tokenComma, start, start+size, ",")
-	case runeValue == '-' && strings.HasPrefix(l.source[start:], "->"):
-		l.emit(tokenArrow, start, start+2, "->")
+func syntaxDiagnostic(source string, diagnostic syntax.Diagnostic) (Diagnostic, error) {
+	rangeValue, err := syntaxRange(source, diagnostic.Span)
+	if err != nil {
+		return Diagnostic{}, err
+	}
+	severity := DiagnosticError
+	if diagnostic.Severity == syntax.SeverityWarning {
+		severity = DiagnosticWarning
+	}
+	return Diagnostic{
+		Range: rangeValue, Severity: severity, Code: string(diagnostic.Code),
+		Source: "gooo", Message: diagnostic.Message,
+	}, nil
+}
+
+func syntaxDeclarations(file *syntax.File) []syntax.Declaration {
+	if file == nil {
+		return nil
+	}
+	if file.Declarations != nil {
+		return file.Declarations
+	}
+	return file.Decls
+}
+
+func appendDeclaration(result *ParseResult, source string, declaration syntax.Declaration) error {
+	switch value := declaration.(type) {
+	case *syntax.EntityDecl:
+		return appendEntity(result, source, value)
+	case *syntax.ActivityDecl:
+		return appendActivity(result, source, value)
 	default:
-		l.offset += size
-		l.diagnostics = append(l.diagnostics, Diagnostic{Range: sourceRange(l.source, start, l.offset), Severity: DiagnosticError, Code: "lex.unexpected-character", Source: "gooo", Message: "unexpected character"})
+		return nil
 	}
 }
 
-func (l *sourceLexer) lexIdentifier(start int) {
-	_, firstSize := utf8.DecodeRuneInString(l.source[start:])
-	l.offset += firstSize
-	for l.offset < len(l.source) {
-		runeValue, size := utf8.DecodeRuneInString(l.source[l.offset:])
-		if !isIdentifierPart(runeValue) {
-			break
+func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl) error {
+	rangeValue, err := syntaxRange(source, entity.Span)
+	if err != nil {
+		return err
+	}
+	selection, err := syntaxRange(source, entity.NameSpan)
+	if err != nil {
+		return err
+	}
+	result.Symbols = append(result.Symbols, Symbol{
+		Name: entity.Name, ID: entity.ID, Kind: SymbolClass,
+		Detail: "entity " + entity.Name, Range: rangeValue, SelectionRange: selection,
+	})
+	return nil
+}
+
+func appendActivity(result *ParseResult, source string, activity *syntax.ActivityDecl) error {
+	rangeValue, err := syntaxRange(source, activity.Span)
+	if err != nil {
+		return err
+	}
+	selection, err := syntaxRange(source, activity.NameSpan)
+	if err != nil {
+		return err
+	}
+	result.Symbols = append(result.Symbols, Symbol{
+		Name: activity.Name, Kind: SymbolFunction, Detail: "activity " + activity.Name,
+		Range: rangeValue, SelectionRange: selection,
+	})
+	for _, input := range activity.Inputs {
+		if err := appendReference(result, source, input.Name, input.Span); err != nil {
+			return err
 		}
-		l.offset += size
 	}
-	text := l.source[start:l.offset]
-	l.emit(identifierKind(text), start, l.offset, text)
+	if err := appendReference(result, source, activity.Result.Name, activity.Result.Span); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (l *sourceLexer) lexString(start int) {
-	l.offset++
-	closed := false
-	for l.offset < len(l.source) {
-		if l.source[l.offset] == '\\' {
-			l.offset += 1
-			if l.offset < len(l.source) {
-				_, size := utf8.DecodeRuneInString(l.source[l.offset:])
-				l.offset += size
-			}
-			continue
-		}
-		if l.source[l.offset] == '"' {
-			l.offset++
-			closed = true
-			break
-		}
-		_, size := utf8.DecodeRuneInString(l.source[l.offset:])
-		l.offset += size
+func appendReference(result *ParseResult, source, name string, span syntax.Span) error {
+	if name == "" || span.IsEmpty() {
+		return nil
 	}
-	if !closed {
-		l.diagnostics = append(l.diagnostics, Diagnostic{Range: sourceRange(l.source, start, l.offset), Severity: DiagnosticError, Code: "lex.unterminated-string", Source: "gooo", Message: "unterminated string"})
+	rangeValue, err := syntaxRange(source, span)
+	if err != nil {
+		return err
 	}
-	value := l.source[start:l.offset]
-	if decoded, err := strconv.Unquote(value); err == nil {
-		value = decoded
-	}
-	l.emit(tokenString, start, l.offset, value)
+	result.References = append(result.References, Reference{Name: name, Range: rangeValue})
+	return nil
 }
 
-func (l *sourceLexer) emit(kind tokenKind, start, end int, value string) {
-	l.offset = end
-	l.tokens = append(l.tokens, parserToken{kind: kind, text: l.source[start:end], value: value, start: start, end: end})
-}
-
-func identifierKind(text string) tokenKind {
-	switch text {
-	case "package":
-		return tokenPackage
-	case "namespace":
-		return tokenNamespace
-	case "entity":
-		return tokenEntity
-	case "id":
-		return tokenID
-	case "activity":
-		return tokenActivity
-	default:
-		return tokenIdentifier
+func syntaxRange(source string, span syntax.Span) (Range, error) {
+	start, err := OffsetToPosition(source, span.Start.Offset)
+	if err != nil {
+		return Range{}, fmt.Errorf("lsp: invalid syntax start span: %w", err)
 	}
-}
-
-func isIdentifierStart(value rune) bool {
-	return value == '_' || unicode.IsLetter(value)
-}
-
-func isIdentifierPart(value rune) bool {
-	return isIdentifierStart(value) || unicode.IsDigit(value)
+	end, err := OffsetToPosition(source, span.End.Offset)
+	if err != nil {
+		return Range{}, fmt.Errorf("lsp: invalid syntax end span: %w", err)
+	}
+	return Range{Start: start, End: end}, nil
 }

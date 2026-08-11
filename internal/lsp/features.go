@@ -2,144 +2,122 @@ package lsp
 
 import (
 	"sort"
-	"strings"
 	"unicode"
-	"unicode/utf16"
 	"unicode/utf8"
 )
 
-func (s *Server) hover(params TextDocumentPositionParams) (*Hover, bool) {
-	document, ok := s.documents[params.TextDocument.URI]
+func (server *Server) hover(params TextDocumentPositionParams) (*Hover, bool) {
+	document, ok := server.documents[params.TextDocument.URI]
 	if !ok {
 		return nil, false
 	}
-	name := wordAt(document.text, params.Position)
-	if name == "" {
+	name, start, end, ok := wordAt(document.text, params.Position)
+	if !ok {
 		return nil, false
 	}
 	symbol, ok := symbolNamed(document.result.Symbols, name)
 	if !ok {
 		return nil, false
 	}
-	rangeValue := wordRange(document.text, params.Position)
+	rangeValue, err := byteRange(document.text, start, end)
+	if err != nil {
+		return nil, false
+	}
 	return &Hover{Contents: MarkupContent{Kind: "plaintext", Value: symbol.Detail}, Range: &rangeValue}, true
 }
 
-func (s *Server) completion(uri string) *CompletionList {
+func (server *Server) completion(uri string) *CompletionList {
 	items := []CompletionItem{
-		{Label: "package", Kind: int(symbolKeyword), Detail: "gooo keyword"},
-		{Label: "namespace", Kind: int(symbolKeyword), Detail: "gooo keyword"},
-		{Label: "entity", Kind: int(symbolKeyword), Detail: "gooo keyword"},
-		{Label: "activity", Kind: int(symbolKeyword), Detail: "gooo keyword"},
+		{Label: "activity", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
+		{Label: "entity", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
+		{Label: "namespace", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
+		{Label: "package", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
 	}
-	if document, ok := s.documents[uri]; ok {
+	if document, ok := server.documents[uri]; ok {
 		for _, symbol := range document.result.Symbols {
-			items = append(items, symbolCompletions(symbol)...)
+			items = append(items, CompletionItem{Label: symbol.Name, Kind: int(symbol.Kind), Detail: symbol.Detail})
 		}
 	}
-	sort.SliceStable(items, func(i, j int) bool { return items[i].Label < items[j].Label })
-	return &CompletionList{Items: uniqueCompletions(items)}
+	sort.SliceStable(items, func(left, right int) bool { return items[left].Label < items[right].Label })
+	return &CompletionList{Items: uniqueCompletionItems(items)}
 }
 
-func (s *Server) definition(params TextDocumentPositionParams) []Location {
-	document, ok := s.documents[params.TextDocument.URI]
+func (server *Server) definition(params TextDocumentPositionParams) []Location {
+	document, ok := server.documents[params.TextDocument.URI]
 	if !ok {
 		return nil
 	}
-	name := wordAt(document.text, params.Position)
-	if name == "" {
-		return nil
-	}
-	symbol, ok := symbolNamed(document.result.Symbols, name)
+	name, _, _, ok := wordAt(document.text, params.Position)
 	if !ok {
 		return nil
 	}
-	return []Location{{URI: params.TextDocument.URI, Range: symbol.SelectionRange}}
+	if symbol, found := symbolNamed(document.result.Symbols, name); found {
+		return []Location{{URI: params.TextDocument.URI, Range: symbol.SelectionRange}}
+	}
+	for _, reference := range document.result.References {
+		if reference.Name != name {
+			continue
+		}
+		if symbol, found := symbolNamed(document.result.Symbols, name); found {
+			return []Location{{URI: params.TextDocument.URI, Range: symbol.SelectionRange}}
+		}
+	}
+	return nil
 }
 
 func symbolNamed(symbols []Symbol, name string) (Symbol, bool) {
 	for _, symbol := range symbols {
-		if symbol.Name == name || symbolAliasNamed(symbol.Aliases, name) {
+		if symbol.Name == name {
 			return symbol, true
 		}
 	}
 	return Symbol{}, false
 }
 
-func symbolAliasNamed(aliases []string, name string) bool {
-	for _, alias := range aliases {
-		if alias == name {
-			return true
-		}
-	}
-	return false
-}
-
-func symbolCompletions(symbol Symbol) []CompletionItem {
-	kind := int(symbolCompletionKind(symbol.Kind))
-	items := []CompletionItem{{Label: symbol.Name, Kind: kind, Detail: symbol.Detail}}
-	for _, alias := range symbol.Aliases {
-		items = append(items, CompletionItem{Label: alias, Kind: kind, Detail: "alias of " + symbol.Name})
-	}
-	return items
-}
-
-func uniqueCompletions(items []CompletionItem) []CompletionItem {
+func uniqueCompletionItems(items []CompletionItem) []CompletionItem {
 	result := make([]CompletionItem, 0, len(items))
-	seen := make(map[string]bool)
+	seen := make(map[string]struct{}, len(items))
 	for _, item := range items {
-		if !seen[item.Label] {
-			seen[item.Label] = true
-			result = append(result, item)
+		if _, exists := seen[item.Label]; exists {
+			continue
 		}
+		seen[item.Label] = struct{}{}
+		result = append(result, item)
 	}
 	return result
 }
 
-func symbolCompletionKind(kind SymbolKind) SymbolKind {
-	if kind == symbolClass {
-		return symbolClass
+func wordAt(source string, position Position) (string, int, int, bool) {
+	offset, err := PositionToOffset(source, position)
+	if err != nil {
+		return "", 0, 0, false
 	}
-	if kind == symbolFunction {
-		return symbolFunction
+	start, end := identifierBounds(source, offset)
+	if start == end {
+		return "", 0, 0, false
 	}
-	return symbolText
-}
-
-func wordAt(source string, position Position) string {
-	offset := positionOffset(source, position)
-	start, end := identifierBounds(source, offset)
-	return source[start:end]
-}
-
-func wordRange(source string, position Position) Range {
-	offset := positionOffset(source, position)
-	start, end := identifierBounds(source, offset)
-	return Range{Start: offsetPosition(source, start), End: offsetPosition(source, end)}
+	return source[start:end], start, end, true
 }
 
 func identifierBounds(source string, offset int) (int, int) {
-	if offset > len(source) {
-		offset = len(source)
-	}
-	if offset > 0 && (offset == len(source) || !isIdentifierRuneAt(source, offset)) {
+	if offset > 0 && (offset == len(source) || !identifierAt(source, offset)) {
 		_, size := utf8.DecodeLastRuneInString(source[:offset])
-		if size > 0 && isIdentifierRuneAt(source, offset-size) {
+		if size > 0 && identifierAt(source, offset-size) {
 			offset -= size
 		}
 	}
 	start := offset
 	for start > 0 {
-		runeValue, size := utf8.DecodeLastRuneInString(source[:start])
-		if !isIdentifier(runeValue) {
+		value, size := utf8.DecodeLastRuneInString(source[:start])
+		if !isIdentifier(value) {
 			break
 		}
 		start -= size
 	}
 	end := offset
 	for end < len(source) {
-		runeValue, size := utf8.DecodeRuneInString(source[end:])
-		if !isIdentifier(runeValue) {
+		value, size := utf8.DecodeRuneInString(source[end:])
+		if !isIdentifier(value) {
 			break
 		}
 		end += size
@@ -147,67 +125,26 @@ func identifierBounds(source string, offset int) (int, int) {
 	return start, end
 }
 
-func isIdentifierRuneAt(source string, offset int) bool {
+func identifierAt(source string, offset int) bool {
 	if offset < 0 || offset >= len(source) {
 		return false
 	}
-	runeValue, _ := utf8.DecodeRuneInString(source[offset:])
-	return isIdentifier(runeValue)
+	value, _ := utf8.DecodeRuneInString(source[offset:])
+	return isIdentifier(value)
 }
 
-func isIdentifier(runeValue rune) bool {
-	return runeValue == '_' || unicode.IsLetter(runeValue) || unicode.IsDigit(runeValue)
+func isIdentifier(value rune) bool {
+	return value == '_' || unicode.IsLetter(value) || unicode.IsDigit(value)
 }
 
-func positionOffset(source string, position Position) int {
-	lineStart := 0
-	for line := 0; line < position.Line && lineStart < len(source); line++ {
-		newline := strings.IndexByte(source[lineStart:], '\n')
-		if newline < 0 {
-			return len(source)
-		}
-		lineStart += newline + 1
+func byteRange(source string, start, end int) (Range, error) {
+	startPosition, err := OffsetToPosition(source, start)
+	if err != nil {
+		return Range{}, err
 	}
-	if position.Line < 0 || position.Character <= 0 {
-		return lineStart
+	endPosition, err := OffsetToPosition(source, end)
+	if err != nil {
+		return Range{}, err
 	}
-	offset, units := lineStart, 0
-	for offset < len(source) && source[offset] != '\n' && source[offset] != '\r' {
-		runeValue, size := utf8.DecodeRuneInString(source[offset:])
-		length := utf16.RuneLen(runeValue)
-		if length < 0 {
-			length = 1
-		}
-		if units+length > position.Character {
-			break
-		}
-		units += length
-		offset += size
-	}
-	return offset
-}
-
-func offsetPosition(source string, offset int) Position {
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > len(source) {
-		offset = len(source)
-	}
-	line, character := 0, 0
-	for index := 0; index < offset; {
-		runeValue, size := utf8.DecodeRuneInString(source[index:])
-		if runeValue == '\n' {
-			line++
-			character = 0
-		} else {
-			units := utf16.RuneLen(runeValue)
-			if units < 0 {
-				units = 1
-			}
-			character += units
-		}
-		index += size
-	}
-	return Position{Line: line, Character: character}
+	return Range{Start: startPosition, End: endPosition}, nil
 }
