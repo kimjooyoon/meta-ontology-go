@@ -10,11 +10,20 @@ determinism—not the percentage of lines executed.
 
 This review is based on the attached design brief, [`docs/spec.md`](../spec.md),
 [`docs/architecture.md`](../architecture.md), [`AGENTS.md`](../../AGENTS.md), and
-the open PRs present on 2026-08-12. The current `origin/integration` baseline is
-`e394af6`. It contains the repository verifier and a placeholder CLI; the syntax,
-semantic, BX, analyzer, generator, LSP, and cache implementations are currently
+the open PRs present on 2026-08-12. The initial review baseline was `e394af6`,
+which contained the repository verifier and a placeholder CLI; the syntax,
+semantic, BX, analyzer, generator, LSP, and cache implementations were then on
 separate PR branches. No submitted reviews or inline review threads were present
 on the inspected open PRs.
+
+Follow-up snapshot: `origin/integration` has since advanced to `74e90c4`, integrating
+the syntax layer and staged self-hosting verifier governance. Semantic IR, BX,
+analyzer, generator, LSP, cache, and query remain separate from that integration
+snapshot. The current trust boundary is still Go-hosted Stage 0; `gooo`-host parity
+is not evidence until the dual-evidence comparison in
+[`.github/conformance-plan.md`](../../.github/conformance-plan.md) passes. The
+remaining lanes should keep publishing independent contracts and fixtures against
+minimal interfaces rather than waiting for the full package graph.
 
 The current CI already runs formatting, vet, unit tests, race tests, DAMP/DRY caps,
 changed-path scope, and branch policy. Its semantic job explicitly defers when
@@ -240,3 +249,118 @@ semantic pipeline.
   enabled; no deferred check is mistaken for a pass.
 - [ ] The integration result records the exact blocked dependency or full
   end-to-end evidence, rather than relying on a scoped PR description.
+
+## Follow-up: living experiment board
+
+This section is an ideation backlog, not a claim that every experiment is already
+implemented. Each row should be revisited when its lane changes, when a failure is
+minimized, and before promoting a verifier stage. The first executable artifact can
+be a standalone fixture or adapter over a small interface; it must record a blocked
+dependency instead of reporting an unimplemented lane as passed.
+
+| Lane | Invariant/property experiment | Fuzz seed and minimization | Golden/contract experiment | Race and benchmark experiment | Promotion trigger |
+| --- | --- | --- | --- | --- | --- |
+| Syntax/AST | Permute comments, whitespace, declaration order, and Unicode while preserving the same normalized AST; assert recovery makes progress. | Empty input, invalid byte, truncated string, unterminated comment, invalid escape, and one valid declaration after an error. Keep the smallest byte seed that reproduces the diagnostic/span issue. | Canonical AST and diagnostic JSON with repository-relative spans; compare parse/lower output once semantic IR exists. | Parse the same immutable source concurrently; benchmark bytes and declarations with allocations reported, not wall-clock pass/fail. | P0 no panic/hang/span regression; P1 stable diagnostic golden. |
+| Semantic IR/PROV | Permute nodes/facts, normalize twice, validate candidate/deterministic separation, and check relation-domain/cardinality rules. | Generate bounded IDs, namespaces, relation kinds, missing nodes, duplicate edges, and invalid spans; shrink to the smallest invalid graph. | Canonical IR, stable semantic hash, and PROV validity fixture; include a candidate that must not become truth. | Snapshot reads during promotion/normalization under `-race`; benchmark normalization/hash by node and fact count. | P0 laws and validation; P1 corpus of minimized invalid graphs. |
+| BX/lowering/lifting | Check Get-Put, Put-Get, Diff/Apply, delta composition, transactional rejection, and locality closure over generated documents. | Malformed references, missing source spans, duplicate/removal conflicts, and mixed candidate/deterministic deltas; preserve the smallest failing delta. | Billing DTO contract: `.gooo -> IR -> generated DTO -> lifted delta -> IR fingerprint`; compare source-backed evidence. | Reconcile independent models concurrently and verify no shared mutation; benchmark lower/lift/reconcile by graph size. | P0 round-trip/locality; Stage 1 requires parity with the independent Go verifier. |
+| Go analyzer | Permute registration order, import aliases, receiver names, local shadowing, and unknown helpers; only registered semantic symbols may lift. | Seed valid and malformed Go snippets, unresolved selectors, generic/type-alias forms, and nested functions; minimize source plus registry. | Canonical fact/candidate/implementation-detail JSON and a real `go/parser`/`go/types` contract when available. | Analyze immutable source concurrently with independent registries; benchmark AST/type resolution by file and symbol count. | P0 conservative lifting; P1 type-resolution and analyzer-to-BX contract. |
+| Generator | Equal normalized IR/options produce equal bytes; changing one activity preserves unrelated regions, slots, and source-map ranges. | Empty IR, duplicate IDs, invalid Go names/types, malformed prior markers, nested/mismatched markers, and oversized names. | Versioned generated Go/source-map golden that passes `gofmt`, `go/parser`, and compilation; never store absolute paths. | Concurrent generation into separate temp dirs; benchmark generation by entities, ports, and marker count with operation counts. | P0 deterministic/local output and fail-closed markers; P1 golden review. |
+| Query/search | Inverse and derived relations are order-independent, duplicate-free, bounded, and do not cross namespaces without an explicit edge. | Cycles, disconnected graphs, recursive rules, unknown predicates, depth limits, and duplicate facts; shrink graph and rule set together. | Canonical query-result JSON and bounded closure fixture tied to semantic IDs; compare with the rule engine's independent result. | Concurrent read-only queries over a snapshot; benchmark traversal/closure by graph size and depth, not timeout thresholds. | P0 termination and namespace safety; P1 derived-result golden. |
+| LSP/JSON-RPC | Frame round-trip, lifecycle state, UTF-16 edits, document versions, diagnostics ordering, and invalid-request behavior are deterministic. | Empty/partial headers, oversized length, truncated payload, invalid JSON/params, unknown method, and split-at-every-byte seeds. | Canonical protocol transcript with IDs, paths, and timestamps normalized; include open/change/close/shutdown. | Run independent documents/servers under `-race`; benchmark framing and diagnostics by payload size with bounded resource limits. | P0 no desynchronization; P1 transcript and version-conflict contract. |
+| Cache/freshness | Canonical key equality, first-writer immutability, digest validation, dependency invalidation, cancellation, and stale-evidence rejection hold. | Corrupt metadata/data, interrupted temp entries, path traversal/symlink candidates, unsupported/cyclic values, and dependency changes. | Cache manifest golden containing input/projection/evidence digests; restart fixture must distinguish miss, corruption, and hit. | Same-key and independent-key barriers plus cross-process restart; benchmark hit/miss/recompute and lock contention with operation counts. | P0 integrity/race; P1 restart/dependency contract; scheduled durability stress. |
+| Provenance/evidence | Evidence is append-only, source-backed, digest-linked, and cannot certify a missing or stale projection. | Missing parent, wrong digest, duplicate sequence, future stage, malformed signature/manifest, and disconnected evidence paths. | Canonical evidence bundle for parse, generate, verify, and build; compare two independent runs byte-for-byte. | Concurrent append uses explicit serialization or immutable segments; benchmark evidence construction by edge count. | P0 freshness and chain validity; Stage 1 requires independent bundle comparison. |
+| CLI/CI/self-hosting | Commands have stable exit/error contracts; scope policy is fail-closed; Go-hosted and gooo-hosted decisions agree before authority changes. | Arg permutations, missing files, malformed diffs, unknown branch aliases, unavailable revisions, and unsupported stage values. | End-to-end billing transcript plus Stage 0/1 evidence manifest; no deferred or unavailable result is rendered as pass. | Run isolated CLI processes in parallel temp dirs; benchmark verifier operations and fixture size, never CI success on latency alone. | Stage 0 now; Stage 1 only after dual evidence, reproducibility, comparator independence, and rollback rehearsal. |
+
+## Flaky-test prevention and reproducibility
+
+The following rules apply to every new experiment:
+
+- Use channels, barriers, `sync.WaitGroup`, and explicit operation counters for
+  synchronization. Do not use `time.Sleep` to prove ordering or mutual exclusion.
+- Use `t.TempDir`, repository-relative paths, UTC, fixed locale, stable environment
+  variables, and local random sources. Never depend on the developer's home,
+  timezone, map iteration, wall-clock timestamp, or process scheduling.
+- Every randomized property and fuzz failure records a seed, generator version,
+  input digest, lane, invariant ID, and exact command. A minimized seed becomes a
+  normal regression fixture before the failure is closed.
+- Timeouts are watchdogs that classify a hang; they are not a correctness oracle.
+  A timeout must preserve the input and stack/log evidence for triage.
+- Golden output excludes absolute paths, timestamps, random IDs, hostnames, and
+  toolchain-specific noise. Canonicalize before comparison and require an explicit
+  update action for changes.
+- Benchmarks report `testing.B` samples, allocations, and deterministic operation
+  counts. PR CI should detect missing or pathological work; performance budgets and
+  regression thresholds belong in scheduled runs with repeated samples.
+- Race tests use bounded barriers and repeated runs. A retry may collect diagnosis,
+  but must never hide a first failure or turn a flaky result into a pass.
+
+## Failure triage protocol
+
+The first failing signal is preserved as evidence, even if a rerun passes. Triage
+follows this order:
+
+1. Classify the lane, invariant ID, test kind, commit, base, and whether the failure
+   is deterministic, seed-dependent, race-only, resource-bound, or environment-bound.
+2. Re-run the exact command once with the recorded seed, `-count=1`, pinned toolchain,
+   `GOOS/GOARCH`, `GOMAXPROCS`, and input digest. Do not broaden the scope by merging
+   another lane to make the failure disappear.
+3. Minimize the input: fuzz corpus to one seed, property data to the smallest model,
+   golden output to the smallest semantic delta, or benchmark to the smallest
+   operation count that still reproduces the anomaly.
+4. Compare authoritative views in order: source/AST, IR/facts, projection/source map,
+   lifted delta, cache/evidence digest, and CI decision. The first mismatch owns the
+   defect; downstream symptoms are linked evidence.
+5. Assign severity: P0 blocks a semantic law, safety boundary, integrity check, or
+   deterministic output; P1 blocks a package promotion or creates a reproducibility
+   gap; P2 is scheduled performance, corpus, or observability debt.
+6. Add the minimized failure as a deterministic regression test or seed, then update
+   the experiment board and promotion status. “Flaky” is a diagnosis requiring a
+   cause and quarantine owner, not a disposition that permits merging.
+
+The minimum triage record is:
+
+```text
+lane, invariant, test-kind, commit, base, input-digest, seed
+go-version, GOOS/GOARCH, GOMAXPROCS, command, first-output
+classification, severity, minimized-fixture, next-promotion-gate
+```
+
+## Self-hosting evidence ladder
+
+The current [staged conformance plan](../../.github/conformance-plan.md) makes Go
+the authoritative verifier at Stage 0. The testing strategy must remain comparable
+as the implementation moves toward `gooo`:
+
+- **Stage 0 — Go-hosted:** run the Go verifier, all deterministic gates, and explicit
+  deferred markers for unavailable `gooo` checks. Deferred is not semantic success.
+- **Stage 1 — dual evidence:** run Go and `gooo` verifiers on the same pinned
+  checkout and compare normalized semantic results, scope decisions, generated
+  freshness, and evidence manifests with an independent comparator. Any mismatch,
+  unavailable input, or non-reproducible output blocks promotion.
+- **Stage 2 — gooo authority with fallback:** require `gooo` while retaining the Go
+  verifier as an independently runnable fallback; preserve both evidence bundles
+  and rehearse rollback.
+- **Stage 3 — fallback removal:** remove the fallback only after an independent
+  parity audit, reproducible rebuild, forced-mismatch recovery, and reviewed
+  governance change. The former verifier remains pinned as a recovery artifact.
+
+For every stage, run the same fixture twice from the same commit and compare semantic
+IDs, canonical bytes, digests, evidence decisions, and failure classifications. The
+stage variable is fail-closed: an unimplemented future stage must fail or remain at
+the prior stage, never silently pass.
+
+## CI cadence and promotion contract
+
+The living board maps experiments to three cadences:
+
+| Cadence | Required evidence | Allowed variability | Promotion rule |
+| --- | --- | --- | --- |
+| Every PR | Unit/table tests, bounded properties, fuzz seed replay, reviewed goldens, package contract, repository vet/test/race, DAMP/DRY, and scope policy. | No wall-clock threshold, unpinned random seed, or retry-only pass. | A new P0 failure blocks; a P1 failure blocks the owning lane's promotion; P2 is recorded with an owner. |
+| Scheduled | Longer fuzz budgets, repeated race stress, cross-process cache/restart, benchmark samples, dependency invalidation, and Stage 1 dual-evidence rehearsal. | Bounded duration and fixed environment matrix; raw samples retained. | A reproducible regression becomes a PR fixture; threshold changes require baseline and rationale. |
+| Stage promotion | Full cross-package contract, two-run reproducibility, independent comparator, evidence freshness, rollback rehearsal, and explicit governance review. | None for semantic decisions; unavailable evidence is a block. | Move Go-hosted -> dual -> gooo authority only when the conformance plan's gate is met. |
+
+When a dependency lane is absent from `integration`, its contract can use a small
+DTO, interface, or fixture under the owning research scope. The result must say
+“blocked: dependency X absent” and still prove the adapter's local law. Once the lane
+is integrated, re-run the exact saved command and compare the evidence rather than
+replacing it with a new unconnected smoke test.
