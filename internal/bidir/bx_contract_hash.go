@@ -1,0 +1,287 @@
+package bidir
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"sort"
+	"strings"
+)
+
+func digest(value string) string {
+	sum := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(sum[:])
+}
+
+func documentDigest(document Document) string {
+	return digest(documentCanonical(document))
+}
+
+func documentCanonical(document Document) string {
+	var builder strings.Builder
+	writePart(&builder, document.Package)
+	writePart(&builder, document.Namespace)
+	for _, declaration := range document.Declarations {
+		writePart(&builder, string(declaration.Kind))
+		writePart(&builder, string(declaration.ID))
+		writePart(&builder, declaration.Name)
+		writeMapFingerprint(&builder, declaration.Attributes)
+		writeSpan(&builder, declaration.Span)
+		writeReferences(&builder, declaration.Inputs)
+		writeReferences(&builder, declaration.Outputs)
+	}
+	for _, relation := range document.Relations {
+		writePart(&builder, string(relation.Kind))
+		writePart(&builder, string(relation.Source))
+		writePart(&builder, string(relation.Target))
+		writeMapFingerprint(&builder, relation.Attributes)
+		writeSpan(&builder, relation.Span)
+	}
+	return builder.String()
+}
+
+func writeReferences(builder *strings.Builder, references []Reference) {
+	for _, reference := range references {
+		writePart(builder, string(reference.ID))
+		writePart(builder, reference.Name)
+		writePart(builder, reference.Namespace)
+		writeSpan(builder, reference.Span)
+	}
+}
+
+func writeSpan(builder *strings.Builder, span SourceSpan) {
+	writePart(builder, span.File)
+	fmt.Fprintf(builder, "%d,%d,%d,%d,%d,%d;", span.Start, span.End, span.StartLine, span.StartColumn, span.EndLine, span.EndColumn)
+}
+
+func writePart(builder *strings.Builder, value string) {
+	fmt.Fprintf(builder, "%d:", len(value))
+	builder.WriteString(value)
+}
+
+func factCanonical(fact Fact) string {
+	var builder strings.Builder
+	fmt.Fprintf(&builder, "%d|", fact.Layer)
+	writePart(&builder, string(fact.Subject))
+	writePart(&builder, string(fact.Predicate))
+	writePart(&builder, string(fact.Object))
+	writePart(&builder, string(fact.SubjectKind))
+	writePart(&builder, string(fact.ObjectKind))
+	writeMapFingerprint(&builder, fact.Attributes)
+	writeSpan(&builder, fact.Source)
+	writePart(&builder, fact.Reason)
+	return builder.String()
+}
+
+func factID(fact Fact) string {
+	return fmt.Sprintf("%d:%s:%s:%s", fact.Layer, fact.Subject, fact.Predicate, fact.Object)
+}
+
+func factSequenceHash(delta FactDelta) string {
+	var builder strings.Builder
+	writeFacts(&builder, "added", delta.Added)
+	writeFacts(&builder, "removed", delta.Removed)
+	return digest(builder.String())
+}
+
+func factOrderHash(delta FactDelta) string {
+	var builder strings.Builder
+	writeFactIDs(&builder, "added", delta.Added)
+	writeFactIDs(&builder, "removed", delta.Removed)
+	return digest(builder.String())
+}
+
+func writeFacts(builder *strings.Builder, label string, facts FactSet) {
+	writePart(builder, label)
+	for index, fact := range facts {
+		fmt.Fprintf(builder, "%d|", index)
+		writePart(builder, factCanonical(fact))
+	}
+}
+
+func writeFactIDs(builder *strings.Builder, label string, facts FactSet) {
+	writePart(builder, label)
+	for index, fact := range facts {
+		fmt.Fprintf(builder, "%d|", index)
+		writePart(builder, factID(fact))
+	}
+}
+
+func factIDs(facts FactSet) []string {
+	ids := make([]string, len(facts))
+	for index, fact := range facts {
+		ids[index] = factID(fact)
+	}
+	return ids
+}
+
+func evidenceSpans(facts FactSet) BXEvidenceSpanSet {
+	ids := factIDs(facts)
+	spans := make([]SourceSpan, 0, len(facts))
+	for _, fact := range facts {
+		if fact.Source.Valid() {
+			spans = append(spans, fact.Source)
+		}
+	}
+	sort.Slice(spans, func(i, j int) bool { return spanLess(spans[i], spans[j]) })
+	return BXEvidenceSpanSet{IDs: ids, Spans: spans, IDCount: len(ids), SpanCount: len(spans), Hash: digest(spanSetCanonical(ids, spans))}
+}
+
+func spanSetCanonical(ids []string, spans []SourceSpan) string {
+	var builder strings.Builder
+	for _, id := range ids {
+		writePart(&builder, id)
+	}
+	for _, span := range spans {
+		writeSpan(&builder, span)
+	}
+	return builder.String()
+}
+
+func spanLess(left, right SourceSpan) bool {
+	if left.File != right.File {
+		return left.File < right.File
+	}
+	if left.Start != right.Start {
+		return left.Start < right.Start
+	}
+	if left.End != right.End {
+		return left.End < right.End
+	}
+	if left.StartLine != right.StartLine {
+		return left.StartLine < right.StartLine
+	}
+	return left.StartColumn < right.StartColumn
+}
+
+func artifact(hash string, count int) BXArtifactEvidence {
+	return BXArtifactEvidence{Hash: hash, Count: count}
+}
+
+func baseEvidence(input BXBaseEvidenceInput, document Document, model Model) (BXBaseEvidence, error) {
+	if documentDigest(input.DSL) != documentDigest(document) {
+		return BXBaseEvidence{}, fmt.Errorf("base DSL artifact does not match fixture document")
+	}
+	if !SemanticEquivalent(input.IR, model) {
+		return BXBaseEvidence{}, fmt.Errorf("base IR artifact does not match fixture model")
+	}
+	if len(input.Go) == 0 || len(input.SourceMap) == 0 || len(input.Evidence) == 0 || len(input.Provenance) == 0 {
+		return BXBaseEvidence{}, fmt.Errorf("base evidence requires non-empty Go, source-map, evidence, and provenance artifacts")
+	}
+	return BXBaseEvidence{
+		DSL:        artifact(documentDigest(input.DSL), 1),
+		IR:         artifact(SemanticFingerprint(input.IR), len(input.IR.Nodes)+len(input.IR.Relations)),
+		Go:         artifact(digestFacts(input.Go), len(input.Go)),
+		SourceMap:  artifact(digestSpans(input.SourceMap), len(input.SourceMap)),
+		Evidence:   artifact(digestFacts(input.Evidence), len(input.Evidence)),
+		Provenance: artifact(digestSpans(input.Provenance), len(input.Provenance)),
+	}, nil
+}
+
+func digestFacts(facts FactSet) string {
+	copySet := facts.Normalized()
+	var builder strings.Builder
+	for _, fact := range copySet {
+		writePart(&builder, factCanonical(fact))
+	}
+	return digest(builder.String())
+}
+
+func digestSpans(spans []SourceSpan) string {
+	copySpans := append([]SourceSpan(nil), spans...)
+	sort.Slice(copySpans, func(i, j int) bool { return spanLess(copySpans[i], copySpans[j]) })
+	var builder strings.Builder
+	for _, span := range copySpans {
+		writeSpan(&builder, span)
+	}
+	return digest(builder.String())
+}
+
+func lstatDigest(stat BXLStat) string {
+	return digest(fmt.Sprintf("%s|%d|%d|%t", stat.Path, stat.Size, stat.Mode, stat.Exists))
+}
+
+func stateEvidence(model Model, document Document, region Locality, snapshot BXFileSnapshot) BXStateEvidence {
+	return BXStateEvidence{
+		Semantic: SemanticFingerprint(model),
+		Source:   documentDigest(document),
+		Region:   localityDigest(region),
+		Slot:     slotDigest(document),
+		Bytes:    digest(string(snapshot.Bytes)),
+		LStat:    lstatDigest(snapshot.LStat),
+	}
+}
+
+func localityDigest(locality Locality) string {
+	return digest(localityCanonical(locality))
+}
+
+func localityCanonical(locality Locality) string {
+	var builder strings.Builder
+	for _, id := range locality.Touched {
+		writePart(&builder, string(id))
+	}
+	builder.WriteByte('|')
+	for _, id := range locality.Affected {
+		writePart(&builder, string(id))
+	}
+	return builder.String()
+}
+
+func slotDigest(document Document) string {
+	var builder strings.Builder
+	for _, declaration := range document.Declarations {
+		writeSlots(&builder, declaration.ID, "input", declaration.Inputs)
+		writeSlots(&builder, declaration.ID, "output", declaration.Outputs)
+	}
+	return digest(builder.String())
+}
+
+func writeSlots(builder *strings.Builder, declaration ID, direction string, references []Reference) {
+	for index, reference := range references {
+		fmt.Fprintf(builder, "%d|", index)
+		writePart(builder, string(declaration))
+		writePart(builder, direction)
+		writePart(builder, string(reference.ID))
+		writePart(builder, reference.Name)
+		writePart(builder, reference.Namespace)
+		writeSpan(builder, reference.Span)
+	}
+}
+
+func observationMatches(observation BXWriteObservation, before, after Document) error {
+	if !observation.Observed {
+		return fmt.Errorf("write observer did not report an observation")
+	}
+	if err := snapshotMatches(observation.Before, before); err != nil {
+		return fmt.Errorf("before snapshot: %w", err)
+	}
+	if err := snapshotMatches(observation.After, after); err != nil {
+		return fmt.Errorf("after snapshot: %w", err)
+	}
+	return nil
+}
+
+func snapshotMatches(snapshot BXFileSnapshot, document Document) error {
+	want := documentSourceBytes(document)
+	if string(snapshot.Bytes) != string(want) {
+		return fmt.Errorf("observed bytes do not match source document")
+	}
+	if !snapshot.LStat.Exists || snapshot.LStat.Path == "" || snapshot.LStat.Mode == 0 || snapshot.LStat.Size != int64(len(snapshot.Bytes)) {
+		return fmt.Errorf("observed lstat is incomplete or inconsistent")
+	}
+	return nil
+}
+
+func documentSourceBytes(document Document) []byte {
+	return []byte(documentCanonical(document))
+}
+
+func canonicalJSON(value any) (string, error) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}

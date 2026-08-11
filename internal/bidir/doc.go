@@ -25,16 +25,22 @@
 // verified; naming a future phase never makes it complete.
 //
 // ReconciliationFixture is the adapter contract for parser-neutral BX
-// experiments. MeasureBXFixture emits stable golden evidence, while the
-// package benchmarks exercise the same contract without importing a parser or
-// generator implementation.
+// experiments. BXEvidenceFixture is the hard evidence extension: it must
+// provide non-empty DSL, IR, Go, source-map, evidence, and provenance base
+// artifacts, ordered delta hashes, locality closure JSON, evidence ID/span
+// cardinality, and observer-confirmed before/after bytes and lstat snapshots.
+// MeasureBXFixture rejects incomplete contracts; missing evidence is never
+// green. A rejected partial observation must preserve semantic/source/region/
+// slot/bytes/lstat digests and must not create removals or promote candidates.
 //
 // Source-order preservation is currently defined for source-backed activity
-// input ports. Generic gooo:invokes lifting, Go-side port inference, and
-// three-way merge reconciliation remain explicitly deferred. CLI delta
-// atomicity belongs to the CLI ownership boundary and is also deferred here.
+// input ports. Deterministic facts must reference registered model endpoints.
+// Partial observations never imply relation removal, and explicit removals
+// remain transactional and idempotent.
 //
-// Deterministic facts must reference registered model endpoints. Partial
-// observations never imply relation removal, and explicit removals remain
-// transactional and idempotent.
+// Generic gooo:invokes lifting, PROV-O mapping policy, Go-lift/CLI delta
+// atomicity, Go-side port inference, three-way merge, and output-port
+// source-order ownership remain explicit deferred seams until their owning
+// APIs and evidence exist. CLI delta atomicity belongs to the CLI ownership
+// boundary and is also deferred here.
 package bidir
