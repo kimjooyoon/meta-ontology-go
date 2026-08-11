@@ -10,6 +10,8 @@
 - [ ] `go test ./...` passes.
 - [ ] `go test -race ./...` passes.
 - [ ] Semantic round-trip, evidence, scope, and generated-freshness checks pass.
+- [ ] The staged verifier level is identified; no level is promoted without
+      parity, independent-evidence, reproducible-build, and rollback gates.
 - [ ] No generated region was hand-edited.
 
 ## Review boundary
