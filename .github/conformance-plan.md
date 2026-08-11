@@ -13,6 +13,12 @@ retaining an independently reproducible trust boundary.
 
 ## Evidence and trust rules
 
+The comparison contract is implemented in `internal/verify/evidence.go`.
+Go-hosted and future gooo-hosted adapters emit the same schema-versioned
+`EvidenceBundle`; producer identity is recorded in the manifest but excluded
+from the canonical payload comparison. CI compares canonical JSONL payloads and
+their SHA-256 manifests before any stage can claim parity.
+
 - Go and `gooo` produce separate append-only evidence bundles before comparison.
   A verifier must not certify its own output as the only trust root.
 - Comparisons use stable semantic IDs, canonical serialization, fixture inputs,

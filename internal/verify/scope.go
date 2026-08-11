@@ -16,6 +16,7 @@ var branchScopeAllowlist = map[string][]string{
 	"agent/cache":                         {"internal/cache"},
 	"agent/cache-research":                {"docs/research/cache.md"},
 	"agent/ci-workflow":                   {".github", "scripts", "internal/verify"},
+	"agent/ci-evidence-contract":          {".github", "scripts", "internal/verify"},
 	"agent/ci-workflow-stage":             {".github", "scripts", "internal/verify"},
 	"agent/cli":                           {"cmd/gooo"},
 	"agent/codegen-research":              {"docs/research/codegen.md"},
