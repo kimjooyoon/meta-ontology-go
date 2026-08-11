@@ -19,6 +19,7 @@ var branchScopeAllowlist = map[string][]string{
 	"agent/ci-evidence-contract":          {".github", "scripts", "internal/verify"},
 	"agent/ci-workflow-stage":             {".github", "scripts", "internal/verify"},
 	"agent/cli":                           {"cmd/gooo"},
+	"agent/cli-check":                     {"cmd/gooo"},
 	"agent/codegen-research":              {"docs/research/codegen.md"},
 	"agent/conformance-fuzz":              {"internal/conformance/fuzz"},
 	"agent/dependency-cycle-detector":     {"internal/detection/cycles"},
