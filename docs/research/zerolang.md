@@ -283,7 +283,173 @@ check가 중복 표시되는 경우는 합쳐서 적었으며, 아래 평가는 
 5. #2의 governance/conformance 문서는 각 통합 단계의 실제 지원 범위와 동기화한다. 문서가
    실패한 gate를 green으로 표현해서는 안 된다.
 
-## 7. 출처와 재현 경로
+## 7. 실험 backlog
+
+다음 항목은 구현 완료를 주장하는 목록이 아니라, graph-first contract가 생겼을 때
+바로 실행할 수 있도록 고정한 실험 설계다. 현재 저장소의 CLI는 일부 command가 아직
+placeholder이므로, command가 없으면 실험을 pass로 표시하지 않고 `blocked`로 기록한다.
+
+### 공통 실험 프로토콜
+
+- fixture와 실행 결과에 repository commit, compiler/generator/verifier version, fixture
+  hash, pre/post graph·IR·projection hash를 함께 기록한다.
+- 각 run은 깨끗한 temporary workspace에서 수행하고 stdout/stderr, JSON output, changed
+  path, changed generated marker, evidence ID를 보존한다.
+- 같은 입력을 두 번 실행해 canonical output과 decision이 같은지 확인한다.
+- 실패 시 큰 통합 테스트를 무작정 늘리지 않고, 최소 counterexample fixture와 다음 조치를
+  backlog에 추가한다.
+
+### EXP-GRAPH-01 — projection/patch/query contract matrix
+
+**가설.** clean projection, checked patch, 좁은 query를 하나의 작은 fixture matrix로
+묶으면 graph·projection·semantic IR 사이의 authority drift를 command 경계에서 잡을 수
+있다.
+
+**Fixture.** `conformance/graph-first/billing/`에 `main.gooo`, 기대 IR fact set,
+generated Go marker view, handwritten slot, unrelated declaration을 둔다. 다음 상태를
+각각 복제한다: clean, no-op export/import, one-local patch, stale graph hash, stale node
+hash, expected field mismatch, projection-only edit, graph-only edit, 양쪽 독립 edit.
+
+**측정값.** command별 exit code와 diagnostic code, pre/post semantic hash, graph hash,
+changed path 수, changed marker 수, slot bytes, query result의 canonical hash/order,
+evidence receipt 수와 wall-clock time을 기록한다.
+
+**통과 기준.** clean fixture는 `query → patch --check-only → patch → check → test →
+run`이 통과한다. no-op export/import와 `verify-projection`은 write가 0이고, matching
+precondition patch는 의도한 region만 바꾼다. stale/mismatch/양쪽 edit는 write 없이
+stable repair diagnostic으로 실패한다. 같은 query의 두 결과는 byte-identical이다.
+
+**실패 시 다음 조치.** projection, patch, query 중 최초로 invariant가 깨진 층으로
+fixture를 분리하고 해당 command contract를 먼저 고정한다. silent overwrite가 있으면
+authority/reconciliation policy를 수정하기 전까지 downstream generator/test를 확장하지
+않는다.
+
+### EXP-GRAPH-02 — stale patch와 concurrent edit
+
+**가설.** graph/IR fingerprint와 node/field expected value를 compare-and-swap처럼
+사용하면 Agent A와 B의 stale semantic edit를 partial write 없이 검출할 수 있다.
+
+**Fixture.** 하나의 base graph에서 A/B snapshot을 만든다. 같은 literal/관계에 대한
+충돌 patch, 서로 다른 node에 대한 독립 patch, declaration rename 대 alias edit, graph hash는
+같지만 node hash가 다른 patch, 이미 적용된 patch의 재적용을 준비한다.
+
+**측정값.** accept/reject 수, false accept 수, store/Go byte diff, partial write 여부,
+diagnostic code와 repair target, 재조회 후 recovery command 수, 충돌 후 semantic hash를
+기록한다.
+
+**통과 기준.** stale graph/node/field precondition은 100% reject하고 store·projection·
+evidence를 변경하지 않는다. 독립 node patch는 정책이 허용하는 경우 모두 accept되며,
+같은 semantic target은 deterministic conflict가 된다. 같은 요청을 재실행해도 결과가
+달라지지 않는다.
+
+**실패 시 다음 조치.** false accept면 precondition에 semantic node hash와 relevant
+relation closure를 추가한다. partial write면 atomic staging/rollback을 우선 수정한다.
+conflict code가 재현되지 않으면 query snapshot과 repair schema를 먼저 contract test로
+고정한다.
+
+### EXP-GRAPH-03 — query completeness와 결정성
+
+**가설.** Agent가 필요한 neighborhood만 query해도 전체 IR을 읽은 reference evaluator와
+동일한 semantic fact set을 얻고, inverse/namespace 경계가 결과를 오염시키지 않는다.
+
+**Fixture.** `billing`, `fraud`, `settlement` 세 namespace에 같은 display name을 가진
+Entity/Activity를 만들고 `used`, `wasGeneratedBy`, `invokes`, inverse와 bounded
+neighborhood query를 준비한다. 명시 fact, candidate fact, derived fact를 구분하고
+unrelated namespace를 섞는다.
+
+**측정값.** query별 reference fact set과 실제 result set의 차집합, result ordering과
+canonical JSON hash, bounded depth/size, query latency, candidate 누출·누락 수를 잰다.
+
+**통과 기준.** 명시된 query semantics와 실제 결과가 exact match하고, 반복 실행 및
+동일 fact의 입력 순서 변경에도 결과 bytes가 같다. namespace 밖 fact와 candidate가
+허가 없이 섞이지 않으며, bounded query가 정해진 상한을 넘지 않는다.
+
+**실패 시 다음 조치.** 누락이 vocabulary/derived-rule 정의 문제인지 query 구현 문제인지
+분리한다. vocabulary가 모호하면 rule을 추가하기보다 query를 unsupported로 명시하고,
+구현 오류면 해당 smallest graph를 regression fixture로 고정한다.
+
+### EXP-LOCAL-01 — locality counterexamples
+
+**가설.** unambiguous semantic edit는 해당 IR/Go/generated marker만 바꾸며, identity
+matching이 모호한 경우에도 조용한 ID 탈취나 unrelated rewrite가 발생하지 않는다.
+
+**Fixture.** 다음 변형을 각각 base fixture에서 만든다: 동일 shape declaration을 앞/뒤에
+삽입, 같은 종류 statement reorder, activity rename, namespace 동명이인 추가, unrelated
+file edit, handwritten slot edit, marker 중복·누락·범위 불일치, generated region 밖의
+주석 edit.
+
+**측정값.** 보존·retire된 semantic ID 수, changed generated marker 목록, unchanged
+region/slot byte hash, source-map span 변화, semantic delta cardinality, conflict/candidate
+수와 diagnostic을 비교한다.
+
+**통과 기준.** 정상적인 단일 edit는 target closure만 변경하고 unrelated ID·slot·comment를
+보존한다. ambiguous insertion은 기존 ID를 임의로 빼앗지 않고 retire/conflict/candidate
+중 하나의 명시된 정책을 따른다. malformed marker는 regeneration 전에 실패하고
+handwritten body를 잃지 않는다.
+
+**실패 시 다음 조치.** 실패를 identity matcher, generator ordering, marker parser,
+source-map 중 한 층의 최소 counterexample로 축소하고 그 fixture를 영구 conformance에
+추가한다. locality assertion을 완화하거나 “전체 파일 재생성”으로 숨기지 않는다.
+
+### EXP-EVIDENCE-01 — closed-loop Agent evidence
+
+**가설.** Agent가 변경 전 scope와 변경 후 semantic delta/evidence를 구조화해 제출하게
+하면 Builder의 추론 오류와 Gate의 안전성 판단을 분리할 수 있다.
+
+**Fixture.** 다음 task transcript를 재생한다: 허용된 local activity edit, 허용 범위를
+넘는 `invokes` edge 추가, stale patch 재시도, generated freshness 위반, expected-fail
+test를 unexpected pass로 바꾸는 edit. 각 fixture에는 request ID, allowed semantic
+scope fingerprint, base graph/IR hash, delta, projection hash, command results, evidence
+hash, Builder/Guardian/Gate actor를 넣는다.
+
+**측정값.** evidence field completeness, `actual delta ⊆ allowed scope` 정확도, stale
+evidence 검출률, 같은 input에 대한 Gate decision 재현성, Builder self-approval 발생 수,
+task당 command/turn 수를 기록한다.
+
+**통과 기준.** accepted change는 100% complete·fresh evidence를 가지고, out-of-scope,
+stale, generated-drift fixture는 merge 전에 reject된다. 같은 snapshot과 evidence를 두
+번 평가하면 decision과 reason code가 같다. Builder는 verifier/policy를 바꿔 자기 변경을
+승인할 수 없다.
+
+**실패 시 다음 조치.** 누락된 field를 optional로 낮추지 말고 schema의 required field로
+승격한다. stale evidence가 통과하면 source/IR/Go hash와 verifier version을 evidence와
+cache key에 포함한다. 역할 분리가 깨지면 해당 Gate를 보호된 kernel 경계로 옮기고
+independent Guardian 검토를 요구한다.
+
+### EXP-EVIDENCE-02 — provenance와 cache freshness
+
+**가설.** reconstructable cache는 재사용할 수 있지만 provenance/evidence는 append-only
+durable record로 유지하면 cache hit가 오래된 검증을 새 변경의 증거처럼 재사용하지 않는다.
+
+**Fixture.** 동일 input 반복, DSL whitespace-only edit, semantic ID rename, handwritten
+logic edit, generator/verifier version 변경, relevant import 변경, cache entry corruption,
+evidence field tamper를 각각 실행한다.
+
+**측정값.** cache hit/miss와 invalidation reason, source/IR/Go/evidence hash 일치 여부,
+evidence sequence length, tamper 검출률, 재계산 시간, durable record의 overwrite 여부를
+측정한다.
+
+**통과 기준.** whitespace-only와 unrelated edit만 허용된 범위에서 hit되고 semantic,
+generator, verifier, import 변경은 miss된다. evidence hash가 현재 input과 다르면 Gate가
+reject하고 새 receipt를 append한다. cache purge는 durable evidence를 삭제하지 않는다.
+
+**실패 시 다음 조치.** 빠진 key를 invalidation contract에 추가하고, evidence overwrite가
+발생하면 append-only storage/sequence 검사를 먼저 고친다. cache와 provenance의 수명이
+불명확하면 두 저장소를 분리한 뒤 다시 측정한다.
+
+### 실행 순서와 backlog 완료 조건
+
+1. `EXP-GRAPH-01`로 command/result schema를 고정한다.
+2. `EXP-GRAPH-02`와 `EXP-GRAPH-03`으로 patch precondition과 query semantics를 검증한다.
+3. `EXP-LOCAL-01`로 identity·generated locality의 counterexample을 추가한다.
+4. `EXP-EVIDENCE-01`과 `EXP-EVIDENCE-02`로 scope/evidence/cache의 폐쇄루프를 검증한다.
+
+각 실험은 fixture 파일, machine-readable result, 명시된 threshold, 최소 하나의
+regression case, 담당 역할(Builder/Guardian/Gate)을 갖기 전에는 완료로 표시하지 않는다.
+command가 아직 구현되지 않은 경우도 실패로 위장하지 않고 `blocked: missing contract`
+로 남긴다.
+
+## 8. 출처와 재현 경로
 
 모든 zerolang 관찰은 위 snapshot의 공식 저장소 파일을 기준으로 했다.
 
