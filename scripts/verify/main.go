@@ -39,6 +39,12 @@ func run(root, from, to, head, base, branch string) error {
 		return err
 	}
 	if validRevision(from) && validRevision(to) && from != to {
+		if !revisionAvailable(root, from) {
+			return fmt.Errorf("scope base revision %q is unavailable", from)
+		}
+		if !revisionAvailable(root, to) {
+			return fmt.Errorf("scope head revision %q is unavailable", to)
+		}
 		changed, err := changedPaths(root, from, to)
 		if err != nil {
 			return err
@@ -47,7 +53,7 @@ func run(root, from, to, head, base, branch string) error {
 		if scopeBranch == "" {
 			scopeBranch = head
 		}
-		if err := verify.CheckPathScopeForBranch(changed, []string{".github", "scripts", "internal/verify"}, scopeBranch); err != nil {
+		if err := verify.CheckPathScopeForBranch(changed, scopeBranch); err != nil {
 			return err
 		}
 		if scopeBranch == "agent/go-version" {
@@ -72,6 +78,14 @@ func validRevision(value string) bool {
 	return value != "" && value != strings.Repeat("0", len(value))
 }
 
+func revisionAvailable(root, revision string) bool {
+	if !validRevision(revision) {
+		return false
+	}
+	_, err := runGit(root, "rev-parse", "--verify", revision+"^{commit}")
+	return err == nil
+}
+
 func trackedGoFiles(root string) ([]string, error) {
 	output, err := runGit(root, "ls-files", "-z", "--", "*.go")
 	if err != nil {
@@ -88,7 +102,7 @@ func trackedGoFiles(root string) ([]string, error) {
 }
 
 func changedPaths(root, from, to string) ([]string, error) {
-	output, err := runGit(root, "diff", "--name-only", "--diff-filter=ACMRTUXB", from, to)
+	output, err := runGit(root, "diff", "--name-only", "--diff-filter=ACMRTUXB", from+"..."+to)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +114,7 @@ func changedPaths(root, from, to string) ([]string, error) {
 }
 
 func changedDiff(root, from, to, path string) (string, error) {
-	return runGit(root, "diff", "--unified=0", from, to, "--", path)
+	return runGit(root, "diff", "--unified=0", from+"..."+to, "--", path)
 }
 
 func runGit(root string, args ...string) (string, error) {
