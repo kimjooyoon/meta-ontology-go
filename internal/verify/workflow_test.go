@@ -45,6 +45,8 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 	}
 	for _, marker := range []string{
 		"run-name: \"CI [${{",
+		"startsWith(github.ref, 'refs/heads/agent/') && 'agent push cap-only'",
+		"|| 'push full'",
 		"Record CI event source",
 		"source=\"PR authoritative\"",
 		"source=\"agent push cap-only\"",
