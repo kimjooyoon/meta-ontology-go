@@ -55,11 +55,8 @@ func slotMarker(prefix, id string) string {
 }
 
 func parseMarkers(source []byte) (parsedMarkers, error) {
-	lines := splitSourceLines(source)
-	result := parsedMarkers{Slots: make(map[string]parsedSlot)}
-	var region *generatedRegion
-	var slot *parsedSlot
-	for index, line := range lines {
+	state := markerState{result: parsedMarkers{Slots: make(map[string]parsedSlot)}}
+	for index, line := range splitSourceLines(source) {
 		marker, attrs, ok, err := parseMarker(line.text)
 		if err != nil {
 			return parsedMarkers{}, fmt.Errorf("generator: malformed marker on line %d: %w", index+1, err)
@@ -67,77 +64,11 @@ func parseMarkers(source []byte) (parsedMarkers, error) {
 		if !ok {
 			continue
 		}
-		switch marker {
-		case "generated-start":
-			if region != nil {
-				return parsedMarkers{}, fmt.Errorf("generator: nested generated region on line %d", index+1)
-			}
-			id := attrs["id"]
-			if id == "" {
-				return parsedMarkers{}, fmt.Errorf("generator: generated region on line %d has no ID", index+1)
-			}
-			region = &generatedRegion{
-				ID:        id,
-				Kind:      attrs["kind"],
-				Start:     line.start,
-				StartLine: index,
-			}
-		case "generated-end":
-			if region == nil {
-				return parsedMarkers{}, fmt.Errorf("generator: generated end without start on line %d", index+1)
-			}
-			if slot != nil {
-				return parsedMarkers{}, fmt.Errorf("generator: generated region %q closes with an open slot on line %d", region.ID, index+1)
-			}
-			if endID := attrs["id"]; endID != "" && endID != region.ID {
-				return parsedMarkers{}, fmt.Errorf("generator: generated region %q closes as %q on line %d", region.ID, endID, index+1)
-			}
-			region.End = line.end
-			region.EndLine = index
-			for _, existing := range result.Regions {
-				if existing.ID == region.ID {
-					return parsedMarkers{}, fmt.Errorf("generator: duplicate generated region ID %q", region.ID)
-				}
-			}
-			result.Regions = append(result.Regions, *region)
-			region = nil
-		case "slot-start":
-			if region == nil {
-				return parsedMarkers{}, fmt.Errorf("generator: slot outside generated region on line %d", index+1)
-			}
-			if slot != nil {
-				return parsedMarkers{}, fmt.Errorf("generator: nested slot in region %q on line %d", region.ID, index+1)
-			}
-			id := attrs["id"]
-			if id == "" {
-				return parsedMarkers{}, fmt.Errorf("generator: slot on line %d has no ID", index+1)
-			}
-			slot = &parsedSlot{ID: id, Start: line.end, StartLine: index}
-		case "slot-end":
-			if slot == nil {
-				return parsedMarkers{}, fmt.Errorf("generator: slot end without start on line %d", index+1)
-			}
-			if endID := attrs["id"]; endID != "" && endID != slot.ID {
-				return parsedMarkers{}, fmt.Errorf("generator: slot %q closes as %q on line %d", slot.ID, endID, index+1)
-			}
-			slot.End = line.start
-			slot.EndLine = index
-			slot.Body = append([]byte(nil), source[slot.Start:slot.End]...)
-			if _, exists := result.Slots[slot.ID]; exists {
-				return parsedMarkers{}, fmt.Errorf("generator: duplicate slot ID %q", slot.ID)
-			}
-			result.Slots[slot.ID] = *slot
-			region.Slots = append(region.Slots, *slot)
-			slot = nil
+		if err := state.apply(marker, attrs, line, index, source); err != nil {
+			return parsedMarkers{}, err
 		}
 	}
-	if slot != nil {
-		return parsedMarkers{}, fmt.Errorf("generator: unterminated slot %q", slot.ID)
-	}
-	if region != nil {
-		return parsedMarkers{}, fmt.Errorf("generator: unterminated generated region %q", region.ID)
-	}
-	return result, nil
+	return state.finish()
 }
 
 func parseMarker(line string) (string, map[string]string, bool, error) {
