@@ -221,9 +221,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            ci-evidence.json
-            ci-jobs.json
+          path: ci-evidence.json
           if-no-files-found: error
           retention-days: 14
 
@@ -261,6 +259,7 @@ jobs:
               throw new Error('canonical jobs are not terminal, successful, unique, and bound to the immutable head');
             }
             fs.writeFileSync('ci-final-jobs.json', JSON.stringify(response.data.jobs));
+            fs.writeFileSync('ci-jobs.json', JSON.stringify(response.data.jobs));
       - name: Reproduce proof fixture
         run: |
           rm -rf ci-generated-proof
@@ -326,5 +325,6 @@ jobs:
           path: |
             ci-proof.json
             provenance-receipt.jsonl
+            ci-jobs.json
           if-no-files-found: error
           retention-days: 14

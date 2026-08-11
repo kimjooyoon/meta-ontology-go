@@ -67,18 +67,29 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 		"actions/github-script@v7",
 		"listJobsForWorkflowRun",
 		"ci-jobs.json",
+		"ci-final-jobs.json",
 		"ci-evidence.json",
 		"CI_SLOT_PRESERVATION: \"true\"",
 		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
 		"actions/upload-artifact@v4",
+		"ci-proof.json",
+		"provenance-receipt.jsonl",
 		"if-no-files-found: error",
 	} {
 		if !strings.Contains(text, marker) {
 			t.Fatalf("workflow lost event-source evidence marker %q", marker)
 		}
 	}
-	if strings.Count(text, "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}") != 7 {
-		t.Fatalf("expected seven immutable checkout refs, got %d", strings.Count(text, "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"))
+}
+
+func TestCIWorkflowUsesImmutableCheckoutForEveryJob(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	marker := "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
+	if strings.Count(string(workflow), marker) != 7 {
+		t.Fatalf("expected seven immutable checkout refs, got %d", strings.Count(string(workflow), marker))
 	}
 }
 
