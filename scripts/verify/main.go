@@ -37,7 +37,7 @@ func run(root, from, to, head, base string) error {
 	if err := verify.CheckGoCaps(root, files, maxGoFileLines, maxGoFunctionLines); err != nil {
 		return err
 	}
-	if from != "" && to != "" && from != to {
+	if validRevision(from) && validRevision(to) && from != to {
 		changed, err := changedPaths(root, from, to)
 		if err != nil {
 			return err
@@ -52,6 +52,10 @@ func run(root, from, to, head, base string) error {
 		}
 	}
 	return nil
+}
+
+func validRevision(value string) bool {
+	return value != "" && value != strings.Repeat("0", len(value))
 }
 
 func trackedGoFiles(root string) ([]string, error) {
