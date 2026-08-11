@@ -65,8 +65,12 @@ func insertImportTypes(packageScope *gotypes.Package, imports []Import) error {
 }
 
 func validateTypeExpr(packageScope *gotypes.Package, expression, context string) error {
-	if _, err := gotypes.Eval(token.NewFileSet(), packageScope, token.NoPos, expression); err != nil {
+	result, err := gotypes.Eval(token.NewFileSet(), packageScope, token.NoPos, expression)
+	if err != nil {
 		return fmt.Errorf("generator: invalid Go type %q for %s: %w", expression, context, err)
+	}
+	if !result.IsType() {
+		return fmt.Errorf("generator: expression %q for %s is not a Go type", expression, context)
 	}
 	return nil
 }

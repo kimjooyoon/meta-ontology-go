@@ -22,6 +22,28 @@ func TestFixtureMultipleHandwrittenSlotsSurviveIRDefaults(t *testing.T) {
 	}
 }
 
+func TestFixtureHandwrittenSlotBytesRemainExact(t *testing.T) {
+	first := mustAcceptanceResult(t, acceptanceFixture(), nil)
+	handwritten := "return Artifact{Digest: source.Digest}\n\t// preserve spacing  \n"
+	previous := strings.Replace(string(first.Source), "return Artifact{}", handwritten, 1)
+	beforeMarkers, err := parseMarkers([]byte(previous))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := beforeMarkers.Slots["gooo://slot/compile-implementation"].Body
+	changed := acceptanceFixture()
+	changed.Activities[0].Slots[0].Default = "panic(\"replacement default\")"
+	second := mustAcceptanceResult(t, changed, []byte(previous))
+	afterMarkers, err := parseMarkers(second.Source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual := afterMarkers.Slots["gooo://slot/compile-implementation"].Body
+	if !bytes.Equal(actual, expected) {
+		t.Fatalf("handwritten slot bytes changed: got %q want %q", actual, expected)
+	}
+}
+
 func TestFixtureSourceMapMatchesProtectedMarkerBounds(t *testing.T) {
 	result := mustAcceptanceResult(t, acceptanceFixture(), nil)
 	markers, err := parseMarkers(result.Source)

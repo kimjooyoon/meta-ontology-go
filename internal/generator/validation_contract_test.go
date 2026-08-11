@@ -43,6 +43,12 @@ func TestGenerateRejectsUnknownPortType(t *testing.T) {
 	assertGenerationError(t, ir, "invalid Go type")
 }
 
+func TestGenerateRejectsValueExpressionPortType(t *testing.T) {
+	ir := billingIR()
+	ir.Activities[0].Inputs[0].GoType = "1"
+	assertGenerationError(t, ir, "not a Go type")
+}
+
 func TestGenerateFailureDoesNotMutateIR(t *testing.T) {
 	ir := acceptanceFixture()
 	ir.Activities[0].Slots[0].ID = ir.Entities[0].ID
