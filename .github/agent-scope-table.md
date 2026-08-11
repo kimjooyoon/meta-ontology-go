@@ -9,6 +9,7 @@ allowed repository prefix and do not create additional branch aliases.
 | --- | --- |
 | `agent/analyzer` | `internal/analyzer/**` |
 | `agent/analyzer-contract` | `internal/analyzer/**` |
+| `agent/bootstrap-evidence-current` | `.github/agent-scope-table.md`, `examples/bootstrap/**`, `internal/bootstrap/**`, `internal/verify/scope.go` |
 | `agent/bidir` | `internal/bidir/**` |
 | `agent/bidir-followup` | `internal/bidir/**` |
 | `agent/bidir-research` | `docs/research/bidirectional.md` |

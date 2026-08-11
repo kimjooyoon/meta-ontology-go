@@ -3,7 +3,7 @@
   "stage": "go-hosted-baseline",
   "producer": "gooo://host/compiler/go",
   "verifier": "gooo://host/verifier/go",
-  "source_digest": null,
+  "source_digest": "cb1bc1c5ae68590f2ef9d2235f87474bb2c996a594bd72d215231b9b19fbc90e",
   "semantic_digest": null,
   "provenance_digest": null,
   "decision": "deferred",

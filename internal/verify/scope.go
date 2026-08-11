@@ -11,6 +11,7 @@ import (
 var branchScopeAllowlist = map[string][]string{
 	"agent/analyzer":                          {"internal/analyzer"},
 	"agent/analyzer-contract":                 {"internal/analyzer"},
+	"agent/bootstrap-evidence-current":        {".github/agent-scope-table.md", "examples/bootstrap", "internal/bootstrap", "internal/verify/scope.go"},
 	"agent/bidir":                             {"internal/bidir"},
 	"agent/bidir-followup":                    {"internal/bidir"},
 	"agent/bidirectional-experiment-contract": {"docs/research/bidirectional.md"},
