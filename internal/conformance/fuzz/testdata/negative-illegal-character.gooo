@@ -1,0 +1,3 @@
+package billing
+namespace billing
+entity Order id "billing://entity/order" @

@@ -1,0 +1,3 @@
+package billing
+namespace billing
+entity Payment id "billing://entity/payment

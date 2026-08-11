@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "max_source_bytes": 8192,
+  "operation_timeout_ms": 250,
+  "fixtures": [
+    {
+      "name": "valid-minimal",
+      "file": "valid-minimal.gooo",
+      "kind": "valid",
+      "want_diagnostics": 0,
+      "min_diagnostics": 0,
+      "declarations": 2,
+      "required_codes": []
+    },
+    {
+      "name": "negative-unterminated-string",
+      "file": "negative-unterminated-string.gooo",
+      "kind": "negative",
+      "want_diagnostics": -1,
+      "min_diagnostics": 1,
+      "declarations": -1,
+      "required_codes": ["lex.unterminated-string"]
+    },
+    {
+      "name": "negative-missing-arrow",
+      "file": "negative-missing-arrow.gooo",
+      "kind": "negative",
+      "want_diagnostics": -1,
+      "min_diagnostics": 1,
+      "declarations": 1,
+      "required_codes": ["parse.expected-arrow"]
+    },
+    {
+      "name": "negative-illegal-character",
+      "file": "negative-illegal-character.gooo",
+      "kind": "negative",
+      "want_diagnostics": -1,
+      "min_diagnostics": 1,
+      "declarations": 1,
+      "required_codes": ["lex.unexpected-character"]
+    }
+  ]
+}
