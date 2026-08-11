@@ -15,6 +15,7 @@ var (
 	ErrCandidateNotFound = errors.New("semantic candidate not found")
 	ErrInvalidEvidence   = errors.New("invalid semantic evidence")
 	ErrEvidenceConflict  = errors.New("semantic evidence conflict")
+	ErrStaleEvidence     = errors.New("stale semantic evidence")
 )
 
 // ValidationIssue is one deterministic graph invariant violation.
