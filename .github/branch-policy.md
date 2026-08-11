@@ -65,8 +65,10 @@ The pull-request trigger explicitly includes `ready_for_review`, ensuring a
 draft-to-review transition receives the same six-job authoritative matrix.
 
 This current-base follow-up records the integration evidence used for the new
-audit PR: `integration` is `60cf2ce`, and the PR policy step passes the base SHA
+audit PR: `integration` is `f066d61`, and the PR policy step passes the base SHA
 through `GOOO_SCOPE_FROM` while using the head SHA as `GOOO_SCOPE_TO`. The
 existing `agent/bidir-followup` alias was checked against that same base; its
-only allowed prefix remains `internal/bidir`. The stale PR #77 is not a base
-for this branch and must not be merged as the audit result.
+only allowed prefix remains `internal/bidir`. The stale PRs #77 and #84 are
+not bases for this branch and must not be merged as the audit result. The
+observed generator fixture follow-ups use exact `internal/generator` aliases;
+unknown generator branch names remain rejected.

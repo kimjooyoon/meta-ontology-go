@@ -21,6 +21,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/ci-evidence-contract` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-ownership-audit` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-ownership-audit-current` | `.github/**`, `scripts/**`, `internal/verify/**` |
+| `agent/ci-ownership-audit-current2` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-scope-triage` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-workflow` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-workflow-stage` | `.github/**`, `scripts/**`, `internal/verify/**` |
@@ -41,6 +42,8 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/freshness-research` | `internal/research/freshness/**`, `docs/research/**` |
 | `agent/fuzz-conformance` | `internal/conformance/fuzz/**` |
 | `agent/generator` | `internal/generator/**` |
+| `agent/generator-fixtures-current` | `internal/generator/**` |
+| `agent/generator-fixtures-current2` | `internal/generator/**` |
 | `agent/go-version` | `go.mod` (toolchain directives only) |
 | `agent/grammar-followup` | `docs/research/grammar.md` |
 | `agent/grammar-research` | `docs/research/grammar.md` |

@@ -171,12 +171,15 @@ func TestFollowUpBranchScopeAliases(t *testing.T) {
 		{"agent/cache-experiment-followup", "docs/research/cache.md"},
 		{"agent/ci-ownership-audit", ".github/agent-scope-table.md"},
 		{"agent/ci-ownership-audit-current", "internal/verify/scope.go"},
+		{"agent/ci-ownership-audit-current2", "internal/verify/scope.go"},
 		{"agent/ci-scope-triage", "internal/verify/scope.go"},
 		{"agent/cli-bootstrap-contract", "cmd/gooo/evidence_adapter.go"},
 		{"agent/cli-check", "cmd/gooo/main.go"},
 		{"agent/codegen-followup", "docs/research/codegen-reproducibility.md"},
 		{"agent/codegen-hypotheses", "docs/research/codegen-experiments.md"},
 		{"agent/codegen-fixture-adapter", "docs/research/codegen-fixture-adapter.md"},
+		{"agent/generator-fixtures-current", "internal/generator/fixture_contract_test.go"},
+		{"agent/generator-fixtures-current2", "internal/generator/fixture_contract_test.go"},
 		{"agent/freshness-research", "internal/research/freshness/contract.go"},
 		{"agent/grammar-followup", "docs/research/grammar.md"},
 		{"agent/integration-governance", "docs/governance/integration-promotion.md"},
@@ -207,7 +210,10 @@ func TestFollowUpScopeBoundariesAndUnknowns(t *testing.T) {
 		{"agent/testing-research-contracts", "docs/research/security.md"},
 		{"agent/ci-ownership-audit", "internal/semantic/graph.go"},
 		{"agent/ci-ownership-audit-current", "internal/semantic/graph.go"},
+		{"agent/ci-ownership-audit-current2", "internal/semantic/graph.go"},
 		{"agent/cli-check", "internal/semantic/graph.go"},
+		{"agent/generator-fixtures-current", "internal/semantic/graph.go"},
+		{"agent/generator-fixtures-current2", "internal/semantic/graph.go"},
 	}
 	for _, test := range cases {
 		if err := CheckPathScopeForBranch([]string{test.path}, test.branch); err == nil {
