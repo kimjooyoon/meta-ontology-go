@@ -27,3 +27,7 @@ round-trip, evidence, scope, and generated-region checks under the
 The CI/verification change itself is intentionally scoped to `.github/**`,
 `scripts/**`, and `internal/verify/**`. A change outside those paths needs its owning
 agent and its own review boundary.
+
+The `agent/go-version` maintenance branch is the sole exception: it may change
+`go.mod` only when the diff contains `go` or `toolchain` directives. Dependency,
+module, `go.sum`, and other source changes remain outside that exception.

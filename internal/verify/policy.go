@@ -158,12 +158,68 @@ func CheckPathScope(paths, allowedPrefixes []string) error {
 	return nil
 }
 
+// CheckPathScopeForBranch extends the CI ownership boundary for the one
+// maintenance branch that is allowed to update the Go toolchain declaration.
+// The content of go.mod is checked separately by CheckGoModToolchainDiff.
+func CheckPathScopeForBranch(paths, allowedPrefixes []string, branch string) error {
+	if branch == "agent/go-version" {
+		allowedPrefixes = append(append([]string(nil), allowedPrefixes...), "go.mod")
+	}
+	return CheckPathScope(paths, allowedPrefixes)
+}
+
+// CheckGoModToolchainDiff accepts only added or removed go/toolchain
+// directives from a go.mod diff. This keeps the branch exception narrow: a
+// dependency or module change still fails even when it is on agent/go-version.
+func CheckGoModToolchainDiff(diff string) error {
+	violations := make([]string, 0)
+	for _, line := range strings.Split(diff, "\n") {
+		if !strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "-") {
+			continue
+		}
+		if strings.HasPrefix(line, "+++") || strings.HasPrefix(line, "---") {
+			continue
+		}
+		content := strings.TrimSpace(line[1:])
+		if !isToolchainDirective(content) {
+			violations = append(violations, content)
+		}
+	}
+	if len(violations) > 0 {
+		return fmt.Errorf("go.mod changes outside Go toolchain directives: %s", strings.Join(violations, "; "))
+	}
+	return nil
+}
+
+func isToolchainDirective(line string) bool {
+	fields := strings.Fields(line)
+	if len(fields) != 2 {
+		return false
+	}
+	if fields[0] == "go" {
+		return validGoVersion(fields[1])
+	}
+	return fields[0] == "toolchain" && strings.HasPrefix(fields[1], "go") && validGoVersion(strings.TrimPrefix(fields[1], "go"))
+}
+
+func validGoVersion(value string) bool {
+	if !strings.HasPrefix(value, "1.") || len(value) < 3 {
+		return false
+	}
+	for _, character := range value[2:] {
+		if character != '.' && character != '-' && (character < '0' || character > '9') {
+			return false
+		}
+	}
+	return true
+}
+
 func normalizePrefixes(prefixes []string) []string {
 	result := make([]string, 0, len(prefixes))
 	for _, prefix := range prefixes {
 		prefix = strings.Trim(strings.ReplaceAll(prefix, "\\", "/"), "/")
 		if prefix != "" {
-			result = append(result, prefix+"/")
+			result = append(result, prefix)
 		}
 	}
 	return sortedUnique(result)
@@ -171,7 +227,7 @@ func normalizePrefixes(prefixes []string) []string {
 
 func isAllowed(path string, prefixes []string) bool {
 	for _, prefix := range prefixes {
-		if strings.HasPrefix(path, prefix) {
+		if path == prefix || strings.HasPrefix(path, prefix+"/") {
 			return true
 		}
 	}
