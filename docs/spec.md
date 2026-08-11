@@ -40,7 +40,9 @@ The bootstrap sequence is deliberately conservative:
 At no stage does parsing a declaration promote it to policy. Stable IDs and
 `.gooo` intent remain authoritative; semantic IR is the comparison form; generated
 Go is derived; and verifier results remain candidate evidence until the CI
-promotion gates in [the governance contract](governance.md) pass.
+promotion gates in [the governance contract](governance.md) pass. The paired
+host/evidence contract is documented in [bootstrap-evidence.md](bootstrap-evidence.md)
+and exercised by the non-promoting fixtures under `examples/bootstrap/`.
 
 ## Identity and namespaces
 
