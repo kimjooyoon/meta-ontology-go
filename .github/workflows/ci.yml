@@ -247,6 +247,20 @@ jobs:
         with:
           name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-evidence-input
+      - name: Collect terminal canonical jobs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
+            const names = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
+            const head = context.payload.pull_request?.head.sha || context.sha;
+            const jobs = response.data.jobs.filter(job => names.includes(job.name));
+            if (jobs.length !== names.length || jobs.some(job => job.status !== 'completed' || job.conclusion !== 'success' || job.head_sha !== head)) {
+              throw new Error('canonical jobs are not terminal, successful, unique, and bound to the immutable head');
+            }
+            fs.writeFileSync('ci-final-jobs.json', JSON.stringify(response.data.jobs));
       - name: Reproduce proof fixture
         run: |
           rm -rf ci-generated-proof
@@ -300,7 +314,7 @@ jobs:
         run: |
           go run ./scripts/ci-proof \
             --root . --governance .github/ci-governance.json --evidence ci-evidence-input/ci-evidence.json \
-            --jobs ci-evidence-input/ci-jobs.json --context ci-proof-context.json --generated ci-generated-proof \
+            --jobs ci-final-jobs.json --context ci-proof-context.json --generated ci-generated-proof \
             --output ci-proof.json --receipt provenance-receipt.jsonl
       - name: Verify promotion proof fail closed
         run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass

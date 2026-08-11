@@ -62,7 +62,7 @@ func statusFor(decision string) string {
 }
 
 func makeReceipt(bundle proofBundle, context contextInput) provenanceReceipt {
-	return provenanceReceipt{Schema: receiptSchema, Operation: "verify", Relation: "conformance", Delta: "ci-policy", AllowedIntent: "verification-only", Locality: "repository", Event: bundle.Event, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, Ref: bundle.Ref, PRNumber: bundle.PRNumber, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Jobs: bundle.Jobs, Digests: receiptDigests{Source: bundle.Digests.Source, IR: bundle.Digests.Semantic, Projection: bundle.Digests.Projection, Build: bundle.Digests.Build, Policy: bundle.Digests.Policy, Schema: bundle.Digests.Schema, Toolchain: bundle.Digests.Toolchain, Target: bundle.Digests.Target, Bundle: bundle.Digests.Bundle}, Cache: cacheReceipt{Key: bundle.Cache.Key, Outcome: bundle.Cache.Outcome}, DiagnosticIDs: context.DiagnosticIDs, RepairIDs: context.RepairIDs, WriteEffect: bundle.WriteEffect, Producer: "go-ci-proof", Role: "Gate", Predecessors: context.Predecessors, Decision: bundle.Decision}
+	return provenanceReceipt{Schema: receiptSchema, Operation: "verify", Relation: "conformance", Delta: "ci-policy", AllowedIntent: "verification-only", Locality: "repository", Event: bundle.Event, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, Ref: bundle.Ref, PRNumber: bundle.PRNumber, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Jobs: bundle.Jobs, Artifacts: bundle.Artifacts, Digests: receiptDigests{Source: bundle.Digests.Source, IR: bundle.Digests.Semantic, Projection: bundle.Digests.Projection, Build: bundle.Digests.Build, Policy: bundle.Digests.Policy, Schema: bundle.Digests.Schema, Toolchain: bundle.Digests.Toolchain, Target: bundle.Digests.Target, Bundle: bundle.Digests.Bundle}, Cache: cacheReceipt{Key: bundle.Cache.Key, Outcome: bundle.Cache.Outcome}, DiagnosticIDs: context.DiagnosticIDs, RepairIDs: context.RepairIDs, WriteEffect: bundle.WriteEffect, Producer: "go-ci-proof", Role: "Gate", Predecessors: context.Predecessors, Decision: bundle.Decision}
 }
 
 func marshalProof(bundle proofBundle) ([]byte, error) {
@@ -125,8 +125,14 @@ func verifyReceipt(filename string, bundle proofBundle) error {
 	if err := json.Unmarshal([]byte(lines[len(lines)-1]), &receipt); err != nil {
 		return err
 	}
-	if receipt.Schema != receiptSchema || receipt.Operation != "verify" || receipt.Relation != "conformance" || receipt.AllowedIntent != "verification-only" || receipt.HeadSHA != bundle.HeadSHA || receipt.RunID != bundle.RunID || receipt.Decision != bundle.Decision || len(receipt.Jobs) != len(proofJobs) || receipt.WriteEffect != "none" || receipt.Cache.Key != bundle.Cache.Key || receipt.Cache.Outcome != bundle.Cache.Outcome {
+	if receipt.Schema != receiptSchema || receipt.Operation != "verify" || receipt.Relation != "conformance" || receipt.AllowedIntent != "verification-only" || receipt.HeadSHA != bundle.HeadSHA || receipt.RunID != bundle.RunID || receipt.Decision != bundle.Decision || len(receipt.Jobs) != len(proofJobs) || len(receipt.Artifacts) != len(bundle.Artifacts) || receipt.WriteEffect != "none" || receipt.Cache.Key != bundle.Cache.Key || receipt.Cache.Outcome != bundle.Cache.Outcome {
 		return fmt.Errorf("provenance receipt does not match proof bundle")
+	}
+	for index, artifact := range bundle.Artifacts {
+		recorded := receipt.Artifacts[index]
+		if recorded.ID != artifact.ID || recorded.Name != artifact.Name || recorded.Size != artifact.Size || recorded.Expired != artifact.Expired {
+			return fmt.Errorf("provenance receipt artifact inventory mismatch")
+		}
 	}
 	return nil
 }

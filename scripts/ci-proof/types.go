@@ -186,31 +186,32 @@ type proofDigests struct {
 }
 
 type provenanceReceipt struct {
-	Schema        string         `json:"schema"`
-	Operation     string         `json:"operation"`
-	Relation      string         `json:"relation"`
-	Delta         string         `json:"delta"`
-	AllowedIntent string         `json:"allowed_intent"`
-	Locality      string         `json:"locality"`
-	Event         string         `json:"event"`
-	BaseRef       string         `json:"base_ref"`
-	BaseSHA       string         `json:"base_sha"`
-	HeadSHA       string         `json:"head_sha"`
-	Ref           string         `json:"ref"`
-	PRNumber      int64          `json:"pr_number"`
-	RunID         int64          `json:"run_id"`
-	RunAttempt    int64          `json:"run_attempt"`
-	WorkflowSHA   string         `json:"workflow_sha"`
-	Jobs          []jobInput     `json:"jobs"`
-	Digests       receiptDigests `json:"digests"`
-	Cache         cacheReceipt   `json:"cache"`
-	DiagnosticIDs []string       `json:"diagnostic_ids"`
-	RepairIDs     []string       `json:"repair_ids"`
-	WriteEffect   string         `json:"write_effect"`
-	Producer      string         `json:"producer"`
-	Role          string         `json:"role"`
-	Predecessors  []string       `json:"predecessors"`
-	Decision      string         `json:"decision"`
+	Schema        string          `json:"schema"`
+	Operation     string          `json:"operation"`
+	Relation      string          `json:"relation"`
+	Delta         string          `json:"delta"`
+	AllowedIntent string          `json:"allowed_intent"`
+	Locality      string          `json:"locality"`
+	Event         string          `json:"event"`
+	BaseRef       string          `json:"base_ref"`
+	BaseSHA       string          `json:"base_sha"`
+	HeadSHA       string          `json:"head_sha"`
+	Ref           string          `json:"ref"`
+	PRNumber      int64           `json:"pr_number"`
+	RunID         int64           `json:"run_id"`
+	RunAttempt    int64           `json:"run_attempt"`
+	WorkflowSHA   string          `json:"workflow_sha"`
+	Jobs          []jobInput      `json:"jobs"`
+	Artifacts     []artifactInput `json:"artifacts"`
+	Digests       receiptDigests  `json:"digests"`
+	Cache         cacheReceipt    `json:"cache"`
+	DiagnosticIDs []string        `json:"diagnostic_ids"`
+	RepairIDs     []string        `json:"repair_ids"`
+	WriteEffect   string          `json:"write_effect"`
+	Producer      string          `json:"producer"`
+	Role          string          `json:"role"`
+	Predecessors  []string        `json:"predecessors"`
+	Decision      string          `json:"decision"`
 }
 
 type receiptDigests struct {
