@@ -1,0 +1,4 @@
+version	semanticdelta/v1
+scope	prefix	billing://
+delta	remove-node	Entity	fraud://entity/archive
+delta	remove-fact	prov:used	billing://activity/pay-order	fraud://entity/archive
