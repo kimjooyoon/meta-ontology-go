@@ -17,15 +17,32 @@ func (graph Graph) Traverse(start ID, options TraversalOptions) (TraversalResult
 	if err != nil {
 		return TraversalResult{}, err
 	}
-	deterministic := graph.traversePaths(canonicalStart, normalized, false)
-	all := graph.traversePaths(canonicalStart, normalized, true)
-	candidates := make([]Path, 0, len(all))
-	for _, path := range all {
+	if err := graph.requireEndpoint(canonicalStart); err != nil {
+		return TraversalResult{}, err
+	}
+	deterministic, candidates := graph.selectedPaths(canonicalStart, normalized)
+	return TraversalResult{Deterministic: deterministic, Candidates: candidates, Metadata: graph.Metadata()}, nil
+}
+
+func (graph Graph) selectedPaths(start ID, options TraversalOptions) ([]Path, []Path) {
+	deterministic := make([]Path, 0)
+	candidates := make([]Path, 0)
+	if options.Selection != SelectCandidate {
+		deterministic = graph.traversePaths(start, options, SelectDeterministic)
+	}
+	if options.Selection == SelectDeterministic {
+		return deterministic, candidates
+	}
+	selection := SelectAll
+	if options.Selection == SelectCandidate {
+		selection = SelectCandidate
+	}
+	for _, path := range graph.traversePaths(start, options, selection) {
 		if path.Status == FactCandidate {
 			candidates = append(candidates, path)
 		}
 	}
-	return TraversalResult{Deterministic: deterministic, Candidates: candidates}, nil
+	return deterministic, candidates
 }
 
 func (options TraversalOptions) normalized() (TraversalOptions, error) {
@@ -45,6 +62,11 @@ func (options TraversalOptions) normalized() (TraversalOptions, error) {
 		}
 		options.Predicate = predicate
 	}
+	selection, err := options.Selection.normalized()
+	if err != nil {
+		return TraversalOptions{}, err
+	}
+	options.Selection = selection
 	return options, nil
 }
 
@@ -52,13 +74,13 @@ func invalidTraversal(detail string) error {
 	return fmt.Errorf("%w: %s", ErrInvalidTraversal, detail)
 }
 
-func (graph Graph) traversePaths(start ID, options TraversalOptions, includeCandidates bool) []Path {
+func (graph Graph) traversePaths(start ID, options TraversalOptions, selection FactSelection) []Path {
 	frontier := []Path{{IDs: []ID{start}, Status: FactDeterministic}}
 	paths := make([]Path, 0)
 	for depth := 1; depth <= options.MaxDepth && len(frontier) > 0; depth++ {
 		next := make([]Path, 0)
 		for _, path := range frontier {
-			for _, fact := range graph.edges(path.Last(), options, includeCandidates) {
+			for _, fact := range graph.edges(path.Last(), options, selection) {
 				nextID := nextNode(path.Last(), fact, options.Direction)
 				if containsID(path.IDs, nextID) {
 					continue
@@ -77,13 +99,13 @@ func (graph Graph) traversePaths(start ID, options TraversalOptions, includeCand
 	return paths
 }
 
-func (graph Graph) edges(at ID, options TraversalOptions, includeCandidates bool) []Fact {
-	facts := graph.DeterministicFacts()
-	if includeCandidates {
-		facts = append(facts, graph.CandidateFacts()...)
-	}
+func (graph Graph) edges(at ID, options TraversalOptions, selection FactSelection) []Fact {
+	facts := graph.AllFacts()
 	matches := make([]Fact, 0)
 	for _, fact := range facts {
+		if !selection.includes(fact.Status) {
+			continue
+		}
 		if options.Predicate != "" && fact.Predicate != options.Predicate {
 			continue
 		}

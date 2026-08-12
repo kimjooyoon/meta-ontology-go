@@ -214,6 +214,7 @@ func (query ExactQuery) normalized() (ExactQuery, error) {
 type MatchResult struct {
 	Deterministic []Fact
 	Candidates    []Fact
+	Metadata      ProjectionMetadata
 }
 
 func (result MatchResult) Empty() bool {
@@ -237,11 +238,13 @@ const (
 )
 
 // TraversalOptions bounds a traversal. An empty Predicate follows every PROV
-// relation; zero Direction defaults to Outgoing.
+// relation; zero Direction defaults to Outgoing; zero Selection includes both
+// fact layers.
 type TraversalOptions struct {
 	Predicate Relation
 	Direction Direction
 	MaxDepth  int
+	Selection FactSelection
 }
 
 // Path is a simple path beginning at the requested start ID. IDs are ordered
@@ -266,6 +269,7 @@ func (path Path) Last() ID {
 type TraversalResult struct {
 	Deterministic []Path
 	Candidates    []Path
+	Metadata      ProjectionMetadata
 }
 
 func (result TraversalResult) All() []Path {

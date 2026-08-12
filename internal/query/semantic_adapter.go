@@ -35,6 +35,11 @@ func FromSemanticIR(ir semantic.IR) (*Graph, error) {
 		evidenceStatus:   evidenceStatus,
 		provenanceStatus: provenanceStatus,
 	}
+	for _, node := range normalized.Graph.Nodes() {
+		if err := graph.AddNode(Node{ID: ID(node.ID.String()), Kind: nodeKind(node.Kind)}); err != nil {
+			return nil, fmt.Errorf("project semantic node: %w", err)
+		}
+	}
 	for _, fact := range normalized.Graph.AllFacts() {
 		projected, err := projectSemanticFact(fact)
 		if err != nil {
@@ -45,6 +50,19 @@ func FromSemanticIR(ir semantic.IR) (*Graph, error) {
 		}
 	}
 	return graph, nil
+}
+
+func nodeKind(kind semantic.Kind) NodeKind {
+	switch kind {
+	case semantic.Entity:
+		return EntityNodeKind
+	case semantic.Activity:
+		return ActivityNodeKind
+	case semantic.Agent:
+		return AgentNodeKind
+	default:
+		return UnknownNodeKind
+	}
 }
 
 func projectSemanticFact(fact semantic.Fact) (Fact, error) {

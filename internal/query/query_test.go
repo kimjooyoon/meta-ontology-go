@@ -1,6 +1,7 @@
 package query
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -39,6 +40,12 @@ func TestExactMatchIsStrictAboutTripleIdentity(t *testing.T) {
 	wrongNamespace := NewExactQuery(id("settlement://activity/pay"), Used, id("billing://entity/order"))
 	for _, query := range []ExactQuery{wrongRelation, wrongNamespace} {
 		result, err := graph.ExactMatch(query)
+		if query.Subject == ID("settlement://activity/pay") {
+			if !errors.Is(err, ErrUnknownEndpoint) {
+				t.Fatalf("unknown endpoint error = %v", err)
+			}
+			continue
+		}
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -126,7 +133,7 @@ func TestInvalidInputsAreRejected(t *testing.T) {
 	if _, err := graph.ExactMatch(NewExactQuery(id("billing://activity/pay"), Relation("gooo:maybe"), id("billing://entity/order"))); err == nil {
 		t.Fatal("unknown relation was accepted")
 	}
-	if _, err := graph.Traverse(id("billing://activity/pay"), TraversalOptions{}); err == nil {
+	if _, err := graph.Traverse(id("billing://activity/pay"), TraversalOptions{}); !errors.Is(err, ErrInvalidTraversal) {
 		t.Fatal("unbounded traversal was accepted")
 	}
 }
@@ -183,6 +190,12 @@ func TestFromSemanticIRKeepsCandidatesOutOfAuthoritativeQueries(t *testing.T) {
 	}
 	if projected.StableHash() == "" || projected.Canonical() == "" {
 		t.Fatal("query projection did not expose a stable read fingerprint")
+	}
+	if result.Metadata.SemanticDigest != ir.StableHash() || result.Metadata.ProjectionStatus != "derived" {
+		t.Fatalf("query result lost projection metadata: %#v", result.Metadata)
+	}
+	if node, ok := projected.Node(ID(activity.ID.String())); !ok || node.Kind != ActivityNodeKind {
+		t.Fatalf("activity node type was not projected: %#v %t", node, ok)
 	}
 }
 
