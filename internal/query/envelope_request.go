@@ -13,7 +13,8 @@ func (request Request) Normalize() (Request, error) {
 	if request.Schema != QueryEnvelopeSchema {
 		return Request{}, envelopeError(ErrInvalidEnvelope, "invalid_schema", "schema must be gooo-query/v1")
 	}
-	if request.Operation != OperationExact && request.Operation != OperationTraversal {
+	if request.Operation != OperationExact && request.Operation != OperationTraversal &&
+		request.Operation != OperationDerived {
 		return Request{}, envelopeError(ErrUnsupportedOperation, "unsupported_operation", string(request.Operation))
 	}
 	root, err := ParseID(request.Root.String())
@@ -39,10 +40,16 @@ func (request Request) Normalize() (Request, error) {
 	if request.Operation == OperationExact {
 		return normalizeExact(request)
 	}
+	if request.Operation == OperationDerived {
+		return normalizeDerived(request)
+	}
 	return normalizeTraversal(request)
 }
 
 func normalizeExact(request Request) (Request, error) {
+	if request.Rule != "" {
+		return Request{}, envelopeError(ErrInvalidEnvelope, "unexpected_rule", "exact queries do not accept derived rules")
+	}
 	if request.Target == "" {
 		return Request{}, envelopeError(ErrInvalidEnvelope, "missing_target", "exact query requires target")
 	}
@@ -66,6 +73,9 @@ func normalizeExact(request Request) (Request, error) {
 }
 
 func normalizeTraversal(request Request) (Request, error) {
+	if request.Rule != "" {
+		return Request{}, envelopeError(ErrInvalidEnvelope, "unexpected_rule", "traversal does not accept derived rules")
+	}
 	if request.Target != "" {
 		return Request{}, envelopeError(ErrInvalidEnvelope, "unexpected_target", "traversal has no target")
 	}
@@ -86,6 +96,38 @@ func normalizeTraversal(request Request) (Request, error) {
 		request.Relation = relation
 	}
 	request.Direction = direction
+	return request, nil
+}
+
+func normalizeDerived(request Request) (Request, error) {
+	if request.Target != "" {
+		return Request{}, envelopeError(ErrInvalidDerivedQuery, "unexpected_target", "derived queries have no target")
+	}
+	if request.Relation != "" {
+		return Request{}, envelopeError(
+			ErrInvalidDerivedQuery, "derived_relation_rejected", "derived rules use registered rule IDs",
+		)
+	}
+	if request.Direction != "" && request.Direction != "outgoing" {
+		return Request{}, envelopeError(
+			ErrInvalidDerivedQuery, "reversed_direction", "derived rules have a fixed outgoing result direction",
+		)
+	}
+	rule, err := ParseDerivedRule(request.Rule)
+	if err != nil {
+		return Request{}, envelopeError(ErrUnsupportedDerivedRule, "unsupported_rule", err.Error())
+	}
+	_, selection, err := normalizeLayer(request.Layer)
+	if err != nil {
+		return Request{}, err
+	}
+	if _, _, err := normalizeDerivedOptions(DerivedOptions{
+		Rule: rule, MaxDepth: request.MaxDepth, Limit: request.Limit, Selection: selection,
+	}); err != nil {
+		return Request{}, envelopeError(ErrInvalidDerivedQuery, "invalid_rule_options", err.Error())
+	}
+	request.Rule = rule
+	request.Direction = "outgoing"
 	return request, nil
 }
 
@@ -152,6 +194,12 @@ func errorCode(err error) string {
 	}
 	if errors.Is(err, ErrInvalidQuery) {
 		return "invalid_query"
+	}
+	if errors.Is(err, ErrUnsupportedDerivedRule) {
+		return "unsupported_rule"
+	}
+	if errors.Is(err, ErrInvalidDerivedQuery) {
+		return "invalid_derived_query"
 	}
 	return "query_rejected"
 }

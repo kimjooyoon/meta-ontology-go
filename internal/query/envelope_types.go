@@ -26,6 +26,7 @@ type Operation string
 const (
 	OperationExact     Operation = "exact"
 	OperationTraversal Operation = "traverse"
+	OperationDerived   Operation = "derived"
 )
 
 // Layer is the explicit fact universe selected by an envelope.
@@ -38,26 +39,30 @@ const (
 )
 
 // Request is a versioned, read-only query envelope. Target is required for an
-// exact query and forbidden for traversal. Empty Relation means all supported
-// relations for traversal only.
+// exact query and forbidden for traversal or derived rules. Empty Relation
+// means all supported relations for traversal only; Rule is required by the
+// derived operation and forbidden by exact/traversal operations.
 type Request struct {
-	Schema    string    `json:"schema"`
-	Operation Operation `json:"operation"`
-	Root      ID        `json:"root"`
-	Target    ID        `json:"target,omitempty"`
-	Relation  Relation  `json:"relation,omitempty"`
-	Layer     Layer     `json:"layer"`
-	Direction string    `json:"direction,omitempty"`
-	MaxDepth  int       `json:"max_depth"`
-	Limit     int       `json:"limit"`
+	Schema    string        `json:"schema"`
+	Operation Operation     `json:"operation"`
+	Root      ID            `json:"root"`
+	Target    ID            `json:"target,omitempty"`
+	Relation  Relation      `json:"relation,omitempty"`
+	Rule      DerivedRuleID `json:"rule,omitempty"`
+	Layer     Layer         `json:"layer"`
+	Direction string        `json:"direction,omitempty"`
+	MaxDepth  int           `json:"max_depth"`
+	Limit     int           `json:"limit"`
 }
 
 // QueryResult keeps fact layers and traversal paths separate in a response.
 type QueryResult struct {
-	DeterministicMatches []Fact `json:"deterministic_matches,omitempty"`
-	CandidateMatches     []Fact `json:"candidate_matches,omitempty"`
-	DeterministicPaths   []Path `json:"deterministic_paths,omitempty"`
-	CandidatePaths       []Path `json:"candidate_paths,omitempty"`
+	DeterministicMatches []Fact        `json:"deterministic_matches,omitempty"`
+	CandidateMatches     []Fact        `json:"candidate_matches,omitempty"`
+	DeterministicPaths   []Path        `json:"deterministic_paths,omitempty"`
+	CandidatePaths       []Path        `json:"candidate_paths,omitempty"`
+	DerivedDeterministic []DerivedFact `json:"derived_deterministic,omitempty"`
+	DerivedCandidates    []DerivedFact `json:"derived_candidates,omitempty"`
 }
 
 // EnvelopeError is a stable machine-readable rejection. Message is diagnostic
@@ -85,15 +90,17 @@ func (queryError *EnvelopeError) Unwrap() error {
 // EnvelopeMetadata exposes projection and authority state without promoting a
 // query graph or fabricating missing source/provenance evidence.
 type EnvelopeMetadata struct {
-	SchemaVersion    string           `json:"schema_version"`
-	GraphHash        string           `json:"graph_hash"`
-	SemanticDigest   string           `json:"semantic_digest,omitempty"`
-	ProjectionStatus string           `json:"projection_status"`
-	SourceStatus     string           `json:"source_status"`
-	IRStatus         string           `json:"ir_status"`
-	EvidenceStatus   string           `json:"evidence_status"`
-	ProvenanceStatus string           `json:"provenance_status"`
-	AuthorityLabels  []AuthorityLabel `json:"authority_labels"`
+	SchemaVersion     string           `json:"schema_version"`
+	GraphHash         string           `json:"graph_hash"`
+	SemanticDigest    string           `json:"semantic_digest,omitempty"`
+	ProjectionStatus  string           `json:"projection_status"`
+	SourceStatus      string           `json:"source_status"`
+	IRStatus          string           `json:"ir_status"`
+	EvidenceStatus    string           `json:"evidence_status"`
+	ProvenanceStatus  string           `json:"provenance_status"`
+	DerivedStatus     string           `json:"derived_status"`
+	DerivedRuleSchema string           `json:"derived_rule_schema,omitempty"`
+	AuthorityLabels   []AuthorityLabel `json:"authority_labels"`
 }
 
 // Response is the versioned machine-readable result envelope. Hash is the

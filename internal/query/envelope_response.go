@@ -44,14 +44,16 @@ func envelopeMetadata(metadata ProjectionMetadata) EnvelopeMetadata {
 		}
 	}
 	return EnvelopeMetadata{
-		SchemaVersion:    metadata.SchemaVersion,
-		GraphHash:        metadata.GraphHash,
-		SemanticDigest:   metadata.SemanticDigest,
-		ProjectionStatus: metadata.ProjectionStatus,
-		SourceStatus:     metadata.SourceStatus,
-		IRStatus:         irStatus,
-		EvidenceStatus:   metadata.EvidenceStatus,
-		ProvenanceStatus: provenanceStatus,
-		AuthorityLabels:  labels,
+		SchemaVersion:     metadata.SchemaVersion,
+		GraphHash:         metadata.GraphHash,
+		SemanticDigest:    metadata.SemanticDigest,
+		ProjectionStatus:  metadata.ProjectionStatus,
+		SourceStatus:      metadata.SourceStatus,
+		IRStatus:          irStatus,
+		EvidenceStatus:    metadata.EvidenceStatus,
+		ProvenanceStatus:  provenanceStatus,
+		DerivedStatus:     metadata.DerivedStatus,
+		DerivedRuleSchema: metadata.DerivedRuleSchema,
+		AuthorityLabels:   labels,
 	}
 }

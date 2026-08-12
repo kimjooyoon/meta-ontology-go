@@ -17,15 +17,17 @@ type AuthorityLabel struct {
 // producer. Evidence is bound separately; provenance remains unknown until a
 // distinct provenance binding is supplied.
 type ProjectionMetadata struct {
-	SchemaVersion    string
-	GraphHash        string
-	SemanticDigest   string
-	SourceDigest     string
-	EvidenceDigest   string
-	ProvenanceDigest string
-	SourceStatus     string
-	EvidenceStatus   string
-	ProvenanceStatus string
-	ProjectionStatus string
-	AuthorityLabels  []AuthorityLabel
+	SchemaVersion     string
+	GraphHash         string
+	SemanticDigest    string
+	SourceDigest      string
+	EvidenceDigest    string
+	ProvenanceDigest  string
+	SourceStatus      string
+	EvidenceStatus    string
+	ProvenanceStatus  string
+	ProjectionStatus  string
+	DerivedStatus     string
+	DerivedRuleSchema string
+	AuthorityLabels   []AuthorityLabel
 }

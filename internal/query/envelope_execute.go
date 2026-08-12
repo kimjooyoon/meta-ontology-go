@@ -21,6 +21,8 @@ func (graph Graph) Execute(request Request) (Response, error) {
 	}
 	if normalized.Operation == OperationExact {
 		response, err = graph.executeExact(response)
+	} else if normalized.Operation == OperationDerived {
+		response, err = graph.executeDerived(response)
 	} else {
 		response, err = graph.executeTraversal(response)
 	}
@@ -30,6 +32,25 @@ func (graph Graph) Execute(request Request) (Response, error) {
 	if err := response.seal(); err != nil {
 		return Response{}, err
 	}
+	return response, nil
+}
+
+func (graph Graph) executeDerived(response Response) (Response, error) {
+	_, selection, err := normalizeLayer(response.Request.Layer)
+	if err != nil {
+		return response, err
+	}
+	result, err := graph.Derive(response.Request.Root, DerivedOptions{
+		Rule: response.Request.Rule, MaxDepth: response.Request.MaxDepth,
+		Limit: response.Request.Limit, Selection: selection,
+	})
+	if err != nil {
+		return response, err
+	}
+	response.Metadata = envelopeMetadata(result.Metadata)
+	response.Result.DerivedDeterministic, response.Result.DerivedCandidates = limitDerived(
+		result.Deterministic, result.Candidates, response.Request.Limit,
+	)
 	return response, nil
 }
 
@@ -104,6 +125,17 @@ func limitPaths(deterministic, candidates []Path, limit int) ([]Path, []Path) {
 		candidates = candidates[:remaining]
 	}
 	return append([]Path(nil), deterministic...), append([]Path(nil), candidates...)
+}
+
+func limitDerived(deterministic, candidates []DerivedFact, limit int) ([]DerivedFact, []DerivedFact) {
+	if len(deterministic) > limit {
+		return append([]DerivedFact(nil), deterministic[:limit]...), nil
+	}
+	remaining := limit - len(deterministic)
+	if len(candidates) > remaining {
+		candidates = candidates[:remaining]
+	}
+	return append([]DerivedFact(nil), deterministic...), append([]DerivedFact(nil), candidates...)
 }
 
 func (graph Graph) rejectedResponse(request Request, err error) (Response, error) {

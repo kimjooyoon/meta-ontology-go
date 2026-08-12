@@ -178,6 +178,7 @@ func (graph Graph) Metadata() ProjectionMetadata {
 		EvidenceStatus:   "unknown",
 		ProvenanceStatus: "unknown",
 		ProjectionStatus: "unbound",
+		DerivedStatus:    DerivedStatusNotRequested,
 		AuthorityLabels: []AuthorityLabel{
 			{View: ".gooo", Authority: "authoritative", Status: "unavailable"},
 			{View: "semantic_ir", Authority: "authoritative", Status: "unavailable"},
@@ -185,6 +186,7 @@ func (graph Graph) Metadata() ProjectionMetadata {
 			{View: "generated_go", Authority: "derived", Status: "unavailable"},
 			{View: "provenance", Authority: "authoritative", Status: "unknown"},
 			{View: "query_graph", Authority: "derived", Status: "unbound"},
+			{View: "derived_query", Authority: "derived", Status: DerivedStatusNotRequested},
 		},
 	}
 	if graph.binding == nil {
