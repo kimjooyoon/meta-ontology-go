@@ -116,6 +116,10 @@ func adaptFacts(result *SemanticAdapterResult, input SemanticAdapterInput) error
 			result.DeferredFacts = append(result.DeferredFacts, fact)
 			continue
 		}
+		if !mapping.allowsOrigin(fact.Origin) {
+			result.DeferredFacts = append(result.DeferredFacts, fact)
+			continue
+		}
 		mapped, err := mapFact(result.IR.Graph, fact.Subject, fact.Object, mapping, fact.Span)
 		if err != nil {
 			return err

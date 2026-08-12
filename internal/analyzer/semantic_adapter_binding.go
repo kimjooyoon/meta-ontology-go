@@ -32,6 +32,11 @@ func (p MappingPolicy) Canonical() string {
 		writeBindingField(&b, mapping.SourceSubjectKind.String())
 		writeBindingField(&b, mapping.SourceObjectKind.String())
 		writeBindingField(&b, strconv.FormatBool(mapping.Reverse))
+		origins := append([]ObservationOrigin(nil), mapping.AllowedOrigins...)
+		sort.Slice(origins, func(i, j int) bool { return origins[i] < origins[j] })
+		for _, origin := range origins {
+			writeBindingField(&b, string(origin))
+		}
 	}
 	return b.String()
 }

@@ -34,17 +34,17 @@ func newFactCollector(resolver *resolver, delta *SemanticDelta, subject Identity
 func (c *factCollector) collectSignature(function *ast.FuncDecl) {
 	if function.Recv != nil {
 		for _, field := range function.Recv.List {
-			c.collectTypeRefs(field.Type, RelationUses, false)
+			c.collectTypeRefs(field.Type, RelationUses, false, OriginSignature)
 		}
 	}
 	if function.Type.Params != nil {
 		for _, field := range function.Type.Params.List {
-			c.collectTypeRefs(field.Type, RelationUses, false)
+			c.collectTypeRefs(field.Type, RelationUses, false, OriginSignature)
 		}
 	}
 	if function.Type.Results != nil {
 		for _, field := range function.Type.Results.List {
-			c.collectTypeRefs(field.Type, RelationGenerates, false)
+			c.collectTypeRefs(field.Type, RelationGenerates, false, OriginSignature)
 		}
 	}
 }
@@ -70,29 +70,31 @@ func (c *factCollector) handle(node ast.Node, parent ast.Node) {
 	case *ast.CallExpr:
 		c.callTargets[current.Fun] = true
 		result := c.resolve(current.Fun)
-		c.recordResolution(result, relationForCall(result.entries), current.Fun, "call target")
+		c.recordResolution(result, relationForCall(result.entries), current.Fun, "call target", OriginImplementation)
 	case *ast.Field:
-		c.collectTypeRefs(current.Type, RelationUses, true)
+		c.collectTypeRefs(current.Type, RelationUses, true, OriginImplementation)
 	case *ast.CompositeLit:
-		c.collectTypeRefs(current.Type, RelationUses, true)
+		c.collectTypeRefs(current.Type, RelationUses, true, OriginImplementation)
 	case *ast.TypeAssertExpr:
-		c.collectTypeRefs(current.Type, RelationUses, true)
+		c.collectTypeRefs(current.Type, RelationUses, true, OriginImplementation)
 	case *ast.SelectorExpr:
 		if c.typeNodes[current] || c.callTargets[current] {
 			return
 		}
 		result := c.resolve(current)
-		c.recordResolution(result, relationForReference(result.entries), current, "symbol reference")
+		c.recordResolution(result, relationForReference(result.entries), current, "symbol reference", OriginImplementation)
 	case *ast.Ident:
 		if c.typeNodes[current] || isSelectorChild(parent) || isCallTarget(parent, current) || isDeclarationName(parent, current) {
 			return
 		}
 		result := c.resolve(current)
-		c.recordResolution(result, relationForReference(result.entries), current, "symbol reference")
+		c.recordResolution(result, relationForReference(result.entries), current, "symbol reference", OriginImplementation)
 	}
 }
 
-func (c *factCollector) collectTypeRefs(expr ast.Expr, relation Relation, respectBlocks bool) {
+func (c *factCollector) collectTypeRefs(
+	expr ast.Expr, relation Relation, respectBlocks bool, origin ObservationOrigin,
+) {
 	if expr == nil {
 		return
 	}
@@ -107,7 +109,7 @@ func (c *factCollector) collectTypeRefs(expr ast.Expr, relation Relation, respec
 		}
 		result := c.resolveWithBlocks(expression, respectBlocks)
 		if result.state != unresolved {
-			c.recordResolution(result, relation, expression, "type reference")
+			c.recordResolution(result, relation, expression, "type reference", origin)
 		}
 		return true
 	})
@@ -137,7 +139,9 @@ func (c *factCollector) blocksSemanticLookup(expr ast.Expr) bool {
 	return !hasType
 }
 
-func (c *factCollector) recordResolution(result resolution, relation Relation, expression ast.Expr, reason string) {
+func (c *factCollector) recordResolution(
+	result resolution, relation Relation, expression ast.Expr, reason string, origin ObservationOrigin,
+) {
 	if result.state == unresolved {
 		if reason == "call target" {
 			c.delta.ImplementationDetails = append(c.delta.ImplementationDetails, ImplementationDetail{
@@ -160,6 +164,7 @@ func (c *factCollector) recordResolution(result resolution, relation Relation, e
 			Options:   options,
 			Span:      c.span(expression),
 			Reason:    "multiple registered semantic symbols match",
+			Origin:    origin,
 		})
 		return
 	}
@@ -171,6 +176,7 @@ func (c *factCollector) recordResolution(result resolution, relation Relation, e
 		Relation: relation,
 		Object:   result.entries[0].Identity,
 		Span:     c.span(expression),
+		Origin:   origin,
 	})
 }
 

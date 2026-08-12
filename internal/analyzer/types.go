@@ -77,6 +77,15 @@ type SourceFile struct {
 	Source      []byte
 }
 
+// ObservationOrigin distinguishes contract-shaped signature facts from
+// implementation observations in a generated Go projection.
+type ObservationOrigin string
+
+const (
+	OriginSignature      ObservationOrigin = "signature"
+	OriginImplementation ObservationOrigin = "implementation"
+)
+
 // Position is a zero-based byte offset plus one-based line and column, using
 // token.FileSet's standard Go position conventions.
 type Position struct {
@@ -98,6 +107,7 @@ type Fact struct {
 	Relation Relation
 	Object   Identity
 	Span     Span
+	Origin   ObservationOrigin
 }
 
 // Candidate is a potentially semantic relation that could not be selected
@@ -109,6 +119,7 @@ type Candidate struct {
 	Options   []Identity
 	Span      Span
 	Reason    string
+	Origin    ObservationOrigin
 }
 
 // ImplementationDetail records a source call that stayed in the Go view

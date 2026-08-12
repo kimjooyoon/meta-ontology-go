@@ -148,6 +148,8 @@ func parseAnnotations(group *ast.CommentGroup) annotation {
 		case "activity", "entity":
 			result.kind = SymbolKind(parts[0])
 			applyAnnotationParts(&result, parts[1:])
+		case "generated:start", "generated:end", "slot:start", "slot:end":
+			continue
 		default:
 			applyAnnotationParts(&result, parts)
 		}

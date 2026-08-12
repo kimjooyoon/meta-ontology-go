@@ -53,6 +53,7 @@ type RelationMapping struct {
 	SourceSubjectKind semantic.Kind
 	SourceObjectKind  semantic.Kind
 	Reverse           bool
+	AllowedOrigins    []ObservationOrigin
 }
 
 // MappingPolicy contains no default mappings. Every analyzer relation must be
@@ -123,7 +124,24 @@ func (p MappingPolicy) validateMapping(mapping RelationMapping) error {
 	if err := mapping.Predicate.ValidateKinds(subject, object); err != nil {
 		return adapterError(AdapterInvalidPolicy, mapping.Source, "", err.Error())
 	}
+	for _, origin := range mapping.AllowedOrigins {
+		if origin != OriginSignature && origin != OriginImplementation {
+			return adapterError(AdapterInvalidPolicy, mapping.Source, "", "unknown observation origin")
+		}
+	}
 	return nil
+}
+
+func (m RelationMapping) allowsOrigin(origin ObservationOrigin) bool {
+	if len(m.AllowedOrigins) == 0 {
+		return true
+	}
+	for _, allowed := range m.AllowedOrigins {
+		if allowed == origin {
+			return true
+		}
+	}
+	return false
 }
 
 func (p MappingPolicy) lookup(relation Relation) (RelationMapping, bool) {

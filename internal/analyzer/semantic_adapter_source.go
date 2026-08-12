@@ -46,6 +46,8 @@ func AnalyzeAndAdaptSemantic(input SourceSemanticAdapterInput) (SemanticAdapterR
 	if err != nil {
 		return SemanticAdapterResult{}, err
 	}
+	analysis.Registrations = append(analysis.Registrations, input.Registry.all()...)
+	sortRegistrations(analysis.Registrations)
 	return AdaptSemantic(SemanticAdapterInput{
 		Base: input.Base, Analysis: analysis, Policy: input.Policy,
 		Producer: input.Producer, EvidenceKind: input.EvidenceKind,
