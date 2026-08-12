@@ -13,9 +13,9 @@ type AuthorityLabel struct {
 
 // ProjectionMetadata binds a query view to the semantic IR snapshot it was
 // derived from. The empty SourceDigest is intentional: this package cannot
-// invent a source digest that was not supplied by the IR producer. Evidence
-// and provenance digests come from the validated IR; their status distinguishes
-// an available set from a known-empty set.
+// invent a source digest or provenance receipt that was not supplied by the IR
+// producer. Evidence is bound separately; provenance remains unknown until a
+// distinct provenance binding is supplied.
 type ProjectionMetadata struct {
 	SchemaVersion    string
 	GraphHash        string

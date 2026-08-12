@@ -6,7 +6,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
-func TestProjectionMetadataBindsAuthorityAndKnownEmptyEvidence(t *testing.T) {
+func TestProjectionMetadataDoesNotInferProvenance(t *testing.T) {
 	ir := semantic.NewIR("billing", "billing")
 	activity, err := semantic.NewActivity("billing://activity/pay", "billing", "PayOrder")
 	if err != nil {
@@ -36,11 +36,11 @@ func TestProjectionMetadataBindsAuthorityAndKnownEmptyEvidence(t *testing.T) {
 	if metadata.SourceDigest != "" || metadata.SourceStatus != "unavailable" {
 		t.Fatalf("source was fabricated: %#v", metadata)
 	}
-	if metadata.EvidenceStatus != "known_empty" || metadata.ProvenanceStatus != "known_empty" {
+	if metadata.EvidenceStatus != "known_empty" || metadata.ProvenanceStatus != "unknown" {
 		t.Fatalf("empty evidence was not typed explicitly: %#v", metadata)
 	}
-	if metadata.EvidenceDigest == "" || metadata.ProvenanceDigest == "" {
-		t.Fatalf("validated IR digests missing: %#v", metadata)
+	if metadata.EvidenceDigest == "" || metadata.ProvenanceDigest != "" {
+		t.Fatalf("provenance was inferred from empty evidence: %#v", metadata)
 	}
 	labels := make(map[string]AuthorityLabel, len(metadata.AuthorityLabels))
 	for _, label := range metadata.AuthorityLabels {

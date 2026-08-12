@@ -23,17 +23,15 @@ func FromSemanticIR(ir semantic.IR) (*Graph, error) {
 	if len(normalized.Evidence()) > 0 {
 		evidenceStatus = "available"
 	}
-	provenanceStatus := "known_empty"
-	if len(normalized.Evidence()) > 0 {
-		provenanceStatus = "available"
-	}
 	graph.binding = &projectionBinding{
-		semanticDigest:   normalized.StableHash(),
-		sourceStatus:     "unavailable",
-		evidenceDigest:   normalized.EvidenceHash(),
-		provenanceDigest: normalized.ProvenanceHash(),
-		evidenceStatus:   evidenceStatus,
-		provenanceStatus: provenanceStatus,
+		semanticDigest: normalized.StableHash(),
+		sourceStatus:   "unavailable",
+		evidenceDigest: normalized.EvidenceHash(),
+		evidenceStatus: evidenceStatus,
+		// Semantic evidence is an audit input, not a distinct provenance
+		// receipt. A separate provenance binding must be supplied before this
+		// projection can claim provenance availability.
+		provenanceStatus: "unknown",
 	}
 	for _, node := range normalized.Graph.Nodes() {
 		if err := graph.AddNode(Node{ID: ID(node.ID.String()), Kind: nodeKind(node.Kind)}); err != nil {
