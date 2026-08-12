@@ -24,21 +24,23 @@ type SemanticAdapterInput struct {
 // outside the authoritative semantic graph. Candidates are added only through
 // Graph.AddCandidate when their explicit mapping and endpoints are valid.
 type SemanticAdapterResult struct {
-	IR                 semantic.IR
-	SourceDigest       string
-	PolicyDigest       string
-	ToolchainDigest    string
-	BindingDigest      string
-	DeferredFacts      []Fact
-	DeferredCandidates []Candidate
+	IR                              semantic.IR
+	SourceDigest                    string
+	PolicyDigest                    string
+	ToolchainDigest                 string
+	BindingDigest                   string
+	ImplementationObservationDigest string
+	DeferredFacts                   []Fact
+	DeferredCandidates              []Candidate
 	// ShadowedCandidateEvidence retains a mapped candidate observation when
 	// the same FactKey is already deterministic in the base graph. The
 	// evidence is intentionally not added to IR: candidate evidence cannot
 	// stand in for authoritative evidence, and the semantic IR rejects a
 	// candidate evidence record without a candidate fact. Keeping it here
 	// preserves the historical observation without changing authority.
-	ShadowedCandidateEvidence []semantic.Evidence
-	ImplementationDetails     []ImplementationDetail
+	ShadowedCandidateEvidence  []semantic.Evidence
+	ImplementationDetails      []ImplementationDetail
+	ImplementationObservations []ImplementationObservation
 }
 
 // AdaptSemantic performs a transactional, explicit mapping. The input IR is
@@ -60,6 +62,8 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 		DeferredCandidates:    copyCandidates(input.Analysis.Delta.Candidates),
 		ImplementationDetails: copyDetails(input.Analysis.Delta.ImplementationDetails),
 	}
+	transaction.ImplementationObservations = collectImplementationObservations(input.Analysis, base, input)
+	transaction.ImplementationObservationDigest = implementationObservationDigest(transaction.ImplementationObservations)
 	if err := addRegisteredNodes(&transaction.IR, input.Analysis.Registrations); err != nil {
 		return SemanticAdapterResult{}, err
 	}
