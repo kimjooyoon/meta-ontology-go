@@ -163,7 +163,7 @@ func normalizePrefixes(prefixes []string) []string {
 	for _, prefix := range prefixes {
 		prefix = strings.Trim(strings.ReplaceAll(prefix, "\\", "/"), "/")
 		if prefix != "" {
-			result = append(result, prefix+"/")
+			result = append(result, prefix)
 		}
 	}
 	return sortedUnique(result)
@@ -171,7 +171,7 @@ func normalizePrefixes(prefixes []string) []string {
 
 func isAllowed(path string, prefixes []string) bool {
 	for _, prefix := range prefixes {
-		if strings.HasPrefix(path, prefix) {
+		if path == prefix || strings.HasPrefix(path, prefix+"/") {
 			return true
 		}
 	}
