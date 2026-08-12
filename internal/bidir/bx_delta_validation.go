@@ -34,6 +34,9 @@ func validateDeltaHashes(delta BXDeltaEvidence) error {
 	if delta.PortOrderHash != sequenceHash(delta.PortSequence) || delta.RelationOrderHash != sequenceHash(delta.RelationSequence) {
 		return errors.New("ordered port/relation hash does not match sequence")
 	}
+	if delta.OrderHash != deltaOrderHash(delta.SequenceHash, delta.PortOrderHash, delta.RelationOrderHash) {
+		return errors.New("order hash does not match sequence and ordered collections")
+	}
 	if delta.EvidenceHash != evidenceSpanSetHash(delta.EvidenceSpans) {
 		return errors.New("evidence hash does not match IDs, fact keys, and spans")
 	}

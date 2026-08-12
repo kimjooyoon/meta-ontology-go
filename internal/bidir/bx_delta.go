@@ -16,11 +16,12 @@ func makeDeltaEvidenceUnchecked(delta FactDelta, locality Locality, partial bool
 	facts := append(append(FactSet{}, delta.Added...), delta.Removed...)
 	ports, relations := orderedSequences(after)
 	portHash, relationHash := sequenceHash(ports), sequenceHash(relations)
+	sequenceHash := factSequenceHash(delta)
 	closure := LocalityBetween(base, after)
 	evidenceSet := evidenceSpans(facts)
 	evidence := BXDeltaEvidence{
-		SequenceHash:        factSequenceHash(delta),
-		OrderHash:           digest(factOrderHash(delta) + "|" + portHash + "|" + relationHash),
+		SequenceHash:        sequenceHash,
+		OrderHash:           deltaOrderHash(sequenceHash, portHash, relationHash),
 		Locality:            detachedLocality(locality),
 		Added:               factCanonicalValues(delta.Added),
 		Removed:             factCanonicalValues(delta.Removed),
@@ -41,6 +42,14 @@ func makeDeltaEvidenceUnchecked(delta FactDelta, locality Locality, partial bool
 	evidence.CanonicalJSON = deltaJSON(delta, evidence)
 	evidence.LocalityCanonicalJSON = localityJSON(locality, evidence.LocalityClosureHash)
 	return evidence
+}
+
+// deltaOrderHash binds the observed fact sequence to the source-authoritative
+// semantic collection orders. All inputs are fixed-width SHA-256 values, so
+// the delimiter is unambiguous and the hash can be recomputed from the
+// detached evidence record alone.
+func deltaOrderHash(sequenceHash, portHash, relationHash string) string {
+	return digest(sequenceHash + "|" + portHash + "|" + relationHash)
 }
 
 type canonicalDeltaEvidence struct {

@@ -184,6 +184,11 @@ func TestBXEvidenceRejectsTamperedCanonicalDeltaEvidence(t *testing.T) {
 		"port-order-hash": func(delta *BXDeltaEvidence) {
 			delta.PortOrderHash = digest("tampered port sequence")
 		},
+		"order-hash": func(delta *BXDeltaEvidence) {
+			tampered := digest("tampered order")
+			delta.CanonicalJSON = strings.Replace(delta.CanonicalJSON, `"order_hash":"`+delta.OrderHash+`"`, `"order_hash":"`+tampered+`"`, 1)
+			delta.OrderHash = tampered
+		},
 		"evidence-hash": func(delta *BXDeltaEvidence) {
 			delta.EvidenceHash = digest("tampered evidence")
 			delta.EvidenceSpans.Hash = delta.EvidenceHash

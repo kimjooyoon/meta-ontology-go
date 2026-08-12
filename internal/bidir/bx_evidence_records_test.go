@@ -68,6 +68,15 @@ func TestBXDeltaEvidencePreservesOrderAndCanonicalizesModelPermutation(t *testin
 	if left.SequenceHash == right.SequenceHash {
 		t.Fatal("fact source sequence hash ignored observation order")
 	}
+	if left.OrderHash == right.OrderHash {
+		t.Fatal("canonical order hash ignored observation order")
+	}
+	if err := validateDeltaEvidence(left); err != nil {
+		t.Fatalf("left permutation evidence failed self-consistency: %v", err)
+	}
+	if err := validateDeltaEvidence(right); err != nil {
+		t.Fatalf("right permutation evidence failed self-consistency: %v", err)
+	}
 	if left.EvidenceHash != right.EvidenceHash || !reflect.DeepEqual(left.EvidenceSpans, right.EvidenceSpans) {
 		t.Fatal("permuted duplicate evidence changed canonical evidence boundary")
 	}
