@@ -27,7 +27,8 @@ func evidenceFixture(run string) EvidenceFreshness {
 func cacheReceiptFixture(key Key, run string) CacheReceipt {
 	evidence := evidenceFixture(run)
 	return CacheReceipt{
-		SchemaVersion: cacheReceiptSchemaVersion, CacheKey: key.Digest, ArtifactKind: key.ArtifactKind,
+		SchemaVersion: cacheReceiptSchemaVersion, CacheKey: key.Digest, Domain: key.Domain,
+		KeyVersion: key.Version, HostStage: key.HostStage, ArtifactKind: key.ArtifactKind,
 		Projection:            key.Projection,
 		SemanticClosureDigest: key.SemanticClosureDigest, DependencyRoot: key.DependencyRoot,
 		DirectDependencies: []Digest{HashBytes([]byte("direct"))}, PolicySchemaDigest: key.PolicySchemaDigest,
@@ -87,6 +88,9 @@ func TestCacheReceiptBindsProjectionAndContent(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, mutate := range map[string]func(*CacheReceipt){
+		"domain":     func(r *CacheReceipt) { r.Domain = "other" },
+		"version":    func(r *CacheReceipt) { r.KeyVersion = "other" },
+		"host stage": func(r *CacheReceipt) { r.HostStage = GoooHostedStage },
 		"projection": func(r *CacheReceipt) { r.Projection = "other" },
 		"artifact":   func(r *CacheReceipt) { r.ArtifactKind = "other" },
 		"options":    func(r *CacheReceipt) { r.OptionsDigest = mustOptionsDigest(map[string]any{"mode": "other"}) },
@@ -188,6 +192,14 @@ func TestCacheReceiptC3C5RequiresImmutableEvidenceBundle(t *testing.T) {
 	unknownRef.Evidence.EvidenceRefs = nil
 	if _, err := unknownRef.Seal(); !errors.Is(err, ErrInvalidReceipt) {
 		t.Fatalf("missing evidence ref = %v, want ErrInvalidReceipt", err)
+	}
+	unboundRef := receipt
+	unboundRef.EvidenceRefs = append([]EvidenceRef(nil), receipt.EvidenceRefs...)
+	unboundRef.EvidenceRefs = append(unboundRef.EvidenceRefs,
+		EvidenceRef{Name: "unbound", Digest: HashBytes([]byte("unbound"))})
+	unboundRef.Evidence.EvidenceRefs = append([]EvidenceRef(nil), unboundRef.EvidenceRefs...)
+	if _, err := unboundRef.Seal(); !errors.Is(err, ErrInvalidReceipt) {
+		t.Fatalf("unbound evidence ref = %v, want ErrInvalidReceipt", err)
 	}
 	zeroRef := receipt
 	zeroRef.EvidenceRefs = []EvidenceRef{{Name: "source", Digest: Digest("0000000000000000000000000000000000000000000000000000000000000000")}}

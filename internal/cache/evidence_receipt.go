@@ -69,7 +69,8 @@ func (e EvidenceFreshness) Validate() error {
 		}
 	}
 	for _, ref := range e.EvidenceRefs {
-		if err := validateKeyComponent("evidence ref", ref.Name, true); err != nil || !ref.Digest.Known() {
+		if err := validateKeyComponent("evidence ref", ref.Name, true); err != nil ||
+			!knownEvidenceRef(ref.Name) || !ref.Digest.Known() {
 			return fmt.Errorf("%w: malformed evidence ref %q", ErrInvalidReceipt, ref.Name)
 		}
 	}
@@ -101,6 +102,9 @@ func (e EvidenceFreshness) Matches(current EvidenceFreshness) bool {
 type CacheReceipt struct {
 	SchemaVersion         string            `json:"schema_version"`
 	CacheKey              Digest            `json:"cache_key"`
+	Domain                string            `json:"domain"`
+	KeyVersion            string            `json:"key_version"`
+	HostStage             HostStage         `json:"host_stage"`
 	ArtifactKind          string            `json:"artifact_kind"`
 	Projection            string            `json:"projection"`
 	SemanticClosureDigest Digest            `json:"semantic_closure_digest"`
@@ -134,13 +138,24 @@ const (
 
 // Validate checks the required cache receipt schema before it is sealed.
 func (r CacheReceipt) Validate() error {
-	if r.SchemaVersion != cacheReceiptSchemaVersion || !r.CacheKey.Known() || r.ArtifactKind == "" ||
-		r.Projection == "" ||
+	if r.SchemaVersion != cacheReceiptSchemaVersion || !r.CacheKey.Known() ||
 		!r.SemanticClosureDigest.Known() || !r.DependencyRoot.Known() || r.DirectDependencies == nil ||
 		!r.PolicySchemaDigest.Known() || r.Toolchain == "" || r.Target == "" || !r.BuildTagsDigest.Known() ||
 		!r.OptionsDigest.Known() ||
 		r.ProducerHost == "" || !validReceiptStatus(r.Status) || r.Size < 0 {
 		return fmt.Errorf("%w: required cache receipt field missing", ErrInvalidReceipt)
+	}
+	for _, field := range []struct{ label, value string }{
+		{"domain", r.Domain}, {"key version", r.KeyVersion}, {"artifact kind", r.ArtifactKind},
+		{"projection", r.Projection}, {"toolchain", r.Toolchain}, {"target", r.Target},
+		{"producer host", r.ProducerHost},
+	} {
+		if err := validateKeyComponent(field.label, field.value, true); err != nil {
+			return fmt.Errorf("%w: %v", ErrInvalidReceipt, err)
+		}
+	}
+	if !r.HostStage.Valid() {
+		return fmt.Errorf("%w: invalid host stage", ErrInvalidReceipt)
 	}
 	if r.hasArtifact() && (!r.ContentDigest.Known() || !r.Reconstructable) {
 		return fmt.Errorf("%w: artifact receipt is not reconstructable", ErrInvalidReceipt)
@@ -174,7 +189,8 @@ func (r CacheReceipt) ValidateForKey(key Key) error {
 	if err := validateFullKey(key); err != nil {
 		return err
 	}
-	if r.CacheKey != key.Digest || r.ArtifactKind != key.ArtifactKind || r.Projection != key.Projection ||
+	if r.CacheKey != key.Digest || r.Domain != key.Domain || r.KeyVersion != key.Version ||
+		r.HostStage != key.HostStage || r.ArtifactKind != key.ArtifactKind || r.Projection != key.Projection ||
 		r.SemanticClosureDigest != key.SemanticClosureDigest || r.DependencyRoot != key.DependencyRoot ||
 		r.PolicySchemaDigest != key.PolicySchemaDigest || r.Toolchain != key.Toolchain ||
 		r.OptionsDigest != key.OptionsDigest ||
@@ -229,11 +245,21 @@ func validateEvidenceRefs(refs []EvidenceRef) error {
 		return fmt.Errorf("%w: missing or duplicated evidence refs", ErrInvalidReceipt)
 	}
 	for _, ref := range refs {
-		if err := validateKeyComponent("evidence ref", ref.Name, true); err != nil || !ref.Digest.Known() {
+		if err := validateKeyComponent("evidence ref", ref.Name, true); err != nil ||
+			!knownEvidenceRef(ref.Name) || !ref.Digest.Known() {
 			return fmt.Errorf("%w: malformed evidence ref %q", ErrInvalidReceipt, ref.Name)
 		}
 	}
 	return nil
+}
+
+func knownEvidenceRef(name string) bool {
+	switch name {
+	case "source", "ir", "policy", "toolchain", "target", "bundle":
+		return true
+	default:
+		return false
+	}
 }
 
 func validateEvidenceBindings(e EvidenceFreshness) error {
