@@ -48,29 +48,27 @@ func adaptSyntaxDeclaration(declaration syntax.Declaration) (Declaration, error)
 	case *syntax.EntityDecl:
 		return Declaration{Kind: EntityKind, ID: ID(value.ID), Name: value.Name, Span: toSourceSpan(value.Span)}, nil
 	case *syntax.ActivityDecl:
-		return adaptSyntaxActivity(value), nil
+		return adaptSyntaxActivity(value)
 	default:
 		return Declaration{}, fmt.Errorf("unsupported syntax declaration %T", declaration)
 	}
 }
 
-func adaptSyntaxActivity(activity *syntax.ActivityDecl) Declaration {
+func adaptSyntaxActivity(activity *syntax.ActivityDecl) (Declaration, error) {
 	declaration := Declaration{Kind: ActivityKind, Name: activity.Name, Span: toSourceSpan(activity.Span)}
-	inputs := activity.Parameters
-	if len(inputs) == 0 {
-		inputs = activity.Inputs
+	if len(activity.Inputs) == 0 && len(activity.Parameters) != 0 {
+		return Declaration{}, fmt.Errorf("activity %q uses unsupported legacy-only Parameters; canonical Inputs is required", activity.Name)
 	}
-	for _, input := range inputs {
+	for _, input := range activity.Inputs {
 		declaration.Inputs = append(declaration.Inputs, Reference{Name: input.Name, Span: toSourceSpan(input.Span)})
 	}
-	output := activity.Result
-	if output.Name == "" {
-		output.Name = activity.Output
+	if activity.Output == "" && activity.Result.Name != "" {
+		return Declaration{}, fmt.Errorf("activity %q uses unsupported legacy-only Result; canonical Output is required", activity.Name)
 	}
-	if output.Name != "" {
-		declaration.Outputs = append(declaration.Outputs, Reference{Name: output.Name, Span: toSourceSpan(output.Span)})
+	if activity.Output != "" {
+		declaration.Outputs = append(declaration.Outputs, Reference{Name: activity.Output, Span: toSourceSpan(activity.Span)})
 	}
-	return declaration
+	return declaration, nil
 }
 
 func toSourceSpan(span syntax.Span) SourceSpan {
