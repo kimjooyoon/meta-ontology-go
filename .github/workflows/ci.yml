@@ -302,6 +302,10 @@ jobs:
               repository: `${context.repo.owner}/${context.repo.repo}`,
               branch: baseRef,
               policy_sha256: evidence.digests.policy_sha256,
+              event_ref: context.ref,
+              checkout_ref: headSha,
+              token_source: '',
+              read_status: 'unavailable',
               exists: false,
               strict: false,
               required_checks: [],
@@ -317,10 +321,6 @@ jobs:
               run_id: context.runId,
               run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
               workflow_sha: process.env.CI_WORKFLOW_SHA,
-              event_ref: context.ref,
-              checkout_ref: headSha,
-              token_source: '',
-              read_status: 'unavailable',
               digest_sha256: ''
             };
             const tokenSource = process.env.BRANCH_PROTECTION_TOKEN ? 'BRANCH_PROTECTION_TOKEN' : 'github.token';
