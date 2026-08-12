@@ -201,3 +201,10 @@ func validDigest(value string) bool {
 	}
 	return true
 }
+
+func validArtifactDigest(value string) bool {
+	if strings.HasPrefix(value, "sha256:") {
+		value = strings.TrimPrefix(value, "sha256:")
+	}
+	return validDigest(value)
+}

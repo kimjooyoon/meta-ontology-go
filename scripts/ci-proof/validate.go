@@ -72,7 +72,7 @@ func validatePredecessors(bundle proofBundle) error {
 
 func validateArtifacts(artifacts []artifactInput) error {
 	for _, artifact := range artifacts {
-		if artifact.ID <= 0 || artifact.Name == "" || artifact.Size <= 0 || artifact.Expired || !validDigest(artifact.Digest) {
+		if artifact.ID <= 0 || artifact.Name == "" || artifact.Size <= 0 || artifact.Expired || !validArtifactDigest(artifact.Digest) {
 			return fmt.Errorf("artifact inventory contains missing, zero, or expired artifact")
 		}
 	}

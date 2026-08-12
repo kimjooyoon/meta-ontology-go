@@ -62,6 +62,13 @@ func TestCIArtifactDigestMissingFailsClosed(t *testing.T) {
 	}
 }
 
+func TestCIArtifactDigestAcceptsGitHubSHA256Form(t *testing.T) {
+	artifact := artifactInput{ID: 1, Name: "receipt", Size: 1, Digest: "sha256:" + strings.Repeat("a", 64)}
+	if err := validateArtifacts([]artifactInput{artifact}); err != nil {
+		t.Fatalf("GitHub SHA-256 artifact digest was rejected: %v", err)
+	}
+}
+
 func TestCIBranchProtectionSnapshotMismatchFailsClosed(t *testing.T) {
 	bundle := validProof()
 	bundle.BranchProtection.Digest = "mismatch"
