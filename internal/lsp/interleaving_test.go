@@ -52,6 +52,31 @@ type trackedPipeReader struct {
 	once    sync.Once
 }
 
+type nonInterruptingCloser struct {
+	started chan struct{}
+	release chan struct{}
+	closed  chan struct{}
+	start   sync.Once
+	close   sync.Once
+}
+
+func newNonInterruptingCloser() *nonInterruptingCloser {
+	return &nonInterruptingCloser{
+		started: make(chan struct{}), release: make(chan struct{}), closed: make(chan struct{}),
+	}
+}
+
+func (reader *nonInterruptingCloser) Read([]byte) (int, error) {
+	reader.start.Do(func() { close(reader.started) })
+	<-reader.release
+	return 0, io.EOF
+}
+
+func (reader *nonInterruptingCloser) Close() error {
+	reader.close.Do(func() { close(reader.closed) })
+	return nil
+}
+
 func (reader *trackedPipeReader) Read(data []byte) (int, error) {
 	reader.once.Do(func() { close(reader.started) })
 	return reader.reader.Read(data)
@@ -82,6 +107,29 @@ func TestServeContextClosesBlockedInputRead(t *testing.T) {
 		t.Fatal("pipe writer remained open after canceled input read")
 	}
 	_ = pipeWriter.Close()
+}
+
+func TestServeContextReturnsWhenCloseDoesNotInterruptReader(t *testing.T) {
+	input := newNonInterruptingCloser()
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- NewServer().ServeContext(ctx, input, &bytes.Buffer{}) }()
+	<-input.started
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("ServeContext() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("ServeContext() waited for a reader that Close could not interrupt")
+	}
+	select {
+	case <-input.closed:
+	default:
+		t.Fatal("ServeContext() did not close the input reader")
+	}
+	close(input.release)
 }
 
 func TestExitCancelsPendingRequest(t *testing.T) {

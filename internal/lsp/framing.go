@@ -51,7 +51,6 @@ func readFrameContext(ctx context.Context, reader *bufio.Reader, input io.Reader
 		}
 		closer := input.(io.Closer)
 		_ = closer.Close()
-		<-results
 		return nil, ctx.Err()
 	}
 }
