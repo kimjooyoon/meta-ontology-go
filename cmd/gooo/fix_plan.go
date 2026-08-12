@@ -17,6 +17,8 @@ type fixPlan struct {
 	Evidence      graphReferenceState `json:"evidence"`
 	Provenance    graphReferenceState `json:"provenance"`
 	Projection    graphStatus         `json:"projection"`
+	Lowering      graphStatus         `json:"lowering"`
+	Output        graphStatus         `json:"output"`
 	Repairs       graphStatus         `json:"repairs"`
 	GraphPatch    graphStatus         `json:"graph_patch"`
 	Workspace     graphStatus         `json:"workspace"`

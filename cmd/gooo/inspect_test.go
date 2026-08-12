@@ -35,6 +35,9 @@ func TestRunInspectG1ContractAndRepeatDeterminism(t *testing.T) {
 	if dump.Projection.Status != "deferred" || dump.Projection.Reason == "" {
 		t.Fatalf("unexpected projection status: %#v", dump.Projection)
 	}
+	if dump.Lowering.Status != "deferred" || dump.Lowering.Reason == "" || dump.Output.Status != "deferred" || dump.Output.Reason == "" {
+		t.Fatalf("unexpected lifecycle status: lowering=%#v output=%#v", dump.Lowering, dump.Output)
+	}
 	wantAuthorities := graphAuthorities{
 		GoooSource: "authoritative", SemanticIR: "authoritative", Handwritten: "authoritative",
 		Provenance: "authoritative", Graph: "derived",

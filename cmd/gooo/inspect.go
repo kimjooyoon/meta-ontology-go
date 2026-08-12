@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -12,6 +13,10 @@ import (
 )
 
 const graphDumpSchemaVersion = "gooo-graph/v1"
+
+const maxGraphDumpBytes = 1 << 20
+
+var errGraphDumpLimit = errors.New("graph dump resource limit exceeded")
 
 func runInspect(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
 	if len(args) != 1 {
@@ -43,7 +48,7 @@ func runInspect(args []string, reader SourceReader, parser SourceParser, stdout,
 		fmt.Fprintf(stderr, "gooo: %s: graph dump failed: %v\n", filename, err)
 		return exitFailure
 	}
-	if err := writeInspectOutput(stdout, payload); err != nil {
+	if err := writeInspectOutput(stdout, payload, deadline); err != nil {
 		fmt.Fprintf(stderr, "gooo: graph output: %v\n", err)
 		return exitFailure
 	}
@@ -80,11 +85,26 @@ func marshalGraphDump(source []byte, ir semantic.IR) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(payload)+1 > maxGraphDumpBytes {
+		return nil, errGraphDumpLimit
+	}
 	return append(payload, '\n'), nil
 }
 
-func writeInspectOutput(output io.Writer, payload []byte) error {
+type writeDeadlineSetter interface {
+	SetWriteDeadline(time.Time) error
+}
+
+func writeInspectOutput(output io.Writer, payload []byte, deadline time.Time) error {
+	if deadlineWriter, supportsDeadline := output.(writeDeadlineSetter); supportsDeadline {
+		if err := deadlineWriter.SetWriteDeadline(deadline); err == nil {
+			defer deadlineWriter.SetWriteDeadline(time.Time{})
+		}
+	}
 	for len(payload) > 0 {
+		if !deadline.IsZero() && !time.Now().Before(deadline) {
+			return errCommandDeadline
+		}
 		written, err := output.Write(payload)
 		if written > 0 {
 			payload = payload[written:]

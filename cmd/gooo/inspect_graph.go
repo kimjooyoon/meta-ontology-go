@@ -15,6 +15,8 @@ type graphDump struct {
 	Evidence      graphReferenceState `json:"evidence"`
 	Provenance    graphReferenceState `json:"provenance"`
 	Projection    graphStatus         `json:"projection"`
+	Lowering      graphStatus         `json:"lowering"`
+	Output        graphStatus         `json:"output"`
 	Authorities   graphAuthorities    `json:"authorities"`
 	Nodes         []graphNode         `json:"nodes"`
 	Relations     []graphRelation     `json:"relations"`
@@ -78,6 +80,12 @@ func newGraphDump(source []byte, ir semantic.IR) graphDump {
 		},
 		Projection: graphStatus{
 			Status: "deferred", Reason: "read-only graph dump does not run projection",
+		},
+		Lowering: graphStatus{
+			Status: "deferred", Reason: "bidir lowering has no cooperative cancellation contract",
+		},
+		Output: graphStatus{
+			Status: "deferred", Reason: "generic writers have no cooperative cancellation contract",
 		},
 		Authorities: graphAuthorities{
 			GoooSource: "authoritative", SemanticIR: "authoritative", Handwritten: "authoritative",

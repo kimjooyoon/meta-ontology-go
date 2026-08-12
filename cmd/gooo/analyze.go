@@ -55,7 +55,7 @@ func runAnalyze(args []string, reader SourceReader, parser SourceParser, stdout,
 		fmt.Fprintf(stderr, "gooo: %s: fix plan failed: %v\n", filename, err)
 		return exitFailure
 	}
-	if err := writeInspectOutput(stdout, payload); err != nil {
+	if err := writeInspectOutput(stdout, payload, deadline); err != nil {
 		fmt.Fprintf(stderr, "gooo: fix plan output: %v\n", err)
 		return exitFailure
 	}
@@ -81,6 +81,12 @@ func newFixPlan(source []byte, diagnostics syntax.Diagnostics, file *syntax.File
 		},
 		Projection: graphStatus{
 			Status: "deferred", Reason: "read-only fix plan does not run projection",
+		},
+		Lowering: graphStatus{
+			Status: "deferred", Reason: "bidir lowering has no cooperative cancellation contract",
+		},
+		Output: graphStatus{
+			Status: "deferred", Reason: "generic writers have no cooperative cancellation contract",
 		},
 		Repairs: graphStatus{
 			Status: "deferred", Reason: "automatic repair edits are not generated",

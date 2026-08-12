@@ -31,7 +31,7 @@ func TestRunAnalyzeValidFixPlanContract(t *testing.T) {
 	if plan.Evidence.Status != "missing" || plan.Provenance.Status != "missing" {
 		t.Fatalf("evidence status = %#v, provenance = %#v", plan.Evidence, plan.Provenance)
 	}
-	if plan.Repairs.Status != "deferred" || plan.GraphPatch.Status != "deferred" || plan.Workspace.Status != "deferred" || plan.SemanticLoop.Status != "deferred" {
+	if plan.Repairs.Status != "deferred" || plan.GraphPatch.Status != "deferred" || plan.Workspace.Status != "deferred" || plan.SemanticLoop.Status != "deferred" || plan.Lowering.Status != "deferred" || plan.Output.Status != "deferred" {
 		t.Fatalf("write or loop status was not deferred: %#v", plan)
 	}
 	wantAuthorities := graphAuthorities{
