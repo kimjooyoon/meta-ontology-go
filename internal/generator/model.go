@@ -122,6 +122,42 @@ type Result struct {
 	SourceMap SourceMap
 }
 
+// MetadataResult is a typed projection result with deterministic identity
+// digests. Unavailable external provenance is represented explicitly.
+type MetadataResult struct {
+	Result
+	Metadata GenerationMetadata
+}
+
+// GenerationMetadata describes reproducible projection inputs and trust.
+type GenerationMetadata struct {
+	SourceDigest     string
+	SemanticIRDigest string
+	SourceMapDigest  string
+	Evidence         EvidenceStatus
+	Toolchain        ToolchainIdentity
+	Projection       ProjectionStatus
+}
+
+// EvidenceStatus records what this package can prove without external files.
+type EvidenceStatus struct {
+	Decision string
+	Refs     []string
+}
+
+// ToolchainIdentity is deferred because the generator does not own a build
+// or receipt store. It never fabricates an environment identity.
+type ToolchainIdentity struct {
+	Status string
+	Value  string
+}
+
+// ProjectionStatus records the authoritative status of this generator result.
+type ProjectionStatus struct {
+	Decision string
+	Refs     []string
+}
+
 // Generator renders semantic input into Go source.
 type Generator struct {
 	Options Options
