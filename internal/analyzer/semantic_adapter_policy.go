@@ -29,10 +29,11 @@ const (
 // AdapterError carries a stable class while keeping detail local to the
 // rejected observation. Errors are returned before the caller's IR changes.
 type AdapterError struct {
-	Code     AdapterErrorCode
-	Relation Relation
-	Identity string
-	Detail   string
+	Code        AdapterErrorCode     `json:"code"`
+	Relation    Relation             `json:"relation"`
+	Identity    string               `json:"identity"`
+	Detail      string               `json:"detail"`
+	WriteEffect ReconcileWriteEffect `json:"write_effect"`
 }
 
 func (e AdapterError) Error() string {
@@ -42,7 +43,7 @@ func (e AdapterError) Error() string {
 func (e AdapterError) Unwrap() error { return ErrSemanticAdapter }
 
 func adapterError(code AdapterErrorCode, relation Relation, identity, detail string) error {
-	return AdapterError{Code: code, Relation: relation, Identity: identity, Detail: detail}
+	return AdapterError{Code: code, Relation: relation, Identity: identity, Detail: detail, WriteEffect: ReconcileNoWrite}
 }
 
 // RelationMapping is an explicit typed rule. Reverse is part of the rule and

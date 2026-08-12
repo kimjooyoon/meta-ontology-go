@@ -63,6 +63,7 @@ func semanticAdapterBindingDigest(result SemanticAdapterResult) string {
 	writeBindingField(&b, result.PolicyDigest)
 	writeBindingField(&b, result.ToolchainDigest)
 	writeBindingField(&b, result.ImplementationObservationDigest)
+	writeBindingField(&b, result.NormalizedDelta.Digest)
 	return semantic.StableHashString(b.String())
 }
 

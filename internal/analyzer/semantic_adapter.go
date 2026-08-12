@@ -30,6 +30,7 @@ type SemanticAdapterResult struct {
 	ToolchainDigest                 string
 	BindingDigest                   string
 	ImplementationObservationDigest string
+	NormalizedDelta                 SemanticNormalizedDelta
 	DeferredFacts                   []Fact
 	DeferredCandidates              []Candidate
 	// ShadowedCandidateEvidence retains a mapped candidate observation when
@@ -53,6 +54,7 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 	if err != nil {
 		return SemanticAdapterResult{}, err
 	}
+	baseDigest := base.StableHash()
 	if err := validateObservations(input.Analysis); err != nil {
 		return SemanticAdapterResult{}, err
 	}
@@ -79,6 +81,10 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 		return SemanticAdapterResult{}, err
 	}
 	if err := transaction.IR.Validate(); err != nil {
+		return SemanticAdapterResult{}, err
+	}
+	transaction.NormalizedDelta, err = newSemanticNormalizedDelta(input, baseDigest, transaction)
+	if err != nil {
 		return SemanticAdapterResult{}, err
 	}
 	transaction.BindingDigest = semanticAdapterBindingDigest(transaction)
@@ -145,7 +151,7 @@ func adaptFacts(result *SemanticAdapterResult, input SemanticAdapterInput) error
 func adaptCandidates(result *SemanticAdapterResult, input SemanticAdapterInput) error {
 	for _, candidate := range input.Analysis.Delta.Candidates {
 		mapping, ok := input.Policy.lookup(candidate.Relation)
-		if !ok {
+		if !ok || !mapping.allowsOrigin(candidate.Origin) {
 			continue
 		}
 		for _, option := range candidate.Options {

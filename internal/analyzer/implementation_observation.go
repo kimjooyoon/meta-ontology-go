@@ -64,6 +64,10 @@ func collectImplementationObservations(
 		if fact.Origin != OriginImplementation {
 			continue
 		}
+		mapping, mapped := input.Policy.lookup(fact.Relation)
+		if mapped && mapping.allowsOrigin(fact.Origin) {
+			continue
+		}
 		observations = append(observations, ImplementationObservation{
 			SourceDigest: input.SourceDigest, SourceFile: fact.Span.Filename,
 			BaseDigest: base.StableHash(), PolicyDigest: input.Policy.Digest(),
