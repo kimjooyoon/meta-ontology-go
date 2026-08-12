@@ -66,6 +66,7 @@ func newGraphDump(source []byte, ir semantic.IR) graphDump {
 	for _, record := range evidence {
 		refs = append(refs, record.ID.String())
 	}
+	sort.Strings(refs)
 	return graphDump{
 		SchemaVersion: graphDumpSchemaVersion,
 		GraphHash:     authoritativeGraphHash(ir.Graph),
