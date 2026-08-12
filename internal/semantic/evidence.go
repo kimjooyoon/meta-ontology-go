@@ -85,6 +85,9 @@ func (e Evidence) Normalized() (Evidence, error) {
 	if status != FactDeterministic && status != FactCandidate {
 		return Evidence{}, fmt.Errorf("%w: unknown status %d", ErrInvalidEvidence, status)
 	}
+	if status == FactCandidate && e.Kind != CompilerRunEvidence {
+		return Evidence{}, fmt.Errorf("%w: candidate evidence must be %q, got %q", ErrInvalidEvidence, CompilerRunEvidence, e.Kind)
+	}
 	digest, err := normalizeDigest(e.Digest)
 	if err != nil {
 		return Evidence{}, err

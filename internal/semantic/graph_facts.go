@@ -21,12 +21,12 @@ func (g Graph) prepareFact(fact Fact) (Fact, error) {
 	if err := g.validateDeclaredFactEndpoints(normalized); err != nil {
 		return Fact{}, err
 	}
-	// Candidate observations may be type-incomplete until review. They remain
-	// outside authoritative hashes, while Validate and promotion fail closed.
-	if normalized.Status == FactDeterministic {
-		if err := g.validateDeclaredFactKinds(normalized); err != nil {
-			return Fact{}, err
-		}
+	// Candidate observations remain outside authoritative hashes, but their
+	// declared endpoints and PROV direction must still be valid at the write
+	// boundary. Review may decide whether a valid candidate is promoted; it
+	// cannot make an invalid relation meaningful.
+	if err := g.validateDeclaredFactKinds(normalized); err != nil {
+		return Fact{}, err
 	}
 	return normalized, nil
 }
@@ -82,13 +82,35 @@ func (g *Graph) addCandidate(fact Fact, key FactKey) error {
 
 func mergeFact(existing, incoming Fact) Fact {
 	merged := existing
-	if merged.Span.IsZero() && !incoming.Span.IsZero() {
+	if merged.Span.IsZero() || (!incoming.Span.IsZero() && spanLess(incoming.Span, merged.Span)) {
 		merged.Span = incoming.Span
 	}
-	if merged.Reason == "" && incoming.Reason != "" {
+	if merged.Reason == "" || (incoming.Reason != "" && incoming.Reason < merged.Reason) {
 		merged.Reason = incoming.Reason
 	}
 	return merged
+}
+
+func spanLess(left, right Span) bool {
+	if left.File != right.File {
+		return left.File < right.File
+	}
+	if left.Start.Offset != right.Start.Offset {
+		return left.Start.Offset < right.Start.Offset
+	}
+	if left.Start.Line != right.Start.Line {
+		return left.Start.Line < right.Start.Line
+	}
+	if left.Start.Column != right.Start.Column {
+		return left.Start.Column < right.Start.Column
+	}
+	if left.End.Offset != right.End.Offset {
+		return left.End.Offset < right.End.Offset
+	}
+	if left.End.Line != right.End.Line {
+		return left.End.Line < right.End.Line
+	}
+	return left.End.Column < right.End.Column
 }
 
 func (g Graph) Facts() []Fact {
@@ -174,13 +196,19 @@ func (g *Graph) PromoteCandidate(key FactKey) (Fact, error) {
 	if err != nil {
 		return Fact{}, err
 	}
-	g.ensure()
 	candidate, ok := g.candidates[key]
 	if !ok {
 		return Fact{}, fmt.Errorf("%w: %s %s %s", ErrCandidateNotFound, key.Subject, key.Predicate, key.Object)
 	}
 	candidate.Status = FactDeterministic
-	if err := g.AddFact(candidate); err != nil {
+	normalized, err := g.prepareFact(candidate)
+	if err != nil {
+		return Fact{}, err
+	}
+	// All fallible work is complete before this commit point. In particular, a
+	// malformed candidate remains in place when promotion is rejected.
+	g.ensure()
+	if err := g.storeFact(normalized); err != nil {
 		return Fact{}, err
 	}
 	return g.facts[key], nil
