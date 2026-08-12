@@ -12,7 +12,7 @@ import (
 func TestRunCheckValidSource(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := runCheck([]string{"billing.gooo"}, fixtureReader{source: validSource}, SyntaxSourceParser{}, &stdout, &stderr)
-	if code != exitOK || stdout.String() != "ok: billing.gooo\n" || stderr.Len() != 0 {
+	if code != exitOK || stdout.String() != "ok: billing.gooo\n" || stderr.String() != deferredCheckProvenance+"\n" {
 		t.Fatalf("check result = code %d, stdout %q, stderr %q", code, stdout.String(), stderr.String())
 	}
 }
@@ -86,7 +86,7 @@ type recordingParser struct {
 func (p *recordingParser) ParseFile(filename, source string) (*syntax.File, syntax.Diagnostics) {
 	p.filename = filename
 	p.source = source
-	return &syntax.File{}, nil
+	return syntax.ParseFile(filename, source)
 }
 
 const validSource = `package billing

@@ -1,12 +1,17 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
+
+const deferredCheckProvenance = "gooo: provenance: deferred (no provenance records attached)"
 
 // SourceReader isolates command I/O from the check pipeline. A future
 // workspace or editor host can provide a reader without changing diagnostics.
@@ -47,7 +52,7 @@ func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, s
 		fmt.Fprintf(stderr, "gooo: %s: read error: %v\n", filename, err)
 		return exitFailure
 	}
-	_, diagnostics, err := parseWithDeadline(parser, filename, string(source), remainingDeadline(deadline))
+	file, diagnostics, err := parseWithDeadline(parser, filename, string(source), remainingDeadline(deadline))
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: %s: parse error: %v\n", filename, err)
 		return exitFailure
@@ -58,6 +63,37 @@ func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, s
 	if diagnostics.HasErrors() {
 		return exitFailure
 	}
+	if _, err := semanticCheckIR(file, remainingDeadline(deadline)); err != nil {
+		if !reportSemanticDiagnostic(filename, file, err, stderr) {
+			return exitFailure
+		}
+		return exitFailure
+	}
+	if _, err := fmt.Fprintln(stderr, deferredCheckProvenance); err != nil {
+		return exitFailure
+	}
 	fmt.Fprintf(stdout, "ok: %s\n", filename)
 	return exitOK
+}
+
+func reportSemanticDiagnostic(filename string, file *syntax.File, err error, stderr io.Writer) bool {
+	span := syntax.Span{Filename: filename}
+	if file != nil {
+		span = file.Span
+	}
+	_, writeErr := fmt.Fprintf(stderr, "%s: error %s: %v\n", span.String(), semanticDiagnosticCode(err), err)
+	return writeErr == nil
+}
+
+func semanticDiagnosticCode(err error) string {
+	if strings.Contains(err.Error(), "unknown declaration") {
+		return "semantic.invalid-endpoint"
+	}
+	if errors.Is(err, semantic.ErrUnknownRelation) {
+		return "semantic.invalid-relation"
+	}
+	if strings.Contains(err.Error(), "cannot connect") || errors.Is(err, semantic.ErrInvalidFact) {
+		return "semantic.invalid-kind"
+	}
+	return "semantic.invalid"
 }
