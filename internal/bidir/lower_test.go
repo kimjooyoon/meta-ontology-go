@@ -1,6 +1,8 @@
 package bidir
 
 import (
+	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
@@ -55,6 +57,50 @@ activity PayOrder(Order) -> Payment`)
 	if document.Declarations[0].Span.File != "billing.gooo" {
 		t.Fatalf("declaration source span was not adapted: %#v", document.Declarations[0].Span)
 	}
+}
+
+func TestTypedLowererRetainsOutputPortSpansAndOrder(t *testing.T) {
+	document := sourceOrderedOutputDocument()
+	first, err := LowerDocument(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := LowerDocument(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstOutputs := typedOutputFacts(first)
+	secondOutputs := typedOutputFacts(second)
+	if !reflect.DeepEqual(firstOutputs, secondOutputs) {
+		t.Fatalf("repeated typed lowering changed output evidence: %#v != %#v", firstOutputs, secondOutputs)
+	}
+	wantIDs := []semantic.ID{"billing://entity/zebra", "billing://entity/apple"}
+	if got := outputFactIDsBySpan(firstOutputs); !reflect.DeepEqual(got, wantIDs) {
+		t.Fatalf("typed lowering lost authoritative output order: got %v want %v", got, wantIDs)
+	}
+	if len(firstOutputs) != 2 || firstOutputs[0].Span == firstOutputs[1].Span {
+		t.Fatalf("typed lowering did not retain two distinct output spans: %#v", firstOutputs)
+	}
+}
+
+func typedOutputFacts(ir semantic.IR) []semantic.Fact {
+	activity := semantic.MustIdentity("billing://activity/process")
+	var outputs []semantic.Fact
+	for _, fact := range ir.Graph.Facts() {
+		if fact.Predicate == semantic.WasGeneratedBy && fact.Object == activity {
+			outputs = append(outputs, fact)
+		}
+	}
+	sort.Slice(outputs, func(i, j int) bool { return outputs[i].Span.Start.Offset < outputs[j].Span.Start.Offset })
+	return outputs
+}
+
+func outputFactIDsBySpan(facts []semantic.Fact) []semantic.ID {
+	ids := make([]semantic.ID, len(facts))
+	for index, fact := range facts {
+		ids[index] = fact.Subject
+	}
+	return ids
 }
 
 func TestCandidateDoesNotBecomeDeterministic(t *testing.T) {

@@ -48,6 +48,50 @@ func TestPutPreservesDSLOutputPortSourceOrderWhenIDsDisagree(t *testing.T) {
 	}
 }
 
+func TestOutputPortOrderSurvivesModelPermutationsAndRepeats(t *testing.T) {
+	document := sourceOrderedOutputDocument()
+	base, err := Get(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	permuted := base.Clone()
+	reverseRelations(permuted.Relations)
+	basePorts, _ := orderedSequences(base)
+	permutedPorts, _ := orderedSequences(permuted)
+	if !reflect.DeepEqual(basePorts, permutedPorts) || sequenceHash(basePorts) != sequenceHash(permutedPorts) {
+		t.Fatalf("output port order was not source-authoritative: %v != %v", basePorts, permutedPorts)
+	}
+	want := []ID{"billing://entity/zebra", "billing://entity/apple"}
+	for repeat := 0; repeat < 3; repeat++ {
+		for _, model := range []Model{base, permuted} {
+			written, err := Put(document, model)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := outputIDs(written); !reflect.DeepEqual(got, want) {
+				t.Fatalf("permuted model changed output order: got %v want %v", got, want)
+			}
+			if got := outputSpans(written); !reflect.DeepEqual(got, []SourceSpan{{File: "ports.gooo", Start: 30, End: 35}, {File: "ports.gooo", Start: 40, End: 45}}) {
+				t.Fatalf("permuted model lost output spans: %#v", got)
+			}
+		}
+	}
+	if _, err := Get(document); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRelationOrderHashUsesSourceSpansAcrossPermutations(t *testing.T) {
+	model := sourceOrderedRelationsModel()
+	permuted := model.Clone()
+	reverseRelations(permuted.Relations)
+	_, leftRelations := orderedSequences(model)
+	_, rightRelations := orderedSequences(permuted)
+	if !reflect.DeepEqual(leftRelations, rightRelations) || sequenceHash(leftRelations) != sequenceHash(rightRelations) {
+		t.Fatalf("relation order was not source-authoritative: %v != %v", leftRelations, rightRelations)
+	}
+}
+
 func sourceOrderedInputDocument() Document {
 	return Document{
 		Package: "billing", Namespace: "billing",
@@ -73,6 +117,19 @@ func sourceOrderedOutputDocument() Document {
 		{ID: "billing://entity/apple", Name: "Apple", Span: SourceSpan{File: "ports.gooo", Start: 40, End: 45}},
 	}
 	return document
+}
+
+func sourceOrderedRelationsModel() Model {
+	return Model{Relations: []Relation{
+		{ID: StableRelationID(PredicateInvokes, "billing://activity/zulu", "billing://activity/alpha"), Kind: PredicateInvokes, Source: "billing://activity/zulu", Target: "billing://activity/alpha", Span: SourceSpan{File: "relations.gooo", Start: 10, End: 15}},
+		{ID: StableRelationID(PredicateInvokes, "billing://activity/alpha", "billing://activity/zulu"), Kind: PredicateInvokes, Source: "billing://activity/alpha", Target: "billing://activity/zulu", Span: SourceSpan{File: "relations.gooo", Start: 20, End: 25}},
+	}}
+}
+
+func reverseRelations(relations []Relation) {
+	for left, right := 0, len(relations)-1; left < right; left, right = left+1, right-1 {
+		relations[left], relations[right] = relations[right], relations[left]
+	}
 }
 
 func inputIDs(document Document) []ID {

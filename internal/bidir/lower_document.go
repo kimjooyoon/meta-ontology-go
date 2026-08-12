@@ -96,23 +96,32 @@ func lowerDocumentContracts(ir *semantic.IR, document Document, namespace semant
 			}
 			activityID = ids[generated]
 		}
-		contract := semantic.ActivityContract{Activity: activityID, Span: toSemanticSpan(declaration.Span)}
-		for _, reference := range declaration.Inputs {
-			id, err := resolveSemanticReference(reference, namespace, ids, names)
-			if err != nil {
-				return fmt.Errorf("activity %q input: %w", declaration.Name, err)
-			}
-			contract.Inputs = append(contract.Inputs, id)
-		}
-		for _, reference := range declaration.Outputs {
-			id, err := resolveSemanticReference(reference, namespace, ids, names)
-			if err != nil {
-				return fmt.Errorf("activity %q output: %w", declaration.Name, err)
-			}
-			contract.Outputs = append(contract.Outputs, id)
-		}
-		if err := ir.AddActivityContract(contract); err != nil {
+		if err := lowerTypedContractReferences(ir, activityID, declaration, namespace, ids, names); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func lowerTypedContractReferences(ir *semantic.IR, activityID semantic.ID, declaration Declaration, namespace semantic.Namespace, ids map[ID]semantic.ID, names map[string]semantic.ID) error {
+	for _, reference := range declaration.Inputs {
+		id, err := resolveSemanticReference(reference, namespace, ids, names)
+		if err != nil {
+			return fmt.Errorf("activity %q input: %w", declaration.Name, err)
+		}
+		fact := semantic.NewUsedFact(activityID, id).WithSpan(toSemanticSpan(reference.Span))
+		if err := ir.AddFact(fact); err != nil {
+			return fmt.Errorf("activity %q input: %w", declaration.Name, err)
+		}
+	}
+	for _, reference := range declaration.Outputs {
+		id, err := resolveSemanticReference(reference, namespace, ids, names)
+		if err != nil {
+			return fmt.Errorf("activity %q output: %w", declaration.Name, err)
+		}
+		fact := semantic.NewWasGeneratedByFact(id, activityID).WithSpan(toSemanticSpan(reference.Span))
+		if err := ir.AddFact(fact); err != nil {
+			return fmt.Errorf("activity %q output: %w", declaration.Name, err)
 		}
 	}
 	return nil
