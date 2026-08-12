@@ -66,6 +66,26 @@ func TestDerivedInverseRulesSeparateLayersAndStayOutOfGraphHash(t *testing.T) {
 	}
 }
 
+func TestDerivedInverseLimitPreservesCanonicalPrefix(t *testing.T) {
+	root := id("urn:derived:inverse:limit:root")
+	graph := New()
+	for _, activity := range []string{"z", "a", "m"} {
+		assertAdd(t, graph, NewFact(id("urn:derived:inverse:limit:"+activity), Used, root))
+	}
+	limited, err := graph.Execute(derivedEnvelope(root, RuleUsedBy, LayerDeterministic, 1, 1))
+	if err != nil {
+		t.Fatal(err)
+	}
+	full, err := graph.Execute(derivedEnvelope(root, RuleUsedBy, LayerDeterministic, 1, 10))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(full.Result.DerivedDeterministic) != 3 ||
+		!reflect.DeepEqual(limited.Result.DerivedDeterministic, full.Result.DerivedDeterministic[:1]) {
+		t.Fatalf("inverse limit changed canonical prefix: %#v vs %#v", limited.Result, full.Result)
+	}
+}
+
 func TestDerivedRulePermutationReplayAndTransitiveCycleBounds(t *testing.T) {
 	root, middle, leaf := id("urn:derived:root"), id("urn:derived:middle"), id("urn:derived:leaf")
 	facts := []Fact{
@@ -142,8 +162,16 @@ func TestDerivedCandidateClosureAndLimit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	full, err := graph.Execute(derivedEnvelope(root, RuleDependsOn, LayerAll, 1, 10))
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(response.Result.DerivedDeterministic) != 1 || len(response.Result.DerivedCandidates) != 0 {
 		t.Fatalf("limit did not prefer deterministic derived rows: %#v", response.Result)
+	}
+	if len(full.Result.DerivedDeterministic) < 1 ||
+		!reflect.DeepEqual(response.Result.DerivedDeterministic, full.Result.DerivedDeterministic[:1]) {
+		t.Fatalf("limit changed canonical deterministic prefix: %#v vs %#v", response.Result, full.Result)
 	}
 	candidates, err := graph.Execute(derivedEnvelope(root, RuleDependsOn, LayerCandidate, 1, 10))
 	if err != nil {

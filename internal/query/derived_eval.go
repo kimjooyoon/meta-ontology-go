@@ -1,7 +1,5 @@
 package query
 
-import "sort"
-
 type derivedState struct {
 	node      ID
 	depth     int
@@ -34,7 +32,7 @@ func (graph Graph) deriveInverse(root ID, rule derivedRule, options DerivedOptio
 func (graph Graph) deriveInverseRows(
 	root ID, rule derivedRule, status FactStatus, limit int, blocked map[derivedKey]struct{},
 ) []DerivedFact {
-	rows := make(map[derivedKey]DerivedFact)
+	rows := make([]DerivedFact, 0, limit)
 	for _, fact := range graph.AllFacts() {
 		if fact.Status != status || fact.Predicate != rule.base || fact.Object != root {
 			continue
@@ -44,23 +42,27 @@ func (graph Graph) deriveInverseRows(
 		if _, exists := blocked[key]; exists {
 			continue
 		}
-		rows[key] = derived
+		rows = append(rows, derived)
+		if len(rows) == limit {
+			break
+		}
 	}
-	return limitSortedDerived(rows, limit)
+	return rows
 }
 
 func (graph Graph) deriveDependsOn(root ID, options DerivedOptions) ([]DerivedFact, []DerivedFact) {
+	nodes := graph.Nodes()
 	var deterministic []DerivedFact
 	if options.Selection != SelectCandidate {
-		deterministic = graph.deriveDependsOnRows(
-			root, options.MaxDepth, SelectDeterministic, false, options.Limit, nil,
+		deterministic = graph.deriveTargets(
+			root, nodes, options.MaxDepth, SelectDeterministic, false, options.Limit, nil,
 		)
 	}
 	if options.Selection == SelectDeterministic || len(deterministic) >= options.Limit {
 		return deterministic, nil
 	}
-	candidates := graph.deriveDependsOnRows(
-		root, options.MaxDepth, options.Selection, true,
+	candidates := graph.deriveTargets(
+		root, nodes, options.MaxDepth, options.Selection, true,
 		options.Limit-len(deterministic), derivedKeys(deterministic),
 	)
 	if options.Selection == SelectCandidate {
@@ -69,49 +71,84 @@ func (graph Graph) deriveDependsOn(root ID, options DerivedOptions) ([]DerivedFa
 	return deterministic, candidates
 }
 
-func (graph Graph) deriveDependsOnRows(
-	root ID, maxDepth int, selection FactSelection, wantCandidate bool,
-	limit int, blocked map[derivedKey]struct{},
+func (graph Graph) deriveTargets(
+	root ID, nodes []Node, maxDepth int, selection FactSelection,
+	wantCandidate bool, limit int, blocked map[derivedKey]struct{},
 ) []DerivedFact {
-	rows := make(map[derivedKey]DerivedFact)
-	frontier := []derivedState{{node: root}}
+	if limit <= 0 {
+		return nil
+	}
+	index := graph.reverseDerivedEdges(selection)
+	rows := make([]DerivedFact, 0, limit)
+	for _, node := range nodes {
+		if node.ID == root {
+			continue
+		}
+		derived, ok := findDerivedTarget(
+			root, node.ID, maxDepth, selection, wantCandidate, index,
+		)
+		if !ok {
+			continue
+		}
+		key := derivedKey{derived.Subject, derived.Predicate, derived.Object}
+		if _, exists := blocked[key]; exists {
+			continue
+		}
+		rows = append(rows, derived)
+		if len(rows) == limit {
+			return rows
+		}
+	}
+	return rows
+}
+
+func (graph Graph) reverseDerivedEdges(selection FactSelection) map[ID][]Fact {
+	index := make(map[ID][]Fact)
+	for _, fact := range graph.AllFacts() {
+		if selection.includes(fact.Status) && fact.Predicate == WasDerivedFrom {
+			index[fact.Object] = append(index[fact.Object], fact)
+		}
+	}
+	for _, facts := range index {
+		sortFacts(facts)
+	}
+	return index
+}
+
+func findDerivedTarget(
+	root, target ID, maxDepth int, selection FactSelection, wantCandidate bool,
+	index map[ID][]Fact,
+) (DerivedFact, bool) {
+	frontier := []derivedState{{node: target}}
 	visited := make(map[derivedVisitKey]struct{})
-	visited[derivedVisitKey{node: root}] = struct{}{}
-	for depth := 1; depth <= maxDepth && len(frontier) > 0; depth++ {
-		next := make([]derivedState, 0)
-		for _, state := range frontier {
-			for _, fact := range graph.edges(state.node, TraversalOptions{
-				Predicate: WasDerivedFrom, Direction: Outgoing, Selection: selection,
-			}, selection) {
-				if fact.Object == root {
-					continue
-				}
-				candidate := state.candidate || fact.Status == FactCandidate
-				nextState := derivedState{node: fact.Object, depth: depth, candidate: candidate}
-				visitKey := derivedVisitKey{node: nextState.node, candidate: candidate}
-				if _, exists := visited[visitKey]; exists {
-					continue
-				}
-				visited[visitKey] = struct{}{}
-				next = append(next, nextState)
+	visited[derivedVisitKey{node: target}] = struct{}{}
+	for head := 0; head < len(frontier); head++ {
+		state := frontier[head]
+		if state.depth == maxDepth {
+			continue
+		}
+		for _, fact := range index[state.node] {
+			candidate := state.candidate || fact.Status == FactCandidate
+			depth := state.depth + 1
+			if fact.Subject == root {
 				if candidate != wantCandidate {
 					continue
 				}
-				derived := newDerivedFact(
+				return newDerivedFact(
 					derivedRule{id: RuleDependsOn, predicate: DerivedDependsOn},
-					root, fact.Object, depth, statusForCandidate(candidate),
-				)
-				key := derivedKey{derived.Subject, derived.Predicate, derived.Object}
-				if _, exists := blocked[key]; exists {
-					continue
-				}
-				recordDerivedRow(rows, key, derived)
+					root, target, depth, statusForCandidate(candidate),
+				), true
 			}
+			nextState := derivedState{node: fact.Subject, depth: depth, candidate: candidate}
+			visitKey := derivedVisitKey{node: nextState.node, candidate: candidate}
+			if _, exists := visited[visitKey]; exists {
+				continue
+			}
+			visited[visitKey] = struct{}{}
+			frontier = append(frontier, nextState)
 		}
-		sortDerivedStates(next)
-		frontier = next
 	}
-	return limitSortedDerived(rows, limit)
+	return DerivedFact{}, false
 }
 
 func statusForCandidate(candidate bool) FactStatus {
@@ -135,54 +172,4 @@ func derivedKeys(rows []DerivedFact) map[derivedKey]struct{} {
 		keys[derivedKey{row.Subject, row.Predicate, row.Object}] = struct{}{}
 	}
 	return keys
-}
-
-func recordDerivedRow(rows map[derivedKey]DerivedFact, key derivedKey, row DerivedFact) {
-	if existing, ok := rows[key]; !ok || row.Depth < existing.Depth {
-		rows[key] = row
-	}
-}
-
-func limitSortedDerived(rows map[derivedKey]DerivedFact, limit int) []DerivedFact {
-	result := sortedDerived(rows)
-	if len(result) > limit {
-		result = result[:limit]
-	}
-	return append([]DerivedFact(nil), result...)
-}
-
-func sortedDerived(rows map[derivedKey]DerivedFact) []DerivedFact {
-	result := make([]DerivedFact, 0, len(rows))
-	for _, row := range rows {
-		result = append(result, row)
-	}
-	sort.Slice(result, func(i, j int) bool {
-		left, right := result[i], result[j]
-		if left.Subject != right.Subject {
-			return left.Subject < right.Subject
-		}
-		if left.Predicate != right.Predicate {
-			return left.Predicate < right.Predicate
-		}
-		if left.Object != right.Object {
-			return left.Object < right.Object
-		}
-		if left.Depth != right.Depth {
-			return left.Depth < right.Depth
-		}
-		return left.SourceLayer < right.SourceLayer
-	})
-	return result
-}
-
-func sortDerivedStates(states []derivedState) {
-	sort.Slice(states, func(i, j int) bool {
-		if states[i].node != states[j].node {
-			return states[i].node < states[j].node
-		}
-		if states[i].candidate != states[j].candidate {
-			return !states[i].candidate
-		}
-		return states[i].depth < states[j].depth
-	})
 }
