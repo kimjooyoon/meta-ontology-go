@@ -16,7 +16,6 @@ on:
 permissions:
   contents: read
   actions: read
-  administration: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -272,6 +271,7 @@ jobs:
       - name: Collect proof context
         uses: actions/github-script@v7
         env:
+          BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
           github-token: ${{ github.token }}
@@ -304,26 +304,31 @@ jobs:
               workflow_sha: process.env.CI_WORKFLOW_SHA,
               digest_sha256: ''
             };
-            try {
-              const response = await github.rest.repos.getBranchProtection({owner: context.repo.owner, repo: context.repo.repo, branch: baseRef});
-              const data = response.data;
-              const reviews = data.required_pull_request_reviews || {};
-              const checks = data.required_status_checks || {};
-              protection = {
-                ...protection,
-                exists: true,
-                strict: Boolean(checks.strict),
-                required_checks: [...(checks.contexts || [])].sort(),
-                enforce_admins: Boolean(data.enforce_admins?.enabled),
-                required_reviews: Number(reviews.required_approving_review_count || 0),
-                dismiss_stale_reviews: Boolean(reviews.dismiss_stale_reviews),
-                require_last_push_approval: Boolean(reviews.require_last_push_approval),
-                linear_history: Boolean(data.required_linear_history?.enabled),
-                allow_force_pushes: Boolean(data.allow_force_pushes?.enabled),
-                allow_deletions: Boolean(data.allow_deletions?.enabled),
-              };
-            } catch (error) {
-              core.warning(`branch protection API snapshot unavailable: ${error.message}`);
+            if (!process.env.BRANCH_PROTECTION_TOKEN) {
+              core.warning('BRANCH_PROTECTION_TOKEN is unavailable; branch protection proof will fail closed');
+            } else {
+              try {
+                const adminGithub = github.getOctokit(process.env.BRANCH_PROTECTION_TOKEN);
+                const response = await adminGithub.rest.repos.getBranchProtection({owner: context.repo.owner, repo: context.repo.repo, branch: baseRef});
+                const data = response.data;
+                const reviews = data.required_pull_request_reviews || {};
+                const checks = data.required_status_checks || {};
+                protection = {
+                  ...protection,
+                  exists: true,
+                  strict: Boolean(checks.strict),
+                  required_checks: [...(checks.contexts || [])].sort(),
+                  enforce_admins: Boolean(data.enforce_admins?.enabled),
+                  required_reviews: Number(reviews.required_approving_review_count || 0),
+                  dismiss_stale_reviews: Boolean(reviews.dismiss_stale_reviews),
+                  require_last_push_approval: Boolean(reviews.require_last_push_approval),
+                  linear_history: Boolean(data.required_linear_history?.enabled),
+                  allow_force_pushes: Boolean(data.allow_force_pushes?.enabled),
+                  allow_deletions: Boolean(data.allow_deletions?.enabled),
+                };
+              } catch (error) {
+                core.warning(`branch protection API snapshot unavailable: ${error.message}`);
+              }
             }
             const protectionPayload = {...protection, digest_sha256: ''};
             protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');

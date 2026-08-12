@@ -77,7 +77,7 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"CI_SLOT_PRESERVATION: \"true\"",
 		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
 		"actions/upload-artifact@v4",
-		"administration: read",
+		"BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}",
 		"getBranchProtection",
 		"branch_protection",
 		"digest_sha256",

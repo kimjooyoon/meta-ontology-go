@@ -113,16 +113,17 @@ func validateEvidenceDigests(root string, evidence evidenceInput) error {
 }
 
 func validateBranchProtection(protection branchProtection, evidence evidenceInput, context contextInput) error {
-	if protection.Repository != evidence.Repository || protection.Branch != context.BaseRef || protection.PolicySHA != evidence.Digests.Policy || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA || !protection.Exists {
+	if protection.Repository != evidence.Repository || protection.Branch != context.BaseRef || protection.PolicySHA != evidence.Digests.Policy || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA {
 		return fmt.Errorf("branch protection snapshot is missing or unbound")
 	}
 	if protection.Digest != digestBranchProtection(protection) {
 		return fmt.Errorf("branch protection snapshot digest mismatch")
 	}
-	if !protection.Strict || !protection.EnforceAdmins || protection.RequiredReviews < 1 || !protection.DismissStaleReviews || !protection.RequireLastPushApproval || !protection.LinearHistory || protection.AllowForcePushes || protection.AllowDeletions || !sameStringSet(protection.RequiredChecks, proofJobs) {
-		return fmt.Errorf("branch protection safeguards are incomplete")
-	}
 	return nil
+}
+
+func branchProtectionReady(protection branchProtection) bool {
+	return protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews >= 1 && protection.DismissStaleReviews && protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, proofJobs)
 }
 
 func digestBranchProtection(protection branchProtection) string {

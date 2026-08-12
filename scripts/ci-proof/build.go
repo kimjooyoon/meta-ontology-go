@@ -27,7 +27,7 @@ func buildProof(inputs proofInputs, digests proofDigests) (proofBundle, provenan
 func gateRejections(inputs proofInputs) []string {
 	c := inputs.Context
 	failures := make([]string, 0)
-	if inputs.Governance.Promotion.BranchProtectionRequired && !c.BranchProtected {
+	if inputs.Governance.Promotion.BranchProtectionRequired && !branchProtectionReady(c.BranchProtection) {
 		failures = append(failures, "branch_protection_missing")
 	}
 	if c.Guardian == "" || c.Approver == "" || c.Guardian == c.Approver || c.Guardian == c.Builder || c.Approver == c.Builder || c.Guardian == c.Actor || c.Approver == c.Actor {
