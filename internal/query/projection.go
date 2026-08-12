@@ -29,5 +29,6 @@ type ProjectionMetadata struct {
 	ProjectionStatus  string
 	DerivedStatus     string
 	DerivedRuleSchema string
+	DerivedRuleDigest string
 	AuthorityLabels   []AuthorityLabel
 }

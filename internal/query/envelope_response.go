@@ -54,6 +54,7 @@ func envelopeMetadata(metadata ProjectionMetadata) EnvelopeMetadata {
 		ProvenanceStatus:  provenanceStatus,
 		DerivedStatus:     metadata.DerivedStatus,
 		DerivedRuleSchema: metadata.DerivedRuleSchema,
+		DerivedRuleDigest: metadata.DerivedRuleDigest,
 		AuthorityLabels:   labels,
 	}
 }

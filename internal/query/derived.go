@@ -3,7 +3,6 @@ package query
 import (
 	"errors"
 	"fmt"
-	"sort"
 )
 
 const DerivedRuleSchemaVersion = "gooo-query/rules/v1"
@@ -78,12 +77,6 @@ type derivedRule struct {
 	transitive bool
 }
 
-type derivedPath struct {
-	node   ID
-	ids    []ID
-	status FactStatus
-}
-
 type derivedKey struct {
 	subject   ID
 	predicate DerivedRelation
@@ -132,12 +125,16 @@ func (graph Graph) Derive(root ID, options DerivedOptions) (DerivedResult, error
 	if rule.transitive {
 		deterministic, candidates = graph.deriveDependsOn(canonicalRoot, normalized)
 	} else {
-		deterministic, candidates = graph.deriveInverse(canonicalRoot, rule, normalized.Selection)
+		deterministic, candidates = graph.deriveInverse(canonicalRoot, rule, normalized)
 	}
 	deterministic, candidates = limitDerived(deterministic, candidates, normalized.Limit)
 	metadata := graph.Metadata()
 	metadata.DerivedStatus = DerivedStatusNonAuthoritative
 	metadata.DerivedRuleSchema = DerivedRuleSchemaVersion
+	metadata.DerivedRuleDigest, err = normalized.Rule.CanonicalDigest()
+	if err != nil {
+		return DerivedResult{}, err
+	}
 	for index := range metadata.AuthorityLabels {
 		if metadata.AuthorityLabels[index].View == "derived_query" {
 			metadata.AuthorityLabels[index].Status = DerivedStatusNonAuthoritative
@@ -177,120 +174,4 @@ func normalizeDerivedOptions(options DerivedOptions) (DerivedOptions, derivedRul
 	options.Rule = ruleID
 	options.Selection = selection
 	return options, rule, nil
-}
-
-func (graph Graph) deriveInverse(root ID, rule derivedRule, selection FactSelection) ([]DerivedFact, []DerivedFact) {
-	deterministic := make(map[derivedKey]DerivedFact)
-	candidates := make(map[derivedKey]DerivedFact)
-	for _, fact := range graph.AllFacts() {
-		if fact.Predicate != rule.base || fact.Object != root || !selection.includes(fact.Status) {
-			continue
-		}
-		derived := newDerivedFact(rule, fact.Object, fact.Subject, 1, fact.Status)
-		recordDerived(deterministic, candidates, derived)
-	}
-	return sortedDerived(deterministic), sortedDerived(candidates)
-}
-
-func (graph Graph) deriveDependsOn(root ID, options DerivedOptions) ([]DerivedFact, []DerivedFact) {
-	deterministic := make(map[derivedKey]DerivedFact)
-	candidates := make(map[derivedKey]DerivedFact)
-	frontier := []derivedPath{{node: root, ids: []ID{root}, status: FactDeterministic}}
-	for depth := 1; depth <= options.MaxDepth && len(frontier) > 0; depth++ {
-		next := make([]derivedPath, 0)
-		for _, path := range frontier {
-			for _, fact := range graph.edges(path.node, TraversalOptions{
-				Predicate: WasDerivedFrom, Direction: Outgoing, Selection: options.Selection,
-			}, options.Selection) {
-				if containsID(path.ids, fact.Object) {
-					continue
-				}
-				status := path.status
-				if fact.Status == FactCandidate {
-					status = FactCandidate
-				}
-				derived := newDerivedFact(
-					derivedRule{id: RuleDependsOn, predicate: DerivedDependsOn},
-					root, fact.Object, depth, status,
-				)
-				recordDerived(deterministic, candidates, derived)
-				next = append(next, derivedPath{
-					node: fact.Object, ids: appendPathID(path.ids, fact.Object), status: status,
-				})
-			}
-		}
-		sortDerivedPaths(next)
-		frontier = next
-	}
-	return sortedDerived(deterministic), sortedDerived(candidates)
-}
-
-func newDerivedFact(rule derivedRule, subject, object ID, depth int, status FactStatus) DerivedFact {
-	return DerivedFact{
-		Subject: subject, Predicate: rule.predicate, Object: object,
-		RuleID: rule.id, Depth: depth, Status: DerivedFactStatus,
-		SourceLayer: status.String(),
-	}
-}
-
-func recordDerived(deterministic, candidates map[derivedKey]DerivedFact, fact DerivedFact) {
-	key := derivedKey{fact.Subject, fact.Predicate, fact.Object}
-	if fact.SourceLayer == FactCandidate.String() {
-		if _, exists := deterministic[key]; !exists {
-			candidates[key] = preferDerived(candidates[key], fact)
-		}
-		return
-	}
-	deterministic[key] = preferDerived(deterministic[key], fact)
-	delete(candidates, key)
-}
-
-func preferDerived(existing, incoming DerivedFact) DerivedFact {
-	if existing.RuleID == "" || incoming.Depth < existing.Depth {
-		return incoming
-	}
-	return existing
-}
-
-func sortedDerived(rows map[derivedKey]DerivedFact) []DerivedFact {
-	result := make([]DerivedFact, 0, len(rows))
-	for _, row := range rows {
-		result = append(result, row)
-	}
-	sort.Slice(result, func(i, j int) bool {
-		left, right := result[i], result[j]
-		if left.Subject != right.Subject {
-			return left.Subject < right.Subject
-		}
-		if left.Predicate != right.Predicate {
-			return left.Predicate < right.Predicate
-		}
-		if left.Object != right.Object {
-			return left.Object < right.Object
-		}
-		if left.Depth != right.Depth {
-			return left.Depth < right.Depth
-		}
-		return left.SourceLayer < right.SourceLayer
-	})
-	return result
-}
-
-func sortDerivedPaths(paths []derivedPath) {
-	sort.Slice(paths, func(i, j int) bool {
-		if len(paths[i].ids) != len(paths[j].ids) {
-			return len(paths[i].ids) < len(paths[j].ids)
-		}
-		for index := range paths[i].ids {
-			if paths[i].ids[index] != paths[j].ids[index] {
-				return paths[i].ids[index] < paths[j].ids[index]
-			}
-		}
-		return paths[i].status < paths[j].status
-	})
-}
-
-func appendPathID(ids []ID, next ID) []ID {
-	result := append([]ID(nil), ids...)
-	return append(result, next)
 }

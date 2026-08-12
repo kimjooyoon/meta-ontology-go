@@ -1,6 +1,7 @@
 package query
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -96,8 +97,17 @@ func TestDerivedRulePermutationReplayAndTransitiveCycleBounds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(wantJSON, gotJSON) || want.Hash != got.Hash {
+	if !reflect.DeepEqual(wantJSON, gotJSON) || want.Hash != got.Hash ||
+		want.RequestHash != got.RequestHash {
 		t.Fatalf("permuted derived response changed: %s/%s vs %s/%s", wantJSON, want.Hash, gotJSON, got.Hash)
+	}
+	ruleDigest, err := RuleDependsOn.CanonicalDigest()
+	if err != nil || want.Metadata.DerivedRuleDigest != ruleDigest {
+		t.Fatalf("rule digest was not canonical: %q/%q", want.Metadata.DerivedRuleDigest, ruleDigest)
+	}
+	requestDigest, err := request.CanonicalDigest()
+	if err != nil || want.RequestHash != requestDigest {
+		t.Fatalf("request digest was not canonical: %q/%q", want.RequestHash, requestDigest)
 	}
 	if len(want.Result.DerivedDeterministic) != 2 {
 		t.Fatalf("cycle was not reduced to simple bounded closure: %#v", want.Result)
@@ -142,11 +152,64 @@ func TestDerivedCandidateClosureAndLimit(t *testing.T) {
 	if len(candidates.Result.DerivedDeterministic) != 0 || len(candidates.Result.DerivedCandidates) != 1 {
 		t.Fatalf("candidate layer leaked: %#v", candidates.Result)
 	}
+	if candidates.Result.DerivedCandidates[0].SourceLayer != FactCandidate.String() {
+		t.Fatalf("candidate source layer was promoted: %#v", candidates.Result.DerivedCandidates[0])
+	}
 	direct, err := graph.Derive(root, DerivedOptions{
 		Rule: RuleDependsOn, MaxDepth: 1, Limit: 1, Selection: SelectAll,
 	})
 	if err != nil || len(direct.Deterministic) != 1 || len(direct.Candidates) != 0 {
 		t.Fatalf("direct derived API did not enforce row limit: %#v %v", direct, err)
+	}
+}
+
+func TestDerivedBoundsRejectInvalidDirectOptions(t *testing.T) {
+	graph := New()
+	root, target := id("urn:derived:bounds:root"), id("urn:derived:bounds:target")
+	assertAdd(t, graph, NewFact(root, WasDerivedFrom, target))
+	cases := []DerivedOptions{
+		{Rule: RuleDependsOn, MaxDepth: 0, Limit: 1, Selection: SelectAll},
+		{Rule: RuleDependsOn, MaxDepth: MaxEnvelopeDepth + 1, Limit: 1, Selection: SelectAll},
+		{Rule: RuleDependsOn, MaxDepth: 1, Limit: 0, Selection: SelectAll},
+		{Rule: RuleDependsOn, MaxDepth: 1, Limit: MaxEnvelopeLimit + 1, Selection: SelectAll},
+	}
+	for _, options := range cases {
+		if _, err := graph.Derive(root, options); !errors.Is(err, ErrInvalidDerivedQuery) {
+			t.Fatalf("invalid direct options returned %v", err)
+		}
+	}
+}
+
+func TestDerivedCycleUsesBoundedNodeStates(t *testing.T) {
+	graph := New()
+	root := id("urn:derived:state:root")
+	a := id("urn:derived:state:a")
+	b := id("urn:derived:state:b")
+	c := id("urn:derived:state:c")
+	d := id("urn:derived:state:d")
+	assertAdd(t, graph, NewFact(root, WasDerivedFrom, a))
+	assertAdd(t, graph, NewFact(a, WasDerivedFrom, b))
+	assertAdd(t, graph, NewFact(b, WasDerivedFrom, a))
+	assertAdd(t, graph, NewFact(b, WasDerivedFrom, c))
+	assertAdd(t, graph, NewFact(c, WasDerivedFrom, b))
+	assertAdd(t, graph, NewFact(c, WasDerivedFrom, d))
+	beforeNodes := graph.Nodes()
+	result, err := graph.Derive(root, DerivedOptions{
+		Rule: RuleDependsOn, MaxDepth: 4, Limit: MaxEnvelopeLimit, Selection: SelectDeterministic,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Deterministic) != 4 {
+		t.Fatalf("cycle state visit emitted wrong closure: %#v", result.Deterministic)
+	}
+	for _, row := range result.Deterministic {
+		if row.Object == root || row.Depth > 4 {
+			t.Fatalf("cycle or depth escaped closure: %#v", row)
+		}
+	}
+	if !reflect.DeepEqual(graph.Nodes(), beforeNodes) {
+		t.Fatal("bounded closure mutated graph nodes")
 	}
 }
 

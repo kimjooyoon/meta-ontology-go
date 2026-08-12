@@ -100,6 +100,7 @@ type EnvelopeMetadata struct {
 	ProvenanceStatus  string           `json:"provenance_status"`
 	DerivedStatus     string           `json:"derived_status"`
 	DerivedRuleSchema string           `json:"derived_rule_schema,omitempty"`
+	DerivedRuleDigest string           `json:"derived_rule_digest,omitempty"`
 	AuthorityLabels   []AuthorityLabel `json:"authority_labels"`
 }
 
