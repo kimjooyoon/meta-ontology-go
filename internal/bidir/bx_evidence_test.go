@@ -205,10 +205,15 @@ func TestBXEvidenceRejectsTamperedCanonicalDeltaEvidence(t *testing.T) {
 
 func TestEvidenceRetainsSameFactKeyWithDistinctIDsAndSpans(t *testing.T) {
 	first := NewSourcedFact(DeterministicFact, "billing://activity/pay-order", PredicateInvokes, "billing://activity/audit-payment", SourceSpan{File: "a.go", Start: 1, End: 2})
+	first.EvidenceID = "urn:gooo:evidence:explicit-a"
 	second := NewSourcedFact(DeterministicFact, "billing://activity/pay-order", PredicateInvokes, "billing://activity/audit-payment", SourceSpan{File: "b.go", Start: 3, End: 4})
+	second.EvidenceID = "urn:gooo:evidence:explicit-b"
 	evidence := evidenceSpans(FactSet{first, second})
 	if evidence.IDCount != 2 || evidence.SpanCount != 2 || evidence.IDs[0] == evidence.IDs[1] {
 		t.Fatalf("same FactKey evidence was collapsed: %#v", evidence)
+	}
+	if evidence.EvidenceIDAuthority != "explicit" || !reflect.DeepEqual(evidence.IDs, []string{first.EvidenceID, second.EvidenceID}) {
+		t.Fatalf("explicit evidence IDs were not retained: %#v", evidence)
 	}
 	if evidence.FactKeys[0] != evidence.FactKeys[1] || evidence.Hash == "" {
 		t.Fatalf("same-edge evidence boundary lost key/hash: %#v", evidence)

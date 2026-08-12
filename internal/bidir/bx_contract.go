@@ -94,12 +94,13 @@ type BXTransactionEvidence struct {
 
 // BXEvidenceSpanSet records evidence IDs and source-span cardinality.
 type BXEvidenceSpanSet struct {
-	IDs       []string
-	FactKeys  []string
-	Spans     []SourceSpan
-	IDCount   int
-	SpanCount int
-	Hash      string
+	IDs                 []string
+	FactKeys            []string
+	Spans               []SourceSpan
+	IDCount             int
+	SpanCount           int
+	Hash                string
+	EvidenceIDAuthority string
 }
 
 // BXDeltaEvidence records ordered delta and locality evidence.
@@ -232,7 +233,7 @@ func validateDeltaEvidence(delta BXDeltaEvidence) error {
 	if delta.PortOrderHash == "" || delta.RelationOrderHash == "" {
 		return errors.New("ordered port/relation hashes are missing")
 	}
-	if delta.EvidenceHash == "" || delta.EvidenceHash != delta.EvidenceSpans.Hash || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.IDs) || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.FactKeys) || delta.EvidenceSpans.SpanCount != len(delta.EvidenceSpans.Spans) || !uniqueStrings(delta.EvidenceSpans.IDs) {
+	if delta.EvidenceHash == "" || delta.EvidenceHash != delta.EvidenceSpans.Hash || (delta.EvidenceSpans.EvidenceIDAuthority != "explicit" && delta.EvidenceSpans.EvidenceIDAuthority != "derived-non-authoritative") || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.IDs) || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.FactKeys) || delta.EvidenceSpans.SpanCount != len(delta.EvidenceSpans.Spans) || !uniqueStrings(delta.EvidenceSpans.IDs) {
 		return errors.New("evidence ID/span set is incomplete")
 	}
 	return validateDeltaConsistency(delta)

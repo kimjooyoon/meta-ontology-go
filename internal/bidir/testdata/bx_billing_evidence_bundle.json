@@ -49,7 +49,8 @@
         "spans": ["10:payment.go42,58,0,0,0,0;"],
         "id_count": 1,
         "span_count": 1,
-        "hash": "6e3c3d2e9e22b37ca69d06b64211549546915de41cc101235d1368b40414a6a6"
+        "hash": "53ac589cbeb1b3e79ffd38c0b1d32c1e603a5552e6fe2ba3e212bef9886efffe",
+        "evidence_id_authority": "derived-non-authoritative"
       },
       "partial_observation": false
     },
@@ -78,7 +79,8 @@
         "spans": [],
         "id_count": 1,
         "span_count": 0,
-        "hash": "950fcb77a3d4b4f39daa5d3a3842562e9958ebaa850a4ac2eb4c74e5246a431d"
+        "hash": "f53b36a2fd1b2f1fd130ec9782f6f95a4e40e78db3c58ecfb47baecba795219c",
+        "evidence_id_authority": "derived-non-authoritative"
       },
       "partial_observation": true
     }

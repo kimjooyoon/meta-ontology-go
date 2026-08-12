@@ -29,10 +29,14 @@ func (l FactLayer) String() string {
 
 // Fact is the adapter format for parser and Go analyzer observations.
 type Fact struct {
-	Layer       FactLayer
-	Subject     ID
-	Predicate   Predicate
-	Object      ID
+	Layer     FactLayer
+	Subject   ID
+	Predicate Predicate
+	Object    ID
+	// EvidenceID is an adapter-supplied provenance identifier. It is kept out
+	// of FactKey and semantic canonicalization so same-edge observations can
+	// retain distinct evidence records without changing fact identity.
+	EvidenceID  string
 	SubjectKind Kind
 	ObjectKind  Kind
 	Attributes  map[string]string

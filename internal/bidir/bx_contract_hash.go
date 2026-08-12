@@ -78,6 +78,9 @@ func factID(fact Fact) string {
 }
 
 func factEvidenceID(fact Fact, occurrence int) string {
+	if fact.EvidenceID != "" {
+		return fact.EvidenceID
+	}
 	return "urn:gooo:evidence:" + digest(fmt.Sprintf("%s|%d", factCanonical(fact), occurrence))
 }
 
@@ -115,9 +118,13 @@ func evidenceSpans(facts FactSet) BXEvidenceSpanSet {
 	ids := make([]string, len(facts))
 	factKeys := make([]string, len(facts))
 	occurrences := make(map[string]int, len(facts))
+	authority := "explicit"
 	for index, fact := range facts {
 		canonical := factCanonical(fact)
 		ids[index] = factEvidenceID(fact, occurrences[canonical])
+		if fact.EvidenceID == "" {
+			authority = "derived-non-authoritative"
+		}
 		occurrences[canonical]++
 		factKeys[index] = factID(fact)
 	}
@@ -128,11 +135,12 @@ func evidenceSpans(facts FactSet) BXEvidenceSpanSet {
 		}
 	}
 	sort.Slice(spans, func(i, j int) bool { return spanLess(spans[i], spans[j]) })
-	return BXEvidenceSpanSet{IDs: ids, FactKeys: factKeys, Spans: spans, IDCount: len(ids), SpanCount: len(spans), Hash: digest(spanSetCanonical(ids, factKeys, spans))}
+	return BXEvidenceSpanSet{IDs: ids, FactKeys: factKeys, Spans: spans, IDCount: len(ids), SpanCount: len(spans), Hash: digest(spanSetCanonical(authority, ids, factKeys, spans)), EvidenceIDAuthority: authority}
 }
 
-func spanSetCanonical(ids, factKeys []string, spans []SourceSpan) string {
+func spanSetCanonical(authority string, ids, factKeys []string, spans []SourceSpan) string {
 	var builder strings.Builder
+	writePart(&builder, authority)
 	for _, id := range ids {
 		writePart(&builder, id)
 	}

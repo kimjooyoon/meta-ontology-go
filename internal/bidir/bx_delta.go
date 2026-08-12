@@ -44,42 +44,44 @@ func makeDeltaEvidenceUnchecked(delta FactDelta, locality Locality, partial bool
 }
 
 type canonicalDeltaEvidence struct {
-	SequenceHash     string   `json:"sequence_hash"`
-	OrderHash        string   `json:"order_hash"`
-	Added            []string `json:"added"`
-	Removed          []string `json:"removed"`
-	Candidates       []string `json:"candidates"`
-	PortSequence     []string `json:"port_sequence"`
-	RelationSequence []string `json:"relation_sequence"`
-	Touched          []ID     `json:"touched"`
-	Affected         []ID     `json:"affected"`
-	ClosureMembers   []ID     `json:"closure_members"`
-	ClosureHash      string   `json:"closure_hash"`
-	EvidenceIDs      []string `json:"evidence_ids"`
-	EvidenceFactKeys []string `json:"evidence_fact_keys"`
-	EvidenceSpans    []string `json:"evidence_spans"`
-	EvidenceHash     string   `json:"evidence_hash"`
-	Partial          bool     `json:"partial_observation"`
+	SequenceHash        string   `json:"sequence_hash"`
+	OrderHash           string   `json:"order_hash"`
+	Added               []string `json:"added"`
+	Removed             []string `json:"removed"`
+	Candidates          []string `json:"candidates"`
+	PortSequence        []string `json:"port_sequence"`
+	RelationSequence    []string `json:"relation_sequence"`
+	Touched             []ID     `json:"touched"`
+	Affected            []ID     `json:"affected"`
+	ClosureMembers      []ID     `json:"closure_members"`
+	ClosureHash         string   `json:"closure_hash"`
+	EvidenceIDs         []string `json:"evidence_ids"`
+	EvidenceFactKeys    []string `json:"evidence_fact_keys"`
+	EvidenceSpans       []string `json:"evidence_spans"`
+	EvidenceIDAuthority string   `json:"evidence_id_authority"`
+	EvidenceHash        string   `json:"evidence_hash"`
+	Partial             bool     `json:"partial_observation"`
 }
 
 func deltaJSON(delta FactDelta, evidence BXDeltaEvidence) string {
 	value := canonicalDeltaEvidence{
-		SequenceHash:     evidence.SequenceHash,
-		OrderHash:        evidence.OrderHash,
-		Added:            factCanonicalValues(delta.Added),
-		Removed:          factCanonicalValues(delta.Removed),
-		Candidates:       evidence.Candidates,
-		PortSequence:     evidence.PortSequence,
-		RelationSequence: evidence.RelationSequence,
-		Touched:          evidence.Locality.Touched,
-		Affected:         evidence.Locality.Affected,
-		ClosureMembers:   evidence.ClosureMembers,
-		ClosureHash:      evidence.LocalityClosureHash,
-		EvidenceIDs:      evidence.EvidenceSpans.IDs,
-		EvidenceFactKeys: evidence.EvidenceSpans.FactKeys,
-		EvidenceSpans:    spanTexts(evidence.EvidenceSpans.Spans),
-		EvidenceHash:     evidence.EvidenceHash,
-		Partial:          evidence.PartialObservation,
+		SequenceHash:        evidence.SequenceHash,
+		OrderHash:           evidence.OrderHash,
+		Added:               factCanonicalValues(delta.Added),
+		Removed:             factCanonicalValues(delta.Removed),
+		Candidates:          evidence.Candidates,
+		PortSequence:        evidence.PortSequence,
+		RelationSequence:    evidence.RelationSequence,
+		Touched:             evidence.Locality.Touched,
+		Affected:            evidence.Locality.Affected,
+		ClosureMembers:      evidence.ClosureMembers,
+		ClosureHash:         evidence.LocalityClosureHash,
+		EvidenceIDs:         evidence.EvidenceSpans.IDs,
+		EvidenceFactKeys:    evidence.EvidenceSpans.FactKeys,
+		EvidenceSpans:       spanTexts(evidence.EvidenceSpans.Spans),
+		EvidenceIDAuthority: evidence.EvidenceSpans.EvidenceIDAuthority,
+		EvidenceHash:        evidence.EvidenceHash,
+		Partial:             evidence.PartialObservation,
 	}
 	result, _ := canonicalJSON(value)
 	return result
