@@ -13,7 +13,7 @@ func verifiedTestWorkflow(request Request) WorkflowBinding {
 		Status: WorkflowEvidenceVerified, Repository: "caller/repository",
 		BaseSHA: strings.Repeat("a", 40), HeadSHA: head,
 		EventRef: "event-002", CheckoutRef: "refs/pull/104/merge",
-		Run: "run-002", Attempt: 1, ArtifactCount: 1,
+		Run: request.RunID, Attempt: 1, ArtifactCount: 1,
 		Jobs: successfulReceiptJobs(head),
 	}
 }

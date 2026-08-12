@@ -176,6 +176,9 @@ func (r ProvenanceReceipt) Validate() error {
 	if err := r.Binding.validate(); err != nil {
 		return fmt.Errorf("receipt binding: %w", err)
 	}
+	if r.Run != r.Binding.RunID {
+		return oracleError(OracleID001, "receipt run does not match observation binding")
+	}
 	for _, field := range []struct {
 		name  string
 		value string

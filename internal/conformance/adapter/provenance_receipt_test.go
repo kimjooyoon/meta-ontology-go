@@ -101,7 +101,7 @@ func newRejectedReceipt(t *testing.T, reason RejectionKind, outcome ReceiptOutco
 		Schema: ProvenanceReceiptSchema, Repository: "caller/repository",
 		BaseSHA: strings.Repeat("a", 40), HeadSHA: head,
 		EventRef: "event-002", CheckoutRef: "refs/pull/104/merge",
-		Run: "run-002", Attempt: 1, ArtifactCount: workflow.ArtifactCount,
+		Run: workflow.Run, Attempt: 1, ArtifactCount: workflow.ArtifactCount,
 		Jobs:               successfulReceiptJobs(head),
 		Binding:            requestObservationBinding(request),
 		PreconditionDigest: digestBytes([]byte("precondition")),

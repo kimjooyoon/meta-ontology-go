@@ -53,6 +53,12 @@ func TestProvenanceReceiptRejectsObserverWorkflowRelabel(t *testing.T) {
 	assertReceiptOracleError(t, receipt.ValidateObservedNoWrite(request, &observation), OracleNW003)
 }
 
+func TestProvenanceReceiptRejectsRunBindingRelabel(t *testing.T) {
+	receipt, _, _ := newCancelledReceipt(t)
+	receipt.Run = "relabeled-run"
+	assertReceiptOracleError(t, receipt.Validate(), OracleID001)
+}
+
 func TestProvenanceReceiptRejectsMissingOrZeroArtifact(t *testing.T) {
 	receipt, _, _ := newCancelledReceipt(t)
 	receipt.ArtifactCount = 0
