@@ -73,6 +73,12 @@ type Symbol struct {
 	Detail         string
 	Range          Range
 	SelectionRange Range
+
+	// identityRange preserves the canonical syntax span of an explicit
+	// semantic identity literal for local navigation. Activity identities are
+	// intentionally absent here because their IDs belong to semantic lowering.
+	identityRange Range
+	hasIdentity   bool
 }
 
 type Reference struct {

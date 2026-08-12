@@ -110,3 +110,27 @@ func TestSyntaxDiagnosticsHandleInvalidUTF8Boundary(t *testing.T) {
 		t.Fatalf("invalid byte diagnostic = %#v", diagnostic)
 	}
 }
+
+func TestSyntaxEntityIdentitySpanHandlesInvalidUTF8WithoutMutation(t *testing.T) {
+	bytes := []byte("package p\r\nnamespace n\r\nentity Order id \"urn:order\"\r\n")
+	bytes = append(bytes, 0xff)
+	source := string(bytes)
+	file, diagnostics := syntax.ParseFile("invalid-identity.gooo", source)
+	originalSource := source
+	originalDiagnostics := append(syntax.Diagnostics(nil), diagnostics...)
+	result, err := adaptSyntaxResult("invalid-identity.gooo", source, file, diagnostics)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Symbols) != 1 {
+		t.Fatalf("symbols = %#v", result.Symbols)
+	}
+	symbol := result.Symbols[0]
+	if !symbol.hasIdentity || symbol.identityRange.Start != (Position{Line: 2, Character: 16}) ||
+		symbol.identityRange.End != (Position{Line: 2, Character: 27}) {
+		t.Fatalf("identity range = %#v", symbol.identityRange)
+	}
+	if source != originalSource || !reflect.DeepEqual(diagnostics, originalDiagnostics) {
+		t.Fatalf("identity mapping mutated source or diagnostics: source=%q diagnostics=%#v", source, diagnostics)
+	}
+}

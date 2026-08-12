@@ -120,9 +120,19 @@ func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl)
 	if err != nil {
 		return err
 	}
+	identityRange := Range{}
+	hasIdentity := false
+	if entity.ID != "" && !entity.IDSpan.IsEmpty() {
+		identityRange, err = syntaxRange(source, entity.IDSpan)
+		if err != nil {
+			return err
+		}
+		hasIdentity = true
+	}
 	result.Symbols = append(result.Symbols, Symbol{
 		Name: entity.Name, ID: entity.ID, Kind: SymbolClass,
 		Detail: "entity " + entity.Name, Range: rangeValue, SelectionRange: selection,
+		identityRange: identityRange, hasIdentity: hasIdentity,
 	})
 	return nil
 }

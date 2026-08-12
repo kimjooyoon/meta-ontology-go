@@ -69,7 +69,7 @@ func (server *Server) definition(params TextDocumentPositionParams) []Location {
 	if !ok {
 		return nil
 	}
-	target, _, _, ok := wordAt(document.text, params.Position)
+	target, ok := definitionTarget(document.text, params.Position, document.result.Symbols)
 	if !ok {
 		return nil
 	}
@@ -78,6 +78,29 @@ func (server *Server) definition(params TextDocumentPositionParams) []Location {
 		return nil
 	}
 	return []Location{{URI: params.TextDocument.URI, Range: symbol.SelectionRange}}
+}
+
+func definitionTarget(source string, position Position, symbols []Symbol) (string, bool) {
+	for _, symbol := range symbols {
+		if symbol.hasIdentity && positionInRange(position, symbol.identityRange) {
+			return symbol.ID, true
+		}
+	}
+	target, _, _, ok := wordAt(source, position)
+	return target, ok
+}
+
+func positionInRange(position Position, value Range) bool {
+	if position.Line < value.Start.Line || position.Line > value.End.Line {
+		return false
+	}
+	if position.Line == value.Start.Line && position.Character < value.Start.Character {
+		return false
+	}
+	if position.Line == value.End.Line && position.Character >= value.End.Character {
+		return false
+	}
+	return true
 }
 
 func resolveDefinitionSymbol(symbols []Symbol, target string) (Symbol, bool) {
