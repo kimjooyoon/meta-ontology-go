@@ -130,6 +130,14 @@ type MetadataResult struct {
 	Metadata GenerationMetadata
 }
 
+// ProjectionMetadataV1 is the versioned wire surface for generator output.
+type ProjectionMetadataV1 struct {
+	Schema    string             `json:"schema"`
+	Source    []byte             `json:"source"`
+	SourceMap SourceMap          `json:"source_map"`
+	Metadata  GenerationMetadata `json:"metadata"`
+}
+
 // GenerationMetadata describes reproducible projection inputs and trust.
 type GenerationMetadata struct {
 	SourceDigest     string            `json:"source_digest"`
