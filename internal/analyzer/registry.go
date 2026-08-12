@@ -2,7 +2,11 @@ package analyzer
 
 import (
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
+
+const registrySchema = "analyzer-registry/v1"
 
 // Registry contains semantic symbols allowed to cross the Go / semantic
 // boundary. Callers provide the stable symbol keys; the registry does not load
@@ -59,6 +63,31 @@ func (r *Registry) all() []Registration {
 	sortRegistrations(entries)
 	return entries
 }
+
+// Canonical returns the order-independent identity mapping used by the
+// analyzer. Source spans are evidence, not registry identity.
+func (r *Registry) Canonical() string {
+	entries := r.all()
+	var builder strings.Builder
+	builder.WriteString(registrySchema)
+	builder.WriteByte('\n')
+	writeBindingField(&builder, intString(len(entries)))
+	for _, entry := range entries {
+		builder.WriteString("entry\n")
+		writeBindingField(&builder, entry.Ref.PackagePath)
+		writeBindingField(&builder, entry.Ref.PackageName)
+		writeBindingField(&builder, entry.Ref.Receiver)
+		writeBindingField(&builder, entry.Ref.Name)
+		writeBindingField(&builder, string(entry.Kind))
+		writeBindingField(&builder, entry.Identity.Namespace)
+		writeBindingField(&builder, entry.Identity.ID)
+	}
+	return builder.String()
+}
+
+// Digest returns the versioned identity of the complete registry mapping.
+// Nil and empty registries intentionally have the same deterministic digest.
+func (r *Registry) Digest() string { return semantic.StableHashString(r.Canonical()) }
 
 func validateRegistration(registration Registration) error {
 	if !validKind(registration.Kind) {

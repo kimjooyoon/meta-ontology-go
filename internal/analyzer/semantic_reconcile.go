@@ -17,6 +17,7 @@ type SemanticReconcileResult struct {
 	SourceMatch      bool
 	PolicyMatch      bool
 	ToolchainMatch   bool
+	RegistryMatch    bool
 	ObservationMatch bool
 	Accepted         bool
 	WriteEffect      ReconcileWriteEffect
@@ -30,6 +31,24 @@ func ReconcileSemantic(
 	observed SemanticAdapterResult, expected semantic.IR, sourceDigest, policyDigest,
 	toolchainDigest, observationDigest string,
 ) SemanticReconcileResult {
+	return reconcileSemantic(observed, expected, sourceDigest, policyDigest, toolchainDigest,
+		observed.RegistryDigest, observationDigest)
+}
+
+// ReconcileSemanticWithRegistry compares a result against an external
+// registry digest. Use it when the expected contract names its registry.
+func ReconcileSemanticWithRegistry(
+	observed SemanticAdapterResult, expected semantic.IR, sourceDigest, policyDigest,
+	toolchainDigest, registryDigest, observationDigest string,
+) SemanticReconcileResult {
+	return reconcileSemantic(observed, expected, sourceDigest, policyDigest, toolchainDigest,
+		registryDigest, observationDigest)
+}
+
+func reconcileSemantic(
+	observed SemanticAdapterResult, expected semantic.IR, sourceDigest, policyDigest,
+	toolchainDigest, registryDigest, observationDigest string,
+) SemanticReconcileResult {
 	comparison := semantic.CompareIR(observed.IR, expected)
 	deltaValid := normalizedDeltaValid(observed)
 	authoritySafe := normalizedDeltaAuthoritySafe(observed)
@@ -40,11 +59,13 @@ func ReconcileSemantic(
 		SourceMatch:      observed.SourceDigest == sourceDigest,
 		PolicyMatch:      observed.PolicyDigest == policyDigest,
 		ToolchainMatch:   observed.ToolchainDigest == toolchainDigest,
+		RegistryMatch:    observed.RegistryDigest == registryDigest && registryDigest != "",
 		ObservationMatch: observed.ImplementationObservationDigest == observationDigest && observationDigest != "",
 		WriteEffect:      ReconcileNoWrite,
 	}
 	result.Accepted = deltaValid && authoritySafe && comparison.SemanticEqual && comparison.ProvenanceEqual &&
-		result.SourceMatch && result.PolicyMatch && result.ToolchainMatch && result.ObservationMatch
+		result.SourceMatch && result.PolicyMatch && result.ToolchainMatch && result.RegistryMatch &&
+		result.ObservationMatch
 	if !result.Accepted {
 		result.FailureCode = reconcileFailureCode(result)
 	}
@@ -63,6 +84,9 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	if result.ImplementationObservationDigest != implementationObservationDigest(
 		result.ImplementationObservations, result.SlotObservations,
 	) {
+		return false
+	}
+	if !validDigest(result.RegistryDigest) {
 		return false
 	}
 	if err := validateDeltaShape(result.NormalizedDelta); err != nil {
@@ -100,6 +124,7 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 		binding := DeltaBinding{
 			SourceDigest: observation.SourceDigest, BaseDigest: observation.BaseDigest,
 			PolicyDigest: observation.PolicyDigest, ToolchainDigest: observation.ToolchainDigest,
+			RegistryDigest: observation.RegistryDigest,
 		}
 		if !binding.complete() || observation.Origin != OriginImplementation {
 			return false
@@ -131,7 +156,8 @@ func normalizedDeltaBindingsMatch(result SemanticAdapterResult) bool {
 	var binding *DeltaBinding
 	accept := func(candidate DeltaBinding) bool {
 		if !candidate.complete() || candidate.SourceDigest != result.SourceDigest ||
-			candidate.PolicyDigest != result.PolicyDigest || candidate.ToolchainDigest != result.ToolchainDigest {
+			candidate.PolicyDigest != result.PolicyDigest || candidate.ToolchainDigest != result.ToolchainDigest ||
+			candidate.RegistryDigest != result.RegistryDigest {
 			return false
 		}
 		if binding == nil {
@@ -153,13 +179,15 @@ func normalizedDeltaBindingsMatch(result SemanticAdapterResult) bool {
 	}
 	for _, observation := range result.NormalizedDelta.DeferredImplementation {
 		if !validDigest(observation.SourceDigest) || observation.SourceDigest != result.SourceDigest ||
-			observation.PolicyDigest != result.PolicyDigest || observation.ToolchainDigest != result.ToolchainDigest {
+			observation.PolicyDigest != result.PolicyDigest || observation.ToolchainDigest != result.ToolchainDigest ||
+			!validDigest(observation.RegistryDigest) || observation.RegistryDigest != result.RegistryDigest {
 			return false
 		}
 		if binding == nil {
 			binding = &DeltaBinding{
 				SourceDigest: observation.SourceDigest, BaseDigest: observation.BaseDigest,
 				PolicyDigest: observation.PolicyDigest, ToolchainDigest: observation.ToolchainDigest,
+				RegistryDigest: observation.RegistryDigest,
 			}
 		} else if binding.BaseDigest != observation.BaseDigest {
 			return false
@@ -174,6 +202,7 @@ func normalizedDeltaBindingsMatch(result SemanticAdapterResult) bool {
 		if !accept(DeltaBinding{
 			SourceDigest: slot.SourceDigest, BaseDigest: slot.BaseDigest,
 			PolicyDigest: slot.PolicyDigest, ToolchainDigest: slot.ToolchainDigest,
+			RegistryDigest: slot.RegistryDigest,
 		}) {
 			return false
 		}
@@ -217,6 +246,8 @@ func reconcileFailureCode(result SemanticReconcileResult) string {
 		return "candidate-or-deferred-promotion"
 	case !result.Comparison.LeftValid || !result.Comparison.RightValid:
 		return "invalid-semantic-ir"
+	case !result.RegistryMatch:
+		return "registry-mismatch"
 	case !result.SourceMatch || !result.ObservationMatch:
 		return "source-or-observation-mismatch"
 	case !result.PolicyMatch || !result.ToolchainMatch:

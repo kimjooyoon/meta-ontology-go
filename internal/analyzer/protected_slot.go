@@ -20,6 +20,7 @@ type ProtectedSlotObservation struct {
 	BaseDigest      string `json:"base_digest"`
 	PolicyDigest    string `json:"policy_digest"`
 	ToolchainDigest string `json:"toolchain_digest"`
+	RegistryDigest  string `json:"registry_digest"`
 	SlotID          string `json:"slot_id"`
 	Status          string `json:"status"`
 	Span            Span   `json:"span"`
@@ -37,6 +38,7 @@ func (o ProtectedSlotObservation) Canonical() string {
 	writeBindingField(&builder, o.BaseDigest)
 	writeBindingField(&builder, o.PolicyDigest)
 	writeBindingField(&builder, o.ToolchainDigest)
+	writeBindingField(&builder, o.RegistryDigest)
 	writeBindingField(&builder, o.SlotID)
 	writeBindingField(&builder, o.Status)
 	writeSlotSpan(&builder, o.Span)
@@ -109,14 +111,15 @@ func collectProtectedSlots(sources []SourceFile) ([]protectedSlot, error) {
 }
 
 func bindProtectedSlots(
-	slots []protectedSlot, sourceDigest, baseDigest, policyDigest, toolchainDigest string,
+	slots []protectedSlot, sourceDigest, baseDigest, policyDigest, toolchainDigest,
+	registryDigest string,
 ) []ProtectedSlotObservation {
 	observations := make([]ProtectedSlotObservation, 0, len(slots))
 	for _, slot := range slots {
 		observations = append(observations, ProtectedSlotObservation{
 			SourceDigest: sourceDigest, SourceFile: slot.SourceFile,
 			BaseDigest: baseDigest, PolicyDigest: policyDigest,
-			ToolchainDigest: toolchainDigest, SlotID: slot.SlotID,
+			ToolchainDigest: toolchainDigest, RegistryDigest: registryDigest, SlotID: slot.SlotID,
 			Status: ProtectedSlotDeferred, Span: slot.Span,
 			BodySpan: slot.BodySpan, BodyDigest: slot.BodyDigest,
 		})
@@ -138,7 +141,8 @@ func writeSlotSpan(builder *strings.Builder, span Span) {
 func validProtectedSlotObservation(observation ProtectedSlotObservation) bool {
 	if !validDigest(observation.SourceDigest) || !validDigest(observation.BaseDigest) ||
 		!validDigest(observation.PolicyDigest) || !validDigest(observation.ToolchainDigest) ||
-		!validDigest(observation.BodyDigest) || observation.SourceFile == "" || observation.SlotID == "" ||
+		!validDigest(observation.RegistryDigest) || !validDigest(observation.BodyDigest) ||
+		observation.SourceFile == "" || observation.SlotID == "" ||
 		observation.Status != ProtectedSlotDeferred {
 		return false
 	}
@@ -161,7 +165,8 @@ func validProtectedSpan(span Span) bool {
 }
 
 func validateSlotObservations(
-	slots []ProtectedSlotObservation, sourceDigest, baseDigest, policyDigest, toolchainDigest string,
+	slots []ProtectedSlotObservation, sourceDigest, baseDigest, policyDigest, toolchainDigest,
+	registryDigest string,
 ) error {
 	seen := make(map[string]struct{}, len(slots))
 	for _, slot := range slots {
@@ -169,7 +174,8 @@ func validateSlotObservations(
 			return adapterError(AdapterSlotConfig, "", slot.SlotID, "protected slot observation is invalid")
 		}
 		if slot.SourceDigest != sourceDigest || slot.BaseDigest != baseDigest ||
-			slot.PolicyDigest != policyDigest || slot.ToolchainDigest != toolchainDigest {
+			slot.PolicyDigest != policyDigest || slot.ToolchainDigest != toolchainDigest ||
+			slot.RegistryDigest != registryDigest {
 			return adapterError(AdapterSlotConfig, "", slot.SlotID, "protected slot binding does not match adapter input")
 		}
 		if _, exists := seen[slot.SlotID]; exists {

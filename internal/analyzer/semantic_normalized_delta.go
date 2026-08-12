@@ -17,6 +17,7 @@ type DeltaBinding struct {
 	BaseDigest      string `json:"base_digest"`
 	PolicyDigest    string `json:"policy_digest"`
 	ToolchainDigest string `json:"toolchain_digest"`
+	RegistryDigest  string `json:"registry_digest"`
 }
 
 func (b DeltaBinding) canonical() string {
@@ -25,12 +26,14 @@ func (b DeltaBinding) canonical() string {
 	writeBindingField(&builder, b.BaseDigest)
 	writeBindingField(&builder, b.PolicyDigest)
 	writeBindingField(&builder, b.ToolchainDigest)
+	writeBindingField(&builder, b.RegistryDigest)
 	return builder.String()
 }
 
 func (b DeltaBinding) complete() bool {
 	return validDigest(b.SourceDigest) && validDigest(b.BaseDigest) &&
-		validDigest(b.PolicyDigest) && validDigest(b.ToolchainDigest)
+		validDigest(b.PolicyDigest) && validDigest(b.ToolchainDigest) &&
+		validDigest(b.RegistryDigest)
 }
 
 // NormalizedSignatureFact is an authoritative, typed signature fact and its
@@ -147,6 +150,7 @@ func newSemanticNormalizedDelta(
 	binding := DeltaBinding{
 		SourceDigest: input.SourceDigest, BaseDigest: baseDigest,
 		PolicyDigest: input.Policy.Digest(), ToolchainDigest: input.ToolchainDigest,
+		RegistryDigest: result.RegistryDigest,
 	}
 	delta.SignatureFacts = normalizedSignatureFacts(input, result, binding)
 	var err error

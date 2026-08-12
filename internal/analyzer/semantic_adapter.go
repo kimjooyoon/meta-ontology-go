@@ -18,6 +18,7 @@ type SemanticAdapterInput struct {
 	EvidenceKind     semantic.EvidenceKind
 	SourceDigest     string
 	ToolchainDigest  string
+	Registry         *Registry
 	SlotObservations []ProtectedSlotObservation
 }
 
@@ -29,6 +30,7 @@ type SemanticAdapterResult struct {
 	SourceDigest                    string
 	PolicyDigest                    string
 	ToolchainDigest                 string
+	RegistryDigest                  string
 	BindingDigest                   string
 	ImplementationObservationDigest string
 	SlotObservationDigest           string
@@ -62,12 +64,13 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 		return SemanticAdapterResult{}, err
 	}
 	if err := validateSlotObservations(input.SlotObservations, input.SourceDigest, baseDigest,
-		input.Policy.Digest(), input.ToolchainDigest); err != nil {
+		input.Policy.Digest(), input.ToolchainDigest, input.Registry.Digest()); err != nil {
 		return SemanticAdapterResult{}, err
 	}
 	transaction := SemanticAdapterResult{
 		IR: base, SourceDigest: input.SourceDigest, PolicyDigest: input.Policy.Digest(),
 		ToolchainDigest:       input.ToolchainDigest,
+		RegistryDigest:        input.Registry.Digest(),
 		SlotObservations:      append([]ProtectedSlotObservation(nil), input.SlotObservations...),
 		DeferredCandidates:    copyCandidates(input.Analysis.Delta.Candidates),
 		ImplementationDetails: copyDetails(input.Analysis.Delta.ImplementationDetails),

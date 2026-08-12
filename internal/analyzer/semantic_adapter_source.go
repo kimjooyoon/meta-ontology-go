@@ -52,6 +52,7 @@ func AnalyzeAndAdaptSemantic(input SourceSemanticAdapterInput) (SemanticAdapterR
 	}
 	boundSlots := bindProtectedSlots(
 		slots, sourceDigest, base.StableHash(), input.Policy.Digest(), ToolchainDigest(toolchain),
+		input.Registry.Digest(),
 	)
 	analysis, err := AnalyzePackage(sources, input.Registry)
 	if err != nil {
@@ -62,7 +63,7 @@ func AnalyzeAndAdaptSemantic(input SourceSemanticAdapterInput) (SemanticAdapterR
 	return AdaptSemantic(SemanticAdapterInput{
 		Base: input.Base, Analysis: analysis, Policy: input.Policy,
 		Producer: input.Producer, EvidenceKind: input.EvidenceKind,
-		SourceDigest: sourceDigest, ToolchainDigest: ToolchainDigest(toolchain),
+		SourceDigest: sourceDigest, ToolchainDigest: ToolchainDigest(toolchain), Registry: input.Registry,
 		SlotObservations: boundSlots,
 	})
 }

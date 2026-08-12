@@ -36,6 +36,9 @@ func validateDeltaShape(delta SemanticNormalizedDelta) error {
 		if observation.Origin != OriginImplementation || !knownAnalyzerRelation(observation.Relation) {
 			return fmt.Errorf("deferred implementation observation is not typed")
 		}
+		if !validDigest(observation.RegistryDigest) {
+			return fmt.Errorf("deferred implementation observation registry binding is incomplete")
+		}
 		if _, err := semantic.ParseIdentity(observation.Subject.ID); err != nil {
 			return err
 		}

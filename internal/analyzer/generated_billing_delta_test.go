@@ -43,7 +43,7 @@ func TestGeneratedBillingNormalizedDeltaIsStableAcrossRunsAndOrder(t *testing.T)
 	}
 	for _, field := range []string{
 		"schema_version", "signature_facts", "candidate_facts", "deferred_implementation",
-		"deferred_details", "deferred_slots", "digest",
+		"deferred_details", "deferred_slots", "registry_digest", "digest",
 	} {
 		if !strings.Contains(string(payload), `"`+field+`"`) {
 			t.Fatalf("machine-readable delta omitted %q: %s", field, payload)
@@ -162,15 +162,20 @@ func adaptGeneratedBillingSource(
 func assertGeneratedDeltaBindings(t *testing.T, result SemanticAdapterResult) {
 	t.Helper()
 	base := result.NormalizedDelta.SignatureFacts[0].Binding.BaseDigest
+	if !validDigest(result.RegistryDigest) || result.RegistryDigest != generatedBillingRegistry(t).Digest() {
+		t.Fatalf("registry binding = %q", result.RegistryDigest)
+	}
 	for _, fact := range result.NormalizedDelta.SignatureFacts {
 		binding := fact.Binding
-		if !binding.complete() || binding.BaseDigest != base || fact.Fact.Span.File == "" || fact.Evidence.ID == "" {
+		if !binding.complete() || binding.BaseDigest != base || binding.RegistryDigest != result.RegistryDigest ||
+			fact.Fact.Span.File == "" || fact.Evidence.ID == "" {
 			t.Fatalf("signature binding = %#v", binding)
 		}
 	}
 	for _, observation := range result.NormalizedDelta.DeferredImplementation {
 		if observation.BaseDigest != base || !validDigest(observation.SourceDigest) ||
-			observation.SourceFile == "" || !validDigest(observation.Fingerprint()) {
+			observation.RegistryDigest != result.RegistryDigest || observation.SourceFile == "" ||
+			!validDigest(observation.Fingerprint()) {
 			t.Fatalf("deferred observation binding = %#v, base=%q fingerprint=%q", observation, base, observation.Fingerprint())
 		}
 	}

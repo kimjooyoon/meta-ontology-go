@@ -17,6 +17,7 @@ type ImplementationObservation struct {
 	BaseDigest      string
 	PolicyDigest    string
 	ToolchainDigest string
+	RegistryDigest  string
 	Subject         Identity
 	Relation        Relation
 	Object          Identity
@@ -35,6 +36,7 @@ func (o ImplementationObservation) Canonical() string {
 	writeBindingField(&b, o.BaseDigest)
 	writeBindingField(&b, o.PolicyDigest)
 	writeBindingField(&b, o.ToolchainDigest)
+	writeBindingField(&b, o.RegistryDigest)
 	writeBindingField(&b, o.Subject.Namespace)
 	writeBindingField(&b, o.Subject.ID)
 	writeBindingField(&b, string(o.Relation))
@@ -71,7 +73,7 @@ func collectImplementationObservations(
 		observations = append(observations, ImplementationObservation{
 			SourceDigest: input.SourceDigest, SourceFile: fact.Span.Filename,
 			BaseDigest: base.StableHash(), PolicyDigest: input.Policy.Digest(),
-			ToolchainDigest: input.ToolchainDigest, Subject: fact.Subject,
+			ToolchainDigest: input.ToolchainDigest, RegistryDigest: input.Registry.Digest(), Subject: fact.Subject,
 			Relation: fact.Relation, Object: fact.Object, Origin: fact.Origin,
 			Span: fact.Span,
 		})

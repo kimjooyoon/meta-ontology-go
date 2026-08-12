@@ -31,6 +31,7 @@ func TestGeneratedBillingProtectedSlotIsStableAcrossReplayAndOrder(t *testing.T)
 			slot.SourceFile != source.Filename || slot.SourceDigest != result.SourceDigest ||
 			slot.BaseDigest != result.NormalizedDelta.SignatureFacts[0].Binding.BaseDigest ||
 			slot.PolicyDigest != result.PolicyDigest || slot.ToolchainDigest != result.ToolchainDigest ||
+			slot.RegistryDigest != result.RegistryDigest ||
 			slot.BodySpan.End.Offset <= slot.BodySpan.Start.Offset {
 			t.Fatalf("protected slot = %#v", slot)
 		}
