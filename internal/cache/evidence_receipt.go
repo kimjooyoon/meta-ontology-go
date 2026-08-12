@@ -8,7 +8,7 @@ import (
 
 const (
 	cacheReceiptSchemaVersion     = "v2"
-	benchmarkReceiptSchemaVersion = "v1"
+	benchmarkReceiptSchemaVersion = "v2"
 )
 
 var (
@@ -28,6 +28,8 @@ type EvidenceFreshness struct {
 	BaseDigest         Digest        `json:"base_digest"`
 	HeadDigest         Digest        `json:"head_digest"`
 	RunID              string        `json:"run_id"`
+	EventID            string        `json:"event_id"`
+	Attempt            uint64        `json:"attempt"`
 	PredecessorDigests []Digest      `json:"predecessor_digests"`
 	SourceDigest       Digest        `json:"source_digest"`
 	IRDigest           Digest        `json:"ir_digest"`
@@ -52,8 +54,8 @@ func (e EvidenceFreshness) Validate() error {
 			return fmt.Errorf("%w: unknown %s digest", ErrInvalidReceipt, item.label)
 		}
 	}
-	if e.RunID == "" {
-		return fmt.Errorf("%w: missing run ID", ErrInvalidReceipt)
+	if e.RunID == "" || e.EventID == "" || e.Attempt == 0 {
+		return fmt.Errorf("%w: missing immutable event attempt", ErrInvalidReceipt)
 	}
 	if e.PredecessorDigests == nil || hasDuplicateDigests(e.PredecessorDigests) {
 		return fmt.Errorf("%w: missing or replayed predecessors", ErrInvalidReceipt)
@@ -71,6 +73,9 @@ func (e EvidenceFreshness) Validate() error {
 			return fmt.Errorf("%w: malformed evidence ref %q", ErrInvalidReceipt, ref.Name)
 		}
 	}
+	if err := validateEvidenceBindings(e); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -78,7 +83,8 @@ func (e EvidenceFreshness) Validate() error {
 func (e EvidenceFreshness) Equal(other EvidenceFreshness) bool {
 	left, right := canonicalEvidence(e), canonicalEvidence(other)
 	return left.BaseDigest == right.BaseDigest && left.HeadDigest == right.HeadDigest &&
-		left.RunID == right.RunID && left.SourceDigest == right.SourceDigest &&
+		left.RunID == right.RunID && left.EventID == right.EventID && left.Attempt == right.Attempt &&
+		left.SourceDigest == right.SourceDigest &&
 		left.IRDigest == right.IRDigest && left.PolicyDigest == right.PolicyDigest &&
 		left.ToolchainDigest == right.ToolchainDigest && left.TargetDigest == right.TargetDigest &&
 		left.BundleDigest == right.BundleDigest && digestSliceEqual(left.PredecessorDigests, right.PredecessorDigests) &&
@@ -104,6 +110,7 @@ type CacheReceipt struct {
 	Toolchain             string            `json:"toolchain"`
 	Target                string            `json:"target"`
 	BuildTagsDigest       Digest            `json:"build_tags_digest"`
+	OptionsDigest         Digest            `json:"options_digest"`
 	ContentDigest         Digest            `json:"content_digest"`
 	Size                  int64             `json:"size"`
 	Reconstructable       bool              `json:"reconstructable"`
@@ -131,6 +138,7 @@ func (r CacheReceipt) Validate() error {
 		r.Projection == "" ||
 		!r.SemanticClosureDigest.Known() || !r.DependencyRoot.Known() || r.DirectDependencies == nil ||
 		!r.PolicySchemaDigest.Known() || r.Toolchain == "" || r.Target == "" || !r.BuildTagsDigest.Known() ||
+		!r.OptionsDigest.Known() ||
 		r.ProducerHost == "" || !validReceiptStatus(r.Status) || r.Size < 0 {
 		return fmt.Errorf("%w: required cache receipt field missing", ErrInvalidReceipt)
 	}
@@ -169,6 +177,7 @@ func (r CacheReceipt) ValidateForKey(key Key) error {
 	if r.CacheKey != key.Digest || r.ArtifactKind != key.ArtifactKind || r.Projection != key.Projection ||
 		r.SemanticClosureDigest != key.SemanticClosureDigest || r.DependencyRoot != key.DependencyRoot ||
 		r.PolicySchemaDigest != key.PolicySchemaDigest || r.Toolchain != key.Toolchain ||
+		r.OptionsDigest != key.OptionsDigest ||
 		r.Target != key.Target || r.BuildTagsDigest != key.BuildTagsDigest {
 		return fmt.Errorf("%w: receipt identity differs from key", ErrInvalidReceipt)
 	}
@@ -227,56 +236,28 @@ func validateEvidenceRefs(refs []EvidenceRef) error {
 	return nil
 }
 
+func validateEvidenceBindings(e EvidenceFreshness) error {
+	bound := make(map[string]Digest, len(e.EvidenceRefs))
+	for _, ref := range e.EvidenceRefs {
+		bound[ref.Name] = ref.Digest
+	}
+	for _, required := range []struct {
+		name   string
+		digest Digest
+	}{
+		{"policy", e.PolicyDigest}, {"toolchain", e.ToolchainDigest},
+	} {
+		if bound[required.name] != required.digest {
+			return fmt.Errorf("%w: evidence ref %q is not bound", ErrInvalidReceipt, required.name)
+		}
+	}
+	return nil
+}
+
 func canonicalEvidence(e EvidenceFreshness) EvidenceFreshness {
 	e.PredecessorDigests = append([]Digest(nil), e.PredecessorDigests...)
 	sort.Slice(e.PredecessorDigests, func(i, j int) bool { return e.PredecessorDigests[i] < e.PredecessorDigests[j] })
 	e.EvidenceRefs = append([]EvidenceRef(nil), e.EvidenceRefs...)
 	sort.Slice(e.EvidenceRefs, func(i, j int) bool { return e.EvidenceRefs[i].Name < e.EvidenceRefs[j].Name })
 	return e
-}
-
-func hasDuplicateDigests(values []Digest) bool {
-	seen := make(map[Digest]struct{}, len(values))
-	for _, value := range values {
-		if _, exists := seen[value]; exists {
-			return true
-		}
-		seen[value] = struct{}{}
-	}
-	return false
-}
-
-func hasDuplicateEvidenceRefs(values []EvidenceRef) bool {
-	seen := make(map[string]struct{}, len(values))
-	for _, value := range values {
-		if _, exists := seen[value.Name]; exists {
-			return true
-		}
-		seen[value.Name] = struct{}{}
-	}
-	return false
-}
-
-func digestSliceEqual(left, right []Digest) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for index := range left {
-		if left[index] != right[index] {
-			return false
-		}
-	}
-	return true
-}
-
-func evidenceRefsEqual(left, right []EvidenceRef) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for index := range left {
-		if left[index] != right[index] {
-			return false
-		}
-	}
-	return true
 }

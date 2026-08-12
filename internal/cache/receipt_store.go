@@ -23,7 +23,8 @@ func (c *Cache) AppendReceipt(receipt CacheReceipt) (CacheReceipt, error) {
 	}
 	for _, prior := range existing {
 		if prior.ReceiptDigest == sealed.ReceiptDigest || prior.Evidence.RunID == sealed.Evidence.RunID ||
-			prior.Evidence.BundleDigest == sealed.Evidence.BundleDigest {
+			prior.Evidence.BundleDigest == sealed.Evidence.BundleDigest ||
+			(prior.Evidence.EventID == sealed.Evidence.EventID && prior.Evidence.Attempt == sealed.Evidence.Attempt) {
 			return CacheReceipt{}, ErrReceiptReplay
 		}
 	}
@@ -70,6 +71,7 @@ func (c *Cache) readReceiptsLocked() ([]CacheReceipt, error) {
 	result := make([]CacheReceipt, 0)
 	seenRuns := make(map[string]struct{})
 	seenBundles := make(map[Digest]struct{})
+	seenEvents := make(map[evidenceAttempt]struct{})
 	for {
 		var receipt CacheReceipt
 		err := decoder.Decode(&receipt)
@@ -88,10 +90,20 @@ func (c *Cache) readReceiptsLocked() ([]CacheReceipt, error) {
 		if _, exists := seenBundles[receipt.Evidence.BundleDigest]; exists {
 			return nil, ErrReceiptReplay
 		}
+		event := evidenceAttempt{ID: receipt.Evidence.EventID, Attempt: receipt.Evidence.Attempt}
+		if _, exists := seenEvents[event]; exists {
+			return nil, ErrReceiptReplay
+		}
 		seenRuns[receipt.Evidence.RunID] = struct{}{}
 		seenBundles[receipt.Evidence.BundleDigest] = struct{}{}
+		seenEvents[event] = struct{}{}
 		result = append(result, receipt)
 	}
+}
+
+type evidenceAttempt struct {
+	ID      string
+	Attempt uint64
 }
 
 func validateSealedReceipt(receipt CacheReceipt) error {

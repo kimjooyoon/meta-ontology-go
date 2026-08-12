@@ -33,25 +33,29 @@ type ProjectionKeySpec struct {
 	ToolVersion           string
 	Target                string
 	BuildTags             []string
-	Options               any
+	OptionsDigest         Digest
+	// Options is retained only for source compatibility and is fail-closed.
+	Options any
 }
 
 // KeySpec is the compatibility constructor for callers that provide source
 // inputs and freshness records instead of precomputed typed digests.
 type KeySpec struct {
-	Version      string
-	Domain       string
-	Namespace    string
-	ArtifactKind string
-	Projection   string
-	ToolVersion  string
-	Toolchain    string
-	Target       string
-	BuildTags    []string
-	HostStage    HostStage
-	Inputs       any
-	Options      any
-	Freshness    FreshnessSpec
+	Version       string
+	Domain        string
+	Namespace     string
+	ArtifactKind  string
+	Projection    string
+	ToolVersion   string
+	Toolchain     string
+	Target        string
+	BuildTags     []string
+	HostStage     HostStage
+	Inputs        any
+	OptionsDigest Digest
+	// Options is retained only for source compatibility and is fail-closed.
+	Options   any
+	Freshness FreshnessSpec
 }
 
 // ProjectionKey is the content address of one projection. Its fields are
@@ -91,9 +95,9 @@ func NewProjectionKey(spec ProjectionKeySpec) (ProjectionKey, error) {
 	if err != nil {
 		return ProjectionKey{}, err
 	}
-	optionsDigest, err := DigestOf(normalized.Options)
+	optionsDigest, err := requireOptionsDigest(normalized.OptionsDigest, normalized.Options)
 	if err != nil {
-		return ProjectionKey{}, fmt.Errorf("hash options: %w", err)
+		return ProjectionKey{}, err
 	}
 	key := ProjectionKey{
 		Domain: normalized.Domain, Namespace: normalized.Domain, Version: normalized.Version,
@@ -132,6 +136,10 @@ func NewKey(spec KeySpec) (Key, error) {
 	if err := validateKeyComponent("toolchain", toolchain, true); err != nil {
 		return Key{}, err
 	}
+	optionsDigest, err := requireOptionsDigest(spec.OptionsDigest, spec.Options)
+	if err != nil {
+		return Key{}, err
+	}
 	inputDigest, err := DigestOf(spec.Inputs)
 	if err != nil {
 		return Key{}, fmt.Errorf("hash inputs: %w", err)
@@ -147,7 +155,7 @@ func NewKey(spec KeySpec) (Key, error) {
 		SemanticClosureDigest: inputDigest, DependencyRoot: freshness.DependencyDigest,
 		PolicySchemaDigest: freshness.ProvenanceDigest, Toolchain: toolchain,
 		ToolVersion: spec.ToolVersion, Target: defaultString(spec.Target, "default"),
-		BuildTags: spec.BuildTags, Options: spec.Options,
+		BuildTags: spec.BuildTags, OptionsDigest: optionsDigest,
 	})
 	return key, err
 }

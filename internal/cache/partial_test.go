@@ -11,7 +11,7 @@ func partialSpec(part string, value, revision int) PartialSpec {
 		Part: part,
 		KeySpec: KeySpec{
 			Version: "v1", Namespace: "billing", ToolVersion: "compiler-1",
-			Inputs: map[string]any{"value": value}, Options: map[string]any{"mode": "fast"},
+			Inputs: map[string]any{"value": value}, OptionsDigest: mustOptionsDigest(map[string]any{"mode": "fast"}),
 			Freshness: FreshnessSpec{
 				Dependencies: map[string]any{"revision": revision},
 				Provenance:   map[string]any{"source": "main.gooo"},

@@ -45,8 +45,8 @@ func TestHostStageIsPartOfCacheKeyAndMetadata(t *testing.T) {
 	futureKey, err := NewKey(KeySpec{
 		Version: "v1", Namespace: "billing", ToolVersion: "compiler-1",
 		HostStage: GoooHostedStage, Inputs: map[string]any{"source": "main.gooo"},
-		Options:   map[string]any{"mode": "fast"},
-		Freshness: testFreshnessSpec(),
+		OptionsDigest: mustOptionsDigest(map[string]any{"mode": "fast"}),
+		Freshness:     testFreshnessSpec(),
 	})
 	if err != nil {
 		t.Fatal(err)

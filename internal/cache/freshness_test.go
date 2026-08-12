@@ -19,7 +19,7 @@ func makeFreshKey(t *testing.T, dependency, provenance int) (Key, Freshness) {
 	}
 	key, err := NewKey(KeySpec{
 		Version: "v1", Namespace: "billing", ToolVersion: "compiler-1",
-		Inputs: map[string]any{"source": "main.gooo"}, Options: map[string]any{"mode": "fast"},
+		Inputs: map[string]any{"source": "main.gooo"}, OptionsDigest: mustOptionsDigest(map[string]any{"mode": "fast"}),
 		Freshness: spec,
 	})
 	if err != nil {

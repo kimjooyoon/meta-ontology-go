@@ -10,7 +10,7 @@ func makeTestKey(t *testing.T, version, namespace string) Key {
 	t.Helper()
 	key, err := NewKey(KeySpec{
 		Version: version, Namespace: namespace, ToolVersion: "compiler-1",
-		Inputs: map[string]any{"source": "main.gooo"}, Options: map[string]any{"mode": "fast"},
+		Inputs: map[string]any{"source": "main.gooo"}, OptionsDigest: mustOptionsDigest(map[string]any{"mode": "fast"}),
 		Freshness: testFreshnessSpec(),
 	})
 	if err != nil {
@@ -55,6 +55,16 @@ func TestNewKeyRejectsInvalidComponentsAndCanonicalValues(t *testing.T) {
 	}
 	if _, err := NewKey(KeySpec{Namespace: "billing", Inputs: func() {}}); err == nil {
 		t.Fatal("unsupported input value was accepted")
+	}
+}
+
+func TestNewKeyRejectsOpaqueOptions(t *testing.T) {
+	_, err := NewKey(KeySpec{
+		Namespace: "billing", ToolVersion: "compiler-1", Inputs: map[string]any{"source": "main.gooo"},
+		Options: map[string]any{"mode": "fast"}, Freshness: testFreshnessSpec(),
+	})
+	if !errors.Is(err, ErrUnknownFreshness) {
+		t.Fatalf("opaque options = %v, want ErrUnknownFreshness", err)
 	}
 }
 

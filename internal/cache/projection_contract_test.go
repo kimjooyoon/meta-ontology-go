@@ -16,8 +16,16 @@ func projectionSpec() ProjectionKeySpec {
 		DependencyRoot:        HashBytes([]byte("dependency-root")),
 		PolicySchemaDigest:    HashBytes([]byte("policy-schema")),
 		Toolchain:             "go1.26.5", Target: "darwin/arm64", BuildTags: []string{"linux"},
-		Options: map[string]any{"mode": "fast", "trim": true},
+		OptionsDigest: mustOptionsDigest(map[string]any{"mode": "fast", "trim": true}),
 	}
+}
+
+func mustOptionsDigest(value any) Digest {
+	digest, err := DigestOptions(value)
+	if err != nil {
+		panic(err)
+	}
+	return digest
 }
 
 func TestProjectionKeyC1MutationMatrix(t *testing.T) {
@@ -41,7 +49,7 @@ func TestProjectionKeyC1MutationMatrix(t *testing.T) {
 		{"toolchain", func(s *ProjectionKeySpec) { s.Toolchain = "go1.26.6" }},
 		{"target", func(s *ProjectionKeySpec) { s.Target = "linux/amd64" }},
 		{"build tags", func(s *ProjectionKeySpec) { s.BuildTags = []string{"linux", "race"} }},
-		{"options", func(s *ProjectionKeySpec) { s.Options = map[string]any{"mode": "safe"} }},
+		{"options", func(s *ProjectionKeySpec) { s.OptionsDigest = mustOptionsDigest(map[string]any{"mode": "safe"}) }},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -63,7 +71,7 @@ func TestProjectionKeyC2PresentationStableAndCorruptionMisses(t *testing.T) {
 	second := projectionSpec()
 	first.BuildTags = []string{"linux", "windows"}
 	second.BuildTags = []string{"windows", "linux", "linux"}
-	second.Options = map[string]any{"trim": true, "mode": "fast"}
+	second.OptionsDigest = mustOptionsDigest(map[string]any{"trim": true, "mode": "fast"})
 	firstKey, err := NewProjectionKey(first)
 	if err != nil {
 		t.Fatal(err)
@@ -125,6 +133,25 @@ func TestProjectionKeyC3UnknownIdentityFailsClosed(t *testing.T) {
 	}
 	if _, err := NewProjectionKey(projectionSpec()); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestProjectionKeyC3OpaqueOptionsFailClosed(t *testing.T) {
+	spec := projectionSpec()
+	spec.Options = map[string]any{"mode": "unsafe"}
+	if _, err := NewProjectionKey(spec); !errors.Is(err, ErrUnknownFreshness) {
+		t.Fatalf("opaque options = %v, want ErrUnknownFreshness", err)
+	}
+	if _, err := DigestOptions(nil); !errors.Is(err, ErrUnknownFreshness) {
+		t.Fatalf("nil options = %v, want ErrUnknownFreshness", err)
+	}
+	first, err := DigestOptions(map[string]any{"mode": "fast", "trim": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := DigestOptions(map[string]any{"trim": true, "mode": "fast"})
+	if err != nil || first != second {
+		t.Fatalf("options presentation changed digest: %s != %s (%v)", first, second, err)
 	}
 }
 
