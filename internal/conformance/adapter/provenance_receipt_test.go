@@ -75,11 +75,21 @@ func TestProvenanceReceiptAppendIsImmutable(t *testing.T) {
 }
 
 func newCancelledReceipt(t *testing.T) (ProvenanceReceipt, Request, NoWriteObservation) {
+	return newRejectedReceipt(t, RejectionCancelled, ReceiptOutcomeCancelled)
+}
+
+func newClosedReceipt(t *testing.T) (ProvenanceReceipt, Request, NoWriteObservation) {
+	return newRejectedReceipt(t, RejectionClosed, ReceiptOutcomeClosed)
+}
+
+func newRejectedReceipt(t *testing.T, reason RejectionKind, outcome ReceiptOutcome) (ProvenanceReceipt, Request, NoWriteObservation) {
 	t.Helper()
 	request := sampleRequest(StatusFail)
 	request.Expected.FailureCode = "marker-overlap"
 	observer := newStableObserver(t, request)
-	observation, err := observer.CaptureRejected(RejectionCancelled)
+	workflow := verifiedTestWorkflow(request)
+	head := workflow.HeadSHA
+	observation, err := observer.CaptureRejected(reason)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,16 +97,16 @@ func newCancelledReceipt(t *testing.T) (ProvenanceReceipt, Request, NoWriteObser
 	if err != nil {
 		t.Fatal(err)
 	}
-	head := strings.Repeat("b", 40)
 	return ProvenanceReceipt{
 		Schema: ProvenanceReceiptSchema, Repository: "caller/repository",
 		BaseSHA: strings.Repeat("a", 40), HeadSHA: head,
 		EventRef: "event-002", CheckoutRef: "refs/pull/104/merge",
-		Run: "run-002", Attempt: 1, Jobs: successfulReceiptJobs(head),
+		Run: "run-002", Attempt: 1, ArtifactCount: workflow.ArtifactCount,
+		Jobs:               successfulReceiptJobs(head),
 		Binding:            requestObservationBinding(request),
 		PreconditionDigest: digestBytes([]byte("precondition")),
 		BeforeStateDigest:  digests.Before, AfterStateDigest: digests.After,
-		Outcome: ReceiptOutcomeCancelled, WriteEffect: ReceiptWriteEffectNone,
+		Outcome: outcome, WriteEffect: ReceiptWriteEffectNone,
 		Predecessors: []ReceiptPredecessor{}, ProvenanceStatus: ReceiptProvenanceVerified,
 	}, request, observation
 }

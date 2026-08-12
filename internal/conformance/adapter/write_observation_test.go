@@ -260,6 +260,7 @@ func newObserverWithTempSetup(t *testing.T, request Request, setup func(string))
 	if err != nil {
 		t.Fatal(err)
 	}
+	attachVerifiedWorkflow(t, observer, request)
 	return observer
 }
 

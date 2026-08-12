@@ -6,20 +6,22 @@ import (
 )
 
 type observerSealInput struct {
-	Binding ObservationBinding `json:"binding"`
-	Paths   ObserverPaths      `json:"paths"`
-	Reason  RejectionKind      `json:"rejection_reason,omitempty"`
-	Before  FilesystemState    `json:"before"`
-	After   FilesystemState    `json:"after"`
+	Binding  ObservationBinding `json:"binding"`
+	Paths    ObserverPaths      `json:"paths"`
+	Workflow WorkflowBinding    `json:"workflow"`
+	Reason   RejectionKind      `json:"rejection_reason,omitempty"`
+	Before   FilesystemState    `json:"before"`
+	After    FilesystemState    `json:"after"`
 }
 
 func observationSeal(observation NoWriteObservation) [sha256.Size]byte {
 	input := observerSealInput{
-		Binding: observation.Binding,
-		Paths:   observation.Paths,
-		Reason:  observation.Reason,
-		Before:  observation.Before,
-		After:   observation.After,
+		Binding:  observation.Binding,
+		Paths:    observation.Paths,
+		Workflow: observation.Workflow,
+		Reason:   observation.Reason,
+		Before:   observation.Before,
+		After:    observation.After,
 	}
 	payload, err := json.Marshal(input)
 	if err != nil {

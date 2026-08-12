@@ -48,6 +48,9 @@ func (o *NoWriteObservation) VerifyNoWrite(request Request) error {
 	if o.stamp.digest != observationSeal(*o) {
 		return oracleError(OracleNW003, "observer seal does not match captured evidence")
 	}
+	if err := validateVerifiedWorkflow(o.Workflow); err != nil {
+		return err
+	}
 	if err := validateObservation(*o); err != nil {
 		return err
 	}
@@ -63,6 +66,19 @@ func (o *NoWriteObservation) VerifyNoWrite(request Request) error {
 	current, err := captureState(o.Paths)
 	if err != nil || !reflect.DeepEqual(current, o.After) {
 		return oracleError(OracleNW002, "observer trace is stale")
+	}
+	return nil
+}
+
+func validateVerifiedWorkflow(workflow WorkflowBinding) error {
+	if workflow.Status == WorkflowEvidenceMissing {
+		return oracleError(OracleNW001, "observer workflow evidence is missing")
+	}
+	if workflow.Status != WorkflowEvidenceVerified {
+		return oracleError(OracleNW003, "observer workflow evidence is not independently verified")
+	}
+	if err := workflow.validate(); err != nil {
+		return oracleError(OracleNW003, "observer workflow evidence: "+err.Error())
 	}
 	return nil
 }

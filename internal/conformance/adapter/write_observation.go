@@ -67,12 +67,13 @@ type FilesystemState struct {
 // NoWriteObservation is returned by an independent NoWriteObserver.
 // The private stamp prevents a response or decoded wire payload from becoming proof.
 type NoWriteObservation struct {
-	Binding ObservationBinding `json:"binding"`
-	Paths   ObserverPaths      `json:"paths"`
-	Reason  RejectionKind      `json:"rejection_reason,omitempty"`
-	Before  FilesystemState    `json:"before"`
-	After   FilesystemState    `json:"after"`
-	stamp   *observerStamp
+	Binding  ObservationBinding `json:"binding"`
+	Paths    ObserverPaths      `json:"paths"`
+	Workflow WorkflowBinding    `json:"workflow"`
+	Reason   RejectionKind      `json:"rejection_reason,omitempty"`
+	Before   FilesystemState    `json:"before"`
+	After    FilesystemState    `json:"after"`
+	stamp    *observerStamp
 }
 
 type observerStamp struct {
@@ -80,11 +81,13 @@ type observerStamp struct {
 }
 
 type NoWriteObserver struct {
-	binding  ObservationBinding
-	paths    ObserverPaths
-	before   FilesystemState
-	stamp    *observerStamp
-	finished bool
+	binding          ObservationBinding
+	paths            ObserverPaths
+	before           FilesystemState
+	workflow         WorkflowBinding
+	workflowCaptured bool
+	stamp            *observerStamp
+	finished         bool
 }
 
 // NewNoWriteObserver captures the pre-invocation state using os.Lstat and bytes.
@@ -101,7 +104,8 @@ func NewNoWriteObserver(binding ObservationBinding, paths ObserverPaths) (*NoWri
 		return nil, fmt.Errorf("capture before state: %w", err)
 	}
 	return &NoWriteObserver{
-		binding: binding, paths: normalized, before: before, stamp: &observerStamp{},
+		binding: binding, paths: normalized, before: before,
+		workflow: missingWorkflowBinding(), stamp: &observerStamp{},
 	}, nil
 }
 
@@ -128,7 +132,7 @@ func (o *NoWriteObserver) finish(reason RejectionKind) (NoWriteObservation, erro
 		return NoWriteObservation{}, fmt.Errorf("capture after state: %w", err)
 	}
 	observation := NoWriteObservation{
-		Binding: o.binding, Paths: o.paths, Reason: reason,
+		Binding: o.binding, Paths: o.paths, Workflow: o.workflow, Reason: reason,
 		Before: o.before, After: after, stamp: o.stamp,
 	}
 	o.stamp.digest = observationSeal(observation)

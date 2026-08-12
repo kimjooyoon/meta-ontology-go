@@ -64,6 +64,7 @@ type ProvenanceReceipt struct {
 	CheckoutRef        string                  `json:"checkout_ref"`
 	Run                string                  `json:"run"`
 	Attempt            int                     `json:"attempt"`
+	ArtifactCount      int                     `json:"artifact_count"`
 	Jobs               []ReceiptJob            `json:"jobs"`
 	Binding            ObservationBinding      `json:"binding"`
 	PreconditionDigest string                  `json:"precondition_sha256"`
@@ -162,6 +163,12 @@ func (r ProvenanceReceipt) Validate() error {
 	}
 	if r.Attempt < 1 {
 		return fmt.Errorf("receipt attempt must be positive")
+	}
+	if r.ArtifactCount < 0 {
+		return fmt.Errorf("receipt artifact_count cannot be negative")
+	}
+	if r.ProvenanceStatus == ReceiptProvenanceVerified && r.ArtifactCount == 0 {
+		return oracleError(OracleNW003, "verified receipt has no observer-bound artifact")
 	}
 	if err := validateReceiptJobs(r.Jobs, r.HeadSHA, r.ProvenanceStatus); err != nil {
 		return err

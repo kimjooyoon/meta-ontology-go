@@ -31,11 +31,14 @@ func (r ProvenanceReceipt) ValidateObservedNoWrite(request Request, observation 
 	if r.Binding != requestObservationBinding(request) || r.Binding != observation.Binding {
 		return oracleError(OracleID001, "receipt and observer bindings do not match request")
 	}
-	if err := validateReceiptReason(r.Outcome, observation.Reason); err != nil {
-		return err
-	}
 	digests, err := observation.StateDigests(request)
 	if err != nil {
+		return err
+	}
+	if err := validateObservedWorkflow(r, observation.Workflow); err != nil {
+		return err
+	}
+	if err := validateReceiptReason(r.Outcome, observation.Reason); err != nil {
 		return err
 	}
 	if r.BeforeStateDigest != digests.Before || r.AfterStateDigest != digests.After {
