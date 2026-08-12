@@ -9,6 +9,11 @@ type BenchmarkReceipt struct {
 	Fixture          string                  `json:"fixture"`
 	BaseDigest       Digest                  `json:"base_digest"`
 	HeadDigest       Digest                  `json:"head_digest"`
+	BaseSHA          string                  `json:"base_sha"`
+	HeadSHA          string                  `json:"head_sha"`
+	Event            string                  `json:"event"`
+	Workflow         string                  `json:"workflow"`
+	WorkflowRunID    string                  `json:"workflow_run_id"`
 	RunID            string                  `json:"run_id"`
 	EventID          string                  `json:"event_id"`
 	Attempt          uint64                  `json:"attempt"`
@@ -29,10 +34,11 @@ type BenchmarkReceipt struct {
 
 // BenchmarkJob binds one canonical CI job to its immutable run result.
 type BenchmarkJob struct {
-	ID         string `json:"id"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
-	HeadSHA    Digest `json:"head_sha"`
+	ID            string `json:"id"`
+	Status        string `json:"status"`
+	Conclusion    string `json:"conclusion"`
+	HeadSHA       Digest `json:"head_sha"`
+	HeadCommitSHA string `json:"head_commit_sha"`
 }
 
 const (
@@ -53,7 +59,9 @@ var canonicalBenchmarkJobs = []string{
 // performance claim.
 func (r BenchmarkReceipt) Validate() error {
 	if r.SchemaVersion != benchmarkReceiptSchemaVersion || r.Fixture == "" || !r.BaseDigest.Known() ||
-		!r.HeadDigest.Known() || r.RunID == "" || r.EventID == "" || r.Attempt == 0 ||
+		!r.HeadDigest.Known() || !validCommitSHA(r.BaseSHA) || !validCommitSHA(r.HeadSHA) ||
+		r.Event != "pull_request" || r.Workflow == "" || r.WorkflowRunID == "" ||
+		r.RunID == "" || r.EventID == "" || r.Attempt == 0 ||
 		r.Filesystem == "" || !r.ToolchainDigest.Known() || !r.PolicyDigest.Known() ||
 		r.JobIDs != nil || len(r.Jobs) != len(canonicalBenchmarkJobs) ||
 		r.P50Nanoseconds > r.P95Nanoseconds {
@@ -72,7 +80,7 @@ func (r BenchmarkReceipt) Validate() error {
 	for _, name := range canonicalBenchmarkJobs {
 		job, exists := r.Jobs[name]
 		if !exists || job.ID == "" || job.Status == "" || job.Conclusion == "" ||
-			!job.HeadSHA.Known() || job.HeadSHA != r.HeadDigest {
+			!job.HeadSHA.Known() || job.HeadSHA != r.HeadDigest || job.HeadCommitSHA != r.HeadSHA {
 			return fmt.Errorf("%w: incomplete benchmark job %q", ErrInvalidReceipt, name)
 		}
 		if _, exists := seenIDs[job.ID]; exists {

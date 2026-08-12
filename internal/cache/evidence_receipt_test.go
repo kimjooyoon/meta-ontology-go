@@ -203,18 +203,25 @@ func TestBenchmarkReceiptBindsCanonicalJobs(t *testing.T) {
 		t.Fatal(err)
 	}
 	benchmark := BenchmarkReceipt{SchemaVersion: benchmarkReceiptSchemaVersion, Fixture: "partial",
-		BaseDigest: key.Digest, HeadDigest: key.Digest, RunID: "bench-1", EventID: "event-bench-1", Attempt: 1,
+		BaseDigest: key.Digest, HeadDigest: key.Digest, BaseSHA: commitFixtureSHA("bench-base"), HeadSHA: commitFixtureSHA("bench-head"),
+		Event: "pull_request", Workflow: "CI [PR authoritative]", WorkflowRunID: "31560000000",
+		RunID: "bench-1", EventID: "event-bench-1", Attempt: 1,
 		Filesystem: "local", ToolchainDigest: HashBytes([]byte("go1.26.5")), PolicyDigest: HashBytes([]byte("policy")),
-		EvidenceRefs: benchmarkEvidenceRefs(), Jobs: benchmarkJobs(key.Digest), P50Nanoseconds: 10, P95Nanoseconds: 20}
+		EvidenceRefs: benchmarkEvidenceRefs(), Jobs: benchmarkJobs(key.Digest, commitFixtureSHA("bench-head")), P50Nanoseconds: 10, P95Nanoseconds: 20}
 	delete(benchmark.Jobs, canonicalRaceJob)
 	if err := benchmark.Validate(); !errors.Is(err, ErrInvalidReceipt) {
 		t.Fatalf("incomplete benchmark = %v, want ErrInvalidReceipt", err)
 	}
-	benchmark.Jobs[canonicalRaceJob] = BenchmarkJob{ID: "6", Status: "completed", Conclusion: "success", HeadSHA: key.Digest}
+	benchmark.Jobs[canonicalRaceJob] = BenchmarkJob{ID: "6", Status: "completed", Conclusion: "success", HeadSHA: key.Digest, HeadCommitSHA: commitFixtureSHA("bench-head")}
 	if err := benchmark.Validate(); err != nil {
 		t.Fatalf("complete benchmark = %v", err)
 	}
 	for name, mutate := range map[string]func(*BenchmarkReceipt){
+		"base sha":     func(r *BenchmarkReceipt) { r.BaseSHA = commitFixtureSHA("other-base") },
+		"head sha":     func(r *BenchmarkReceipt) { r.HeadSHA = commitFixtureSHA("other-head") },
+		"event":        func(r *BenchmarkReceipt) { r.Event = "push" },
+		"workflow":     func(r *BenchmarkReceipt) { r.Workflow = "" },
+		"workflow run": func(r *BenchmarkReceipt) { r.WorkflowRunID = "" },
 		"job status": func(r *BenchmarkReceipt) {
 			job := r.Jobs[canonicalTestJob]
 			job.Status = ""
@@ -228,6 +235,11 @@ func TestBenchmarkReceiptBindsCanonicalJobs(t *testing.T) {
 		"job head": func(r *BenchmarkReceipt) {
 			job := r.Jobs[canonicalTestJob]
 			job.HeadSHA = HashBytes([]byte("other"))
+			r.Jobs[canonicalTestJob] = job
+		},
+		"job commit head": func(r *BenchmarkReceipt) {
+			job := r.Jobs[canonicalTestJob]
+			job.HeadCommitSHA = commitFixtureSHA("other-head")
 			r.Jobs[canonicalTestJob] = job
 		},
 		"policy ref": func(r *BenchmarkReceipt) { r.EvidenceRefs[0].Digest = HashBytes([]byte("other")) },
@@ -249,10 +261,10 @@ func benchmarkEvidenceRefs() []EvidenceRef {
 	}
 }
 
-func benchmarkJobs(head Digest) map[string]BenchmarkJob {
+func benchmarkJobs(head Digest, commitHead string) map[string]BenchmarkJob {
 	jobs := make(map[string]BenchmarkJob, len(canonicalBenchmarkJobs))
 	for index, name := range canonicalBenchmarkJobs {
-		jobs[name] = BenchmarkJob{ID: string(rune('1' + index)), Status: "completed", Conclusion: "success", HeadSHA: head}
+		jobs[name] = BenchmarkJob{ID: string(rune('1' + index)), Status: "completed", Conclusion: "success", HeadSHA: head, HeadCommitSHA: commitHead}
 	}
 	return jobs
 }
