@@ -6,9 +6,18 @@ import (
 )
 
 func (g *Graph) AddFact(fact Fact) error {
+	return g.addFact(fact, true)
+}
+
+func (g *Graph) addFact(fact Fact, requireEndpoints bool) error {
 	normalized, err := fact.Normalized()
 	if err != nil {
 		return err
+	}
+	if requireEndpoints {
+		if err := g.validateDeclaredFactEndpoints(normalized); err != nil {
+			return err
+		}
 	}
 	// Candidate observations may be type-incomplete until review. They remain
 	// outside authoritative hashes, while Validate and promotion fail closed.
@@ -27,6 +36,16 @@ func (g *Graph) AddFact(fact Fact) error {
 	}
 	g.facts[key] = normalized
 	delete(g.candidates, key)
+	return nil
+}
+
+func (g Graph) validateDeclaredFactEndpoints(fact Fact) error {
+	if _, ok := g.nodes[fact.Subject]; !ok {
+		return fmt.Errorf("%w: fact subject %s is not declared", ErrNodeNotFound, fact.Subject)
+	}
+	if _, ok := g.nodes[fact.Object]; !ok {
+		return fmt.Errorf("%w: fact object %s is not declared", ErrNodeNotFound, fact.Object)
+	}
 	return nil
 }
 
@@ -181,7 +200,7 @@ func (g *Graph) AddActivityContract(contract ActivityContract) error {
 	}
 	for _, agent := range contract.Agents {
 		fact := NewWasAssociatedWithFact(activity, agent).WithSpan(span)
-		if err := g.AddFact(fact); err != nil {
+		if err := g.addFact(fact, false); err != nil {
 			return err
 		}
 	}
@@ -190,7 +209,7 @@ func (g *Graph) AddActivityContract(contract ActivityContract) error {
 
 func (g *Graph) addContractFacts(activity ID, span Span, ids []ID, predicate Relation) error {
 	for _, object := range ids {
-		if err := g.AddFact(NewFact(activity, predicate, object).WithSpan(span)); err != nil {
+		if err := g.addFact(NewFact(activity, predicate, object).WithSpan(span), false); err != nil {
 			return err
 		}
 	}
@@ -200,7 +219,7 @@ func (g *Graph) addContractFacts(activity ID, span Span, ids []ID, predicate Rel
 func (g *Graph) addContractOutputs(activity ID, span Span, entities []ID) error {
 	for _, entity := range entities {
 		fact := NewWasGeneratedByFact(entity, activity).WithSpan(span)
-		if err := g.AddFact(fact); err != nil {
+		if err := g.addFact(fact, false); err != nil {
 			return err
 		}
 	}

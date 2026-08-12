@@ -9,11 +9,15 @@ func TestGraphValidationRequiresDeclaredNodesAndPROVKinds(t *testing.T) {
 	g := NewGraph()
 	activity := MustIdentity("billing://activity/pay")
 	entity := MustIdentity("billing://entity/order")
-	if err := g.AddFact(NewUsedFact(activity, entity)); err != nil {
-		t.Fatal(err)
+	before := g.Canonical()
+	if err := g.AddFact(NewUsedFact(activity, entity)); !errors.Is(err, ErrNodeNotFound) {
+		t.Fatalf("missing node add error = %v, want ErrNodeNotFound", err)
 	}
-	if err := g.Validate(); !errors.Is(err, ErrGraphInvalid) {
-		t.Fatalf("missing node graph error = %v, want ErrGraphInvalid", err)
+	if g.Canonical() != before {
+		t.Fatal("rejected missing-node fact mutated the graph")
+	}
+	if err := g.Validate(); err != nil {
+		t.Fatalf("empty graph after rejected fact is invalid: %v", err)
 	}
 
 	g = NewGraph()

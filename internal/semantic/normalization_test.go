@@ -65,6 +65,12 @@ func TestDeterministicFactsShadowCandidates(t *testing.T) {
 	g := NewGraph()
 	activity := MustIdentity("billing://activity/pay")
 	entity := MustIdentity("billing://entity/order")
+	if err := g.AddNode(mustActivity(t, activity, Namespace("billing"), "Pay")); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.AddNode(mustEntity(t, entity, Namespace("billing"), "Order")); err != nil {
+		t.Fatal(err)
+	}
 	candidate := NewCandidateFact(activity, Used, entity, "observed registered semantic symbol")
 	if err := g.AddCandidate(candidate); err != nil {
 		t.Fatal(err)

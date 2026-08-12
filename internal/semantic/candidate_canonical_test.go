@@ -192,7 +192,10 @@ func TestIdentityLabelRenamePreservesMeaningAndEvidence(t *testing.T) {
 }
 
 func TestIdentityRekeyAuthorizationIsDeferred(t *testing.T) {
-	t.Log("DEFERRED: semantic-ir/v1 has no ID continuity or rekey authorization contract")
+	contract := readDeferredContract(t, "authorized-rekey")
+	if contract.Status != "deferred" || contract.Authoritative {
+		t.Fatalf("authorized rekey contract = %#v, want non-authoritative deferred", contract)
+	}
 }
 
 func TestCandidateEvidenceRemainsCandidateAfterGraphPromotion(t *testing.T) {
@@ -219,8 +222,12 @@ func TestCandidateEvidenceRemainsCandidateAfterGraphPromotion(t *testing.T) {
 	if len(ir.Evidence()) != 1 || ir.Evidence()[0].Status != FactCandidate {
 		t.Fatal("candidate evidence was erased or silently reclassified")
 	}
+	beforeEvidenceHash := ir.EvidenceHash()
 	if err := ir.Validate(); err != nil {
 		t.Fatalf("retained candidate evidence invalidated promoted graph: %v", err)
+	}
+	if ir.EvidenceHash() != beforeEvidenceHash {
+		t.Fatal("promotion changed the retained candidate evidence digest")
 	}
 }
 
