@@ -19,6 +19,9 @@ func (d *SemanticDelta) sort() {
 		if left.Reference != right.Reference {
 			return left.Reference < right.Reference
 		}
+		if left.IdentityState != right.IdentityState {
+			return left.IdentityState < right.IdentityState
+		}
 		return left.Reason < right.Reason
 	})
 }

@@ -59,7 +59,7 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 		return false
 	}
 	memberCount := len(result.NormalizedDelta.SignatureFacts) + len(result.NormalizedDelta.CandidateFacts) +
-		len(result.NormalizedDelta.DeferredImplementation)
+		len(result.NormalizedDelta.DeferredImplementation) + len(result.NormalizedDelta.DeferredDetails)
 	if memberCount == 0 ||
 		!normalizedDeltaBindingsMatch(result) {
 		return false
@@ -91,6 +91,11 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 			PolicyDigest: observation.PolicyDigest, ToolchainDigest: observation.ToolchainDigest,
 		}
 		if !binding.complete() || observation.Origin != OriginImplementation {
+			return false
+		}
+	}
+	for _, detail := range result.NormalizedDelta.DeferredDetails {
+		if !validateDeferredImplementationDetail(detail) {
 			return false
 		}
 	}
@@ -141,6 +146,11 @@ func normalizedDeltaBindingsMatch(result SemanticAdapterResult) bool {
 				PolicyDigest: observation.PolicyDigest, ToolchainDigest: observation.ToolchainDigest,
 			}
 		} else if binding.BaseDigest != observation.BaseDigest {
+			return false
+		}
+	}
+	for _, detail := range result.NormalizedDelta.DeferredDetails {
+		if !accept(detail.Binding) {
 			return false
 		}
 	}

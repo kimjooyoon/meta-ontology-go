@@ -12,7 +12,6 @@ func TestAnalyzeSourceLiftsOnlyRegisteredSymbols(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	registry := NewRegistry()
 	registry.MustRegister(Registration{
 		Ref:      SymbolRef{PackagePath: "example.com/fraud", PackageName: "fraud", Name: "Check"},
@@ -49,14 +48,20 @@ func TestAnalyzeSourceLiftsOnlyRegisteredSymbols(t *testing.T) {
 	if len(result.Delta.Candidates) != 0 {
 		t.Fatalf("candidates = %#v, want none", result.Delta.Candidates)
 	}
-
 	var details []string
 	for _, detail := range result.Delta.ImplementationDetails {
 		details = append(details, detail.Reference)
 	}
 	sort.Strings(details)
-	if !reflect.DeepEqual(details, []string{"json.Marshal", "strings.TrimSpace"}) {
+	if !reflect.DeepEqual(details, []string{
+		"OrderID", "json.Marshal", "normalized", "normalized", "order", "order.ID", "order.ID", "strings.TrimSpace",
+	}) {
 		t.Fatalf("implementation details = %#v", details)
+	}
+	for _, detail := range result.Delta.ImplementationDetails {
+		if detail.IdentityState != IdentityUnresolved || detail.Span.Start.Offset < 0 || detail.Reason == "" {
+			t.Fatalf("incomplete unresolved detail = %#v", detail)
+		}
 	}
 }
 
@@ -221,7 +226,8 @@ type Order struct{}
 	if len(result.Delta.Added) != 0 || len(result.Delta.Candidates) != 0 {
 		t.Fatalf("delta = %#v, want no semantic relation", result.Delta)
 	}
-	if len(result.Delta.ImplementationDetails) != 1 || result.Delta.ImplementationDetails[0].Reference != "order.Validate" {
+	if len(result.Delta.ImplementationDetails) != 2 ||
+		result.Delta.ImplementationDetails[1].Reference != "order.Validate" {
 		t.Fatalf("implementation details = %#v", result.Delta.ImplementationDetails)
 	}
 }

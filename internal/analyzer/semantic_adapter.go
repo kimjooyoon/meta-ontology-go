@@ -192,7 +192,11 @@ func copyCandidates(candidates []Candidate) []Candidate {
 }
 
 func copyDetails(details []ImplementationDetail) []ImplementationDetail {
-	return append([]ImplementationDetail(nil), details...)
+	copyOf := append([]ImplementationDetail(nil), details...)
+	for index := range copyOf {
+		copyOf[index] = copyOf[index].normalized()
+	}
+	return copyOf
 }
 
 func validateEvidenceConfig(input SemanticAdapterInput) error {

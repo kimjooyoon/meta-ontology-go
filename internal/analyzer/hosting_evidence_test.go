@@ -11,8 +11,9 @@ func TestHostingViewsSeparateFactsCandidatesAndImplementation(t *testing.T) {
 	facts := report.AuthoritativeFacts()
 	candidates := report.CandidateEvidence()
 	details := report.ImplementationEvidence()
-	if len(facts) != 3 || len(candidates) != 1 || len(details) != 0 {
-		t.Fatalf("evidence views = facts %d, candidates %d, implementation %d; want 3, 1, 0", len(facts), len(candidates), len(details))
+	if len(facts) != 3 || len(candidates) != 1 || len(details) != 3 {
+		t.Fatalf("evidence views = facts %d, candidates %d, implementation %d; want 3, 1, 3",
+			len(facts), len(candidates), len(details))
 	}
 	for _, fact := range facts {
 		if fact.Kind != EvidenceKindFact || fact.Status != EvidenceStatusDeterministic {
@@ -66,6 +67,21 @@ func TestHostingPairHasStableIDsSpansAndIndependentFutureComparison(t *testing.T
 				NewIdentity("security", "security://activity/check"),
 			}, Span: hostingSpan("testdata/hosting_pair.go", 7, 2, 7, 13, 148, 159),
 			Reason: "multiple registered semantic symbols match",
+		},
+		{
+			Kind: EvidenceKindImplementation, Status: EvidenceStatusImplementation,
+			Reference: "order", Span: hostingSpan("testdata/hosting_pair.go", 7, 14, 7, 19, 160, 165),
+			Reason: "symbol reference: unregistered semantic symbol", IdentityState: IdentityUnresolved,
+		},
+		{
+			Kind: EvidenceKindImplementation, Status: EvidenceStatusImplementation,
+			Reference: "OrderID", Span: hostingSpan("testdata/hosting_pair.go", 8, 17, 8, 24, 183, 190),
+			Reason: "symbol reference: unregistered semantic symbol", IdentityState: IdentityUnresolved,
+		},
+		{
+			Kind: EvidenceKindImplementation, Status: EvidenceStatusImplementation,
+			Reference: "order.ID", Span: hostingSpan("testdata/hosting_pair.go", 8, 26, 8, 34, 192, 200),
+			Reason: "symbol reference: unregistered semantic symbol", IdentityState: IdentityUnresolved,
 		},
 		{
 			Kind: EvidenceKindFact, Status: EvidenceStatusDeterministic,

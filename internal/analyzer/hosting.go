@@ -124,19 +124,18 @@ const (
 	EvidenceStatusImplementation EvidenceStatus = "implementation"
 )
 
-// EvidenceRecord is a host-neutral, append-only projection of one analyzer
-// result. Producer and stage live on EvidenceReport so records can compare
-// across Go-hosted and future gooo-hosted runs.
+// EvidenceRecord is a host-neutral, append-only projection of one analyzer result.
 type EvidenceRecord struct {
-	Kind      EvidenceKind
-	Status    EvidenceStatus
-	Subject   Identity
-	Relation  Relation
-	Object    Identity
-	Reference string
-	Options   []Identity
-	Span      Span
-	Reason    string
+	Kind          EvidenceKind
+	Status        EvidenceStatus
+	Subject       Identity
+	Relation      Relation
+	Object        Identity
+	Reference     string
+	Options       []Identity
+	Span          Span
+	Reason        string
+	IdentityState IdentityState
 }
 
 // Valid reports whether the record has the fields required for its kind.
@@ -147,7 +146,8 @@ func (e EvidenceRecord) Valid() bool {
 	case EvidenceKindCandidate:
 		return e.Status == EvidenceStatusCandidate && e.Subject.Valid() && e.Relation != "" && e.Reference != "" && validIdentityOptions(e.Options) && evidenceSpanValid(e.Span)
 	case EvidenceKindImplementation:
-		return e.Status == EvidenceStatusImplementation && e.Reference != "" && evidenceSpanValid(e.Span)
+		return e.Status == EvidenceStatusImplementation && e.Reference != "" &&
+			e.IdentityState.valid() && evidenceSpanValid(e.Span)
 	default:
 		return false
 	}
@@ -222,9 +222,11 @@ func (r Result) GoHostedEvidence() EvidenceReport {
 		})
 	}
 	for _, detail := range r.Delta.ImplementationDetails {
+		detail = detail.normalized()
 		report.Records = append(report.Records, EvidenceRecord{
 			Kind: EvidenceKindImplementation, Status: EvidenceStatusImplementation,
 			Reference: detail.Reference, Span: detail.Span, Reason: detail.Reason,
+			IdentityState: detail.IdentityState,
 		})
 	}
 	sortEvidenceRecords(report.Records)
@@ -270,6 +272,7 @@ func (e EvidenceRecord) comparisonCanonical() string {
 	writeEvidenceField(&builder, strconv.Itoa(e.Span.End.Line))
 	writeEvidenceField(&builder, strconv.Itoa(e.Span.End.Column))
 	writeEvidenceField(&builder, e.Reason)
+	writeEvidenceField(&builder, string(e.IdentityState))
 	return builder.String()
 }
 

@@ -61,7 +61,7 @@ type Order struct{}
 		counts[record.Kind]++
 	}
 	if !reflect.DeepEqual(counts, map[EvidenceKind]int{
-		EvidenceKindFact: 1, EvidenceKindCandidate: 1, EvidenceKindImplementation: 1,
+		EvidenceKindFact: 1, EvidenceKindCandidate: 1, EvidenceKindImplementation: 2,
 	}) {
 		t.Fatalf("evidence counts = %#v", counts)
 	}

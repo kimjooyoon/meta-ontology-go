@@ -64,7 +64,6 @@ func (c *factCollector) Visit(node ast.Node) ast.Visitor {
 	c.parents = append(c.parents, node)
 	return c
 }
-
 func (c *factCollector) handle(node ast.Node, parent ast.Node) {
 	switch current := node.(type) {
 	case *ast.CallExpr:
@@ -108,9 +107,7 @@ func (c *factCollector) collectTypeRefs(
 			return true
 		}
 		result := c.resolveWithBlocks(expression, respectBlocks)
-		if result.state != unresolved {
-			c.recordResolution(result, relation, expression, "type reference", origin)
-		}
+		c.recordResolution(result, relation, expression, "type reference", origin)
 		return true
 	})
 }
@@ -143,18 +140,13 @@ func (c *factCollector) recordResolution(
 	result resolution, relation Relation, expression ast.Expr, reason string, origin ObservationOrigin,
 ) {
 	if result.state == unresolved {
-		if reason == "call target" {
-			c.delta.ImplementationDetails = append(c.delta.ImplementationDetails, ImplementationDetail{
-				Reference: expressionName(expression),
-				Span:      c.span(expression),
-				Reason:    "unregistered semantic symbol",
-			})
-		}
+		c.addImplementationDetail(expression, reason, IdentityUnresolved)
 		return
 	}
 	if result.state == ambiguous {
 		options := uniqueIdentities(result.entries)
 		if len(options) == 0 {
+			c.addImplementationDetail(expression, reason, IdentityAmbiguous)
 			return
 		}
 		c.delta.Candidates = append(c.delta.Candidates, Candidate{
@@ -169,6 +161,7 @@ func (c *factCollector) recordResolution(
 		return
 	}
 	if len(result.entries) != 1 || !result.entries[0].Identity.Valid() {
+		c.addImplementationDetail(expression, reason, IdentityInvalid)
 		return
 	}
 	c.delta.Added = append(c.delta.Added, Fact{
@@ -178,6 +171,26 @@ func (c *factCollector) recordResolution(
 		Span:     c.span(expression),
 		Origin:   origin,
 	})
+}
+
+func (c *factCollector) addImplementationDetail(
+	expression ast.Expr, reason string, state IdentityState,
+) {
+	c.delta.ImplementationDetails = append(c.delta.ImplementationDetails, ImplementationDetail{
+		Reference: expressionName(expression), Span: c.span(expression),
+		Reason: reason + ": " + identityStateReason(state), IdentityState: state,
+	})
+}
+
+func identityStateReason(state IdentityState) string {
+	switch state {
+	case IdentityAmbiguous:
+		return "ambiguous semantic symbol"
+	case IdentityInvalid:
+		return "invalid registered identity"
+	default:
+		return "unregistered semantic symbol"
+	}
 }
 
 func (c *factCollector) span(node ast.Node) Span {

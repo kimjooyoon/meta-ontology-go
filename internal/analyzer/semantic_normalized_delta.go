@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -92,11 +91,12 @@ func (f NormalizedCandidateFact) canonical() string {
 // SemanticNormalizedDelta is the machine-readable handoff boundary. The
 // three slices deliberately cannot be confused by a status bit or a string.
 type SemanticNormalizedDelta struct {
-	SchemaVersion          string                      `json:"schema_version"`
-	SignatureFacts         []NormalizedSignatureFact   `json:"signature_facts"`
-	CandidateFacts         []NormalizedCandidateFact   `json:"candidate_facts"`
-	DeferredImplementation []ImplementationObservation `json:"deferred_implementation"`
-	Digest                 string                      `json:"digest"`
+	SchemaVersion          string                         `json:"schema_version"`
+	SignatureFacts         []NormalizedSignatureFact      `json:"signature_facts"`
+	CandidateFacts         []NormalizedCandidateFact      `json:"candidate_facts"`
+	DeferredImplementation []ImplementationObservation    `json:"deferred_implementation"`
+	DeferredDetails        []DeferredImplementationDetail `json:"deferred_details"`
+	Digest                 string                         `json:"digest"`
 }
 
 // Canonical returns an order-independent representation of the typed delta.
@@ -119,6 +119,11 @@ func (d SemanticNormalizedDelta) Canonical() string {
 	for _, observation := range observations {
 		builder.WriteString("deferred\n")
 		builder.WriteString(observation.Canonical())
+	}
+	details := append([]DeferredImplementationDetail(nil), d.DeferredDetails...)
+	sort.Slice(details, func(i, j int) bool { return details[i].canonical() < details[j].canonical() })
+	for _, detail := range details {
+		builder.WriteString(detail.canonical())
 	}
 	return builder.String()
 }
@@ -143,6 +148,7 @@ func newSemanticNormalizedDelta(
 		return SemanticNormalizedDelta{}, err
 	}
 	delta.DeferredImplementation = append([]ImplementationObservation(nil), result.ImplementationObservations...)
+	delta.DeferredDetails = deferredImplementationDetails(result, binding)
 	delta.Digest = delta.StableHash()
 	return delta, validateDeltaShape(delta)
 }
@@ -247,53 +253,4 @@ func evidenceForFact(
 
 func shadowEvidenceForFact(records []semantic.Evidence, key semantic.FactKey) (semantic.Evidence, bool) {
 	return evidenceForFact(records, key, semantic.FactCandidate)
-}
-
-func validateDeltaShape(delta SemanticNormalizedDelta) error {
-	if delta.SchemaVersion != semanticNormalizedDeltaSchema {
-		return fmt.Errorf("normalized delta schema is %q", delta.SchemaVersion)
-	}
-	for _, fact := range delta.SignatureFacts {
-		if !knownAnalyzerRelation(fact.SourceRelation) || fact.Fact.Status != semantic.FactDeterministic ||
-			!fact.Fact.Predicate.Valid() || fact.Evidence.Status != semantic.FactDeterministic {
-			return fmt.Errorf("signature fact binding or status is incomplete")
-		}
-	}
-	for _, candidate := range delta.CandidateFacts {
-		if !candidate.Subject.Valid() || !knownAnalyzerRelation(candidate.SourceRelation) {
-			return fmt.Errorf("candidate binding or identity is incomplete")
-		}
-		for _, option := range candidate.Options {
-			if _, err := semantic.ParseIdentity(option.String()); err != nil {
-				return err
-			}
-		}
-		for _, fact := range candidate.Facts {
-			if fact.Status != semantic.FactCandidate || !fact.Predicate.Valid() {
-				return fmt.Errorf("candidate semantic fact is not typed")
-			}
-		}
-	}
-	for _, observation := range delta.DeferredImplementation {
-		if observation.Origin != OriginImplementation || !knownAnalyzerRelation(observation.Relation) {
-			return fmt.Errorf("deferred implementation observation is not typed")
-		}
-		if _, err := semantic.ParseIdentity(observation.Subject.ID); err != nil {
-			return err
-		}
-		if _, err := semantic.ParseIdentity(observation.Object.ID); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func writeSemanticSpan(builder *strings.Builder, span semantic.Span) {
-	writeBindingField(builder, span.File)
-	writeBindingField(builder, intString(span.Start.Offset))
-	writeBindingField(builder, intString(span.Start.Line))
-	writeBindingField(builder, intString(span.Start.Column))
-	writeBindingField(builder, intString(span.End.Offset))
-	writeBindingField(builder, intString(span.End.Line))
-	writeBindingField(builder, intString(span.End.Column))
 }
