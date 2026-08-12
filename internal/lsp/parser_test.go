@@ -69,7 +69,7 @@ func TestCanonicalASTAliasesCannotDiverge(t *testing.T) {
 		t.Fatal(err)
 	}
 	activity := *file.Decls[1].(*syntax.ActivityDecl)
-	activity.Inputs = []syntax.NameRef{{Name: "alias-input", Span: activity.Inputs[0].Span}}
+	activity.Parameters = []syntax.NameRef{{Name: "alias-input", Span: activity.Parameters[0].Span}}
 	activity.Result = syntax.NameRef{Name: "alias-output", Span: activity.Result.Span}
 	variantFile := *file
 	variantFile.Decls = []syntax.Declaration{file.Decls[0], &activity}

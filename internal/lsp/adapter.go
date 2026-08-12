@@ -163,9 +163,6 @@ func canonicalActivityOutput(source string, activity *syntax.ActivityDecl) synta
 }
 
 func canonicalActivityParameters(activity *syntax.ActivityDecl) []syntax.NameRef {
-	if activity.Parameters != nil {
-		return activity.Parameters
-	}
 	return activity.Inputs
 }
 

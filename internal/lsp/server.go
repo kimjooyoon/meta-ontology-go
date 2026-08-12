@@ -60,6 +60,7 @@ func (server *Server) ServeContext(ctx context.Context, input io.Reader, output 
 		}
 		payload, err := readFrameContext(ctx, reader, input)
 		if errors.Is(err, io.EOF) {
+			loop.cancelAll()
 			return loop.wait(ctx)
 		}
 		if err != nil {
