@@ -254,12 +254,22 @@ jobs:
             const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
             const names = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
             const head = context.payload.pull_request?.head.sha || context.sha;
-            const jobs = response.data.jobs.filter(job => names.includes(job.name));
-            if (jobs.length !== names.length || jobs.some(job => job.status !== 'completed' || job.conclusion !== 'success' || job.head_sha !== head)) {
-              throw new Error('canonical jobs are not terminal, successful, unique, and bound to the immutable head');
+            const byName = new Map();
+            for (const job of response.data.jobs) {
+              if (!names.includes(job.name)) continue;
+              if (byName.has(job.name)) throw new Error(`duplicate canonical job ${job.name}`);
+              byName.set(job.name, job);
             }
-            fs.writeFileSync('ci-final-jobs.json', JSON.stringify(response.data.jobs));
-            fs.writeFileSync('ci-jobs.json', JSON.stringify(response.data.jobs));
+            const jobs = names.map(name => byName.get(name));
+            const ids = new Set();
+            for (const job of jobs) {
+              if (!job || job.status !== 'completed' || job.conclusion !== 'success' || job.head_sha !== head || job.id <= 0 || ids.has(job.id)) {
+                throw new Error('canonical jobs are not terminal, successful, unique, and bound to the immutable head');
+              }
+              ids.add(job.id);
+            }
+            fs.writeFileSync('ci-final-jobs.json', JSON.stringify(jobs));
+            fs.writeFileSync('ci-jobs.json', JSON.stringify(jobs));
       - name: Reproduce proof fixture
         run: |
           rm -rf ci-generated-proof
