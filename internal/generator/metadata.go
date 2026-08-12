@@ -46,14 +46,15 @@ func GenerateWithBinding(ir SemanticIR, previous []byte, binding ProjectionBindi
 	result.Metadata.SemanticIR = BindingStatus{Status: "BOUND", Authority: "caller-binding"}
 	result.Metadata.Projection = ProjectionStatus{Decision: "PASS", Refs: []string{"go-generator", "caller-binding"}}
 	if binding.EvidenceDigest != "" {
-		result.Metadata.Evidence = EvidenceStatus{Decision: "BOUND", Refs: []string{binding.EvidenceDigest}}
+		result.Metadata.Evidence = EvidenceStatus{Decision: "UNVERIFIED", Refs: []string{binding.EvidenceDigest}}
 	}
 	if binding.ProvenanceDigest != "" {
-		result.Metadata.Provenance = BindingStatus{Status: "BOUND", Authority: binding.ProvenanceDigest}
+		result.Metadata.Provenance = BindingStatus{Status: "UNVERIFIED", Authority: "caller-supplied-unverified"}
 	}
 	if binding.Toolchain.Value != "" {
-		result.Metadata.Toolchain = binding.Toolchain
+		result.Metadata.Toolchain = ToolchainIdentity{Status: "UNVERIFIED", Value: binding.Toolchain.Value}
 	}
+	result.Metadata.Authority.Provenance = "caller-supplied-unverified"
 	return result, nil
 }
 
