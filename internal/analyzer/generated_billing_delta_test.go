@@ -43,7 +43,7 @@ func TestGeneratedBillingNormalizedDeltaIsStableAcrossRunsAndOrder(t *testing.T)
 	}
 	for _, field := range []string{
 		"schema_version", "signature_facts", "candidate_facts", "deferred_implementation",
-		"deferred_details", "digest",
+		"deferred_details", "deferred_slots", "digest",
 	} {
 		if !strings.Contains(string(payload), `"`+field+`"`) {
 			t.Fatalf("machine-readable delta omitted %q: %s", field, payload)

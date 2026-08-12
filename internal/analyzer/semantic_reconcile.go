@@ -55,11 +55,22 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	if result.NormalizedDelta.Digest == "" || result.NormalizedDelta.Digest != result.NormalizedDelta.StableHash() {
 		return false
 	}
+	if result.SlotObservationDigest != protectedSlotObservationDigest(result.SlotObservations) ||
+		result.SlotObservationDigest != protectedSlotObservationDigest(result.NormalizedDelta.DeferredSlots) ||
+		len(result.SlotObservations) != len(result.NormalizedDelta.DeferredSlots) {
+		return false
+	}
+	if result.ImplementationObservationDigest != implementationObservationDigest(
+		result.ImplementationObservations, result.SlotObservations,
+	) {
+		return false
+	}
 	if err := validateDeltaShape(result.NormalizedDelta); err != nil {
 		return false
 	}
 	memberCount := len(result.NormalizedDelta.SignatureFacts) + len(result.NormalizedDelta.CandidateFacts) +
-		len(result.NormalizedDelta.DeferredImplementation) + len(result.NormalizedDelta.DeferredDetails)
+		len(result.NormalizedDelta.DeferredImplementation) + len(result.NormalizedDelta.DeferredDetails) +
+		len(result.NormalizedDelta.DeferredSlots)
 	if memberCount == 0 ||
 		!normalizedDeltaBindingsMatch(result) {
 		return false
@@ -96,6 +107,11 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	}
 	for _, detail := range result.NormalizedDelta.DeferredDetails {
 		if !validateDeferredImplementationDetail(detail) {
+			return false
+		}
+	}
+	for _, slot := range result.NormalizedDelta.DeferredSlots {
+		if !validProtectedSlotObservation(slot) {
 			return false
 		}
 	}
@@ -151,6 +167,14 @@ func normalizedDeltaBindingsMatch(result SemanticAdapterResult) bool {
 	}
 	for _, detail := range result.NormalizedDelta.DeferredDetails {
 		if !accept(detail.Binding) {
+			return false
+		}
+	}
+	for _, slot := range result.NormalizedDelta.DeferredSlots {
+		if !accept(DeltaBinding{
+			SourceDigest: slot.SourceDigest, BaseDigest: slot.BaseDigest,
+			PolicyDigest: slot.PolicyDigest, ToolchainDigest: slot.ToolchainDigest,
+		}) {
 			return false
 		}
 	}

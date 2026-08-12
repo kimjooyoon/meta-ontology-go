@@ -96,6 +96,7 @@ type SemanticNormalizedDelta struct {
 	CandidateFacts         []NormalizedCandidateFact      `json:"candidate_facts"`
 	DeferredImplementation []ImplementationObservation    `json:"deferred_implementation"`
 	DeferredDetails        []DeferredImplementationDetail `json:"deferred_details"`
+	DeferredSlots          []ProtectedSlotObservation     `json:"deferred_slots"`
 	Digest                 string                         `json:"digest"`
 }
 
@@ -125,6 +126,12 @@ func (d SemanticNormalizedDelta) Canonical() string {
 	for _, detail := range details {
 		builder.WriteString(detail.canonical())
 	}
+	slots := append([]ProtectedSlotObservation(nil), d.DeferredSlots...)
+	sort.Slice(slots, func(i, j int) bool { return slots[i].Canonical() < slots[j].Canonical() })
+	for _, slot := range slots {
+		builder.WriteString("slot\n")
+		builder.WriteString(slot.Canonical())
+	}
 	return builder.String()
 }
 
@@ -149,6 +156,7 @@ func newSemanticNormalizedDelta(
 	}
 	delta.DeferredImplementation = append([]ImplementationObservation(nil), result.ImplementationObservations...)
 	delta.DeferredDetails = deferredImplementationDetails(result, binding)
+	delta.DeferredSlots = append([]ProtectedSlotObservation(nil), result.SlotObservations...)
 	delta.Digest = delta.StableHash()
 	return delta, validateDeltaShape(delta)
 }

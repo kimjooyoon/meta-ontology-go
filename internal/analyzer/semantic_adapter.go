@@ -11,13 +11,14 @@ import (
 // SemanticAdapterInput supplies an analyzer result and an immutable semantic
 // base. Base is normalized into a private transaction before any additions.
 type SemanticAdapterInput struct {
-	Base            semantic.IR
-	Analysis        Result
-	Policy          MappingPolicy
-	Producer        semantic.ID
-	EvidenceKind    semantic.EvidenceKind
-	SourceDigest    string
-	ToolchainDigest string
+	Base             semantic.IR
+	Analysis         Result
+	Policy           MappingPolicy
+	Producer         semantic.ID
+	EvidenceKind     semantic.EvidenceKind
+	SourceDigest     string
+	ToolchainDigest  string
+	SlotObservations []ProtectedSlotObservation
 }
 
 // SemanticAdapterResult keeps unmapped observations and implementation detail
@@ -30,6 +31,7 @@ type SemanticAdapterResult struct {
 	ToolchainDigest                 string
 	BindingDigest                   string
 	ImplementationObservationDigest string
+	SlotObservationDigest           string
 	NormalizedDelta                 SemanticNormalizedDelta
 	DeferredFacts                   []Fact
 	DeferredCandidates              []Candidate
@@ -42,6 +44,7 @@ type SemanticAdapterResult struct {
 	ShadowedCandidateEvidence  []semantic.Evidence
 	ImplementationDetails      []ImplementationDetail
 	ImplementationObservations []ImplementationObservation
+	SlotObservations           []ProtectedSlotObservation
 }
 
 // AdaptSemantic performs a transactional, explicit mapping. The input IR is
@@ -58,14 +61,22 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 	if err := validateObservations(input.Analysis); err != nil {
 		return SemanticAdapterResult{}, err
 	}
+	if err := validateSlotObservations(input.SlotObservations, input.SourceDigest, baseDigest,
+		input.Policy.Digest(), input.ToolchainDigest); err != nil {
+		return SemanticAdapterResult{}, err
+	}
 	transaction := SemanticAdapterResult{
 		IR: base, SourceDigest: input.SourceDigest, PolicyDigest: input.Policy.Digest(),
 		ToolchainDigest:       input.ToolchainDigest,
+		SlotObservations:      append([]ProtectedSlotObservation(nil), input.SlotObservations...),
 		DeferredCandidates:    copyCandidates(input.Analysis.Delta.Candidates),
 		ImplementationDetails: copyDetails(input.Analysis.Delta.ImplementationDetails),
 	}
+	transaction.SlotObservationDigest = protectedSlotObservationDigest(transaction.SlotObservations)
 	transaction.ImplementationObservations = collectImplementationObservations(input.Analysis, base, input)
-	transaction.ImplementationObservationDigest = implementationObservationDigest(transaction.ImplementationObservations)
+	transaction.ImplementationObservationDigest = implementationObservationDigest(
+		transaction.ImplementationObservations, transaction.SlotObservations,
+	)
 	if err := addRegisteredNodes(&transaction.IR, input.Analysis.Registrations); err != nil {
 		return SemanticAdapterResult{}, err
 	}

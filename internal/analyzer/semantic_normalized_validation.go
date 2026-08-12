@@ -48,6 +48,11 @@ func validateDeltaShape(delta SemanticNormalizedDelta) error {
 			return fmt.Errorf("deferred implementation detail is incomplete")
 		}
 	}
+	for _, slot := range delta.DeferredSlots {
+		if !validProtectedSlotObservation(slot) {
+			return fmt.Errorf("deferred protected slot is incomplete")
+		}
+	}
 	return nil
 }
 

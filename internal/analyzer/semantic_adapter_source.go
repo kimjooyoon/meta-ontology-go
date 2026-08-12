@@ -42,6 +42,17 @@ func AnalyzeAndAdaptSemantic(input SourceSemanticAdapterInput) (SemanticAdapterR
 	if err != nil {
 		return SemanticAdapterResult{}, err
 	}
+	slots, err := collectProtectedSlots(sources)
+	if err != nil {
+		return SemanticAdapterResult{}, err
+	}
+	base, err := input.Base.Normalized()
+	if err != nil {
+		return SemanticAdapterResult{}, err
+	}
+	boundSlots := bindProtectedSlots(
+		slots, sourceDigest, base.StableHash(), input.Policy.Digest(), ToolchainDigest(toolchain),
+	)
 	analysis, err := AnalyzePackage(sources, input.Registry)
 	if err != nil {
 		return SemanticAdapterResult{}, err
@@ -52,6 +63,7 @@ func AnalyzeAndAdaptSemantic(input SourceSemanticAdapterInput) (SemanticAdapterR
 		Base: input.Base, Analysis: analysis, Policy: input.Policy,
 		Producer: input.Producer, EvidenceKind: input.EvidenceKind,
 		SourceDigest: sourceDigest, ToolchainDigest: ToolchainDigest(toolchain),
+		SlotObservations: boundSlots,
 	})
 }
 
