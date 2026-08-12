@@ -148,7 +148,9 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 		return server.definitionRequest(request)
 	case "textDocument/documentSymbol":
 		return server.documentSymbolRequest(request)
-	case "workspace/symbol", "textDocument/references", "textDocument/rename", "textDocument/formatting":
+	case "textDocument/references":
+		return server.referencesRequest(request)
+	case "workspace/symbol", "textDocument/rename", "textDocument/formatting":
 		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
 	default:
 		return responseOrNil(request.ID, methodNotFound, "Method not found"), nil, nil
@@ -170,6 +172,7 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 			CompletionProvider:     &CompletionOptions{},
 			DefinitionProvider:     true,
 			DocumentSymbolProvider: true,
+			ReferencesProvider:     true,
 		},
 		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},
 	}

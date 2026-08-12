@@ -56,15 +56,14 @@ func TestInitializeDefersWorkspaceAndSourceMapFeatures(t *testing.T) {
 	var input, output bytes.Buffer
 	writeRequest(t, &input, 1, "initialize", nil)
 	writeRequest(t, &input, 2, "workspace/symbol", map[string]any{"query": "Order"})
-	writeRequest(t, &input, 3, "textDocument/references", map[string]any{})
-	writeRequest(t, &input, 4, "shutdown", nil)
+	writeRequest(t, &input, 3, "shutdown", nil)
 	writeNotification(t, &input, "exit", nil)
 	if err := NewServer().Serve(&input, &output); err != nil {
 		t.Fatalf("Serve() error = %v", err)
 	}
 	messages := readFrames(t, output.Bytes())
-	if len(messages) != 4 || responseCode(t, messages[1]) != methodNotFound || responseCode(t, messages[2]) != methodNotFound {
-		t.Fatalf("messages = %d, codes = %d/%d", len(messages), responseCode(t, messages[1]), responseCode(t, messages[2]))
+	if len(messages) != 3 || responseCode(t, messages[1]) != methodNotFound {
+		t.Fatalf("messages = %d, code = %d", len(messages), responseCode(t, messages[1]))
 	}
 	var envelope struct {
 		Result struct {
@@ -182,7 +181,7 @@ func assertInitialize(t *testing.T, payload []byte) {
 	}
 	decodeJSON(t, payload, &message)
 	if !message.Result.Capabilities.HoverProvider || !message.Result.Capabilities.DefinitionProvider ||
-		!message.Result.Capabilities.DocumentSymbolProvider {
+		!message.Result.Capabilities.DocumentSymbolProvider || !message.Result.Capabilities.ReferencesProvider {
 		t.Fatalf("capabilities = %#v", message.Result.Capabilities)
 	}
 	if message.Result.Capabilities.TextDocumentSync.Change != 2 {

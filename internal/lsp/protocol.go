@@ -87,6 +87,7 @@ type ServerCapabilities struct {
 	CompletionProvider     *CompletionOptions      `json:"completionProvider,omitempty"`
 	DefinitionProvider     bool                    `json:"definitionProvider,omitempty"`
 	DocumentSymbolProvider bool                    `json:"documentSymbolProvider,omitempty"`
+	ReferencesProvider     bool                    `json:"referencesProvider,omitempty"`
 }
 
 type InitializeResult struct {
@@ -119,6 +120,16 @@ type TextDocumentPositionParams struct {
 
 type DocumentSymbolParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+type ReferenceContext struct {
+	IncludeDeclaration bool `json:"includeDeclaration"`
+}
+
+type ReferenceParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     *Position              `json:"position"`
+	Context      ReferenceContext       `json:"context"`
 }
 
 type PublishDiagnosticsParams struct {
