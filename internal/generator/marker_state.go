@@ -71,7 +71,7 @@ func (s *markerState) startSlot(attrs map[string]string, line sourceLine, lineNu
 	if id == "" {
 		return fmt.Errorf("generator: slot on line %d has no ID", lineNumber)
 	}
-	s.slot = &parsedSlot{ID: id, Start: line.end, StartLine: lineNumber - 1}
+	s.slot = &parsedSlot{ID: id, RegionID: s.region.ID, RegionKind: s.region.Kind, Start: line.end, StartLine: lineNumber - 1}
 	return nil
 }
 

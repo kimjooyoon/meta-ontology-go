@@ -104,7 +104,30 @@ func validateDeclaredSlots(ir SemanticIR, markers parsedMarkers, allowRemovedReg
 			return fmt.Errorf("generator: stale slot identity %q", id)
 		}
 	}
+	for _, slot := range markers.Slots {
+		owner, declared := declaredSlotOwner(ir, slot.ID)
+		if !declared {
+			continue
+		}
+		if owner != slot.RegionID {
+			return fmt.Errorf("generator: slot %q changes region owner from %q to %q", slot.ID, slot.RegionID, owner)
+		}
+		if slot.RegionKind != "activity" {
+			return fmt.Errorf("generator: slot %q belongs to non-activity region kind %q", slot.ID, slot.RegionKind)
+		}
+	}
 	return nil
+}
+
+func declaredSlotOwner(ir SemanticIR, slotID string) (string, bool) {
+	for _, activity := range ir.Activities {
+		for _, slot := range activity.Slots {
+			if slot.ID == slotID {
+				return activity.ID, true
+			}
+		}
+	}
+	return "", false
 }
 
 func hasActivity(ir SemanticIR, id string) bool {

@@ -30,12 +30,14 @@ type generatedRegion struct {
 }
 
 type parsedSlot struct {
-	ID        string
-	Start     int
-	End       int
-	StartLine int
-	EndLine   int
-	Body      []byte
+	ID         string
+	RegionID   string
+	RegionKind string
+	Start      int
+	End        int
+	StartLine  int
+	EndLine    int
+	Body       []byte
 }
 
 type parsedMarkers struct {
