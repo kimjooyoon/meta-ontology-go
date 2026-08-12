@@ -23,6 +23,9 @@ func metadataResult(result Result, ir SemanticIR) MetadataResult {
 			SourceDigest:     digestBytes(result.Source),
 			SemanticIRDigest: digestIR(ir),
 			SourceMapDigest:  digestSourceMap(result.SourceMap),
+			Source:           BindingStatus{Status: "AVAILABLE", Authority: "generator-output"},
+			SemanticIR:       BindingStatus{Status: "AVAILABLE", Authority: "generator-input"},
+			Provenance:       BindingStatus{Status: "DEFERRED", Authority: "external-receipt-required"},
 			Evidence: EvidenceStatus{
 				Decision: "DEFERRED",
 				Refs:     []string{},
@@ -34,6 +37,11 @@ func metadataResult(result Result, ir SemanticIR) MetadataResult {
 			Projection: ProjectionStatus{
 				Decision: "PASS",
 				Refs:     []string{"go-generator"},
+			},
+			Authority: AuthorityLabels{
+				Projection: "go-generator",
+				Verifier:   "go-verifier-stage-0",
+				Provenance: "external-receipt-required",
 			},
 		},
 	}

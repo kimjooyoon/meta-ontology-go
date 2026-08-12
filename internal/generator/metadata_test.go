@@ -2,6 +2,7 @@ package generator
 
 import (
 	"bytes"
+	"encoding/json"
 	"reflect"
 	"strings"
 	"testing"
@@ -40,6 +41,45 @@ func TestGenerateWithMetadataMarksUnavailableEvidenceAndToolchain(t *testing.T) 
 	}
 	if result.Metadata.Projection.Decision != "PASS" {
 		t.Fatalf("unexpected projection status: %#v", result.Metadata.Projection)
+	}
+	if result.Metadata.Source.Status != "AVAILABLE" || result.Metadata.SemanticIR.Status != "AVAILABLE" {
+		t.Fatalf("source/IR bindings are not available: %#v", result.Metadata)
+	}
+	if result.Metadata.Provenance.Status != "DEFERRED" || result.Metadata.Authority.Verifier != "go-verifier-stage-0" {
+		t.Fatalf("authority boundary was not explicit: %#v", result.Metadata)
+	}
+}
+
+func TestGenerateWithMetadataJSONIsCanonicalAcrossPermutation(t *testing.T) {
+	firstIR := acceptanceFixture()
+	secondIR := acceptanceFixture()
+	secondIR.Entities[0], secondIR.Entities[1] = secondIR.Entities[1], secondIR.Entities[0]
+	first, err := GenerateWithMetadata(firstIR, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := GenerateWithMetadata(secondIR, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstJSON, err := json.Marshal(first.Metadata)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondJSON, err := json.Marshal(second.Metadata)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(firstJSON, secondJSON) {
+		t.Fatal("metadata JSON changed under declaration permutation")
+	}
+}
+
+func TestGenerateWithMetadataRejectsInvalidIRWithoutMetadata(t *testing.T) {
+	ir := acceptanceFixture()
+	ir.Activities[0].Slots[0].ID = ""
+	if result, err := GenerateWithMetadata(ir, nil); err == nil || result.Metadata.SourceDigest != "" {
+		t.Fatalf("invalid IR returned metadata: result=%#v err=%v", result, err)
 	}
 }
 
