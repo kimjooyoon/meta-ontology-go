@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"encoding/hex"
+	"sort"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
@@ -22,10 +23,17 @@ type SemanticAdapterInput struct {
 // outside the authoritative semantic graph. Candidates are added only through
 // Graph.AddCandidate when their explicit mapping and endpoints are valid.
 type SemanticAdapterResult struct {
-	IR                    semantic.IR
-	DeferredFacts         []Fact
-	DeferredCandidates    []Candidate
-	ImplementationDetails []ImplementationDetail
+	IR                 semantic.IR
+	DeferredFacts      []Fact
+	DeferredCandidates []Candidate
+	// ShadowedCandidateEvidence retains a mapped candidate observation when
+	// the same FactKey is already deterministic in the base graph. The
+	// evidence is intentionally not added to IR: candidate evidence cannot
+	// stand in for authoritative evidence, and the semantic IR rejects a
+	// candidate evidence record without a candidate fact. Keeping it here
+	// preserves the historical observation without changing authority.
+	ShadowedCandidateEvidence []semantic.Evidence
+	ImplementationDetails     []ImplementationDetail
 }
 
 // AdaptSemantic performs a transactional, explicit mapping. The input IR is
@@ -132,14 +140,15 @@ func adaptCandidates(result *SemanticAdapterResult, input SemanticAdapterInput) 
 			}
 			mapped.Status = semantic.FactCandidate
 			mapped.Reason = candidate.Reason
+			evidence, err := mappedEvidence(input, candidate.Relation, mapped, semantic.FactCandidate)
+			if err != nil {
+				return err
+			}
 			if result.IR.Graph.HasFact(mapped.Key()) {
+				result.ShadowedCandidateEvidence = append(result.ShadowedCandidateEvidence, evidence)
 				continue
 			}
 			if err := result.IR.AddCandidate(mapped); err != nil {
-				return err
-			}
-			evidence, err := mappedEvidence(input, candidate.Relation, mapped, semantic.FactCandidate)
-			if err != nil {
 				return err
 			}
 			if err := result.IR.AddEvidence(evidence); err != nil {
@@ -147,6 +156,9 @@ func adaptCandidates(result *SemanticAdapterResult, input SemanticAdapterInput) 
 			}
 		}
 	}
+	sort.Slice(result.ShadowedCandidateEvidence, func(i, j int) bool {
+		return result.ShadowedCandidateEvidence[i].Canonical() < result.ShadowedCandidateEvidence[j].Canonical()
+	})
 	return nil
 }
 
