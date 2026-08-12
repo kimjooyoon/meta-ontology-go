@@ -114,6 +114,32 @@ func TestCacheReceiptBindsProjectionAndContent(t *testing.T) {
 	}
 }
 
+func TestCacheReceiptC1C4OptionsDigestFailsClosed(t *testing.T) {
+	key, err := NewProjectionKey(projectionSpec())
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := cacheReceiptFixture(key, "options")
+	missing := receipt
+	missing.OptionsDigest = ""
+	if err := missing.ValidateForKey(key); !errors.Is(err, ErrInvalidReceipt) {
+		t.Fatalf("missing options digest = %v, want ErrInvalidReceipt", err)
+	}
+	variant := projectionSpec()
+	variant.OptionsDigest = mustOptionsDigest(map[string]any{"mode": "other"})
+	variantKey, err := NewProjectionKey(variant)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if variantKey == key {
+		t.Fatal("options mutation retained projection identity")
+	}
+	receipt.OptionsDigest = variantKey.OptionsDigest
+	if err := receipt.ValidateForKey(key); !errors.Is(err, ErrInvalidReceipt) {
+		t.Fatalf("mismatched options digest = %v, want ErrInvalidReceipt", err)
+	}
+}
+
 func TestEvidenceFreshnessC4RejectsStaleAndReplayTuples(t *testing.T) {
 	current := evidenceFixture("run-current")
 	for name, mutate := range map[string]func(*EvidenceFreshness){
