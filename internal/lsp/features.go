@@ -116,7 +116,7 @@ func documentCopy(value *document) document {
 
 func featureErrorResponse(id json.RawMessage, err error, ctx context.Context) (*responseEnvelope, [][]byte, error) {
 	if errors.Is(err, ErrStaleResult) {
-		return nil, nil, nil
+		return responseOrNil(id, contentModified, "content modified during request"), nil, nil
 	}
 	if ctx.Err() != nil {
 		return nil, nil, ctx.Err()

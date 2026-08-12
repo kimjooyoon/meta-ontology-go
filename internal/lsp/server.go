@@ -93,11 +93,13 @@ func (server *Server) ServeContext(ctx context.Context, input io.Reader, output 
 				return err
 			}
 		}
-		if server.exited {
+		shutdown, exited := server.lifecycleState()
+		if exited {
+			loop.cancelAll()
 			if err := loop.wait(ctx); err != nil {
 				return err
 			}
-			if server.shutdown {
+			if shutdown {
 				return nil
 			}
 			return ErrExitWithoutShutdown
@@ -113,7 +115,8 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 	if request.JSONRPC != jsonRPCVersion || request.Method == "" {
 		return responseOrNil(request.ID, invalidRequest, "Invalid Request"), nil, nil
 	}
-	if server.shutdown && request.Method != "exit" {
+	shutdown, _ := server.lifecycleState()
+	if shutdown && request.Method != "exit" {
 		return responseOrNil(request.ID, invalidRequest, "server is shut down"), nil, nil
 	}
 	switch request.Method {
@@ -124,7 +127,7 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 	case "shutdown":
 		return server.shutdownRequest(request), nil, nil
 	case "exit":
-		server.exited = true
+		server.markExited()
 		return nil, nil, nil
 	case "textDocument/didOpen":
 		return server.didOpen(ctx, request)
@@ -150,7 +153,9 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 	if err := decodeParams(request.Params, &params); err != nil {
 		return responseOrNil(request.ID, invalidParams, "Invalid initialize parameters"), nil, nil
 	}
+	server.mu.Lock()
 	server.initialized = true
+	server.mu.Unlock()
 	result := InitializeResult{
 		Capabilities: ServerCapabilities{
 			TextDocumentSync:   TextDocumentSyncOptions{OpenClose: true, Change: 2},
@@ -164,7 +169,9 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 }
 
 func (server *Server) shutdownRequest(request requestEnvelope) *responseEnvelope {
+	server.mu.Lock()
 	server.shutdown = true
+	server.mu.Unlock()
 	if request.ID == nil {
 		return nil
 	}
@@ -283,16 +290,4 @@ func (server *Server) definitionRequest(ctx context.Context, request requestEnve
 		return featureErrorResponse(request.ID, err, ctx)
 	}
 	return resultResponse(request.ID, server.definition(params)), nil, nil
-}
-
-func (server *Server) parse(ctx context.Context, uri, source string) (ParseResult, error) {
-	server.parseMu.Lock()
-	defer server.parseMu.Unlock()
-	if parser, ok := server.parser.(ContextParser); ok {
-		return parser.ParseContext(ctx, uri, source)
-	}
-	if err := ctx.Err(); err != nil {
-		return ParseResult{}, err
-	}
-	return server.parser.Parse(uri, source), nil
 }

@@ -5,11 +5,12 @@ import "encoding/json"
 const jsonRPCVersion = "2.0"
 
 const (
-	parseError     = -32700
-	invalidRequest = -32600
-	methodNotFound = -32601
-	invalidParams  = -32602
-	internalError  = -32603
+	parseError      = -32700
+	invalidRequest  = -32600
+	methodNotFound  = -32601
+	invalidParams   = -32602
+	internalError   = -32603
+	contentModified = -32801
 )
 
 // Position is a zero-based LSP position measured in UTF-16 code units.

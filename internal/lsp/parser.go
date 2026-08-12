@@ -36,6 +36,18 @@ func (function ContextParserFunc) Parse(uri, source string) ParseResult {
 	return result
 }
 
+func (server *Server) parse(ctx context.Context, uri, source string) (ParseResult, error) {
+	server.parseMu.Lock()
+	defer server.parseMu.Unlock()
+	if parser, ok := server.parser.(ContextParser); ok {
+		return parser.ParseContext(ctx, uri, source)
+	}
+	if err := ctx.Err(); err != nil {
+		return ParseResult{}, err
+	}
+	return server.parser.Parse(uri, source), nil
+}
+
 type ParseResult struct {
 	File        *syntax.File
 	Symbols     []Symbol
@@ -78,6 +90,9 @@ func (SyntaxParser) Parse(uri, source string) ParseResult {
 }
 
 func (SyntaxParser) ParseContext(ctx context.Context, uri, source string) (ParseResult, error) {
+	// syntax.ParseFile is not interruptible. The default adapter therefore
+	// guarantees cancellation only at the parse boundary; ContextParser
+	// adapters can provide finer-grained cancellation when needed.
 	if err := ctx.Err(); err != nil {
 		return ParseResult{}, err
 	}
