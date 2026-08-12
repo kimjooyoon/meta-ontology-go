@@ -43,6 +43,11 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 	if strings.Contains(text, "name: \"gofmt [") || strings.Contains(text, "name: \"CI policy [") {
 		t.Fatal("required check names were changed instead of using run metadata")
 	}
+	assertWorkflowMarkers(t, text)
+}
+
+func assertWorkflowMarkers(t *testing.T, text string) {
+	t.Helper()
 	for _, marker := range []string{
 		"run-name: \"CI [${{",
 		"types: [opened, synchronize, reopened, ready_for_review]",
@@ -72,6 +77,10 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 		"CI_SLOT_PRESERVATION: \"true\"",
 		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
 		"actions/upload-artifact@v4",
+		"administration: read",
+		"getBranchProtection",
+		"branch_protection",
+		"digest_sha256",
 		"ci-proof.json",
 		"provenance-receipt.jsonl",
 		"if-no-files-found: error",

@@ -16,6 +16,7 @@ on:
 permissions:
   contents: read
   actions: read
+  administration: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -275,16 +276,57 @@ jobs:
         with:
           github-token: ${{ github.token }}
           script: |
+            const crypto = require('crypto');
             const fs = require('fs');
             const pull = context.payload.pull_request;
             const baseRef = pull ? pull.base.ref : context.ref_name;
             const baseSha = pull ? pull.base.sha : context.payload.before;
             const headSha = pull ? pull.head.sha : context.sha;
-            let branchProtected = false;
+            const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
+            let protection = {
+              repository: `${context.repo.owner}/${context.repo.repo}`,
+              branch: baseRef,
+              policy_sha256: evidence.digests.policy_sha256,
+              exists: false,
+              strict: false,
+              required_checks: [],
+              enforce_admins: false,
+              required_reviews: 0,
+              dismiss_stale_reviews: false,
+              require_last_push_approval: false,
+              linear_history: false,
+              allow_force_pushes: false,
+              allow_deletions: false,
+              base_sha: baseSha,
+              head_sha: headSha,
+              run_id: context.runId,
+              run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
+              workflow_sha: process.env.CI_WORKFLOW_SHA,
+              digest_sha256: ''
+            };
             try {
-              await github.rest.repos.getBranchProtection({owner: context.repo.owner, repo: context.repo.repo, branch: baseRef});
-              branchProtected = true;
-            } catch (_) {}
+              const response = await github.rest.repos.getBranchProtection({owner: context.repo.owner, repo: context.repo.repo, branch: baseRef});
+              const data = response.data;
+              const reviews = data.required_pull_request_reviews || {};
+              const checks = data.required_status_checks || {};
+              protection = {
+                ...protection,
+                exists: true,
+                strict: Boolean(checks.strict),
+                required_checks: [...(checks.contexts || [])].sort(),
+                enforce_admins: Boolean(data.enforce_admins?.enabled),
+                required_reviews: Number(reviews.required_approving_review_count || 0),
+                dismiss_stale_reviews: Boolean(reviews.dismiss_stale_reviews),
+                require_last_push_approval: Boolean(reviews.require_last_push_approval),
+                linear_history: Boolean(data.required_linear_history?.enabled),
+                allow_force_pushes: Boolean(data.allow_force_pushes?.enabled),
+                allow_deletions: Boolean(data.allow_deletions?.enabled),
+              };
+            } catch (error) {
+              core.warning(`branch protection API snapshot unavailable: ${error.message}`);
+            }
+            const protectionPayload = {...protection, digest_sha256: ''};
+            protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');
             let approvals = [];
             if (pull) {
               try {
@@ -303,7 +345,7 @@ jobs:
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
               actor: context.actor, builder: context.actor, guardian: approvals[0]?.actor || '', approver: approvals[1]?.actor || '', gate: 'CI policy',
-              branch_protected: branchProtected, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
+              branch_protected: protection.exists, branch_protection: protection, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
               provenance_status: 'unavailable', artifacts_status: artifacts.length ? 'verified' : 'missing', approvals_status: approvals.length >= 2 ? 'verified' : 'missing',
               write_effect: 'none', no_write_outside_generated: true, approvals, artifacts, fixture_paths: ['examples/billing/main.gooo'],
               cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: []

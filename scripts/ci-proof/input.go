@@ -32,6 +32,9 @@ func readInputs(root, governancePath, evidencePath, jobsPath, contextPath string
 	if err := validateEvidenceDigests(root, evidence); err != nil {
 		return proofInputs{}, err
 	}
+	if err := validateBranchProtection(context.BranchProtection, evidence, context); err != nil {
+		return proofInputs{}, err
+	}
 	return proofInputs{Governance: governanceInput{Schema: matrix.Schema, Promotion: promotionInput{Source: matrix.Promotion.Source, Target: matrix.Promotion.Target, RequiredChecks: matrix.Promotion.RequiredChecks, BranchProtectionRequired: matrix.Promotion.BranchProtectionRequired}}, Evidence: evidence, Jobs: jobs, Context: context}, nil
 }
 
@@ -56,7 +59,7 @@ func readJobs(filename string) ([]jobInput, error) {
 	result := make([]jobInput, 0, len(proofJobs))
 	for _, name := range proofJobs {
 		job, ok := byName[name]
-		if !ok || job.ID <= 0 || job.Conclusion != "success" || !validSHA(job.HeadSHA) {
+		if !ok || job.ID <= 0 || job.Status != "completed" || job.Conclusion != "success" || !validSHA(job.HeadSHA) {
 			return nil, fmt.Errorf("canonical proof job %q is missing or unsuccessful", name)
 		}
 		result = append(result, job)
@@ -107,6 +110,41 @@ func validateEvidenceDigests(root string, evidence evidenceInput) error {
 		return fmt.Errorf("proof repository root is required")
 	}
 	return nil
+}
+
+func validateBranchProtection(protection branchProtection, evidence evidenceInput, context contextInput) error {
+	if protection.Repository != evidence.Repository || protection.Branch != context.BaseRef || protection.PolicySHA != evidence.Digests.Policy || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA || !protection.Exists {
+		return fmt.Errorf("branch protection snapshot is missing or unbound")
+	}
+	if protection.Digest != digestBranchProtection(protection) {
+		return fmt.Errorf("branch protection snapshot digest mismatch")
+	}
+	if !protection.Strict || !protection.EnforceAdmins || protection.RequiredReviews < 1 || !protection.DismissStaleReviews || !protection.RequireLastPushApproval || !protection.LinearHistory || protection.AllowForcePushes || protection.AllowDeletions || !sameStringSet(protection.RequiredChecks, proofJobs) {
+		return fmt.Errorf("branch protection safeguards are incomplete")
+	}
+	return nil
+}
+
+func digestBranchProtection(protection branchProtection) string {
+	protection.Digest = ""
+	data, _ := json.Marshal(protection)
+	return digestBytes(data)
+}
+
+func sameStringSet(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	seen := make(map[string]bool, len(left))
+	for _, value := range left {
+		seen[value] = true
+	}
+	for _, value := range right {
+		if !seen[value] {
+			return false
+		}
+	}
+	return true
 }
 
 func readJSON[T any](filename string) (T, error) {
