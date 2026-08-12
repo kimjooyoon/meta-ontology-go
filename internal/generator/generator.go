@@ -37,6 +37,20 @@ func GenerateFrom(input any, options Options) ([]byte, SourceMap, error) {
 	return result.Source, result.SourceMap, nil
 }
 
+// GenerateFromProjectionV1 adapts a typed or reflective input through the
+// same strict compatibility path as GenerateFrom and returns versioned,
+// read-only projection metadata. External evidence remains deferred.
+func GenerateFromProjectionV1(input any, options Options) (ProjectionMetadataV1, error) {
+	ir, err := adaptInput(input)
+	if err != nil {
+		return ProjectionMetadataV1{}, err
+	}
+	if options.PackageName != "" {
+		ir.Package = options.PackageName
+	}
+	return GenerateProjectionV1(ir, nil)
+}
+
 // Generate projects ir into Go.  When previous is non-empty, only owned
 // generated regions are replaced or removed.  Marker-outside text and the
 // contents of stable handwritten slots are retained byte-for-byte.

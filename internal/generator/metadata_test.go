@@ -162,6 +162,20 @@ func TestProjectionMetadataV1UsesDeferredExternalBindings(t *testing.T) {
 	}
 }
 
+func TestGenerateFromProjectionV1UsesPackageOverrideInDigest(t *testing.T) {
+	input := semanticIRProviderFixture{ir: acceptanceFixture()}
+	result, err := GenerateFromProjectionV1(input, Options{PackageName: "adaptergen"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Metadata.SemanticIRDigest == "" || result.Metadata.SourceDigest == "" || result.Metadata.SourceMapDigest == "" {
+		t.Fatalf("missing adapter projection digests: %#v", result.Metadata)
+	}
+	if !strings.Contains(string(result.Source), "package adaptergen") {
+		t.Fatalf("package override was not applied:\n%s", result.Source)
+	}
+}
+
 func TestGenerateWithBindingReplaysAndBinds(t *testing.T) {
 	ir := acceptanceFixture()
 	base, err := GenerateProjectionV1(ir, nil)
