@@ -27,6 +27,7 @@ type Evidence struct {
 	GeneratedBy string            `json:"generated_by"`
 	Attributes  map[string]string `json:"attributes,omitempty"`
 	Freshness   Freshness         `json:"freshness"`
+	Binding     *RunBinding       `json:"binding,omitempty"`
 	Hash        string            `json:"hash"`
 }
 
@@ -53,6 +54,7 @@ func NewFreshness(sourceHash string, producedAt, validUntil time.Time) Freshness
 // ReadOptions controls optional freshness checks during Read.
 type ReadOptions struct {
 	ExpectedSourceHash string
+	ExpectedBinding    *RunBinding
 	RequireFresh       bool
 	Now                time.Time
 }
@@ -71,6 +73,7 @@ type CorruptionError struct {
 	Offset int64
 	Kind   string
 	Detail string
+	cause  error
 }
 
 // ErrDuplicateID is the stable identity-conflict sentinel for Append.
@@ -90,6 +93,8 @@ func (e *DuplicateError) Unwrap() error { return ErrDuplicateID }
 func (e *CorruptionError) Error() string {
 	return fmt.Sprintf("provenance corruption at %s:%d (byte %d, %s): %s", e.Path, e.Line, e.Offset, e.Kind, e.Detail)
 }
+
+func (e *CorruptionError) Unwrap() error { return e.cause }
 
 // FreshnessError reports a valid record that does not match the requested
 // source snapshot or freshness window.
@@ -142,6 +147,13 @@ func normalizeEvidence(evidence Evidence) (Evidence, error) {
 	}
 	evidence.Freshness, err = normalizeFreshness(evidence.Freshness)
 	if err != nil {
+		return Evidence{}, err
+	}
+	evidence.Binding, err = normalizeBinding(evidence.ID, evidence.Binding, bindingRequired(evidence.Type))
+	if err != nil {
+		return Evidence{}, err
+	}
+	if err := validateBindingSource(evidence.ID, evidence); err != nil {
 		return Evidence{}, err
 	}
 	return evidence, nil
@@ -242,6 +254,9 @@ func marshalEvidence(evidence Evidence, includeHash bool) ([]byte, error) {
 	}
 	if len(evidence.Attributes) > 0 {
 		body["attributes"] = evidence.Attributes
+	}
+	if evidence.Binding != nil {
+		body["binding"] = evidence.Binding
 	}
 	if includeHash {
 		body["hash"] = evidence.Hash

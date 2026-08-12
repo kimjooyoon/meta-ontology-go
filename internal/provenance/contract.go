@@ -26,6 +26,7 @@ type ContractSpec struct {
 type InputContract struct {
 	RequiredFields  []string
 	FreshnessFields []string
+	BindingFields   []string
 	IdentityRule    string
 }
 
@@ -98,11 +99,12 @@ func CurrentContract() ContractSpec {
 		Input: InputContract{
 			RequiredFields:  []string{"id", "type", "subject", "generated_by", "freshness"},
 			FreshnessFields: []string{"source_hash", "produced_at", "valid_until?"},
+			BindingFields:   []string{"repository", "base", "head", "event_ref", "checkout_ref", "run_id", "run_attempt", "workflow", "six jobs(id, conclusion, head_sha)", "policy_digest", "toolchain_digest", "bundle_digest", "predecessors", "evidence_refs", "write_effect"},
 			IdentityRule:    "id is unique within one store and is not inferred from display names",
 		},
 		Output: OutputContract{
 			LineEncoding:       "one UTF-8 compact JSON object per LF-terminated line",
-			RecordHashRule:     "sha256(canonical record JSON with hash omitted)",
+			RecordHashRule:     "sha256(canonical record JSON with hash omitted, including optional binding)",
 			SnapshotDigestRule: "sha256(sorted canonical JSONL records with LF separators)",
 			OrderingRule:       "Read returns records sorted lexicographically by stable id",
 			DiagnosticsRule:    "corruption reports path, line, byte offset, kind, and detail",
@@ -124,18 +126,25 @@ func CurrentContract() ContractSpec {
 			{ID: "H2", Claim: "a line mutation cannot be read as valid evidence", Fixture: "minimal-two-records", PassCriterion: "Read returns CorruptionError with a precise kind", FailCriterion: "tampered data yields a successful snapshot"},
 			{ID: "H3", Claim: "append-only identity prevents destructive duplicate writes", Fixture: "minimal-two-records", PassCriterion: "duplicate append fails and file bytes are unchanged", FailCriterion: "duplicate append mutates or validates"},
 			{ID: "H4", Claim: "freshness policy rejects a wrong or expired source", Fixture: "minimal-two-records", PassCriterion: "Read returns FreshnessError when checks are requested", FailCriterion: "stale evidence is returned as fresh"},
+			{ID: "H5", Claim: "a protected receipt is bound to one complete run tuple", Fixture: "graph-proof-007-binding", PassCriterion: "missing, internally inconsistent, or expected-tuple-mismatched binding fails closed", FailCriterion: "a protected record validates without its exact tuple"},
+			{ID: "H6", Claim: "receipt predecessor claims are append-only and non-replayable", Fixture: "graph-proof-007-binding", PassCriterion: "duplicate predecessor returns ReplayError before any write", FailCriterion: "a predecessor is accepted twice or bytes change"},
 		},
 		NegativeCases: []NegativeCase{
 			{ID: "N1", Mutation: "replace a record hash", ExpectedKind: "hash-mismatch", Preservation: "no successful snapshot"},
 			{ID: "N2", Mutation: "append an existing id", ExpectedKind: "duplicate-id", Preservation: "file bytes unchanged"},
 			{ID: "N3", Mutation: "write malformed JSON or omit LF", ExpectedKind: "invalid-json or missing-newline", Preservation: "no successful snapshot"},
 			{ID: "N4", Mutation: "read with wrong source or after valid_until", ExpectedKind: "source-mismatch or expired", Preservation: "FreshnessError, not success"},
+			{ID: "N5", Mutation: "tamper a canonical job head_sha or conclusion", ExpectedKind: "binding-invalid", Preservation: "no successful snapshot"},
+			{ID: "N6", Mutation: "supply a different but internally valid expected tuple", ExpectedKind: "binding-mismatch", Preservation: "no successful snapshot"},
+			{ID: "N7", Mutation: "append a second receipt with an existing predecessor", ExpectedKind: "replayed-predecessor", Preservation: "file bytes unchanged"},
+			{ID: "N8", Mutation: "omit binding or set write_effect to nonzero", ExpectedKind: "binding-invalid", Preservation: "file bytes unchanged"},
 		},
 		Deferred: []DeferredCase{
 			{ID: "D1", Capability: "cross-process append locking", Reason: "Store serializes one in-process instance only; an OS-level lock contract is not implemented"},
 			{ID: "D2", Capability: "full RFC 8785 JSON Canonicalization Scheme", Reason: "The profile relies on compact encoding/json with sorted map keys and must not claim full JCS compliance"},
 			{ID: "D3", Capability: "AST/IR/BX/codegen/LSP/cache adapters", Reason: "No upstream semantic packages are present in this baseline; adapters need a later integration contract"},
 			{ID: "D4", Capability: "gooo-hosted self-hosting stage", Reason: "The gooo check stage is unimplemented and remains deferred"},
+			{ID: "D5", Capability: "external provenance provider attestation", Reason: "No external provenance connector or authoritative remote receipt is available in this lane"},
 		},
 	}
 }

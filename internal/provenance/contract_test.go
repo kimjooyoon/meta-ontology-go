@@ -16,12 +16,12 @@ func TestCurrentContractIsExecutable(t *testing.T) {
 	if spec.Version != ContractVersion || spec.Format == "" {
 		t.Fatalf("contract identity is incomplete: %#v", spec)
 	}
-	for _, field := range append(spec.Input.RequiredFields, spec.Input.FreshnessFields...) {
+	for _, field := range append(append(spec.Input.RequiredFields, spec.Input.FreshnessFields...), spec.Input.BindingFields...) {
 		if strings.TrimSpace(field) == "" {
 			t.Fatal("contract contains an empty input field")
 		}
 	}
-	if len(spec.Adapters) < 6 || len(spec.HostingStages) != 2 || len(spec.Hypotheses) < 4 || len(spec.NegativeCases) < 4 || len(spec.Deferred) < 3 {
+	if len(spec.Adapters) < 6 || len(spec.HostingStages) != 2 || len(spec.Hypotheses) < 6 || len(spec.NegativeCases) < 8 || len(spec.Deferred) < 5 {
 		t.Fatalf("contract evidence plan is incomplete: %#v", spec)
 	}
 	for _, adapter := range spec.Adapters {
