@@ -6,8 +6,30 @@ import (
 	"errors"
 	"io"
 	"strings"
+	"sync"
 	"testing"
 )
+
+type nonCloseableReader struct {
+	started  chan struct{}
+	release  chan struct{}
+	finished chan struct{}
+	start    sync.Once
+	finish   sync.Once
+}
+
+func newNonCloseableReader() *nonCloseableReader {
+	return &nonCloseableReader{
+		started: make(chan struct{}), release: make(chan struct{}), finished: make(chan struct{}),
+	}
+}
+
+func (reader *nonCloseableReader) Read([]byte) (int, error) {
+	reader.start.Do(func() { close(reader.started) })
+	<-reader.release
+	reader.finish.Do(func() { close(reader.finished) })
+	return 0, io.EOF
+}
 
 func TestReadMessageHandlesPartialInput(t *testing.T) {
 	input := []byte("Content-Length: 11\r\n\r\n{\"ok\":true}")

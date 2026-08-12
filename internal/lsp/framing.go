@@ -32,9 +32,6 @@ func readFrameContext(ctx context.Context, reader *bufio.Reader, input io.Reader
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	if _, interruptible := input.(io.Closer); !interruptible {
-		return readFrame(reader)
-	}
 	results := make(chan frameResult, 1)
 	go func() {
 		payload, err := readFrame(reader)
@@ -49,8 +46,9 @@ func readFrameContext(ctx context.Context, reader *bufio.Reader, input io.Reader
 			return result.payload, result.err
 		default:
 		}
-		closer := input.(io.Closer)
-		_ = closer.Close()
+		if closer, interruptible := input.(io.Closer); interruptible {
+			_ = closer.Close()
+		}
 		return nil, ctx.Err()
 	}
 }

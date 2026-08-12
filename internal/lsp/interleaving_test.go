@@ -132,6 +132,29 @@ func TestServeContextReturnsWhenCloseDoesNotInterruptReader(t *testing.T) {
 	close(input.release)
 }
 
+func TestServeContextReturnsWhenNonCloseableReaderBlocks(t *testing.T) {
+	input := newNonCloseableReader()
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- NewServer().ServeContext(ctx, input, &bytes.Buffer{}) }()
+	<-input.started
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("ServeContext() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("ServeContext() waited for a non-closeable reader after cancellation")
+	}
+	close(input.release)
+	select {
+	case <-input.finished:
+	case <-time.After(time.Second):
+		t.Fatal("non-closeable reader did not finish after release")
+	}
+}
+
 func TestExitCancelsPendingRequest(t *testing.T) {
 	var calls atomic.Int32
 	opened := make(chan struct{})
