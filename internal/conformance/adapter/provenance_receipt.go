@@ -254,8 +254,9 @@ func validateReceiptJobs(jobs []ReceiptJob, head string, status ReceiptProvenanc
 		if !validCommitID(job.HeadSHA) || !validJobStatus(job.Status) {
 			return fmt.Errorf("receipt job %q is malformed", job.Name)
 		}
-		if job.Status == "completed" && !validJobConclusion(job.Conclusion) {
-			return fmt.Errorf("receipt job %q has invalid conclusion", job.Name)
+		if (job.Status == "completed" && !validJobConclusion(job.Conclusion)) ||
+			(job.Status != "completed" && job.Conclusion != "") {
+			return fmt.Errorf("receipt job %q has an invalid conclusion state", job.Name)
 		}
 		seen[job.Name] = struct{}{}
 	}

@@ -27,6 +27,16 @@ func TestProvenanceReceiptStaleJobHeadRejects(t *testing.T) {
 	}
 }
 
+func TestProvenanceReceiptRejectsDeferredPrematureConclusion(t *testing.T) {
+	receipt, _, _ := newCancelledReceipt(t)
+	receipt.ProvenanceStatus = ReceiptProvenanceDeferred
+	receipt.Jobs[0].Status = "queued"
+	receipt.Jobs[0].Conclusion = "success"
+	if err := receipt.Validate(); err == nil {
+		t.Fatal("deferred job with a premature conclusion was accepted")
+	}
+}
+
 func TestProvenanceReceiptRejectsDuplicateTerminalSuccess(t *testing.T) {
 	receipt, _, _ := newCancelledReceipt(t)
 	receipt.Jobs[1].Name = receipt.Jobs[0].Name
