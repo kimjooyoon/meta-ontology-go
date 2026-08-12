@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 type diagnosticsBuffer struct {
@@ -42,6 +44,44 @@ func (buffer *diagnosticsBuffer) Bytes() []byte {
 	buffer.mu.Lock()
 	defer buffer.mu.Unlock()
 	return append([]byte(nil), buffer.data.Bytes()...)
+}
+
+type trackedPipeReader struct {
+	reader  *io.PipeReader
+	started chan struct{}
+	once    sync.Once
+}
+
+func (reader *trackedPipeReader) Read(data []byte) (int, error) {
+	reader.once.Do(func() { close(reader.started) })
+	return reader.reader.Read(data)
+}
+
+func (reader *trackedPipeReader) Close() error {
+	return reader.reader.Close()
+}
+
+func TestServeContextClosesBlockedInputRead(t *testing.T) {
+	pipeReader, pipeWriter := io.Pipe()
+	input := &trackedPipeReader{reader: pipeReader, started: make(chan struct{})}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- NewServer().ServeContext(ctx, input, &bytes.Buffer{}) }()
+	<-input.started
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("ServeContext() error = %v, want context.Canceled", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("ServeContext() did not unblock its input read")
+	}
+	if _, err := pipeWriter.Write([]byte("unexpected input")); err == nil {
+		t.Fatal("pipe writer remained open after canceled input read")
+	}
+	_ = pipeWriter.Close()
 }
 
 func TestExitCancelsPendingRequest(t *testing.T) {
