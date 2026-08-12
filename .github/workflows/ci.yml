@@ -278,17 +278,17 @@ jobs:
               protection_status: 'unavailable',
               approval_status: 'unavailable',
               provenance_status: 'unavailable',
-              missing_reasons: {
-                protection: 'domain_protection_observer_unavailable',
-                approval: 'domain_approval_observer_unavailable',
-                provenance: 'domain_provenance_observer_unavailable',
-              },
               digests: {
                 source_sha256: evidence.digests.source_sha256,
                 ir_sha256: evidence.digests.ir_sha256,
                 generated_output_sha256: evidence.digests.generated_output_sha256,
                 bundle_sha256: evidence.digests.bundle_sha256,
                 domain_sha256: '',
+              },
+              missing_reasons: {
+                protection: 'domain_protection_observer_unavailable',
+                approval: 'domain_approval_observer_unavailable',
+                provenance: 'domain_provenance_observer_unavailable',
               },
             };
             const domainPayload = {...domain, digests: {...domain.digests, domain_sha256: ''}};
