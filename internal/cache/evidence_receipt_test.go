@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"encoding/json"
 	"errors"
+	"slices"
 	"testing"
 )
 
@@ -12,7 +14,10 @@ func evidenceFixture(run string) EvidenceFreshness {
 		SourceDigest:       HashBytes([]byte("source")), IRDigest: HashBytes([]byte("ir")),
 		PolicyDigest: HashBytes([]byte("policy")), ToolchainDigest: HashBytes([]byte("go1.26.5")),
 		TargetDigest: HashBytes([]byte("darwin/arm64")), BundleDigest: HashBytes([]byte("bundle-" + run)),
-		EvidenceRefs: []EvidenceRef{{Name: "source", Digest: HashBytes([]byte("source-ref"))}},
+		EvidenceRefs: []EvidenceRef{
+			{Name: "source", Digest: HashBytes([]byte("source-ref"))},
+			{Name: "bundle", Digest: HashBytes([]byte("bundle-ref"))},
+		},
 	}
 }
 
@@ -20,11 +25,83 @@ func cacheReceiptFixture(key Key, run string) CacheReceipt {
 	evidence := evidenceFixture(run)
 	return CacheReceipt{
 		SchemaVersion: cacheReceiptSchemaVersion, CacheKey: key.Digest, ArtifactKind: key.ArtifactKind,
+		Projection:            key.Projection,
 		SemanticClosureDigest: key.SemanticClosureDigest, DependencyRoot: key.DependencyRoot,
 		DirectDependencies: []Digest{HashBytes([]byte("direct"))}, PolicySchemaDigest: key.PolicySchemaDigest,
 		Toolchain: key.Toolchain, Target: key.Target, BuildTagsDigest: key.BuildTagsDigest,
+		ContentDigest: HashBytes([]byte("projection")), Size: int64(len("projection")), Reconstructable: true,
 		EvidenceRefs: evidence.EvidenceRefs, ProducerHost: "go-hosted", Status: ReceiptRecomputed,
 		Evidence: evidence,
+	}
+}
+
+func TestCacheReceiptCanonicalizationIsPresentationStable(t *testing.T) {
+	key, err := NewProjectionKey(projectionSpec())
+	if err != nil {
+		t.Fatal(err)
+	}
+	left := cacheReceiptFixture(key, "canonical")
+	right := cacheReceiptFixture(key, "canonical")
+	right.EvidenceRefs = append([]EvidenceRef(nil), right.EvidenceRefs...)
+	slices.Reverse(right.Evidence.PredecessorDigests)
+	slices.Reverse(right.Evidence.EvidenceRefs)
+	slices.Reverse(right.EvidenceRefs)
+	sealedLeft, err := left.Seal()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sealedRight, err := right.Seal()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sealedLeft.ReceiptDigest != sealedRight.ReceiptDigest {
+		t.Fatalf("presentation changed receipt digest: %s != %s", sealedLeft.ReceiptDigest, sealedRight.ReceiptDigest)
+	}
+	leftJSON, err := json.Marshal(sealedLeft)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rightJSON, err := json.Marshal(sealedRight)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(leftJSON) != string(rightJSON) {
+		t.Fatal("canonical receipt JSON differs by presentation order")
+	}
+}
+
+func TestCacheReceiptBindsProjectionAndContent(t *testing.T) {
+	key, err := NewProjectionKey(projectionSpec())
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := cacheReceiptFixture(key, "binding")
+	if err := receipt.ValidateForKey(key); err != nil {
+		t.Fatal(err)
+	}
+	if err := receipt.ValidateForData([]byte("projection")); err != nil {
+		t.Fatal(err)
+	}
+	for name, mutate := range map[string]func(*CacheReceipt){
+		"projection": func(r *CacheReceipt) { r.Projection = "other" },
+		"artifact":   func(r *CacheReceipt) { r.ArtifactKind = "other" },
+		"content":    func(r *CacheReceipt) { r.ContentDigest = HashBytes([]byte("other")) },
+		"size":       func(r *CacheReceipt) { r.Size++ },
+		"rebuild":    func(r *CacheReceipt) { r.Reconstructable = false },
+	} {
+		t.Run(name, func(t *testing.T) {
+			mutated := receipt
+			mutate(&mutated)
+			if name == "content" || name == "size" {
+				if err := mutated.ValidateForData([]byte("projection")); !errors.Is(err, ErrInvalidReceipt) {
+					t.Fatalf("mutated data receipt = %v, want ErrInvalidReceipt", err)
+				}
+				return
+			}
+			if err := mutated.ValidateForKey(key); !errors.Is(err, ErrInvalidReceipt) {
+				t.Fatalf("mutated identity receipt = %v, want ErrInvalidReceipt", err)
+			}
+		})
 	}
 }
 

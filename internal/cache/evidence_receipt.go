@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	cacheReceiptSchemaVersion     = "v1"
+	cacheReceiptSchemaVersion     = "v2"
 	benchmarkReceiptSchemaVersion = "v1"
 )
 
@@ -96,6 +96,7 @@ type CacheReceipt struct {
 	SchemaVersion         string            `json:"schema_version"`
 	CacheKey              Digest            `json:"cache_key"`
 	ArtifactKind          string            `json:"artifact_kind"`
+	Projection            string            `json:"projection"`
 	SemanticClosureDigest Digest            `json:"semantic_closure_digest"`
 	DependencyRoot        Digest            `json:"dependency_root"`
 	DirectDependencies    []Digest          `json:"direct_dependencies"`
@@ -103,6 +104,9 @@ type CacheReceipt struct {
 	Toolchain             string            `json:"toolchain"`
 	Target                string            `json:"target"`
 	BuildTagsDigest       Digest            `json:"build_tags_digest"`
+	ContentDigest         Digest            `json:"content_digest"`
+	Size                  int64             `json:"size"`
+	Reconstructable       bool              `json:"reconstructable"`
 	EvidenceRefs          []EvidenceRef     `json:"evidence_refs"`
 	ProducerHost          string            `json:"producer_host"`
 	Status                ReceiptStatus     `json:"status"`
@@ -124,10 +128,17 @@ const (
 // Validate checks the required cache receipt schema before it is sealed.
 func (r CacheReceipt) Validate() error {
 	if r.SchemaVersion != cacheReceiptSchemaVersion || !r.CacheKey.Known() || r.ArtifactKind == "" ||
+		r.Projection == "" ||
 		!r.SemanticClosureDigest.Known() || !r.DependencyRoot.Known() || r.DirectDependencies == nil ||
 		!r.PolicySchemaDigest.Known() || r.Toolchain == "" || r.Target == "" || !r.BuildTagsDigest.Known() ||
-		r.ProducerHost == "" || !validReceiptStatus(r.Status) {
+		r.ProducerHost == "" || !validReceiptStatus(r.Status) || r.Size < 0 {
 		return fmt.Errorf("%w: required cache receipt field missing", ErrInvalidReceipt)
+	}
+	if r.hasArtifact() && (!r.ContentDigest.Known() || !r.Reconstructable) {
+		return fmt.Errorf("%w: artifact receipt is not reconstructable", ErrInvalidReceipt)
+	}
+	if !r.hasArtifact() && (r.ContentDigest != "" || r.Size != 0 || r.Reconstructable) {
+		return fmt.Errorf("%w: non-artifact receipt has content", ErrInvalidReceipt)
 	}
 	if err := validateEvidenceRefs(r.EvidenceRefs); err != nil {
 		return err
@@ -155,11 +166,22 @@ func (r CacheReceipt) ValidateForKey(key Key) error {
 	if err := validateFullKey(key); err != nil {
 		return err
 	}
-	if r.CacheKey != key.Digest || r.ArtifactKind != key.ArtifactKind ||
+	if r.CacheKey != key.Digest || r.ArtifactKind != key.ArtifactKind || r.Projection != key.Projection ||
 		r.SemanticClosureDigest != key.SemanticClosureDigest || r.DependencyRoot != key.DependencyRoot ||
 		r.PolicySchemaDigest != key.PolicySchemaDigest || r.Toolchain != key.Toolchain ||
 		r.Target != key.Target || r.BuildTagsDigest != key.BuildTagsDigest {
 		return fmt.Errorf("%w: receipt identity differs from key", ErrInvalidReceipt)
+	}
+	return nil
+}
+
+// ValidateForData binds an artifact receipt to the exact bytes it describes.
+func (r CacheReceipt) ValidateForData(data []byte) error {
+	if err := r.Validate(); err != nil {
+		return err
+	}
+	if !r.hasArtifact() || r.ContentDigest != HashBytes(data) || r.Size != int64(len(data)) {
+		return fmt.Errorf("%w: receipt content differs from artifact", ErrInvalidReceipt)
 	}
 	return nil
 }
@@ -187,6 +209,10 @@ func (r CacheReceipt) Seal() (CacheReceipt, error) {
 func validReceiptStatus(status ReceiptStatus) bool {
 	return status == ReceiptHit || status == ReceiptMiss || status == ReceiptRecomputed ||
 		status == ReceiptStale || status == ReceiptCorrupt
+}
+
+func (r CacheReceipt) hasArtifact() bool {
+	return r.Status == ReceiptHit || r.Status == ReceiptRecomputed
 }
 
 func validateEvidenceRefs(refs []EvidenceRef) error {
