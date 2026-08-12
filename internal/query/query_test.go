@@ -3,6 +3,8 @@ package query
 import (
 	"reflect"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 func TestExactMatchSeparatesFactStatus(t *testing.T) {
@@ -126,6 +128,89 @@ func TestInvalidInputsAreRejected(t *testing.T) {
 	}
 	if _, err := graph.Traverse(id("billing://activity/pay"), TraversalOptions{}); err == nil {
 		t.Fatal("unbounded traversal was accepted")
+	}
+}
+
+func TestFromSemanticIRKeepsCandidatesOutOfAuthoritativeQueries(t *testing.T) {
+	ir := semantic.NewIR("billing", "billing")
+	activity, err := semantic.NewActivity("billing://activity/pay", "billing", "PayOrder")
+	if err != nil {
+		t.Fatal(err)
+	}
+	order, err := semantic.NewEntity("billing://entity/order", "billing", "Order")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ir.AddNode(activity); err != nil {
+		t.Fatal(err)
+	}
+	if err := ir.AddNode(order); err != nil {
+		t.Fatal(err)
+	}
+	invoice, err := semantic.NewEntity("billing://entity/invoice", "billing", "Invoice")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ir.AddNode(invoice); err != nil {
+		t.Fatal(err)
+	}
+	if err := ir.AddFact(semantic.NewUsedFact(activity.ID, order.ID)); err != nil {
+		t.Fatal(err)
+	}
+	if err := ir.AddCandidate(semantic.NewCandidateFact(activity.ID, semantic.Used, order.ID, "ambiguous adapter")); err != nil {
+		t.Fatal(err)
+	}
+	if err := ir.AddCandidate(semantic.NewCandidateFact(activity.ID, semantic.Used, invoice.ID, "ambiguous invoice adapter")); err != nil {
+		t.Fatal(err)
+	}
+	projected, err := FromSemanticIR(ir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := projected.ExactMatch(NewExactQuery(ID(activity.ID.String()), Used, ID(order.ID.String())))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Deterministic) != 1 || len(result.Candidates) != 0 {
+		t.Fatalf("candidate was not shadowed by authoritative fact: %#v", result)
+	}
+	candidateResult, err := projected.ExactMatch(NewExactQuery(ID(activity.ID.String()), Used, ID(invoice.ID.String())))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidateResult.Deterministic) != 0 || len(candidateResult.Candidates) != 1 || candidateResult.Candidates[0].Status != Candidate {
+		t.Fatalf("candidate projection was not kept separate: %#v", candidateResult)
+	}
+	if projected.StableHash() == "" || projected.Canonical() == "" {
+		t.Fatal("query projection did not expose a stable read fingerprint")
+	}
+}
+
+func TestFromSemanticIRRejectsInvalidAuthoritativeGraph(t *testing.T) {
+	ir := semantic.NewIR("billing", "billing")
+	activity, err := semantic.NewActivity("billing://activity/pay", "billing", "PayOrder")
+	if err != nil {
+		t.Fatal(err)
+	}
+	entity, err := semantic.NewEntity("billing://entity/order", "billing", "Order")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ir.AddNode(activity); err != nil {
+		t.Fatal(err)
+	}
+	if err := ir.AddNode(entity); err != nil {
+		t.Fatal(err)
+	}
+	// Reverse the PROV direction deliberately. The adapter must validate the
+	// IR first rather than silently publishing a query projection.
+	if err := ir.AddFact(semantic.NewFact(activity.ID, semantic.WasGeneratedBy, entity.ID)); err != nil {
+		// AddFact currently permits construction and IR.Validate owns the final
+		// graph boundary; retain the test for either fail-closed behavior.
+		return
+	}
+	if _, err := FromSemanticIR(ir); err == nil {
+		t.Fatal("invalid semantic relation was projected into query graph")
 	}
 }
 
