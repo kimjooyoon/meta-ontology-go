@@ -56,7 +56,7 @@ func TestSyntaxDiagnosticsSortByCanonicalSourceOrder(t *testing.T) {
 	}
 	permuted := append([]Diagnostic(nil), first.Diagnostics...)
 	permuted[0], permuted[1] = permuted[1], permuted[0]
-	if sorted := sortMappedDiagnostics("fixture.gooo", source, permuted); !reflect.DeepEqual(first.Diagnostics, sorted) {
+	if sorted := canonicalDiagnosticOrder("fixture.gooo", source, permuted); !reflect.DeepEqual(first.Diagnostics, sorted) {
 		t.Fatalf("permuted diagnostics = %#v, want %#v", sorted, first.Diagnostics)
 	}
 }

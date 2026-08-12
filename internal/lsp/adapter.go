@@ -25,11 +25,13 @@ func adaptSyntaxResult(uri, source string, file *syntax.File, diagnostics syntax
 }
 
 func normalizeParseResult(uri, source string, result ParseResult) ParseResult {
-	result.Diagnostics = sortMappedDiagnostics(uri, source, result.Diagnostics)
+	result.Diagnostics = canonicalDiagnosticOrder(uri, source, result.Diagnostics)
 	return result
 }
 
-func sortMappedDiagnostics(uri, source string, diagnostics []Diagnostic) []Diagnostic {
+// canonicalDiagnosticOrder preserves syntax source order and adds only the
+// LSP view's deterministic tie-breaks for diagnostics sharing a start.
+func canonicalDiagnosticOrder(uri, source string, diagnostics []Diagnostic) []Diagnostic {
 	result := append([]Diagnostic(nil), diagnostics...)
 	for index := range result {
 		if result[index].filename == "" {
