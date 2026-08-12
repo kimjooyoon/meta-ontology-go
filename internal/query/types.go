@@ -244,6 +244,9 @@ type TraversalOptions struct {
 	Predicate Relation
 	Direction Direction
 	MaxDepth  int
+	// Limit bounds both returned paths and edge inspection. Zero preserves
+	// the unbounded direct Go API; query envelopes always set this field.
+	Limit     int
 	Selection FactSelection
 }
 

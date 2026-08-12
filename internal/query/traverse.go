@@ -28,26 +28,35 @@ func (graph Graph) selectedPaths(start ID, options TraversalOptions) ([]Path, []
 	deterministic := make([]Path, 0)
 	candidates := make([]Path, 0)
 	if options.Selection != SelectCandidate {
-		deterministic = graph.traversePaths(start, options, SelectDeterministic)
+		deterministicQuota := newQueryWorkQuota(options.Limit)
+		deterministic = graph.traversePaths(
+			start, options, SelectDeterministic, FactDeterministic, options.Limit, deterministicQuota,
+		)
 	}
-	if options.Selection == SelectDeterministic {
+	if options.Selection == SelectDeterministic || (options.Limit > 0 && len(deterministic) >= options.Limit) {
 		return deterministic, candidates
 	}
 	selection := SelectAll
 	if options.Selection == SelectCandidate {
 		selection = SelectCandidate
 	}
-	for _, path := range graph.traversePaths(start, options, selection) {
-		if path.Status == FactCandidate {
-			candidates = append(candidates, path)
-		}
+	remaining := 0
+	if options.Limit > 0 {
+		remaining = options.Limit - len(deterministic)
 	}
+	candidateQuota := newQueryWorkQuota(options.Limit)
+	candidates = graph.traversePaths(start, options, selection, FactCandidate, remaining, candidateQuota)
 	return deterministic, candidates
 }
 
 func (options TraversalOptions) normalized() (TraversalOptions, error) {
 	if options.MaxDepth <= 0 {
 		return TraversalOptions{}, invalidTraversal("max depth must be positive")
+	}
+	if options.Limit < 0 || options.Limit > MaxEnvelopeLimit {
+		return TraversalOptions{}, invalidTraversal(
+			fmt.Sprintf("limit must be 0..%d", MaxEnvelopeLimit),
+		)
 	}
 	if options.Direction == 0 {
 		options.Direction = Outgoing
@@ -74,13 +83,26 @@ func invalidTraversal(detail string) error {
 	return fmt.Errorf("%w: %s", ErrInvalidTraversal, detail)
 }
 
-func (graph Graph) traversePaths(start ID, options TraversalOptions, selection FactSelection) []Path {
+func (graph Graph) traversePaths(
+	start ID,
+	options TraversalOptions,
+	selection FactSelection,
+	outputStatus FactStatus,
+	resultLimit int,
+	quota *queryWorkQuota,
+) []Path {
+	facts := graph.AllFacts()
 	frontier := []Path{{IDs: []ID{start}, Status: FactDeterministic}}
 	paths := make([]Path, 0)
 	for depth := 1; depth <= options.MaxDepth && len(frontier) > 0; depth++ {
 		next := make([]Path, 0)
+		complete := true
 		for _, path := range frontier {
-			for _, fact := range graph.edges(path.Last(), options, selection) {
+			edges, edgesComplete := graph.edges(path.Last(), facts, options, selection, quota)
+			if !edgesComplete {
+				complete = false
+			}
+			for _, fact := range edges {
 				nextID := nextNode(path.Last(), fact, options.Direction)
 				if containsID(path.IDs, nextID) {
 					continue
@@ -91,20 +113,38 @@ func (graph Graph) traversePaths(start ID, options TraversalOptions, selection F
 				}
 				next = append(next, extendPath(path, fact, nextID, status))
 			}
+			if !complete {
+				break
+			}
 		}
 		sortPaths(next)
-		paths = append(paths, next...)
+		for _, path := range next {
+			if path.Status == outputStatus {
+				paths = append(paths, path)
+				if resultLimit > 0 && len(paths) == resultLimit {
+					return paths
+				}
+			}
+		}
+		if !complete {
+			return paths
+		}
 		frontier = next
 	}
 	return paths
 }
 
-func (graph Graph) edges(at ID, options TraversalOptions, selection FactSelection) []Fact {
-	facts := graph.AllFacts()
+func (graph Graph) edges(
+	at ID, facts []Fact, options TraversalOptions, selection FactSelection,
+	quota *queryWorkQuota,
+) ([]Fact, bool) {
 	matches := make([]Fact, 0)
 	for _, fact := range facts {
 		if !selection.includes(fact.Status) {
 			continue
+		}
+		if !quota.take() {
+			return matches, false
 		}
 		if options.Predicate != "" && fact.Predicate != options.Predicate {
 			continue
@@ -113,8 +153,7 @@ func (graph Graph) edges(at ID, options TraversalOptions, selection FactSelectio
 			matches = append(matches, fact)
 		}
 	}
-	sortFacts(matches)
-	return matches
+	return matches, true
 }
 
 func follows(at ID, fact Fact, direction Direction) bool {

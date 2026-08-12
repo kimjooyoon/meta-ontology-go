@@ -82,6 +82,7 @@ func (graph Graph) executeTraversal(response Response) (Response, error) {
 		Predicate: response.Request.Relation,
 		Direction: envelopeDirection(response.Request.Direction),
 		MaxDepth:  response.Request.MaxDepth,
+		Limit:     response.Request.Limit,
 		Selection: selection,
 	})
 	if err != nil {

@@ -14,7 +14,9 @@ type derivedVisitKey struct {
 func (graph Graph) deriveInverse(root ID, rule derivedRule, options DerivedOptions) ([]DerivedFact, []DerivedFact) {
 	var deterministic []DerivedFact
 	if options.Selection != SelectCandidate {
-		deterministic = graph.deriveInverseRows(root, rule, FactDeterministic, options.Limit, nil)
+		deterministic = graph.deriveInverseRows(
+			root, rule, FactDeterministic, options.Limit, nil, newQueryWorkQuota(options.Limit),
+		)
 	}
 	if options.Selection == SelectDeterministic || len(deterministic) >= options.Limit {
 		return deterministic, nil
@@ -22,6 +24,7 @@ func (graph Graph) deriveInverse(root ID, rule derivedRule, options DerivedOptio
 	blocked := derivedKeys(deterministic)
 	candidates := graph.deriveInverseRows(
 		root, rule, FactCandidate, options.Limit-len(deterministic), blocked,
+		newQueryWorkQuota(options.Limit),
 	)
 	if options.Selection == SelectCandidate {
 		return nil, candidates
@@ -31,11 +34,15 @@ func (graph Graph) deriveInverse(root ID, rule derivedRule, options DerivedOptio
 
 func (graph Graph) deriveInverseRows(
 	root ID, rule derivedRule, status FactStatus, limit int, blocked map[derivedKey]struct{},
+	quota *queryWorkQuota,
 ) []DerivedFact {
 	rows := make([]DerivedFact, 0, limit)
 	for _, fact := range graph.AllFacts() {
 		if fact.Status != status || fact.Predicate != rule.base || fact.Object != root {
 			continue
+		}
+		if !quota.take() {
+			return rows
 		}
 		derived := newDerivedFact(rule, fact.Object, fact.Subject, 1, fact.Status)
 		key := derivedKey{derived.Subject, derived.Predicate, derived.Object}
@@ -56,6 +63,7 @@ func (graph Graph) deriveDependsOn(root ID, options DerivedOptions) ([]DerivedFa
 	if options.Selection != SelectCandidate {
 		deterministic = graph.deriveTargets(
 			root, nodes, options.MaxDepth, SelectDeterministic, false, options.Limit, nil,
+			newQueryWorkQuota(options.Limit),
 		)
 	}
 	if options.Selection == SelectDeterministic || len(deterministic) >= options.Limit {
@@ -64,6 +72,7 @@ func (graph Graph) deriveDependsOn(root ID, options DerivedOptions) ([]DerivedFa
 	candidates := graph.deriveTargets(
 		root, nodes, options.MaxDepth, options.Selection, true,
 		options.Limit-len(deterministic), derivedKeys(deterministic),
+		newQueryWorkQuota(options.Limit),
 	)
 	if options.Selection == SelectCandidate {
 		return nil, candidates
@@ -73,7 +82,7 @@ func (graph Graph) deriveDependsOn(root ID, options DerivedOptions) ([]DerivedFa
 
 func (graph Graph) deriveTargets(
 	root ID, nodes []Node, maxDepth int, selection FactSelection,
-	wantCandidate bool, limit int, blocked map[derivedKey]struct{},
+	wantCandidate bool, limit int, blocked map[derivedKey]struct{}, quota *queryWorkQuota,
 ) []DerivedFact {
 	if limit <= 0 {
 		return nil
@@ -84,9 +93,15 @@ func (graph Graph) deriveTargets(
 		if node.ID == root {
 			continue
 		}
-		derived, ok := findDerivedTarget(
-			root, node.ID, maxDepth, selection, wantCandidate, index,
+		if len(index[node.ID]) == 0 {
+			continue
+		}
+		derived, ok, complete := findDerivedTarget(
+			root, node.ID, maxDepth, selection, wantCandidate, index, quota,
 		)
+		if !complete {
+			return rows
+		}
 		if !ok {
 			continue
 		}
@@ -117,8 +132,8 @@ func (graph Graph) reverseDerivedEdges(selection FactSelection) map[ID][]Fact {
 
 func findDerivedTarget(
 	root, target ID, maxDepth int, selection FactSelection, wantCandidate bool,
-	index map[ID][]Fact,
-) (DerivedFact, bool) {
+	index map[ID][]Fact, quota *queryWorkQuota,
+) (DerivedFact, bool, bool) {
 	frontier := []derivedState{{node: target}}
 	visited := make(map[derivedVisitKey]struct{})
 	visited[derivedVisitKey{node: target}] = struct{}{}
@@ -128,6 +143,9 @@ func findDerivedTarget(
 			continue
 		}
 		for _, fact := range index[state.node] {
+			if !quota.take() {
+				return DerivedFact{}, false, false
+			}
 			candidate := state.candidate || fact.Status == FactCandidate
 			depth := state.depth + 1
 			if fact.Subject == root {
@@ -137,7 +155,7 @@ func findDerivedTarget(
 				return newDerivedFact(
 					derivedRule{id: RuleDependsOn, predicate: DerivedDependsOn},
 					root, target, depth, statusForCandidate(candidate),
-				), true
+				), true, true
 			}
 			nextState := derivedState{node: fact.Subject, depth: depth, candidate: candidate}
 			visitKey := derivedVisitKey{node: nextState.node, candidate: candidate}
@@ -148,7 +166,7 @@ func findDerivedTarget(
 			frontier = append(frontier, nextState)
 		}
 	}
-	return DerivedFact{}, false
+	return DerivedFact{}, false, true
 }
 
 func statusForCandidate(candidate bool) FactStatus {

@@ -82,6 +82,14 @@ func TestEnvelopeFiltersLayersAndBoundsResults(t *testing.T) {
 	if len(response.Result.DeterministicPaths) != 1 || len(response.Result.CandidatePaths) != 0 {
 		t.Fatalf("limit did not prefer deterministic paths: %#v", response.Result)
 	}
+	all.Limit = 2
+	response, err = graph.Execute(all)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Result.DeterministicPaths) != 1 || len(response.Result.CandidatePaths) != 1 {
+		t.Fatalf("candidate paths did not follow deterministic paths: %#v", response.Result)
+	}
 
 	candidate := traversalEnvelope(root, LayerCandidate, 1, 10)
 	response, err = graph.Execute(candidate)
