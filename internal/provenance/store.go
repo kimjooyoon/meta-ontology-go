@@ -3,14 +3,12 @@ package provenance
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
-	"time"
 )
 
 // Store is an append-only canonical JSONL evidence store. A Store serializes
@@ -43,43 +41,7 @@ func (s *Store) Append(records ...Evidence) error {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	current, err := s.readUnlocked(ReadOptions{})
-	if err != nil {
-		return err
-	}
-	known := make(map[string]struct{}, len(current.Records)+len(records))
-	for _, record := range current.Records {
-		known[record.ID] = struct{}{}
-	}
-	batch := make([]Evidence, 0, len(records))
-	for index, record := range records {
-		normalized, err := prepareEvidence(record)
-		if err != nil {
-			return fmt.Errorf("evidence %d: %w", index, err)
-		}
-		if _, exists := known[normalized.ID]; exists {
-			return &DuplicateError{ID: normalized.ID}
-		}
-		known[normalized.ID] = struct{}{}
-		batch = append(batch, normalized)
-	}
-	sortEvidence(batch)
-	payload, err := canonicalBatch(batch)
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Dir(s.path), 0o755); err != nil {
-		return fmt.Errorf("create provenance directory: %w", err)
-	}
-	file, err := os.OpenFile(s.path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return fmt.Errorf("open provenance store: %w", err)
-	}
-	defer file.Close()
-	if err := writeFull(file, payload); err != nil {
-		return fmt.Errorf("append provenance evidence: %w", err)
-	}
-	return nil
+	return s.appendRecords(records)
 }
 
 // Read validates every line and returns records in stable ID order.
@@ -97,7 +59,17 @@ func (s *Store) readUnlocked(options ReadOptions) (Snapshot, error) {
 	if err != nil {
 		return Snapshot{}, err
 	}
+	var expectedBinding *RunBinding
+	if options.ExpectedBinding != nil {
+		expectedBinding, err = normalizeBinding("expected", options.ExpectedBinding, true)
+		if err != nil {
+			return Snapshot{}, err
+		}
+	}
 	for _, record := range records {
+		if err := checkExpectedBinding(record, expectedBinding); err != nil {
+			return Snapshot{}, err
+		}
 		if err := checkFreshness(record, options); err != nil {
 			return Snapshot{}, err
 		}
@@ -122,6 +94,7 @@ func (s *Store) readRecords() ([]Evidence, error) {
 	reader := bufio.NewReader(file)
 	records := make([]Evidence, 0)
 	known := make(map[string]int)
+	owners := make(map[string]string)
 	var offset int64
 	for lineNumber := 1; ; lineNumber++ {
 		raw, readErr := reader.ReadBytes('\n')
@@ -132,6 +105,9 @@ func (s *Store) readRecords() ([]Evidence, error) {
 			}
 			if previous, exists := known[record.ID]; exists {
 				return nil, corruption(s.path, lineNumber, offset, "duplicate-id", fmt.Errorf("ID %q already appeared on line %d", record.ID, previous))
+			}
+			if err := checkPredecessorClaims(owners, record); err != nil {
+				return nil, corruption(s.path, lineNumber, offset, "replayed-predecessor", err)
 			}
 			known[record.ID] = lineNumber
 			records = append(records, record)
@@ -161,7 +137,12 @@ func parseLine(path string, lineNumber int, offset int64, raw []byte) (Evidence,
 	}
 	normalized, err := normalizeEvidence(evidence)
 	if err != nil {
-		return Evidence{}, corruption(path, lineNumber, offset, "invalid-record", err)
+		kind := "invalid-record"
+		var bindingErr *BindingError
+		if errors.As(err, &bindingErr) {
+			kind = "binding-invalid"
+		}
+		return Evidence{}, corruption(path, lineNumber, offset, kind, err)
 	}
 	unsigned, err := marshalEvidence(normalized, false)
 	if err != nil {
@@ -199,65 +180,12 @@ func prepareEvidence(evidence Evidence) (Evidence, error) {
 	return normalized, nil
 }
 
-func canonicalBatch(records []Evidence) ([]byte, error) {
-	var payload bytes.Buffer
-	for _, record := range records {
-		line, err := marshalEvidence(record, true)
-		if err != nil {
-			return nil, err
-		}
-		payload.Write(line)
-		payload.WriteByte('\n')
-	}
-	return payload.Bytes(), nil
-}
-
-func writeFull(file *os.File, payload []byte) error {
-	for len(payload) > 0 {
-		written, err := file.Write(payload)
-		if err != nil {
-			return err
-		}
-		if written == 0 {
-			return io.ErrShortWrite
-		}
-		payload = payload[written:]
-	}
-	return nil
-}
-
-func sortEvidence(records []Evidence) {
-	sort.Slice(records, func(i, j int) bool { return records[i].ID < records[j].ID })
-}
-
-func snapshotDigest(records []Evidence) (string, error) {
-	payload, err := canonicalBatch(records)
-	if err != nil {
-		return "", err
-	}
-	return digestBytes(payload), nil
-}
-
-func checkFreshness(record Evidence, options ReadOptions) error {
-	expected := strings.ToLower(strings.TrimSpace(options.ExpectedSourceHash))
-	if expected != "" {
-		if err := validateDigest(expected); err != nil {
-			return fmt.Errorf("expected source hash: %w", err)
-		}
-		if expected != record.Freshness.SourceHash {
-			return &FreshnessError{ID: record.ID, Kind: "source-mismatch", Expected: expected, Actual: record.Freshness.SourceHash}
-		}
-	}
-	if !options.RequireFresh || record.Freshness.ValidUntil == "" {
+func checkExpectedBinding(record Evidence, expected *RunBinding) error {
+	if expected == nil || !bindingRequired(record.Type) {
 		return nil
 	}
-	now := options.Now
-	if now.IsZero() {
-		now = time.Now().UTC()
-	}
-	validUntil, _ := time.Parse(time.RFC3339Nano, record.Freshness.ValidUntil)
-	if now.After(validUntil) {
-		return &FreshnessError{ID: record.ID, Kind: "expired", Actual: validUntil.Format(time.RFC3339Nano)}
+	if record.Binding == nil || !compareBindings(record.Binding, expected) {
+		return &BindingMismatchError{ID: record.ID}
 	}
 	return nil
 }
@@ -286,5 +214,5 @@ func asLineError(err error, target **lineError) bool {
 }
 
 func corruption(path string, line int, offset int64, kind string, err error) error {
-	return &CorruptionError{Path: path, Line: line, Offset: offset, Kind: kind, Detail: err.Error()}
+	return &CorruptionError{Path: path, Line: line, Offset: offset, Kind: kind, Detail: err.Error(), cause: err}
 }
