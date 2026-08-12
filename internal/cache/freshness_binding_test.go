@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"strconv"
 	"testing"
 )
@@ -9,8 +10,8 @@ func evidenceFixture(run string) EvidenceFreshness {
 	headSHA := commitFixtureSHA("head")
 	return EvidenceFreshness{
 		BaseDigest: HashBytes([]byte("base")), HeadDigest: HashBytes([]byte("head")), RunID: run,
-		BaseSHA: commitFixtureSHA("base"), HeadSHA: headSHA,
-		Event: "pull_request", EventID: "event-" + run, Attempt: 1,
+		BaseSHA: commitFixtureSHA("base"), HeadSHA: headSHA, CheckoutRef: headSHA,
+		Event: "pull_request", EventRef: "refs/pull/8/merge", EventID: "event-" + run, Attempt: 1,
 		Jobs:               freshnessJobsFixture(headSHA),
 		PredecessorDigests: []Digest{HashBytes([]byte("generator")), HashBytes([]byte("semantic"))},
 		SourceDigest:       HashBytes([]byte("source")), IRDigest: HashBytes([]byte("ir")),
@@ -42,14 +43,16 @@ func freshnessJobsFixture(headSHA string) map[string]FreshnessJob {
 func TestEvidenceFreshnessC4RejectsStaleAndReplayTuples(t *testing.T) {
 	current := evidenceFixture("run-current")
 	for name, mutate := range map[string]func(*EvidenceFreshness){
-		"base":       func(e *EvidenceFreshness) { e.BaseDigest = HashBytes([]byte("new-base")) },
-		"head":       func(e *EvidenceFreshness) { e.HeadDigest = HashBytes([]byte("new-head")) },
-		"base sha":   func(e *EvidenceFreshness) { e.BaseSHA = commitFixtureSHA("new-base") },
-		"head sha":   func(e *EvidenceFreshness) { e.HeadSHA = commitFixtureSHA("new-head") },
-		"run":        func(e *EvidenceFreshness) { e.RunID = "run-other" },
-		"event kind": func(e *EvidenceFreshness) { e.Event = "push" },
-		"event":      func(e *EvidenceFreshness) { e.EventID = "event-other" },
-		"attempt":    func(e *EvidenceFreshness) { e.Attempt++ },
+		"base":         func(e *EvidenceFreshness) { e.BaseDigest = HashBytes([]byte("new-base")) },
+		"head":         func(e *EvidenceFreshness) { e.HeadDigest = HashBytes([]byte("new-head")) },
+		"base sha":     func(e *EvidenceFreshness) { e.BaseSHA = commitFixtureSHA("new-base") },
+		"head sha":     func(e *EvidenceFreshness) { e.HeadSHA = commitFixtureSHA("new-head") },
+		"run":          func(e *EvidenceFreshness) { e.RunID = "run-other" },
+		"event kind":   func(e *EvidenceFreshness) { e.Event = "push" },
+		"event ref":    func(e *EvidenceFreshness) { e.EventRef = "refs/pull/9/merge" },
+		"checkout ref": func(e *EvidenceFreshness) { e.CheckoutRef = commitFixtureSHA("other-head") },
+		"event":        func(e *EvidenceFreshness) { e.EventID = "event-other" },
+		"attempt":      func(e *EvidenceFreshness) { e.Attempt++ },
 		"job head": func(e *EvidenceFreshness) {
 			jobs := copyFreshnessJobs(e.Jobs)
 			job := jobs[canonicalTestJob]
@@ -85,6 +88,31 @@ func TestEvidenceFreshnessC4RejectsStaleAndReplayTuples(t *testing.T) {
 			mutate(&stale)
 			if stale.Matches(current) {
 				t.Fatal("stale evidence matched current tuple")
+			}
+		})
+	}
+}
+
+func TestEvidenceFreshnessC4RequiresDistinctImmutableRefs(t *testing.T) {
+	current := evidenceFixture("refs")
+	if err := current.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	for name, mutate := range map[string]func(*EvidenceFreshness){
+		"missing event ref":    func(e *EvidenceFreshness) { e.EventRef = "" },
+		"malformed event ref":  func(e *EvidenceFreshness) { e.EventRef = "push:event" },
+		"missing checkout ref": func(e *EvidenceFreshness) { e.CheckoutRef = "" },
+		"swapped refs":         func(e *EvidenceFreshness) { e.EventRef, e.CheckoutRef = e.CheckoutRef, e.EventRef },
+		"mismatched checkout":  func(e *EvidenceFreshness) { e.CheckoutRef = commitFixtureSHA("other-head") },
+	} {
+		t.Run(name, func(t *testing.T) {
+			mutated := current
+			mutate(&mutated)
+			if err := mutated.Validate(); !errors.Is(err, ErrInvalidReceipt) {
+				t.Fatalf("invalid refs = %v, want ErrInvalidReceipt", err)
+			}
+			if mutated.Equal(current) {
+				t.Fatal("invalid ref mutation retained freshness equality")
 			}
 		})
 	}

@@ -31,6 +31,36 @@ func validCommitSHA(value string) bool {
 	return value != strings.Repeat("0", len(value))
 }
 
+func validEventRef(value string) bool {
+	parts := strings.Split(value, "/")
+	if len(parts) != 4 || parts[0] != "refs" || parts[1] != "pull" ||
+		(parts[3] != "head" && parts[3] != "merge") || strings.TrimSpace(value) != value {
+		return false
+	}
+	if parts[2] == "" || parts[2] == "0" {
+		return false
+	}
+	for _, char := range parts[2] {
+		if char < '0' || char > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func validateFreshnessRefs(eventRef, checkoutRef, headSHA string) error {
+	if !validEventRef(eventRef) {
+		return fmt.Errorf("%w: malformed event ref", ErrInvalidReceipt)
+	}
+	if !validCommitSHA(checkoutRef) {
+		return fmt.Errorf("%w: malformed checkout ref", ErrInvalidReceipt)
+	}
+	if checkoutRef != headSHA {
+		return fmt.Errorf("%w: checkout ref does not match head SHA", ErrInvalidReceipt)
+	}
+	return nil
+}
+
 func validateFreshnessJobs(jobs map[string]FreshnessJob, headSHA string) error {
 	if len(jobs) != len(canonicalBenchmarkJobs) {
 		return fmt.Errorf("%w: incomplete canonical CI jobs", ErrInvalidReceipt)

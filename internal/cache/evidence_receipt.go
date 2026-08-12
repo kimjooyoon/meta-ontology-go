@@ -28,8 +28,10 @@ type EvidenceFreshness struct {
 	HeadDigest         Digest                  `json:"head_digest"`
 	BaseSHA            string                  `json:"base_sha"`
 	HeadSHA            string                  `json:"head_sha"`
+	CheckoutRef        string                  `json:"checkout_ref"`
 	RunID              string                  `json:"run_id"`
 	Event              string                  `json:"event"`
+	EventRef           string                  `json:"event_ref"`
 	EventID            string                  `json:"event_id"`
 	Attempt            uint64                  `json:"attempt"`
 	Jobs               map[string]FreshnessJob `json:"jobs"`
@@ -59,6 +61,9 @@ func (e EvidenceFreshness) Validate() error {
 	}
 	if !validCommitSHA(e.BaseSHA) || !validCommitSHA(e.HeadSHA) {
 		return fmt.Errorf("%w: missing immutable base/head SHA", ErrInvalidReceipt)
+	}
+	if err := validateFreshnessRefs(e.EventRef, e.CheckoutRef, e.HeadSHA); err != nil {
+		return err
 	}
 	if e.RunID == "" || e.Event != "pull_request" || e.EventID == "" || e.Attempt == 0 {
 		return fmt.Errorf("%w: missing immutable event attempt", ErrInvalidReceipt)
@@ -93,7 +98,8 @@ func (e EvidenceFreshness) Validate() error {
 func (e EvidenceFreshness) Equal(other EvidenceFreshness) bool {
 	left, right := canonicalEvidence(e), canonicalEvidence(other)
 	return left.BaseDigest == right.BaseDigest && left.HeadDigest == right.HeadDigest &&
-		left.BaseSHA == right.BaseSHA && left.HeadSHA == right.HeadSHA && left.Event == right.Event &&
+		left.BaseSHA == right.BaseSHA && left.HeadSHA == right.HeadSHA && left.CheckoutRef == right.CheckoutRef &&
+		left.Event == right.Event && left.EventRef == right.EventRef &&
 		left.RunID == right.RunID && left.EventID == right.EventID && left.Attempt == right.Attempt &&
 		freshnessJobsEqual(left.Jobs, right.Jobs) &&
 		left.SourceDigest == right.SourceDigest &&

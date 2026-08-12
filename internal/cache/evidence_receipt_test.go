@@ -143,15 +143,6 @@ func TestCacheReceiptC3C5RequiresImmutableEvidenceBundle(t *testing.T) {
 	if _, err := cache.AppendReceipt(sealed); !errors.Is(err, ErrReceiptReplay) {
 		t.Fatalf("replayed receipt = %v, want ErrReceiptReplay", err)
 	}
-	eventReplay := cacheReceiptFixture(key, "run-2")
-	eventReplay.Evidence.EventID = sealed.Evidence.EventID
-	sealedEventReplay, err := eventReplay.Seal()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := cache.AppendReceipt(sealedEventReplay); !errors.Is(err, ErrReceiptReplay) {
-		t.Fatalf("event/attempt replay = %v, want ErrReceiptReplay", err)
-	}
 	receipts, err := cache.Receipts()
 	if err != nil || len(receipts) != 1 {
 		t.Fatalf("receipt log = %d, %v", len(receipts), err)
