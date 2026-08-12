@@ -32,6 +32,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runGraph(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "analyze":
 		return runAnalyze(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+	case "version":
+		return runVersion(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "gooo: command %q is not implemented yet\n", args[0])
 		return exitFailure
@@ -39,5 +41,5 @@ func run(args []string, stdout, stderr io.Writer) int {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "usage: gooo <check|generate|inspect|graph|analyze> [args]")
+	fmt.Fprintln(writer, "usage: gooo <check|generate|inspect|graph|analyze|version> [args]")
 }
