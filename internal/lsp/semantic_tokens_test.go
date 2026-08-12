@@ -119,7 +119,10 @@ func TestSemanticTokensUseUTF16AndDeltaEncoding(t *testing.T) {
 
 func TestSemanticTokensStaleOverlayReturnsContentModified(t *testing.T) {
 	var calls atomic.Int32
-	opened, started, release := make(chan struct{}), make(chan struct{}), make(chan struct{})
+	opened := make(chan struct{})
+	started := make(chan struct{})
+	returned := make(chan struct{})
+	release := make(chan struct{})
 	parser := ContextParserFunc(func(ctx context.Context, uri, source string) (ParseResult, error) {
 		if calls.Add(1) == 1 {
 			close(opened)
@@ -128,6 +131,7 @@ func TestSemanticTokensStaleOverlayReturnsContentModified(t *testing.T) {
 		close(started)
 		select {
 		case <-release:
+			close(returned)
 			return ParseResult{}, nil
 		case <-ctx.Done():
 			return ParseResult{}, ctx.Err()
@@ -154,6 +158,11 @@ func TestSemanticTokensStaleOverlayReturnsContentModified(t *testing.T) {
 	writeNotification(t, writer, "textDocument/didClose", map[string]any{"textDocument": map[string]any{"uri": uri}})
 	<-output.second
 	close(release)
+	select {
+	case <-returned:
+	case <-time.After(time.Second):
+		t.Fatal("semantic token parser did not return")
+	}
 	writeRequest(t, writer, 8, "shutdown", nil)
 	writeNotification(t, writer, "exit", nil)
 	if err := <-done; err != nil {
