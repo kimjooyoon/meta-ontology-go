@@ -355,8 +355,10 @@ jobs:
               const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
               artifacts = response.data.artifacts.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired}));
             } catch (_) {}
+            const eventRef = context.ref;
+            const checkoutRef = headSha;
             const contextData = {
-              repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: context.ref,
+              repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
               actor: context.actor, builder: context.actor, guardian: approvals[0]?.actor || '', approver: approvals[1]?.actor || '', gate: 'CI policy',

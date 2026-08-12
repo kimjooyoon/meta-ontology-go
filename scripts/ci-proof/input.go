@@ -74,7 +74,7 @@ func validateInputIdentity(evidence evidenceInput, context contextInput, jobs []
 	if context.Repository != evidence.Repository || context.Event != evidence.Event || context.BaseRef != evidence.BaseRef || context.BaseSHA != evidence.BaseSHA || context.HeadSHA != evidence.HeadSHA || context.WorkflowSHA != evidence.WorkflowSHA || context.RunID != evidence.RunID || context.RunAttempt != evidence.Attempt {
 		return fmt.Errorf("proof context does not match CI evidence identity")
 	}
-	if context.Ref == "" || context.Actor == "" || context.Builder == "" || context.Gate == "" || !validSHA(evidence.BaseSHA) || !validSHA(evidence.HeadSHA) || !validSHA(evidence.WorkflowSHA) || evidence.BaseSHA == evidence.HeadSHA {
+	if context.Ref == "" || context.EventRef == "" || context.CheckoutRef == "" || context.EventRef != context.Ref || context.CheckoutRef != evidence.HeadSHA || context.Actor == "" || context.Builder == "" || context.Gate == "" || !validSHA(evidence.BaseSHA) || !validSHA(evidence.HeadSHA) || !validSHA(evidence.WorkflowSHA) || !validSHA(context.CheckoutRef) || evidence.BaseSHA == evidence.HeadSHA {
 		return fmt.Errorf("proof identity is missing, invalid, or identical")
 	}
 	if evidence.Event != "pull_request" && evidence.Event != "push" {

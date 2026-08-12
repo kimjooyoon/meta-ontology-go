@@ -61,6 +61,8 @@ type contextInput struct {
 	Repository       string           `json:"repository"`
 	Event            string           `json:"event"`
 	Ref              string           `json:"ref"`
+	EventRef         string           `json:"event_ref"`
+	CheckoutRef      string           `json:"checkout_ref"`
 	BaseRef          string           `json:"base_ref"`
 	BaseSHA          string           `json:"base_sha"`
 	HeadSHA          string           `json:"head_sha"`
@@ -156,6 +158,8 @@ type proofBundle struct {
 	BaseSHA          string           `json:"base_sha"`
 	HeadSHA          string           `json:"head_sha"`
 	Ref              string           `json:"ref"`
+	EventRef         string           `json:"event_ref"`
+	CheckoutRef      string           `json:"checkout_ref"`
 	RunID            int64            `json:"run_id"`
 	RunAttempt       int64            `json:"run_attempt"`
 	WorkflowSHA      string           `json:"workflow_sha"`
@@ -221,6 +225,8 @@ type provenanceReceipt struct {
 	BaseSHA          string           `json:"base_sha"`
 	HeadSHA          string           `json:"head_sha"`
 	Ref              string           `json:"ref"`
+	EventRef         string           `json:"event_ref"`
+	CheckoutRef      string           `json:"checkout_ref"`
 	PRNumber         int64            `json:"pr_number"`
 	RunID            int64            `json:"run_id"`
 	RunAttempt       int64            `json:"run_attempt"`
