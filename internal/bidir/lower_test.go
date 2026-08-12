@@ -59,18 +59,15 @@ activity PayOrder(Order) -> Payment`)
 
 func TestCandidateDoesNotBecomeDeterministic(t *testing.T) {
 	graph := semantic.NewGraph()
-	activity := semantic.MustIdentity("billing://activity/pay-order")
 	entity := semantic.MustIdentity("billing://entity/order")
-	if err := graph.AddNode(semantic.Node{ID: activity, Kind: semantic.Activity, Namespace: "billing", Name: "PayOrder"}); err != nil {
-		t.Fatal(err)
-	}
 	if err := graph.AddNode(semantic.Node{ID: entity, Kind: semantic.Entity, Namespace: "billing", Name: "Order"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := graph.AddCandidate(semantic.NewCandidateFact(activity, semantic.WasDerivedFrom, entity, "ambiguous Go call")); err != nil {
+	candidate := semantic.NewCandidateFact(entity, semantic.WasDerivedFrom, entity, "ambiguous Go call")
+	if err := graph.AddCandidate(candidate); err != nil {
 		t.Fatal(err)
 	}
-	if graph.HasFact(semantic.FactKey{Subject: activity, Predicate: semantic.WasDerivedFrom, Object: entity}) {
+	if graph.HasFact(candidate.Key()) {
 		t.Fatal("candidate was promoted unexpectedly")
 	}
 }
