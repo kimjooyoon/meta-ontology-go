@@ -218,6 +218,15 @@ func (d FactDelta) Normalized() FactDelta {
 	return FactDelta{Added: d.Added.Normalized(), Removed: d.Removed.Normalized()}
 }
 
+// RawFactObservation preserves adapter observations before semantic FactSet
+// normalization. It is detached, non-authoritative evidence: duplicate
+// FactKeys remain distinct when their evidence records differ.
+type RawFactObservation struct {
+	Added        FactSet
+	Removed      FactSet
+	EvidenceHash string
+}
+
 // ReconcileOptions controls provenance strictness.
 type ReconcileOptions struct {
 	RequireSource bool
@@ -259,13 +268,15 @@ func (e *ReconcileError) Error() string {
 	return fmt.Sprintf("bidir reconciliation rejected %d fact(s): %s", len(e.Conflicts), e.Conflicts[0].Message)
 }
 
-// ReconcileResult contains accepted layers, semantic delta, and locality.
+// ReconcileResult contains accepted layers, semantic delta, locality, and a
+// detached non-authoritative raw observation boundary.
 type ReconcileResult struct {
-	Model      Model
-	Delta      Delta
-	Locality   Locality
-	Accepted   FactSet
-	Syntactic  FactSet
-	Candidates FactSet
-	Conflicts  []Conflict
+	Model          Model
+	Delta          Delta
+	Locality       Locality
+	RawObservation RawFactObservation
+	Accepted       FactSet
+	Syntactic      FactSet
+	Candidates     FactSet
+	Conflicts      []Conflict
 }

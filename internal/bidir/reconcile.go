@@ -27,13 +27,14 @@ func Reconcile(base Model, changes FactDelta) (ReconcileResult, error) {
 
 // ReconcileWithOptions applies a fact delta transactionally.
 func ReconcileWithOptions(base Model, changes FactDelta, options ReconcileOptions) (ReconcileResult, error) {
+	rawObservation := newRawFactObservation(changes)
 	base = base.Normalized()
 	if err := base.Validate(); err != nil {
-		return ReconcileResult{Model: base}, err
+		return ReconcileResult{Model: base, RawObservation: rawObservation}, err
 	}
 	working := base.Clone()
 	changes = changes.Normalized()
-	result := ReconcileResult{}
+	result := ReconcileResult{RawObservation: rawObservation}
 	for _, fact := range changes.Removed {
 		if conflict := removeFact(&working, fact, options); conflict != nil {
 			result.Conflicts = append(result.Conflicts, *conflict)
