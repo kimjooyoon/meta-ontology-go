@@ -60,7 +60,6 @@ type BXEvidenceFixture interface {
 	ReconciliationFixture
 	BaseEvidence() BXBaseEvidenceInput
 	ObserveAcceptedWrite(before, after Document) BXWriteObservation
-	ObserveRejectedWrite(before Document) BXWriteObservation
 }
 
 // BXStateEvidence records all transaction dimensions as digests.
@@ -75,16 +74,19 @@ type BXStateEvidence struct {
 
 // BXTransactionEvidence records an observed before/after transaction.
 type BXTransactionEvidence struct {
-	Before   BXStateEvidence
-	After    BXStateEvidence
-	Observed bool
-	Atomic   bool
-	NoWrite  bool
+	Before         BXStateEvidence
+	After          BXStateEvidence
+	Observed       bool
+	Atomic         bool
+	NoWrite        bool
+	Deferred       bool
+	DeferredReason string
 }
 
 // BXEvidenceSpanSet records evidence IDs and source-span cardinality.
 type BXEvidenceSpanSet struct {
 	IDs       []string
+	FactKeys  []string
 	Spans     []SourceSpan
 	IDCount   int
 	SpanCount int
@@ -99,7 +101,15 @@ type BXDeltaEvidence struct {
 	Locality              Locality
 	LocalityClosureHash   string
 	LocalityCanonicalJSON string
+	ClosureMembers        []ID
+	ClosureValid          bool
+	Candidates            []string
+	PortSequence          []string
+	RelationSequence      []string
+	PortOrderHash         string
+	RelationOrderHash     string
 	EvidenceSpans         BXEvidenceSpanSet
+	EvidenceHash          string
 	PartialObservation    bool
 	RemovedCreated        bool
 	CandidatePromoted     bool
@@ -164,8 +174,8 @@ func (e BXEvidence) validate() error {
 	if e.Delta.CandidatePromoted || e.Delta.RemovedCreated || e.PartialDelta.CandidatePromoted || e.PartialDelta.RemovedCreated || e.PartialConflict.RemovedCreated || e.PartialConflict.CandidatePromoted {
 		return errors.New("partial observation changed authoritative semantic state")
 	}
-	if !e.PartialConflict.NoWriteObserved {
-		return errors.New("rejected delta lacks observer-confirmed no-write evidence")
+	if !e.RejectedTransaction.Deferred || e.PartialConflict.NoWriteObserved {
+		return errors.New("rejected transaction must remain explicitly deferred")
 	}
 	if e.PartialConflict.Kind == "" || e.PartialConflict.Count == 0 || !e.PartialConflict.Transactional {
 		return errors.New("partial delta did not produce a transactional rejection")
@@ -199,16 +209,31 @@ func validateDeltaEvidence(delta BXDeltaEvidence) error {
 	if delta.SequenceHash == "" || delta.OrderHash == "" || delta.CanonicalJSON == "" {
 		return errors.New("delta sequence/order/canonical evidence is missing")
 	}
-	if delta.LocalityClosureHash == "" || delta.LocalityCanonicalJSON == "" {
+	if delta.LocalityClosureHash == "" || delta.LocalityCanonicalJSON == "" || !delta.ClosureValid {
 		return errors.New("locality closure evidence is missing")
 	}
-	if delta.EvidenceSpans.Hash == "" || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.IDs) || delta.EvidenceSpans.SpanCount != len(delta.EvidenceSpans.Spans) {
+	if delta.ClosureMembers == nil || !sameIDs(delta.ClosureMembers, delta.Locality.Affected) {
+		return errors.New("locality closure membership is incomplete")
+	}
+	if delta.Candidates == nil || delta.PortSequence == nil || delta.RelationSequence == nil {
+		return errors.New("delta candidate/port/relation sequence is missing")
+	}
+	if delta.PortOrderHash == "" || delta.RelationOrderHash == "" {
+		return errors.New("ordered port/relation hashes are missing")
+	}
+	if delta.EvidenceHash == "" || delta.EvidenceHash != delta.EvidenceSpans.Hash || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.IDs) || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.FactKeys) || delta.EvidenceSpans.SpanCount != len(delta.EvidenceSpans.Spans) || !uniqueStrings(delta.EvidenceSpans.IDs) {
 		return errors.New("evidence ID/span set is incomplete")
 	}
 	return nil
 }
 
 func validateTransaction(transaction BXTransactionEvidence, requireNoWrite bool) error {
+	if requireNoWrite {
+		if !transaction.Deferred || transaction.DeferredReason == "" || transaction.Observed || transaction.Atomic || transaction.NoWrite {
+			return errors.New("rejected transaction observer is not explicitly deferred")
+		}
+		return validateDeferredState(transaction)
+	}
 	if err := validateState(transaction.Before); err != nil {
 		return fmt.Errorf("before state: %w", err)
 	}
@@ -218,8 +243,14 @@ func validateTransaction(transaction BXTransactionEvidence, requireNoWrite bool)
 	if !transaction.Observed || !transaction.Atomic {
 		return errors.New("transaction was not observed atomically")
 	}
-	if requireNoWrite && (!transaction.NoWrite || transaction.Before != transaction.After) {
-		return errors.New("rejected transaction is not an atomic no-write")
+	return nil
+}
+
+func validateDeferredState(transaction BXTransactionEvidence) error {
+	for _, state := range []BXStateEvidence{transaction.Before, transaction.After} {
+		if state.Semantic == "" || state.Source == "" || state.Region == "" || state.Slot == "" {
+			return errors.New("deferred transaction lacks semantic/source/region/slot state")
+		}
 	}
 	return nil
 }
@@ -238,4 +269,27 @@ func containsString(values []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func sameIDs(left, right []ID) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func uniqueStrings(values []string) bool {
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		if _, exists := seen[value]; exists {
+			return false
+		}
+		seen[value] = struct{}{}
+	}
+	return true
 }

@@ -3,7 +3,6 @@ package bidir
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -78,6 +77,10 @@ func factID(fact Fact) string {
 	return fmt.Sprintf("%d:%s:%s:%s", fact.Layer, fact.Subject, fact.Predicate, fact.Object)
 }
 
+func factEvidenceID(fact Fact, occurrence int) string {
+	return "urn:gooo:evidence:" + digest(fmt.Sprintf("%s|%d", factCanonical(fact), occurrence))
+}
+
 func factSequenceHash(delta FactDelta) string {
 	var builder strings.Builder
 	writeFacts(&builder, "added", delta.Added)
@@ -108,16 +111,16 @@ func writeFactIDs(builder *strings.Builder, label string, facts FactSet) {
 	}
 }
 
-func factIDs(facts FactSet) []string {
-	ids := make([]string, len(facts))
-	for index, fact := range facts {
-		ids[index] = factID(fact)
-	}
-	return ids
-}
-
 func evidenceSpans(facts FactSet) BXEvidenceSpanSet {
-	ids := factIDs(facts)
+	ids := make([]string, len(facts))
+	factKeys := make([]string, len(facts))
+	occurrences := make(map[string]int, len(facts))
+	for index, fact := range facts {
+		canonical := factCanonical(fact)
+		ids[index] = factEvidenceID(fact, occurrences[canonical])
+		occurrences[canonical]++
+		factKeys[index] = factID(fact)
+	}
 	spans := make([]SourceSpan, 0, len(facts))
 	for _, fact := range facts {
 		if fact.Source.Valid() {
@@ -125,13 +128,16 @@ func evidenceSpans(facts FactSet) BXEvidenceSpanSet {
 		}
 	}
 	sort.Slice(spans, func(i, j int) bool { return spanLess(spans[i], spans[j]) })
-	return BXEvidenceSpanSet{IDs: ids, Spans: spans, IDCount: len(ids), SpanCount: len(spans), Hash: digest(spanSetCanonical(ids, spans))}
+	return BXEvidenceSpanSet{IDs: ids, FactKeys: factKeys, Spans: spans, IDCount: len(ids), SpanCount: len(spans), Hash: digest(spanSetCanonical(ids, factKeys, spans))}
 }
 
-func spanSetCanonical(ids []string, spans []SourceSpan) string {
+func spanSetCanonical(ids, factKeys []string, spans []SourceSpan) string {
 	var builder strings.Builder
 	for _, id := range ids {
 		writePart(&builder, id)
+	}
+	for _, factKey := range factKeys {
+		writePart(&builder, factKey)
 	}
 	for _, span := range spans {
 		writeSpan(&builder, span)
@@ -152,7 +158,13 @@ func spanLess(left, right SourceSpan) bool {
 	if left.StartLine != right.StartLine {
 		return left.StartLine < right.StartLine
 	}
-	return left.StartColumn < right.StartColumn
+	if left.StartColumn != right.StartColumn {
+		return left.StartColumn < right.StartColumn
+	}
+	if left.EndLine != right.EndLine {
+		return left.EndLine < right.EndLine
+	}
+	return left.EndColumn < right.EndColumn
 }
 
 func artifact(hash string, count int) BXArtifactEvidence {
@@ -196,92 +208,4 @@ func digestSpans(spans []SourceSpan) string {
 		writeSpan(&builder, span)
 	}
 	return digest(builder.String())
-}
-
-func lstatDigest(stat BXLStat) string {
-	return digest(fmt.Sprintf("%s|%d|%d|%t", stat.Path, stat.Size, stat.Mode, stat.Exists))
-}
-
-func stateEvidence(model Model, document Document, region Locality, snapshot BXFileSnapshot) BXStateEvidence {
-	return BXStateEvidence{
-		Semantic: SemanticFingerprint(model),
-		Source:   documentDigest(document),
-		Region:   localityDigest(region),
-		Slot:     slotDigest(document),
-		Bytes:    digest(string(snapshot.Bytes)),
-		LStat:    lstatDigest(snapshot.LStat),
-	}
-}
-
-func localityDigest(locality Locality) string {
-	return digest(localityCanonical(locality))
-}
-
-func localityCanonical(locality Locality) string {
-	var builder strings.Builder
-	for _, id := range locality.Touched {
-		writePart(&builder, string(id))
-	}
-	builder.WriteByte('|')
-	for _, id := range locality.Affected {
-		writePart(&builder, string(id))
-	}
-	return builder.String()
-}
-
-func slotDigest(document Document) string {
-	var builder strings.Builder
-	for _, declaration := range document.Declarations {
-		writeSlots(&builder, declaration.ID, "input", declaration.Inputs)
-		writeSlots(&builder, declaration.ID, "output", declaration.Outputs)
-	}
-	return digest(builder.String())
-}
-
-func writeSlots(builder *strings.Builder, declaration ID, direction string, references []Reference) {
-	for index, reference := range references {
-		fmt.Fprintf(builder, "%d|", index)
-		writePart(builder, string(declaration))
-		writePart(builder, direction)
-		writePart(builder, string(reference.ID))
-		writePart(builder, reference.Name)
-		writePart(builder, reference.Namespace)
-		writeSpan(builder, reference.Span)
-	}
-}
-
-func observationMatches(observation BXWriteObservation, before, after Document) error {
-	if !observation.Observed {
-		return fmt.Errorf("write observer did not report an observation")
-	}
-	if err := snapshotMatches(observation.Before, before); err != nil {
-		return fmt.Errorf("before snapshot: %w", err)
-	}
-	if err := snapshotMatches(observation.After, after); err != nil {
-		return fmt.Errorf("after snapshot: %w", err)
-	}
-	return nil
-}
-
-func snapshotMatches(snapshot BXFileSnapshot, document Document) error {
-	want := documentSourceBytes(document)
-	if string(snapshot.Bytes) != string(want) {
-		return fmt.Errorf("observed bytes do not match source document")
-	}
-	if !snapshot.LStat.Exists || snapshot.LStat.Path == "" || snapshot.LStat.Mode == 0 || snapshot.LStat.Size != int64(len(snapshot.Bytes)) {
-		return fmt.Errorf("observed lstat is incomplete or inconsistent")
-	}
-	return nil
-}
-
-func documentSourceBytes(document Document) []byte {
-	return []byte(documentCanonical(document))
-}
-
-func canonicalJSON(value any) (string, error) {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }

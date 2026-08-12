@@ -64,7 +64,7 @@ func MeasureBXFixture(fixture ReconciliationFixture) (BXEvidence, error) {
 	if err != nil {
 		return evidence, err
 	}
-	evidence.PartialConflict, evidence.RejectedTransaction, evidence.PartialDelta = partialEvidence(contract, document, base, fixture.PartialDelta())
+	evidence.PartialConflict, evidence.RejectedTransaction, evidence.PartialDelta = partialEvidence(document, base, fixture.PartialDelta())
 	evidence.Deferred = deferredBXSeams()
 	if err := evidence.validate(); err != nil {
 		return evidence, err
@@ -85,14 +85,11 @@ func acceptedTransaction(contract BXEvidenceFixture, before, after Document, bas
 	}, nil
 }
 
-func partialEvidence(contract BXEvidenceFixture, document Document, base Model, delta FactDelta) (BXConflictEvidence, BXTransactionEvidence, BXDeltaEvidence) {
+func partialEvidence(document Document, base Model, delta FactDelta) (BXConflictEvidence, BXTransactionEvidence, BXDeltaEvidence) {
 	result, err := Reconcile(base, delta)
 	partial := makeDeltaEvidenceUnchecked(delta, LocalityBetween(base, result.Model), true, base, result.Model)
-	transaction := BXTransactionEvidence{}
-	if observationErr := buildRejectedTransaction(contract, document, base, result, &transaction); observationErr != nil {
-		return BXConflictEvidence{Transactional: false}, transaction, partial
-	}
-	evidence := BXConflictEvidence{Transactional: SemanticEquivalent(base, result.Model), NoWriteObserved: transaction.NoWrite}
+	transaction := deferredTransaction(document, base, result.Model)
+	evidence := BXConflictEvidence{Transactional: SemanticEquivalent(base, result.Model)}
 	evidence.RemovedCreated = removedCreated(base, result.Model, delta)
 	evidence.CandidatePromoted = candidatePromoted(base, delta, result.Model)
 	var reconcileErr *ReconcileError
@@ -108,18 +105,14 @@ func partialEvidence(contract BXEvidenceFixture, document Document, base Model, 
 	return evidence, transaction, partial
 }
 
-func buildRejectedTransaction(contract BXEvidenceFixture, document Document, base Model, result ReconcileResult, transaction *BXTransactionEvidence) error {
-	observation := contract.ObserveRejectedWrite(document)
-	if err := observationMatches(observation, document, document); err != nil {
-		return fmt.Errorf("rejected write observation: %w", err)
+func deferredTransaction(document Document, base, after Model) BXTransactionEvidence {
+	region := LocalityBetween(base, after)
+	return BXTransactionEvidence{
+		Before:         deferredStateEvidence(base, document, region),
+		After:          deferredStateEvidence(after, document, region),
+		Deferred:       true,
+		DeferredReason: "filesystem/inode observer belongs to Security/conformance ownership",
 	}
-	region := LocalityBetween(base, result.Model)
-	transaction.Before = stateEvidence(base, document, region, observation.Before)
-	transaction.After = stateEvidence(result.Model, document, region, observation.After)
-	transaction.Observed = observation.Observed
-	transaction.Atomic = transaction.Before == transaction.After
-	transaction.NoWrite = transaction.Atomic
-	return nil
 }
 
 func removedCreated(base, after Model, delta FactDelta) bool {
@@ -155,8 +148,8 @@ func deferredBXSeams() []string {
 		"generic gooo:invokes lifting",
 		"PROV-O adapter mapping policy",
 		"Go-lift/CLI delta atomicity",
+		"rejected transaction filesystem/inode observer",
 		"three-way merge",
-		"output-port source-order ownership",
 	}
 }
 
@@ -184,7 +177,11 @@ func (e BXEvidence) Canonical() string {
 	fmt.Fprintf(&builder, "partial_conflict=%s\n", conflictStatus(e.PartialConflict.Kind))
 	fmt.Fprintf(&builder, "partial_conflict_count=%d\n", e.PartialConflict.Count)
 	fmt.Fprintf(&builder, "partial_transactional=%s\n", evidenceStatus(e.PartialConflict.Transactional))
-	fmt.Fprintf(&builder, "partial_no_write=%s\n", evidenceStatus(e.PartialConflict.NoWriteObserved))
+	if e.RejectedTransaction.Deferred {
+		fmt.Fprintf(&builder, "partial_no_write=deferred\n")
+	} else {
+		fmt.Fprintf(&builder, "partial_no_write=%s\n", evidenceStatus(e.PartialConflict.NoWriteObserved))
+	}
 	fmt.Fprintf(&builder, "partial_removed_created=%t\n", e.PartialConflict.RemovedCreated)
 	fmt.Fprintf(&builder, "partial_candidate_promoted=%t\n", e.PartialConflict.CandidatePromoted)
 	fmt.Fprintf(&builder, "deferred=%s\n", strings.Join(e.Deferred, ","))
@@ -197,10 +194,17 @@ func writeDeltaCanonical(builder *strings.Builder, label string, delta BXDeltaEv
 	fmt.Fprintf(builder, "%s_json=%s\n", label, delta.CanonicalJSON)
 	fmt.Fprintf(builder, "%s_locality_closure_hash=%s\n", label, delta.LocalityClosureHash)
 	fmt.Fprintf(builder, "%s_locality_json=%s\n", label, delta.LocalityCanonicalJSON)
+	fmt.Fprintf(builder, "%s_candidates=%s\n", label, strings.Join(delta.Candidates, ","))
+	fmt.Fprintf(builder, "%s_port_sequence=%s\n", label, strings.Join(delta.PortSequence, ","))
+	fmt.Fprintf(builder, "%s_relation_sequence=%s\n", label, strings.Join(delta.RelationSequence, ","))
+	fmt.Fprintf(builder, "%s_port_order_hash=%s\n", label, delta.PortOrderHash)
+	fmt.Fprintf(builder, "%s_relation_order_hash=%s\n", label, delta.RelationOrderHash)
 	fmt.Fprintf(builder, "%s_evidence_ids=%s\n", label, strings.Join(delta.EvidenceSpans.IDs, ","))
+	fmt.Fprintf(builder, "%s_evidence_fact_keys=%s\n", label, strings.Join(delta.EvidenceSpans.FactKeys, ","))
 	fmt.Fprintf(builder, "%s_evidence_id_count=%d\n", label, delta.EvidenceSpans.IDCount)
 	fmt.Fprintf(builder, "%s_evidence_span_count=%d\n", label, delta.EvidenceSpans.SpanCount)
 	fmt.Fprintf(builder, "%s_evidence_span_hash=%s\n", label, delta.EvidenceSpans.Hash)
+	fmt.Fprintf(builder, "%s_evidence_hash=%s\n", label, delta.EvidenceHash)
 }
 
 func writeTransactionCanonical(builder *strings.Builder, label string, transaction BXTransactionEvidence) {
@@ -209,6 +213,8 @@ func writeTransactionCanonical(builder *strings.Builder, label string, transacti
 	fmt.Fprintf(builder, "%s_observed=%s\n", label, evidenceStatus(transaction.Observed))
 	fmt.Fprintf(builder, "%s_atomic=%s\n", label, evidenceStatus(transaction.Atomic))
 	fmt.Fprintf(builder, "%s_no_write=%s\n", label, evidenceStatus(transaction.NoWrite))
+	fmt.Fprintf(builder, "%s_deferred=%s\n", label, evidenceStatus(transaction.Deferred))
+	fmt.Fprintf(builder, "%s_deferred_reason=%s\n", label, transaction.DeferredReason)
 }
 
 func stateCanonical(state BXStateEvidence) string {

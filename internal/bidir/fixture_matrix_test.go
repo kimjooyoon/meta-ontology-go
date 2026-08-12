@@ -24,10 +24,6 @@ func (f matrixFixture) ObserveAcceptedWrite(before, after Document) BXWriteObser
 	return fixtureWriteObservation(before, after)
 }
 
-func (f matrixFixture) ObserveRejectedWrite(before Document) BXWriteObservation {
-	return fixtureWriteObservation(before, before)
-}
-
 func TestBXEvidenceMatrixCoversConflictClasses(t *testing.T) {
 	candidate := candidateFixtureDelta()
 	cases := []struct {
@@ -75,8 +71,11 @@ func assertEvidenceContract(t *testing.T, evidence BXEvidence, kind ConflictKind
 	if evidence.Delta.CandidatePromoted || !evidence.PartialDelta.PartialObservation {
 		t.Fatalf("candidate or partial delta contract was not recorded: %#v", evidence)
 	}
-	if !evidence.RejectedTransaction.NoWrite {
-		t.Fatal("rejected delta lacked atomic no-write evidence")
+	if kind == "" || len(evidence.Delta.Candidates) == 0 && evidence.Delta.EvidenceSpans.IDCount == 0 {
+		t.Fatal("canonical delta omitted candidate/evidence records")
+	}
+	if !evidence.RejectedTransaction.Deferred || evidence.PartialConflict.NoWriteObserved {
+		t.Fatal("rejected delta transaction was not explicitly deferred")
 	}
 }
 

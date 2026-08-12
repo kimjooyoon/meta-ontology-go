@@ -92,7 +92,9 @@ func declarationFromNode(node Node, model Model) Declaration {
 	sort.SliceStable(declaration.Inputs, func(i, j int) bool {
 		return referenceSourceOrderLess(declaration.Inputs[i], declaration.Inputs[j])
 	})
-	sort.Slice(declaration.Outputs, func(i, j int) bool { return declaration.Outputs[i].ID < declaration.Outputs[j].ID })
+	sort.SliceStable(declaration.Outputs, func(i, j int) bool {
+		return referenceSourceOrderLess(declaration.Outputs[i], declaration.Outputs[j])
+	})
 	return declaration
 }
 
@@ -116,6 +118,12 @@ func referenceSourceOrderLess(left, right Reference) bool {
 		}
 		if left.Span.End != right.Span.End {
 			return left.Span.End < right.Span.End
+		}
+		if left.Span.EndLine != right.Span.EndLine {
+			return left.Span.EndLine < right.Span.EndLine
+		}
+		if left.Span.EndColumn != right.Span.EndColumn {
+			return left.Span.EndColumn < right.Span.EndColumn
 		}
 	}
 	return left.ID < right.ID
