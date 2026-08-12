@@ -6,9 +6,9 @@ const QueryProjectionSchemaVersion = "gooo-query/v1"
 // query projection. A query graph is never authoritative merely because it
 // contains a stable hash.
 type AuthorityLabel struct {
-	View      string
-	Authority string
-	Status    string
+	View      string `json:"view"`
+	Authority string `json:"authority"`
+	Status    string `json:"status"`
 }
 
 // ProjectionMetadata binds a query view to the semantic IR snapshot it was

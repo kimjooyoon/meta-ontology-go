@@ -135,11 +135,11 @@ func (status FactStatus) String() string {
 // Fact is one directed relation between stable semantic IDs. Reason is
 // optional context for a candidate and never changes triple identity.
 type Fact struct {
-	Subject   ID
-	Predicate Relation
-	Object    ID
-	Status    FactStatus
-	Reason    string
+	Subject   ID         `json:"subject"`
+	Predicate Relation   `json:"predicate"`
+	Object    ID         `json:"object"`
+	Status    FactStatus `json:"status"`
+	Reason    string     `json:"reason,omitempty"`
 }
 
 func NewFact(subject ID, predicate Relation, object ID) Fact {
@@ -250,9 +250,9 @@ type TraversalOptions struct {
 // Path is a simple path beginning at the requested start ID. IDs are ordered
 // in traversal direction and Facts contain the canonical relation direction.
 type Path struct {
-	IDs    []ID
-	Facts  []Fact
-	Status FactStatus
+	IDs    []ID       `json:"ids"`
+	Facts  []Fact     `json:"facts"`
+	Status FactStatus `json:"status"`
 }
 
 func (path Path) Depth() int { return len(path.Facts) }
