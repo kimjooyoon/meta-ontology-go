@@ -15,12 +15,5 @@ func semanticCheckIR(file *syntax.File, timeout time.Duration) (semantic.IR, err
 }
 
 func semanticCheckIRWithLowerer(file *syntax.File, timeout time.Duration, lower func(*syntax.File) (semantic.IR, error)) (semantic.IR, error) {
-	ir, err := lowerInspectIRWith(file, timeout, lower)
-	if err != nil {
-		return semantic.IR{}, err
-	}
-	if err := ir.Validate(); err != nil {
-		return semantic.IR{}, err
-	}
-	return ir, nil
+	return lowerInspectIRWith(file, timeout, lower)
 }

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strings"
 	"time"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -21,6 +21,10 @@ const (
 )
 
 func runAnalyze(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
+	return runAnalyzeWithLowerer(args, reader, parser, stdout, stderr, bidir.Lower)
+}
+
+func runAnalyzeWithLowerer(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer, lower func(*syntax.File) (semantic.IR, error)) int {
 	if len(args) != 1 {
 		fmt.Fprintln(stderr, "usage: gooo analyze <file.gooo>")
 		return exitUsage
@@ -41,7 +45,7 @@ func runAnalyze(args []string, reader SourceReader, parser SourceParser, stdout,
 	if syntaxDiagnostics.HasErrors() {
 		plan.Status = fixPlanSyntaxInvalid
 	} else {
-		ir, lowerErr := lowerInspectIR(file, remainingDeadline(deadline))
+		ir, lowerErr := lowerInspectIRWith(file, remainingDeadline(deadline), lower)
 		if lowerErr != nil {
 			plan.Status = fixPlanSemanticInvalid
 			plan.Diagnostics = append(plan.Diagnostics, semanticFixDiagnostics(lowerErr, fileSpan(file))...)
@@ -136,20 +140,19 @@ func syntaxFixDiagnostics(diagnostics syntax.Diagnostics) []fixPlanDiagnostic {
 
 func semanticFixDiagnostics(err error, span fixPlanSpan) []fixPlanDiagnostic {
 	var validation *semantic.ValidationErrors
-	if errors.As(err, &validation) && len(validation.Issues) > 0 {
-		result := make([]fixPlanDiagnostic, 0, len(validation.Issues))
-		for _, issue := range validation.Issues {
-			code := "semantic.invalid"
-			if strings.TrimSpace(issue.Code) != "" {
-				code = "semantic." + strings.TrimSpace(issue.Code)
-			}
-			result = append(result, newFixPlanDiagnostic("semantic", "error", code, issue.Message, span, "not-evaluated"))
-		}
-		return result
+	if !errors.As(err, &validation) || len(validation.Issues) == 0 {
+		return []fixPlanDiagnostic{newFixPlanDiagnostic(
+			"semantic", "error", "semantic.lowering", err.Error(), span, "not-evaluated",
+		)}
 	}
-	return []fixPlanDiagnostic{newFixPlanDiagnostic(
-		"semantic", "error", "semantic.lowering", err.Error(), span, "not-evaluated",
-	)}
+	semanticDiagnostics := canonicalSemanticDiagnostics(err)
+	result := make([]fixPlanDiagnostic, 0, len(semanticDiagnostics))
+	for _, diagnostic := range semanticDiagnostics {
+		result = append(result, newFixPlanDiagnostic(
+			"semantic", "error", diagnostic.Code, diagnostic.Message, span, "not-evaluated",
+		))
+	}
+	return result
 }
 
 func newFixPlanDiagnostic(phase, severity, code, message string, span fixPlanSpan, applicability string) fixPlanDiagnostic {
@@ -184,6 +187,9 @@ func canonicalFixPlanDiagnostics(diagnostics []fixPlanDiagnostic) []fixPlanDiagn
 		}
 		if left.Code != right.Code {
 			return left.Code < right.Code
+		}
+		if left.Message != right.Message {
+			return left.Message < right.Message
 		}
 		return left.RepairID < right.RepairID
 	})

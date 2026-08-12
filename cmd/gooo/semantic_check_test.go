@@ -169,6 +169,54 @@ func TestSemanticDiagnosticClassifiesDeadline(t *testing.T) {
 	}
 }
 
+func TestSemanticValidationDiagnosticsAreCanonical(t *testing.T) {
+	span := syntax.Span{
+		Filename: "fixture.gooo",
+		Start:    syntax.Position{Offset: 0, Line: 1, Column: 1},
+		End:      syntax.Position{Offset: 4, Line: 1, Column: 5},
+	}
+	issues := []semantic.ValidationIssue{
+		{Code: "relation-kind", Message: "kind mismatch", Subject: "billing://activity/pay", Object: "billing://entity/order"},
+		{Code: "missing-object", Message: "object is not declared", Subject: "billing://activity/pay", Object: "billing://entity/missing"},
+	}
+	first, err := formatSemanticDiagnostics(span, &semantic.ValidationErrors{Issues: issues})
+	if err != nil {
+		t.Fatal(err)
+	}
+	issues[0], issues[1] = issues[1], issues[0]
+	second, err := formatSemanticDiagnostics(span, &semantic.ValidationErrors{Issues: issues})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(first, second) {
+		t.Fatalf("semantic validation diagnostics changed with insertion order:\nfirst=%ssecond=%s", first, second)
+	}
+	want := "fixture.gooo:1:1-1:5: error semantic.invalid-endpoint: object is not declared\n" +
+		"fixture.gooo:1:1-1:5: error semantic.invalid-kind: kind mismatch\n"
+	if string(first) != want {
+		t.Fatalf("semantic validation diagnostics = %q, want %q", first, want)
+	}
+}
+
+func TestInspectAndAnalyzeValidateLowererResults(t *testing.T) {
+	invalidLowerer := func(*syntax.File) (semantic.IR, error) { return semantic.IR{}, nil }
+	var inspectOut, inspectErr bytes.Buffer
+	inspectCode := runInspectWithLowerer([]string{"fixture.gooo"}, fixtureReader{source: sourceOrderA}, SyntaxSourceParser{}, &inspectOut, &inspectErr, invalidLowerer)
+	if inspectCode != exitFailure || inspectOut.Len() != 0 || !bytes.Contains(inspectErr.Bytes(), []byte("semantic.invalid")) {
+		t.Fatalf("inspect accepted invalid IR = code %d, stdout=%q, stderr=%q", inspectCode, inspectOut.String(), inspectErr.String())
+	}
+
+	var analyzeOut, analyzeErr bytes.Buffer
+	analyzeCode := runAnalyzeWithLowerer([]string{"fixture.gooo"}, fixtureReader{source: sourceOrderA}, SyntaxSourceParser{}, &analyzeOut, &analyzeErr, invalidLowerer)
+	if analyzeCode != exitFailure || analyzeErr.Len() != 0 {
+		t.Fatalf("analyze accepted invalid IR = code %d, stderr=%q", analyzeCode, analyzeErr.String())
+	}
+	plan := decodeFixPlan(t, analyzeOut.Bytes())
+	if plan.Status != fixPlanSemanticInvalid || len(plan.Diagnostics) != 1 || plan.Diagnostics[0].Code != "semantic.lowering" {
+		t.Fatalf("invalid IR analyze plan = %#v", plan)
+	}
+}
+
 func checkFixture(t *testing.T, source string) (stdout, stderr string, code int) {
 	t.Helper()
 	var out, err bytes.Buffer

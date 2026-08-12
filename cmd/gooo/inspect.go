@@ -19,6 +19,10 @@ const maxGraphDumpBytes = 1 << 20
 var errGraphDumpLimit = errors.New("graph dump resource limit exceeded")
 
 func runInspect(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
+	return runInspectWithLowerer(args, reader, parser, stdout, stderr, bidir.Lower)
+}
+
+func runInspectWithLowerer(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer, lower func(*syntax.File) (semantic.IR, error)) int {
 	if len(args) != 1 {
 		fmt.Fprintln(stderr, "usage: gooo inspect <file.gooo>")
 		return exitUsage
@@ -38,9 +42,11 @@ func runInspect(args []string, reader SourceReader, parser SourceParser, stdout,
 	if !reportDiagnostics(diagnostics, stderr) || diagnostics.HasErrors() {
 		return exitFailure
 	}
-	ir, err := lowerInspectIR(file, remainingDeadline(deadline))
+	ir, err := lowerInspectIRWith(file, remainingDeadline(deadline), lower)
 	if err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: semantic lowering failed: %v\n", filename, err)
+		if !reportSemanticDiagnostic(filename, file, err, stderr) {
+			return exitFailure
+		}
 		return exitFailure
 	}
 	payload, err := marshalGraphDump(source, ir)
@@ -67,12 +73,17 @@ func lowerInspectIR(file *syntax.File, timeout time.Duration) (semantic.IR, erro
 func lowerInspectIRWith(file *syntax.File, timeout time.Duration, lower func(*syntax.File) (semantic.IR, error)) (semantic.IR, error) {
 	// The current bidir API has no cancellation-aware lowering contract. The
 	// buffered result bounds the CLI wait and lets a late lowerer return safely.
+	// Validation is part of the read-only semantic boundary so every caller
+	// observes the same validated IR or the same deterministic error.
 	if timeout <= 0 {
 		return semantic.IR{}, errCommandDeadline
 	}
 	result := make(chan inspectLowerResult, 1)
 	go func() {
 		ir, err := lower(file)
+		if err == nil {
+			err = ir.Validate()
+		}
 		result <- inspectLowerResult{ir: ir, err: err}
 	}()
 	timer := time.NewTimer(timeout)
