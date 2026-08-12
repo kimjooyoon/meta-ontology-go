@@ -6,6 +6,11 @@ import (
 	"unicode/utf8"
 )
 
+// Invalid UTF-8 in a quoted string is recovered byte by byte: each malformed
+// byte emits one DiagInvalidUTF8 over its one-byte source span and contributes
+// U+FFFD to the recovered string value. Escape syntax remains independent:
+// malformed ASCII escapes still emit DiagInvalidEscape, and malformed \u
+// escapes may emit both diagnostics when they contain malformed bytes.
 func (l *Lexer) lexString(start Position) {
 	var value strings.Builder
 	l.advanceRune() // opening quote
@@ -25,10 +30,7 @@ func (l *Lexer) lexString(start Position) {
 				terminated = true
 			}
 		case r == utf8.RuneError && size == 1:
-			invalidStart := l.position()
-			l.advanceRune()
-			value.WriteRune(utf8.RuneError)
-			l.addDiagnostic(DiagInvalidUTF8, startSpan(l.filename, invalidStart, l.position()), "invalid UTF-8 byte in string literal")
+			l.consumeInvalidUTF8(&value)
 		default:
 			value.WriteRune(l.advanceRune())
 		}
@@ -51,6 +53,13 @@ func (l *Lexer) lexEscape(value *strings.Builder, stringStart Position) bool {
 		return true
 	}
 	r, _ := l.peekRune()
+	if r == utf8.RuneError {
+		_, size := l.peekRune()
+		if size == 1 {
+			l.consumeInvalidUTF8(value)
+			return false
+		}
+	}
 	switch r {
 	case '"', '\\':
 		value.WriteRune(l.advanceRune())
@@ -66,19 +75,25 @@ func (l *Lexer) lexEscape(value *strings.Builder, stringStart Position) bool {
 	case 'u':
 		l.advanceRune()
 		begin := l.offset
+		var recovered strings.Builder
 		for i := 0; i < 4 && l.offset < len(l.source); i++ {
-			l.advanceRune()
+			r, size := l.peekRune()
+			if r == utf8.RuneError && size == 1 {
+				l.consumeInvalidUTF8(&recovered)
+				continue
+			}
+			recovered.WriteRune(l.advanceRune())
 		}
 		raw := l.source[begin:l.offset]
 		if len(raw) != 4 {
 			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, stringStart, l.position()), "unicode escape must contain four hexadecimal digits")
-			value.WriteString(raw)
+			value.WriteString(recovered.String())
 			return false
 		}
 		decoded, err := strconv.ParseUint(raw, 16, 16)
 		if err != nil {
 			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, stringStart, l.position()), "invalid unicode escape")
-			value.WriteString(raw)
+			value.WriteString(recovered.String())
 			return false
 		}
 		value.WriteRune(rune(decoded))
@@ -89,4 +104,11 @@ func (l *Lexer) lexEscape(value *strings.Builder, stringStart Position) bool {
 		value.WriteRune(r)
 	}
 	return false
+}
+
+func (l *Lexer) consumeInvalidUTF8(value *strings.Builder) {
+	invalidStart := l.position()
+	l.advanceRune()
+	value.WriteRune(utf8.RuneError)
+	l.addDiagnostic(DiagInvalidUTF8, startSpan(l.filename, invalidStart, l.position()), "invalid UTF-8 byte in string literal")
 }
