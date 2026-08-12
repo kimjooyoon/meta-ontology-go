@@ -93,6 +93,7 @@ type SourceMap struct {
 type SourceMapping struct {
 	SemanticID string
 	Kind       string
+	Ordinal    int
 	Source     SourceSpan
 	Generated  SourceRange
 }

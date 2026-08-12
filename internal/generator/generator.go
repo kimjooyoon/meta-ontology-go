@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/parser"
 	"go/token"
-	"sort"
 )
 
 // Project is the convenience entry point for a projection with optional
@@ -60,6 +59,9 @@ func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	if err := validateDeclaredSlots(ir, markers, len(previous) > 0); err != nil {
+		return Result{}, err
+	}
 
 	var source []byte
 	if len(previous) == 0 {
@@ -79,6 +81,39 @@ func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
 		return Result{}, err
 	}
 	return Result{Source: source, SourceMap: sourceMap}, nil
+}
+
+func validateDeclaredSlots(ir SemanticIR, markers parsedMarkers, allowRemovedRegions bool) error {
+	declared := make(map[string]struct{})
+	active := make(map[string]struct{})
+	for _, activity := range ir.Activities {
+		for _, slot := range activity.Slots {
+			declared[slot.ID] = struct{}{}
+		}
+	}
+	for _, region := range markers.Regions {
+		if allowRemovedRegions && !hasActivity(ir, region.ID) {
+			continue
+		}
+		for _, slot := range region.Slots {
+			active[slot.ID] = struct{}{}
+		}
+	}
+	for id := range active {
+		if _, exists := declared[id]; !exists {
+			return fmt.Errorf("generator: stale slot identity %q", id)
+		}
+	}
+	return nil
+}
+
+func hasActivity(ir SemanticIR, id string) bool {
+	for _, activity := range ir.Activities {
+		if activity.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func validatePackage(source []byte, expected string) error {
@@ -156,33 +191,32 @@ func makeSourceMap(source []byte, ir SemanticIR) (SourceMap, error) {
 		result.Mappings = append(result.Mappings, SourceMapping{
 			SemanticID: region.ID,
 			Kind:       region.Kind,
+			Ordinal:    len(result.Mappings),
 			Source:     sourceSpan,
 			Generated:  rangeForOffsets(source, region.Start, region.End),
 		})
-		for _, slot := range region.Slots {
-			var slotSource SourceSpan
-			if activity, ok := activities[region.ID]; ok {
-				for _, declared := range activity.Slots {
-					if declared.ID == slot.ID {
-						slotSource = declared.Source
-						break
-					}
-				}
+		declaredSlots := make(map[string]Slot)
+		if activity, ok := activities[region.ID]; ok {
+			for _, declared := range activity.Slots {
+				declaredSlots[declared.ID] = declared
 			}
+		}
+		for slotIndex, slot := range region.Slots {
+			var slotSource SourceSpan
+			declared, exists := declaredSlots[slot.ID]
+			if !exists {
+				return SourceMap{}, fmt.Errorf("generator: source map has stale slot identity %q", slot.ID)
+			}
+			slotSource = declared.Source
 			result.Mappings = append(result.Mappings, SourceMapping{
 				SemanticID: slot.ID,
 				Kind:       "slot",
+				Ordinal:    slotIndex,
 				Source:     slotSource,
 				Generated:  rangeForOffsets(source, slot.Start, slot.End),
 			})
 		}
 	}
-	sort.SliceStable(result.Mappings, func(i, j int) bool {
-		if result.Mappings[i].Generated.Start.Offset != result.Mappings[j].Generated.Start.Offset {
-			return result.Mappings[i].Generated.Start.Offset < result.Mappings[j].Generated.Start.Offset
-		}
-		return result.Mappings[i].Kind < result.Mappings[j].Kind
-	})
 	return result, nil
 }
 

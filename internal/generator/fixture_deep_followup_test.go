@@ -64,6 +64,23 @@ func TestFixtureSourceMapMatchesProtectedMarkerBounds(t *testing.T) {
 	}
 }
 
+func TestFixtureSourceMapPreservesDeclaredSlotOrder(t *testing.T) {
+	ir := acceptanceFixture()
+	ir.Activities[0].Slots = []Slot{
+		{ID: "gooo://slot/compile-implementation", Default: "return Artifact{}"},
+		{ID: "gooo://slot/compile-audit", Default: "return Artifact{}"},
+	}
+	result := mustAcceptanceResult(t, ir, nil)
+	mappings := result.SourceMap.Lookup("gooo://slot/compile-implementation")
+	if len(mappings) != 1 || mappings[0].Ordinal != 0 {
+		t.Fatalf("first declared slot lost its ordinal: %#v", mappings)
+	}
+	mappings = result.SourceMap.Lookup("gooo://slot/compile-audit")
+	if len(mappings) != 1 || mappings[0].Ordinal != 1 {
+		t.Fatalf("second declared slot lost its ordinal: %#v", mappings)
+	}
+}
+
 func TestFixtureDuplicateRegionRollbackIsAtomic(t *testing.T) {
 	result := mustAcceptanceResult(t, acceptanceFixture(), nil)
 	duplicate := append(append([]byte(nil), result.Source...), testGeneratedBlock(t, result.Source, "gooo://entity/source")...)
