@@ -160,7 +160,8 @@ func stableRepairID(phase, severity, code, message string, span fixPlanSpan) str
 }
 
 func canonicalFixPlanDiagnostics(diagnostics []fixPlanDiagnostic) []fixPlanDiagnostic {
-	result := append([]fixPlanDiagnostic(nil), diagnostics...)
+	result := make([]fixPlanDiagnostic, 0, len(diagnostics))
+	result = append(result, diagnostics...)
 	sort.SliceStable(result, func(i, j int) bool {
 		left, right := result[i], result[j]
 		if left.Span.File != right.Span.File {

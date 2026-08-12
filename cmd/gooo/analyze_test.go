@@ -22,6 +22,9 @@ func TestRunAnalyzeValidFixPlanContract(t *testing.T) {
 	if plan.SchemaVersion != fixPlanSchemaVersion || plan.Status != fixPlanReady || plan.SourceDigest == "" || plan.GraphHash == "" {
 		t.Fatalf("incomplete fix plan identity: %#v", plan)
 	}
+	if !bytes.Contains(output, []byte(`"diagnostics":[]`)) || bytes.Contains(output, []byte(`"diagnostics":null`)) {
+		t.Fatalf("valid fix plan diagnostics is not an empty JSON array: %s", output)
+	}
 	if plan.IR.Status != "available" || plan.IR.SemanticDigest == "" || len(plan.Diagnostics) != 0 {
 		t.Fatalf("unexpected valid plan state: %#v", plan)
 	}
