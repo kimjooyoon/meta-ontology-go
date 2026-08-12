@@ -161,3 +161,42 @@ func TestProjectionMetadataV1UsesDeferredExternalBindings(t *testing.T) {
 		t.Fatalf("missing binding was fabricated: %#v", result.Metadata)
 	}
 }
+
+func TestGenerateWithBindingReplaysAndBinds(t *testing.T) {
+	ir := acceptanceFixture()
+	base, err := GenerateProjectionV1(ir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	binding := ProjectionBinding{
+		Schema: projectionBindingSchemaV1, SourceDigest: base.Metadata.SourceDigest,
+		SemanticIRDigest: base.Metadata.SemanticIRDigest, SourceMapDigest: base.Metadata.SourceMapDigest,
+		EvidenceDigest: digestBytes([]byte("evidence")), ProvenanceDigest: digestBytes([]byte("provenance")),
+		Toolchain: ToolchainIdentity{Status: "BOUND", Value: "go1.26.5"},
+	}
+	bound, err := GenerateWithBinding(ir, nil, binding)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bound.Metadata.Source.Status != "BOUND" || bound.Metadata.Provenance.Status != "BOUND" || bound.Metadata.Toolchain.Value != "go1.26.5" {
+		t.Fatalf("binding status not reflected: %#v", bound.Metadata)
+	}
+}
+
+func TestGenerateWithBindingRejectsTamperingWithoutMutation(t *testing.T) {
+	ir := acceptanceFixture()
+	previous, err := Generate(ir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	binding := ProjectionBinding{Schema: projectionBindingSchemaV1, SourceDigest: digestBytes(previous.Source), SemanticIRDigest: digestIR(ir), SourceMapDigest: digestSourceMap(previous.SourceMap)}
+	beforeIR := copyIR(ir)
+	beforeSource := append([]byte(nil), previous.Source...)
+	binding.SourceDigest = digestBytes([]byte("tampered"))
+	if _, err := GenerateWithBinding(ir, previous.Source, binding); err == nil {
+		t.Fatal("tampered binding was accepted")
+	}
+	if !reflect.DeepEqual(ir, beforeIR) || !bytes.Equal(previous.Source, beforeSource) {
+		t.Fatal("binding rejection mutated caller-owned inputs")
+	}
+}

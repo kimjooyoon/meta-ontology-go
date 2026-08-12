@@ -138,6 +138,18 @@ type ProjectionMetadataV1 struct {
 	Metadata  GenerationMetadata `json:"metadata"`
 }
 
+// ProjectionBinding supplies independently computed identities for opt-in
+// fail-closed projection verification. Empty external fields stay deferred.
+type ProjectionBinding struct {
+	Schema           string            `json:"schema"`
+	SourceDigest     string            `json:"source_digest"`
+	SemanticIRDigest string            `json:"semantic_ir_digest"`
+	SourceMapDigest  string            `json:"source_map_digest"`
+	EvidenceDigest   string            `json:"evidence_digest,omitempty"`
+	ProvenanceDigest string            `json:"provenance_digest,omitempty"`
+	Toolchain        ToolchainIdentity `json:"toolchain"`
+}
+
 // GenerationMetadata describes reproducible projection inputs and trust.
 type GenerationMetadata struct {
 	SourceDigest     string            `json:"source_digest"`
