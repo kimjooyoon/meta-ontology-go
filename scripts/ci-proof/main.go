@@ -18,9 +18,13 @@ func main() {
 	receipt := flag.String("receipt", "provenance-receipt.jsonl", "append-only receipt output")
 	verify := flag.String("verify", "", "verify an existing proof bundle")
 	requirePass := flag.Bool("require-pass", false, "reject a fail-closed decision")
+	failureInput := flag.String("failure-input", "", "write a versioned CI failure manifest from an exact GitHub tuple")
+	failureOutput := flag.String("failure-output", "ci-failure.json", "CI failure manifest output")
 	flag.Parse()
 	var err error
-	if *verify != "" {
+	if *failureInput != "" {
+		err = writeFailureManifest(*failureInput, *failureOutput)
+	} else if *verify != "" {
 		err = verifyProof(*verify, *governance, *receipt, *requirePass)
 	} else {
 		err = generateProof(*root, *governance, *evidence, *jobs, *context, *generated, *output, *receipt)

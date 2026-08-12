@@ -215,6 +215,8 @@ jobs:
         env:
           CI_REPOSITORY: ${{ github.repository }}
           CI_EVENT: ${{ github.event_name }}
+          CI_EVENT_REF: ${{ github.ref }}
+          CI_CHECKOUT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           CI_BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
           CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           CI_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -245,13 +247,13 @@ jobs:
             const eventRef = context.ref;
             const output = fs.readFileSync('ci-domain/cli-check.stdout', 'utf8');
             const domain = {
-              schema: 'gooo/domain-evidence/v1',
+              schema: 'gooo/domain-evidence/v2',
               repository: context.payload.repository.full_name,
               event: context.eventName,
               base_ref: baseRef,
               base_sha: baseSha,
               head_sha: headSha,
-              event_ref: eventRef,
+              event_ref: context.ref,
               checkout_ref: headSha,
               run_id: context.runId,
               run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
@@ -276,6 +278,11 @@ jobs:
               protection_status: 'unavailable',
               approval_status: 'unavailable',
               provenance_status: 'unavailable',
+              missing_reasons: {
+                protection: 'domain_protection_observer_unavailable',
+                approval: 'domain_approval_observer_unavailable',
+                provenance: 'domain_provenance_observer_unavailable',
+              },
               digests: {
                 source_sha256: evidence.digests.source_sha256,
                 ir_sha256: evidence.digests.ir_sha256,
@@ -320,6 +327,8 @@ jobs:
           path: ci-evidence-input
       - name: Collect terminal canonical jobs
         uses: actions/github-script@v7
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
           github-token: ${{ github.token }}
           script: |
@@ -333,7 +342,11 @@ jobs:
               if (byName.has(job.name)) throw new Error(`duplicate canonical job ${job.name}`);
               byName.set(job.name, job);
             }
-            const jobs = names.map(name => byName.get(name));
+            const attempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+            const jobs = names.map(name => {
+              const job = byName.get(name);
+              return job ? {...job, run_attempt: attempt} : job;
+            });
             const ids = new Set();
             for (const job of jobs) {
               if (!job || job.status !== 'completed' || job.conclusion !== 'success' || job.head_sha !== head || job.id <= 0 || ids.has(job.id)) {
@@ -371,10 +384,11 @@ jobs:
               repository: `${context.repo.owner}/${context.repo.repo}`,
               branch: baseRef,
               policy_sha256: evidence.digests.policy_sha256,
-              event_ref: context.ref,
-              checkout_ref: headSha,
+              event_ref: evidence.event_ref,
+              checkout_ref: evidence.checkout_ref,
               token_source: '',
               read_status: 'unavailable',
+              missing_reason: process.env.BRANCH_PROTECTION_TOKEN ? 'branch_protection_api_unavailable' : 'branch_protection_token_unavailable',
               exists: false,
               strict: false,
               required_checks: [],
@@ -415,6 +429,7 @@ jobs:
                 allow_force_pushes: Boolean(data.allow_force_pushes?.enabled),
                 allow_deletions: Boolean(data.allow_deletions?.enabled),
                 read_status: 'verified',
+                missing_reason: '',
               };
             } catch (error) {
               core.warning(`branch protection API snapshot unavailable via ${tokenSource}: ${error.message}`);
@@ -430,21 +445,24 @@ jobs:
               } catch (_) {}
             }
             let artifacts = [];
+            const runAttempt = Number(process.env.GITHUB_RUN_ATTEMPT || 1);
             try {
               const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
-              artifacts = response.data.artifacts.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired, digest: artifact.digest || ''}));
+              artifacts = response.data.artifacts.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired, digest: artifact.digest || '', run_id: context.runId, run_attempt: runAttempt}));
             } catch (_) {}
+            const expectedArtifactName = `ci-evidence-${context.runId}-${runAttempt}`;
+            const artifactsVerified = artifacts.length === 1 && artifacts[0].id > 0 && artifacts[0].name === expectedArtifactName && artifacts[0].size_bytes > 0 && !artifacts[0].expired && /^sha256:[0-9a-f]{64}$/.test(artifacts[0].digest);
             const eventRef = context.ref;
             const checkoutRef = headSha;
             const contextData = {
               repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
-              pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
+              pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
               actor: context.actor, builder: context.actor, guardian: approvals[0]?.actor || '', approver: approvals[1]?.actor || '', gate: 'CI policy',
               branch_protected: protection.exists, branch_protection: protection, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
-              provenance_status: 'unavailable', artifacts_status: artifacts.length ? 'verified' : 'missing', approvals_status: approvals.length >= 2 ? 'verified' : 'missing',
+              provenance_status: 'unavailable', artifacts_status: artifactsVerified ? 'verified' : 'missing', approvals_status: approvals.length >= 2 ? 'verified' : 'missing',
               write_effect: 'none', no_write_outside_generated: true, approvals, artifacts, fixture_paths: ['examples/billing/main.gooo'],
-              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], domain_evidence: domainEvidence
+              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence
             };
             fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
       - name: Build deterministic proof and append receipt
@@ -466,4 +484,91 @@ jobs:
             ci-jobs.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
+          retention-days: 14
+
+  failure-report:
+    name: CI failure summary
+    needs: [format, vet, test, race, semantic, policy, proof]
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Capture exact failure tuple
+        uses: actions/github-script@v7
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
+            const failed = response.data.jobs.find(job => job.name !== 'CI failure summary' && job.status === 'completed' && job.conclusion && job.conclusion !== 'success' && job.conclusion !== 'skipped');
+            if (!failed) {
+              core.info('No terminal CI failure was observed for this exact run.');
+              fs.writeFileSync('ci-failure-input.json', '');
+              return;
+            }
+            const pull = context.payload.pull_request;
+            const head = pull?.head.sha || context.sha;
+            if (!failed.head_sha || failed.head_sha !== head || !failed.run_id || failed.run_id !== context.runId) {
+              throw new Error('failure job API record lacks exact head/run binding; refusing to guess');
+            }
+            const code = failed.name === 'CI proof bundle' ? 'CI-GATE-001' : failed.name === 'CI policy' ? 'CI-SCOPE-001' : 'CI-TEST-001';
+            const message = `${failed.name} concluded ${failed.conclusion} for exact run ${context.runId} attempt ${process.env.CI_RUN_ATTEMPT || 1}`;
+            const remediation = code === 'CI-GATE-001'
+              ? 'Read the proof rejection reasons and obtain only the missing independent governance or provenance evidence for this tuple.'
+              : code === 'CI-SCOPE-001'
+                ? 'Inspect the CI policy summary and remove the out-of-scope or contract-violating change before pushing.'
+                : 'Reproduce the terminal job failure at the exact head, fix only the owned scope, and rerun the required checks.';
+            fs.writeFileSync('ci-failure-input.json', JSON.stringify({
+              code,
+              message,
+              remediation,
+              job: {
+                id: failed.id,
+                name: failed.name,
+                status: failed.status,
+                conclusion: failed.conclusion,
+                head_sha: failed.head_sha,
+                run_id: failed.run_id,
+                run_attempt: Number(process.env.CI_RUN_ATTEMPT || 1),
+              },
+            }, null, 2) + '\n');
+      - name: Generate versioned failure manifest and summary
+        if: ${{ always() }}
+        env:
+          CI_REPOSITORY: ${{ github.repository }}
+          CI_EVENT: ${{ github.event_name }}
+          CI_EVENT_REF: ${{ github.ref }}
+          CI_CHECKOUT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          CI_BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          CI_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          CI_PR_NUMBER: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || 0 }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_ACTOR: ${{ github.actor }}
+        run: |
+          if [ ! -s ci-failure-input.json ]; then
+            echo "No failure manifest emitted for this run." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          go run ./scripts/ci-proof --failure-input ci-failure-input.json --failure-output ci-failure.json
+          jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `scripts/ci-proof/docs/failure-reasons.md`\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload failure reason manifest
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-failure.json
+          if-no-files-found: ignore
           retention-days: 14

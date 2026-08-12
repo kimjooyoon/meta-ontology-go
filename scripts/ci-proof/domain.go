@@ -25,6 +25,7 @@ type domainEvidence struct {
 	ApprovalStatus      string               `json:"approval_status"`
 	ProvenanceStatus    string               `json:"provenance_status"`
 	Digests             domainEvidenceDigest `json:"digests"`
+	MissingReasons      missingReasons       `json:"missing_reasons"`
 }
 
 type domainCommand struct {
@@ -46,7 +47,7 @@ type domainEvidenceDigest struct {
 }
 
 func validateDomainEvidence(domain domainEvidence, evidence evidenceInput, context contextInput) error {
-	if domain.Schema != "gooo/domain-evidence/v1" || domain.Repository != evidence.Repository || domain.Event != evidence.Event || domain.BaseRef != evidence.BaseRef || domain.BaseSHA != evidence.BaseSHA || domain.HeadSHA != evidence.HeadSHA || domain.EventRef != context.EventRef || domain.CheckoutRef != context.CheckoutRef || domain.RunID != evidence.RunID || domain.RunAttempt != evidence.Attempt || domain.WorkflowSHA != evidence.WorkflowSHA {
+	if domain.Schema != domainEvidenceSchema || domain.Repository != evidence.Repository || domain.Event != evidence.Event || domain.EventRef != evidence.EventRef || domain.CheckoutRef != evidence.CheckoutRef || domain.BaseRef != evidence.BaseRef || domain.BaseSHA != evidence.BaseSHA || domain.HeadSHA != evidence.HeadSHA || domain.EventRef != context.EventRef || domain.CheckoutRef != context.CheckoutRef || domain.RunID != evidence.RunID || domain.RunAttempt != evidence.Attempt || domain.WorkflowSHA != evidence.WorkflowSHA {
 		return fmt.Errorf("domain evidence identity is incomplete or mismatched")
 	}
 	if domain.CLI.Status != "verified" || !domain.CLI.Available || domain.CLI.Command == "" || domain.CLI.Fixture == "" || domain.CLI.OutputSHA256 != digestBytes([]byte(domain.CLI.Output)) {
@@ -57,6 +58,9 @@ func validateDomainEvidence(domain domainEvidence, evidence evidenceInput, conte
 	}
 	if domain.ObserverStatus != "unavailable" || len(domain.ObserverReceiptRefs) != 0 || domain.ProtectionStatus != "unavailable" || domain.ApprovalStatus != "unavailable" || domain.ProvenanceStatus != "unavailable" {
 		return fmt.Errorf("unavailable domain evidence was overstated")
+	}
+	if err := validateMissingReasons(domain.MissingReasons, domain.ProtectionStatus, domain.ApprovalStatus, domain.ProvenanceStatus); err != nil {
+		return err
 	}
 	if domain.Digests.SourceSHA256 != evidence.Digests.Source || domain.Digests.IRSHA256 != evidence.Digests.IR || domain.Digests.GeneratedSHA256 != evidence.Digests.Generated || domain.Digests.BundleSHA256 != evidence.Digests.Bundle || !validDigest(domain.Digests.DomainSHA256) {
 		return fmt.Errorf("domain evidence digests are missing or mismatched")

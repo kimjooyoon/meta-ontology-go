@@ -1,8 +1,10 @@
 package main
 
 const (
-	proofSchema   = "gooo/ci-proof/v1"
-	receiptSchema = "gooo/provenance-receipt/v1"
+	evidenceSchema       = "gooo/ci-evidence/v2"
+	proofSchema          = "gooo/ci-proof/v2"
+	receiptSchema        = "gooo/provenance-receipt/v2"
+	domainEvidenceSchema = "gooo/domain-evidence/v2"
 )
 
 var proofJobs = []string{"gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"}
@@ -30,6 +32,8 @@ type evidenceInput struct {
 	Schema      string          `json:"schema"`
 	Repository  string          `json:"repository"`
 	Event       string          `json:"event"`
+	EventRef    string          `json:"event_ref"`
+	CheckoutRef string          `json:"checkout_ref"`
 	BaseRef     string          `json:"base_ref"`
 	BaseSHA     string          `json:"base_sha"`
 	HeadSHA     string          `json:"head_sha"`
@@ -52,9 +56,11 @@ type evidenceDigests struct {
 type jobInput struct {
 	ID         int64  `json:"id"`
 	Name       string `json:"name"`
-	Status     string `json:"status,omitempty"`
+	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`
 	HeadSHA    string `json:"head_sha"`
+	RunID      int64  `json:"run_id"`
+	RunAttempt int64  `json:"run_attempt"`
 }
 
 type contextInput struct {
@@ -94,6 +100,7 @@ type contextInput struct {
 	DiagnosticIDs    []string         `json:"diagnostic_ids"`
 	RepairIDs        []string         `json:"repair_ids"`
 	Predecessors     []string         `json:"predecessors"`
+	MissingReasons   missingReasons   `json:"missing_reasons"`
 }
 
 type branchProtection struct {
@@ -114,6 +121,7 @@ type branchProtection struct {
 	LinearHistory           bool     `json:"linear_history"`
 	AllowForcePushes        bool     `json:"allow_force_pushes"`
 	AllowDeletions          bool     `json:"allow_deletions"`
+	MissingReason           string   `json:"missing_reason,omitempty"`
 	BaseSHA                 string   `json:"base_sha"`
 	HeadSHA                 string   `json:"head_sha"`
 	RunID                   int64    `json:"run_id"`
@@ -128,11 +136,19 @@ type approvalInput struct {
 }
 
 type artifactInput struct {
-	ID      int64  `json:"id"`
-	Name    string `json:"name"`
-	Size    int64  `json:"size_bytes"`
-	Expired bool   `json:"expired"`
-	Digest  string `json:"digest"`
+	ID         int64  `json:"id"`
+	Name       string `json:"name"`
+	Size       int64  `json:"size_bytes"`
+	Expired    bool   `json:"expired"`
+	Digest     string `json:"digest"`
+	RunID      int64  `json:"run_id"`
+	RunAttempt int64  `json:"run_attempt"`
+}
+
+type missingReasons struct {
+	Protection string `json:"protection,omitempty"`
+	Approval   string `json:"approval,omitempty"`
+	Provenance string `json:"provenance,omitempty"`
 }
 
 type cacheInput struct {
@@ -184,6 +200,7 @@ type proofBundle struct {
 	NoWrite          bool             `json:"no_write_outside_generated"`
 	Rejections       []string         `json:"rejections"`
 	Predecessors     []string         `json:"predecessors"`
+	MissingReasons   missingReasons   `json:"missing_reasons"`
 }
 
 type actorRoles struct {
@@ -251,6 +268,7 @@ type provenanceReceipt struct {
 	Role             string           `json:"role"`
 	Predecessors     []string         `json:"predecessors"`
 	Decision         string           `json:"decision"`
+	MissingReasons   missingReasons   `json:"missing_reasons"`
 }
 
 type receiptDigests struct {

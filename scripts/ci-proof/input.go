@@ -47,6 +47,7 @@ func readJobs(filename string) ([]jobInput, error) {
 		return nil, fmt.Errorf("read workflow jobs: %w", err)
 	}
 	byName := make(map[string]jobInput, len(proofJobs))
+	seenIDs := make(map[int64]bool, len(proofJobs))
 	for _, job := range jobs {
 		if !isProofJob(job.Name) {
 			continue
@@ -54,6 +55,10 @@ func readJobs(filename string) ([]jobInput, error) {
 		if _, exists := byName[job.Name]; exists {
 			return nil, fmt.Errorf("duplicate canonical proof job %q", job.Name)
 		}
+		if job.ID <= 0 || seenIDs[job.ID] {
+			return nil, fmt.Errorf("duplicate or invalid canonical proof job id %d", job.ID)
+		}
+		seenIDs[job.ID] = true
 		if job.Name == "CI policy" && job.Conclusion == "" {
 			job.Conclusion = "success"
 		}
@@ -62,7 +67,7 @@ func readJobs(filename string) ([]jobInput, error) {
 	result := make([]jobInput, 0, len(proofJobs))
 	for _, name := range proofJobs {
 		job, ok := byName[name]
-		if !ok || job.ID <= 0 || job.Status != "completed" || job.Conclusion != "success" || !validSHA(job.HeadSHA) {
+		if !ok || job.ID <= 0 || job.Status != "completed" || job.Conclusion != "success" || !validSHA(job.HeadSHA) || job.RunID <= 0 || job.RunAttempt <= 0 {
 			return nil, fmt.Errorf("canonical proof job %q is missing or unsuccessful", name)
 		}
 		result = append(result, job)
@@ -71,10 +76,10 @@ func readJobs(filename string) ([]jobInput, error) {
 }
 
 func validateInputIdentity(evidence evidenceInput, context contextInput, jobs []jobInput) error {
-	if evidence.Schema != "gooo/ci-evidence/v1" || evidence.Repository == "" || evidence.Event == "" || evidence.BaseRef == "" || evidence.RunID <= 0 || evidence.Attempt <= 0 {
+	if evidence.Schema != evidenceSchema || evidence.Repository == "" || evidence.Event == "" || !validEventRef(evidence.Event, evidence.EventRef) || evidence.CheckoutRef != evidence.HeadSHA || evidence.BaseRef == "" || evidence.RunID <= 0 || evidence.Attempt <= 0 {
 		return fmt.Errorf("CI evidence identity is incomplete")
 	}
-	if context.Repository != evidence.Repository || context.Event != evidence.Event || context.BaseRef != evidence.BaseRef || context.BaseSHA != evidence.BaseSHA || context.HeadSHA != evidence.HeadSHA || context.WorkflowSHA != evidence.WorkflowSHA || context.RunID != evidence.RunID || context.RunAttempt != evidence.Attempt {
+	if context.Repository != evidence.Repository || context.Event != evidence.Event || context.Ref != evidence.EventRef || context.EventRef != evidence.EventRef || context.CheckoutRef != evidence.CheckoutRef || context.BaseRef != evidence.BaseRef || context.BaseSHA != evidence.BaseSHA || context.HeadSHA != evidence.HeadSHA || context.WorkflowSHA != evidence.WorkflowSHA || context.RunID != evidence.RunID || context.RunAttempt != evidence.Attempt {
 		return fmt.Errorf("proof context does not match CI evidence identity")
 	}
 	if context.Ref == "" || context.EventRef == "" || context.CheckoutRef == "" || context.EventRef != context.Ref || context.CheckoutRef != evidence.HeadSHA || context.Actor == "" || context.Builder == "" || context.Gate == "" || !validSHA(evidence.BaseSHA) || !validSHA(evidence.HeadSHA) || !validSHA(evidence.WorkflowSHA) || !validSHA(context.CheckoutRef) || evidence.BaseSHA == evidence.HeadSHA {
@@ -89,18 +94,29 @@ func validateInputIdentity(evidence evidenceInput, context contextInput, jobs []
 	if evidence.Event == "push" && context.PRNumber != 0 {
 		return fmt.Errorf("push proof cannot carry a pull request number")
 	}
-	return compareJobs(evidence.Jobs, jobs, evidence.HeadSHA)
+	if err := compareJobs(evidence.Jobs, jobs, evidence.HeadSHA, evidence.RunID, evidence.Attempt); err != nil {
+		return err
+	}
+	if err := validateArtifacts(context.Artifacts, context.RunID, context.RunAttempt); err != nil {
+		return err
+	}
+	if err := validateMissingReasons(context.MissingReasons, context.DomainEvidence.ProtectionStatus, context.DomainEvidence.ApprovalStatus, context.DomainEvidence.ProvenanceStatus); err != nil {
+		return err
+	}
+	return nil
 }
 
-func compareJobs(expected, actual []jobInput, head string) error {
+func compareJobs(expected, actual []jobInput, head string, runID, runAttempt int64) error {
 	if len(expected) != len(proofJobs) || len(actual) != len(proofJobs) {
 		return fmt.Errorf("proof must contain exactly six canonical jobs")
 	}
+	seenIDs := make(map[int64]bool, len(expected))
 	for index, name := range proofJobs {
 		left, right := expected[index], actual[index]
-		if left.Name != name || right.Name != name || left.ID != right.ID || right.Conclusion != "success" || right.HeadSHA != head || left.HeadSHA != head {
+		if left.Name != name || right.Name != name || left.ID != right.ID || left.ID <= 0 || seenIDs[left.ID] || left.Status != "completed" || right.Status != "completed" || left.Conclusion != "success" || right.Conclusion != "success" || right.HeadSHA != head || left.HeadSHA != head || left.RunID != runID || right.RunID != runID || left.RunAttempt != runAttempt || right.RunAttempt != runAttempt {
 			return fmt.Errorf("proof job %q is missing or mismatched", name)
 		}
+		seenIDs[left.ID] = true
 	}
 	return nil
 }
@@ -121,6 +137,9 @@ func validateBranchProtection(protection branchProtection, evidence evidenceInpu
 	}
 	if protection.TokenSource != "github.token" && protection.TokenSource != "BRANCH_PROTECTION_TOKEN" || protection.ReadStatus != "verified" && protection.ReadStatus != "unavailable" {
 		return fmt.Errorf("branch protection snapshot source or status is invalid")
+	}
+	if protection.ReadStatus == "unavailable" && protection.MissingReason == "" || protection.ReadStatus == "verified" && protection.MissingReason != "" {
+		return fmt.Errorf("branch protection missing reason is inconsistent with read status")
 	}
 	if protection.Digest != digestBranchProtection(protection) {
 		return fmt.Errorf("branch protection snapshot digest mismatch")
@@ -190,6 +209,19 @@ func validSHA(value string) bool {
 	return true
 }
 
+func validEventRef(event, ref string) bool {
+	if ref == "" || strings.ContainsAny(ref, "\r\n") {
+		return false
+	}
+	if event == "pull_request" {
+		return strings.HasPrefix(ref, "refs/pull/") && strings.HasSuffix(ref, "/merge")
+	}
+	if event == "push" {
+		return strings.HasPrefix(ref, "refs/heads/")
+	}
+	return false
+}
+
 func validDigest(value string) bool {
 	if len(value) != 64 || value == strings.Repeat("0", 64) {
 		return false
@@ -203,8 +235,5 @@ func validDigest(value string) bool {
 }
 
 func validArtifactDigest(value string) bool {
-	if strings.HasPrefix(value, "sha256:") {
-		value = strings.TrimPrefix(value, "sha256:")
-	}
-	return validDigest(value)
+	return strings.HasPrefix(value, "sha256:") && validDigest(strings.TrimPrefix(value, "sha256:"))
 }
