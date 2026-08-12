@@ -4,6 +4,8 @@ import "encoding/json"
 
 const jsonRPCVersion = "2.0"
 
+const WorkspaceSymbolProtocolSchema = "gooo/lsp-workspace-symbol/v1"
+
 const (
 	parseError      = -32700
 	invalidRequest  = -32600
@@ -79,15 +81,20 @@ type CompletionOptions struct {
 	TriggerCharacters []string `json:"triggerCharacters,omitempty"`
 }
 
-// ServerCapabilities intentionally contains no workspace or source-map
-// capabilities. Those features are deferred until they have an implementation.
+type WorkspaceSymbolOptions struct {
+	Schema string `json:"schema"`
+}
+
+// ServerCapabilities advertises only implemented document/workspace-read
+// features. Workspace edits and source maps remain deferred.
 type ServerCapabilities struct {
-	TextDocumentSync       TextDocumentSyncOptions `json:"textDocumentSync"`
-	HoverProvider          bool                    `json:"hoverProvider,omitempty"`
-	CompletionProvider     *CompletionOptions      `json:"completionProvider,omitempty"`
-	DefinitionProvider     bool                    `json:"definitionProvider,omitempty"`
-	DocumentSymbolProvider bool                    `json:"documentSymbolProvider,omitempty"`
-	ReferencesProvider     bool                    `json:"referencesProvider,omitempty"`
+	TextDocumentSync        TextDocumentSyncOptions `json:"textDocumentSync"`
+	HoverProvider           bool                    `json:"hoverProvider,omitempty"`
+	CompletionProvider      *CompletionOptions      `json:"completionProvider,omitempty"`
+	DefinitionProvider      bool                    `json:"definitionProvider,omitempty"`
+	DocumentSymbolProvider  bool                    `json:"documentSymbolProvider,omitempty"`
+	ReferencesProvider      bool                    `json:"referencesProvider,omitempty"`
+	WorkspaceSymbolProvider *WorkspaceSymbolOptions `json:"workspaceSymbolProvider,omitempty"`
 }
 
 type InitializeResult struct {
@@ -120,6 +127,10 @@ type TextDocumentPositionParams struct {
 
 type DocumentSymbolParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+type WorkspaceSymbolParams struct {
+	Query string `json:"query"`
 }
 
 type ReferenceContext struct {
@@ -171,6 +182,14 @@ type DocumentSymbol struct {
 	Kind           SymbolKind `json:"kind"`
 	Range          Range      `json:"range"`
 	SelectionRange Range      `json:"selectionRange"`
+}
+
+type WorkspaceSymbol struct {
+	ID       string     `json:"id,omitempty"`
+	Name     string     `json:"name"`
+	Detail   string     `json:"detail,omitempty"`
+	Kind     SymbolKind `json:"kind"`
+	Location Location   `json:"location"`
 }
 
 type requestEnvelope struct {

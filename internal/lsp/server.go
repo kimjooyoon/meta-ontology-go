@@ -22,7 +22,7 @@ type document struct {
 }
 
 // Server implements the supported .gooo text-document LSP surface. Workspace
-// and source-map features remain deliberately unadvertised and unsupported.
+// symbols use open documents only; edits and source maps remain unsupported.
 type Server struct {
 	parser      Parser
 	documents   map[string]*document
@@ -150,33 +150,13 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 		return server.documentSymbolRequest(request)
 	case "textDocument/references":
 		return server.referencesRequest(request)
-	case "workspace/symbol", "textDocument/rename", "textDocument/formatting":
+	case "workspace/symbol":
+		return server.workspaceSymbolRequest(request)
+	case "textDocument/rename", "textDocument/formatting":
 		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
 	default:
 		return responseOrNil(request.ID, methodNotFound, "Method not found"), nil, nil
 	}
-}
-
-func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
-	var params InitializeParams
-	if err := decodeParams(request.Params, &params); err != nil {
-		return responseOrNil(request.ID, invalidParams, "Invalid initialize parameters"), nil, nil
-	}
-	server.mu.Lock()
-	server.initialized = true
-	server.mu.Unlock()
-	result := InitializeResult{
-		Capabilities: ServerCapabilities{
-			TextDocumentSync:       TextDocumentSyncOptions{OpenClose: true, Change: 2},
-			HoverProvider:          true,
-			CompletionProvider:     &CompletionOptions{},
-			DefinitionProvider:     true,
-			DocumentSymbolProvider: true,
-			ReferencesProvider:     true,
-		},
-		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},
-	}
-	return resultResponse(request.ID, result), nil, nil
 }
 
 func (server *Server) shutdownRequest(request requestEnvelope) *responseEnvelope {
