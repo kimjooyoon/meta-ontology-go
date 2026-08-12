@@ -217,7 +217,7 @@ func TestBenchmarkReceiptBindsCanonicalJobs(t *testing.T) {
 		t.Fatalf("complete benchmark = %v", err)
 	}
 	for name, mutate := range map[string]func(*BenchmarkReceipt){
-		"base sha":     func(r *BenchmarkReceipt) { r.BaseSHA = commitFixtureSHA("other-base") },
+		"base sha":     func(r *BenchmarkReceipt) { r.BaseSHA = "not-a-commit-sha" },
 		"head sha":     func(r *BenchmarkReceipt) { r.HeadSHA = commitFixtureSHA("other-head") },
 		"event":        func(r *BenchmarkReceipt) { r.Event = "push" },
 		"workflow":     func(r *BenchmarkReceipt) { r.Workflow = "" },
