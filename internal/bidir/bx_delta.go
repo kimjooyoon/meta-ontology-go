@@ -22,6 +22,8 @@ func makeDeltaEvidenceUnchecked(delta FactDelta, locality Locality, partial bool
 		SequenceHash:        factSequenceHash(delta),
 		OrderHash:           digest(factOrderHash(delta) + "|" + portHash + "|" + relationHash),
 		Locality:            locality,
+		Added:               factCanonicalValues(delta.Added),
+		Removed:             factCanonicalValues(delta.Removed),
 		LocalityClosureHash: localityDigest(locality),
 		ClosureMembers:      append([]ID{}, locality.Affected...),
 		ClosureValid:        sameLocality(locality, closure),
@@ -41,25 +43,27 @@ func makeDeltaEvidenceUnchecked(delta FactDelta, locality Locality, partial bool
 	return evidence
 }
 
+type canonicalDeltaEvidence struct {
+	SequenceHash     string   `json:"sequence_hash"`
+	OrderHash        string   `json:"order_hash"`
+	Added            []string `json:"added"`
+	Removed          []string `json:"removed"`
+	Candidates       []string `json:"candidates"`
+	PortSequence     []string `json:"port_sequence"`
+	RelationSequence []string `json:"relation_sequence"`
+	Touched          []ID     `json:"touched"`
+	Affected         []ID     `json:"affected"`
+	ClosureMembers   []ID     `json:"closure_members"`
+	ClosureHash      string   `json:"closure_hash"`
+	EvidenceIDs      []string `json:"evidence_ids"`
+	EvidenceFactKeys []string `json:"evidence_fact_keys"`
+	EvidenceSpans    []string `json:"evidence_spans"`
+	EvidenceHash     string   `json:"evidence_hash"`
+	Partial          bool     `json:"partial_observation"`
+}
+
 func deltaJSON(delta FactDelta, evidence BXDeltaEvidence) string {
-	value := struct {
-		SequenceHash     string   `json:"sequence_hash"`
-		OrderHash        string   `json:"order_hash"`
-		Added            []string `json:"added"`
-		Removed          []string `json:"removed"`
-		Candidates       []string `json:"candidates"`
-		PortSequence     []string `json:"port_sequence"`
-		RelationSequence []string `json:"relation_sequence"`
-		Touched          []ID     `json:"touched"`
-		Affected         []ID     `json:"affected"`
-		ClosureMembers   []ID     `json:"closure_members"`
-		ClosureHash      string   `json:"closure_hash"`
-		EvidenceIDs      []string `json:"evidence_ids"`
-		EvidenceFactKeys []string `json:"evidence_fact_keys"`
-		EvidenceSpans    []string `json:"evidence_spans"`
-		EvidenceHash     string   `json:"evidence_hash"`
-		Partial          bool     `json:"partial_observation"`
-	}{
+	value := canonicalDeltaEvidence{
 		SequenceHash:     evidence.SequenceHash,
 		OrderHash:        evidence.OrderHash,
 		Added:            factCanonicalValues(delta.Added),

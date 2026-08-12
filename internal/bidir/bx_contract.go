@@ -107,6 +107,8 @@ type BXDeltaEvidence struct {
 	SequenceHash          string
 	OrderHash             string
 	CanonicalJSON         string
+	Added                 []string
+	Removed               []string
 	Locality              Locality
 	LocalityClosureHash   string
 	LocalityCanonicalJSON string
@@ -233,7 +235,7 @@ func validateDeltaEvidence(delta BXDeltaEvidence) error {
 	if delta.EvidenceHash == "" || delta.EvidenceHash != delta.EvidenceSpans.Hash || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.IDs) || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.FactKeys) || delta.EvidenceSpans.SpanCount != len(delta.EvidenceSpans.Spans) || !uniqueStrings(delta.EvidenceSpans.IDs) {
 		return errors.New("evidence ID/span set is incomplete")
 	}
-	return nil
+	return validateDeltaConsistency(delta)
 }
 
 func validateTransaction(transaction BXTransactionEvidence, requireNoWrite bool) error {

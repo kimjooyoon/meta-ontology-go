@@ -209,6 +209,8 @@ func writeDeltaCanonical(builder *strings.Builder, label string, delta BXDeltaEv
 	fmt.Fprintf(builder, "%s_sequence_hash=%s\n", label, delta.SequenceHash)
 	fmt.Fprintf(builder, "%s_order_hash=%s\n", label, delta.OrderHash)
 	fmt.Fprintf(builder, "%s_json=%s\n", label, delta.CanonicalJSON)
+	fmt.Fprintf(builder, "%s_added=%s\n", label, strings.Join(delta.Added, ","))
+	fmt.Fprintf(builder, "%s_removed=%s\n", label, strings.Join(delta.Removed, ","))
 	fmt.Fprintf(builder, "%s_locality_closure_hash=%s\n", label, delta.LocalityClosureHash)
 	fmt.Fprintf(builder, "%s_locality_json=%s\n", label, delta.LocalityCanonicalJSON)
 	fmt.Fprintf(builder, "%s_candidates=%s\n", label, strings.Join(delta.Candidates, ","))
