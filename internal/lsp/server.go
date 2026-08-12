@@ -152,6 +152,8 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 		return server.referencesRequest(request)
 	case "workspace/symbol":
 		return server.workspaceSymbolRequest(request)
+	case "textDocument/semanticTokens/full":
+		return server.semanticTokensRequest(ctx, request)
 	case "textDocument/rename", "textDocument/formatting":
 		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
 	default:

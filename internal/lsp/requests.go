@@ -130,7 +130,7 @@ func (server *Server) canRunAsync(request requestEnvelope) bool {
 		return false
 	}
 	switch request.Method {
-	case "textDocument/hover", "textDocument/completion", "textDocument/definition":
+	case "textDocument/hover", "textDocument/completion", "textDocument/definition", "textDocument/semanticTokens/full":
 		return true
 	default:
 		return false

@@ -17,6 +17,14 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 			DocumentSymbolProvider:  true,
 			ReferencesProvider:      true,
 			WorkspaceSymbolProvider: &WorkspaceSymbolOptions{Schema: WorkspaceSymbolProtocolSchema},
+			SemanticTokensProvider: &SemanticTokensOptions{
+				Schema: SemanticTokensProtocolSchema,
+				Legend: SemanticTokensLegend{
+					TokenTypes:     append([]string(nil), canonicalSemanticTokenTypes...),
+					TokenModifiers: []string{},
+				},
+				Full: true,
+			},
 		},
 		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},
 	}

@@ -5,6 +5,7 @@ import "encoding/json"
 const jsonRPCVersion = "2.0"
 
 const WorkspaceSymbolProtocolSchema = "gooo/lsp-workspace-symbol/v1"
+const SemanticTokensProtocolSchema = "gooo/lsp-semantic-tokens/v1"
 
 const (
 	parseError      = -32700
@@ -85,6 +86,17 @@ type WorkspaceSymbolOptions struct {
 	Schema string `json:"schema"`
 }
 
+type SemanticTokensLegend struct {
+	TokenTypes     []string `json:"tokenTypes"`
+	TokenModifiers []string `json:"tokenModifiers"`
+}
+
+type SemanticTokensOptions struct {
+	Schema string               `json:"schema"`
+	Legend SemanticTokensLegend `json:"legend"`
+	Full   bool                 `json:"full"`
+}
+
 // ServerCapabilities advertises only implemented document/workspace-read
 // features. Workspace edits and source maps remain deferred.
 type ServerCapabilities struct {
@@ -95,6 +107,7 @@ type ServerCapabilities struct {
 	DocumentSymbolProvider  bool                    `json:"documentSymbolProvider,omitempty"`
 	ReferencesProvider      bool                    `json:"referencesProvider,omitempty"`
 	WorkspaceSymbolProvider *WorkspaceSymbolOptions `json:"workspaceSymbolProvider,omitempty"`
+	SemanticTokensProvider  *SemanticTokensOptions  `json:"semanticTokensProvider,omitempty"`
 }
 
 type InitializeResult struct {
@@ -131,6 +144,15 @@ type DocumentSymbolParams struct {
 
 type WorkspaceSymbolParams struct {
 	Query string `json:"query"`
+}
+
+type SemanticTokensParams struct {
+	TextDocument *TextDocumentIdentifier `json:"textDocument"`
+}
+
+type SemanticTokens struct {
+	ResultID string   `json:"resultId,omitempty"`
+	Data     []uint32 `json:"data"`
 }
 
 type ReferenceContext struct {
