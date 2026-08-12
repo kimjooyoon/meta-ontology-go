@@ -91,12 +91,21 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	) {
 		return false
 	}
+	if !implementationObservationsMatch(
+		result.ImplementationObservations, result.NormalizedDelta.DeferredImplementation,
+	) {
+		return false
+	}
 	if !validDigest(result.RegistryDigest) {
 		return false
 	}
 	if err := validateDeltaShape(result.NormalizedDelta); err != nil {
 		return false
 	}
+	return normalizedDeltaMembersValid(result)
+}
+
+func normalizedDeltaMembersValid(result SemanticAdapterResult) bool {
 	memberCount := len(result.NormalizedDelta.SignatureFacts) + len(result.NormalizedDelta.CandidateFacts) +
 		len(result.NormalizedDelta.DeferredImplementation) + len(result.NormalizedDelta.DeferredDetails) +
 		len(result.NormalizedDelta.DeferredSlots)

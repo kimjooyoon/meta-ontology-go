@@ -84,6 +84,28 @@ func collectImplementationObservations(
 	return observations
 }
 
+func implementationObservationsMatch(
+	left, right []ImplementationObservation,
+) bool {
+	orderedLeft := append([]ImplementationObservation(nil), left...)
+	orderedRight := append([]ImplementationObservation(nil), right...)
+	sort.Slice(orderedLeft, func(i, j int) bool {
+		return orderedLeft[i].Canonical() < orderedLeft[j].Canonical()
+	})
+	sort.Slice(orderedRight, func(i, j int) bool {
+		return orderedRight[i].Canonical() < orderedRight[j].Canonical()
+	})
+	if len(orderedLeft) != len(orderedRight) {
+		return false
+	}
+	for index := range orderedLeft {
+		if orderedLeft[index].Canonical() != orderedRight[index].Canonical() {
+			return false
+		}
+	}
+	return true
+}
+
 func implementationObservationDigest(
 	observations []ImplementationObservation, slots []ProtectedSlotObservation,
 ) string {
