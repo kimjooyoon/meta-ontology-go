@@ -82,10 +82,11 @@ type CompletionOptions struct {
 // ServerCapabilities intentionally contains no workspace or source-map
 // capabilities. Those features are deferred until they have an implementation.
 type ServerCapabilities struct {
-	TextDocumentSync   TextDocumentSyncOptions `json:"textDocumentSync"`
-	HoverProvider      bool                    `json:"hoverProvider,omitempty"`
-	CompletionProvider *CompletionOptions      `json:"completionProvider,omitempty"`
-	DefinitionProvider bool                    `json:"definitionProvider,omitempty"`
+	TextDocumentSync       TextDocumentSyncOptions `json:"textDocumentSync"`
+	HoverProvider          bool                    `json:"hoverProvider,omitempty"`
+	CompletionProvider     *CompletionOptions      `json:"completionProvider,omitempty"`
+	DefinitionProvider     bool                    `json:"definitionProvider,omitempty"`
+	DocumentSymbolProvider bool                    `json:"documentSymbolProvider,omitempty"`
 }
 
 type InitializeResult struct {
@@ -114,6 +115,10 @@ type DidCloseTextDocumentParams struct {
 type TextDocumentPositionParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 	Position     Position               `json:"position"`
+}
+
+type DocumentSymbolParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
 
 type PublishDiagnosticsParams struct {
@@ -146,6 +151,15 @@ type CompletionList struct {
 type Location struct {
 	URI   string `json:"uri"`
 	Range Range  `json:"range"`
+}
+
+type DocumentSymbol struct {
+	ID             string     `json:"id,omitempty"`
+	Name           string     `json:"name"`
+	Detail         string     `json:"detail,omitempty"`
+	Kind           SymbolKind `json:"kind"`
+	Range          Range      `json:"range"`
+	SelectionRange Range      `json:"selectionRange"`
 }
 
 type requestEnvelope struct {

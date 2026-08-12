@@ -181,7 +181,8 @@ func assertInitialize(t *testing.T, payload []byte) {
 		Result InitializeResult `json:"result"`
 	}
 	decodeJSON(t, payload, &message)
-	if !message.Result.Capabilities.HoverProvider || !message.Result.Capabilities.DefinitionProvider {
+	if !message.Result.Capabilities.HoverProvider || !message.Result.Capabilities.DefinitionProvider ||
+		!message.Result.Capabilities.DocumentSymbolProvider {
 		t.Fatalf("capabilities = %#v", message.Result.Capabilities)
 	}
 	if message.Result.Capabilities.TextDocumentSync.Change != 2 {

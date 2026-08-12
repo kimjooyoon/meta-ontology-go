@@ -146,6 +146,8 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 		return server.completionRequest(ctx, request)
 	case "textDocument/definition":
 		return server.definitionRequest(ctx, request)
+	case "textDocument/documentSymbol":
+		return server.documentSymbolRequest(request)
 	case "workspace/symbol", "textDocument/references", "textDocument/rename", "textDocument/formatting":
 		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
 	default:
@@ -163,10 +165,11 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 	server.mu.Unlock()
 	result := InitializeResult{
 		Capabilities: ServerCapabilities{
-			TextDocumentSync:   TextDocumentSyncOptions{OpenClose: true, Change: 2},
-			HoverProvider:      true,
-			CompletionProvider: &CompletionOptions{},
-			DefinitionProvider: true,
+			TextDocumentSync:       TextDocumentSyncOptions{OpenClose: true, Change: 2},
+			HoverProvider:          true,
+			CompletionProvider:     &CompletionOptions{},
+			DefinitionProvider:     true,
+			DocumentSymbolProvider: true,
 		},
 		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},
 	}
@@ -285,7 +288,6 @@ func (server *Server) completionRequest(ctx context.Context, request requestEnve
 	}
 	return resultResponse(request.ID, server.completion(params.TextDocument.URI)), nil, nil
 }
-
 func (server *Server) definitionRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params TextDocumentPositionParams
 	if err := decodeParams(request.Params, &params); err != nil {
