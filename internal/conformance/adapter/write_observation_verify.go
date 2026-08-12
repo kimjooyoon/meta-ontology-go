@@ -72,6 +72,9 @@ func requestObservationBinding(request Request) ObservationBinding {
 }
 
 func validateObservation(observation NoWriteObservation) error {
+	if observation.Reason != "" && !validRejectionKind(observation.Reason) {
+		return oracleError(OracleNW003, "observer rejection kind is invalid")
+	}
 	if err := observation.Binding.validate(); err != nil {
 		return oracleError(OracleNW002, "observation binding is stale or malformed")
 	}
@@ -85,6 +88,10 @@ func validateObservation(observation NoWriteObservation) error {
 		return oracleError(OracleNW003, "after snapshot: "+err.Error())
 	}
 	return nil
+}
+
+func validRejectionKind(reason RejectionKind) bool {
+	return reason == RejectionCancelled || reason == RejectionClosed
 }
 
 func validatePaths(observation NoWriteObservation) error {

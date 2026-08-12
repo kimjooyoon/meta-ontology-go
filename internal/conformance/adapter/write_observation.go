@@ -24,6 +24,14 @@ type ObserverPaths struct {
 	TempRoot   string `json:"temp_root"`
 }
 
+// RejectionKind identifies a transaction that must leave observed files unchanged.
+type RejectionKind string
+
+const (
+	RejectionCancelled RejectionKind = "cancelled"
+	RejectionClosed    RejectionKind = "closed"
+)
+
 // LstatIdentity retains metadata needed to detect replacement with equal bytes.
 type LstatIdentity struct {
 	Exists          bool   `json:"exists"`
@@ -62,6 +70,7 @@ type FilesystemState struct {
 type NoWriteObservation struct {
 	Binding ObservationBinding `json:"binding"`
 	Paths   ObserverPaths      `json:"paths"`
+	Reason  RejectionKind      `json:"rejection_reason,omitempty"`
 	Before  FilesystemState    `json:"before"`
 	After   FilesystemState    `json:"after"`
 	stamp   *observerStamp
@@ -99,6 +108,18 @@ func NewNoWriteObserver(binding ObservationBinding, paths ObserverPaths) (*NoWri
 
 // Finish captures the post-invocation state. Differences are verified by the oracle.
 func (o *NoWriteObserver) Finish() (NoWriteObservation, error) {
+	return o.finish("")
+}
+
+// CaptureRejected closes an observer around a cancelled or closed transaction.
+func (o *NoWriteObserver) CaptureRejected(reason RejectionKind) (NoWriteObservation, error) {
+	if !validRejectionKind(reason) {
+		return NoWriteObservation{}, fmt.Errorf("unsupported rejection kind %q", reason)
+	}
+	return o.finish(reason)
+}
+
+func (o *NoWriteObserver) finish(reason RejectionKind) (NoWriteObservation, error) {
 	if o == nil || o.stamp == nil || o.finished {
 		return NoWriteObservation{}, fmt.Errorf("observer is not initialized")
 	}
@@ -108,7 +129,8 @@ func (o *NoWriteObserver) Finish() (NoWriteObservation, error) {
 		return NoWriteObservation{}, fmt.Errorf("capture after state: %w", err)
 	}
 	observation := NoWriteObservation{
-		Binding: o.binding, Paths: o.paths, Before: o.before, After: after, stamp: o.stamp,
+		Binding: o.binding, Paths: o.paths, Reason: reason,
+		Before: o.before, After: after, stamp: o.stamp,
 	}
 	o.stamp.digest = observationSeal(observation)
 	return observation, nil
