@@ -14,18 +14,26 @@ const sourceBundleSchema = "analyzer-source-bundle/v1"
 // adaptation. The source bytes are hashed before parsing so the result cannot
 // silently claim evidence for a different source presentation.
 type SourceSemanticAdapterInput struct {
-	Base         semantic.IR
-	Sources      []SourceFile
-	Registry     *Registry
-	Policy       MappingPolicy
-	Producer     semantic.ID
-	EvidenceKind semantic.EvidenceKind
+	Base              semantic.IR
+	Sources           []SourceFile
+	Registry          *Registry
+	Policy            MappingPolicy
+	Producer          semantic.ID
+	EvidenceKind      semantic.EvidenceKind
+	ToolchainIdentity string
 }
 
 // AnalyzeAndAdaptSemantic performs the registered Go analysis and typed
 // semantic adaptation as one source-bound operation. It does not write files
 // or mutate the supplied source slices or base IR.
 func AnalyzeAndAdaptSemantic(input SourceSemanticAdapterInput) (SemanticAdapterResult, error) {
+	if err := input.Policy.Validate(); err != nil {
+		return SemanticAdapterResult{}, err
+	}
+	toolchain := strings.TrimSpace(input.ToolchainIdentity)
+	if toolchain == "" {
+		return SemanticAdapterResult{}, adapterError(AdapterSourceConfig, "", "", "toolchain identity is required")
+	}
 	sources, err := canonicalSourceFiles(input.Sources)
 	if err != nil {
 		return SemanticAdapterResult{}, err
@@ -41,7 +49,7 @@ func AnalyzeAndAdaptSemantic(input SourceSemanticAdapterInput) (SemanticAdapterR
 	return AdaptSemantic(SemanticAdapterInput{
 		Base: input.Base, Analysis: analysis, Policy: input.Policy,
 		Producer: input.Producer, EvidenceKind: input.EvidenceKind,
-		SourceDigest: sourceDigest,
+		SourceDigest: sourceDigest, ToolchainDigest: ToolchainDigest(toolchain),
 	})
 }
 

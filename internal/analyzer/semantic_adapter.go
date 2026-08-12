@@ -11,12 +11,13 @@ import (
 // SemanticAdapterInput supplies an analyzer result and an immutable semantic
 // base. Base is normalized into a private transaction before any additions.
 type SemanticAdapterInput struct {
-	Base         semantic.IR
-	Analysis     Result
-	Policy       MappingPolicy
-	Producer     semantic.ID
-	EvidenceKind semantic.EvidenceKind
-	SourceDigest string
+	Base            semantic.IR
+	Analysis        Result
+	Policy          MappingPolicy
+	Producer        semantic.ID
+	EvidenceKind    semantic.EvidenceKind
+	SourceDigest    string
+	ToolchainDigest string
 }
 
 // SemanticAdapterResult keeps unmapped observations and implementation detail
@@ -25,6 +26,9 @@ type SemanticAdapterInput struct {
 type SemanticAdapterResult struct {
 	IR                 semantic.IR
 	SourceDigest       string
+	PolicyDigest       string
+	ToolchainDigest    string
+	BindingDigest      string
 	DeferredFacts      []Fact
 	DeferredCandidates []Candidate
 	// ShadowedCandidateEvidence retains a mapped candidate observation when
@@ -51,7 +55,8 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 		return SemanticAdapterResult{}, err
 	}
 	transaction := SemanticAdapterResult{
-		IR: base, SourceDigest: input.SourceDigest,
+		IR: base, SourceDigest: input.SourceDigest, PolicyDigest: input.Policy.Digest(),
+		ToolchainDigest:       input.ToolchainDigest,
 		DeferredCandidates:    copyCandidates(input.Analysis.Delta.Candidates),
 		ImplementationDetails: copyDetails(input.Analysis.Delta.ImplementationDetails),
 	}
@@ -72,6 +77,7 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 	if err := transaction.IR.Validate(); err != nil {
 		return SemanticAdapterResult{}, err
 	}
+	transaction.BindingDigest = semanticAdapterBindingDigest(transaction)
 	return transaction, nil
 }
 
