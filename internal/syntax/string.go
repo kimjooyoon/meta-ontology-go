@@ -25,8 +25,9 @@ func (l *Lexer) lexString(start Position) {
 			l.addDiagnostic(DiagUnterminatedString, startSpan(l.filename, start, l.position()), "unterminated string literal")
 			terminated = true // emit the partial token and let whitespace handle EOL
 		case r == '\\':
+			escapeStart := l.position()
 			l.advanceRune()
-			if l.lexEscape(&value, start) {
+			if l.lexEscape(&value, escapeStart) {
 				terminated = true
 			}
 		case r == utf8.RuneError && size == 1:
@@ -47,9 +48,9 @@ func (l *Lexer) lexString(start Position) {
 }
 
 // lexEscape returns true when the escape ends the recoverable string token.
-func (l *Lexer) lexEscape(value *strings.Builder, stringStart Position) bool {
+func (l *Lexer) lexEscape(value *strings.Builder, escapeStart Position) bool {
 	if l.offset >= len(l.source) {
-		l.addDiagnostic(DiagUnterminatedString, startSpan(l.filename, stringStart, l.position()), "unterminated escape sequence")
+		l.addDiagnostic(DiagUnterminatedString, startSpan(l.filename, escapeStart, l.position()), "unterminated escape sequence")
 		return true
 	}
 	r, _ := l.peekRune()
@@ -86,13 +87,13 @@ func (l *Lexer) lexEscape(value *strings.Builder, stringStart Position) bool {
 		}
 		raw := l.source[begin:l.offset]
 		if len(raw) != 4 {
-			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, stringStart, l.position()), "unicode escape must contain four hexadecimal digits")
+			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "unicode escape must contain four hexadecimal digits")
 			value.WriteString(recovered.String())
 			return false
 		}
 		decoded, err := strconv.ParseUint(raw, 16, 16)
 		if err != nil {
-			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, stringStart, l.position()), "invalid unicode escape")
+			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "invalid unicode escape")
 			value.WriteString(recovered.String())
 			return false
 		}
