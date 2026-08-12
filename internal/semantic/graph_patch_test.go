@@ -134,6 +134,86 @@ func TestValidatePatchPreconditionsRejectsInvalidFieldAndBase(t *testing.T) {
 	}
 }
 
+func TestApplyGraphPatchReturnsCopyAndPreservesOriginal(t *testing.T) {
+	graph, node := patchFixture(t)
+	sourceDigest := StableHashString("source")
+	irDigest := StableHashString("ir")
+	fieldDigest, err := NodeFieldHash(node, "name")
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := GraphPatchRequest{
+		SchemaVersion: GraphPatchSchemaVersion, Operation: GraphPatchSetNodeField,
+		ExpectedGraphHash: graph.StableHash(), NodeID: node.ID, ExpectedNodeHash: node.StableHash(),
+		Field: "name", ExpectedFieldHash: fieldDigest, ExpectedSourceDigest: sourceDigest,
+		ExpectedIRDigest: irDigest, AllowedIntent: "rename node", Locality: "node:" + node.ID.String(),
+	}
+	beforeCanonical, beforeHash := graph.Canonical(), graph.StableHash()
+	updated, err := graph.ApplyGraphPatch(GraphPatchBase{SourceDigest: sourceDigest, IRDigest: irDigest}, request, GraphPatchMutation{Name: "Purchase"})
+	if err != nil {
+		t.Fatalf("rename patch rejected: %v", err)
+	}
+	if graph.Canonical() != beforeCanonical || graph.StableHash() != beforeHash {
+		t.Fatal("applying patch mutated original graph")
+	}
+	updatedNode, ok := updated.Node(node.ID)
+	if !ok || updatedNode.Name != "Purchase" {
+		t.Fatalf("updated node = %#v, want renamed node", updatedNode)
+	}
+	if updated.StableHash() != beforeHash || updated.Canonical() == beforeCanonical {
+		t.Fatal("presentation-only rename changed semantic hash or failed to change canonical view")
+	}
+}
+
+func TestApplyGraphPatchRejectsMutationWithoutChangingOriginal(t *testing.T) {
+	graph, node := patchFixture(t)
+	sourceDigest := StableHashString("source")
+	irDigest := StableHashString("ir")
+	fieldDigest, err := NodeFieldHash(node, "name")
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := GraphPatchRequest{
+		SchemaVersion: GraphPatchSchemaVersion, Operation: GraphPatchSetNodeField,
+		ExpectedGraphHash: graph.StableHash(), NodeID: node.ID, ExpectedNodeHash: node.StableHash(),
+		Field: "name", ExpectedFieldHash: fieldDigest, ExpectedSourceDigest: sourceDigest,
+		ExpectedIRDigest: irDigest, AllowedIntent: "rename node", Locality: "node:" + node.ID.String(),
+	}
+	beforeCanonical, beforeHash := graph.Canonical(), graph.StableHash()
+	_, err = graph.ApplyGraphPatch(GraphPatchBase{SourceDigest: sourceDigest, IRDigest: irDigest}, request, GraphPatchMutation{Name: "Process"})
+	if err == nil {
+		t.Fatal("name-collision mutation was accepted")
+	}
+	if graph.Canonical() != beforeCanonical || graph.StableHash() != beforeHash {
+		t.Fatal("rejected mutation changed original graph")
+	}
+}
+
+func TestApplyGraphPatchAddsOnlyValidatedDeterministicFact(t *testing.T) {
+	graph, entity := patchFixture(t)
+	other := mustEntity(t, MustIdentity("urn:gooo:source"), Namespace("billing"), "Source")
+	if err := graph.AddNode(other); err != nil {
+		t.Fatal(err)
+	}
+	sourceDigest := StableHashString("source")
+	irDigest := StableHashString("ir")
+	request := GraphPatchRequest{
+		SchemaVersion: GraphPatchSchemaVersion, Operation: GraphPatchAddFact,
+		ExpectedGraphHash: graph.StableHash(), Subject: entity.ID, Predicate: WasDerivedFrom,
+		Object: other.ID, ExpectedSourceDigest: sourceDigest, ExpectedIRDigest: irDigest,
+		AllowedIntent: "add derivation", Locality: "fact:" + entity.ID.String(),
+	}
+	fact := NewWasDerivedFromFact(entity.ID, other.ID)
+	before := graph.StableHash()
+	updated, err := graph.ApplyGraphPatch(GraphPatchBase{SourceDigest: sourceDigest, IRDigest: irDigest}, request, GraphPatchMutation{Fact: &fact})
+	if err != nil {
+		t.Fatalf("fact patch rejected: %v", err)
+	}
+	if !updated.HasFact(fact.Key()) || graph.HasFact(fact.Key()) || graph.StableHash() != before {
+		t.Fatal("fact patch did not preserve copy-on-write semantics")
+	}
+}
+
 func patchFixture(t *testing.T) (Graph, Node) {
 	t.Helper()
 	graph := NewGraph()
