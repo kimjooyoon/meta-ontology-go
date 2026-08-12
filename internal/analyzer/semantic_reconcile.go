@@ -19,6 +19,7 @@ type SemanticReconcileResult struct {
 	ToolchainMatch   bool
 	RegistryMatch    bool
 	ObservationMatch bool
+	BindingMatch     bool
 	Accepted         bool
 	WriteEffect      ReconcileWriteEffect
 	FailureCode      string
@@ -61,11 +62,12 @@ func reconcileSemantic(
 		ToolchainMatch:   observed.ToolchainDigest == toolchainDigest,
 		RegistryMatch:    observed.RegistryDigest == registryDigest && registryDigest != "",
 		ObservationMatch: observed.ImplementationObservationDigest == observationDigest && observationDigest != "",
+		BindingMatch:     observed.BindingDigest == semanticAdapterBindingDigest(observed),
 		WriteEffect:      ReconcileNoWrite,
 	}
 	result.Accepted = deltaValid && authoritySafe && comparison.SemanticEqual && comparison.ProvenanceEqual &&
 		result.SourceMatch && result.PolicyMatch && result.ToolchainMatch && result.RegistryMatch &&
-		result.ObservationMatch
+		result.ObservationMatch && result.BindingMatch
 	if !result.Accepted {
 		result.FailureCode = reconcileFailureCode(result)
 	}
@@ -74,6 +76,9 @@ func reconcileSemantic(
 
 func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	if result.NormalizedDelta.Digest == "" || result.NormalizedDelta.Digest != result.NormalizedDelta.StableHash() {
+		return false
+	}
+	if !validDigest(result.BindingDigest) || result.BindingDigest != semanticAdapterBindingDigest(result) {
 		return false
 	}
 	if result.SlotObservationDigest != protectedSlotObservationDigest(result.SlotObservations) ||

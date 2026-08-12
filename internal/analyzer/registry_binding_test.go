@@ -84,15 +84,19 @@ func TestRegistryBindingTamperRejectsWithoutIRMutation(t *testing.T) {
 	registry := generatedBillingRegistry(t)
 	base := adaptGeneratedBillingSource(t, source, registry, policy)
 	cases := []struct {
-		name   string
-		mutate func(*SemanticAdapterResult)
+		name             string
+		mutate           func(*SemanticAdapterResult)
+		wantBindingMatch bool
 	}{
-		{name: "result digest", mutate: func(result *SemanticAdapterResult) {
+		{name: "result digest", wantBindingMatch: false, mutate: func(result *SemanticAdapterResult) {
 			result.RegistryDigest = semantic.StableHashString("tampered-registry")
 		}},
-		{name: "delta binding", mutate: func(result *SemanticAdapterResult) {
+		{name: "delta binding", wantBindingMatch: true, mutate: func(result *SemanticAdapterResult) {
 			result.NormalizedDelta.SignatureFacts[0].Binding.RegistryDigest =
 				semantic.StableHashString("tampered-binding")
+		}},
+		{name: "binding digest", wantBindingMatch: false, mutate: func(result *SemanticAdapterResult) {
+			result.BindingDigest = semantic.StableHashString("tampered-binding-digest")
 		}},
 	}
 	for _, testCase := range cases {
@@ -103,7 +107,8 @@ func TestRegistryBindingTamperRejectsWithoutIRMutation(t *testing.T) {
 			reconcile := ReconcileSemanticWithRegistry(observed, observed.IR, observed.SourceDigest,
 				observed.PolicyDigest, observed.ToolchainDigest, registry.Digest(),
 				observed.ImplementationObservationDigest)
-			if reconcile.Accepted || reconcile.DeltaValid || reconcile.WriteEffect != ReconcileNoWrite ||
+			if reconcile.Accepted || reconcile.DeltaValid || reconcile.BindingMatch != testCase.wantBindingMatch ||
+				reconcile.WriteEffect != ReconcileNoWrite ||
 				reconcile.FailureCode != "invalid-delta-binding" {
 				t.Fatalf("tampered registry reconcile = %#v, want invalid no-write", reconcile)
 			}
