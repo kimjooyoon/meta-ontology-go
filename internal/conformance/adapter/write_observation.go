@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -137,7 +136,8 @@ func (o *NoWriteObserver) finish(reason RejectionKind) (NoWriteObservation, erro
 }
 
 func (b ObservationBinding) validate() error {
-	if strings.TrimSpace(b.Fixture) == "" || strings.TrimSpace(string(b.Operation)) == "" || strings.TrimSpace(b.RunID) == "" {
+	if strings.TrimSpace(b.Fixture) == "" ||
+		strings.TrimSpace(string(b.Operation)) == "" || strings.TrimSpace(b.RunID) == "" {
 		return fmt.Errorf("observation fixture, operation, and run_id are required")
 	}
 	if !knownOperation(b.Operation) {
@@ -154,17 +154,20 @@ func normalizeObserverPaths(paths ObserverPaths) (ObserverPaths, error) {
 		}
 	}
 	var err error
-	paths.SourcePath, err = filepath.Abs(filepath.Clean(paths.SourcePath))
+	paths.SourcePath, err = canonicalObserverPath(paths.SourcePath)
 	if err != nil {
 		return ObserverPaths{}, fmt.Errorf("source path: %w", err)
 	}
-	paths.OutputPath, err = filepath.Abs(filepath.Clean(paths.OutputPath))
+	paths.OutputPath, err = canonicalObserverPath(paths.OutputPath)
 	if err != nil {
 		return ObserverPaths{}, fmt.Errorf("output path: %w", err)
 	}
-	paths.TempRoot, err = filepath.Abs(filepath.Clean(paths.TempRoot))
+	paths.TempRoot, err = canonicalObserverPath(paths.TempRoot)
 	if err != nil {
 		return ObserverPaths{}, fmt.Errorf("temp root: %w", err)
+	}
+	if err := validateObserverPathDisjointness(paths); err != nil {
+		return ObserverPaths{}, err
 	}
 	info, err := os.Lstat(paths.TempRoot)
 	if err != nil || !info.IsDir() {
