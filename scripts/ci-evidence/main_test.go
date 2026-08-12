@@ -30,6 +30,20 @@ func TestEvidenceRejectsEmptyPolicyConclusion(t *testing.T) {
 	}
 }
 
+func TestEvidenceBindsSelfPolicySuccessAsCompleted(t *testing.T) {
+	jobs := validJobs()
+	policy := len(jobs) - 1
+	jobs[policy].Status = "in_progress"
+	jobs[policy].Conclusion = ""
+	result, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result[policy].Status != "completed" || result[policy].Conclusion != "success" {
+		t.Fatalf("self policy was not normalized to a terminal success: %+v", result[policy])
+	}
+}
+
 func TestEvidenceRejectsBundleDigestMismatch(t *testing.T) {
 	bundle := validEvidence()
 	bundle.Digests.BundleSHA256 = strings.Repeat("b", 64)

@@ -159,6 +159,7 @@ func normalizeJobs(apiJobs []apiJob, headSHA string, runID, runAttempt int64, se
 		}
 		seenIDs[job.ID] = true
 		if job.Name == "CI policy" && job.Conclusion == "" && selfPolicySuccess {
+			job.Status = "completed"
 			job.Conclusion = "success"
 		}
 		byName[job.Name] = job
