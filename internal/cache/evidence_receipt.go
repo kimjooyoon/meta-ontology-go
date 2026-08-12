@@ -3,7 +3,6 @@ package cache
 import (
 	"errors"
 	"fmt"
-	"sort"
 )
 
 const (
@@ -25,19 +24,23 @@ type EvidenceRef struct {
 // EvidenceFreshness is separate from ProjectionKey and records the exact
 // source, verifier, policy, and CI evidence used for a cache decision.
 type EvidenceFreshness struct {
-	BaseDigest         Digest        `json:"base_digest"`
-	HeadDigest         Digest        `json:"head_digest"`
-	RunID              string        `json:"run_id"`
-	EventID            string        `json:"event_id"`
-	Attempt            uint64        `json:"attempt"`
-	PredecessorDigests []Digest      `json:"predecessor_digests"`
-	SourceDigest       Digest        `json:"source_digest"`
-	IRDigest           Digest        `json:"ir_digest"`
-	PolicyDigest       Digest        `json:"policy_digest"`
-	ToolchainDigest    Digest        `json:"toolchain_digest"`
-	TargetDigest       Digest        `json:"target_digest"`
-	BundleDigest       Digest        `json:"bundle_digest"`
-	EvidenceRefs       []EvidenceRef `json:"evidence_refs"`
+	BaseDigest         Digest                  `json:"base_digest"`
+	HeadDigest         Digest                  `json:"head_digest"`
+	BaseSHA            string                  `json:"base_sha"`
+	HeadSHA            string                  `json:"head_sha"`
+	RunID              string                  `json:"run_id"`
+	Event              string                  `json:"event"`
+	EventID            string                  `json:"event_id"`
+	Attempt            uint64                  `json:"attempt"`
+	Jobs               map[string]FreshnessJob `json:"jobs"`
+	PredecessorDigests []Digest                `json:"predecessor_digests"`
+	SourceDigest       Digest                  `json:"source_digest"`
+	IRDigest           Digest                  `json:"ir_digest"`
+	PolicyDigest       Digest                  `json:"policy_digest"`
+	ToolchainDigest    Digest                  `json:"toolchain_digest"`
+	TargetDigest       Digest                  `json:"target_digest"`
+	BundleDigest       Digest                  `json:"bundle_digest"`
+	EvidenceRefs       []EvidenceRef           `json:"evidence_refs"`
 }
 
 // Validate rejects missing, zero, duplicated, or malformed evidence.
@@ -54,8 +57,14 @@ func (e EvidenceFreshness) Validate() error {
 			return fmt.Errorf("%w: unknown %s digest", ErrInvalidReceipt, item.label)
 		}
 	}
-	if e.RunID == "" || e.EventID == "" || e.Attempt == 0 {
+	if !validCommitSHA(e.BaseSHA) || !validCommitSHA(e.HeadSHA) {
+		return fmt.Errorf("%w: missing immutable base/head SHA", ErrInvalidReceipt)
+	}
+	if e.RunID == "" || e.Event != "pull_request" || e.EventID == "" || e.Attempt == 0 {
 		return fmt.Errorf("%w: missing immutable event attempt", ErrInvalidReceipt)
+	}
+	if err := validateFreshnessJobs(e.Jobs, e.HeadSHA); err != nil {
+		return err
 	}
 	if e.PredecessorDigests == nil || hasDuplicateDigests(e.PredecessorDigests) {
 		return fmt.Errorf("%w: missing or replayed predecessors", ErrInvalidReceipt)
@@ -84,7 +93,9 @@ func (e EvidenceFreshness) Validate() error {
 func (e EvidenceFreshness) Equal(other EvidenceFreshness) bool {
 	left, right := canonicalEvidence(e), canonicalEvidence(other)
 	return left.BaseDigest == right.BaseDigest && left.HeadDigest == right.HeadDigest &&
+		left.BaseSHA == right.BaseSHA && left.HeadSHA == right.HeadSHA && left.Event == right.Event &&
 		left.RunID == right.RunID && left.EventID == right.EventID && left.Attempt == right.Attempt &&
+		freshnessJobsEqual(left.Jobs, right.Jobs) &&
 		left.SourceDigest == right.SourceDigest &&
 		left.IRDigest == right.IRDigest && left.PolicyDigest == right.PolicyDigest &&
 		left.ToolchainDigest == right.ToolchainDigest && left.TargetDigest == right.TargetDigest &&
@@ -278,12 +289,4 @@ func validateEvidenceBindings(e EvidenceFreshness) error {
 		}
 	}
 	return nil
-}
-
-func canonicalEvidence(e EvidenceFreshness) EvidenceFreshness {
-	e.PredecessorDigests = append([]Digest(nil), e.PredecessorDigests...)
-	sort.Slice(e.PredecessorDigests, func(i, j int) bool { return e.PredecessorDigests[i] < e.PredecessorDigests[j] })
-	e.EvidenceRefs = append([]EvidenceRef(nil), e.EvidenceRefs...)
-	sort.Slice(e.EvidenceRefs, func(i, j int) bool { return e.EvidenceRefs[i].Name < e.EvidenceRefs[j].Name })
-	return e
 }
