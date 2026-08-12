@@ -33,7 +33,7 @@ func (c *Cache) AppendReceipt(receipt CacheReceipt) (CacheReceipt, error) {
 	if err != nil {
 		return CacheReceipt{}, fmt.Errorf("cache: encode receipt: %w", err)
 	}
-	file, err := os.OpenFile(c.receipts, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
+	file, err := openReceiptAppend(c.receipts)
 	if err != nil {
 		return CacheReceipt{}, fmt.Errorf("cache: open receipts: %w", err)
 	}
@@ -59,7 +59,7 @@ func (c *Cache) Receipts() ([]CacheReceipt, error) {
 }
 
 func (c *Cache) readReceiptsLocked() ([]CacheReceipt, error) {
-	file, err := os.Open(c.receipts)
+	file, err := openReceiptRead(c.receipts)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
@@ -127,6 +127,17 @@ func validateSealedReceipt(receipt CacheReceipt) error {
 	digest, err := DigestOf(copy)
 	if err != nil || digest != receipt.ReceiptDigest {
 		return fmt.Errorf("%w: receipt digest mismatch", ErrInvalidReceipt)
+	}
+	return nil
+}
+
+func validateReceiptFile(file *os.File) error {
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
+	if !info.Mode().IsRegular() {
+		return ErrUnsafeReceiptLog
 	}
 	return nil
 }

@@ -11,8 +11,9 @@ const (
 )
 
 var (
-	ErrInvalidReceipt = errors.New("invalid cache evidence receipt")
-	ErrReceiptReplay  = errors.New("cache evidence receipt replay")
+	ErrInvalidReceipt   = errors.New("invalid cache evidence receipt")
+	ErrReceiptReplay    = errors.New("cache evidence receipt replay")
+	ErrUnsafeReceiptLog = errors.New("unsafe cache receipt log")
 )
 
 // EvidenceRef identifies immutable external evidence included in a receipt.

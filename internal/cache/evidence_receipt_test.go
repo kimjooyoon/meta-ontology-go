@@ -3,6 +3,9 @@ package cache
 import (
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
+	"runtime"
 	"slices"
 	"testing"
 )
@@ -258,4 +261,33 @@ func benchmarkJobs(head Digest, commitHead string) map[string]BenchmarkJob {
 		jobs[name] = BenchmarkJob{ID: string(rune('1' + index)), Status: "completed", Conclusion: "success", HeadSHA: head, HeadCommitSHA: commitHead}
 	}
 	return jobs
+}
+
+func TestReceiptLogRejectsSymlinkWithoutMutatingTarget(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlink creation requires platform privileges on Windows")
+	}
+	cache, _, _, _, receipt := projectionHitFixture(t)
+	target := filepath.Join(t.TempDir(), "outside.jsonl")
+	original := []byte("outside\n")
+	if err := os.WriteFile(target, original, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	receiptLog := filepath.Join(cache.Root(), receiptsFileName)
+	if err := os.Symlink(target, receiptLog); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cache.AppendReceipt(receipt); !errors.Is(err, ErrUnsafeReceiptLog) {
+		t.Fatalf("append through receipt symlink = %v, want ErrUnsafeReceiptLog", err)
+	}
+	if _, err := cache.Receipts(); !errors.Is(err, ErrUnsafeReceiptLog) {
+		t.Fatalf("read through receipt symlink = %v, want ErrUnsafeReceiptLog", err)
+	}
+	got, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(original) {
+		t.Fatalf("symlink target mutated: %q", got)
+	}
 }
