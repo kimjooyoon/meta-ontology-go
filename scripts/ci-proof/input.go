@@ -113,8 +113,11 @@ func validateEvidenceDigests(root string, evidence evidenceInput) error {
 }
 
 func validateBranchProtection(protection branchProtection, evidence evidenceInput, context contextInput) error {
-	if protection.Repository != evidence.Repository || protection.Branch != context.BaseRef || protection.PolicySHA != evidence.Digests.Policy || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA {
+	if protection.Repository != evidence.Repository || protection.Branch != context.BaseRef || protection.PolicySHA != evidence.Digests.Policy || protection.EventRef != context.EventRef || protection.CheckoutRef != context.CheckoutRef || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA {
 		return fmt.Errorf("branch protection snapshot is missing or unbound")
+	}
+	if protection.TokenSource != "github.token" && protection.TokenSource != "BRANCH_PROTECTION_TOKEN" || protection.ReadStatus != "verified" && protection.ReadStatus != "unavailable" {
+		return fmt.Errorf("branch protection snapshot source or status is invalid")
 	}
 	if protection.Digest != digestBranchProtection(protection) {
 		return fmt.Errorf("branch protection snapshot digest mismatch")
@@ -123,7 +126,7 @@ func validateBranchProtection(protection branchProtection, evidence evidenceInpu
 }
 
 func branchProtectionReady(protection branchProtection) bool {
-	return protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews >= 1 && protection.DismissStaleReviews && protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, proofJobs)
+	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews >= 1 && protection.DismissStaleReviews && protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, proofJobs)
 }
 
 func digestBranchProtection(protection branchProtection) string {

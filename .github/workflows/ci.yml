@@ -16,6 +16,11 @@ on:
 permissions:
   contents: read
   actions: read
+  pull-requests: read
+  # GitHub Actions does not expose an administration permission key for
+  # GITHUB_TOKEN, so administration: read must not be added here. The proof
+  # uses the default read-only client when available and an approved
+  # Administration: read secret as an optional fallback.
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -312,33 +317,38 @@ jobs:
               run_id: context.runId,
               run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
               workflow_sha: process.env.CI_WORKFLOW_SHA,
+              event_ref: context.ref,
+              checkout_ref: headSha,
+              token_source: '',
+              read_status: 'unavailable',
               digest_sha256: ''
             };
-            if (!process.env.BRANCH_PROTECTION_TOKEN) {
-              core.warning('BRANCH_PROTECTION_TOKEN is unavailable; branch protection proof will fail closed');
-            } else {
-              try {
-                const adminGithub = github.getOctokit(process.env.BRANCH_PROTECTION_TOKEN);
-                const response = await adminGithub.rest.repos.getBranchProtection({owner: context.repo.owner, repo: context.repo.repo, branch: baseRef});
-                const data = response.data;
-                const reviews = data.required_pull_request_reviews || {};
-                const checks = data.required_status_checks || {};
-                protection = {
-                  ...protection,
-                  exists: true,
-                  strict: Boolean(checks.strict),
-                  required_checks: [...(checks.contexts || [])].sort(),
-                  enforce_admins: Boolean(data.enforce_admins?.enabled),
-                  required_reviews: Number(reviews.required_approving_review_count || 0),
-                  dismiss_stale_reviews: Boolean(reviews.dismiss_stale_reviews),
-                  require_last_push_approval: Boolean(reviews.require_last_push_approval),
-                  linear_history: Boolean(data.required_linear_history?.enabled),
-                  allow_force_pushes: Boolean(data.allow_force_pushes?.enabled),
-                  allow_deletions: Boolean(data.allow_deletions?.enabled),
-                };
-              } catch (error) {
-                core.warning(`branch protection API snapshot unavailable: ${error.message}`);
-              }
+            const tokenSource = process.env.BRANCH_PROTECTION_TOKEN ? 'BRANCH_PROTECTION_TOKEN' : 'github.token';
+            const protectionClient = process.env.BRANCH_PROTECTION_TOKEN
+              ? github.getOctokit(process.env.BRANCH_PROTECTION_TOKEN)
+              : github;
+            protection.token_source = tokenSource;
+            try {
+              const response = await protectionClient.rest.repos.getBranchProtection({owner: context.repo.owner, repo: context.repo.repo, branch: baseRef});
+              const data = response.data;
+              const reviews = data.required_pull_request_reviews || {};
+              const checks = data.required_status_checks || {};
+              protection = {
+                ...protection,
+                exists: true,
+                strict: Boolean(checks.strict),
+                required_checks: [...(checks.contexts || [])].sort(),
+                enforce_admins: Boolean(data.enforce_admins?.enabled),
+                required_reviews: Number(reviews.required_approving_review_count || 0),
+                dismiss_stale_reviews: Boolean(reviews.dismiss_stale_reviews),
+                require_last_push_approval: Boolean(reviews.require_last_push_approval),
+                linear_history: Boolean(data.required_linear_history?.enabled),
+                allow_force_pushes: Boolean(data.allow_force_pushes?.enabled),
+                allow_deletions: Boolean(data.allow_deletions?.enabled),
+                read_status: 'verified',
+              };
+            } catch (error) {
+              core.warning(`branch protection API snapshot unavailable via ${tokenSource}: ${error.message}`);
             }
             const protectionPayload = {...protection, digest_sha256: ''};
             protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');

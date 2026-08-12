@@ -23,7 +23,7 @@ func validateProof(bundle proofBundle) error {
 	if bundle.Actors.Actor == "" || bundle.Actors.Builder == "" || bundle.Actors.Gate == "" || bundle.Actors.Builder != bundle.Actors.Actor {
 		return fmt.Errorf("proof actor roles are incomplete")
 	}
-	if err := validateBranchProtection(bundle.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{BaseRef: bundle.BaseRef}); err != nil {
+	if err := validateBranchProtection(bundle.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{BaseRef: bundle.BaseRef, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}); err != nil {
 		return err
 	}
 	if len(bundle.Fixtures.Paths) == 0 || bundle.Fixtures.Status == "" || bundle.Fixtures.Source == "" || bundle.Fixtures.Semantic == "" || bundle.Fixtures.Provenance == "" || bundle.Scope.Decision == "" {

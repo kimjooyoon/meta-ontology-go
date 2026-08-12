@@ -99,6 +99,10 @@ type branchProtection struct {
 	Repository              string   `json:"repository"`
 	Branch                  string   `json:"branch"`
 	PolicySHA               string   `json:"policy_sha256"`
+	EventRef                string   `json:"event_ref"`
+	CheckoutRef             string   `json:"checkout_ref"`
+	TokenSource             string   `json:"token_source"`
+	ReadStatus              string   `json:"read_status"`
 	Exists                  bool     `json:"exists"`
 	Strict                  bool     `json:"strict"`
 	RequiredChecks          []string `json:"required_checks"`

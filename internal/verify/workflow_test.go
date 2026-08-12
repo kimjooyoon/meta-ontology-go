@@ -78,6 +78,13 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
 		"actions/upload-artifact@v4",
 		"BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}",
+		"pull-requests: read",
+		"administration: read must not be added here",
+		"const tokenSource = process.env.BRANCH_PROTECTION_TOKEN ? 'BRANCH_PROTECTION_TOKEN' : 'github.token'",
+		"const protectionClient = process.env.BRANCH_PROTECTION_TOKEN",
+		"read_status: 'unavailable'",
+		"event_ref: context.ref",
+		"checkout_ref: headSha",
 		"getBranchProtection",
 		"branch_protection",
 		"digest_sha256",
@@ -88,6 +95,14 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		if !strings.Contains(text, marker) {
 			t.Fatalf("workflow lost event-source evidence marker %q", marker)
 		}
+	}
+	for _, forbidden := range []string{"updateBranchProtection", "replaceBranchProtection", "PUT /repos/", "repos.updateBranchProtection"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("workflow contains forbidden protection write %q", forbidden)
+		}
+	}
+	if strings.Contains(text, "\nadministration: read\n") {
+		t.Fatal("workflow declares unsupported administration permission key")
 	}
 }
 

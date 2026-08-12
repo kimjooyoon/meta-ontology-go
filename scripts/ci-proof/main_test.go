@@ -64,6 +64,28 @@ func TestCIBranchProtectionSnapshotMismatchFailsClosed(t *testing.T) {
 	}
 }
 
+func TestCIBranchProtectionSnapshotRefTamperingFailsClosed(t *testing.T) {
+	for _, mutate := range []func(*branchProtection){
+		func(snapshot *branchProtection) { snapshot.EventRef = "refs/pull/2/merge" },
+		func(snapshot *branchProtection) { snapshot.CheckoutRef = strings.Repeat("b", 40) },
+	} {
+		bundle := validProof()
+		mutate(&bundle.BranchProtection)
+		if err := validateProof(bundle); err == nil {
+			t.Fatal("tampered branch protection ref was accepted")
+		}
+	}
+}
+
+func TestCIBranchProtectionUnavailableIsNotReady(t *testing.T) {
+	bundle := validProof()
+	bundle.BranchProtection.Exists = false
+	bundle.BranchProtection.ReadStatus = "unavailable"
+	if branchProtectionReady(bundle.BranchProtection) {
+		t.Fatal("unavailable branch protection snapshot was promotion-ready")
+	}
+}
+
 func TestCIRefSeparationRejectsCheckoutMismatch(t *testing.T) {
 	bundle := validProof()
 	bundle.CheckoutRef = strings.Repeat("b", 40)
@@ -114,7 +136,7 @@ func validProof() proofBundle {
 }
 
 func validBranchProtection(bundle proofBundle) branchProtection {
-	protection := branchProtection{Repository: bundle.Repository, Branch: bundle.BaseRef, PolicySHA: bundle.Digests.Policy, Exists: true, Strict: true, RequiredChecks: append([]string(nil), proofJobs...), EnforceAdmins: true, RequiredReviews: 1, DismissStaleReviews: true, RequireLastPushApproval: true, LinearHistory: true, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA}
+	protection := branchProtection{Repository: bundle.Repository, Branch: bundle.BaseRef, PolicySHA: bundle.Digests.Policy, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, TokenSource: "github.token", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append([]string(nil), proofJobs...), EnforceAdmins: true, RequiredReviews: 1, DismissStaleReviews: true, RequireLastPushApproval: true, LinearHistory: true, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA}
 	protection.Digest = digestBranchProtection(protection)
 	return protection
 }
