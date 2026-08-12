@@ -69,7 +69,7 @@ func (e EvidenceFreshness) Validate() error {
 	if e.RunID == "" || e.Event != "pull_request" || e.EventID == "" || e.Attempt == 0 {
 		return fmt.Errorf("%w: missing immutable event attempt", ErrInvalidReceipt)
 	}
-	if err := validateFreshnessJobs(e.Jobs, e.HeadSHA); err != nil {
+	if err := validateFreshnessJobs(e.Jobs, e.RunID, e.Attempt, e.HeadSHA); err != nil {
 		return err
 	}
 	if e.PredecessorDigests == nil || hasDuplicateDigests(e.PredecessorDigests) {

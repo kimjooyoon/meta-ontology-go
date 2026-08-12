@@ -12,7 +12,7 @@ func evidenceFixture(run string) EvidenceFreshness {
 		BaseDigest: HashBytes([]byte("base")), HeadDigest: HashBytes([]byte("head")), RunID: run,
 		BaseSHA: commitFixtureSHA("base"), HeadSHA: headSHA, CheckoutRef: headSHA,
 		Event: "pull_request", EventRef: "refs/pull/8/merge", EventID: "event-" + run, Attempt: 1,
-		Jobs:               freshnessJobsFixture(headSHA),
+		Jobs:               freshnessJobsFixture(headSHA, run, 1),
 		PredecessorDigests: []Digest{HashBytes([]byte("generator")), HashBytes([]byte("semantic"))},
 		SourceDigest:       HashBytes([]byte("source")), IRDigest: HashBytes([]byte("ir")),
 		PolicyDigest: HashBytes([]byte("policy")), ToolchainDigest: HashBytes([]byte("go1.26.5")),
@@ -30,11 +30,12 @@ func commitFixtureSHA(value string) string {
 	return string(HashBytes([]byte("commit:" + value)))
 }
 
-func freshnessJobsFixture(headSHA string) map[string]FreshnessJob {
+func freshnessJobsFixture(headSHA, runID string, attempt uint64) map[string]FreshnessJob {
 	jobs := make(map[string]FreshnessJob, len(canonicalBenchmarkJobs))
 	for index, name := range canonicalBenchmarkJobs {
 		jobs[name] = FreshnessJob{
-			ID: strconv.Itoa(index + 1), Status: "completed", Conclusion: "success", HeadSHA: headSHA,
+			ID: strconv.Itoa(index + 1), RunID: runID, Attempt: attempt,
+			Status: "completed", Conclusion: "success", HeadSHA: headSHA,
 		}
 	}
 	return jobs
@@ -53,6 +54,20 @@ func TestEvidenceFreshnessC4RejectsStaleAndReplayTuples(t *testing.T) {
 		"checkout ref": func(e *EvidenceFreshness) { e.CheckoutRef = commitFixtureSHA("other-head") },
 		"event":        func(e *EvidenceFreshness) { e.EventID = "event-other" },
 		"attempt":      func(e *EvidenceFreshness) { e.Attempt++ },
+		"job run": func(e *EvidenceFreshness) {
+			jobs := copyFreshnessJobs(e.Jobs)
+			job := jobs[canonicalTestJob]
+			job.RunID = "run-other"
+			jobs[canonicalTestJob] = job
+			e.Jobs = jobs
+		},
+		"job attempt": func(e *EvidenceFreshness) {
+			jobs := copyFreshnessJobs(e.Jobs)
+			job := jobs[canonicalTestJob]
+			job.Attempt++
+			jobs[canonicalTestJob] = job
+			e.Jobs = jobs
+		},
 		"job head": func(e *EvidenceFreshness) {
 			jobs := copyFreshnessJobs(e.Jobs)
 			job := jobs[canonicalTestJob]
@@ -113,6 +128,27 @@ func TestEvidenceFreshnessC4RequiresDistinctImmutableRefs(t *testing.T) {
 			}
 			if mutated.Equal(current) {
 				t.Fatal("invalid ref mutation retained freshness equality")
+			}
+		})
+	}
+}
+
+func TestEvidenceFreshnessRejectsJobsFromAnotherRunOrAttempt(t *testing.T) {
+	current := evidenceFixture("run-bound")
+	if err := current.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	for name, mutate := range map[string]func(*FreshnessJob){
+		"run":     func(job *FreshnessJob) { job.RunID = "run-other" },
+		"attempt": func(job *FreshnessJob) { job.Attempt++ },
+	} {
+		t.Run(name, func(t *testing.T) {
+			mutated := canonicalEvidence(current)
+			job := mutated.Jobs[canonicalTestJob]
+			mutate(&job)
+			mutated.Jobs[canonicalTestJob] = job
+			if err := mutated.Validate(); !errors.Is(err, ErrInvalidReceipt) {
+				t.Fatalf("job tuple mutation = %v, want ErrInvalidReceipt", err)
 			}
 		})
 	}

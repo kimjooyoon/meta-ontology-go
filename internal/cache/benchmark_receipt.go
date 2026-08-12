@@ -35,6 +35,8 @@ type BenchmarkReceipt struct {
 // BenchmarkJob binds one canonical CI job to its immutable run result.
 type BenchmarkJob struct {
 	ID            string `json:"id"`
+	RunID         string `json:"run_id"`
+	Attempt       uint64 `json:"attempt"`
 	Status        string `json:"status"`
 	Conclusion    string `json:"conclusion"`
 	HeadSHA       Digest `json:"head_sha"`
@@ -79,7 +81,8 @@ func (r BenchmarkReceipt) Validate() error {
 	seenIDs := make(map[string]struct{}, len(r.Jobs))
 	for _, name := range canonicalBenchmarkJobs {
 		job, exists := r.Jobs[name]
-		if !exists || job.ID == "" || job.Status == "" || job.Conclusion == "" ||
+		if !exists || job.ID == "" || job.RunID != r.WorkflowRunID || job.Attempt != r.Attempt ||
+			job.Status == "" || job.Conclusion == "" ||
 			!job.HeadSHA.Known() || job.HeadSHA != r.HeadDigest || job.HeadCommitSHA != r.HeadSHA {
 			return fmt.Errorf("%w: incomplete benchmark job %q", ErrInvalidReceipt, name)
 		}

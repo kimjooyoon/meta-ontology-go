@@ -12,6 +12,8 @@ import (
 // SHA-256 digests of durable payloads.
 type FreshnessJob struct {
 	ID         string `json:"id"`
+	RunID      string `json:"run_id"`
+	Attempt    uint64 `json:"attempt"`
 	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`
 	HeadSHA    string `json:"head_sha"`
@@ -61,14 +63,15 @@ func validateFreshnessRefs(eventRef, checkoutRef, headSHA string) error {
 	return nil
 }
 
-func validateFreshnessJobs(jobs map[string]FreshnessJob, headSHA string) error {
+func validateFreshnessJobs(jobs map[string]FreshnessJob, runID string, attempt uint64, headSHA string) error {
 	if len(jobs) != len(canonicalBenchmarkJobs) {
 		return fmt.Errorf("%w: incomplete canonical CI jobs", ErrInvalidReceipt)
 	}
 	seenIDs := make(map[string]struct{}, len(jobs))
 	for _, name := range canonicalBenchmarkJobs {
 		job, ok := jobs[name]
-		if !ok || strings.TrimSpace(job.ID) == "" || job.Status != "completed" ||
+		if !ok || strings.TrimSpace(job.ID) == "" || job.RunID != runID || job.Attempt != attempt ||
+			job.Status != "completed" ||
 			job.Conclusion != "success" || job.HeadSHA != headSHA {
 			return fmt.Errorf("%w: non-terminal or mismatched canonical CI job %q", ErrInvalidReceipt, name)
 		}
