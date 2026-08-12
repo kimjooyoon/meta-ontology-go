@@ -95,6 +95,10 @@ func TestOracleNW001NegativeOracleRequiresIndependentObserver(t *testing.T) {
 	if evaluation.Matched || evaluation.OracleCode != OracleNW001 || evaluation.PromotionEligible {
 		t.Fatalf("producer-only negative result was accepted: %+v", evaluation)
 	}
+	evaluation = EvaluateObserved(request, response, nil)
+	if evaluation.Matched || evaluation.OracleCode != OracleNW001 || evaluation.PromotionEligible {
+		t.Fatalf("forged producer claim reached observed evaluator: %+v", evaluation)
+	}
 	observer := newStableObserver(t, request)
 	observation, err := observer.Finish()
 	if err != nil {

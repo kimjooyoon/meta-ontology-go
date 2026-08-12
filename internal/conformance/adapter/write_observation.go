@@ -67,7 +67,9 @@ type NoWriteObservation struct {
 	stamp   *observerStamp
 }
 
-type observerStamp struct{}
+type observerStamp struct {
+	digest [sha256.Size]byte
+}
 
 type NoWriteObserver struct {
 	binding  ObservationBinding
@@ -105,9 +107,11 @@ func (o *NoWriteObserver) Finish() (NoWriteObservation, error) {
 	if err != nil {
 		return NoWriteObservation{}, fmt.Errorf("capture after state: %w", err)
 	}
-	return NoWriteObservation{
+	observation := NoWriteObservation{
 		Binding: o.binding, Paths: o.paths, Before: o.before, After: after, stamp: o.stamp,
-	}, nil
+	}
+	o.stamp.digest = observationSeal(observation)
+	return observation, nil
 }
 
 func (b ObservationBinding) validate() error {

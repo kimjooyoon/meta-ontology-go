@@ -45,6 +45,9 @@ func (o *NoWriteObservation) VerifyNoWrite(request Request) error {
 	if o.Binding != requestObservationBinding(request) {
 		return oracleError(OracleID001, "observer binding does not match request")
 	}
+	if o.stamp.digest != observationSeal(*o) {
+		return oracleError(OracleNW003, "observer seal does not match captured evidence")
+	}
 	if err := validateObservation(*o); err != nil {
 		return err
 	}
