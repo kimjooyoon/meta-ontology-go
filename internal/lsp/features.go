@@ -1,13 +1,22 @@
 package lsp
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"sort"
 	"unicode"
 	"unicode/utf8"
 )
 
 func (server *Server) hover(params TextDocumentPositionParams) (*Hover, bool) {
+	server.mu.RLock()
 	document, ok := server.documents[params.TextDocument.URI]
+	if ok {
+		copyValue := documentCopy(document)
+		document = &copyValue
+	}
+	server.mu.RUnlock()
 	if !ok {
 		return nil, false
 	}
@@ -33,7 +42,14 @@ func (server *Server) completion(uri string) *CompletionList {
 		{Label: "namespace", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
 		{Label: "package", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
 	}
-	if document, ok := server.documents[uri]; ok {
+	server.mu.RLock()
+	document, ok := server.documents[uri]
+	if ok {
+		copyValue := documentCopy(document)
+		document = &copyValue
+	}
+	server.mu.RUnlock()
+	if ok {
 		for _, symbol := range document.result.Symbols {
 			items = append(items, CompletionItem{Label: symbol.Name, Kind: int(symbol.Kind), Detail: symbol.Detail})
 		}
@@ -43,7 +59,13 @@ func (server *Server) completion(uri string) *CompletionList {
 }
 
 func (server *Server) definition(params TextDocumentPositionParams) []Location {
+	server.mu.RLock()
 	document, ok := server.documents[params.TextDocument.URI]
+	if ok {
+		copyValue := documentCopy(document)
+		document = &copyValue
+	}
+	server.mu.RUnlock()
 	if !ok {
 		return nil
 	}
@@ -63,6 +85,43 @@ func (server *Server) definition(params TextDocumentPositionParams) []Location {
 		}
 	}
 	return nil
+}
+
+func (server *Server) refresh(ctx context.Context, uri string) error {
+	server.mu.RLock()
+	document, exists := server.documents[uri]
+	if exists {
+		version, source := document.version, document.text
+		server.mu.RUnlock()
+		result, err := server.parse(ctx, uri, source)
+		if err != nil {
+			return err
+		}
+		server.mu.Lock()
+		defer server.mu.Unlock()
+		current, stillOpen := server.documents[uri]
+		if !stillOpen || current.version != version || current.text != source {
+			return ErrStaleResult
+		}
+		current.result = result
+		return nil
+	}
+	server.mu.RUnlock()
+	return nil
+}
+
+func documentCopy(value *document) document {
+	return document{version: value.version, text: value.text, result: value.result}
+}
+
+func featureErrorResponse(id json.RawMessage, err error, ctx context.Context) (*responseEnvelope, [][]byte, error) {
+	if errors.Is(err, ErrStaleResult) {
+		return nil, nil, nil
+	}
+	if ctx.Err() != nil {
+		return nil, nil, ctx.Err()
+	}
+	return responseOrNil(id, internalError, err.Error()), nil, nil
 }
 
 func symbolNamed(symbols []Symbol, name string) (Symbol, bool) {

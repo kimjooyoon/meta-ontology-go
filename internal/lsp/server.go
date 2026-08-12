@@ -5,13 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
+	"sync"
 )
 
 var (
 	ErrExitWithoutShutdown = errors.New("lsp: exit received before shutdown")
 	ErrInvalidVersion      = errors.New("lsp: document version is not newer")
+	ErrStaleResult         = errors.New("lsp: stale result suppressed")
 )
 
 type document struct {
@@ -28,6 +29,9 @@ type Server struct {
 	initialized bool
 	shutdown    bool
 	exited      bool
+	mu          sync.RWMutex
+	parseMu     sync.Mutex
+	inflight    map[string]*inFlightRequest
 }
 
 func NewServer(parsers ...Parser) *Server {
@@ -35,7 +39,7 @@ func NewServer(parsers ...Parser) *Server {
 	if len(parsers) > 0 && parsers[0] != nil {
 		parser = parsers[0]
 	}
-	return &Server{parser: parser, documents: make(map[string]*document)}
+	return &Server{parser: parser, documents: make(map[string]*document), inflight: make(map[string]*inFlightRequest)}
 }
 
 func (server *Server) Serve(input io.Reader, output io.Writer) error {
@@ -44,19 +48,39 @@ func (server *Server) Serve(input io.Reader, output io.Writer) error {
 
 func (server *Server) ServeContext(ctx context.Context, input io.Reader, output io.Writer) error {
 	reader := bufio.NewReader(input)
+	loop := newRequestLoop(server, output)
 	for {
 		if err := ctx.Err(); err != nil {
+			loop.cancelAll()
+			return err
+		}
+		if err := loop.drain(); err != nil {
+			loop.cancelAll()
 			return err
 		}
 		payload, err := readFrame(reader)
 		if errors.Is(err, io.EOF) {
-			return nil
+			return loop.wait(ctx)
 		}
 		if err != nil {
+			loop.cancelAll()
 			return err
+		}
+		if request, valid := decodeRequest(payload); valid {
+			if request.Method == "$/cancelRequest" {
+				server.cancelRequest(request)
+				continue
+			}
+			if server.canRunAsync(request) {
+				if err := loop.start(ctx, request, payload); err != nil {
+					return err
+				}
+				continue
+			}
 		}
 		response, notifications, dispatchErr := server.dispatch(ctx, payload)
 		if dispatchErr != nil {
+			loop.cancelAll()
 			return dispatchErr
 		}
 		if response != nil {
@@ -70,6 +94,9 @@ func (server *Server) ServeContext(ctx context.Context, input io.Reader, output 
 			}
 		}
 		if server.exited {
+			if err := loop.wait(ctx); err != nil {
+				return err
+			}
 			if server.shutdown {
 				return nil
 			}
@@ -106,11 +133,11 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 	case "textDocument/didClose":
 		return server.didClose(request)
 	case "textDocument/hover":
-		return server.hoverRequest(request)
+		return server.hoverRequestContext(ctx, request)
 	case "textDocument/completion":
-		return server.completionRequest(request)
+		return server.completionRequest(ctx, request)
 	case "textDocument/definition":
-		return server.definitionRequest(request)
+		return server.definitionRequest(ctx, request)
 	case "workspace/symbol", "textDocument/references", "textDocument/rename", "textDocument/formatting":
 		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
 	default:
@@ -126,7 +153,7 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 	server.initialized = true
 	result := InitializeResult{
 		Capabilities: ServerCapabilities{
-			TextDocumentSync:   TextDocumentSyncOptions{OpenClose: true, Change: 1},
+			TextDocumentSync:   TextDocumentSyncOptions{OpenClose: true, Change: 2},
 			HoverProvider:      true,
 			CompletionProvider: &CompletionOptions{},
 			DefinitionProvider: true,
@@ -149,16 +176,21 @@ func (server *Server) didOpen(ctx context.Context, request requestEnvelope) (*re
 	if err := decodeParams(request.Params, &params); err != nil || params.TextDocument.URI == "" || params.TextDocument.Version < 0 {
 		return responseOrNil(request.ID, invalidParams, "Invalid didOpen parameters"), nil, nil
 	}
-	if _, exists := server.documents[params.TextDocument.URI]; exists {
+	server.mu.RLock()
+	_, exists := server.documents[params.TextDocument.URI]
+	server.mu.RUnlock()
+	if exists {
 		return responseOrNil(request.ID, invalidParams, "Document is already open"), nil, nil
 	}
 	result, err := server.parse(ctx, params.TextDocument.URI, params.TextDocument.Text)
 	if err != nil {
-		return server.parseFailure(request.ID, ctx, err), nil, errIfCanceled(ctx, err)
+		return parseFailure(request.ID, ctx, err), nil, errIfCanceled(ctx, err)
 	}
+	server.mu.Lock()
 	server.documents[params.TextDocument.URI] = &document{
 		version: params.TextDocument.Version, text: params.TextDocument.Text, result: result,
 	}
+	server.mu.Unlock()
 	notification, err := diagnosticsNotification(params.TextDocument.URI, result.Diagnostics)
 	return nil, oneNotification(notification, err), err
 }
@@ -168,22 +200,37 @@ func (server *Server) didChange(ctx context.Context, request requestEnvelope) (*
 	if err := decodeParams(request.Params, &params); err != nil || params.TextDocument.URI == "" {
 		return responseOrNil(request.ID, invalidParams, "Invalid didChange parameters"), nil, nil
 	}
+	server.mu.RLock()
 	document, exists := server.documents[params.TextDocument.URI]
-	if !exists {
-		return responseOrNil(request.ID, invalidParams, "Document is not open"), nil, nil
+	if exists {
+		documentVersion, documentText := document.version, document.text
+		server.mu.RUnlock()
+		return server.changeDocument(ctx, request, params, documentVersion, documentText)
 	}
-	if params.TextDocument.Version <= document.version {
+	server.mu.RUnlock()
+	return responseOrNil(request.ID, invalidParams, "Document is not open"), nil, nil
+}
+
+func (server *Server) changeDocument(ctx context.Context, request requestEnvelope, params DidChangeTextDocumentParams, version int, source string) (*responseEnvelope, [][]byte, error) {
+	if params.TextDocument.Version <= version {
 		return responseOrNil(request.ID, invalidParams, ErrInvalidVersion.Error()), nil, nil
 	}
-	text, err := applyChanges(document.text, params.ContentChanges)
+	text, err := applyChanges(source, params.ContentChanges)
 	if err != nil {
 		return responseOrNil(request.ID, invalidParams, err.Error()), nil, nil
 	}
 	result, err := server.parse(ctx, params.TextDocument.URI, text)
 	if err != nil {
-		return server.parseFailure(request.ID, ctx, err), nil, errIfCanceled(ctx, err)
+		return parseFailure(request.ID, ctx, err), nil, errIfCanceled(ctx, err)
+	}
+	server.mu.Lock()
+	document, exists := server.documents[params.TextDocument.URI]
+	if !exists || document.version != version || document.text != source {
+		server.mu.Unlock()
+		return nil, nil, nil
 	}
 	document.version, document.text, document.result = params.TextDocument.Version, text, result
+	server.mu.Unlock()
 	notification, err := diagnosticsNotification(params.TextDocument.URI, result.Diagnostics)
 	return nil, oneNotification(notification, err), err
 }
@@ -193,40 +240,54 @@ func (server *Server) didClose(request requestEnvelope) (*responseEnvelope, [][]
 	if err := decodeParams(request.Params, &params); err != nil || params.TextDocument.URI == "" {
 		return responseOrNil(request.ID, invalidParams, "Invalid didClose parameters"), nil, nil
 	}
+	server.mu.Lock()
 	if _, exists := server.documents[params.TextDocument.URI]; !exists {
+		server.mu.Unlock()
 		return responseOrNil(request.ID, invalidParams, "Document is not open"), nil, nil
 	}
 	delete(server.documents, params.TextDocument.URI)
+	server.mu.Unlock()
 	notification, err := diagnosticsNotification(params.TextDocument.URI, nil)
 	return nil, oneNotification(notification, err), err
 }
 
-func (server *Server) hoverRequest(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
+func (server *Server) hoverRequestContext(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params TextDocumentPositionParams
 	if err := decodeParams(request.Params, &params); err != nil {
 		return responseOrNil(request.ID, invalidParams, "Invalid hover parameters"), nil, nil
+	}
+	if err := server.refresh(ctx, params.TextDocument.URI); err != nil {
+		return featureErrorResponse(request.ID, err, ctx)
 	}
 	hover, _ := server.hover(params)
 	return resultResponse(request.ID, hover), nil, nil
 }
 
-func (server *Server) completionRequest(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
+func (server *Server) completionRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params TextDocumentPositionParams
 	if err := decodeParams(request.Params, &params); err != nil {
 		return responseOrNil(request.ID, invalidParams, "Invalid completion parameters"), nil, nil
 	}
+	if err := server.refresh(ctx, params.TextDocument.URI); err != nil {
+		return featureErrorResponse(request.ID, err, ctx)
+	}
 	return resultResponse(request.ID, server.completion(params.TextDocument.URI)), nil, nil
 }
 
-func (server *Server) definitionRequest(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
+func (server *Server) definitionRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params TextDocumentPositionParams
 	if err := decodeParams(request.Params, &params); err != nil {
 		return responseOrNil(request.ID, invalidParams, "Invalid definition parameters"), nil, nil
+	}
+	if err := server.refresh(ctx, params.TextDocument.URI); err != nil {
+		return featureErrorResponse(request.ID, err, ctx)
 	}
 	return resultResponse(request.ID, server.definition(params)), nil, nil
 }
 
 func (server *Server) parse(ctx context.Context, uri, source string) (ParseResult, error) {
+	server.parseMu.Lock()
+	defer server.parseMu.Unlock()
 	if parser, ok := server.parser.(ContextParser); ok {
 		return parser.ParseContext(ctx, uri, source)
 	}
@@ -234,66 +295,4 @@ func (server *Server) parse(ctx context.Context, uri, source string) (ParseResul
 		return ParseResult{}, err
 	}
 	return server.parser.Parse(uri, source), nil
-}
-
-func (server *Server) parseFailure(id json.RawMessage, ctx context.Context, err error) *responseEnvelope {
-	if ctx.Err() != nil {
-		return nil
-	}
-	return responseOrNil(id, internalError, err.Error())
-}
-
-func errIfCanceled(ctx context.Context, err error) error {
-	if ctx.Err() != nil {
-		return ctx.Err()
-	}
-	return nil
-}
-
-func decodeParams(raw json.RawMessage, target any) error {
-	if len(raw) == 0 || string(raw) == "null" {
-		return nil
-	}
-	return json.Unmarshal(raw, target)
-}
-
-func responseOrNil(id json.RawMessage, code int, message string) *responseEnvelope {
-	if id == nil {
-		return nil
-	}
-	return errorResponse(id, code, message)
-}
-
-func resultResponse(id json.RawMessage, result any) *responseEnvelope {
-	encoded, err := json.Marshal(result)
-	if err != nil {
-		return errorResponse(id, internalError, err.Error())
-	}
-	return &responseEnvelope{JSONRPC: jsonRPCVersion, ID: responseID(id), Result: encoded}
-}
-
-func errorResponse(id json.RawMessage, code int, message string) *responseEnvelope {
-	return &responseEnvelope{JSONRPC: jsonRPCVersion, ID: responseID(id), Error: &errorObject{Code: code, Message: message}}
-}
-
-func responseID(id json.RawMessage) json.RawMessage {
-	if id == nil {
-		return json.RawMessage("null")
-	}
-	return id
-}
-
-func writeResponse(output io.Writer, response *responseEnvelope) error {
-	payload, err := json.Marshal(response)
-	if err != nil {
-		return fmt.Errorf("lsp: encode response: %w", err)
-	}
-	return WriteMessage(output, payload)
-}
-
-func oneNotification(notification []byte, err error) [][]byte {
-	if err != nil || notification == nil {
-		return nil
-	}
-	return [][]byte{notification}
 }
