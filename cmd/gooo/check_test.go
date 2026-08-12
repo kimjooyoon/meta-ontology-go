@@ -61,7 +61,7 @@ func TestRunDispatchesCheckAndUsage(t *testing.T) {
 	}
 	stdout.Reset()
 	stderr.Reset()
-	if code := run(nil, &stdout, &stderr); code != exitUsage || stderr.String() != "usage: gooo <check|generate> [args]\n" {
+	if code := run(nil, &stdout, &stderr); code != exitUsage || stderr.String() != "usage: gooo <check|generate|inspect> [args]\n" {
 		t.Fatalf("root usage = code %d, stderr %q", code, stderr.String())
 	}
 }

@@ -26,6 +26,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runCheck(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "generate":
 		return runGenerate(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+	case "inspect":
+		return runInspect(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "gooo: command %q is not implemented yet\n", args[0])
 		return exitFailure
@@ -33,5 +35,5 @@ func run(args []string, stdout, stderr io.Writer) int {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "usage: gooo <check|generate> [args]")
+	fmt.Fprintln(writer, "usage: gooo <check|generate|inspect> [args]")
 }
