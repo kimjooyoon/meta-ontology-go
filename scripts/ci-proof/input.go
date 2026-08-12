@@ -35,6 +35,9 @@ func readInputs(root, governancePath, evidencePath, jobsPath, contextPath string
 	if err := validateBranchProtection(context.BranchProtection, evidence, context); err != nil {
 		return proofInputs{}, err
 	}
+	if err := validateDomainEvidence(context.DomainEvidence, evidence, context); err != nil {
+		return proofInputs{}, err
+	}
 	return proofInputs{Governance: governanceInput{Schema: matrix.Schema, Promotion: promotionInput{Source: matrix.Promotion.Source, Target: matrix.Promotion.Target, RequiredChecks: matrix.Promotion.RequiredChecks, BranchProtectionRequired: matrix.Promotion.BranchProtectionRequired}}, Evidence: evidence, Jobs: jobs, Context: context}, nil
 }
 

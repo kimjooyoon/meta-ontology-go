@@ -202,8 +202,14 @@ jobs:
           grep -Fq '//gooo:slot:start' ci-generated/first/semantic.gooo.go
           grep -Fq '//gooo:slot:end' ci-generated/first/semantic.gooo.go
           test -z "$(git diff --name-only)"
-          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$)' || true)"
+          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$|ci-domain/)' || true)"
           test -z "$unexpected"
+      - name: Capture CLI domain evidence
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
+        run: |
+          rm -rf ci-domain
+          mkdir -p ci-domain
+          go run ./cmd/gooo check examples/billing/main.gooo > ci-domain/cli-check.stdout 2> ci-domain/cli-check.stderr
       - name: Verify and write CI evidence bundle
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
         env:
@@ -221,12 +227,74 @@ jobs:
         run: |
           go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --output ci-evidence.json
           go run ./scripts/ci-evidence --verify ci-evidence.json
+      - name: Write machine-readable domain evidence
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        env:
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const crypto = require('crypto');
+            const fs = require('fs');
+            const evidence = JSON.parse(fs.readFileSync('ci-evidence.json', 'utf8'));
+            const pull = context.payload.pull_request;
+            const headSha = pull ? pull.head.sha : context.sha;
+            const baseSha = pull ? pull.base.sha : context.payload.before;
+            const baseRef = pull ? pull.base.ref : context.ref_name;
+            const eventRef = context.ref;
+            const output = fs.readFileSync('ci-domain/cli-check.stdout', 'utf8');
+            const domain = {
+              schema: 'gooo/domain-evidence/v1',
+              repository: context.payload.repository.full_name,
+              event: context.eventName,
+              base_ref: baseRef,
+              base_sha: baseSha,
+              head_sha: headSha,
+              event_ref: eventRef,
+              checkout_ref: headSha,
+              run_id: context.runId,
+              run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
+              workflow_sha: process.env.CI_WORKFLOW_SHA,
+              cli: {
+                command: 'go run ./cmd/gooo check examples/billing/main.gooo',
+                fixture: 'examples/billing/main.gooo',
+                status: 'verified',
+                available: true,
+                output,
+                output_sha256: crypto.createHash('sha256').update(output).digest('hex'),
+              },
+              graph: {
+                command: 'go run ./cmd/gooo graph-dump examples/billing/main.gooo',
+                status: 'deferred',
+                available: false,
+                reason: 'graph-dump is not implemented in the current checkout',
+                output_sha256: crypto.createHash('sha256').update('').digest('hex'),
+              },
+              observer_receipt_refs: [],
+              observer_status: 'unavailable',
+              protection_status: 'unavailable',
+              approval_status: 'unavailable',
+              provenance_status: 'unavailable',
+              digests: {
+                source_sha256: evidence.digests.source_sha256,
+                ir_sha256: evidence.digests.ir_sha256,
+                generated_output_sha256: evidence.digests.generated_output_sha256,
+                bundle_sha256: evidence.digests.bundle_sha256,
+                domain_sha256: '',
+              },
+            };
+            const domainPayload = {...domain, digests: {...domain.digests, domain_sha256: ''}};
+            domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
+            fs.writeFileSync('ci-domain-evidence.json', JSON.stringify(domain, null, 2) + '\n');
       - name: Upload CI evidence bundle
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ci-evidence.json
+          path: |
+            ci-evidence.json
+            ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
 
@@ -298,6 +366,7 @@ jobs:
             const baseSha = pull ? pull.base.sha : context.payload.before;
             const headSha = pull ? pull.head.sha : context.sha;
             const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
+            const domainEvidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-domain-evidence.json', 'utf8'));
             let protection = {
               repository: `${context.repo.owner}/${context.repo.repo}`,
               branch: baseRef,
@@ -363,7 +432,7 @@ jobs:
             let artifacts = [];
             try {
               const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
-              artifacts = response.data.artifacts.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired}));
+              artifacts = response.data.artifacts.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired, digest: artifact.digest || ''}));
             } catch (_) {}
             const eventRef = context.ref;
             const checkoutRef = headSha;
@@ -375,7 +444,7 @@ jobs:
               branch_protected: protection.exists, branch_protection: protection, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
               provenance_status: 'unavailable', artifacts_status: artifacts.length ? 'verified' : 'missing', approvals_status: approvals.length >= 2 ? 'verified' : 'missing',
               write_effect: 'none', no_write_outside_generated: true, approvals, artifacts, fixture_paths: ['examples/billing/main.gooo'],
-              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: []
+              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], domain_evidence: domainEvidence
             };
             fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
       - name: Build deterministic proof and append receipt
@@ -395,5 +464,6 @@ jobs:
             ci-proof.json
             provenance-receipt.jsonl
             ci-jobs.json
+            ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14

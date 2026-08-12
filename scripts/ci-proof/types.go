@@ -77,6 +77,7 @@ type contextInput struct {
 	Gate             string           `json:"gate"`
 	BranchProtected  bool             `json:"branch_protected"`
 	BranchProtection branchProtection `json:"branch_protection"`
+	DomainEvidence   domainEvidence   `json:"domain_evidence"`
 	ScopeDecision    string           `json:"scope_decision"`
 	FixtureStatus    string           `json:"fixture_status"`
 	SourceStatus     string           `json:"source_status"`
@@ -131,6 +132,7 @@ type artifactInput struct {
 	Name    string `json:"name"`
 	Size    int64  `json:"size_bytes"`
 	Expired bool   `json:"expired"`
+	Digest  string `json:"digest"`
 }
 
 type cacheInput struct {
@@ -170,6 +172,7 @@ type proofBundle struct {
 	Jobs             []jobInput       `json:"jobs"`
 	Actors           actorRoles       `json:"actors"`
 	BranchProtection branchProtection `json:"branch_protection"`
+	DomainEvidence   domainEvidence   `json:"domain_evidence"`
 	Scope            scopeResult      `json:"scope"`
 	Fixtures         fixtureResult    `json:"fixtures"`
 	Artifacts        []artifactInput  `json:"artifacts"`
@@ -236,6 +239,7 @@ type provenanceReceipt struct {
 	RunAttempt       int64            `json:"run_attempt"`
 	WorkflowSHA      string           `json:"workflow_sha"`
 	BranchProtection branchProtection `json:"branch_protection"`
+	DomainEvidence   domainEvidence   `json:"domain_evidence"`
 	Jobs             []jobInput       `json:"jobs"`
 	Artifacts        []artifactInput  `json:"artifacts"`
 	Digests          receiptDigests   `json:"digests"`

@@ -26,6 +26,9 @@ func validateProof(bundle proofBundle) error {
 	if err := validateBranchProtection(bundle.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{BaseRef: bundle.BaseRef, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}); err != nil {
 		return err
 	}
+	if err := validateDomainEvidence(bundle.DomainEvidence, evidenceInput{Repository: bundle.Repository, Event: bundle.Event, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Source: bundle.Digests.Source, IR: bundle.Digests.Semantic, Generated: bundle.Digests.Projection, Bundle: bundle.DomainEvidence.Digests.BundleSHA256}}, contextInput{EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}); err != nil {
+		return err
+	}
 	if len(bundle.Fixtures.Paths) == 0 || bundle.Fixtures.Status == "" || bundle.Fixtures.Source == "" || bundle.Fixtures.Semantic == "" || bundle.Fixtures.Provenance == "" || bundle.Scope.Decision == "" {
 		return fmt.Errorf("proof fixture or scope evidence is incomplete")
 	}
@@ -69,7 +72,7 @@ func validatePredecessors(bundle proofBundle) error {
 
 func validateArtifacts(artifacts []artifactInput) error {
 	for _, artifact := range artifacts {
-		if artifact.ID <= 0 || artifact.Name == "" || artifact.Size <= 0 || artifact.Expired {
+		if artifact.ID <= 0 || artifact.Name == "" || artifact.Size <= 0 || artifact.Expired || !validDigest(artifact.Digest) {
 			return fmt.Errorf("artifact inventory contains missing, zero, or expired artifact")
 		}
 	}
