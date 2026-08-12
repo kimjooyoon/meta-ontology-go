@@ -97,9 +97,9 @@ func TestFixtureSourceMapKeepsStableSemanticSource(t *testing.T) {
 
 func TestFixtureImportPermutationIsReproducible(t *testing.T) {
 	firstIR := acceptanceFixture()
-	firstIR.Imports = []Import{{Name: "_", Path: "example/z"}, {Name: "_", Path: "example/a"}, {Name: "_", Path: "example/m"}}
+	firstIR.Imports = []Import{{Name: "_", Path: "strings"}, {Name: "_", Path: "errors"}, {Name: "_", Path: "fmt"}}
 	secondIR := firstIR
-	secondIR.Imports = []Import{{Name: "_", Path: "example/m"}, {Name: "_", Path: "example/z"}, {Name: "_", Path: "example/a"}}
+	secondIR.Imports = []Import{{Name: "_", Path: "fmt"}, {Name: "_", Path: "strings"}, {Name: "_", Path: "errors"}}
 	first := mustAcceptanceResult(t, firstIR, nil)
 	second := mustAcceptanceResult(t, secondIR, nil)
 	if !bytes.Equal(first.Source, second.Source) || !reflect.DeepEqual(first.SourceMap, second.SourceMap) {

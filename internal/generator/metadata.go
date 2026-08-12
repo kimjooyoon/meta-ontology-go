@@ -22,13 +22,20 @@ func GenerateWithMetadata(ir SemanticIR, previous []byte) (MetadataResult, error
 
 // GenerateProjectionV1 returns a versioned, canonicalizable result surface.
 func GenerateProjectionV1(ir SemanticIR, previous []byte) (ProjectionMetadataV1, error) {
-	result, err := GenerateWithMetadata(ir, previous)
+	normalized, err := normalizeIR(ir)
+	if err != nil {
+		return ProjectionMetadataV1{}, err
+	}
+	result, err := GenerateWithMetadata(normalized, previous)
 	if err != nil {
 		return ProjectionMetadataV1{}, err
 	}
 	return ProjectionMetadataV1{
-		Schema: projectionMetadataSchemaV1, Source: append([]byte(nil), result.Source...),
-		SourceMap: result.SourceMap, Metadata: result.Metadata,
+		Schema:     projectionMetadataSchemaV1,
+		Source:     append([]byte(nil), result.Source...),
+		SemanticIR: normalized,
+		SourceMap:  result.SourceMap,
+		Metadata:   result.Metadata,
 	}, nil
 }
 
@@ -62,7 +69,10 @@ func validateProjectionBinding(result ProjectionMetadataV1, ir SemanticIR, bindi
 	if binding.Schema != projectionBindingSchemaV1 {
 		return fmt.Errorf("generator: unsupported projection binding schema %q", binding.Schema)
 	}
-	expectedIR := digestIR(ir)
+	expectedIR := digestIR(result.SemanticIR)
+	if expectedIR == "" || expectedIR != digestIR(ir) {
+		return fmt.Errorf("generator: projection SemanticIR digest is not normalized")
+	}
 	if !validDigest(binding.SourceDigest) || binding.SourceDigest != digestBytes(result.Source) {
 		return fmt.Errorf("generator: projection binding source digest mismatch")
 	}
@@ -101,7 +111,9 @@ func (result ProjectionMetadataV1) CanonicalJSON() ([]byte, error) {
 	if result.Schema != projectionMetadataSchemaV1 {
 		return nil, fmt.Errorf("generator: unsupported projection metadata schema %q", result.Schema)
 	}
-	if result.Metadata.SourceDigest != digestBytes(result.Source) || result.Metadata.SourceMapDigest != digestSourceMap(result.SourceMap) {
+	if !validDigest(result.Metadata.SourceDigest) || result.Metadata.SourceDigest != digestBytes(result.Source) ||
+		!validDigest(result.Metadata.SemanticIRDigest) || result.Metadata.SemanticIRDigest != digestIR(result.SemanticIR) ||
+		!validDigest(result.Metadata.SourceMapDigest) || result.Metadata.SourceMapDigest != digestSourceMap(result.SourceMap) {
 		return nil, fmt.Errorf("generator: projection metadata digest mismatch")
 	}
 	payload, err := json.Marshal(result)

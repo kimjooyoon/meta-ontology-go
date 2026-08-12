@@ -188,7 +188,7 @@ func normalizeActivity(activity *Activity, index int, entityTypes map[string]str
 		return err
 	}
 	if len(activity.Slots) == 0 {
-		activity.Slots = []Slot{{ID: activity.ID + "/implementation", Name: "implementation", Default: defaultActivityBody(activity)}}
+		activity.Slots = []Slot{{ID: activity.ID + "/implementation", Name: "implementation", Default: defaultActivityBody(activity, entityTypes)}}
 	}
 	return normalizeSlots(activity)
 }

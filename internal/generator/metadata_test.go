@@ -134,6 +134,11 @@ func TestProjectionMetadataV1CanonicalHashAndDigestSensitivity(t *testing.T) {
 	if _, err := mutatedMap.CanonicalJSON(); err == nil {
 		t.Fatal("source-map digest mismatch was accepted")
 	}
+	mutatedIR := cloneProjectionV1(first)
+	mutatedIR.SemanticIR.Package = "tampered"
+	if _, err := mutatedIR.CanonicalJSON(); err == nil {
+		t.Fatal("SemanticIR digest mismatch was accepted")
+	}
 	unchangedHash, err := first.CanonicalHash()
 	if err != nil || unchangedHash != firstHash {
 		t.Fatalf("canonical hash changed without input mutation: %q %v", unchangedHash, err)
@@ -164,6 +169,7 @@ func TestProjectionMetadataV1UsesDeferredExternalBindings(t *testing.T) {
 
 func TestGenerateFromProjectionV1UsesPackageOverrideInDigest(t *testing.T) {
 	input := semanticIRProviderFixture{ir: acceptanceFixture()}
+	before := copyIR(input.ir)
 	result, err := GenerateFromProjectionV1(input, Options{PackageName: "adaptergen"})
 	if err != nil {
 		t.Fatal(err)
@@ -173,6 +179,26 @@ func TestGenerateFromProjectionV1UsesPackageOverrideInDigest(t *testing.T) {
 	}
 	if !strings.Contains(string(result.Source), "package adaptergen") {
 		t.Fatalf("package override was not applied:\n%s", result.Source)
+	}
+	if input.ir.Package != before.Package || !reflect.DeepEqual(input.ir, before) {
+		t.Fatal("package override mutated caller-owned typed input")
+	}
+}
+
+func TestGeneratedSourceCompilesForNonStructOutput(t *testing.T) {
+	ir := SemanticIR{
+		Package: "compilegen",
+		Activities: []Activity{{
+			ID: "activity:render", Name: "Render", GoName: "Render",
+			Outputs: []Port{{Name: "result", GoName: "result", GoType: "string"}},
+		}},
+	}
+	result, err := Generate(ir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(result.Source), "return *new(string)") {
+		t.Fatalf("non-struct output did not receive a compilable zero value:\n%s", result.Source)
 	}
 }
 

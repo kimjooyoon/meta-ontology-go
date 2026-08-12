@@ -86,8 +86,8 @@ func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	if _, err := parser.ParseFile(token.NewFileSet(), "generated.gooo.go", source, parser.ParseComments); err != nil {
-		return Result{}, fmt.Errorf("generator: generated source is not valid Go: %w", err)
+	if err := validateGeneratedSource(source, ir.Package); err != nil {
+		return Result{}, err
 	}
 
 	sourceMap, err := makeSourceMap(source, ir)

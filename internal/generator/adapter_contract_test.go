@@ -137,6 +137,21 @@ func TestTypedAdapterPreservesAuthoritativePortOrder(t *testing.T) {
 	}
 }
 
+func TestReflectiveFallbackPreservesAuthoritativeFactOrder(t *testing.T) {
+	input := reflectiveGraph()
+	input.Facts = []reflectiveFactFixture{
+		{Subject: "activity:run", Predicate: "used", Object: "entity:z"},
+		{Subject: "activity:run", Predicate: "used", Object: "entity:a"},
+	}
+	source, _, err := GenerateFrom(input, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(source), "func Run(zeta Zeta, alpha Alpha)") {
+		t.Fatalf("reflective slice fact order was not preserved:\n%s", source)
+	}
+}
+
 func TestGenerateFromProjectionV1ReflectiveInputIsDeterministic(t *testing.T) {
 	input := reflectiveGraph()
 	first, err := GenerateFromProjectionV1(input, Options{})

@@ -132,10 +132,11 @@ type MetadataResult struct {
 
 // ProjectionMetadataV1 is the versioned wire surface for generator output.
 type ProjectionMetadataV1 struct {
-	Schema    string             `json:"schema"`
-	Source    []byte             `json:"source"`
-	SourceMap SourceMap          `json:"source_map"`
-	Metadata  GenerationMetadata `json:"metadata"`
+	Schema     string             `json:"schema"`
+	Source     []byte             `json:"source"`
+	SemanticIR SemanticIR         `json:"semantic_ir"`
+	SourceMap  SourceMap          `json:"source_map"`
+	Metadata   GenerationMetadata `json:"metadata"`
 }
 
 // ProjectionBinding supplies independently computed identities for opt-in
