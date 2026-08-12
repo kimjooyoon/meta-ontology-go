@@ -7,6 +7,7 @@ type Parser struct {
 	filename string
 	source   string
 	tokens   Tokens
+	eof      Span
 
 	index       int
 	diagnostics Diagnostics
@@ -26,6 +27,7 @@ func NewParserFile(filename, source string) *Parser {
 		filename:    filename,
 		source:      source,
 		tokens:      tokens,
+		eof:         tokens[len(tokens)-1].Span,
 		diagnostics: diagnostics,
 	}
 }
@@ -79,7 +81,7 @@ func (p *Parser) parseFile() *File {
 		p.skipIllegal()
 		switch {
 		case p.at(TokenEOF):
-			file.Span.End = p.peek().Span.End
+			file.Span.End = p.eof.End
 			file.Declarations = file.Decls
 			return file
 		case p.at(TokenEntity):
