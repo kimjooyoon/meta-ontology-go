@@ -23,6 +23,7 @@ const (
 	AdapterUnknownEndpoint AdapterErrorCode = "unknown-endpoint"
 	AdapterEndpointKind    AdapterErrorCode = "endpoint-kind"
 	AdapterEvidenceConfig  AdapterErrorCode = "evidence-config"
+	AdapterSourceConfig    AdapterErrorCode = "source-config"
 )
 
 // AdapterError carries a stable class while keeping detail local to the

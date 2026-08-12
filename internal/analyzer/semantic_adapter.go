@@ -24,6 +24,7 @@ type SemanticAdapterInput struct {
 // Graph.AddCandidate when their explicit mapping and endpoints are valid.
 type SemanticAdapterResult struct {
 	IR                 semantic.IR
+	SourceDigest       string
 	DeferredFacts      []Fact
 	DeferredCandidates []Candidate
 	// ShadowedCandidateEvidence retains a mapped candidate observation when
@@ -50,7 +51,7 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 		return SemanticAdapterResult{}, err
 	}
 	transaction := SemanticAdapterResult{
-		IR:                    base,
+		IR: base, SourceDigest: input.SourceDigest,
 		DeferredCandidates:    copyCandidates(input.Analysis.Delta.Candidates),
 		ImplementationDetails: copyDetails(input.Analysis.Delta.ImplementationDetails),
 	}
