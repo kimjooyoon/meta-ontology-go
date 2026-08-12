@@ -87,9 +87,10 @@ func (d Diagnostics) Errors() Diagnostics {
 	return errors
 }
 
-// SortBySpan returns a copy sorted by source position with deterministic
-// span, severity, code, and message tie-breaks. Parse results preserve phase
-// order; callers that need one globally ordered view can use this method.
+// SortBySpan returns a copy sorted by the canonical diagnostic key: filename,
+// start offset, end offset, severity, code, then message. Parse results
+// preserve phase order; callers that need one globally ordered view can use
+// this method.
 func (d Diagnostics) SortBySpan() Diagnostics {
 	result := append(Diagnostics(nil), d...)
 	sort.SliceStable(result, func(i, j int) bool {
@@ -105,20 +106,8 @@ func diagnosticLess(left, right Diagnostic) bool {
 	if left.Span.Start.Offset != right.Span.Start.Offset {
 		return left.Span.Start.Offset < right.Span.Start.Offset
 	}
-	if left.Span.Start.Line != right.Span.Start.Line {
-		return left.Span.Start.Line < right.Span.Start.Line
-	}
-	if left.Span.Start.Column != right.Span.Start.Column {
-		return left.Span.Start.Column < right.Span.Start.Column
-	}
 	if left.Span.End.Offset != right.Span.End.Offset {
 		return left.Span.End.Offset < right.Span.End.Offset
-	}
-	if left.Span.End.Line != right.Span.End.Line {
-		return left.Span.End.Line < right.Span.End.Line
-	}
-	if left.Span.End.Column != right.Span.End.Column {
-		return left.Span.End.Column < right.Span.End.Column
 	}
 	if left.Severity != right.Severity {
 		return left.Severity < right.Severity
