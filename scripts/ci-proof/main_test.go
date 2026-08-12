@@ -100,6 +100,20 @@ func TestCIDomainEvidenceOutputTamperingFailsClosed(t *testing.T) {
 	}
 }
 
+func TestCIDomainEvidenceCanonicalDigestOmitsDeferredFixture(t *testing.T) {
+	bundle := validProof()
+	data, err := json.Marshal(bundle.DomainEvidence)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), `"graph":{"command":"go run ./cmd/gooo graph-dump examples/billing/main.gooo","fixture"`) {
+		t.Fatal("deferred graph fixture was serialized despite being unavailable")
+	}
+	if err := validateProof(bundle); err != nil {
+		t.Fatalf("canonical deferred graph evidence was rejected: %v", err)
+	}
+}
+
 func TestCIRefSeparationRejectsCheckoutMismatch(t *testing.T) {
 	bundle := validProof()
 	bundle.CheckoutRef = strings.Repeat("b", 40)

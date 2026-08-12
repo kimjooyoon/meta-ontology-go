@@ -29,7 +29,7 @@ type domainEvidence struct {
 
 type domainCommand struct {
 	Command      string `json:"command"`
-	Fixture      string `json:"fixture"`
+	Fixture      string `json:"fixture,omitempty"`
 	Status       string `json:"status"`
 	Available    bool   `json:"available"`
 	Reason       string `json:"reason,omitempty"`
