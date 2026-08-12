@@ -59,8 +59,7 @@ func ParseFile(filename, source string) (*File, Diagnostics) {
 
 func (p *Parser) parseFile() *File {
 	start := Position{Offset: 0, Line: 1, Column: 1}
-	end := p.tokens[len(p.tokens)-1].Span.End
-	file := &File{Span: startSpan(p.filename, start, end)}
+	file := &File{Span: startSpan(p.filename, start, start)}
 
 	p.skipIllegal()
 	if p.at(TokenPackage) {
@@ -80,6 +79,7 @@ func (p *Parser) parseFile() *File {
 		p.skipIllegal()
 		switch {
 		case p.at(TokenEOF):
+			file.Span.End = p.peek().Span.End
 			file.Declarations = file.Decls
 			return file
 		case p.at(TokenEntity):
