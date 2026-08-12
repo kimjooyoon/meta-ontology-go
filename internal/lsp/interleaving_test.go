@@ -3,6 +3,7 @@ package lsp
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -126,7 +127,14 @@ func TestStaleFeatureReturnsContentModified(t *testing.T) {
 	_ = writer.Close()
 	messages := readFrames(t, output.Bytes())
 	for _, message := range messages {
-		if responseCode(t, message) == contentModified {
+		var response struct {
+			ID    int          `json:"id"`
+			Error *errorObject `json:"error"`
+		}
+		if json.Unmarshal(message, &response) != nil || response.ID != 7 || response.Error == nil {
+			continue
+		}
+		if response.Error.Code == contentModified && response.Error.Message == "content modified during request" {
 			return
 		}
 	}

@@ -9,7 +9,7 @@ import (
 
 func adaptSyntaxResult(uri, source string, file *syntax.File, diagnostics syntax.Diagnostics) (ParseResult, error) {
 	result := ParseResult{File: file}
-	for _, diagnostic := range diagnostics {
+	for _, diagnostic := range diagnostics.SortBySpan() {
 		mapped, err := syntaxDiagnostic(source, diagnostic)
 		if err != nil {
 			return ParseResult{}, err
@@ -138,7 +138,7 @@ func appendActivity(result *ParseResult, source string, activity *syntax.Activit
 		Name: activity.Name, Kind: SymbolFunction, Detail: "activity " + activity.Name,
 		Range: rangeValue, SelectionRange: selection,
 	})
-	for _, input := range activity.Inputs {
+	for _, input := range canonicalActivityParameters(activity) {
 		if err := appendReference(result, source, input.Name, input.Span); err != nil {
 			return err
 		}
@@ -160,6 +160,13 @@ func canonicalActivityOutput(source string, activity *syntax.ActivityDecl) synta
 		Name: activity.Output,
 		Span: syntax.Span{Filename: activity.Span.Filename, Start: syntax.Position{Offset: start}, End: syntax.Position{Offset: end}},
 	}
+}
+
+func canonicalActivityParameters(activity *syntax.ActivityDecl) []syntax.NameRef {
+	if activity.Parameters != nil {
+		return activity.Parameters
+	}
+	return activity.Inputs
 }
 
 func appendReference(result *ParseResult, source, name string, span syntax.Span) error {

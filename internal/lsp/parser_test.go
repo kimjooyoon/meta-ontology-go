@@ -36,6 +36,10 @@ func TestSyntaxDiagnosticsSortByCanonicalSourceOrder(t *testing.T) {
 	if len(raw) != 2 || raw[0].Code != syntax.DiagUnexpectedCharacter || raw[1].Code != syntax.DiagExpectedIdentifier {
 		t.Fatalf("raw phase order = %#v", raw)
 	}
+	canonical := raw.SortBySpan()
+	if canonical[0].Code != syntax.DiagExpectedIdentifier || canonical[1].Code != syntax.DiagUnexpectedCharacter {
+		t.Fatalf("canonical source order = %#v", canonical)
+	}
 	first, err := (SyntaxParser{}).ParseContext(context.Background(), "fixture.gooo", source)
 	if err != nil {
 		t.Fatal(err)
@@ -65,7 +69,7 @@ func TestCanonicalASTAliasesCannotDiverge(t *testing.T) {
 		t.Fatal(err)
 	}
 	activity := *file.Decls[1].(*syntax.ActivityDecl)
-	activity.Parameters = []syntax.NameRef{{Name: "alias-input", Span: activity.Parameters[0].Span}}
+	activity.Inputs = []syntax.NameRef{{Name: "alias-input", Span: activity.Inputs[0].Span}}
 	activity.Result = syntax.NameRef{Name: "alias-output", Span: activity.Result.Span}
 	variantFile := *file
 	variantFile.Decls = []syntax.Declaration{file.Decls[0], &activity}
@@ -75,7 +79,7 @@ func TestCanonicalASTAliasesCannotDiverge(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(canonical.Symbols, variant.Symbols) || !reflect.DeepEqual(canonical.References, variant.References) {
-		t.Fatalf("alias fields changed LSP output: canonical=%#v/%#v variant=%#v/%#v", canonical.Symbols, canonical.References, variant.Symbols, variant.References)
+		t.Fatalf("non-preferred alias fields changed LSP output: canonical=%#v/%#v variant=%#v/%#v", canonical.Symbols, canonical.References, variant.Symbols, variant.References)
 	}
 }
 
