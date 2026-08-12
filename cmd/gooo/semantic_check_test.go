@@ -47,7 +47,7 @@ activity PayOrder(PayOrder) -> Order
 	}
 	beforeEntries := directoryEntries(t, directory)
 	var stdout, stderr bytes.Buffer
-	code := runCheck([]string{filename}, OSFileReader{}, SyntaxSourceParser{}, &stdout, &stderr)
+	code := runCheck([]string{"--semantic", filename}, OSFileReader{}, SyntaxSourceParser{}, &stdout, &stderr)
 	if code != exitFailure || stdout.Len() != 0 || !bytes.Contains(stderr.Bytes(), []byte("semantic.invalid-kind")) {
 		t.Fatalf("kind check = code %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
 	}
@@ -83,6 +83,6 @@ func TestSemanticDiagnosticClassifiesInvalidRelation(t *testing.T) {
 func checkFixture(t *testing.T, source string) (stdout, stderr string, code int) {
 	t.Helper()
 	var out, err bytes.Buffer
-	code = runCheck([]string{"billing.gooo"}, fixtureReader{source: source}, SyntaxSourceParser{}, &out, &err)
+	code = runCheck([]string{"--semantic", "billing.gooo"}, fixtureReader{source: source}, SyntaxSourceParser{}, &out, &err)
 	return out.String(), err.String(), code
 }

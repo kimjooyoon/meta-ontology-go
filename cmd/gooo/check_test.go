@@ -12,7 +12,7 @@ import (
 func TestRunCheckValidSource(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := runCheck([]string{"billing.gooo"}, fixtureReader{source: validSource}, SyntaxSourceParser{}, &stdout, &stderr)
-	if code != exitOK || stdout.String() != "ok: billing.gooo\n" || stderr.String() != deferredCheckProvenance+"\n" {
+	if code != exitOK || stdout.String() != "ok: billing.gooo\n" || stderr.Len() != 0 {
 		t.Fatalf("check result = code %d, stdout %q, stderr %q", code, stdout.String(), stderr.String())
 	}
 }
@@ -40,8 +40,29 @@ func TestRunCheckReadErrorAndUsage(t *testing.T) {
 	}
 	stderr.Reset()
 	code = runCheck(nil, fixtureReader{}, SyntaxSourceParser{}, &bytes.Buffer{}, &stderr)
-	if code != exitUsage || stderr.String() != "usage: gooo check <file.gooo>\n" {
+	if code != exitUsage || stderr.String() != "usage: gooo check [--semantic] <file.gooo>\n" {
 		t.Fatalf("usage = code %d, stderr %q", code, stderr.String())
+	}
+}
+
+func TestRunCheckSemanticModeIsExplicit(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := runCheck([]string{"--semantic", "billing.gooo"}, fixtureReader{source: validSource}, SyntaxSourceParser{}, &stdout, &stderr)
+	if code != exitOK || stdout.String() != "ok: billing.gooo\n" || stderr.String() != deferredCheckProvenance+"\n" {
+		t.Fatalf("semantic check result = code %d, stdout %q, stderr %q", code, stdout.String(), stderr.String())
+	}
+}
+
+func TestRunCheckDefaultPreservesSyntaxOnlyMode(t *testing.T) {
+	source := `package billing
+namespace billing
+entity Order id "billing://entity/order"
+activity PayOrder(Missing) -> Order
+`
+	var stdout, stderr bytes.Buffer
+	code := runCheck([]string{"billing.gooo"}, fixtureReader{source: source}, SyntaxSourceParser{}, &stdout, &stderr)
+	if code != exitOK || stdout.String() != "ok: billing.gooo\n" || stderr.Len() != 0 {
+		t.Fatalf("syntax-only check result = code %d, stdout %q, stderr %q", code, stdout.String(), stderr.String())
 	}
 }
 
@@ -56,7 +77,7 @@ func TestRunCheckUsesParserSeam(t *testing.T) {
 
 func TestRunDispatchesCheckAndUsage(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	if code := run([]string{"check"}, &stdout, &stderr); code != exitUsage || !strings.Contains(stderr.String(), "usage: gooo check") {
+	if code := run([]string{"check"}, &stdout, &stderr); code != exitUsage || !strings.Contains(stderr.String(), "usage: gooo check [--semantic]") {
 		t.Fatalf("check usage = code %d, stderr %q", code, stderr.String())
 	}
 	stdout.Reset()

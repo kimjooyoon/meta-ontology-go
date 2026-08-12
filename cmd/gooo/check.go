@@ -41,11 +41,11 @@ func (SyntaxSourceParser) ParseFile(filename, source string) (*syntax.File, synt
 }
 
 func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
-	if len(args) != 1 {
-		fmt.Fprintln(stderr, "usage: gooo check <file.gooo>")
+	semanticMode, filename, ok := checkArguments(args)
+	if !ok {
+		fmt.Fprintln(stderr, "usage: gooo check [--semantic] <file.gooo>")
 		return exitUsage
 	}
-	filename := args[0]
 	deadline := time.Now().Add(commandDeadline)
 	source, err := readSourceWithDeadline(reader, filename, remainingDeadline(deadline))
 	if err != nil {
@@ -63,17 +63,29 @@ func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, s
 	if diagnostics.HasErrors() {
 		return exitFailure
 	}
-	if _, err := semanticCheckIR(file, remainingDeadline(deadline)); err != nil {
-		if !reportSemanticDiagnostic(filename, file, err, stderr) {
+	if semanticMode {
+		if _, err := semanticCheckIR(file, remainingDeadline(deadline)); err != nil {
+			if !reportSemanticDiagnostic(filename, file, err, stderr) {
+				return exitFailure
+			}
 			return exitFailure
 		}
-		return exitFailure
-	}
-	if _, err := fmt.Fprintln(stderr, deferredCheckProvenance); err != nil {
-		return exitFailure
+		if _, err := fmt.Fprintln(stderr, deferredCheckProvenance); err != nil {
+			return exitFailure
+		}
 	}
 	fmt.Fprintf(stdout, "ok: %s\n", filename)
 	return exitOK
+}
+
+func checkArguments(args []string) (semanticMode bool, filename string, ok bool) {
+	if len(args) == 1 {
+		return false, args[0], true
+	}
+	if len(args) == 2 && args[0] == "--semantic" {
+		return true, args[1], true
+	}
+	return false, "", false
 }
 
 func reportSemanticDiagnostic(filename string, file *syntax.File, err error, stderr io.Writer) bool {
