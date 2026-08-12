@@ -34,7 +34,7 @@ func TestRunVersionJSONBindsVersionedContracts(t *testing.T) {
 	}
 	want := versionInfo{
 		SchemaVersion: versionSchema, Language: "gooo", Version: goooVersion,
-		Status: versionStatus, SemanticIR: semantic.CurrentIRVersion,
+		Status: versionStatus, SemanticIR: semantic.CurrentIRVersion, SemanticCheck: semanticCheckSchemaVersion,
 		Graph: graphDumpSchemaVersion, FixPlan: fixPlanSchemaVersion,
 	}
 	if info != want {

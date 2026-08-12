@@ -21,6 +21,7 @@ type versionInfo struct {
 	Version       string `json:"version"`
 	Status        string `json:"status"`
 	SemanticIR    string `json:"semantic_ir"`
+	SemanticCheck string `json:"semantic_check"`
 	Graph         string `json:"graph"`
 	FixPlan       string `json:"fix_plan"`
 }
@@ -39,7 +40,7 @@ func runVersion(args []string, stdout, stderr io.Writer) int {
 	}
 	payload, err := json.Marshal(versionInfo{
 		SchemaVersion: versionSchema, Language: "gooo", Version: goooVersion,
-		Status: versionStatus, SemanticIR: semantic.CurrentIRVersion,
+		Status: versionStatus, SemanticIR: semantic.CurrentIRVersion, SemanticCheck: semanticCheckSchemaVersion,
 		Graph: graphDumpSchemaVersion, FixPlan: fixPlanSchemaVersion,
 	})
 	if err != nil {

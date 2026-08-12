@@ -61,12 +61,18 @@ type inspectLowerResult struct {
 }
 
 func lowerInspectIR(file *syntax.File, timeout time.Duration) (semantic.IR, error) {
+	return lowerInspectIRWith(file, timeout, bidir.Lower)
+}
+
+func lowerInspectIRWith(file *syntax.File, timeout time.Duration, lower func(*syntax.File) (semantic.IR, error)) (semantic.IR, error) {
+	// The current bidir API has no cancellation-aware lowering contract. The
+	// buffered result bounds the CLI wait and lets a late lowerer return safely.
 	if timeout <= 0 {
 		return semantic.IR{}, errCommandDeadline
 	}
 	result := make(chan inspectLowerResult, 1)
 	go func() {
-		ir, err := bidir.Lower(file)
+		ir, err := lower(file)
 		result <- inspectLowerResult{ir: ir, err: err}
 	}()
 	timer := time.NewTimer(timeout)

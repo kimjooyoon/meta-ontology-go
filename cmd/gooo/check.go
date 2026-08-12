@@ -98,6 +98,9 @@ func reportSemanticDiagnostic(filename string, file *syntax.File, err error, std
 }
 
 func semanticDiagnosticCode(err error) string {
+	if errors.Is(err, errCommandDeadline) {
+		return "semantic.deadline"
+	}
 	if strings.Contains(err.Error(), "unknown declaration") {
 		return "semantic.invalid-endpoint"
 	}
