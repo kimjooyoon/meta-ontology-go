@@ -38,6 +38,10 @@ type Diagnostic struct {
 	Code     string             `json:"code,omitempty"`
 	Source   string             `json:"source,omitempty"`
 	Message  string             `json:"message"`
+	filename string
+	start    int
+	end      int
+	spanned  bool
 }
 
 type TextDocumentIdentifier struct {

@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -40,12 +39,13 @@ func (server *Server) parse(ctx context.Context, uri, source string) (ParseResul
 	server.parseMu.Lock()
 	defer server.parseMu.Unlock()
 	if parser, ok := server.parser.(ContextParser); ok {
-		return parser.ParseContext(ctx, uri, source)
+		result, err := parser.ParseContext(ctx, uri, source)
+		return normalizeParseResult(uri, source, result), err
 	}
 	if err := ctx.Err(); err != nil {
 		return ParseResult{}, err
 	}
-	return server.parser.Parse(uri, source), nil
+	return normalizeParseResult(uri, source, server.parser.Parse(uri, source)), nil
 }
 
 type ParseResult struct {
@@ -97,118 +97,5 @@ func (SyntaxParser) ParseContext(ctx context.Context, uri, source string) (Parse
 		return ParseResult{}, err
 	}
 	file, diagnostics := syntax.ParseFile(uri, source)
-	result := ParseResult{File: file}
-	for _, diagnostic := range diagnostics {
-		mapped, err := syntaxDiagnostic(source, diagnostic)
-		if err != nil {
-			return ParseResult{}, err
-		}
-		result.Diagnostics = append(result.Diagnostics, mapped)
-	}
-	for _, declaration := range syntaxDeclarations(file) {
-		if err := appendDeclaration(&result, source, declaration); err != nil {
-			return ParseResult{}, err
-		}
-	}
-	return result, nil
-}
-
-func syntaxDiagnostic(source string, diagnostic syntax.Diagnostic) (Diagnostic, error) {
-	rangeValue, err := syntaxRange(source, diagnostic.Span)
-	if err != nil {
-		return Diagnostic{}, err
-	}
-	severity := DiagnosticError
-	if diagnostic.Severity == syntax.SeverityWarning {
-		severity = DiagnosticWarning
-	}
-	return Diagnostic{
-		Range: rangeValue, Severity: severity, Code: string(diagnostic.Code),
-		Source: "gooo", Message: diagnostic.Message,
-	}, nil
-}
-
-func syntaxDeclarations(file *syntax.File) []syntax.Declaration {
-	if file == nil {
-		return nil
-	}
-	if file.Declarations != nil {
-		return file.Declarations
-	}
-	return file.Decls
-}
-
-func appendDeclaration(result *ParseResult, source string, declaration syntax.Declaration) error {
-	switch value := declaration.(type) {
-	case *syntax.EntityDecl:
-		return appendEntity(result, source, value)
-	case *syntax.ActivityDecl:
-		return appendActivity(result, source, value)
-	default:
-		return nil
-	}
-}
-
-func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl) error {
-	rangeValue, err := syntaxRange(source, entity.Span)
-	if err != nil {
-		return err
-	}
-	selection, err := syntaxRange(source, entity.NameSpan)
-	if err != nil {
-		return err
-	}
-	result.Symbols = append(result.Symbols, Symbol{
-		Name: entity.Name, ID: entity.ID, Kind: SymbolClass,
-		Detail: "entity " + entity.Name, Range: rangeValue, SelectionRange: selection,
-	})
-	return nil
-}
-
-func appendActivity(result *ParseResult, source string, activity *syntax.ActivityDecl) error {
-	rangeValue, err := syntaxRange(source, activity.Span)
-	if err != nil {
-		return err
-	}
-	selection, err := syntaxRange(source, activity.NameSpan)
-	if err != nil {
-		return err
-	}
-	result.Symbols = append(result.Symbols, Symbol{
-		Name: activity.Name, Kind: SymbolFunction, Detail: "activity " + activity.Name,
-		Range: rangeValue, SelectionRange: selection,
-	})
-	for _, input := range activity.Inputs {
-		if err := appendReference(result, source, input.Name, input.Span); err != nil {
-			return err
-		}
-	}
-	if err := appendReference(result, source, activity.Result.Name, activity.Result.Span); err != nil {
-		return err
-	}
-	return nil
-}
-
-func appendReference(result *ParseResult, source, name string, span syntax.Span) error {
-	if name == "" || span.IsEmpty() {
-		return nil
-	}
-	rangeValue, err := syntaxRange(source, span)
-	if err != nil {
-		return err
-	}
-	result.References = append(result.References, Reference{Name: name, Range: rangeValue})
-	return nil
-}
-
-func syntaxRange(source string, span syntax.Span) (Range, error) {
-	start, err := OffsetToPosition(source, span.Start.Offset)
-	if err != nil {
-		return Range{}, fmt.Errorf("lsp: invalid syntax start span: %w", err)
-	}
-	end, err := OffsetToPosition(source, span.End.Offset)
-	if err != nil {
-		return Range{}, fmt.Errorf("lsp: invalid syntax end span: %w", err)
-	}
-	return Range{Start: start, End: end}, nil
+	return adaptSyntaxResult(uri, source, file, diagnostics)
 }

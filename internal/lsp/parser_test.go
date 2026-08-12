@@ -4,6 +4,8 @@ import (
 	"context"
 	"reflect"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func TestSyntaxParserUsesCanonicalASTAndSpans(t *testing.T) {
@@ -16,7 +18,7 @@ func TestSyntaxParserUsesCanonicalASTAndSpans(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(first, second) {
 		t.Fatalf("parse is not deterministic: first=%#v second=%#v error=%v", first, second, err)
 	}
-	if first.File == nil || len(first.File.Declarations) != 2 || len(first.Diagnostics) != 0 {
+	if first.File == nil || len(first.File.Decls) != 2 || len(first.Diagnostics) != 0 {
 		t.Fatalf("parse result = %#v", first)
 	}
 	entity := first.Symbols[0]
@@ -25,6 +27,55 @@ func TestSyntaxParserUsesCanonicalASTAndSpans(t *testing.T) {
 	}
 	if len(first.References) != 2 || first.References[0].Range.Start != (Position{Line: 3, Character: 13}) {
 		t.Fatalf("references = %#v", first.References)
+	}
+}
+
+func TestSyntaxDiagnosticsSortByCanonicalSourceOrder(t *testing.T) {
+	source := "package namespace n\n@"
+	_, raw := syntax.ParseFile("fixture.gooo", source)
+	if len(raw) != 2 || raw[0].Code != syntax.DiagUnexpectedCharacter || raw[1].Code != syntax.DiagExpectedIdentifier {
+		t.Fatalf("raw phase order = %#v", raw)
+	}
+	first, err := (SyntaxParser{}).ParseContext(context.Background(), "fixture.gooo", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := (SyntaxParser{}).ParseContext(context.Background(), "fixture.gooo", source)
+	if err != nil || !reflect.DeepEqual(first.Diagnostics, second.Diagnostics) {
+		t.Fatalf("repeated diagnostics differ: first=%#v second=%#v error=%v", first.Diagnostics, second.Diagnostics, err)
+	}
+	want := []string{"parse.expected-identifier", "lex.unexpected-character"}
+	for index, code := range want {
+		if first.Diagnostics[index].Code != code {
+			t.Fatalf("sorted diagnostics = %#v, want codes %v", first.Diagnostics, want)
+		}
+	}
+	permuted := append([]Diagnostic(nil), first.Diagnostics...)
+	permuted[0], permuted[1] = permuted[1], permuted[0]
+	if sorted := sortMappedDiagnostics("fixture.gooo", source, permuted); !reflect.DeepEqual(first.Diagnostics, sorted) {
+		t.Fatalf("permuted diagnostics = %#v, want %#v", sorted, first.Diagnostics)
+	}
+}
+
+func TestCanonicalASTAliasesCannotDiverge(t *testing.T) {
+	source := "package p\nnamespace n\nentity A id \"urn:a\"\nactivity Run(A) -> A"
+	file, diagnostics := syntax.ParseFile("alias.gooo", source)
+	canonical, err := adaptSyntaxResult("alias.gooo", source, file, diagnostics)
+	if err != nil {
+		t.Fatal(err)
+	}
+	activity := *file.Decls[1].(*syntax.ActivityDecl)
+	activity.Parameters = []syntax.NameRef{{Name: "alias-input", Span: activity.Parameters[0].Span}}
+	activity.Result = syntax.NameRef{Name: "alias-output", Span: activity.Result.Span}
+	variantFile := *file
+	variantFile.Decls = []syntax.Declaration{file.Decls[0], &activity}
+	variantFile.Declarations = []syntax.Declaration{&syntax.EntityDecl{Name: "alias-only"}}
+	variant, err := adaptSyntaxResult("alias.gooo", source, &variantFile, diagnostics)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(canonical.Symbols, variant.Symbols) || !reflect.DeepEqual(canonical.References, variant.References) {
+		t.Fatalf("alias fields changed LSP output: canonical=%#v/%#v variant=%#v/%#v", canonical.Symbols, canonical.References, variant.Symbols, variant.References)
 	}
 }
 
