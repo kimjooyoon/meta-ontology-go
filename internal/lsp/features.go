@@ -69,22 +69,32 @@ func (server *Server) definition(params TextDocumentPositionParams) []Location {
 	if !ok {
 		return nil
 	}
-	name, _, _, ok := wordAt(document.text, params.Position)
+	target, _, _, ok := wordAt(document.text, params.Position)
 	if !ok {
 		return nil
 	}
-	if symbol, found := symbolNamed(document.result.Symbols, name); found {
-		return []Location{{URI: params.TextDocument.URI, Range: symbol.SelectionRange}}
+	symbol, found := resolveDefinitionSymbol(document.result.Symbols, target)
+	if !found {
+		return nil
 	}
-	for _, reference := range document.result.References {
-		if reference.Name != name {
+	return []Location{{URI: params.TextDocument.URI, Range: symbol.SelectionRange}}
+}
+
+func resolveDefinitionSymbol(symbols []Symbol, target string) (Symbol, bool) {
+	var match Symbol
+	for _, symbol := range symbols {
+		if symbol.Name != target && symbol.ID != target {
 			continue
 		}
-		if symbol, found := symbolNamed(document.result.Symbols, name); found {
-			return []Location{{URI: params.TextDocument.URI, Range: symbol.SelectionRange}}
+		if match.Name != "" || match.ID != "" {
+			return Symbol{}, false
 		}
+		match = symbol
 	}
-	return nil
+	if match.Name == "" && match.ID == "" {
+		return Symbol{}, false
+	}
+	return match, true
 }
 
 func (server *Server) refresh(ctx context.Context, uri string) error {

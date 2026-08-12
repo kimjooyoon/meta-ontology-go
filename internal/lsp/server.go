@@ -145,7 +145,7 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 	case "textDocument/completion":
 		return server.completionRequest(ctx, request)
 	case "textDocument/definition":
-		return server.definitionRequest(ctx, request)
+		return server.definitionRequest(request)
 	case "textDocument/documentSymbol":
 		return server.documentSymbolRequest(request)
 	case "workspace/symbol", "textDocument/references", "textDocument/rename", "textDocument/formatting":
@@ -288,13 +288,10 @@ func (server *Server) completionRequest(ctx context.Context, request requestEnve
 	}
 	return resultResponse(request.ID, server.completion(params.TextDocument.URI)), nil, nil
 }
-func (server *Server) definitionRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
+func (server *Server) definitionRequest(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params TextDocumentPositionParams
 	if err := decodeParams(request.Params, &params); err != nil {
 		return responseOrNil(request.ID, invalidParams, "Invalid definition parameters"), nil, nil
-	}
-	if err := server.refresh(ctx, params.TextDocument.URI); err != nil {
-		return featureErrorResponse(request.ID, err, ctx)
 	}
 	return resultResponse(request.ID, server.definition(params)), nil, nil
 }
