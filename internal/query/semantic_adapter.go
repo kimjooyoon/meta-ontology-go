@@ -14,8 +14,28 @@ func FromSemanticIR(ir semantic.IR) (*Graph, error) {
 	if err := ir.Validate(); err != nil {
 		return nil, fmt.Errorf("semantic IR is not queryable: %w", err)
 	}
+	normalized, err := ir.Normalized()
+	if err != nil {
+		return nil, fmt.Errorf("semantic IR cannot be normalized for query: %w", err)
+	}
 	graph := New()
-	for _, fact := range ir.Graph.AllFacts() {
+	evidenceStatus := "known_empty"
+	if len(normalized.Evidence()) > 0 {
+		evidenceStatus = "available"
+	}
+	provenanceStatus := "known_empty"
+	if len(normalized.Evidence()) > 0 {
+		provenanceStatus = "available"
+	}
+	graph.binding = &projectionBinding{
+		semanticDigest:   normalized.StableHash(),
+		sourceStatus:     "unavailable",
+		evidenceDigest:   normalized.EvidenceHash(),
+		provenanceDigest: normalized.ProvenanceHash(),
+		evidenceStatus:   evidenceStatus,
+		provenanceStatus: provenanceStatus,
+	}
+	for _, fact := range normalized.Graph.AllFacts() {
 		projected, err := projectSemanticFact(fact)
 		if err != nil {
 			return nil, err
