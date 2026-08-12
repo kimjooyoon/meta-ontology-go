@@ -25,7 +25,7 @@ func makeDeltaEvidenceUnchecked(delta FactDelta, locality Locality, partial bool
 		LocalityClosureHash: localityDigest(locality),
 		ClosureMembers:      append([]ID{}, locality.Affected...),
 		ClosureValid:        sameLocality(locality, closure),
-		Candidates:          factCanonicalValues(candidateFacts(delta.Added)),
+		Candidates:          factCanonicalValues(candidateFacts(facts)),
 		PortSequence:        ports,
 		RelationSequence:    relations,
 		PortOrderHash:       portHash,

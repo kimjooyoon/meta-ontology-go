@@ -55,11 +55,19 @@ type BXWriteObservation struct {
 	After    BXFileSnapshot
 }
 
+// BXRejectedWriteObserver owns before/after snapshots around a rejected
+// operation. The producer supplies only the operation, never its snapshots.
+type BXRejectedWriteObserver interface {
+	Kind() string
+	ObserveRejected(operation func() error) (BXWriteObservation, error)
+}
+
 // BXEvidenceFixture extends a reconciliation fixture with hard evidence.
 type BXEvidenceFixture interface {
 	ReconciliationFixture
 	BaseEvidence() BXBaseEvidenceInput
 	ObserveAcceptedWrite(before, after Document) BXWriteObservation
+	RejectedWriteObserver(document Document) (BXRejectedWriteObserver, error)
 }
 
 // BXStateEvidence records all transaction dimensions as digests.
@@ -76,6 +84,7 @@ type BXStateEvidence struct {
 type BXTransactionEvidence struct {
 	Before         BXStateEvidence
 	After          BXStateEvidence
+	ObserverKind   string
 	Observed       bool
 	Atomic         bool
 	NoWrite        bool
@@ -174,8 +183,8 @@ func (e BXEvidence) validate() error {
 	if e.Delta.CandidatePromoted || e.Delta.RemovedCreated || e.PartialDelta.CandidatePromoted || e.PartialDelta.RemovedCreated || e.PartialConflict.RemovedCreated || e.PartialConflict.CandidatePromoted {
 		return errors.New("partial observation changed authoritative semantic state")
 	}
-	if !e.RejectedTransaction.Deferred || e.PartialConflict.NoWriteObserved {
-		return errors.New("rejected transaction must remain explicitly deferred")
+	if e.RejectedTransaction.Deferred || !e.RejectedTransaction.NoWrite || !e.PartialConflict.NoWriteObserved {
+		return errors.New("rejected transaction lacks observed atomic no-write evidence")
 	}
 	if e.PartialConflict.Kind == "" || e.PartialConflict.Count == 0 || !e.PartialConflict.Transactional {
 		return errors.New("partial delta did not produce a transactional rejection")
@@ -229,10 +238,16 @@ func validateDeltaEvidence(delta BXDeltaEvidence) error {
 
 func validateTransaction(transaction BXTransactionEvidence, requireNoWrite bool) error {
 	if requireNoWrite {
-		if !transaction.Deferred || transaction.DeferredReason == "" || transaction.Observed || transaction.Atomic || transaction.NoWrite {
-			return errors.New("rejected transaction observer is not explicitly deferred")
+		if err := validateState(transaction.Before); err != nil {
+			return fmt.Errorf("before state: %w", err)
 		}
-		return validateDeferredState(transaction)
+		if err := validateState(transaction.After); err != nil {
+			return fmt.Errorf("after state: %w", err)
+		}
+		if transaction.ObserverKind == "" || !transaction.Observed || !transaction.Atomic || !transaction.NoWrite || transaction.Deferred || transaction.Before != transaction.After {
+			return errors.New("rejected transaction observer did not prove atomic no-write")
+		}
+		return nil
 	}
 	if err := validateState(transaction.Before); err != nil {
 		return fmt.Errorf("before state: %w", err)
@@ -242,15 +257,6 @@ func validateTransaction(transaction BXTransactionEvidence, requireNoWrite bool)
 	}
 	if !transaction.Observed || !transaction.Atomic {
 		return errors.New("transaction was not observed atomically")
-	}
-	return nil
-}
-
-func validateDeferredState(transaction BXTransactionEvidence) error {
-	for _, state := range []BXStateEvidence{transaction.Before, transaction.After} {
-		if state.Semantic == "" || state.Source == "" || state.Region == "" || state.Slot == "" {
-			return errors.New("deferred transaction lacks semantic/source/region/slot state")
-		}
 	}
 	return nil
 }
@@ -279,17 +285,6 @@ func sameIDs(left, right []ID) bool {
 		if left[index] != right[index] {
 			return false
 		}
-	}
-	return true
-}
-
-func uniqueStrings(values []string) bool {
-	seen := make(map[string]struct{}, len(values))
-	for _, value := range values {
-		if _, exists := seen[value]; exists {
-			return false
-		}
-		seen[value] = struct{}{}
 	}
 	return true
 }

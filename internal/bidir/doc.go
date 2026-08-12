@@ -28,11 +28,12 @@
 // experiments. BXEvidenceFixture is the hard evidence extension: it must
 // provide non-empty DSL, IR, Go, source-map, evidence, and provenance base
 // artifacts, ordered delta hashes, locality closure JSON, evidence ID/span
-// cardinality, and accepted-write before/after bytes and lstat snapshots.
-// MeasureBXFixture rejects incomplete contracts; missing evidence is never
-// green. A rejected partial observation must preserve semantic/source/region/
-// slot digests, must not create removals or promote candidates, and remains
-// explicitly deferred until an owner supplies filesystem/inode observation.
+// cardinality, accepted-write before/after bytes and lstat snapshots, and an
+// observer-owned rejected-write adapter. MeasureBXFixture rejects incomplete
+// contracts; missing evidence is never green. A rejected partial observation
+// must preserve semantic/source/region/slot/bytes/lstat digests, prove atomic
+// no-write through its observer, must not create removals or promote
+// candidates, and must retain the filesystem/inode seam as deferred.
 //
 // Source-order preservation is currently defined for source-backed activity
 // input ports. Deterministic facts must reference registered model endpoints.

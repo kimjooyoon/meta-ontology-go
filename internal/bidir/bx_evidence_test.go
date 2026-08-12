@@ -43,6 +43,10 @@ func (billingBXFixture) ObserveAcceptedWrite(before, after Document) BXWriteObse
 	return fixtureWriteObservation(before, after)
 }
 
+func (billingBXFixture) RejectedWriteObserver(document Document) (BXRejectedWriteObserver, error) {
+	return NewBXMemoryRejectedWriteObserver(document), nil
+}
+
 func fixtureBaseEvidence(document Document) BXBaseEvidenceInput {
 	model, _ := Get(document)
 	facts := ProjectFacts(model)
@@ -83,7 +87,9 @@ func TestBXEvidenceMatchesBillingGolden(t *testing.T) {
 		"accepted_evidence_span_count=1",
 		"accepted_before=",
 		"accepted_after=",
-		"rejected_deferred=pass",
+		"rejected_observer=memory-source",
+		"rejected_deferred=fail",
+		"partial_no_write=pass",
 		"partial_conflict=missing-source",
 		"partial_removed_created=false",
 		"partial_candidate_promoted=false",
@@ -136,8 +142,8 @@ func TestBXDeltaEvidencePreservesFactOrderAndAtomicState(t *testing.T) {
 	if evidence.Delta.PortOrderHash == "" || evidence.Delta.RelationOrderHash == "" || !strings.Contains(evidence.Delta.CanonicalJSON, "\"candidates\"") {
 		t.Fatalf("delta canonical order/candidate schema is incomplete: %#v", evidence.Delta)
 	}
-	if !evidence.RejectedTransaction.Deferred || evidence.PartialConflict.NoWriteObserved || evidence.PartialConflict.RemovedCreated || evidence.PartialConflict.CandidatePromoted {
-		t.Fatalf("rejected partial transaction was not explicitly deferred and non-authoritative: %#v", evidence)
+	if evidence.RejectedTransaction.Deferred || !evidence.RejectedTransaction.NoWrite || !evidence.PartialConflict.NoWriteObserved || evidence.PartialConflict.RemovedCreated || evidence.PartialConflict.CandidatePromoted {
+		t.Fatalf("rejected partial transaction was not observer-proven and non-authoritative: %#v", evidence)
 	}
 }
 
@@ -147,10 +153,11 @@ func TestBXEvidenceRejectsMissingCanonicalDeltaFields(t *testing.T) {
 		t.Fatal(err)
 	}
 	for name, mutate := range map[string]func(*BXDeltaEvidence){
-		"closure-members": func(delta *BXDeltaEvidence) { delta.ClosureMembers = nil },
-		"candidates":      func(delta *BXDeltaEvidence) { delta.Candidates = nil },
-		"port-sequence":   func(delta *BXDeltaEvidence) { delta.PortSequence = nil },
-		"evidence-hash":   func(delta *BXDeltaEvidence) { delta.EvidenceHash = "" },
+		"closure-members":    func(delta *BXDeltaEvidence) { delta.ClosureMembers = nil },
+		"closure-membership": func(delta *BXDeltaEvidence) { delta.ClosureMembers = []ID{"not-in-closure"} },
+		"candidates":         func(delta *BXDeltaEvidence) { delta.Candidates = nil },
+		"port-sequence":      func(delta *BXDeltaEvidence) { delta.PortSequence = nil },
+		"evidence-hash":      func(delta *BXDeltaEvidence) { delta.EvidenceHash = "" },
 	} {
 		t.Run(name, func(t *testing.T) {
 			copyEvidence := evidence
@@ -171,6 +178,35 @@ func TestEvidenceRetainsSameFactKeyWithDistinctIDsAndSpans(t *testing.T) {
 	}
 	if evidence.FactKeys[0] != evidence.FactKeys[1] || evidence.Hash == "" {
 		t.Fatalf("same-edge evidence boundary lost key/hash: %#v", evidence)
+	}
+}
+
+func TestBXRejectedObserverOwnsNoWriteSnapshots(t *testing.T) {
+	document := billingDocument()
+	observer := NewBXMemoryRejectedWriteObserver(document)
+	called := false
+	observation, err := observer.ObserveRejected(func() error {
+		called = true
+		return nil
+	})
+	if err != nil || !called || observer.Kind() != "memory-source" {
+		t.Fatalf("observer did not run its operation: err=%v called=%t kind=%q", err, called, observer.Kind())
+	}
+	if !observation.Observed || !reflect.DeepEqual(observation.Before, observation.After) {
+		t.Fatalf("observer did not prove no-write: %#v", observation)
+	}
+	observation.Before.Bytes[0] ^= 1
+	second, err := observer.ObserveRejected(func() error { return nil })
+	if err != nil || !reflect.DeepEqual(second.Before, second.After) {
+		t.Fatalf("observer snapshots were not isolated: err=%v observation=%#v", err, second)
+	}
+}
+
+func TestBXDeltaEvidenceRetainsRemovedCandidates(t *testing.T) {
+	candidate := NewSourcedFact(CandidateFact, "billing://activity/pay-order", PredicateWasDerivedFrom, "billing://entity/order", SourceSpan{File: "removed.go", Start: 1, End: 2})
+	evidence := makeDeltaEvidenceUnchecked(FactDelta{Removed: FactSet{candidate}}, Locality{}, true, Model{}, Model{})
+	if len(evidence.Candidates) != 1 || !strings.Contains(evidence.CanonicalJSON, "\"candidates\"") {
+		t.Fatalf("removed candidate was omitted from canonical evidence: %#v", evidence)
 	}
 }
 

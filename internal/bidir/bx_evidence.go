@@ -64,7 +64,14 @@ func MeasureBXFixture(fixture ReconciliationFixture) (BXEvidence, error) {
 	if err != nil {
 		return evidence, err
 	}
-	evidence.PartialConflict, evidence.RejectedTransaction, evidence.PartialDelta = partialEvidence(document, base, fixture.PartialDelta())
+	observer, err := contract.RejectedWriteObserver(document)
+	if err != nil {
+		return evidence, fmt.Errorf("rejected write observer: %w", err)
+	}
+	evidence.PartialConflict, evidence.RejectedTransaction, evidence.PartialDelta, err = partialEvidence(document, base, fixture.PartialDelta(), observer)
+	if err != nil {
+		return evidence, err
+	}
 	evidence.Deferred = deferredBXSeams()
 	if err := evidence.validate(); err != nil {
 		return evidence, err
@@ -78,41 +85,55 @@ func acceptedTransaction(contract BXEvidenceFixture, before, after Document, bas
 		return BXTransactionEvidence{}, fmt.Errorf("accepted write observation: %w", err)
 	}
 	return BXTransactionEvidence{
-		Before:   stateEvidence(base, before, result.Locality, observation.Before),
-		After:    stateEvidence(result.Model, after, result.Locality, observation.After),
-		Observed: observation.Observed,
-		Atomic:   true,
+		Before:       stateEvidence(base, before, result.Locality, observation.Before),
+		After:        stateEvidence(result.Model, after, result.Locality, observation.After),
+		ObserverKind: "accepted-fixture",
+		Observed:     observation.Observed,
+		Atomic:       true,
 	}, nil
 }
 
-func partialEvidence(document Document, base Model, delta FactDelta) (BXConflictEvidence, BXTransactionEvidence, BXDeltaEvidence) {
-	result, err := Reconcile(base, delta)
+func partialEvidence(document Document, base Model, delta FactDelta, observer BXRejectedWriteObserver) (BXConflictEvidence, BXTransactionEvidence, BXDeltaEvidence, error) {
+	if observer == nil {
+		return BXConflictEvidence{}, BXTransactionEvidence{}, BXDeltaEvidence{}, errors.New("rejected write observer is nil")
+	}
+	result := ReconcileResult{Model: base}
+	var reconcileErr error
+	called := false
+	observation, observerErr := observer.ObserveRejected(func() error {
+		called = true
+		result, reconcileErr = Reconcile(base, delta)
+		return reconcileErr
+	})
+	if observerErr != nil {
+		return BXConflictEvidence{}, BXTransactionEvidence{}, BXDeltaEvidence{}, fmt.Errorf("observe rejected write: %w", observerErr)
+	}
+	if !called {
+		return BXConflictEvidence{}, BXTransactionEvidence{}, BXDeltaEvidence{}, errors.New("rejected write observer did not run operation")
+	}
 	partial := makeDeltaEvidenceUnchecked(delta, LocalityBetween(base, result.Model), true, base, result.Model)
-	transaction := deferredTransaction(document, base, result.Model)
+	before := stateEvidence(base, document, LocalityBetween(base, result.Model), observation.Before)
+	after := stateEvidence(result.Model, document, LocalityBetween(base, result.Model), observation.After)
+	transaction := BXTransactionEvidence{
+		Before: before, After: after, ObserverKind: observer.Kind(), Observed: observation.Observed,
+		Atomic: before == after, NoWrite: before == after,
+	}
 	evidence := BXConflictEvidence{Transactional: SemanticEquivalent(base, result.Model)}
 	evidence.RemovedCreated = removedCreated(base, result.Model, delta)
 	evidence.CandidatePromoted = candidatePromoted(base, delta, result.Model)
-	var reconcileErr *ReconcileError
-	if !errors.As(err, &reconcileErr) {
-		return evidence, transaction, partial
+	var conflictErr *ReconcileError
+	if !errors.As(reconcileErr, &conflictErr) {
+		evidence.NoWriteObserved = transaction.NoWrite
+		return evidence, transaction, partial, nil
 	}
-	evidence.Count = len(reconcileErr.Conflicts)
+	evidence.Count = len(conflictErr.Conflicts)
 	if evidence.Count > 0 {
-		evidence.Kind = reconcileErr.Conflicts[0].Kind
+		evidence.Kind = conflictErr.Conflicts[0].Kind
 	}
 	partial.RemovedCreated = evidence.RemovedCreated
 	partial.CandidatePromoted = evidence.CandidatePromoted
-	return evidence, transaction, partial
-}
-
-func deferredTransaction(document Document, base, after Model) BXTransactionEvidence {
-	region := LocalityBetween(base, after)
-	return BXTransactionEvidence{
-		Before:         deferredStateEvidence(base, document, region),
-		After:          deferredStateEvidence(after, document, region),
-		Deferred:       true,
-		DeferredReason: "filesystem/inode observer belongs to Security/conformance ownership",
-	}
+	evidence.NoWriteObserved = transaction.NoWrite
+	return evidence, transaction, partial, nil
 }
 
 func removedCreated(base, after Model, delta FactDelta) bool {
@@ -177,11 +198,7 @@ func (e BXEvidence) Canonical() string {
 	fmt.Fprintf(&builder, "partial_conflict=%s\n", conflictStatus(e.PartialConflict.Kind))
 	fmt.Fprintf(&builder, "partial_conflict_count=%d\n", e.PartialConflict.Count)
 	fmt.Fprintf(&builder, "partial_transactional=%s\n", evidenceStatus(e.PartialConflict.Transactional))
-	if e.RejectedTransaction.Deferred {
-		fmt.Fprintf(&builder, "partial_no_write=deferred\n")
-	} else {
-		fmt.Fprintf(&builder, "partial_no_write=%s\n", evidenceStatus(e.PartialConflict.NoWriteObserved))
-	}
+	fmt.Fprintf(&builder, "partial_no_write=%s\n", evidenceStatus(e.PartialConflict.NoWriteObserved))
 	fmt.Fprintf(&builder, "partial_removed_created=%t\n", e.PartialConflict.RemovedCreated)
 	fmt.Fprintf(&builder, "partial_candidate_promoted=%t\n", e.PartialConflict.CandidatePromoted)
 	fmt.Fprintf(&builder, "deferred=%s\n", strings.Join(e.Deferred, ","))
@@ -210,6 +227,7 @@ func writeDeltaCanonical(builder *strings.Builder, label string, delta BXDeltaEv
 func writeTransactionCanonical(builder *strings.Builder, label string, transaction BXTransactionEvidence) {
 	fmt.Fprintf(builder, "%s_before=%s\n", label, stateCanonical(transaction.Before))
 	fmt.Fprintf(builder, "%s_after=%s\n", label, stateCanonical(transaction.After))
+	fmt.Fprintf(builder, "%s_observer=%s\n", label, transaction.ObserverKind)
 	fmt.Fprintf(builder, "%s_observed=%s\n", label, evidenceStatus(transaction.Observed))
 	fmt.Fprintf(builder, "%s_atomic=%s\n", label, evidenceStatus(transaction.Atomic))
 	fmt.Fprintf(builder, "%s_no_write=%s\n", label, evidenceStatus(transaction.NoWrite))
