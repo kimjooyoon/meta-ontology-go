@@ -92,7 +92,9 @@ func graphReferences(refs []string, missingReason string) graphReferenceState {
 	if len(refs) == 0 {
 		return graphReferenceState{Status: "missing", Reason: missingReason}
 	}
-	return graphReferenceState{Status: "available", Refs: refs}
+	ordered := append([]string(nil), refs...)
+	sort.Strings(ordered)
+	return graphReferenceState{Status: "available", Refs: ordered}
 }
 
 func graphNodes(nodes []semantic.Node) []graphNode {
