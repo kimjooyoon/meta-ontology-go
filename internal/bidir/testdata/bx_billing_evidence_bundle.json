@@ -47,9 +47,10 @@
         "ids": ["urn:gooo:evidence:546dd5b3285b92624f2e2ecc9efd5fac3a8aa42a86d68453ed2a989125361adf"],
         "fact_keys": ["2:billing://activity/pay-order:gooo:invokes:billing://activity/audit-payment"],
         "spans": ["10:payment.go42,58,0,0,0,0;"],
+        "records": [{"evidence_id": "urn:gooo:evidence:546dd5b3285b92624f2e2ecc9efd5fac3a8aa42a86d68453ed2a989125361adf", "fact_key": "2:billing://activity/pay-order:gooo:invokes:billing://activity/audit-payment", "span": "10:payment.go42,58,0,0,0,0;", "has_span": true}],
         "id_count": 1,
         "span_count": 1,
-        "hash": "53ac589cbeb1b3e79ffd38c0b1d32c1e603a5552e6fe2ba3e212bef9886efffe",
+        "hash": "d335b2be119fd38eab19b2afdf1eadd8ab06c5c907f3341e659e724888b58911",
         "evidence_id_authority": "derived-non-authoritative"
       },
       "partial_observation": false
@@ -77,9 +78,10 @@
         "ids": ["urn:gooo:evidence:e1b0e88e866776c07d5893ac887973bcb421886af7fbf885c23afa78c46bd4f8"],
         "fact_keys": ["2:billing://activity/pay-order:gooo:invokes:billing://activity/audit-payment"],
         "spans": [],
+        "records": [{"evidence_id": "urn:gooo:evidence:e1b0e88e866776c07d5893ac887973bcb421886af7fbf885c23afa78c46bd4f8", "fact_key": "2:billing://activity/pay-order:gooo:invokes:billing://activity/audit-payment", "span": "0:0,0,0,0,0,0;", "has_span": false}],
         "id_count": 1,
         "span_count": 0,
-        "hash": "f53b36a2fd1b2f1fd130ec9782f6f95a4e40e78db3c58ecfb47baecba795219c",
+        "hash": "c1d6a2ceafe8d58eafd94c47491978b3d06c5347a8ff13cd554ab13176bcc6ea",
         "evidence_id_authority": "derived-non-authoritative"
       },
       "partial_observation": true

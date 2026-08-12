@@ -97,6 +97,7 @@ type BXEvidenceSpanSet struct {
 	IDs                 []string
 	FactKeys            []string
 	Spans               []SourceSpan
+	Records             []BXEvidenceRecord
 	IDCount             int
 	SpanCount           int
 	Hash                string
@@ -233,8 +234,11 @@ func validateDeltaEvidence(delta BXDeltaEvidence) error {
 	if delta.PortOrderHash == "" || delta.RelationOrderHash == "" {
 		return errors.New("ordered port/relation hashes are missing")
 	}
-	if delta.EvidenceHash == "" || delta.EvidenceHash != delta.EvidenceSpans.Hash || (delta.EvidenceSpans.EvidenceIDAuthority != "explicit" && delta.EvidenceSpans.EvidenceIDAuthority != "derived-non-authoritative") || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.IDs) || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.FactKeys) || delta.EvidenceSpans.SpanCount != len(delta.EvidenceSpans.Spans) || !uniqueStrings(delta.EvidenceSpans.IDs) {
+	if delta.EvidenceHash == "" || delta.EvidenceHash != delta.EvidenceSpans.Hash || !validEvidenceAuthority(delta.EvidenceSpans.EvidenceIDAuthority) || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.IDs) || delta.EvidenceSpans.IDCount != len(delta.EvidenceSpans.FactKeys) || delta.EvidenceSpans.SpanCount != len(delta.EvidenceSpans.Spans) || !uniqueStrings(delta.EvidenceSpans.IDs) {
 		return errors.New("evidence ID/span set is incomplete")
+	}
+	if err := validateEvidenceRecords(delta.EvidenceSpans); err != nil {
+		return err
 	}
 	return validateDeltaConsistency(delta)
 }

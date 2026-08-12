@@ -115,42 +115,29 @@ func writeFactIDs(builder *strings.Builder, label string, facts FactSet) {
 }
 
 func evidenceSpans(facts FactSet) BXEvidenceSpanSet {
-	ids := make([]string, len(facts))
-	factKeys := make([]string, len(facts))
-	occurrences := make(map[string]int, len(facts))
-	authority := "explicit"
+	observed := make(FactSet, len(facts))
 	for index, fact := range facts {
+		observed[index] = fact.normalized()
+	}
+	sort.SliceStable(observed, func(i, j int) bool { return rawFactLess(observed[i], observed[j]) })
+	ids := make([]string, len(observed))
+	factKeys := make([]string, len(observed))
+	records := make([]BXEvidenceRecord, len(observed))
+	spans := make([]SourceSpan, 0, len(observed))
+	occurrences := make(map[string]int, len(observed))
+	for index, fact := range observed {
 		canonical := factCanonical(fact)
 		ids[index] = factEvidenceID(fact, occurrences[canonical])
-		if fact.EvidenceID == "" {
-			authority = "derived-non-authoritative"
-		}
 		occurrences[canonical]++
 		factKeys[index] = factID(fact)
-	}
-	spans := make([]SourceSpan, 0, len(facts))
-	for _, fact := range facts {
+		records[index] = BXEvidenceRecord{EvidenceID: ids[index], FactKey: factKeys[index], Span: fact.Source, HasSpan: fact.Source.Valid()}
 		if fact.Source.Valid() {
 			spans = append(spans, fact.Source)
 		}
 	}
-	sort.Slice(spans, func(i, j int) bool { return spanLess(spans[i], spans[j]) })
-	return BXEvidenceSpanSet{IDs: ids, FactKeys: factKeys, Spans: spans, IDCount: len(ids), SpanCount: len(spans), Hash: digest(spanSetCanonical(authority, ids, factKeys, spans)), EvidenceIDAuthority: authority}
-}
-
-func spanSetCanonical(authority string, ids, factKeys []string, spans []SourceSpan) string {
-	var builder strings.Builder
-	writePart(&builder, authority)
-	for _, id := range ids {
-		writePart(&builder, id)
-	}
-	for _, factKey := range factKeys {
-		writePart(&builder, factKey)
-	}
-	for _, span := range spans {
-		writeSpan(&builder, span)
-	}
-	return builder.String()
+	evidence := BXEvidenceSpanSet{IDs: ids, FactKeys: factKeys, Spans: spans, Records: records, IDCount: len(ids), SpanCount: len(spans), EvidenceIDAuthority: evidenceAuthority(observed)}
+	evidence.Hash = evidenceSpanSetHash(evidence)
+	return evidence
 }
 
 func spanLess(left, right SourceSpan) bool {

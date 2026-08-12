@@ -34,7 +34,7 @@ func validateDeltaHashes(delta BXDeltaEvidence) error {
 	if delta.PortOrderHash != sequenceHash(delta.PortSequence) || delta.RelationOrderHash != sequenceHash(delta.RelationSequence) {
 		return errors.New("ordered port/relation hash does not match sequence")
 	}
-	if delta.EvidenceHash != digest(spanSetCanonical(delta.EvidenceSpans.EvidenceIDAuthority, delta.EvidenceSpans.IDs, delta.EvidenceSpans.FactKeys, delta.EvidenceSpans.Spans)) {
+	if delta.EvidenceHash != evidenceSpanSetHash(delta.EvidenceSpans) {
 		return errors.New("evidence hash does not match IDs, fact keys, and spans")
 	}
 	return nil
@@ -58,7 +58,8 @@ func validateCanonicalDelta(delta BXDeltaEvidence) error {
 		Touched: delta.Locality.Touched, Affected: delta.Locality.Affected,
 		ClosureMembers: delta.ClosureMembers, ClosureHash: delta.LocalityClosureHash,
 		EvidenceIDs: delta.EvidenceSpans.IDs, EvidenceFactKeys: delta.EvidenceSpans.FactKeys,
-		EvidenceSpans: spanTexts(delta.EvidenceSpans.Spans), EvidenceIDAuthority: delta.EvidenceSpans.EvidenceIDAuthority, EvidenceHash: delta.EvidenceHash,
+		EvidenceSpans: spanTexts(delta.EvidenceSpans.Spans), EvidenceRecords: canonicalEvidenceRecords(delta.EvidenceSpans.Records), EvidenceIDCount: delta.EvidenceSpans.IDCount, EvidenceSpanCount: delta.EvidenceSpans.SpanCount,
+		EvidenceIDAuthority: delta.EvidenceSpans.EvidenceIDAuthority, EvidenceHash: delta.EvidenceHash,
 		Partial: delta.PartialObservation,
 	}
 	if !reflect.DeepEqual(payload, expected) {

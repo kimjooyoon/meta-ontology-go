@@ -61,13 +61,21 @@ type bxBundleClosure struct {
 }
 
 type bxBundleEvidence struct {
-	IDs                 []string `json:"ids"`
-	FactKeys            []string `json:"fact_keys"`
-	Spans               []string `json:"spans"`
-	IDCount             int      `json:"id_count"`
-	SpanCount           int      `json:"span_count"`
-	Hash                string   `json:"hash"`
-	EvidenceIDAuthority string   `json:"evidence_id_authority"`
+	IDs                 []string                 `json:"ids"`
+	FactKeys            []string                 `json:"fact_keys"`
+	Spans               []string                 `json:"spans"`
+	Records             []bxBundleEvidenceRecord `json:"records"`
+	IDCount             int                      `json:"id_count"`
+	SpanCount           int                      `json:"span_count"`
+	Hash                string                   `json:"hash"`
+	EvidenceIDAuthority string                   `json:"evidence_id_authority"`
+}
+
+type bxBundleEvidenceRecord struct {
+	EvidenceID string `json:"evidence_id"`
+	FactKey    string `json:"fact_key"`
+	Span       string `json:"span"`
+	HasSpan    bool   `json:"has_span"`
 }
 
 type bxBundleTransaction struct {
@@ -153,9 +161,17 @@ func assertBundleDelta(t *testing.T, got bxBundleDelta, want BXDeltaEvidence) {
 	if !reflect.DeepEqual(got.Closure.Touched, idsAsStrings(want.Locality.Touched)) || !reflect.DeepEqual(got.Closure.Affected, idsAsStrings(want.Locality.Affected)) || !reflect.DeepEqual(got.Closure.Members, idsAsStrings(want.ClosureMembers)) || got.Closure.Hash != want.LocalityClosureHash {
 		t.Fatal("bundle locality closure evidence mismatch")
 	}
-	if !reflect.DeepEqual(got.Evidence.IDs, want.EvidenceSpans.IDs) || !reflect.DeepEqual(got.Evidence.FactKeys, want.EvidenceSpans.FactKeys) || got.Evidence.IDCount != want.EvidenceSpans.IDCount || got.Evidence.SpanCount != want.EvidenceSpans.SpanCount || got.Evidence.Hash != want.EvidenceHash || got.Evidence.EvidenceIDAuthority != want.EvidenceSpans.EvidenceIDAuthority {
+	if !reflect.DeepEqual(got.Evidence.IDs, want.EvidenceSpans.IDs) || !reflect.DeepEqual(got.Evidence.FactKeys, want.EvidenceSpans.FactKeys) || !reflect.DeepEqual(got.Evidence.Records, bundleRecords(want.EvidenceSpans.Records)) || got.Evidence.IDCount != want.EvidenceSpans.IDCount || got.Evidence.SpanCount != want.EvidenceSpans.SpanCount || got.Evidence.Hash != want.EvidenceHash || got.Evidence.EvidenceIDAuthority != want.EvidenceSpans.EvidenceIDAuthority {
 		t.Fatalf("bundle evidence ID/span set mismatch: got=%#v want=%#v", got.Evidence, want.EvidenceSpans)
 	}
+}
+
+func bundleRecords(records []BXEvidenceRecord) []bxBundleEvidenceRecord {
+	values := make([]bxBundleEvidenceRecord, len(records))
+	for index, record := range records {
+		values[index] = bxBundleEvidenceRecord{EvidenceID: record.EvidenceID, FactKey: record.FactKey, Span: spanText(record.Span), HasSpan: record.HasSpan}
+	}
+	return values
 }
 
 func assertBundleTransaction(t *testing.T, got bxBundleTransaction, want BXTransactionEvidence) {

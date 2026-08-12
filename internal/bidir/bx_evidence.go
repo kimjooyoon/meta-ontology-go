@@ -220,10 +220,21 @@ func writeDeltaCanonical(builder *strings.Builder, label string, delta BXDeltaEv
 	fmt.Fprintf(builder, "%s_relation_order_hash=%s\n", label, delta.RelationOrderHash)
 	fmt.Fprintf(builder, "%s_evidence_ids=%s\n", label, strings.Join(delta.EvidenceSpans.IDs, ","))
 	fmt.Fprintf(builder, "%s_evidence_fact_keys=%s\n", label, strings.Join(delta.EvidenceSpans.FactKeys, ","))
+	fmt.Fprintf(builder, "%s_evidence_spans=%s\n", label, strings.Join(spanTexts(delta.EvidenceSpans.Spans), ","))
+	fmt.Fprintf(builder, "%s_evidence_records=%s\n", label, strings.Join(canonicalEvidenceRecordTexts(delta.EvidenceSpans.Records), ","))
 	fmt.Fprintf(builder, "%s_evidence_id_count=%d\n", label, delta.EvidenceSpans.IDCount)
 	fmt.Fprintf(builder, "%s_evidence_span_count=%d\n", label, delta.EvidenceSpans.SpanCount)
+	fmt.Fprintf(builder, "%s_evidence_id_authority=%s\n", label, delta.EvidenceSpans.EvidenceIDAuthority)
 	fmt.Fprintf(builder, "%s_evidence_span_hash=%s\n", label, delta.EvidenceSpans.Hash)
 	fmt.Fprintf(builder, "%s_evidence_hash=%s\n", label, delta.EvidenceHash)
+}
+
+func canonicalEvidenceRecordTexts(records []BXEvidenceRecord) []string {
+	values := make([]string, len(records))
+	for index, record := range records {
+		values[index] = strings.Join([]string{record.EvidenceID, record.FactKey, spanText(record.Span), fmt.Sprintf("%t", record.HasSpan)}, "|")
+	}
+	return values
 }
 
 func writeTransactionCanonical(builder *strings.Builder, label string, transaction BXTransactionEvidence) {
