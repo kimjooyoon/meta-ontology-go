@@ -117,25 +117,20 @@ func TestSemanticTokensUseUTF16AndDeltaEncoding(t *testing.T) {
 	}
 }
 
-func TestSemanticTokensStaleOverlayReturnsContentModified(t *testing.T) {
+func TestSemanticTokensClosedDocumentSuppressesResponse(t *testing.T) {
 	var calls atomic.Int32
 	opened := make(chan struct{})
 	started := make(chan struct{})
 	returned := make(chan struct{})
-	release := make(chan struct{})
 	parser := ContextParserFunc(func(ctx context.Context, uri, source string) (ParseResult, error) {
 		if calls.Add(1) == 1 {
 			close(opened)
 			return ParseResult{Symbols: []Symbol{{Name: "source", Kind: SymbolClass, SelectionRange: Range{End: Position{Character: 6}}}}}, nil
 		}
 		close(started)
-		select {
-		case <-release:
-			close(returned)
-			return ParseResult{}, nil
-		case <-ctx.Done():
-			return ParseResult{}, ctx.Err()
-		}
+		<-ctx.Done()
+		close(returned)
+		return ParseResult{}, ctx.Err()
 	})
 	reader, writer := io.Pipe()
 	output := newDiagnosticsBuffer()
@@ -157,7 +152,6 @@ func TestSemanticTokensStaleOverlayReturnsContentModified(t *testing.T) {
 	}
 	writeNotification(t, writer, "textDocument/didClose", map[string]any{"textDocument": map[string]any{"uri": uri}})
 	<-output.second
-	close(release)
 	select {
 	case <-returned:
 	case <-time.After(time.Second):
@@ -169,8 +163,8 @@ func TestSemanticTokensStaleOverlayReturnsContentModified(t *testing.T) {
 		t.Fatalf("Serve() error = %v", err)
 	}
 	_ = writer.Close()
-	if !semanticTokenResponseHasCode(t, output.Bytes(), 7, contentModified) {
-		t.Fatalf("no ContentModified response: %q", output.Bytes())
+	if responseIDPresent(t, output.Bytes(), 7) {
+		t.Fatalf("closed semantic token request emitted a response: %q", output.Bytes())
 	}
 }
 
@@ -211,21 +205,6 @@ func TestSemanticTokensCancelSuppressesResult(t *testing.T) {
 		t.Fatalf("output messages = %d, want diagnostics and shutdown", len(messages))
 	}
 	assertResultID(t, messages[1], 8)
-}
-
-func semanticTokenResponseHasCode(t *testing.T, data []byte, id, wantCode int) bool {
-	t.Helper()
-	for _, message := range readFrames(t, data) {
-		var response struct {
-			ID    int          `json:"id"`
-			Error *errorObject `json:"error"`
-		}
-		decodeJSON(t, message, &response)
-		if response.ID == id && response.Error != nil && response.Error.Code == wantCode {
-			return true
-		}
-	}
-	return false
 }
 
 func mustMarshalResponse(t *testing.T, response *responseEnvelope) []byte {

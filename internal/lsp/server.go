@@ -240,6 +240,7 @@ func (server *Server) didClose(request requestEnvelope) (*responseEnvelope, [][]
 	if err := decodeParams(request.Params, &params); err != nil || params.TextDocument.URI == "" {
 		return responseOrNil(request.ID, invalidParams, "Invalid didClose parameters"), nil, nil
 	}
+	server.cancelRequestsForURI(params.TextDocument.URI)
 	server.mu.Lock()
 	if _, exists := server.documents[params.TextDocument.URI]; !exists {
 		server.mu.Unlock()

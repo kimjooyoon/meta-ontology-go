@@ -170,10 +170,9 @@ func TestExitCancelsPendingRequest(t *testing.T) {
 	assertResultID(t, messages[1], 8)
 }
 
-func TestStaleFeatureReturnsContentModified(t *testing.T) {
+func TestClosedFeatureSuppressesResponse(t *testing.T) {
 	var calls atomic.Int32
 	opened := make(chan struct{})
-	release := make(chan struct{})
 	returned := make(chan struct{})
 	started := make(chan struct{})
 	parser := ContextParserFunc(func(ctx context.Context, uri, source string) (ParseResult, error) {
@@ -182,13 +181,9 @@ func TestStaleFeatureReturnsContentModified(t *testing.T) {
 			return ParseResult{Symbols: []Symbol{{Name: "source", Detail: "ready"}}}, nil
 		}
 		close(started)
-		select {
-		case <-release:
-			close(returned)
-			return ParseResult{Symbols: []Symbol{{Name: "source", Detail: "new"}}}, nil
-		case <-ctx.Done():
-			return ParseResult{}, ctx.Err()
-		}
+		<-ctx.Done()
+		close(returned)
+		return ParseResult{}, ctx.Err()
 	})
 	reader, writer := io.Pipe()
 	output := newDiagnosticsBuffer()
@@ -212,7 +207,6 @@ func TestStaleFeatureReturnsContentModified(t *testing.T) {
 		"textDocument": map[string]any{"uri": uri},
 	})
 	<-output.second
-	close(release)
 	select {
 	case <-returned:
 	case <-time.After(time.Second):
@@ -227,17 +221,12 @@ func TestStaleFeatureReturnsContentModified(t *testing.T) {
 	messages := readFrames(t, output.Bytes())
 	for _, message := range messages {
 		var response struct {
-			ID    int          `json:"id"`
-			Error *errorObject `json:"error"`
+			ID int `json:"id"`
 		}
-		if json.Unmarshal(message, &response) != nil || response.ID != 7 || response.Error == nil {
-			continue
-		}
-		if response.Error.Code == contentModified && response.Error.Message == "content modified during request" {
-			return
+		if json.Unmarshal(message, &response) == nil && response.ID == 7 {
+			t.Fatalf("closed feature emitted response: %s", message)
 		}
 	}
-	t.Fatalf("messages contained no ContentModified response: %q", output.Bytes())
 }
 
 func TestInputEOFCancelsPendingRequest(t *testing.T) {

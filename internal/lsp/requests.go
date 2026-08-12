@@ -13,6 +13,7 @@ type cancelParams struct {
 type inFlightRequest struct {
 	cancel   context.CancelFunc
 	canceled bool
+	uri      string
 }
 
 type requestResult struct {
@@ -40,7 +41,7 @@ func (loop *requestLoop) start(parent context.Context, request requestEnvelope, 
 		return writeResponse(loop.output, errorResponse(request.ID, invalidRequest, "duplicate request ID"))
 	}
 	requestCtx, cancel := context.WithCancel(parent)
-	loop.server.inflight[key] = &inFlightRequest{cancel: cancel}
+	loop.server.inflight[key] = &inFlightRequest{cancel: cancel, uri: requestDocumentURI(request)}
 	loop.pending++
 	go func() {
 		response, notifications, err := loop.server.dispatch(requestCtx, payload)
@@ -117,6 +118,26 @@ func (server *Server) cancelRequest(request requestEnvelope) {
 		state.canceled = true
 		state.cancel()
 	}
+}
+
+func (server *Server) cancelRequestsForURI(uri string) {
+	for _, state := range server.inflight {
+		if state.uri != uri {
+			continue
+		}
+		state.canceled = true
+		state.cancel()
+	}
+}
+
+func requestDocumentURI(request requestEnvelope) string {
+	var params struct {
+		TextDocument *TextDocumentIdentifier `json:"textDocument"`
+	}
+	if decodeParams(request.Params, &params) != nil || params.TextDocument == nil {
+		return ""
+	}
+	return params.TextDocument.URI
 }
 
 func (server *Server) canRunAsync(request requestEnvelope) bool {
