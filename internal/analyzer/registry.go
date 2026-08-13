@@ -26,7 +26,7 @@ func (r *Registry) Register(registration Registration) error {
 	if r == nil {
 		return errNilRegistry
 	}
-	if err := validateRegistration(registration); err != nil {
+	if err := validateRegistryRegistration(registration); err != nil {
 		return err
 	}
 	for _, existing := range r.entries {
@@ -98,6 +98,19 @@ func validateRegistration(registration Registration) error {
 	}
 	if !registration.Identity.Valid() {
 		return invalidRegistrationError("semantic identity is required")
+	}
+	return nil
+}
+
+func validateRegistryRegistration(registration Registration) error {
+	if err := validateRegistration(registration); err != nil {
+		return err
+	}
+	if _, err := semantic.ParseIdentity(registration.Identity.ID); err != nil {
+		return invalidRegistrationError("semantic identity must be a valid URI")
+	}
+	if _, err := semantic.ParseNamespace(registration.Identity.Namespace); err != nil {
+		return invalidRegistrationError("semantic namespace must be valid")
 	}
 	return nil
 }
