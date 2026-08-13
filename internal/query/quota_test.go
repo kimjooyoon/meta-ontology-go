@@ -106,11 +106,17 @@ func TestEnvelopeTraversalCycleLimitReplaysCanonicalPrefix(t *testing.T) {
 	if err != nil || len(limited.Result.DeterministicPaths) != 2 {
 		t.Fatalf("bounded cycle traversal = %#v, err=%v", limited.Result, err)
 	}
+	if limited.Metadata.GraphHash != beforeHash {
+		t.Fatalf("bounded cycle response changed graph hash: got %q want %q", limited.Metadata.GraphHash, beforeHash)
+	}
 	fullRequest := limitedRequest
 	fullRequest.Limit = 10
 	full, err := first.Execute(fullRequest)
 	if err != nil || len(full.Result.DeterministicPaths) < 2 {
 		t.Fatalf("expanded cycle traversal = %#v, err=%v", full.Result, err)
+	}
+	if full.Metadata.GraphHash != beforeHash {
+		t.Fatalf("expanded cycle response changed graph hash: got %q want %q", full.Metadata.GraphHash, beforeHash)
 	}
 	if !reflect.DeepEqual(limited.Result.DeterministicPaths, full.Result.DeterministicPaths[:2]) {
 		t.Fatalf("bounded cycle traversal changed canonical prefix: %#v vs %#v",
@@ -140,5 +146,16 @@ func TestEnvelopeTraversalInvalidRelationFailsClosedWithoutMutation(t *testing.T
 	assertAdd(t, graph, NewFact(root, WasDerivedFrom, target))
 	request := traversalEnvelope(root, LayerDeterministic, 2, 2)
 	request.Relation = Relation("gooo:unknown")
-	assertRejectedEnvelope(t, graph, request, "invalid-traversal-relation", "unsupported_relation")
+	beforeHash := graph.StableHash()
+	response, err := graph.Execute(request)
+	if err == nil || response.Error == nil || response.Error.Code != "unsupported_relation" {
+		t.Fatalf("invalid traversal relation was not rejected: %#v, err=%v", response, err)
+	}
+	if response.Metadata.GraphHash != beforeHash || graph.StableHash() != beforeHash {
+		t.Fatalf("invalid traversal relation changed graph hash: response=%q graph=%q want=%q",
+			response.Metadata.GraphHash, graph.StableHash(), beforeHash)
+	}
+	if response.Hash == "" || response.Hash != response.CanonicalDigestValue() {
+		t.Fatalf("invalid traversal rejection was not sealed: %#v", response)
+	}
 }
