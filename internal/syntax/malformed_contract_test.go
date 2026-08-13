@@ -91,3 +91,26 @@ func TestMalformedUnicodeEscapeStopsBeforeNewline(t *testing.T) {
 		})
 	}
 }
+
+func TestMalformedUnicodeEscapePreservesClosingQuote(t *testing.T) {
+	source := quotedIDSource("A", `\u12`)
+	original := source
+	file, diagnostics := ParseFile("unicode-quote.gooo", source)
+	tokens, lexerDiagnostics := LexFile("unicode-quote.gooo", source)
+	if len(diagnostics) != 1 || len(lexerDiagnostics) != 1 || diagnostics[0].Code != DiagInvalidEscape {
+		t.Fatalf("diagnostics = %#v, lexer diagnostics = %#v", diagnostics, lexerDiagnostics)
+	}
+	entity := file.Declarations[0].(*EntityDecl)
+	quoteOffset := strings.LastIndexByte(source, '"')
+	if entity.IDSpan.End.Offset != quoteOffset+1 || file.Span.End != tokens[len(tokens)-1].Span.End {
+		t.Fatalf("string/root spans = %#v, %#v", entity.IDSpan, file.Span)
+	}
+	formatted, formatDiagnostics, err := FormatSource("unicode-quote.gooo", source)
+	if err == nil || formatted != "" || !reflect.DeepEqual(diagnostics, formatDiagnostics) {
+		t.Fatalf("format result = %q, %#v, %v", formatted, formatDiagnostics, err)
+	}
+	secondFile, secondDiagnostics := ParseFile("unicode-quote.gooo", source)
+	if !reflect.DeepEqual(file, secondFile) || !reflect.DeepEqual(diagnostics, secondDiagnostics) || source != original {
+		t.Fatal("malformed Unicode quote recovery was not deterministic or mutated input")
+	}
+}

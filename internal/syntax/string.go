@@ -83,7 +83,7 @@ func (l *Lexer) lexEscape(value *strings.Builder, escapeStart Position) bool {
 		var recovered strings.Builder
 		for i := 0; i < 4 && l.offset < len(l.source); i++ {
 			r, size := l.peekRune()
-			if r == '\n' || r == '\r' {
+			if r == '\n' || r == '\r' || r == '"' {
 				break
 			}
 			if r == utf8.RuneError && size == 1 {
