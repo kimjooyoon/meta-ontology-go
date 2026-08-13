@@ -98,7 +98,7 @@ func run(root, from, to, head, base, branch, expectedHead string, capsOnly, skip
 		}
 	}
 	if base != "" || head != "" {
-		if err := verify.CheckIntegrationPullRequest(head, base); err != nil {
+		if err := verify.CheckPullRequestPolicy(head, base); err != nil {
 			return err
 		}
 	}

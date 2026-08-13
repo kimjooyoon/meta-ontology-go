@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestProtectedPushFailureManifestUsesExactBranchOwner(t *testing.T) {
-	for _, branch := range []string{"integration", "dev", "main"} {
+	for _, branch := range []string{"dev", "main"} {
 		t.Run(branch, func(t *testing.T) {
 			binding := validFailureBinding()
 			binding.Event = "push"
@@ -36,10 +36,15 @@ func TestProtectedPushFailureManifestRejectsUnknownOrStaleOwner(t *testing.T) {
 			binding.EventRef = "refs/heads/main"
 			binding.OwnerBranch = "integration"
 		},
-		"pull request number": func(binding *failureBinding) {
+		"retired protected branch": func(binding *failureBinding) {
 			binding.BaseRef = "integration"
 			binding.EventRef = "refs/heads/integration"
 			binding.OwnerBranch = "integration"
+		},
+		"pull request number": func(binding *failureBinding) {
+			binding.BaseRef = "dev"
+			binding.EventRef = "refs/heads/dev"
+			binding.OwnerBranch = "dev"
 			binding.PRNumber = 105
 		},
 	} {

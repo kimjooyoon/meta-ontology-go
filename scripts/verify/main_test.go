@@ -72,8 +72,10 @@ func TestCISCOPE001UnknownAgentPushFailsClosed(t *testing.T) {
 	if err := checkAgentPushBranch("agent/ci-generator-current7"); err != nil {
 		t.Fatal(err)
 	}
-	if err := checkAgentPushBranch("integration"); err != nil {
-		t.Fatal(err)
+	for _, branch := range []string{"dev", "main"} {
+		if err := checkAgentPushBranch(branch); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 

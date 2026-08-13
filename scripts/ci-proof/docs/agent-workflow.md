@@ -4,7 +4,7 @@ Each PR is an independent goal. An agent must continue implementing, testing,
 committing, pushing, and auditing its own PR even when another PR is blocked.
 Do not wait for another agent's permission or external evidence.
 
-The governance contract is explicitly `mode=ci_only`. Integration CI closure
+The governance contract is explicitly `mode=ci_only`. Dev CI closure
 does not consume human reviews, approval actors, or last-push approval fields.
 It is determined by exact tuple identity, the six GitHub-app jobs, registered
 scope, current artifact digest/binding, checked-in policy digest, and the
@@ -14,7 +14,7 @@ promotion predicate and remains fail-closed when its observer is unavailable.
 PR failure ownership and protected-branch push ownership are separate. A
 pull-request manifest must use the exact registered `agent/*` owner branch.
 For a protected `push`, the owner is the normalized event branch itself and
-must be one of `integration`, `dev`, or `main`; the event ref must be exactly
+must be one of `dev` or `main`; the event ref must be exactly
 `refs/heads/<owner>`, and `pr_number` must be zero. Unknown, stale, omitted, or
 malformed refs fail closed and route remediation through the catalog/gate
 handoff rather than inventing an agent owner.
@@ -26,26 +26,21 @@ transition policy, `scripts/ci-proof/**`, `scripts/ci-evidence/**`,
 on any add, modify, delete, or rename, including `previous_filename` renames. It
 checks out only the immutable base SHA and does not parse candidate YAML as an
 authorization decision. Comments and inert YAML markers therefore cannot bypass
-the path gate, and fork PRs receive the same read-only treatment.
+the path gate, and fork PRs receive the same read-only treatment. A Guardian PASS
+is kernel-safety evidence only; CI scope ownership and the exact PR policy remain
+separate conjunctions.
 
-The current default branch is `main`, and the integration base predates this
-`pull_request_target` workflow. Merging only to `integration` therefore does not
-activate it; this PR is the explicit one-time
-`CI-ROOT-OF-TRUST-BOOTSTRAP-001` migration and performs no default-branch or
-protection mutation. After the explicit integration-to-dev/default migration, a
-probe must compare the distinct runtime SHA/ref, workflow SHA/ref, and event PR
-head SHA before any required-context decision. The artifact reports
-`CI-GUARDIAN-DEFAULT-BRANCH-001` until that topology exists and
-`CI-GUARDIAN-HEAD-BINDING-UNVERIFIED` until the probe proves the binding. These
-are shadow signals, not an existing required check or merge/promotion evidence.
-After bootstrap, ordinary PRs cannot modify the kernel. Future kernel rotation
-requires a maintenance ledger with before/after policy digests and code/tests
-proving the new base-pinned guardian; it is not a human-review predicate or an
-`agent/ci-workflow` exemption.
+The default branch is `dev`. The guardian remains a read-only shadow signal until
+its post-topology probe proves runtime SHA/ref, workflow SHA/ref, event PR head
+SHA, and the external expected tuple are identical. The artifact reports
+`CI-GUARDIAN-HEAD-BINDING-UNVERIFIED` until that probe succeeds; this is not an
+existing required check or merge/promotion evidence. Ordinary PRs cannot modify
+the kernel. Future kernel rotation requires a maintenance ledger with before/after
+policy digests and code/tests proving the new base-pinned guardian; it is not a
+human-review predicate or an `agent/ci-workflow` exemption.
 
-During the transition, feature PRs may target `integration` or `dev`; only exact
-`dev -> main` is a promotion. `integration` is temporary compatibility and remains
-in the protected push owner set while migration evidence is collected.
+Feature PRs target `dev`; only exact `dev -> main` is a promotion. The former
+`integration` ref is retired and must not be used for routing or ownership.
 
 Cross-scope relationships are local dependencies. Record them as
 `CI-DEPENDENCY-001` with `blocking_scope=local` and `parallelizable=true`; keep

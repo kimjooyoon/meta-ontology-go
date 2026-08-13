@@ -3,7 +3,7 @@
   "mode": "ci_only",
   "ci_app_id": 15368,
   "guardian_context": "CI guardian",
-  "protected_push_branches": ["integration", "dev", "main"],
+  "protected_push_branches": ["dev", "main"],
   "ownership": [
     {"branch": "agent/analyzer", "paths": ["internal/analyzer/**"]},
     {"branch": "agent/analyzer-contract", "paths": ["internal/analyzer/**"]},

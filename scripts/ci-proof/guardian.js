@@ -7,7 +7,7 @@ const HEAD_BINDING_STATUS = 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED';
 const DEFAULT_BRANCH_CODE = 'CI-GUARDIAN-DEFAULT-BRANCH-001';
 const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v1';
 const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE]);
-const ALLOWED_BASES = new Set(['integration', 'dev', 'main']);
+const ALLOWED_BASES = new Set(['dev', 'main']);
 const ALLOWED_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review']);
 const VALID_STATUSES = new Set(['added', 'copied', 'changed', 'modified', 'removed', 'renamed']);
 const PROTECTED_FILES = new Set([
@@ -64,8 +64,18 @@ function normalizePath(value) {
 }
 
 function isProtectedKernelPath(value) {
+  return kernelPathKind(value) !== null;
+}
+
+function kernelPathKind(value) {
   const path = normalizePath(value);
-  return PROTECTED_FILES.has(path) || PROTECTED_PREFIXES.some((prefix) => path.startsWith(prefix));
+  if (PROTECTED_FILES.has(path)) {
+    return 'file';
+  }
+  if (PROTECTED_PREFIXES.some((prefix) => path === prefix.slice(0, -1) || path.startsWith(prefix))) {
+    return 'prefix';
+  }
+  return null;
 }
 
 function validateGuardianPullRequest(pull) {
@@ -190,13 +200,33 @@ async function kernelTreeDigest({getCommit, getTree, owner, repo, ref}) {
   } catch (error) {
     throw guardianFailure(`kernel tree API failed: ${error.message || error}`);
   }
-  if (!treeResponse || (treeResponse.status !== undefined && treeResponse.status !== 200) || !treeResponse.data || treeResponse.data.truncated === true || !Array.isArray(treeResponse.data.tree)) {
+  if (!treeResponse || (treeResponse.status !== undefined && treeResponse.status !== 200) || !treeResponse.data || treeResponse.data.sha !== treeSHA || treeResponse.data.truncated === true || !Array.isArray(treeResponse.data.tree)) {
     throw guardianFailure('kernel tree response is missing or truncated');
   }
-  const entries = treeResponse.data.tree
-    .filter((entry) => entry && entry.type === 'blob' && typeof entry.path === 'string' && validSHA(entry.sha) && isProtectedKernelPath(entry.path))
-    .map((entry) => ({path: entry.path, mode: entry.mode || null, sha: entry.sha}))
-    .sort((left, right) => left.path.localeCompare(right.path));
+  const seen = new Set();
+  const entries = [];
+  for (const entry of treeResponse.data.tree) {
+    if (!entry || typeof entry.path !== 'string' || typeof entry.type !== 'string' || !validSHA(entry.sha)) {
+      throw guardianFailure('kernel tree response contains a malformed entry');
+    }
+    const path = normalizePath(entry.path);
+    if (seen.has(path)) {
+      throw guardianFailure(`kernel tree response contains a duplicate path: ${path}`);
+    }
+    seen.add(path);
+    const kind = kernelPathKind(path);
+    if (kind === null) {
+      continue;
+    }
+    if (!['blob', 'tree'].includes(entry.type) || (kind === 'file' && entry.type !== 'blob')) {
+      throw guardianFailure(`kernel tree response contains an unsupported protected entry: ${path}`);
+    }
+    entries.push({path, type: entry.type, mode: entry.mode || null, sha: entry.sha});
+  }
+  if (entries.length === 0) {
+    throw guardianFailure('kernel tree response contains no protected entries');
+  }
+  entries.sort((left, right) => [left.path, left.type, left.sha].join('\u0000').localeCompare([right.path, right.type, right.sha].join('\u0000')));
   return `sha256:${crypto.createHash('sha256').update(JSON.stringify(entries)).digest('hex')}`;
 }
 
@@ -311,10 +341,51 @@ function validateSortedKernelPaths(paths) {
   }
 }
 
-function validateGuardianArtifact(manifest) {
+function expectedArtifactTuple(manifest) {
+  if (!manifest) {
+    return null;
+  }
+  return {
+    repository: manifest.repository,
+    pull_request_number: manifest.pull_request_number,
+    action: manifest.action,
+    base_repo: manifest.base_repo,
+    base_ref: manifest.base_ref,
+    base_sha: manifest.base_sha,
+    head_repo: manifest.head_repo,
+    head_ref: manifest.head_ref,
+    head_sha: manifest.head_sha,
+    default_branch: manifest.default_branch,
+    workflow_ref: manifest.workflow_ref,
+    workflow_sha: manifest.workflow_sha,
+    runtime_ref: manifest.runtime_ref,
+    runtime_sha: manifest.runtime_sha,
+    event_ref: manifest.event_ref,
+    run_id: manifest.run_id,
+    run_attempt: manifest.run_attempt,
+  };
+}
+
+function validateExpectedArtifactTuple(manifest, expected) {
+  const fields = ['repository', 'pull_request_number', 'action', 'base_repo', 'base_ref', 'base_sha', 'head_repo', 'head_ref', 'head_sha', 'default_branch', 'workflow_ref', 'workflow_sha', 'runtime_ref', 'runtime_sha', 'event_ref', 'run_id', 'run_attempt'];
+  if (!expected || fields.some((field) => expected[field] === undefined || expected[field] === null)) {
+    throw guardianFailure('guardian artifact external expected tuple is missing');
+  }
+  if (!validRepository(expected.repository) || !validPositiveInteger(expected.pull_request_number) || !validRef(expected.action) || !validRepository(expected.base_repo) || !ALLOWED_BASES.has(expected.base_ref) || !validSHA(expected.base_sha) || !validRepository(expected.head_repo) || !validRef(expected.head_ref) || !validSHA(expected.head_sha) || !validRef(expected.default_branch) || !validRef(expected.workflow_ref) || !validSHA(expected.workflow_sha) || !validRef(expected.runtime_ref) || !validSHA(expected.runtime_sha) || !validRef(expected.event_ref) || !validPositiveInteger(expected.run_id) || !validPositiveInteger(expected.run_attempt)) {
+    throw guardianFailure('guardian artifact external expected tuple is malformed');
+  }
+  for (const field of fields) {
+    if (manifest[field] !== expected[field]) {
+      throw guardianFailure(`guardian artifact external tuple mismatch: ${field}`);
+    }
+  }
+}
+
+function validateGuardianArtifact(manifest, expected) {
   if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || manifest.head_binding_status !== HEAD_BINDING_STATUS || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0) {
     throw guardianFailure('guardian artifact schema or identity is malformed');
   }
+  validateExpectedArtifactTuple(manifest, expected);
   if (manifest.base_repo !== manifest.repository) {
     throw guardianFailure('guardian artifact base repository is not the event repository');
   }
@@ -353,7 +424,7 @@ function validateGuardianArtifact(manifest) {
       throw guardianFailure('guardian artifact PASS is not bound to the exact default dev identity');
     }
     const trustedPromotion = manifest.base_repo === manifest.repository && manifest.head_repo === manifest.repository && manifest.base_ref === 'main' && manifest.head_ref === 'dev' && manifest.head_sha === manifest.workflow_sha;
-    const featureRoute = (manifest.base_ref === 'integration' || manifest.base_ref === 'dev') && manifest.head_ref.startsWith('agent/');
+    const featureRoute = manifest.base_ref === 'dev' && manifest.head_ref.startsWith('agent/');
     if (!featureRoute && !trustedPromotion) {
       throw guardianFailure('guardian artifact PASS route is neither an agent feature nor exact dev-to-main promotion');
     }
@@ -380,6 +451,7 @@ module.exports = {
   classifyGuardianDecision,
   defaultBranchDecision,
   digestGuardianArtifact,
+  expectedArtifactTuple,
   inspectChangedFiles,
   isProtectedKernelPath,
   kernelTreeDigest,

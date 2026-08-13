@@ -4,7 +4,7 @@
 
 ## Validation
 
-- [ ] Feature PR targets `integration` or `dev`; only an exact `dev` head may target
+- [ ] Feature PR targets `dev`; only an exact `dev` head may target
       `main` for promotion.
 - [ ] `gofmt -l .` is empty.
 - [ ] `go vet ./...` passes.

@@ -73,8 +73,8 @@ func ValidateGovernanceMatrix(matrix GovernanceMatrix) error {
 }
 
 func validateProtectedPushBranches(branches []string) error {
-	if !sameStrings(branches, []string{"integration", "dev", "main"}) {
-		return fmt.Errorf("protected push branches must be integration, dev, and main")
+	if !sameStrings(branches, []string{"dev", "main"}) {
+		return fmt.Errorf("protected push branches must be dev and main")
 	}
 	for _, branch := range branches {
 		if branch == "" || strings.ContainsAny(branch, "/*?[]") {

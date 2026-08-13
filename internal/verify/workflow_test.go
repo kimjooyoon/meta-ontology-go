@@ -13,9 +13,8 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(workflow)
-	guard := "if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')"
-	if strings.Count(text, guard) != 5 {
-		t.Fatalf("expected five full-check push guards, got %d", strings.Count(text, guard))
+	if strings.Contains(text, "'agent/**'") || strings.Contains(text, "agent push cap-only") {
+		t.Fatal("CI workflow retained a non-protected agent push trigger")
 	}
 	for _, condition := range []string{"if: github.event_name == 'pull_request'", "if: github.event_name == 'push'"} {
 		if !strings.Contains(text, condition) {
@@ -53,7 +52,7 @@ func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
 	}
 	text := string(workflow)
 	for _, marker := range []string{
-		"name: CI guardian", "pull_request_target:", "- integration\n      - dev\n      - main",
+		"name: CI guardian", "pull_request_target:", "- dev\n      - main",
 		"actions/checkout@11d5960a326750d5838078e36cf38b85af677262", "ref: ${{ github.workflow_sha }}",
 		"persist-credentials: false", "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b", "listFiles",
 		"github.rest.pulls.get", "github.workflow_ref", "github.workflow_sha", "github.sha",
@@ -77,13 +76,10 @@ func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
 func assertWorkflowMarkers(t *testing.T, text string) {
 	t.Helper()
 	for _, marker := range []string{
-		"run-name: \"CI [${{",
+		"run-name: \"CI [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]\"",
 		"types: [opened, synchronize, reopened, ready_for_review]",
-		"startsWith(github.ref, 'refs/heads/agent/') && 'agent push cap-only'",
-		"|| 'push full'",
 		"Record CI event source",
 		"source=\"PR authoritative\"",
-		"source=\"agent push cap-only\"",
 		"source=\"push full\"",
 		"GITHUB_STEP_SUMMARY",
 		"ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}",
@@ -178,12 +174,11 @@ func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(workflow)
-	if !strings.Contains(text, "pull_request:\n    branches:\n      - integration\n      - dev\n      - main") {
-		t.Fatal("pull-request trigger does not include the integration/dev/main transition targets")
+	if !strings.Contains(text, "pull_request:\n    branches:\n      - dev\n      - main") {
+		t.Fatal("pull-request trigger does not include the dev/main steady-state targets")
 	}
-	guard := "if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')"
-	if strings.Count(text, guard) != 5 {
-		t.Fatalf("pull requests do not retain five guarded canonical jobs: %d", strings.Count(text, guard))
+	if strings.Contains(text, "'agent/**'") {
+		t.Fatal("push trigger includes an unprotected agent branch")
 	}
 	if !strings.Contains(text, "  policy:\n    name: CI policy") {
 		t.Fatal("pull requests do not retain the unconditionally scheduled policy job")

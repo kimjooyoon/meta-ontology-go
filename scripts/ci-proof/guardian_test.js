@@ -12,6 +12,7 @@ const {
   buildGuardianArtifact,
   classifyGuardianDecision,
   digestGuardianArtifact,
+  expectedArtifactTuple,
   inspectChangedFiles,
   kernelTreeDigest,
   revalidatePullRequest,
@@ -21,7 +22,7 @@ const {
 
 const sha = (letter) => letter.repeat(40);
 const file = (filename, status = 'modified', previous_filename) => ({filename, status, ...(previous_filename ? {previous_filename} : {})});
-const pull = (base = 'integration', fork = false) => ({
+const pull = (base = 'dev', fork = false) => ({
   number: 108,
   base: {ref: base, sha: sha('b'), repo: {full_name: 'owner/repo'}},
   head: {ref: 'agent/ci-workflow', sha: sha('a'), repo: {full_name: fork ? 'fork/repo' : 'owner/repo'}},
@@ -71,6 +72,7 @@ async function testKernelStatusesAndRenames() {
 
 async function testForkAndMalformedAPI() {
   validateGuardianPullRequest(pull('dev', true));
+  assert.throws(() => validateGuardianPullRequest(pull('integration')), (error) => error && error.code === ROOT_FAILURE_CODE);
   await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1, listFiles: async () => ({status: 200, data: [{status: 'modified'}]})}));
   await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 0, listFiles: async () => ({status: 200, data: null})}));
   await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 0, listFiles: async () => undefined}));
@@ -90,7 +92,7 @@ async function testStaleRaceAndArtifactDigest() {
   }));
   await rejectsRoot(() => revalidatePullRequest({
     owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
-    getPull: async () => ({status: 200, data: {...eventPull, base: {...eventPull.base, ref: 'integration'}}}),
+    getPull: async () => ({status: 200, data: {...eventPull, base: {...eventPull.base, ref: 'main'}}}),
   }));
   const matching = await revalidatePullRequest({
     owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
@@ -103,9 +105,11 @@ async function testStaleRaceAndArtifactDigest() {
     runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
     result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md', 'modified')], kernelPaths: []},
   });
-  validateGuardianArtifact(artifact);
-  artifact.changed_files[0].filename = 'docs/tampered.md';
+  const expected = expectedArtifactTuple(artifact);
   assert.throws(() => validateGuardianArtifact(artifact), (error) => error && error.code === ROOT_FAILURE_CODE);
+  validateGuardianArtifact(artifact, expected);
+  artifact.changed_files[0].filename = 'docs/tampered.md';
+  assert.throws(() => validateGuardianArtifact(artifact, expected), (error) => error && error.code === ROOT_FAILURE_CODE);
   const freshArtifact = () => buildGuardianArtifact({
     pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
     workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
@@ -123,8 +127,9 @@ async function testStaleRaceAndArtifactDigest() {
     (candidate) => { candidate.kernel_paths = ['scripts/ci-proof/a', 'scripts/ci-proof/a']; },
   ]) {
     const candidate = freshArtifact();
+    const expected = expectedArtifactTuple(candidate);
     mutate(candidate);
-    assert.throws(() => validateGuardianArtifact(candidate), (error) => error && error.code === ROOT_FAILURE_CODE);
+    assert.throws(() => validateGuardianArtifact(candidate, expected), (error) => error && error.code === ROOT_FAILURE_CODE);
   }
   const rehash = (candidate) => {
     candidate.bundle_sha256 = digestGuardianArtifact(candidate);
@@ -135,18 +140,24 @@ async function testStaleRaceAndArtifactDigest() {
     (candidate) => { candidate.event_ref = 'refs/heads/main'; },
     (candidate) => { candidate.runtime_ref = 'refs/heads/main'; },
     (candidate) => { candidate.base_ref = 'main'; candidate.head_ref = 'agent/ci-workflow'; },
+    (candidate) => { candidate.pull_request_number = 999; },
+    (candidate) => { candidate.head_sha = sha('f'); },
+    (candidate) => { candidate.run_id = 999; },
+    (candidate) => { candidate.run_attempt = 2; },
     (candidate) => { candidate.changed_files_count = 2; },
     (candidate) => { candidate.changed_files = [file('.github/workflows/ci.yml', 'modified')]; },
   ]) {
     const candidate = rehash(freshArtifact());
+    const expected = expectedArtifactTuple(candidate);
     mutate(candidate);
     rehash(candidate);
-    assert.throws(() => validateGuardianArtifact(candidate), (error) => error && error.code === ROOT_FAILURE_CODE);
+    assert.throws(() => validateGuardianArtifact(candidate, expected), (error) => error && error.code === ROOT_FAILURE_CODE);
   }
   const omittedKernel = rehash(freshArtifact());
+  const omittedKernelExpected = expectedArtifactTuple(omittedKernel);
   omittedKernel.changed_files = [file('.github/workflows/ci.yml', 'modified')];
   rehash(omittedKernel);
-  assert.throws(() => validateGuardianArtifact(omittedKernel), (error) => error && error.code === ROOT_FAILURE_CODE);
+  assert.throws(() => validateGuardianArtifact(omittedKernel, omittedKernelExpected), (error) => error && error.code === ROOT_FAILURE_CODE);
 }
 
 async function testPromotionAndKernelDigests() {
@@ -170,7 +181,7 @@ async function testPromotionAndKernelDigests() {
   });
   assert.equal(wrongDefault.code, ROOT_FAILURE_CODE);
   const bootstrap = classifyGuardianDecision({
-    pull: pull('integration'), repository: 'owner/repo', defaultBranch: 'main', eventRef: 'refs/heads/main', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main', workflowSha: sha('d'), runtimeSha: sha('d'),
+    pull: pull('dev'), repository: 'owner/repo', defaultBranch: 'main', eventRef: 'refs/heads/main', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main', workflowSha: sha('d'), runtimeSha: sha('d'),
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
   assert.equal(bootstrap.code, DEFAULT_BRANCH_CODE);
@@ -185,12 +196,27 @@ async function testPromotionAndKernelDigests() {
   const tree = await kernelTreeDigest({
     owner: 'owner', repo: 'repo', ref: sha('d'),
     getCommit: async () => ({status: 200, data: {commit: {tree: {sha: sha('a')}}}}),
-    getTree: async () => ({status: 200, data: {truncated: false, tree: [
+    getTree: async () => ({status: 200, data: {sha: sha('a'), truncated: false, tree: [
       {path: '.github/workflows/ci.yml', type: 'blob', mode: '100644', sha: sha('1')},
       {path: 'docs/readme.md', type: 'blob', mode: '100644', sha: sha('2')},
     ]}}),
   });
   assert.match(tree, /^sha256:[0-9a-f]{64}$/);
+  const treeResponse = () => ({status: 200, data: {sha: sha('a'), truncated: false, tree: [{path: '.github/workflows/ci.yml', type: 'blob', mode: '100644', sha: sha('1')}]}});
+  for (const mutate of [
+    (response) => { response.data.sha = sha('b'); },
+    (response) => { response.data.tree[0].sha = 'short'; },
+    (response) => { response.data.tree[0].type = 'commit'; },
+    (response) => { response.data.tree.push({...response.data.tree[0]}); },
+  ]) {
+    const response = treeResponse();
+    mutate(response);
+    await rejectsRoot(() => kernelTreeDigest({
+      owner: 'owner', repo: 'repo', ref: sha('d'),
+      getCommit: async () => ({status: 200, data: {commit: {tree: {sha: sha('a')}}}}),
+      getTree: async () => response,
+    }));
+  }
 }
 
 async function testPaginationLimit() {
@@ -209,7 +235,8 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   const workflow = fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'workflows', 'ci-guardian.yml'), 'utf8');
   assert.match(workflow, /^name: CI guardian/m);
   assert.match(workflow, /pull_request_target:/);
-  assert.match(workflow, /- integration\n      - dev\n      - main/);
+  assert.match(workflow, /- dev\n      - main/);
+  assert.doesNotMatch(workflow, /- integration/);
   assert.match(workflow, /name: CI guardian/);
   assert.match(workflow, /ref: \$\{\{ github\.workflow_sha \}\}/);
   assert.doesNotMatch(workflow, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/);
@@ -224,8 +251,10 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
   assert.match(workflow, /if: \$\{\{ always\(\) \}\}/);
   assert.match(workflow, /ci-guardian\.json/);
+  assert.match(workflow, /pull_request_number: observedPull && observedPull\.number/);
+  assert.match(workflow, /runtime_sha: runtimeSha/);
   const writeIndex = workflow.indexOf('writeFileSync');
-  const validateIndex = workflow.indexOf('guardian.validateGuardianArtifact(artifact)');
+  const validateIndex = workflow.indexOf('guardian.validateGuardianArtifact(artifact,');
   const setFailedIndex = workflow.indexOf('core.setFailed');
   assert(writeIndex >= 0 && writeIndex < validateIndex && validateIndex < setFailedIndex, 'guardian validates the written artifact before reporting failure');
   assert.match(workflow, /head_binding=\$\{artifact\.head_binding_status\}/);

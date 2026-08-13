@@ -67,8 +67,8 @@ validator compares every field with its executable catalog and rejects drift.
 | `CI-FRESHNESS-001` | freshness / error | A head, base, run, attempt, or job is stale, replayed, or mismatched. | Stop promotion, fetch current refs, and require a fresh exact-head run. | Do not reuse historical green evidence or guess a tuple. | Handoff the stale and current tuples. |
 | `CI-PROVENANCE-001` | provenance / blocked | Required provenance evidence is absent, unavailable, or unverifiable. | Record the missing reason as fail-closed and request legitimate evidence. | Do not infer live protection or provenance from CI output. | Handoff the exact evidence references still required. |
 | `CI-OWNERSHIP-001` | ownership / blocked | Branch owner or path ownership cannot be resolved from the protected registry. | Keep the issue local, verify the registered owner, and stop only this PR's mutation. | Do not claim another agent's scope, create aliases, or edit ownership policy. | Handoff the unresolved branch/path tuple to the governance owner. |
-| `CI-ROOT-OF-TRUST-001` | trust-root / blocked | A PR-controlled workflow has no previously integrated base-pinned guardian for its own CI policy change. | Treat the change as a one-time bootstrap, publish immutable diff/test evidence, and require the guardian on subsequent CI changes. | Do not claim proof-of-proof from PR-controlled jobs or bypass the guardian boundary. | Handoff the base/head policy tuple and guardian bootstrap evidence to the integration gate. |
-| `CI-ROOT-OF-TRUST-BOOTSTRAP-001` | trust-root / blocked | The base/default topology cannot run the newly introduced guardian for this bootstrap PR. | Record the exact base/head, protected-kernel diff, local tests, and PR evidence; keep the guardian advisory until a real base-pinned run exists. | Do not add an unenforceable required context, claim that #105 proves itself, or mutate default/main. | Handoff the bootstrap ledger to integration; after dev/default migration, prove a guardian run before changing protection. |
+| `CI-ROOT-OF-TRUST-001` | trust-root / blocked | A PR-controlled workflow has no previously integrated base-pinned guardian for its own CI policy change. | Treat the change as a one-time bootstrap, publish immutable diff/test evidence, and require the guardian on subsequent CI changes. | Do not claim proof-of-proof from PR-controlled jobs or bypass the guardian boundary. | Handoff the base/head policy tuple and guardian bootstrap evidence to the dev gate. |
+| `CI-ROOT-OF-TRUST-BOOTSTRAP-001` | trust-root / blocked | The default-dev topology cannot yet prove the newly introduced guardian's native head binding. | Record the exact base/head, protected-kernel diff, local tests, and PR evidence; keep the guardian advisory until a real base-pinned probe exists. | Do not add an unenforceable required context, claim that a PR-controlled job proves itself, or mutate protection. | Handoff the bootstrap ledger to dev; prove the guardian binding before changing protection. |
 | `CI-UNCLASSIFIED-001` | unclassified / blocked | A terminal failure cannot be safely classified. | Stop and request deterministic CI policy classification. | Do not guess a reason or treat it as green. | Handoff the exact job/run tuple to gate. |
 
 ## Guardian artifact activation statuses
@@ -77,7 +77,7 @@ These codes are emitted in the `gooo/ci-guardian/v1` shadow artifact and are
 distinct from the `gooo/ci-failure/v1` catalog above:
 
 - `CI-GUARDIAN-DEFAULT-BRANCH-001`: the repository default branch is not `dev`
-  (or the runtime ref is not the exact default-dev ref), so an integration-only
+  (or the runtime ref is not the exact default-dev ref), so a pre-default
   bootstrap must not be treated as an active guardian.
 - `CI-GUARDIAN-HEAD-BINDING-UNVERIFIED`: runtime SHA/ref, workflow SHA/ref, and
   event PR head SHA are recorded as distinct identities, but a post-bootstrap

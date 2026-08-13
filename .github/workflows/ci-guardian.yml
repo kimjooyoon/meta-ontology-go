@@ -3,7 +3,6 @@ name: CI guardian
 on:
   pull_request_target:
     branches:
-      - integration
       - dev
       - main
     types: [opened, synchronize, reopened, ready_for_review]
@@ -120,7 +119,25 @@ jobs:
             fs.writeFileSync('ci-guardian.json', JSON.stringify(artifact, null, 2) + '\n');
             let validationError = null;
             try {
-              guardian.validateGuardianArtifact(artifact);
+              guardian.validateGuardianArtifact(artifact, {
+                repository,
+                pull_request_number: observedPull && observedPull.number,
+                action: context.payload.action,
+                base_repo: observedPull && observedPull.base && observedPull.base.repo && observedPull.base.repo.full_name,
+                base_ref: observedPull && observedPull.base && observedPull.base.ref,
+                base_sha: observedPull && observedPull.base && observedPull.base.sha,
+                head_repo: observedPull && observedPull.head && observedPull.head.repo && observedPull.head.repo.full_name,
+                head_ref: observedPull && observedPull.head && observedPull.head.ref,
+                head_sha: observedPull && observedPull.head && observedPull.head.sha,
+                default_branch: defaultBranch,
+                workflow_ref: workflowRef,
+                workflow_sha: workflowSha,
+                runtime_ref: runtimeRef,
+                runtime_sha: runtimeSha,
+                event_ref: runtimeRef,
+                run_id: runId,
+                run_attempt: runAttempt,
+              });
             } catch (error) {
               validationError = error;
             }
