@@ -12,7 +12,6 @@ const {
   buildGuardianArtifact,
   classifyGuardianDecision,
   digestGuardianArtifact,
-  expectedArtifactTuple,
   inspectChangedFiles,
   kernelTreeDigest,
   revalidatePullRequest,
@@ -27,6 +26,26 @@ const pull = (base = 'dev', fork = false) => ({
   base: {ref: base, sha: sha('b'), repo: {full_name: 'owner/repo'}},
   head: {ref: 'agent/ci-workflow', sha: sha('a'), repo: {full_name: fork ? 'fork/repo' : 'owner/repo'}},
   changed_files: 1,
+});
+
+const expectedFixtureTuple = () => ({
+  repository: 'owner/repo',
+  pull_request_number: 108,
+  action: 'synchronize',
+  base_repo: 'owner/repo',
+  base_ref: 'dev',
+  base_sha: sha('d'),
+  head_repo: 'owner/repo',
+  head_ref: 'agent/ci-workflow',
+  head_sha: sha('a'),
+  default_branch: 'dev',
+  workflow_ref: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev',
+  workflow_sha: sha('d'),
+  runtime_ref: 'refs/heads/dev',
+  runtime_sha: sha('d'),
+  event_ref: 'refs/heads/dev',
+  run_id: 108,
+  run_attempt: 1,
 });
 
 async function rejectsRoot(operation) {
@@ -86,6 +105,7 @@ async function testForkAndMalformedAPI() {
 
 async function testStaleRaceAndArtifactDigest() {
   const eventPull = pull('dev');
+  eventPull.base.sha = sha('d');
   await rejectsRoot(() => revalidatePullRequest({
     owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
     getPull: async () => ({status: 200, data: {...eventPull, head: {...eventPull.head, sha: sha('c')}}}),
@@ -105,7 +125,7 @@ async function testStaleRaceAndArtifactDigest() {
     runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
     result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md', 'modified')], kernelPaths: []},
   });
-  const expected = expectedArtifactTuple(artifact);
+  const expected = expectedFixtureTuple();
   assert.throws(() => validateGuardianArtifact(artifact), (error) => error && error.code === ROOT_FAILURE_CODE);
   validateGuardianArtifact(artifact, expected);
   artifact.changed_files[0].filename = 'docs/tampered.md';
@@ -127,7 +147,7 @@ async function testStaleRaceAndArtifactDigest() {
     (candidate) => { candidate.kernel_paths = ['scripts/ci-proof/a', 'scripts/ci-proof/a']; },
   ]) {
     const candidate = freshArtifact();
-    const expected = expectedArtifactTuple(candidate);
+    const expected = expectedFixtureTuple();
     mutate(candidate);
     assert.throws(() => validateGuardianArtifact(candidate, expected), (error) => error && error.code === ROOT_FAILURE_CODE);
   }
@@ -148,13 +168,19 @@ async function testStaleRaceAndArtifactDigest() {
     (candidate) => { candidate.changed_files = [file('.github/workflows/ci.yml', 'modified')]; },
   ]) {
     const candidate = rehash(freshArtifact());
-    const expected = expectedArtifactTuple(candidate);
+    const expected = expectedFixtureTuple();
     mutate(candidate);
     rehash(candidate);
     assert.throws(() => validateGuardianArtifact(candidate, expected), (error) => error && error.code === ROOT_FAILURE_CODE);
   }
+  const featureBaseRace = rehash(freshArtifact());
+  featureBaseRace.base_sha = sha('e');
+  rehash(featureBaseRace);
+  const featureBaseRaceExpected = expectedFixtureTuple();
+  featureBaseRaceExpected.base_sha = sha('e');
+  assert.throws(() => validateGuardianArtifact(featureBaseRace, featureBaseRaceExpected), (error) => error && error.code === ROOT_FAILURE_CODE);
   const omittedKernel = rehash(freshArtifact());
-  const omittedKernelExpected = expectedArtifactTuple(omittedKernel);
+  const omittedKernelExpected = expectedFixtureTuple();
   omittedKernel.changed_files = [file('.github/workflows/ci.yml', 'modified')];
   rehash(omittedKernel);
   assert.throws(() => validateGuardianArtifact(omittedKernel, omittedKernelExpected), (error) => error && error.code === ROOT_FAILURE_CODE);
@@ -180,8 +206,10 @@ async function testPromotionAndKernelDigests() {
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
   assert.equal(wrongDefault.code, ROOT_FAILURE_CODE);
+  const bootstrapPull = pull('dev');
+  bootstrapPull.base.sha = sha('d');
   const bootstrap = classifyGuardianDecision({
-    pull: pull('dev'), repository: 'owner/repo', defaultBranch: 'main', eventRef: 'refs/heads/main', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main', workflowSha: sha('d'), runtimeSha: sha('d'),
+    pull: bootstrapPull, repository: 'owner/repo', defaultBranch: 'main', eventRef: 'refs/heads/main', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main', workflowSha: sha('d'), runtimeSha: sha('d'),
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
   assert.equal(bootstrap.code, DEFAULT_BRANCH_CODE);

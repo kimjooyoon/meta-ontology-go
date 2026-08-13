@@ -245,6 +245,10 @@ function trustedDevPromotion({pull, repository, defaultBranch, workflowRef, work
 function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef, eventRef, workflowSha, runtimeSha, result, kernelBeforeDigest, kernelAfterDigest}) {
   const route = pullIdentity(pull);
   const promotion = trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha});
+  const featureRoute = route.base_ref === 'dev' && route.head_ref && route.head_ref.startsWith('agent/');
+  if (result.decision === 'PASS' && featureRoute && route.base_sha !== workflowSha) {
+    return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'feature base SHA is not the exact workflow SHA'};
+  }
   if (route.base_ref === 'main' && !promotion) {
     return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'main promotion is not the exact same-repository dev workflow authority'};
   }
@@ -341,31 +345,6 @@ function validateSortedKernelPaths(paths) {
   }
 }
 
-function expectedArtifactTuple(manifest) {
-  if (!manifest) {
-    return null;
-  }
-  return {
-    repository: manifest.repository,
-    pull_request_number: manifest.pull_request_number,
-    action: manifest.action,
-    base_repo: manifest.base_repo,
-    base_ref: manifest.base_ref,
-    base_sha: manifest.base_sha,
-    head_repo: manifest.head_repo,
-    head_ref: manifest.head_ref,
-    head_sha: manifest.head_sha,
-    default_branch: manifest.default_branch,
-    workflow_ref: manifest.workflow_ref,
-    workflow_sha: manifest.workflow_sha,
-    runtime_ref: manifest.runtime_ref,
-    runtime_sha: manifest.runtime_sha,
-    event_ref: manifest.event_ref,
-    run_id: manifest.run_id,
-    run_attempt: manifest.run_attempt,
-  };
-}
-
 function validateExpectedArtifactTuple(manifest, expected) {
   const fields = ['repository', 'pull_request_number', 'action', 'base_repo', 'base_ref', 'base_sha', 'head_repo', 'head_ref', 'head_sha', 'default_branch', 'workflow_ref', 'workflow_sha', 'runtime_ref', 'runtime_sha', 'event_ref', 'run_id', 'run_attempt'];
   if (!expected || fields.some((field) => expected[field] === undefined || expected[field] === null)) {
@@ -428,6 +407,9 @@ function validateGuardianArtifact(manifest, expected) {
     if (!featureRoute && !trustedPromotion) {
       throw guardianFailure('guardian artifact PASS route is neither an agent feature nor exact dev-to-main promotion');
     }
+    if (featureRoute && manifest.base_sha !== manifest.workflow_sha) {
+      throw guardianFailure('guardian artifact PASS feature base SHA is not the exact workflow SHA');
+    }
     if (manifest.kernel_paths.length > 0 && (!trustedPromotion || manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null)) {
       throw guardianFailure('guardian artifact PASS kernel propagation is not exact dev-to-main authority');
     }
@@ -451,7 +433,6 @@ module.exports = {
   classifyGuardianDecision,
   defaultBranchDecision,
   digestGuardianArtifact,
-  expectedArtifactTuple,
   inspectChangedFiles,
   isProtectedKernelPath,
   kernelTreeDigest,
