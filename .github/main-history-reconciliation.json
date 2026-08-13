@@ -1,0 +1,37 @@
+{
+  "schema": "gooo/main-history-reconciliation/v1",
+  "version": 1,
+  "candidate_merge_sha": "6a95e73a391a114d8a22cdc23251e8a7623d7768",
+  "candidate_first_parent_sha": "3b1647c7aa14558d07f868d649071a2c36e6cc88",
+  "candidate_second_parent_sha": "c557daf1fd6748b2e61afca10fb632792683061f",
+  "dev_sha": "3b1647c7aa14558d07f868d649071a2c36e6cc88",
+  "main_sha": "c557daf1fd6748b2e61afca10fb632792683061f",
+  "merge_base_sha": "0e838bff165dc73ed984ecbdca338d957b8abfa9",
+  "main_only_commits": [
+    {
+      "sha": "a798c8be290fd7f96662edca173cd93cfe270482",
+      "message": "chore: require Go 1.26.6"
+    },
+    {
+      "sha": "c557daf1fd6748b2e61afca10fb632792683061f",
+      "message": "chore: use Go 1.26.5 toolchain"
+    }
+  ],
+  "main_only_paths": [
+    "go.mod"
+  ],
+  "blob_equivalence": {
+    "path": "go.mod",
+    "dev_blob_sha": "0eaaa03f3d837fafab8ba1959b70adca21deeacd",
+    "main_blob_sha": "0eaaa03f3d837fafab8ba1959b70adca21deeacd",
+    "dev_sha256": "a2b49728e00943685ad402def409ffee32e15329a120b831ed58521616bed84b",
+    "main_sha256": "a2b49728e00943685ad402def409ffee32e15329a120b831ed58521616bed84b"
+  },
+  "disposition": "TREE_EQUIVALENT_ALREADY_IN_DEV",
+  "unincorporated_material": false,
+  "target_invariant": {
+    "main_is_ancestor_of_candidate": true,
+    "future_main_promotion": "exact_ci_backed_fast_forward_plus_main_dev_equality"
+  },
+  "canonical_digest": "sha256:919c2db00feaf873435f07a1437066247c810740b639ba435579ec17e078eac8"
+}
