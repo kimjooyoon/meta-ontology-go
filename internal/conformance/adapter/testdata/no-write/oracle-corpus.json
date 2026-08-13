@@ -1,0 +1,13 @@
+[
+  {"name":"missing-observer","oracle_code":"ORACLE-NW-001"},
+  {"name":"stale-observer","oracle_code":"ORACLE-NW-002"},
+  {"name":"malformed-observer","oracle_code":"ORACLE-NW-003"},
+  {"name":"byte-change","oracle_code":"ORACLE-NW-004"},
+  {"name":"lstat-replacement","oracle_code":"ORACLE-NW-005"},
+  {"name":"temp-artifact-change-including-root","oracle_code":"ORACLE-NW-006"},
+  {"name":"temp-symlink-identity-change","oracle_code":"ORACLE-NW-006"},
+  {"name":"missing-failure","oracle_code":"ORACLE-FAIL-001"},
+  {"name":"wrong-failure-code","oracle_code":"ORACLE-FAIL-002"},
+  {"name":"invalid-pass-no-write","oracle_code":"ORACLE-PASS-001"},
+  {"name":"identity-mismatch","oracle_code":"ORACLE-ID-001"}
+]
