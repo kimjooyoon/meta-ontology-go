@@ -22,6 +22,28 @@ func TestFixtureMultipleHandwrittenSlotsSurviveIRDefaults(t *testing.T) {
 	}
 }
 
+func TestFixtureHandwrittenSlotBytesRemainExact(t *testing.T) {
+	first := mustAcceptanceResult(t, acceptanceFixture(), nil)
+	handwritten := "return Artifact{Digest: source.Digest}\n\t// preserve spacing  \n"
+	previous := strings.Replace(string(first.Source), "return Artifact{}", handwritten, 1)
+	beforeMarkers, err := parseMarkers([]byte(previous))
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := beforeMarkers.Slots["gooo://slot/compile-implementation"].Body
+	changed := acceptanceFixture()
+	changed.Activities[0].Slots[0].Default = "panic(\"replacement default\")"
+	second := mustAcceptanceResult(t, changed, []byte(previous))
+	afterMarkers, err := parseMarkers(second.Source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual := afterMarkers.Slots["gooo://slot/compile-implementation"].Body
+	if !bytes.Equal(actual, expected) {
+		t.Fatalf("handwritten slot bytes changed: got %q want %q", actual, expected)
+	}
+}
+
 func TestFixtureSourceMapMatchesProtectedMarkerBounds(t *testing.T) {
 	result := mustAcceptanceResult(t, acceptanceFixture(), nil)
 	markers, err := parseMarkers(result.Source)
@@ -39,6 +61,23 @@ func TestFixtureSourceMapMatchesProtectedMarkerBounds(t *testing.T) {
 				t.Fatalf("slot %q source map does not match marker bounds: %#v", slot.ID, slotMapping)
 			}
 		}
+	}
+}
+
+func TestFixtureSourceMapPreservesDeclaredSlotOrder(t *testing.T) {
+	ir := acceptanceFixture()
+	ir.Activities[0].Slots = []Slot{
+		{ID: "gooo://slot/compile-implementation", Default: "return Artifact{}"},
+		{ID: "gooo://slot/compile-audit", Default: "return Artifact{}"},
+	}
+	result := mustAcceptanceResult(t, ir, nil)
+	mappings := result.SourceMap.Lookup("gooo://slot/compile-implementation")
+	if len(mappings) != 1 || mappings[0].Ordinal != 0 {
+		t.Fatalf("first declared slot lost its ordinal: %#v", mappings)
+	}
+	mappings = result.SourceMap.Lookup("gooo://slot/compile-audit")
+	if len(mappings) != 1 || mappings[0].Ordinal != 1 {
+		t.Fatalf("second declared slot lost its ordinal: %#v", mappings)
 	}
 }
 
