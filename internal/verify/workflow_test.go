@@ -106,18 +106,23 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 			t.Fatalf("workflow contains forbidden protection write %q", forbidden)
 		}
 	}
-	for _, forbidden := range []string{"github.rest.pulls.listReviews", "approval_api_unavailable", "independent_approval_missing_or_overlapping", "approvals_evidence_not_verified"} {
-		if strings.Contains(text, forbidden) {
-			t.Fatalf("workflow retains obsolete human-review proof predicate %q", forbidden)
-		}
-	}
-	for _, marker := range []string{"response.data.artifacts", "artifacts.length < 100", "approvals_status: 'not_applicable'", "provenance_status: artifactsVerified ? 'verified' : 'missing'"} {
-		if !strings.Contains(text, marker) {
-			t.Fatalf("workflow lost CI-only machine evidence marker %q", marker)
-		}
-	}
+	assertCIOnlyProofMarkers(t, text)
 	if strings.Contains(text, "\nadministration: read\n") {
 		t.Fatal("workflow declares unsupported administration permission key")
+	}
+}
+
+func assertCIOnlyProofMarkers(t *testing.T, text string) {
+	t.Helper()
+	for _, forbidden := range []string{"github.rest.pulls.listReviews", "approval_api_unavailable", "independent_approval_missing_or_overlapping", "approvals_evidence_not_verified", "ci-generated-proof"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("workflow retains obsolete CI predicate %q", forbidden)
+		}
+	}
+	for _, marker := range []string{"response.data.artifacts", "artifacts.length < 100", "approvals_status: 'not_applicable'", "provenance_status: artifactsVerified ? 'verified' : 'missing'", "rm -rf ci-generated/first", "--generated ci-generated/first"} {
+		if !strings.Contains(text, marker) {
+			t.Fatalf("workflow lost CI-only machine marker %q", marker)
+		}
 	}
 }
 

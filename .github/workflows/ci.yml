@@ -375,11 +375,11 @@ jobs:
             fs.writeFileSync('ci-jobs.json', JSON.stringify(jobs));
       - name: Reproduce proof fixture
         run: |
-          rm -rf ci-generated-proof
-          mkdir -p ci-generated-proof
-          go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated-proof
-          test -s ci-generated-proof/semantic.gooo.go
-          test -z "$(gofmt -l ci-generated-proof/semantic.gooo.go)"
+          rm -rf ci-generated/first
+          mkdir -p ci-generated/first
+          go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/first
+          test -s ci-generated/first/semantic.gooo.go
+          test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
           test -z "$(git diff --name-only)"
       - name: Collect proof context
         uses: actions/github-script@v7
@@ -488,7 +488,7 @@ jobs:
         run: |
           go run ./scripts/ci-proof \
             --root . --governance .github/ci-governance.json --evidence ci-evidence-input/ci-evidence.json \
-            --jobs ci-final-jobs.json --context ci-proof-context.json --generated ci-generated-proof \
+            --jobs ci-final-jobs.json --context ci-proof-context.json --generated ci-generated/first \
             --output ci-proof.json --receipt provenance-receipt.jsonl
       - name: Verify promotion proof fail closed
         run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
