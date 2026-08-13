@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestCIMachineProofDoesNotRequireProtectionOrReviews(t *testing.T) {
@@ -49,6 +50,28 @@ func TestCIBranchProtectionRequiresCIOnlySnapshot(t *testing.T) {
 		if branchProtectionReadyFor(mutated, "main") {
 			t.Fatal("human-review branch protection predicate was accepted by CI-only gate")
 		}
+	}
+}
+
+func TestFeatureBranchProtectionRejectsObservedFreshness(t *testing.T) {
+	bundle := validProof()
+	baseContext := contextInput{BaseRef: "dev", EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}
+	evidence := evidenceInput{Repository: bundle.Repository, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}
+	for _, test := range []struct {
+		name   string
+		mutate func(*branchProtection)
+	}{
+		{name: "observed_at", mutate: func(snapshot *branchProtection) { snapshot.ObservedAt = stringPointer("2026-08-14T00:00:00Z") }},
+		{name: "valid_until", mutate: func(snapshot *branchProtection) { snapshot.ValidUntil = stringPointer("2026-08-14T00:10:00Z") }},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			snapshot := bundle.BranchProtection
+			test.mutate(&snapshot)
+			snapshot.Digest = digestBranchProtection(snapshot)
+			if err := validateBranchProtectionAt(snapshot, evidence, baseContext, time.Date(2026, time.August, 14, 0, 5, 0, 0, time.UTC)); err == nil {
+				t.Fatal("feature proof accepted freshness on an unobserved branch-protection snapshot")
+			}
+		})
 	}
 }
 

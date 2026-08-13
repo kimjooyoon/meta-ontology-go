@@ -69,17 +69,17 @@ with a single self-checking compiler. The workflow currently pins
 `GOOO_CONFORMANCE_STAGE=0`: the Go verifier is authoritative and the existing
 format, vet, test, race, scope, DAMP/DRY, and deferred-CLI gates remain
 required. Promotion criteria are documented in `.github/conformance-plan.md`
-and require a reviewed CI-owned change.
+and require a CI-owned change authorized by deterministic evidence.
 
 The CI/verification change itself is intentionally scoped to `.github/**`,
 `scripts/**`, and `internal/verify/**`. A change outside those paths needs its owning
-agent and its own review boundary.
+agent and its own scope boundary.
 
 The ownership map for `agent/*` branches is explicit and lives in
 `internal/verify/scope.go`. Unknown agent branches fail closed. The map assigns
 each feature branch to its package, maps research branches to their individual
 `docs/research/<slug>.md` file, and reserves shared CI paths for
-`agent/ci-workflow`. The review table of registered aliases is maintained in
+`agent/ci-workflow`. The registered-alias table is maintained in
 `.github/agent-scope-table.md`; the Go map remains the executable policy. The
 `agent/go-version` maintenance branch is the sole
 toolchain exception: it may change `go.mod` only when the diff contains `go` or

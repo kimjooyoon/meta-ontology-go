@@ -101,8 +101,8 @@ jobs:
           cache: true
       - name: Semantic conformance (staged verifier promotion)
         env:
-          # Stage 0 is the current trust boundary. Advancing it is a reviewed
-          # governance change documented in .github/conformance-plan.md.
+          # Stage 0 is the current trust boundary. Advancing it requires a
+          # deterministic CI-authorized governance change documented in .github/conformance-plan.md.
           GOOO_CONFORMANCE_STAGE: "0"
         run: ./scripts/semantic-conformance.sh
 
