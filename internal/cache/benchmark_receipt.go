@@ -82,7 +82,7 @@ func (r BenchmarkReceipt) Validate() error {
 	for _, name := range canonicalBenchmarkJobs {
 		job, exists := r.Jobs[name]
 		if !exists || job.ID == "" || job.RunID != r.WorkflowRunID || job.Attempt != r.Attempt ||
-			job.Status == "" || job.Conclusion == "" ||
+			job.Status != "completed" || job.Conclusion != "success" ||
 			!job.HeadSHA.Known() || job.HeadSHA != r.HeadDigest || job.HeadCommitSHA != r.HeadSHA {
 			return fmt.Errorf("%w: incomplete benchmark job %q", ErrInvalidReceipt, name)
 		}
