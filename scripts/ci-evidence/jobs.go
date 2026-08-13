@@ -144,7 +144,7 @@ func validEventRef(event, ref string) bool {
 	return false
 }
 
-func normalizeJobs(apiJobs []apiJob, headSHA string, runID, runAttempt int64, selfPolicySuccess bool) ([]jobEvidence, error) {
+func normalizeJobs(apiJobs []apiJob, headSHA string, runID, runAttempt int64) ([]jobEvidence, error) {
 	byName := make(map[string]apiJob)
 	seenIDs := make(map[int64]bool)
 	for _, job := range apiJobs {
@@ -158,10 +158,6 @@ func normalizeJobs(apiJobs []apiJob, headSHA string, runID, runAttempt int64, se
 			return nil, fmt.Errorf("duplicate or invalid canonical CI job id %d", job.ID)
 		}
 		seenIDs[job.ID] = true
-		if job.Name == "CI policy" && job.Conclusion == "" && selfPolicySuccess {
-			job.Status = "completed"
-			job.Conclusion = "success"
-		}
 		byName[job.Name] = job
 	}
 	result := make([]jobEvidence, 0, len(canonicalJobs))

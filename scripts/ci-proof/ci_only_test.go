@@ -1,9 +1,43 @@
 package main
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
+
+func TestCIMachineProofDoesNotRequireProtectionOrReviews(t *testing.T) {
+	bundle := validProof()
+	bundle.BranchProtection.ReadStatus = "unavailable"
+	bundle.BranchProtection.Exists = false
+	bundle.BranchProtection.Strict = false
+	bundle.BranchProtection.RequiredChecks = nil
+	bundle.BranchProtection.EnforceAdmins = false
+	bundle.BranchProtection.MissingReason = "branch_protection_token_unavailable"
+	bundle.BranchProtection.Digest = digestBranchProtection(bundle.BranchProtection)
+	bundle.Digests.Bundle = ""
+	payload, err := json.Marshal(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundle.Digests.Bundle = digestBytes(payload)
+	if err := validateProof(bundle); err != nil {
+		t.Fatalf("machine proof incorrectly required human review or observable protection: %v", err)
+	}
+}
+
+func TestCIPromotionPredicateUsesCIOnlyProtection(t *testing.T) {
+	bundle := validProof()
+	promotion := promotionInput{BranchProtectionRequired: true}
+	if !promotionReady(promotion, bundle.BranchProtection) {
+		t.Fatal("CI-only protection snapshot was not promotion-ready")
+	}
+	bundle.BranchProtection.RequiredReviews = 1
+	bundle.BranchProtection.Digest = digestBranchProtection(bundle.BranchProtection)
+	if promotionReady(promotion, bundle.BranchProtection) {
+		t.Fatal("human review requirement was accepted by CI-only promotion predicate")
+	}
+}
 
 func TestCIBranchProtectionRequiresCIOnlySnapshot(t *testing.T) {
 	bundle := validProof()
@@ -28,7 +62,7 @@ func TestCIGateRejectionsUseMachineEvidenceWithoutHumanReviews(t *testing.T) {
 	context := contextInput{
 		Actor: "builder", Builder: "builder", Gate: "CI policy", BranchProtection: bundle.BranchProtection,
 		ScopeDecision: "passed", FixtureStatus: "verified", SourceStatus: "verified", SemanticStatus: "verified", ProvenanceStatus: "verified",
-		ArtifactsStatus: "verified", ApprovalsStatus: "not_applicable", WriteEffect: "none", NoWrite: true,
+		ArtifactsStatus: "verified", WriteEffect: "none", NoWrite: true,
 		FixturePaths: []string{"examples/billing/main.gooo"}, Artifacts: bundle.Artifacts,
 		MissingReasons: missingReasons{Protection: "domain_protection_observer_unavailable", Provenance: "domain_provenance_observer_unavailable"},
 		Cache:          validCache(),

@@ -22,7 +22,6 @@ type domainEvidence struct {
 	ObserverReceiptRefs []string             `json:"observer_receipt_refs"`
 	ObserverStatus      string               `json:"observer_status"`
 	ProtectionStatus    string               `json:"protection_status"`
-	ApprovalStatus      string               `json:"approval_status"`
 	ProvenanceStatus    string               `json:"provenance_status"`
 	Digests             domainEvidenceDigest `json:"digests"`
 	MissingReasons      missingReasons       `json:"missing_reasons"`
@@ -56,10 +55,10 @@ func validateDomainEvidence(domain domainEvidence, evidence evidenceInput, conte
 	if domain.Graph.Status != "deferred" || domain.Graph.Available || domain.Graph.Command == "" {
 		return fmt.Errorf("graph domain evidence must remain explicitly deferred")
 	}
-	if domain.ObserverStatus != "unavailable" || len(domain.ObserverReceiptRefs) != 0 || domain.ProtectionStatus != "unavailable" || domain.ApprovalStatus != "not_applicable" || domain.ProvenanceStatus != "unavailable" {
-		return fmt.Errorf("unavailable domain evidence was overstated")
+	if domain.ObserverStatus != "unavailable" || len(domain.ObserverReceiptRefs) != 0 || domain.ProtectionStatus != "unavailable" || domain.ProvenanceStatus != "not_applicable" {
+		return fmt.Errorf("domain evidence status is not CI-only and deterministic")
 	}
-	if err := validateMissingReasons(domain.MissingReasons, domain.ProtectionStatus, domain.ApprovalStatus, domain.ProvenanceStatus); err != nil {
+	if err := validateMissingReasons(domain.MissingReasons, domain.ProtectionStatus, domain.ProvenanceStatus); err != nil {
 		return err
 	}
 	if domain.Digests.SourceSHA256 != evidence.Digests.Source || domain.Digests.IRSHA256 != evidence.Digests.IR || domain.Digests.GeneratedSHA256 != evidence.Digests.Generated || domain.Digests.BundleSHA256 != evidence.Digests.Bundle || !validDigest(domain.Digests.DomainSHA256) {

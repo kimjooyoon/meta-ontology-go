@@ -1,11 +1,8 @@
 {
   "schema": "gooo/ci-governance/v1",
-  "roles": [
-    {"name": "Builder", "independent": false, "may_approve": false, "forbidden_overlaps": ["Guardian", "Approver", "Gate"]},
-    {"name": "Guardian", "independent": true, "may_approve": true, "forbidden_overlaps": ["Builder", "Approver", "Gate"]},
-    {"name": "Approver", "independent": true, "may_approve": true, "forbidden_overlaps": ["Builder", "Guardian", "Gate"]},
-    {"name": "Gate", "independent": true, "may_approve": false, "forbidden_overlaps": ["Builder", "Guardian", "Approver"]}
-  ],
+  "mode": "ci_only",
+  "ci_app_id": 15368,
+  "guardian_context": "CI guardian",
   "ownership": [
     {"branch": "agent/analyzer", "paths": ["internal/analyzer/**"]},
     {"branch": "agent/analyzer-contract", "paths": ["internal/analyzer/**"]},
@@ -105,9 +102,6 @@
     "source": "integration",
     "target": "main",
     "required_checks": ["gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"],
-    "branch_protection_required": true,
-    "independent_guardian_approver": true,
-    "forbid_self_approval": true,
-    "forbid_role_overlap": true
+    "branch_protection_required": true
   }
 }

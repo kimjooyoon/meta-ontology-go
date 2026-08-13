@@ -16,7 +16,6 @@ on:
 permissions:
   contents: read
   actions: read
-  pull-requests: read
   # GitHub Actions does not expose an administration permission key for
   # GITHUB_TOKEN, so administration: read must not be added here. The proof
   # uses the default read-only client when available and an approved
@@ -180,21 +179,32 @@ jobs:
           GOOO_PR_HEAD: ""
           GOOO_PR_BASE: ""
         run: go run ./scripts/verify
-      - name: Collect canonical job evidence
-        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
+  evidence:
+    name: CI evidence
+    needs: [format, vet, test, race, semantic, policy]
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test artifact paginator contract
+        run: node scripts/ci-proof/artifacts_test.js
+      - name: Collect terminal canonical job evidence
         uses: actions/github-script@v7
         with:
           github-token: ${{ github.token }}
           script: |
             const jobs = [];
             for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listJobsForWorkflowRun({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                run_id: context.runId,
-                per_page: 100,
-                page,
-              });
+              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data.jobs)) throw new Error('canonical job API returned malformed data');
               jobs.push(...response.data.jobs);
               if (response.data.jobs.length < 100) {
                 require('fs').writeFileSync('ci-jobs.json', JSON.stringify(jobs));
@@ -203,9 +213,7 @@ jobs:
             }
             throw new Error('canonical job API pagination exceeded the fail-closed page limit');
       - name: Reproduce generated evidence input
-        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
         run: |
-          rm -rf ci-generated
           mkdir -p ci-generated/first ci-generated/second
           go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/first
           go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/second
@@ -217,13 +225,10 @@ jobs:
           unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$|ci-domain/)' || true)"
           test -z "$unexpected"
       - name: Capture CLI domain evidence
-        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
         run: |
-          rm -rf ci-domain
           mkdir -p ci-domain
           go run ./cmd/gooo check examples/billing/main.gooo > ci-domain/cli-check.stdout 2> ci-domain/cli-check.stderr
       - name: Verify and write CI evidence bundle
-        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
         env:
           CI_REPOSITORY: ${{ github.repository }}
           CI_EVENT: ${{ github.event_name }}
@@ -235,14 +240,12 @@ jobs:
           CI_RUN_ID: ${{ github.run_id }}
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
-          CI_POLICY_SELF_SUCCESS: "true"
           CI_SLOT_PRESERVATION: "true"
           CI_NO_WRITE_OUTSIDE_GENERATED: "true"
         run: |
           go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --output ci-evidence.json
           go run ./scripts/ci-evidence --verify ci-evidence.json
       - name: Write machine-readable domain evidence
-        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
         uses: actions/github-script@v7
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
@@ -256,57 +259,21 @@ jobs:
             const headSha = pull ? pull.head.sha : context.sha;
             const baseSha = pull ? pull.base.sha : context.payload.before;
             const baseRef = pull ? pull.base.ref : context.ref_name;
-            const eventRef = context.ref;
             const output = fs.readFileSync('ci-domain/cli-check.stdout', 'utf8');
             const domain = {
-              schema: 'gooo/domain-evidence/v2',
-              repository: context.payload.repository.full_name,
-              event: context.eventName,
-              base_ref: baseRef,
-              base_sha: baseSha,
-              head_sha: headSha,
-              event_ref: context.ref,
-              checkout_ref: headSha,
-              run_id: context.runId,
-              run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
-              workflow_sha: process.env.CI_WORKFLOW_SHA,
-              cli: {
-                command: 'go run ./cmd/gooo check examples/billing/main.gooo',
-                fixture: 'examples/billing/main.gooo',
-                status: 'verified',
-                available: true,
-                output,
-                output_sha256: crypto.createHash('sha256').update(output).digest('hex'),
-              },
-              graph: {
-                command: 'go run ./cmd/gooo graph-dump examples/billing/main.gooo',
-                status: 'deferred',
-                available: false,
-                reason: 'graph-dump is not implemented in the current checkout',
-                output_sha256: crypto.createHash('sha256').update('').digest('hex'),
-              },
-              observer_receipt_refs: [],
-              observer_status: 'unavailable',
-              protection_status: 'unavailable',
-              approval_status: 'not_applicable',
-              provenance_status: 'unavailable',
-              digests: {
-                source_sha256: evidence.digests.source_sha256,
-                ir_sha256: evidence.digests.ir_sha256,
-                generated_output_sha256: evidence.digests.generated_output_sha256,
-                bundle_sha256: evidence.digests.bundle_sha256,
-                domain_sha256: '',
-              },
-              missing_reasons: {
-                protection: 'domain_protection_observer_unavailable',
-                provenance: 'domain_provenance_observer_unavailable',
-              },
+              schema: 'gooo/domain-evidence/v2', repository: context.payload.repository.full_name, event: context.eventName,
+              base_ref: baseRef, base_sha: baseSha, head_sha: headSha, event_ref: context.ref, checkout_ref: headSha,
+              run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1), workflow_sha: process.env.CI_WORKFLOW_SHA,
+              cli: {command: 'go run ./cmd/gooo check examples/billing/main.gooo', fixture: 'examples/billing/main.gooo', status: 'verified', available: true, output, output_sha256: crypto.createHash('sha256').update(output).digest('hex')},
+              graph: {command: 'go run ./cmd/gooo graph-dump examples/billing/main.gooo', status: 'deferred', available: false, reason: 'graph-dump is not implemented in the current checkout', output_sha256: crypto.createHash('sha256').update('').digest('hex')},
+              observer_receipt_refs: [], observer_status: 'unavailable', protection_status: 'unavailable', provenance_status: 'not_applicable',
+              digests: {source_sha256: evidence.digests.source_sha256, ir_sha256: evidence.digests.ir_sha256, generated_output_sha256: evidence.digests.generated_output_sha256, bundle_sha256: evidence.digests.bundle_sha256, domain_sha256: ''},
+              missing_reasons: {protection: 'domain_protection_observer_unavailable', provenance: ''},
             };
             const domainPayload = {...domain, digests: {...domain.digests, domain_sha256: ''}};
             domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
             fs.writeFileSync('ci-domain-evidence.json', JSON.stringify(domain, null, 2) + '\n');
       - name: Upload CI evidence bundle
-        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
@@ -318,7 +285,7 @@ jobs:
 
   proof:
     name: CI proof bundle
-    needs: [format, vet, test, race, semantic, policy]
+    needs: [format, vet, test, race, semantic, policy, evidence]
     if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
@@ -375,7 +342,6 @@ jobs:
             fs.writeFileSync('ci-jobs.json', JSON.stringify(jobs));
       - name: Reproduce proof fixture
         run: |
-          rm -rf ci-generated/first
           mkdir -p ci-generated/first
           go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/first
           test -s ci-generated/first/semantic.gooo.go
@@ -453,20 +419,15 @@ jobs:
             }
             const protectionPayload = {...protection, digest_sha256: ''};
             protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');
+            const {listWorkflowArtifacts, selectCurrentEvidenceArtifact, selectUniqueArtifact} = require('./scripts/ci-proof/artifacts');
             let artifacts = [];
             let artifactReadError = '';
             const runAttempt = Number(process.env.GITHUB_RUN_ATTEMPT || 1);
             try {
-              const artifactRows = [];
-              for (let page = 1; page <= 1000; page++) {
-                const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
-                artifactRows.push(...response.data.artifacts);
-                if (response.data.artifacts.length < 100) break;
-                if (page === 1000) throw new Error('workflow artifact API pagination exceeded the fail-closed page limit');
-              }
-              artifacts = artifactRows.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired, digest: artifact.digest || '', run_id: context.runId, run_attempt: runAttempt}));
+              const artifactRows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+              artifacts = [selectCurrentEvidenceArtifact(artifactRows, context.runId, runAttempt)];
             } catch (error) {
-              artifactReadError = 'artifact_api_unavailable';
+              artifactReadError = error.message;
               core.warning(error.message);
             }
             const expectedArtifactName = `ci-evidence-${context.runId}-${runAttempt}`;
@@ -477,10 +438,10 @@ jobs:
               repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
-              actor: context.actor, builder: context.actor, guardian: '', approver: '', gate: 'CI policy',
+              actor: context.actor, builder: context.actor, gate: 'CI policy',
               branch_protected: protection.exists, branch_protection: protection, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
-              provenance_status: artifactsVerified ? 'verified' : 'missing', artifacts_status: artifactsVerified ? 'verified' : 'missing', approvals_status: 'not_applicable',
-              write_effect: 'none', no_write_outside_generated: true, approvals: [], artifacts, fixture_paths: ['examples/billing/main.gooo'],
+              provenance_status: 'verified', artifacts_status: artifactsVerified ? 'verified' : 'missing',
+              write_effect: 'none', no_write_outside_generated: true, artifacts, fixture_paths: ['examples/billing/main.gooo'],
               cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence
             };
             fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
@@ -617,16 +578,11 @@ jobs:
               proofState = 'artifact_missing';
             }
             const proofArtifactName = `ci-proof-${context.runId}-${runAttempt}`;
+            const {listWorkflowArtifacts, selectUniqueArtifact} = require('./scripts/ci-proof/artifacts');
             let proofArtifact = null;
             try {
-              const artifactRows = [];
-              for (let page = 1; page <= 1000; page++) {
-                const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
-                artifactRows.push(...response.data.artifacts);
-                if (response.data.artifacts.length < 100) break;
-                if (page === 1000) throw new Error('failure artifact API pagination exceeded the fail-closed page limit');
-              }
-              proofArtifact = artifactRows.find(artifact => artifact.name === proofArtifactName) || null;
+              const artifactRows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+              proofArtifact = selectUniqueArtifact(artifactRows, proofArtifactName);
             } catch (error) {
               proofState = 'artifact_invalid';
               core.warning(error.message);
@@ -641,11 +597,16 @@ jobs:
               ['go vet', 'CI-TEST-001'],
               ['go test', 'CI-TEST-001'],
               ['go test -race', 'CI-TEST-001'],
+              ['CI evidence', 'CI-ARTIFACT-001'],
             ]);
             const classifyTerminalJob = job => {
               if (job.name === 'CI policy') {
                 const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
                 return failedStep?.name === 'Check DAMP/DRY caps' ? 'CI-CAPS-001' : 'CI-SCOPE-001';
+              }
+              if (job.name === 'CI evidence') {
+                const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
+                return failedStep?.name === 'Reproduce generated evidence input' || failedStep?.name === 'Capture CLI domain evidence' ? 'CI-TEST-001' : 'CI-ARTIFACT-001';
               }
               return terminalCodes.get(job.name) || 'CI-UNCLASSIFIED-001';
             };
@@ -657,7 +618,7 @@ jobs:
             addProofCode(reason => reason.includes('artifact') || reason.includes('fixture_inventory'), 'CI-ARTIFACT-001');
             addProofCode(reason => reason === 'fixture_evidence_not_verified', 'CI-TEST-001');
             addProofCode(reason => reason.includes('fresh') || reason.includes('stale') || reason.includes('mismatch'), 'CI-FRESHNESS-001');
-            addProofCode(reason => reason.includes('provenance'), 'CI-PROVENANCE-001');
+            addProofCode(reason => reason.includes('provenance') || reason === 'missing_external_evidence', 'CI-PROVENANCE-001');
             addProofCode(reason => reason.includes('ownership'), 'CI-OWNERSHIP-001');
             addProofCode(reason => reason.includes('dependency'), 'CI-DEPENDENCY-001');
             addProofCode(reason => reason.includes('contract') || reason === 'source_evidence_not_verified' || reason === 'semantic_evidence_not_verified' || reason.startsWith('cache_'), 'CI-CONTRACT-001');

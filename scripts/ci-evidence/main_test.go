@@ -9,7 +9,7 @@ import (
 func TestEvidenceRejectsMissingCanonicalJob(t *testing.T) {
 	jobs := validJobs()
 	jobs = jobs[:len(jobs)-1]
-	if _, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1, true); err == nil {
+	if _, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1); err == nil {
 		t.Fatal("missing canonical job was accepted")
 	}
 }
@@ -17,7 +17,7 @@ func TestEvidenceRejectsMissingCanonicalJob(t *testing.T) {
 func TestEvidenceRejectsMismatchedJobHead(t *testing.T) {
 	jobs := validJobs()
 	jobs[0].HeadSHA = strings.Repeat("b", 40)
-	if _, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1, true); err == nil {
+	if _, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1); err == nil {
 		t.Fatal("mismatched canonical job head was accepted")
 	}
 }
@@ -25,22 +25,18 @@ func TestEvidenceRejectsMismatchedJobHead(t *testing.T) {
 func TestEvidenceRejectsEmptyPolicyConclusion(t *testing.T) {
 	jobs := validJobs()
 	jobs[len(jobs)-1].Conclusion = ""
-	if _, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1, false); err == nil {
+	if _, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1); err == nil {
 		t.Fatal("empty policy conclusion was accepted")
 	}
 }
 
-func TestEvidenceBindsSelfPolicySuccessAsCompleted(t *testing.T) {
+func TestEvidenceRejectsInProgressPolicyWithoutIndependentObservation(t *testing.T) {
 	jobs := validJobs()
 	policy := len(jobs) - 1
 	jobs[policy].Status = "in_progress"
 	jobs[policy].Conclusion = ""
-	result, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1, true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if result[policy].Status != "completed" || result[policy].Conclusion != "success" {
-		t.Fatalf("self policy was not normalized to a terminal success: %+v", result[policy])
+	if _, err := normalizeJobs(jobs, strings.Repeat("a", 40), 1, 1); err == nil {
+		t.Fatal("in-progress policy was accepted without an independent terminal observation")
 	}
 }
 

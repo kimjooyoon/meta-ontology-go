@@ -78,8 +78,6 @@ type contextInput struct {
 	RunAttempt       int64            `json:"run_attempt"`
 	Actor            string           `json:"actor"`
 	Builder          string           `json:"builder"`
-	Guardian         string           `json:"guardian"`
-	Approver         string           `json:"approver"`
 	Gate             string           `json:"gate"`
 	BranchProtected  bool             `json:"branch_protected"`
 	BranchProtection branchProtection `json:"branch_protection"`
@@ -90,10 +88,8 @@ type contextInput struct {
 	SemanticStatus   string           `json:"semantic_status"`
 	ProvenanceStatus string           `json:"provenance_status"`
 	ArtifactsStatus  string           `json:"artifacts_status"`
-	ApprovalsStatus  string           `json:"approvals_status"`
 	WriteEffect      string           `json:"write_effect"`
 	NoWrite          bool             `json:"no_write_outside_generated"`
-	Approvals        []approvalInput  `json:"approvals"`
 	Artifacts        []artifactInput  `json:"artifacts"`
 	FixturePaths     []string         `json:"fixture_paths"`
 	Cache            cacheInput       `json:"cache"`
@@ -130,11 +126,6 @@ type branchProtection struct {
 	Digest                  string   `json:"digest_sha256"`
 }
 
-type approvalInput struct {
-	Actor string `json:"actor"`
-	State string `json:"state"`
-}
-
 type artifactInput struct {
 	ID         int64  `json:"id"`
 	Name       string `json:"name"`
@@ -147,7 +138,6 @@ type artifactInput struct {
 
 type missingReasons struct {
 	Protection string `json:"protection,omitempty"`
-	Approval   string `json:"approval,omitempty"`
 	Provenance string `json:"provenance,omitempty"`
 }
 
@@ -192,7 +182,6 @@ type proofBundle struct {
 	Scope            scopeResult      `json:"scope"`
 	Fixtures         fixtureResult    `json:"fixtures"`
 	Artifacts        []artifactInput  `json:"artifacts"`
-	Approvals        []approvalInput  `json:"approvals"`
 	Cache            cacheInput       `json:"cache"`
 	Digests          proofDigests     `json:"digests"`
 	WriteEffect      string           `json:"write_effect"`
@@ -204,11 +193,9 @@ type proofBundle struct {
 }
 
 type actorRoles struct {
-	Actor    string `json:"actor"`
-	Builder  string `json:"builder"`
-	Guardian string `json:"guardian"`
-	Approver string `json:"approver"`
-	Gate     string `json:"gate"`
+	Actor   string `json:"actor"`
+	Builder string `json:"builder"`
+	Gate    string `json:"gate"`
 }
 
 type scopeResult struct {

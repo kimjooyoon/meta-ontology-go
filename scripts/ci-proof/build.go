@@ -12,7 +12,7 @@ import (
 func buildProof(inputs proofInputs, digests proofDigests) (proofBundle, provenanceReceipt, error) {
 	context := inputs.Context
 	rejections := gateRejections(inputs)
-	bundle := proofBundle{Schema: proofSchema, Repository: context.Repository, Event: context.Event, PRNumber: context.PRNumber, BaseRef: context.BaseRef, BaseSHA: context.BaseSHA, HeadSHA: context.HeadSHA, Ref: context.Ref, EventRef: context.EventRef, CheckoutRef: context.CheckoutRef, RunID: context.RunID, RunAttempt: context.RunAttempt, WorkflowSHA: context.WorkflowSHA, Jobs: inputs.Jobs, Actors: actorRoles{Actor: context.Actor, Builder: context.Builder, Guardian: context.Guardian, Approver: context.Approver, Gate: context.Gate}, BranchProtection: context.BranchProtection, DomainEvidence: context.DomainEvidence, Scope: scopeResult{Decision: context.ScopeDecision, Status: statusFor(context.ScopeDecision)}, Fixtures: fixtureResult{Paths: context.FixturePaths, Status: context.FixtureStatus, Source: context.SourceStatus, Semantic: context.SemanticStatus, Provenance: context.ProvenanceStatus}, Artifacts: context.Artifacts, Approvals: context.Approvals, Cache: context.Cache, Digests: digests, WriteEffect: context.WriteEffect, Decision: "PASS", NoWrite: context.NoWrite, Rejections: rejections, Predecessors: context.Predecessors, MissingReasons: context.MissingReasons}
+	bundle := proofBundle{Schema: proofSchema, Repository: context.Repository, Event: context.Event, PRNumber: context.PRNumber, BaseRef: context.BaseRef, BaseSHA: context.BaseSHA, HeadSHA: context.HeadSHA, Ref: context.Ref, EventRef: context.EventRef, CheckoutRef: context.CheckoutRef, RunID: context.RunID, RunAttempt: context.RunAttempt, WorkflowSHA: context.WorkflowSHA, Jobs: inputs.Jobs, Actors: actorRoles{Actor: context.Actor, Builder: context.Builder, Gate: context.Gate}, BranchProtection: context.BranchProtection, DomainEvidence: context.DomainEvidence, Scope: scopeResult{Decision: context.ScopeDecision, Status: statusFor(context.ScopeDecision)}, Fixtures: fixtureResult{Paths: context.FixturePaths, Status: context.FixtureStatus, Source: context.SourceStatus, Semantic: context.SemanticStatus, Provenance: context.ProvenanceStatus}, Artifacts: context.Artifacts, Cache: context.Cache, Digests: digests, WriteEffect: context.WriteEffect, Decision: "PASS", NoWrite: context.NoWrite, Rejections: rejections, Predecessors: context.Predecessors, MissingReasons: context.MissingReasons}
 	if len(rejections) > 0 {
 		bundle.Decision = "FAIL_CLOSED"
 	}
@@ -28,9 +28,6 @@ func buildProof(inputs proofInputs, digests proofDigests) (proofBundle, provenan
 func gateRejections(inputs proofInputs) []string {
 	c := inputs.Context
 	failures := make([]string, 0)
-	if inputs.Governance.Promotion.BranchProtectionRequired && !branchProtectionReady(c.BranchProtection) {
-		failures = append(failures, "branch_protection_missing")
-	}
 	if c.ScopeDecision != "passed" {
 		failures = append(failures, "scope_not_passed")
 	}

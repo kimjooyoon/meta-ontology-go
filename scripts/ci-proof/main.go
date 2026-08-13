@@ -13,7 +13,7 @@ func main() {
 	evidence := flag.String("evidence", "ci-evidence-input/ci-evidence.json", "CI evidence bundle")
 	jobs := flag.String("jobs", "ci-jobs.json", "workflow jobs JSON")
 	context := flag.String("context", "ci-proof-context.json", "GitHub proof context")
-	generated := flag.String("generated", "ci-generated-proof", "generated output directory")
+	generated := flag.String("generated", "ci-generated/first", "generated output directory")
 	output := flag.String("output", "ci-proof.json", "proof bundle output")
 	receipt := flag.String("receipt", "provenance-receipt.jsonl", "append-only receipt output")
 	verify := flag.String("verify", "", "verify an existing proof bundle")

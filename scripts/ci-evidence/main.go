@@ -39,7 +39,7 @@ func build(root, jobsPath, generated, output string) error {
 	if err != nil {
 		return err
 	}
-	jobs, err := normalizeJobs(apiJobs, metadata.HeadSHA, metadata.RunID, metadata.RunAttempt, os.Getenv("CI_POLICY_SELF_SUCCESS") == "true")
+	jobs, err := normalizeJobs(apiJobs, metadata.HeadSHA, metadata.RunID, metadata.RunAttempt)
 	if err != nil {
 		return err
 	}

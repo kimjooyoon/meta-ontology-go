@@ -30,6 +30,8 @@ var failureCatalogRecords = []failureCatalogRecord{
 	{Code: "CI-FRESHNESS-001", Entry: failureCatalogEntry{Class: "freshness", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
 	{Code: "CI-PROVENANCE-001", Entry: failureCatalogEntry{Class: "provenance", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
 	{Code: "CI-OWNERSHIP-001", Entry: failureCatalogEntry{Class: "ownership", Severity: "blocked", BlockingScope: "local", Parallelizable: true, HandoffRequired: true, Owner: "branch-ownership"}},
+	{Code: "CI-ROOT-OF-TRUST-001", Entry: failureCatalogEntry{Class: "trust-root", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
+	{Code: "CI-ROOT-OF-TRUST-BOOTSTRAP-001", Entry: failureCatalogEntry{Class: "trust-root", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
 	{Code: "CI-UNCLASSIFIED-001", Entry: failureCatalogEntry{Class: "unclassified", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
 }
 
@@ -111,7 +113,7 @@ func validateFailureEvidence(manifest failureManifest) error {
 	if !sort.StringsAreSorted(manifest.Rejections) {
 		return fmt.Errorf("failure rejection set is not canonical")
 	}
-	for _, reason := range []string{manifest.MissingReasons.Protection, manifest.MissingReasons.Approval, manifest.MissingReasons.Provenance} {
+	for _, reason := range []string{manifest.MissingReasons.Protection, manifest.MissingReasons.Provenance} {
 		if containsUnknown(reason) {
 			return fmt.Errorf("failure missing reason is unknown")
 		}

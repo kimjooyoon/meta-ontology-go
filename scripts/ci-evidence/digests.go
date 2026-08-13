@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/scripts/ci-proof/manifest"
 )
 
 func computeDigests(root, generated string) (digests, error) {
@@ -113,6 +115,12 @@ func hashDirectory(root string) (string, error) {
 		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
 		if err != nil {
 			return "", err
+		}
+		if strings.HasSuffix(name, ".manifest.jsonl") {
+			data, err = manifest.Canonicalize(root, data)
+			if err != nil {
+				return "", err
+			}
 		}
 		hash.Write([]byte(name))
 		hash.Write([]byte{0})

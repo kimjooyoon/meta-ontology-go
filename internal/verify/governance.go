@@ -10,22 +10,15 @@ import (
 
 const GovernanceSchemaVersion = "gooo/ci-governance/v1"
 
-var canonicalGovernanceRoles = []string{"Builder", "Guardian", "Approver", "Gate"}
-
 // GovernanceMatrix is the machine-readable CI trust and promotion contract.
 type GovernanceMatrix struct {
 	Schema          string                `json:"schema"`
-	Roles           []GovernanceRole      `json:"roles"`
+	Mode            string                `json:"mode"`
+	CIAppID         int64                 `json:"ci_app_id"`
+	GuardianContext string                `json:"guardian_context"`
 	Ownership       []GovernanceOwnership `json:"ownership"`
 	ProtectedKernel []string              `json:"protected_kernel_paths"`
 	Promotion       GovernancePromotion   `json:"promotion"`
-}
-
-type GovernanceRole struct {
-	Name              string   `json:"name"`
-	Independent       bool     `json:"independent"`
-	MayApprove        bool     `json:"may_approve"`
-	ForbiddenOverlaps []string `json:"forbidden_overlaps"`
 }
 
 type GovernanceOwnership struct {
@@ -34,13 +27,10 @@ type GovernanceOwnership struct {
 }
 
 type GovernancePromotion struct {
-	Source                      string   `json:"source"`
-	Target                      string   `json:"target"`
-	RequiredChecks              []string `json:"required_checks"`
-	BranchProtectionRequired    bool     `json:"branch_protection_required"`
-	IndependentGuardianApprover bool     `json:"independent_guardian_approver"`
-	ForbidSelfApproval          bool     `json:"forbid_self_approval"`
-	ForbidRoleOverlap           bool     `json:"forbid_role_overlap"`
+	Source                   string   `json:"source"`
+	Target                   string   `json:"target"`
+	RequiredChecks           []string `json:"required_checks"`
+	BranchProtectionRequired bool     `json:"branch_protection_required"`
 }
 
 // ReadGovernanceMatrix loads and validates the protected JSON contract.
@@ -49,8 +39,10 @@ func ReadGovernanceMatrix(filename string) (GovernanceMatrix, error) {
 	if err != nil {
 		return GovernanceMatrix{}, err
 	}
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	decoder.DisallowUnknownFields()
 	var matrix GovernanceMatrix
-	if err := json.Unmarshal(data, &matrix); err != nil {
+	if err := decoder.Decode(&matrix); err != nil {
 		return GovernanceMatrix{}, fmt.Errorf("parse governance matrix: %w", err)
 	}
 	if err := ValidateGovernanceMatrix(matrix); err != nil {
@@ -64,8 +56,8 @@ func ValidateGovernanceMatrix(matrix GovernanceMatrix) error {
 	if matrix.Schema != GovernanceSchemaVersion {
 		return fmt.Errorf("unsupported governance schema %q", matrix.Schema)
 	}
-	if err := validateGovernanceRoles(matrix.Roles); err != nil {
-		return err
+	if matrix.Mode != "ci_only" || matrix.CIAppID != 15368 || matrix.GuardianContext != "CI guardian" {
+		return fmt.Errorf("governance mode must be ci_only")
 	}
 	if err := validateGovernanceOwnership(matrix.Ownership); err != nil {
 		return err
@@ -74,30 +66,6 @@ func ValidateGovernanceMatrix(matrix GovernanceMatrix) error {
 		return err
 	}
 	return validatePromotion(matrix.Promotion)
-}
-
-func validateGovernanceRoles(roles []GovernanceRole) error {
-	if len(roles) != len(canonicalGovernanceRoles) {
-		return fmt.Errorf("governance matrix must define four roles")
-	}
-	seen := make(map[string]bool, len(roles))
-	for _, role := range roles {
-		if seen[role.Name] || !contains(canonicalGovernanceRoles, role.Name) {
-			return fmt.Errorf("duplicate or unknown governance role %q", role.Name)
-		}
-		seen[role.Name] = true
-		if role.Name == "Guardian" || role.Name == "Approver" {
-			if !role.Independent {
-				return fmt.Errorf("%s must be independent", role.Name)
-			}
-		}
-	}
-	for _, name := range canonicalGovernanceRoles {
-		if !seen[name] {
-			return fmt.Errorf("missing governance role %q", name)
-		}
-	}
-	return nil
 }
 
 func validateGovernanceOwnership(ownership []GovernanceOwnership) error {
@@ -139,8 +107,8 @@ func validatePromotion(promotion GovernancePromotion) error {
 	if promotion.Source != "integration" || promotion.Target != "main" {
 		return fmt.Errorf("promotion must be integration to main")
 	}
-	if !promotion.BranchProtectionRequired || !promotion.IndependentGuardianApprover || !promotion.ForbidSelfApproval || !promotion.ForbidRoleOverlap {
-		return fmt.Errorf("promotion safeguards are incomplete")
+	if !promotion.BranchProtectionRequired {
+		return fmt.Errorf("promotion branch protection is required")
 	}
 	if !sameStrings(promotion.RequiredChecks, canonicalJobs()) {
 		return fmt.Errorf("promotion checks do not match canonical CI jobs")

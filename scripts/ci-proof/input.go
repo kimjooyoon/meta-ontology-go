@@ -100,7 +100,7 @@ func validateInputIdentity(evidence evidenceInput, context contextInput, jobs []
 	if err := validateArtifacts(context.Artifacts, context.RunID, context.RunAttempt); err != nil {
 		return err
 	}
-	if err := validateMissingReasons(context.MissingReasons, context.DomainEvidence.ProtectionStatus, context.DomainEvidence.ApprovalStatus, context.DomainEvidence.ProvenanceStatus); err != nil {
+	if err := validateMissingReasons(context.MissingReasons, context.DomainEvidence.ProtectionStatus, context.DomainEvidence.ProvenanceStatus); err != nil {
 		return err
 	}
 	return nil
@@ -149,6 +149,10 @@ func validateBranchProtection(protection branchProtection, evidence evidenceInpu
 
 func branchProtectionReady(protection branchProtection) bool {
 	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, proofJobs)
+}
+
+func promotionReady(promotion promotionInput, protection branchProtection) bool {
+	return promotion.BranchProtectionRequired && branchProtectionReady(protection)
 }
 
 func digestBranchProtection(protection branchProtection) string {

@@ -31,7 +31,7 @@ func validateProof(bundle proofBundle) error {
 	if err := validateDomainEvidence(bundle.DomainEvidence, evidenceInput{Repository: bundle.Repository, Event: bundle.Event, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Source: bundle.Digests.Source, IR: bundle.Digests.Semantic, Generated: bundle.Digests.Projection, Bundle: bundle.DomainEvidence.Digests.BundleSHA256}}, contextInput{EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}); err != nil {
 		return err
 	}
-	if err := validateMissingReasons(bundle.MissingReasons, bundle.DomainEvidence.ProtectionStatus, bundle.DomainEvidence.ApprovalStatus, bundle.DomainEvidence.ProvenanceStatus); err != nil {
+	if err := validateMissingReasons(bundle.MissingReasons, bundle.DomainEvidence.ProtectionStatus, bundle.DomainEvidence.ProvenanceStatus); err != nil {
 		return err
 	}
 	if bundle.MissingReasons != bundle.DomainEvidence.MissingReasons {
@@ -93,12 +93,12 @@ func validateArtifacts(artifacts []artifactInput, runID, runAttempt int64) error
 	return nil
 }
 
-func validateMissingReasons(reasons missingReasons, protectionStatus, approvalStatus, provenanceStatus string) error {
+func validateMissingReasons(reasons missingReasons, protectionStatus, provenanceStatus string) error {
 	for _, item := range []struct {
 		label  string
 		status string
 		reason string
-	}{{"protection", protectionStatus, reasons.Protection}, {"approval", approvalStatus, reasons.Approval}, {"provenance", provenanceStatus, reasons.Provenance}} {
+	}{{"protection", protectionStatus, reasons.Protection}, {"provenance", provenanceStatus, reasons.Provenance}} {
 		label, status, reason := item.label, item.status, item.reason
 		if status == "unavailable" || status == "missing" {
 			if reason == "" {

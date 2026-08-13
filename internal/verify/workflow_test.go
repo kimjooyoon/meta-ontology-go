@@ -83,7 +83,6 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
 		"actions/upload-artifact@v4",
 		"BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}",
-		"pull-requests: read",
 		"administration: read must not be added here",
 		"const tokenSource = process.env.BRANCH_PROTECTION_TOKEN ? 'BRANCH_PROTECTION_TOKEN' : 'github.token'",
 		"const protectionClient = process.env.BRANCH_PROTECTION_TOKEN",
@@ -96,6 +95,9 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"ci-proof.json",
 		"provenance-receipt.jsonl",
 		"if-no-files-found: error",
+		"scripts/ci-proof/artifacts_test.js",
+		"listWorkflowArtifacts",
+		"selectCurrentEvidenceArtifact",
 	} {
 		if !strings.Contains(text, marker) {
 			t.Fatalf("workflow lost event-source evidence marker %q", marker)
@@ -106,23 +108,13 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 			t.Fatalf("workflow contains forbidden protection write %q", forbidden)
 		}
 	}
-	assertCIOnlyProofMarkers(t, text)
+	for _, forbidden := range []string{"pulls.listReviews", "approval_api_unavailable", "independent_approval_missing_or_overlapping", "approvals_status"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("workflow still treats human approval as CI proof authority: %q", forbidden)
+		}
+	}
 	if strings.Contains(text, "\nadministration: read\n") {
 		t.Fatal("workflow declares unsupported administration permission key")
-	}
-}
-
-func assertCIOnlyProofMarkers(t *testing.T, text string) {
-	t.Helper()
-	for _, forbidden := range []string{"github.rest.pulls.listReviews", "approval_api_unavailable", "independent_approval_missing_or_overlapping", "approvals_evidence_not_verified", "ci-generated-proof"} {
-		if strings.Contains(text, forbidden) {
-			t.Fatalf("workflow retains obsolete CI predicate %q", forbidden)
-		}
-	}
-	for _, marker := range []string{"response.data.artifacts", "artifacts.length < 100", "approvals_status: 'not_applicable'", "provenance_status: artifactsVerified ? 'verified' : 'missing'", "rm -rf ci-generated/first", "--generated ci-generated/first"} {
-		if !strings.Contains(text, marker) {
-			t.Fatalf("workflow lost CI-only machine marker %q", marker)
-		}
 	}
 }
 
@@ -132,8 +124,8 @@ func TestCIWorkflowUsesImmutableCheckoutForEveryJob(t *testing.T) {
 		t.Fatal(err)
 	}
 	marker := "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
-	if strings.Count(string(workflow), marker) != 7 {
-		t.Fatalf("expected seven immutable checkout refs, got %d", strings.Count(string(workflow), marker))
+	if strings.Count(string(workflow), marker) != 8 {
+		t.Fatalf("expected eight immutable checkout refs, got %d", strings.Count(string(workflow), marker))
 	}
 }
 
