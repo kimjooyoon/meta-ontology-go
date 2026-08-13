@@ -85,6 +85,9 @@ func (e Evidence) Normalized() (Evidence, error) {
 	if status != FactDeterministic && status != FactCandidate {
 		return Evidence{}, fmt.Errorf("%w: unknown status %d", ErrInvalidEvidence, status)
 	}
+	if status == FactCandidate && e.Kind != CompilerRunEvidence {
+		return Evidence{}, fmt.Errorf("%w: candidate evidence must be %q, got %q", ErrInvalidEvidence, CompilerRunEvidence, e.Kind)
+	}
 	digest, err := normalizeDigest(e.Digest)
 	if err != nil {
 		return Evidence{}, err
@@ -119,9 +122,11 @@ func (e Evidence) ValidateAgainst(graph Graph) error {
 		return err
 	}
 	if normalized.Status == FactCandidate {
-		if !graph.HasCandidate(normalized.Fact) {
+		if !graph.HasCandidate(normalized.Fact) && !graph.HasFact(normalized.Fact) {
 			return fmt.Errorf("%w: candidate fact is not present", ErrInvalidEvidence)
 		}
+		// Promotion changes the graph fact status explicitly; it does not
+		// reclassify or erase the append-only candidate evidence record.
 		return nil
 	}
 	if !graph.HasFact(normalized.Fact) {
