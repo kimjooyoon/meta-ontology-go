@@ -193,6 +193,23 @@ type guardianEnvironment struct {
 	Digest                 string                         `json:"digest_sha256"`
 }
 
+type guardianInstallationScope struct {
+	Repository      string   `json:"repository"`
+	InstallationID  int64    `json:"installation_id"`
+	TokenSource     string   `json:"token_source"`
+	ReadStatus      string   `json:"read_status"`
+	RepositoryCount int      `json:"repository_count"`
+	Repositories    []string `json:"repositories"`
+	ExactMatch      bool     `json:"exact_match"`
+	MissingReason   string   `json:"missing_reason"`
+	RunID           int64    `json:"run_id"`
+	RunAttempt      int64    `json:"run_attempt"`
+	WorkflowSHA     string   `json:"workflow_sha"`
+	ObservedAt      *string  `json:"observed_at"`
+	ValidUntil      *string  `json:"valid_until"`
+	Digest          string   `json:"digest_sha256"`
+}
+
 type guardianDeploymentBranchPolicy struct {
 	ProtectedBranches    bool `json:"protected_branches"`
 	CustomBranchPolicies bool `json:"custom_branch_policies"`

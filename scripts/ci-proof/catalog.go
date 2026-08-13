@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	pathpkg "path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -22,13 +23,15 @@ type catalogDocumentEntry struct {
 	Owner           string
 }
 
+type failureOwnerRegistryEntry struct {
+	Branch string   `json:"branch"`
+	Paths  []string `json:"paths"`
+}
+
 type failureOwnerRegistry struct {
-	Schema                string   `json:"schema"`
-	ProtectedPushBranches []string `json:"protected_push_branches"`
-	Ownership             []struct {
-		Branch string   `json:"branch"`
-		Paths  []string `json:"paths"`
-	} `json:"ownership"`
+	Schema                string                      `json:"schema"`
+	ProtectedPushBranches []string                    `json:"protected_push_branches"`
+	Ownership             []failureOwnerRegistryEntry `json:"ownership"`
 }
 
 var failureCatalogDigest, failureCatalogDigestErr = loadFailureCatalogDigest()
@@ -118,27 +121,81 @@ func validateFailureOwnerRegistry(branch string) error {
 	if err != nil {
 		return fmt.Errorf("read failure owner registry: %w", err)
 	}
+	return validateFailureOwnerRegistryDocument(data, branch)
+}
+
+func validateFailureOwnerRegistryDocument(data []byte, branch string) error {
 	var registry failureOwnerRegistry
 	if err := json.Unmarshal(data, &registry); err != nil {
 		return fmt.Errorf("parse failure owner registry: %w", err)
 	}
-	if registry.Schema != "gooo/ci-governance/v2" || branch == "" || strings.ContainsAny(branch, "*?[]") {
+	if registry.Schema != "gooo/ci-governance/v2" || !validFailureOwnerBranch(branch) || branch == "dev" || branch == "main" {
 		return fmt.Errorf("failure owner registry is invalid")
 	}
+	if err := validateFailureProtectedPushBranches(registry.ProtectedPushBranches); err != nil {
+		return err
+	}
+	seen := make(map[string]bool, len(registry.Ownership))
 	var matched bool
 	for _, owner := range registry.Ownership {
-		if owner.Branch != branch {
-			continue
+		if !validFailureOwnerBranch(owner.Branch) || owner.Branch == "dev" || owner.Branch == "main" {
+			return fmt.Errorf("failure owner registry contains an invalid protected or wildcard branch %q", owner.Branch)
 		}
-		if matched || !sameCatalogPaths(owner.Paths, []string{".github/**", "scripts/**", "internal/verify/**"}) {
-			return fmt.Errorf("failure owner registry is duplicated or outside CI scope")
+		if seen[owner.Branch] {
+			return fmt.Errorf("failure owner registry contains duplicate branch %q", owner.Branch)
 		}
-		matched = true
+		seen[owner.Branch] = true
+		if len(owner.Paths) == 0 {
+			return fmt.Errorf("failure owner registry branch %q has no paths", owner.Branch)
+		}
+		pathSeen := make(map[string]bool, len(owner.Paths))
+		for _, path := range owner.Paths {
+			if !validFailureOwnerPath(path) {
+				return fmt.Errorf("failure owner registry branch %q has malformed path %q", owner.Branch, path)
+			}
+			if pathSeen[path] {
+				return fmt.Errorf("failure owner registry branch %q has duplicate path %q", owner.Branch, path)
+			}
+			pathSeen[path] = true
+		}
+		if owner.Branch == branch {
+			if matched {
+				return fmt.Errorf("failure owner registry contains duplicate branch %q", branch)
+			}
+			matched = true
+		}
 	}
 	if !matched {
-		return fmt.Errorf("failure owner branch %q is not registered for CI scope", branch)
+		return fmt.Errorf("failure owner branch %q is not registered for dev pull requests", branch)
 	}
 	return nil
+}
+
+func validFailureOwnerBranch(branch string) bool {
+	if branch == "" || branch != strings.TrimSpace(branch) || !strings.HasPrefix(branch, "agent/") || strings.ContainsAny(branch, " ~^:?*[]\\\r\n") || strings.Contains(branch, "//") || strings.Contains(branch, "..") || strings.Contains(branch, "@{") || strings.HasSuffix(branch, "/") || strings.HasSuffix(branch, ".") || strings.HasSuffix(branch, ".lock") {
+		return false
+	}
+	return true
+}
+
+func validFailureOwnerPath(path string) bool {
+	if path == "" || path != strings.TrimSpace(path) || strings.Contains(path, "\\") || strings.HasPrefix(path, "/") {
+		return false
+	}
+	suffix := ""
+	base := path
+	if strings.HasSuffix(path, "/**") {
+		suffix = "/**"
+		base = strings.TrimSuffix(path, suffix)
+	}
+	if base == "" || strings.ContainsAny(base, "*?[]") || (suffix == "" && strings.ContainsAny(path, "*?[]")) {
+		return false
+	}
+	cleaned := pathpkg.Clean(base)
+	if cleaned == "." || cleaned == ".." || strings.HasPrefix(cleaned, "../") || cleaned != base {
+		return false
+	}
+	return path == base+suffix
 }
 
 func validateFailureOwnerBinding(binding failureBinding) error {
@@ -175,8 +232,11 @@ func validateProtectedPushOwnerRegistry(branch string) error {
 	if err := json.Unmarshal(data, &registry); err != nil {
 		return fmt.Errorf("parse protected push owner registry: %w", err)
 	}
-	if registry.Schema != "gooo/ci-governance/v2" || len(registry.ProtectedPushBranches) == 0 || !sameStrings(registry.ProtectedPushBranches, []string{"dev", "main"}) {
+	if registry.Schema != "gooo/ci-governance/v2" {
 		return fmt.Errorf("protected push owner registry is invalid")
+	}
+	if err := validateFailureProtectedPushBranches(registry.ProtectedPushBranches); err != nil {
+		return err
 	}
 	for _, protectedBranch := range registry.ProtectedPushBranches {
 		if protectedBranch == branch {
@@ -186,21 +246,14 @@ func validateProtectedPushOwnerRegistry(branch string) error {
 	return fmt.Errorf("protected push branch %q is not registered", branch)
 }
 
-func sameCatalogPaths(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
+func validateFailureProtectedPushBranches(branches []string) error {
+	if len(branches) == 0 || !sameStrings(branches, []string{"dev", "main"}) {
+		return fmt.Errorf("protected push owner registry is invalid")
 	}
-	seen := make(map[string]bool, len(left))
-	for _, path := range left {
-		if seen[path] {
-			return false
-		}
-		seen[path] = true
-	}
-	for _, path := range right {
-		if !seen[path] {
-			return false
+	for _, branch := range branches {
+		if branch == "" || strings.ContainsAny(branch, "/*?[]") {
+			return fmt.Errorf("protected push owner registry contains an invalid branch %q", branch)
 		}
 	}
-	return true
+	return nil
 }

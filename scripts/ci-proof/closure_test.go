@@ -52,6 +52,21 @@ func TestNoFailureClosureSupportsExactDevToMainPromotion(t *testing.T) {
 	}
 }
 
+func TestNoFailureClosureAcceptsRegisteredDocsOwner(t *testing.T) {
+	binding := validFailureBinding()
+	binding.OwnerBranch = "agent/docs"
+	manifest, err := buildClosureManifest(validClosureInputFor(binding), binding)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if manifest.OwnerBranch != binding.OwnerBranch || manifest.OwnerRef == "" {
+		t.Fatalf("registered docs owner was not bound: %+v", manifest)
+	}
+	if err := validateClosureManifest(manifest, binding); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestNoFailureClosureRejectsStaleCanonicalJob(t *testing.T) {
 	input := validClosureInput()
 	input.CanonicalJobs[0].HeadSHA = strings.Repeat("b", 40)
