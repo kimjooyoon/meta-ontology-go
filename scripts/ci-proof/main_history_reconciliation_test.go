@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"testing"
@@ -16,16 +17,30 @@ import (
 const reconciliationLedgerPath = ".github/main-history-reconciliation.json"
 
 type reconciliationCommit struct {
-	SHA     string `json:"sha"`
-	Message string `json:"message"`
+	SHA            string                      `json:"sha"`
+	Message        string                      `json:"message"`
+	ResultingGoMod reconciliationGoModEvidence `json:"resulting_go_mod"`
+	Transition     string                      `json:"transition"`
+}
+
+type reconciliationGoModEvidence struct {
+	Path        string `json:"path"`
+	BlobSHA     string `json:"blob_sha"`
+	Size        int    `json:"size"`
+	SHA256      string `json:"sha256"`
+	GoDirective string `json:"go_directive"`
 }
 
 type reconciliationBlob struct {
-	Path        string `json:"path"`
-	DevBlobSHA  string `json:"dev_blob_sha"`
-	MainBlobSHA string `json:"main_blob_sha"`
-	DevSHA256   string `json:"dev_sha256"`
-	MainSHA256  string `json:"main_sha256"`
+	Path            string `json:"path"`
+	DevBlobSHA      string `json:"dev_blob_sha"`
+	DevSize         int    `json:"dev_size"`
+	MainBlobSHA     string `json:"main_blob_sha"`
+	MainSize        int    `json:"main_size"`
+	DevSHA256       string `json:"dev_sha256"`
+	MainSHA256      string `json:"main_sha256"`
+	DevGoDirective  string `json:"dev_go_directive"`
+	MainGoDirective string `json:"main_go_directive"`
 }
 
 type reconciliationTarget struct {
@@ -34,21 +49,23 @@ type reconciliationTarget struct {
 }
 
 type reconciliationLedger struct {
-	Schema                   string                 `json:"schema"`
-	Version                  int                    `json:"version"`
-	CandidateMergeSHA        string                 `json:"candidate_merge_sha"`
-	CandidateFirstParentSHA  string                 `json:"candidate_first_parent_sha"`
-	CandidateSecondParentSHA string                 `json:"candidate_second_parent_sha"`
-	DevSHA                   string                 `json:"dev_sha"`
-	MainSHA                  string                 `json:"main_sha"`
-	MergeBaseSHA             string                 `json:"merge_base_sha"`
-	MainOnlyCommits          []reconciliationCommit `json:"main_only_commits"`
-	MainOnlyPaths            []string               `json:"main_only_paths"`
-	BlobEquivalence          reconciliationBlob     `json:"blob_equivalence"`
-	Disposition              string                 `json:"disposition"`
-	UnincorporatedMaterial   bool                   `json:"unincorporated_material"`
-	TargetInvariant          reconciliationTarget   `json:"target_invariant"`
-	CanonicalDigest          string                 `json:"canonical_digest"`
+	Schema                   string                      `json:"schema"`
+	Version                  int                         `json:"version"`
+	CandidateMergeSHA        string                      `json:"candidate_merge_sha"`
+	CandidateFirstParentSHA  string                      `json:"candidate_first_parent_sha"`
+	CandidateSecondParentSHA string                      `json:"candidate_second_parent_sha"`
+	DevSHA                   string                      `json:"dev_sha"`
+	MainSHA                  string                      `json:"main_sha"`
+	MergeBaseSHA             string                      `json:"merge_base_sha"`
+	MainOnlyCommits          []reconciliationCommit      `json:"main_only_commits"`
+	MainOnlyPaths            []string                    `json:"main_only_paths"`
+	MergeBaseBlob            reconciliationGoModEvidence `json:"merge_base_blob"`
+	BlobEquivalence          reconciliationBlob          `json:"blob_equivalence"`
+	EquivalenceBasis         string                      `json:"equivalence_basis"`
+	Disposition              string                      `json:"disposition"`
+	UnincorporatedMaterial   bool                        `json:"unincorporated_material"`
+	TargetInvariant          reconciliationTarget        `json:"target_invariant"`
+	CanonicalDigest          string                      `json:"canonical_digest"`
 }
 
 func readReconciliationLedger(t *testing.T) reconciliationLedger {
@@ -105,15 +122,54 @@ func validateReconciliationLedger(ledger reconciliationLedger) error {
 	if ledger.TargetInvariant.FutureMainPromotion != "exact_ci_backed_fast_forward_plus_main_dev_equality" {
 		return fmt.Errorf("future promotion invariant is not exact")
 	}
-	if len(ledger.MainOnlyCommits) != 2 || ledger.MainOnlyCommits[0].SHA != "a798c8be290fd7f96662edca173cd93cfe270482" || ledger.MainOnlyCommits[0].Message != "chore: require Go 1.26.6" || ledger.MainOnlyCommits[1].SHA != "c557daf1fd6748b2e61afca10fb632792683061f" || ledger.MainOnlyCommits[1].Message != "chore: use Go 1.26.5 toolchain" {
+	expectedCommits := []reconciliationCommit{
+		{
+			SHA:     "a798c8be290fd7f96662edca173cd93cfe270482",
+			Message: "chore: require Go 1.26.6",
+			ResultingGoMod: reconciliationGoModEvidence{
+				Path:        "go.mod",
+				BlobSHA:     "f5d57a1b2e3c869aab3427dd11519f81fbcf31f8",
+				Size:        57,
+				SHA256:      "609503ca851a755543781fc951f391aff8d2c120aba175d862b1b7aeef14e236",
+				GoDirective: "go 1.26.6",
+			},
+			Transition: "TRANSIENT_GO_1_26_6_BUMP",
+		},
+		{
+			SHA:     "c557daf1fd6748b2e61afca10fb632792683061f",
+			Message: "chore: use Go 1.26.5 toolchain",
+			ResultingGoMod: reconciliationGoModEvidence{
+				Path:        "go.mod",
+				BlobSHA:     "0eaaa03f3d837fafab8ba1959b70adca21deeacd",
+				Size:        57,
+				SHA256:      "a2b49728e00943685ad402def409ffee32e15329a120b831ed58521616bed84b",
+				GoDirective: "go 1.26.5",
+			},
+			Transition: "FINAL_GO_1_26_5_TIP_EQUIVALENT_TO_DEV",
+		},
+	}
+	if !reflect.DeepEqual(ledger.MainOnlyCommits, expectedCommits) {
 		return fmt.Errorf("main-only commit evidence is not exact")
 	}
 	if !sort.StringsAreSorted(ledger.MainOnlyPaths) || len(ledger.MainOnlyPaths) != 1 || ledger.MainOnlyPaths[0] != "go.mod" {
 		return fmt.Errorf("main-only path inventory is not the exact sorted residual set")
 	}
+	expectedMergeBaseBlob := reconciliationGoModEvidence{
+		Path:        "go.mod",
+		BlobSHA:     "9b16c0cd3711c2444ebff1a28ad193c31f06be22",
+		Size:        55,
+		SHA256:      "af4562214f5d56647f7b953c1a74587286bfb1f97c31d3bd8403eda047186323",
+		GoDirective: "go 1.23",
+	}
+	if !reflect.DeepEqual(ledger.MergeBaseBlob, expectedMergeBaseBlob) {
+		return fmt.Errorf("merge-base go.mod evidence is not exact")
+	}
 	blob := ledger.BlobEquivalence
-	if blob.Path != "go.mod" || !validReconciliationSHA(blob.DevBlobSHA) || blob.DevBlobSHA != blob.MainBlobSHA || !validReconciliationDigest("sha256:"+blob.DevSHA256) || blob.DevSHA256 != blob.MainSHA256 {
+	if blob.Path != "go.mod" || !validReconciliationSHA(blob.DevBlobSHA) || blob.DevBlobSHA != blob.MainBlobSHA || blob.DevSize != 57 || blob.MainSize != 57 || !validReconciliationDigest("sha256:"+blob.DevSHA256) || blob.DevSHA256 != blob.MainSHA256 || blob.DevGoDirective != "go 1.26.5" || blob.MainGoDirective != "go 1.26.5" {
 		return fmt.Errorf("go.mod blob equivalence is not exact")
+	}
+	if ledger.EquivalenceBasis != "FINAL_MAIN_TIP_VS_DEV_TIP_TREE_EQUIVALENCE_ONLY" {
+		return fmt.Errorf("equivalence basis is not final-tip-only")
 	}
 	if ledger.Disposition != "TREE_EQUIVALENT_ALREADY_IN_DEV" || ledger.UnincorporatedMaterial {
 		return fmt.Errorf("reconciliation disposition is unsafe")
@@ -147,6 +203,29 @@ func TestMainHistoryReconciliationRejectsTamperAndTopologyDrift(t *testing.T) {
 		},
 		"malformed topology": func(candidate *reconciliationLedger) {
 			candidate.CandidateSecondParentSHA = candidate.DevSHA
+			candidate.CanonicalDigest = reconciliationCanonicalDigest(*candidate)
+		},
+		"intermediate blob tamper": func(candidate *reconciliationLedger) {
+			candidate.MainOnlyCommits[0].ResultingGoMod.BlobSHA = candidate.MainOnlyCommits[1].ResultingGoMod.BlobSHA
+			candidate.CanonicalDigest = reconciliationCanonicalDigest(*candidate)
+		},
+		"intermediate digest tamper": func(candidate *reconciliationLedger) {
+			candidate.MainOnlyCommits[0].ResultingGoMod.SHA256 = strings.Repeat("0", 64)
+			candidate.CanonicalDigest = reconciliationCanonicalDigest(*candidate)
+		},
+		"intermediate directive tamper": func(candidate *reconciliationLedger) {
+			candidate.MainOnlyCommits[0].ResultingGoMod.GoDirective = "go 1.26.5"
+			candidate.CanonicalDigest = reconciliationCanonicalDigest(*candidate)
+		},
+		"intermediate order tamper": func(candidate *reconciliationLedger) {
+			candidate.MainOnlyCommits[0], candidate.MainOnlyCommits[1] = candidate.MainOnlyCommits[1], candidate.MainOnlyCommits[0]
+			candidate.CanonicalDigest = reconciliationCanonicalDigest(*candidate)
+		},
+		"intermediate falsely equals dev": func(candidate *reconciliationLedger) {
+			candidate.MainOnlyCommits[0].ResultingGoMod.BlobSHA = candidate.BlobEquivalence.DevBlobSHA
+			candidate.MainOnlyCommits[0].ResultingGoMod.Size = candidate.BlobEquivalence.DevSize
+			candidate.MainOnlyCommits[0].ResultingGoMod.SHA256 = candidate.BlobEquivalence.DevSHA256
+			candidate.MainOnlyCommits[0].ResultingGoMod.GoDirective = candidate.BlobEquivalence.DevGoDirective
 			candidate.CanonicalDigest = reconciliationCanonicalDigest(*candidate)
 		},
 	}
