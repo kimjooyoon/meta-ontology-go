@@ -15,6 +15,11 @@ agent/*  ->  integration  ->  main
   changes must arrive through the `integration` promotion path.
 - CI checks are required before either merge. The workflow uses the same deterministic
   gate for work branches, `integration`, and `main`.
+- The checked-in governance mode is `ci_only`: integration CI closure is determined
+  by the exact six canonical jobs, scope, artifact, provenance, and no-write
+  predicates. Human reviews and last-push approvals are not CI proof inputs.
+  Branch protection remains a separate, fail-closed promotion predicate for
+  integration-to-main; inaccessible protection cannot be inferred from CI.
 
 The scaffold baseline does not yet expose a working semantic CLI. Until
 `cmd/gooo` implements its `check` command, the semantic CLI and generated-freshness

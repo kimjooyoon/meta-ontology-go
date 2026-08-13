@@ -43,6 +43,11 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 	if strings.Contains(text, "name: \"gofmt [") || strings.Contains(text, "name: \"CI policy [") {
 		t.Fatal("required check names were changed instead of using run metadata")
 	}
+	assertWorkflowMarkers(t, text)
+}
+
+func assertWorkflowMarkers(t *testing.T, text string) {
+	t.Helper()
 	for _, marker := range []string{
 		"run-name: \"CI [${{",
 		"types: [opened, synchronize, reopened, ready_for_review]",
@@ -53,11 +58,91 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 		"source=\"agent push cap-only\"",
 		"source=\"push full\"",
 		"GITHUB_STEP_SUMMARY",
+		"ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}",
+		"Verify PR checkout identity",
+		"EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",
+		"EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}",
+		"actual_head=\"$(git rev-parse HEAD)\"",
+		"git rev-parse --verify \"$EXPECTED_BASE^{commit}\" >/dev/null",
 		"GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}",
-		"GOOO_SCOPE_TO: ${{ github.sha }}",
+		"GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}",
+		"GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",
+		"needs: [format, vet, test, race, semantic]",
+		"if: ${{ always() }}",
+		"actions/github-script@v7",
+		"listJobsForWorkflowRun",
+		"ci-jobs.json",
+		"ci-final-jobs.json",
+		"ci-evidence.json",
+		"Capture CLI domain evidence",
+		"go run ./cmd/gooo check examples/billing/main.gooo",
+		"go run ./cmd/gooo graph-dump examples/billing/main.gooo",
+		"ci-domain-evidence.json",
+		"domain_evidence",
+		"CI_SLOT_PRESERVATION: \"true\"",
+		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
+		"actions/upload-artifact@v4",
+		"BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}",
+		"administration: read must not be added here",
+		"const tokenSource = process.env.BRANCH_PROTECTION_TOKEN ? 'BRANCH_PROTECTION_TOKEN' : 'github.token'",
+		"const protectionClient = process.env.BRANCH_PROTECTION_TOKEN",
+		"read_status: 'unavailable'",
+		"event_ref: context.ref",
+		"checkout_ref: headSha",
+		"getBranchProtection",
+		"branch_protection",
+		"digest_sha256",
+		"ci-proof.json",
+		"provenance-receipt.jsonl",
+		"if-no-files-found: error",
+		"scripts/ci-proof/artifacts_test.js",
+		"listWorkflowArtifacts",
+		"selectCurrentEvidenceArtifact",
 	} {
 		if !strings.Contains(text, marker) {
 			t.Fatalf("workflow lost event-source evidence marker %q", marker)
 		}
+	}
+	for _, forbidden := range []string{"updateBranchProtection", "replaceBranchProtection", "PUT /repos/", "repos.updateBranchProtection"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("workflow contains forbidden protection write %q", forbidden)
+		}
+	}
+	for _, forbidden := range []string{"pulls.listReviews", "approval_api_unavailable", "independent_approval_missing_or_overlapping", "approvals_status"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("workflow still treats human approval as CI proof authority: %q", forbidden)
+		}
+	}
+	if strings.Contains(text, "\nadministration: read\n") {
+		t.Fatal("workflow declares unsupported administration permission key")
+	}
+}
+
+func TestCIWorkflowUsesImmutableCheckoutForEveryJob(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	marker := "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
+	if strings.Count(string(workflow), marker) != 8 {
+		t.Fatalf("expected eight immutable checkout refs, got %d", strings.Count(string(workflow), marker))
+	}
+}
+
+func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(workflow)
+	guard := "if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')"
+	if strings.Count(text, guard) != 5 {
+		t.Fatalf("pull requests do not retain five guarded canonical jobs: %d", strings.Count(text, guard))
+	}
+	if !strings.Contains(text, "  policy:\n    name: CI policy") {
+		t.Fatal("pull requests do not retain the unconditionally scheduled policy job")
+	}
+	if strings.Count(text, "    name: gofmt\n") != 1 || strings.Count(text, "    name: go vet\n") != 1 || strings.Count(text, "    name: go test\n") != 1 || strings.Count(text, "    name: go test -race\n") != 1 || strings.Count(text, "    name: Semantic conformance\n") != 1 || strings.Count(text, "    name: CI policy\n") != 1 {
+		t.Fatal("canonical job names are missing or duplicated")
 	}
 }
