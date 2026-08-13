@@ -1,6 +1,10 @@
 package analyzer
 
-import "strings"
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
 
 // SymbolKind is the semantic role registered for a Go symbol.
 type SymbolKind string
@@ -77,6 +81,72 @@ type SourceFile struct {
 	Source      []byte
 }
 
+// DiagnosticCode identifies a deterministic analyzer diagnostic.
+type DiagnosticCode string
+
+const (
+	DiagInvalidAnnotation     DiagnosticCode = "analyzer.invalid-annotation"
+	DiagConflictingAnnotation DiagnosticCode = "analyzer.conflicting-annotation"
+)
+
+// Diagnostic describes a source-backed semantic-analysis problem. Invalid
+// annotations never become registrations or semantic facts.
+type Diagnostic struct {
+	Code    DiagnosticCode
+	Message string
+	Span    Span
+}
+
+// String formats a diagnostic deterministically.
+func (d Diagnostic) String() string {
+	return d.Span.String() + ": " + string(d.Code) + ": " + d.Message
+}
+
+// Error implements error for convenient single-diagnostic reporting.
+func (d Diagnostic) Error() string { return d.String() }
+
+// Diagnostics is an ordered list of analyzer diagnostics.
+type Diagnostics []Diagnostic
+
+// SortBySpan returns a detached, deterministic source order. Filename is part
+// of the ordering so package analysis does not depend on input file order.
+func (d Diagnostics) SortBySpan() Diagnostics {
+	result := append(Diagnostics(nil), d...)
+	sort.SliceStable(result, func(i, j int) bool {
+		left, right := result[i], result[j]
+		if left.Span.Filename != right.Span.Filename {
+			return left.Span.Filename < right.Span.Filename
+		}
+		if left.Span.Start.Offset != right.Span.Start.Offset {
+			return left.Span.Start.Offset < right.Span.Start.Offset
+		}
+		if left.Code != right.Code {
+			return left.Code < right.Code
+		}
+		return left.Message < right.Message
+	})
+	return result
+}
+
+// HasErrors reports whether at least one diagnostic was emitted.
+func (d Diagnostics) HasErrors() bool { return len(d) > 0 }
+
+// Error returns all diagnostics as one deterministic error value.
+func (d Diagnostics) Error() error {
+	if !d.HasErrors() {
+		return nil
+	}
+	lines := make([]string, 0, len(d))
+	for _, diagnostic := range d.SortBySpan() {
+		lines = append(lines, diagnostic.String())
+	}
+	return diagnosticError(strings.Join(lines, "\n"))
+}
+
+type diagnosticError string
+
+func (e diagnosticError) Error() string { return string(e) }
+
 // ObservationOrigin distinguishes contract-shaped signature facts from
 // implementation observations in a generated Go projection.
 type ObservationOrigin string
@@ -99,6 +169,18 @@ type Span struct {
 	Filename string
 	Start    Position
 	End      Position
+}
+
+// String formats a source span for diagnostics without requiring source text.
+func (s Span) String() string {
+	location := fmt.Sprintf("%d:%d", s.Start.Line, s.Start.Column)
+	if s.Filename != "" {
+		location = s.Filename + ":" + location
+	}
+	if s.Start.Offset == s.End.Offset {
+		return location
+	}
+	return fmt.Sprintf("%s-%d:%d", location, s.End.Line, s.End.Column)
 }
 
 // Fact is a deterministic semantic relation produced from one source reference.
@@ -171,4 +253,5 @@ func (d SemanticDelta) DeterministicFacts() []Fact {
 type Result struct {
 	Delta         SemanticDelta
 	Registrations []Registration
+	Diagnostics   Diagnostics
 }

@@ -50,7 +50,9 @@ func (a *Analyzer) AnalyzePackage(sources []SourceFile) (Result, error) {
 	resolver := newResolver(registry, fileSet, parsed)
 	result := Result{}
 	for _, file := range parsed {
-		for _, registration := range collectRegistrations(file, fileSet) {
+		registrations, diagnostics := collectRegistrations(file, fileSet)
+		result.Diagnostics = append(result.Diagnostics, diagnostics...)
+		for _, registration := range registrations {
 			if resolver.addLocal(registration) {
 				result.Registrations = append(result.Registrations, registration)
 			}
@@ -61,6 +63,7 @@ func (a *Analyzer) AnalyzePackage(sources []SourceFile) (Result, error) {
 	}
 	result.Delta.sort()
 	sortRegistrations(result.Registrations)
+	result.Diagnostics = result.Diagnostics.SortBySpan()
 	return result, nil
 }
 
