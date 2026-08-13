@@ -97,7 +97,7 @@ func validateFailureEvidence(manifest failureManifest) error {
 	if manifest.ArtifactStatus == "verified" && (len(manifest.Artifacts) != 1 || manifest.Artifacts[0].Name != fmt.Sprintf("ci-evidence-%d-%d", manifest.RunID, manifest.RunAttempt)) {
 		return fmt.Errorf("verified failure artifact evidence is not the exact CI evidence artifact")
 	}
-	if manifest.Job.Name == "CI proof bundle" && manifest.ProofArtifactRef == nil {
+	if manifest.Job.Name == "CI proof bundle" && manifest.ProofArtifactRef == nil && !isFailClosedMissingProof(manifest) {
 		return fmt.Errorf("proof failure is missing its direct proof artifact reference")
 	}
 	if manifest.ProofArtifactRef != nil {
@@ -133,6 +133,21 @@ func validateFailureEvidence(manifest failureManifest) error {
 		}
 	}
 	return nil
+}
+
+func isFailClosedMissingProof(manifest failureManifest) bool {
+	if manifest.Code != "CI-ARTIFACT-001" || manifest.ArtifactStatus != "missing" {
+		return false
+	}
+	if manifest.ArtifactReason != "artifact_missing" && manifest.ArtifactReason != "artifact_invalid" && manifest.ArtifactReason != "artifact_missing_or_invalid" {
+		return false
+	}
+	for _, rejection := range manifest.Rejections {
+		if rejection == "proof_artifact_missing" || rejection == "proof_artifact_invalid" {
+			return true
+		}
+	}
+	return false
 }
 
 func sameFailureJobs(jobs []failureJob, primary failureJob, codes []string) bool {
