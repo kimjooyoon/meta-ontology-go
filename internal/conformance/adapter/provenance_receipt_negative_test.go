@@ -45,6 +45,14 @@ func TestProvenanceReceiptRejectsDuplicateTerminalSuccess(t *testing.T) {
 	}
 }
 
+func TestProvenanceReceiptRejectsNonCanonicalJobOrder(t *testing.T) {
+	receipt, _, _ := newCancelledReceipt(t)
+	receipt.Jobs[0], receipt.Jobs[1] = receipt.Jobs[1], receipt.Jobs[0]
+	if err := receipt.Validate(); err == nil {
+		t.Fatal("non-canonical job order was accepted")
+	}
+}
+
 func TestProvenanceReceiptReplayAndOrderReject(t *testing.T) {
 	receipt, _, _ := newCancelledReceipt(t)
 	digest := digestBytes([]byte("previous evidence"))

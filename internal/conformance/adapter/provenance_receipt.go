@@ -244,8 +244,8 @@ func validateReceiptJobs(jobs []ReceiptJob, head string, status ReceiptProvenanc
 		return fmt.Errorf("receipt requires exactly six jobs")
 	}
 	seen := make(map[string]struct{}, len(jobs))
-	for _, job := range jobs {
-		if !isReceiptJobName(job.Name) || job.HeadSHA != head {
+	for index, job := range jobs {
+		if job.Name != receiptJobNames[index] || job.HeadSHA != head {
 			return fmt.Errorf("receipt job %q is not bound to head", job.Name)
 		}
 		if _, exists := seen[job.Name]; exists {
@@ -271,15 +271,6 @@ func validateReceiptJobs(jobs []ReceiptJob, head string, status ReceiptProvenanc
 		}
 	}
 	return nil
-}
-
-func isReceiptJobName(name string) bool {
-	for _, expected := range receiptJobNames {
-		if name == expected {
-			return true
-		}
-	}
-	return false
 }
 
 func validJobStatus(status string) bool {
