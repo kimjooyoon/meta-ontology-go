@@ -34,7 +34,7 @@ func buildFailureProvenance(manifest failureManifest, binding failureBinding) fa
 		WasGeneratedBy:    manifest.Activity,
 		WasAssociatedWith: manifest.Agent,
 		WasDerivedFrom:    []string{runRef, jobRef},
-		HadPrimarySource:  []string{sourceRef, failureCatalogPath},
+		HadPrimarySource:  append([]string{sourceRef, manifest.OwnerRef}, append(append([]string{}, manifest.ArtifactRefs...), failureCatalogPath, failureCatalogDigest)...),
 	}
 }
 
@@ -42,7 +42,7 @@ func readFailureBinding() (failureBinding, error) {
 	values := map[string]string{
 		"repository": os.Getenv("CI_REPOSITORY"), "event": os.Getenv("CI_EVENT"), "event_ref": os.Getenv("CI_EVENT_REF"), "checkout_ref": os.Getenv("CI_CHECKOUT_REF"),
 		"base_ref": os.Getenv("CI_BASE_REF"), "base_sha": os.Getenv("CI_BASE_SHA"), "head_sha": os.Getenv("CI_HEAD_SHA"),
-		"workflow_sha": os.Getenv("CI_WORKFLOW_SHA"), "actor": os.Getenv("CI_ACTOR"),
+		"workflow_sha": os.Getenv("CI_WORKFLOW_SHA"), "actor": os.Getenv("CI_ACTOR"), "owner_branch": os.Getenv("CI_OWNER_BRANCH"),
 	}
 	for name, value := range values {
 		if value == "" || containsUnknown(value) {
@@ -64,7 +64,7 @@ func readFailureBinding() (failureBinding, error) {
 	if err != nil {
 		return failureBinding{}, err
 	}
-	return failureBinding{Repository: values["repository"], Event: values["event"], EventRef: values["event_ref"], CheckoutRef: values["checkout_ref"], BaseRef: values["base_ref"], BaseSHA: values["base_sha"], HeadSHA: values["head_sha"], WorkflowSHA: values["workflow_sha"], PRNumber: prNumber, RunID: runID, RunAttempt: runAttempt, Actor: values["actor"]}, nil
+	return failureBinding{Repository: values["repository"], Event: values["event"], EventRef: values["event_ref"], CheckoutRef: values["checkout_ref"], BaseRef: values["base_ref"], BaseSHA: values["base_sha"], HeadSHA: values["head_sha"], WorkflowSHA: values["workflow_sha"], PRNumber: prNumber, RunID: runID, RunAttempt: runAttempt, Actor: values["actor"], OwnerBranch: values["owner_branch"]}, nil
 }
 
 func failureScope(binding failureBinding) (string, error) {

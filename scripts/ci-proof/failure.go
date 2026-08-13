@@ -10,26 +10,6 @@ const failureSchema = "gooo/ci-failure/v1"
 
 const failureCatalogPath = "scripts/ci-proof/docs/failure-reasons.md"
 
-type failureCatalogEntry struct {
-	Class           string
-	Severity        string
-	BlockingScope   string
-	Parallelizable  bool
-	HandoffRequired bool
-}
-
-var failureCatalog = map[string]failureCatalogEntry{
-	"CI-TEST-001":       {Class: "test", Severity: "error", BlockingScope: "local", Parallelizable: true, HandoffRequired: false},
-	"CI-SCOPE-001":      {Class: "scope", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: false},
-	"CI-CONTRACT-001":   {Class: "contract", Severity: "critical", BlockingScope: "global", Parallelizable: false, HandoffRequired: true},
-	"CI-DEPENDENCY-001": {Class: "dependency", Severity: "warning", BlockingScope: "local", Parallelizable: true, HandoffRequired: true},
-	"CI-GATE-001":       {Class: "gate", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true},
-	"CI-ARTIFACT-001":   {Class: "artifact", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: false},
-	"CI-FRESHNESS-001":  {Class: "freshness", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: false},
-	"CI-PROVENANCE-001": {Class: "provenance", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true},
-	"CI-OWNERSHIP-001":  {Class: "ownership", Severity: "blocked", BlockingScope: "local", Parallelizable: true, HandoffRequired: true},
-}
-
 type failureJob struct {
 	ID         int64  `json:"id"`
 	Name       string `json:"name"`
@@ -41,10 +21,17 @@ type failureJob struct {
 }
 
 type failureInput struct {
-	Code        string     `json:"code"`
-	Message     string     `json:"message"`
-	Remediation string     `json:"remediation"`
-	Job         failureJob `json:"job"`
+	Code           string          `json:"code"`
+	FailureCodes   []string        `json:"failure_codes"`
+	Message        string          `json:"message"`
+	Remediation    string          `json:"remediation"`
+	OwnerBranch    string          `json:"owner_branch"`
+	Rejections     []string        `json:"rejections"`
+	MissingReasons missingReasons  `json:"missing_reasons"`
+	Artifacts      []artifactInput `json:"artifacts"`
+	ArtifactStatus string          `json:"artifact_status"`
+	ArtifactReason string          `json:"artifact_reason"`
+	Job            failureJob      `json:"job"`
 }
 
 type failureBinding struct {
@@ -60,6 +47,7 @@ type failureBinding struct {
 	RunID       int64
 	RunAttempt  int64
 	Actor       string
+	OwnerBranch string
 }
 
 type failureProvenance struct {
@@ -73,6 +61,7 @@ type failureManifest struct {
 	Schema          string            `json:"schema"`
 	Version         int               `json:"version"`
 	Code            string            `json:"code"`
+	FailureCodes    []string          `json:"failure_codes"`
 	Class           string            `json:"class"`
 	Severity        string            `json:"severity"`
 	Scope           string            `json:"scope"`
@@ -93,10 +82,19 @@ type failureManifest struct {
 	Job             failureJob        `json:"job"`
 	Activity        string            `json:"activity"`
 	Agent           string            `json:"agent"`
+	OwnerBranch     string            `json:"owner_branch"`
+	OwnerRef        string            `json:"owner_ref"`
 	Entity          string            `json:"entity"`
 	Provenance      failureProvenance `json:"provenance"`
 	EvidenceRefs    []string          `json:"evidence_refs"`
 	CatalogPath     string            `json:"catalog_path"`
+	CatalogDigest   string            `json:"catalog_digest"`
+	Rejections      []string          `json:"rejections"`
+	MissingReasons  missingReasons    `json:"missing_reasons"`
+	Artifacts       []artifactInput   `json:"artifacts"`
+	ArtifactRefs    []string          `json:"artifact_refs"`
+	ArtifactStatus  string            `json:"artifact_status"`
+	ArtifactReason  string            `json:"artifact_reason"`
 	Message         string            `json:"message"`
 	Remediation     string            `json:"remediation"`
 	HandoffRequired bool              `json:"handoff_required"`
@@ -141,32 +139,59 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 	if input.Message == "" || input.Remediation == "" {
 		return failureManifest{}, fmt.Errorf("failure message and remediation are required")
 	}
+	if input.OwnerBranch == "" || input.OwnerBranch != binding.OwnerBranch {
+		return failureManifest{}, fmt.Errorf("failure owner branch is missing or mismatched")
+	}
 	manifest := failureManifest{
-		Schema: failureSchema, Version: 1, Code: input.Code, Class: entry.Class, Severity: entry.Severity,
+		Schema: failureSchema, Version: 1, Code: input.Code, FailureCodes: input.FailureCodes, Class: entry.Class, Severity: entry.Severity,
 		Scope: scope, BlockingScope: entry.BlockingScope, Parallelizable: entry.Parallelizable,
 		SourceCommit: binding.HeadSHA, Repository: binding.Repository, BaseRef: binding.BaseRef, BaseSHA: binding.BaseSHA, HeadSHA: binding.HeadSHA,
 		Event: binding.Event, EventRef: binding.EventRef, CheckoutRef: binding.CheckoutRef, PRNumber: binding.PRNumber, RunID: binding.RunID,
 		RunAttempt: binding.RunAttempt, WorkflowSHA: binding.WorkflowSHA, Job: input.Job,
-		CatalogPath: failureCatalogPath, Message: input.Message, Remediation: input.Remediation,
+		OwnerBranch: binding.OwnerBranch, OwnerRef: failureOwnerRef(binding), CatalogPath: failureCatalogPath, CatalogDigest: failureCatalogDigest,
+		Rejections: input.Rejections, MissingReasons: input.MissingReasons, Artifacts: input.Artifacts,
+		ArtifactStatus: input.ArtifactStatus, ArtifactReason: input.ArtifactReason, Message: input.Message, Remediation: input.Remediation,
 		HandoffRequired: entry.HandoffRequired,
+	}
+	if len(manifest.FailureCodes) == 0 {
+		manifest.FailureCodes = []string{input.Code}
 	}
 	manifest.Activity = fmt.Sprintf("urn:gooo:ci-run:%d:%d", binding.RunID, binding.RunAttempt)
 	manifest.Agent = "urn:gooo:agent:" + binding.Actor
 	manifest.Entity = fmt.Sprintf("urn:gooo:ci-failure:%d:%d:%d:%s", binding.RunID, binding.RunAttempt, input.Job.ID, input.Code)
+	manifest.ArtifactRefs = failureArtifactRefs(binding, manifest.Artifacts)
 	runRef := fmt.Sprintf("https://github.com/%s/actions/runs/%d", binding.Repository, binding.RunID)
 	jobRef := fmt.Sprintf("%s/job/%d", runRef, input.Job.ID)
 	sourceRef := fmt.Sprintf("https://github.com/%s/commit/%s", binding.Repository, binding.HeadSHA)
-	manifest.EvidenceRefs = []string{runRef, jobRef, failureCatalogPath}
+	manifest.EvidenceRefs = failureEvidenceRefs(manifest, runRef, jobRef)
 	manifest.Provenance = failureProvenance{
 		WasGeneratedBy:    manifest.Activity,
 		WasAssociatedWith: manifest.Agent,
 		WasDerivedFrom:    []string{runRef, jobRef},
-		HadPrimarySource:  []string{sourceRef, failureCatalogPath},
+		HadPrimarySource:  append([]string{sourceRef, manifest.OwnerRef}, append(append([]string{}, manifest.ArtifactRefs...), failureCatalogPath, failureCatalogDigest)...),
 	}
 	if err := validateFailureManifest(manifest, binding); err != nil {
 		return failureManifest{}, err
 	}
 	return manifest, nil
+}
+
+func failureOwnerRef(binding failureBinding) string {
+	return fmt.Sprintf("https://github.com/%s/blob/%s/.github/ci-governance.json", binding.Repository, binding.HeadSHA)
+}
+
+func failureArtifactRefs(binding failureBinding, artifacts []artifactInput) []string {
+	refs := make([]string, 0, len(artifacts))
+	for _, artifact := range artifacts {
+		refs = append(refs, fmt.Sprintf("https://github.com/%s/actions/runs/%d/artifacts/%d", binding.Repository, binding.RunID, artifact.ID))
+	}
+	return refs
+}
+
+func failureEvidenceRefs(manifest failureManifest, runRef, jobRef string) []string {
+	refs := []string{runRef, jobRef, manifest.OwnerRef}
+	refs = append(refs, manifest.ArtifactRefs...)
+	return append(refs, failureCatalogPath, failureCatalogDigest)
 }
 
 func validateFailureManifest(manifest failureManifest, binding failureBinding) error {
@@ -181,11 +206,17 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	if manifest.Scope != scope || manifest.Class != entry.Class || manifest.Severity != entry.Severity || manifest.BlockingScope != entry.BlockingScope || manifest.Parallelizable != entry.Parallelizable || manifest.HandoffRequired != entry.HandoffRequired {
 		return fmt.Errorf("failure classification does not match catalog")
 	}
-	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA {
+	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA || manifest.OwnerBranch != binding.OwnerBranch || manifest.OwnerRef != failureOwnerRef(binding) || !sameStrings(manifest.ArtifactRefs, failureArtifactRefs(binding, manifest.Artifacts)) {
 		return fmt.Errorf("failure manifest tuple is stale or mismatched")
 	}
-	if manifest.Repository == "" || manifest.BaseRef == "" || manifest.CatalogPath != failureCatalogPath || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
+	if manifest.Repository == "" || manifest.BaseRef == "" || manifest.OwnerBranch == "" || containsUnknown(manifest.OwnerBranch) || manifest.CatalogPath != failureCatalogPath || manifest.CatalogDigest != failureCatalogDigest || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
 		return fmt.Errorf("failure manifest has incomplete or unknown values")
+	}
+	if err := validateFailureCodes(manifest.FailureCodes, manifest.Code); err != nil {
+		return err
+	}
+	if err := validateFailureEvidence(manifest); err != nil {
+		return err
 	}
 	if binding.Actor == "" || containsUnknown(binding.Actor) || manifest.Activity != fmt.Sprintf("urn:gooo:ci-run:%d:%d", binding.RunID, binding.RunAttempt) || manifest.Agent != "urn:gooo:agent:"+binding.Actor || manifest.Entity != fmt.Sprintf("urn:gooo:ci-failure:%d:%d:%d:%s", binding.RunID, binding.RunAttempt, manifest.Job.ID, manifest.Code) {
 		return fmt.Errorf("failure activity, agent, or entity is not derived from the exact tuple")
@@ -197,7 +228,7 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	if manifest.Provenance.WasGeneratedBy != expected.WasGeneratedBy || manifest.Provenance.WasAssociatedWith != expected.WasAssociatedWith || !sameStrings(manifest.Provenance.WasDerivedFrom, expected.WasDerivedFrom) || !sameStrings(manifest.Provenance.HadPrimarySource, expected.HadPrimarySource) {
 		return fmt.Errorf("failure provenance relations are incomplete or mismatched")
 	}
-	if !sameStrings(manifest.EvidenceRefs, []string{expected.WasDerivedFrom[0], expected.WasDerivedFrom[1], failureCatalogPath}) {
+	if !sameStrings(manifest.EvidenceRefs, failureEvidenceRefs(manifest, expected.WasDerivedFrom[0], expected.WasDerivedFrom[1])) {
 		return fmt.Errorf("failure evidence references are incomplete or mismatched")
 	}
 	return nil

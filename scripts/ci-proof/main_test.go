@@ -126,6 +126,22 @@ func TestCIArtifactInventoryRejectsZeroArtifacts(t *testing.T) {
 	}
 }
 
+func TestCIGateRejectionsExposeMissingArtifactAndCompleteSet(t *testing.T) {
+	context := contextInput{ArtifactsStatus: "missing", FixturePaths: []string{"examples/billing/main.gooo"}}
+	rejections := gateRejections(proofInputs{Context: context})
+	joined := strings.Join(rejections, ",")
+	for _, expected := range []string{"artifact_evidence_not_verified", "artifact_inventory_missing"} {
+		if !strings.Contains(joined, expected) {
+			t.Fatalf("missing artifact rejection %q was not preserved: %v", expected, rejections)
+		}
+	}
+	for index := 1; index < len(rejections); index++ {
+		if rejections[index-1] >= rejections[index] {
+			t.Fatalf("rejection set is not sorted and unique: %v", rejections)
+		}
+	}
+}
+
 func TestCIProofJobsRejectDuplicateID(t *testing.T) {
 	jobs := make([]jobInput, len(proofJobs))
 	head := strings.Repeat("a", 40)

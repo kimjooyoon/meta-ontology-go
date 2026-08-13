@@ -37,16 +37,22 @@ func gateRejections(inputs proofInputs) []string {
 	if c.ScopeDecision != "passed" {
 		failures = append(failures, "scope_not_passed")
 	}
-	for status, value := range map[string]string{"fixture": c.FixtureStatus, "source": c.SourceStatus, "semantic": c.SemanticStatus, "provenance": c.ProvenanceStatus, "artifacts": c.ArtifactsStatus, "approvals": c.ApprovalsStatus} {
+	for status, value := range map[string]string{"fixture": c.FixtureStatus, "source": c.SourceStatus, "semantic": c.SemanticStatus, "provenance": c.ProvenanceStatus, "approvals": c.ApprovalsStatus} {
 		if value != "verified" {
 			failures = append(failures, status+"_evidence_not_verified")
 		}
 	}
+	if c.ArtifactsStatus != "verified" {
+		failures = append(failures, "artifact_evidence_not_verified")
+	}
 	if c.WriteEffect != "none" || !c.NoWrite {
 		failures = append(failures, "write_effect_not_none")
 	}
-	if len(c.FixturePaths) == 0 || len(c.Artifacts) == 0 {
-		failures = append(failures, "fixture_or_artifact_inventory_missing")
+	if len(c.FixturePaths) == 0 {
+		failures = append(failures, "fixture_inventory_missing")
+	}
+	if len(c.Artifacts) == 0 {
+		failures = append(failures, "artifact_inventory_missing")
 	}
 	if c.MissingReasons.Protection != "" || c.MissingReasons.Approval != "" || c.MissingReasons.Provenance != "" {
 		failures = append(failures, "missing_external_evidence")
@@ -55,7 +61,13 @@ func gateRejections(inputs proofInputs) []string {
 		failures = append(failures, "cache_"+err.Error())
 	}
 	sort.Strings(failures)
-	return failures
+	unique := failures[:0]
+	for _, failure := range failures {
+		if len(unique) == 0 || unique[len(unique)-1] != failure {
+			unique = append(unique, failure)
+		}
+	}
+	return unique
 }
 
 func statusFor(decision string) string {

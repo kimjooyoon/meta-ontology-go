@@ -501,10 +501,19 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Download exact proof evidence
+        if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-proof-input
+          if-no-files-found: ignore
       - name: Capture exact failure tuple
         uses: actions/github-script@v7
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          CI_OWNER_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
         with:
           github-token: ${{ github.token }}
           script: |
@@ -518,20 +527,139 @@ jobs:
             }
             const pull = context.payload.pull_request;
             const head = pull?.head.sha || context.sha;
-            if (!failed.head_sha || failed.head_sha !== head || !failed.run_id || failed.run_id !== context.runId) {
+            const runAttempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+            if (!failed.head_sha || failed.head_sha !== head || !failed.run_id || failed.run_id !== context.runId || Number(failed.run_attempt || 0) !== runAttempt) {
               throw new Error('failure job API record lacks exact head/run binding; refusing to guess');
             }
-            const code = failed.name === 'CI proof bundle' ? 'CI-GATE-001' : failed.name === 'CI policy' ? 'CI-SCOPE-001' : 'CI-TEST-001';
-            const message = `${failed.name} concluded ${failed.conclusion} for exact run ${context.runId} attempt ${process.env.CI_RUN_ATTEMPT || 1}`;
+            const expectedJobs = ['CI policy', 'Semantic conformance', 'gofmt', 'go vet', 'go test', 'go test -race'];
+            const proofPath = 'ci-proof-input/ci-proof.json';
+            let proof = null;
+            let proofState = 'not_available';
+            if (fs.existsSync(proofPath)) {
+              try {
+                proof = JSON.parse(fs.readFileSync(proofPath, 'utf8'));
+                const exactProofTuple = proof.schema === 'gooo/ci-proof/v2'
+                  && proof.repository === `${context.repo.owner}/${context.repo.repo}`
+                  && proof.event === context.eventName
+                  && proof.base_ref === (pull?.base.ref || context.ref_name)
+                  && proof.base_sha === (pull?.base.sha || context.payload.before)
+                  && proof.head_sha === head
+                  && proof.ref === context.ref
+                  && proof.event_ref === context.ref
+                  && proof.checkout_ref === head
+                  && Number(proof.pr_number || 0) === Number(pull?.number || 0)
+                  && Number(proof.run_id || 0) === context.runId
+                  && Number(proof.run_attempt || 0) === runAttempt
+                  && proof.workflow_sha === process.env.CI_WORKFLOW_SHA;
+                const proofJobNames = Array.isArray(proof.jobs) ? proof.jobs.map(job => job.name) : [];
+                const jobsBound = Array.isArray(proof.jobs) && proof.jobs.length === expectedJobs.length
+                  && new Set(proofJobNames).size === expectedJobs.length
+                  && expectedJobs.every(name => proofJobNames.includes(name))
+                  && proof.jobs.every(job => job.head_sha === head && Number(job.run_id || 0) === context.runId && Number(job.run_attempt || 0) === runAttempt);
+                const proofArtifacts = Array.isArray(proof.artifacts) ? proof.artifacts : null;
+                const expectedArtifactName = `ci-evidence-${context.runId}-${runAttempt}`;
+                const artifactsBound = proofArtifacts !== null && proofArtifacts.length === 1 && proofArtifacts[0].name === expectedArtifactName && proofArtifacts.every(artifact => artifact.id > 0 && artifact.run_id === context.runId && artifact.run_attempt === runAttempt && artifact.size_bytes > 0 && !artifact.expired && /^sha256:[0-9a-f]{64}$/.test(artifact.digest || ''));
+                if (!exactProofTuple || !jobsBound) {
+                  proofState = 'stale_or_mismatched';
+                  proof = null;
+                } else if (!artifactsBound || proofArtifacts.length === 0) {
+                  proofState = 'artifact_missing_or_invalid';
+                } else {
+                  proofState = 'verified';
+                }
+              } catch (_) {
+                proof = null;
+                proofState = 'artifact_invalid';
+              }
+            } else {
+              proofState = 'artifact_missing';
+            }
+            const terminalCodes = new Map([
+              ['CI policy', 'CI-SCOPE-001'],
+              ['Semantic conformance', 'CI-TEST-001'],
+              ['gofmt', 'CI-TEST-001'],
+              ['go vet', 'CI-TEST-001'],
+              ['go test', 'CI-TEST-001'],
+              ['go test -race', 'CI-TEST-001'],
+            ]);
+            const proofRejections = proof && Array.isArray(proof.rejections) ? [...new Set(proof.rejections)].sort() : [];
+            const proofCodes = new Set();
+            const addProofCode = (predicate, code) => { if (proofRejections.some(predicate)) proofCodes.add(code); };
+            addProofCode(reason => reason === 'branch_protection_missing' || reason === 'independent_approval_missing_or_overlapping' || reason === 'approvals_evidence_not_verified' || reason === 'write_effect_not_none', 'CI-GATE-001');
+            addProofCode(reason => reason === 'scope_not_passed', 'CI-SCOPE-001');
+            addProofCode(reason => reason.includes('artifact') || reason.includes('fixture_inventory'), 'CI-ARTIFACT-001');
+            addProofCode(reason => reason === 'fixture_evidence_not_verified', 'CI-TEST-001');
+            addProofCode(reason => reason.includes('fresh') || reason.includes('stale') || reason.includes('mismatch'), 'CI-FRESHNESS-001');
+            addProofCode(reason => reason.includes('provenance') || reason === 'missing_external_evidence', 'CI-PROVENANCE-001');
+            addProofCode(reason => reason.includes('ownership'), 'CI-OWNERSHIP-001');
+            addProofCode(reason => reason.includes('dependency'), 'CI-DEPENDENCY-001');
+            addProofCode(reason => reason.includes('contract') || reason === 'source_evidence_not_verified' || reason === 'semantic_evidence_not_verified' || reason.startsWith('cache_'), 'CI-CONTRACT-001');
+            let code;
+            let failureCodes;
+            let artifactStatus = 'not_applicable';
+            let artifactReason = 'canonical_job_failure';
+            let rejections = [];
+            let missingReasons = {};
+            let artifacts = [];
+            if (failed.name === 'CI proof bundle') {
+              if (proofState === 'artifact_missing' || proofState === 'artifact_invalid' || proofState === 'artifact_missing_or_invalid') {
+                code = 'CI-ARTIFACT-001';
+                failureCodes = [code];
+                rejections = [proofState === 'artifact_missing' ? 'proof_artifact_missing' : 'proof_artifact_invalid'];
+                artifactStatus = 'missing';
+                artifactReason = proofState;
+              } else if (proofState === 'stale_or_mismatched') {
+                code = 'CI-FRESHNESS-001';
+                failureCodes = [code];
+                rejections = ['proof_artifact_tuple_mismatch'];
+                artifactStatus = 'not_applicable';
+                artifactReason = 'stale_or_mismatched_proof_artifact';
+              } else {
+                if (proofCodes.size === 0) throw new Error('proof rejection set has no catalog mapping; refusing to guess');
+                const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001'];
+                failureCodes = [...proofCodes].sort();
+                code = priority.find(candidate => proofCodes.has(candidate));
+                rejections = proofRejections;
+                missingReasons = proof.missing_reasons || {};
+                artifacts = proof.artifacts;
+                artifactStatus = 'verified';
+                artifactReason = 'proof_artifact_current_and_bound';
+              }
+            } else {
+              if (!terminalCodes.has(failed.name)) throw new Error(`unmapped terminal CI job ${failed.name}; refusing to guess`);
+              code = terminalCodes.get(failed.name);
+              failureCodes = [code];
+              if (proofState === 'verified') {
+                artifacts = proof.artifacts;
+                artifactStatus = 'verified';
+                artifactReason = 'proof_artifact_current_and_bound';
+                rejections = proofRejections;
+                missingReasons = proof.missing_reasons || {};
+              }
+            }
+            const message = `${failed.name} concluded ${failed.conclusion} for exact run ${context.runId} attempt ${runAttempt}; codes=${failureCodes.join(',')}`;
             const remediation = code === 'CI-GATE-001'
-              ? 'Read the proof rejection reasons and obtain only the missing independent governance or provenance evidence for this tuple.'
-              : code === 'CI-SCOPE-001'
-                ? 'Inspect the CI policy summary and remove the out-of-scope or contract-violating change before pushing.'
-                : 'Reproduce the terminal job failure at the exact head, fix only the owned scope, and rerun the required checks.';
+              ? 'Read every recorded rejection and obtain only the missing independent governance evidence for this exact tuple.'
+              : code === 'CI-ARTIFACT-001'
+                ? 'Rebuild and publish the required artifact for this exact run and verify its count, digest, and tuple binding.'
+                : code === 'CI-FRESHNESS-001'
+                  ? 'Stop promotion, fetch the current refs, and require a fresh exact-head run.'
+                  : code === 'CI-PROVENANCE-001'
+                    ? 'Record the missing provenance reason and request legitimate external evidence without inferring it.'
+                    : code === 'CI-SCOPE-001'
+                      ? 'Inspect the CI policy summary and remove the out-of-scope or contract-violating change before pushing.'
+                      : 'Reproduce the terminal job failure at the exact head, fix only the owned scope, and rerun the required checks.';
             fs.writeFileSync('ci-failure-input.json', JSON.stringify({
               code,
+              failure_codes: failureCodes,
               message,
               remediation,
+              owner_branch: process.env.CI_OWNER_BRANCH,
+              rejections,
+              missing_reasons: missingReasons,
+              artifacts,
+              artifact_status: artifactStatus,
+              artifact_reason: artifactReason,
               job: {
                 id: failed.id,
                 name: failed.name,
@@ -539,7 +667,7 @@ jobs:
                 conclusion: failed.conclusion,
                 head_sha: failed.head_sha,
                 run_id: failed.run_id,
-                run_attempt: Number(process.env.CI_RUN_ATTEMPT || 1),
+                run_attempt: runAttempt,
               },
             }, null, 2) + '\n');
       - name: Generate versioned failure manifest and summary
@@ -557,6 +685,7 @@ jobs:
           CI_RUN_ID: ${{ github.run_id }}
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_ACTOR: ${{ github.actor }}
+          CI_OWNER_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
         run: |
           if [ ! -s ci-failure-input.json ]; then
             echo "No failure manifest emitted for this run." >> "$GITHUB_STEP_SUMMARY"
@@ -564,11 +693,12 @@ jobs:
           fi
           go run ./scripts/ci-proof --failure-input ci-failure-input.json --failure-output ci-failure.json
           jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- severity: `\(.severity)`\n- scope: `\(.scope)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- handoff_required: `\(.handoff_required)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `\(.catalog_path)`\n- evidence: \(.evidence_refs | join(", "))\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"- failure_codes: `\(.failure_codes | join(", "))`\n- owner_branch: `\(.owner_branch)` ref `\(.owner_ref)`\n- catalog_digest: `\(.catalog_digest)`\n- artifact_status: `\(.artifact_status)` reason `\(.artifact_reason)` refs \(.artifact_refs | join(", "))\n- rejections: \(.rejections | join(", "))"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
       - name: Upload failure reason manifest
-        if: ${{ always() }}
+        if: ${{ always() && hashFiles('ci-failure.json') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: ci-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-failure.json
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 14

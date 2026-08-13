@@ -21,6 +21,16 @@ code, severity, scope, blocking scope, parallelization, handoff requirement,
 catalog path, and evidence references. Re-run only after the current head is
 confirmed.
 
+The failure manifest also exposes the immutable `catalog_digest`, sorted
+`failure_codes` (the complete mapped set), all proof `rejections`, exact
+`owner_branch`, `artifact_status`, `artifact_reason`, bound artifact records,
+and protection/approval/provenance `missing_reasons`. A proof artifact that is
+missing, malformed, stale, or bound to another run is never treated as a
+successful proof: emit `CI-ARTIFACT-001` or `CI-FRESHNESS-001` with the exact
+reason and require a fresh artifact. Every terminal canonical job has an
+explicit mapping; an unrecognized terminal job is a fail-closed workflow
+error, not an inferred success or guessed category.
+
 The provenance receipt is bound to the same repository, event, base/head/ref,
 PR, run/attempt, workflow, canonical job records, artifact inventory, branch
 protection snapshot, domain evidence, digests, and predecessor list as the
