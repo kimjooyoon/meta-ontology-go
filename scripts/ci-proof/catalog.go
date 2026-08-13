@@ -10,6 +10,7 @@ import (
 )
 
 const failureOwnerRegistryPath = ".github/ci-governance.json"
+const promotionOwnerBindingCode = "CI-PROMOTION-OWNER-BINDING-001"
 
 type catalogDocumentEntry struct {
 	Code            string
@@ -142,11 +143,30 @@ func validateFailureOwnerRegistry(branch string) error {
 
 func validateFailureOwnerBinding(binding failureBinding) error {
 	if binding.Event == "pull_request" {
+		if binding.BaseRef != "dev" && binding.BaseRef != "main" {
+			return fmt.Errorf("%s: pull request base branch is unsupported", promotionOwnerBindingCode)
+		}
+		if binding.BaseRef == "main" {
+			if binding.OwnerBranch != "dev" {
+				return fmt.Errorf("%s: main promotion owner must be exact dev", promotionOwnerBindingCode)
+			}
+			if err := validateProtectedPushOwnerRegistry(binding.OwnerBranch); err != nil {
+				return fmt.Errorf("%s: %w", promotionOwnerBindingCode, err)
+			}
+			return nil
+		}
+		if binding.OwnerBranch == "dev" {
+			return fmt.Errorf("%s: dev-to-dev pull request is not a feature or promotion route", promotionOwnerBindingCode)
+		}
 		return validateFailureOwnerRegistry(binding.OwnerBranch)
 	}
 	if binding.Event != "push" || binding.PRNumber != 0 || binding.OwnerBranch != binding.BaseRef || binding.EventRef != "refs/heads/"+binding.BaseRef {
 		return fmt.Errorf("protected push owner must equal the exact protected base branch")
 	}
+	return validateProtectedPushOwnerRegistry(binding.BaseRef)
+}
+
+func validateProtectedPushOwnerRegistry(branch string) error {
 	data, err := readFailureFile(failureOwnerRegistryPath)
 	if err != nil {
 		return fmt.Errorf("read protected push owner registry: %w", err)
@@ -158,12 +178,12 @@ func validateFailureOwnerBinding(binding failureBinding) error {
 	if registry.Schema != "gooo/ci-governance/v1" || len(registry.ProtectedPushBranches) == 0 || !sameStrings(registry.ProtectedPushBranches, []string{"dev", "main"}) {
 		return fmt.Errorf("protected push owner registry is invalid")
 	}
-	for _, branch := range registry.ProtectedPushBranches {
-		if branch == binding.BaseRef {
+	for _, protectedBranch := range registry.ProtectedPushBranches {
+		if protectedBranch == branch {
 			return nil
 		}
 	}
-	return fmt.Errorf("protected push branch %q is not registered", binding.BaseRef)
+	return fmt.Errorf("protected push branch %q is not registered", branch)
 }
 
 func sameCatalogPaths(left, right []string) bool {

@@ -186,6 +186,46 @@ async function testStaleRaceAndArtifactDigest() {
   assert.throws(() => validateGuardianArtifact(omittedKernel, omittedKernelExpected), (error) => error && error.code === ROOT_FAILURE_CODE);
 }
 
+async function testCanonicalOrdering() {
+  const eventPull = pull('dev');
+  eventPull.base.sha = sha('d');
+  const orderingArtifact = buildGuardianArtifact({
+    pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
+    runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
+    result: {
+      decision: 'PASS', code: null, reason: null,
+      files: [file('cmd/gooo/analyze_test.go'), file('cmd/gooo/analyze.go')], kernelPaths: [],
+    },
+  });
+  assert.deepEqual(orderingArtifact.changed_files.map((candidate) => candidate.filename), [
+    'cmd/gooo/analyze.go', 'cmd/gooo/analyze_test.go',
+  ]);
+  validateGuardianArtifact(orderingArtifact, expectedFixtureTuple());
+
+  const unsortedArtifact = buildGuardianArtifact({
+    pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
+    runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
+    result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md')], kernelPaths: []},
+  });
+  unsortedArtifact.changed_files = [file('cmd/gooo/analyze_test.go'), file('cmd/gooo/analyze.go')];
+  unsortedArtifact.changed_files_count = 2;
+  unsortedArtifact.bundle_sha256 = digestGuardianArtifact(unsortedArtifact);
+  assert.throws(() => validateGuardianArtifact(unsortedArtifact, expectedFixtureTuple()), (error) => error && error.code === ROOT_FAILURE_CODE);
+
+  const treeEntries = [
+    {path: 'scripts/ci-proof/analyze_test.go', type: 'blob', mode: '100644', sha: sha('1')},
+    {path: 'scripts/ci-proof/analyze.go', type: 'blob', mode: '100644', sha: sha('2')},
+  ];
+  const treeDigest = async (entries) => kernelTreeDigest({
+    owner: 'owner', repo: 'repo', ref: sha('d'),
+    getCommit: async () => ({status: 200, data: {commit: {tree: {sha: sha('a')}}}}),
+    getTree: async () => ({status: 200, data: {sha: sha('a'), truncated: false, tree: entries}}),
+  });
+  assert.equal(await treeDigest(treeEntries), await treeDigest([...treeEntries].reverse()));
+}
+
 async function testPromotionAndKernelDigests() {
   const promotionPull = pull('main');
   promotionPull.head.ref = 'dev';
@@ -313,6 +353,7 @@ function testKernelSetIsMonotonic() {
   await testKernelStatusesAndRenames();
   await testForkAndMalformedAPI();
   await testStaleRaceAndArtifactDigest();
+  await testCanonicalOrdering();
   await testPromotionAndKernelDigests();
   await testPaginationLimit();
   testWorkflowIsReadOnlyAndBasePinned();
