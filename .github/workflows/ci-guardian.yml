@@ -68,6 +68,8 @@ jobs:
         with:
           client-id: ${{ env.GUARDIAN_APP_CLIENT_ID }}
           private-key: ${{ env.GUARDIAN_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
           permission-administration: read
       - name: Inspect changed paths from default authority
         # v7: f28e40c7f34bde8b3046d885e986cb6290c5673b
@@ -103,6 +105,7 @@ jobs:
             let branchProtection = null;
             let devBranchProtection = null;
             let observerEnvironmentSnapshot = null;
+            let installationRepositoryScope = null;
             let observedPull = eventPull;
             let result = {decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: 'guardian observation was incomplete', files: [], kernelPaths: []};
             try {
@@ -160,6 +163,15 @@ jobs:
                 const observerTokenSource = 'github_app_installation';
                 const appInstallationId = Number(process.env.GUARDIAN_APP_INSTALLATION_ID || 0);
                 const appSlug = process.env.GUARDIAN_APP_SLUG || '';
+                installationRepositoryScope = await guardian.observeInstallationRepositoryScope({
+                  listRepositories: (parameters) => observerClient ? observerClient.request('GET /installation/repositories', parameters) : Promise.resolve({status: 403}),
+                  repository,
+                  installationId: appInstallationId,
+                  tokenSource: observerTokenSource,
+                  runId,
+                  runAttempt,
+                  workflowSHA: workflowSha,
+                });
                 const getProtection = (parameters) => observerClient ? observerClient.rest.repos.getBranchProtection(parameters) : Promise.resolve({status: 403});
                 const policySHA = crypto.createHash('sha256').update(fs.readFileSync('.github/ci-governance.json')).digest('hex');
                 branchProtection = await guardian.observeBranchProtection({
@@ -220,6 +232,9 @@ jobs:
               if (route === 'promotion_main' && (!branchProtection || branchProtection.read_status !== 'verified' || !devBranchProtection || devBranchProtection.read_status !== 'verified' || !observerEnvironmentSnapshot || observerEnvironmentSnapshot.read_status !== 'verified')) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.PROTECTION_CODE, reason: (branchProtection && branchProtection.missing_reason) || (observerEnvironmentSnapshot && observerEnvironmentSnapshot.missing_reason) || 'trusted protection observer evidence is unavailable'};
               }
+              if (route === 'promotion_main' && (!installationRepositoryScope || installationRepositoryScope.read_status !== 'verified' || installationRepositoryScope.exact_match !== true)) {
+                result = {...result, decision: 'FAIL_CLOSED', code: guardian.INSTALLATION_SCOPE_CODE, reason: (installationRepositoryScope && installationRepositoryScope.missing_reason) || 'installation repository scope observer evidence is unavailable'};
+              }
             } catch (error) {
               result = {...result, decision: 'FAIL_CLOSED', code: error.code || guardian.ROOT_FAILURE_CODE, reason: error.message || String(error)};
             }
@@ -243,6 +258,7 @@ jobs:
               devBranchProtection,
               observerEnvironment: guardian.OBSERVER_ENVIRONMENT,
               observerEnvironmentSnapshot,
+              installationRepositoryScope,
             });
             fs.writeFileSync('ci-guardian.json', JSON.stringify(artifact, null, 2) + '\n');
             let validationError = null;
