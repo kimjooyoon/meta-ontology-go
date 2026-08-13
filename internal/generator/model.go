@@ -93,6 +93,7 @@ type SourceMap struct {
 type SourceMapping struct {
 	SemanticID string
 	Kind       string
+	Ordinal    int
 	Source     SourceSpan
 	Generated  SourceRange
 }
@@ -120,6 +121,80 @@ type Options struct {
 type Result struct {
 	Source    []byte
 	SourceMap SourceMap
+}
+
+// MetadataResult is a typed projection result with deterministic identity
+// digests. Unavailable external provenance is represented explicitly.
+type MetadataResult struct {
+	Result
+	Metadata GenerationMetadata
+}
+
+// ProjectionMetadataV1 is the versioned wire surface for generator output.
+type ProjectionMetadataV1 struct {
+	Schema     string             `json:"schema"`
+	Source     []byte             `json:"source"`
+	SemanticIR SemanticIR         `json:"semantic_ir"`
+	SourceMap  SourceMap          `json:"source_map"`
+	Metadata   GenerationMetadata `json:"metadata"`
+}
+
+// ProjectionBinding supplies independently computed identities for opt-in
+// fail-closed projection verification. Empty external fields stay deferred.
+type ProjectionBinding struct {
+	Schema           string            `json:"schema"`
+	SourceDigest     string            `json:"source_digest"`
+	SemanticIRDigest string            `json:"semantic_ir_digest"`
+	SourceMapDigest  string            `json:"source_map_digest"`
+	EvidenceDigest   string            `json:"evidence_digest,omitempty"`
+	ProvenanceDigest string            `json:"provenance_digest,omitempty"`
+	Toolchain        ToolchainIdentity `json:"toolchain"`
+}
+
+// GenerationMetadata describes reproducible projection inputs and trust.
+type GenerationMetadata struct {
+	SourceDigest     string            `json:"source_digest"`
+	SemanticIRDigest string            `json:"semantic_ir_digest"`
+	SourceMapDigest  string            `json:"source_map_digest"`
+	Source           BindingStatus     `json:"source"`
+	SemanticIR       BindingStatus     `json:"semantic_ir"`
+	Provenance       BindingStatus     `json:"provenance"`
+	Evidence         EvidenceStatus    `json:"evidence"`
+	Toolchain        ToolchainIdentity `json:"toolchain"`
+	Projection       ProjectionStatus  `json:"projection"`
+	Authority        AuthorityLabels   `json:"authority"`
+}
+
+// BindingStatus identifies whether a value is available and authoritative.
+type BindingStatus struct {
+	Status    string `json:"status"`
+	Authority string `json:"authority"`
+}
+
+// AuthorityLabels names the verifier and projection boundaries explicitly.
+type AuthorityLabels struct {
+	Projection string `json:"projection"`
+	Verifier   string `json:"verifier"`
+	Provenance string `json:"provenance"`
+}
+
+// EvidenceStatus records what this package can prove without external files.
+type EvidenceStatus struct {
+	Decision string   `json:"decision"`
+	Refs     []string `json:"refs"`
+}
+
+// ToolchainIdentity is deferred because the generator does not own a build
+// or receipt store. It never fabricates an environment identity.
+type ToolchainIdentity struct {
+	Status string `json:"status"`
+	Value  string `json:"value"`
+}
+
+// ProjectionStatus records the authoritative status of this generator result.
+type ProjectionStatus struct {
+	Decision string   `json:"decision"`
+	Refs     []string `json:"refs"`
 }
 
 // Generator renders semantic input into Go source.
