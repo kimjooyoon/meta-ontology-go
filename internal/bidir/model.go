@@ -44,9 +44,32 @@ type SourceSpan struct {
 	EndColumn   int
 }
 
-// Valid reports whether the span carries any source evidence.
+// Validate checks the structural invariants of a source span. The zero value
+// is valid and means that no source evidence was supplied.
+func (s SourceSpan) Validate() error {
+	if s.Start < 0 || s.End < 0 {
+		return fmt.Errorf("source span offsets must be non-negative")
+	}
+	if s.End < s.Start {
+		return fmt.Errorf("source span end precedes start")
+	}
+	if s.StartLine < 0 || s.StartColumn < 0 || s.EndLine < 0 || s.EndColumn < 0 {
+		return fmt.Errorf("source span positions must be non-negative")
+	}
+	if s.StartLine > 0 && s.EndLine > 0 {
+		if s.EndLine < s.StartLine {
+			return fmt.Errorf("source span end line precedes start line")
+		}
+		if s.EndLine == s.StartLine && s.StartColumn > 0 && s.EndColumn > 0 && s.EndColumn < s.StartColumn {
+			return fmt.Errorf("source span end column precedes start column")
+		}
+	}
+	return nil
+}
+
+// Valid reports whether the span carries structurally valid source evidence.
 func (s SourceSpan) Valid() bool {
-	return s.File != "" || s.Start != 0 || s.End != 0
+	return s.Validate() == nil && (strings.TrimSpace(s.File) != "" || s.Start != 0 || s.End != 0 || s.StartLine != 0 || s.EndLine != 0)
 }
 
 // Reference names a declaration from a parser-neutral document.
@@ -190,6 +213,9 @@ func (m *Model) Normalize() {
 func (m Model) Validate() error {
 	seenNodes := make(map[ID]Kind, len(m.Nodes))
 	for _, node := range m.Nodes {
+		if err := node.Span.Validate(); err != nil {
+			return fmt.Errorf("node %q: %w", node.ID, err)
+		}
 		if err := validateID(node.ID); err != nil {
 			return fmt.Errorf("node %q: %w", node.ID, err)
 		}
@@ -203,6 +229,9 @@ func (m Model) Validate() error {
 	}
 	seenRelations := make(map[string]struct{}, len(m.Relations))
 	for _, relation := range m.Relations {
+		if err := relation.Span.Validate(); err != nil {
+			return fmt.Errorf("relation %s %q -> %q: %w", relation.Kind, relation.Source, relation.Target, err)
+		}
 		if relation.Kind == "" {
 			return fmt.Errorf("relation %q -> %q has empty predicate", relation.Source, relation.Target)
 		}

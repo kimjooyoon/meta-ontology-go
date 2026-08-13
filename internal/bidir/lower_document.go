@@ -19,6 +19,9 @@ func LowerDocumentContext(ctx context.Context, document Document) (semantic.IR, 
 	if err := checkLowerContext(ctx); err != nil {
 		return semantic.IR{}, err
 	}
+	if err := validateDocumentSpans(document); err != nil {
+		return semantic.IR{}, err
+	}
 	namespaceText := strings.TrimSpace(document.Namespace)
 	if namespaceText == "" {
 		namespaceText = "gooo"

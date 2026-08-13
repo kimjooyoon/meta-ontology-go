@@ -32,9 +32,17 @@ func ReconcileWithOptions(base Model, changes FactDelta, options ReconcileOption
 	if err := base.Validate(); err != nil {
 		return ReconcileResult{Model: base, RawObservation: rawObservation}, err
 	}
+	result := ReconcileResult{Model: base, RawObservation: rawObservation}
+	for _, fact := range append(append(FactSet(nil), changes.Removed...), changes.Added...) {
+		if conflict := validateFactInput(fact); conflict != nil {
+			result.Conflicts = append(result.Conflicts, *conflict)
+		}
+	}
+	if len(result.Conflicts) > 0 {
+		return result, &ReconcileError{Conflicts: result.Conflicts}
+	}
 	working := base.Clone()
 	changes = changes.Normalized()
-	result := ReconcileResult{RawObservation: rawObservation}
 	for _, fact := range changes.Removed {
 		if conflict := removeFact(&working, fact, options); conflict != nil {
 			result.Conflicts = append(result.Conflicts, *conflict)
@@ -60,6 +68,28 @@ func ReconcileWithOptions(base Model, changes FactDelta, options ReconcileOption
 	result.Delta = Diff(base, working)
 	result.Locality = LocalityForDelta(base, result.Delta)
 	return result, nil
+}
+
+func validateFactInput(fact Fact) *Conflict {
+	if err := fact.Source.Validate(); err != nil {
+		return &Conflict{Kind: ConflictInvalidFact, Fact: fact, Message: fmt.Sprintf("invalid source span: %v", err)}
+	}
+	if fact.Layer != DeterministicFact {
+		if fact.Layer != SyntacticFact && fact.Layer != CandidateFact {
+			return &Conflict{Kind: ConflictInvalidFact, Fact: fact, Message: fmt.Sprintf("unsupported fact layer %d", fact.Layer)}
+		}
+		return nil
+	}
+	if !knownSemanticPredicate(fact.Predicate) {
+		return &Conflict{Kind: ConflictUnknownPredicate, Fact: fact, Message: fmt.Sprintf("predicate %q is not deterministic semantic vocabulary", fact.Predicate)}
+	}
+	if err := validateID(fact.Subject); err != nil {
+		return &Conflict{Kind: ConflictInvalidFact, Fact: fact, Message: fmt.Sprintf("invalid subject: %v", err)}
+	}
+	if err := validateID(fact.Object); err != nil {
+		return &Conflict{Kind: ConflictInvalidFact, Fact: fact, Message: fmt.Sprintf("invalid object: %v", err)}
+	}
+	return nil
 }
 
 func addFact(model *Model, result *ReconcileResult, fact Fact, options ReconcileOptions) *Conflict {
