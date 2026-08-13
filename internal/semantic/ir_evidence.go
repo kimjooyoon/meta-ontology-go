@@ -18,6 +18,9 @@ func (ir *IR) AddEvidence(evidence Evidence) error {
 	if err != nil {
 		return err
 	}
+	if err := normalized.ValidateAgainst(ir.Graph); err != nil {
+		return err
+	}
 	ir.ensureEvidence()
 	if existing, ok := ir.evidence[normalized.ID]; ok {
 		if existing.Canonical() != normalized.Canonical() {

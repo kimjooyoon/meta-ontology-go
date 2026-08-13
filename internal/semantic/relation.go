@@ -21,6 +21,15 @@ type RelationKind = Relation
 
 type Predicate = Relation
 
+// RelationSpec is the closed semantic type signature for a PROV-inspired
+// relation. Keeping the signatures in one registry prevents the accepted
+// vocabulary and its legality rules from drifting apart.
+type RelationSpec struct {
+	Predicate   Relation
+	SubjectKind Kind
+	ObjectKind  Kind
+}
+
 const (
 	Used              Relation = "used"
 	WasGeneratedBy    Relation = "wasGeneratedBy"
@@ -33,40 +42,45 @@ const (
 	RelationWasAssociatedWith = WasAssociatedWith
 )
 
+var relationSpecs = [...]RelationSpec{
+	{Predicate: Used, SubjectKind: Activity, ObjectKind: Entity},
+	{Predicate: WasGeneratedBy, SubjectKind: Entity, ObjectKind: Activity},
+	{Predicate: WasDerivedFrom, SubjectKind: Entity, ObjectKind: Entity},
+	{Predicate: WasAssociatedWith, SubjectKind: Activity, ObjectKind: Agent},
+}
+
+// RelationSpecs returns the deterministic, typed PROV-inspired vocabulary.
+// The returned slice is detached so callers cannot mutate the registry.
+func RelationSpecs() []RelationSpec {
+	return append([]RelationSpec(nil), relationSpecs[:]...)
+}
+
+func (r Relation) Spec() (RelationSpec, bool) {
+	for _, spec := range relationSpecs {
+		if spec.Predicate == r {
+			return spec, true
+		}
+	}
+	return RelationSpec{}, false
+}
+
 func (r Relation) String() string {
 	return string(r)
 }
 
 func (r Relation) Valid() bool {
-	switch r {
-	case Used, WasGeneratedBy, WasDerivedFrom, WasAssociatedWith:
-		return true
-	default:
-		return false
-	}
+	_, ok := r.Spec()
+	return ok
 }
 
 // ValidateKinds checks the PROV-inspired type signature of a relation.
 func (r Relation) ValidateKinds(subject, object Kind) error {
-	switch r {
-	case Used:
-		if subject == Activity && object == Entity {
-			return nil
-		}
-	case WasGeneratedBy:
-		if subject == Entity && object == Activity {
-			return nil
-		}
-	case WasDerivedFrom:
-		if subject == Entity && object == Entity {
-			return nil
-		}
-	case WasAssociatedWith:
-		if subject == Activity && object == Agent {
-			return nil
-		}
-	default:
+	spec, ok := r.Spec()
+	if !ok {
 		return fmt.Errorf("%w: %q", ErrUnknownRelation, r)
+	}
+	if subject == spec.SubjectKind && object == spec.ObjectKind {
+		return nil
 	}
 	return fmt.Errorf("%w: %s cannot connect %s to %s", ErrInvalidFact, r, subject, object)
 }
