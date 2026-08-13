@@ -185,6 +185,36 @@ func TestGenerateFromProjectionV1UsesPackageOverrideInDigest(t *testing.T) {
 	}
 }
 
+func TestGenerateFromProjectionV1HonorsHeaderOption(t *testing.T) {
+	input := semanticIRProviderFixture{ir: acceptanceFixture()}
+	before := copyIR(input.ir)
+	result, err := GenerateFromProjectionV1(input, Options{Header: "// adapter projection header"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.HasPrefix(result.Source, []byte("// adapter projection header\npackage ")) {
+		t.Fatalf("projection header option was ignored:\n%s", result.Source)
+	}
+	if _, err := result.CanonicalJSON(); err != nil {
+		t.Fatalf("header projection lost metadata binding: %v", err)
+	}
+	if !reflect.DeepEqual(input.ir, before) {
+		t.Fatal("header projection mutated caller-owned typed input")
+	}
+}
+
+func TestGenerateFromProjectionV1RejectsInvalidPackageWithoutMutation(t *testing.T) {
+	input := semanticIRProviderFixture{ir: acceptanceFixture()}
+	before := copyIR(input.ir)
+	result, err := GenerateFromProjectionV1(input, Options{PackageName: "not-a-package", Header: "// ignored"})
+	if err == nil || result.Metadata.SourceDigest != "" {
+		t.Fatalf("invalid package returned projection metadata: result=%#v err=%v", result, err)
+	}
+	if !reflect.DeepEqual(input.ir, before) {
+		t.Fatal("invalid package rejection mutated caller-owned typed input")
+	}
+}
+
 func TestGeneratedSourceCompilesForNonStructOutput(t *testing.T) {
 	ir := SemanticIR{
 		Package: "compilegen",

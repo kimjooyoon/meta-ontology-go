@@ -22,20 +22,25 @@ func GenerateWithMetadata(ir SemanticIR, previous []byte) (MetadataResult, error
 
 // GenerateProjectionV1 returns a versioned, canonicalizable result surface.
 func GenerateProjectionV1(ir SemanticIR, previous []byte) (ProjectionMetadataV1, error) {
+	return generateProjectionV1(New(Options{}), ir, previous)
+}
+
+func generateProjectionV1(generator Generator, ir SemanticIR, previous []byte) (ProjectionMetadataV1, error) {
 	normalized, err := normalizeIR(ir)
 	if err != nil {
 		return ProjectionMetadataV1{}, err
 	}
-	result, err := GenerateWithMetadata(normalized, previous)
+	result, err := generator.Generate(normalized, previous)
 	if err != nil {
 		return ProjectionMetadataV1{}, err
 	}
+	metadata := metadataResult(result, normalized)
 	return ProjectionMetadataV1{
 		Schema:     projectionMetadataSchemaV1,
 		Source:     append([]byte(nil), result.Source...),
 		SemanticIR: normalized,
 		SourceMap:  result.SourceMap,
-		Metadata:   result.Metadata,
+		Metadata:   metadata.Metadata,
 	}, nil
 }
 

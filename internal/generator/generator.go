@@ -48,7 +48,7 @@ func GenerateFromProjectionV1(input any, options Options) (ProjectionMetadataV1,
 	if options.PackageName != "" {
 		ir.Package = options.PackageName
 	}
-	return GenerateProjectionV1(ir, nil)
+	return generateProjectionV1(New(options), ir, nil)
 }
 
 // Generate projects ir into Go.  When previous is non-empty, only owned
