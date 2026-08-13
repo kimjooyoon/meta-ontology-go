@@ -18,6 +18,9 @@ func Format(file *File) (string, error) {
 	if err := validateIdentifier(file.Namespace.Name, "namespace name"); err != nil {
 		return "", err
 	}
+	if file.Decls != nil && file.Declarations != nil && !sameDeclarations(file.Decls, file.Declarations) {
+		return "", fmt.Errorf("file declaration aliases conflict")
+	}
 	declarations := file.Decls
 	if declarations == nil {
 		declarations = file.Declarations
@@ -37,6 +40,18 @@ func Format(file *File) (string, error) {
 	}
 	output.WriteByte('\n')
 	return output.String(), nil
+}
+
+func sameDeclarations(left, right []Declaration) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
 }
 
 // FormatSource parses and formats a complete source file when it is valid.
