@@ -42,6 +42,33 @@ func (a Adapter[S]) Diff(before, after S) (Delta, error) {
 	return DiffSnapshots(left, right)
 }
 
+// Apply computes and scope-checks a deterministic delta before invoking the
+// caller's authoritative writer. Out-of-scope deltas and empty deltas never
+// reach commit; the latter keeps candidate-only changes and replays no-op.
+func (a Adapter[S]) Apply(before, after S, scope Scope, commit func(Delta) error) (Report, error) {
+	if commit == nil {
+		return Report{}, fmt.Errorf("semanticdelta commit callback is required")
+	}
+	delta, err := a.Diff(before, after)
+	if err != nil {
+		return Report{}, fmt.Errorf("compute semantic delta: %w", err)
+	}
+	report, err := Detect(delta, scope)
+	if err != nil {
+		return report, err
+	}
+	if !report.Passes() {
+		return report, &ScopeError{Report: report}
+	}
+	if delta.IsEmpty() {
+		return report, nil
+	}
+	if err := commit(delta); err != nil {
+		return report, fmt.Errorf("commit semantic delta: %w", err)
+	}
+	return report, nil
+}
+
 // Adapt is a convenience form for callers that only need one snapshot.
 func Adapt[S any](source S, adapter Adapter[S]) (Snapshot, error) {
 	return adapter.Snapshot(source)

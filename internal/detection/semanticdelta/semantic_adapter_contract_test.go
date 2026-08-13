@@ -45,6 +45,34 @@ func TestSemanticIRAdapterContractRejectsInvalidProjection(t *testing.T) {
 	}
 }
 
+func TestSemanticIRAdapterApplyIgnoresCandidateWithoutCommit(t *testing.T) {
+	before := semanticContractFixture(t, "Pay order", false)
+	after := semanticContractFixture(t, "Pay order", false)
+	candidate := semantic.NewCandidateFact(
+		semantic.MustIdentity("billing://entity/order"), semantic.WasDerivedFrom,
+		semantic.MustIdentity("billing://entity/order"), "candidate only",
+	)
+	if err := after.AddCandidate(candidate); err != nil {
+		t.Fatal(err)
+	}
+	commits := 0
+	report, err := semanticIRContractAdapter().Apply(
+		before,
+		after,
+		Scope{Prefixes: []string{"billing://"}},
+		func(Delta) error {
+			commits++
+			return nil
+		},
+	)
+	if err != nil || !report.Passes() {
+		t.Fatalf("candidate-only Apply = report %#v, error %v", report, err)
+	}
+	if commits != 0 {
+		t.Fatalf("candidate-only change reached commit callback %d time(s)", commits)
+	}
+}
+
 func semanticIRContractAdapter() Adapter[semantic.IR] {
 	return Adapter[semantic.IR]{
 		Nodes: func(ir semantic.IR) ([]Node, error) {

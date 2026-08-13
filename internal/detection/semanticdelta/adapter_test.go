@@ -70,3 +70,60 @@ func TestDiffSnapshotsIgnoresOrderingAndPresentationBoundary(t *testing.T) {
 		t.Fatalf("delta ordering/content = %#v", delta)
 	}
 }
+
+func TestAdapterApplyRejectsOutOfScopeWithoutCommit(t *testing.T) {
+	before := fakeIR{nodes: []Node{{ID: "billing://activity/pay", Kind: "Activity"}}}
+	after := fakeIR{nodes: []Node{
+		{ID: "billing://activity/pay", Kind: "Activity"},
+		{ID: "fraud://entity/charge", Kind: "Entity"},
+	}}
+	adapter := Adapter[fakeIR]{
+		Nodes: func(value fakeIR) ([]Node, error) { return value.nodes, nil },
+		Facts: func(value fakeIR) ([]Fact, error) { return value.facts, nil },
+	}
+	commits := 0
+	_, err := adapter.Apply(before, after, Scope{Prefixes: []string{"billing://"}}, func(Delta) error {
+		commits++
+		return nil
+	})
+	var scopeErr *ScopeError
+	if !errors.As(err, &scopeErr) {
+		t.Fatalf("Apply error = %v, want ScopeError", err)
+	}
+	if commits != 0 {
+		t.Fatalf("out-of-scope delta reached commit callback %d time(s)", commits)
+	}
+}
+
+func TestAdapterApplyCommitsAllowedDeltaAndSkipsReplay(t *testing.T) {
+	before := fakeIR{nodes: []Node{{ID: "billing://activity/pay", Kind: "Activity"}}}
+	after := fakeIR{nodes: []Node{
+		{ID: "billing://activity/pay", Kind: "Activity"},
+		{ID: "billing://entity/order", Kind: "Entity"},
+	}}
+	adapter := Adapter[fakeIR]{
+		Nodes: func(value fakeIR) ([]Node, error) { return value.nodes, nil },
+		Facts: func(value fakeIR) ([]Fact, error) { return value.facts, nil },
+	}
+	commits := 0
+	var committed Delta
+	commit := func(delta Delta) error {
+		commits++
+		committed = delta
+		return nil
+	}
+	scope := Scope{Prefixes: []string{"billing://"}}
+	if report, err := adapter.Apply(before, after, scope, commit); err != nil || !report.Passes() {
+		t.Fatalf("allowed Apply = report %#v, error %v", report, err)
+	}
+	want := Delta{AddedNodes: []Node{{ID: "billing://entity/order", Kind: "Entity"}}}
+	if !reflect.DeepEqual(committed, want) || commits != 1 {
+		t.Fatalf("commit = %#v after %d calls, want %#v after one call", committed, commits, want)
+	}
+	if report, err := adapter.Apply(after, after, scope, commit); err != nil || !report.Passes() {
+		t.Fatalf("replay Apply = report %#v, error %v", report, err)
+	}
+	if commits != 1 {
+		t.Fatalf("replay reached commit callback %d time(s), want one total", commits)
+	}
+}
