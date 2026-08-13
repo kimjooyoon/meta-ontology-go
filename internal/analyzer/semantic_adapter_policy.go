@@ -25,6 +25,7 @@ const (
 	AdapterEvidenceConfig  AdapterErrorCode = "evidence-config"
 	AdapterSourceConfig    AdapterErrorCode = "source-config"
 	AdapterSlotConfig      AdapterErrorCode = "slot-config"
+	AdapterLocalityConfig  AdapterErrorCode = "locality-config"
 )
 
 // AdapterError carries a stable class while keeping detail local to the

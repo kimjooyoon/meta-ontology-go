@@ -51,7 +51,8 @@ func ToolchainDigest(identity string) string {
 func semanticAdapterBindingDigest(result SemanticAdapterResult) string {
 	if !validDigest(result.SourceDigest) || !validDigest(result.PolicyDigest) ||
 		!validDigest(result.ToolchainDigest) || !validDigest(result.ImplementationObservationDigest) ||
-		!validDigest(result.SlotObservationDigest) || !validDigest(result.RegistryDigest) {
+		!validDigest(result.SlotObservationDigest) || !validDigest(result.RegistryDigest) ||
+		!validDigest(result.Locality.Digest) {
 		return ""
 	}
 	var b strings.Builder
@@ -66,6 +67,7 @@ func semanticAdapterBindingDigest(result SemanticAdapterResult) string {
 	writeBindingField(&b, result.RegistryDigest)
 	writeBindingField(&b, result.ImplementationObservationDigest)
 	writeBindingField(&b, result.SlotObservationDigest)
+	writeBindingField(&b, result.Locality.Digest)
 	writeBindingField(&b, result.NormalizedDelta.Digest)
 	return semantic.StableHashString(b.String())
 }

@@ -32,6 +32,7 @@ type SemanticAdapterResult struct {
 	ToolchainDigest                 string
 	RegistryDigest                  string
 	BindingDigest                   string
+	Locality                        LocalityEnvelope
 	ImplementationObservationDigest string
 	SlotObservationDigest           string
 	NormalizedDelta                 SemanticNormalizedDelta
@@ -56,6 +57,10 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 		return SemanticAdapterResult{}, err
 	}
 	base, err := input.Base.Normalized()
+	if err != nil {
+		return SemanticAdapterResult{}, err
+	}
+	baseForLocality, err := base.Normalized()
 	if err != nil {
 		return SemanticAdapterResult{}, err
 	}
@@ -98,6 +103,10 @@ func AdaptSemantic(input SemanticAdapterInput) (SemanticAdapterResult, error) {
 		return SemanticAdapterResult{}, err
 	}
 	transaction.NormalizedDelta, err = newSemanticNormalizedDelta(input, baseDigest, transaction)
+	if err != nil {
+		return SemanticAdapterResult{}, err
+	}
+	transaction.Locality, err = LocalityEnvelopeFor(baseForLocality, transaction)
 	if err != nil {
 		return SemanticAdapterResult{}, err
 	}

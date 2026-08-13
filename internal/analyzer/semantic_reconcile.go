@@ -91,6 +91,9 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	) {
 		return false
 	}
+	if !validLocalityEnvelope(result) {
+		return false
+	}
 	if !implementationObservationsMatch(
 		result.ImplementationObservations, result.NormalizedDelta.DeferredImplementation,
 	) {
