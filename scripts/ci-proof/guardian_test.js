@@ -287,15 +287,32 @@ async function testProtectionObserverContracts() {
   const sixOnlyDev = {...verified, branch: 'dev', required_checks: ['CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'], required_check_bindings: verified.required_check_bindings.filter((binding) => binding.context !== 'CI guardian')};
   sixOnlyDev.digest_sha256 = digestBranchProtection(sixOnlyDev);
   assert.throws(() => validateBranchProtectionSnapshot(sixOnlyDev, {requireVerified: true, expectedBranch: 'dev'}), (error) => error && error.code === PROTECTION_CODE);
-  const environment = await observeGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), now: observerNow, getEnvironment: async () => githubDateResponse({name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, wait_timer: 0, reviewers: [], protection_rules: [{type: 'branch_policy'}]})});
+  const environment = await observeGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), now: observerNow, getEnvironment: async () => githubDateResponse({name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: [{type: 'branch_policy', id: 42, node_id: 'MDExOlByb3RlY3Rpb25SdWxlNDI='}]})});
   assert.equal(environment.read_status, 'verified');
   assert.equal(environment.observed_at, observedAt);
   assert.equal(environment.valid_until, validUntil);
+  assert.deepEqual(environment.protection_rules, ['branch_policy']);
+  assert.equal(environment.wait_timer, 0);
+  assert.deepEqual(environment.reviewers, []);
   const environmentTamper = {...environment, deployment_branch_policy: {...environment.deployment_branch_policy, custom_branch_policies: true}};
   environmentTamper.digest_sha256 = require('./guardian').digestGuardianEnvironment(environmentTamper);
   assert.throws(() => validateGuardianEnvironment(environmentTamper, {requireVerified: true}), (error) => error && error.code === PROTECTION_CODE);
-  const environmentMissing = await observeGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), getEnvironment: async () => ({status: 200, data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}}})});
-  assert.equal(environmentMissing.read_status, 'unavailable');
+  const invalidEnvironmentResponses = [
+    {name: 'missing policy', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: []}},
+    {name: 'required reviewers', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: [{type: 'branch_policy'}, {type: 'required_reviewers'}]}},
+    {name: 'wait timer', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: [{type: 'wait_timer'}]}},
+    {name: 'unknown rule', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: [{type: 'deployment_branch_policy'}]}},
+    {name: 'duplicate rule', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: [{type: 'branch_policy'}, {type: 'branch_policy'}]}},
+    {name: 'malformed rule', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: [{id: 42}]}},
+    {name: 'top-level wait timer', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: [{type: 'branch_policy'}], wait_timer: 0}},
+    {name: 'top-level reviewers', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: [{type: 'branch_policy'}], reviewers: []}},
+    {name: 'policy mismatch', data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: false, custom_branch_policies: false}, protection_rules: [{type: 'branch_policy'}]}},
+  ];
+  for (const invalid of invalidEnvironmentResponses) {
+    const environmentMissing = await observeGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), getEnvironment: async () => githubDateResponse(invalid.data)});
+    assert.equal(environmentMissing.read_status, 'unavailable', invalid.name);
+    assert.equal(environmentMissing.missing_reason, 'guardian_environment_api_malformed', invalid.name);
+  }
   const responseDateMissing = await observeBranchProtection({...protectionArgs, getProtection: async () => ({status: 200, data: protectionData})});
   assert.equal(responseDateMissing.read_status, 'unavailable');
   assert.match(responseDateMissing.missing_reason, /response_date/);
