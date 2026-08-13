@@ -36,6 +36,26 @@ func TestSemanticAdapterUnmappedCandidateRemainsDeferred(t *testing.T) {
 	}
 }
 
+func TestDeferredCandidateTamperFailsReconcileWithoutWrite(t *testing.T) {
+	observed := adaptGeneratedBillingSource(t, generatedBillingSource(t),
+		ambiguousGeneratedBillingRegistry(t), generatedBillingPolicy(t))
+	if len(observed.DeferredCandidates) != 1 {
+		t.Fatalf("deferred candidates = %d, want one", len(observed.DeferredCandidates))
+	}
+	before := irSnapshot(observed.IR)
+	observed.DeferredCandidates[0].Reason = "tampered candidate reason"
+
+	reconcile := ReconcileSemantic(observed, observed.IR, observed.SourceDigest, observed.PolicyDigest,
+		observed.ToolchainDigest, observed.ImplementationObservationDigest)
+	if reconcile.Accepted || reconcile.DeltaValid || reconcile.WriteEffect != ReconcileNoWrite ||
+		reconcile.FailureCode != "invalid-delta-binding" {
+		t.Fatalf("tampered deferred candidate reconcile = %#v, want invalid no-write", reconcile)
+	}
+	if got := irSnapshot(observed.IR); got != before {
+		t.Fatalf("reconcile mutated IR: before=%q after=%q", before, got)
+	}
+}
+
 func TestSemanticAdapterRejectsUnknownCandidateRelationWithoutMutation(t *testing.T) {
 	base := semantic.NewIR("billing", semantic.Namespace("billing"))
 	before := irSnapshot(base)

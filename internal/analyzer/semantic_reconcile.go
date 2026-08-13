@@ -102,6 +102,9 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	if !deferredImplementationDetailsMatch(result) {
 		return false
 	}
+	if !candidateObservationsMatch(result) {
+		return false
+	}
 	if !validDigest(result.RegistryDigest) {
 		return false
 	}
@@ -126,7 +129,7 @@ func normalizedDeltaMembersValid(result SemanticAdapterResult) bool {
 		}
 	}
 	for _, candidate := range result.NormalizedDelta.CandidateFacts {
-		if !candidate.Binding.complete() {
+		if !candidate.Binding.complete() || !validDigest(candidate.ObservationDigest) {
 			return false
 		}
 		for _, fact := range candidate.Facts {

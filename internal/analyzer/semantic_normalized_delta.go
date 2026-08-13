@@ -59,21 +59,23 @@ func (f NormalizedSignatureFact) canonical() string {
 // evidence are populated only when an explicit policy mapped the options;
 // the candidate remains separate from deterministic graph facts either way.
 type NormalizedCandidateFact struct {
-	Binding        DeltaBinding        `json:"binding"`
-	SourceRelation Relation            `json:"source_relation"`
-	Origin         ObservationOrigin   `json:"origin"`
-	Subject        semantic.ID         `json:"subject"`
-	Options        []semantic.ID       `json:"options"`
-	Facts          []semantic.Fact     `json:"facts"`
-	Evidence       []semantic.Evidence `json:"evidence"`
-	Span           semantic.Span       `json:"span"`
-	Reason         string              `json:"reason"`
+	Binding           DeltaBinding        `json:"binding"`
+	ObservationDigest string              `json:"observation_digest"`
+	SourceRelation    Relation            `json:"source_relation"`
+	Origin            ObservationOrigin   `json:"origin"`
+	Subject           semantic.ID         `json:"subject"`
+	Options           []semantic.ID       `json:"options"`
+	Facts             []semantic.Fact     `json:"facts"`
+	Evidence          []semantic.Evidence `json:"evidence"`
+	Span              semantic.Span       `json:"span"`
+	Reason            string              `json:"reason"`
 }
 
 func (f NormalizedCandidateFact) canonical() string {
 	var builder strings.Builder
 	builder.WriteString("candidate\n")
 	builder.WriteString(f.Binding.canonical())
+	writeBindingField(&builder, f.ObservationDigest)
 	writeBindingField(&builder, string(f.SourceRelation))
 	writeBindingField(&builder, string(f.Origin))
 	writeBindingField(&builder, f.Subject.String())
@@ -199,8 +201,9 @@ func normalizedCandidateFacts(
 	output := make([]NormalizedCandidateFact, 0, len(input.Analysis.Delta.Candidates))
 	for _, sourceCandidate := range input.Analysis.Delta.Candidates {
 		candidate := NormalizedCandidateFact{
-			Binding: binding, SourceRelation: sourceCandidate.Relation,
-			Origin: sourceCandidate.Origin, Span: semanticSpan(sourceCandidate.Span),
+			Binding: binding, ObservationDigest: candidateObservationDigest(sourceCandidate),
+			SourceRelation: sourceCandidate.Relation,
+			Origin:         sourceCandidate.Origin, Span: semanticSpan(sourceCandidate.Span),
 			Reason: sourceCandidate.Reason,
 		}
 		subject, err := semantic.ParseIdentity(sourceCandidate.Subject.ID)
