@@ -58,6 +58,26 @@ func (o ImplementationObservation) Fingerprint() string {
 	return semantic.StableHashString(o.Canonical())
 }
 
+func validImplementationObservation(observation ImplementationObservation) bool {
+	if !validDigest(observation.SourceDigest) || !validDigest(observation.BaseDigest) ||
+		!validDigest(observation.PolicyDigest) || !validDigest(observation.ToolchainDigest) ||
+		!validDigest(observation.RegistryDigest) || observation.SourceFile == "" ||
+		observation.Span.Filename != observation.SourceFile ||
+		observation.Span.Start.Offset < 0 ||
+		observation.Span.End.Offset < observation.Span.Start.Offset ||
+		observation.Origin != OriginImplementation || !knownAnalyzerRelation(observation.Relation) ||
+		!observation.Subject.Valid() || !observation.Object.Valid() {
+		return false
+	}
+	if _, err := semantic.ParseIdentity(observation.Subject.ID); err != nil {
+		return false
+	}
+	if _, err := semantic.ParseIdentity(observation.Object.ID); err != nil {
+		return false
+	}
+	return true
+}
+
 func collectImplementationObservations(
 	result Result, base semantic.IR, input SemanticAdapterInput,
 ) []ImplementationObservation {
