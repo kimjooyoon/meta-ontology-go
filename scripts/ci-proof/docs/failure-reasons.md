@@ -6,9 +6,10 @@ class, severity, blocking scope, parallelization rule, and handoff requirement;
 a caller cannot change those fields in a manifest.
 
 The manifest carries the machine-readable `catalog_path` and immutable
-`catalog_digest` fields. The digest covers the versioned code/classification
-table and the path; the validator rejects any caller-supplied digest that does
-not match the compiled catalog. The workflow summary prints the digest,
+`catalog_digest` fields. The digest is SHA-256 over the checked-in catalog
+document bytes, including the machine-catalog records; the validator rejects
+any caller-supplied digest or code/classification drift that does not match
+those bytes. The workflow summary prints the digest,
 complete `failure_codes`, exact `owner_branch`, artifact status/reason, and all
 rejections so an agent can act without parsing a human-only default. It also
 derives `owner_ref` from the registered governance file at the exact head and
@@ -34,6 +35,21 @@ classification (`class`, `severity`, `scope`, `blocking_scope`,
 caller-supplied values that cannot be derived from the exact workflow tuple.
 `failure_test.go` checks that the human catalog contains exactly the machine
 catalog's eleven codes, with no missing or duplicate entries.
+
+The following machine-catalog records are part of the catalog bytes. The
+validator compares every field with its executable catalog and rejects drift.
+
+<!-- machine-catalog: CI-TEST-001|test|error|local|true|false|registered-path-owner -->
+<!-- machine-catalog: CI-SCOPE-001|scope|error|global|false|false|ci-policy -->
+<!-- machine-catalog: CI-CAPS-001|caps|error|global|false|false|ci-policy -->
+<!-- machine-catalog: CI-CONTRACT-001|contract|critical|global|false|true|gate -->
+<!-- machine-catalog: CI-DEPENDENCY-001|dependency|warning|local|true|true|registered-path-owner -->
+<!-- machine-catalog: CI-GATE-001|gate|blocked|global|false|true|gate -->
+<!-- machine-catalog: CI-ARTIFACT-001|artifact|error|global|false|true|gate -->
+<!-- machine-catalog: CI-FRESHNESS-001|freshness|error|global|false|true|gate -->
+<!-- machine-catalog: CI-PROVENANCE-001|provenance|blocked|global|false|true|gate -->
+<!-- machine-catalog: CI-OWNERSHIP-001|ownership|blocked|local|true|true|branch-ownership -->
+<!-- machine-catalog: CI-UNCLASSIFIED-001|unclassified|blocked|global|false|true|gate -->
 
 ## Codes
 

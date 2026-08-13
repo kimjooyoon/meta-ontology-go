@@ -67,6 +67,23 @@ func TestFailureManifestBindsCatalogRefAndHandoffParity(t *testing.T) {
 	}
 }
 
+func TestFailureManifestRejectsTamperedClassificationAndHandoff(t *testing.T) {
+	binding := validFailureBinding()
+	manifest, err := buildFailureManifest(validFailureInput(), binding)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest.Class = "gate"
+	if err := validateFailureManifest(manifest, binding); err == nil {
+		t.Fatal("tampered failure classification was accepted")
+	}
+	manifest.Class = "test"
+	manifest.HandoffOwner = "gate"
+	if err := validateFailureManifest(manifest, binding); err == nil {
+		t.Fatal("tampered failure handoff owner was accepted")
+	}
+}
+
 func TestFailureCatalogMatchesCheckedInDocument(t *testing.T) {
 	_, source, _, ok := runtime.Caller(0)
 	if !ok {
@@ -74,6 +91,12 @@ func TestFailureCatalogMatchesCheckedInDocument(t *testing.T) {
 	}
 	document, err := os.ReadFile(filepath.Join(filepath.Dir(source), "docs", "failure-reasons.md"))
 	if err != nil {
+		t.Fatal(err)
+	}
+	if got := "sha256:" + digestBytes(document); got != failureCatalogDigest {
+		t.Fatalf("catalog digest is not bound to document bytes: got %s want %s", failureCatalogDigest, got)
+	}
+	if err := validateFailureCatalog(); err != nil {
 		t.Fatal(err)
 	}
 	counts := make(map[string]int)
@@ -99,6 +122,15 @@ func TestFailureCatalogMatchesCheckedInDocument(t *testing.T) {
 		if _, ok := failureCatalog[code]; !ok {
 			t.Fatalf("catalog contains unknown code %s", code)
 		}
+	}
+}
+
+func TestFailureOwnerRegistryRequiresRegisteredCIOwner(t *testing.T) {
+	if err := validateFailureOwnerRegistry("agent/ci-workflow"); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateFailureOwnerRegistry("agent/bidir"); err == nil {
+		t.Fatal("non-CI owner was accepted for failure manifests")
 	}
 }
 
@@ -175,8 +207,11 @@ func TestFailureManifestAllowsMissingArtifactOnlyFailClosed(t *testing.T) {
 	input.Code = "CI-ARTIFACT-001"
 	input.FailureCodes = []string{"CI-ARTIFACT-001"}
 	input.TerminalFailureCodes = []string{"CI-ARTIFACT-001"}
+	input.Job = failureJob{ID: 11, Name: "CI proof bundle", Status: "completed", Conclusion: "failure", HeadSHA: strings.Repeat("a", 40), RunID: 9, RunAttempt: 2}
+	input.TerminalFailures = []failureJob{input.Job}
+	input.Rejections = []string{"proof_artifact_missing"}
 	input.ArtifactStatus = "missing"
-	input.ArtifactReason = "proof_artifact_missing"
+	input.ArtifactReason = "artifact_missing"
 	input.Message = "proof artifact is missing for the exact run"
 	input.Remediation = "rerun the exact head and publish the proof artifact"
 	manifest, err := buildFailureManifest(input, binding)
@@ -250,23 +285,5 @@ func TestFailureManifestRejectsUnknownBinding(t *testing.T) {
 	binding.Actor = "unknown"
 	if _, err := buildFailureManifest(validFailureInput(), binding); err == nil {
 		t.Fatal("unknown agent binding was accepted")
-	}
-}
-
-func validFailureBinding() failureBinding {
-	return failureBinding{
-		Repository: "owner/repo", Event: "pull_request", EventRef: "refs/pull/7/merge", CheckoutRef: strings.Repeat("a", 40), BaseRef: "integration",
-		BaseSHA: strings.Repeat("b", 40), HeadSHA: strings.Repeat("a", 40), WorkflowSHA: strings.Repeat("c", 40),
-		PRNumber: 7, RunID: 9, RunAttempt: 2, Actor: "builder", OwnerBranch: "agent/ci-workflow",
-	}
-}
-
-func validFailureInput() failureInput {
-	head := strings.Repeat("a", 40)
-	job := failureJob{ID: 11, Name: "go test", Status: "completed", Conclusion: "failure", HeadSHA: head, RunID: 9, RunAttempt: 2}
-	return failureInput{
-		Code: "CI-TEST-001", FailureCodes: []string{"CI-TEST-001"}, Message: "go test failed in the exact PR run", Remediation: "reproduce and fix the failing test",
-		OwnerBranch: "agent/ci-workflow", ArtifactStatus: "not_applicable", ArtifactReason: "canonical_job_failure",
-		TerminalFailures: []failureJob{job}, TerminalFailureCodes: []string{"CI-TEST-001"}, Job: job,
 	}
 }

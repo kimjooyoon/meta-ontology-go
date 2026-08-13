@@ -186,13 +186,22 @@ jobs:
         with:
           github-token: ${{ github.token }}
           script: |
-            const response = await github.rest.actions.listJobsForWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId,
-              per_page: 100,
-            });
-            require('fs').writeFileSync('ci-jobs.json', JSON.stringify(response.data.jobs));
+            const jobs = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listJobsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+                per_page: 100,
+                page,
+              });
+              jobs.push(...response.data.jobs);
+              if (response.data.jobs.length < 100) {
+                require('fs').writeFileSync('ci-jobs.json', JSON.stringify(jobs));
+                return;
+              }
+            }
+            throw new Error('canonical job API pagination exceeded the fail-closed page limit');
       - name: Reproduce generated evidence input
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main'
         run: |
@@ -336,11 +345,17 @@ jobs:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
-            const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
+            const jobsFromAPI = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              jobsFromAPI.push(...response.data.jobs);
+              if (response.data.jobs.length < 100) break;
+              if (page === 1000) throw new Error('proof job API pagination exceeded the fail-closed page limit');
+            }
             const names = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
             const head = context.payload.pull_request?.head.sha || context.sha;
             const byName = new Map();
-            for (const job of response.data.jobs) {
+            for (const job of jobsFromAPI) {
               if (!names.includes(job.name)) continue;
               if (byName.has(job.name)) throw new Error(`duplicate canonical job ${job.name}`);
               byName.set(job.name, job);
@@ -440,21 +455,43 @@ jobs:
             const protectionPayload = {...protection, digest_sha256: ''};
             protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');
             let approvals = [];
+            let approvalReadError = '';
+            const listPages = async (fetchPage, label) => {
+              const items = [];
+              for (let page = 1; page <= 1000; page++) {
+                let response;
+                try {
+                  response = await fetchPage(page);
+                } catch (error) {
+                  throw new Error(`${label} API read failed: ${error.message}`);
+                }
+                items.push(...response.data);
+                if (response.data.length < 100) return items;
+              }
+              throw new Error(`${label} API pagination exceeded the fail-closed page limit`);
+            };
             if (pull) {
               try {
-                const response = await github.rest.pulls.listReviews({owner: context.repo.owner, repo: context.repo.repo, pull_number: pull.number, per_page: 100});
+                const reviews = await listPages(page => github.rest.pulls.listReviews({owner: context.repo.owner, repo: context.repo.repo, pull_number: pull.number, per_page: 100, page}), 'pull request reviews');
                 const seen = new Set();
-                approvals = response.data.filter(review => review.state === 'APPROVED' && review.user && !seen.has(review.user.login) && seen.add(review.user.login)).map(review => ({actor: review.user.login, state: review.state}));
-              } catch (_) {}
+                approvals = reviews.filter(review => review.state === 'APPROVED' && review.user && !seen.has(review.user.login) && seen.add(review.user.login)).map(review => ({actor: review.user.login, state: review.state}));
+              } catch (error) {
+                approvalReadError = 'approval_api_unavailable';
+                core.warning(error.message);
+              }
             }
             let artifacts = [];
+            let artifactReadError = '';
             const runAttempt = Number(process.env.GITHUB_RUN_ATTEMPT || 1);
             try {
-              const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
-              artifacts = response.data.artifacts.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired, digest: artifact.digest || '', run_id: context.runId, run_attempt: runAttempt}));
-            } catch (_) {}
+              const artifactRows = await listPages(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}), 'workflow artifacts');
+              artifacts = artifactRows.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired, digest: artifact.digest || '', run_id: context.runId, run_attempt: runAttempt}));
+            } catch (error) {
+              artifactReadError = 'artifact_api_unavailable';
+              core.warning(error.message);
+            }
             const expectedArtifactName = `ci-evidence-${context.runId}-${runAttempt}`;
-            const artifactsVerified = artifacts.length === 1 && artifacts[0].id > 0 && artifacts[0].name === expectedArtifactName && artifacts[0].size_bytes > 0 && !artifacts[0].expired && /^sha256:[0-9a-f]{64}$/.test(artifacts[0].digest);
+            const artifactsVerified = !artifactReadError && artifacts.length === 1 && artifacts[0].id > 0 && artifacts[0].name === expectedArtifactName && artifacts[0].size_bytes > 0 && !artifacts[0].expired && /^sha256:[0-9a-f]{64}$/.test(artifacts[0].digest);
             const eventRef = context.ref;
             const checkoutRef = headSha;
             const contextData = {
@@ -463,7 +500,7 @@ jobs:
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
               actor: context.actor, builder: context.actor, guardian: approvals[0]?.actor || '', approver: approvals[1]?.actor || '', gate: 'CI policy',
               branch_protected: protection.exists, branch_protection: protection, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
-              provenance_status: 'unavailable', artifacts_status: artifactsVerified ? 'verified' : 'missing', approvals_status: approvals.length >= 2 ? 'verified' : 'missing',
+              provenance_status: 'unavailable', artifacts_status: artifactsVerified ? 'verified' : 'missing', approvals_status: approvals.length >= 2 && !approvalReadError ? 'verified' : 'missing',
               write_effect: 'none', no_write_outside_generated: true, approvals, artifacts, fixture_paths: ['examples/billing/main.gooo'],
               cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence
             };
@@ -521,13 +558,19 @@ jobs:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
-            const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
+            const jobsFromAPI = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              jobsFromAPI.push(...response.data.jobs);
+              if (response.data.jobs.length < 100) break;
+              if (page === 1000) throw new Error('failure job API pagination exceeded the fail-closed page limit');
+            }
             const expectedJobs = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
-            const terminalFailures = response.data.jobs
+            const terminalFailures = jobsFromAPI
               .filter(job => job.name !== 'CI failure summary' && job.status === 'completed' && job.conclusion && job.conclusion !== 'success' && job.conclusion !== 'skipped')
               .sort((left, right) => left.id - right.id || left.name.localeCompare(right.name));
             if (terminalFailures.length === 0) {
-              const canonicalJobs = response.data.jobs
+              const canonicalJobs = jobsFromAPI
                 .filter(job => expectedJobs.includes(job.name))
                 .sort((left, right) => expectedJobs.indexOf(left.name) - expectedJobs.indexOf(right.name));
               const pull = context.payload.pull_request;
@@ -597,9 +640,18 @@ jobs:
             const proofArtifactName = `ci-proof-${context.runId}-${runAttempt}`;
             let proofArtifact = null;
             try {
-              const artifactResponse = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
-              proofArtifact = artifactResponse.data.artifacts.find(artifact => artifact.name === proofArtifactName) || null;
-            } catch (_) {}
+              const artifactRows = [];
+              for (let page = 1; page <= 1000; page++) {
+                const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+                artifactRows.push(...response.data.artifacts);
+                if (response.data.artifacts.length < 100) break;
+                if (page === 1000) throw new Error('failure artifact API pagination exceeded the fail-closed page limit');
+              }
+              proofArtifact = artifactRows.find(artifact => artifact.name === proofArtifactName) || null;
+            } catch (error) {
+              proofState = 'artifact_invalid';
+              core.warning(error.message);
+            }
             const proofArtifactRef = proofArtifact ? {id: proofArtifact.id, name: proofArtifact.name, size_bytes: proofArtifact.size_in_bytes, expired: proofArtifact.expired, digest: proofArtifact.digest || '', run_id: context.runId, run_attempt: runAttempt} : null;
             const proofArtifactValid = proofArtifactRef !== null && proofArtifactRef.id > 0 && proofArtifactRef.size_bytes > 0 && !proofArtifactRef.expired && /^sha256:[0-9a-f]{64}$/.test(proofArtifactRef.digest);
             if (proofState === 'verified' && !proofArtifactValid) proofState = 'artifact_missing_or_invalid';

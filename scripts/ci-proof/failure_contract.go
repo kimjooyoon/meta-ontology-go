@@ -1,11 +1,8 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"sort"
-	"strings"
 )
 
 type failureCatalogEntry struct {
@@ -38,25 +35,12 @@ var failureCatalogRecords = []failureCatalogRecord{
 
 var failureCatalog = buildFailureCatalog()
 
-var failureCatalogDigest = immutableFailureCatalogDigest()
-
 func buildFailureCatalog() map[string]failureCatalogEntry {
 	catalog := make(map[string]failureCatalogEntry, len(failureCatalogRecords))
 	for _, record := range failureCatalogRecords {
 		catalog[record.Code] = record.Entry
 	}
 	return catalog
-}
-
-func immutableFailureCatalogDigest() string {
-	var payload strings.Builder
-	payload.WriteString(failureCatalogPath)
-	payload.WriteByte('\n')
-	for _, record := range failureCatalogRecords {
-		fmt.Fprintf(&payload, "%s|%s|%s|%s|%t|%t|%s\n", record.Code, record.Entry.Class, record.Entry.Severity, record.Entry.BlockingScope, record.Entry.Parallelizable, record.Entry.HandoffRequired, record.Entry.Owner)
-	}
-	digest := sha256.Sum256([]byte(payload.String()))
-	return "sha256:" + hex.EncodeToString(digest[:])
 }
 
 func validateFailureCodes(codes []string, primary string) error {
@@ -155,14 +139,16 @@ func sameFailureJobs(jobs []failureJob, primary failureJob, codes []string) bool
 		return false
 	}
 	seenIDs := make(map[int64]bool, len(jobs))
+	seenNames := make(map[string]bool, len(jobs))
 	for index, job := range jobs {
 		if index > 0 && (job.ID < jobs[index-1].ID || (job.ID == jobs[index-1].ID && job.Name < jobs[index-1].Name)) {
 			return false
 		}
-		if job.ID <= 0 || seenIDs[job.ID] || codes[index] == "" {
+		if job.ID <= 0 || seenIDs[job.ID] || seenNames[job.Name] || codes[index] == "" {
 			return false
 		}
 		seenIDs[job.ID] = true
+		seenNames[job.Name] = true
 	}
 	return true
 }
@@ -171,8 +157,14 @@ func sameFailureJob(left, right failureJob) bool {
 	return left == right
 }
 
-func validateTerminalFailureMapping(manifest failureManifest) error {
+func validateTerminalFailureMapping(manifest failureManifest, binding failureBinding) error {
+	if len(manifest.TerminalFailures) != len(manifest.TerminalFailureCodes) {
+		return fmt.Errorf("terminal failure mapping is incomplete")
+	}
 	for index, job := range manifest.TerminalFailures {
+		if err := validateFailureJob(job, binding); err != nil {
+			return fmt.Errorf("terminal failure job is stale or mismatched: %w", err)
+		}
 		code := manifest.TerminalFailureCodes[index]
 		if _, ok := failureCatalog[code]; !ok || !containsCode(manifest.FailureCodes, code) {
 			return fmt.Errorf("terminal failure code is unknown or missing from the complete set")
@@ -183,8 +175,23 @@ func validateTerminalFailureMapping(manifest failureManifest) error {
 		if job.Name == "CI policy" && code != "CI-SCOPE-001" && code != "CI-CAPS-001" {
 			return fmt.Errorf("CI policy terminal failure has a non-deterministic code")
 		}
+		if isCanonicalFailureJob(job.Name) && job.Name != "CI policy" && code != "CI-TEST-001" {
+			return fmt.Errorf("canonical terminal job %q has a non-deterministic code", job.Name)
+		}
+		if job.Name == "CI proof bundle" && code == "CI-UNCLASSIFIED-001" {
+			return fmt.Errorf("proof terminal job has an unclassified code")
+		}
 	}
 	return nil
+}
+
+func isCanonicalFailureJob(name string) bool {
+	for _, canonical := range []string{"gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"} {
+		if name == canonical {
+			return true
+		}
+	}
+	return false
 }
 
 func containsCode(codes []string, target string) bool {

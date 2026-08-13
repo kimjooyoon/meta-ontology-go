@@ -10,7 +10,7 @@ func TestFailureManifestBindsProofArtifactReference(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if manifest.ProofArtifactRef == nil || manifest.ProofArtifactRef.Name != "ci-proof-9-2" || len(manifest.ArtifactURLs) != 2 {
+	if manifest.ProofArtifactRef == nil || manifest.ProofArtifactRef.Name != "ci-proof-9-2" || len(manifest.ArtifactURLs) != 2 || len(manifest.ArtifactRefs) != 2 || manifest.ArtifactRefs[1] != *manifest.ProofArtifactRef {
 		t.Fatalf("proof artifact reference was not bound: %+v", manifest)
 	}
 	manifest.ProofArtifactRef.Digest = "sha256:" + strings.Repeat("0", 64)
@@ -99,6 +99,26 @@ func TestFailureManifestRejectsUnorderedTerminalFailures(t *testing.T) {
 	manifest.TerminalFailures[0], manifest.TerminalFailures[1] = manifest.TerminalFailures[1], manifest.TerminalFailures[0]
 	if err := validateFailureManifest(manifest, validFailureBinding()); err == nil {
 		t.Fatal("unordered terminal failures were accepted")
+	}
+}
+
+func TestFailureManifestRejectsDuplicateTerminalJobName(t *testing.T) {
+	input := validFailureInput()
+	duplicate := input.Job
+	duplicate.ID = 12
+	input.TerminalFailures = append(input.TerminalFailures, duplicate)
+	input.TerminalFailureCodes = append(input.TerminalFailureCodes, "CI-TEST-001")
+	if _, err := buildFailureManifest(input, validFailureBinding()); err == nil {
+		t.Fatal("duplicate terminal job name was accepted")
+	}
+}
+
+func TestFailureManifestRejectsStaleSecondaryTerminalJob(t *testing.T) {
+	input := validFailureInput()
+	input.TerminalFailures = append(input.TerminalFailures, failureJob{ID: 12, Name: "go vet", Status: "completed", Conclusion: "failure", HeadSHA: strings.Repeat("b", 40), RunID: 9, RunAttempt: 2})
+	input.TerminalFailureCodes = append(input.TerminalFailureCodes, "CI-TEST-001")
+	if _, err := buildFailureManifest(input, validFailureBinding()); err == nil {
+		t.Fatal("stale secondary terminal job was accepted")
 	}
 }
 
