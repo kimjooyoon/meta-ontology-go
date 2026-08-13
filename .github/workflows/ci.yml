@@ -563,7 +563,7 @@ jobs:
             exit 0
           fi
           go run ./scripts/ci-proof --failure-input ci-failure-input.json --failure-output ci-failure.json
-          jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `scripts/ci-proof/docs/failure-reasons.md`\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- severity: `\(.severity)`\n- scope: `\(.scope)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- handoff_required: `\(.handoff_required)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `\(.catalog_path)`\n- evidence: \(.evidence_refs | join(", "))\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
       - name: Upload failure reason manifest
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

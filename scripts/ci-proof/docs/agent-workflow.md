@@ -16,7 +16,10 @@ and take another independent task.
 
 For every CI failure, read the versioned `gooo/ci-failure/v1` manifest first.
 Use its exact source/base/head/run/attempt/job tuple and evidence references;
-unknown values are fail-closed. Re-run only after the current head is confirmed.
+unknown values are fail-closed. The workflow summary repeats the manifest's
+code, severity, scope, blocking scope, parallelization, handoff requirement,
+catalog path, and evidence references. Re-run only after the current head is
+confirmed.
 
 Normal operations are:
 

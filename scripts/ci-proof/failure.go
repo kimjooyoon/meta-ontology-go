@@ -96,6 +96,7 @@ type failureManifest struct {
 	Entity          string            `json:"entity"`
 	Provenance      failureProvenance `json:"provenance"`
 	EvidenceRefs    []string          `json:"evidence_refs"`
+	CatalogPath     string            `json:"catalog_path"`
 	Message         string            `json:"message"`
 	Remediation     string            `json:"remediation"`
 	HandoffRequired bool              `json:"handoff_required"`
@@ -146,7 +147,8 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 		SourceCommit: binding.HeadSHA, Repository: binding.Repository, BaseRef: binding.BaseRef, BaseSHA: binding.BaseSHA, HeadSHA: binding.HeadSHA,
 		Event: binding.Event, EventRef: binding.EventRef, CheckoutRef: binding.CheckoutRef, PRNumber: binding.PRNumber, RunID: binding.RunID,
 		RunAttempt: binding.RunAttempt, WorkflowSHA: binding.WorkflowSHA, Job: input.Job,
-		Message: input.Message, Remediation: input.Remediation, HandoffRequired: entry.HandoffRequired,
+		CatalogPath: failureCatalogPath, Message: input.Message, Remediation: input.Remediation,
+		HandoffRequired: entry.HandoffRequired,
 	}
 	manifest.Activity = fmt.Sprintf("urn:gooo:ci-run:%d:%d", binding.RunID, binding.RunAttempt)
 	manifest.Agent = "urn:gooo:agent:" + binding.Actor
@@ -182,7 +184,7 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA {
 		return fmt.Errorf("failure manifest tuple is stale or mismatched")
 	}
-	if manifest.Repository == "" || manifest.BaseRef == "" || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
+	if manifest.Repository == "" || manifest.BaseRef == "" || manifest.CatalogPath != failureCatalogPath || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
 		return fmt.Errorf("failure manifest has incomplete or unknown values")
 	}
 	if binding.Actor == "" || containsUnknown(binding.Actor) || manifest.Activity != fmt.Sprintf("urn:gooo:ci-run:%d:%d", binding.RunID, binding.RunAttempt) || manifest.Agent != "urn:gooo:agent:"+binding.Actor || manifest.Entity != fmt.Sprintf("urn:gooo:ci-failure:%d:%d:%d:%s", binding.RunID, binding.RunAttempt, manifest.Job.ID, manifest.Code) {
