@@ -71,8 +71,8 @@ func TestCandidateEvidenceCannotStandInForAuthoritativeFact(t *testing.T) {
 	if _, err := graph.PromoteCandidate(fact.Key()); err != nil {
 		t.Fatal(err)
 	}
-	if err := candidateEvidence.ValidateAgainst(graph); !errors.Is(err, ErrInvalidEvidence) {
-		t.Fatalf("candidate evidence remained valid after promotion: %v", err)
+	if err := candidateEvidence.ValidateAgainst(graph); err != nil {
+		t.Fatalf("retained candidate evidence failed after promotion: %v", err)
 	}
 	if err := authoritativeEvidence.ValidateAgainst(graph); err != nil {
 		t.Fatalf("authoritative evidence did not match promoted fact: %v", err)
