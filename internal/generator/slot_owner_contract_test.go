@@ -40,11 +40,28 @@ func TestSlotOwnerKindMismatchFailsClosedWithoutMutation(t *testing.T) {
 	corrupted := strings.Replace(string(first.Source), `//gooo:generated:start id="gooo://activity/compile" kind="activity"`, `//gooo:generated:start id="gooo://activity/compile" kind="entity"`, 1)
 	corrupted = strings.Replace(corrupted, `//gooo:generated:end id="gooo://activity/compile" kind="activity"`, `//gooo:generated:end id="gooo://activity/compile" kind="entity"`, 1)
 	previous := []byte(corrupted)
-	if _, err := Generate(acceptanceFixture(), previous); err == nil || !strings.Contains(err.Error(), "non-activity region kind") {
+	if _, err := Generate(acceptanceFixture(), previous); err == nil || !strings.Contains(err.Error(), "changes kind") {
 		t.Fatalf("expected slot kind rejection, got %v", err)
 	}
 	if !bytes.Equal(previous, []byte(corrupted)) {
 		t.Fatal("slot kind rejection mutated previous source")
+	}
+}
+
+func TestRegionKindChangeFailsClosedWithoutMutation(t *testing.T) {
+	first := mustAcceptanceResult(t, acceptanceFixture(), nil)
+	changed := acceptanceFixture()
+	activity := changed.Activities[0]
+	changed.Activities = changed.Activities[1:]
+	changed.Entities = append(changed.Entities, Entity{
+		ID: activity.ID, Name: activity.Name, GoName: activity.GoName,
+	})
+	previous := append([]byte(nil), first.Source...)
+	if _, err := Generate(changed, previous); err == nil || !strings.Contains(err.Error(), "changes kind") {
+		t.Fatalf("expected generated-region kind rejection, got %v", err)
+	}
+	if !bytes.Equal(previous, first.Source) {
+		t.Fatal("generated-region kind rejection mutated previous source")
 	}
 }
 

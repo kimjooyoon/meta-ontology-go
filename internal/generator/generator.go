@@ -68,6 +68,9 @@ func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
 		if err := validatePackage(previous, ir.Package); err != nil {
 			return Result{}, err
 		}
+		if err := validateDeclaredRegions(ir, markers); err != nil {
+			return Result{}, err
+		}
 	}
 	blocks, order, err := g.renderBlocks(ir, markers)
 	if err != nil {
@@ -95,6 +98,26 @@ func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
 		return Result{}, err
 	}
 	return Result{Source: source, SourceMap: sourceMap}, nil
+}
+
+func validateDeclaredRegions(ir SemanticIR, markers parsedMarkers) error {
+	declared := make(map[string]string, len(ir.Entities)+len(ir.Activities))
+	for _, entity := range ir.Entities {
+		declared[entity.ID] = "entity"
+	}
+	for _, activity := range ir.Activities {
+		declared[activity.ID] = "activity"
+	}
+	for _, region := range markers.Regions {
+		expected, exists := declared[region.ID]
+		if !exists {
+			continue
+		}
+		if region.Kind != expected {
+			return fmt.Errorf("generator: generated region %q changes kind from %q to %q", region.ID, region.Kind, expected)
+		}
+	}
+	return nil
 }
 
 func validateDeclaredSlots(ir SemanticIR, markers parsedMarkers, allowRemovedRegions bool) error {
