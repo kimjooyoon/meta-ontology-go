@@ -268,7 +268,7 @@ jobs:
               graph: {command: 'go run ./cmd/gooo graph-dump examples/billing/main.gooo', status: 'deferred', available: false, reason: 'graph-dump is not implemented in the current checkout', output_sha256: crypto.createHash('sha256').update('').digest('hex')},
               observer_receipt_refs: [], observer_status: 'unavailable', protection_status: 'unavailable', provenance_status: 'not_applicable',
               digests: {source_sha256: evidence.digests.source_sha256, ir_sha256: evidence.digests.ir_sha256, generated_output_sha256: evidence.digests.generated_output_sha256, bundle_sha256: evidence.digests.bundle_sha256, domain_sha256: ''},
-              missing_reasons: {protection: 'domain_protection_observer_unavailable', provenance: ''},
+              missing_reasons: {protection: 'domain_protection_observer_unavailable'},
             };
             const domainPayload = {...domain, digests: {...domain.digests, domain_sha256: ''}};
             domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
