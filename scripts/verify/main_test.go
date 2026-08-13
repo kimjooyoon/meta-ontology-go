@@ -87,3 +87,15 @@ func TestCISCOPE002MalformedAgentBranchFailsClosed(t *testing.T) {
 		t.Fatal("wildcard branch key was accepted")
 	}
 }
+
+func TestCapModesRejectAmbiguousInvocation(t *testing.T) {
+	if err := validateCapMode(true, true); err == nil {
+		t.Fatal("caps-only and skip-caps were accepted together")
+	}
+	if err := validateCapMode(true, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := validateCapMode(false, true); err != nil {
+		t.Fatal(err)
+	}
+}

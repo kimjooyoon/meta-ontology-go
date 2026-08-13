@@ -24,20 +24,38 @@ func main() {
 	head := flag.String("head", os.Getenv("GOOO_PR_HEAD"), "pull-request head branch")
 	base := flag.String("base", os.Getenv("GOOO_PR_BASE"), "pull-request base branch")
 	expectedHead := flag.String("expected-head", os.Getenv("GOOO_EXPECTED_HEAD"), "expected checked-out pull-request head revision")
+	capsOnly := flag.Bool("caps-only", false, "run only DAMP/DRY caps")
+	skipCaps := flag.Bool("skip-caps", false, "skip DAMP/DRY caps and run scope checks")
 	flag.Parse()
-	if err := run(*root, *from, *to, *head, *base, *branch, *expectedHead); err != nil {
+	if err := validateCapMode(*capsOnly, *skipCaps); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if err := run(*root, *from, *to, *head, *base, *branch, *expectedHead, *capsOnly, *skipCaps); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(root, from, to, head, base, branch, expectedHead string) error {
+func validateCapMode(capsOnly, skipCaps bool) error {
+	if capsOnly && skipCaps {
+		return fmt.Errorf("--caps-only and --skip-caps are mutually exclusive")
+	}
+	return nil
+}
+
+func run(root, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
 	files, err := trackedGoFiles(root)
 	if err != nil {
 		return err
 	}
-	if err := verify.CheckGoCaps(root, files, maxGoFileLines, maxGoFunctionLines); err != nil {
-		return err
+	if !skipCaps {
+		if err := verify.CheckGoCaps(root, files, maxGoFileLines, maxGoFunctionLines); err != nil {
+			return err
+		}
+	}
+	if capsOnly {
+		return nil
 	}
 	if err := checkAgentPushBranch(branch); err != nil {
 		return err

@@ -21,17 +21,20 @@ type failureJob struct {
 }
 
 type failureInput struct {
-	Code           string          `json:"code"`
-	FailureCodes   []string        `json:"failure_codes"`
-	Message        string          `json:"message"`
-	Remediation    string          `json:"remediation"`
-	OwnerBranch    string          `json:"owner_branch"`
-	Rejections     []string        `json:"rejections"`
-	MissingReasons missingReasons  `json:"missing_reasons"`
-	Artifacts      []artifactInput `json:"artifacts"`
-	ArtifactStatus string          `json:"artifact_status"`
-	ArtifactReason string          `json:"artifact_reason"`
-	Job            failureJob      `json:"job"`
+	Code                 string          `json:"code"`
+	FailureCodes         []string        `json:"failure_codes"`
+	Message              string          `json:"message"`
+	Remediation          string          `json:"remediation"`
+	OwnerBranch          string          `json:"owner_branch"`
+	Rejections           []string        `json:"rejections"`
+	MissingReasons       missingReasons  `json:"missing_reasons"`
+	Artifacts            []artifactInput `json:"artifacts"`
+	ProofArtifact        *artifactInput  `json:"proof_artifact"`
+	ArtifactStatus       string          `json:"artifact_status"`
+	ArtifactReason       string          `json:"artifact_reason"`
+	TerminalFailures     []failureJob    `json:"terminal_failures"`
+	TerminalFailureCodes []string        `json:"terminal_failure_codes"`
+	Job                  failureJob      `json:"job"`
 }
 
 type failureBinding struct {
@@ -58,51 +61,54 @@ type failureProvenance struct {
 }
 
 type failureManifest struct {
-	Schema          string            `json:"schema"`
-	Version         int               `json:"version"`
-	Code            string            `json:"code"`
-	FailureCodes    []string          `json:"failure_codes"`
-	Class           string            `json:"class"`
-	Severity        string            `json:"severity"`
-	Scope           string            `json:"scope"`
-	BlockingScope   string            `json:"blocking_scope"`
-	Parallelizable  bool              `json:"parallelizable"`
-	SourceCommit    string            `json:"source_commit"`
-	Repository      string            `json:"repository"`
-	BaseRef         string            `json:"base_ref"`
-	BaseSHA         string            `json:"base_sha"`
-	HeadSHA         string            `json:"head_sha"`
-	Event           string            `json:"event"`
-	EventRef        string            `json:"event_ref"`
-	CheckoutRef     string            `json:"checkout_ref"`
-	PRNumber        int64             `json:"pr_number"`
-	RunID           int64             `json:"run_id"`
-	RunAttempt      int64             `json:"run_attempt"`
-	WorkflowSHA     string            `json:"workflow_sha"`
-	Job             failureJob        `json:"job"`
-	Activity        string            `json:"activity"`
-	Agent           string            `json:"agent"`
-	OwnerBranch     string            `json:"owner_branch"`
-	OwnerRef        string            `json:"owner_ref"`
-	Entity          string            `json:"entity"`
-	Provenance      failureProvenance `json:"provenance"`
-	EvidenceRefs    []string          `json:"evidence_refs"`
-	CatalogPath     string            `json:"catalog_path"`
-	CatalogDigest   string            `json:"catalog_digest"`
-	CatalogRef      string            `json:"catalog_ref"`
-	CatalogVersion  int               `json:"catalog_version"`
-	CatalogSHA256   string            `json:"catalog_sha256"`
-	Rejections      []string          `json:"rejections"`
-	MissingReasons  missingReasons    `json:"missing_reasons"`
-	Artifacts       []artifactInput   `json:"artifacts"`
-	ArtifactURLs    []string          `json:"artifact_urls"`
-	ArtifactRefs    []artifactInput   `json:"artifact_refs"`
-	ArtifactStatus  string            `json:"artifact_status"`
-	ArtifactReason  string            `json:"artifact_reason"`
-	Message         string            `json:"message"`
-	Remediation     string            `json:"remediation"`
-	HandoffOwner    string            `json:"handoff_owner"`
-	HandoffRequired bool              `json:"handoff_required"`
+	Schema               string            `json:"schema"`
+	Version              int               `json:"version"`
+	Code                 string            `json:"code"`
+	FailureCodes         []string          `json:"failure_codes"`
+	Class                string            `json:"class"`
+	Severity             string            `json:"severity"`
+	Scope                string            `json:"scope"`
+	BlockingScope        string            `json:"blocking_scope"`
+	Parallelizable       bool              `json:"parallelizable"`
+	SourceCommit         string            `json:"source_commit"`
+	Repository           string            `json:"repository"`
+	BaseRef              string            `json:"base_ref"`
+	BaseSHA              string            `json:"base_sha"`
+	HeadSHA              string            `json:"head_sha"`
+	Event                string            `json:"event"`
+	EventRef             string            `json:"event_ref"`
+	CheckoutRef          string            `json:"checkout_ref"`
+	PRNumber             int64             `json:"pr_number"`
+	RunID                int64             `json:"run_id"`
+	RunAttempt           int64             `json:"run_attempt"`
+	WorkflowSHA          string            `json:"workflow_sha"`
+	Job                  failureJob        `json:"job"`
+	Activity             string            `json:"activity"`
+	Agent                string            `json:"agent"`
+	OwnerBranch          string            `json:"owner_branch"`
+	OwnerRef             string            `json:"owner_ref"`
+	Entity               string            `json:"entity"`
+	Provenance           failureProvenance `json:"provenance"`
+	EvidenceRefs         []string          `json:"evidence_refs"`
+	CatalogPath          string            `json:"catalog_path"`
+	CatalogDigest        string            `json:"catalog_digest"`
+	CatalogRef           string            `json:"catalog_ref"`
+	CatalogVersion       int               `json:"catalog_version"`
+	CatalogSHA256        string            `json:"catalog_sha256"`
+	Rejections           []string          `json:"rejections"`
+	MissingReasons       missingReasons    `json:"missing_reasons"`
+	Artifacts            []artifactInput   `json:"artifacts"`
+	ProofArtifactRef     *artifactInput    `json:"proof_artifact_ref,omitempty"`
+	ArtifactURLs         []string          `json:"artifact_urls"`
+	ArtifactRefs         []artifactInput   `json:"artifact_refs"`
+	ArtifactStatus       string            `json:"artifact_status"`
+	ArtifactReason       string            `json:"artifact_reason"`
+	TerminalFailures     []failureJob      `json:"terminal_failures"`
+	TerminalFailureCodes []string          `json:"terminal_failure_codes"`
+	Message              string            `json:"message"`
+	Remediation          string            `json:"remediation"`
+	HandoffOwner         string            `json:"handoff_owner"`
+	HandoffRequired      bool              `json:"handoff_required"`
 }
 
 func writeFailureManifest(inputPath, outputPath string) error {
@@ -155,8 +161,9 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 		RunAttempt: binding.RunAttempt, WorkflowSHA: binding.WorkflowSHA, Job: input.Job,
 		OwnerBranch: binding.OwnerBranch, OwnerRef: failureOwnerRef(binding), CatalogPath: failureCatalogPath, CatalogDigest: failureCatalogDigest,
 		CatalogRef: failureCatalogPath + "@" + binding.HeadSHA, CatalogVersion: 1, CatalogSHA256: failureCatalogDigest,
-		Rejections: input.Rejections, MissingReasons: input.MissingReasons, Artifacts: input.Artifacts,
+		Rejections: input.Rejections, MissingReasons: input.MissingReasons, Artifacts: input.Artifacts, ProofArtifactRef: input.ProofArtifact,
 		ArtifactStatus: input.ArtifactStatus, ArtifactReason: input.ArtifactReason, Message: input.Message, Remediation: input.Remediation,
+		TerminalFailures: append([]failureJob(nil), input.TerminalFailures...), TerminalFailureCodes: append([]string(nil), input.TerminalFailureCodes...),
 		HandoffRequired: entry.HandoffRequired, HandoffOwner: entry.Owner,
 	}
 	if len(manifest.FailureCodes) == 0 {
@@ -165,7 +172,7 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 	manifest.Activity = fmt.Sprintf("urn:gooo:ci-run:%d:%d", binding.RunID, binding.RunAttempt)
 	manifest.Agent = "urn:gooo:agent:" + binding.Actor
 	manifest.Entity = fmt.Sprintf("urn:gooo:ci-failure:%d:%d:%d:%s", binding.RunID, binding.RunAttempt, input.Job.ID, input.Code)
-	manifest.ArtifactURLs = failureArtifactRefs(binding, manifest.Artifacts)
+	manifest.ArtifactURLs = failureArtifactRefs(binding, manifest.Artifacts, manifest.ProofArtifactRef)
 	manifest.ArtifactRefs = append([]artifactInput(nil), manifest.Artifacts...)
 	runRef := fmt.Sprintf("https://github.com/%s/actions/runs/%d", binding.Repository, binding.RunID)
 	jobRef := fmt.Sprintf("%s/job/%d", runRef, input.Job.ID)
@@ -187,10 +194,13 @@ func failureOwnerRef(binding failureBinding) string {
 	return fmt.Sprintf("https://github.com/%s/blob/%s/.github/ci-governance.json", binding.Repository, binding.HeadSHA)
 }
 
-func failureArtifactRefs(binding failureBinding, artifacts []artifactInput) []string {
-	refs := make([]string, 0, len(artifacts))
+func failureArtifactRefs(binding failureBinding, artifacts []artifactInput, proofArtifact *artifactInput) []string {
+	refs := make([]string, 0, len(artifacts)+1)
 	for _, artifact := range artifacts {
 		refs = append(refs, fmt.Sprintf("https://github.com/%s/actions/runs/%d/artifacts/%d", binding.Repository, binding.RunID, artifact.ID))
+	}
+	if proofArtifact != nil {
+		refs = append(refs, fmt.Sprintf("https://github.com/%s/actions/runs/%d/artifacts/%d", binding.Repository, binding.RunID, proofArtifact.ID))
 	}
 	return refs
 }
@@ -213,13 +223,16 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	if manifest.Scope != scope || manifest.Class != entry.Class || manifest.Severity != entry.Severity || manifest.BlockingScope != entry.BlockingScope || manifest.Parallelizable != entry.Parallelizable || manifest.HandoffRequired != entry.HandoffRequired || manifest.HandoffOwner != entry.Owner {
 		return fmt.Errorf("failure classification does not match catalog")
 	}
-	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA || manifest.OwnerBranch != binding.OwnerBranch || manifest.OwnerRef != failureOwnerRef(binding) || !sameArtifactInputs(manifest.ArtifactRefs, manifest.Artifacts) {
+	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA || manifest.OwnerBranch != binding.OwnerBranch || manifest.OwnerRef != failureOwnerRef(binding) || !sameArtifactInputs(manifest.ArtifactRefs, manifest.Artifacts) || !sameFailureJobs(manifest.TerminalFailures, manifest.Job, manifest.TerminalFailureCodes) {
 		return fmt.Errorf("failure manifest tuple is stale or mismatched")
 	}
 	if manifest.Repository == "" || manifest.BaseRef == "" || manifest.OwnerBranch == "" || containsUnknown(manifest.OwnerBranch) || manifest.CatalogPath != failureCatalogPath || manifest.CatalogDigest != failureCatalogDigest || manifest.CatalogRef != failureCatalogPath+"@"+binding.HeadSHA || manifest.CatalogVersion != 1 || manifest.CatalogSHA256 != failureCatalogDigest || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
 		return fmt.Errorf("failure manifest has incomplete or unknown values")
 	}
 	if err := validateFailureCodes(manifest.FailureCodes, manifest.Code); err != nil {
+		return err
+	}
+	if err := validateTerminalFailureMapping(manifest); err != nil {
 		return err
 	}
 	if err := validateFailureEvidence(manifest); err != nil {
@@ -237,6 +250,9 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	}
 	if !sameStrings(manifest.EvidenceRefs, failureEvidenceRefs(manifest, expected.WasDerivedFrom[0], expected.WasDerivedFrom[1])) {
 		return fmt.Errorf("failure evidence references are incomplete or mismatched")
+	}
+	if !sameStrings(manifest.ArtifactURLs, failureArtifactRefs(binding, manifest.Artifacts, manifest.ProofArtifactRef)) {
+		return fmt.Errorf("failure artifact URLs are incomplete or mismatched")
 	}
 	return nil
 }

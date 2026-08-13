@@ -174,6 +174,7 @@ func TestFailureManifestAllowsMissingArtifactOnlyFailClosed(t *testing.T) {
 	input := validFailureInput()
 	input.Code = "CI-ARTIFACT-001"
 	input.FailureCodes = []string{"CI-ARTIFACT-001"}
+	input.TerminalFailureCodes = []string{"CI-ARTIFACT-001"}
 	input.ArtifactStatus = "missing"
 	input.ArtifactReason = "proof_artifact_missing"
 	input.Message = "proof artifact is missing for the exact run"
@@ -262,9 +263,10 @@ func validFailureBinding() failureBinding {
 
 func validFailureInput() failureInput {
 	head := strings.Repeat("a", 40)
+	job := failureJob{ID: 11, Name: "go test", Status: "completed", Conclusion: "failure", HeadSHA: head, RunID: 9, RunAttempt: 2}
 	return failureInput{
 		Code: "CI-TEST-001", FailureCodes: []string{"CI-TEST-001"}, Message: "go test failed in the exact PR run", Remediation: "reproduce and fix the failing test",
 		OwnerBranch: "agent/ci-workflow", ArtifactStatus: "not_applicable", ArtifactReason: "canonical_job_failure",
-		Job: failureJob{ID: 11, Name: "go test", Status: "completed", Conclusion: "failure", HeadSHA: head, RunID: 9, RunAttempt: 2},
+		TerminalFailures: []failureJob{job}, TerminalFailureCodes: []string{"CI-TEST-001"}, Job: job,
 	}
 }

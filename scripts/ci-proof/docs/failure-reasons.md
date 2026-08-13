@@ -12,7 +12,8 @@ not match the compiled catalog. The workflow summary prints the digest,
 complete `failure_codes`, exact `owner_branch`, artifact status/reason, and all
 rejections so an agent can act without parsing a human-only default. It also
 derives `owner_ref` from the registered governance file at the exact head and
-`artifact_refs` from the exact run's artifact IDs.
+`artifact_refs` from the exact run's evidence artifact IDs and `proof_artifact_ref`
+from the exact proof artifact ID/digest.
 
 Every failure is bound to one exact tuple: source commit, base SHA, head SHA,
 event ref, workflow run, attempt, job ID/head, and registered owner branch.
@@ -27,18 +28,19 @@ The required machine fields are `schema`, `version`, `code`, `failure_codes`,
 classification (`class`, `severity`, `scope`, `blocking_scope`,
 `parallelizable`), source/base/head and event/run/attempt/job tuple, `agent`,
 `owner_branch`, `owner_ref`, `provenance`, `evidence_refs`, catalog path/digest,
-`rejections`, `missing_reasons`, artifact status/reason/records/refs, message,
-remediation, and `handoff_required`. The validator rejects omitted or
+`rejections`, `missing_reasons`, artifact status/reason/records/refs,
+`proof_artifact_ref`, ordered `terminal_failures` and their
+`terminal_failure_codes`, message, remediation, and `handoff_required`. The validator rejects omitted or
 caller-supplied values that cannot be derived from the exact workflow tuple.
 `failure_test.go` checks that the human catalog contains exactly the machine
-catalog's nine codes, with no missing or duplicate entries.
+catalog's eleven codes, with no missing or duplicate entries.
 
 ## Codes
 
 | Code | Class / severity | Criteria | Agent action | Prohibited action | Handoff |
 | --- | --- | --- | --- | --- | --- |
 | `CI-TEST-001` | test / error | A canonical implementation, formatting, vet, race, or conformance job is terminal and unsuccessful. | Reproduce the exact-head failure in the owned scope, fix the defect, and run the required checks. | Do not weaken a test, skip a required job, or rewrite the failure as a gate success. | Return the exact failing job tuple if another owner is required. |
-| `CI-SCOPE-001` | scope / error | Changed paths, size caps, or PR target violate the registered scope contract. | Remove or split out unrelated paths and re-run scope validation. | Do not add aliases, rename ownership, or broaden the scope table from the feature PR. | Handoff the offending path list and exact base/head. |
+| `CI-SCOPE-001` | scope / error | Changed paths or PR target violate the registered scope contract. | Remove or split out unrelated paths and re-run scope validation. | Do not add aliases, rename ownership, or broaden the scope table from the feature PR. | Handoff the offending path list and exact base/head. |
 | `CI-CAPS-001` | caps / error | DAMP file or DRY function cap is exceeded. | Split the file/function and rerun cap checks. | Do not relabel a cap failure as generic scope success. | Handoff the exact path/function to ci-policy. |
 | `CI-CONTRACT-001` | contract / critical | Existing code and the requested semantic contract have incompatible meanings. | Preserve both meanings, stop the conflicting edit, and report the evidence. | Do not overwrite, silently reinterpret, or add a duplicate contract. | Return to the requestor for a separate decision/task. |
 | `CI-DEPENDENCY-001` | dependency / warning | A dependency outside this PR blocks only this PR's local proof or implementation. | Record the dependency as `blocking_scope=local`, continue unrelated PRs, and prepare a bounded handoff. | Do not convert a local dependency into a global stop or modify another scope. | Handoff the dependency tuple and the smallest required interface. |

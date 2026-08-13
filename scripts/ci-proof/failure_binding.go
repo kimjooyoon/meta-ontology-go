@@ -8,7 +8,7 @@ import (
 )
 
 func validateFailureJob(job failureJob, binding failureBinding) error {
-	if job.ID <= 0 || !isFailureJobName(job.Name) || containsUnknown(job.Name) || job.Status != "completed" || job.Conclusion == "success" || job.Conclusion == "" || containsUnknown(job.Conclusion) || job.RunID != binding.RunID || job.RunAttempt != binding.RunAttempt || job.HeadSHA != binding.HeadSHA {
+	if job.ID <= 0 || job.Name == "" || job.Name == "CI failure summary" || containsUnknown(job.Name) || job.Status != "completed" || job.Conclusion == "success" || job.Conclusion == "" || containsUnknown(job.Conclusion) || job.RunID != binding.RunID || job.RunAttempt != binding.RunAttempt || job.HeadSHA != binding.HeadSHA {
 		return fmt.Errorf("failure job is not bound to the exact run tuple")
 	}
 	return nil

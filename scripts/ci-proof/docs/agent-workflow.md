@@ -23,13 +23,16 @@ confirmed.
 
 The failure manifest also exposes the immutable `catalog_digest`, sorted
 `failure_codes` (the complete mapped set), all proof `rejections`, exact
-`owner_branch`, `artifact_status`, `artifact_reason`, bound artifact records,
-and protection/approval/provenance `missing_reasons`. A proof artifact that is
+`owner_branch`, `artifact_status`, `artifact_reason`, bound evidence and proof
+artifact records, ordered terminal failure records/codes, and
+protection/approval/provenance `missing_reasons`. A proof artifact that is
 missing, malformed, stale, or bound to another run is never treated as a
 successful proof: emit `CI-ARTIFACT-001` or `CI-FRESHNESS-001` with the exact
-reason and require a fresh artifact. Every terminal canonical job has an
-explicit mapping; an unrecognized terminal job is a fail-closed workflow
-error, not an inferred success or guessed category.
+reason and require a fresh artifact. Every terminal job is collected in
+deterministic ID/name order with an explicit mapping; an unrecognized terminal
+job emits `CI-UNCLASSIFIED-001`, never an inferred success or guessed category.
+The dedicated DAMP/DRY cap step emits `CI-CAPS-001` separately from scope
+failures.
 
 The provenance receipt is bound to the same repository, event, base/head/ref,
 PR, run/attempt, workflow, canonical job records, artifact inventory, branch

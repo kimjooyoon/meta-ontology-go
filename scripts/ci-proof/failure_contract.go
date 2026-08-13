@@ -97,6 +97,15 @@ func validateFailureEvidence(manifest failureManifest) error {
 	if manifest.ArtifactStatus == "verified" && (len(manifest.Artifacts) != 1 || manifest.Artifacts[0].Name != fmt.Sprintf("ci-evidence-%d-%d", manifest.RunID, manifest.RunAttempt)) {
 		return fmt.Errorf("verified failure artifact evidence is not the exact CI evidence artifact")
 	}
+	if manifest.Job.Name == "CI proof bundle" && manifest.ProofArtifactRef == nil {
+		return fmt.Errorf("proof failure is missing its direct proof artifact reference")
+	}
+	if manifest.ProofArtifactRef != nil {
+		proof := manifest.ProofArtifactRef
+		if proof.ID <= 0 || proof.Name != fmt.Sprintf("ci-proof-%d-%d", manifest.RunID, manifest.RunAttempt) || proof.Size <= 0 || proof.Expired || !validArtifactDigest(proof.Digest) || proof.RunID != manifest.RunID || proof.RunAttempt != manifest.RunAttempt {
+			return fmt.Errorf("proof artifact reference is stale, zero, or invalid")
+		}
+	}
 	seenArtifacts := make(map[int64]bool, len(manifest.Artifacts))
 	for _, artifact := range manifest.Artifacts {
 		if artifact.ID <= 0 || seenArtifacts[artifact.ID] || artifact.Name == "" || containsUnknown(artifact.Name) || artifact.Size <= 0 || artifact.Expired || !validArtifactDigest(artifact.Digest) || artifact.RunID != manifest.RunID || artifact.RunAttempt != manifest.RunAttempt {
@@ -124,6 +133,52 @@ func validateFailureEvidence(manifest failureManifest) error {
 		}
 	}
 	return nil
+}
+
+func sameFailureJobs(jobs []failureJob, primary failureJob, codes []string) bool {
+	if len(jobs) == 0 || len(jobs) != len(codes) || !sameFailureJob(jobs[0], primary) {
+		return false
+	}
+	seenIDs := make(map[int64]bool, len(jobs))
+	for index, job := range jobs {
+		if index > 0 && (job.ID < jobs[index-1].ID || (job.ID == jobs[index-1].ID && job.Name < jobs[index-1].Name)) {
+			return false
+		}
+		if job.ID <= 0 || seenIDs[job.ID] || codes[index] == "" {
+			return false
+		}
+		seenIDs[job.ID] = true
+	}
+	return true
+}
+
+func sameFailureJob(left, right failureJob) bool {
+	return left == right
+}
+
+func validateTerminalFailureMapping(manifest failureManifest) error {
+	for index, job := range manifest.TerminalFailures {
+		code := manifest.TerminalFailureCodes[index]
+		if _, ok := failureCatalog[code]; !ok || !containsCode(manifest.FailureCodes, code) {
+			return fmt.Errorf("terminal failure code is unknown or missing from the complete set")
+		}
+		if !isFailureJobName(job.Name) && code != "CI-UNCLASSIFIED-001" {
+			return fmt.Errorf("unmapped terminal job lacks CI-UNCLASSIFIED-001")
+		}
+		if job.Name == "CI policy" && code != "CI-SCOPE-001" && code != "CI-CAPS-001" {
+			return fmt.Errorf("CI policy terminal failure has a non-deterministic code")
+		}
+	}
+	return nil
+}
+
+func containsCode(codes []string, target string) bool {
+	for _, code := range codes {
+		if code == target {
+			return true
+		}
+	}
+	return false
 }
 
 func sameArtifactInputs(left, right []artifactInput) bool {
