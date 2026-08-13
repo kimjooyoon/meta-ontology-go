@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -67,6 +68,9 @@ func normalizeDatalogQuery(request DatalogQuery) (DatalogQuery, []DatalogRule, e
 			return DatalogQuery{}, nil, datalogError("query references unknown predicate %q", pattern.Predicate)
 		}
 	}
+	sort.Slice(patterns, func(i, j int) bool {
+		return datalogAtomCanonical(patterns[i]) < datalogAtomCanonical(patterns[j])
+	})
 	sort.Slice(rules, func(i, j int) bool { return rules[i].ID < rules[j].ID })
 	request.Patterns, request.Rules = patterns, rules
 	return request, rules, nil
@@ -104,6 +108,9 @@ func normalizeDatalogRule(rule DatalogRule) (DatalogRule, error) {
 			}
 		}
 	}
+	sort.Slice(body, func(i, j int) bool {
+		return datalogAtomCanonical(body[i]) < datalogAtomCanonical(body[j])
+	})
 	rule.Head, rule.Body = head, body
 	return rule, nil
 }
@@ -185,4 +192,16 @@ func validDatalogRuleID(value string) bool {
 
 func datalogError(format string, args ...any) error {
 	return fmt.Errorf("%w: %s", ErrInvalidDatalogQuery, fmt.Sprintf(format, args...))
+}
+
+func datalogAtomCanonical(atom DatalogAtom) string {
+	return strconv.Quote(atom.Predicate) + "\x00" +
+		datalogTermCanonical(atom.Subject) + "\x00" + datalogTermCanonical(atom.Object)
+}
+
+func datalogTermCanonical(term DatalogTerm) string {
+	if term.Variable != "" {
+		return "variable\x00" + term.Variable
+	}
+	return "constant\x00" + term.Constant.String()
 }
