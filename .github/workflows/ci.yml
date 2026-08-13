@@ -513,6 +513,8 @@ jobs:
               run_id: context.runId,
               run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
               workflow_sha: process.env.CI_WORKFLOW_SHA,
+              observed_at: null,
+              valid_until: null,
               digest_sha256: ''
             };
             if (baseRef === 'main') {

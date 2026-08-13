@@ -27,12 +27,19 @@ const {
   digestBranchProtection,
   observeBranchProtection,
   observeGuardianEnvironment,
+  OBSERVER_FRESHNESS_WINDOW_MS,
   validateBranchProtectionSnapshot,
   validatePublicBranchSummary,
   validateGuardianEnvironment,
+  validObserverFreshness,
 } = require('./guardian');
 
 const sha = (letter) => letter.repeat(40);
+const observerNow = new Date('2026-08-14T00:00:00.000Z');
+const observerDateHeader = 'Thu, 13 Aug 2026 23:55:00 GMT';
+const observedAt = '2026-08-13T23:55:00.000Z';
+const validUntil = '2026-08-14T00:05:00.000Z';
+const githubDateResponse = (data, status = 200) => ({status, headers: {date: observerDateHeader}, data});
 const file = (filename, status = 'modified', previous_filename) => ({filename, status, ...(previous_filename ? {previous_filename} : {})});
 const pull = (base = 'dev', fork = false) => ({
   number: 108,
@@ -71,7 +78,7 @@ const mainProtectionFixture = () => {
   const snapshot = {
     repository: 'owner/repo', branch: 'main', policy_sha256: '6'.repeat(64), event_ref: 'refs/heads/dev', checkout_ref: sha('d'), token_source: 'github_app_installation', app_installation_id: 42, app_slug: 'guardian', read_status: 'verified', exists: true, strict: true,
     required_checks: [...contexts].sort(), required_check_bindings: contexts.map((context) => ({context, app_id: 15368})).sort((left, right) => left.context < right.context ? -1 : left.context > right.context ? 1 : 0), enforce_admins: true, required_reviews: 0,
-    dismiss_stale_reviews: false, require_last_push_approval: false, linear_history: true, allow_force_pushes: false, allow_deletions: false, required_signatures: false, required_conversation_resolution: false, block_creations: false, lock_branch: false, allow_fork_syncing: false, restrictions: null, missing_reason: '', base_sha: sha('b'), head_sha: sha('d'), run_id: 108, run_attempt: 1, workflow_sha: sha('d'), digest_sha256: '',
+    dismiss_stale_reviews: false, require_last_push_approval: false, linear_history: true, allow_force_pushes: false, allow_deletions: false, required_signatures: false, required_conversation_resolution: false, block_creations: false, lock_branch: false, allow_fork_syncing: false, restrictions: null, missing_reason: '', base_sha: sha('b'), head_sha: sha('d'), run_id: 108, run_attempt: 1, workflow_sha: sha('d'), observed_at: observedAt, valid_until: validUntil, digest_sha256: '',
   };
   snapshot.digest_sha256 = digestBranchProtection(snapshot);
   return snapshot;
@@ -222,7 +229,7 @@ async function testStaleRaceAndArtifactDigest() {
   const promotionArtifact = buildGuardianArtifact({
     pull: promotion, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
     workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev', liveBefore: liveFixture(), liveAfter: liveFixture(), checkName: 'CI guardian',
-    result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md')], kernelPaths: []}, branchProtection: mainProtectionFixture(), devBranchProtection: {...mainProtectionFixture(), branch: 'dev', required_checks: ['CI guardian shadow', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'], required_check_bindings: ['CI guardian shadow', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'].map((context) => ({context, app_id: 15368})).sort((left, right) => left.context < right.context ? -1 : left.context > right.context ? 1 : 0)}, observerEnvironment: OBSERVER_ENVIRONMENT, observerEnvironmentSnapshot: {repository: 'owner/repo', name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: ['branch_policy'], wait_timer: 0, reviewers: [], token_source: 'github.token', read_status: 'verified', missing_reason: '', run_id: 108, run_attempt: 1, workflow_sha: sha('d'), digest_sha256: ''},
+    result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md')], kernelPaths: []}, branchProtection: mainProtectionFixture(), devBranchProtection: {...mainProtectionFixture(), branch: 'dev', required_checks: ['CI guardian shadow', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'], required_check_bindings: ['CI guardian shadow', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'].map((context) => ({context, app_id: 15368})).sort((left, right) => left.context < right.context ? -1 : left.context > right.context ? 1 : 0)}, observerEnvironment: OBSERVER_ENVIRONMENT, observerEnvironmentSnapshot: {repository: 'owner/repo', name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: ['branch_policy'], wait_timer: 0, reviewers: [], token_source: 'github.token', read_status: 'verified', missing_reason: '', run_id: 108, run_attempt: 1, workflow_sha: sha('d'), observed_at: observedAt, valid_until: validUntil, digest_sha256: ''},
   });
   promotionArtifact.dev_branch_protection.digest_sha256 = digestBranchProtection(promotionArtifact.dev_branch_protection);
   promotionArtifact.observer_environment_snapshot.digest_sha256 = require('./guardian').digestGuardianEnvironment(promotionArtifact.observer_environment_snapshot);
@@ -239,10 +246,15 @@ async function testStaleRaceAndArtifactDigest() {
   promotionExpected.workflow_ref = 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev';
   promotionArtifact.head_binding_status = HEAD_BINDING_STATUS;
   promotionArtifact.bundle_sha256 = digestGuardianArtifact(promotionArtifact);
-  assert.throws(() => validateGuardianArtifact(promotionArtifact, promotionExpected), (error) => error && error.code === CHECK_IDENTITY_CODE);
+  assert.throws(() => validateGuardianArtifact(promotionArtifact, promotionExpected, {now: observerNow}), (error) => error && error.code === CHECK_IDENTITY_CODE);
 }
 
 async function testProtectionObserverContracts() {
+  assert.equal(OBSERVER_FRESHNESS_WINDOW_MS, 10 * 60 * 1000);
+  assert.equal(validObserverFreshness(observedAt, validUntil, observerNow), true);
+  assert.equal(validObserverFreshness(observedAt, validUntil, new Date('2026-08-14T00:06:00.000Z')), false);
+  assert.equal(validObserverFreshness('2026-08-14T00:01:00.000Z', validUntil, observerNow), false);
+  assert.equal(validObserverFreshness(observedAt, '2026-08-14T01:05:00.000Z', observerNow), false);
   assert.equal(validatePublicBranchSummary({protected: true, required_status_checks: {contexts: ['gofmt', 'CI guardian', 'go test', 'CI policy', 'go vet', 'go test -race', 'Semantic conformance'], checks: [{context: 'gofmt', app_id: 15368}, {context: 'CI guardian', app_id: 15368}, {context: 'go test', app_id: 15368}, {context: 'CI policy', app_id: 15368}, {context: 'go vet', app_id: 15368}, {context: 'go test -race', app_id: 15368}, {context: 'Semantic conformance', app_id: 15368}]}}), true);
   assert.equal(validatePublicBranchSummary({protected: true, required_status_checks: {contexts: ['gofmt'], checks: [{context: 'gofmt', app_id: 15368}]}}), false);
   const unavailable = await observeBranchProtection({repository: 'owner/repo', policySHA: '6'.repeat(64), eventRef: 'refs/heads/dev', checkoutRef: sha('d'), baseSHA: sha('b'), headSHA: sha('d'), runId: 108, runAttempt: 1, workflowSHA: sha('d'), tokenSource: 'github.token', getProtection: async () => ({status: 403})});
@@ -250,10 +262,19 @@ async function testProtectionObserverContracts() {
   assert.throws(() => validateBranchProtectionSnapshot(unavailable, {requireVerified: true}), (error) => error && error.code === PROTECTION_CODE);
   const protectionData = {required_status_checks: {strict: true, contexts: ['CI guardian', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'], checks: [{context: 'CI guardian', app_id: 15368}, {context: 'CI policy', app_id: 15368}, {context: 'Semantic conformance', app_id: 15368}, {context: 'go test', app_id: 15368}, {context: 'go test -race', app_id: 15368}, {context: 'go vet', app_id: 15368}, {context: 'gofmt', app_id: 15368}]}, enforce_admins: {enabled: true}, required_linear_history: {enabled: true}, allow_force_pushes: {enabled: false}, allow_deletions: {enabled: false}, required_signatures: {enabled: false}, required_conversation_resolution: {enabled: false}, block_creations: {enabled: false}, lock_branch: {enabled: false}, allow_fork_syncing: {enabled: false}};
   const protectionArgs = {repository: 'owner/repo', branch: 'main', expectedContexts: ['CI guardian', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'], policySHA: '6'.repeat(64), eventRef: 'refs/heads/dev', checkoutRef: sha('d'), baseSHA: sha('b'), headSHA: sha('d'), runId: 108, runAttempt: 1, workflowSHA: sha('d'), tokenSource: 'github_app_installation', appInstallationId: 42, appSlug: 'guardian'};
-  const verified = await observeBranchProtection({...protectionArgs, getProtection: async () => ({status: 200, data: protectionData})});
-  validateBranchProtectionSnapshot(verified, {requireVerified: true});
-  const explicitNull = await observeBranchProtection({...protectionArgs, getProtection: async () => ({status: 200, data: {...protectionData, required_pull_request_reviews: null, restrictions: null}})});
-  validateBranchProtectionSnapshot(explicitNull, {requireVerified: true});
+  const verified = await observeBranchProtection({...protectionArgs, now: observerNow, getProtection: async () => githubDateResponse(protectionData)});
+  validateBranchProtectionSnapshot(verified, {requireVerified: true, now: observerNow});
+  for (const freshness of [
+    {observed_at: null, valid_until: validUntil},
+    {observed_at: '2026-08-14T00:01:00.000Z', valid_until: '2026-08-14T00:11:00.000Z'},
+    {observed_at: '2026-08-13T23:40:00.000Z', valid_until: '2026-08-13T23:50:00.000Z'},
+  ]) {
+    const stale = {...verified, ...freshness};
+    stale.digest_sha256 = digestBranchProtection(stale);
+    assert.throws(() => validateBranchProtectionSnapshot(stale, {requireVerified: true, now: observerNow}), (error) => error && error.code === PROTECTION_CODE);
+  }
+  const explicitNull = await observeBranchProtection({...protectionArgs, now: observerNow, getProtection: async () => githubDateResponse({...protectionData, required_pull_request_reviews: null, restrictions: null})});
+  validateBranchProtectionSnapshot(explicitNull, {requireVerified: true, now: observerNow});
   const wrongApp = {...verified, required_check_bindings: verified.required_check_bindings.map((binding, index) => index === 0 ? {...binding, app_id: 1} : binding)};
   wrongApp.digest_sha256 = digestBranchProtection(wrongApp);
   assert.throws(() => validateBranchProtectionSnapshot(wrongApp, {requireVerified: true}), (error) => error && error.code === PROTECTION_CODE);
@@ -266,13 +287,18 @@ async function testProtectionObserverContracts() {
   const sixOnlyDev = {...verified, branch: 'dev', required_checks: ['CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'], required_check_bindings: verified.required_check_bindings.filter((binding) => binding.context !== 'CI guardian')};
   sixOnlyDev.digest_sha256 = digestBranchProtection(sixOnlyDev);
   assert.throws(() => validateBranchProtectionSnapshot(sixOnlyDev, {requireVerified: true, expectedBranch: 'dev'}), (error) => error && error.code === PROTECTION_CODE);
-  const environment = await observeGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), getEnvironment: async () => ({status: 200, data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, wait_timer: 0, reviewers: [], protection_rules: [{type: 'branch_policy'}]}})});
+  const environment = await observeGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), now: observerNow, getEnvironment: async () => githubDateResponse({name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, wait_timer: 0, reviewers: [], protection_rules: [{type: 'branch_policy'}]})});
   assert.equal(environment.read_status, 'verified');
+  assert.equal(environment.observed_at, observedAt);
+  assert.equal(environment.valid_until, validUntil);
   const environmentTamper = {...environment, deployment_branch_policy: {...environment.deployment_branch_policy, custom_branch_policies: true}};
   environmentTamper.digest_sha256 = require('./guardian').digestGuardianEnvironment(environmentTamper);
   assert.throws(() => validateGuardianEnvironment(environmentTamper, {requireVerified: true}), (error) => error && error.code === PROTECTION_CODE);
   const environmentMissing = await observeGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), getEnvironment: async () => ({status: 200, data: {name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}}})});
   assert.equal(environmentMissing.read_status, 'unavailable');
+  const responseDateMissing = await observeBranchProtection({...protectionArgs, getProtection: async () => ({status: 200, data: protectionData})});
+  assert.equal(responseDateMissing.read_status, 'unavailable');
+  assert.match(responseDateMissing.missing_reason, /response_date/);
 }
 
 async function testCanonicalOrdering() {
@@ -435,8 +461,16 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /pull_request_target:/);
   assert.match(workflow, /environment: \$\{\{ github\.base_ref == 'main' && 'guardian-observer'/);
   assert.match(workflow, /actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/);
+  assert.match(workflow, /client-id: \$\{\{ env\.GUARDIAN_APP_CLIENT_ID \}\}/);
+  assert.doesNotMatch(workflow, /\bapp-id:/);
   assert.match(workflow, /permission-administration: read/);
   assert.match(workflow, /GUARDIAN_APP_PRIVATE_KEY/);
+  const mintStart = workflow.indexOf('id: guardian-app-token');
+  const mintEnd = workflow.indexOf('- name: Inspect changed paths from default authority', mintStart);
+  assert(mintStart >= 0 && mintEnd > mintStart, 'Guardian App mint step is missing');
+  const mintStep = workflow.slice(mintStart, mintEnd);
+  assert.equal((workflow.match(/\$\{\{ secrets\.[^}]+\}\}/g) || []).length, 1, 'workflow must contain exactly one secret reference');
+  assert.equal((mintStep.match(/\$\{\{ secrets\.[^}]+\}\}/g) || []).join(''), '${{ secrets.GUARDIAN_APP_PRIVATE_KEY }}', 'only the Guardian private key may be read in the mint step');
   assert.match(workflow, /getBranchProtection/);
   assert.match(ciWorkflow, /token_source: 'not_observed',\s+app_installation_id: 0,\s+app_slug: '',\s+read_status: 'unavailable'/);
   assert.match(workflow, /- dev\n      - main/);

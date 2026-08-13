@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"strings"
+	"time"
 )
 
 func validProof() proofBundle {
@@ -31,7 +32,8 @@ func validBranchProtection(bundle proofBundle) branchProtection {
 	if bundle.BaseRef == "main" {
 		tokenSource = "github_app_installation"
 	}
-	protection := branchProtection{Repository: bundle.Repository, Branch: bundle.BaseRef, PolicySHA: bundle.Digests.Policy, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, TokenSource: tokenSource, AppInstallationID: 42, AppSlug: "guardian", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append([]string(nil), proofJobs...), RequiredCheckBindings: requiredCheckBindingsFor(proofJobs), EnforceAdmins: true, RequiredReviews: 0, DismissStaleReviews: false, RequireLastPushApproval: false, LinearHistory: true, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA}
+	observedAt, validUntil := freshObserverWindow()
+	protection := branchProtection{Repository: bundle.Repository, Branch: bundle.BaseRef, PolicySHA: bundle.Digests.Policy, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, TokenSource: tokenSource, AppInstallationID: 42, AppSlug: "guardian", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append([]string(nil), proofJobs...), RequiredCheckBindings: requiredCheckBindingsFor(proofJobs), EnforceAdmins: true, RequiredReviews: 0, DismissStaleReviews: false, RequireLastPushApproval: false, LinearHistory: true, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, ObservedAt: observedAt, ValidUntil: validUntil}
 	if bundle.BaseRef != "main" {
 		protection.ReadStatus = "unavailable"
 		protection.Exists = false
@@ -40,10 +42,18 @@ func validBranchProtection(bundle proofBundle) branchProtection {
 		protection.RequiredCheckBindings = nil
 		protection.EnforceAdmins = false
 		protection.LinearHistory = false
+		protection.ObservedAt = nil
+		protection.ValidUntil = nil
 		protection.MissingReason = "trusted_guardian_required"
 	}
 	protection.Digest = digestBranchProtection(protection)
 	return protection
+}
+
+func freshObserverWindow() (*string, *string) {
+	observed := time.Now().UTC().Add(-time.Minute)
+	validUntil := observed.Add(guardianObserverFreshnessWindow)
+	return stringPointer(observed.Format(time.RFC3339Nano)), stringPointer(validUntil.Format(time.RFC3339Nano))
 }
 
 func unobservedBranchProtection(bundle proofBundle) branchProtection {

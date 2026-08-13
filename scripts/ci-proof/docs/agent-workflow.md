@@ -141,3 +141,8 @@ canonical-success jobs. `HEALTH_PASS_ONLY`, `write_effect=none`, and the empty
 terminal-failure arrays are explicit: this artifact never asserts promotion,
 provenance, or mergeability. Missing or mismatched canonical jobs
 must fail closed instead of silently producing a note-only result.
+
+Immediately before any promotion, the gate must perform a final exact re-read
+of the live dev and main refs and both current dev/main protection snapshots.
+Only that exact tuple may be followed by a normal CAS/fast-forward operation;
+force-push and force-update operations are never permitted.

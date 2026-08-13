@@ -148,6 +148,8 @@ type branchProtection struct {
 	RunID                          int64                  `json:"run_id"`
 	RunAttempt                     int64                  `json:"run_attempt"`
 	WorkflowSHA                    string                 `json:"workflow_sha"`
+	ObservedAt                     *string                `json:"observed_at"`
+	ValidUntil                     *string                `json:"valid_until"`
 	Digest                         string                 `json:"digest_sha256"`
 }
 
@@ -186,6 +188,8 @@ type guardianEnvironment struct {
 	RunID                  int64                          `json:"run_id"`
 	RunAttempt             int64                          `json:"run_attempt"`
 	WorkflowSHA            string                         `json:"workflow_sha"`
+	ObservedAt             *string                        `json:"observed_at"`
+	ValidUntil             *string                        `json:"valid_until"`
 	Digest                 string                         `json:"digest_sha256"`
 }
 

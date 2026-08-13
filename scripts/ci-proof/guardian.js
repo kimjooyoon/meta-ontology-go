@@ -11,6 +11,7 @@ const PROMOTION_TOPOLOGY_CODE = 'CI-GUARDIAN-PROMOTION-TOPOLOGY-001';
 const CHECK_IDENTITY_CODE = 'CI-GUARDIAN-CHECK-IDENTITY-001';
 const PROTECTION_CODE = 'CI-GUARDIAN-PROTECTION-001';
 const OBSERVER_ENVIRONMENT = 'guardian-observer';
+const OBSERVER_FRESHNESS_WINDOW_MS = 10 * 60 * 1000;
 const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v2';
 const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE, PROTECTION_CODE]);
 const ALLOWED_BASES = new Set(['dev', 'main']);
@@ -71,6 +72,25 @@ function digestGuardianEnvironment(snapshot) {
   return crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex');
 }
 
+function observerFreshnessFromResponse(response) {
+  const headers = response && response.headers;
+  const rawDate = headers && typeof headers.get === 'function' ? headers.get('date') : headers && (headers.date || headers.Date);
+  if (typeof rawDate !== 'string' || rawDate.trim() === '') return null;
+  const observedMillis = Date.parse(rawDate);
+  if (!Number.isFinite(observedMillis)) return null;
+  const validUntilMillis = observedMillis + OBSERVER_FRESHNESS_WINDOW_MS;
+  if (!Number.isFinite(validUntilMillis)) return null;
+  return {observed_at: new Date(observedMillis).toISOString(), valid_until: new Date(validUntilMillis).toISOString()};
+}
+
+function validObserverFreshness(observedAt, validUntil, now = new Date()) {
+  if (typeof observedAt !== 'string' || typeof validUntil !== 'string' || !(now instanceof Date) || !Number.isFinite(now.getTime())) return false;
+  const observedMillis = Date.parse(observedAt);
+  const validUntilMillis = Date.parse(validUntil);
+  if (!Number.isFinite(observedMillis) || !Number.isFinite(validUntilMillis)) return false;
+  return validUntilMillis - observedMillis === OBSERVER_FRESHNESS_WINDOW_MS && observedMillis <= now.getTime() && now.getTime() < validUntilMillis;
+}
+
 function emptyGuardianEnvironment({repository, tokenSource, runId, runAttempt, workflowSHA, missingReason}) {
   const snapshot = {
     repository: repository || null,
@@ -85,29 +105,31 @@ function emptyGuardianEnvironment({repository, tokenSource, runId, runAttempt, w
     run_id: validPositiveInteger(runId) ? runId : null,
     run_attempt: validPositiveInteger(runAttempt) ? runAttempt : null,
     workflow_sha: workflowSHA || null,
+    observed_at: null,
+    valid_until: null,
     digest_sha256: '',
   };
   snapshot.digest_sha256 = digestGuardianEnvironment(snapshot);
   return snapshot;
 }
 
-function validateGuardianEnvironment(snapshot, {requireVerified = false} = {}) {
+function validateGuardianEnvironment(snapshot, {requireVerified = false, now = new Date()} = {}) {
   if (!snapshot || !validRepository(snapshot.repository) || snapshot.name !== OBSERVER_ENVIRONMENT || !snapshot.deployment_branch_policy || typeof snapshot.deployment_branch_policy.protected_branches !== 'boolean' || typeof snapshot.deployment_branch_policy.custom_branch_policies !== 'boolean' || !Array.isArray(snapshot.protection_rules) || !Number.isInteger(snapshot.wait_timer) || snapshot.wait_timer < 0 || !Array.isArray(snapshot.reviewers) || snapshot.reviewers.some((reviewer) => typeof reviewer !== 'string') || !validRef(snapshot.token_source) || !['verified', 'unavailable'].includes(snapshot.read_status) || typeof snapshot.missing_reason !== 'string' || !validPositiveInteger(snapshot.run_id) || !validPositiveInteger(snapshot.run_attempt) || !validSHA(snapshot.workflow_sha) || !/^[0-9a-f]{64}$/.test(snapshot.digest_sha256 || '')) {
     throw guardianFailure('guardian observer environment snapshot is malformed', PROTECTION_CODE);
   }
   if (snapshot.digest_sha256 !== digestGuardianEnvironment(snapshot)) throw guardianFailure('guardian observer environment digest mismatch', PROTECTION_CODE);
   if (snapshot.read_status === 'verified') {
-    if (snapshot.token_source !== 'github.token' || snapshot.deployment_branch_policy.protected_branches !== true || snapshot.deployment_branch_policy.custom_branch_policies !== false || snapshot.protection_rules.some((rule) => rule !== 'branch_policy') || snapshot.protection_rules.length > 1 || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason !== '') {
+    if (snapshot.token_source !== 'github.token' || snapshot.deployment_branch_policy.protected_branches !== true || snapshot.deployment_branch_policy.custom_branch_policies !== false || snapshot.protection_rules.some((rule) => rule !== 'branch_policy') || snapshot.protection_rules.length > 1 || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason !== '' || !validObserverFreshness(snapshot.observed_at, snapshot.valid_until, now)) {
       throw guardianFailure('guardian observer environment policy is not exact', PROTECTION_CODE);
     }
-  } else if (snapshot.deployment_branch_policy.protected_branches || snapshot.deployment_branch_policy.custom_branch_policies || snapshot.protection_rules.length !== 0 || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason === '') {
+  } else if (snapshot.deployment_branch_policy.protected_branches || snapshot.deployment_branch_policy.custom_branch_policies || snapshot.protection_rules.length !== 0 || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason === '' || snapshot.observed_at !== null || snapshot.valid_until !== null) {
     throw guardianFailure('guardian observer environment is not fail-closed', PROTECTION_CODE);
   }
   if (requireVerified && snapshot.read_status !== 'verified') throw guardianFailure('guardian observer environment evidence is unavailable', PROTECTION_CODE);
   return snapshot;
 }
 
-async function observeGuardianEnvironment({getEnvironment, repository, tokenSource, runId, runAttempt, workflowSHA}) {
+async function observeGuardianEnvironment({getEnvironment, repository, tokenSource, runId, runAttempt, workflowSHA, now = new Date()}) {
   const unavailable = (reason) => emptyGuardianEnvironment({repository, tokenSource, runId, runAttempt, workflowSHA, missingReason: reason});
   if (typeof getEnvironment !== 'function' || !validRepository(repository) || !validRef(tokenSource) || !validPositiveInteger(runId) || !validPositiveInteger(runAttempt) || !validSHA(workflowSHA)) return unavailable('guardian_environment_observer_input_invalid');
   let response;
@@ -116,6 +138,8 @@ async function observeGuardianEnvironment({getEnvironment, repository, tokenSour
   } catch (error) {
     return unavailable('guardian_environment_api_unavailable');
   }
+  const freshness = observerFreshnessFromResponse(response);
+  if (!freshness) return unavailable('guardian_environment_response_date_missing_or_malformed');
   const data = response && response.data;
   const policy = data && data.deployment_branch_policy;
   const rules = data && data.protection_rules;
@@ -134,13 +158,15 @@ async function observeGuardianEnvironment({getEnvironment, repository, tokenSour
     run_id: runId,
     run_attempt: runAttempt,
     workflow_sha: workflowSHA,
+    observed_at: freshness.observed_at,
+    valid_until: freshness.valid_until,
     digest_sha256: '',
   };
-  snapshot.digest_sha256 = digestBranchProtection(snapshot);
+  snapshot.digest_sha256 = digestGuardianEnvironment(snapshot);
   try {
-    validateGuardianEnvironment(snapshot, {requireVerified: true});
+    validateGuardianEnvironment(snapshot, {requireVerified: true, now});
   } catch (error) {
-    return emptyGuardianEnvironment({repository, tokenSource, runId, runAttempt, workflowSHA, missingReason: 'guardian_environment_policy_mismatch'});
+    return emptyGuardianEnvironment({repository, tokenSource, runId, runAttempt, workflowSHA, missingReason: 'guardian_environment_freshness_or_policy_mismatch'});
   }
   return snapshot;
 }
@@ -185,6 +211,8 @@ function emptyBranchProtection({branch, repository, policySHA, eventRef, checkou
     run_id: validPositiveInteger(runId) ? runId : null,
     run_attempt: validPositiveInteger(runAttempt) ? runAttempt : null,
     workflow_sha: workflowSHA || null,
+    observed_at: null,
+    valid_until: null,
     digest_sha256: '',
   };
   snapshot.digest_sha256 = digestBranchProtection(snapshot);
@@ -212,7 +240,7 @@ function validatePublicBranchSummary(data) {
   return validRequiredCheckBindings(checks.checks.map((check) => ({context: check && check.context, app_id: Number(check && check.app_id)})), MAIN_PROTECTION_CONTEXTS);
 }
 
-function validateBranchProtectionSnapshot(snapshot, {requireVerified = false, expectedBranch = null, expectedContexts = null} = {}) {
+function validateBranchProtectionSnapshot(snapshot, {requireVerified = false, expectedBranch = null, expectedContexts = null, now = new Date()} = {}) {
   const branch = expectedBranch || (snapshot && snapshot.branch);
   const contexts = expectedContexts || protectionContextsForBranch(branch);
   if (!snapshot || !['dev', 'main'].includes(branch) || snapshot.branch !== branch || contexts.length === 0 || !validRepository(snapshot.repository) || !/^[0-9a-f]{64}$/.test(snapshot.policy_sha256 || '') || !validRef(snapshot.event_ref) || !validRef(snapshot.checkout_ref) || !validSHA(snapshot.base_sha) || !validSHA(snapshot.head_sha) || !validPositiveInteger(snapshot.run_id) || !validPositiveInteger(snapshot.run_attempt) || !validSHA(snapshot.workflow_sha) || !validRef(snapshot.token_source) || !['verified', 'unavailable'].includes(snapshot.read_status) || !Array.isArray(snapshot.required_checks) || !Array.isArray(snapshot.required_check_bindings) || typeof snapshot.required_signatures !== 'boolean' || typeof snapshot.required_conversation_resolution !== 'boolean' || typeof snapshot.block_creations !== 'boolean' || typeof snapshot.lock_branch !== 'boolean' || typeof snapshot.allow_fork_syncing !== 'boolean' || (snapshot.restrictions !== undefined && snapshot.restrictions !== null) || !/^([0-9a-f]{64})$/.test(snapshot.digest_sha256 || '')) {
@@ -220,17 +248,17 @@ function validateBranchProtectionSnapshot(snapshot, {requireVerified = false, ex
   }
   if (snapshot.digest_sha256 !== digestBranchProtection(snapshot)) throw guardianFailure('branch protection snapshot digest mismatch', PROTECTION_CODE);
   if (snapshot.read_status === 'verified') {
-    if (snapshot.token_source !== 'github_app_installation' || !validPositiveInteger(snapshot.app_installation_id) || typeof snapshot.app_slug !== 'string' || snapshot.app_slug.length === 0 || !snapshot.exists || snapshot.strict !== true || !sameSet(snapshot.required_checks, contexts) || !validRequiredCheckBindings(snapshot.required_check_bindings, contexts) || snapshot.enforce_admins !== true || snapshot.required_reviews !== 0 || snapshot.dismiss_stale_reviews !== false || snapshot.require_last_push_approval !== false || snapshot.linear_history !== true || snapshot.allow_force_pushes !== false || snapshot.allow_deletions !== false || snapshot.required_signatures !== false || snapshot.required_conversation_resolution !== false || snapshot.block_creations !== false || snapshot.lock_branch !== false || snapshot.allow_fork_syncing !== false || snapshot.restrictions !== null || snapshot.missing_reason !== '') {
+    if (snapshot.token_source !== 'github_app_installation' || !validPositiveInteger(snapshot.app_installation_id) || typeof snapshot.app_slug !== 'string' || snapshot.app_slug.length === 0 || !snapshot.exists || snapshot.strict !== true || !sameSet(snapshot.required_checks, contexts) || !validRequiredCheckBindings(snapshot.required_check_bindings, contexts) || snapshot.enforce_admins !== true || snapshot.required_reviews !== 0 || snapshot.dismiss_stale_reviews !== false || snapshot.require_last_push_approval !== false || snapshot.linear_history !== true || snapshot.allow_force_pushes !== false || snapshot.allow_deletions !== false || snapshot.required_signatures !== false || snapshot.required_conversation_resolution !== false || snapshot.block_creations !== false || snapshot.lock_branch !== false || snapshot.allow_fork_syncing !== false || snapshot.restrictions !== null || snapshot.missing_reason !== '' || !validObserverFreshness(snapshot.observed_at, snapshot.valid_until, now)) {
       throw guardianFailure('full branch protection snapshot is incomplete or not exact', PROTECTION_CODE);
     }
-  } else if (snapshot.exists || snapshot.strict || snapshot.required_checks.length !== 0 || snapshot.required_check_bindings.length !== 0 || snapshot.required_signatures || snapshot.required_conversation_resolution || snapshot.block_creations || snapshot.lock_branch || snapshot.allow_fork_syncing || snapshot.restrictions !== null || snapshot.missing_reason === '') {
+  } else if (snapshot.exists || snapshot.strict || snapshot.required_checks.length !== 0 || snapshot.required_check_bindings.length !== 0 || snapshot.required_signatures || snapshot.required_conversation_resolution || snapshot.block_creations || snapshot.lock_branch || snapshot.allow_fork_syncing || snapshot.restrictions !== null || snapshot.missing_reason === '' || snapshot.observed_at !== null || snapshot.valid_until !== null) {
     throw guardianFailure('unavailable branch protection snapshot is not fail-closed', PROTECTION_CODE);
   }
   if (requireVerified && snapshot.read_status !== 'verified') throw guardianFailure('full branch protection observer evidence is unavailable', PROTECTION_CODE);
   return snapshot;
 }
 
-async function observeBranchProtection({getProtection, branch = 'main', expectedContexts = protectionContextsForBranch(branch), repository, policySHA, eventRef, checkoutRef, baseSHA, headSHA, runId, runAttempt, workflowSHA, tokenSource, appInstallationId = 0, appSlug = ''}) {
+async function observeBranchProtection({getProtection, branch = 'main', expectedContexts = protectionContextsForBranch(branch), repository, policySHA, eventRef, checkoutRef, baseSHA, headSHA, runId, runAttempt, workflowSHA, tokenSource, appInstallationId = 0, appSlug = '', now = new Date()}) {
   const unavailable = (reason) => ({...emptyBranchProtection({branch, repository, policySHA, eventRef, checkoutRef, baseSHA, headSHA, runId, runAttempt, workflowSHA, tokenSource, missingReason: reason, appInstallationId, appSlug}), digest_sha256: ''});
   const finishUnavailable = (reason) => { const snapshot = unavailable(reason); snapshot.digest_sha256 = digestBranchProtection(snapshot); return snapshot; };
   if (typeof getProtection !== 'function' || !validRepository(repository) || !/^[0-9a-f]{64}$/.test(policySHA || '') || !validRef(eventRef) || !validRef(checkoutRef) || !validSHA(baseSHA) || !validSHA(headSHA) || !validPositiveInteger(runId) || !validPositiveInteger(runAttempt) || !validSHA(workflowSHA) || !validRef(tokenSource)) return finishUnavailable('branch_protection_observer_input_invalid');
@@ -240,6 +268,8 @@ async function observeBranchProtection({getProtection, branch = 'main', expected
   } catch (error) {
     return finishUnavailable('branch_protection_api_unavailable');
   }
+  const freshness = observerFreshnessFromResponse(response);
+  if (!freshness) return finishUnavailable('branch_protection_response_date_missing_or_malformed');
   const data = response && response.data;
   const checks = data && data.required_status_checks;
   const reviews = data && data.required_pull_request_reviews;
@@ -280,11 +310,13 @@ async function observeBranchProtection({getProtection, branch = 'main', expected
     run_id: runId,
     run_attempt: runAttempt,
     workflow_sha: workflowSHA,
+    observed_at: freshness.observed_at,
+    valid_until: freshness.valid_until,
     digest_sha256: '',
   };
   snapshot.digest_sha256 = digestBranchProtection(snapshot);
   try {
-    validateBranchProtectionSnapshot(snapshot, {requireVerified: true, expectedBranch: branch, expectedContexts});
+    validateBranchProtectionSnapshot(snapshot, {requireVerified: true, expectedBranch: branch, expectedContexts, now});
   } catch (error) {
     return finishUnavailable('branch_protection_policy_mismatch');
   }
@@ -694,7 +726,7 @@ function validateExpectedArtifactTuple(manifest, expected) {
   }
 }
 
-function validateGuardianArtifact(manifest, expected) {
+function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
   if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || ![HEAD_BINDING_STATUS, HEAD_BINDING_VERIFIED].includes(manifest.head_binding_status) || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0 || !['feature_dev', 'promotion_main'].includes(manifest.route) || !['CI guardian shadow', 'CI guardian'].includes(manifest.check_name)) {
     throw guardianFailure('guardian artifact schema or identity is malformed');
   }
@@ -704,9 +736,9 @@ function validateGuardianArtifact(manifest, expected) {
   }
   if (manifest.route === 'promotion_main') {
     if (manifest.observer_environment !== OBSERVER_ENVIRONMENT) throw guardianFailure('guardian observer environment is not the protected environment', PROTECTION_CODE);
-    validateBranchProtectionSnapshot(manifest.branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'main', expectedContexts: MAIN_PROTECTION_CONTEXTS});
-    validateBranchProtectionSnapshot(manifest.dev_branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'dev', expectedContexts: DEV_PROTECTION_CONTEXTS});
-    validateGuardianEnvironment(manifest.observer_environment_snapshot, {requireVerified: manifest.decision === 'PASS'});
+    validateBranchProtectionSnapshot(manifest.branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'main', expectedContexts: MAIN_PROTECTION_CONTEXTS, now});
+    validateBranchProtectionSnapshot(manifest.dev_branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'dev', expectedContexts: DEV_PROTECTION_CONTEXTS, now});
+    validateGuardianEnvironment(manifest.observer_environment_snapshot, {requireVerified: manifest.decision === 'PASS', now});
     if (manifest.observer_environment_digest !== manifest.observer_environment_snapshot.digest_sha256) throw guardianFailure('guardian observer environment digest is not bound', PROTECTION_CODE);
   } else if (manifest.branch_protection !== null || manifest.dev_branch_protection !== null || manifest.observer_environment_snapshot !== null || manifest.observer_environment_digest !== null) {
     throw guardianFailure('feature guardian artifact must not carry privileged observer snapshots', PROTECTION_CODE);
@@ -788,6 +820,7 @@ function validateGuardianArtifact(manifest, expected) {
 module.exports = {
   ALLOWED_BASES,
   DEFAULT_BRANCH_CODE,
+  OBSERVER_FRESHNESS_WINDOW_MS,
   LIVE_REF_CODE,
   PROMOTION_TOPOLOGY_CODE,
   CHECK_IDENTITY_CODE,
@@ -805,6 +838,8 @@ module.exports = {
   readLiveTopology,
   digestBranchProtection,
   digestGuardianEnvironment,
+  observerFreshnessFromResponse,
+  validObserverFreshness,
   emptyGuardianEnvironment,
   observeBranchProtection,
   observeGuardianEnvironment,

@@ -3,12 +3,14 @@ package main
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func validGuardianEvidenceFixture() (guardianEvidence, proofBundle) {
 	base := strings.Repeat("b", 40)
 	head := strings.Repeat("a", 40)
 	bundle := proofBundle{Repository: "owner/repo", PRNumber: 7, BaseRef: "main", BaseSHA: base, HeadSHA: head, RunID: 300, RunAttempt: 1, Digests: proofDigests{Policy: strings.Repeat("6", 64)}, PromotionObservation: &promotionObservation{Action: "synchronize", Topology: guardianTopology{Status: "ahead", AheadBy: 1, BehindBy: 0, MergeBaseSHA: base}}}
+	observedAt, validUntil := freshObserverWindow()
 	evidence := guardianEvidence{
 		Schema: guardianEvidenceSchema, Route: "promotion_main", CheckName: "CI guardian", Repository: "owner/repo", PRNumber: 7, Action: "synchronize",
 		BaseRepo: "owner/repo", BaseRef: "main", BaseSHA: base, HeadRepo: "owner/repo", HeadRef: "dev", HeadSHA: head,
@@ -21,11 +23,11 @@ func validGuardianEvidenceFixture() (guardianEvidence, proofBundle) {
 		CheckRunID: 55, CheckRunName: "CI guardian", CheckRunAppID: 15368, CheckRunStatus: "completed", CheckRunConclusion: "success", CheckRunHeadSHA: head, CheckSuiteID: 77,
 		Decision: "PASS", HeadBindingStatus: "verified", BundleSHA: "sha256:" + strings.Repeat("2", 64),
 	}
-	evidence.BranchProtection = branchProtection{Repository: "owner/repo", Branch: "main", PolicySHA: strings.Repeat("6", 64), EventRef: "refs/heads/dev", CheckoutRef: head, TokenSource: "github_app_installation", AppInstallationID: 42, AppSlug: "guardian", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append(append([]string(nil), proofJobs...), "CI guardian"), RequiredCheckBindings: requiredCheckBindingsFor(append(append([]string(nil), proofJobs...), "CI guardian")), EnforceAdmins: true, RequiredReviews: 0, LinearHistory: true, BaseSHA: base, HeadSHA: head, RunID: evidence.RunID, RunAttempt: evidence.RunAttempt, WorkflowSHA: head}
+	evidence.BranchProtection = branchProtection{Repository: "owner/repo", Branch: "main", PolicySHA: strings.Repeat("6", 64), EventRef: "refs/heads/dev", CheckoutRef: head, TokenSource: "github_app_installation", AppInstallationID: 42, AppSlug: "guardian", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append(append([]string(nil), proofJobs...), "CI guardian"), RequiredCheckBindings: requiredCheckBindingsFor(append(append([]string(nil), proofJobs...), "CI guardian")), EnforceAdmins: true, RequiredReviews: 0, LinearHistory: true, BaseSHA: base, HeadSHA: head, RunID: evidence.RunID, RunAttempt: evidence.RunAttempt, WorkflowSHA: head, ObservedAt: observedAt, ValidUntil: validUntil}
 	evidence.BranchProtection.Digest = digestBranchProtection(evidence.BranchProtection)
-	evidence.DevBranchProtection = branchProtection{Repository: "owner/repo", Branch: "dev", PolicySHA: strings.Repeat("6", 64), EventRef: "refs/heads/dev", CheckoutRef: head, TokenSource: "github_app_installation", AppInstallationID: 42, AppSlug: "guardian", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append(append([]string(nil), proofJobs...), "CI guardian shadow"), RequiredCheckBindings: requiredCheckBindingsFor(append(append([]string(nil), proofJobs...), "CI guardian shadow")), EnforceAdmins: true, RequiredReviews: 0, LinearHistory: true, BaseSHA: base, HeadSHA: head, RunID: evidence.RunID, RunAttempt: evidence.RunAttempt, WorkflowSHA: head}
+	evidence.DevBranchProtection = branchProtection{Repository: "owner/repo", Branch: "dev", PolicySHA: strings.Repeat("6", 64), EventRef: "refs/heads/dev", CheckoutRef: head, TokenSource: "github_app_installation", AppInstallationID: 42, AppSlug: "guardian", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append(append([]string(nil), proofJobs...), "CI guardian shadow"), RequiredCheckBindings: requiredCheckBindingsFor(append(append([]string(nil), proofJobs...), "CI guardian shadow")), EnforceAdmins: true, RequiredReviews: 0, LinearHistory: true, BaseSHA: base, HeadSHA: head, RunID: evidence.RunID, RunAttempt: evidence.RunAttempt, WorkflowSHA: head, ObservedAt: observedAt, ValidUntil: validUntil}
 	evidence.DevBranchProtection.Digest = digestBranchProtection(evidence.DevBranchProtection)
-	evidence.ObserverEnvironmentSnapshot = guardianEnvironment{Repository: "owner/repo", Name: "guardian-observer", DeploymentBranchPolicy: guardianDeploymentBranchPolicy{ProtectedBranches: true, CustomBranchPolicies: false}, ProtectionRules: []string{"branch_policy"}, TokenSource: "github.token", ReadStatus: "verified", WaitTimer: 0, Reviewers: []string{}, RunID: evidence.RunID, RunAttempt: evidence.RunAttempt, WorkflowSHA: head}
+	evidence.ObserverEnvironmentSnapshot = guardianEnvironment{Repository: "owner/repo", Name: "guardian-observer", DeploymentBranchPolicy: guardianDeploymentBranchPolicy{ProtectedBranches: true, CustomBranchPolicies: false}, ProtectionRules: []string{"branch_policy"}, TokenSource: "github.token", ReadStatus: "verified", WaitTimer: 0, Reviewers: []string{}, RunID: evidence.RunID, RunAttempt: evidence.RunAttempt, WorkflowSHA: head, ObservedAt: observedAt, ValidUntil: validUntil}
 	evidence.ObserverEnvironmentSnapshot.Digest = digestGuardianEnvironment(evidence.ObserverEnvironmentSnapshot)
 	evidence.ObserverEnvironmentDigest = evidence.ObserverEnvironmentSnapshot.Digest
 	bundle.BranchProtection = evidence.BranchProtection
@@ -71,5 +73,43 @@ func TestGuardianEvidenceRejectsUnavailableOrNonPromotionTopology(t *testing.T) 
 	evidence.Topology.Status = "identical"
 	if err := validateGuardianEvidence(&evidence, bundle); err == nil {
 		t.Fatal("identical main/dev topology was accepted for promotion")
+	}
+}
+
+func TestGuardianEvidenceRejectsMissingFutureAndExpiredObserverFreshness(t *testing.T) {
+	now := time.Date(2026, time.August, 14, 0, 0, 0, 0, time.UTC)
+	setFreshness := func(evidence *guardianEvidence, observedAt, validUntil *string) {
+		evidence.BranchProtection.ObservedAt = observedAt
+		evidence.BranchProtection.ValidUntil = validUntil
+		evidence.BranchProtection.Digest = digestBranchProtection(evidence.BranchProtection)
+		evidence.DevBranchProtection.ObservedAt = observedAt
+		evidence.DevBranchProtection.ValidUntil = validUntil
+		evidence.DevBranchProtection.Digest = digestBranchProtection(evidence.DevBranchProtection)
+		evidence.ObserverEnvironmentSnapshot.ObservedAt = observedAt
+		evidence.ObserverEnvironmentSnapshot.ValidUntil = validUntil
+		evidence.ObserverEnvironmentSnapshot.Digest = digestGuardianEnvironment(evidence.ObserverEnvironmentSnapshot)
+		evidence.ObserverEnvironmentDigest = evidence.ObserverEnvironmentSnapshot.Digest
+	}
+	for name, window := range map[string][2]*string{
+		"missing": {nil, stringPointer("2026-08-14T00:10:00Z")},
+		"future":  {stringPointer("2026-08-14T00:01:00Z"), stringPointer("2026-08-14T00:11:00Z")},
+		"expired": {stringPointer("2026-08-13T23:40:00Z"), stringPointer("2026-08-13T23:50:00Z")},
+	} {
+		t.Run(name, func(t *testing.T) {
+			evidence, bundle := validGuardianEvidenceFixture()
+			setFreshness(&evidence, window[0], window[1])
+			bundle.BranchProtection = evidence.BranchProtection
+			bundle.DevBranchProtection = evidence.DevBranchProtection
+			if err := validateGuardianEvidenceAt(&evidence, bundle, now); err == nil {
+				t.Fatalf("%s observer freshness was accepted", name)
+			}
+		})
+	}
+	evidence, bundle := validGuardianEvidenceFixture()
+	setFreshness(&evidence, stringPointer("2026-08-13T23:55:00Z"), stringPointer("2026-08-14T00:05:00Z"))
+	bundle.BranchProtection = evidence.BranchProtection
+	bundle.DevBranchProtection = evidence.DevBranchProtection
+	if err := validateGuardianEvidenceAt(&evidence, bundle, now); err != nil {
+		t.Fatalf("valid observer freshness was rejected: %v", err)
 	}
 }

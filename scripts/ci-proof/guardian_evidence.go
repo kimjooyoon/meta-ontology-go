@@ -17,6 +17,10 @@ var guardianEvidenceActions = map[string]bool{
 }
 
 func validateGuardianEvidence(evidence *guardianEvidence, bundle proofBundle) error {
+	return validateGuardianEvidenceAt(evidence, bundle, time.Now().UTC())
+}
+
+func validateGuardianEvidenceAt(evidence *guardianEvidence, bundle proofBundle, now time.Time) error {
 	if bundle.BaseRef != "main" {
 		if evidence != nil {
 			return fmt.Errorf("guardian evidence is not allowed on a dev feature proof")
@@ -41,13 +45,13 @@ func validateGuardianEvidence(evidence *guardianEvidence, bundle proofBundle) er
 	if evidence.WorkflowID <= 0 || evidence.WorkflowPath != ".github/workflows/ci-guardian.yml" || evidence.RunEvent != "pull_request_target" || evidence.RunStatus != "completed" || evidence.RunConclusion != "success" || evidence.RunNumber <= 0 || evidence.GuardianJobID <= 0 || evidence.GuardianJobName != "CI guardian" || evidence.GuardianJobStatus != "completed" || evidence.GuardianJobConclusion != "success" || evidence.GuardianJobHeadSHA != evidence.HeadSHA || evidence.CheckRunID <= 0 || evidence.GuardianJobID != evidence.CheckRunID || evidence.CheckRunName != "CI guardian" || evidence.CheckRunAppID != 15368 || evidence.CheckRunStatus != "completed" || evidence.CheckRunConclusion != "success" || evidence.CheckRunHeadSHA != evidence.HeadSHA || evidence.CheckSuiteID <= 0 {
 		return fmt.Errorf("guardian observer run, job, or check identity is incomplete")
 	}
-	if err := validateBranchProtection(evidence.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: evidence.BaseSHA, HeadSHA: evidence.HeadSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{BaseRef: "main"}); err != nil {
+	if err := validateBranchProtectionAt(evidence.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: evidence.BaseSHA, HeadSHA: evidence.HeadSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{BaseRef: "main"}, now); err != nil {
 		return fmt.Errorf("guardian branch protection evidence is invalid: %w", err)
 	}
-	if err := validateTrustedBranchProtection(evidence.DevBranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: evidence.BaseSHA, HeadSHA: evidence.HeadSHA, EventRef: evidence.EventRef, CheckoutRef: evidence.WorkflowSHA, RunID: evidence.RunID, Attempt: evidence.RunAttempt, WorkflowSHA: evidence.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, "dev"); err != nil {
+	if err := validateTrustedBranchProtectionAt(evidence.DevBranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: evidence.BaseSHA, HeadSHA: evidence.HeadSHA, EventRef: evidence.EventRef, CheckoutRef: evidence.WorkflowSHA, RunID: evidence.RunID, Attempt: evidence.RunAttempt, WorkflowSHA: evidence.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, "dev", now); err != nil {
 		return fmt.Errorf("guardian dev branch protection evidence is invalid: %w", err)
 	}
-	if err := validateGuardianEnvironmentEvidence(evidence.ObserverEnvironmentSnapshot, evidence, bundle); err != nil {
+	if err := validateGuardianEnvironmentEvidenceAt(evidence.ObserverEnvironmentSnapshot, evidence, bundle, now); err != nil {
 		return err
 	}
 	if !reflect.DeepEqual(bundle.BranchProtection, evidence.BranchProtection) {
@@ -73,7 +77,11 @@ func digestGuardianEnvironment(environment guardianEnvironment) string {
 }
 
 func validateGuardianEnvironmentEvidence(environment guardianEnvironment, evidence *guardianEvidence, bundle proofBundle) error {
-	if environment.Repository != bundle.Repository || environment.Name != "guardian-observer" || environment.TokenSource != "github.token" || environment.ReadStatus != "verified" || !environment.DeploymentBranchPolicy.ProtectedBranches || environment.DeploymentBranchPolicy.CustomBranchPolicies || len(environment.ProtectionRules) > 1 || (len(environment.ProtectionRules) == 1 && environment.ProtectionRules[0] != "branch_policy") || environment.WaitTimer != 0 || len(environment.Reviewers) != 0 || environment.MissingReason != "" || environment.RunID != evidence.RunID || environment.RunAttempt != evidence.RunAttempt || environment.WorkflowSHA != evidence.WorkflowSHA || environment.Digest == "" || environment.Digest != digestGuardianEnvironment(environment) || environment.Digest != evidence.ObserverEnvironmentDigest {
+	return validateGuardianEnvironmentEvidenceAt(environment, evidence, bundle, time.Now().UTC())
+}
+
+func validateGuardianEnvironmentEvidenceAt(environment guardianEnvironment, evidence *guardianEvidence, bundle proofBundle, now time.Time) error {
+	if environment.Repository != bundle.Repository || environment.Name != "guardian-observer" || environment.TokenSource != "github.token" || environment.ReadStatus != "verified" || !environment.DeploymentBranchPolicy.ProtectedBranches || environment.DeploymentBranchPolicy.CustomBranchPolicies || len(environment.ProtectionRules) > 1 || (len(environment.ProtectionRules) == 1 && environment.ProtectionRules[0] != "branch_policy") || environment.WaitTimer != 0 || len(environment.Reviewers) != 0 || environment.MissingReason != "" || environment.RunID != evidence.RunID || environment.RunAttempt != evidence.RunAttempt || environment.WorkflowSHA != evidence.WorkflowSHA || environment.Digest == "" || environment.Digest != digestGuardianEnvironment(environment) || environment.Digest != evidence.ObserverEnvironmentDigest || !validObserverFreshness(environment.ObservedAt, environment.ValidUntil, now) {
 		return fmt.Errorf("guardian observer environment evidence is missing, tampered, or unbound")
 	}
 	return nil

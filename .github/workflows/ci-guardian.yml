@@ -66,7 +66,7 @@ jobs:
           GUARDIAN_APP_CLIENT_ID: ${{ vars.GUARDIAN_APP_CLIENT_ID }}
           GUARDIAN_APP_PRIVATE_KEY: ${{ secrets.GUARDIAN_APP_PRIVATE_KEY }}
         with:
-          app-id: ${{ env.GUARDIAN_APP_CLIENT_ID }}
+          client-id: ${{ env.GUARDIAN_APP_CLIENT_ID }}
           private-key: ${{ env.GUARDIAN_APP_PRIVATE_KEY }}
           permission-administration: read
       - name: Inspect changed paths from default authority

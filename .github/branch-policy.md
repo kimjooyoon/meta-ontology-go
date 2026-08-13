@@ -103,3 +103,10 @@ jobs, artifacts, and protection predicates. Historical PR narratives, preview
 merge SHAs, stale workflow runs, and auxiliary push results are not evidence for
 the current gate. Unknown agent branch names remain rejected by the executable
 scope map.
+
+Observer freshness is bounded to exactly ten minutes: every verified
+`guardian-observer`, dev-protection, and main-protection snapshot records the
+GitHub response `Date` as `observed_at` and derives `valid_until` from that
+timestamp. Missing, malformed, future, or expired freshness evidence is
+fail-closed. Steady-state dev/main are seven contexts each: the six canonical
+proof contexts plus the app-bound Guardian context for that branch.
