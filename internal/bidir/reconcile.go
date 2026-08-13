@@ -27,13 +27,22 @@ func Reconcile(base Model, changes FactDelta) (ReconcileResult, error) {
 
 // ReconcileWithOptions applies a fact delta transactionally.
 func ReconcileWithOptions(base Model, changes FactDelta, options ReconcileOptions) (ReconcileResult, error) {
+	rawObservation := newRawFactObservation(changes)
 	base = base.Normalized()
 	if err := base.Validate(); err != nil {
-		return ReconcileResult{Model: base}, err
+		return ReconcileResult{Model: base, RawObservation: rawObservation}, err
+	}
+	result := ReconcileResult{Model: base, RawObservation: rawObservation}
+	for _, fact := range append(append(FactSet(nil), changes.Removed...), changes.Added...) {
+		if conflict := validateFactInput(fact); conflict != nil {
+			result.Conflicts = append(result.Conflicts, *conflict)
+		}
+	}
+	if len(result.Conflicts) > 0 {
+		return result, &ReconcileError{Conflicts: result.Conflicts}
 	}
 	working := base.Clone()
 	changes = changes.Normalized()
-	result := ReconcileResult{}
 	for _, fact := range changes.Removed {
 		if conflict := removeFact(&working, fact, options); conflict != nil {
 			result.Conflicts = append(result.Conflicts, *conflict)
@@ -61,19 +70,48 @@ func ReconcileWithOptions(base Model, changes FactDelta, options ReconcileOption
 	return result, nil
 }
 
+func validateFactInput(fact Fact) *Conflict {
+	if err := fact.Source.Validate(); err != nil {
+		return &Conflict{Kind: ConflictInvalidFact, Fact: fact, Message: fmt.Sprintf("invalid source span: %v", err)}
+	}
+	if fact.Layer != DeterministicFact {
+		if fact.Layer != SyntacticFact && fact.Layer != CandidateFact {
+			return &Conflict{Kind: ConflictInvalidFact, Fact: fact, Message: fmt.Sprintf("unsupported fact layer %d", fact.Layer)}
+		}
+		return nil
+	}
+	if !knownSemanticPredicate(fact.Predicate) {
+		return &Conflict{Kind: ConflictUnknownPredicate, Fact: fact, Message: fmt.Sprintf("predicate %q is not deterministic semantic vocabulary", fact.Predicate)}
+	}
+	if err := validateID(fact.Subject); err != nil {
+		return &Conflict{Kind: ConflictInvalidFact, Fact: fact, Message: fmt.Sprintf("invalid subject: %v", err)}
+	}
+	if err := validateID(fact.Object); err != nil {
+		return &Conflict{Kind: ConflictInvalidFact, Fact: fact, Message: fmt.Sprintf("invalid object: %v", err)}
+	}
+	return nil
+}
+
 func addFact(model *Model, result *ReconcileResult, fact Fact, options ReconcileOptions) *Conflict {
 	switch fact.Layer {
 	case SyntacticFact:
 		result.Syntactic = append(result.Syntactic, fact)
 		return nil
 	case CandidateFact:
-		model.Candidates = append(model.Candidates, fact.normalized())
+		candidate := fact.normalized()
+		// Keep the observation in the result/evidence stream, but mirror the
+		// semantic graph rule that an existing deterministic fact shadows a
+		// candidate with the same triple.
+		if _, exists := findRelation(*model, fact.Predicate, fact.Subject, fact.Object); !exists {
+			model.Candidates = append(model.Candidates, candidate)
+		}
 		result.Candidates = append(result.Candidates, fact)
 		return nil
 	case DeterministicFact:
 		if conflict := addDeterministicFact(model, fact, options); conflict != nil {
 			return conflict
 		}
+		model.Candidates = model.Candidates.withoutSemanticKey(fact.SemanticKey())
 		result.Accepted = append(result.Accepted, fact)
 		return nil
 	default:
@@ -180,15 +218,7 @@ func ensureEndpoint(model *Model, id ID, hintedKind Kind, fact Fact, subject boo
 		}
 		return nil
 	}
-	kind := hintedKind
-	if kind == "" {
-		kind = inferredEndpointKind(fact.Predicate, subject)
-	}
-	if kind == "" {
-		return &Conflict{Kind: ConflictUnknownEndpoint, Fact: fact, Message: fmt.Sprintf("%s %q is not registered in the base model", endpointLabel(subject), id)}
-	}
-	model.Nodes = append(model.Nodes, Node{ID: id, Kind: kind, Name: defaultName(id), Namespace: model.Namespace, Span: fact.Source})
-	return nil
+	return &Conflict{Kind: ConflictUnknownEndpoint, Fact: fact, Message: fmt.Sprintf("%s %q is not registered in the base model", endpointLabel(subject), id)}
 }
 
 func endpointLabel(subject bool) string {
@@ -196,24 +226,4 @@ func endpointLabel(subject bool) string {
 		return "subject"
 	}
 	return "object"
-}
-
-func inferredEndpointKind(predicate Predicate, subject bool) Kind {
-	switch predicate {
-	case PredicateUsed:
-		if subject {
-			return ActivityKind
-		}
-		return EntityKind
-	case PredicateWasGeneratedBy:
-		if subject {
-			return EntityKind
-		}
-		return ActivityKind
-	case PredicateWasDerivedFrom:
-		return EntityKind
-	case PredicateInvokes:
-		return ActivityKind
-	}
-	return ""
 }
