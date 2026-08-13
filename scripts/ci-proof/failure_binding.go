@@ -74,11 +74,11 @@ func failureScope(binding failureBinding) (string, error) {
 		}
 		return "pr", nil
 	}
-	if binding.Event == "push" && binding.BaseRef == "integration" {
-		return "integration", nil
-	}
-	if binding.Event == "push" && binding.BaseRef == "main" {
-		return "main", nil
+	if binding.Event == "push" && (binding.BaseRef == "integration" || binding.BaseRef == "dev" || binding.BaseRef == "main") {
+		if binding.EventRef != "refs/heads/"+binding.BaseRef || binding.OwnerBranch != binding.BaseRef {
+			return "", fmt.Errorf("protected push owner must equal the exact protected branch")
+		}
+		return binding.BaseRef, nil
 	}
 	if binding.Event == "push" && strings.HasPrefix(binding.EventRef, "refs/heads/agent/") {
 		if binding.PRNumber != 0 {

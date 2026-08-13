@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - integration
+      - dev
       - main
       - 'agent/**'
   pull_request:
@@ -182,7 +183,7 @@ jobs:
   evidence:
     name: CI evidence
     needs: [format, vet, test, race, semantic, policy]
-    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main') }}
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -258,7 +259,8 @@ jobs:
             const pull = context.payload.pull_request;
             const headSha = pull ? pull.head.sha : context.sha;
             const baseSha = pull ? pull.base.sha : context.payload.before;
-            const baseRef = pull ? pull.base.ref : context.ref_name;
+            const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
+            const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
             const output = fs.readFileSync('ci-domain/cli-check.stdout', 'utf8');
             const domain = {
               schema: 'gooo/domain-evidence/v2', repository: context.payload.repository.full_name, event: context.eventName,
@@ -286,7 +288,7 @@ jobs:
   proof:
     name: CI proof bundle
     needs: [format, vet, test, race, semantic, policy, evidence]
-    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main') }}
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -358,7 +360,8 @@ jobs:
             const crypto = require('crypto');
             const fs = require('fs');
             const pull = context.payload.pull_request;
-            const baseRef = pull ? pull.base.ref : context.ref_name;
+            const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
+            const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
             const baseSha = pull ? pull.base.sha : context.payload.before;
             const headSha = pull ? pull.head.sha : context.sha;
             const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
@@ -469,7 +472,7 @@ jobs:
   failure-report:
     name: CI failure summary
     needs: [format, vet, test, race, semantic, policy, proof]
-    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main') }}
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -493,7 +496,6 @@ jobs:
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
-          CI_OWNER_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
         with:
           github-token: ${{ github.token }}
           script: |
@@ -506,6 +508,12 @@ jobs:
               if (page === 1000) throw new Error('failure job API pagination exceeded the fail-closed page limit');
             }
             const expectedJobs = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
+            const pull = context.payload.pull_request;
+            const {normalizeBaseRef, normalizeOwnerBranch} = require('./scripts/ci-proof/refs');
+            const normalizedBaseRef = normalizeBaseRef(context.eventName, context.ref, pull);
+            const normalizedOwnerBranch = normalizeOwnerBranch(context.eventName, context.ref, pull);
+            fs.writeFileSync('ci-base-ref.txt', normalizedBaseRef + '\n');
+            fs.writeFileSync('ci-owner-branch.txt', normalizedOwnerBranch + '\n');
             const terminalFailures = jobsFromAPI
               .filter(job => job.name !== 'CI failure summary' && job.status === 'completed' && job.conclusion && job.conclusion !== 'success' && job.conclusion !== 'skipped')
               .sort((left, right) => left.id - right.id || left.name.localeCompare(right.name));
@@ -513,7 +521,6 @@ jobs:
               const canonicalJobs = jobsFromAPI
                 .filter(job => expectedJobs.includes(job.name))
                 .sort((left, right) => expectedJobs.indexOf(left.name) - expectedJobs.indexOf(right.name));
-              const pull = context.payload.pull_request;
               const head = pull?.head.sha || context.sha;
               const runAttempt = Number(process.env.CI_RUN_ATTEMPT || 1);
               const canonicalBound = canonicalJobs.length === expectedJobs.length
@@ -528,7 +535,6 @@ jobs:
               return;
             }
             const failed = terminalFailures[0];
-            const pull = context.payload.pull_request;
             const head = pull?.head.sha || context.sha;
             const runAttempt = Number(process.env.CI_RUN_ATTEMPT || 1);
             const exactJob = job => job.head_sha === head && job.run_id === context.runId && Number(job.run_attempt || 0) === runAttempt;
@@ -544,7 +550,7 @@ jobs:
                 const exactProofTuple = proof.schema === 'gooo/ci-proof/v2'
                   && proof.repository === `${context.repo.owner}/${context.repo.repo}`
                   && proof.event === context.eventName
-                  && proof.base_ref === (pull?.base.ref || context.ref_name)
+                  && proof.base_ref === normalizedBaseRef
                   && proof.base_sha === (pull?.base.sha || context.payload.before)
                   && proof.head_sha === head
                   && proof.ref === context.ref
@@ -684,7 +690,7 @@ jobs:
               failure_codes: failureCodes,
               message,
               remediation,
-              owner_branch: process.env.CI_OWNER_BRANCH,
+              owner_branch: normalizedOwnerBranch,
               rejections,
               missing_reasons: missingReasons,
               artifacts,
@@ -710,7 +716,7 @@ jobs:
           CI_EVENT: ${{ github.event_name }}
           CI_EVENT_REF: ${{ github.ref }}
           CI_CHECKOUT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          CI_BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+          CI_BASE_REF: ""
           CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           CI_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
@@ -718,8 +724,12 @@ jobs:
           CI_RUN_ID: ${{ github.run_id }}
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_ACTOR: ${{ github.actor }}
-          CI_OWNER_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          CI_OWNER_BRANCH: ""
         run: |
+          test -s ci-base-ref.txt
+          test -s ci-owner-branch.txt
+          export CI_BASE_REF="$(cat ci-base-ref.txt)"
+          export CI_OWNER_BRANCH="$(cat ci-owner-branch.txt)"
           if [ -s ci-closure-input.json ]; then
             go run ./scripts/ci-proof --closure-input ci-closure-input.json --closure-output ci-closure.json
             jq -r '"### CI closure\n- status: `\(.status)`\n- decision: `\(.decision)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)`\n- canonical jobs: \(.canonical_jobs | map([.id, .name, .head_sha, .conclusion] | @csv) | join("; "))\n- terminal failures: none\n- write effect: `\(.write_effect)`"' ci-closure.json >> "$GITHUB_STEP_SUMMARY"

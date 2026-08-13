@@ -67,6 +67,9 @@ func writeClosureManifest(inputPath, outputPath string) error {
 }
 
 func buildClosureManifest(input closureInput, binding failureBinding) (closureManifest, error) {
+	if err := validateFailureOwnerBinding(binding); err != nil {
+		return closureManifest{}, err
+	}
 	scope, err := failureScope(binding)
 	if err != nil {
 		return closureManifest{}, err
@@ -117,6 +120,9 @@ func validateClosureManifest(manifest closureManifest, binding failureBinding) e
 	}
 	if len(manifest.TerminalFailures) != 0 || len(manifest.TerminalFailureCodes) != 0 {
 		return fmt.Errorf("no-failure closure contains terminal failure data")
+	}
+	if err := validateFailureOwnerBinding(binding); err != nil {
+		return err
 	}
 	return validateCanonicalClosureJobs(manifest.CanonicalJobs, binding)
 }

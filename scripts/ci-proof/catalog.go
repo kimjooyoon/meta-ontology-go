@@ -22,8 +22,9 @@ type catalogDocumentEntry struct {
 }
 
 type failureOwnerRegistry struct {
-	Schema    string `json:"schema"`
-	Ownership []struct {
+	Schema                string   `json:"schema"`
+	ProtectedPushBranches []string `json:"protected_push_branches"`
+	Ownership             []struct {
 		Branch string   `json:"branch"`
 		Paths  []string `json:"paths"`
 	} `json:"ownership"`
@@ -137,6 +138,32 @@ func validateFailureOwnerRegistry(branch string) error {
 		return fmt.Errorf("failure owner branch %q is not registered for CI scope", branch)
 	}
 	return nil
+}
+
+func validateFailureOwnerBinding(binding failureBinding) error {
+	if binding.Event == "pull_request" || (binding.Event == "push" && strings.HasPrefix(binding.EventRef, "refs/heads/agent/")) {
+		return validateFailureOwnerRegistry(binding.OwnerBranch)
+	}
+	if binding.Event != "push" || binding.PRNumber != 0 || binding.OwnerBranch != binding.BaseRef || binding.EventRef != "refs/heads/"+binding.BaseRef {
+		return fmt.Errorf("protected push owner must equal the exact protected base branch")
+	}
+	data, err := readFailureFile(failureOwnerRegistryPath)
+	if err != nil {
+		return fmt.Errorf("read protected push owner registry: %w", err)
+	}
+	var registry failureOwnerRegistry
+	if err := json.Unmarshal(data, &registry); err != nil {
+		return fmt.Errorf("parse protected push owner registry: %w", err)
+	}
+	if registry.Schema != "gooo/ci-governance/v1" || len(registry.ProtectedPushBranches) == 0 || !sameStrings(registry.ProtectedPushBranches, []string{"integration", "dev", "main"}) {
+		return fmt.Errorf("protected push owner registry is invalid")
+	}
+	for _, branch := range registry.ProtectedPushBranches {
+		if branch == binding.BaseRef {
+			return nil
+		}
+	}
+	return fmt.Errorf("protected push branch %q is not registered", binding.BaseRef)
 }
 
 func sameCatalogPaths(left, right []string) bool {
