@@ -40,12 +40,22 @@ func (server *Server) parse(ctx context.Context, uri, source string) (ParseResul
 	defer server.parseMu.Unlock()
 	if parser, ok := server.parser.(ContextParser); ok {
 		result, err := parser.ParseContext(ctx, uri, source)
-		return normalizeParseResult(uri, source, result), err
+		return cloneParseResult(normalizeParseResult(uri, source, result)), err
 	}
 	if err := ctx.Err(); err != nil {
 		return ParseResult{}, err
 	}
-	return normalizeParseResult(uri, source, server.parser.Parse(uri, source)), nil
+	return cloneParseResult(normalizeParseResult(uri, source, server.parser.Parse(uri, source))), nil
+}
+
+// cloneParseResult gives the document store and feature readers ownership of
+// the derived LSP projections. The canonical syntax tree remains read-only and
+// is intentionally not copied or reinterpreted by this adapter.
+func cloneParseResult(result ParseResult) ParseResult {
+	result.Symbols = append([]Symbol(nil), result.Symbols...)
+	result.References = append([]Reference(nil), result.References...)
+	result.Diagnostics = append([]Diagnostic(nil), result.Diagnostics...)
+	return result
 }
 
 type ParseResult struct {

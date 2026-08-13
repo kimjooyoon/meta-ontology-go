@@ -144,7 +144,7 @@ func (server *Server) refresh(ctx context.Context, uri string) error {
 }
 
 func documentCopy(value *document) document {
-	return document{version: value.version, text: value.text, result: value.result}
+	return document{version: value.version, text: value.text, result: cloneParseResult(value.result)}
 }
 
 func featureErrorResponse(id json.RawMessage, err error, ctx context.Context) (*responseEnvelope, [][]byte, error) {
