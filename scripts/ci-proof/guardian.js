@@ -6,6 +6,7 @@ const ROOT_FAILURE_CODE = 'CI-ROOT-OF-TRUST-001';
 const HEAD_BINDING_STATUS = 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED';
 const DEFAULT_BRANCH_CODE = 'CI-GUARDIAN-DEFAULT-BRANCH-001';
 const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v1';
+const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE]);
 const ALLOWED_BASES = new Set(['integration', 'dev', 'main']);
 const ALLOWED_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review']);
 const VALID_STATUSES = new Set(['added', 'copied', 'changed', 'modified', 'removed', 'renamed']);
@@ -98,8 +99,8 @@ function validateChangedFile(file) {
   return {filename, previous_filename: file.previous_filename || null, status: file.status};
 }
 
-async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pullNumber}) {
-  if (typeof listFiles !== 'function' || typeof owner !== 'string' || typeof repo !== 'string' || baseRepoFullName !== `${owner}/${repo}` || !Number.isInteger(pullNumber) || pullNumber < 1) {
+async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pullNumber, expectedCount}) {
+  if (typeof listFiles !== 'function' || typeof owner !== 'string' || typeof repo !== 'string' || baseRepoFullName !== `${owner}/${repo}` || !Number.isInteger(pullNumber) || pullNumber < 1 || !Number.isInteger(expectedCount) || expectedCount < 0) {
     throw guardianFailure('changed-file API binding is missing or malformed');
   }
   const files = [];
@@ -118,6 +119,9 @@ async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pu
       files.push(validated);
     }
     if (response.data.length < 100) {
+      if (files.length !== expectedCount) {
+        throw guardianFailure(`changed-file API count ${files.length} does not match live pull count ${expectedCount}`);
+      }
       const kernelPaths = files
         .flatMap((file) => [file.filename, file.previous_filename])
         .filter((path) => path && isProtectedKernelPath(path));
@@ -156,7 +160,7 @@ async function revalidatePullRequest({getPull, owner, repo, pullNumber, eventPul
   } catch (error) {
     throw guardianFailure(`live pull request API failed: ${error.message || error}`);
   }
-  if (!response || (response.status !== undefined && response.status !== 200) || !response.data) {
+  if (!response || (response.status !== undefined && response.status !== 200) || !response.data || !Number.isInteger(response.data.changed_files) || response.data.changed_files < 0) {
     throw guardianFailure('live pull request API returned malformed data');
   }
   const livePull = validateGuardianPullRequest(response.data);
@@ -270,6 +274,7 @@ function buildGuardianArtifact({pull, repository, action, defaultBranch, workflo
     kernel_before_sha256: result && result.kernelBeforeDigest ? result.kernelBeforeDigest : null,
     kernel_after_sha256: result && result.kernelAfterDigest ? result.kernelAfterDigest : null,
     changed_files: sortedChangedFiles(result && result.files),
+    changed_files_count: Array.isArray(result && result.files) ? result.files.length : 0,
     kernel_paths: [...new Set((result && result.kernelPaths) || [])].sort(),
     decision: result && result.decision ? result.decision : 'FAIL_CLOSED',
     code: result ? result.code : ROOT_FAILURE_CODE,
@@ -323,8 +328,14 @@ function validateGuardianArtifact(manifest) {
   if (manifest.runtime_sha !== manifest.workflow_sha && manifest.decision === 'PASS') {
     throw guardianFailure('guardian artifact PASS runtime and workflow SHA differ');
   }
-  if (manifest.decision === 'FAIL_CLOSED' && (typeof manifest.code !== 'string' || manifest.code.length === 0)) {
+  if (manifest.decision === 'FAIL_CLOSED' && (!GUARDIAN_FAILURE_CODES.has(manifest.code))) {
     throw guardianFailure('guardian artifact failure code is missing');
+  }
+  if (manifest.decision === 'PASS' && manifest.code !== null) {
+    throw guardianFailure('guardian artifact PASS code must be null');
+  }
+  if (!Number.isInteger(manifest.changed_files_count) || manifest.changed_files_count !== manifest.changed_files.length) {
+    throw guardianFailure('guardian artifact changed-file count does not match collected files');
   }
   validateSortedArtifactFiles(manifest.changed_files);
   validateSortedKernelPaths(manifest.kernel_paths);
@@ -341,11 +352,13 @@ function validateGuardianArtifact(manifest) {
     if (manifest.default_branch !== 'dev' || manifest.workflow_ref !== expectedWorkflowRef(manifest.repository) || manifest.runtime_ref !== 'refs/heads/dev' || manifest.event_ref !== 'refs/heads/dev' || manifest.runtime_sha !== manifest.workflow_sha || !validSHA(manifest.workflow_sha)) {
       throw guardianFailure('guardian artifact PASS is not bound to the exact default dev identity');
     }
-    if (manifest.kernel_paths.length > 0) {
-      const trustedPromotion = manifest.base_repo === manifest.repository && manifest.head_repo === manifest.repository && manifest.base_ref === 'main' && manifest.head_ref === 'dev' && manifest.head_sha === manifest.workflow_sha && manifest.kernel_before_sha256 !== null && manifest.kernel_after_sha256 !== null;
-      if (!trustedPromotion) {
-        throw guardianFailure('guardian artifact PASS kernel propagation is not exact dev-to-main authority');
-      }
+    const trustedPromotion = manifest.base_repo === manifest.repository && manifest.head_repo === manifest.repository && manifest.base_ref === 'main' && manifest.head_ref === 'dev' && manifest.head_sha === manifest.workflow_sha;
+    const featureRoute = (manifest.base_ref === 'integration' || manifest.base_ref === 'dev') && manifest.head_ref.startsWith('agent/');
+    if (!featureRoute && !trustedPromotion) {
+      throw guardianFailure('guardian artifact PASS route is neither an agent feature nor exact dev-to-main promotion');
+    }
+    if (manifest.kernel_paths.length > 0 && (!trustedPromotion || manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null)) {
+      throw guardianFailure('guardian artifact PASS kernel propagation is not exact dev-to-main authority');
     }
   }
   if (manifest.bundle_sha256 !== digestGuardianArtifact(manifest)) {

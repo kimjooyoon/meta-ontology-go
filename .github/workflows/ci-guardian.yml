@@ -55,13 +55,6 @@ jobs:
               if (!repository || !/^[0-9a-f]{40}$/i.test(workflowSha || '') || !/^[0-9a-f]{40}$/i.test(runtimeSha || '') || !workflowRef || !runtimeRef || !Number.isInteger(runId) || runId < 1 || !Number.isInteger(runAttempt) || runAttempt < 1) {
                 throw guardian.guardianFailure('runtime workflow/ref/run identity is missing or malformed');
               }
-              result = await guardian.inspectChangedFiles({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                baseRepoFullName: pull.base.repo.full_name,
-                pullNumber: pull.number,
-                listFiles: (parameters) => github.rest.pulls.listFiles(parameters),
-              });
               observedPull = await guardian.revalidatePullRequest({
                 getPull: (parameters) => github.rest.pulls.get(parameters),
                 owner: context.repo.owner,
@@ -69,6 +62,25 @@ jobs:
                 pullNumber: pull.number,
                 eventPull: pull,
               });
+              const expectedChangedFiles = observedPull.changed_files;
+              result = await guardian.inspectChangedFiles({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                baseRepoFullName: observedPull.base.repo.full_name,
+                pullNumber: observedPull.number,
+                expectedCount: expectedChangedFiles,
+                listFiles: (parameters) => github.rest.pulls.listFiles(parameters),
+              });
+              observedPull = await guardian.revalidatePullRequest({
+                getPull: (parameters) => github.rest.pulls.get(parameters),
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pullNumber: pull.number,
+                eventPull: observedPull,
+              });
+              if (observedPull.changed_files !== expectedChangedFiles) {
+                throw guardian.guardianFailure('live pull changed_files count changed during guardian inspection');
+              }
               let beforeDigest = null;
               let afterDigest = null;
               if (result.kernelPaths.length > 0 && guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha})) {
@@ -106,6 +118,12 @@ jobs:
               result,
             });
             fs.writeFileSync('ci-guardian.json', JSON.stringify(artifact, null, 2) + '\n');
+            let validationError = null;
+            try {
+              guardian.validateGuardianArtifact(artifact);
+            } catch (error) {
+              validationError = error;
+            }
             await core.summary
               .addHeading('CI guardian shadow')
               .addRaw(`schema=${artifact.schema}\n`)
@@ -117,7 +135,9 @@ jobs:
               .addRaw(`head=${artifact.head_ref}@${artifact.head_sha}\n`)
               .addRaw(`bundle=${artifact.bundle_sha256}\n`)
               .write();
-            if (artifact.decision !== 'PASS') {
+            if (validationError) {
+              core.setFailed(`${guardian.ROOT_FAILURE_CODE}: guardian artifact validation failed: ${validationError.message || validationError}`);
+            } else if (artifact.decision !== 'PASS') {
               core.setFailed(`${artifact.code}: ${artifact.reason}`);
             }
       - name: Upload guardian observation

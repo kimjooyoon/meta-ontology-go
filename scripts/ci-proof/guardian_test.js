@@ -25,6 +25,7 @@ const pull = (base = 'integration', fork = false) => ({
   number: 108,
   base: {ref: base, sha: sha('b'), repo: {full_name: 'owner/repo'}},
   head: {ref: 'agent/ci-workflow', sha: sha('a'), repo: {full_name: fork ? 'fork/repo' : 'owner/repo'}},
+  changed_files: 1,
 });
 
 async function rejectsRoot(operation) {
@@ -35,7 +36,7 @@ async function testPaginationAndNonKernelPass() {
   const pages = [Array.from({length: 100}, (_, index) => file(index === 0 ? 'docs/readme.md' : `docs/page-${index}.md`, index === 0 ? 'added' : 'modified')), [file('docs/final.md', 'modified')]];
   const calls = [];
   const result = await inspectChangedFiles({
-    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108,
+    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 101,
     listFiles: async (options) => {
       calls.push(options);
       return {status: 200, data: pages[options.page - 1] || []};
@@ -50,19 +51,19 @@ async function testPaginationAndNonKernelPass() {
 async function testKernelStatusesAndRenames() {
   for (const status of ['added', 'modified', 'removed']) {
     const result = await inspectChangedFiles({
-      owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108,
+      owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
       listFiles: async () => ({status: 200, data: [file('.github/workflows/ci.yml', status)]}),
     });
     assert.equal(result.code, ROOT_FAILURE_CODE);
     assert.equal(result.decision, 'FAIL_CLOSED');
   }
   const renamed = await inspectChangedFiles({
-    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108,
+    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
     listFiles: async () => ({status: 200, data: [file('docs/new.md', 'renamed', '.github/ci-governance.json')]}),
   });
   assert.equal(renamed.code, ROOT_FAILURE_CODE);
   const inert = await inspectChangedFiles({
-    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108,
+    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
     listFiles: async () => ({status: 200, data: [{...file('.github/workflows/ci.yml'), patch: '# name: CI guardian'}]}),
   });
   assert.equal(inert.code, ROOT_FAILURE_CODE);
@@ -70,12 +71,12 @@ async function testKernelStatusesAndRenames() {
 
 async function testForkAndMalformedAPI() {
   validateGuardianPullRequest(pull('dev', true));
-  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, listFiles: async () => ({status: 200, data: [{status: 'modified'}]})}));
-  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, listFiles: async () => ({status: 200, data: null})}));
-  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, listFiles: async () => undefined}));
-  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, listFiles: async () => { throw new Error('forbidden'); }}));
-  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, listFiles: async () => ({status: 200, data: [file('.github/workflows/ci.yml', 'renamed')]})}));
-  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'other/repo', pullNumber: 108, listFiles: async () => ({status: 200, data: []})}));
+  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1, listFiles: async () => ({status: 200, data: [{status: 'modified'}]})}));
+  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 0, listFiles: async () => ({status: 200, data: null})}));
+  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 0, listFiles: async () => undefined}));
+  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 0, listFiles: async () => { throw new Error('forbidden'); }}));
+  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1, listFiles: async () => ({status: 200, data: [file('.github/workflows/ci.yml', 'renamed')]})}));
+  await rejectsRoot(() => inspectChangedFiles({owner: 'owner', repo: 'repo', baseRepoFullName: 'other/repo', pullNumber: 108, expectedCount: 0, listFiles: async () => ({status: 200, data: []})}));
   for (const malformed of [pull('release'), {...pull(), base: {...pull().base, sha: 'short'}}, {...pull(), head: null}]) {
     assert.throws(() => validateGuardianPullRequest(malformed), (error) => error.code === ROOT_FAILURE_CODE);
   }
@@ -117,6 +118,7 @@ async function testStaleRaceAndArtifactDigest() {
     (candidate) => { candidate.workflow_ref = 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main'; },
     (candidate) => { candidate.runtime_sha = sha('e'); },
     (candidate) => { candidate.code = ROOT_FAILURE_CODE; },
+    (candidate) => { candidate.action = 'closed'; },
     (candidate) => { candidate.changed_files.push(candidate.changed_files[0]); },
     (candidate) => { candidate.kernel_paths = ['scripts/ci-proof/a', 'scripts/ci-proof/a']; },
   ]) {
@@ -132,6 +134,8 @@ async function testStaleRaceAndArtifactDigest() {
     (candidate) => { candidate.default_branch = 'main'; },
     (candidate) => { candidate.event_ref = 'refs/heads/main'; },
     (candidate) => { candidate.runtime_ref = 'refs/heads/main'; },
+    (candidate) => { candidate.base_ref = 'main'; candidate.head_ref = 'agent/ci-workflow'; },
+    (candidate) => { candidate.changed_files_count = 2; },
     (candidate) => { candidate.changed_files = [file('.github/workflows/ci.yml', 'modified')]; },
   ]) {
     const candidate = rehash(freshArtifact());
@@ -192,7 +196,7 @@ async function testPromotionAndKernelDigests() {
 async function testPaginationLimit() {
   let calls = 0;
   await rejectsRoot(() => inspectChangedFiles({
-    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108,
+    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 100000,
     listFiles: async () => {
       calls += 1;
       return {status: 200, data: Array.from({length: 100}, (_, index) => file(`docs/page-${calls}-${index}.md`))};
@@ -220,7 +224,10 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
   assert.match(workflow, /if: \$\{\{ always\(\) \}\}/);
   assert.match(workflow, /ci-guardian\.json/);
-  assert(workflow.indexOf('writeFileSync') < workflow.indexOf('core.setFailed'));
+  const writeIndex = workflow.indexOf('writeFileSync');
+  const validateIndex = workflow.indexOf('guardian.validateGuardianArtifact(artifact)');
+  const setFailedIndex = workflow.indexOf('core.setFailed');
+  assert(writeIndex >= 0 && writeIndex < validateIndex && validateIndex < setFailedIndex, 'guardian validates the written artifact before reporting failure');
   assert.match(workflow, /head_binding=\$\{artifact\.head_binding_status\}/);
   assert.doesNotMatch(workflow, /github\.event\.pull_request\.head\.sha/);
   assert.doesNotMatch(workflow, /refs\/pull\//);
