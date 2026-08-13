@@ -31,7 +31,7 @@ type SourceParser interface {
 type OSFileReader struct{}
 
 func (OSFileReader) ReadFile(filename string) ([]byte, error) {
-	return readRegularFile(filename, maxInputBytes)
+	return readRegularFile(filename, maxOutputBytes)
 }
 
 // SyntaxSourceParser delegates parsing to the repository syntax contract.
@@ -42,38 +42,73 @@ func (SyntaxSourceParser) ParseFile(filename, source string) (*syntax.File, synt
 }
 
 func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
+	args, jsonMode := parseJSONFlag(args)
 	semanticMode, filename, ok := checkArguments(args)
 	if !ok {
+		if jsonMode {
+			return reportUsage(true, stdout, stderr, "check", "usage: gooo check [--semantic] [--json] <file.gooo>")
+		}
 		fmt.Fprintln(stderr, "usage: gooo check [--semantic] <file.gooo>")
 		return exitUsage
 	}
 	deadline := time.Now().Add(commandDeadline)
 	source, err := readSourceWithDeadline(reader, filename, remainingDeadline(deadline))
 	if err != nil {
+		if jsonMode {
+			return reportFailure(true, stdout, stderr, "check", filename, "io.read", err.Error(), syntax.Span{})
+		}
 		fmt.Fprintf(stderr, "gooo: %s: read error: %v\n", filename, err)
 		return exitFailure
 	}
 	file, diagnostics, err := parseWithDeadline(parser, filename, string(source), remainingDeadline(deadline))
 	if err != nil {
+		if jsonMode {
+			return reportFailure(true, stdout, stderr, "check", filename, "parse", err.Error(), syntax.Span{})
+		}
 		fmt.Fprintf(stderr, "gooo: %s: parse error: %v\n", filename, err)
 		return exitFailure
 	}
-	if !reportDiagnostics(diagnostics, stderr) {
-		return exitFailure
-	}
 	if diagnostics.HasErrors() {
+		if jsonMode {
+			if err := writeJSONReport(stdout, newJSONReport("check", "error", filename, syntaxCLIDiagnostics(diagnostics))); err != nil {
+				return exitFailure
+			}
+			return exitFailure
+		}
+		if !reportDiagnostics(diagnostics, stderr) {
+			return exitFailure
+		}
 		return exitFailure
 	}
+	if !jsonMode && !reportDiagnostics(diagnostics, stderr) {
+		return exitFailure
+	}
+	var semanticHash string
 	if semanticMode {
-		if _, err := semanticCheckIR(file, remainingDeadline(deadline)); err != nil {
+		ir, err := semanticCheckIR(file, remainingDeadline(deadline))
+		if err != nil {
+			if jsonMode {
+				return reportFailure(true, stdout, stderr, "check", filename, "semantic.lowering", err.Error(), syntaxFileSpan(file))
+			}
 			if !reportSemanticDiagnostic(filename, file, err, stderr) {
 				return exitFailure
 			}
 			return exitFailure
 		}
-		if _, err := fmt.Fprintln(stderr, deferredCheckProvenance); err != nil {
+		semanticHash = ir.StableHash()
+		if !jsonMode {
+			if _, err := fmt.Fprintln(stderr, deferredCheckProvenance); err != nil {
+				return exitFailure
+			}
+		}
+	}
+	if jsonMode {
+		report := newJSONReport("check", "ok", filename, syntaxCLIDiagnostics(diagnostics))
+		report.SemanticHash = semanticHash
+		if err := writeJSONReport(stdout, report); err != nil {
 			return exitFailure
 		}
+		return exitOK
 	}
 	fmt.Fprintf(stdout, "ok: %s\n", filename)
 	return exitOK
