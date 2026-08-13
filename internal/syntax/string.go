@@ -61,6 +61,10 @@ func (l *Lexer) lexEscape(value *strings.Builder, escapeStart Position) bool {
 			return false
 		}
 	}
+	if r == '\n' || r == '\r' {
+		l.addDiagnostic(DiagUnterminatedString, startSpan(l.filename, escapeStart, l.position()), "unterminated escape sequence")
+		return true
+	}
 	switch r {
 	case '"', '\\':
 		value.WriteRune(l.advanceRune())
