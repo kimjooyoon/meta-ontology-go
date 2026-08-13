@@ -54,8 +54,10 @@ func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
 	text := string(workflow)
 	for _, marker := range []string{
 		"name: CI guardian", "pull_request_target:", "- integration\n      - dev\n      - main",
-		"actions/checkout@11d5960a326750d5838078e36cf38b85af677262", "ref: ${{ github.event.pull_request.base.sha }}",
+		"actions/checkout@11d5960a326750d5838078e36cf38b85af677262", "ref: ${{ github.workflow_sha }}",
 		"persist-credentials: false", "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b", "listFiles",
+		"github.rest.pulls.get", "github.workflow_ref", "github.workflow_sha", "github.sha",
+		"actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", "head_binding_status", "ci-guardian.json",
 		"contents: read", "pull-requests: read",
 	} {
 		if !strings.Contains(text, marker) {
@@ -64,7 +66,7 @@ func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
 	}
 	for _, forbidden := range []string{
 		"github.event.pull_request.head.sha", "refs/pull/", "secrets.", "contents: write",
-		"pull-requests: write", "agent/ci-workflow", "\n        run:", "\n    pull_request:",
+		"pull-requests: write", "agent/ci-workflow", "ref: ${{ github.event.pull_request.base.sha }}", "\n        run:", "\n    pull_request:",
 	} {
 		if strings.Contains(text, forbidden) {
 			t.Fatalf("guardian workflow contains unsafe marker %q", forbidden)

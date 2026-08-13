@@ -1,6 +1,11 @@
 'use strict';
 
+const crypto = require('node:crypto');
+
 const ROOT_FAILURE_CODE = 'CI-ROOT-OF-TRUST-001';
+const HEAD_BINDING_STATUS = 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED';
+const DEFAULT_BRANCH_CODE = 'CI-GUARDIAN-DEFAULT-BRANCH-001';
+const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v1';
 const ALLOWED_BASES = new Set(['integration', 'dev', 'main']);
 const VALID_STATUSES = new Set(['added', 'copied', 'changed', 'modified', 'removed', 'renamed']);
 const PROTECTED_FILES = new Set([
@@ -27,6 +32,22 @@ function guardianFailure(reason) {
 
 function validSHA(value) {
   return typeof value === 'string' && /^[0-9a-f]{40}$/i.test(value);
+}
+
+function validRepository(value) {
+  return typeof value === 'string' && /^[^/\s]+\/[^/\s]+$/.test(value);
+}
+
+function validRef(value) {
+  return typeof value === 'string' && value.length > 0 && !/[\s\\]/.test(value);
+}
+
+function expectedWorkflowRef(repository) {
+  return `${repository}/.github/workflows/ci-guardian.yml@refs/heads/dev`;
+}
+
+function validPositiveInteger(value) {
+  return Number.isInteger(value) && value > 0;
 }
 
 function normalizePath(value) {
@@ -56,7 +77,7 @@ function validateGuardianPullRequest(pull) {
   if (!base.repo || typeof base.repo.full_name !== 'string' || !base.repo.full_name.includes('/')) {
     throw guardianFailure('pull request base repository is missing or malformed');
   }
-  if (!pull.head || typeof pull.head.ref !== 'string' || pull.head.ref.length === 0 || !validSHA(pull.head.sha)) {
+  if (!pull.head || typeof pull.head.ref !== 'string' || pull.head.ref.length === 0 || !validSHA(pull.head.sha) || !pull.head.repo || typeof pull.head.repo.full_name !== 'string' || !pull.head.repo.full_name.includes('/')) {
     throw guardianFailure('pull request head identity is missing or malformed');
   }
   return pull;
@@ -108,14 +129,227 @@ async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pu
   throw guardianFailure('changed-file pagination exceeded the fail-closed page limit');
 }
 
+function pullIdentity(pull) {
+  return {
+    number: pull && pull.number,
+    base_repo: pull && pull.base && pull.base.repo && pull.base.repo.full_name,
+    base_ref: pull && pull.base && pull.base.ref,
+    base_sha: pull && pull.base && pull.base.sha,
+    head_repo: pull && pull.head && pull.head.repo && pull.head.repo.full_name,
+    head_ref: pull && pull.head && pull.head.ref,
+    head_sha: pull && pull.head && pull.head.sha,
+  };
+}
+
+function sameIdentity(left, right) {
+  return JSON.stringify(pullIdentity(left)) === JSON.stringify(pullIdentity(right));
+}
+
+async function revalidatePullRequest({getPull, owner, repo, pullNumber, eventPull}) {
+  if (typeof getPull !== 'function' || typeof owner !== 'string' || typeof repo !== 'string' || !validPositiveInteger(pullNumber)) {
+    throw guardianFailure('live pull request API binding is missing or malformed');
+  }
+  let response;
+  try {
+    response = await getPull({owner, repo, pull_number: pullNumber});
+  } catch (error) {
+    throw guardianFailure(`live pull request API failed: ${error.message || error}`);
+  }
+  if (!response || (response.status !== undefined && response.status !== 200) || !response.data) {
+    throw guardianFailure('live pull request API returned malformed data');
+  }
+  const livePull = validateGuardianPullRequest(response.data);
+  if (livePull.base.repo.full_name !== `${owner}/${repo}` || !sameIdentity(eventPull, livePull)) {
+    throw guardianFailure('pull request base/head changed during guardian inspection');
+  }
+  return livePull;
+}
+
+async function kernelTreeDigest({getCommit, getTree, owner, repo, ref}) {
+  if (typeof getCommit !== 'function' || typeof getTree !== 'function' || typeof owner !== 'string' || typeof repo !== 'string' || !validSHA(ref)) {
+    throw guardianFailure('kernel digest API binding is missing or malformed');
+  }
+  let commitResponse;
+  try {
+    commitResponse = await getCommit({owner, repo, ref});
+  } catch (error) {
+    throw guardianFailure(`kernel commit API failed: ${error.message || error}`);
+  }
+  const treeSHA = commitResponse && commitResponse.data && commitResponse.data.commit && commitResponse.data.commit.tree && commitResponse.data.commit.tree.sha;
+  if (!commitResponse || (commitResponse.status !== undefined && commitResponse.status !== 200) || !validSHA(treeSHA)) {
+    throw guardianFailure('kernel commit response is missing an exact tree SHA');
+  }
+  let treeResponse;
+  try {
+    treeResponse = await getTree({owner, repo, tree_sha: treeSHA, recursive: '1'});
+  } catch (error) {
+    throw guardianFailure(`kernel tree API failed: ${error.message || error}`);
+  }
+  if (!treeResponse || (treeResponse.status !== undefined && treeResponse.status !== 200) || !treeResponse.data || treeResponse.data.truncated === true || !Array.isArray(treeResponse.data.tree)) {
+    throw guardianFailure('kernel tree response is missing or truncated');
+  }
+  const entries = treeResponse.data.tree
+    .filter((entry) => entry && entry.type === 'blob' && typeof entry.path === 'string' && validSHA(entry.sha) && isProtectedKernelPath(entry.path))
+    .map((entry) => ({path: entry.path, mode: entry.mode || null, sha: entry.sha}))
+    .sort((left, right) => left.path.localeCompare(right.path));
+  return `sha256:${crypto.createHash('sha256').update(JSON.stringify(entries)).digest('hex')}`;
+}
+
+function defaultBranchDecision(defaultBranch, eventRef) {
+  if (defaultBranch !== 'dev' || eventRef !== `refs/heads/${defaultBranch}`) {
+    return {decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'guardian is not executing from the protected dev default branch'};
+  }
+  return {decision: 'PASS', code: null, reason: null};
+}
+
+function trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha}) {
+  const identity = pullIdentity(pull);
+  return defaultBranch === 'dev' && workflowRef === expectedWorkflowRef(repository) && runtimeSha === workflowSha && identity.base_repo === repository && identity.head_repo === repository && identity.base_ref === 'main' && identity.head_ref === 'dev' && identity.head_sha === workflowSha && validSHA(workflowSha);
+}
+
+function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef, eventRef, workflowSha, runtimeSha, result, kernelBeforeDigest, kernelAfterDigest}) {
+  const route = pullIdentity(pull);
+  const promotion = trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha});
+  if (route.base_ref === 'main' && !promotion) {
+    return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'main promotion is not the exact same-repository dev workflow authority'};
+  }
+  if (result.decision === 'FAIL_CLOSED' && (result.kernelPaths || []).length > 0 && promotion) {
+    if (!/^sha256:[0-9a-f]{64}$/.test(kernelBeforeDigest || '') || !/^sha256:[0-9a-f]{64}$/.test(kernelAfterDigest || '')) {
+      return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'trusted kernel propagation is missing before/after digests'};
+    }
+    return {...result, decision: 'PASS', code: null, reason: 'exact dev-to-main kernel propagation', kernelBeforeDigest, kernelAfterDigest};
+  }
+  if (result.decision === 'PASS') {
+    const activation = defaultBranchDecision(defaultBranch, eventRef);
+    if (activation.decision !== 'PASS') {
+      return {...result, ...activation};
+    }
+    if (workflowRef !== expectedWorkflowRef(repository) || runtimeSha !== workflowSha || !validSHA(workflowSha) || !validSHA(runtimeSha)) {
+      return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
+    }
+  }
+  return result;
+}
+
+function sortedChangedFiles(files) {
+  return [...(Array.isArray(files) ? files : [])].sort((left, right) => {
+    const leftKey = [left.filename, left.previous_filename || '', left.status].join('\u0000');
+    const rightKey = [right.filename, right.previous_filename || '', right.status].join('\u0000');
+    return leftKey.localeCompare(rightKey);
+  });
+}
+
+function digestGuardianArtifact(manifest) {
+  const unsigned = {...manifest, bundle_sha256: ''};
+  return `sha256:${crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')}`;
+}
+
+function buildGuardianArtifact({pull, repository, action, defaultBranch, workflowRef, workflowSha, runtimeRef, runtimeSha, runId, runAttempt, eventRef, result}) {
+  const identity = pullIdentity(pull);
+  const manifest = {
+    schema: GUARDIAN_SCHEMA,
+    repository: repository || null,
+    pull_request_number: identity.number || null,
+    action: action || null,
+    base_repo: identity.base_repo || null,
+    base_ref: identity.base_ref || null,
+    base_sha: identity.base_sha || null,
+    head_repo: identity.head_repo || null,
+    head_ref: identity.head_ref || null,
+    head_sha: identity.head_sha || null,
+    workflow_ref: workflowRef || null,
+    workflow_sha: workflowSha || null,
+    runtime_ref: runtimeRef || null,
+    runtime_sha: runtimeSha || null,
+    run_id: validPositiveInteger(runId) ? runId : null,
+    run_attempt: validPositiveInteger(runAttempt) ? runAttempt : null,
+    event_ref: eventRef || null,
+    default_branch: defaultBranch || null,
+    head_binding_status: HEAD_BINDING_STATUS,
+    kernel_before_sha256: result && result.kernelBeforeDigest ? result.kernelBeforeDigest : null,
+    kernel_after_sha256: result && result.kernelAfterDigest ? result.kernelAfterDigest : null,
+    changed_files: sortedChangedFiles(result && result.files),
+    kernel_paths: [...new Set((result && result.kernelPaths) || [])].sort(),
+    decision: result && result.decision ? result.decision : 'FAIL_CLOSED',
+    code: result ? result.code : ROOT_FAILURE_CODE,
+    reason: result && result.reason ? result.reason : result && result.decision === 'PASS' ? 'guardian observation passed' : 'guardian observation was incomplete',
+    bundle_sha256: '',
+  };
+  manifest.bundle_sha256 = digestGuardianArtifact(manifest);
+  return manifest;
+}
+
+function validateSortedArtifactFiles(files) {
+  let previousKey = null;
+  for (const file of files) {
+    const validated = validateChangedFile(file);
+    const key = [validated.filename, validated.previous_filename || '', validated.status].join('\u0000');
+    if (previousKey !== null && key <= previousKey) {
+      throw guardianFailure('guardian artifact changed files are not sorted and unique');
+    }
+    previousKey = key;
+  }
+}
+
+function validateSortedKernelPaths(paths) {
+  let previous = null;
+  for (const path of paths) {
+    if (typeof path !== 'string' || !isProtectedKernelPath(path) || (previous !== null && path <= previous)) {
+      throw guardianFailure('guardian artifact kernel paths are not protected, sorted, and unique');
+    }
+    previous = path;
+  }
+}
+
+function validateGuardianArtifact(manifest) {
+  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || manifest.head_binding_status !== HEAD_BINDING_STATUS || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0) {
+    throw guardianFailure('guardian artifact schema or identity is malformed');
+  }
+  if (manifest.base_repo !== manifest.repository) {
+    throw guardianFailure('guardian artifact base repository is not the event repository');
+  }
+  const expectedRef = `${manifest.repository}/.github/workflows/ci-guardian.yml@refs/heads/${manifest.default_branch}`;
+  if (manifest.workflow_ref !== expectedRef || (manifest.default_branch === 'dev' && manifest.workflow_ref !== expectedWorkflowRef(manifest.repository))) {
+    throw guardianFailure('guardian artifact workflow source is not the exact default-branch workflow');
+  }
+  if (manifest.decision === 'PASS' && (manifest.code !== null || manifest.runtime_sha !== manifest.workflow_sha)) {
+    throw guardianFailure('guardian artifact PASS identity or code is inconsistent');
+  }
+  if (manifest.decision === 'FAIL_CLOSED' && (typeof manifest.code !== 'string' || manifest.code.length === 0)) {
+    throw guardianFailure('guardian artifact failure code is missing');
+  }
+  validateSortedArtifactFiles(manifest.changed_files);
+  validateSortedKernelPaths(manifest.kernel_paths);
+  const beforeValid = manifest.kernel_before_sha256 === null || /^sha256:[0-9a-f]{64}$/.test(manifest.kernel_before_sha256);
+  const afterValid = manifest.kernel_after_sha256 === null || /^sha256:[0-9a-f]{64}$/.test(manifest.kernel_after_sha256);
+  if (!beforeValid || !afterValid || (manifest.kernel_paths.length === 0 && (manifest.kernel_before_sha256 !== null || manifest.kernel_after_sha256 !== null)) || (manifest.decision === 'PASS' && manifest.kernel_paths.length > 0 && (manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null))) {
+    throw guardianFailure('guardian artifact kernel digest fields are inconsistent');
+  }
+  if (manifest.bundle_sha256 !== digestGuardianArtifact(manifest)) {
+    throw guardianFailure('guardian artifact digest does not match canonical content');
+  }
+  return manifest;
+}
+
 module.exports = {
   ALLOWED_BASES,
+  DEFAULT_BRANCH_CODE,
+  GUARDIAN_SCHEMA,
+  HEAD_BINDING_STATUS,
   PROTECTED_FILES,
   PROTECTED_PREFIXES,
   ROOT_FAILURE_CODE,
   guardianFailure,
+  buildGuardianArtifact,
+  classifyGuardianDecision,
+  defaultBranchDecision,
+  digestGuardianArtifact,
   inspectChangedFiles,
   isProtectedKernelPath,
+  kernelTreeDigest,
   normalizePath,
+  revalidatePullRequest,
+  validateGuardianArtifact,
   validateGuardianPullRequest,
+  trustedDevPromotion,
 };

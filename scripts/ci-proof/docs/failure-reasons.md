@@ -71,6 +71,19 @@ validator compares every field with its executable catalog and rejects drift.
 | `CI-ROOT-OF-TRUST-BOOTSTRAP-001` | trust-root / blocked | The base/default topology cannot run the newly introduced guardian for this bootstrap PR. | Record the exact base/head, protected-kernel diff, local tests, and PR evidence; keep the guardian advisory until a real base-pinned run exists. | Do not add an unenforceable required context, claim that #105 proves itself, or mutate default/main. | Handoff the bootstrap ledger to integration; after dev/default migration, prove a guardian run before changing protection. |
 | `CI-UNCLASSIFIED-001` | unclassified / blocked | A terminal failure cannot be safely classified. | Stop and request deterministic CI policy classification. | Do not guess a reason or treat it as green. | Handoff the exact job/run tuple to gate. |
 
+## Guardian artifact activation statuses
+
+These codes are emitted in the `gooo/ci-guardian/v1` shadow artifact and are
+distinct from the `gooo/ci-failure/v1` catalog above:
+
+- `CI-GUARDIAN-DEFAULT-BRANCH-001`: the repository default branch is not `dev`
+  (or the runtime ref is not the exact default-dev ref), so an integration-only
+  bootstrap must not be treated as an active guardian.
+- `CI-GUARDIAN-HEAD-BINDING-UNVERIFIED`: runtime SHA/ref, workflow SHA/ref, and
+  event PR head SHA are recorded as distinct identities, but a post-bootstrap
+  probe has not yet established which native check identity is head-bound. Keep
+  the artifact shadow-only and do not add a required context or write statuses.
+
 ## Required missing-reason behavior
 
 Protection and provenance statuses must carry a non-empty reason

@@ -28,16 +28,20 @@ checks out only the immutable base SHA and does not parse candidate YAML as an
 authorization decision. Comments and inert YAML markers therefore cannot bypass
 the path gate, and fork PRs receive the same read-only treatment.
 
-The current integration base predates this `pull_request_target` workflow. GitHub
-loads that workflow from the protected base/default topology, so this PR is the
-explicit one-time `CI-ROOT-OF-TRUST-BOOTSTRAP-001` migration and cannot produce its
-own authoritative guardian context. No default-branch or protection mutation is
-performed here. After bootstrap, ordinary PRs cannot modify the kernel. Future
-kernel rotation requires a maintenance ledger with before/after policy digests and
-the code/tests proving the new base-pinned guardian; it is not a human-review
-predicate or an `agent/ci-workflow` exemption. Until a real guardian run is proven
-from the protected dev/default topology, the context is not claimed as an existing
-required check.
+The current default branch is `main`, and the integration base predates this
+`pull_request_target` workflow. Merging only to `integration` therefore does not
+activate it; this PR is the explicit one-time
+`CI-ROOT-OF-TRUST-BOOTSTRAP-001` migration and performs no default-branch or
+protection mutation. After the explicit integration-to-dev/default migration, a
+probe must compare the distinct runtime SHA/ref, workflow SHA/ref, and event PR
+head SHA before any required-context decision. The artifact reports
+`CI-GUARDIAN-DEFAULT-BRANCH-001` until that topology exists and
+`CI-GUARDIAN-HEAD-BINDING-UNVERIFIED` until the probe proves the binding. These
+are shadow signals, not an existing required check or merge/promotion evidence.
+After bootstrap, ordinary PRs cannot modify the kernel. Future kernel rotation
+requires a maintenance ledger with before/after policy digests and code/tests
+proving the new base-pinned guardian; it is not a human-review predicate or an
+`agent/ci-workflow` exemption.
 
 During the transition, feature PRs may target `integration` or `dev`; only exact
 `dev -> main` is a promotion. `integration` is temporary compatibility and remains

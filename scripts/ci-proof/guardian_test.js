@@ -6,8 +6,15 @@ const path = require('node:path');
 const {
   PROTECTED_FILES,
   PROTECTED_PREFIXES,
+  DEFAULT_BRANCH_CODE,
+  HEAD_BINDING_STATUS,
   ROOT_FAILURE_CODE,
+  buildGuardianArtifact,
+  classifyGuardianDecision,
   inspectChangedFiles,
+  kernelTreeDigest,
+  revalidatePullRequest,
+  validateGuardianArtifact,
   validateGuardianPullRequest,
 } = require('./guardian');
 
@@ -73,6 +80,95 @@ async function testForkAndMalformedAPI() {
   }
 }
 
+async function testStaleRaceAndArtifactDigest() {
+  const eventPull = pull('integration');
+  await rejectsRoot(() => revalidatePullRequest({
+    owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
+    getPull: async () => ({status: 200, data: {...eventPull, head: {...eventPull.head, sha: sha('c')}}}),
+  }));
+  await rejectsRoot(() => revalidatePullRequest({
+    owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
+    getPull: async () => ({status: 200, data: {...eventPull, base: {...eventPull.base, ref: 'dev'}}}),
+  }));
+  const matching = await revalidatePullRequest({
+    owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
+    getPull: async () => ({status: 200, data: eventPull}),
+  });
+  assert.equal(matching.head.sha, eventPull.head.sha);
+  const artifact = buildGuardianArtifact({
+    pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
+    runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
+    result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md', 'modified')], kernelPaths: []},
+  });
+  validateGuardianArtifact(artifact);
+  artifact.changed_files[0].filename = 'docs/tampered.md';
+  assert.throws(() => validateGuardianArtifact(artifact), (error) => error && error.code === ROOT_FAILURE_CODE);
+  const freshArtifact = () => buildGuardianArtifact({
+    pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
+    runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
+    result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md', 'modified')], kernelPaths: []},
+  });
+  for (const mutate of [
+    (candidate) => { candidate.repository = ''; },
+    (candidate) => { candidate.base_sha = 'short'; },
+    (candidate) => { candidate.workflow_ref = 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main'; },
+    (candidate) => { candidate.runtime_sha = sha('e'); },
+    (candidate) => { candidate.code = ROOT_FAILURE_CODE; },
+    (candidate) => { candidate.changed_files.push(candidate.changed_files[0]); },
+    (candidate) => { candidate.kernel_paths = ['scripts/ci-proof/a', 'scripts/ci-proof/a']; },
+  ]) {
+    const candidate = freshArtifact();
+    mutate(candidate);
+    assert.throws(() => validateGuardianArtifact(candidate), (error) => error && error.code === ROOT_FAILURE_CODE);
+  }
+}
+
+async function testPromotionAndKernelDigests() {
+  const promotionPull = pull('main');
+  promotionPull.head.ref = 'dev';
+  promotionPull.head.repo.full_name = 'owner/repo';
+  promotionPull.head.sha = sha('d');
+  const exact = classifyGuardianDecision({
+    pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'),
+    result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
+  });
+  assert.equal(exact.decision, 'PASS');
+  const stale = classifyGuardianDecision({
+    pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('e'), runtimeSha: sha('e'),
+    result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
+  });
+  assert.equal(stale.code, ROOT_FAILURE_CODE);
+  const wrongDefault = classifyGuardianDecision({
+    pull: promotionPull, repository: 'owner/repo', defaultBranch: 'main', eventRef: 'refs/heads/main', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main', workflowSha: sha('d'), runtimeSha: sha('d'),
+    result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
+  });
+  assert.equal(wrongDefault.code, ROOT_FAILURE_CODE);
+  const bootstrap = classifyGuardianDecision({
+    pull: pull('integration'), repository: 'owner/repo', defaultBranch: 'main', eventRef: 'refs/heads/main', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main', workflowSha: sha('d'), runtimeSha: sha('d'),
+    result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
+  });
+  assert.equal(bootstrap.code, DEFAULT_BRANCH_CODE);
+  const kernel = classifyGuardianDecision({
+    pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'),
+    kernelBeforeDigest: 'sha256:' + '1'.repeat(64), kernelAfterDigest: 'sha256:' + '2'.repeat(64),
+    result: {decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'kernel changed', kernelPaths: ['.github/workflows/ci.yml']},
+  });
+  assert.equal(kernel.decision, 'PASS');
+  assert.equal(kernel.kernelBeforeDigest, 'sha256:' + '1'.repeat(64));
+  assert.equal(DEFAULT_BRANCH_CODE, 'CI-GUARDIAN-DEFAULT-BRANCH-001');
+  const tree = await kernelTreeDigest({
+    owner: 'owner', repo: 'repo', ref: sha('d'),
+    getCommit: async () => ({status: 200, data: {commit: {tree: {sha: sha('a')}}}}),
+    getTree: async () => ({status: 200, data: {truncated: false, tree: [
+      {path: '.github/workflows/ci.yml', type: 'blob', mode: '100644', sha: sha('1')},
+      {path: 'docs/readme.md', type: 'blob', mode: '100644', sha: sha('2')},
+    ]}}),
+  });
+  assert.match(tree, /^sha256:[0-9a-f]{64}$/);
+}
+
 async function testPaginationLimit() {
   let calls = 0;
   await rejectsRoot(() => inspectChangedFiles({
@@ -91,11 +187,21 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /pull_request_target:/);
   assert.match(workflow, /- integration\n      - dev\n      - main/);
   assert.match(workflow, /name: CI guardian/);
-  assert.match(workflow, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/);
+  assert.match(workflow, /ref: \$\{\{ github\.workflow_sha \}\}/);
+  assert.doesNotMatch(workflow, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/);
   assert.match(workflow, /persist-credentials: false/);
   assert.match(workflow, /actions\/checkout@11d5960a326750d5838078e36cf38b85af677262/);
   assert.match(workflow, /actions\/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b/);
   assert.match(workflow, /listFiles/);
+  assert.match(workflow, /github\.rest\.pulls\.get/);
+  assert.match(workflow, /github\.workflow_ref/);
+  assert.match(workflow, /github\.workflow_sha/);
+  assert.match(workflow, /github\.sha/);
+  assert.match(workflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
+  assert.match(workflow, /if: \$\{\{ always\(\) \}\}/);
+  assert.match(workflow, /ci-guardian\.json/);
+  assert(workflow.indexOf('writeFileSync') < workflow.indexOf('core.setFailed'));
+  assert.match(workflow, /head_binding=\$\{artifact\.head_binding_status\}/);
   assert.doesNotMatch(workflow, /github\.event\.pull_request\.head\.sha/);
   assert.doesNotMatch(workflow, /refs\/pull\//);
   assert.doesNotMatch(workflow, /secrets\./);
@@ -103,6 +209,10 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.doesNotMatch(workflow, /^\s+run:/m);
   assert.doesNotMatch(workflow, /^\s+pull_request:/m);
   assert.doesNotMatch(workflow, /agent\/ci-workflow/);
+}
+
+function testHeadBindingIsExplicitlyShadowOnly() {
+  assert.equal(HEAD_BINDING_STATUS, 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED');
 }
 
 function testKernelSetIsMonotonic() {
@@ -118,8 +228,11 @@ function testKernelSetIsMonotonic() {
   await testPaginationAndNonKernelPass();
   await testKernelStatusesAndRenames();
   await testForkAndMalformedAPI();
+  await testStaleRaceAndArtifactDigest();
+  await testPromotionAndKernelDigests();
   await testPaginationLimit();
   testWorkflowIsReadOnlyAndBasePinned();
+  testHeadBindingIsExplicitlyShadowOnly();
   testKernelSetIsMonotonic();
   console.log('guardian tests passed');
 })().catch((error) => {

@@ -32,12 +32,17 @@ not parse candidate YAML, inspect PR text, execute candidate code, or use write
 permissions, so comments and inert workflow markers cannot authorize a change.
 
 This guardian is a one-time `CI-ROOT-OF-TRUST-BOOTSTRAP-001` migration on a base
-that predates the workflow. GitHub cannot make a newly added `pull_request_target`
-workflow authoritative for its own bootstrap PR, and this task does not mutate
-default-branch topology or branch protection. After bootstrap, ordinary PRs cannot
-modify the protected kernel. A future kernel rotation is an explicit maintenance
-operation with before/after policy digests and an issue ledger; it is not a human
-review predicate or an ordinary PR exemption.
+that predates the workflow. The current default branch is `main`, so merging only
+to `integration` does not activate this `pull_request_target` workflow. The task
+does not mutate default-branch topology or branch protection. After the explicit
+integration-to-dev/default migration, a probe must compare runtime SHA/ref,
+workflow SHA/ref, and event PR head SHA before any required-context decision.
+The guardian summary reports `CI-GUARDIAN-DEFAULT-BRANCH-001` until that topology
+exists and `CI-GUARDIAN-HEAD-BINDING-UNVERIFIED` until the probe proves the
+binding; neither is a required status or merge/promotion authorization. A future
+kernel rotation is an explicit maintenance operation with before/after policy
+digests and an issue ledger, not a human review predicate or ordinary PR
+exemption.
 
 The scaffold baseline does not yet expose a working semantic CLI. Until
 `cmd/gooo` implements its `check` command, the semantic CLI and generated-freshness
