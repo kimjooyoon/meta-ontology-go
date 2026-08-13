@@ -42,3 +42,28 @@ func TestIdentityIsIndependentFromNamespaceAndDisplayName(t *testing.T) {
 		t.Fatal("test did not exercise a display-name change")
 	}
 }
+
+func TestGraphNodeLookupUsesCanonicalIdentity(t *testing.T) {
+	graph := NewGraph()
+	node := Node{
+		ID:        ID(" BILLING://ENTITY/order "),
+		Kind:      Entity,
+		Namespace: Namespace("billing"),
+		Name:      "Order",
+	}
+	if err := graph.AddNode(node); err != nil {
+		t.Fatal(err)
+	}
+	for _, lookup := range []ID{node.ID, MustIdentity("billing://entity/order")} {
+		got, ok := graph.Node(lookup)
+		if !ok {
+			t.Fatalf("canonical identity lookup %q did not resolve", lookup)
+		}
+		if got.ID != MustIdentity("billing://entity/order") {
+			t.Fatalf("lookup returned non-canonical identity %q", got.ID)
+		}
+	}
+	if _, ok := graph.Node(ID("not an identity")); ok {
+		t.Fatal("invalid identity lookup unexpectedly resolved")
+	}
+}

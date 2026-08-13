@@ -29,10 +29,14 @@ func (l FactLayer) String() string {
 
 // Fact is the adapter format for parser and Go analyzer observations.
 type Fact struct {
-	Layer       FactLayer
-	Subject     ID
-	Predicate   Predicate
-	Object      ID
+	Layer     FactLayer
+	Subject   ID
+	Predicate Predicate
+	Object    ID
+	// EvidenceID is an adapter-supplied provenance identifier. It is kept out
+	// of FactKey and semantic canonicalization so same-edge observations can
+	// retain distinct evidence records without changing fact identity.
+	EvidenceID  string
 	SubjectKind Kind
 	ObjectKind  Kind
 	Attributes  map[string]string
@@ -135,6 +139,21 @@ func (s FactSet) withoutKey(key FactKey) FactSet {
 	return result
 }
 
+// withoutSemanticKey removes only candidate observations for an authoritative
+// triple. Candidate identity includes its layer, but shadowing is deliberately
+// layer-independent: a deterministic fact must not leave a stale candidate in
+// the model while the raw/evidence boundary retains the observation.
+func (s FactSet) withoutSemanticKey(key string) FactSet {
+	result := make(FactSet, 0, len(s))
+	for _, fact := range s {
+		if fact.Layer == CandidateFact && fact.SemanticKey() == key {
+			continue
+		}
+		result = append(result, fact)
+	}
+	return result
+}
+
 func factLess(left, right Fact) bool {
 	if left.Layer != right.Layer {
 		return left.Layer < right.Layer
@@ -214,6 +233,15 @@ func (d FactDelta) Normalized() FactDelta {
 	return FactDelta{Added: d.Added.Normalized(), Removed: d.Removed.Normalized()}
 }
 
+// RawFactObservation preserves adapter observations before semantic FactSet
+// normalization. It is detached, non-authoritative evidence: duplicate
+// FactKeys remain distinct when their evidence records differ.
+type RawFactObservation struct {
+	Added        FactSet
+	Removed      FactSet
+	EvidenceHash string
+}
+
 // ReconcileOptions controls provenance strictness.
 type ReconcileOptions struct {
 	RequireSource bool
@@ -255,13 +283,15 @@ func (e *ReconcileError) Error() string {
 	return fmt.Sprintf("bidir reconciliation rejected %d fact(s): %s", len(e.Conflicts), e.Conflicts[0].Message)
 }
 
-// ReconcileResult contains accepted layers, semantic delta, and locality.
+// ReconcileResult contains accepted layers, semantic delta, locality, and a
+// detached non-authoritative raw observation boundary.
 type ReconcileResult struct {
-	Model      Model
-	Delta      Delta
-	Locality   Locality
-	Accepted   FactSet
-	Syntactic  FactSet
-	Candidates FactSet
-	Conflicts  []Conflict
+	Model          Model
+	Delta          Delta
+	Locality       Locality
+	RawObservation RawFactObservation
+	Accepted       FactSet
+	Syntactic      FactSet
+	Candidates     FactSet
+	Conflicts      []Conflict
 }

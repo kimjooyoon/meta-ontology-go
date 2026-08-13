@@ -5,12 +5,48 @@ import (
 	"sort"
 )
 
+const (
+	PutSourceInvalid     = "put.source-invalid"
+	PutModelInvalid      = "put.model-invalid"
+	PutProvenanceMissing = "put.provenance-missing"
+	PutWriteConflict     = "put.write-conflict"
+)
+
+// PutError reports a rejected write. NoWrite is true for every PutError: the
+// returned document is the original source view, never a partially built one.
+type PutError struct {
+	Code    string
+	NoWrite bool
+	Err     error
+}
+
+func (e *PutError) Error() string {
+	if e == nil {
+		return "bidir put failed"
+	}
+	return fmt.Sprintf("%s: %v", e.Code, e.Err)
+}
+
+func (e *PutError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Err
+}
+
 // Put writes an updated model into a document while preserving source order
 // for surviving declarations and explicit relations.
 func Put(document Document, updated Model) (Document, error) {
+	source, err := Get(document)
+	if err != nil {
+		return document, putError(PutSourceInvalid, err)
+	}
 	updated = updated.Normalized()
 	if err := updated.Validate(); err != nil {
-		return Document{}, err
+		return document, putError(PutModelInvalid, err)
+	}
+	if err := validatePutProvenance(source, updated); err != nil {
+		return document, putError(PutProvenanceMissing, err)
 	}
 	result := Document{Package: document.Package, Namespace: document.Namespace}
 	if result.Package == "" {
@@ -25,11 +61,30 @@ func Put(document Document, updated Model) (Document, error) {
 	nodes := nodeMap(updated.Nodes)
 	declarationIDs, err := appendSurvivingDeclarations(&result, document.Declarations, nodes, updated)
 	if err != nil {
-		return Document{}, err
+		return document, putError(PutWriteConflict, err)
 	}
 	appendNewDeclarations(&result, updated, nodes, declarationIDs)
 	appendUpdatedRelations(&result, document.Relations, updated)
 	return result, nil
+}
+
+func putError(code string, err error) error {
+	return &PutError{Code: code, NoWrite: true, Err: err}
+}
+
+func validatePutProvenance(source, updated Model) error {
+	delta := Diff(source, updated)
+	for _, node := range append(delta.AddedNodes, delta.RemovedNodes...) {
+		if !node.Span.Valid() {
+			return fmt.Errorf("node %q semantic change has no source span", node.ID)
+		}
+	}
+	for _, relation := range append(delta.AddedRelations, delta.RemovedRelations...) {
+		if !relation.Span.Valid() {
+			return fmt.Errorf("relation %s %q -> %q semantic change has no source span", relation.Kind, relation.Source, relation.Target)
+		}
+	}
+	return nil
 }
 
 func appendSurvivingDeclarations(result *Document, declarations []Declaration, nodes map[ID]Node, updated Model) (map[ID]struct{}, error) {

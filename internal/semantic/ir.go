@@ -49,8 +49,8 @@ func (ir *IR) AddActivityContract(contract ActivityContract) error {
 }
 
 func (ir IR) Validate() error {
-	if ir.Version == "" {
-		return fmt.Errorf("%w: IR version is empty", ErrGraphInvalid)
+	if err := validateIRVersion(ir.Version); err != nil {
+		return err
 	}
 	if err := validatePackageName(ir.Package); err != nil {
 		return err
@@ -70,6 +70,9 @@ func (ir IR) Normalized() (IR, error) {
 	version := strings.TrimSpace(ir.Version)
 	if version == "" {
 		version = CurrentIRVersion
+	}
+	if err := validateIRVersion(version); err != nil {
+		return IR{}, err
 	}
 	packageName := strings.TrimSpace(ir.Package)
 	if err := validatePackageName(packageName); err != nil {
@@ -97,6 +100,17 @@ func (ir IR) Normalized() (IR, error) {
 		return IR{}, err
 	}
 	return out, nil
+}
+
+func validateIRVersion(raw string) error {
+	version := strings.TrimSpace(raw)
+	if version == "" {
+		return fmt.Errorf("%w: IR version is empty", ErrGraphInvalid)
+	}
+	if version != CurrentIRVersion {
+		return fmt.Errorf("%w: unsupported IR version %q (want %q)", ErrGraphInvalid, version, CurrentIRVersion)
+	}
+	return nil
 }
 
 func (ir *IR) Normalize() error {
