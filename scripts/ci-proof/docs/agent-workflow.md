@@ -21,6 +21,12 @@ code, severity, scope, blocking scope, parallelization, handoff requirement,
 catalog path, and evidence references. Re-run only after the current head is
 confirmed.
 
+The provenance receipt is bound to the same repository, event, base/head/ref,
+PR, run/attempt, workflow, canonical job records, artifact inventory, branch
+protection snapshot, domain evidence, digests, and predecessor list as the
+proof bundle. A mismatch is a receipt failure, not a reason to accept the
+underlying proof.
+
 Normal operations are:
 
 1. Reconfirm the existing PR, branch, base, and current head.

@@ -244,6 +244,7 @@ type provenanceReceipt struct {
 	Delta            string           `json:"delta"`
 	AllowedIntent    string           `json:"allowed_intent"`
 	Locality         string           `json:"locality"`
+	Repository       string           `json:"repository"`
 	Event            string           `json:"event"`
 	BaseRef          string           `json:"base_ref"`
 	BaseSHA          string           `json:"base_sha"`
