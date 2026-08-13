@@ -9,14 +9,14 @@ import (
 
 // InvalidateKey removes one exact cache object. It is safe when absent.
 func (c *Cache) InvalidateKey(key Key) (bool, error) {
+	if err := validateFullKey(key); err != nil {
+		return false, err
+	}
 	release, err := c.acquireKey(key)
 	if err != nil {
 		return false, err
 	}
 	defer release()
-	if err := c.validatePathKey(key); err != nil {
-		return false, err
-	}
 	c.filesystemMu.Lock()
 	defer c.filesystemMu.Unlock()
 	path, _ := c.objectPath(key)
