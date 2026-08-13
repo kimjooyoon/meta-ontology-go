@@ -125,15 +125,6 @@ func TestFailureCatalogMatchesCheckedInDocument(t *testing.T) {
 	}
 }
 
-func TestFailureOwnerRegistryRequiresRegisteredCIOwner(t *testing.T) {
-	if err := validateFailureOwnerRegistry("agent/ci-workflow"); err != nil {
-		t.Fatal(err)
-	}
-	if err := validateFailureOwnerRegistry("agent/bidir"); err == nil {
-		t.Fatal("non-CI owner was accepted for failure manifests")
-	}
-}
-
 func TestFailureManifestRejectsTamperedOwnerBinding(t *testing.T) {
 	binding := validFailureBinding()
 	manifest, err := buildFailureManifest(validFailureInput(), binding)

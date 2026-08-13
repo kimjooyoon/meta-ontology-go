@@ -10,10 +10,12 @@ const LIVE_REF_CODE = 'CI-GUARDIAN-LIVE-REF-001';
 const PROMOTION_TOPOLOGY_CODE = 'CI-GUARDIAN-PROMOTION-TOPOLOGY-001';
 const CHECK_IDENTITY_CODE = 'CI-GUARDIAN-CHECK-IDENTITY-001';
 const PROTECTION_CODE = 'CI-GUARDIAN-PROTECTION-001';
+const INSTALLATION_SCOPE_CODE = 'CI-GUARDIAN-INSTALLATION-SCOPE-001';
 const OBSERVER_ENVIRONMENT = 'guardian-observer';
+const INSTALLATION_SCOPE_REPOSITORY = 'kimjooyoon/meta-ontology-go';
 const OBSERVER_FRESHNESS_WINDOW_MS = 10 * 60 * 1000;
 const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v2';
-const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE, PROTECTION_CODE]);
+const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE, PROTECTION_CODE, INSTALLATION_SCOPE_CODE]);
 const ALLOWED_BASES = new Set(['dev', 'main']);
 const ALLOWED_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review']);
 const PROOF_CONTEXTS = ['CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'];
@@ -119,7 +121,7 @@ function validateGuardianEnvironment(snapshot, {requireVerified = false, now = n
   }
   if (snapshot.digest_sha256 !== digestGuardianEnvironment(snapshot)) throw guardianFailure('guardian observer environment digest mismatch', PROTECTION_CODE);
   if (snapshot.read_status === 'verified') {
-    if (snapshot.token_source !== 'github.token' || snapshot.deployment_branch_policy.protected_branches !== true || snapshot.deployment_branch_policy.custom_branch_policies !== false || snapshot.protection_rules.some((rule) => rule !== 'branch_policy') || snapshot.protection_rules.length > 1 || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason !== '' || !validObserverFreshness(snapshot.observed_at, snapshot.valid_until, now)) {
+    if (snapshot.token_source !== 'github.token' || snapshot.deployment_branch_policy.protected_branches !== true || snapshot.deployment_branch_policy.custom_branch_policies !== false || snapshot.protection_rules.length !== 1 || snapshot.protection_rules[0] !== 'branch_policy' || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason !== '' || !validObserverFreshness(snapshot.observed_at, snapshot.valid_until, now)) {
       throw guardianFailure('guardian observer environment policy is not exact', PROTECTION_CODE);
     }
   } else if (snapshot.deployment_branch_policy.protected_branches || snapshot.deployment_branch_policy.custom_branch_policies || snapshot.protection_rules.length !== 0 || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason === '' || snapshot.observed_at !== null || snapshot.valid_until !== null) {
@@ -127,6 +129,84 @@ function validateGuardianEnvironment(snapshot, {requireVerified = false, now = n
   }
   if (requireVerified && snapshot.read_status !== 'verified') throw guardianFailure('guardian observer environment evidence is unavailable', PROTECTION_CODE);
   return snapshot;
+}
+
+function digestInstallationRepositoryScope(snapshot) {
+  const unsigned = {...snapshot, digest_sha256: ''};
+  return crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex');
+}
+
+function emptyInstallationRepositoryScope({repository, installationId, tokenSource, runId, runAttempt, workflowSHA, missingReason}) {
+  const snapshot = {
+    repository: repository || null,
+    installation_id: Number.isInteger(installationId) && installationId >= 0 ? installationId : 0,
+    token_source: tokenSource || null,
+    read_status: 'unavailable',
+    repository_count: 0,
+    repositories: [],
+    exact_match: false,
+    missing_reason: missingReason || 'installation_repository_scope_unavailable',
+    run_id: validPositiveInteger(runId) ? runId : null,
+    run_attempt: validPositiveInteger(runAttempt) ? runAttempt : null,
+    workflow_sha: workflowSHA || null,
+    observed_at: null,
+    valid_until: null,
+    digest_sha256: '',
+  };
+  snapshot.digest_sha256 = digestInstallationRepositoryScope(snapshot);
+  return snapshot;
+}
+
+function validateInstallationRepositoryScope(snapshot, {requireVerified = false, expectedRepository, now = new Date()} = {}) {
+  if (!snapshot || !validRepository(snapshot.repository) || !validRepository(expectedRepository) || snapshot.repository !== expectedRepository || !Number.isInteger(snapshot.installation_id) || snapshot.installation_id < 0 || snapshot.token_source !== 'github_app_installation' || !['verified', 'unavailable'].includes(snapshot.read_status) || !Number.isInteger(snapshot.repository_count) || snapshot.repository_count < 0 || !Array.isArray(snapshot.repositories) || snapshot.repository_count !== snapshot.repositories.length || snapshot.repositories.some((repository) => !validRepository(repository)) || typeof snapshot.exact_match !== 'boolean' || typeof snapshot.missing_reason !== 'string' || !validPositiveInteger(snapshot.run_id) || !validPositiveInteger(snapshot.run_attempt) || !validSHA(snapshot.workflow_sha) || !/^[0-9a-f]{64}$/.test(snapshot.digest_sha256 || '')) {
+    throw guardianFailure('guardian installation repository scope attestation is malformed', INSTALLATION_SCOPE_CODE);
+  }
+  if (snapshot.digest_sha256 !== digestInstallationRepositoryScope(snapshot)) throw guardianFailure('guardian installation repository scope digest mismatch', INSTALLATION_SCOPE_CODE);
+  if (snapshot.read_status === 'verified') {
+    if (snapshot.installation_id < 1 || snapshot.repository_count !== 1 || JSON.stringify(snapshot.repositories) !== JSON.stringify([expectedRepository]) || snapshot.exact_match !== true || snapshot.missing_reason !== '' || !validObserverFreshness(snapshot.observed_at, snapshot.valid_until, now)) {
+      throw guardianFailure('guardian installation repository scope is not exact', INSTALLATION_SCOPE_CODE);
+    }
+  } else if (snapshot.installation_id !== 0 || snapshot.repository_count !== 0 || snapshot.repositories.length !== 0 || snapshot.exact_match !== false || snapshot.missing_reason === '' || snapshot.observed_at !== null || snapshot.valid_until !== null) {
+    throw guardianFailure('guardian installation repository scope is not fail-closed', INSTALLATION_SCOPE_CODE);
+  }
+  if (requireVerified && snapshot.read_status !== 'verified') throw guardianFailure('guardian installation repository scope is unavailable', INSTALLATION_SCOPE_CODE);
+  return snapshot;
+}
+
+async function observeInstallationRepositoryScope({listRepositories, repository, installationId, tokenSource, runId, runAttempt, workflowSHA, now = new Date()}) {
+  const unavailable = (reason) => emptyInstallationRepositoryScope({repository, installationId: 0, tokenSource, runId, runAttempt, workflowSHA, missingReason: reason});
+  if (typeof listRepositories !== 'function' || repository !== INSTALLATION_SCOPE_REPOSITORY || !validPositiveInteger(installationId) || tokenSource !== 'github_app_installation' || !validPositiveInteger(runId) || !validPositiveInteger(runAttempt) || !validSHA(workflowSHA)) return unavailable('installation_repository_scope_observer_input_invalid');
+  let response;
+  try {
+    response = await listRepositories({per_page: 100, page: 1});
+  } catch (error) {
+    return unavailable('installation_repository_scope_api_unavailable');
+  }
+  const freshness = observerFreshnessFromResponse(response);
+  const data = response && response.data;
+  if (!freshness || !response || (response.status !== undefined && response.status !== 200) || !data || !Number.isInteger(data.total_count) || data.total_count !== 1 || !Array.isArray(data.repositories) || data.repositories.length !== 1 || !data.repositories[0] || data.repositories[0].full_name !== INSTALLATION_SCOPE_REPOSITORY) return unavailable('installation_repository_scope_api_mismatch');
+  const snapshot = {
+    repository,
+    installation_id: installationId,
+    token_source: tokenSource,
+    read_status: 'verified',
+    repository_count: 1,
+    repositories: [data.repositories[0].full_name],
+    exact_match: true,
+    missing_reason: '',
+    run_id: runId,
+    run_attempt: runAttempt,
+    workflow_sha: workflowSHA,
+    observed_at: freshness.observed_at,
+    valid_until: freshness.valid_until,
+    digest_sha256: '',
+  };
+  snapshot.digest_sha256 = digestInstallationRepositoryScope(snapshot);
+  try {
+    return validateInstallationRepositoryScope(snapshot, {requireVerified: true, expectedRepository: INSTALLATION_SCOPE_REPOSITORY, now});
+  } catch (error) {
+    return unavailable('installation_repository_scope_freshness_or_binding_mismatch');
+  }
 }
 
 async function observeGuardianEnvironment({getEnvironment, repository, tokenSource, runId, runAttempt, workflowSHA, now = new Date()}) {
@@ -429,6 +509,14 @@ function validateGuardianPullRequest(pull) {
   return pull;
 }
 
+function validatePromotionPullRequestState(pull) {
+  const hasOwn = (key) => Object.prototype.hasOwnProperty.call(pull || {}, key);
+  if (!pull || pull.state !== 'open' || pull.draft !== false || (hasOwn('merged') && pull.merged !== false) || (hasOwn('merged_at') && pull.merged_at !== null)) {
+    throw guardianFailure('promotion pull request is not open, ready, and unmerged', PROMOTION_TOPOLOGY_CODE);
+  }
+  return pull;
+}
+
 function validateChangedFile(file) {
   if (!file || typeof file !== 'object' || !VALID_STATUSES.has(file.status)) {
     throw guardianFailure('changed-file response contains a missing or unsupported status');
@@ -511,6 +599,7 @@ async function revalidatePullRequest({getPull, owner, repo, pullNumber, eventPul
   if (livePull.base.repo.full_name !== `${owner}/${repo}` || !sameIdentity(eventPull, livePull)) {
     throw guardianFailure('pull request base/head changed during guardian inspection');
   }
+  if (routeForPull(livePull) === 'promotion_main') validatePromotionPullRequestState(livePull);
   return livePull;
 }
 
@@ -644,7 +733,7 @@ function digestGuardianArtifact(manifest) {
   return `sha256:${crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')}`;
 }
 
-function buildGuardianArtifact({pull, repository, action, defaultBranch, workflowRef, workflowSha, runtimeRef, runtimeSha, runId, runAttempt, eventRef, result, liveBefore, liveAfter, checkName, branchProtection = null, devBranchProtection = null, observerEnvironment = null, observerEnvironmentSnapshot = null}) {
+function buildGuardianArtifact({pull, repository, action, defaultBranch, workflowRef, workflowSha, runtimeRef, runtimeSha, runId, runAttempt, eventRef, result, liveBefore, liveAfter, checkName, branchProtection = null, devBranchProtection = null, observerEnvironment = null, observerEnvironmentSnapshot = null, installationRepositoryScope = null}) {
   const identity = pullIdentity(pull);
   const route = routeForPull(pull);
   const topology = liveAfter && liveAfter.topology ? liveAfter.topology : liveBefore && liveBefore.topology ? liveBefore.topology : null;
@@ -670,6 +759,7 @@ function buildGuardianArtifact({pull, repository, action, defaultBranch, workflo
     observer_environment: observerEnvironment || null,
     observer_environment_snapshot: observerEnvironmentSnapshot,
     observer_environment_digest: observerEnvironmentSnapshot && observerEnvironmentSnapshot.digest_sha256 ? observerEnvironmentSnapshot.digest_sha256 : null,
+    installation_repository_scope: installationRepositoryScope,
     head_binding_status: result && result.decision === 'PASS' ? HEAD_BINDING_VERIFIED : HEAD_BINDING_STATUS,
     route,
     check_name: checkName || checkNameForRoute(route),
@@ -747,7 +837,8 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
     validateBranchProtectionSnapshot(manifest.dev_branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'dev', expectedContexts: DEV_PROTECTION_CONTEXTS, now});
     validateGuardianEnvironment(manifest.observer_environment_snapshot, {requireVerified: manifest.decision === 'PASS', now});
     if (manifest.observer_environment_digest !== manifest.observer_environment_snapshot.digest_sha256) throw guardianFailure('guardian observer environment digest is not bound', PROTECTION_CODE);
-  } else if (manifest.branch_protection !== null || manifest.dev_branch_protection !== null || manifest.observer_environment_snapshot !== null || manifest.observer_environment_digest !== null) {
+    validateInstallationRepositoryScope(manifest.installation_repository_scope, {requireVerified: manifest.decision === 'PASS', expectedRepository: manifest.repository, now});
+  } else if (manifest.branch_protection !== null || manifest.dev_branch_protection !== null || manifest.observer_environment_snapshot !== null || manifest.observer_environment_digest !== null || manifest.installation_repository_scope !== null) {
     throw guardianFailure('feature guardian artifact must not carry privileged observer snapshots', PROTECTION_CODE);
   }
   const snapshotsPresent = manifest.live_refs_before !== null && manifest.live_refs_before !== undefined && manifest.live_refs_after !== null && manifest.live_refs_after !== undefined;
@@ -836,6 +927,8 @@ module.exports = {
   MAIN_PROTECTION_CONTEXTS,
   protectionContextsForBranch,
   OBSERVER_ENVIRONMENT,
+  INSTALLATION_SCOPE_CODE,
+  INSTALLATION_SCOPE_REPOSITORY,
   GUARDIAN_SCHEMA,
   HEAD_BINDING_STATUS,
   HEAD_BINDING_VERIFIED,
@@ -850,9 +943,13 @@ module.exports = {
   emptyGuardianEnvironment,
   observeBranchProtection,
   observeGuardianEnvironment,
+  digestInstallationRepositoryScope,
+  emptyInstallationRepositoryScope,
+  observeInstallationRepositoryScope,
   validateBranchProtectionSnapshot,
   validatePublicBranchSummary,
   validateGuardianEnvironment,
+  validateInstallationRepositoryScope,
   validatePublicBranchSummary,
   routeForPull,
   checkNameForRoute,
@@ -868,5 +965,6 @@ module.exports = {
   revalidatePullRequest,
   validateGuardianArtifact,
   validateGuardianPullRequest,
+  validatePromotionPullRequestState,
   trustedDevPromotion,
 };

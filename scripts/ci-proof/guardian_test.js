@@ -11,6 +11,8 @@ const {
   HEAD_BINDING_VERIFIED,
   LIVE_REF_CODE,
   PROMOTION_TOPOLOGY_CODE,
+  INSTALLATION_SCOPE_CODE,
+  INSTALLATION_SCOPE_REPOSITORY,
   CHECK_IDENTITY_CODE,
   PROTECTION_CODE,
   OBSERVER_ENVIRONMENT,
@@ -27,10 +29,14 @@ const {
   digestBranchProtection,
   observeBranchProtection,
   observeGuardianEnvironment,
+  observeInstallationRepositoryScope,
+  emptyInstallationRepositoryScope,
+  digestInstallationRepositoryScope,
   OBSERVER_FRESHNESS_WINDOW_MS,
   validateBranchProtectionSnapshot,
   validatePublicBranchSummary,
   validateGuardianEnvironment,
+  validateInstallationRepositoryScope,
   validObserverFreshness,
 } = require('./guardian');
 
@@ -229,11 +235,12 @@ async function testStaleRaceAndArtifactDigest() {
   const promotionArtifact = buildGuardianArtifact({
     pull: promotion, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
     workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev', liveBefore: liveFixture(), liveAfter: liveFixture(), checkName: 'CI guardian',
-    result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md')], kernelPaths: []}, branchProtection: mainProtectionFixture(), devBranchProtection: {...mainProtectionFixture(), branch: 'dev', required_checks: ['CI guardian shadow', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'], required_check_bindings: ['CI guardian shadow', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'].map((context) => ({context, app_id: 15368})).sort((left, right) => left.context < right.context ? -1 : left.context > right.context ? 1 : 0)}, observerEnvironment: OBSERVER_ENVIRONMENT, observerEnvironmentSnapshot: {repository: 'owner/repo', name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: ['branch_policy'], wait_timer: 0, reviewers: [], token_source: 'github.token', read_status: 'verified', missing_reason: '', run_id: 108, run_attempt: 1, workflow_sha: sha('d'), observed_at: observedAt, valid_until: validUntil, digest_sha256: ''},
+    result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md')], kernelPaths: []}, branchProtection: mainProtectionFixture(), devBranchProtection: {...mainProtectionFixture(), branch: 'dev', required_checks: ['CI guardian shadow', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'], required_check_bindings: ['CI guardian shadow', 'CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'].map((context) => ({context, app_id: 15368})).sort((left, right) => left.context < right.context ? -1 : left.context > right.context ? 1 : 0)}, observerEnvironment: OBSERVER_ENVIRONMENT, observerEnvironmentSnapshot: {repository: 'owner/repo', name: OBSERVER_ENVIRONMENT, deployment_branch_policy: {protected_branches: true, custom_branch_policies: false}, protection_rules: ['branch_policy'], wait_timer: 0, reviewers: [], token_source: 'github.token', read_status: 'verified', missing_reason: '', run_id: 108, run_attempt: 1, workflow_sha: sha('d'), observed_at: observedAt, valid_until: validUntil, digest_sha256: ''}, installationRepositoryScope: {repository: 'owner/repo', installation_id: 42, token_source: 'github_app_installation', read_status: 'verified', repository_count: 1, repositories: ['owner/repo'], exact_match: true, missing_reason: '', run_id: 108, run_attempt: 1, workflow_sha: sha('d'), observed_at: observedAt, valid_until: validUntil, digest_sha256: ''},
   });
   promotionArtifact.dev_branch_protection.digest_sha256 = digestBranchProtection(promotionArtifact.dev_branch_protection);
   promotionArtifact.observer_environment_snapshot.digest_sha256 = require('./guardian').digestGuardianEnvironment(promotionArtifact.observer_environment_snapshot);
   promotionArtifact.observer_environment_digest = promotionArtifact.observer_environment_snapshot.digest_sha256;
+  promotionArtifact.installation_repository_scope.digest_sha256 = digestInstallationRepositoryScope(promotionArtifact.installation_repository_scope);
   promotionArtifact.bundle_sha256 = digestGuardianArtifact(promotionArtifact);
   const promotionExpected = expectedFixtureTuple();
   promotionExpected.base_ref = 'main';
@@ -247,6 +254,66 @@ async function testStaleRaceAndArtifactDigest() {
   promotionArtifact.head_binding_status = HEAD_BINDING_STATUS;
   promotionArtifact.bundle_sha256 = digestGuardianArtifact(promotionArtifact);
   assert.throws(() => validateGuardianArtifact(promotionArtifact, promotionExpected, {now: observerNow}), (error) => error && error.code === CHECK_IDENTITY_CODE);
+}
+
+async function testPromotionPullRequestStateFailClosed() {
+  const promotion = pull('main');
+  promotion.head.ref = 'dev';
+  promotion.state = 'open';
+  promotion.draft = false;
+  promotion.merged = false;
+  promotion.merged_at = null;
+  const liveResponse = (mutate = {}) => ({status: 200, data: {...promotion, ...mutate}});
+  const revalidate = (mutate) => revalidatePullRequest({
+    owner: 'owner', repo: 'repo', pullNumber: promotion.number, eventPull: promotion,
+    getPull: async () => liveResponse(mutate),
+  });
+  const accepted = await revalidate();
+  assert.equal(accepted.state, 'open');
+  assert.equal(accepted.draft, false);
+  for (const mutation of [
+    {state: 'closed'},
+    {draft: true},
+    {merged: true},
+    {merged_at: '2026-08-14T00:00:00Z'},
+  ]) {
+    await assert.rejects(() => revalidate(mutation), (error) => error && error.code === PROMOTION_TOPOLOGY_CODE);
+  }
+  const feature = pull('dev');
+  const featureAccepted = await revalidatePullRequest({
+    owner: 'owner', repo: 'repo', pullNumber: feature.number, eventPull: feature,
+    getPull: async () => ({status: 200, data: feature}),
+  });
+  assert.equal(featureAccepted.head.ref, 'agent/ci-workflow');
+}
+
+async function testInstallationRepositoryScopeAttestation() {
+  const valid = await observeInstallationRepositoryScope({
+    repository: INSTALLATION_SCOPE_REPOSITORY, installationId: 42, tokenSource: 'github_app_installation', runId: 108, runAttempt: 1, workflowSHA: sha('d'), now: observerNow,
+    listRepositories: async () => githubDateResponse({total_count: 1, repositories: [{full_name: INSTALLATION_SCOPE_REPOSITORY}]}),
+  });
+  assert.equal(valid.read_status, 'verified');
+  assert.equal(valid.exact_match, true);
+  assert.deepEqual(valid.repositories, [INSTALLATION_SCOPE_REPOSITORY]);
+  assert.equal(valid.digest_sha256, digestInstallationRepositoryScope(valid));
+  for (const data of [
+    {total_count: 0, repositories: []},
+    {total_count: 2, repositories: [{full_name: INSTALLATION_SCOPE_REPOSITORY}, {full_name: 'kimjooyoon/other'}]},
+    {total_count: 1, repositories: [{full_name: 'kimjooyoon/other'}]},
+  ]) {
+    const unavailable = await observeInstallationRepositoryScope({
+      repository: INSTALLATION_SCOPE_REPOSITORY, installationId: 42, tokenSource: 'github_app_installation', runId: 108, runAttempt: 1, workflowSHA: sha('d'), now: observerNow,
+      listRepositories: async () => githubDateResponse(data),
+    });
+    assert.equal(unavailable.read_status, 'unavailable');
+    assert.match(unavailable.missing_reason, /installation_repository_scope_api_mismatch/);
+    assert.throws(() => validateInstallationRepositoryScope(unavailable, {requireVerified: true, expectedRepository: INSTALLATION_SCOPE_REPOSITORY, now: observerNow}), (error) => error && error.code === INSTALLATION_SCOPE_CODE);
+  }
+  const malformed = emptyInstallationRepositoryScope({repository: INSTALLATION_SCOPE_REPOSITORY, installationId: 0, tokenSource: 'github_app_installation', runId: 108, runAttempt: 1, workflowSHA: sha('d'), missingReason: 'test'});
+  malformed.repositories = [INSTALLATION_SCOPE_REPOSITORY];
+  malformed.repository_count = 1;
+  malformed.digest_sha256 = digestInstallationRepositoryScope(malformed);
+  assert.throws(() => validateInstallationRepositoryScope(malformed, {expectedRepository: INSTALLATION_SCOPE_REPOSITORY, now: observerNow}), (error) => error && error.code === INSTALLATION_SCOPE_CODE);
 }
 
 async function testProtectionObserverContracts() {
@@ -486,9 +553,14 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   const mintEnd = workflow.indexOf('- name: Inspect changed paths from default authority', mintStart);
   assert(mintStart >= 0 && mintEnd > mintStart, 'Guardian App mint step is missing');
   const mintStep = workflow.slice(mintStart, mintEnd);
+  assert.match(mintStep, /owner: \$\{\{ github\.repository_owner \}\}/);
+  assert.match(mintStep, /repositories: \$\{\{ github\.event\.repository\.name \}\}/);
+  assert.equal((mintStep.match(/^\s+permission-[^:]+:/gm) || []).length, 1, 'Guardian App token must request only one explicit permission');
   assert.equal((workflow.match(/\$\{\{ secrets\.[^}]+\}\}/g) || []).length, 1, 'workflow must contain exactly one secret reference');
   assert.equal((mintStep.match(/\$\{\{ secrets\.[^}]+\}\}/g) || []).join(''), '${{ secrets.GUARDIAN_APP_PRIVATE_KEY }}', 'only the Guardian private key may be read in the mint step');
   assert.match(workflow, /getBranchProtection/);
+  assert.match(workflow, /GET \/installation\/repositories/);
+  assert.match(workflow, /observeInstallationRepositoryScope/);
   assert.match(ciWorkflow, /token_source: 'not_observed',\s+app_installation_id: 0,\s+app_slug: '',\s+read_status: 'unavailable'/);
   assert.match(workflow, /- dev\n      - main/);
   assert.doesNotMatch(workflow, /- integration/);
@@ -541,6 +613,8 @@ function testKernelSetIsMonotonic() {
   await testKernelStatusesAndRenames();
   await testForkAndMalformedAPI();
   await testStaleRaceAndArtifactDigest();
+  await testPromotionPullRequestStateFailClosed();
+  await testInstallationRepositoryScopeAttestation();
   await testCanonicalOrdering();
   await testPromotionAndKernelDigests();
   await testProtectionObserverContracts();

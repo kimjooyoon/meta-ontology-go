@@ -8,6 +8,7 @@ import (
 func validPromotionBundleFixture() proofBundle {
 	evidence, _ := validGuardianEvidenceFixture()
 	bundle := validProof()
+	bundle.Repository = evidence.Repository
 	bundle.Event = "pull_request"
 	bundle.PRNumber = evidence.PRNumber
 	bundle.BaseRef = "main"
