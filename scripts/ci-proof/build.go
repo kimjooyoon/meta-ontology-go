@@ -74,11 +74,6 @@ func gateRejections(inputs proofInputs) []string {
 	return unique
 }
 
-func machineBoundPromotionReady(inputs proofInputs) bool {
-	c := inputs.Context
-	return c.BaseRef == "main" && inputs.Governance.Promotion.Source == "dev" && inputs.Governance.Promotion.Target == "main" && inputs.Governance.Promotion.BranchProtectionRequired && branchProtectionReadyFor(c.BranchProtection, "main") && c.GuardianEvidence != nil
-}
-
 // promotionOperatorReady is a pure, non-mutating predicate for a future
 // external fast-forward operator. It never writes refs or protection.
 func promotionOperatorReady(bundle proofBundle) bool {

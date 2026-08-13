@@ -172,10 +172,6 @@ func branchProtectionReadyFor(protection branchProtection, base string) bool {
 	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, requiredContextsForBase(base)) && validRequiredCheckBindings(protection.RequiredCheckBindings, requiredContextsForBase(base))
 }
 
-func promotionReady(promotion promotionInput, protection branchProtection) bool {
-	return promotion.BranchProtectionRequired && branchProtectionReady(protection)
-}
-
 func digestBranchProtection(protection branchProtection) string {
 	protection.Digest = ""
 	data, _ := json.Marshal(protection)

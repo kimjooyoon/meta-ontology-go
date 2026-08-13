@@ -26,19 +26,6 @@ func TestCIMachineProofDoesNotRequireProtectionOrReviews(t *testing.T) {
 	}
 }
 
-func TestCIPromotionPredicateUsesCIOnlyProtection(t *testing.T) {
-	bundle := validProof()
-	promotion := promotionInput{BranchProtectionRequired: true}
-	if !promotionReady(promotion, bundle.BranchProtection) {
-		t.Fatal("CI-only protection snapshot was not promotion-ready")
-	}
-	bundle.BranchProtection.RequiredReviews = 1
-	bundle.BranchProtection.Digest = digestBranchProtection(bundle.BranchProtection)
-	if promotionReady(promotion, bundle.BranchProtection) {
-		t.Fatal("human review requirement was accepted by CI-only promotion predicate")
-	}
-}
-
 func TestCIBranchProtectionRequiresCIOnlySnapshot(t *testing.T) {
 	bundle := validProof()
 	if !branchProtectionReady(bundle.BranchProtection) {
@@ -117,31 +104,6 @@ func TestCIBranchProtectionMissingReasonCanonicalizesForBothStatuses(t *testing.
 	}
 	if roundTrip.MissingReason == "" || digestBranchProtection(roundTrip) != unavailable.Digest {
 		t.Fatalf("unavailable protection missing reason was not canonicalized: %+v", roundTrip)
-	}
-}
-
-func TestCIMachineBoundPromotionRejectsUnavailableProtection(t *testing.T) {
-	bundle := validProof()
-	bundle.BranchProtection.ReadStatus = "unavailable"
-	bundle.BranchProtection.Exists = false
-	bundle.BranchProtection.MissingReason = "branch_protection_token_unavailable"
-	context := contextInput{
-		Repository: bundle.Repository, Event: bundle.Event, Ref: bundle.Ref, EventRef: bundle.EventRef,
-		CheckoutRef: bundle.CheckoutRef, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA,
-		HeadSHA: bundle.HeadSHA, WorkflowSHA: bundle.WorkflowSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt,
-		BranchProtection: bundle.BranchProtection, ArtifactsStatus: "verified",
-		ProvenanceStatus: "verified",
-	}
-	inputs := proofInputs{
-		Governance: governanceInput{Promotion: promotionInput{Source: "dev", Target: "main", RequiredChecks: append([]string(nil), proofJobs...), BranchProtectionRequired: true}},
-		Evidence:   evidenceInput{Jobs: bundle.Jobs}, Jobs: bundle.Jobs, Context: context,
-	}
-	if machineBoundPromotionReady(inputs) {
-		t.Fatal("unavailable protection was treated as promotion-ready")
-	}
-	context.BranchProtection.MissingReason = "unknown"
-	if machineBoundPromotionReady(proofInputs{Jobs: bundle.Jobs, Context: context}) {
-		t.Fatal("unknown protection observer gap was accepted")
 	}
 }
 
