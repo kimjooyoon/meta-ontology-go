@@ -144,14 +144,21 @@ async function observeGuardianEnvironment({getEnvironment, repository, tokenSour
   const policy = data && data.deployment_branch_policy;
   const rules = data && data.protection_rules;
   const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object || {}, key);
-  if (!response || (response.status !== undefined && response.status !== 200) || !data || data.name !== OBSERVER_ENVIRONMENT || !policy || !hasOwn(policy, 'protected_branches') || typeof policy.protected_branches !== 'boolean' || !hasOwn(policy, 'custom_branch_policies') || typeof policy.custom_branch_policies !== 'boolean' || !hasOwn(data, 'wait_timer') || !Number.isInteger(data.wait_timer) || data.wait_timer < 0 || !hasOwn(data, 'reviewers') || !Array.isArray(data.reviewers) || data.reviewers.some((reviewer) => !reviewer || typeof reviewer !== 'object') || !Array.isArray(rules) || rules.some((rule) => !rule || typeof rule !== 'object' || rule.type !== 'branch_policy')) return unavailable('guardian_environment_api_malformed');
+  if (!response || (response.status !== undefined && response.status !== 200) || !data || data.name !== OBSERVER_ENVIRONMENT || !policy || !hasOwn(policy, 'protected_branches') || typeof policy.protected_branches !== 'boolean' || !hasOwn(policy, 'custom_branch_policies') || typeof policy.custom_branch_policies !== 'boolean' || policy.protected_branches !== true || policy.custom_branch_policies !== false || hasOwn(data, 'wait_timer') || hasOwn(data, 'reviewers') || !Array.isArray(rules) || rules.length === 0) return unavailable('guardian_environment_api_malformed');
+  const seenRuleTypes = new Set();
+  for (const rule of rules) {
+    if (!rule || typeof rule !== 'object' || Array.isArray(rule) || !hasOwn(rule, 'type') || typeof rule.type !== 'string' || rule.type.length === 0 || seenRuleTypes.has(rule.type) || !['branch_policy', 'required_reviewers', 'wait_timer'].includes(rule.type)) return unavailable('guardian_environment_api_malformed');
+    seenRuleTypes.add(rule.type);
+    if (rule.type !== 'branch_policy') return unavailable('guardian_environment_api_malformed');
+  }
+  if (seenRuleTypes.size !== 1 || rules.length !== 1 || !seenRuleTypes.has('branch_policy')) return unavailable('guardian_environment_api_malformed');
   const snapshot = {
     repository,
     name: OBSERVER_ENVIRONMENT,
     deployment_branch_policy: {protected_branches: policy.protected_branches, custom_branch_policies: policy.custom_branch_policies},
-    protection_rules: rules.map(() => 'branch_policy'),
-    wait_timer: data.wait_timer,
-    reviewers: data.reviewers.map(() => 'reviewer'),
+    protection_rules: ['branch_policy'],
+    wait_timer: 0,
+    reviewers: [],
     token_source: tokenSource,
     read_status: 'verified',
     missing_reason: '',
