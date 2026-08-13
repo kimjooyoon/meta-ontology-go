@@ -23,6 +23,26 @@ func TestCIBranchProtectionRequiresCIOnlySnapshot(t *testing.T) {
 	}
 }
 
+func TestCIMachineBoundPromotionAcceptsKnownProtectionObserverGap(t *testing.T) {
+	bundle := validProof()
+	bundle.BranchProtection.ReadStatus = "unavailable"
+	bundle.BranchProtection.Exists = false
+	bundle.BranchProtection.MissingReason = "branch_protection_token_unavailable"
+	context := contextInput{
+		HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt,
+		BranchProtection: bundle.BranchProtection, ArtifactsStatus: "verified",
+		ProvenanceStatus: "verified", ApprovalsStatus: "not_applicable",
+	}
+	inputs := proofInputs{Jobs: bundle.Jobs, Context: context}
+	if !machineBoundPromotionReady(inputs) {
+		t.Fatal("known protection observer gap was not replaced by exact machine evidence")
+	}
+	context.BranchProtection.MissingReason = "unknown"
+	if machineBoundPromotionReady(proofInputs{Jobs: bundle.Jobs, Context: context}) {
+		t.Fatal("unknown protection observer gap was accepted")
+	}
+}
+
 func TestCIGateRejectionsUseMachineEvidenceWithoutHumanReviews(t *testing.T) {
 	bundle := validProof()
 	context := contextInput{

@@ -28,7 +28,7 @@ func buildProof(inputs proofInputs, digests proofDigests) (proofBundle, provenan
 func gateRejections(inputs proofInputs) []string {
 	c := inputs.Context
 	failures := make([]string, 0)
-	if inputs.Governance.Promotion.BranchProtectionRequired && !branchProtectionReady(c.BranchProtection) {
+	if inputs.Governance.Promotion.BranchProtectionRequired && !machineBoundPromotionReady(inputs) {
 		failures = append(failures, "branch_protection_missing")
 	}
 	if c.ScopeDecision != "passed" {
@@ -62,6 +62,28 @@ func gateRejections(inputs proofInputs) []string {
 		}
 	}
 	return unique
+}
+
+func machineBoundPromotionReady(inputs proofInputs) bool {
+	c := inputs.Context
+	if branchProtectionReady(c.BranchProtection) {
+		return true
+	}
+	if c.BranchProtection.ReadStatus != "unavailable" || c.BranchProtection.MissingReason != "branch_protection_token_unavailable" {
+		return false
+	}
+	if c.ArtifactsStatus != "verified" || c.ProvenanceStatus != "verified" || c.ApprovalsStatus != "not_applicable" {
+		return false
+	}
+	if len(inputs.Jobs) != len(proofJobs) {
+		return false
+	}
+	for index, job := range inputs.Jobs {
+		if job.Name != proofJobs[index] || job.Status != "completed" || job.Conclusion != "success" || job.ID <= 0 || job.HeadSHA != c.HeadSHA || job.RunID != c.RunID || job.RunAttempt != c.RunAttempt {
+			return false
+		}
+	}
+	return true
 }
 
 func statusFor(decision string) string {
