@@ -11,6 +11,10 @@ const (
 	PROVWasAssociatedWith = "prov:wasAssociatedWith"
 )
 
+// PROV attribution is intentionally unsupported in semantic-ir/v1. The
+// kernel has no attribution identity or qualified attribution schema, so it
+// must reject wasAttributedTo instead of inferring it from association.
+
 // Inverse returns a query projection without mutating canonical facts.
 func Inverse(relation RelationKind) RelationKind {
 	switch relation {
