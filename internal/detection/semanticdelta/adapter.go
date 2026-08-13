@@ -46,9 +46,6 @@ func (a Adapter[S]) Diff(before, after S) (Delta, error) {
 // caller's authoritative writer. Out-of-scope deltas and empty deltas never
 // reach commit; the latter keeps candidate-only changes and replays no-op.
 func (a Adapter[S]) Apply(before, after S, scope Scope, commit func(Delta) error) (Report, error) {
-	if commit == nil {
-		return Report{}, fmt.Errorf("semanticdelta commit callback is required")
-	}
 	delta, err := a.Diff(before, after)
 	if err != nil {
 		return Report{}, fmt.Errorf("compute semantic delta: %w", err)
@@ -62,6 +59,9 @@ func (a Adapter[S]) Apply(before, after S, scope Scope, commit func(Delta) error
 	}
 	if delta.IsEmpty() {
 		return report, nil
+	}
+	if commit == nil {
+		return Report{}, fmt.Errorf("semanticdelta commit callback is required")
 	}
 	if err := commit(delta); err != nil {
 		return report, fmt.Errorf("commit semantic delta: %w", err)

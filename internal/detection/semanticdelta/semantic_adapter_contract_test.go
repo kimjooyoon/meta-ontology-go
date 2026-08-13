@@ -60,10 +60,7 @@ func TestSemanticIRAdapterApplyIgnoresCandidateWithoutCommit(t *testing.T) {
 		before,
 		after,
 		Scope{Prefixes: []string{"billing://"}},
-		func(Delta) error {
-			commits++
-			return nil
-		},
+		nil,
 	)
 	if err != nil || !report.Passes() {
 		t.Fatalf("candidate-only Apply = report %#v, error %v", report, err)

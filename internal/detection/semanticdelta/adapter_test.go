@@ -96,8 +96,8 @@ func TestAdapterApplyRejectsOutOfScopeWithoutCommit(t *testing.T) {
 }
 
 func TestAdapterApplyCommitsAllowedDeltaAndSkipsReplay(t *testing.T) {
-	before := fakeIR{nodes: []Node{{ID: "billing://activity/pay", Kind: "Activity"}}}
-	after := fakeIR{nodes: []Node{
+	current := fakeIR{nodes: []Node{{ID: "billing://activity/pay", Kind: "Activity"}}}
+	desired := fakeIR{nodes: []Node{
 		{ID: "billing://activity/pay", Kind: "Activity"},
 		{ID: "billing://entity/order", Kind: "Entity"},
 	}}
@@ -110,17 +110,18 @@ func TestAdapterApplyCommitsAllowedDeltaAndSkipsReplay(t *testing.T) {
 	commit := func(delta Delta) error {
 		commits++
 		committed = delta
+		current = desired
 		return nil
 	}
 	scope := Scope{Prefixes: []string{"billing://"}}
-	if report, err := adapter.Apply(before, after, scope, commit); err != nil || !report.Passes() {
+	if report, err := adapter.Apply(current, desired, scope, commit); err != nil || !report.Passes() {
 		t.Fatalf("allowed Apply = report %#v, error %v", report, err)
 	}
 	want := Delta{AddedNodes: []Node{{ID: "billing://entity/order", Kind: "Entity"}}}
 	if !reflect.DeepEqual(committed, want) || commits != 1 {
 		t.Fatalf("commit = %#v after %d calls, want %#v after one call", committed, commits, want)
 	}
-	if report, err := adapter.Apply(after, after, scope, commit); err != nil || !report.Passes() {
+	if report, err := adapter.Apply(current, desired, scope, nil); err != nil || !report.Passes() {
 		t.Fatalf("replay Apply = report %#v, error %v", report, err)
 	}
 	if commits != 1 {
