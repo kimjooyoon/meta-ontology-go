@@ -26,6 +26,10 @@ const PROTECTED_PREFIXES = [
   'internal/verify/',
 ];
 
+function canonicalStringCompare(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function guardianFailure(reason) {
   const error = new Error(`${ROOT_FAILURE_CODE}: ${reason}`);
   error.code = ROOT_FAILURE_CODE;
@@ -136,7 +140,7 @@ async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pu
         .flatMap((file) => [file.filename, file.previous_filename])
         .filter((path) => path && isProtectedKernelPath(path));
       if (kernelPaths.length > 0) {
-        return {decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: `protected kernel path changed: ${kernelPaths.sort().join(', ')}`, files, kernelPaths: [...new Set(kernelPaths)].sort()};
+        return {decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: `protected kernel path changed: ${kernelPaths.sort(canonicalStringCompare).join(', ')}`, files, kernelPaths: [...new Set(kernelPaths)].sort(canonicalStringCompare)};
       }
       return {decision: 'PASS', code: null, reason: null, files, kernelPaths: []};
     }
@@ -226,7 +230,7 @@ async function kernelTreeDigest({getCommit, getTree, owner, repo, ref}) {
   if (entries.length === 0) {
     throw guardianFailure('kernel tree response contains no protected entries');
   }
-  entries.sort((left, right) => [left.path, left.type, left.sha].join('\u0000').localeCompare([right.path, right.type, right.sha].join('\u0000')));
+  entries.sort((left, right) => canonicalStringCompare([left.path, left.type, left.sha].join('\u0000'), [right.path, right.type, right.sha].join('\u0000')));
   return `sha256:${crypto.createHash('sha256').update(JSON.stringify(entries)).digest('hex')}`;
 }
 
@@ -274,7 +278,7 @@ function sortedChangedFiles(files) {
   return [...(Array.isArray(files) ? files : [])].sort((left, right) => {
     const leftKey = [left.filename, left.previous_filename || '', left.status].join('\u0000');
     const rightKey = [right.filename, right.previous_filename || '', right.status].join('\u0000');
-    return leftKey.localeCompare(rightKey);
+    return canonicalStringCompare(leftKey, rightKey);
   });
 }
 
@@ -309,7 +313,7 @@ function buildGuardianArtifact({pull, repository, action, defaultBranch, workflo
     kernel_after_sha256: result && result.kernelAfterDigest ? result.kernelAfterDigest : null,
     changed_files: sortedChangedFiles(result && result.files),
     changed_files_count: Array.isArray(result && result.files) ? result.files.length : 0,
-    kernel_paths: [...new Set((result && result.kernelPaths) || [])].sort(),
+    kernel_paths: [...new Set((result && result.kernelPaths) || [])].sort(canonicalStringCompare),
     decision: result && result.decision ? result.decision : 'FAIL_CLOSED',
     code: result ? result.code : ROOT_FAILURE_CODE,
     reason: result && result.reason ? result.reason : result && result.decision === 'PASS' ? 'guardian observation passed' : 'guardian observation was incomplete',
@@ -324,7 +328,7 @@ function validateSortedArtifactFiles(files) {
   for (const file of files) {
     const validated = validateChangedFile(file);
     const key = [validated.filename, validated.previous_filename || '', validated.status].join('\u0000');
-    if (previousKey !== null && key <= previousKey) {
+    if (previousKey !== null && canonicalStringCompare(key, previousKey) <= 0) {
       throw guardianFailure('guardian artifact changed files are not sorted and unique');
     }
     previousKey = key;
@@ -332,13 +336,13 @@ function validateSortedArtifactFiles(files) {
 }
 
 function derivedKernelPaths(files) {
-  return [...new Set(files.flatMap((file) => [file.filename, file.previous_filename || null]).filter((path) => path && isProtectedKernelPath(path)))].sort();
+  return [...new Set(files.flatMap((file) => [file.filename, file.previous_filename || null]).filter((path) => path && isProtectedKernelPath(path)))].sort(canonicalStringCompare);
 }
 
 function validateSortedKernelPaths(paths) {
   let previous = null;
   for (const path of paths) {
-    if (typeof path !== 'string' || !isProtectedKernelPath(path) || (previous !== null && path <= previous)) {
+    if (typeof path !== 'string' || !isProtectedKernelPath(path) || (previous !== null && canonicalStringCompare(path, previous) <= 0)) {
       throw guardianFailure('guardian artifact kernel paths are not protected, sorted, and unique');
     }
     previous = path;
