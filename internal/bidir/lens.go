@@ -18,6 +18,9 @@ type GoFactAdapter interface {
 
 // Get lowers a parser-neutral document into the canonical generic model.
 func Get(document Document) (Model, error) {
+	if err := validateDocumentSpans(document); err != nil {
+		return Model{}, err
+	}
 	model := Model{Package: document.Package, Namespace: document.Namespace}
 	if strings.TrimSpace(model.Namespace) == "" {
 		model.Namespace = "gooo"
