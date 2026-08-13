@@ -34,6 +34,24 @@ func TestNoFailureClosureRejectsTerminalFailureData(t *testing.T) {
 	}
 }
 
+func TestNoFailureClosureSupportsExactDevToMainPromotion(t *testing.T) {
+	binding := validFailureBinding()
+	binding.BaseRef = "main"
+	binding.EventRef = "refs/pull/163/merge"
+	binding.PRNumber = 163
+	binding.OwnerBranch = "dev"
+	manifest, err := buildClosureManifest(validClosureInputFor(binding), binding)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if manifest.BaseRef != "main" || manifest.OwnerBranch != "dev" || manifest.Decision != "HEALTH_PASS_ONLY" {
+		t.Fatalf("exact dev-to-main promotion closure was not preserved: %+v", manifest)
+	}
+	if err := validateClosureManifest(manifest, binding); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestNoFailureClosureRejectsStaleCanonicalJob(t *testing.T) {
 	input := validClosureInput()
 	input.CanonicalJobs[0].HeadSHA = strings.Repeat("b", 40)
@@ -64,6 +82,10 @@ func TestNoFailureClosureDoesNotWriteOnInvalidInput(t *testing.T) {
 
 func validClosureInput() closureInput {
 	binding := validFailureBinding()
+	return validClosureInputFor(binding)
+}
+
+func validClosureInputFor(binding failureBinding) closureInput {
 	jobs := make([]failureJob, len(proofJobs))
 	for index, name := range proofJobs {
 		jobs[index] = failureJob{ID: int64(index + 1), Name: name, Status: "completed", Conclusion: "success", HeadSHA: binding.HeadSHA, RunID: binding.RunID, RunAttempt: binding.RunAttempt}
