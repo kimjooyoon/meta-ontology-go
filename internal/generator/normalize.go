@@ -13,6 +13,7 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 		return SemanticIR{}, fmt.Errorf("generator: invalid Go package %q", input.Package)
 	}
 	result := copyIR(input)
+	canonicalizeIRCollections(&result)
 	if err := normalizeImports(&result); err != nil {
 		return SemanticIR{}, err
 	}
@@ -33,6 +34,24 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 		return SemanticIR{}, err
 	}
 	return result, nil
+}
+
+// canonicalizeIRCollections gives semantically equivalent nil and empty
+// collections one wire representation without changing caller-owned input.
+// This keeps generated metadata digests independent of how an adapter
+// materializes absent optional declarations.
+func canonicalizeIRCollections(ir *SemanticIR) {
+	ir.Imports = append([]Import{}, ir.Imports...)
+	ir.Entities = append([]Entity{}, ir.Entities...)
+	for index := range ir.Entities {
+		ir.Entities[index].Fields = append([]Field{}, ir.Entities[index].Fields...)
+	}
+	ir.Activities = append([]Activity{}, ir.Activities...)
+	for index := range ir.Activities {
+		ir.Activities[index].Inputs = append([]Port{}, ir.Activities[index].Inputs...)
+		ir.Activities[index].Outputs = append([]Port{}, ir.Activities[index].Outputs...)
+		ir.Activities[index].Slots = append([]Slot{}, ir.Activities[index].Slots...)
+	}
 }
 
 func copyIR(input SemanticIR) SemanticIR {
