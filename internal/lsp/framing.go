@@ -89,6 +89,9 @@ func readFrame(reader *bufio.Reader) ([]byte, error) {
 			return nil, ErrMalformedHeader
 		}
 		if strings.EqualFold(strings.TrimSpace(name), "Content-Length") {
+			if length >= 0 {
+				return nil, ErrMalformedHeader
+			}
 			parsed, parseErr := strconv.Atoi(strings.TrimSpace(value))
 			if parseErr != nil || parsed < 0 {
 				return nil, ErrMalformedHeader

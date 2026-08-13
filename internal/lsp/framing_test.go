@@ -59,6 +59,13 @@ func TestReadMessageRejectsTruncatedHeaders(t *testing.T) {
 	}
 }
 
+func TestReadMessageRejectsDuplicateContentLengthHeaders(t *testing.T) {
+	input := "Content-Length: 2\r\ncontent-length: 2\r\n\r\n{}"
+	if _, err := ReadMessage(strings.NewReader(input)); !errors.Is(err, ErrMalformedHeader) {
+		t.Fatalf("duplicate Content-Length error = %v, want ErrMalformedHeader", err)
+	}
+}
+
 func TestReadMessageKeepsSequentialFrames(t *testing.T) {
 	var input bytes.Buffer
 	writeFrameForTest(t, &input, []byte(`{"text":"😀"}`))
