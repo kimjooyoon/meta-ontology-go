@@ -185,11 +185,20 @@ func canonicalFixPlanDiagnostics(diagnostics []fixPlanDiagnostic) []fixPlanDiagn
 		if left.Phase != right.Phase {
 			return left.Phase < right.Phase
 		}
+		if left.Severity != right.Severity {
+			return left.Severity < right.Severity
+		}
 		if left.Code != right.Code {
 			return left.Code < right.Code
 		}
 		if left.Message != right.Message {
 			return left.Message < right.Message
+		}
+		if left.Applicability != right.Applicability {
+			return left.Applicability < right.Applicability
+		}
+		if left.Status != right.Status {
+			return left.Status < right.Status
 		}
 		return left.RepairID < right.RepairID
 	})

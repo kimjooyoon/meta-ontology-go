@@ -147,6 +147,84 @@ func TestRunAnalyzeIsReadOnly(t *testing.T) {
 	}
 }
 
+func TestRunAnalyzeSemanticInvalidIsReadOnly(t *testing.T) {
+	directory := t.TempDir()
+	filename := filepath.Join(directory, "input.gooo")
+	if err := os.WriteFile(filename, []byte(sourceOrderA), 0o640); err != nil {
+		t.Fatal(err)
+	}
+	beforeBytes, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeInfo, err := os.Stat(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeEntries := directoryEntries(t, directory)
+	var stdout, stderr bytes.Buffer
+	code := runAnalyzeWithLowerer(
+		[]string{filename}, OSFileReader{}, SyntaxSourceParser{}, &stdout, &stderr,
+		func(*syntax.File) (semantic.IR, error) { return semantic.IR{}, semantic.ErrUnknownRelation },
+	)
+	if code != exitFailure || stderr.Len() != 0 || stdout.Len() == 0 {
+		t.Fatalf("semantic-invalid analyze = code %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
+	}
+	afterBytes, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterInfo, err := os.Stat(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(beforeBytes, afterBytes) || !os.SameFile(beforeInfo, afterInfo) ||
+		beforeInfo.Mode() != afterInfo.Mode() || !beforeInfo.ModTime().Equal(afterInfo.ModTime()) {
+		t.Fatal("semantic-invalid analyze changed its input file")
+	}
+	if afterEntries := directoryEntries(t, directory); !reflect.DeepEqual(beforeEntries, afterEntries) {
+		t.Fatalf("semantic-invalid analyze changed directory entries: before=%v after=%v", beforeEntries, afterEntries)
+	}
+}
+
+func TestCanonicalFixPlanDiagnosticsOrdersObservableFields(t *testing.T) {
+	span := fixPlanSpan{
+		File:  "fixture.gooo",
+		Start: fixPlanPosition{Offset: 4, Line: 2, Column: 5},
+		End:   fixPlanPosition{Offset: 8, Line: 2, Column: 9},
+	}
+	input := []fixPlanDiagnostic{
+		{
+			RepairID: "repair-warning", Phase: "semantic", Severity: "warning",
+			Code: "semantic.same", Message: "same", Span: span,
+			Applicability: "potential", Status: "deferred",
+		},
+		{
+			RepairID: "repair-error", Phase: "semantic", Severity: "error",
+			Code: "semantic.same", Message: "same", Span: span,
+			Applicability: "not-evaluated", Status: "blocked",
+		},
+	}
+	reversed := append([]fixPlanDiagnostic(nil), input...)
+	reversed[0], reversed[1] = reversed[1], reversed[0]
+
+	first, err := json.Marshal(canonicalFixPlanDiagnostics(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := json.Marshal(canonicalFixPlanDiagnostics(reversed))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(first, second) {
+		t.Fatalf("fix-plan diagnostics changed with insertion order:\nfirst=%s\nsecond=%s", first, second)
+	}
+	ordered := canonicalFixPlanDiagnostics(input)
+	if ordered[0].Severity != "error" || ordered[1].Severity != "warning" {
+		t.Fatalf("fix-plan diagnostic severity order = %#v", ordered)
+	}
+}
+
 func TestApplyFixPlanIREvidenceRefsAreInsertionIndependent(t *testing.T) {
 	firstIR := lowerInspectFixtureIR(t)
 	secondIR := lowerInspectFixtureIR(t)
