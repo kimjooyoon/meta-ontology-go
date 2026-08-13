@@ -126,6 +126,9 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 	}
 	switch request.Method {
 	case "initialize":
+		if server.isInitialized() {
+			return responseOrNil(request.ID, invalidRequest, "server is already initialized"), nil, nil
+		}
 		return server.initialize(request)
 	case "initialized", "$/cancelRequest":
 		return nil, nil, nil
