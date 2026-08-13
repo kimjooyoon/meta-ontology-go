@@ -87,7 +87,7 @@ func readGovernance(filename string) (governanceInput, error) {
 	if err := json.Unmarshal(data, &matrix); err != nil {
 		return governanceInput{}, err
 	}
-	if matrix.Schema != "gooo/ci-governance/v1" || matrix.Promotion.Source != "integration" || matrix.Promotion.Target != "main" || !matrix.Promotion.BranchProtectionRequired {
+	if matrix.Schema != "gooo/ci-governance/v1" || matrix.Promotion.Source != "dev" || matrix.Promotion.Target != "main" || !matrix.Promotion.BranchProtectionRequired {
 		return governanceInput{}, fmt.Errorf("governance promotion contract is incomplete")
 	}
 	return matrix, nil

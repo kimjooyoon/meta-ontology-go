@@ -1,25 +1,43 @@
 # Branch and pull-request policy
 
-The repository uses a two-stage integration path:
+The repository uses a staged integration path during the integration-to-dev
+migration:
 
 ```text
-agent/*  ->  integration  ->  main
+agent/*  ->  integration or dev  ->  main
 ```
 
 - Work branches use the `agent/` prefix and contain one coherent change.
-- Pull requests from work branches target `integration`. The CI policy job rejects a
-  pull request that targets another branch.
-- `integration` is the shared validation branch. It is the base for follow-up work and
-  is promoted to `main` through a separate pull request.
+- Pull requests from work branches target `integration` or `dev`. The CI policy job
+  rejects a work branch targeting `main` or another branch.
+- `integration` remains a temporary compatibility branch while `dev` becomes the
+  promotion source. The only valid promotion is an exact `dev` head targeting `main`.
 - `main` is protected from direct pushes. Releases and other externally visible
-  changes must arrive through the `integration` promotion path.
+  changes must arrive through the separate `dev`-to-`main` promotion path.
 - CI checks are required before either merge. The workflow uses the same deterministic
   gate for work branches, `integration`, and `main`.
 - The checked-in governance mode is `ci_only`: integration CI closure is determined
   by the exact six canonical jobs, scope, artifact, provenance, and no-write
   predicates. Human reviews and last-push approvals are not CI proof inputs.
   Branch protection remains a separate, fail-closed promotion predicate for
-  integration-to-main; inaccessible protection cannot be inferred from CI.
+  dev-to-main; inaccessible protection cannot be inferred from CI.
+
+## Immutable CI trust kernel
+
+The `CI guardian` job is a read-only `pull_request_target` check. It checks out
+only the immutable base SHA and uses base-pinned code to paginate the changed-file
+API. It inspects both `filename` and `previous_filename`; any add, modify, delete,
+or rename touching the protected kernel fails with `CI-ROOT-OF-TRUST-001`. It does
+not parse candidate YAML, inspect PR text, execute candidate code, or use write
+permissions, so comments and inert workflow markers cannot authorize a change.
+
+This guardian is a one-time `CI-ROOT-OF-TRUST-BOOTSTRAP-001` migration on a base
+that predates the workflow. GitHub cannot make a newly added `pull_request_target`
+workflow authoritative for its own bootstrap PR, and this task does not mutate
+default-branch topology or branch protection. After bootstrap, ordinary PRs cannot
+modify the protected kernel. A future kernel rotation is an explicit maintenance
+operation with before/after policy digests and an issue ledger; it is not a human
+review predicate or an ordinary PR exemption.
 
 The scaffold baseline does not yet expose a working semantic CLI. Until
 `cmd/gooo` implements its `check` command, the semantic CLI and generated-freshness
@@ -69,11 +87,8 @@ revisions deterministically.
 The pull-request trigger explicitly includes `ready_for_review`, ensuring a
 draft-to-review transition receives the same six-job authoritative matrix.
 
-This current-base follow-up records the integration evidence used for the new
-audit PR: `integration` is `f066d61`, and the PR policy step passes the base SHA
-through `GOOO_SCOPE_FROM` while using the head SHA as `GOOO_SCOPE_TO`. The
-existing `agent/bidir-followup` alias was checked against that same base; its
-only allowed prefix remains `internal/bidir`. The stale PRs #77 and #84 are
-not bases for this branch and must not be merged as the audit result. The
-observed generator fixture follow-ups use exact `internal/generator` aliases;
-unknown generator branch names remain rejected.
+Every audit must re-read the live PR base/head, event/run/attempt, canonical
+jobs, artifacts, and protection predicates. Historical PR narratives, preview
+merge SHAs, stale workflow runs, and auxiliary push results are not evidence for
+the current gate. Unknown agent branch names remain rejected by the executable
+scope map.

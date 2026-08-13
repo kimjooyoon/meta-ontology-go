@@ -46,6 +46,32 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 	assertWorkflowMarkers(t, text)
 }
 
+func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci-guardian.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(workflow)
+	for _, marker := range []string{
+		"name: CI guardian", "pull_request_target:", "- integration\n      - dev\n      - main",
+		"actions/checkout@11d5960a326750d5838078e36cf38b85af677262", "ref: ${{ github.event.pull_request.base.sha }}",
+		"persist-credentials: false", "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b", "listFiles",
+		"contents: read", "pull-requests: read",
+	} {
+		if !strings.Contains(text, marker) {
+			t.Fatalf("guardian workflow lost marker %q", marker)
+		}
+	}
+	for _, forbidden := range []string{
+		"github.event.pull_request.head.sha", "refs/pull/", "secrets.", "contents: write",
+		"pull-requests: write", "agent/ci-workflow", "\n        run:", "\n    pull_request:",
+	} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("guardian workflow contains unsafe marker %q", forbidden)
+		}
+	}
+}
+
 func assertWorkflowMarkers(t *testing.T, text string) {
 	t.Helper()
 	for _, marker := range []string{
@@ -150,6 +176,9 @@ func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(workflow)
+	if !strings.Contains(text, "pull_request:\n    branches:\n      - integration\n      - dev\n      - main") {
+		t.Fatal("pull-request trigger does not include the integration/dev/main transition targets")
+	}
 	guard := "if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')"
 	if strings.Count(text, guard) != 5 {
 		t.Fatalf("pull requests do not retain five guarded canonical jobs: %d", strings.Count(text, guard))

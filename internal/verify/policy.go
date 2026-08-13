@@ -184,11 +184,17 @@ func isAllowed(path string, prefixes []string) bool {
 
 // CheckIntegrationPullRequest enforces the branch policy used by CI.
 func CheckIntegrationPullRequest(head, base string) error {
-	if base != "integration" {
-		return fmt.Errorf("pull request base must be integration, got %q", base)
+	if base == "main" {
+		if head != "dev" {
+			return fmt.Errorf("main promotion head must be dev, got %q", head)
+		}
+		return nil
+	}
+	if base != "integration" && base != "dev" {
+		return fmt.Errorf("pull request base must be integration or dev, got %q", base)
 	}
 	if !strings.HasPrefix(head, "agent/") || len(strings.TrimPrefix(head, "agent/")) == 0 {
-		return fmt.Errorf("pull request head must use agent/*, got %q", head)
+		return fmt.Errorf("feature pull request head must use agent/*, got %q", head)
 	}
 	return nil
 }

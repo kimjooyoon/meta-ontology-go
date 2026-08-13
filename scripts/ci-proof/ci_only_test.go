@@ -70,7 +70,7 @@ func TestCIMachineBoundPromotionAcceptsKnownProtectionObserverGap(t *testing.T) 
 		ProvenanceStatus: "verified",
 	}
 	inputs := proofInputs{
-		Governance: governanceInput{Promotion: promotionInput{Source: "integration", Target: "main", RequiredChecks: append([]string(nil), proofJobs...), BranchProtectionRequired: true}},
+		Governance: governanceInput{Promotion: promotionInput{Source: "dev", Target: "main", RequiredChecks: append([]string(nil), proofJobs...), BranchProtectionRequired: true}},
 		Evidence:   evidenceInput{Jobs: bundle.Jobs}, Jobs: bundle.Jobs, Context: context,
 	}
 	if !machineBoundPromotionReady(inputs) {

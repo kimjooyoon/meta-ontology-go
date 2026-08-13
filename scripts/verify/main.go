@@ -81,10 +81,13 @@ func run(root, from, to, head, base, branch, expectedHead string, capsOnly, skip
 		if scopeBranch == "" {
 			scopeBranch = head
 		}
-		if err := verify.CheckPathScopeForBranch(changed, scopeBranch); err != nil {
-			return err
+		promotion := base == "main" && head == "dev"
+		if !promotion {
+			if err := verify.CheckPathScopeForBranch(changed, scopeBranch); err != nil {
+				return err
+			}
 		}
-		if scopeBranch == "agent/go-version" {
+		if scopeBranch == "agent/go-version" && !promotion {
 			diff, err := changedDiff(root, from, to, "go.mod")
 			if err != nil {
 				return err

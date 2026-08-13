@@ -19,18 +19,29 @@ must be one of `integration`, `dev`, or `main`; the event ref must be exactly
 malformed refs fail closed and route remediation through the catalog/gate
 handoff rather than inventing an agent owner.
 
-The future `CI guardian` is a separate `pull_request_target` context. Guardian v1 freezes
-the base protected-kernel paths (`.github/ci-governance.json`, CI workflows,
-branch policy/scope, `internal/verify/**`, and `scripts/verify/**`) and fails
-closed on any change, including `previous_filename` renames. It never parses
-candidate YAML as an authorization decision. Because a newly introduced
-`pull_request_target` workflow cannot execute for its own PR and GitHub loads
-that workflow from the default/base topology, PR #105 is a one-time authorized
-bootstrap recorded as `CI-ROOT-OF-TRUST-BOOTSTRAP-001`. Its workflow is not
-included in this PR because the current default branch cannot run a newly added
-`pull_request_target` workflow; this is a `CI-ROOT-OF-TRUST-001` migration
-follow-up. Until a real guardian run is proven from the protected dev/default
-topology, no guardian context is added as an unenforceable required check.
+The `CI guardian` is a separate `pull_request_target` context. Guardian v1 freezes
+the union of protected-kernel paths (`.github/workflows/**`, governance and
+transition policy, `scripts/ci-proof/**`, `scripts/ci-evidence/**`,
+`scripts/verify/**`, `internal/verify/**`, `go.mod`, and `go.sum`) and fails closed
+on any add, modify, delete, or rename, including `previous_filename` renames. It
+checks out only the immutable base SHA and does not parse candidate YAML as an
+authorization decision. Comments and inert YAML markers therefore cannot bypass
+the path gate, and fork PRs receive the same read-only treatment.
+
+The current integration base predates this `pull_request_target` workflow. GitHub
+loads that workflow from the protected base/default topology, so this PR is the
+explicit one-time `CI-ROOT-OF-TRUST-BOOTSTRAP-001` migration and cannot produce its
+own authoritative guardian context. No default-branch or protection mutation is
+performed here. After bootstrap, ordinary PRs cannot modify the kernel. Future
+kernel rotation requires a maintenance ledger with before/after policy digests and
+the code/tests proving the new base-pinned guardian; it is not a human-review
+predicate or an `agent/ci-workflow` exemption. Until a real guardian run is proven
+from the protected dev/default topology, the context is not claimed as an existing
+required check.
+
+During the transition, feature PRs may target `integration` or `dev`; only exact
+`dev -> main` is a promotion. `integration` is temporary compatibility and remains
+in the protected push owner set while migration evidence is collected.
 
 Cross-scope relationships are local dependencies. Record them as
 `CI-DEPENDENCY-001` with `blocking_scope=local` and `parallelizable=true`; keep

@@ -1,0 +1,55 @@
+name: CI guardian
+
+on:
+  pull_request_target:
+    branches:
+      - integration
+      - dev
+      - main
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guardian:
+    name: CI guardian
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout protected base
+        # v4: 11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Inspect changed paths from protected base
+        # v7: f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const guardian = require('./scripts/ci-proof/guardian');
+            try {
+              const pull = guardian.validateGuardianPullRequest(context.payload.pull_request);
+              const result = await guardian.inspectChangedFiles({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                baseRepoFullName: pull.base.repo.full_name,
+                pullNumber: pull.number,
+                listFiles: (parameters) => github.rest.pulls.listFiles(parameters),
+              });
+              await core.summary
+                .addHeading('CI guardian')
+                .addRaw(`decision=${result.decision}\n`)
+                .addRaw(`code=${result.code || 'none'}\n`)
+                .addRaw(`base=${pull.base.ref}@${pull.base.sha}\n`)
+                .addRaw(`files=${result.files.length}\n`)
+                .write();
+              if (result.decision !== 'PASS') {
+                core.setFailed(`${result.code}: ${result.reason}`);
+              }
+            } catch (error) {
+              core.setFailed(`${error.code || guardian.ROOT_FAILURE_CODE}: ${error.message}`);
+            }
