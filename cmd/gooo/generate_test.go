@@ -137,6 +137,39 @@ activity PayOrder(PayOrder) -> Order
 	}
 }
 
+func TestRunGenerateRejectsInvalidInputBeforeCreatingOutputRoot(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{name: "syntax", source: "package billing\nentity Broken id \"x\" @", want: "error"},
+		{name: "semantic", source: `package billing
+namespace billing
+entity Order id "billing://entity/order"
+activity PayOrder(PayOrder) -> Order
+`, want: "generation failed"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			parent := t.TempDir()
+			outputDir := filepath.Join(parent, "new-output")
+			beforeEntries := directoryEntries(t, parent)
+			var stdout, stderr bytes.Buffer
+			code := runGenerate([]string{"fixture.gooo", "--out", outputDir}, fixtureReader{source: test.source}, SyntaxSourceParser{}, &stdout, &stderr)
+			if code != exitFailure || stdout.Len() != 0 || !strings.Contains(stderr.String(), test.want) {
+				t.Fatalf("%s generate = code %d, stdout=%q, stderr=%q", test.name, code, stdout.String(), stderr.String())
+			}
+			if _, err := os.Lstat(outputDir); !os.IsNotExist(err) {
+				t.Fatalf("%s rejection created output root: %v", test.name, err)
+			}
+			if !reflect.DeepEqual(beforeEntries, directoryEntries(t, parent)) {
+				t.Fatalf("%s rejection changed parent directory entries", test.name)
+			}
+		})
+	}
+}
+
 func TestGenerateDigestMatchSkipsWrite(t *testing.T) {
 	outputDir := t.TempDir()
 	args := []string{"billing.gooo", "--out", outputDir}
