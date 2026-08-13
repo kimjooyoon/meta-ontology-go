@@ -20,10 +20,14 @@ func main() {
 	requirePass := flag.Bool("require-pass", false, "reject a fail-closed decision")
 	failureInput := flag.String("failure-input", "", "write a versioned CI failure manifest from an exact GitHub tuple")
 	failureOutput := flag.String("failure-output", "ci-failure.json", "CI failure manifest output")
+	closureInput := flag.String("closure-input", "", "write an exact-tuple no-failure closure manifest")
+	closureOutput := flag.String("closure-output", "ci-closure.json", "no-failure closure manifest output")
 	flag.Parse()
 	var err error
 	if *failureInput != "" {
 		err = writeFailureManifest(*failureInput, *failureOutput)
+	} else if *closureInput != "" {
+		err = writeClosureManifest(*closureInput, *closureOutput)
 	} else if *verify != "" {
 		err = verifyProof(*verify, *governance, *receipt, *requirePass)
 	} else {

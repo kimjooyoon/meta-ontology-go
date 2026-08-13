@@ -53,3 +53,11 @@ Normal operations are:
 Self-approval, overlapping approval, admin bypass, force-push, branch aliasing,
 CI-policy weakening, and reuse of stale evidence are prohibited. CI green is
 necessary but never sufficient for a protected merge.
+
+When the terminal failure set is empty, the failure report emits a separate
+`gooo/ci-closure/v1` artifact. Its `NO_TERMINAL_FAILURE` status is bound to the
+same repository/base/head/event/run/attempt tuple and all six terminal
+canonical-success jobs. `HEALTH_PASS_ONLY`, `write_effect=none`, and the empty
+terminal-failure arrays are explicit: this artifact never asserts promotion,
+approval, provenance, or mergeability. Missing or mismatched canonical jobs
+must fail closed instead of silently producing a note-only result.

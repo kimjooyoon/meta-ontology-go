@@ -522,11 +522,25 @@ jobs:
           script: |
             const fs = require('fs');
             const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100});
+            const expectedJobs = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
             const terminalFailures = response.data.jobs
               .filter(job => job.name !== 'CI failure summary' && job.status === 'completed' && job.conclusion && job.conclusion !== 'success' && job.conclusion !== 'skipped')
               .sort((left, right) => left.id - right.id || left.name.localeCompare(right.name));
             if (terminalFailures.length === 0) {
-              core.info('No terminal CI failure was observed for this exact run.');
+              const canonicalJobs = response.data.jobs
+                .filter(job => expectedJobs.includes(job.name))
+                .sort((left, right) => expectedJobs.indexOf(left.name) - expectedJobs.indexOf(right.name));
+              const pull = context.payload.pull_request;
+              const head = pull?.head.sha || context.sha;
+              const runAttempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+              const canonicalBound = canonicalJobs.length === expectedJobs.length
+                && canonicalJobs.every((job, index) => job.name === expectedJobs[index] && job.status === 'completed' && job.conclusion === 'success' && job.head_sha === head && job.run_id === context.runId && Number(job.run_attempt || 0) === runAttempt);
+              if (!canonicalBound) throw new Error('no-failure closure requires six terminal successful canonical jobs bound to the exact tuple');
+              fs.writeFileSync('ci-closure-input.json', JSON.stringify({
+                canonical_jobs: canonicalJobs.map(job => ({id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: job.run_id, run_attempt: runAttempt})),
+                terminal_failures: [],
+                terminal_failure_codes: [],
+              }, null, 2) + '\n');
               fs.writeFileSync('ci-failure-input.json', '');
               return;
             }
@@ -538,7 +552,6 @@ jobs:
             if (terminalFailures.some(job => !job.head_sha || !exactJob(job))) {
               throw new Error('terminal failure API record lacks exact head/run binding; refusing to guess');
             }
-            const expectedJobs = ['CI policy', 'Semantic conformance', 'gofmt', 'go vet', 'go test', 'go test -race'];
             const proofPath = 'ci-proof-input/ci-proof.json';
             let proof = null;
             let proofState = 'not_available';
@@ -715,9 +728,14 @@ jobs:
           CI_ACTOR: ${{ github.actor }}
           CI_OWNER_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
         run: |
-          if [ ! -s ci-failure-input.json ]; then
-            echo "No failure manifest emitted for this run." >> "$GITHUB_STEP_SUMMARY"
+          if [ -s ci-closure-input.json ]; then
+            go run ./scripts/ci-proof --closure-input ci-closure-input.json --closure-output ci-closure.json
+            jq -r '"### CI closure\n- status: `\(.status)`\n- decision: `\(.decision)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)`\n- canonical jobs: \(.canonical_jobs | map([.id, .name, .head_sha, .conclusion] | @csv) | join("; "))\n- terminal failures: none\n- write effect: `\(.write_effect)`"' ci-closure.json >> "$GITHUB_STEP_SUMMARY"
             exit 0
+          fi
+          if [ ! -s ci-failure-input.json ]; then
+            echo "No machine-readable closure or failure manifest was emitted for this run." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
           go run ./scripts/ci-proof --failure-input ci-failure-input.json --failure-output ci-failure.json
           jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- severity: `\(.severity)`\n- scope: `\(.scope)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- handoff_required: `\(.handoff_required)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `\(.catalog_path)`\n- evidence: \(.evidence_refs | join(", "))\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
@@ -728,5 +746,13 @@ jobs:
         with:
           name: ci-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-failure.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload no-failure closure manifest
+        if: ${{ always() && hashFiles('ci-closure.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-closure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-closure.json
           if-no-files-found: error
           retention-days: 14
