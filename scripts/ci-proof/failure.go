@@ -89,14 +89,19 @@ type failureManifest struct {
 	EvidenceRefs    []string          `json:"evidence_refs"`
 	CatalogPath     string            `json:"catalog_path"`
 	CatalogDigest   string            `json:"catalog_digest"`
+	CatalogRef      string            `json:"catalog_ref"`
+	CatalogVersion  int               `json:"catalog_version"`
+	CatalogSHA256   string            `json:"catalog_sha256"`
 	Rejections      []string          `json:"rejections"`
 	MissingReasons  missingReasons    `json:"missing_reasons"`
 	Artifacts       []artifactInput   `json:"artifacts"`
-	ArtifactRefs    []string          `json:"artifact_refs"`
+	ArtifactURLs    []string          `json:"artifact_urls"`
+	ArtifactRefs    []artifactInput   `json:"artifact_refs"`
 	ArtifactStatus  string            `json:"artifact_status"`
 	ArtifactReason  string            `json:"artifact_reason"`
 	Message         string            `json:"message"`
 	Remediation     string            `json:"remediation"`
+	HandoffOwner    string            `json:"handoff_owner"`
 	HandoffRequired bool              `json:"handoff_required"`
 }
 
@@ -149,9 +154,10 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 		Event: binding.Event, EventRef: binding.EventRef, CheckoutRef: binding.CheckoutRef, PRNumber: binding.PRNumber, RunID: binding.RunID,
 		RunAttempt: binding.RunAttempt, WorkflowSHA: binding.WorkflowSHA, Job: input.Job,
 		OwnerBranch: binding.OwnerBranch, OwnerRef: failureOwnerRef(binding), CatalogPath: failureCatalogPath, CatalogDigest: failureCatalogDigest,
+		CatalogRef: failureCatalogPath + "@" + binding.HeadSHA, CatalogVersion: 1, CatalogSHA256: failureCatalogDigest,
 		Rejections: input.Rejections, MissingReasons: input.MissingReasons, Artifacts: input.Artifacts,
 		ArtifactStatus: input.ArtifactStatus, ArtifactReason: input.ArtifactReason, Message: input.Message, Remediation: input.Remediation,
-		HandoffRequired: entry.HandoffRequired,
+		HandoffRequired: entry.HandoffRequired, HandoffOwner: entry.Owner,
 	}
 	if len(manifest.FailureCodes) == 0 {
 		manifest.FailureCodes = []string{input.Code}
@@ -159,7 +165,8 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 	manifest.Activity = fmt.Sprintf("urn:gooo:ci-run:%d:%d", binding.RunID, binding.RunAttempt)
 	manifest.Agent = "urn:gooo:agent:" + binding.Actor
 	manifest.Entity = fmt.Sprintf("urn:gooo:ci-failure:%d:%d:%d:%s", binding.RunID, binding.RunAttempt, input.Job.ID, input.Code)
-	manifest.ArtifactRefs = failureArtifactRefs(binding, manifest.Artifacts)
+	manifest.ArtifactURLs = failureArtifactRefs(binding, manifest.Artifacts)
+	manifest.ArtifactRefs = append([]artifactInput(nil), manifest.Artifacts...)
 	runRef := fmt.Sprintf("https://github.com/%s/actions/runs/%d", binding.Repository, binding.RunID)
 	jobRef := fmt.Sprintf("%s/job/%d", runRef, input.Job.ID)
 	sourceRef := fmt.Sprintf("https://github.com/%s/commit/%s", binding.Repository, binding.HeadSHA)
@@ -168,7 +175,7 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 		WasGeneratedBy:    manifest.Activity,
 		WasAssociatedWith: manifest.Agent,
 		WasDerivedFrom:    []string{runRef, jobRef},
-		HadPrimarySource:  append([]string{sourceRef, manifest.OwnerRef}, append(append([]string{}, manifest.ArtifactRefs...), failureCatalogPath, failureCatalogDigest)...),
+		HadPrimarySource:  append([]string{sourceRef, manifest.OwnerRef, manifest.CatalogRef, manifest.CatalogSHA256}, manifest.ArtifactURLs...),
 	}
 	if err := validateFailureManifest(manifest, binding); err != nil {
 		return failureManifest{}, err
@@ -190,8 +197,8 @@ func failureArtifactRefs(binding failureBinding, artifacts []artifactInput) []st
 
 func failureEvidenceRefs(manifest failureManifest, runRef, jobRef string) []string {
 	refs := []string{runRef, jobRef, manifest.OwnerRef}
-	refs = append(refs, manifest.ArtifactRefs...)
-	return append(refs, failureCatalogPath, failureCatalogDigest)
+	refs = append(refs, manifest.ArtifactURLs...)
+	return append(refs, manifest.CatalogRef, manifest.CatalogSHA256)
 }
 
 func validateFailureManifest(manifest failureManifest, binding failureBinding) error {
@@ -203,13 +210,13 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	if err != nil {
 		return err
 	}
-	if manifest.Scope != scope || manifest.Class != entry.Class || manifest.Severity != entry.Severity || manifest.BlockingScope != entry.BlockingScope || manifest.Parallelizable != entry.Parallelizable || manifest.HandoffRequired != entry.HandoffRequired {
+	if manifest.Scope != scope || manifest.Class != entry.Class || manifest.Severity != entry.Severity || manifest.BlockingScope != entry.BlockingScope || manifest.Parallelizable != entry.Parallelizable || manifest.HandoffRequired != entry.HandoffRequired || manifest.HandoffOwner != entry.Owner {
 		return fmt.Errorf("failure classification does not match catalog")
 	}
-	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA || manifest.OwnerBranch != binding.OwnerBranch || manifest.OwnerRef != failureOwnerRef(binding) || !sameStrings(manifest.ArtifactRefs, failureArtifactRefs(binding, manifest.Artifacts)) {
+	if manifest.SourceCommit != binding.HeadSHA || manifest.Repository != binding.Repository || manifest.BaseRef != binding.BaseRef || manifest.BaseSHA != binding.BaseSHA || manifest.HeadSHA != binding.HeadSHA || manifest.Event != binding.Event || manifest.EventRef != binding.EventRef || manifest.CheckoutRef != binding.CheckoutRef || manifest.PRNumber != binding.PRNumber || manifest.RunID != binding.RunID || manifest.RunAttempt != binding.RunAttempt || manifest.WorkflowSHA != binding.WorkflowSHA || manifest.OwnerBranch != binding.OwnerBranch || manifest.OwnerRef != failureOwnerRef(binding) || !sameArtifactInputs(manifest.ArtifactRefs, manifest.Artifacts) {
 		return fmt.Errorf("failure manifest tuple is stale or mismatched")
 	}
-	if manifest.Repository == "" || manifest.BaseRef == "" || manifest.OwnerBranch == "" || containsUnknown(manifest.OwnerBranch) || manifest.CatalogPath != failureCatalogPath || manifest.CatalogDigest != failureCatalogDigest || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
+	if manifest.Repository == "" || manifest.BaseRef == "" || manifest.OwnerBranch == "" || containsUnknown(manifest.OwnerBranch) || manifest.CatalogPath != failureCatalogPath || manifest.CatalogDigest != failureCatalogDigest || manifest.CatalogRef != failureCatalogPath+"@"+binding.HeadSHA || manifest.CatalogVersion != 1 || manifest.CatalogSHA256 != failureCatalogDigest || !validSHA(manifest.SourceCommit) || !validSHA(manifest.BaseSHA) || !validSHA(manifest.HeadSHA) || !validSHA(manifest.WorkflowSHA) || manifest.BaseSHA == manifest.HeadSHA || !validEventRef(manifest.Event, manifest.EventRef) || manifest.CheckoutRef != manifest.HeadSHA || manifest.RunID <= 0 || manifest.RunAttempt <= 0 || manifest.PRNumber < 0 || manifest.Activity == "" || manifest.Agent == "" || manifest.Entity == "" || manifest.Message == "" || manifest.Remediation == "" || containsUnknown(manifest.Message) || containsUnknown(manifest.Remediation) {
 		return fmt.Errorf("failure manifest has incomplete or unknown values")
 	}
 	if err := validateFailureCodes(manifest.FailureCodes, manifest.Code); err != nil {

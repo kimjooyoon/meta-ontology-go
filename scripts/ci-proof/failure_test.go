@@ -54,6 +54,19 @@ func TestFailureManifestRejectsTamperedCatalogDigest(t *testing.T) {
 	}
 }
 
+func TestFailureManifestBindsCatalogRefAndHandoffParity(t *testing.T) {
+	manifest, err := buildFailureManifest(validFailureInput(), validFailureBinding())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if manifest.CatalogRef != failureCatalogPath+"@"+validFailureBinding().HeadSHA || manifest.CatalogVersion != 1 || manifest.CatalogSHA256 != failureCatalogDigest || manifest.HandoffOwner != "registered-path-owner" {
+		t.Fatalf("immutable catalog or owner binding missing: %+v", manifest)
+	}
+	if !failureCatalog["CI-ARTIFACT-001"].HandoffRequired || !failureCatalog["CI-FRESHNESS-001"].HandoffRequired {
+		t.Fatal("artifact and freshness failures must require handoff")
+	}
+}
+
 func TestFailureCatalogMatchesCheckedInDocument(t *testing.T) {
 	_, source, _, ok := runtime.Caller(0)
 	if !ok {
@@ -111,7 +124,7 @@ func TestFailureManifestRejectsTamperedArtifactReference(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	manifest.ArtifactRefs[0] = "https://github.com/owner/repo/actions/runs/8/artifacts/12"
+	manifest.ArtifactRefs[0].ID++
 	if err := validateFailureManifest(manifest, binding); err == nil {
 		t.Fatal("tampered failure artifact reference was accepted")
 	}

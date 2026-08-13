@@ -14,6 +14,7 @@ type failureCatalogEntry struct {
 	BlockingScope   string
 	Parallelizable  bool
 	HandoffRequired bool
+	Owner           string
 }
 
 type failureCatalogRecord struct {
@@ -22,15 +23,17 @@ type failureCatalogRecord struct {
 }
 
 var failureCatalogRecords = []failureCatalogRecord{
-	{Code: "CI-TEST-001", Entry: failureCatalogEntry{Class: "test", Severity: "error", BlockingScope: "local", Parallelizable: true, HandoffRequired: false}},
-	{Code: "CI-SCOPE-001", Entry: failureCatalogEntry{Class: "scope", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: false}},
-	{Code: "CI-CONTRACT-001", Entry: failureCatalogEntry{Class: "contract", Severity: "critical", BlockingScope: "global", Parallelizable: false, HandoffRequired: true}},
-	{Code: "CI-DEPENDENCY-001", Entry: failureCatalogEntry{Class: "dependency", Severity: "warning", BlockingScope: "local", Parallelizable: true, HandoffRequired: true}},
-	{Code: "CI-GATE-001", Entry: failureCatalogEntry{Class: "gate", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true}},
-	{Code: "CI-ARTIFACT-001", Entry: failureCatalogEntry{Class: "artifact", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: false}},
-	{Code: "CI-FRESHNESS-001", Entry: failureCatalogEntry{Class: "freshness", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: false}},
-	{Code: "CI-PROVENANCE-001", Entry: failureCatalogEntry{Class: "provenance", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true}},
-	{Code: "CI-OWNERSHIP-001", Entry: failureCatalogEntry{Class: "ownership", Severity: "blocked", BlockingScope: "local", Parallelizable: true, HandoffRequired: true}},
+	{Code: "CI-TEST-001", Entry: failureCatalogEntry{Class: "test", Severity: "error", BlockingScope: "local", Parallelizable: true, HandoffRequired: false, Owner: "registered-path-owner"}},
+	{Code: "CI-SCOPE-001", Entry: failureCatalogEntry{Class: "scope", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: false, Owner: "ci-policy"}},
+	{Code: "CI-CAPS-001", Entry: failureCatalogEntry{Class: "caps", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: false, Owner: "ci-policy"}},
+	{Code: "CI-CONTRACT-001", Entry: failureCatalogEntry{Class: "contract", Severity: "critical", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
+	{Code: "CI-DEPENDENCY-001", Entry: failureCatalogEntry{Class: "dependency", Severity: "warning", BlockingScope: "local", Parallelizable: true, HandoffRequired: true, Owner: "registered-path-owner"}},
+	{Code: "CI-GATE-001", Entry: failureCatalogEntry{Class: "gate", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
+	{Code: "CI-ARTIFACT-001", Entry: failureCatalogEntry{Class: "artifact", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
+	{Code: "CI-FRESHNESS-001", Entry: failureCatalogEntry{Class: "freshness", Severity: "error", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
+	{Code: "CI-PROVENANCE-001", Entry: failureCatalogEntry{Class: "provenance", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
+	{Code: "CI-OWNERSHIP-001", Entry: failureCatalogEntry{Class: "ownership", Severity: "blocked", BlockingScope: "local", Parallelizable: true, HandoffRequired: true, Owner: "branch-ownership"}},
+	{Code: "CI-UNCLASSIFIED-001", Entry: failureCatalogEntry{Class: "unclassified", Severity: "blocked", BlockingScope: "global", Parallelizable: false, HandoffRequired: true, Owner: "gate"}},
 }
 
 var failureCatalog = buildFailureCatalog()
@@ -50,7 +53,7 @@ func immutableFailureCatalogDigest() string {
 	payload.WriteString(failureCatalogPath)
 	payload.WriteByte('\n')
 	for _, record := range failureCatalogRecords {
-		fmt.Fprintf(&payload, "%s|%s|%s|%s|%t|%t\n", record.Code, record.Entry.Class, record.Entry.Severity, record.Entry.BlockingScope, record.Entry.Parallelizable, record.Entry.HandoffRequired)
+		fmt.Fprintf(&payload, "%s|%s|%s|%s|%t|%t|%s\n", record.Code, record.Entry.Class, record.Entry.Severity, record.Entry.BlockingScope, record.Entry.Parallelizable, record.Entry.HandoffRequired, record.Entry.Owner)
 	}
 	digest := sha256.Sum256([]byte(payload.String()))
 	return "sha256:" + hex.EncodeToString(digest[:])
@@ -121,4 +124,16 @@ func validateFailureEvidence(manifest failureManifest) error {
 		}
 	}
 	return nil
+}
+
+func sameArtifactInputs(left, right []artifactInput) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
 }

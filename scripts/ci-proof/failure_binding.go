@@ -34,7 +34,7 @@ func buildFailureProvenance(manifest failureManifest, binding failureBinding) fa
 		WasGeneratedBy:    manifest.Activity,
 		WasAssociatedWith: manifest.Agent,
 		WasDerivedFrom:    []string{runRef, jobRef},
-		HadPrimarySource:  append([]string{sourceRef, manifest.OwnerRef}, append(append([]string{}, manifest.ArtifactRefs...), failureCatalogPath, failureCatalogDigest)...),
+		HadPrimarySource:  append([]string{sourceRef, manifest.OwnerRef, manifest.CatalogRef, manifest.CatalogSHA256}, manifest.ArtifactURLs...),
 	}
 }
 
