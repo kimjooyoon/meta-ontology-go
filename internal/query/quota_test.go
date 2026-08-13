@@ -1,6 +1,9 @@
 package query
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestDerivedQuotaStopsBFSWithoutMutationAndReplays(t *testing.T) {
 	root := id("urn:derived:quota:root")
@@ -76,4 +79,66 @@ func TestEnvelopeTraversalQuotaStopsEdgeScanBeforeResultRows(t *testing.T) {
 	if len(response.Result.DeterministicPaths) != 1 || response.Result.DeterministicPaths[0].Last() != target {
 		t.Fatalf("larger traversal quota did not reach the matching edge: %#v", response.Result)
 	}
+}
+
+func TestEnvelopeTraversalCycleLimitReplaysCanonicalPrefix(t *testing.T) {
+	root := id("urn:query:cycle-limit:000-root")
+	branch := id("urn:query:cycle-limit:100-branch")
+	loop := id("urn:query:cycle-limit:200-loop")
+	leaf := id("urn:query:cycle-limit:300-leaf")
+	facts := []Fact{
+		NewFact(root, WasDerivedFrom, branch),
+		NewFact(branch, WasDerivedFrom, loop),
+		NewFact(loop, WasDerivedFrom, root),
+		NewFact(root, WasDerivedFrom, leaf),
+	}
+	first, second := New(), New()
+	for _, fact := range facts {
+		assertAdd(t, first, fact)
+	}
+	for index := len(facts) - 1; index >= 0; index-- {
+		assertAdd(t, second, facts[index])
+	}
+	beforeCanonical, beforeHash, beforeNodes := first.Canonical(), first.StableHash(), first.Nodes()
+	limitedRequest := traversalEnvelope(root, LayerDeterministic, 8, 2)
+	limitedRequest.Relation = WasDerivedFrom
+	limited, err := first.Execute(limitedRequest)
+	if err != nil || len(limited.Result.DeterministicPaths) != 2 {
+		t.Fatalf("bounded cycle traversal = %#v, err=%v", limited.Result, err)
+	}
+	fullRequest := limitedRequest
+	fullRequest.Limit = 10
+	full, err := first.Execute(fullRequest)
+	if err != nil || len(full.Result.DeterministicPaths) < 2 {
+		t.Fatalf("expanded cycle traversal = %#v, err=%v", full.Result, err)
+	}
+	if !reflect.DeepEqual(limited.Result.DeterministicPaths, full.Result.DeterministicPaths[:2]) {
+		t.Fatalf("bounded cycle traversal changed canonical prefix: %#v vs %#v",
+			limited.Result.DeterministicPaths, full.Result.DeterministicPaths[:2])
+	}
+	for _, path := range limited.Result.DeterministicPaths {
+		if path.Depth() > 8 || hasRepeatedID(path.IDs) {
+			t.Fatalf("bounded cycle traversal escaped simple path: %#v", path)
+		}
+	}
+	for run := 0; run < 3; run++ {
+		replay, replayErr := second.Execute(limitedRequest)
+		if replayErr != nil || replay.Hash != limited.Hash {
+			t.Fatalf("bounded cycle replay %d changed: %#v, err=%v", run, replay, replayErr)
+		}
+	}
+	if first.Canonical() != beforeCanonical || first.StableHash() != beforeHash ||
+		!reflect.DeepEqual(first.Nodes(), beforeNodes) {
+		t.Fatal("bounded cycle traversal mutated graph authority")
+	}
+}
+
+func TestEnvelopeTraversalInvalidRelationFailsClosedWithoutMutation(t *testing.T) {
+	graph := New()
+	root := id("urn:query:invalid-traversal:root")
+	target := id("urn:query:invalid-traversal:target")
+	assertAdd(t, graph, NewFact(root, WasDerivedFrom, target))
+	request := traversalEnvelope(root, LayerDeterministic, 2, 2)
+	request.Relation = Relation("gooo:unknown")
+	assertRejectedEnvelope(t, graph, request, "invalid-traversal-relation", "unsupported_relation")
 }
