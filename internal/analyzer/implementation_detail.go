@@ -34,7 +34,7 @@ func deferredImplementationDetails(result SemanticAdapterResult, binding DeltaBi
 }
 
 func validateDeferredImplementationDetail(detail DeferredImplementationDetail) bool {
-	return detail.Detail.Reference != "" &&
+	return detail.Detail.Reference != "" && detail.Detail.Span.Filename != "" &&
 		detail.Detail.IdentityState.valid() && detail.Detail.Span.Start.Offset >= 0 &&
 		detail.Detail.Span.End.Offset >= detail.Detail.Span.Start.Offset
 }
