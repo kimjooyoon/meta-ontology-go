@@ -4,11 +4,21 @@ const crypto = require('node:crypto');
 
 const ROOT_FAILURE_CODE = 'CI-ROOT-OF-TRUST-001';
 const HEAD_BINDING_STATUS = 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED';
+const HEAD_BINDING_VERIFIED = 'verified';
 const DEFAULT_BRANCH_CODE = 'CI-GUARDIAN-DEFAULT-BRANCH-001';
-const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v1';
-const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE]);
+const LIVE_REF_CODE = 'CI-GUARDIAN-LIVE-REF-001';
+const PROMOTION_TOPOLOGY_CODE = 'CI-GUARDIAN-PROMOTION-TOPOLOGY-001';
+const CHECK_IDENTITY_CODE = 'CI-GUARDIAN-CHECK-IDENTITY-001';
+const PROTECTION_CODE = 'CI-GUARDIAN-PROTECTION-001';
+const OBSERVER_ENVIRONMENT = 'guardian-observer';
+const OBSERVER_FRESHNESS_WINDOW_MS = 10 * 60 * 1000;
+const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v2';
+const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE, PROTECTION_CODE]);
 const ALLOWED_BASES = new Set(['dev', 'main']);
 const ALLOWED_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review']);
+const PROOF_CONTEXTS = ['CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'];
+const DEV_PROTECTION_CONTEXTS = [...PROOF_CONTEXTS, 'CI guardian shadow'];
+const MAIN_PROTECTION_CONTEXTS = [...PROOF_CONTEXTS, 'CI guardian'];
 const VALID_STATUSES = new Set(['added', 'copied', 'changed', 'modified', 'removed', 'renamed']);
 const PROTECTED_FILES = new Set([
   '.github/ci-governance.json',
@@ -30,9 +40,9 @@ function canonicalStringCompare(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-function guardianFailure(reason) {
-  const error = new Error(`${ROOT_FAILURE_CODE}: ${reason}`);
-  error.code = ROOT_FAILURE_CODE;
+function guardianFailure(reason, code = ROOT_FAILURE_CODE) {
+  const error = new Error(`${code}: ${reason}`);
+  error.code = code;
   return error;
 }
 
@@ -50,6 +60,319 @@ function validRef(value) {
 
 function expectedWorkflowRef(repository) {
   return `${repository}/.github/workflows/ci-guardian.yml@refs/heads/dev`;
+}
+
+function digestBranchProtection(snapshot) {
+  const unsigned = {...snapshot, digest_sha256: ''};
+  return crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex');
+}
+
+function digestGuardianEnvironment(snapshot) {
+  const unsigned = {...snapshot, digest_sha256: ''};
+  return crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex');
+}
+
+function observerFreshnessFromResponse(response) {
+  const headers = response && response.headers;
+  const rawDate = headers && typeof headers.get === 'function' ? headers.get('date') : headers && (headers.date || headers.Date);
+  if (typeof rawDate !== 'string' || rawDate.trim() === '') return null;
+  const observedMillis = Date.parse(rawDate);
+  if (!Number.isFinite(observedMillis)) return null;
+  const validUntilMillis = observedMillis + OBSERVER_FRESHNESS_WINDOW_MS;
+  if (!Number.isFinite(validUntilMillis)) return null;
+  return {observed_at: new Date(observedMillis).toISOString(), valid_until: new Date(validUntilMillis).toISOString()};
+}
+
+function validObserverFreshness(observedAt, validUntil, now = new Date()) {
+  if (typeof observedAt !== 'string' || typeof validUntil !== 'string' || !(now instanceof Date) || !Number.isFinite(now.getTime())) return false;
+  const observedMillis = Date.parse(observedAt);
+  const validUntilMillis = Date.parse(validUntil);
+  if (!Number.isFinite(observedMillis) || !Number.isFinite(validUntilMillis)) return false;
+  return validUntilMillis - observedMillis === OBSERVER_FRESHNESS_WINDOW_MS && observedMillis <= now.getTime() && now.getTime() < validUntilMillis;
+}
+
+function emptyGuardianEnvironment({repository, tokenSource, runId, runAttempt, workflowSHA, missingReason}) {
+  const snapshot = {
+    repository: repository || null,
+    name: OBSERVER_ENVIRONMENT,
+    deployment_branch_policy: {protected_branches: false, custom_branch_policies: false},
+    protection_rules: [],
+    wait_timer: 0,
+    reviewers: [],
+    token_source: tokenSource || null,
+    read_status: 'unavailable',
+    missing_reason: missingReason || 'guardian_environment_api_unavailable',
+    run_id: validPositiveInteger(runId) ? runId : null,
+    run_attempt: validPositiveInteger(runAttempt) ? runAttempt : null,
+    workflow_sha: workflowSHA || null,
+    observed_at: null,
+    valid_until: null,
+    digest_sha256: '',
+  };
+  snapshot.digest_sha256 = digestGuardianEnvironment(snapshot);
+  return snapshot;
+}
+
+function validateGuardianEnvironment(snapshot, {requireVerified = false, now = new Date()} = {}) {
+  if (!snapshot || !validRepository(snapshot.repository) || snapshot.name !== OBSERVER_ENVIRONMENT || !snapshot.deployment_branch_policy || typeof snapshot.deployment_branch_policy.protected_branches !== 'boolean' || typeof snapshot.deployment_branch_policy.custom_branch_policies !== 'boolean' || !Array.isArray(snapshot.protection_rules) || !Number.isInteger(snapshot.wait_timer) || snapshot.wait_timer < 0 || !Array.isArray(snapshot.reviewers) || snapshot.reviewers.some((reviewer) => typeof reviewer !== 'string') || !validRef(snapshot.token_source) || !['verified', 'unavailable'].includes(snapshot.read_status) || typeof snapshot.missing_reason !== 'string' || !validPositiveInteger(snapshot.run_id) || !validPositiveInteger(snapshot.run_attempt) || !validSHA(snapshot.workflow_sha) || !/^[0-9a-f]{64}$/.test(snapshot.digest_sha256 || '')) {
+    throw guardianFailure('guardian observer environment snapshot is malformed', PROTECTION_CODE);
+  }
+  if (snapshot.digest_sha256 !== digestGuardianEnvironment(snapshot)) throw guardianFailure('guardian observer environment digest mismatch', PROTECTION_CODE);
+  if (snapshot.read_status === 'verified') {
+    if (snapshot.token_source !== 'github.token' || snapshot.deployment_branch_policy.protected_branches !== true || snapshot.deployment_branch_policy.custom_branch_policies !== false || snapshot.protection_rules.some((rule) => rule !== 'branch_policy') || snapshot.protection_rules.length > 1 || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason !== '' || !validObserverFreshness(snapshot.observed_at, snapshot.valid_until, now)) {
+      throw guardianFailure('guardian observer environment policy is not exact', PROTECTION_CODE);
+    }
+  } else if (snapshot.deployment_branch_policy.protected_branches || snapshot.deployment_branch_policy.custom_branch_policies || snapshot.protection_rules.length !== 0 || snapshot.wait_timer !== 0 || snapshot.reviewers.length !== 0 || snapshot.missing_reason === '' || snapshot.observed_at !== null || snapshot.valid_until !== null) {
+    throw guardianFailure('guardian observer environment is not fail-closed', PROTECTION_CODE);
+  }
+  if (requireVerified && snapshot.read_status !== 'verified') throw guardianFailure('guardian observer environment evidence is unavailable', PROTECTION_CODE);
+  return snapshot;
+}
+
+async function observeGuardianEnvironment({getEnvironment, repository, tokenSource, runId, runAttempt, workflowSHA, now = new Date()}) {
+  const unavailable = (reason) => emptyGuardianEnvironment({repository, tokenSource, runId, runAttempt, workflowSHA, missingReason: reason});
+  if (typeof getEnvironment !== 'function' || !validRepository(repository) || !validRef(tokenSource) || !validPositiveInteger(runId) || !validPositiveInteger(runAttempt) || !validSHA(workflowSHA)) return unavailable('guardian_environment_observer_input_invalid');
+  let response;
+  try {
+    response = await getEnvironment({owner: repository.split('/')[0], repo: repository.split('/')[1], environment_name: OBSERVER_ENVIRONMENT});
+  } catch (error) {
+    return unavailable('guardian_environment_api_unavailable');
+  }
+  const freshness = observerFreshnessFromResponse(response);
+  if (!freshness) return unavailable('guardian_environment_response_date_missing_or_malformed');
+  const data = response && response.data;
+  const policy = data && data.deployment_branch_policy;
+  const rules = data && data.protection_rules;
+  const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object || {}, key);
+  if (!response || (response.status !== undefined && response.status !== 200) || !data || data.name !== OBSERVER_ENVIRONMENT || !policy || !hasOwn(policy, 'protected_branches') || typeof policy.protected_branches !== 'boolean' || !hasOwn(policy, 'custom_branch_policies') || typeof policy.custom_branch_policies !== 'boolean' || !hasOwn(data, 'wait_timer') || !Number.isInteger(data.wait_timer) || data.wait_timer < 0 || !hasOwn(data, 'reviewers') || !Array.isArray(data.reviewers) || data.reviewers.some((reviewer) => !reviewer || typeof reviewer !== 'object') || !Array.isArray(rules) || rules.some((rule) => !rule || typeof rule !== 'object' || rule.type !== 'branch_policy')) return unavailable('guardian_environment_api_malformed');
+  const snapshot = {
+    repository,
+    name: OBSERVER_ENVIRONMENT,
+    deployment_branch_policy: {protected_branches: policy.protected_branches, custom_branch_policies: policy.custom_branch_policies},
+    protection_rules: rules.map(() => 'branch_policy'),
+    wait_timer: data.wait_timer,
+    reviewers: data.reviewers.map(() => 'reviewer'),
+    token_source: tokenSource,
+    read_status: 'verified',
+    missing_reason: '',
+    run_id: runId,
+    run_attempt: runAttempt,
+    workflow_sha: workflowSHA,
+    observed_at: freshness.observed_at,
+    valid_until: freshness.valid_until,
+    digest_sha256: '',
+  };
+  snapshot.digest_sha256 = digestGuardianEnvironment(snapshot);
+  try {
+    validateGuardianEnvironment(snapshot, {requireVerified: true, now});
+  } catch (error) {
+    return emptyGuardianEnvironment({repository, tokenSource, runId, runAttempt, workflowSHA, missingReason: 'guardian_environment_freshness_or_policy_mismatch'});
+  }
+  return snapshot;
+}
+
+function protectionContextsForBranch(branch) {
+  if (branch === 'dev') return DEV_PROTECTION_CONTEXTS;
+  if (branch === 'main') return MAIN_PROTECTION_CONTEXTS;
+  return [];
+}
+
+function emptyBranchProtection({branch, repository, policySHA, eventRef, checkoutRef, baseSHA, headSHA, runId, runAttempt, workflowSHA, tokenSource, missingReason, appInstallationId = 0, appSlug = ''}) {
+  const snapshot = {
+    repository: repository || null,
+    branch: branch || null,
+    policy_sha256: policySHA || null,
+    event_ref: eventRef || null,
+    checkout_ref: checkoutRef || null,
+    token_source: tokenSource || null,
+    app_installation_id: appInstallationId,
+    app_slug: appSlug,
+    read_status: 'unavailable',
+    exists: false,
+    strict: false,
+    required_checks: [],
+    required_check_bindings: [],
+    enforce_admins: false,
+    required_reviews: 0,
+    dismiss_stale_reviews: false,
+    require_last_push_approval: false,
+    linear_history: false,
+    allow_force_pushes: false,
+    allow_deletions: false,
+    required_signatures: false,
+    required_conversation_resolution: false,
+    block_creations: false,
+    lock_branch: false,
+    allow_fork_syncing: false,
+    restrictions: null,
+    missing_reason: missingReason || 'branch_protection_api_unavailable',
+    base_sha: baseSHA || null,
+    head_sha: headSHA || null,
+    run_id: validPositiveInteger(runId) ? runId : null,
+    run_attempt: validPositiveInteger(runAttempt) ? runAttempt : null,
+    workflow_sha: workflowSHA || null,
+    observed_at: null,
+    valid_until: null,
+    digest_sha256: '',
+  };
+  snapshot.digest_sha256 = digestBranchProtection(snapshot);
+  return snapshot;
+}
+
+function sameSet(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  const expected = [...right].sort(canonicalStringCompare);
+  const actual = [...left].sort(canonicalStringCompare);
+  return actual.every((value, index) => value === expected[index]);
+}
+
+function validRequiredCheckBindings(bindings, contexts) {
+  if (!Array.isArray(bindings) || bindings.length !== contexts.length) return false;
+  const actual = bindings.map((binding) => binding && `${binding.context}\u0000${binding.app_id}`).sort(canonicalStringCompare);
+  const expected = contexts.map((context) => `${context}\u000015368`).sort(canonicalStringCompare);
+  return actual.every((value, index) => value === expected[index]);
+}
+
+function validatePublicBranchSummary(data) {
+  const checks = data && data.required_status_checks;
+  if (!data || data.protected !== true || !checks || !Array.isArray(checks.contexts) || !Array.isArray(checks.checks)) return false;
+  if (!sameSet(checks.contexts, MAIN_PROTECTION_CONTEXTS)) return false;
+  return validRequiredCheckBindings(checks.checks.map((check) => ({context: check && check.context, app_id: Number(check && check.app_id)})), MAIN_PROTECTION_CONTEXTS);
+}
+
+function validateBranchProtectionSnapshot(snapshot, {requireVerified = false, expectedBranch = null, expectedContexts = null, now = new Date()} = {}) {
+  const branch = expectedBranch || (snapshot && snapshot.branch);
+  const contexts = expectedContexts || protectionContextsForBranch(branch);
+  if (!snapshot || !['dev', 'main'].includes(branch) || snapshot.branch !== branch || contexts.length === 0 || !validRepository(snapshot.repository) || !/^[0-9a-f]{64}$/.test(snapshot.policy_sha256 || '') || !validRef(snapshot.event_ref) || !validRef(snapshot.checkout_ref) || !validSHA(snapshot.base_sha) || !validSHA(snapshot.head_sha) || !validPositiveInteger(snapshot.run_id) || !validPositiveInteger(snapshot.run_attempt) || !validSHA(snapshot.workflow_sha) || !validRef(snapshot.token_source) || !['verified', 'unavailable'].includes(snapshot.read_status) || !Array.isArray(snapshot.required_checks) || !Array.isArray(snapshot.required_check_bindings) || typeof snapshot.required_signatures !== 'boolean' || typeof snapshot.required_conversation_resolution !== 'boolean' || typeof snapshot.block_creations !== 'boolean' || typeof snapshot.lock_branch !== 'boolean' || typeof snapshot.allow_fork_syncing !== 'boolean' || (snapshot.restrictions !== undefined && snapshot.restrictions !== null) || !/^([0-9a-f]{64})$/.test(snapshot.digest_sha256 || '')) {
+    throw guardianFailure('branch protection snapshot is malformed', PROTECTION_CODE);
+  }
+  if (snapshot.digest_sha256 !== digestBranchProtection(snapshot)) throw guardianFailure('branch protection snapshot digest mismatch', PROTECTION_CODE);
+  if (snapshot.read_status === 'verified') {
+    if (snapshot.token_source !== 'github_app_installation' || !validPositiveInteger(snapshot.app_installation_id) || typeof snapshot.app_slug !== 'string' || snapshot.app_slug.length === 0 || !snapshot.exists || snapshot.strict !== true || !sameSet(snapshot.required_checks, contexts) || !validRequiredCheckBindings(snapshot.required_check_bindings, contexts) || snapshot.enforce_admins !== true || snapshot.required_reviews !== 0 || snapshot.dismiss_stale_reviews !== false || snapshot.require_last_push_approval !== false || snapshot.linear_history !== true || snapshot.allow_force_pushes !== false || snapshot.allow_deletions !== false || snapshot.required_signatures !== false || snapshot.required_conversation_resolution !== false || snapshot.block_creations !== false || snapshot.lock_branch !== false || snapshot.allow_fork_syncing !== false || snapshot.restrictions !== null || snapshot.missing_reason !== '' || !validObserverFreshness(snapshot.observed_at, snapshot.valid_until, now)) {
+      throw guardianFailure('full branch protection snapshot is incomplete or not exact', PROTECTION_CODE);
+    }
+  } else if (snapshot.exists || snapshot.strict || snapshot.required_checks.length !== 0 || snapshot.required_check_bindings.length !== 0 || snapshot.required_signatures || snapshot.required_conversation_resolution || snapshot.block_creations || snapshot.lock_branch || snapshot.allow_fork_syncing || snapshot.restrictions !== null || snapshot.missing_reason === '' || snapshot.observed_at !== null || snapshot.valid_until !== null) {
+    throw guardianFailure('unavailable branch protection snapshot is not fail-closed', PROTECTION_CODE);
+  }
+  if (requireVerified && snapshot.read_status !== 'verified') throw guardianFailure('full branch protection observer evidence is unavailable', PROTECTION_CODE);
+  return snapshot;
+}
+
+async function observeBranchProtection({getProtection, branch = 'main', expectedContexts = protectionContextsForBranch(branch), repository, policySHA, eventRef, checkoutRef, baseSHA, headSHA, runId, runAttempt, workflowSHA, tokenSource, appInstallationId = 0, appSlug = '', now = new Date()}) {
+  const unavailable = (reason) => ({...emptyBranchProtection({branch, repository, policySHA, eventRef, checkoutRef, baseSHA, headSHA, runId, runAttempt, workflowSHA, tokenSource, missingReason: reason, appInstallationId, appSlug}), digest_sha256: ''});
+  const finishUnavailable = (reason) => { const snapshot = unavailable(reason); snapshot.digest_sha256 = digestBranchProtection(snapshot); return snapshot; };
+  if (typeof getProtection !== 'function' || !validRepository(repository) || !/^[0-9a-f]{64}$/.test(policySHA || '') || !validRef(eventRef) || !validRef(checkoutRef) || !validSHA(baseSHA) || !validSHA(headSHA) || !validPositiveInteger(runId) || !validPositiveInteger(runAttempt) || !validSHA(workflowSHA) || !validRef(tokenSource)) return finishUnavailable('branch_protection_observer_input_invalid');
+  let response;
+  try {
+    response = await getProtection({owner: repository.split('/')[0], repo: repository.split('/')[1], branch});
+  } catch (error) {
+    return finishUnavailable('branch_protection_api_unavailable');
+  }
+  const freshness = observerFreshnessFromResponse(response);
+  if (!freshness) return finishUnavailable('branch_protection_response_date_missing_or_malformed');
+  const data = response && response.data;
+  const checks = data && data.required_status_checks;
+  const reviews = data && data.required_pull_request_reviews;
+  const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object || {}, key);
+  const boolObject = (object, key) => Boolean(object && hasOwn(object, key) && typeof object[key] === 'boolean');
+  if (!response || (response.status !== undefined && response.status !== 200) || !data || !hasOwn(data, 'required_status_checks') || !checks || !boolObject(checks, 'strict') || !Array.isArray(checks.contexts) || !Array.isArray(checks.checks) || !hasOwn(data, 'enforce_admins') || !boolObject(data.enforce_admins, 'enabled') || !hasOwn(data, 'required_linear_history') || !boolObject(data.required_linear_history, 'enabled') || !hasOwn(data, 'allow_force_pushes') || !boolObject(data.allow_force_pushes, 'enabled') || !hasOwn(data, 'allow_deletions') || !boolObject(data.allow_deletions, 'enabled') || (reviews !== null && reviews !== undefined) || !hasOwn(data, 'required_signatures') || !boolObject(data.required_signatures, 'enabled') || !hasOwn(data, 'required_conversation_resolution') || !boolObject(data.required_conversation_resolution, 'enabled') || !hasOwn(data, 'block_creations') || !boolObject(data.block_creations, 'enabled') || !hasOwn(data, 'lock_branch') || !boolObject(data.lock_branch, 'enabled') || !hasOwn(data, 'allow_fork_syncing') || !boolObject(data.allow_fork_syncing, 'enabled') || (hasOwn(data, 'restrictions') && data.restrictions !== null) || checks.contexts.some((context) => typeof context !== 'string') || checks.checks.some((check) => !check || typeof check !== 'object' || !hasOwn(check, 'context') || typeof check.context !== 'string' || !hasOwn(check, 'app_id') || !Number.isInteger(check.app_id))) return finishUnavailable('branch_protection_api_malformed');
+  const bindings = checks.checks.map((check) => ({context: check && check.context, app_id: Number(check && check.app_id)}));
+  const snapshot = {
+    repository,
+    branch,
+    policy_sha256: policySHA,
+    event_ref: eventRef,
+    checkout_ref: checkoutRef,
+    token_source: tokenSource,
+    app_installation_id: appInstallationId,
+    app_slug: appSlug,
+    read_status: 'verified',
+    exists: true,
+    strict: Boolean(checks.strict),
+    required_checks: [...checks.contexts].sort(canonicalStringCompare),
+    required_check_bindings: bindings.sort((left, right) => canonicalStringCompare(`${left.context}\u0000${left.app_id}`, `${right.context}\u0000${right.app_id}`)),
+    enforce_admins: Boolean(data.enforce_admins && data.enforce_admins.enabled),
+    required_reviews: Number(reviews && reviews.required_approving_review_count || 0),
+    dismiss_stale_reviews: Boolean(reviews && reviews.dismiss_stale_reviews),
+    require_last_push_approval: Boolean(reviews && reviews.require_last_push_approval),
+    linear_history: Boolean(data.required_linear_history && data.required_linear_history.enabled),
+    allow_force_pushes: Boolean(data.allow_force_pushes && data.allow_force_pushes.enabled),
+    allow_deletions: Boolean(data.allow_deletions && data.allow_deletions.enabled),
+    required_signatures: Boolean(data.required_signatures && data.required_signatures.enabled),
+    required_conversation_resolution: Boolean(data.required_conversation_resolution && data.required_conversation_resolution.enabled),
+    block_creations: Boolean(data.block_creations && data.block_creations.enabled),
+    lock_branch: Boolean(data.lock_branch && data.lock_branch.enabled),
+    allow_fork_syncing: Boolean(data.allow_fork_syncing && data.allow_fork_syncing.enabled),
+    restrictions: null,
+    missing_reason: '',
+    base_sha: baseSHA,
+    head_sha: headSHA,
+    run_id: runId,
+    run_attempt: runAttempt,
+    workflow_sha: workflowSHA,
+    observed_at: freshness.observed_at,
+    valid_until: freshness.valid_until,
+    digest_sha256: '',
+  };
+  snapshot.digest_sha256 = digestBranchProtection(snapshot);
+  try {
+    validateBranchProtectionSnapshot(snapshot, {requireVerified: true, expectedBranch: branch, expectedContexts, now});
+  } catch (error) {
+    return finishUnavailable('branch_protection_policy_mismatch');
+  }
+  return snapshot;
+}
+
+function routeForPull(pull) {
+  const identity = pullIdentity(pull);
+  if (identity.base_ref === 'dev' && typeof identity.head_ref === 'string' && identity.head_ref.startsWith('agent/')) return 'feature_dev';
+  if (identity.base_ref === 'main' && identity.head_ref === 'dev') return 'promotion_main';
+  return null;
+}
+
+function checkNameForRoute(route) {
+  if (route === 'feature_dev') return 'CI guardian shadow';
+  if (route === 'promotion_main') return 'CI guardian';
+  return null;
+}
+
+function validateLiveRefResponse(response, ref) {
+  if (!response || (response.status !== undefined && response.status !== 200) || !response.data || !response.data.object || !validSHA(response.data.object.sha)) {
+    throw guardianFailure(`live ref ${ref} is unavailable or malformed`, LIVE_REF_CODE);
+  }
+  return response.data.object.sha;
+}
+
+async function readLiveTopology({getRef, compareCommits, owner, repo}) {
+  if (typeof getRef !== 'function' || typeof compareCommits !== 'function' || typeof owner !== 'string' || typeof repo !== 'string') {
+    throw guardianFailure('live ref API binding is missing or malformed', LIVE_REF_CODE);
+  }
+  let devResponse;
+  let mainResponse;
+  try {
+    [devResponse, mainResponse] = await Promise.all([
+      getRef({owner, repo, ref: 'heads/dev'}),
+      getRef({owner, repo, ref: 'heads/main'}),
+    ]);
+  } catch (error) {
+    throw guardianFailure(`live ref API failed: ${error.message || error}`, LIVE_REF_CODE);
+  }
+  const devSha = validateLiveRefResponse(devResponse, 'heads/dev');
+  const mainSha = validateLiveRefResponse(mainResponse, 'heads/main');
+  let compareResponse;
+  try {
+    compareResponse = await compareCommits({owner, repo, base: mainSha, head: devSha});
+  } catch (error) {
+    throw guardianFailure(`live topology compare API failed: ${error.message || error}`, PROMOTION_TOPOLOGY_CODE);
+  }
+  const data = compareResponse && compareResponse.data;
+  if (!compareResponse || (compareResponse.status !== undefined && compareResponse.status !== 200) || !data || !['ahead', 'behind', 'identical', 'diverged'].includes(data.status) || !Number.isInteger(data.ahead_by) || !Number.isInteger(data.behind_by) || !data.merge_base_commit || !validSHA(data.merge_base_commit.sha)) {
+    throw guardianFailure('live topology compare response is malformed', PROMOTION_TOPOLOGY_CODE);
+  }
+  return {
+    refs: {dev_sha: devSha, main_sha: mainSha},
+    topology: {status: data.status, ahead_by: data.ahead_by, behind_by: data.behind_by, merge_base_sha: data.merge_base_commit.sha},
+  };
 }
 
 function validPositiveInteger(value) {
@@ -241,20 +564,47 @@ function defaultBranchDecision(defaultBranch, eventRef) {
   return {decision: 'PASS', code: null, reason: null};
 }
 
-function trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha}) {
+function trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName}) {
   const identity = pullIdentity(pull);
-  return defaultBranch === 'dev' && workflowRef === expectedWorkflowRef(repository) && runtimeSha === workflowSha && identity.base_repo === repository && identity.head_repo === repository && identity.base_ref === 'main' && identity.head_ref === 'dev' && identity.head_sha === workflowSha && validSHA(workflowSha);
+  const liveMatches = validLiveSnapshot(liveBefore) && validLiveSnapshot(liveAfter) && liveBefore.refs.dev_sha === liveAfter.refs.dev_sha && liveBefore.refs.main_sha === liveAfter.refs.main_sha;
+  const promotionTopology = validPromotionTopology(liveBefore) && validPromotionTopology(liveAfter);
+  return defaultBranch === 'dev' && workflowRef === expectedWorkflowRef(repository) && runtimeSha === workflowSha && checkName === 'CI guardian' && identity.base_repo === repository && identity.head_repo === repository && identity.base_ref === 'main' && identity.head_ref === 'dev' && identity.head_sha === workflowSha && validSHA(workflowSha) && identity.base_sha === liveBefore?.refs.main_sha && identity.head_sha === liveBefore?.refs.dev_sha && identity.head_sha === liveAfter?.refs.dev_sha && identity.base_sha === liveAfter?.refs.main_sha && liveMatches && promotionTopology;
 }
 
-function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef, eventRef, workflowSha, runtimeSha, result, kernelBeforeDigest, kernelAfterDigest}) {
+function validLiveSnapshot(snapshot) {
+  return Boolean(snapshot && snapshot.refs && validSHA(snapshot.refs.dev_sha) && validSHA(snapshot.refs.main_sha) && snapshot.topology && ['ahead', 'behind', 'identical', 'diverged'].includes(snapshot.topology.status) && Number.isInteger(snapshot.topology.ahead_by) && snapshot.topology.ahead_by >= 0 && Number.isInteger(snapshot.topology.behind_by) && snapshot.topology.behind_by >= 0 && validSHA(snapshot.topology.merge_base_sha));
+}
+
+function validPromotionTopology(snapshot) {
+  return validLiveSnapshot(snapshot) && snapshot.topology.status === 'ahead' && snapshot.topology.ahead_by > 0 && snapshot.topology.behind_by === 0 && snapshot.topology.merge_base_sha === snapshot.refs.main_sha;
+}
+
+function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef, eventRef, workflowSha, runtimeSha, result, kernelBeforeDigest, kernelAfterDigest, liveBefore, liveAfter, checkName}) {
   const route = pullIdentity(pull);
-  const promotion = trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha});
-  const featureRoute = route.base_ref === 'dev' && route.head_ref && route.head_ref.startsWith('agent/');
+  const routeName = routeForPull(pull);
+  const expectedCheckName = checkNameForRoute(routeName);
+  if (!routeName || !expectedCheckName || (checkName && checkName !== expectedCheckName)) {
+    return {...result, decision: 'FAIL_CLOSED', code: CHECK_IDENTITY_CODE, reason: 'guardian route or check identity is not canonical'};
+  }
+  if (defaultBranch !== 'dev' || eventRef !== 'refs/heads/dev' || workflowRef !== expectedWorkflowRef(repository) || runtimeSha !== workflowSha || !validSHA(workflowSha) || route.base_repo !== repository || route.head_repo !== repository) {
+    return {...result, decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'guardian runtime is not the protected default-dev authority'};
+  }
+  if (!validLiveSnapshot(liveBefore) || !validLiveSnapshot(liveAfter) || liveBefore.refs.dev_sha !== liveAfter.refs.dev_sha || liveBefore.refs.main_sha !== liveAfter.refs.main_sha) {
+    return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'guardian live refs are missing, malformed, or drifted'};
+  }
+  const promotion = trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName: expectedCheckName});
+  const featureRoute = routeName === 'feature_dev';
+  if (featureRoute && expectedCheckName !== 'CI guardian shadow') {
+    return {...result, decision: 'FAIL_CLOSED', code: CHECK_IDENTITY_CODE, reason: 'feature route must emit the shadow guardian check'};
+  }
+  if (featureRoute && (route.base_sha !== workflowSha || route.base_sha !== liveBefore.refs.dev_sha || liveBefore.refs.dev_sha !== liveAfter.refs.dev_sha)) {
+    return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'feature base, workflow, and live dev SHAs are not identical'};
+  }
   if (result.decision === 'PASS' && featureRoute && route.base_sha !== workflowSha) {
-    return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'feature base SHA is not the exact workflow SHA'};
+    return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'feature base SHA is not the exact workflow SHA'};
   }
   if (route.base_ref === 'main' && !promotion) {
-    return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'main promotion is not the exact same-repository dev workflow authority'};
+    return {...result, decision: 'FAIL_CLOSED', code: PROMOTION_TOPOLOGY_CODE, reason: 'main promotion is not the exact same-repository dev workflow authority'};
   }
   if (result.decision === 'FAIL_CLOSED' && (result.kernelPaths || []).length > 0 && promotion) {
     if (!/^sha256:[0-9a-f]{64}$/.test(kernelBeforeDigest || '') || !/^sha256:[0-9a-f]{64}$/.test(kernelAfterDigest || '')) {
@@ -268,7 +618,7 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
       return {...result, ...activation};
     }
     if (workflowRef !== expectedWorkflowRef(repository) || runtimeSha !== workflowSha || !validSHA(workflowSha) || !validSHA(runtimeSha)) {
-      return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
+      return {...result, decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
     }
   }
   return result;
@@ -287,8 +637,10 @@ function digestGuardianArtifact(manifest) {
   return `sha256:${crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')}`;
 }
 
-function buildGuardianArtifact({pull, repository, action, defaultBranch, workflowRef, workflowSha, runtimeRef, runtimeSha, runId, runAttempt, eventRef, result}) {
+function buildGuardianArtifact({pull, repository, action, defaultBranch, workflowRef, workflowSha, runtimeRef, runtimeSha, runId, runAttempt, eventRef, result, liveBefore, liveAfter, checkName, branchProtection = null, devBranchProtection = null, observerEnvironment = null, observerEnvironmentSnapshot = null}) {
   const identity = pullIdentity(pull);
+  const route = routeForPull(pull);
+  const topology = liveAfter && liveAfter.topology ? liveAfter.topology : liveBefore && liveBefore.topology ? liveBefore.topology : null;
   const manifest = {
     schema: GUARDIAN_SCHEMA,
     repository: repository || null,
@@ -308,7 +660,17 @@ function buildGuardianArtifact({pull, repository, action, defaultBranch, workflo
     run_attempt: validPositiveInteger(runAttempt) ? runAttempt : null,
     event_ref: eventRef || null,
     default_branch: defaultBranch || null,
-    head_binding_status: HEAD_BINDING_STATUS,
+    observer_environment: observerEnvironment || null,
+    observer_environment_snapshot: observerEnvironmentSnapshot,
+    observer_environment_digest: observerEnvironmentSnapshot && observerEnvironmentSnapshot.digest_sha256 ? observerEnvironmentSnapshot.digest_sha256 : null,
+    head_binding_status: result && result.decision === 'PASS' ? HEAD_BINDING_VERIFIED : HEAD_BINDING_STATUS,
+    route,
+    check_name: checkName || checkNameForRoute(route),
+    live_refs_before: liveBefore ? liveBefore.refs : null,
+    live_refs_after: liveAfter ? liveAfter.refs : null,
+    topology,
+    branch_protection: branchProtection,
+    dev_branch_protection: devBranchProtection,
     kernel_before_sha256: result && result.kernelBeforeDigest ? result.kernelBeforeDigest : null,
     kernel_after_sha256: result && result.kernelAfterDigest ? result.kernelAfterDigest : null,
     changed_files: sortedChangedFiles(result && result.files),
@@ -364,11 +726,28 @@ function validateExpectedArtifactTuple(manifest, expected) {
   }
 }
 
-function validateGuardianArtifact(manifest, expected) {
-  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || manifest.head_binding_status !== HEAD_BINDING_STATUS || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0) {
+function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
+  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || ![HEAD_BINDING_STATUS, HEAD_BINDING_VERIFIED].includes(manifest.head_binding_status) || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0 || !['feature_dev', 'promotion_main'].includes(manifest.route) || !['CI guardian shadow', 'CI guardian'].includes(manifest.check_name)) {
     throw guardianFailure('guardian artifact schema or identity is malformed');
   }
   validateExpectedArtifactTuple(manifest, expected);
+  if (manifest.check_name !== checkNameForRoute(manifest.route)) {
+    throw guardianFailure('guardian artifact check identity does not match route', CHECK_IDENTITY_CODE);
+  }
+  if (manifest.route === 'promotion_main') {
+    if (manifest.observer_environment !== OBSERVER_ENVIRONMENT) throw guardianFailure('guardian observer environment is not the protected environment', PROTECTION_CODE);
+    validateBranchProtectionSnapshot(manifest.branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'main', expectedContexts: MAIN_PROTECTION_CONTEXTS, now});
+    validateBranchProtectionSnapshot(manifest.dev_branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'dev', expectedContexts: DEV_PROTECTION_CONTEXTS, now});
+    validateGuardianEnvironment(manifest.observer_environment_snapshot, {requireVerified: manifest.decision === 'PASS', now});
+    if (manifest.observer_environment_digest !== manifest.observer_environment_snapshot.digest_sha256) throw guardianFailure('guardian observer environment digest is not bound', PROTECTION_CODE);
+  } else if (manifest.branch_protection !== null || manifest.dev_branch_protection !== null || manifest.observer_environment_snapshot !== null || manifest.observer_environment_digest !== null) {
+    throw guardianFailure('feature guardian artifact must not carry privileged observer snapshots', PROTECTION_CODE);
+  }
+  const snapshotsPresent = manifest.live_refs_before !== null && manifest.live_refs_before !== undefined && manifest.live_refs_after !== null && manifest.live_refs_after !== undefined;
+  const snapshotsValid = validLiveSnapshot({refs: manifest.live_refs_before, topology: manifest.topology}) && validLiveSnapshot({refs: manifest.live_refs_after, topology: manifest.topology}) && manifest.live_refs_before.dev_sha === manifest.live_refs_after.dev_sha && manifest.live_refs_before.main_sha === manifest.live_refs_after.main_sha;
+  if ((manifest.decision === 'PASS' && !snapshotsValid) || (snapshotsPresent && !snapshotsValid)) {
+    throw guardianFailure('guardian artifact live ref snapshots are missing, malformed, or drifted', LIVE_REF_CODE);
+  }
   if (manifest.base_repo !== manifest.repository) {
     throw guardianFailure('guardian artifact base repository is not the event repository');
   }
@@ -387,6 +766,12 @@ function validateGuardianArtifact(manifest, expected) {
   }
   if (manifest.decision === 'PASS' && manifest.code !== null) {
     throw guardianFailure('guardian artifact PASS code must be null');
+  }
+  if (manifest.head_binding_status !== HEAD_BINDING_VERIFIED && manifest.decision === 'PASS') {
+    throw guardianFailure('guardian PASS head binding must be verified', CHECK_IDENTITY_CODE);
+  }
+  if (manifest.decision === 'FAIL_CLOSED' && manifest.head_binding_status !== HEAD_BINDING_STATUS) {
+    throw guardianFailure('guardian FAIL_CLOSED head binding must remain unverified', CHECK_IDENTITY_CODE);
   }
   if (!Number.isInteger(manifest.changed_files_count) || manifest.changed_files_count !== manifest.changed_files.length) {
     throw guardianFailure('guardian artifact changed-file count does not match collected files');
@@ -418,6 +803,14 @@ function validateGuardianArtifact(manifest, expected) {
       throw guardianFailure('guardian artifact PASS kernel propagation is not exact dev-to-main authority');
     }
   }
+  if (manifest.decision === 'PASS' && manifest.route === 'feature_dev' && (manifest.base_ref !== 'dev' || manifest.check_name !== 'CI guardian shadow' || manifest.base_sha !== manifest.workflow_sha || manifest.base_sha !== manifest.live_refs_before.dev_sha)) {
+    throw guardianFailure('guardian feature route identity is not exact', LIVE_REF_CODE);
+  }
+  if (manifest.decision === 'PASS' && manifest.route === 'promotion_main') {
+    if (manifest.check_name !== 'CI guardian' || manifest.base_ref !== 'main' || manifest.head_ref !== 'dev' || manifest.live_refs_before.main_sha !== manifest.base_sha || manifest.live_refs_after.main_sha !== manifest.base_sha || manifest.live_refs_before.dev_sha !== manifest.head_sha || manifest.live_refs_after.dev_sha !== manifest.head_sha || !validPromotionTopology({refs: manifest.live_refs_before, topology: manifest.topology}) || !validPromotionTopology({refs: manifest.live_refs_after, topology: manifest.topology}) || manifest.branch_protection.read_status !== 'verified' || manifest.branch_protection.branch !== 'main' || manifest.branch_protection.base_sha !== manifest.base_sha || manifest.branch_protection.head_sha !== manifest.head_sha || manifest.branch_protection.workflow_sha !== manifest.workflow_sha || manifest.branch_protection.run_id !== manifest.run_id || manifest.branch_protection.run_attempt !== manifest.run_attempt || manifest.dev_branch_protection.read_status !== 'verified' || manifest.dev_branch_protection.branch !== 'dev' || manifest.dev_branch_protection.base_sha !== manifest.base_sha || manifest.dev_branch_protection.head_sha !== manifest.head_sha || manifest.dev_branch_protection.workflow_sha !== manifest.workflow_sha || manifest.dev_branch_protection.run_id !== manifest.run_id || manifest.dev_branch_protection.run_attempt !== manifest.run_attempt || manifest.observer_environment_snapshot.read_status !== 'verified' || manifest.observer_environment_snapshot.run_id !== manifest.run_id || manifest.observer_environment_snapshot.run_attempt !== manifest.run_attempt || manifest.observer_environment_snapshot.workflow_sha !== manifest.workflow_sha) {
+      throw guardianFailure('guardian promotion topology evidence is not exact', PROMOTION_TOPOLOGY_CODE);
+    }
+  }
   if (manifest.bundle_sha256 !== digestGuardianArtifact(manifest)) {
     throw guardianFailure('guardian artifact digest does not match canonical content');
   }
@@ -427,11 +820,35 @@ function validateGuardianArtifact(manifest, expected) {
 module.exports = {
   ALLOWED_BASES,
   DEFAULT_BRANCH_CODE,
+  OBSERVER_FRESHNESS_WINDOW_MS,
+  LIVE_REF_CODE,
+  PROMOTION_TOPOLOGY_CODE,
+  CHECK_IDENTITY_CODE,
+  PROTECTION_CODE,
+  DEV_PROTECTION_CONTEXTS,
+  MAIN_PROTECTION_CONTEXTS,
+  protectionContextsForBranch,
+  OBSERVER_ENVIRONMENT,
   GUARDIAN_SCHEMA,
   HEAD_BINDING_STATUS,
+  HEAD_BINDING_VERIFIED,
   PROTECTED_FILES,
   PROTECTED_PREFIXES,
   ROOT_FAILURE_CODE,
+  readLiveTopology,
+  digestBranchProtection,
+  digestGuardianEnvironment,
+  observerFreshnessFromResponse,
+  validObserverFreshness,
+  emptyGuardianEnvironment,
+  observeBranchProtection,
+  observeGuardianEnvironment,
+  validateBranchProtectionSnapshot,
+  validatePublicBranchSummary,
+  validateGuardianEnvironment,
+  validatePublicBranchSummary,
+  routeForPull,
+  checkNameForRoute,
   guardianFailure,
   buildGuardianArtifact,
   classifyGuardianDecision,

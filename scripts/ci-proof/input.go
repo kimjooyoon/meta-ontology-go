@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
 )
@@ -38,7 +40,13 @@ func readInputs(root, governancePath, evidencePath, jobsPath, contextPath string
 	if err := validateDomainEvidence(context.DomainEvidence, evidence, context); err != nil {
 		return proofInputs{}, err
 	}
-	return proofInputs{Governance: governanceInput{Schema: matrix.Schema, Promotion: promotionInput{Source: matrix.Promotion.Source, Target: matrix.Promotion.Target, RequiredChecks: matrix.Promotion.RequiredChecks, BranchProtectionRequired: matrix.Promotion.BranchProtectionRequired}}, Evidence: evidence, Jobs: jobs, Context: context}, nil
+	return proofInputs{Governance: governanceInput{
+		Schema:           matrix.Schema,
+		RequiredContexts: governanceContexts{Dev: matrix.RequiredContexts.Dev, Main: matrix.RequiredContexts.Main},
+		GuardianContexts: guardianContexts{DevShadow: matrix.GuardianContexts.DevShadow, MainRequired: matrix.GuardianContexts.MainRequired},
+		ProofJobs:        matrix.ProofJobs,
+		Promotion:        promotionInput{Source: matrix.Promotion.Source, Target: matrix.Promotion.Target, RequiredChecks: matrix.Promotion.RequiredChecks, BranchProtectionRequired: matrix.Promotion.BranchProtectionRequired},
+	}, Evidence: evidence, Jobs: jobs, Context: context}, nil
 }
 
 func readJobs(filename string) ([]jobInput, error) {
@@ -129,10 +137,14 @@ func validateEvidenceDigests(root string, evidence evidenceInput) error {
 }
 
 func validateBranchProtection(protection branchProtection, evidence evidenceInput, context contextInput) error {
-	if protection.Repository != evidence.Repository || protection.Branch != context.BaseRef || protection.PolicySHA != evidence.Digests.Policy || protection.EventRef != context.EventRef || protection.CheckoutRef != context.CheckoutRef || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA {
+	return validateBranchProtectionAt(protection, evidence, context, time.Now().UTC())
+}
+
+func validateBranchProtectionAt(protection branchProtection, evidence evidenceInput, context contextInput, now time.Time) error {
+	if protection.Repository != evidence.Repository || protection.PolicySHA != evidence.Digests.Policy || !validSHA(protection.BaseSHA) || !validSHA(protection.HeadSHA) || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA {
 		return fmt.Errorf("branch protection snapshot is missing or unbound")
 	}
-	if protection.TokenSource != "github.token" && protection.TokenSource != "BRANCH_PROTECTION_TOKEN" || protection.ReadStatus != "verified" && protection.ReadStatus != "unavailable" {
+	if protection.ReadStatus != "verified" && protection.ReadStatus != "unavailable" {
 		return fmt.Errorf("branch protection snapshot source or status is invalid")
 	}
 	if protection.ReadStatus == "unavailable" && protection.MissingReason == "" || protection.ReadStatus == "verified" && protection.MissingReason != "" {
@@ -141,15 +153,46 @@ func validateBranchProtection(protection branchProtection, evidence evidenceInpu
 	if protection.Digest != digestBranchProtection(protection) {
 		return fmt.Errorf("branch protection snapshot digest mismatch")
 	}
+	if context.BaseRef == "dev" {
+		if protection.Branch != "dev" || protection.TokenSource != "not_observed" || protection.ReadStatus != "unavailable" || protection.Exists || protection.Strict || len(protection.RequiredChecks) != 0 || len(protection.RequiredCheckBindings) != 0 || protection.MissingReason != "trusted_guardian_required" || protection.EventRef != context.EventRef || protection.CheckoutRef != context.CheckoutRef || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA || protection.ObservedAt != nil || protection.ValidUntil != nil {
+			return fmt.Errorf("feature proof must keep branch protection explicitly unobserved")
+		}
+		return nil
+	}
+	if context.BaseRef != "main" || protection.Branch != "main" || protection.TokenSource != "github_app_installation" || protection.ReadStatus != "verified" || !branchProtectionReadyForAt(protection, "main", now) {
+		return fmt.Errorf("main proof requires the trusted Guardian branch protection snapshot")
+	}
+	return nil
+}
+
+func validateTrustedBranchProtection(protection branchProtection, evidence evidenceInput, branch string) error {
+	return validateTrustedBranchProtectionAt(protection, evidence, branch, time.Now().UTC())
+}
+
+func validateTrustedBranchProtectionAt(protection branchProtection, evidence evidenceInput, branch string, now time.Time) error {
+	if protection.Repository != evidence.Repository || protection.Branch != branch || protection.PolicySHA != evidence.Digests.Policy || protection.TokenSource != "github_app_installation" || protection.ReadStatus != "verified" || !validSHA(protection.BaseSHA) || !validSHA(protection.HeadSHA) || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.EventRef != evidence.EventRef || protection.CheckoutRef != evidence.CheckoutRef || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA || !branchProtectionReadyForAt(protection, branch, now) {
+		return fmt.Errorf("trusted %s branch protection snapshot is missing or unbound", branch)
+	}
 	return nil
 }
 
 func branchProtectionReady(protection branchProtection) bool {
-	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, proofJobs)
+	return branchProtectionReadyFor(protection, "dev")
 }
 
-func promotionReady(promotion promotionInput, protection branchProtection) bool {
-	return promotion.BranchProtectionRequired && branchProtectionReady(protection)
+func requiredContextsForBase(base string) []string {
+	if base == "main" {
+		return append(append([]string(nil), proofJobs...), "CI guardian")
+	}
+	return append(append([]string(nil), proofJobs...), "CI guardian shadow")
+}
+
+func branchProtectionReadyFor(protection branchProtection, base string) bool {
+	return branchProtectionReadyForAt(protection, base, time.Now().UTC())
+}
+
+func branchProtectionReadyForAt(protection branchProtection, base string, now time.Time) bool {
+	return protection.ReadStatus == "verified" && protection.TokenSource == "github_app_installation" && protection.AppInstallationID > 0 && protection.AppSlug != "" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && !protection.RequiredSignatures && !protection.RequiredConversationResolution && !protection.BlockCreations && !protection.LockBranch && !protection.AllowForkSyncing && protection.Restrictions == nil && sameStringSet(protection.RequiredChecks, requiredContextsForBase(base)) && validRequiredCheckBindings(protection.RequiredCheckBindings, requiredContextsForBase(base)) && validObserverFreshness(protection.ObservedAt, protection.ValidUntil, now)
 }
 
 func digestBranchProtection(protection branchProtection) string {
@@ -184,6 +227,20 @@ func readJSON[T any](filename string) (T, error) {
 		return value, fmt.Errorf("empty JSON input %s", filename)
 	}
 	if err := json.Unmarshal(data, &value); err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func readStrictJSON[T any](filename string) (T, error) {
+	var value T
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return value, err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&value); err != nil {
 		return value, err
 	}
 	return value, nil

@@ -57,6 +57,17 @@ func TestGovernanceMatrixRejectsNonCIMode(t *testing.T) {
 	}
 }
 
+func TestGovernanceMatrixRejectsSixOnlyDevProtection(t *testing.T) {
+	matrix, err := ReadGovernanceMatrix(filepath.Join("..", "..", ".github", "ci-governance.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	matrix.RequiredContexts.Dev = canonicalJobs()
+	if err := ValidateGovernanceMatrix(matrix); err == nil {
+		t.Fatal("six-only dev protection was accepted as steady-state governance")
+	}
+}
+
 func TestGovernanceMatrixRejectsWildcardOwnership(t *testing.T) {
 	matrix := GovernanceMatrix{Schema: GovernanceSchemaVersion, Ownership: []GovernanceOwnership{{Branch: "agent/*", Paths: []string{"internal/verify"}}}}
 	if err := validateGovernanceOwnership(matrix.Ownership); err == nil {

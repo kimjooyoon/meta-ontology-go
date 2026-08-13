@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestCIMachineProofDoesNotRequireProtectionOrReviews(t *testing.T) {
@@ -13,7 +14,7 @@ func TestCIMachineProofDoesNotRequireProtectionOrReviews(t *testing.T) {
 	bundle.BranchProtection.Strict = false
 	bundle.BranchProtection.RequiredChecks = nil
 	bundle.BranchProtection.EnforceAdmins = false
-	bundle.BranchProtection.MissingReason = "branch_protection_token_unavailable"
+	bundle.BranchProtection.MissingReason = "trusted_guardian_required"
 	bundle.BranchProtection.Digest = digestBranchProtection(bundle.BranchProtection)
 	bundle.Digests.Bundle = ""
 	payload, err := json.Marshal(bundle)
@@ -26,59 +27,129 @@ func TestCIMachineProofDoesNotRequireProtectionOrReviews(t *testing.T) {
 	}
 }
 
-func TestCIPromotionPredicateUsesCIOnlyProtection(t *testing.T) {
-	bundle := validProof()
-	promotion := promotionInput{BranchProtectionRequired: true}
-	if !promotionReady(promotion, bundle.BranchProtection) {
-		t.Fatal("CI-only protection snapshot was not promotion-ready")
-	}
-	bundle.BranchProtection.RequiredReviews = 1
-	bundle.BranchProtection.Digest = digestBranchProtection(bundle.BranchProtection)
-	if promotionReady(promotion, bundle.BranchProtection) {
-		t.Fatal("human review requirement was accepted by CI-only promotion predicate")
-	}
-}
-
 func TestCIBranchProtectionRequiresCIOnlySnapshot(t *testing.T) {
 	bundle := validProof()
-	if !branchProtectionReady(bundle.BranchProtection) {
-		t.Fatal("CI-only branch protection snapshot was not promotion-ready")
+	if branchProtectionReady(bundle.BranchProtection) {
+		t.Fatal("feature proof treated unobserved protection as promotion-ready")
+	}
+	bundle.BaseRef = "main"
+	snapshot := validBranchProtection(bundle)
+	snapshot.RequiredChecks = append(append([]string(nil), proofJobs...), "CI guardian")
+	snapshot.RequiredCheckBindings = requiredCheckBindingsFor(snapshot.RequiredChecks)
+	snapshot.Digest = digestBranchProtection(snapshot)
+	if !branchProtectionReadyFor(snapshot, "main") {
+		t.Fatal("trusted main branch protection snapshot was not promotion-ready")
 	}
 	for _, mutate := range []func(*branchProtection){
 		func(snapshot *branchProtection) { snapshot.RequiredReviews = 1 },
 		func(snapshot *branchProtection) { snapshot.DismissStaleReviews = true },
 		func(snapshot *branchProtection) { snapshot.RequireLastPushApproval = true },
 	} {
-		snapshot := bundle.BranchProtection
-		mutate(&snapshot)
-		if branchProtectionReady(snapshot) {
+		mutated := snapshot
+		mutate(&mutated)
+		if branchProtectionReadyFor(mutated, "main") {
 			t.Fatal("human-review branch protection predicate was accepted by CI-only gate")
 		}
 	}
 }
 
-func TestCIMachineBoundPromotionAcceptsKnownProtectionObserverGap(t *testing.T) {
+func TestFeatureBranchProtectionRejectsObservedFreshness(t *testing.T) {
 	bundle := validProof()
-	bundle.BranchProtection.ReadStatus = "unavailable"
-	bundle.BranchProtection.Exists = false
-	bundle.BranchProtection.MissingReason = "branch_protection_token_unavailable"
-	context := contextInput{
-		Repository: bundle.Repository, Event: bundle.Event, Ref: bundle.Ref, EventRef: bundle.EventRef,
-		CheckoutRef: bundle.CheckoutRef, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA,
-		HeadSHA: bundle.HeadSHA, WorkflowSHA: bundle.WorkflowSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt,
-		BranchProtection: bundle.BranchProtection, ArtifactsStatus: "verified",
-		ProvenanceStatus: "verified",
+	baseContext := contextInput{BaseRef: "dev", EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}
+	evidence := evidenceInput{Repository: bundle.Repository, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}
+	for _, test := range []struct {
+		name   string
+		mutate func(*branchProtection)
+	}{
+		{name: "observed_at", mutate: func(snapshot *branchProtection) { snapshot.ObservedAt = stringPointer("2026-08-14T00:00:00Z") }},
+		{name: "valid_until", mutate: func(snapshot *branchProtection) { snapshot.ValidUntil = stringPointer("2026-08-14T00:10:00Z") }},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			snapshot := bundle.BranchProtection
+			test.mutate(&snapshot)
+			snapshot.Digest = digestBranchProtection(snapshot)
+			if err := validateBranchProtectionAt(snapshot, evidence, baseContext, time.Date(2026, time.August, 14, 0, 5, 0, 0, time.UTC)); err == nil {
+				t.Fatal("feature proof accepted freshness on an unobserved branch-protection snapshot")
+			}
+		})
 	}
-	inputs := proofInputs{
-		Governance: governanceInput{Promotion: promotionInput{Source: "dev", Target: "main", RequiredChecks: append([]string(nil), proofJobs...), BranchProtectionRequired: true}},
-		Evidence:   evidenceInput{Jobs: bundle.Jobs}, Jobs: bundle.Jobs, Context: context,
+}
+
+func TestCIBranchProtectionRequiresExactGitHubAppBindings(t *testing.T) {
+	bundle := validProof()
+	bundle.BaseRef = "main"
+	mainSnapshot := validBranchProtection(bundle)
+	mainSnapshot.RequiredChecks = append(append([]string(nil), proofJobs...), "CI guardian")
+	mainSnapshot.RequiredCheckBindings = requiredCheckBindingsFor(mainSnapshot.RequiredChecks)
+	mainSnapshot.Digest = digestBranchProtection(mainSnapshot)
+	mutations := []func(*branchProtection){
+		func(snapshot *branchProtection) { snapshot.RequiredCheckBindings[0].AppID = 1 },
+		func(snapshot *branchProtection) { snapshot.RequiredCheckBindings[0].Context = "other" },
+		func(snapshot *branchProtection) {
+			snapshot.RequiredCheckBindings[1].Context = snapshot.RequiredCheckBindings[0].Context
+		},
 	}
-	if !machineBoundPromotionReady(inputs) {
-		t.Fatal("known protection observer gap was not replaced by exact machine evidence")
+	for index, mutate := range mutations {
+		snapshot := mainSnapshot
+		snapshot.RequiredCheckBindings = append([]requiredCheckBinding(nil), mainSnapshot.RequiredCheckBindings...)
+		mutate(&snapshot)
+		if branchProtectionReadyFor(snapshot, "main") {
+			t.Fatalf("invalid app binding mutation %d was accepted", index)
+		}
 	}
-	context.BranchProtection.MissingReason = "unknown"
-	if machineBoundPromotionReady(proofInputs{Jobs: bundle.Jobs, Context: context}) {
-		t.Fatal("unknown protection observer gap was accepted")
+}
+
+func TestCIBranchProtectionBindingDigestRoundTripsStructuredChecks(t *testing.T) {
+	bundle := validProof()
+	bundle.BaseRef = "main"
+	protection := validBranchProtection(bundle)
+	protection.RequiredChecks = append(append([]string(nil), proofJobs...), "CI guardian")
+	protection.RequiredCheckBindings = requiredCheckBindingsFor(protection.RequiredChecks)
+	protection.Digest = digestBranchProtection(protection)
+	data, err := json.Marshal(protection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var roundTrip branchProtection
+	if err := json.Unmarshal(data, &roundTrip); err != nil {
+		t.Fatal(err)
+	}
+	if len(roundTrip.RequiredCheckBindings) != len(proofJobs)+1 || digestBranchProtection(roundTrip) != protection.Digest {
+		t.Fatalf("structured app bindings were not preserved in the protection digest: %+v", roundTrip.RequiredCheckBindings)
+	}
+}
+
+func TestCIBranchProtectionMissingReasonCanonicalizesForBothStatuses(t *testing.T) {
+	bundle := validProof()
+	bundle.BaseRef = "main"
+	verifiedProtection := validBranchProtection(bundle)
+	verifiedProtection.RequiredChecks = append(append([]string(nil), proofJobs...), "CI guardian")
+	verifiedProtection.RequiredCheckBindings = requiredCheckBindingsFor(verifiedProtection.RequiredChecks)
+	verifiedProtection.Digest = digestBranchProtection(verifiedProtection)
+	verified, err := json.Marshal(verifiedProtection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(verified), `"missing_reason":""`) {
+		t.Fatalf("verified protection JSON omitted the empty missing_reason key: %s", verified)
+	}
+	unavailable := validBranchProtection(validProof())
+	unavailable.ReadStatus = "unavailable"
+	unavailable.Exists = false
+	unavailable.RequiredChecks = nil
+	unavailable.RequiredCheckBindings = nil
+	unavailable.MissingReason = "branch_protection_token_unavailable"
+	unavailable.Digest = digestBranchProtection(unavailable)
+	data, err := json.Marshal(unavailable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var roundTrip branchProtection
+	if err := json.Unmarshal(data, &roundTrip); err != nil {
+		t.Fatal(err)
+	}
+	if roundTrip.MissingReason == "" || digestBranchProtection(roundTrip) != unavailable.Digest {
+		t.Fatalf("unavailable protection missing reason was not canonicalized: %+v", roundTrip)
 	}
 }
 

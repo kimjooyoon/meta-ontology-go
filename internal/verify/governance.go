@@ -8,18 +8,30 @@ import (
 	"strings"
 )
 
-const GovernanceSchemaVersion = "gooo/ci-governance/v1"
+const GovernanceSchemaVersion = "gooo/ci-governance/v2"
 
 // GovernanceMatrix is the machine-readable CI trust and promotion contract.
 type GovernanceMatrix struct {
 	Schema                string                `json:"schema"`
 	Mode                  string                `json:"mode"`
 	CIAppID               int64                 `json:"ci_app_id"`
-	GuardianContext       string                `json:"guardian_context"`
+	RequiredContexts      GovernanceContexts    `json:"required_contexts"`
+	GuardianContexts      GuardianContexts      `json:"guardian_contexts"`
+	ProofJobs             []string              `json:"proof_jobs"`
 	ProtectedPushBranches []string              `json:"protected_push_branches"`
 	Ownership             []GovernanceOwnership `json:"ownership"`
 	ProtectedKernel       []string              `json:"protected_kernel_paths"`
 	Promotion             GovernancePromotion   `json:"promotion"`
+}
+
+type GovernanceContexts struct {
+	Dev  []string `json:"dev"`
+	Main []string `json:"main"`
+}
+
+type GuardianContexts struct {
+	DevShadow    string `json:"dev_shadow"`
+	MainRequired string `json:"main_required"`
 }
 
 type GovernanceOwnership struct {
@@ -57,8 +69,17 @@ func ValidateGovernanceMatrix(matrix GovernanceMatrix) error {
 	if matrix.Schema != GovernanceSchemaVersion {
 		return fmt.Errorf("unsupported governance schema %q", matrix.Schema)
 	}
-	if matrix.Mode != "ci_only" || matrix.CIAppID != 15368 || matrix.GuardianContext != "CI guardian" {
+	if matrix.Mode != "ci_only" || matrix.CIAppID != 15368 || matrix.GuardianContexts.DevShadow != "CI guardian shadow" || matrix.GuardianContexts.MainRequired != "CI guardian" {
 		return fmt.Errorf("governance mode must be ci_only")
+	}
+	if !sameStrings(matrix.ProofJobs, canonicalJobs()) {
+		return fmt.Errorf("proof jobs do not match canonical CI jobs")
+	}
+	if !sameStrings(matrix.RequiredContexts.Dev, append(append([]string(nil), canonicalJobs()...), "CI guardian shadow")) || !sameStrings(matrix.RequiredContexts.Main, append(append([]string(nil), canonicalJobs()...), "CI guardian")) {
+		return fmt.Errorf("required contexts do not match the dev/main guardian matrix")
+	}
+	if len(matrix.RequiredContexts.Dev) != len(canonicalJobs())+1 || len(matrix.RequiredContexts.Main) != len(matrix.RequiredContexts.Dev) || contains(matrix.RequiredContexts.Dev, "CI guardian") || !contains(matrix.RequiredContexts.Dev, "CI guardian shadow") {
+		return fmt.Errorf("required context names are not unique and route-specific")
 	}
 	if err := validateGovernanceOwnership(matrix.Ownership); err != nil {
 		return err

@@ -18,6 +18,45 @@ func TestProofBundleValidatesAndPreservesReceiptSchema(t *testing.T) {
 	}
 }
 
+func TestOldProofAndReceiptSchemasFailClosed(t *testing.T) {
+	bundle := validProof()
+	bundle.Schema = "gooo/ci-proof/v2"
+	if err := validateProof(bundle); err == nil {
+		t.Fatal("old proof schema was accepted after GuardianEvidence contract migration")
+	}
+	bundle = validProof()
+	receipt := makeReceipt(bundle, contextInput{})
+	receipt.Schema = "gooo/provenance-receipt/v2"
+	filename := writeReceiptFixture(t, receipt)
+	if err := verifyReceipt(filename, bundle); err == nil {
+		t.Fatal("old receipt schema was accepted after GuardianEvidence contract migration")
+	}
+}
+
+func TestProofUnknownFieldsFailClosed(t *testing.T) {
+	bundle := validProof()
+	data, err := json.Marshal(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document map[string]any
+	if err := json.Unmarshal(data, &document); err != nil {
+		t.Fatal(err)
+	}
+	document["legacy_guardian_evidence"] = map[string]any{"decision": "PASS"}
+	data, err = json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	filename := t.TempDir() + "/proof.json"
+	if err := os.WriteFile(filename, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readStrictJSON[proofBundle](filename); err == nil {
+		t.Fatal("proof unknown field was accepted")
+	}
+}
+
 func TestCIReceiptRejectsTamperedBindingEvidence(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -25,7 +64,7 @@ func TestCIReceiptRejectsTamperedBindingEvidence(t *testing.T) {
 	}{
 		{name: "repository", mutate: func(receipt *provenanceReceipt) { receipt.Repository = "other/repo" }},
 		{name: "job head", mutate: func(receipt *provenanceReceipt) { receipt.Jobs[0].HeadSHA = strings.Repeat("b", 40) }},
-		{name: "branch protection", mutate: func(receipt *provenanceReceipt) { receipt.BranchProtection.Strict = false }},
+		{name: "branch protection", mutate: func(receipt *provenanceReceipt) { receipt.BranchProtection.MissingReason = "tampered" }},
 		{name: "domain evidence", mutate: func(receipt *provenanceReceipt) { receipt.DomainEvidence.ObserverStatus = "verified" }},
 		{name: "proof digest", mutate: func(receipt *provenanceReceipt) { receipt.Digests.Bundle = strings.Repeat("d", 64) }},
 	}
@@ -67,38 +106,6 @@ func writeReceiptFixture(t *testing.T, receipt provenanceReceipt) string {
 		t.Fatal(err)
 	}
 	return filename
-}
-
-func TestCICacheC1KeyMutationFailsClosed(t *testing.T) {
-	cache := validCache()
-	cache.Key = "mutated"
-	if err := validateCache(cache, evidenceInput{HeadSHA: strings.Repeat("a", 40)}); err == nil {
-		t.Fatal("cache key mutation was accepted")
-	}
-}
-
-func TestCICacheC2ContentSizeMismatchFailsClosed(t *testing.T) {
-	cache := validCache()
-	cache.HitContentSize++
-	if err := validateCache(cache, evidenceInput{HeadSHA: strings.Repeat("a", 40)}); err == nil {
-		t.Fatal("cache content-size mismatch was accepted")
-	}
-}
-
-func TestCICacheC3UnknownDependencyFailsClosed(t *testing.T) {
-	cache := validCache()
-	cache.DirectDependencies = nil
-	if err := validateCache(cache, evidenceInput{HeadSHA: strings.Repeat("a", 40)}); err == nil {
-		t.Fatal("unknown dependency evidence was accepted")
-	}
-}
-
-func TestCICacheC4ReplayPredecessorFailsClosed(t *testing.T) {
-	cache := validCache()
-	cache.Predecessor = strings.Repeat("a", 40)
-	if err := validateCache(cache, evidenceInput{HeadSHA: strings.Repeat("a", 40)}); err == nil {
-		t.Fatal("replayed predecessor was accepted")
-	}
 }
 
 func TestCICacheC5MissingArtifactFailsClosed(t *testing.T) {
@@ -257,37 +264,4 @@ func TestCITerminalJobSnapshotRejectsInProgress(t *testing.T) {
 	if _, err := readJobs(filename); err == nil {
 		t.Fatal("in-progress canonical job was accepted")
 	}
-}
-
-func validProof() proofBundle {
-	head := strings.Repeat("a", 40)
-	jobs := make([]jobInput, len(proofJobs))
-	for index, name := range proofJobs {
-		jobs[index] = jobInput{ID: int64(index + 1), Name: name, Status: "completed", Conclusion: "success", HeadSHA: head, RunID: 1, RunAttempt: 1}
-	}
-	bundle := proofBundle{Schema: proofSchema, Repository: "owner/repo", Event: "pull_request", PRNumber: 1, BaseRef: "dev", BaseSHA: strings.Repeat("b", 40), HeadSHA: head, Ref: "refs/pull/1/merge", EventRef: "refs/pull/1/merge", CheckoutRef: head, RunID: 1, RunAttempt: 1, WorkflowSHA: strings.Repeat("c", 40), Jobs: jobs, Actors: actorRoles{Actor: "builder", Builder: "builder", Gate: "CI policy"}, Scope: scopeResult{Decision: "passed", Status: "verified"}, Fixtures: fixtureResult{Paths: []string{"examples/billing/main.gooo"}, Status: "verified", Source: "verified", Semantic: "verified", Provenance: "verified"}, Artifacts: []artifactInput{{ID: 1, Name: "ci-evidence-1-1", Size: 1, Digest: "sha256:" + strings.Repeat("a", 64), RunID: 1, RunAttempt: 1}}, Cache: cacheInput{Key: "none", Outcome: "not_run", Status: "not_applicable"}, Digests: proofDigests{Source: strings.Repeat("1", 64), Semantic: strings.Repeat("2", 64), Provenance: strings.Repeat("3", 64), Projection: strings.Repeat("4", 64), Build: strings.Repeat("5", 64), Policy: strings.Repeat("6", 64), Schema: strings.Repeat("7", 64), Toolchain: strings.Repeat("8", 64), Target: strings.Repeat("9", 64)}, WriteEffect: "none", Decision: "PASS", NoWrite: true, MissingReasons: missingReasons{Protection: "domain_protection_observer_unavailable"}}
-	bundle.BranchProtection = validBranchProtection(bundle)
-	bundle.DomainEvidence = validDomainEvidence(bundle)
-	payload, _ := json.Marshal(bundle)
-	bundle.Digests.Bundle = digestBytes(payload)
-	return bundle
-}
-
-func validDomainEvidence(bundle proofBundle) domainEvidence {
-	domain := domainEvidence{Schema: domainEvidenceSchema, Repository: bundle.Repository, Event: bundle.Event, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, CLI: domainCommand{Command: "go run ./cmd/gooo check examples/billing/main.gooo", Fixture: "examples/billing/main.gooo", Status: "verified", Available: true, Output: "ok: examples/billing/main.gooo\n"}, Graph: domainCommand{Command: "go run ./cmd/gooo graph-dump examples/billing/main.gooo", Status: "deferred", Available: false}, ObserverStatus: "unavailable", ProtectionStatus: "unavailable", ProvenanceStatus: "not_applicable", MissingReasons: bundle.MissingReasons, Digests: domainEvidenceDigest{SourceSHA256: bundle.Digests.Source, IRSHA256: bundle.Digests.Semantic, GeneratedSHA256: bundle.Digests.Projection, BundleSHA256: strings.Repeat("a", 64)}}
-	domain.CLI.OutputSHA256 = digestBytes([]byte(domain.CLI.Output))
-	domain.Digests.DomainSHA256 = digestDomainEvidence(domain)
-	return domain
-}
-
-func validBranchProtection(bundle proofBundle) branchProtection {
-	protection := branchProtection{Repository: bundle.Repository, Branch: bundle.BaseRef, PolicySHA: bundle.Digests.Policy, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, TokenSource: "github.token", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append([]string(nil), proofJobs...), EnforceAdmins: true, RequiredReviews: 0, DismissStaleReviews: false, RequireLastPushApproval: false, LinearHistory: true, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA}
-	protection.Digest = digestBranchProtection(protection)
-	return protection
-}
-
-func validCache() cacheInput {
-	semantic := strings.Repeat("1", 64)
-	root := "dependency-root"
-	return cacheInput{Key: digestBytes([]byte("artifact\x00" + semantic + "\x00" + root)), Outcome: "hit", Status: "verified", ArtifactKind: "artifact", SemanticClosureDigest: semantic, DependencyRoot: root, DirectDependencies: []string{"dep"}, PolicyDigest: strings.Repeat("2", 64), SchemaDigest: strings.Repeat("3", 64), ToolchainDigest: strings.Repeat("4", 64), TargetDigest: strings.Repeat("5", 64), EvidenceRefs: []string{"receipt"}, ProducerHost: "host", ContentSize: 1, HitContentSize: 1, Predecessor: strings.Repeat("b", 40)}
 }

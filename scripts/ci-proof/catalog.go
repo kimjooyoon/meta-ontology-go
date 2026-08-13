@@ -122,7 +122,7 @@ func validateFailureOwnerRegistry(branch string) error {
 	if err := json.Unmarshal(data, &registry); err != nil {
 		return fmt.Errorf("parse failure owner registry: %w", err)
 	}
-	if registry.Schema != "gooo/ci-governance/v1" || branch == "" || strings.ContainsAny(branch, "*?[]") {
+	if registry.Schema != "gooo/ci-governance/v2" || branch == "" || strings.ContainsAny(branch, "*?[]") {
 		return fmt.Errorf("failure owner registry is invalid")
 	}
 	var matched bool
@@ -175,7 +175,7 @@ func validateProtectedPushOwnerRegistry(branch string) error {
 	if err := json.Unmarshal(data, &registry); err != nil {
 		return fmt.Errorf("parse protected push owner registry: %w", err)
 	}
-	if registry.Schema != "gooo/ci-governance/v1" || len(registry.ProtectedPushBranches) == 0 || !sameStrings(registry.ProtectedPushBranches, []string{"dev", "main"}) {
+	if registry.Schema != "gooo/ci-governance/v2" || len(registry.ProtectedPushBranches) == 0 || !sameStrings(registry.ProtectedPushBranches, []string{"dev", "main"}) {
 		return fmt.Errorf("protected push owner registry is invalid")
 	}
 	for _, protectedBranch := range registry.ProtectedPushBranches {

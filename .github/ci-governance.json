@@ -1,8 +1,16 @@
 {
-  "schema": "gooo/ci-governance/v1",
+  "schema": "gooo/ci-governance/v2",
   "mode": "ci_only",
   "ci_app_id": 15368,
-  "guardian_context": "CI guardian",
+  "required_contexts": {
+    "dev": ["gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy", "CI guardian shadow"],
+    "main": ["gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy", "CI guardian"]
+  },
+  "guardian_contexts": {
+    "dev_shadow": "CI guardian shadow",
+    "main_required": "CI guardian"
+  },
+  "proof_jobs": ["gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"],
   "protected_push_branches": ["dev", "main"],
   "ownership": [
     {"branch": "agent/analyzer", "paths": ["internal/analyzer/**"]},
