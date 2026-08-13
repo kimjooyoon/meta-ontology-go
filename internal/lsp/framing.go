@@ -64,14 +64,19 @@ func (reader singleByteReader) Read(buffer []byte) (int, error) {
 
 func readFrame(reader *bufio.Reader) ([]byte, error) {
 	length := -1
+	headerStarted := false
 	for {
 		line, err := reader.ReadString('\n')
-		if errors.Is(err, io.EOF) && len(line) == 0 {
-			return nil, io.EOF
+		if errors.Is(err, io.EOF) {
+			if !headerStarted && len(line) == 0 {
+				return nil, io.EOF
+			}
+			return nil, io.ErrUnexpectedEOF
 		}
 		if err != nil {
 			return nil, err
 		}
+		headerStarted = true
 		line = strings.TrimSuffix(strings.TrimSuffix(line, "\n"), "\r")
 		if line == "" {
 			if length < 0 {

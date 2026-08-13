@@ -48,6 +48,17 @@ func TestReadMessageRejectsMalformedAndPartialFrames(t *testing.T) {
 	}
 }
 
+func TestReadMessageRejectsTruncatedHeaders(t *testing.T) {
+	for _, input := range []string{
+		"Content-Length: 4\r\n",
+		"Content-Length: 4",
+	} {
+		if _, err := ReadMessage(strings.NewReader(input)); !errors.Is(err, io.ErrUnexpectedEOF) {
+			t.Fatalf("truncated header %q error = %v, want io.ErrUnexpectedEOF", input, err)
+		}
+	}
+}
+
 func TestReadMessageKeepsSequentialFrames(t *testing.T) {
 	var input bytes.Buffer
 	writeFrameForTest(t, &input, []byte(`{"text":"😀"}`))
