@@ -39,6 +39,7 @@ func malformedSyntaxSeeds() []string {
 		"/* unterminated",
 		string([]byte{'p', 'a', 'c', 'k', 'a', 'g', 'e', ' ', 0xff}),
 		string(append([]byte("package p\nnamespace n\nentity A id \""), 0xff, 0xfe, '"')),
+		quotedIDSource("A", `\ud800`),
 		"package 도메인\nnamespace 도메인\nentity 注文 id \"urn:注文\"\n",
 		"package p\rnamespace n\rentity A id \"urn:a\"\ractivity Run() -> A\r",
 	}

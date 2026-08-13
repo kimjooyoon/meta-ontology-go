@@ -104,6 +104,11 @@ func (l *Lexer) lexEscape(value *strings.Builder, escapeStart Position) bool {
 			value.WriteString(recovered.String())
 			return false
 		}
+		if decoded >= 0xd800 && decoded <= 0xdfff {
+			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "unicode escape cannot encode a surrogate code point")
+			value.WriteString(recovered.String())
+			return false
+		}
 		value.WriteRune(rune(decoded))
 	default:
 		badStart := l.position()
