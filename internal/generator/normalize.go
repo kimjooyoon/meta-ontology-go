@@ -13,6 +13,7 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 		return SemanticIR{}, fmt.Errorf("generator: invalid Go package %q", input.Package)
 	}
 	result := copyIR(input)
+	canonicalizeIRCollections(&result)
 	if err := normalizeImports(&result); err != nil {
 		return SemanticIR{}, err
 	}
@@ -23,7 +24,34 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 	if err := normalizeActivities(&result, types); err != nil {
 		return SemanticIR{}, err
 	}
+	if err := validateTopLevelNames(result); err != nil {
+		return SemanticIR{}, err
+	}
+	if err := validateStableIDs(result); err != nil {
+		return SemanticIR{}, err
+	}
+	if err := validateGoTypes(result); err != nil {
+		return SemanticIR{}, err
+	}
 	return result, nil
+}
+
+// canonicalizeIRCollections gives semantically equivalent nil and empty
+// collections one wire representation without changing caller-owned input.
+// This keeps generated metadata digests independent of how an adapter
+// materializes absent optional declarations.
+func canonicalizeIRCollections(ir *SemanticIR) {
+	ir.Imports = append([]Import{}, ir.Imports...)
+	ir.Entities = append([]Entity{}, ir.Entities...)
+	for index := range ir.Entities {
+		ir.Entities[index].Fields = append([]Field{}, ir.Entities[index].Fields...)
+	}
+	ir.Activities = append([]Activity{}, ir.Activities...)
+	for index := range ir.Activities {
+		ir.Activities[index].Inputs = append([]Port{}, ir.Activities[index].Inputs...)
+		ir.Activities[index].Outputs = append([]Port{}, ir.Activities[index].Outputs...)
+		ir.Activities[index].Slots = append([]Slot{}, ir.Activities[index].Slots...)
+	}
 }
 
 func copyIR(input SemanticIR) SemanticIR {
@@ -44,6 +72,7 @@ func copyIR(input SemanticIR) SemanticIR {
 
 func normalizeImports(ir *SemanticIR) error {
 	seen := make(map[string]struct{}, len(ir.Imports))
+	seenPaths := make(map[string]struct{}, len(ir.Imports))
 	for index := range ir.Imports {
 		item := &ir.Imports[index]
 		if item.Path == "" {
@@ -52,11 +81,15 @@ func normalizeImports(ir *SemanticIR) error {
 		if item.Name != "" && !isGoIdentifier(item.Name) {
 			return fmt.Errorf("generator: invalid import name %q", item.Name)
 		}
+		if _, exists := seenPaths[item.Path]; exists {
+			return fmt.Errorf("generator: duplicate import path %q", item.Path)
+		}
 		key := item.Name + "\x00" + item.Path
 		if _, exists := seen[key]; exists {
 			return fmt.Errorf("generator: duplicate import %q", item.Path)
 		}
 		seen[key] = struct{}{}
+		seenPaths[item.Path] = struct{}{}
 	}
 	sort.Slice(ir.Imports, func(i, j int) bool {
 		if ir.Imports[i].Path != ir.Imports[j].Path {
@@ -174,7 +207,7 @@ func normalizeActivity(activity *Activity, index int, entityTypes map[string]str
 		return err
 	}
 	if len(activity.Slots) == 0 {
-		activity.Slots = []Slot{{ID: activity.ID + "/implementation", Name: "implementation", Default: defaultActivityBody(activity)}}
+		activity.Slots = []Slot{{ID: activity.ID + "/implementation", Name: "implementation", Default: defaultActivityBody(activity, entityTypes)}}
 	}
 	return normalizeSlots(activity)
 }
@@ -191,5 +224,50 @@ func normalizeSlots(activity *Activity) error {
 		}
 		seen[slot.ID] = struct{}{}
 	}
+	return nil
+}
+
+func validateTopLevelNames(ir SemanticIR) error {
+	names := make(map[string]string, len(ir.Entities)+len(ir.Activities))
+	for _, entity := range ir.Entities {
+		if previous, exists := names[entity.GoName]; exists {
+			return fmt.Errorf("generator: Go name %q is used by %s and entity %q", entity.GoName, previous, entity.ID)
+		}
+		names[entity.GoName] = "entity " + entity.ID
+	}
+	for _, activity := range ir.Activities {
+		if previous, exists := names[activity.GoName]; exists {
+			return fmt.Errorf("generator: Go name %q is used by %s and activity %q", activity.GoName, previous, activity.ID)
+		}
+		names[activity.GoName] = "activity " + activity.ID
+	}
+	return nil
+}
+
+func validateStableIDs(ir SemanticIR) error {
+	seen := make(map[string]string, len(ir.Entities)+len(ir.Activities))
+	for _, entity := range ir.Entities {
+		if err := recordStableID(seen, entity.ID, "entity"); err != nil {
+			return err
+		}
+	}
+	for _, activity := range ir.Activities {
+		if err := recordStableID(seen, activity.ID, "activity"); err != nil {
+			return err
+		}
+		for _, slot := range activity.Slots {
+			if err := recordStableID(seen, slot.ID, "slot"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func recordStableID(seen map[string]string, id, kind string) error {
+	if previous, exists := seen[id]; exists {
+		return fmt.Errorf("generator: stable ID %q is used by %s and %s", id, previous, kind)
+	}
+	seen[id] = kind
 	return nil
 }
