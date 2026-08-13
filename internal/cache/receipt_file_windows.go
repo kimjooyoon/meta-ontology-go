@@ -5,7 +5,15 @@ package cache
 import (
 	"os"
 	"syscall"
+	"unsafe"
 )
+
+var (
+	lockFileExProc   = syscall.NewLazyDLL("kernel32.dll").NewProc("LockFileEx")
+	unlockFileExProc = syscall.NewLazyDLL("kernel32.dll").NewProc("UnlockFileEx")
+)
+
+const lockFileExExclusive = 0x00000002
 
 func openReceiptRead(path string) (*os.File, error) {
 	return openReceiptFile(path, syscall.GENERIC_READ, syscall.OPEN_EXISTING)
@@ -36,4 +44,22 @@ func openReceiptFile(path string, access, disposition uint32) (*os.File, error) 
 		return nil, err
 	}
 	return file, nil
+}
+
+func acquireReceiptFileLock(path string) (func(), error) {
+	file, err := openReceiptFile(path+".lock", syscall.GENERIC_READ|syscall.GENERIC_WRITE, syscall.OPEN_ALWAYS)
+	if err != nil {
+		return nil, err
+	}
+	var overlapped syscall.Overlapped
+	result, _, callErr := lockFileExProc.Call(file.Fd(), lockFileExExclusive,
+		0, 1, 0, uintptr(unsafe.Pointer(&overlapped)))
+	if result == 0 {
+		_ = file.Close()
+		return nil, callErr
+	}
+	return func() {
+		_, _, _ = unlockFileExProc.Call(file.Fd(), 0, 1, 0, uintptr(unsafe.Pointer(&overlapped)))
+		_ = file.Close()
+	}, nil
 }

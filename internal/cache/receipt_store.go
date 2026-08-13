@@ -17,6 +17,11 @@ func (c *Cache) AppendReceipt(receipt CacheReceipt) (CacheReceipt, error) {
 	}
 	c.receiptMu.Lock()
 	defer c.receiptMu.Unlock()
+	release, err := acquireReceiptFileLock(c.receipts)
+	if err != nil {
+		return CacheReceipt{}, fmt.Errorf("cache: lock receipts: %w", err)
+	}
+	defer release()
 	existing, err := c.readReceiptsLocked()
 	if err != nil {
 		return CacheReceipt{}, err
@@ -55,6 +60,11 @@ func (c *Cache) AppendReceipt(receipt CacheReceipt) (CacheReceipt, error) {
 func (c *Cache) Receipts() ([]CacheReceipt, error) {
 	c.receiptMu.Lock()
 	defer c.receiptMu.Unlock()
+	release, err := acquireReceiptFileLock(c.receipts)
+	if err != nil {
+		return nil, fmt.Errorf("cache: lock receipts: %w", err)
+	}
+	defer release()
 	return c.readReceiptsLocked()
 }
 
