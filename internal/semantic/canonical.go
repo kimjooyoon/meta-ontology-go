@@ -104,16 +104,17 @@ func (g Graph) Canonical() string {
 	return b.String()
 }
 
-// SemanticCanonical excludes source spans, names, aliases, and candidate
-// explanations. Those fields are useful projections but do not change the
-// semantic identity graph. It remains fully order-independent.
+// SemanticCanonical is the authoritative meaning projection. It excludes
+// source spans, names, aliases, candidate facts, and candidate explanations.
+// Candidate observations remain available through Canonical and AllFacts but
+// cannot change authority-gating hashes until explicitly promoted.
 func (g Graph) SemanticCanonical() string {
 	var b strings.Builder
 	for _, node := range g.Nodes() {
 		b.WriteString(node.SemanticCanonical())
 		b.WriteByte('\n')
 	}
-	for _, fact := range g.AllFacts() {
+	for _, fact := range g.DeterministicFacts() {
 		b.WriteString(fact.SemanticCanonical())
 		b.WriteByte('\n')
 	}
