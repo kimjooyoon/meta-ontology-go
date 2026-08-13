@@ -44,7 +44,7 @@ func (graph Graph) selectedPaths(start ID, options TraversalOptions) ([]Path, []
 	if options.Limit > 0 {
 		remaining = options.Limit - len(deterministic)
 	}
-	candidateQuota := newQueryWorkQuota(options.Limit)
+	candidateQuota := newQueryWorkQuota(remaining)
 	candidates = graph.traversePaths(start, options, selection, FactCandidate, remaining, candidateQuota)
 	return deterministic, candidates
 }
