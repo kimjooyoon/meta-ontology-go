@@ -1,0 +1,137 @@
+package main
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"time"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+)
+
+const graphDumpSchemaVersion = "gooo-graph/v1"
+
+const maxGraphDumpBytes = 1 << 20
+
+var errGraphDumpLimit = errors.New("graph dump resource limit exceeded")
+
+func runInspect(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
+	return runInspectWithLowerer(args, reader, parser, stdout, stderr, bidir.Lower)
+}
+
+func runInspectWithLowerer(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer, lower func(*syntax.File) (semantic.IR, error)) int {
+	if len(args) != 1 {
+		fmt.Fprintln(stderr, "usage: gooo inspect <file.gooo>")
+		return exitUsage
+	}
+	filename := args[0]
+	deadline := time.Now().Add(commandDeadline)
+	source, err := readSourceWithDeadline(reader, filename, remainingDeadline(deadline))
+	if err != nil {
+		fmt.Fprintf(stderr, "gooo: %s: read error: %v\n", filename, err)
+		return exitFailure
+	}
+	file, diagnostics, err := parseWithDeadline(parser, filename, string(source), remainingDeadline(deadline))
+	if err != nil {
+		fmt.Fprintf(stderr, "gooo: %s: parse error: %v\n", filename, err)
+		return exitFailure
+	}
+	if !reportDiagnostics(diagnostics, stderr) || diagnostics.HasErrors() {
+		return exitFailure
+	}
+	ir, err := lowerInspectIRWith(file, remainingDeadline(deadline), lower)
+	if err != nil {
+		if !reportSemanticDiagnostic(filename, file, err, stderr) {
+			return exitFailure
+		}
+		return exitFailure
+	}
+	payload, err := marshalGraphDump(source, ir)
+	if err != nil {
+		fmt.Fprintf(stderr, "gooo: %s: graph dump failed: %v\n", filename, err)
+		return exitFailure
+	}
+	if err := writeInspectOutput(stdout, payload, deadline); err != nil {
+		fmt.Fprintf(stderr, "gooo: graph output: %v\n", err)
+		return exitFailure
+	}
+	return exitOK
+}
+
+type inspectLowerResult struct {
+	ir  semantic.IR
+	err error
+}
+
+func lowerInspectIR(file *syntax.File, timeout time.Duration) (semantic.IR, error) {
+	return lowerInspectIRWith(file, timeout, bidir.Lower)
+}
+
+func lowerInspectIRWith(file *syntax.File, timeout time.Duration, lower func(*syntax.File) (semantic.IR, error)) (semantic.IR, error) {
+	// The current bidir API has no cancellation-aware lowering contract. The
+	// buffered result bounds the CLI wait and lets a late lowerer return safely.
+	// Validation is part of the read-only semantic boundary so every caller
+	// observes the same validated IR or the same deterministic error.
+	if timeout <= 0 {
+		return semantic.IR{}, errCommandDeadline
+	}
+	result := make(chan inspectLowerResult, 1)
+	go func() {
+		ir, err := lower(file)
+		if err == nil {
+			err = ir.Validate()
+		}
+		result <- inspectLowerResult{ir: ir, err: err}
+	}()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case lowered := <-result:
+		return lowered.ir, lowered.err
+	case <-timer.C:
+		return semantic.IR{}, errCommandDeadline
+	}
+}
+
+func marshalGraphDump(source []byte, ir semantic.IR) ([]byte, error) {
+	dump := newGraphDump(source, ir)
+	payload, err := json.Marshal(dump)
+	if err != nil {
+		return nil, err
+	}
+	if len(payload)+1 > maxGraphDumpBytes {
+		return nil, errGraphDumpLimit
+	}
+	return append(payload, '\n'), nil
+}
+
+type writeDeadlineSetter interface {
+	SetWriteDeadline(time.Time) error
+}
+
+func writeInspectOutput(output io.Writer, payload []byte, deadline time.Time) error {
+	if deadlineWriter, supportsDeadline := output.(writeDeadlineSetter); supportsDeadline {
+		if err := deadlineWriter.SetWriteDeadline(deadline); err == nil {
+			defer deadlineWriter.SetWriteDeadline(time.Time{})
+		}
+	}
+	for len(payload) > 0 {
+		if !deadline.IsZero() && !time.Now().Before(deadline) {
+			return errCommandDeadline
+		}
+		written, err := output.Write(payload)
+		if written > 0 {
+			payload = payload[written:]
+		}
+		if err != nil {
+			return err
+		}
+		if written == 0 {
+			return io.ErrShortWrite
+		}
+	}
+	return nil
+}

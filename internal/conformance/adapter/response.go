@@ -50,8 +50,5 @@ func validateFailure(status Status, failure *Failure) error {
 	if strings.TrimSpace(failure.Code) == "" {
 		return fmt.Errorf("failure code is required")
 	}
-	if failure.NoWrite && status == StatusPass {
-		return fmt.Errorf("pass response cannot carry no-write failure")
-	}
 	return nil
 }

@@ -24,6 +24,9 @@ func TestCanonicalHashExcludesPresentationAndEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, graph := range []*Graph{&left, &right} {
+		if err := graph.AddNode(Node{ID: entityID, Kind: Entity, Namespace: ns, Name: "Order"}); err != nil {
+			t.Fatal(err)
+		}
 		fact := NewCandidateFact(activityID, Used, entityID, "  inferred from an implementation call  ").WithSpan(Span{
 			File: "evidence.go", Start: Position{Offset: 40}, End: Position{Offset: 50},
 		})
@@ -63,6 +66,12 @@ func TestPromoteCandidateIsAtomicAndPreservesFact(t *testing.T) {
 	activity := MustIdentity("billing://activity/pay")
 	entity := MustIdentity("billing://entity/order")
 	g := NewGraph()
+	if err := g.AddNode(mustActivity(t, activity, Namespace("billing"), "Pay")); err != nil {
+		t.Fatal(err)
+	}
+	if err := g.AddNode(mustEntity(t, entity, Namespace("billing"), "Order")); err != nil {
+		t.Fatal(err)
+	}
 	candidate := NewCandidateFact(activity, Used, entity, "implementation evidence")
 	if err := g.AddCandidate(candidate); err != nil {
 		t.Fatal(err)

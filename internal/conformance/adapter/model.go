@@ -88,7 +88,6 @@ type Measurements struct {
 	SourceSpanCount        int  `json:"source_span_count"`
 	ProtectedBytesEqual    bool `json:"protected_bytes_equal"`
 	UnrelatedRegionCount   int  `json:"unrelated_region_count"`
-	NoWrite                bool `json:"no_write"`
 	RepeatCount            int  `json:"repeat_count"`
 	CanonicalEqualCount    int  `json:"canonical_equal_count"`
 	SourceEqualCount       int  `json:"source_equal_count"`
