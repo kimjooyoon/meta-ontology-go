@@ -12,6 +12,9 @@ func Reconcile(before Snapshot, delta Delta) (Snapshot, error) {
 	if err != nil {
 		return Snapshot{}, fmt.Errorf("normalize reconciliation base: %w", err)
 	}
+	if err := validateFactEndpoints(base.Nodes, base.Facts, "reconciliation base"); err != nil {
+		return Snapshot{}, err
+	}
 	change, err := delta.Normalized()
 	if err != nil {
 		return Snapshot{}, fmt.Errorf("normalize reconciliation delta: %w", err)
@@ -24,7 +27,40 @@ func Reconcile(before Snapshot, delta Delta) (Snapshot, error) {
 	if err != nil {
 		return Snapshot{}, err
 	}
-	return (Snapshot{Nodes: nodes, Facts: facts}).Normalized()
+	result, err := (Snapshot{Nodes: nodes, Facts: facts}).Normalized()
+	if err != nil {
+		return Snapshot{}, err
+	}
+	if err := validateFactEndpoints(result.Nodes, result.Facts, "reconciliation result"); err != nil {
+		return Snapshot{}, err
+	}
+	return result, nil
+}
+
+func validateFactEndpoints(nodes []Node, facts []Fact, snapshotName string) error {
+	knownNodes := make(map[string]struct{}, len(nodes))
+	for _, node := range nodes {
+		knownNodes[node.ID] = struct{}{}
+	}
+	for _, fact := range facts {
+		if _, ok := knownNodes[fact.Subject]; !ok {
+			return fmt.Errorf(
+				"reconcile %s: fact %q references missing subject node %q",
+				snapshotName,
+				factKey(fact),
+				fact.Subject,
+			)
+		}
+		if _, ok := knownNodes[fact.Object]; !ok {
+			return fmt.Errorf(
+				"reconcile %s: fact %q references missing object node %q",
+				snapshotName,
+				factKey(fact),
+				fact.Object,
+			)
+		}
+	}
+	return nil
 }
 
 func reconcileNodes(base []Node, delta Delta) ([]Node, error) {
