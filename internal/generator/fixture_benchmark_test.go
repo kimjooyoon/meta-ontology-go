@@ -46,7 +46,7 @@ func BenchmarkFixtureSourceMapGeneration(b *testing.B) {
 
 func BenchmarkFixtureImportPermutation(b *testing.B) {
 	ir := acceptanceFixture()
-	ir.Imports = []Import{{Name: "_", Path: "example/z"}, {Name: "_", Path: "example/a"}, {Name: "_", Path: "example/m"}}
+	ir.Imports = []Import{{Name: "_", Path: "strings"}, {Name: "_", Path: "errors"}, {Name: "_", Path: "fmt"}}
 	b.ResetTimer()
 	for range b.N {
 		if _, err := Generate(ir, nil); err != nil {
