@@ -31,22 +31,34 @@ func (a Adapter[S]) Snapshot(source S) (Snapshot, error) {
 // Diff adapts two source values and computes their presentation-insensitive
 // semantic delta.
 func (a Adapter[S]) Diff(before, after S) (Delta, error) {
+	left, right, err := a.snapshots(before, after)
+	if err != nil {
+		return Delta{}, err
+	}
+	return DiffSnapshots(left, right)
+}
+
+func (a Adapter[S]) snapshots(before, after S) (Snapshot, Snapshot, error) {
 	left, err := a.Snapshot(before)
 	if err != nil {
-		return Delta{}, fmt.Errorf("adapt before snapshot: %w", err)
+		return Snapshot{}, Snapshot{}, fmt.Errorf("adapt before snapshot: %w", err)
 	}
 	right, err := a.Snapshot(after)
 	if err != nil {
-		return Delta{}, fmt.Errorf("adapt after snapshot: %w", err)
+		return Snapshot{}, Snapshot{}, fmt.Errorf("adapt after snapshot: %w", err)
 	}
-	return DiffSnapshots(left, right)
+	return left, right, nil
 }
 
 // Apply computes and scope-checks a deterministic delta before invoking the
 // caller's authoritative writer. Out-of-scope deltas and empty deltas never
 // reach commit; the latter keeps candidate-only changes and replays no-op.
 func (a Adapter[S]) Apply(before, after S, scope Scope, commit func(Delta) error) (Report, error) {
-	delta, err := a.Diff(before, after)
+	left, right, err := a.snapshots(before, after)
+	if err != nil {
+		return Report{}, fmt.Errorf("compute semantic delta: %w", err)
+	}
+	delta, err := DiffSnapshots(left, right)
 	if err != nil {
 		return Report{}, fmt.Errorf("compute semantic delta: %w", err)
 	}
@@ -56,6 +68,9 @@ func (a Adapter[S]) Apply(before, after S, scope Scope, commit func(Delta) error
 	}
 	if !report.Passes() {
 		return report, &ScopeError{Report: report}
+	}
+	if _, err := Reconcile(left, delta); err != nil {
+		return report, fmt.Errorf("reconcile semantic delta: %w", err)
 	}
 	if delta.IsEmpty() {
 		return report, nil

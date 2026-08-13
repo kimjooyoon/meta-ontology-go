@@ -95,6 +95,31 @@ func TestAdapterApplyRejectsOutOfScopeWithoutCommit(t *testing.T) {
 	}
 }
 
+func TestAdapterApplyRejectsDanglingFactWithoutCommit(t *testing.T) {
+	before := fakeIR{nodes: []Node{{ID: "billing://entity/order", Kind: "Entity"}}}
+	after := fakeIR{
+		nodes: before.nodes,
+		facts: []Fact{{
+			Subject: "billing://entity/order", Predicate: "uses", Object: "billing://entity/missing",
+		}},
+	}
+	adapter := Adapter[fakeIR]{
+		Nodes: func(value fakeIR) ([]Node, error) { return value.nodes, nil },
+		Facts: func(value fakeIR) ([]Fact, error) { return value.facts, nil },
+	}
+	commits := 0
+	_, err := adapter.Apply(before, after, Scope{Prefixes: []string{"billing://"}}, func(Delta) error {
+		commits++
+		return nil
+	})
+	if err == nil {
+		t.Fatal("Apply accepted a dangling fact endpoint")
+	}
+	if commits != 0 {
+		t.Fatalf("invalid semantic delta reached commit callback %d time(s)", commits)
+	}
+}
+
 func TestAdapterApplyCommitsAllowedDeltaAndSkipsReplay(t *testing.T) {
 	current := fakeIR{nodes: []Node{{ID: "billing://activity/pay", Kind: "Activity"}}}
 	desired := fakeIR{nodes: []Node{
