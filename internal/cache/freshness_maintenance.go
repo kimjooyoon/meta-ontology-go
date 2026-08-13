@@ -82,7 +82,8 @@ func (c *Cache) invalidateStaleEntry(shardPath string, entry os.DirEntry, filter
 		return false, nil
 	}
 	metadata, err := readMetadataAt(filepath.Join(entryPath, metaFileName))
-	if err != nil || !metadataSane(metadata) || !filter.matches(metadata) {
+	if err != nil || !metadataSane(metadata) || !metadataBindsToEntry(metadata, shardPath, entry.Name()) ||
+		!filter.matches(metadata) {
 		return false, nil
 	}
 	if metadataFreshness(metadata).Equal(filter.Current) {
@@ -92,4 +93,8 @@ func (c *Cache) invalidateStaleEntry(shardPath string, entry os.DirEntry, filter
 		return false, fmt.Errorf("cache: invalidate stale %s: %w", entry.Name(), err)
 	}
 	return true, nil
+}
+
+func metadataBindsToEntry(metadata Metadata, shardPath, entryName string) bool {
+	return metadata.Key == entryName && len(entryName) >= 2 && filepath.Base(shardPath) == entryName[:2]
 }

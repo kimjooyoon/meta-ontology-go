@@ -107,7 +107,8 @@ func (c *Cache) invalidateEntry(shardPath string, entry os.DirEntry, filter Inva
 		return false, nil
 	}
 	metadata, err := readMetadataAt(filepath.Join(entryPath, metaFileName))
-	if err != nil || !metadataSane(metadata) || !filter.matches(metadata) {
+	if err != nil || !metadataSane(metadata) || !metadataBindsToEntry(metadata, shardPath, entry.Name()) ||
+		!filter.matches(metadata) {
 		return false, nil
 	}
 	if err := removeCacheEntry(entryPath, entryInfo); err != nil {
