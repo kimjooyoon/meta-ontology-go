@@ -70,6 +70,7 @@ type NoWriteObservation struct {
 	Binding  ObservationBinding `json:"binding"`
 	Paths    ObserverPaths      `json:"paths"`
 	Workflow WorkflowBinding    `json:"workflow"`
+	Mutation MutationEvidence   `json:"mutation"`
 	Reason   RejectionKind      `json:"rejection_reason,omitempty"`
 	Before   FilesystemState    `json:"before"`
 	After    FilesystemState    `json:"after"`
@@ -86,6 +87,8 @@ type NoWriteObserver struct {
 	before           FilesystemState
 	workflow         WorkflowBinding
 	workflowCaptured bool
+	mutation         MutationEvidence
+	mutationCaptured bool
 	stamp            *observerStamp
 	finished         bool
 }
@@ -105,7 +108,8 @@ func NewNoWriteObserver(binding ObservationBinding, paths ObserverPaths) (*NoWri
 	}
 	return &NoWriteObserver{
 		binding: binding, paths: normalized, before: before,
-		workflow: missingWorkflowBinding(), stamp: &observerStamp{},
+		workflow: missingWorkflowBinding(), mutation: missingMutationEvidence(),
+		stamp: &observerStamp{},
 	}, nil
 }
 
@@ -132,8 +136,9 @@ func (o *NoWriteObserver) finish(reason RejectionKind) (NoWriteObservation, erro
 		return NoWriteObservation{}, fmt.Errorf("capture after state: %w", err)
 	}
 	observation := NoWriteObservation{
-		Binding: o.binding, Paths: o.paths, Workflow: o.workflow, Reason: reason,
-		Before: o.before, After: after, stamp: o.stamp,
+		Binding: o.binding, Paths: o.paths, Workflow: o.workflow,
+		Mutation: o.mutation, Reason: reason, Before: o.before, After: after,
+		stamp: o.stamp,
 	}
 	o.stamp.digest = observationSeal(observation)
 	return observation, nil

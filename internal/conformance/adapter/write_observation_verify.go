@@ -51,6 +51,9 @@ func (o *NoWriteObservation) VerifyNoWrite(request Request) error {
 	if err := validateVerifiedWorkflow(o.Workflow); err != nil {
 		return err
 	}
+	if err := validateObserverMutation(*o); err != nil {
+		return err
+	}
 	if err := validateObservation(*o); err != nil {
 		return err
 	}

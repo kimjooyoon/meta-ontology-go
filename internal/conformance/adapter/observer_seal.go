@@ -9,6 +9,7 @@ type observerSealInput struct {
 	Binding  ObservationBinding `json:"binding"`
 	Paths    ObserverPaths      `json:"paths"`
 	Workflow WorkflowBinding    `json:"workflow"`
+	Mutation MutationEvidence   `json:"mutation"`
 	Reason   RejectionKind      `json:"rejection_reason,omitempty"`
 	Before   FilesystemState    `json:"before"`
 	After    FilesystemState    `json:"after"`
@@ -19,6 +20,7 @@ func observationSeal(observation NoWriteObservation) [sha256.Size]byte {
 		Binding:  observation.Binding,
 		Paths:    observation.Paths,
 		Workflow: observation.Workflow,
+		Mutation: observation.Mutation,
 		Reason:   observation.Reason,
 		Before:   observation.Before,
 		After:    observation.After,

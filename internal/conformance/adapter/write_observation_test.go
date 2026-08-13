@@ -261,6 +261,7 @@ func newObserverWithTempSetup(t *testing.T, request Request, setup func(string))
 		t.Fatal(err)
 	}
 	attachVerifiedWorkflow(t, observer, request)
+	attachVerifiedMutation(t, observer, request)
 	return observer
 }
 
