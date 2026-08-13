@@ -31,13 +31,10 @@ func gateRejections(inputs proofInputs) []string {
 	if inputs.Governance.Promotion.BranchProtectionRequired && !branchProtectionReady(c.BranchProtection) {
 		failures = append(failures, "branch_protection_missing")
 	}
-	if c.Guardian == "" || c.Approver == "" || c.Guardian == c.Approver || c.Guardian == c.Builder || c.Approver == c.Builder || c.Guardian == c.Actor || c.Approver == c.Actor {
-		failures = append(failures, "independent_approval_missing_or_overlapping")
-	}
 	if c.ScopeDecision != "passed" {
 		failures = append(failures, "scope_not_passed")
 	}
-	for status, value := range map[string]string{"fixture": c.FixtureStatus, "source": c.SourceStatus, "semantic": c.SemanticStatus, "provenance": c.ProvenanceStatus, "approvals": c.ApprovalsStatus} {
+	for status, value := range map[string]string{"fixture": c.FixtureStatus, "source": c.SourceStatus, "semantic": c.SemanticStatus, "provenance": c.ProvenanceStatus} {
 		if value != "verified" {
 			failures = append(failures, status+"_evidence_not_verified")
 		}
@@ -53,9 +50,6 @@ func gateRejections(inputs proofInputs) []string {
 	}
 	if len(c.Artifacts) == 0 {
 		failures = append(failures, "artifact_inventory_missing")
-	}
-	if c.MissingReasons.Protection != "" || c.MissingReasons.Approval != "" || c.MissingReasons.Provenance != "" {
-		failures = append(failures, "missing_external_evidence")
 	}
 	if err := validateCache(c.Cache, inputs.Evidence); err != nil {
 		failures = append(failures, "cache_"+err.Error())

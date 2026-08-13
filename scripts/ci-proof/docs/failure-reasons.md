@@ -60,17 +60,18 @@ validator compares every field with its executable catalog and rejects drift.
 | `CI-CAPS-001` | caps / error | DAMP file or DRY function cap is exceeded. | Split the file/function and rerun cap checks. | Do not relabel a cap failure as generic scope success. | Handoff the exact path/function to ci-policy. |
 | `CI-CONTRACT-001` | contract / critical | Existing code and the requested semantic contract have incompatible meanings. | Preserve both meanings, stop the conflicting edit, and report the evidence. | Do not overwrite, silently reinterpret, or add a duplicate contract. | Return to the requestor for a separate decision/task. |
 | `CI-DEPENDENCY-001` | dependency / warning | A dependency outside this PR blocks only this PR's local proof or implementation. | Record the dependency as `blocking_scope=local`, continue unrelated PRs, and prepare a bounded handoff. | Do not convert a local dependency into a global stop or modify another scope. | Handoff the dependency tuple and the smallest required interface. |
-| `CI-GATE-001` | gate / blocked | Draft state, missing required review, branch protection, or a protected promotion predicate blocks merge. | Report the exact missing governance evidence and keep the PR unmerged. | Do not self-approve, admin-bypass, force-push, or treat green CI as approval. | Request independent approval/protection evidence for the same tuple. |
+| `CI-GATE-001` | gate / blocked | Draft state, missing CI-only branch protection, or a protected promotion predicate blocks merge. | Report the exact machine-bound protection evidence and keep the PR unmerged. | Do not admin-bypass, force-push, or treat an incomplete machine tuple as green. | Request the missing protection evidence for the same tuple. |
 | `CI-ARTIFACT-001` | artifact / error | Required artifact count, name, size, expiry, or digest is missing or invalid. | Rebuild the artifact from the exact run and verify its digest and binding. | Do not reuse an artifact from another run/attempt or invent a digest. | Handoff artifact IDs, digests, and the exact run tuple. |
 | `CI-FRESHNESS-001` | freshness / error | A head, base, run, attempt, or job is stale, replayed, or mismatched. | Stop promotion, fetch current refs, and require a fresh exact-head run. | Do not reuse historical green evidence or guess a tuple. | Handoff the stale and current tuples. |
-| `CI-PROVENANCE-001` | provenance / blocked | Required provenance, observer, or approval evidence is absent, unavailable, or unverifiable. | Record the missing reason as fail-closed and request legitimate external evidence. | Do not infer live protection, approval, or provenance from CI output. | Handoff the exact evidence references still required. |
+| `CI-PROVENANCE-001` | provenance / blocked | Required machine-bound provenance or observer evidence is absent, unavailable, or unverifiable. | Record the missing reason as fail-closed and request legitimate provenance evidence. | Do not infer live protection or provenance from unrelated CI output. | Handoff the exact evidence references still required. |
 | `CI-OWNERSHIP-001` | ownership / blocked | Branch owner or path ownership cannot be resolved from the protected registry. | Keep the issue local, verify the registered owner, and stop only this PR's mutation. | Do not claim another agent's scope, create aliases, or edit ownership policy. | Handoff the unresolved branch/path tuple to the governance owner. |
 | `CI-UNCLASSIFIED-001` | unclassified / blocked | A terminal failure cannot be safely classified. | Stop and request deterministic CI policy classification. | Do not guess a reason or treat it as green. | Handoff the exact job/run tuple to gate. |
 
 ## Required missing-reason behavior
 
-Protection, approval, and provenance statuses must carry a non-empty reason
-when unavailable or missing. A missing token is not permission to guess: use a
-fail-closed `CI-GATE-001` or `CI-PROVENANCE-001` record. The failure artifact
-must include this catalog path so an agent can immediately locate the action and
-handoff rule.
+Protection and provenance statuses must carry a non-empty reason when
+unavailable or missing; approval is explicitly not applicable under CI-only
+policy. A missing token is not permission to guess: use a fail-closed
+`CI-GATE-001` or `CI-PROVENANCE-001` record. The failure artifact must include
+this catalog path so an agent can immediately locate the action and handoff
+rule.

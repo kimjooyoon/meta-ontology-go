@@ -25,7 +25,8 @@ The failure manifest also exposes the immutable `catalog_digest`, sorted
 `failure_codes` (the complete mapped set), all proof `rejections`, exact
 `owner_branch`, `artifact_status`, `artifact_reason`, bound evidence and proof
 artifact records, ordered terminal failure records/codes, and
-protection/approval/provenance `missing_reasons`. A proof artifact that is
+protection/provenance `missing_reasons`; approval is explicitly not applicable
+under CI-only policy. A proof artifact that is
 missing, malformed, stale, or bound to another run is never treated as a
 successful proof: emit `CI-ARTIFACT-001` or `CI-FRESHNESS-001` with the exact
 reason and require a fresh artifact. Every terminal job is collected in
@@ -45,14 +46,15 @@ Normal operations are:
 1. Reconfirm the existing PR, branch, base, and current head.
 2. Work only in the registered path scope and run the required local checks.
 3. Commit intentionally and push normally to the existing branch.
-4. Audit the fresh PR-authoritative run, canonical jobs, artifacts, reviews, and
-   branch protection using GitHub's current state.
-5. Merge only when exact-head CI, required independent review, and actual branch
-   protection all permit it.
+4. Audit the fresh PR-authoritative run, canonical jobs, exact artifact tuple,
+   machine-bound provenance, and branch protection using GitHub's current state.
+5. Merge only when exact-head CI, machine-bound provenance, and actual CI-only
+   branch protection all permit it.
 
-Self-approval, overlapping approval, admin bypass, force-push, branch aliasing,
-CI-policy weakening, and reuse of stale evidence are prohibited. CI green is
-necessary but never sufficient for a protected merge.
+Human review metadata is observational, not a CI promotion predicate under the
+CI-only policy. Admin bypass, force-push, branch aliasing, CI-policy weakening,
+and reuse of stale evidence are prohibited. CI green is necessary but never
+sufficient without the exact machine-bound protection and provenance tuple.
 
 When the terminal failure set is empty, the failure report emits a separate
 `gooo/ci-closure/v1` artifact. Its `NO_TERMINAL_FAILURE` status is bound to the

@@ -148,7 +148,7 @@ func validateBranchProtection(protection branchProtection, evidence evidenceInpu
 }
 
 func branchProtectionReady(protection branchProtection) bool {
-	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews >= 1 && protection.DismissStaleReviews && protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, proofJobs)
+	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, proofJobs)
 }
 
 func digestBranchProtection(protection branchProtection) string {

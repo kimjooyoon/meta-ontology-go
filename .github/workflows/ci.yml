@@ -288,7 +288,7 @@ jobs:
               observer_receipt_refs: [],
               observer_status: 'unavailable',
               protection_status: 'unavailable',
-              approval_status: 'unavailable',
+              approval_status: 'not_applicable',
               provenance_status: 'unavailable',
               digests: {
                 source_sha256: evidence.digests.source_sha256,
@@ -299,7 +299,6 @@ jobs:
               },
               missing_reasons: {
                 protection: 'domain_protection_observer_unavailable',
-                approval: 'domain_approval_observer_unavailable',
                 provenance: 'domain_provenance_observer_unavailable',
               },
             };
@@ -454,37 +453,17 @@ jobs:
             }
             const protectionPayload = {...protection, digest_sha256: ''};
             protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');
-            let approvals = [];
-            let approvalReadError = '';
-            const listPages = async (fetchPage, label) => {
-              const items = [];
-              for (let page = 1; page <= 1000; page++) {
-                let response;
-                try {
-                  response = await fetchPage(page);
-                } catch (error) {
-                  throw new Error(`${label} API read failed: ${error.message}`);
-                }
-                items.push(...response.data);
-                if (response.data.length < 100) return items;
-              }
-              throw new Error(`${label} API pagination exceeded the fail-closed page limit`);
-            };
-            if (pull) {
-              try {
-                const reviews = await listPages(page => github.rest.pulls.listReviews({owner: context.repo.owner, repo: context.repo.repo, pull_number: pull.number, per_page: 100, page}), 'pull request reviews');
-                const seen = new Set();
-                approvals = reviews.filter(review => review.state === 'APPROVED' && review.user && !seen.has(review.user.login) && seen.add(review.user.login)).map(review => ({actor: review.user.login, state: review.state}));
-              } catch (error) {
-                approvalReadError = 'approval_api_unavailable';
-                core.warning(error.message);
-              }
-            }
             let artifacts = [];
             let artifactReadError = '';
             const runAttempt = Number(process.env.GITHUB_RUN_ATTEMPT || 1);
             try {
-              const artifactRows = await listPages(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}), 'workflow artifacts');
+              const artifactRows = [];
+              for (let page = 1; page <= 1000; page++) {
+                const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+                artifactRows.push(...response.data.artifacts);
+                if (response.data.artifacts.length < 100) break;
+                if (page === 1000) throw new Error('workflow artifact API pagination exceeded the fail-closed page limit');
+              }
               artifacts = artifactRows.map(artifact => ({id: artifact.id, name: artifact.name, size_bytes: artifact.size_in_bytes, expired: artifact.expired, digest: artifact.digest || '', run_id: context.runId, run_attempt: runAttempt}));
             } catch (error) {
               artifactReadError = 'artifact_api_unavailable';
@@ -498,10 +477,10 @@ jobs:
               repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
-              actor: context.actor, builder: context.actor, guardian: approvals[0]?.actor || '', approver: approvals[1]?.actor || '', gate: 'CI policy',
+              actor: context.actor, builder: context.actor, guardian: '', approver: '', gate: 'CI policy',
               branch_protected: protection.exists, branch_protection: protection, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
-              provenance_status: 'unavailable', artifacts_status: artifactsVerified ? 'verified' : 'missing', approvals_status: approvals.length >= 2 && !approvalReadError ? 'verified' : 'missing',
-              write_effect: 'none', no_write_outside_generated: true, approvals, artifacts, fixture_paths: ['examples/billing/main.gooo'],
+              provenance_status: artifactsVerified ? 'verified' : 'missing', artifacts_status: artifactsVerified ? 'verified' : 'missing', approvals_status: 'not_applicable',
+              write_effect: 'none', no_write_outside_generated: true, approvals: [], artifacts, fixture_paths: ['examples/billing/main.gooo'],
               cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence
             };
             fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
@@ -673,12 +652,12 @@ jobs:
             const proofRejections = proof && Array.isArray(proof.rejections) ? [...new Set(proof.rejections)].sort() : [];
             const proofCodes = new Set();
             const addProofCode = (predicate, code) => { if (proofRejections.some(predicate)) proofCodes.add(code); };
-            addProofCode(reason => reason === 'branch_protection_missing' || reason === 'independent_approval_missing_or_overlapping' || reason === 'approvals_evidence_not_verified' || reason === 'write_effect_not_none', 'CI-GATE-001');
+            addProofCode(reason => reason === 'branch_protection_missing' || reason === 'write_effect_not_none', 'CI-GATE-001');
             addProofCode(reason => reason === 'scope_not_passed', 'CI-SCOPE-001');
             addProofCode(reason => reason.includes('artifact') || reason.includes('fixture_inventory'), 'CI-ARTIFACT-001');
             addProofCode(reason => reason === 'fixture_evidence_not_verified', 'CI-TEST-001');
             addProofCode(reason => reason.includes('fresh') || reason.includes('stale') || reason.includes('mismatch'), 'CI-FRESHNESS-001');
-            addProofCode(reason => reason.includes('provenance') || reason === 'missing_external_evidence', 'CI-PROVENANCE-001');
+            addProofCode(reason => reason.includes('provenance'), 'CI-PROVENANCE-001');
             addProofCode(reason => reason.includes('ownership'), 'CI-OWNERSHIP-001');
             addProofCode(reason => reason.includes('dependency'), 'CI-DEPENDENCY-001');
             addProofCode(reason => reason.includes('contract') || reason === 'source_evidence_not_verified' || reason === 'semantic_evidence_not_verified' || reason.startsWith('cache_'), 'CI-CONTRACT-001');

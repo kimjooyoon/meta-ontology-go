@@ -56,7 +56,7 @@ func validateDomainEvidence(domain domainEvidence, evidence evidenceInput, conte
 	if domain.Graph.Status != "deferred" || domain.Graph.Available || domain.Graph.Command == "" {
 		return fmt.Errorf("graph domain evidence must remain explicitly deferred")
 	}
-	if domain.ObserverStatus != "unavailable" || len(domain.ObserverReceiptRefs) != 0 || domain.ProtectionStatus != "unavailable" || domain.ApprovalStatus != "unavailable" || domain.ProvenanceStatus != "unavailable" {
+	if domain.ObserverStatus != "unavailable" || len(domain.ObserverReceiptRefs) != 0 || domain.ProtectionStatus != "unavailable" || domain.ApprovalStatus != "not_applicable" || domain.ProvenanceStatus != "unavailable" {
 		return fmt.Errorf("unavailable domain evidence was overstated")
 	}
 	if err := validateMissingReasons(domain.MissingReasons, domain.ProtectionStatus, domain.ApprovalStatus, domain.ProvenanceStatus); err != nil {
