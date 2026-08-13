@@ -142,7 +142,7 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 	if err := validateFailureCatalog(); err != nil {
 		return failureManifest{}, err
 	}
-	if err := validateFailureOwnerRegistry(binding.OwnerBranch); err != nil {
+	if err := validateFailureOwnerBinding(binding); err != nil {
 		return failureManifest{}, err
 	}
 	entry, ok := failureCatalog[input.Code]
@@ -249,7 +249,7 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	if err := validateFailureCatalog(); err != nil {
 		return err
 	}
-	if err := validateFailureOwnerRegistry(binding.OwnerBranch); err != nil {
+	if err := validateFailureOwnerBinding(binding); err != nil {
 		return err
 	}
 	if err := validateTerminalFailureMapping(manifest, binding); err != nil {

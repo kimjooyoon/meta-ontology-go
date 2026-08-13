@@ -12,13 +12,14 @@ const GovernanceSchemaVersion = "gooo/ci-governance/v1"
 
 // GovernanceMatrix is the machine-readable CI trust and promotion contract.
 type GovernanceMatrix struct {
-	Schema          string                `json:"schema"`
-	Mode            string                `json:"mode"`
-	CIAppID         int64                 `json:"ci_app_id"`
-	GuardianContext string                `json:"guardian_context"`
-	Ownership       []GovernanceOwnership `json:"ownership"`
-	ProtectedKernel []string              `json:"protected_kernel_paths"`
-	Promotion       GovernancePromotion   `json:"promotion"`
+	Schema                string                `json:"schema"`
+	Mode                  string                `json:"mode"`
+	CIAppID               int64                 `json:"ci_app_id"`
+	GuardianContext       string                `json:"guardian_context"`
+	ProtectedPushBranches []string              `json:"protected_push_branches"`
+	Ownership             []GovernanceOwnership `json:"ownership"`
+	ProtectedKernel       []string              `json:"protected_kernel_paths"`
+	Promotion             GovernancePromotion   `json:"promotion"`
 }
 
 type GovernanceOwnership struct {
@@ -62,10 +63,25 @@ func ValidateGovernanceMatrix(matrix GovernanceMatrix) error {
 	if err := validateGovernanceOwnership(matrix.Ownership); err != nil {
 		return err
 	}
+	if err := validateProtectedPushBranches(matrix.ProtectedPushBranches); err != nil {
+		return err
+	}
 	if err := validateKernelPaths(matrix.ProtectedKernel); err != nil {
 		return err
 	}
 	return validatePromotion(matrix.Promotion)
+}
+
+func validateProtectedPushBranches(branches []string) error {
+	if !sameStrings(branches, []string{"integration", "dev", "main"}) {
+		return fmt.Errorf("protected push branches must be integration, dev, and main")
+	}
+	for _, branch := range branches {
+		if branch == "" || strings.ContainsAny(branch, "/*?[]") {
+			return fmt.Errorf("invalid protected push branch %q", branch)
+		}
+	}
+	return nil
 }
 
 func validateGovernanceOwnership(ownership []GovernanceOwnership) error {

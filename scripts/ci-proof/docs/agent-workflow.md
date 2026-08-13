@@ -11,6 +11,14 @@ scope, current artifact digest/binding, checked-in policy digest, and the
 no-write/provenance contract. Branch protection is retained as a separate
 promotion predicate and remains fail-closed when its observer is unavailable.
 
+PR failure ownership and protected-branch push ownership are separate. A
+pull-request manifest must use the exact registered `agent/*` owner branch.
+For a protected `push`, the owner is the normalized event branch itself and
+must be one of `integration`, `dev`, or `main`; the event ref must be exactly
+`refs/heads/<owner>`, and `pr_number` must be zero. Unknown, stale, omitted, or
+malformed refs fail closed and route remediation through the catalog/gate
+handoff rather than inventing an agent owner.
+
 The future `CI guardian` is a separate `pull_request_target` context. Guardian v1 freezes
 the base protected-kernel paths (`.github/ci-governance.json`, CI workflows,
 branch policy/scope, `internal/verify/**`, and `scripts/verify/**`) and fails

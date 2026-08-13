@@ -98,14 +98,29 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"scripts/ci-proof/artifacts_test.js",
 		"listWorkflowArtifacts",
 		"selectCurrentEvidenceArtifact",
+		"normalizeBaseRef",
+		"./scripts/ci-proof/refs",
 	} {
 		if !strings.Contains(text, marker) {
 			t.Fatalf("workflow lost event-source evidence marker %q", marker)
 		}
 	}
+	assertWorkflowIdentityMarkers(t, text)
+}
+
+func assertWorkflowIdentityMarkers(t *testing.T, text string) {
+	t.Helper()
 	for _, forbidden := range []string{"updateBranchProtection", "replaceBranchProtection", "PUT /repos/", "repos.updateBranchProtection"} {
 		if strings.Contains(text, forbidden) {
 			t.Fatalf("workflow contains forbidden protection write %q", forbidden)
+		}
+	}
+	if strings.Contains(text, "context.ref_name") {
+		t.Fatal("workflow uses the unavailable github-script context.ref_name field")
+	}
+	for _, marker := range []string{"- dev", "normalizeOwnerBranch", "ci-base-ref.txt", "ci-owner-branch.txt"} {
+		if !strings.Contains(text, marker) {
+			t.Fatalf("workflow lost protected-push identity marker %q", marker)
 		}
 	}
 	for _, forbidden := range []string{"pulls.listReviews", "approval_api_unavailable", "independent_approval_missing_or_overlapping", "approvals_status"} {
