@@ -57,6 +57,31 @@ func TestCIBranchProtectionRequiresCIOnlySnapshot(t *testing.T) {
 	}
 }
 
+func TestCIMachineBoundPromotionAcceptsKnownProtectionObserverGap(t *testing.T) {
+	bundle := validProof()
+	bundle.BranchProtection.ReadStatus = "unavailable"
+	bundle.BranchProtection.Exists = false
+	bundle.BranchProtection.MissingReason = "branch_protection_token_unavailable"
+	context := contextInput{
+		Repository: bundle.Repository, Event: bundle.Event, Ref: bundle.Ref, EventRef: bundle.EventRef,
+		CheckoutRef: bundle.CheckoutRef, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA,
+		HeadSHA: bundle.HeadSHA, WorkflowSHA: bundle.WorkflowSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt,
+		BranchProtection: bundle.BranchProtection, ArtifactsStatus: "verified",
+		ProvenanceStatus: "verified",
+	}
+	inputs := proofInputs{
+		Governance: governanceInput{Promotion: promotionInput{Source: "integration", Target: "main", RequiredChecks: append([]string(nil), proofJobs...), BranchProtectionRequired: true}},
+		Evidence:   evidenceInput{Jobs: bundle.Jobs}, Jobs: bundle.Jobs, Context: context,
+	}
+	if !machineBoundPromotionReady(inputs) {
+		t.Fatal("known protection observer gap was not replaced by exact machine evidence")
+	}
+	context.BranchProtection.MissingReason = "unknown"
+	if machineBoundPromotionReady(proofInputs{Jobs: bundle.Jobs, Context: context}) {
+		t.Fatal("unknown protection observer gap was accepted")
+	}
+}
+
 func TestCIGateRejectionsUseMachineEvidenceWithoutHumanReviews(t *testing.T) {
 	bundle := validProof()
 	context := contextInput{

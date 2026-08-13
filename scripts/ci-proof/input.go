@@ -59,9 +59,6 @@ func readJobs(filename string) ([]jobInput, error) {
 			return nil, fmt.Errorf("duplicate or invalid canonical proof job id %d", job.ID)
 		}
 		seenIDs[job.ID] = true
-		if job.Name == "CI policy" && job.Conclusion == "" {
-			job.Conclusion = "success"
-		}
 		byName[job.Name] = job
 	}
 	result := make([]jobInput, 0, len(proofJobs))

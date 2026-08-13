@@ -61,6 +61,35 @@ func gateRejections(inputs proofInputs) []string {
 	return unique
 }
 
+func machineBoundPromotionReady(inputs proofInputs) bool {
+	c := inputs.Context
+	if branchProtectionReady(c.BranchProtection) {
+		return true
+	}
+	promotion := inputs.Governance.Promotion
+	if promotion.Source != "integration" || promotion.Target != "main" || !promotion.BranchProtectionRequired || !sameStringSet(promotion.RequiredChecks, proofJobs) {
+		return false
+	}
+	if c.BranchProtection.ReadStatus != "unavailable" || c.BranchProtection.MissingReason != "branch_protection_token_unavailable" {
+		return false
+	}
+	if c.ArtifactsStatus != "verified" || c.ProvenanceStatus != "verified" {
+		return false
+	}
+	if len(inputs.Jobs) != len(proofJobs) || len(inputs.Evidence.Jobs) != len(proofJobs) {
+		return false
+	}
+	if compareJobs(inputs.Evidence.Jobs, inputs.Jobs, c.HeadSHA, c.RunID, c.RunAttempt) != nil {
+		return false
+	}
+	for index, job := range inputs.Jobs {
+		if job.Name != proofJobs[index] || job.Status != "completed" || job.Conclusion != "success" || job.ID <= 0 || job.HeadSHA != c.HeadSHA || job.RunID != c.RunID || job.RunAttempt != c.RunAttempt {
+			return false
+		}
+	}
+	return true
+}
+
 func statusFor(decision string) string {
 	if decision == "passed" {
 		return "verified"
