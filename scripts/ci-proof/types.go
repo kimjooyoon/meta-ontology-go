@@ -94,6 +94,7 @@ type contextInput struct {
 	Gate                 string                `json:"gate"`
 	BranchProtected      bool                  `json:"branch_protected"`
 	BranchProtection     branchProtection      `json:"branch_protection"`
+	DevBranchProtection  branchProtection      `json:"dev_branch_protection"`
 	DomainEvidence       domainEvidence        `json:"domain_evidence"`
 	ScopeDecision        string                `json:"scope_decision"`
 	FixtureStatus        string                `json:"fixture_status"`
@@ -115,31 +116,39 @@ type contextInput struct {
 }
 
 type branchProtection struct {
-	Repository              string                 `json:"repository"`
-	Branch                  string                 `json:"branch"`
-	PolicySHA               string                 `json:"policy_sha256"`
-	EventRef                string                 `json:"event_ref"`
-	CheckoutRef             string                 `json:"checkout_ref"`
-	TokenSource             string                 `json:"token_source"`
-	ReadStatus              string                 `json:"read_status"`
-	Exists                  bool                   `json:"exists"`
-	Strict                  bool                   `json:"strict"`
-	RequiredChecks          []string               `json:"required_checks"`
-	RequiredCheckBindings   []requiredCheckBinding `json:"required_check_bindings"`
-	EnforceAdmins           bool                   `json:"enforce_admins"`
-	RequiredReviews         int64                  `json:"required_reviews"`
-	DismissStaleReviews     bool                   `json:"dismiss_stale_reviews"`
-	RequireLastPushApproval bool                   `json:"require_last_push_approval"`
-	LinearHistory           bool                   `json:"linear_history"`
-	AllowForcePushes        bool                   `json:"allow_force_pushes"`
-	AllowDeletions          bool                   `json:"allow_deletions"`
-	MissingReason           string                 `json:"missing_reason"`
-	BaseSHA                 string                 `json:"base_sha"`
-	HeadSHA                 string                 `json:"head_sha"`
-	RunID                   int64                  `json:"run_id"`
-	RunAttempt              int64                  `json:"run_attempt"`
-	WorkflowSHA             string                 `json:"workflow_sha"`
-	Digest                  string                 `json:"digest_sha256"`
+	Repository                     string                 `json:"repository"`
+	Branch                         string                 `json:"branch"`
+	PolicySHA                      string                 `json:"policy_sha256"`
+	EventRef                       string                 `json:"event_ref"`
+	CheckoutRef                    string                 `json:"checkout_ref"`
+	TokenSource                    string                 `json:"token_source"`
+	AppInstallationID              int64                  `json:"app_installation_id"`
+	AppSlug                        string                 `json:"app_slug"`
+	ReadStatus                     string                 `json:"read_status"`
+	Exists                         bool                   `json:"exists"`
+	Strict                         bool                   `json:"strict"`
+	RequiredChecks                 []string               `json:"required_checks"`
+	RequiredCheckBindings          []requiredCheckBinding `json:"required_check_bindings"`
+	EnforceAdmins                  bool                   `json:"enforce_admins"`
+	RequiredReviews                int64                  `json:"required_reviews"`
+	DismissStaleReviews            bool                   `json:"dismiss_stale_reviews"`
+	RequireLastPushApproval        bool                   `json:"require_last_push_approval"`
+	LinearHistory                  bool                   `json:"linear_history"`
+	AllowForcePushes               bool                   `json:"allow_force_pushes"`
+	AllowDeletions                 bool                   `json:"allow_deletions"`
+	RequiredSignatures             bool                   `json:"required_signatures"`
+	RequiredConversationResolution bool                   `json:"required_conversation_resolution"`
+	BlockCreations                 bool                   `json:"block_creations"`
+	LockBranch                     bool                   `json:"lock_branch"`
+	AllowForkSyncing               bool                   `json:"allow_fork_syncing"`
+	Restrictions                   any                    `json:"restrictions"`
+	MissingReason                  string                 `json:"missing_reason"`
+	BaseSHA                        string                 `json:"base_sha"`
+	HeadSHA                        string                 `json:"head_sha"`
+	RunID                          int64                  `json:"run_id"`
+	RunAttempt                     int64                  `json:"run_attempt"`
+	WorkflowSHA                    string                 `json:"workflow_sha"`
+	Digest                         string                 `json:"digest_sha256"`
 }
 
 type artifactInput struct {
@@ -164,59 +173,25 @@ type guardianTopology struct {
 	MergeBaseSHA string `json:"merge_base_sha"`
 }
 
-type guardianEvidence struct {
-	Schema                string           `json:"schema"`
-	Route                 string           `json:"route"`
-	CheckName             string           `json:"check_name"`
-	Repository            string           `json:"repository"`
-	PRNumber              int64            `json:"pr_number"`
-	Action                string           `json:"action"`
-	BaseRepo              string           `json:"base_repo"`
-	BaseRef               string           `json:"base_ref"`
-	BaseSHA               string           `json:"base_sha"`
-	HeadRepo              string           `json:"head_repo"`
-	HeadRef               string           `json:"head_ref"`
-	HeadSHA               string           `json:"head_sha"`
-	WorkflowRef           string           `json:"workflow_ref"`
-	WorkflowSHA           string           `json:"workflow_sha"`
-	RuntimeRef            string           `json:"runtime_ref"`
-	RuntimeSHA            string           `json:"runtime_sha"`
-	EventRef              string           `json:"event_ref"`
-	DefaultBranch         string           `json:"default_branch"`
-	RunID                 int64            `json:"run_id"`
-	RunAttempt            int64            `json:"run_attempt"`
-	WorkflowID            int64            `json:"workflow_id"`
-	WorkflowPath          string           `json:"workflow_path"`
-	RunEvent              string           `json:"run_event"`
-	RunStatus             string           `json:"run_status"`
-	RunConclusion         string           `json:"run_conclusion"`
-	RunCreatedAt          string           `json:"run_created_at"`
-	RunNumber             int64            `json:"run_number"`
-	LiveRefsBefore        guardianLiveRefs `json:"live_refs_before"`
-	LiveRefsAfter         guardianLiveRefs `json:"live_refs_after"`
-	Topology              guardianTopology `json:"topology"`
-	ArtifactID            int64            `json:"artifact_id"`
-	ArtifactName          string           `json:"artifact_name"`
-	ArtifactSize          int64            `json:"artifact_size"`
-	ArtifactExpired       bool             `json:"artifact_expired"`
-	ArtifactDigest        string           `json:"artifact_digest"`
-	ManifestBundleSHA     string           `json:"manifest_bundle_sha256"`
-	GuardianJobID         int64            `json:"guardian_job_id"`
-	GuardianJobName       string           `json:"guardian_job_name"`
-	GuardianJobStatus     string           `json:"guardian_job_status"`
-	GuardianJobConclusion string           `json:"guardian_job_conclusion"`
-	GuardianJobHeadSHA    string           `json:"guardian_job_head_sha"`
-	CheckRunID            int64            `json:"check_run_id"`
-	CheckRunName          string           `json:"check_run_name"`
-	CheckRunAppID         int64            `json:"check_run_app_id"`
-	CheckRunStatus        string           `json:"check_run_status"`
-	CheckRunConclusion    string           `json:"check_run_conclusion"`
-	CheckRunHeadSHA       string           `json:"check_run_head_sha"`
-	CheckSuiteID          int64            `json:"check_suite_id"`
-	Decision              string           `json:"decision"`
-	Code                  *string          `json:"code"`
-	HeadBindingStatus     string           `json:"head_binding_status"`
-	BundleSHA             string           `json:"bundle_sha256"`
+type guardianEnvironment struct {
+	Repository             string                         `json:"repository"`
+	Name                   string                         `json:"name"`
+	DeploymentBranchPolicy guardianDeploymentBranchPolicy `json:"deployment_branch_policy"`
+	ProtectionRules        []string                       `json:"protection_rules"`
+	WaitTimer              int                            `json:"wait_timer"`
+	Reviewers              []string                       `json:"reviewers"`
+	TokenSource            string                         `json:"token_source"`
+	ReadStatus             string                         `json:"read_status"`
+	MissingReason          string                         `json:"missing_reason"`
+	RunID                  int64                          `json:"run_id"`
+	RunAttempt             int64                          `json:"run_attempt"`
+	WorkflowSHA            string                         `json:"workflow_sha"`
+	Digest                 string                         `json:"digest_sha256"`
+}
+
+type guardianDeploymentBranchPolicy struct {
+	ProtectedBranches    bool `json:"protected_branches"`
+	CustomBranchPolicies bool `json:"custom_branch_policies"`
 }
 
 type missingReasons struct {
@@ -244,6 +219,7 @@ type provenanceReceipt struct {
 	RunAttempt             int64                   `json:"run_attempt"`
 	WorkflowSHA            string                  `json:"workflow_sha"`
 	BranchProtection       branchProtection        `json:"branch_protection"`
+	DevBranchProtection    branchProtection        `json:"dev_branch_protection"`
 	DomainEvidence         domainEvidence          `json:"domain_evidence"`
 	Jobs                   []jobInput              `json:"jobs"`
 	Artifacts              []artifactInput         `json:"artifacts"`

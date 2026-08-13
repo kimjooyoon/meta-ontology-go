@@ -10,10 +10,12 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  actions: read
 
 jobs:
   guardian:
     name: ${{ github.base_ref == 'main' && 'CI guardian' || 'CI guardian shadow' }}
+    environment: ${{ github.base_ref == 'main' && 'guardian-observer' || '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout default workflow authority
@@ -23,6 +25,50 @@ jobs:
           ref: ${{ github.workflow_sha }}
           fetch-depth: 1
           persist-credentials: false
+      - name: Validate guardian observer environment
+        id: observer-environment
+        continue-on-error: true
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        env:
+          GUARDIAN_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          GUARDIAN_RUN_ID: ${{ github.run_id }}
+          GUARDIAN_RUN_ATTEMPT: ${{ github.run_attempt }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('node:fs');
+            const guardian = require('./scripts/ci-proof/guardian');
+            const repository = context.payload.repository && context.payload.repository.full_name;
+            const runId = Number(process.env.GUARDIAN_RUN_ID);
+            const runAttempt = Number(process.env.GUARDIAN_RUN_ATTEMPT);
+            let snapshot;
+            try {
+              snapshot = await guardian.observeGuardianEnvironment({
+                getEnvironment: (parameters) => github.rest.repos.getEnvironment(parameters),
+                repository,
+                tokenSource: 'github.token',
+                runId,
+                runAttempt,
+                workflowSHA: process.env.GUARDIAN_WORKFLOW_SHA,
+              });
+            } catch (error) {
+              snapshot = guardian.emptyGuardianEnvironment({repository, tokenSource: 'github.token', runId, runAttempt, workflowSHA: process.env.GUARDIAN_WORKFLOW_SHA, missingReason: 'guardian_environment_observer_failed'});
+            }
+            fs.writeFileSync('ci-guardian-environment.json', JSON.stringify(snapshot, null, 2) + '\n');
+            core.setOutput('verified', snapshot.read_status === 'verified' ? 'true' : 'false');
+      - name: Mint current-repository Guardian App token
+        id: guardian-app-token
+        if: github.base_ref == 'main' && steps.observer-environment.outputs.verified == 'true'
+        continue-on-error: true
+        # v3: bcd2ba49218906704ab6c1aa796996da409d3eb1
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        env:
+          GUARDIAN_APP_CLIENT_ID: ${{ vars.GUARDIAN_APP_CLIENT_ID }}
+          GUARDIAN_APP_PRIVATE_KEY: ${{ secrets.GUARDIAN_APP_PRIVATE_KEY }}
+        with:
+          app-id: ${{ env.GUARDIAN_APP_CLIENT_ID }}
+          private-key: ${{ env.GUARDIAN_APP_PRIVATE_KEY }}
+          permission-administration: read
       - name: Inspect changed paths from default authority
         # v7: f28e40c7f34bde8b3046d885e986cb6290c5673b
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
@@ -33,10 +79,14 @@ jobs:
           GUARDIAN_RUNTIME_SHA: ${{ github.sha }}
           GUARDIAN_RUN_ID: ${{ github.run_id }}
           GUARDIAN_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GUARDIAN_APP_TOKEN: ${{ steps.guardian-app-token.outputs.token }}
+          GUARDIAN_APP_INSTALLATION_ID: ${{ steps.guardian-app-token.outputs.installation-id }}
+          GUARDIAN_APP_SLUG: ${{ steps.guardian-app-token.outputs.app-slug }}
         with:
           github-token: ${{ github.token }}
           script: |
             const fs = require('node:fs');
+            const crypto = require('node:crypto');
             const guardian = require('./scripts/ci-proof/guardian');
             const eventPull = context.payload.pull_request;
             const repository = context.payload.repository && context.payload.repository.full_name;
@@ -50,6 +100,9 @@ jobs:
             let liveBefore = null;
             let liveAfter = null;
             let checkName = null;
+            let branchProtection = null;
+            let devBranchProtection = null;
+            let observerEnvironmentSnapshot = null;
             let observedPull = eventPull;
             let result = {decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: 'guardian observation was incomplete', files: [], kernelPaths: []};
             try {
@@ -95,6 +148,55 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
               });
+              const route = guardian.routeForPull(observedPull);
+              if (route === 'promotion_main') {
+                try {
+                  observerEnvironmentSnapshot = JSON.parse(fs.readFileSync('ci-guardian-environment.json', 'utf8'));
+                } catch (error) {
+                  observerEnvironmentSnapshot = guardian.emptyGuardianEnvironment({repository, tokenSource: 'github.token', runId, runAttempt, workflowSHA: workflowSha, missingReason: 'guardian_environment_artifact_unavailable'});
+                }
+                const observerToken = process.env.GUARDIAN_APP_TOKEN || '';
+                const observerClient = observerToken ? github.getOctokit(observerToken) : null;
+                const observerTokenSource = 'github_app_installation';
+                const appInstallationId = Number(process.env.GUARDIAN_APP_INSTALLATION_ID || 0);
+                const appSlug = process.env.GUARDIAN_APP_SLUG || '';
+                const getProtection = (parameters) => observerClient ? observerClient.rest.repos.getBranchProtection(parameters) : Promise.resolve({status: 403});
+                const policySHA = crypto.createHash('sha256').update(fs.readFileSync('.github/ci-governance.json')).digest('hex');
+                branchProtection = await guardian.observeBranchProtection({
+                  getProtection,
+                  branch: 'main',
+                  expectedContexts: guardian.MAIN_PROTECTION_CONTEXTS,
+                  repository,
+                  policySHA,
+                  eventRef: runtimeRef,
+                  checkoutRef: runtimeSha,
+                  baseSHA: observedPull.base.sha,
+                  headSHA: observedPull.head.sha,
+                  runId,
+                  runAttempt,
+                  workflowSHA: workflowSha,
+                  tokenSource: observerTokenSource,
+                  appInstallationId,
+                  appSlug,
+                });
+                devBranchProtection = await guardian.observeBranchProtection({
+                  getProtection,
+                  branch: 'dev',
+                  expectedContexts: guardian.DEV_PROTECTION_CONTEXTS,
+                  repository,
+                  policySHA,
+                  eventRef: runtimeRef,
+                  checkoutRef: runtimeSha,
+                  baseSHA: observedPull.base.sha,
+                  headSHA: observedPull.head.sha,
+                  runId,
+                  runAttempt,
+                  workflowSHA: workflowSha,
+                  tokenSource: observerTokenSource,
+                  appInstallationId,
+                  appSlug,
+                });
+              }
               let beforeDigest = null;
               let afterDigest = null;
               checkName = guardian.checkNameForRoute(guardian.routeForPull(observedPull));
@@ -115,6 +217,9 @@ jobs:
                 });
               }
               result = guardian.classifyGuardianDecision({pull: observedPull, repository, defaultBranch, workflowRef, eventRef: runtimeRef, workflowSha, runtimeSha, result, kernelBeforeDigest: beforeDigest, kernelAfterDigest: afterDigest, liveBefore, liveAfter, checkName});
+              if (route === 'promotion_main' && (!branchProtection || branchProtection.read_status !== 'verified' || !devBranchProtection || devBranchProtection.read_status !== 'verified' || !observerEnvironmentSnapshot || observerEnvironmentSnapshot.read_status !== 'verified')) {
+                result = {...result, decision: 'FAIL_CLOSED', code: guardian.PROTECTION_CODE, reason: (branchProtection && branchProtection.missing_reason) || (observerEnvironmentSnapshot && observerEnvironmentSnapshot.missing_reason) || 'trusted protection observer evidence is unavailable'};
+              }
             } catch (error) {
               result = {...result, decision: 'FAIL_CLOSED', code: error.code || guardian.ROOT_FAILURE_CODE, reason: error.message || String(error)};
             }
@@ -134,6 +239,10 @@ jobs:
               liveBefore,
               liveAfter,
               checkName: guardian.checkNameForRoute(guardian.routeForPull(observedPull)),
+              branchProtection,
+              devBranchProtection,
+              observerEnvironment: guardian.OBSERVER_ENVIRONMENT,
+              observerEnvironmentSnapshot,
             });
             fs.writeFileSync('ci-guardian.json', JSON.stringify(artifact, null, 2) + '\n');
             let validationError = null;
@@ -166,6 +275,7 @@ jobs:
               .addRaw(`decision=${artifact.decision}\n`)
               .addRaw(`code=${artifact.code || 'none'}\n`)
               .addRaw(`default_branch=${artifact.default_branch || 'unknown'}\n`)
+              .addRaw(`observer_environment=${artifact.observer_environment || 'unknown'}\n`)
               .addRaw(`head_binding=${artifact.head_binding_status}\n`)
               .addRaw(`base=${artifact.base_ref}@${artifact.base_sha}\n`)
               .addRaw(`head=${artifact.head_ref}@${artifact.head_sha}\n`)

@@ -3,7 +3,7 @@
   "mode": "ci_only",
   "ci_app_id": 15368,
   "required_contexts": {
-    "dev": ["gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"],
+    "dev": ["gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy", "CI guardian shadow"],
     "main": ["gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy", "CI guardian"]
   },
   "guardian_contexts": {

@@ -136,10 +136,10 @@ func validateEvidenceDigests(root string, evidence evidenceInput) error {
 }
 
 func validateBranchProtection(protection branchProtection, evidence evidenceInput, context contextInput) error {
-	if protection.Repository != evidence.Repository || protection.Branch != context.BaseRef || protection.PolicySHA != evidence.Digests.Policy || protection.EventRef != context.EventRef || protection.CheckoutRef != context.CheckoutRef || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA {
+	if protection.Repository != evidence.Repository || protection.PolicySHA != evidence.Digests.Policy || !validSHA(protection.BaseSHA) || !validSHA(protection.HeadSHA) || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA {
 		return fmt.Errorf("branch protection snapshot is missing or unbound")
 	}
-	if protection.TokenSource != "github.token" && protection.TokenSource != "BRANCH_PROTECTION_TOKEN" || protection.ReadStatus != "verified" && protection.ReadStatus != "unavailable" {
+	if protection.ReadStatus != "verified" && protection.ReadStatus != "unavailable" {
 		return fmt.Errorf("branch protection snapshot source or status is invalid")
 	}
 	if protection.ReadStatus == "unavailable" && protection.MissingReason == "" || protection.ReadStatus == "verified" && protection.MissingReason != "" {
@@ -148,11 +148,21 @@ func validateBranchProtection(protection branchProtection, evidence evidenceInpu
 	if protection.Digest != digestBranchProtection(protection) {
 		return fmt.Errorf("branch protection snapshot digest mismatch")
 	}
-	if protection.ReadStatus == "verified" && protection.Exists && !sameStringSet(protection.RequiredChecks, requiredContextsForBase(context.BaseRef)) {
-		return fmt.Errorf("branch protection required contexts do not match route %q", context.BaseRef)
+	if context.BaseRef == "dev" {
+		if protection.Branch != "dev" || protection.TokenSource != "not_observed" || protection.ReadStatus != "unavailable" || protection.Exists || protection.Strict || len(protection.RequiredChecks) != 0 || len(protection.RequiredCheckBindings) != 0 || protection.MissingReason != "trusted_guardian_required" || protection.EventRef != context.EventRef || protection.CheckoutRef != context.CheckoutRef || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA {
+			return fmt.Errorf("feature proof must keep branch protection explicitly unobserved")
+		}
+		return nil
 	}
-	if protection.ReadStatus == "verified" && protection.Exists && !validRequiredCheckBindings(protection.RequiredCheckBindings, requiredContextsForBase(context.BaseRef)) {
-		return fmt.Errorf("branch protection required check app bindings do not match route %q", context.BaseRef)
+	if context.BaseRef != "main" || protection.Branch != "main" || protection.TokenSource != "github_app_installation" || protection.ReadStatus != "verified" || !branchProtectionReadyFor(protection, "main") {
+		return fmt.Errorf("main proof requires the trusted Guardian branch protection snapshot")
+	}
+	return nil
+}
+
+func validateTrustedBranchProtection(protection branchProtection, evidence evidenceInput, branch string) error {
+	if protection.Repository != evidence.Repository || protection.Branch != branch || protection.PolicySHA != evidence.Digests.Policy || protection.TokenSource != "github_app_installation" || protection.ReadStatus != "verified" || !validSHA(protection.BaseSHA) || !validSHA(protection.HeadSHA) || protection.BaseSHA != evidence.BaseSHA || protection.HeadSHA != evidence.HeadSHA || protection.EventRef != evidence.EventRef || protection.CheckoutRef != evidence.CheckoutRef || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA || !branchProtectionReadyFor(protection, branch) {
+		return fmt.Errorf("trusted %s branch protection snapshot is missing or unbound", branch)
 	}
 	return nil
 }
@@ -165,11 +175,11 @@ func requiredContextsForBase(base string) []string {
 	if base == "main" {
 		return append(append([]string(nil), proofJobs...), "CI guardian")
 	}
-	return append([]string(nil), proofJobs...)
+	return append(append([]string(nil), proofJobs...), "CI guardian shadow")
 }
 
 func branchProtectionReadyFor(protection branchProtection, base string) bool {
-	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, requiredContextsForBase(base)) && validRequiredCheckBindings(protection.RequiredCheckBindings, requiredContextsForBase(base))
+	return protection.ReadStatus == "verified" && protection.TokenSource == "github_app_installation" && protection.AppInstallationID > 0 && protection.AppSlug != "" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && !protection.RequiredSignatures && !protection.RequiredConversationResolution && !protection.BlockCreations && !protection.LockBranch && !protection.AllowForkSyncing && protection.Restrictions == nil && sameStringSet(protection.RequiredChecks, requiredContextsForBase(base)) && validRequiredCheckBindings(protection.RequiredCheckBindings, requiredContextsForBase(base))
 }
 
 func digestBranchProtection(protection branchProtection) string {

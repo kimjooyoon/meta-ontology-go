@@ -37,6 +37,7 @@ type proofBundle struct {
 	Jobs                   []jobInput              `json:"jobs"`
 	Actors                 actorRoles              `json:"actors"`
 	BranchProtection       branchProtection        `json:"branch_protection"`
+	DevBranchProtection    branchProtection        `json:"dev_branch_protection"`
 	DomainEvidence         domainEvidence          `json:"domain_evidence"`
 	Scope                  scopeResult             `json:"scope"`
 	Fixtures               fixtureResult           `json:"fixtures"`

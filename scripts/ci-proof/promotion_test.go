@@ -27,10 +27,8 @@ func validPromotionBundleFixture() proofBundle {
 	bundle.Artifacts[0].Name = "ci-evidence-300-1"
 	bundle.Artifacts[0].RunID = bundle.RunID
 	bundle.Artifacts[0].RunAttempt = bundle.RunAttempt
-	bundle.BranchProtection = validBranchProtection(bundle)
-	bundle.BranchProtection.RequiredChecks = append(append([]string(nil), proofJobs...), "CI guardian")
-	bundle.BranchProtection.RequiredCheckBindings = requiredCheckBindingsFor(bundle.BranchProtection.RequiredChecks)
-	bundle.BranchProtection.Digest = digestBranchProtection(bundle.BranchProtection)
+	bundle.BranchProtection = evidence.BranchProtection
+	bundle.DevBranchProtection = evidence.DevBranchProtection
 	bundle.DomainEvidence = validDomainEvidence(bundle)
 	bundle.GuardianEvidence = &evidence
 	bundle.PromotionObservation = &promotionObservation{

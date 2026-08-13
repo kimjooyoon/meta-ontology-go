@@ -75,10 +75,10 @@ func ValidateGovernanceMatrix(matrix GovernanceMatrix) error {
 	if !sameStrings(matrix.ProofJobs, canonicalJobs()) {
 		return fmt.Errorf("proof jobs do not match canonical CI jobs")
 	}
-	if !sameStrings(matrix.RequiredContexts.Dev, canonicalJobs()) || !sameStrings(matrix.RequiredContexts.Main, append(append([]string(nil), canonicalJobs()...), "CI guardian")) {
+	if !sameStrings(matrix.RequiredContexts.Dev, append(append([]string(nil), canonicalJobs()...), "CI guardian shadow")) || !sameStrings(matrix.RequiredContexts.Main, append(append([]string(nil), canonicalJobs()...), "CI guardian")) {
 		return fmt.Errorf("required contexts do not match the dev/main guardian matrix")
 	}
-	if len(matrix.RequiredContexts.Main) != len(matrix.RequiredContexts.Dev)+1 || contains(matrix.RequiredContexts.Dev, "CI guardian") {
+	if len(matrix.RequiredContexts.Dev) != len(canonicalJobs())+1 || len(matrix.RequiredContexts.Main) != len(matrix.RequiredContexts.Dev) || contains(matrix.RequiredContexts.Dev, "CI guardian") || !contains(matrix.RequiredContexts.Dev, "CI guardian shadow") {
 		return fmt.Errorf("required context names are not unique and route-specific")
 	}
 	if err := validateGovernanceOwnership(matrix.Ownership); err != nil {

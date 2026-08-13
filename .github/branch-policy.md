@@ -16,11 +16,15 @@ agent/*  ->  dev  ->  main
   changes must arrive through the separate `dev`-to-`main` promotion path.
 - CI checks are required before either merge. The workflow uses the same deterministic
   gate for work branches, `dev`, and `main`.
-- The checked-in governance mode is `ci_only`: dev CI closure is determined
-  by the exact six canonical jobs, scope, artifact, provenance, and no-write
-  predicates. Human reviews and last-push approvals are not CI proof inputs.
-  Branch protection remains a separate, fail-closed promotion predicate for
-  dev-to-main; inaccessible protection cannot be inferred from CI.
+- The checked-in governance mode is `ci_only`: the proof still contains exactly
+  six canonical jobs, while steady-state dev protection requires those six plus
+  the app-bound `CI guardian shadow` (seven contexts). Main requires those six
+  plus app-bound `CI guardian` (seven contexts). Human reviews and last-push
+  approvals are not CI proof inputs. This bootstrap PR is the one-time
+  expected-negative under the currently observed six-context dev protection;
+  after it lands, the gate must activate dev's shadow context before any later
+  PR is merged. Main promotion requires trusted seven-context snapshots for
+  both dev and main; inaccessible protection cannot be inferred from CI.
 
 ## Immutable CI trust kernel
 
@@ -45,6 +49,10 @@ candidate's new `CI guardian shadow` route name. Record that old-base Guardian
 result as bootstrap expected-negative evidence. A later non-kernel feature PR,
 after this workflow is integrated, is the probe for `CI guardian shadow`; do not
 pretend this PR has already activated that name or make it required here.
+The promotion route validates the named `guardian-observer` environment before
+minting a current-repository GitHub App installation token with only
+Administration:read. The environment/App configuration is provisioned outside
+this owner lane; missing or malformed configuration remains fail-closed.
 
 The scaffold baseline does not yet expose a working semantic CLI. Until
 `cmd/gooo` implements its `check` command, the semantic CLI and generated-freshness

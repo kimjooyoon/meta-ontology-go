@@ -53,6 +53,7 @@ func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
 	text := string(workflow)
 	for _, marker := range []string{
 		"name: CI guardian", "pull_request_target:", "- dev\n      - main",
+		"environment: ${{ github.base_ref == 'main' && 'guardian-observer'", "actions: read", "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1", "permission-administration: read", "GUARDIAN_APP_PRIVATE_KEY", "getBranchProtection", "observer_environment",
 		"actions/checkout@11d5960a326750d5838078e36cf38b85af677262", "ref: ${{ github.workflow_sha }}",
 		"persist-credentials: false", "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b", "listFiles",
 		"github.rest.pulls.get", "github.workflow_ref", "github.workflow_sha", "github.sha",
@@ -64,7 +65,7 @@ func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
 		}
 	}
 	for _, forbidden := range []string{
-		"github.event.pull_request.head.sha", "refs/pull/", "secrets.", "contents: write",
+		"github.event.pull_request.head.sha", "refs/pull/", "BRANCH_PROTECTION_TOKEN", "contents: write",
 		"pull-requests: write", "agent/ci-workflow", "ref: ${{ github.event.pull_request.base.sha }}", "\n        run:", "\n    pull_request:",
 	} {
 		if strings.Contains(text, forbidden) {
@@ -106,14 +107,11 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"CI_SLOT_PRESERVATION: \"true\"",
 		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
 		"actions/upload-artifact@v4",
-		"BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}",
 		"administration: read must not be added here",
-		"const tokenSource = process.env.BRANCH_PROTECTION_TOKEN ? 'BRANCH_PROTECTION_TOKEN' : 'github.token'",
-		"const protectionClient = process.env.BRANCH_PROTECTION_TOKEN",
 		"read_status: 'unavailable'",
 		"event_ref: context.ref",
 		"checkout_ref: headSha",
-		"getBranchProtection",
+		"trusted_guardian_required",
 		"branch_protection",
 		"digest_sha256",
 		"ci-proof.json",
@@ -130,6 +128,9 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		}
 	}
 	assertWorkflowIdentityMarkers(t, text)
+	if strings.Contains(text, "BRANCH_PROTECTION_TOKEN") || strings.Contains(text, "getBranchProtection") {
+		t.Fatal("pull_request CI must not read branch protection or receive its observer credential")
+	}
 }
 
 func assertWorkflowIdentityMarkers(t *testing.T, text string) {

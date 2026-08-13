@@ -16,10 +16,9 @@ permissions:
   contents: read
   actions: read
   checks: read
-  # GitHub Actions does not expose an administration permission key for
-  # GITHUB_TOKEN, so administration: read must not be added here. The proof
-  # uses the default read-only client when available and an approved
-  # Administration: read secret as an optional fallback.
+  # Branch protection is intentionally not observed from this pull_request
+  # workflow. Main promotion consumes the base-pinned Guardian envelope.
+  # administration: read must not be added here.
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -456,12 +455,11 @@ jobs:
             if (manifest.live_refs_before.dev_sha !== live.refs.dev_sha || manifest.live_refs_after.dev_sha !== live.refs.dev_sha || manifest.live_refs_before.main_sha !== live.refs.main_sha || manifest.live_refs_after.main_sha !== live.refs.main_sha || manifest.topology.merge_base_sha !== live.topology.merge_base_sha || manifest.topology.ahead_by !== live.topology.ahead_by || manifest.topology.behind_by !== live.topology.behind_by) throw new Error('Guardian live topology drifted while proof was collecting evidence');
             const zipDigest = fs.readFileSync('ci-guardian-zip-sha256.txt', 'utf8').trim();
             if (manifest.decision !== 'PASS' || manifest.code !== null || manifest.check_name !== 'CI guardian' || selection.job.id <= 0 || selection.artifact.id <= 0 || selection.artifact.name !== `ci-guardian-${selection.run_id}-${selection.run_attempt}` || `sha256:${zipDigest}` !== selection.artifact.digest) throw new Error('Guardian promotion evidence is not exact PASS/check/artifact identity');
-            const bundle = {schema: 'gooo/ci-guardian-evidence/v1', route: manifest.route, check_name: manifest.check_name, repository: manifest.repository, pr_number: manifest.pull_request_number, action: manifest.action, base_repo: manifest.base_repo, base_ref: manifest.base_ref, base_sha: manifest.base_sha, head_repo: manifest.head_repo, head_ref: manifest.head_ref, head_sha: manifest.head_sha, workflow_ref: manifest.workflow_ref, workflow_sha: manifest.workflow_sha, runtime_ref: manifest.runtime_ref, runtime_sha: manifest.runtime_sha, event_ref: manifest.event_ref, default_branch: manifest.default_branch, head_binding_status: manifest.head_binding_status, run_id: selection.run_id, run_attempt: selection.run_attempt, workflow_id: selection.workflow_id, workflow_path: selection.workflow_path, run_event: selection.run_event, run_status: selection.run_status, run_conclusion: selection.run_conclusion, run_created_at: selection.run_created_at, run_number: selection.run_number, live_refs_before: manifest.live_refs_before, live_refs_after: manifest.live_refs_after, topology: manifest.topology, artifact_id: selection.artifact.id, artifact_name: selection.artifact.name, artifact_size: selection.artifact.size, artifact_expired: selection.artifact.expired, artifact_digest: selection.artifact.digest, manifest_bundle_sha256: manifest.bundle_sha256, guardian_job_id: selection.job.id, guardian_job_name: selection.job.name, guardian_job_status: selection.job.status, guardian_job_conclusion: selection.job.conclusion, guardian_job_head_sha: selection.job.head_sha, check_run_id: selection.check.id, check_run_name: selection.check.name, check_run_app_id: selection.check.app_id, check_run_status: selection.check.status, check_run_conclusion: selection.check.conclusion, check_run_head_sha: selection.check.head_sha, check_suite_id: selection.check.suite_id, decision: manifest.decision, code: manifest.code, bundle_sha256: manifest.bundle_sha256};
+            const bundle = {schema: 'gooo/ci-guardian-evidence/v1', route: manifest.route, check_name: manifest.check_name, repository: manifest.repository, pr_number: manifest.pull_request_number, action: manifest.action, base_repo: manifest.base_repo, base_ref: manifest.base_ref, base_sha: manifest.base_sha, head_repo: manifest.head_repo, head_ref: manifest.head_ref, head_sha: manifest.head_sha, workflow_ref: manifest.workflow_ref, workflow_sha: manifest.workflow_sha, runtime_ref: manifest.runtime_ref, runtime_sha: manifest.runtime_sha, event_ref: manifest.event_ref, default_branch: manifest.default_branch, observer_environment: manifest.observer_environment, observer_environment_snapshot: manifest.observer_environment_snapshot, observer_environment_digest: manifest.observer_environment_digest, head_binding_status: manifest.head_binding_status, run_id: selection.run_id, run_attempt: selection.run_attempt, workflow_id: selection.workflow_id, workflow_path: selection.workflow_path, run_event: selection.run_event, run_status: selection.run_status, run_conclusion: selection.run_conclusion, run_created_at: selection.run_created_at, run_number: selection.run_number, live_refs_before: manifest.live_refs_before, live_refs_after: manifest.live_refs_after, topology: manifest.topology, branch_protection: manifest.branch_protection, dev_branch_protection: manifest.dev_branch_protection, artifact_id: selection.artifact.id, artifact_name: selection.artifact.name, artifact_size: selection.artifact.size, artifact_expired: selection.artifact.expired, artifact_digest: selection.artifact.digest, manifest_bundle_sha256: manifest.bundle_sha256, guardian_job_id: selection.job.id, guardian_job_name: selection.job.name, guardian_job_status: selection.job.status, guardian_job_conclusion: selection.job.conclusion, guardian_job_head_sha: selection.job.head_sha, check_run_id: selection.check.id, check_run_name: selection.check.name, check_run_app_id: selection.check.app_id, check_run_status: selection.check.status, check_run_conclusion: selection.check.conclusion, check_run_head_sha: selection.check.head_sha, check_suite_id: selection.check.suite_id, decision: manifest.decision, code: manifest.code, bundle_sha256: manifest.bundle_sha256};
             fs.writeFileSync('ci-guardian-evidence.json', JSON.stringify(bundle, null, 2) + '\n');
       - name: Collect proof context
         uses: actions/github-script@v7
         env:
-          BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
           github-token: ${{ github.token }}
@@ -488,7 +486,7 @@ jobs:
               policy_sha256: evidence.digests.policy_sha256,
               event_ref: evidence.event_ref,
               checkout_ref: evidence.checkout_ref,
-              token_source: '',
+              token_source: 'not_observed',
               read_status: 'unavailable',
               exists: false,
               strict: false,
@@ -501,7 +499,13 @@ jobs:
               linear_history: false,
               allow_force_pushes: false,
               allow_deletions: false,
-              missing_reason: process.env.BRANCH_PROTECTION_TOKEN ? 'branch_protection_api_unavailable' : 'branch_protection_token_unavailable',
+              required_signatures: false,
+              required_conversation_resolution: false,
+              block_creations: false,
+              lock_branch: false,
+              allow_fork_syncing: false,
+              restrictions: null,
+              missing_reason: 'trusted_guardian_required',
               base_sha: baseSha,
               head_sha: headSha,
               run_id: context.runId,
@@ -509,37 +513,13 @@ jobs:
               workflow_sha: process.env.CI_WORKFLOW_SHA,
               digest_sha256: ''
             };
-            const tokenSource = process.env.BRANCH_PROTECTION_TOKEN ? 'BRANCH_PROTECTION_TOKEN' : 'github.token';
-            const protectionClient = process.env.BRANCH_PROTECTION_TOKEN
-              ? github.getOctokit(process.env.BRANCH_PROTECTION_TOKEN)
-              : github;
-            protection.token_source = tokenSource;
-            try {
-              const response = await protectionClient.rest.repos.getBranchProtection({owner: context.repo.owner, repo: context.repo.repo, branch: baseRef});
-              const data = response.data;
-              const reviews = data.required_pull_request_reviews || {};
-              const checks = data.required_status_checks || {};
-              protection = {
-                ...protection,
-                exists: true,
-                strict: Boolean(checks.strict),
-                required_checks: [...(checks.contexts || [])].sort(),
-                required_check_bindings: [...(checks.checks || [])].map(check => ({context: check.context, app_id: Number(check.app_id)})).sort((left, right) => left.context < right.context ? -1 : left.context > right.context ? 1 : left.app_id - right.app_id),
-                enforce_admins: Boolean(data.enforce_admins?.enabled),
-                required_reviews: Number(reviews.required_approving_review_count || 0),
-                dismiss_stale_reviews: Boolean(reviews.dismiss_stale_reviews),
-                require_last_push_approval: Boolean(reviews.require_last_push_approval),
-                linear_history: Boolean(data.required_linear_history?.enabled),
-                allow_force_pushes: Boolean(data.allow_force_pushes?.enabled),
-                allow_deletions: Boolean(data.allow_deletions?.enabled),
-                read_status: 'verified',
-                missing_reason: '',
-              };
-            } catch (error) {
-              core.warning(`branch protection API snapshot unavailable via ${tokenSource}: ${error.message}`);
+            if (baseRef === 'main') {
+              if (!guardianEvidence.branch_protection) throw new Error('Guardian envelope is missing trusted branch protection evidence');
+              protection = guardianEvidence.branch_protection;
+            } else {
+              const protectionPayload = {...protection, digest_sha256: ''};
+              protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');
             }
-            const protectionPayload = {...protection, digest_sha256: ''};
-            protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');
             const {listWorkflowArtifacts, selectCurrentEvidenceArtifact, selectUniqueArtifact} = require('./scripts/ci-proof/artifacts');
             let artifacts = [];
             let artifactReadError = '';
@@ -560,7 +540,7 @@ jobs:
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
               actor: context.actor, builder: context.actor, gate: 'CI policy',
-              branch_protected: protection.exists, branch_protection: protection, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
+              branch_protected: protection.exists, branch_protection: protection, dev_branch_protection: guardianEvidence ? guardianEvidence.dev_branch_protection : null, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
               provenance_status: 'verified', artifacts_status: artifactsVerified ? 'verified' : 'missing',
               write_effect: 'none', no_write_outside_generated: true, artifacts, fixture_paths: ['examples/billing/main.gooo'],
               cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence, guardian_evidence: guardianEvidence, promotion_observation: promotionObservation

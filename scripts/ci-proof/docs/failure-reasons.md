@@ -80,6 +80,12 @@ validator compares every field with its executable catalog and rejects drift.
 These codes are emitted in the `gooo/ci-guardian/v2` shadow artifact and are
 distinct from the `gooo/ci-failure/v1` catalog above:
 
+Steady-state dev protection is seven app-bound contexts: the six canonical
+proof contexts plus `CI guardian shadow`. Main is seven contexts with
+`CI guardian`. Six-only dev protection is a migration/bootstrap state and is
+not steady-state eligible; emit `CI-GATE-001`/`CI-PROVENANCE-001` for the
+missing shadow predicate rather than treating green six-job CI as sufficient.
+
 - `CI-GUARDIAN-DEFAULT-BRANCH-001`: the repository default branch is not `dev`
   (or the runtime ref is not the exact default-dev ref), so a pre-default
   bootstrap must not be treated as an active guardian.
