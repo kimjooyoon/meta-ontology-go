@@ -150,3 +150,20 @@ func TestUnicodeScalarEscapeFormatsAndParsesToSameValue(t *testing.T) {
 		t.Fatalf("scalar round-trip = %#v, %#v", roundTrip, roundTripDiagnostics)
 	}
 }
+
+func TestFormatRejectsInvalidUTF8ASTIDWithoutMutation(t *testing.T) {
+	file, diagnostics := Parse("package p namespace n entity A id \"urn:a\"")
+	if len(diagnostics) != 0 {
+		t.Fatalf("valid AST setup diagnostics = %#v", diagnostics)
+	}
+	entity := file.Declarations[0].(*EntityDecl)
+	entity.ID = string([]byte{'u', 'r', 'n', ':', 0xff})
+	original := entity.ID
+	formatted, err := Format(file)
+	if err == nil || formatted != "" {
+		t.Fatalf("invalid UTF-8 AST format result = %q, %v", formatted, err)
+	}
+	if entity.ID != original {
+		t.Fatal("formatting mutated invalid UTF-8 AST input")
+	}
+}

@@ -67,6 +67,9 @@ func formatEntity(output *strings.Builder, entity *EntityDecl) error {
 	if err := validateIdentifier(entity.Name, "entity name"); err != nil {
 		return err
 	}
+	if !utf8.ValidString(entity.ID) {
+		return fmt.Errorf("entity id is not valid UTF-8")
+	}
 	fmt.Fprintf(output, "entity %s id %s", entity.Name, quoteString(entity.ID))
 	return nil
 }
