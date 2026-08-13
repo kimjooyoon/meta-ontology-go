@@ -197,6 +197,13 @@ func (graph Graph) resolutionLayer(
 				continue
 			}
 			rows = append(rows, row)
+			if len(rows) == limit {
+				// used and generated are already in the same stable order as
+				// sortResolutionRows. Sort only the bounded prefix before
+				// returning so the limit also bounds Cartesian expansion.
+				sortResolutionRows(rows)
+				return append([]ResolutionRow(nil), rows...)
+			}
 		}
 	}
 	sortResolutionRows(rows)
