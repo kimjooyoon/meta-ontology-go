@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -38,7 +39,13 @@ func readInputs(root, governancePath, evidencePath, jobsPath, contextPath string
 	if err := validateDomainEvidence(context.DomainEvidence, evidence, context); err != nil {
 		return proofInputs{}, err
 	}
-	return proofInputs{Governance: governanceInput{Schema: matrix.Schema, Promotion: promotionInput{Source: matrix.Promotion.Source, Target: matrix.Promotion.Target, RequiredChecks: matrix.Promotion.RequiredChecks, BranchProtectionRequired: matrix.Promotion.BranchProtectionRequired}}, Evidence: evidence, Jobs: jobs, Context: context}, nil
+	return proofInputs{Governance: governanceInput{
+		Schema:           matrix.Schema,
+		RequiredContexts: governanceContexts{Dev: matrix.RequiredContexts.Dev, Main: matrix.RequiredContexts.Main},
+		GuardianContexts: guardianContexts{DevShadow: matrix.GuardianContexts.DevShadow, MainRequired: matrix.GuardianContexts.MainRequired},
+		ProofJobs:        matrix.ProofJobs,
+		Promotion:        promotionInput{Source: matrix.Promotion.Source, Target: matrix.Promotion.Target, RequiredChecks: matrix.Promotion.RequiredChecks, BranchProtectionRequired: matrix.Promotion.BranchProtectionRequired},
+	}, Evidence: evidence, Jobs: jobs, Context: context}, nil
 }
 
 func readJobs(filename string) ([]jobInput, error) {
@@ -141,11 +148,28 @@ func validateBranchProtection(protection branchProtection, evidence evidenceInpu
 	if protection.Digest != digestBranchProtection(protection) {
 		return fmt.Errorf("branch protection snapshot digest mismatch")
 	}
+	if protection.ReadStatus == "verified" && protection.Exists && !sameStringSet(protection.RequiredChecks, requiredContextsForBase(context.BaseRef)) {
+		return fmt.Errorf("branch protection required contexts do not match route %q", context.BaseRef)
+	}
+	if protection.ReadStatus == "verified" && protection.Exists && !validRequiredCheckBindings(protection.RequiredCheckBindings, requiredContextsForBase(context.BaseRef)) {
+		return fmt.Errorf("branch protection required check app bindings do not match route %q", context.BaseRef)
+	}
 	return nil
 }
 
 func branchProtectionReady(protection branchProtection) bool {
-	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, proofJobs)
+	return branchProtectionReadyFor(protection, "dev")
+}
+
+func requiredContextsForBase(base string) []string {
+	if base == "main" {
+		return append(append([]string(nil), proofJobs...), "CI guardian")
+	}
+	return append([]string(nil), proofJobs...)
+}
+
+func branchProtectionReadyFor(protection branchProtection, base string) bool {
+	return protection.ReadStatus == "verified" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && sameStringSet(protection.RequiredChecks, requiredContextsForBase(base)) && validRequiredCheckBindings(protection.RequiredCheckBindings, requiredContextsForBase(base))
 }
 
 func promotionReady(promotion promotionInput, protection branchProtection) bool {
@@ -184,6 +208,20 @@ func readJSON[T any](filename string) (T, error) {
 		return value, fmt.Errorf("empty JSON input %s", filename)
 	}
 	if err := json.Unmarshal(data, &value); err != nil {
+		return value, err
+	}
+	return value, nil
+}
+
+func readStrictJSON[T any](filename string) (T, error) {
+	var value T
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return value, err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&value); err != nil {
 		return value, err
 	}
 	return value, nil

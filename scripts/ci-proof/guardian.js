@@ -4,9 +4,13 @@ const crypto = require('node:crypto');
 
 const ROOT_FAILURE_CODE = 'CI-ROOT-OF-TRUST-001';
 const HEAD_BINDING_STATUS = 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED';
+const HEAD_BINDING_VERIFIED = 'verified';
 const DEFAULT_BRANCH_CODE = 'CI-GUARDIAN-DEFAULT-BRANCH-001';
-const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v1';
-const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE]);
+const LIVE_REF_CODE = 'CI-GUARDIAN-LIVE-REF-001';
+const PROMOTION_TOPOLOGY_CODE = 'CI-GUARDIAN-PROMOTION-TOPOLOGY-001';
+const CHECK_IDENTITY_CODE = 'CI-GUARDIAN-CHECK-IDENTITY-001';
+const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v2';
+const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE]);
 const ALLOWED_BASES = new Set(['dev', 'main']);
 const ALLOWED_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review']);
 const VALID_STATUSES = new Set(['added', 'copied', 'changed', 'modified', 'removed', 'renamed']);
@@ -30,9 +34,9 @@ function canonicalStringCompare(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-function guardianFailure(reason) {
-  const error = new Error(`${ROOT_FAILURE_CODE}: ${reason}`);
-  error.code = ROOT_FAILURE_CODE;
+function guardianFailure(reason, code = ROOT_FAILURE_CODE) {
+  const error = new Error(`${code}: ${reason}`);
+  error.code = code;
   return error;
 }
 
@@ -50,6 +54,58 @@ function validRef(value) {
 
 function expectedWorkflowRef(repository) {
   return `${repository}/.github/workflows/ci-guardian.yml@refs/heads/dev`;
+}
+
+function routeForPull(pull) {
+  const identity = pullIdentity(pull);
+  if (identity.base_ref === 'dev' && typeof identity.head_ref === 'string' && identity.head_ref.startsWith('agent/')) return 'feature_dev';
+  if (identity.base_ref === 'main' && identity.head_ref === 'dev') return 'promotion_main';
+  return null;
+}
+
+function checkNameForRoute(route) {
+  if (route === 'feature_dev') return 'CI guardian shadow';
+  if (route === 'promotion_main') return 'CI guardian';
+  return null;
+}
+
+function validateLiveRefResponse(response, ref) {
+  if (!response || (response.status !== undefined && response.status !== 200) || !response.data || !response.data.object || !validSHA(response.data.object.sha)) {
+    throw guardianFailure(`live ref ${ref} is unavailable or malformed`, LIVE_REF_CODE);
+  }
+  return response.data.object.sha;
+}
+
+async function readLiveTopology({getRef, compareCommits, owner, repo}) {
+  if (typeof getRef !== 'function' || typeof compareCommits !== 'function' || typeof owner !== 'string' || typeof repo !== 'string') {
+    throw guardianFailure('live ref API binding is missing or malformed', LIVE_REF_CODE);
+  }
+  let devResponse;
+  let mainResponse;
+  try {
+    [devResponse, mainResponse] = await Promise.all([
+      getRef({owner, repo, ref: 'heads/dev'}),
+      getRef({owner, repo, ref: 'heads/main'}),
+    ]);
+  } catch (error) {
+    throw guardianFailure(`live ref API failed: ${error.message || error}`, LIVE_REF_CODE);
+  }
+  const devSha = validateLiveRefResponse(devResponse, 'heads/dev');
+  const mainSha = validateLiveRefResponse(mainResponse, 'heads/main');
+  let compareResponse;
+  try {
+    compareResponse = await compareCommits({owner, repo, base: mainSha, head: devSha});
+  } catch (error) {
+    throw guardianFailure(`live topology compare API failed: ${error.message || error}`, PROMOTION_TOPOLOGY_CODE);
+  }
+  const data = compareResponse && compareResponse.data;
+  if (!compareResponse || (compareResponse.status !== undefined && compareResponse.status !== 200) || !data || !['ahead', 'behind', 'identical', 'diverged'].includes(data.status) || !Number.isInteger(data.ahead_by) || !Number.isInteger(data.behind_by) || !data.merge_base_commit || !validSHA(data.merge_base_commit.sha)) {
+    throw guardianFailure('live topology compare response is malformed', PROMOTION_TOPOLOGY_CODE);
+  }
+  return {
+    refs: {dev_sha: devSha, main_sha: mainSha},
+    topology: {status: data.status, ahead_by: data.ahead_by, behind_by: data.behind_by, merge_base_sha: data.merge_base_commit.sha},
+  };
 }
 
 function validPositiveInteger(value) {
@@ -241,20 +297,47 @@ function defaultBranchDecision(defaultBranch, eventRef) {
   return {decision: 'PASS', code: null, reason: null};
 }
 
-function trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha}) {
+function trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName}) {
   const identity = pullIdentity(pull);
-  return defaultBranch === 'dev' && workflowRef === expectedWorkflowRef(repository) && runtimeSha === workflowSha && identity.base_repo === repository && identity.head_repo === repository && identity.base_ref === 'main' && identity.head_ref === 'dev' && identity.head_sha === workflowSha && validSHA(workflowSha);
+  const liveMatches = validLiveSnapshot(liveBefore) && validLiveSnapshot(liveAfter) && liveBefore.refs.dev_sha === liveAfter.refs.dev_sha && liveBefore.refs.main_sha === liveAfter.refs.main_sha;
+  const promotionTopology = validPromotionTopology(liveBefore) && validPromotionTopology(liveAfter);
+  return defaultBranch === 'dev' && workflowRef === expectedWorkflowRef(repository) && runtimeSha === workflowSha && checkName === 'CI guardian' && identity.base_repo === repository && identity.head_repo === repository && identity.base_ref === 'main' && identity.head_ref === 'dev' && identity.head_sha === workflowSha && validSHA(workflowSha) && identity.base_sha === liveBefore?.refs.main_sha && identity.head_sha === liveBefore?.refs.dev_sha && identity.head_sha === liveAfter?.refs.dev_sha && identity.base_sha === liveAfter?.refs.main_sha && liveMatches && promotionTopology;
 }
 
-function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef, eventRef, workflowSha, runtimeSha, result, kernelBeforeDigest, kernelAfterDigest}) {
+function validLiveSnapshot(snapshot) {
+  return Boolean(snapshot && snapshot.refs && validSHA(snapshot.refs.dev_sha) && validSHA(snapshot.refs.main_sha) && snapshot.topology && ['ahead', 'behind', 'identical', 'diverged'].includes(snapshot.topology.status) && Number.isInteger(snapshot.topology.ahead_by) && snapshot.topology.ahead_by >= 0 && Number.isInteger(snapshot.topology.behind_by) && snapshot.topology.behind_by >= 0 && validSHA(snapshot.topology.merge_base_sha));
+}
+
+function validPromotionTopology(snapshot) {
+  return validLiveSnapshot(snapshot) && snapshot.topology.status === 'ahead' && snapshot.topology.ahead_by > 0 && snapshot.topology.behind_by === 0 && snapshot.topology.merge_base_sha === snapshot.refs.main_sha;
+}
+
+function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef, eventRef, workflowSha, runtimeSha, result, kernelBeforeDigest, kernelAfterDigest, liveBefore, liveAfter, checkName}) {
   const route = pullIdentity(pull);
-  const promotion = trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha});
-  const featureRoute = route.base_ref === 'dev' && route.head_ref && route.head_ref.startsWith('agent/');
+  const routeName = routeForPull(pull);
+  const expectedCheckName = checkNameForRoute(routeName);
+  if (!routeName || !expectedCheckName || (checkName && checkName !== expectedCheckName)) {
+    return {...result, decision: 'FAIL_CLOSED', code: CHECK_IDENTITY_CODE, reason: 'guardian route or check identity is not canonical'};
+  }
+  if (defaultBranch !== 'dev' || eventRef !== 'refs/heads/dev' || workflowRef !== expectedWorkflowRef(repository) || runtimeSha !== workflowSha || !validSHA(workflowSha) || route.base_repo !== repository || route.head_repo !== repository) {
+    return {...result, decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'guardian runtime is not the protected default-dev authority'};
+  }
+  if (!validLiveSnapshot(liveBefore) || !validLiveSnapshot(liveAfter) || liveBefore.refs.dev_sha !== liveAfter.refs.dev_sha || liveBefore.refs.main_sha !== liveAfter.refs.main_sha) {
+    return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'guardian live refs are missing, malformed, or drifted'};
+  }
+  const promotion = trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName: expectedCheckName});
+  const featureRoute = routeName === 'feature_dev';
+  if (featureRoute && expectedCheckName !== 'CI guardian shadow') {
+    return {...result, decision: 'FAIL_CLOSED', code: CHECK_IDENTITY_CODE, reason: 'feature route must emit the shadow guardian check'};
+  }
+  if (featureRoute && (route.base_sha !== workflowSha || route.base_sha !== liveBefore.refs.dev_sha || liveBefore.refs.dev_sha !== liveAfter.refs.dev_sha)) {
+    return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'feature base, workflow, and live dev SHAs are not identical'};
+  }
   if (result.decision === 'PASS' && featureRoute && route.base_sha !== workflowSha) {
-    return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'feature base SHA is not the exact workflow SHA'};
+    return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'feature base SHA is not the exact workflow SHA'};
   }
   if (route.base_ref === 'main' && !promotion) {
-    return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'main promotion is not the exact same-repository dev workflow authority'};
+    return {...result, decision: 'FAIL_CLOSED', code: PROMOTION_TOPOLOGY_CODE, reason: 'main promotion is not the exact same-repository dev workflow authority'};
   }
   if (result.decision === 'FAIL_CLOSED' && (result.kernelPaths || []).length > 0 && promotion) {
     if (!/^sha256:[0-9a-f]{64}$/.test(kernelBeforeDigest || '') || !/^sha256:[0-9a-f]{64}$/.test(kernelAfterDigest || '')) {
@@ -268,7 +351,7 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
       return {...result, ...activation};
     }
     if (workflowRef !== expectedWorkflowRef(repository) || runtimeSha !== workflowSha || !validSHA(workflowSha) || !validSHA(runtimeSha)) {
-      return {...result, decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
+      return {...result, decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
     }
   }
   return result;
@@ -287,8 +370,10 @@ function digestGuardianArtifact(manifest) {
   return `sha256:${crypto.createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')}`;
 }
 
-function buildGuardianArtifact({pull, repository, action, defaultBranch, workflowRef, workflowSha, runtimeRef, runtimeSha, runId, runAttempt, eventRef, result}) {
+function buildGuardianArtifact({pull, repository, action, defaultBranch, workflowRef, workflowSha, runtimeRef, runtimeSha, runId, runAttempt, eventRef, result, liveBefore, liveAfter, checkName}) {
   const identity = pullIdentity(pull);
+  const route = routeForPull(pull);
+  const topology = liveAfter && liveAfter.topology ? liveAfter.topology : liveBefore && liveBefore.topology ? liveBefore.topology : null;
   const manifest = {
     schema: GUARDIAN_SCHEMA,
     repository: repository || null,
@@ -308,7 +393,12 @@ function buildGuardianArtifact({pull, repository, action, defaultBranch, workflo
     run_attempt: validPositiveInteger(runAttempt) ? runAttempt : null,
     event_ref: eventRef || null,
     default_branch: defaultBranch || null,
-    head_binding_status: HEAD_BINDING_STATUS,
+    head_binding_status: result && result.decision === 'PASS' ? HEAD_BINDING_VERIFIED : HEAD_BINDING_STATUS,
+    route,
+    check_name: checkName || checkNameForRoute(route),
+    live_refs_before: liveBefore ? liveBefore.refs : null,
+    live_refs_after: liveAfter ? liveAfter.refs : null,
+    topology,
     kernel_before_sha256: result && result.kernelBeforeDigest ? result.kernelBeforeDigest : null,
     kernel_after_sha256: result && result.kernelAfterDigest ? result.kernelAfterDigest : null,
     changed_files: sortedChangedFiles(result && result.files),
@@ -365,10 +455,18 @@ function validateExpectedArtifactTuple(manifest, expected) {
 }
 
 function validateGuardianArtifact(manifest, expected) {
-  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || manifest.head_binding_status !== HEAD_BINDING_STATUS || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0) {
+  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || ![HEAD_BINDING_STATUS, HEAD_BINDING_VERIFIED].includes(manifest.head_binding_status) || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0 || !['feature_dev', 'promotion_main'].includes(manifest.route) || !['CI guardian shadow', 'CI guardian'].includes(manifest.check_name)) {
     throw guardianFailure('guardian artifact schema or identity is malformed');
   }
   validateExpectedArtifactTuple(manifest, expected);
+  if (manifest.check_name !== checkNameForRoute(manifest.route)) {
+    throw guardianFailure('guardian artifact check identity does not match route', CHECK_IDENTITY_CODE);
+  }
+  const snapshotsPresent = manifest.live_refs_before !== null && manifest.live_refs_before !== undefined && manifest.live_refs_after !== null && manifest.live_refs_after !== undefined;
+  const snapshotsValid = validLiveSnapshot({refs: manifest.live_refs_before, topology: manifest.topology}) && validLiveSnapshot({refs: manifest.live_refs_after, topology: manifest.topology}) && manifest.live_refs_before.dev_sha === manifest.live_refs_after.dev_sha && manifest.live_refs_before.main_sha === manifest.live_refs_after.main_sha;
+  if ((manifest.decision === 'PASS' && !snapshotsValid) || (snapshotsPresent && !snapshotsValid)) {
+    throw guardianFailure('guardian artifact live ref snapshots are missing, malformed, or drifted', LIVE_REF_CODE);
+  }
   if (manifest.base_repo !== manifest.repository) {
     throw guardianFailure('guardian artifact base repository is not the event repository');
   }
@@ -387,6 +485,12 @@ function validateGuardianArtifact(manifest, expected) {
   }
   if (manifest.decision === 'PASS' && manifest.code !== null) {
     throw guardianFailure('guardian artifact PASS code must be null');
+  }
+  if (manifest.head_binding_status !== HEAD_BINDING_VERIFIED && manifest.decision === 'PASS') {
+    throw guardianFailure('guardian PASS head binding must be verified', CHECK_IDENTITY_CODE);
+  }
+  if (manifest.decision === 'FAIL_CLOSED' && manifest.head_binding_status !== HEAD_BINDING_STATUS) {
+    throw guardianFailure('guardian FAIL_CLOSED head binding must remain unverified', CHECK_IDENTITY_CODE);
   }
   if (!Number.isInteger(manifest.changed_files_count) || manifest.changed_files_count !== manifest.changed_files.length) {
     throw guardianFailure('guardian artifact changed-file count does not match collected files');
@@ -418,6 +522,14 @@ function validateGuardianArtifact(manifest, expected) {
       throw guardianFailure('guardian artifact PASS kernel propagation is not exact dev-to-main authority');
     }
   }
+  if (manifest.decision === 'PASS' && manifest.route === 'feature_dev' && (manifest.base_ref !== 'dev' || manifest.check_name !== 'CI guardian shadow' || manifest.base_sha !== manifest.workflow_sha || manifest.base_sha !== manifest.live_refs_before.dev_sha)) {
+    throw guardianFailure('guardian feature route identity is not exact', LIVE_REF_CODE);
+  }
+  if (manifest.decision === 'PASS' && manifest.route === 'promotion_main') {
+    if (manifest.check_name !== 'CI guardian' || manifest.base_ref !== 'main' || manifest.head_ref !== 'dev' || manifest.live_refs_before.main_sha !== manifest.base_sha || manifest.live_refs_after.main_sha !== manifest.base_sha || manifest.live_refs_before.dev_sha !== manifest.head_sha || manifest.live_refs_after.dev_sha !== manifest.head_sha || !validPromotionTopology({refs: manifest.live_refs_before, topology: manifest.topology}) || !validPromotionTopology({refs: manifest.live_refs_after, topology: manifest.topology})) {
+      throw guardianFailure('guardian promotion topology evidence is not exact', PROMOTION_TOPOLOGY_CODE);
+    }
+  }
   if (manifest.bundle_sha256 !== digestGuardianArtifact(manifest)) {
     throw guardianFailure('guardian artifact digest does not match canonical content');
   }
@@ -427,11 +539,18 @@ function validateGuardianArtifact(manifest, expected) {
 module.exports = {
   ALLOWED_BASES,
   DEFAULT_BRANCH_CODE,
+  LIVE_REF_CODE,
+  PROMOTION_TOPOLOGY_CODE,
+  CHECK_IDENTITY_CODE,
   GUARDIAN_SCHEMA,
   HEAD_BINDING_STATUS,
+  HEAD_BINDING_VERIFIED,
   PROTECTED_FILES,
   PROTECTED_PREFIXES,
   ROOT_FAILURE_CODE,
+  readLiveTopology,
+  routeForPull,
+  checkNameForRoute,
   guardianFailure,
   buildGuardianArtifact,
   classifyGuardianDecision,

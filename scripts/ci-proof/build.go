@@ -12,15 +12,20 @@ import (
 func buildProof(inputs proofInputs, digests proofDigests) (proofBundle, provenanceReceipt, error) {
 	context := inputs.Context
 	rejections := gateRejections(inputs)
-	bundle := proofBundle{Schema: proofSchema, Repository: context.Repository, Event: context.Event, PRNumber: context.PRNumber, BaseRef: context.BaseRef, BaseSHA: context.BaseSHA, HeadSHA: context.HeadSHA, Ref: context.Ref, EventRef: context.EventRef, CheckoutRef: context.CheckoutRef, RunID: context.RunID, RunAttempt: context.RunAttempt, WorkflowSHA: context.WorkflowSHA, Jobs: inputs.Jobs, Actors: actorRoles{Actor: context.Actor, Builder: context.Builder, Gate: context.Gate}, BranchProtection: context.BranchProtection, DomainEvidence: context.DomainEvidence, Scope: scopeResult{Decision: context.ScopeDecision, Status: statusFor(context.ScopeDecision)}, Fixtures: fixtureResult{Paths: context.FixturePaths, Status: context.FixtureStatus, Source: context.SourceStatus, Semantic: context.SemanticStatus, Provenance: context.ProvenanceStatus}, Artifacts: context.Artifacts, Cache: context.Cache, Digests: digests, WriteEffect: context.WriteEffect, Decision: "PASS", NoWrite: context.NoWrite, Rejections: rejections, Predecessors: context.Predecessors, MissingReasons: context.MissingReasons}
+	bundle := proofBundle{Schema: proofSchema, Repository: context.Repository, Event: context.Event, PRNumber: context.PRNumber, BaseRef: context.BaseRef, BaseSHA: context.BaseSHA, HeadSHA: context.HeadSHA, Ref: context.Ref, EventRef: context.EventRef, CheckoutRef: context.CheckoutRef, RunID: context.RunID, RunAttempt: context.RunAttempt, WorkflowSHA: context.WorkflowSHA, Jobs: inputs.Jobs, Actors: actorRoles{Actor: context.Actor, Builder: context.Builder, Gate: context.Gate}, BranchProtection: context.BranchProtection, DomainEvidence: context.DomainEvidence, GuardianEvidence: context.GuardianEvidence, Scope: scopeResult{Decision: context.ScopeDecision, Status: statusFor(context.ScopeDecision)}, Fixtures: fixtureResult{Paths: context.FixturePaths, Status: context.FixtureStatus, Source: context.SourceStatus, Semantic: context.SemanticStatus, Provenance: context.ProvenanceStatus}, Artifacts: context.Artifacts, Cache: context.Cache, Digests: digests, WriteEffect: context.WriteEffect, Decision: "PASS", NoWrite: context.NoWrite, Rejections: rejections, Predecessors: context.Predecessors, MissingReasons: context.MissingReasons}
 	if len(rejections) > 0 {
 		bundle.Decision = "FAIL_CLOSED"
 	}
+	bundle.PromotionObservation = context.PromotionObservation
+	bundle.PromotionAuthorization = promotionAuthorizationFor(bundle)
 	payload, err := marshalProof(bundle)
 	if err != nil {
 		return proofBundle{}, provenanceReceipt{}, err
 	}
 	bundle.Digests.Bundle = digestBytes(payload)
+	if bundle.PromotionAuthorization != nil {
+		bundle.PromotionAuthorization.ProofDigest = bundle.Digests.Bundle
+	}
 	receipt := makeReceipt(bundle, context)
 	return bundle, receipt, nil
 }
@@ -30,6 +35,14 @@ func gateRejections(inputs proofInputs) []string {
 	failures := make([]string, 0)
 	if c.ScopeDecision != "passed" {
 		failures = append(failures, "scope_not_passed")
+	}
+	if c.BaseRef == "main" {
+		if c.GuardianEvidence == nil || c.BranchProtection.ReadStatus != "verified" || !branchProtectionReadyFor(c.BranchProtection, "main") {
+			failures = append(failures, "main_protection_not_verified")
+		}
+		if !validPromotionObservationForContext(c) {
+			failures = append(failures, "promotion_observation_not_verified")
+		}
 	}
 	for status, value := range map[string]string{"fixture": c.FixtureStatus, "source": c.SourceStatus, "semantic": c.SemanticStatus, "provenance": c.ProvenanceStatus} {
 		if value != "verified" {
@@ -63,31 +76,19 @@ func gateRejections(inputs proofInputs) []string {
 
 func machineBoundPromotionReady(inputs proofInputs) bool {
 	c := inputs.Context
-	if branchProtectionReady(c.BranchProtection) {
-		return true
-	}
-	promotion := inputs.Governance.Promotion
-	if promotion.Source != "dev" || promotion.Target != "main" || !promotion.BranchProtectionRequired || !sameStringSet(promotion.RequiredChecks, proofJobs) {
+	return c.BaseRef == "main" && inputs.Governance.Promotion.Source == "dev" && inputs.Governance.Promotion.Target == "main" && inputs.Governance.Promotion.BranchProtectionRequired && branchProtectionReadyFor(c.BranchProtection, "main") && c.GuardianEvidence != nil
+}
+
+// promotionOperatorReady is a pure, non-mutating predicate for a future
+// external fast-forward operator. It never writes refs or protection.
+func promotionOperatorReady(bundle proofBundle) bool {
+	if bundle.Decision != "PASS" || bundle.Event != "pull_request" || bundle.BaseRef != "main" || bundle.PRNumber <= 0 || !validSHA(bundle.BaseSHA) || !validSHA(bundle.HeadSHA) || bundle.Repository == "" {
 		return false
 	}
-	if c.BranchProtection.ReadStatus != "unavailable" || c.BranchProtection.MissingReason != "branch_protection_token_unavailable" {
+	if validatePromotionObservation(bundle.PromotionObservation, bundle) != nil || validatePromotionAuthorization(bundle) != nil || !promotionProofCoreReady(bundle) {
 		return false
 	}
-	if c.ArtifactsStatus != "verified" || c.ProvenanceStatus != "verified" {
-		return false
-	}
-	if len(inputs.Jobs) != len(proofJobs) || len(inputs.Evidence.Jobs) != len(proofJobs) {
-		return false
-	}
-	if compareJobs(inputs.Evidence.Jobs, inputs.Jobs, c.HeadSHA, c.RunID, c.RunAttempt) != nil {
-		return false
-	}
-	for index, job := range inputs.Jobs {
-		if job.Name != proofJobs[index] || job.Status != "completed" || job.Conclusion != "success" || job.ID <= 0 || job.HeadSHA != c.HeadSHA || job.RunID != c.RunID || job.RunAttempt != c.RunAttempt {
-			return false
-		}
-	}
-	return true
+	return bundle.PromotionAuthorization.Decision == "PASS" && bundle.PromotionAuthorization.Code == nil && bundle.PromotionAuthorization.ProofDigest == bundle.Digests.Bundle
 }
 
 func statusFor(decision string) string {
@@ -98,11 +99,16 @@ func statusFor(decision string) string {
 }
 
 func makeReceipt(bundle proofBundle, context contextInput) provenanceReceipt {
-	return provenanceReceipt{Schema: receiptSchema, Operation: "verify", Relation: "conformance", Delta: "ci-policy", AllowedIntent: "verification-only", Locality: "repository", Repository: bundle.Repository, Event: bundle.Event, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, Ref: bundle.Ref, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, PRNumber: bundle.PRNumber, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, BranchProtection: bundle.BranchProtection, DomainEvidence: bundle.DomainEvidence, Jobs: bundle.Jobs, Artifacts: bundle.Artifacts, Digests: receiptDigests{Source: bundle.Digests.Source, IR: bundle.Digests.Semantic, Projection: bundle.Digests.Projection, Build: bundle.Digests.Build, Policy: bundle.Digests.Policy, Schema: bundle.Digests.Schema, Toolchain: bundle.Digests.Toolchain, Target: bundle.Digests.Target, Bundle: bundle.Digests.Bundle}, Cache: cacheReceipt{Key: bundle.Cache.Key, Outcome: bundle.Cache.Outcome}, DiagnosticIDs: context.DiagnosticIDs, RepairIDs: context.RepairIDs, WriteEffect: bundle.WriteEffect, Producer: "go-ci-proof", Role: "Gate", Predecessors: context.Predecessors, Decision: bundle.Decision, MissingReasons: bundle.MissingReasons}
+	return provenanceReceipt{Schema: receiptSchema, Operation: "verify", Relation: "conformance", Delta: "ci-policy", AllowedIntent: "verification-only", Locality: "repository", Repository: bundle.Repository, Event: bundle.Event, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, Ref: bundle.Ref, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, PRNumber: bundle.PRNumber, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, BranchProtection: bundle.BranchProtection, DomainEvidence: bundle.DomainEvidence, GuardianEvidence: bundle.GuardianEvidence, PromotionObservation: bundle.PromotionObservation, PromotionAuthorization: bundle.PromotionAuthorization, Jobs: bundle.Jobs, Artifacts: bundle.Artifacts, Digests: receiptDigests{Source: bundle.Digests.Source, IR: bundle.Digests.Semantic, Projection: bundle.Digests.Projection, Build: bundle.Digests.Build, Policy: bundle.Digests.Policy, Schema: bundle.Digests.Schema, Toolchain: bundle.Digests.Toolchain, Target: bundle.Digests.Target, Bundle: bundle.Digests.Bundle}, Cache: cacheReceipt{Key: bundle.Cache.Key, Outcome: bundle.Cache.Outcome}, DiagnosticIDs: context.DiagnosticIDs, RepairIDs: context.RepairIDs, WriteEffect: bundle.WriteEffect, Producer: "go-ci-proof", Role: "Gate", Predecessors: context.Predecessors, Decision: bundle.Decision, MissingReasons: bundle.MissingReasons}
 }
 
 func marshalProof(bundle proofBundle) ([]byte, error) {
 	bundle.Digests.Bundle = ""
+	if bundle.PromotionAuthorization != nil {
+		authorization := *bundle.PromotionAuthorization
+		authorization.ProofDigest = ""
+		bundle.PromotionAuthorization = &authorization
+	}
 	data, err := json.Marshal(bundle)
 	if err != nil {
 		return nil, fmt.Errorf("marshal CI proof: %w", err)
@@ -158,11 +164,13 @@ func verifyReceipt(filename string, bundle proofBundle) error {
 		return fmt.Errorf("receipt is empty")
 	}
 	var receipt provenanceReceipt
-	if err := json.Unmarshal([]byte(lines[len(lines)-1]), &receipt); err != nil {
+	decoder := json.NewDecoder(strings.NewReader(lines[len(lines)-1]))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&receipt); err != nil {
 		return err
 	}
 	expectedDigests := receiptDigests{Source: bundle.Digests.Source, IR: bundle.Digests.Semantic, Projection: bundle.Digests.Projection, Build: bundle.Digests.Build, Policy: bundle.Digests.Policy, Schema: bundle.Digests.Schema, Toolchain: bundle.Digests.Toolchain, Target: bundle.Digests.Target, Bundle: bundle.Digests.Bundle}
-	if receipt.Schema != receiptSchema || receipt.Operation != "verify" || receipt.Relation != "conformance" || receipt.AllowedIntent != "verification-only" || receipt.Repository != bundle.Repository || receipt.Event != bundle.Event || receipt.BaseRef != bundle.BaseRef || receipt.BaseSHA != bundle.BaseSHA || receipt.HeadSHA != bundle.HeadSHA || receipt.Ref != bundle.Ref || receipt.EventRef != bundle.EventRef || receipt.CheckoutRef != bundle.CheckoutRef || receipt.PRNumber != bundle.PRNumber || receipt.RunID != bundle.RunID || receipt.RunAttempt != bundle.RunAttempt || receipt.WorkflowSHA != bundle.WorkflowSHA || receipt.Decision != bundle.Decision || !reflect.DeepEqual(receipt.BranchProtection, bundle.BranchProtection) || !reflect.DeepEqual(receipt.DomainEvidence, bundle.DomainEvidence) || !reflect.DeepEqual(receipt.Jobs, bundle.Jobs) || receipt.Digests != expectedDigests || receipt.MissingReasons != bundle.MissingReasons || len(receipt.Artifacts) != len(bundle.Artifacts) || receipt.WriteEffect != "none" || receipt.Cache.Key != bundle.Cache.Key || receipt.Cache.Outcome != bundle.Cache.Outcome || !reflect.DeepEqual(receipt.Predecessors, bundle.Predecessors) {
+	if receipt.Schema != receiptSchema || receipt.Operation != "verify" || receipt.Relation != "conformance" || receipt.AllowedIntent != "verification-only" || receipt.Repository != bundle.Repository || receipt.Event != bundle.Event || receipt.BaseRef != bundle.BaseRef || receipt.BaseSHA != bundle.BaseSHA || receipt.HeadSHA != bundle.HeadSHA || receipt.Ref != bundle.Ref || receipt.EventRef != bundle.EventRef || receipt.CheckoutRef != bundle.CheckoutRef || receipt.PRNumber != bundle.PRNumber || receipt.RunID != bundle.RunID || receipt.RunAttempt != bundle.RunAttempt || receipt.WorkflowSHA != bundle.WorkflowSHA || receipt.Decision != bundle.Decision || !reflect.DeepEqual(receipt.BranchProtection, bundle.BranchProtection) || !reflect.DeepEqual(receipt.DomainEvidence, bundle.DomainEvidence) || !reflect.DeepEqual(receipt.GuardianEvidence, bundle.GuardianEvidence) || !reflect.DeepEqual(receipt.PromotionObservation, bundle.PromotionObservation) || !reflect.DeepEqual(receipt.PromotionAuthorization, bundle.PromotionAuthorization) || !reflect.DeepEqual(receipt.Jobs, bundle.Jobs) || receipt.Digests != expectedDigests || receipt.MissingReasons != bundle.MissingReasons || len(receipt.Artifacts) != len(bundle.Artifacts) || receipt.WriteEffect != "none" || receipt.Cache.Key != bundle.Cache.Key || receipt.Cache.Outcome != bundle.Cache.Outcome || !reflect.DeepEqual(receipt.Predecessors, bundle.Predecessors) {
 		return fmt.Errorf("provenance receipt does not match proof bundle")
 	}
 	for index, artifact := range bundle.Artifacts {

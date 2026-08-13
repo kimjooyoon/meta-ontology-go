@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   guardian:
-    name: CI guardian
+    name: ${{ github.base_ref == 'main' && 'CI guardian' || 'CI guardian shadow' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout default workflow authority
@@ -47,6 +47,9 @@ jobs:
             const runtimeSha = process.env.GUARDIAN_RUNTIME_SHA;
             const runId = Number(process.env.GUARDIAN_RUN_ID);
             const runAttempt = Number(process.env.GUARDIAN_RUN_ATTEMPT);
+            let liveBefore = null;
+            let liveAfter = null;
+            let checkName = null;
             let observedPull = eventPull;
             let result = {decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: 'guardian observation was incomplete', files: [], kernelPaths: []};
             try {
@@ -54,6 +57,12 @@ jobs:
               if (!repository || !/^[0-9a-f]{40}$/i.test(workflowSha || '') || !/^[0-9a-f]{40}$/i.test(runtimeSha || '') || !workflowRef || !runtimeRef || !Number.isInteger(runId) || runId < 1 || !Number.isInteger(runAttempt) || runAttempt < 1) {
                 throw guardian.guardianFailure('runtime workflow/ref/run identity is missing or malformed');
               }
+              liveBefore = await guardian.readLiveTopology({
+                getRef: (parameters) => github.rest.git.getRef(parameters),
+                compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
               observedPull = await guardian.revalidatePullRequest({
                 getPull: (parameters) => github.rest.pulls.get(parameters),
                 owner: context.repo.owner,
@@ -80,9 +89,16 @@ jobs:
               if (observedPull.changed_files !== expectedChangedFiles) {
                 throw guardian.guardianFailure('live pull changed_files count changed during guardian inspection');
               }
+              liveAfter = await guardian.readLiveTopology({
+                getRef: (parameters) => github.rest.git.getRef(parameters),
+                compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
               let beforeDigest = null;
               let afterDigest = null;
-              if (result.kernelPaths.length > 0 && guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha})) {
+              checkName = guardian.checkNameForRoute(guardian.routeForPull(observedPull));
+              if (result.kernelPaths.length > 0 && guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName})) {
                 beforeDigest = await guardian.kernelTreeDigest({
                   getCommit: (parameters) => github.rest.repos.getCommit(parameters),
                   getTree: (parameters) => github.rest.git.getTree(parameters),
@@ -98,7 +114,7 @@ jobs:
                   ref: observedPull.head.sha,
                 });
               }
-              result = guardian.classifyGuardianDecision({pull: observedPull, repository, defaultBranch, workflowRef, eventRef: runtimeRef, workflowSha, runtimeSha, result, kernelBeforeDigest: beforeDigest, kernelAfterDigest: afterDigest});
+              result = guardian.classifyGuardianDecision({pull: observedPull, repository, defaultBranch, workflowRef, eventRef: runtimeRef, workflowSha, runtimeSha, result, kernelBeforeDigest: beforeDigest, kernelAfterDigest: afterDigest, liveBefore, liveAfter, checkName});
             } catch (error) {
               result = {...result, decision: 'FAIL_CLOSED', code: error.code || guardian.ROOT_FAILURE_CODE, reason: error.message || String(error)};
             }
@@ -115,6 +131,9 @@ jobs:
               runAttempt,
               eventRef: runtimeRef,
               result,
+              liveBefore,
+              liveAfter,
+              checkName: guardian.checkNameForRoute(guardian.routeForPull(observedPull)),
             });
             fs.writeFileSync('ci-guardian.json', JSON.stringify(artifact, null, 2) + '\n');
             let validationError = null;
@@ -142,7 +161,7 @@ jobs:
               validationError = error;
             }
             await core.summary
-              .addHeading('CI guardian shadow')
+              .addHeading(artifact.check_name || 'CI guardian shadow')
               .addRaw(`schema=${artifact.schema}\n`)
               .addRaw(`decision=${artifact.decision}\n`)
               .addRaw(`code=${artifact.code || 'none'}\n`)

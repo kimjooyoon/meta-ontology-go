@@ -62,7 +62,7 @@ func verifyProof(filename, governance, receipt string, requirePass bool) error {
 	if _, err := readGovernance(governance); err != nil {
 		return err
 	}
-	bundle, err := readJSON[proofBundle](filename)
+	bundle, err := readStrictJSON[proofBundle](filename)
 	if err != nil {
 		return err
 	}
@@ -87,8 +87,8 @@ func readGovernance(filename string) (governanceInput, error) {
 	if err := json.Unmarshal(data, &matrix); err != nil {
 		return governanceInput{}, err
 	}
-	if matrix.Schema != "gooo/ci-governance/v1" || matrix.Promotion.Source != "dev" || matrix.Promotion.Target != "main" || !matrix.Promotion.BranchProtectionRequired {
+	if matrix.Schema != "gooo/ci-governance/v2" || matrix.Promotion.Source != "dev" || matrix.Promotion.Target != "main" || !matrix.Promotion.BranchProtectionRequired || !sameStringSet(matrix.ProofJobs, proofJobs) || !sameStringSet(matrix.RequiredContexts.Dev, proofJobs) || !sameStringSet(matrix.RequiredContexts.Main, append(append([]string(nil), proofJobs...), "CI guardian")) || matrix.GuardianContexts.DevShadow != "CI guardian shadow" || matrix.GuardianContexts.MainRequired != "CI guardian" {
 		return governanceInput{}, fmt.Errorf("governance promotion contract is incomplete")
 	}
-	return matrix, nil
+	return governanceInput{Schema: matrix.Schema, RequiredContexts: governanceContexts{Dev: matrix.RequiredContexts.Dev, Main: matrix.RequiredContexts.Main}, GuardianContexts: guardianContexts{DevShadow: matrix.GuardianContexts.DevShadow, MainRequired: matrix.GuardianContexts.MainRequired}, ProofJobs: matrix.ProofJobs, Promotion: promotionInput{Source: matrix.Promotion.Source, Target: matrix.Promotion.Target, RequiredChecks: matrix.Promotion.RequiredChecks, BranchProtectionRequired: matrix.Promotion.BranchProtectionRequired}}, nil
 }

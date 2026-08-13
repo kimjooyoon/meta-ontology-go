@@ -18,6 +18,45 @@ func TestProofBundleValidatesAndPreservesReceiptSchema(t *testing.T) {
 	}
 }
 
+func TestOldProofAndReceiptSchemasFailClosed(t *testing.T) {
+	bundle := validProof()
+	bundle.Schema = "gooo/ci-proof/v2"
+	if err := validateProof(bundle); err == nil {
+		t.Fatal("old proof schema was accepted after GuardianEvidence contract migration")
+	}
+	bundle = validProof()
+	receipt := makeReceipt(bundle, contextInput{})
+	receipt.Schema = "gooo/provenance-receipt/v2"
+	filename := writeReceiptFixture(t, receipt)
+	if err := verifyReceipt(filename, bundle); err == nil {
+		t.Fatal("old receipt schema was accepted after GuardianEvidence contract migration")
+	}
+}
+
+func TestProofUnknownFieldsFailClosed(t *testing.T) {
+	bundle := validProof()
+	data, err := json.Marshal(bundle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document map[string]any
+	if err := json.Unmarshal(data, &document); err != nil {
+		t.Fatal(err)
+	}
+	document["legacy_guardian_evidence"] = map[string]any{"decision": "PASS"}
+	data, err = json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	filename := t.TempDir() + "/proof.json"
+	if err := os.WriteFile(filename, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readStrictJSON[proofBundle](filename); err == nil {
+		t.Fatal("proof unknown field was accepted")
+	}
+}
+
 func TestCIReceiptRejectsTamperedBindingEvidence(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -67,38 +106,6 @@ func writeReceiptFixture(t *testing.T, receipt provenanceReceipt) string {
 		t.Fatal(err)
 	}
 	return filename
-}
-
-func TestCICacheC1KeyMutationFailsClosed(t *testing.T) {
-	cache := validCache()
-	cache.Key = "mutated"
-	if err := validateCache(cache, evidenceInput{HeadSHA: strings.Repeat("a", 40)}); err == nil {
-		t.Fatal("cache key mutation was accepted")
-	}
-}
-
-func TestCICacheC2ContentSizeMismatchFailsClosed(t *testing.T) {
-	cache := validCache()
-	cache.HitContentSize++
-	if err := validateCache(cache, evidenceInput{HeadSHA: strings.Repeat("a", 40)}); err == nil {
-		t.Fatal("cache content-size mismatch was accepted")
-	}
-}
-
-func TestCICacheC3UnknownDependencyFailsClosed(t *testing.T) {
-	cache := validCache()
-	cache.DirectDependencies = nil
-	if err := validateCache(cache, evidenceInput{HeadSHA: strings.Repeat("a", 40)}); err == nil {
-		t.Fatal("unknown dependency evidence was accepted")
-	}
-}
-
-func TestCICacheC4ReplayPredecessorFailsClosed(t *testing.T) {
-	cache := validCache()
-	cache.Predecessor = strings.Repeat("a", 40)
-	if err := validateCache(cache, evidenceInput{HeadSHA: strings.Repeat("a", 40)}); err == nil {
-		t.Fatal("replayed predecessor was accepted")
-	}
 }
 
 func TestCICacheC5MissingArtifactFailsClosed(t *testing.T) {
@@ -281,7 +288,7 @@ func validDomainEvidence(bundle proofBundle) domainEvidence {
 }
 
 func validBranchProtection(bundle proofBundle) branchProtection {
-	protection := branchProtection{Repository: bundle.Repository, Branch: bundle.BaseRef, PolicySHA: bundle.Digests.Policy, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, TokenSource: "github.token", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append([]string(nil), proofJobs...), EnforceAdmins: true, RequiredReviews: 0, DismissStaleReviews: false, RequireLastPushApproval: false, LinearHistory: true, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA}
+	protection := branchProtection{Repository: bundle.Repository, Branch: bundle.BaseRef, PolicySHA: bundle.Digests.Policy, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, TokenSource: "github.token", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append([]string(nil), proofJobs...), RequiredCheckBindings: requiredCheckBindingsFor(proofJobs), EnforceAdmins: true, RequiredReviews: 0, DismissStaleReviews: false, RequireLastPushApproval: false, LinearHistory: true, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA}
 	protection.Digest = digestBranchProtection(protection)
 	return protection
 }

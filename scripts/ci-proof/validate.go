@@ -28,6 +28,12 @@ func validateProof(bundle proofBundle) error {
 	if err := validateBranchProtection(bundle.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{BaseRef: bundle.BaseRef, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}); err != nil {
 		return err
 	}
+	if err := validateGuardianEvidence(bundle.GuardianEvidence, bundle); err != nil {
+		return err
+	}
+	if err := validatePromotionAuthorization(bundle); err != nil {
+		return err
+	}
 	if err := validateDomainEvidence(bundle.DomainEvidence, evidenceInput{Repository: bundle.Repository, Event: bundle.Event, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Source: bundle.Digests.Source, IR: bundle.Digests.Semantic, Generated: bundle.Digests.Projection, Bundle: bundle.DomainEvidence.Digests.BundleSHA256}}, contextInput{EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}); err != nil {
 		return err
 	}
@@ -52,8 +58,27 @@ func validateProof(bundle proofBundle) error {
 	if err := validateProofDigests(bundle.Digests); err != nil {
 		return err
 	}
+	if err := validateProofDigest(bundle); err != nil {
+		return err
+	}
+	if bundle.Decision != "PASS" && bundle.Decision != "FAIL_CLOSED" {
+		return fmt.Errorf("unknown proof decision %q", bundle.Decision)
+	}
+	return nil
+}
+
+func validateProofDigest(bundle proofBundle) error {
 	recorded := bundle.Digests.Bundle
+	authorizationDigest := ""
+	if bundle.PromotionAuthorization != nil {
+		authorizationDigest = bundle.PromotionAuthorization.ProofDigest
+	}
 	bundle.Digests.Bundle = ""
+	if bundle.PromotionAuthorization != nil {
+		authorization := *bundle.PromotionAuthorization
+		authorization.ProofDigest = ""
+		bundle.PromotionAuthorization = &authorization
+	}
 	payload, err := json.Marshal(bundle)
 	if err != nil {
 		return err
@@ -61,8 +86,8 @@ func validateProof(bundle proofBundle) error {
 	if digestBytes(payload) != recorded {
 		return fmt.Errorf("proof bundle digest mismatch")
 	}
-	if bundle.Decision != "PASS" && bundle.Decision != "FAIL_CLOSED" {
-		return fmt.Errorf("unknown proof decision %q", bundle.Decision)
+	if bundle.PromotionAuthorization != nil && authorizationDigest != recorded {
+		return fmt.Errorf("promotion authorization is not signed by the proof digest")
 	}
 	return nil
 }

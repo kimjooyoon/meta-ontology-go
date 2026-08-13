@@ -39,6 +39,13 @@ not a required status or merge/promotion authorization. A future kernel rotation
 is an explicit maintenance operation with before/after policy digests and an issue
 ledger, not a human review predicate or ordinary PR exemption.
 
+During this bootstrap PR, `pull_request_target` still executes the Guardian
+workflow integrated on the current default `dev`; it cannot emit or prove the
+candidate's new `CI guardian shadow` route name. Record that old-base Guardian
+result as bootstrap expected-negative evidence. A later non-kernel feature PR,
+after this workflow is integrated, is the probe for `CI guardian shadow`; do not
+pretend this PR has already activated that name or make it required here.
+
 The scaffold baseline does not yet expose a working semantic CLI. Until
 `cmd/gooo` implements its `check` command, the semantic CLI and generated-freshness
 step prints an explicit deferred status and exits successfully. Formatting, vet, unit

@@ -49,6 +49,8 @@ validator compares every field with its executable catalog and rejects drift.
 <!-- machine-catalog: CI-FRESHNESS-001|freshness|error|global|false|true|gate -->
 <!-- machine-catalog: CI-PROVENANCE-001|provenance|blocked|global|false|true|gate -->
 <!-- machine-catalog: CI-OWNERSHIP-001|ownership|blocked|local|true|true|branch-ownership -->
+<!-- machine-catalog: CI-PROMOTION-AUTH-001|gate|blocked|global|false|true|gate -->
+<!-- machine-catalog: CI-PROMOTION-OBSERVATION-001|gate|blocked|global|false|true|gate -->
 <!-- machine-catalog: CI-ROOT-OF-TRUST-001|trust-root|blocked|global|false|true|gate -->
 <!-- machine-catalog: CI-ROOT-OF-TRUST-BOOTSTRAP-001|trust-root|blocked|global|false|true|gate -->
 <!-- machine-catalog: CI-UNCLASSIFIED-001|unclassified|blocked|global|false|true|gate -->
@@ -67,13 +69,15 @@ validator compares every field with its executable catalog and rejects drift.
 | `CI-FRESHNESS-001` | freshness / error | A head, base, run, attempt, or job is stale, replayed, or mismatched. | Stop promotion, fetch current refs, and require a fresh exact-head run. | Do not reuse historical green evidence or guess a tuple. | Handoff the stale and current tuples. |
 | `CI-PROVENANCE-001` | provenance / blocked | Required provenance evidence is absent, unavailable, or unverifiable. | Record the missing reason as fail-closed and request legitimate evidence. | Do not infer live protection or provenance from CI output. | Handoff the exact evidence references still required. |
 | `CI-OWNERSHIP-001` | ownership / blocked | Branch owner or path ownership cannot be resolved from the protected registry. | Keep the issue local, verify the registered owner, and stop only this PR's mutation. | Do not claim another agent's scope, create aliases, or edit ownership policy. | Handoff the unresolved branch/path tuple to the governance owner. |
+| `CI-PROMOTION-AUTH-001` | gate / blocked | A proof bundle cannot produce a digest-bound fast-forward authorization for the exact dev-to-main route. | Keep the authorization `FAIL_CLOSED` and hand off the exact proof, protection, Guardian, and PR-state predicates still missing. | Do not infer authorization from green jobs, a draft PR, or a mutable mergeability claim. | Handoff the proof digest and missing promotion predicates to the gate. |
+| `CI-PROMOTION-OBSERVATION-001` | gate / blocked | The live same-repository dev-to-main PR is draft, dirty, stale, merged, unknown, or not exactly bound to current main/dev refs and topology. | Re-fetch the PR and refs and require a fresh clean exact-head observation. | Do not authorize a fast-forward from a draft, behind, divergent, or unknown state. | Handoff the current PR/ref/topology tuple to the promotion gate. |
 | `CI-ROOT-OF-TRUST-001` | trust-root / blocked | A PR-controlled workflow has no previously integrated base-pinned guardian for its own CI policy change. | Treat the change as a one-time bootstrap, publish immutable diff/test evidence, and require the guardian on subsequent CI changes. | Do not claim proof-of-proof from PR-controlled jobs or bypass the guardian boundary. | Handoff the base/head policy tuple and guardian bootstrap evidence to the dev gate. |
-| `CI-ROOT-OF-TRUST-BOOTSTRAP-001` | trust-root / blocked | The default-dev topology cannot yet prove the newly introduced guardian's native head binding. | Record the exact base/head, protected-kernel diff, local tests, and PR evidence; keep the guardian advisory until a real base-pinned probe exists. | Do not add an unenforceable required context, claim that a PR-controlled job proves itself, or mutate protection. | Handoff the bootstrap ledger to dev; prove the guardian binding before changing protection. |
+| `CI-ROOT-OF-TRUST-BOOTSTRAP-001` | trust-root / blocked | The default-dev topology cannot yet prove the newly introduced guardian's native head binding; this candidate is still executed by the old integrated default workflow and cannot prove its new shadow check name. | Record the exact base/head, old-base Guardian expected-negative, protected-kernel diff, local tests, and PR evidence; keep the guardian advisory until a real post-integration probe exists. | Do not add an unenforceable required context, claim that a PR-controlled job proves itself, or pretend the candidate emitted `CI guardian shadow`. | Handoff the bootstrap ledger to dev; run a later non-kernel feature probe and prove the binding before changing protection. |
 | `CI-UNCLASSIFIED-001` | unclassified / blocked | A terminal failure cannot be safely classified. | Stop and request deterministic CI policy classification. | Do not guess a reason or treat it as green. | Handoff the exact job/run tuple to gate. |
 
 ## Guardian artifact activation statuses
 
-These codes are emitted in the `gooo/ci-guardian/v1` shadow artifact and are
+These codes are emitted in the `gooo/ci-guardian/v2` shadow artifact and are
 distinct from the `gooo/ci-failure/v1` catalog above:
 
 - `CI-GUARDIAN-DEFAULT-BRANCH-001`: the repository default branch is not `dev`

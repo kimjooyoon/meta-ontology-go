@@ -8,6 +8,10 @@ const {
   PROTECTED_PREFIXES,
   DEFAULT_BRANCH_CODE,
   HEAD_BINDING_STATUS,
+  HEAD_BINDING_VERIFIED,
+  LIVE_REF_CODE,
+  PROMOTION_TOPOLOGY_CODE,
+  CHECK_IDENTITY_CODE,
   ROOT_FAILURE_CODE,
   buildGuardianArtifact,
   classifyGuardianDecision,
@@ -17,6 +21,7 @@ const {
   revalidatePullRequest,
   validateGuardianArtifact,
   validateGuardianPullRequest,
+  readLiveTopology,
 } = require('./guardian');
 
 const sha = (letter) => letter.repeat(40);
@@ -46,6 +51,11 @@ const expectedFixtureTuple = () => ({
   event_ref: 'refs/heads/dev',
   run_id: 108,
   run_attempt: 1,
+});
+
+const liveFixture = () => ({
+  refs: {dev_sha: sha('d'), main_sha: sha('b')},
+  topology: {status: 'ahead', ahead_by: 1, behind_by: 0, merge_base_sha: sha('b')},
 });
 
 async function rejectsRoot(operation) {
@@ -123,6 +133,7 @@ async function testStaleRaceAndArtifactDigest() {
     pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
     workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
     runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
+    liveBefore: liveFixture(), liveAfter: liveFixture(),
     result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md', 'modified')], kernelPaths: []},
   });
   const expected = expectedFixtureTuple();
@@ -134,6 +145,7 @@ async function testStaleRaceAndArtifactDigest() {
     pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
     workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
     runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
+    liveBefore: liveFixture(), liveAfter: liveFixture(),
     result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md', 'modified')], kernelPaths: []},
   });
   for (const mutate of [
@@ -145,11 +157,12 @@ async function testStaleRaceAndArtifactDigest() {
     (candidate) => { candidate.action = 'closed'; },
     (candidate) => { candidate.changed_files.push(candidate.changed_files[0]); },
     (candidate) => { candidate.kernel_paths = ['scripts/ci-proof/a', 'scripts/ci-proof/a']; },
+    (candidate) => { candidate.head_binding_status = HEAD_BINDING_STATUS; },
   ]) {
     const candidate = freshArtifact();
     const expected = expectedFixtureTuple();
     mutate(candidate);
-    assert.throws(() => validateGuardianArtifact(candidate, expected), (error) => error && error.code === ROOT_FAILURE_CODE);
+    assert.throws(() => validateGuardianArtifact(candidate, expected), (error) => error && [ROOT_FAILURE_CODE, 'CI-GUARDIAN-CHECK-IDENTITY-001'].includes(error.code));
   }
   const rehash = (candidate) => {
     candidate.bundle_sha256 = digestGuardianArtifact(candidate);
@@ -184,6 +197,26 @@ async function testStaleRaceAndArtifactDigest() {
   omittedKernel.changed_files = [file('.github/workflows/ci.yml', 'modified')];
   rehash(omittedKernel);
   assert.throws(() => validateGuardianArtifact(omittedKernel, omittedKernelExpected), (error) => error && error.code === ROOT_FAILURE_CODE);
+  const promotion = pull('main');
+  promotion.head.ref = 'dev';
+  promotion.head.sha = sha('d');
+  const promotionArtifact = buildGuardianArtifact({
+    pull: promotion, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev', liveBefore: liveFixture(), liveAfter: liveFixture(), checkName: 'CI guardian',
+    result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md')], kernelPaths: []},
+  });
+  const promotionExpected = expectedFixtureTuple();
+  promotionExpected.base_ref = 'main';
+  promotionExpected.base_sha = sha('b');
+  promotionExpected.head_ref = 'dev';
+  promotionExpected.head_sha = sha('d');
+  promotionExpected.workflow_sha = sha('d');
+  promotionExpected.runtime_sha = sha('d');
+  promotionExpected.default_branch = 'dev';
+  promotionExpected.workflow_ref = 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev';
+  promotionArtifact.head_binding_status = HEAD_BINDING_STATUS;
+  promotionArtifact.bundle_sha256 = digestGuardianArtifact(promotionArtifact);
+  assert.throws(() => validateGuardianArtifact(promotionArtifact, promotionExpected), (error) => error && error.code === CHECK_IDENTITY_CODE);
 }
 
 async function testCanonicalOrdering() {
@@ -193,6 +226,7 @@ async function testCanonicalOrdering() {
     pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
     workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
     runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
+    liveBefore: liveFixture(), liveAfter: liveFixture(),
     result: {
       decision: 'PASS', code: null, reason: null,
       files: [file('cmd/gooo/analyze_test.go'), file('cmd/gooo/analyze.go')], kernelPaths: [],
@@ -207,6 +241,7 @@ async function testCanonicalOrdering() {
     pull: eventPull, repository: 'owner/repo', action: 'synchronize', defaultBranch: 'dev',
     workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
     runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 108, runAttempt: 1, eventRef: 'refs/heads/dev',
+    liveBefore: liveFixture(), liveAfter: liveFixture(),
     result: {decision: 'PASS', code: null, reason: null, files: [file('docs/a.md')], kernelPaths: []},
   });
   unsortedArtifact.changed_files = [file('cmd/gooo/analyze_test.go'), file('cmd/gooo/analyze.go')];
@@ -233,34 +268,57 @@ async function testPromotionAndKernelDigests() {
   promotionPull.head.sha = sha('d');
   const exact = classifyGuardianDecision({
     pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'),
+    liveBefore: liveFixture(), liveAfter: liveFixture(), checkName: 'CI guardian',
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
   assert.equal(exact.decision, 'PASS');
   const stale = classifyGuardianDecision({
     pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('e'), runtimeSha: sha('e'),
+    liveBefore: liveFixture(), liveAfter: liveFixture(), checkName: 'CI guardian',
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
-  assert.equal(stale.code, ROOT_FAILURE_CODE);
+  assert.equal(stale.code, 'CI-GUARDIAN-PROMOTION-TOPOLOGY-001');
   const wrongDefault = classifyGuardianDecision({
     pull: promotionPull, repository: 'owner/repo', defaultBranch: 'main', eventRef: 'refs/heads/main', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main', workflowSha: sha('d'), runtimeSha: sha('d'),
+    liveBefore: liveFixture(), liveAfter: liveFixture(), checkName: 'CI guardian',
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
-  assert.equal(wrongDefault.code, ROOT_FAILURE_CODE);
+  assert.equal(wrongDefault.code, DEFAULT_BRANCH_CODE);
   const bootstrapPull = pull('dev');
   bootstrapPull.base.sha = sha('d');
   const bootstrap = classifyGuardianDecision({
     pull: bootstrapPull, repository: 'owner/repo', defaultBranch: 'main', eventRef: 'refs/heads/main', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/main', workflowSha: sha('d'), runtimeSha: sha('d'),
+    liveBefore: liveFixture(), liveAfter: liveFixture(), checkName: 'CI guardian shadow',
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
   assert.equal(bootstrap.code, DEFAULT_BRANCH_CODE);
   const kernel = classifyGuardianDecision({
     pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'),
+    liveBefore: liveFixture(), liveAfter: liveFixture(), checkName: 'CI guardian',
     kernelBeforeDigest: 'sha256:' + '1'.repeat(64), kernelAfterDigest: 'sha256:' + '2'.repeat(64),
     result: {decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: 'kernel changed', kernelPaths: ['.github/workflows/ci.yml']},
   });
   assert.equal(kernel.decision, 'PASS');
   assert.equal(kernel.kernelBeforeDigest, 'sha256:' + '1'.repeat(64));
   assert.equal(DEFAULT_BRANCH_CODE, 'CI-GUARDIAN-DEFAULT-BRANCH-001');
+  const missingLive = classifyGuardianDecision({
+    pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian',
+    result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
+  });
+  assert.equal(missingLive.code, 'CI-GUARDIAN-LIVE-REF-001');
+  const featurePull = pull('dev');
+  featurePull.base.sha = sha('d');
+  const identicalLive = {refs: {dev_sha: sha('d'), main_sha: sha('d')}, topology: {status: 'identical', ahead_by: 0, behind_by: 0, merge_base_sha: sha('d')}};
+  const stableFeature = classifyGuardianDecision({
+    pull: featurePull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian shadow', liveBefore: identicalLive, liveAfter: identicalLive,
+    result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
+  });
+  assert.equal(stableFeature.decision, 'PASS');
+  const identicalPromotion = classifyGuardianDecision({
+    pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian', liveBefore: identicalLive, liveAfter: identicalLive,
+    result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
+  });
+  assert.equal(identicalPromotion.code, 'CI-GUARDIAN-PROMOTION-TOPOLOGY-001');
   const tree = await kernelTreeDigest({
     owner: 'owner', repo: 'repo', ref: sha('d'),
     getCommit: async () => ({status: 200, data: {commit: {tree: {sha: sha('a')}}}}),
@@ -297,6 +355,21 @@ async function testPaginationLimit() {
     },
   }));
   assert.equal(calls, 1000);
+}
+
+async function testLiveRefsAndRouteIdentity() {
+  const topology = {status: 'ahead', ahead_by: 2, behind_by: 0, merge_base_commit: {sha: sha('b')}};
+  const observed = await readLiveTopology({
+    owner: 'owner', repo: 'repo',
+    getRef: async ({ref}) => ({status: 200, data: {object: {sha: ref.endsWith('dev') ? sha('d') : sha('b')}}}),
+    compareCommits: async () => ({status: 200, data: topology}),
+  });
+  assert.equal(observed.refs.dev_sha, sha('d'));
+  await assert.rejects(() => readLiveTopology({owner: 'owner', repo: 'repo', getRef: async () => ({status: 403}), compareCommits: async () => ({status: 200, data: topology})}), (error) => error && error.code === LIVE_REF_CODE);
+  const feature = pull('dev');
+  feature.base.sha = sha('d');
+  const withoutSnapshots = classifyGuardianDecision({pull: feature, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian shadow', result: {decision: 'PASS', code: null, reason: null, kernelPaths: []}});
+  assert.equal(withoutSnapshots.code, LIVE_REF_CODE);
 }
 
 function testWorkflowIsReadOnlyAndBasePinned() {
@@ -337,6 +410,7 @@ function testWorkflowIsReadOnlyAndBasePinned() {
 
 function testHeadBindingIsExplicitlyShadowOnly() {
   assert.equal(HEAD_BINDING_STATUS, 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED');
+  assert.equal(HEAD_BINDING_VERIFIED, 'verified');
 }
 
 function testKernelSetIsMonotonic() {
@@ -359,6 +433,7 @@ function testKernelSetIsMonotonic() {
   testWorkflowIsReadOnlyAndBasePinned();
   testHeadBindingIsExplicitlyShadowOnly();
   testKernelSetIsMonotonic();
+  await testLiveRefsAndRouteIdentity();
   console.log('guardian tests passed');
 })().catch((error) => {
   console.error(error);
