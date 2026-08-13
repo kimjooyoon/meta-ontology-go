@@ -196,6 +196,9 @@ func localityBaseDigest(result SemanticAdapterResult) string {
 	for _, candidate := range result.NormalizedDelta.CandidateFacts {
 		return candidate.Binding.BaseDigest
 	}
+	for _, fact := range result.NormalizedDelta.DeferredFacts {
+		return fact.Binding.BaseDigest
+	}
 	for _, observation := range result.NormalizedDelta.DeferredImplementation {
 		return observation.BaseDigest
 	}

@@ -105,6 +105,9 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	if !candidateObservationsMatch(result) {
 		return false
 	}
+	if !deferredFactsMatch(result) {
+		return false
+	}
 	if !validDigest(result.RegistryDigest) {
 		return false
 	}
@@ -116,6 +119,7 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 
 func normalizedDeltaMembersValid(result SemanticAdapterResult) bool {
 	memberCount := len(result.NormalizedDelta.SignatureFacts) + len(result.NormalizedDelta.CandidateFacts) +
+		len(result.NormalizedDelta.DeferredFacts) +
 		len(result.NormalizedDelta.DeferredImplementation) + len(result.NormalizedDelta.DeferredDetails) +
 		len(result.NormalizedDelta.DeferredSlots)
 	if memberCount == 0 ||
@@ -141,6 +145,11 @@ func normalizedDeltaMembersValid(result SemanticAdapterResult) bool {
 			if evidence.Validate() != nil || !candidateFactKey(candidate, evidence.Fact) {
 				return false
 			}
+		}
+	}
+	for _, fact := range result.NormalizedDelta.DeferredFacts {
+		if !fact.Binding.complete() || !validSourceFact(fact.Fact) {
+			return false
 		}
 	}
 	for _, observation := range result.NormalizedDelta.DeferredImplementation {
@@ -197,6 +206,11 @@ func normalizedDeltaBindingsMatch(result SemanticAdapterResult) bool {
 	}
 	for _, candidate := range result.NormalizedDelta.CandidateFacts {
 		if !accept(candidate.Binding) {
+			return false
+		}
+	}
+	for _, fact := range result.NormalizedDelta.DeferredFacts {
+		if !accept(fact.Binding) {
 			return false
 		}
 	}

@@ -32,6 +32,11 @@ func validateDeltaShape(delta SemanticNormalizedDelta) error {
 			}
 		}
 	}
+	for _, fact := range delta.DeferredFacts {
+		if !validSourceFact(fact.Fact) {
+			return fmt.Errorf("deferred fact is invalid")
+		}
+	}
 	for _, observation := range delta.DeferredImplementation {
 		if !validImplementationObservation(observation) {
 			return fmt.Errorf("deferred implementation observation is invalid")

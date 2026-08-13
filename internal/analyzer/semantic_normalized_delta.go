@@ -71,6 +71,19 @@ type NormalizedCandidateFact struct {
 	Reason            string              `json:"reason"`
 }
 
+type NormalizedDeferredFact struct {
+	Binding DeltaBinding `json:"binding"`
+	Fact    Fact         `json:"fact"`
+}
+
+func (f NormalizedDeferredFact) canonical() string {
+	var builder strings.Builder
+	builder.WriteString("deferred-fact\n")
+	builder.WriteString(f.Binding.canonical())
+	builder.WriteString(sourceFactCanonical(f.Fact))
+	return builder.String()
+}
+
 func (f NormalizedCandidateFact) canonical() string {
 	var builder strings.Builder
 	builder.WriteString("candidate\n")
@@ -99,6 +112,7 @@ type SemanticNormalizedDelta struct {
 	SchemaVersion          string                         `json:"schema_version"`
 	SignatureFacts         []NormalizedSignatureFact      `json:"signature_facts"`
 	CandidateFacts         []NormalizedCandidateFact      `json:"candidate_facts"`
+	DeferredFacts          []NormalizedDeferredFact       `json:"deferred_facts"`
 	DeferredImplementation []ImplementationObservation    `json:"deferred_implementation"`
 	DeferredDetails        []DeferredImplementationDetail `json:"deferred_details"`
 	DeferredSlots          []ProtectedSlotObservation     `json:"deferred_slots"`
@@ -119,6 +133,11 @@ func (d SemanticNormalizedDelta) Canonical() string {
 	sort.Slice(candidates, func(i, j int) bool { return candidates[i].canonical() < candidates[j].canonical() })
 	for _, candidate := range candidates {
 		builder.WriteString(candidate.canonical())
+	}
+	deferredFacts := append([]NormalizedDeferredFact(nil), d.DeferredFacts...)
+	sort.Slice(deferredFacts, func(i, j int) bool { return deferredFacts[i].canonical() < deferredFacts[j].canonical() })
+	for _, fact := range deferredFacts {
+		builder.WriteString(fact.canonical())
 	}
 	observations := append([]ImplementationObservation(nil), d.DeferredImplementation...)
 	sort.Slice(observations, func(i, j int) bool { return observations[i].Canonical() < observations[j].Canonical() })
@@ -160,11 +179,21 @@ func newSemanticNormalizedDelta(
 	if err != nil {
 		return SemanticNormalizedDelta{}, err
 	}
+	delta.DeferredFacts = normalizedDeferredFacts(result.DeferredFacts, binding)
 	delta.DeferredImplementation = append([]ImplementationObservation(nil), result.ImplementationObservations...)
 	delta.DeferredDetails = deferredImplementationDetails(result, binding)
 	delta.DeferredSlots = append([]ProtectedSlotObservation(nil), result.SlotObservations...)
 	delta.Digest = delta.StableHash()
 	return delta, validateDeltaShape(delta)
+}
+
+func normalizedDeferredFacts(facts []Fact, binding DeltaBinding) []NormalizedDeferredFact {
+	output := make([]NormalizedDeferredFact, 0, len(facts))
+	for _, fact := range facts {
+		output = append(output, NormalizedDeferredFact{Binding: binding, Fact: fact})
+	}
+	sort.Slice(output, func(i, j int) bool { return output[i].canonical() < output[j].canonical() })
+	return output
 }
 
 func normalizedSignatureFacts(

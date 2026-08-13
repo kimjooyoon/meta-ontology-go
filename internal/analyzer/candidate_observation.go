@@ -9,6 +9,33 @@ import (
 
 const candidateObservationSchema = "analyzer-candidate-observation/v1"
 
+const factObservationSchema = "analyzer-fact-observation/v1"
+
+func sourceFactCanonical(fact Fact) string {
+	var builder strings.Builder
+	builder.WriteString(factObservationSchema)
+	builder.WriteByte('\n')
+	writeBindingField(&builder, fact.Subject.Namespace)
+	writeBindingField(&builder, fact.Subject.ID)
+	writeBindingField(&builder, string(fact.Relation))
+	writeBindingField(&builder, fact.Object.Namespace)
+	writeBindingField(&builder, fact.Object.ID)
+	writeBindingField(&builder, string(fact.Origin))
+	writeSemanticSpan(&builder, semanticSpan(fact.Span))
+	return builder.String()
+}
+
+func validSourceFact(fact Fact) bool {
+	if !fact.Subject.Valid() || !fact.Object.Valid() || !knownAnalyzerRelation(fact.Relation) ||
+		fact.Span.Filename == "" || fact.Span.Start.Offset < 0 ||
+		fact.Span.End.Offset < fact.Span.Start.Offset {
+		return false
+	}
+	_, subjectErr := semantic.ParseIdentity(fact.Subject.ID)
+	_, objectErr := semantic.ParseIdentity(fact.Object.ID)
+	return subjectErr == nil && objectErr == nil
+}
+
 func candidateObservationDigest(candidate Candidate) string {
 	var builder strings.Builder
 	builder.WriteString(candidateObservationSchema)
@@ -40,6 +67,28 @@ func candidateObservationsMatch(result SemanticAdapterResult) bool {
 	actual := make([]string, 0, len(result.NormalizedDelta.CandidateFacts))
 	for _, candidate := range result.NormalizedDelta.CandidateFacts {
 		actual = append(actual, candidate.ObservationDigest)
+	}
+	sort.Strings(expected)
+	sort.Strings(actual)
+	for index := range expected {
+		if expected[index] != actual[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func deferredFactsMatch(result SemanticAdapterResult) bool {
+	if len(result.DeferredFacts) != len(result.NormalizedDelta.DeferredFacts) {
+		return false
+	}
+	expected := make([]string, 0, len(result.DeferredFacts))
+	for _, fact := range result.DeferredFacts {
+		expected = append(expected, sourceFactCanonical(fact))
+	}
+	actual := make([]string, 0, len(result.NormalizedDelta.DeferredFacts))
+	for _, fact := range result.NormalizedDelta.DeferredFacts {
+		actual = append(actual, sourceFactCanonical(fact.Fact))
 	}
 	sort.Strings(expected)
 	sort.Strings(actual)
