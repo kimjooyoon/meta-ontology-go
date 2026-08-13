@@ -63,3 +63,29 @@ func TestSemanticAdapterRejectsUnknownCandidateRelationWithoutMutation(t *testin
 	assertAdapterCode(t, err, AdapterUnknownRelation)
 	assertSnapshot(t, base, before)
 }
+
+func TestSemanticAdapterRejectsUnknownCandidateEndpointWithoutMutation(t *testing.T) {
+	base := semantic.NewIR("billing", semantic.Namespace("billing"))
+	before := irSnapshot(base)
+	analysis := Result{
+		Registrations: billingRegistrations(),
+		Delta: SemanticDelta{Candidates: []Candidate{
+			candidateWithOption("billing://entity/order"),
+			candidateWithOption("billing://entity/missing"),
+		}},
+	}
+	_, err := AdaptSemantic(SemanticAdapterInput{
+		Base: base, Analysis: analysis, Policy: billingPolicy(t, RelationUses),
+		Producer: semantic.GoHostedCompilerID, EvidenceKind: semantic.CompilerRunEvidence,
+		SourceDigest: semantic.StableHash([]byte("unknown-candidate-endpoint")),
+	})
+	assertAdapterCode(t, err, AdapterUnknownEndpoint)
+	assertSnapshot(t, base, before)
+}
+
+func candidateWithOption(object string) Candidate {
+	return Candidate{
+		Subject: NewIdentity("billing", "billing://activity/pay-order"), Relation: RelationUses,
+		Options: []Identity{NewIdentity("billing", object)}, Span: testSpan(), Reason: "ambiguous endpoint",
+	}
+}
