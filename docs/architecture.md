@@ -6,11 +6,10 @@ Go projection is structural output; handwritten slots are the implementation
 escape hatch. Evidence records describe what a build observed and do not become
 new intent by themselves.
 
-The proposed history from a handwritten seed to a self-hosted compiler is tracked
-in the [self-hosting research note](research/self-hosting.md), owned by the
-self-hosting-bootstrap workstream. This document connects that research to the
-normative architecture without making the research note, or a future self-hosted
-verifier, authoritative by itself.
+Self-hosting is not part of the current implementation contract. The checked-in
+bootstrap fixtures are non-promoting evidence shapes; this document does not
+define a self-hosted compiler or verifier authority, and it does not link to a
+research note that is not present in this repository.
 
 ```text
 main.gooo
@@ -80,51 +79,38 @@ implicit deletion; removals must be explicit.
 6. Record locality, source spans, hashes, and command results as evidence for the
    reviewer and CI.
 
-## Bootstrap path to self-hosting
+## CI-only branch and promotion flow
 
-Self-hosting is a staged trust transition, not a single generator feature. The
-following sequence is the proposed bootstrap history; a stage is current only
-after its evidence is present in protected CI.
+The checked-in governance mode is `ci_only`. Work branches target `dev`; no
+intermediary branch is a current route or promotion source. The only
+promotion route is an exact same-repository pull request with `base=main` and
+`head=dev`.
 
-| Stage | Implementation shape | Trust boundary | Promotion evidence |
-| --- | --- | --- | --- |
-| Seed | Handwritten Go kernel plus a small `.gooo` fixture | Go parser, IR, generator, and verifier are trusted; DSL is intent input | Reproducible Go checks and the example semantic check |
-| Semantic mirror | `.gooo` describes the compiler ontology, contracts, and verifier vocabulary | Go remains authoritative for execution; `.gooo` is a reviewed semantic mirror | Stable IDs, source spans, canonical IR, and BX tests agree |
-| Structural self-host | `.gooo` drives structural Go for compiler components; handwritten slots retain irreducible logic | Generated Go is replaceable output; the seed remains the rollback implementation | Marker/locality checks, deterministic regeneration, and build equivalence |
-| Shadow verifier | A `.gooo`-described verifier runs beside the seed verifier | Candidate verifier is evidence only and cannot approve itself | Seed/candidate decision and evidence streams match on pinned fixtures |
-| Promoted self-host | The promoted verifier checks the next bootstrap and can rebuild the compiler | Previous verifier and source digest remain the rollback authority | Reproducible bootstrap, BX/provenance/locality gates, and independent approval |
+The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
+`Semantic conformance`, and `CI policy`. Protected `dev` requires those six
+contexts plus `CI guardian shadow`. Protected `main` requires those six plus
+`CI guardian`. The Guardian context is app-bound and route-specific, so both
+branches require exactly seven contexts.
 
-At every stage, `.gooo` remains the SSOT for declared intent and stable IDs;
-semantic IR remains the normalized comparison form; generated Go remains derived;
-and provenance remains append-only evidence. A bootstrap artifact cannot grant
-itself authority merely because it generated or verified itself.
+For a promotion, the proof must bind an open, non-draft, unmerged, mergeable,
+clean same-repository PR to the current `main` and `dev` refs. The live refs are
+read before and after inspection and must remain unchanged. The topology must
+be `ahead` with `ahead > 0`, `behind = 0`, and `merge_base_sha` equal to the
+current main SHA. The six proof jobs, exact artifacts, Guardian evidence, and
+both seven-context protection snapshots must also pass.
 
-The research note owns experiment history, alternatives, and stage-specific
-measurements. This architecture owns the boundary rules that any implementation
-must satisfy before those measurements can support promotion.
+The proof emits a `promotion_authorization` containing the exact base/head
+SHAs, `source=dev`, `target=main`, `operation=fast_forward`, and the proof bundle
+digest. It is `PASS` only when all predicates above hold; otherwise it is
+`FAIL_CLOSED` with a reason code. This authorization is pure evidence: the
+proof producer never writes refs or branch protection. After a final exact
+reread of refs and protection, an external gate may perform only a normal
+compare-and-swap/fast-forward update of `main`; force-push and force-update
+operations are not permitted.
 
-The comparable evidence shape and paired fixtures are defined in the
-[bootstrap evidence bridge](bootstrap-evidence.md). It is the contract between
-the Go-hosted seed and a future gooo-hosted candidate; it does not promote the
-candidate or replace the research note.
-
-## Current CI baseline
-
-The integration workflow in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
-currently has separate format, vet, unit-test, race-test, semantic-conformance,
-and CI-policy jobs. The semantic job delegates to
-[`scripts/semantic-conformance.sh`](../scripts/semantic-conformance.sh); its
-explicit deferred path is evidence that the CLI is not yet available, not proof
-of self-hosting. The policy job checks branch ownership, Go size caps, and the
-integration PR target. These checks protect the seed and candidate boundaries;
-they are not yet the self-hosted verifier promotion gate.
-
-## What is not part of the current contract
-
-The architecture leaves room for richer relations, a production LSP, a stable Go
-analysis CLI, durable evidence publishing, and self-hosted verifier promotion.
-Those are design directions only until they have a supported entry point and
-runnable conformance evidence. The current required CI is documented in
-[CONTRIBUTING.md](../CONTRIBUTING.md) and the integration workflow. Self-hosting
-and verifier promotion are future capabilities until the staged gates above are
-wired into protected CI.
+The current CI workflow runs format, vet, unit-test, race-test,
+semantic-conformance, policy, evidence, proof, and failure-report jobs. The
+semantic check is runnable for the billing fixture. Richer relations, a
+production LSP, a stable Go analysis CLI, cache conformance, durable evidence
+publishing, and self-hosted verifier promotion remain unsupported until each
+has an implemented entry point and runnable evidence.

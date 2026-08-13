@@ -18,31 +18,17 @@ The checked-in [billing example](../examples/billing/main.gooo) is the canonical
 small input. It is a conformance fixture, not a promise that all future syntax
 will remain source-compatible.
 
-## Bootstrap and self-hosting boundary
+## Current implementation boundary
 
-`meta-ontology-go` is intended to progressively re-express its own compiler and
-verifier in `.gooo`. The history, experiments, and alternatives are maintained in
-the [self-hosting research note](research/self-hosting.md) by the
-self-hosting-bootstrap workstream. This language sketch only defines the SSOT and
-trust boundary for that work; it does not claim that self-hosting is supported
-today.
+This language sketch defines the `.gooo` source and semantic contracts only. It
+does not define self-hosting, a self-hosted verifier, or a promotion authority.
+The checked-in files under `examples/bootstrap/` and
+[bootstrap-evidence.md](bootstrap-evidence.md) are non-promoting evidence-shape
+fixtures; `deferred`, `not-run`, and candidate results are not success or policy.
 
-The bootstrap sequence is deliberately conservative:
-
-| Stage | `.gooo` role | Trusted authority |
-| --- | --- | --- |
-| Seed | Small business and conformance fixtures | Handwritten Go kernel and protected CI |
-| Mirror | Declare compiler ontology, contracts, and verifier vocabulary | Go kernel executes and verifies; `.gooo` is reviewed intent |
-| Structural self-host | Drive generated compiler structure while retaining handwritten slots | Seed verifier remains rollback authority |
-| Shadow | Describe a candidate verifier and compare its decisions | Seed verifier; candidate output is evidence only |
-| Promotion | Rebuild and verify the next compiler from the candidate path | Protected CI promotes only after independent equivalence evidence |
-
-At no stage does parsing a declaration promote it to policy. Stable IDs and
-`.gooo` intent remain authoritative; semantic IR is the comparison form; generated
-Go is derived; and verifier results remain candidate evidence until the CI
-promotion gates in [the governance contract](governance.md) pass. The paired
-host/evidence contract is documented in [bootstrap-evidence.md](bootstrap-evidence.md)
-and exercised by the non-promoting fixtures under `examples/bootstrap/`.
+This contract has no separate research dependency. The current branch and
+promotion rules are documented separately in [governance.md](governance.md) and
+do not change the meaning of `.gooo` declarations.
 
 ## Identity and namespaces
 
