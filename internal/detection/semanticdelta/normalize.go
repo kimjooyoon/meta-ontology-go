@@ -257,8 +257,6 @@ func uniqueFacts(facts []Fact) []Fact {
 	return result
 }
 
-func nodeKey(node Node) string { return node.ID + "\x00" + node.Kind }
-
 func factKey(fact Fact) string {
 	return fact.Subject + "\x00" + fact.Predicate + "\x00" + fact.Object
 }
@@ -274,12 +272,12 @@ func factLess(left, right Fact) bool {
 }
 
 func overlapNodes(left, right []Node) bool {
-	seen := make(map[string]struct{}, len(left))
+	seen := make(map[Node]struct{}, len(left))
 	for _, node := range left {
-		seen[nodeKey(node)] = struct{}{}
+		seen[node] = struct{}{}
 	}
 	for _, node := range right {
-		if _, exists := seen[nodeKey(node)]; exists {
+		if _, exists := seen[node]; exists {
 			return true
 		}
 	}
@@ -287,12 +285,12 @@ func overlapNodes(left, right []Node) bool {
 }
 
 func overlapFacts(left, right []Fact) bool {
-	seen := make(map[string]struct{}, len(left))
+	seen := make(map[factIdentity]struct{}, len(left))
 	for _, fact := range left {
-		seen[factKey(fact)] = struct{}{}
+		seen[factIdentityOf(fact)] = struct{}{}
 	}
 	for _, fact := range right {
-		if _, exists := seen[factKey(fact)]; exists {
+		if _, exists := seen[factIdentityOf(fact)]; exists {
 			return true
 		}
 	}

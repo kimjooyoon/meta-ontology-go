@@ -88,16 +88,16 @@ func reconcileNodes(base []Node, delta Delta) ([]Node, error) {
 func reconcileFacts(base []Fact, delta Delta) ([]Fact, error) {
 	current := factMap(base)
 	for _, fact := range delta.RemovedFacts {
-		key := factKey(fact)
+		key := factIdentityOf(fact)
 		if _, ok := current[key]; !ok {
-			return nil, fmt.Errorf("reconcile facts: cannot remove absent fact %q", key)
+			return nil, fmt.Errorf("reconcile facts: cannot remove absent fact %q", factKey(fact))
 		}
 		delete(current, key)
 	}
 	for _, fact := range delta.AddedFacts {
-		key := factKey(fact)
+		key := factIdentityOf(fact)
 		if _, ok := current[key]; ok {
-			return nil, fmt.Errorf("reconcile facts: cannot add existing fact %q", key)
+			return nil, fmt.Errorf("reconcile facts: cannot add existing fact %q", factKey(fact))
 		}
 		current[key] = fact
 	}

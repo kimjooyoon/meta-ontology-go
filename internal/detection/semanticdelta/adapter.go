@@ -137,10 +137,10 @@ func nodeMap(nodes []Node) map[string]Node {
 	return result
 }
 
-func factMap(facts []Fact) map[string]Fact {
-	result := make(map[string]Fact, len(facts))
+func factMap(facts []Fact) map[factIdentity]Fact {
+	result := make(map[factIdentity]Fact, len(facts))
 	for _, fact := range facts {
-		result[factKey(fact)] = fact
+		result[factIdentityOf(fact)] = fact
 	}
 	return result
 }

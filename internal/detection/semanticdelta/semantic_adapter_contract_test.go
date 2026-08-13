@@ -33,6 +33,19 @@ func TestSemanticIRAdapterContractIgnoresPresentationAndCandidates(t *testing.T)
 	}
 }
 
+func TestSemanticIRAdapterClassifiesPresentationOnlyEditAsSyntaxOnly(t *testing.T) {
+	before := semanticContractFixture(t, "Pay order", false)
+	after := semanticContractFixture(t, "Collect order", false)
+
+	delta, err := semanticIRContractAdapter().Diff(before, after)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !delta.IsEmpty() {
+		t.Fatalf("display-only edit produced semantic delta: %#v", delta)
+	}
+}
+
 func TestSemanticIRAdapterContractRejectsInvalidProjection(t *testing.T) {
 	adapter := Adapter[semantic.IR]{
 		Nodes: func(semantic.IR) ([]Node, error) {
