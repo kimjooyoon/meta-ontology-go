@@ -56,6 +56,12 @@ func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
 			return Result{}, err
 		}
 	}
+	if err := validateRegionOwners(ir, markers); err != nil {
+		return Result{}, err
+	}
+	if err := validateDeclaredSlots(ir, markers, len(previous) > 0); err != nil {
+		return Result{}, err
+	}
 	blocks, order, err := g.renderBlocks(ir, markers)
 	if err != nil {
 		return Result{}, err
@@ -79,6 +85,74 @@ func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
 		return Result{}, err
 	}
 	return Result{Source: source, SourceMap: sourceMap}, nil
+}
+
+func validateRegionOwners(ir SemanticIR, markers parsedMarkers) error {
+	expected := make(map[string]string, len(ir.Entities)+len(ir.Activities))
+	for _, entity := range ir.Entities {
+		expected[entity.ID] = "entity"
+	}
+	for _, activity := range ir.Activities {
+		expected[activity.ID] = "activity"
+	}
+	for _, region := range markers.Regions {
+		if kind, exists := expected[region.ID]; exists && region.Kind != kind {
+			return fmt.Errorf("generator: region %q changes kind from %q to %q", region.ID, region.Kind, kind)
+		}
+	}
+	return nil
+}
+
+func validateDeclaredSlots(ir SemanticIR, markers parsedMarkers, allowRemovedRegions bool) error {
+	declared := make(map[string]struct{})
+	for _, activity := range ir.Activities {
+		for _, slot := range activity.Slots {
+			declared[slot.ID] = struct{}{}
+		}
+	}
+	for _, region := range markers.Regions {
+		if allowRemovedRegions && !hasActivity(ir, region.ID) {
+			continue
+		}
+		for _, slot := range region.Slots {
+			if _, exists := declared[slot.ID]; !exists {
+				return fmt.Errorf("generator: stale slot identity %q", slot.ID)
+			}
+		}
+	}
+	for _, slot := range markers.Slots {
+		owner, exists := declaredSlotOwner(ir, slot.ID)
+		if !exists {
+			continue
+		}
+		if owner != slot.RegionID {
+			return fmt.Errorf("generator: slot %q changes region owner from %q to %q", slot.ID, slot.RegionID, owner)
+		}
+		if slot.RegionKind != "activity" {
+			return fmt.Errorf("generator: slot %q belongs to non-activity region kind %q", slot.ID, slot.RegionKind)
+		}
+	}
+	return nil
+}
+
+func declaredSlotOwner(ir SemanticIR, slotID string) (string, bool) {
+	for _, activity := range ir.Activities {
+		for _, slot := range activity.Slots {
+			if slot.ID == slotID {
+				return activity.ID, true
+			}
+		}
+	}
+	return "", false
+}
+
+func hasActivity(ir SemanticIR, id string) bool {
+	for _, activity := range ir.Activities {
+		if activity.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func validatePackage(source []byte, expected string) error {

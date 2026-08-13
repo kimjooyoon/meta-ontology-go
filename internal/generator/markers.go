@@ -30,12 +30,14 @@ type generatedRegion struct {
 }
 
 type parsedSlot struct {
-	ID        string
-	Start     int
-	End       int
-	StartLine int
-	EndLine   int
-	Body      []byte
+	ID         string
+	RegionID   string
+	RegionKind string
+	Start      int
+	End        int
+	StartLine  int
+	EndLine    int
+	Body       []byte
 }
 
 type parsedMarkers struct {
@@ -88,13 +90,39 @@ func parseMarker(line string) (string, map[string]string, bool, error) {
 		return "", nil, false, nil
 	}
 	if len(trimmed) > len(prefix) && trimmed[len(prefix)] != ' ' && trimmed[len(prefix)] != '\t' {
-		return "", nil, false, nil
+		return "", nil, false, fmt.Errorf("invalid %s marker line boundary", marker)
 	}
 	attrs, err := parseAttributes(strings.TrimSpace(trimmed[len(prefix):]))
 	if err != nil {
 		return "", nil, false, err
 	}
+	if err := validateMarkerAttributes(marker, attrs); err != nil {
+		return "", nil, false, err
+	}
 	return marker, attrs, true, nil
+}
+
+func validateMarkerAttributes(marker string, attrs map[string]string) error {
+	allowed := map[string]struct{}{"id": {}}
+	if marker == "generated-start" || marker == "generated-end" {
+		allowed["kind"] = struct{}{}
+	}
+	for key := range attrs {
+		if _, ok := allowed[key]; !ok {
+			return fmt.Errorf("unknown %s marker attribute %q", marker, key)
+		}
+	}
+	if attrs["id"] == "" {
+		return fmt.Errorf("%s marker requires a non-empty id", marker)
+	}
+	if marker == "generated-start" || marker == "generated-end" {
+		switch attrs["kind"] {
+		case "entity", "activity":
+		default:
+			return fmt.Errorf("%s marker requires kind entity or activity", marker)
+		}
+	}
+	return nil
 }
 
 func parseAttributes(input string) (map[string]string, error) {
