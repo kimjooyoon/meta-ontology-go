@@ -99,6 +99,14 @@ func validateRegistration(registration Registration) error {
 	if !registration.Identity.Valid() {
 		return invalidRegistrationError("semantic identity is required")
 	}
+	if _, err := semantic.ParseIdentity(registration.Identity.ID); err != nil {
+		return invalidRegistrationError("semantic identity must be a valid URI")
+	}
+	if strings.TrimSpace(registration.Identity.Namespace) != "" {
+		if _, err := semantic.ParseNamespace(registration.Identity.Namespace); err != nil {
+			return invalidRegistrationError("semantic namespace must be valid")
+		}
+	}
 	return nil
 }
 

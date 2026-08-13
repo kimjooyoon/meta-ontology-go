@@ -18,14 +18,15 @@ var ErrSemanticAdapter = errors.New("semantic adapter rejected input")
 type AdapterErrorCode string
 
 const (
-	AdapterInvalidPolicy   AdapterErrorCode = "invalid-policy"
-	AdapterUnknownRelation AdapterErrorCode = "unknown-relation"
-	AdapterUnknownEndpoint AdapterErrorCode = "unknown-endpoint"
-	AdapterEndpointKind    AdapterErrorCode = "endpoint-kind"
-	AdapterEvidenceConfig  AdapterErrorCode = "evidence-config"
-	AdapterSourceConfig    AdapterErrorCode = "source-config"
-	AdapterSlotConfig      AdapterErrorCode = "slot-config"
-	AdapterLocalityConfig  AdapterErrorCode = "locality-config"
+	AdapterInvalidPolicy       AdapterErrorCode = "invalid-policy"
+	AdapterUnknownRelation     AdapterErrorCode = "unknown-relation"
+	AdapterUnknownEndpoint     AdapterErrorCode = "unknown-endpoint"
+	AdapterEndpointKind        AdapterErrorCode = "endpoint-kind"
+	AdapterEvidenceConfig      AdapterErrorCode = "evidence-config"
+	AdapterSourceConfig        AdapterErrorCode = "source-config"
+	AdapterAnalysisDiagnostics AdapterErrorCode = "analysis-diagnostics"
+	AdapterSlotConfig          AdapterErrorCode = "slot-config"
+	AdapterLocalityConfig      AdapterErrorCode = "locality-config"
 )
 
 // AdapterError carries a stable class while keeping detail local to the

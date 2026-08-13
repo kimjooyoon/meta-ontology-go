@@ -3,6 +3,7 @@ package analyzer
 import (
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
@@ -59,6 +60,37 @@ func TestAnalyzeAndAdaptSemanticRequiresToolchainIdentity(t *testing.T) {
 	var adapterErr AdapterError
 	if !errors.As(err, &adapterErr) || adapterErr.Code != AdapterSourceConfig {
 		t.Fatalf("toolchain error = %v, want source-config", err)
+	}
+}
+
+func TestAnalyzeAndAdaptSemanticRejectsDiagnosticsWithoutMutation(t *testing.T) {
+	base := semantic.NewIR("billing", semantic.Namespace("billing"))
+	before := irSnapshot(base)
+	_, err := AnalyzeAndAdaptSemantic(SourceSemanticAdapterInput{
+		Base: base,
+		Sources: []SourceFile{{
+			Filename:    "invalid-annotation.go",
+			PackagePath: "billing",
+			Source: []byte(`package billing
+
+//gooo:semantic entity id="not-an-identity" namespace=billing
+type Order struct{}
+`),
+		}},
+		Registry: NewRegistry(), Policy: billingPolicy(t, RelationUses),
+		Producer: semantic.GoHostedCompilerID, EvidenceKind: semantic.CompilerRunEvidence,
+		ToolchainIdentity: "go1.26.5|test/amd64",
+	})
+	var adapterErr AdapterError
+	if !errors.As(err, &adapterErr) || adapterErr.Code != AdapterAnalysisDiagnostics ||
+		adapterErr.WriteEffect != ReconcileNoWrite {
+		t.Fatalf("diagnostic rejection = %v, want analysis-diagnostics no-write", err)
+	}
+	if !strings.Contains(adapterErr.Detail, "semantic identity must be a valid URI") {
+		t.Fatalf("diagnostic rejection detail = %q", adapterErr.Detail)
+	}
+	if got := irSnapshot(base); got != before {
+		t.Fatalf("diagnostic rejection mutated base IR: before=%q after=%q", before, got)
 	}
 }
 
