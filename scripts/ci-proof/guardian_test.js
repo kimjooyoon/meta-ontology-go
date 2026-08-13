@@ -11,6 +11,7 @@ const {
   ROOT_FAILURE_CODE,
   buildGuardianArtifact,
   classifyGuardianDecision,
+  digestGuardianArtifact,
   inspectChangedFiles,
   kernelTreeDigest,
   revalidatePullRequest,
@@ -81,14 +82,14 @@ async function testForkAndMalformedAPI() {
 }
 
 async function testStaleRaceAndArtifactDigest() {
-  const eventPull = pull('integration');
+  const eventPull = pull('dev');
   await rejectsRoot(() => revalidatePullRequest({
     owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
     getPull: async () => ({status: 200, data: {...eventPull, head: {...eventPull.head, sha: sha('c')}}}),
   }));
   await rejectsRoot(() => revalidatePullRequest({
     owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
-    getPull: async () => ({status: 200, data: {...eventPull, base: {...eventPull.base, ref: 'dev'}}}),
+    getPull: async () => ({status: 200, data: {...eventPull, base: {...eventPull.base, ref: 'integration'}}}),
   }));
   const matching = await revalidatePullRequest({
     owner: 'owner', repo: 'repo', pullNumber: 108, eventPull,
@@ -123,6 +124,25 @@ async function testStaleRaceAndArtifactDigest() {
     mutate(candidate);
     assert.throws(() => validateGuardianArtifact(candidate), (error) => error && error.code === ROOT_FAILURE_CODE);
   }
+  const rehash = (candidate) => {
+    candidate.bundle_sha256 = digestGuardianArtifact(candidate);
+    return candidate;
+  };
+  for (const mutate of [
+    (candidate) => { candidate.default_branch = 'main'; },
+    (candidate) => { candidate.event_ref = 'refs/heads/main'; },
+    (candidate) => { candidate.runtime_ref = 'refs/heads/main'; },
+    (candidate) => { candidate.changed_files = [file('.github/workflows/ci.yml', 'modified')]; },
+  ]) {
+    const candidate = rehash(freshArtifact());
+    mutate(candidate);
+    rehash(candidate);
+    assert.throws(() => validateGuardianArtifact(candidate), (error) => error && error.code === ROOT_FAILURE_CODE);
+  }
+  const omittedKernel = rehash(freshArtifact());
+  omittedKernel.changed_files = [file('.github/workflows/ci.yml', 'modified')];
+  rehash(omittedKernel);
+  assert.throws(() => validateGuardianArtifact(omittedKernel), (error) => error && error.code === ROOT_FAILURE_CODE);
 }
 
 async function testPromotionAndKernelDigests() {

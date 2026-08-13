@@ -7,6 +7,7 @@ const HEAD_BINDING_STATUS = 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED';
 const DEFAULT_BRANCH_CODE = 'CI-GUARDIAN-DEFAULT-BRANCH-001';
 const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v1';
 const ALLOWED_BASES = new Set(['integration', 'dev', 'main']);
+const ALLOWED_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review']);
 const VALID_STATUSES = new Set(['added', 'copied', 'changed', 'modified', 'removed', 'renamed']);
 const PROTECTED_FILES = new Set([
   '.github/ci-governance.json',
@@ -291,6 +292,10 @@ function validateSortedArtifactFiles(files) {
   }
 }
 
+function derivedKernelPaths(files) {
+  return [...new Set(files.flatMap((file) => [file.filename, file.previous_filename || null]).filter((path) => path && isProtectedKernelPath(path)))].sort();
+}
+
 function validateSortedKernelPaths(paths) {
   let previous = null;
   for (const path of paths) {
@@ -308,22 +313,40 @@ function validateGuardianArtifact(manifest) {
   if (manifest.base_repo !== manifest.repository) {
     throw guardianFailure('guardian artifact base repository is not the event repository');
   }
+  if (!ALLOWED_ACTIONS.has(manifest.action)) {
+    throw guardianFailure('guardian artifact action is not a supported pull-request trigger');
+  }
   const expectedRef = `${manifest.repository}/.github/workflows/ci-guardian.yml@refs/heads/${manifest.default_branch}`;
   if (manifest.workflow_ref !== expectedRef || (manifest.default_branch === 'dev' && manifest.workflow_ref !== expectedWorkflowRef(manifest.repository))) {
     throw guardianFailure('guardian artifact workflow source is not the exact default-branch workflow');
   }
-  if (manifest.decision === 'PASS' && (manifest.code !== null || manifest.runtime_sha !== manifest.workflow_sha)) {
-    throw guardianFailure('guardian artifact PASS identity or code is inconsistent');
+  if (manifest.runtime_sha !== manifest.workflow_sha && manifest.decision === 'PASS') {
+    throw guardianFailure('guardian artifact PASS runtime and workflow SHA differ');
   }
   if (manifest.decision === 'FAIL_CLOSED' && (typeof manifest.code !== 'string' || manifest.code.length === 0)) {
     throw guardianFailure('guardian artifact failure code is missing');
   }
   validateSortedArtifactFiles(manifest.changed_files);
   validateSortedKernelPaths(manifest.kernel_paths);
+  const expectedKernelPaths = derivedKernelPaths(manifest.changed_files);
+  if (JSON.stringify(expectedKernelPaths) !== JSON.stringify(manifest.kernel_paths)) {
+    throw guardianFailure('guardian artifact kernel paths do not match changed filenames and previous_filename values');
+  }
   const beforeValid = manifest.kernel_before_sha256 === null || /^sha256:[0-9a-f]{64}$/.test(manifest.kernel_before_sha256);
   const afterValid = manifest.kernel_after_sha256 === null || /^sha256:[0-9a-f]{64}$/.test(manifest.kernel_after_sha256);
   if (!beforeValid || !afterValid || (manifest.kernel_paths.length === 0 && (manifest.kernel_before_sha256 !== null || manifest.kernel_after_sha256 !== null)) || (manifest.decision === 'PASS' && manifest.kernel_paths.length > 0 && (manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null))) {
     throw guardianFailure('guardian artifact kernel digest fields are inconsistent');
+  }
+  if (manifest.decision === 'PASS') {
+    if (manifest.default_branch !== 'dev' || manifest.workflow_ref !== expectedWorkflowRef(manifest.repository) || manifest.runtime_ref !== 'refs/heads/dev' || manifest.event_ref !== 'refs/heads/dev' || manifest.runtime_sha !== manifest.workflow_sha || !validSHA(manifest.workflow_sha)) {
+      throw guardianFailure('guardian artifact PASS is not bound to the exact default dev identity');
+    }
+    if (manifest.kernel_paths.length > 0) {
+      const trustedPromotion = manifest.base_repo === manifest.repository && manifest.head_repo === manifest.repository && manifest.base_ref === 'main' && manifest.head_ref === 'dev' && manifest.head_sha === manifest.workflow_sha && manifest.kernel_before_sha256 !== null && manifest.kernel_after_sha256 !== null;
+      if (!trustedPromotion) {
+        throw guardianFailure('guardian artifact PASS kernel propagation is not exact dev-to-main authority');
+      }
+    }
   }
   if (manifest.bundle_sha256 !== digestGuardianArtifact(manifest)) {
     throw guardianFailure('guardian artifact digest does not match canonical content');
