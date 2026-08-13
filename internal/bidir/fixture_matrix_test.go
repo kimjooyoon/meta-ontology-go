@@ -16,6 +16,18 @@ func (f matrixFixture) AcceptedDelta() FactDelta { return f.accepted }
 
 func (f matrixFixture) PartialDelta() FactDelta { return f.partial }
 
+func (f matrixFixture) BaseEvidence() BXBaseEvidenceInput {
+	return fixtureBaseEvidence(f.Document())
+}
+
+func (f matrixFixture) ObserveAcceptedWrite(before, after Document) BXWriteObservation {
+	return fixtureWriteObservation(before, after)
+}
+
+func (f matrixFixture) RejectedWriteObserver(document Document) (BXRejectedWriteObserver, error) {
+	return NewBXMemoryRejectedWriteObserver(document), nil
+}
+
 func TestBXEvidenceMatrixCoversConflictClasses(t *testing.T) {
 	candidate := candidateFixtureDelta()
 	cases := []struct {
@@ -56,6 +68,18 @@ func assertEvidenceContract(t *testing.T, evidence BXEvidence, kind ConflictKind
 	}
 	if !evidence.PartialConflict.Transactional {
 		t.Fatal("conflicting reconciliation was not transactional")
+	}
+	if evidence.PartialConflict.RemovedCreated || evidence.PartialConflict.CandidatePromoted {
+		t.Fatalf("partial observation promoted or removed state: %#v", evidence.PartialConflict)
+	}
+	if evidence.Delta.CandidatePromoted || !evidence.PartialDelta.PartialObservation {
+		t.Fatalf("candidate or partial delta contract was not recorded: %#v", evidence)
+	}
+	if kind == "" || len(evidence.Delta.Candidates) == 0 && evidence.Delta.EvidenceSpans.IDCount == 0 {
+		t.Fatal("canonical delta omitted candidate/evidence records")
+	}
+	if evidence.RejectedTransaction.Deferred || !evidence.RejectedTransaction.NoWrite || !evidence.PartialConflict.NoWriteObserved {
+		t.Fatal("rejected delta transaction was not observer-proven as no-write")
 	}
 }
 
