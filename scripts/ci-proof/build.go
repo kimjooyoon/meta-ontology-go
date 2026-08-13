@@ -67,7 +67,7 @@ func machineBoundPromotionReady(inputs proofInputs) bool {
 		return true
 	}
 	promotion := inputs.Governance.Promotion
-	if promotion.Source != "integration" || promotion.Target != "main" || !promotion.BranchProtectionRequired || !sameStringSet(promotion.RequiredChecks, proofJobs) {
+	if promotion.Source != "dev" || promotion.Target != "main" || !promotion.BranchProtectionRequired || !sameStringSet(promotion.RequiredChecks, proofJobs) {
 		return false
 	}
 	if c.BranchProtection.ReadStatus != "unavailable" || c.BranchProtection.MissingReason != "branch_protection_token_unavailable" {

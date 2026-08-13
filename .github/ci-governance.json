@@ -3,7 +3,7 @@
   "mode": "ci_only",
   "ci_app_id": 15368,
   "guardian_context": "CI guardian",
-  "protected_push_branches": ["integration", "dev", "main"],
+  "protected_push_branches": ["dev", "main"],
   "ownership": [
     {"branch": "agent/analyzer", "paths": ["internal/analyzer/**"]},
     {"branch": "agent/analyzer-contract", "paths": ["internal/analyzer/**"]},
@@ -90,17 +90,20 @@
     {"branch": "agent/zerolang-experiments", "paths": ["docs/research/zerolang.md"]}
   ],
   "protected_kernel_paths": [
+    ".github/workflows/**",
     ".github/ci-governance.json",
-    ".github/workflows/ci.yml",
     ".github/agent-scope-table.md",
     ".github/branch-policy.md",
     ".github/conformance-plan.md",
-    "internal/verify/scope.go",
-    "internal/verify/policy.go",
-    "scripts/verify/main.go"
+    "scripts/ci-proof/**",
+    "scripts/ci-evidence/**",
+    "scripts/verify/**",
+    "internal/verify/**",
+    "go.mod",
+    "go.sum"
   ],
   "promotion": {
-    "source": "integration",
+    "source": "dev",
     "target": "main",
     "required_checks": ["gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"],
     "branch_protection_required": true

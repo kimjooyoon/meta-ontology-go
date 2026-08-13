@@ -4,7 +4,8 @@
 
 ## Validation
 
-- [ ] PR targets `integration` (unless this is the integration-to-main promotion).
+- [ ] Feature PR targets `dev`; only an exact `dev` head may target
+      `main` for promotion.
 - [ ] `gofmt -l .` is empty.
 - [ ] `go vet ./...` passes.
 - [ ] `go test ./...` passes.

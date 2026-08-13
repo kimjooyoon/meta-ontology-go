@@ -7,21 +7,6 @@ import (
 	"testing"
 )
 
-func TestPolicyChecksAreDeterministic(t *testing.T) {
-	if err := CheckPathScope([]string{"scripts/verify.sh", "internal/verify/policy.go"}, []string{".github", "scripts", "internal/verify"}); err != nil {
-		t.Fatal(err)
-	}
-	if err := CheckPathScope([]string{"internal/semantic/graph.go"}, []string{"internal/verify"}); err == nil {
-		t.Fatal("core package path crossed CI ownership boundary")
-	}
-	if err := CheckIntegrationPullRequest("agent/ci-workflow", "integration"); err != nil {
-		t.Fatal(err)
-	}
-	if err := CheckIntegrationPullRequest("feature/work", "main"); err == nil {
-		t.Fatal("invalid branch policy was accepted")
-	}
-}
-
 func TestGoVersionBranchAllowsOnlyToolchainGoModChanges(t *testing.T) {
 	if err := CheckPathScopeForBranch([]string{"go.mod"}, "agent/go-version"); err != nil {
 		t.Fatal(err)

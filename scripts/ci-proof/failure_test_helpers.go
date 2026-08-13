@@ -4,7 +4,7 @@ import "strings"
 
 func validFailureBinding() failureBinding {
 	return failureBinding{
-		Repository: "owner/repo", Event: "pull_request", EventRef: "refs/pull/7/merge", CheckoutRef: strings.Repeat("a", 40), BaseRef: "integration",
+		Repository: "owner/repo", Event: "pull_request", EventRef: "refs/pull/7/merge", CheckoutRef: strings.Repeat("a", 40), BaseRef: "dev",
 		BaseSHA: strings.Repeat("b", 40), HeadSHA: strings.Repeat("a", 40), WorkflowSHA: strings.Repeat("c", 40),
 		PRNumber: 7, RunID: 9, RunAttempt: 2, Actor: "builder", OwnerBranch: "agent/ci-workflow",
 	}

@@ -4,7 +4,7 @@ Each PR is an independent goal. An agent must continue implementing, testing,
 committing, pushing, and auditing its own PR even when another PR is blocked.
 Do not wait for another agent's permission or external evidence.
 
-The governance contract is explicitly `mode=ci_only`. Integration CI closure
+The governance contract is explicitly `mode=ci_only`. Dev CI closure
 does not consume human reviews, approval actors, or last-push approval fields.
 It is determined by exact tuple identity, the six GitHub-app jobs, registered
 scope, current artifact digest/binding, checked-in policy digest, and the
@@ -14,23 +14,33 @@ promotion predicate and remains fail-closed when its observer is unavailable.
 PR failure ownership and protected-branch push ownership are separate. A
 pull-request manifest must use the exact registered `agent/*` owner branch.
 For a protected `push`, the owner is the normalized event branch itself and
-must be one of `integration`, `dev`, or `main`; the event ref must be exactly
+must be one of `dev` or `main`; the event ref must be exactly
 `refs/heads/<owner>`, and `pr_number` must be zero. Unknown, stale, omitted, or
 malformed refs fail closed and route remediation through the catalog/gate
 handoff rather than inventing an agent owner.
 
-The future `CI guardian` is a separate `pull_request_target` context. Guardian v1 freezes
-the base protected-kernel paths (`.github/ci-governance.json`, CI workflows,
-branch policy/scope, `internal/verify/**`, and `scripts/verify/**`) and fails
-closed on any change, including `previous_filename` renames. It never parses
-candidate YAML as an authorization decision. Because a newly introduced
-`pull_request_target` workflow cannot execute for its own PR and GitHub loads
-that workflow from the default/base topology, PR #105 is a one-time authorized
-bootstrap recorded as `CI-ROOT-OF-TRUST-BOOTSTRAP-001`. Its workflow is not
-included in this PR because the current default branch cannot run a newly added
-`pull_request_target` workflow; this is a `CI-ROOT-OF-TRUST-001` migration
-follow-up. Until a real guardian run is proven from the protected dev/default
-topology, no guardian context is added as an unenforceable required check.
+The `CI guardian` is a separate `pull_request_target` context. Guardian v1 freezes
+the union of protected-kernel paths (`.github/workflows/**`, governance and
+transition policy, `scripts/ci-proof/**`, `scripts/ci-evidence/**`,
+`scripts/verify/**`, `internal/verify/**`, `go.mod`, and `go.sum`) and fails closed
+on any add, modify, delete, or rename, including `previous_filename` renames. It
+checks out only the immutable base SHA and does not parse candidate YAML as an
+authorization decision. Comments and inert YAML markers therefore cannot bypass
+the path gate, and fork PRs receive the same read-only treatment. A Guardian PASS
+is kernel-safety evidence only; CI scope ownership and the exact PR policy remain
+separate conjunctions.
+
+The default branch is `dev`. The guardian remains a read-only shadow signal until
+its post-topology probe proves runtime SHA/ref, workflow SHA/ref, event PR head
+SHA, and the external expected tuple are identical. The artifact reports
+`CI-GUARDIAN-HEAD-BINDING-UNVERIFIED` until that probe succeeds; this is not an
+existing required check or merge/promotion evidence. Ordinary PRs cannot modify
+the kernel. Future kernel rotation requires a maintenance ledger with before/after
+policy digests and code/tests proving the new base-pinned guardian; it is not a
+human-review predicate or an `agent/ci-workflow` exemption.
+
+Feature PRs target `dev`; only exact `dev -> main` is a promotion. The former
+`integration` ref is retired and must not be used for routing or ownership.
 
 Cross-scope relationships are local dependencies. Record them as
 `CI-DEPENDENCY-001` with `blocking_scope=local` and `parallelizable=true`; keep
