@@ -33,6 +33,24 @@ func deferredImplementationDetails(result SemanticAdapterResult, binding DeltaBi
 	return details
 }
 
+func deferredImplementationDetailsMatch(result SemanticAdapterResult) bool {
+	if len(result.ImplementationDetails) != len(result.NormalizedDelta.DeferredDetails) {
+		return false
+	}
+	if len(result.ImplementationDetails) == 0 {
+		return true
+	}
+	expected := deferredImplementationDetails(result, result.NormalizedDelta.DeferredDetails[0].Binding)
+	actual := append([]DeferredImplementationDetail(nil), result.NormalizedDelta.DeferredDetails...)
+	sort.Slice(actual, func(i, j int) bool { return actual[i].canonical() < actual[j].canonical() })
+	for index := range expected {
+		if expected[index].canonical() != actual[index].canonical() {
+			return false
+		}
+	}
+	return true
+}
+
 func validateDeferredImplementationDetail(detail DeferredImplementationDetail) bool {
 	return detail.Detail.Reference != "" && detail.Detail.Span.Filename != "" &&
 		detail.Detail.IdentityState.valid() && detail.Detail.Span.Start.Offset >= 0 &&

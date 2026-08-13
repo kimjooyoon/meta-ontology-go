@@ -99,6 +99,9 @@ func normalizedDeltaValid(result SemanticAdapterResult) bool {
 	) {
 		return false
 	}
+	if !deferredImplementationDetailsMatch(result) {
+		return false
+	}
 	if !validDigest(result.RegistryDigest) {
 		return false
 	}
