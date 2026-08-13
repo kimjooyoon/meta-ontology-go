@@ -430,6 +430,7 @@ async function testLiveRefsAndRouteIdentity() {
 
 function testWorkflowIsReadOnlyAndBasePinned() {
   const workflow = fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'workflows', 'ci-guardian.yml'), 'utf8');
+  const ciWorkflow = fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'workflows', 'ci.yml'), 'utf8');
   assert.match(workflow, /^name: CI guardian/m);
   assert.match(workflow, /pull_request_target:/);
   assert.match(workflow, /environment: \$\{\{ github\.base_ref == 'main' && 'guardian-observer'/);
@@ -437,6 +438,7 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /permission-administration: read/);
   assert.match(workflow, /GUARDIAN_APP_PRIVATE_KEY/);
   assert.match(workflow, /getBranchProtection/);
+  assert.match(ciWorkflow, /token_source: 'not_observed',\s+app_installation_id: 0,\s+app_slug: '',\s+read_status: 'unavailable'/);
   assert.match(workflow, /- dev\n      - main/);
   assert.doesNotMatch(workflow, /- integration/);
   assert.match(workflow, /name: CI guardian/);

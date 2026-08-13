@@ -487,6 +487,8 @@ jobs:
               event_ref: evidence.event_ref,
               checkout_ref: evidence.checkout_ref,
               token_source: 'not_observed',
+              app_installation_id: 0,
+              app_slug: '',
               read_status: 'unavailable',
               exists: false,
               strict: false,
