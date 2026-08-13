@@ -134,6 +134,27 @@ func TestThreeWayCandidatesStaySeparateWhenObservationIsAbsent(t *testing.T) {
 	}
 }
 
+func TestThreeWayDeterministicRelationShadowsCandidate(t *testing.T) {
+	base := threeWayBillingModel(t)
+	candidate := NewSourcedFact(CandidateFact, "billing://entity/payment", PredicateWasDerivedFrom, "billing://entity/order", SourceSpan{File: "candidate.go", Start: 1, End: 2})
+	relation := Relation{Kind: candidate.Predicate, Source: candidate.Subject, Target: candidate.Object, Span: SourceSpan{File: "accepted.go", Start: 3, End: 4}}
+	left := threeWayAddRelation(t, base, relation)
+	right := base.Clone()
+	right.Candidates = FactSet{candidate}
+	baseBefore, leftBefore, rightBefore := base.Clone(), left.Clone(), right.Clone()
+
+	result, err := ReconcileThreeWay(base, left, right)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if countRelation(result.Model, relation) != 1 || result.Model.Candidates.Contains(candidate) {
+		t.Fatalf("three-way merge retained a shadowed candidate: %#v", result.Model)
+	}
+	if !reflect.DeepEqual(base, baseBefore) || !reflect.DeepEqual(left, leftBefore) || !reflect.DeepEqual(right, rightBefore) {
+		t.Fatal("three-way candidate shadowing mutated an input")
+	}
+}
+
 func TestThreeWayPartialRelationAbsenceDoesNotDelete(t *testing.T) {
 	base := threeWayAddRelation(t, threeWayBillingModel(t), threeWayInvokesRelation("base.gooo", 10))
 	left := base.Clone()

@@ -76,6 +76,9 @@ func ReconcileThreeWay(base, left, right Model) (ThreeWayResult, error) {
 		return result, &ThreeWayConflictError{Conflicts: result.Conflicts}
 	}
 	merged.Candidates = mergeThreeWayCandidates(base, left, right)
+	for _, relation := range merged.Relations {
+		merged.Candidates = merged.Candidates.withoutSemanticKey(relationKey(relation.Kind, relation.Source, relation.Target))
+	}
 	merged.Normalize()
 	result.Model = merged
 	result.Delta = Diff(base, merged)

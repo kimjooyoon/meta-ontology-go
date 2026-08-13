@@ -139,6 +139,21 @@ func (s FactSet) withoutKey(key FactKey) FactSet {
 	return result
 }
 
+// withoutSemanticKey removes only candidate observations for an authoritative
+// triple. Candidate identity includes its layer, but shadowing is deliberately
+// layer-independent: a deterministic fact must not leave a stale candidate in
+// the model while the raw/evidence boundary retains the observation.
+func (s FactSet) withoutSemanticKey(key string) FactSet {
+	result := make(FactSet, 0, len(s))
+	for _, fact := range s {
+		if fact.Layer == CandidateFact && fact.SemanticKey() == key {
+			continue
+		}
+		result = append(result, fact)
+	}
+	return result
+}
+
 func factLess(left, right Fact) bool {
 	if left.Layer != right.Layer {
 		return left.Layer < right.Layer

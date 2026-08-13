@@ -218,6 +218,14 @@ func (m Model) Validate() error {
 		}
 		seenRelations[key] = struct{}{}
 	}
+	for _, candidate := range m.Candidates {
+		if candidate.Layer != CandidateFact {
+			return fmt.Errorf("model candidate %q has non-candidate layer %s", candidate.SemanticKey(), candidate.Layer)
+		}
+		if _, exists := seenRelations[candidate.SemanticKey()]; exists {
+			return fmt.Errorf("candidate %q is shadowed by a deterministic relation", candidate.SemanticKey())
+		}
+	}
 	return nil
 }
 

@@ -68,13 +68,20 @@ func addFact(model *Model, result *ReconcileResult, fact Fact, options Reconcile
 		result.Syntactic = append(result.Syntactic, fact)
 		return nil
 	case CandidateFact:
-		model.Candidates = append(model.Candidates, fact.normalized())
+		candidate := fact.normalized()
+		// Keep the observation in the result/evidence stream, but mirror the
+		// semantic graph rule that an existing deterministic fact shadows a
+		// candidate with the same triple.
+		if _, exists := findRelation(*model, fact.Predicate, fact.Subject, fact.Object); !exists {
+			model.Candidates = append(model.Candidates, candidate)
+		}
 		result.Candidates = append(result.Candidates, fact)
 		return nil
 	case DeterministicFact:
 		if conflict := addDeterministicFact(model, fact, options); conflict != nil {
 			return conflict
 		}
+		model.Candidates = model.Candidates.withoutSemanticKey(fact.SemanticKey())
 		result.Accepted = append(result.Accepted, fact)
 		return nil
 	default:
