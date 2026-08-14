@@ -32,6 +32,10 @@ func (n Node) Canonical() string {
 		writeCanonicalField(&b, alias)
 	}
 	writeCanonicalSpan(&b, n.Span)
+	for _, field := range n.Fields {
+		b.WriteString(field.Canonical())
+		b.WriteByte('\n')
+	}
 	return b.String()
 }
 
@@ -44,7 +48,70 @@ func (n Node) SemanticCanonical() string {
 	writeCanonicalField(&b, n.ID.String())
 	writeCanonicalField(&b, n.Kind.String())
 	writeCanonicalField(&b, n.Namespace.String())
+	for _, field := range n.Fields {
+		b.WriteString(field.SemanticCanonical())
+		b.WriteByte('\n')
+	}
 	return b.String()
+}
+
+func (r TypeRef) Canonical() string {
+	if normalized, err := r.Normalized(); err == nil {
+		r = normalized
+	}
+	var b strings.Builder
+	writeCanonicalField(&b, r.ID.String())
+	writeCanonicalField(&b, r.Namespace.String())
+	writeCanonicalField(&b, r.Name)
+	return b.String()
+}
+
+func (r TypeRef) SemanticCanonical() string {
+	if normalized, err := r.Normalized(); err == nil {
+		r = normalized
+	}
+	return r.ID.String()
+}
+
+func (f Field) Canonical() string {
+	if normalized, err := f.Normalized(); err == nil {
+		f = normalized
+	}
+	var b strings.Builder
+	b.WriteString("field\t")
+	writeCanonicalField(&b, f.ID.String())
+	writeCanonicalField(&b, f.Parent.String())
+	writeCanonicalField(&b, f.Name)
+	for _, alias := range f.Aliases {
+		writeCanonicalField(&b, alias)
+	}
+	b.WriteString(f.TypeRef.Canonical())
+	writeCanonicalField(&b, string(f.Presence))
+	writeCanonicalField(&b, string(f.Cardinality))
+	writeCanonicalSpan(&b, f.Span)
+	return b.String()
+}
+
+func (f Field) SemanticCanonical() string {
+	if normalized, err := f.Normalized(); err == nil {
+		f = normalized
+	}
+	var b strings.Builder
+	b.WriteString("field\t")
+	writeCanonicalField(&b, f.ID.String())
+	writeCanonicalField(&b, f.Parent.String())
+	writeCanonicalField(&b, f.TypeRef.SemanticCanonical())
+	writeCanonicalField(&b, string(f.Presence))
+	writeCanonicalField(&b, string(f.Cardinality))
+	return b.String()
+}
+
+func (f Field) StableHash() string {
+	return StableHashString(f.SemanticCanonical())
+}
+
+func (f Field) Hash() string {
+	return f.StableHash()
 }
 
 func (n Node) StableHash() string {
