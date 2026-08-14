@@ -69,7 +69,7 @@ The valid decision/state/reason combinations are closed:
 | `PASS` | `EVALUATED` | `NONE` / absent | Applicable catalog row and exact predicate are true. |
 | `FAIL_CLOSED` | `EVALUATED` | `PREDICATE_FALSE` / exact code | Applicable predicate is false. |
 | `NOT_APPLICABLE` | `EVALUATED` | `CATALOG_NOT_APPLICABLE` / exact code | Immutable catalog proof establishes `NOT_APPLICABLE`. |
-| `UNKNOWN` | `EVALUATED` | missing, ambiguous, mismatch, applicability-unproven, or evaluator reason / exact code | Required input or exact result cannot be established. |
+| `UNKNOWN` | `EVALUATED` | `REQUIRED_INPUT_MISSING`, `INPUT_AMBIGUOUS`, `SNAPSHOT_MISMATCH`, `APPLICABILITY_UNPROVEN`, or `CATALOG_MISMATCH` / exact code | Required input or exact result cannot be established without evaluator failure. |
 | `UNKNOWN` | `DEFERRED` | `EXCEPTION_WINDOW_ACTIVE` / exact code | The union of cataloged exception intervals is active; waived is an annotation, never `PASS`. |
 | `UNKNOWN` | `NOT_RUN` | `NOT_RUN` / exact code | Evaluation did not run; it never implies success. |
 | `UNKNOWN` | `ERROR` | `EVALUATOR_ERROR` / exact code | The evaluator itself failed before establishing another reason. |
