@@ -78,13 +78,15 @@ func (s Span) Validate() error {
 }
 
 // Node is a semantic declaration. Name and Aliases are presentation and
-// lookup metadata; ID, Kind, and Namespace are the semantic identity boundary.
+// lookup metadata; ID, Kind, Namespace, and latent field structure are the
+// semantic identity boundary. Fields are valid only on Entity nodes.
 type Node struct {
 	ID        ID
 	Kind      Kind
 	Namespace Namespace
 	Name      string
 	Aliases   []string
+	Fields    []Field `json:"fields,omitempty"`
 	Span      Span
 }
 
@@ -141,11 +143,16 @@ func (n Node) Normalized() (Node, error) {
 	if err := span.Validate(); err != nil {
 		return Node{}, fmt.Errorf("%w: span: %v", ErrInvalidNode, err)
 	}
+	fields, err := normalizeFields(n.Fields, id, n.Kind)
+	if err != nil {
+		return Node{}, fmt.Errorf("%w: fields: %w", ErrInvalidNode, err)
+	}
 
 	n.ID = id
 	n.Namespace = ns
 	n.Name = name
 	n.Aliases = aliases
+	n.Fields = fields
 	n.Span = span
 	return n, nil
 }
