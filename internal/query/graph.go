@@ -91,52 +91,6 @@ func (graph Graph) Node(id ID) (Node, bool) {
 	return node, ok
 }
 
-// NodeByName performs a namespace-qualified display-name lookup. An empty
-// namespace is rejected so equal names from separate contexts cannot merge.
-func (graph Graph) NodeByName(namespace, name string) (Node, bool) {
-	namespace = normalizeDisplayName(namespace)
-	name = normalizeDisplayName(name)
-	if namespace == "" || name == "" {
-		return Node{}, false
-	}
-	var found Node
-	for _, node := range graph.nodes {
-		if node.Namespace != namespace || !node.hasName(name) {
-			continue
-		}
-		if found.ID != "" && found.ID != node.ID {
-			// A malformed or manually assembled graph must fail closed rather
-			// than choosing a map-order-dependent result.
-			return Node{}, false
-		}
-		found = copyQueryNode(node)
-	}
-	return found, found.ID != ""
-}
-
-// Search returns namespace-qualified display-name matches in stable order.
-// It is a lookup projection only; facts remain keyed by stable IDs.
-func (graph Graph) Search(namespace, name string) []Node {
-	namespace = normalizeDisplayName(namespace)
-	name = normalizeDisplayName(name)
-	if namespace == "" || name == "" {
-		return nil
-	}
-	results := make([]Node, 0)
-	for _, node := range graph.nodes {
-		if node.Namespace == namespace && node.hasName(name) {
-			results = append(results, copyQueryNode(node))
-		}
-	}
-	sortNodes(results)
-	return results
-}
-
-func copyQueryNode(node Node) Node {
-	node.Aliases = append([]string(nil), node.Aliases...)
-	return node
-}
-
 // Nodes returns endpoints in stable ID/kind order.
 func (graph Graph) Nodes() []Node {
 	nodes := make([]Node, 0, len(graph.nodes))
@@ -232,54 +186,6 @@ func (graph Graph) CandidateFacts() []Fact {
 
 // Candidates is the conventional spelling for the candidate layer.
 func (graph Graph) Candidates() []Fact { return graph.CandidateFacts() }
-
-// Metadata returns a detached, current snapshot of the query projection. The
-// graph hash follows the current view, while SemanticDigest remains bound to
-// the IR snapshot from which the view was derived.
-func (graph Graph) Metadata() ProjectionMetadata {
-	metadata := ProjectionMetadata{
-		SchemaVersion:    QueryProjectionSchemaVersion,
-		Namespace:        "",
-		GraphHash:        graph.StableHash(),
-		SourceStatus:     "unavailable",
-		EvidenceStatus:   "unknown",
-		ProvenanceStatus: "unknown",
-		ProjectionStatus: "unbound",
-		DerivedStatus:    DerivedStatusNotRequested,
-		AuthorityLabels: []AuthorityLabel{
-			{View: ".gooo", Authority: "authoritative", Status: "unavailable"},
-			{View: "semantic_ir", Authority: "authoritative", Status: "unavailable"},
-			{View: "handwritten_go", Authority: "authoritative", Status: "unavailable"},
-			{View: "generated_go", Authority: "derived", Status: "unavailable"},
-			{View: "provenance", Authority: "authoritative", Status: "unknown"},
-			{View: "query_graph", Authority: "derived", Status: "unbound"},
-			{View: "derived_query", Authority: "derived", Status: DerivedStatusNotRequested},
-		},
-	}
-	if graph.binding == nil {
-		return metadata
-	}
-	metadata.SemanticDigest = graph.binding.semanticDigest
-	metadata.Namespace = graph.binding.namespace
-	metadata.SourceDigest = graph.binding.sourceDigest
-	metadata.EvidenceDigest = graph.binding.evidenceDigest
-	metadata.ProvenanceDigest = graph.binding.provenanceDigest
-	metadata.SourceStatus = graph.binding.sourceStatus
-	metadata.EvidenceStatus = graph.binding.evidenceStatus
-	metadata.ProvenanceStatus = graph.binding.provenanceStatus
-	metadata.ProjectionStatus = "derived"
-	for index := range metadata.AuthorityLabels {
-		switch metadata.AuthorityLabels[index].View {
-		case "semantic_ir":
-			metadata.AuthorityLabels[index].Status = "bound"
-		case "provenance":
-			metadata.AuthorityLabels[index].Status = metadata.ProvenanceStatus
-		case "query_graph":
-			metadata.AuthorityLabels[index].Status = "current"
-		}
-	}
-	return metadata
-}
 
 // AllFacts returns a detached deterministic ordering of both fact layers.
 func (graph Graph) AllFacts() []Fact {

@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 func TestSemanticWorkspaceProjectionIsScopedAndReplayable(t *testing.T) {
@@ -20,7 +18,12 @@ func TestSemanticWorkspaceProjectionIsScopedAndReplayable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	assertWorkspaceScopedSearch(t, first, second)
+	assertWorkspaceDatalog(t, first, second)
+}
 
+func assertWorkspaceScopedSearch(t *testing.T, first, second *Graph) {
+	t.Helper()
 	firstPayment, ok := first.NodeByName("billing", "Payment")
 	if !ok || firstPayment.ID != id("billing://entity/payment") {
 		t.Fatalf("billing Payment lookup = %#v, %v", firstPayment, ok)
@@ -42,17 +45,12 @@ func TestSemanticWorkspaceProjectionIsScopedAndReplayable(t *testing.T) {
 	if got := first.Search("billing", "Payment"); len(got) != 1 || got[0].ID != firstPayment.ID {
 		t.Fatalf("scoped search = %#v", got)
 	}
+}
 
+func assertWorkspaceDatalog(t *testing.T, first, second *Graph) {
+	t.Helper()
 	request := workspaceDatalogRequest()
-	permuted := request
-	permuted.Patterns = append([]Atom(nil), request.Patterns...)
-	for left, right := 0, len(permuted.Patterns)-1; left < right; left, right = left+1, right-1 {
-		permuted.Patterns[left], permuted.Patterns[right] = permuted.Patterns[right], permuted.Patterns[left]
-	}
-	permuted.Rules = append([]Rule(nil), request.Rules...)
-	for left, right := 0, len(permuted.Rules)-1; left < right; left, right = left+1, right-1 {
-		permuted.Rules[left], permuted.Rules[right] = permuted.Rules[right], permuted.Rules[left]
-	}
+	permuted := permutedWorkspaceRequest(request)
 	requestDigest, err := request.CanonicalDigest()
 	if err != nil {
 		t.Fatal(err)
@@ -62,67 +60,80 @@ func TestSemanticWorkspaceProjectionIsScopedAndReplayable(t *testing.T) {
 		t.Fatalf("rule/pattern permutation changed request digest: %q/%q, err=%v", requestDigest, permutedDigest, err)
 	}
 
-	beforeCanonical, beforeHash := first.Canonical(), first.StableHash()
-	usedBy := DatalogQuery{
-		Patterns: []Atom{Triple("usedBy", Variable("entity"), Variable("activity"))},
-		Rules:    []Rule{request.Rules[2]}, IncludeDerived: true, Limit: 10,
-	}
-	usedByResult, err := first.EvaluateDatalog(usedBy)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(usedByResult.Rows) != 1 || len(usedByResult.Derived) != 1 ||
-		usedByResult.Rows[0].Bindings["entity"] != id("billing://entity/order") ||
-		usedByResult.Rows[0].Bindings["activity"] != id("billing://activity/pay") {
-		t.Fatalf("usedBy result = %#v", usedByResult)
-	}
-	if usedByResult.Rows[0].Facts[0].Origin != DatalogDerived || usedByResult.Derived[0].Namespace != "billing" {
-		t.Fatalf("usedBy authority metadata = %#v", usedByResult)
-	}
-	if first.Canonical() != beforeCanonical || first.StableHash() != beforeHash {
-		t.Fatal("Datalog projection mutated the authority graph")
-	}
-
-	dependsOn, err := first.EvaluateDatalog(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	permutedResult, err := first.EvaluateDatalog(permuted)
-	if err != nil {
-		t.Fatal(err)
-	}
-	dependsDigest, err := dependsOn.CanonicalDigest()
-	if err != nil {
-		t.Fatal(err)
-	}
-	permutedResultDigest, err := permutedResult.CanonicalDigest()
-	if err != nil || dependsDigest != permutedResultDigest {
-		t.Fatalf("rule permutation changed result digest: %q/%q, err=%v", dependsDigest, permutedResultDigest, err)
-	}
-	if len(dependsOn.Derived) != 4 || len(dependsOn.Rows) != 3 || !dependsOn.Complete {
-		t.Fatalf("dependsOn result = %#v", dependsOn)
-	}
-	transitiveFound := false
-	for _, row := range dependsOn.Rows {
-		if row.Bindings["entity"] == id("billing://entity/payment") &&
-			row.Bindings["source"] == id("billing://entity/base") {
-			transitiveFound = true
-		}
-	}
-	if !transitiveFound {
-		t.Fatalf("transitive dependsOn row missing = %#v", dependsOn.Rows)
-	}
-
+	assertWorkspaceUsedBy(t, first, request.Rules[2])
+	dependsOn := assertWorkspaceDependsOn(t, first, request, permuted)
 	secondResult, err := second.EvaluateDatalog(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(secondResult.Rows) != 3 || secondResult.Rows[0].Facts[0].Namespace != "settlement" {
-		t.Fatalf("settlement projection = %#v", secondResult)
+	if err != nil || len(secondResult.Rows) != 3 || secondResult.Rows[0].Facts[0].Namespace != "settlement" {
+		t.Fatalf("settlement projection = %#v, err=%v", secondResult, err)
 	}
 	if reflect.DeepEqual(dependsOn.Rows, secondResult.Rows) {
 		t.Fatal("different namespaces produced identical identity rows")
 	}
+}
+
+func permutedWorkspaceRequest(request DatalogQuery) DatalogQuery {
+	permuted := request
+	permuted.Patterns = append([]Atom(nil), request.Patterns...)
+	for left, right := 0, len(permuted.Patterns)-1; left < right; left, right = left+1, right-1 {
+		permuted.Patterns[left], permuted.Patterns[right] = permuted.Patterns[right], permuted.Patterns[left]
+	}
+	permuted.Rules = append([]Rule(nil), request.Rules...)
+	for left, right := 0, len(permuted.Rules)-1; left < right; left, right = left+1, right-1 {
+		permuted.Rules[left], permuted.Rules[right] = permuted.Rules[right], permuted.Rules[left]
+	}
+	return permuted
+}
+
+func assertWorkspaceUsedBy(t *testing.T, graph *Graph, rule Rule) {
+	t.Helper()
+	request := DatalogQuery{
+		Patterns: []Atom{Triple("usedBy", Variable("entity"), Variable("activity"))},
+		Rules:    []Rule{rule}, IncludeDerived: true, Limit: 10,
+	}
+	result, err := graph.EvaluateDatalog(request)
+	if err != nil || len(result.Rows) != 1 || len(result.Derived) != 1 {
+		t.Fatalf("usedBy result = %#v, err=%v", result, err)
+	}
+	if result.Rows[0].Bindings["entity"] != id("billing://entity/order") ||
+		result.Rows[0].Bindings["activity"] != id("billing://activity/pay") ||
+		result.Rows[0].Facts[0].Origin != DatalogDerived || result.Derived[0].Namespace != "billing" {
+		t.Fatalf("usedBy authority metadata = %#v", result)
+	}
+}
+
+func assertWorkspaceDependsOn(t *testing.T, graph *Graph, request, permuted DatalogQuery) DatalogResult {
+	t.Helper()
+	beforeCanonical, beforeHash := graph.Canonical(), graph.StableHash()
+	result, err := graph.EvaluateDatalog(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	permutedResult, err := graph.EvaluateDatalog(permuted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dependsDigest, err := result.CanonicalDigest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	permutedDigest, err := permutedResult.CanonicalDigest()
+	if err != nil || dependsDigest != permutedDigest {
+		t.Fatalf("rule permutation changed result digest: %q/%q, err=%v", dependsDigest, permutedDigest, err)
+	}
+	if len(result.Derived) != 4 || len(result.Rows) != 3 || !result.Complete {
+		t.Fatalf("dependsOn result = %#v", result)
+	}
+	if graph.Canonical() != beforeCanonical || graph.StableHash() != beforeHash {
+		t.Fatal("Datalog projection mutated the authority graph")
+	}
+	for _, row := range result.Rows {
+		if row.Bindings["entity"] == id("billing://entity/payment") &&
+			row.Bindings["source"] == id("billing://entity/base") {
+			return result
+		}
+	}
+	t.Fatalf("transitive dependsOn row missing = %#v", result.Rows)
+	return DatalogResult{}
 }
 
 func TestDatalogCandidateIsolationAndBudgetFailuresAreNotPasses(t *testing.T) {
@@ -236,61 +247,4 @@ func workspaceDatalogRequest() DatalogQuery {
 		IncludeDerived: true,
 		Limit:          10,
 	}
-}
-
-func workspaceIR(t *testing.T, namespace, prefix string, candidate bool) semantic.IR {
-	t.Helper()
-	ir := semantic.NewIR(namespace, semantic.Namespace(namespace))
-	entities := []struct {
-		id, name string
-	}{
-		{prefix + "entity/payment", "Payment"},
-		{prefix + "entity/order", "Order"},
-		{prefix + "entity/base", "Base"},
-	}
-	for _, entity := range entities {
-		node, err := semantic.NewEntity(semantic.MustIdentity(entity.id), semantic.Namespace(namespace), entity.name)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := ir.AddNode(node); err != nil {
-			t.Fatal(err)
-		}
-	}
-	activity, err := semantic.NewActivity(semantic.MustIdentity(prefix+"activity/pay"), semantic.Namespace(namespace), "Pay")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := ir.AddNode(activity); err != nil {
-		t.Fatal(err)
-	}
-	add := func(fact semantic.Fact) {
-		t.Helper()
-		if err := ir.AddFact(fact); err != nil {
-			t.Fatal(err)
-		}
-	}
-	add(semantic.NewUsedFact(activity.ID, semantic.MustIdentity(prefix+"entity/order")))
-	add(semantic.NewWasDerivedFromFact(semantic.MustIdentity(prefix+"entity/payment"), semantic.MustIdentity(prefix+"entity/order")))
-	add(semantic.NewWasDerivedFromFact(semantic.MustIdentity(prefix+"entity/order"), semantic.MustIdentity(prefix+"entity/base")))
-	if candidate {
-		addCandidate := semantic.NewCandidateFact(
-			semantic.MustIdentity(prefix+"entity/payment"),
-			semantic.WasDerivedFrom,
-			semantic.MustIdentity(prefix+"entity/external"),
-			"unresolved cross-context observation",
-		)
-		// Candidates must also have declared endpoints in a validated IR.
-		external, err := semantic.NewEntity(semantic.MustIdentity(prefix+"entity/external"), semantic.Namespace(namespace), "External")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := ir.AddNode(external); err != nil {
-			t.Fatal(err)
-		}
-		if err := ir.AddCandidate(addCandidate); err != nil {
-			t.Fatal(err)
-		}
-	}
-	return ir
 }
