@@ -40,6 +40,26 @@ which CLI surfaces are not yet supported. The current GitHub Actions workflow is
 documented in [CONTRIBUTING.md](CONTRIBUTING.md); it should be treated as the
 source of truth for required CI, not as a promise of future compiler features.
 
+## Branch and promotion contract
+
+Work branches target `dev`. The only promotion route is an exact,
+same-repository `dev`-to-`main` pull request; no intermediary branch is part of
+the current contract. Governance is `ci_only`: review and approval fields do not
+authorize a protected-branch promotion.
+
+The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
+`Semantic conformance`, and `CI policy`. Protected `dev` requires those six plus
+`CI guardian shadow`; protected `main` requires those six plus `CI guardian`.
+The resulting seven-context protections are route-specific.
+
+For the promotion route, CI emits a digest-bound `promotion_authorization` with
+`source=dev`, `target=main`, and `operation=fast_forward`. It passes only for
+fresh exact refs and topology (`ahead > 0`, `behind = 0`, `main` as merge base),
+the required proof and Guardian evidence, both exact seven-context protection
+snapshots, and a clean, open, non-draft, unmerged same-repository pull request.
+The proof producer never mutates refs or protection. After a final exact reread,
+only a normal CAS/fast-forward update is allowed; force updates are prohibited.
+
 ## Project status
 
 This is an experimental language, not a stable application framework. In
@@ -54,7 +74,8 @@ evidence are present.
 [AGENTS.md](AGENTS.md) defines authority boundaries and agent roles.
 [CONTRIBUTING.md](CONTRIBUTING.md) defines branch, PR, review, and CI workflow.
 [docs/governance.md](docs/governance.md) records the SSOT boundary, BX laws, line
-caps, and evidence policy. [docs/conformance.md](docs/conformance.md) is the
-runnable example index.
+caps, and evidence policy. [docs/metrics-rfc.md](docs/metrics-rfc.md) defines
+the design-only deterministic metric contract. [docs/conformance.md](docs/conformance.md)
+is the runnable example index.
 
 [W3C PROV-O]: https://www.w3.org/TR/prov-o/

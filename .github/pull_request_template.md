@@ -4,7 +4,8 @@
 
 ## Validation
 
-- [ ] PR targets `integration` (unless this is the integration-to-main promotion).
+- [ ] Feature PR targets `dev`; only an exact `dev` head may target
+      `main` for promotion.
 - [ ] `gofmt -l .` is empty.
 - [ ] `go vet ./...` passes.
 - [ ] `go test ./...` passes.
@@ -14,7 +15,8 @@
       parity, independent-evidence, reproducible-build, and rollback gates.
 - [ ] No generated region was hand-edited.
 
-## Review boundary
+## Deterministic CI boundary
 
 - [ ] Changes stay within the declared ownership scope.
 - [ ] Any semantic identity, provenance, or policy impact is described above.
+- [ ] Acceptance uses exact-head CI evidence for the current PR tuple; human reviews are not CI proof inputs.
