@@ -73,6 +73,28 @@ func arrowLeft(img *image.Paletted, x, y int, colorIndex uint8) {
 	line(img, x, y, x+7, y+5, colorIndex)
 }
 
+func circle(img *image.Paletted, cx, cy, radius int, colorIndex uint8) {
+	for y := cy - radius; y <= cy+radius; y++ {
+		for x := cx - radius; x <= cx+radius; x++ {
+			dx, dy := x-cx, y-cy
+			if dx*dx+dy*dy <= radius*radius {
+				img.SetColorIndex(x, y, colorIndex)
+			}
+		}
+	}
+}
+
+func diamond(img *image.Paletted, cx, cy, radius int, colorIndex uint8) {
+	for offset := 0; offset <= radius; offset++ {
+		line(img, cx-offset, cy-radius+offset, cx+offset, cy-radius+offset, colorIndex)
+		line(img, cx-offset, cy+radius-offset, cx+offset, cy+radius-offset, colorIndex)
+	}
+}
+
+func cross(img *image.Paletted, x0, y0, x1, y1 int, colorIndex uint8) {
+	line(img, x0, y0, x1, y1, colorIndex)
+}
+
 func drawText(img *image.Paletted, x, y int, value string, scale int, colorIndex uint8) int {
 	value = strings.ToUpper(value)
 	start := x
