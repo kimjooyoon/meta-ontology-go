@@ -3,45 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"reflect"
 	"testing"
 
 	queryengine "github.com/kimjooyoon/meta-ontology-go/internal/query"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
-
-func TestRunQueryReturnsStableSemanticProjection(t *testing.T) {
-	var stdout, stderr bytes.Buffer
-	code := runQuery([]string{"--json", "fixture.gooo", "--kind", "activity", "--predicate", "prov:used"}, fixtureReader{source: validSource}, SyntaxSourceParser{}, &stdout, &stderr)
-	if code != exitOK || stderr.Len() != 0 {
-		t.Fatalf("query = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
-	}
-	var report jsonReport
-	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
-		t.Fatal(err)
-	}
-	if report.Status != "ok" || len(report.Nodes) != 1 || report.Nodes[0].Kind != "Activity" || len(report.Facts) != 1 {
-		t.Fatalf("unexpected query projection: %#v", report)
-	}
-	if report.Facts[0].Predicate != "used" {
-		t.Fatalf("predicate filter was not applied: %#v", report.Facts)
-	}
-}
-
-func TestRunQueryUnknownIDHasStableFailureCode(t *testing.T) {
-	var stdout, stderr bytes.Buffer
-	code := runQuery([]string{"--json", "fixture.gooo", "--id", "billing://entity/missing"}, fixtureReader{source: validSource}, SyntaxSourceParser{}, &stdout, &stderr)
-	if code != exitFailure || stderr.Len() != 0 {
-		t.Fatalf("unknown query ID = %d, stderr=%q", code, stderr.String())
-	}
-	var report jsonReport
-	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
-		t.Fatal(err)
-	}
-	if report.Status != "error" || len(report.Diagnostics) != 1 || report.Diagnostics[0].Code != "query.invalid" {
-		t.Fatalf("unexpected unknown-ID report: %#v", report)
-	}
-}
 
 func TestRunQueryEnvelopeExactBillingUsesDetachedQueryProjection(t *testing.T) {
 	var stdout, stderr bytes.Buffer
@@ -54,10 +22,7 @@ func TestRunQueryEnvelopeExactBillingUsesDetachedQueryProjection(t *testing.T) {
 	if code != exitOK || stderr.Len() != 0 {
 		t.Fatalf("exact query = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
 	}
-	var response queryengine.Response
-	if err := json.Unmarshal(stdout.Bytes(), &response); err != nil {
-		t.Fatal(err)
-	}
+	response := decodeQueryResponse(t, stdout.Bytes())
 	if response.Schema != queryengine.QueryEnvelopeSchema || response.Status != queryengine.ResponseOK {
 		t.Fatalf("unexpected envelope identity: %#v", response)
 	}
@@ -75,7 +40,7 @@ func TestRunQueryEnvelopeExactBillingUsesDetachedQueryProjection(t *testing.T) {
 
 func TestRunQueryEnvelopeTraversalAndDerivedAreCanonicalAndBounded(t *testing.T) {
 	traversalArgs := []string{
-		"--json", "billing.gooo", "--operation", "traverse",
+		"billing.gooo", "--operation", "traverse",
 		"--root", "billing://activity/pay-order", "--relation", "used",
 		"--direction", "outgoing", "--layer", "deterministic",
 		"--max-depth", "2", "--limit", "10",
@@ -85,23 +50,17 @@ func TestRunQueryEnvelopeTraversalAndDerivedAreCanonicalAndBounded(t *testing.T)
 	if !bytes.Equal(first, second) {
 		t.Fatalf("replayed traversal changed canonical output:\n%s\n%s", first, second)
 	}
-	var traversal queryengine.Response
-	if err := json.Unmarshal(first, &traversal); err != nil {
-		t.Fatal(err)
-	}
+	traversal := decodeQueryResponse(t, first)
 	if len(traversal.Result.DeterministicPaths) != 1 || traversal.Status != queryengine.ResponseOK {
 		t.Fatalf("traversal result = %#v", traversal)
 	}
 
 	derived := runQueryBytes(t, []string{
-		"--json", "billing.gooo", "--derived",
+		"billing.gooo", "--derived",
 		"--root", "billing://entity/order", "--rule", "usedBy",
 		"--layer", "deterministic", "--max-depth", "1", "--limit", "10",
 	}, validSource)
-	var response queryengine.Response
-	if err := json.Unmarshal(derived, &response); err != nil {
-		t.Fatal(err)
-	}
+	response := decodeQueryResponse(t, derived)
 	if response.Status != queryengine.ResponseOK || len(response.Result.DerivedDeterministic) != 1 ||
 		response.Result.DerivedDeterministic[0].Status != queryengine.DerivedFactStatus {
 		t.Fatalf("derived result = %#v", response)
@@ -116,18 +75,28 @@ func TestRunQueryEnvelopeRejectsUnknownAndIncompleteRequests(t *testing.T) {
 	}{
 		{
 			name: "unknown predicate",
-			args: []string{"--json", "billing.gooo", "--traverse", "--root", "billing://activity/pay-order", "--predicate", "prov:unknown", "--direction", "outgoing", "--limit", "10"},
+			args: []string{"billing.gooo", "--traverse", "--root", "billing://activity/pay-order", "--predicate", "prov:unknown", "--direction", "outgoing", "--limit", "10"},
 			code: "unsupported_relation",
 		},
 		{
 			name: "unknown endpoint",
-			args: []string{"--json", "billing.gooo", "--traverse", "--root", "billing://activity/missing", "--direction", "outgoing", "--limit", "10"},
+			args: []string{"billing.gooo", "--traverse", "--root", "billing://activity/missing", "--direction", "outgoing", "--limit", "10"},
 			code: "unknown_endpoint",
 		},
 		{
 			name: "malformed rule",
-			args: []string{"--json", "billing.gooo", "--derived", "--root", "billing://entity/order", "--rule", "not-a-rule", "--limit", "10"},
+			args: []string{"billing.gooo", "--derived", "--root", "billing://entity/order", "--rule", "not-a-rule", "--limit", "10"},
 			code: "unsupported_rule",
+		},
+		{
+			name: "unrooted kind selector",
+			args: []string{"billing.gooo", "--kind", "activity"},
+			code: "invalid_root",
+		},
+		{
+			name: "duplicate operation",
+			args: []string{"billing.gooo", "--exact", "--traverse", "--root", "billing://activity/pay-order"},
+			code: "unsupported_operation",
 		},
 	}
 	for _, testCase := range cases {
@@ -137,28 +106,25 @@ func TestRunQueryEnvelopeRejectsUnknownAndIncompleteRequests(t *testing.T) {
 			if code != exitFailure || stderr.Len() != 0 {
 				t.Fatalf("request = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
 			}
-			var response queryengine.Response
-			if err := json.Unmarshal(stdout.Bytes(), &response); err != nil {
-				t.Fatal(err)
-			}
+			response := decodeQueryResponse(t, stdout.Bytes())
 			if response.Status != queryengine.ResponseError || response.Error == nil || response.Error.Code != testCase.code {
 				t.Fatalf("response = %#v", response)
+			}
+			if response.Hash == "" || response.Hash != queryResponseDigestValue(response) {
+				t.Fatalf("rejected response was not sealed: %#v", response)
 			}
 		})
 	}
 
 	var stdout, stderr bytes.Buffer
 	code := runQuery([]string{
-		"--json", "billing.gooo", "--traverse", "--root", "billing://activity/pay-order",
+		"billing.gooo", "--traverse", "--root", "billing://activity/pay-order",
 		"--predicate", "used", "--direction", "outgoing", "--max-depth", "2", "--limit", "1",
-	}, fixtureReader{source: validSource}, SyntaxSourceParser{}, &stdout, &stderr)
+	}, fixtureReader{source: billingSource}, SyntaxSourceParser{}, &stdout, &stderr)
 	if code != exitFailure || stderr.Len() != 0 {
 		t.Fatalf("incomplete query = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
 	}
-	var response queryengine.Response
-	if err := json.Unmarshal(stdout.Bytes(), &response); err != nil {
-		t.Fatal(err)
-	}
+	response := decodeQueryResponse(t, stdout.Bytes())
 	if response.Status != queryengine.StatusDeferred || response.Error == nil || response.Error.Code != "incomplete_result" {
 		t.Fatalf("incomplete response = %#v", response)
 	}
@@ -166,8 +132,8 @@ func TestRunQueryEnvelopeRejectsUnknownAndIncompleteRequests(t *testing.T) {
 
 func TestRunQueryEnvelopeUsesStableIDsAndPreservesCandidateIsolation(t *testing.T) {
 	options := queryOptions{
-		engine: true, operation: "derived", root: "billing://entity/order",
-		rule: string(queryengine.RuleUsedBy), layer: string(queryengine.LayerAll),
+		operation: "derived", root: "billing://entity/order",
+		rule: string(queryengine.RuleUsedBy), layer: string(queryengine.LayerDeterministic),
 		maxDepth: 1, maxDepthSet: true, limit: 10, limitSet: true,
 	}
 	ir := semantic.NewIR("billing", "billing")
@@ -192,9 +158,8 @@ func TestRunQueryEnvelopeUsesStableIDsAndPreservesCandidateIsolation(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(response.Result.DerivedDeterministic) != 0 || len(response.Result.DerivedCandidates) != 1 ||
-		response.Result.DerivedCandidates[0].SourceLayer != queryengine.Candidate.String() {
-		t.Fatalf("candidate entered authoritative result: %#v", response.Result)
+	if len(response.Result.DerivedDeterministic) != 0 || len(response.Result.DerivedCandidates) != 0 {
+		t.Fatalf("candidate entered default authoritative result: %#v", response.Result)
 	}
 
 	graph, err := queryengine.FromSemanticIR(ir)
@@ -218,7 +183,7 @@ func TestRunQueryEnvelopeUsesStableIDsAndPreservesCandidateIsolation(t *testing.
 }
 
 func TestRunQueryEnvelopeCanonicalizesInputPermutation(t *testing.T) {
-	args := []string{"--json", "billing.gooo", "--exact", "--root", "billing://activity/pay-order", "--relation", "used", "--target", "billing://entity/order", "--limit", "10"}
+	args := []string{"billing.gooo", "--exact", "--root", "billing://activity/pay-order", "--relation", "used", "--target", "billing://entity/order", "--limit", "10"}
 	first := runQueryBytes(t, args, validSource)
 	permuted := `package billing
 namespace billing
@@ -231,6 +196,38 @@ entity Order id "billing://entity/order"
 	}
 }
 
+func TestRunQueryDoesNotWriteAuthorityFile(t *testing.T) {
+	directory := t.TempDir()
+	filename := directory + "/billing.gooo"
+	if err := os.WriteFile(filename, []byte(validSource), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeEntries, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	code := runQuery([]string{filename, "--id", "billing://activity/pay-order"}, OSFileReader{}, SyntaxSourceParser{}, &stdout, &stderr)
+	if code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("read-only query = %d, stdout=%q, stderr=%q", code, stdout.String(), stderr.String())
+	}
+	after, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterEntries, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(before, after) || !reflect.DeepEqual(beforeEntries, afterEntries) {
+		t.Fatalf("query changed the authority filesystem: before=%v after=%v", beforeEntries, afterEntries)
+	}
+}
+
 func runQueryBytes(t *testing.T, args []string, source string) []byte {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
@@ -239,3 +236,31 @@ func runQueryBytes(t *testing.T, args []string, source string) []byte {
 	}
 	return stdout.Bytes()
 }
+
+func decodeQueryResponse(t *testing.T, payload []byte) queryengine.Response {
+	t.Helper()
+	var response queryengine.Response
+	if err := json.Unmarshal(payload, &response); err != nil {
+		t.Fatalf("query output was not canonical JSON: %v (%q)", err, payload)
+	}
+	if response.Schema != queryengine.QueryEnvelopeSchema {
+		t.Fatalf("query output schema = %q, want %q", response.Schema, queryengine.QueryEnvelopeSchema)
+	}
+	return response
+}
+
+func queryResponseDigestValue(response queryengine.Response) string {
+	digest, err := response.CanonicalDigest()
+	if err != nil {
+		return ""
+	}
+	return digest
+}
+
+const billingSource = `package billing
+namespace billing
+entity Order id "billing://entity/order"
+entity PaymentMethod id "billing://entity/payment-method"
+entity Payment id "billing://entity/payment"
+activity PayOrder(Order, PaymentMethod) -> Payment
+`
