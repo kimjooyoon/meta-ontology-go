@@ -10,11 +10,23 @@ import (
 
 // LowerDocument lowers the parser-neutral view into the current semantic IR.
 func LowerDocument(document Document) (semantic.IR, error) {
-	return LowerDocumentContext(context.Background(), document)
+	return LowerDocumentWithTypes(document, semantic.DefaultTypeRegistry())
+}
+
+// LowerDocumentWithTypes lowers a parser-neutral document and resolves latent
+// field TypeRefs through the supplied semantic registry.
+func LowerDocumentWithTypes(document Document, registry semantic.TypeRegistry) (semantic.IR, error) {
+	return LowerDocumentContextWithTypes(context.Background(), document, registry)
 }
 
 // LowerDocumentContext is the cancellable parser-neutral lowerer.
 func LowerDocumentContext(ctx context.Context, document Document) (semantic.IR, error) {
+	return LowerDocumentContextWithTypes(ctx, document, semantic.DefaultTypeRegistry())
+}
+
+// LowerDocumentContextWithTypes is the cancellable typed parser-neutral
+// lowerer. It returns no partial IR on any field or registry failure.
+func LowerDocumentContextWithTypes(ctx context.Context, document Document, registry semantic.TypeRegistry) (semantic.IR, error) {
 	ctx = nonNilLowerContext(ctx)
 	if err := checkLowerContext(ctx); err != nil {
 		return semantic.IR{}, err
@@ -46,6 +58,13 @@ func LowerDocumentContext(ctx context.Context, document Document) (semantic.IR, 
 	}
 	if err := ir.Validate(); err != nil {
 		return semantic.IR{}, err
+	}
+	if semanticIRHasFields(ir) {
+		normalized, err := ir.NormalizedWithTypes(registry)
+		if err != nil {
+			return semantic.IR{}, err
+		}
+		ir = normalized
 	}
 	if err := checkLowerContext(ctx); err != nil {
 		return semantic.IR{}, err
@@ -79,6 +98,22 @@ func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document,
 		if err != nil {
 			return nil, nil, err
 		}
+		if len(declaration.Fields) > 0 {
+			if kind != semantic.Entity {
+				return nil, nil, fmt.Errorf("declaration %q: fields are only valid on Entity nodes", declaration.Name)
+			}
+			node.Fields = make([]semantic.Field, len(declaration.Fields))
+			for index, field := range declaration.Fields {
+				semanticField, err := field.semantic()
+				if err != nil {
+					return nil, nil, fmt.Errorf("declaration %q field %d: %w", declaration.Name, index, err)
+				}
+				if semanticField.Parent != semanticID {
+					return nil, nil, fmt.Errorf("declaration %q field %d: %w: field %s parent is %s, want %s", declaration.Name, index, ErrInvalidField, semanticField.ID, semanticField.Parent, semanticID)
+				}
+				node.Fields[index] = semanticField
+			}
+		}
 		node.Span = toSemanticSpan(declaration.Span)
 		if err := ir.AddNode(node); err != nil {
 			return nil, nil, err
@@ -90,6 +125,15 @@ func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document,
 		names[referenceKey(namespace.String(), declaration.Name)] = semanticID
 	}
 	return names, ids, nil
+}
+
+func semanticIRHasFields(ir semantic.IR) bool {
+	for _, node := range ir.Graph.Nodes() {
+		if len(node.Fields) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func semanticKind(kind Kind) (semantic.Kind, error) {
