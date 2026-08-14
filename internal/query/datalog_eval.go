@@ -7,12 +7,35 @@ import (
 
 type datalogBinding map[string]ID
 
-func deriveDatalog(base []DatalogFact, rules []DatalogRule, limit int) ([]DatalogFact, error) {
+type datalogWorkBudget struct {
+	remaining int
+	limit     int
+	exhausted bool
+}
+
+func newDatalogWorkBudget(limit int) *datalogWorkBudget {
+	return &datalogWorkBudget{remaining: limit, limit: limit}
+}
+
+func (budget *datalogWorkBudget) take() bool {
+	if budget.remaining == 0 {
+		budget.exhausted = true
+		return false
+	}
+	budget.remaining--
+	return true
+}
+
+func deriveDatalog(
+	base []DatalogFact, rules []DatalogRule, limit, maxDepth int, budget *datalogWorkBudget,
+) ([]DatalogFact, error) {
 	byPredicate := make(map[string][]DatalogFact)
 	known := make(map[DatalogFactKey]struct{})
+	depths := make(map[DatalogFactKey]int)
 	for _, fact := range base {
 		byPredicate[fact.Predicate] = append(byPredicate[fact.Predicate], fact)
 		known[fact.Key()] = struct{}{}
+		depths[fact.Key()] = fact.Depth
 	}
 	for predicate := range byPredicate {
 		sortDatalogFacts(byPredicate[predicate])
@@ -21,14 +44,22 @@ func deriveDatalog(base []DatalogFact, rules []DatalogRule, limit int) ([]Datalo
 	for {
 		changed := false
 		for _, rule := range rules {
-			for _, conclusion := range applyDatalogRule(rule, byPredicate) {
+			conclusions, err := applyDatalogRule(rule, byPredicate, depths, budget)
+			if err != nil {
+				return nil, err
+			}
+			for _, conclusion := range conclusions {
 				if _, exists := known[conclusion.Key()]; exists {
 					continue
+				}
+				if conclusion.Depth > maxDepth {
+					return nil, fmt.Errorf("%w: maximum derivation depth %d", ErrDatalogBudget, maxDepth)
 				}
 				if len(derived) >= limit {
 					return nil, fmt.Errorf("%w: maximum derived facts %d", ErrDatalogBudget, limit)
 				}
 				known[conclusion.Key()] = struct{}{}
+				depths[conclusion.Key()] = conclusion.Depth
 				derived = append(derived, conclusion)
 				byPredicate[conclusion.Predicate] = append(byPredicate[conclusion.Predicate], conclusion)
 				sortDatalogFacts(byPredicate[conclusion.Predicate])
@@ -43,21 +74,39 @@ func deriveDatalog(base []DatalogFact, rules []DatalogRule, limit int) ([]Datalo
 	return derived, nil
 }
 
-func applyDatalogRule(rule DatalogRule, byPredicate map[string][]DatalogFact) []DatalogFact {
+func applyDatalogRule(
+	rule DatalogRule, byPredicate map[string][]DatalogFact,
+	depths map[DatalogFactKey]int, budget *datalogWorkBudget,
+) ([]DatalogFact, error) {
 	results := make([]DatalogFact, 0)
 	var join func(int, datalogBinding, []DatalogFact)
 	join = func(index int, binding datalogBinding, support []DatalogFact) {
 		if index == len(rule.Body) {
 			subject := datalogTermValue(rule.Head.Subject, binding)
 			object := datalogTermValue(rule.Head.Object, binding)
+			depth := 1
+			namespace := ""
+			for _, fact := range support {
+				if fact.Namespace != "" {
+					namespace = fact.Namespace
+				}
+				if candidateDepth := depths[fact.Key()] + 1; candidateDepth > depth {
+					depth = candidateDepth
+				}
+			}
 			results = append(results, DatalogFact{
-				Subject: subject, Predicate: rule.Head.Predicate, Object: object,
-				Origin: DatalogDerived, RuleID: rule.ID, Support: datalogSupport(support),
+				Namespace: namespace, Subject: subject,
+				Predicate: rule.Head.Predicate, Object: object,
+				Origin: DatalogDerived, RuleID: rule.ID, Depth: depth,
+				Support: datalogSupport(support),
 			})
 			return
 		}
 		atom := rule.Body[index]
 		for _, fact := range byPredicate[atom.Predicate] {
+			if !budget.take() {
+				return
+			}
 			next, ok := bindDatalogAtom(atom, fact, binding)
 			if !ok {
 				continue
@@ -66,7 +115,10 @@ func applyDatalogRule(rule DatalogRule, byPredicate map[string][]DatalogFact) []
 		}
 	}
 	join(0, make(datalogBinding), nil)
-	return results
+	if budget.exhausted {
+		return nil, fmt.Errorf("%w: maximum work %d", ErrDatalogBudget, budget.limit)
+	}
+	return results, nil
 }
 
 func bindDatalogAtom(atom DatalogAtom, fact DatalogFact, binding datalogBinding) (datalogBinding, bool) {
