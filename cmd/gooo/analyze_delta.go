@@ -116,23 +116,6 @@ func analyzeSymbolKind(kind semantic.Kind) analyzer.SymbolKind {
 	return analyzer.KindEntity
 }
 
-func validateAnalyzeAnnotations(result analyzer.Result, authority semantic.IR) error {
-	nodes := map[string]semantic.Node{}
-	for _, node := range authority.Graph.Nodes() {
-		nodes[string(node.ID)] = node
-	}
-	for _, registration := range result.Registrations {
-		node, ok := nodes[registration.Identity.ID]
-		if !ok {
-			return fmt.Errorf("annotation for %q names identity %q absent from DSL authority", registration.Ref.Name, registration.Identity.ID)
-		}
-		if analyzeSymbolKind(node.Kind) != registration.Kind || node.Namespace.String() != registration.Identity.Namespace {
-			return fmt.Errorf("annotation for %q disagrees with DSL identity %q", registration.Ref.Name, registration.Identity.ID)
-		}
-	}
-	return nil
-}
-
 func validateAnalyzeGeneratedSource(model generator.SemanticIR, authority semantic.IR, source []byte) error {
 	text := string(source)
 	if !strings.Contains(text, "//gooo:generated:") && !strings.Contains(text, "//gooo:slot:") {

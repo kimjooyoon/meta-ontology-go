@@ -114,16 +114,6 @@ func runAnalyzeDelta(args []string, reader SourceReader, parser SourceParser, st
 	if err != nil {
 		return reportAnalyzeDeltaError(stderr, "", "build symbol registry", err)
 	}
-	analysis, err := analyzer.AnalyzePackage(sources, registry)
-	if err != nil {
-		return reportAnalyzeDeltaError(stderr, "", "analyze Go input", err)
-	}
-	if analysis.Diagnostics.HasErrors() {
-		return reportAnalyzeDeltaError(stderr, "", "analyze Go input", analysis.Diagnostics.Error())
-	}
-	if err := validateAnalyzeAnnotations(analysis, authority); err != nil {
-		return reportAnalyzeDeltaError(stderr, "", "validate semantic annotations", err)
-	}
 	policy, err := analyzeMappingPolicy()
 	if err != nil {
 		return reportAnalyzeDeltaError(stderr, "", "build mapping policy", err)
