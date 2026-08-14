@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -12,11 +11,9 @@ import (
 )
 
 type queryOptions struct {
-	ID        string
-	Kind      semantic.Kind
-	Predicate semantic.Relation
-
-	engine      bool
+	Kind        semantic.Kind
+	KindSet     bool
+	IDSelector  bool
 	operation   string
 	root        string
 	target      string
@@ -66,30 +63,7 @@ func runQuery(args []string, reader SourceReader, parser SourceParser, stdout, s
 	if err != nil {
 		return reportFailure(jsonMode, stdout, stderr, "query", filename, "semantic.lowering", err.Error(), syntaxFileSpan(file))
 	}
-	if options.engine {
-		return runQueryEngine(options, ir, filename, jsonMode, stdout, stderr)
-	}
-	nodes, facts, err := selectQueryResults(ir, options)
-	if err != nil {
-		return reportFailure(jsonMode, stdout, stderr, "query", filename, "query.invalid", err.Error(), syntaxFileSpan(file))
-	}
-	if jsonMode {
-		report := newJSONReport("query", "ok", filename, syntaxCLIDiagnostics(diagnostics))
-		report.SemanticHash = ir.StableHash()
-		report.Nodes, report.Facts = nodes, facts
-		if err := writeJSONReport(stdout, report); err != nil {
-			return exitFailure
-		}
-		return exitOK
-	}
-	fmt.Fprintf(stdout, "query: %s nodes=%d facts=%d\n", filename, len(nodes), len(facts))
-	for _, node := range nodes {
-		fmt.Fprintf(stdout, "node: %s %s %s/%s\n", node.ID, node.Kind, node.Namespace, node.Name)
-	}
-	for _, fact := range facts {
-		fmt.Fprintf(stdout, "fact: %s %s %s (%s)\n", fact.Subject, fact.Predicate, fact.Object, fact.Status)
-	}
-	return exitOK
+	return runQueryEngine(options, ir, filename, jsonMode, stdout, stderr)
 }
 
 func parseQueryArguments(args []string) (queryOptions, string, string) {
@@ -101,14 +75,14 @@ func parseQueryArguments(args []string) (queryOptions, string, string) {
 	if filename == "" || strings.HasPrefix(filename, "-") {
 		return queryOptions{}, "", usage
 	}
-	options := queryOptions{engine: queryArgumentsUseEngine(args[1:])}
+	var options queryOptions
 	for index := 1; index < len(args); index++ {
 		arg := args[index]
 		if arg == "--exact" || arg == "--traverse" || arg == "--derived" {
 			if options.operation != "" {
-				return queryOptions{}, "", "usage: gooo query: query operation may be specified once"
+				options.operation = "invalid"
+				continue
 			}
-			options.engine = true
 			options.operation = strings.TrimPrefix(arg, "--")
 			continue
 		}
@@ -126,7 +100,7 @@ func parseQueryArguments(args []string) (queryOptions, string, string) {
 		}
 		index++
 	}
-	if options.engine && options.operation == "" {
+	if options.operation == "" {
 		switch {
 		case options.rule != "":
 			options.operation = "derived"
@@ -139,38 +113,20 @@ func parseQueryArguments(args []string) (queryOptions, string, string) {
 	return options, filename, ""
 }
 
-func queryArgumentsUseEngine(args []string) bool {
-	for _, arg := range args {
-		switch arg {
-		case "--exact", "--traverse", "--derived", "--operation", "--op", "--root", "--target", "--relation", "--rule", "--layer", "--direction", "--max-depth", "--depth", "--limit":
-			return true
-		}
-	}
-	return false
-}
-
 func parseLegacyQueryArgument(options queryOptions, arg, value string) (queryOptions, string) {
 	switch arg {
 	case "--id":
-		if options.ID != "" || options.root != "" {
-			return queryOptions{}, "usage: gooo query: --id may be specified once"
-		}
-		if options.engine {
-			options.root = value
+		if options.root != "" {
+			options.operation = "invalid"
 			return options, ""
 		}
-		id, err := semantic.ParseIdentity(value)
-		if err != nil {
-			return queryOptions{}, fmt.Sprintf("usage: gooo query: invalid --id: %v", err)
-		}
-		options.ID = id.String()
+		options.root, options.IDSelector = value, true
 	case "--kind":
-		if options.engine {
-			return queryOptions{}, "usage: gooo query: --kind is only available for the legacy projection"
+		if options.KindSet {
+			options.Kind = semantic.Kind("invalid")
+			return options, ""
 		}
-		if options.Kind != "" {
-			return queryOptions{}, "usage: gooo query: --kind may be specified once"
-		}
+		options.KindSet = true
 		switch strings.ToLower(value) {
 		case "entity":
 			options.Kind = semantic.Entity
@@ -179,24 +135,14 @@ func parseLegacyQueryArgument(options queryOptions, arg, value string) (queryOpt
 		case "agent":
 			options.Kind = semantic.Agent
 		default:
-			return queryOptions{}, "usage: gooo query: --kind must be entity, activity, or agent"
+			options.Kind = semantic.Kind(strings.TrimSpace(value))
 		}
 	case "--predicate":
-		if options.engine {
-			if options.relation != "" {
-				return queryOptions{}, "usage: gooo query: --predicate may be specified once"
-			}
-			options.relation = value
+		if options.relation != "" {
+			options.relation = "invalid"
 			return options, ""
 		}
-		if options.Predicate != "" {
-			return queryOptions{}, "usage: gooo query: --predicate may be specified once"
-		}
-		predicate, ok := normalizePredicate(value)
-		if !ok {
-			return queryOptions{}, "usage: gooo query: --predicate is not a supported PROV relation"
-		}
-		options.Predicate = semantic.Relation(predicate)
+		options.relation = value
 	}
 	return options, ""
 }
@@ -204,10 +150,12 @@ func parseLegacyQueryArgument(options queryOptions, arg, value string) (queryOpt
 func parseEngineQueryArgument(options queryOptions, arg, value string) (queryOptions, string) {
 	if arg == "--operation" || arg == "--op" {
 		if options.operation != "" {
-			return queryOptions{}, "usage: gooo query: query operation may be specified once"
+			options.operation = "invalid"
+			return options, ""
 		}
 		if value != "exact" && value != "traverse" && value != "derived" {
-			return queryOptions{}, "usage: gooo query: --operation must be exact, traverse, or derived"
+			options.operation = value
+			return options, ""
 		}
 		options.operation = value
 		return options, ""
@@ -234,10 +182,12 @@ func parseQueryStringArgument(options queryOptions, arg, value string) (queryOpt
 	case "--direction":
 		target = &options.direction
 	default:
-		return queryOptions{}, "usage: gooo query: unknown query option"
+		options.operation = "invalid"
+		return options, ""
 	}
 	if *target != "" {
-		return queryOptions{}, fmt.Sprintf("usage: gooo query: %s may be specified once", arg)
+		options.operation = "invalid"
+		return options, ""
 	}
 	*target = value
 	return options, ""
@@ -246,54 +196,26 @@ func parseQueryStringArgument(options queryOptions, arg, value string) (queryOpt
 func parseQueryBoundArgument(options queryOptions, arg, value string) (queryOptions, string) {
 	if arg == "--limit" {
 		if options.limitSet {
-			return queryOptions{}, "usage: gooo query: --limit may be specified once"
+			options.limit = 0
+			return options, ""
 		}
 		limit, err := parseQueryInteger(value)
 		if err != nil {
-			return queryOptions{}, fmt.Sprintf("usage: gooo query: invalid --limit: %v", err)
+			options.limit, options.limitSet = 0, true
+			return options, ""
 		}
 		options.limit, options.limitSet = limit, true
 		return options, ""
 	}
 	if options.maxDepthSet {
-		return queryOptions{}, "usage: gooo query: --max-depth may be specified once"
+		options.maxDepth = 0
+		return options, ""
 	}
 	depth, err := parseQueryInteger(value)
 	if err != nil {
-		return queryOptions{}, fmt.Sprintf("usage: gooo query: invalid --max-depth: %v", err)
+		options.maxDepth, options.maxDepthSet = 0, true
+		return options, ""
 	}
 	options.maxDepth, options.maxDepthSet = depth, true
 	return options, ""
-}
-
-func selectQueryResults(ir semantic.IR, options queryOptions) ([]jsonNode, []jsonFact, error) {
-	if err := ir.Validate(); err != nil {
-		return nil, nil, err
-	}
-	nodes := make([]jsonNode, 0)
-	knownID := options.ID == ""
-	for _, node := range ir.Graph.Nodes() {
-		if options.ID != "" && node.ID.String() != options.ID {
-			continue
-		}
-		if options.Kind != "" && node.Kind != options.Kind {
-			continue
-		}
-		knownID = true
-		nodes = append(nodes, jsonNode{ID: node.ID.String(), Kind: node.Kind.String(), Namespace: node.Namespace.String(), Name: node.Name})
-	}
-	if !knownID {
-		return nil, nil, fmt.Errorf("stable ID %q was not found", options.ID)
-	}
-	facts := make([]jsonFact, 0)
-	for _, fact := range ir.Graph.AllFacts() {
-		if options.ID != "" && fact.Subject.String() != options.ID && fact.Object.String() != options.ID {
-			continue
-		}
-		if options.Predicate != "" && fact.Predicate != options.Predicate {
-			continue
-		}
-		facts = append(facts, jsonFact{Subject: fact.Subject.String(), Predicate: fact.Predicate.String(), Object: fact.Object.String(), Status: fact.Status.String()})
-	}
-	return nodes, facts, nil
 }

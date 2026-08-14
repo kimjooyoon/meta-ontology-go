@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
 
 	queryengine "github.com/kimjooyoon/meta-ontology-go/internal/query"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
@@ -29,26 +28,18 @@ func parseQueryInteger(raw string) (int, error) {
 func runQueryEngine(options queryOptions, ir semantic.IR, filename string, jsonMode bool, stdout, stderr io.Writer) int {
 	response, err := executeCLIQuery(ir, options)
 	if response.Schema == "" {
-		return reportFailure(jsonMode, stdout, stderr, "query", filename, "query.engine", err.Error(), syntax.Span{})
+		message := "canonical query engine returned no response"
+		if err != nil {
+			message = err.Error()
+		}
+		return reportFailure(jsonMode, stdout, stderr, "query", filename, "query.engine", message, syntax.Span{})
 	}
-	if jsonMode {
-		if writeQueryResponse(stdout, response) != nil {
-			return exitFailure
-		}
-		if err != nil || response.Status != queryengine.ResponseOK {
-			return exitFailure
-		}
-		return exitOK
-	}
-	if err != nil || response.Status != queryengine.ResponseOK {
-		if response.Error != nil {
-			fmt.Fprintf(stderr, "gooo: %s: query: %s\n", filename, response.Error.Message)
-		} else {
-			fmt.Fprintf(stderr, "gooo: %s: query: %v\n", filename, err)
-		}
+	if writeQueryResponse(stdout, response) != nil {
 		return exitFailure
 	}
-	printQueryResponse(stdout, response)
+	if err != nil || response.Status != queryengine.ResponseOK {
+		return exitFailure
+	}
 	return exitOK
 }
 
@@ -61,6 +52,9 @@ func executeCLIQuery(ir semantic.IR, options queryOptions) (queryengine.Response
 	response, err := graph.Execute(request)
 	if err != nil || response.Status != queryengine.ResponseOK {
 		return response, err
+	}
+	if err := validateCLIQueryKind(*graph, response.Request, options); err != nil {
+		return rejectCLIQueryResponse(response, err)
 	}
 	if request.Operation == queryengine.OperationExact {
 		return response, nil
@@ -78,19 +72,66 @@ func executeCLIQuery(ir semantic.IR, options queryOptions) (queryengine.Response
 	return response, errIncompleteCLIQuery
 }
 
+type cliQueryValidationError struct {
+	code    string
+	message string
+}
+
+func (err cliQueryValidationError) Error() string {
+	return err.code + ": " + err.message
+}
+
+func validateCLIQueryKind(graph queryengine.Graph, request queryengine.Request, options queryOptions) error {
+	if !options.KindSet {
+		return nil
+	}
+	if options.Kind != semantic.Entity && options.Kind != semantic.Activity && options.Kind != semantic.Agent {
+		return cliQueryValidationError{code: "invalid_kind", message: "kind must be entity, activity, or agent"}
+	}
+	node, ok := graph.Node(request.Root)
+	if !ok {
+		return cliQueryValidationError{code: "unknown_endpoint", message: fmt.Sprintf("root %q is not present in the query graph", request.Root)}
+	}
+	want := queryengine.UnknownNodeKind
+	switch options.Kind {
+	case semantic.Entity:
+		want = queryengine.EntityNodeKind
+	case semantic.Activity:
+		want = queryengine.ActivityNodeKind
+	case semantic.Agent:
+		want = queryengine.AgentNodeKind
+	}
+	if node.Kind != want {
+		return cliQueryValidationError{
+			code:    "kind_mismatch",
+			message: fmt.Sprintf("root %q has kind %s, want %s", request.Root, node.Kind, want),
+		}
+	}
+	return nil
+}
+
+func rejectCLIQueryResponse(response queryengine.Response, validationErr error) (queryengine.Response, error) {
+	var typed cliQueryValidationError
+	if !errors.As(validationErr, &typed) {
+		return queryengine.Response{}, validationErr
+	}
+	response.Status = queryengine.ResponseError
+	response.Error = &queryengine.EnvelopeError{Code: typed.code, Message: typed.message}
+	var err error
+	response.Hash, err = response.CanonicalDigest()
+	if err != nil {
+		return queryengine.Response{}, err
+	}
+	return response, validationErr
+}
+
 func queryRequest(options queryOptions) queryengine.Request {
 	operation := queryengine.Operation(options.operation)
 	if operation == "" {
 		operation = queryengine.OperationTraversal
 	}
 	root := options.root
-	if root == "" {
-		root = options.ID
-	}
 	relation := options.relation
-	if relation == "" && options.Predicate != "" {
-		relation = options.Predicate.String()
-	}
 	layer := queryengine.Layer(options.layer)
 	if layer == "" {
 		layer = queryengine.LayerDeterministic
@@ -106,6 +147,9 @@ func queryRequest(options queryOptions) queryengine.Request {
 	direction := options.direction
 	if direction == "" {
 		direction = "outgoing"
+		if options.IDSelector && operation != queryengine.OperationExact {
+			direction = "both"
+		}
 	}
 	return queryengine.Request{
 		Schema: queryengine.QueryEnvelopeSchema, Operation: operation,
@@ -148,13 +192,24 @@ func queryResponseCompleteness(graph queryengine.Graph, request queryengine.Requ
 	if !bytes.Equal(mustQueryJSON(expanded.Result), mustQueryJSON(response.Result)) {
 		return false, "query bounds produced an incomplete result"
 	}
-	if request.Limit < queryengine.MaxEnvelopeLimit && len(graph.AllFacts()) > request.Limit {
+	if request.Limit < queryengine.MaxEnvelopeLimit && queryFactCount(graph, request.Layer) > request.Limit {
 		return false, "query work budget was exhausted before completeness was proven"
 	}
 	if request.Limit == queryengine.MaxEnvelopeLimit && queryResultSize(response.Result) == request.Limit {
 		return false, "query result reached the maximum work budget"
 	}
 	return true, ""
+}
+
+func queryFactCount(graph queryengine.Graph, layer queryengine.Layer) int {
+	switch layer {
+	case queryengine.LayerCandidate:
+		return len(graph.CandidateFacts())
+	case queryengine.LayerAll:
+		return len(graph.AllFacts())
+	default:
+		return len(graph.DeterministicFacts())
+	}
 }
 
 func queryResultSize(result queryengine.QueryResult) int {
@@ -181,28 +236,4 @@ func writeQueryResponse(writer io.Writer, response queryengine.Response) error {
 	}
 	_, err = fmt.Fprintf(writer, "%s\n", payload)
 	return err
-}
-
-func printQueryResponse(writer io.Writer, response queryengine.Response) {
-	fmt.Fprintf(writer, "query: status=%s graph=%s\n", response.Status, response.Metadata.GraphHash)
-	for _, fact := range response.Result.DeterministicMatches {
-		fmt.Fprintf(writer, "fact: %s %s %s (%s)\n", fact.Subject, fact.Predicate, fact.Object, fact.Status)
-	}
-	for _, fact := range response.Result.CandidateMatches {
-		fmt.Fprintf(writer, "fact: %s %s %s (%s)\n", fact.Subject, fact.Predicate, fact.Object, fact.Status)
-	}
-	for _, path := range append(append([]queryengine.Path{}, response.Result.DeterministicPaths...), response.Result.CandidatePaths...) {
-		fmt.Fprintf(writer, "path: %s\n", strings.Join(idsAsStrings(path.IDs), " -> "))
-	}
-	for _, fact := range append(append([]queryengine.DerivedFact{}, response.Result.DerivedDeterministic...), response.Result.DerivedCandidates...) {
-		fmt.Fprintf(writer, "derived: %s %s %s (%s)\n", fact.Subject, fact.Predicate, fact.Object, fact.Status)
-	}
-}
-
-func idsAsStrings(ids []queryengine.ID) []string {
-	result := make([]string, len(ids))
-	for index, id := range ids {
-		result[index] = id.String()
-	}
-	return result
 }
