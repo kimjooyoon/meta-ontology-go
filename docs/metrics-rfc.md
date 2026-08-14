@@ -270,7 +270,9 @@ feature work or to promote a green feature.
 ## 7. Metric family catalog
 
 The first catalog is by family; individual metrics must still satisfy the
-`DecisionMetric` contract before adoption.
+`DecisionMetric` contract before adoption. The compact design-only initial
+catalog is [docs/metric-catalog.md](metric-catalog.md); it names questions and
+fixtures but does not activate any metric or existing check.
 
 | Family | Questions covered |
 | --- | --- |
