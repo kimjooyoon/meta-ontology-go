@@ -78,7 +78,11 @@ func nodeNameRefs(node Node) []NameRef {
 }
 
 func (g Graph) Node(id ID) (Node, bool) {
-	node, ok := g.nodes[id]
+	canonical, err := ParseIdentity(id.String())
+	if err != nil {
+		return Node{}, false
+	}
+	node, ok := g.nodes[canonical]
 	if !ok {
 		return Node{}, false
 	}

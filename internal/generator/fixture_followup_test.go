@@ -42,6 +42,7 @@ func TestFixtureRollbackRejectsOrphanMarkerWithoutMutation(t *testing.T) {
 }
 
 func TestFixtureDeclarationPermutationIsReproducible(t *testing.T) {
+	// GEN-DET-002: declaration order does not change source or source-map bytes.
 	firstIR := acceptanceFixture()
 	secondIR := acceptanceFixture()
 	secondIR.Entities[0], secondIR.Entities[1] = secondIR.Entities[1], secondIR.Entities[0]

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	"sort"
 	"strings"
 )
 
@@ -112,7 +113,15 @@ func indentSnippet(snippet, prefix string) string {
 
 func formatBlock(packageName, block string) ([]byte, error) {
 	source := []byte("package " + packageName + "\n\n" + block)
+	originalMarkers, err := parseMarkers(source)
+	if err != nil {
+		return nil, fmt.Errorf("generator: parse block markers: %w", err)
+	}
 	formatted, err := format.Source(source)
+	if err != nil {
+		return nil, err
+	}
+	formatted, err = restoreSlotBodies(formatted, originalMarkers.Slots)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +134,39 @@ func formatBlock(packageName, block string) ([]byte, error) {
 	result = bytes.TrimRight(result, "\n")
 	result = append(result, '\n')
 	return result, nil
+}
+
+func restoreSlotBodies(source []byte, original map[string]parsedSlot) ([]byte, error) {
+	if len(original) == 0 {
+		return source, nil
+	}
+	formatted, err := parseMarkers(source)
+	if err != nil {
+		return nil, fmt.Errorf("generator: parse formatted slot markers: %w", err)
+	}
+	slots := make([]parsedSlot, 0, len(original))
+	for id, previous := range original {
+		current, exists := formatted.Slots[id]
+		if !exists {
+			return nil, fmt.Errorf("generator: formatted block lost slot %q", id)
+		}
+		current.Body = previous.Body
+		slots = append(slots, current)
+	}
+	sort.Slice(slots, func(i, j int) bool { return slots[i].Start > slots[j].Start })
+	result := append([]byte(nil), source...)
+	for _, slot := range slots {
+		result = replaceBytes(result, slot.Start, slot.End, slot.Body)
+	}
+	return result, nil
+}
+
+func replaceBytes(source []byte, start, end int, replacement []byte) []byte {
+	result := make([]byte, 0, len(source)-end+start+len(replacement))
+	result = append(result, source[:start]...)
+	result = append(result, replacement...)
+	result = append(result, source[end:]...)
+	return result
 }
 
 func (g Generator) renderNewFile(ir SemanticIR, blocks map[string][]byte, order []string) ([]byte, error) {

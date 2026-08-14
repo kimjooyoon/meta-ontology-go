@@ -1,6 +1,6 @@
 # Explicit agent scope registry
 
-This is the review table for the exact branch keys in
+This is the registry for the exact branch keys in
 `internal/verify/scope.go`. A branch name is never interpreted as a wildcard;
 unknown `agent/*` names fail closed. Directory suffixes below describe the
 allowed repository prefix and do not create additional branch aliases.

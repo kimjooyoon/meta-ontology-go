@@ -1,17 +1,21 @@
 package generator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
-	"sort"
-	"strings"
 )
 
 // SemanticIRProvider is the intentionally small adapter seam for a future
-// parser/semantic package.  The generator does not import those packages.
+// parser/semantic package. The generator does not import those packages.
 type SemanticIRProvider interface {
 	SemanticIR() SemanticIR
 }
+
+// ErrDeferredRelationOrder identifies a reflective graph whose relation
+// collection has no authoritative order. Typed adapters must provide the
+// ordered SemanticIR when port order is semantically meaningful.
+var ErrDeferredRelationOrder = errors.New("generator: relation order is DEFERRED/non-authoritative")
 
 func adaptInput(input any) (SemanticIR, error) {
 	switch value := input.(type) {
@@ -29,23 +33,39 @@ func adaptInput(input any) (SemanticIR, error) {
 	}
 }
 
-// reflectSemanticGraph is a narrow bridge for early semantic graph packages
-// that predate SemanticIRProvider.  It is deliberately structural and only
-// reads exported fields named Package, Nodes, Facts, ID, Kind, Name, Subject,
-// Predicate, and Object.  Once the semantic package adopts the local provider
-// interface, this fallback can be removed without changing the renderer.
+// reflectSemanticGraph is a strict compatibility bridge for structural
+// semantic graphs. It rejects malformed input rather than dropping facts.
 func reflectSemanticGraph(input any) (SemanticIR, error) {
 	value, err := reflectedStruct(input)
 	if err != nil {
 		return SemanticIR{}, err
 	}
-	model := SemanticIR{Package: stringField(value, "Package")}
-	entityByID, activityByID, err := reflectNodes(value, &model, input)
+	model := SemanticIR{Package: "generated"}
+	if packageName, err := optionalStringField(value, "Package"); err != nil {
+		return SemanticIR{}, err
+	} else if packageName != "" {
+		model.Package = packageName
+	}
+	nodes, err := readReflectedCollection(value, "Nodes", input)
 	if err != nil {
 		return SemanticIR{}, err
 	}
-	reflectFacts(value, &model, entityByID, activityByID)
-	finishReflectedModel(&model)
+	entities := make(map[string]int)
+	activities := make(map[string]int)
+	kinds := make(map[string]string)
+	if err := reflectNodes(nodes, &model, entities, activities, kinds); err != nil {
+		return SemanticIR{}, err
+	}
+	facts, err := readReflectedCollection(value, "Facts", input)
+	if err != nil {
+		return SemanticIR{}, err
+	}
+	if err := reflectFacts(facts, &model, entities, activities, kinds); err != nil {
+		return SemanticIR{}, err
+	}
+	if !facts.ordered && len(facts.values) > 0 {
+		return SemanticIR{}, fmt.Errorf("%w: reflective Facts map has no source order; implement SemanticIRProvider", ErrDeferredRelationOrder)
+	}
 	return model, nil
 }
 
@@ -53,12 +73,9 @@ func reflectedStruct(input any) (reflect.Value, error) {
 	if input == nil {
 		return reflect.Value{}, fmt.Errorf("generator: nil semantic input")
 	}
-	value := reflect.ValueOf(input)
-	for value.Kind() == reflect.Pointer {
-		if value.IsNil() {
-			return reflect.Value{}, fmt.Errorf("generator: nil semantic input")
-		}
-		value = value.Elem()
+	value := indirectValue(reflect.ValueOf(input))
+	if !value.IsValid() {
+		return reflect.Value{}, fmt.Errorf("generator: nil semantic input")
 	}
 	if value.Kind() != reflect.Struct {
 		return reflect.Value{}, fmt.Errorf("generator: unsupported semantic input %T", input)
@@ -66,106 +83,8 @@ func reflectedStruct(input any) (reflect.Value, error) {
 	return value, nil
 }
 
-func reflectNodes(value reflect.Value, model *SemanticIR, input any) (map[string]int, map[string]int, error) {
-	nodes := value.FieldByName("Nodes")
-	if !nodes.IsValid() || nodes.Kind() != reflect.Map {
-		return nil, nil, fmt.Errorf("generator: semantic input %T does not expose a Nodes map; implement SemanticIRProvider", input)
-	}
-	entityByID := make(map[string]int)
-	activityByID := make(map[string]int)
-	for _, key := range nodes.MapKeys() {
-		reflectNode(nodes.MapIndex(key), model, entityByID, activityByID)
-	}
-	return entityByID, activityByID, nil
-}
-
-func reflectNode(node reflect.Value, model *SemanticIR, entities, activities map[string]int) {
-	node = indirectValue(node)
-	if node.Kind() != reflect.Struct {
-		return
-	}
-	id := valueString(node.FieldByName("ID"))
-	name := stringField(node, "Name")
-	kind := strings.ToLower(valueString(node.FieldByName("Kind")))
-	if id == "" || name == "" {
-		return
-	}
-	switch {
-	case strings.Contains(kind, "entity"):
-		entities[id] = len(model.Entities)
-		model.Entities = append(model.Entities, Entity{ID: id, Name: name, GoName: name})
-	case strings.Contains(kind, "activity"):
-		activities[id] = len(model.Activities)
-		model.Activities = append(model.Activities, Activity{ID: id, Name: name, GoName: name})
-	}
-}
-
-func reflectFacts(value reflect.Value, model *SemanticIR, entities, activities map[string]int) {
-	facts := value.FieldByName("Facts")
-	if !facts.IsValid() || facts.Kind() != reflect.Map {
-		return
-	}
-	for _, key := range facts.MapKeys() {
-		reflectFact(facts.MapIndex(key), model, entities, activities)
-	}
-}
-
-func reflectFact(fact reflect.Value, model *SemanticIR, entities, activities map[string]int) {
-	fact = indirectValue(fact)
-	if fact.Kind() != reflect.Struct {
-		return
-	}
-	subject := valueString(fact.FieldByName("Subject"))
-	predicate := strings.ToLower(valueString(fact.FieldByName("Predicate")))
-	object := valueString(fact.FieldByName("Object"))
-	activityIndex, subjectIsActivity := activities[subject]
-	objectActivityIndex, objectIsActivity := activities[object]
-	if subjectIsActivity && strings.Contains(predicate, "used") {
-		appendInput(model, activityIndex, entities, object)
-	}
-	if objectIsActivity && strings.Contains(predicate, "generated") {
-		appendOutput(model, objectActivityIndex, entities, subject)
-	}
-}
-
-func appendInput(model *SemanticIR, activityIndex int, entities map[string]int, entityID string) {
-	entityIndex, ok := entities[entityID]
-	if !ok {
-		return
-	}
-	entity := model.Entities[entityIndex]
-	model.Activities[activityIndex].Inputs = append(model.Activities[activityIndex].Inputs, Port{
-		Name: lowerCamel(entity.GoName), EntityID: entity.ID, GoType: entity.GoName,
-	})
-}
-
-func appendOutput(model *SemanticIR, activityIndex int, entities map[string]int, entityID string) {
-	entityIndex, ok := entities[entityID]
-	if !ok {
-		return
-	}
-	entity := model.Entities[entityIndex]
-	model.Activities[activityIndex].Outputs = append(model.Activities[activityIndex].Outputs, Port{
-		Name: entity.GoName, EntityID: entity.ID, GoType: entity.GoName,
-	})
-}
-
-func finishReflectedModel(model *SemanticIR) {
-	if model.Package == "" {
-		model.Package = "generated"
-	}
-	for index := range model.Activities {
-		sort.SliceStable(model.Activities[index].Inputs, func(left, right int) bool {
-			return model.Activities[index].Inputs[left].EntityID < model.Activities[index].Inputs[right].EntityID
-		})
-		sort.SliceStable(model.Activities[index].Outputs, func(left, right int) bool {
-			return model.Activities[index].Outputs[left].EntityID < model.Activities[index].Outputs[right].EntityID
-		})
-	}
-}
-
 func indirectValue(value reflect.Value) reflect.Value {
-	for value.Kind() == reflect.Pointer {
+	for value.IsValid() && (value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface) {
 		if value.IsNil() {
 			return reflect.Value{}
 		}
@@ -174,19 +93,10 @@ func indirectValue(value reflect.Value) reflect.Value {
 	return value
 }
 
-func stringField(value reflect.Value, name string) string {
-	return valueString(value.FieldByName(name))
-}
-
 func valueString(value reflect.Value) string {
+	value = indirectValue(value)
 	if !value.IsValid() {
 		return ""
-	}
-	for value.Kind() == reflect.Pointer {
-		if value.IsNil() {
-			return ""
-		}
-		value = value.Elem()
 	}
 	if value.Kind() == reflect.String {
 		return value.String()
