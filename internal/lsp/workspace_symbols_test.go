@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -54,11 +55,11 @@ func TestWorkspaceSymbolsMatchOpenDocumentsByNameAndID(t *testing.T) {
 	}
 	for index, expected := range want {
 		got := response.Result[index]
-		if got.Location.URI != expected.uri || got.Name != expected.name || got.ID != expected.id {
+		if got.Location.URI != expected.uri || got.Name != expected.name || got.ID != "" || !strings.Contains(got.Detail, expected.id) {
 			t.Fatalf("workspace symbol %d = %#v, want %#v", index, got, expected)
 		}
 	}
-	if response.Result[0].Detail != "entity Order" || response.Result[0].Kind != SymbolClass ||
+	if !strings.HasPrefix(response.Result[0].Detail, "entity Order") || response.Result[0].Kind != SymbolClass ||
 		response.Result[0].Location.Range != testRange(0, 0, 0, 12) {
 		t.Fatalf("workspace symbol projection = %#v", response.Result[0])
 	}

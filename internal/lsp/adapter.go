@@ -1,13 +1,31 @@
 package lsp
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sort"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
+type loweredSymbolKey struct {
+	start int
+	end   int
+	kind  semantic.Kind
+	name  string
+}
+
+// adaptSyntaxResult is retained as a small, context-free test seam. The live
+// SyntaxParser path uses adaptSyntaxResultContext so lowering participates in
+// request cancellation.
 func adaptSyntaxResult(uri, source string, file *syntax.File, diagnostics syntax.Diagnostics) (ParseResult, error) {
+	return adaptSyntaxResultContext(context.Background(), uri, source, file, diagnostics)
+}
+
+func adaptSyntaxResultContext(ctx context.Context, uri, source string, file *syntax.File, diagnostics syntax.Diagnostics) (ParseResult, error) {
 	result := ParseResult{File: file}
 	for _, diagnostic := range diagnostics.SortBySpan() {
 		mapped, err := syntaxDiagnostic(source, diagnostic)
@@ -16,9 +34,31 @@ func adaptSyntaxResult(uri, source string, file *syntax.File, diagnostics syntax
 		}
 		result.Diagnostics = append(result.Diagnostics, mapped)
 	}
-	for _, declaration := range syntaxDeclarations(file) {
-		if err := appendDeclaration(&result, source, declaration); err != nil {
+
+	result.semanticChecked = file != nil && (file.Package != nil || file.Namespace != nil || len(syntaxDeclarations(file)) > 0)
+	ids := make(map[loweredSymbolKey]string)
+	names := make(map[string]string)
+	if result.semanticChecked && !diagnostics.HasErrors() && file.Package != nil && file.Namespace != nil {
+		ir, err := bidir.LowerContext(ctx, canonicalSyntaxFile(file))
+		if err != nil {
+			if errors.Is(err, bidir.ErrLowerCanceled) {
+				return ParseResult{}, err
+			}
+			result.Diagnostics = append(result.Diagnostics, semanticDiagnostic(uri, source, file, err))
+		} else {
+			result.semanticValid = true
+			ids, names = loweredIdentities(ir)
+		}
+	}
+
+	if file != nil {
+		if err := appendHeaderSymbols(&result, source, file); err != nil {
 			return ParseResult{}, err
+		}
+		for _, declaration := range syntaxDeclarations(file) {
+			if err := appendDeclaration(&result, source, declaration, ids, names); err != nil {
+				return ParseResult{}, err
+			}
 		}
 	}
 	return normalizeParseResult(uri, source, result), nil
@@ -97,21 +137,65 @@ func syntaxDeclarations(file *syntax.File) []syntax.Declaration {
 	if file == nil {
 		return nil
 	}
-	return file.Decls
+	if len(file.Decls) > 0 {
+		return file.Decls
+	}
+	return file.Declarations
 }
 
-func appendDeclaration(result *ParseResult, source string, declaration syntax.Declaration) error {
+func canonicalSyntaxFile(file *syntax.File) *syntax.File {
+	if file == nil || len(file.Decls) == 0 {
+		return file
+	}
+	clone := *file
+	clone.Declarations = append([]syntax.Declaration(nil), file.Decls...)
+	return &clone
+}
+
+func appendHeaderSymbols(result *ParseResult, source string, file *syntax.File) error {
+	if file.Package != nil && file.Package.Name != "" && !file.Package.NameSpan.IsEmpty() {
+		rangeValue, err := syntaxRange(source, file.Package.Span)
+		if err != nil {
+			return err
+		}
+		selection, err := syntaxRange(source, file.Package.NameSpan)
+		if err != nil {
+			return err
+		}
+		result.Headers = append(result.Headers, Symbol{
+			Name: file.Package.Name, Kind: SymbolPackage, Detail: "package " + file.Package.Name,
+			Range: rangeValue, SelectionRange: selection,
+		})
+	}
+	if file.Namespace != nil && file.Namespace.Name != "" && !file.Namespace.NameSpan.IsEmpty() {
+		rangeValue, err := syntaxRange(source, file.Namespace.Span)
+		if err != nil {
+			return err
+		}
+		selection, err := syntaxRange(source, file.Namespace.NameSpan)
+		if err != nil {
+			return err
+		}
+		result.Headers = append(result.Headers, Symbol{
+			Name: file.Namespace.Name, Kind: SymbolNamespace, Detail: "namespace " + file.Namespace.Name,
+			Range: rangeValue, SelectionRange: selection,
+		})
+	}
+	return nil
+}
+
+func appendDeclaration(result *ParseResult, source string, declaration syntax.Declaration, ids map[loweredSymbolKey]string, names map[string]string) error {
 	switch value := declaration.(type) {
 	case *syntax.EntityDecl:
-		return appendEntity(result, source, value)
+		return appendEntity(result, source, value, ids)
 	case *syntax.ActivityDecl:
-		return appendActivity(result, source, value)
+		return appendActivity(result, source, value, ids, names)
 	default:
 		return nil
 	}
 }
 
-func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl) error {
+func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl, ids map[loweredSymbolKey]string) error {
 	rangeValue, err := syntaxRange(source, entity.Span)
 	if err != nil {
 		return err
@@ -120,9 +204,10 @@ func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl)
 	if err != nil {
 		return err
 	}
+	id := ids[loweredSymbolKey{start: entity.Span.Start.Offset, end: entity.Span.End.Offset, kind: semantic.Entity, name: entity.Name}]
 	identityRange := Range{}
 	hasIdentity := false
-	if entity.ID != "" && !entity.IDSpan.IsEmpty() {
+	if id != "" && entity.ID != "" && !entity.IDSpan.IsEmpty() {
 		identityRange, err = syntaxRange(source, entity.IDSpan)
 		if err != nil {
 			return err
@@ -130,14 +215,14 @@ func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl)
 		hasIdentity = true
 	}
 	result.Symbols = append(result.Symbols, Symbol{
-		Name: entity.Name, ID: entity.ID, Kind: SymbolClass,
+		Name: entity.Name, ID: id, Kind: SymbolClass,
 		Detail: "entity " + entity.Name, Range: rangeValue, SelectionRange: selection,
 		identityRange: identityRange, hasIdentity: hasIdentity,
 	})
 	return nil
 }
 
-func appendActivity(result *ParseResult, source string, activity *syntax.ActivityDecl) error {
+func appendActivity(result *ParseResult, source string, activity *syntax.ActivityDecl, ids map[loweredSymbolKey]string, names map[string]string) error {
 	rangeValue, err := syntaxRange(source, activity.Span)
 	if err != nil {
 		return err
@@ -146,17 +231,18 @@ func appendActivity(result *ParseResult, source string, activity *syntax.Activit
 	if err != nil {
 		return err
 	}
+	id := ids[loweredSymbolKey{start: activity.Span.Start.Offset, end: activity.Span.End.Offset, kind: semantic.Activity, name: activity.Name}]
 	result.Symbols = append(result.Symbols, Symbol{
-		Name: activity.Name, Kind: SymbolFunction, Detail: "activity " + activity.Name,
+		Name: activity.Name, ID: id, Kind: SymbolFunction, Detail: "activity " + activity.Name,
 		Range: rangeValue, SelectionRange: selection,
 	})
-	for _, input := range canonicalActivityParameters(activity) {
-		if err := appendReference(result, source, input.Name, input.Span); err != nil {
+	for _, input := range activity.Inputs {
+		if err := appendReference(result, source, input.Name, input.Span, names[input.Name]); err != nil {
 			return err
 		}
 	}
 	output := canonicalActivityOutput(source, activity)
-	return appendReference(result, source, output.Name, output.Span)
+	return appendReference(result, source, output.Name, output.Span, names[output.Name])
 }
 
 func canonicalActivityOutput(source string, activity *syntax.ActivityDecl) syntax.NameRef {
@@ -174,11 +260,7 @@ func canonicalActivityOutput(source string, activity *syntax.ActivityDecl) synta
 	}
 }
 
-func canonicalActivityParameters(activity *syntax.ActivityDecl) []syntax.NameRef {
-	return activity.Inputs
-}
-
-func appendReference(result *ParseResult, source, name string, span syntax.Span) error {
+func appendReference(result *ParseResult, source, name string, span syntax.Span, id string) error {
 	if name == "" || span.IsEmpty() {
 		return nil
 	}
@@ -186,7 +268,7 @@ func appendReference(result *ParseResult, source, name string, span syntax.Span)
 	if err != nil {
 		return err
 	}
-	result.References = append(result.References, Reference{Name: name, Range: rangeValue})
+	result.References = append(result.References, Reference{Name: name, ID: id, Range: rangeValue})
 	return nil
 }
 

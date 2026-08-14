@@ -167,9 +167,8 @@ func TestSyntaxEntityIdentitySpanHandlesInvalidUTF8WithoutMutation(t *testing.T)
 		t.Fatalf("symbols = %#v", result.Symbols)
 	}
 	symbol := result.Symbols[0]
-	if !symbol.hasIdentity || symbol.identityRange.Start != (Position{Line: 2, Character: 16}) ||
-		symbol.identityRange.End != (Position{Line: 2, Character: 27}) {
-		t.Fatalf("identity range = %#v", symbol.identityRange)
+	if symbol.hasIdentity || symbol.ID != "" {
+		t.Fatalf("malformed source invented identity = %#v", symbol)
 	}
 	if source != originalSource || !reflect.DeepEqual(diagnostics, originalDiagnostics) {
 		t.Fatalf("identity mapping mutated source or diagnostics: source=%q diagnostics=%#v", source, diagnostics)

@@ -52,6 +52,7 @@ func (server *Server) parse(ctx context.Context, uri, source string) (ParseResul
 // the derived LSP projections. The canonical syntax tree remains read-only and
 // is intentionally not copied or reinterpreted by this adapter.
 func cloneParseResult(result ParseResult) ParseResult {
+	result.Headers = append([]Symbol(nil), result.Headers...)
 	result.Symbols = append([]Symbol(nil), result.Symbols...)
 	result.References = append([]Reference(nil), result.References...)
 	result.Diagnostics = append([]Diagnostic(nil), result.Diagnostics...)
@@ -60,9 +61,16 @@ func cloneParseResult(result ParseResult) ParseResult {
 
 type ParseResult struct {
 	File        *syntax.File
+	Headers     []Symbol
 	Symbols     []Symbol
 	References  []Reference
 	Diagnostics []Diagnostic
+
+	// semanticChecked distinguishes the authoritative syntax adapter from
+	// test/integration parsers supplied through ParserFunc. A checked result
+	// never falls back to name-only links when lowering was rejected.
+	semanticChecked bool
+	semanticValid   bool
 }
 
 type SymbolKind int
@@ -70,6 +78,7 @@ type SymbolKind int
 const (
 	SymbolFile      SymbolKind = 1
 	SymbolNamespace SymbolKind = 3
+	SymbolPackage   SymbolKind = 4
 	SymbolClass     SymbolKind = 5
 	SymbolFunction  SymbolKind = 12
 	SymbolKeyword   SymbolKind = 14
@@ -93,6 +102,7 @@ type Symbol struct {
 
 type Reference struct {
 	Name  string
+	ID    string
 	Range Range
 }
 
@@ -113,5 +123,5 @@ func (SyntaxParser) ParseContext(ctx context.Context, uri, source string) (Parse
 		return ParseResult{}, err
 	}
 	file, diagnostics := syntax.ParseFile(uri, source)
-	return adaptSyntaxResult(uri, source, file, diagnostics)
+	return adaptSyntaxResultContext(ctx, uri, source, file, diagnostics)
 }
