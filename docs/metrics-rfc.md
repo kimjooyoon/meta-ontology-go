@@ -58,6 +58,10 @@ input. `EVALUATOR_ERROR` is reserved for an evaluator that cannot establish
 the other reasons; it is not a generic replacement for an unresolved authority
 input.
 
+`PASS` and catalog-proven `NOT_APPLICABLE` are not failure packets. The latter
+retains its deterministic code and applicability proof, but has no failure
+domain, retry, dependency routing, or blocking propagation.
+
 The valid decision/state/reason combinations are closed:
 
 | decision | evaluation_state | failure_reason/code | required condition |
@@ -343,8 +347,10 @@ metric and evidence tuple.
 
 ## 6. Failure domains and dependency propagation
 
-Every non-PASS result and failure packet carries `failure_domain` and sorted
-`dependency_edges`:
+Every actual `FAIL_CLOSED` or `UNKNOWN` result, including deferred, not-run,
+and evaluator-error states, and every corresponding failure packet carries
+`failure_domain` and sorted `dependency_edges`. `PASS` and catalog-proven
+`NOT_APPLICABLE` are excluded from this failure-routing requirement.
 
 | Domain | Propagation rule |
 | --- | --- |
