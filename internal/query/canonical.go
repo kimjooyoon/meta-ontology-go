@@ -11,6 +11,11 @@ import (
 // candidate explanations are intentionally omitted from semantic identity.
 func (graph Graph) Canonical() string {
 	var builder strings.Builder
+	if graph.binding != nil && graph.binding.namespace != "" {
+		builder.WriteString("namespace\t")
+		writeCanonicalField(&builder, graph.binding.namespace)
+		builder.WriteByte('\n')
+	}
 	for _, fact := range graph.AllFacts() {
 		builder.WriteString("fact\t")
 		writeCanonicalField(&builder, fact.Status.String())
