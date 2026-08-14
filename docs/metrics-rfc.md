@@ -128,14 +128,18 @@ UseSiteID = hash(containing_semantic_id,
                  resolved_target_semantic_id,
                  canonical_ast_path,
                  implementation_slot_id)
-ExecutionRootSet = explicitly listed execution roots from the immutable metric
-                    catalog, plus canonical adapter roots from the immutable
-                    adapter registry
+ExecutionRootSet(snapshot) = sort(unique(
+  immutable_metric_catalog.execution_root_ids(snapshot)
+  ∪ canonical_adapter_registry.adapter_root_ids(snapshot)))
 G_exec = (V_exec, E_exec)
-E_exec = adapter -> canonical_entrypoint
-         ∪ canonical_implementation_slot -> resolved_callee
-Reach_exec = nodes reachable from ExecutionRootSet following E_exec forward
-AuthoritativeUseSet(u) = reachable, resolved, authoritative UseSiteIDs for u
+V_exec = immutable adapter-root IDs ∪ authoritative SemanticUnitIDs
+E_exec = (adapter_root_id -> bound SemanticUnitID)
+         ∪ (caller SemanticUnitID -> resolved callee SemanticUnitID
+            for canonical authoritative calls)
+Reach_exec = Reach(ExecutionRootSet(snapshot), G_exec)
+AuthoritativeUseSet(u) = {UseSiteID(call) | call is canonical and authoritative,
+  containing_semantic_id(call) ∈ Reach_exec,
+  target_semantic_id(call) = SemanticUnitID(u)}
 R(u) = distinct containing semantic IDs represented by AuthoritativeUseSet(u)
 ComponentWeight(u) = count(normalized AST operation tokens in the catalog-pinned
                             component closure, deduplicated by source origin)
@@ -148,28 +152,33 @@ LocalWeight(u) = count(normalized AST operation tokens in
 `ExecutionRootSet` is not inferred from exported names, file paths, changed
 files, tests, a `main` function, or a scan of the call graph. Every root must
 be an immutable metric-catalog row or a canonical adapter-registry binding,
-with a stable ID and the catalog/registry digest recorded in the observation.
-An explicitly empty root set is valid; a missing root declaration or an
-ambiguous root binding is `UNKNOWN`.
+with a stable ID; the set is sorted after duplicate removal and its
+catalog/registry digest is recorded in the observation. An explicitly empty
+root set is valid; a missing root declaration or an ambiguous root binding is
+`UNKNOWN`.
 
-`G_exec` contains only the two directed edge forms shown above: a canonical
-adapter points to its registered semantic entrypoint, and an authoritative
-implementation slot points to its resolved callee. Reachability follows those
-directions from every root; reverse incoming edges are observed for use-site
-collection but are never traversed as forward reachability. Containment,
-ownership, inverse or derived relations, candidate facts, aliases, unresolved
-symbols, reflection or string names, unreachable code, and test-only edges
-unless the immutable metric policy includes tests are excluded from `E_exec`.
-Generated call-sites map to one source-origin edge and do not add generated
-expansion edges. A missing or ambiguous adapter, call, owner, source-origin,
-stable-ID, or reachability resolution is `UNKNOWN`, never an empty set.
+`G_exec` contains exactly the two directed edge forms shown above: an
+adapter-root ID points to its bound semantic ID, and a caller semantic ID
+points to its resolved callee semantic ID for a canonical authoritative call.
+`implementation_slot_id` remains part of `UseSiteID` and its source binding; it
+is not a `G_exec` vertex and no implicit semantic-unit-to-slot edge exists. A
+UseSite is reachable if and only if its `containing_semantic_id` is in
+`Reach_exec`; it contributes to `AuthoritativeUseSet(u)` only when its target
+is exactly `SemanticUnitID(u)`. Incoming edges may be selected for use-site
+collection but are never traversed in reverse for reachability.
 
-`AuthoritativeUseSet(u)` is the set of `UseSiteID`s for authoritative incoming
-edges whose containing implementation slot is in `Reach_exec` and whose
-resolved target is `SemanticUnitID(u)`. Candidate facts are not references;
-aliases are not identities. The containing semantic ID and implementation
-slot must each resolve uniquely. Thus an unresolved, ambiguous, or
-unreachable reference cannot create a consumer or a `PASS` result.
+Containment, ownership, inverse or derived relations, candidate facts, aliases,
+unresolved symbols, reflection or string names, unreachable code, and test-only
+edges unless the immutable metric policy includes tests are excluded from
+`E_exec`. Generated call-sites map to one source-origin edge and do not add
+generated expansion edges. A missing or ambiguous adapter, call, owner,
+source-origin, stable-ID, or reachability resolution is `UNKNOWN`, never an
+empty set.
+
+Candidate facts are not references; aliases are not identities. The containing
+semantic ID, target semantic ID, source binding, and call edge must each
+resolve uniquely. Thus an unresolved, ambiguous, or unreachable reference
+cannot create a consumer or a `PASS` result.
 
 The component closure is rooted at `SemanticUnitID(u)` over a catalog-pinned
 edge set used only for component weight:
