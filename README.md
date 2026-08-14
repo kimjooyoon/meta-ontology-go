@@ -23,6 +23,29 @@ PROV-inspired vocabulary, deterministic normalization, explicit candidate facts,
 and marker-based generated regions. See [the architecture](docs/architecture.md)
 and [the language sketch](docs/spec.md).
 
+## The deterministic pressure loop
+
+[![Animated explanation of the semantic pressure loop: a stable floor, protected K-of-M selector, 100 heuristic attempts, append-only provenance, deterministic CI requalification, and a sealed next floor](docs/assets/metric-pressure-loop/metric-pressure-loop.gif)](docs/assets/metric-pressure-loop/metric-pressure-loop.png)
+
+The [static PNG preview](docs/assets/metric-pressure-loop/metric-pressure-loop.png)
+is useful in viewers that do not animate GIFs. The loop is illustrative: each
+system's protected policy/SPI declares its own `N` base metrics, `M` cross
+pressures, and active `K`; the language guarantees at least **two independent,
+non-compensating pressure dimensions**, not one universal set of numbers. The
+animation uses `N=6`, `M=4`, and `K=2` only as one concrete policy instance, and
+the 100 parallel agents are an illustrative workload. Agent attempts are
+heuristic and may PASS, FAIL, or remain UNKNOWN; deterministic policy selection
+and **Deterministic CI — not inference** perform the ceiling-vector
+requalification, where all required dimensions must pass together before the
+qualified ceiling becomes the next floor.
+
+Regenerate and verify the checked-in media with:
+
+```sh
+go run ./docs/assets/metric-pressure-loop
+go run ./docs/assets/metric-pressure-loop -check
+```
+
 ## Quick start
 
 Run the repository checks from the project root:
