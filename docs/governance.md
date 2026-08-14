@@ -31,6 +31,10 @@ The semantic IR is an interchange representation, not a second business SSOT.
 Its normalized form makes projections comparable; it does not authorize a tool to
 invent domain meaning. Provenance is evidence, not a write-back channel.
 
+The design-only [deterministic metrics RFC](metrics-rfc.md) defines how repeated
+reasoning may become exact predicates. It does not activate new blocking checks;
+the contracts in this document and the live CI policy remain authoritative.
+
 ## 2. CI-only branch and promotion contract
 
 The checked-in governance mode is `ci_only`. Review roles, approval actors, and

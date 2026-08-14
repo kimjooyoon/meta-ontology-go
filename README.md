@@ -74,7 +74,8 @@ evidence are present.
 [AGENTS.md](AGENTS.md) defines authority boundaries and agent roles.
 [CONTRIBUTING.md](CONTRIBUTING.md) defines branch, PR, review, and CI workflow.
 [docs/governance.md](docs/governance.md) records the SSOT boundary, BX laws, line
-caps, and evidence policy. [docs/conformance.md](docs/conformance.md) is the
-runnable example index.
+caps, and evidence policy. [docs/metrics-rfc.md](docs/metrics-rfc.md) defines
+the design-only deterministic metric contract. [docs/conformance.md](docs/conformance.md)
+is the runnable example index.
 
 [W3C PROV-O]: https://www.w3.org/TR/prov-o/
