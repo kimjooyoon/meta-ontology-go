@@ -19,6 +19,7 @@ DecisionMetric {
   unit: value's unit or finite domain
   predicate: exact accept/reject expression
   decision: PASS | FAIL_CLOSED | NOT_APPLICABLE | UNKNOWN
+  enforcement_effect: NO_EFFECT | ALLOW | BLOCK
   evaluation_state: EVALUATED | DEFERRED | NOT_RUN | ERROR
   applicability: catalog-derived APPLICABLE | NOT_APPLICABLE
   scope: feature | global | integration | promotion | retirement
@@ -63,20 +64,30 @@ The valid decision/state/reason combinations are closed:
 | --- | --- | --- | --- |
 | `PASS` | `EVALUATED` | `NONE` / absent | Applicable catalog row and exact predicate are true. |
 | `FAIL_CLOSED` | `EVALUATED` | `PREDICATE_FALSE` / exact code | Applicable predicate is false. |
-| `FAIL_CLOSED` | One of `EVALUATED`, `DEFERRED`, `NOT_RUN`, `ERROR` | Any non-`NONE`, non-`CATALOG_NOT_APPLICABLE` reason / exact code | Catalog-declared blocking adapter projects the raw non-PASS result without rewriting its state, reason, code, or domain. |
 | `NOT_APPLICABLE` | `EVALUATED` | `CATALOG_NOT_APPLICABLE` / exact code | Immutable catalog proof establishes `NOT_APPLICABLE`. |
 | `UNKNOWN` | `EVALUATED` | missing, ambiguous, mismatch, applicability-unproven, or evaluator reason / exact code | Required input or exact result cannot be established. |
 | `UNKNOWN` | `DEFERRED` | `EXCEPTION_WINDOW_ACTIVE` / exact code | The union of cataloged exception intervals is active; waived is an annotation, never `PASS`. |
 | `UNKNOWN` | `NOT_RUN` | `NOT_RUN` / exact code | Evaluation did not run; it never implies success. |
 | `UNKNOWN` | `ERROR` | `EVALUATOR_ERROR` / exact code | The evaluator itself failed before establishing another reason. |
 
-The raw metric result is the source of truth. A catalog-declared blocking
-adapter may project any raw `UNKNOWN` or `ERROR` result to `FAIL_CLOSED` for
-enforcement, retaining its original evaluation state, failure reason, code, and
-domain; it may not project `NONE` or an unproved `CATALOG_NOT_APPLICABLE`.
-Other decision/state/reason combinations, including `PASS+ERROR`,
-`PASS+PREDICATE_FALSE`, `FAIL_CLOSED+NONE`, and `NOT_APPLICABLE` without
-catalog proof, are invalid and rejected.
+The raw metric decision, evaluation state, failure reason, failure code, and
+failure domain are never rewritten for enforcement. `enforcement_effect` is a
+separate closed field derived from adoption and applicability:
+
+| adoption/applicability/raw result | enforcement_effect |
+| --- | --- |
+| Adoption is before `BLOCKING` | `NO_EFFECT` |
+| `BLOCKING` + applicable + raw `PASS` | `ALLOW` |
+| `BLOCKING` + applicable + raw predicate false (`FAIL_CLOSED`) | `BLOCK` |
+| `BLOCKING` + applicable + raw `UNKNOWN` in any valid evaluated, deferred, not-run, or error state | `BLOCK` |
+| `BLOCKING` + catalog-proven `NOT_APPLICABLE` | `NO_EFFECT` |
+| `BLOCKING` + applicability not proven (raw `UNKNOWN` with `APPLICABILITY_UNPROVEN`) | `BLOCK` |
+
+Other raw decision/state/reason combinations, including `PASS+ERROR`,
+`PASS+PREDICATE_FALSE`, `FAIL_CLOSED+NOT_RUN`, `FAIL_CLOSED+ERROR`,
+`FAIL_CLOSED+NONE`, and `NOT_APPLICABLE` without catalog proof, are invalid and
+rejected. Enforcement never changes a raw `UNKNOWN` or `ERROR` into
+`FAIL_CLOSED`.
 
 For every L4 or L5 observation, the packet must contain repository, event,
 event_ref, base ref and SHA, head ref and SHA, workflow SHA, run and attempt,
@@ -88,8 +99,8 @@ predicates touch branch protection or topology must include the live protection
 and/or topology digest; a catalog proof is required to mark either input
 not-applicable. There is no “when inputs exist” escape: missing mandatory data
 is `UNKNOWN`, and for a declared blocking metric `NOT_APPLICABLE` without
-catalog proof, `DEFERRED`, `NOT_RUN`, `UNKNOWN`, or evaluator `ERROR` all map to
-`FAIL_CLOSED`.
+catalog proof, `DEFERRED`, `NOT_RUN`, `UNKNOWN`, or evaluator `ERROR` retain
+their raw result while `enforcement_effect=BLOCK`.
 
 `APP` means append-only evidence can only add or retain facts, `SNAP` is a
 current snapshot value, `EQ` is an exact deterministic equality, and `COND` is
@@ -154,6 +165,28 @@ adopted through the state machine.
 Raw LOC caps of 300 lines per file and 75 lines per function remain
 resource-safety limits. They are not evidence that the language is DAMP or DRY
 and are reported separately from semantic reuse and its semantic weights.
+
+The resource metrics use an immutable `ResourcePathSet(snapshot)` selected by
+the catalog's path predicate over the snapshot blob manifest. Each selected
+path must resolve to exactly one blob; a missing blob or ambiguous path class
+is `UNKNOWN`. Generated output, vendor paths, and test files are excluded by
+default and are included only by an explicit catalog path rule. For a selected
+Go blob, canonical formatting is required before counting: pinned `gofmt` (or
+an equivalently specified formatter) accepts the source, and line endings are
+canonicalized from CRLF to LF; a lone CR or formatting failure is `UNKNOWN`.
+
+```text
+PhysicalLOC(blob) = 0                         if blob is empty
+                    count(LF)                 if the canonical blob ends in LF
+                    count(LF) + 1             otherwise
+```
+
+A final LF terminates the last line and does not add an extra empty line. A
+function resource span is the inclusive Go AST span from the function or
+method declaration's start line through its closing-brace end line; it is
+parsed from the canonical LF blob, never found by text matching. A syntax or
+AST-span ambiguity is `UNKNOWN`. Canonical formatting and LF normalization
+prevent minification and line-ending changes from gaming either resource cap.
 
 For a semantic unit `u`, define:
 
@@ -344,7 +377,7 @@ complete.
 | BX, locality, no-write | Do Get-Put and Put-Get preserve semantic meaning, limit the change radius, and leave rejected input unchanged? |
 | Projection and leverage | Are markers, slots, source maps, generated bytes, and semantic-to-output coverage deterministic and complete? What derived views does one authority declaration supply? |
 | Obligation coverage | Does every declared semantic law have a distinct input partition, oracle, and witness? |
-| Query, cache, performance | Are query results sound and bounded, cache keys/freshness/invalidation correct, and pinned performance baselines reproducible? |
+| Query, cache, performance, host parity | Are query results sound and bounded, cache keys/freshness/invalidation correct, pinned performance baselines reproducible, and host outputs equal across the declared matrix? |
 | Diagnostics and LSP | Are codes, spans, ordering, UTF-16 ranges, versions, cancellation, and read-only behavior deterministic? |
 | Ownership and scope | Is there exactly one registered writer, is semantic closure in scope, and are roles separated? |
 | Evidence and freshness | Are event/base/head/run/attempt/jobs/artifacts/catalog and write effects exact, digest-bound, current, and append-only? |
