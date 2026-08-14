@@ -101,7 +101,7 @@ func runAnalyzeDelta(args []string, reader SourceReader, parser SourceParser, st
 		fmt.Fprintln(stderr, err)
 		return exitUsage
 	}
-	deadline := time.Now().Add(commandDeadline)
+	deadline := time.Now().Add(2 * commandDeadline)
 	authority, model, err := readAnalyzeAuthority(o.authority, reader, parser, deadline)
 	if err != nil {
 		return reportAnalyzeDeltaError(stderr, o.authority, "read authority", err)
