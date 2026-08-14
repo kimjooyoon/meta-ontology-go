@@ -32,6 +32,7 @@ type provenanceCLIError struct {
 type provenancePublishResponse struct {
 	Schema          string                `json:"schema"`
 	Status          string                `json:"status"`
+	CheckStatus     string                `json:"check_status,omitempty"`
 	SourceDigest    string                `json:"source_digest,omitempty"`
 	SemanticDigest  string                `json:"semantic_digest,omitempty"`
 	GraphDigest     string                `json:"graph_digest,omitempty"`
