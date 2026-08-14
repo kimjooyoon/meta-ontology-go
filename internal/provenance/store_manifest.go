@@ -1,6 +1,7 @@
 package provenance
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -42,6 +43,26 @@ func preparedManifestFor(baseData []byte, baseRecords []Evidence, nextData []byt
 
 func manifestStateMatches(manifest ledgerManifest, expected ledgerManifestState) bool {
 	return manifest.Bytes == expected.Bytes && manifest.Lines == expected.Lines && manifest.Digest == expected.Digest && manifest.LastID == expected.LastID && manifest.LastHash == expected.LastHash && manifest.Data == expected.Data
+}
+
+type ledgerMaterializeFaultPoints struct {
+	create, write, sync, close, rename, directorySync storageFaultPoint
+}
+
+func preparedRecoveryLedgerPoints() ledgerMaterializeFaultPoints {
+	return ledgerMaterializeFaultPoints{
+		write: faultRecoveryLedgerWrite, sync: faultRecoveryLedgerSync,
+		close: faultRecoveryLedgerClose, rename: faultRecoveryLedgerRename,
+		directorySync: faultRecoveryDirectorySync,
+	}
+}
+
+func committedRepairLedgerPoints() ledgerMaterializeFaultPoints {
+	return ledgerMaterializeFaultPoints{
+		create: faultCommittedRepairCreate, write: faultCommittedRepairWrite,
+		sync: faultCommittedRepairSync, close: faultCommittedRepairClose,
+		rename: faultCommittedRepairRename, directorySync: faultCommittedRepairDirectory,
+	}
 }
 
 type manifestFaultPoints struct {
@@ -98,10 +119,15 @@ func writeManifest(path string, manifest ledgerManifest, recovery bool) error {
 	return nil
 }
 
-func materializeLedger(path string, data []byte) error {
+func materializeLedger(path string, data []byte, points ledgerMaterializeFaultPoints) error {
 	directory := filepath.Dir(path)
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return fmt.Errorf("create provenance directory: %w", err)
+	}
+	if points.create != "" {
+		if err := failStorageOperation(points.create); err != nil {
+			return fmt.Errorf("create recovery ledger: %w", err)
+		}
 	}
 	temporary, err := os.CreateTemp(directory, ".provenance-ledger-*")
 	if err != nil {
@@ -109,27 +135,55 @@ func materializeLedger(path string, data []byte) error {
 	}
 	temporaryName := temporary.Name()
 	defer os.Remove(temporaryName)
-	if err := writeFullAt(temporary, data, faultRecoveryLedgerWrite); err != nil {
+	if err := writeFullAt(temporary, data, points.write); err != nil {
 		_ = temporary.Close()
 		return fmt.Errorf("write recovery ledger: %w", err)
 	}
-	if err := syncFile(temporary, faultRecoveryLedgerSync); err != nil {
+	if err := syncFile(temporary, points.sync); err != nil {
 		_ = temporary.Close()
 		return fmt.Errorf("sync recovery ledger: %w", err)
 	}
-	if err := closeFile(temporary, faultRecoveryLedgerClose); err != nil {
+	if err := closeFile(temporary, points.close); err != nil {
 		return fmt.Errorf("close recovery ledger: %w", err)
 	}
-	if err := failStorageOperation(faultRecoveryLedgerRename); err != nil {
+	if err := failStorageOperation(points.rename); err != nil {
 		return fmt.Errorf("rename recovery ledger: %w", err)
 	}
 	if err := os.Rename(temporaryName, path); err != nil {
 		return fmt.Errorf("rename recovery ledger: %w", err)
 	}
-	if err := syncDirectory(directory, faultRecoveryDirectorySync); err != nil {
+	if err := syncDirectory(directory, points.directorySync); err != nil {
 		return fmt.Errorf("sync recovery directory: %w", err)
 	}
 	return nil
+}
+
+// repairCommittedLedger treats validated committed metadata as an exact
+// recovery image. The replacement is durable before the post-state is
+// reread, parsed, and compared byte-for-byte; any barrier failure returns an
+// error so callers never observe an unvalidated partial repair.
+func repairCommittedLedger(path string, expected []byte) (ledgerState, error) {
+	if err := materializeLedger(path, expected, committedRepairLedgerPoints()); err != nil {
+		return ledgerState{}, fmt.Errorf("repair committed provenance ledger: %w", err)
+	}
+	if err := failStorageOperation(faultCommittedRepairRevalidate); err != nil {
+		return ledgerState{}, fmt.Errorf("revalidate committed provenance ledger: %w", err)
+	}
+	actual, err := os.ReadFile(path)
+	if err != nil {
+		return ledgerState{}, fmt.Errorf("re-read committed provenance ledger: %w", err)
+	}
+	if !bytes.Equal(actual, expected) {
+		return ledgerState{}, corruption(path, 0, 0, "repair-mismatch", fmt.Errorf("repaired ledger differs from committed bytes"))
+	}
+	state, err := parseLedgerData(path, actual)
+	if err != nil {
+		return ledgerState{}, fmt.Errorf("revalidate committed provenance records: %w", err)
+	}
+	if state.digest != digestBytes(expected) {
+		return ledgerState{}, corruption(path, 0, 0, "repair-mismatch", fmt.Errorf("repaired ledger digest differs from committed digest"))
+	}
+	return state, nil
 }
 
 func syncDirectory(directory string, point storageFaultPoint) error {

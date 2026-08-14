@@ -33,6 +33,13 @@ const (
 	faultRecoveryManifestClose     storageFaultPoint = "recovery-manifest-close"
 	faultRecoveryManifestRename    storageFaultPoint = "recovery-manifest-rename"
 	faultRecoveryManifestDirectory storageFaultPoint = "recovery-manifest-directory-sync"
+	faultCommittedRepairCreate     storageFaultPoint = "committed-repair-create"
+	faultCommittedRepairWrite      storageFaultPoint = "committed-repair-write"
+	faultCommittedRepairSync       storageFaultPoint = "committed-repair-sync"
+	faultCommittedRepairClose      storageFaultPoint = "committed-repair-close"
+	faultCommittedRepairRename     storageFaultPoint = "committed-repair-rename"
+	faultCommittedRepairDirectory  storageFaultPoint = "committed-repair-directory-sync"
+	faultCommittedRepairRevalidate storageFaultPoint = "committed-repair-revalidate"
 )
 
 type storageFault struct {

@@ -47,7 +47,9 @@ type ledgerManifestState struct {
 
 // readLedger exposes only a committed state. The JSONL file is deliberately
 // not authoritative by itself: a missing commit record rejects non-empty
-// bytes, and a prepared record deterministically rolls back to Base.
+// bytes, a prepared record deterministically rolls back to Base, and a fully
+// validated committed record repairs any divergent materialization from its
+// exact post-state image.
 func readLedger(path string) (ledgerState, error) {
 	data, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
@@ -74,12 +76,7 @@ func readLedger(path string) (ledgerState, error) {
 			return ledgerState{}, err
 		}
 		if !bytes.Equal(data, state.bytes) {
-			if len(data) != 0 {
-				if _, parseErr := parseLedgerData(path, data); parseErr != nil {
-					return ledgerState{}, parseErr
-				}
-			}
-			return ledgerState{}, corruption(path, 0, 0, "ledger-mutation", fmt.Errorf("ledger bytes differ from committed metadata"))
+			return repairCommittedLedger(path, state.bytes)
 		}
 		return state, nil
 	case manifestPrepared:
@@ -104,7 +101,7 @@ func recoverPrepared(path string, manifest ledgerManifest) (ledgerState, error) 
 	if !bytes.HasPrefix(next.bytes, base.bytes) {
 		return ledgerState{}, corruption(path, 0, 0, "commit-metadata-mutation", fmt.Errorf("prepared state does not append to its base"))
 	}
-	if err := materializeLedger(path, base.bytes); err != nil {
+	if err := materializeLedger(path, base.bytes, preparedRecoveryLedgerPoints()); err != nil {
 		return ledgerState{}, fmt.Errorf("recover provenance ledger: %w", err)
 	}
 	committed := ledgerManifestFor(base.bytes, base.records)
@@ -150,6 +147,8 @@ func readManifest(path string) (ledgerManifest, error) {
 		if _, ok := fields["base"]; !ok || manifest.Base == nil {
 			return ledgerManifest{}, corruption(path, 0, 0, "commit-metadata-incomplete", fmt.Errorf("prepared manifest base is required"))
 		}
+	} else if manifest.Base != nil {
+		return ledgerManifest{}, corruption(path, 0, 0, "commit-metadata-incomplete", fmt.Errorf("committed manifest cannot contain a prepared base"))
 	}
 	return manifest, nil
 }

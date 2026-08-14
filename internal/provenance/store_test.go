@@ -93,65 +93,100 @@ func TestSourceMutationFreshnessFailure(t *testing.T) {
 	}
 }
 
-func TestUnknownMalformedCorruptReorderedAndTruncatedLedgerReject(t *testing.T) {
-	t.Run("unknown-field", func(t *testing.T) {
-		path, data := validLedgerBytes(t)
-		mutated := bytes.Replace(data, []byte(`{"schema"`), []byte(`{"authority":"inferred","schema"`), 1)
-		if err := os.WriteFile(path, mutated, 0o644); err != nil {
-			t.Fatal(err)
-		}
-		_, err := New(path).Read(ReadOptions{})
-		var diagnostic *CorruptionError
-		if !errors.As(err, &diagnostic) || diagnostic.Kind != "invalid-json" {
-			t.Fatalf("unknown field was accepted: %v", err)
-		}
-	})
+func TestMalformedCommittedMetadataRejectsRepair(t *testing.T) {
+	t.Run("unknown-field", testUnknownCommittedMetadata)
+	t.Run("corrupt", testCorruptCommittedMetadata)
+	t.Run("stale-digest", testStaleCommittedMetadata)
+	t.Run("truncated", testTruncatedCommittedMetadata)
+	t.Run("no-repair", testMalformedMetadataDoesNotRepair)
+}
 
-	t.Run("corrupt", func(t *testing.T) {
-		path, data := validLedgerBytes(t)
-		marker := []byte(`"source_digest":"`)
-		index := bytes.Index(data, marker)
-		if index < 0 {
-			t.Fatal("golden source digest not found")
-		}
-		position := index + len(marker)
-		data[position] = 'f'
-		if err := os.WriteFile(path, data, 0o644); err != nil {
-			t.Fatal(err)
-		}
-		_, err := New(path).Read(ReadOptions{})
-		var diagnostic *CorruptionError
-		if !errors.As(err, &diagnostic) || diagnostic.Kind != "hash-mismatch" {
-			t.Fatalf("corrupt record was accepted: %v", err)
-		}
-	})
+func testUnknownCommittedMetadata(t *testing.T) {
+	path, data := validLedgerBytes(t)
+	metadata := bytes.Replace(mustReadFile(t, manifestPath(path)), []byte(`{"schema"`), []byte(`{"authority":"inferred","schema"`), 1)
+	if err := os.WriteFile(manifestPath(path), metadata, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	assertManifestError(t, path, "manifest-malformed", "unknown committed metadata field")
+	assertLedgerUnchanged(t, path, data)
+}
 
-	t.Run("reordered", func(t *testing.T) {
-		path, data := validLedgerBytes(t)
-		lines := bytes.Split(data, []byte{'\n'})
-		lines[0], lines[1] = lines[1], lines[0]
-		if err := os.WriteFile(path, bytes.Join(lines, []byte{'\n'}), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		_, err := New(path).Read(ReadOptions{})
-		var diagnostic *CorruptionError
-		if !errors.As(err, &diagnostic) || diagnostic.Kind != "chain-gap" {
-			t.Fatalf("reordered ledger was accepted: %v", err)
-		}
-	})
+func testCorruptCommittedMetadata(t *testing.T) {
+	path, data := validLedgerBytes(t)
+	metadata := mustReadFile(t, manifestPath(path))
+	marker := []byte(`"data":"`)
+	index := bytes.Index(metadata, marker)
+	if index < 0 {
+		t.Fatal("committed metadata data not found")
+	}
+	metadata[index+len(marker)] = '!'
+	if err := os.WriteFile(manifestPath(path), metadata, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	assertManifestError(t, path, "commit-metadata-malformed", "corrupt committed metadata")
+	assertLedgerUnchanged(t, path, data)
+}
 
-	t.Run("truncated", func(t *testing.T) {
-		path, data := validLedgerBytes(t)
-		lastLine := bytes.LastIndex(data[:len(data)-1], []byte{'\n'}) + 1
-		if err := os.WriteFile(path, data[:lastLine], 0o644); err != nil {
-			t.Fatal(err)
-		}
-		_, err := New(path).Read(ReadOptions{})
-		var diagnostic *CorruptionError
-		if !errors.As(err, &diagnostic) || diagnostic.Kind != "ledger-mutation" {
-			t.Fatalf("truncated ledger was accepted: %v", err)
-		}
-	})
+func testStaleCommittedMetadata(t *testing.T) {
+	path, data := validLedgerBytes(t)
+	metadata := mustReadFile(t, manifestPath(path))
+	marker := []byte(`"digest":"`)
+	index := bytes.Index(metadata, marker)
+	if index < 0 {
+		t.Fatal("committed metadata digest not found")
+	}
+	position := index + len(marker)
+	if metadata[position] == '0' {
+		metadata[position] = '1'
+	} else {
+		metadata[position] = '0'
+	}
+	if err := os.WriteFile(manifestPath(path), metadata, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	assertManifestError(t, path, "commit-metadata-stale", "stale committed metadata")
+	assertLedgerUnchanged(t, path, data)
+}
+
+func testTruncatedCommittedMetadata(t *testing.T) {
+	path, data := validLedgerBytes(t)
+	metadata := mustReadFile(t, manifestPath(path))
+	if err := os.WriteFile(manifestPath(path), metadata[:len(metadata)/2], 0o644); err != nil {
+		t.Fatal(err)
+	}
+	assertManifestError(t, path, "manifest-malformed", "truncated committed metadata")
+	assertLedgerUnchanged(t, path, data)
+}
+
+func testMalformedMetadataDoesNotRepair(t *testing.T) {
+	path, _ := validLedgerBytes(t)
+	metadata := bytes.Replace(mustReadFile(t, manifestPath(path)), []byte(`{"schema"`), []byte(`{"authority":"inferred","schema"`), 1)
+	if err := os.WriteFile(manifestPath(path), metadata, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	assertManifestError(t, path, "manifest-malformed", "malformed metadata authorized repair")
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("malformed metadata repair changed the ledger: %v", err)
+	}
+}
+
+func assertManifestError(t *testing.T, path, kind, message string) {
+	t.Helper()
+	_, err := New(path).Read(ReadOptions{})
+	var diagnostic *CorruptionError
+	if !errors.As(err, &diagnostic) || diagnostic.Kind != kind {
+		t.Fatalf("%s: %v", message, err)
+	}
+}
+
+func assertLedgerUnchanged(t *testing.T, path string, expected []byte) {
+	t.Helper()
+	if !bytes.Equal(expected, mustReadFile(t, path)) {
+		t.Fatal("metadata rejection changed the ledger")
+	}
 }
 
 func TestChainGapAndCandidateDeferredCannotSatisfyVerifiedClaim(t *testing.T) {
