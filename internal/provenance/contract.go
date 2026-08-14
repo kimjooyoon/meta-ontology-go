@@ -32,10 +32,11 @@ func CurrentContract() ContractSpec {
 		},
 		Integrity: []string{
 			"sha256 canonical content hash", "contiguous predecessor ID/digest chain",
-			"durable exact-byte manifest", "unknown-field rejection", "source freshness",
+			"durable two-phase commit metadata with exact base/post bytes",
+			"prepared-transaction rollback", "unknown-field rejection", "source freshness",
 		},
 		Statuses:      []string{"verified", "candidate", "deferred", "failed", "rejected"},
-		NegativeCases: []string{"duplicate-conflict", "digest-conflict", "stale-source", "unknown-field", "malformed", "chain-gap", "mutation", "reorder", "truncation", "candidate-as-verified"},
+		NegativeCases: []string{"duplicate-conflict", "digest-conflict", "stale-source", "unknown-field", "malformed", "chain-gap", "mutation", "reorder", "truncation", "commit-metadata-missing", "partial-batch-authority", "candidate-as-verified"},
 		Deferred:      []string{"GitHub or credential inference", "CI publishing", "business authority inference"},
 	}
 }

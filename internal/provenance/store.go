@@ -3,8 +3,6 @@ package provenance
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -12,7 +10,8 @@ import (
 
 // Store is a durable append-only JSONL ledger. The per-path process lock makes
 // separate Store values safe to use concurrently in one process. The manifest
-// records the exact byte length and digest last committed.
+// is a two-phase commit record containing the complete base or committed
+// canonical ledger bytes; the JSONL file is a materialized append-only view.
 type Store struct {
 	path string
 	mu   sync.Mutex
@@ -136,12 +135,15 @@ func (s *Store) appendUnlocked(records []Evidence) error {
 	if err != nil {
 		return err
 	}
+	combined := append(append([]byte(nil), state.bytes...), payload...)
+	allRecords := append(append([]Evidence(nil), state.records...), pending...)
+	if err := writeManifest(s.path, preparedManifestFor(state.bytes, state.records, combined, allRecords), false); err != nil {
+		return fmt.Errorf("prepare provenance append: %w", err)
+	}
 	if err := appendPayload(s.path, payload); err != nil {
 		return err
 	}
-	combined := append(append([]byte(nil), state.bytes...), payload...)
-	allRecords := append(append([]Evidence(nil), state.records...), pending...)
-	return writeManifest(s.path, ledgerManifestFor(combined, allRecords))
+	return writeManifest(s.path, ledgerManifestFor(combined, allRecords), false)
 }
 
 // Read validates the complete physical ledger and returns append order.
@@ -225,42 +227,6 @@ func canonicalJSONL(records []Evidence) ([]byte, error) {
 		output.WriteByte('\n')
 	}
 	return output.Bytes(), nil
-}
-
-func appendPayload(path string, payload []byte) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return fmt.Errorf("create provenance directory: %w", err)
-	}
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return fmt.Errorf("open provenance store: %w", err)
-	}
-	if err := writeFull(file, payload); err != nil {
-		_ = file.Close()
-		return fmt.Errorf("append provenance evidence: %w", err)
-	}
-	if err := file.Sync(); err != nil {
-		_ = file.Close()
-		return fmt.Errorf("sync provenance store: %w", err)
-	}
-	if err := file.Close(); err != nil {
-		return fmt.Errorf("close provenance store: %w", err)
-	}
-	return nil
-}
-
-func writeFull(file *os.File, payload []byte) error {
-	for len(payload) > 0 {
-		written, err := file.Write(payload)
-		if err != nil {
-			return err
-		}
-		if written == 0 {
-			return io.ErrShortWrite
-		}
-		payload = payload[written:]
-	}
-	return nil
 }
 
 // ReadAll is a convenience alias for adapters that prefer explicit wording.
