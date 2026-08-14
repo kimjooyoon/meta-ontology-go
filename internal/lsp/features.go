@@ -20,17 +20,17 @@ func (server *Server) hover(params TextDocumentPositionParams) (*Hover, bool) {
 	if !ok {
 		return nil, false
 	}
-	name, start, end, ok := wordAt(document.text, params.Position)
+	symbol, ok := symbolAtPosition(*document, params.Position)
 	if !ok {
 		return nil, false
 	}
-	symbol, ok := symbolNamed(document.result.Symbols, name)
-	if !ok {
-		return nil, false
-	}
-	rangeValue, err := byteRange(document.text, start, end)
-	if err != nil {
-		return nil, false
+	rangeValue := symbol.SelectionRange
+	if name, start, end, found := wordAt(document.text, params.Position); found {
+		if candidate, candidateOK := symbolNamed(allSymbols(document.result), name); candidateOK && candidate.Name == symbol.Name {
+			if value, err := byteRange(document.text, start, end); err == nil {
+				rangeValue = value
+			}
+		}
 	}
 	return &Hover{Contents: MarkupContent{Kind: "plaintext", Value: symbol.Detail}, Range: &rangeValue}, true
 }
@@ -50,8 +50,12 @@ func (server *Server) completion(uri string) *CompletionList {
 	}
 	server.mu.RUnlock()
 	if ok {
-		for _, symbol := range document.result.Symbols {
-			items = append(items, CompletionItem{Label: symbol.Name, Kind: int(symbol.Kind), Detail: symbol.Detail})
+		for _, symbol := range allSymbols(document.result) {
+			item := CompletionItem{Label: symbol.Name, Kind: int(symbol.Kind), Detail: symbol.Detail}
+			if symbol.ID != "" {
+				item.Documentation = "semantic ID: " + symbol.ID
+			}
+			items = append(items, item)
 		}
 	}
 	sort.SliceStable(items, func(left, right int) bool { return items[left].Label < items[right].Label })
@@ -69,15 +73,67 @@ func (server *Server) definition(params TextDocumentPositionParams) []Location {
 	if !ok {
 		return nil
 	}
-	target, ok := definitionTarget(document.text, params.Position, document.result.Symbols)
+	if document.result.semanticChecked && !document.result.semanticValid {
+		return nil
+	}
+	target, ok := definitionTargetForDocument(*document, params.Position)
 	if !ok {
 		return nil
 	}
-	symbol, found := resolveDefinitionSymbol(document.result.Symbols, target)
+	symbol, found := resolveDefinitionSymbol(allSymbols(document.result), target)
 	if !found {
 		return nil
 	}
 	return []Location{{URI: params.TextDocument.URI, Range: symbol.SelectionRange}}
+}
+
+func symbolAtPosition(document document, position Position) (Symbol, bool) {
+	for _, symbol := range allSymbols(document.result) {
+		if positionInRange(position, symbol.SelectionRange) || (symbol.hasIdentity && positionInRange(position, symbol.identityRange)) {
+			return symbol, true
+		}
+	}
+	for _, reference := range document.result.References {
+		if !positionInRange(position, reference.Range) || reference.ID == "" {
+			continue
+		}
+		if symbol, ok := symbolByID(allSymbols(document.result), reference.ID); ok {
+			return symbol, true
+		}
+	}
+	name, _, _, ok := wordAt(document.text, position)
+	if !ok {
+		return Symbol{}, false
+	}
+	return symbolNamed(allSymbols(document.result), name)
+}
+
+func symbolByID(symbols []Symbol, id string) (Symbol, bool) {
+	var match Symbol
+	for _, symbol := range symbols {
+		if symbol.ID != id {
+			continue
+		}
+		if match.ID != "" {
+			return Symbol{}, false
+		}
+		match = symbol
+	}
+	return match, match.ID != ""
+}
+
+func definitionTargetForDocument(document document, position Position) (string, bool) {
+	for _, symbol := range allSymbols(document.result) {
+		if symbol.hasIdentity && positionInRange(position, symbol.identityRange) {
+			return symbol.ID, true
+		}
+	}
+	for _, reference := range document.result.References {
+		if reference.ID != "" && positionInRange(position, reference.Range) {
+			return reference.ID, true
+		}
+	}
+	return definitionTarget(document.text, position, allSymbols(document.result))
 }
 
 func definitionTarget(source string, position Position, symbols []Symbol) (string, bool) {
