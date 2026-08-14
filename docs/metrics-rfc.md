@@ -116,60 +116,112 @@ adopted through the state machine.
 
 ## 4. DAMP/DRY semantic profile
 
-Raw file and function limits of 300 and 75 lines remain resource-safety caps.
-They are not evidence that the language is DAMP or DRY and are reported
-separately from semantic reuse.
+Raw LOC caps of 300 lines per file and 75 lines per function remain
+resource-safety limits. They are not evidence that the language is DAMP or DRY
+and are reported separately from semantic reuse and its semantic weights.
 
 For a semantic unit `u`, define:
 
 ```text
 SemanticUnitID(u) = stable semantic identity from the authoritative ID registry
-L(u) = canonical logical weight of u after AST/IR normalization
 UseSiteID = hash(containing_semantic_id,
                  resolved_target_semantic_id,
                  canonical_ast_path,
                  implementation_slot_id)
+ExecutionRootSet = explicitly listed execution roots from the immutable metric
+                    catalog, plus canonical adapter roots from the immutable
+                    adapter registry
+G_exec = (V_exec, E_exec)
+E_exec = adapter -> canonical_entrypoint
+         ∪ canonical_implementation_slot -> resolved_callee
+Reach_exec = nodes reachable from ExecutionRootSet following E_exec forward
 AuthoritativeUseSet(u) = reachable, resolved, authoritative UseSiteIDs for u
 R(u) = distinct containing semantic IDs represented by AuthoritativeUseSet(u)
+ComponentWeight(u) = count(normalized AST operation tokens in the catalog-pinned
+                            component closure, deduplicated by source origin)
+LocalImplementationClosure(u) = canonical implementation of u plus its
+                                eligible private intra-unit helpers
+LocalWeight(u) = count(normalized AST operation tokens in
+                       LocalImplementationClosure(u), deduplicated by origin)
 ```
 
-`AuthoritativeUseSet` is built only from reachable resolved semantic references.
-It excludes candidate facts, aliases as identities, unresolved symbols,
-reflection strings, unreachable code, and test-only references unless the
-immutable metric policy explicitly includes tests. A generated call-site is
-mapped to its source origin exactly once; generated expansion is not a new use.
+`ExecutionRootSet` is not inferred from exported names, file paths, changed
+files, tests, a `main` function, or a scan of the call graph. Every root must
+be an immutable metric-catalog row or a canonical adapter-registry binding,
+with a stable ID and the catalog/registry digest recorded in the observation.
+An explicitly empty root set is valid; a missing root declaration or an
+ambiguous root binding is `UNKNOWN`.
+
+`G_exec` contains only the two directed edge forms shown above: a canonical
+adapter points to its registered semantic entrypoint, and an authoritative
+implementation slot points to its resolved callee. Reachability follows those
+directions from every root; reverse incoming edges are observed for use-site
+collection but are never traversed as forward reachability. Containment,
+ownership, inverse or derived relations, candidate facts, aliases, unresolved
+symbols, reflection or string names, unreachable code, and test-only edges
+unless the immutable metric policy includes tests are excluded from `E_exec`.
+Generated call-sites map to one source-origin edge and do not add generated
+expansion edges. A missing or ambiguous adapter, call, owner, source-origin,
+stable-ID, or reachability resolution is `UNKNOWN`, never an empty set.
+
+`AuthoritativeUseSet(u)` is the set of `UseSiteID`s for authoritative incoming
+edges whose containing implementation slot is in `Reach_exec` and whose
+resolved target is `SemanticUnitID(u)`. Candidate facts are not references;
+aliases are not identities. The containing semantic ID and implementation
+slot must each resolve uniquely. Thus an unresolved, ambiguous, or
+unreachable reference cannot create a consumer or a `PASS` result.
 
 The component closure is rooted at `SemanticUnitID(u)` over a catalog-pinned
-edge set:
+edge set used only for component weight:
 
 ```text
 E_catalog = containment ∪ canonical_calls ∪ owned_implementation_slots
 Closure(u) = reachable nodes from SemanticUnitID(u) through E_catalog
-L(u) = count(normalized AST operation tokens in Closure(u), deduplicated by origin)
+ComponentWeight(u) = count(normalized AST operation tokens in Closure(u),
+                            deduplicated by origin)
 ```
 
 Inverse, derived, and candidate edges are excluded from `E_catalog`. The
-canonical implementation is the unique authority node referenced by all use
-sites in `AuthoritativeUseSet(u)`. If the root, edge catalog, origin mapping,
-resolution, or reachability cannot be determined, the result is `UNKNOWN` and
-never `PASS`.
+canonical implementation is the unique authoritative implementation slot for
+`u`; it is not selected by the shortest file, function, or text match.
+
+`LocalImplementationClosure(u)` is the least fixed point beginning with that
+canonical implementation. From a node already in the closure, it may traverse
+only a uniquely resolved private helper edge when the helper is in the same
+`SemanticUnitID(u)` and the helper has no separate `SemanticUnitID`. The helper
+is eligible only when every authoritative incoming call to it is from a node
+already in the closure. The root implementation is exempt from that incoming-
+call condition because its authoritative consumers are precisely what
+`AuthoritativeUseSet(u)` measures.
+
+Traversal stops at a helper with a stable ID, a generated helper, or a helper
+known to be shared; those helpers are separate boundaries and are not folded
+into the local closure. A shared helper with no model or stable identity is
+`UNKNOWN`, because its ownership and weight cannot be determined. Missing or
+ambiguous helper resolution, private/intra-unit classification, incoming-call
+set, or source-origin mapping is likewise `UNKNOWN`.
+
+`LocalWeight(u)` counts normalized AST operation tokens across the entire local
+closure. A token is identified by its normalized operation and canonical source
+origin; repeated generated expansions or repeated views of one origin count
+once. Comments, whitespace, aliases, candidate facts, and unreachable nodes do
+not contribute. The closure is semantic-ID anchored and file-independent, so
+splitting a helper or moving it across files cannot lower `LocalWeight`; all
+eligible operations remain in the same closure and are counted as one union.
 
 The profile is:
 
 | Classification | Predicate | Gate meaning |
 | --- | --- | --- |
 | `ORPHAN` | `|R(u)| = 0` | Descriptive only; no reuse claim. |
-| `DAMP` | `|R(u)| = 1` and the component closure weight is `<= 300` | One-use intent may remain local. |
-| `DRY` | `|R(u)| >= 2` and one stable canonical implementation has local weight `<= 75` | Shared intent must have one authoritative implementation. |
-| `UNKNOWN` | `R(u)` or `L(u)` cannot be determined exactly | Never PASS; adoption state decides whether it gates. |
+| `DAMP` | `|R(u)| = 1` and `ComponentWeight(u) <= 300` | One-use intent may remain local. |
+| `DRY` | `|R(u)| >= 2` and one stable canonical implementation has `LocalWeight(u) <= 75` | Shared intent must have one authoritative implementation. |
+| `UNKNOWN` | `R(u)`, `ComponentWeight(u)`, or `LocalWeight(u)` cannot be determined exactly | Never PASS; adoption state decides whether it gates. |
 
-`L(u)` counts normalized semantic operations, not physical lines. Comments and
-whitespace, generated duplicates, aliases, candidate facts, unreachable code,
-and fake or unresolved references do not create consumers. A generated region
-counts once through its source-map origin. Splitting one semantic closure across
-files or helpers does not reduce its closure weight; otherwise the metric is
-being gamed. A DRY result also requires a stable identity and an authoritative
-consumer set, not merely similar text.
+`ComponentWeight(u)` and `LocalWeight(u)` count normalized semantic operations,
+not physical lines. The raw LOC caps above remain separate resource checks. A
+DRY result also requires a stable identity, a uniquely resolved canonical
+implementation, and an authoritative consumer set, not merely similar text.
 
 ## 5. Inference ledger and catalog immutability
 
