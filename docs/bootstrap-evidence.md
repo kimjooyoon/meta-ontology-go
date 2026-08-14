@@ -1,10 +1,10 @@
 # Bootstrap evidence bridge
 
-This document is the small, implementation-facing bridge between the
-[self-hosting research note](research/self-hosting.md), the
-[staged CI plan](../.github/conformance-plan.md), and the semantic evidence
-model. It defines what Go-hosted and future gooo-hosted runs must emit so they
-can be compared without treating either host as business intent.
+This document is a small, implementation-facing bridge between the
+[staged CI plan](../.github/conformance-plan.md) and the semantic evidence model.
+It records non-promoting evidence shapes for a Go-hosted baseline and a future
+gooo-hosted candidate; it does not rely on a separate research note or make
+self-hosting a supported authority.
 
 The current Go-hosted baseline remains authoritative for execution and recovery.
 The gooo-hosted path is a proposed candidate; it has no promotion authority and
@@ -89,11 +89,13 @@ meaning change.
 | Go-hosted baseline | Go verifier and protected CI | Go checks, pinned inputs, source/semantic/provenance digests | Baseline; semantic CLI may be deferred |
 | Dual evidence | Go verifier decides; gooo host is shadow | Same fixture results and comparable envelopes | Proposed; not run by default |
 | gooo-hosted candidate | Go verifier remains fallback | Reproducible bootstrap, BX/locality, parity, rollback | Proposed; not promoted |
-| Promoted gooo host | Independent comparison plus protected policy | Soak, adversarial corpus, recovery rehearsal, approval | Future; not implemented |
+| Promoted gooo host | Independent comparison plus protected CI policy | Soak, adversarial corpus, recovery rehearsal, reproducible evidence | Future; not implemented |
 
-Promotion is a state transition in CI, not a field a fixture may set to true.
-The promotion job must reject the candidate whenever any required evidence is
-deferred or absent.
+Promotion is a CI-only state transition, not a field a fixture may set to true.
+These fixtures never authorize a branch update. The current protected-branch
+promotion contract is the exact same-repository `dev`-to-`main` route documented
+in [governance.md](governance.md); its proof is fail-closed whenever required
+evidence is deferred or absent.
 
 ## Fixtures and execution
 

@@ -1,0 +1,19 @@
+{
+  "version": "semanticdelta/v1",
+  "allowed": {
+    "prefixes": ["billing://"],
+    "predicates": ["prov:used"]
+  },
+  "delta": {
+    "addedNodes": [
+      {"id": "fraud://entity/charge", "kind": "Entity"}
+    ],
+    "addedFacts": [
+      {
+        "subject": "billing://activity/pay-order",
+        "predicate": "gooo:invokes",
+        "object": "fraud://entity/charge"
+      }
+    ]
+  }
+}
