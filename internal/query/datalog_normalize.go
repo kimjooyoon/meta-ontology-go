@@ -26,6 +26,18 @@ func normalizeDatalogQuery(request DatalogQuery) (DatalogQuery, []DatalogRule, e
 	if request.MaxDerivedFacts == 0 {
 		request.MaxDerivedFacts = DefaultDatalogDerivedLimit
 	}
+	if request.MaxDepth < 0 || request.MaxDepth > MaxDatalogDepth {
+		return DatalogQuery{}, nil, datalogError("max depth must be 0..%d", MaxDatalogDepth)
+	}
+	if request.MaxDepth == 0 {
+		request.MaxDepth = DefaultDatalogDepth
+	}
+	if request.MaxWork < 0 || request.MaxWork > MaxDatalogWork {
+		return DatalogQuery{}, nil, datalogError("max work must be 0..%d", MaxDatalogWork)
+	}
+	if request.MaxWork == 0 {
+		request.MaxWork = DefaultDatalogWork
+	}
 
 	patterns := make([]DatalogAtom, len(request.Patterns))
 	for index, pattern := range request.Patterns {

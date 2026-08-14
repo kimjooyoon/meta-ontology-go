@@ -15,6 +15,7 @@ type Graph struct {
 }
 
 type projectionBinding struct {
+	namespace        string
 	semanticDigest   string
 	sourceDigest     string
 	evidenceDigest   string
@@ -54,10 +55,26 @@ func (graph *Graph) AddNode(node Node) error {
 		normalized.Kind != UnknownNodeKind && existing.Kind != normalized.Kind {
 		return fmt.Errorf("%w: %s is both %s and %s", ErrInvalidNode, normalized.ID, existing.Kind, normalized.Kind)
 	}
+	if existing, ok := graph.nodes[normalized.ID]; ok && existing.Namespace != "" &&
+		normalized.Namespace != "" && existing.Namespace != normalized.Namespace {
+		return fmt.Errorf("%w: %s changes namespace from %s to %s", ErrInvalidNode, normalized.ID, existing.Namespace, normalized.Namespace)
+	}
+	if len(displayNames(normalized)) > 0 && normalized.Namespace != "" {
+		for _, existing := range graph.nodes {
+			if existing.ID == normalized.ID || existing.Namespace != normalized.Namespace {
+				continue
+			}
+			for _, incomingName := range displayNames(normalized) {
+				if existing.hasName(incomingName) {
+					return fmt.Errorf("%w: %s/%s is already attached to %s", ErrInvalidNode, normalized.Namespace, incomingName, existing.ID)
+				}
+			}
+		}
+	}
 	if existing, ok := graph.nodes[normalized.ID]; ok && existing.Kind != UnknownNodeKind {
 		return nil
 	}
-	graph.nodes[normalized.ID] = normalized
+	graph.nodes[normalized.ID] = copyQueryNode(normalized)
 	return nil
 }
 
@@ -68,7 +85,56 @@ func (graph Graph) Node(id ID) (Node, bool) {
 		return Node{}, false
 	}
 	node, ok := graph.nodes[canonical]
+	if ok {
+		node = copyQueryNode(node)
+	}
 	return node, ok
+}
+
+// NodeByName performs a namespace-qualified display-name lookup. An empty
+// namespace is rejected so equal names from separate contexts cannot merge.
+func (graph Graph) NodeByName(namespace, name string) (Node, bool) {
+	namespace = normalizeDisplayName(namespace)
+	name = normalizeDisplayName(name)
+	if namespace == "" || name == "" {
+		return Node{}, false
+	}
+	var found Node
+	for _, node := range graph.nodes {
+		if node.Namespace != namespace || !node.hasName(name) {
+			continue
+		}
+		if found.ID != "" && found.ID != node.ID {
+			// A malformed or manually assembled graph must fail closed rather
+			// than choosing a map-order-dependent result.
+			return Node{}, false
+		}
+		found = copyQueryNode(node)
+	}
+	return found, found.ID != ""
+}
+
+// Search returns namespace-qualified display-name matches in stable order.
+// It is a lookup projection only; facts remain keyed by stable IDs.
+func (graph Graph) Search(namespace, name string) []Node {
+	namespace = normalizeDisplayName(namespace)
+	name = normalizeDisplayName(name)
+	if namespace == "" || name == "" {
+		return nil
+	}
+	results := make([]Node, 0)
+	for _, node := range graph.nodes {
+		if node.Namespace == namespace && node.hasName(name) {
+			results = append(results, copyQueryNode(node))
+		}
+	}
+	sortNodes(results)
+	return results
+}
+
+func copyQueryNode(node Node) Node {
+	node.Aliases = append([]string(nil), node.Aliases...)
+	return node
 }
 
 // Nodes returns endpoints in stable ID/kind order.
@@ -173,6 +239,7 @@ func (graph Graph) Candidates() []Fact { return graph.CandidateFacts() }
 func (graph Graph) Metadata() ProjectionMetadata {
 	metadata := ProjectionMetadata{
 		SchemaVersion:    QueryProjectionSchemaVersion,
+		Namespace:        "",
 		GraphHash:        graph.StableHash(),
 		SourceStatus:     "unavailable",
 		EvidenceStatus:   "unknown",
@@ -193,6 +260,7 @@ func (graph Graph) Metadata() ProjectionMetadata {
 		return metadata
 	}
 	metadata.SemanticDigest = graph.binding.semanticDigest
+	metadata.Namespace = graph.binding.namespace
 	metadata.SourceDigest = graph.binding.sourceDigest
 	metadata.EvidenceDigest = graph.binding.evidenceDigest
 	metadata.ProvenanceDigest = graph.binding.provenanceDigest

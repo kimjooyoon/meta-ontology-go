@@ -24,6 +24,7 @@ func FromSemanticIR(ir semantic.IR) (*Graph, error) {
 		evidenceStatus = "available"
 	}
 	graph.binding = &projectionBinding{
+		namespace:      normalized.Namespace.String(),
 		semanticDigest: normalized.StableHash(),
 		sourceStatus:   "unavailable",
 		evidenceDigest: normalized.EvidenceHash(),
@@ -34,7 +35,11 @@ func FromSemanticIR(ir semantic.IR) (*Graph, error) {
 		provenanceStatus: "unknown",
 	}
 	for _, node := range normalized.Graph.Nodes() {
-		if err := graph.AddNode(Node{ID: ID(node.ID.String()), Kind: nodeKind(node.Kind)}); err != nil {
+		aliases := append([]string(nil), node.Aliases...)
+		if err := graph.AddNode(Node{
+			ID: ID(node.ID.String()), Kind: nodeKind(node.Kind),
+			Namespace: node.Namespace.String(), Name: node.Name, Aliases: aliases,
+		}); err != nil {
 			return nil, fmt.Errorf("project semantic node: %w", err)
 		}
 	}
