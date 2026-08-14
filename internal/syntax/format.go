@@ -1,10 +1,15 @@
 package syntax
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"unicode/utf8"
 )
+
+// ErrLatentFieldsUnsupported is returned when callers attempt to serialize a
+// synthetic field carrier before the public grammar can represent fields.
+var ErrLatentFieldsUnsupported = errors.New("latent entity fields are unsupported by the public syntax formatter")
 
 // Format renders a syntax tree in the canonical .gooo source form.
 // Formatting is semantic: source spans and original whitespace are not copied.
@@ -78,6 +83,9 @@ func formatDeclaration(output *strings.Builder, declaration Declaration) error {
 func formatEntity(output *strings.Builder, entity *EntityDecl) error {
 	if entity == nil {
 		return fmt.Errorf("nil entity declaration")
+	}
+	if len(entity.Fields) != 0 {
+		return ErrLatentFieldsUnsupported
 	}
 	if err := validateIdentifier(entity.Name, "entity name"); err != nil {
 		return err
