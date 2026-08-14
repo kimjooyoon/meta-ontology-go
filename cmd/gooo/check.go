@@ -43,14 +43,19 @@ func (SyntaxSourceParser) ParseFile(filename, source string) (*syntax.File, synt
 
 func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
 	args, jsonMode := parseJSONFlag(args)
-	semanticMode, filename, ok := checkArguments(args)
-	if !ok {
+	options, err := parseCheckArguments(args)
+	if err != nil {
 		if jsonMode {
-			return reportUsage(true, stdout, stderr, "check", "usage: gooo check [--semantic] [--json] <file.gooo>")
+			return reportUsage(true, stdout, stderr, "check", checkUsage)
 		}
-		fmt.Fprintln(stderr, "usage: gooo check [--semantic] <file.gooo>")
+		fmt.Fprintln(stderr, checkUsage)
 		return exitUsage
 	}
+	return runCheckOptions(options, jsonMode, reader, parser, stdout, stderr)
+}
+
+func runCheckOptions(options checkOptions, jsonMode bool, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
+	filename := options.filename
 	deadline := time.Now().Add(commandDeadline)
 	source, err := readSourceWithDeadline(reader, filename, remainingDeadline(deadline))
 	if err != nil {
@@ -83,45 +88,117 @@ func runCheck(args []string, reader SourceReader, parser SourceParser, stdout, s
 	if !jsonMode && !reportDiagnostics(diagnostics, stderr) {
 		return exitFailure
 	}
-	var semanticHash string
-	if semanticMode {
-		ir, err := semanticCheckIR(file, remainingDeadline(deadline))
-		if err != nil {
-			if jsonMode {
-				return reportFailure(true, stdout, stderr, "check", filename, "semantic.lowering", err.Error(), syntaxFileSpan(file))
-			}
-			if !reportSemanticDiagnostic(filename, file, err, stderr) {
-				return exitFailure
-			}
-			return exitFailure
+	semanticHash, provenanceResponse, code := runSemanticCheck(options, jsonMode, source, file, diagnostics, deadline, stdout, stderr)
+	if code != exitOK {
+		return code
+	}
+	return writeCheckResult(jsonMode, filename, semanticHash, provenanceResponse, diagnostics, stdout)
+}
+
+func runSemanticCheck(options checkOptions, jsonMode bool, source []byte, file *syntax.File, diagnostics syntax.Diagnostics, deadline time.Time, stdout, stderr io.Writer) (string, *provenancePublishResponse, int) {
+	if !options.semantic {
+		return "", nil, exitOK
+	}
+	ir, err := semanticCheckIR(file, remainingDeadline(deadline))
+	if err != nil {
+		if jsonMode {
+			return "", nil, reportFailure(true, stdout, stderr, "check", options.filename, "semantic.lowering", err.Error(), syntaxFileSpan(file))
 		}
-		semanticHash = ir.StableHash()
+		if !reportSemanticDiagnostic(options.filename, file, err, stderr) {
+			return "", nil, exitFailure
+		}
+		return "", nil, exitFailure
+	}
+	semanticHash := ir.StableHash()
+	if options.provenanceStore == "" {
 		if !jsonMode {
 			if _, err := fmt.Fprintln(stderr, deferredCheckProvenance); err != nil {
-				return exitFailure
+				return semanticHash, nil, exitFailure
 			}
 		}
+		return semanticHash, nil, exitOK
 	}
+	response, err := publishSemanticCheckProvenance(options.filename, source, file, ir, options.provenanceStore)
+	if err == nil {
+		return semanticHash, &response, exitOK
+	}
+	response, sealErr := rejectSemanticCheckProvenance(response, err)
+	if sealErr != nil {
+		return semanticHash, nil, exitFailure
+	}
+	if jsonMode {
+		report := newJSONReport("check", "error", options.filename, syntaxCLIDiagnostics(diagnostics))
+		report.SemanticHash = semanticHash
+		report.Provenance = &response
+		if writeErr := writeJSONReport(stdout, report); writeErr != nil {
+			return semanticHash, nil, exitFailure
+		}
+		return semanticHash, nil, exitFailure
+	}
+	fmt.Fprintf(stdout, "ok: %s\nprovenance: rejected\n", options.filename)
+	fmt.Fprintf(stderr, "gooo: %s: %s: %v\n", options.filename, provenanceErrorCode(err), err)
+	return semanticHash, nil, exitFailure
+}
+
+func writeCheckResult(jsonMode bool, filename, semanticHash string, provenanceResponse *provenancePublishResponse, diagnostics syntax.Diagnostics, stdout io.Writer) int {
 	if jsonMode {
 		report := newJSONReport("check", "ok", filename, syntaxCLIDiagnostics(diagnostics))
 		report.SemanticHash = semanticHash
+		report.Provenance = provenanceResponse
 		if err := writeJSONReport(stdout, report); err != nil {
 			return exitFailure
 		}
 		return exitOK
 	}
 	fmt.Fprintf(stdout, "ok: %s\n", filename)
+	if provenanceResponse != nil {
+		fmt.Fprintf(stdout, "provenance: %s records=%d store_digest=%s\n", provenanceResponse.Status, len(provenanceResponse.Records), provenanceResponse.StoreDigest)
+	}
 	return exitOK
 }
 
+const checkUsage = "usage: gooo check [--semantic] [--provenance-store <ledger.jsonl>] [--json] <file.gooo>"
+
+type checkOptions struct {
+	semantic        bool
+	filename        string
+	provenanceStore string
+}
+
+func parseCheckArguments(args []string) (checkOptions, error) {
+	options := checkOptions{}
+	for index := 0; index < len(args); index++ {
+		switch args[index] {
+		case "--semantic":
+			if options.semantic {
+				return checkOptions{}, errors.New(checkUsage)
+			}
+			options.semantic = true
+		case "--provenance-store":
+			if options.provenanceStore != "" || index+1 >= len(args) || args[index+1] == "" || strings.HasPrefix(args[index+1], "-") {
+				return checkOptions{}, errors.New(checkUsage)
+			}
+			options.provenanceStore = args[index+1]
+			index++
+		default:
+			if strings.HasPrefix(args[index], "-") || options.filename != "" {
+				return checkOptions{}, errors.New(checkUsage)
+			}
+			options.filename = args[index]
+		}
+	}
+	if options.filename == "" || (options.provenanceStore != "" && !options.semantic) {
+		return checkOptions{}, errors.New(checkUsage)
+	}
+	return options, nil
+}
+
 func checkArguments(args []string) (semanticMode bool, filename string, ok bool) {
-	if len(args) == 1 {
-		return false, args[0], true
+	options, err := parseCheckArguments(args)
+	if err != nil || options.provenanceStore != "" {
+		return false, "", false
 	}
-	if len(args) == 2 && args[0] == "--semantic" {
-		return true, args[1], true
-	}
-	return false, "", false
+	return options.semantic, options.filename, true
 }
 
 func reportSemanticDiagnostic(filename string, file *syntax.File, err error, stderr io.Writer) bool {
