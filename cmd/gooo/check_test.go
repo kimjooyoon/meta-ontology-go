@@ -40,7 +40,7 @@ func TestRunCheckReadErrorAndUsage(t *testing.T) {
 	}
 	stderr.Reset()
 	code = runCheck(nil, fixtureReader{}, SyntaxSourceParser{}, &bytes.Buffer{}, &stderr)
-	if code != exitUsage || stderr.String() != "usage: gooo check [--semantic] <file.gooo>\n" {
+	if code != exitUsage || stderr.String() != checkUsage+"\n" {
 		t.Fatalf("usage = code %d, stderr %q", code, stderr.String())
 	}
 }

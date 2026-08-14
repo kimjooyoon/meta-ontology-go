@@ -45,6 +45,8 @@ type jsonReport struct {
 	GetPut                   *bool           `json:"get_put,omitempty"`
 	PutGet                   *bool           `json:"put_get,omitempty"`
 	Diagnostics              []cliDiagnostic `json:"diagnostics"`
+
+	Provenance *provenancePublishResponse `json:"provenance,omitempty"`
 }
 
 func parseJSONFlag(args []string) (clean []string, jsonMode bool) {
