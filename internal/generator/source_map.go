@@ -10,6 +10,9 @@ func makeSourceMap(source []byte, ir SemanticIR) (SourceMap, error) {
 	if err != nil {
 		return SourceMap{}, err
 	}
+	if _, err := canonicalMarkerManifestV1(source, markers, ir); err != nil {
+		return SourceMap{}, err
+	}
 	entities, activities := sourceMapNodes(ir)
 	result := SourceMap{Mappings: make([]SourceMapping, 0, len(markers.Regions))}
 	for _, region := range markers.Regions {
