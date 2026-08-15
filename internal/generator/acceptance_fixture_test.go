@@ -6,11 +6,9 @@ func acceptanceFixture() SemanticIR {
 		Entities: []Entity{
 			{
 				ID: "gooo://entity/source", Name: "Source", GoName: "Source",
-				Fields: []Field{{Name: "Digest", GoName: "Digest", GoType: "string"}},
 			},
 			{
 				ID: "gooo://entity/artifact", Name: "Artifact", GoName: "Artifact",
-				Fields: []Field{{Name: "Digest", GoName: "Digest", GoType: "string"}},
 			},
 		},
 		Activities: []Activity{

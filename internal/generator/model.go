@@ -1,6 +1,8 @@
 // Package generator contains the dependency-free Go projection boundary.
 package generator
 
+import "encoding/json"
+
 // SemanticIR is the local DTO consumed by the Go projection. IDs are stable
 // declaration identity; names are presentation and may change.
 type SemanticIR struct {
@@ -25,13 +27,27 @@ type Entity struct {
 	Source SourceSpan
 }
 
-// Field is an optional structural field of an Entity.
+// Field is a semantic structural field of an Entity. ID, Parent, source
+// spans, and declaration order remain authoritative; Go projection details
+// are derived only after the bound EntityFields profile is accepted.
 type Field struct {
-	ID     string
-	Name   string
-	GoName string
-	GoType string
-	Source SourceSpan
+	ID              string
+	Parent          string
+	Name            string
+	Aliases         []string
+	TypeRefID       string
+	Presence        string
+	Cardinality     string
+	Origin          string
+	GoName          string
+	GoType          string
+	Source          SourceSpan
+	IDSpan          SourceSpan
+	NameSpan        SourceSpan
+	TypeRefSpan     SourceSpan
+	PresenceSpan    SourceSpan
+	CardinalitySpan SourceSpan
+	NameSource      SourceSpan // compatibility alias for NameSpan at this boundary
 }
 
 // Activity is projected to a Go function. Port order is part of its boundary.
@@ -91,11 +107,51 @@ type SourceMap struct {
 
 // SourceMapping is one semantic-to-generated range mapping.
 type SourceMapping struct {
-	SemanticID string
-	Kind       string
-	Ordinal    int
-	Source     SourceSpan
-	Generated  SourceRange
+	SemanticID     string
+	Kind           string
+	Ordinal        int
+	Source         SourceSpan
+	Generated      SourceRange
+	ParentID       string     `json:"parent_id,omitempty"`
+	TypeRefID      string     `json:"type_ref_id,omitempty"`
+	Presence       string     `json:"presence,omitempty"`
+	Cardinality    string     `json:"cardinality,omitempty"`
+	NameSource     SourceSpan `json:"name_source,omitempty"`
+	ProfileID      string     `json:"profile_id,omitempty"`
+	ProfileVersion int        `json:"profile_version,omitempty"`
+	ProfileDigest  string     `json:"profile_digest,omitempty"`
+}
+
+// MarshalJSON keeps the established fieldless source-map wire form stable
+// while publishing the additional field metadata only for field mappings.
+func (mapping SourceMapping) MarshalJSON() ([]byte, error) {
+	type sourceMappingWire struct {
+		SemanticID     string      `json:"SemanticID"`
+		Kind           string      `json:"Kind"`
+		Ordinal        int         `json:"Ordinal"`
+		Source         SourceSpan  `json:"Source"`
+		Generated      SourceRange `json:"Generated"`
+		ParentID       string      `json:"parent_id,omitempty"`
+		TypeRefID      string      `json:"type_ref_id,omitempty"`
+		Presence       string      `json:"presence,omitempty"`
+		Cardinality    string      `json:"cardinality,omitempty"`
+		NameSource     *SourceSpan `json:"name_source,omitempty"`
+		ProfileID      string      `json:"profile_id,omitempty"`
+		ProfileVersion int         `json:"profile_version,omitempty"`
+		ProfileDigest  string      `json:"profile_digest,omitempty"`
+	}
+	var nameSource *SourceSpan
+	if !sourceSpanIsZero(mapping.NameSource) {
+		span := mapping.NameSource
+		nameSource = &span
+	}
+	return json.Marshal(sourceMappingWire{
+		SemanticID: mapping.SemanticID, Kind: mapping.Kind, Ordinal: mapping.Ordinal,
+		Source: mapping.Source, Generated: mapping.Generated, ParentID: mapping.ParentID,
+		TypeRefID: mapping.TypeRefID, Presence: mapping.Presence, Cardinality: mapping.Cardinality,
+		NameSource: nameSource, ProfileID: mapping.ProfileID, ProfileVersion: mapping.ProfileVersion,
+		ProfileDigest: mapping.ProfileDigest,
+	})
 }
 
 // Lookup returns mappings for an identity in generated order.
@@ -153,16 +209,31 @@ type ProjectionBinding struct {
 
 // GenerationMetadata describes reproducible projection inputs and trust.
 type GenerationMetadata struct {
-	SourceDigest     string            `json:"source_digest"`
-	SemanticIRDigest string            `json:"semantic_ir_digest"`
-	SourceMapDigest  string            `json:"source_map_digest"`
-	Source           BindingStatus     `json:"source"`
-	SemanticIR       BindingStatus     `json:"semantic_ir"`
-	Provenance       BindingStatus     `json:"provenance"`
-	Evidence         EvidenceStatus    `json:"evidence"`
-	Toolchain        ToolchainIdentity `json:"toolchain"`
-	Projection       ProjectionStatus  `json:"projection"`
-	Authority        AuthorityLabels   `json:"authority"`
+	SourceDigest     string                `json:"source_digest"`
+	SemanticIRDigest string                `json:"semantic_ir_digest"`
+	SourceMapDigest  string                `json:"source_map_digest"`
+	Source           BindingStatus         `json:"source"`
+	SemanticIR       BindingStatus         `json:"semantic_ir"`
+	Provenance       BindingStatus         `json:"provenance"`
+	Evidence         EvidenceStatus        `json:"evidence"`
+	Toolchain        ToolchainIdentity     `json:"toolchain"`
+	Projection       ProjectionStatus      `json:"projection"`
+	Authority        AuthorityLabels       `json:"authority"`
+	EntityFields     *EntityFieldsMetadata `json:"entity_fields,omitempty"`
+}
+
+// EntityFieldsMetadata records the exact profile bound to a supported field
+// projection. It is nil for the fieldless/deferred production path so the
+// established fieldless metadata wire representation remains unchanged.
+type EntityFieldsMetadata struct {
+	State   string                      `json:"state"`
+	Profile EntityFieldsProfileMetadata `json:"profile"`
+}
+
+type EntityFieldsProfileMetadata struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
+	Digest  string `json:"digest"`
 }
 
 // BindingStatus identifies whether a value is available and authoritative.

@@ -8,7 +8,7 @@ import (
 
 func TestGeneratorRoundTripPreservesHandwrittenSlotBytes(t *testing.T) {
 	first := mustAcceptanceResult(t, acceptanceFixture(), nil)
-	handwritten := "return Artifact{Digest: source.Digest}\n\t// preserve spacing  \n"
+	handwritten := "return Artifact{}\n\t// preserve spacing  \n"
 	previous := bytes.Replace(first.Source, []byte("return Artifact{}"), []byte(handwritten), 1)
 	if bytes.Equal(previous, first.Source) {
 		t.Fatal("fixture did not produce a handwritten replay input")
@@ -114,7 +114,7 @@ func TestGeneratorRejectsUnknownMarkerAttributesWithoutMutation(t *testing.T) {
 	previous := []byte(corrupted)
 
 	_, err := Generate(acceptanceFixture(), previous)
-	if err == nil || !strings.Contains(err.Error(), "unknown generated-start marker attribute") {
+	if err == nil || !strings.Contains(err.Error(), "unknown generated-start attribute") {
 		t.Fatalf("expected marker-attribute rejection, got %v", err)
 	}
 	if !bytes.Equal(previous, []byte(corrupted)) {
