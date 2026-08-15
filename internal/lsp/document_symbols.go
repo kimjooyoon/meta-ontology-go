@@ -18,7 +18,7 @@ func (server *Server) documentSymbols(uri string) ([]DocumentSymbol, bool) {
 	server.mu.RLock()
 	document, exists := server.documents[uri]
 	if exists {
-		result := canonicalDocumentSymbols(document.result.Symbols)
+		result := canonicalDocumentSymbols(allSymbols(document.result))
 		server.mu.RUnlock()
 		return result, true
 	}
@@ -26,11 +26,28 @@ func (server *Server) documentSymbols(uri string) ([]DocumentSymbol, bool) {
 	return nil, false
 }
 
+func allSymbols(result ParseResult) []Symbol {
+	all := make([]Symbol, 0, len(result.Headers)+len(result.Symbols))
+	all = append(all, result.Headers...)
+	all = append(all, result.Symbols...)
+	return all
+}
+
+func symbolDetail(symbol Symbol) string {
+	if symbol.ID == "" {
+		return symbol.Detail
+	}
+	if symbol.Detail == "" {
+		return "semantic ID: " + symbol.ID
+	}
+	return symbol.Detail + " (semantic ID: " + symbol.ID + ")"
+}
+
 func canonicalDocumentSymbols(symbols []Symbol) []DocumentSymbol {
 	result := make([]DocumentSymbol, 0, len(symbols))
 	for _, symbol := range symbols {
 		result = append(result, DocumentSymbol{
-			ID: symbol.ID, Name: symbol.Name, Detail: symbol.Detail, Kind: symbol.Kind,
+			ID: symbol.ID, Name: symbol.Name, Detail: symbolDetail(symbol), Kind: symbol.Kind,
 			Range: symbol.Range, SelectionRange: symbol.SelectionRange,
 		})
 	}

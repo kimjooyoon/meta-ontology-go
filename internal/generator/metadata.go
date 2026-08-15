@@ -26,15 +26,29 @@ func GenerateProjectionV1(ir SemanticIR, previous []byte) (ProjectionMetadataV1,
 }
 
 func generateProjectionV1(generator Generator, ir SemanticIR, previous []byte) (ProjectionMetadataV1, error) {
-	normalized, err := normalizeIR(ir)
+	return generateProjectionV1WithEntityFieldsSupport(generator, ir, previous, checkedEntityFieldsSupport())
+}
+
+// generateProjectionV1WithEntityFieldsSupport is package-private so focused
+// tests can prove the exact profile-bound SUPPORTED branch without exposing a
+// caller-selectable production activation surface.
+func generateProjectionV1WithEntityFieldsSupport(generator Generator, ir SemanticIR, previous []byte, support entityFieldsSupport) (ProjectionMetadataV1, error) {
+	if err := validateEntityFieldsInput(ir, support); err != nil {
+		return ProjectionMetadataV1{}, err
+	}
+	working := ir
+	if support.State == entityFieldsSupported && semanticIRHasFields(ir) {
+		working = prepareEntityFields(ir)
+	}
+	normalized, err := normalizeIR(working)
 	if err != nil {
 		return ProjectionMetadataV1{}, err
 	}
-	result, err := generator.Generate(normalized, previous)
+	result, err := generator.generateWithEntityFieldsSupport(normalized, previous, support)
 	if err != nil {
 		return ProjectionMetadataV1{}, err
 	}
-	metadata := metadataResult(result, normalized)
+	metadata := metadataResultWithEntityFieldsSupport(result, normalized, support)
 	return ProjectionMetadataV1{
 		Schema:     projectionMetadataSchemaV1,
 		Source:     append([]byte(nil), result.Source...),
@@ -164,6 +178,23 @@ func metadataResult(result Result, ir SemanticIR) MetadataResult {
 				Verifier:   "go-verifier-stage-0",
 				Provenance: "external-receipt-required",
 			},
+		},
+	}
+}
+
+func metadataResultWithEntityFieldsSupport(result Result, ir SemanticIR, support entityFieldsSupport) MetadataResult {
+	metadata := metadataResult(result, ir)
+	if semanticIRHasFields(ir) {
+		metadata.Metadata.EntityFields = entityFieldsMetadata(support)
+	}
+	return metadata
+}
+
+func entityFieldsMetadata(support entityFieldsSupport) *EntityFieldsMetadata {
+	return &EntityFieldsMetadata{
+		State: string(support.State),
+		Profile: EntityFieldsProfileMetadata{
+			ID: support.Profile.ID, Version: support.Profile.Version, Digest: support.Profile.Digest,
 		},
 	}
 }

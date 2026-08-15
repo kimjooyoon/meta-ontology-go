@@ -9,7 +9,15 @@ import (
 )
 
 func nodeSemanticEqual(left, right Node) bool {
-	return left.ID == right.ID && left.Kind == right.Kind && stringMapEqual(left.Attributes, right.Attributes)
+	if left.ID != right.ID || left.Kind != right.Kind || !stringMapEqual(left.Attributes, right.Attributes) || len(left.Fields) != len(right.Fields) {
+		return false
+	}
+	for index := range left.Fields {
+		if !fieldSemanticEqual(left.Fields[index], right.Fields[index]) {
+			return false
+		}
+	}
+	return true
 }
 
 func relationSemanticEqual(left, right Relation) bool {
@@ -48,6 +56,9 @@ func SemanticFingerprint(model Model) string {
 		writeFingerprintPart(&canonical, string(node.ID))
 		writeFingerprintPart(&canonical, string(node.Kind))
 		writeMapFingerprint(&canonical, node.Attributes)
+		for _, field := range node.Fields {
+			writeFieldSemanticFingerprint(&canonical, field)
+		}
 	}
 	canonical.WriteByte('|')
 	for _, relation := range model.Relations {
