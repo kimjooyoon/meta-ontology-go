@@ -59,11 +59,6 @@ func validResourceNumbers(receipt ResourceReceipt) bool {
 
 func compareResources(full, selected ResourceTotals) (ResourceClass, bool) {
 	comparisons := []int{compareValue(selected.CPUCoreNS, full.CPUCoreNS), compareValue(selected.PeakRSSBytes, full.PeakRSSBytes), compareValue(selected.ReadBytes, full.ReadBytes), compareValue(selected.WriteBytes, full.WriteBytes)}
-	utilization, ok := compareUtilization(selected.Utilization, full.Utilization)
-	if !ok {
-		return "", false
-	}
-	comparisons = append(comparisons, utilization)
 	less := false
 	for _, comparison := range comparisons {
 		if comparison > 0 {
@@ -86,28 +81,6 @@ func compareValue(left, right int64) int {
 		return -1
 	}
 	return 1
-}
-
-func compareUtilization(left, right Utilization) (int, bool) {
-	if left.Denominator <= 0 || right.Denominator <= 0 {
-		return 0, false
-	}
-	leftProduct, ok := multiplyInt64(left.Numerator, right.Denominator)
-	if !ok {
-		return 0, false
-	}
-	rightProduct, ok := multiplyInt64(right.Numerator, left.Denominator)
-	if !ok {
-		return 0, false
-	}
-	difference, ok := subtractInt64(leftProduct, rightProduct)
-	if !ok || difference == 0 {
-		return 0, ok
-	}
-	if difference < 0 {
-		return -1, true
-	}
-	return 1, true
 }
 
 func addInt64(left, right int64) (int64, bool) {

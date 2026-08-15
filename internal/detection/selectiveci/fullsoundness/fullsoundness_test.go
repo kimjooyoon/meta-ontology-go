@@ -173,6 +173,24 @@ func TestResourceClasses(t *testing.T) {
 	if got := Evaluate(regressed); got.Decision != DecisionSound || got.ResourceVector.Class != ResourceRegressed {
 		t.Fatalf("regressed resources got %#v", got)
 	}
+	higherUtilization := soundInput()
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).CPUCoreNS = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).WallNS = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).PeakRSSBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).ReadBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).WriteBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).CPUCoreNS = 2
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).WallNS = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).PeakRSSBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).ReadBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).WriteBytes = 1
+	got := Evaluate(higherUtilization)
+	if got.Decision != DecisionSound || got.ResourceVector.Class != ResourceImproved {
+		t.Fatalf("higher utilization resources got %#v", got)
+	}
+	if got.ResourceVector.Full.Utilization != (Utilization{Numerator: 10, Denominator: 10}) || got.ResourceVector.Selected.Utilization != (Utilization{Numerator: 3, Denominator: 2}) {
+		t.Fatalf("utilization was not retained exactly: %#v", got.ResourceVector)
+	}
 }
 
 func TestStrictJSON(t *testing.T) {
