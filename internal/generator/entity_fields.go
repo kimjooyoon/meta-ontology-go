@@ -289,15 +289,6 @@ func prepareEntityFields(ir SemanticIR) SemanticIR {
 	return prepared
 }
 
-func entityFieldsMetadata(support syntax.EntityFieldsSupport) *EntityFieldsMetadata {
-	return &EntityFieldsMetadata{
-		State: string(support.State),
-		Profile: EntityFieldsProfileMetadata{
-			ID: support.Profile.ID, Version: support.Profile.Version, Digest: support.Profile.Digest,
-		},
-	}
-}
-
 func entityFieldsProfileMapping() syntax.EntityFieldsProfile {
 	return syntax.CurrentEntityFieldsSupport().Profile
 }

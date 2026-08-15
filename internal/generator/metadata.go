@@ -190,6 +190,15 @@ func metadataResultWithEntityFieldsSupport(result Result, ir SemanticIR, support
 	return metadata
 }
 
+func entityFieldsMetadata(support entityFieldsSupport) *EntityFieldsMetadata {
+	return &EntityFieldsMetadata{
+		State: string(support.State),
+		Profile: EntityFieldsProfileMetadata{
+			ID: support.Profile.ID, Version: support.Profile.Version, Digest: support.Profile.Digest,
+		},
+	}
+}
+
 func digestBytes(value []byte) string {
 	digest := sha256.Sum256(value)
 	return "sha256:" + hex.EncodeToString(digest[:])
