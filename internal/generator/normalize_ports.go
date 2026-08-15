@@ -53,13 +53,20 @@ func normalizePort(port *Port, entityTypes map[string]string, activityID, direct
 	return nil
 }
 
-func defaultActivityBody(activity *Activity) string {
+func defaultActivityBody(activity *Activity, entityTypes map[string]string) string {
 	if len(activity.Outputs) == 0 {
 		return ""
 	}
 	results := make([]string, len(activity.Outputs))
 	for index, output := range activity.Outputs {
-		results[index] = output.GoType + "{}"
+		if entityType, ok := entityTypes[output.EntityID]; ok && entityType == output.GoType {
+			// Preserve the established fixture output for generated entity structs.
+			results[index] = output.GoType + "{}"
+			continue
+		}
+		// *new(T) is a valid zero value expression for every Go type, including
+		// scalar, interface, map, slice, function, and imported types.
+		results[index] = "*new(" + output.GoType + ")"
 	}
 	return "return " + join(results, ", ")
 }

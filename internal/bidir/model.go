@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 // ID is the stable identity of a semantic node.
@@ -33,22 +35,6 @@ const (
 	PredicateSpecialization Predicate = "prov:specializationOf"
 )
 
-// SourceSpan is the dependency-free provenance boundary used by adapters.
-type SourceSpan struct {
-	File        string
-	Start       int
-	End         int
-	StartLine   int
-	StartColumn int
-	EndLine     int
-	EndColumn   int
-}
-
-// Valid reports whether the span carries any source evidence.
-func (s SourceSpan) Valid() bool {
-	return s.File != "" || s.Start != 0 || s.End != 0
-}
-
 // Reference names a declaration from a parser-neutral document.
 type Reference struct {
 	ID        ID
@@ -62,6 +48,7 @@ type Declaration struct {
 	Kind       Kind
 	ID         ID
 	Name       string
+	Fields     []Field
 	Inputs     []Reference
 	Outputs    []Reference
 	Attributes map[string]string
@@ -83,6 +70,7 @@ type Node struct {
 	Name       string
 	Namespace  string
 	Aliases    []string
+	Fields     []Field
 	Attributes map[string]string
 	Span       SourceSpan
 }
@@ -141,6 +129,7 @@ func StableRelationID(predicate Predicate, source, target ID) ID {
 func (n Node) normalized() Node {
 	n.Aliases = append([]string(nil), n.Aliases...)
 	sort.Strings(n.Aliases)
+	n.Fields = cloneFields(n.Fields)
 	n.Attributes = cloneStringMap(n.Attributes)
 	return n
 }
@@ -186,10 +175,19 @@ func (m *Model) Normalize() {
 	}
 }
 
-// Validate checks identity uniqueness and graph references.
+// Validate checks identity uniqueness, typed fields, and graph references.
 func (m Model) Validate() error {
+	return m.ValidateWithTypes(semantic.DefaultTypeRegistry())
+}
+
+// ValidateWithTypes validates field TypeRefs against an explicit registry.
+// The receiver and all nested slices remain untouched.
+func (m Model) ValidateWithTypes(registry semantic.TypeRegistry) error {
 	seenNodes := make(map[ID]Kind, len(m.Nodes))
 	for _, node := range m.Nodes {
+		if err := node.Span.Validate(); err != nil {
+			return fmt.Errorf("node %q: %w", node.ID, err)
+		}
 		if err := validateID(node.ID); err != nil {
 			return fmt.Errorf("node %q: %w", node.ID, err)
 		}
@@ -201,8 +199,14 @@ func (m Model) Validate() error {
 		}
 		seenNodes[node.ID] = node.Kind
 	}
+	if err := validateModelFields(m.Nodes, registry); err != nil {
+		return err
+	}
 	seenRelations := make(map[string]struct{}, len(m.Relations))
 	for _, relation := range m.Relations {
+		if err := relation.Span.Validate(); err != nil {
+			return fmt.Errorf("relation %s %q -> %q: %w", relation.Kind, relation.Source, relation.Target, err)
+		}
 		if relation.Kind == "" {
 			return fmt.Errorf("relation %q -> %q has empty predicate", relation.Source, relation.Target)
 		}
@@ -217,6 +221,14 @@ func (m Model) Validate() error {
 			return fmt.Errorf("duplicate relation %s", key)
 		}
 		seenRelations[key] = struct{}{}
+	}
+	for _, candidate := range m.Candidates {
+		if candidate.Layer != CandidateFact {
+			return fmt.Errorf("model candidate %q has non-candidate layer %s", candidate.SemanticKey(), candidate.Layer)
+		}
+		if _, exists := seenRelations[candidate.SemanticKey()]; exists {
+			return fmt.Errorf("candidate %q is shadowed by a deterministic relation", candidate.SemanticKey())
+		}
 	}
 	return nil
 }

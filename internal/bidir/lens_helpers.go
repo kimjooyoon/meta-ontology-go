@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 func declarationIdentity(namespace string, declaration Declaration) (ID, error) {
@@ -14,7 +16,53 @@ func declarationIdentity(namespace string, declaration Declaration) (ID, error) 
 		}
 		return declaration.ID, nil
 	}
-	return ID(namespace + "://" + strings.ToLower(string(declaration.Kind)) + "/" + slug(declaration.Name)), nil
+	derived := slug(declaration.Name)
+	if derived == "" {
+		return "", fmt.Errorf("declaration %q cannot derive a stable ID", declaration.Name)
+	}
+	return ID(namespace + "://" + strings.ToLower(string(declaration.Kind)) + "/" + derived), nil
+}
+
+func validateDocumentSpans(document Document) error {
+	for index, declaration := range document.Declarations {
+		if err := declaration.Span.Validate(); err != nil {
+			return fmt.Errorf("declaration %d %q: %w", index, declaration.Name, err)
+		}
+		for fieldIndex, field := range declaration.Fields {
+			spans := []struct {
+				name string
+				span SourceSpan
+			}{
+				{name: "field", span: field.Span},
+				{name: "field ID", span: field.IDSpan},
+				{name: "field name", span: field.NameSpan},
+				{name: "field type", span: field.TypeRefSpan},
+				{name: "field presence", span: field.PresenceSpan},
+				{name: "field cardinality", span: field.CardinalitySpan},
+			}
+			for _, item := range spans {
+				if err := item.span.Validate(); err != nil {
+					return fmt.Errorf("declaration %q field %d %s: %w", declaration.Name, fieldIndex, item.name, err)
+				}
+			}
+		}
+		for refIndex, reference := range declaration.Inputs {
+			if err := reference.Span.Validate(); err != nil {
+				return fmt.Errorf("declaration %q input %d: %w", declaration.Name, refIndex, err)
+			}
+		}
+		for refIndex, reference := range declaration.Outputs {
+			if err := reference.Span.Validate(); err != nil {
+				return fmt.Errorf("declaration %q output %d: %w", declaration.Name, refIndex, err)
+			}
+		}
+	}
+	for index, relation := range document.Relations {
+		if err := relation.Span.Validate(); err != nil {
+			return fmt.Errorf("relation %d %s %q -> %q: %w", index, relation.Kind, relation.Source, relation.Target, err)
+		}
+	}
+	return nil
 }
 
 func resolveReference(reference Reference, namespace string, names map[string]ID, ids map[ID]struct{}) (ID, error) {
@@ -69,13 +117,18 @@ func appendCheckedRelation(relations []Relation, relation Relation) ([]Relation,
 	return append(relations, relation), nil
 }
 
-func declarationFromNode(node Node, model Model) Declaration {
-	declaration := Declaration{Kind: node.Kind, ID: node.ID, Name: node.Name, Attributes: cloneStringMap(node.Attributes), Span: node.Span}
+func declarationFromNode(node Node, model Model, registry semantic.TypeRegistry) (Declaration, error) {
+	declaration := Declaration{Kind: node.Kind, ID: node.ID, Name: node.Name, Fields: cloneFields(node.Fields), Attributes: cloneStringMap(node.Attributes), Span: node.Span}
 	if declaration.Name == "" {
 		declaration.Name = defaultName(node.ID)
 	}
+	for index, field := range declaration.Fields {
+		if err := validateSourceField(field, node.ID, registry); err != nil {
+			return Declaration{}, fmt.Errorf("node %q field %d: %w", node.ID, index, err)
+		}
+	}
 	if node.Kind != ActivityKind {
-		return declaration
+		return declaration, nil
 	}
 	for _, relation := range model.Relations {
 		if relation.Kind == PredicateUsed && relation.Source == node.ID {
@@ -89,9 +142,44 @@ func declarationFromNode(node Node, model Model) Declaration {
 			}
 		}
 	}
-	sort.Slice(declaration.Inputs, func(i, j int) bool { return declaration.Inputs[i].ID < declaration.Inputs[j].ID })
-	sort.Slice(declaration.Outputs, func(i, j int) bool { return declaration.Outputs[i].ID < declaration.Outputs[j].ID })
-	return declaration
+	sort.SliceStable(declaration.Inputs, func(i, j int) bool {
+		return referenceSourceOrderLess(declaration.Inputs[i], declaration.Inputs[j])
+	})
+	sort.SliceStable(declaration.Outputs, func(i, j int) bool {
+		return referenceSourceOrderLess(declaration.Outputs[i], declaration.Outputs[j])
+	})
+	return declaration, nil
+}
+
+func referenceSourceOrderLess(left, right Reference) bool {
+	leftValid, rightValid := left.Span.Valid(), right.Span.Valid()
+	if leftValid != rightValid {
+		return leftValid
+	}
+	if leftValid {
+		if left.Span.File != right.Span.File {
+			return left.Span.File < right.Span.File
+		}
+		if left.Span.Start != right.Span.Start {
+			return left.Span.Start < right.Span.Start
+		}
+		if left.Span.StartLine != right.Span.StartLine {
+			return left.Span.StartLine < right.Span.StartLine
+		}
+		if left.Span.StartColumn != right.Span.StartColumn {
+			return left.Span.StartColumn < right.Span.StartColumn
+		}
+		if left.Span.End != right.Span.End {
+			return left.Span.End < right.Span.End
+		}
+		if left.Span.EndLine != right.Span.EndLine {
+			return left.Span.EndLine < right.Span.EndLine
+		}
+		if left.Span.EndColumn != right.Span.EndColumn {
+			return left.Span.EndColumn < right.Span.EndColumn
+		}
+	}
+	return left.ID < right.ID
 }
 
 func (m Model) node(id ID) (Node, bool) {

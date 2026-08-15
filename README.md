@@ -23,6 +23,35 @@ PROV-inspired vocabulary, deterministic normalization, explicit candidate facts,
 and marker-based generated regions. See [the architecture](docs/architecture.md)
 and [the language sketch](docs/spec.md).
 
+## The deterministic pressure loop
+
+[![Animated explanation of the semantic self-improvement loop: policy-defined base metrics rise from an observed floor; a deterministic selector chooses a focus subset while every baseline remains guarded; 100 heuristic attempts fan out; single-pressure regressions are rejected; source-backed evidence and path proof let deterministic CI requalify all dimensions; the verified ceiling ratchets into epoch 2's immutable floor](docs/assets/metric-pressure-loop/metric-pressure-loop.gif)](docs/assets/metric-pressure-loop/metric-pressure-loop.png)
+
+The [static PNG preview](docs/assets/metric-pressure-loop/metric-pressure-loop.png)
+is useful in viewers that do not animate GIFs. The loop is illustrative: each
+system's protected policy/SPI declares its own `N` base metrics, `M` cross
+pressures, and active `K`; the language guarantees at least **two independent,
+non-compensating pressure dimensions**, not one universal set of numbers. The
+animation uses `N=6`, `M=4`, and `K=2` only as one concrete policy instance, and
+the 100 parallel agents are an illustrative workload. Every agent focuses only
+on the selected subset while all `N` baseline metrics remain non-regression
+floors. A performance gain that damages completeness, or the reverse, is
+rejected. Attempts may use local inference and may PASS, FAIL, or remain
+UNKNOWN, but missing evaluator/oracle/evidence is fail-closed: **Deterministic
+CI — not inference** checks exact source-backed evidence across the full
+declared vector. Proof computes remaining viable paths, and only a qualified
+ceiling becomes the next immutable floor with the next metric/SPI and
+provenance obligations. Self-improvement here means verified contract,
+evaluator, and evidence gains compound; agents do not rewrite the judge or
+lower thresholds.
+
+Regenerate and verify the checked-in media with:
+
+```sh
+go run ./docs/assets/metric-pressure-loop
+go run ./docs/assets/metric-pressure-loop -check
+```
+
 ## Quick start
 
 Run the repository checks from the project root:
@@ -40,6 +69,26 @@ which CLI surfaces are not yet supported. The current GitHub Actions workflow is
 documented in [CONTRIBUTING.md](CONTRIBUTING.md); it should be treated as the
 source of truth for required CI, not as a promise of future compiler features.
 
+## Branch and promotion contract
+
+Work branches target `dev`. The only promotion route is an exact,
+same-repository `dev`-to-`main` pull request; no intermediary branch is part of
+the current contract. Governance is `ci_only`: review and approval fields do not
+authorize a protected-branch promotion.
+
+The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
+`Semantic conformance`, and `CI policy`. Protected `dev` requires those six plus
+`CI guardian shadow`; protected `main` requires those six plus `CI guardian`.
+The resulting seven-context protections are route-specific.
+
+For the promotion route, CI emits a digest-bound `promotion_authorization` with
+`source=dev`, `target=main`, and `operation=fast_forward`. It passes only for
+fresh exact refs and topology (`ahead > 0`, `behind = 0`, `main` as merge base),
+the required proof and Guardian evidence, both exact seven-context protection
+snapshots, and a clean, open, non-draft, unmerged same-repository pull request.
+The proof producer never mutates refs or protection. After a final exact reread,
+only a normal CAS/fast-forward update is allowed; force updates are prohibited.
+
 ## Project status
 
 This is an experimental language, not a stable application framework. In
@@ -54,7 +103,8 @@ evidence are present.
 [AGENTS.md](AGENTS.md) defines authority boundaries and agent roles.
 [CONTRIBUTING.md](CONTRIBUTING.md) defines branch, PR, review, and CI workflow.
 [docs/governance.md](docs/governance.md) records the SSOT boundary, BX laws, line
-caps, and evidence policy. [docs/conformance.md](docs/conformance.md) is the
-runnable example index.
+caps, and evidence policy. [docs/metrics-rfc.md](docs/metrics-rfc.md) defines
+the design-only deterministic metric contract. [docs/conformance.md](docs/conformance.md)
+is the runnable example index.
 
 [W3C PROV-O]: https://www.w3.org/TR/prov-o/

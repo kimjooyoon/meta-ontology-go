@@ -1,6 +1,7 @@
 package bidir
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,6 +10,46 @@ import (
 
 // LowerDocument lowers the parser-neutral view into the current semantic IR.
 func LowerDocument(document Document) (semantic.IR, error) {
+	return lowerDocumentWithTypesAndEntityFieldsSupport(document, semantic.DefaultTypeRegistry(), CurrentEntityFieldsSupport())
+}
+
+func lowerDocumentWithEntityFieldsSupport(document Document, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerDocumentWithTypesAndEntityFieldsSupport(document, semantic.DefaultTypeRegistry(), support)
+}
+
+// LowerDocumentWithTypes lowers a parser-neutral document and resolves latent
+// field TypeRefs through the supplied semantic registry.
+func LowerDocumentWithTypes(document Document, registry semantic.TypeRegistry) (semantic.IR, error) {
+	return lowerDocumentWithTypesAndEntityFieldsSupport(document, registry, CurrentEntityFieldsSupport())
+}
+
+func lowerDocumentWithTypesAndEntityFieldsSupport(document Document, registry semantic.TypeRegistry, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(context.Background(), document, registry, support)
+}
+
+// LowerDocumentContext is the cancellable parser-neutral lowerer.
+func LowerDocumentContext(ctx context.Context, document Document) (semantic.IR, error) {
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, semantic.DefaultTypeRegistry(), CurrentEntityFieldsSupport())
+}
+
+// LowerDocumentContextWithTypes is the cancellable typed parser-neutral
+// lowerer. It returns no partial IR on any field or registry failure.
+func LowerDocumentContextWithTypes(ctx context.Context, document Document, registry semantic.TypeRegistry) (semantic.IR, error) {
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, registry, CurrentEntityFieldsSupport())
+}
+
+func lowerDocumentContextWithEntityFieldsSupport(ctx context.Context, document Document, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, semantic.DefaultTypeRegistry(), support)
+}
+
+func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, document Document, registry semantic.TypeRegistry, support EntityFieldsSupport) (semantic.IR, error) {
+	ctx = nonNilLowerContext(ctx)
+	if err := checkLowerContext(ctx); err != nil {
+		return semantic.IR{}, err
+	}
+	if err := validateDocumentSpans(document); err != nil {
+		return semantic.IR{}, err
+	}
 	namespaceText := strings.TrimSpace(document.Namespace)
 	if namespaceText == "" {
 		namespaceText = "gooo"
@@ -17,27 +58,46 @@ func LowerDocument(document Document) (semantic.IR, error) {
 	if err != nil {
 		return semantic.IR{}, err
 	}
+	if err := validateEntityFieldsDocument(document, namespace.String(), registry, support); err != nil {
+		return semantic.IR{}, err
+	}
 	ir := semantic.NewIR(document.Package, namespace)
-	names, ids, err := lowerDocumentNodes(&ir, document, namespace)
+	names, ids, err := lowerDocumentNodes(ctx, &ir, document, namespace)
 	if err != nil {
 		return semantic.IR{}, err
 	}
-	if err := lowerDocumentContracts(&ir, document, namespace, ids, names); err != nil {
+	if err := lowerDocumentContracts(ctx, &ir, document, namespace, ids, names); err != nil {
 		return semantic.IR{}, err
 	}
-	if err := lowerDocumentRelations(&ir, document.Relations); err != nil {
+	if err := lowerDocumentRelations(ctx, &ir, document.Relations); err != nil {
+		return semantic.IR{}, err
+	}
+	if err := validateLoweredContext(ctx, ir); err != nil {
 		return semantic.IR{}, err
 	}
 	if err := ir.Validate(); err != nil {
 		return semantic.IR{}, err
 	}
+	if semanticIRHasFields(ir) {
+		normalized, err := ir.NormalizedWithTypes(registry)
+		if err != nil {
+			return semantic.IR{}, err
+		}
+		ir = normalized
+	}
+	if err := checkLowerContext(ctx); err != nil {
+		return semantic.IR{}, err
+	}
 	return ir, nil
 }
 
-func lowerDocumentNodes(ir *semantic.IR, document Document, namespace semantic.Namespace) (map[string]semantic.ID, map[ID]semantic.ID, error) {
+func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document, namespace semantic.Namespace) (map[string]semantic.ID, map[ID]semantic.ID, error) {
 	names := make(map[string]semantic.ID)
 	ids := make(map[ID]semantic.ID, len(document.Declarations))
 	for _, declaration := range document.Declarations {
+		if err := checkLowerContext(ctx); err != nil {
+			return nil, nil, err
+		}
 		if len(declaration.Attributes) > 0 {
 			return nil, nil, fmt.Errorf("semantic IR does not support declaration attributes")
 		}
@@ -57,6 +117,22 @@ func lowerDocumentNodes(ir *semantic.IR, document Document, namespace semantic.N
 		if err != nil {
 			return nil, nil, err
 		}
+		if len(declaration.Fields) > 0 {
+			if kind != semantic.Entity {
+				return nil, nil, fmt.Errorf("declaration %q: fields are only valid on Entity nodes", declaration.Name)
+			}
+			node.Fields = make([]semantic.Field, len(declaration.Fields))
+			for index, field := range declaration.Fields {
+				semanticField, err := field.semantic()
+				if err != nil {
+					return nil, nil, fmt.Errorf("declaration %q field %d: %w", declaration.Name, index, err)
+				}
+				if semanticField.Parent != semanticID {
+					return nil, nil, fmt.Errorf("declaration %q field %d: %w: field %s parent is %s, want %s", declaration.Name, index, ErrInvalidField, semanticField.ID, semanticField.Parent, semanticID)
+				}
+				node.Fields[index] = semanticField
+			}
+		}
 		node.Span = toSemanticSpan(declaration.Span)
 		if err := ir.AddNode(node); err != nil {
 			return nil, nil, err
@@ -68,6 +144,15 @@ func lowerDocumentNodes(ir *semantic.IR, document Document, namespace semantic.N
 		names[referenceKey(namespace.String(), declaration.Name)] = semanticID
 	}
 	return names, ids, nil
+}
+
+func semanticIRHasFields(ir semantic.IR) bool {
+	for _, node := range ir.Graph.Nodes() {
+		if len(node.Fields) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func semanticKind(kind Kind) (semantic.Kind, error) {
@@ -83,8 +168,11 @@ func semanticKind(kind Kind) (semantic.Kind, error) {
 	}
 }
 
-func lowerDocumentContracts(ir *semantic.IR, document Document, namespace semantic.Namespace, ids map[ID]semantic.ID, names map[string]semantic.ID) error {
+func lowerDocumentContracts(ctx context.Context, ir *semantic.IR, document Document, namespace semantic.Namespace, ids map[ID]semantic.ID, names map[string]semantic.ID) error {
 	for _, declaration := range document.Declarations {
+		if err := checkLowerContext(ctx); err != nil {
+			return err
+		}
 		if declaration.Kind != ActivityKind {
 			continue
 		}
@@ -96,23 +184,38 @@ func lowerDocumentContracts(ir *semantic.IR, document Document, namespace semant
 			}
 			activityID = ids[generated]
 		}
-		contract := semantic.ActivityContract{Activity: activityID, Span: toSemanticSpan(declaration.Span)}
-		for _, reference := range declaration.Inputs {
-			id, err := resolveSemanticReference(reference, namespace, ids, names)
-			if err != nil {
-				return fmt.Errorf("activity %q input: %w", declaration.Name, err)
-			}
-			contract.Inputs = append(contract.Inputs, id)
-		}
-		for _, reference := range declaration.Outputs {
-			id, err := resolveSemanticReference(reference, namespace, ids, names)
-			if err != nil {
-				return fmt.Errorf("activity %q output: %w", declaration.Name, err)
-			}
-			contract.Outputs = append(contract.Outputs, id)
-		}
-		if err := ir.AddActivityContract(contract); err != nil {
+		if err := lowerTypedContractReferences(ctx, ir, activityID, declaration, namespace, ids, names); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func lowerTypedContractReferences(ctx context.Context, ir *semantic.IR, activityID semantic.ID, declaration Declaration, namespace semantic.Namespace, ids map[ID]semantic.ID, names map[string]semantic.ID) error {
+	for _, reference := range declaration.Inputs {
+		if err := checkLowerContext(ctx); err != nil {
+			return err
+		}
+		id, err := resolveSemanticReference(reference, namespace, ids, names)
+		if err != nil {
+			return fmt.Errorf("activity %q input: %w", declaration.Name, err)
+		}
+		fact := semantic.NewUsedFact(activityID, id).WithSpan(toSemanticSpan(reference.Span))
+		if err := ir.AddFact(fact); err != nil {
+			return fmt.Errorf("activity %q input: %w", declaration.Name, err)
+		}
+	}
+	for _, reference := range declaration.Outputs {
+		if err := checkLowerContext(ctx); err != nil {
+			return err
+		}
+		id, err := resolveSemanticReference(reference, namespace, ids, names)
+		if err != nil {
+			return fmt.Errorf("activity %q output: %w", declaration.Name, err)
+		}
+		fact := semantic.NewWasGeneratedByFact(id, activityID).WithSpan(toSemanticSpan(reference.Span))
+		if err := ir.AddFact(fact); err != nil {
+			return fmt.Errorf("activity %q output: %w", declaration.Name, err)
 		}
 	}
 	return nil
@@ -140,8 +243,11 @@ func resolveSemanticReference(reference Reference, namespace semantic.Namespace,
 	return id, nil
 }
 
-func lowerDocumentRelations(ir *semantic.IR, relations []Relation) error {
+func lowerDocumentRelations(ctx context.Context, ir *semantic.IR, relations []Relation) error {
 	for _, relation := range relations {
+		if err := checkLowerContext(ctx); err != nil {
+			return err
+		}
 		predicate, ok := semanticPredicate(relation.Kind)
 		if !ok {
 			return fmt.Errorf("predicate %q is not representable in semantic IR", relation.Kind)
@@ -162,6 +268,20 @@ func lowerDocumentRelations(ir *semantic.IR, relations []Relation) error {
 		}
 	}
 	return nil
+}
+
+func validateLoweredContext(ctx context.Context, ir semantic.IR) error {
+	for range ir.Graph.Nodes() {
+		if err := checkLowerContext(ctx); err != nil {
+			return err
+		}
+	}
+	for range ir.Graph.AllFacts() {
+		if err := checkLowerContext(ctx); err != nil {
+			return err
+		}
+	}
+	return checkLowerContext(ctx)
 }
 
 func semanticPredicate(predicate Predicate) (semantic.Relation, bool) {

@@ -108,17 +108,16 @@ func validateMarkerAttributes(marker string, attrs map[string]string) error {
 		allowed["kind"] = struct{}{}
 	}
 	for key := range attrs {
-		if _, ok := allowed[key]; !ok {
-			return fmt.Errorf("unknown %s marker attribute %q", marker, key)
+		if _, exists := allowed[key]; !exists {
+			return fmt.Errorf("unknown %s attribute %q", marker, key)
 		}
 	}
 	if attrs["id"] == "" {
 		return fmt.Errorf("%s marker requires a non-empty id", marker)
 	}
 	if marker == "generated-start" || marker == "generated-end" {
-		switch attrs["kind"] {
-		case "entity", "activity":
-		default:
+		kind := attrs["kind"]
+		if kind != "entity" && kind != "activity" {
 			return fmt.Errorf("%s marker requires kind entity or activity", marker)
 		}
 	}

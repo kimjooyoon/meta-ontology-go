@@ -6,10 +6,32 @@ import (
 )
 
 func (g *Graph) AddFact(fact Fact) error {
-	normalized, err := fact.Normalized()
+	normalized, err := g.prepareFact(fact)
 	if err != nil {
 		return err
 	}
+	return g.storeFact(normalized)
+}
+
+func (g Graph) prepareFact(fact Fact) (Fact, error) {
+	normalized, err := fact.Normalized()
+	if err != nil {
+		return Fact{}, err
+	}
+	if err := g.validateDeclaredFactEndpoints(normalized); err != nil {
+		return Fact{}, err
+	}
+	// Candidate observations remain outside authoritative hashes, but their
+	// declared endpoints and PROV direction must still be valid at the write
+	// boundary. Review may decide whether a valid candidate is promoted; it
+	// cannot make an invalid relation meaningful.
+	if err := g.validateDeclaredFactKinds(normalized); err != nil {
+		return Fact{}, err
+	}
+	return normalized, nil
+}
+
+func (g *Graph) storeFact(normalized Fact) error {
 	g.ensure()
 	key := normalized.Key()
 	if normalized.Status == FactCandidate {
@@ -21,6 +43,25 @@ func (g *Graph) AddFact(fact Fact) error {
 	g.facts[key] = normalized
 	delete(g.candidates, key)
 	return nil
+}
+
+func (g Graph) validateDeclaredFactEndpoints(fact Fact) error {
+	if _, ok := g.nodes[fact.Subject]; !ok {
+		return fmt.Errorf("%w: fact subject %s is not declared", ErrNodeNotFound, fact.Subject)
+	}
+	if _, ok := g.nodes[fact.Object]; !ok {
+		return fmt.Errorf("%w: fact object %s is not declared", ErrNodeNotFound, fact.Object)
+	}
+	return nil
+}
+
+func (g Graph) validateDeclaredFactKinds(fact Fact) error {
+	subject, subjectOK := g.nodes[fact.Subject]
+	object, objectOK := g.nodes[fact.Object]
+	if !subjectOK || !objectOK {
+		return fmt.Errorf("%w: fact endpoints are not declared", ErrNodeNotFound)
+	}
+	return fact.Predicate.ValidateKinds(subject.Kind, object.Kind)
 }
 
 func (g *Graph) AddCandidate(fact Fact) error {
@@ -41,13 +82,35 @@ func (g *Graph) addCandidate(fact Fact, key FactKey) error {
 
 func mergeFact(existing, incoming Fact) Fact {
 	merged := existing
-	if merged.Span.IsZero() && !incoming.Span.IsZero() {
+	if merged.Span.IsZero() || (!incoming.Span.IsZero() && spanLess(incoming.Span, merged.Span)) {
 		merged.Span = incoming.Span
 	}
-	if merged.Reason == "" && incoming.Reason != "" {
+	if merged.Reason == "" || (incoming.Reason != "" && incoming.Reason < merged.Reason) {
 		merged.Reason = incoming.Reason
 	}
 	return merged
+}
+
+func spanLess(left, right Span) bool {
+	if left.File != right.File {
+		return left.File < right.File
+	}
+	if left.Start.Offset != right.Start.Offset {
+		return left.Start.Offset < right.Start.Offset
+	}
+	if left.Start.Line != right.Start.Line {
+		return left.Start.Line < right.Start.Line
+	}
+	if left.Start.Column != right.Start.Column {
+		return left.Start.Column < right.Start.Column
+	}
+	if left.End.Offset != right.End.Offset {
+		return left.End.Offset < right.End.Offset
+	}
+	if left.End.Line != right.End.Line {
+		return left.End.Line < right.End.Line
+	}
+	return left.End.Column < right.End.Column
 }
 
 func (g Graph) Facts() []Fact {
@@ -133,13 +196,19 @@ func (g *Graph) PromoteCandidate(key FactKey) (Fact, error) {
 	if err != nil {
 		return Fact{}, err
 	}
-	g.ensure()
 	candidate, ok := g.candidates[key]
 	if !ok {
 		return Fact{}, fmt.Errorf("%w: %s %s %s", ErrCandidateNotFound, key.Subject, key.Predicate, key.Object)
 	}
 	candidate.Status = FactDeterministic
-	if err := g.AddFact(candidate); err != nil {
+	normalized, err := g.prepareFact(candidate)
+	if err != nil {
+		return Fact{}, err
+	}
+	// All fallible work is complete before this commit point. In particular, a
+	// malformed candidate remains in place when promotion is rejected.
+	g.ensure()
+	if err := g.storeFact(normalized); err != nil {
 		return Fact{}, err
 	}
 	return g.facts[key], nil
@@ -157,38 +226,54 @@ func (g *Graph) AddActivityContract(contract ActivityContract) error {
 	if err := span.Validate(); err != nil {
 		return err
 	}
-	if err := g.addContractFacts(activity, span, contract.Inputs, Used); err != nil {
+	facts, err := g.addContractFacts(activity, span, contract.Inputs, Used)
+	if err != nil {
 		return err
 	}
-	if err := g.addContractOutputs(activity, span, contract.Outputs); err != nil {
+	outputs, err := g.addContractOutputs(activity, span, contract.Outputs)
+	if err != nil {
 		return err
 	}
+	facts = append(facts, outputs...)
 	for _, agent := range contract.Agents {
 		fact := NewWasAssociatedWithFact(activity, agent).WithSpan(span)
-		if err := g.AddFact(fact); err != nil {
+		normalized, err := g.prepareFact(fact)
+		if err != nil {
+			return err
+		}
+		facts = append(facts, normalized)
+	}
+	for _, fact := range facts {
+		if err := g.storeFact(fact); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (g *Graph) addContractFacts(activity ID, span Span, ids []ID, predicate Relation) error {
+func (g Graph) addContractFacts(activity ID, span Span, ids []ID, predicate Relation) ([]Fact, error) {
+	facts := make([]Fact, 0, len(ids))
 	for _, object := range ids {
-		if err := g.AddFact(NewFact(activity, predicate, object).WithSpan(span)); err != nil {
-			return err
+		fact, err := g.prepareFact(NewFact(activity, predicate, object).WithSpan(span))
+		if err != nil {
+			return nil, err
 		}
+		facts = append(facts, fact)
 	}
-	return nil
+	return facts, nil
 }
 
-func (g *Graph) addContractOutputs(activity ID, span Span, entities []ID) error {
+func (g Graph) addContractOutputs(activity ID, span Span, entities []ID) ([]Fact, error) {
+	facts := make([]Fact, 0, len(entities))
 	for _, entity := range entities {
 		fact := NewWasGeneratedByFact(entity, activity).WithSpan(span)
-		if err := g.AddFact(fact); err != nil {
-			return err
+		normalized, err := g.prepareFact(fact)
+		if err != nil {
+			return nil, err
 		}
+		facts = append(facts, normalized)
 	}
-	return nil
+	return facts, nil
 }
 
 func normalizeFactKey(key FactKey) (FactKey, error) {

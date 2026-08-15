@@ -3,59 +3,36 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
-	if len(args) != 3 || args[1] != "--out" || args[2] == "" {
-		fmt.Fprintln(stderr, "usage: gooo generate <file.gooo> --out <directory>")
+	args, jsonMode := parseJSONFlag(args)
+	options, err := parseGenerateArguments(args)
+	if err != nil {
+		if jsonMode {
+			return reportUsage(true, stdout, stderr, "generate", err.Error())
+		}
+		fmt.Fprintln(stderr, err)
 		return exitUsage
 	}
-	filename, outputDir := args[0], args[2]
-	source, err := reader.ReadFile(filename)
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: read error: %v\n", filename, err)
-		return exitFailure
+	deadline := time.Now().Add(commandDeadline)
+	input, code := readGenerateInput(options, reader, parser, jsonMode, stdout, stderr, deadline)
+	if code != exitOK {
+		return code
 	}
-	file, diagnostics := parser.ParseFile(filename, string(source))
-	for _, diagnostic := range diagnostics.SortBySpan() {
-		fmt.Fprintln(stderr, diagnostic.String())
+	artifacts, code := buildGenerateArtifacts(options, input, jsonMode, stdout, stderr, deadline)
+	if code != exitOK {
+		return code
 	}
-	if diagnostics.HasErrors() {
-		return exitFailure
+	if code := writeGenerateArtifacts(artifacts, jsonMode, stdout, stderr); code != exitOK {
+		return code
 	}
-	ir, err := bidir.Lower(file)
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: semantic lowering failed: %v\n", filename, err)
-		return exitFailure
-	}
-	model, err := projectionIR(ir)
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: generator adapter failed: %v\n", filename, err)
-		return exitFailure
-	}
-	result, err := generator.Generate(model, nil)
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: generation failed: %v\n", filename, err)
-		return exitFailure
-	}
-	if err := os.MkdirAll(outputDir, 0o755); err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: create output directory: %v\n", outputDir, err)
-		return exitFailure
-	}
-	output := filepath.Join(outputDir, "semantic.gooo.go")
-	if err := os.WriteFile(output, result.Source, 0o644); err != nil {
-		fmt.Fprintf(stderr, "gooo: %s: write generated source: %v\n", output, err)
-		return exitFailure
-	}
-	fmt.Fprintf(stdout, "generated: %s\n", output)
-	return exitOK
+	return reportGenerateSuccess(options, input, artifacts, jsonMode, stdout)
 }
 
 func projectionIR(ir semantic.IR) (generator.SemanticIR, error) {

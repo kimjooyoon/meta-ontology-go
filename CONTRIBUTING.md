@@ -23,9 +23,10 @@ See [docs/governance.md](docs/governance.md) for the complete SSOT matrix and
 
 The author is the Builder: they change the scoped source view and add evidence.
 A Guardian reviews the semantic diff, provenance, generated-region integrity, and
-checks without weakening the gate. An Approver decides whether the change is
-acceptable. One person or agent must not implement a feature, weaken its verifier,
-and approve the same change.
+checks without weakening the gate. An Approver records review acceptance. These
+review roles are workflow only; they are not CI proof inputs or protected branch
+promotion authority. One person or agent must not implement a feature,
+weaken its verifier, and approve the same change.
 
 For documentation or example work, the allowed ownership is `docs/**`,
 `examples/**`, and the root governance files `README.md`, `CONTRIBUTING.md`, and
@@ -33,7 +34,7 @@ For documentation or example work, the allowed ownership is `docs/**`,
 
 ## Branch and PR workflow
 
-1. Start from the repository default branch and create `agent/<area>`; for this
+1. Start from the current `dev` branch and create `agent/<area>`; for this
    documentation area, use `agent/docs`.
 2. Inspect `git status` before editing. Mixed worktrees must be staged by explicit
    path; never silently include another agent's changes.
@@ -43,6 +44,26 @@ For documentation or example work, the allowed ownership is `docs/**`,
    a ready-for-review PR. Request a Guardian review before approval.
 5. If a generated output needs a structural change, change the DSL or generator
    in its owning PR and regenerate it. Never hand-edit generated regions.
+
+The branch contract is deterministic and CI-only:
+
+- Work branches target `dev`; no intermediary branch is a route, promotion
+  source, or ownership boundary.
+- The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
+  `Semantic conformance`, and `CI policy`.
+- Protected `dev` requires those six contexts plus `CI guardian shadow`.
+  Protected `main` requires those six plus `CI guardian`. Each branch therefore
+  requires exactly seven contexts.
+- The only promotion is a same-repository PR with `base=main` and `head=dev`.
+  CI accepts it only when the PR is open, non-draft, unmerged, mergeable, clean,
+  and bound to the current refs with `main` as the merge base, `ahead > 0`, and
+  `behind = 0`.
+- The proof contains a digest-bound `promotion_authorization` with
+  `operation=fast_forward`, `source=dev`, and `target=main`. It is a pure,
+  non-mutating authorization record and is `FAIL_CLOSED` for missing or stale
+  evidence. After a final exact reread, the external gate may perform only a
+  normal CAS/fast-forward update; CI never writes refs or protection and force
+  updates are prohibited.
 
 ## Required local checks
 
@@ -63,9 +84,10 @@ in `.github/workflows/ci.yml` runs exactly these CI steps:
 - `go vet ./...` in the Go vet job;
 - `go run ./cmd/gooo check examples/billing/main.gooo` in the semantic job.
 
-CI does not currently run race tests, static analysis, LSP checks, cache checks,
-generated-output snapshots, or automatic provenance publishing. Those are future
-work, not current guarantees.
+CI currently runs race tests in addition to the format, vet, unit-test,
+semantic, and policy jobs. Static analysis, LSP checks, cache checks,
+generated-output snapshots, and automatic provenance publishing are not current
+guarantees.
 
 ## Line caps and review size
 
