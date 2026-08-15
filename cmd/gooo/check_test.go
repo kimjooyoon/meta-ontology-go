@@ -40,7 +40,7 @@ func TestRunCheckReadErrorAndUsage(t *testing.T) {
 	}
 	stderr.Reset()
 	code = runCheck(nil, fixtureReader{}, SyntaxSourceParser{}, &bytes.Buffer{}, &stderr)
-	if code != exitUsage || stderr.String() != "usage: gooo check [--semantic] <file.gooo>\n" {
+	if code != exitUsage || stderr.String() != checkUsage+"\n" {
 		t.Fatalf("usage = code %d, stderr %q", code, stderr.String())
 	}
 }
@@ -82,7 +82,7 @@ func TestRunDispatchesCheckAndUsage(t *testing.T) {
 	}
 	stdout.Reset()
 	stderr.Reset()
-	if code := run(nil, &stdout, &stderr); code != exitUsage || stderr.String() != "usage: gooo <check|generate|roundtrip|query|inspect|graph|analyze|version> [args]\n" {
+	if code := run(nil, &stdout, &stderr); code != exitUsage || stderr.String() != "usage: gooo <check|generate|roundtrip|query|inspect|graph|analyze|provenance|lsp|version> [args]\n" {
 		t.Fatalf("root usage = code %d, stderr %q", code, stderr.String())
 	}
 }

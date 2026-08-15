@@ -3,6 +3,8 @@ package bidir
 import (
 	"fmt"
 	"sort"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 const (
@@ -37,16 +39,47 @@ func (e *PutError) Unwrap() error {
 // Put writes an updated model into a document while preserving source order
 // for surviving declarations and explicit relations.
 func Put(document Document, updated Model) (Document, error) {
-	source, err := Get(document)
+	return putWithTypesAndEntityFieldsSupport(document, updated, semantic.DefaultTypeRegistry(), CurrentEntityFieldsSupport())
+}
+
+func putWithEntityFieldsSupport(document Document, updated Model, support EntityFieldsSupport) (Document, error) {
+	return putWithTypesAndEntityFieldsSupport(document, updated, semantic.DefaultTypeRegistry(), support)
+}
+
+// PutWithTypes writes a typed model back to the parser-neutral carrier. All
+// validation completes before constructing the returned document, preserving
+// the no-write guarantee on every rejection.
+func PutWithTypes(document Document, updated Model, registry semantic.TypeRegistry) (Document, error) {
+	return putWithTypesAndEntityFieldsSupport(document, updated, registry, CurrentEntityFieldsSupport())
+}
+
+func putWithTypesAndEntityFieldsSupport(document Document, updated Model, registry semantic.TypeRegistry, support EntityFieldsSupport) (Document, error) {
+	hasFields := documentHasFields(document) || modelHasFields(updated.Nodes)
+	if err := entityFieldsActivation(support, hasFields, firstPutFieldSpan(document, updated)); err != nil {
+		return document, putError(PutModelInvalid, err)
+	}
+	source, err := getWithTypesAndEntityFieldsSupport(document, registry, support)
 	if err != nil {
 		return document, putError(PutSourceInvalid, err)
 	}
 	updated = updated.Normalized()
-	if err := updated.Validate(); err != nil {
+	if err := validateFieldParentStability(source, updated); err != nil {
 		return document, putError(PutModelInvalid, err)
+	}
+	if err := validateFieldOrderStability(source, updated); err != nil {
+		return document, putError(PutModelInvalid, err)
+	}
+	if err := validateFieldSourceSnapshot(source, updated); err != nil {
+		return document, putError(PutProvenanceMissing, err)
 	}
 	if err := validatePutProvenance(source, updated); err != nil {
 		return document, putError(PutProvenanceMissing, err)
+	}
+	if err := validateEntityFieldsModel(updated.Nodes, registry, support); err != nil {
+		return document, putError(PutModelInvalid, err)
+	}
+	if err := updated.ValidateWithTypes(registry); err != nil {
+		return document, putError(PutModelInvalid, err)
 	}
 	result := Document{Package: document.Package, Namespace: document.Namespace}
 	if result.Package == "" {
@@ -59,13 +92,40 @@ func Put(document Document, updated Model) (Document, error) {
 		result.Namespace = "gooo"
 	}
 	nodes := nodeMap(updated.Nodes)
-	declarationIDs, err := appendSurvivingDeclarations(&result, document.Declarations, nodes, updated)
+	declarationIDs, err := appendSurvivingDeclarations(&result, document.Declarations, nodes, updated, registry)
 	if err != nil {
 		return document, putError(PutWriteConflict, err)
 	}
-	appendNewDeclarations(&result, updated, nodes, declarationIDs)
+	if err := appendNewDeclarations(&result, updated, nodes, declarationIDs, registry); err != nil {
+		return document, putError(PutWriteConflict, err)
+	}
 	appendUpdatedRelations(&result, document.Relations, updated)
 	return result, nil
+}
+
+func firstPutFieldSpan(document Document, updated Model) SourceSpan {
+	if span := firstDocumentFieldSpan(document); span.Valid() {
+		return span
+	}
+	return firstModelFieldSpan(updated.Nodes)
+}
+
+func validateFieldSourceSnapshot(before, after Model) error {
+	source := make(map[ID]Field)
+	for _, node := range before.Nodes {
+		for _, field := range node.Fields {
+			source[field.ID] = field
+		}
+	}
+	for _, node := range after.Nodes {
+		for _, field := range node.Fields {
+			previous, exists := source[field.ID]
+			if exists && previous.Span.File != field.Span.File {
+				return entityFieldsError(EntityFieldsIncompleteDiagnostic, fmt.Sprintf("field %q provenance crosses source snapshots", field.ID), field.Span, ErrUnrepresentableField)
+			}
+		}
+	}
+	return nil
 }
 
 func putError(code string, err error) error {
@@ -75,8 +135,13 @@ func putError(code string, err error) error {
 func validatePutProvenance(source, updated Model) error {
 	delta := Diff(source, updated)
 	for _, node := range append(delta.AddedNodes, delta.RemovedNodes...) {
-		if !node.Span.Valid() {
+		if !node.Span.Valid() && len(node.Fields) == 0 {
 			return fmt.Errorf("node %q semantic change has no source span", node.ID)
+		}
+		for _, field := range node.Fields {
+			if !field.Span.Valid() {
+				return fmt.Errorf("field %q semantic change has no source span", field.ID)
+			}
 		}
 	}
 	for _, relation := range append(delta.AddedRelations, delta.RemovedRelations...) {
@@ -87,7 +152,7 @@ func validatePutProvenance(source, updated Model) error {
 	return nil
 }
 
-func appendSurvivingDeclarations(result *Document, declarations []Declaration, nodes map[ID]Node, updated Model) (map[ID]struct{}, error) {
+func appendSurvivingDeclarations(result *Document, declarations []Declaration, nodes map[ID]Node, updated Model, registry semantic.TypeRegistry) (map[ID]struct{}, error) {
 	ids := make(map[ID]struct{}, len(declarations))
 	for _, declaration := range declarations {
 		id, err := declarationIdentity(result.Namespace, declaration)
@@ -99,13 +164,17 @@ func appendSurvivingDeclarations(result *Document, declarations []Declaration, n
 		}
 		ids[id] = struct{}{}
 		if node, exists := nodes[id]; exists {
-			result.Declarations = append(result.Declarations, declarationFromNode(node, updated))
+			declaration, err := declarationFromNode(node, updated, registry)
+			if err != nil {
+				return nil, err
+			}
+			result.Declarations = append(result.Declarations, declaration)
 		}
 	}
 	return ids, nil
 }
 
-func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, existing map[ID]struct{}) {
+func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, existing map[ID]struct{}, registry semantic.TypeRegistry) error {
 	ids := make([]ID, 0, len(updated.Nodes))
 	for _, node := range updated.Nodes {
 		if _, exists := existing[node.ID]; !exists {
@@ -114,8 +183,13 @@ func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, e
 	}
 	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
 	for _, id := range ids {
-		result.Declarations = append(result.Declarations, declarationFromNode(nodes[id], updated))
+		declaration, err := declarationFromNode(nodes[id], updated, registry)
+		if err != nil {
+			return err
+		}
+		result.Declarations = append(result.Declarations, declaration)
 	}
+	return nil
 }
 
 func appendUpdatedRelations(result *Document, original []Relation, updated Model) {

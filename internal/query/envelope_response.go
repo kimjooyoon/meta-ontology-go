@@ -45,6 +45,7 @@ func envelopeMetadata(metadata ProjectionMetadata) EnvelopeMetadata {
 	}
 	return EnvelopeMetadata{
 		SchemaVersion:     metadata.SchemaVersion,
+		Namespace:         metadata.Namespace,
 		GraphHash:         metadata.GraphHash,
 		SemanticDigest:    metadata.SemanticDigest,
 		ProjectionStatus:  metadata.ProjectionStatus,

@@ -33,7 +33,7 @@ func (server *Server) workspaceSymbols(query string) []WorkspaceSymbol {
 	server.mu.RLock()
 	result := make([]WorkspaceSymbol, 0)
 	for uri, document := range server.documents {
-		for _, symbol := range document.result.Symbols {
+		for _, symbol := range allSymbols(document.result) {
 			if !workspaceSymbolMatches(symbol, query) {
 				continue
 			}
@@ -55,7 +55,7 @@ func workspaceSymbolMatches(symbol Symbol, query string) bool {
 
 func workspaceSymbol(uri string, symbol Symbol) WorkspaceSymbol {
 	return WorkspaceSymbol{
-		ID: symbol.ID, Name: symbol.Name, Detail: symbol.Detail, Kind: symbol.Kind,
+		ID: symbol.ID, Name: symbol.Name, Detail: symbolDetail(symbol), Kind: symbol.Kind,
 		Location: Location{URI: uri, Range: symbol.Range},
 	}
 }
