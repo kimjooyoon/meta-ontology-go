@@ -1,0 +1,197 @@
+{
+  "cases": [
+    {
+      "name": "five-sample-boundary",
+      "samples": [
+        {"wall_ns": 500, "cpu_ns": 500},
+        {"wall_ns": 1000, "cpu_ns": 1000},
+        {"wall_ns": 700, "cpu_ns": 700},
+        {"wall_ns": 800, "cpu_ns": 800},
+        {"wall_ns": 900, "cpu_ns": 900}
+      ],
+      "wall_sample_count": 5,
+      "cpu_sample_count": 5,
+      "wall_baseline_ns": 1000,
+      "cpu_baseline_ns": 1000,
+      "wall_median_limit_ppm": 800000,
+      "wall_max_limit_ppm": 1000000,
+      "cpu_median_limit_ppm": 800000,
+      "cpu_max_limit_ppm": 1000000,
+      "expected": {
+        "decision": "PASS",
+        "reason": "",
+        "wall_median_ns": 800,
+        "wall_max_ns": 1000,
+        "cpu_median_ns": 800,
+        "cpu_max_ns": 1000,
+        "wall_median_ppm": 800000,
+        "wall_max_ppm": 1000000,
+        "cpu_median_ppm": 800000,
+        "cpu_max_ppm": 1000000
+      }
+    },
+    {
+      "name": "wall-median-one-unit-overrun",
+      "samples": [
+        {"wall_ns": 500, "cpu_ns": 500},
+        {"wall_ns": 800, "cpu_ns": 800},
+        {"wall_ns": 801, "cpu_ns": 801},
+        {"wall_ns": 900, "cpu_ns": 900},
+        {"wall_ns": 1000, "cpu_ns": 1000}
+      ],
+      "wall_sample_count": 5,
+      "cpu_sample_count": 5,
+      "wall_baseline_ns": 1000,
+      "cpu_baseline_ns": 1000,
+      "wall_median_limit_ppm": 800000,
+      "wall_max_limit_ppm": 1000000,
+      "cpu_median_limit_ppm": 801000,
+      "cpu_max_limit_ppm": 1000000,
+      "expected": {
+        "decision": "FAIL_CLOSED",
+        "reason": "",
+        "wall_median_ns": 801,
+        "wall_max_ns": 1000,
+        "cpu_median_ns": 801,
+        "cpu_max_ns": 1000,
+        "wall_median_ppm": 801000,
+        "wall_max_ppm": 1000000,
+        "cpu_median_ppm": 801000,
+        "cpu_max_ppm": 1000000
+      }
+    },
+    {
+      "name": "wall-max-one-unit-overrun",
+      "samples": [
+        {"wall_ns": 500, "cpu_ns": 500},
+        {"wall_ns": 800, "cpu_ns": 800},
+        {"wall_ns": 900, "cpu_ns": 900},
+        {"wall_ns": 1000, "cpu_ns": 1000},
+        {"wall_ns": 1001, "cpu_ns": 1001}
+      ],
+      "wall_sample_count": 5,
+      "cpu_sample_count": 5,
+      "wall_baseline_ns": 1000,
+      "cpu_baseline_ns": 1000,
+      "wall_median_limit_ppm": 900000,
+      "wall_max_limit_ppm": 1000000,
+      "cpu_median_limit_ppm": 900000,
+      "cpu_max_limit_ppm": 1001000,
+      "expected": {
+        "decision": "FAIL_CLOSED",
+        "reason": "",
+        "wall_median_ns": 900,
+        "wall_max_ns": 1001,
+        "cpu_median_ns": 900,
+        "cpu_max_ns": 1001,
+        "wall_median_ppm": 900000,
+        "wall_max_ppm": 1001000,
+        "cpu_median_ppm": 900000,
+        "cpu_max_ppm": 1001000
+      }
+    },
+    {
+      "name": "cpu-median-one-unit-overrun",
+      "samples": [
+        {"wall_ns": 500, "cpu_ns": 500},
+        {"wall_ns": 800, "cpu_ns": 800},
+        {"wall_ns": 900, "cpu_ns": 801},
+        {"wall_ns": 1000, "cpu_ns": 900},
+        {"wall_ns": 1001, "cpu_ns": 1000}
+      ],
+      "wall_sample_count": 5,
+      "cpu_sample_count": 5,
+      "wall_baseline_ns": 1000,
+      "cpu_baseline_ns": 1000,
+      "wall_median_limit_ppm": 900000,
+      "wall_max_limit_ppm": 1001000,
+      "cpu_median_limit_ppm": 800000,
+      "cpu_max_limit_ppm": 1000000,
+      "expected": {
+        "decision": "FAIL_CLOSED",
+        "reason": "",
+        "wall_median_ns": 900,
+        "wall_max_ns": 1001,
+        "cpu_median_ns": 801,
+        "cpu_max_ns": 1000,
+        "wall_median_ppm": 900000,
+        "wall_max_ppm": 1001000,
+        "cpu_median_ppm": 801000,
+        "cpu_max_ppm": 1000000
+      }
+    },
+    {
+      "name": "cpu-max-one-unit-overrun",
+      "samples": [
+        {"wall_ns": 500, "cpu_ns": 500},
+        {"wall_ns": 800, "cpu_ns": 800},
+        {"wall_ns": 900, "cpu_ns": 900},
+        {"wall_ns": 1000, "cpu_ns": 1000},
+        {"wall_ns": 1001, "cpu_ns": 1001}
+      ],
+      "wall_sample_count": 5,
+      "cpu_sample_count": 5,
+      "wall_baseline_ns": 1000,
+      "cpu_baseline_ns": 1000,
+      "wall_median_limit_ppm": 900000,
+      "wall_max_limit_ppm": 1001000,
+      "cpu_median_limit_ppm": 900000,
+      "cpu_max_limit_ppm": 1000000,
+      "expected": {
+        "decision": "FAIL_CLOSED",
+        "reason": "",
+        "wall_median_ns": 900,
+        "wall_max_ns": 1001,
+        "cpu_median_ns": 900,
+        "cpu_max_ns": 1001,
+        "wall_median_ppm": 900000,
+        "wall_max_ppm": 1001000,
+        "cpu_median_ppm": 900000,
+        "cpu_max_ppm": 1001000
+      }
+    },
+    {
+      "name": "four-samples-unknown",
+      "samples": [{"wall_ns": 1, "cpu_ns": 1}, {"wall_ns": 2, "cpu_ns": 2}, {"wall_ns": 3, "cpu_ns": 3}, {"wall_ns": 4, "cpu_ns": 4}],
+      "wall_sample_count": 4,
+      "cpu_sample_count": 4,
+      "expected": {"decision": "UNKNOWN", "reason": "sample_count"}
+    },
+    {
+      "name": "six-samples-unknown",
+      "samples": [{"wall_ns": 1, "cpu_ns": 1}, {"wall_ns": 2, "cpu_ns": 2}, {"wall_ns": 3, "cpu_ns": 3}, {"wall_ns": 4, "cpu_ns": 4}, {"wall_ns": 5, "cpu_ns": 5}, {"wall_ns": 6, "cpu_ns": 6}],
+      "wall_sample_count": 6,
+      "cpu_sample_count": 6,
+      "expected": {"decision": "UNKNOWN", "reason": "sample_count"}
+    },
+    {
+      "name": "zero-wall-count-unknown",
+      "samples": [{"wall_ns": 1, "cpu_ns": 1}, {"wall_ns": 2, "cpu_ns": 2}, {"wall_ns": 3, "cpu_ns": 3}, {"wall_ns": 4, "cpu_ns": 4}, {"wall_ns": 5, "cpu_ns": 5}],
+      "wall_sample_count": 0,
+      "cpu_sample_count": 5,
+      "expected": {"decision": "UNKNOWN", "reason": "zero_sample_count"}
+    },
+    {
+      "name": "zero-cpu-count-unknown",
+      "samples": [{"wall_ns": 1, "cpu_ns": 1}, {"wall_ns": 2, "cpu_ns": 2}, {"wall_ns": 3, "cpu_ns": 3}, {"wall_ns": 4, "cpu_ns": 4}, {"wall_ns": 5, "cpu_ns": 5}],
+      "wall_sample_count": 5,
+      "cpu_sample_count": 0,
+      "expected": {"decision": "UNKNOWN", "reason": "zero_sample_count"}
+    },
+    {
+      "name": "multiplication-overflow-unknown",
+      "samples": [
+        {"wall_ns": 18446744073709551615, "cpu_ns": 1},
+        {"wall_ns": 18446744073709551615, "cpu_ns": 2},
+        {"wall_ns": 18446744073709551615, "cpu_ns": 3},
+        {"wall_ns": 18446744073709551615, "cpu_ns": 4},
+        {"wall_ns": 18446744073709551615, "cpu_ns": 5}
+      ],
+      "wall_sample_count": 5,
+      "cpu_sample_count": 5,
+      "wall_baseline_ns": 1,
+      "cpu_baseline_ns": 1,
+      "expected": {"decision": "UNKNOWN", "reason": "ppm_overflow"}
+    }
+  ]
+}
