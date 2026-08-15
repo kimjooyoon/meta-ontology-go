@@ -128,11 +128,13 @@ func hasCouplingFailure(evidence CouplingEvidence, reason string) bool {
 	return false
 }
 
-func TestCouplingObserverFixtureMatrix(t *testing.T) {
-	tests := []struct {
-		name, claim, wantDecision, wantReason string
-		mutate                                func(*CouplingInput)
-	}{
+type couplingFixtureCase struct {
+	name, claim, wantDecision, wantReason string
+	mutate                                func(*CouplingInput)
+}
+
+func couplingAdversarialFixtures(t *testing.T) []couplingFixtureCase {
+	return []couplingFixtureCase{
 		{"code changed no receipt", "NO_DELTA", CouplingDecisionFailClosed, "missing-receipt", func(in *CouplingInput) { in.Receipts = nil }},
 		{"meaningless forced edit", "NO_DELTA", CouplingDecisionFailClosed, "no-delta-without-equality", func(in *CouplingInput) {
 			in.Receipts[0].CanonicalDelta = "forced"
@@ -200,23 +202,41 @@ func TestCouplingObserverFixtureMatrix(t *testing.T) {
 			refreshCouplingReceipt(t, &in.Receipts[0])
 		}},
 		{"noncanonical serialization", "NO_DELTA", CouplingDecisionFailClosed, "noncanonical-evidence", func(in *CouplingInput) { in.Receipts[0].CanonicalPayload = "{\"surface_id\":\"noncanonical\"}" }},
+	}
+}
+
+func couplingPositiveFixtures() []couplingFixtureCase {
+	return []couplingFixtureCase{
 		{"valid semantic delta", "DELTA", CouplingDecisionPass, "", func(*CouplingInput) {}},
 		{"valid implementation-only no delta", "NO_DELTA", CouplingDecisionPass, "", func(*CouplingInput) {}},
 	}
+}
+
+func runCouplingFixtureCase(t *testing.T, test couplingFixtureCase) {
+	t.Helper()
+	input := couplingFixture(t, test.claim)
+	test.mutate(&input)
+	got := VerifyCoupling(input)
+	if got.RawDecision != test.wantDecision {
+		t.Fatalf("decision = %s, want %s; failures=%+v", got.RawDecision, test.wantDecision, got.Failures)
+	}
+	if test.wantReason != "" && !hasCouplingFailure(got, test.wantReason) {
+		t.Fatalf("missing failure reason %s: %+v", test.wantReason, got.Failures)
+	}
+	if err := got.ValidateCanonical(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCouplingObserverFixtureMatrix(t *testing.T) {
+	tests := couplingAdversarialFixtures(t)
+	tests = append(tests, couplingPositiveFixtures()...)
+	if len(tests) != 17 {
+		t.Fatalf("fixture denominator = %d, want 17", len(tests))
+	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			input := couplingFixture(t, test.claim)
-			test.mutate(&input)
-			got := VerifyCoupling(input)
-			if got.RawDecision != test.wantDecision {
-				t.Fatalf("decision = %s, want %s; failures=%+v", got.RawDecision, test.wantDecision, got.Failures)
-			}
-			if test.wantReason != "" && !hasCouplingFailure(got, test.wantReason) {
-				t.Fatalf("missing failure reason %s: %+v", test.wantReason, got.Failures)
-			}
-			if err := got.ValidateCanonical(); err != nil {
-				t.Fatal(err)
-			}
+			runCouplingFixtureCase(t, test)
 		})
 	}
 }
