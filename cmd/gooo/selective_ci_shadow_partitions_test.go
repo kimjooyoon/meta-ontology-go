@@ -94,7 +94,7 @@ func TestSelectiveCIShadowLaneRegistryBindingFailsClosedWithoutExecution(t *test
 	if err := json.Unmarshal(bytes.TrimSpace(stdout.Bytes()), &output); err != nil {
 		t.Fatalf("decode shadow output: %v", err)
 	}
-	if output.Status != "FULL_SUITE_FALLBACK" || output.Stage != "REGISTRY_BINDING" || output.Component != "lane" || output.Reason != "LANE_REGISTRY_DIGEST_MISMATCH" {
+	if output.Status != "FULL_SUITE_FALLBACK" || output.Stage != "REGISTRY_BINDING" || output.Component != "lane" || output.Reason != "REGISTRY_DIGEST_MISMATCH" {
 		t.Fatalf("lane registry fallback = %#v", output)
 	}
 	if output.ExecutionAuthorized || !output.ShadowOnly || len(output.SelectedCommands) != 0 || len(output.SelectedGuards) != 0 || len(output.SelectedWorkIDs) != 0 || len(output.ResourceReceipts) != 0 {
