@@ -14,6 +14,9 @@ var ErrLatentFieldsUnsupported = errors.New("latent entity fields are unsupporte
 // Format renders a syntax tree in the canonical .gooo source form.
 // Formatting is semantic: source spans and original whitespace are not copied.
 func Format(file *File) (string, error) {
+	if err := CurrentEntityFieldsSupport().Validate(); err != nil {
+		return "", err
+	}
 	if file == nil || file.Package == nil || file.Namespace == nil {
 		return "", fmt.Errorf("package and namespace declarations are required")
 	}
@@ -85,7 +88,15 @@ func formatEntity(output *strings.Builder, entity *EntityDecl) error {
 		return fmt.Errorf("nil entity declaration")
 	}
 	if len(entity.Fields) != 0 {
-		return ErrLatentFieldsUnsupported
+		support := CurrentEntityFieldsSupport()
+		switch support.State {
+		case EntityFieldsDeferred:
+			return ErrLatentFieldsUnsupported
+		case EntityFieldsSupported:
+			return ErrEntityFieldsSupportUnavailable
+		default:
+			return ErrEntityFieldsUnknownState
+		}
 	}
 	if err := validateIdentifier(entity.Name, "entity name"); err != nil {
 		return err

@@ -44,6 +44,11 @@ const (
 	DiagUnexpectedDeclaration DiagnosticCode = "parse.unexpected-token"
 )
 
+const (
+	DiagEntityFieldsDeferred      DiagnosticCode = "parse.entity-fields-deferred"
+	DiagEntityFieldsConfiguration DiagnosticCode = "parse.entity-fields-configuration"
+)
+
 // Diagnostic describes a recoverable lexical or syntactic problem.
 type Diagnostic struct {
 	Severity Severity
