@@ -143,6 +143,9 @@ func (r CouplingRegistry) resolve(sites []ChangedCodeSite) ([]CouplingSurface, e
 	if err != nil {
 		return nil, err
 	}
+	if len(sites) == 0 {
+		return nil, fmt.Errorf("no-changed-sites: changed site set is empty")
+	}
 	byID := make(map[string]CouplingSurface)
 	for _, site := range sites {
 		if !validRepoPath(site.Path) {
@@ -169,13 +172,14 @@ func (r CouplingRegistry) resolve(sites []ChangedCodeSite) ([]CouplingSurface, e
 		if len(candidates) != 1 {
 			return nil, fmt.Errorf("ambiguous-origin: %s", site.Path)
 		}
+		if candidates[0].Applicability == CouplingNotApplicable {
+			return nil, fmt.Errorf("surface-not-applicable: %s", candidates[0].SurfaceID)
+		}
 		byID[candidates[0].SurfaceID] = candidates[0]
 	}
 	result := make([]CouplingSurface, 0, len(byID))
 	for _, surface := range byID {
-		if surface.Applicability == CouplingApplicable {
-			result = append(result, surface)
-		}
+		result = append(result, surface)
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].SurfaceID < result[j].SurfaceID })
 	return result, nil

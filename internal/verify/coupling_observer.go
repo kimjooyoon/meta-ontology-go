@@ -101,7 +101,7 @@ func setSurfaceDecision(evidence *CouplingEvidence, surfaceID, decision, reason 
 
 func reasonFromError(err error) string {
 	message := err.Error()
-	for _, reason := range []string{"surface-unregistered", "ambiguous-origin", "registry-invalid", "missing-input"} {
+	for _, reason := range []string{"surface-unregistered", "ambiguous-origin", "surface-not-applicable", "no-changed-sites", "registry-invalid", "missing-input"} {
 		if len(message) >= len(reason) && message[:len(reason)] == reason {
 			return reason
 		}

@@ -116,19 +116,6 @@ func refreshCouplingReceipt(t *testing.T, receipt *CouplingReceipt) {
 	receipt.CanonicalPayload = payload
 }
 
-func hasCouplingFailure(evidence CouplingEvidence, reason string) bool {
-	want := CouplingFailureCodePrefix + reason
-	for _, failure := range evidence.Failures {
-		if failure.Code == want {
-			if reason == "source-binding-mismatch" && (failure.Domain != CouplingDomainIntegrity || failure.Owner != couplingSurface().SemanticOwnerID || failure.Retry) {
-				return false
-			}
-			return true
-		}
-	}
-	return false
-}
-
 type couplingFixtureCase struct {
 	name, claim, wantDecision, wantReason string
 	mutate                                func(*CouplingInput)
@@ -235,9 +222,11 @@ func runCouplingFixtureCase(t *testing.T, test couplingFixtureCase) {
 
 func TestCouplingObserverFixtureMatrix(t *testing.T) {
 	tests := couplingAdversarialFixtures(t)
-	tests = append(append(tests, couplingControlFixtures(t)...), couplingPositiveFixtures()...)
-	if len(tests) != 19 {
-		t.Fatalf("fixture denominator = %d, want 19", len(tests))
+	tests = append(tests, couplingResolutionFixtures()...)
+	tests = append(tests, couplingControlFixtures(t)...)
+	tests = append(tests, couplingPositiveFixtures()...)
+	if len(tests) != 22 {
+		t.Fatalf("fixture denominator = %d, want 22", len(tests))
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
