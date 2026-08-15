@@ -62,6 +62,12 @@ func (l *Lexer) Lex() (Tokens, Diagnostics) {
 		case r == ',':
 			l.advanceRune()
 			l.emit(TokenComma, start)
+		case r == '{':
+			l.advanceRune()
+			l.emit(TokenLBrace, start)
+		case r == '}':
+			l.advanceRune()
+			l.emit(TokenRBrace, start)
 		case r == '-' && l.peekByte(1) == '>':
 			l.advanceRune()
 			l.advanceRune()
