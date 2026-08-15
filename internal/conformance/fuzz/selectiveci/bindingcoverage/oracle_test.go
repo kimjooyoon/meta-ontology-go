@@ -14,7 +14,7 @@ func TestCorpus(t *testing.T) {
 	if corpus.Schema != SchemaV1 {
 		t.Fatalf("schema=%q", corpus.Schema)
 	}
-	if len(corpus.Cases) != 18 {
+	if len(corpus.Cases) != 20 {
 		t.Fatalf("case count=%d", len(corpus.Cases))
 	}
 	digest, err := CorpusDigest(corpus)
@@ -59,6 +59,14 @@ func TestRequiredCoverageShapes(t *testing.T) {
 	shared := Evaluate(rows["shared-endpoint-references"].Input)
 	if shared.Decision != DecisionExact || shared.EndpointReferenceCount != 4 || shared.WorkUnits != 10 {
 		t.Fatalf("shared endpoint references=%+v", shared.Vector)
+	}
+	stale := Evaluate(rows["valid-but-unequal-snapshot-digests"].Input)
+	if stale.Decision != DecisionUnknown || stale.Reason != "STALE_OR_BAD_DIGEST" {
+		t.Fatalf("unequal snapshot digests=%+v", stale.Vector)
+	}
+	selfLink := Evaluate(rows["self-link-binding"].Input)
+	if selfLink.Decision != DecisionUnknown || selfLink.Reason != "UNKNOWN_BINDING" {
+		t.Fatalf("self-link binding=%+v", selfLink.Vector)
 	}
 }
 

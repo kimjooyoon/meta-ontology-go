@@ -1,6 +1,6 @@
 {
   "schema": "binding-coverage/v1",
-  "canonical_digest": "sha256:f843dbfde704560d3ae4c4b0f6b48256f81d51ae9cf3b429e56fe84f4fbcfbda",
+  "canonical_digest": "sha256:36d185eaf200ddbbb60084f18a73db0efc1a53447addeba423a0f9e6468df988",
   "cases": [
     {
       "name": "selective-ci-9-binding-complete",
@@ -184,6 +184,18 @@
       "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:shared-first", "reason": "reason:shared-first"}, {"rank": 1, "stage": "stage:shared-second", "reason": "reason:shared-second"}], "required_bindings": [{"id": "sid:binding-shared-a", "from_field_id": "sid:shared-from", "to_field_id": "sid:shared-to", "kind": "EXACT_VALUE", "expected_stage": "stage:shared-first", "expected_reason": "reason:shared-first"}, {"id": "sid:binding-shared-b", "from_field_id": "sid:shared-from", "to_field_id": "sid:shared-other", "kind": "SET_EQUAL", "expected_stage": "stage:shared-second", "expected_reason": "reason:shared-second"}], "partitions": [{"binding_id": "sid:binding-shared-a", "polarity": "MATCH", "stage": "stage:shared-first", "reason": "reason:shared-first"}, {"binding_id": "sid:binding-shared-a", "polarity": "MISMATCH", "stage": "stage:shared-first", "reason": "reason:shared-first"}, {"binding_id": "sid:binding-shared-b", "polarity": "MATCH", "stage": "stage:shared-second", "reason": "reason:shared-second"}, {"binding_id": "sid:binding-shared-b", "polarity": "MISMATCH", "stage": "stage:shared-second", "reason": "reason:shared-second"}]},
       "expected": {"decision": "EXACT", "reason": "COMPLETE", "required_binding_count": 2, "partition_count": 4, "endpoint_reference_count": 4, "input_bytes": 1288, "work_units": 10, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
       "expected_digest": "sha256:4e05b5cd67bb2dab264d5e79d400982842d81513cabb7b90ec862dc52a5b7852"
+    },
+    {
+      "name": "valid-but-unequal-snapshot-digests",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111", "expected_snapshot_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:snapshot-binding", "from_field_id": "sid:snapshot-from", "to_field_id": "sid:snapshot-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:snapshot-binding", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}, {"binding_id": "sid:snapshot-binding", "polarity": "MISMATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "STALE_OR_BAD_DIGEST", "required_binding_count": 1, "partition_count": 2, "endpoint_reference_count": 2, "input_bytes": 746, "work_units": 5, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:02343fc40c612641eb00557edc32202a950e8a556c36800088b22bd4dc1c2a5f"
+    },
+    {
+      "name": "self-link-binding",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:self-link", "from_field_id": "sid:self-field", "to_field_id": "sid:self-field", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:self-link", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}, {"binding_id": "sid:self-link", "polarity": "MISMATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "UNKNOWN_BINDING", "required_binding_count": 1, "partition_count": 2, "endpoint_reference_count": 2, "input_bytes": 721, "work_units": 5, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:5dfbf303b469102fe5d6ff43e88b0e71abfdf1ba92daca83d4eced1e05bb5f00"
     }
   ]
 }
