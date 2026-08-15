@@ -59,12 +59,30 @@ func TestGeneratedAnimationMetadata(t *testing.T) {
 	if len(gifData) >= 5*1024*1024 {
 		t.Fatalf("GIF size = %d bytes, want less than 5 MiB", len(gifData))
 	}
+	duration := len(animation.Delay) * frameDelay
+	if duration < 22*100 || duration > 30*100 {
+		t.Fatalf("GIF duration = %d hundredths, want 22 to 30 seconds", duration)
+	}
 	pngConfig, err := png.DecodeConfig(bytes.NewReader(pngData))
 	if err != nil {
 		t.Fatalf("decode PNG config: %v", err)
 	}
 	if pngConfig.Width != width || pngConfig.Height != height {
 		t.Fatalf("PNG dimensions = %dx%d, want %dx%d", pngConfig.Width, pngConfig.Height, width, height)
+	}
+}
+
+func TestLoopStagesAreOrdered(t *testing.T) {
+	previous := -1
+	for frame := 0; frame < frameCount; frame++ {
+		stage := loopState(frame).stage
+		if stage < previous {
+			t.Fatalf("stage regressed at frame %d: %d after %d", frame, stage, previous)
+		}
+		previous = stage
+	}
+	if previous != stageNextWork {
+		t.Fatalf("final stage = %d, want %d", previous, stageNextWork)
 	}
 }
 
