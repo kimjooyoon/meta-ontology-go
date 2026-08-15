@@ -25,10 +25,16 @@ func Classify(input Input) Output {
 
 	owners, ownerErr := normalizeOwners(input.OwnedPathPrefixes)
 	if ownerErr != nil {
+		if _, invalid := ownerErr.(errInvalidPath); invalid {
+			return seal(result, DecisionUnknown, ReasonMissingInput)
+		}
 		return seal(result, DecisionUnknown, ReasonAmbiguousOwner)
 	}
 	paths, pathErr := normalizePaths(input.ChangedPaths)
-	if pathErr != nil || !pathsInScope(paths, owners) {
+	if pathErr != nil {
+		return seal(result, DecisionUnknown, ReasonMissingInput)
+	}
+	if !pathsInScope(paths, owners) {
 		return seal(result, DecisionIneligible, ReasonPathOutOfScope)
 	}
 	result.OwnedPathPrefixes = owners

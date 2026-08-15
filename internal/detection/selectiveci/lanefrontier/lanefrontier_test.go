@@ -83,14 +83,35 @@ func TestOwnerAmbiguity(t *testing.T) {
 	}
 }
 
-func TestPathTraversalAndAbsolutePathRejection(t *testing.T) {
-	for _, changed := range []string{"../outside.go", "/absolute.go", "internal/../outside.go", "internal\\outside.go"} {
-		input := baseInput()
-		input.ChangedPaths = []string{changed}
-		got := Classify(input)
-		if got.Decision != DecisionIneligible || got.Reason != ReasonPathOutOfScope {
-			t.Errorf("path %q: got %s/%s", changed, got.Decision, got.Reason)
-		}
+func TestPathValidationAndScope(t *testing.T) {
+	cases := []struct {
+		name     string
+		owned    bool
+		path     string
+		decision Decision
+		reason   Reason
+	}{
+		{"absolute-path-invalid", false, "/absolute.go", DecisionUnknown, ReasonMissingInput},
+		{"traversal-path-invalid", false, "../outside.go", DecisionUnknown, ReasonMissingInput},
+		{"empty-path-invalid", false, "", DecisionUnknown, ReasonMissingInput},
+		{"normalized-path-out-of-scope", false, "outside/file.go", DecisionIneligible, ReasonPathOutOfScope},
+		{"owned-absolute-path-invalid", true, "/internal", DecisionUnknown, ReasonMissingInput},
+		{"owned-traversal-path-invalid", true, "../internal", DecisionUnknown, ReasonMissingInput},
+		{"owned-empty-path-invalid", true, "", DecisionUnknown, ReasonMissingInput},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			input := baseInput()
+			if test.owned {
+				input.OwnedPathPrefixes = []string{test.path}
+			} else {
+				input.ChangedPaths = []string{test.path}
+			}
+			got := Classify(input)
+			if got.Decision != test.decision || got.Reason != test.reason {
+				t.Fatalf("path %q: got %s/%s, want %s/%s", test.path, got.Decision, got.Reason, test.decision, test.reason)
+			}
+		})
 	}
 }
 
