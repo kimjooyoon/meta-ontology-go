@@ -48,11 +48,35 @@ type graphAuthorities struct {
 }
 
 type graphNode struct {
-	ID        string   `json:"id"`
-	Kind      string   `json:"kind"`
-	Namespace string   `json:"namespace"`
-	Name      string   `json:"name"`
-	Aliases   []string `json:"aliases,omitempty"`
+	ID        string       `json:"id"`
+	Kind      string       `json:"kind"`
+	Namespace string       `json:"namespace"`
+	Name      string       `json:"name"`
+	Aliases   []string     `json:"aliases,omitempty"`
+	Fields    []graphField `json:"fields,omitempty"`
+}
+
+type graphField struct {
+	ID          string    `json:"id"`
+	Parent      string    `json:"parent"`
+	Name        string    `json:"name"`
+	Aliases     []string  `json:"aliases,omitempty"`
+	TypeRefID   string    `json:"type_ref_id"`
+	Presence    string    `json:"presence"`
+	Cardinality string    `json:"cardinality"`
+	Source      graphSpan `json:"source"`
+}
+
+type graphSpan struct {
+	File  string        `json:"file"`
+	Start graphPosition `json:"start"`
+	End   graphPosition `json:"end"`
+}
+
+type graphPosition struct {
+	Offset int `json:"offset"`
+	Line   int `json:"line"`
+	Column int `json:"column"`
 }
 
 type graphRelation struct {
@@ -111,9 +135,19 @@ func graphNodes(nodes []semantic.Node) []graphNode {
 	for _, node := range nodes {
 		aliases := append([]string(nil), node.Aliases...)
 		sort.Strings(aliases)
+		fields := make([]graphField, 0, len(node.Fields))
+		for _, field := range node.Fields {
+			fieldAliases := append([]string(nil), field.Aliases...)
+			sort.Strings(fieldAliases)
+			fields = append(fields, graphField{
+				ID: string(field.ID), Parent: string(field.Parent), Name: field.Name, Aliases: fieldAliases,
+				TypeRefID: string(field.TypeRef.ID), Presence: string(field.Presence), Cardinality: string(field.Cardinality),
+				Source: graphSpan{File: field.Span.File, Start: graphPosition{Offset: field.Span.Start.Offset, Line: field.Span.Start.Line, Column: field.Span.Start.Column}, End: graphPosition{Offset: field.Span.End.Offset, Line: field.Span.End.Line, Column: field.Span.End.Column}},
+			})
+		}
 		result = append(result, graphNode{
 			ID: string(node.ID), Kind: node.Kind.String(), Namespace: node.Namespace.String(),
-			Name: node.Name, Aliases: aliases,
+			Name: node.Name, Aliases: aliases, Fields: fields,
 		})
 	}
 	return result
