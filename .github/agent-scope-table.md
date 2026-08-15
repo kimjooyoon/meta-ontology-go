@@ -41,6 +41,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/detection` | `internal/detection/**` |
 | `agent/detection-cycles` | `internal/detection/cycles/**` |
 | `agent/docs` | `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, `docs/**`, `examples/**` |
+| `agent/entity-fields` | `internal/semantic/**`, `internal/syntax/**`, `internal/bidir/**`, `internal/generator/**`, `cmd/gooo/**`, `internal/lsp/**` |
 | `agent/formatter` | `internal/formatter/**` |
 | `agent/freshness-detection` | `internal/detection/freshness/**` |
 | `agent/freshness-research` | `internal/research/freshness/**`, `docs/research/**` |

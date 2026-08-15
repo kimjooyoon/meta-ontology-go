@@ -47,6 +47,7 @@
     {"branch": "agent/detection", "paths": ["internal/detection/**"]},
     {"branch": "agent/detection-cycles", "paths": ["internal/detection/cycles/**"]},
     {"branch": "agent/docs", "paths": ["AGENTS.md", "CONTRIBUTING.md", "README.md", "docs/**", "examples/**"]},
+    {"branch": "agent/entity-fields", "paths": ["internal/semantic/**", "internal/syntax/**", "internal/bidir/**", "internal/generator/**", "cmd/gooo/**", "internal/lsp/**"]},
     {"branch": "agent/formatter", "paths": ["internal/formatter/**"]},
     {"branch": "agent/freshness-detection", "paths": ["internal/detection/freshness/**"]},
     {"branch": "agent/freshness-research", "paths": ["internal/research/freshness/**", "docs/research/**"]},
