@@ -54,7 +54,6 @@ const (
 	ReasonDuplicatePolarity       Reason = "DUPLICATE_POLARITY"
 	ReasonWorkOverflow            Reason = "WORK_OVERFLOW"
 	ReasonEvaluatorError          Reason = "EVALUATOR_ERROR"
-	ReasonStaleInput              Reason = "STALE_INPUT"
 	ReasonSnapshotMismatch        Reason = "SNAPSHOT_MISMATCH"
 	ReasonInvalidPrecedence       Reason = "INVALID_PRECEDENCE"
 	ReasonDuplicatePrecedence     Reason = "DUPLICATE_PRECEDENCE"
