@@ -25,7 +25,7 @@ and [the language sketch](docs/spec.md).
 
 ## The deterministic pressure loop
 
-[![Animated explanation of the semantic pressure loop: a stable floor, protected K-of-M selector, 100 heuristic attempts, append-only provenance, deterministic CI requalification, and a sealed next floor](docs/assets/metric-pressure-loop/metric-pressure-loop.gif)](docs/assets/metric-pressure-loop/metric-pressure-loop.png)
+[![Animated explanation of the semantic self-improvement loop: policy-defined base metrics rise from an observed floor; a deterministic selector chooses a focus subset while every baseline remains guarded; 100 heuristic attempts fan out; single-pressure regressions are rejected; source-backed evidence and path proof let deterministic CI requalify all dimensions; the verified ceiling ratchets into epoch 2's immutable floor](docs/assets/metric-pressure-loop/metric-pressure-loop.gif)](docs/assets/metric-pressure-loop/metric-pressure-loop.png)
 
 The [static PNG preview](docs/assets/metric-pressure-loop/metric-pressure-loop.png)
 is useful in viewers that do not animate GIFs. The loop is illustrative: each
@@ -33,11 +33,17 @@ system's protected policy/SPI declares its own `N` base metrics, `M` cross
 pressures, and active `K`; the language guarantees at least **two independent,
 non-compensating pressure dimensions**, not one universal set of numbers. The
 animation uses `N=6`, `M=4`, and `K=2` only as one concrete policy instance, and
-the 100 parallel agents are an illustrative workload. Agent attempts are
-heuristic and may PASS, FAIL, or remain UNKNOWN; deterministic policy selection
-and **Deterministic CI — not inference** perform the ceiling-vector
-requalification, where all required dimensions must pass together before the
-qualified ceiling becomes the next floor.
+the 100 parallel agents are an illustrative workload. Every agent focuses only
+on the selected subset while all `N` baseline metrics remain non-regression
+floors. A performance gain that damages completeness, or the reverse, is
+rejected. Attempts may use local inference and may PASS, FAIL, or remain
+UNKNOWN, but missing evaluator/oracle/evidence is fail-closed: **Deterministic
+CI — not inference** checks exact source-backed evidence across the full
+declared vector. Proof computes remaining viable paths, and only a qualified
+ceiling becomes the next immutable floor with the next metric/SPI and
+provenance obligations. Self-improvement here means verified contract,
+evaluator, and evidence gains compound; agents do not rewrite the judge or
+lower thresholds.
 
 Regenerate and verify the checked-in media with:
 

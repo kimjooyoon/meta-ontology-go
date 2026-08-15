@@ -14,10 +14,10 @@ import (
 const (
 	width       = 1280
 	height      = 720
-	frameCount  = 48
-	frameDelay  = 8
+	frameCount  = 144
+	frameDelay  = 16
 	defaultDir  = "docs/assets/metric-pressure-loop"
-	staticFrame = frameCount - 6
+	staticFrame = frameCount - 1
 )
 
 func main() {
