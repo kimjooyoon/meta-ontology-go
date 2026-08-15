@@ -105,6 +105,34 @@ func lookupTypeRefSpelling(ref semantic.TypeRef) string {
 
 func resolveFieldType(semanticRef semantic.TypeRef, use TypeRefUse, registry semantic.TypeRegistry) (semantic.TypeDef, error) {
 	current, err := registry.Resolve(semanticRef)
+	if semanticRef.ID != "" {
+		if err != nil {
+			return semantic.TypeDef{}, err
+		}
+		if use.Form == TypeRefFormLookup && use.ResolvedID == "" {
+			presentationRef, presentationErr := parseLookupTypeRef(use.Spelling)
+			if presentationErr != nil {
+				return semantic.TypeDef{}, presentationErr
+			}
+			presented, presentationErr := registry.Resolve(presentationRef)
+			if presentationErr != nil {
+				return semantic.TypeDef{}, presentationErr
+			}
+			if current.ID != presented.ID {
+				return semantic.TypeDef{}, fmt.Errorf("field TypeRef and source presentation resolve to different IDs (%s and %s)", current.ID, presented.ID)
+			}
+		}
+		if use.ResolvedID != "" {
+			resolvedID, parseErr := semantic.ParseIdentity(string(use.ResolvedID))
+			if parseErr != nil {
+				return semantic.TypeDef{}, parseErr
+			}
+			if current.ID != resolvedID {
+				return semantic.TypeDef{}, fmt.Errorf("explicit field TypeRef ID %s disagrees with source presentation ID %s", current.ID, resolvedID)
+			}
+		}
+		return current, nil
+	}
 	if err != nil && use.ResolvedID == "" {
 		return semantic.TypeDef{}, err
 	}
@@ -168,14 +196,20 @@ func normalizeModelFields(model *Model, registry semantic.TypeRegistry) error {
 }
 
 func resolvedFieldTypeID(field Field, ref semantic.TypeRef, registry semantic.TypeRegistry) (semantic.ID, error) {
+	typeID, err := resolvedTypeID(ref, registry)
+	if err != nil {
+		return "", err
+	}
 	if field.TypeRefUse.ResolvedID != "" {
 		id, err := semantic.ParseIdentity(string(field.TypeRefUse.ResolvedID))
 		if err != nil {
 			return "", err
 		}
-		return id, nil
+		if typeID != id {
+			return "", fmt.Errorf("field TypeRef ID %s disagrees with source presentation ID %s", typeID, id)
+		}
 	}
-	return resolvedTypeID(ref, registry)
+	return typeID, nil
 }
 
 func validateSourceField(field Field, owner ID, registry semantic.TypeRegistry) error {

@@ -52,6 +52,43 @@ func TestLatentFieldSourceTypeRefUseSurvivesRegistryRename(t *testing.T) {
 	}
 }
 
+func TestLatentFieldExplicitTypeIDCannotBeMaskedByStaleTypeRefUse(t *testing.T) {
+	registry := semantic.NewTypeRegistry()
+	const changedTypeID semantic.ID = "urn:custom:type:changed"
+	if err := registry.Register(semantic.TypeDef{ID: changedTypeID, Namespace: "custom", Name: "changed"}); err != nil {
+		t.Fatal(err)
+	}
+	document := latentDocument()
+	model, err := GetWithTypes(document, registry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := model.Clone()
+	updated.Nodes[0].Fields[0].TypeRef = TypeRef{ID: changedTypeID}
+	// Keep the old source presentation metadata deliberately stale.
+	if updated.Nodes[0].Fields[0].TypeRefUse.ResolvedID != ID(semantic.BuiltinStringTypeID) {
+		t.Fatalf("fixture did not retain the original resolved TypeRef ID: %#v", updated.Nodes[0].Fields[0].TypeRefUse)
+	}
+	if SemanticEquivalent(model, updated) {
+		t.Fatal("stale TypeRefUse masked an explicit semantic TypeRef.ID change")
+	}
+	if SemanticFingerprint(model) == SemanticFingerprint(updated) {
+		t.Fatal("stale TypeRefUse masked an explicit semantic fingerprint change")
+	}
+
+	written, err := PutWithTypes(document, updated, registry)
+	if err == nil || !strings.Contains(err.Error(), "disagrees") {
+		t.Fatalf("stale TypeRefUse Put result = %v", err)
+	}
+	putErr, ok := err.(*PutError)
+	if !ok || !putErr.NoWrite {
+		t.Fatalf("stale TypeRefUse Put was not transactional: %v", err)
+	}
+	if !reflect.DeepEqual(written, document) {
+		t.Fatal("stale TypeRefUse rejection changed the source document")
+	}
+}
+
 func TestLatentFieldReadbackRejectsAggregateAndSemanticOnlyProvenanceWithoutWrite(t *testing.T) {
 	document := latentDocument()
 	model, err := Get(document)
@@ -118,7 +155,7 @@ func latentDocument() Document {
 func customTypeDocument(typeRef TypeRef, typeRefUse TypeRefUse) Document {
 	return Document{
 		Package: "custom", Namespace: "custom",
-		Declarations: []Declaration{{Kind: EntityKind, ID: "custom://entity/item", Name: "Item", Fields: []Field{{
+		Declarations: []Declaration{{Kind: EntityKind, ID: "custom://entity/item", Name: "Item", Span: SourceSpan{File: "custom.gooo", Start: 1, End: 40}, Fields: []Field{{
 			ID: "custom://field/value", Parent: "custom://entity/item", Name: "Value", TypeRef: typeRef, TypeRefUse: typeRefUse, Origin: FieldOriginSource,
 			Presence: FieldPresenceRequired, Cardinality: FieldCardinalityOne,
 			Span: SourceSpan{File: "custom.gooo", Start: 1, End: 40}, IDSpan: SourceSpan{File: "custom.gooo", Start: 1, End: 19}, NameSpan: SourceSpan{File: "custom.gooo", Start: 20, End: 25}, TypeRefSpan: typeRefUse.Span, PresenceSpan: SourceSpan{File: "custom.gooo", Start: 30, End: 37}, CardinalitySpan: SourceSpan{File: "custom.gooo", Start: 38, End: 40},
