@@ -1,0 +1,183 @@
+{
+  "schema": "binding-coverage/v1",
+  "canonical_digest": "sha256:f066dd6d4a669143aaca541fc495411577413b092b4f4cdd884be7eb90f9db8c",
+  "cases": [
+    {
+      "name": "selective-ci-9-binding-complete",
+      "input": {
+        "schema": "binding-coverage/v1",
+        "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "precedence": [
+          {"rank": 0, "stage": "stage:partition-01", "reason": "reason:evidence-01"},
+          {"rank": 1, "stage": "stage:partition-02", "reason": "reason:evidence-02"},
+          {"rank": 2, "stage": "stage:partition-03", "reason": "reason:evidence-03"},
+          {"rank": 3, "stage": "stage:partition-04", "reason": "reason:evidence-04"},
+          {"rank": 4, "stage": "stage:partition-05", "reason": "reason:evidence-05"},
+          {"rank": 5, "stage": "stage:partition-06", "reason": "reason:evidence-06"},
+          {"rank": 6, "stage": "stage:partition-07", "reason": "reason:evidence-07"},
+          {"rank": 7, "stage": "stage:partition-08", "reason": "reason:evidence-08"},
+          {"rank": 8, "stage": "stage:partition-09", "reason": "reason:evidence-09"}
+        ],
+        "required_bindings": [
+          {"id": "sid:lane-registry", "from_field_id": "sid:lane-registry-from", "to_field_id": "sid:lane-registry-to", "kind": "EXACT_VALUE", "expected_stage": "stage:partition-01", "expected_reason": "reason:evidence-01"},
+          {"id": "sid:command-registry", "from_field_id": "sid:command-registry-from", "to_field_id": "sid:command-registry-to", "kind": "EXACT_DIGEST", "expected_stage": "stage:partition-02", "expected_reason": "reason:evidence-02"},
+          {"id": "sid:resource-envelope", "from_field_id": "sid:resource-envelope-from", "to_field_id": "sid:resource-envelope-to", "kind": "SET_EQUAL", "expected_stage": "stage:partition-03", "expected_reason": "reason:evidence-03"},
+          {"id": "sid:impact-graph", "from_field_id": "sid:impact-graph-from", "to_field_id": "sid:impact-graph-to", "kind": "DERIVED_DIGEST", "expected_stage": "stage:partition-04", "expected_reason": "reason:evidence-04"},
+          {"id": "sid:semantic-delta", "from_field_id": "sid:semantic-delta-from", "to_field_id": "sid:semantic-delta-to", "kind": "EXACT_VALUE", "expected_stage": "stage:partition-05", "expected_reason": "reason:evidence-05"},
+          {"id": "sid:provenance", "from_field_id": "sid:provenance-from", "to_field_id": "sid:provenance-to", "kind": "EXACT_DIGEST", "expected_stage": "stage:partition-06", "expected_reason": "reason:evidence-06"},
+          {"id": "sid:path-closure", "from_field_id": "sid:path-closure-from", "to_field_id": "sid:path-closure-to", "kind": "SET_EQUAL", "expected_stage": "stage:partition-07", "expected_reason": "reason:evidence-07"},
+          {"id": "sid:work-frontier", "from_field_id": "sid:work-frontier-from", "to_field_id": "sid:work-frontier-to", "kind": "DERIVED_DIGEST", "expected_stage": "stage:partition-08", "expected_reason": "reason:evidence-08"},
+          {"id": "sid:policy-guard", "from_field_id": "sid:policy-guard-from", "to_field_id": "sid:policy-guard-to", "kind": "EXACT_VALUE", "expected_stage": "stage:partition-09", "expected_reason": "reason:evidence-09"}
+        ],
+        "partitions": [
+          {"binding_id": "sid:lane-registry", "polarity": "MATCH", "stage": "stage:partition-01", "reason": "reason:evidence-01"},
+          {"binding_id": "sid:lane-registry", "polarity": "MISMATCH", "stage": "stage:partition-01", "reason": "reason:evidence-01"},
+          {"binding_id": "sid:command-registry", "polarity": "MATCH", "stage": "stage:partition-02", "reason": "reason:evidence-02"},
+          {"binding_id": "sid:command-registry", "polarity": "MISMATCH", "stage": "stage:partition-02", "reason": "reason:evidence-02"},
+          {"binding_id": "sid:resource-envelope", "polarity": "MATCH", "stage": "stage:partition-03", "reason": "reason:evidence-03"},
+          {"binding_id": "sid:resource-envelope", "polarity": "MISMATCH", "stage": "stage:partition-03", "reason": "reason:evidence-03"},
+          {"binding_id": "sid:impact-graph", "polarity": "MATCH", "stage": "stage:partition-04", "reason": "reason:evidence-04"},
+          {"binding_id": "sid:impact-graph", "polarity": "MISMATCH", "stage": "stage:partition-04", "reason": "reason:evidence-04"},
+          {"binding_id": "sid:semantic-delta", "polarity": "MATCH", "stage": "stage:partition-05", "reason": "reason:evidence-05"},
+          {"binding_id": "sid:semantic-delta", "polarity": "MISMATCH", "stage": "stage:partition-05", "reason": "reason:evidence-05"},
+          {"binding_id": "sid:provenance", "polarity": "MATCH", "stage": "stage:partition-06", "reason": "reason:evidence-06"},
+          {"binding_id": "sid:provenance", "polarity": "MISMATCH", "stage": "stage:partition-06", "reason": "reason:evidence-06"},
+          {"binding_id": "sid:path-closure", "polarity": "MATCH", "stage": "stage:partition-07", "reason": "reason:evidence-07"},
+          {"binding_id": "sid:path-closure", "polarity": "MISMATCH", "stage": "stage:partition-07", "reason": "reason:evidence-07"},
+          {"binding_id": "sid:work-frontier", "polarity": "MATCH", "stage": "stage:partition-08", "reason": "reason:evidence-08"},
+          {"binding_id": "sid:work-frontier", "polarity": "MISMATCH", "stage": "stage:partition-08", "reason": "reason:evidence-08"},
+          {"binding_id": "sid:policy-guard", "polarity": "MATCH", "stage": "stage:partition-09", "reason": "reason:evidence-09"},
+          {"binding_id": "sid:policy-guard", "polarity": "MISMATCH", "stage": "stage:partition-09", "reason": "reason:evidence-09"}
+        ]
+      },
+      "expected": {"decision": "EXACT", "reason": "COMPLETE", "required_binding_count": 9, "partition_count": 18, "referenced_endpoint_count": 18, "input_bytes": 4809, "work_units": 45, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:e8e6c2d96c5346d6580e3542570dc5c7073d664df2d21283ce07df9153ad2dfc"
+    },
+    {
+      "name": "selective-ci-9-missing-lane-registry-mismatch",
+      "input": {
+        "schema": "binding-coverage/v1",
+        "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "precedence": [
+          {"rank": 0, "stage": "stage:partition-01", "reason": "reason:evidence-01"}, {"rank": 1, "stage": "stage:partition-02", "reason": "reason:evidence-02"}, {"rank": 2, "stage": "stage:partition-03", "reason": "reason:evidence-03"}, {"rank": 3, "stage": "stage:partition-04", "reason": "reason:evidence-04"}, {"rank": 4, "stage": "stage:partition-05", "reason": "reason:evidence-05"}, {"rank": 5, "stage": "stage:partition-06", "reason": "reason:evidence-06"}, {"rank": 6, "stage": "stage:partition-07", "reason": "reason:evidence-07"}, {"rank": 7, "stage": "stage:partition-08", "reason": "reason:evidence-08"}, {"rank": 8, "stage": "stage:partition-09", "reason": "reason:evidence-09"}
+        ],
+        "required_bindings": [
+          {"id": "sid:lane-registry", "from_field_id": "sid:lane-registry-from", "to_field_id": "sid:lane-registry-to", "kind": "EXACT_VALUE", "expected_stage": "stage:partition-01", "expected_reason": "reason:evidence-01"},
+          {"id": "sid:command-registry", "from_field_id": "sid:command-registry-from", "to_field_id": "sid:command-registry-to", "kind": "EXACT_DIGEST", "expected_stage": "stage:partition-02", "expected_reason": "reason:evidence-02"},
+          {"id": "sid:resource-envelope", "from_field_id": "sid:resource-envelope-from", "to_field_id": "sid:resource-envelope-to", "kind": "SET_EQUAL", "expected_stage": "stage:partition-03", "expected_reason": "reason:evidence-03"},
+          {"id": "sid:impact-graph", "from_field_id": "sid:impact-graph-from", "to_field_id": "sid:impact-graph-to", "kind": "DERIVED_DIGEST", "expected_stage": "stage:partition-04", "expected_reason": "reason:evidence-04"},
+          {"id": "sid:semantic-delta", "from_field_id": "sid:semantic-delta-from", "to_field_id": "sid:semantic-delta-to", "kind": "EXACT_VALUE", "expected_stage": "stage:partition-05", "expected_reason": "reason:evidence-05"},
+          {"id": "sid:provenance", "from_field_id": "sid:provenance-from", "to_field_id": "sid:provenance-to", "kind": "EXACT_DIGEST", "expected_stage": "stage:partition-06", "expected_reason": "reason:evidence-06"},
+          {"id": "sid:path-closure", "from_field_id": "sid:path-closure-from", "to_field_id": "sid:path-closure-to", "kind": "SET_EQUAL", "expected_stage": "stage:partition-07", "expected_reason": "reason:evidence-07"},
+          {"id": "sid:work-frontier", "from_field_id": "sid:work-frontier-from", "to_field_id": "sid:work-frontier-to", "kind": "DERIVED_DIGEST", "expected_stage": "stage:partition-08", "expected_reason": "reason:evidence-08"},
+          {"id": "sid:policy-guard", "from_field_id": "sid:policy-guard-from", "to_field_id": "sid:policy-guard-to", "kind": "EXACT_VALUE", "expected_stage": "stage:partition-09", "expected_reason": "reason:evidence-09"}
+        ],
+        "partitions": [
+          {"binding_id": "sid:lane-registry", "polarity": "MATCH", "stage": "stage:partition-01", "reason": "reason:evidence-01"},
+          {"binding_id": "sid:command-registry", "polarity": "MATCH", "stage": "stage:partition-02", "reason": "reason:evidence-02"}, {"binding_id": "sid:command-registry", "polarity": "MISMATCH", "stage": "stage:partition-02", "reason": "reason:evidence-02"},
+          {"binding_id": "sid:resource-envelope", "polarity": "MATCH", "stage": "stage:partition-03", "reason": "reason:evidence-03"}, {"binding_id": "sid:resource-envelope", "polarity": "MISMATCH", "stage": "stage:partition-03", "reason": "reason:evidence-03"},
+          {"binding_id": "sid:impact-graph", "polarity": "MATCH", "stage": "stage:partition-04", "reason": "reason:evidence-04"}, {"binding_id": "sid:impact-graph", "polarity": "MISMATCH", "stage": "stage:partition-04", "reason": "reason:evidence-04"},
+          {"binding_id": "sid:semantic-delta", "polarity": "MATCH", "stage": "stage:partition-05", "reason": "reason:evidence-05"}, {"binding_id": "sid:semantic-delta", "polarity": "MISMATCH", "stage": "stage:partition-05", "reason": "reason:evidence-05"},
+          {"binding_id": "sid:provenance", "polarity": "MATCH", "stage": "stage:partition-06", "reason": "reason:evidence-06"}, {"binding_id": "sid:provenance", "polarity": "MISMATCH", "stage": "stage:partition-06", "reason": "reason:evidence-06"},
+          {"binding_id": "sid:path-closure", "polarity": "MATCH", "stage": "stage:partition-07", "reason": "reason:evidence-07"}, {"binding_id": "sid:path-closure", "polarity": "MISMATCH", "stage": "stage:partition-07", "reason": "reason:evidence-07"},
+          {"binding_id": "sid:work-frontier", "polarity": "MATCH", "stage": "stage:partition-08", "reason": "reason:evidence-08"}, {"binding_id": "sid:work-frontier", "polarity": "MISMATCH", "stage": "stage:partition-08", "reason": "reason:evidence-08"},
+          {"binding_id": "sid:policy-guard", "polarity": "MATCH", "stage": "stage:partition-09", "reason": "reason:evidence-09"}, {"binding_id": "sid:policy-guard", "polarity": "MISMATCH", "stage": "stage:partition-09", "reason": "reason:evidence-09"}
+        ]
+      },
+      "expected": {"decision": "INCOMPLETE", "reason": "MISSING_MISMATCH", "required_binding_count": 9, "partition_count": 17, "referenced_endpoint_count": 18, "input_bytes": 4693, "work_units": 44, "missing_match": [], "missing_mismatch": ["sid:lane-registry"], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:7df8a78a4d2e33ce5663ba34c8bbd12eb300f81b5fd85b45c0e96a7c2fe5b034"
+    },
+    {
+      "name": "missing-match",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "INCOMPLETE", "reason": "MISSING_MATCH", "required_binding_count": 1, "partition_count": 1, "referenced_endpoint_count": 2, "input_bytes": 622, "work_units": 4, "missing_match": ["sid:binding-a"], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:f8fb0f51910175754e722a8775204d6f5f7e9fa1e5b236a2244dcfe426f68833"
+    },
+    {
+      "name": "zero-denominator",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [], "required_bindings": [], "partitions": []},
+      "expected": {"decision": "INCOMPLETE", "reason": "ZERO_DENOMINATOR", "required_binding_count": 0, "partition_count": 0, "referenced_endpoint_count": 0, "input_bytes": 280, "work_units": 0, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:aec3b73a2ce93a127078d2b70f318b997c33c9d4319da86a92bcce2e80199ab0"
+    },
+    {
+      "name": "duplicate-binding-id",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}, {"id": "sid:binding-a", "from_field_id": "sid:field-b-from", "to_field_id": "sid:field-b-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}, {"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "UNKNOWN_BINDING", "required_binding_count": 2, "partition_count": 2, "referenced_endpoint_count": 4, "input_bytes": 902, "work_units": 8, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:3d163f2be3d0e56ad79513912443e2097be64c972492fcb07f5bf3fa1d4300ab"
+    },
+    {
+      "name": "duplicate-binding-polarity",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}, {"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "DUPLICATE_PARTITION_POLARITY", "required_binding_count": 1, "partition_count": 2, "referenced_endpoint_count": 2, "input_bytes": 720, "work_units": 5, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:fb222cc3a173cca40d2cdf07af406313b7d302d74997e082d416d29e263d2ebf"
+    },
+    {
+      "name": "dangling-binding",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:missing-binding", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "DANGLING_PARTITION", "required_binding_count": 1, "partition_count": 1, "referenced_endpoint_count": 2, "input_bytes": 625, "work_units": 4, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:a155b0ae40d3e0014fb70c3e7b4246338cdf3b957a80f2809ef9818beb77f20b"
+    },
+    {
+      "name": "bad-stable-id",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "bad-binding", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "bad-binding", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "UNKNOWN_BINDING", "required_binding_count": 1, "partition_count": 1, "referenced_endpoint_count": 2, "input_bytes": 615, "work_units": 4, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:b3d84eea8c05716690da12ed2691cd470b8538945300029ee69ac82ba35e7ffa"
+    },
+    {
+      "name": "bad-snapshot-digest",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "not-a-digest", "expected_snapshot_digest": "not-a-digest", "precedence": [], "required_bindings": [], "partitions": []},
+      "expected": {"decision": "UNKNOWN", "reason": "STALE_OR_BAD_DIGEST", "required_binding_count": 0, "partition_count": 0, "referenced_endpoint_count": 0, "input_bytes": 162, "work_units": 0, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:a9e0ac3279860bb16a9873d8d8a609ff0971eac94b8315f07d72085024b945a6"
+    },
+    {
+      "name": "unsupported-kind",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "UNSUPPORTED", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}, {"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "UNKNOWN_BINDING", "required_binding_count": 1, "partition_count": 2, "referenced_endpoint_count": 2, "input_bytes": 723, "work_units": 5, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:995431c4ed7ec6cab87e82d5ebdd2f9e428e48465dce3fa2951c1c3fb83e472b"
+    },
+    {
+      "name": "bad-token",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "bad-token"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:binding", "reason": "bad-token"}, {"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:binding", "reason": "bad-token"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "UNKNOWN_BINDING", "required_binding_count": 1, "partition_count": 2, "referenced_endpoint_count": 2, "input_bytes": 705, "work_units": 5, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:e8522202a2469ab71f4317f0074108bebc87ef3e6d16179da956ff71bc1f1394"
+    },
+    {
+      "name": "stale-partition-metadata",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:binding", "reason": "reason:evidence"}, {"rank": 1, "stage": "stage:other", "reason": "reason:other"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}, {"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:other", "reason": "reason:other"}]},
+      "expected": {"decision": "UNKNOWN", "reason": "STALE_PARTITION", "required_binding_count": 1, "partition_count": 2, "referenced_endpoint_count": 2, "input_bytes": 775, "work_units": 5, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:f88fabacc3887b45f27bcd26e5213af0778a2f35f2a6d7619063198148d35803"
+    },
+    {
+      "name": "unknown-schema",
+      "input": {"schema": "binding-coverage/v0", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [], "required_bindings": [], "partitions": []},
+      "expected": {"decision": "UNKNOWN", "reason": "UNKNOWN_SCHEMA", "required_binding_count": 0, "partition_count": 0, "referenced_endpoint_count": 0, "input_bytes": 280, "work_units": 0, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:184f4ee3621af8a1e0bdd58b66304a196ca638310ed027654575393efdaa60d7"
+    },
+    {
+      "name": "complete-two-bindings",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:first", "reason": "reason:first"}, {"rank": 1, "stage": "stage:second", "reason": "reason:second"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:first", "expected_reason": "reason:first"}, {"id": "sid:binding-b", "from_field_id": "sid:field-b-from", "to_field_id": "sid:field-b-to", "kind": "SET_EQUAL", "expected_stage": "stage:second", "expected_reason": "reason:second"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:first", "reason": "reason:first"}, {"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:first", "reason": "reason:first"}, {"binding_id": "sid:binding-b", "polarity": "MATCH", "stage": "stage:second", "reason": "reason:second"}, {"binding_id": "sid:binding-b", "polarity": "MISMATCH", "stage": "stage:second", "reason": "reason:second"}]},
+      "expected": {"decision": "EXACT", "reason": "COMPLETE", "required_binding_count": 2, "partition_count": 4, "referenced_endpoint_count": 4, "input_bytes": 1135, "work_units": 10, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:60ab7a977efe34eecffb7dbe8d63728e17abc5e9be08501e6605eea21e029689"
+    },
+    {
+      "name": "permuted-complete-two-bindings",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 1, "stage": "stage:second", "reason": "reason:second"}, {"rank": 0, "stage": "stage:first", "reason": "reason:first"}], "required_bindings": [{"id": "sid:binding-b", "from_field_id": "sid:field-b-from", "to_field_id": "sid:field-b-to", "kind": "SET_EQUAL", "expected_stage": "stage:second", "expected_reason": "reason:second"}, {"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_VALUE", "expected_stage": "stage:first", "expected_reason": "reason:first"}], "partitions": [{"binding_id": "sid:binding-b", "polarity": "MISMATCH", "stage": "stage:second", "reason": "reason:second"}, {"binding_id": "sid:binding-b", "polarity": "MATCH", "stage": "stage:second", "reason": "reason:second"}, {"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:first", "reason": "reason:first"}, {"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:first", "reason": "reason:first"}]},
+      "expected": {"decision": "EXACT", "reason": "COMPLETE", "required_binding_count": 2, "partition_count": 4, "referenced_endpoint_count": 4, "input_bytes": 1135, "work_units": 10, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:60ab7a977efe34eecffb7dbe8d63728e17abc5e9be08501e6605eea21e029689"
+    },
+    {
+      "name": "overflow-boundary",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 9223372036854775807, "stage": "stage:binding", "reason": "reason:evidence"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "DERIVED_DIGEST", "expected_stage": "stage:binding", "expected_reason": "reason:evidence"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:binding", "reason": "reason:evidence"}, {"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:binding", "reason": "reason:evidence"}]},
+      "expected": {"decision": "EXACT", "reason": "COMPLETE", "required_binding_count": 1, "partition_count": 2, "referenced_endpoint_count": 2, "input_bytes": 744, "work_units": 5, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:4d3040e44413903368a0e93e7b7b1c614f806b467c17b63c20092b9deac20cc9"
+    },
+    {
+      "name": "precedence-metadata-as-data",
+      "input": {"schema": "binding-coverage/v1", "snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "expected_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000", "precedence": [{"rank": 0, "stage": "stage:unused", "reason": "reason:unused"}, {"rank": 1, "stage": "stage:selected", "reason": "reason:selected"}], "required_bindings": [{"id": "sid:binding-a", "from_field_id": "sid:field-a-from", "to_field_id": "sid:field-a-to", "kind": "EXACT_DIGEST", "expected_stage": "stage:selected", "expected_reason": "reason:selected"}], "partitions": [{"binding_id": "sid:binding-a", "polarity": "MATCH", "stage": "stage:selected", "reason": "reason:selected"}, {"binding_id": "sid:binding-a", "polarity": "MISMATCH", "stage": "stage:selected", "reason": "reason:selected"}]},
+      "expected": {"decision": "EXACT", "reason": "COMPLETE", "required_binding_count": 1, "partition_count": 2, "referenced_endpoint_count": 2, "input_bytes": 787, "work_units": 5, "missing_match": [], "missing_mismatch": [], "execution_authorized": false, "ci_authorized": false},
+      "expected_digest": "sha256:ca1a04eba8f08f8765e9a6707c1ab841a2fac218022db0822c8752d529815b43"
+    }
+  ]
+}
