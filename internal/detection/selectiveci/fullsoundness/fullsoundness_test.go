@@ -24,6 +24,21 @@ func TestSoundFixture(t *testing.T) {
 	}
 }
 
+func TestClosedIDs(t *testing.T) {
+	valid := []string{"c1", "o1", "a", "z_9", "command-guard"}
+	for _, value := range valid {
+		if !validID(value) {
+			t.Errorf("validID(%q) = false", value)
+		}
+	}
+	invalid := []string{"", strings.Repeat("a", 65), "C1", "c/1", "c:1", "c 1", "1command"}
+	for _, value := range invalid {
+		if validID(value) {
+			t.Errorf("validID(%q) = true", value)
+		}
+	}
+}
+
 func TestClosedReasons(t *testing.T) {
 	cases := []struct {
 		name     string

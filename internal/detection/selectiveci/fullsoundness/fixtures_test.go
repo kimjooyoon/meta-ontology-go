@@ -34,7 +34,9 @@ func receipt(input *Input, name string, cpu, allocated, wall, peak, read, write 
 	return ResourceReceipt{CommandID: id(name), SnapshotDigest: input.SnapshotDigest, ToolchainDigest: input.ToolchainDigest, RunnerDigest: input.RunnerDigest, CPUCoreNS: cpu, AllocatedCPUCount: allocated, WallNS: wall, PeakRSSBytes: peak, ReadBytes: read, WriteBytes: write}
 }
 
-func id(value string) string { return "urn:fullsoundness:" + value }
+func id(value string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(value, "/", "-"), ":", "-")
+}
 
 func digest(marker string) string { return strings.Repeat(marker, 64) }
 

@@ -1,7 +1,5 @@
 package fullsoundness
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-
 func validateInput(input Input) (evaluationState, Reason) {
 	if input.SchemaVersion != SchemaVersion || !validInputDigests(input) {
 		return evaluationState{}, ReasonFullSuiteRequired
@@ -170,8 +168,19 @@ func validInputDigests(input Input) bool {
 }
 
 func validID(value string) bool {
-	parsed, err := semantic.ParseIdentity(value)
-	return err == nil && parsed.String() == value
+	if len(value) < 1 || len(value) > 64 {
+		return false
+	}
+	if value[0] < 'a' || value[0] > 'z' {
+		return false
+	}
+	for index := 1; index < len(value); index++ {
+		char := value[index]
+		if (char < 'a' || char > 'z') && (char < '0' || char > '9') && char != '-' && char != '_' {
+			return false
+		}
+	}
+	return true
 }
 
 func validDigest(value string) bool {
