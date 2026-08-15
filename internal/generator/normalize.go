@@ -61,6 +61,9 @@ func copyIR(input SemanticIR) SemanticIR {
 	result.Activities = append([]Activity(nil), input.Activities...)
 	for index := range result.Entities {
 		result.Entities[index].Fields = append([]Field(nil), input.Entities[index].Fields...)
+		for fieldIndex := range result.Entities[index].Fields {
+			result.Entities[index].Fields[fieldIndex].Aliases = append([]string(nil), input.Entities[index].Fields[fieldIndex].Aliases...)
+		}
 	}
 	for index := range result.Activities {
 		result.Activities[index].Inputs = append([]Port(nil), input.Activities[index].Inputs...)
@@ -249,6 +252,11 @@ func validateStableIDs(ir SemanticIR) error {
 	for _, entity := range ir.Entities {
 		if err := recordStableID(seen, entity.ID, "entity"); err != nil {
 			return err
+		}
+		for _, field := range entity.Fields {
+			if err := recordStableID(seen, field.ID, "field"); err != nil {
+				return err
+			}
 		}
 	}
 	for _, activity := range ir.Activities {
