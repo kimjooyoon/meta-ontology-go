@@ -3,6 +3,8 @@ package bidir
 import (
 	"fmt"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 // DSLAdapter defines the parser-neutral source boundary.
@@ -18,6 +20,12 @@ type GoFactAdapter interface {
 
 // Get lowers a parser-neutral document into the canonical generic model.
 func Get(document Document) (Model, error) {
+	return GetWithTypes(document, semantic.DefaultTypeRegistry())
+}
+
+// GetWithTypes lowers a parser-neutral document into the generic model while
+// resolving every latent field TypeRef through registry.
+func GetWithTypes(document Document, registry semantic.TypeRegistry) (Model, error) {
 	if err := validateDocumentSpans(document); err != nil {
 		return Model{}, err
 	}
@@ -36,7 +44,10 @@ func Get(document Document) (Model, error) {
 		return Model{}, err
 	}
 	model.Normalize()
-	if err := model.Validate(); err != nil {
+	if err := normalizeModelFields(&model, registry); err != nil {
+		return Model{}, err
+	}
+	if err := model.ValidateWithTypes(registry); err != nil {
 		return Model{}, err
 	}
 	return model, nil
@@ -61,7 +72,7 @@ func collectDeclarations(model *Model, declarations []Declaration) (map[string]I
 		}
 		ids[id] = struct{}{}
 		names[referenceKey(model.Namespace, declaration.Name)] = id
-		model.Nodes = append(model.Nodes, Node{ID: id, Kind: declaration.Kind, Name: declaration.Name, Namespace: model.Namespace, Attributes: cloneStringMap(declaration.Attributes), Span: declaration.Span})
+		model.Nodes = append(model.Nodes, Node{ID: id, Kind: declaration.Kind, Name: declaration.Name, Namespace: model.Namespace, Fields: cloneFields(declaration.Fields), Attributes: cloneStringMap(declaration.Attributes), Span: declaration.Span})
 	}
 	return names, ids, nil
 }

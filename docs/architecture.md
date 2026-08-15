@@ -114,3 +114,8 @@ semantic check is runnable for the billing fixture. Richer relations, a
 production LSP, a stable Go analysis CLI, cache conformance, durable evidence
 publishing, and self-hosted verifier promotion remain unsupported until each
 has an implemented entry point and runnable evidence.
+
+The future model for deterministic pressure selection, floor preservation,
+parallel attempts, finite path proof, and epoch promotion is documented in
+[Floor/Ceiling Epochs](floor-ceiling-epochs.md). It is a design contract only;
+it does not activate metric adoption or change the current CI authority.
