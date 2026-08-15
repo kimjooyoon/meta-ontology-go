@@ -125,6 +125,9 @@ func bindShadowRegistry(inputs shadowDecodedInputs) *shadowEvaluationFailure {
 	if rawDigest(inputs.head.RegistryDigest) != inputs.planInput.Registry.Digest {
 		return &shadowEvaluationFailure{"REGISTRY_BINDING", "head_snapshot", "REGISTRY_DIGEST_MISMATCH"}
 	}
+	if inputs.lane.RegistryDigest != inputs.planInput.Registry.Digest {
+		return &shadowEvaluationFailure{"REGISTRY_BINDING", "lane", "REGISTRY_DIGEST_MISMATCH"}
+	}
 	return nil
 }
 
