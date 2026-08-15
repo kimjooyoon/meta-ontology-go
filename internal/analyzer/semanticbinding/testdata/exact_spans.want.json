@@ -8,8 +8,8 @@
       "id": "billing://entity/order",
       "location": {
         "filename": "exact_spans.go",
-        "start": {"offset": 57, "line": 4, "column": 1},
-        "end": {"offset": 76, "line": 4, "column": 20}
+        "start": {"offset": 81, "line": 4, "column": 1},
+        "end": {"offset": 100, "line": 4, "column": 20}
       }
     },
     {
@@ -18,8 +18,8 @@
       "id": "billing://entity/payment",
       "location": {
         "filename": "exact_spans.go",
-        "start": {"offset": 120, "line": 7, "column": 1},
-        "end": {"offset": 141, "line": 7, "column": 22}
+        "start": {"offset": 166, "line": 7, "column": 1},
+        "end": {"offset": 187, "line": 7, "column": 22}
       }
     }
   ]

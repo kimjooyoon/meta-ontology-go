@@ -8,8 +8,8 @@
       "id": "billing://entity/order",
       "location": {
         "filename": "filename_identity_a.go",
-        "start": {"offset": 57, "line": 4, "column": 1},
-        "end": {"offset": 76, "line": 4, "column": 20}
+        "start": {"offset": 81, "line": 4, "column": 1},
+        "end": {"offset": 100, "line": 4, "column": 20}
       }
     }
   ]

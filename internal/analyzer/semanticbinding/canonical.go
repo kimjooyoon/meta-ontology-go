@@ -55,10 +55,6 @@ func (b Binding) Canonical() string {
 	writeField(&builder, "binding")
 	writeField(&builder, b.ID)
 	writeField(&builder, string(b.Role))
-	writeField(&builder, b.PackagePath)
-	writeField(&builder, b.DeclarationKey)
-	writeSpan(&builder, b.Span)
-	writeSpan(&builder, b.DirectiveSpan)
 	return builder.String()
 }
 
@@ -73,10 +69,6 @@ func (o Obligation) Canonical() string {
 	writeField(&builder, o.ID)
 	writeField(&builder, o.Subject)
 	writeField(&builder, o.Pressure)
-	writeField(&builder, o.PackagePath)
-	writeField(&builder, o.DeclarationKey)
-	writeSpan(&builder, o.Span)
-	writeSpan(&builder, o.DirectiveSpan)
 	return builder.String()
 }
 
@@ -88,16 +80,6 @@ func writeField(builder *strings.Builder, value string) {
 	builder.WriteByte(':')
 	builder.WriteString(value)
 	builder.WriteByte('\n')
-}
-
-func writeSpan(builder *strings.Builder, span Span) {
-	writeField(builder, span.Filename)
-	writeField(builder, strconv.Itoa(span.Start.Offset))
-	writeField(builder, strconv.Itoa(span.Start.Line))
-	writeField(builder, strconv.Itoa(span.Start.Column))
-	writeField(builder, strconv.Itoa(span.End.Offset))
-	writeField(builder, strconv.Itoa(span.End.Line))
-	writeField(builder, strconv.Itoa(span.End.Column))
 }
 
 func digestString(value string) string {
@@ -115,46 +97,21 @@ func sortRecords(bindings []Binding, obligations []Obligation) {
 }
 
 func compareBinding(left, right Binding) int {
-	if value := strings.Compare(left.PackagePath, right.PackagePath); value != 0 {
-		return value
-	}
-	if value := strings.Compare(left.DeclarationKey, right.DeclarationKey); value != 0 {
-		return value
-	}
-	if value := strings.Compare(left.Span.Filename, right.Span.Filename); value != 0 {
-		return value
-	}
-	if left.Span.Start.Offset != right.Span.Start.Offset {
-		return compareInt(left.Span.Start.Offset, right.Span.Start.Offset)
-	}
 	if value := strings.Compare(left.ID, right.ID); value != 0 {
 		return value
 	}
-	return strings.Compare(string(left.Role), string(right.Role))
+	if value := strings.Compare(string(left.Role), string(right.Role)); value != 0 {
+		return value
+	}
+	return 0
 }
 
 func compareObligation(left, right Obligation) int {
-	if value := strings.Compare(left.PackagePath, right.PackagePath); value != 0 {
+	if value := strings.Compare(left.ID, right.ID); value != 0 {
 		return value
 	}
-	if value := strings.Compare(left.DeclarationKey, right.DeclarationKey); value != 0 {
+	if value := strings.Compare(left.Subject, right.Subject); value != 0 {
 		return value
 	}
-	if value := strings.Compare(left.Span.Filename, right.Span.Filename); value != 0 {
-		return value
-	}
-	if left.Span.Start.Offset != right.Span.Start.Offset {
-		return compareInt(left.Span.Start.Offset, right.Span.Start.Offset)
-	}
-	return strings.Compare(left.ID, right.ID)
-}
-
-func compareInt(left, right int) int {
-	if left < right {
-		return -1
-	}
-	if left > right {
-		return 1
-	}
-	return 0
+	return strings.Compare(left.Pressure, right.Pressure)
 }

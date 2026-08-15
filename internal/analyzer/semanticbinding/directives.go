@@ -32,11 +32,11 @@ func parseDirective(comment *ast.Comment, span Span) (directive, bool, error) {
 	if !strings.HasPrefix(text, "//") {
 		return directive{}, false, nil
 	}
-	body := strings.TrimSpace(strings.TrimPrefix(text, "//"))
+	body := strings.TrimPrefix(text, "//")
 	if !strings.HasPrefix(body, "gooo:") {
 		return directive{}, false, nil
 	}
-	body = strings.TrimSpace(strings.TrimPrefix(body, "gooo:"))
+	body = strings.TrimPrefix(body, "gooo:")
 	if ignoredGeneratedMarker(body) {
 		return directive{}, false, nil
 	}
@@ -66,7 +66,6 @@ func parseDirective(comment *ast.Comment, span Span) (directive, bool, error) {
 }
 
 func firstWord(value string) (string, string) {
-	value = strings.TrimLeft(value, " \t")
 	for index, character := range value {
 		if character == ' ' || character == '\t' {
 			return value[:index], value[index:]
