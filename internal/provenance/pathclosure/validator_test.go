@@ -141,17 +141,3 @@ func TestTwoPathsWhereOneIsIncompleteAreNotBothComplete(t *testing.T) {
 	}
 	assertExactRecordSequence(t, complete.Edges, fixture.edges)
 }
-
-func TestClosureOnlyOutcomeCasesAreDependencyLocalNotRun(t *testing.T) {
-	cases := []string{
-		"missing edge UNKNOWN",
-		"zero requirements UNKNOWN",
-		"two paths one incomplete UNKNOWN",
-		"wrong phase order FAIL_CLOSED",
-	}
-	for _, name := range cases {
-		t.Run(name, func(t *testing.T) {
-			t.Skip("dependency-local NOT_RUN: no internal/provenance/pathclosure evaluator exists on origin/dev")
-		})
-	}
-}

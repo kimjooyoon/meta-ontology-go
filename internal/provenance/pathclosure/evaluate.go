@@ -23,7 +23,7 @@ func indexEdges(edges []semantic.InferenceEdge) (map[semantic.ID]semantic.Infere
 }
 
 func evaluateRequirement(requirement Requirement, edges map[semantic.ID]semantic.InferenceEdge) issueClass {
-	var previous semantic.InferenceEdge
+	selected := make([]semantic.InferenceEdge, 0, len(requirement.RecordIDs))
 	for i, recordID := range requirement.RecordIDs {
 		edge, exists := edges[recordID]
 		if !exists {
@@ -32,19 +32,38 @@ func evaluateRequirement(requirement Requirement, edges map[semantic.ID]semantic
 		if edge.Kind != requirement.ExpectedKinds[i] {
 			return issueMalformed
 		}
-		if i == 0 {
-			if edge.SubjectID != requirement.StartID {
-				return issueMalformed
-			}
-		} else if previous.ObjectID != edge.SubjectID {
-			return issueMalformed
-		}
-		previous = edge
-		if i == len(requirement.RecordIDs)-1 && edge.ObjectID != requirement.EndID {
-			return issueMalformed
-		}
+		selected = append(selected, edge)
+	}
+	chain, err := semantic.NewInferencePathChain(selected...)
+	if err != nil {
+		return classifyChainError(err)
+	}
+	if !sameCanonicalEdges(chain.Edges, selected) ||
+		chain.Edges[0].SubjectID != requirement.StartID ||
+		chain.Edges[len(chain.Edges)-1].ObjectID != requirement.EndID {
+		return issueMalformed
 	}
 	return 0
+}
+
+func classifyChainError(err error) issueClass {
+	message := strings.ToLower(err.Error())
+	if strings.Contains(message, "path_orphan") || strings.Contains(message, "path_ambiguity") {
+		return issueMissingEvidence
+	}
+	return issueMalformed
+}
+
+func sameCanonicalEdges(left, right []semantic.InferenceEdge) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i].Canonical() != right[i].Canonical() {
+			return false
+		}
+	}
+	return true
 }
 
 func resultForSemanticError(result Result, states []requirementState, err error) Result {
@@ -80,17 +99,21 @@ func classifySemanticError(err error) issueClass {
 		current := issueMalformed
 		switch issue.Code {
 		case "stable-id-collision":
-			current = issueDuplicate
-		case "duplicate-evidence":
-			current = issueDuplicate
-		case "orphan-evidence":
+			if strings.Contains(strings.ToLower(issue.Detail), "evidence") {
+				current = issueMissingEvidence
+			} else {
+				current = issueDuplicate
+			}
+		case "duplicate-evidence", "orphan-evidence", "independent-evidence",
+			"missing-acceptance-receipt", "orphan-acceptance-receipt", "unbacked-acceptance-receipt":
 			current = issueMissingEvidence
 		case "edge", "evidence", "claim":
 			lower := strings.ToLower(issue.Detail)
-			if strings.Contains(lower, "duplicate") {
-				current = issueDuplicate
-			} else if strings.Contains(lower, "snapshot") && strings.Contains(lower, "required") {
+			if strings.Contains(lower, "snapshot") && strings.Contains(lower, "required") {
 				current = issueMissingSnapshot
+			} else if strings.Contains(lower, "evidence") &&
+				(strings.Contains(lower, "required") || strings.Contains(lower, "duplicate")) {
+				current = issueMissingEvidence
 			}
 		}
 		class = moreSevere(class, current)
