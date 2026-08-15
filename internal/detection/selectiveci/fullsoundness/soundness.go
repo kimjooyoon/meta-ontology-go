@@ -32,6 +32,9 @@ func receiptMap(values []ResourceReceipt, commands map[string]Command, input Inp
 		if value.SnapshotDigest != input.SnapshotDigest || value.ToolchainDigest != input.ToolchainDigest || value.RunnerDigest != input.RunnerDigest {
 			return nil, ReasonFullSuiteRequired
 		}
+		if !validResourceNumbers(value) {
+			return nil, ReasonFullSuiteRequired
+		}
 		result[value.CommandID] = value
 	}
 	return result, ""
