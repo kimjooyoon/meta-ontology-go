@@ -237,6 +237,9 @@ func validateSourceField(field Field, owner ID, registry semantic.TypeRegistry) 
 	if field.Origin != FieldOriginSource {
 		return fmt.Errorf("%w: field %q has non-source origin %q", ErrUnrepresentableField, field.ID, field.Origin)
 	}
+	if err := validateExactFieldSpans(field); err != nil {
+		return fmt.Errorf("%w: field %q: %v", ErrUnrepresentableField, field.ID, err)
+	}
 	spans := []struct {
 		name string
 		span SourceSpan

@@ -16,31 +16,47 @@ var ErrLowerCanceled = errors.New("bidir lowering canceled")
 
 // Lower parses the current syntax AST boundary into semantic IR.
 func Lower(file *syntax.File) (semantic.IR, error) {
-	return LowerWithTypes(file, semantic.DefaultTypeRegistry())
+	return lowerWithTypesAndEntityFieldsSupport(file, semantic.DefaultTypeRegistry(), CurrentEntityFieldsSupport())
+}
+
+func lowerWithEntityFieldsSupport(file *syntax.File, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerWithTypesAndEntityFieldsSupport(file, semantic.DefaultTypeRegistry(), support)
 }
 
 // LowerWithTypes lowers the syntax carrier and resolves latent field TypeRefs
 // through the supplied semantic registry.
 func LowerWithTypes(file *syntax.File, registry semantic.TypeRegistry) (semantic.IR, error) {
-	return LowerContextWithTypes(context.Background(), file, registry)
+	return lowerWithTypesAndEntityFieldsSupport(file, registry, CurrentEntityFieldsSupport())
+}
+
+func lowerWithTypesAndEntityFieldsSupport(file *syntax.File, registry semantic.TypeRegistry, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerContextWithTypesAndEntityFieldsSupport(context.Background(), file, registry, support)
 }
 
 // LowerContext lowers without mutating file and never returns a partial IR.
 func LowerContext(ctx context.Context, file *syntax.File) (semantic.IR, error) {
-	return LowerContextWithTypes(ctx, file, semantic.DefaultTypeRegistry())
+	return lowerContextWithTypesAndEntityFieldsSupport(ctx, file, semantic.DefaultTypeRegistry(), CurrentEntityFieldsSupport())
 }
 
 // LowerContextWithTypes is the cancellable typed syntax lowerer.
 func LowerContextWithTypes(ctx context.Context, file *syntax.File, registry semantic.TypeRegistry) (semantic.IR, error) {
+	return lowerContextWithTypesAndEntityFieldsSupport(ctx, file, registry, CurrentEntityFieldsSupport())
+}
+
+func lowerContextWithEntityFieldsSupport(ctx context.Context, file *syntax.File, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerContextWithTypesAndEntityFieldsSupport(ctx, file, semantic.DefaultTypeRegistry(), support)
+}
+
+func lowerContextWithTypesAndEntityFieldsSupport(ctx context.Context, file *syntax.File, registry semantic.TypeRegistry, support EntityFieldsSupport) (semantic.IR, error) {
 	ctx = nonNilLowerContext(ctx)
 	if err := checkLowerContext(ctx); err != nil {
 		return semantic.IR{}, err
 	}
-	document, err := DocumentFromSyntaxContext(ctx, file)
+	document, err := documentFromSyntaxContextWithEntityFieldsSupport(ctx, file, support)
 	if err != nil {
 		return semantic.IR{}, err
 	}
-	return LowerDocumentContextWithTypes(ctx, document, registry)
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, registry, support)
 }
 
 func nonNilLowerContext(ctx context.Context) context.Context {
@@ -62,11 +78,19 @@ func checkLowerContext(ctx context.Context) error {
 // DocumentFromSyntax adapts syntax without making the generic lens depend on
 // parser implementation details.
 func DocumentFromSyntax(file *syntax.File) (Document, error) {
-	return DocumentFromSyntaxContext(context.Background(), file)
+	return documentFromSyntaxContextWithEntityFieldsSupport(context.Background(), file, CurrentEntityFieldsSupport())
+}
+
+func documentFromSyntaxWithEntityFieldsSupport(file *syntax.File, support EntityFieldsSupport) (Document, error) {
+	return documentFromSyntaxContextWithEntityFieldsSupport(context.Background(), file, support)
 }
 
 // DocumentFromSyntaxContext is the cancellable syntax adapter.
 func DocumentFromSyntaxContext(ctx context.Context, file *syntax.File) (Document, error) {
+	return documentFromSyntaxContextWithEntityFieldsSupport(ctx, file, CurrentEntityFieldsSupport())
+}
+
+func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file *syntax.File, support EntityFieldsSupport) (Document, error) {
 	ctx = nonNilLowerContext(ctx)
 	if err := checkLowerContext(ctx); err != nil {
 		return Document{}, err
@@ -76,6 +100,9 @@ func DocumentFromSyntaxContext(ctx context.Context, file *syntax.File) (Document
 	}
 	if file.Namespace == nil || file.Namespace.Name == "" {
 		return Document{}, fmt.Errorf("namespace is required")
+	}
+	if err := entityFieldsActivation(support, syntaxFileHasFields(file), firstSyntaxFieldSpan(file)); err != nil {
+		return Document{}, err
 	}
 	document := Document{Package: file.Package.Name, Namespace: file.Namespace.Name}
 	for _, declaration := range syntaxDeclarations(file) {
@@ -88,7 +115,36 @@ func DocumentFromSyntaxContext(ctx context.Context, file *syntax.File) (Document
 		}
 		document.Declarations = append(document.Declarations, adapted)
 	}
+	if err := validateEntityFieldsDocument(document, document.Namespace, semantic.DefaultTypeRegistry(), support); err != nil {
+		return Document{}, err
+	}
 	return document, nil
+}
+
+func syntaxFileHasFields(file *syntax.File) bool {
+	if file == nil {
+		return false
+	}
+	for _, declaration := range syntaxDeclarations(file) {
+		entity, ok := declaration.(*syntax.EntityDecl)
+		if ok && len(entity.Fields) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func firstSyntaxFieldSpan(file *syntax.File) SourceSpan {
+	if file == nil {
+		return SourceSpan{}
+	}
+	for _, declaration := range syntaxDeclarations(file) {
+		entity, ok := declaration.(*syntax.EntityDecl)
+		if ok && len(entity.Fields) > 0 {
+			return toSourceSpan(entity.Fields[0].Span)
+		}
+	}
+	return SourceSpan{}
 }
 
 func syntaxDeclarations(file *syntax.File) []syntax.Declaration {

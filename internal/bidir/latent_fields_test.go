@@ -11,7 +11,8 @@ import (
 
 func TestLatentSyntaxFieldsLowerToSemanticIRInDeclarationOrder(t *testing.T) {
 	file := latentSyntaxFile()
-	document, err := DocumentFromSyntax(file)
+	support := supportedEntityFieldsForTest()
+	document, err := documentFromSyntaxWithEntityFieldsSupport(file, support)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +23,7 @@ func TestLatentSyntaxFieldsLowerToSemanticIRInDeclarationOrder(t *testing.T) {
 		t.Fatalf("type reference lookup spelling changed: %#v", got)
 	}
 
-	ir, err := Lower(file)
+	ir, err := lowerWithEntityFieldsSupport(file, support)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,10 +40,10 @@ func TestLatentSyntaxFieldsLowerToSemanticIRInDeclarationOrder(t *testing.T) {
 	if order.Fields[0].TypeRef.ID != semantic.BuiltinStringTypeID || order.Fields[1].TypeRef.ID != semantic.BuiltinStringTypeID {
 		t.Fatalf("registered string type was not resolved: %#v", order.Fields)
 	}
-	if order.Fields[0].Presence != semantic.Required || order.Fields[1].Presence != semantic.Optional || order.Fields[0].Cardinality != semantic.One || order.Fields[1].Cardinality != semantic.Many {
+	if order.Fields[0].Presence != semantic.Required || order.Fields[1].Presence != semantic.Required || order.Fields[0].Cardinality != semantic.One || order.Fields[1].Cardinality != semantic.One {
 		t.Fatalf("field presence/cardinality changed: %#v", order.Fields)
 	}
-	if order.Fields[0].Span.File != "latent.gooo" || order.Fields[0].Span.Start.Offset != 10 || order.Fields[1].Span.End.Offset != 100 {
+	if order.Fields[0].Span.File != "latent.gooo" || order.Fields[0].Span.Start.Offset != 10 || order.Fields[1].Span.End.Offset != 102 {
 		t.Fatalf("field spans were not lowered: %#v", order.Fields)
 	}
 
@@ -55,21 +56,21 @@ func TestLatentSyntaxFieldsLowerToSemanticIRInDeclarationOrder(t *testing.T) {
 func TestLatentFieldsGetPutPreservesAliasesSpansAndOrder(t *testing.T) {
 	document := latentDocument()
 	before := document
-	model, err := Get(document)
+	model, err := getWithEntityFieldsSupport(document, supportedEntityFieldsForTest())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(model.Nodes[0].Fields) != 2 || model.Nodes[0].Fields[0].Name != "Order Number" || model.Nodes[0].Fields[1].Name != "Amount" {
 		t.Fatalf("model field order changed: %#v", model.Nodes[0].Fields)
 	}
-	written, err := Put(document, model)
+	written, err := putWithEntityFieldsSupport(document, model, supportedEntityFieldsForTest())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(written, document) {
 		t.Fatalf("field carrier changed during Get-Put:\n got %#v\nwant %#v", written, document)
 	}
-	observed, err := Get(written)
+	observed, err := getWithEntityFieldsSupport(written, supportedEntityFieldsForTest())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +93,7 @@ func TestLatentFieldsGetPutPreservesAliasesSpansAndOrder(t *testing.T) {
 }
 
 func TestLatentFieldSemanticIdentityIgnoresPresentationAndSpan(t *testing.T) {
-	left, err := Get(latentDocument())
+	left, err := getWithEntityFieldsSupport(latentDocument(), supportedEntityFieldsForTest())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +149,7 @@ func TestLatentFieldValidationRejectsDeterministicallyWithoutPartialModel(t *tes
 			document := latentDocument()
 			test.mutate(&document)
 			beforeGet := document
-			model, err := Get(document)
+			model, err := getWithEntityFieldsSupport(document, supportedEntityFieldsForTest())
 			if err == nil || !strings.Contains(err.Error(), test.want) {
 				t.Fatalf("Get error = %v, want substring %q", err, test.want)
 			}
@@ -164,7 +165,7 @@ func TestLatentFieldValidationRejectsDeterministicallyWithoutPartialModel(t *tes
 
 func TestLatentFieldPutRejectsParentMoveWithoutWrite(t *testing.T) {
 	document := latentDocument()
-	model, err := Get(document)
+	model, err := getWithEntityFieldsSupport(document, supportedEntityFieldsForTest())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,7 +176,7 @@ func TestLatentFieldPutRejectsParentMoveWithoutWrite(t *testing.T) {
 		ID: field.ID, Parent: "billing://entity/payment", Name: field.Name, Aliases: field.Aliases,
 		TypeRef: field.TypeRef, Presence: field.Presence, Cardinality: field.Cardinality, Span: field.Span,
 	})
-	written, err := Put(document, updated)
+	written, err := putWithEntityFieldsSupport(document, updated, supportedEntityFieldsForTest())
 	if err == nil || !strings.Contains(err.Error(), "cannot move") {
 		t.Fatalf("parent move result = %v", err)
 	}
@@ -187,7 +188,7 @@ func TestLatentFieldPutRejectsParentMoveWithoutWrite(t *testing.T) {
 func TestLatentFieldPutRejectsSemanticAdditionWithoutFieldSpan(t *testing.T) {
 	document := latentDocument()
 	document.Declarations[0].Span = SourceSpan{File: "latent.gooo", Start: 1, End: 2}
-	model, err := Get(document)
+	model, err := getWithEntityFieldsSupport(document, supportedEntityFieldsForTest())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +197,7 @@ func TestLatentFieldPutRejectsSemanticAdditionWithoutFieldSpan(t *testing.T) {
 		ID: "billing://field/no-span", Parent: "billing://entity/order", Name: "No Span",
 		TypeRef: TypeRef{Name: "string"}, Presence: FieldPresenceRequired, Cardinality: FieldCardinalityOne,
 	})
-	written, err := Put(document, updated)
+	written, err := putWithEntityFieldsSupport(document, updated, supportedEntityFieldsForTest())
 	if err == nil || !strings.Contains(err.Error(), "field \"billing://field/no-span\" semantic change has no source span") {
 		t.Fatalf("missing field provenance result = %v", err)
 	}
@@ -207,7 +208,7 @@ func TestLatentFieldPutRejectsSemanticAdditionWithoutFieldSpan(t *testing.T) {
 
 func TestLatentFieldPutRejectsWithoutWriteOrCandidatePromotion(t *testing.T) {
 	document := latentDocument()
-	model, err := Get(document)
+	model, err := getWithEntityFieldsSupport(document, supportedEntityFieldsForTest())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,7 +216,7 @@ func TestLatentFieldPutRejectsWithoutWriteOrCandidatePromotion(t *testing.T) {
 	updated.Candidates = append(updated.Candidates, NewSourcedFact(CandidateFact, "billing://activity/pay", PredicateWasDerivedFrom, "billing://entity/order", SourceSpan{File: "candidate.go", Start: 1, End: 2}))
 	updated.Nodes[0].Fields[0].TypeRef = semantic.TypeRef{}
 	updated.Nodes[0].Fields[0].TypeRefUse = TypeRefUse{}
-	written, err := Put(document, updated)
+	written, err := putWithEntityFieldsSupport(document, updated, supportedEntityFieldsForTest())
 	if err == nil {
 		t.Fatal("invalid field model was accepted")
 	}
@@ -238,13 +239,13 @@ func TestLatentFieldTypedRegistryRejectsUnknownAndAmbiguousReferences(t *testing
 		t.Fatal(err)
 	}
 	document.Declarations[0].Fields[0].TypeRef = semantic.TypeRef{Name: "string"}
-	if ir, err := LowerDocumentWithTypes(document, ambiguous); err == nil || !strings.Contains(err.Error(), "ambiguous semantic type") || !reflect.DeepEqual(ir, semantic.IR{}) {
+	if ir, err := lowerDocumentWithTypesAndEntityFieldsSupport(document, ambiguous, supportedEntityFieldsForTest()); err == nil || !strings.Contains(err.Error(), "ambiguous semantic type") || !reflect.DeepEqual(ir, semantic.IR{}) {
 		t.Fatalf("ambiguous type result = %#v, %v", ir, err)
 	}
 	document.Declarations[0].Fields[0].TypeRef = semantic.TypeRef{Namespace: "gooo", Name: "string"}
 	document.Declarations[0].Fields[1].TypeRef = semantic.TypeRef{Namespace: "gooo", Name: "string"}
 	document.Declarations[1].Fields[0].TypeRef = semantic.TypeRef{Namespace: "gooo", Name: "string"}
-	ir, err := LowerDocumentWithTypes(document, ambiguous)
+	ir, err := lowerDocumentWithTypesAndEntityFieldsSupport(document, ambiguous, supportedEntityFieldsForTest())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -276,7 +277,7 @@ func latentSyntaxFile() *syntax.File {
 				Fields: []syntax.FieldDecl{
 					{Span: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 10}, End: syntax.Position{Offset: 50}}, ID: "billing://field/order-number", Name: "Order Number", TypeRef: syntax.TypeRefDecl{Span: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 31}, End: syntax.Position{Offset: 37}}, Spelling: "string"}, Presence: syntax.FieldPresenceRequired, Cardinality: syntax.FieldCardinalityOne,
 						IDSpan: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 10}, End: syntax.Position{Offset: 18}}, NameSpan: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 19}, End: syntax.Position{Offset: 30}}, PresenceSpan: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 38}, End: syntax.Position{Offset: 46}}, CardinalitySpan: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 47}, End: syntax.Position{Offset: 50}}},
-					{Span: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 60}, End: syntax.Position{Offset: 100}}, ID: "billing://field/amount", Name: "Amount", TypeRef: syntax.TypeRefDecl{Span: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 81}, End: syntax.Position{Offset: 92}}, Spelling: "gooo:string"}, Presence: syntax.FieldPresenceOptional, Cardinality: syntax.FieldCardinalityMany,
+					{Span: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 60}, End: syntax.Position{Offset: 102}}, ID: "billing://field/amount", Name: "Amount", TypeRef: syntax.TypeRefDecl{Span: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 81}, End: syntax.Position{Offset: 92}}, Spelling: "gooo:string"}, Presence: syntax.FieldPresenceRequired, Cardinality: syntax.FieldCardinalityOne,
 						IDSpan: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 60}, End: syntax.Position{Offset: 68}}, NameSpan: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 69}, End: syntax.Position{Offset: 80}}, PresenceSpan: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 93}, End: syntax.Position{Offset: 97}}, CardinalitySpan: syntax.Span{Filename: "latent.gooo", Start: syntax.Position{Offset: 98}, End: syntax.Position{Offset: 102}}},
 				},
 			},
