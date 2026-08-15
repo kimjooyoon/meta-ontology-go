@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -15,11 +16,22 @@ var ErrLowerCanceled = errors.New("bidir lowering canceled")
 
 // Lower parses the current syntax AST boundary into semantic IR.
 func Lower(file *syntax.File) (semantic.IR, error) {
-	return LowerContext(context.Background(), file)
+	return LowerWithTypes(file, semantic.DefaultTypeRegistry())
+}
+
+// LowerWithTypes lowers the syntax carrier and resolves latent field TypeRefs
+// through the supplied semantic registry.
+func LowerWithTypes(file *syntax.File, registry semantic.TypeRegistry) (semantic.IR, error) {
+	return LowerContextWithTypes(context.Background(), file, registry)
 }
 
 // LowerContext lowers without mutating file and never returns a partial IR.
 func LowerContext(ctx context.Context, file *syntax.File) (semantic.IR, error) {
+	return LowerContextWithTypes(ctx, file, semantic.DefaultTypeRegistry())
+}
+
+// LowerContextWithTypes is the cancellable typed syntax lowerer.
+func LowerContextWithTypes(ctx context.Context, file *syntax.File, registry semantic.TypeRegistry) (semantic.IR, error) {
 	ctx = nonNilLowerContext(ctx)
 	if err := checkLowerContext(ctx); err != nil {
 		return semantic.IR{}, err
@@ -28,7 +40,7 @@ func LowerContext(ctx context.Context, file *syntax.File) (semantic.IR, error) {
 	if err != nil {
 		return semantic.IR{}, err
 	}
-	return LowerDocumentContext(ctx, document)
+	return LowerDocumentContextWithTypes(ctx, document, registry)
 }
 
 func nonNilLowerContext(ctx context.Context) context.Context {
@@ -92,12 +104,95 @@ func adaptSyntaxDeclaration(ctx context.Context, declaration syntax.Declaration)
 	}
 	switch value := declaration.(type) {
 	case *syntax.EntityDecl:
-		return Declaration{Kind: EntityKind, ID: ID(value.ID), Name: value.Name, Span: toSourceSpan(value.Span)}, nil
+		if len(value.Fields) > 0 && strings.TrimSpace(value.ID) == "" {
+			return Declaration{}, fmt.Errorf("entity %q field parent ID is required", value.Name)
+		}
+		fields := make([]Field, 0, len(value.Fields))
+		for index, field := range value.Fields {
+			if err := checkLowerContext(ctx); err != nil {
+				return Declaration{}, err
+			}
+			adapted, err := adaptSyntaxField(value.ID, field)
+			if err != nil {
+				return Declaration{}, fmt.Errorf("entity %q field %d: %w", value.Name, index, err)
+			}
+			fields = append(fields, adapted)
+		}
+		return Declaration{Kind: EntityKind, ID: ID(value.ID), Name: value.Name, Fields: fields, Span: toSourceSpan(value.Span)}, nil
 	case *syntax.ActivityDecl:
 		return adaptSyntaxActivity(ctx, value)
 	default:
 		return Declaration{}, fmt.Errorf("unsupported syntax declaration %T", declaration)
 	}
+}
+
+func adaptSyntaxField(parent string, field syntax.FieldDecl) (Field, error) {
+	typeRef, typeRefUse, err := parseSyntaxTypeRef(field.TypeRef.Spelling)
+	if err != nil {
+		return Field{}, err
+	}
+	typeRefUse.Span = toSourceSpan(field.TypeRef.Span)
+	return Field{
+		ID:              ID(field.ID),
+		Parent:          ID(parent),
+		Name:            field.Name,
+		TypeRef:         typeRef,
+		TypeRefUse:      typeRefUse,
+		Origin:          FieldOriginSource,
+		Presence:        FieldPresence(field.Presence),
+		Cardinality:     FieldCardinality(field.Cardinality),
+		Span:            toSourceSpan(field.Span),
+		IDSpan:          toSourceSpan(field.IDSpan),
+		NameSpan:        toSourceSpan(field.NameSpan),
+		TypeRefSpan:     toSourceSpan(field.TypeRef.Span),
+		PresenceSpan:    toSourceSpan(field.PresenceSpan),
+		CardinalitySpan: toSourceSpan(field.CardinalitySpan),
+	}, nil
+}
+
+func parseSyntaxTypeRef(spelling string) (semantic.TypeRef, TypeRefUse, error) {
+	raw := strings.TrimSpace(spelling)
+	if raw == "" {
+		return semantic.TypeRef{}, TypeRefUse{}, fmt.Errorf("%w: type reference spelling is empty", ErrInvalidField)
+	}
+	if strings.Contains(raw, "://") || strings.HasPrefix(raw, "urn:") {
+		id, err := semantic.ParseIdentity(raw)
+		if err != nil {
+			return semantic.TypeRef{}, TypeRefUse{}, fmt.Errorf("%w: type reference identity: %v", ErrInvalidField, err)
+		}
+		return semantic.TypeRef{ID: id}, TypeRefUse{Form: TypeRefFormStableID, Spelling: id.String(), ResolvedID: ID(id)}, nil
+	}
+	ref, err := parseLookupTypeRef(raw)
+	if err != nil {
+		return semantic.TypeRef{}, TypeRefUse{}, err
+	}
+	return ref, TypeRefUse{Form: TypeRefFormLookup, Spelling: lookupTypeRefSpelling(ref)}, nil
+}
+
+func parseLookupTypeRef(raw string) (semantic.TypeRef, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return semantic.TypeRef{}, fmt.Errorf("%w: type reference spelling is empty", ErrInvalidField)
+	}
+	parts := strings.Split(raw, ":")
+	ref := semantic.TypeRef{}
+	switch len(parts) {
+	case 1:
+		ref.Name = strings.TrimSpace(parts[0])
+	case 2:
+		namespace, err := semantic.ParseNamespace(strings.TrimSpace(parts[0]))
+		if err != nil {
+			return semantic.TypeRef{}, fmt.Errorf("%w: type reference namespace: %v", ErrInvalidField, err)
+		}
+		ref.Namespace = namespace
+		ref.Name = strings.TrimSpace(parts[1])
+	default:
+		return semantic.TypeRef{}, fmt.Errorf("%w: type reference spelling %q is not representable", ErrInvalidField, raw)
+	}
+	if err := ref.Validate(); err != nil {
+		return semantic.TypeRef{}, fmt.Errorf("%w: type reference: %v", ErrInvalidField, err)
+	}
+	return ref, nil
 }
 
 func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (Declaration, error) {

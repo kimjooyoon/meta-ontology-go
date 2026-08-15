@@ -9,10 +9,11 @@ type Parser struct {
 	tokens   Tokens
 	eof      Span
 
-	index       int
-	diagnostics Diagnostics
-	parsed      bool
-	file        *File
+	index                int
+	diagnostics          Diagnostics
+	parsed               bool
+	file                 *File
+	entityFieldsRejected bool
 }
 
 // NewParser creates a parser for an unnamed source.
@@ -33,7 +34,8 @@ func NewParserFile(filename, source string) *Parser {
 }
 
 // Parse parses the source once. Repeated calls return copies of the diagnostic
-// slice and the same immutable-by-convention AST pointer.
+// slice and the same immutable-by-convention AST pointer. Deferred EntityFields
+// input returns no AST so unsupported source cannot leak a partial result.
 func (p *Parser) Parse() (*File, Diagnostics) {
 	if p.parsed {
 		return p.file, append(Diagnostics(nil), p.diagnostics...)
@@ -85,7 +87,11 @@ func (p *Parser) parseFile() *File {
 			file.Declarations = file.Decls
 			return file
 		case p.at(TokenEntity):
-			file.Decls = append(file.Decls, p.parseEntity())
+			entity := p.parseEntity()
+			if p.entityFieldsRejected {
+				return nil
+			}
+			file.Decls = append(file.Decls, entity)
 			file.Declarations = file.Decls
 		case p.at(TokenActivity):
 			file.Decls = append(file.Decls, p.parseActivity())
@@ -130,6 +136,9 @@ func (p *Parser) parseEntity() *EntityDecl {
 	name := p.expectIdentifier("entity name", DiagExpectedIdentifier)
 	p.expect(TokenID, "id", DiagExpectedID)
 	id := p.expectString()
+	if p.atEntityFieldsMarker() {
+		p.rejectEntityFields(p.advance())
+	}
 
 	end := keyword.Span.End
 	if !name.Span.IsEmpty() {

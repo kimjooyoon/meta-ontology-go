@@ -13,6 +13,9 @@ func (m Model) Apply(delta Delta) (Model, error) {
 	if err := working.Validate(); err != nil {
 		return Model{}, err
 	}
+	if err := validateFieldParentStability(m, working); err != nil {
+		return Model{}, err
+	}
 	return working, nil
 }
 
