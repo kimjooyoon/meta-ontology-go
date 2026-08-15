@@ -75,97 +75,96 @@ func firstWord(value string) (string, string) {
 }
 
 func parseFields(input string, shape directiveFields) (map[string]string, error) {
-	allowed := make(map[string]struct{}, len(shape.allowed))
-	for _, name := range shape.allowed {
-		allowed[name] = struct{}{}
-	}
+	allowed := allowedFieldSet(shape.allowed)
 	fields := make(map[string]string, len(shape.required))
 	for index := 0; index < len(input); {
 		index = skipSpace(input, index)
 		if index == len(input) {
 			break
 		}
-		start := index
-		for index < len(input) && input[index] != '=' && input[index] != ' ' && input[index] != '\t' {
-			index++
+		name, next, err := parseFieldName(input, index, allowed, fields)
+		if err != nil {
+			return nil, err
 		}
-		if start == index || index == len(input) || input[index] != '=' {
-			return nil, &Error{
-				Code:              CodeMalformedDirective,
-				Message:           "fields must use key=\"value\" syntax",
-				FullSuiteFallback: true,
-			}
-		}
-		name := input[start:index]
-		if _, ok := allowed[name]; !ok {
-			return nil, &Error{
-				Code:              CodeUnknownField,
-				Message:           "unknown directive field " + strconv.Quote(name),
-				FullSuiteFallback: true,
-			}
-		}
-		if _, duplicate := fields[name]; duplicate {
-			return nil, &Error{
-				Code:              CodeDuplicateField,
-				Message:           "duplicate directive field " + strconv.Quote(name),
-				FullSuiteFallback: true,
-			}
-		}
-		index++
-		if index >= len(input) || input[index] != '"' {
-			return nil, &Error{
-				Code:              CodeMalformedDirective,
-				Message:           "directive field values must be double quoted",
-				FullSuiteFallback: true,
-			}
-		}
-		index++
-		valueStart := index
-		for index < len(input) && input[index] != '"' {
-			if input[index] == '\\' || input[index] == '\n' || input[index] == '\r' {
-				return nil, &Error{
-					Code:              CodeMalformedDirective,
-					Message:           "directive field values cannot contain escapes or newlines",
-					FullSuiteFallback: true,
-				}
-			}
-			index++
-		}
-		if index == len(input) {
-			return nil, &Error{
-				Code:              CodeMalformedDirective,
-				Message:           "unterminated directive field value",
-				FullSuiteFallback: true,
-			}
-		}
-		value := input[valueStart:index]
-		if value == "" || value != strings.TrimSpace(value) {
-			return nil, &Error{
-				Code:              CodeMalformedDirective,
-				Message:           "directive field values must not be empty or padded",
-				FullSuiteFallback: true,
-			}
+		value, next, err := parseFieldValue(input, next)
+		if err != nil {
+			return nil, err
 		}
 		fields[name] = value
+		index, err = consumeFieldSeparator(input, next)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return fields, requireFields(fields, shape.required)
+}
+
+func allowedFieldSet(names []string) map[string]struct{} {
+	allowed := make(map[string]struct{}, len(names))
+	for _, name := range names {
+		allowed[name] = struct{}{}
+	}
+	return allowed
+}
+
+func parseFieldName(input string, start int, allowed map[string]struct{}, fields map[string]string) (string, int, error) {
+	index := start
+	for index < len(input) && input[index] != '=' && input[index] != ' ' && input[index] != '\t' {
 		index++
-		if index < len(input) && input[index] != ' ' && input[index] != '\t' {
-			return nil, &Error{
-				Code:              CodeMalformedDirective,
-				Message:           "directive fields must be separated by whitespace",
-				FullSuiteFallback: true,
-			}
-		}
 	}
-	for _, name := range shape.required {
+	if start == index || index == len(input) || input[index] != '=' {
+		return "", 0, directiveError(CodeMalformedDirective, "fields must use key=\"value\" syntax")
+	}
+	name := input[start:index]
+	if _, ok := allowed[name]; !ok {
+		return "", 0, directiveError(CodeUnknownField, "unknown directive field "+strconv.Quote(name))
+	}
+	if _, duplicate := fields[name]; duplicate {
+		return "", 0, directiveError(CodeDuplicateField, "duplicate directive field "+strconv.Quote(name))
+	}
+	return name, index + 1, nil
+}
+
+func parseFieldValue(input string, index int) (string, int, error) {
+	if index >= len(input) || input[index] != '"' {
+		return "", 0, directiveError(CodeMalformedDirective, "directive field values must be double quoted")
+	}
+	index++
+	valueStart := index
+	for index < len(input) && input[index] != '"' {
+		if input[index] == '\\' || input[index] == '\n' || input[index] == '\r' {
+			return "", 0, directiveError(CodeMalformedDirective, "directive field values cannot contain escapes or newlines")
+		}
+		index++
+	}
+	if index == len(input) {
+		return "", 0, directiveError(CodeMalformedDirective, "unterminated directive field value")
+	}
+	value := input[valueStart:index]
+	if value == "" || value != strings.TrimSpace(value) {
+		return "", 0, directiveError(CodeMalformedDirective, "directive field values must not be empty or padded")
+	}
+	return value, index + 1, nil
+}
+
+func consumeFieldSeparator(input string, index int) (int, error) {
+	if index < len(input) && input[index] != ' ' && input[index] != '\t' {
+		return 0, directiveError(CodeMalformedDirective, "directive fields must be separated by whitespace")
+	}
+	return index, nil
+}
+
+func requireFields(fields map[string]string, required []string) error {
+	for _, name := range required {
 		if _, ok := fields[name]; !ok {
-			return nil, &Error{
-				Code:              CodeMissingField,
-				Message:           "missing directive field " + strconv.Quote(name),
-				FullSuiteFallback: true,
-			}
+			return directiveError(CodeMissingField, "missing directive field "+strconv.Quote(name))
 		}
 	}
-	return fields, nil
+	return nil
+}
+
+func directiveError(code Code, message string) error {
+	return &Error{Code: code, Message: message, FullSuiteFallback: true}
 }
 
 func skipSpace(value string, index int) int {
