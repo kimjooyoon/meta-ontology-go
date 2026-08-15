@@ -19,9 +19,13 @@ const (
 	exitUsage   = 2
 )
 
-func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }
+func main() { os.Exit(runWithInput(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
 func run(args []string, stdout, stderr io.Writer) int {
+	return runWithInput(args, os.Stdin, stdout, stderr)
+}
+
+func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		printUsage(stderr)
 		return exitUsage
@@ -41,6 +45,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runGraph(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "analyze":
 		return runAnalyze(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+	case "provenance":
+		return runProvenance(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+	case "lsp":
+		return runLSP(args[1:], input, stdout, stderr)
 	case "version":
 		return runVersion(args[1:], stdout, stderr)
 	default:
@@ -50,7 +58,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 }
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "usage: gooo <check|generate|roundtrip|query|inspect|graph|analyze|version> [args]")
+	fmt.Fprintln(writer, "usage: gooo <check|generate|roundtrip|query|inspect|graph|analyze|provenance|lsp|version> [args]")
 }
 
 var analyzeDeltaToolchain = runtime.Version() + "|" + runtime.GOOS + "/" + runtime.GOARCH

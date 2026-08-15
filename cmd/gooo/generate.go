@@ -46,6 +46,11 @@ func projectionIR(ir semantic.IR) (generator.SemanticIR, error) {
 		item := generatorNode(node)
 		switch node.Kind {
 		case semantic.Entity:
+			fields, err := projectionSemanticFields(node)
+			if err != nil {
+				return generator.SemanticIR{}, err
+			}
+			item.entity.Fields = fields
 			entities[string(node.ID)] = len(model.Entities)
 			model.Entities = append(model.Entities, item.entity)
 		case semantic.Activity:

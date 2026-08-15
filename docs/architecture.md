@@ -6,6 +6,11 @@ Go projection is structural output; handwritten slots are the implementation
 escape hatch. Evidence records describe what a build observed and do not become
 new intent by themselves.
 
+The normative code-to-semantic receipt and terminology-path contract is in
+[code-semantic-coupling.md](code-semantic-coupling.md). It requires one
+digest-bound `DELTA` or `NO_DELTA` receipt for each changed registered semantic
+code surface; a changed file alone is not a semantic proof.
+
 Self-hosting is not part of the current implementation contract. The checked-in
 bootstrap fixtures are non-promoting evidence shapes; this document does not
 define a self-hosted compiler or verifier authority, and it does not link to a
@@ -114,3 +119,8 @@ semantic check is runnable for the billing fixture. Richer relations, a
 production LSP, a stable Go analysis CLI, cache conformance, durable evidence
 publishing, and self-hosted verifier promotion remain unsupported until each
 has an implemented entry point and runnable evidence.
+
+The future model for deterministic pressure selection, floor preservation,
+parallel attempts, finite path proof, and epoch promotion is documented in
+[Floor/Ceiling Epochs](floor-ceiling-epochs.md). It is a design contract only;
+it does not activate metric adoption or change the current CI authority.

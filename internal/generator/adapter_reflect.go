@@ -106,6 +106,9 @@ func reflectNode(value reflect.Value, index int, model *SemanticIR, entities, ac
 	if kind != "entity" && kind != "activity" {
 		return fmt.Errorf("generator: unsupported semantic node kind %q for %q", kind, id)
 	}
+	if kind == "entity" && reflectedNodeHasFields(value) {
+		return entityFieldsError(entityFieldsDeferredDiagnostic, Field{ID: id}, "reflective entity fields are deferred and require the package-private test seam")
+	}
 	if previous, exists := kinds[id]; exists {
 		return fmt.Errorf("generator: duplicate semantic node ID %q (%s and %s)", id, previous, kind)
 	}
@@ -118,6 +121,23 @@ func reflectNode(value reflect.Value, index int, model *SemanticIR, entities, ac
 	activities[id] = len(model.Activities)
 	model.Activities = append(model.Activities, Activity{ID: id, Name: name, GoName: name})
 	return nil
+}
+
+func reflectedNodeHasFields(value reflect.Value) bool {
+	fields := value.FieldByName("Fields")
+	if !fields.IsValid() {
+		return false
+	}
+	fields = indirectValue(fields)
+	if !fields.IsValid() {
+		return false
+	}
+	switch fields.Kind() {
+	case reflect.Array, reflect.Slice, reflect.Map:
+		return fields.Len() > 0
+	default:
+		return true
+	}
 }
 
 func reflectFacts(collection reflectedCollection, model *SemanticIR, entities, activities map[string]int, kinds map[string]string) error {

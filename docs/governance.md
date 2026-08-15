@@ -34,6 +34,9 @@ invent domain meaning. Provenance is evidence, not a write-back channel.
 The design-only [deterministic metrics RFC](metrics-rfc.md) defines how repeated
 reasoning may become exact predicates. It does not activate new blocking checks;
 the contracts in this document and the live CI policy remain authoritative.
+The [code-semantic coupling contract](code-semantic-coupling.md) adds the
+docs-owned receipt and typed-path design; its two proposed metrics remain
+`DESIGN_ONLY`, `UNOBSERVED`, and `NO_EFFECT`.
 
 ## 2. CI-only branch and promotion contract
 

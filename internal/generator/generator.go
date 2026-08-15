@@ -55,6 +55,19 @@ func GenerateFromProjectionV1(input any, options Options) (ProjectionMetadataV1,
 // generated regions are replaced or removed.  Marker-outside text and the
 // contents of stable handwritten slots are retained byte-for-byte.
 func (g Generator) Generate(input SemanticIR, previous []byte) (Result, error) {
+	return g.generateWithEntityFieldsSupport(input, previous, checkedEntityFieldsSupport())
+}
+
+// generateWithEntityFieldsSupport is intentionally package-private. Tests may
+// inject the exact profile-bound SUPPORTED state, while every production
+// entry point above and below remains bound to checked-in DEFERRED state.
+func (g Generator) generateWithEntityFieldsSupport(input SemanticIR, previous []byte, support entityFieldsSupport) (Result, error) {
+	if err := validateEntityFieldsInput(input, support); err != nil {
+		return Result{}, err
+	}
+	if support.State == entityFieldsSupported && semanticIRHasFields(input) {
+		input = prepareEntityFields(input)
+	}
 	ir, err := normalizeIR(input)
 	if err != nil {
 		return Result{}, err
@@ -199,87 +212,4 @@ func appendGeneratedBlock(output *bytes.Buffer, block []byte) {
 		output.WriteByte('\n')
 	}
 	output.Write(block)
-}
-
-func makeSourceMap(source []byte, ir SemanticIR) (SourceMap, error) {
-	markers, err := parseMarkers(source)
-	if err != nil {
-		return SourceMap{}, err
-	}
-	entities := make(map[string]Entity, len(ir.Entities))
-	activities := make(map[string]Activity, len(ir.Activities))
-	for _, entity := range ir.Entities {
-		entities[entity.ID] = entity
-	}
-	for _, activity := range ir.Activities {
-		activities[activity.ID] = activity
-	}
-
-	result := SourceMap{Mappings: make([]SourceMapping, 0, len(markers.Regions))}
-	for _, region := range markers.Regions {
-		var sourceSpan SourceSpan
-		switch region.Kind {
-		case "entity":
-			if entity, ok := entities[region.ID]; ok {
-				sourceSpan = entity.Source
-			}
-		case "activity":
-			if activity, ok := activities[region.ID]; ok {
-				sourceSpan = activity.Source
-			}
-		}
-		result.Mappings = append(result.Mappings, SourceMapping{
-			SemanticID: region.ID,
-			Kind:       region.Kind,
-			Ordinal:    len(result.Mappings),
-			Source:     sourceSpan,
-			Generated:  rangeForOffsets(source, region.Start, region.End),
-		})
-		declaredSlots := make(map[string]Slot)
-		if activity, ok := activities[region.ID]; ok {
-			for _, declared := range activity.Slots {
-				declaredSlots[declared.ID] = declared
-			}
-		}
-		for slotIndex, slot := range region.Slots {
-			var slotSource SourceSpan
-			declared, exists := declaredSlots[slot.ID]
-			if !exists {
-				return SourceMap{}, fmt.Errorf("generator: source map has stale slot identity %q", slot.ID)
-			}
-			slotSource = declared.Source
-			result.Mappings = append(result.Mappings, SourceMapping{
-				SemanticID: slot.ID,
-				Kind:       "slot",
-				Ordinal:    slotIndex,
-				Source:     slotSource,
-				Generated:  rangeForOffsets(source, slot.Start, slot.End),
-			})
-		}
-	}
-	return result, nil
-}
-
-func rangeForOffsets(source []byte, start, end int) SourceRange {
-	return SourceRange{Start: positionAt(source, start), End: positionAt(source, end)}
-}
-
-func positionAt(source []byte, offset int) Position {
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > len(source) {
-		offset = len(source)
-	}
-	line := 1
-	column := 1
-	for _, value := range source[:offset] {
-		if value == '\n' {
-			line++
-			column = 1
-			continue
-		}
-		column++
-	}
-	return Position{Offset: offset, Line: line, Column: column}
 }

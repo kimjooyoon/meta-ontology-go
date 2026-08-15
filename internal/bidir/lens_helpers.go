@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 func declarationIdentity(namespace string, declaration Declaration) (ID, error) {
@@ -25,6 +27,24 @@ func validateDocumentSpans(document Document) error {
 	for index, declaration := range document.Declarations {
 		if err := declaration.Span.Validate(); err != nil {
 			return fmt.Errorf("declaration %d %q: %w", index, declaration.Name, err)
+		}
+		for fieldIndex, field := range declaration.Fields {
+			spans := []struct {
+				name string
+				span SourceSpan
+			}{
+				{name: "field", span: field.Span},
+				{name: "field ID", span: field.IDSpan},
+				{name: "field name", span: field.NameSpan},
+				{name: "field type", span: field.TypeRefSpan},
+				{name: "field presence", span: field.PresenceSpan},
+				{name: "field cardinality", span: field.CardinalitySpan},
+			}
+			for _, item := range spans {
+				if err := item.span.Validate(); err != nil {
+					return fmt.Errorf("declaration %q field %d %s: %w", declaration.Name, fieldIndex, item.name, err)
+				}
+			}
 		}
 		for refIndex, reference := range declaration.Inputs {
 			if err := reference.Span.Validate(); err != nil {
@@ -97,13 +117,18 @@ func appendCheckedRelation(relations []Relation, relation Relation) ([]Relation,
 	return append(relations, relation), nil
 }
 
-func declarationFromNode(node Node, model Model) Declaration {
-	declaration := Declaration{Kind: node.Kind, ID: node.ID, Name: node.Name, Attributes: cloneStringMap(node.Attributes), Span: node.Span}
+func declarationFromNode(node Node, model Model, registry semantic.TypeRegistry) (Declaration, error) {
+	declaration := Declaration{Kind: node.Kind, ID: node.ID, Name: node.Name, Fields: cloneFields(node.Fields), Attributes: cloneStringMap(node.Attributes), Span: node.Span}
 	if declaration.Name == "" {
 		declaration.Name = defaultName(node.ID)
 	}
+	for index, field := range declaration.Fields {
+		if err := validateSourceField(field, node.ID, registry); err != nil {
+			return Declaration{}, fmt.Errorf("node %q field %d: %w", node.ID, index, err)
+		}
+	}
 	if node.Kind != ActivityKind {
-		return declaration
+		return declaration, nil
 	}
 	for _, relation := range model.Relations {
 		if relation.Kind == PredicateUsed && relation.Source == node.ID {
@@ -123,7 +148,7 @@ func declarationFromNode(node Node, model Model) Declaration {
 	sort.SliceStable(declaration.Outputs, func(i, j int) bool {
 		return referenceSourceOrderLess(declaration.Outputs[i], declaration.Outputs[j])
 	})
-	return declaration
+	return declaration, nil
 }
 
 func referenceSourceOrderLess(left, right Reference) bool {

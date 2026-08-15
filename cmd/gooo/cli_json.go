@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -45,23 +44,9 @@ type jsonReport struct {
 	Equivalent               *bool           `json:"equivalent,omitempty"`
 	GetPut                   *bool           `json:"get_put,omitempty"`
 	PutGet                   *bool           `json:"put_get,omitempty"`
-	Nodes                    []jsonNode      `json:"nodes"`
-	Facts                    []jsonFact      `json:"facts"`
 	Diagnostics              []cliDiagnostic `json:"diagnostics"`
-}
 
-type jsonNode struct {
-	ID        string `json:"id"`
-	Kind      string `json:"kind"`
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
-}
-
-type jsonFact struct {
-	Subject   string `json:"subject"`
-	Predicate string `json:"predicate"`
-	Object    string `json:"object"`
-	Status    string `json:"status"`
+	Provenance *provenancePublishResponse `json:"provenance,omitempty"`
 }
 
 func parseJSONFlag(args []string) (clean []string, jsonMode bool) {
@@ -85,8 +70,6 @@ func newJSONReport(command, status, filename string, diagnostics []cliDiagnostic
 		Command:       command,
 		Status:        status,
 		File:          filename,
-		Nodes:         []jsonNode{},
-		Facts:         []jsonFact{},
 		Diagnostics:   diagnostics,
 	}
 }
@@ -183,20 +166,4 @@ func reportUsage(jsonMode bool, stdout, stderr io.Writer, command, usage string)
 	}
 	fmt.Fprintln(stderr, usage)
 	return exitUsage
-}
-
-func normalizePredicate(raw string) (string, bool) {
-	value := strings.TrimSpace(raw)
-	switch value {
-	case "used", "prov:used":
-		return "used", true
-	case "wasGeneratedBy", "prov:wasGeneratedBy":
-		return "wasGeneratedBy", true
-	case "wasDerivedFrom", "prov:wasDerivedFrom":
-		return "wasDerivedFrom", true
-	case "wasAssociatedWith", "prov:wasAssociatedWith":
-		return "wasAssociatedWith", true
-	default:
-		return "", false
-	}
 }
