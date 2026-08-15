@@ -31,6 +31,7 @@ type generateArtifacts struct {
 	output       string
 	manifestPath string
 	manifest     projectionManifest
+	cleanupDirs  []string
 }
 
 func reportGenerateUsage(jsonMode bool, stdout, stderr io.Writer, err error) int {
@@ -95,6 +96,14 @@ func buildGenerateArtifacts(options generateOptions, input generateInput, jsonMo
 	if manifestPath == "" {
 		manifestPath = filepath.Join(options.outputDir, generatedManifestFileName)
 	}
+	cleanupDirs := append(missingDirectoryChain(options.outputDir), missingDirectoryChain(filepath.Dir(manifestPath))...)
+	cleanupDirs = uniquePaths(cleanupDirs)
+	buildSucceeded := false
+	defer func() {
+		if !buildSucceeded {
+			_ = cleanupGenerateDirectories(cleanupDirs)
+		}
+	}()
 	manifest, err := buildProjectionManifest(options.filename, output, input.source, input.previousGo, generation.ir, generation.result)
 	if err != nil {
 		return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.filename, "manifest.build", "manifest failed", err, input.file)
@@ -112,7 +121,8 @@ func buildGenerateArtifacts(options generateOptions, input generateInput, jsonMo
 		return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.outputDir, "io.manifest-path", "manifest path", err, input.file)
 	}
 	manifest.GeneratedFile = output
-	return generateArtifacts{ir: generation.ir, result: generation.result, output: output, manifestPath: manifestPath, manifest: manifest}, exitOK
+	buildSucceeded = true
+	return generateArtifacts{ir: generation.ir, result: generation.result, output: output, manifestPath: manifestPath, manifest: manifest, cleanupDirs: cleanupDirs}, exitOK
 }
 
 func reportGenerateError(jsonMode bool, stdout, stderr io.Writer, filename, code, prefix string, err error, file *syntax.File) int {
@@ -124,15 +134,17 @@ func reportGenerateError(jsonMode bool, stdout, stderr io.Writer, filename, code
 }
 
 func writeGenerateArtifacts(artifacts generateArtifacts, jsonMode bool, stdout, stderr io.Writer) int {
-	if err := writeGeneratedOutput(artifacts.output, artifacts.result.Source); err != nil {
-		return reportGenerateIOError(jsonMode, stdout, stderr, artifacts.output, "io.write", "write generated source", err)
-	}
 	manifestBytes, err := jsonManifestBytes(artifacts.manifest)
 	if err != nil {
+		_ = cleanupGenerateDirectories(artifacts.cleanupDirs)
 		return reportGenerateIOError(jsonMode, stdout, stderr, artifacts.manifestPath, "io.write-manifest", "write manifest", err)
 	}
-	if err := writeGeneratedOutput(artifacts.manifestPath, manifestBytes); err != nil {
-		return reportGenerateIOError(jsonMode, stdout, stderr, artifacts.manifestPath, "io.write-manifest", "write manifest", err)
+	if err := writeAtomicFiles([]atomicWrite{
+		{path: artifacts.output, data: artifacts.result.Source},
+		{path: artifacts.manifestPath, data: manifestBytes},
+	}); err != nil {
+		_ = cleanupGenerateDirectories(artifacts.cleanupDirs)
+		return reportGenerateIOError(jsonMode, stdout, stderr, artifacts.output, "io.write", "write generated source and manifest", err)
 	}
 	return exitOK
 }
@@ -223,10 +235,31 @@ func generateWithDeadline(file *syntax.File, previous []byte, timeout time.Durat
 			result <- generationResult{err: fmt.Errorf("semantic lowering failed: %w", err)}
 			return
 		}
+		if err := rejectCLIEntityFieldsIR(ir); err != nil {
+			result <- generationResult{err: err}
+			return
+		}
 		model, err := projectionIR(ir)
 		if err != nil {
 			result <- generationResult{err: fmt.Errorf("generator adapter failed: %w", err)}
 			return
+		}
+		if semanticIRHasFields(ir) {
+			document, err := bidir.DocumentFromSyntax(file)
+			if err != nil {
+				result <- generationResult{err: fmt.Errorf("BX document adaptation failed: %w", err)}
+				return
+			}
+			sourceModel, err := bidir.Get(document)
+			if err != nil {
+				result <- generationResult{err: fmt.Errorf("BX model projection failed: %w", err)}
+				return
+			}
+			model, err = projectionIRFromBidirModel(ir, sourceModel)
+			if err != nil {
+				result <- generationResult{err: fmt.Errorf("generator field adapter failed: %w", err)}
+				return
+			}
 		}
 		generated, err := generator.Generate(model, previous)
 		result <- generationResult{ir: ir, result: generated, err: err}
