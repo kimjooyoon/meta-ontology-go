@@ -14,6 +14,7 @@ func testStringField(parent ID, suffix string) Field {
 		TypeRef:     TypeRef{ID: BuiltinStringTypeID},
 		Presence:    Required,
 		Cardinality: One,
+		Span:        Span{File: "entity-fields.gooo", Start: Position{Line: 1, Column: 1}, End: Position{Line: 1, Column: 2}},
 	}
 }
 
