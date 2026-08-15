@@ -17,6 +17,9 @@ func FuzzPermutationCanonical(f *testing.F) {
 		if len(data)%3 == 0 {
 			second.Partitions = reversePartitions(second.Partitions)
 		}
+		if len(data)%5 == 0 {
+			second.PrecedenceRegistry = reversePrecedence(second.PrecedenceRegistry)
+		}
 		left, err := EncodeJSON(Observe(first))
 		if err != nil {
 			t.Fatal(err)

@@ -1,37 +1,33 @@
 package bindingcoverage
 
-import (
-	"math"
-	"strings"
-	"unicode"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-)
-
 // Observe evaluates explicit binding partitions without side effects or
 // inferred coverage. Classify is a descriptive alias for the same observer.
 func Observe(input Input) Output {
 	input = normalizeInput(input)
 	canonical, err := input.CanonicalJSON()
 	if err != nil {
-		return seal(baseOutput(input, 0), DecisionUnknown, ReasonEvaluatorError)
+		return seal(baseOutput(input, 0, ""), DecisionUnknown, ReasonEvaluatorError)
 	}
-	result := baseOutput(input, uint64(len(canonical)))
+	result := baseOutput(input, uint64(len(canonical)), digestBytes(canonical))
 	if input.SchemaVersion != SchemaVersion {
 		return seal(result, DecisionUnknown, ReasonUnknownSchema)
 	}
-	if input.RequiredBindings == nil || input.Partitions == nil {
+	if input.RequiredBindings == nil || input.Partitions == nil || input.PrecedenceRegistry == nil {
 		return seal(result, DecisionUnknown, ReasonMissingInput)
 	}
 	if reason := validateHeader(input); reason != "" {
 		return seal(result, DecisionUnknown, reason)
 	}
 
-	bindingIDs, endpointReferences, reason := validateBindings(input.RequiredBindings)
+	precedencePairs, reason := validatePrecedence(input.PrecedenceRegistry)
 	if reason != "" {
 		return seal(result, DecisionUnknown, reason)
 	}
-	match, mismatch, reason := validatePartitions(input.Partitions, bindingIDs)
+	bindingPairs, endpointReferences, reason := validateBindings(input.RequiredBindings, precedencePairs)
+	if reason != "" {
+		return seal(result, DecisionUnknown, reason)
+	}
+	match, mismatch, reason := validatePartitions(input.Partitions, bindingPairs)
 	if reason != "" {
 		return seal(result, DecisionUnknown, reason)
 	}
@@ -43,21 +39,31 @@ func Observe(input Input) Output {
 	result.MismatchCoveredCount = result.RequiredBindingCount - uint64(len(result.MissingMismatchBindingIDs))
 	work, ok := workUnits(result.RequiredBindingCount, result.PartitionCount, result.EndpointReferenceCount)
 	if !ok {
-		return seal(baseOutput(input, uint64(len(canonical))), DecisionUnknown, ReasonWorkOverflow)
+		return seal(baseOutput(input, uint64(len(canonical)), digestBytes(canonical)), DecisionUnknown, ReasonWorkOverflow)
 	}
 	result.DeterministicWorkUnits = work
-	if result.RequiredBindingCount == 0 || len(result.MissingMatchBindingIDs) != 0 || len(result.MissingMismatchBindingIDs) != 0 {
-		return seal(result, DecisionIncomplete, ReasonIncomplete)
+	if result.RequiredBindingCount == 0 {
+		return seal(result, DecisionIncomplete, ReasonZeroDenominator)
 	}
-	return seal(result, DecisionExact, ReasonExact)
+	hasMissingMatch := len(result.MissingMatchBindingIDs) != 0
+	hasMissingMismatch := len(result.MissingMismatchBindingIDs) != 0
+	switch {
+	case hasMissingMatch && hasMissingMismatch:
+		return seal(result, DecisionIncomplete, ReasonMissingMatchAndMismatch)
+	case hasMissingMatch:
+		return seal(result, DecisionIncomplete, ReasonMissingMatch)
+	case hasMissingMismatch:
+		return seal(result, DecisionIncomplete, ReasonMissingMismatch)
+	}
+	return seal(result, DecisionExact, ReasonComplete)
 }
 
 func Classify(input Input) Output { return Observe(input) }
 
 func Evaluate(input Input) Output { return Observe(input) }
 
-func baseOutput(input Input, inputBytes uint64) Output {
-	return Output{SchemaVersion: input.SchemaVersion, ContractID: input.ContractID, SnapshotDigest: input.SnapshotDigest, InputBytes: inputBytes}
+func baseOutput(input Input, inputBytes uint64, inputDigest string) Output {
+	return Output{SchemaVersion: input.SchemaVersion, ContractID: input.ContractID, SnapshotDigest: input.SnapshotDigest, ExpectedSnapshotDigest: input.ExpectedSnapshotDigest, InputDigest: inputDigest, InputBytes: inputBytes}
 }
 
 func seal(output Output, decision Decision, reason Reason) Output {
@@ -66,170 +72,4 @@ func seal(output Output, decision Decision, reason Reason) Output {
 	output.Reason = reason
 	output.CanonicalDigest = output.StableDigest()
 	return output
-}
-
-func validateHeader(input Input) Reason {
-	if input.ContractID == "" || input.SnapshotDigest == "" {
-		return ReasonMissingInput
-	}
-	if !validStableID(input.ContractID) {
-		return ReasonInvalidID
-	}
-	if !validDigest(input.SnapshotDigest) {
-		return ReasonInvalidDigest
-	}
-	return ""
-}
-
-func validateBindings(bindings []RequiredBinding) (map[string]struct{}, uint64, Reason) {
-	ids := make(map[string]struct{}, len(bindings))
-	endpointReferences := uint64(0)
-	for _, binding := range bindings {
-		if reason := validateID(binding.BindingID); reason != "" {
-			return nil, 0, reason
-		}
-		if _, exists := ids[binding.BindingID]; exists {
-			return nil, 0, ReasonDuplicateID
-		}
-		if reason := validateID(binding.FromFieldID); reason != "" {
-			return nil, 0, reason
-		}
-		if reason := validateID(binding.ToFieldID); reason != "" {
-			return nil, 0, reason
-		}
-		if !validKind(binding.Kind) {
-			return nil, 0, ReasonInvalidEnum
-		}
-		var ok bool
-		endpointReferences, ok = addUint64(endpointReferences, 2)
-		if !ok {
-			return nil, 0, ReasonWorkOverflow
-		}
-		ids[binding.BindingID] = struct{}{}
-	}
-	return ids, endpointReferences, ""
-}
-
-func validatePartitions(partitions []Partition, bindingIDs map[string]struct{}) (map[string]struct{}, map[string]struct{}, Reason) {
-	ids := make(map[string]struct{}, len(partitions))
-	match := make(map[string]struct{}, len(bindingIDs))
-	mismatch := make(map[string]struct{}, len(bindingIDs))
-	polarity := make(map[string]struct{}, len(partitions))
-	for _, partition := range partitions {
-		if reason := validateID(partition.PartitionID); reason != "" {
-			return nil, nil, reason
-		}
-		if _, exists := bindingIDs[partition.PartitionID]; exists {
-			return nil, nil, ReasonDuplicateID
-		}
-		if _, exists := ids[partition.PartitionID]; exists {
-			return nil, nil, ReasonDuplicateID
-		}
-		if reason := validateID(partition.BindingID); reason != "" {
-			return nil, nil, reason
-		}
-		if _, exists := bindingIDs[partition.BindingID]; !exists {
-			return nil, nil, ReasonUnknownReference
-		}
-		if !validPolarity(partition.Polarity) {
-			return nil, nil, ReasonInvalidEnum
-		}
-		if reason := validateToken(partition.ExpectedStage); reason != "" {
-			return nil, nil, reason
-		}
-		if reason := validateToken(partition.ExpectedReason); reason != "" {
-			return nil, nil, reason
-		}
-		key := partition.BindingID + "\x00" + string(partition.Polarity)
-		if _, exists := polarity[key]; exists {
-			return nil, nil, ReasonDuplicatePolarity
-		}
-		ids[partition.PartitionID] = struct{}{}
-		polarity[key] = struct{}{}
-		if partition.Polarity == PolarityMatch {
-			match[partition.BindingID] = struct{}{}
-		} else {
-			mismatch[partition.BindingID] = struct{}{}
-		}
-	}
-	return match, mismatch, ""
-}
-
-func missingBindings(bindings []RequiredBinding, match, mismatch map[string]struct{}) ([]string, []string) {
-	missingMatch := make([]string, 0)
-	missingMismatch := make([]string, 0)
-	for _, binding := range bindings {
-		if _, exists := match[binding.BindingID]; !exists {
-			missingMatch = append(missingMatch, binding.BindingID)
-		}
-		if _, exists := mismatch[binding.BindingID]; !exists {
-			missingMismatch = append(missingMismatch, binding.BindingID)
-		}
-	}
-	return missingMatch, missingMismatch
-}
-
-func workUnits(required, partitions, endpointReferences uint64) (uint64, bool) {
-	total, ok := addUint64(required, partitions)
-	if !ok {
-		return 0, false
-	}
-	return addUint64(total, endpointReferences)
-}
-
-func addUint64(left, right uint64) (uint64, bool) {
-	if math.MaxUint64-left < right {
-		return 0, false
-	}
-	return left + right, true
-}
-
-func validateID(value string) Reason {
-	if value == "" {
-		return ReasonMissingInput
-	}
-	if !validStableID(value) {
-		return ReasonInvalidID
-	}
-	return ""
-}
-
-func validStableID(value string) bool {
-	parsed, err := semantic.ParseIdentity(value)
-	return err == nil && parsed.String() == value
-}
-
-func validDigest(value string) bool {
-	if len(value) != 64 {
-		return false
-	}
-	for _, char := range value {
-		if !(char >= '0' && char <= '9') && !(char >= 'a' && char <= 'f') {
-			return false
-		}
-	}
-	return true
-}
-
-func validateToken(value string) Reason {
-	if value == "" {
-		return ReasonMissingInput
-	}
-	if strings.TrimSpace(value) != value {
-		return ReasonInvalidToken
-	}
-	for _, char := range value {
-		if unicode.IsSpace(char) || unicode.IsControl(char) {
-			return ReasonInvalidToken
-		}
-	}
-	return ""
-}
-
-func validKind(kind BindingKind) bool {
-	return kind == KindExactValue || kind == KindExactDigest || kind == KindSetEqual || kind == KindDerivedDigest
-}
-
-func validPolarity(polarity Polarity) bool {
-	return polarity == PolarityMatch || polarity == PolarityMismatch
 }
