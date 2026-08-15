@@ -3,14 +3,20 @@ package syntax
 import (
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
+// Invalid UTF-8 in a quoted string is recovered byte by byte: each malformed
+// byte emits one DiagInvalidUTF8 over its one-byte source span and contributes
+// U+FFFD to the recovered string value. Escape syntax remains independent:
+// malformed ASCII escapes still emit DiagInvalidEscape, and malformed \u
+// escapes may emit both diagnostics when they contain malformed bytes.
 func (l *Lexer) lexString(start Position) {
 	var value strings.Builder
 	l.advanceRune() // opening quote
 	terminated := false
 	for l.offset < len(l.source) {
-		r, _ := l.peekRune()
+		r, size := l.peekRune()
 		switch {
 		case r == '"':
 			l.advanceRune()
@@ -19,10 +25,13 @@ func (l *Lexer) lexString(start Position) {
 			l.addDiagnostic(DiagUnterminatedString, startSpan(l.filename, start, l.position()), "unterminated string literal")
 			terminated = true // emit the partial token and let whitespace handle EOL
 		case r == '\\':
+			escapeStart := l.position()
 			l.advanceRune()
-			if l.lexEscape(&value, start) {
+			if l.lexEscape(&value, escapeStart) {
 				terminated = true
 			}
+		case r == utf8.RuneError && size == 1:
+			l.consumeInvalidUTF8(&value)
 		default:
 			value.WriteRune(l.advanceRune())
 		}
@@ -39,12 +48,23 @@ func (l *Lexer) lexString(start Position) {
 }
 
 // lexEscape returns true when the escape ends the recoverable string token.
-func (l *Lexer) lexEscape(value *strings.Builder, stringStart Position) bool {
+func (l *Lexer) lexEscape(value *strings.Builder, escapeStart Position) bool {
 	if l.offset >= len(l.source) {
-		l.addDiagnostic(DiagUnterminatedString, startSpan(l.filename, stringStart, l.position()), "unterminated escape sequence")
+		l.addDiagnostic(DiagUnterminatedString, startSpan(l.filename, escapeStart, l.position()), "unterminated escape sequence")
 		return true
 	}
 	r, _ := l.peekRune()
+	if r == utf8.RuneError {
+		_, size := l.peekRune()
+		if size == 1 {
+			l.consumeInvalidUTF8(value)
+			return false
+		}
+	}
+	if r == '\n' || r == '\r' {
+		l.addDiagnostic(DiagUnterminatedString, startSpan(l.filename, escapeStart, l.position()), "unterminated escape sequence")
+		return true
+	}
 	switch r {
 	case '"', '\\':
 		value.WriteRune(l.advanceRune())
@@ -60,19 +80,33 @@ func (l *Lexer) lexEscape(value *strings.Builder, stringStart Position) bool {
 	case 'u':
 		l.advanceRune()
 		begin := l.offset
+		var recovered strings.Builder
 		for i := 0; i < 4 && l.offset < len(l.source); i++ {
-			l.advanceRune()
+			r, size := l.peekRune()
+			if r == '\n' || r == '\r' || r == '"' {
+				break
+			}
+			if r == utf8.RuneError && size == 1 {
+				l.consumeInvalidUTF8(&recovered)
+				continue
+			}
+			recovered.WriteRune(l.advanceRune())
 		}
 		raw := l.source[begin:l.offset]
 		if len(raw) != 4 {
-			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, stringStart, l.position()), "unicode escape must contain four hexadecimal digits")
-			value.WriteString(raw)
+			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "unicode escape must contain four hexadecimal digits")
+			value.WriteString(recovered.String())
 			return false
 		}
 		decoded, err := strconv.ParseUint(raw, 16, 16)
 		if err != nil {
-			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, stringStart, l.position()), "invalid unicode escape")
-			value.WriteString(raw)
+			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "invalid unicode escape")
+			value.WriteString(recovered.String())
+			return false
+		}
+		if decoded >= 0xd800 && decoded <= 0xdfff {
+			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "unicode escape cannot encode a surrogate code point")
+			value.WriteString(recovered.String())
 			return false
 		}
 		value.WriteRune(rune(decoded))
@@ -83,4 +117,11 @@ func (l *Lexer) lexEscape(value *strings.Builder, stringStart Position) bool {
 		value.WriteRune(r)
 	}
 	return false
+}
+
+func (l *Lexer) consumeInvalidUTF8(value *strings.Builder) {
+	invalidStart := l.position()
+	l.advanceRune()
+	value.WriteRune(utf8.RuneError)
+	l.addDiagnostic(DiagInvalidUTF8, startSpan(l.filename, invalidStart, l.position()), "invalid UTF-8 byte in string literal")
 }

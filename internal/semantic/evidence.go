@@ -85,6 +85,9 @@ func (e Evidence) Normalized() (Evidence, error) {
 	if status != FactDeterministic && status != FactCandidate {
 		return Evidence{}, fmt.Errorf("%w: unknown status %d", ErrInvalidEvidence, status)
 	}
+	if status == FactCandidate && e.Kind != CompilerRunEvidence {
+		return Evidence{}, fmt.Errorf("%w: candidate evidence must be %q, got %q", ErrInvalidEvidence, CompilerRunEvidence, e.Kind)
+	}
 	digest, err := normalizeDigest(e.Digest)
 	if err != nil {
 		return Evidence{}, err
@@ -119,13 +122,30 @@ func (e Evidence) ValidateAgainst(graph Graph) error {
 		return err
 	}
 	if normalized.Status == FactCandidate {
-		if !graph.HasCandidate(normalized.Fact) {
+		if !graph.HasCandidate(normalized.Fact) && !graph.HasFact(normalized.Fact) {
 			return fmt.Errorf("%w: candidate fact is not present", ErrInvalidEvidence)
 		}
+		// Promotion changes the graph fact status explicitly; it does not
+		// reclassify or erase the append-only candidate evidence record.
 		return nil
 	}
 	if !graph.HasFact(normalized.Fact) {
 		return fmt.Errorf("%w: deterministic fact is not present", ErrInvalidEvidence)
+	}
+	return nil
+}
+
+// ValidateFresh checks that the evidence digest still names the pinned
+// payload used to produce the record. It does not decide whether the claim is
+// authoritative; that policy remains with the independent Go verifier.
+func (e Evidence) ValidateFresh(payload []byte) error {
+	normalized, err := e.Normalized()
+	if err != nil {
+		return err
+	}
+	expected := StableHash(payload)
+	if normalized.Digest != expected {
+		return fmt.Errorf("%w: got %s, want %s", ErrStaleEvidence, normalized.Digest, expected)
 	}
 	return nil
 }

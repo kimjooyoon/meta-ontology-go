@@ -28,7 +28,9 @@ more consistent. The detailed policy is in [docs/governance.md](docs/governance.
   or runnable evidence.
 - **Guardian:** inspects scope, IDs, provenance, BX laws, generated markers, and
   freshness; does not implement the feature under review.
-- **Approver:** accepts the reviewed change after required checks pass.
+- **Approver:** records review acceptance after required checks pass. Review
+  roles do not authorize a protected-branch promotion; that decision is made by
+  the CI-only proof and branch-protection contract below.
 - **Docs/example Builder:** owns `docs/**`, `examples/**`, and root `README.md`,
   `CONTRIBUTING.md`, and `AGENTS.md`; it must not modify core package source.
 
@@ -53,8 +55,31 @@ go run ./cmd/gooo check examples/billing/main.gooo
 
 Do not claim that a command or subsystem is supported unless it has an implemented
 entry point and runnable evidence. In particular, `analyze` and `lsp` are not
-stable CLI features yet, and the current CI does not enforce race, cache, or
-provenance-publishing checks.
+stable CLI features yet. CI runs the canonical format, vet, unit-test, race,
+semantic-conformance, and policy jobs; cache conformance and durable provenance
+publishing are not current guarantees.
+
+## CI-only branch flow
+
+Work branches use `agent/* -> dev`. The only promotion route is the exact
+same-repository `dev -> main` route; no intermediary branch participates in the
+current contract. Governance mode is `ci_only`: review roles, approval actors,
+and last-push approval fields are not CI proof inputs.
+
+The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
+`Semantic conformance`, and `CI policy`. Protected `dev` requires those six
+contexts plus `CI guardian shadow`; protected `main` requires those six plus
+`CI guardian`. Both are seven-context protections.
+
+For a `dev -> main` promotion, CI emits a digest-bound `promotion_authorization`
+with `source=dev`, `target=main`, and `operation=fast_forward`. It is `PASS`
+only for a current, open, non-draft, unmerged, clean, mergeable same-repository
+PR whose live `dev` ref is ahead of `main`, has `behind=0`, and has `main` as
+its merge base, with exact proof, Guardian, artifact, and protection evidence.
+The authorization never writes refs or protection. After a final exact reread,
+only a normal compare-and-swap/fast-forward operation may update `main`; force
+pushes and force updates are not permitted. Missing or stale evidence is
+`FAIL_CLOSED`.
 
 ## Review caps
 

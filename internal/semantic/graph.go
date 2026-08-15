@@ -43,17 +43,20 @@ func (g *Graph) AddNode(node Node) error {
 	if err != nil {
 		return err
 	}
-	g.ensure()
 
 	old, exists := g.nodes[normalized.ID]
 	if exists && (old.Kind != normalized.Kind || old.Namespace != normalized.Namespace) {
 		return fmt.Errorf("%w: %s cannot change kind or namespace", ErrIdentityConflict, normalized.ID)
+	}
+	if err := g.validateEntityFieldsIdentityDomain(normalized); err != nil {
+		return err
 	}
 	for _, ref := range nodeNameRefs(normalized) {
 		if owner, occupied := g.names[ref]; occupied && owner != normalized.ID {
 			return fmt.Errorf("%w: %s/%s is already owned by %s", ErrNameCollision, ref.Namespace, ref.Name, owner)
 		}
 	}
+	g.ensure()
 	if exists {
 		for _, ref := range nodeNameRefs(old) {
 			if owner, occupied := g.names[ref]; occupied && owner == normalized.ID {
@@ -68,6 +71,33 @@ func (g *Graph) AddNode(node Node) error {
 	return nil
 }
 
+func (g Graph) validateEntityFieldsIdentityDomain(node Node) error {
+	for existingID, existing := range g.nodes {
+		for _, field := range existing.Fields {
+			if field.ID == node.ID {
+				return fmt.Errorf("%w: node %s collides with field %s on %s", ErrInvalidField, node.ID, field.ID, existingID)
+			}
+			if existingID == node.ID {
+				continue
+			}
+			for _, incoming := range node.Fields {
+				if field.ID == incoming.ID {
+					return fmt.Errorf("%w: field %s cannot move from %s to %s", ErrInvalidField, incoming.ID, existingID, node.ID)
+				}
+			}
+		}
+	}
+	for _, field := range node.Fields {
+		if field.ID == node.ID {
+			return fmt.Errorf("%w: field %s collides with parent node", ErrInvalidField, field.ID)
+		}
+		if _, exists := g.nodes[field.ID]; exists {
+			return fmt.Errorf("%w: field %s collides with declaration %s", ErrInvalidField, field.ID, field.ID)
+		}
+	}
+	return nil
+}
+
 func nodeNameRefs(node Node) []NameRef {
 	refs := make([]NameRef, 0, 1+len(node.Aliases))
 	refs = append(refs, NameRef{Namespace: node.Namespace, Name: node.Name})
@@ -78,7 +108,11 @@ func nodeNameRefs(node Node) []NameRef {
 }
 
 func (g Graph) Node(id ID) (Node, bool) {
-	node, ok := g.nodes[id]
+	canonical, err := ParseIdentity(id.String())
+	if err != nil {
+		return Node{}, false
+	}
+	node, ok := g.nodes[canonical]
 	if !ok {
 		return Node{}, false
 	}
@@ -127,5 +161,6 @@ func (g Graph) ResolveName(namespace, name string) (Node, error) {
 
 func copyNode(node Node) Node {
 	node.Aliases = append([]string(nil), node.Aliases...)
+	node.Fields = copyFields(node.Fields)
 	return node
 }
