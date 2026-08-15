@@ -145,6 +145,7 @@ type Output struct {
 	SelectedCommandCount                 uint64          `json:"selected_command_count"`
 	ObligationCount                      uint64          `json:"obligation_count"`
 	AuthoritativeImpactedObligationCount uint64          `json:"authoritative_impacted_obligation_count"`
+	SemanticEvaluated                    bool            `json:"semantic_evaluated"`
 	FullFailureCommandIDs                []string        `json:"full_failure_command_ids"`
 	SelectedFailureCommandIDs            []string        `json:"selected_failure_command_ids"`
 	OmittedCommandIDs                    []string        `json:"omitted_command_ids"`

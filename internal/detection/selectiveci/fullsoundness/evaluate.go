@@ -15,10 +15,10 @@ type evaluationState struct {
 func Evaluate(input Input) Output {
 	input = normalizeInput(input)
 	result := baseOutput(input)
+	populateCounts(&result, input)
 	if missingRequiredInput(input) {
 		return seal(result, DecisionUnknown, ReasonFullSuiteRequired)
 	}
-	populateCounts(&result, input)
 	state, reason := validateInput(input)
 	if reason != "" {
 		return seal(result, DecisionUnknown, reason)
@@ -26,13 +26,17 @@ func Evaluate(input Input) Output {
 	if result.CommandCount == 0 {
 		return seal(result, DecisionUnknown, ReasonZeroCommandDenominator)
 	}
-	populateCommandLists(&result, state)
 	if input.ExecutionAuthorized || input.CIAuthorized {
 		return seal(result, DecisionUnsound, ReasonAuthorizationPresent)
 	}
 	if !sameStringSet(input.SelectedCommandIDs, input.SelectionReceipt.CommandIDs) {
 		return seal(result, DecisionUnsound, ReasonSelectedSetMismatch)
 	}
+	if globalGuardOmitted(state) {
+		return seal(result, DecisionUnsound, ReasonGlobalGuardOmitted)
+	}
+	result.SemanticEvaluated = true
+	populateCommandLists(&result, state)
 	if reason := checkSoundness(state); reason != "" {
 		return seal(result, decisionFor(reason), reason)
 	}
@@ -74,8 +78,7 @@ func sealProjectionFailure(output Output) Output {
 	output.FullFailureCommandIDs = nil
 	output.SelectedFailureCommandIDs = nil
 	output.OmittedCommandIDs = nil
-	output.CommandCount = 0
-	output.SelectedCommandCount = 0
+	output.SemanticEvaluated = false
 	output = normalizeOutput(output)
 	output.DecisionDigest, _ = output.DecisionStableDigest()
 	output.CanonicalDigest = output.StableDigest()

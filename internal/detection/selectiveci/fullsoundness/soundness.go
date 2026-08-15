@@ -42,9 +42,6 @@ func validReceiptDigests(value ResourceReceipt) bool {
 }
 
 func checkSoundness(state evaluationState) Reason {
-	if globalGuardOmitted(state) {
-		return ReasonGlobalGuardOmitted
-	}
 	if reason := compareSelectedOutcomes(state); reason != "" {
 		return reason
 	}

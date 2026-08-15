@@ -20,6 +20,9 @@ func TestSoundFixture(t *testing.T) {
 	if got.ResourceVector == nil || got.ResourceVector.Class != ResourceImproved {
 		t.Fatalf("resource vector = %#v, want IMPROVED", got.ResourceVector)
 	}
+	if !got.SemanticEvaluated {
+		t.Fatal("sound result did not evaluate semantics")
+	}
 	if got.ExecutionAuthorized || got.CIAuthorized || !got.ValidDigests() {
 		t.Fatalf("output flags or digest invalid: %#v", got)
 	}
@@ -190,6 +193,53 @@ func TestResourceClasses(t *testing.T) {
 	}
 	if got.ResourceVector.Full.Utilization != (Utilization{Numerator: 10, Denominator: 10}) || got.ResourceVector.Selected.Utilization != (Utilization{Numerator: 3, Denominator: 2}) {
 		t.Fatalf("utilization was not retained exactly: %#v", got.ResourceVector)
+	}
+}
+
+func TestSemanticEvaluationStage(t *testing.T) {
+	cases := []struct {
+		name      string
+		mutate    func(*Input)
+		decision  Decision
+		reason    Reason
+		evaluated bool
+		selected  uint64
+	}{
+		{"missing full receipt", func(input *Input) { input.FullResourceReceipts = nil }, DecisionUnknown, ReasonFullSuiteRequired, false, 2},
+		{"missing selected receipt", func(input *Input) { input.SelectedResourceReceipts = nil }, DecisionUnknown, ReasonFullSuiteRequired, false, 2},
+		{"global guard omitted", func(input *Input) { selectOnly(input, []string{id("command/impact")}) }, DecisionUnsound, ReasonGlobalGuardOmitted, false, 1},
+		{"resource overflow", func(input *Input) { input.FullResourceReceipts[0].CPUCoreNS = math.MaxInt64 }, DecisionUnknown, ReasonResourceOverflow, true, 2},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			input := soundInput()
+			test.mutate(&input)
+			got := Evaluate(input)
+			if got.Decision != test.decision || got.Reason != test.reason || got.SemanticEvaluated != test.evaluated {
+				t.Fatalf("got %#v", got)
+			}
+			if got.CommandCount != 3 || got.SelectedCommandCount != test.selected || got.ObligationCount != 2 {
+				t.Fatalf("raw counts = %#v", got)
+			}
+			assertDecisionSemanticStage(t, got)
+		})
+	}
+}
+
+func assertDecisionSemanticStage(t *testing.T, output Output) {
+	t.Helper()
+	semantic, err := semanticProjection(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !output.SemanticEvaluated {
+		if semantic.FullCount != 0 || semantic.SelectedCount != 0 || semantic.FullPassCount != 0 || semantic.SelectedPassCount != 0 || semantic.FullFailCount != 0 || semantic.SelectedFailCount != 0 || len(semantic.FullFailureIDs) != 0 || len(semantic.SelectedFailureIDs) != 0 || len(semantic.OmittedIDs) != 0 {
+			t.Fatalf("unevaluated semantic projection = %#v", semantic)
+		}
+		return
+	}
+	if semantic.FullCount != 3 || semantic.SelectedCount != 2 || semantic.FullPassCount != 3 || semantic.SelectedPassCount != 2 || len(semantic.FullFailureIDs) != 0 || len(semantic.SelectedFailureIDs) != 0 || !reflect.DeepEqual(semantic.OmittedIDs, []string{id("command/pass")}) {
+		t.Fatalf("evaluated semantic projection = %#v", semantic)
 	}
 }
 

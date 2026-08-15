@@ -77,6 +77,9 @@ func (output Output) decisionProjection() (decisionProjection, error) {
 }
 
 func semanticProjection(output Output) (decisionSemantic, error) {
+	if !output.SemanticEvaluated {
+		return emptyDecisionSemantic(), nil
+	}
 	fullFail := uint64(len(output.FullFailureCommandIDs))
 	selectedFail := uint64(len(output.SelectedFailureCommandIDs))
 	fullPass, ok := subtractUint64(output.CommandCount, fullFail)
@@ -88,6 +91,10 @@ func semanticProjection(output Output) (decisionSemantic, error) {
 		return decisionSemantic{}, errProjectionOverflow
 	}
 	return decisionSemantic{FullCount: output.CommandCount, SelectedCount: output.SelectedCommandCount, FullPassCount: fullPass, FullFailCount: fullFail, SelectedPassCount: selectedPass, SelectedFailCount: selectedFail, FullFailureIDs: output.FullFailureCommandIDs, SelectedFailureIDs: output.SelectedFailureCommandIDs, OmittedIDs: output.OmittedCommandIDs}, nil
+}
+
+func emptyDecisionSemantic() decisionSemantic {
+	return decisionSemantic{FullFailureIDs: []string{}, SelectedFailureIDs: []string{}, OmittedIDs: []string{}}
 }
 
 func resourceProjection(vector *ResourceVector) (decisionResource, error) {
