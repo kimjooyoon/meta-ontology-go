@@ -41,11 +41,18 @@ func (r CouplingRegistry) Normalized() (CouplingRegistry, error) {
 
 func normalizeSurface(raw CouplingSurface) (CouplingSurface, error) {
 	out := raw
-	for label, value := range map[string]string{
-		"surface ID": raw.SurfaceID, "code symbol ID": raw.CodeSymbolID,
-		"semantic owner ID": raw.SemanticOwnerID, "scope ID": raw.ScopeID,
-		"source map ID": raw.SourceMapID,
-	} {
+	identityFields := []struct {
+		label string
+		value string
+	}{
+		{"surface ID", raw.SurfaceID},
+		{"code symbol ID", raw.CodeSymbolID},
+		{"semantic owner ID", raw.SemanticOwnerID},
+		{"scope ID", raw.ScopeID},
+		{"source map ID", raw.SourceMapID},
+	}
+	for _, field := range identityFields {
+		label, value := field.label, field.value
 		if _, err := parseStableID(value); err != nil {
 			return CouplingSurface{}, fmt.Errorf("%s: %w", label, err)
 		}

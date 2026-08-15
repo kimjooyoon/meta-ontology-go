@@ -225,8 +225,8 @@ func TestCouplingObserverFixtureMatrix(t *testing.T) {
 	tests = append(tests, couplingResolutionFixtures()...)
 	tests = append(tests, couplingControlFixtures(t)...)
 	tests = append(tests, couplingPositiveFixtures()...)
-	if len(tests) != 22 {
-		t.Fatalf("fixture denominator = %d, want 22", len(tests))
+	if len(tests) != 23 {
+		t.Fatalf("fixture denominator = %d, want 23", len(tests))
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
