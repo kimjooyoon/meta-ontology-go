@@ -1,0 +1,12 @@
+{
+  "status": "accepted",
+  "canonical": "obligation|billing://obligation/order-number|billing://field/order-number",
+  "records": [
+    {
+      "directive": "obligation",
+      "name": "Order",
+      "id": "billing://obligation/order-number",
+      "field": "billing://field/order-number"
+    }
+  ]
+}
