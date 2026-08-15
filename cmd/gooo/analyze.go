@@ -62,10 +62,22 @@ func runAnalyzeWithLowerer(args []string, reader SourceReader, parser SourcePars
 	}
 	plan := newFixPlan(source, syntaxDiagnostics, file)
 	if syntaxDiagnostics.HasErrors() {
+		if hasCLIEntityFieldsDeferredDiagnostic(syntaxDiagnostics) {
+			if !reportDiagnostics(syntaxDiagnostics, stderr) {
+				return exitFailure
+			}
+			return exitFailure
+		}
 		plan.Status = fixPlanSyntaxInvalid
 	} else {
 		ir, lowerErr := lowerInspectIRWith(file, remainingDeadline(deadline), lower)
 		if lowerErr != nil {
+			if isCLIEntityFieldsDeferredError(lowerErr) {
+				if !reportSemanticDiagnostic(filename, file, lowerErr, stderr) {
+					return exitFailure
+				}
+				return exitFailure
+			}
 			plan.Status = fixPlanSemanticInvalid
 			plan.Diagnostics = append(plan.Diagnostics, semanticFixDiagnostics(lowerErr, fileSpan(file))...)
 		} else {
