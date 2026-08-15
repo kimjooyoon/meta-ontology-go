@@ -18,7 +18,6 @@ func couplingPathID(value string) semantic.ID {
 	}
 	return couplingID(value)
 }
-
 func couplingSurface() CouplingSurface {
 	return CouplingSurface{
 		SurfaceID: "gooo://coupling/surface/pay-order", CodeSymbolID: "gooo://coupling/code/pay-order",
@@ -30,7 +29,6 @@ func couplingSurface() CouplingSurface {
 		RuleDigests: []string{couplingDigest("rule")}, Applicability: CouplingApplicable,
 	}
 }
-
 func couplingFixture(t *testing.T, claim string) CouplingInput {
 	t.Helper()
 	surface := couplingSurface()
@@ -58,8 +56,9 @@ func couplingFixture(t *testing.T, claim string) CouplingInput {
 		AfterIRDigest: after, ChangeClaim: claim, ReceiptKind: expectedReceiptKind(claim), PathDigest: path.StableHash(),
 		OriginPathIDs: edgeIDs(path.Edges), EvidenceRefs: evidenceIDs(path.Evidence), State: CouplingCurrent, Path: path,
 	}
+	receipt.AuthoritySourceBeforeDigest = couplingDigest("source-before")
+	receipt.AuthoritySourceAfterDigest = receipt.AuthoritySourceBeforeDigest
 	if claim == "DELTA" {
-		receipt.AuthoritySourceBeforeDigest = couplingDigest("source-before")
 		receipt.AuthoritySourceAfterDigest = couplingDigest("source-after")
 		receipt.CanonicalDelta = "relation\tpay-order\tchanged"
 		receipt.DeltaDigest = semantic.StableHashString(receipt.CanonicalDelta)
@@ -67,7 +66,6 @@ func couplingFixture(t *testing.T, claim string) CouplingInput {
 	refreshCouplingReceipt(t, &receipt)
 	return CouplingInput{Schema: CouplingEvidenceSchemaVersion, Envelope: envelope, Registry: registry, ChangedSites: []ChangedCodeSite{{Path: "internal/billing/pay.go", CodeSymbolID: surface.CodeSymbolID, SourceMapBindingDigest: surface.SourceMapBindingDigest}}, Receipts: []CouplingReceipt{receipt}}
 }
-
 func couplingPath(claim string, before, after, policy, owner, source, ruleDigest string) semantic.InferencePathV1 {
 	rule := semantic.RuleBinding{ID: couplingID("rule/pay-order"), Version: "1", Digest: ruleDigest}
 	controls := semantic.InferenceControls{}
@@ -122,6 +120,9 @@ func hasCouplingFailure(evidence CouplingEvidence, reason string) bool {
 	want := CouplingFailureCodePrefix + reason
 	for _, failure := range evidence.Failures {
 		if failure.Code == want {
+			if reason == "source-binding-mismatch" && (failure.Domain != CouplingDomainIntegrity || failure.Owner != couplingSurface().SemanticOwnerID || failure.Retry) {
+				return false
+			}
 			return true
 		}
 	}
@@ -155,6 +156,10 @@ func couplingAdversarialFixtures(t *testing.T) []couplingFixtureCase {
 			in.Receipts[0].DeltaDigest = ""
 			in.Receipts[0].AuthoritySourceBeforeDigest = ""
 			in.Receipts[0].AuthoritySourceAfterDigest = ""
+			refreshCouplingReceipt(t, &in.Receipts[0])
+		}},
+		{"source binding mismatch", "DELTA", CouplingDecisionFailClosed, "source-binding-mismatch", func(in *CouplingInput) {
+			in.Receipts[0].AuthoritySourceBeforeDigest = couplingDigest("wrong-authority-source")
 			refreshCouplingReceipt(t, &in.Receipts[0])
 		}},
 		{"stale registry", "NO_DELTA", CouplingDecisionUnknown, "registry-mismatch", func(in *CouplingInput) { in.Envelope.RegistryDigest = couplingDigest("stale-registry") }},
@@ -230,9 +235,9 @@ func runCouplingFixtureCase(t *testing.T, test couplingFixtureCase) {
 
 func TestCouplingObserverFixtureMatrix(t *testing.T) {
 	tests := couplingAdversarialFixtures(t)
-	tests = append(tests, couplingPositiveFixtures()...)
-	if len(tests) != 17 {
-		t.Fatalf("fixture denominator = %d, want 17", len(tests))
+	tests = append(append(tests, couplingControlFixtures(t)...), couplingPositiveFixtures()...)
+	if len(tests) != 19 {
+		t.Fatalf("fixture denominator = %d, want 19", len(tests))
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

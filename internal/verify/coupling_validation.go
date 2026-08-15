@@ -62,7 +62,7 @@ func validateReceipt(r CouplingReceipt, surface CouplingSurface, envelope Coupli
 	} else {
 		need(r.BeforeIRDigest == r.AfterIRDigest, "no-delta-without-equality", "NO_DELTA requires equal IR digests")
 		need(r.CanonicalDelta == "" && r.DeltaDigest == "", "no-delta-without-equality", "NO_DELTA cannot carry a delta")
-		need(r.AuthoritySourceBeforeDigest == "" && r.AuthoritySourceAfterDigest == "" || r.AuthoritySourceBeforeDigest == r.AuthoritySourceAfterDigest, "no-delta-without-equality", "NO_DELTA source binding changed")
+		need(validHexDigest(r.AuthoritySourceBeforeDigest) && validHexDigest(r.AuthoritySourceAfterDigest) && r.AuthoritySourceBeforeDigest == r.AuthoritySourceAfterDigest, "no-delta-without-equality", "NO_DELTA requires equal authoritative source snapshots")
 	}
 	failures = append(failures, validatePath(r, surface, envelope)...)
 	return uniqueFailures(failures)
@@ -105,14 +105,39 @@ func validatePath(r CouplingReceipt, surface CouplingSurface, envelope CouplingE
 		if edge.Rule.Digest != r.RuleDigest || edge.Before.Semantic != r.BeforeIRDigest || edge.After.Semantic != r.AfterIRDigest {
 			failures = append(failures, couplingFailure("path-binding-mismatch", owner, "typed edge is not bound to receipt digests"))
 		}
-	}
-	for _, claim := range r.Path.Claims {
-		if claim.Rule.Digest != r.RuleDigest || claim.Controls.Profile.Digest != "" && claim.Controls.Profile.Digest != r.ProfileDigest {
-			failures = append(failures, couplingFailure("path-binding-mismatch", owner, "semantic claim is not bound to registry controls"))
+		if edge.Before.Source != r.AuthoritySourceBeforeDigest || edge.After.Source != r.AuthoritySourceAfterDigest {
+			failures = append(failures, couplingFailure("source-binding-mismatch", owner, "typed edge source snapshots are not bound to receipt digests"))
+		}
+		if !couplingControlsMatch(edge.Controls, surface, envelope) {
+			failures = append(failures, couplingFailure("controls-mismatch", owner, "typed edge controls are not bound to the current envelope or profile"))
 		}
 	}
-	_ = envelope
+	for _, claim := range r.Path.Claims {
+		if claim.Rule.Digest != r.RuleDigest {
+			failures = append(failures, couplingFailure("path-binding-mismatch", owner, "semantic claim is not bound to registry controls"))
+		}
+		if claim.Before.Source != r.AuthoritySourceBeforeDigest || claim.After.Source != r.AuthoritySourceAfterDigest {
+			failures = append(failures, couplingFailure("source-binding-mismatch", owner, "semantic claim source snapshots are not bound to receipt digests"))
+		}
+		if !couplingControlsMatch(claim.Controls, surface, envelope) {
+			failures = append(failures, couplingFailure("controls-mismatch", owner, "semantic claim controls are not bound to the current envelope or profile"))
+		}
+	}
 	return uniqueFailures(failures)
+}
+
+func couplingControlsMatch(controls semantic.InferenceControls, surface CouplingSurface, envelope CouplingEnvelope) bool {
+	if controls.CatalogDigest != "" && controls.CatalogDigest != envelope.CatalogDigest {
+		return false
+	}
+	if controls.PolicyDigest != "" && controls.PolicyDigest != envelope.PolicyDigest {
+		return false
+	}
+	if controls.Profile.Digest == "" {
+		return controls.Profile.ID == "" && controls.Profile.Version == ""
+	}
+	return controls.Profile.ID == surface.ProfileID && controls.Profile.Version == surface.ProfileVersion &&
+		controls.Profile.Digest == surface.ProfileDigest && controls.Profile.Digest == envelope.ProfileDigest
 }
 
 func hasAuthorityPath(edges []semantic.InferenceEdge) bool {
@@ -209,7 +234,7 @@ func couplingFailure(reason, owner, detail string) CouplingFailure {
 
 func couplingFailureRoute(reason string) (string, bool) {
 	switch reason {
-	case "registry-mismatch", "registry-invalid", "noncanonical-evidence", "surface-owner-mismatch", "observation-promotion":
+	case "registry-mismatch", "registry-invalid", "noncanonical-evidence", "surface-owner-mismatch", "observation-promotion", "source-binding-mismatch", "controls-mismatch":
 		return CouplingDomainIntegrity, false
 	case "missing-receipt", "orphan-receipt", "duplicate-receipt", "surface-mismatch", "surface-symbol-mismatch", "delta-without-change", "delta-without-source", "no-delta-without-equality":
 		return CouplingDomainFeature, false
