@@ -282,19 +282,3 @@ func semanticValidationCode(code string) string {
 	}
 	return "semantic." + code
 }
-
-func semanticDiagnosticCode(err error) string {
-	if errors.Is(err, errCommandDeadline) {
-		return "semantic.deadline"
-	}
-	if strings.Contains(err.Error(), "unknown declaration") {
-		return "semantic.invalid-endpoint"
-	}
-	if errors.Is(err, semantic.ErrUnknownRelation) {
-		return "semantic.invalid-relation"
-	}
-	if strings.Contains(err.Error(), "cannot connect") || errors.Is(err, semantic.ErrInvalidFact) {
-		return "semantic.invalid-kind"
-	}
-	return "semantic.invalid"
-}

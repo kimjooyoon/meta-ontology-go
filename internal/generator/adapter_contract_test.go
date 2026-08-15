@@ -117,8 +117,8 @@ func TestTypedAdapterPreservesAuthoritativePortOrder(t *testing.T) {
 	provider := semanticIRProviderFixture{ir: SemanticIR{
 		Package: "orderedgen",
 		Entities: []Entity{
-			{ID: "entity:z", Name: "Zeta", GoName: "Zeta", Fields: []Field{{Name: "ID", GoName: "ID", GoType: "string"}}},
-			{ID: "entity:a", Name: "Alpha", GoName: "Alpha", Fields: []Field{{Name: "ID", GoName: "ID", GoType: "string"}}},
+			{ID: "entity:z", Name: "Zeta", GoName: "Zeta"},
+			{ID: "entity:a", Name: "Alpha", GoName: "Alpha"},
 		},
 		Activities: []Activity{{
 			ID: "activity:run", Name: "Run", GoName: "Run",

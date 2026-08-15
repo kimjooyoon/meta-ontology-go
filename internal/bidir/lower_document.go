@@ -10,23 +10,39 @@ import (
 
 // LowerDocument lowers the parser-neutral view into the current semantic IR.
 func LowerDocument(document Document) (semantic.IR, error) {
-	return LowerDocumentWithTypes(document, semantic.DefaultTypeRegistry())
+	return lowerDocumentWithTypesAndEntityFieldsSupport(document, semantic.DefaultTypeRegistry(), CurrentEntityFieldsSupport())
+}
+
+func lowerDocumentWithEntityFieldsSupport(document Document, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerDocumentWithTypesAndEntityFieldsSupport(document, semantic.DefaultTypeRegistry(), support)
 }
 
 // LowerDocumentWithTypes lowers a parser-neutral document and resolves latent
 // field TypeRefs through the supplied semantic registry.
 func LowerDocumentWithTypes(document Document, registry semantic.TypeRegistry) (semantic.IR, error) {
-	return LowerDocumentContextWithTypes(context.Background(), document, registry)
+	return lowerDocumentWithTypesAndEntityFieldsSupport(document, registry, CurrentEntityFieldsSupport())
+}
+
+func lowerDocumentWithTypesAndEntityFieldsSupport(document Document, registry semantic.TypeRegistry, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(context.Background(), document, registry, support)
 }
 
 // LowerDocumentContext is the cancellable parser-neutral lowerer.
 func LowerDocumentContext(ctx context.Context, document Document) (semantic.IR, error) {
-	return LowerDocumentContextWithTypes(ctx, document, semantic.DefaultTypeRegistry())
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, semantic.DefaultTypeRegistry(), CurrentEntityFieldsSupport())
 }
 
 // LowerDocumentContextWithTypes is the cancellable typed parser-neutral
 // lowerer. It returns no partial IR on any field or registry failure.
 func LowerDocumentContextWithTypes(ctx context.Context, document Document, registry semantic.TypeRegistry) (semantic.IR, error) {
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, registry, CurrentEntityFieldsSupport())
+}
+
+func lowerDocumentContextWithEntityFieldsSupport(ctx context.Context, document Document, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, semantic.DefaultTypeRegistry(), support)
+}
+
+func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, document Document, registry semantic.TypeRegistry, support EntityFieldsSupport) (semantic.IR, error) {
 	ctx = nonNilLowerContext(ctx)
 	if err := checkLowerContext(ctx); err != nil {
 		return semantic.IR{}, err
@@ -40,6 +56,9 @@ func LowerDocumentContextWithTypes(ctx context.Context, document Document, regis
 	}
 	namespace, err := semantic.ParseNamespace(namespaceText)
 	if err != nil {
+		return semantic.IR{}, err
+	}
+	if err := validateEntityFieldsDocument(document, namespace.String(), registry, support); err != nil {
 		return semantic.IR{}, err
 	}
 	ir := semantic.NewIR(document.Package, namespace)

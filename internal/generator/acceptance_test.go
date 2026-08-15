@@ -11,7 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
 )
 
-const acceptanceFingerprint = "889a7f0a59a1b271724a03a534a2c556035f50b6764f7330d3d481f612517258"
+const acceptanceFingerprint = "66cc8b603ecded2a22a2ba4e0ad07905c719c4ceb6e803be64b6687e093a50da"
 
 func TestAcceptanceFixtureReproducibility(t *testing.T) {
 	// GEN-DET-001: repeated projection bytes and evidence hashes are stable.
