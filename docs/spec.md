@@ -23,9 +23,10 @@ will remain source-compatible.
 This section is normative for the upcoming EntityFields V1 implementation
 closure. It is not a current support claim: the live parser still rejects
 `EntityFields` source and the implementation Gate must land before this syntax
-can be parsed, lowered, formatted, generated, or exposed by LSP. Until then,
-the public parser must continue to reject it without constructing a partial
-field list.
+can be parsed, lowered, formatted, passed through the CLI generator, represented
+in a field source map, or exposed by LSP. Until then, none of those public
+surfaces is runnable, and the public parser must continue to reject it without
+constructing a partial field list.
 
 ### Surface grammar
 
@@ -72,15 +73,26 @@ activity PayOrder(Order) -> Order
 
 ### Identity, ownership, and ordering
 
-- A field ID is mandatory in V1. It is the field's stable semantic identity;
-  it must be a valid absolute identity and must never be derived from the
-  display name, entity name, declaration order, or source path.
-- The parent is implicit only from the enclosing entity block and is recorded
-  as that entity's exact stable ID. Fields are valid only on `Entity` nodes;
-  an activity, agent, top-level field, or parent move is invalid.
+- Field identity is exactly `Field.ID`. It is mandatory in V1, must be a valid
+  absolute identity, and must never be derived from the display name, source
+  spelling, resolved type, presence, cardinality, declaration order, or path.
+  Name, source spelling, resolved type, presence, and cardinality are state or
+  presentation, never identity.
+- `Parent` records the exact stable ID of the enclosing entity. Parent
+  ownership is immutable in V1: a field ID cannot move to another entity or to
+  a non-Entity declaration. Moving a field is an explicit source delete plus
+  source add, and therefore creates a new field identity.
+- The stable-ID collision domain is the complete normalized model: Entity,
+  Activity, Agent, and Field IDs share one globally unique keyspace. A
+  duplicate ID of any kind, including a Field ID equal to a declaration ID,
+  is rejected before publication with `GOOO-EF-V1-ID-COLLISION`. A field ID
+  reused under another parent is the same collision. Different field IDs may
+  have the same name under different parents; names do not merge fields.
+- A name or type spelling change preserves `Field.ID`. A resolved type,
+  presence, or cardinality change updates semantic state while preserving
+  `Field.ID`. Only an explicit source delete/add changes identity.
 - A field name is presentation metadata. V1 accepts one identifier and does
-  not define aliases. Renaming the name is not an identity change when the
-  field ID is preserved.
+  not define aliases.
 - Field declarations retain source order in the syntax carrier, BX model,
   semantic IR, and every later projection. Normalization may normalize
   presentation text, but it must not sort or drop fields.
@@ -107,15 +119,58 @@ must not be reconstructed from a current registry display name.
 
 `required` lowers to semantic `Required`; `optional` lowers to semantic
 `Optional`. `one` lowers to semantic `One`; `many` lowers to semantic `Many`.
-All four combinations are valid V1 semantic values, and all four are part of
-the field's semantic identity. An unknown value is a deterministic error.
+These values are semantic state, not part of field identity. All four
+combinations are valid semantic input, but the immutable V1 Go projection
+profile intentionally supports only one combination.
 
-The live generator model currently carries only `Field.GoType` and renders it
-verbatim; it does not carry field presence or cardinality. Therefore V1 makes
-no pointer, slice, nullability, or other generated-Go shape promise. Until a
-separate generator contract defines and tests that mapping, generated Go for
-EntityFields is deferred and a generator must fail closed rather than choose
-or silently omit a shape.
+#### Immutable Go projection profile
+
+The named authority is profile ID `gooo.entityfields.go-projection.v1`,
+profile version `1`. Its canonical profile bytes are UTF-8 with LF line
+endings and no trailing newline; the profile digest is SHA-256 of those exact
+bytes: `7e93032618d1250cd4ff480eb7b5d6832f79bfc6921e6b9eea104151db965ec0`.
+Downstream code must bind the profile ID, version, and digest together. An
+unbound profile or digest mismatch fails closed with
+`GOOO-EF-V1-UNBOUND-PROFILE` or `GOOO-EF-V1-PROFILE-DIGEST-MISMATCH`.
+
+```text
+profile_id=gooo.entityfields.go-projection.v1
+profile_version=1
+type.urn:gooo:type:string=string
+shape.required.one=string
+shape.required.many=UNSUPPORTED:GOOO-EF-V1-UNSUPPORTED-SHAPE
+shape.optional.one=UNSUPPORTED:GOOO-EF-V1-UNSUPPORTED-SHAPE
+shape.optional.many=UNSUPPORTED:GOOO-EF-V1-UNSUPPORTED-SHAPE
+```
+
+The closed mapping is:
+
+| Resolved `TypeRef.ID` | Presence | Cardinality | Go field type |
+| --- | --- | --- | --- |
+| `urn:gooo:type:string` | `required` | `one` | `string` |
+| `urn:gooo:type:string` | `required` | `many` | unsupported |
+| `urn:gooo:type:string` | `optional` | `one` | unsupported |
+| `urn:gooo:type:string` | `optional` | `many` | unsupported |
+
+The profile binds the stable semantic type ID, never a display name. An
+unknown, ambiguous, or unprofiled type fails with
+`GOOO-EF-V1-UNKNOWN-TYPE`, `GOOO-EF-V1-AMBIGUOUS-TYPE`, or
+`GOOO-EF-V1-UNSUPPORTED-TYPE`, respectively. The supported `string` field has
+the ordinary Go zero value `""`; `required` is semantic schema state and does
+not promise a non-empty runtime value or add runtime validation. Unsupported
+shapes produce no generated field, generated file, source-map entry, or
+evidence record. The profile defines no tags, aliases, custom codecs,
+nullability convention, or slice/pointer convention.
+
+For this profile, the generated Go identifier is exactly `Field.Name`; no
+case conversion, sanitization, or name inference is permitted. The name must
+be a valid Go identifier and not a Go keyword. Duplicate resulting Go names
+within one entity fail with `GOOO-EF-V1-GO-NAME-COLLISION`; names in different
+entities are independent. Field declaration order is the generated struct
+field order. The current generator DTO does not yet carry this profile,
+presence, cardinality, resolved type ID, or field-level source-map data; adding
+those bindings is an implementation Gate obligation, not a reason to weaken
+this contract.
 
 ### Deterministic validation and malformed input
 
@@ -124,13 +179,16 @@ failure:
 
 | Condition | Required result |
 | --- | --- |
-| Duplicate field ID in one entity or across entities | Reject deterministically |
+| Duplicate or cross-kind stable ID | Reject with `GOOO-EF-V1-ID-COLLISION` |
 | Duplicate name or alias collision within entity | Reject; aliases are not a V1 surface feature |
 | Same field name under different entities | Allowed; parent identity separates the fields |
-| Unknown or ambiguous type reference | Reject before semantic publication |
-| Wrong parent or field on a non-Entity | Reject before semantic publication |
-| Missing field ID, name, type, presence, cardinality, or required span | Reject before semantic publication |
-| Malformed or unterminated `fields` block | Emit ordered diagnostics and publish no fields from that entity |
+| Unknown type reference | Reject with `GOOO-EF-V1-UNKNOWN-TYPE` |
+| Ambiguous type reference | Reject with `GOOO-EF-V1-AMBIGUOUS-TYPE` |
+| Wrong parent or field on a non-Entity | Reject with `GOOO-EF-V1-WRONG-PARENT` |
+| Missing field ID, name, type, presence, cardinality, or required span | Reject with `GOOO-EF-V1-INCOMPLETE-FIELD` |
+| Unsupported profile type or shape | Reject with the profile's stable fail-closed diagnostic |
+| Generated identifier collision | Reject with `GOOO-EF-V1-GO-NAME-COLLISION` |
+| Malformed or unterminated `fields` block | Emit ordered source diagnostics and publish no fields from that entity |
 
 The field, ID, name, type, presence, and cardinality spans are half-open,
 source-backed spans. A malformed block must not produce a field that later
@@ -146,23 +204,37 @@ The implementation Gate must preserve the existing authority boundaries:
   dropping a field.
 - Lowering maps each field to `semantic.Field` in declaration order, assigns
   the enclosing entity ID as `Parent`, resolves the type through the explicit
-  registry, and returns no partial IR on error.
+  registry, enforces the model-wide ID collision domain, and returns no
+  partial IR on error. A type lookup is resolved once to `TypeRef.ID`; no
+  nearest, spelling, or display-name fallback is allowed.
 - BX `Get`/`Put` must preserve field order, IDs, parent immutability, type
   presentation, and all field subspans. `Put` must validate before writing;
   missing provenance, semantic-only additions, non-source origins, conflicts,
   or invalid fields return the original document unchanged and must not promote
   candidate or derived observations.
-- The generator may project a field only after it has a complete deterministic
-  presence/cardinality-to-Go contract. Its generated region must use stable
+- The generator must bind the exact profile ID, version, and digest before
+  projection. It must preserve declaration order, use stable generated-region
   markers, preserve handwritten slots, and reject stale or incomplete field
-  input rather than omit a field.
-- A field-aware source map must bind each field ID to its source span and
-  generated range in declaration order. The current generator maps only entity,
-  activity, and slot regions, so this obligation is deferred with generation.
-- LSP must carry field diagnostics and exact ranges without inventing semantic
-  identities. Field symbols, references, and source-map capabilities may be
-  advertised only after their implementation and conformance evidence land;
-  the current adapter exposes entity/activity symbols only.
+  input rather than omit a field. A failed projection returns no generated
+  artifacts.
+- Each generated field source-map/evidence record must bind `Field.ID`,
+  `Parent`, resolved `TypeRef.ID`, presence, cardinality, declaration ordinal,
+  source span, name span, generated byte region, and the profile ID, version,
+  and digest. The current DTO and source map cannot represent all of these;
+  the implementation must extend them before claiming support. Generated Go
+  remains derived and non-authoritative; handwritten slots cannot override
+  structural fields.
+- A field document symbol is standard `SymbolKind.Field = 8`, with
+  `Name = Field.Name`, `Range = Field.Span`, and
+  `SelectionRange = Field.NameSpan`, nested beneath its enclosing entity.
+  Standard `Detail` may carry the stable field ID; no custom JSON-RPC wire
+  member may be added. Definition and reference identity is
+  `TypeRefUse.ResolvedID`. Emit a `Location` only when a source-backed target
+  location for that ID exists in the same snapshot; otherwise emit no link.
+  Spelling, display-name, and nearest-name fallback are forbidden. Rename and
+  name edits preserve `Field.ID`; type, presence, and cardinality edits change
+  state only. Invalid or partial fields produce neither trusted symbols nor
+  links; diagnostics remain source-backed.
 
 `.gooo` declarations remain authoritative for business intent and explicit
 contracts; stable IDs remain authoritative identity; generated Go remains a
@@ -170,14 +242,38 @@ derived structural projection; handwritten slots remain irreducible logic; and
 candidate or derived views remain non-authoritative. EntityFields do not add
 PROV relations, query nodes, aliases, or capabilities by implication.
 
+### Conformance partitions for the implementation Gate
+
+The support boundary is atomic. The parser, formatter, lowerer, BX, CLI
+generator, source map, and LSP must be proven together; parser-only or
+synthetic-only LSP support must not be advertised. Any layer unable to preserve
+the field contract must fail closed before write or publication. The minimum
+independent Gate partitions are:
+
+- Positive: one minimal `required one` string field; a name rename preserving
+  its ID; a type-state update preserving its ID; and stable declaration-order
+  projection with the bound profile digest.
+- Negative semantic: duplicate field ID; Field ID colliding with Entity,
+  Activity, or Agent ID; wrong parent; unknown, ambiguous, or unprofiled type;
+  and malformed or unterminated field block.
+- Negative projection: `optional one`, `required many`, and `optional many`;
+  generated Go identifier collision; unbound profile or digest mismatch; and
+  any unsupported input producing an artifact or partial source map.
+- Negative LSP: a missing source-backed target for `TypeRefUse.ResolvedID`, an
+  invalid or partial field, and a cross-snapshot target. Each produces no link
+  or trusted symbol and retains source-backed diagnostics.
+- Negative CLI/BX: a failed generation or `Put` leaves the original source and
+  generated outputs unchanged, with no partial write, evidence, or authority.
+
 ### Explicitly deferred or unsupported
 
 V1 does not support field aliases, alias-based identity or lookup, query-node
 semantics, field-specific capability declarations, implicit field IDs, implicit
-parent inference, pressure selectors, or generated-Go presence/cardinality
-mapping. These are deferred until a separately implemented and verified
-contract exists. Parser recognition, a latent AST carrier, or semantic
-constructors alone do not change the current support status.
+parent inference, pressure selectors, tags, custom codecs, or any Go shape
+outside the immutable profile above. Unsupported shapes are fail-closed, not
+deferred inference. Other features are deferred until a separately implemented
+and verified contract exists. Parser recognition, a latent AST carrier, or
+semantic constructors alone do not change the current support status.
 
 ## Current implementation boundary
 
