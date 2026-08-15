@@ -230,9 +230,15 @@ func TestEntityFieldsProjectionRejectsMalformedPartitionsAndUnknownState(t *test
 			ir.Graph = semantic.NewGraph()
 			_ = ir.AddNode(node)
 		}, want: "UNKNOWN-TYPE"},
+		{name: "unbound profile", edit: func(_ *semantic.IR, _ *bidir.Model, support *syntax.EntityFieldsSupport) {
+			support.Profile = syntax.EntityFieldsProfile{}
+		}, want: "UNBOUND-PROFILE"},
 		{name: "profile mismatch", edit: func(_ *semantic.IR, _ *bidir.Model, support *syntax.EntityFieldsSupport) {
-			support.Profile.Digest = "tampered"
+			support.Profile.ID = "other"
 		}, want: "PROFILE-MISMATCH"},
+		{name: "profile digest mismatch", edit: func(_ *semantic.IR, _ *bidir.Model, support *syntax.EntityFieldsSupport) {
+			support.Profile.Digest = "tampered"
+		}, want: "PROFILE-DIGEST-MISMATCH"},
 		{name: "unknown state", edit: func(_ *semantic.IR, _ *bidir.Model, support *syntax.EntityFieldsSupport) { support.State = "UNKNOWN" }, want: "UNKNOWN-STATE"},
 	}
 	for _, testCase := range cases {

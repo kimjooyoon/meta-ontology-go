@@ -88,6 +88,9 @@ func sameCLIField(projected generator.Field, semanticField generator.Field) bool
 
 func classifyCLIEntityFieldsModelError(err error) error {
 	message := err.Error()
+	if strings.Contains(message, "GOOO-EF-V1-") {
+		return err
+	}
 	switch {
 	case strings.Contains(message, "duplicate field ID"), strings.Contains(message, "collides with"):
 		return fmt.Errorf("GOOO-EF-V1-ID-COLLISION: %w", err)
@@ -103,15 +106,19 @@ func classifyCLIEntityFieldsModelError(err error) error {
 }
 
 func validateCLIEntityFieldsSupport(support syntax.EntityFieldsSupport) error {
-	switch support.State {
-	case syntax.EntityFieldsDeferred, syntax.EntityFieldsSupported:
-		if err := support.Profile.Validate(); err != nil {
-			return fmt.Errorf("GOOO-EF-V1-PROFILE-MISMATCH: %w", err)
-		}
-		return nil
-	default:
+	if support.State != syntax.EntityFieldsDeferred && support.State != syntax.EntityFieldsSupported {
 		return fmt.Errorf("GOOO-EF-V1-UNKNOWN-STATE: %q", support.State)
 	}
+	if support.Profile.ID == "" && support.Profile.Version == 0 && support.Profile.Digest == "" {
+		return errors.New("GOOO-EF-V1-UNBOUND-PROFILE: profile is unbound")
+	}
+	if support.Profile.ID != syntax.EntityFieldsProfileID || support.Profile.Version != syntax.EntityFieldsProfileVersion {
+		return errors.New("GOOO-EF-V1-PROFILE-MISMATCH: profile identity or version does not match")
+	}
+	if support.Profile.Digest != syntax.EntityFieldsProfileDigest {
+		return errors.New("GOOO-EF-V1-PROFILE-DIGEST-MISMATCH: profile digest does not match")
+	}
+	return nil
 }
 
 func validateCLIProjectedFields(model generator.SemanticIR) error {
