@@ -12,6 +12,9 @@ const CorrectionSchema = "gooo/selective-ci-shadow-correction/v1"
 //go:embed correction_predecessor.json
 var correctionFile embed.FS
 
+//go:embed correction_predecessor_2.json
+var secondCorrectionFile embed.FS
+
 type CorrectionRecord struct {
 	Schema     string            `json:"schema"`
 	ReasonCode string            `json:"reason_code"`
@@ -25,7 +28,15 @@ type CorrectionDigests struct {
 }
 
 func LoadCorrection() (CorrectionRecord, error) {
-	data, err := correctionFile.ReadFile("correction_predecessor.json")
+	return loadCorrection(correctionFile, "correction_predecessor.json")
+}
+
+func LoadSecondCorrection() (CorrectionRecord, error) {
+	return loadCorrection(secondCorrectionFile, "correction_predecessor_2.json")
+}
+
+func loadCorrection(files embed.FS, name string) (CorrectionRecord, error) {
+	data, err := files.ReadFile(name)
 	if err != nil {
 		return CorrectionRecord{}, err
 	}

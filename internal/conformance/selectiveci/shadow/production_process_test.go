@@ -74,14 +74,14 @@ func TestProductionEquivalenceAgainstIndependentCorpus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := CorpusDigest(); got != "36359077392431f4e4136baeb022b78f87fdf7c69a0dbab18ca38e3e92ae6954" {
+	if got := CorpusDigest(); got != "8448b309f64a05c06f75f03352d7516dcb296182af4b922532c28677353ca01e" {
 		t.Fatalf("corpus digest changed: %s", got)
 	}
-	if got := ExpectedVectorDigest(corpus); got != "fe260bba00c58fb3ab761910c253905dfb749be60ed655b03810bebddc2b3ef5" {
+	if got := ExpectedVectorDigest(corpus); got != "c48741ac3ba78be5cbd4ede9df04c962e32da0ba2dc761be79c2829749aad213" {
 		t.Fatalf("expected vector digest changed: %s", got)
 	}
-	if len(corpus.Cases) != 32 {
-		t.Fatalf("corpus case count = %d, want 32", len(corpus.Cases))
+	if len(corpus.Cases) != 33 {
+		t.Fatalf("corpus case count = %d, want 33", len(corpus.Cases))
 	}
 	mismatches := []string{}
 	for _, testCase := range corpus.Cases {

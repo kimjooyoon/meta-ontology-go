@@ -17,6 +17,9 @@ func productionPartition(t *testing.T, name string) productionFixture {
 		configureProductionInjection(t, &fixture)
 	case "snapshot-binding-manifest-mismatch", "snapshot-binding-stale-analyzer-digest", "registry-binding-mismatch":
 		configureProductionSnapshot(t, &fixture, name)
+	case "registry-binding-lane-mismatch":
+		fixture.laneInput.RegistryDigest = productionDigest("different-lane-registry")
+		fixture.encode()
 	case "plan-digest-tamper", "plan-unknown", "plan-changed-roots-mismatch", "plan-selection-union-invalid":
 		fixture.planInput.CPUCapacity = 1
 		fixture.reencode(t)

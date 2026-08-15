@@ -772,6 +772,28 @@
         "execution_authorized": false,
         "canonical_digest": "ec70f4f93d2bd561d4db38251f99f0adccd48d257f50703c07ea4800f8200c77"
       }
+    },
+    {
+      "name": "registry-binding-lane-mismatch",
+      "partition": "lane registry digest mismatch",
+      "files": {
+        "analyzer_base": "{\"schema\":\"gooo/selective-ci-shadow-analyzer/v1\",\"status\":\"BOUND\",\"full_suite_fallback\":false,\"registry_digest\":\"registry-main\",\"files\":[{\"path\":\"src/root.gooo\",\"blob_digest\":\"blob-base\",\"semantic_ids\":[\"urn:root\"]}],\"digest\":\"8d66b8ad22c3cb05ab814fbf506ae573bd524d45b65d11e974eb4f0f4a1c2341\"}",
+        "analyzer_head": "{\"schema\":\"gooo/selective-ci-shadow-analyzer/v1\",\"status\":\"BOUND\",\"full_suite_fallback\":false,\"registry_digest\":\"registry-main\",\"files\":[{\"path\":\"src/root.gooo\",\"blob_digest\":\"blob-head\",\"semantic_ids\":[\"urn:root\"]}],\"digest\":\"80676f93f9a8c7e25f94335ec3db04fdae2c44636b123304ba8dc6c4151d0341\"}",
+        "planner": "{\"schema\":\"gooo/selective-ci-shadow-planner/v1\",\"status\":\"SELECTIVE\",\"registry_digest\":\"registry-main\",\"base_manifest\":{\"schema\":\"gooo/selective-ci-shadow-manifest/v1\",\"files\":[{\"path\":\"src/root.gooo\",\"blob_digest\":\"blob-base\",\"semantic_ids\":[\"urn:root\"]}],\"digest\":\"ec19d5b73958dd525c9800fa078937fcdc98be5d6dc10a22c01edaeed1bf8bc0\"},\"head_manifest\":{\"schema\":\"gooo/selective-ci-shadow-manifest/v1\",\"files\":[{\"path\":\"src/root.gooo\",\"blob_digest\":\"blob-head\",\"semantic_ids\":[\"urn:root\"]}],\"digest\":\"b9ddcde1a753a74421377103ef98909fb9cea0f4e6e699839aede25a23501a68\"},\"plan_digest\":\"ae33d1a282951a3b5b99b6c8bf823e90f224e987b3ed8c7d85b3a61345a640a5\",\"changed_root_ids\":[\"urn:root\"],\"selected_command_ids\":[\"urn:cmd/root\"],\"selected_guard_command_ids\":[\"urn:guard/lint\"],\"selected_work_ids\":[\"work/root\",\"work/lint\"],\"commands\":[{\"id\":\"urn:cmd/root\",\"argv\":[\"sh\",\"-c\",\"echo SAFE; touch /tmp/gooo-shadow-must-not-run\"]}],\"guard_commands\":[{\"id\":\"urn:guard/lint\",\"argv\":[\"gooo\",\"lint\"]}]}",
+        "proof": "{\"schema\":\"gooo/selective-ci-shadow-proof/v1\",\"status\":\"VERIFIED\",\"fallback\":\"NONE\",\"registry_digest\":\"registry-main\",\"plan_digest\":\"ae33d1a282951a3b5b99b6c8bf823e90f224e987b3ed8c7d85b3a61345a640a5\",\"snapshots\":{\"base\":{\"source\":\"8d66b8ad22c3cb05ab814fbf506ae573bd524d45b65d11e974eb4f0f4a1c2341\",\"semantic\":\"ec19d5b73958dd525c9800fa078937fcdc98be5d6dc10a22c01edaeed1bf8bc0\"},\"head\":{\"source\":\"80676f93f9a8c7e25f94335ec3db04fdae2c44636b123304ba8dc6c4151d0341\",\"semantic\":\"b9ddcde1a753a74421377103ef98909fb9cea0f4e6e699839aede25a23501a68\"}},\"changed_root_ids\":[\"urn:root\"],\"selected_command_ids\":[\"urn:cmd/root\",\"urn:guard/lint\"],\"verified_command_ids\":[\"urn:cmd/root\",\"urn:guard/lint\"],\"proof_digest\":\"70354d9a59c1649265fcfc63c06ba69fa1ad84764aabf0f5e041f65bca13057a\"}",
+        "lane": "{\"schema\":\"gooo/selective-ci-shadow-lane/v1\",\"decision\":\"ELIGIBLE\",\"reason\":\"ELIGIBLE\",\"registry_digest\":\"registry-lane-other\",\"base_sha\":\"base-sha\",\"lane_head_sha\":\"head-sha\",\"lane_id\":\"lane-main\",\"registered_branch\":\"agent/prototype-conformance\",\"owned_path_prefixes\":[\"internal/conformance/selectiveci/shadow\"],\"changed_paths\":[\"internal/conformance/selectiveci/shadow/oracle.go\"],\"ahead_count\":0,\"behind_count\":0,\"open_pr_count\":0,\"active_lease_count\":0,\"canonical_digest\":\"b8601377a41964dee150948285befd6c0097762fbcb2b17e7b8aeaa6e20f5536\"}"
+      },
+      "expected": {
+        "status": "FULL_SUITE_FALLBACK",
+        "stage": "REGISTRY_BINDING",
+        "reason": "registry digest binding mismatch",
+        "selected_command_ids": [],
+        "selected_guard_command_ids": [],
+        "selected_work_ids": [],
+        "selected_argv": {},
+        "execution_authorized": false,
+        "canonical_digest": "1cbe3224b2be8843ff702157484c665e8672342a48997398ac250ef5d06f9fd0"
+      }
     }
   ]
 }

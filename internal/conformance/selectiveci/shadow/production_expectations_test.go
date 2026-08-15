@@ -21,6 +21,7 @@ func expectedProduction(name string) productionExpectation {
 		"snapshot-binding-manifest-mismatch":            {"FULL_SUITE_FALLBACK", "SNAPSHOT_BINDING", "base_manifest", "MANIFEST_MISMATCH", nil},
 		"snapshot-binding-stale-analyzer-digest":        {"FULL_SUITE_FALLBACK", "INPUT", "base_snapshot", "selectiveci.malformed-digest", nil},
 		"registry-binding-mismatch":                     {"FULL_SUITE_FALLBACK", "REGISTRY_BINDING", "base_snapshot", "REGISTRY_DIGEST_MISMATCH", nil},
+		"registry-binding-lane-mismatch":                {"FULL_SUITE_FALLBACK", "REGISTRY_BINDING", "lane", "REGISTRY_DIGEST_MISMATCH", nil},
 		"plan-digest-tamper":                            {"FULL_SUITE_FALLBACK", "PLAN", "planner", "FRONTIER_BLOCKED", nil},
 		"plan-unknown":                                  {"FULL_SUITE_FALLBACK", "PLAN", "planner", "FRONTIER_BLOCKED", nil},
 		"plan-changed-roots-mismatch":                   {"FULL_SUITE_FALLBACK", "PLAN", "planner", "FRONTIER_BLOCKED", nil},
