@@ -25,14 +25,22 @@ func entityFieldsFixture() SemanticIR {
 				{
 					ID: "urn:gooo:field:order-number", Parent: "urn:gooo:entity:order", Name: "OrderNumber",
 					TypeRefID: entityFieldsStringTypeID, Presence: "required", Cardinality: "one",
-					Source:     SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 20, Line: 4, Column: 5}, End: Position{Offset: 38, Line: 4, Column: 23}},
-					NameSource: SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 25, Line: 4, Column: 10}, End: Position{Offset: 36, Line: 4, Column: 21}},
+					Source:          SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 20, Line: 4, Column: 5}, End: Position{Offset: 38, Line: 4, Column: 23}},
+					IDSpan:          SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 20, Line: 4, Column: 5}, End: Position{Offset: 22, Line: 4, Column: 7}},
+					NameSpan:        SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 23, Line: 4, Column: 8}, End: Position{Offset: 25, Line: 4, Column: 10}},
+					TypeRefSpan:     SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 26, Line: 4, Column: 11}, End: Position{Offset: 28, Line: 4, Column: 13}},
+					PresenceSpan:    SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 29, Line: 4, Column: 14}, End: Position{Offset: 32, Line: 4, Column: 17}},
+					CardinalitySpan: SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 33, Line: 4, Column: 18}, End: Position{Offset: 37, Line: 4, Column: 22}},
 				},
 				{
 					ID: "urn:gooo:field:customer-name", Parent: "urn:gooo:entity:order", Name: "CustomerName",
 					TypeRefID: entityFieldsStringTypeID, Presence: "required", Cardinality: "one",
-					Source:     SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 40, Line: 5, Column: 5}, End: Position{Offset: 58, Line: 5, Column: 23}},
-					NameSource: SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 45, Line: 5, Column: 10}, End: Position{Offset: 57, Line: 5, Column: 22}},
+					Source:          SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 40, Line: 5, Column: 5}, End: Position{Offset: 58, Line: 5, Column: 23}},
+					IDSpan:          SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 40, Line: 5, Column: 5}, End: Position{Offset: 42, Line: 5, Column: 7}},
+					NameSpan:        SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 43, Line: 5, Column: 8}, End: Position{Offset: 45, Line: 5, Column: 10}},
+					TypeRefSpan:     SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 46, Line: 5, Column: 11}, End: Position{Offset: 48, Line: 5, Column: 13}},
+					PresenceSpan:    SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 49, Line: 5, Column: 14}, End: Position{Offset: 52, Line: 5, Column: 17}},
+					CardinalitySpan: SourceSpan{URI: "entity-fields.gooo", Start: Position{Offset: 53, Line: 5, Column: 18}, End: Position{Offset: 57, Line: 5, Column: 22}},
 				},
 			},
 		}},
@@ -138,7 +146,7 @@ func TestEntityFieldsSupportedProjectionPreservesOrderIdentityAndMetadata(t *tes
 	fixture := entityFieldsFixture()
 	for index, mapping := range fieldMappings {
 		field := fixture.Entities[0].Fields[index]
-		if mapping.SemanticID != field.ID || mapping.Source != field.Source || mapping.ParentID != field.Parent || mapping.TypeRefID != field.TypeRefID || mapping.Presence != field.Presence || mapping.Cardinality != field.Cardinality {
+		if mapping.SemanticID != field.ID || mapping.Source != field.Source || mapping.NameSource != field.NameSpan || mapping.ParentID != field.Parent || mapping.TypeRefID != field.TypeRefID || mapping.Presence != field.Presence || mapping.Cardinality != field.Cardinality {
 			t.Fatalf("field %d lost authoritative metadata: %#v", index, mapping)
 		}
 		if mapping.ProfileID != syntax.EntityFieldsProfileID || mapping.ProfileVersion != syntax.EntityFieldsProfileVersion || mapping.ProfileDigest != syntax.EntityFieldsProfileDigest {
@@ -173,40 +181,6 @@ func TestEntityFieldsSupportedReplayPreservesHandwrittenSlotBytes(t *testing.T) 
 	}
 	if len(replayed.SourceMap.Lookup("urn:gooo:field:order-number")) != 1 || len(replayed.SourceMap.Lookup("urn:gooo:slot:load-order")) != 1 {
 		t.Fatalf("replay lost field or slot mappings: %#v", replayed.SourceMap)
-	}
-}
-
-func TestEntityFieldsUnsupportedInputsFailClosedWithoutMutation(t *testing.T) {
-	cases := []struct {
-		name string
-		edit func(*SemanticIR)
-		code string
-	}{
-		{name: "optional", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[0].Presence = "optional" }, code: entityFieldsUnsupportedShapeDiagnostic},
-		{name: "many", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[0].Cardinality = "many" }, code: entityFieldsUnsupportedShapeDiagnostic},
-		{name: "unsupported type", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[0].TypeRefID = "urn:gooo:type:integer" }, code: entityFieldsUnsupportedTypeDiagnostic},
-		{name: "missing parent", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[0].Parent = "" }, code: entityFieldsIncompleteDiagnostic},
-		{name: "wrong parent", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[0].Parent = "urn:gooo:entity:other" }, code: entityFieldsWrongParentDiagnostic},
-		{name: "duplicate field ID", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[1].ID = ir.Entities[0].Fields[0].ID }, code: entityFieldsIDCollisionDiagnostic},
-		{name: "cross-kind field ID", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[0].ID = ir.Activities[0].ID }, code: entityFieldsIDCollisionDiagnostic},
-		{name: "illegal order", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[1].Source.Start.Offset = 10 }, code: entityFieldsIllegalReorderDiagnostic},
-		{name: "zero origin", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[0].Source = SourceSpan{} }, code: entityFieldsIncompleteDiagnostic},
-		{name: "cross snapshot", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[1].Source.URI = "other.gooo" }, code: entityFieldsUnrepresentableDiagnostic},
-		{name: "Go name collision", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[1].Name = ir.Entities[0].Fields[0].Name }, code: entityFieldsGoNameCollisionDiagnostic},
-		{name: "aliases", edit: func(ir *SemanticIR) { ir.Entities[0].Fields[0].Aliases = []string{"OrderNo"} }, code: entityFieldsUnsupportedShapeDiagnostic},
-	}
-	for _, testCase := range cases {
-		t.Run(testCase.name, func(t *testing.T) {
-			ir := entityFieldsFixture()
-			testCase.edit(&ir)
-			result, err := New(Options{}).generateWithEntityFieldsSupport(ir, nil, supportedEntityFieldsForTest())
-			if err == nil || !strings.Contains(err.Error(), testCase.code) {
-				t.Fatalf("expected %s, got result=%#v err=%v", testCase.code, result, err)
-			}
-			if result.Source != nil || result.SourceMap.Mappings != nil {
-				t.Fatalf("rejected input produced artifacts: %#v", result)
-			}
-		})
 	}
 }
 

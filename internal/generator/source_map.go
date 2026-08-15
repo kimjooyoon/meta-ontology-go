@@ -79,7 +79,7 @@ func appendEntityFieldMappings(result *SourceMap, source []byte, region generate
 			TypeRefID:      field.TypeRefID,
 			Presence:       field.Presence,
 			Cardinality:    field.Cardinality,
-			NameSource:     fieldNameSource(field),
+			NameSource:     field.NameSpan,
 			ProfileID:      profile.ID,
 			ProfileVersion: profile.Version,
 			ProfileDigest:  profile.Digest,

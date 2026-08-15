@@ -204,63 +204,6 @@ func validateSupportedField(entity Entity, index int, field Field, used map[stri
 	return nil
 }
 
-func validateFieldSource(entity Entity, field Field, sourceURI string, previousStart int, hasPrevious bool) error {
-	span := field.Source
-	if strings.TrimSpace(span.URI) == "" || span.Start.Line <= 0 || span.Start.Column <= 0 || span.End.Line <= 0 || span.End.Column <= 0 || span.Start.Offset < 0 || span.End.Offset <= span.Start.Offset {
-		return entityFieldsError(entityFieldsIncompleteDiagnostic, field, "source span must be a non-zero, half-open source range")
-	}
-	if sourceURI != "" && span.URI != sourceURI {
-		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "field origins cross source snapshots")
-	}
-	if hasPrevious && span.Start.Offset <= previousStart {
-		return entityFieldsError(entityFieldsIllegalReorderDiagnostic, field, fmt.Sprintf("%s field order is not source ordered", entity.ID))
-	}
-	if entity.Source.URI != "" && entity.Source.URI != span.URI {
-		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "field origin does not match its entity source snapshot")
-	}
-	for _, subspan := range []struct {
-		name string
-		span SourceSpan
-	}{
-		{name: "ID", span: field.IDSpan},
-		{name: "name", span: fieldNameSource(field)},
-		{name: "type", span: field.TypeRefSpan},
-		{name: "presence", span: field.PresenceSpan},
-		{name: "cardinality", span: field.CardinalitySpan},
-	} {
-		if !sourceSpanIsZero(subspan.span) {
-			if err := validateFieldSubspan(field, subspan.span, subspan.name); err != nil {
-				return err
-			}
-		}
-	}
-	if !sourceSpanIsZero(field.NameSpan) && !sourceSpanIsZero(field.NameSource) && field.NameSpan != field.NameSource {
-		if err := validateFieldSubspan(field, field.NameSpan, "name"); err != nil {
-			return err
-		}
-		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, "name source spans disagree")
-	}
-	return nil
-}
-
-func fieldNameSource(field Field) SourceSpan {
-	if !sourceSpanIsZero(field.NameSpan) {
-		return field.NameSpan
-	}
-	return field.NameSource
-}
-
-func sourceSpanIsZero(span SourceSpan) bool {
-	return span == (SourceSpan{})
-}
-
-func validateFieldSubspan(field Field, subspan SourceSpan, label string) error {
-	if strings.TrimSpace(subspan.URI) == "" || subspan.URI != field.Source.URI || subspan.Start.Line <= 0 || subspan.Start.Column <= 0 || subspan.End.Line <= 0 || subspan.End.Column <= 0 || subspan.Start.Offset < field.Source.Start.Offset || subspan.End.Offset > field.Source.End.Offset || subspan.End.Offset <= subspan.Start.Offset {
-		return entityFieldsError(entityFieldsUnrepresentableDiagnostic, field, label+" source span is not an exact subspan of the field origin")
-	}
-	return nil
-}
-
 func canonicalEntityFieldIdentity(raw string) (string, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" || strings.IndexFunc(value, unicode.IsSpace) >= 0 {

@@ -47,7 +47,7 @@ type Field struct {
 	TypeRefSpan     SourceSpan
 	PresenceSpan    SourceSpan
 	CardinalitySpan SourceSpan
-	NameSource      SourceSpan // compatibility alias for NameSpan at this boundary
+	NameSource      SourceSpan // compatibility alias; NameSpan is authoritative
 }
 
 // Activity is projected to a Go function. Port order is part of its boundary.
