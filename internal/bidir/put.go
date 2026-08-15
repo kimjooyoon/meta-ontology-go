@@ -39,26 +39,47 @@ func (e *PutError) Unwrap() error {
 // Put writes an updated model into a document while preserving source order
 // for surviving declarations and explicit relations.
 func Put(document Document, updated Model) (Document, error) {
-	return PutWithTypes(document, updated, semantic.DefaultTypeRegistry())
+	return putWithTypesAndEntityFieldsSupport(document, updated, semantic.DefaultTypeRegistry(), CurrentEntityFieldsSupport())
+}
+
+func putWithEntityFieldsSupport(document Document, updated Model, support EntityFieldsSupport) (Document, error) {
+	return putWithTypesAndEntityFieldsSupport(document, updated, semantic.DefaultTypeRegistry(), support)
 }
 
 // PutWithTypes writes a typed model back to the parser-neutral carrier. All
 // validation completes before constructing the returned document, preserving
 // the no-write guarantee on every rejection.
 func PutWithTypes(document Document, updated Model, registry semantic.TypeRegistry) (Document, error) {
-	source, err := GetWithTypes(document, registry)
+	return putWithTypesAndEntityFieldsSupport(document, updated, registry, CurrentEntityFieldsSupport())
+}
+
+func putWithTypesAndEntityFieldsSupport(document Document, updated Model, registry semantic.TypeRegistry, support EntityFieldsSupport) (Document, error) {
+	hasFields := documentHasFields(document) || modelHasFields(updated.Nodes)
+	if err := entityFieldsActivation(support, hasFields, firstPutFieldSpan(document, updated)); err != nil {
+		return document, putError(PutModelInvalid, err)
+	}
+	source, err := getWithTypesAndEntityFieldsSupport(document, registry, support)
 	if err != nil {
 		return document, putError(PutSourceInvalid, err)
 	}
 	updated = updated.Normalized()
-	if err := updated.ValidateWithTypes(registry); err != nil {
-		return document, putError(PutModelInvalid, err)
-	}
 	if err := validateFieldParentStability(source, updated); err != nil {
 		return document, putError(PutModelInvalid, err)
 	}
+	if err := validateFieldOrderStability(source, updated); err != nil {
+		return document, putError(PutModelInvalid, err)
+	}
+	if err := validateFieldSourceSnapshot(source, updated); err != nil {
+		return document, putError(PutProvenanceMissing, err)
+	}
 	if err := validatePutProvenance(source, updated); err != nil {
 		return document, putError(PutProvenanceMissing, err)
+	}
+	if err := validateEntityFieldsModel(updated.Nodes, registry, support); err != nil {
+		return document, putError(PutModelInvalid, err)
+	}
+	if err := updated.ValidateWithTypes(registry); err != nil {
+		return document, putError(PutModelInvalid, err)
 	}
 	result := Document{Package: document.Package, Namespace: document.Namespace}
 	if result.Package == "" {
@@ -82,6 +103,31 @@ func PutWithTypes(document Document, updated Model, registry semantic.TypeRegist
 	return result, nil
 }
 
+func firstPutFieldSpan(document Document, updated Model) SourceSpan {
+	if span := firstDocumentFieldSpan(document); span.Valid() {
+		return span
+	}
+	return firstModelFieldSpan(updated.Nodes)
+}
+
+func validateFieldSourceSnapshot(before, after Model) error {
+	source := make(map[ID]Field)
+	for _, node := range before.Nodes {
+		for _, field := range node.Fields {
+			source[field.ID] = field
+		}
+	}
+	for _, node := range after.Nodes {
+		for _, field := range node.Fields {
+			previous, exists := source[field.ID]
+			if exists && previous.Span.File != field.Span.File {
+				return entityFieldsError(EntityFieldsIncompleteDiagnostic, fmt.Sprintf("field %q provenance crosses source snapshots", field.ID), field.Span, ErrUnrepresentableField)
+			}
+		}
+	}
+	return nil
+}
+
 func putError(code string, err error) error {
 	return &PutError{Code: code, NoWrite: true, Err: err}
 }
@@ -89,7 +135,7 @@ func putError(code string, err error) error {
 func validatePutProvenance(source, updated Model) error {
 	delta := Diff(source, updated)
 	for _, node := range append(delta.AddedNodes, delta.RemovedNodes...) {
-		if !node.Span.Valid() {
+		if !node.Span.Valid() && len(node.Fields) == 0 {
 			return fmt.Errorf("node %q semantic change has no source span", node.ID)
 		}
 		for _, field := range node.Fields {
