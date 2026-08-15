@@ -14,7 +14,7 @@ func TestCorpus(t *testing.T) {
 	if corpus.Schema != SchemaV1 {
 		t.Fatalf("schema=%q", corpus.Schema)
 	}
-	if len(corpus.Cases) != 17 {
+	if len(corpus.Cases) != 18 {
 		t.Fatalf("case count=%d", len(corpus.Cases))
 	}
 	digest, err := CorpusDigest(corpus)
@@ -55,6 +55,10 @@ func TestRequiredCoverageShapes(t *testing.T) {
 	}
 	if missing.ExecutionAuthorized || missing.CIAuthorized {
 		t.Fatal("authorization escaped the oracle partition")
+	}
+	shared := Evaluate(rows["shared-endpoint-references"].Input)
+	if shared.Decision != DecisionExact || shared.EndpointReferenceCount != 4 || shared.WorkUnits != 10 {
+		t.Fatalf("shared endpoint references=%+v", shared.Vector)
 	}
 }
 

@@ -61,17 +61,17 @@ type Partition struct {
 // Vector is the normalized semantic result. The two authorization values are
 // deliberately fixed false: authorization is not part of this partition.
 type Vector struct {
-	Decision                string   `json:"decision"`
-	Reason                  string   `json:"reason"`
-	RequiredBindingCount    int64    `json:"required_binding_count"`
-	PartitionCount          int64    `json:"partition_count"`
-	ReferencedEndpointCount int64    `json:"referenced_endpoint_count"`
-	InputBytes              int64    `json:"input_bytes"`
-	WorkUnits               int64    `json:"work_units"`
-	MissingMatch            []string `json:"missing_match"`
-	MissingMismatch         []string `json:"missing_mismatch"`
-	ExecutionAuthorized     bool     `json:"execution_authorized"`
-	CIAuthorized            bool     `json:"ci_authorized"`
+	Decision               string   `json:"decision"`
+	Reason                 string   `json:"reason"`
+	RequiredBindingCount   int64    `json:"required_binding_count"`
+	PartitionCount         int64    `json:"partition_count"`
+	EndpointReferenceCount int64    `json:"endpoint_reference_count"`
+	InputBytes             int64    `json:"input_bytes"`
+	WorkUnits              int64    `json:"work_units"`
+	MissingMatch           []string `json:"missing_match"`
+	MissingMismatch        []string `json:"missing_mismatch"`
+	ExecutionAuthorized    bool     `json:"execution_authorized"`
+	CIAuthorized           bool     `json:"ci_authorized"`
 }
 
 type Result struct {
@@ -100,8 +100,9 @@ func Evaluate(input Input) Result {
 }
 
 func baseVector(input Input) (Vector, bool) {
-	endpointCount := referencedEndpointCount(input.RequiredBindings)
-	work, overflow := safeAdd(int64(len(input.RequiredBindings)), int64(len(input.Partitions)))
+	endpointCount, overflow := endpointReferenceCount(input.RequiredBindings)
+	work, workOverflow := safeAdd(int64(len(input.RequiredBindings)), int64(len(input.Partitions)))
+	overflow = overflow || workOverflow
 	if !overflow {
 		work, overflow = safeAdd(work, int64(endpointCount))
 	}
@@ -110,15 +111,15 @@ func baseVector(input Input) (Vector, bool) {
 		overflow = true
 	}
 	return Vector{
-		RequiredBindingCount:    int64(len(input.RequiredBindings)),
-		PartitionCount:          int64(len(input.Partitions)),
-		ReferencedEndpointCount: endpointCount,
-		InputBytes:              int64(len(canonical)),
-		WorkUnits:               work,
-		MissingMatch:            []string{},
-		MissingMismatch:         []string{},
-		ExecutionAuthorized:     false,
-		CIAuthorized:            false,
+		RequiredBindingCount:   int64(len(input.RequiredBindings)),
+		PartitionCount:         int64(len(input.Partitions)),
+		EndpointReferenceCount: endpointCount,
+		InputBytes:             int64(len(canonical)),
+		WorkUnits:              work,
+		MissingMatch:           []string{},
+		MissingMismatch:        []string{},
+		ExecutionAuthorized:    false,
+		CIAuthorized:           false,
 	}, overflow
 }
 
@@ -241,17 +242,8 @@ func finish(vector Vector, decision, reason string) Result {
 	return Result{Vector: vector, CanonicalDigest: digestVector(vector)}
 }
 
-func referencedEndpointCount(bindings []Binding) int64 {
-	seen := make(map[string]bool, len(bindings)*2)
-	for _, binding := range bindings {
-		if binding.FromFieldID != "" {
-			seen[binding.FromFieldID] = true
-		}
-		if binding.ToFieldID != "" {
-			seen[binding.ToFieldID] = true
-		}
-	}
-	return int64(len(seen))
+func endpointReferenceCount(bindings []Binding) (int64, bool) {
+	return safeAdd(int64(len(bindings)), int64(len(bindings)))
 }
 
 func validKind(kind string) bool {
