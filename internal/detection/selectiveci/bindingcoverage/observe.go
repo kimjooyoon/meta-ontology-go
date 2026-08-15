@@ -27,7 +27,7 @@ func Observe(input Input) Output {
 		return seal(result, DecisionUnknown, reason)
 	}
 
-	bindingIDs, endpoints, reason := validateBindings(input.RequiredBindings)
+	bindingIDs, endpointReferences, reason := validateBindings(input.RequiredBindings)
 	if reason != "" {
 		return seal(result, DecisionUnknown, reason)
 	}
@@ -37,10 +37,11 @@ func Observe(input Input) Output {
 	}
 	result.RequiredBindingCount = uint64(len(input.RequiredBindings))
 	result.PartitionCount = uint64(len(input.Partitions))
+	result.EndpointReferenceCount = endpointReferences
 	result.MissingMatchBindingIDs, result.MissingMismatchBindingIDs = missingBindings(input.RequiredBindings, match, mismatch)
 	result.MatchCoveredCount = result.RequiredBindingCount - uint64(len(result.MissingMatchBindingIDs))
 	result.MismatchCoveredCount = result.RequiredBindingCount - uint64(len(result.MissingMismatchBindingIDs))
-	work, ok := workUnits(result.RequiredBindingCount, result.PartitionCount, uint64(len(endpoints)))
+	work, ok := workUnits(result.RequiredBindingCount, result.PartitionCount, result.EndpointReferenceCount)
 	if !ok {
 		return seal(baseOutput(input, uint64(len(canonical))), DecisionUnknown, ReasonWorkOverflow)
 	}
@@ -80,30 +81,33 @@ func validateHeader(input Input) Reason {
 	return ""
 }
 
-func validateBindings(bindings []RequiredBinding) (map[string]struct{}, map[string]struct{}, Reason) {
+func validateBindings(bindings []RequiredBinding) (map[string]struct{}, uint64, Reason) {
 	ids := make(map[string]struct{}, len(bindings))
-	endpoints := make(map[string]struct{}, len(bindings)*2)
+	endpointReferences := uint64(0)
 	for _, binding := range bindings {
 		if reason := validateID(binding.BindingID); reason != "" {
-			return nil, nil, reason
+			return nil, 0, reason
 		}
 		if _, exists := ids[binding.BindingID]; exists {
-			return nil, nil, ReasonDuplicateID
+			return nil, 0, ReasonDuplicateID
 		}
 		if reason := validateID(binding.FromFieldID); reason != "" {
-			return nil, nil, reason
+			return nil, 0, reason
 		}
 		if reason := validateID(binding.ToFieldID); reason != "" {
-			return nil, nil, reason
+			return nil, 0, reason
 		}
 		if !validKind(binding.Kind) {
-			return nil, nil, ReasonInvalidEnum
+			return nil, 0, ReasonInvalidEnum
+		}
+		var ok bool
+		endpointReferences, ok = addUint64(endpointReferences, 2)
+		if !ok {
+			return nil, 0, ReasonWorkOverflow
 		}
 		ids[binding.BindingID] = struct{}{}
-		endpoints[binding.FromFieldID] = struct{}{}
-		endpoints[binding.ToFieldID] = struct{}{}
 	}
-	return ids, endpoints, ""
+	return ids, endpointReferences, ""
 }
 
 func validatePartitions(partitions []Partition, bindingIDs map[string]struct{}) (map[string]struct{}, map[string]struct{}, Reason) {
@@ -165,12 +169,12 @@ func missingBindings(bindings []RequiredBinding, match, mismatch map[string]stru
 	return missingMatch, missingMismatch
 }
 
-func workUnits(required, partitions, endpoints uint64) (uint64, bool) {
+func workUnits(required, partitions, endpointReferences uint64) (uint64, bool) {
 	total, ok := addUint64(required, partitions)
 	if !ok {
 		return 0, false
 	}
-	return addUint64(total, endpoints)
+	return addUint64(total, endpointReferences)
 }
 
 func addUint64(left, right uint64) (uint64, bool) {

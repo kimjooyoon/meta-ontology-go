@@ -85,6 +85,7 @@ type Output struct {
 	MatchCoveredCount         uint64   `json:"match_covered_count"`
 	MismatchCoveredCount      uint64   `json:"mismatch_covered_count"`
 	PartitionCount            uint64   `json:"partition_count"`
+	EndpointReferenceCount    uint64   `json:"endpoint_reference_count"`
 	DeterministicWorkUnits    uint64   `json:"deterministic_work_units"`
 	InputBytes                uint64   `json:"input_bytes"`
 	Decision                  Decision `json:"decision"`

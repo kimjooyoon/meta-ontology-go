@@ -16,7 +16,7 @@ func TestExactFixture(t *testing.T) {
 	if got.RequiredBindingCount != 9 || got.MatchCoveredCount != 9 || got.MismatchCoveredCount != 9 || got.PartitionCount != 18 {
 		t.Fatalf("coverage counts = %d/%d/%d/%d, want 9/9/9/18", got.RequiredBindingCount, got.MatchCoveredCount, got.MismatchCoveredCount, got.PartitionCount)
 	}
-	if got.DeterministicWorkUnits != 45 || got.InputBytes == 0 {
+	if got.EndpointReferenceCount != 18 || got.DeterministicWorkUnits != 45 || got.InputBytes == 0 {
 		t.Fatalf("work/input bytes = %d/%d, want work 45 and nonzero input", got.DeterministicWorkUnits, got.InputBytes)
 	}
 	if len(got.MissingMatchBindingIDs) != 0 || len(got.MissingMismatchBindingIDs) != 0 {
@@ -179,6 +179,20 @@ func TestWorkAccountingOverflow(t *testing.T) {
 	}
 }
 
+func TestSharedEndpointReferences(t *testing.T) {
+	got := Observe(sharedEndpointInput())
+	if got.Decision != DecisionExact || got.Reason != ReasonExact {
+		t.Fatalf("got %s/%s, want EXACT/EXACT", got.Decision, got.Reason)
+	}
+	if got.RequiredBindingCount != 2 || got.MatchCoveredCount != 2 || got.MismatchCoveredCount != 2 || got.PartitionCount != 4 {
+		t.Fatalf("coverage counts = %d/%d/%d/%d, want 2/2/2/4", got.RequiredBindingCount, got.MatchCoveredCount, got.MismatchCoveredCount, got.PartitionCount)
+	}
+	if got.EndpointReferenceCount != 4 || got.DeterministicWorkUnits != 10 {
+		t.Fatalf("endpoint/work counts = %d/%d, want 4/10", got.EndpointReferenceCount, got.DeterministicWorkUnits)
+	}
+	t.Logf("shared endpoint fixture digest=%s", got.CanonicalDigest)
+}
+
 func TestCanonicalFixtureDigest(t *testing.T) {
 	got := Observe(fixtureInput())
 	t.Logf("binding coverage fixture digest=%s counts=%d/%d/%d/%d work=%d input_bytes=%d", got.CanonicalDigest, got.RequiredBindingCount, got.MatchCoveredCount, got.MismatchCoveredCount, got.PartitionCount, got.DeterministicWorkUnits, got.InputBytes)
@@ -206,6 +220,21 @@ func fixtureInput() Input {
 		partitions = append(partitions, Partition{PartitionID: id("partition/" + name + "/mismatch"), BindingID: binding.BindingID, Polarity: PolarityMismatch, ExpectedStage: "stage-" + name, ExpectedReason: "mismatched"})
 	}
 	return Input{SchemaVersion: SchemaVersion, ContractID: id("contract/selective-ci"), SnapshotDigest: strings.Repeat("a", 64), RequiredBindings: bindings, Partitions: partitions}
+}
+
+func sharedEndpointInput() Input {
+	middle := id("field/shared/middle")
+	bindings := []RequiredBinding{
+		{BindingID: bindingID("shared-a"), FromFieldID: id("field/shared/from"), ToFieldID: middle, Kind: KindExactValue},
+		{BindingID: bindingID("shared-b"), FromFieldID: middle, ToFieldID: id("field/shared/to"), Kind: KindExactDigest},
+	}
+	partitions := []Partition{
+		{PartitionID: id("partition/shared-a/match"), BindingID: bindingID("shared-a"), Polarity: PolarityMatch, ExpectedStage: "stage-shared-a", ExpectedReason: "matched"},
+		{PartitionID: id("partition/shared-a/mismatch"), BindingID: bindingID("shared-a"), Polarity: PolarityMismatch, ExpectedStage: "stage-shared-a", ExpectedReason: "mismatched"},
+		{PartitionID: id("partition/shared-b/match"), BindingID: bindingID("shared-b"), Polarity: PolarityMatch, ExpectedStage: "stage-shared-b", ExpectedReason: "matched"},
+		{PartitionID: id("partition/shared-b/mismatch"), BindingID: bindingID("shared-b"), Polarity: PolarityMismatch, ExpectedStage: "stage-shared-b", ExpectedReason: "mismatched"},
+	}
+	return Input{SchemaVersion: SchemaVersion, ContractID: id("contract/shared-endpoint"), SnapshotDigest: strings.Repeat("b", 64), RequiredBindings: bindings, Partitions: partitions}
 }
 
 func bindingID(name string) string { return id("binding/" + name) }
