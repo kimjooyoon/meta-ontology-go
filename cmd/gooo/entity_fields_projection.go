@@ -205,16 +205,12 @@ func projectionSemanticFields(node semantic.Node) ([]generator.Field, error) {
 }
 
 func projectionBidirField(field bidir.Field) (generator.Field, error) {
-	typeRefID := field.TypeRef.ID
-	if typeRefID == "" {
-		typeRefID = semantic.ID(field.TypeRefUse.ResolvedID)
-	}
-	if typeRefID == "" {
-		return generator.Field{}, errors.New("field has no resolved TypeRef.ID")
+	if field.TypeRef.ID == "" {
+		return generator.Field{}, errors.New("GOOO-EF-V1-INCOMPLETE-FIELD: field has no authoritative TypeRef.ID")
 	}
 	return generator.Field{
 		ID: string(field.ID), Parent: string(field.Parent), Name: field.Name, Aliases: append([]string(nil), field.Aliases...),
-		TypeRefID: string(typeRefID), Presence: string(field.Presence), Cardinality: string(field.Cardinality), Origin: string(field.Origin),
+		TypeRefID: string(field.TypeRef.ID), Presence: string(field.Presence), Cardinality: string(field.Cardinality), Origin: string(field.Origin),
 		Source: bidirGeneratorSpan(field.Span), IDSpan: bidirGeneratorSpan(field.IDSpan), NameSpan: bidirGeneratorSpan(field.NameSpan),
 		TypeRefSpan: bidirGeneratorSpan(field.TypeRefSpan), PresenceSpan: bidirGeneratorSpan(field.PresenceSpan),
 		CardinalitySpan: bidirGeneratorSpan(field.CardinalitySpan), NameSource: bidirGeneratorSpan(field.NameSpan),
