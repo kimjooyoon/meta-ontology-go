@@ -198,7 +198,9 @@ type Location struct {
 }
 
 type DocumentSymbol struct {
-	ID             string     `json:"id,omitempty"`
+	// ID is an internal correspondence key. DocumentSymbol has no standard
+	// wire identity field, so it is projected through Detail instead.
+	ID             string     `json:"-"`
 	Name           string     `json:"name"`
 	Detail         string     `json:"detail,omitempty"`
 	Kind           SymbolKind `json:"kind"`
@@ -207,7 +209,9 @@ type DocumentSymbol struct {
 }
 
 type WorkspaceSymbol struct {
-	ID       string     `json:"id,omitempty"`
+	// ID is an internal correspondence key. WorkspaceSymbol has no standard
+	// wire identity field, so it is projected through Detail instead.
+	ID       string     `json:"-"`
 	Name     string     `json:"name"`
 	Detail   string     `json:"detail,omitempty"`
 	Kind     SymbolKind `json:"kind"`

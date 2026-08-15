@@ -1,7 +1,9 @@
 package query
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -9,6 +11,10 @@ const (
 	DefaultDatalogLimit        = 100
 	MaxDatalogLimit            = MaxEnvelopeLimit
 	DefaultDatalogDerivedLimit = 10000
+	DefaultDatalogDepth        = MaxEnvelopeDepth
+	MaxDatalogDepth            = MaxEnvelopeDepth
+	DefaultDatalogWork         = 10000
+	MaxDatalogWork             = 100000
 	MaxDatalogRules            = 128
 	MaxDatalogBodyAtoms        = 32
 )
@@ -66,6 +72,12 @@ type DatalogQuery struct {
 	IncludeDerived    bool
 	Limit             int
 	MaxDerivedFacts   int
+	// MaxDepth bounds recursive rule derivation depth. Zero selects the
+	// versioned safe default; it never means unbounded evaluation.
+	MaxDepth int
+	// MaxWork bounds rule-body and pattern candidate inspections. Zero selects
+	// the versioned safe default; it never means unbounded evaluation.
+	MaxWork int
 }
 
 // DatalogOrigin identifies the authority boundary of a returned fact.
@@ -93,22 +105,25 @@ func (origin DatalogOrigin) String() string {
 // DatalogFact is a read-only fact in the selected query universe. Derived
 // facts carry one deterministic support proof; they never enter Graph.
 type DatalogFact struct {
+	Namespace string
 	Subject   ID
 	Predicate string
 	Object    ID
 	Origin    DatalogOrigin
 	RuleID    string
+	Depth     int
 	Support   []DatalogFactKey
 }
 
 type DatalogFactKey struct {
+	Namespace string
 	Subject   ID
 	Predicate string
 	Object    ID
 }
 
 func (fact DatalogFact) Key() DatalogFactKey {
-	return DatalogFactKey{fact.Subject, fact.Predicate, fact.Object}
+	return DatalogFactKey{Namespace: fact.Namespace, Subject: fact.Subject, Predicate: fact.Predicate, Object: fact.Object}
 }
 
 // DatalogRow contains one set-semantics binding and the facts that satisfied
@@ -144,16 +159,21 @@ func (graph Graph) EvaluateDatalog(request DatalogQuery) (DatalogResult, error) 
 	declared := make([]DatalogFact, 0, len(graph.DeterministicFacts()))
 	for _, fact := range graph.DeterministicFacts() {
 		declared = append(declared, DatalogFact{
-			Subject: fact.Subject, Predicate: string(fact.Predicate), Object: fact.Object,
-			Origin: DatalogDeclared,
+			Namespace: graphScope(graph),
+			Subject:   fact.Subject, Predicate: string(fact.Predicate), Object: fact.Object,
+			Origin: DatalogDeclared, Depth: 0,
 		})
 	}
 	sortDatalogFacts(declared)
 	var derived []DatalogFact
+	workBudget := newDatalogWorkBudget(normalized.MaxWork)
 	if normalized.IncludeDerived {
-		derived, err = deriveDatalog(declared, rules, normalized.MaxDerivedFacts)
+		derived, err = deriveDatalog(
+			declared, rules, normalized.MaxDerivedFacts,
+			normalized.MaxDepth, workBudget,
+		)
 		if err != nil {
-			return DatalogResult{}, err
+			return DatalogResult{Complete: false}, err
 		}
 	}
 
@@ -164,19 +184,66 @@ func (graph Graph) EvaluateDatalog(request DatalogQuery) (DatalogResult, error) 
 	if normalized.IncludeCandidates {
 		for _, fact := range graph.CandidateFacts() {
 			universe = append(universe, DatalogFact{
-				Subject: fact.Subject, Predicate: string(fact.Predicate), Object: fact.Object,
-				Origin: DatalogCandidate,
+				Namespace: graphScope(graph),
+				Subject:   fact.Subject, Predicate: string(fact.Predicate), Object: fact.Object,
+				Origin: DatalogCandidate, Depth: 0,
 			})
 		}
 	}
 	sortDatalogFacts(universe)
-	rows := matchDatalogPatterns(normalized.Patterns, universe)
+	rows, err := matchDatalogPatterns(normalized.Patterns, universe, workBudget)
+	if err != nil {
+		return DatalogResult{Complete: false}, err
+	}
 	complete := true
 	if len(rows) > normalized.Limit {
 		rows = rows[:normalized.Limit]
 		complete = false
+		return DatalogResult{Rows: rows, Derived: derived, Complete: false},
+			fmt.Errorf("%w: maximum result rows %d", ErrDatalogBudget, normalized.Limit)
 	}
 	return DatalogResult{Rows: rows, Derived: derived, Complete: complete}, nil
+}
+
+func graphScope(graph Graph) string {
+	if graph.binding == nil {
+		return ""
+	}
+	return graph.binding.namespace
+}
+
+// CanonicalJSON is a stable request representation after defaults and all
+// bounds have been normalized. It is suitable for replay/cache keys.
+func (request DatalogQuery) CanonicalJSON() ([]byte, error) {
+	normalized, _, err := normalizeDatalogQuery(request)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(normalized)
+}
+
+// CanonicalDigest hashes the normalized Datalog request bytes.
+func (request DatalogQuery) CanonicalDigest() (string, error) {
+	canonical, err := request.CanonicalJSON()
+	if err != nil {
+		return "", err
+	}
+	return digestBytes(canonical), nil
+}
+
+// CanonicalJSON returns the deterministic result receipt. It is not a source
+// or authority hash; the graph hash remains owned by the semantic snapshot.
+func (result DatalogResult) CanonicalJSON() ([]byte, error) {
+	return json.Marshal(result)
+}
+
+// CanonicalDigest hashes the stable Datalog result bytes.
+func (result DatalogResult) CanonicalDigest() (string, error) {
+	canonical, err := result.CanonicalJSON()
+	if err != nil {
+		return "", err
+	}
+	return digestBytes(canonical), nil
 }
 
 // QueryDatalog is an API synonym that reads naturally at call sites.

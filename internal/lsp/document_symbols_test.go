@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -43,10 +44,11 @@ func TestDocumentSymbolRequestUsesCanonicalParseResult(t *testing.T) {
 	if response.ID != 2 || len(response.Result) != 2 {
 		t.Fatalf("document symbols response = %#v", response)
 	}
-	if response.Result[0].ID != "urn:first" || response.Result[1].ID != "urn:later" {
-		t.Fatalf("document symbols order = %#v", response.Result)
+	if response.Result[0].ID != "" || !strings.Contains(response.Result[0].Detail, "urn:first") ||
+		response.Result[1].ID != "" || !strings.Contains(response.Result[1].Detail, "urn:later") {
+		t.Fatalf("document symbol wire identity projection = %#v", response.Result)
 	}
-	if response.Result[0].Name != "First" || response.Result[0].Detail != "entity First" ||
+	if response.Result[0].Name != "First" || !strings.HasPrefix(response.Result[0].Detail, "entity First") ||
 		response.Result[0].Kind != SymbolClass || response.Result[0].SelectionRange.Start.Line != 1 {
 		t.Fatalf("document symbol projection = %#v", response.Result[0])
 	}
@@ -105,7 +107,14 @@ func TestDocumentSymbolInvalidAndMissingDocuments(t *testing.T) {
 		t.Fatalf("invalid params response code = %d", responseCode(t, messages[0]))
 	}
 	assertRawResult(t, messages[1], 2, "null")
-	assertRawResult(t, messages[3], 3, "[]")
+	var response struct {
+		ID     int              `json:"id"`
+		Result []DocumentSymbol `json:"result"`
+	}
+	decodeJSON(t, messages[3], &response)
+	if response.ID != 3 || len(response.Result) != 1 || response.Result[0].Name != "p" {
+		t.Fatalf("malformed document symbols = %#v", response)
+	}
 }
 
 func assertRawResult(t *testing.T, payload []byte, id int, want string) {

@@ -23,6 +23,7 @@ func (g Graph) Validate() error {
 
 func validateNodes(g Graph, issues *ValidationErrors) {
 	nameOwners := make(map[NameRef]ID, len(g.names))
+	fieldOwners := make(map[ID]ID)
 	nodeIDs := make([]ID, 0, len(g.nodes))
 	for id := range g.nodes {
 		nodeIDs = append(nodeIDs, id)
@@ -43,6 +44,12 @@ func validateNodes(g Graph, issues *ValidationErrors) {
 				issues.add("name-collision", fmt.Sprintf("%s/%s belongs to %s and %s", ref.Namespace, ref.Name, owner, normalized.ID), owner, normalized.ID)
 			}
 			nameOwners[ref] = normalized.ID
+		}
+		for _, field := range normalized.Fields {
+			if owner, exists := fieldOwners[field.ID]; exists && owner != normalized.ID {
+				issues.add("field-id-collision", fmt.Sprintf("field %s belongs to %s and %s", field.ID, owner, normalized.ID), owner, normalized.ID)
+			}
+			fieldOwners[field.ID] = normalized.ID
 		}
 	}
 	validateNameIndex(g, nameOwners, issues)

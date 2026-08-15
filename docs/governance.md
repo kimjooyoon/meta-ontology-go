@@ -31,42 +31,56 @@ The semantic IR is an interchange representation, not a second business SSOT.
 Its normalized form makes projections comparable; it does not authorize a tool to
 invent domain meaning. Provenance is evidence, not a write-back channel.
 
-## 2. Bootstrap history and trust boundary
+The design-only [deterministic metrics RFC](metrics-rfc.md) defines how repeated
+reasoning may become exact predicates. It does not activate new blocking checks;
+the contracts in this document and the live CI policy remain authoritative.
 
-The long-form bootstrap history and experiments live in the
-[self-hosting research note](research/self-hosting.md), owned by the
-self-hosting-bootstrap workstream. The note is research input, not a policy
-override. This contract defines the authority transition that the research must
-respect as `meta-ontology-go` incrementally re-expresses its own compiler and
-verifier in `.gooo`.
+## 2. CI-only branch and promotion contract
 
-The proposed stages are:
+The checked-in governance mode is `ci_only`. Review roles, approval actors, and
+last-push approval fields are not CI proof inputs. Review roles remain useful for
+scope and evidence review, but protected-branch promotion is decided only by the
+deterministic proof and branch-protection predicates below.
 
-1. **Seed:** a handwritten Go kernel parses, lowers, projects, and verifies a
-   small `.gooo` fixture.
-2. **Semantic mirror:** `.gooo` declares the compiler ontology, contracts, and
-   verifier vocabulary while the Go kernel remains the execution authority.
-3. **Structural self-host:** `.gooo` drives generated structure for compiler
-   components; only irreducible logic remains in handwritten slots.
-4. **Shadow verifier:** a `.gooo`-described verifier runs beside the trusted seed
-   verifier and produces candidate evidence.
-5. **Promotion:** CI accepts the self-hosted verifier only after independent
-   comparison and reproducible bootstrap gates pass; the previous verifier stays
-   available for rollback.
+Work branches use `agent/* -> dev`. No intermediary branch is a route, ownership
+boundary, or promotion source. The only promotion
+route is a same-repository pull request with `base=main` and `head=dev`.
 
-The trust boundary is explicit:
+The six canonical proof jobs are:
 
 ```text
-trusted seed verifier ──compares──> candidate .gooo verifier
-        │                                  │
-        ├── rollback authority             └── evidence only until promotion
-        └── protected CI policy
+gofmt | go vet | go test | go test -race | Semantic conformance | CI policy
 ```
 
-Self-hosting is therefore not an SSOT change by itself. `.gooo` owns declared
-intent and IDs at every stage; IR is the comparison form; generated Go is derived;
-and verifier output is evidence until CI promotes the candidate. A candidate must
-not decide its own promotion, weaken its own checks, or delete the seed evidence.
+Protected `dev` requires those six contexts plus `CI guardian shadow`.
+Protected `main` requires those six contexts plus `CI guardian`. The Guardian
+context is app-bound and route-specific, so both branches require exactly seven
+contexts.
+
+An exact promotion proof requires all of the following:
+
+1. The PR is open, non-draft, unmerged, mergeable, clean, and binds the same
+   repository's `dev` head to the `main` base.
+2. The live `dev` and `main` refs are the recorded head and base both before and
+   after inspection. The topology is `ahead`, with `ahead > 0`, `behind = 0`, and
+   `merge_base_sha` equal to the live main SHA.
+3. The six canonical jobs, their current immutable artifact, Guardian evidence,
+   and exact seven-context protection snapshots all pass.
+4. The proof contains a digest-bound `promotion_authorization` with
+   `operation=fast_forward`, `source=dev`, `target=main`, the exact base/head
+   SHAs, and `proof_digest` equal to the proof bundle digest.
+
+The authorization is pure, non-mutating evidence. It is `PASS` only when every
+predicate holds and is otherwise `FAIL_CLOSED` with a reason code. The proof
+producer does not write refs or branch protection. Immediately before a real
+promotion, the gate must reread the exact ref and protection tuple; only an
+ordinary compare-and-swap/fast-forward update of `main` may follow. Force-push
+and force-update operations are never permitted.
+
+The bootstrap fixtures and [bootstrap evidence bridge](bootstrap-evidence.md)
+record non-promoting evidence shapes only. Self-hosting and a self-hosted
+verifier are not current supported authorities, and this contract does not rely
+on a separate research note.
 
 ## 3. Provenance policy
 
@@ -161,8 +175,9 @@ text stable. Generated output is not a place to fix a source-model problem.
   and supplies tests or runnable examples.
 - **Guardian:** verifies semantic scope, stable IDs, provenance, BX laws, marker
   integrity, and evidence freshness; they do not implement the feature.
-- **Approver:** makes the final acceptance decision after the Guardian's review
-  and required CI checks.
+- **Approver:** records review acceptance after the Guardian's review and
+  required CI checks. This review role does not authorize a protected
+  branch promotion; the CI-only contract in section 2 does.
 - **Docs/example Builder:** owns only `docs/**`, `examples/**`, and the root
   governance Markdown files for documentation work. Core package source belongs
   to its implementing Builder.
@@ -184,49 +199,30 @@ The PR body should state:
 - checks run and any known environmental blocker;
 - unsupported features deliberately not claimed.
 
-The integration GitHub Actions workflow in
-[`.github/workflows/ci.yml`](../.github/workflows/ci.yml) currently runs:
+The current workflow runs these canonical jobs:
 
 ```text
-format: gofmt -l .
-vet:    go vet ./...
-test:   go test ./...
-race:   go test -race ./...
-semantic: ./scripts/semantic-conformance.sh
-policy: go run ./scripts/verify
+format:   gofmt -l .
+vet:      go vet ./...
+test:     go test ./...
+race:     go test -race ./...
+semantic: go run ./cmd/gooo check examples/billing/main.gooo
+policy:   go run ./scripts/verify
 ```
 
-The semantic script intentionally has a deferred path that exits successfully
-when the baseline has no `gooo check` command; that status is not evidence that a
-semantic CLI or self-hosted verifier is supported. When the command is present,
-the script runs the CLI check, semantic/generated tests, and generated-freshness
-checks. The policy job enforces changed-path ownership, Go size caps, and the
-integration pull-request target. Static analysis, cache conformance, LSP
-behavior, and durable provenance publishing are not current CI gates.
+Evidence, proof, and failure-report jobs consume those six results. The semantic
+check is a runnable billing-fixture check. Static analysis, LSP behavior, cache
+conformance, generated-output snapshots, and automatic durable provenance
+publishing are not current guarantees.
 
-The workflow is a seed/candidate safety baseline. It is not yet a self-hosted
-verifier promotion gate.
+The six jobs remain the proof core; protected-branch contexts add exactly one
+route-specific app-bound Guardian context: `CI guardian shadow` on `dev` and
+`CI guardian` on `main`. Review and approval data do not replace these contexts.
 
-### Verifier promotion plan
-
-The existing jobs are the baseline gate, not a self-hosting promotion gate. A
-future protected workflow should promote in separate, auditable steps:
-
-- **shadow:** run the candidate verifier without allowing it to determine status;
-- **compare:** compare seed and candidate decisions, semantic fingerprints,
-  generated output, locality, and provenance manifests on pinned fixtures;
-- **bootstrap:** rebuild the compiler from the pinned source and verify that the
-  next result is equivalent to the prior result;
-- **promote:** require an independent Guardian/Approver decision, record the
-  source/tool/verifier digests, and retain the previous verifier for rollback.
-
-Until those steps are implemented in protected CI, candidate verifier results are
-append-only research evidence and cannot change the required gate.
-
-The field-level comparison envelope and non-success fixture states are defined
-in the [bootstrap evidence bridge](bootstrap-evidence.md). A fixture with
-`deferred`, `not-run`, or `promotion_eligible: false` is evidence of an
-unimplemented or non-promotable stage, never evidence of success.
+The [bootstrap evidence bridge](bootstrap-evidence.md) defines non-promoting
+fixture states such as `deferred`, `not-run`, and
+`promotion_eligible: false`. Those states never authorize a branch promotion or
+make a self-hosted verifier a supported authority.
 
 ## 8. Review line caps
 

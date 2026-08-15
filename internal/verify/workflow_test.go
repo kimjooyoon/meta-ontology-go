@@ -13,9 +13,8 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(workflow)
-	guard := "if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/agent/')"
-	if strings.Count(text, guard) != 5 {
-		t.Fatalf("expected five full-check push guards, got %d", strings.Count(text, guard))
+	if strings.Contains(text, "'agent/**'") || strings.Contains(text, "agent push cap-only") {
+		t.Fatal("CI workflow retained a non-protected agent push trigger")
 	}
 	for _, condition := range []string{"if: github.event_name == 'pull_request'", "if: github.event_name == 'push'"} {
 		if !strings.Contains(text, condition) {
@@ -43,21 +42,172 @@ func TestCIWorkflowSeparatesPushCapsFromPullRequestChecks(t *testing.T) {
 	if strings.Contains(text, "name: \"gofmt [") || strings.Contains(text, "name: \"CI policy [") {
 		t.Fatal("required check names were changed instead of using run metadata")
 	}
+	assertWorkflowMarkers(t, text)
+}
+
+func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci-guardian.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(workflow)
 	for _, marker := range []string{
-		"run-name: \"CI [${{",
+		"name: CI guardian", "pull_request_target:", "- dev\n      - main",
+		"environment: ${{ github.base_ref == 'main' && 'guardian-observer'", "actions: read", "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1", "permission-administration: read", "GUARDIAN_APP_PRIVATE_KEY", "getBranchProtection", "observer_environment",
+		"actions/checkout@11d5960a326750d5838078e36cf38b85af677262", "ref: ${{ github.workflow_sha }}",
+		"persist-credentials: false", "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b", "listFiles",
+		"github.rest.pulls.get", "github.workflow_ref", "github.workflow_sha", "github.sha",
+		"actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", "head_binding_status", "ci-guardian.json",
+		"contents: read", "pull-requests: read",
+	} {
+		if !strings.Contains(text, marker) {
+			t.Fatalf("guardian workflow lost marker %q", marker)
+		}
+	}
+	for _, forbidden := range []string{
+		"github.event.pull_request.head.sha", "refs/pull/", "BRANCH_PROTECTION_TOKEN", "contents: write",
+		"pull-requests: write", "agent/ci-workflow", "ref: ${{ github.event.pull_request.base.sha }}", "\n        run:", "\n    pull_request:",
+	} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("guardian workflow contains unsafe marker %q", forbidden)
+		}
+	}
+}
+
+func TestCIGuardianAppTokenUsesClientIDAndOneMintSecret(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci-guardian.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(workflow)
+	if strings.Contains(text, "app-id:") || !strings.Contains(text, "client-id: ${{ env.GUARDIAN_APP_CLIENT_ID }}") {
+		t.Fatal("Guardian App token action is not using the pinned client-id input")
+	}
+	mintStart := strings.Index(text, "id: guardian-app-token")
+	if mintStart < 0 {
+		t.Fatal("Guardian App mint step is missing")
+	}
+	mintEnd := strings.Index(text[mintStart:], "- name: Inspect changed paths from default authority")
+	if mintEnd < 0 {
+		t.Fatal("Guardian App mint step has no bounded end")
+	}
+	mintStep := text[mintStart : mintStart+mintEnd]
+	if strings.Count(text, "${{ secrets.") != 1 || strings.Count(mintStep, "${{ secrets.") != 1 || !strings.Contains(mintStep, "GUARDIAN_APP_PRIVATE_KEY: ${{ secrets.GUARDIAN_APP_PRIVATE_KEY }}") {
+		t.Fatal("Guardian mint step does not use exactly GUARDIAN_APP_PRIVATE_KEY")
+	}
+}
+
+func assertWorkflowMarkers(t *testing.T, text string) {
+	t.Helper()
+	for _, marker := range []string{
+		"run-name: \"CI [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]\"",
 		"types: [opened, synchronize, reopened, ready_for_review]",
-		"startsWith(github.ref, 'refs/heads/agent/') && 'agent push cap-only'",
-		"|| 'push full'",
 		"Record CI event source",
 		"source=\"PR authoritative\"",
-		"source=\"agent push cap-only\"",
 		"source=\"push full\"",
 		"GITHUB_STEP_SUMMARY",
+		"ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}",
+		"Verify PR checkout identity",
+		"EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",
+		"EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}",
+		"actual_head=\"$(git rev-parse HEAD)\"",
+		"git rev-parse --verify \"$EXPECTED_BASE^{commit}\" >/dev/null",
 		"GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}",
-		"GOOO_SCOPE_TO: ${{ github.sha }}",
+		"GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}",
+		"GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",
+		"needs: [format, vet, test, race, semantic]",
+		"if: ${{ always() }}",
+		"actions/github-script@v7",
+		"listJobsForWorkflowRun",
+		"ci-jobs.json",
+		"ci-final-jobs.json",
+		"ci-evidence.json",
+		"Capture CLI domain evidence",
+		"go run ./cmd/gooo check examples/billing/main.gooo",
+		"go run ./cmd/gooo graph-dump examples/billing/main.gooo",
+		"ci-domain-evidence.json",
+		"domain_evidence",
+		"CI_SLOT_PRESERVATION: \"true\"",
+		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
+		"actions/upload-artifact@v4",
+		"administration: read must not be added here",
+		"read_status: 'unavailable'",
+		"event_ref: context.ref",
+		"checkout_ref: headSha",
+		"trusted_guardian_required",
+		"branch_protection",
+		"digest_sha256",
+		"ci-proof.json",
+		"provenance-receipt.jsonl",
+		"if-no-files-found: error",
+		"scripts/ci-proof/artifacts_test.js",
+		"listWorkflowArtifacts",
+		"selectCurrentEvidenceArtifact",
+		"normalizeBaseRef",
+		"./scripts/ci-proof/refs",
 	} {
 		if !strings.Contains(text, marker) {
 			t.Fatalf("workflow lost event-source evidence marker %q", marker)
 		}
+	}
+	assertWorkflowIdentityMarkers(t, text)
+	if strings.Contains(text, "BRANCH_PROTECTION_TOKEN") || strings.Contains(text, "getBranchProtection") {
+		t.Fatal("pull_request CI must not read branch protection or receive its observer credential")
+	}
+}
+
+func assertWorkflowIdentityMarkers(t *testing.T, text string) {
+	t.Helper()
+	for _, forbidden := range []string{"updateBranchProtection", "replaceBranchProtection", "PUT /repos/", "repos.updateBranchProtection"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("workflow contains forbidden protection write %q", forbidden)
+		}
+	}
+	if strings.Contains(text, "context.ref_name") {
+		t.Fatal("workflow uses the unavailable github-script context.ref_name field")
+	}
+	for _, marker := range []string{"- dev", "normalizeOwnerBranch", "ci-base-ref.txt", "ci-owner-branch.txt"} {
+		if !strings.Contains(text, marker) {
+			t.Fatalf("workflow lost protected-push identity marker %q", marker)
+		}
+	}
+	for _, forbidden := range []string{"pulls.listReviews", "approval_api_unavailable", "independent_approval_missing_or_overlapping", "approvals_status"} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("workflow still treats human approval as CI proof authority: %q", forbidden)
+		}
+	}
+	if strings.Contains(text, "\nadministration: read\n") {
+		t.Fatal("workflow declares unsupported administration permission key")
+	}
+}
+
+func TestCIWorkflowUsesImmutableCheckoutForEveryJob(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	marker := "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
+	if strings.Count(string(workflow), marker) != 8 {
+		t.Fatalf("expected eight immutable checkout refs, got %d", strings.Count(string(workflow), marker))
+	}
+}
+
+func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(workflow)
+	if !strings.Contains(text, "pull_request:\n    branches:\n      - dev\n      - main") {
+		t.Fatal("pull-request trigger does not include the dev/main steady-state targets")
+	}
+	if strings.Contains(text, "'agent/**'") {
+		t.Fatal("push trigger includes an unprotected agent branch")
+	}
+	if !strings.Contains(text, "  policy:\n    name: CI policy") {
+		t.Fatal("pull requests do not retain the unconditionally scheduled policy job")
+	}
+	if strings.Count(text, "    name: gofmt\n") != 1 || strings.Count(text, "    name: go vet\n") != 1 || strings.Count(text, "    name: go test\n") != 1 || strings.Count(text, "    name: go test -race\n") != 1 || strings.Count(text, "    name: Semantic conformance\n") != 1 || strings.Count(text, "    name: CI policy\n") != 1 {
+		t.Fatal("canonical job names are missing or duplicated")
 	}
 }
