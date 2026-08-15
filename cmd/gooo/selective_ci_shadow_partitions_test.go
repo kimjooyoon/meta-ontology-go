@@ -59,6 +59,13 @@ func TestSelectiveCIShadowBindingAndPlannerPrecedence(t *testing.T) {
 			f.planInput.CPUCapacity = 1
 			f.files["plan_input.json"], _ = plannersci.EncodeJSON(f.planInput)
 		}},
+		{name: "lane registry precedence", stage: "REGISTRY_BINDING", component: "lane", mutate: func(f *shadowFixture) {
+			f.laneInput.RegistryDigest = shadowDigest("wrong-lane-registry")
+			f.laneInput.ActiveLeaseCount = 1
+			f.planInput.CPUCapacity = 1
+			f.proofInput.RegistryDigest = shadowDigest("wrong-proof-registry")
+			f.reencodeAll()
+		}},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -72,6 +79,29 @@ func TestSelectiveCIShadowBindingAndPlannerPrecedence(t *testing.T) {
 				t.Fatalf("fallback exposed selection = %#v", output)
 			}
 		})
+	}
+}
+
+func TestSelectiveCIShadowLaneRegistryBindingFailsClosedWithoutExecution(t *testing.T) {
+	fixture := newShadowFixture(t)
+	fixture.laneInput.RegistryDigest = shadowDigest("wrong-lane-registry")
+	fixture.reencodeLane()
+	var stdout, stderr bytes.Buffer
+	if code := runSelectiveCI(fixture.args(), fixture.reader(), &stdout, &stderr); code != exitOK {
+		t.Fatalf("shadow code = %d, stderr = %q", code, stderr.String())
+	}
+	var output selectiveCIShadowOutput
+	if err := json.Unmarshal(bytes.TrimSpace(stdout.Bytes()), &output); err != nil {
+		t.Fatalf("decode shadow output: %v", err)
+	}
+	if output.Status != "FULL_SUITE_FALLBACK" || output.Stage != "REGISTRY_BINDING" || output.Component != "lane" || output.Reason != "LANE_REGISTRY_DIGEST_MISMATCH" {
+		t.Fatalf("lane registry fallback = %#v", output)
+	}
+	if output.ExecutionAuthorized || !output.ShadowOnly || len(output.SelectedCommands) != 0 || len(output.SelectedGuards) != 0 || len(output.SelectedWorkIDs) != 0 || len(output.ResourceReceipts) != 0 {
+		t.Fatalf("lane registry fallback exposed execution = %#v", output)
+	}
+	if bytes.Contains(stdout.Bytes(), []byte("gooo-shadow-sentinel")) || bytes.Contains(stdout.Bytes(), []byte("never-run")) {
+		t.Fatal("lane registry fallback exposed or ran sentinel argv")
 	}
 }
 
