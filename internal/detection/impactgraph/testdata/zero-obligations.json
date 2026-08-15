@@ -1,1 +1,1 @@
-{"schema_version":"impactgraph/v1","nodes":[{"id":"change:billing/empty","kind":"change"}],"edges":[]}
+{"version":"gooo/impact-graph/v1","snapshot_digest":"0000000000000000000000000000000000000000000000000000000000000000","registry_digest":"1111111111111111111111111111111111111111111111111111111111111111","policy_digest":"2222222222222222222222222222222222222222222222222222222222222222","nodes":[{"id":"change:billing/empty","kind":"SOURCE"}],"edges":[]}

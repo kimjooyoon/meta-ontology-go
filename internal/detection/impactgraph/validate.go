@@ -68,8 +68,25 @@ func (graph Graph) Validate() error {
 
 // Normalized returns a detached graph with canonical ordering.
 func (graph Graph) Normalized() (Graph, error) {
+	if err := validateGraphHeader(graph); err != nil {
+		return Graph{}, err
+	}
+	nodes, byID, err := normalizeNodes(graph.Nodes)
+	if err != nil {
+		return Graph{}, err
+	}
+	edges, err := normalizeEdges(graph.Edges, byID)
+	if err != nil {
+		return Graph{}, err
+	}
+	return Graph{Version: graph.Version, SnapshotDigest: graph.SnapshotDigest,
+		RegistryDigest: graph.RegistryDigest, PolicyDigest: graph.PolicyDigest,
+		Nodes: nodes, Edges: edges}, nil
+}
+
+func validateGraphHeader(graph Graph) error {
 	if graph.Version != SchemaVersion {
-		return Graph{}, fmt.Errorf("%w: unsupported schema version %q", ErrInvalidGraph, graph.Version)
+		return fmt.Errorf("%w: unsupported schema version %q", ErrInvalidGraph, graph.Version)
 	}
 	for _, field := range []struct {
 		name  string
@@ -80,24 +97,27 @@ func (graph Graph) Normalized() (Graph, error) {
 		{name: "policy digest", value: graph.PolicyDigest},
 	} {
 		if !validDigest(field.value) {
-			return Graph{}, fmt.Errorf("%w: %s must be lowercase SHA-256 hex", ErrInvalidGraph, field.name)
+			return fmt.Errorf("%w: %s must be lowercase SHA-256 hex", ErrInvalidGraph, field.name)
 		}
 	}
 	if len(graph.Nodes) == 0 {
-		return Graph{}, fmt.Errorf("%w: no nodes", ErrInvalidGraph)
+		return fmt.Errorf("%w: no nodes", ErrInvalidGraph)
 	}
+	return nil
+}
 
-	nodes := make([]Node, len(graph.Nodes))
-	byID := make(map[string]NodeKind, len(graph.Nodes))
-	for index, node := range graph.Nodes {
+func normalizeNodes(rawNodes []Node) ([]Node, map[string]NodeKind, error) {
+	nodes := make([]Node, len(rawNodes))
+	byID := make(map[string]NodeKind, len(rawNodes))
+	for index, node := range rawNodes {
 		if err := validateID(node.ID); err != nil {
-			return Graph{}, fmt.Errorf("%w at node %d: %v", ErrInvalidNode, index, err)
+			return nil, nil, fmt.Errorf("%w at node %d: %v", ErrInvalidNode, index, err)
 		}
 		if !validNodeKind(node.Kind) {
-			return Graph{}, fmt.Errorf("%w at node %d: unknown kind %q", ErrInvalidNode, index, node.Kind)
+			return nil, nil, fmt.Errorf("%w at node %d: unknown kind %q", ErrInvalidNode, index, node.Kind)
 		}
 		if _, exists := byID[node.ID]; exists {
-			return Graph{}, fmt.Errorf("%w: %q", ErrDuplicateNode, node.ID)
+			return nil, nil, fmt.Errorf("%w: %q", ErrDuplicateNode, node.ID)
 		}
 		byID[node.ID] = node.Kind
 		nodes[index] = node
@@ -108,25 +128,28 @@ func (graph Graph) Normalized() (Graph, error) {
 		}
 		return nodes[i].Kind < nodes[j].Kind
 	})
+	return nodes, byID, nil
+}
 
-	edges := make([]Edge, len(graph.Edges))
-	seen := make(map[string]struct{}, len(graph.Edges))
-	for index, raw := range graph.Edges {
+func normalizeEdges(rawEdges []Edge, byID map[string]NodeKind) ([]Edge, error) {
+	edges := make([]Edge, len(rawEdges))
+	seen := make(map[string]struct{}, len(rawEdges))
+	for index, raw := range rawEdges {
 		edge, err := raw.normalized()
 		if err != nil {
-			return Graph{}, fmt.Errorf("%w at edge %d: %v", ErrInvalidEdge, index, err)
+			return nil, fmt.Errorf("%w at edge %d: %v", ErrInvalidEdge, index, err)
 		}
 		fromKind, fromOK := byID[edge.From]
 		toKind, toOK := byID[edge.To]
 		if !fromOK || !toOK {
-			return Graph{}, fmt.Errorf("%w at edge %d: endpoint is not registered", ErrInvalidEdge, index)
+			return nil, fmt.Errorf("%w at edge %d: endpoint is not registered", ErrInvalidEdge, index)
 		}
 		if !IsLegalEdge(edge.Kind, fromKind, toKind) {
-			return Graph{}, fmt.Errorf("%w at edge %d: %s %s->%s", ErrInvalidEdge, index, edge.Kind, fromKind, toKind)
+			return nil, fmt.Errorf("%w at edge %d: %s %s->%s", ErrInvalidEdge, index, edge.Kind, fromKind, toKind)
 		}
 		key := edge.From + "\x00" + string(edge.Kind) + "\x00" + edge.To
 		if _, exists := seen[key]; exists {
-			return Graph{}, fmt.Errorf("%w: %s", ErrDuplicateEdge, key)
+			return nil, fmt.Errorf("%w: %s", ErrDuplicateEdge, key)
 		}
 		seen[key] = struct{}{}
 		edges[index] = edge
@@ -140,9 +163,7 @@ func (graph Graph) Normalized() (Graph, error) {
 		}
 		return edges[i].Kind < edges[j].Kind
 	})
-	return Graph{Version: graph.Version, SnapshotDigest: graph.SnapshotDigest,
-		RegistryDigest: graph.RegistryDigest, PolicyDigest: graph.PolicyDigest,
-		Nodes: nodes, Edges: edges}, nil
+	return edges, nil
 }
 
 func (edge Edge) normalized() (Edge, error) {

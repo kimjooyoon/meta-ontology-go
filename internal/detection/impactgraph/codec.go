@@ -11,6 +11,9 @@ import (
 
 // DecodeJSON decodes exactly one strict graph document.
 func DecodeJSON(data []byte) (Graph, error) {
+	if err := rejectDuplicateJSONKeys(data); err != nil {
+		return Graph{}, fmt.Errorf("%w: %v", ErrInvalidDocument, err)
+	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	var raw *Graph
@@ -28,6 +31,69 @@ func DecodeJSON(data []byte) (Graph, error) {
 		return Graph{}, fmt.Errorf("%w: trailing data: %v", ErrInvalidDocument, err)
 	}
 	return raw.Normalized()
+}
+
+func rejectDuplicateJSONKeys(data []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if err := scanJSONValue(decoder); err != nil {
+		return err
+	}
+	return nil
+}
+
+func scanJSONValue(decoder *json.Decoder) error {
+	token, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	delim, isDelimiter := token.(json.Delim)
+	if !isDelimiter {
+		return nil
+	}
+	switch delim {
+	case '{':
+		seen := make(map[string]struct{})
+		for decoder.More() {
+			key, err := decoder.Token()
+			if err != nil {
+				return err
+			}
+			name, ok := key.(string)
+			if !ok {
+				return fmt.Errorf("object key is not a string")
+			}
+			if _, duplicate := seen[name]; duplicate {
+				return fmt.Errorf("duplicate object field %q", name)
+			}
+			seen[name] = struct{}{}
+			if err := scanJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+		end, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+		if end != json.Delim('}') {
+			return fmt.Errorf("object did not terminate")
+		}
+	case '[':
+		for decoder.More() {
+			if err := scanJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+		end, err := decoder.Token()
+		if err != nil {
+			return err
+		}
+		if end != json.Delim(']') {
+			return fmt.Errorf("array did not terminate")
+		}
+	default:
+		return fmt.Errorf("unexpected JSON delimiter %q", delim)
+	}
+	return nil
 }
 
 // Decode is the strict JSON graph decoder.

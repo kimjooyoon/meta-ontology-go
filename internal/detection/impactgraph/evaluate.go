@@ -17,7 +17,7 @@ func (graph Graph) Evaluate(changedIDs, executedObligationIDs []string) Evaluati
 	if code != FailureCodeNone {
 		return unknownEvaluation(code)
 	}
-	executed, code := inputIDs(executedObligationIDs, byID, true)
+	executed, code := executedIDs(executedObligationIDs, byID)
 	if code != FailureCodeNone {
 		return unknownEvaluation(code)
 	}
@@ -89,6 +89,26 @@ func inputIDs(ids []string, byID map[string]NodeKind, obligationsOnly bool) ([]s
 				return nil, FailureCodeAmbiguousExecutedInput
 			}
 			return nil, FailureCodeAmbiguousChangedInput
+		}
+		seen[id] = struct{}{}
+		result = append(result, id)
+	}
+	sort.Strings(result)
+	return result, FailureCodeNone
+}
+
+func executedIDs(ids []string, byID map[string]NodeKind) ([]string, string) {
+	seen := make(map[string]struct{}, len(ids))
+	result := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if err := validateID(id); err != nil {
+			return nil, FailureCodeUnknownExecutedObligation
+		}
+		if kind, registered := byID[id]; registered && kind != NodeKindObligation {
+			return nil, FailureCodeUnknownExecutedObligation
+		}
+		if _, duplicate := seen[id]; duplicate {
+			return nil, FailureCodeAmbiguousExecutedInput
 		}
 		seen[id] = struct{}{}
 		result = append(result, id)

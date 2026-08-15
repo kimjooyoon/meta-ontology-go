@@ -2,7 +2,6 @@ package impactgraph_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -11,8 +10,6 @@ import (
 
 	impactgraph "github.com/kimjooyoon/meta-ontology-go/internal/detection/impactgraph"
 )
-
-const fixtureSchemaPlaceholder = `"schema_version":"impactgraph/v1"`
 
 type expectedResult struct {
 	decision            string
@@ -120,6 +117,7 @@ func TestDecodeRejectsMalformedGraphs(t *testing.T) {
 		"duplicate-node.json",
 		"duplicate-edge.json",
 		"illegal-endpoint-kinds.json",
+		"duplicate-json-field.json",
 		"unknown-json-field.json",
 		"trailing-json.json",
 	} {
@@ -135,26 +133,14 @@ func TestCanonicalAndDigestReplayIgnoreInsertionOrder(t *testing.T) {
 	first := decodeFixture(t, "positive-3of3.json")
 	second := decodeFixture(t, "positive-3of3-reordered.json")
 
-	firstCanonical, err := first.Canonical()
-	if err != nil {
-		t.Fatalf("first Canonical: %v", err)
-	}
-	secondCanonical, err := second.Canonical()
-	if err != nil {
-		t.Fatalf("second Canonical: %v", err)
-	}
+	firstCanonical := []byte(first.Canonical())
+	secondCanonical := []byte(second.Canonical())
 	if !bytes.Equal(firstCanonical, secondCanonical) {
 		t.Fatalf("insertion order changed canonical bytes:\n%s\n---\n%s", firstCanonical, secondCanonical)
 	}
 
-	firstDigest, err := first.Digest()
-	if err != nil {
-		t.Fatalf("first Digest: %v", err)
-	}
-	secondDigest, err := second.Digest()
-	if err != nil {
-		t.Fatalf("second Digest: %v", err)
-	}
+	firstDigest := first.Digest()
+	secondDigest := second.Digest()
 	if firstDigest == "" || firstDigest != secondDigest {
 		t.Fatalf("insertion order changed digest: %q vs %q", firstDigest, secondDigest)
 	}
@@ -175,15 +161,7 @@ func fixtureBytes(t *testing.T, name string) []byte {
 	if err != nil {
 		t.Fatalf("read fixture %q: %v", name, err)
 	}
-	version, err := json.Marshal(impactgraph.SchemaVersion)
-	if err != nil {
-		t.Fatalf("marshal SchemaVersion: %v", err)
-	}
-	replacement := append([]byte(`"schema_version":`), version...)
-	if !bytes.Contains(data, []byte(fixtureSchemaPlaceholder)) {
-		t.Fatalf("fixture %q has no schema placeholder", name)
-	}
-	return bytes.Replace(data, []byte(fixtureSchemaPlaceholder), replacement, 1)
+	return data
 }
 
 func assertResult(t *testing.T, got impactgraph.Result, want expectedResult) {
@@ -198,11 +176,11 @@ func assertResult(t *testing.T, got impactgraph.Result, want expectedResult) {
 	assertStringSet(t, "ExecutedRequired", got.ExecutedRequired, want.executedRequired)
 	assertStringSet(t, "Missed", got.Missed, want.missed)
 	assertStringSet(t, "Extra", got.Extra, want.extra)
-	if got.CoverageNumerator != want.coverageNumerator {
-		t.Errorf("CoverageNumerator = %d, want %d", got.CoverageNumerator, want.coverageNumerator)
+	if got.Numerator != want.coverageNumerator {
+		t.Errorf("Numerator = %d, want %d", got.Numerator, want.coverageNumerator)
 	}
-	if got.CoverageDenominator != want.coverageDenominator {
-		t.Errorf("CoverageDenominator = %d, want %d", got.CoverageDenominator, want.coverageDenominator)
+	if got.Denominator != want.coverageDenominator {
+		t.Errorf("Denominator = %d, want %d", got.Denominator, want.coverageDenominator)
 	}
 }
 
