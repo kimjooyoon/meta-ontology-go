@@ -18,6 +18,7 @@ type AuthorityLabel struct {
 // distinct provenance binding is supplied.
 type ProjectionMetadata struct {
 	SchemaVersion     string
+	Namespace         string
 	GraphHash         string
 	SemanticDigest    string
 	SourceDigest      string

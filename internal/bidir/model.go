@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 // ID is the stable identity of a semantic node.
@@ -46,6 +48,7 @@ type Declaration struct {
 	Kind       Kind
 	ID         ID
 	Name       string
+	Fields     []Field
 	Inputs     []Reference
 	Outputs    []Reference
 	Attributes map[string]string
@@ -67,6 +70,7 @@ type Node struct {
 	Name       string
 	Namespace  string
 	Aliases    []string
+	Fields     []Field
 	Attributes map[string]string
 	Span       SourceSpan
 }
@@ -125,6 +129,7 @@ func StableRelationID(predicate Predicate, source, target ID) ID {
 func (n Node) normalized() Node {
 	n.Aliases = append([]string(nil), n.Aliases...)
 	sort.Strings(n.Aliases)
+	n.Fields = cloneFields(n.Fields)
 	n.Attributes = cloneStringMap(n.Attributes)
 	return n
 }
@@ -170,8 +175,14 @@ func (m *Model) Normalize() {
 	}
 }
 
-// Validate checks identity uniqueness and graph references.
+// Validate checks identity uniqueness, typed fields, and graph references.
 func (m Model) Validate() error {
+	return m.ValidateWithTypes(semantic.DefaultTypeRegistry())
+}
+
+// ValidateWithTypes validates field TypeRefs against an explicit registry.
+// The receiver and all nested slices remain untouched.
+func (m Model) ValidateWithTypes(registry semantic.TypeRegistry) error {
 	seenNodes := make(map[ID]Kind, len(m.Nodes))
 	for _, node := range m.Nodes {
 		if err := node.Span.Validate(); err != nil {
@@ -187,6 +198,9 @@ func (m Model) Validate() error {
 			return fmt.Errorf("duplicate node ID %q (%s and %s)", node.ID, previous, node.Kind)
 		}
 		seenNodes[node.ID] = node.Kind
+	}
+	if err := validateModelFields(m.Nodes, registry); err != nil {
+		return err
 	}
 	seenRelations := make(map[string]struct{}, len(m.Relations))
 	for _, relation := range m.Relations {

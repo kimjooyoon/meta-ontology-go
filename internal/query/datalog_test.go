@@ -207,8 +207,8 @@ func TestDatalogResultLimitIsDeterministicAndMarkedIncomplete(t *testing.T) {
 		Patterns: []Atom{Triple("used", Constant(id("urn:activity:start")), Variable("entity"))},
 		Limit:    2,
 	})
-	if err != nil {
-		t.Fatal(err)
+	if !errors.Is(err, ErrDatalogBudget) {
+		t.Fatalf("row limit error = %v, want ErrDatalogBudget", err)
 	}
 	if result.Complete || len(result.Rows) != 2 {
 		t.Fatalf("bounded result = %#v", result)

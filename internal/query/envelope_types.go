@@ -91,6 +91,7 @@ func (queryError *EnvelopeError) Unwrap() error {
 // query graph or fabricating missing source/provenance evidence.
 type EnvelopeMetadata struct {
 	SchemaVersion     string           `json:"schema_version"`
+	Namespace         string           `json:"namespace,omitempty"`
 	GraphHash         string           `json:"graph_hash"`
 	SemanticDigest    string           `json:"semantic_digest,omitempty"`
 	ProjectionStatus  string           `json:"projection_status"`

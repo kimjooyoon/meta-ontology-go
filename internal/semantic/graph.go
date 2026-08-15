@@ -43,17 +43,29 @@ func (g *Graph) AddNode(node Node) error {
 	if err != nil {
 		return err
 	}
-	g.ensure()
 
 	old, exists := g.nodes[normalized.ID]
 	if exists && (old.Kind != normalized.Kind || old.Namespace != normalized.Namespace) {
 		return fmt.Errorf("%w: %s cannot change kind or namespace", ErrIdentityConflict, normalized.ID)
+	}
+	for _, existing := range g.nodes {
+		if existing.ID == normalized.ID {
+			continue
+		}
+		for _, existingField := range existing.Fields {
+			for _, field := range normalized.Fields {
+				if existingField.ID == field.ID {
+					return fmt.Errorf("%w: field %s cannot move from %s to %s", ErrInvalidField, field.ID, existing.ID, normalized.ID)
+				}
+			}
+		}
 	}
 	for _, ref := range nodeNameRefs(normalized) {
 		if owner, occupied := g.names[ref]; occupied && owner != normalized.ID {
 			return fmt.Errorf("%w: %s/%s is already owned by %s", ErrNameCollision, ref.Namespace, ref.Name, owner)
 		}
 	}
+	g.ensure()
 	if exists {
 		for _, ref := range nodeNameRefs(old) {
 			if owner, occupied := g.names[ref]; occupied && owner == normalized.ID {
@@ -131,5 +143,6 @@ func (g Graph) ResolveName(namespace, name string) (Node, error) {
 
 func copyNode(node Node) Node {
 	node.Aliases = append([]string(nil), node.Aliases...)
+	node.Fields = copyFields(node.Fields)
 	return node
 }

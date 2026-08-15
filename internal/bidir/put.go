@@ -3,6 +3,8 @@ package bidir
 import (
 	"fmt"
 	"sort"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 const (
@@ -37,12 +39,22 @@ func (e *PutError) Unwrap() error {
 // Put writes an updated model into a document while preserving source order
 // for surviving declarations and explicit relations.
 func Put(document Document, updated Model) (Document, error) {
-	source, err := Get(document)
+	return PutWithTypes(document, updated, semantic.DefaultTypeRegistry())
+}
+
+// PutWithTypes writes a typed model back to the parser-neutral carrier. All
+// validation completes before constructing the returned document, preserving
+// the no-write guarantee on every rejection.
+func PutWithTypes(document Document, updated Model, registry semantic.TypeRegistry) (Document, error) {
+	source, err := GetWithTypes(document, registry)
 	if err != nil {
 		return document, putError(PutSourceInvalid, err)
 	}
 	updated = updated.Normalized()
-	if err := updated.Validate(); err != nil {
+	if err := updated.ValidateWithTypes(registry); err != nil {
+		return document, putError(PutModelInvalid, err)
+	}
+	if err := validateFieldParentStability(source, updated); err != nil {
 		return document, putError(PutModelInvalid, err)
 	}
 	if err := validatePutProvenance(source, updated); err != nil {
@@ -59,11 +71,13 @@ func Put(document Document, updated Model) (Document, error) {
 		result.Namespace = "gooo"
 	}
 	nodes := nodeMap(updated.Nodes)
-	declarationIDs, err := appendSurvivingDeclarations(&result, document.Declarations, nodes, updated)
+	declarationIDs, err := appendSurvivingDeclarations(&result, document.Declarations, nodes, updated, registry)
 	if err != nil {
 		return document, putError(PutWriteConflict, err)
 	}
-	appendNewDeclarations(&result, updated, nodes, declarationIDs)
+	if err := appendNewDeclarations(&result, updated, nodes, declarationIDs, registry); err != nil {
+		return document, putError(PutWriteConflict, err)
+	}
 	appendUpdatedRelations(&result, document.Relations, updated)
 	return result, nil
 }
@@ -78,6 +92,11 @@ func validatePutProvenance(source, updated Model) error {
 		if !node.Span.Valid() {
 			return fmt.Errorf("node %q semantic change has no source span", node.ID)
 		}
+		for _, field := range node.Fields {
+			if !field.Span.Valid() {
+				return fmt.Errorf("field %q semantic change has no source span", field.ID)
+			}
+		}
 	}
 	for _, relation := range append(delta.AddedRelations, delta.RemovedRelations...) {
 		if !relation.Span.Valid() {
@@ -87,7 +106,7 @@ func validatePutProvenance(source, updated Model) error {
 	return nil
 }
 
-func appendSurvivingDeclarations(result *Document, declarations []Declaration, nodes map[ID]Node, updated Model) (map[ID]struct{}, error) {
+func appendSurvivingDeclarations(result *Document, declarations []Declaration, nodes map[ID]Node, updated Model, registry semantic.TypeRegistry) (map[ID]struct{}, error) {
 	ids := make(map[ID]struct{}, len(declarations))
 	for _, declaration := range declarations {
 		id, err := declarationIdentity(result.Namespace, declaration)
@@ -99,13 +118,17 @@ func appendSurvivingDeclarations(result *Document, declarations []Declaration, n
 		}
 		ids[id] = struct{}{}
 		if node, exists := nodes[id]; exists {
-			result.Declarations = append(result.Declarations, declarationFromNode(node, updated))
+			declaration, err := declarationFromNode(node, updated, registry)
+			if err != nil {
+				return nil, err
+			}
+			result.Declarations = append(result.Declarations, declaration)
 		}
 	}
 	return ids, nil
 }
 
-func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, existing map[ID]struct{}) {
+func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, existing map[ID]struct{}, registry semantic.TypeRegistry) error {
 	ids := make([]ID, 0, len(updated.Nodes))
 	for _, node := range updated.Nodes {
 		if _, exists := existing[node.ID]; !exists {
@@ -114,8 +137,13 @@ func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, e
 	}
 	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
 	for _, id := range ids {
-		result.Declarations = append(result.Declarations, declarationFromNode(nodes[id], updated))
+		declaration, err := declarationFromNode(nodes[id], updated, registry)
+		if err != nil {
+			return err
+		}
+		result.Declarations = append(result.Declarations, declaration)
 	}
+	return nil
 }
 
 func appendUpdatedRelations(result *Document, original []Relation, updated Model) {
