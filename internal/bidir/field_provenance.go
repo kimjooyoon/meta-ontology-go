@@ -106,80 +106,101 @@ func lookupTypeRefSpelling(ref semantic.TypeRef) string {
 func resolveFieldType(semanticRef semantic.TypeRef, use TypeRefUse, registry semantic.TypeRegistry) (semantic.TypeDef, error) {
 	current, err := registry.Resolve(semanticRef)
 	if semanticRef.ID != "" {
-		if err != nil {
-			return semantic.TypeDef{}, err
-		}
-		if use.Form == TypeRefFormLookup && use.ResolvedID == "" {
-			presentationRef, presentationErr := parseLookupTypeRef(use.Spelling)
-			if presentationErr != nil {
-				return semantic.TypeDef{}, presentationErr
-			}
-			presented, presentationErr := registry.Resolve(presentationRef)
-			if presentationErr != nil {
-				return semantic.TypeDef{}, presentationErr
-			}
-			if current.ID != presented.ID {
-				return semantic.TypeDef{}, fmt.Errorf("field TypeRef and source presentation resolve to different IDs (%s and %s)", current.ID, presented.ID)
-			}
-		}
-		if use.ResolvedID != "" {
-			resolvedID, parseErr := semantic.ParseIdentity(string(use.ResolvedID))
-			if parseErr != nil {
-				return semantic.TypeDef{}, parseErr
-			}
-			if current.ID != resolvedID {
-				return semantic.TypeDef{}, fmt.Errorf("explicit field TypeRef ID %s disagrees with source presentation ID %s", current.ID, resolvedID)
-			}
-		}
-		return current, nil
+		return resolveExplicitFieldType(current, err, use, registry)
 	}
 	if err != nil && use.ResolvedID == "" {
 		return semantic.TypeDef{}, err
 	}
-	if use.Form == TypeRefFormLookup && use.ResolvedID != "" && semanticRef.ID == "" {
-		presentationRef, presentationErr := parseLookupTypeRef(use.Spelling)
-		if presentationErr != nil {
-			return semantic.TypeDef{}, presentationErr
-		}
-		currentRef, currentErr := semanticRef.Normalized()
-		if currentErr != nil {
-			return semantic.TypeDef{}, currentErr
-		}
-		if currentRef.Name != presentationRef.Name || (currentRef.Namespace != "" && presentationRef.Namespace != "" && currentRef.Namespace != presentationRef.Namespace) {
-			if err != nil {
-				return semantic.TypeDef{}, err
-			}
-			return semantic.TypeDef{}, fmt.Errorf("field TypeRef lookup does not match its original source presentation")
-		}
+	if presentationErr := validateFieldLookupPresentation(semanticRef, use, err); presentationErr != nil {
+		return semantic.TypeDef{}, presentationErr
 	}
 	if use.Form == TypeRefFormLookup && use.ResolvedID == "" {
-		presentationRef, presentationErr := typeRefFromUse(use)
-		if presentationErr != nil {
-			return semantic.TypeDef{}, presentationErr
+		return resolveLookupFieldType(current, err, use, registry)
+	}
+	if use.ResolvedID != "" {
+		return resolveFieldTypeByID(current, err, use, registry)
+	}
+	return current, err
+}
+
+func resolveExplicitFieldType(current semantic.TypeDef, resolveErr error, use TypeRefUse, registry semantic.TypeRegistry) (semantic.TypeDef, error) {
+	if resolveErr != nil {
+		return semantic.TypeDef{}, resolveErr
+	}
+	if use.Form == TypeRefFormLookup && use.ResolvedID == "" {
+		presentationRef, err := parseLookupTypeRef(use.Spelling)
+		if err != nil {
+			return semantic.TypeDef{}, err
 		}
-		presented, presentationErr := registry.Resolve(presentationRef)
-		if presentationErr != nil {
-			return semantic.TypeDef{}, presentationErr
-		}
+		presented, err := registry.Resolve(presentationRef)
 		if err != nil {
 			return semantic.TypeDef{}, err
 		}
 		if current.ID != presented.ID {
 			return semantic.TypeDef{}, fmt.Errorf("field TypeRef and source presentation resolve to different IDs (%s and %s)", current.ID, presented.ID)
 		}
-		current = presented
 	}
-	if use.ResolvedID != "" {
-		resolved, resolveErr := registry.Resolve(semantic.TypeRef{ID: semantic.ID(use.ResolvedID)})
-		if resolveErr != nil {
-			return semantic.TypeDef{}, resolveErr
-		}
-		if err == nil && current.ID != resolved.ID {
-			return semantic.TypeDef{}, fmt.Errorf("field TypeRef and source presentation resolve to different IDs (%s and %s)", current.ID, resolved.ID)
-		}
-		return resolved, nil
+	if use.ResolvedID == "" {
+		return current, nil
 	}
-	return current, err
+	resolvedID, err := semantic.ParseIdentity(string(use.ResolvedID))
+	if err != nil {
+		return semantic.TypeDef{}, err
+	}
+	if current.ID != resolvedID {
+		return semantic.TypeDef{}, fmt.Errorf("explicit field TypeRef ID %s disagrees with source presentation ID %s", current.ID, resolvedID)
+	}
+	return current, nil
+}
+
+func validateFieldLookupPresentation(ref semantic.TypeRef, use TypeRefUse, resolveErr error) error {
+	if use.Form != TypeRefFormLookup || use.ResolvedID == "" {
+		return nil
+	}
+	presentationRef, err := parseLookupTypeRef(use.Spelling)
+	if err != nil {
+		return err
+	}
+	currentRef, err := ref.Normalized()
+	if err != nil {
+		return err
+	}
+	if currentRef.Name == presentationRef.Name && (currentRef.Namespace == "" || presentationRef.Namespace == "" || currentRef.Namespace == presentationRef.Namespace) {
+		return nil
+	}
+	if resolveErr != nil {
+		return resolveErr
+	}
+	return fmt.Errorf("field TypeRef lookup does not match its original source presentation")
+}
+
+func resolveLookupFieldType(current semantic.TypeDef, resolveErr error, use TypeRefUse, registry semantic.TypeRegistry) (semantic.TypeDef, error) {
+	presentationRef, err := typeRefFromUse(use)
+	if err != nil {
+		return semantic.TypeDef{}, err
+	}
+	presented, err := registry.Resolve(presentationRef)
+	if err != nil {
+		return semantic.TypeDef{}, err
+	}
+	if resolveErr != nil {
+		return semantic.TypeDef{}, resolveErr
+	}
+	if current.ID != presented.ID {
+		return semantic.TypeDef{}, fmt.Errorf("field TypeRef and source presentation resolve to different IDs (%s and %s)", current.ID, presented.ID)
+	}
+	return presented, nil
+}
+
+func resolveFieldTypeByID(current semantic.TypeDef, resolveErr error, use TypeRefUse, registry semantic.TypeRegistry) (semantic.TypeDef, error) {
+	resolved, err := registry.Resolve(semantic.TypeRef{ID: semantic.ID(use.ResolvedID)})
+	if err != nil {
+		return semantic.TypeDef{}, err
+	}
+	if resolveErr == nil && current.ID != resolved.ID {
+		return semantic.TypeDef{}, fmt.Errorf("field TypeRef and source presentation resolve to different IDs (%s and %s)", current.ID, resolved.ID)
+	}
+	return resolved, nil
 }
 
 func normalizeModelFields(model *Model, registry semantic.TypeRegistry) error {
