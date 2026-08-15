@@ -74,10 +74,10 @@ func TestProductionEquivalenceAgainstIndependentCorpus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := CorpusDigest(); got != "e79ba3696eec2bb67c915398a1f652f523b9b98a3227bee2e4e2c4b9f2f8120e" {
+	if got := CorpusDigest(); got != "36359077392431f4e4136baeb022b78f87fdf7c69a0dbab18ca38e3e92ae6954" {
 		t.Fatalf("corpus digest changed: %s", got)
 	}
-	if got := ExpectedVectorDigest(corpus); got != "a9661672d1dcf30df297b8aae90d2b7138ef7126dccf9f45b495a5399dd82c58" {
+	if got := ExpectedVectorDigest(corpus); got != "fe260bba00c58fb3ab761910c253905dfb749be60ed655b03810bebddc2b3ef5" {
 		t.Fatalf("expected vector digest changed: %s", got)
 	}
 	if len(corpus.Cases) != 32 {
@@ -91,6 +91,9 @@ func TestProductionEquivalenceAgainstIndependentCorpus(t *testing.T) {
 		fixture := productionPartition(t, testCase.Name)
 		output := process.invoke(t, fixture)
 		expectation := expectedProduction(testCase.Name)
+		if output.ExecutionAuthorized {
+			mismatches = append(mismatches, testCase.Name+": production authorized execution")
+		}
 		if expectation.status == "" {
 			mismatches = append(mismatches, testCase.Name+": missing independent production expectation")
 			continue

@@ -190,7 +190,7 @@ func Evaluate(c Case) Result {
 	return Result{
 		Status: ShadowSelective, Stage: StageSelective, Reason: "all bindings verified",
 		SelectedCommandIDs: selected, SelectedGuardIDs: guards, SelectedWorkIDs: work,
-		SelectedArgv: argv, ExecutionAuthorized: true, CanonicalDigest: digest,
+		SelectedArgv: argv, ExecutionAuthorized: false, CanonicalDigest: digest,
 	}
 }
 

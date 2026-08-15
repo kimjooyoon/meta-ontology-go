@@ -1,0 +1,12 @@
+{
+  "schema": "gooo/selective-ci-shadow-correction/v1",
+  "reason_code": "EXECUTION_AUTHORITY_CONTRADICTION",
+  "superseded": {
+    "corpus_digest": "e79ba3696eec2bb67c915398a1f652f523b9b98a3227bee2e4e2c4b9f2f8120e",
+    "expected_vector_digest": "a9661672d1dcf30df297b8aae90d2b7138ef7126dccf9f45b495a5399dd82c58"
+  },
+  "corrected": {
+    "corpus_digest": "36359077392431f4e4136baeb022b78f87fdf7c69a0dbab18ca38e3e92ae6954",
+    "expected_vector_digest": "fe260bba00c58fb3ab761910c253905dfb749be60ed655b03810bebddc2b3ef5"
+  }
+}
