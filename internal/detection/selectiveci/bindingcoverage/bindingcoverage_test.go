@@ -54,7 +54,7 @@ func TestIncompleteCoverage(t *testing.T) {
 			input.RequiredBindings = []RequiredBinding{}
 			input.Partitions = []Partition{}
 		}, ReasonZeroDenominator, func(t *testing.T, got Output) {
-			if got.RequiredBindingCount != 0 || got.DeterministicWorkUnits != 0 || len(got.MissingMatchBindingIDs) != 0 || len(got.MissingMismatchBindingIDs) != 0 {
+			if got.RequiredBindingCount != 0 || got.PartitionCount != 0 || got.EndpointReferenceCount != 0 || got.DeterministicWorkUnits != 0 || len(got.MissingMatchBindingIDs) != 0 || len(got.MissingMismatchBindingIDs) != 0 {
 				t.Fatalf("zero denominator output = %#v", got)
 			}
 		}},
@@ -128,6 +128,10 @@ func TestMalformedAndAmbiguousCases(t *testing.T) {
 			got := Observe(input)
 			if got.Decision != DecisionUnknown || got.Reason != test.reason {
 				t.Fatalf("got %s/%s, want UNKNOWN/%s", got.Decision, got.Reason, test.reason)
+			}
+			assertShapeCounts(t, got, input)
+			if len(got.MissingMatchBindingIDs) != 0 || len(got.MissingMismatchBindingIDs) != 0 {
+				t.Fatalf("UNKNOWN output reported coverage gaps: %#v", got)
 			}
 		})
 	}
