@@ -9,11 +9,17 @@ func Observe(input Input) Output {
 		return seal(baseOutput(input, 0, ""), DecisionUnknown, ReasonEvaluatorError)
 	}
 	result := baseOutput(input, uint64(len(canonical)), digestBytes(canonical))
-	if input.SchemaVersion != SchemaVersion {
-		return seal(result, DecisionUnknown, ReasonUnknownSchema)
-	}
 	if input.RequiredBindings == nil || input.Partitions == nil || input.PrecedenceRegistry == nil {
 		return seal(result, DecisionUnknown, ReasonMissingInput)
+	}
+	// Shape counts describe the canonical input itself, not validated semantic
+	// success. Populate them before any schema, header, registry, or reference
+	// validation so UNKNOWN cannot launder partial validation counts.
+	if !populateShapeCounts(&result, len(input.RequiredBindings), len(input.Partitions)) {
+		return seal(result, DecisionUnknown, ReasonWorkOverflow)
+	}
+	if input.SchemaVersion != SchemaVersion {
+		return seal(result, DecisionUnknown, ReasonUnknownSchema)
 	}
 	if reason := validateHeader(input); reason != "" {
 		return seal(result, DecisionUnknown, reason)
@@ -23,7 +29,7 @@ func Observe(input Input) Output {
 	if reason != "" {
 		return seal(result, DecisionUnknown, reason)
 	}
-	bindingPairs, endpointReferences, reason := validateBindings(input.RequiredBindings, precedencePairs)
+	bindingPairs, reason := validateBindings(input.RequiredBindings, precedencePairs)
 	if reason != "" {
 		return seal(result, DecisionUnknown, reason)
 	}
@@ -31,17 +37,9 @@ func Observe(input Input) Output {
 	if reason != "" {
 		return seal(result, DecisionUnknown, reason)
 	}
-	result.RequiredBindingCount = uint64(len(input.RequiredBindings))
-	result.PartitionCount = uint64(len(input.Partitions))
-	result.EndpointReferenceCount = endpointReferences
 	result.MissingMatchBindingIDs, result.MissingMismatchBindingIDs = missingBindings(input.RequiredBindings, match, mismatch)
 	result.MatchCoveredCount = result.RequiredBindingCount - uint64(len(result.MissingMatchBindingIDs))
 	result.MismatchCoveredCount = result.RequiredBindingCount - uint64(len(result.MissingMismatchBindingIDs))
-	work, ok := workUnits(result.RequiredBindingCount, result.PartitionCount, result.EndpointReferenceCount)
-	if !ok {
-		return seal(baseOutput(input, uint64(len(canonical)), digestBytes(canonical)), DecisionUnknown, ReasonWorkOverflow)
-	}
-	result.DeterministicWorkUnits = work
 	if result.RequiredBindingCount == 0 {
 		return seal(result, DecisionIncomplete, ReasonZeroDenominator)
 	}

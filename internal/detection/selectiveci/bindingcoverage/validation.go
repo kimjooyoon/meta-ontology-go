@@ -43,48 +43,42 @@ func validatePrecedence(entries []PrecedenceEntry) (map[string]struct{}, Reason)
 	return pairs, ""
 }
 
-func validateBindings(bindings []RequiredBinding, precedencePairs map[string]struct{}) (map[string]string, uint64, Reason) {
+func validateBindings(bindings []RequiredBinding, precedencePairs map[string]struct{}) (map[string]string, Reason) {
 	ids := make(map[string]struct{}, len(bindings))
 	bindingPairs := make(map[string]string, len(bindings))
-	endpointReferences := uint64(0)
 	for _, binding := range bindings {
 		if reason := validateID(binding.BindingID); reason != "" {
-			return nil, 0, reason
+			return nil, reason
 		}
 		if _, exists := ids[binding.BindingID]; exists {
-			return nil, 0, ReasonDuplicateID
+			return nil, ReasonDuplicateID
 		}
 		if reason := validateID(binding.FromFieldID); reason != "" {
-			return nil, 0, reason
+			return nil, reason
 		}
 		if reason := validateID(binding.ToFieldID); reason != "" {
-			return nil, 0, reason
+			return nil, reason
 		}
 		if !validKind(binding.Kind) {
-			return nil, 0, ReasonInvalidEnum
+			return nil, ReasonInvalidEnum
 		}
 		if reason := validateStageToken(binding.ExpectedStage); reason != "" {
-			return nil, 0, reason
+			return nil, reason
 		}
 		if reason := validateReasonToken(binding.ExpectedReason); reason != "" {
-			return nil, 0, reason
+			return nil, reason
 		}
 		if binding.FromFieldID == binding.ToFieldID {
-			return nil, 0, ReasonSelfLink
+			return nil, ReasonSelfLink
 		}
 		pair := expectedPair(binding.ExpectedStage, binding.ExpectedReason)
 		if _, registered := precedencePairs[pair]; !registered {
-			return nil, 0, ReasonUnregisteredPair
-		}
-		var ok bool
-		endpointReferences, ok = addUint64(endpointReferences, 2)
-		if !ok {
-			return nil, 0, ReasonWorkOverflow
+			return nil, ReasonUnregisteredPair
 		}
 		ids[binding.BindingID] = struct{}{}
 		bindingPairs[binding.BindingID] = pair
 	}
-	return bindingPairs, endpointReferences, ""
+	return bindingPairs, ""
 }
 
 func validatePartitions(partitions []Partition, bindingPairs map[string]string) (map[string]struct{}, map[string]struct{}, Reason) {
@@ -156,6 +150,22 @@ func workUnits(required, partitions, endpointReferences uint64) (uint64, bool) {
 		return 0, false
 	}
 	return addUint64(total, endpointReferences)
+}
+
+func populateShapeCounts(output *Output, required, partitions int) bool {
+	output.RequiredBindingCount = uint64(required)
+	output.PartitionCount = uint64(partitions)
+	endpointReferences, ok := addUint64(output.RequiredBindingCount, output.RequiredBindingCount)
+	if !ok {
+		return false
+	}
+	output.EndpointReferenceCount = endpointReferences
+	work, ok := workUnits(output.RequiredBindingCount, output.PartitionCount, endpointReferences)
+	if !ok {
+		return false
+	}
+	output.DeterministicWorkUnits = work
+	return true
 }
 
 func addUint64(left, right uint64) (uint64, bool) {
