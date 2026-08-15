@@ -62,6 +62,7 @@ type Result struct {
 	CPUCoreNS         uint64 `json:"cpu_core_ns"`
 	CPUUtilizationPPM uint64 `json:"cpu_utilization_ppm"`
 	CanonicalDigest   string `json:"canonical_digest"`
+	FullSuiteRequired bool   `json:"full_suite_required"`
 	PeakRSSBytes      uint64 `json:"peak_rss_bytes"`
 	ReadBytes         uint64 `json:"read_bytes"`
 	SchemaVersion     string `json:"schema_version"`

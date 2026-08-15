@@ -44,10 +44,25 @@ func normalizeInput(input Input) Input {
 }
 
 func normalizeResult(result Result) Result {
-	result.Selected = sortedUnique(result.Selected)
+	result.Selected = uniqueInOrder(result.Selected)
+	result.SelectedIDs = uniqueInOrder(result.SelectedIDs)
+	result.WorkIDs = uniqueInOrder(result.WorkIDs)
 	result.Unknown = sortedUnique(result.Unknown)
 	result.Blocked = sortedUnique(result.Blocked)
 	result.Shortfall = sortedUnique(result.Shortfall)
+	return result
+}
+
+func uniqueInOrder(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if _, exists := seen[value]; exists {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
 	return result
 }
 

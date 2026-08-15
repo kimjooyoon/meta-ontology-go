@@ -8,8 +8,10 @@ type Decision string
 
 const (
 	DecisionPass    Decision = "PASS"
+	DecisionBlocked Decision = "BLOCKED"
 	DecisionUnknown Decision = "UNKNOWN"
 	StatusPass               = "PASS"
+	StatusBlocked            = "BLOCKED"
 )
 
 // Pressure is a registry entry identified only by a stable ID.
@@ -43,6 +45,7 @@ type ObligationState struct {
 // RepairPath is one declared, finite route for repairing an obligation.
 type RepairPath struct {
 	StableID                  string   `json:"stable_id"`
+	WorkID                    string   `json:"work_id"`
 	ObligationID              string   `json:"obligation_id"`
 	PrerequisiteObligationIDs []string `json:"prerequisite_obligation_ids"`
 	ReadSet                   []string `json:"read_set"`
@@ -104,11 +107,15 @@ type inputPresence struct {
 // Result is the deterministic frontier partition. Selected contains work IDs;
 // the other sets contain stable path IDs. A shortfall is an UNKNOWN result.
 type Result struct {
-	Status    Decision `json:"status"`
-	Selected  []string `json:"selected"`
-	Unknown   []string `json:"unknown"`
-	Blocked   []string `json:"blocked"`
-	Shortfall []string `json:"shortfall"`
+	Status            Decision `json:"status"`
+	Selected          []string `json:"selected"`
+	SelectedIDs       []string `json:"selected_ids"`
+	WorkIDs           []string `json:"work_ids"`
+	Unknown           []string `json:"unknown"`
+	Blocked           []string `json:"blocked"`
+	Shortfall         []string `json:"shortfall"`
+	Quality           string   `json:"quality"`
+	FullSuiteRequired bool     `json:"full_suite_required"`
 }
 
 // SelectionResult is an expressive alias for Result.

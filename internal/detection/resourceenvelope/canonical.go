@@ -12,6 +12,7 @@ type canonicalResult struct {
 	CPUCoreNS         uint64 `json:"cpu_core_ns"`
 	CPUUtilizationPPM uint64 `json:"cpu_utilization_ppm"`
 	PeakRSSBytes      uint64 `json:"peak_rss_bytes"`
+	FullSuiteRequired bool   `json:"full_suite_required"`
 	ReadBytes         uint64 `json:"read_bytes"`
 	SchemaVersion     string `json:"schema_version"`
 	Status            Status `json:"status"`
@@ -23,7 +24,7 @@ type canonicalResult struct {
 func (r Result) MarshalJSON() ([]byte, error) {
 	return json.Marshal(canonicalResult{CanonicalDigest: r.CanonicalDigest,
 		CPUCoreNS: r.CPUCoreNS, CPUUtilizationPPM: r.CPUUtilizationPPM,
-		PeakRSSBytes: r.PeakRSSBytes, ReadBytes: r.ReadBytes,
+		FullSuiteRequired: r.FullSuiteRequired, PeakRSSBytes: r.PeakRSSBytes, ReadBytes: r.ReadBytes,
 		SchemaVersion: r.SchemaVersion, Status: r.Status,
 		WriteBytes: r.WriteBytes})
 }
@@ -33,7 +34,7 @@ func (r Result) MarshalJSON() ([]byte, error) {
 func (r Result) CanonicalJSON() ([]byte, error) {
 	return json.Marshal(canonicalResult{CPUCoreNS: r.CPUCoreNS,
 		CPUUtilizationPPM: r.CPUUtilizationPPM, PeakRSSBytes: r.PeakRSSBytes,
-		ReadBytes: r.ReadBytes, SchemaVersion: r.SchemaVersion, Status: r.Status,
+		FullSuiteRequired: r.FullSuiteRequired, ReadBytes: r.ReadBytes, SchemaVersion: r.SchemaVersion, Status: r.Status,
 		WriteBytes: r.WriteBytes})
 }
 
@@ -62,6 +63,7 @@ func (r Result) DigestValue() string { return r.CanonicalDigestValue() }
 func (r Result) computedDigest() string { return r.CanonicalDigestValue() }
 
 func sealResult(result Result, reason string) Result {
+	result.FullSuiteRequired = result.Status == UNKNOWN
 	result.ReasonCode = reason
 	result.Digest = ""
 	result.CanonicalDigest = result.computedDigest()

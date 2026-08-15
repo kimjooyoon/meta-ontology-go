@@ -30,6 +30,7 @@ func Evaluate(envelope Envelope) Result {
 		result.PeakRSSBytes > envelope.Limits.PeakRSSBytes ||
 		result.ReadBytes > envelope.Limits.ReadBytes ||
 		result.WriteBytes > envelope.Limits.WriteBytes {
+		result.Status = FAIL_CLOSED
 		return sealResult(result, "resource-overrun")
 	}
 	result.Status = PASS

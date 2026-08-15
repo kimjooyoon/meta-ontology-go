@@ -132,6 +132,9 @@ func DecodeJSON(data []byte) (Input, error) {
 		}
 		return Input{}, fmt.Errorf("decode work frontier JSON: %w", err)
 	}
+	if input.fromJSON && input.present.minimumSelectedPressures && input.MinimumSelectedPressures < 2 {
+		return Input{}, fmt.Errorf("decode work frontier JSON: minimum_selected_pressures must be at least 2")
+	}
 	return input, nil
 }
 

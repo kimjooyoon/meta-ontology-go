@@ -48,16 +48,31 @@ func Select(input Input) Result {
 	}
 	selected := make([]RepairPath, 0, len(ready))
 	sort.Slice(ready, func(i, j int) bool { return selectionKey(ready[i]) < selectionKey(ready[j]) })
+	var usedCPU uint64
 	for _, path := range ready {
-		if conflictsWithAny(path, selected) {
+		if conflictsWithAnyPath(path, selected) || path.CPUCoreNSUpperBound > input.Capacity.CPUCoreNS-usedCPU {
 			result.Blocked = append(result.Blocked, path.stableID())
 			continue
 		}
 		selected = append(selected, path)
-		result.Selected = append(result.Selected, WorkIDFor(input, path))
+		usedCPU += path.CPUCoreNSUpperBound
+		workID := WorkIDFor(input, path)
+		result.Selected = append(result.Selected, workID)
+		result.SelectedIDs = append(result.SelectedIDs, path.stableID())
+		result.WorkIDs = append(result.WorkIDs, workID)
 	}
 	if len(result.Unknown) != 0 || len(result.Shortfall) != 0 {
 		result.Status = DecisionUnknown
+		result.Quality = "UNKNOWN"
+		result.FullSuiteRequired = true
+		result.Selected = nil
+		result.SelectedIDs = nil
+		result.WorkIDs = nil
+	} else if len(result.Selected) == 0 && len(result.Blocked) != 0 {
+		result.Status = DecisionBlocked
+		result.Quality = "BLOCKED"
+	} else {
+		result.Quality = "MAXIMAL"
 	}
 	return normalizeResult(result)
 }
@@ -79,6 +94,9 @@ func WorkID(snapshotDigest, obligationID, pathID, policyDigest string) string {
 
 // WorkIDFor computes the identity of a path in an input snapshot.
 func WorkIDFor(input Input, path RepairPath) string {
+	if path.WorkID != "" {
+		return path.WorkID
+	}
 	return WorkID(input.SnapshotDigest, path.ObligationID, path.stableID(), input.PolicyDigest)
 }
 
@@ -136,7 +154,7 @@ func stateKnown(state ObligationState) bool {
 }
 
 func pathKnown(path RepairPath) bool {
-	if path.stableID() == "" || path.ObligationID == "" {
+	if path.stableID() == "" || path.ObligationID == "" || path.CPUCoreNSUpperBound == 0 {
 		return false
 	}
 	if path.fromJSON && (!path.stableIDPresent || !path.obligationIDPresent ||
@@ -145,7 +163,8 @@ func pathKnown(path RepairPath) bool {
 		!path.policyPriorityPresent || !path.cpuCoreNSUpperBoundPresent) {
 		return false
 	}
-	return stringsKnown(path.PrerequisiteObligationIDs) && stringsKnown(path.ReadSet) &&
+	return (len(path.ReadSet) != 0 || len(path.WriteSet) != 0) &&
+		stringsKnown(path.PrerequisiteObligationIDs) && stringsKnown(path.ReadSet) &&
 		stringsKnown(path.WriteSet) && stringsKnown(path.RequiredPressureIDs) &&
 		!hasDuplicate(path.PrerequisiteObligationIDs) && !hasDuplicate(path.ReadSet) &&
 		!hasDuplicate(path.WriteSet) && !hasDuplicate(path.RequiredPressureIDs)
@@ -157,7 +176,8 @@ func classifyPath(input Input, indexes frontierIndexes, path RepairPath) pathCla
 	}
 	state, exists := indexes.states[path.ObligationID]
 	if !exists || !pressuresResolve(indexes, path.RequiredPressureIDs) ||
-		!obligationsResolve(indexes, path.PrerequisiteObligationIDs) {
+		!obligationsResolve(indexes, path.PrerequisiteObligationIDs) ||
+		!pressuresResolve(indexes, path.ReadSet) || !pressuresResolve(indexes, path.WriteSet) {
 		return pathUnknown
 	}
 	if state == "PASS" || prerequisitesIncomplete(indexes, path.PrerequisiteObligationIDs) ||
@@ -217,71 +237,11 @@ func hasDuplicate(values []string) bool {
 	return false
 }
 
-func selectionKey(path RepairPath) string {
-	return paddedUint64(uint64(path.PolicyPriority)) + paddedUint64(path.CPUCoreNSUpperBound) + path.stableID()
-}
-
-func paddedUint64(value uint64) string {
-	const width = 20
-	digits := make([]byte, width)
-	for i := width - 1; i >= 0; i-- {
-		digits[i] = byte('0' + value%10)
-		value /= 10
-	}
-	return string(digits)
-}
-
-func conflictsWithAny(path RepairPath, selected []RepairPath) bool {
+func conflictsWithAnyPath(path RepairPath, selected []RepairPath) bool {
 	for _, other := range selected {
 		if conflicts(path, other) {
 			return true
 		}
-	}
-	return false
-}
-
-func conflicts(left, right RepairPath) bool {
-	return intersects(left.WriteSet, right.WriteSet) ||
-		intersects(left.WriteSet, right.ReadSet) || intersects(right.WriteSet, left.ReadSet)
-}
-
-func intersects(left, right []string) bool {
-	if len(left) > len(right) {
-		left, right = right, left
-	}
-	set := make(map[string]struct{}, len(left))
-	for _, value := range left {
-		set[value] = struct{}{}
-	}
-	for _, value := range right {
-		if _, ok := set[value]; ok {
-			return true
-		}
-	}
-	return false
-}
-
-func unknownAll(input Input) Result {
-	result := Result{Status: DecisionUnknown}
-	for _, path := range input.Paths {
-		if id := path.stableID(); id != "" {
-			result.Unknown = append(result.Unknown, id)
-		}
-	}
-	return normalizeResult(result)
-}
-
-func duplicatePathIDs(paths []RepairPath) bool {
-	seen := make(map[string]struct{}, len(paths))
-	for _, path := range paths {
-		id := path.stableID()
-		if id == "" {
-			continue
-		}
-		if _, exists := seen[id]; exists {
-			return true
-		}
-		seen[id] = struct{}{}
 	}
 	return false
 }
