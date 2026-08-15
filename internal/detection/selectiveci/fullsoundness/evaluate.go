@@ -53,11 +53,31 @@ func baseOutput(input Input) Output {
 }
 
 func seal(output Output, decision Decision, reason Reason) Output {
-	output = normalizeOutput(output)
 	output.Decision = decision
 	output.Reason = reason
 	output.ExecutionAuthorized = false
 	output.CIAuthorized = false
+	output = normalizeOutput(output)
+	decisionDigest, err := output.DecisionStableDigest()
+	if err != nil {
+		return sealProjectionFailure(output)
+	}
+	output.DecisionDigest = decisionDigest
+	output.CanonicalDigest = output.StableDigest()
+	return output
+}
+
+func sealProjectionFailure(output Output) Output {
+	output.Decision = DecisionUnknown
+	output.Reason = ReasonResourceOverflow
+	output.ResourceVector = nil
+	output.FullFailureCommandIDs = nil
+	output.SelectedFailureCommandIDs = nil
+	output.OmittedCommandIDs = nil
+	output.CommandCount = 0
+	output.SelectedCommandCount = 0
+	output = normalizeOutput(output)
+	output.DecisionDigest, _ = output.DecisionStableDigest()
 	output.CanonicalDigest = output.StableDigest()
 	return output
 }

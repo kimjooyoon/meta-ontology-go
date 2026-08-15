@@ -3,6 +3,7 @@ package fullsoundness
 import (
 	"bytes"
 	"math"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -19,9 +20,10 @@ func TestSoundFixture(t *testing.T) {
 	if got.ResourceVector == nil || got.ResourceVector.Class != ResourceImproved {
 		t.Fatalf("resource vector = %#v, want IMPROVED", got.ResourceVector)
 	}
-	if got.ExecutionAuthorized || got.CIAuthorized || got.CanonicalDigest != got.StableDigest() {
+	if got.ExecutionAuthorized || got.CIAuthorized || !got.ValidDigests() {
 		t.Fatalf("output flags or digest invalid: %#v", got)
 	}
+	t.Logf("direct decision=%s envelope=%s", got.DecisionDigest, got.CanonicalDigest)
 }
 
 func TestClosedIDs(t *testing.T) {
@@ -125,16 +127,38 @@ func TestPermutationCanonicalOutput(t *testing.T) {
 	first := soundInput()
 	second := soundInput()
 	reverseInput(&second)
-	left, err := EncodeJSON(Evaluate(first))
+	leftOutput := Evaluate(first)
+	rightOutput := Evaluate(second)
+	if !reflect.DeepEqual(leftOutput, rightOutput) {
+		t.Fatalf("permuted outputs differ:\n%#v\n%#v", leftOutput, rightOutput)
+	}
+	left, err := EncodeJSON(leftOutput)
 	if err != nil {
 		t.Fatal(err)
 	}
-	right, err := EncodeJSON(Evaluate(second))
+	right, err := EncodeJSON(rightOutput)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(left, right) {
 		t.Fatalf("permutations differ:\n%s\n%s", left, right)
+	}
+}
+
+func TestSnapshotChangesOnlyEnvelopeDigest(t *testing.T) {
+	first := soundInput()
+	second := soundInput()
+	rebindSnapshot(&second, digest("0"))
+	left := Evaluate(first)
+	right := Evaluate(second)
+	if left.Decision != DecisionSound || right.Decision != DecisionSound {
+		t.Fatalf("snapshot inputs not sound: %s/%s", left.Decision, right.Decision)
+	}
+	if left.DecisionDigest != right.DecisionDigest {
+		t.Fatalf("decision digest changed: %s != %s", left.DecisionDigest, right.DecisionDigest)
+	}
+	if left.CanonicalDigest == right.CanonicalDigest {
+		t.Fatal("envelope digest did not bind snapshot")
 	}
 }
 

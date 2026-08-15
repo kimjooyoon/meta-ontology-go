@@ -50,9 +50,10 @@ const (
 type ResourceClass string
 
 const (
-	ResourceImproved  ResourceClass = "IMPROVED"
-	ResourceEqual     ResourceClass = "EQUAL"
-	ResourceRegressed ResourceClass = "REGRESSED"
+	ResourceImproved    ResourceClass = "IMPROVED"
+	ResourceEqual       ResourceClass = "EQUAL"
+	ResourceRegressed   ResourceClass = "REGRESSED"
+	ResourceNotComputed ResourceClass = "NOT_COMPUTED"
 )
 
 type Obligation struct {
@@ -152,5 +153,6 @@ type Output struct {
 	Reason                               Reason          `json:"reason"`
 	ExecutionAuthorized                  bool            `json:"execution_authorized"`
 	CIAuthorized                         bool            `json:"ci_authorized"`
+	DecisionDigest                       string          `json:"decision_digest"`
 	CanonicalDigest                      string          `json:"canonical_digest"`
 }

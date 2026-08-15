@@ -86,6 +86,17 @@ func findReceipt(values []ResourceReceipt, commandID string) *ResourceReceipt {
 	return nil
 }
 
+func rebindSnapshot(input *Input, snapshot string) {
+	input.SnapshotDigest = snapshot
+	input.SelectionReceipt.SnapshotDigest = snapshot
+	for index := range input.FullResourceReceipts {
+		input.FullResourceReceipts[index].SnapshotDigest = snapshot
+	}
+	for index := range input.SelectedResourceReceipts {
+		input.SelectedResourceReceipts[index].SnapshotDigest = snapshot
+	}
+}
+
 func reverseStrings(values []string) {
 	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
 		values[left], values[right] = values[right], values[left]

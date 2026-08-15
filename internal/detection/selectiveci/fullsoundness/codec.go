@@ -48,7 +48,19 @@ func (input Input) CanonicalJSON() ([]byte, error) { return json.Marshal(normali
 
 func EncodeJSON(output Output) ([]byte, error) {
 	output = normalizeOutput(output)
-	output.CanonicalDigest = output.StableDigest()
+	decisionDigest, err := output.DecisionStableDigest()
+	if err != nil {
+		return nil, fmt.Errorf("encode full soundness decision: %w", err)
+	}
+	if output.DecisionDigest != "" && output.DecisionDigest != decisionDigest {
+		return nil, fmt.Errorf("full soundness decision digest mismatch")
+	}
+	output.DecisionDigest = decisionDigest
+	envelopeDigest := output.StableDigest()
+	if output.CanonicalDigest != "" && output.CanonicalDigest != envelopeDigest {
+		return nil, fmt.Errorf("full soundness envelope digest mismatch")
+	}
+	output.CanonicalDigest = envelopeDigest
 	data, err := json.Marshal(output)
 	if err != nil {
 		return nil, fmt.Errorf("encode full soundness output: %w", err)
@@ -68,6 +80,14 @@ func (output Output) StableDigest() string {
 		return ""
 	}
 	return digestBytes(data)
+}
+
+func (output Output) ValidDigests() bool {
+	decisionDigest, err := output.DecisionStableDigest()
+	if err != nil || output.DecisionDigest != decisionDigest {
+		return false
+	}
+	return output.CanonicalDigest == output.StableDigest()
 }
 
 func digestBytes(data []byte) string {
