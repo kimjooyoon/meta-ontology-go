@@ -8,13 +8,13 @@ import (
 
 func TestFixtureMultipleHandwrittenSlotsSurviveIRDefaults(t *testing.T) {
 	first := mustAcceptanceResult(t, acceptanceFixture(), nil)
-	previous := strings.Replace(string(first.Source), "return Artifact{}", "return Artifact{Digest: source.Digest}", 1)
-	previous = strings.Replace(previous, "return artifact", "return Artifact{Digest: artifact.Digest}", 1)
+	previous := strings.Replace(string(first.Source), "return Artifact{}", "return Artifact{}\n\t// source digest preserved", 1)
+	previous = strings.Replace(previous, "return artifact", "return artifact\n\t// artifact digest preserved", 1)
 	changed := acceptanceFixture()
 	changed.Activities[0].Slots[0].Default = "panic(\"new compile default\")"
 	changed.Activities[1].Slots[0].Default = "panic(\"new inspect default\")"
 	second := mustAcceptanceResult(t, changed, []byte(previous))
-	if !strings.Contains(string(second.Source), "return Artifact{Digest: source.Digest}") || !strings.Contains(string(second.Source), "return Artifact{Digest: artifact.Digest}") {
+	if !strings.Contains(string(second.Source), "// source digest preserved") || !strings.Contains(string(second.Source), "// artifact digest preserved") {
 		t.Fatal("handwritten slot content was replaced by a new default")
 	}
 	if !bytes.Equal(testGeneratedBlock(t, first.Source, "gooo://entity/source"), testGeneratedBlock(t, second.Source, "gooo://entity/source")) {
@@ -24,7 +24,7 @@ func TestFixtureMultipleHandwrittenSlotsSurviveIRDefaults(t *testing.T) {
 
 func TestFixtureHandwrittenSlotBytesRemainExact(t *testing.T) {
 	first := mustAcceptanceResult(t, acceptanceFixture(), nil)
-	handwritten := "return Artifact{Digest: source.Digest}\n\t// preserve spacing  \n"
+	handwritten := "return Artifact{}\n\t// preserve spacing  \n"
 	previous := strings.Replace(string(first.Source), "return Artifact{}", handwritten, 1)
 	beforeMarkers, err := parseMarkers([]byte(previous))
 	if err != nil {
