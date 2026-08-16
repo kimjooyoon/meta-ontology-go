@@ -14,11 +14,12 @@ const (
 )
 
 func Corpus() []Case {
-	return []Case{
+	cases := []Case{
 		bindingCase("case-01", ClosedSound, ReasonExactBinding, orderID, fileA, fileA, blobA, blobA, "Order", true, true, false),
 		bindingCase("case-02", ClosedSound, ReasonRenameBinding, orderID, fileB, fileB, blobA, blobA, "PurchaseOrder", true, true, false),
 		bindingCase("case-03", FailClosedUnsound, ReasonBlobWithoutID, orderID, fileA, fileB, blobA, blobB, "Order", true, true, false),
 		bindingCase("case-04", UnknownFullSuiteRequired, ReasonSourceMapRegistry, orderID, fileA, fileA, blobA, blobA, "Order", false, false, true),
+		missingBindingCase(),
 		unknownGraphCase(),
 		missedGraphCase(),
 		soundnessCase("case-07", ReasonGlobalGuard, []string{"cmd-guard"}, guardCommands(), Authoritative, true),
@@ -33,13 +34,25 @@ func Corpus() []Case {
 		externalCase("case-16", "external-phase", ExternalAssertion{Authenticity: true, Provider: true, Phase: false, Observer: true}),
 		externalCase("case-17", "external-observer", ExternalAssertion{Authenticity: true, Provider: true, Phase: true, Observer: false}),
 	}
+	for index := range cases {
+		cases[index].Baseline.WorkspaceRoot = "/workspace/fixture"
+		cases[index].Baseline.SourcePath = "/workspace/fixture/" + cases[index].ID + ".go"
+	}
+	return cases
+}
+
+func missingBindingCase() Case {
+	value := bindingCase("case-04-no-binding", UnknownFullSuiteRequired, ReasonSourceMapRegistry, orderID, fileA, fileA, blobA, blobA, "Order", true, true, false)
+	value.Expected.LocalizedIDs = []string{fileA}
+	value.Baseline.DirectivePresent = false
+	return value
 }
 
 func bindingCase(id string, state State, reason Reason, stableID, expectedFile, observedFile, expectedBlob, observedBlob, declaration string, registry, sourceMap, ambiguous bool) Case {
 	return Case{ID: id, Expected: Expected{State: state, Reason: reason, LocalizedIDs: []string{stableID}}, Baseline: BaselineConfig{
 		Subject: SubjectBinding, StableID: stableID, BoundID: stableID, ExpectedFile: expectedFile,
 		ObservedFile: observedFile, ExpectedBlob: expectedBlob, ObservedBlob: observedBlob,
-		DeclarationName: declaration,
+		DeclarationName: declaration, DirectivePresent: true,
 		RegistryPresent: registry, SourceMapPresent: sourceMap, Ambiguous: ambiguous,
 		FullCommands: 1, SelectedCommands: 1, ProvRecords: 1, ProvPaths: 1,
 	}}
@@ -64,6 +77,7 @@ func soundnessCase(id string, reason Reason, localized []string, commands []Comm
 	}
 	return Case{ID: id, Expected: Expected{State: expectedSoundnessState(reason), Reason: reason, LocalizedIDs: localized}, Baseline: BaselineConfig{
 		Subject: SubjectSoundness, Commands: commands, Obligation: ObligationAssertion{ID: obligationID, Authority: authority, Impacted: impacted},
+		External:     ExternalAssertion{Authenticity: true, Provider: true, Phase: true, Observer: true},
 		FullCommands: 2, SelectedCommands: selectedCount(commands), ProvRecords: 5, ProvPaths: 2,
 	}}
 }

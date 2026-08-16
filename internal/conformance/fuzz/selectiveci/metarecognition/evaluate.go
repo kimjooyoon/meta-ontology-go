@@ -9,7 +9,9 @@ func evaluateBaseline(c Case) Outcome {
 	state, reason, ids := ClosedSound, ReasonExactBinding, []string{}
 	switch b.Subject {
 	case SubjectBinding:
-		if !b.RegistryPresent || !b.SourceMapPresent || b.Ambiguous {
+		if !b.DirectivePresent {
+			state, reason, ids = UnknownFullSuiteRequired, ReasonSourceMapRegistry, []string{b.ObservedFile}
+		} else if !b.RegistryPresent || !b.SourceMapPresent || b.Ambiguous {
 			state, reason, ids = UnknownFullSuiteRequired, ReasonSourceMapRegistry, []string{b.StableID}
 		} else if b.BoundID != b.StableID || b.ExpectedFile != b.ObservedFile || b.ExpectedBlob != b.ObservedBlob {
 			state, reason, ids = FailClosedUnsound, ReasonBlobWithoutID, []string{b.StableID}

@@ -103,6 +103,32 @@ func TestBaselineCountersDoNotAffectGooo(t *testing.T) {
 	}
 }
 
+func TestExternalCompleteness(t *testing.T) {
+	values := []struct {
+		name     string
+		external ExternalAssertion
+		id       string
+	}{
+		{name: "all-zero", external: ExternalAssertion{}, id: "external-authenticity"},
+		{name: "authenticity", external: ExternalAssertion{Provider: true, Phase: true, Observer: true}, id: "external-authenticity"},
+		{name: "provider", external: ExternalAssertion{Authenticity: true, Phase: true, Observer: true}, id: "external-provider"},
+		{name: "phase", external: ExternalAssertion{Authenticity: true, Provider: true, Observer: true}, id: "external-phase"},
+		{name: "observer", external: ExternalAssertion{Authenticity: true, Provider: true, Phase: true}, id: "external-observer"},
+	}
+	for _, value := range values {
+		t.Run(value.name, func(t *testing.T) {
+			caseValue := Corpus()[7]
+			caseValue.Baseline.External = value.external
+			gooo, baseline := Evaluate(caseValue)
+			for name, outcome := range map[string]Outcome{"gooo": gooo, "baseline": baseline} {
+				if outcome.State != UnknownFullSuiteRequired || outcome.Reason != ReasonExternalMissing || !equalIDs(outcome.LocalizedIDs, []string{value.id}) {
+					t.Errorf("%s = %#v, want UNKNOWN external %s", name, outcome, value.id)
+				}
+			}
+		})
+	}
+}
+
 func TestReplayCanonicalizesRootPathAndOrder(t *testing.T) {
 	original := Corpus()
 	original[0].Baseline.Roots = []string{"root://a", "root://z"}
@@ -110,6 +136,9 @@ func TestReplayCanonicalizesRootPathAndOrder(t *testing.T) {
 	perturbed := append([]Case(nil), original...)
 	perturbed[0].Baseline.Roots = []string{"root://z", "root://a"}
 	perturbed[0].Baseline.Path.IDs = []string{"path://z", "path://a"}
+	relocated := append([]Case(nil), original...)
+	relocated[0].Baseline.WorkspaceRoot = "/physical/root-b"
+	relocated[0].Baseline.SourcePath = "/physical/root-b/case-01.go"
 	commands := append([]CommandAssertion(nil), perturbed[6].Baseline.Commands...)
 	for left, right := 0, len(commands)-1; left < right; left, right = left+1, right-1 {
 		commands[left], commands[right] = commands[right], commands[left]
@@ -129,6 +158,21 @@ func TestReplayCanonicalizesRootPathAndOrder(t *testing.T) {
 	if string(first) != string(second) {
 		t.Fatal("replay changed under root/path/order permutation")
 	}
+	third, err := ReplayJSON(relocated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(first) != string(third) {
+		t.Fatal("replay changed under physical workspace relocation")
+	}
+	relocated[0].Baseline.SourcePath = "/physical/root-b/other.go"
+	different, err := ReplayJSON(relocated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(first) == string(different) {
+		t.Fatal("replay discarded a genuinely different relative source path")
+	}
 	decoded, err := DecodeReplayJSON(second)
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +186,7 @@ func TestReplayCanonicalizesRootPathAndOrder(t *testing.T) {
 }
 
 func TestReplayRejectsSchemaAndDuplicates(t *testing.T) {
-	caseJSON := `{"id":"case-x","subject":"SEMANTIC_BINDING","roots":[],"commands":[],"paths":[]}`
+	caseJSON := `{"id":"case-x","subject":"SEMANTIC_BINDING","source":"case.go","roots":[],"commands":[],"paths":[]}`
 	valid := `{"schema":"` + SchemaVersion + `","cases":[` + caseJSON + `]}`
 	unknown := strings.Replace(valid, `,"cases"`, `,"extra":true,"cases"`, 1)
 	duplicateCase := `{"schema":"` + SchemaVersion + `","cases":[` + caseJSON + `,` + caseJSON + `]}`
@@ -156,5 +200,16 @@ func TestReplayRejectsSchemaAndDuplicates(t *testing.T) {
 	}
 	if _, err := DecodeReplayJSON([]byte(valid)); err != nil {
 		t.Fatal(err)
+	}
+	invalidPaths := map[string][2]string{
+		"relative-root":  {"workspace/fixture", "/workspace/fixture/case.go"},
+		"escaped-source": {"/workspace/fixture", "/workspace/fixture/../secret.go"},
+		"ambiguous-root": {"/workspace/./fixture", "/workspace/fixture/case.go"},
+		"outside-root":   {"/workspace/fixture", "/workspace/fixtures/case.go"},
+	}
+	for name, values := range invalidPaths {
+		if _, err := canonicalRootRelativePath(values[0], values[1]); err == nil {
+			t.Errorf("canonicalRootRelativePath accepted %s", name)
+		}
 	}
 }

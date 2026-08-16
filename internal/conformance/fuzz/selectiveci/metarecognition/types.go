@@ -89,6 +89,9 @@ type BaselineConfig struct {
 	ExpectedBlob     string
 	ObservedBlob     string
 	DeclarationName  string
+	DirectivePresent bool
+	WorkspaceRoot    string
+	SourcePath       string
 	RegistryPresent  bool
 	SourceMapPresent bool
 	Ambiguous        bool

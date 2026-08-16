@@ -34,7 +34,11 @@ func evaluateBinding(b BaselineConfig) Outcome {
 	if declaration == "" {
 		declaration = "Order"
 	}
-	source := []byte("package billing\n\n//gooo:bind id=\"billing://order\" role=\"HANDWRITTEN_IMPL\"\ntype " + declaration + " struct{}\n")
+	directive := "//gooo:bind id=\"billing://order\" role=\"HANDWRITTEN_IMPL\"\n"
+	if !b.DirectivePresent {
+		directive = ""
+	}
+	source := []byte("package billing\n\n" + directive + "type " + declaration + " struct{}\n")
 	sources := []semanticbinding.SourceFile{{Filename: b.ObservedFile, PackagePath: "billing", Source: source}}
 	if b.Ambiguous {
 		sources = append(sources, sources[0])
@@ -47,6 +51,9 @@ func evaluateBinding(b BaselineConfig) Outcome {
 	work := Work{Full: len(sources), Selected: len(result.Bindings), ProvRecords: len(result.Bindings) + len(result.Obligations), ProvPaths: len(result.Bindings)}
 	if result.Status == semanticbinding.StatusUnknown {
 		return productionOutcome(UnknownFullSuiteRequired, ReasonSourceMapRegistry, []string{b.StableID}, work)
+	}
+	if len(result.Bindings) == 0 {
+		return productionOutcome(UnknownFullSuiteRequired, ReasonSourceMapRegistry, []string{b.ObservedFile}, work)
 	}
 	if len(result.Bindings) != 1 || result.Bindings[0].ID != b.BoundID {
 		return productionOutcome(FailClosedUnsound, ReasonBlobWithoutID, []string{b.StableID}, work)
@@ -233,7 +240,7 @@ func commandIDs(values []CommandAssertion, include func(CommandAssertion) bool) 
 }
 
 func externalMissing(value ExternalAssertion) bool {
-	return value.Authenticity || value.Provider || value.Phase || value.Observer
+	return !(value.Authenticity && value.Provider && value.Phase && value.Observer)
 }
 
 func externalInputID(value ExternalAssertion) string {

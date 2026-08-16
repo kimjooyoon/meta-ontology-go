@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
+	"path/filepath"
 	"sort"
+	"strings"
 )
 
 type ReplayDocument struct {
@@ -16,6 +19,7 @@ type ReplayDocument struct {
 type ReplayCase struct {
 	ID       string   `json:"id"`
 	Subject  Subject  `json:"subject"`
+	Source   string   `json:"source"`
 	Roots    []string `json:"roots"`
 	Commands []string `json:"commands"`
 	Paths    []string `json:"paths"`
@@ -29,7 +33,11 @@ func ReplayJSON(cases []Case) ([]byte, error) {
 		for _, command := range value.Baseline.Commands {
 			commands = append(commands, command.ID)
 		}
-		document.Cases = append(document.Cases, ReplayCase{ID: value.ID, Subject: value.Baseline.Subject, Roots: value.Baseline.Roots, Commands: commands, Paths: value.Baseline.Path.IDs})
+		source, err := canonicalRootRelativePath(value.Baseline.WorkspaceRoot, value.Baseline.SourcePath)
+		if err != nil {
+			return nil, fmt.Errorf("case %s: %w", value.ID, err)
+		}
+		document.Cases = append(document.Cases, ReplayCase{ID: value.ID, Subject: value.Baseline.Subject, Source: source, Roots: value.Baseline.Roots, Commands: commands, Paths: value.Baseline.Path.IDs})
 	}
 	sort.Slice(document.Cases, func(i, j int) bool { return document.Cases[i].ID < document.Cases[j].ID })
 	if err := validateReplay(document); err != nil {
@@ -73,6 +81,10 @@ func validateReplay(document ReplayDocument) error {
 		if !value.Subject.Valid() {
 			return fmt.Errorf("replay case %q has invalid subject %q", value.ID, value.Subject)
 		}
+		if value.Source == "" || path.IsAbs(value.Source) || value.Source == "." || strings.Contains(value.Source, "\\") ||
+			path.Clean(value.Source) != value.Source || strings.HasPrefix(value.Source, "../") || value.Source == ".." {
+			return fmt.Errorf("replay case %q has invalid source %q", value.ID, value.Source)
+		}
 		if err := uniqueValues(value.ID, "root", value.Roots); err != nil {
 			return err
 		}
@@ -84,6 +96,40 @@ func validateReplay(document ReplayDocument) error {
 		}
 	}
 	return nil
+}
+
+func canonicalRootRelativePath(workspaceRoot, sourcePath string) (string, error) {
+	root, err := canonicalPhysicalPath(workspaceRoot, "workspace root")
+	if err != nil {
+		return "", err
+	}
+	source, err := canonicalPhysicalPath(sourcePath, "source path")
+	if err != nil {
+		return "", err
+	}
+	relative, err := filepath.Rel(filepath.FromSlash(root), filepath.FromSlash(source))
+	if err != nil {
+		return "", fmt.Errorf("source path %q escapes workspace root %q", sourcePath, workspaceRoot)
+	}
+	relative = filepath.ToSlash(relative)
+	if relative == "." || relative == ".." || strings.HasPrefix(relative, "../") {
+		return "", fmt.Errorf("source path %q escapes workspace root %q", sourcePath, workspaceRoot)
+	}
+	return relative, nil
+}
+
+func canonicalPhysicalPath(value, label string) (string, error) {
+	cleaned := strings.ReplaceAll(value, "\\", "/")
+	if cleaned == "" || !path.IsAbs(cleaned) || strings.Contains(cleaned, "//") {
+		return "", fmt.Errorf("%s %q is not an unambiguous absolute path", label, value)
+	}
+	parts := strings.Split(cleaned, "/")
+	for _, part := range parts[1:] {
+		if part == "" || part == "." || part == ".." {
+			return "", fmt.Errorf("%s %q contains an ambiguous component", label, value)
+		}
+	}
+	return path.Clean(cleaned), nil
 }
 
 func uniqueValues(caseID, kind string, values []string) error {
