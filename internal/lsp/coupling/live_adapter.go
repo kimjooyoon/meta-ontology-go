@@ -66,6 +66,15 @@ func NewLiveAdapter(data []byte) (*LiveAdapter, error) {
 // ResolveLive is the safe one-shot entry point. Invalid or malformed input
 // becomes a deterministic fail-closed diagnostic and never panics.
 func ResolveLive(request LiveRequest, data []byte) Result {
+	if request.Context == nil {
+		return liveFailure(request, OutcomeUnknown, DiagnosticMissingCancellation, DiagnosticWarning, "A cancellation token is required.")
+	}
+	if cancelled(request.Context) {
+		return liveFailure(request, OutcomeUnknown, DiagnosticCancelled, DiagnosticWarning, "The coupling query request was cancelled.")
+	}
+	if issue := validateLiveRequest(request); issue != nil {
+		return liveFailure(request, issue.outcome, issue.code, issue.severity, issue.message)
+	}
 	adapter, err := NewLiveAdapter(data)
 	if err != nil {
 		return liveFailure(request, OutcomeFailClosed, DiagnosticLiveInvalidEnvelope, DiagnosticError, "The coupling query envelope is invalid.")
@@ -142,6 +151,12 @@ type liveIssue struct {
 }
 
 func validateLiveRequest(request LiveRequest) *liveIssue {
+	if request.Query.Control.RequestCancellationVersion != request.Query.Control.ObservedCancellationVersion {
+		return &liveIssue{OutcomeUnknown, DiagnosticCancelled, DiagnosticWarning, "The coupling query cancellation ordering is stale."}
+	}
+	if request.Query.Control.RequestVersion != request.Query.Control.ObservedVersion {
+		return &liveIssue{OutcomeUnknown, DiagnosticWrongVersion, DiagnosticWarning, "The coupling query version ordering is stale."}
+	}
 	if request.DocumentURI == "" || strings.TrimSpace(request.DocumentURI) != request.DocumentURI {
 		return &liveIssue{OutcomeUnknown, DiagnosticDocumentMismatch, DiagnosticWarning, "The exact document URI is required."}
 	}
@@ -191,7 +206,34 @@ func validateLiveLocations(request LiveRequest, link couplingexplain.Explanation
 	if origin.StableID != link.CodeBinding.CodeSymbolID || target.StableID != link.Term.TermID {
 		return &liveIssue{OutcomeUnknown, DiagnosticAmbiguous, DiagnosticWarning, "The verified query location binding is ambiguous."}
 	}
+	for _, stableID := range liveRequiredLocationIDs(link) {
+		if _, ok := byID[stableID]; !ok {
+			return &liveIssue{OutcomeUnknown, DiagnosticLiveMissingLocations, DiagnosticWarning, "The verified query lacks a required contributing source location."}
+		}
+	}
 	return nil
+}
+
+func liveRequiredLocationIDs(link couplingexplain.ExplanationLink) []string {
+	values := []string{link.CodeBinding.CodeSymbolID, link.SemanticOwner, link.Term.TermID,
+		link.OriginPath.StartID, link.OriginPath.EndID, link.Verifier.EvidenceID}
+	for _, step := range link.OriginPath.Steps {
+		values = append(values, step.ToID, step.EvidenceRef)
+	}
+	values = append(values, link.Receipt.EvidenceRefs...)
+	seen := make(map[string]struct{}, len(values))
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if value == "" {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		result = append(result, value)
+	}
+	return result
 }
 
 func validateSourceLocation(request LiveRequest, location SourceLocation) *liveIssue {
@@ -201,7 +243,10 @@ func validateSourceLocation(request LiveRequest, location SourceLocation) *liveI
 	if err := validateIdentity(location.SourceMapID, "source map"); err != nil {
 		return &liveIssue{OutcomeFailClosed, DiagnosticLiveInvalidBinding, DiagnosticError, "The source location map ID is malformed."}
 	}
-	if err := validateDigest(location.SourceMapDigest); err != nil || location.SourceMapDigest != request.Query.SourceMapDigest {
+	if err := validateDigest(location.SourceMapDigest); err != nil {
+		return &liveIssue{OutcomeFailClosed, DiagnosticLiveInvalidBinding, DiagnosticError, "The source location map digest is malformed."}
+	}
+	if location.SourceMapDigest != request.Query.SourceMapDigest {
 		return &liveIssue{OutcomeUnknown, DiagnosticStaleSnapshot, DiagnosticWarning, "The source location map is stale."}
 	}
 	if location.URI == "" || strings.TrimSpace(location.URI) != location.URI {

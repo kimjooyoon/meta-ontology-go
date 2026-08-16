@@ -41,27 +41,14 @@ func liveHoverText(link couplingexplain.ExplanationLink) string {
 }
 
 func liveRelatedInformation(link couplingexplain.ExplanationLink, locations map[string]SourceLocation) []DiagnosticRelatedInformation {
-	ids := make([]string, 0, len(link.OriginPath.Steps)*2+len(link.Receipt.EvidenceRefs))
-	seen := make(map[string]struct{})
-	add := func(id string) {
-		if id == "" {
-			return
+	ids := make([]string, 0, len(liveRequiredLocationIDs(link)))
+	for _, id := range liveRequiredLocationIDs(link) {
+		if id == link.CodeBinding.CodeSymbolID || id == link.Term.TermID {
+			continue
 		}
-		if _, exists := seen[id]; exists {
-			return
+		if _, ok := locations[id]; ok {
+			ids = append(ids, id)
 		}
-		if _, ok := locations[id]; !ok {
-			return
-		}
-		seen[id] = struct{}{}
-		ids = append(ids, id)
-	}
-	for _, step := range link.OriginPath.Steps {
-		add(step.ToID)
-		add(step.EvidenceRef)
-	}
-	for _, id := range link.Receipt.EvidenceRefs {
-		add(id)
 	}
 	sort.Strings(ids)
 	related := make([]DiagnosticRelatedInformation, 0, len(ids))
