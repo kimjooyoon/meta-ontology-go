@@ -32,131 +32,16 @@ func Compare(input Input) Comparison {
 
 func evaluateBaseline(input Input, selectedIDs []string, fullSuite bool, name string) BaselineResult {
 	result := BaselineResult{Name: name, Decision: DecisionUnknown, Reason: ReasonMissingInput, FullSuite: fullSuite}
-	if input.Commands == nil || input.Paths == nil || selectedIDs == nil || len(selectedIDs) == 0 {
+	commands, ids, selected, failure := baselineSelection(input, selectedIDs)
+	if failure.reason != "" {
+		result.Decision, result.Reason = failure.decision, failure.reason
 		return result
 	}
-	commands := map[string]CommandRecord{}
-	for _, command := range input.Commands {
-		if _, exists := commands[command.ID]; exists {
-			result.Decision, result.Reason = DecisionFailClosed, ReasonDuplicateID
-			return result
-		}
-		commands[command.ID] = command
-	}
-	ids := sortedStrings(selectedIDs)
-	selected := map[string]struct{}{}
-	for _, id := range ids {
-		if _, exists := selected[id]; exists {
-			result.Decision, result.Reason = DecisionFailClosed, ReasonDuplicateID
-			return result
-		}
-		if _, exists := commands[id]; !exists {
-			result.Decision, result.Reason = DecisionFailClosed, ReasonDanglingID
-			return result
-		}
-		selected[id] = struct{}{}
-	}
-	vector := &PartialVector{}
-	groups := map[string]struct{}{}
-	var resourceKnown, pressureKnown bool = true, true
-	var cpu, memory, work, affected, applicable uint64
-	var peak uint64
-	for _, id := range ids {
-		command := commands[id]
-		if command.CPUCoreNS == nil || command.MemoryBytes == nil || command.PeakMemoryBytes == nil || command.WorkUnits == nil {
-			resourceKnown = false
-			continue
-		}
-		var ok bool
-		cpu, ok = add(cpu, *command.CPUCoreNS)
-		if !ok {
-			resourceKnown = false
-		}
-		memory, ok = add(memory, *command.MemoryBytes)
-		if !ok {
-			resourceKnown = false
-		}
-		work, ok = add(work, *command.WorkUnits)
-		if !ok {
-			resourceKnown = false
-		}
-		if *command.PeakMemoryBytes > peak {
-			peak = *command.PeakMemoryBytes
-		}
-		affected, ok = add(affected, 1)
-		if !ok {
-			resourceKnown = false
-		}
-		if command.Pressures == nil {
-			pressureKnown = false
-			continue
-		}
-		for _, pressure := range command.Pressures {
-			if pressure.Applicable == nil || pressure.IndependenceGroupID == "" {
-				pressureKnown = false
-				continue
-			}
-			if *pressure.Applicable {
-				applicable, ok = add(applicable, 1)
-				if !ok {
-					pressureKnown = false
-				}
-				groups[pressure.IndependenceGroupID] = struct{}{}
-			}
-		}
-	}
-	if resourceKnown {
-		vector.CPUCoreNS, vector.MemoryBytes, vector.PeakMemoryBytes, vector.WorkUnits, vector.AffectedStableIDs = U64(cpu), U64(memory), U64(peak), U64(work), U64(affected)
-	}
-	if pressureKnown {
-		vector.ApplicablePressures, vector.IndependentGroups = U64(applicable), U64(uint64(len(groups)))
-	}
-
-	provKnown := true
-	var records, finitePaths, numerator, denominator uint64
-	pathCount := 0
-	for _, path := range input.Paths {
-		if _, exists := selected[path.CommandID]; !exists {
-			continue
-		}
-		pathCount++
-		if path.RecordIDs == nil || path.Finite == nil || path.ClosureNumerator == nil || path.ClosureDenominator == nil {
-			provKnown = false
-			continue
-		}
-		var ok bool
-		records, ok = add(records, uint64(len(path.RecordIDs)))
-		if !ok {
-			provKnown = false
-		}
-		if *path.Finite {
-			finitePaths, ok = add(finitePaths, 1)
-			if !ok {
-				provKnown = false
-			}
-			numerator, ok = add(numerator, *path.ClosureNumerator)
-			if !ok {
-				provKnown = false
-			}
-			denominator, ok = add(denominator, *path.ClosureDenominator)
-			if !ok {
-				provKnown = false
-			}
-		}
-	}
-	if pathCount == 0 {
-		provKnown = false
-	}
-	if provKnown {
-		vector.UniquePROVRecords, vector.FinitePROVPaths = U64(records), U64(finitePaths)
-		vector.ClosureNumerator, vector.ClosureDenominator = U64(numerator), U64(denominator)
-	}
+	vector, resourceKnown, pressureKnown := baselineResources(commands, ids)
+	prov, provKnown := baselinePROV(input.Paths, selected)
+	mergePartial(vector, prov)
 	result.Vector = vector
-	if !resourceKnown {
-		result.Reason = ReasonMissingResource
-		return result
-	}
-	if !pressureKnown {
+	if !resourceKnown || !pressureKnown {
 		result.Reason = ReasonMissingResource
 		return result
 	}
@@ -166,6 +51,153 @@ func evaluateBaseline(input Input, selectedIDs []string, fullSuite bool, name st
 	}
 	result.Decision, result.Reason = DecisionPass, ReasonNone
 	return result
+}
+
+func baselineSelection(input Input, selectedIDs []string) (map[string]CommandRecord, []string, map[string]struct{}, validationFailure) {
+	if input.Commands == nil || input.Paths == nil || selectedIDs == nil || len(selectedIDs) == 0 {
+		return nil, nil, nil, validationFailure{DecisionUnknown, ReasonMissingInput}
+	}
+	commands := map[string]CommandRecord{}
+	for _, command := range input.Commands {
+		if _, exists := commands[command.ID]; exists {
+			return nil, nil, nil, validationFailure{DecisionFailClosed, ReasonDuplicateID}
+		}
+		commands[command.ID] = command
+	}
+	ids := sortedStrings(selectedIDs)
+	selected := map[string]struct{}{}
+	for _, id := range ids {
+		if _, exists := selected[id]; exists {
+			return nil, nil, nil, validationFailure{DecisionFailClosed, ReasonDuplicateID}
+		}
+		if _, exists := commands[id]; !exists {
+			return nil, nil, nil, validationFailure{DecisionFailClosed, ReasonDanglingID}
+		}
+		selected[id] = struct{}{}
+	}
+	return commands, ids, selected, validationFailure{}
+}
+
+func baselineResources(commands map[string]CommandRecord, ids []string) (*PartialVector, bool, bool) {
+	vector := &PartialVector{}
+	groups := map[string]struct{}{}
+	var cpu, memory, work, affected, applicable, peak uint64
+	resourceKnown, pressureKnown := true, true
+	for _, id := range ids {
+		command := commands[id]
+		if !baselineCommandResources(command, &cpu, &memory, &work, &affected, &peak) {
+			resourceKnown = false
+		}
+		if !baselinePressures(command, &applicable, groups) {
+			pressureKnown = false
+		}
+	}
+	if resourceKnown {
+		vector.CPUCoreNS, vector.MemoryBytes, vector.PeakMemoryBytes = U64(cpu), U64(memory), U64(peak)
+		vector.WorkUnits, vector.AffectedStableIDs = U64(work), U64(affected)
+	}
+	if pressureKnown {
+		vector.ApplicablePressures, vector.IndependentGroups = U64(applicable), U64(uint64(len(groups)))
+	}
+	return vector, resourceKnown, pressureKnown
+}
+
+func baselineCommandResources(command CommandRecord, cpu, memory, work, affected, peak *uint64) bool {
+	if command.CPUCoreNS == nil || command.MemoryBytes == nil || command.PeakMemoryBytes == nil || command.WorkUnits == nil {
+		return false
+	}
+	var ok bool
+	*cpu, ok = add(*cpu, *command.CPUCoreNS)
+	if !ok {
+		return false
+	}
+	*memory, ok = add(*memory, *command.MemoryBytes)
+	if !ok {
+		return false
+	}
+	*work, ok = add(*work, *command.WorkUnits)
+	if !ok {
+		return false
+	}
+	*affected, ok = add(*affected, 1)
+	if !ok {
+		return false
+	}
+	if *command.PeakMemoryBytes > *peak {
+		*peak = *command.PeakMemoryBytes
+	}
+	return true
+}
+
+func baselinePressures(command CommandRecord, applicable *uint64, groups map[string]struct{}) bool {
+	if command.Pressures == nil {
+		return false
+	}
+	known := true
+	for _, pressure := range command.Pressures {
+		if pressure.Applicable == nil || pressure.IndependenceGroupID == "" {
+			known = false
+			continue
+		}
+		if *pressure.Applicable {
+			var ok bool
+			*applicable, ok = add(*applicable, 1)
+			if !ok {
+				known = false
+			}
+			groups[pressure.IndependenceGroupID] = struct{}{}
+		}
+	}
+	return known
+}
+
+func baselinePROV(paths []PathRecord, selected map[string]struct{}) (*PartialVector, bool) {
+	vector := &PartialVector{}
+	var records, finitePaths, numerator, denominator uint64
+	pathCount := 0
+	known := true
+	for _, path := range paths {
+		if _, exists := selected[path.CommandID]; !exists {
+			continue
+		}
+		pathCount++
+		if path.RecordIDs == nil || path.Finite == nil || path.ClosureNumerator == nil || path.ClosureDenominator == nil {
+			known = false
+			continue
+		}
+		var ok bool
+		records, ok = add(records, uint64(len(path.RecordIDs)))
+		if !ok {
+			known = false
+		}
+		if *path.Finite {
+			finitePaths, ok = add(finitePaths, 1)
+			if !ok {
+				known = false
+			}
+			numerator, ok = add(numerator, *path.ClosureNumerator)
+			if !ok {
+				known = false
+			}
+			denominator, ok = add(denominator, *path.ClosureDenominator)
+			if !ok {
+				known = false
+			}
+		}
+	}
+	if pathCount == 0 {
+		known = false
+	}
+	if known {
+		vector.UniquePROVRecords, vector.FinitePROVPaths = U64(records), U64(finitePaths)
+		vector.ClosureNumerator, vector.ClosureDenominator = U64(numerator), U64(denominator)
+	}
+	return vector, known
+}
+
+func mergePartial(left, right *PartialVector) {
+	left.UniquePROVRecords, left.FinitePROVPaths = right.UniquePROVRecords, right.FinitePROVPaths
+	left.ClosureNumerator, left.ClosureDenominator = right.ClosureNumerator, right.ClosureDenominator
 }
 
 func strictlyBetter(oracle Vector, baseline *PartialVector) bool {
