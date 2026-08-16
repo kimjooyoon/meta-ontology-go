@@ -243,9 +243,7 @@ func receiptsClosePath(roots []semantic.ID, receipts map[string]CouplingReceipt,
 	for _, root := range roots {
 		rootSet[root] = struct{}{}
 	}
-	byObject := make(map[semantic.ID][]semantic.InferenceEdge)
 	for _, edge := range edges {
-		byObject[edge.ObjectID] = append(byObject[edge.ObjectID], edge)
 		if edge.Kind != semantic.InferenceAuthoritativeDeclaration && len(edge.SourceRoots) != 0 {
 			return false
 		}
@@ -262,34 +260,17 @@ func receiptsClosePath(roots []semantic.ID, receipts map[string]CouplingReceipt,
 		if err != nil {
 			return false
 		}
-		pathID, err := semantic.ParseIdentity(receipt.OriginPathID)
-		if err != nil {
+		chain, ok := selectedOracleChain(receipt.OriginPathIDs, edges)
+		if !ok || len(chain) == 0 {
 			return false
 		}
-		pathEdge, ok := edges[pathID]
-		if !ok || pathEdge.Kind != semantic.InferenceIndependentVerification || pathEdge.ObjectID != receiptID || pathEdge.SubjectID.String() != binding.CodeSymbolID {
+		pathEdge := chain[len(chain)-1]
+		first := chain[0]
+		if pathEdge.Kind != semantic.InferenceIndependentVerification || pathEdge.ObjectID != receiptID || pathEdge.SubjectID.String() != binding.CodeSymbolID || first.Kind != semantic.InferenceAuthoritativeDeclaration || len(first.SourceRoots) != 1 || first.SourceRoots[0] != first.SubjectID || first.ObjectID.String() != binding.SemanticOwnerID {
 			return false
 		}
-		chain := make([]semantic.InferenceEdge, 0, len(edges))
-		seenChain := make(map[semantic.ID]struct{})
-		current := pathEdge
-		for {
-			if _, duplicate := seenChain[current.RecordID]; duplicate {
-				return false
-			}
-			seenChain[current.RecordID] = struct{}{}
-			chain = append(chain, current)
-			if _, isRoot := rootSet[current.SubjectID]; isRoot {
-				if current.Kind != semantic.InferenceAuthoritativeDeclaration || len(current.SourceRoots) != 1 || current.SourceRoots[0] != current.SubjectID || current.ObjectID.String() != binding.SemanticOwnerID {
-					return false
-				}
-				break
-			}
-			predecessors := byObject[current.SubjectID]
-			if len(predecessors) != 1 {
-				return false
-			}
-			current = predecessors[0]
+		if _, isRoot := rootSet[first.SourceRoots[0]]; !isRoot {
+			return false
 		}
 		if !chainHasProjection(chain, binding) {
 			return false
@@ -318,7 +299,7 @@ func receiptsClosePath(roots []semantic.ID, receipts map[string]CouplingReceipt,
 		for _, ref := range claim.Evidence {
 			usedEvidence[ref.ID] = struct{}{}
 		}
-		if !sameEvidenceIDs(receipt.EvidenceRefs, claim.Evidence) || !hasIndependentEvidence(pathEdge.Evidence, evidence) {
+		if !sameReceiptEvidence(receipt.EvidenceRefs, chain, claim, evidence) || !hasIndependentEvidence(pathEdge.Evidence, evidence) {
 			return false
 		}
 	}
@@ -326,6 +307,104 @@ func receiptsClosePath(roots []semantic.ID, receipts map[string]CouplingReceipt,
 		return false
 	}
 	return rootsUsed(roots, edges, usedEdges)
+}
+
+func sameReceiptEvidence(ids []string, chain []semantic.InferenceEdge, claim semantic.SemanticChangeClaim, evidence map[semantic.ID]semantic.InferenceEvidence) bool {
+	if len(ids) != len(sortedUnique(ids)) {
+		return false
+	}
+	want := make(map[string]struct{})
+	for _, ref := range claim.Evidence {
+		want[ref.ID.String()] = struct{}{}
+	}
+	for _, edge := range chain {
+		for _, ref := range edge.Evidence {
+			want[ref.ID.String()] = struct{}{}
+		}
+	}
+	actual := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		parsed, err := semantic.ParseIdentity(id)
+		if err != nil {
+			return false
+		}
+		if _, ok := evidence[parsed]; !ok {
+			return false
+		}
+		actual[id] = struct{}{}
+	}
+	if len(actual) != len(want) {
+		return false
+	}
+	for id := range want {
+		if _, ok := actual[id]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// selectedOracleChain independently orders the exact edge IDs named by a
+// receipt. It intentionally does not call semantic path normalization: the
+// oracle owns the closure, start/end, fork, cycle, and disconnected checks.
+func selectedOracleChain(ids []string, edges map[semantic.ID]semantic.InferenceEdge) ([]semantic.InferenceEdge, bool) {
+	if len(ids) == 0 {
+		return nil, false
+	}
+	selected := make(map[semantic.ID]semantic.InferenceEdge, len(ids))
+	for _, rawID := range ids {
+		id, err := semantic.ParseIdentity(rawID)
+		if err != nil {
+			return nil, false
+		}
+		if _, duplicate := selected[id]; duplicate {
+			return nil, false
+		}
+		edge, ok := edges[id]
+		if !ok {
+			return nil, false
+		}
+		selected[id] = edge
+	}
+	bySubject := make(map[semantic.ID][]semantic.InferenceEdge, len(selected))
+	objects := make(map[semantic.ID]struct{}, len(selected))
+	for _, edge := range selected {
+		bySubject[edge.SubjectID] = append(bySubject[edge.SubjectID], edge)
+		objects[edge.ObjectID] = struct{}{}
+	}
+	var start semantic.ID
+	starts := 0
+	for subject := range bySubject {
+		if _, hasIncoming := objects[subject]; !hasIncoming {
+			start = subject
+			starts++
+		}
+	}
+	if starts != 1 {
+		return nil, false
+	}
+	ordered := make([]semantic.InferenceEdge, 0, len(selected))
+	visited := make(map[semantic.ID]struct{}, len(selected))
+	for {
+		outgoing := bySubject[start]
+		if len(outgoing) == 0 {
+			break
+		}
+		if len(outgoing) != 1 {
+			return nil, false
+		}
+		edge := outgoing[0]
+		if _, duplicate := visited[edge.RecordID]; duplicate {
+			return nil, false
+		}
+		visited[edge.RecordID] = struct{}{}
+		ordered = append(ordered, edge)
+		start = edge.ObjectID
+	}
+	if len(ordered) != len(selected) {
+		return nil, false
+	}
+	return ordered, true
 }
 
 func chainHasProjection(chain []semantic.InferenceEdge, binding CodeBinding) bool {

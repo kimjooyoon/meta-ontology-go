@@ -298,12 +298,19 @@ func baselinePath(input Input, registry map[string]CodeBinding, receipts []Coupl
 	}
 	for _, receipt := range receipts {
 		binding := registry[receipt.SurfaceID]
-		final, exists := edges[receipt.OriginPathID]
+		final, exists := semantic.InferenceEdge{}, false
+		for _, pathID := range receipt.OriginPathIDs {
+			candidate, ok := edges[pathID]
+			if ok && candidate.Kind == semantic.InferenceIndependentVerification {
+				final, exists = candidate, true
+				break
+			}
+		}
 		claim, claimExists := claims[receipt.ClaimRecordID]
 		if !exists || !claimExists || final.Kind != semantic.InferenceIndependentVerification || final.ObjectID.String() != receipt.ReceiptID || final.SubjectID.String() != binding.CodeSymbolID || claim.ObjectID.String() != receipt.ReceiptID || claim.SubjectID.String() != binding.SemanticOwnerID {
 			return false
 		}
-		if len(receipt.EvidenceRefs) == 0 || len(claim.Evidence) != len(receipt.EvidenceRefs) {
+		if len(receipt.EvidenceRefs) == 0 {
 			return false
 		}
 		current := final

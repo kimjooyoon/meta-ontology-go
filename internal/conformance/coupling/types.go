@@ -169,7 +169,7 @@ type CouplingReceipt struct {
 	SemanticDelta               string      `json:"semantic_delta,omitempty"`
 	SemanticDeltaDigest         string      `json:"semantic_delta_digest,omitempty"`
 	AuthoritativeSourceRef      string      `json:"authoritative_source_ref,omitempty"`
-	OriginPathID                string      `json:"origin_path_id"`
+	OriginPathIDs               []string    `json:"origin_path_ids"`
 	ClaimRecordID               string      `json:"claim_record_id"`
 	EvidenceRefs                []string    `json:"evidence_refs"`
 	State                       string      `json:"state"`

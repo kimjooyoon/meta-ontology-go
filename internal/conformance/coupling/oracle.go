@@ -367,7 +367,7 @@ func validateReceiptClaim(receipt CouplingReceipt, beforeDigest, afterDigest, de
 	default:
 		return oracleValidation{DecisionFailClosed, ReasonInvalidDelta}
 	}
-	if len(receipt.EvidenceRefs) == 0 || receipt.OriginPathID == "" || receipt.ClaimRecordID == "" {
+	if len(receipt.EvidenceRefs) == 0 || len(receipt.OriginPathIDs) == 0 || receipt.ClaimRecordID == "" {
 		return oracleValidation{DecisionFailClosed, ReasonPathMalformed}
 	}
 	return oracleValidation{}
