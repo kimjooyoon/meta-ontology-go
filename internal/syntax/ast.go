@@ -103,7 +103,9 @@ func (r TypeRefDecl) SourceSpan() Span { return r.Span }
 
 // FieldDecl is a latent ordered structural member of one EntityDecl. ID is an
 // explicit textual stable identifier and is never derived from Name or a
-// source path. The parser does not populate FieldDecl values yet.
+// source path. The ordinary parser keeps fields deferred; the explicit
+// supported parser populates this carrier without resolving types or deriving
+// identities.
 type FieldDecl struct {
 	Span        Span
 	ID          string
@@ -139,6 +141,8 @@ type EntityDecl struct {
 	NameSpan Span
 	IDSpan   Span
 	Fields   []FieldDecl
+	// FieldsPresent distinguishes an explicit empty fields block from no block.
+	FieldsPresent bool
 }
 
 func (*EntityDecl) declarationNode()   {}

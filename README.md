@@ -105,6 +105,7 @@ evidence are present.
 [docs/governance.md](docs/governance.md) records the SSOT boundary, BX laws, line
 caps, and evidence policy. [docs/metrics-rfc.md](docs/metrics-rfc.md) defines
 the design-only deterministic metric contract. [docs/conformance.md](docs/conformance.md)
-is the runnable example index.
+is the runnable example index. The [Deterministic CI Evolution Retrospective](docs/deterministic-ci-evolution.md)
+is the append-only read-only evidence record.
 
 [W3C PROV-O]: https://www.w3.org/TR/prov-o/
