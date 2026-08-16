@@ -1,5 +1,5 @@
 // Package couplingmanifest adapts source-backed analyzer snapshots into the
-// identity-only change manifest consumed by the coupling detector.
+// ChangeManifest contract consumed by the coupling detector.
 package couplingmanifest
 
 import (
@@ -7,18 +7,25 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci"
 	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 const (
-	// SchemaV1 is the lossless, adapter-owned wire schema for Manifest.
-	SchemaV1 = "gooo/coupling-change-manifest-adapter/v1"
+	// SchemaV1 is the detector-owned wire schema. The adapter deliberately does
+	// not publish a second manifest schema.
+	SchemaV1 = "gooo/code-semantic-coupling-manifest/v1"
+	// ManifestSchemaV1 is the detector vocabulary spelling of SchemaV1.
+	ManifestSchemaV1 = SchemaV1
 	// FormatVersion is the descriptive spelling of SchemaV1.
 	FormatVersion = SchemaV1
 	// AuthoritySchemaV1 identifies the in-memory registry/source-map contract.
 	AuthoritySchemaV1 = "gooo/coupling-authority/v1"
 )
 
-// Status is the closed construction state of a coupling manifest.
+const absentDigest = "0000000000000000000000000000000000000000000000000000000000000000"
+
+// Status describes the adapter construction state. It is construction
+// metadata, not part of the detector ChangeManifest wire object.
 type Status string
 
 const (
@@ -26,7 +33,6 @@ const (
 	StatusUnknown    Status = "UNKNOWN"
 	StatusFailClosed Status = "FAIL_CLOSED"
 
-	// Complete, Unknown, and FailClosed are concise compatibility spellings.
 	Complete   = StatusComplete
 	Unknown    = StatusUnknown
 	FailClosed = StatusFailClosed
@@ -68,14 +74,35 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
 
-// SourceMapBinding is one explicit source-map/registry record for one side of
-// a snapshot. Path is checked as a source locator, but never enters manifest
-// identity. Every identity tuple member must be a stable semantic identifier.
+// SourceMapBinding is the exact detector registry binding shape. Presentation
+// labels are retained for callers but never enter registry or manifest identity.
 type SourceMapBinding struct {
-	SurfaceID              string
-	CodeSymbolID           string
-	SemanticOwnerID        string
-	SourceMapID            string
+	SourceMapID   semantic.ID `json:"source_map_id"`
+	BindingDigest string      `json:"binding_digest"`
+	PackageLabel  string      `json:"package_label,omitempty"`
+	FileLabel     string      `json:"file_label,omitempty"`
+	SourceSpan    string      `json:"source_span,omitempty"`
+}
+
+// Surface is the exact detector registry surface shape. The four stable IDs
+// remain distinct; labels and names are not represented as identity.
+type Surface struct {
+	SurfaceID         semantic.ID      `json:"surface_id"`
+	CodeSymbolID      semantic.ID      `json:"code_symbol_id"`
+	SemanticOwnerID   semantic.ID      `json:"semantic_owner_id"`
+	Binding           SourceMapBinding `json:"binding"`
+	PresentationLabel string           `json:"presentation_label,omitempty"`
+}
+
+// SourceMapObservation binds one analyzer snapshot observation to a
+// registered surface. BindingDigest is the analyzer/selectiveci binding
+// digest; SourceMapBindingDigest is the detector registry/source-map digest.
+// Path and role are source locators/validation data, not identity.
+type SourceMapObservation struct {
+	SurfaceID              semantic.ID
+	CodeSymbolID           semantic.ID
+	SemanticOwnerID        semantic.ID
+	SourceMapID            semantic.ID
 	Role                   semanticbinding.Role
 	Path                   string
 	BlobDigest             string
@@ -83,21 +110,13 @@ type SourceMapBinding struct {
 	SourceMapBindingDigest string
 }
 
-// Binding is a vocabulary alias for SourceMapBinding.
-type Binding = SourceMapBinding
-
-// Surface is one registered authority identity. The inventory is complete and
-// is independent of which side of the snapshot currently contains a source.
-type Surface struct {
-	SurfaceID       string
-	CodeSymbolID    string
-	SemanticOwnerID string
-	SourceMapID     string
-}
+// SourceMapRecord and Observation are vocabulary aliases for side bindings.
+type SourceMapRecord = SourceMapObservation
+type Observation = SourceMapObservation
 
 // RegistrySourceMap is the explicit authority binding for both snapshots.
-// Before and Head must be non-nil, including when one side is an explicit
-// empty source set. Candidate and derived records are never authoritative.
+// Before and Head must be non-nil, including for an explicit empty source set.
+// Candidate and derived records are observations, never authority.
 type RegistrySourceMap struct {
 	Schema            string
 	RegistryDigest    string
@@ -105,17 +124,13 @@ type RegistrySourceMap struct {
 	ToolchainDigest   string
 	ProfileDigest     string
 	Inventory         []Surface
-	Before            []SourceMapBinding
-	Head              []SourceMapBinding
-	CandidateBindings []SourceMapBinding
-	DerivedBindings   []SourceMapBinding
+	Before            []SourceMapObservation
+	Head              []SourceMapObservation
+	CandidateBindings []SourceMapObservation
+	DerivedBindings   []SourceMapObservation
 }
 
-// Authority is a descriptive alias for RegistrySourceMap.
 type Authority = RegistrySourceMap
-
-// Registry and SourceMap are concise vocabulary aliases for the explicit
-// combined authority binding.
 type Registry = RegistrySourceMap
 type SourceMap = RegistrySourceMap
 
@@ -127,32 +142,33 @@ type Input struct {
 	Authority RegistrySourceMap
 }
 
-// ManifestInput is a vocabulary alias for Input.
 type ManifestInput = Input
 
-// Component is one resolved identity-bearing mechanical change. It contains
-// exact source/blob binding digests, but no paths, names, aliases, labels, or
-// prose.
-type Component struct {
-	SurfaceID                    string `json:"surface_id"`
-	CodeSymbolID                 string `json:"code_symbol_id"`
-	SemanticOwnerID              string `json:"semantic_owner_id"`
-	SourceMapID                  string `json:"source_map_id"`
-	BeforePresent                bool   `json:"before_present"`
-	AfterPresent                 bool   `json:"after_present"`
-	BeforeBindingDigest          string `json:"before_binding_digest"`
-	AfterBindingDigest           string `json:"after_binding_digest"`
-	BeforeSourceMapBindingDigest string `json:"before_source_map_binding_digest"`
-	AfterSourceMapBindingDigest  string `json:"after_source_map_binding_digest"`
-	BeforeBlobDigest             string `json:"before_blob_digest"`
-	AfterBlobDigest              string `json:"after_blob_digest"`
+// ManifestEntry is the exact detector ManifestEntry contract. The additional
+// fields are adapter-only metadata and are omitted from the wire object.
+type ManifestEntry struct {
+	SurfaceID           semantic.ID `json:"surface_id"`
+	CodeSymbolID        semantic.ID `json:"code_symbol_id"`
+	SemanticOwnerID     semantic.ID `json:"semantic_owner_id"`
+	BeforeBindingDigest string      `json:"before_binding_digest"`
+	AfterBindingDigest  string      `json:"after_binding_digest"`
+	BeforeBlobDigest    string      `json:"before_blob_digest"`
+	AfterBlobDigest     string      `json:"after_blob_digest"`
+	BeforeSourcePath    string      `json:"before_source_path"`
+	AfterSourcePath     string      `json:"after_source_path"`
+
+	SourceMapID                  semantic.ID `json:"-"`
+	BeforePresent                bool        `json:"-"`
+	AfterPresent                 bool        `json:"-"`
+	BeforeSourceMapBindingDigest string      `json:"-"`
+	AfterSourceMapBindingDigest  string      `json:"-"`
 }
 
-// ManifestEntry is the detector-facing name for Component.
-type ManifestEntry = Component
+// Component is retained as a vocabulary alias for detector entries.
+type Component = ManifestEntry
 
-// ComponentCounts are deterministic counts only; they are not an
-// authorization or resource decision.
+// ComponentCounts are deterministic adapter metadata. They are recomputed
+// from resolved entries and never participate in authorization.
 type ComponentCounts struct {
 	Registered int `json:"registered"`
 	Before     int `json:"before"`
@@ -160,34 +176,38 @@ type ComponentCounts struct {
 	Resolved   int `json:"resolved"`
 }
 
-// Work is the deterministic amount of coupling-detector work described by a
-// manifest. No command, authorization, or write instruction is represented.
+// Work is deterministic adapter metadata only.
 type Work struct {
 	ComponentCount int `json:"component_count"`
 	WorkUnits      int `json:"work_units"`
 }
 
-// Manifest is the strict canonical coupling-detector input. A COMPLETE
-// manifest with an explicit full inventory is distinct from UNKNOWN, whose
-// resolved surface IDs and entries are empty.
+// Manifest is the detector ChangeManifest wire contract. Status, source-map
+// digest, resolved IDs, counts, and work remain adapter metadata and are not
+// serialized as extra detector fields.
 type Manifest struct {
 	Schema               string          `json:"schema"`
-	Status               Status          `json:"status"`
-	ObservationComplete  bool            `json:"observation_complete"`
-	FullSuiteRequired    bool            `json:"full_suite_required"`
-	BeforeSnapshotDigest string          `json:"before_snapshot_digest"`
-	HeadSnapshotDigest   string          `json:"head_snapshot_digest"`
+	Complete             bool            `json:"complete"`
+	ZeroChange           bool            `json:"zero_change"`
 	RegistryDigest       string          `json:"registry_digest"`
-	SourceMapDigest      string          `json:"source_map_digest"`
 	ToolchainDigest      string          `json:"toolchain_digest"`
 	ProfileDigest        string          `json:"profile_digest"`
-	ReasonCode           ErrorCode       `json:"reason_code"`
-	ResolvedSurfaceIDs   []string        `json:"resolved_surface_ids"`
+	BeforeSnapshotDigest string          `json:"before_snapshot_digest"`
+	AfterSnapshotDigest  string          `json:"after_snapshot_digest"`
 	Entries              []ManifestEntry `json:"entries"`
-	Counts               ComponentCounts `json:"counts"`
-	Work                 Work            `json:"work"`
 	Digest               string          `json:"digest"`
+
+	Status             Status          `json:"-"`
+	FullSuiteRequired  bool            `json:"-"`
+	ReasonCode         ErrorCode       `json:"-"`
+	SourceMapDigest    string          `json:"-"`
+	ResolvedSurfaceIDs []semantic.ID   `json:"-"`
+	Counts             ComponentCounts `json:"-"`
+	Work               Work            `json:"-"`
+	HeadSnapshotDigest string          `json:"-"` // compatibility alias for callers using “head”.
+
+	statsKnown bool
 }
 
-// ChangeManifest is a vocabulary alias for Manifest.
+// ChangeManifest is the detector-facing vocabulary spelling.
 type ChangeManifest = Manifest

@@ -2,29 +2,32 @@ package couplingmanifest
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
-// CanonicalJSON returns the strict canonical JSON representation of a
-// digest-sealed manifest.
+// CanonicalJSON returns the strict detector ChangeManifest JSON representation.
+// Source paths are serialized for detector validation but are excluded from the
+// digest identity, as required by the detector contract.
 func (m Manifest) CanonicalJSON() ([]byte, error) {
-	normalized, unsigned, err := canonicalUnsigned(m)
+	normalized, _, err := canonicalUnsigned(m)
 	if err != nil {
 		return nil, err
 	}
-	if !validDigest(m.Digest) || digest(unsigned) != m.Digest {
+	if _, err := rawDigest(m.Digest); err != nil || stableDigest(manifestCanonical(normalized)) != m.Digest {
 		return nil, codecError(CodeInvalidManifest, "manifest digest does not match canonical content")
 	}
 	return json.Marshal(wireForManifest(normalized))
 }
 
-// StableHash returns the digest bound into the canonical manifest.
+// StableHash returns the raw SHA-256 digest bound into the manifest.
 func (m Manifest) StableHash() string { return m.Digest }
 
 // Canonical returns canonical JSON or an empty string when the manifest is
@@ -103,47 +106,57 @@ func EncodeManifestJSON(manifest Manifest) ([]byte, error) { return EncodeJSON(m
 
 type manifestWire struct {
 	Schema               string          `json:"schema"`
-	Status               Status          `json:"status"`
-	ObservationComplete  bool            `json:"observation_complete"`
-	FullSuiteRequired    bool            `json:"full_suite_required"`
-	BeforeSnapshotDigest string          `json:"before_snapshot_digest"`
-	HeadSnapshotDigest   string          `json:"head_snapshot_digest"`
+	Complete             bool            `json:"complete"`
+	ZeroChange           bool            `json:"zero_change"`
 	RegistryDigest       string          `json:"registry_digest"`
-	SourceMapDigest      string          `json:"source_map_digest"`
 	ToolchainDigest      string          `json:"toolchain_digest"`
 	ProfileDigest        string          `json:"profile_digest"`
-	ReasonCode           ErrorCode       `json:"reason_code"`
-	ResolvedSurfaceIDs   []string        `json:"resolved_surface_ids"`
+	BeforeSnapshotDigest string          `json:"before_snapshot_digest"`
+	AfterSnapshotDigest  string          `json:"after_snapshot_digest"`
 	Entries              []ManifestEntry `json:"entries"`
-	Counts               ComponentCounts `json:"counts"`
-	Work                 Work            `json:"work"`
 	Digest               string          `json:"digest"`
 }
 
 type unsignedManifestWire struct {
 	Schema               string          `json:"schema"`
-	Status               Status          `json:"status"`
-	ObservationComplete  bool            `json:"observation_complete"`
-	FullSuiteRequired    bool            `json:"full_suite_required"`
-	BeforeSnapshotDigest string          `json:"before_snapshot_digest"`
-	HeadSnapshotDigest   string          `json:"head_snapshot_digest"`
+	Complete             bool            `json:"complete"`
+	ZeroChange           bool            `json:"zero_change"`
 	RegistryDigest       string          `json:"registry_digest"`
-	SourceMapDigest      string          `json:"source_map_digest"`
 	ToolchainDigest      string          `json:"toolchain_digest"`
 	ProfileDigest        string          `json:"profile_digest"`
-	ReasonCode           ErrorCode       `json:"reason_code"`
-	ResolvedSurfaceIDs   []string        `json:"resolved_surface_ids"`
+	BeforeSnapshotDigest string          `json:"before_snapshot_digest"`
+	AfterSnapshotDigest  string          `json:"after_snapshot_digest"`
 	Entries              []ManifestEntry `json:"entries"`
-	Counts               ComponentCounts `json:"counts"`
-	Work                 Work            `json:"work"`
 }
 
 func wireForManifest(m Manifest) manifestWire {
-	return manifestWire{Schema: m.Schema, Status: m.Status, ObservationComplete: m.ObservationComplete, FullSuiteRequired: m.FullSuiteRequired, BeforeSnapshotDigest: m.BeforeSnapshotDigest, HeadSnapshotDigest: m.HeadSnapshotDigest, RegistryDigest: m.RegistryDigest, SourceMapDigest: m.SourceMapDigest, ToolchainDigest: m.ToolchainDigest, ProfileDigest: m.ProfileDigest, ReasonCode: m.ReasonCode, ResolvedSurfaceIDs: m.ResolvedSurfaceIDs, Entries: m.Entries, Counts: m.Counts, Work: m.Work, Digest: m.Digest}
+	return manifestWire{
+		Schema: m.Schema, Complete: m.Complete, ZeroChange: m.ZeroChange,
+		RegistryDigest: m.RegistryDigest, ToolchainDigest: m.ToolchainDigest,
+		ProfileDigest: m.ProfileDigest, BeforeSnapshotDigest: m.BeforeSnapshotDigest,
+		AfterSnapshotDigest: m.AfterSnapshotDigest, Entries: m.Entries, Digest: m.Digest,
+	}
 }
 
 func manifestFromWire(wire manifestWire) Manifest {
-	return Manifest{Schema: wire.Schema, Status: wire.Status, ObservationComplete: wire.ObservationComplete, FullSuiteRequired: wire.FullSuiteRequired, BeforeSnapshotDigest: wire.BeforeSnapshotDigest, HeadSnapshotDigest: wire.HeadSnapshotDigest, RegistryDigest: wire.RegistryDigest, SourceMapDigest: wire.SourceMapDigest, ToolchainDigest: wire.ToolchainDigest, ProfileDigest: wire.ProfileDigest, ReasonCode: wire.ReasonCode, ResolvedSurfaceIDs: wire.ResolvedSurfaceIDs, Entries: wire.Entries, Counts: wire.Counts, Work: wire.Work, Digest: wire.Digest}
+	manifest := Manifest{
+		Schema: wire.Schema, Complete: wire.Complete, ZeroChange: wire.ZeroChange,
+		RegistryDigest: wire.RegistryDigest, ToolchainDigest: wire.ToolchainDigest,
+		ProfileDigest: wire.ProfileDigest, BeforeSnapshotDigest: wire.BeforeSnapshotDigest,
+		AfterSnapshotDigest: wire.AfterSnapshotDigest, Entries: wire.Entries,
+		Digest: wire.Digest, HeadSnapshotDigest: wire.AfterSnapshotDigest,
+		Status: StatusUnknown, FullSuiteRequired: !wire.Complete,
+	}
+	if wire.Complete {
+		manifest.Status = StatusComplete
+	}
+	manifest.ResolvedSurfaceIDs = make([]semantic.ID, 0, len(wire.Entries))
+	for _, entry := range wire.Entries {
+		manifest.ResolvedSurfaceIDs = append(manifest.ResolvedSurfaceIDs, entry.SurfaceID)
+	}
+	manifest.Counts = countEntries(wire.Entries)
+	manifest.Work = Work{ComponentCount: len(wire.Entries), WorkUnits: len(wire.Entries)}
+	return manifest
 }
 
 func canonicalUnsigned(m Manifest) (Manifest, []byte, error) {
@@ -151,7 +164,12 @@ func canonicalUnsigned(m Manifest) (Manifest, []byte, error) {
 	if err != nil {
 		return Manifest{}, nil, err
 	}
-	unsigned, err := json.Marshal(unsignedManifestWire{Schema: normalized.Schema, Status: normalized.Status, ObservationComplete: normalized.ObservationComplete, FullSuiteRequired: normalized.FullSuiteRequired, BeforeSnapshotDigest: normalized.BeforeSnapshotDigest, HeadSnapshotDigest: normalized.HeadSnapshotDigest, RegistryDigest: normalized.RegistryDigest, SourceMapDigest: normalized.SourceMapDigest, ToolchainDigest: normalized.ToolchainDigest, ProfileDigest: normalized.ProfileDigest, ReasonCode: normalized.ReasonCode, ResolvedSurfaceIDs: normalized.ResolvedSurfaceIDs, Entries: normalized.Entries, Counts: normalized.Counts, Work: normalized.Work})
+	unsigned, err := json.Marshal(unsignedManifestWire{
+		Schema: normalized.Schema, Complete: normalized.Complete, ZeroChange: normalized.ZeroChange,
+		RegistryDigest: normalized.RegistryDigest, ToolchainDigest: normalized.ToolchainDigest,
+		ProfileDigest: normalized.ProfileDigest, BeforeSnapshotDigest: normalized.BeforeSnapshotDigest,
+		AfterSnapshotDigest: normalized.AfterSnapshotDigest, Entries: normalized.Entries,
+	})
 	if err != nil {
 		return Manifest{}, nil, codecError(CodeInvalidManifest, "encode unsigned manifest: %v", err)
 	}
@@ -162,52 +180,70 @@ func normalizeManifest(m Manifest) (Manifest, error) {
 	if m.Schema != SchemaV1 {
 		return Manifest{}, codecError(CodeInvalidSchema, "schema %q is not %q", m.Schema, SchemaV1)
 	}
-	switch m.Status {
-	case StatusComplete:
-		if !m.ObservationComplete || m.FullSuiteRequired || m.ReasonCode != "" {
-			return Manifest{}, codecError(CodeInvalidStatus, "COMPLETE manifest flags or reason are inconsistent")
-		}
-		for value, label := range map[string]string{m.BeforeSnapshotDigest: "before snapshot digest", m.HeadSnapshotDigest: "head snapshot digest", m.RegistryDigest: "registry digest", m.SourceMapDigest: "source-map digest", m.ToolchainDigest: "toolchain digest", m.ProfileDigest: "profile digest"} {
-			if !validDigest(value) {
-				return Manifest{}, codecError(CodeInvalidManifest, "%s is malformed", label)
-			}
-		}
-	case StatusUnknown, StatusFailClosed:
-		if m.ObservationComplete || !m.FullSuiteRequired || !validReason(m.ReasonCode) {
-			return Manifest{}, codecError(CodeInvalidStatus, "non-complete manifest flags or reason are inconsistent")
-		}
-		for _, value := range []string{m.BeforeSnapshotDigest, m.HeadSnapshotDigest, m.RegistryDigest, m.SourceMapDigest, m.ToolchainDigest, m.ProfileDigest} {
-			if value != "" && !validDigest(value) {
-				return Manifest{}, codecError(CodeInvalidManifest, "non-complete manifest has a malformed digest")
-			}
-		}
-	default:
-		return Manifest{}, codecError(CodeInvalidStatus, "unknown manifest status %q", m.Status)
+	if m.AfterSnapshotDigest == "" && m.HeadSnapshotDigest != "" {
+		m.AfterSnapshotDigest = m.HeadSnapshotDigest
 	}
-	if m.ResolvedSurfaceIDs == nil || m.Entries == nil {
-		return Manifest{}, codecError(CodeInvalidManifest, "resolved surface IDs and entries must be explicit arrays")
+	if m.HeadSnapshotDigest != "" && m.AfterSnapshotDigest != m.HeadSnapshotDigest {
+		return Manifest{}, codecError(CodeInvalidManifest, "after/head snapshot digest aliases disagree")
 	}
-	m.ResolvedSurfaceIDs = append([]string(nil), m.ResolvedSurfaceIDs...)
-	sort.Strings(m.ResolvedSurfaceIDs)
-	if !uniqueIDs(m.ResolvedSurfaceIDs) {
-		return Manifest{}, codecError(CodeInvalidManifest, "resolved surface IDs are duplicated or malformed")
+	if m.Entries == nil {
+		return Manifest{}, codecError(CodeInvalidManifest, "manifest entries must be an explicit array")
 	}
 	m.Entries = append([]ManifestEntry(nil), m.Entries...)
 	sort.Slice(m.Entries, func(i, j int) bool { return m.Entries[i].SurfaceID < m.Entries[j].SurfaceID })
 	if err := normalizeEntries(m.Entries); err != nil {
 		return Manifest{}, err
 	}
-	if len(m.ResolvedSurfaceIDs) != len(m.Entries) {
-		return Manifest{}, codecError(CodeInvalidManifest, "resolved surface IDs and entries are not the same complete set")
-	}
-	for i, entry := range m.Entries {
-		if m.ResolvedSurfaceIDs[i] != entry.SurfaceID {
-			return Manifest{}, codecError(CodeInvalidManifest, "resolved surface IDs and entries are not aligned")
+	if m.Complete {
+		for _, value := range []struct {
+			value string
+			name  string
+		}{
+			{m.RegistryDigest, "registry digest"},
+			{m.ToolchainDigest, "toolchain digest"},
+			{m.ProfileDigest, "profile digest"},
+			{m.BeforeSnapshotDigest, "before snapshot digest"},
+			{m.AfterSnapshotDigest, "after snapshot digest"},
+		} {
+			if _, err := rawDigest(value.value); err != nil {
+				return Manifest{}, codecError(CodeInvalidManifest, "%s is malformed", value.name)
+			}
+		}
+		if m.ZeroChange != isZeroChange(m.Entries) {
+			return Manifest{}, codecError(CodeInvalidManifest, "zero-change claim is inconsistent with entries")
+		}
+	} else {
+		if m.ZeroChange || len(m.Entries) != 0 {
+			return Manifest{}, codecError(CodeInvalidStatus, "incomplete manifest must have zero-change false and no entries")
+		}
+		for _, value := range []string{m.RegistryDigest, m.ToolchainDigest, m.ProfileDigest, m.BeforeSnapshotDigest, m.AfterSnapshotDigest} {
+			if value != "" {
+				if _, err := rawDigest(value); err != nil {
+					return Manifest{}, codecError(CodeInvalidManifest, "incomplete manifest has a malformed digest")
+				}
+			}
 		}
 	}
-	if m.Counts != countEntries(m.Entries) || m.Work.ComponentCount != len(m.Entries) || m.Work.WorkUnits != len(m.Entries) {
-		return Manifest{}, codecError(CodeInvalidManifest, "component counts or work are inconsistent")
+	if m.SourceMapDigest != "" {
+		if _, err := rawDigest(m.SourceMapDigest); err != nil {
+			return Manifest{}, codecError(CodeInvalidManifest, "source-map digest is malformed")
+		}
 	}
+	if m.statsKnown {
+		if m.Status == "" {
+			return Manifest{}, codecError(CodeInvalidStatus, "adapter status is missing")
+		}
+		if m.Complete && (m.Status != StatusComplete || m.FullSuiteRequired || m.ReasonCode != "") {
+			return Manifest{}, codecError(CodeInvalidStatus, "complete adapter status is inconsistent")
+		}
+		if !m.Complete && (m.Status == StatusComplete || !m.FullSuiteRequired || !validReason(m.ReasonCode)) {
+			return Manifest{}, codecError(CodeInvalidStatus, "incomplete adapter status is inconsistent")
+		}
+		if m.Counts != countEntries(m.Entries) || m.Work.ComponentCount != len(m.Entries) || m.Work.WorkUnits != len(m.Entries) {
+			return Manifest{}, codecError(CodeInvalidManifest, "component counts or work are inconsistent")
+		}
+	}
+	m.HeadSnapshotDigest = m.AfterSnapshotDigest
 	return m, nil
 }
 
@@ -225,10 +261,9 @@ func countEntries(entries []ManifestEntry) ComponentCounts {
 }
 
 func normalizeEntries(entries []ManifestEntry) error {
-	seen := make(map[string]struct{}, len(entries))
-	seenSymbols := make(map[string]struct{}, len(entries))
-	seenOwners := make(map[string]struct{}, len(entries))
-	seenMaps := make(map[string]struct{}, len(entries))
+	seen := make(map[semantic.ID]struct{}, len(entries))
+	seenSymbols := make(map[semantic.ID]struct{}, len(entries))
+	seenOwners := make(map[semantic.ID]struct{}, len(entries))
 	for _, entry := range entries {
 		if _, err := normalizeID(entry.SurfaceID); err != nil {
 			return codecError(CodeInvalidManifest, "entry has malformed surface ID")
@@ -237,9 +272,15 @@ func normalizeEntries(entries []ManifestEntry) error {
 			return codecError(CodeInvalidManifest, "entry surface IDs are duplicated")
 		}
 		seen[entry.SurfaceID] = struct{}{}
-		for _, value := range []string{entry.CodeSymbolID, entry.SemanticOwnerID, entry.SourceMapID} {
-			if _, err := normalizeID(value); err != nil {
-				return codecError(CodeInvalidManifest, "entry %q has a malformed identity tuple", entry.SurfaceID)
+		for _, value := range []struct {
+			id   semantic.ID
+			name string
+		}{
+			{entry.CodeSymbolID, "code symbol ID"},
+			{entry.SemanticOwnerID, "semantic owner ID"},
+		} {
+			if _, err := normalizeID(value.id); err != nil {
+				return codecError(CodeInvalidManifest, "entry %q has malformed %s", entry.SurfaceID, value.name)
 			}
 		}
 		if _, exists := seenSymbols[entry.CodeSymbolID]; exists {
@@ -248,37 +289,26 @@ func normalizeEntries(entries []ManifestEntry) error {
 		if _, exists := seenOwners[entry.SemanticOwnerID]; exists {
 			return codecError(CodeInvalidManifest, "entry semantic owner IDs are duplicated")
 		}
-		if _, exists := seenMaps[entry.SourceMapID]; exists {
-			return codecError(CodeInvalidManifest, "entry source-map IDs are duplicated")
-		}
 		seenSymbols[entry.CodeSymbolID] = struct{}{}
 		seenOwners[entry.SemanticOwnerID] = struct{}{}
-		seenMaps[entry.SourceMapID] = struct{}{}
-		if !entry.BeforePresent && (entry.BeforeBindingDigest != "" || entry.BeforeSourceMapBindingDigest != "" || entry.BeforeBlobDigest != "") || !entry.AfterPresent && (entry.AfterBindingDigest != "" || entry.AfterSourceMapBindingDigest != "" || entry.AfterBlobDigest != "") {
-			return codecError(CodeInvalidManifest, "entry %q has a digest for an absent side", entry.SurfaceID)
+		for _, value := range []struct {
+			value string
+			name  string
+		}{
+			{entry.BeforeBindingDigest, "before binding digest"},
+			{entry.AfterBindingDigest, "after binding digest"},
+			{entry.BeforeBlobDigest, "before blob digest"},
+			{entry.AfterBlobDigest, "after blob digest"},
+		} {
+			if _, err := rawDigest(value.value); err != nil {
+				return codecError(CodeInvalidManifest, "entry %q has a malformed %s", entry.SurfaceID, value.name)
+			}
 		}
-		if entry.BeforePresent && (!validRawDigest(entry.BeforeBindingDigest) || !validRawDigest(entry.BeforeSourceMapBindingDigest) || !validDigest(entry.BeforeBlobDigest)) || entry.AfterPresent && (!validRawDigest(entry.AfterBindingDigest) || !validRawDigest(entry.AfterSourceMapBindingDigest) || !validDigest(entry.AfterBlobDigest)) {
-			return codecError(CodeInvalidManifest, "entry %q has a malformed side digest", entry.SurfaceID)
-		}
-		if !entry.BeforePresent && !entry.AfterPresent {
-			return codecError(CodeInvalidManifest, "entry %q is absent from both sides", entry.SurfaceID)
+		if entry.BeforeSourcePath == "" || entry.AfterSourcePath == "" {
+			return codecError(CodeInvalidManifest, "entry %q has a missing source path", entry.SurfaceID)
 		}
 	}
 	return nil
-}
-
-func uniqueIDs(values []string) bool {
-	seen := make(map[string]struct{}, len(values))
-	for _, value := range values {
-		if _, err := normalizeID(value); err != nil {
-			return false
-		}
-		if _, exists := seen[value]; exists {
-			return false
-		}
-		seen[value] = struct{}{}
-	}
-	return true
 }
 
 func validReason(code ErrorCode) bool {
@@ -295,21 +325,49 @@ func codecError(code ErrorCode, format string, args ...any) *Error {
 }
 
 func sealResult(m Manifest, supplied ...error) (Manifest, error) {
-	normalized, unsigned, err := canonicalUnsigned(m)
+	normalized, _, err := canonicalUnsigned(m)
 	if err != nil {
 		return Manifest{}, err
 	}
-	normalized.Digest = digest(unsigned)
+	normalized.Digest = stableDigest(manifestCanonical(normalized))
 	if len(supplied) != 0 {
 		return normalized, supplied[0]
 	}
 	return normalized, nil
 }
 
-func digest(data []byte) string {
-	sum := sha256.Sum256(data)
-	return "sha256:" + hex.EncodeToString(sum[:])
+func field(builder *strings.Builder, value string) {
+	builder.WriteString(strconv.Itoa(len(value)))
+	builder.WriteByte(':')
+	builder.WriteString(value)
+	builder.WriteByte('|')
 }
+
+func manifestCanonical(manifest Manifest) string {
+	entries := append([]ManifestEntry(nil), manifest.Entries...)
+	sort.Slice(entries, func(i, j int) bool { return entries[i].SurfaceID < entries[j].SurfaceID })
+	var builder strings.Builder
+	field(&builder, SchemaV1)
+	field(&builder, strconv.FormatBool(manifest.Complete))
+	field(&builder, strconv.FormatBool(manifest.ZeroChange))
+	field(&builder, manifest.RegistryDigest)
+	field(&builder, manifest.ToolchainDigest)
+	field(&builder, manifest.ProfileDigest)
+	field(&builder, manifest.BeforeSnapshotDigest)
+	field(&builder, manifest.AfterSnapshotDigest)
+	for _, entry := range entries {
+		field(&builder, entry.SurfaceID.String())
+		field(&builder, entry.CodeSymbolID.String())
+		field(&builder, entry.SemanticOwnerID.String())
+		field(&builder, entry.BeforeBindingDigest)
+		field(&builder, entry.AfterBindingDigest)
+		field(&builder, entry.BeforeBlobDigest)
+		field(&builder, entry.AfterBlobDigest)
+	}
+	return builder.String()
+}
+
+func stableDigest(value string) string { return semantic.StableHashString(value) }
 
 func rejectDuplicateKeys(data []byte) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
@@ -363,6 +421,6 @@ func scanJSONValue(decoder *json.Decoder) error {
 		_, err = decoder.Token()
 		return err
 	default:
-		return nil
+		return fmt.Errorf("unexpected JSON delimiter %q", delim)
 	}
 }
