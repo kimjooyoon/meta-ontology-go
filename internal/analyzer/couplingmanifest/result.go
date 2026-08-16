@@ -3,63 +3,61 @@ package couplingmanifest
 import (
 	"fmt"
 
+	detector "github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
-func resultForResolution(err error, authority RegistrySourceMap) (Manifest, error) {
-	typed, ok := err.(*Error)
-	if !ok {
-		return unknownResult(CodeUnknownChangedSurface, err.Error(), authority)
-	}
-	if typed.Status == StatusFailClosed {
-		return failResult(typed, authority)
-	}
-	return unknownResult(typed.Code, typed.Message, authority)
+func unknownError(code ConstructionCode, format string, args ...any) *ConstructionError {
+	return &ConstructionError{Code: code, Message: fmt.Sprintf(format, args...), Status: ConstructionUnknown, FullSuiteRequired: true}
 }
 
-func failError(code ErrorCode, format string, args ...any) *Error {
-	return &Error{Code: code, Message: fmt.Sprintf(format, args...), Status: StatusFailClosed, FullSuiteRequired: true}
+func failError(code ConstructionCode, format string, args ...any) *ConstructionError {
+	return &ConstructionError{Code: code, Message: fmt.Sprintf(format, args...), Status: ConstructionFailClosed, FullSuiteRequired: true}
 }
 
-func unknownError(code ErrorCode, format string, args ...any) *Error {
-	return &Error{Code: code, Message: fmt.Sprintf(format, args...), Status: StatusUnknown, FullSuiteRequired: true}
+func constructionError(err error) *ConstructionError {
+	if typed, ok := err.(*ConstructionError); ok {
+		return typed
+	}
+	return failError(CodeMalformedBinding, "%v", err)
 }
 
-func unknownResult(code ErrorCode, message string, authority RegistrySourceMap) (Manifest, error) {
-	manifest := incompleteManifest(StatusUnknown, code, authority)
-	return sealResult(manifest, unknownError(code, "%s", message))
+func failedOutput(err *ConstructionError) BuildOutput {
+	return BuildOutput{
+		Manifest: detector.ChangeManifest{Schema: detector.ManifestSchemaV1, Entries: []detector.ManifestEntry{}},
+		Metadata: Metadata{Status: err.Status, Reason: err.Code},
+	}
 }
 
-func failResult(err error, authority RegistrySourceMap) (Manifest, error) {
-	typed, ok := err.(*Error)
-	if !ok {
-		typed = failError(CodeInvalidManifest, "%v", err)
+func acceptStructuralDetectorResult(result detector.Result) *ConstructionError {
+	if result.Status == detector.StatusPass {
+		return nil
 	}
-	manifest := incompleteManifest(StatusFailClosed, typed.Code, authority)
-	return sealResult(manifest, typed)
+	if result.Status == detector.StatusUnknown && len(result.Reasons) == 1 && result.Reasons[0].Code == detector.ReasonExternalReceiptMissing {
+		return nil
+	}
+	if len(result.Reasons) == 0 {
+		return unknownError(CodeAuthorityDrift, "detector rejected manifest without a reason")
+	}
+	return &ConstructionError{Code: CodeAuthorityDrift, Message: string(result.Reasons[0].Code) + ": " + result.Reasons[0].Detail, Status: constructionStatus(result.Status), FullSuiteRequired: true}
 }
 
-func incompleteManifest(status Status, code ErrorCode, authority RegistrySourceMap) Manifest {
-	manifest := Manifest{
-		Schema: SchemaV1, Complete: false, ZeroChange: false,
-		Entries: []ManifestEntry{}, Status: status, FullSuiteRequired: true,
-		ReasonCode: code, ResolvedSurfaceIDs: []semantic.ID{}, Counts: ComponentCounts{}, Work: Work{}, statsKnown: true,
+func constructionStatus(status detector.Status) ConstructionStatus {
+	if status == detector.StatusFailClosed {
+		return ConstructionFailClosed
 	}
-	setAuthorityDigests(&manifest, authority)
-	return manifest
+	return ConstructionUnknown
 }
 
-func setAuthorityDigests(manifest *Manifest, authority RegistrySourceMap) {
-	if digest, err := rawDigest(authority.RegistryDigest); err == nil {
-		manifest.RegistryDigest = digest
+func completeMetadata(sourceMapDigest string, surfaces []detector.Surface, before, head map[semantic.ID]resolved) Metadata {
+	ids := make([]semantic.ID, 0, len(surfaces))
+	for _, surface := range sortedSurfaces(surfaces) {
+		ids = append(ids, surface.SurfaceID)
 	}
-	if digest, err := rawDigest(authority.SourceMapDigest); err == nil {
-		manifest.SourceMapDigest = digest
-	}
-	if digest, err := rawDigest(authority.ToolchainDigest); err == nil {
-		manifest.ToolchainDigest = digest
-	}
-	if digest, err := rawDigest(authority.ProfileDigest); err == nil {
-		manifest.ProfileDigest = digest
+	return Metadata{
+		Status: ConstructionComplete, SourceMapDigest: sourceMapDigest,
+		ResolvedSurfaceIDs: ids,
+		Counts:             ComponentCounts{Registered: len(surfaces), Before: len(before), Head: len(head), Resolved: len(surfaces)},
+		Work:               Work{ComponentCount: len(surfaces), WorkUnits: len(surfaces)},
 	}
 }

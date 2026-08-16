@@ -1,58 +1,86 @@
 package couplingmanifest
 
 import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding"
+	detector "github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 const absentPath = "<absent>"
 
 type observed struct {
-	Role          semanticbinding.Role
+	Role          string
 	Path          string
 	BlobDigest    string
 	BindingDigest string
 }
 
 type resolved struct {
-	Surface  Surface
 	Observed observed
 }
 
-type normalizedAuthority struct {
-	registryDigest  string
-	sourceMapDigest string
-	toolchainDigest string
-	profileDigest   string
-	inventory       map[semantic.ID]Surface
-	before          map[semantic.ID]SourceMapObservation
-	head            map[semantic.ID]SourceMapObservation
+// BuildOutput keeps detector output and adapter metadata separate. The
+// detector result is produced by detector.Evaluate and is never synthesized by
+// this package.
+type BuildOutput struct {
+	Manifest       detector.ChangeManifest
+	DetectorResult detector.Result
+	Metadata       Metadata
 }
 
-// Build constructs a complete source-backed change manifest. Change derivation
-// remains the detector's responsibility; this adapter emits the full
-// registered inventory and exact before/after source evidence only.
+// Build constructs the exact detector ChangeManifest. Construction metadata is
+// available through BuildDetailed; detector semantic decisions remain outside
+// this method.
 func Build(input Input) (Manifest, error) {
-	if err := validateBuildInput(input); err != nil {
-		return unknownResult(err.Code, err.Message, input.Authority)
+	output, err := BuildDetailed(input)
+	return output.Manifest, err
+}
+
+// BuildDetailed constructs a manifest and runs the detector's own structural
+// validation path against it. A missing external resource receipt is the
+// expected result here because this adapter does not make the detector's final
+// coupling decision.
+func BuildDetailed(input Input) (BuildOutput, error) {
+	if err := validateSnapshots(input); err != nil {
+		return failedOutput(err), err
 	}
-	authority, err := normalizeAuthority(input.Authority)
+	if err := validateSourceMapContext(input); err != nil {
+		return failedOutput(err), err
+	}
+	beforeDigest, err := rawDigest(input.Before.Digest)
 	if err != nil {
-		if typed, ok := err.(*Error); ok && typed.Status == StatusUnknown {
-			return unknownResult(typed.Code, typed.Message, input.Authority)
-		}
-		return failResult(err, input.Authority)
+		constructionErr := unknownError(CodeInvalidSnapshot, "before snapshot digest is malformed")
+		return failedOutput(constructionErr), constructionErr
 	}
-	beforeDigest, headDigest, digestErr := snapshotAuthorityDigests(input, authority)
-	if digestErr != nil {
-		return unknownResult(digestErr.Code, digestErr.Message, input.Authority)
-	}
-	resolvedBefore, resolvedHead, err := resolveSnapshots(input, authority)
+	headDigest, err := rawDigest(input.Head.Digest)
 	if err != nil {
-		return resultForResolution(err, input.Authority)
+		constructionErr := unknownError(CodeInvalidSnapshot, "head snapshot digest is malformed")
+		return failedOutput(constructionErr), constructionErr
 	}
-	manifest := completeManifest(authority, beforeDigest, headDigest, resolvedBefore, resolvedHead)
-	return sealResult(manifest)
+	if err := matchSnapshotAuthority(input, beforeDigest, headDigest); err != nil {
+		return failedOutput(err), err
+	}
+	before, head, resolveErr := resolveSnapshots(input)
+	if resolveErr != nil {
+		return failedOutput(resolveErr), resolveErr
+	}
+	manifest := makeManifest(input.Authority, beforeDigest, headDigest, before, head)
+	detectorResult := ValidateManifest(manifest, input.Authority)
+	if err := acceptStructuralDetectorResult(detectorResult); err != nil {
+		return BuildOutput{Manifest: manifest, DetectorResult: detectorResult}, err
+	}
+	metadata := completeMetadata(input.SourceMap.Digest, input.Authority.Registry.Surfaces, before, head)
+	return BuildOutput{Manifest: manifest, DetectorResult: detectorResult, Metadata: metadata}, nil
+}
+
+// ValidateManifest exposes the detector's exact result for callers that have a
+// complete detector input packet. This wrapper performs no normalization.
+func ValidateManifest(manifest detector.ChangeManifest, authority detector.AuthorityContext) detector.Result {
+	return detector.Evaluate(detectorInput(manifest, authority), authority)
+}
+
+// Evaluate forwards an exact detector packet and authority context unchanged.
+func Evaluate(input detector.Input, authority detector.AuthorityContext) detector.Result {
+	return detector.Evaluate(input, authority)
 }
 
 // BuildManifest is the descriptive spelling of Build.
@@ -61,10 +89,24 @@ func BuildManifest(input Input) (Manifest, error) { return Build(input) }
 // Adapt is a vocabulary alias for Build.
 func Adapt(input Input) (Manifest, error) { return Build(input) }
 
-// New constructs a change manifest from the explicit adapter input.
+// New constructs a manifest from the explicit adapter input.
 func New(input Input) (Manifest, error) { return Build(input) }
 
-func validateBuildInput(input Input) *Error {
+func detectorInput(manifest detector.ChangeManifest, authority detector.AuthorityContext) detector.Input {
+	return detector.Input{
+		Schema: detector.InputSchemaV1,
+		Config: detector.Config{
+			Schema: detector.ConfigSchemaV1, RegistryDigest: authority.Registry.Digest,
+			ToolchainDigest: authority.ToolchainDigest, ProfileDigest: authority.ProfileDigest,
+			SnapshotDigest: authority.SnapshotDigest, ExpectedProviderDigest: authority.ExpectedProviderDigest,
+			ExpectedObserverDigest: authority.ExpectedObserverDigest, Baseline: authority.Baseline,
+			ExternalReceiptRequired: authority.ExternalReceiptRequired,
+		},
+		Registry: authority.Registry, Manifest: manifest, Receipts: []detector.CouplingReceipt{},
+	}
+}
+
+func validateSnapshots(input Input) *ConstructionError {
 	if input.Before == nil || input.Head == nil {
 		return unknownError(CodeMissingSnapshot, "before and head snapshots are required")
 	}
@@ -77,112 +119,61 @@ func validateBuildInput(input Input) *Error {
 	return nil
 }
 
-func snapshotAuthorityDigests(input Input, authority normalizedAuthority) (string, string, *Error) {
-	beforeDigest, err := rawDigest(input.Before.Digest)
-	if err != nil {
-		return "", "", unknownError(CodeInvalidSnapshot, "before snapshot digest is malformed")
+func matchSnapshotAuthority(input Input, beforeDigest, headDigest string) *ConstructionError {
+	if input.Authority.Schema == "" || input.Authority.Registry.Schema == "" || input.Authority.Registry.Digest == "" {
+		return unknownError(CodeMissingAuthority, "detector authority context is incomplete")
 	}
-	headDigest, err := rawDigest(input.Head.Digest)
-	if err != nil {
-		return "", "", unknownError(CodeInvalidSnapshot, "head snapshot digest is malformed")
+	if input.SourceMap.Digest == "" {
+		return unknownError(CodeMissingAuthority, "source-map digest is unavailable")
 	}
-	if registryDigest, _ := rawDigest(input.Before.RegistryDigest); registryDigest != authority.registryDigest {
-		return "", "", unknownError(CodeAuthorityDrift, "before snapshot registry digest does not agree with authority")
+	beforeRegistry, beforeRegistryErr := rawDigest(input.Before.RegistryDigest)
+	headRegistry, headRegistryErr := rawDigest(input.Head.RegistryDigest)
+	beforeSourceMap, beforeSourceMapErr := rawDigest(input.Before.SourceMapDigest)
+	headSourceMap, headSourceMapErr := rawDigest(input.Head.SourceMapDigest)
+	if beforeRegistryErr != nil || headRegistryErr != nil || beforeRegistry != input.Authority.Registry.Digest || headRegistry != input.Authority.Registry.Digest {
+		return unknownError(CodeAuthorityDrift, "snapshot registry digest differs from detector authority")
 	}
-	if registryDigest, _ := rawDigest(input.Head.RegistryDigest); registryDigest != authority.registryDigest {
-		return "", "", unknownError(CodeAuthorityDrift, "head snapshot registry digest does not agree with authority")
+	if beforeSourceMapErr != nil || headSourceMapErr != nil || beforeSourceMap != input.SourceMap.Digest || headSourceMap != input.SourceMap.Digest {
+		return unknownError(CodeAuthorityDrift, "snapshot source-map digest differs from source-map context")
 	}
-	if sourceMapDigest, _ := rawDigest(input.Before.SourceMapDigest); sourceMapDigest != authority.sourceMapDigest {
-		return "", "", unknownError(CodeAuthorityDrift, "before snapshot source-map digest does not agree with authority")
+	if headDigest != input.Authority.SnapshotDigest {
+		return unknownError(CodeAuthorityDrift, "head snapshot digest differs from detector authority")
 	}
-	if sourceMapDigest, _ := rawDigest(input.Head.SourceMapDigest); sourceMapDigest != authority.sourceMapDigest {
-		return "", "", unknownError(CodeAuthorityDrift, "head snapshot source-map digest does not agree with authority")
-	}
-	return beforeDigest, headDigest, nil
+	return nil
 }
 
-func resolveSnapshots(input Input, authority normalizedAuthority) (map[semantic.ID]resolved, map[semantic.ID]resolved, error) {
-	before, err := snapshotIndex(*input.Before)
-	if err != nil {
-		return nil, nil, unknownError(CodeInvalidSnapshot, "%v", err)
-	}
-	head, err := snapshotIndex(*input.Head)
-	if err != nil {
-		return nil, nil, unknownError(CodeInvalidSnapshot, "%v", err)
-	}
-	if err := rejectUnregistered(before, authority.inventory); err != nil {
-		return nil, nil, err
-	}
-	if err := rejectUnregistered(head, authority.inventory); err != nil {
-		return nil, nil, err
-	}
-	if err := rejectUnobservedBindings(before, authority.before); err != nil {
-		return nil, nil, err
-	}
-	if err := rejectUnobservedBindings(head, authority.head); err != nil {
-		return nil, nil, err
-	}
-	resolvedBefore, err := resolveSide(before, authority.before, authority.inventory, false)
-	if err != nil {
-		return nil, nil, err
-	}
-	resolvedHead, err := resolveSide(head, authority.head, authority.inventory, true)
-	if err != nil {
-		return nil, nil, err
-	}
-	if err := requireInventoryCoverage(authority.inventory, resolvedBefore, resolvedHead); err != nil {
-		return nil, nil, err
-	}
-	return resolvedBefore, resolvedHead, nil
-}
-
-func completeManifest(authority normalizedAuthority, beforeDigest, headDigest string, before, head map[semantic.ID]resolved) Manifest {
-	surfaceIDs := sortedSurfaceIDs(authority.inventory)
-	entries := buildEntries(surfaceIDs, authority, before, head)
-	return Manifest{
-		Schema: SchemaV1, Complete: true, ZeroChange: isZeroChange(entries),
-		BeforeSnapshotDigest: beforeDigest, AfterSnapshotDigest: headDigest,
-		RegistryDigest: authority.registryDigest, ToolchainDigest: authority.toolchainDigest,
-		ProfileDigest: authority.profileDigest, SourceMapDigest: authority.sourceMapDigest,
-		Entries: entries, Status: StatusComplete,
-		ResolvedSurfaceIDs: append([]semantic.ID(nil), surfaceIDs...),
-		Counts:             ComponentCounts{Registered: len(surfaceIDs), Before: len(before), Head: len(head), Resolved: len(entries)},
-		Work:               Work{ComponentCount: len(entries), WorkUnits: len(entries)},
-		HeadSnapshotDigest: headDigest, FullSuiteRequired: false, statsKnown: true,
-	}
-}
-
-func buildEntries(surfaceIDs []semantic.ID, authority normalizedAuthority, before, head map[semantic.ID]resolved) []ManifestEntry {
-	entries := make([]ManifestEntry, 0, len(surfaceIDs))
-	for _, surfaceID := range surfaceIDs {
-		surface := authority.inventory[surfaceID]
-		entry := ManifestEntry{SurfaceID: surface.SurfaceID, CodeSymbolID: surface.CodeSymbolID, SemanticOwnerID: surface.SemanticOwnerID, SourceMapID: surface.Binding.SourceMapID}
-		applyEntrySide(&entry, surface, before, authority.before, true)
-		applyEntrySide(&entry, surface, head, authority.head, false)
+func makeManifest(authority detector.AuthorityContext, beforeDigest, headDigest string, before, head map[semantic.ID]resolved) detector.ChangeManifest {
+	entries := make([]detector.ManifestEntry, 0, len(authority.Registry.Surfaces))
+	for _, surface := range sortedSurfaces(authority.Registry.Surfaces) {
+		entry := detector.ManifestEntry{
+			SurfaceID: surface.SurfaceID, CodeSymbolID: surface.CodeSymbolID, SemanticOwnerID: surface.SemanticOwnerID,
+			BeforeBindingDigest: absentDigest, AfterBindingDigest: surface.Binding.BindingDigest,
+			BeforeBlobDigest: absentDigest, AfterBlobDigest: absentDigest,
+			BeforeSourcePath: absentPath, AfterSourcePath: absentPath,
+		}
+		if value, ok := before[surface.SemanticOwnerID]; ok {
+			entry.BeforeBindingDigest, entry.BeforeBlobDigest, entry.BeforeSourcePath = value.Observed.BindingDigest, value.Observed.BlobDigest, value.Observed.Path
+		}
+		if value, ok := head[surface.SemanticOwnerID]; ok {
+			entry.AfterBlobDigest, entry.AfterSourcePath = value.Observed.BlobDigest, value.Observed.Path
+		}
 		entries = append(entries, entry)
 	}
-	return entries
+	manifest := detector.ChangeManifest{
+		Schema: detector.ManifestSchemaV1, Complete: true,
+		ZeroChange: zeroChange(entries), RegistryDigest: authority.Registry.Digest,
+		ToolchainDigest: authority.ToolchainDigest, ProfileDigest: authority.ProfileDigest,
+		BeforeSnapshotDigest: beforeDigest, AfterSnapshotDigest: headDigest, Entries: entries,
+	}
+	manifest.Digest = detectorManifestDigest(manifest)
+	return manifest
 }
 
-func applyEntrySide(entry *ManifestEntry, surface Surface, resolved map[semantic.ID]resolved, bindings map[semantic.ID]SourceMapObservation, before bool) {
-	value, present := resolved[surface.SemanticOwnerID]
-	if before {
-		if !present {
-			entry.BeforeBindingDigest, entry.BeforeBlobDigest, entry.BeforeSourcePath = absentDigest, absentDigest, absentPath
-			return
+func zeroChange(entries []detector.ManifestEntry) bool {
+	for _, entry := range entries {
+		if entry.BeforeBindingDigest != entry.AfterBindingDigest || entry.BeforeBlobDigest != entry.AfterBlobDigest {
+			return false
 		}
-		entry.BeforePresent = true
-		entry.BeforeBindingDigest = bindings[surface.SemanticOwnerID].SourceMapBindingDigest
-		entry.BeforeSourceMapBindingDigest = entry.BeforeBindingDigest
-		entry.BeforeBlobDigest, entry.BeforeSourcePath = value.Observed.BlobDigest, value.Observed.Path
-		return
 	}
-	if !present {
-		entry.AfterBindingDigest, entry.AfterBlobDigest, entry.AfterSourcePath = surface.Binding.BindingDigest, absentDigest, absentPath
-		return
-	}
-	entry.AfterPresent = true
-	entry.AfterBindingDigest = bindings[surface.SemanticOwnerID].SourceMapBindingDigest
-	entry.AfterSourceMapBindingDigest = entry.AfterBindingDigest
-	entry.AfterBlobDigest, entry.AfterSourcePath = value.Observed.BlobDigest, value.Observed.Path
+	return true
 }
