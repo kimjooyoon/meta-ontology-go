@@ -11,7 +11,7 @@ type contractFixture struct {
 	Input             json.RawMessage `json:"input"`
 	DecodeError       bool            `json:"decode_error"`
 	PermutationTest   bool            `json:"permutation_test"`
-	FairBaseline      bool            `json:"fair_baseline"`
+	GreedyNonmaximum  bool            `json:"greedy_nonmaximum"`
 	RequiredConflicts [][]string      `json:"required_conflicts"`
 	Expected          expectedResult  `json:"expected"`
 }
@@ -48,6 +48,7 @@ type oracleResult struct {
 	Status      string
 	SelectedIDs []string
 	WorkIDs     []string
+	MaximumSize int
 }
 
 func independentOracle(t *testing.T, raw []byte) oracleResult {
@@ -101,7 +102,7 @@ func independentOracle(t *testing.T, raw []byte) oracleResult {
 	if len(selected) == 0 && blocked {
 		return oracleResult{Status: "BLOCKED"}
 	}
-	result := oracleResult{Status: "PASS"}
+	result := oracleResult{Status: "PASS", MaximumSize: maximumCompatibleSize(ready, input.CPUCapacity)}
 	for _, pressure := range selected {
 		result.SelectedIDs = append(result.SelectedIDs, pressure.ID)
 		result.WorkIDs = append(result.WorkIDs, pressure.WorkID)
@@ -141,6 +142,29 @@ func pressuresConflict(left, right oraclePressure) bool {
 		}
 	}
 	return false
+}
+
+func maximumCompatibleSize(pressures []oraclePressure, capacity int) int {
+	maximum := 0
+	for mask := 1; mask < 1<<len(pressures); mask++ {
+		var chosen []oraclePressure
+		cpu, valid := 0, true
+		for i, pressure := range pressures {
+			if mask&(1<<i) == 0 {
+				continue
+			}
+			if cpu+pressure.CPU > capacity || conflictsWithAny(pressure, chosen) {
+				valid = false
+				break
+			}
+			cpu += pressure.CPU
+			chosen = append(chosen, pressure)
+		}
+		if valid && len(chosen) > maximum {
+			maximum = len(chosen)
+		}
+	}
+	return maximum
 }
 
 func assertRequiredConflicts(t *testing.T, fixture contractFixture) {

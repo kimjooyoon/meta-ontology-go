@@ -243,7 +243,7 @@
     }
   },
   {
-    "name": "greedy-maximal-fair-baseline",
+    "name": "greedy-maximal-not-maximum",
     "input": {
       "version": "workfrontier/v1",
       "m": 3,
@@ -280,7 +280,7 @@
       ]
     },
     "permutation_test": true,
-    "fair_baseline": true,
+    "greedy_nonmaximum": true,
     "expected": {
       "status": "PASS",
       "quality": "MAXIMAL",
