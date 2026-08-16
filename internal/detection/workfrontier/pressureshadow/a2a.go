@@ -58,6 +58,20 @@ func Validate(input Input) Result {
 	return makeResult(inputDigest, decision, reason, missing, orphan, missingBinding, mismatch)
 }
 
+// ValidateBytes is the strict raw-wire boundary for S1a2a validation.
+func ValidateBytes(data []byte) Result {
+	input, err := DecodeInput(data)
+	if err != nil {
+		return makeResult(invalidInputDigest(data), DecisionFailClosed, ReasonInvalidInput,
+			nil, nil, nil, nil)
+	}
+	return Validate(input)
+}
+
+func invalidInputDigest(data []byte) string {
+	return digestBytes(append([]byte("invalid-input\x00"), data...))
+}
+
 func selectorPathIDs(input Input) map[string]struct{} {
 	ids := make(map[string]struct{}, len(input.Selector.Paths))
 	for _, path := range input.Selector.Paths {
@@ -106,7 +120,8 @@ func bindingIssues(input Input, paths map[string]struct{}, rows map[string]PathC
 		blank, unequal := false, false
 		for index := range selector {
 			blank = blank || selector[index] == "" || values[index] == ""
-			unequal = unequal || values[index] != "" && values[index] != selector[index]
+			unequal = unequal || selector[index] != "" && values[index] != "" &&
+				values[index] != selector[index]
 		}
 		if blank {
 			missing = append(missing, id)
