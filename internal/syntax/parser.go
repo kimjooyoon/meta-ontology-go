@@ -9,36 +9,58 @@ type Parser struct {
 	tokens   Tokens
 	eof      Span
 
-	index       int
-	diagnostics Diagnostics
-	parsed      bool
-	file        *File
+	index                int
+	diagnostics          Diagnostics
+	parsed               bool
+	file                 *File
+	entityFieldsRejected bool
+	entityFieldsSupport  EntityFieldsSupport
+	entityFieldsError    error
 }
 
 // NewParser creates a parser for an unnamed source.
 func NewParser(source string) *Parser {
-	return NewParserFile("", source)
+	return NewParserWithEntityFieldsSupport(source, CurrentEntityFieldsSupport())
 }
 
 // NewParserFile creates a parser for a named source.
 func NewParserFile(filename, source string) *Parser {
+	return NewParserFileWithEntityFieldsSupport(filename, source, CurrentEntityFieldsSupport())
+}
+
+// NewParserWithEntityFieldsSupport creates a parser with an explicit,
+// profile-bound EntityFields mode. The mode is validated before parsing.
+func NewParserWithEntityFieldsSupport(source string, support EntityFieldsSupport) *Parser {
+	return NewParserFileWithEntityFieldsSupport("", source, support)
+}
+
+// NewParserFileWithEntityFieldsSupport creates a named parser with an
+// explicit, profile-bound EntityFields mode.
+func NewParserFileWithEntityFieldsSupport(filename, source string, support EntityFieldsSupport) *Parser {
 	tokens, diagnostics := LexFile(filename, source)
 	return &Parser{
-		filename:    filename,
-		source:      source,
-		tokens:      tokens,
-		eof:         tokens[len(tokens)-1].Span,
-		diagnostics: diagnostics,
+		filename:            filename,
+		source:              source,
+		tokens:              tokens,
+		eof:                 tokens[len(tokens)-1].Span,
+		diagnostics:         diagnostics,
+		entityFieldsSupport: support,
+		entityFieldsError:   support.Validate(),
 	}
 }
 
 // Parse parses the source once. Repeated calls return copies of the diagnostic
-// slice and the same immutable-by-convention AST pointer.
+// slice and the same immutable-by-convention AST pointer. Deferred EntityFields
+// input returns no AST so unsupported source cannot leak a partial result.
 func (p *Parser) Parse() (*File, Diagnostics) {
 	if p.parsed {
 		return p.file, append(Diagnostics(nil), p.diagnostics...)
 	}
 	p.parsed = true
+	if p.entityFieldsError != nil {
+		p.error(DiagEntityFieldsConfiguration, p.eof, p.entityFieldsError.Error())
+		return nil, append(Diagnostics(nil), p.diagnostics...)
+	}
 	p.file = p.parseFile()
 	return p.file, append(Diagnostics(nil), p.diagnostics...)
 }
@@ -57,6 +79,18 @@ func Parse(source string) (*File, Diagnostics) {
 // ParseFile parses a named .gooo source file.
 func ParseFile(filename, source string) (*File, Diagnostics) {
 	return NewParserFile(filename, source).Parse()
+}
+
+// ParseWithEntityFieldsSupport parses an unnamed source with an explicit
+// EntityFields mode.
+func ParseWithEntityFieldsSupport(source string, support EntityFieldsSupport) (*File, Diagnostics) {
+	return NewParserWithEntityFieldsSupport(source, support).Parse()
+}
+
+// ParseFileWithEntityFieldsSupport parses a named source with an explicit
+// EntityFields mode.
+func ParseFileWithEntityFieldsSupport(filename, source string, support EntityFieldsSupport) (*File, Diagnostics) {
+	return NewParserFileWithEntityFieldsSupport(filename, source, support).Parse()
 }
 
 func (p *Parser) parseFile() *File {
@@ -85,7 +119,11 @@ func (p *Parser) parseFile() *File {
 			file.Declarations = file.Decls
 			return file
 		case p.at(TokenEntity):
-			file.Decls = append(file.Decls, p.parseEntity())
+			entity := p.parseEntity()
+			if p.entityFieldsRejected {
+				return nil
+			}
+			file.Decls = append(file.Decls, entity)
 			file.Declarations = file.Decls
 		case p.at(TokenActivity):
 			file.Decls = append(file.Decls, p.parseActivity())
@@ -130,7 +168,8 @@ func (p *Parser) parseEntity() *EntityDecl {
 	name := p.expectIdentifier("entity name", DiagExpectedIdentifier)
 	p.expect(TokenID, "id", DiagExpectedID)
 	id := p.expectString()
-
+	fields := []FieldDecl(nil)
+	fieldsPresent := false
 	end := keyword.Span.End
 	if !name.Span.IsEmpty() {
 		end = name.Span.End
@@ -138,74 +177,29 @@ func (p *Parser) parseEntity() *EntityDecl {
 	if !id.Span.IsEmpty() {
 		end = id.Span.End
 	}
-	return &EntityDecl{
-		Span:     startSpan(p.filename, keyword.Span.Start, end),
-		Name:     name.Name,
-		ID:       id.Name,
-		NameSpan: name.Span,
-		IDSpan:   id.Span,
-	}
-}
-
-func (p *Parser) parseActivity() *ActivityDecl {
-	keyword := p.advance()
-	name := p.expectIdentifier("activity name", DiagExpectedIdentifier)
-	activity := &ActivityDecl{
-		Span:     startSpan(p.filename, keyword.Span.Start, keyword.Span.End),
-		Name:     name.Name,
-		NameSpan: name.Span,
-	}
-	if !name.Span.IsEmpty() {
-		activity.Span.End = name.Span.End
-	}
-
-	p.expect(TokenLParen, "(", DiagExpectedLeftParen)
-	if !p.at(TokenRParen) {
-		for {
-			p.skipIllegal()
-			if p.at(TokenIdentifier) {
-				parameter := p.advance()
-				activity.Inputs = append(activity.Inputs, NameRef{Span: parameter.Span, Name: parameter.Value})
-				activity.Span.End = parameter.Span.End
-			} else {
-				p.error(DiagExpectedIdentifier, p.peek().Span, "expected activity parameter name")
-				if p.at(TokenComma) {
-					p.advance()
-				}
-				break
+	if p.atEntityFieldsMarker() {
+		marker := p.advance()
+		switch p.entityFieldsSupport.State {
+		case EntityFieldsDeferred:
+			p.rejectEntityFields(marker)
+		case EntityFieldsSupported:
+			fields, fieldsPresent, end = p.parseEntityFields(marker)
+			if !fieldsPresent {
+				fields = nil
 			}
-
-			if p.at(TokenComma) {
-				p.advance()
-				if p.at(TokenRParen) {
-					p.error(DiagExpectedIdentifier, p.peek().Span, "expected activity parameter name after comma")
-					break
-				}
-				continue
-			}
-			if !p.at(TokenRParen) {
-				p.error(DiagExpectedComma, p.peek().Span, "expected comma or closing parenthesis after activity parameter")
-				if !p.at(TokenEOF) {
-					p.advance()
-				}
-			}
-			break
+		default:
+			p.error(DiagEntityFieldsConfiguration, marker.Span, ErrEntityFieldsUnknownState.Error())
 		}
 	}
-
-	closing := p.expect(TokenRParen, ")", DiagExpectedRightParen)
-	if !closing.Span.IsEmpty() {
-		activity.Span.End = closing.Span.End
+	return &EntityDecl{
+		Span:          startSpan(p.filename, keyword.Span.Start, end),
+		Name:          name.Name,
+		ID:            id.Name,
+		NameSpan:      name.Span,
+		IDSpan:        id.Span,
+		Fields:        fields,
+		FieldsPresent: fieldsPresent,
 	}
-	p.expect(TokenArrow, "->", DiagExpectedArrow)
-	result := p.expectIdentifier("activity result", DiagExpectedResult)
-	activity.Result = result
-	activity.Parameters = append([]NameRef(nil), activity.Inputs...)
-	activity.Output = result.Name
-	if !result.Span.IsEmpty() {
-		activity.Span.End = result.Span.End
-	}
-	return activity
 }
 
 func (p *Parser) expect(kind TokenKind, expected string, code DiagnosticCode) Token {

@@ -44,6 +44,18 @@ const (
 	DiagUnexpectedDeclaration DiagnosticCode = "parse.unexpected-token"
 )
 
+const (
+	DiagEntityFieldsDeferred      DiagnosticCode = "parse.entity-fields-deferred"
+	DiagEntityFieldsConfiguration DiagnosticCode = "parse.entity-fields-configuration"
+	DiagExpectedFieldsLeftBrace   DiagnosticCode = "parse.expected-fields-left-brace"
+	DiagExpectedEntityField       DiagnosticCode = "parse.expected-entity-field"
+	DiagExpectedFieldType         DiagnosticCode = "parse.expected-field-type"
+	DiagExpectedFieldPresence     DiagnosticCode = "parse.expected-field-presence"
+	DiagExpectedFieldCardinality  DiagnosticCode = "parse.expected-field-cardinality"
+	DiagEntityFieldsUnterminated  DiagnosticCode = "parse.entity-fields-unterminated"
+	DiagEntityFieldsTrailing      DiagnosticCode = "parse.entity-fields-trailing"
+)
+
 // Diagnostic describes a recoverable lexical or syntactic problem.
 type Diagnostic struct {
 	Severity Severity

@@ -25,6 +25,9 @@ func documentCanonical(document Document) string {
 		writePart(&builder, string(declaration.Kind))
 		writePart(&builder, string(declaration.ID))
 		writePart(&builder, declaration.Name)
+		if len(declaration.Fields) > 0 {
+			writeFields(&builder, declaration.Fields)
+		}
 		writeMapFingerprint(&builder, declaration.Attributes)
 		writeSpan(&builder, declaration.Span)
 		writeReferences(&builder, declaration.Inputs)
@@ -38,6 +41,35 @@ func documentCanonical(document Document) string {
 		writeSpan(&builder, relation.Span)
 	}
 	return builder.String()
+}
+
+func writeFields(builder *strings.Builder, fields []Field) {
+	fmt.Fprintf(builder, "%d|", len(fields))
+	for _, field := range fields {
+		writePart(builder, string(field.ID))
+		writePart(builder, string(field.Parent))
+		writePart(builder, field.Name)
+		fmt.Fprintf(builder, "%d|", len(field.Aliases))
+		for _, alias := range field.Aliases {
+			writePart(builder, alias)
+		}
+		writePart(builder, string(field.TypeRef.ID))
+		writePart(builder, string(field.TypeRef.Namespace))
+		writePart(builder, field.TypeRef.Name)
+		writePart(builder, string(field.Origin))
+		writePart(builder, string(field.TypeRefUse.Form))
+		writePart(builder, field.TypeRefUse.Spelling)
+		writePart(builder, string(field.TypeRefUse.ResolvedID))
+		writeSpan(builder, field.TypeRefUse.Span)
+		writePart(builder, string(field.Presence))
+		writePart(builder, string(field.Cardinality))
+		writeSpan(builder, field.Span)
+		writeSpan(builder, field.IDSpan)
+		writeSpan(builder, field.NameSpan)
+		writeSpan(builder, field.TypeRefSpan)
+		writeSpan(builder, field.PresenceSpan)
+		writeSpan(builder, field.CardinalitySpan)
+	}
 }
 
 func writeReferences(builder *strings.Builder, references []Reference) {

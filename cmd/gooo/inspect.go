@@ -84,6 +84,9 @@ func lowerInspectIRWith(file *syntax.File, timeout time.Duration, lower func(*sy
 		if err == nil {
 			err = ir.Validate()
 		}
+		if err == nil {
+			err = rejectCLIEntityFieldsIR(ir)
+		}
 		result <- inspectLowerResult{ir: ir, err: err}
 	}()
 	timer := time.NewTimer(timeout)

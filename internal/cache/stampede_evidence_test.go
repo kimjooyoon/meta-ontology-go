@@ -23,6 +23,7 @@ const (
 )
 
 func TestCacheSameKeyCrossProcessStampede(t *testing.T) {
+	requireClassifiedCacheTest(t, "TestCacheSameKeyCrossProcessStampede", CacheTestClassSlowObservation)
 	if os.Getenv(stampedeHelperEnv) == "1" {
 		runStampedeHelper(t)
 		return
@@ -68,7 +69,7 @@ func startStampedeHelpers(t *testing.T, root, release string) ([]*exec.Cmd, []*s
 	for index := 0; index < 2; index++ {
 		ready := filepath.Join(root, fmt.Sprintf("ready-%d", index))
 		output := &strings.Builder{}
-		command := exec.Command(os.Args[0], "-test.run", "^TestCacheSameKeyCrossProcessStampede$")
+		command := exec.Command(os.Args[0], "-test.run", "^TestCacheSameKeyCrossProcessStampede$", "-cache-test-class="+CacheTestClassSlowObservation)
 		command.Env = append(os.Environ(),
 			stampedeHelperEnv+"=1", stampedeRootEnv+"="+root, stampedeReleaseEnv+"="+release,
 			stampedeReadyEnv+"="+ready, stampedeComputeEnv+"="+filepath.Join(root, fmt.Sprintf("compute-%d", index)),

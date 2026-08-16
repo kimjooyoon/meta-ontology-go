@@ -44,6 +44,9 @@ func runQueryEngine(options queryOptions, ir semantic.IR, filename string, jsonM
 }
 
 func executeCLIQuery(ir semantic.IR, options queryOptions) (queryengine.Response, error) {
+	if err := rejectCLIEntityFieldsIR(ir); err != nil {
+		return queryengine.Response{}, err
+	}
 	graph, err := queryengine.FromSemanticIR(ir)
 	if err != nil {
 		return queryengine.Response{}, err

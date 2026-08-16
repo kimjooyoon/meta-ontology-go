@@ -1,14 +1,28 @@
 package syntax
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"unicode/utf8"
 )
 
+// ErrLatentFieldsUnsupported is returned when callers attempt to serialize a
+// synthetic field carrier before the public grammar can represent fields.
+var ErrLatentFieldsUnsupported = errors.New("latent entity fields are unsupported by the public syntax formatter")
+
 // Format renders a syntax tree in the canonical .gooo source form.
 // Formatting is semantic: source spans and original whitespace are not copied.
 func Format(file *File) (string, error) {
+	return FormatWithEntityFieldsSupport(file, CurrentEntityFieldsSupport())
+}
+
+// FormatWithEntityFieldsSupport renders a syntax tree with an explicit,
+// profile-bound EntityFields mode.
+func FormatWithEntityFieldsSupport(file *File, support EntityFieldsSupport) (string, error) {
+	if err := support.Validate(); err != nil {
+		return "", err
+	}
 	if file == nil || file.Package == nil || file.Namespace == nil {
 		return "", fmt.Errorf("package and namespace declarations are required")
 	}
@@ -33,7 +47,7 @@ func Format(file *File) (string, error) {
 			if index > 0 {
 				output.WriteByte('\n')
 			}
-			if err := formatDeclaration(&output, declaration); err != nil {
+			if err := formatDeclaration(&output, declaration, support); err != nil {
 				return "", err
 			}
 		}
@@ -64,10 +78,21 @@ func FormatSource(filename, source string) (string, Diagnostics, error) {
 	return formatted, diagnostics, err
 }
 
-func formatDeclaration(output *strings.Builder, declaration Declaration) error {
+// FormatSourceWithEntityFieldsSupport parses and formats a complete source
+// file with an explicit, profile-bound EntityFields mode.
+func FormatSourceWithEntityFieldsSupport(filename, source string, support EntityFieldsSupport) (string, Diagnostics, error) {
+	file, diagnostics := ParseFileWithEntityFieldsSupport(filename, source, support)
+	if diagnostics.HasErrors() {
+		return "", diagnostics, diagnostics.Error()
+	}
+	formatted, err := FormatWithEntityFieldsSupport(file, support)
+	return formatted, diagnostics, err
+}
+
+func formatDeclaration(output *strings.Builder, declaration Declaration, support EntityFieldsSupport) error {
 	switch value := declaration.(type) {
 	case *EntityDecl:
-		return formatEntity(output, value)
+		return formatEntity(output, value, support)
 	case *ActivityDecl:
 		return formatActivity(output, value)
 	default:
@@ -75,7 +100,7 @@ func formatDeclaration(output *strings.Builder, declaration Declaration) error {
 	}
 }
 
-func formatEntity(output *strings.Builder, entity *EntityDecl) error {
+func formatEntity(output *strings.Builder, entity *EntityDecl, support EntityFieldsSupport) error {
 	if entity == nil {
 		return fmt.Errorf("nil entity declaration")
 	}
@@ -86,7 +111,73 @@ func formatEntity(output *strings.Builder, entity *EntityDecl) error {
 		return fmt.Errorf("entity id is not valid UTF-8")
 	}
 	fmt.Fprintf(output, "entity %s id %s", entity.Name, quoteString(entity.ID))
+	if entity.FieldsPresent || len(entity.Fields) != 0 {
+		switch support.State {
+		case EntityFieldsDeferred:
+			return ErrLatentFieldsUnsupported
+		case EntityFieldsSupported:
+			return formatEntityFields(output, entity.Fields)
+		default:
+			return ErrEntityFieldsUnknownState
+		}
+	}
 	return nil
+}
+
+func formatEntityFields(output *strings.Builder, fields []FieldDecl) error {
+	output.WriteString(" fields {")
+	for _, field := range fields {
+		if err := validateFieldForFormatting(field); err != nil {
+			return err
+		}
+		output.WriteString("\n    field ")
+		output.WriteString(field.Name)
+		output.WriteString(" id ")
+		output.WriteString(quoteString(field.ID))
+		output.WriteString(" type ")
+		output.WriteString(formatTypeReference(field.TypeRef.Spelling))
+		output.WriteByte(' ')
+		output.WriteString(string(field.Presence))
+		output.WriteByte(' ')
+		output.WriteString(string(field.Cardinality))
+	}
+	if len(fields) != 0 {
+		output.WriteByte('\n')
+	}
+	output.WriteByte('}')
+	return nil
+}
+
+func validateFieldForFormatting(field FieldDecl) error {
+	if field.Span.IsEmpty() || field.NameSpan.IsEmpty() || field.IDSpan.IsEmpty() || field.TypeRef.Span.IsEmpty() || field.PresenceSpan.IsEmpty() || field.CardinalitySpan.IsEmpty() {
+		return fmt.Errorf("entity field %q is missing source spans", field.Name)
+	}
+	if err := validateIdentifier(field.Name, "field name"); err != nil {
+		return err
+	}
+	if isEntityFieldsReservedWord(field.Name) {
+		return fmt.Errorf("field name uses reserved EntityFields keyword %q", field.Name)
+	}
+	if !utf8.ValidString(field.ID) {
+		return fmt.Errorf("field id is not valid UTF-8")
+	}
+	if field.TypeRef.Spelling == "" || !utf8.ValidString(field.TypeRef.Spelling) {
+		return fmt.Errorf("field type reference is not valid UTF-8")
+	}
+	if isEntityFieldsReservedWord(field.TypeRef.Spelling) {
+		return fmt.Errorf("field type reference uses reserved EntityFields keyword %q", field.TypeRef.Spelling)
+	}
+	if !field.Presence.Valid() || !field.Cardinality.Valid() {
+		return fmt.Errorf("field %q has an invalid presence or cardinality", field.Name)
+	}
+	return nil
+}
+
+func formatTypeReference(spelling string) string {
+	if err := validateIdentifier(spelling, "field type reference"); err == nil {
+		return spelling
+	}
+	return quoteString(spelling)
 }
 
 func formatActivity(output *strings.Builder, activity *ActivityDecl) error {
@@ -178,40 +269,4 @@ func validateIdentifier(value, label string) error {
 		return fmt.Errorf("%s uses reserved keyword %q", label, value)
 	}
 	return nil
-}
-
-func quoteString(value string) string {
-	var output strings.Builder
-	output.WriteByte('"')
-	for _, character := range value {
-		switch character {
-		case '"':
-			output.WriteString(`\"`)
-		case '\\':
-			output.WriteString(`\\`)
-		case '\n':
-			output.WriteString(`\n`)
-		case '\r':
-			output.WriteString(`\r`)
-		case '\t':
-			output.WriteString(`\t`)
-		default:
-			if character < 0x20 || character == 0x7f {
-				writeUnicodeEscape(&output, character)
-			} else {
-				output.WriteRune(character)
-			}
-		}
-	}
-	output.WriteByte('"')
-	return output.String()
-}
-
-func writeUnicodeEscape(output *strings.Builder, character rune) {
-	const hexadecimal = "0123456789abcdef"
-	output.WriteString(`\u`)
-	output.WriteByte(hexadecimal[(character>>12)&0xf])
-	output.WriteByte(hexadecimal[(character>>8)&0xf])
-	output.WriteByte(hexadecimal[(character>>4)&0xf])
-	output.WriteByte(hexadecimal[character&0xf])
 }

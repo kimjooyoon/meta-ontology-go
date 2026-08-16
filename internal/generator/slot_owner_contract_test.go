@@ -25,9 +25,9 @@ func TestSlotOwnerChangeFailsClosedWithoutMutation(t *testing.T) {
 
 func TestSameSlotOwnerPreservesBodyAndSourceMap(t *testing.T) {
 	first := mustAcceptanceResult(t, acceptanceFixture(), nil)
-	previous := bytes.Replace(first.Source, []byte("return Artifact{}"), []byte("return Artifact{Digest: source.Digest}"), 1)
+	previous := bytes.Replace(first.Source, []byte("return Artifact{}"), []byte("return Artifact{}\n\t// same owner preserved"), 1)
 	second := mustAcceptanceResult(t, acceptanceFixture(), previous)
-	if !bytes.Contains(second.Source, []byte("return Artifact{Digest: source.Digest}")) {
+	if !bytes.Contains(second.Source, []byte("// same owner preserved")) {
 		t.Fatal("same-owner slot body was not preserved")
 	}
 	if len(second.SourceMap.Lookup("gooo://slot/compile-implementation")) != 1 {
