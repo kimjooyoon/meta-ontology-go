@@ -123,6 +123,9 @@ func matchSnapshotAuthority(input Input, beforeDigest, headDigest string) *Const
 	if input.Authority.Schema == "" || input.Authority.Registry.Schema == "" || input.Authority.Registry.Digest == "" {
 		return unknownError(CodeMissingAuthority, "detector authority context is incomplete")
 	}
+	if input.Authority.Registry.Surfaces == nil {
+		return unknownError(CodeMissingAuthority, "detector authority registry surfaces are unavailable")
+	}
 	if input.SourceMap.Digest == "" {
 		return unknownError(CodeMissingAuthority, "source-map digest is unavailable")
 	}

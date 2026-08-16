@@ -31,11 +31,11 @@ func resolveSnapshots(input Input) (map[semantic.ID]resolved, map[semantic.ID]re
 	}
 	beforeSnapshot, err := snapshotIndex(*input.Before)
 	if err != nil {
-		return nil, nil, unknownError(CodeInvalidSnapshot, "%v", err)
+		return nil, nil, constructionError(err)
 	}
 	headSnapshot, err := snapshotIndex(*input.Head)
 	if err != nil {
-		return nil, nil, unknownError(CodeInvalidSnapshot, "%v", err)
+		return nil, nil, constructionError(err)
 	}
 	if err := rejectUnregistered(beforeSnapshot, surfaces); err != nil {
 		return nil, nil, constructionError(err)
@@ -73,14 +73,41 @@ func resolveSnapshots(input Input) (map[semantic.ID]resolved, map[semantic.ID]re
 
 func registrySurfaceIndex(values []detector.Surface) (map[semantic.ID]detector.Surface, error) {
 	result := make(map[semantic.ID]detector.Surface, len(values))
+	seenSymbols := make(map[semantic.ID]struct{}, len(values))
+	seenOwners := make(map[semantic.ID]struct{}, len(values))
+	seenMaps := make(map[semantic.ID]struct{}, len(values))
 	for _, surface := range values {
 		if _, err := canonicalID(surface.SurfaceID); err != nil {
 			return nil, failError(CodeMalformedBinding, "surface ID: %v", err)
 		}
+		if _, err := canonicalID(surface.CodeSymbolID); err != nil {
+			return nil, failError(CodeMalformedBinding, "code symbol ID: %v", err)
+		}
+		if _, err := canonicalID(surface.SemanticOwnerID); err != nil {
+			return nil, failError(CodeMalformedBinding, "semantic owner ID: %v", err)
+		}
+		if _, err := canonicalID(surface.Binding.SourceMapID); err != nil {
+			return nil, failError(CodeMalformedBinding, "source-map ID: %v", err)
+		}
+		if _, err := rawDigest(surface.Binding.BindingDigest); err != nil {
+			return nil, failError(CodeMalformedBinding, "source-map binding digest: %v", err)
+		}
 		if _, exists := result[surface.SurfaceID]; exists {
 			return nil, failError(CodeDuplicateBinding, "surface ID %q occurs more than once", surface.SurfaceID)
 		}
+		if _, exists := seenSymbols[surface.CodeSymbolID]; exists {
+			return nil, failError(CodeDuplicateBinding, "code symbol ID %q occurs more than once", surface.CodeSymbolID)
+		}
+		if _, exists := seenOwners[surface.SemanticOwnerID]; exists {
+			return nil, failError(CodeDuplicateBinding, "semantic owner ID %q occurs more than once", surface.SemanticOwnerID)
+		}
+		if _, exists := seenMaps[surface.Binding.SourceMapID]; exists {
+			return nil, failError(CodeDuplicateBinding, "source-map ID %q occurs more than once", surface.Binding.SourceMapID)
+		}
 		result[surface.SurfaceID] = surface
+		seenSymbols[surface.CodeSymbolID] = struct{}{}
+		seenOwners[surface.SemanticOwnerID] = struct{}{}
+		seenMaps[surface.Binding.SourceMapID] = struct{}{}
 	}
 	return result, nil
 }
@@ -89,13 +116,42 @@ func observationIndex(values []SourceMapObservation, surfaces map[semantic.ID]de
 	result := make(map[semantic.ID]SourceMapObservation, len(values))
 	seenSymbols := make(map[semantic.ID]struct{}, len(values))
 	seenMaps := make(map[semantic.ID]struct{}, len(values))
+	registeredSymbols := make(map[semantic.ID]struct{}, len(surfaces))
+	registeredOwners := make(map[semantic.ID]struct{}, len(surfaces))
+	registeredMaps := make(map[semantic.ID]struct{}, len(surfaces))
+	for _, surface := range surfaces {
+		registeredSymbols[surface.CodeSymbolID] = struct{}{}
+		registeredOwners[surface.SemanticOwnerID] = struct{}{}
+		registeredMaps[surface.Binding.SourceMapID] = struct{}{}
+	}
 	for _, value := range values {
+		if value.SurfaceID == "" || value.CodeSymbolID == "" || value.SemanticOwnerID == "" || value.SourceMapID == "" {
+			return nil, unknownError(CodeUnknownChangedSurface, "source-map observation identity is missing")
+		}
 		if _, err := canonicalID(value.SurfaceID); err != nil {
 			return nil, failError(CodeMalformedBinding, "observation surface ID: %v", err)
 		}
+		if _, err := canonicalID(value.CodeSymbolID); err != nil {
+			return nil, failError(CodeMalformedBinding, "observation code symbol ID: %v", err)
+		}
+		if _, err := canonicalID(value.SemanticOwnerID); err != nil {
+			return nil, failError(CodeMalformedBinding, "observation semantic owner ID: %v", err)
+		}
+		if _, err := canonicalID(value.SourceMapID); err != nil {
+			return nil, failError(CodeMalformedBinding, "observation source-map ID: %v", err)
+		}
 		registered, ok := surfaces[value.SurfaceID]
 		if !ok {
-			return nil, failError(CodeMalformedBinding, "surface ID %q is not registered", value.SurfaceID)
+			return nil, unknownError(CodeUnknownChangedSurface, "surface ID %q is not registered", value.SurfaceID)
+		}
+		if _, ok := registeredSymbols[value.CodeSymbolID]; !ok {
+			return nil, unknownError(CodeUnknownChangedSurface, "code symbol ID %q is not registered", value.CodeSymbolID)
+		}
+		if _, ok := registeredOwners[value.SemanticOwnerID]; !ok {
+			return nil, unknownError(CodeUnknownChangedSurface, "semantic owner ID %q is not registered", value.SemanticOwnerID)
+		}
+		if _, ok := registeredMaps[value.SourceMapID]; !ok {
+			return nil, unknownError(CodeUnknownChangedSurface, "source-map ID %q is not registered", value.SourceMapID)
 		}
 		if value.CodeSymbolID != registered.CodeSymbolID || value.SemanticOwnerID != registered.SemanticOwnerID || value.SourceMapID != registered.Binding.SourceMapID {
 			return nil, failError(CodeConflictingBinding, "observation identity tuple differs from detector registry")
@@ -108,7 +164,7 @@ func observationIndex(values []SourceMapObservation, surfaces map[semantic.ID]de
 		}
 		value.BlobDigest, value.BindingDigest, value.SourceMapBindingDigest = blobDigest, bindingDigest, sourceMapBindingDigest
 		if value.SourceMapBindingDigest != registered.Binding.BindingDigest {
-			return nil, unknownError(CodeAuthorityDrift, "observation source-map binding differs from detector registry")
+			return nil, failError(CodeConflictingBinding, "observation source-map binding differs from detector registry")
 		}
 		if _, exists := result[value.SemanticOwnerID]; exists {
 			return nil, failError(CodeDuplicateBinding, "semantic owner ID %q occurs more than once", value.SemanticOwnerID)
@@ -134,9 +190,12 @@ func snapshotIndex(snapshot selectiveci.Snapshot) (map[semantic.ID]observed, err
 			return nil, err
 		}
 		for _, binding := range source.Bindings {
+			if binding.ID == "" {
+				return nil, unknownError(CodeUnknownChangedSurface, "snapshot semantic owner ID is missing")
+			}
 			ownerID, err := canonicalIDString(binding.ID)
 			if err != nil {
-				return nil, err
+				return nil, failError(CodeMalformedBinding, "snapshot semantic owner ID: %v", err)
 			}
 			bindingDigest, err := rawDigest(binding.BindingDigest)
 			if err != nil {
@@ -158,7 +217,7 @@ func rejectUnregistered(values map[semantic.ID]observed, surfaces map[semantic.I
 	}
 	for owner := range values {
 		if _, ok := owners[owner]; !ok {
-			return failError(CodeMalformedBinding, "semantic owner ID %q is not registered", owner)
+			return unknownError(CodeUnknownChangedSurface, "semantic owner ID %q is not registered", owner)
 		}
 	}
 	return nil
