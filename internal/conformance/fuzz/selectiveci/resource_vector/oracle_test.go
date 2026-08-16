@@ -24,7 +24,7 @@ func TestR4F01Vectors(t *testing.T) {
 		t.Fatalf("r4-f-01 output = %#v", got)
 	}
 	wantSelected := Vector{CPUCoreNS: 33, MemoryBytes: 224, PeakMemoryBytes: 128, WorkUnits: 18, AffectedStableIDs: 2, ApplicablePressures: 2, IndependentGroups: 2, UniquePROVRecords: 12, FinitePROVPaths: 3, ClosureNumerator: 3, ClosureDenominator: 3}
-	wantFull := Vector{CPUCoreNS: 36, MemoryBytes: 272, PeakMemoryBytes: 128, WorkUnits: 19, AffectedStableIDs: 3, ApplicablePressures: 3, IndependentGroups: 3, UniquePROVRecords: 15, FinitePROVPaths: 4, ClosureNumerator: 4, ClosureDenominator: 4}
+	wantFull := Vector{CPUCoreNS: 36, MemoryBytes: 272, PeakMemoryBytes: 128, WorkUnits: 19, AffectedStableIDs: 2, ApplicablePressures: 3, IndependentGroups: 3, UniquePROVRecords: 15, FinitePROVPaths: 4, ClosureNumerator: 4, ClosureDenominator: 4}
 	if got.Selected == nil || got.Full == nil || *got.Selected != wantSelected || *got.Full != wantFull {
 		t.Fatalf("vectors selected=%#v full=%#v", got.Selected, got.Full)
 	}
@@ -65,7 +65,7 @@ func TestStrictJSONAndExpectedIsolation(t *testing.T) {
 	}
 	corpus.Cases[0].Expected.Decision = DecisionFailClosed
 	right := Evaluate(corpus.Cases[0].Input)
-	if left.InputDigest != right.InputDigest || !reflect.DeepEqual(left.Selected, right.Selected) || left.Decision != right.Decision {
+	if !reflect.DeepEqual(left, right) {
 		t.Fatal("expected-only mutation changed replay output")
 	}
 	outputJSON, err := EncodeOutputJSON(left)
@@ -112,7 +112,7 @@ func TestComponentwiseCeilingsDoNotCompensate(t *testing.T) {
 	input.Ceilings.Selected.MemoryBytes = U64(223)
 	input.Ceilings.Selected.CPUCoreNS = U64(1_000_000)
 	got := Evaluate(input)
-	if got.Decision != DecisionUnknown || got.Reason != ReasonCeilingExceeded || !contains(got.LimitFailures, "selected:memory_bytes") {
+	if got.Decision != DecisionFailClosed || got.Reason != ReasonResourceLimitExceeded || !contains(got.LimitFailures, "selected:memory_bytes") {
 		t.Fatalf("memory ceiling result = %#v", got)
 	}
 	if got.Selected == nil || got.Selected.MemoryBytes != 224 {

@@ -27,21 +27,25 @@ const (
 type Reason string
 
 const (
-	ReasonNone                  Reason = "NONE"
-	ReasonMissingInput          Reason = "MISSING_INPUT"
-	ReasonMissingResource       Reason = "MISSING_RESOURCE"
-	ReasonMissingPROV           Reason = "MISSING_PROV"
-	ReasonInvalidPath           Reason = "INVALID_PATH"
-	ReasonDuplicateID           Reason = "DUPLICATE_ID"
-	ReasonDuplicateRecord       Reason = "DUPLICATE_PROV_RECORD"
-	ReasonDuplicatePath         Reason = "DUPLICATE_PATH"
-	ReasonDanglingID            Reason = "DANGLING_ID"
-	ReasonSelectionInvalid      Reason = "INVALID_SELECTION"
-	ReasonInvalidPressure       Reason = "INVALID_PRESSURE"
-	ReasonOverflow              Reason = "COUNT_OVERFLOW"
-	ReasonCeilingExceeded       Reason = "CEILING_EXCEEDED"
-	ReasonClosureInvalid        Reason = "INVALID_PROV_CLOSURE"
-	ReasonRootRelocationInvalid Reason = "INVALID_ROOT_RELOCATION"
+	ReasonNone                     Reason = "NONE"
+	ReasonMissingInput             Reason = "MISSING_INPUT"
+	ReasonMissingResource          Reason = "MISSING_RESOURCE"
+	ReasonMissingPROV              Reason = "MISSING_PROV"
+	ReasonInvalidPath              Reason = "INVALID_PATH"
+	ReasonDuplicateID              Reason = "DUPLICATE_ID"
+	ReasonDuplicateRecord          Reason = "DUPLICATE_PROV_RECORD"
+	ReasonDuplicatePath            Reason = "DUPLICATE_PATH"
+	ReasonDanglingID               Reason = "DANGLING_ID"
+	ReasonSelectionInvalid         Reason = "INVALID_SELECTION"
+	ReasonInvalidPressure          Reason = "INVALID_PRESSURE"
+	ReasonOverflow                 Reason = "COUNT_OVERFLOW"
+	ReasonResourceLimitExceeded    Reason = "RESOURCE_LIMIT_EXCEEDED"
+	ReasonCeilingExceeded          Reason = ReasonResourceLimitExceeded
+	ReasonMissingAffectedBinding   Reason = "MISSING_AFFECTED_BINDING"
+	ReasonDuplicateAffectedBinding Reason = "DUPLICATE_AFFECTED_BINDING"
+	ReasonDanglingAffectedBinding  Reason = "DANGLING_AFFECTED_BINDING"
+	ReasonClosureInvalid           Reason = "INVALID_PROV_CLOSURE"
+	ReasonRootRelocationInvalid    Reason = "INVALID_ROOT_RELOCATION"
 )
 
 // PressureRecord is part of a canonical command record. Applicable is a
@@ -55,13 +59,14 @@ type PressureRecord struct {
 // CommandRecord is the canonical command-side record. Resource dimensions
 // are presence-aware: nil means the producer did not provide the field.
 type CommandRecord struct {
-	ID              string           `json:"id"`
-	Path            string           `json:"path"`
-	CPUCoreNS       *uint64          `json:"cpu_core_ns"`
-	MemoryBytes     *uint64          `json:"memory_bytes"`
-	PeakMemoryBytes *uint64          `json:"peak_memory_bytes"`
-	WorkUnits       *uint64          `json:"work_units"`
-	Pressures       []PressureRecord `json:"pressures"`
+	ID                string           `json:"id"`
+	Path              string           `json:"path"`
+	CPUCoreNS         *uint64          `json:"cpu_core_ns"`
+	MemoryBytes       *uint64          `json:"memory_bytes"`
+	PeakMemoryBytes   *uint64          `json:"peak_memory_bytes"`
+	WorkUnits         *uint64          `json:"work_units"`
+	Pressures         []PressureRecord `json:"pressures"`
+	AffectedStableIDs []string         `json:"affected_stable_ids"`
 }
 
 // PathRecord is the canonical provenance-side record. Record IDs are kept as
@@ -106,6 +111,7 @@ type Input struct {
 	Root               string           `json:"root"`
 	Commands           []CommandRecord  `json:"commands"`
 	Paths              []PathRecord     `json:"paths"`
+	AffectedStableIDs  []string         `json:"affected_stable_ids"`
 	SelectedCommandIDs []string         `json:"selected_command_ids"`
 	FullCommandIDs     []string         `json:"full_command_ids"`
 	Ceilings           ResourceCeilings `json:"ceilings"`

@@ -38,6 +38,13 @@ func evaluateBaseline(input Input, selectedIDs []string, fullSuite bool, name st
 		return result
 	}
 	vector, resourceKnown, pressureKnown := baselineResources(commands, ids)
+	affected, affectedFailure := baselineAffected(input, commands, ids)
+	if affectedFailure.reason != "" {
+		result.Vector = vector
+		result.Decision, result.Reason = affectedFailure.decision, affectedFailure.reason
+		return result
+	}
+	vector.AffectedStableIDs = U64(affected)
 	prov, provKnown := baselinePROV(input.Paths, selected)
 	mergePartial(vector, prov)
 	result.Vector = vector
@@ -81,11 +88,11 @@ func baselineSelection(input Input, selectedIDs []string) (map[string]CommandRec
 func baselineResources(commands map[string]CommandRecord, ids []string) (*PartialVector, bool, bool) {
 	vector := &PartialVector{}
 	groups := map[string]struct{}{}
-	var cpu, memory, work, affected, applicable, peak uint64
+	var cpu, memory, applicable, peak, work uint64
 	resourceKnown, pressureKnown := true, true
 	for _, id := range ids {
 		command := commands[id]
-		if !baselineCommandResources(command, &cpu, &memory, &work, &affected, &peak) {
+		if !baselineCommandResources(command, &cpu, &memory, &work, &peak) {
 			resourceKnown = false
 		}
 		if !baselinePressures(command, &applicable, groups) {
@@ -94,7 +101,7 @@ func baselineResources(commands map[string]CommandRecord, ids []string) (*Partia
 	}
 	if resourceKnown {
 		vector.CPUCoreNS, vector.MemoryBytes, vector.PeakMemoryBytes = U64(cpu), U64(memory), U64(peak)
-		vector.WorkUnits, vector.AffectedStableIDs = U64(work), U64(affected)
+		vector.WorkUnits = U64(work)
 	}
 	if pressureKnown {
 		vector.ApplicablePressures, vector.IndependentGroups = U64(applicable), U64(uint64(len(groups)))
@@ -102,7 +109,7 @@ func baselineResources(commands map[string]CommandRecord, ids []string) (*Partia
 	return vector, resourceKnown, pressureKnown
 }
 
-func baselineCommandResources(command CommandRecord, cpu, memory, work, affected, peak *uint64) bool {
+func baselineCommandResources(command CommandRecord, cpu, memory, work, peak *uint64) bool {
 	if command.CPUCoreNS == nil || command.MemoryBytes == nil || command.PeakMemoryBytes == nil || command.WorkUnits == nil {
 		return false
 	}
@@ -119,14 +126,60 @@ func baselineCommandResources(command CommandRecord, cpu, memory, work, affected
 	if !ok {
 		return false
 	}
-	*affected, ok = add(*affected, 1)
-	if !ok {
-		return false
-	}
 	if *command.PeakMemoryBytes > *peak {
 		*peak = *command.PeakMemoryBytes
 	}
 	return true
+}
+
+func baselineAffected(input Input, commands map[string]CommandRecord, ids []string) (uint64, validationFailure) {
+	if input.AffectedStableIDs == nil {
+		return 0, validationFailure{DecisionUnknown, ReasonMissingAffectedBinding}
+	}
+	registry := map[string]struct{}{}
+	for _, stableID := range input.AffectedStableIDs {
+		if !validAffectedID(stableID) {
+			return 0, validationFailure{DecisionFailClosed, ReasonDanglingAffectedBinding}
+		}
+		if _, exists := registry[stableID]; exists {
+			return 0, validationFailure{DecisionFailClosed, ReasonDuplicateAffectedBinding}
+		}
+		registry[stableID] = struct{}{}
+	}
+	selected := map[string]struct{}{}
+	for _, id := range ids {
+		selected[id] = struct{}{}
+	}
+	union := map[string]struct{}{}
+	bound := map[string]struct{}{}
+	for _, id := range sortedCommandIDs(commands) {
+		command := commands[id]
+		if command.AffectedStableIDs == nil {
+			return 0, validationFailure{DecisionUnknown, ReasonMissingAffectedBinding}
+		}
+		local := map[string]struct{}{}
+		for _, stableID := range command.AffectedStableIDs {
+			if !validAffectedID(stableID) {
+				return 0, validationFailure{DecisionFailClosed, ReasonDanglingAffectedBinding}
+			}
+			if _, exists := local[stableID]; exists {
+				return 0, validationFailure{DecisionFailClosed, ReasonDuplicateAffectedBinding}
+			}
+			if _, exists := registry[stableID]; !exists {
+				return 0, validationFailure{DecisionFailClosed, ReasonDanglingAffectedBinding}
+			}
+			local[stableID], bound[stableID] = struct{}{}, struct{}{}
+			if _, exists := selected[id]; exists {
+				union[stableID] = struct{}{}
+			}
+		}
+	}
+	for _, stableID := range input.AffectedStableIDs {
+		if _, exists := bound[stableID]; !exists {
+			return 0, validationFailure{DecisionUnknown, ReasonMissingAffectedBinding}
+		}
+	}
+	return uint64(len(union)), validationFailure{}
 }
 
 func baselinePressures(command CommandRecord, applicable *uint64, groups map[string]struct{}) bool {

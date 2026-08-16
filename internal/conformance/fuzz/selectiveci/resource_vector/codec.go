@@ -32,7 +32,7 @@ func DecodeInput(data []byte) (Input, error) {
 	if err := json.Unmarshal(data, &fields); err != nil || fields == nil {
 		return Input{}, fmt.Errorf("decode resource-vector input: expected object")
 	}
-	for _, name := range []string{"schema", "fixture_id", "root", "commands", "paths", "selected_command_ids", "full_command_ids", "ceilings"} {
+	for _, name := range []string{"schema", "fixture_id", "root", "commands", "paths", "affected_stable_ids", "selected_command_ids", "full_command_ids", "ceilings"} {
 		if !present(fields, name) {
 			return Input{}, fmt.Errorf("decode resource-vector input: missing %q", name)
 		}
@@ -48,12 +48,14 @@ func EncodeInputJSON(input Input) ([]byte, error) {
 		Root               string           `json:"root"`
 		Commands           []CommandRecord  `json:"commands"`
 		Paths              []PathRecord     `json:"paths"`
+		AffectedStableIDs  []string         `json:"affected_stable_ids"`
 		SelectedCommandIDs []string         `json:"selected_command_ids"`
 		FullCommandIDs     []string         `json:"full_command_ids"`
 		Ceilings           ResourceCeilings `json:"ceilings"`
 	}{
 		Schema: normalized.Schema, FixtureID: normalized.FixtureID, Root: input.Root,
 		Commands: normalized.Commands, Paths: normalized.Paths,
+		AffectedStableIDs:  normalized.AffectedStableIDs,
 		SelectedCommandIDs: normalized.SelectedCommandIDs, FullCommandIDs: normalized.FullCommandIDs,
 		Ceilings: normalized.Ceilings,
 	}, "", "  ")
@@ -124,6 +126,7 @@ func canonicalInput(input Input) canonicalInputView {
 			commands[index].Path = path
 		}
 		commands[index].Pressures = append([]PressureRecord(nil), commands[index].Pressures...)
+		commands[index].AffectedStableIDs = sortedStrings(commands[index].AffectedStableIDs)
 		sort.Slice(commands[index].Pressures, func(left, right int) bool {
 			return pressureKey(commands[index].Pressures[left]) < pressureKey(commands[index].Pressures[right])
 		})
@@ -147,6 +150,7 @@ func canonicalInput(input Input) canonicalInputView {
 	})
 	return canonicalInputView{
 		Schema: input.Schema, FixtureID: input.FixtureID, Commands: commands, Paths: paths,
+		AffectedStableIDs:  sortedStrings(input.AffectedStableIDs),
 		SelectedCommandIDs: sortedStrings(input.SelectedCommandIDs), FullCommandIDs: sortedStrings(input.FullCommandIDs),
 		Ceilings: input.Ceilings,
 	}
@@ -157,6 +161,7 @@ type canonicalInputView struct {
 	FixtureID          string           `json:"fixture_id"`
 	Commands           []CommandRecord  `json:"commands"`
 	Paths              []PathRecord     `json:"paths"`
+	AffectedStableIDs  []string         `json:"affected_stable_ids"`
 	SelectedCommandIDs []string         `json:"selected_command_ids"`
 	FullCommandIDs     []string         `json:"full_command_ids"`
 	Ceilings           ResourceCeilings `json:"ceilings"`

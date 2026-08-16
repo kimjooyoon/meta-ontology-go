@@ -44,7 +44,7 @@ func Evaluate(input Input) Output {
 	output.LimitFailures = append(output.LimitFailures, compareCeilings(selected, input.Ceilings.Selected, "selected")...)
 	output.LimitFailures = append(output.LimitFailures, compareCeilings(full, input.Ceilings.Full, "full")...)
 	if len(output.LimitFailures) != 0 {
-		return finish(output, DecisionUnknown, ReasonCeilingExceeded)
+		return finish(output, DecisionFailClosed, ReasonResourceLimitExceeded)
 	}
 	output.Decision, output.Reason, output.FullSuiteRequired = DecisionPass, ReasonNone, false
 	output.ProofValid = selectedMeta.pathCount > 0 && selectedMeta.allFinite &&
@@ -87,6 +87,7 @@ func replayVector(records indexedRecords, selectedIDs []string) (Vector, vectorM
 		selected[id] = struct{}{}
 	}
 	vector := Vector{PeakMemoryBytes: 0}
+	affected := map[string]struct{}{}
 	groups := map[string]struct{}{}
 	for _, id := range ids {
 		command := records.commands[id]
@@ -103,8 +104,8 @@ func replayVector(records indexedRecords, selectedIDs []string) (Vector, vectorM
 		if vector.WorkUnits, ok = add(vector.WorkUnits, *command.WorkUnits); !ok {
 			return Vector{}, vectorMeta{}, false
 		}
-		if vector.AffectedStableIDs, ok = add(vector.AffectedStableIDs, 1); !ok {
-			return Vector{}, vectorMeta{}, false
+		for _, stableID := range command.AffectedStableIDs {
+			affected[stableID] = struct{}{}
 		}
 		for _, pressure := range command.Pressures {
 			if !*pressure.Applicable {
@@ -116,6 +117,7 @@ func replayVector(records indexedRecords, selectedIDs []string) (Vector, vectorM
 			groups[pressure.IndependenceGroupID] = struct{}{}
 		}
 	}
+	vector.AffectedStableIDs = uint64(len(affected))
 	vector.IndependentGroups = uint64(len(groups))
 	meta := vectorMeta{allFinite: true}
 	for _, id := range ids {
