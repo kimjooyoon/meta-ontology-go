@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 )
 
 // DecodeR4JSON accepts exactly one R4 envelope. Unknown fields, duplicate
@@ -22,9 +23,9 @@ func DecodeR4JSON(data []byte) (R4Input, error) {
 		return R4Input{}, fmt.Errorf("decode r4 work frontier: %w", err)
 	}
 	for _, field := range []string{
-		"schema_version", "snapshot_digest", "policy_digest", "registry_digest",
-		"minimum_selected_pressures", "capacity", "pressures", "states", "paths",
-		"root_obligation_ids", "rules",
+		"schema_version", "snapshot_digest", "snapshot_payload", "policy_digest", "policy_payload",
+		"registry_digest", "registry_payload", "minimum_selected_pressures", "capacity", "pressures",
+		"states", "paths", "root_obligation_ids", "rules",
 	} {
 		if !r4FieldPresent(fields, field) {
 			return R4Input{}, fmt.Errorf("decode r4 work frontier: required field %q is missing", field)
@@ -49,12 +50,14 @@ func DecodeR4JSON(data []byte) (R4Input, error) {
 	return normalizeR4Input(input), nil
 }
 
-// EvaluateR4JSON maps malformed or incomplete envelopes to a conservative
-// UNKNOWN result while DecodeR4JSON remains available when callers need the
-// strict parse error.
+// EvaluateR4JSON maps incomplete envelopes to UNKNOWN and malformed duplicate
+// envelopes to FAIL_CLOSED while DecodeR4JSON retains the strict parse error.
 func EvaluateR4JSON(data []byte) R4Result {
 	input, err := DecodeR4JSON(data)
 	if err != nil {
+		if strings.Contains(err.Error(), "duplicate field") {
+			return r4FailClosed(r4Graph{}, R4ReasonMalformedBinding)
+		}
 		return R4Result{
 			SchemaVersion:     R4SchemaVersion,
 			Status:            R4StatusUnknown,

@@ -7,13 +7,13 @@ import "sort"
 func EvaluateR4(input R4Input) R4Result {
 	input = normalizeR4Input(input)
 	if !r4RequiredInputKnown(input) {
-		return R4Result{
-			SchemaVersion:     R4SchemaVersion,
-			Status:            R4StatusUnknown,
-			Reason:            R4ReasonRequiredInputMissing,
-			Quality:           R4StatusUnknown,
-			FullSuiteRequired: true,
+		return r4RequiredInputResult()
+	}
+	if reason := validateR4Bindings(input); reason != "" {
+		if reason == R4ReasonMalformedBinding {
+			return r4FailClosed(r4Graph{}, reason)
 		}
+		return r4Unknown(r4Graph{}, reason)
 	}
 	graph, graphReason := buildR4Graph(input)
 	if graphReason != "" {
@@ -28,8 +28,25 @@ func EvaluateR4(input R4Input) R4Result {
 		}
 		return r4Unknown(graph, reason)
 	}
+	legacy := r4LegacyInput(input, graph)
+	result := r4ResultFromGraph(graph)
+	ready, result := classifyR4Paths(legacy, graph, result)
+	result = selectR4Paths(input, legacy, ready, result)
+	return finishR4Result(result)
+}
 
-	legacy := Input{
+func r4RequiredInputResult() R4Result {
+	return R4Result{
+		SchemaVersion:     R4SchemaVersion,
+		Status:            R4StatusUnknown,
+		Reason:            R4ReasonRequiredInputMissing,
+		Quality:           R4StatusUnknown,
+		FullSuiteRequired: true,
+	}
+}
+
+func r4LegacyInput(input R4Input, graph r4Graph) Input {
+	return Input{
 		SchemaVersion:            SchemaVersion,
 		SnapshotDigest:           input.SnapshotDigest,
 		PolicyDigest:             input.PolicyDigest,
@@ -40,12 +57,17 @@ func EvaluateR4(input R4Input) R4Result {
 		States:                   append([]ObligationState(nil), input.States...),
 		Paths:                    append([]RepairPath(nil), graph.reachablePaths...),
 	}
+}
+
+func classifyR4Paths(legacy Input, graph r4Graph, result R4Result) ([]RepairPath, R4Result) {
 	indexes := buildIndexes(legacy)
-	if indexes.invalid {
-		return r4Unknown(graph, R4ReasonRequiredInputMissing)
-	}
 	ready := make([]RepairPath, 0, len(graph.reachablePaths))
-	result := r4ResultFromGraph(graph)
+	if indexes.invalid {
+		for _, path := range graph.reachablePaths {
+			result.Unknown = append(result.Unknown, path.StableID)
+		}
+		return ready, result
+	}
 	for _, path := range graph.reachablePaths {
 		switch classifyPath(legacy, indexes, path) {
 		case pathReady:
@@ -58,6 +80,10 @@ func EvaluateR4(input R4Input) R4Result {
 			result.Shortfall = append(result.Shortfall, path.StableID)
 		}
 	}
+	return ready, result
+}
+
+func selectR4Paths(input R4Input, legacy Input, ready []RepairPath, result R4Result) R4Result {
 	sort.Slice(ready, func(i, j int) bool { return selectionKey(ready[i]) < selectionKey(ready[j]) })
 	var usedCPU uint64
 	selected := make([]RepairPath, 0, len(ready))
@@ -81,6 +107,10 @@ func EvaluateR4(input R4Input) R4Result {
 		result.SelectedIDs = append(result.SelectedIDs, path.StableID)
 		result.WorkIDs = append(result.WorkIDs, workID)
 	}
+	return result
+}
+
+func finishR4Result(result R4Result) R4Result {
 	if len(result.Unknown) != 0 {
 		return r4UnknownWithResult(result, R4ReasonRequiredInputMissing)
 	}
@@ -100,7 +130,9 @@ func EvaluateR4(input R4Input) R4Result {
 
 func r4RequiredInputKnown(input R4Input) bool {
 	return input.SchemaVersion == R4SchemaVersion && input.SnapshotDigest != "" &&
-		input.PolicyDigest != "" && input.RegistryDigest != "" &&
+		input.SnapshotPayload != "" && input.PolicyDigest != "" &&
+		input.PolicyPayload != "" && input.RegistryDigest != "" &&
+		input.RegistryPayload != "" &&
 		input.MinimumSelectedPressures >= 2 && input.Pressures != nil &&
 		input.States != nil && input.Paths != nil && input.RootObligationIDs != nil &&
 		len(input.RootObligationIDs) != 0 && input.Rules != nil

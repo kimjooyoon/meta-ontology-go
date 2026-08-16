@@ -13,14 +13,18 @@ const (
 )
 
 const (
-	R4ReasonNone                 = "NONE"
-	R4ReasonRequiredInputMissing = "REQUIRED_INPUT_MISSING"
-	R4ReasonUnboundedFrontier    = "UNBOUNDED_FRONTIER"
-	R4ReasonIterationExhausted   = "ITERATION_EXHAUSTED"
-	R4ReasonSelectionShortfall   = "SELECTION_SHORTFALL"
-	R4ReasonDuplicateSCCRule     = "DUPLICATE_SCC_RULE"
-	R4ReasonConflictingSCCRule   = "CONFLICTING_SCC_RULE"
-	R4ReasonMalformedGraph       = "MALFORMED_GRAPH"
+	R4ReasonNone                    = "NONE"
+	R4ReasonRequiredInputMissing    = "REQUIRED_INPUT_MISSING"
+	R4ReasonUnboundedFrontier       = "UNBOUNDED_FRONTIER"
+	R4ReasonIterationExhausted      = "ITERATION_EXHAUSTED"
+	R4ReasonSelectionShortfall      = "SELECTION_SHORTFALL"
+	R4ReasonDuplicateSCCRule        = "DUPLICATE_SCC_RULE"
+	R4ReasonConflictingSCCRule      = "CONFLICTING_SCC_RULE"
+	R4ReasonMalformedGraph          = "MALFORMED_GRAPH"
+	R4ReasonMalformedBinding        = "MALFORMED_BINDING"
+	R4ReasonSnapshotBindingMismatch = "SNAPSHOT_BINDING_MISMATCH"
+	R4ReasonPolicyBindingMismatch   = "POLICY_BINDING_MISMATCH"
+	R4ReasonRegistryBindingMismatch = "REGISTRY_BINDING_MISMATCH"
 )
 
 // R4Rule is the only accepted finite rule spelling in the R4 envelope.
@@ -36,8 +40,11 @@ type R4Rule struct {
 type R4Input struct {
 	SchemaVersion            string            `json:"schema_version"`
 	SnapshotDigest           string            `json:"snapshot_digest"`
+	SnapshotPayload          string            `json:"snapshot_payload"`
 	PolicyDigest             string            `json:"policy_digest"`
+	PolicyPayload            string            `json:"policy_payload"`
 	RegistryDigest           string            `json:"registry_digest"`
+	RegistryPayload          string            `json:"registry_payload"`
 	MinimumSelectedPressures uint32            `json:"minimum_selected_pressures"`
 	Capacity                 Capacity          `json:"capacity"`
 	Pressures                []Pressure        `json:"pressures"`
