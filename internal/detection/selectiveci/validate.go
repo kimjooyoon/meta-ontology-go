@@ -190,7 +190,7 @@ func validateBindings(bindings []ObligationBinding) error {
 		}
 		seen[binding.ID] = struct{}{}
 		if len(binding.CommandIDs) == 0 {
-			return failure(ReasonMissingBinding, "obligation has no commands")
+			return failure(ReasonMissingCommand, "obligation has no commands")
 		}
 		if len(binding.CommandIDs) != len(sortedUnique(binding.CommandIDs)) {
 			return failure(ReasonDuplicateID, "duplicate command reference")
