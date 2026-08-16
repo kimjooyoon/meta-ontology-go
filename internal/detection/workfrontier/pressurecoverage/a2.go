@@ -64,6 +64,10 @@ func Evaluate(input Input) Result {
 	if len(input.RequiredPressureIDs) == 0 {
 		return finish(result, DecisionUnknown, ReasonRequiredInputMissing)
 	}
+	return evaluateCoverage(result, input)
+}
+
+func evaluateCoverage(result Result, input Input) Result {
 	records := recordsByID(input.PressureRecords)
 	groups := map[string]struct{}{}
 	for _, id := range input.RequiredPressureIDs {

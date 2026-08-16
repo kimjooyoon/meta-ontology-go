@@ -1,7 +1,6 @@
 package pressurecoverage
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -178,14 +177,9 @@ func TestEvaluatePermutationReplay(t *testing.T) {
 	input.RequiredPressureIDs[0], input.RequiredPressureIDs[2] = input.RequiredPressureIDs[2], input.RequiredPressureIDs[0]
 	input.PressureRecords[0], input.PressureRecords[2] = input.PressureRecords[2], input.PressureRecords[0]
 	got := Evaluate(input)
-	if !reflect.DeepEqual(got, base) || !bytes.Equal(resultBytes(got), resultBytes(base)) {
+	if !reflect.DeepEqual(got, base) {
 		t.Fatalf("permutation changed result: %#v != %#v", got, base)
 	}
-}
-
-func resultBytes(result Result) []byte {
-	data, _ := json.Marshal(result)
-	return data
 }
 
 func a2Input() Input {
