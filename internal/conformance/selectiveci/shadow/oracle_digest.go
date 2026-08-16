@@ -83,14 +83,8 @@ func caseDigest(c Case) string {
 		Name      string `json:"name"`
 		Partition string `json:"partition"`
 		Files     Files  `json:"files"`
-		Result    Result `json:"result"`
-	}{c.Name, c.Partition, c.Files, resultWithoutDigest(c.Expected)}
+	}{c.Name, c.Partition, c.Files}
 	return hashJSON(value)
-}
-
-func resultWithoutDigest(result Result) Result {
-	result.CanonicalDigest = ""
-	return result
 }
 
 func hashJSON(value any) string {

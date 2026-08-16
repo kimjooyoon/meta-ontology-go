@@ -74,7 +74,7 @@ func TestProductionEquivalenceAgainstIndependentCorpus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := CorpusDigest(); got != "8448b309f64a05c06f75f03352d7516dcb296182af4b922532c28677353ca01e" {
+	if got := CorpusDigest(); got != "1749e4a01627483ca9b3f6ecb20e83244abb729b24501600dbe2ee553d295ca3" {
 		t.Fatalf("corpus digest changed: %s", got)
 	}
 	if got := ExpectedVectorDigest(corpus); got != "c48741ac3ba78be5cbd4ede9df04c962e32da0ba2dc761be79c2829749aad213" {
