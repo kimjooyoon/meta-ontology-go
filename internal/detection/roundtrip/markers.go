@@ -37,7 +37,11 @@ type openRegion struct {
 }
 
 func parseGeneratedFile(source []byte) (generatedFile, error) {
-	state := markerState{result: generatedFile{Regions: make(map[semantic.ID]generatedRegion)}, source: source}
+	state := markerState{
+		result:        generatedFile{Regions: make(map[semantic.ID]generatedRegion)},
+		source:        source,
+		closedSlotIDs: make(map[semantic.ID]struct{}),
+	}
 	for _, line := range splitSourceLines(source) {
 		if err := state.apply(line); err != nil {
 			return generatedFile{}, err
@@ -47,10 +51,11 @@ func parseGeneratedFile(source []byte) (generatedFile, error) {
 }
 
 type markerState struct {
-	result generatedFile
-	source []byte
-	open   *openRegion
-	slotID semantic.ID
+	result        generatedFile
+	source        []byte
+	open          *openRegion
+	slotID        semantic.ID
+	closedSlotIDs map[semantic.ID]struct{}
 }
 
 func (s *markerState) apply(line markerLine) error {
@@ -89,6 +94,9 @@ func (s *markerState) startRegion(line markerLine, attributes map[string]string)
 	if _, exists := s.result.Regions[id]; exists {
 		return fmt.Errorf("duplicate generated region %q", id)
 	}
+	if _, exists := s.closedSlotIDs[id]; exists {
+		return fmt.Errorf("generated region %q collides with slot identity", id)
+	}
 	s.open = &openRegion{ID: id, Kind: attributes["kind"], ContentStart: line.End}
 	return nil
 }
@@ -103,6 +111,15 @@ func (s *markerState) startSlot(line markerLine, attributes map[string]string) e
 	id, err := parseMarkerID(attributes["id"])
 	if err != nil {
 		return fmt.Errorf("slot ID: %w", err)
+	}
+	if id == s.open.ID {
+		return fmt.Errorf("slot %q collides with generated region identity", id)
+	}
+	if _, exists := s.result.Regions[id]; exists {
+		return fmt.Errorf("slot %q collides with generated region identity", id)
+	}
+	if _, exists := s.closedSlotIDs[id]; exists {
+		return fmt.Errorf("duplicate slot %q", id)
 	}
 	s.slotID = id
 	return nil
@@ -119,6 +136,7 @@ func (s *markerState) endSlot(line markerLine, attributes map[string]string) err
 	if id != s.slotID {
 		return fmt.Errorf("slot %q closes as %q", s.slotID, id)
 	}
+	s.closedSlotIDs[s.slotID] = struct{}{}
 	s.slotID = ""
 	return nil
 }
