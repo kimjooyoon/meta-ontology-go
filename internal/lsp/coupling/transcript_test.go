@@ -351,9 +351,15 @@ func TestProtocolTranscriptReadOnlyStandardSurface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, forbidden := range []string{"WorkspaceEdit", "workspaceEdit", "TextEdit", "textEdit", "edits"} {
-		if bytes.Contains(wire, []byte(forbidden)) {
-			t.Fatalf("read-only adapter exposed write surface %q: %s", forbidden, wire)
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(wire, &fields); err != nil {
+		t.Fatal(err)
+	}
+	for field := range fields {
+		switch field {
+		case "Outcome", "Links", "Hover", "Diagnostics":
+		default:
+			t.Fatalf("read-only adapter exposed an unexpected wire field %q: %s", field, wire)
 		}
 	}
 	if len(result.Links) != 1 || len(result.Diagnostics) != 1 {
