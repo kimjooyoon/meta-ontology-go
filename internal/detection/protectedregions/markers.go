@@ -35,15 +35,34 @@ func hasMarkerPrefix(line, prefix string) bool {
 	return len(line) == len(prefix) || line[len(prefix)] == ' ' || line[len(prefix)] == '\t'
 }
 
-func markerID(input string, legacy bool) (string, error) {
-	if legacy {
-		return strings.TrimSpace(input), nil
+func markerAttributes(input string, spec markerSpec) (string, string, error) {
+	if spec.legacy {
+		value := strings.TrimSpace(input)
+		if spec.boundary == End {
+			if value != "" {
+				return "", "", fmt.Errorf("legacy generated end marker has unexpected attributes")
+			}
+			return "", "", nil
+		}
+		if value == "" || len(strings.Fields(value)) != 1 {
+			return "", "", fmt.Errorf("legacy generated marker has invalid ID")
+		}
+		return value, "", nil
 	}
 	attrs, err := parseAttributes(input)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return attrs["id"], nil
+	for key := range attrs {
+		if key != "id" && (spec.kind != Generated || key != "kind") {
+			return "", "", fmt.Errorf("unknown %s marker attribute %q", spec.kind, key)
+		}
+	}
+	semanticKind := attrs["kind"]
+	if spec.kind == Generated && semanticKind != "" && semanticKind != "entity" && semanticKind != "activity" {
+		return "", "", fmt.Errorf("generated marker requires kind entity or activity")
+	}
+	return attrs["id"], semanticKind, nil
 }
 
 func parseAttributes(input string) (map[string]string, error) {

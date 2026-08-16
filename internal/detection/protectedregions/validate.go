@@ -14,12 +14,14 @@ type sourceLine struct {
 }
 
 type markerEvent struct {
-	kind     MarkerKind
-	boundary MarkerBoundary
-	id       string
-	line     int
-	start    int
-	end      int
+	kind         MarkerKind
+	boundary     MarkerBoundary
+	id           string
+	semanticKind string
+	legacy       bool
+	line         int
+	start        int
+	end          int
 }
 
 type openMarker struct {
@@ -54,14 +56,20 @@ func Validate(source []byte) Report {
 		if !ok {
 			continue
 		}
-		if event.id == "" {
+		if event.id == "" && !(event.legacy && event.boundary == End) {
 			result.Issues = append(result.Issues, Issue{
 				Kind: IssueMissingID, Marker: event.kind, Line: event.line,
 				Detail: "marker has no id",
 			})
 		}
+		if event.kind == Generated && !event.legacy && event.semanticKind == "" {
+			result.Issues = append(result.Issues, Issue{
+				Kind: IssueMissingKind, Marker: event.kind, ID: event.id, Line: event.line,
+				Detail: "generated marker has no kind",
+			})
+		}
 		if event.boundary == Start {
-			key := string(event.kind) + "\x00" + event.id
+			key := event.id
 			if event.id != "" {
 				if previous, exists := seen[key]; exists {
 					result.Issues = append(result.Issues, Issue{
@@ -94,13 +102,16 @@ func Validate(source []byte) Report {
 			BodyEnd:   event.start,
 		})
 	}
-	for index := len(stack) - 1; index >= 0; index-- {
+	for index := 0; index < len(stack); index++ {
 		opened := stack[index].event
 		result.Issues = append(result.Issues, Issue{
 			Kind: IssueMissingEnd, Marker: opened.kind, ID: opened.id, Line: opened.line,
 			Detail: "marker is not closed",
 		})
 	}
+	sort.SliceStable(result.Issues, func(i, j int) bool {
+		return result.Issues[i].Line < result.Issues[j].Line
+	})
 	sort.SliceStable(result.Regions, func(i, j int) bool { return result.Regions[i].Start < result.Regions[j].Start })
 	return result
 }
@@ -152,6 +163,14 @@ func closeMarker(event markerEvent, stack []openMarker, result *Report) ([]openM
 	if event.id != "" && top.event.id != "" && event.id != top.event.id {
 		result.Issues = append(result.Issues, Issue{Kind: IssueMismatchedMarker, Marker: event.kind, ID: event.id, Line: event.line, Detail: fmt.Sprintf("opened as %q", top.event.id)})
 	}
+	if event.kind == Generated && !event.legacy && !top.event.legacy &&
+		event.semanticKind != "" && top.event.semanticKind != "" &&
+		event.semanticKind != top.event.semanticKind {
+		result.Issues = append(result.Issues, Issue{
+			Kind: IssueMismatchedMarker, Marker: event.kind, ID: event.id, Line: event.line,
+			Detail: fmt.Sprintf("opened with kind %q", top.event.semanticKind),
+		})
+	}
 	return stack[:len(stack)-1], top, true
 }
 
@@ -171,15 +190,21 @@ func topKind(stack []openMarker, kind MarkerKind) bool {
 func parseMarker(line sourceLine, lineNumber int) (markerEvent, bool, error) {
 	trimmed := strings.TrimSpace(line.text)
 	for _, spec := range markerSpecs() {
-		if !hasMarkerPrefix(trimmed, spec.prefix) {
+		if !strings.HasPrefix(trimmed, spec.prefix) {
 			continue
 		}
-		rest := strings.TrimSpace(trimmed[len(spec.prefix):])
-		id, err := markerID(rest, spec.legacy)
-		if err != nil {
-			return markerEvent{}, true, err
+		event := markerEvent{kind: spec.kind, boundary: spec.boundary, line: lineNumber, start: line.start, end: line.end, legacy: spec.legacy}
+		if !hasMarkerPrefix(trimmed, spec.prefix) {
+			return event, true, fmt.Errorf("invalid %s marker line boundary", spec.prefix)
 		}
-		return markerEvent{kind: spec.kind, boundary: spec.boundary, id: id, line: lineNumber, start: line.start, end: line.end}, true, nil
+		rest := strings.TrimSpace(trimmed[len(spec.prefix):])
+		id, semanticKind, err := markerAttributes(rest, spec)
+		if err != nil {
+			return event, true, err
+		}
+		event.id = id
+		event.semanticKind = semanticKind
+		return event, true, nil
 	}
 	return markerEvent{}, false, nil
 }

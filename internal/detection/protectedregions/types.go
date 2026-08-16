@@ -33,6 +33,7 @@ type IssueKind string
 const (
 	IssueInvalidMarker        IssueKind = "invalid-marker"
 	IssueMissingID            IssueKind = "missing-id"
+	IssueMissingKind          IssueKind = "missing-kind"
 	IssueMissingStart         IssueKind = "missing-start"
 	IssueMissingEnd           IssueKind = "missing-end"
 	IssueDuplicateMarker      IssueKind = "duplicate-marker"

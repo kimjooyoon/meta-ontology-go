@@ -33,18 +33,41 @@ func CheckLocality(before, after []byte) error {
 }
 
 func generatedSkeleton(source []byte, report Report) []byte {
-	regions := generatedRegions(report)
+	regions := skeletonRegions(report)
 	if len(regions) == 0 {
 		return append([]byte(nil), source...)
 	}
 	result := make([]byte, 0, len(source))
 	cursor := 0
 	for _, region := range regions {
-		result = append(result, source[cursor:region.Start]...)
-		result = append(result, []byte(fmt.Sprintf("\x00gooo:generated:%s:%s\x00", region.Kind, region.ID))...)
+		result = append(result, source[cursor:region.BodyStart]...)
+		result = append(result, []byte(fmt.Sprintf("\x00gooo:protected-body:%s:%s\x00", region.Kind, region.ID))...)
+		result = append(result, source[region.BodyEnd:region.End]...)
 		cursor = region.End
 	}
 	return append(result, source[cursor:]...)
+}
+
+func skeletonRegions(report Report) []Region {
+	generated := generatedRegions(report)
+	regions := append([]Region(nil), generated...)
+	for _, region := range report.Regions {
+		if region.Kind != Slot && region.Kind != Handwritten {
+			continue
+		}
+		insideGenerated := false
+		for _, owner := range generated {
+			if region.Start >= owner.Start && region.End <= owner.End {
+				insideGenerated = true
+				break
+			}
+		}
+		if !insideGenerated {
+			regions = append(regions, region)
+		}
+	}
+	sort.SliceStable(regions, func(i, j int) bool { return regions[i].Start < regions[j].Start })
+	return regions
 }
 
 func generatedRegions(report Report) []Region {
