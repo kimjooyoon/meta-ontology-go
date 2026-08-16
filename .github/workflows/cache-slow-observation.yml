@@ -1,0 +1,272 @@
+name: Cache slow observation
+run-name: "Cache slow observation [${{ github.event_name }}]"
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Dependency: PR #232 supplies this exact cache contract and must merge first.
+  CACHE_CONTRACT_BRANCH: agent/cache
+  CACHE_CONTRACT_HEAD: 3a7154c2c021c581bb7b442bd1e81a1cb3a3061e
+  CACHE_TEST_CLASS: slow-observation
+  CACHE_TEST_FLAG: -cache-test-class=slow-observation
+
+concurrency:
+  group: cache-slow-observation-dev
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    name: cache slow observation (non-required)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout dev snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: refs/heads/dev
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve exact dev snapshot
+        id: snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin refs/heads/dev
+          dev_sha="$(git rev-parse FETCH_HEAD)"
+          git checkout --detach "$dev_sha"
+          actual_sha="$(git rev-parse HEAD)"
+          test "$actual_sha" = "$dev_sha"
+          git cat-file -e "$CACHE_CONTRACT_HEAD^{commit}"
+          if ! git merge-base --is-ancestor "$CACHE_CONTRACT_HEAD" "$actual_sha"; then
+            echo "dev snapshot does not contain cache contract head $CACHE_CONTRACT_HEAD" >&2
+            exit 1
+          fi
+          test -z "$(git status --porcelain)"
+          mkdir -p cache-observation
+          printf 'refs/heads/dev\n' > cache-observation/checkout-ref.txt
+          printf '%s\n' "$actual_sha" > cache-observation/checkout-sha.txt
+          printf '%s\n' "$CACHE_CONTRACT_HEAD" > cache-observation/cache-contract-head.txt
+          printf 'checkout_ref=refs/heads/dev\n' >> "$GITHUB_OUTPUT"
+          printf 'checkout_sha=%s\n' "$actual_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Record observation inputs
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TRIGGER_REF: ${{ github.ref }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          CHECKOUT_SHA: ${{ steps.snapshot.outputs.checkout_sha }}
+          CACHE_CONTRACT_BRANCH: ${{ env.CACHE_CONTRACT_BRANCH }}
+          CACHE_CONTRACT_HEAD: ${{ env.CACHE_CONTRACT_HEAD }}
+        run: |
+          set -euo pipefail
+          go_version="$(go version)"
+          go_toolchain="$(go env GOVERSION)"
+          export GO_VERSION="$go_version" GO_TOOLCHAIN="$go_toolchain"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          normal = [
+              "go", "test", "-count=1", "-json", "./internal/cache",
+              "-args", "-cache-test-class=slow-observation",
+          ]
+          race = [
+              "go", "test", "-count=1", "-race", "-json", "./internal/cache",
+              "-args", "-cache-test-class=slow-observation",
+          ]
+          payload = {
+              "schema": "gooo/cache-slow-observation/v1",
+              "observation": "open-loop",
+              "merge_gate": "non-required",
+              "promotion_authority": "none",
+              "event": os.environ["EVENT_NAME"],
+              "trigger_ref": os.environ["TRIGGER_REF"],
+              "workflow_ref": os.environ["WORKFLOW_REF"],
+              "workflow_sha": os.environ["WORKFLOW_SHA"],
+              "run_id": int(os.environ["RUN_ID"]),
+              "run_attempt": int(os.environ["RUN_ATTEMPT"]),
+              "checkout_ref": "refs/heads/dev",
+              "checkout_sha": os.environ["CHECKOUT_SHA"],
+              "go_version": os.environ["GO_VERSION"],
+              "go_toolchain": os.environ["GO_TOOLCHAIN"],
+              "cache_contract": {
+                  "branch": os.environ["CACHE_CONTRACT_BRANCH"],
+                  "head_sha": os.environ["CACHE_CONTRACT_HEAD"],
+                  "class_id": "slow-observation",
+                  "class_flag": "-cache-test-class=slow-observation",
+                  "inventory": [
+                      "TestCacheLatencyEvidenceMatrix",
+                      "TestCacheSameKeyCrossProcessStampede",
+                      "TestIncrementalCacheMutationMatrix",
+                  ],
+              },
+              "commands": {
+                  "normal_durability": {"argv": normal, "text": " ".join(normal)},
+                  "race_durability": {"argv": race, "text": " ".join(race)},
+              },
+          }
+          Path("cache-observation/metadata.json").write_text(json.dumps(payload, indent=2) + "\n")
+          Path("cache-observation/commands.txt").write_text(
+              payload["commands"]["normal_durability"]["text"] + "\n" +
+              payload["commands"]["race_durability"]["text"] + "\n"
+          )
+          PY
+
+      - name: Run slow observation (normal durability)
+        id: normal
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          mkdir -p cache-observation
+          go test -count=1 -json ./internal/cache -args -cache-test-class=slow-observation \
+            > cache-observation/normal-go-test.json \
+            2> cache-observation/normal-stderr.log
+          status=$?
+          printf '%s\n' "$status" > cache-observation/normal-exit-status.txt
+          exit "$status"
+
+      - name: Run slow observation (race durability)
+        id: race
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          mkdir -p cache-observation
+          go test -count=1 -race -json ./internal/cache -args -cache-test-class=slow-observation \
+            > cache-observation/race-go-test.json \
+            2> cache-observation/race-stderr.log
+          status=$?
+          printf '%s\n' "$status" > cache-observation/race-exit-status.txt
+          exit "$status"
+
+      - name: Finalize observation evidence
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set +e
+          mkdir -p cache-observation
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path("cache-observation")
+
+          def result(mode):
+              status_file = root / f"{mode}-exit-status.txt"
+              json_file = root / f"{mode}-go-test.json"
+              if not status_file.exists():
+                  return {"status": "UNKNOWN", "exit_status": None, "json_present": json_file.exists()}
+              raw = status_file.read_text().strip()
+              try:
+                  exit_status = int(raw)
+              except ValueError:
+                  return {"status": "UNKNOWN", "exit_status": None, "json_present": json_file.exists()}
+              if not json_file.exists():
+                  return {"status": "UNKNOWN", "exit_status": exit_status, "json_present": False}
+              return {
+                  "status": "PASS" if exit_status == 0 else "RED",
+                  "exit_status": exit_status,
+                  "json_present": json_file.exists(),
+              }
+
+          modes = {
+              "normal_durability": result("normal"),
+              "race_durability": result("race"),
+          }
+          overall = "PASS" if all(item["status"] == "PASS" for item in modes.values()) else "RED"
+          evidence = {
+              "schema": "gooo/cache-slow-observation-result/v1",
+              "cache_contract_head": "3a7154c2c021c581bb7b442bd1e81a1cb3a3061e",
+              "class_id": "slow-observation",
+              "class_flag": "-cache-test-class=slow-observation",
+              "overall_status": overall,
+              "visibility": "red_or_UNKNOWN",
+              "merge_gate": "non-required",
+              "promotion_authority": "none",
+              "modes": modes,
+          }
+          (root / "observation-result.json").write_text(json.dumps(evidence, indent=2) + "\n")
+
+          lines = [
+              "### Cache slow observation",
+              "",
+              "- class: `slow-observation`",
+              "- checkout: `refs/heads/dev` at the recorded immutable SHA",
+              f"- overall result: **{overall}**",
+              "- merge gate: non-required open-loop evidence",
+              "- promotion authority: none; this observation cannot authorize promotion",
+              "",
+          ]
+          for name, item in modes.items():
+              lines.append(
+                  f"- {name}: **{item['status']}** "
+                  f"(exit={item['exit_status']}, json_present={item['json_present']})"
+              )
+          (root / "human-summary.md").write_text("\n".join(lines) + "\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("\n".join(lines) + "\n")
+
+          manifest = []
+          for path in sorted(root.iterdir()):
+              if path.name == "artifact-manifest.json" or not path.is_file():
+                  continue
+              data = path.read_bytes()
+              manifest.append({
+                  "path": str(path),
+                  "bytes": len(data),
+                  "sha256": hashlib.sha256(data).hexdigest(),
+              })
+          (root / "artifact-manifest.json").write_text(json.dumps({
+              "schema": "gooo/cache-slow-observation-artifacts/v1",
+              "files": manifest,
+          }, indent=2) + "\n")
+          PY
+
+      - name: Upload immutable observation artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cache-slow-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: cache-observation/
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: false
+
+      - name: Mark observation conclusion (non-required)
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s cache-observation/observation-result.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path("cache-observation/observation-result.json").read_text())
+          if result.get("overall_status") != "PASS":
+              raise SystemExit(
+                  "cache slow observation is RED or UNKNOWN; evidence is non-required "
+                  "and cannot authorize promotion"
+              )
+          PY
