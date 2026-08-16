@@ -97,8 +97,10 @@ TermRecord {
   canonical_name: label only
   definition, definition_version, definition_digest
   related_term_ids: sorted stable IDs
-  inference_edge_kinds: closed enum values
-  phase: PRECOMPILE | COMPILE | RUNTIME | VERIFICATION
+  inference_edge_kinds: closed document shorthand values
+  logical_phase: DECLARATION | DERIVATION | PROJECTION |
+                 OBSERVATION | LIFT | VERIFICATION
+  execution_placement: PRECOMPILE | COMPILE | RUNTIME | VERIFICATION
   authority_layer: BUSINESS_SOURCE | SEMANTIC_IR | PROJECTION |
                     OBSERVATION | VERIFICATION
   effect: DECLARES | NORMALIZES | PROJECTS | CANDIDATE |
@@ -119,10 +121,11 @@ CodeBinding {
 OriginPath {
   path_id: stable path ID
   from_id, to_id: stable registry IDs
-  edge_kind: DECLARATION | DETERMINISTIC_DERIVATION | PROJECTION |
-             OBSERVATION_CANDIDATE | ACCEPTED_LIFT |
-             INDEPENDENT_VERIFICATION
-  phase, rule_ref, input_digest, output_digest, evidence_ref
+  edge_kind: document shorthand for the six typed edge names below
+  logical_phase: DECLARATION | DERIVATION | PROJECTION |
+                 OBSERVATION | LIFT | VERIFICATION
+  execution_placement: proposed category or MISSING/UNKNOWN
+  rule_ref, input_digest, output_digest, evidence_ref
 }
 ```
 
@@ -178,7 +181,25 @@ the semantic authority changed. An `OBSERVATION_CANDIDATE` edge never becomes an
 accepted semantic change merely because it is visible in a code index. An
 `ACCEPTED_LIFT` requires an explicit authority decision and fresh evidence.
 
-The closed path enum is exactly:
+The edge names in this document are human contract shorthand. They are not the
+serialized values of the existing `semantic.InferencePathV1` wire enum. The
+codec uses this total, one-to-one, versioned mapping literally:
+
+| Human contract shorthand | `semantic.InferencePathV1` wire enum |
+| --- | --- |
+| `DECLARATION` | `AUTHORITATIVE_DECLARATION` |
+| `DETERMINISTIC_DERIVATION` | `DETERMINISTIC_DERIVATION` |
+| `PROJECTION` | `DERIVED_PROJECTION` |
+| `OBSERVATION_CANDIDATE` | `OBSERVATION_CANDIDATE` |
+| `ACCEPTED_LIFT` | `ACCEPTED_LIFT` |
+| `INDEPENDENT_VERIFICATION` | `INDEPENDENT_VERIFICATION` |
+
+No implementation may infer a mapping from names, aliases, similarity, or an
+LLM. Alias matching and name/LLM inference are forbidden; codec mapping must
+be literal and versioned. An unknown value, missing mapping, or schema-version
+mismatch is `UNKNOWN`.
+
+The document's closed edge vocabulary is exactly:
 
 ```text
 DECLARATION
@@ -189,20 +210,51 @@ ACCEPTED_LIFT
 INDEPENDENT_VERIFICATION
 ```
 
-The closed change-claim enum is exactly `DELTA | NO_DELTA`. It must not be
-reused as an edge kind, and an edge kind must not be used as a semantic-change
-claim. The phase labels locate a possible observer or rule:
+The document also uses the following change-claim shorthand. It is distinct
+from both the edge vocabulary and the wire edge enum:
 
-| Phase | Permitted contract role | Current support claim |
+| Human contract shorthand | `semantic.SemanticChangeKind` wire enum |
+| --- | --- |
+| `DELTA` | `SEMANTIC_DELTA` |
+| `NO_DELTA` | `NO_SEMANTIC_DELTA` |
+
+The closed change-claim shorthand is exactly `DELTA | NO_DELTA`; it must not be
+reused as an edge kind, and an edge kind must not be used as a semantic-change
+claim. The change-claim codec uses the same literal, versioned discipline.
+
+Code/semantic coupling rule: the wire enum, these mappings, and their exact
+mapping fixtures form one accepted ceiling. Changing either the enum or a
+mapping requires this contract and the exact mapping fixtures to change in the
+same accepted ceiling. Mismatched snapshots, mapping digests, or versions are
+`UNKNOWN`.
+
+The current `semantic.InferencePathV1` logical phase enum is exactly:
+
+| Logical inference phase | `semantic.InferencePathV1` wire phase |
+| --- | --- |
+| `DECLARATION` | `DECLARATION` |
+| `DERIVATION` | `DERIVATION` |
+| `PROJECTION` | `PROJECTION` |
+| `OBSERVATION` | `OBSERVATION` |
+| `LIFT` | `LIFT` |
+| `VERIFICATION` | `VERIFICATION` |
+
+Logical inference phase and execution placement are separate axes. The
+following are proposed execution-placement categories for this document, not
+values of the current `InferencePathV1` logical phase enum:
+
+| Proposed execution placement | Proposed role | Current support claim |
 | --- | --- | --- |
 | `PRECOMPILE` | Resolve registry, authority, affected surfaces, and paths. | Design placement only. |
 | `COMPILE` | Lower/normalize IR, project code, bind source maps, and form receipts. | Current compiler has related IR/projection surfaces; this contract adds no API. |
 | `RUNTIME` | Observe execution occurrences/effects only when a runtime profile exists. | Not implied by a design-time `.gooo` activity. |
 | `VERIFICATION` | Recompute digests, validate typed paths/receipts, and emit evidence. | Future observer placement; not a current CI promise. |
 
-Phases locate a rule; they do not claim every phase or adapter exists today. A
-design-time activity is not a runtime occurrence; runtime claims require
-runtime evidence and distinct occurrence IDs.
+No implementation may infer execution placement from a logical inference
+phase. Until an exact registered adapter exists, execution placement is
+`MISSING`/`UNKNOWN`. Logical phases do not claim every phase or adapter exists
+today. A design-time activity is not a runtime occurrence; runtime claims
+require runtime evidence and distinct occurrence IDs.
 
 ## 4. Two inactive metric contracts
 
@@ -216,9 +268,9 @@ row: both are `DESIGN_ONLY`, `adoption=UNOBSERVED`, and
 | --- | --- |
 | Question | Does every required term/code/decision relation have exactly one complete typed path to authority and independent evidence? |
 | Exact inputs | Changed-surface set; term and semantic-owner registry; code/source-map bindings; origin paths; rule/evidence registry; source/IR/registry/toolchain/profile digests. |
-| Normalization | Sort stable IDs; resolve each endpoint once; canonicalize the six edge kinds, phase, rule, input/output digests, and evidence refs; reject duplicates rather than deduplicating them. |
+| Normalization | Sort stable IDs; resolve each endpoint once; canonicalize the six document edge shorthands through their literal wire mapping, logical phase, proposed execution placement, rule, input/output digests, and evidence refs; reject duplicates rather than deduplicating them. |
 | PASS law | Every required relation has one and only one complete path ending at authority and an evidence/verifier node; all edge kinds are registered and all digests match. |
-| FAIL_CLOSED law | A known duplicate, orphan, unregistered edge kind, illegal endpoint, contradictory phase, or mismatched bound is `FAIL_CLOSED` with the exact path failure code. |
+| FAIL_CLOSED law | A known duplicate, orphan, unregistered edge kind, illegal endpoint, contradictory logical phase, or mismatched bound is `FAIL_CLOSED` with the exact path failure code. |
 | UNKNOWN law | Missing/ambiguous registry, source-map, rule, evidence, snapshot, or verifier input is `UNKNOWN`; it is never an empty path or PASS. |
 | N/A law | Only a future immutable catalog row may prove `NOT_APPLICABLE`; absent applicability proof is `UNKNOWN`. |
 | Fixture/oracle | The billing fixture above; positives cover declaration → deterministic derivation → projection → independent verification, and negatives remove, duplicate, reverse, or relabel one edge. The oracle recomputes the required relation set and path digest. |
