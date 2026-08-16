@@ -4,7 +4,11 @@ import "sort"
 
 // Observe computes a read-only, explicit pressure coverage observation.
 func Observe(input Input) Output {
-	output := Output{Schema: SchemaVersion, InputDigest: CanonicalInputDigest(input), RequiredPressureCount: uint64(len(input.RequiredPressureIDs))}
+	output := Output{
+		Schema:                SchemaVersion,
+		InputDigest:           CanonicalInputDigest(input),
+		RequiredPressureCount: uint64(len(input.RequiredPressureIDs)),
+	}
 	setCost(&output, input, 0)
 	if reason := validateHeader(input); reason != "" {
 		return finish(output, input, DecisionUnknown, reason)
@@ -24,7 +28,8 @@ func Observe(input Input) Output {
 		groups[record.IndependenceGroupID] = append(groups[record.IndependenceGroupID], id)
 	}
 	output.DistinctGroupCount = uint64(len(groups))
-	if uint64(len(groups)) < effectiveK(input.MinimumIndependent) || uint64(len(groups)) < effectiveK(input.RequestedK) {
+	if uint64(len(groups)) < effectiveK(input.MinimumIndependent) ||
+		uint64(len(groups)) < effectiveK(input.RequestedK) {
 		return finish(output, input, DecisionUnknown, ReasonIndependentGroupShortfall)
 	}
 	output.SelectedIDs = selectRepresentatives(groups, input.RequestedK)
@@ -34,16 +39,50 @@ func Observe(input Input) Output {
 }
 
 func validateHeader(input Input) Reason {
-	if input.Schema == "" || input.AuthoritySnapshotDigest == "" || input.PolicyDigest == "" || input.RegistryDigest == "" || input.ToolchainOptionsDigest == "" || input.RequestedK == 0 || input.MinimumIndependent == 0 || input.PressureRecords == nil || input.RequiredPressureIDs == nil || input.FinitePathIDs == nil || input.GuardIDs == nil {
+	if missingRequiredInput(input) {
 		return ReasonRequiredInputMissing
 	}
-	if input.Schema != SchemaVersion || !validDigest(input.AuthoritySnapshotDigest) || !validDigest(input.PolicyDigest) || !validDigest(input.RegistryDigest) || !validDigest(input.ToolchainOptionsDigest) {
+	if input.Schema != SchemaVersion || !validDigests(input) || !boundDigests(input) {
 		return ReasonStaleDigest
 	}
 	return ""
 }
 
+func missingRequiredInput(input Input) bool {
+	return input.Schema == "" || input.AuthoritySnapshotDigest == "" ||
+		input.PolicyDigest == "" || input.RegistryDigest == "" ||
+		input.ToolchainOptionsDigest == "" || input.RequestedK == 0 ||
+		input.MinimumIndependent == 0 || len(input.PressureRecords) == 0 ||
+		len(input.RequiredPressureIDs) == 0 || len(input.FinitePathIDs) == 0 ||
+		len(input.GuardIDs) == 0
+}
+
+func validDigests(input Input) bool {
+	return validDigest(input.AuthoritySnapshotDigest) &&
+		validDigest(input.PolicyDigest) && validDigest(input.RegistryDigest) &&
+		validDigest(input.ToolchainOptionsDigest)
+}
+
 func validateRecords(input Input) (map[string]PressureRecord, Decision, Reason) {
+	if reason := validateLists(input); reason != "" {
+		return nil, listDecision(reason), reason
+	}
+	records := make(map[string]PressureRecord, len(input.PressureRecords))
+	for _, record := range input.PressureRecords {
+		decision, reason := addRecord(records, record)
+		if reason != "" {
+			return nil, decision, reason
+		}
+	}
+	for _, id := range input.RequiredPressureIDs {
+		if _, ok := records[id]; !ok {
+			return nil, DecisionUnknown, ReasonRequiredInputMissing
+		}
+	}
+	return records, DecisionPass, ""
+}
+
+func validateLists(input Input) Reason {
 	lists := []struct {
 		values    []string
 		duplicate Reason
@@ -55,31 +94,36 @@ func validateRecords(input Input) (map[string]PressureRecord, Decision, Reason) 
 	}
 	for _, list := range lists {
 		if reason := listReason(list.values, list.duplicate, list.malformed); reason != "" {
-			return nil, listDecision(reason), reason
+			return reason
 		}
 	}
-	records := make(map[string]PressureRecord, len(input.PressureRecords))
-	for _, record := range input.PressureRecords {
-		if !validID(record.PressureID) || !validID(record.CategoryID) || (record.IndependenceGroupID != "" && !validID(record.IndependenceGroupID)) || (record.ApplicabilityRuleID != "" && !validID(record.ApplicabilityRuleID)) {
-			return nil, DecisionFailClosed, ReasonCatalogMismatch
-		}
-		if record.IndependenceGroupID == "" || record.ApplicabilityRuleID == "" {
-			return nil, DecisionUnknown, ReasonApplicabilityUnproven
-		}
-		if prior, exists := records[record.PressureID]; exists {
-			if prior.CategoryID == record.CategoryID && prior.IndependenceGroupID == record.IndependenceGroupID && prior.ApplicabilityRuleID == record.ApplicabilityRuleID {
-				return nil, DecisionFailClosed, ReasonDuplicateID
-			}
-			return nil, DecisionFailClosed, ReasonConflictingGroupBinding
-		}
-		records[record.PressureID] = record
+	return ""
+}
+
+func addRecord(records map[string]PressureRecord, record PressureRecord) (Decision, Reason) {
+	if !validRecord(record) {
+		return DecisionFailClosed, ReasonCatalogMismatch
 	}
-	for _, id := range input.RequiredPressureIDs {
-		if _, ok := records[id]; !ok {
-			return nil, DecisionUnknown, ReasonRequiredInputMissing
-		}
+	if record.IndependenceGroupID == "" || record.ApplicabilityRuleID == "" {
+		return DecisionUnknown, ReasonApplicabilityUnproven
 	}
-	return records, DecisionPass, ""
+	if prior, exists := records[record.PressureID]; exists {
+		if prior == record {
+			return DecisionFailClosed, ReasonDuplicatePressureID
+		}
+		return DecisionFailClosed, ReasonConflictingGroupBinding
+	}
+	records[record.PressureID] = record
+	return DecisionPass, ""
+}
+
+func validRecord(record PressureRecord) bool {
+	return validID(record.PressureID) && validID(record.CategoryID) &&
+		optionalID(record.IndependenceGroupID) && optionalID(record.ApplicabilityRuleID)
+}
+
+func optionalID(value string) bool {
+	return value == "" || validID(value)
 }
 
 func listReason(values []string, duplicate, malformed Reason) Reason {
@@ -162,9 +206,13 @@ func effectiveK(value uint64) uint64 {
 }
 
 func setCost(output *Output, input Input, selected int) {
-	output.DeterministicWorkUnits = uint64(len(input.PressureRecords)) + 2*uint64(len(input.RequiredPressureIDs)) + uint64(len(input.GuardIDs)) + uint64(len(input.FinitePathIDs))
+	pressureCount := uint64(len(input.PressureRecords))
+	requiredCount := uint64(len(input.RequiredPressureIDs))
+	guardCount := uint64(len(input.GuardIDs))
+	pathCount := uint64(len(input.FinitePathIDs))
+	output.DeterministicWorkUnits = pressureCount + 2*requiredCount + guardCount + pathCount
 	output.CPUCoreNS = uint64(selected)
-	output.MemoryBytes = 1024 * uint64(len(input.RequiredPressureIDs))
-	output.ProvRecords = uint64(len(input.PressureRecords)) + uint64(len(input.GuardIDs))
-	output.ProvPaths = uint64(len(input.FinitePathIDs))
+	output.MemoryBytes = 1024 * requiredCount
+	output.ProvRecords = pressureCount + guardCount
+	output.ProvPaths = pathCount
 }

@@ -14,7 +14,12 @@ func TestPositiveK2(t *testing.T) {
 	if len(got.UnselectedIDs) != 2 || got.UnselectedIDs[0] != "pressure-aa" || got.UnselectedIDs[1] != "pressure-z" {
 		t.Fatalf("partition = %#v", got)
 	}
-	if got.InputDigest != CanonicalInputDigest(input) || got.OutputDigest != CanonicalOutputDigest(got) || got.ReplayDigest == "" {
+	if got.DeterministicWorkUnits != 16 || got.CPUCoreNS != 2 ||
+		got.MemoryBytes != 4096 || got.ProvRecords != 5 || got.ProvPaths != 3 {
+		t.Fatalf("cost vector = %#v", got)
+	}
+	if got.InputDigest != CanonicalInputDigest(input) ||
+		got.OutputDigest != CanonicalOutputDigest(got) || got.ReplayDigest == "" {
 		t.Fatalf("digests = %#v", got)
 	}
 }
@@ -28,9 +33,14 @@ func TestMutationDecisions(t *testing.T) {
 		{"same group", DecisionUnknown, ReasonIndependentGroupShortfall},
 		{"missing group", DecisionUnknown, ReasonApplicabilityUnproven},
 		{"missing applicability", DecisionUnknown, ReasonApplicabilityUnproven},
-		{"duplicate", DecisionFailClosed, ReasonDuplicateID},
+		{"duplicate", DecisionFailClosed, ReasonDuplicatePressureID},
 		{"conflicting binding", DecisionFailClosed, ReasonConflictingGroupBinding},
 		{"stale digest", DecisionUnknown, ReasonStaleDigest},
+		{"empty required", DecisionUnknown, ReasonRequiredInputMissing},
+		{"empty guards", DecisionUnknown, ReasonRequiredInputMissing},
+		{"empty paths", DecisionUnknown, ReasonRequiredInputMissing},
+		{"internal whitespace", DecisionUnknown, ReasonCatalogMismatch},
+		{"control ID", DecisionUnknown, ReasonCatalogMismatch},
 	}
 	for _, test := range cases {
 		input := fixture()
@@ -55,7 +65,20 @@ func mutate(input *Input, name string) {
 	case "conflicting binding":
 		input.PressureRecords = append(input.PressureRecords, PressureRecord{"pressure-a", "category-a", "group-x", "rule-1"})
 	case "stale digest":
-		input.PolicyDigest = "stale"
+		input.PolicyDigest = digestBytes([]byte("stale-policy"))
+	case "empty required":
+		input.RequiredPressureIDs = []string{}
+	case "empty guards":
+		input.GuardIDs = []string{}
+	case "empty paths":
+		input.FinitePathIDs = []string{}
+	case "internal whitespace":
+		input.RequiredPressureIDs[0] = "pressure z"
+	case "control ID":
+		input.RequiredPressureIDs[0] = "pressure-z\x00"
+	}
+	if name != "stale digest" {
+		bindDigests(input)
 	}
 }
 
@@ -76,7 +99,22 @@ func fixture() Input {
 		{"pressure-b", "category-b", "group-b", "rule-1"},
 		{"pressure-aa", "category-a", "group-a", "rule-1"},
 	}
-	return Input{Schema: SchemaVersion, AuthoritySnapshotDigest: testDigest, PolicyDigest: testDigest, RegistryDigest: testDigest, ToolchainOptionsDigest: testDigest, RequestedK: 2, MinimumIndependent: 2, PressureRecords: records, RequiredPressureIDs: []string{"pressure-z", "pressure-a", "pressure-b", "pressure-aa"}, FinitePathIDs: []string{"path-1", "path-2", "path-3"}, GuardIDs: []string{"guard-1"}}
+	input := Input{
+		Schema:              SchemaVersion,
+		RequestedK:          2,
+		MinimumIndependent:  2,
+		PressureRecords:     records,
+		RequiredPressureIDs: []string{"pressure-z", "pressure-a", "pressure-b", "pressure-aa"},
+		FinitePathIDs:       []string{"path-1", "path-2", "path-3"},
+		GuardIDs:            []string{"guard-1"},
+	}
+	bindDigests(&input)
+	return input
 }
 
-const testDigest = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+func bindDigests(input *Input) {
+	input.AuthoritySnapshotDigest = authorityBindingDigest(*input, "authority-snapshot")
+	input.PolicyDigest = authorityBindingDigest(*input, "policy")
+	input.RegistryDigest = authorityBindingDigest(*input, "registry")
+	input.ToolchainOptionsDigest = authorityBindingDigest(*input, "toolchain-options")
+}

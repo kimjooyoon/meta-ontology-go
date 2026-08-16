@@ -23,6 +23,7 @@ const (
 	ReasonCatalogMismatch           Reason = "CATALOG_MISMATCH"
 	ReasonIndependentGroupShortfall Reason = "INDEPENDENT_GROUP_SHORTFALL"
 	ReasonDuplicateID               Reason = "DUPLICATE_ID"
+	ReasonDuplicatePressureID       Reason = "DUPLICATE_PRESSURE_ID"
 	ReasonConflictingGroupBinding   Reason = "CONFLICTING_GROUP_BINDING"
 	ReasonMalformedFinitePath       Reason = "PROV_PATH_MALFORMED"
 )

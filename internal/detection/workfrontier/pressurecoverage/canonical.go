@@ -6,11 +6,28 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 func CanonicalInputDigest(input Input) string {
 	data, _ := json.Marshal(normalizeInput(input))
 	return digestBytes(data)
+}
+
+func authorityBindingDigest(input Input, role string) string {
+	input.AuthoritySnapshotDigest = ""
+	input.PolicyDigest = ""
+	input.RegistryDigest = ""
+	input.ToolchainOptionsDigest = ""
+	return digestBytes([]byte(role + "\x00" + CanonicalInputDigest(input)))
+}
+
+func boundDigests(input Input) bool {
+	return input.AuthoritySnapshotDigest == authorityBindingDigest(input, "authority-snapshot") &&
+		input.PolicyDigest == authorityBindingDigest(input, "policy") &&
+		input.RegistryDigest == authorityBindingDigest(input, "registry") &&
+		input.ToolchainOptionsDigest == authorityBindingDigest(input, "toolchain-options")
 }
 
 func CanonicalOutputDigest(output Output) string {
@@ -75,6 +92,13 @@ func validDigest(value string) bool {
 }
 
 func validID(value string) bool {
-	return value != "" && value == strings.TrimSpace(value) && len(value) <= 256 &&
-		!strings.ContainsAny(value, "\r\n\t\x00")
+	if value == "" || value != strings.TrimSpace(value) || len(value) > 256 || !utf8.ValidString(value) {
+		return false
+	}
+	for _, character := range value {
+		if unicode.IsSpace(character) || unicode.IsControl(character) {
+			return false
+		}
+	}
+	return true
 }
