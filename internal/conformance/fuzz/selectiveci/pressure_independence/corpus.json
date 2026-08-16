@@ -1,0 +1,234 @@
+{
+  "schema": "gooo/pressure-independence-corpus/v1",
+  "canonical_digest": "sha256:f2981d4e3077c4b3ed81efc80012cd0b39ea253452bde53c6e1be752b38c6bc9",
+  "cases": [
+    {
+      "name": "two-independent-groups-pass",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-pass",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-pass","input_digest":"sha256:5b9afc259a44ce33dec41f7183691bf085319f05ad8e1879e676fc9c263d8814","selected_ids":["pressure-a","pressure-b"],"unselected_ids":[],"unknown_ids":[],"distinct_group_count":2,"decision":"PASS","reason":"NONE","full_suite_required":false,"proof_valid":true,"cost_receipt":{"cpu_core_ns":2,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:0f9fd63b73d192c23e7042d0ca8f83a7d70220aeeab50f0ab7c900ff5af0d697","replay_digest":"sha256:8f122ade1cfc6d05958deded91d135ebf1fe760a4b2cb4c09c450fe7b14960da"}
+    },
+    {
+      "name": "two-ids-one-group-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-same-group",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-same-group","input_digest":"sha256:48fd645da6bd10c14052ae7ce649ac3ad84f11fa2facdca0a65fc5112ccdbdcd","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":1,"decision":"UNKNOWN","reason":"INDEPENDENT_GROUP_SHORTFALL","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:cb5e02bafa46b04d34de258c77913429e155f5f5e930d8e2fbd7d782059c0a11","replay_digest":"sha256:3b591b74067979ff5d3ff11f51613e1eb3d1decb57fd0bc52df89c64b36fcc22"}
+    },
+    {
+      "name": "missing-group-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-missing-group",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-missing-group","input_digest":"sha256:d7f8756fa80abf0fc930f86905a801e91a21608b51a050ec4adc043efd115363","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"APPLICABILITY_UNPROVEN","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:65b4c9a65b8ba1c4da04e28581ca060b21e65f7e21ffc34e0bd5b1db3dab4c21","replay_digest":"sha256:5914d29ee3dea5a82dca19cdbd1e9afbcc2ddc087b1d5902e39ec4f5213d2273"}
+    },
+    {
+      "name": "missing-applicability-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-missing-rule",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": ""}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-missing-rule","input_digest":"sha256:8ee2295a0f3e36ab4edeed5785cbbc71e3a9437aaa6d6a6e3258d33d0b98ee76","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"APPLICABILITY_UNPROVEN","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:215a1de6ddaa75a3a28068fbb9526a10bfc0668bb8649c1352832a8c2c5e7cc9","replay_digest":"sha256:a00c6aca347c1ca02985c2ec9331a5c0a564a14e70a9ca10962ecd6e3822e7a2"}
+    },
+    {
+      "name": "conflicting-group-binding-fail-closed",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-conflict",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-conflict","input_digest":"sha256:48ea8ed1d9410301c9ef6334524f126ebba630e87fc13db65f9ab304f499e73e","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"FAIL_CLOSED","reason":"CONFLICTING_GROUP_BINDING","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":8,"prov_records":4,"prov_paths":2},"canonical_output_digest":"sha256:220daa8e56983c00af1a0c2442814159f995a9737830387267f383b5062805e9","replay_digest":"sha256:007d663c2a93de00fec27d3588923d886870946c2a7e4b9f5c451fea18d85b46"}
+    },
+    {
+      "name": "duplicate-pressure-id-fail-closed",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-duplicate",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-duplicate","input_digest":"sha256:b591c70264021f305de564bd1f6fa9906f9448d08572490c2c9faf834142b79b","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"FAIL_CLOSED","reason":"DUPLICATE_PRESSURE_ID","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":8,"prov_records":4,"prov_paths":2},"canonical_output_digest":"sha256:7acd361a2ead42db719de9378f5250c4d02421b504e948aa238f3f54d2e724ec","replay_digest":"sha256:e5d8ecf86115e0de5e461ea8523d96d6184849d67f190f4264cb4951fa63745b"}
+    },
+    {
+      "name": "stale-registry-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-stale-registry",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "registry_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-stale-registry","input_digest":"sha256:5bed52ed23d210aa3674314c7bb87a2448d08a49615d4ab2f45d48e3074f3f25","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"STALE_DIGEST","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:f7889db1881349b6a2738337d582e35c7e36e3637c9ba94ab80a9e6acc51216d","replay_digest":"sha256:463a4c3c60ed4d9c043f53f98597c02aed74c8e9aae4d1b4ec1aa1b7c2ea5e7d"}
+    },
+    {
+      "name": "stale-policy-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-stale-policy",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "policy_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-stale-policy","input_digest":"sha256:8d81dc37fbee6b265ac2212c9dffb2283826b6799eef060457d5f6153aaa50d0","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"STALE_DIGEST","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:e7ea4f09d27343784e967f89a878cc0b86804e0e46f18a26d606fd8eafa33258","replay_digest":"sha256:ca5ec5695008208da7a7ead3c4ce6833342b5ca2995089bb69dbeb776781c101"}
+    },
+    {
+      "name": "stale-snapshot-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-stale-snapshot",
+        "authority_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-stale-snapshot","input_digest":"sha256:fd60da76e23d7a0896a9645f67a44917b8648eaf7fe96d035fc80d01a8f45db5","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"STALE_DIGEST","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:a7011609eb79a3b1384e860108dede447d79355bcbadf4c5b7eacb63c72c7213","replay_digest":"sha256:d11dff3eded3f6a39bf00e88beaa126a9e36c5d55f762fa9878f1e75949f190f"}
+    },
+    {
+      "name": "missing-resource-ceiling-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1", "fixture_id": "fixture-missing-resource",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111", "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444", "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 0, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-missing-resource","input_digest":"sha256:645127b9062e5846ee9799c61010ed4c1b70506f83dbd8823d886626ae6e54bd","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"REQUIRED_INPUT_MISSING","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:960401d3dc2d0b2dd40aea93d7b7f0cdc8777e8d16c739ca9247a1a792472ebf","replay_digest":"sha256:b88fe2bf0ae09893c744862754f23939146854d694f48602fb49ef6b2db59747"}
+    },
+    {
+      "name": "missing-prov-ceiling-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1", "fixture_id": "fixture-missing-prov",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111", "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444", "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 0}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-missing-prov","input_digest":"sha256:aa1cea3ecea6f10a79694e170543e869bd2f8104361204cfd18834461ef46e94","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"REQUIRED_INPUT_MISSING","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:a780c819b07e39e4020f8bb661638003c9c6fc63141ab24170aad837e4ceaaef","replay_digest":"sha256:0c0499e246db3d45227b4d90007acd53090ddfac7c5a266eec56456c12afa004"}
+    },
+    {
+      "name": "unbounded-frontier-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1", "fixture_id": "fixture-unbounded",
+        "authority_snapshot_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111", "policy_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222", "registry_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333", "oracle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444", "toolchain_options_digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": [],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-unbounded","input_digest":"sha256:9310cafb8b5e7a0134ee258b3cc276bdbc68927122bc895cf334884c512d9d3a","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"PROV_PATH_MISSING","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":5,"prov_records":3,"prov_paths":0},"canonical_output_digest":"sha256:f98dc2846657ca89ab62dc44d936f75f9647ad782e6d7eb2c9198ceae85caf56","replay_digest":"sha256:3d63b48c4c4816df2ac8be49a177e200e1e93020f601804da08e9ea81b3f58b1"}
+    }
+  ]
+}
