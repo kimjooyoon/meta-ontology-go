@@ -6,22 +6,10 @@ import (
 	"testing"
 )
 
-const (
-	r4FixtureSnapshotPayload = `{"fixture":"r4","kind":"snapshot","revision":1}`
-	r4FixturePolicyPayload   = `{"fixture":"r4","kind":"policy","revision":1}`
-	r4FixtureRegistryPayload = `{"fixture":"r4","kind":"registry","revision":1}`
-)
-
 func r4FixtureInput(t *testing.T, name string) R4Input {
 	t.Helper()
 	base := R4Input{
 		SchemaVersion:            R4SchemaVersion,
-		SnapshotDigest:           r4BindingDigest(r4FixtureSnapshotPayload),
-		SnapshotPayload:          r4FixtureSnapshotPayload,
-		PolicyDigest:             r4BindingDigest(r4FixturePolicyPayload),
-		PolicyPayload:            r4FixturePolicyPayload,
-		RegistryDigest:           r4BindingDigest(r4FixtureRegistryPayload),
-		RegistryPayload:          r4FixtureRegistryPayload,
 		MinimumSelectedPressures: 2,
 		Capacity:                 Capacity{CPUCoreNS: 20},
 		Pressures:                []Pressure{{StableID: "pressure/a"}, {StableID: "pressure/b"}},
@@ -70,7 +58,11 @@ func r4FixtureInput(t *testing.T, name string) R4Input {
 	default:
 		t.Fatalf("unknown R4 fixture %q", name)
 	}
-	return base
+	bound, err := BindR4Payloads(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return bound
 }
 
 func bindR4Rules(t *testing.T, input R4Input, name string) R4Input {

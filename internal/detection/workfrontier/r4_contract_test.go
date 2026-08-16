@@ -75,6 +75,17 @@ func TestR4PermutationAndRootOrderIndependence(t *testing.T) {
 	if baseGraph.GraphDigest != permutedGraph.GraphDigest || baseGraph.SCCDigest != permutedGraph.SCCDigest || baseGraph.CondensationDigest != permutedGraph.CondensationDigest {
 		t.Fatalf("permutation changed graph digests: %#v %#v", baseGraph, permutedGraph)
 	}
+	multiRoot := r4FixtureInput(t, "acyclic")
+	multiRoot.RootObligationIDs = []string{"obligation/root", "obligation/child"}
+	multiRoot, err = BindR4Payloads(multiRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reorderedRoots := multiRoot
+	reorderedRoots.RootObligationIDs = []string{"obligation/child", "obligation/root"}
+	if !reflect.DeepEqual(EvaluateR4(multiRoot), EvaluateR4(reorderedRoots)) {
+		t.Fatal("root order changed the normalized result")
+	}
 	if got := FairBaseline(r4FixtureInput(t, "acyclic")); !reflect.DeepEqual(got, []string{"path/root"}) {
 		t.Fatalf("fair baseline = %v", got)
 	}
@@ -138,6 +149,11 @@ func TestR4DigestsExcludeFixtureLabels(t *testing.T) {
 func TestR4MalformedGraphFailsClosed(t *testing.T) {
 	input := r4FixtureInput(t, "acyclic")
 	input.Paths[0].PrerequisiteObligationIDs = []string{"obligation/root", "obligation/root"}
+	var err error
+	input, err = BindR4Payloads(input)
+	if err != nil {
+		t.Fatal(err)
+	}
 	got := EvaluateR4(input)
 	if got.Status != R4StatusFailClosed || got.Reason != R4ReasonMalformedGraph || len(got.SelectedIDs) != 0 {
 		t.Fatalf("malformed graph result = %#v", got)
@@ -149,16 +165,22 @@ func TestR4BindingsRequireCanonicalPayloadProof(t *testing.T) {
 	if got := EvaluateR4(input); got.Status != R4StatusPass {
 		t.Fatalf("valid bindings = %#v", got)
 	}
+	alternate := r4FixtureInput(t, "acyclic")
+	alternate.States[0].Status = "PASS"
+	projections, err := r4ProjectionBytes(alternate)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	stale := input
-	stale.SnapshotDigest = r4BindingDigest(`{"fixture":"r4","kind":"snapshot","revision":2}`)
+	stale.SnapshotDigest = r4BindingDigest(string(projections.snapshot))
 	got := EvaluateR4(stale)
 	if got.Status != R4StatusUnknown || got.Reason != R4ReasonSnapshotBindingMismatch || len(got.SelectedIDs) != 0 {
 		t.Fatalf("stale binding = %#v", got)
 	}
 
 	mutated := input
-	mutated.SnapshotPayload = `{"fixture":"r4","kind":"snapshot","revision":2}`
+	mutated.SnapshotPayload = string(projections.snapshot)
 	got = EvaluateR4(mutated)
 	if got.Status != R4StatusUnknown || got.Reason != R4ReasonSnapshotBindingMismatch || len(got.SelectedIDs) != 0 {
 		t.Fatalf("mutated payload = %#v", got)
@@ -196,6 +218,44 @@ func TestR4RootRelocationChangesReachableBinding(t *testing.T) {
 	}
 	if got := EvaluateR4(relocated); len(got.SelectedIDs) != 0 {
 		t.Fatalf("relocated root selected paths without its declared frontier: %#v", got)
+	}
+}
+
+func TestR4GovernedProjectionMutationsRequireRebinding(t *testing.T) {
+	state := r4FixtureInput(t, "acyclic")
+	state.States[0].Status = "PASS"
+	assertR4BindingMismatch(t, state, R4ReasonSnapshotBindingMismatch)
+
+	path := r4FixtureInput(t, "acyclic")
+	path.Paths[0].PolicyPriority++
+	assertR4BindingMismatch(t, path, R4ReasonSnapshotBindingMismatch)
+
+	root := r4FixtureInput(t, "acyclic")
+	root.RootObligationIDs = []string{"obligation/child"}
+	assertR4BindingMismatch(t, root, R4ReasonSnapshotBindingMismatch)
+
+	policy := r4FixtureInput(t, "acyclic")
+	policy.Capacity.CPUCoreNS++
+	assertR4BindingMismatch(t, policy, R4ReasonPolicyBindingMismatch)
+
+	bound := r4FixtureInput(t, "self-loop")
+	bound.Rules[0].MaxIterations++
+	assertR4BindingMismatch(t, bound, R4ReasonPolicyBindingMismatch)
+
+	use := r4FixtureInput(t, "self-loop")
+	use.Rules[0].IterationsUsed++
+	assertR4BindingMismatch(t, use, R4ReasonSnapshotBindingMismatch)
+
+	registry := r4FixtureInput(t, "acyclic")
+	registry.Pressures[0].StableID = "pressure/changed"
+	assertR4BindingMismatch(t, registry, R4ReasonRegistryBindingMismatch)
+}
+
+func assertR4BindingMismatch(t *testing.T, input R4Input, reason string) {
+	t.Helper()
+	got := EvaluateR4(input)
+	if got.Status != R4StatusUnknown || got.Reason != reason || len(got.SelectedIDs) != 0 {
+		t.Fatalf("binding mismatch = %#v, want UNKNOWN/%s with empty selection", got, reason)
 	}
 }
 

@@ -128,7 +128,8 @@ func normalizeR4Result(result R4Result) R4Result {
 func r4PathKey(path RepairPath) string {
 	return path.StableID + "\x00" + path.ObligationID + "\x00" +
 		joinR4(path.PrerequisiteObligationIDs) + "\x00" + joinR4(path.ReadSet) + "\x00" +
-		joinR4(path.WriteSet) + "\x00" + joinR4(path.RequiredPressureIDs)
+		joinR4(path.WriteSet) + "\x00" + joinR4(path.RequiredPressureIDs) + "\x00" +
+		path.WorkID + "\x00" + fmt.Sprint(path.PolicyPriority) + "\x00" + fmt.Sprint(path.CPUCoreNSUpperBound)
 }
 
 func joinR4(values []string) string {
