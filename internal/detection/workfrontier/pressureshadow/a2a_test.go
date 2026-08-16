@@ -164,18 +164,22 @@ func TestValidateBytesRejectsInvalidWire(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			want := Result{
-				Schema: SchemaVersion, InputDigest: test.inputDigest,
-				Decision: DecisionFailClosed, Reason: ReasonInvalidInput,
-				MissingPathIDs: []string{}, OrphanPathIDs: []string{},
-				MissingBindingPathIDs: []string{}, BindingMismatchPathIDs: []string{},
-				EnforcementEffect: EnforcementNoEffect,
-				ResultDigest:      test.resultDigest, ReplayDigest: test.replayDigest,
-			}
+			want := invalidWireResult(test.inputDigest, test.resultDigest, test.replayDigest)
 			if got := ValidateBytes([]byte(test.raw)); !reflect.DeepEqual(got, want) {
 				t.Fatalf("invalid wire result = %#v, want %#v", got, want)
 			}
 		})
+	}
+}
+
+func invalidWireResult(inputDigest, resultDigest, replayDigest string) Result {
+	return Result{
+		Schema: SchemaVersion, InputDigest: inputDigest,
+		Decision: DecisionFailClosed, Reason: ReasonInvalidInput,
+		MissingPathIDs: []string{}, OrphanPathIDs: []string{},
+		MissingBindingPathIDs: []string{}, BindingMismatchPathIDs: []string{},
+		EnforcementEffect: EnforcementNoEffect,
+		ResultDigest:      resultDigest, ReplayDigest: replayDigest,
 	}
 }
 
