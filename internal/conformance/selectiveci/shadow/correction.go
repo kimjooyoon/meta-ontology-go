@@ -15,6 +15,9 @@ var correctionFile embed.FS
 //go:embed correction_predecessor_2.json
 var secondCorrectionFile embed.FS
 
+//go:embed correction_predecessor_3.json
+var thirdCorrectionFile embed.FS
+
 type CorrectionRecord struct {
 	Schema     string            `json:"schema"`
 	ReasonCode string            `json:"reason_code"`
@@ -33,6 +36,10 @@ func LoadCorrection() (CorrectionRecord, error) {
 
 func LoadSecondCorrection() (CorrectionRecord, error) {
 	return loadCorrection(secondCorrectionFile, "correction_predecessor_2.json")
+}
+
+func LoadThirdCorrection() (CorrectionRecord, error) {
+	return loadCorrection(thirdCorrectionFile, "correction_predecessor_3.json")
 }
 
 func loadCorrection(files embed.FS, name string) (CorrectionRecord, error) {
