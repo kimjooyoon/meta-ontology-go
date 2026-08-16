@@ -1,8 +1,14 @@
 # Code ↔ Semantic Coupling Contract
 
 Status: normative docs contract; the two metric rows in this document are
-`DESIGN_ONLY` hypotheses. This document does not add a verifier, CI job, LSP
-capability, catalog row, adoption transition, or blocking check.
+`DESIGN_ONLY` hypotheses. This document does not add a new verifier, CI job,
+LSP capability, catalog row, adoption transition, or blocking check.
+
+Current `dev` contains `internal/detection/coupling`, a pure read-only
+evaluator for exact code-to-semantic receipts and typed paths. It is an
+implementation projection of this contract; its presence does not adopt a
+catalog row, schedule CI, add a CLI, publish durable evidence, or change
+enforcement.
 
 This contract makes explanations reproducible across the `.gooo` source,
 semantic IR, code projection, and evidence. Business intent remains in the
@@ -87,8 +93,11 @@ one valid receipt.”
 
 ## 2. Registry and fixture design
 
-The docs-owned registry is a canonical fixture/schema until a separately
-adopted implementation owns it. Its identity-bearing fields are:
+The docs-owned registry is a canonical fixture/schema for this contract. The
+merged `internal/detection/coupling` evaluator has versioned internal
+registry, manifest, receipt, input, and result schemas plus an evaluator-owned
+authority context; those APIs are projections, not new DSL syntax or an
+adoption decision. The identity-bearing fields are:
 
 ```text
 TermRecord {
@@ -97,8 +106,10 @@ TermRecord {
   canonical_name: label only
   definition, definition_version, definition_digest
   related_term_ids: sorted stable IDs
-  inference_edge_kinds: closed enum values
-  phase: PRECOMPILE | COMPILE | RUNTIME | VERIFICATION
+  inference_edge_kinds: closed document shorthand values
+  logical_phase: DECLARATION | DERIVATION | PROJECTION |
+                 OBSERVATION | LIFT | VERIFICATION
+  execution_placement: PRECOMPILE | COMPILE | RUNTIME | VERIFICATION
   authority_layer: BUSINESS_SOURCE | SEMANTIC_IR | PROJECTION |
                     OBSERVATION | VERIFICATION
   effect: DECLARES | NORMALIZES | PROJECTS | CANDIDATE |
@@ -119,10 +130,11 @@ CodeBinding {
 OriginPath {
   path_id: stable path ID
   from_id, to_id: stable registry IDs
-  edge_kind: DECLARATION | DETERMINISTIC_DERIVATION | PROJECTION |
-             OBSERVATION_CANDIDATE | ACCEPTED_LIFT |
-             INDEPENDENT_VERIFICATION
-  phase, rule_ref, input_digest, output_digest, evidence_ref
+  edge_kind: document shorthand for the six typed edge names below
+  logical_phase: DECLARATION | DERIVATION | PROJECTION |
+                 OBSERVATION | LIFT | VERIFICATION
+  execution_placement: proposed category or MISSING/UNKNOWN
+  rule_ref, input_digest, output_digest, evidence_ref
 }
 ```
 
@@ -178,7 +190,25 @@ the semantic authority changed. An `OBSERVATION_CANDIDATE` edge never becomes an
 accepted semantic change merely because it is visible in a code index. An
 `ACCEPTED_LIFT` requires an explicit authority decision and fresh evidence.
 
-The closed path enum is exactly:
+The edge names in this document are human contract shorthand. They are not the
+serialized values of the existing `semantic.InferencePathV1` wire enum. The
+codec uses this total, one-to-one, versioned mapping literally:
+
+| Human contract shorthand | `semantic.InferencePathV1` wire enum |
+| --- | --- |
+| `DECLARATION` | `AUTHORITATIVE_DECLARATION` |
+| `DETERMINISTIC_DERIVATION` | `DETERMINISTIC_DERIVATION` |
+| `PROJECTION` | `DERIVED_PROJECTION` |
+| `OBSERVATION_CANDIDATE` | `OBSERVATION_CANDIDATE` |
+| `ACCEPTED_LIFT` | `ACCEPTED_LIFT` |
+| `INDEPENDENT_VERIFICATION` | `INDEPENDENT_VERIFICATION` |
+
+No implementation may infer a mapping from names, aliases, similarity, or an
+LLM. Alias matching and name/LLM inference are forbidden; codec mapping must
+be literal and versioned. An unknown value, missing mapping, or schema-version
+mismatch is `UNKNOWN`.
+
+The document's closed edge vocabulary is exactly:
 
 ```text
 DECLARATION
@@ -189,20 +219,51 @@ ACCEPTED_LIFT
 INDEPENDENT_VERIFICATION
 ```
 
-The closed change-claim enum is exactly `DELTA | NO_DELTA`. It must not be
-reused as an edge kind, and an edge kind must not be used as a semantic-change
-claim. The phase labels locate a possible observer or rule:
+The document also uses the following change-claim shorthand. It is distinct
+from both the edge vocabulary and the wire edge enum:
 
-| Phase | Permitted contract role | Current support claim |
+| Human contract shorthand | `semantic.SemanticChangeKind` wire enum |
+| --- | --- |
+| `DELTA` | `SEMANTIC_DELTA` |
+| `NO_DELTA` | `NO_SEMANTIC_DELTA` |
+
+The closed change-claim shorthand is exactly `DELTA | NO_DELTA`; it must not be
+reused as an edge kind, and an edge kind must not be used as a semantic-change
+claim. The change-claim codec uses the same literal, versioned discipline.
+
+Code/semantic coupling rule: the wire enum, these mappings, and their exact
+mapping fixtures form one accepted ceiling. Changing either the enum or a
+mapping requires this contract and the exact mapping fixtures to change in the
+same accepted ceiling. Mismatched snapshots, mapping digests, or versions are
+`UNKNOWN`.
+
+The current `semantic.InferencePathV1` logical phase enum is exactly:
+
+| Logical inference phase | `semantic.InferencePathV1` wire phase |
+| --- | --- |
+| `DECLARATION` | `DECLARATION` |
+| `DERIVATION` | `DERIVATION` |
+| `PROJECTION` | `PROJECTION` |
+| `OBSERVATION` | `OBSERVATION` |
+| `LIFT` | `LIFT` |
+| `VERIFICATION` | `VERIFICATION` |
+
+Logical inference phase and execution placement are separate axes. The
+following are proposed execution-placement categories for this document, not
+values of the current `InferencePathV1` logical phase enum:
+
+| Proposed execution placement | Proposed role | Current support claim |
 | --- | --- | --- |
 | `PRECOMPILE` | Resolve registry, authority, affected surfaces, and paths. | Design placement only. |
 | `COMPILE` | Lower/normalize IR, project code, bind source maps, and form receipts. | Current compiler has related IR/projection surfaces; this contract adds no API. |
 | `RUNTIME` | Observe execution occurrences/effects only when a runtime profile exists. | Not implied by a design-time `.gooo` activity. |
 | `VERIFICATION` | Recompute digests, validate typed paths/receipts, and emit evidence. | Future observer placement; not a current CI promise. |
 
-Phases locate a rule; they do not claim every phase or adapter exists today. A
-design-time activity is not a runtime occurrence; runtime claims require
-runtime evidence and distinct occurrence IDs.
+No implementation may infer execution placement from a logical inference
+phase. Until an exact registered adapter exists, execution placement is
+`MISSING`/`UNKNOWN`. Logical phases do not claim every phase or adapter exists
+today. A design-time activity is not a runtime occurrence; runtime claims
+require runtime evidence and distinct occurrence IDs.
 
 ## 4. Two inactive metric contracts
 
@@ -216,9 +277,9 @@ row: both are `DESIGN_ONLY`, `adoption=UNOBSERVED`, and
 | --- | --- |
 | Question | Does every required term/code/decision relation have exactly one complete typed path to authority and independent evidence? |
 | Exact inputs | Changed-surface set; term and semantic-owner registry; code/source-map bindings; origin paths; rule/evidence registry; source/IR/registry/toolchain/profile digests. |
-| Normalization | Sort stable IDs; resolve each endpoint once; canonicalize the six edge kinds, phase, rule, input/output digests, and evidence refs; reject duplicates rather than deduplicating them. |
+| Normalization | Sort stable IDs; resolve each endpoint once; canonicalize the six document edge shorthands through their literal wire mapping, logical phase, proposed execution placement, rule, input/output digests, and evidence refs; reject duplicates rather than deduplicating them. |
 | PASS law | Every required relation has one and only one complete path ending at authority and an evidence/verifier node; all edge kinds are registered and all digests match. |
-| FAIL_CLOSED law | A known duplicate, orphan, unregistered edge kind, illegal endpoint, contradictory phase, or mismatched bound is `FAIL_CLOSED` with the exact path failure code. |
+| FAIL_CLOSED law | A known duplicate, orphan, unregistered edge kind, illegal endpoint, contradictory logical phase, or mismatched bound is `FAIL_CLOSED` with the exact path failure code. |
 | UNKNOWN law | Missing/ambiguous registry, source-map, rule, evidence, snapshot, or verifier input is `UNKNOWN`; it is never an empty path or PASS. |
 | N/A law | Only a future immutable catalog row may prove `NOT_APPLICABLE`; absent applicability proof is `UNKNOWN`. |
 | Fixture/oracle | The billing fixture above; positives cover declaration → deterministic derivation → projection → independent verification, and negatives remove, duplicate, reverse, or relabel one edge. The oracle recomputes the required relation set and path digest. |
@@ -241,11 +302,11 @@ row: both are `DESIGN_ONLY`, `adoption=UNOBSERVED`, and
 | UNKNOWN law | Unavailable or ambiguous snapshot, registry, toolchain/profile, source-map, IR, source, or verifier input is `UNKNOWN`; it never becomes `NO_DELTA`. |
 | N/A law | Only a future catalog predicate may prove inapplicability for a snapshot; missing proof is `UNKNOWN`. |
 | Fixture/oracle | Implementation-only refactor, semantic declaration change, candidate-only observation, and each negative receipt partition above. The oracle recomputes changed-surface closure, IR equality/delta, and receipt cardinality. |
-| Observer/layer | Future read-only `coupling-receipt-observer`, semantic/BX `L1` plus exact CI-snapshot binding `L4`; it is not a current CI job or stable CLI command. |
+| Observer/layer | Current `internal/detection/coupling` is a pure read-only evaluator for receipt/path predicates; no current CI job, stable CLI command, catalog adoption, or enforcement effect is claimed. |
 | Failure code/domain/owner/retry | `<MetricID>#<reason-kebab-case>`; feature predicate failures `FEATURE_LANE`, missing shared evidence `DEPENDENCY_LOCAL`, registry/catalog corruption `REPOSITORY_INTEGRITY`; future semantic authority owner repins and reruns after the exact cause is repaired. |
 | Anti-gaming | File counts, changed-line counts, receipt counts, or equal final text are insufficient; unregistered symbols are UNKNOWN, generated expansion maps to one origin, and a no-op receipt with false digests fails. |
 | Dependencies | Semantic scope closure, stable IDs, source-map totality, canonical IR, provenance freshness, and the independent verifier. |
-| Observability truth | `PARTIAL`: current code has semantic hashes, source spans, provenance-related structures, and generated bindings, but no adopted registry-wide receipt verifier. |
+| Observability truth | `PARTIAL`: current `dev` includes the internal coupling evaluator with exact receipt/path validation and canonical digests, but no adopted registry row, CI observer, or stable CLI command. |
 | Enforcement | `DESIGN_ONLY`, `UNOBSERVED`, `NO_EFFECT`; no adoption, CI, merge, promotion, or LSP behavior changes. |
 
 ## 5. Pressure selection and protected floors
@@ -370,8 +431,10 @@ delta evidence; candidate-only promotion remains rejected.
 CI lanes should accept the exact changed-surface closure, registry/toolchain/
 profile/catalog digests, one receipt per surface, typed paths, independent
 verifier results, and owner/retry fields. They distinguish `UNKNOWN` from
-`FAIL_CLOSED` and retain evidence append-only. Until those entry points exist,
-these are expectations only and current CI support is not claimed.
+`FAIL_CLOSED` and retain evidence append-only. The current internal coupling
+evaluator is read-only and does not schedule CI, publish durable evidence, or
+change enforcement. Until those CI and catalog adapters exist, these are
+expectations only and current CI support is not claimed.
 
 The contract digest is defined as:
 
