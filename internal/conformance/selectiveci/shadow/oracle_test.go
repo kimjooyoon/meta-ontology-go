@@ -2,12 +2,14 @@ package shadow
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
 const (
-	phaseACorpusDigest         = "8448b309f64a05c06f75f03352d7516dcb296182af4b922532c28677353ca01e"
+	phaseACorpusDigest         = "1749e4a01627483ca9b3f6ecb20e83244abb729b24501600dbe2ee553d295ca3"
 	phaseAExpectedVectorDigest = "c48741ac3ba78be5cbd4ede9df04c962e32da0ba2dc761be79c2829749aad213"
+	priorCorpusDigest          = "8448b309f64a05c06f75f03352d7516dcb296182af4b922532c28677353ca01e"
 )
 
 func TestCorpusMatchesIndependentOracle(t *testing.T) {
@@ -52,6 +54,56 @@ func TestCorpusMatchesIndependentOracle(t *testing.T) {
 	}
 }
 
+func TestExpectedLabelsDoNotAffectOracle(t *testing.T) {
+	corpus, err := LoadCorpus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixture := corpus.Cases[0]
+	want := Evaluate(fixture)
+	mutations := []struct {
+		name   string
+		mutate func(*Result)
+	}{
+		{"status", func(result *Result) { result.Status = "changed-status" }},
+		{"stage", func(result *Result) { result.Stage = "changed-stage" }},
+		{"reason", func(result *Result) { result.Reason = "changed-reason" }},
+		{"selected command IDs", func(result *Result) { result.SelectedCommandIDs = []string{"changed-command"} }},
+		{"selected guard IDs", func(result *Result) { result.SelectedGuardIDs = []string{"changed-guard"} }},
+		{"selected work IDs", func(result *Result) { result.SelectedWorkIDs = []string{"changed-work"} }},
+		{"selected argv", func(result *Result) { result.SelectedArgv = map[string][]string{"changed-command": {"changed-argv"}} }},
+		{"execution authorization", func(result *Result) { result.ExecutionAuthorized = true }},
+		{"canonical digest", func(result *Result) { result.CanonicalDigest = "changed-digest" }},
+	}
+	for _, mutation := range mutations {
+		t.Run(mutation.name, func(t *testing.T) {
+			mutated := fixture
+			mutated.Expected = fixture.Expected
+			mutation.mutate(&mutated.Expected)
+			if got := Evaluate(mutated); !reflect.DeepEqual(got, want) {
+				t.Fatalf("oracle changed after expected-label mutation: got %#v want %#v", got, want)
+			}
+		})
+	}
+}
+
+func TestGovernedInputMutationChangesOracleDigest(t *testing.T) {
+	corpus, err := LoadCorpus()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixture := corpus.Cases[0]
+	baseline := Evaluate(fixture)
+	mutated := fixture
+	mutated.Files.AnalyzerHead = strings.Replace(mutated.Files.AnalyzerHead, "blob-head", "blob-head-mutated", 1)
+	if mutated.Files.AnalyzerHead == fixture.Files.AnalyzerHead {
+		t.Fatal("governed-input mutation did not change the input")
+	}
+	if got := Evaluate(mutated); got.CanonicalDigest == baseline.CanonicalDigest {
+		t.Fatalf("governed-input mutation preserved oracle digest %q", got.CanonicalDigest)
+	}
+}
+
 func TestCorrectionRecordBindsSupersededAndCorrectedEvidence(t *testing.T) {
 	record, err := LoadCorrection()
 	if err != nil {
@@ -79,8 +131,24 @@ func TestSecondCorrectionRecordBindsLaneRegistryOmission(t *testing.T) {
 	if record.Superseded.CorpusDigest != "36359077392431f4e4136baeb022b78f87fdf7c69a0dbab18ca38e3e92ae6954" || record.Superseded.ExpectedVectorDigest != "fe260bba00c58fb3ab761910c253905dfb749be60ed655b03810bebddc2b3ef5" {
 		t.Fatalf("second correction predecessor evidence = %#v", record.Superseded)
 	}
-	if record.Corrected.CorpusDigest != CorpusDigest() || record.Corrected.ExpectedVectorDigest != phaseAExpectedVectorDigest {
+	if record.Corrected.CorpusDigest != priorCorpusDigest || record.Corrected.ExpectedVectorDigest != phaseAExpectedVectorDigest {
 		t.Fatalf("second correction evidence = %#v", record.Corrected)
+	}
+}
+
+func TestThirdCorrectionRecordBindsExpectedDigestIndependence(t *testing.T) {
+	record, err := LoadThirdCorrection()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if record.ReasonCode != "EXPECTED_VALUE_DIGEST_ECHO" {
+		t.Fatalf("third correction reason = %q", record.ReasonCode)
+	}
+	if record.Superseded.CorpusDigest != priorCorpusDigest || record.Superseded.ExpectedVectorDigest != phaseAExpectedVectorDigest {
+		t.Fatalf("third correction predecessor evidence = %#v", record.Superseded)
+	}
+	if record.Corrected.CorpusDigest != CorpusDigest() || record.Corrected.ExpectedVectorDigest != phaseAExpectedVectorDigest {
+		t.Fatalf("third correction evidence = %#v", record.Corrected)
 	}
 }
 

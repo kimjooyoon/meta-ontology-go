@@ -9,4 +9,7 @@ func TestBothCorrectionRecordsRemainAvailable(t *testing.T) {
 	if _, err := LoadSecondCorrection(); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := LoadThirdCorrection(); err != nil {
+		t.Fatal(err)
+	}
 }
