@@ -98,6 +98,16 @@ func indexReceipts(receipts []CouplingReceipt, changed []ManifestEntry) (map[sem
 }
 
 func validateReceipt(receipt CouplingReceipt, entry ManifestEntry, config Config, surface Surface) *evaluationIssue {
+	if issue := validateReceiptIdentity(receipt, entry, config, surface); issue != nil {
+		return issue
+	}
+	if issue := validateReceiptClaim(receipt); issue != nil {
+		return issue
+	}
+	return validateReceiptReferences(receipt)
+}
+
+func validateReceiptIdentity(receipt CouplingReceipt, entry ManifestEntry, config Config, surface Surface) *evaluationIssue {
 	if receipt.Schema != ReceiptSchemaV1 {
 		return failIssue(ReasonMalformedBinding, receipt.SurfaceID.String())
 	}
@@ -140,6 +150,10 @@ func validateReceipt(receipt CouplingReceipt, entry ManifestEntry, config Config
 	if receipt.BeforeBlobDigest != entry.BeforeBlobDigest || receipt.AfterBlobDigest != entry.AfterBlobDigest {
 		return failIssue(ReasonDigestMismatch, receipt.SurfaceID.String())
 	}
+	return nil
+}
+
+func validateReceiptClaim(receipt CouplingReceipt) *evaluationIssue {
 	wantKind, validClaim := semanticKindForClaim(receipt.ChangeClaim)
 	if !validClaim || receipt.ReceiptKind != wantKind {
 		return failIssue(ReasonContradictoryReceipt, receipt.SurfaceID.String())
@@ -172,7 +186,7 @@ func validateReceipt(receipt CouplingReceipt, entry ManifestEntry, config Config
 			return issue
 		}
 	}
-	return validateReceiptReferences(receipt)
+	return nil
 }
 
 func validateReceiptReferences(receipt CouplingReceipt) *evaluationIssue {

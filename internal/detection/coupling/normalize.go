@@ -153,14 +153,29 @@ func normalizeSurface(raw Surface) (Surface, *evaluationIssue) {
 func normalizeManifest(
 	manifest ChangeManifest, config Config, registry map[semantic.ID]Surface,
 ) ([]ManifestEntry, *evaluationIssue) {
+	if issue := validateManifestHeader(manifest, config); issue != nil {
+		return nil, issue
+	}
+	entries, issue := normalizeManifestEntries(manifest.Entries, registry)
+	if issue != nil {
+		return nil, issue
+	}
+	changed := changedManifestEntries(entries)
+	if manifest.ZeroChange != (len(changed) == 0) {
+		return nil, failIssue(ReasonContradictoryReceipt, "zero-change claim")
+	}
+	return changed, nil
+}
+
+func validateManifestHeader(manifest ChangeManifest, config Config) *evaluationIssue {
 	if manifest.Schema == "" {
-		return nil, required("manifest")
+		return required("manifest")
 	}
 	if manifest.Schema != ManifestSchemaV1 {
-		return nil, failIssue(ReasonMalformedBinding, "manifest schema")
+		return failIssue(ReasonMalformedBinding, "manifest schema")
 	}
 	if !manifest.Complete {
-		return nil, required("complete source-backed change manifest")
+		return required("complete source-backed change manifest")
 	}
 	for _, value := range []struct {
 		value string
@@ -174,23 +189,27 @@ func normalizeManifest(
 		{manifest.Digest, "manifest digest"},
 	} {
 		if issue := normalizeDigestValue(value.value, value.name); issue != nil {
-			return nil, issue
+			return issue
 		}
 	}
 	if manifest.RegistryDigest != config.RegistryDigest || manifest.ToolchainDigest != config.ToolchainDigest ||
 		manifest.ProfileDigest != config.ProfileDigest || manifest.AfterSnapshotDigest != config.SnapshotDigest {
-		return nil, failIssue(ReasonDigestMismatch, "manifest/config digest")
+		return failIssue(ReasonDigestMismatch, "manifest/config digest")
 	}
 	if stableDigest(manifestCanonical(manifest)) != manifest.Digest {
-		return nil, unknownIssue(ReasonStaleInput, "manifest digest")
+		return unknownIssue(ReasonStaleInput, "manifest digest")
 	}
 	if manifest.Entries == nil {
-		return nil, required("complete manifest entries")
+		return required("complete manifest entries")
 	}
-	if len(manifest.Entries) != len(registry) {
+	return nil
+}
+
+func normalizeManifestEntries(raw []ManifestEntry, registry map[semantic.ID]Surface) ([]ManifestEntry, *evaluationIssue) {
+	if len(raw) != len(registry) {
 		return nil, failIssue(ReasonMalformedBinding, "manifest entry cardinality")
 	}
-	entries := append([]ManifestEntry(nil), manifest.Entries...)
+	entries := append([]ManifestEntry(nil), raw...)
 	sort.Slice(entries, func(i, j int) bool { return entries[i].SurfaceID < entries[j].SurfaceID })
 	seen := make(map[semantic.ID]struct{}, len(entries))
 	for index := range entries {
@@ -226,16 +245,17 @@ func normalizeManifest(
 			}
 		}
 	}
+	return entries, nil
+}
+
+func changedManifestEntries(entries []ManifestEntry) []ManifestEntry {
 	changed := make([]ManifestEntry, 0, len(entries))
 	for _, entry := range entries {
 		if entry.BeforeBindingDigest != entry.AfterBindingDigest || entry.BeforeBlobDigest != entry.AfterBlobDigest {
 			changed = append(changed, entry)
 		}
 	}
-	if manifest.ZeroChange != (len(changed) == 0) {
-		return nil, failIssue(ReasonContradictoryReceipt, "zero-change claim")
-	}
-	return changed, nil
+	return changed
 }
 
 func sortedIDs(values []semantic.ID) []semantic.ID {

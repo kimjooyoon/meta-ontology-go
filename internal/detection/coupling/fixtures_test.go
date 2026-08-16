@@ -16,11 +16,40 @@ type couplingFixture struct {
 	verification semantic.ID
 }
 
+type fixtureContext struct {
+	owner, code, surface          semantic.ID
+	registry                      Registry
+	config                        Config
+	manifest                      ChangeManifest
+	beforeBlob, afterBlob         string
+	beforeSemantic, afterSemantic string
+	beforeSource, afterSource     string
+}
+
+type fixtureProof struct {
+	path                                semantic.InferencePathV1
+	receipt                             CouplingReceipt
+	authority, projection, verification semantic.ID
+}
+
 func fixtureID(name string) semantic.ID { return semantic.MustIdentity("gooo://coupling/" + name) }
 
 func fixtureDigest(name string) string { return semantic.StableHashString("coupling-fixture/" + name) }
 
 func newFixture(t *testing.T, claim ChangeClaim) couplingFixture {
+	t.Helper()
+	context := fixtureContextFor(t, claim)
+	proof := fixtureProofFor(context, claim)
+	external := externalReceiptFor(context.config)
+	return couplingFixture{
+		input: Input{Schema: InputSchemaV1, Config: context.config, Registry: context.registry, Manifest: context.manifest,
+			Receipts: []CouplingReceipt{proof.receipt}, InferencePath: proof.path, ExternalReceipt: external, WorkspaceRoot: "/workspace"},
+		owner: context.owner, code: context.code, surface: context.surface,
+		authority: proof.authority, projection: proof.projection, verification: proof.verification,
+	}
+}
+
+func fixtureContextFor(t *testing.T, claim ChangeClaim) fixtureContext {
 	t.Helper()
 	owner, code, surface := fixtureID("owner"), fixtureID("code-symbol"), fixtureID("surface")
 	sourceMap := fixtureID("source-map")
@@ -59,16 +88,24 @@ func newFixture(t *testing.T, claim ChangeClaim) couplingFixture {
 		Entries: []ManifestEntry{entry},
 	}
 	manifest.Digest = stableDigest(manifestCanonical(manifest))
+	return fixtureContext{owner: owner, code: code, surface: surface, registry: registry, config: config, manifest: manifest,
+		beforeBlob: beforeBlob, afterBlob: afterBlob, beforeSemantic: beforeSemantic, afterSemantic: afterSemantic,
+		beforeSource: beforeSource, afterSource: afterSource}
+}
+
+func fixtureProofFor(context fixtureContext, claim ChangeClaim) fixtureProof {
+	owner, code, surface := context.owner, context.code, context.surface
+	config := context.config
 	authority, projection, verification := fixtureID("authority-edge"), fixtureID("projection-edge"), fixtureID("verification-edge")
 	sourceID := fixtureID("authoritative-source")
 	authEvidence, projectionEvidence, verificationEvidence := fixtureID("auth-evidence"), fixtureID("projection-evidence"), fixtureID("verification-evidence")
-	path := fixturePath(owner, code, surface, authority, projection, verification, sourceID, authEvidence, projectionEvidence, verificationEvidence, beforeSemantic, afterSemantic, beforeSource, afterSource, config)
+	path := fixturePath(owner, code, surface, authority, projection, verification, sourceID, authEvidence, projectionEvidence, verificationEvidence, context.beforeSemantic, context.afterSemantic, context.beforeSource, context.afterSource, config)
 	claimRecord := semantic.InferenceRecord{
 		RecordID: fixtureID("claim"), SubjectID: owner, ObjectID: surface,
 		Rule:      semantic.RuleBinding{ID: fixtureID("rule"), Version: "v1", Digest: fixtureDigest("rule")},
 		Phase:     semantic.PhasePlacement{Phase: semantic.PhaseVerification, Ordinal: 4},
-		Before:    semantic.SnapshotDigests{Source: beforeSource, Semantic: beforeSemantic},
-		After:     semantic.SnapshotDigests{Source: afterSource, Semantic: afterSemantic},
+		Before:    semantic.SnapshotDigests{Source: context.beforeSource, Semantic: context.beforeSemantic},
+		After:     semantic.SnapshotDigests{Source: context.afterSource, Semantic: context.afterSemantic},
 		Authority: semantic.AuthorityBinding{Layer: semantic.AuthoritySemantic, Effect: semantic.AuthorityDelta},
 		Evidence:  []semantic.EvidenceReference{{ID: verificationEvidence, Digest: fixtureDigest("evidence-verification-evidence")}},
 		Controls:  semantic.InferenceControls{PolicyDigest: config.ProfileDigest},
@@ -84,10 +121,10 @@ func newFixture(t *testing.T, claim ChangeClaim) couplingFixture {
 	path.Claims = []semantic.SemanticChangeClaim{semanticClaim}
 	receipt := CouplingReceipt{
 		Schema: ReceiptSchemaV1, ReceiptID: fixtureID("receipt"), SurfaceID: surface, SemanticOwnerID: owner, CodeSymbolID: code,
-		SourceMapBindingDigest: registrySurface.Binding.BindingDigest, SnapshotDigest: config.SnapshotDigest,
-		RegistryDigest: registry.Digest, ToolchainDigest: config.ToolchainDigest, ProfileDigest: config.ProfileDigest,
-		BeforeBlobDigest: beforeBlob, AfterBlobDigest: afterBlob, BeforeAuthoritySourceDigest: beforeSource, AfterAuthoritySourceDigest: afterSource,
-		BeforeCanonicalSemanticDigest: beforeSemantic, AfterCanonicalSemanticDigest: afterSemantic,
+		SourceMapBindingDigest: context.registry.Surfaces[0].Binding.BindingDigest, SnapshotDigest: config.SnapshotDigest,
+		RegistryDigest: context.registry.Digest, ToolchainDigest: config.ToolchainDigest, ProfileDigest: config.ProfileDigest,
+		BeforeBlobDigest: context.beforeBlob, AfterBlobDigest: context.afterBlob, BeforeAuthoritySourceDigest: context.beforeSource, AfterAuthoritySourceDigest: context.afterSource,
+		BeforeCanonicalSemanticDigest: context.beforeSemantic, AfterCanonicalSemanticDigest: context.afterSemantic,
 		ChangeClaim: claim, ReceiptKind: receiptKind(claim), OriginPathIDs: []semantic.ID{verification, projection, authority},
 		InferenceClaimID: semanticClaim.RecordID, EvidenceRefs: []semantic.EvidenceReference{
 			{ID: authEvidence, Digest: fixtureDigest("evidence-auth-evidence")},
@@ -99,10 +136,14 @@ func newFixture(t *testing.T, claim ChangeClaim) couplingFixture {
 		receipt.CanonicalDelta, receipt.DeltaDigest = canonicalDelta, stableDigest(canonicalDelta)
 		receipt.AuthoritativeSource = &AuthoritySource{SourceID: sourceID, Path: "billing/authority.gooo", Span: "10:1-10:12"}
 	}
+	return fixtureProof{path: path, receipt: receipt, authority: authority, projection: projection, verification: verification}
+}
+
+func externalReceiptFor(config Config) *ExternalResourceReceipt {
 	cpu, memory, work := uint64(7), uint64(11), uint64(13)
 	external := &ExternalResourceReceipt{Schema: ResourceSchemaV1, SnapshotDigest: config.SnapshotDigest, ProviderDigest: fixtureDigest("provider"), ObserverDigest: fixtureDigest("observer"), CPUWorkUnits: &cpu, PeakMemoryBytes: &memory, DeterministicWorkUnits: &work}
 	external.Digest = stableDigest(externalCanonical(*external))
-	return couplingFixture{input: Input{Schema: InputSchemaV1, Config: config, Registry: registry, Manifest: manifest, Receipts: []CouplingReceipt{receipt}, InferencePath: path, ExternalReceipt: external, WorkspaceRoot: "/workspace"}, owner: owner, code: code, surface: surface, authority: authority, projection: projection, verification: verification}
+	return external
 }
 
 func receiptKind(claim ChangeClaim) semantic.SemanticChangeKind {

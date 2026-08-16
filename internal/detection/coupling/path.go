@@ -60,47 +60,72 @@ func validateReceiptPath(
 	receipt CouplingReceipt, entry ManifestEntry, path semantic.InferencePathV1,
 ) *evaluationIssue {
 	index := indexInferencePath(path)
+	claim, issue := receiptClaim(receipt, index)
+	if issue != nil {
+		return issue
+	}
+	chain, issue := selectedReceiptChain(receipt, index)
+	if issue != nil {
+		return issue
+	}
+	if issue := validateReceiptChain(receipt, entry, index, chain); issue != nil {
+		return issue
+	}
+	return validateEvidenceReferences(receipt, index, chain.Edges, claim)
+}
+
+func receiptClaim(receipt CouplingReceipt, index inferenceIndex) (semantic.SemanticChangeClaim, *evaluationIssue) {
 	claim, exists := index.claims[receipt.InferenceClaimID]
 	if !exists {
-		return failIssue(ReasonOrphanReceipt, receipt.SurfaceID.String())
+		return semantic.SemanticChangeClaim{}, failIssue(ReasonOrphanReceipt, receipt.SurfaceID.String())
 	}
 	wantKind, validClaim := semanticKindForClaim(receipt.ChangeClaim)
 	if !validClaim || receipt.ReceiptKind != wantKind {
-		return failIssue(ReasonContradictoryReceipt, receipt.SurfaceID.String())
+		return semantic.SemanticChangeClaim{}, failIssue(ReasonContradictoryReceipt, receipt.SurfaceID.String())
 	}
 	if !recordMentionsOwner(claim.InferenceRecord, receipt.SemanticOwnerID) ||
 		claim.Kind != wantKind || claim.Before.Semantic != receipt.BeforeCanonicalSemanticDigest ||
 		claim.After.Semantic != receipt.AfterCanonicalSemanticDigest ||
 		claim.Before.Source != receipt.BeforeAuthoritySourceDigest || claim.After.Source != receipt.AfterAuthoritySourceDigest {
-		return failIssue(ReasonDigestMismatch, receipt.SurfaceID.String())
+		return semantic.SemanticChangeClaim{}, failIssue(ReasonDigestMismatch, receipt.SurfaceID.String())
 	}
 	if claim.Kind == semantic.SemanticDelta &&
 		(claim.CanonicalDelta != receipt.CanonicalDelta || claim.DeltaDigest != receipt.DeltaDigest) {
-		return failIssue(ReasonDigestMismatch, receipt.SurfaceID.String())
+		return semantic.SemanticChangeClaim{}, failIssue(ReasonDigestMismatch, receipt.SurfaceID.String())
 	}
 	if claim.Kind == semantic.NoSemanticDelta && (receipt.CanonicalDelta != "" || receipt.DeltaDigest != "") {
-		return failIssue(ReasonNoDeltaWithoutEquality, receipt.SurfaceID.String())
+		return semantic.SemanticChangeClaim{}, failIssue(ReasonNoDeltaWithoutEquality, receipt.SurfaceID.String())
 	}
+	return claim, nil
+}
+
+func selectedReceiptChain(receipt CouplingReceipt, index inferenceIndex) (semantic.InferencePathChain, *evaluationIssue) {
 	if len(receipt.OriginPathIDs) == 0 {
-		return failIssue(ReasonMissingAuthorityPath, receipt.SurfaceID.String())
+		return semantic.InferencePathChain{}, failIssue(ReasonMissingAuthorityPath, receipt.SurfaceID.String())
 	}
 	selected := make([]semantic.InferenceEdge, 0, len(receipt.OriginPathIDs))
 	seenPathIDs := make(map[semantic.ID]struct{}, len(receipt.OriginPathIDs))
 	for _, pathID := range receipt.OriginPathIDs {
 		if _, duplicate := seenPathIDs[pathID]; duplicate {
-			return failIssue(ReasonInferencePathMalformed, receipt.SurfaceID.String())
+			return semantic.InferencePathChain{}, failIssue(ReasonInferencePathMalformed, receipt.SurfaceID.String())
 		}
 		seenPathIDs[pathID] = struct{}{}
 		edge, ok := index.edges[pathID]
 		if !ok {
-			return failIssue(ReasonOrphanReceipt, receipt.SurfaceID.String())
+			return semantic.InferencePathChain{}, failIssue(ReasonOrphanReceipt, receipt.SurfaceID.String())
 		}
 		selected = append(selected, edge)
 	}
 	chain, err := semantic.NewInferencePathChain(selected...)
 	if err != nil {
-		return failIssue(ReasonInferencePathMalformed, receipt.SurfaceID.String())
+		return semantic.InferencePathChain{}, failIssue(ReasonInferencePathMalformed, receipt.SurfaceID.String())
 	}
+	return chain, nil
+}
+
+func validateReceiptChain(
+	receipt CouplingReceipt, entry ManifestEntry, index inferenceIndex, chain semantic.InferencePathChain,
+) *evaluationIssue {
 	if len(chain.Edges) == 0 {
 		return failIssue(ReasonMissingAuthorityPath, receipt.SurfaceID.String())
 	}
@@ -144,23 +169,20 @@ func validateReceiptPath(
 	if !foundCode || !foundSurface || !projection {
 		return failIssue(ReasonDigestMismatch, receipt.SurfaceID.String())
 	}
-	if receipt.ChangeClaim == ChangeClaimDelta {
-		if receipt.AuthoritativeSource == nil || receipt.AuthoritativeSource.SourceID == "" || receipt.AuthoritativeSource.Path == "" {
-			return failIssue(ReasonDeltaWithoutSource, receipt.SurfaceID.String())
-		}
-		rootFound := false
-		for _, edge := range chain.Edges {
-			for _, root := range edge.SourceRoots {
-				if root == receipt.AuthoritativeSource.SourceID {
-					rootFound = true
-				}
+	if receipt.ChangeClaim != ChangeClaimDelta {
+		return nil
+	}
+	if receipt.AuthoritativeSource == nil || receipt.AuthoritativeSource.SourceID == "" || receipt.AuthoritativeSource.Path == "" {
+		return failIssue(ReasonDeltaWithoutSource, receipt.SurfaceID.String())
+	}
+	for _, edge := range chain.Edges {
+		for _, root := range edge.SourceRoots {
+			if root == receipt.AuthoritativeSource.SourceID {
+				return nil
 			}
 		}
-		if !rootFound {
-			return failIssue(ReasonMissingAuthorityPath, receipt.SurfaceID.String())
-		}
 	}
-	return validateEvidenceReferences(receipt, index, chain.Edges, claim)
+	return failIssue(ReasonMissingAuthorityPath, receipt.SurfaceID.String())
 }
 
 func validateEvidenceReferences(
