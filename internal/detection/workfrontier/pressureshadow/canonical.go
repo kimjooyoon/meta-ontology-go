@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -17,9 +16,14 @@ import (
 )
 
 func (input *Input) UnmarshalJSON(data []byte) error {
+	if err := rejectDuplicateKeys(data); err != nil {
+		return err
+	}
 	type wire Input
 	var decoded wire
-	if err := decodeStrictObject(data, &decoded); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&decoded); err != nil {
 		return err
 	}
 	if err := validateSyntax(Input(decoded)); err != nil {
@@ -36,49 +40,53 @@ func DecodeInput(data []byte) (Input, error) {
 	}
 	return input, nil
 }
-
-func decodeStrictObject(data []byte, target any) error {
-	if err := rejectDuplicateKeys(data); err != nil {
-		return err
-	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	return decoder.Decode(target)
-}
-
 func validateSyntax(input Input) error {
 	if input.Schema != SchemaVersion || input.Selector.SchemaVersion != workfrontier.SchemaVersion {
 		return fmt.Errorf("invalid schema")
 	}
-	seenPaths := make(map[string]struct{}, len(input.Selector.Paths))
+	seenPressures := make(map[string]struct{}, len(input.Selector.Pressures))
 	for _, pressure := range input.Selector.Pressures {
-		if !validID(pressureID(pressure)) {
-			return fmt.Errorf("invalid pressure ID")
+		if err := checkUniqueID(seenPressures, pressureID(pressure), "pressure"); err != nil {
+			return err
 		}
 	}
+	seenStates := make(map[string]struct{}, len(input.Selector.States))
+	for _, state := range input.Selector.States {
+		id := stableID(state.ObligationID, state.ID)
+		if err := checkUniqueID(seenStates, id, "obligation state"); err != nil {
+			return err
+		}
+	}
+	seenPaths := make(map[string]struct{}, len(input.Selector.Paths))
 	for _, path := range input.Selector.Paths {
 		id := pathID(path)
-		if !validID(id) || !validIDs(path.RequiredPressureIDs) {
+		if !validIDs(path.RequiredPressureIDs) {
 			return fmt.Errorf("invalid path ID")
 		}
-		if _, exists := seenPaths[id]; exists {
-			return fmt.Errorf("duplicate selector path ID %q", id)
+		if err := checkUniqueID(seenPaths, id, "path"); err != nil {
+			return err
 		}
-		seenPaths[id] = struct{}{}
 	}
 	seenRows := make(map[string]struct{}, len(input.PathCoverage))
 	for _, row := range input.PathCoverage {
-		if !validID(row.PathID) {
-			return fmt.Errorf("invalid path coverage ID")
+		if err := checkUniqueID(seenRows, row.PathID, "path coverage"); err != nil {
+			return err
 		}
-		if _, exists := seenRows[row.PathID]; exists {
-			return fmt.Errorf("duplicate path coverage ID %q", row.PathID)
-		}
-		seenRows[row.PathID] = struct{}{}
 		if _, err := pressurecoverage.CanonicalInputBytes(row.Coverage); err != nil {
 			return fmt.Errorf("invalid pressure coverage: %w", err)
 		}
 	}
+	return nil
+}
+
+func checkUniqueID(seen map[string]struct{}, id, kind string) error {
+	if !validID(id) {
+		return fmt.Errorf("invalid %s ID", kind)
+	}
+	if _, exists := seen[id]; exists {
+		return fmt.Errorf("duplicate %s ID %q", kind, id)
+	}
+	seen[id] = struct{}{}
 	return nil
 }
 
@@ -158,7 +166,7 @@ func validIDs(values []string) bool {
 }
 
 func validID(value string) bool {
-	if value == "" || value != strings.TrimSpace(value) || len(value) > 256 || !utf8.ValidString(value) {
+	if value == "" || len(value) > 256 || !utf8.ValidString(value) {
 		return false
 	}
 	for _, character := range value {
@@ -176,17 +184,18 @@ func sortedStrings(values []string) []string {
 }
 
 func pressureID(pressure workfrontier.Pressure) string {
-	if pressure.StableID != "" {
-		return pressure.StableID
-	}
-	return pressure.ID
+	return stableID(pressure.StableID, pressure.ID)
 }
 
 func pathID(path workfrontier.RepairPath) string {
-	if path.StableID != "" {
-		return path.StableID
+	return stableID(path.StableID, path.ID)
+}
+
+func stableID(primary, fallback string) string {
+	if primary != "" {
+		return primary
 	}
-	return path.ID
+	return fallback
 }
 
 func digestBytes(data []byte) string {
@@ -199,8 +208,7 @@ func rejectDuplicateKeys(data []byte) error {
 	if err := scanJSONValue(decoder); err != nil {
 		return err
 	}
-	var trailing any
-	if err := decoder.Decode(&trailing); err != io.EOF {
+	if _, err := decoder.Token(); err != io.EOF {
 		return fmt.Errorf("trailing JSON value")
 	}
 	return nil
@@ -215,42 +223,31 @@ func scanJSONValue(decoder *json.Decoder) error {
 	if !composite {
 		return nil
 	}
-	switch delimiter {
-	case '{':
-		return scanJSONObject(decoder)
-	case '[':
-		return scanJSONArray(decoder)
-	default:
+	if delimiter == '[' {
+		for decoder.More() {
+			if err := scanJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+	} else if delimiter == '{' {
+		seen := map[string]struct{}{}
+		for decoder.More() {
+			key, err := decoder.Token()
+			if err != nil {
+				return err
+			}
+			name := key.(string)
+			if _, exists := seen[name]; exists {
+				return fmt.Errorf("duplicate JSON key %q", name)
+			}
+			seen[name] = struct{}{}
+			if err := scanJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+	} else {
 		return fmt.Errorf("unexpected JSON delimiter %q", delimiter)
 	}
-}
-
-func scanJSONObject(decoder *json.Decoder) error {
-	seen := map[string]struct{}{}
-	for decoder.More() {
-		key, err := decoder.Token()
-		if err != nil {
-			return err
-		}
-		name := key.(string)
-		if _, exists := seen[name]; exists {
-			return fmt.Errorf("duplicate JSON key %q", name)
-		}
-		seen[name] = struct{}{}
-		if err := scanJSONValue(decoder); err != nil {
-			return err
-		}
-	}
-	_, err := decoder.Token()
-	return err
-}
-
-func scanJSONArray(decoder *json.Decoder) error {
-	for decoder.More() {
-		if err := scanJSONValue(decoder); err != nil {
-			return err
-		}
-	}
-	_, err := decoder.Token()
+	_, err = decoder.Token()
 	return err
 }
