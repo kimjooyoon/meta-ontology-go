@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer/selectiveci"
 	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer/semanticbinding"
+	detectorcoupling "github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
@@ -56,6 +58,17 @@ func TestBuildMatchesDetectorManifestContractAndZeroChange(t *testing.T) {
 	}
 	if decoded.Digest != manifest.Digest || !bytes.Equal(data, mustCanonical(t, decoded)) {
 		t.Fatalf("round-trip changed manifest: %#v", decoded)
+	}
+	var detectorManifest detectorcoupling.ChangeManifest
+	if err := json.Unmarshal(data, &detectorManifest); err != nil {
+		t.Fatalf("detector ChangeManifest decode: %v", err)
+	}
+	detectorData, err := json.Marshal(detectorManifest)
+	if err != nil {
+		t.Fatalf("detector ChangeManifest encode: %v", err)
+	}
+	if !bytes.Equal(data, detectorData) {
+		t.Fatalf("adapter bytes differ from detector contract:\nadapter: %s\ndetector: %s", data, detectorData)
 	}
 }
 
