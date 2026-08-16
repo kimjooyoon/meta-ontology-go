@@ -15,34 +15,45 @@ const (
 
 func Corpus() []Case {
 	return []Case{
-		bindingCase("case-01", ClosedSound, ReasonExactBinding, orderID, fileA, fileA, blobA, blobA, true, true, false),
-		bindingCase("case-02", ClosedSound, ReasonRenameBinding, orderID, fileB, fileB, blobA, blobA, true, true, false),
-		bindingCase("case-03", FailClosedUnsound, ReasonBlobWithoutID, orderID, fileA, fileB, blobA, blobB, true, true, false),
-		bindingCase("case-04", UnknownFullSuiteRequired, ReasonSourceMapRegistry, orderID, fileA, fileA, blobA, blobA, false, false, true),
-		graphCase(),
-		soundnessCase("case-06", ReasonGlobalGuard, []string{"cmd-guard"}, guardCommands(), Authoritative, true),
-		soundnessCase("case-07", ReasonSelectedDrift, []string{"cmd-impact"}, driftCommands(), Authoritative, true),
-		soundnessCase("case-08", ReasonOmittedFailure, []string{"cmd-fail"}, omittedFailureCommands(), Authoritative, true),
-		soundnessCase("case-09", ReasonNonAuthoritative, []string{"obl-candidate"}, nonAuthoritativeCommands(), Candidate, true),
-		pathCase(),
+		bindingCase("case-01", ClosedSound, ReasonExactBinding, orderID, fileA, fileA, blobA, blobA, "Order", true, true, false),
+		bindingCase("case-02", ClosedSound, ReasonRenameBinding, orderID, fileB, fileB, blobA, blobA, "PurchaseOrder", true, true, false),
+		bindingCase("case-03", FailClosedUnsound, ReasonBlobWithoutID, orderID, fileA, fileB, blobA, blobB, "Order", true, true, false),
+		bindingCase("case-04", UnknownFullSuiteRequired, ReasonSourceMapRegistry, orderID, fileA, fileA, blobA, blobA, "Order", false, false, true),
+		unknownGraphCase(),
+		missedGraphCase(),
+		soundnessCase("case-07", ReasonGlobalGuard, []string{"cmd-guard"}, guardCommands(), Authoritative, true),
+		soundnessCase("case-08", ReasonSelectedDrift, []string{"cmd-impact"}, driftCommands(), Authoritative, true),
+		soundnessCase("case-09", ReasonOmittedFailure, []string{"cmd-fail"}, omittedFailureCommands(), Authoritative, true),
+		soundnessCase("case-10", ReasonNonAuthoritative, []string{"obl-candidate"}, nonAuthoritativeCommands(), Candidate, true),
+		pathCase("case-11", ReasonDuplicateReceipt, "path://duplicate", true, false),
+		pathCase("case-12", ReasonConflictingReceipt, "path://conflict", false, true),
 		resourceCase(),
-		externalCase(),
+		externalCase("case-14", "external-authenticity", ExternalAssertion{Authenticity: false, Provider: true, Phase: true, Observer: true}),
+		externalCase("case-15", "external-provider", ExternalAssertion{Authenticity: true, Provider: false, Phase: true, Observer: true}),
+		externalCase("case-16", "external-phase", ExternalAssertion{Authenticity: true, Provider: true, Phase: false, Observer: true}),
+		externalCase("case-17", "external-observer", ExternalAssertion{Authenticity: true, Provider: true, Phase: true, Observer: false}),
 	}
 }
 
-func bindingCase(id string, state State, reason Reason, stableID, expectedFile, observedFile, expectedBlob, observedBlob string, registry, sourceMap, ambiguous bool) Case {
+func bindingCase(id string, state State, reason Reason, stableID, expectedFile, observedFile, expectedBlob, observedBlob, declaration string, registry, sourceMap, ambiguous bool) Case {
 	return Case{ID: id, Expected: Expected{State: state, Reason: reason, LocalizedIDs: []string{stableID}}, Baseline: BaselineConfig{
 		Subject: SubjectBinding, StableID: stableID, BoundID: stableID, ExpectedFile: expectedFile,
 		ObservedFile: observedFile, ExpectedBlob: expectedBlob, ObservedBlob: observedBlob,
+		DeclarationName: declaration,
 		RegistryPresent: registry, SourceMapPresent: sourceMap, Ambiguous: ambiguous,
 		FullCommands: 1, SelectedCommands: 1, ProvRecords: 1, ProvPaths: 1,
 	}}
 }
 
-func graphCase() Case {
+func unknownGraphCase() Case {
 	return Case{ID: "case-05", Expected: Expected{State: UnknownFullSuiteRequired, Reason: ReasonUnknownGraph, LocalizedIDs: []string{"graph://unknown"}}, Baseline: BaselineConfig{
-		Subject: SubjectGraph, UnknownIDs: []string{"graph://unknown"}, MissedIDs: []string{"billing://obligation/order"},
-		FullCommands: 2, SelectedCommands: 2, ProvRecords: 5, ProvPaths: 1,
+		Subject: SubjectGraph, UnknownIDs: []string{"graph://unknown"}, FullCommands: 3, SelectedCommands: 1, ProvRecords: 5, ProvPaths: 1,
+	}}
+}
+
+func missedGraphCase() Case {
+	return Case{ID: "case-06", Expected: Expected{State: FailClosedUnsound, Reason: ReasonMissedObligation, LocalizedIDs: []string{"billing://obligation/order"}}, Baseline: BaselineConfig{
+		Subject: SubjectGraph, MissedIDs: []string{"billing://obligation/order"}, FullCommands: 3, SelectedCommands: 1, ProvRecords: 5, ProvPaths: 1,
 	}}
 }
 
@@ -84,21 +95,21 @@ func nonAuthoritativeCommands() []CommandAssertion {
 	return []CommandAssertion{command("cmd-guard", true, Pass, Pass, "guard-full", "guard-full", true, false, false), command("cmd-candidate", false, Pass, Pass, "candidate-full", "candidate-full", false, false, false)}
 }
 
-func pathCase() Case {
-	return Case{ID: "case-10", Expected: Expected{State: FailClosedUnsound, Reason: ReasonDuplicateReceipt, LocalizedIDs: []string{"path://duplicate"}}, Baseline: BaselineConfig{
-		Subject: SubjectPath, Path: PathAssertion{IDs: []string{"path://duplicate"}, Duplicate: true}, FullCommands: 1, SelectedCommands: 1, ProvRecords: 4, ProvPaths: 2,
+func pathCase(id string, reason Reason, pathID string, duplicate, conflict bool) Case {
+	return Case{ID: id, Expected: Expected{State: FailClosedUnsound, Reason: reason, LocalizedIDs: []string{pathID}}, Baseline: BaselineConfig{
+		Subject: SubjectPath, Path: PathAssertion{IDs: []string{pathID}, Duplicate: duplicate, Conflict: conflict}, FullCommands: 1, SelectedCommands: 1, ProvRecords: 4, ProvPaths: 2,
 	}}
 }
 
 func resourceCase() Case {
-	return Case{ID: "case-11", Expected: Expected{State: UnknownFullSuiteRequired, Reason: ReasonInvalidResource, LocalizedIDs: []string{"receipt-1"}}, Baseline: BaselineConfig{
+	return Case{ID: "case-13", Expected: Expected{State: UnknownFullSuiteRequired, Reason: ReasonInvalidResource, LocalizedIDs: []string{"receipt-1"}}, Baseline: BaselineConfig{
 		Subject: SubjectResource, Resource: ResourceAssertion{Overflow: true}, FullCommands: 1, SelectedCommands: 1, ProvRecords: 2, ProvPaths: 1,
 	}}
 }
 
-func externalCase() Case {
-	return Case{ID: "case-12", Expected: Expected{State: UnknownFullSuiteRequired, Reason: ReasonExternalMissing, LocalizedIDs: []string{"external-input"}}, Baseline: BaselineConfig{
-		Subject: SubjectSoundness, External: ExternalAssertion{Authenticity: true, Provider: false, Phase: true, Observer: false}, Commands: guardCommands(), FullCommands: 2, SelectedCommands: 1, ProvRecords: 5, ProvPaths: 2,
+func externalCase(id, localized string, external ExternalAssertion) Case {
+	return Case{ID: id, Expected: Expected{State: UnknownFullSuiteRequired, Reason: ReasonExternalMissing, LocalizedIDs: []string{localized}}, Baseline: BaselineConfig{
+		Subject: SubjectSoundness, External: external, Commands: guardCommands(), FullCommands: 2, SelectedCommands: 1, ProvRecords: 5, ProvPaths: 2,
 	}}
 }
 

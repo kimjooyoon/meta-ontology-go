@@ -20,6 +20,15 @@ const (
 	SubjectResource  Subject = "RESOURCE_ENVELOPE"
 )
 
+func (s Subject) Valid() bool {
+	switch s {
+	case SubjectBinding, SubjectGraph, SubjectSoundness, SubjectPath, SubjectResource:
+		return true
+	default:
+		return false
+	}
+}
+
 type State string
 
 const (
@@ -31,18 +40,20 @@ const (
 type Reason string
 
 const (
-	ReasonExactBinding      Reason = "EXACT_REGISTERED_BINDING"
-	ReasonRenameBinding     Reason = "STABLE_ID_RENAME_EXACT_BINDING"
-	ReasonBlobWithoutID     Reason = "FILE_BLOB_WITHOUT_STABLE_ID_BINDING"
-	ReasonSourceMapRegistry Reason = "SOURCE_MAP_OR_REGISTRY_MISSING"
-	ReasonUnknownGraph      Reason = "UNKNOWN_GRAPH_NODE_OR_MISSED_OBLIGATION"
-	ReasonGlobalGuard       Reason = "GLOBAL_GUARD_OMITTED"
-	ReasonSelectedDrift     Reason = "SELECTED_FULL_STATUS_OR_OUTPUT_DIGEST_DRIFT"
-	ReasonOmittedFailure    Reason = "OMITTED_FULL_SUITE_FAILURE"
-	ReasonNonAuthoritative  Reason = "NON_AUTHORITATIVE_OMITTED_OBLIGATION"
-	ReasonDuplicateReceipt  Reason = "DUPLICATE_OR_CONFLICTING_PATH_RECEIPT"
-	ReasonInvalidResource   Reason = "INVALID_OR_OVERFLOW_RESOURCE_RECEIPT"
-	ReasonExternalMissing   Reason = "EXTERNAL_AUTHENTICITY_PROVIDER_PHASE_OBSERVER_MISSING"
+	ReasonExactBinding       Reason = "EXACT_REGISTERED_BINDING"
+	ReasonRenameBinding      Reason = "STABLE_ID_RENAME_EXACT_BINDING"
+	ReasonBlobWithoutID      Reason = "FILE_BLOB_WITHOUT_STABLE_ID_BINDING"
+	ReasonSourceMapRegistry  Reason = "SOURCE_MAP_OR_REGISTRY_MISSING"
+	ReasonUnknownGraph       Reason = "UNKNOWN_GRAPH_NODE"
+	ReasonMissedObligation   Reason = "MISSED_OBLIGATION"
+	ReasonGlobalGuard        Reason = "GLOBAL_GUARD_OMITTED"
+	ReasonSelectedDrift      Reason = "SELECTED_FULL_STATUS_OR_OUTPUT_DIGEST_DRIFT"
+	ReasonOmittedFailure     Reason = "OMITTED_FULL_SUITE_FAILURE"
+	ReasonNonAuthoritative   Reason = "NON_AUTHORITATIVE_OMITTED_OBLIGATION"
+	ReasonDuplicateReceipt   Reason = "DUPLICATE_PATH_RECEIPT"
+	ReasonConflictingReceipt Reason = "CONFLICTING_PATH_RECEIPT"
+	ReasonInvalidResource    Reason = "INVALID_OR_OVERFLOW_RESOURCE_RECEIPT"
+	ReasonExternalMissing    Reason = "EXTERNAL_AUTHENTICITY_PROVIDER_PHASE_OBSERVER_MISSING"
 )
 
 type Finding string
@@ -77,12 +88,14 @@ type BaselineConfig struct {
 	ObservedFile     string
 	ExpectedBlob     string
 	ObservedBlob     string
+	DeclarationName  string
 	RegistryPresent  bool
 	SourceMapPresent bool
 	Ambiguous        bool
 
 	UnknownIDs []string
 	MissedIDs  []string
+	Roots      []string
 	Commands   []CommandAssertion
 	Obligation ObligationAssertion
 	Path       PathAssertion
@@ -211,9 +224,9 @@ func (s State) Valid() bool {
 
 func (r Reason) Valid() bool {
 	for _, value := range []Reason{ReasonExactBinding, ReasonRenameBinding, ReasonBlobWithoutID,
-		ReasonSourceMapRegistry, ReasonUnknownGraph, ReasonGlobalGuard, ReasonSelectedDrift,
-		ReasonOmittedFailure, ReasonNonAuthoritative, ReasonDuplicateReceipt, ReasonInvalidResource,
-		ReasonExternalMissing} {
+		ReasonSourceMapRegistry, ReasonUnknownGraph, ReasonMissedObligation, ReasonGlobalGuard,
+		ReasonSelectedDrift, ReasonOmittedFailure, ReasonNonAuthoritative, ReasonDuplicateReceipt,
+		ReasonConflictingReceipt, ReasonInvalidResource, ReasonExternalMissing} {
 		if r == value {
 			return true
 		}
@@ -225,6 +238,7 @@ func (c Case) normalized() Case {
 	c.Expected.LocalizedIDs = sorted(c.Expected.LocalizedIDs)
 	c.Baseline.UnknownIDs = sorted(c.Baseline.UnknownIDs)
 	c.Baseline.MissedIDs = sorted(c.Baseline.MissedIDs)
+	c.Baseline.Roots = sorted(c.Baseline.Roots)
 	c.Baseline.Path.IDs = sorted(c.Baseline.Path.IDs)
 	c.Baseline.Commands = append([]CommandAssertion(nil), c.Baseline.Commands...)
 	sort.Slice(c.Baseline.Commands, func(i, j int) bool { return c.Baseline.Commands[i].ID < c.Baseline.Commands[j].ID })
