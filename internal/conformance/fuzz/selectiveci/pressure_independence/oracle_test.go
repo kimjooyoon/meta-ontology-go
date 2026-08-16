@@ -100,9 +100,39 @@ func TestGroupMutationChangesResult(t *testing.T) {
 	mutated := input
 	mutated.PressureRecords = append([]PressureRecord(nil), input.PressureRecords...)
 	mutated.PressureRecords[1].IndependenceGroupID = mutated.PressureRecords[0].IndependenceGroupID
-	left, right := Evaluate(input), Evaluate(mutated)
-	if left.Decision != DecisionPass || right.Decision != DecisionUnknown || left.InputDigest == right.InputDigest {
-		t.Fatalf("group mutation left=%#v right=%#v", left, right)
+	left, stale := Evaluate(input), Evaluate(mutated)
+	if left.Decision != DecisionPass || stale.Decision != DecisionUnknown || stale.Reason != ReasonStaleDigest {
+		t.Fatalf("group mutation left=%#v stale=%#v", left, stale)
+	}
+	contracts, ok := readArtifactContracts()
+	if !ok {
+		t.Fatal("artifact contracts invalid")
+	}
+	mutated.RegistryDigest = registryBindingDigest(mutated.PressureRecords, contracts.registry)
+	right := Evaluate(mutated)
+	if right.Decision != DecisionUnknown || right.Reason != ReasonIndependentGroupShortfall ||
+		left.InputDigest == right.InputDigest {
+		t.Fatalf("rebound group mutation left=%#v right=%#v", left, right)
+	}
+}
+
+func TestRegistryBindingTracksCategoryAndApplicability(t *testing.T) {
+	input := mustCorpusInput(t, "two-independent-groups-pass")
+	mutations := []struct {
+		name   string
+		mutate func(*PressureRecord)
+	}{
+		{name: "category", mutate: func(record *PressureRecord) { record.CategoryID = "category-mutated" }},
+		{name: "applicability", mutate: func(record *PressureRecord) { record.ApplicabilityRuleID = "rule-v2" }},
+	}
+	for _, mutation := range mutations {
+		mutated := input
+		mutated.PressureRecords = append([]PressureRecord(nil), input.PressureRecords...)
+		mutation.mutate(&mutated.PressureRecords[1])
+		got := Evaluate(mutated)
+		if got.Decision != DecisionUnknown || got.Reason != ReasonStaleDigest {
+			t.Fatalf("%s mutation with old registry = %#v", mutation.name, got)
+		}
 	}
 }
 
@@ -111,6 +141,11 @@ func TestAmbiguousApplicabilityAndNonCompensatingResources(t *testing.T) {
 	ambiguous := input
 	ambiguous.PressureRecords = append([]PressureRecord(nil), input.PressureRecords...)
 	ambiguous.PressureRecords[1].ApplicabilityRuleID = "rule-v2"
+	contracts, ok := readArtifactContracts()
+	if !ok {
+		t.Fatal("artifact contracts invalid")
+	}
+	ambiguous.RegistryDigest = registryBindingDigest(ambiguous.PressureRecords, contracts.registry)
 	if got := Evaluate(ambiguous); got.Decision != DecisionUnknown || got.Reason != ReasonInputAmbiguous {
 		t.Fatalf("ambiguous applicability = %#v", got)
 	}

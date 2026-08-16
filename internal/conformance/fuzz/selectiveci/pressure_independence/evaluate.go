@@ -100,14 +100,7 @@ func missingInput(input Input) bool {
 }
 
 func staleDigest(input Input) bool {
-	digests := []string{input.AuthoritySnapshotDigest, input.PolicyDigest, input.RegistryDigest,
-		input.OracleDigest, input.ToolchainOptionsDigest}
-	for _, value := range digests {
-		if !validDigest(value) || allZeroDigest(value) {
-			return true
-		}
-	}
-	return false
+	return !verifyArtifactBindings(input)
 }
 
 func malformedLists(input Input) bool {
@@ -238,15 +231,6 @@ func validDigest(value string) bool {
 	}
 	_, err := hex.DecodeString(value[len("sha256:"):])
 	return err == nil
-}
-
-func allZeroDigest(value string) bool {
-	for _, r := range value[len("sha256:"):] {
-		if r != '0' {
-			return false
-		}
-	}
-	return true
 }
 
 func hasDuplicate(values []string) bool {
