@@ -10,14 +10,30 @@ func validProof() proofBundle {
 	head := strings.Repeat("a", 40)
 	jobs := make([]jobInput, len(proofJobs))
 	for index, name := range proofJobs {
-		jobs[index] = jobInput{ID: int64(index + 1), Name: name, Status: "completed", Conclusion: "success", HeadSHA: head, RunID: 1, RunAttempt: 1}
+		jobs[index] = jobInput{ID: int64(index + 1), Name: name, Status: stringPointer("completed"), Conclusion: stringPointer("success"), HeadSHA: head, RunID: 1, RunAttempt: 1, ObservationState: apiTerminalSuccess}
 	}
-	bundle := proofBundle{Schema: proofSchema, Repository: "owner/repo", Event: "pull_request", PRNumber: 1, BaseRef: "dev", BaseSHA: strings.Repeat("b", 40), HeadSHA: head, Ref: "refs/pull/1/merge", EventRef: "refs/pull/1/merge", CheckoutRef: head, RunID: 1, RunAttempt: 1, WorkflowSHA: strings.Repeat("c", 40), Jobs: jobs, Actors: actorRoles{Actor: "builder", Builder: "builder", Gate: "CI policy"}, Scope: scopeResult{Decision: "passed", Status: "verified"}, Fixtures: fixtureResult{Paths: []string{"examples/billing/main.gooo"}, Status: "verified", Source: "verified", Semantic: "verified", Provenance: "verified"}, Artifacts: []artifactInput{{ID: 1, Name: "ci-evidence-1-1", Size: 1, Digest: "sha256:" + strings.Repeat("a", 64), RunID: 1, RunAttempt: 1}}, Cache: cacheInput{Key: "none", Outcome: "not_run", Status: "not_applicable"}, Digests: proofDigests{Source: strings.Repeat("1", 64), Semantic: strings.Repeat("2", 64), Provenance: strings.Repeat("3", 64), Projection: strings.Repeat("4", 64), Build: strings.Repeat("5", 64), Policy: strings.Repeat("6", 64), Schema: strings.Repeat("7", 64), Toolchain: strings.Repeat("8", 64), Target: strings.Repeat("9", 64)}, WriteEffect: "none", Decision: "PASS", NoWrite: true, MissingReasons: missingReasons{Protection: "domain_protection_observer_unavailable"}}
+	bundle := proofBundle{Schema: proofSchema, Repository: "owner/repo", Event: "pull_request", PRNumber: 1, BaseRef: "dev", BaseSHA: strings.Repeat("b", 40), HeadSHA: head, Ref: "refs/pull/1/merge", EventRef: "refs/pull/1/merge", CheckoutRef: head, RunID: 1, RunAttempt: 1, WorkflowSHA: strings.Repeat("c", 40), Scheduler: validSchedulerInput(head, 1, 1), Jobs: jobs, Actors: actorRoles{Actor: "builder", Builder: "builder", Gate: "CI policy"}, Scope: scopeResult{Decision: "passed", Status: "verified"}, Fixtures: fixtureResult{Paths: []string{"examples/billing/main.gooo"}, Status: "verified", Source: "verified", Semantic: "verified", Provenance: "verified"}, Artifacts: []artifactInput{{ID: 1, Name: "ci-evidence-1-1", Size: 1, Digest: "sha256:" + strings.Repeat("a", 64), RunID: 1, RunAttempt: 1}}, Cache: cacheInput{Key: "none", Outcome: "not_run", Status: "not_applicable"}, Digests: proofDigests{Source: strings.Repeat("1", 64), Semantic: strings.Repeat("2", 64), Provenance: strings.Repeat("3", 64), Projection: strings.Repeat("4", 64), Build: strings.Repeat("5", 64), Policy: strings.Repeat("6", 64), Schema: strings.Repeat("7", 64), Toolchain: strings.Repeat("8", 64), Target: strings.Repeat("9", 64)}, WriteEffect: "none", Decision: "PASS", NoWrite: true, MissingReasons: missingReasons{Protection: "domain_protection_observer_unavailable"}}
 	bundle.BranchProtection = unobservedBranchProtection(bundle)
 	bundle.DomainEvidence = validDomainEvidence(bundle)
 	payload, _ := json.Marshal(bundle)
 	bundle.Digests.Bundle = digestBytes(payload)
 	return bundle
+}
+
+func validSchedulerInput(head string, runID, runAttempt int64) []schedulerInput {
+	sources := map[string]string{
+		"gofmt":                "needs.format.result",
+		"go vet":               "needs.vet.result",
+		"go test":              "needs.test.result",
+		"go test -race":        "needs.race.result",
+		"Semantic conformance": "needs.semantic.result",
+		"CI policy":            "needs.policy.result",
+	}
+	results := make([]schedulerInput, 0, len(proofJobs))
+	for _, name := range proofJobs {
+		results = append(results, schedulerInput{Name: name, Source: sources[name], Result: "success", HeadSHA: head, RunID: runID, RunAttempt: runAttempt})
+	}
+	return results
 }
 
 func validDomainEvidence(bundle proofBundle) domainEvidence {

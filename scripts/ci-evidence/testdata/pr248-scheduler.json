@@ -1,0 +1,8 @@
+[
+  {"name": "gofmt", "source": "needs.format.result", "result": "success", "head_sha": "da5125fd247fe65fd7335dacb1c77529e989e6ba", "run_id": 31937165616, "run_attempt": 1},
+  {"name": "go vet", "source": "needs.vet.result", "result": "success", "head_sha": "da5125fd247fe65fd7335dacb1c77529e989e6ba", "run_id": 31937165616, "run_attempt": 1},
+  {"name": "go test", "source": "needs.test.result", "result": "success", "head_sha": "da5125fd247fe65fd7335dacb1c77529e989e6ba", "run_id": 31937165616, "run_attempt": 1},
+  {"name": "go test -race", "source": "needs.race.result", "result": "success", "head_sha": "da5125fd247fe65fd7335dacb1c77529e989e6ba", "run_id": 31937165616, "run_attempt": 1},
+  {"name": "Semantic conformance", "source": "needs.semantic.result", "result": "success", "head_sha": "da5125fd247fe65fd7335dacb1c77529e989e6ba", "run_id": 31937165616, "run_attempt": 1},
+  {"name": "CI policy", "source": "needs.policy.result", "result": "success", "head_sha": "da5125fd247fe65fd7335dacb1c77529e989e6ba", "run_id": 31937165616, "run_attempt": 1}
+]

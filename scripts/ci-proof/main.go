@@ -12,6 +12,7 @@ func main() {
 	governance := flag.String("governance", ".github/ci-governance.json", "governance matrix")
 	evidence := flag.String("evidence", "ci-evidence-input/ci-evidence.json", "CI evidence bundle")
 	jobs := flag.String("jobs", "ci-jobs.json", "workflow jobs JSON")
+	scheduler := flag.String("scheduler", "ci-final-scheduler.json", "proof-side same-run scheduler result bindings")
 	context := flag.String("context", "ci-proof-context.json", "GitHub proof context")
 	generated := flag.String("generated", "ci-generated/first", "generated output directory")
 	output := flag.String("output", "ci-proof.json", "proof bundle output")
@@ -31,7 +32,7 @@ func main() {
 	} else if *verify != "" {
 		err = verifyProof(*verify, *governance, *receipt, *requirePass)
 	} else {
-		err = generateProof(*root, *governance, *evidence, *jobs, *context, *generated, *output, *receipt)
+		err = generateProof(*root, *governance, *evidence, *jobs, *scheduler, *context, *generated, *output, *receipt)
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -39,8 +40,8 @@ func main() {
 	}
 }
 
-func generateProof(root, governance, evidence, jobs, context, generated, output, receipt string) error {
-	inputs, err := readInputs(root, governance, evidence, jobs, context)
+func generateProof(root, governance, evidence, jobs, scheduler, context, generated, output, receipt string) error {
+	inputs, err := readInputs(root, governance, evidence, jobs, scheduler, context)
 	if err != nil {
 		return err
 	}

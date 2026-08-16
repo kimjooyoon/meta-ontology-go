@@ -7,24 +7,42 @@ import (
 	"strings"
 )
 
-const evidenceSchema = "gooo/ci-evidence/v2"
+const evidenceSchema = "gooo/ci-evidence/v3"
+
+const (
+	apiTerminalSuccess = "api_terminal_success"
+	observerLag        = "observer_lag"
+)
 
 var canonicalJobs = []string{"gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"}
 
 type apiJob struct {
-	ID         int64  `json:"id"`
-	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
-	HeadSHA    string `json:"head_sha"`
-	RunID      int64  `json:"run_id"`
+	ID          int64   `json:"id"`
+	Name        string  `json:"name"`
+	Status      *string `json:"status"`
+	Conclusion  *string `json:"conclusion"`
+	HeadSHA     string  `json:"head_sha"`
+	RunID       int64   `json:"run_id"`
+	RunAttempt  int64   `json:"run_attempt"`
+	CompletedAt *string `json:"completed_at"`
 }
 
 type jobEvidence struct {
-	ID         int64  `json:"id"`
+	ID               int64   `json:"id"`
+	Name             string  `json:"name"`
+	Status           *string `json:"status"`
+	Conclusion       *string `json:"conclusion"`
+	HeadSHA          string  `json:"head_sha"`
+	RunID            int64   `json:"run_id"`
+	RunAttempt       int64   `json:"run_attempt"`
+	CompletedAt      *string `json:"completed_at"`
+	ObservationState string  `json:"observation_state"`
+}
+
+type schedulerEvidence struct {
 	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
+	Source     string `json:"source"`
+	Result     string `json:"result"`
 	HeadSHA    string `json:"head_sha"`
 	RunID      int64  `json:"run_id"`
 	RunAttempt int64  `json:"run_attempt"`
@@ -42,22 +60,23 @@ type digests struct {
 }
 
 type evidence struct {
-	Schema                  string        `json:"schema"`
-	Repository              string        `json:"repository"`
-	Event                   string        `json:"event"`
-	EventRef                string        `json:"event_ref"`
-	CheckoutRef             string        `json:"checkout_ref"`
-	BaseRef                 string        `json:"base_ref"`
-	BaseSHA                 string        `json:"base_sha"`
-	HeadSHA                 string        `json:"head_sha"`
-	RunID                   int64         `json:"run_id"`
-	RunAttempt              int64         `json:"run_attempt"`
-	WorkflowSHA             string        `json:"workflow_sha"`
-	Toolchain               string        `json:"toolchain"`
-	SlotPreservation        bool          `json:"slot_preservation"`
-	NoWriteOutsideGenerated bool          `json:"no_write_outside_generated"`
-	Jobs                    []jobEvidence `json:"jobs"`
-	Digests                 digests       `json:"digests"`
+	Schema                  string              `json:"schema"`
+	Repository              string              `json:"repository"`
+	Event                   string              `json:"event"`
+	EventRef                string              `json:"event_ref"`
+	CheckoutRef             string              `json:"checkout_ref"`
+	BaseRef                 string              `json:"base_ref"`
+	BaseSHA                 string              `json:"base_sha"`
+	HeadSHA                 string              `json:"head_sha"`
+	RunID                   int64               `json:"run_id"`
+	RunAttempt              int64               `json:"run_attempt"`
+	WorkflowSHA             string              `json:"workflow_sha"`
+	Toolchain               string              `json:"toolchain"`
+	SlotPreservation        bool                `json:"slot_preservation"`
+	NoWriteOutsideGenerated bool                `json:"no_write_outside_generated"`
+	Scheduler               []schedulerEvidence `json:"scheduler"`
+	Jobs                    []jobEvidence       `json:"jobs"`
+	Digests                 digests             `json:"digests"`
 }
 
 type metadata struct {
@@ -144,7 +163,11 @@ func validEventRef(event, ref string) bool {
 	return false
 }
 
-func normalizeJobs(apiJobs []apiJob, headSHA string, runID, runAttempt int64) ([]jobEvidence, error) {
+func normalizeJobs(apiJobs []apiJob, scheduler []schedulerEvidence, headSHA string, runID, runAttempt int64) ([]jobEvidence, error) {
+	schedulerByName, err := validateSchedulerResults(scheduler, headSHA, runID, runAttempt)
+	if err != nil {
+		return nil, err
+	}
 	byName := make(map[string]apiJob)
 	seenIDs := make(map[int64]bool)
 	for _, job := range apiJobs {
@@ -163,12 +186,86 @@ func normalizeJobs(apiJobs []apiJob, headSHA string, runID, runAttempt int64) ([
 	result := make([]jobEvidence, 0, len(canonicalJobs))
 	for _, name := range canonicalJobs {
 		job, ok := byName[name]
-		if !ok || job.ID <= 0 || job.Status != "completed" || job.Conclusion != "success" || !validSHA(job.HeadSHA) || job.HeadSHA != headSHA || job.RunID != runID {
+		if !ok || job.ID <= 0 || job.Status == nil || *job.Status == "" || !validSHA(job.HeadSHA) || job.HeadSHA != headSHA || job.RunID != runID || job.RunAttempt != runAttempt {
 			return nil, fmt.Errorf("canonical CI job %q is missing or mismatched", name)
 		}
-		result = append(result, jobEvidence{ID: job.ID, Name: job.Name, Status: job.Status, Conclusion: job.Conclusion, HeadSHA: job.HeadSHA, RunID: job.RunID, RunAttempt: runAttempt})
+		state, err := observationState(job, schedulerByName[name])
+		if err != nil {
+			return nil, fmt.Errorf("canonical CI job %q: %w", name, err)
+		}
+		result = append(result, jobEvidence{ID: job.ID, Name: job.Name, Status: job.Status, Conclusion: job.Conclusion, HeadSHA: job.HeadSHA, RunID: job.RunID, RunAttempt: runAttempt, CompletedAt: job.CompletedAt, ObservationState: state})
 	}
 	return result, nil
+}
+
+func validateSchedulerResults(results []schedulerEvidence, headSHA string, runID, runAttempt int64) (map[string]schedulerEvidence, error) {
+	if len(results) != len(canonicalJobs) {
+		return nil, fmt.Errorf("same-run scheduler evidence must contain all six canonical jobs")
+	}
+	expectedSources := map[string]string{
+		"gofmt":                "needs.format.result",
+		"go vet":               "needs.vet.result",
+		"go test":              "needs.test.result",
+		"go test -race":        "needs.race.result",
+		"Semantic conformance": "needs.semantic.result",
+		"CI policy":            "needs.policy.result",
+	}
+	byName := make(map[string]schedulerEvidence, len(results))
+	for _, result := range results {
+		if !jobSet()[result.Name] || byName[result.Name].Name != "" {
+			return nil, fmt.Errorf("duplicate or unknown same-run scheduler result %q", result.Name)
+		}
+		if result.Source != expectedSources[result.Name] || result.Result != "success" || result.HeadSHA != headSHA || result.RunID != runID || result.RunAttempt != runAttempt {
+			return nil, fmt.Errorf("same-run scheduler result %q is missing, unsuccessful, or mismatched", result.Name)
+		}
+		byName[result.Name] = result
+	}
+	for _, name := range canonicalJobs {
+		if _, ok := byName[name]; !ok {
+			return nil, fmt.Errorf("same-run scheduler result %q is missing", name)
+		}
+	}
+	return byName, nil
+}
+
+func observationState(job apiJob, scheduler schedulerEvidence) (string, error) {
+	if job.Status == nil || *job.Status == "" || !validRawJobStatus(*job.Status) {
+		return "", fmt.Errorf("raw API status is missing or malformed")
+	}
+	if job.Conclusion != nil && !validRawJobConclusion(*job.Conclusion) {
+		return "", fmt.Errorf("raw API conclusion is malformed")
+	}
+	if scheduler.Result != "success" {
+		return "", fmt.Errorf("same-run scheduler result is not success")
+	}
+	if job.Conclusion != nil && *job.Status != "completed" {
+		return "", fmt.Errorf("raw API has a nonterminal status with a terminal conclusion")
+	}
+	if job.Conclusion != nil && *job.Conclusion != "success" {
+		return "", fmt.Errorf("raw API conclusion %q contradicts same-run scheduler success", *job.Conclusion)
+	}
+	if *job.Status == "completed" && job.Conclusion != nil && *job.Conclusion == "success" {
+		return apiTerminalSuccess, nil
+	}
+	return observerLag, nil
+}
+
+func validRawJobStatus(status string) bool {
+	switch status {
+	case "queued", "in_progress", "completed", "waiting", "requested", "pending":
+		return true
+	default:
+		return false
+	}
+}
+
+func validRawJobConclusion(conclusion string) bool {
+	switch conclusion {
+	case "success", "failure", "neutral", "cancelled", "skipped", "timed_out", "action_required", "stale", "startup_failure":
+		return true
+	default:
+		return false
+	}
 }
 
 func jobSet() map[string]bool {

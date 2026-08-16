@@ -35,8 +35,16 @@ func promotionProofCoreReady(bundle proofBundle) bool {
 	if bundle.Decision != "PASS" || !branchProtectionReadyFor(bundle.BranchProtection, "main") || validateGuardianEvidence(bundle.GuardianEvidence, bundle) != nil || len(bundle.Jobs) != len(proofJobs) {
 		return false
 	}
+	schedulerByName, err := validateSchedulerInputs(bundle.Scheduler, bundle.HeadSHA, bundle.RunID, bundle.RunAttempt)
+	if err != nil {
+		return false
+	}
 	for index, job := range bundle.Jobs {
-		if job.Name != proofJobs[index] || job.Status != "completed" || job.Conclusion != "success" || job.HeadSHA != bundle.HeadSHA || job.RunID != bundle.RunID || job.RunAttempt != bundle.RunAttempt {
+		if job.Name != proofJobs[index] || job.HeadSHA != bundle.HeadSHA || job.RunID != bundle.RunID || job.RunAttempt != bundle.RunAttempt {
+			return false
+		}
+		state, err := jobObservationState(job, schedulerByName[job.Name])
+		if err != nil || job.ObservationState != state {
 			return false
 		}
 	}

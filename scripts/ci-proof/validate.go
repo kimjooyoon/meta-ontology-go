@@ -15,10 +15,18 @@ func validateProof(bundle proofBundle) error {
 	if len(bundle.Jobs) != len(proofJobs) || len(bundle.Artifacts) == 0 {
 		return fmt.Errorf("proof requires six jobs and a non-empty artifact inventory")
 	}
+	schedulerByName, err := validateSchedulerInputs(bundle.Scheduler, bundle.HeadSHA, bundle.RunID, bundle.RunAttempt)
+	if err != nil {
+		return err
+	}
 	seenIDs := make(map[int64]bool, len(bundle.Jobs))
 	for index, job := range bundle.Jobs {
-		if job.Name != proofJobs[index] || job.ID <= 0 || seenIDs[job.ID] || job.Status != "completed" || job.Conclusion != "success" || !validSHA(job.HeadSHA) || job.HeadSHA != bundle.HeadSHA || job.RunID != bundle.RunID || job.RunAttempt != bundle.RunAttempt {
+		if job.Name != proofJobs[index] || job.ID <= 0 || seenIDs[job.ID] || !validSHA(job.HeadSHA) || job.HeadSHA != bundle.HeadSHA || job.RunID != bundle.RunID || job.RunAttempt != bundle.RunAttempt {
 			return fmt.Errorf("proof job %q is incomplete", job.Name)
+		}
+		state, err := jobObservationState(job, schedulerByName[job.Name])
+		if err != nil || job.ObservationState != state {
+			return fmt.Errorf("proof job %q has an invalid observer state", job.Name)
 		}
 		seenIDs[job.ID] = true
 	}

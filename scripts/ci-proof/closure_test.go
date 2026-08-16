@@ -21,7 +21,7 @@ func TestNoFailureClosureBindsHealthOnlyTuple(t *testing.T) {
 		t.Fatal(err)
 	}
 	encoded, err := json.Marshal(manifest)
-	if err != nil || !strings.Contains(string(encoded), `"schema":"gooo/ci-closure/v1"`) {
+	if err != nil || !strings.Contains(string(encoded), `"schema":"gooo/ci-closure/v2"`) {
 		t.Fatalf("closure schema missing: %s", encoded)
 	}
 }
@@ -75,6 +75,21 @@ func TestNoFailureClosureRejectsStaleCanonicalJob(t *testing.T) {
 	}
 }
 
+func TestNoFailureClosurePreservesObserverLag(t *testing.T) {
+	input := validClosureInput()
+	input.CanonicalJobs[0].Status = stringPointer("in_progress")
+	input.CanonicalJobs[0].Conclusion = nil
+	input.CanonicalJobs[0].CompletedAt = nil
+	input.CanonicalJobs[0].ObservationState = observerLag
+	manifest, err := buildClosureManifest(input, validFailureBinding())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if manifest.CanonicalJobs[0].ObservationState != observerLag || manifest.CanonicalJobs[0].Conclusion != nil {
+		t.Fatalf("closure rewrote raw observer lag: %+v", manifest.CanonicalJobs[0])
+	}
+}
+
 func TestNoFailureClosureDoesNotWriteOnInvalidInput(t *testing.T) {
 	root := t.TempDir()
 	inputPath := filepath.Join(root, "closure-input.json")
@@ -101,11 +116,11 @@ func validClosureInput() closureInput {
 }
 
 func validClosureInputFor(binding failureBinding) closureInput {
-	jobs := make([]failureJob, len(proofJobs))
+	jobs := make([]jobInput, len(proofJobs))
 	for index, name := range proofJobs {
-		jobs[index] = failureJob{ID: int64(index + 1), Name: name, Status: "completed", Conclusion: "success", HeadSHA: binding.HeadSHA, RunID: binding.RunID, RunAttempt: binding.RunAttempt}
+		jobs[index] = jobInput{ID: int64(index + 1), Name: name, Status: stringPointer("completed"), Conclusion: stringPointer("success"), HeadSHA: binding.HeadSHA, RunID: binding.RunID, RunAttempt: binding.RunAttempt, ObservationState: apiTerminalSuccess}
 	}
-	return closureInput{CanonicalJobs: jobs, TerminalFailures: []failureJob{}, TerminalFailureCodes: []string{}}
+	return closureInput{Scheduler: validSchedulerInput(binding.HeadSHA, binding.RunID, binding.RunAttempt), CanonicalJobs: jobs, TerminalFailures: []failureJob{}, TerminalFailureCodes: []string{}}
 }
 
 func setFailureBindingEnvironment(t *testing.T, binding failureBinding) {
