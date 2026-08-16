@@ -224,6 +224,9 @@ func TestStrictR4JSONCodecCanonicalReplay(t *testing.T) {
 		{"unknown field", func(value []byte) []byte {
 			return bytes.Replace(value, []byte(`"schema"`), []byte(`"unknown":"x","schema"`), 1)
 		}},
+		{"removed expected label field", func(value []byte) []byte {
+			return bytes.Replace(value, []byte(`"record_bytes":[`), []byte(`"expected_labels":[],"record_bytes":[`), 1)
+		}},
 		{"duplicate key", func(value []byte) []byte {
 			return bytes.Replace(value, []byte(`"schema":"`+pathclosure.R4SchemaVersion+`"`), []byte(`"schema":"`+pathclosure.R4SchemaVersion+`","schema":"`+pathclosure.R4SchemaVersion+`"`), 1)
 		}},

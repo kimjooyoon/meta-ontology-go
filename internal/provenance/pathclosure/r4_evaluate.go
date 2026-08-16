@@ -40,8 +40,8 @@ func duplicateR4IDs(values []semantic.ID) semantic.ID {
 }
 
 // EvaluateR4 recomputes only the declared finite paths. It never discovers
-// paths, treats labels as expected inputs rather than selectors, and never
-// emits promotion authorization.
+// paths, accepts no expected/display label in the R4 input, and never emits
+// promotion authorization.
 func EvaluateR4(input R4Input) R4Result {
 	required := sortedR4IDs(input.Boundary.RequiredPathIDs)
 	cost := len(input.Records) + len(input.Receipts) + len(input.Paths)
