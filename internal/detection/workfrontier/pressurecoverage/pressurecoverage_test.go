@@ -1,154 +1,112 @@
 package pressurecoverage
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 )
 
-func TestPositiveK2(t *testing.T) {
+func TestCanonicalRoundTripAndBinding(t *testing.T) {
 	input := fixture()
-	got := Observe(input)
-	if got.Decision != DecisionPass || got.RequiredPressureCount != 4 || got.DistinctGroupCount != 3 {
-		t.Fatalf("result = %#v", got)
-	}
-	if len(got.SelectedIDs) != 2 || got.SelectedIDs[0] != "pressure-a" || got.SelectedIDs[1] != "pressure-b" {
-		t.Fatalf("selected = %#v", got.SelectedIDs)
-	}
-	if len(got.UnselectedIDs) != 2 || got.UnselectedIDs[0] != "pressure-aa" || got.UnselectedIDs[1] != "pressure-z" {
-		t.Fatalf("partition = %#v", got)
-	}
-	if got.DeterministicWorkUnits != 16 || got.CPUCoreNS != 2 ||
-		got.MemoryBytes != 4096 || got.ProvRecords != 5 || got.ProvPaths != 3 {
-		t.Fatalf("cost vector = %#v", got)
-	}
-	if got.InputDigest != CanonicalInputDigest(input) ||
-		got.OutputDigest != CanonicalOutputDigest(got) || got.ReplayDigest == "" {
-		t.Fatalf("digests = %#v", got)
-	}
-}
-
-func TestMutationDecisions(t *testing.T) {
-	cases := []struct {
-		name     string
-		decision Decision
-		reason   Reason
-	}{
-		{"same group", DecisionUnknown, ReasonIndependentGroupShortfall},
-		{"missing group", DecisionUnknown, ReasonApplicabilityUnproven},
-		{"missing applicability", DecisionUnknown, ReasonApplicabilityUnproven},
-		{"duplicate", DecisionFailClosed, ReasonDuplicatePressureID},
-		{"conflicting binding", DecisionFailClosed, ReasonConflictingGroupBinding},
-		{"stale digest", DecisionUnknown, ReasonStaleDigest},
-		{"empty required", DecisionUnknown, ReasonRequiredInputMissing},
-		{"empty guards", DecisionUnknown, ReasonRequiredInputMissing},
-		{"empty paths", DecisionUnknown, ReasonRequiredInputMissing},
-		{"valid but missing", DecisionUnknown, ReasonRequiredInputMissing},
-		{"internal whitespace", DecisionFailClosed, ReasonInvalidStableID},
-		{"control ID", DecisionFailClosed, ReasonInvalidStableID},
-		{"malformed path ID", DecisionFailClosed, ReasonMalformedFinitePath},
-	}
-	for _, test := range cases {
-		input := fixture()
-		mutate(&input, test.name)
-		got := Observe(input)
-		if got.Decision != test.decision || got.Reason != test.reason || !got.FullSuiteRequired {
-			t.Fatalf("%s: result = %#v", test.name, got)
-		}
-	}
-}
-
-func mutate(input *Input, name string) {
-	switch name {
-	case "same group":
-		input.PressureRecords[0].IndependenceGroupID, input.PressureRecords[2].IndependenceGroupID = "group-a", "group-a"
-	case "missing group":
-		input.PressureRecords[0].IndependenceGroupID = ""
-	case "missing applicability":
-		input.PressureRecords[0].ApplicabilityRuleID = ""
-	case "duplicate":
-		input.PressureRecords = append(input.PressureRecords, input.PressureRecords[0])
-	case "conflicting binding":
-		input.PressureRecords = append(input.PressureRecords, PressureRecord{"pressure-a", "category-a", "group-x", "rule-1"})
-	case "stale digest":
-		input.PolicyDigest = digestBytes([]byte("stale-policy"))
-	case "empty required":
-		input.RequiredPressureIDs = []string{}
-	case "empty guards":
-		input.GuardIDs = []string{}
-	case "empty paths":
-		input.FinitePathIDs = []string{}
-	case "valid but missing":
-		input.RequiredPressureIDs[0] = "pressure-missing"
-	case "internal whitespace":
-		input.RequiredPressureIDs[0] = "pressure z"
-	case "control ID":
-		input.RequiredPressureIDs[0] = "pressure-z\x00"
-	case "malformed path ID":
-		input.FinitePathIDs[0] = "path 1"
-	}
-	if name != "stale digest" {
-		bindDigests(input)
-	}
-}
-
-func TestPermutationInvariance(t *testing.T) {
-	base := Observe(fixture())
-	input := fixture()
-	input.RequiredPressureIDs[0], input.RequiredPressureIDs[3] = input.RequiredPressureIDs[3], input.RequiredPressureIDs[0]
-	input.PressureRecords[0], input.PressureRecords[3] = input.PressureRecords[3], input.PressureRecords[0]
-	if got := Observe(input); got.OutputDigest != base.OutputDigest {
-		t.Fatalf("invariant changed: %#v != %#v", base, got)
-	}
-}
-
-func TestDecodeInputAcceptsCanonicalFixture(t *testing.T) {
-	data, err := json.Marshal(fixture())
+	want, err := CanonicalInputBytes(input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := DecodeInput(data)
-	if err != nil || got.Schema != SchemaVersion {
-		t.Fatalf("decoded input = %#v, error = %v", got, err)
+	decoded, err := DecodeInput(want)
+	if err != nil || CanonicalInputDigest(decoded) != CanonicalInputDigest(input) {
+		t.Fatalf("round trip = %#v, error = %v", decoded, err)
+	}
+	var direct Input
+	if err := json.Unmarshal(want, &direct); err != nil {
+		t.Fatalf("direct json.Unmarshal: %v", err)
+	}
+	if direct.RequestedK != 21 || direct.Schema != SchemaVersion {
+		t.Fatalf("decoded envelope = %#v", direct)
+	}
+	if input.PolicyDigest != authorityBindingDigest(input, "policy") ||
+		input.RegistryDigest != authorityBindingDigest(input, "registry") {
+		t.Fatal("authority binding digest mismatch")
 	}
 }
 
-func TestDecodeInputRejectsUnknownAndTrailingData(t *testing.T) {
+func TestCanonicalPermutationReplay(t *testing.T) {
+	first, err := CanonicalInputBytes(fixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := fixture()
+	input.RequiredPressureIDs[0], input.RequiredPressureIDs[3] = input.RequiredPressureIDs[3], input.RequiredPressureIDs[0]
+	input.PressureRecords[0], input.PressureRecords[3] = input.PressureRecords[3], input.PressureRecords[0]
+	second, err := CanonicalInputBytes(input)
+	if err != nil || !bytes.Equal(first, second) || CanonicalInputDigest(input) != digestBytes(first) {
+		t.Fatalf("canonical replay differs: %s != %s", first, second)
+	}
+}
+
+func TestCanonicalInputRejectsMalformedAndAmbiguousRecords(t *testing.T) {
+	cases := []struct {
+		name string
+		edit func(*Input)
+	}{
+		{"internal whitespace", func(input *Input) { input.RequiredPressureIDs[0] = "pressure z" }},
+		{"control character", func(input *Input) { input.PressureRecords[0].CategoryID = "category\x00" }},
+		{"duplicate record", func(input *Input) {
+			input.PressureRecords = append(input.PressureRecords, input.PressureRecords[0])
+		}},
+		{"conflicting record", func(input *Input) {
+			input.PressureRecords = append(input.PressureRecords, PressureRecord{
+				"pressure-a", "category-a", "group-new", "rule-1",
+			})
+		}},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			input := fixture()
+			test.edit(&input)
+			if _, err := CanonicalInputBytes(input); err == nil {
+				t.Fatal("accepted malformed or ambiguous input")
+			}
+		})
+	}
+}
+
+func TestStrictJSONBoundary(t *testing.T) {
 	cases := []struct {
 		name string
 		data string
 	}{
 		{"unknown top-level field", schemaJSON(`,"display_name":"shown"`)},
 		{"unknown nested field", schemaJSON(`,"pressure_records":[{"pressure_id":"p","display_name":"shown"}]`)},
+		{"duplicate top-level key", schemaJSON(`,"schema":"` + SchemaVersion + `"`)},
+		{"duplicate nested key", schemaJSON(`,"pressure_records":[{"pressure_id":"p","pressure_id":"q"}]`)},
 		{"trailing JSON", schemaJSON("") + " " + schemaJSON("")},
+		{"invalid schema", `{"schema":"wrong"}`},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			if _, err := DecodeInput([]byte(test.data)); err == nil {
-				t.Fatal("accepted invalid JSON input")
+				t.Fatal("DecodeInput accepted invalid JSON")
+			}
+			var input Input
+			if err := json.Unmarshal([]byte(test.data), &input); err == nil {
+				t.Fatal("json.Unmarshal accepted invalid JSON")
 			}
 		})
 	}
 }
 
-func schemaJSON(suffix string) string {
-	return `{"schema":"` + SchemaVersion + `"` + suffix + `}`
-}
-
 func fixture() Input {
-	records := []PressureRecord{
-		{"pressure-z", "category-z", "group-z", "rule-1"},
-		{"pressure-a", "category-a", "group-a", "rule-1"},
-		{"pressure-b", "category-b", "group-b", "rule-1"},
-		{"pressure-aa", "category-a", "group-a", "rule-1"},
-	}
 	input := Input{
-		Schema:              SchemaVersion,
-		RequestedK:          2,
-		MinimumIndependent:  2,
-		PressureRecords:     records,
+		Schema:             SchemaVersion,
+		RequestedK:         21,
+		MinimumIndependent: 2,
+		PressureRecords: []PressureRecord{
+			{"pressure-z", "category-z", "group-z", "rule-1"},
+			{"pressure-a", "category-a", "group-a", "rule-1"},
+			{"pressure-b", "category-b", "group-b", "rule-1"},
+			{"pressure-aa", "category-a", "group-a", "rule-1"},
+		},
 		RequiredPressureIDs: []string{"pressure-z", "pressure-a", "pressure-b", "pressure-aa"},
-		FinitePathIDs:       []string{"path-1", "path-2", "path-3"},
-		GuardIDs:            []string{"guard-1"},
 	}
 	bindDigests(&input)
 	return input
@@ -159,4 +117,8 @@ func bindDigests(input *Input) {
 	input.PolicyDigest = authorityBindingDigest(*input, "policy")
 	input.RegistryDigest = authorityBindingDigest(*input, "registry")
 	input.ToolchainOptionsDigest = authorityBindingDigest(*input, "toolchain-options")
+}
+
+func schemaJSON(suffix string) string {
+	return `{"schema":"` + SchemaVersion + `"` + suffix + `}`
 }

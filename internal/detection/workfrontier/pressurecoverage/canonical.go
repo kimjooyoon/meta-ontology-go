@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"sort"
 	"strings"
@@ -13,28 +13,45 @@ import (
 	"unicode/utf8"
 )
 
-func DecodeInput(data []byte) (Input, error) {
+// UnmarshalJSON is the strict public boundary for Input.
+func (input *Input) UnmarshalJSON(data []byte) error {
+	if err := rejectDuplicateKeys(data); err != nil {
+		return err
+	}
+	type wire Input
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
+	var decoded wire
+	if err := decoder.Decode(&decoded); err != nil {
+		return err
+	}
+	if err := validateInput(Input(decoded)); err != nil {
+		return err
+	}
+	*input = Input(decoded)
+	return nil
+}
+
+func DecodeInput(data []byte) (Input, error) {
 	var input Input
-	if err := decoder.Decode(&input); err != nil {
+	if err := json.Unmarshal(data, &input); err != nil {
 		return Input{}, err
-	}
-	var trailing json.RawMessage
-	if err := decoder.Decode(&trailing); err != io.EOF {
-		if err == nil {
-			return Input{}, errors.New("pressure coverage input has trailing JSON")
-		}
-		return Input{}, err
-	}
-	if input.Schema != SchemaVersion {
-		return Input{}, errors.New("pressure coverage input has invalid schema")
 	}
 	return input, nil
 }
 
+func CanonicalInputBytes(input Input) ([]byte, error) {
+	if err := validateInput(input); err != nil {
+		return nil, err
+	}
+	return json.Marshal(normalizeInput(input))
+}
+
 func CanonicalInputDigest(input Input) string {
-	data, _ := json.Marshal(normalizeInput(input))
+	data, err := CanonicalInputBytes(input)
+	if err != nil {
+		return digestBytes([]byte("canonical-input-error:" + err.Error()))
+	}
 	return digestBytes(data)
 }
 
@@ -46,30 +63,96 @@ func authorityBindingDigest(input Input, role string) string {
 	return digestBytes([]byte(role + "\x00" + CanonicalInputDigest(input)))
 }
 
-func boundDigests(input Input) bool {
-	return input.AuthoritySnapshotDigest == authorityBindingDigest(input, "authority-snapshot") &&
-		input.PolicyDigest == authorityBindingDigest(input, "policy") &&
-		input.RegistryDigest == authorityBindingDigest(input, "registry") &&
-		input.ToolchainOptionsDigest == authorityBindingDigest(input, "toolchain-options")
+func validateInput(input Input) error {
+	if input.Schema != SchemaVersion {
+		return fmt.Errorf("pressure coverage input has invalid schema")
+	}
+	seen := make(map[string]struct{}, len(input.RequiredPressureIDs))
+	for _, id := range input.RequiredPressureIDs {
+		if !validID(id) {
+			return fmt.Errorf("invalid required pressure ID %q", id)
+		}
+		if _, exists := seen[id]; exists {
+			return fmt.Errorf("duplicate required pressure ID %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+	records := make(map[string]PressureRecord, len(input.PressureRecords))
+	for _, record := range input.PressureRecords {
+		if !validID(record.PressureID) || !validID(record.CategoryID) ||
+			!optionalID(record.IndependenceGroupID) || !optionalID(record.ApplicabilityRuleID) {
+			return fmt.Errorf("invalid pressure record ID %q", record.PressureID)
+		}
+		if prior, exists := records[record.PressureID]; exists {
+			if prior == record {
+				return fmt.Errorf("duplicate pressure ID %q", record.PressureID)
+			}
+			return fmt.Errorf("conflicting pressure ID %q", record.PressureID)
+		}
+		records[record.PressureID] = record
+	}
+	return nil
 }
 
-func CanonicalOutputDigest(output Output) string {
-	output.SelectedIDs = sortedUnique(output.SelectedIDs)
-	output.UnselectedIDs = sortedUnique(output.UnselectedIDs)
-	output.UnknownIDs = sortedUnique(output.UnknownIDs)
-	output.OutputDigest, output.ReplayDigest = "", ""
-	data, _ := json.Marshal(output)
-	return digestBytes(data)
+func optionalID(value string) bool { return value == "" || validID(value) }
+
+func rejectDuplicateKeys(data []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if err := scanJSONValue(decoder); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return fmt.Errorf("trailing JSON value")
+	}
+	return nil
+}
+
+func scanJSONValue(decoder *json.Decoder) error {
+	token, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	delimiter, composite := token.(json.Delim)
+	if !composite {
+		return nil
+	}
+	if delimiter == '[' {
+		for decoder.More() {
+			if err := scanJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+	} else if delimiter == '{' {
+		seen := map[string]struct{}{}
+		for decoder.More() {
+			key, err := decoder.Token()
+			if err != nil {
+				return err
+			}
+			name := key.(string)
+			if _, exists := seen[name]; exists {
+				return fmt.Errorf("duplicate JSON key %q", name)
+			}
+			seen[name] = struct{}{}
+			if err := scanJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+	} else {
+		return fmt.Errorf("unexpected JSON delimiter %q", delimiter)
+	}
+	_, err = decoder.Token()
+	return err
 }
 
 func normalizeInput(input Input) Input {
 	input.PressureRecords = append([]PressureRecord(nil), input.PressureRecords...)
-	input.RequiredPressureIDs = sortedCopy(input.RequiredPressureIDs)
-	input.FinitePathIDs = sortedCopy(input.FinitePathIDs)
-	input.GuardIDs = sortedCopy(input.GuardIDs)
+	input.RequiredPressureIDs = append([]string(nil), input.RequiredPressureIDs...)
 	sort.Slice(input.PressureRecords, func(left, right int) bool {
 		return pressureKey(input.PressureRecords[left]) < pressureKey(input.PressureRecords[right])
 	})
+	sort.Strings(input.RequiredPressureIDs)
 	return input
 }
 
@@ -78,44 +161,14 @@ func pressureKey(record PressureRecord) string {
 		record.IndependenceGroupID, record.ApplicabilityRuleID}, "\x00")
 }
 
-func sortedCopy(values []string) []string {
-	result := append([]string(nil), values...)
-	sort.Strings(result)
-	return result
-}
-
-func sortedUnique(values []string) []string {
-	if values == nil {
-		return []string{}
-	}
-	result := sortedCopy(values)
-	if len(result) < 2 {
-		return result
-	}
-	unique := result[:1]
-	for _, value := range result[1:] {
-		if value != unique[len(unique)-1] {
-			unique = append(unique, value)
-		}
-	}
-	return unique
-}
-
 func digestBytes(data []byte) string {
 	sum := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
-func validDigest(value string) bool {
-	if len(value) != 71 || !strings.HasPrefix(value, "sha256:") {
-		return false
-	}
-	_, err := hex.DecodeString(value[7:])
-	return err == nil && strings.Trim(value[7:], "0") != ""
-}
-
 func validID(value string) bool {
-	if value == "" || value != strings.TrimSpace(value) || len(value) > 256 || !utf8.ValidString(value) {
+	if value == "" || value != strings.TrimSpace(value) || len(value) > 256 ||
+		!utf8.ValidString(value) {
 		return false
 	}
 	for _, character := range value {
