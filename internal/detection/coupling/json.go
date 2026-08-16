@@ -56,11 +56,7 @@ func DecodeInput(data []byte) (Input, error) {
 	}, nil
 }
 
-func EvaluateJSON(data []byte, authorities ...AuthorityContext) Result {
-	authority := AuthorityContext{}
-	if len(authorities) == 1 {
-		authority = authorities[0]
-	}
+func EvaluateJSON(data []byte, authority AuthorityContext) Result {
 	input, err := DecodeInput(data)
 	if err != nil {
 		result := resultFor(StatusFailClosed, ReasonMalformedBinding, "JSON input", ObservationVector{})
@@ -68,7 +64,7 @@ func EvaluateJSON(data []byte, authorities ...AuthorityContext) Result {
 		result.Digest = stableDigest(resultCanonical(result))
 		return result
 	}
-	return Evaluate(input, authorities...)
+	return Evaluate(input, authority)
 }
 
 func EncodeInput(input Input) ([]byte, error) { return json.Marshal(input) }

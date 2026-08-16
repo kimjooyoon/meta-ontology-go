@@ -2,17 +2,13 @@ package coupling
 
 import "github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 
-func Evaluate(input Input, authorities ...AuthorityContext) (result Result) {
-	authority := AuthorityContext{}
-	if len(authorities) == 1 {
-		authority = authorities[0]
-	}
+func Evaluate(input Input, authority AuthorityContext) (result Result) {
 	inputDigest := inputIdentityDigest(input, authority)
 	defer func() {
 		result.InputDigest = inputDigest
 		result.Digest = stableDigest(resultCanonical(result))
 	}()
-	if len(authorities) != 1 || authority.Schema == "" {
+	if authority.Schema == "" {
 		return resultFor(StatusUnknown, ReasonAuthorityInputSelfBound, "evaluator authority context is missing", ObservationVector{})
 	}
 	authorityConfig, issue := normalizeAuthorityContext(authority)

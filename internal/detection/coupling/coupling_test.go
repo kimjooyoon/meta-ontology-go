@@ -89,7 +89,7 @@ func TestZeroChangeManifestYieldsEmptyPass(t *testing.T) {
 
 func TestProducerCannotSelfBindEmptyApplicabilityOrResourceWaiver(t *testing.T) {
 	fixture := newFixture(t, ChangeClaimNoDelta)
-	missingAuthority := Evaluate(fixture.input)
+	missingAuthority := Evaluate(fixture.input, AuthorityContext{})
 	if missingAuthority.Status != StatusUnknown || missingAuthority.Reasons[0].Code != ReasonAuthorityInputSelfBound {
 		t.Fatalf("missing evaluator authority = %#v", missingAuthority)
 	}
