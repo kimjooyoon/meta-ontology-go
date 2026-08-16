@@ -1,0 +1,120 @@
+package coupling
+
+import (
+	"reflect"
+	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+)
+
+func TestSelectedInferenceChainRejectsMalformedGraphs(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(*couplingFixture)
+	}{
+		{"disconnected", mutateDisconnected},
+		{"fork", mutateFork},
+		{"cycle", mutateCycle},
+		{"wrong endpoint", mutateWrongEndpoint},
+		{"omitted evidence", mutateOmittedEvidence},
+		{"extra unrelated evidence", mutateExtraEvidence},
+		{"duplicate evidence", mutateDuplicateEvidence},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fixture := newFixture(t, ChangeClaimDelta)
+			tc.mutate(&fixture)
+			result := Evaluate(fixture.input)
+			if result.Status != StatusFailClosed || len(result.AcceptedSurfaceIDs) != 0 {
+				t.Fatalf("malformed %s result = %#v", tc.name, result)
+			}
+		})
+	}
+}
+
+func TestOriginPathIDPermutationUsesGraphOrder(t *testing.T) {
+	left := newFixture(t, ChangeClaimDelta)
+	right := newFixture(t, ChangeClaimDelta)
+	right.input.Receipts[0].OriginPathIDs = []semantic.ID{left.authority, left.projection, left.verification}
+	leftResult, rightResult := Evaluate(left.input), Evaluate(right.input)
+	if leftResult.Status != StatusPass || rightResult.Status != StatusPass || leftResult.Digest != rightResult.Digest {
+		t.Fatalf("path ID order changed result: left=%#v right=%#v", leftResult, rightResult)
+	}
+}
+
+func mutateDisconnected(fixture *couplingFixture) {
+	edge := fixture.input.InferencePath.Edges[1]
+	edge.RecordID = fixtureID("disconnected-edge")
+	edge.SubjectID, edge.ObjectID = fixtureID("disconnected-subject"), fixtureID("disconnected-object")
+	fixture.input.InferencePath.Edges = append(fixture.input.InferencePath.Edges, edge)
+	fixture.input.Receipts[0].OriginPathIDs = append(fixture.input.Receipts[0].OriginPathIDs, edge.RecordID)
+}
+
+func mutateFork(fixture *couplingFixture) {
+	edge := fixture.input.InferencePath.Edges[1]
+	edge.RecordID, edge.ObjectID = fixtureID("fork-edge"), fixtureID("fork-surface")
+	fixture.input.InferencePath.Edges = append(fixture.input.InferencePath.Edges, edge)
+	fixture.input.Receipts[0].OriginPathIDs = append(fixture.input.Receipts[0].OriginPathIDs, edge.RecordID)
+}
+
+func mutateCycle(fixture *couplingFixture) {
+	edge := fixture.input.InferencePath.Edges[1]
+	edge.RecordID, edge.SubjectID, edge.ObjectID = fixtureID("cycle-edge"), fixture.verification, fixture.code
+	fixture.input.InferencePath.Edges = append(fixture.input.InferencePath.Edges, edge)
+	fixture.input.Receipts[0].OriginPathIDs = append(fixture.input.Receipts[0].OriginPathIDs, edge.RecordID)
+}
+
+func mutateWrongEndpoint(fixture *couplingFixture) {
+	fixture.input.InferencePath.Edges[2].ObjectID = fixtureID("wrong-verification-endpoint")
+}
+
+func mutateOmittedEvidence(fixture *couplingFixture) {
+	fixture.input.Receipts[0].EvidenceRefs = fixture.input.Receipts[0].EvidenceRefs[:2]
+}
+
+func mutateExtraEvidence(fixture *couplingFixture) {
+	edge := fixture.input.InferencePath.Edges[1]
+	extra := semantic.InferenceEvidence{ID: fixtureID("unrelated-evidence"), Digest: fixtureDigest("unrelated-evidence"), Before: edge.Before, After: edge.After, Controls: edge.Controls}
+	fixture.input.InferencePath.Evidence = append(fixture.input.InferencePath.Evidence, extra)
+	fixture.input.Receipts[0].EvidenceRefs = append(fixture.input.Receipts[0].EvidenceRefs, semantic.EvidenceReference{ID: extra.ID, Digest: extra.Digest})
+}
+
+func mutateDuplicateEvidence(fixture *couplingFixture) {
+	fixture.input.Receipts[0].EvidenceRefs = append(fixture.input.Receipts[0].EvidenceRefs, fixture.input.Receipts[0].EvidenceRefs[0])
+}
+
+func TestCandidateOnlyObservationCannotCloseReceipt(t *testing.T) {
+	fixture := newFixture(t, ChangeClaimDelta)
+	authority := fixture.input.InferencePath.Edges[0]
+	authority.Kind = semantic.InferenceObservationCandidate
+	authority.Authority.Layer = semantic.AuthorityCandidate
+	authority.Authority.Effect = semantic.AuthorityObserve
+	authority.SourceRoots = nil
+	authority.Phase.Phase = semantic.PhaseObservation
+	authority.After.Semantic = authority.Before.Semantic
+	authority.Controls.CatalogDigest = fixtureDigest("catalog")
+	fixture.input.InferencePath.Edges[0] = authority
+	fixture.input.InferencePath.Evidence[0].After.Semantic = authority.After.Semantic
+	fixture.input.InferencePath.Evidence[0].Controls = authority.Controls
+	result := Evaluate(fixture.input)
+	if result.Status != StatusFailClosed || !reflect.DeepEqual(result.Reasons[0].Code, ReasonCandidateOnlyPath) {
+		t.Fatalf("candidate-only result = %#v", result)
+	}
+}
+
+func TestAcceptedLiftClosesAChangedSurface(t *testing.T) {
+	fixture := newFixture(t, ChangeClaimDelta)
+	authority := fixture.input.InferencePath.Edges[0]
+	authority.Kind = semantic.InferenceAcceptedLift
+	authority.Phase.Phase = semantic.PhaseLift
+	authority.Authority.Layer = semantic.AuthoritySemantic
+	authority.Authority.Effect = semantic.AuthorityLift
+	authority.Controls.PolicyDigest = fixture.input.Config.ProfileDigest
+	authority.AcceptanceReceipt = fixture.input.InferencePath.Evidence[0].ID
+	fixture.input.InferencePath.Edges[0] = authority
+	fixture.input.InferencePath.Evidence[0].Controls = authority.Controls
+	result := Evaluate(fixture.input)
+	if result.Status != StatusPass {
+		t.Fatalf("accepted-lift result = %#v", result)
+	}
+}
