@@ -35,6 +35,9 @@ type DetectorSnapshotAdapter interface {
 }
 
 func ExplainDetectorSnapshot(ctx context.Context, request Request, snapshot DetectorSnapshot, adapter DetectorSnapshotAdapter) (Explanation, error) {
+	if adapter == nil {
+		return requestNoLink(requestBinding(request), StatusUnknown, ReasonMissing, "missing-detector-adapter"), nil
+	}
 	envelope, err := adapter.AdaptDetectorSnapshot(snapshot)
 	if err != nil {
 		return Explanation{}, err

@@ -113,6 +113,7 @@ type CodeBindingSummary struct {
 	RegisteredSurfaceID string       `json:"registered_surface_id"`
 	SourceMapID         string       `json:"source_map_id"`
 	BindingDigest       string       `json:"binding_digest"`
+	CodeBindingDigest   string       `json:"code_binding_digest"`
 	Presentation        Presentation `json:"presentation,omitempty"`
 }
 
@@ -152,7 +153,9 @@ type ReceiptSummary struct {
 	ReceiptKind    semantic.SemanticChangeKind `json:"receipt_kind"`
 	BeforeIRDigest string                      `json:"before_ir_digest"`
 	AfterIRDigest  string                      `json:"after_ir_digest"`
+	CanonicalDelta string                      `json:"canonical_delta,omitempty"`
 	DeltaDigest    string                      `json:"delta_digest,omitempty"`
+	ReceiptDigest  string                      `json:"receipt_digest"`
 	OriginPathID   string                      `json:"origin_path_id"`
 	EvidenceRefs   []string                    `json:"evidence_refs"`
 	Presentation   Presentation                `json:"presentation,omitempty"`
@@ -164,6 +167,7 @@ type VerifierSummary struct {
 	State          VerifierState `json:"state"`
 	Independent    bool          `json:"independent"`
 	EvidenceDigest string        `json:"evidence_digest"`
+	VerifierDigest string        `json:"verifier_digest"`
 	EvidenceRefs   []string      `json:"evidence_refs"`
 	Presentation   Presentation  `json:"presentation,omitempty"`
 }
@@ -250,6 +254,9 @@ func ExplainEnvelopeBytes(ctx context.Context, request Request, data []byte) (Ex
 }
 
 func ExplainWithAdapter(ctx context.Context, request Request, data []byte, adapter VerifiedEnvelopeAdapter) (Explanation, error) {
+	if adapter == nil {
+		return requestNoLink(requestBinding(request), StatusUnknown, ReasonMissing, "missing-envelope-adapter"), nil
+	}
 	envelope, err := adapter.DecodeVerifiedEnvelope(data)
 	if err != nil {
 		return Explanation{}, err
@@ -258,6 +265,9 @@ func ExplainWithAdapter(ctx context.Context, request Request, data []byte, adapt
 }
 
 func ExplainCanonicalSnapshot(ctx context.Context, request Request, inputs CanonicalInputs, adapter DetectorOracleAdapter) (Explanation, error) {
+	if adapter == nil {
+		return requestNoLink(requestBinding(request), StatusUnknown, ReasonMissing, "missing-canonical-adapter"), nil
+	}
 	envelope, err := adapter.VerifyCanonicalSnapshot(inputs)
 	if err != nil {
 		return Explanation{}, err

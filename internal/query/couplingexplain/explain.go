@@ -18,10 +18,7 @@ type envelopeIssue struct {
 // binding and output-shape integrity; it does not infer ownership, delta
 // semantics, path meaning, or authorization.
 func Explain(ctx context.Context, request Request, envelope VerifiedEnvelope) Explanation {
-	binding := SnapshotBinding{SnapshotDigest: request.SnapshotDigest, RegistryDigest: request.RegistryDigest,
-		SourceMapDigest: request.SourceMapDigest, ManifestDigest: request.ManifestDigest, ToolchainDigest: request.ToolchainDigest, ProfileDigest: request.ProfileDigest,
-		DetectorInputDigest: request.DetectorInputDigest, DetectorResultDigest: request.DetectorResultDigest, VerifierResultDigest: request.VerifierResultDigest,
-		EnvelopeDigest: request.EnvelopeDigest, Control: request.Control}
+	binding := requestBinding(request)
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -55,11 +52,26 @@ func Explain(ctx context.Context, request Request, envelope VerifiedEnvelope) Ex
 		Upstream: envelope.Upstream, Link: &link}
 }
 
+func requestBinding(request Request) SnapshotBinding {
+	return SnapshotBinding{SnapshotDigest: request.SnapshotDigest, RegistryDigest: request.RegistryDigest,
+		SourceMapDigest: request.SourceMapDigest, ManifestDigest: request.ManifestDigest, ToolchainDigest: request.ToolchainDigest,
+		ProfileDigest: request.ProfileDigest, DetectorInputDigest: request.DetectorInputDigest, DetectorResultDigest: request.DetectorResultDigest,
+		VerifierResultDigest: request.VerifierResultDigest, EnvelopeDigest: request.EnvelopeDigest, Control: request.Control}
+}
+
 func validateRequestBinding(request Request, envelope VerifiedEnvelope) *envelopeIssue {
-	if request.CodeSymbolID == "" || !validDigest(request.SnapshotDigest) || !validDigest(request.RegistryDigest) ||
+	if request.CodeSymbolID == "" || request.SnapshotDigest == "" || request.RegistryDigest == "" ||
+		request.SourceMapDigest == "" || request.ManifestDigest == "" || request.ToolchainDigest == "" || request.ProfileDigest == "" ||
+		request.DetectorInputDigest == "" || request.DetectorResultDigest == "" || request.VerifierResultDigest == "" {
+		return &envelopeIssue{status: StatusUnknown, reason: ReasonMissing, code: "missing-request-binding"}
+	}
+	if !validStableID(request.CodeSymbolID) || !validDigest(request.SnapshotDigest) || !validDigest(request.RegistryDigest) ||
 		!validDigest(request.SourceMapDigest) || !validDigest(request.ManifestDigest) || !validDigest(request.ToolchainDigest) || !validDigest(request.ProfileDigest) ||
-		!validDigest(request.DetectorInputDigest) || !validDigest(request.DetectorResultDigest) || !validDigest(request.VerifierResultDigest) || !validDigest(request.EnvelopeDigest) {
-		return &envelopeIssue{status: StatusFailClosed, reason: ReasonStale, code: "invalid-request-binding"}
+		!validDigest(request.DetectorInputDigest) || !validDigest(request.DetectorResultDigest) || !validDigest(request.VerifierResultDigest) {
+		return &envelopeIssue{status: StatusFailClosed, reason: ReasonStale, code: "malformed-request-binding"}
+	}
+	if request.EnvelopeDigest != "" && !validDigest(request.EnvelopeDigest) {
+		return &envelopeIssue{status: StatusFailClosed, reason: ReasonStale, code: "malformed-request-envelope-digest"}
 	}
 	if envelope.EnvelopeDigest == "" || request.EnvelopeDigest != envelope.EnvelopeDigest {
 		return &envelopeIssue{status: StatusUnknown, reason: ReasonStale, code: "stale-envelope-digest"}
@@ -91,6 +103,9 @@ func validateEnvelopeShape(envelope VerifiedEnvelope) *envelopeIssue {
 	if envelope.Schema == "" || envelope.Binding.SnapshotDigest == "" || !validDigest(envelope.EvidenceDigest) {
 		return &envelopeIssue{status: StatusFailClosed, reason: ReasonMissing, code: "incomplete-envelope-header"}
 	}
+	if envelope.Schema != "gooo-coupling-explanation/v1" {
+		return &envelopeIssue{status: StatusFailClosed, reason: ReasonNotVerified, code: "malformed-envelope-schema"}
+	}
 	if envelope.Upstream != nil {
 		if (envelope.Upstream.SourceMapDigest != "" && !validDigest(envelope.Upstream.SourceMapDigest)) || !validDigest(envelope.Upstream.ManifestDigest) || !validDigest(envelope.Upstream.DetectorInputDigest) ||
 			!validDigest(envelope.Upstream.DetectorResultDigest) || (envelope.Upstream.DetectorStatus != "" &&
@@ -114,16 +129,11 @@ func validateEnvelopeShape(envelope VerifiedEnvelope) *envelopeIssue {
 		}
 		return nil
 	}
-	if envelope.CodeBinding.CodeSymbolID == "" || envelope.CodeBinding.SemanticOwnerID == "" || envelope.SemanticOwner == "" ||
-		envelope.Term.TermID == "" || envelope.Term.Version == "" ||
-		!validDigest(envelope.Term.DefinitionDigest) || envelope.OriginPath.PathID == "" ||
-		envelope.OriginPath.StepCount != len(envelope.OriginPath.Steps) || envelope.OriginPath.StepCount < 1 ||
-		!validDigest(envelope.OriginPath.PathDigest) || envelope.Receipt.ReceiptID == "" ||
-		envelope.Receipt.SurfaceID == "" || !validChangeClaim(envelope.Receipt.ChangeClaim) ||
-		!envelope.Receipt.ReceiptKind.Valid() || envelope.Receipt.OriginPathID == "" ||
-		envelope.Verifier.EvidenceID == "" || envelope.Verifier.ReceiptID == "" ||
-		!validDigest(envelope.Verifier.EvidenceDigest) {
-		return &envelopeIssue{status: StatusFailClosed, reason: ReasonMissing, code: "incomplete-verified-envelope"}
+	if missingVerifiedMaterial(envelope) {
+		return missingIssue()
+	}
+	if issue := malformedVerifiedMaterial(envelope); issue != nil {
+		return issue
 	}
 	if envelope.SemanticOwner != envelope.CodeBinding.SemanticOwnerID || envelope.Term.SemanticOwnerID != envelope.SemanticOwner {
 		return &envelopeIssue{status: StatusFailClosed, reason: ReasonUnregistered, code: "envelope-owner-mismatch"}
@@ -135,6 +145,9 @@ func validateEnvelopeShape(envelope VerifiedEnvelope) *envelopeIssue {
 		return &envelopeIssue{status: StatusFailClosed, reason: ReasonNotVerified, code: "verified-envelope-contradiction"}
 	}
 	if inputIssue := validateConnectedPath(envelope.OriginPath, envelope.SemanticOwner, envelope.Term.TermID); inputIssue != nil {
+		return inputIssue
+	}
+	if inputIssue := validateVerifiedIntegrity(envelope); inputIssue != nil {
 		return inputIssue
 	}
 	return nil

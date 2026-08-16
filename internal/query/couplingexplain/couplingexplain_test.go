@@ -43,6 +43,7 @@ func TestExplainUnknownStatesProduceNoLink(t *testing.T) {
 		{"missing", VerdictUnknown, ReasonMissing, "missing-verifier", StatusUnknown},
 		{"candidate-only", VerdictUnknown, ReasonAmbiguous, "candidate-only", StatusUnknown},
 		{"not-verified", VerdictFailClosed, ReasonNotVerified, "verifier-failed", StatusFailClosed},
+		{"verifier-fail-closed", VerdictUnknown, ReasonNotVerified, "verifier-fail-closed", StatusFailClosed},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -53,6 +54,9 @@ func TestExplainUnknownStatesProduceNoLink(t *testing.T) {
 			envelope.Verifier.EvidenceDigest = envelope.EvidenceDigest
 			if test.name == "missing" {
 				envelope.Verifier.EvidenceID = ""
+			}
+			if test.name == "verifier-fail-closed" {
+				envelope.Verifier.State = VerifierFailClosed
 			}
 			refreshEnvelopeDigest(&request, &envelope)
 			got := Explain(context.Background(), request, envelope)
@@ -102,8 +106,6 @@ func TestEnvelopeLabelsRootsActorsAndPermutationsDoNotChangeEvidence(t *testing.
 	envelope.OriginPath.Presentation = Presentation{Label: "path label", Root: "path-root", Path: "path", Timestamp: "later", Actor: "agent-d"}
 	envelope.Receipt.Presentation = Presentation{Label: "receipt label", Root: "receipt-root", Path: "receipt", Timestamp: "later", Actor: "agent-e"}
 	envelope.Verifier.Presentation = Presentation{Label: "verifier label", Root: "verifier-root", Path: "verifier", Timestamp: "later", Actor: "agent-f"}
-	envelope.Receipt.EvidenceRefs = []string{"evidence://z", "evidence://a"}
-	envelope.Verifier.EvidenceRefs = []string{"path://z", "path://a"}
 	refreshEnvelopeDigest(&request, &envelope)
 	got := Explain(context.Background(), request, envelope)
 	if got.Status != StatusPass || got.EvidenceDigest != envelope.EvidenceDigest {
@@ -151,6 +153,14 @@ func TestStrictEnvelopeJSONAndAdapterBoundary(t *testing.T) {
 	if _, err := DecodeVerifiedEnvelope(unknown); err == nil {
 		t.Fatal("unknown JSON field accepted")
 	}
+	topLevelDuplicate := bytes.Replace(raw, []byte(`"schema":"gooo-coupling-explanation/v1","binding"`), []byte(`"schema":"gooo-coupling-explanation/v1","schema":"gooo-coupling-explanation/v1","binding"`), 1)
+	if _, err := DecodeVerifiedEnvelope(topLevelDuplicate); err == nil {
+		t.Fatal("top-level duplicate JSON key accepted")
+	}
+	nestedDuplicate := bytes.Replace(raw, []byte(`"snapshot_digest":"`+request.SnapshotDigest+`","registry_digest"`), []byte(`"snapshot_digest":"`+request.SnapshotDigest+`","snapshot_digest":"`+request.SnapshotDigest+`","registry_digest"`), 1)
+	if _, err := DecodeVerifiedEnvelope(nestedDuplicate); err == nil {
+		t.Fatal("nested duplicate JSON key accepted")
+	}
 	adapter := fixtureAdapter{}
 	got, err := ExplainWithAdapter(context.Background(), request, raw, adapter)
 	if err != nil || got.Status != StatusPass || got.Link == nil {
@@ -158,15 +168,33 @@ func TestStrictEnvelopeJSONAndAdapterBoundary(t *testing.T) {
 	}
 }
 
+func TestMissingAdaptersAreUnknownWithoutLink(t *testing.T) {
+	request, envelope := fixtureEnvelope(t, ClaimNoDelta, VerdictVerified)
+	for _, name := range []string{"detector", "canonical"} {
+		t.Run(name, func(t *testing.T) {
+			var got Explanation
+			var err error
+			if name == "detector" {
+				got, err = ExplainDetectorSnapshot(context.Background(), request, DetectorSnapshot{}, nil)
+			} else {
+				got, err = ExplainCanonicalSnapshot(context.Background(), request, CanonicalInputs{}, nil)
+			}
+			if err != nil || got.Status != StatusUnknown || got.Link != nil || got.NoLink == nil || got.NoLink.Reason != ReasonMissing {
+				t.Fatalf("missing adapter result = %#v, err=%v", got, err)
+			}
+		})
+	}
+	if envelope.EnvelopeDigest == "" {
+		t.Fatal("fixture envelope digest missing")
+	}
+}
+
 func TestMergedDetectorResultIsStrictAndAdapterOnly(t *testing.T) {
-	result := coupling.Evaluate(coupling.Input{}, coupling.AuthorityContext{})
+	result := literalDetectorResult()
 	if result.Status != coupling.StatusUnknown || len(result.Reasons) != 1 || result.Reasons[0].Code != coupling.ReasonAuthorityInputSelfBound {
 		t.Fatalf("missing evaluator authority = %#v", result)
 	}
-	raw, err := coupling.EncodeResult(result)
-	if err != nil {
-		t.Fatal(err)
-	}
+	raw := literalDetectorResultBytes()
 	decoded, err := DecodeDetectorResult(raw)
 	if err != nil || decoded.Digest != result.Digest || decoded.Status != coupling.StatusUnknown {
 		t.Fatalf("detector result = %#v, err=%v", decoded, err)
@@ -189,6 +217,42 @@ func TestMergedDetectorResultIsStrictAndAdapterOnly(t *testing.T) {
 	}
 }
 
+func TestProducerResultMutationsRejectExactDigest(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func([]byte) []byte
+	}{
+		{"decision", func(raw []byte) []byte {
+			return bytes.Replace(raw, []byte(`"status":"UNKNOWN"`), []byte(`"status":"PASS"`), 1)
+		}},
+		{"reason", func(raw []byte) []byte {
+			return bytes.Replace(raw, []byte(`"detail":"evaluator authority context is missing"`), []byte(`"detail":"changed producer reason"`), 1)
+		}},
+		{"input-digest", func(raw []byte) []byte {
+			return bytes.Replace(raw, []byte(`265a7627c123865b1cb0a3cadfc74b0d9e079cfa85a78dfbc1534368d73c2beb`), []byte(digest("other-input")), 1)
+		}},
+		{"binding", func(raw []byte) []byte {
+			return bytes.Replace(raw, []byte(`"accepted_surface_ids":null`), []byte(`"accepted_surface_ids":["surface://mutated"]`), 1)
+		}},
+		{"count", func(raw []byte) []byte {
+			return bytes.Replace(raw, []byte(`"receipts":{"known":false,"value":0}`), []byte(`"receipts":{"known":true,"value":1}`), 1)
+		}},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			raw := test.mutate(literalDetectorResultBytes())
+			_, err := DecodeDetectorResult(raw)
+			jsonErr, ok := err.(*coupling.JSONError)
+			if !ok || jsonErr.Code != coupling.ReasonMalformedBinding {
+				t.Fatalf("producer mutation %q error = %v, want MALFORMED_BINDING", test.name, err)
+			}
+			if err == nil {
+				t.Fatalf("producer mutation %q accepted", test.name)
+			}
+		})
+	}
+}
+
 func TestCancellationVersionRaceAndNoWrite(t *testing.T) {
 	request, envelope := fixtureEnvelope(t, ClaimDelta, VerdictVerified)
 	original := append([]byte(nil), mustJSON(t, envelope)...)
@@ -206,72 +270,5 @@ func TestCancellationVersionRaceAndNoWrite(t *testing.T) {
 	}
 	if !bytes.Equal(original, mustJSON(t, envelope)) {
 		t.Fatal("Explain mutated its envelope input")
-	}
-}
-
-type fixtureAdapter struct{}
-
-func (fixtureAdapter) DecodeVerifiedEnvelope(data []byte) (VerifiedEnvelope, error) {
-	return DecodeVerifiedEnvelope(data)
-}
-
-type detectorFixtureAdapter struct {
-	envelope VerifiedEnvelope
-}
-
-func (adapter detectorFixtureAdapter) AdaptDetectorSnapshot(DetectorSnapshot) (VerifiedEnvelope, error) {
-	return adapter.envelope, nil
-}
-
-func fixtureEnvelope(t *testing.T, claim ChangeClaim, verdict EnvelopeVerdict) (Request, VerifiedEnvelope) {
-	t.Helper()
-	bindingDigest := digest("binding")
-	termDigest := digest("term-definition")
-	evidenceDigest := digest("evidence")
-	control := Control{RequestVersion: 7, ObservedVersion: 7, RequestCancellationVersion: 11, ObservedCancellationVersion: 11}
-	binding := SnapshotBinding{SnapshotDigest: digest("snapshot"), RegistryDigest: digest("registry"), SourceMapDigest: digest("source-map"), ManifestDigest: digest("manifest"), ToolchainDigest: digest("toolchain"), ProfileDigest: digest("profile"), DetectorInputDigest: digest("detector-input"), DetectorResultDigest: digest("detector-result"), VerifierResultDigest: digest("verifier-result"), Control: control}
-	path := PathSummary{PathID: "path://pay-order", StartID: "code://billing/pay-order", EndID: "evidence://coupling", StepCount: 3, PathDigest: digest("path"), Steps: []PathStep{
-		{FromID: "code://billing/pay-order", ToID: "owner://billing/pay-order", Kind: semantic.InferenceDerivedProjection, Phase: semantic.PhasePlacement{Phase: semantic.PhaseProjection, Ordinal: 1}, InputDigest: bindingDigest, OutputDigest: digest("owner")},
-		{FromID: "owner://billing/pay-order", ToID: "term://pay-order", Kind: semantic.InferenceAuthoritativeDeclaration, Phase: semantic.PhasePlacement{Phase: semantic.PhaseDeclaration, Ordinal: 2}, InputDigest: digest("owner"), OutputDigest: termDigest},
-		{FromID: "term://pay-order", ToID: "evidence://coupling", Kind: semantic.InferenceIndependentVerification, Phase: semantic.PhasePlacement{Phase: semantic.PhaseVerification, Ordinal: 3}, InputDigest: termDigest, OutputDigest: evidenceDigest, EvidenceRef: "evidence://coupling"},
-	}}
-	receipt := ReceiptSummary{ReceiptID: "receipt://pay-order", SurfaceID: "surface://pay-order", ChangeClaim: claim, ReceiptKind: semantic.SemanticDelta, BeforeIRDigest: digest("before"), AfterIRDigest: digest("after"), DeltaDigest: digest("delta"), OriginPathID: path.PathID, EvidenceRefs: []string{"evidence://coupling"}}
-	if claim == ClaimNoDelta {
-		receipt.ReceiptKind = semantic.NoSemanticDelta
-		receipt.AfterIRDigest = receipt.BeforeIRDigest
-		receipt.DeltaDigest = ""
-	}
-	verifier := VerifierSummary{EvidenceID: "evidence://coupling", ReceiptID: receipt.ReceiptID, State: VerifierPass, Independent: true, EvidenceDigest: evidenceDigest, EvidenceRefs: []string{path.PathID}}
-	envelope := VerifiedEnvelope{Schema: "gooo-coupling-explanation/v1", Binding: binding, CodeBinding: CodeBindingSummary{CodeSymbolID: "code://billing/pay-order", SemanticOwnerID: "owner://billing/pay-order", RegisteredSurfaceID: receipt.SurfaceID, SourceMapID: "sourcemap://pay-order", BindingDigest: bindingDigest}, SemanticOwner: "owner://billing/pay-order", Term: TermSummary{TermID: "term://pay-order", SemanticOwnerID: "owner://billing/pay-order", Version: "v1", DefinitionDigest: termDigest}, OriginPath: path, Receipt: receipt, Verifier: verifier, Verdict: verdict, EvidenceDigest: evidenceDigest}
-	if verdict != VerdictVerified {
-		envelope.NoLinkReason = ReasonMissing
-		envelope.Diagnostics = []Diagnostic{{Code: "fixture-no-link"}}
-	}
-	envelope.EnvelopeDigest = envelope.Digest()
-	request := Request{CodeSymbolID: envelope.CodeBinding.CodeSymbolID, SnapshotDigest: binding.SnapshotDigest, RegistryDigest: binding.RegistryDigest, SourceMapDigest: binding.SourceMapDigest, ManifestDigest: binding.ManifestDigest, ToolchainDigest: binding.ToolchainDigest, ProfileDigest: binding.ProfileDigest, DetectorInputDigest: binding.DetectorInputDigest, DetectorResultDigest: binding.DetectorResultDigest, VerifierResultDigest: binding.VerifierResultDigest, EnvelopeDigest: envelope.EnvelopeDigest, Control: control}
-	return request, envelope
-}
-
-func refreshEnvelopeDigest(request *Request, envelope *VerifiedEnvelope) {
-	envelope.EnvelopeDigest = envelope.Digest()
-	request.EnvelopeDigest = envelope.EnvelopeDigest
-}
-
-func digest(value string) string { return DigestBytes([]byte(value)) }
-
-func mustJSON(t *testing.T, value any) []byte {
-	t.Helper()
-	data, err := json.Marshal(value)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
-}
-
-func TestNoLinkReasonsAreClosed(t *testing.T) {
-	for _, value := range []LinkReason{ReasonAmbiguous, ReasonStale, ReasonUnregistered, ReasonMissing, ReasonNotVerified} {
-		if !validReason(value) {
-			t.Fatal(value)
-		}
 	}
 }

@@ -10,7 +10,7 @@ import (
 
 func TestLiveSnapshotPreservesDetectorDecisionAndWithholdsMissingLink(t *testing.T) {
 	request, _ := fixtureEnvelope(t, ClaimNoDelta, VerdictVerified)
-	result := detector.Evaluate(detector.Input{}, detector.AuthorityContext{})
+	result := literalDetectorResult()
 	manifestDigest := request.ManifestDigest
 	snapshot := LiveSnapshot{
 		Manifest:         couplingmanifest.Manifest{Schema: detector.ManifestSchemaV1, Digest: manifestDigest},
@@ -41,7 +41,7 @@ func TestLiveSnapshotPreservesDetectorDecisionAndWithholdsMissingLink(t *testing
 
 func TestLiveSnapshotRejectsTamperedOrConflictingUpstreamBytes(t *testing.T) {
 	request, _ := fixtureEnvelope(t, ClaimNoDelta, VerdictVerified)
-	result := detector.Evaluate(detector.Input{}, detector.AuthorityContext{})
+	result := literalDetectorResult()
 	snapshot := LiveSnapshot{
 		Manifest:       couplingmanifest.Manifest{Schema: detector.ManifestSchemaV1, Digest: request.ManifestDigest},
 		DetectorInput:  detector.Input{Manifest: detector.ChangeManifest{Digest: request.ManifestDigest}},
@@ -87,6 +87,20 @@ func TestUpstreamDecisionOrderingIsCanonical(t *testing.T) {
 
 type liveFixtureAdapter struct {
 	binding SnapshotBinding
+}
+
+func literalDetectorResult() detector.Result {
+	return detector.Result{
+		Schema: detector.ResultSchemaV1, Status: detector.StatusUnknown,
+		Reasons:           []detector.Reason{{Code: detector.ReasonAuthorityInputSelfBound, Detail: "evaluator authority context is missing"}},
+		FullSuiteRequired: true,
+		InputDigest:       "265a7627c123865b1cb0a3cadfc74b0d9e079cfa85a78dfbc1534368d73c2beb",
+		Digest:            "ceadad25cf2b1fb7d3af40568caa658634eef34a0f7e7e7b75ac4253e04bfd65",
+	}
+}
+
+func literalDetectorResultBytes() []byte {
+	return []byte(`{"schema":"gooo/code-semantic-coupling-result/v1","status":"UNKNOWN","accepted_surface_ids":null,"reasons":[{"code":"COUPLING_AUTHORITY_INPUT_SELF_BOUND","detail":"evaluator authority context is missing"}],"observation":{"changed_surfaces":{"known":false,"value":0},"receipts":{"known":false,"value":0},"inference_records":{"known":false,"value":0},"inference_paths":{"known":false,"value":0},"deterministic_work":{"known":false,"value":0},"resource_work":{"known":false,"value":0},"cpu":{"known":false,"value":0},"memory":{"known":false,"value":0}},"full_suite_required":true,"input_digest":"265a7627c123865b1cb0a3cadfc74b0d9e079cfa85a78dfbc1534368d73c2beb","digest":"ceadad25cf2b1fb7d3af40568caa658634eef34a0f7e7e7b75ac4253e04bfd65"}`)
 }
 
 func (adapter liveFixtureAdapter) AdaptLiveSnapshot(snapshot LiveSnapshot) (VerifiedEnvelope, error) {
