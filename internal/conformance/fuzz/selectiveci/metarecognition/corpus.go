@@ -42,7 +42,7 @@ func Corpus() []Case {
 }
 
 func missingBindingCase() Case {
-	value := bindingCase("case-04-no-binding", UnknownFullSuiteRequired, ReasonSourceMapRegistry, orderID, fileA, fileA, blobA, blobA, "Order", true, true, false)
+	value := bindingCase("case-04-no-binding", UnknownFullSuiteRequired, ReasonBlobWithoutID, orderID, fileA, fileA, blobA, blobA, "Order", true, true, false)
 	value.Expected.LocalizedIDs = []string{fileA}
 	value.Baseline.DirectivePresent = false
 	return value

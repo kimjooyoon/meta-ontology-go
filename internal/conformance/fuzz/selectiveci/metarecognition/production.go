@@ -53,7 +53,7 @@ func evaluateBinding(b BaselineConfig) Outcome {
 		return productionOutcome(UnknownFullSuiteRequired, ReasonSourceMapRegistry, []string{b.StableID}, work)
 	}
 	if len(result.Bindings) == 0 {
-		return productionOutcome(UnknownFullSuiteRequired, ReasonSourceMapRegistry, []string{b.ObservedFile}, work)
+		return productionOutcome(UnknownFullSuiteRequired, ReasonBlobWithoutID, []string{b.ObservedFile}, work)
 	}
 	if len(result.Bindings) != 1 || result.Bindings[0].ID != b.BoundID {
 		return productionOutcome(FailClosedUnsound, ReasonBlobWithoutID, []string{b.StableID}, work)
