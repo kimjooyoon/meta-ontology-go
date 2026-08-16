@@ -6,52 +6,42 @@ import (
 	"encoding/json"
 	"sort"
 	"strings"
-	"unicode"
 )
 
-func CanonicalInputBytes(input Input) ([]byte, error) { return json.Marshal(normalizeInput(input)) }
-
 func CanonicalInputDigest(input Input) string {
-	data, err := CanonicalInputBytes(input)
-	if err != nil {
-		return digestBytes([]byte("canonical-input-error:" + err.Error()))
-	}
+	data, _ := json.Marshal(normalizeInput(input))
 	return digestBytes(data)
-}
-
-func CanonicalOutputBytes(output Output) ([]byte, error) {
-	output.SelectedIDs, output.UnselectedIDs, output.UnknownIDs = sortedUnique(output.SelectedIDs), sortedUnique(output.UnselectedIDs), sortedUnique(output.UnknownIDs)
-	output.OutputDigest, output.ReplayDigest = "", ""
-	return json.Marshal(output)
 }
 
 func CanonicalOutputDigest(output Output) string {
-	data, err := CanonicalOutputBytes(output)
-	if err != nil {
-		return digestBytes([]byte("canonical-output-error:" + err.Error()))
-	}
+	output.SelectedIDs = sortedUnique(output.SelectedIDs)
+	output.UnselectedIDs = sortedUnique(output.UnselectedIDs)
+	output.UnknownIDs = sortedUnique(output.UnknownIDs)
+	output.OutputDigest, output.ReplayDigest = "", ""
+	data, _ := json.Marshal(output)
 	return digestBytes(data)
-}
-
-func ReplayDigest(inputDigest, outputDigest string) string {
-	return digestBytes([]byte(inputDigest + "\x00" + outputDigest))
 }
 
 func normalizeInput(input Input) Input {
 	input.PressureRecords = append([]PressureRecord(nil), input.PressureRecords...)
-	input.RequiredPressureIDs, input.FinitePathIDs = sortedCopy(input.RequiredPressureIDs), sortedCopy(input.FinitePathIDs)
-	input.GuardIDs, input.PresentationRoot = sortedCopy(input.GuardIDs), ""
-	for i := range input.PressureRecords {
-		input.PressureRecords[i].DisplayName, input.PressureRecords[i].PresentationMetadata = "", nil
-	}
-	sort.Slice(input.PressureRecords, func(i, j int) bool {
-		return pressureKey(input.PressureRecords[i]) < pressureKey(input.PressureRecords[j])
+	input.RequiredPressureIDs = sortedCopy(input.RequiredPressureIDs)
+	input.FinitePathIDs = sortedCopy(input.FinitePathIDs)
+	input.GuardIDs = sortedCopy(input.GuardIDs)
+	sort.Slice(input.PressureRecords, func(left, right int) bool {
+		return pressureKey(input.PressureRecords[left]) < pressureKey(input.PressureRecords[right])
 	})
 	return input
 }
 
 func pressureKey(record PressureRecord) string {
-	return strings.Join([]string{record.PressureID, record.CategoryID, record.IndependenceGroupID, record.ApplicabilityRuleID}, "\x00")
+	return strings.Join([]string{record.PressureID, record.CategoryID,
+		record.IndependenceGroupID, record.ApplicabilityRuleID}, "\x00")
+}
+
+func sortedCopy(values []string) []string {
+	result := append([]string(nil), values...)
+	sort.Strings(result)
+	return result
 }
 
 func sortedUnique(values []string) []string {
@@ -62,19 +52,13 @@ func sortedUnique(values []string) []string {
 	if len(result) < 2 {
 		return result
 	}
-	out := result[:1]
+	unique := result[:1]
 	for _, value := range result[1:] {
-		if value != out[len(out)-1] {
-			out = append(out, value)
+		if value != unique[len(unique)-1] {
+			unique = append(unique, value)
 		}
 	}
-	return out
-}
-
-func sortedCopy(values []string) []string {
-	result := append([]string(nil), values...)
-	sort.Strings(result)
-	return result
+	return unique
 }
 
 func digestBytes(data []byte) string {
@@ -86,26 +70,11 @@ func validDigest(value string) bool {
 	if len(value) != 71 || !strings.HasPrefix(value, "sha256:") {
 		return false
 	}
-	decoded, err := hex.DecodeString(value[7:])
-	if err != nil {
-		return false
-	}
-	for _, value := range decoded {
-		if value != 0 {
-			return true
-		}
-	}
-	return false
+	_, err := hex.DecodeString(value[7:])
+	return err == nil && strings.Trim(value[7:], "0") != ""
 }
 
 func validID(value string) bool {
-	if value == "" || value != strings.TrimSpace(value) || len(value) > 256 {
-		return false
-	}
-	for _, character := range value {
-		if unicode.IsSpace(character) || unicode.IsControl(character) {
-			return false
-		}
-	}
-	return true
+	return value != "" && value == strings.TrimSpace(value) && len(value) <= 256 &&
+		!strings.ContainsAny(value, "\r\n\t\x00")
 }
