@@ -1,18 +1,24 @@
 name: CI
+run-name: "CI [${{ github.event_name == 'pull_request' && 'PR authoritative' || 'push full' }}]"
 
 on:
   push:
     branches:
-      - integration
+      - dev
       - main
-      - 'agent/**'
   pull_request:
     branches:
-      - integration
+      - dev
       - main
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
+  actions: read
+  checks: read
+  # Branch protection is intentionally not observed from this pull_request
+  # workflow. Main promotion consumes the base-pinned Guardian envelope.
+  # administration: read must not be added here.
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -25,6 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v5
@@ -40,6 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v5
@@ -54,6 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v5
@@ -68,6 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v5
@@ -82,31 +92,771 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
-      - name: Semantic CLI conformance (transitions from deferred to required)
+      - name: Semantic conformance (staged verifier promotion)
+        env:
+          # Stage 0 is the current trust boundary. Advancing it requires a
+          # deterministic CI-authorized governance change documented in .github/conformance-plan.md.
+          GOOO_CONFORMANCE_STAGE: "0"
         run: ./scripts/semantic-conformance.sh
 
   policy:
     name: CI policy
+    needs: [format, vet, test, race, semantic]
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
+      - name: Record CI event source
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          CI_REF: ${{ github.ref }}
+        run: |
+          if [ "$CI_EVENT" = "pull_request" ]; then
+            source="PR authoritative"
+          else
+            source="push full"
+          fi
+          {
+            echo "### CI event source"
+            echo "- run source: $source"
+            echo "- event: $CI_EVENT"
+            echo "- ref: $CI_REF"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify PR checkout identity
+        if: github.event_name == 'pull_request'
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          actual_head="$(git rev-parse HEAD)"
+          test "$actual_head" = "$EXPECTED_HEAD"
+          git rev-parse --verify "$EXPECTED_BASE^{commit}" >/dev/null
+      - name: Check DAMP/DRY caps
+        if: github.event_name == 'pull_request'
+        run: go run ./scripts/verify --caps-only
       - name: Check changed-file scope, Go size caps, and PR target
+        if: github.event_name == 'pull_request'
         env:
           GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-          GOOO_SCOPE_TO: ${{ github.sha }}
+          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
+          GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          GOOO_SCOPE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           GOOO_PR_HEAD: ${{ github.head_ref }}
           GOOO_PR_BASE: ${{ github.base_ref }}
+        run: go run ./scripts/verify --skip-caps
+      - name: Check Go caps on protected push
+        if: github.event_name == 'push'
+        env:
+          # A rebase can make github.event.before unavailable to checkout. Push
+          # validation therefore keeps the local size caps while PR events run
+          # the complete changed-path scope and ownership check.
+          GOOO_SCOPE_FROM: ""
+          GOOO_SCOPE_TO: ""
+          GOOO_SCOPE_BRANCH: ${{ github.ref_name }}
+          GOOO_PR_HEAD: ""
+          GOOO_PR_BASE: ""
         run: go run ./scripts/verify
+  evidence:
+    name: CI evidence
+    needs: [format, vet, test, race, semantic, policy]
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test artifact paginator contract
+        run: node scripts/ci-proof/artifacts_test.js
+      - name: Collect terminal canonical job evidence
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const jobs = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data.jobs)) throw new Error('canonical job API returned malformed data');
+              jobs.push(...response.data.jobs);
+              if (response.data.jobs.length < 100) {
+                require('fs').writeFileSync('ci-jobs.json', JSON.stringify(jobs));
+                return;
+              }
+            }
+            throw new Error('canonical job API pagination exceeded the fail-closed page limit');
+      - name: Reproduce generated evidence input
+        run: |
+          mkdir -p ci-generated/first ci-generated/second
+          go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/first
+          go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/second
+          cmp ci-generated/first/semantic.gooo.go ci-generated/second/semantic.gooo.go
+          test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
+          grep -Fq '//gooo:slot:start' ci-generated/first/semantic.gooo.go
+          grep -Fq '//gooo:slot:end' ci-generated/first/semantic.gooo.go
+          test -z "$(git diff --name-only)"
+          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$|ci-domain/)' || true)"
+          test -z "$unexpected"
+      - name: Capture CLI domain evidence
+        run: |
+          mkdir -p ci-domain
+          go run ./cmd/gooo check examples/billing/main.gooo > ci-domain/cli-check.stdout 2> ci-domain/cli-check.stderr
+      - name: Verify and write CI evidence bundle
+        env:
+          CI_REPOSITORY: ${{ github.repository }}
+          CI_EVENT: ${{ github.event_name }}
+          CI_EVENT_REF: ${{ github.ref }}
+          CI_CHECKOUT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          CI_BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          CI_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          CI_SLOT_PRESERVATION: "true"
+          CI_NO_WRITE_OUTSIDE_GENERATED: "true"
+        run: |
+          go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --output ci-evidence.json
+          go run ./scripts/ci-evidence --verify ci-evidence.json
+      - name: Write machine-readable domain evidence
+        uses: actions/github-script@v7
+        env:
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const crypto = require('crypto');
+            const fs = require('fs');
+            const evidence = JSON.parse(fs.readFileSync('ci-evidence.json', 'utf8'));
+            const pull = context.payload.pull_request;
+            const headSha = pull ? pull.head.sha : context.sha;
+            const baseSha = pull ? pull.base.sha : context.payload.before;
+            const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
+            const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
+            const output = fs.readFileSync('ci-domain/cli-check.stdout', 'utf8');
+            const domain = {
+              schema: 'gooo/domain-evidence/v2', repository: context.payload.repository.full_name, event: context.eventName,
+              base_ref: baseRef, base_sha: baseSha, head_sha: headSha, event_ref: context.ref, checkout_ref: headSha,
+              run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1), workflow_sha: process.env.CI_WORKFLOW_SHA,
+              cli: {command: 'go run ./cmd/gooo check examples/billing/main.gooo', fixture: 'examples/billing/main.gooo', status: 'verified', available: true, output, output_sha256: crypto.createHash('sha256').update(output).digest('hex')},
+              graph: {command: 'go run ./cmd/gooo graph-dump examples/billing/main.gooo', status: 'deferred', available: false, reason: 'graph-dump is not implemented in the current checkout', output_sha256: crypto.createHash('sha256').update('').digest('hex')},
+              observer_receipt_refs: [], observer_status: 'unavailable', protection_status: 'unavailable', provenance_status: 'not_applicable',
+              digests: {source_sha256: evidence.digests.source_sha256, ir_sha256: evidence.digests.ir_sha256, generated_output_sha256: evidence.digests.generated_output_sha256, bundle_sha256: evidence.digests.bundle_sha256, domain_sha256: ''},
+              missing_reasons: {protection: 'domain_protection_observer_unavailable'},
+            };
+            const domainPayload = {...domain, digests: {...domain.digests, domain_sha256: ''}};
+            domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
+            fs.writeFileSync('ci-domain-evidence.json', JSON.stringify(domain, null, 2) + '\n');
+      - name: Upload CI evidence bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ci-evidence.json
+            ci-domain-evidence.json
+          if-no-files-found: error
+          retention-days: 14
+
+  proof:
+    name: CI proof bundle
+    needs: [format, vet, test, race, semantic, policy, evidence]
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Download canonical evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-evidence-input
+      - name: Collect terminal canonical jobs
+        uses: actions/github-script@v7
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const jobsFromAPI = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              jobsFromAPI.push(...response.data.jobs);
+              if (response.data.jobs.length < 100) break;
+              if (page === 1000) throw new Error('proof job API pagination exceeded the fail-closed page limit');
+            }
+            const names = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
+            const head = context.payload.pull_request?.head.sha || context.sha;
+            const byName = new Map();
+            for (const job of jobsFromAPI) {
+              if (!names.includes(job.name)) continue;
+              if (byName.has(job.name)) throw new Error(`duplicate canonical job ${job.name}`);
+              byName.set(job.name, job);
+            }
+            const attempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+            const jobs = names.map(name => {
+              const job = byName.get(name);
+              return job ? {...job, run_attempt: attempt} : job;
+            });
+            const ids = new Set();
+            for (const job of jobs) {
+              if (!job || job.status !== 'completed' || job.conclusion !== 'success' || job.head_sha !== head || job.id <= 0 || ids.has(job.id)) {
+                throw new Error('canonical jobs are not terminal, successful, unique, and bound to the immutable head');
+              }
+              ids.add(job.id);
+            }
+            fs.writeFileSync('ci-final-jobs.json', JSON.stringify(jobs));
+            fs.writeFileSync('ci-jobs.json', JSON.stringify(jobs));
+      - name: Reproduce proof fixture
+        run: |
+          mkdir -p ci-generated/first
+          go run ./cmd/gooo generate examples/billing/main.gooo --out ci-generated/first
+          test -s ci-generated/first/semantic.gooo.go
+          test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
+          test -z "$(git diff --name-only)"
+      - name: Select exact Guardian promotion evidence
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        uses: actions/github-script@v7
+        env:
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const eventPull = context.payload.pull_request;
+            const pullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number});
+            const pull = pullResponse.data;
+            if (!pull || pull.base.ref !== 'main' || pull.base.sha !== eventPull.base.sha || pull.head.ref !== eventPull.head.ref || pull.head.sha !== eventPull.head.sha || pull.base.repo.full_name !== context.payload.repository.full_name || pull.head.repo.full_name !== context.payload.repository.full_name) throw new Error('promotion PR changed during Guardian selection');
+            const expectedHead = pull.head.sha;
+            const runs = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listWorkflowRuns({owner: context.repo.owner, repo: context.repo.repo, workflow_id: 'ci-guardian.yml', event: 'pull_request_target', per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data.workflow_runs)) throw new Error('Guardian workflow run API returned malformed data');
+              runs.push(...response.data.workflow_runs);
+              if (response.data.workflow_runs.length < 100) break;
+              if (page === 1000) throw new Error('Guardian workflow run pagination exceeded the fail-closed page limit');
+            }
+            const matching = runs.filter(run => run.workflow_id && run.event === 'pull_request_target' && run.head_sha === expectedHead && run.head_branch === pull.head.ref && Array.isArray(run.pull_requests) && run.pull_requests.some(candidate => Number(candidate.number) === pull.number && candidate.base && candidate.base.ref === 'main' && candidate.base.sha === pull.base.sha && candidate.head && candidate.head.ref === pull.head.ref && candidate.head.sha === pull.head.sha));
+            matching.sort((left, right) => Number(right.run_number || 0) - Number(left.run_number || 0) || Number(right.run_attempt || 1) - Number(left.run_attempt || 1) || Number(right.id) - Number(left.id));
+            if (matching.length === 0) throw new Error('no current exact-head Guardian run exists');
+            const selected = matching[0];
+            if (selected.status !== 'completed' || selected.conclusion !== 'success') throw new Error('latest exact-head Guardian run is not successful and terminal');
+            const selectedKey = `${selected.run_number || 0}:${selected.run_attempt || 1}:${selected.id}`;
+            const sameMax = matching.filter(run => `${run.run_number || 0}:${run.run_attempt || 1}:${run.id}` === selectedKey);
+            if (sameMax.length !== 1) throw new Error('Guardian run selection is ambiguous');
+            const workflow = await github.rest.actions.getWorkflow({owner: context.repo.owner, repo: context.repo.repo, workflow_id: selected.workflow_id});
+            if (!workflow.data || workflow.data.id !== selected.workflow_id || workflow.data.path !== '.github/workflows/ci-guardian.yml') throw new Error('selected workflow is not ci-guardian.yml');
+            const jobs = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: selected.id, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data.jobs)) throw new Error('Guardian job API returned malformed data');
+              jobs.push(...response.data.jobs);
+              if (response.data.jobs.length < 100) break;
+              if (page === 1000) throw new Error('Guardian job pagination exceeded the fail-closed page limit');
+            }
+            const guardianJobs = jobs.filter(job => job.name === 'CI guardian' && job.status === 'completed' && job.conclusion === 'success' && job.head_sha === expectedHead && typeof job.check_run_url === 'string');
+            if (guardianJobs.length !== 1) throw new Error('selected Guardian run does not have exactly one successful exact-head CI guardian job');
+            const checkURL = guardianJobs[0].check_run_url;
+            const checkResponse = await github.request(checkURL);
+            const check = checkResponse.data;
+            if (!check || check.name !== 'CI guardian' || !check.app || check.app.id !== 15368 || check.status !== 'completed' || check.conclusion !== 'success' || check.head_sha !== expectedHead || !check.check_suite || check.check_suite.id <= 0 || check.check_suite.head_sha !== expectedHead || !String(check.details_url || '').includes(`/actions/runs/${selected.id}/`)) throw new Error('selected Guardian job check is not app-bound, terminal, or exact-head');
+            const suiteChecks = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.checks.listForSuite({owner: context.repo.owner, repo: context.repo.repo, check_suite_id: check.check_suite.id, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data.check_runs)) throw new Error('Guardian check API returned malformed data');
+              suiteChecks.push(...response.data.check_runs);
+              if (response.data.check_runs.length < 100) break;
+              if (page === 1000) throw new Error('Guardian check pagination exceeded the fail-closed page limit');
+            }
+            const suiteGuardianChecks = suiteChecks.filter(candidate => candidate.name === 'CI guardian');
+            if (suiteGuardianChecks.length !== 1 || suiteGuardianChecks[0].id !== check.id || suiteGuardianChecks[0].app?.id !== 15368 || suiteGuardianChecks[0].head_sha !== expectedHead) throw new Error('selected Guardian check suite is ambiguous or not app-bound');
+            const attempt = Number(selected.run_attempt || 1);
+            const expectedName = `ci-guardian-${selected.id}-${attempt}`;
+            const artifacts = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: selected.id, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data.artifacts)) throw new Error('Guardian artifact API returned malformed data');
+              artifacts.push(...response.data.artifacts);
+              if (response.data.artifacts.length < 100) break;
+              if (page === 1000) throw new Error('Guardian artifact pagination exceeded the fail-closed page limit');
+            }
+            const sameName = artifacts.filter(artifact => artifact.name === expectedName);
+            if (sameName.length !== 1 || sameName[0].expired || sameName[0].id <= 0 || sameName[0].size_in_bytes <= 0 || !/^sha256:[0-9a-f]{64}$/.test(sameName[0].digest || '')) throw new Error('selected Guardian run does not have exactly one current digest-bound artifact');
+            fs.writeFileSync('ci-guardian-selection.json', JSON.stringify({repository: context.payload.repository.full_name, pr_number: pull.number, action: context.payload.action, base_repo: pull.base.repo.full_name, base_ref: pull.base.ref, base_sha: pull.base.sha, head_repo: pull.head.repo.full_name, head_ref: pull.head.ref, head_sha: pull.head.sha, run_id: selected.id, run_attempt: attempt, workflow_id: selected.workflow_id, workflow_path: workflow.data.path, run_event: selected.event, run_status: selected.status, run_conclusion: selected.conclusion, run_created_at: selected.created_at, run_number: selected.run_number, job: {id: guardianJobs[0].id, name: guardianJobs[0].name, status: guardianJobs[0].status, conclusion: guardianJobs[0].conclusion, head_sha: guardianJobs[0].head_sha}, check: {id: check.id, name: check.name, app_id: check.app.id, status: check.status, conclusion: check.conclusion, head_sha: check.head_sha, suite_id: check.check_suite && check.check_suite.id}, artifact: {id: sameName[0].id, name: sameName[0].name, size: sameName[0].size_in_bytes, expired: sameName[0].expired, digest: sameName[0].digest}, expected_head_sha: expectedHead}, null, 2) + '\n');
+      - name: Download selected Guardian artifact
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          artifact_id="$(jq -r '.artifact.id' ci-guardian-selection.json)"
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
+            --output ci-guardian-artifact.zip
+          expected_digest="$(jq -r '.artifact.digest' ci-guardian-selection.json | sed 's/^sha256://')"
+          actual_digest="$(sha256sum ci-guardian-artifact.zip | awk '{print $1}')"
+          test -n "$expected_digest" && test "$actual_digest" = "$expected_digest"
+          printf '%s\n' "$actual_digest" > ci-guardian-zip-sha256.txt
+          mkdir -p ci-guardian-input
+          unzip -oq ci-guardian-artifact.zip -d ci-guardian-input
+          test -s ci-guardian-input/ci-guardian.json
+      - name: Validate Guardian promotion evidence
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const crypto = require('crypto');
+            const guardian = require('./scripts/ci-proof/guardian');
+            const eventPull = context.payload.pull_request;
+            const currentPullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number});
+            const pull = currentPullResponse.data;
+            if (!pull || pull.number !== eventPull.number || pull.base?.ref !== eventPull.base?.ref || pull.base?.sha !== eventPull.base?.sha || pull.head?.ref !== eventPull.head?.ref || pull.head?.sha !== eventPull.head?.sha) throw new Error('promotion PR identity drifted before Guardian evidence validation');
+            const selection = JSON.parse(fs.readFileSync('ci-guardian-selection.json', 'utf8'));
+            const manifest = JSON.parse(fs.readFileSync('ci-guardian-input/ci-guardian.json', 'utf8'));
+            const live = await guardian.readLiveTopology({getRef: p => github.rest.git.getRef(p), compareCommits: p => github.rest.repos.compareCommits(p), owner: context.repo.owner, repo: context.repo.repo});
+            fs.writeFileSync('ci-promotion-observation.json', JSON.stringify({repository: pull.base.repo.full_name, pr_number: pull.number, action: context.payload.action, state: pull.state, draft: pull.draft === true, merged: pull.merged === true, mergeable: pull.mergeable === true, mergeable_state: pull.mergeable_state, base_repo: pull.base.repo.full_name, base_ref: pull.base.ref, base_sha: pull.base.sha, head_repo: pull.head.repo.full_name, head_ref: pull.head.ref, head_sha: pull.head.sha, live_dev_sha: live.refs.dev_sha, live_main_sha: live.refs.main_sha, topology: live.topology}, null, 2) + '\n');
+            const expected = {
+              repository: context.payload.repository.full_name, pull_request_number: pull.number, action: context.payload.action,
+              base_repo: pull.base.repo.full_name, base_ref: pull.base.ref, base_sha: pull.base.sha,
+              head_repo: pull.head.repo.full_name, head_ref: pull.head.ref, head_sha: pull.head.sha,
+              default_branch: context.payload.repository.default_branch, workflow_ref: `${context.payload.repository.full_name}/.github/workflows/ci-guardian.yml@refs/heads/dev`, workflow_sha: live.refs.dev_sha,
+              runtime_ref: 'refs/heads/dev', runtime_sha: live.refs.dev_sha, event_ref: 'refs/heads/dev', run_id: selection.run_id, run_attempt: selection.run_attempt,
+            };
+            guardian.validateGuardianArtifact(manifest, expected);
+            if (manifest.live_refs_before.dev_sha !== live.refs.dev_sha || manifest.live_refs_after.dev_sha !== live.refs.dev_sha || manifest.live_refs_before.main_sha !== live.refs.main_sha || manifest.live_refs_after.main_sha !== live.refs.main_sha || manifest.topology.merge_base_sha !== live.topology.merge_base_sha || manifest.topology.ahead_by !== live.topology.ahead_by || manifest.topology.behind_by !== live.topology.behind_by) throw new Error('Guardian live topology drifted while proof was collecting evidence');
+            const zipDigest = fs.readFileSync('ci-guardian-zip-sha256.txt', 'utf8').trim();
+            if (manifest.decision !== 'PASS' || manifest.code !== null || manifest.check_name !== 'CI guardian' || selection.job.id <= 0 || selection.artifact.id <= 0 || selection.artifact.name !== `ci-guardian-${selection.run_id}-${selection.run_attempt}` || `sha256:${zipDigest}` !== selection.artifact.digest) throw new Error('Guardian promotion evidence is not exact PASS/check/artifact identity');
+            const bundle = {schema: 'gooo/ci-guardian-evidence/v1', route: manifest.route, check_name: manifest.check_name, repository: manifest.repository, pr_number: manifest.pull_request_number, action: manifest.action, base_repo: manifest.base_repo, base_ref: manifest.base_ref, base_sha: manifest.base_sha, head_repo: manifest.head_repo, head_ref: manifest.head_ref, head_sha: manifest.head_sha, workflow_ref: manifest.workflow_ref, workflow_sha: manifest.workflow_sha, runtime_ref: manifest.runtime_ref, runtime_sha: manifest.runtime_sha, event_ref: manifest.event_ref, default_branch: manifest.default_branch, observer_environment: manifest.observer_environment, observer_environment_snapshot: manifest.observer_environment_snapshot, observer_environment_digest: manifest.observer_environment_digest, head_binding_status: manifest.head_binding_status, run_id: selection.run_id, run_attempt: selection.run_attempt, workflow_id: selection.workflow_id, workflow_path: selection.workflow_path, run_event: selection.run_event, run_status: selection.run_status, run_conclusion: selection.run_conclusion, run_created_at: selection.run_created_at, run_number: selection.run_number, live_refs_before: manifest.live_refs_before, live_refs_after: manifest.live_refs_after, topology: manifest.topology, branch_protection: manifest.branch_protection, dev_branch_protection: manifest.dev_branch_protection, artifact_id: selection.artifact.id, artifact_name: selection.artifact.name, artifact_size: selection.artifact.size, artifact_expired: selection.artifact.expired, artifact_digest: selection.artifact.digest, manifest_bundle_sha256: manifest.bundle_sha256, guardian_job_id: selection.job.id, guardian_job_name: selection.job.name, guardian_job_status: selection.job.status, guardian_job_conclusion: selection.job.conclusion, guardian_job_head_sha: selection.job.head_sha, check_run_id: selection.check.id, check_run_name: selection.check.name, check_run_app_id: selection.check.app_id, check_run_status: selection.check.status, check_run_conclusion: selection.check.conclusion, check_run_head_sha: selection.check.head_sha, check_suite_id: selection.check.suite_id, decision: manifest.decision, code: manifest.code, bundle_sha256: manifest.bundle_sha256};
+            fs.writeFileSync('ci-guardian-evidence.json', JSON.stringify(bundle, null, 2) + '\n');
+      - name: Collect proof context
+        uses: actions/github-script@v7
+        env:
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const crypto = require('crypto');
+            const fs = require('fs');
+            const pull = context.payload.pull_request;
+            const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
+            const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
+            const baseSha = pull ? pull.base.sha : context.payload.before;
+            const headSha = pull ? pull.head.sha : context.sha;
+            const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
+            const domainEvidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-domain-evidence.json', 'utf8'));
+            let guardianEvidence = null;
+            let promotionObservation = null;
+            if (baseRef === 'main') {
+              if (!fs.existsSync('ci-guardian-evidence.json')) throw new Error('main promotion proof requires exact Guardian evidence');
+              guardianEvidence = JSON.parse(fs.readFileSync('ci-guardian-evidence.json', 'utf8'));
+              if (fs.existsSync('ci-promotion-observation.json')) promotionObservation = JSON.parse(fs.readFileSync('ci-promotion-observation.json', 'utf8'));
+            }
+            let protection = {
+              repository: `${context.repo.owner}/${context.repo.repo}`,
+              branch: baseRef,
+              policy_sha256: evidence.digests.policy_sha256,
+              event_ref: evidence.event_ref,
+              checkout_ref: evidence.checkout_ref,
+              token_source: 'not_observed',
+              app_installation_id: 0,
+              app_slug: '',
+              read_status: 'unavailable',
+              exists: false,
+              strict: false,
+              required_checks: [],
+              required_check_bindings: [],
+              enforce_admins: false,
+              required_reviews: 0,
+              dismiss_stale_reviews: false,
+              require_last_push_approval: false,
+              linear_history: false,
+              allow_force_pushes: false,
+              allow_deletions: false,
+              required_signatures: false,
+              required_conversation_resolution: false,
+              block_creations: false,
+              lock_branch: false,
+              allow_fork_syncing: false,
+              restrictions: null,
+              missing_reason: 'trusted_guardian_required',
+              base_sha: baseSha,
+              head_sha: headSha,
+              run_id: context.runId,
+              run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
+              workflow_sha: process.env.CI_WORKFLOW_SHA,
+              observed_at: null,
+              valid_until: null,
+              digest_sha256: ''
+            };
+            if (baseRef === 'main') {
+              if (!guardianEvidence.branch_protection) throw new Error('Guardian envelope is missing trusted branch protection evidence');
+              protection = guardianEvidence.branch_protection;
+            } else {
+              const protectionPayload = {...protection, digest_sha256: ''};
+              protection.digest_sha256 = crypto.createHash('sha256').update(JSON.stringify(protectionPayload)).digest('hex');
+            }
+            const {listWorkflowArtifacts, selectCurrentEvidenceArtifact, selectUniqueArtifact} = require('./scripts/ci-proof/artifacts');
+            let artifacts = [];
+            let artifactReadError = '';
+            const runAttempt = Number(process.env.GITHUB_RUN_ATTEMPT || 1);
+            try {
+              const artifactRows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+              artifacts = [selectCurrentEvidenceArtifact(artifactRows, context.runId, runAttempt)];
+            } catch (error) {
+              artifactReadError = error.message;
+              core.warning(error.message);
+            }
+            const expectedArtifactName = `ci-evidence-${context.runId}-${runAttempt}`;
+            const artifactsVerified = !artifactReadError && artifacts.length === 1 && artifacts[0].id > 0 && artifacts[0].name === expectedArtifactName && artifacts[0].size_bytes > 0 && !artifacts[0].expired && /^sha256:[0-9a-f]{64}$/.test(artifacts[0].digest);
+            const eventRef = context.ref;
+            const checkoutRef = headSha;
+            const contextData = {
+              repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
+              base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
+              pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
+              actor: context.actor, builder: context.actor, gate: 'CI policy',
+              branch_protected: protection.exists, branch_protection: protection, dev_branch_protection: guardianEvidence ? guardianEvidence.dev_branch_protection : null, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
+              provenance_status: 'verified', artifacts_status: artifactsVerified ? 'verified' : 'missing',
+              write_effect: 'none', no_write_outside_generated: true, artifacts, fixture_paths: ['examples/billing/main.gooo'],
+              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence, guardian_evidence: guardianEvidence, promotion_observation: promotionObservation
+            };
+            fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
+      - name: Build deterministic proof and append receipt
+        run: |
+          go run ./scripts/ci-proof \
+            --root . --governance .github/ci-governance.json --evidence ci-evidence-input/ci-evidence.json \
+            --jobs ci-final-jobs.json --context ci-proof-context.json --generated ci-generated/first \
+            --output ci-proof.json --receipt provenance-receipt.jsonl
+      - name: Verify promotion proof fail closed
+        run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
+      - name: Upload proof and provenance receipt
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ci-proof.json
+            provenance-receipt.jsonl
+            ci-jobs.json
+            ci-evidence-input/ci-domain-evidence.json
+          if-no-files-found: error
+          retention-days: 14
+
+  failure-report:
+    name: CI failure summary
+    needs: [format, vet, test, race, semantic, policy, proof]
+    if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Download exact proof evidence
+        if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-proof-input
+          if-no-files-found: ignore
+      - name: Capture exact failure tuple
+        uses: actions/github-script@v7
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const jobsFromAPI = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              jobsFromAPI.push(...response.data.jobs);
+              if (response.data.jobs.length < 100) break;
+              if (page === 1000) throw new Error('failure job API pagination exceeded the fail-closed page limit');
+            }
+            const expectedJobs = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
+            const pull = context.payload.pull_request;
+            const {normalizeBaseRef, normalizeOwnerBranch} = require('./scripts/ci-proof/refs');
+            const normalizedBaseRef = normalizeBaseRef(context.eventName, context.ref, pull);
+            const normalizedOwnerBranch = normalizeOwnerBranch(context.eventName, context.ref, pull);
+            fs.writeFileSync('ci-base-ref.txt', normalizedBaseRef + '\n');
+            fs.writeFileSync('ci-owner-branch.txt', normalizedOwnerBranch + '\n');
+            const terminalFailures = jobsFromAPI
+              .filter(job => job.name !== 'CI failure summary' && job.status === 'completed' && job.conclusion && job.conclusion !== 'success' && job.conclusion !== 'skipped')
+              .sort((left, right) => left.id - right.id || left.name.localeCompare(right.name));
+            if (terminalFailures.length === 0) {
+              const canonicalJobs = jobsFromAPI
+                .filter(job => expectedJobs.includes(job.name))
+                .sort((left, right) => expectedJobs.indexOf(left.name) - expectedJobs.indexOf(right.name));
+              const head = pull?.head.sha || context.sha;
+              const runAttempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+              const canonicalBound = canonicalJobs.length === expectedJobs.length
+                && canonicalJobs.every((job, index) => job.name === expectedJobs[index] && job.status === 'completed' && job.conclusion === 'success' && job.head_sha === head && job.run_id === context.runId && Number(job.run_attempt || 0) === runAttempt);
+              if (!canonicalBound) throw new Error('no-failure closure requires six terminal successful canonical jobs bound to the exact tuple');
+              fs.writeFileSync('ci-closure-input.json', JSON.stringify({
+                canonical_jobs: canonicalJobs.map(job => ({id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: job.run_id, run_attempt: runAttempt})),
+                terminal_failures: [],
+                terminal_failure_codes: [],
+              }, null, 2) + '\n');
+              fs.writeFileSync('ci-failure-input.json', '');
+              return;
+            }
+            const failed = terminalFailures[0];
+            const head = pull?.head.sha || context.sha;
+            const runAttempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+            const exactJob = job => job.head_sha === head && job.run_id === context.runId && Number(job.run_attempt || 0) === runAttempt;
+            if (terminalFailures.some(job => !job.head_sha || !exactJob(job))) {
+              throw new Error('terminal failure API record lacks exact head/run binding; refusing to guess');
+            }
+            const proofPath = 'ci-proof-input/ci-proof.json';
+            let proof = null;
+            let proofState = 'not_available';
+            if (fs.existsSync(proofPath)) {
+              try {
+                proof = JSON.parse(fs.readFileSync(proofPath, 'utf8'));
+                const exactProofTuple = proof.schema === 'gooo/ci-proof/v3'
+                  && proof.repository === `${context.repo.owner}/${context.repo.repo}`
+                  && proof.event === context.eventName
+                  && proof.base_ref === normalizedBaseRef
+                  && proof.base_sha === (pull?.base.sha || context.payload.before)
+                  && proof.head_sha === head
+                  && proof.ref === context.ref
+                  && proof.event_ref === context.ref
+                  && proof.checkout_ref === head
+                  && Number(proof.pr_number || 0) === Number(pull?.number || 0)
+                  && Number(proof.run_id || 0) === context.runId
+                  && Number(proof.run_attempt || 0) === runAttempt
+                  && proof.workflow_sha === process.env.CI_WORKFLOW_SHA;
+                const proofJobNames = Array.isArray(proof.jobs) ? proof.jobs.map(job => job.name) : [];
+                const jobsBound = Array.isArray(proof.jobs) && proof.jobs.length === expectedJobs.length
+                  && new Set(proofJobNames).size === expectedJobs.length
+                  && expectedJobs.every(name => proofJobNames.includes(name))
+                  && proof.jobs.every(job => job.head_sha === head && Number(job.run_id || 0) === context.runId && Number(job.run_attempt || 0) === runAttempt);
+                const proofArtifacts = Array.isArray(proof.artifacts) ? proof.artifacts : null;
+                const expectedArtifactName = `ci-evidence-${context.runId}-${runAttempt}`;
+                const artifactsBound = proofArtifacts !== null && proofArtifacts.length === 1 && proofArtifacts[0].name === expectedArtifactName && proofArtifacts.every(artifact => artifact.id > 0 && artifact.run_id === context.runId && artifact.run_attempt === runAttempt && artifact.size_bytes > 0 && !artifact.expired && /^sha256:[0-9a-f]{64}$/.test(artifact.digest || ''));
+                if (!exactProofTuple || !jobsBound) {
+                  proofState = 'stale_or_mismatched';
+                  proof = null;
+                } else if (!artifactsBound || proofArtifacts.length === 0) {
+                  proofState = 'artifact_missing_or_invalid';
+                } else {
+                  proofState = 'verified';
+                }
+              } catch (_) {
+                proof = null;
+                proofState = 'artifact_invalid';
+              }
+            } else {
+              proofState = 'artifact_missing';
+            }
+            const proofArtifactName = `ci-proof-${context.runId}-${runAttempt}`;
+            const {listWorkflowArtifacts, selectUniqueArtifact} = require('./scripts/ci-proof/artifacts');
+            let proofArtifact = null;
+            try {
+              const artifactRows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+              proofArtifact = selectUniqueArtifact(artifactRows, proofArtifactName);
+            } catch (error) {
+              proofState = 'artifact_invalid';
+              core.warning(error.message);
+            }
+            const proofArtifactRef = proofArtifact ? {id: proofArtifact.id, name: proofArtifact.name, size_bytes: proofArtifact.size_in_bytes, expired: proofArtifact.expired, digest: proofArtifact.digest || '', run_id: context.runId, run_attempt: runAttempt} : null;
+            const proofArtifactValid = proofArtifactRef !== null && proofArtifactRef.id > 0 && proofArtifactRef.size_bytes > 0 && !proofArtifactRef.expired && /^sha256:[0-9a-f]{64}$/.test(proofArtifactRef.digest);
+            if (proofState === 'verified' && !proofArtifactValid) proofState = 'artifact_missing_or_invalid';
+            const terminalCodes = new Map([
+              ['CI policy', 'CI-SCOPE-001'],
+              ['Semantic conformance', 'CI-TEST-001'],
+              ['gofmt', 'CI-TEST-001'],
+              ['go vet', 'CI-TEST-001'],
+              ['go test', 'CI-TEST-001'],
+              ['go test -race', 'CI-TEST-001'],
+              ['CI evidence', 'CI-ARTIFACT-001'],
+            ]);
+            const classifyTerminalJob = job => {
+              if (job.name === 'CI policy') {
+                const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
+                return failedStep?.name === 'Check DAMP/DRY caps' ? 'CI-CAPS-001' : 'CI-SCOPE-001';
+              }
+              if (job.name === 'CI evidence') {
+                const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
+                return failedStep?.name === 'Reproduce generated evidence input' || failedStep?.name === 'Capture CLI domain evidence' ? 'CI-TEST-001' : 'CI-ARTIFACT-001';
+              }
+              return terminalCodes.get(job.name) || 'CI-UNCLASSIFIED-001';
+            };
+            const proofRejections = proof && Array.isArray(proof.rejections) ? [...new Set(proof.rejections)].sort() : [];
+            const proofCodes = new Set();
+            const addProofCode = (predicate, code) => { if (proofRejections.some(predicate)) proofCodes.add(code); };
+            addProofCode(reason => reason === 'branch_protection_missing' || reason === 'write_effect_not_none', 'CI-GATE-001');
+            addProofCode(reason => reason === 'scope_not_passed', 'CI-SCOPE-001');
+            addProofCode(reason => reason.includes('artifact') || reason.includes('fixture_inventory'), 'CI-ARTIFACT-001');
+            addProofCode(reason => reason === 'fixture_evidence_not_verified', 'CI-TEST-001');
+            addProofCode(reason => reason.includes('fresh') || reason.includes('stale') || reason.includes('mismatch'), 'CI-FRESHNESS-001');
+            addProofCode(reason => reason.includes('provenance') || reason === 'missing_external_evidence', 'CI-PROVENANCE-001');
+            addProofCode(reason => reason.includes('ownership'), 'CI-OWNERSHIP-001');
+            addProofCode(reason => reason.includes('dependency'), 'CI-DEPENDENCY-001');
+            addProofCode(reason => reason.includes('contract') || reason === 'source_evidence_not_verified' || reason === 'semantic_evidence_not_verified' || reason.startsWith('cache_'), 'CI-CONTRACT-001');
+            let code;
+            let failureCodes;
+            let artifactStatus = 'not_applicable';
+            let artifactReason = 'canonical_job_failure';
+            let rejections = [];
+            let missingReasons = {};
+            let artifacts = [];
+            let proofFailureCodes = [];
+            if (failed.name === 'CI proof bundle') {
+              if (proofState === 'artifact_missing' || proofState === 'artifact_invalid' || proofState === 'artifact_missing_or_invalid') {
+                code = 'CI-ARTIFACT-001';
+                proofFailureCodes = [code];
+                rejections = [proofState === 'artifact_missing' ? 'proof_artifact_missing' : 'proof_artifact_invalid'];
+                artifactStatus = 'missing';
+                artifactReason = proofState;
+              } else if (proofState === 'stale_or_mismatched') {
+                code = 'CI-FRESHNESS-001';
+                proofFailureCodes = [code];
+                rejections = ['proof_artifact_tuple_mismatch'];
+                artifactStatus = 'not_applicable';
+                artifactReason = 'stale_or_mismatched_proof_artifact';
+              } else {
+                if (proofCodes.size === 0) throw new Error('proof rejection set has no catalog mapping; refusing to guess');
+                proofFailureCodes = [...proofCodes].sort();
+                rejections = proofRejections;
+                missingReasons = proof.missing_reasons || {};
+                artifacts = proof.artifacts;
+                artifactStatus = 'verified';
+                artifactReason = 'proof_artifact_current_and_bound';
+              }
+            } else {
+              code = classifyTerminalJob(failed);
+              proofFailureCodes = [code];
+              if (proofState === 'verified') {
+                artifacts = proof.artifacts;
+                artifactStatus = 'verified';
+                artifactReason = 'proof_artifact_current_and_bound';
+                rejections = proofRejections;
+                missingReasons = proof.missing_reasons || {};
+              }
+            }
+            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-CAPS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
+            const terminalFailureCodes = terminalFailures.map(job => job.name === 'CI proof bundle' ? (proofFailureCodes[0] || 'CI-UNCLASSIFIED-001') : classifyTerminalJob(job));
+            failureCodes = [...new Set([...terminalFailureCodes, ...proofFailureCodes])].sort();
+            code = priority.find(candidate => failureCodes.includes(candidate)) || 'CI-UNCLASSIFIED-001';
+            const message = `${failed.name} concluded ${failed.conclusion} for exact run ${context.runId} attempt ${runAttempt}; codes=${failureCodes.join(',')}`;
+            const remediation = code === 'CI-GATE-001'
+              ? 'Read every recorded rejection and obtain only the missing independent governance evidence for this exact tuple.'
+              : code === 'CI-ARTIFACT-001'
+                ? 'Rebuild and publish the required artifact for this exact run and verify its count, digest, and tuple binding.'
+                : code === 'CI-FRESHNESS-001'
+                  ? 'Stop promotion, fetch the current refs, and require a fresh exact-head run.'
+                  : code === 'CI-PROVENANCE-001'
+                    ? 'Record the missing provenance reason and request legitimate external evidence without inferring it.'
+                    : code === 'CI-SCOPE-001'
+                      ? 'Inspect the CI policy summary and remove the out-of-scope or contract-violating change before pushing.'
+                      : 'Reproduce the terminal job failure at the exact head, fix only the owned scope, and rerun the required checks.';
+            fs.writeFileSync('ci-failure-input.json', JSON.stringify({
+              code,
+              failure_codes: failureCodes,
+              message,
+              remediation,
+              owner_branch: normalizedOwnerBranch,
+              rejections,
+              missing_reasons: missingReasons,
+              artifacts,
+              proof_artifact: proofArtifactRef,
+              artifact_status: artifactStatus,
+              artifact_reason: artifactReason,
+              terminal_failures: terminalFailures.map(job => ({id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: job.run_id, run_attempt: runAttempt})),
+              terminal_failure_codes: terminalFailureCodes,
+              job: {
+                id: failed.id,
+                name: failed.name,
+                status: failed.status,
+                conclusion: failed.conclusion,
+                head_sha: failed.head_sha,
+                run_id: failed.run_id,
+                run_attempt: runAttempt,
+              },
+            }, null, 2) + '\n');
+      - name: Generate versioned failure manifest and summary
+        if: ${{ always() }}
+        env:
+          CI_REPOSITORY: ${{ github.repository }}
+          CI_EVENT: ${{ github.event_name }}
+          CI_EVENT_REF: ${{ github.ref }}
+          CI_CHECKOUT_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          CI_BASE_REF: ""
+          CI_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          CI_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          CI_PR_NUMBER: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || 0 }}
+          CI_RUN_ID: ${{ github.run_id }}
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_ACTOR: ${{ github.actor }}
+          CI_OWNER_BRANCH: ""
+        run: |
+          test -s ci-base-ref.txt
+          test -s ci-owner-branch.txt
+          export CI_BASE_REF="$(cat ci-base-ref.txt)"
+          export CI_OWNER_BRANCH="$(cat ci-owner-branch.txt)"
+          if [ -s ci-closure-input.json ]; then
+            go run ./scripts/ci-proof --closure-input ci-closure-input.json --closure-output ci-closure.json
+            jq -r '"### CI closure\n- status: `\(.status)`\n- decision: `\(.decision)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)`\n- canonical jobs: \(.canonical_jobs | map([.id, .name, .head_sha, .conclusion] | @csv) | join("; "))\n- terminal failures: none\n- write effect: `\(.write_effect)`"' ci-closure.json >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ ! -s ci-failure-input.json ]; then
+            echo "No machine-readable closure or failure manifest was emitted for this run." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          go run ./scripts/ci-proof --failure-input ci-failure-input.json --failure-output ci-failure.json
+          jq -r '"### CI failure\n- code: `\(.code)`\n- class: `\(.class)`\n- severity: `\(.severity)`\n- scope: `\(.scope)`\n- blocking_scope: `\(.blocking_scope)`\n- parallelizable: `\(.parallelizable)`\n- handoff_required: `\(.handoff_required)`\n- exact tuple: run `\(.run_id)` attempt `\(.run_attempt)` head `\(.head_sha)` job `\(.job.id)`\n- catalog: `\(.catalog_path)`\n- evidence: \(.evidence_refs | join(", "))\n- message: \(.message)\n- remediation: \(.remediation)"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"- failure_codes: `\(.failure_codes | join(", "))`\n- owner_branch: `\(.owner_branch)` ref `\(.owner_ref)`\n- catalog_digest: `\(.catalog_digest)`\n- artifact_status: `\(.artifact_status)` reason `\(.artifact_reason)` refs \(.artifact_refs | map([.id, .name, .size_bytes, .digest, .run_id, .run_attempt] | @csv) | join("; "))\n- proof_artifact_ref: \(.proof_artifact_ref // "none" | tostring)\n- rejections: \(.rejections | join(", "))"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload failure reason manifest
+        if: ${{ always() && hashFiles('ci-failure.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-failure.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload no-failure closure manifest
+        if: ${{ always() && hashFiles('ci-closure.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-closure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-closure.json
+          if-no-files-found: error
+          retention-days: 14

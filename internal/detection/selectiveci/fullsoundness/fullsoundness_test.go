@@ -1,0 +1,289 @@
+package fullsoundness
+
+import (
+	"bytes"
+	"math"
+	"reflect"
+	"strings"
+	"testing"
+)
+
+func TestSoundFixture(t *testing.T) {
+	input := soundInput()
+	got := Evaluate(input)
+	if got.Decision != DecisionSound || got.Reason != ReasonSound {
+		t.Fatalf("got %s/%s, want SOUND/SOUND", got.Decision, got.Reason)
+	}
+	if got.CommandCount != 3 || got.SelectedCommandCount != 2 || got.ObligationCount != 2 || got.AuthoritativeImpactedObligationCount != 1 {
+		t.Fatalf("semantic counts = %#v", got)
+	}
+	if got.ResourceVector == nil || got.ResourceVector.Class != ResourceImproved {
+		t.Fatalf("resource vector = %#v, want IMPROVED", got.ResourceVector)
+	}
+	if !got.SemanticEvaluated {
+		t.Fatal("sound result did not evaluate semantics")
+	}
+	if got.ExecutionAuthorized || got.CIAuthorized || !got.ValidDigests() {
+		t.Fatalf("output flags or digest invalid: %#v", got)
+	}
+	t.Logf("direct decision=%s envelope=%s", got.DecisionDigest, got.CanonicalDigest)
+}
+
+func TestClosedIDs(t *testing.T) {
+	valid := []string{"c1", "o1", "a", "z_9", "command-guard"}
+	for _, value := range valid {
+		if !validID(value) {
+			t.Errorf("validID(%q) = false", value)
+		}
+	}
+	invalid := []string{"", strings.Repeat("a", 65), "C1", "c/1", "c:1", "c 1", "1command"}
+	for _, value := range invalid {
+		if validID(value) {
+			t.Errorf("validID(%q) = true", value)
+		}
+	}
+}
+
+func TestClosedReasons(t *testing.T) {
+	cases := []struct {
+		name     string
+		mutate   func(*Input)
+		decision Decision
+		reason   Reason
+	}{
+		{"authorization", func(input *Input) { input.ExecutionAuthorized = true }, DecisionUnsound, ReasonAuthorizationPresent},
+		{"CI authorization", func(input *Input) { input.CIAuthorized = true }, DecisionUnsound, ReasonAuthorizationPresent},
+		{"selected receipt set", func(input *Input) {
+			input.SelectionReceipt.CommandIDs = append(input.SelectionReceipt.CommandIDs, id("command/pass"))
+		}, DecisionUnsound, ReasonSelectedSetMismatch},
+		{"global guard", func(input *Input) { selectOnly(input, []string{id("command/impact")}) }, DecisionUnsound, ReasonGlobalGuardOmitted},
+		{"selected extra failure", func(input *Input) {
+			selected := findOutcome(input.SelectedOutcomes, id("command/impact"))
+			selected.Status = OutcomeFail
+		}, DecisionUnsound, ReasonSelectedExtraFailure},
+		{"status mismatch", func(input *Input) {
+			full := findOutcome(input.FullOutcomes, id("command/impact"))
+			full.Status, full.FailureCode = OutcomeFail, "full"
+		}, DecisionUnsound, ReasonSelectedFullStatusMismatch},
+		{"failure code", func(input *Input) {
+			full := findOutcome(input.FullOutcomes, id("command/impact"))
+			selected := findOutcome(input.SelectedOutcomes, id("command/impact"))
+			full.Status, selected.Status, full.FailureCode, selected.FailureCode = OutcomeFail, OutcomeFail, "full", "selected"
+		}, DecisionUnsound, ReasonFailureCodeMismatch},
+		{"output digest", func(input *Input) {
+			findOutcome(input.SelectedOutcomes, id("command/impact")).OutputDigest = digest("9")
+		}, DecisionUnsound, ReasonOutputDigestMismatch},
+		{"omitted full failure", func(input *Input) {
+			selectOnly(input, []string{id("command/guard")})
+			full := findOutcome(input.FullOutcomes, id("command/impact"))
+			full.Status, full.FailureCode = OutcomeFail, "failed"
+		}, DecisionUnsound, ReasonOmittedFullFailure},
+		{"impacted omitted", func(input *Input) { selectOnly(input, []string{id("command/guard")}) }, DecisionUnsound, ReasonImpactedCommandOmitted},
+		{"missing selected receipt", func(input *Input) { input.SelectedResourceReceipts = nil }, DecisionUnknown, ReasonFullSuiteRequired},
+		{"missing full receipt", func(input *Input) { input.FullResourceReceipts = nil }, DecisionUnknown, ReasonFullSuiteRequired},
+		{"missing selection receipt", func(input *Input) { input.SelectionReceipt = nil }, DecisionUnknown, ReasonFullSuiteRequired},
+		{"duplicate command obligation", func(input *Input) {
+			input.Commands[1].ObligationIDs = append(input.Commands[1].ObligationIDs, input.Commands[1].ObligationIDs[0])
+		}, DecisionUnknown, ReasonFullSuiteRequired},
+		{"unregistered obligation", func(input *Input) {
+			input.Commands[1].ObligationIDs = append(input.Commands[1].ObligationIDs, id("obligation/missing"))
+		}, DecisionUnknown, ReasonUnregisteredObligation},
+		{"unprovable obligation", func(input *Input) { input.Obligations[0].Authority = AuthorityCandidate }, DecisionUnknown, ReasonUnprovableObligation},
+		{"zero commands", zeroCommandInput, DecisionUnknown, ReasonZeroCommandDenominator},
+		{"invalid outcome", func(input *Input) { findOutcome(input.FullOutcomes, id("command/impact")).Status = "OTHER" }, DecisionUnknown, ReasonInvalidOutcome},
+		{"digest binding", func(input *Input) { input.SelectionReceipt.SnapshotDigest = digest("0") }, DecisionUnknown, ReasonDigestBindingMismatch},
+		{"resource overflow", func(input *Input) { input.FullResourceReceipts[0].CPUCoreNS = math.MaxInt64 }, DecisionUnknown, ReasonResourceOverflow},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			input := soundInput()
+			test.mutate(&input)
+			got := Evaluate(input)
+			if got.Decision != test.decision || got.Reason != test.reason {
+				t.Fatalf("got %s/%s, want %s/%s", got.Decision, got.Reason, test.decision, test.reason)
+			}
+			if got.ExecutionAuthorized || got.CIAuthorized {
+				t.Fatalf("result authorized execution: %#v", got)
+			}
+		})
+	}
+}
+
+func TestSharedObligationClosure(t *testing.T) {
+	input := soundInput()
+	shared := id("obligation/impact")
+	input.Commands = append(input.Commands, Command{ID: id("command/shared"), ObligationIDs: []string{shared}})
+	input.FullOutcomes = append(input.FullOutcomes, outcome("command/shared", OutcomePass, "", "4"))
+	input.FullResourceReceipts = append(input.FullResourceReceipts, receipt(&input, "command/shared", 1, 1, 1, 1, 1, 1))
+	got := Evaluate(input)
+	if got.Decision != DecisionUnsound || got.Reason != ReasonImpactedCommandOmitted {
+		t.Fatalf("got %s/%s, want UNSOUND/IMPACTED_COMMAND_OMITTED", got.Decision, got.Reason)
+	}
+	selectOnly(&input, []string{id("command/guard"), id("command/impact"), id("command/shared")})
+	got = Evaluate(input)
+	if got.Decision != DecisionSound || got.Reason != ReasonSound {
+		t.Fatalf("shared closure got %s/%s, want SOUND/SOUND", got.Decision, got.Reason)
+	}
+}
+
+func TestPermutationCanonicalOutput(t *testing.T) {
+	first := soundInput()
+	second := soundInput()
+	reverseInput(&second)
+	leftOutput := Evaluate(first)
+	rightOutput := Evaluate(second)
+	if !reflect.DeepEqual(leftOutput, rightOutput) {
+		t.Fatalf("permuted outputs differ:\n%#v\n%#v", leftOutput, rightOutput)
+	}
+	left, err := EncodeJSON(leftOutput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	right, err := EncodeJSON(rightOutput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(left, right) {
+		t.Fatalf("permutations differ:\n%s\n%s", left, right)
+	}
+}
+
+func TestSnapshotChangesOnlyEnvelopeDigest(t *testing.T) {
+	first := soundInput()
+	second := soundInput()
+	rebindSnapshot(&second, digest("0"))
+	left := Evaluate(first)
+	right := Evaluate(second)
+	if left.Decision != DecisionSound || right.Decision != DecisionSound {
+		t.Fatalf("snapshot inputs not sound: %s/%s", left.Decision, right.Decision)
+	}
+	if left.DecisionDigest != right.DecisionDigest {
+		t.Fatalf("decision digest changed: %s != %s", left.DecisionDigest, right.DecisionDigest)
+	}
+	if left.CanonicalDigest == right.CanonicalDigest {
+		t.Fatal("envelope digest did not bind snapshot")
+	}
+}
+
+func TestResourceClasses(t *testing.T) {
+	equal := soundInput()
+	selectOnly(&equal, []string{id("command/guard"), id("command/impact"), id("command/pass")})
+	if got := Evaluate(equal); got.Decision != DecisionSound || got.ResourceVector.Class != ResourceEqual {
+		t.Fatalf("equal resources got %#v", got)
+	}
+	regressed := soundInput()
+	findReceipt(regressed.SelectedResourceReceipts, id("command/impact")).CPUCoreNS = 20
+	if got := Evaluate(regressed); got.Decision != DecisionSound || got.ResourceVector.Class != ResourceRegressed {
+		t.Fatalf("regressed resources got %#v", got)
+	}
+	higherUtilization := soundInput()
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).CPUCoreNS = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).WallNS = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).PeakRSSBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).ReadBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/guard")).WriteBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).CPUCoreNS = 2
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).WallNS = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).PeakRSSBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).ReadBytes = 1
+	findReceipt(higherUtilization.SelectedResourceReceipts, id("command/impact")).WriteBytes = 1
+	got := Evaluate(higherUtilization)
+	if got.Decision != DecisionSound || got.ResourceVector.Class != ResourceImproved {
+		t.Fatalf("higher utilization resources got %#v", got)
+	}
+	if got.ResourceVector.Full.Utilization != (Utilization{Numerator: 10, Denominator: 10}) || got.ResourceVector.Selected.Utilization != (Utilization{Numerator: 3, Denominator: 2}) {
+		t.Fatalf("utilization was not retained exactly: %#v", got.ResourceVector)
+	}
+}
+
+func TestSemanticEvaluationStage(t *testing.T) {
+	cases := []struct {
+		name      string
+		mutate    func(*Input)
+		decision  Decision
+		reason    Reason
+		evaluated bool
+		selected  uint64
+	}{
+		{"missing full receipt", func(input *Input) { input.FullResourceReceipts = nil }, DecisionUnknown, ReasonFullSuiteRequired, false, 2},
+		{"missing selected receipt", func(input *Input) { input.SelectedResourceReceipts = nil }, DecisionUnknown, ReasonFullSuiteRequired, false, 2},
+		{"global guard omitted", func(input *Input) { selectOnly(input, []string{id("command/impact")}) }, DecisionUnsound, ReasonGlobalGuardOmitted, false, 1},
+		{"resource overflow", func(input *Input) { input.FullResourceReceipts[0].CPUCoreNS = math.MaxInt64 }, DecisionUnknown, ReasonResourceOverflow, true, 2},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			input := soundInput()
+			test.mutate(&input)
+			got := Evaluate(input)
+			if got.Decision != test.decision || got.Reason != test.reason || got.SemanticEvaluated != test.evaluated {
+				t.Fatalf("got %#v", got)
+			}
+			if got.CommandCount != 3 || got.SelectedCommandCount != test.selected || got.ObligationCount != 2 {
+				t.Fatalf("raw counts = %#v", got)
+			}
+			assertDecisionSemanticStage(t, got)
+		})
+	}
+}
+
+func assertDecisionSemanticStage(t *testing.T, output Output) {
+	t.Helper()
+	semantic, err := semanticProjection(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !output.SemanticEvaluated {
+		if semantic.FullCount != 0 || semantic.SelectedCount != 0 || semantic.FullPassCount != 0 || semantic.SelectedPassCount != 0 || semantic.FullFailCount != 0 || semantic.SelectedFailCount != 0 || len(semantic.FullFailureIDs) != 0 || len(semantic.SelectedFailureIDs) != 0 || len(semantic.OmittedIDs) != 0 {
+			t.Fatalf("unevaluated semantic projection = %#v", semantic)
+		}
+		return
+	}
+	if semantic.FullCount != 3 || semantic.SelectedCount != 2 || semantic.FullPassCount != 3 || semantic.SelectedPassCount != 2 || len(semantic.FullFailureIDs) != 0 || len(semantic.SelectedFailureIDs) != 0 || !reflect.DeepEqual(semantic.OmittedIDs, []string{id("command/pass")}) {
+		t.Fatalf("evaluated semantic projection = %#v", semantic)
+	}
+}
+
+func TestStrictJSON(t *testing.T) {
+	encoded, err := EncodeInputJSON(soundInput())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ClassifyJSON(encoded); got.Decision != DecisionSound {
+		t.Fatalf("encoded input got %s/%s", got.Decision, got.Reason)
+	}
+	canonical := strings.TrimSpace(string(encoded))
+	duplicate := strings.Replace(canonical, `"schema_version":"`+SchemaVersion+`"`, `"schema_version":"`+SchemaVersion+`","schema_version":"`+SchemaVersion+`"`, 1)
+	unknown := strings.TrimSuffix(canonical, "}") + `,"extra":true}`
+	for name, data := range map[string]string{"duplicate": duplicate, "unknown": unknown, "trailing": canonical + " {}"} {
+		t.Run(name, func(t *testing.T) {
+			got := ClassifyJSON([]byte(data))
+			if got.Decision != DecisionUnknown || got.Reason != ReasonFullSuiteRequired {
+				t.Fatalf("got %s/%s, want UNKNOWN/FULL_SUITE_REQUIRED", got.Decision, got.Reason)
+			}
+		})
+	}
+}
+
+func zeroCommandInput(input *Input) {
+	input.Obligations = []Obligation{}
+	input.Commands = []Command{}
+	input.ImpactedObligationIDs = []string{}
+	input.SelectedCommandIDs = []string{}
+	input.SelectionReceipt.CommandIDs = []string{}
+	input.FullOutcomes = []Outcome{}
+	input.SelectedOutcomes = []Outcome{}
+	input.FullResourceReceipts = []ResourceReceipt{}
+	input.SelectedResourceReceipts = []ResourceReceipt{}
+}
+
+func reverseInput(input *Input) {
+	reverseObligations(input.Obligations)
+	reverseCommands(input.Commands)
+	reverseOutcomes(input.FullOutcomes)
+	reverseOutcomes(input.SelectedOutcomes)
+	reverseReceipts(input.FullResourceReceipts)
+	reverseReceipts(input.SelectedResourceReceipts)
+	reverseStrings(input.ImpactedObligationIDs)
+	reverseStrings(input.SelectedCommandIDs)
+	reverseStrings(input.SelectionReceipt.CommandIDs)
+}
