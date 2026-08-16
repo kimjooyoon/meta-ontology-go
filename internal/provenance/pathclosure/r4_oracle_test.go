@@ -24,15 +24,13 @@ func literalR4Oracle(name string) (pathclosure.Status, string) {
 			"missing record":               {pathclosure.UNKNOWN, pathclosure.CodeMissingRecord},
 			"missing evidence binding":     {pathclosure.UNKNOWN, pathclosure.CodeMissingEvidence},
 			"missing provider binding":     {pathclosure.UNKNOWN, pathclosure.CodeMissingProvider},
-			"compile labeled runtime":      {pathclosure.UNKNOWN, pathclosure.CodePhaseMismatch},
-			"runtime labeled compile":      {pathclosure.UNKNOWN, pathclosure.CodePhaseMismatch},
 			"stale provider phase digest":  {pathclosure.UNKNOWN, pathclosure.CodePhaseMismatch},
 			"producer only effect claim":   {pathclosure.UNKNOWN, pathclosure.CodeMissingObserver},
 		}[name].status, map[string]string{
 			"complete": pathclosure.CodeR4ProofValid, "wrong subject": pathclosure.CodeInvalidPath, "wrong object endpoint": pathclosure.CodeInvalidPath,
 			"wrong canonical record bytes": pathclosure.CodeInvalidPath, "wrong predecessor": pathclosure.CodeInvalidPath, "duplicate receipt": pathclosure.CodeConflictingReceipt,
 			"conflicting receipt": pathclosure.CodeConflictingReceipt, "missing record": pathclosure.CodeMissingRecord, "missing evidence binding": pathclosure.CodeMissingEvidence,
-			"missing provider binding": pathclosure.CodeMissingProvider, "compile labeled runtime": pathclosure.CodePhaseMismatch, "runtime labeled compile": pathclosure.CodePhaseMismatch,
+			"missing provider binding":    pathclosure.CodeMissingProvider,
 			"stale provider phase digest": pathclosure.CodePhaseMismatch, "producer only effect claim": pathclosure.CodeMissingObserver,
 		}[name]
 }

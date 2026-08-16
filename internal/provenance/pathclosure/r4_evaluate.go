@@ -153,9 +153,6 @@ func evaluateR4Path(path R4Path, records map[semantic.ID]R4Record, receipts map[
 	if len(path.RecordIDs) == 0 || len(path.RecordIDs) != len(path.RecordBytes) {
 		return FAIL_CLOSED, CodeInvalidPath, "path record IDs and canonical record bytes are not a non-empty equal-length sequence"
 	}
-	if len(path.ExpectedLabels) != 0 && len(path.ExpectedLabels) != len(path.RecordIDs) {
-		return FAIL_CLOSED, CodeInvalidPath, "path expected-label sequence has the wrong length"
-	}
 	if err := invalidR4ID(path.StartID, "path start ID"); err != nil {
 		return FAIL_CLOSED, CodeInvalidPath, err.Error()
 	}
@@ -198,9 +195,6 @@ func evaluateR4Path(path R4Path, records map[semantic.ID]R4Record, receipts map[
 		if index == len(path.RecordIDs)-1 && record.ObjectID != path.EndID {
 			return FAIL_CLOSED, CodeInvalidPath, "path end does not match last record object"
 		}
-		if len(path.ExpectedLabels) != 0 && path.ExpectedLabels[index] != record.Label {
-			return UNKNOWN, CodePhaseMismatch, "expected label does not match canonical record label"
-		}
 		if status, code, reason := validateR4Binding(record, receipts); status != PASS {
 			return status, code, reason
 		}
@@ -221,7 +215,7 @@ func decodeCanonicalR4Record(data []byte) (R4Record, error) {
 	if !bytes.Equal(data, canonical) {
 		return R4Record{}, fmt.Errorf("non-canonical JSON")
 	}
-	record := R4Record{ID: semantic.ID(wire.ID), SubjectID: semantic.ID(wire.SubjectID), ObjectID: semantic.ID(wire.ObjectID), ProviderID: semantic.ID(wire.ProviderID), ProviderDigest: wire.ProviderDigest, Phase: R4Phase(wire.Phase), PhaseDigest: wire.PhaseDigest, Label: wire.Label, PredecessorID: semantic.ID(wire.PredecessorID), ReceiptID: semantic.ID(wire.ReceiptID), Writes: wire.Writes, Effect: wire.Effect}
+	record := R4Record{ID: semantic.ID(wire.ID), SubjectID: semantic.ID(wire.SubjectID), ObjectID: semantic.ID(wire.ObjectID), ProviderID: semantic.ID(wire.ProviderID), ProviderDigest: wire.ProviderDigest, Phase: R4Phase(wire.Phase), PhaseDigest: wire.PhaseDigest, PredecessorID: semantic.ID(wire.PredecessorID), ReceiptID: semantic.ID(wire.ReceiptID), Writes: wire.Writes, Effect: wire.Effect}
 	return normalizeR4Record(record)
 }
 
@@ -248,8 +242,8 @@ func validateR4Binding(record R4Record, receipts map[semantic.ID]R4Receipt) (Sta
 	if (record.Effect != "" || !record.Writes) && receipt.ObserverID == "" {
 		return UNKNOWN, CodeMissingObserver, "record " + record.ID.String() + " makes a no-write/effect claim without an observer-owned receipt"
 	}
-	if (record.Phase != R4CompilePhase && record.Phase != R4RuntimePhase) || record.Label != string(record.Phase) {
-		return UNKNOWN, CodePhaseMismatch, "record " + record.ID.String() + " phase and label disagree"
+	if record.Phase != R4CompilePhase && record.Phase != R4RuntimePhase {
+		return UNKNOWN, CodePhaseMismatch, "record " + record.ID.String() + " has no explicit supported phase binding"
 	}
 	if !validR4Digest(record.ProviderDigest) || !validR4Digest(record.PhaseDigest) || !validR4Digest(receipt.ProviderDigest) || !validR4Digest(receipt.PhaseDigest) {
 		return UNKNOWN, CodePhaseMismatch, "provider or phase digest is not a current canonical digest for record " + record.ID.String()

@@ -42,7 +42,6 @@ type R4Record struct {
 	ProviderDigest string
 	Phase          R4Phase
 	PhaseDigest    string
-	Label          string
 	PredecessorID  semantic.ID
 	ReceiptID      semantic.ID
 	Writes         bool
@@ -67,12 +66,11 @@ type R4Receipt struct {
 // R4Path is an ordered, finite claim. RecordBytes are the exact canonical JSON
 // bytes that must be recomputed for the ordered RecordIDs.
 type R4Path struct {
-	ID             semantic.ID
-	StartID        semantic.ID
-	EndID          semantic.ID
-	RecordIDs      []semantic.ID
-	RecordBytes    []string
-	ExpectedLabels []string
+	ID          semantic.ID
+	StartID     semantic.ID
+	EndID       semantic.ID
+	RecordIDs   []semantic.ID
+	RecordBytes []string
 }
 
 type R4Boundary struct {
@@ -104,7 +102,7 @@ func (r R4Record) canonicalFields() r4WireRecord {
 	return r4WireRecord{
 		ID: r.ID.String(), SubjectID: r.SubjectID.String(), ObjectID: r.ObjectID.String(),
 		ProviderID: r.ProviderID.String(), ProviderDigest: r.ProviderDigest,
-		Phase: string(r.Phase), PhaseDigest: r.PhaseDigest, Label: r.Label,
+		Phase: string(r.Phase), PhaseDigest: r.PhaseDigest,
 		PredecessorID: r.PredecessorID.String(), ReceiptID: r.ReceiptID.String(),
 		Writes: r.Writes, Effect: r.Effect,
 	}
@@ -158,7 +156,7 @@ func normalizeR4Record(raw R4Record) (R4Record, error) {
 			return R4Record{}, err
 		}
 	}
-	out.ProviderDigest, out.PhaseDigest, out.Label, out.Effect = strings.TrimSpace(raw.ProviderDigest), strings.TrimSpace(raw.PhaseDigest), strings.TrimSpace(raw.Label), strings.TrimSpace(raw.Effect)
+	out.ProviderDigest, out.PhaseDigest, out.Effect = strings.TrimSpace(raw.ProviderDigest), strings.TrimSpace(raw.PhaseDigest), strings.TrimSpace(raw.Effect)
 	return out, nil
 }
 
@@ -202,7 +200,6 @@ func normalizeR4Path(raw R4Path) (R4Path, error) {
 		}
 	}
 	out.RecordBytes = append([]string(nil), raw.RecordBytes...)
-	out.ExpectedLabels = append([]string(nil), raw.ExpectedLabels...)
 	return out, nil
 }
 
@@ -210,4 +207,16 @@ func sortedR4IDs(values []semantic.ID) []semantic.ID {
 	out := append([]semantic.ID(nil), values...)
 	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
 	return out
+}
+
+// Canonical is the decision-only representation. It contains no expected or
+// display label, so metadata outside the R4 contract cannot affect evidence.
+func (r R4Result) Canonical() string {
+	return fmt.Sprintf("status=%s|code=%s|reason=%s|required=%v|covered=%v|proof=%t|promotion=%t|cost=%d", r.Status, r.Code, r.Reason, sortedR4IDs(r.RequiredPathIDs), sortedR4IDs(r.CoveredPathIDs), r.ProofValid, r.PromotionAuthorized, r.Cost)
+}
+
+// CanonicalDigest seals only the deterministic decision fields. It is not a
+// signature and carries no external-authenticity or promotion authority.
+func (r R4Result) CanonicalDigest() string {
+	return semantic.StableHashString("gooo-path-closure-r4-result/v1\x00" + r.Canonical())
 }

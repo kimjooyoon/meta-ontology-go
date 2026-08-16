@@ -18,7 +18,6 @@ type r4WireRecord struct {
 	ProviderDigest string `json:"provider_digest"`
 	Phase          string `json:"phase"`
 	PhaseDigest    string `json:"phase_digest"`
-	Label          string `json:"label"`
 	PredecessorID  string `json:"predecessor_id"`
 	ReceiptID      string `json:"receipt_id"`
 	Writes         bool   `json:"writes"`
@@ -39,12 +38,11 @@ type r4WireReceipt struct {
 }
 
 type r4WirePath struct {
-	ID             string   `json:"id"`
-	StartID        string   `json:"start_id"`
-	EndID          string   `json:"end_id"`
-	RecordIDs      []string `json:"record_ids"`
-	RecordBytes    []string `json:"record_bytes"`
-	ExpectedLabels []string `json:"expected_labels"`
+	ID          string   `json:"id"`
+	StartID     string   `json:"start_id"`
+	EndID       string   `json:"end_id"`
+	RecordIDs   []string `json:"record_ids"`
+	RecordBytes []string `json:"record_bytes"`
 }
 
 type r4WireBoundary struct {
@@ -80,7 +78,7 @@ func wireR4Input(value R4Input) r4WireInput {
 		for _, id := range path.RecordIDs {
 			ids = append(ids, id.String())
 		}
-		paths = append(paths, r4WirePath{ID: path.ID.String(), StartID: path.StartID.String(), EndID: path.EndID.String(), RecordIDs: ids, RecordBytes: append([]string(nil), path.RecordBytes...), ExpectedLabels: append([]string(nil), path.ExpectedLabels...)})
+		paths = append(paths, r4WirePath{ID: path.ID.String(), StartID: path.StartID.String(), EndID: path.EndID.String(), RecordIDs: ids, RecordBytes: append([]string(nil), path.RecordBytes...)})
 	}
 	sort.Slice(paths, func(i, j int) bool { return paths[i].ID < paths[j].ID })
 	ids := make([]string, 0, len(value.Boundary.RequiredPathIDs))
@@ -96,13 +94,13 @@ func r4InputFromWire(value r4WireInput) R4Input {
 		input.Boundary.RequiredPathIDs = append(input.Boundary.RequiredPathIDs, semantic.ID(id))
 	}
 	for _, record := range value.Records {
-		input.Records = append(input.Records, R4Record{ID: semantic.ID(record.ID), SubjectID: semantic.ID(record.SubjectID), ObjectID: semantic.ID(record.ObjectID), ProviderID: semantic.ID(record.ProviderID), ProviderDigest: record.ProviderDigest, Phase: R4Phase(record.Phase), PhaseDigest: record.PhaseDigest, Label: record.Label, PredecessorID: semantic.ID(record.PredecessorID), ReceiptID: semantic.ID(record.ReceiptID), Writes: record.Writes, Effect: record.Effect})
+		input.Records = append(input.Records, R4Record{ID: semantic.ID(record.ID), SubjectID: semantic.ID(record.SubjectID), ObjectID: semantic.ID(record.ObjectID), ProviderID: semantic.ID(record.ProviderID), ProviderDigest: record.ProviderDigest, Phase: R4Phase(record.Phase), PhaseDigest: record.PhaseDigest, PredecessorID: semantic.ID(record.PredecessorID), ReceiptID: semantic.ID(record.ReceiptID), Writes: record.Writes, Effect: record.Effect})
 	}
 	for _, receipt := range value.Receipts {
 		input.Receipts = append(input.Receipts, R4Receipt{ID: semantic.ID(receipt.ID), EventID: semantic.ID(receipt.EventID), RecordID: semantic.ID(receipt.RecordID), ProviderID: semantic.ID(receipt.ProviderID), ProviderDigest: receipt.ProviderDigest, Phase: R4Phase(receipt.Phase), PhaseDigest: receipt.PhaseDigest, ObserverID: semantic.ID(receipt.ObserverID), Writes: receipt.Writes, Effect: receipt.Effect})
 	}
 	for _, path := range value.Paths {
-		converted := R4Path{ID: semantic.ID(path.ID), StartID: semantic.ID(path.StartID), EndID: semantic.ID(path.EndID), RecordBytes: append([]string(nil), path.RecordBytes...), ExpectedLabels: append([]string(nil), path.ExpectedLabels...)}
+		converted := R4Path{ID: semantic.ID(path.ID), StartID: semantic.ID(path.StartID), EndID: semantic.ID(path.EndID), RecordBytes: append([]string(nil), path.RecordBytes...)}
 		for _, id := range path.RecordIDs {
 			converted.RecordIDs = append(converted.RecordIDs, semantic.ID(id))
 		}

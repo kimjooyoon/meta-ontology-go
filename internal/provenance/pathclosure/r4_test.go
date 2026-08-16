@@ -25,14 +25,14 @@ func completeR4Fixture() r4Fixture {
 	phaseDigest := r4Digest("phase")
 	root, middle, end := r4ID("node/root"), r4ID("node/middle"), r4ID("node/end")
 	records := []pathclosure.R4Record{
-		{ID: r4ID("record/compile"), SubjectID: root, ObjectID: middle, ProviderID: provider, ProviderDigest: providerDigest, Phase: pathclosure.R4CompilePhase, PhaseDigest: phaseDigest, Label: "compile", ReceiptID: r4ID("receipt/compile"), Writes: true},
-		{ID: r4ID("record/runtime"), SubjectID: middle, ObjectID: end, ProviderID: provider, ProviderDigest: providerDigest, Phase: pathclosure.R4RuntimePhase, PhaseDigest: phaseDigest, Label: "runtime", PredecessorID: r4ID("record/compile"), ReceiptID: r4ID("receipt/runtime"), Writes: true},
+		{ID: r4ID("record/compile"), SubjectID: root, ObjectID: middle, ProviderID: provider, ProviderDigest: providerDigest, Phase: pathclosure.R4CompilePhase, PhaseDigest: phaseDigest, ReceiptID: r4ID("receipt/compile"), Writes: true},
+		{ID: r4ID("record/runtime"), SubjectID: middle, ObjectID: end, ProviderID: provider, ProviderDigest: providerDigest, Phase: pathclosure.R4RuntimePhase, PhaseDigest: phaseDigest, PredecessorID: r4ID("record/compile"), ReceiptID: r4ID("receipt/runtime"), Writes: true},
 	}
 	receipts := []pathclosure.R4Receipt{
 		{ID: r4ID("receipt/compile"), EventID: r4ID("event/compile"), RecordID: records[0].ID, ProviderID: provider, ProviderDigest: providerDigest, Phase: pathclosure.R4CompilePhase, PhaseDigest: phaseDigest, Writes: true},
 		{ID: r4ID("receipt/runtime"), EventID: r4ID("event/runtime"), RecordID: records[1].ID, ProviderID: provider, ProviderDigest: providerDigest, Phase: pathclosure.R4RuntimePhase, PhaseDigest: phaseDigest, Writes: true},
 	}
-	path := pathclosure.R4Path{ID: r4ID("path/main"), StartID: root, EndID: end, ExpectedLabels: []string{"compile", "runtime"}}
+	path := pathclosure.R4Path{ID: r4ID("path/main"), StartID: root, EndID: end}
 	for _, record := range records {
 		path.RecordIDs = append(path.RecordIDs, record.ID)
 		bytesValue, err := record.CanonicalRecordBytes()
@@ -54,7 +54,6 @@ func cloneR4Input(value pathclosure.R4Input) pathclosure.R4Input {
 	for index := range copy.Paths {
 		copy.Paths[index].RecordIDs = append([]semantic.ID(nil), value.Paths[index].RecordIDs...)
 		copy.Paths[index].RecordBytes = append([]string(nil), value.Paths[index].RecordBytes...)
-		copy.Paths[index].ExpectedLabels = append([]string(nil), value.Paths[index].ExpectedLabels...)
 	}
 	return copy
 }
@@ -139,13 +138,12 @@ func TestEvaluateR4DirectForgedPathAndReceiptPartitions(t *testing.T) {
 			mutateR4Record(input, r4ID("record/runtime"), func(record *pathclosure.R4Record) { record.ProviderID, record.ProviderDigest = "", "" })
 			refreshR4RecordBytes(input)
 		}, pathclosure.UNKNOWN, pathclosure.CodeMissingProvider},
-		{"compile labeled runtime", func(input *pathclosure.R4Input) {
-			mutateR4Record(input, r4ID("record/compile"), func(record *pathclosure.R4Record) { record.Label = "runtime" })
+		{"record phase altered without receipt", func(input *pathclosure.R4Input) {
+			mutateR4Record(input, r4ID("record/compile"), func(record *pathclosure.R4Record) { record.Phase = pathclosure.R4RuntimePhase })
 			refreshR4RecordBytes(input)
 		}, pathclosure.UNKNOWN, pathclosure.CodePhaseMismatch},
-		{"runtime labeled compile", func(input *pathclosure.R4Input) {
-			mutateR4Record(input, r4ID("record/runtime"), func(record *pathclosure.R4Record) { record.Label = "compile" })
-			refreshR4RecordBytes(input)
+		{"receipt phase altered without record", func(input *pathclosure.R4Input) {
+			mutateR4Receipt(input, r4ID("receipt/runtime"), func(receipt *pathclosure.R4Receipt) { receipt.Phase = pathclosure.R4CompilePhase })
 		}, pathclosure.UNKNOWN, pathclosure.CodePhaseMismatch},
 		{"stale provider phase digest", func(input *pathclosure.R4Input) {
 			mutateR4Receipt(input, r4ID("receipt/runtime"), func(receipt *pathclosure.R4Receipt) { receipt.PhaseDigest = r4Digest("stale") })
@@ -170,7 +168,7 @@ func TestEvaluateR4DirectForgedPathAndReceiptPartitions(t *testing.T) {
 	}
 }
 
-func TestEvaluateR4FiniteBoundaryAndExpectedLabelIsolation(t *testing.T) {
+func TestEvaluateR4FiniteBoundaryAndRootIsolation(t *testing.T) {
 	for _, test := range []struct {
 		name   string
 		mutate func(*pathclosure.R4Input)
@@ -178,7 +176,6 @@ func TestEvaluateR4FiniteBoundaryAndExpectedLabelIsolation(t *testing.T) {
 	}{
 		{"open world", func(input *pathclosure.R4Input) { input.Boundary.OpenWorld = true }, pathclosure.CodeOpenWorld},
 		{"not exhausted", func(input *pathclosure.R4Input) { input.Boundary.Exhausted = false }, pathclosure.CodeUnexhaustedBoundary},
-		{"label expectation is isolated", func(input *pathclosure.R4Input) { input.Paths[0].ExpectedLabels[0] = "runtime" }, pathclosure.CodePhaseMismatch},
 		{"root replay is not discovered", func(input *pathclosure.R4Input) { input.Paths[0].StartID = r4ID("node/alternate-root") }, pathclosure.CodeInvalidPath},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -189,6 +186,20 @@ func TestEvaluateR4FiniteBoundaryAndExpectedLabelIsolation(t *testing.T) {
 				t.Fatalf("R4 result = %#v, want code %s", got, test.code)
 			}
 		})
+	}
+}
+
+func TestR4ExpectedOnlyMetaLabelCannotAffectDecision(t *testing.T) {
+	input := completeR4Fixture().input
+	baseline := pathclosure.EvaluateR4(input)
+	baselineDigest := baseline.CanonicalDigest()
+	// Expected/meta labels are deliberately not an R4 input. Keeping them in a
+	// caller-side adapter must not alter any result field or decision digest.
+	for _, metaLabel := range []string{"compile", "runtime", "forged-alias"} {
+		result := func(_ string) pathclosure.R4Result { return pathclosure.EvaluateR4(input) }(metaLabel)
+		if !reflect.DeepEqual(result, baseline) || result.CanonicalDigest() != baselineDigest {
+			t.Fatalf("meta label %q changed the R4 decision: %#v vs %#v", metaLabel, result, baseline)
+		}
 	}
 }
 
