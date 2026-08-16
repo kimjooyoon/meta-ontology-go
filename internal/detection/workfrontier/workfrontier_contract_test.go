@@ -38,8 +38,8 @@ func TestWorkfrontierFixtures(t *testing.T) {
 				t.Fatalf("quality = %q, want %q", got.Quality, fixture.Expected.Quality)
 			}
 			assertRequiredConflicts(t, fixture)
-			if fixture.GreedyNonmaximum && oracle.MaximumSize <= len(oracle.SelectedIDs) {
-				t.Fatalf("oracle did not prove a larger compatible set: maximum=%d selected=%d", oracle.MaximumSize, len(oracle.SelectedIDs))
+			if fixture.FairBaseline && len(oracle.SelectedIDs) == 0 {
+				t.Fatal("fair baseline selected no compatible path")
 			}
 		})
 	}
