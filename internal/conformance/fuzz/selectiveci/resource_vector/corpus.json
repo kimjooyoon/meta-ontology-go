@@ -1,0 +1,69 @@
+{
+  "schema": "gooo/selective-ci-resource-vector-corpus/v1",
+  "canonical_digest": "sha256:65bafd89d06df21800003a3750eb8ca887fd84119bb8ddfa37a037a325b5c267",
+  "cases": [
+    {
+      "name": "r4-f-01",
+      "input": {
+        "schema": "gooo/selective-ci-resource-vector/v1",
+        "fixture_id": "r4-f-01",
+        "root": "/workspace/r4-f-01",
+        "commands": [
+          {
+            "id": "stable://command/compile",
+            "path": "/workspace/r4-f-01/src/compile.gooo",
+            "cpu_core_ns": 15,
+            "memory_bytes": 96,
+            "peak_memory_bytes": 128,
+            "work_units": 8,
+            "pressures": [{"id": "pressure://parse", "independence_group_id": "group://parse", "applicable": true}]
+          },
+          {
+            "id": "stable://command/verify",
+            "path": "/workspace/r4-f-01/src/verify.gooo",
+            "cpu_core_ns": 18,
+            "memory_bytes": 128,
+            "peak_memory_bytes": 64,
+            "work_units": 10,
+            "pressures": [{"id": "pressure://verify", "independence_group_id": "group://verify", "applicable": true}]
+          },
+          {
+            "id": "stable://command/package",
+            "path": "/workspace/r4-f-01/src/package.gooo",
+            "cpu_core_ns": 3,
+            "memory_bytes": 48,
+            "peak_memory_bytes": 32,
+            "work_units": 1,
+            "pressures": [{"id": "pressure://package", "independence_group_id": "group://package", "applicable": true}]
+          }
+        ],
+        "paths": [
+          {"id": "prov://path/compile-source", "path": "/workspace/r4-f-01/src/compile.gooo", "command_id": "stable://command/compile", "record_ids": ["prov://record/01", "prov://record/02", "prov://record/03", "prov://record/04"], "finite": true, "closure_numerator": 1, "closure_denominator": 1},
+          {"id": "prov://path/compile-generated", "path": "/workspace/r4-f-01/gen/compile.go", "command_id": "stable://command/compile", "record_ids": ["prov://record/05", "prov://record/06", "prov://record/07", "prov://record/08"], "finite": true, "closure_numerator": 1, "closure_denominator": 1},
+          {"id": "prov://path/verify-source", "path": "/workspace/r4-f-01/src/verify.gooo", "command_id": "stable://command/verify", "record_ids": ["prov://record/09", "prov://record/10", "prov://record/11", "prov://record/12"], "finite": true, "closure_numerator": 1, "closure_denominator": 1},
+          {"id": "prov://path/package-source", "path": "/workspace/r4-f-01/src/package.gooo", "command_id": "stable://command/package", "record_ids": ["prov://record/13", "prov://record/14", "prov://record/15"], "finite": true, "closure_numerator": 1, "closure_denominator": 1}
+        ],
+        "selected_command_ids": ["stable://command/compile", "stable://command/verify"],
+        "full_command_ids": ["stable://command/compile", "stable://command/verify", "stable://command/package"],
+        "ceilings": {
+          "selected": {"cpu_core_ns": 33, "memory_bytes": 224, "peak_memory_bytes": 128, "work_units": 18, "affected_stable_ids": 2, "applicable_pressures": 2, "independent_groups": 2, "unique_prov_records": 12, "finite_prov_paths": 3, "closure_numerator": 3, "closure_denominator": 3},
+          "full": {"cpu_core_ns": 36, "memory_bytes": 272, "peak_memory_bytes": 128, "work_units": 19, "affected_stable_ids": 3, "applicable_pressures": 3, "independent_groups": 3, "unique_prov_records": 15, "finite_prov_paths": 4, "closure_numerator": 4, "closure_denominator": 4}
+        }
+      },
+      "expected": {
+        "schema": "gooo/selective-ci-resource-vector/v1",
+        "fixture_id": "r4-f-01",
+        "input_digest": "sha256:f8e4ddff1de99d7f61bbc976bb8ef9dec2fe4707b8ca00ec26c9ef397df8de60",
+        "selected": {"cpu_core_ns": 33, "memory_bytes": 224, "peak_memory_bytes": 128, "work_units": 18, "affected_stable_ids": 2, "applicable_pressures": 2, "independent_groups": 2, "unique_prov_records": 12, "finite_prov_paths": 3, "closure_numerator": 3, "closure_denominator": 3},
+        "full": {"cpu_core_ns": 36, "memory_bytes": 272, "peak_memory_bytes": 128, "work_units": 19, "affected_stable_ids": 3, "applicable_pressures": 3, "independent_groups": 3, "unique_prov_records": 15, "finite_prov_paths": 4, "closure_numerator": 4, "closure_denominator": 4},
+        "decision": "PASS",
+        "reason": "NONE",
+        "limit_failures": [],
+        "full_suite_required": false,
+        "proof_valid": true,
+        "canonical_output_digest": "sha256:8b9442d49d0f3f1f03a7246eafa6daa2dca86003fd6e883aca517fe9d5dc285e",
+        "replay_digest": "sha256:aa8c5dedc51036940584aff435b4bef4e0ff3ce40fc8541b39ac73a025e4a3ec"
+      }
+    }
+  ]
+}
