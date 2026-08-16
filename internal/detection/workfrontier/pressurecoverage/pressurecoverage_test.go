@@ -6,8 +6,29 @@ import (
 	"testing"
 )
 
+const (
+	expectedSnapshot  = "sha256:84440ba2628e8ce259a82d21115eb08c78a37dee612f2efdea6e3b7bf0f508c7"
+	expectedPolicy    = "sha256:80c9b1f9b9f059c43ad73a4f2a46c740f38e41c987d66e5f7dc9203775e81968"
+	expectedRegistry  = "sha256:f325d05cef0f2c5fc1a1f03e9ac93c5a7eab96a10fbec009637f197af0f847af"
+	expectedToolchain = "sha256:e5e6b048838a03825a54a519e7e4ee56621d72be359da5a84bb8b774cd57ec7e"
+)
+
 func TestCanonicalRoundTripAndBinding(t *testing.T) {
 	input := fixture()
+	bindings := []struct {
+		role string
+		want string
+	}{
+		{"authority-snapshot", expectedSnapshot},
+		{"policy", expectedPolicy},
+		{"registry", expectedRegistry},
+		{"toolchain-options", expectedToolchain},
+	}
+	for _, binding := range bindings {
+		if got := authorityBindingDigest(input, binding.role); got != binding.want {
+			t.Fatalf("%s binding = %s, want %s", binding.role, got, binding.want)
+		}
+	}
 	want, err := CanonicalInputBytes(input)
 	if err != nil {
 		t.Fatal(err)
@@ -23,9 +44,44 @@ func TestCanonicalRoundTripAndBinding(t *testing.T) {
 	if direct.RequestedK != 21 || direct.Schema != SchemaVersion {
 		t.Fatalf("decoded envelope = %#v", direct)
 	}
-	if input.PolicyDigest != authorityBindingDigest(input, "policy") ||
-		input.RegistryDigest != authorityBindingDigest(input, "registry") {
-		t.Fatal("authority binding digest mismatch")
+}
+
+func TestBindingSurfaceMutations(t *testing.T) {
+	bindings := []struct {
+		role string
+		want string
+	}{
+		{"authority-snapshot", expectedSnapshot},
+		{"policy", expectedPolicy},
+		{"registry", expectedRegistry},
+		{"toolchain-options", expectedToolchain},
+	}
+	base := fixture()
+	baseDigest := CanonicalInputDigest(base)
+	mutations := []struct {
+		role string
+		edit func(*Input)
+	}{
+		{"authority-snapshot", func(input *Input) { input.AuthoritySnapshotDigest = "snapshot-mutated" }},
+		{"policy", func(input *Input) { input.PolicyDigest = "policy-mutated" }},
+		{"registry", func(input *Input) { input.RegistryDigest = "registry-mutated" }},
+		{"toolchain-options", func(input *Input) { input.ToolchainOptionsDigest = "toolchain-mutated" }},
+	}
+	for _, mutation := range mutations {
+		input := fixture()
+		mutation.edit(&input)
+		if CanonicalInputDigest(input) == baseDigest {
+			t.Fatalf("%s mutation did not change canonical digest", mutation.role)
+		}
+		for _, binding := range bindings {
+			got := bindingField(input, binding.role)
+			if binding.role == mutation.role && got == binding.want {
+				t.Fatalf("%s mutation did not change its binding", mutation.role)
+			}
+			if binding.role != mutation.role && got != binding.want {
+				t.Fatalf("%s mutation changed %s", mutation.role, binding.role)
+			}
+		}
 	}
 }
 
@@ -97,9 +153,13 @@ func TestStrictJSONBoundary(t *testing.T) {
 
 func fixture() Input {
 	input := Input{
-		Schema:             SchemaVersion,
-		RequestedK:         21,
-		MinimumIndependent: 2,
+		Schema:                  SchemaVersion,
+		RequestedK:              21,
+		MinimumIndependent:      2,
+		AuthoritySnapshotDigest: expectedSnapshot,
+		PolicyDigest:            expectedPolicy,
+		RegistryDigest:          expectedRegistry,
+		ToolchainOptionsDigest:  expectedToolchain,
 		PressureRecords: []PressureRecord{
 			{"pressure-z", "category-z", "group-z", "rule-1"},
 			{"pressure-a", "category-a", "group-a", "rule-1"},
@@ -108,15 +168,22 @@ func fixture() Input {
 		},
 		RequiredPressureIDs: []string{"pressure-z", "pressure-a", "pressure-b", "pressure-aa"},
 	}
-	bindDigests(&input)
 	return input
 }
 
-func bindDigests(input *Input) {
-	input.AuthoritySnapshotDigest = authorityBindingDigest(*input, "authority-snapshot")
-	input.PolicyDigest = authorityBindingDigest(*input, "policy")
-	input.RegistryDigest = authorityBindingDigest(*input, "registry")
-	input.ToolchainOptionsDigest = authorityBindingDigest(*input, "toolchain-options")
+func bindingField(input Input, role string) string {
+	switch role {
+	case "authority-snapshot":
+		return input.AuthoritySnapshotDigest
+	case "policy":
+		return input.PolicyDigest
+	case "registry":
+		return input.RegistryDigest
+	case "toolchain-options":
+		return input.ToolchainOptionsDigest
+	default:
+		return ""
+	}
 }
 
 func schemaJSON(suffix string) string {

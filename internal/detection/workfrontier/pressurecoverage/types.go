@@ -1,10 +1,10 @@
 // Package pressurecoverage defines a strict canonical pressure-input envelope.
+// A1 is syntactic and canonical only: zero K, empty required IDs, and blank or
+// arbitrary bindings are data here, not PASS, applicability, or completeness
+// decisions; those decisions belong to A2.
 package pressurecoverage
 
-const (
-	SchemaVersion        = "gooo/workfrontier-pressure-coverage/v1"
-	LanguageFloor uint64 = 2
-)
+const SchemaVersion = "gooo/workfrontier-pressure-coverage/v1"
 
 type PressureRecord struct {
 	PressureID          string `json:"pressure_id"`
