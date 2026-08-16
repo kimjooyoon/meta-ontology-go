@@ -1,8 +1,14 @@
 # Code ↔ Semantic Coupling Contract
 
 Status: normative docs contract; the two metric rows in this document are
-`DESIGN_ONLY` hypotheses. This document does not add a verifier, CI job, LSP
-capability, catalog row, adoption transition, or blocking check.
+`DESIGN_ONLY` hypotheses. This document does not add a new verifier, CI job,
+LSP capability, catalog row, adoption transition, or blocking check.
+
+Current `dev` contains `internal/detection/coupling`, a pure read-only
+evaluator for exact code-to-semantic receipts and typed paths. It is an
+implementation projection of this contract; its presence does not adopt a
+catalog row, schedule CI, add a CLI, publish durable evidence, or change
+enforcement.
 
 This contract makes explanations reproducible across the `.gooo` source,
 semantic IR, code projection, and evidence. Business intent remains in the
@@ -87,8 +93,11 @@ one valid receipt.”
 
 ## 2. Registry and fixture design
 
-The docs-owned registry is a canonical fixture/schema until a separately
-adopted implementation owns it. Its identity-bearing fields are:
+The docs-owned registry is a canonical fixture/schema for this contract. The
+merged `internal/detection/coupling` evaluator has versioned internal
+registry, manifest, receipt, input, and result schemas plus an evaluator-owned
+authority context; those APIs are projections, not new DSL syntax or an
+adoption decision. The identity-bearing fields are:
 
 ```text
 TermRecord {
@@ -293,11 +302,11 @@ row: both are `DESIGN_ONLY`, `adoption=UNOBSERVED`, and
 | UNKNOWN law | Unavailable or ambiguous snapshot, registry, toolchain/profile, source-map, IR, source, or verifier input is `UNKNOWN`; it never becomes `NO_DELTA`. |
 | N/A law | Only a future catalog predicate may prove inapplicability for a snapshot; missing proof is `UNKNOWN`. |
 | Fixture/oracle | Implementation-only refactor, semantic declaration change, candidate-only observation, and each negative receipt partition above. The oracle recomputes changed-surface closure, IR equality/delta, and receipt cardinality. |
-| Observer/layer | Future read-only `coupling-receipt-observer`, semantic/BX `L1` plus exact CI-snapshot binding `L4`; it is not a current CI job or stable CLI command. |
+| Observer/layer | Current `internal/detection/coupling` is a pure read-only evaluator for receipt/path predicates; no current CI job, stable CLI command, catalog adoption, or enforcement effect is claimed. |
 | Failure code/domain/owner/retry | `<MetricID>#<reason-kebab-case>`; feature predicate failures `FEATURE_LANE`, missing shared evidence `DEPENDENCY_LOCAL`, registry/catalog corruption `REPOSITORY_INTEGRITY`; future semantic authority owner repins and reruns after the exact cause is repaired. |
 | Anti-gaming | File counts, changed-line counts, receipt counts, or equal final text are insufficient; unregistered symbols are UNKNOWN, generated expansion maps to one origin, and a no-op receipt with false digests fails. |
 | Dependencies | Semantic scope closure, stable IDs, source-map totality, canonical IR, provenance freshness, and the independent verifier. |
-| Observability truth | `PARTIAL`: current code has semantic hashes, source spans, provenance-related structures, and generated bindings, but no adopted registry-wide receipt verifier. |
+| Observability truth | `PARTIAL`: current `dev` includes the internal coupling evaluator with exact receipt/path validation and canonical digests, but no adopted registry row, CI observer, or stable CLI command. |
 | Enforcement | `DESIGN_ONLY`, `UNOBSERVED`, `NO_EFFECT`; no adoption, CI, merge, promotion, or LSP behavior changes. |
 
 ## 5. Pressure selection and protected floors
@@ -422,8 +431,10 @@ delta evidence; candidate-only promotion remains rejected.
 CI lanes should accept the exact changed-surface closure, registry/toolchain/
 profile/catalog digests, one receipt per surface, typed paths, independent
 verifier results, and owner/retry fields. They distinguish `UNKNOWN` from
-`FAIL_CLOSED` and retain evidence append-only. Until those entry points exist,
-these are expectations only and current CI support is not claimed.
+`FAIL_CLOSED` and retain evidence append-only. The current internal coupling
+evaluator is read-only and does not schedule CI, publish durable evidence, or
+change enforcement. Until those CI and catalog adapters exist, these are
+expectations only and current CI support is not claimed.
 
 The contract digest is defined as:
 
