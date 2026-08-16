@@ -88,8 +88,8 @@ func validateLists(input Input) Reason {
 		duplicate Reason
 		malformed Reason
 	}{
-		{input.RequiredPressureIDs, ReasonDuplicateID, ReasonCatalogMismatch},
-		{input.GuardIDs, ReasonDuplicateID, ReasonCatalogMismatch},
+		{input.RequiredPressureIDs, ReasonDuplicateID, ReasonInvalidStableID},
+		{input.GuardIDs, ReasonDuplicateID, ReasonInvalidStableID},
 		{input.FinitePathIDs, ReasonMalformedFinitePath, ReasonMalformedFinitePath},
 	}
 	for _, list := range lists {
@@ -102,7 +102,7 @@ func validateLists(input Input) Reason {
 
 func addRecord(records map[string]PressureRecord, record PressureRecord) (Decision, Reason) {
 	if !validRecord(record) {
-		return DecisionFailClosed, ReasonCatalogMismatch
+		return DecisionFailClosed, ReasonInvalidStableID
 	}
 	if record.IndependenceGroupID == "" || record.ApplicabilityRuleID == "" {
 		return DecisionUnknown, ReasonApplicabilityUnproven
@@ -141,7 +141,8 @@ func listReason(values []string, duplicate, malformed Reason) Reason {
 }
 
 func listDecision(reason Reason) Decision {
-	if reason == ReasonDuplicateID || reason == ReasonMalformedFinitePath {
+	if reason == ReasonDuplicateID || reason == ReasonInvalidStableID ||
+		reason == ReasonMalformedFinitePath {
 		return DecisionFailClosed
 	}
 	return DecisionUnknown

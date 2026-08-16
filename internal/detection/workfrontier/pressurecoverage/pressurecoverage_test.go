@@ -1,6 +1,9 @@
 package pressurecoverage
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestPositiveK2(t *testing.T) {
 	input := fixture()
@@ -39,8 +42,10 @@ func TestMutationDecisions(t *testing.T) {
 		{"empty required", DecisionUnknown, ReasonRequiredInputMissing},
 		{"empty guards", DecisionUnknown, ReasonRequiredInputMissing},
 		{"empty paths", DecisionUnknown, ReasonRequiredInputMissing},
-		{"internal whitespace", DecisionUnknown, ReasonCatalogMismatch},
-		{"control ID", DecisionUnknown, ReasonCatalogMismatch},
+		{"valid but missing", DecisionUnknown, ReasonRequiredInputMissing},
+		{"internal whitespace", DecisionFailClosed, ReasonInvalidStableID},
+		{"control ID", DecisionFailClosed, ReasonInvalidStableID},
+		{"malformed path ID", DecisionFailClosed, ReasonMalformedFinitePath},
 	}
 	for _, test := range cases {
 		input := fixture()
@@ -72,10 +77,14 @@ func mutate(input *Input, name string) {
 		input.GuardIDs = []string{}
 	case "empty paths":
 		input.FinitePathIDs = []string{}
+	case "valid but missing":
+		input.RequiredPressureIDs[0] = "pressure-missing"
 	case "internal whitespace":
 		input.RequiredPressureIDs[0] = "pressure z"
 	case "control ID":
 		input.RequiredPressureIDs[0] = "pressure-z\x00"
+	case "malformed path ID":
+		input.FinitePathIDs[0] = "path 1"
 	}
 	if name != "stale digest" {
 		bindDigests(input)
@@ -90,6 +99,39 @@ func TestPermutationInvariance(t *testing.T) {
 	if got := Observe(input); got.OutputDigest != base.OutputDigest {
 		t.Fatalf("invariant changed: %#v != %#v", base, got)
 	}
+}
+
+func TestDecodeInputAcceptsCanonicalFixture(t *testing.T) {
+	data, err := json.Marshal(fixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := DecodeInput(data)
+	if err != nil || got.Schema != SchemaVersion {
+		t.Fatalf("decoded input = %#v, error = %v", got, err)
+	}
+}
+
+func TestDecodeInputRejectsUnknownAndTrailingData(t *testing.T) {
+	cases := []struct {
+		name string
+		data string
+	}{
+		{"unknown top-level field", schemaJSON(`,"display_name":"shown"`)},
+		{"unknown nested field", schemaJSON(`,"pressure_records":[{"pressure_id":"p","display_name":"shown"}]`)},
+		{"trailing JSON", schemaJSON("") + " " + schemaJSON("")},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := DecodeInput([]byte(test.data)); err == nil {
+				t.Fatal("accepted invalid JSON input")
+			}
+		})
+	}
+}
+
+func schemaJSON(suffix string) string {
+	return `{"schema":"` + SchemaVersion + `"` + suffix + `}`
 }
 
 func fixture() Input {

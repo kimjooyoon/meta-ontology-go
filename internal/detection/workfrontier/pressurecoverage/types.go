@@ -21,6 +21,7 @@ const (
 	ReasonStaleDigest               Reason = "STALE_DIGEST"
 	ReasonApplicabilityUnproven     Reason = "APPLICABILITY_UNPROVEN"
 	ReasonCatalogMismatch           Reason = "CATALOG_MISMATCH"
+	ReasonInvalidStableID           Reason = "INVALID_STABLE_ID"
 	ReasonIndependentGroupShortfall Reason = "INDEPENDENT_GROUP_SHORTFALL"
 	ReasonDuplicateID               Reason = "DUPLICATE_ID"
 	ReasonDuplicatePressureID       Reason = "DUPLICATE_PRESSURE_ID"

@@ -1,14 +1,37 @@
 package pressurecoverage
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"io"
 	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
+
+func DecodeInput(data []byte) (Input, error) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	var input Input
+	if err := decoder.Decode(&input); err != nil {
+		return Input{}, err
+	}
+	var trailing json.RawMessage
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return Input{}, errors.New("pressure coverage input has trailing JSON")
+		}
+		return Input{}, err
+	}
+	if input.Schema != SchemaVersion {
+		return Input{}, errors.New("pressure coverage input has invalid schema")
+	}
+	return input, nil
+}
 
 func CanonicalInputDigest(input Input) string {
 	data, _ := json.Marshal(normalizeInput(input))
