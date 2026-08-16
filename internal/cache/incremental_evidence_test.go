@@ -48,6 +48,7 @@ type incrementalMeasurement struct {
 }
 
 func TestIncrementalCacheMutationMatrix(t *testing.T) {
+	requireClassifiedCacheTest(t, "TestIncrementalCacheMutationMatrix", CacheTestClassSlowObservation)
 	mutations := []incrementalMutation{
 		{name: "presentation rename", presentationOnly: true, mutatedFactIndex: -1, dependencyPart: -1, expectedAffected: func(int) map[int]bool { return map[int]bool{} }},
 		{name: "local fact", mutatedFactIndex: -1, dependencyPart: -1, expectedAffected: singleAffectedPart},
