@@ -19,7 +19,7 @@ func selectedCommands(registry Registry, obligations []string) ([]Command, []Com
 		for _, commandID := range binding.CommandIDs {
 			command, ok := commands[commandID]
 			if !ok {
-				return nil, nil, failure(ReasonDanglingReference, "obligation command is not registered")
+				return nil, nil, failure(ReasonDanglingCommand, "obligation command is not registered")
 			}
 			selected[command.ID] = command
 		}

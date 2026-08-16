@@ -112,6 +112,18 @@ func TestEvaluateZeroObligationsRequiresFullSuite(t *testing.T) {
 	})
 }
 
+func TestEvaluateUncoveredChangedRootFailsClosed(t *testing.T) {
+	graph := decodeFixture(t, "positive-3of3.json")
+	graph.Nodes = append(graph.Nodes, impactgraph.Node{ID: "change:billing/uncovered", Kind: impactgraph.NodeKindSemantic})
+	result := graph.Evaluate(
+		[]string{"change:billing/pay-order", "change:billing/uncovered"},
+		payOrderObligations,
+	)
+	if result.Decision != impactgraph.UNKNOWN || !result.FullSuiteRequired || result.FailureCode != impactgraph.FailureCodeNoReachableObligations {
+		t.Fatalf("uncovered root result = %#v", result)
+	}
+}
+
 func TestDecodeRejectsMalformedGraphs(t *testing.T) {
 	for _, fixture := range []string{
 		"duplicate-node.json",

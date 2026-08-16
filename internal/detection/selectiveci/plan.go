@@ -16,10 +16,17 @@ func Plan(input Input) PlanResult {
 	if err != nil {
 		return sealResult(fallback(result, reasonFor(err)))
 	}
-	required, err := applicableObligations(graph, changed)
-	if err != nil {
-		return sealResult(fallback(result, reasonFor(err)))
+	coverage := EvaluateObligationCoverage(ObligationCoverageInput{
+		SchemaVersion:  ObligationCoverageSchemaVersion,
+		Graph:          graph,
+		Registry:       input.Registry,
+		SnapshotDigest: input.Head.Digest,
+		ChangedRootIDs: changed,
+	})
+	if coverage.Decision != CoverageDecisionExact {
+		return sealResult(fallback(result, string(coverage.Reason)))
 	}
+	required := coverage.RequiredObligationIDs
 	commands, guards, err := selectedCommands(input.Registry, required)
 	if err != nil {
 		return sealResult(fallback(result, reasonFor(err)))

@@ -30,6 +30,11 @@ func (graph Graph) Evaluate(changedIDs, executedObligationIDs []string) Evaluati
 	if len(required) == 0 {
 		return unknownEvaluation(FailureCodeNoReachableObligations)
 	}
+	for _, root := range roots {
+		if len(reachableObligations([]string{root}, adjacency, byID)) == 0 {
+			return unknownEvaluation(FailureCodeNoReachableObligations)
+		}
+	}
 
 	requiredSet := make(map[string]struct{}, len(required))
 	for _, id := range required {
