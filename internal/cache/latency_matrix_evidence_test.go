@@ -35,6 +35,7 @@ type cacheLatencySample struct {
 // each supported worker and process cardinality. These values are evidence
 // only: this test deliberately has no timing threshold or performance claim.
 func TestCacheLatencyEvidenceMatrix(t *testing.T) {
+	requireClassifiedCacheTest(t, "TestCacheLatencyEvidenceMatrix", CacheTestClassSlowObservation)
 	if os.Getenv(cacheLatencyHelperEnv) == "1" {
 		runCacheLatencyHelper(t)
 		return
@@ -125,7 +126,7 @@ func measureProcessLatency(t *testing.T, processes int, prepopulate bool) []cach
 		ready := filepath.Join(root, fmt.Sprintf("ready-%d", index))
 		result := filepath.Join(root, fmt.Sprintf("result-%d", index))
 		output := &strings.Builder{}
-		command := exec.Command(os.Args[0], "-test.run", "^TestCacheLatencyEvidenceMatrix$")
+		command := exec.Command(os.Args[0], "-test.run", "^TestCacheLatencyEvidenceMatrix$", "-cache-test-class="+CacheTestClassSlowObservation)
 		command.Env = append(os.Environ(),
 			cacheLatencyHelperEnv+"=1", cacheLatencyRootEnv+"="+root,
 			cacheLatencyReleaseEnv+"="+release, cacheLatencyReadyEnv+"="+ready,

@@ -71,6 +71,8 @@ const (
 	TokenRParen
 	TokenComma
 	TokenArrow
+	TokenLBrace
+	TokenRBrace
 )
 
 // Stable aliases make the token vocabulary convenient for callers that use
@@ -91,6 +93,8 @@ const (
 	TokenKeywordActivity  = TokenActivity
 	TokenLeftParen        = TokenLParen
 	TokenRightParen       = TokenRParen
+	TokenLeftBrace        = TokenLBrace
+	TokenRightBrace       = TokenRBrace
 )
 
 var tokenKindNames = [...]string{
@@ -107,6 +111,8 @@ var tokenKindNames = [...]string{
 	TokenRParen:     ")",
 	TokenComma:      ",",
 	TokenArrow:      "->",
+	TokenLBrace:     "{",
+	TokenRBrace:     "}",
 }
 
 // String returns a stable human-readable token name.
