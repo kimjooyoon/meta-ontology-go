@@ -13,8 +13,12 @@ import (
 func TestCorpusExpectations(t *testing.T) {
 	for _, row := range testCorpus() {
 		got := Evaluate(row.Input)
-		if got.Decision != row.Expected.Decision || got.Reason != row.Expected.Reason || !reflect.DeepEqual(got.ChangedSurfaces, row.Expected.ChangedSurfaces) || !reflect.DeepEqual(got.ReceiptSurfaces, row.Expected.ReceiptSurfaces) || got.ObservationCounts != row.Expected.ObservationCounts {
-			t.Errorf("%s got decision=%s/%s surfaces=%v/%v counts=%+v want=%s/%s surfaces=%v/%v counts=%+v", row.Name, got.Decision, got.Reason, got.ChangedSurfaces, got.ReceiptSurfaces, got.ObservationCounts, row.Expected.Decision, row.Expected.Reason, row.Expected.ChangedSurfaces, row.Expected.ReceiptSurfaces, row.Expected.ObservationCounts)
+		if got.Decision != row.Expected.Decision || got.Reason != row.Expected.Reason ||
+			!reflect.DeepEqual(got.AcceptedSurfaces, row.Expected.AcceptedSurfaces) ||
+			!reflect.DeepEqual(got.ChangedSurfaces, row.Expected.ChangedSurfaces) ||
+			!reflect.DeepEqual(got.ReceiptSurfaces, row.Expected.ReceiptSurfaces) ||
+			got.ObservationCounts != row.Expected.ObservationCounts || got.Resources != row.Expected.Resources {
+			t.Errorf("%s got decision=%s/%s accepted=%v/%v changed=%v/%v receipts=%v/%v counts=%+v/%+v resources=%+v/%+v", row.Name, got.Decision, got.Reason, got.AcceptedSurfaces, row.Expected.AcceptedSurfaces, got.ChangedSurfaces, row.Expected.ChangedSurfaces, got.ReceiptSurfaces, row.Expected.ReceiptSurfaces, got.ObservationCounts, row.Expected.ObservationCounts, got.Resources, row.Expected.Resources)
 		}
 	}
 }
@@ -99,9 +103,13 @@ func TestPresentationAndExpectedMutationIsolation(t *testing.T) {
 	}
 	mutatedCase := row
 	mutatedCase.Name = "case-label-changed"
-	mutatedCase.Expected.Decision = DecisionFailClosed
-	if got := Evaluate(mutatedCase.Input); got.InputDigest != base.InputDigest || got.CanonicalOutputDigest != base.CanonicalOutputDigest || got.ReplayDigest != base.ReplayDigest {
-		t.Fatal("case name or expected label affected result digest")
+	mutatedCase.Expected = FixtureExpectation{
+		Decision: DecisionFailClosed, Reason: ReasonDigestMismatch,
+		AcceptedSurfaces: []string{"expected-only"}, ChangedSurfaces: []string{"expected-only"}, ReceiptSurfaces: []string{"expected-only"},
+		ObservationCounts: ObservationCounts{RegistryBindings: 99, ResourceReceipts: 99}, Resources: ResourceObservation{CPUCoreNS: 99, PeakMemoryBytes: 98, WorkUnits: 97},
+	}
+	if got := Evaluate(mutatedCase.Input); !reflect.DeepEqual(got, base) {
+		t.Fatalf("case name or expected-only mutation affected actual result: base=%+v got=%+v", base, got)
 	}
 	if got := CanonicalInputDigest(row.Input); got == CanonicalInputDigest(func() Input {
 		input := cloneInput(row.Input)

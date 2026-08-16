@@ -8,11 +8,41 @@ import (
 
 func testCorpus() []CorpusCase {
 	base := makeCouplingInput(false, false)
-	positive := expectedFor(base)
+	positive := FixtureExpectation{
+		Decision: DecisionPass, Reason: ReasonNone,
+		AcceptedSurfaces: []string{"urn:gooo:surface:billing/pay-order"},
+		ChangedSurfaces:  []string{"urn:gooo:surface:billing/pay-order"},
+		ReceiptSurfaces:  []string{"urn:gooo:surface:billing/pay-order"},
+		ObservationCounts: ObservationCounts{
+			RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 1, ValidReceipts: 1,
+			PathEdges: 4, PathClaims: 1, PathEvidence: 4, ResourceReceipts: 3,
+		},
+		Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+	}
 	delta := makeCouplingInput(true, false)
-	deltaExpected := expectedFor(delta)
+	deltaExpected := FixtureExpectation{
+		Decision: DecisionPass, Reason: ReasonNone,
+		AcceptedSurfaces: []string{"urn:gooo:surface:billing/pay-order"},
+		ChangedSurfaces:  []string{"urn:gooo:surface:billing/pay-order"},
+		ReceiptSurfaces:  []string{"urn:gooo:surface:billing/pay-order"},
+		ObservationCounts: ObservationCounts{
+			RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 1, ValidReceipts: 1,
+			PathEdges: 4, PathClaims: 1, PathEvidence: 4, AddedSemanticFacts: 2, ResourceReceipts: 3,
+		},
+		Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+	}
 	candidate := makeCouplingInput(false, true)
-	candidateExpected := expectedFor(candidate)
+	candidateExpected := FixtureExpectation{
+		Decision: DecisionPass, Reason: ReasonNone,
+		AcceptedSurfaces: []string{"urn:gooo:surface:billing/pay-order"},
+		ChangedSurfaces:  []string{"urn:gooo:surface:billing/pay-order"},
+		ReceiptSurfaces:  []string{"urn:gooo:surface:billing/pay-order"},
+		ObservationCounts: ObservationCounts{
+			RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 1, ValidReceipts: 1,
+			PathEdges: 5, PathClaims: 1, PathEvidence: 4, CandidateObservations: 1, ResourceReceipts: 3,
+		},
+		Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+	}
 	noWrite := makeCouplingInput(false, false)
 	noWrite.Changes = nil
 	noWrite.Manifest.ZeroChange = true
@@ -70,21 +100,54 @@ func testCorpus() []CorpusCase {
 	pathMissingRoot.Roots = []string{"urn:gooo:source:wrong"}
 	unprovenZeroChange := cloneInput(noWrite)
 	unprovenZeroChange.Manifest.Complete = false
+	noWriteExpected := FixtureExpectation{
+		Decision: DecisionPass, Reason: ReasonNone,
+		AcceptedSurfaces: []string{}, ChangedSurfaces: []string{}, ReceiptSurfaces: []string{},
+		ObservationCounts: ObservationCounts{RegistryBindings: 2, ResourceReceipts: 3},
+		Resources:         ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+	}
 
 	return []CorpusCase{
 		{Name: "positive-no-delta", Input: base, Expected: positive},
 		{Name: "positive-semantic-delta", Input: delta, Expected: deltaExpected},
 		{Name: "positive-candidate-observation", Input: candidate, Expected: candidateExpected},
-		{Name: "positive-no-write", Input: noWrite, Expected: expectedFor(noWrite)},
-		{Name: "negative-missing-receipt", Input: missingReceipt, Expected: expectDecision(missingReceipt, DecisionUnknown, ReasonMissingReceipt)},
-		{Name: "negative-duplicate-receipt", Input: duplicateReceipt, Expected: expectDecision(duplicateReceipt, DecisionFailClosed, ReasonDuplicateReceipt)},
-		{Name: "negative-orphan-receipt", Input: orphanReceipt, Expected: expectDecision(orphanReceipt, DecisionFailClosed, ReasonOrphanReceipt)},
-		{Name: "negative-stale-receipt", Input: staleReceipt, Expected: expectDecision(staleReceipt, DecisionUnknown, ReasonStaleReceipt)},
-		{Name: "negative-unregistered-surface", Input: unregistered, Expected: expectDecision(unregistered, DecisionFailClosed, ReasonSurfaceUnregistered)},
-		{Name: "negative-delta-without-source", Input: deltaWithoutSource, Expected: expectDecision(deltaWithoutSource, DecisionFailClosed, ReasonDeltaWithoutSource)},
-		{Name: "negative-no-delta-without-equality", Input: noDeltaWithoutEquality, Expected: expectDecision(noDeltaWithoutEquality, DecisionFailClosed, ReasonNoDeltaWithoutEquality)},
-		{Name: "negative-missing-root", Input: pathMissingRoot, Expected: expectDecision(pathMissingRoot, DecisionFailClosed, ReasonPathMissing)},
-		{Name: "negative-unproven-zero-change", Input: unprovenZeroChange, Expected: expectDecision(unprovenZeroChange, DecisionUnknown, ReasonRequiredInputMissing)},
+		{Name: "positive-no-write", Input: noWrite, Expected: noWriteExpected},
+		{Name: "negative-missing-receipt", Input: missingReceipt, Expected: FixtureExpectation{
+			Decision: DecisionUnknown, Reason: ReasonMissingReceipt, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{"urn:gooo:surface:billing/pay-order"}, ReceiptSurfaces: []string{},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ResourceReceipts: 3}, Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+		}},
+		{Name: "negative-duplicate-receipt", Input: duplicateReceipt, Expected: FixtureExpectation{
+			Decision: DecisionFailClosed, Reason: ReasonDuplicateReceipt, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{"urn:gooo:surface:billing/pay-order"}, ReceiptSurfaces: []string{"urn:gooo:surface:billing/pay-order"},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 2, ValidReceipts: 1, PathEdges: 4, PathClaims: 1, PathEvidence: 4, ResourceReceipts: 3}, Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+		}},
+		{Name: "negative-orphan-receipt", Input: orphanReceipt, Expected: FixtureExpectation{
+			Decision: DecisionFailClosed, Reason: ReasonOrphanReceipt, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{"urn:gooo:surface:billing/pay-order"}, ReceiptSurfaces: []string{},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 1, PathEdges: 4, PathClaims: 1, PathEvidence: 4, ResourceReceipts: 3}, Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+		}},
+		{Name: "negative-stale-receipt", Input: staleReceipt, Expected: FixtureExpectation{
+			Decision: DecisionUnknown, Reason: ReasonStaleReceipt, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{"urn:gooo:surface:billing/pay-order"}, ReceiptSurfaces: []string{},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 1, PathEdges: 4, PathClaims: 1, PathEvidence: 4, ResourceReceipts: 3}, Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+		}},
+		{Name: "negative-unregistered-surface", Input: unregistered, Expected: FixtureExpectation{
+			Decision: DecisionFailClosed, Reason: ReasonSurfaceUnregistered, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{}, ReceiptSurfaces: []string{},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2, ChangedCodeSurfaces: 1, ReceiptRecords: 1, PathEdges: 4, PathClaims: 1, PathEvidence: 4, ResourceReceipts: 3}, Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+		}},
+		{Name: "negative-delta-without-source", Input: deltaWithoutSource, Expected: FixtureExpectation{
+			Decision: DecisionFailClosed, Reason: ReasonDeltaWithoutSource, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{"urn:gooo:surface:billing/pay-order"}, ReceiptSurfaces: []string{},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 1, PathEdges: 4, PathClaims: 1, PathEvidence: 4, AddedSemanticFacts: 2, ResourceReceipts: 3}, Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+		}},
+		{Name: "negative-no-delta-without-equality", Input: noDeltaWithoutEquality, Expected: FixtureExpectation{
+			Decision: DecisionFailClosed, Reason: ReasonNoDeltaWithoutEquality, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{"urn:gooo:surface:billing/pay-order"}, ReceiptSurfaces: []string{},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 1, PathEdges: 4, PathClaims: 1, PathEvidence: 4, AddedSemanticFacts: 2, ResourceReceipts: 3}, Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+		}},
+		{Name: "negative-missing-root", Input: pathMissingRoot, Expected: FixtureExpectation{
+			Decision: DecisionFailClosed, Reason: ReasonPathMissing, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{"urn:gooo:surface:billing/pay-order"}, ReceiptSurfaces: []string{"urn:gooo:surface:billing/pay-order"},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2, ChangedCodeSurfaces: 1, ChangedRegistered: 1, ReceiptRecords: 1, ValidReceipts: 1, PathEdges: 4, PathClaims: 1, PathEvidence: 4, ResourceReceipts: 3}, Resources: ResourceObservation{CPUCoreNS: 10, PeakMemoryBytes: 20, WorkUnits: 30},
+		}},
+		{Name: "negative-unproven-zero-change", Input: unprovenZeroChange, Expected: FixtureExpectation{
+			Decision: DecisionUnknown, Reason: ReasonRequiredInputMissing, AcceptedSurfaces: []string{}, ChangedSurfaces: []string{}, ReceiptSurfaces: []string{},
+			ObservationCounts: ObservationCounts{RegistryBindings: 2}, Resources: ResourceObservation{},
+		}},
 	}
 }
 
@@ -216,17 +279,6 @@ func makeResourceReceipts(binding ResourceBindingConfig) []ExternalResourceRecei
 	return values
 }
 
-func expectedFor(input Input) FixtureExpectation {
-	output := Evaluate(input)
-	return FixtureExpectation{Decision: output.Decision, Reason: output.Reason, ChangedSurfaces: output.ChangedSurfaces, ReceiptSurfaces: output.ReceiptSurfaces, ObservationCounts: output.ObservationCounts}
-}
-
-func expectDecision(input Input, decision Decision, reason Reason) FixtureExpectation {
-	output := Evaluate(input)
-	output.Decision, output.Reason = decision, reason
-	return FixtureExpectation{Decision: decision, Reason: reason, ChangedSurfaces: output.ChangedSurfaces, ReceiptSurfaces: output.ReceiptSurfaces, ObservationCounts: output.ObservationCounts}
-}
-
 func cloneInput(input Input) Input {
 	output := input
 	output.SemanticBefore = cloneSemanticIR(input.SemanticBefore)
@@ -256,11 +308,8 @@ func digestText(value string) string { return digestBytes([]byte(value)) }
 
 func TestFixtureBuilderSanity(t *testing.T) {
 	for _, row := range testCorpus() {
-		if row.Name == "" || row.Input.FixtureID == "" {
+		if row.Name == "" || row.Input.FixtureID == "" || row.Expected.Decision == "" || row.Expected.Reason == "" {
 			t.Fatal("fixture metadata missing")
-		}
-		if got := Evaluate(row.Input); got.Decision == "" {
-			t.Fatalf("%s produced empty decision", row.Name)
 		}
 	}
 }

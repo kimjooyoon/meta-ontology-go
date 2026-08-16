@@ -110,11 +110,13 @@ func Evaluate(input Input) Output {
 			output.SemanticDeltaDigest = digestBytes([]byte(deltaText))
 		}
 	}
+	output.AcceptedSurfaces = append([]string(nil), changed...)
 	return finish(output, DecisionPass, ReasonNone)
 }
 
 func finish(output Output, decision Decision, reason Reason) Output {
 	output.Decision, output.Reason = decision, reason
+	output.AcceptedSurfaces = sortedUnique(output.AcceptedSurfaces)
 	output.ChangedSurfaces = sortedUnique(output.ChangedSurfaces)
 	output.ReceiptSurfaces = sortedUnique(output.ReceiptSurfaces)
 	output.CanonicalOutputDigest = CanonicalOutputDigest(output)

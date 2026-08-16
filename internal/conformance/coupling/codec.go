@@ -187,6 +187,7 @@ type outputDigestView struct {
 	InputDigest          string              `json:"input_digest"`
 	Decision             Decision            `json:"decision"`
 	Reason               Reason              `json:"reason"`
+	AcceptedSurfaces     []string            `json:"accepted_surfaces"`
 	ChangedSurfaces      []string            `json:"changed_surfaces"`
 	ReceiptSurfaces      []string            `json:"receipt_surfaces"`
 	SemanticBeforeDigest string              `json:"semantic_before_digest"`
@@ -200,7 +201,8 @@ type outputDigestView struct {
 func CanonicalOutputDigest(output Output) string {
 	view := outputDigestView{
 		Schema: output.Schema, InputDigest: output.InputDigest, Decision: output.Decision, Reason: output.Reason,
-		ChangedSurfaces: sortedUnique(output.ChangedSurfaces), ReceiptSurfaces: sortedUnique(output.ReceiptSurfaces),
+		AcceptedSurfaces: sortedUnique(output.AcceptedSurfaces),
+		ChangedSurfaces:  sortedUnique(output.ChangedSurfaces), ReceiptSurfaces: sortedUnique(output.ReceiptSurfaces),
 		SemanticBeforeDigest: output.SemanticBeforeDigest, SemanticAfterDigest: output.SemanticAfterDigest,
 		SemanticDeltaDigest: output.SemanticDeltaDigest, PathClosureDigest: output.PathClosureDigest,
 		ObservationCounts: output.ObservationCounts, Resources: output.Resources,

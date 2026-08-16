@@ -218,6 +218,7 @@ type Output struct {
 	InputDigest           string              `json:"input_digest"`
 	Decision              Decision            `json:"decision"`
 	Reason                Reason              `json:"reason"`
+	AcceptedSurfaces      []string            `json:"accepted_surfaces"`
 	ChangedSurfaces       []string            `json:"changed_surfaces"`
 	ReceiptSurfaces       []string            `json:"receipt_surfaces"`
 	SemanticBeforeDigest  string              `json:"semantic_before_digest"`
@@ -252,11 +253,13 @@ type Comparison struct {
 }
 
 type FixtureExpectation struct {
-	Decision          Decision          `json:"decision"`
-	Reason            Reason            `json:"reason"`
-	ChangedSurfaces   []string          `json:"changed_surfaces"`
-	ReceiptSurfaces   []string          `json:"receipt_surfaces"`
-	ObservationCounts ObservationCounts `json:"observation_counts"`
+	Decision          Decision            `json:"decision"`
+	Reason            Reason              `json:"reason"`
+	AcceptedSurfaces  []string            `json:"accepted_surfaces"`
+	ChangedSurfaces   []string            `json:"changed_surfaces"`
+	ReceiptSurfaces   []string            `json:"receipt_surfaces"`
+	ObservationCounts ObservationCounts   `json:"observation_counts"`
+	Resources         ResourceObservation `json:"resources"`
 }
 
 type CorpusCase struct {
