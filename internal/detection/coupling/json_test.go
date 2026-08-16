@@ -12,7 +12,7 @@ func TestStrictJSONInputAndResultCodecs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result := EvaluateJSON(data)
+	result := EvaluateJSON(data, fixture.authorityContext)
 	if result.Status != StatusPass || !validDigest(result.InputDigest) {
 		t.Fatalf("JSON result = %#v", result)
 	}
@@ -32,7 +32,7 @@ func TestStrictJSONInputAndResultCodecs(t *testing.T) {
 	}
 	for name, mutated := range mutations {
 		t.Run(name, func(t *testing.T) {
-			got := EvaluateJSON(mutated)
+			got := EvaluateJSON(mutated, fixture.authorityContext)
 			if got.Status != StatusFailClosed || got.Reasons[0].Code != ReasonMalformedBinding || !validDigest(got.InputDigest) {
 				t.Fatalf("mutation result = %#v", got)
 			}
@@ -51,7 +51,7 @@ func TestStrictJSONRejectsNestedDuplicateAndUnknownFields(t *testing.T) {
 		{[]byte(`"binding":{"source_map_id"`), []byte(`"binding":{"unknown":true,"source_map_id"`)},
 	} {
 		mutated := bytes.Replace(data, pair[0], pair[1], 1)
-		if got := EvaluateJSON(mutated); got.Status != StatusFailClosed || got.Reasons[0].Code != ReasonMalformedBinding {
+		if got := EvaluateJSON(mutated, fixture.authorityContext); got.Status != StatusFailClosed || got.Reasons[0].Code != ReasonMalformedBinding {
 			t.Fatalf("nested mutation result = %#v", got)
 		}
 	}
@@ -59,7 +59,7 @@ func TestStrictJSONRejectsNestedDuplicateAndUnknownFields(t *testing.T) {
 
 func TestDecodeResultRejectsForgedClosedAlgebra(t *testing.T) {
 	fixture := newFixture(t, ChangeClaimDelta)
-	valid := Evaluate(fixture.input)
+	valid := Evaluate(fixture.input, fixture.authorityContext)
 	cases := map[string]func(*Result){
 		"pass with reason": func(result *Result) { result.Reasons = []Reason{{Code: ReasonDigestMismatch, Detail: "x"}} },
 		"pass full suite":  func(result *Result) { result.FullSuiteRequired = true },

@@ -1,33 +1,46 @@
 package coupling
 
-import (
-	"sort"
+import "github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-)
-
-func Evaluate(input Input) (result Result) {
-	inputDigest := inputIdentityDigest(input)
+func Evaluate(input Input, authorities ...AuthorityContext) (result Result) {
+	authority := AuthorityContext{}
+	if len(authorities) == 1 {
+		authority = authorities[0]
+	}
+	inputDigest := inputIdentityDigest(input, authority)
 	defer func() {
 		result.InputDigest = inputDigest
 		result.Digest = stableDigest(resultCanonical(result))
 	}()
+	if len(authorities) != 1 || authority.Schema == "" {
+		return resultFor(StatusUnknown, ReasonAuthorityInputSelfBound, "evaluator authority context is missing", ObservationVector{})
+	}
+	authorityConfig, issue := normalizeAuthorityContext(authority)
+	if issue != nil {
+		return resultFor(issue.status, issue.code, issue.detail, ObservationVector{})
+	}
 	if input.Schema != InputSchemaV1 {
 		return resultFor(StatusFailClosed, ReasonMalformedBinding, "input schema", ObservationVector{})
 	}
 	if issue := normalizeConfig(input.Config); issue != nil {
 		return resultFor(issue.status, issue.code, issue.detail, ObservationVector{})
 	}
-	registry, issue := normalizeRegistry(input.Registry, input.Config)
+	if issue := validatePacketApplicability(input, authority); issue != nil {
+		return resultFor(issue.status, issue.code, issue.detail, ObservationVector{})
+	}
+	if issue := comparePacketAuthority(input, authorityConfig, authority); issue != nil {
+		return resultFor(issue.status, issue.code, issue.detail, ObservationVector{})
+	}
+	registry, issue := normalizeRegistry(input.Registry, authorityConfig)
 	if issue != nil {
 		return resultFor(issue.status, issue.code, issue.detail, ObservationVector{})
 	}
-	changed, issue := normalizeManifest(input.Manifest, input.Config, registry)
+	changed, issue := normalizeManifest(input.Manifest, authorityConfig, registry)
 	if issue != nil {
 		return resultFor(issue.status, issue.code, issue.detail, ObservationVector{})
 	}
 	observation := baseObservation(len(changed), len(input.Receipts))
-	if issue := validateExternalReceipt(input.ExternalReceipt, input.Config, &observation); issue != nil {
+	if issue := validateExternalReceipt(input.ExternalReceipt, authorityConfig, &observation); issue != nil {
 		return resultFor(issue.status, issue.code, issue.detail, observation)
 	}
 	if len(changed) == 0 {
@@ -54,7 +67,7 @@ func Evaluate(input Input) (result Result) {
 		if !exists {
 			return resultFor(StatusUnknown, ReasonRequiredInputMissing, "receipt for changed surface", observation)
 		}
-		if issue := validateReceipt(receipt, entry, input.Config, registry[entry.SurfaceID]); issue != nil {
+		if issue := validateReceipt(receipt, entry, authorityConfig, registry[entry.SurfaceID]); issue != nil {
 			return resultFor(issue.status, issue.code, issue.detail, observation)
 		}
 		if issue := validateReceiptPath(receipt, entry, path); issue != nil {
@@ -187,106 +200,4 @@ func validateReceiptClaim(receipt CouplingReceipt) *evaluationIssue {
 		}
 	}
 	return nil
-}
-
-func validateReceiptReferences(receipt CouplingReceipt) *evaluationIssue {
-	if _, issue := normalizeID(receipt.InferenceClaimID, "inference claim ID"); issue != nil {
-		return issue
-	}
-	seen := make(map[semantic.ID]struct{}, len(receipt.OriginPathIDs))
-	for _, pathID := range receipt.OriginPathIDs {
-		if _, issue := normalizeID(pathID, "origin path ID"); issue != nil {
-			return issue
-		}
-		if _, duplicate := seen[pathID]; duplicate {
-			return failIssue(ReasonInferencePathMalformed, receipt.SurfaceID.String())
-		}
-		seen[pathID] = struct{}{}
-	}
-	seenEvidence := make(map[semantic.ID]struct{}, len(receipt.EvidenceRefs))
-	for _, ref := range receipt.EvidenceRefs {
-		if _, issue := normalizeID(ref.ID, "evidence ID"); issue != nil {
-			return issue
-		}
-		if issue := normalizeDigestValue(ref.Digest, "evidence digest"); issue != nil {
-			return issue
-		}
-		if _, duplicate := seenEvidence[ref.ID]; duplicate {
-			return failIssue(ReasonInferencePathMalformed, receipt.SurfaceID.String())
-		}
-		seenEvidence[ref.ID] = struct{}{}
-	}
-	return nil
-}
-
-func validateExternalReceipt(
-	receipt *ExternalResourceReceipt, config Config, observation *ObservationVector,
-) *evaluationIssue {
-	if receipt == nil {
-		if config.ExternalReceiptRequired {
-			return unknownIssue(ReasonExternalReceiptMissing, "external resource receipt")
-		}
-		return nil
-	}
-	if receipt.Schema != ResourceSchemaV1 {
-		return failIssue(ReasonMalformedBinding, "external receipt schema")
-	}
-	if receipt.SnapshotDigest == "" || receipt.ProviderDigest == "" || receipt.ObserverDigest == "" || receipt.CPUWorkUnits == nil || receipt.PeakMemoryBytes == nil {
-		return unknownIssue(ReasonExternalReceiptMissing, "external receipt binding or value")
-	}
-	if config.ExternalReceiptRequired && receipt.DeterministicWorkUnits == nil {
-		return unknownIssue(ReasonExternalReceiptMissing, "external deterministic work")
-	}
-	for _, value := range []struct {
-		value string
-		name  string
-	}{
-		{receipt.SnapshotDigest, "external snapshot digest"},
-		{receipt.ProviderDigest, "external provider digest"},
-		{receipt.ObserverDigest, "external observer digest"},
-		{receipt.Digest, "external receipt digest"},
-	} {
-		if issue := normalizeDigestValue(value.value, value.name); issue != nil {
-			return issue
-		}
-	}
-	if receipt.SnapshotDigest != config.SnapshotDigest || receipt.ProviderDigest != config.ExpectedProviderDigest ||
-		receipt.ObserverDigest != config.ExpectedObserverDigest || stableDigest(externalCanonical(*receipt)) != receipt.Digest {
-		return failIssue(ReasonDigestMismatch, "external resource receipt")
-	}
-	observation.CPU = knownDimension(*receipt.CPUWorkUnits)
-	observation.Memory = knownDimension(*receipt.PeakMemoryBytes)
-	if receipt.DeterministicWorkUnits != nil {
-		observation.ResourceWork = knownDimension(*receipt.DeterministicWorkUnits)
-	}
-	return nil
-}
-
-func passResult(accepted []semantic.ID, observation ObservationVector) Result {
-	result := Result{
-		Schema: ResultSchemaV1, Status: StatusPass, AcceptedSurfaceIDs: sortedIDs(accepted),
-		Observation: observation, FullSuiteRequired: false,
-	}
-	result.Digest = stableDigest(resultCanonical(result))
-	return result
-}
-
-func resultFor(status Status, code ReasonCode, detail string, observation ObservationVector) Result {
-	result := Result{
-		Schema: ResultSchemaV1, Status: status,
-		Reasons: []Reason{{Code: code, Detail: detail}}, Observation: observation,
-		FullSuiteRequired: status != StatusPass,
-	}
-	result.Reasons = sortedReasons(result.Reasons)
-	result.Digest = stableDigest(resultCanonical(result))
-	return result
-}
-
-func SortReasons(result *Result) {
-	if result == nil {
-		return
-	}
-	result.Reasons = sortedReasons(result.Reasons)
-	sort.Slice(result.AcceptedSurfaceIDs, func(i, j int) bool { return result.AcceptedSurfaceIDs[i] < result.AcceptedSurfaceIDs[j] })
-	result.Digest = stableDigest(resultCanonical(*result))
 }

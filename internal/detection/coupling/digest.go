@@ -89,6 +89,40 @@ func baselineCanonical(baseline BaselineConfig) string {
 	return builder.String()
 }
 
+func applicabilityCanonical(proof ApplicabilityProof) string {
+	var builder strings.Builder
+	field(&builder, AuthorityContextSchemaV1)
+	field(&builder, proof.Schema)
+	field(&builder, proof.RegistryDigest)
+	field(&builder, proof.ToolchainDigest)
+	field(&builder, proof.ProfileDigest)
+	field(&builder, proof.SnapshotDigest)
+	field(&builder, strconv.FormatBool(proof.AllowsEmpty))
+	return builder.String()
+}
+
+func authorityCanonical(authority AuthorityContext) string {
+	var builder strings.Builder
+	field(&builder, AuthorityContextSchemaV1)
+	field(&builder, authority.Schema)
+	field(&builder, registryCanonical(authority.Registry))
+	field(&builder, authority.Registry.Digest)
+	field(&builder, authority.ToolchainDigest)
+	field(&builder, authority.ProfileDigest)
+	field(&builder, authority.SnapshotDigest)
+	field(&builder, authority.ExpectedProviderDigest)
+	field(&builder, authority.ExpectedObserverDigest)
+	field(&builder, baselineCanonical(authority.Baseline))
+	field(&builder, strconv.FormatBool(authority.ExternalReceiptRequired))
+	if authority.Applicability != nil {
+		field(&builder, applicabilityCanonical(*authority.Applicability))
+		field(&builder, authority.Applicability.Digest)
+	} else {
+		field(&builder, "")
+	}
+	return builder.String()
+}
+
 func receiptCanonical(receipt CouplingReceipt) string {
 	paths := append([]semantic.ID(nil), receipt.OriginPathIDs...)
 	sort.Slice(paths, func(i, j int) bool { return paths[i] < paths[j] })
@@ -192,12 +226,13 @@ func resultCanonical(result Result) string {
 
 func stableDigest(value string) string { return semantic.StableHashString(value) }
 
-func inputIdentityDigest(input Input) string {
+func inputIdentityDigest(input Input, authority AuthorityContext) string {
 	receipts := append([]CouplingReceipt(nil), input.Receipts...)
 	sort.Slice(receipts, func(i, j int) bool { return receiptCanonical(receipts[i]) < receiptCanonical(receipts[j]) })
 	var builder strings.Builder
 	field(&builder, InputSchemaV1)
 	field(&builder, input.Schema)
+	field(&builder, authorityCanonical(authority))
 	field(&builder, configCanonical(input.Config))
 	field(&builder, registryCanonical(input.Registry))
 	field(&builder, input.Registry.Digest)

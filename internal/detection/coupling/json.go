@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 type inputWire struct {
@@ -58,15 +56,19 @@ func DecodeInput(data []byte) (Input, error) {
 	}, nil
 }
 
-func EvaluateJSON(data []byte) Result {
+func EvaluateJSON(data []byte, authorities ...AuthorityContext) Result {
+	authority := AuthorityContext{}
+	if len(authorities) == 1 {
+		authority = authorities[0]
+	}
 	input, err := DecodeInput(data)
 	if err != nil {
 		result := resultFor(StatusFailClosed, ReasonMalformedBinding, "JSON input", ObservationVector{})
-		result.InputDigest = semantic.StableHash(data)
+		result.InputDigest = stableDigest(string(data) + authorityCanonical(authority))
 		result.Digest = stableDigest(resultCanonical(result))
 		return result
 	}
-	return Evaluate(input)
+	return Evaluate(input, authorities...)
 }
 
 func EncodeInput(input Input) ([]byte, error) { return json.Marshal(input) }
@@ -95,7 +97,7 @@ func validateResultShape(result Result) error {
 		ReasonStaleInput: {}, ReasonDigestMismatch: {}, ReasonSourceMapMismatch: {},
 		ReasonContradictoryReceipt: {}, ReasonDeltaWithoutSource: {}, ReasonNoDeltaWithoutEquality: {},
 		ReasonCandidateOnlyPath: {}, ReasonInferencePathMalformed: {}, ReasonMissingAuthorityPath: {},
-		ReasonMissingVerification: {}, ReasonExternalReceiptMissing: {},
+		ReasonMissingVerification: {}, ReasonExternalReceiptMissing: {}, ReasonAuthorityInputSelfBound: {},
 	}
 	seenIDs := make(map[string]struct{}, len(result.AcceptedSurfaceIDs))
 	for _, id := range result.AcceptedSurfaceIDs {

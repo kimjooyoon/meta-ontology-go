@@ -23,6 +23,8 @@ func TestAuthorityInputStatePartitions(t *testing.T) {
 			f.input.Config.RegistryDigest = f.input.Registry.Digest
 			f.input.Manifest.RegistryDigest = f.input.Registry.Digest
 			f.input.Manifest.Digest = stableDigest(manifestCanonical(f.input.Manifest))
+			f.authorityContext.Registry = f.input.Registry
+			f.authorityContext.Registry.Surfaces = append([]Surface(nil), f.input.Registry.Surfaces...)
 		}},
 		{"orphan receipt", StatusFailClosed, ReasonOrphanReceipt, func(f *couplingFixture) {
 			orphan := f.input.Receipts[0]
@@ -45,7 +47,7 @@ func TestAuthorityInputStatePartitions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fixture := newFixture(t, ChangeClaimDelta)
 			tc.mutate(&fixture)
-			result := Evaluate(fixture.input)
+			result := Evaluate(fixture.input, fixture.authorityContext)
 			if result.Status != tc.status || len(result.AcceptedSurfaceIDs) != 0 || len(result.Reasons) == 0 || result.Reasons[0].Code != tc.code {
 				t.Fatalf("state = %#v, want %s/%s", result, tc.status, tc.code)
 			}

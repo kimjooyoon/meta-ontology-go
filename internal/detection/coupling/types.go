@@ -3,14 +3,15 @@ package coupling
 import "github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 
 const (
-	RegistrySchemaV1 = "gooo/code-semantic-coupling-registry/v1"
-	ManifestSchemaV1 = "gooo/code-semantic-coupling-manifest/v1"
-	ConfigSchemaV1   = "gooo/code-semantic-coupling-config/v1"
-	InputSchemaV1    = "gooo/code-semantic-coupling-input/v1"
-	ReceiptSchemaV1  = "gooo/code-semantic-coupling-receipt/v1"
-	ResultSchemaV1   = "gooo/code-semantic-coupling-result/v1"
-	BaselineSchemaV1 = "gooo/code-semantic-coupling-baseline/v1"
-	ResourceSchemaV1 = "gooo/external-resource-receipt/v1"
+	RegistrySchemaV1         = "gooo/code-semantic-coupling-registry/v1"
+	ManifestSchemaV1         = "gooo/code-semantic-coupling-manifest/v1"
+	ConfigSchemaV1           = "gooo/code-semantic-coupling-config/v1"
+	InputSchemaV1            = "gooo/code-semantic-coupling-input/v1"
+	ReceiptSchemaV1          = "gooo/code-semantic-coupling-receipt/v1"
+	ResultSchemaV1           = "gooo/code-semantic-coupling-result/v1"
+	BaselineSchemaV1         = "gooo/code-semantic-coupling-baseline/v1"
+	ResourceSchemaV1         = "gooo/external-resource-receipt/v1"
+	AuthorityContextSchemaV1 = "gooo/code-semantic-coupling-authority/v1"
 )
 
 type Status string
@@ -24,23 +25,24 @@ const (
 type ReasonCode string
 
 const (
-	ReasonMalformedBinding       ReasonCode = "MALFORMED_BINDING"
-	ReasonRequiredInputMissing   ReasonCode = "REQUIRED_INPUT_MISSING"
-	ReasonDuplicateSurface       ReasonCode = "DUPLICATE_SURFACE"
-	ReasonSurfaceUnregistered    ReasonCode = "SURFACE_UNREGISTERED"
-	ReasonDuplicateReceipt       ReasonCode = "DUPLICATE_RECEIPT"
-	ReasonOrphanReceipt          ReasonCode = "ORPHAN_RECEIPT"
-	ReasonStaleInput             ReasonCode = "STALE_INPUT"
-	ReasonDigestMismatch         ReasonCode = "DIGEST_MISMATCH"
-	ReasonSourceMapMismatch      ReasonCode = "SOURCE_MAP_MISMATCH"
-	ReasonContradictoryReceipt   ReasonCode = "CONTRADICTORY_RECEIPT"
-	ReasonDeltaWithoutSource     ReasonCode = "DELTA_WITHOUT_SOURCE"
-	ReasonNoDeltaWithoutEquality ReasonCode = "NO_DELTA_WITHOUT_EQUALITY"
-	ReasonCandidateOnlyPath      ReasonCode = "CANDIDATE_ONLY_PATH"
-	ReasonInferencePathMalformed ReasonCode = "MALFORMED_INFERENCE_PATH"
-	ReasonMissingAuthorityPath   ReasonCode = "AUTHORITY_PATH_MISSING"
-	ReasonMissingVerification    ReasonCode = "INDEPENDENT_VERIFICATION_MISSING"
-	ReasonExternalReceiptMissing ReasonCode = "EXTERNAL_RECEIPT_MISSING"
+	ReasonMalformedBinding        ReasonCode = "MALFORMED_BINDING"
+	ReasonRequiredInputMissing    ReasonCode = "REQUIRED_INPUT_MISSING"
+	ReasonDuplicateSurface        ReasonCode = "DUPLICATE_SURFACE"
+	ReasonSurfaceUnregistered     ReasonCode = "SURFACE_UNREGISTERED"
+	ReasonDuplicateReceipt        ReasonCode = "DUPLICATE_RECEIPT"
+	ReasonOrphanReceipt           ReasonCode = "ORPHAN_RECEIPT"
+	ReasonStaleInput              ReasonCode = "STALE_INPUT"
+	ReasonDigestMismatch          ReasonCode = "DIGEST_MISMATCH"
+	ReasonSourceMapMismatch       ReasonCode = "SOURCE_MAP_MISMATCH"
+	ReasonContradictoryReceipt    ReasonCode = "CONTRADICTORY_RECEIPT"
+	ReasonDeltaWithoutSource      ReasonCode = "DELTA_WITHOUT_SOURCE"
+	ReasonNoDeltaWithoutEquality  ReasonCode = "NO_DELTA_WITHOUT_EQUALITY"
+	ReasonCandidateOnlyPath       ReasonCode = "CANDIDATE_ONLY_PATH"
+	ReasonInferencePathMalformed  ReasonCode = "MALFORMED_INFERENCE_PATH"
+	ReasonMissingAuthorityPath    ReasonCode = "AUTHORITY_PATH_MISSING"
+	ReasonMissingVerification     ReasonCode = "INDEPENDENT_VERIFICATION_MISSING"
+	ReasonExternalReceiptMissing  ReasonCode = "EXTERNAL_RECEIPT_MISSING"
+	ReasonAuthorityInputSelfBound ReasonCode = "COUPLING_AUTHORITY_INPUT_SELF_BOUND"
 )
 
 type Reason struct {
@@ -111,6 +113,34 @@ type Config struct {
 	ExpectedObserverDigest  string         `json:"expected_observer_digest"`
 	Baseline                BaselineConfig `json:"baseline"`
 	ExternalReceiptRequired bool           `json:"external_receipt_required"`
+}
+
+// ApplicabilityProof is evaluator-owned evidence that an empty registry is
+// applicable to one exact immutable snapshot and policy tuple.
+type ApplicabilityProof struct {
+	Schema          string
+	RegistryDigest  string
+	ToolchainDigest string
+	ProfileDigest   string
+	SnapshotDigest  string
+	AllowsEmpty     bool
+	Digest          string
+}
+
+// AuthorityContext is supplied by the evaluator owner, never decoded from an
+// Input packet. Its values define the registry, policy, snapshot, applicability
+// and resource obligations against which producer claims are compared.
+type AuthorityContext struct {
+	Schema                  string
+	Registry                Registry
+	ToolchainDigest         string
+	ProfileDigest           string
+	SnapshotDigest          string
+	ExpectedProviderDigest  string
+	ExpectedObserverDigest  string
+	Baseline                BaselineConfig
+	Applicability           *ApplicabilityProof
+	ExternalReceiptRequired bool
 }
 
 type AuthoritySource struct {

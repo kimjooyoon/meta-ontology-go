@@ -24,7 +24,7 @@ func TestSelectedInferenceChainRejectsMalformedGraphs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fixture := newFixture(t, ChangeClaimDelta)
 			tc.mutate(&fixture)
-			result := Evaluate(fixture.input)
+			result := Evaluate(fixture.input, fixture.authorityContext)
 			if result.Status != StatusFailClosed || len(result.AcceptedSurfaceIDs) != 0 {
 				t.Fatalf("malformed %s result = %#v", tc.name, result)
 			}
@@ -36,7 +36,7 @@ func TestOriginPathIDPermutationUsesGraphOrder(t *testing.T) {
 	left := newFixture(t, ChangeClaimDelta)
 	right := newFixture(t, ChangeClaimDelta)
 	right.input.Receipts[0].OriginPathIDs = []semantic.ID{left.authority, left.projection, left.verification}
-	leftResult, rightResult := Evaluate(left.input), Evaluate(right.input)
+	leftResult, rightResult := Evaluate(left.input, left.authorityContext), Evaluate(right.input, right.authorityContext)
 	if leftResult.Status != StatusPass || rightResult.Status != StatusPass || leftResult.Digest != rightResult.Digest {
 		t.Fatalf("path ID order changed result: left=%#v right=%#v", leftResult, rightResult)
 	}
@@ -96,7 +96,7 @@ func TestCandidateOnlyObservationCannotCloseReceipt(t *testing.T) {
 	fixture.input.InferencePath.Edges[0] = authority
 	fixture.input.InferencePath.Evidence[0].After.Semantic = authority.After.Semantic
 	fixture.input.InferencePath.Evidence[0].Controls = authority.Controls
-	result := Evaluate(fixture.input)
+	result := Evaluate(fixture.input, fixture.authorityContext)
 	if result.Status != StatusFailClosed || !reflect.DeepEqual(result.Reasons[0].Code, ReasonCandidateOnlyPath) {
 		t.Fatalf("candidate-only result = %#v", result)
 	}
@@ -113,7 +113,7 @@ func TestAcceptedLiftClosesAChangedSurface(t *testing.T) {
 	authority.AcceptanceReceipt = fixture.input.InferencePath.Evidence[0].ID
 	fixture.input.InferencePath.Edges[0] = authority
 	fixture.input.InferencePath.Evidence[0].Controls = authority.Controls
-	result := Evaluate(fixture.input)
+	result := Evaluate(fixture.input, fixture.authorityContext)
 	if result.Status != StatusPass {
 		t.Fatalf("accepted-lift result = %#v", result)
 	}
