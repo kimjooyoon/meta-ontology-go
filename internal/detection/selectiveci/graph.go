@@ -52,23 +52,6 @@ func addNode(byID map[string]impactgraph.NodeKind, nodes *[]impactgraph.Node, no
 	return nil
 }
 
-func applicableObligations(graph impactgraph.Graph, changed []string) ([]string, error) {
-	if len(changed) == 0 {
-		return nil, nil
-	}
-	executed := make([]string, 0)
-	for _, node := range graph.Nodes {
-		if node.Kind == impactgraph.NodeKindObligation {
-			executed = append(executed, node.ID)
-		}
-	}
-	evaluation := impactgraph.Evaluate(graph, changed, executed)
-	if evaluation.Decision != impactgraph.PASS {
-		return nil, failure(ReasonEvaluatorError, evaluation.FailureCode)
-	}
-	return evaluation.Required, nil
-}
-
 func graphFailureReason(message string) string {
 	message = strings.ToLower(message)
 	if strings.Contains(message, "duplicate") {

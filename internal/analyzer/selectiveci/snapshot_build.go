@@ -79,7 +79,7 @@ func normalizeSources(inputs []SourceInput, registered map[string]struct{}) ([]S
 		if err != nil {
 			return nil, err
 		}
-		if len(input.Bindings) == 0 {
+		if input.Bindings == nil {
 			return nil, fail(CodeMissingBinding, "source %q has no explicit semantic binding", repoPath)
 		}
 		bindings := make([]Binding, 0, len(input.Bindings))
@@ -116,10 +116,11 @@ func normalizeManifestSources(inputs []Source, registered map[string]struct{}) (
 		if err != nil {
 			return nil, err
 		}
-		if len(input.Bindings) == 0 {
+		if input.Bindings == nil {
 			return nil, fail(CodeMissingBinding, "source %q has no explicit semantic binding", repoPath)
 		}
-		bindings := append([]Binding(nil), input.Bindings...)
+		bindings := make([]Binding, len(input.Bindings))
+		copy(bindings, input.Bindings)
 		for index := range bindings {
 			binding, err := normalizeManifestBinding(bindings[index], repoPath, registered)
 			if err != nil {

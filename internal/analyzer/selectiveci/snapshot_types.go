@@ -60,7 +60,9 @@ func (e *Error) Error() string {
 type SourceInput struct {
 	Path       string
 	BlobDigest string
-	Bindings   []semanticbinding.Binding
+	// Bindings must be non-nil. An explicit empty slice is a validated
+	// unbound source; nil means the binding authority was not supplied.
+	Bindings []semanticbinding.Binding
 }
 
 // SnapshotInput contains all authority needed to construct a Snapshot. A nil
@@ -96,9 +98,11 @@ type Binding struct {
 
 // Source is one canonical manifest source record.
 type Source struct {
-	Path       string    `json:"path"`
-	BlobDigest string    `json:"blob_digest"`
-	Bindings   []Binding `json:"bindings"`
+	Path       string `json:"path"`
+	BlobDigest string `json:"blob_digest"`
+	// Bindings is [] for an explicit unbound source and never null in a
+	// canonical snapshot.
+	Bindings []Binding `json:"bindings"`
 }
 
 // Snapshot is a canonical, source-backed manifest. A BOUND snapshot always

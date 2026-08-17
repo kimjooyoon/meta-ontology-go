@@ -39,6 +39,15 @@ const (
 	ReasonResourceLimit      = "RESOURCE_LIMIT_EXCEEDED"
 	ReasonEvaluatorError     = "EVALUATOR_ERROR"
 	ReasonFrontierBlocked    = "FRONTIER_BLOCKED"
+	ReasonMissingObligation  = "MISSING_OBLIGATION"
+	ReasonMissingCommand     = "MISSING_COMMAND"
+	ReasonDanglingCommand    = "DANGLING_COMMAND"
+	ReasonUnknownRoot        = "UNKNOWN_ROOT"
+	ReasonDuplicateRoot      = "DUPLICATE_ROOT"
+	ReasonStaleGraph         = "STALE_GRAPH"
+	ReasonStaleRegistry      = "STALE_REGISTRY"
+	ReasonStaleSnapshot      = "STALE_SNAPSHOT"
+	ReasonWorkOverflow       = "WORK_OVERFLOW"
 )
 
 type SnapshotFile struct {
