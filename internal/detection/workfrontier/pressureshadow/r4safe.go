@@ -25,9 +25,6 @@ func (input *R4SafeInput) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	if decoded.Schema != R4SafeSchemaVersion {
-		return fmt.Errorf("invalid schema")
-	}
 	if err := validateR4SafeSyntax(decoded); err != nil {
 		return err
 	}
@@ -85,11 +82,11 @@ func ValidateR4Safe(input R4SafeInput) R4SafeResult {
 	case workfrontier.R4StatusUnknown:
 		return finishR4Safe(result, DecisionUnknown, ReasonUpstreamUnknown, true)
 	}
-	if missing {
-		return finishR4Safe(result, DecisionUnknown, ReasonRequiredInputMissing, true)
-	}
 	if pressure.Decision == DecisionFailClosed {
 		return finishR4Safe(result, DecisionFailClosed, ReasonPressureCoverageFailClosed, true)
+	}
+	if missing {
+		return finishR4Safe(result, DecisionUnknown, ReasonRequiredInputMissing, true)
 	}
 	if pressure.Decision == DecisionUnknown {
 		return finishR4Safe(result, DecisionUnknown, ReasonPressureCoverageUnknown, true)
@@ -103,8 +100,7 @@ func ValidateR4Safe(input R4SafeInput) R4SafeResult {
 
 func ValidateR4SafeBytes(data []byte) R4SafeResult {
 	var input R4SafeInput
-	err := json.Unmarshal(data, &input)
-	if err != nil {
+	if err := json.Unmarshal(data, &input); err != nil {
 		result := newR4SafeResult(R4SafeInput{}, workfrontier.R4Result{}, S1B1Result{})
 		result.InputDigest = digestBytes(append([]byte("r4-safe-invalid-input\x00"), data...))
 		return finishR4Safe(result, DecisionFailClosed, ReasonInvalidInput, true)
@@ -115,14 +111,13 @@ func ValidateR4SafeBytes(data []byte) R4SafeResult {
 func projectR4SafeInput(input R4SafeInput) Input {
 	r4 := input.R4Input
 	selector := workfrontier.Input{
-		SchemaVersion: r4.SchemaVersion, SnapshotDigest: r4.SnapshotDigest,
+		SchemaVersion: workfrontier.SchemaVersion, SnapshotDigest: r4.SnapshotDigest,
 		PolicyDigest: r4.PolicyDigest, RegistryDigest: r4.RegistryDigest,
 		MinimumSelectedPressures: r4.MinimumSelectedPressures, Capacity: r4.Capacity,
 		Pressures: append([]workfrontier.Pressure{}, r4.Pressures...),
 		States:    append([]workfrontier.ObligationState{}, r4.States...),
 		Paths:     append([]workfrontier.RepairPath{}, r4.Paths...),
 	}
-	selector.SchemaVersion = workfrontier.SchemaVersion
 	return Input{Schema: SchemaVersion, Selector: selector, PathCoverage: input.PathCoverage}
 }
 
@@ -136,14 +131,12 @@ func newR4SafeResult(input R4SafeInput, r4 workfrontier.R4Result, pressure S1B1R
 		Schema: R4SafeSchemaVersion, InputDigest: digestBytes(inputBytes),
 		R4Result: r4, R4ResultDigest: digestBytes(append([]byte("r4-safe-r4-result\x00"), raw...)),
 		PressureResult: pressure, PressureResultDigest: CanonicalS1B1ResultDigest(pressure),
-		SafeSelectedIDs: nil, SafeWorkIDs: nil, EnforcementEffect: EnforcementNoEffect,
 	}
 }
 
 func finishR4Safe(result R4SafeResult, decision Decision, reason Reason, fullSuite bool) R4SafeResult {
 	result.Decision, result.Reason, result.FullSuiteRequired = decision, reason, fullSuite
-	result.ExecutionAuthorized = false
-	result.EnforcementEffect = EnforcementNoEffect
+	result.ExecutionAuthorized, result.EnforcementEffect = false, EnforcementNoEffect
 	if decision != DecisionPass {
 		result.SafeSelectedIDs, result.SafeWorkIDs = nil, nil
 	}
@@ -167,9 +160,7 @@ func CanonicalR4SafeInputBytes(input R4SafeInput) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	var rows struct {
-		PathCoverage json.RawMessage `json:"path_coverage"`
-	}
+	var rows map[string]json.RawMessage
 	if err := json.Unmarshal(shadow, &rows); err != nil {
 		return nil, err
 	}
@@ -177,15 +168,14 @@ func CanonicalR4SafeInputBytes(input R4SafeInput) ([]byte, error) {
 		Schema       string          `json:"schema"`
 		R4Input      json.RawMessage `json:"r4_input"`
 		PathCoverage json.RawMessage `json:"path_coverage"`
-	}{input.Schema, bytes.TrimSpace(r4Bytes), rows.PathCoverage})
+	}{input.Schema, bytes.TrimSpace(r4Bytes), rows["path_coverage"]})
 }
 
 func validateR4SafeSyntax(input R4SafeInput) error {
 	if input.Schema != R4SafeSchemaVersion || input.R4Input.SchemaVersion != workfrontier.R4SchemaVersion {
 		return fmt.Errorf("invalid schema")
 	}
-	projected := projectR4SafeInput(input)
-	return validateSyntax(projected)
+	return validateSyntax(projectR4SafeInput(input))
 }
 
 func inspectR4Safe(input R4SafeInput) (invalid, missing bool) {
@@ -194,7 +184,7 @@ func inspectR4Safe(input R4SafeInput) (invalid, missing bool) {
 	if len(orphanPathIDs(selectorPathIDs(projected), coverageRows(projected)))+len(extra) > 0 {
 		return true, false
 	}
-	registered, recorded := []string{}, []string{}
+	var registered, recorded []string
 	for _, pressure := range input.R4Input.Pressures {
 		registered = append(registered, pressureID(pressure))
 	}

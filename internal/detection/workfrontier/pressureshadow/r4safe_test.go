@@ -92,6 +92,19 @@ func TestR4SafePrecedenceAndSafeIDKills(t *testing.T) {
 	}
 	runR4SafeCases(t, cases)
 }
+
+func TestR4SafePressureFailurePrecedesMissing(t *testing.T) {
+	input := r4SafeInput(t, 10)
+	input.PathCoverage[0].Coverage.MinimumIndependent = 1
+	input.R4Input.Pressures = append(input.R4Input.Pressures,
+		workfrontier.Pressure{StableID: "p-global"})
+	bindSafeR4(&input)
+	got := ValidateR4Safe(input)
+	if got.Decision != DecisionFailClosed || got.Reason != ReasonPressureCoverageFailClosed {
+		t.Fatalf("mixed result = %#v", got)
+	}
+}
+
 func TestR4SafeStrictPermutationK21AndOpaqueMutation(t *testing.T) {
 	base := r4SafeInput(t, 10)
 	raw, _ := CanonicalR4SafeInputBytes(base)
@@ -111,8 +124,8 @@ func TestR4SafeStrictPermutationK21AndOpaqueMutation(t *testing.T) {
 	duplicatePressure := r4SafeInput(t, 10)
 	conflict := duplicatePressure.PathCoverage[0].Coverage.PressureRecords[0]
 	conflict.CategoryID = "conflicting-category"
-	duplicatePressure.PathCoverage[0].Coverage.PressureRecords = append(
-		duplicatePressure.PathCoverage[0].Coverage.PressureRecords, conflict)
+	records := duplicatePressure.PathCoverage[0].Coverage.PressureRecords
+	duplicatePressure.PathCoverage[0].Coverage.PressureRecords = append(records, conflict)
 	for _, input := range []R4SafeInput{duplicateRow, duplicatePressure} {
 		if got := ValidateR4Safe(input); got.Decision != DecisionFailClosed || got.Reason != ReasonInvalidInput {
 			t.Fatalf("duplicate identity result = %#v", got)
@@ -171,8 +184,7 @@ func r4SafeInput(t *testing.T, capacity uint64) R4SafeInput {
 	return input
 }
 func bindSafeR4(input *R4SafeInput) {
-	bound, _ := workfrontier.BindR4Payloads(input.R4Input)
-	input.R4Input = bound
+	input.R4Input, _ = workfrontier.BindR4Payloads(input.R4Input)
 	rebindSafeCoverage(input)
 }
 func rebindSafeCoverage(input *R4SafeInput) {
@@ -182,8 +194,6 @@ func rebindSafeCoverage(input *R4SafeInput) {
 		shadow.PathCoverage[i].SnapshotDigest = selector.SnapshotDigest
 		shadow.PathCoverage[i].PolicyDigest = selector.PolicyDigest
 		shadow.PathCoverage[i].RegistryDigest = selector.RegistryDigest
-	}
-	for i := range shadow.PathCoverage {
 		rebindCoverage(&shadow, shadow.PathCoverage[i].PathID)
 	}
 	input.PathCoverage = shadow.PathCoverage
