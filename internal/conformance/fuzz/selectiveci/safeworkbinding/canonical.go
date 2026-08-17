@@ -197,6 +197,7 @@ func resultFrame(result ParseResult) ([]byte, bool) {
 		effect,
 	}), true
 }
+
 func resultDigest(result ParseResult) (Digest, bool) {
 	frame, ok := resultFrame(result)
 	if !ok {
