@@ -100,20 +100,20 @@ func normalizeEntries(entries []RegistryEntry) ([]registryRecord, Reason) {
 		}
 		return a.RequiredProjection < b.RequiredProjection
 	})
-	duplicate, conflict := false, false
+	duplicate := false
+	// Full-entry validation makes same-key altered entries invalid.
+	// The explicit check below keeps that precedence local to normalization.
+	// ReasonConflictingItem is reserved for a future registry version
+	// that permits more than one valid shape for a key.
 	for index := 1; index < len(records); index++ {
 		previous, current := records[index-1], records[index]
 		if previous.key != current.key {
 			continue
 		}
-		if previous.entry == current.entry {
-			duplicate = true
-		} else {
-			conflict = true
+		if previous.entry != current.entry {
+			return nil, ReasonInvalidItem
 		}
-	}
-	if conflict {
-		return nil, ReasonConflictingItem
+		duplicate = true
 	}
 	if duplicate {
 		return nil, ReasonDuplicateItem
@@ -122,6 +122,9 @@ func normalizeEntries(entries []RegistryEntry) ([]registryRecord, Reason) {
 }
 
 func canonicalItemFrame(entry RegistryEntry) []byte {
+	if !validateEntry(entry) {
+		return nil
+	}
 	return encodeFrame("gooo/eligibility-registry/item/v1\x00", []frameField{
 		{name: "id", tag: frameTagStableID, value: []byte(entry.ID)},
 		{name: "item_kind", tag: frameTagEnum, value: itemKindSpelling(entry.Kind)},
@@ -135,6 +138,9 @@ func canonicalItemFrame(entry RegistryEntry) []byte {
 }
 
 func canonicalRegistryFrame(sourceDigest Digest, records []registryRecord) []byte {
+	if !validDigest(sourceDigest) {
+		return nil
+	}
 	items := make([][]byte, len(records))
 	for index, record := range records {
 		items[index] = canonicalItemFrame(record.entry)

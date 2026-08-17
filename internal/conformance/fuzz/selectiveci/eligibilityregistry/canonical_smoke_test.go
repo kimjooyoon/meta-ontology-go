@@ -66,45 +66,44 @@ func TestCanonicalRegistryRejections(t *testing.T) {
 	if ok || digest != "" {
 		t.Fatal("malformed source digest accepted")
 	}
+	records, reason := normalizeEntries(smokeEntries())
+	if reason != ReasonNone {
+		t.Fatal("valid records rejected")
+	}
+	if canonicalRegistryFrame("sha256:0", records) != nil {
+		t.Fatal("private registry frame accepted malformed source")
+	}
 	invalidID := smokeEntries()
 	invalidID[0].ID = "Order"
-	invalidCombination := smokeEntries()
-	invalidCombination[0].Authority = AuthoritySemanticIR
-	duplicate := smokeEntries()
-	duplicate = append(duplicate, duplicate[0])
-	conflict := smokeEntries()
-	conflictingEntry := conflict[0]
-	conflictingEntry.RequiredProjection = ProjectionGeneratedGo
-	conflict = append(conflict, conflictingEntry)
-	tests := []struct {
-		name    string
-		entries []RegistryEntry
-	}{
-		{
-			name:    "invalid ID",
-			entries: invalidID,
-		},
-		{
-			name:    "invalid combination",
-			entries: invalidCombination,
-		},
-		{
-			name:    "duplicate",
-			entries: duplicate,
-		},
-		{
-			name:    "conflict",
-			entries: conflict,
-		},
+	if canonicalItemFrame(invalidID[0]) != nil {
+		t.Fatal("private item frame accepted invalid ID")
 	}
-	for _, test := range tests {
-		frame, ok := CanonicalRegistry(validSmokeSource(), test.entries)
-		if ok || frame != nil {
-			t.Fatalf("%s frame accepted", test.name)
-		}
-		digest, ok := RegistryDigest(validSmokeSource(), test.entries)
-		if ok || digest != "" {
-			t.Fatalf("%s digest accepted", test.name)
-		}
+	frame, ok = CanonicalRegistry(validSmokeSource(), invalidID)
+	if ok || frame != nil {
+		t.Fatal("invalid ID frame accepted")
+	}
+	digest, ok = RegistryDigest(validSmokeSource(), invalidID)
+	if ok || digest != "" {
+		t.Fatal("invalid ID digest accepted")
+	}
+	invalidCombination := smokeEntries()
+	invalidCombination = append(invalidCombination, invalidCombination[0])
+	invalidCombination[2].RequiredProjection = ProjectionGeneratedGo
+	frame, ok = CanonicalRegistry(validSmokeSource(), invalidCombination)
+	if ok || frame != nil {
+		t.Fatal("same-key altered field frame accepted")
+	}
+	digest, ok = RegistryDigest(validSmokeSource(), invalidCombination)
+	if ok || digest != "" {
+		t.Fatal("same-key altered field digest accepted")
+	}
+	duplicate := append(smokeEntries(), smokeEntries()[0])
+	frame, ok = CanonicalRegistry(validSmokeSource(), duplicate)
+	if ok || frame != nil {
+		t.Fatal("duplicate frame accepted")
+	}
+	digest, ok = RegistryDigest(validSmokeSource(), duplicate)
+	if ok || digest != "" {
+		t.Fatal("duplicate digest accepted")
 	}
 }
