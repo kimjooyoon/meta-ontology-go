@@ -11,19 +11,12 @@ func envelopeString(value string) jsonValue {
 }
 
 func baseEnvelopeValue() jsonValue {
-	return jsonValue{kind: jsonObjectValue, object: map[string]jsonValue{
-		"schema":                   envelopeString(SafeWorkBindingSchemaV1),
-		"task_id":                  envelopeString("billing://task/pay"),
-		"path_id":                  envelopeString("billing://path/pay"),
-		"obligation_id":            envelopeString("billing://obligation/pay"),
-		"source_snapshot_digest":   envelopeString("sha256:" + strings.Repeat("1", 64)),
-		"semantic_snapshot_digest": envelopeString("sha256:" + strings.Repeat("2", 64)),
-		"policy_digest":            envelopeString("sha256:" + strings.Repeat("3", 64)),
-		"registry_digest":          envelopeString("sha256:" + strings.Repeat("4", 64)),
-		"toolchain_options_digest": envelopeString("sha256:" + strings.Repeat("5", 64)),
-		"binding_digest": envelopeString(
-			"sha256:dc6dbe157ede5924b61676bfdcd4151cd6f73a51b7eefda674cca3d6d169a5cb"),
-	}}
+	binding := reflect.ValueOf(baseBindingForDigest())
+	object := map[string]jsonValue{"binding_digest": envelopeString(digestBase)}
+	for index, field := range bindingFieldOrder[:9] {
+		object[field] = envelopeString(binding.Field(index).String())
+	}
+	return jsonValue{kind: jsonObjectValue, object: object}
 }
 
 func envelopeWithField(field string, fieldValue jsonValue) jsonValue {
@@ -63,7 +56,12 @@ func TestValidateEnvelope_Base(t *testing.T) {
 
 func TestValidateEnvelope_UnknownBeforeMissing(t *testing.T) {
 	for _, field := range []string{
-		"expected", "expected_label", "want", "legacy_work_id", "result_digest", "replay_digest",
+		"expected",
+		"expected_label",
+		"want",
+		"legacy_work_id",
+		"result_digest",
+		"replay_digest",
 	} {
 		requireEnvelopeReason(t, envelopeWithField(field, envelopeString("ignored")), ReasonUnknownField)
 	}
@@ -163,14 +161,16 @@ func TestValidateEnvelope_StableIDs(t *testing.T) {
 }
 
 func TestValidateEnvelope_Digests(t *testing.T) {
-	valid := "sha256:" + strings.Repeat("0", 64)
-	if !validateDigest(valid) {
+	if !validateDigest("sha256:" + strings.Repeat("0", 64)) {
 		t.Fatal("valid digest rejected")
 	}
 	for _, value := range []string{
-		"sha256:" + strings.Repeat("A", 64), "SHA256:" + strings.Repeat("0", 64),
-		strings.Repeat("0", 64), "sha256:" + strings.Repeat("0", 63),
-		"sha256:" + strings.Repeat("0", 65), "sha256:" + strings.Repeat("0", 63) + "g",
+		"sha256:" + strings.Repeat("A", 64),
+		"SHA256:" + strings.Repeat("0", 64),
+		strings.Repeat("0", 64),
+		"sha256:" + strings.Repeat("0", 63),
+		"sha256:" + strings.Repeat("0", 65),
+		"sha256:" + strings.Repeat("0", 63) + "g",
 	} {
 		if validateDigest(value) {
 			t.Errorf("invalid digest accepted: %q", value)
@@ -197,17 +197,17 @@ func TestValidateEnvelope_ConstructionOrder(t *testing.T) {
 }
 
 func TestValidateEnvelope_WhitespaceLocation(t *testing.T) {
-	input := []byte("{\n" +
-		"\t\"binding_digest\" : \"sha256:dc6dbe157ede5924b61676bfdcd4151cd6f73a51b7eefda674cca3d6d169a5cb\",\n" +
-		"\t\"toolchain_options_digest\" : \"sha256:" + strings.Repeat("5", 64) + "\",\n" +
-		"\t\"registry_digest\" : \"sha256:" + strings.Repeat("4", 64) + "\",\n" +
-		"\t\"policy_digest\" : \"sha256:" + strings.Repeat("3", 64) + "\",\n" +
-		"\t\"semantic_snapshot_digest\" : \"sha256:" + strings.Repeat("2", 64) + "\",\n" +
-		"\t\"source_snapshot_digest\" : \"sha256:" + strings.Repeat("1", 64) + "\",\n" +
-		"\t\"obligation_id\" : \"billing://obligation/pay\",\n" +
-		"\t\"path_id\" : \"billing://path/pay\",\n" +
-		"\t\"task_id\" : \"billing://task/pay\",\n" +
-		"\t\"schema\" : \"gooo/safe-work-binding/v1\"\n}")
+	input := []byte("\n{\n" +
+		"  \"schema\" : \"gooo/safe-work-binding/v1\",\n" +
+		"  \"task_id\" : \"billing://task/pay\",\n" +
+		"  \"path_id\" : \"billing://path/pay\",\n" +
+		"  \"obligation_id\" : \"billing://obligation/pay\",\n" +
+		"  \"source_snapshot_digest\" : \"sha256:" + strings.Repeat("1", 64) + "\",\n" +
+		"  \"semantic_snapshot_digest\" : \"sha256:" + strings.Repeat("2", 64) + "\",\n" +
+		"  \"policy_digest\" : \"sha256:" + strings.Repeat("3", 64) + "\",\n" +
+		"  \"registry_digest\" : \"sha256:" + strings.Repeat("4", 64) + "\",\n" +
+		"  \"toolchain_options_digest\" : \"sha256:" + strings.Repeat("5", 64) + "\",\n" +
+		"  \"binding_digest\" : \"sha256:dc6dbe157ede5924b61676bfdcd4151cd6f73a51b7eefda674cca3d6d169a5cb\"\n}\n")
 	document := requireDocumentReason(t, input, ReasonNone)
 	want := requireEnvelopeReason(t, baseEnvelopeValue(), ReasonNone)
 	if got := requireEnvelopeReason(t, document, ReasonNone); got != want {
