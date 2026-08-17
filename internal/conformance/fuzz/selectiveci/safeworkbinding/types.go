@@ -1,7 +1,12 @@
 package safeworkbinding
 
+// LegacyWorkID is an unvalidated legacy representation until A1.2.
 type LegacyWorkID string
+
+// Digest is an unvalidated digest representation until A1.2.
 type Digest string
+
+// StableID is an unvalidated stable-ID representation until A1.2.
 type StableID string
 
 const SafeWorkBindingSchemaV1 = "gooo/safe-work-binding/v1"
@@ -29,7 +34,7 @@ const (
 
 type EnforcementEffect uint8
 
-const EnforcementNoEffect EnforcementEffect = 0
+const EnforcementEffectNoEffect EnforcementEffect = 0
 
 type Reason uint8
 

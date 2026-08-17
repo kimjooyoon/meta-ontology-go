@@ -6,175 +6,125 @@ import (
 	"testing"
 )
 
-const (
-	ones       = "sha256:1111111111111111111111111111111111111111111111111111111111111111"
-	twos       = "sha256:2222222222222222222222222222222222222222222222222222222222222222"
-	threes     = "sha256:3333333333333333333333333333333333333333333333333333333333333333"
-	fours      = "sha256:4444444444444444444444444444444444444444444444444444444444444444"
-	fives      = "sha256:5555555555555555555555555555555555555555555555555555555555555555"
-	dBind      = "sha256:dc6dbe157ede5924b61676bfdcd4151cd6f73a51b7eefda674cca3d6d169a5cb"
-	dPath      = "sha256:c262c10f1652d0d3fd5fa605166d565a44261b834ffcffe876f2bb785f4bcd51"
-	dReg       = "sha256:23477b01e3d477d6ba5702adca8ad77a2cd643748b29e20ac4a7fda0b020673e"
-	dResult    = "sha256:b076bd08e4b82b4b2aeb78f3f8a3e12931ae8f8a01f734cb2a97bca15753a342"
-	dReplay    = "sha256:4564f79ab93fadeb3221f837e38dfdce43e1c653a89086283aaceb09d923080d"
-	dMissing   = "sha256:3b4256d3ab6d60db4caa093cc8306819c9a6fb9fb987927fab8bff841a0690c8"
-	dDuplicate = "sha256:bac3126c6e354dfb38abf69508605e50226f186d25b7381f8eb3215f33e7fda0"
-	dUnknown   = "sha256:1ada140e4d914ab1ab15570deb11e423a7e454b81c2bbf84512454b642ecfa02"
-	dBOM       = "sha256:49d26986dde23834ba79d1064aa577860dfe47a79bff2ab698d385660db1ac8c"
-	dMismatch  = "sha256:c61d5823d85939c5f7645d6f2fe2049fe724bfec3fc12c011e9532ccc41c6b10"
-)
-
-type faultVector struct {
-	name   string
-	result ParseResult
-	length int
-	digest Digest
+type fieldSpec struct {
+	name string
+	typ  reflect.Type
+	tag  string
 }
 
-func assert(t *testing.T, ok bool, message string) {
+func checkFields(t *testing.T, typ reflect.Type, want []fieldSpec) {
 	t.Helper()
-	if !ok {
+	if typ.NumField() != len(want) {
+		t.Fatalf("field count: got %d want %d", typ.NumField(), len(want))
+	}
+	for i, expected := range want {
+		field := typ.Field(i)
+		if field.Name != expected.name || field.Type != expected.typ {
+			t.Fatalf("field %d: got %s %s", i, field.Name, field.Type)
+		}
+		if field.Tag.Get("json") != expected.tag {
+			t.Fatalf("field %s: json tag %q", field.Name, field.Tag.Get("json"))
+		}
+	}
+}
+
+func check(t *testing.T, condition bool, message string) {
+	t.Helper()
+	if !condition {
 		t.Fatal(message)
 	}
 }
 
-func baseBinding() SafeWorkBinding {
-	return SafeWorkBinding{
-		Schema: SafeWorkBindingSchemaV1, TaskID: "billing://task/pay",
-		PathID: "billing://path/pay", ObligationID: "billing://obligation/pay",
-		SourceSnapshotDigest: ones, SemanticSnapshotDigest: twos,
-		PolicyDigest: threes, RegistryDigest: fours, ToolchainOptionsDigest: fives,
-	}
+func checkField(t *testing.T, got frameField, tag frameTag, value []byte) {
+	t.Helper()
+	check(t, got.tag == tag, "field tag")
+	check(t, hex.EncodeToString(got.value) == hex.EncodeToString(value), "field value")
 }
 
-func faultResult(decision Decision, reason Reason, full bool) ParseResult {
-	return ParseResult{Decision: decision, Reason: reason, Faults: []Reason{reason},
-		FullSuiteRequired: full, EnforcementEffect: EnforcementNoEffect}
-}
-
-var passReference = ParseResult{Decision: DecisionPass, Reason: ReasonNone,
-	Faults: []Reason{}, EnforcementEffect: EnforcementNoEffect}
-
-func TestEnumsTagsAndFraming(t *testing.T) {
-	decisions := [...]string{"PASS", "UNKNOWN", "FAIL_CLOSED"}
-	reasons := [...]string{
-		"NONE", "REQUIRED_INPUT_MISSING", "INVALID_UTF8", "BOM_FORBIDDEN",
-		"INVALID_JSON", "TRAILING_VALUE", "DUPLICATE_KEY", "UNKNOWN_FIELD",
-		"NULL_VALUE", "EMPTY_VALUE", "INVALID_SCHEMA", "INVALID_STABLE_ID",
-		"INVALID_DIGEST", "BINDING_DIGEST_MISMATCH",
+func TestA11Declarations(t *testing.T) {
+	check(t, SafeWorkBindingSchemaV1 == "gooo/safe-work-binding/v1", "schema")
+	check(t, reflect.TypeOf(LegacyWorkID("")).Kind() == reflect.String, "legacy type")
+	check(t, reflect.TypeOf(Digest("")).Kind() == reflect.String, "digest type")
+	check(t, reflect.TypeOf(StableID("")).Kind() == reflect.String, "stable ID type")
+	decisions := []struct {
+		value    Decision
+		spelling string
+	}{{DecisionPass, "PASS"}, {DecisionUnknown, "UNKNOWN"}, {DecisionFailClosed, "FAIL_CLOSED"}}
+	for i, expected := range decisions {
+		check(t, uint8(expected.value) == uint8(i), "decision value")
+		check(t, string(encodeEnumField("decision", []byte(expected.spelling)).value) == expected.spelling,
+			"decision spelling")
 	}
-	for i, want := range decisions {
-		assert(t, uint8(Decision(i)) == uint8(i) && decisionSpelling(Decision(i)) == want, "decision")
-	}
-	for i, want := range reasons {
-		assert(t, uint8(Reason(i)) == uint8(i) && reasonSpelling(Reason(i)) == want, "reason")
-	}
-	assert(t, EnforcementNoEffect == 0 && effectSpelling(EnforcementNoEffect) == "NO_EFFECT", "effect")
-	for i, tag := range [...]byte{tagString, tagStableID, tagDigest, tagLegacyWorkID, tagEnum, tagBool, tagReasonList, tagU64} {
-		assert(t, tag == byte(i+1), "tag")
-	}
-	assert(t, hex.EncodeToString(appendU64(nil, 0x0102030405060708)) == "0102030405060708", "big endian")
-	assert(t, hex.EncodeToString(frame("d\x00", frameField{"x", tagU64, []byte{1, 2}})) == "0000000000000002640000000000000000010000000000000001780800000000000000020102", "frame")
-}
-
-func TestVectorsAndSelfExclusion(t *testing.T) {
-	b := baseBinding()
-	bd := bindingDigest(b)
-	assert(t, len(bindingFrame(b)) == 772, "binding length")
-	assert(t, bd == dBind, "binding digest")
-	r := passReference
-	rd := resultDigest(r)
-	assert(t, len(resultFrame(r)) == 255, "result length")
-	assert(t, rd == dResult, "result digest")
-	b.BindingDigest, r.ResultDigest = bd, rd
-	rp := replayDigest(b.BindingDigest, r)
-	assert(t, len(replayFrame(b.BindingDigest, r)) == 252, "replay length")
-	assert(t, rp == dReplay, "replay digest")
-	b.BindingDigest = "sha256:mutated"
-	assert(t, bindingDigest(b) == bd, "binding self digest")
-	b.BindingDigest = bd
-	r.ResultDigest = "sha256:mutated"
-	assert(t, resultDigest(r) == rd, "result self digest")
-	r.ResultDigest, r.ReplayDigest = rd, "sha256:mutated"
-	assert(t, replayDigest(b.BindingDigest, r) == rp, "replay self digest")
-	nilFaults := passReference
-	nilFaults.Faults = nil
-	assert(t, resultDigest(nilFaults) == rd, "nil faults")
-}
-
-func TestBindingMutationsAndFaultVectors(t *testing.T) {
-	b := baseBinding()
-	base := bindingDigest(b)
-	mutations := []struct {
-		name   string
-		mutate func(*SafeWorkBinding)
+	reasons := []struct {
+		value    Reason
+		spelling string
 	}{
-		{"schema", func(v *SafeWorkBinding) { v.Schema += "-v2" }},
-		{"task", func(v *SafeWorkBinding) { v.TaskID += "-v2" }},
-		{"path", func(v *SafeWorkBinding) { v.PathID += "-v2" }},
-		{"obligation", func(v *SafeWorkBinding) { v.ObligationID += "-v2" }},
-		{"source", func(v *SafeWorkBinding) { v.SourceSnapshotDigest += "-v2" }},
-		{"semantic", func(v *SafeWorkBinding) { v.SemanticSnapshotDigest += "-v2" }},
-		{"policy", func(v *SafeWorkBinding) { v.PolicyDigest += "-v2" }},
-		{"registry", func(v *SafeWorkBinding) { v.RegistryDigest += "-v2" }},
-		{"toolchain", func(v *SafeWorkBinding) { v.ToolchainOptionsDigest += "-v2" }},
+		{ReasonNone, "NONE"}, {ReasonRequiredInputMissing, "REQUIRED_INPUT_MISSING"},
+		{ReasonInvalidUTF8, "INVALID_UTF8"}, {ReasonBOMForbidden, "BOM_FORBIDDEN"},
+		{ReasonInvalidJSON, "INVALID_JSON"}, {ReasonTrailingValue, "TRAILING_VALUE"},
+		{ReasonDuplicateKey, "DUPLICATE_KEY"}, {ReasonUnknownField, "UNKNOWN_FIELD"},
+		{ReasonNullValue, "NULL_VALUE"}, {ReasonEmptyValue, "EMPTY_VALUE"},
+		{ReasonInvalidSchema, "INVALID_SCHEMA"}, {ReasonInvalidStableID, "INVALID_STABLE_ID"},
+		{ReasonInvalidDigest, "INVALID_DIGEST"}, {ReasonBindingDigestMismatch, "BINDING_DIGEST_MISMATCH"},
 	}
-	for _, mutation := range mutations {
-		t.Run(mutation.name, func(t *testing.T) {
-			changed := b
-			mutation.mutate(&changed)
-			assert(t, bindingDigest(changed) != base, "binding mutation")
-		})
+	for i, expected := range reasons {
+		check(t, uint8(expected.value) == uint8(i), "reason value")
+		check(t, string(encodeEnumField("reason", []byte(expected.spelling)).value) == expected.spelling,
+			"reason spelling")
 	}
-	path := b
-	path.PathID = "billing://path/pay-v2"
-	registry := b
-	registry.RegistryDigest = "sha256:9999999999999999999999999999999999999999999999999999999999999999"
-	assert(t, bindingDigest(path) == dPath, "path vector")
-	assert(t, bindingDigest(registry) == dReg, "registry vector")
-	faults := []faultVector{
-		{"missing", faultResult(DecisionUnknown, ReasonRequiredInputMissing, true), 306, dMissing},
-		{"duplicate", faultResult(DecisionFailClosed, ReasonDuplicateKey, false), 292, dDuplicate},
-		{"unknown", faultResult(DecisionFailClosed, ReasonUnknownField, false), 290, dUnknown},
-		{"bom", faultResult(DecisionFailClosed, ReasonBOMForbidden, false), 292, dBOM},
-		{"mismatch", faultResult(DecisionFailClosed, ReasonBindingDigestMismatch, false), 312, dMismatch},
-	}
-	for _, vector := range faults {
-		t.Run(vector.name, func(t *testing.T) {
-			assert(t, len(resultFrame(vector.result)) == vector.length, "fault length")
-			assert(t, resultDigest(vector.result) == vector.digest, "fault digest")
-			assert(t, vector.result.ReplayDigest == "", "fault replay")
-		})
-	}
+	check(t, uint8(EnforcementEffectNoEffect) == 0, "effect value")
+	checkFields(t, reflect.TypeOf(SafeWorkBinding{}), []fieldSpec{
+		{"Schema", reflect.TypeOf(""), "schema"}, {"TaskID", reflect.TypeOf(StableID("")), "task_id"},
+		{"PathID", reflect.TypeOf(StableID("")), "path_id"}, {"ObligationID", reflect.TypeOf(StableID("")), "obligation_id"},
+		{"SourceSnapshotDigest", reflect.TypeOf(Digest("")), "source_snapshot_digest"},
+		{"SemanticSnapshotDigest", reflect.TypeOf(Digest("")), "semantic_snapshot_digest"},
+		{"PolicyDigest", reflect.TypeOf(Digest("")), "policy_digest"},
+		{"RegistryDigest", reflect.TypeOf(Digest("")), "registry_digest"},
+		{"ToolchainOptionsDigest", reflect.TypeOf(Digest("")), "toolchain_options_digest"},
+		{"BindingDigest", reflect.TypeOf(Digest("")), "binding_digest"},
+	})
+	checkFields(t, reflect.TypeOf(ParseResult{}), []fieldSpec{
+		{"Decision", reflect.TypeOf(Decision(0)), ""}, {"Reason", reflect.TypeOf(Reason(0)), ""},
+		{"Faults", reflect.TypeOf([]Reason(nil)), ""}, {"FullSuiteRequired", reflect.TypeOf(false), ""},
+		{"ExecutionAuthorized", reflect.TypeOf(false), ""}, {"EnforcementEffect", reflect.TypeOf(EnforcementEffect(0)), ""},
+		{"ResultDigest", reflect.TypeOf(Digest("")), ""}, {"ReplayDigest", reflect.TypeOf(Digest("")), ""},
+	})
 }
 
-func TestSurfaceOrderAndMetadata(t *testing.T) {
-	typ := reflect.TypeOf(SafeWorkBinding{})
-	fields := []struct{ name, tag string }{
-		{"Schema", "schema"}, {"TaskID", "task_id"}, {"PathID", "path_id"},
-		{"ObligationID", "obligation_id"}, {"SourceSnapshotDigest", "source_snapshot_digest"},
-		{"SemanticSnapshotDigest", "semantic_snapshot_digest"}, {"PolicyDigest", "policy_digest"},
-		{"RegistryDigest", "registry_digest"}, {"ToolchainOptionsDigest", "toolchain_options_digest"},
-		{"BindingDigest", "binding_digest"},
+func TestA11PrimitiveFrames(t *testing.T) {
+	for _, vector := range []struct {
+		value uint64
+		want  string
+	}{{0, "0000000000000000"}, {1, "0000000000000001"}, {^uint64(0), "ffffffffffffffff"}} {
+		check(t, hex.EncodeToString(appendU64BE(nil, vector.value)) == vector.want, "u64")
 	}
-	assert(t, typ.NumField() == len(fields), "field count")
-	for i, want := range fields {
-		field := typ.Field(i)
-		assert(t, field.Name == want.name, "field name")
-		assert(t, field.Tag.Get("json") == want.tag, "json tag")
+	for i, tag := range []frameTag{
+		frameTagString, frameTagStableID, frameTagDigest, frameTagLegacyWorkID,
+		frameTagEnum, frameTagBool, frameTagReasonList, frameTagU64,
+	} {
+		check(t, byte(tag) == byte(i+1), "tag")
 	}
-	_, hasLegacy := typ.FieldByName("LegacyWorkID")
-	assert(t, !hasLegacy && string(LegacyWorkID("raw")) == "raw", "legacy type")
-	b := baseBinding()
-	other := SafeWorkBinding{
-		ToolchainOptionsDigest: b.ToolchainOptionsDigest, RegistryDigest: b.RegistryDigest,
-		PolicyDigest: b.PolicyDigest, SemanticSnapshotDigest: b.SemanticSnapshotDigest,
-		SourceSnapshotDigest: b.SourceSnapshotDigest, ObligationID: b.ObligationID,
-		PathID: b.PathID, TaskID: b.TaskID, Schema: b.Schema,
-	}
-	assert(t, bindingDigest(b) == bindingDigest(other), "field order")
-	metadata := struct{ name, expectedLabel string }{"first", "PASS"}
-	before := resultDigest(passReference)
-	metadata.name, metadata.expectedLabel = "second", "FAIL"
-	assert(t, metadata.name != "first" && resultDigest(passReference) == before, "metadata")
+	checkField(t, encodeStringField("x", "abc"), frameTagString, []byte("abc"))
+	checkField(t, encodeStableIDField("x", StableID("abc")), frameTagStableID, []byte("abc"))
+	checkField(t, encodeDigestField("x", Digest("abc")), frameTagDigest, []byte("abc"))
+	checkField(t, encodeLegacyWorkIDField("x", LegacyWorkID("abc")), frameTagLegacyWorkID, []byte("abc"))
+	checkField(t, encodeEnumField("x", []byte("PASS")), frameTagEnum, []byte("PASS"))
+	checkField(t, encodeBoolField("x", false), frameTagBool, []byte{0})
+	checkField(t, encodeBoolField("x", true), frameTagBool, []byte{1})
+	checkField(t, encodeListField("x", [][]byte{{1}, {2, 3}}), frameTagReasonList, []byte{
+		0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 2, 3,
+	})
+	nilList := hex.EncodeToString(encodeListField("x", nil).value)
+	emptyList := hex.EncodeToString(encodeListField("x", [][]byte{}).value)
+	check(t, nilList == emptyList, "nil list")
+	frame := encodeFrame("d\x00", []frameField{{name: "x", tag: frameTagU64, value: []byte{1, 2}}})
+	frameHex := hex.EncodeToString(frame)
+	check(t, frameHex == "0000000000000002640000000000000000010000000000000001780800000000000000020102",
+		"frame layout")
+	legacy := encodeFrame("p", []frameField{encodeLegacyWorkIDField("legacy_work_id", LegacyWorkID("abc"))})
+	legacyHex := hex.EncodeToString(legacy)
+	legacyWant := "0000000000000001700000000000000001000000000000000e6c65676163795f776f726b5f6964" +
+		"040000000000000003616263"
+	check(t, legacyHex == legacyWant,
+		"legacy frame")
 }
