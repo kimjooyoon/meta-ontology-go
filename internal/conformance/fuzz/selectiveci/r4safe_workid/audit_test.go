@@ -51,11 +51,25 @@ func TestExpectedLabelsAndPermutationDoNotAffectResults(t *testing.T) {
 	for _, testCase := range cases {
 		baseline[testCase.name] = Audit(testCase.input)
 	}
-	for index := range cases {
-		cases[index].expected = Result{Decision: DecisionFailClosed, Reason: ReasonWorkIDMismatch}
-		cases[index].expectedLabel = "mutated"
-		if got := Audit(cases[index].input); got != baseline[cases[index].name] {
-			t.Fatalf("expected mutation changed %s: got %#v, want %#v", cases[index].name, got, baseline[cases[index].name])
+	mutations := []struct {
+		name   string
+		mutate func(*auditCase)
+	}{
+		{"decision", func(testCase *auditCase) { testCase.expected.Decision = DecisionUnknown }},
+		{"reason", func(testCase *auditCase) { testCase.expected.Reason = ReasonRequiredInputMissing }},
+		{"work ID", func(testCase *auditCase) { testCase.expected.LegacyWorkID = LegacyWorkID("mutated") }},
+		{"full suite", func(testCase *auditCase) { testCase.expected.FullSuiteRequired = true }},
+		{"authorization", func(testCase *auditCase) { testCase.expected.ExecutionAuthorized = true }},
+		{"effect", func(testCase *auditCase) { testCase.expected.EnforcementEffect = EnforcementEffect(255) }},
+		{"digest", func(testCase *auditCase) { testCase.expected.CanonicalDigest = "mutated" }},
+		{"label", func(testCase *auditCase) { testCase.expectedLabel = "mutated" }},
+	}
+	want := cases[0].expected
+	for _, mutation := range mutations {
+		mutated := cases[0]
+		mutation.mutate(&mutated)
+		if got := Audit(mutated.input); got != want {
+			t.Fatalf("expected %s mutation changed %s: got %#v, want %#v", mutation.name, mutated.name, got, want)
 		}
 	}
 	for index := len(cases) - 1; index >= 0; index-- {
