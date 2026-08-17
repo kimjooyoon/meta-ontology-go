@@ -49,7 +49,11 @@ func TestA11Declarations(t *testing.T) {
 	decisions := []struct {
 		value    Decision
 		spelling string
-	}{{DecisionPass, "PASS"}, {DecisionUnknown, "UNKNOWN"}, {DecisionFailClosed, "FAIL_CLOSED"}}
+	}{
+		{DecisionPass, "PASS"},
+		{DecisionUnknown, "UNKNOWN"},
+		{DecisionFailClosed, "FAIL_CLOSED"},
+	}
 	for i, expected := range decisions {
 		check(t, uint8(expected.value) == uint8(i), "decision value")
 		check(t, string(encodeEnumField("decision", []byte(expected.spelling)).value) == expected.spelling,
@@ -59,13 +63,20 @@ func TestA11Declarations(t *testing.T) {
 		value    Reason
 		spelling string
 	}{
-		{ReasonNone, "NONE"}, {ReasonRequiredInputMissing, "REQUIRED_INPUT_MISSING"},
-		{ReasonInvalidUTF8, "INVALID_UTF8"}, {ReasonBOMForbidden, "BOM_FORBIDDEN"},
-		{ReasonInvalidJSON, "INVALID_JSON"}, {ReasonTrailingValue, "TRAILING_VALUE"},
-		{ReasonDuplicateKey, "DUPLICATE_KEY"}, {ReasonUnknownField, "UNKNOWN_FIELD"},
-		{ReasonNullValue, "NULL_VALUE"}, {ReasonEmptyValue, "EMPTY_VALUE"},
-		{ReasonInvalidSchema, "INVALID_SCHEMA"}, {ReasonInvalidStableID, "INVALID_STABLE_ID"},
-		{ReasonInvalidDigest, "INVALID_DIGEST"}, {ReasonBindingDigestMismatch, "BINDING_DIGEST_MISMATCH"},
+		{ReasonNone, "NONE"},
+		{ReasonRequiredInputMissing, "REQUIRED_INPUT_MISSING"},
+		{ReasonInvalidUTF8, "INVALID_UTF8"},
+		{ReasonBOMForbidden, "BOM_FORBIDDEN"},
+		{ReasonInvalidJSON, "INVALID_JSON"},
+		{ReasonTrailingValue, "TRAILING_VALUE"},
+		{ReasonDuplicateKey, "DUPLICATE_KEY"},
+		{ReasonUnknownField, "UNKNOWN_FIELD"},
+		{ReasonNullValue, "NULL_VALUE"},
+		{ReasonEmptyValue, "EMPTY_VALUE"},
+		{ReasonInvalidSchema, "INVALID_SCHEMA"},
+		{ReasonInvalidStableID, "INVALID_STABLE_ID"},
+		{ReasonInvalidDigest, "INVALID_DIGEST"},
+		{ReasonBindingDigestMismatch, "BINDING_DIGEST_MISMATCH"},
 	}
 	for i, expected := range reasons {
 		check(t, uint8(expected.value) == uint8(i), "reason value")
@@ -74,8 +85,10 @@ func TestA11Declarations(t *testing.T) {
 	}
 	check(t, uint8(EnforcementEffectNoEffect) == 0, "effect value")
 	checkFields(t, reflect.TypeOf(SafeWorkBinding{}), []fieldSpec{
-		{"Schema", reflect.TypeOf(""), "schema"}, {"TaskID", reflect.TypeOf(StableID("")), "task_id"},
-		{"PathID", reflect.TypeOf(StableID("")), "path_id"}, {"ObligationID", reflect.TypeOf(StableID("")), "obligation_id"},
+		{"Schema", reflect.TypeOf(""), "schema"},
+		{"TaskID", reflect.TypeOf(StableID("")), "task_id"},
+		{"PathID", reflect.TypeOf(StableID("")), "path_id"},
+		{"ObligationID", reflect.TypeOf(StableID("")), "obligation_id"},
 		{"SourceSnapshotDigest", reflect.TypeOf(Digest("")), "source_snapshot_digest"},
 		{"SemanticSnapshotDigest", reflect.TypeOf(Digest("")), "semantic_snapshot_digest"},
 		{"PolicyDigest", reflect.TypeOf(Digest("")), "policy_digest"},
@@ -84,23 +97,53 @@ func TestA11Declarations(t *testing.T) {
 		{"BindingDigest", reflect.TypeOf(Digest("")), "binding_digest"},
 	})
 	checkFields(t, reflect.TypeOf(ParseResult{}), []fieldSpec{
-		{"Decision", reflect.TypeOf(Decision(0)), ""}, {"Reason", reflect.TypeOf(Reason(0)), ""},
-		{"Faults", reflect.TypeOf([]Reason(nil)), ""}, {"FullSuiteRequired", reflect.TypeOf(false), ""},
-		{"ExecutionAuthorized", reflect.TypeOf(false), ""}, {"EnforcementEffect", reflect.TypeOf(EnforcementEffect(0)), ""},
-		{"ResultDigest", reflect.TypeOf(Digest("")), ""}, {"ReplayDigest", reflect.TypeOf(Digest("")), ""},
+		{"Decision", reflect.TypeOf(Decision(0)), ""},
+		{"Reason", reflect.TypeOf(Reason(0)), ""},
+		{"Faults", reflect.TypeOf([]Reason(nil)), ""},
+		{"FullSuiteRequired", reflect.TypeOf(false), ""},
+		{"ExecutionAuthorized", reflect.TypeOf(false), ""},
+		{"EnforcementEffect", reflect.TypeOf(EnforcementEffect(0)), ""},
+		{"ResultDigest", reflect.TypeOf(Digest("")), ""},
+		{"ReplayDigest", reflect.TypeOf(Digest("")), ""},
 	})
+}
+
+func TestEnumSpelling_NoEffect(t *testing.T) {
+	expected := []struct {
+		value    EnforcementEffect
+		spelling string
+	}{
+		{EnforcementEffectNoEffect, "NO_EFFECT"},
+	}
+	for _, vector := range expected {
+		field := encodeEnumField("effect", []byte(vector.spelling))
+		check(t, field.tag == frameTagEnum, "effect tag")
+		check(t, uint8(vector.value) == 0, "effect value")
+		check(t, len(field.value) == 9, "effect length")
+		check(t, hex.EncodeToString(field.value) == "4e4f5f454646454354", "effect spelling")
+	}
 }
 
 func TestA11PrimitiveFrames(t *testing.T) {
 	for _, vector := range []struct {
 		value uint64
 		want  string
-	}{{0, "0000000000000000"}, {1, "0000000000000001"}, {^uint64(0), "ffffffffffffffff"}} {
+	}{
+		{0, "0000000000000000"},
+		{1, "0000000000000001"},
+		{^uint64(0), "ffffffffffffffff"},
+	} {
 		check(t, hex.EncodeToString(appendU64BE(nil, vector.value)) == vector.want, "u64")
 	}
 	for i, tag := range []frameTag{
-		frameTagString, frameTagStableID, frameTagDigest, frameTagLegacyWorkID,
-		frameTagEnum, frameTagBool, frameTagReasonList, frameTagU64,
+		frameTagString,
+		frameTagStableID,
+		frameTagDigest,
+		frameTagLegacyWorkID,
+		frameTagEnum,
+		frameTagBool,
+		frameTagReasonList,
+		frameTagU64,
 	} {
 		check(t, byte(tag) == byte(i+1), "tag")
 	}
