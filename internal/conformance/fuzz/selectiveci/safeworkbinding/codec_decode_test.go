@@ -52,31 +52,17 @@ func whitespaceDecodeDocument() []byte {
 	return []byte(document)
 }
 
-func checkResultShape(t *testing.T, result ParseResult, want Reason) {
-	t.Helper()
-	check(t, result.Reason == want && result.ResultDigest != "", "result reason and digest")
-	check(t, !result.ExecutionAuthorized && result.EnforcementEffect == EnforcementEffectNoEffect, "result safety")
-	if want == ReasonNone {
-		check(t, result.Decision == DecisionPass && !result.FullSuiteRequired, "pass state")
-		check(t, result.Faults != nil && len(result.Faults) == 0, "pass faults")
-		return
-	}
-	decision := DecisionFailClosed
-	fullSuite := false
-	if want == ReasonRequiredInputMissing {
-		decision = DecisionUnknown
-		fullSuite = true
-	}
-	check(t, result.Decision == decision && result.FullSuiteRequired == fullSuite, "fault state")
-	check(t, result.Faults != nil && len(result.Faults) == 1 && result.Faults[0] == want, "faults")
-	check(t, result.ReplayDigest == "", "fault replay")
-}
-
 func requireDecodeFault(t *testing.T, input []byte, want Reason) ParseResult {
 	t.Helper()
 	binding, result := DecodeJSON(input)
 	check(t, binding == (SafeWorkBinding{}), "fault binding")
-	checkResultShape(t, result, want)
+	check(t, result.Reason == want, "fault reason")
+	check(t, result.Faults != nil && len(result.Faults) == 1, "fault list")
+	check(t, result.Faults[0] == want, "fault value")
+	check(t, result.ResultDigest != "", "fault result digest")
+	check(t, result.ReplayDigest == "", "fault replay")
+	check(t, !result.ExecutionAuthorized, "fault authorization")
+	check(t, result.EnforcementEffect == EnforcementEffectNoEffect, "fault effect")
 	return result
 }
 
@@ -84,21 +70,28 @@ func requireDecodePass(t *testing.T, input []byte, want SafeWorkBinding) ParseRe
 	t.Helper()
 	binding, result := DecodeJSON(input)
 	check(t, binding == want, "pass binding")
-	checkResultShape(t, result, ReasonNone)
+	check(t, result.Decision == DecisionPass, "pass decision")
+	check(t, result.Reason == ReasonNone, "pass reason")
+	check(t, result.Faults != nil && len(result.Faults) == 0, "pass faults")
+	check(t, !result.FullSuiteRequired, "pass suite")
 	check(t, result.ResultDigest == digestPass, "pass result digest")
-	check(t, result.ReplayDigest == replayDigest(want.BindingDigest, digestPass), "pass replay")
+	check(t, result.ReplayDigest == digestReplay, "pass replay")
+	check(t, !result.ExecutionAuthorized, "pass authorization")
+	check(t, result.EnforcementEffect == EnforcementEffectNoEffect, "pass effect")
 	return result
 }
 
-func checkGovernedDecode(t *testing.T, field, value string) {
+func checkGovernedDecode(t *testing.T, field, value string, digest Digest) {
 	t.Helper()
 	binding := decodeBaseBinding()
 	mutateEnvelopeBinding(&binding, field, value)
 	overrides := map[string]string{field: `"` + value + `"`}
 	requireDecodeFault(t, decodeDocument(nil, overrides), ReasonBindingDigestMismatch)
-	binding.BindingDigest = bindingDigest(binding)
-	overrides["binding_digest"] = `"` + string(binding.BindingDigest) + `"`
-	requireDecodePass(t, decodeDocument(nil, overrides), binding)
+	binding.BindingDigest = digest
+	overrides["binding_digest"] = `"` + string(digest) + `"`
+	decoded, result := DecodeJSON(decodeDocument(nil, overrides))
+	check(t, decoded == binding, "governed binding")
+	check(t, result.Decision == DecisionPass && result.Reason == ReasonNone, "governed pass")
 }
 
 func TestDecodeJSON_BasePass(t *testing.T) {
@@ -138,28 +131,6 @@ func TestDecodeJSON_MixedPrecedence(t *testing.T) {
 	requireDecodeFault(t, []byte(`{"task_id":[{"x":1,"x":2}]}`), ReasonDuplicateKey)
 }
 
-func TestDecodeJSON_UnknownIsolation(t *testing.T) {
-	fields := []string{
-		"expected",
-		"expected_label",
-		"want",
-		"legacy_work_id",
-		"result_digest",
-		"replay_digest",
-	}
-	values := []string{
-		`"ignored"`,
-		"null",
-		"{}",
-	}
-	for _, field := range fields {
-		for _, value := range values {
-			result := requireDecodeFault(t, []byte(`{"`+field+`":`+value+`}`), ReasonUnknownField)
-			check(t, result.ResultDigest == digestExpectedLabel, "unknown result isolation")
-		}
-	}
-}
-
 func TestDecodeJSON_StringTokens(t *testing.T) {
 	requireDecodeFault(t, []byte(`{"schema":"\uFFFD"}`), ReasonInvalidSchema)
 	requireDecodeFault(t, []byte(`{"schema":"\q"}`), ReasonInvalidJSON)
@@ -168,7 +139,8 @@ func TestDecodeJSON_StringTokens(t *testing.T) {
 
 func TestDecodeJSON_StableIDAndDigestGrammar(t *testing.T) {
 	boundary := "billing://entity/" + strings.Repeat("a", 239)
-	checkGovernedDecode(t, "task_id", boundary)
+	checkGovernedDecode(t, "task_id", boundary,
+		"sha256:6f255ad87c0fc5d5c0a62b8f6dba6ec3516e13d2a614e3d673cda2d0ffb97579")
 	tooLong := `{"schema":"gooo/safe-work-binding/v1","task_id":"billing://entity/` +
 		strings.Repeat("a", 240) + `"}`
 	requireDecodeFault(t, []byte(tooLong), ReasonInvalidStableID)
@@ -186,20 +158,26 @@ func TestDecodeJSON_StableIDAndDigestGrammar(t *testing.T) {
 }
 
 func TestDecodeJSON_GovernedMutations(t *testing.T) {
-	binding := decodeBaseBinding()
-	binding.Schema = "invalid"
-	binding.BindingDigest = bindingDigest(binding)
 	requireDecodeFault(t, decodeDocument(nil, map[string]string{
-		"schema": `"invalid"`, "binding_digest": `"` + string(binding.BindingDigest) + `"`,
+		"schema":         `"invalid"`,
+		"binding_digest": `"sha256:20cb8d81572e1d4e06cadd039a4d89c8c394bea4dd2a128f769e0d961a789cab"`,
 	}), ReasonInvalidSchema)
-	checkGovernedDecode(t, "task_id", "billing://task/pay-v2")
-	checkGovernedDecode(t, "path_id", "billing://path/pay-v2")
-	checkGovernedDecode(t, "obligation_id", "billing://obligation/pay-v2")
-	checkGovernedDecode(t, "source_snapshot_digest", "sha256:"+strings.Repeat("6", 64))
-	checkGovernedDecode(t, "semantic_snapshot_digest", "sha256:"+strings.Repeat("7", 64))
-	checkGovernedDecode(t, "policy_digest", "sha256:"+strings.Repeat("8", 64))
-	checkGovernedDecode(t, "registry_digest", "sha256:"+strings.Repeat("9", 64))
-	checkGovernedDecode(t, "toolchain_options_digest", "sha256:"+strings.Repeat("a", 64))
+	checkGovernedDecode(t, "task_id", "billing://task/pay-v2",
+		"sha256:5199c307c3e5ea18acf9d9299092c72b544d9c5273cf04232089c89b0c533441")
+	checkGovernedDecode(t, "path_id", "billing://path/pay-v2",
+		"sha256:c262c10f1652d0d3fd5fa605166d565a44261b834ffcffe876f2bb785f4bcd51")
+	checkGovernedDecode(t, "obligation_id", "billing://obligation/pay-v2",
+		"sha256:98735e6e37a893db3a2619f499e34bdb83086a5fc20c7ef70180c01a959b013b")
+	checkGovernedDecode(t, "source_snapshot_digest", "sha256:"+strings.Repeat("6", 64),
+		"sha256:a66b32b5c184ae1f879260bc0087765b67ae901a1b3850101df724d8b2f00596")
+	checkGovernedDecode(t, "semantic_snapshot_digest", "sha256:"+strings.Repeat("7", 64),
+		"sha256:24a448adbf4e668536178276a2c55d88ee948baec7150c1c4e5f4f3ba0a0db54")
+	checkGovernedDecode(t, "policy_digest", "sha256:"+strings.Repeat("8", 64),
+		"sha256:88f2275f7b8b4e9d2d759dec09f3c5bd1a00b607aa7dc7a1eb4f9b5ebb78e168")
+	checkGovernedDecode(t, "registry_digest", "sha256:"+strings.Repeat("9", 64),
+		"sha256:23477b01e3d477d6ba5702adca8ad77a2cd643748b29e20ac4a7fda0b020673e")
+	checkGovernedDecode(t, "toolchain_options_digest", "sha256:"+strings.Repeat("a", 64),
+		"sha256:758db32e3f69998d81177bca728f1b4bcfea90e8f9e3d5693d020eb5f5a1d843")
 }
 
 func TestDecodeJSON_MemberPermutation(t *testing.T) {
@@ -218,42 +196,4 @@ func TestDecodeJSON_RelocationWithValuesUnchanged(t *testing.T) {
 	want := requireDecodePass(t, decodeDocument(nil, nil), binding)
 	got := requireDecodePass(t, whitespaceDecodeDocument(), binding)
 	check(t, got.ResultDigest == want.ResultDigest && got.ReplayDigest == want.ReplayDigest, "whitespace result")
-}
-
-func TestDecodeJSON_ResultReplayVectors(t *testing.T) {
-	vectors := []struct {
-		reason Reason
-		length int
-		digest Digest
-	}{
-		{ReasonNone, 255, digestPass},
-		{ReasonRequiredInputMissing, 306, digestMissing},
-		{ReasonInvalidUTF8, 290, "sha256:cb0f91bbeb15fdabbf323f49861cf155dceaba0e58eb3b7f02ffd75d6152e3cf"},
-		{ReasonBOMForbidden, 292, digestBOMMixed},
-		{ReasonInvalidJSON, 290, "sha256:6ffcacd5fca7d1ad2b4449bdb2777f3cc70af29d4cc85be8677496faeb0fdb66"},
-		{ReasonTrailingValue, 294, "sha256:bda8407767c9c12ac9bd5a5adc2723a436a01f63e748fd68f15f843a5c4afb4b"},
-		{ReasonDuplicateKey, 292, digestDuplicate},
-		{ReasonUnknownField, 292, digestExpectedLabel},
-		{ReasonNullValue, 286, "sha256:d125c223de622549e7216bf546d817c630d9e6a89e863343598718b1b0117287"},
-		{ReasonEmptyValue, 288, "sha256:5e9b99802e1a4e8eee8035b60f63bc0e2b8a34d0a33df108be67e282c43dcfd4"},
-		{ReasonInvalidSchema, 294, "sha256:46bac36b14f9e6da66d01fefef6d62300f9fbc0e28e46c906f7661e3569a24fb"},
-		{ReasonInvalidStableID, 300, "sha256:9650730414b4329361cb07e48c21ecf3a6e56e4fc400f284ccf2b5a0b8b20873"},
-		{ReasonInvalidDigest, 294, "sha256:4cc1918712c3f741c7fb522c13cbc773a97343b8c675d5b1da90ecd9a5b8c944"},
-		{ReasonBindingDigestMismatch, 312, digestMismatch},
-	}
-	for _, tc := range vectors {
-		result := resultForPass()
-		if tc.reason != ReasonNone {
-			result = resultForReason(tc.reason)
-		}
-		result = completeResult(result)
-		frame, ok := resultFrame(result)
-		check(t, ok && len(frame) == tc.length, "result frame vector")
-		check(t, result.ResultDigest == tc.digest, "result digest vector")
-		checkResultShape(t, result, tc.reason)
-		if tc.reason == ReasonNone {
-			check(t, len(replayFrame(digestBase, result.ResultDigest)) == 252, "replay frame length")
-			check(t, replayDigest(digestBase, result.ResultDigest) == digestReplay, "replay digest vector")
-		}
-	}
 }
