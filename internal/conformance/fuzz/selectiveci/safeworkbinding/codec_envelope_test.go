@@ -51,7 +51,9 @@ func mutateEnvelopeBinding(binding *SafeWorkBinding, field, value string) {
 }
 
 func TestValidateEnvelope_Base(t *testing.T) {
-	requireEnvelopeReason(t, baseEnvelopeValue(), ReasonNone)
+	want := baseBindingForDigest()
+	want.BindingDigest = digestBase
+	check(t, requireEnvelopeReason(t, baseEnvelopeValue(), ReasonNone) == want, "base binding mismatch")
 }
 
 func TestValidateEnvelope_UnknownBeforeMissing(t *testing.T) {
@@ -161,9 +163,7 @@ func TestValidateEnvelope_StableIDs(t *testing.T) {
 }
 
 func TestValidateEnvelope_Digests(t *testing.T) {
-	if !validateDigest("sha256:" + strings.Repeat("0", 64)) {
-		t.Fatal("valid digest rejected")
-	}
+	check(t, validateDigest("sha256:"+strings.Repeat("0", 64)), "valid digest rejected")
 	for _, value := range []string{
 		"sha256:" + strings.Repeat("A", 64),
 		"SHA256:" + strings.Repeat("0", 64),
