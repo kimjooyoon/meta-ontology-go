@@ -30,6 +30,7 @@ func appendU64BE(out []byte, value uint64) []byte {
 	binary.BigEndian.PutUint64(encoded[:], value)
 	return append(out, encoded[:]...)
 }
+
 func encodeFrame(domain string, fields []frameField) []byte {
 	out := appendU64BE(nil, uint64(len(domain)))
 	out = append(out, domain...)
@@ -43,22 +44,28 @@ func encodeFrame(domain string, fields []frameField) []byte {
 	}
 	return out
 }
+
 func encodeStringField(name, value string) frameField {
 	return frameField{name: name, tag: frameTagString, value: []byte(value)}
 }
+
 func encodeStableIDField(name string, value StableID) frameField {
 	return frameField{name: name, tag: frameTagStableID, value: []byte(value)}
 }
+
 func encodeDigestField(name string, value Digest) frameField {
 	return frameField{name: name, tag: frameTagDigest, value: []byte(value)}
 }
+
 func encodeLegacyWorkIDField(name string, value LegacyWorkID) frameField {
 	return frameField{name: name, tag: frameTagLegacyWorkID, value: []byte(value)}
 }
+
 func encodeEnumField(name string, spelling []byte) frameField {
 	value := append([]byte(nil), spelling...)
 	return frameField{name: name, tag: frameTagEnum, value: value}
 }
+
 func encodeBoolField(name string, value bool) frameField {
 	encoded := byte(0)
 	if value {
@@ -66,6 +73,7 @@ func encodeBoolField(name string, value bool) frameField {
 	}
 	return frameField{name: name, tag: frameTagBool, value: []byte{encoded}}
 }
+
 func encodeListField(name string, values [][]byte) frameField {
 	encoded := appendU64BE(nil, uint64(len(values)))
 	for _, value := range values {
@@ -115,6 +123,7 @@ func decisionField(name string, value Decision) (frameField, bool) {
 	}
 	return encodeEnumField(name, spelling), true
 }
+
 func reasonField(name string, value Reason) (frameField, bool) {
 	spelling, ok := reasonSpelling(value)
 	if !ok {
@@ -122,6 +131,7 @@ func reasonField(name string, value Reason) (frameField, bool) {
 	}
 	return encodeEnumField(name, spelling), true
 }
+
 func enforcementEffectField(name string, value EnforcementEffect) (frameField, bool) {
 	spelling, ok := enforcementEffectSpelling(value)
 	if !ok {
@@ -129,6 +139,7 @@ func enforcementEffectField(name string, value EnforcementEffect) (frameField, b
 	}
 	return encodeEnumField(name, spelling), true
 }
+
 func reasonListField(name string, values []Reason) (frameField, bool) {
 	spellings := make([][]byte, len(values))
 	for i, value := range values {
@@ -194,12 +205,14 @@ func resultDigest(result ParseResult) (Digest, bool) {
 	digest := sha256.Sum256(frame)
 	return Digest("sha256:" + hex.EncodeToString(digest[:])), true
 }
+
 func replayFrame(binding, result Digest) []byte {
 	return encodeFrame("gooo/safe-work-binding/replay/v1\x00", []frameField{
 		encodeDigestField("binding_digest", binding),
 		encodeDigestField("result_digest", result),
 	})
 }
+
 func replayDigest(binding, result Digest) Digest {
 	digest := sha256.Sum256(replayFrame(binding, result))
 	return Digest("sha256:" + hex.EncodeToString(digest[:]))
