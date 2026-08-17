@@ -52,15 +52,19 @@ func TestU64AndListVectors(t *testing.T) {
 	requireFrameBytes(t, "u64 zero", appendU64BE(nil, 0), []byte{0, 0, 0, 0, 0, 0, 0, 0})
 	requireFrameBytes(t, "u64 one", appendU64BE(nil, 1), []byte{0, 0, 0, 0, 0, 0, 0, 1})
 	requireFrameBytes(t, "u64 max", appendU64BE(nil, ^uint64(0)), []byte{255, 255, 255, 255, 255, 255, 255, 255})
-	boolFalse := encodeField(frameField{tag: frameTagBool, value: []byte{0}})
-	requireFrame(t, "bool false", bytes.HasSuffix(boolFalse, []byte{0}))
-	requireFrame(t, "bool true", bytes.HasSuffix(encodeField(frameField{tag: frameTagBool, value: []byte{1}}), []byte{1}))
+	boolFalse := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0x06, 0, 0, 0, 0, 0, 0, 0, 1, 0}
+	requireFrameBytes(t, "bool false", encodeField(frameField{tag: frameTagBool, value: []byte{0}}), boolFalse)
+	boolTrue := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0x06, 0, 0, 0, 0, 0, 0, 0, 1, 1}
+	requireFrameBytes(t, "bool true", encodeField(frameField{tag: frameTagBool, value: []byte{1}}), boolTrue)
 	reasonList := frameField{tag: frameTagReasonList, value: []byte{0, 0, 0, 0, 0, 0, 0, 0}}
-	requireFrame(t, "reason list", encodeField(reasonList) != nil)
+	reasonListFrame := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0x07, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0}
+	requireFrameBytes(t, "reason list", encodeField(reasonList), reasonListFrame)
 	u64Field := frameField{tag: frameTagU64, value: []byte{0, 0, 0, 0, 0, 0, 0, 1}}
-	requireFrame(t, "u64 field", encodeField(u64Field) != nil)
+	u64Frame := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0x08, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 1}
+	requireFrameBytes(t, "u64 field", encodeField(u64Field), u64Frame)
 	recordField := frameField{tag: frameTagRecordList, value: []byte{0, 0, 0, 0, 0, 0, 0, 0}}
-	requireFrame(t, "record-list field", encodeField(recordField) != nil)
+	recordFrame := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0x09, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0}
+	requireFrameBytes(t, "record-list field", encodeField(recordField), recordFrame)
 	nilList, emptyList := recordListValue(nil), recordListValue([][]byte{})
 	requireFrame(t, "non-nil lists", nilList != nil && emptyList != nil)
 	requireFrameBytes(t, "nil list", nilList, []byte{0, 0, 0, 0, 0, 0, 0, 0})
