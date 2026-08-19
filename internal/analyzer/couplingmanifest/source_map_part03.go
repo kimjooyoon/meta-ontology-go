@@ -18,20 +18,8 @@ func observationIndex(values []SourceMapObservation, surfaces map[semantic.ID]de
 		registeredMaps[surface.Binding.SourceMapID] = struct{}{}
 	}
 	for _, value := range values {
-		if value.SurfaceID == "" || value.CodeSymbolID == "" || value.SemanticOwnerID == "" || value.SourceMapID == "" {
-			return nil, unknownError(CodeUnknownChangedSurface, "source-map observation identity is missing")
-		}
-		if _, err := canonicalID(value.SurfaceID); err != nil {
-			return nil, failError(CodeMalformedBinding, "observation surface ID: %v", err)
-		}
-		if _, err := canonicalID(value.CodeSymbolID); err != nil {
-			return nil, failError(CodeMalformedBinding, "observation code symbol ID: %v", err)
-		}
-		if _, err := canonicalID(value.SemanticOwnerID); err != nil {
-			return nil, failError(CodeMalformedBinding, "observation semantic owner ID: %v", err)
-		}
-		if _, err := canonicalID(value.SourceMapID); err != nil {
-			return nil, failError(CodeMalformedBinding, "observation source-map ID: %v", err)
+		if err := assertSourceMapObservationFields(value); err != nil {
+			return nil, unknownError(CodeUnknownChangedSurface, err.Error())
 		}
 		registered, ok := surfaces[value.SurfaceID]
 		if !ok {
@@ -49,24 +37,16 @@ func observationIndex(values []SourceMapObservation, surfaces map[semantic.ID]de
 		if value.CodeSymbolID != registered.CodeSymbolID || value.SemanticOwnerID != registered.SemanticOwnerID || value.SourceMapID != registered.Binding.SourceMapID {
 			return nil, failError(CodeConflictingBinding, "observation identity tuple differs from detector registry")
 		}
-		blobDigest, blobErr := rawDigest(value.BlobDigest)
-		bindingDigest, bindingErr := rawDigest(value.BindingDigest)
-		sourceMapBindingDigest, sourceMapBindingErr := rawDigest(value.SourceMapBindingDigest)
-		if blobErr != nil || bindingErr != nil || sourceMapBindingErr != nil {
-			return nil, failError(CodeMalformedBinding, "source-map observation digest is malformed")
+		prepared, err := parseSourceMapObservationDigests(value)
+		if err != nil {
+			return nil, err
 		}
-		value.BlobDigest, value.BindingDigest, value.SourceMapBindingDigest = blobDigest, bindingDigest, sourceMapBindingDigest
-		if value.SourceMapBindingDigest != registered.Binding.BindingDigest {
-			return nil, failError(CodeConflictingBinding, "observation source-map binding differs from detector registry")
+		value = prepared
+		if err := validateSourceMapObservationSurface(registered, value, seenSymbols, seenMaps); err != nil {
+			return nil, err
 		}
 		if _, exists := result[value.SemanticOwnerID]; exists {
 			return nil, failError(CodeDuplicateBinding, "semantic owner ID %q occurs more than once", value.SemanticOwnerID)
-		}
-		if _, exists := seenSymbols[value.CodeSymbolID]; exists {
-			return nil, failError(CodeConflictingBinding, "code symbol ID %q occurs more than once", value.CodeSymbolID)
-		}
-		if _, exists := seenMaps[value.SourceMapID]; exists {
-			return nil, failError(CodeConflictingBinding, "source-map ID %q occurs more than once", value.SourceMapID)
 		}
 		result[value.SemanticOwnerID] = value
 		seenSymbols[value.CodeSymbolID] = struct{}{}

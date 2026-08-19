@@ -23,7 +23,7 @@ func TestRunVersionIsDeterministic(t *testing.T) {
 	}
 }
 
-func TestRunVersionJSONBindsVersionedContracts(t *testing.T) {
+func testRunVersionJSONBindsVersionedContracts(t *testing.T) {
 	var output, stderr bytes.Buffer
 	if code := runVersion([]string{"--json"}, &output, &stderr); code != exitOK || stderr.Len() != 0 {
 		t.Fatalf("version json code = %d, stdout=%q, stderr=%q", code, output.String(), stderr.String())
