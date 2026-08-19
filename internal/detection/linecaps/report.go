@@ -12,10 +12,12 @@ import (
 type Rule string
 
 const (
-	RuleFileLines     Rule = "file-lines"
-	RuleFunctionLines Rule = "function-lines"
-	RuleReadFile      Rule = "read-file"
-	RuleParseFile     Rule = "parse-file"
+	RuleFileLines      Rule = "file-lines"
+	RuleFunctionLines  Rule = "function-lines"
+	RuleRefactorReturn Rule = "refactor-return"
+	RuleRefactorAssign Rule = "refactor-assign-return"
+	RuleReadFile       Rule = "read-file"
+	RuleParseFile      Rule = "parse-file"
 )
 
 // Finding is a deterministic policy violation or an error that prevented a
@@ -116,6 +118,8 @@ func formatFinding(output *strings.Builder, finding Finding) {
 		fmt.Fprintf(output, "%s: %s: got %d, limit %d\n", finding.Path, finding.Rule, finding.Actual, finding.Limit)
 	case RuleFunctionLines:
 		fmt.Fprintf(output, "%s:%d-%d: %s %s: got %d, limit %d\n", finding.Path, finding.StartLine, finding.EndLine, finding.Rule, finding.Name, finding.Actual, finding.Limit)
+	case RuleRefactorReturn, RuleRefactorAssign:
+		fmt.Fprintf(output, "%s:%d-%d: %s %s: %s (actual=%d)\n", finding.Path, finding.StartLine, finding.EndLine, finding.Rule, finding.Name, finding.Detail, finding.Actual)
 	default:
 		fmt.Fprintf(output, "%s: %s: %s\n", finding.Path, finding.Rule, finding.Detail)
 	}

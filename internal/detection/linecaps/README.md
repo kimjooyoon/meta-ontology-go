@@ -1,8 +1,8 @@
 # Line-cap detector
 
 `internal/detection/linecaps` is an independent re-check of the repository's
-Go size policy. It does not import `internal/verify` or change the repository
-verification entry points.
+Go size policy and an optional refactorability signal. It does not import
+`internal/verify` or change the repository verification entry points.
 
 ## API
 
@@ -36,6 +36,15 @@ findings so an incomplete re-check cannot silently pass.
 ```text
 linecaps: violations=1
 internal/example.go:12-87: function-lines Compute: got 76, limit 75
+```
+
+Refactorability findings are emitted with `refactor-return` and
+`refactor-assign-return` rules:
+
+```text
+linecaps: violations=2
+internal/example.go:10-12: refactor-return normalize: single return ReturnExpr (actual=1)
+internal/example.go:20-23: refactor-assign-return makeValue: assignment then return value (actual=2)
 ```
 
 `Report.JSON` is the machine-readable output. It contains a sorted `findings`

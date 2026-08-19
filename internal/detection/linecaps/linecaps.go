@@ -3,6 +3,8 @@
 // The checker measures physical source lines and AST source ranges. A file or
 // function exactly at its configured limit passes; only values above a limit
 // produce findings. Function literals are checked as well as named functions.
+// It also emits lightweight refactorability findings for trivially small
+// function bodies.
 package linecaps
 
 import (
@@ -146,6 +148,10 @@ func AnalyzeSource(path string, source []byte, limits Limits) ([]Finding, error)
 		if ok {
 			findings = append(findings, finding)
 		}
+		refactorFinding, refactorOK := refactorCandidateFinding(fset, node, path)
+		if refactorOK {
+			findings = append(findings, refactorFinding)
+		}
 		return true
 	})
 	sortFindings(findings)
@@ -164,25 +170,30 @@ func lineCount(source []byte) int {
 }
 
 func functionFinding(fset *token.FileSet, node ast.Node, path string, limit int) (Finding, bool) {
-	name := ""
+	name, start, end, ok := functionSpan(fset, node)
+	if !ok {
+		return Finding{}, false
+	}
+	actual := end - start + 1
+	if actual <= limit {
+		return Finding{}, false
+	}
+	return Finding{Path: path, Rule: RuleFunctionLines, Name: name, StartLine: start, EndLine: end, Actual: actual, Limit: limit}, true
+}
+
+func functionSpan(fset *token.FileSet, node ast.Node) (name string, start int, end int, ok bool) {
 	switch function := node.(type) {
 	case *ast.FuncDecl:
 		name = function.Name.Name
 		if function.Recv != nil {
 			name = "method " + name
 		}
+		return name, fset.Position(node.Pos()).Line, fset.Position(node.End()).Line, true
 	case *ast.FuncLit:
-		name = "function literal"
+		return "function literal", fset.Position(node.Pos()).Line, fset.Position(node.End()).Line, true
 	default:
-		return Finding{}, false
+		return "", 0, 0, false
 	}
-	start := fset.Position(node.Pos()).Line
-	end := fset.Position(node.End()).Line
-	actual := end - start + 1
-	if actual <= limit {
-		return Finding{}, false
-	}
-	return Finding{Path: path, Rule: RuleFunctionLines, Name: name, StartLine: start, EndLine: end, Actual: actual, Limit: limit}, true
 }
 
 func normalizePaths(root string, paths []string) ([]string, error) {
