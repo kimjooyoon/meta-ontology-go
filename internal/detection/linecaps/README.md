@@ -50,3 +50,27 @@ internal/example.go:20-23: refactor-assign-return makeValue: assignment then ret
 `Report.JSON` is the machine-readable output. It contains a sorted `findings`
 array with `path`, `rule`, `actual`, `limit`, and optional source range/name or
 error detail fields.
+
+### Layout/line metrics API
+
+`AnalyzeLineMetrics` scans a directory tree and returns layout counts and line
+metrics for `.go` and `.gooo` files:
+
+```go
+stats, err := linecaps.AnalyzeLineMetrics(".")
+if err != nil {
+	panic(err)
+}
+fmt.Println(stats.Total())
+payload, _ := stats.JSON()
+```
+
+The directory rows include immediate and recursive folder/file counts, plus
+recursive go/gooo file and line totals.
+
+```text
+line metrics: files=6 dirs=2 go_lines=7 gooo_lines=5
+.: folders=2 files=6 go_files=3 gooo_files=3 go_lines=7 gooo_lines=5
+sub: folders=1 files=4 go_files=2 gooo_files=2 go_lines=4 gooo_lines=2
+sub/nested: folders=0 files=2 go_files=1 gooo_files=1 go_lines=1 gooo_lines=1
+```
