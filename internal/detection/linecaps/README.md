@@ -74,3 +74,10 @@ line metrics: files=6 dirs=2 go_lines=7 gooo_lines=5
 sub: folders=1 files=4 go_files=2 gooo_files=2 go_lines=4 gooo_lines=2
 sub/nested: folders=0 files=2 go_files=1 gooo_files=1 go_lines=1 gooo_lines=1
 ```
+
+You can also print this report directly from the repository root with:
+
+```sh
+go run ./scripts/line-metrics
+go run ./scripts/line-metrics -json
+```
