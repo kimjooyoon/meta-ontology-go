@@ -2,14 +2,25 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
 )
 
 func run(root, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
 	if !skipCaps {
 		policy := verify.DefaultLinePolicy()
-		if err := verify.CheckSourcePolicy(root, nil, policy); err != nil {
-			return err
+		if !(validRevision(from) && validRevision(to) && from != to) {
+			if err := verify.CheckSourcePolicy(root, nil, policy); err != nil {
+				return err
+			}
+		} else {
+			changed, err := changedPaths(root, from, to)
+			if err != nil {
+				return err
+			}
+			if len(changed) == 0 {
+				return nil
+			}
 		}
 	}
 	if capsOnly {

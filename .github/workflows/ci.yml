@@ -148,20 +148,33 @@ jobs:
           git rev-parse --verify "$EXPECTED_BASE^{commit}" >/dev/null
       - name: Emit source metrics (go/gooo + folders/files)
         run: |
+          mkdir -p ci-metrics
+          go run ./scripts/line-metrics -json > ci-metrics/source-metrics.json
+          go run ./scripts/line-metrics > ci-metrics/source-metrics.txt
           {
             echo "### Source metrics (go/gooo + folders/files)"
             echo '```text'
-            go run ./scripts/line-metrics
+            cat ci-metrics/source-metrics.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           {
             echo "### Source metrics (json)"
             echo '```json'
-            go run ./scripts/line-metrics -json
+            cat ci-metrics/source-metrics.json
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload source metrics artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-line-metrics-${{ github.sha }}
+          path: ci-metrics/source-metrics.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Check DAMP/DRY caps
         if: github.event_name == 'pull_request'
+        env:
+          GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
+          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
         run: go run ./scripts/verify --caps-only
       - name: Check changed-file scope, Go size caps, and PR target
         if: github.event_name == 'pull_request'
