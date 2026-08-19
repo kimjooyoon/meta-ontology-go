@@ -146,6 +146,20 @@ jobs:
           actual_head="$(git rev-parse HEAD)"
           test "$actual_head" = "$EXPECTED_HEAD"
           git rev-parse --verify "$EXPECTED_BASE^{commit}" >/dev/null
+      - name: Emit source metrics (go/gooo + folders/files)
+        run: |
+          {
+            echo "### Source metrics (go/gooo + folders/files)"
+            echo '```text'
+            go run ./scripts/line-metrics
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Source metrics (json)"
+            echo '```json'
+            go run ./scripts/line-metrics -json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Check DAMP/DRY caps
         if: github.event_name == 'pull_request'
         run: go run ./scripts/verify --caps-only

@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
 )
 
 // Violation is one deterministic policy failure.
@@ -31,22 +33,49 @@ func (v Violation) Error() string {
 	return fmt.Sprintf("%s: %s: got %d, limit %d", v.Path, v.Rule, v.Actual, v.Limit)
 }
 
+// LinePolicy defines deterministic source constraints used by CI.
+type LinePolicy struct {
+	MaxFileLines         int
+	MaxFunctionLines     int
+	MaxDirectDirectoryIn int
+}
+
+// DefaultLinePolicy returns the currently active repository constraints.
+func DefaultLinePolicy() LinePolicy {
+	return LinePolicy{
+		MaxFileLines:         75,
+		MaxFunctionLines:     75,
+		MaxDirectDirectoryIn: 10,
+	}
+}
+
 // CheckGoCaps checks the DAMP file limit and DRY function limit. If files is
-// empty, all Go files below root are discovered in lexical path order.
+// empty, all source files below root are discovered in lexical path order.
 func CheckGoCaps(root string, files []string, maxFileLines, maxFunctionLines int) error {
-	if maxFileLines <= 0 || maxFunctionLines <= 0 {
-		return fmt.Errorf("Go caps must be positive")
+	return CheckSourcePolicy(root, files, LinePolicy{
+		MaxFileLines:     maxFileLines,
+		MaxFunctionLines: maxFunctionLines,
+	})
+}
+
+// CheckSourcePolicy checks all repository-wide source constraints from policy.
+func CheckSourcePolicy(root string, files []string, policy LinePolicy) error {
+	if policy.MaxFileLines <= 0 || policy.MaxFunctionLines <= 0 {
+		return fmt.Errorf("source policy caps must be positive")
 	}
 	if len(files) == 0 {
 		var err error
-		files, err = discoverGoFiles(root)
+		files, err = discoverSourceFiles(root)
 		if err != nil {
 			return err
 		}
 	}
 	violations := make([]Violation, 0)
 	for _, path := range sortedUnique(files) {
-		violations = append(violations, checkGoFile(root, path, maxFileLines, maxFunctionLines)...)
+		violations = append(violations, checkSourceFile(root, path, policy)...)
+	}
+	if policy.MaxDirectDirectoryIn > 0 {
+		violations = append(violations, checkDirectoryLayout(root, policy.MaxDirectDirectoryIn)...)
 	}
 	if len(violations) == 0 {
 		return nil
@@ -61,17 +90,27 @@ func CheckGoCaps(root string, files []string, maxFileLines, maxFunctionLines int
 	for i, violation := range violations {
 		lines[i] = violation.Error()
 	}
-	return fmt.Errorf("Go size policy failed:\n%s", strings.Join(lines, "\n"))
+	return fmt.Errorf("source policy failed:\n%s", strings.Join(lines, "\n"))
 }
 
-func checkGoFile(root, path string, maxFileLines, maxFunctionLines int) []Violation {
+func checkSourceFile(root, path string, policy LinePolicy) []Violation {
+	if !strings.HasSuffix(path, ".go") && !strings.HasSuffix(path, ".gooo") {
+		return nil
+	}
 	source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
 	if err != nil {
-		return []Violation{{Path: path, Rule: "read-go-file", Detail: err.Error()}}
+		return []Violation{{Path: path, Rule: "read-gooo-file", Detail: err.Error()}}
 	}
 	violations := make([]Violation, 0)
-	if lines := lineCount(source); lines > maxFileLines {
-		violations = append(violations, Violation{Path: path, Rule: "DAMP file lines", Actual: lines, Limit: maxFileLines})
+	if lines := lineCount(source); lines > policy.MaxFileLines {
+		rule := "DAMP file lines"
+		if strings.HasSuffix(path, ".gooo") {
+			rule = "GOOO file lines"
+		}
+		violations = append(violations, Violation{Path: path, Rule: rule, Actual: lines, Limit: policy.MaxFileLines})
+	}
+	if strings.HasSuffix(path, ".gooo") {
+		return violations
 	}
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, source, parser.ParseComments)
@@ -83,8 +122,8 @@ func checkGoFile(root, path string, maxFileLines, maxFunctionLines int) []Violat
 		if !ok {
 			return true
 		}
-		if length := end - start + 1; length > maxFunctionLines {
-			violations = append(violations, Violation{Path: path, Rule: "DRY function lines", Actual: length, Limit: maxFunctionLines, Detail: name})
+		if length := end - start + 1; length > policy.MaxFunctionLines {
+			violations = append(violations, Violation{Path: path, Rule: "DRY function lines", Actual: length, Limit: policy.MaxFunctionLines, Detail: name})
 		}
 		return true
 	})
@@ -107,7 +146,7 @@ func functionRange(fset *token.FileSet, node ast.Node) (int, int, string, bool) 
 	return fset.Position(node.Pos()).Line, fset.Position(node.End()).Line, name, true
 }
 
-func discoverGoFiles(root string) ([]string, error) {
+func discoverSourceFiles(root string) ([]string, error) {
 	files := make([]string, 0)
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
@@ -116,17 +155,54 @@ func discoverGoFiles(root string) ([]string, error) {
 		if entry.IsDir() && (entry.Name() == ".git" || entry.Name() == "vendor") {
 			return filepath.SkipDir
 		}
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".go") {
-			relative, err := filepath.Rel(root, path)
-			if err != nil {
-				return err
-			}
-			files = append(files, filepath.ToSlash(relative))
+		if entry.IsDir() {
+			return nil
 		}
+		extension := strings.ToLower(filepath.Ext(entry.Name()))
+		if extension != ".go" && extension != ".gooo" {
+			return nil
+		}
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		files = append(files, filepath.ToSlash(relative))
 		return nil
 	})
 	sort.Strings(files)
 	return files, err
+}
+
+func checkDirectoryLayout(root string, maxDirectEntries int) []Violation {
+	report, err := linecaps.AnalyzeLineMetrics(root)
+	if err != nil {
+		return []Violation{{Path: ".", Rule: "directory layout", Detail: err.Error()}}
+	}
+	violations := make([]Violation, 0)
+	for _, directory := range report.Directories {
+		directEntries := directory.DirectFiles + directory.DirectFolders
+		if directEntries > maxDirectEntries {
+			violations = append(violations, Violation{
+				Path:   directory.Path,
+				Rule:   "directory direct entries",
+				Actual: directEntries,
+				Limit:  maxDirectEntries,
+				Detail: "too many direct children",
+			})
+		}
+		if directory.DirectFolders > 0 && directory.DirectFiles > 0 {
+			violations = append(violations, Violation{
+				Path:   directory.Path,
+				Rule:   "directory mixed entries",
+				Detail: "must contain either files or folders, not both",
+			})
+		}
+	}
+	return violations
+}
+
+func discoverGoFiles(root string) ([]string, error) {
+	return discoverSourceFiles(root)
 }
 
 func lineCount(source []byte) int {

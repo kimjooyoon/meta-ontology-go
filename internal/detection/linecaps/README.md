@@ -70,9 +70,9 @@ recursive go/gooo file and line totals.
 
 ```text
 line metrics: files=6 dirs=2 go_lines=7 gooo_lines=5
-.: folders=2 files=6 go_files=3 gooo_files=3 go_lines=7 gooo_lines=5
-sub: folders=1 files=4 go_files=2 gooo_files=2 go_lines=4 gooo_lines=2
-sub/nested: folders=0 files=2 go_files=1 gooo_files=1 go_lines=1 gooo_lines=1
+.: direct_folders=2 direct_files=0 folders=2 files=6 go_files=3 gooo_files=3 go_lines=7 gooo_lines=5
+sub: direct_folders=1 direct_files=0 folders=1 files=4 go_files=2 gooo_files=2 go_lines=4 gooo_lines=2
+sub/nested: direct_folders=0 direct_files=2 folders=0 files=2 go_files=1 gooo_files=1 go_lines=1 gooo_lines=1
 ```
 
 You can also print this report directly from the repository root with:

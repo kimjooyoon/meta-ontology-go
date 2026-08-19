@@ -258,8 +258,8 @@ func (r LineMetricsReport) Text() string {
 	sum := r.Total()
 	fmt.Fprintf(&output, "line metrics: files=%d dirs=%d go_lines=%d gooo_lines=%d\n", sum.RecursiveFiles, sum.RecursiveFolders, sum.GoLines, sum.GoooLines)
 	for _, directory := range orderedDirectoryMetrics(r.Directories) {
-		fmt.Fprintf(&output, "%s: folders=%d files=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n",
-			directory.Path, directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles, directory.GoooFiles, directory.GoLines, directory.GoooLines,
+		fmt.Fprintf(&output, "%s: direct_folders=%d direct_files=%d folders=%d files=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n",
+			directory.Path, directory.DirectFolders, directory.DirectFiles, directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles, directory.GoooFiles, directory.GoLines, directory.GoooLines,
 		)
 	}
 	return output.String()

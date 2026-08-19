@@ -5,15 +5,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
-)
-
-const (
-	maxGoFileLines     = 300
-	maxGoFunctionLines = 75
 )
 
 func main() {
@@ -45,12 +39,9 @@ func validateCapMode(capsOnly, skipCaps bool) error {
 }
 
 func run(root, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
-	files, err := trackedGoFiles(root)
-	if err != nil {
-		return err
-	}
 	if !skipCaps {
-		if err := verify.CheckGoCaps(root, files, maxGoFileLines, maxGoFunctionLines); err != nil {
+		policy := verify.DefaultLinePolicy()
+		if err := verify.CheckSourcePolicy(root, nil, policy); err != nil {
 			return err
 		}
 	}
@@ -170,21 +161,6 @@ func revisionAvailable(root, revision string) bool {
 	}
 	_, err := runGit(root, "rev-parse", "--verify", revision+"^{commit}")
 	return err == nil
-}
-
-func trackedGoFiles(root string) ([]string, error) {
-	output, err := runGit(root, "ls-files", "-z", "--", "*.go")
-	if err != nil {
-		return nil, err
-	}
-	parts := strings.Split(output, "\x00")
-	files := make([]string, 0, len(parts))
-	for _, part := range parts {
-		if part != "" {
-			files = append(files, filepath.ToSlash(part))
-		}
-	}
-	return files, nil
 }
 
 func changedPaths(root, from, to string) ([]string, error) {
