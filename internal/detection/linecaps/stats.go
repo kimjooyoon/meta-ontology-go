@@ -257,6 +257,31 @@ func (r LineMetricsReport) Text() string {
 	var output strings.Builder
 	sum := r.Total()
 	fmt.Fprintf(&output, "line metrics: files=%d dirs=%d go_lines=%d gooo_lines=%d\n", sum.RecursiveFiles, sum.RecursiveFolders, sum.GoLines, sum.GoooLines)
+	fmt.Fprintf(&output, "language totals: go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n", sum.GoFiles, sum.GoooFiles, sum.GoLines, sum.GoooLines)
+	writeLanguageFileSection := func(label FileLanguage, title string) {
+		files := orderedFileMetrics(r.Files)
+		count := 0
+		lines := 0
+		for _, file := range files {
+			if file.Language != label {
+				continue
+			}
+			count++
+			lines += file.Lines
+		}
+		if count == 0 {
+			return
+		}
+		fmt.Fprintf(&output, "%s files: count=%d lines=%d\n", title, count, lines)
+		for _, file := range files {
+			if file.Language != label {
+				continue
+			}
+			fmt.Fprintf(&output, "  %s\tlines=%d\n", file.Path, file.Lines)
+		}
+	}
+	writeLanguageFileSection(FileLanguageGo, "go")
+	writeLanguageFileSection(FileLanguageGooo, "gooo")
 	for _, directory := range orderedDirectoryMetrics(r.Directories) {
 		fmt.Fprintf(&output, "%s: direct_folders=%d direct_files=%d folders=%d files=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n",
 			directory.Path, directory.DirectFolders, directory.DirectFiles, directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles, directory.GoooFiles, directory.GoLines, directory.GoooLines,

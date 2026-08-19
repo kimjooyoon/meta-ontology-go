@@ -3,6 +3,7 @@ package linecaps
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -63,6 +64,27 @@ func TestAnalyzeLineMetricsIncludesNonGoSourceLines(t *testing.T) {
 	}
 	if len(report.Files) != 1 || report.Files[0].Language != FileLanguageOther {
 		t.Fatalf("unexpected file language metric: %#v", report.Files)
+	}
+}
+
+func TestAnalyzeLineMetricsTextIncludesPerLanguageRows(t *testing.T) {
+	root := t.TempDir()
+	writeGoFile(t, root, "a.go", "package a\n")
+	writeGoFile(t, root, "b.gooo", "intent: b\n")
+	writeGoFile(t, root, "c.txt", "x\n")
+	report, err := AnalyzeLineMetrics(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := report.Text()
+	if !strings.Contains(text, "language totals: go_files=1 gooo_files=1 go_lines=2 gooo_lines=2") {
+		t.Fatalf("text missing language totals:\n%s", text)
+	}
+	if !strings.Contains(text, "go files: count=1 lines=2") || !strings.Contains(text, "a.go\tlines=2") {
+		t.Fatalf("text missing go file rows:\n%s", text)
+	}
+	if !strings.Contains(text, "gooo files: count=1 lines=2") || !strings.Contains(text, "b.gooo\tlines=2") {
+		t.Fatalf("text missing gooo file rows:\n%s", text)
 	}
 }
 
