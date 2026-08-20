@@ -7,9 +7,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
+
+	metatoolchain "github.com/kimjooyoon/meta-ontology-go/internal/meta/toolchain"
 )
 
 func hashGeneratedSourceMap(root string) (string, error) {
@@ -45,18 +46,7 @@ func hashGeneratedSourceMap(root string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 func toolchainIdentity() (string, error) {
-	goVersion, err := command("go", "version")
-	if err != nil {
-		return "", err
-	}
-	goEnv, err := command("go", "env", "GOVERSION", "GOROOT", "GOOS", "GOARCH")
-	if err != nil {
-		return "", err
-	}
-	if runtime.Version() != "go1.26.5" || !strings.Contains(goVersion, "go1.26.5") || !strings.HasPrefix(goEnv, "go1.26.5\n") {
-		return "", fmt.Errorf("toolchain is not independently go1.26.5")
-	}
-	return runtime.Version() + "\n" + strings.TrimSpace(goVersion) + "\n" + strings.TrimSpace(goEnv), nil
+	return metatoolchain.Identity(".")
 }
 func command(name string, args ...string) (string, error) {
 	return commandIn(".", name, args...)

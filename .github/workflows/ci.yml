@@ -38,6 +38,19 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Bind the declared Go 1.27 toolchain
+        run: |
+          test "$(go env GOVERSION)" = "go1.27rc3"
+          go version
+      - name: Require Go modernizers and module graph at a fixed point
+        run: |
+          go fix ./...
+          go mod tidy
+          git diff --exit-code
+      - name: Compile module-declared meta tools
+        run: |
+          go list tool
+          go build tool
       - name: Require formatted Go
         run: test -z "$(gofmt -l .)"
 
