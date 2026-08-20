@@ -15,10 +15,7 @@ func (reader *chunkReader) Read(buffer []byte) (int, error) {
 	if reader.read == len(reader.data) {
 		return 0, io.EOF
 	}
-	size := min(reader.size, len(buffer))
-	if size > len(reader.data)-reader.read {
-		size = len(reader.data) - reader.read
-	}
+	size := min(min(reader.size, len(buffer)), len(reader.data)-reader.read)
 	copy(buffer, reader.data[reader.read:reader.read+size])
 	reader.read += size
 	return size, nil

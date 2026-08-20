@@ -11,7 +11,6 @@ func TestConcurrentAppendsRemainOneCanonicalChain(t *testing.T) {
 	const count = 32
 	var wait sync.WaitGroup
 	for index := range count {
-		index := index
 		wait.Go(func() {
 			record := testRecord("event/race/"+string(rune('a'+index)), "semantic/race/"+string(rune('a'+index)), StatusVerified)
 			if err := store.Append(record); err != nil {

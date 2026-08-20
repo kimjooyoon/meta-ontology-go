@@ -44,10 +44,10 @@ func TestEachResourceLimitFailsClosedWithoutCompensation(t *testing.T) {
 		name  string
 		limit func(*CeilingSet)
 	}{
-		{name: "cpu", limit: func(ceiling *CeilingSet) { ceiling.CPUCoreNS = U64(32) }},
-		{name: "memory", limit: func(ceiling *CeilingSet) { ceiling.MemoryBytes = U64(223) }},
-		{name: "work", limit: func(ceiling *CeilingSet) { ceiling.WorkUnits = U64(17) }},
-		{name: "prov", limit: func(ceiling *CeilingSet) { ceiling.UniquePROVRecords = U64(11) }},
+		{name: "cpu", limit: func(ceiling *CeilingSet) { ceiling.CPUCoreNS = new(uint64(32)) }},
+		{name: "memory", limit: func(ceiling *CeilingSet) { ceiling.MemoryBytes = new(uint64(223)) }},
+		{name: "work", limit: func(ceiling *CeilingSet) { ceiling.WorkUnits = new(uint64(17)) }},
+		{name: "prov", limit: func(ceiling *CeilingSet) { ceiling.UniquePROVRecords = new(uint64(11)) }},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {

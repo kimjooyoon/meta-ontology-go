@@ -36,8 +36,8 @@ func TestPermutationAndRootRelocation(t *testing.T) {
 }
 func TestComponentwiseCeilingsDoNotCompensate(t *testing.T) {
 	input := R4F01()
-	input.Ceilings.Selected.MemoryBytes = U64(223)
-	input.Ceilings.Selected.CPUCoreNS = U64(1_000_000)
+	input.Ceilings.Selected.MemoryBytes = new(uint64(223))
+	input.Ceilings.Selected.CPUCoreNS = new(uint64(1_000_000))
 	got := Evaluate(input)
 	if got.Decision != DecisionFailClosed || got.Reason != ReasonResourceLimitExceeded || !contains(got.LimitFailures, "selected:memory_bytes") {
 		t.Fatalf("memory ceiling result = %#v", got)
