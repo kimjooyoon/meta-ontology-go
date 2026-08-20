@@ -53,20 +53,14 @@ func (l *Lexer) lexEscape(value *strings.Builder, escapeStart Position) bool {
 		}
 		raw := l.source[begin:l.offset]
 		if len(raw) != 4 {
-			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "unicode escape must contain four hexadecimal digits")
-			value.WriteString(recovered.String())
-			return false
+			return l.recoverEscape(value, recovered.String(), escapeStart, "unicode escape must contain four hexadecimal digits")
 		}
 		decoded, err := strconv.ParseUint(raw, 16, 16)
 		if err != nil {
-			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "invalid unicode escape")
-			value.WriteString(recovered.String())
-			return false
+			return l.recoverEscape(value, recovered.String(), escapeStart, "invalid unicode escape")
 		}
 		if decoded >= 0xd800 && decoded <= 0xdfff {
-			l.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), "unicode escape cannot encode a surrogate code point")
-			value.WriteString(recovered.String())
-			return false
+			return l.recoverEscape(value, recovered.String(), escapeStart, "unicode escape cannot encode a surrogate code point")
 		}
 		value.WriteRune(rune(decoded))
 	default:

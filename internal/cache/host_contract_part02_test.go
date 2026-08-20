@@ -11,3 +11,13 @@ func TestNewKeyRejectsUnknownHostStage(t *testing.T) {
 		t.Fatalf("unknown stage error = %v, want ErrInvalidHostStage", err)
 	}
 }
+
+func mustCacheValue[T any](t *testing.T) func(T, error) T {
+	return func(value T, err error) T {
+		t.Helper()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return value
+	}
+}

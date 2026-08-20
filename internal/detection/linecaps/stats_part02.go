@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"sort"
-	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
@@ -27,87 +25,17 @@ func AnalyzeLineMetrics(root string) (LineMetricsReport, error) {
 		if walkErr != nil {
 			return walkErr
 		}
-		if entry.IsDir() {
-			name := entry.Name()
-			if name == ".git" || name == "vendor" {
-				return filepath.SkipDir
-			}
-			relative, relErr := filepath.Rel(absRoot, path)
-			if relErr != nil {
-				return relErr
-			}
-			relative = filepath.ToSlash(relative)
-			if relative == "." {
-				return nil
-			}
-			ensureDirectoryNode(directories, relative)
-			parent := filepath.ToSlash(filepath.Dir(relative))
-			ensureDirectoryNode(directories, parent)
-			directories[parent].directFolders++
-			return nil
+		if handled, visitErr := collectMetricDirectory(absRoot, path, entry, directories); handled || visitErr != nil {
+			return visitErr
 		}
-		relative, relErr := filepath.Rel(absRoot, path)
-		if relErr != nil {
-			return relErr
-		}
-		relative = filepath.ToSlash(relative)
-		parent := filepath.ToSlash(filepath.Dir(relative))
-		ensureDirectoryNode(directories, parent)
-		directories[parent].directFiles++
-		extension := strings.ToLower(filepath.Ext(relative))
-		metric, metricErr := measureFileMetric(path, relative, extension)
-		if metricErr != nil {
-			return metricErr
-		}
-		files = append(files, metric)
-		accumulateFileMetric(directories[parent], metric)
-		return nil
+		return collectMetricFile(absRoot, path, directories, &files)
 	})
 	if err != nil {
 		return LineMetricsReport{}, err
 	}
 
-	entries := make([]string, 0, len(directories))
-	for path := range directories {
-		entries = append(entries, path)
-	}
-	sort.Slice(entries, func(i, j int) bool {
-		iDepth := directoryDepth(entries[i])
-		jDepth := directoryDepth(entries[j])
-		if iDepth != jDepth {
-			return iDepth > jDepth
-		}
-		if entries[i] == "." {
-			return false
-		}
-		if entries[j] == "." {
-			return true
-		}
-		return entries[i] < entries[j]
-	})
-	for _, node := range directories {
-		node.recursiveFiles = node.directFiles
-	}
-	for _, path := range entries {
-		node := directories[path]
-		if node == nil {
-			continue
-		}
-		if path == "." {
-			continue
-		}
-		parent := filepath.ToSlash(filepath.Dir(path))
-		parentNode := directories[parent]
-		if parentNode == nil {
-			continue
-		}
-		parentNode.recursiveFolders += 1 + node.recursiveFolders
-		parentNode.recursiveFiles += node.recursiveFiles
-		parentNode.goFiles += node.goFiles
-		parentNode.goooFiles += node.goooFiles
-		parentNode.goLines += node.goLines
-		parentNode.goooLines += node.goooLines
-	}
+	entries := orderedMetricDirectories(directories)
+	aggregateMetricDirectories(directories, entries)
 
 	sorted := make([]DirectoryMetric, 0, len(directories))
 	for _, path := range orderedPaths(directoriesToPaths(directories)) {

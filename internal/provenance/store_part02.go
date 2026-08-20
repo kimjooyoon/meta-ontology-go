@@ -1,9 +1,6 @@
 package provenance
 
-import (
-	"bytes"
-	"fmt"
-)
+import "fmt"
 
 func (s *Store) appendUnlocked(records []Evidence) error {
 	state, err := readLedger(s.path)
@@ -21,20 +18,8 @@ func (s *Store) appendUnlocked(records []Evidence) error {
 			return fmt.Errorf("event %d: %w", index, err)
 		}
 		if existing, exists := known[normalized.ID]; exists {
-			candidate, err := materializeDuplicate(normalized, existing)
-			if err != nil {
-				return fmt.Errorf("event %d: %w", index, err)
-			}
-			left, err := marshalEvidence(existing, true)
-			if err != nil {
+			if err := validateDuplicateEvidence(normalized, existing, index); err != nil {
 				return err
-			}
-			right, err := marshalEvidence(candidate, true)
-			if err != nil {
-				return err
-			}
-			if !bytes.Equal(left, right) {
-				return &ConflictError{ID: normalized.ID, Detail: "same event ID has different canonical bytes"}
 			}
 			continue
 		}

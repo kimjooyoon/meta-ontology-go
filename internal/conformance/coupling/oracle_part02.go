@@ -11,8 +11,7 @@ func Evaluate(input Input) Output {
 		return finish(output, issue.decision, issue.reason)
 	}
 	resources, issue := normalizeResources(input.ResourceReceipts, input.Config.ResourceBinding)
-	output.Resources = resources
-	output.ObservationCounts.ResourceReceipts = uint64(len(input.ResourceReceipts))
+	output.Resources, output.ObservationCounts.ResourceReceipts = resources, uint64(len(input.ResourceReceipts))
 	if issue.decision != "" {
 		return finish(output, issue.decision, issue.reason)
 	}
@@ -51,8 +50,7 @@ func Evaluate(input Input) Output {
 		return finish(output, issue.decision, issue.reason)
 	}
 	receipts, issue := validateReceipts(input, registry, changed, before, after, deltaText)
-	output.ReceiptSurfaces = receipts.valid
-	output.ObservationCounts.ValidReceipts = uint64(len(receipts.valid))
+	output.ReceiptSurfaces, output.ObservationCounts.ValidReceipts = receipts.valid, uint64(len(receipts.valid))
 	if issue.decision != "" {
 		return finish(output, issue.decision, issue.reason)
 	}

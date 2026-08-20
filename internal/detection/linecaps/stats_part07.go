@@ -1,6 +1,10 @@
 package linecaps
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 func measureFileMetric(fullPath, relative, extension string) (FileMetric, error) {
 	metric := FileMetric{Path: relative, Language: FileLanguageOther}
@@ -29,4 +33,23 @@ func accumulateFileMetric(directory *directoryNode, metric FileMetric) {
 		directory.goooFiles++
 		directory.goooLines += metric.Lines
 	}
+}
+
+func collectMetricFile(absRoot, path string, directories map[string]*directoryNode, files *[]FileMetric) error {
+	relative, err := filepath.Rel(absRoot, path)
+	if err != nil {
+		return err
+	}
+	relative = filepath.ToSlash(relative)
+	parent := filepath.ToSlash(filepath.Dir(relative))
+	ensureDirectoryNode(directories, parent)
+	directories[parent].directFiles++
+	extension := strings.ToLower(filepath.Ext(relative))
+	metric, err := measureFileMetric(path, relative, extension)
+	if err != nil {
+		return err
+	}
+	*files = append(*files, metric)
+	accumulateFileMetric(directories[parent], metric)
+	return nil
 }

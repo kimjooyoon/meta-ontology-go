@@ -16,18 +16,9 @@ func TestSemanticProjectionKeyUsesStableIRIdentity(t *testing.T) {
 		return strings.Replace(source, `billing://entity/order`, `billing://entity/purchase`, 1)
 	})
 
-	originalDigest, err := SemanticDigest(original)
-	if err != nil {
-		t.Fatal(err)
-	}
-	renamedDigest, err := SemanticDigest(renamed)
-	if err != nil {
-		t.Fatal(err)
-	}
-	changedDigest, err := SemanticDigest(changedID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	originalDigest := mustCacheValue[Digest](t)(SemanticDigest(original))
+	renamedDigest := mustCacheValue[Digest](t)(SemanticDigest(renamed))
+	changedDigest := mustCacheValue[Digest](t)(SemanticDigest(changedID))
 	if originalDigest != renamedDigest {
 		t.Fatalf("display rename changed semantic digest: %s != %s", originalDigest, renamedDigest)
 	}
@@ -39,18 +30,9 @@ func TestSemanticProjectionKeyUsesStableIRIdentity(t *testing.T) {
 	spec.Domain = ""
 	spec.Namespace = ""
 	spec.SemanticClosureDigest = ""
-	originalKey, err := NewSemanticProjectionKey(original, spec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	renamedKey, err := NewSemanticProjectionKey(renamed, spec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	changedKey, err := NewSemanticProjectionKey(changedID, spec)
-	if err != nil {
-		t.Fatal(err)
-	}
+	originalKey := mustCacheValue[ProjectionKey](t)(NewSemanticProjectionKey(original, spec))
+	renamedKey := mustCacheValue[ProjectionKey](t)(NewSemanticProjectionKey(renamed, spec))
+	changedKey := mustCacheValue[ProjectionKey](t)(NewSemanticProjectionKey(changedID, spec))
 	if originalKey != renamedKey {
 		t.Fatal("presentation-only rename changed semantic projection key")
 	}
