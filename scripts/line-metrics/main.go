@@ -28,7 +28,7 @@ func run(root string, jsonMode, summaryMode bool) error {
 	if err != nil {
 		return err
 	}
-		report.Repository = os.Getenv("GITHUB_REPOSITORY")
+	report.Repository = os.Getenv("GITHUB_REPOSITORY")
 	report.CommitSHA = os.Getenv("METRICS_COMMIT_SHA")
 	if summaryMode {
 		fmt.Print(report.Summary())

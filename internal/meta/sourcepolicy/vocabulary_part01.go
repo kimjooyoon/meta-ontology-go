@@ -26,12 +26,12 @@ const (
 )
 
 const (
-	OperationObserve          Operation = "observe"
-	OperationSplitGo          Operation = "split-go-declarations"
-	OperationSplitGooo        Operation = "split-gooo-sections"
+	OperationObserve         Operation = "observe"
+	OperationSplitGo         Operation = "split-go-declarations"
+	OperationSplitGooo       Operation = "split-gooo-sections"
 	OperationExtractFunction Operation = "extract-function"
-	OperationPartition        Operation = "partition-directory"
-	OperationSeparateKinds    Operation = "separate-directory-kinds"
-	OperationModernize        Operation = "apply-go-fix"
-	OperationSelectToolchain  Operation = "select-toolchain"
+	OperationPartition       Operation = "partition-directory"
+	OperationSeparateKinds   Operation = "separate-directory-kinds"
+	OperationModernize       Operation = "apply-go-fix"
+	OperationSelectToolchain Operation = "select-toolchain"
 )

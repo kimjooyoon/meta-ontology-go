@@ -73,4 +73,3 @@ func runGeneratedBillingProjectionLiftsAgainstDeclaredContract(t *testing.T) {
 		t.Fatalf("lifted IR invalid: %v", err)
 	}
 }
-
