@@ -1,13 +1,12 @@
 package main
 
 import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
-	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func TestEntityFieldsProjectionRejectsMalformedPartitionsAndUnknownState(t *testing.T) {

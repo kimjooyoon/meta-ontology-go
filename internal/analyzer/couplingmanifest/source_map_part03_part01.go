@@ -3,7 +3,7 @@ package couplingmanifest
 import (
 	"fmt"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling"
+	detector "github.com/kimjooyoon/meta-ontology-go/internal/detection/coupling"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 

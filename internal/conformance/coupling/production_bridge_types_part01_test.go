@@ -1,3 +1,5 @@
+//go:build detector_bridge
+
 package coupling
 
 const detectorAuthorityHead = "02e35a01946c20c5de67f2ec71eeca5ac6c3aedb"

@@ -1,3 +1,5 @@
+//go:build detector_bridge
+
 package coupling
 
 import (

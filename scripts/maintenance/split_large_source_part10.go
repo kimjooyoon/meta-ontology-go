@@ -26,7 +26,7 @@ func generatedPath(path string, part int) (string, error) {
 		if _, ok := buildTargets[tokens[len(tokens)-1]]; ok {
 			constraint := "_" + tokens[len(tokens)-1]
 			stem = strings.TrimSuffix(stem, constraint)
-			stem, suffix = stem, constraint+suffix
+			suffix = constraint + suffix
 			if prior := lastToken(stem); isOS(prior) && isArch(tokens[len(tokens)-1]) {
 				stem = strings.TrimSuffix(stem, "_"+prior)
 				suffix = "_" + prior + suffix
