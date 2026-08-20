@@ -34,7 +34,7 @@ func domainFor(subject string, source []byte, file *ast.File) buildDomain {
 	}
 	prefix := source[:int(file.Package)-1]
 	constraints := make([]string, 0)
-	for _, line := range strings.Split(string(prefix), "\n") {
+	for line := range strings.SplitSeq(string(prefix), "\n") {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "//go:build ") || strings.HasPrefix(trimmed, "// +build ") {
 			constraints = append(constraints, trimmed)

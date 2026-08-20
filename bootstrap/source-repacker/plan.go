@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"slices"
 )
 
 func planRepack(root, subject string, limit int) (repackPlan, error) {
@@ -16,8 +17,8 @@ func planRepack(root, subject string, limit int) (repackPlan, error) {
 		return repackPlan{}, err
 	}
 	declarations := movableDeclarations(source.File)
-	for index := len(declarations) - 1; index >= 0; index-- {
-		declaration := declarations[index]
+	for _, declaration := range slices.Backward(declarations) {
+
 		snippet, sourceAfter, transformErr := removeDeclaration(source, declaration)
 		if transformErr != nil {
 			return repackPlan{}, transformErr
