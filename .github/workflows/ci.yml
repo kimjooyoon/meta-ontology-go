@@ -117,11 +117,20 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Project exact-SHA physical storage topology
+        env:
+          EXACT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" \
+            --work "$RUNNER_TEMP/repository-semantic" \
+            --expected-sha "$EXACT_SHA"
       - name: Semantic conformance (staged verifier promotion)
         env:
           # Stage 0 is the current trust boundary. Advancing it requires a
           # deterministic CI-authorized governance change documented in .github/conformance-plan.md.
           GOOO_CONFORMANCE_STAGE: "0"
+          GOOO_STORAGE_ROOT: ${{ runner.temp }}/repository-semantic/physical
         run: ./scripts/semantic-conformance.sh
 
   policy:

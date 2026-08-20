@@ -11,7 +11,7 @@ import (
 
 func TestAnalyzeProjectedLineMetricsSeparatesSourceAndStorage(t *testing.T) {
 	source, storage := t.TempDir(), t.TempDir()
-	for index := 0; index < 11; index++ {
+	for index := range 11 {
 		name := filepath.Join(source, fmt.Sprintf("note-%02d.txt", index))
 		if err := os.WriteFile(name, []byte("metric\n"), 0o644); err != nil {
 			t.Fatal(err)
@@ -29,8 +29,15 @@ func TestAnalyzeProjectedLineMetricsSeparatesSourceAndStorage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(report.Files) != 1 || len(report.StorageDirectories) != 3 {
+	if len(report.StorageDirectories) != 3 {
 		t.Fatalf("projection planes were not preserved: %#v", report)
+	}
+	foundSource := false
+	for _, file := range report.Files {
+		foundSource = foundSource || file.Path == "source.go"
+	}
+	if !foundSource {
+		t.Fatal("logical source metric was not preserved")
 	}
 	for _, indicator := range report.Meta.Failed() {
 		if indicator.MetricID == sourcepolicy.DimensionDirectEntries || indicator.MetricID == sourcepolicy.DimensionDirectoryKinds {

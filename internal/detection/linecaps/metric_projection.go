@@ -14,6 +14,17 @@ func AnalyzeProjectedLineMetrics(root, storageRoot string) (LineMetricsReport, e
 	if storageRoot == "" {
 		return LineMetricsReport{}, fmt.Errorf("line metrics storage root must not be empty")
 	}
+	sourcePath, err := filepath.Abs(root)
+	if err != nil {
+		return LineMetricsReport{}, err
+	}
+	storagePath, err := filepath.Abs(storageRoot)
+	if err != nil {
+		return LineMetricsReport{}, err
+	}
+	if sourcePath == storagePath {
+		return AnalyzeLineMetrics(root)
+	}
 	report, err := AnalyzeLineMetrics(root)
 	if err != nil {
 		return LineMetricsReport{}, err

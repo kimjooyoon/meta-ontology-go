@@ -9,7 +9,7 @@ import (
 
 func TestProjectedPolicySeparatesSourceAndStorageTopology(t *testing.T) {
 	source, storage := t.TempDir(), t.TempDir()
-	for index := 0; index < 11; index++ {
+	for index := range 11 {
 		name := filepath.Join(source, fmt.Sprintf("note-%02d.txt", index))
 		if err := os.WriteFile(name, []byte("metric\n"), 0o644); err != nil {
 			t.Fatal(err)
@@ -26,7 +26,7 @@ func TestProjectedPolicySeparatesSourceAndStorageTopology(t *testing.T) {
 	if err := CheckProjectedSourcePolicy(source, storage, nil, policy); err != nil {
 		t.Fatalf("logical topology was treated as physical: %v", err)
 	}
-	for index := 0; index < 11; index++ {
+	for index := range 11 {
 		name := filepath.Join(objects, fmt.Sprintf("blob-%02d", index))
 		if err := os.WriteFile(name, []byte("object\n"), 0o644); err != nil {
 			t.Fatal(err)
