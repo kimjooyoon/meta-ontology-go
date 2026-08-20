@@ -8,7 +8,8 @@ import (
 // EvaluateLineMetricIndicators connects raw measurements to policy and its
 // actionable meta operations.
 func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.Policy) (sourcepolicy.Report, error) {
-	observations := make([]sourcepolicy.Observation, 0, len(report.Files)+len(report.Directories)*6+4)
+	topology := metricTopologyDirectories(report)
+	observations := make([]sourcepolicy.Observation, 0, len(report.Files)+len(topology)*6+4)
 	for _, file := range report.Files {
 		dimension := sourcepolicy.Dimension("")
 		switch file.Language {
@@ -21,8 +22,13 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 		}
 		observations = append(observations, metricObservation(file.Path, dimension, file.Lines))
 	}
-	for _, directory := range report.Directories {
-		observations = append(observations, directoryMetricObservations(directory)...)
+	producer := metricTopologyProducer(report)
+	for _, directory := range topology {
+		metrics := directoryMetricObservations(directory)
+		for index := range metrics {
+			metrics[index].Producer = producer
+		}
+		observations = append(observations, metrics...)
 	}
 	analysis, err := Analyze(report.Root, nil, Limits{MaxFileLines: policy.MaxFileLines, MaxFunctionLines: policy.MaxFunctionLines})
 	if err != nil {

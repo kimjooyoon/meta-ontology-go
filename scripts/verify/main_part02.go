@@ -6,13 +6,16 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
 )
 
-func run(root, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
+func run(root, storageRoot, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
 	if !skipCaps {
-		if err := printSourceMetrics(root); err != nil {
+		if storageRoot == "" {
+			storageRoot = root
+		}
+		if err := printSourceMetrics(root, storageRoot); err != nil {
 			return err
 		}
 		policy := verify.DefaultLinePolicy()
-		if err := verify.CheckSourcePolicy(root, nil, policy); err != nil {
+		if err := verify.CheckProjectedSourcePolicy(root, storageRoot, nil, policy); err != nil {
 			return err
 		}
 	}

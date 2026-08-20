@@ -43,7 +43,6 @@ func readTracked(root string, paths []string) ([]trackedFile, error) {
 	}
 	return files, nil
 }
-
 func objectClass(kind, language string) string {
 	if kind == "symlink" {
 		return "symlink"

@@ -36,7 +36,7 @@ func ensureDirectoryNode(nodes map[string]*directoryNode, path string) {
 
 // JSON returns the deterministic machine-readable report.
 func (r LineMetricsReport) JSON() ([]byte, error) {
-	report := LineMetricsReport{Repository: r.Repository, CommitSHA: r.CommitSHA, Root: r.Root, Files: orderedFileMetrics(r.Files), Directories: orderedDirectoryMetrics(r.Directories), Meta: r.Meta}
+	report := LineMetricsReport{Repository: r.Repository, CommitSHA: r.CommitSHA, Root: r.Root, StorageRoot: r.StorageRoot, Files: orderedFileMetrics(r.Files), Directories: orderedDirectoryMetrics(r.Directories), StorageDirectories: orderedDirectoryMetrics(r.StorageDirectories), Meta: r.Meta}
 	data, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		return nil, err

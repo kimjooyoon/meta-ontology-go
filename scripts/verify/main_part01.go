@@ -8,6 +8,7 @@ import (
 
 func main() {
 	root := flag.String("root", ".", "repository root")
+	storageRoot := flag.String("storage-root", os.Getenv("GOOO_STORAGE_ROOT"), "physical storage root")
 	from := flag.String("from", os.Getenv("GOOO_SCOPE_FROM"), "base revision for scope checks")
 	to := flag.String("to", os.Getenv("GOOO_SCOPE_TO"), "head revision for scope checks")
 	branch := flag.String("branch", os.Getenv("GOOO_SCOPE_BRANCH"), "scope branch")
@@ -21,7 +22,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	if err := run(*root, *from, *to, *head, *base, *branch, *expectedHead, *capsOnly, *skipCaps); err != nil {
+	if err := run(*root, *storageRoot, *from, *to, *head, *base, *branch, *expectedHead, *capsOnly, *skipCaps); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

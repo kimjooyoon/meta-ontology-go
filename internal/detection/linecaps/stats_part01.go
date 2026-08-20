@@ -34,12 +34,14 @@ type DirectoryMetric struct {
 
 // LineMetricsReport is the repository's line and layout metric output.
 type LineMetricsReport struct {
-	Repository  string              `json:"repository,omitempty"`
-	CommitSHA   string              `json:"commit_sha,omitempty"`
-	Root        string              `json:"root"`
-	Files       []FileMetric        `json:"files"`
-	Directories []DirectoryMetric   `json:"directories"`
-	Meta        sourcepolicy.Report `json:"meta"`
+	Repository         string              `json:"repository,omitempty"`
+	CommitSHA          string              `json:"commit_sha,omitempty"`
+	Root               string              `json:"root"`
+	StorageRoot        string              `json:"storage_root,omitempty"`
+	Files              []FileMetric        `json:"files"`
+	Directories        []DirectoryMetric   `json:"directories"`
+	StorageDirectories []DirectoryMetric   `json:"storage_directories,omitempty"`
+	Meta               sourcepolicy.Report `json:"meta"`
 }
 type directoryNode struct {
 	directFolders    int

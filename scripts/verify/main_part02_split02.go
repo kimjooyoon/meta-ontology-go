@@ -6,8 +6,8 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
 )
 
-func printSourceMetrics(root string) error {
-	report, err := linecaps.AnalyzeLineMetrics(root)
+func printSourceMetrics(root, storageRoot string) error {
+	report, err := linecaps.AnalyzeProjectedLineMetrics(root, storageRoot)
 	if err != nil {
 		return err
 	}

@@ -36,10 +36,9 @@ func (r LineMetricsReport) Text() string {
 	}
 	writeLanguageFileSection(FileLanguageGo, "go")
 	writeLanguageFileSection(FileLanguageGooo, "gooo")
-	for _, directory := range orderedDirectoryMetrics(r.Directories) {
-		fmt.Fprintf(&output, "%s: direct_folders=%d direct_files=%d folders=%d files=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n",
-			directory.Path, directory.DirectFolders, directory.DirectFiles, directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles, directory.GoooFiles, directory.GoLines, directory.GoooLines,
-		)
+	writeDirectoryMetrics(&output, "logical", r.Directories)
+	if len(r.StorageDirectories) > 0 {
+		writeDirectoryMetrics(&output, "physical-projection", r.StorageDirectories)
 	}
 	return output.String()
 }

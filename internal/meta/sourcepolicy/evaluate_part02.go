@@ -31,13 +31,13 @@ func definitionFor(policy Policy, dimension Dimension) (definition, error) {
 			observe.family = FamilyTopology
 			return observe, nil
 		}
-		return capDefinition(FamilyTopology, policy.MaxDirectDirectoryIn, OperationPartition, "directory-partitioner"), nil
+		return capDefinition(FamilyTopology, policy.MaxDirectDirectoryIn, OperationPartition, "repository-projector"), nil
 	case DimensionDirectoryKinds:
 		if !policy.RequireHomogeneousDirectories {
 			observe.family = FamilyTopology
 			return observe, nil
 		}
-		return capDefinition(FamilyTopology, 1, OperationSeparateKinds, "directory-partitioner"), nil
+		return capDefinition(FamilyTopology, 1, OperationSeparateKinds, "repository-projector"), nil
 	case DimensionRefactorDuplicate:
 		return capDefinition(FamilyDuplication, 0, OperationExtractFunction, "deduplicator"), nil
 	case DimensionRefactorReturn:

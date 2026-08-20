@@ -139,6 +139,14 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Project exact-SHA physical storage topology
+        env:
+          EXACT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" \
+            --work "$RUNNER_TEMP/repository-policy" \
+            --expected-sha "$EXACT_SHA"
       - name: Record CI event source
         env:
           CI_EVENT: ${{ github.event_name }}
@@ -170,8 +178,8 @@ jobs:
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: |
           mkdir -p "$METRICS_DIR"
-          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -json > "$METRICS_DIR/source-metrics.json"
-          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -summary > "$METRICS_DIR/source-metrics.txt"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "$RUNNER_TEMP/repository-policy/physical" -json > "$METRICS_DIR/source-metrics.json"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "$RUNNER_TEMP/repository-policy/physical" -summary > "$METRICS_DIR/source-metrics.txt"
           go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           go run ./scripts/source-splitter -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           go run ./bootstrap/source-repacker -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
@@ -193,6 +201,7 @@ jobs:
         env:
           GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
           GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
+          GOOO_STORAGE_ROOT: ${{ runner.temp }}/repository-policy/physical
         run: go run ./scripts/verify --caps-only
       - name: Check changed-file scope, Go size caps, and PR target
         if: github.event_name == 'pull_request'
@@ -215,6 +224,7 @@ jobs:
           GOOO_SCOPE_BRANCH: ${{ github.ref_name }}
           GOOO_PR_HEAD: ""
           GOOO_PR_BASE: ""
+          GOOO_STORAGE_ROOT: ${{ runner.temp }}/repository-policy/physical
         run: go run ./scripts/verify
   evidence:
     name: CI evidence

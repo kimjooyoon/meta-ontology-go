@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 )
-
 func topologyFailures(root string) (int, int, error) {
 	direct, mixed := 0, 0
 	err := filepath.WalkDir(root, func(name string, entry os.DirEntry, walkErr error) error {
@@ -31,7 +30,6 @@ func topologyFailures(root string) (int, int, error) {
 	})
 	return direct, mixed, err
 }
-
 func buildEvidence(sha string, model manifest, objects int,
 	loss, direct, mixed int) evidence {
 	unbound, lineDebt := 0, 0
@@ -67,7 +65,6 @@ func buildEvidence(sha string, model manifest, objects int,
 		},
 	}
 }
-
 func requireBlockingZero(report evidence) error {
 	for _, metric := range report.Indicators {
 		if metric.Blocking && metric.Value > metric.Limit {

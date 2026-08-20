@@ -8,8 +8,17 @@ import (
 
 // CheckSourcePolicy checks all repository-wide source constraints from policy.
 func CheckSourcePolicy(root string, files []string, policy LinePolicy) error {
+	return CheckProjectedSourcePolicy(root, root, files, policy)
+}
+
+// CheckProjectedSourcePolicy checks source semantics and storage topology on
+// their independently materialized roots.
+func CheckProjectedSourcePolicy(root, storageRoot string, files []string, policy LinePolicy) error {
 	if policy.MaxFileLines <= 0 || policy.MaxFunctionLines <= 0 {
 		return fmt.Errorf("source policy caps must be positive")
+	}
+	if storageRoot == "" {
+		return fmt.Errorf("source policy storage root must not be empty")
 	}
 	if len(files) == 0 {
 		var err error
@@ -23,7 +32,7 @@ func CheckSourcePolicy(root string, files []string, policy LinePolicy) error {
 		violations = append(violations, checkSourceFile(root, path, policy)...)
 	}
 	if policy.MaxDirectDirectoryIn > 0 || policy.RequireHomogeneousDirectories {
-		violations = append(violations, checkDirectoryLayout(root, policy)...)
+		violations = append(violations, checkDirectoryLayout(storageRoot, policy)...)
 	}
 	if len(violations) == 0 {
 		return nil
