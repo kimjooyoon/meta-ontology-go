@@ -6,10 +6,10 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 type FileLanguage string
 
 const (
-	FileLanguageGo    FileLanguage = "go"
-	FileLanguageGooo  FileLanguage = "gooo"
-	FileLanguageOther FileLanguage = "other"
-	maxSummaryIndicators             = 100
+	FileLanguageGo       FileLanguage = "go"
+	FileLanguageGooo     FileLanguage = "gooo"
+	FileLanguageOther    FileLanguage = "other"
+	maxSummaryIndicators              = 100
 )
 
 // FileMetric is a per-file line-count metric for recognized source files.
