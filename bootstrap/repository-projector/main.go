@@ -12,6 +12,7 @@ func main() {
 	flag.StringVar(&settings.root, "root", ".", "exact Git checkout to project")
 	flag.StringVar(&settings.work, "work", "", "new directory outside the checkout")
 	flag.StringVar(&settings.expectedSHA, "expected-sha", "", "required exact HEAD")
+	flag.StringVar(&settings.physical, "physical-root", "", "stored repository to restore")
 	flag.Parse()
 	if err := run(settings); err != nil {
 		log.Fatal(err)
@@ -19,6 +20,9 @@ func main() {
 }
 
 func run(settings config) error {
+	if settings.physical != "" {
+		return restorePhysical(settings)
+	}
 	root, err := filepath.Abs(settings.root)
 	if err != nil {
 		return err

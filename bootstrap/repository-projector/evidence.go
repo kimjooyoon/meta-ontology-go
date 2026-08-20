@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -65,4 +66,13 @@ func buildEvidence(sha string, model manifest, objects int,
 				Consumer: "logical-source-splitter", Operation: "split-before-storage", Proof: proof},
 		},
 	}
+}
+
+func requireBlockingZero(report evidence) error {
+	for _, metric := range report.Indicators {
+		if metric.Blocking && metric.Value > metric.Limit {
+			return fmt.Errorf("blocking indicator %s=%d", metric.ID, metric.Value)
+		}
+	}
+	return nil
 }

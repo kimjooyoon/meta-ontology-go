@@ -31,18 +31,6 @@ func buildManifest(sha string, files []trackedFile,
 	}
 }
 
-func decimalKey(hexID string) string {
-	key := make([]byte, 0, len(hexID)*2)
-	for _, digit := range []byte(hexID) {
-		value := digit - '0'
-		if digit >= 'a' {
-			value = digit - 'a' + 10
-		}
-		key = append(key, '0'+value/10, '0'+value%10)
-	}
-	return string(key)
-}
-
 func writeEvidence(work string, report evidence) error {
 	encoded, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
@@ -52,11 +40,35 @@ func writeEvidence(work string, report evidence) error {
 	return os.WriteFile(name, append(encoded, '\n'), 0o644)
 }
 
-func requireBlockingZero(report evidence) error {
-	for _, metric := range report.Indicators {
-		if metric.Blocking && metric.Value > metric.Limit {
-			return fmt.Errorf("blocking indicator %s=%d", metric.ID, metric.Value)
-		}
+func restorePhysical(settings config) error {
+	identity, physical, work, err := physicalPaths(settings)
+	if err != nil {
+		return err
 	}
+	if err := verifyGitIdentity(identity, settings.expectedSHA); err != nil {
+		return err
+	}
+	if err := prepareWork(identity, work); err != nil {
+		return err
+	}
+	data, err := os.ReadFile(filepath.Join(physical, "projection", "catalog", "manifest.json"))
+	if err != nil {
+		return err
+	}
+	var model manifest
+	if err := json.Unmarshal(data, &model); err != nil {
+		return err
+	}
+	if model.Schema != "gooo.repository-projection.v1" || model.SourceSHA == "" {
+		return fmt.Errorf("stored projection manifest is not authoritative")
+	}
+	loss, err := materialize(physical, filepath.Join(work, "materialized"), model)
+	if err != nil {
+		return err
+	}
+	if loss != 0 {
+		return fmt.Errorf("stored projection roundtrip loss=%d", loss)
+	}
+	fmt.Printf("repository-projector: restored=%d source=%s\n", len(model.Entries), model.SourceSHA)
 	return nil
 }

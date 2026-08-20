@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os/exec"
 	"sort"
@@ -53,4 +55,21 @@ func trackedPaths(root string) ([]string, error) {
 	}
 	sort.Strings(paths)
 	return paths, nil
+}
+
+func decimalKey(hexID string) string {
+	key := make([]byte, 0, len(hexID)*2)
+	for _, digit := range []byte(hexID) {
+		value := digit - '0'
+		if digit >= 'a' {
+			value = digit - 'a' + 10
+		}
+		key = append(key, '0'+value/10, '0'+value%10)
+	}
+	return string(key)
+}
+
+func contentHash(data []byte) string {
+	digest := sha256.Sum256(data)
+	return hex.EncodeToString(digest[:])
 }

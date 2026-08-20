@@ -62,7 +62,15 @@ func objectHash(class string, data []byte) string {
 	return hex.EncodeToString(digest.Sum(nil))
 }
 
-func contentHash(data []byte) string {
-	digest := sha256.Sum256(data)
-	return hex.EncodeToString(digest[:])
+func physicalPaths(settings config) (identity, physical, work string, err error) {
+	identity, err = filepath.Abs(settings.root)
+	if err != nil {
+		return
+	}
+	physical, err = filepath.Abs(settings.physical)
+	if err != nil {
+		return
+	}
+	work, err = filepath.Abs(settings.work)
+	return
 }

@@ -4,6 +4,7 @@ type config struct {
 	root        string
 	work        string
 	expectedSHA string
+	physical    string
 }
 
 type trackedFile struct {
