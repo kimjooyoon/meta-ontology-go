@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"slices"
@@ -17,6 +16,7 @@ func planRepack(root, subject string, limit int) (repackPlan, error) {
 		return repackPlan{}, err
 	}
 	declarations := movableDeclarations(source.File)
+	reducible, supported := false, false
 	for _, declaration := range slices.Backward(declarations) {
 
 		snippet, sourceAfter, transformErr := removeDeclaration(source, declaration)
@@ -26,11 +26,13 @@ func planRepack(root, subject string, limit int) (repackPlan, error) {
 		if physicalLines(sourceAfter) > limit {
 			continue
 		}
+		reducible = true
 		for _, target := range targets {
-			additions, supported := requiredImports(source, target, declaration)
-			if !supported {
+			additions, compatible := requiredImports(source, target, declaration)
+			if !compatible {
 				continue
 			}
+			supported = true
 			targetAfter, appendErr := appendDeclaration(target, snippet, additions)
 			if appendErr != nil {
 				return repackPlan{}, appendErr
@@ -44,7 +46,8 @@ func planRepack(root, subject string, limit int) (repackPlan, error) {
 			}}, nil
 		}
 	}
-	return repackPlan{}, fmt.Errorf("%w: %s has no safe destination", errRepackBlocked, subject)
+	reason := blockedReason(len(declarations), len(targets), reducible, supported)
+	return repackPlan{}, repackBlocked{Subject: subject, Reason: reason}
 }
 
 func movableDeclarations(file *ast.File) []ast.Decl {

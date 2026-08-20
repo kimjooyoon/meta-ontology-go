@@ -37,3 +37,18 @@ func replaceFile(path string, data []byte, mode os.FileMode) error {
 	}
 	return os.Rename(temporary, path)
 }
+
+func blockedReason(declarations, targets int, reducible, supported bool) string {
+	switch {
+	case declarations == 0:
+		return "no-movable-declaration"
+	case targets == 0:
+		return "no-build-domain-destination"
+	case !reducible:
+		return "requires-multiple-or-extraction"
+	case !supported:
+		return "import-conflict"
+	default:
+		return "destination-capacity"
+	}
+}

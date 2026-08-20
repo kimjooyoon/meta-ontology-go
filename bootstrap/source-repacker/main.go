@@ -39,6 +39,14 @@ type importAddition struct {
 	Path string
 }
 
+type repackBlocked struct {
+	Subject string
+	Reason  string
+}
+
+func (blocked repackBlocked) Error() string { return blocked.Subject + ": " + blocked.Reason }
+func (blocked repackBlocked) Unwrap() error { return errRepackBlocked }
+
 func checkPlans(cfg config, report metricevidence.Report, indicators []metricevidence.Indicator) error {
 	planned, blocked, matched := 0, 0, 0
 	for _, indicator := range indicators {
@@ -53,6 +61,7 @@ func checkPlans(cfg config, report metricevidence.Report, indicators []metricevi
 		}
 		if errors.Is(err, errRepackBlocked) {
 			blocked++
+			fmt.Printf("source-repacker: blocked subject=%s detail=%v\n", indicator.Subject, err)
 			continue
 		}
 		return fmt.Errorf("plan %s: %w", indicator.Subject, err)
