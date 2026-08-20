@@ -33,6 +33,16 @@ jobs:
         with:
           expected-sha: ${{ env.EXACT_SHA }}
 
+      - name: Plan CI-authorized tracked-tree cutover
+        run: |
+          mkdir -p "$RUNNER_TEMP/repository-projection"
+          go run ./bootstrap/repository-cutover \
+            --root "$GITHUB_WORKSPACE" \
+            --physical-root "${{ steps.materialize.outputs.storage-root }}" \
+            --authority-manifest "${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json" \
+            --expected-sha "$EXACT_SHA" \
+            --evidence "$RUNNER_TEMP/repository-projection/cutover-evidence.json"
+
       - name: Classify logical source split operations
         run: |
           mkdir -p "$RUNNER_TEMP/repository-projection"
@@ -74,6 +84,7 @@ jobs:
             ${{ runner.temp }}/repository-projection/split-plan.json
             ${{ runner.temp }}/repository-projection/density-report.json
             ${{ runner.temp }}/repository-projection/extraction-report.json
+            ${{ runner.temp }}/repository-projection/cutover-evidence.json
             ${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json
             ${{ steps.materialize.outputs.materialization-evidence }}
             ${{ steps.materialize.outputs.activation-evidence }}

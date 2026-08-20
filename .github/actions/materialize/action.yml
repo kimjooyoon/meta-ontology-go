@@ -29,6 +29,7 @@ runs:
         activation_evidence="$work/activation-evidence.json"
         projection_evidence="$projector_work/evidence.json"
         git_dir="$(git -C "$GITHUB_WORKSPACE" rev-parse --absolute-git-dir)"
+        physical_checkout=false
         {
           echo "storage-root=$storage_root"
           echo "materialization-evidence=$materializer_work/materialization-evidence.json"
@@ -37,6 +38,7 @@ runs:
         } >> "$GITHUB_OUTPUT"
         if test -f "$GITHUB_WORKSPACE/projection/catalog/manifest.json"; then
           physical_root="$GITHUB_WORKSPACE"
+          physical_checkout=true
         else
           (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector \
             --root "$GITHUB_WORKSPACE" --work "$projector_work" \
@@ -53,6 +55,12 @@ runs:
           --git-index "$git_index" --expected-sha "${{ inputs.expected-sha }}" \
           --materialization "$materializer_work/materialization-evidence.json" \
           --evidence "$activation_evidence"
+        if test "$physical_checkout" = true; then
+          export GIT_DIR="$git_dir" GIT_WORK_TREE="$GITHUB_WORKSPACE" GIT_INDEX_FILE="$git_index"
+          (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" --work "$projector_work" \
+            --expected-sha "${{ inputs.expected-sha }}")
+        fi
         {
           echo "LOGICAL_WORKSPACE=$GITHUB_WORKSPACE"
           echo "PHYSICAL_WORKSPACE=$storage_root"
