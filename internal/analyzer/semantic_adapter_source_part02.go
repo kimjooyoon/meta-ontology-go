@@ -3,6 +3,7 @@ package analyzer
 import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
+	"strconv"
 	"strings"
 )
 
