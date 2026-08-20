@@ -24,6 +24,7 @@ func declarationAtoms(name string, data []byte) ([]declarationAtom, error) {
 			}
 			atom.kind = typed.Tok.String()
 			atom.movable = typed.Tok == token.CONST || typed.Tok == token.TYPE
+			atom.compactable = typed.Tok == token.VAR && hasCompositeLiteral(typed)
 			if typed.Doc != nil {
 				start = typed.Doc.Pos()
 			}
@@ -40,4 +41,16 @@ func declarationAtoms(name string, data []byte) ([]declarationAtom, error) {
 		atoms = append(atoms, atom)
 	}
 	return atoms, nil
+}
+
+func hasCompositeLiteral(node ast.Node) bool {
+	found := false
+	ast.Inspect(node, func(current ast.Node) bool {
+		if _, ok := current.(*ast.CompositeLit); ok {
+			found = true
+			return false
+		}
+		return !found
+	})
+	return found
 }

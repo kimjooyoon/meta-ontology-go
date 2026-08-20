@@ -10,6 +10,8 @@ func buildReport(sha string, subjects []planSubject) planReport {
 	counts := indicatorCounts(subjects)
 	proof := "axiomatic-foundation"
 	metrics := []planIndicator{
+		{ID: "logical-split.static-density", Value: counts["static-density-rewrite"], Limit: -1,
+			Consumer: "line-density-rewriter", Operation: "compact-static-literal", Proof: proof},
 		{ID: "logical-split.density-rewrite", Value: counts["density-rewrite"], Limit: -1,
 			Consumer: "line-density-rewriter", Operation: "compact-obvious-lines", Proof: proof},
 		{ID: "logical-split.projectable", Value: counts["projectable"], Limit: -1,

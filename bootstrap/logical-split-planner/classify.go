@@ -17,11 +17,17 @@ func classify(subject inputSubject, atoms []declarationAtom) planSubject {
 		} else {
 			giantFixed = giantFixed || atom.lines+3 > subject.Limit
 		}
+		if atom.compactable {
+			result.StaticAtoms++
+		}
 	}
 	switch {
 	case len(atoms) == 0:
 		result.Reason = "unclassified"
 		result.Operation = "inspect-parse-domain"
+	case result.MovableAtoms == 0 && result.StaticAtoms > 0:
+		result.Reason = "static-density-rewrite"
+		result.Operation = "compact-static-literal"
 	case result.MovableAtoms == 0:
 		result.Reason = "no-movable-declaration"
 		result.Operation = "extract-indivisible-source"
@@ -43,7 +49,8 @@ func classify(subject inputSubject, atoms []declarationAtom) planSubject {
 
 func indicatorCounts(subjects []planSubject) map[string]int {
 	counts := map[string]int{
-		"projectable": 0, "density-rewrite": 0, "no-movable-declaration": 0,
+		"projectable": 0, "density-rewrite": 0, "static-density-rewrite": 0,
+		"no-movable-declaration": 0,
 		"fixed-declaration-capacity": 0, "movable-declaration-capacity": 0,
 		"unclassified": 0,
 	}

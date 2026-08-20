@@ -39,7 +39,7 @@ func rewriteSubjects(root string, inputs []splitSubject) ([]rewriteSubject, erro
 		results = append(results, rewriteSubject{
 			Logical: input.Logical, Before: input.Lines, After: after,
 			Operations: operations, Status: status, Consumer: "line-density-rewriter",
-			Operation: "compact-obvious-lines", Proof: "axiomatic-foundation",
+			Operation: input.Operation, Proof: "axiomatic-foundation",
 		})
 	}
 	return results, nil
