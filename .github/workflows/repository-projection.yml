@@ -34,6 +34,10 @@ jobs:
             --work "$RUNNER_TEMP/repository-projection" \
             --expected-sha "$EXACT_SHA"
 
+      - name: Test the restored logical module
+        working-directory: ${{ runner.temp }}/repository-projection/materialized
+        run: go test ./...
+
       - name: Upload exact-SHA projection indicators
         if: always()
         uses: actions/upload-artifact@v4
