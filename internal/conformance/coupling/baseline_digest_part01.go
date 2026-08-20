@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"strings"
 )
 
 func baselineBindingDigest(binding CodeBinding) string {
@@ -37,11 +36,7 @@ func baselineHash(value string) string {
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 func baselineDigest(value string) bool {
-	if len(value) != len("sha256:")+64 || !strings.HasPrefix(value, "sha256:") {
-		return false
-	}
-	_, err := hex.DecodeString(value[len("sha256:"):])
-	return err == nil
+	return validSHA256Digest(value)
 }
 func baselineID(value string) bool {
 	_, err := semantic.ParseIdentity(value)

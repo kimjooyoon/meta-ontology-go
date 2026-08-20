@@ -3,7 +3,6 @@ package analyzer
 import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -57,8 +56,5 @@ func canonicalSourceFiles(sources []SourceFile) ([]SourceFile, error) {
 	return copyOf, nil
 }
 func writeSourceField(builder *strings.Builder, value string) {
-	builder.WriteString(strconv.Itoa(len(value)))
-	builder.WriteByte(':')
-	builder.WriteString(value)
-	builder.WriteByte('\n')
+	writeLengthPrefixedField(builder, value)
 }

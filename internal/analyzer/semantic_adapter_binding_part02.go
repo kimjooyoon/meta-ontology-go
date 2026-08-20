@@ -6,6 +6,9 @@ import (
 )
 
 func writeBindingField(builder *strings.Builder, value string) {
+	writeLengthPrefixedField(builder, value)
+}
+func writeLengthPrefixedField(builder *strings.Builder, value string) {
 	builder.WriteString(strconv.Itoa(len(value)))
 	builder.WriteByte(':')
 	builder.WriteString(value)

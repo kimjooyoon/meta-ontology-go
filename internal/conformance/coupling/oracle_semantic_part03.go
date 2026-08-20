@@ -23,6 +23,9 @@ func validToken(value string) bool {
 	return true
 }
 func validDigest(value string) bool {
+	return validSHA256Digest(value)
+}
+func validSHA256Digest(value string) bool {
 	if len(value) != len("sha256:")+64 || !strings.HasPrefix(value, "sha256:") {
 		return false
 	}
