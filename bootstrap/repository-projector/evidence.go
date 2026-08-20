@@ -31,8 +31,7 @@ func topologyFailures(root string) (int, int, error) {
 	})
 	return direct, mixed, err
 }
-func buildEvidence(sha string, model manifest, objects int,
-	loss, direct, mixed int) evidence {
+func buildEvidence(sha string, model manifest, objects, loss, direct, mixed int) evidence {
 	unbound, lineDebt := 0, 0
 	subjects := make([]subject, 0)
 	for _, entry := range model.Entries {
