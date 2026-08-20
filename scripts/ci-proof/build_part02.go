@@ -59,3 +59,9 @@ func writeOutputs(output string, receiptPath string, bundle proofBundle, receipt
 	_, err = file.Write(append(line, '\n'))
 	return err
 }
+
+func digestDomainEvidence(domain domainEvidence) string {
+	domain.Digests.DomainSHA256 = ""
+	data, _ := json.Marshal(domain)
+	return digestBytes(data)
+}

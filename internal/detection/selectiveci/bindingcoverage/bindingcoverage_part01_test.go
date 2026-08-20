@@ -26,3 +26,16 @@ func TestExactFixture(t *testing.T) {
 		t.Fatalf("digest = %q, stable digest = %q", got.CanonicalDigest, got.StableDigest())
 	}
 }
+
+func coveredPolarity(input Input) (map[string]bool, map[string]bool) {
+	match := map[string]bool{}
+	mismatch := map[string]bool{}
+	for _, partition := range input.Partitions {
+		if partition.Polarity == PolarityMatch {
+			match[partition.BindingID] = true
+		} else if partition.Polarity == PolarityMismatch {
+			mismatch[partition.BindingID] = true
+		}
+	}
+	return match, mismatch
+}

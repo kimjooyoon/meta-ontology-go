@@ -57,20 +57,3 @@ type productionVector struct {
 	ResultDigest string
 	Bindings     productionBindingVector
 }
-type oracleBridgeVector struct {
-	Schema                string
-	InputDigest           string
-	Decision              Decision
-	Reason                Reason
-	AcceptedSurfaces      []string
-	ChangedSurfaces       []string
-	ReceiptSurfaces       []string
-	SemanticBeforeDigest  string
-	SemanticAfterDigest   string
-	SemanticDeltaDigest   string
-	PathClosureDigest     string
-	ObservationCounts     ObservationCounts
-	Resources             ResourceObservation
-	CanonicalOutputDigest string
-	ReplayDigest          string
-}

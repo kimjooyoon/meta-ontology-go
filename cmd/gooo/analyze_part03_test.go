@@ -42,3 +42,29 @@ func TestRunAnalyzeIsReadOnly(t *testing.T) {
 		t.Fatalf("analyze changed directory entries: before=%v after=%v", beforeEntries, afterEntries)
 	}
 }
+
+func TestRunVersionDoesNotWriteFilesystem(t *testing.T) {
+	directory := t.TempDir()
+	original, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(directory); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(original) })
+	before, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code := runVersion([]string{"--json"}, &bytes.Buffer{}, &bytes.Buffer{}); code != exitOK {
+		t.Fatalf("version code = %d", code)
+	}
+	after, err := os.ReadDir(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(before, after) {
+		t.Fatalf("version changed filesystem: before=%v after=%v", before, after)
+	}
+}

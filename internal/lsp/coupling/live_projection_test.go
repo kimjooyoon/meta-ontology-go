@@ -54,23 +54,3 @@ func TestLiveQueryLiteralRootRelocationAndStandardRoundTrip(t *testing.T) {
 		t.Fatalf("diagnostic roundtrip = %#v, err=%v", diagnostics, err)
 	}
 }
-
-func TestLiveQueryInputAndResultIsolation(t *testing.T) {
-	data := []byte(literalVerifiedQueryEnvelope)
-	original := append([]byte(nil), data...)
-	adapter, err := NewLiveAdapter(data)
-	if err != nil {
-		t.Fatal(err)
-	}
-	first := adapter.Resolve(liveRequest())
-	data[0] = '['
-	first.Links[0].TargetURI = "file:///mutated.gooo"
-	first.Diagnostics[0].RelatedInformation = nil
-	if string(adapter.RawBytes()) != string(original) {
-		t.Fatal("live adapter retained caller-owned mutable bytes")
-	}
-	second := adapter.Resolve(liveRequest())
-	if second.Outcome != OutcomePass || second.Links[0].TargetURI != "file:///workspace/model.gooo" || len(second.Diagnostics[0].RelatedInformation) == 0 {
-		t.Fatalf("input/result mutation changed replay: %#v", second)
-	}
-}

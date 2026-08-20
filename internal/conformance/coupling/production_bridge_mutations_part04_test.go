@@ -49,3 +49,7 @@ func mutateRehashAllExternalAuthority(input *production.Input) {
 		input.ExternalReceipt.Digest = bridgeExternalDigest(*input.ExternalReceipt)
 	}
 }
+
+func productionSnapshot(snapshot semantic.SnapshotDigests) semantic.SnapshotDigests {
+	return semantic.SnapshotDigests{Source: bridgeRawDigest(snapshot.Source), Semantic: bridgeRawDigest(snapshot.Semantic)}
+}

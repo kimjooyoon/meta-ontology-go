@@ -71,6 +71,3 @@ func productionRecordFromCanonical(record semantic.InferenceRecord) semantic.Inf
 	}
 	return result
 }
-func productionSnapshot(snapshot semantic.SnapshotDigests) semantic.SnapshotDigests {
-	return semantic.SnapshotDigests{Source: bridgeRawDigest(snapshot.Source), Semantic: bridgeRawDigest(snapshot.Semantic)}
-}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -68,10 +67,4 @@ func validateDomainEvidence(domain domainEvidence, evidence evidenceInput, conte
 		return fmt.Errorf("domain evidence digest mismatch")
 	}
 	return nil
-}
-
-func digestDomainEvidence(domain domainEvidence) string {
-	domain.Digests.DomainSHA256 = ""
-	data, _ := json.Marshal(domain)
-	return digestBytes(data)
 }
