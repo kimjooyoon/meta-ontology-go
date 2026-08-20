@@ -4,7 +4,7 @@ func classify(subject inputSubject, atoms []declarationAtom) planSubject {
 	result := planSubject{
 		Logical: subject.Logical, Lines: subject.Value,
 		RequiredSave: subject.Value - subject.Limit,
-		Consumer: "logical-source-splitter", Proof: "axiomatic-foundation",
+		Consumer:     "logical-source-splitter", Proof: "axiomatic-foundation",
 	}
 	giantMovable, giantFixed := false, false
 	for _, atom := range atoms {
@@ -53,8 +53,8 @@ func classify(subject inputSubject, atoms []declarationAtom) planSubject {
 func indicatorCounts(subjects []planSubject) map[string]int {
 	counts := map[string]int{
 		"projectable": 0, "density-rewrite": 0, "static-density-rewrite": 0,
-		"large-density-rewrite": 0,
-		"no-movable-declaration": 0,
+		"large-density-rewrite":      0,
+		"no-movable-declaration":     0,
 		"fixed-declaration-capacity": 0, "movable-declaration-capacity": 0,
 		"unclassified": 0,
 	}

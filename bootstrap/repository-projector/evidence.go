@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 )
+
 func topologyFailures(root string) (int, int, error) {
 	direct, mixed := 0, 0
 	err := filepath.WalkDir(root, func(name string, entry os.DirEntry, walkErr error) error {

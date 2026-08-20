@@ -22,8 +22,8 @@ func guardCandidates(name string, data []byte) ([]sourceSpan, error) {
 			end := files.Position(specification.End()).Offset
 			if inline, ok := oneLineTokens(data[start:end]); ok {
 				candidates = append(candidates, sourceSpan{
-					start: files.Position(declaration.Pos()).Offset,
-					end: files.Position(declaration.End()).Offset,
+					start:       files.Position(declaration.Pos()).Offset,
+					end:         files.Position(declaration.End()).Offset,
 					replacement: "import " + inline,
 				})
 			}
