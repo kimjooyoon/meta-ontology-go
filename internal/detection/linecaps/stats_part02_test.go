@@ -36,14 +36,14 @@ func TestAnalyzeLineMetricsRejectsEmptyRoot(t *testing.T) {
 func TestLineMetricsSummaryIncludesOnlyFailedInventory(t *testing.T) {
 	root := t.TempDir()
 	writeMetricFile(t, root, "short.go", "package metric\n")
-	writeMetricFile(t, root, "wrapper.go", "package metric\nfunc wrapper() int { return 1 }\n")
+	writeMetricFile(t, root, "wrapper.go", "package metric\nfunc wrapper() int { result := 1; return result }\n")
 	writeMetricFile(t, root, "long.go", "package metric\n"+strings.Repeat("// evidence\n", 75))
 	report, err := AnalyzeLineMetrics(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 	summary := report.Summary()
-	if strings.Contains(summary, "short.go") || !strings.Contains(summary, "long.go") || !strings.Contains(summary, "wrapper.go") || !strings.Contains(summary, "inspect-wrapper") {
+	if strings.Contains(summary, "short.go") || !strings.Contains(summary, "long.go") || !strings.Contains(summary, "wrapper.go") || !strings.Contains(summary, "collapse-assign-return") {
 		t.Fatalf("summary did not project failed indicators only:\n%s", summary)
 	}
 }

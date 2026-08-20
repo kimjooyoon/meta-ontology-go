@@ -41,7 +41,7 @@ func definitionFor(policy Policy, dimension Dimension) (definition, error) {
 	case DimensionRefactorDuplicate:
 		return capDefinition(FamilyDuplication, 0, OperationExtractFunction, "deduplicator"), nil
 	case DimensionRefactorReturn:
-		return candidateDefinition(OperationInspectWrapper), nil
+		return definition{family: FamilyRefactor, relation: RelationObserve, blocking: false, proof: ProofCoherence, operation: OperationInspectWrapper, consumer: "refactor-report"}, nil
 	case DimensionRefactorAssign:
 		return candidateDefinition(OperationCollapseAssign), nil
 	case DimensionFixDelta:

@@ -8,11 +8,12 @@ func TestEvaluateSelectsAllTrilemmaBranchesAndOperations(t *testing.T) {
 		{Subject: ".", Dimension: DimensionFixDelta, Value: 0},
 		{Subject: "go.mod", Dimension: DimensionToolchain, Value: 1},
 		{Subject: "wrapper.go:3:wrapper", Dimension: DimensionRefactorReturn, Value: 1},
+		{Subject: "assign.go:3:assign", Dimension: DimensionRefactorAssign, Value: 2},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(report.Indicators) != 4 || len(report.Actionable()) != 2 || len(report.Failed()) != 1 {
+	if len(report.Indicators) != 5 || len(report.Actionable()) != 2 || len(report.Failed()) != 1 {
 		t.Fatalf("unexpected indicator report: %#v", report)
 	}
 	proofs := map[ProofChoice]bool{}
@@ -21,7 +22,10 @@ func TestEvaluateSelectsAllTrilemmaBranchesAndOperations(t *testing.T) {
 		if indicator.Consumer == "" || indicator.Operation == "" {
 			t.Fatalf("metric is not connected to meta code: %#v", indicator)
 		}
-		if indicator.MetricID == DimensionRefactorReturn && (indicator.Blocking || indicator.Satisfied || indicator.Operation != OperationInspectWrapper) {
+		if indicator.MetricID == DimensionRefactorReturn && (!indicator.Satisfied || indicator.Operation != OperationInspectWrapper) {
+			t.Fatalf("wrapper observation lost its meta operation: %#v", indicator)
+		}
+		if indicator.MetricID == DimensionRefactorAssign && (indicator.Blocking || indicator.Satisfied || indicator.Operation != OperationCollapseAssign) {
 			t.Fatalf("refactor candidate lost its non-blocking operation: %#v", indicator)
 		}
 	}
