@@ -28,7 +28,7 @@ type planSubject struct {
 	RequiredSave int    `json:"required_savings"`
 	MaxAtomLines int    `json:"max_atom_lines"`
 	MovableAtoms int    `json:"movable_atoms"`
-	StaticAtoms  int    `json:"static_atoms"`
+	DensityAtoms int    `json:"density_atoms"`
 	Reason       string `json:"reason"`
 	Consumer     string `json:"consumer"`
 	Operation    string `json:"meta_operation"`

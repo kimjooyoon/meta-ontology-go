@@ -24,7 +24,8 @@ func loadDensitySubjects(name, expectedSHA string) ([]splitSubject, error) {
 	selected := make([]splitSubject, 0)
 	seen := make(map[string]bool)
 	for _, subject := range plan.Subjects {
-		if subject.Reason != "density-rewrite" && subject.Reason != "static-density-rewrite" {
+		if subject.Reason != "density-rewrite" && subject.Reason != "static-density-rewrite" &&
+			subject.Reason != "large-density-rewrite" {
 			continue
 		}
 		if seen[subject.Logical] || subject.RequiredSave < 1 ||

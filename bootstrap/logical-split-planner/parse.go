@@ -24,13 +24,14 @@ func declarationAtoms(name string, data []byte) ([]declarationAtom, error) {
 			}
 			atom.kind = typed.Tok.String()
 			atom.movable = typed.Tok == token.CONST || typed.Tok == token.TYPE
-			atom.compactable = typed.Tok == token.VAR && hasCompositeLiteral(typed)
+			atom.compactable = typed.Tok == token.VAR && hasDensityCarrier(typed)
 			if typed.Doc != nil {
 				start = typed.Doc.Pos()
 			}
 		case *ast.FuncDecl:
 			atom.kind = "func"
 			atom.movable = typed.Name.Name != "init"
+			atom.compactable = hasDensityCarrier(typed)
 			if typed.Doc != nil {
 				start = typed.Doc.Pos()
 			}
@@ -43,10 +44,11 @@ func declarationAtoms(name string, data []byte) ([]declarationAtom, error) {
 	return atoms, nil
 }
 
-func hasCompositeLiteral(node ast.Node) bool {
+func hasDensityCarrier(node ast.Node) bool {
 	found := false
 	ast.Inspect(node, func(current ast.Node) bool {
-		if _, ok := current.(*ast.CompositeLit); ok {
+		switch current.(type) {
+		case *ast.CompositeLit, *ast.FuncLit:
 			found = true
 			return false
 		}

@@ -56,7 +56,8 @@ func run(root, evidence, expected, output string) error {
 		return err
 	}
 	counts := indicatorCounts(plans)
-	density := counts["density-rewrite"] + counts["static-density-rewrite"]
+	density := counts["density-rewrite"] + counts["static-density-rewrite"] +
+		counts["large-density-rewrite"]
 	extraction := len(plans) - counts["projectable"] - density
 	fmt.Printf("logical-split-planner: subjects=%d projectable=%d density=%d extraction=%d\n",
 		len(plans), counts["projectable"], density, extraction)
