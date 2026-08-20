@@ -11,7 +11,7 @@ func (r LineMetricsReport) Text() string {
 	sum := r.Total()
 	fmt.Fprintf(&output, "line metrics: files=%d dirs=%d go_lines=%d gooo_lines=%d\n", sum.RecursiveFiles, sum.RecursiveFolders, sum.GoLines, sum.GoooLines)
 	fmt.Fprintf(&output, "language totals: go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n", sum.GoFiles, sum.GoooFiles, sum.GoLines, sum.GoooLines)
-	fmt.Fprintf(&output, "meta indicators: total=%d blocking=%d failed=%d\n", len(r.Meta.Indicators), r.Meta.BlockingCount(), len(r.Meta.Failed()))
+	fmt.Fprintf(&output, "meta indicators: total=%d blocking=%d actionable=%d failed=%d\n", len(r.Meta.Indicators), r.Meta.BlockingCount(), len(r.Meta.Actionable()), len(r.Meta.Failed()))
 	writeLanguageFileSection := func(label FileLanguage, title string) {
 		files := orderedFileMetrics(r.Files)
 		count := 0
@@ -47,10 +47,14 @@ func (r LineMetricsReport) Text() string {
 // Summary returns bounded human output while JSON retains complete evidence.
 func (r LineMetricsReport) Summary() string {
 	var output strings.Builder
-	total, failed := r.Total(), r.Meta.Failed()
-	fmt.Fprintf(&output, "source metrics: commit=%s files=%d dirs=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d indicators=%d failed=%d\n", r.CommitSHA, total.RecursiveFiles, total.RecursiveFolders, total.GoFiles, total.GoooFiles, total.GoLines, total.GoooLines, len(r.Meta.Indicators), len(failed))
-	for _, indicator := range failed {
-		fmt.Fprintf(&output, "  %s\t%s\tvalue=%d limit=%d operation=%s proof=%s\n", indicator.MetricID, indicator.Subject, indicator.Value, indicator.Limit, indicator.Operation, indicator.Proof)
+	total, actionable, failed := r.Total(), r.Meta.Actionable(), r.Meta.Failed()
+	fmt.Fprintf(&output, "source metrics: commit=%s files=%d dirs=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d indicators=%d actionable=%d failed=%d\n", r.CommitSHA, total.RecursiveFiles, total.RecursiveFolders, total.GoFiles, total.GoooFiles, total.GoLines, total.GoooLines, len(r.Meta.Indicators), len(actionable), len(failed))
+	for index, indicator := range actionable {
+		if index == maxSummaryIndicators {
+			fmt.Fprintf(&output, "  omitted=%d full_evidence=source-metrics.json\n", len(actionable)-index)
+			break
+		}
+		fmt.Fprintf(&output, "  %s\t%s\tvalue=%d limit=%d blocking=%t operation=%s proof=%s\n", indicator.MetricID, indicator.Subject, indicator.Value, indicator.Limit, indicator.Blocking, indicator.Operation, indicator.Proof)
 	}
 	return output.String()
 }

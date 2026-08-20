@@ -9,6 +9,7 @@ const (
 	FamilyVolume      Family = "volume"
 	FamilyTopology    Family = "topology"
 	FamilyDuplication Family = "duplication"
+	FamilyRefactor    Family = "refactor"
 	FamilyConformance Family = "conformance"
 )
 
@@ -30,6 +31,8 @@ const (
 	OperationSplitGo         Operation = "split-go-declarations"
 	OperationSplitGooo       Operation = "split-gooo-sections"
 	OperationExtractFunction Operation = "extract-function"
+	OperationInspectWrapper  Operation = "inspect-wrapper"
+	OperationCollapseAssign  Operation = "collapse-assign-return"
 	OperationPartition       Operation = "partition-directory"
 	OperationSeparateKinds   Operation = "separate-directory-kinds"
 	OperationModernize       Operation = "apply-go-fix"

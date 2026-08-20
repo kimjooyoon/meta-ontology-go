@@ -18,6 +18,8 @@ const (
 	DimensionDirectEntries     Dimension = "gooo.metric.layout.direct-entries.v1"
 	DimensionDirectoryKinds    Dimension = "gooo.metric.layout.entry-kinds.v1"
 	DimensionRefactorDuplicate Dimension = "gooo.metric.refactor.duplicate-body.v1"
+	DimensionRefactorReturn    Dimension = "gooo.metric.refactor.single-return.v1"
+	DimensionRefactorAssign    Dimension = "gooo.metric.refactor.assign-return.v1"
 	DimensionFixDelta          Dimension = "gooo.metric.conformance.go-fix-delta.v1"
 	DimensionToolchain         Dimension = "gooo.metric.conformance.toolchain.v1"
 )

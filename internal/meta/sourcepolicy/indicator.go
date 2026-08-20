@@ -33,10 +33,20 @@ type Report struct {
 	Indicators []Indicator `json:"indicators"`
 }
 
+func (r Report) Actionable() []Indicator {
+	actionable := make([]Indicator, 0)
+	for _, indicator := range r.Indicators {
+		if !indicator.Satisfied {
+			actionable = append(actionable, indicator)
+		}
+	}
+	return actionable
+}
+
 func (r Report) Failed() []Indicator {
 	failed := make([]Indicator, 0)
-	for _, indicator := range r.Indicators {
-		if indicator.Blocking && !indicator.Satisfied {
+	for _, indicator := range r.Actionable() {
+		if indicator.Blocking {
 			failed = append(failed, indicator)
 		}
 	}

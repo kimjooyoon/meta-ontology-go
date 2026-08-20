@@ -40,6 +40,10 @@ func definitionFor(policy Policy, dimension Dimension) (definition, error) {
 		return capDefinition(FamilyTopology, 1, OperationSeparateKinds, "directory-partitioner"), nil
 	case DimensionRefactorDuplicate:
 		return capDefinition(FamilyDuplication, 0, OperationExtractFunction, "deduplicator"), nil
+	case DimensionRefactorReturn:
+		return candidateDefinition(OperationInspectWrapper), nil
+	case DimensionRefactorAssign:
+		return candidateDefinition(OperationCollapseAssign), nil
 	case DimensionFixDelta:
 		return definition{family: FamilyConformance, limit: 0, relation: RelationLessOrEqual, blocking: true, proof: ProofCoherence, operation: OperationModernize, consumer: "go-fix"}, nil
 	case DimensionToolchain:
@@ -51,4 +55,8 @@ func definitionFor(policy Policy, dimension Dimension) (definition, error) {
 
 func capDefinition(family Family, limit int, operation Operation, consumer string) definition {
 	return definition{family: family, limit: limit, relation: RelationLessOrEqual, blocking: true, proof: ProofFoundation, operation: operation, consumer: consumer}
+}
+
+func candidateDefinition(operation Operation) definition {
+	return definition{family: FamilyRefactor, relation: RelationEqual, blocking: false, proof: ProofRegression, operation: operation, consumer: "refactor-planner"}
 }

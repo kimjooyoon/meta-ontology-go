@@ -1,6 +1,10 @@
 package linecaps
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+import (
+	"fmt"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+)
 
 // EvaluateLineMetricIndicators connects raw measurements to policy and its
 // actionable meta operations.
@@ -21,6 +25,15 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 	for _, directory := range report.Directories {
 		observations = append(observations, directoryMetricObservations(directory)...)
 	}
+	analysis, err := Analyze(report.Root, nil, Limits{MaxFileLines: policy.MaxFileLines, MaxFunctionLines: policy.MaxFunctionLines})
+	if err != nil {
+		return sourcepolicy.Report{}, err
+	}
+	for _, finding := range analysis.Findings {
+		if observation, ok := analysisObservation(finding); ok {
+			observations = append(observations, observation)
+		}
+	}
 	total := report.Total()
 	observations = append(observations,
 		metricObservation(".", sourcepolicy.DimensionGoFiles, total.GoFiles),
@@ -33,4 +46,20 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 
 func metricObservation(subject string, dimension sourcepolicy.Dimension, value int) sourcepolicy.Observation {
 	return sourcepolicy.Observation{Subject: subject, Dimension: dimension, Value: value, Producer: "linecaps.AnalyzeLineMetrics"}
+}
+
+func analysisObservation(finding Finding) (sourcepolicy.Observation, bool) {
+	dimension := sourcepolicy.Dimension("")
+	switch finding.Rule {
+	case RuleFunctionLines:
+		dimension = sourcepolicy.DimensionFunctionLines
+	case RuleRefactorReturn:
+		dimension = sourcepolicy.DimensionRefactorReturn
+	case RuleRefactorAssign:
+		dimension = sourcepolicy.DimensionRefactorAssign
+	default:
+		return sourcepolicy.Observation{}, false
+	}
+	subject := fmt.Sprintf("%s:%d:%s", finding.Path, finding.StartLine, finding.Name)
+	return sourcepolicy.Observation{Subject: subject, Dimension: dimension, Value: finding.Actual, Detail: finding.Detail, Producer: "linecaps.Analyze"}, true
 }
