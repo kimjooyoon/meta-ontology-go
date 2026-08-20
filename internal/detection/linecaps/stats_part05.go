@@ -1,10 +1,6 @@
 package linecaps
 
-import (
-	"fmt"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
-)
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
 // EvaluateLineMetricIndicators connects raw measurements to policy and its
 // actionable meta operations.
@@ -60,6 +56,6 @@ func analysisObservation(finding Finding) (sourcepolicy.Observation, bool) {
 	default:
 		return sourcepolicy.Observation{}, false
 	}
-	subject := fmt.Sprintf("%s:%d:%s", finding.Path, finding.StartLine, finding.Name)
+	subject := (sourcepolicy.SourceSubject{Path: finding.Path, Line: finding.StartLine, Name: finding.Name}).String()
 	return sourcepolicy.Observation{Subject: subject, Dimension: dimension, Value: finding.Actual, Detail: finding.Detail, Producer: "linecaps.Analyze"}, true
 }

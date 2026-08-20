@@ -1,5 +1,11 @@
 package sourcepolicy
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 // Dimension is also the stable metric ID emitted into CI artifacts.
 type Dimension string
 
@@ -23,3 +29,27 @@ const (
 	DimensionFixDelta          Dimension = "gooo.metric.conformance.go-fix-delta.v1"
 	DimensionToolchain         Dimension = "gooo.metric.conformance.toolchain.v1"
 )
+
+type SourceSubject struct {
+	Path string
+	Line int
+	Name string
+}
+
+func (subject SourceSubject) String() string {
+	return subject.Path + ":" + strconv.Itoa(subject.Line) + ":" + subject.Name
+}
+
+func ParseSourceSubject(value string) (SourceSubject, error) {
+	nameAt := strings.LastIndex(value, ":")
+	lineAt := strings.LastIndex(value[:max(nameAt, 0)], ":")
+	if lineAt <= 0 || nameAt <= lineAt+1 || nameAt == len(value)-1 {
+		return SourceSubject{}, fmt.Errorf("invalid source subject %q", value)
+	}
+	line, err := strconv.Atoi(value[lineAt+1 : nameAt])
+	subject := SourceSubject{Path: value[:lineAt], Line: line, Name: value[nameAt+1:]}
+	if err != nil || line <= 0 {
+		return SourceSubject{}, fmt.Errorf("invalid source subject line in %q", value)
+	}
+	return subject, nil
+}
