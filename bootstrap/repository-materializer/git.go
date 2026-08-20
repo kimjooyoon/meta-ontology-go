@@ -57,14 +57,14 @@ func trackedBlobs(root string) (map[string]string, error) {
 		return nil, err
 	}
 	tracked := map[string]string{}
-	for _, record := range bytes.Split(output, []byte{0}) {
-		tab := bytes.IndexByte(record, '\t')
-		if tab < 0 {
+	for record := range bytes.SplitSeq(output, []byte{0}) {
+		before, after, ok := bytes.Cut(record, []byte{'\t'})
+		if !ok {
 			continue
 		}
-		fields := strings.Fields(string(record[:tab]))
+		fields := strings.Fields(string(before))
 		if len(fields) == 3 {
-			tracked[string(record[tab+1:])] = fields[1]
+			tracked[string(after)] = fields[1]
 		}
 	}
 	return tracked, nil
