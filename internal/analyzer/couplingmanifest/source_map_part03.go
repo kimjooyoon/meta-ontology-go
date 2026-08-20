@@ -19,6 +19,9 @@ func observationIndex(values []SourceMapObservation, surfaces map[semantic.ID]de
 	}
 	for _, value := range values {
 		if err := assertSourceMapObservationFields(value); err != nil {
+			if classified, ok := err.(*ConstructionError); ok {
+				return nil, classified
+			}
 			return nil, unknownError(CodeUnknownChangedSurface, "%v", err)
 		}
 		registered, ok := surfaces[value.SurfaceID]
