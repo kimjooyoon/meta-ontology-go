@@ -211,3 +211,119 @@ func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
 		t.Fatal("canonical job names are missing or duplicated")
 	}
 }
+
+func readCacheSlowObservationWorkflow(t *testing.T) string {
+	t.Helper()
+	workflow, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "cache-slow-observation.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(workflow)
+}
+
+func TestCacheSlowObservationHasOnlyOpenLoopTriggers(t *testing.T) {
+	text := readCacheSlowObservationWorkflow(t)
+	if !strings.Contains(text, "schedule:\n    - cron: '*/30 * * * *'") {
+		t.Fatal("cache observation lost its exact 30-minute schedule")
+	}
+	if !strings.Contains(text, "  workflow_dispatch:\n") {
+		t.Fatal("cache observation lost workflow_dispatch")
+	}
+	for _, forbidden := range []string{
+		"  pull_request:", "  pull_request_target:", "  push:",
+		"pull_request:", "pull_request_target:", "push:",
+	} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("cache observation has forbidden PR or push trigger %q", forbidden)
+		}
+	}
+	if strings.Contains(text, "required: true") || strings.Contains(text, "needs: [") {
+		t.Fatal("cache observation is coupled to required CI gating")
+	}
+}
+
+func TestCacheSlowObservationBindsRegisteredClassAndCommands(t *testing.T) {
+	text := readCacheSlowObservationWorkflow(t)
+	for _, marker := range []string{
+		"\"class_id\": \"slow-observation\"",
+		"\"class_flag\": \"-cache-test-class=slow-observation\"",
+		"CACHE_CONTRACT_BRANCH: agent/cache",
+		"CACHE_CONTRACT_HEAD: 3a7154c2c021c581bb7b442bd1e81a1cb3a3061e",
+		"Dependency: PR #232 supplies this exact cache contract and must merge first.",
+		"git cat-file -e \"$CACHE_CONTRACT_HEAD^{commit}\"",
+		"git merge-base --is-ancestor \"$CACHE_CONTRACT_HEAD\" \"$actual_sha\"",
+		"TestCacheLatencyEvidenceMatrix",
+		"TestCacheSameKeyCrossProcessStampede",
+		"TestIncrementalCacheMutationMatrix",
+		"go test -count=1 -json ./internal/cache -args -cache-test-class=slow-observation",
+		"go test -count=1 -race -json ./internal/cache -args -cache-test-class=slow-observation",
+		"Run slow observation (normal durability)",
+		"Run slow observation (race durability)",
+		"\"checkout_ref\": \"refs/heads/dev\"",
+		"git fetch --no-tags origin refs/heads/dev",
+		"git checkout --detach \"$dev_sha\"",
+		"test \"$actual_sha\" = \"$dev_sha\"",
+		"event\": os.environ[\"EVENT_NAME\"]",
+	} {
+		if !strings.Contains(text, marker) {
+			t.Fatalf("cache observation lost binding marker %q", marker)
+		}
+	}
+	if strings.Count(text, "-cache-test-class=slow-observation") < 6 {
+		t.Fatal("cache observation does not record and execute the exact class flag in both modes")
+	}
+	if strings.Contains(text, "-run ") || strings.Contains(text, "grep") || strings.Contains(text, "duration") {
+		t.Fatal("cache observation selects tests by name or elapsed-time inference")
+	}
+}
+
+func TestCacheSlowObservationRetainsFailureEvidence(t *testing.T) {
+	text := readCacheSlowObservationWorkflow(t)
+	for _, marker := range []string{
+		"if: ${{ always() }}",
+		"normal-go-test.json",
+		"race-go-test.json",
+		"normal-exit-status.txt",
+		"race-exit-status.txt",
+		"observation-result.json",
+		"human-summary.md",
+		"artifact-manifest.json",
+		"actions/upload-artifact@v4",
+		"name: cache-slow-observation-${{ github.run_id }}-${{ github.run_attempt }}",
+		"if-no-files-found: error",
+		"retention-days: 90",
+		"overwrite: false",
+		"overall_status",
+		"UNKNOWN",
+		"RED",
+		"if not json_file.exists():",
+		"cancel-in-progress: false",
+	} {
+		if !strings.Contains(text, marker) {
+			t.Fatalf("cache observation lost failure-retention marker %q", marker)
+		}
+	}
+}
+
+func TestCacheSlowObservationCannotGatePRsOrPromotion(t *testing.T) {
+	text := readCacheSlowObservationWorkflow(t)
+	for _, marker := range []string{
+		"\"merge_gate\": \"non-required\"",
+		"\"promotion_authority\": \"none\"",
+		"merge gate: non-required open-loop evidence",
+		"this observation cannot authorize promotion",
+		"name: cache slow observation (non-required)",
+	} {
+		if !strings.Contains(text, marker) {
+			t.Fatalf("cache observation lost no-gating marker %q", marker)
+		}
+	}
+	for _, forbidden := range []string{
+		"pull_request", "pull_request_target", "github.event.pull_request",
+		"CI policy", "Semantic conformance", "CI guardian",
+	} {
+		if strings.Contains(text, forbidden) {
+			t.Fatalf("cache observation contains PR/protection coupling %q", forbidden)
+		}
+	}
+}
