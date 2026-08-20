@@ -6,37 +6,39 @@ import (
 	"os"
 )
 
-const closureSchema = "gooo/ci-closure/v1"
+const closureSchema = "gooo/ci-closure/v2"
 
 type closureInput struct {
-	CanonicalJobs        []failureJob `json:"canonical_jobs"`
-	TerminalFailures     []failureJob `json:"terminal_failures"`
-	TerminalFailureCodes []string     `json:"terminal_failure_codes"`
+	Scheduler            []schedulerInput `json:"scheduler"`
+	CanonicalJobs        []jobInput       `json:"canonical_jobs"`
+	TerminalFailures     []failureJob     `json:"terminal_failures"`
+	TerminalFailureCodes []string         `json:"terminal_failure_codes"`
 }
 
 type closureManifest struct {
-	Schema                  string       `json:"schema"`
-	Version                 int          `json:"version"`
-	Status                  string       `json:"status"`
-	Decision                string       `json:"decision"`
-	Repository              string       `json:"repository"`
-	Event                   string       `json:"event"`
-	EventRef                string       `json:"event_ref"`
-	CheckoutRef             string       `json:"checkout_ref"`
-	BaseRef                 string       `json:"base_ref"`
-	BaseSHA                 string       `json:"base_sha"`
-	HeadSHA                 string       `json:"head_sha"`
-	PRNumber                int64        `json:"pr_number"`
-	RunID                   int64        `json:"run_id"`
-	RunAttempt              int64        `json:"run_attempt"`
-	WorkflowSHA             string       `json:"workflow_sha"`
-	OwnerBranch             string       `json:"owner_branch"`
-	OwnerRef                string       `json:"owner_ref"`
-	CanonicalJobs           []failureJob `json:"canonical_jobs"`
-	TerminalFailures        []failureJob `json:"terminal_failures"`
-	TerminalFailureCodes    []string     `json:"terminal_failure_codes"`
-	WriteEffect             string       `json:"write_effect"`
-	NoWriteOutsideGenerated bool         `json:"no_write_outside_generated"`
+	Schema                  string           `json:"schema"`
+	Version                 int              `json:"version"`
+	Status                  string           `json:"status"`
+	Decision                string           `json:"decision"`
+	Repository              string           `json:"repository"`
+	Event                   string           `json:"event"`
+	EventRef                string           `json:"event_ref"`
+	CheckoutRef             string           `json:"checkout_ref"`
+	BaseRef                 string           `json:"base_ref"`
+	BaseSHA                 string           `json:"base_sha"`
+	HeadSHA                 string           `json:"head_sha"`
+	PRNumber                int64            `json:"pr_number"`
+	RunID                   int64            `json:"run_id"`
+	RunAttempt              int64            `json:"run_attempt"`
+	WorkflowSHA             string           `json:"workflow_sha"`
+	OwnerBranch             string           `json:"owner_branch"`
+	OwnerRef                string           `json:"owner_ref"`
+	Scheduler               []schedulerInput `json:"scheduler"`
+	CanonicalJobs           []jobInput       `json:"canonical_jobs"`
+	TerminalFailures        []failureJob     `json:"terminal_failures"`
+	TerminalFailureCodes    []string         `json:"terminal_failure_codes"`
+	WriteEffect             string           `json:"write_effect"`
+	NoWriteOutsideGenerated bool             `json:"no_write_outside_generated"`
 }
 
 func writeClosureManifest(inputPath, outputPath string) error {
@@ -77,7 +79,7 @@ func buildClosureManifest(input closureInput, binding failureBinding) (closureMa
 	if len(input.TerminalFailures) != 0 || len(input.TerminalFailureCodes) != 0 {
 		return closureManifest{}, fmt.Errorf("no-failure closure contains terminal failure data")
 	}
-	if err := validateCanonicalClosureJobs(input.CanonicalJobs, binding); err != nil {
+	if err := validateCanonicalClosureJobs(input.CanonicalJobs, input.Scheduler, binding); err != nil {
 		return closureManifest{}, err
 	}
 	manifest := closureManifest{
@@ -85,7 +87,7 @@ func buildClosureManifest(input closureInput, binding failureBinding) (closureMa
 		Repository: binding.Repository, Event: binding.Event, EventRef: binding.EventRef, CheckoutRef: binding.CheckoutRef,
 		BaseRef: binding.BaseRef, BaseSHA: binding.BaseSHA, HeadSHA: binding.HeadSHA, PRNumber: binding.PRNumber,
 		RunID: binding.RunID, RunAttempt: binding.RunAttempt, WorkflowSHA: binding.WorkflowSHA,
-		OwnerBranch: binding.OwnerBranch, OwnerRef: failureOwnerRef(binding), CanonicalJobs: append([]failureJob(nil), input.CanonicalJobs...),
+		OwnerBranch: binding.OwnerBranch, OwnerRef: failureOwnerRef(binding), Scheduler: append([]schedulerInput(nil), input.Scheduler...), CanonicalJobs: append([]jobInput(nil), input.CanonicalJobs...),
 		TerminalFailures: []failureJob{}, TerminalFailureCodes: []string{}, WriteEffect: "none", NoWriteOutsideGenerated: true,
 	}
 	if scope == "" {
@@ -97,14 +99,22 @@ func buildClosureManifest(input closureInput, binding failureBinding) (closureMa
 	return manifest, nil
 }
 
-func validateCanonicalClosureJobs(jobs []failureJob, binding failureBinding) error {
+func validateCanonicalClosureJobs(jobs []jobInput, scheduler []schedulerInput, binding failureBinding) error {
 	if len(jobs) != len(proofJobs) {
 		return fmt.Errorf("no-failure closure requires exactly six canonical jobs")
 	}
+	schedulerByName, err := validateSchedulerInputs(scheduler, binding.HeadSHA, binding.RunID, binding.RunAttempt)
+	if err != nil {
+		return err
+	}
 	seen := make(map[int64]bool, len(jobs))
 	for index, job := range jobs {
-		if job.Name != proofJobs[index] || job.ID <= 0 || seen[job.ID] || job.Status != "completed" || job.Conclusion != "success" || job.HeadSHA != binding.HeadSHA || job.RunID != binding.RunID || job.RunAttempt != binding.RunAttempt {
+		if job.Name != proofJobs[index] || job.ID <= 0 || seen[job.ID] || job.HeadSHA != binding.HeadSHA || job.RunID != binding.RunID || job.RunAttempt != binding.RunAttempt {
 			return fmt.Errorf("canonical closure job is missing, failed, duplicated, or stale")
+		}
+		state, err := jobObservationState(job, schedulerByName[job.Name])
+		if err != nil || state != job.ObservationState {
+			return fmt.Errorf("canonical closure job has an invalid observer state")
 		}
 		seen[job.ID] = true
 	}
@@ -124,5 +134,5 @@ func validateClosureManifest(manifest closureManifest, binding failureBinding) e
 	if err := validateFailureOwnerBinding(binding); err != nil {
 		return err
 	}
-	return validateCanonicalClosureJobs(manifest.CanonicalJobs, binding)
+	return validateCanonicalClosureJobs(manifest.CanonicalJobs, manifest.Scheduler, binding)
 }

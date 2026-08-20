@@ -16,10 +16,18 @@ func validateEvidence(bundle evidence) error {
 	if len(bundle.Jobs) != len(canonicalJobs) {
 		return fmt.Errorf("CI evidence must contain all six canonical jobs")
 	}
+	schedulerByName, err := validateSchedulerResults(bundle.Scheduler, bundle.HeadSHA, bundle.RunID, bundle.RunAttempt)
+	if err != nil {
+		return err
+	}
 	seenIDs := make(map[int64]bool, len(bundle.Jobs))
 	for index, job := range bundle.Jobs {
-		if job.Name != canonicalJobs[index] || job.ID <= 0 || seenIDs[job.ID] || job.Status != "completed" || job.Conclusion != "success" || job.HeadSHA != bundle.HeadSHA || job.RunID != bundle.RunID || job.RunAttempt != bundle.RunAttempt {
+		if job.Name != canonicalJobs[index] || job.ID <= 0 || seenIDs[job.ID] || job.Status == nil || job.HeadSHA != bundle.HeadSHA || job.RunID != bundle.RunID || job.RunAttempt != bundle.RunAttempt {
 			return fmt.Errorf("CI evidence job %q is incomplete or mismatched", job.Name)
+		}
+		state, err := observationState(apiJob{Status: job.Status, Conclusion: job.Conclusion}, schedulerByName[job.Name])
+		if err != nil || job.ObservationState != state {
+			return fmt.Errorf("CI evidence job %q has an invalid observer state", job.Name)
 		}
 		seenIDs[job.ID] = true
 	}

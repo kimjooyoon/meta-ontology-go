@@ -34,6 +34,7 @@ type proofBundle struct {
 	RunID                  int64                   `json:"run_id"`
 	RunAttempt             int64                   `json:"run_attempt"`
 	WorkflowSHA            string                  `json:"workflow_sha"`
+	Scheduler              []schedulerInput        `json:"scheduler"`
 	Jobs                   []jobInput              `json:"jobs"`
 	Actors                 actorRoles              `json:"actors"`
 	BranchProtection       branchProtection        `json:"branch_protection"`

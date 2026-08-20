@@ -1,17 +1,13 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
 )
 
-func readInputs(root, governancePath, evidencePath, jobsPath, contextPath string) (proofInputs, error) {
+func readInputs(root, governancePath, evidencePath, jobsPath, schedulerPath, contextPath string) (proofInputs, error) {
 	matrix, err := verify.ReadGovernanceMatrix(governancePath)
 	if err != nil {
 		return proofInputs{}, err
@@ -20,7 +16,14 @@ func readInputs(root, governancePath, evidencePath, jobsPath, contextPath string
 	if err != nil {
 		return proofInputs{}, fmt.Errorf("read CI evidence: %w", err)
 	}
-	jobs, err := readJobs(jobsPath)
+	scheduler, err := readScheduler(schedulerPath)
+	if err != nil {
+		return proofInputs{}, err
+	}
+	if err := validateSchedulerAgreement(evidence.Scheduler, scheduler, evidence.HeadSHA, evidence.RunID, evidence.Attempt); err != nil {
+		return proofInputs{}, err
+	}
+	jobs, err := readJobsFor(jobsPath, evidence.Scheduler, evidence.HeadSHA, evidence.RunID, evidence.Attempt)
 	if err != nil {
 		return proofInputs{}, err
 	}
@@ -46,10 +49,22 @@ func readInputs(root, governancePath, evidencePath, jobsPath, contextPath string
 		GuardianContexts: guardianContexts{DevShadow: matrix.GuardianContexts.DevShadow, MainRequired: matrix.GuardianContexts.MainRequired},
 		ProofJobs:        matrix.ProofJobs,
 		Promotion:        promotionInput{Source: matrix.Promotion.Source, Target: matrix.Promotion.Target, RequiredChecks: matrix.Promotion.RequiredChecks, BranchProtectionRequired: matrix.Promotion.BranchProtectionRequired},
-	}, Evidence: evidence, Jobs: jobs, Context: context}, nil
+	}, Evidence: evidence, Scheduler: scheduler, Jobs: jobs, Context: context}, nil
+}
+
+func readScheduler(filename string) ([]schedulerInput, error) {
+	scheduler, err := readJSON[[]schedulerInput](filename)
+	if err != nil {
+		return nil, fmt.Errorf("read proof-side scheduler evidence: %w", err)
+	}
+	return scheduler, nil
 }
 
 func readJobs(filename string) ([]jobInput, error) {
+	return readJobsFor(filename, nil, "", 0, 0)
+}
+
+func readJobsFor(filename string, scheduler []schedulerInput, head string, runID, runAttempt int64) ([]jobInput, error) {
 	jobs, err := readJSON[[]jobInput](filename)
 	if err != nil {
 		return nil, fmt.Errorf("read workflow jobs: %w", err)
@@ -70,11 +85,23 @@ func readJobs(filename string) ([]jobInput, error) {
 		byName[job.Name] = job
 	}
 	result := make([]jobInput, 0, len(proofJobs))
+	schedulerByName := map[string]schedulerInput{}
+	if scheduler != nil {
+		schedulerByName, err = validateSchedulerInputs(scheduler, head, runID, runAttempt)
+		if err != nil {
+			return nil, err
+		}
+	}
 	for _, name := range proofJobs {
 		job, ok := byName[name]
-		if !ok || job.ID <= 0 || job.Status != "completed" || job.Conclusion != "success" || !validSHA(job.HeadSHA) || job.RunID <= 0 || job.RunAttempt <= 0 {
+		if !ok || job.ID <= 0 || job.Status == nil || !validSHA(job.HeadSHA) || job.RunID <= 0 || job.RunAttempt <= 0 {
 			return nil, fmt.Errorf("canonical proof job %q is missing or unsuccessful", name)
 		}
+		state, err := jobObservationState(job, schedulerByName[name])
+		if err != nil {
+			return nil, fmt.Errorf("canonical proof job %q: %w", name, err)
+		}
+		job.ObservationState = state
 		result = append(result, job)
 	}
 	return result, nil
@@ -99,7 +126,7 @@ func validateInputIdentity(evidence evidenceInput, context contextInput, jobs []
 	if evidence.Event == "push" && context.PRNumber != 0 {
 		return fmt.Errorf("push proof cannot carry a pull request number")
 	}
-	if err := compareJobs(evidence.Jobs, jobs, evidence.HeadSHA, evidence.RunID, evidence.Attempt); err != nil {
+	if err := compareJobs(evidence.Jobs, jobs, evidence.Scheduler, evidence.HeadSHA, evidence.RunID, evidence.Attempt); err != nil {
 		return err
 	}
 	if err := validateArtifacts(context.Artifacts, context.RunID, context.RunAttempt); err != nil {
@@ -111,15 +138,22 @@ func validateInputIdentity(evidence evidenceInput, context contextInput, jobs []
 	return nil
 }
 
-func compareJobs(expected, actual []jobInput, head string, runID, runAttempt int64) error {
+func compareJobs(expected, actual []jobInput, scheduler []schedulerInput, head string, runID, runAttempt int64) error {
 	if len(expected) != len(proofJobs) || len(actual) != len(proofJobs) {
 		return fmt.Errorf("proof must contain exactly six canonical jobs")
 	}
 	seenIDs := make(map[int64]bool, len(expected))
+	schedulerByName, err := validateSchedulerInputs(scheduler, head, runID, runAttempt)
+	if err != nil {
+		return err
+	}
 	for index, name := range proofJobs {
 		left, right := expected[index], actual[index]
-		if left.Name != name || right.Name != name || left.ID != right.ID || left.ID <= 0 || seenIDs[left.ID] || left.Status != "completed" || right.Status != "completed" || left.Conclusion != "success" || right.Conclusion != "success" || right.HeadSHA != head || left.HeadSHA != head || left.RunID != runID || right.RunID != runID || left.RunAttempt != runAttempt || right.RunAttempt != runAttempt {
+		if left.Name != name || right.Name != name || left.ID != right.ID || left.ID <= 0 || seenIDs[left.ID] || !sameOptionalString(left.Status, right.Status) || !sameOptionalString(left.Conclusion, right.Conclusion) || left.ObservationState != right.ObservationState || right.HeadSHA != head || left.HeadSHA != head || left.RunID != runID || right.RunID != runID || left.RunAttempt != runAttempt || right.RunAttempt != runAttempt {
 			return fmt.Errorf("proof job %q is missing or mismatched", name)
+		}
+		if state, err := jobObservationState(left, schedulerByName[name]); err != nil || state != left.ObservationState {
+			return fmt.Errorf("proof job %q has an invalid observer state", name)
 		}
 		seenIDs[left.ID] = true
 	}
@@ -193,105 +227,4 @@ func branchProtectionReadyFor(protection branchProtection, base string) bool {
 
 func branchProtectionReadyForAt(protection branchProtection, base string, now time.Time) bool {
 	return protection.ReadStatus == "verified" && protection.TokenSource == "github_app_installation" && protection.AppInstallationID > 0 && protection.AppSlug != "" && protection.Exists && protection.Strict && protection.EnforceAdmins && protection.RequiredReviews == 0 && !protection.DismissStaleReviews && !protection.RequireLastPushApproval && protection.LinearHistory && !protection.AllowForcePushes && !protection.AllowDeletions && !protection.RequiredSignatures && !protection.RequiredConversationResolution && !protection.BlockCreations && !protection.LockBranch && !protection.AllowForkSyncing && protection.Restrictions == nil && sameStringSet(protection.RequiredChecks, requiredContextsForBase(base)) && validRequiredCheckBindings(protection.RequiredCheckBindings, requiredContextsForBase(base)) && validObserverFreshness(protection.ObservedAt, protection.ValidUntil, now)
-}
-
-func digestBranchProtection(protection branchProtection) string {
-	protection.Digest = ""
-	data, _ := json.Marshal(protection)
-	return digestBytes(data)
-}
-
-func sameStringSet(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	seen := make(map[string]bool, len(left))
-	for _, value := range left {
-		seen[value] = true
-	}
-	for _, value := range right {
-		if !seen[value] {
-			return false
-		}
-	}
-	return true
-}
-
-func readJSON[T any](filename string) (T, error) {
-	var value T
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return value, err
-	}
-	if len(strings.TrimSpace(string(data))) == 0 {
-		return value, fmt.Errorf("empty JSON input %s", filename)
-	}
-	if err := json.Unmarshal(data, &value); err != nil {
-		return value, err
-	}
-	return value, nil
-}
-
-func readStrictJSON[T any](filename string) (T, error) {
-	var value T
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return value, err
-	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&value); err != nil {
-		return value, err
-	}
-	return value, nil
-}
-
-func isProofJob(name string) bool {
-	for _, canonical := range proofJobs {
-		if name == canonical {
-			return true
-		}
-	}
-	return false
-}
-
-func validSHA(value string) bool {
-	if len(value) != 40 || value == strings.Repeat("0", 40) {
-		return false
-	}
-	for _, character := range value {
-		if !((character >= '0' && character <= '9') || (character >= 'a' && character <= 'f')) {
-			return false
-		}
-	}
-	return true
-}
-
-func validEventRef(event, ref string) bool {
-	if ref == "" || strings.ContainsAny(ref, "\r\n") {
-		return false
-	}
-	if event == "pull_request" {
-		return strings.HasPrefix(ref, "refs/pull/") && strings.HasSuffix(ref, "/merge")
-	}
-	if event == "push" {
-		return strings.HasPrefix(ref, "refs/heads/")
-	}
-	return false
-}
-
-func validDigest(value string) bool {
-	if len(value) != 64 || value == strings.Repeat("0", 64) {
-		return false
-	}
-	for _, character := range value {
-		if !((character >= '0' && character <= '9') || (character >= 'a' && character <= 'f')) {
-			return false
-		}
-	}
-	return true
-}
-
-func validArtifactDigest(value string) bool {
-	return strings.HasPrefix(value, "sha256:") && validDigest(strings.TrimPrefix(value, "sha256:"))
 }

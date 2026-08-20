@@ -1,10 +1,12 @@
 package main
 
 const (
-	evidenceSchema       = "gooo/ci-evidence/v2"
+	evidenceSchema       = "gooo/ci-evidence/v3"
 	proofSchema          = "gooo/ci-proof/v3"
 	receiptSchema        = "gooo/provenance-receipt/v3"
 	domainEvidenceSchema = "gooo/domain-evidence/v2"
+	apiTerminalSuccess   = "api_terminal_success"
+	observerLag          = "observer_lag"
 )
 
 var proofJobs = []string{"gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"}
@@ -12,6 +14,7 @@ var proofJobs = []string{"gofmt", "go vet", "go test", "go test -race", "Semanti
 type proofInputs struct {
 	Governance governanceInput
 	Evidence   evidenceInput
+	Scheduler  []schedulerInput
 	Jobs       []jobInput
 	Context    contextInput
 }
@@ -42,19 +45,20 @@ type promotionInput struct {
 }
 
 type evidenceInput struct {
-	Schema      string          `json:"schema"`
-	Repository  string          `json:"repository"`
-	Event       string          `json:"event"`
-	EventRef    string          `json:"event_ref"`
-	CheckoutRef string          `json:"checkout_ref"`
-	BaseRef     string          `json:"base_ref"`
-	BaseSHA     string          `json:"base_sha"`
-	HeadSHA     string          `json:"head_sha"`
-	RunID       int64           `json:"run_id"`
-	Attempt     int64           `json:"run_attempt"`
-	WorkflowSHA string          `json:"workflow_sha"`
-	Jobs        []jobInput      `json:"jobs"`
-	Digests     evidenceDigests `json:"digests"`
+	Schema      string           `json:"schema"`
+	Repository  string           `json:"repository"`
+	Event       string           `json:"event"`
+	EventRef    string           `json:"event_ref"`
+	CheckoutRef string           `json:"checkout_ref"`
+	BaseRef     string           `json:"base_ref"`
+	BaseSHA     string           `json:"base_sha"`
+	HeadSHA     string           `json:"head_sha"`
+	RunID       int64            `json:"run_id"`
+	Attempt     int64            `json:"run_attempt"`
+	WorkflowSHA string           `json:"workflow_sha"`
+	Scheduler   []schedulerInput `json:"scheduler"`
+	Jobs        []jobInput       `json:"jobs"`
+	Digests     evidenceDigests  `json:"digests"`
 }
 
 type evidenceDigests struct {
@@ -67,10 +71,21 @@ type evidenceDigests struct {
 }
 
 type jobInput struct {
-	ID         int64  `json:"id"`
+	ID               int64   `json:"id"`
+	Name             string  `json:"name"`
+	Status           *string `json:"status"`
+	Conclusion       *string `json:"conclusion"`
+	HeadSHA          string  `json:"head_sha"`
+	RunID            int64   `json:"run_id"`
+	RunAttempt       int64   `json:"run_attempt"`
+	CompletedAt      *string `json:"completed_at"`
+	ObservationState string  `json:"observation_state"`
+}
+
+type schedulerInput struct {
 	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
+	Source     string `json:"source"`
+	Result     string `json:"result"`
 	HeadSHA    string `json:"head_sha"`
 	RunID      int64  `json:"run_id"`
 	RunAttempt int64  `json:"run_attempt"`
@@ -239,6 +254,7 @@ type provenanceReceipt struct {
 	RunID                  int64                   `json:"run_id"`
 	RunAttempt             int64                   `json:"run_attempt"`
 	WorkflowSHA            string                  `json:"workflow_sha"`
+	Scheduler              []schedulerInput        `json:"scheduler"`
 	BranchProtection       branchProtection        `json:"branch_protection"`
 	DevBranchProtection    branchProtection        `json:"dev_branch_protection"`
 	DomainEvidence         domainEvidence          `json:"domain_evidence"`

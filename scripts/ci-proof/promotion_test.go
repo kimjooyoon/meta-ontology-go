@@ -25,6 +25,11 @@ func validPromotionBundleFixture() proofBundle {
 		bundle.Jobs[index].RunID = bundle.RunID
 		bundle.Jobs[index].RunAttempt = bundle.RunAttempt
 	}
+	for index := range bundle.Scheduler {
+		bundle.Scheduler[index].HeadSHA = bundle.HeadSHA
+		bundle.Scheduler[index].RunID = bundle.RunID
+		bundle.Scheduler[index].RunAttempt = bundle.RunAttempt
+	}
 	bundle.Artifacts[0].Name = "ci-evidence-300-1"
 	bundle.Artifacts[0].RunID = bundle.RunID
 	bundle.Artifacts[0].RunAttempt = bundle.RunAttempt

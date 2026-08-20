@@ -188,22 +188,44 @@ jobs:
           cache: true
       - name: Test artifact paginator contract
         run: node scripts/ci-proof/artifacts_test.js
+      - name: Test canonical job observer contract
+        run: node scripts/ci-evidence/observe_test.js
       - name: Collect terminal canonical job evidence
         uses: actions/github-script@v7
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_NEEDS_FORMAT_RESULT: ${{ needs.format.result }}
+          CI_NEEDS_VET_RESULT: ${{ needs.vet.result }}
+          CI_NEEDS_TEST_RESULT: ${{ needs.test.result }}
+          CI_NEEDS_RACE_RESULT: ${{ needs.race.result }}
+          CI_NEEDS_SEMANTIC_RESULT: ${{ needs.semantic.result }}
+          CI_NEEDS_POLICY_RESULT: ${{ needs.policy.result }}
         with:
           github-token: ${{ github.token }}
           script: |
-            const jobs = [];
-            for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
-              if (!response.data || !Array.isArray(response.data.jobs)) throw new Error('canonical job API returned malformed data');
-              jobs.push(...response.data.jobs);
-              if (response.data.jobs.length < 100) {
-                require('fs').writeFileSync('ci-jobs.json', JSON.stringify(jobs));
-                return;
-              }
-            }
-            throw new Error('canonical job API pagination exceeded the fail-closed page limit');
+            const fs = require('fs');
+            const {observeCanonicalJobs, schedulerResultsFromNeeds} = require('./scripts/ci-evidence/observe');
+            const head = context.payload.pull_request?.head.sha || context.sha;
+            const runAttempt = Number(process.env.CI_RUN_ATTEMPT || 0);
+            const schedulerResults = schedulerResultsFromNeeds({
+              format: process.env.CI_NEEDS_FORMAT_RESULT,
+              vet: process.env.CI_NEEDS_VET_RESULT,
+              test: process.env.CI_NEEDS_TEST_RESULT,
+              race: process.env.CI_NEEDS_RACE_RESULT,
+              semantic: process.env.CI_NEEDS_SEMANTIC_RESULT,
+              policy: process.env.CI_NEEDS_POLICY_RESULT,
+            }, {headSHA: head, runID: context.runId, runAttempt});
+            const observation = await observeCanonicalJobs({
+              expectedHead: head,
+              runID: context.runId,
+              runAttempt,
+              schedulerResults,
+              readPage: page => github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}),
+              onObservation: detail => core.info(`canonical job API observation ${detail.observation}/${detail.bound}: ${detail.reason}`),
+            });
+            core.info(`canonical job identities observed and scheduler closure bound after ${observation.observations}/${observation.bound} observations`);
+            fs.writeFileSync('ci-jobs.json', JSON.stringify(observation.jobs));
+            fs.writeFileSync('ci-scheduler.json', JSON.stringify(schedulerResults));
       - name: Reproduce generated evidence input
         run: |
           mkdir -p ci-generated/first ci-generated/second
@@ -214,7 +236,7 @@ jobs:
           grep -Fq '//gooo:slot:start' ci-generated/first/semantic.gooo.go
           grep -Fq '//gooo:slot:end' ci-generated/first/semantic.gooo.go
           test -z "$(git diff --name-only)"
-          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$|ci-domain/)' || true)"
+          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-scheduler.json$|ci-evidence.json$|ci-domain/)' || true)"
           test -z "$unexpected"
       - name: Capture CLI domain evidence
         run: |
@@ -235,7 +257,7 @@ jobs:
           CI_SLOT_PRESERVATION: "true"
           CI_NO_WRITE_OUTSIDE_GENERATED: "true"
         run: |
-          go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --output ci-evidence.json
+          go run ./scripts/ci-evidence --jobs ci-jobs.json --scheduler ci-scheduler.json --generated ci-generated/first --output ci-evidence.json
           go run ./scripts/ci-evidence --verify ci-evidence.json
       - name: Write machine-readable domain evidence
         uses: actions/github-script@v7
@@ -300,39 +322,40 @@ jobs:
         uses: actions/github-script@v7
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_NEEDS_FORMAT_RESULT: ${{ needs.format.result }}
+          CI_NEEDS_VET_RESULT: ${{ needs.vet.result }}
+          CI_NEEDS_TEST_RESULT: ${{ needs.test.result }}
+          CI_NEEDS_RACE_RESULT: ${{ needs.race.result }}
+          CI_NEEDS_SEMANTIC_RESULT: ${{ needs.semantic.result }}
+          CI_NEEDS_POLICY_RESULT: ${{ needs.policy.result }}
         with:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
-            const jobsFromAPI = [];
-            for (let page = 1; page <= 1000; page++) {
-              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
-              jobsFromAPI.push(...response.data.jobs);
-              if (response.data.jobs.length < 100) break;
-              if (page === 1000) throw new Error('proof job API pagination exceeded the fail-closed page limit');
-            }
-            const names = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy'];
+            const {observeCanonicalJobs, schedulerResultsFromNeeds} = require('./scripts/ci-evidence/observe');
             const head = context.payload.pull_request?.head.sha || context.sha;
-            const byName = new Map();
-            for (const job of jobsFromAPI) {
-              if (!names.includes(job.name)) continue;
-              if (byName.has(job.name)) throw new Error(`duplicate canonical job ${job.name}`);
-              byName.set(job.name, job);
-            }
             const attempt = Number(process.env.CI_RUN_ATTEMPT || 1);
-            const jobs = names.map(name => {
-              const job = byName.get(name);
-              return job ? {...job, run_attempt: attempt} : job;
+            const schedulerResults = schedulerResultsFromNeeds({
+              format: process.env.CI_NEEDS_FORMAT_RESULT,
+              vet: process.env.CI_NEEDS_VET_RESULT,
+              test: process.env.CI_NEEDS_TEST_RESULT,
+              race: process.env.CI_NEEDS_RACE_RESULT,
+              semantic: process.env.CI_NEEDS_SEMANTIC_RESULT,
+              policy: process.env.CI_NEEDS_POLICY_RESULT,
+            }, {headSHA: head, runID: context.runId, runAttempt: attempt});
+            const observation = await observeCanonicalJobs({
+              expectedHead: head,
+              runID: context.runId,
+              runAttempt: attempt,
+              schedulerResults,
+              readPage: page => github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}),
+              onObservation: detail => core.info(`canonical job API observation ${detail.observation}/${detail.bound}: ${detail.reason}`),
             });
-            const ids = new Set();
-            for (const job of jobs) {
-              if (!job || job.status !== 'completed' || job.conclusion !== 'success' || job.head_sha !== head || job.id <= 0 || ids.has(job.id)) {
-                throw new Error('canonical jobs are not terminal, successful, unique, and bound to the immutable head');
-              }
-              ids.add(job.id);
-            }
+            core.info(`canonical job identities observed and scheduler closure bound after ${observation.observations}/${observation.bound} observations`);
+            const jobs = observation.canonicalJobs;
             fs.writeFileSync('ci-final-jobs.json', JSON.stringify(jobs));
             fs.writeFileSync('ci-jobs.json', JSON.stringify(jobs));
+            fs.writeFileSync('ci-final-scheduler.json', JSON.stringify(schedulerResults));
       - name: Reproduce proof fixture
         run: |
           mkdir -p ci-generated/first
@@ -554,7 +577,7 @@ jobs:
         run: |
           go run ./scripts/ci-proof \
             --root . --governance .github/ci-governance.json --evidence ci-evidence-input/ci-evidence.json \
-            --jobs ci-final-jobs.json --context ci-proof-context.json --generated ci-generated/first \
+            --jobs ci-final-jobs.json --scheduler ci-final-scheduler.json --context ci-proof-context.json --generated ci-generated/first \
             --output ci-proof.json --receipt provenance-receipt.jsonl
       - name: Verify promotion proof fail closed
         run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
@@ -567,6 +590,7 @@ jobs:
             ci-proof.json
             provenance-receipt.jsonl
             ci-jobs.json
+            ci-final-scheduler.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
@@ -620,16 +644,26 @@ jobs:
               .filter(job => job.name !== 'CI failure summary' && job.status === 'completed' && job.conclusion && job.conclusion !== 'success' && job.conclusion !== 'skipped')
               .sort((left, right) => left.id - right.id || left.name.localeCompare(right.name));
             if (terminalFailures.length === 0) {
-              const canonicalJobs = jobsFromAPI
-                .filter(job => expectedJobs.includes(job.name))
-                .sort((left, right) => expectedJobs.indexOf(left.name) - expectedJobs.indexOf(right.name));
               const head = pull?.head.sha || context.sha;
               const runAttempt = Number(process.env.CI_RUN_ATTEMPT || 1);
-              const canonicalBound = canonicalJobs.length === expectedJobs.length
-                && canonicalJobs.every((job, index) => job.name === expectedJobs[index] && job.status === 'completed' && job.conclusion === 'success' && job.head_sha === head && job.run_id === context.runId && Number(job.run_attempt || 0) === runAttempt);
-              if (!canonicalBound) throw new Error('no-failure closure requires six terminal successful canonical jobs bound to the exact tuple');
+              const proofPath = 'ci-proof-input/ci-proof.json';
+              if (!fs.existsSync(proofPath)) throw new Error('no-failure closure requires the verified proof artifact');
+              let proof;
+              try {
+                proof = JSON.parse(fs.readFileSync(proofPath, 'utf8'));
+              } catch (error) {
+                throw new Error(`no-failure closure proof artifact is malformed: ${error.message}`);
+              }
+              const proofTuple = proof && proof.schema === 'gooo/ci-proof/v3' && proof.repository === `${context.repo.owner}/${context.repo.repo}`
+                && proof.event === context.eventName && proof.ref === context.ref && proof.event_ref === context.ref
+                && proof.checkout_ref === head && proof.head_sha === head && proof.base_ref === normalizedBaseRef
+                && proof.base_sha === (pull?.base.sha || context.payload.before) && Number(proof.pr_number || 0) === Number(pull?.number || 0)
+                && Number(proof.run_id || 0) === context.runId && Number(proof.run_attempt || 0) === runAttempt
+                && proof.workflow_sha === process.env.CI_WORKFLOW_SHA && proof.decision === 'PASS';
+              if (!proofTuple || !Array.isArray(proof.jobs) || !Array.isArray(proof.scheduler)) throw new Error('no-failure closure requires a verified proof bound to the exact tuple');
               fs.writeFileSync('ci-closure-input.json', JSON.stringify({
-                canonical_jobs: canonicalJobs.map(job => ({id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: job.run_id, run_attempt: runAttempt})),
+                scheduler: proof.scheduler,
+                canonical_jobs: proof.jobs,
                 terminal_failures: [],
                 terminal_failure_codes: [],
               }, null, 2) + '\n');

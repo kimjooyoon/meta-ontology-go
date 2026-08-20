@@ -153,7 +153,7 @@ func TestCIProofJobsRejectDuplicateID(t *testing.T) {
 	jobs := make([]jobInput, len(proofJobs))
 	head := strings.Repeat("a", 40)
 	for index, name := range proofJobs {
-		jobs[index] = jobInput{ID: 1, Name: name, Status: "completed", Conclusion: "success", HeadSHA: head, RunID: 1, RunAttempt: 1}
+		jobs[index] = jobInput{ID: 1, Name: name, Status: stringPointer("completed"), Conclusion: stringPointer("success"), HeadSHA: head, RunID: 1, RunAttempt: 1, ObservationState: apiTerminalSuccess}
 	}
 	data, err := json.Marshal(jobs)
 	if err != nil {
@@ -250,9 +250,9 @@ func TestCITerminalJobSnapshotRejectsInProgress(t *testing.T) {
 	jobs := make([]jobInput, len(proofJobs))
 	head := strings.Repeat("a", 40)
 	for index, name := range proofJobs {
-		jobs[index] = jobInput{ID: int64(index + 1), Name: name, Status: "completed", Conclusion: "success", HeadSHA: head}
+		jobs[index] = jobInput{ID: int64(index + 1), Name: name, Status: stringPointer("completed"), Conclusion: stringPointer("success"), HeadSHA: head}
 	}
-	jobs[len(jobs)-1].Status = "in_progress"
+	jobs[len(jobs)-1].Status = stringPointer("in_progress")
 	data, err := json.Marshal(jobs)
 	if err != nil {
 		t.Fatal(err)
