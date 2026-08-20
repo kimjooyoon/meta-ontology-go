@@ -34,6 +34,14 @@ jobs:
             --work "$RUNNER_TEMP/repository-projection" \
             --expected-sha "$EXACT_SHA"
 
+      - name: Classify logical source split operations
+        run: |
+          go run ./bootstrap/logical-split-planner \
+            --root "$RUNNER_TEMP/repository-projection/materialized" \
+            --evidence "$RUNNER_TEMP/repository-projection/evidence.json" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/split-plan.json"
+
       - name: Test the restored logical module
         working-directory: ${{ runner.temp }}/repository-projection/materialized
         env:
@@ -46,6 +54,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: repository-projection-${{ env.EXACT_SHA }}
-          path: ${{ runner.temp }}/repository-projection/evidence.json
+          path: |
+            ${{ runner.temp }}/repository-projection/evidence.json
+            ${{ runner.temp }}/repository-projection/split-plan.json
           if-no-files-found: error
           retention-days: 14
