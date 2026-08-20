@@ -50,6 +50,15 @@ jobs:
             --expected-sha "$EXACT_SHA" \
             --output "$RUNNER_TEMP/repository-projection/density-report.json"
 
+      - name: Apply metric-selected helper extractions
+        run: |
+          go run ./bootstrap/function-extractor \
+            --root "$RUNNER_TEMP/repository-projection/materialized" \
+            --plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
+            --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/extraction-report.json"
+
       - name: Test the restored logical module
         working-directory: ${{ runner.temp }}/repository-projection/materialized
         env:
@@ -66,5 +75,6 @@ jobs:
             ${{ runner.temp }}/repository-projection/evidence.json
             ${{ runner.temp }}/repository-projection/split-plan.json
             ${{ runner.temp }}/repository-projection/density-report.json
+            ${{ runner.temp }}/repository-projection/extraction-report.json
           if-no-files-found: error
           retention-days: 14
