@@ -3,6 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/token"
+	"sort"
 )
 
 func checkSplitPlans(cfg config, report metricReport, indicators []metricIndicator) error {
@@ -48,4 +51,19 @@ func (report metricReport) validateTopology(plan splitPlan) error {
 		return nil
 	}
 	return fmt.Errorf("metric evidence omits directory %q", plan.Directory)
+}
+
+func commentsForPart(fset *token.FileSet, file, part *ast.File) []*ast.CommentGroup {
+	comments := ast.NewCommentMap(fset, file, file.Comments).Filter(part).Comments()
+	seen := make(map[*ast.CommentGroup]bool, len(comments))
+	for _, group := range comments {
+		seen[group] = true
+	}
+	for _, group := range file.Comments {
+		if group.End() < file.Package && !seen[group] {
+			comments = append(comments, group)
+		}
+	}
+	sort.Slice(comments, func(i, j int) bool { return comments[i].Pos() < comments[j].Pos() })
+	return comments
 }

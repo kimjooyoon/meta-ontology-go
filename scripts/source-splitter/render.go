@@ -18,7 +18,7 @@ func renderPart(fset *token.FileSet, file *ast.File, declarations []ast.Decl) ([
 	part := *file
 	part.Decls = allDecls
 	part.Imports = imports
-	part.Comments = ast.NewCommentMap(fset, file, file.Comments).Filter(&part).Comments()
+	part.Comments = commentsForPart(fset, file, &part)
 	var output bytes.Buffer
 	if err := format.Node(&output, fset, &part); err != nil {
 		return nil, err
