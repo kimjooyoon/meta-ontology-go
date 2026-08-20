@@ -1,6 +1,9 @@
 package main
 
-import "go/format"
+import (
+	"go/format"
+	"slices"
+)
 
 func compactDensity(name string, original []byte) ([]byte, int, error) {
 	current := append([]byte(nil), original...)
@@ -10,11 +13,23 @@ func compactDensity(name string, original []byte) ([]byte, int, error) {
 		if err != nil {
 			return nil, operations, err
 		}
+		expressions, err := expressionCandidates(name, current)
+		if err != nil {
+			return nil, operations, err
+		}
+		spans = append(spans, expressions...)
+		slices.SortStableFunc(spans, func(left, right sourceSpan) int {
+			return (left.end - left.start) - (right.end - right.start)
+		})
 		reduced := false
 		for _, span := range spans {
-			inline, ok := oneLineTokens(current[span.start:span.end])
-			if !ok {
-				continue
+			inline := span.replacement
+			if inline == "" {
+				var ok bool
+				inline, ok = oneLineTokens(current[span.start:span.end])
+				if !ok {
+					continue
+				}
 			}
 			candidate := make([]byte, 0, len(current))
 			candidate = append(candidate, current[:span.start]...)

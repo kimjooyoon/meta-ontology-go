@@ -15,6 +15,19 @@ func guardCandidates(name string, data []byte) ([]sourceSpan, error) {
 	}
 	candidates := make([]sourceSpan, 0)
 	ast.Inspect(source, func(node ast.Node) bool {
+		declaration, isImport := node.(*ast.GenDecl)
+		if isImport && declaration.Tok == token.IMPORT && declaration.Lparen.IsValid() && len(declaration.Specs) == 1 {
+			specification := declaration.Specs[0]
+			start := files.Position(specification.Pos()).Offset
+			end := files.Position(specification.End()).Offset
+			if inline, ok := oneLineTokens(data[start:end]); ok {
+				candidates = append(candidates, sourceSpan{
+					start: files.Position(declaration.Pos()).Offset,
+					end: files.Position(declaration.End()).Offset,
+					replacement: "import " + inline,
+				})
+			}
+		}
 		statement, ok := node.(*ast.IfStmt)
 		if !ok || statement.Else != nil || len(statement.Body.List) != 1 {
 			return true
@@ -33,3 +46,20 @@ func guardCandidates(name string, data []byte) ([]sourceSpan, error) {
 	})
 	return candidates, nil
 }
+
+func simpleStatement(statement ast.Stmt) bool {
+	switch statement.(type) {
+	case *ast.AssignStmt, *ast.ExprStmt, *ast.IncDecStmt, *ast.SendStmt:
+		return true
+	default:
+		return false
+	}
+}
+
+type statementPair struct {
+	first  ast.Stmt
+	second ast.Stmt
+}
+
+func (pair *statementPair) Pos() token.Pos { return pair.first.Pos() }
+func (pair *statementPair) End() token.Pos { return pair.second.End() }

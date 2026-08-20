@@ -43,6 +43,7 @@ type rewriteReport struct {
 }
 
 type sourceSpan struct {
-	start int
-	end   int
+	start       int
+	end         int
+	replacement string
 }
