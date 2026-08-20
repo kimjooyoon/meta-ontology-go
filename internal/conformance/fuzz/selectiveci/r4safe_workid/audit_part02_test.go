@@ -34,9 +34,9 @@ func TestExpectedLabelsAndPermutationDoNotAffectResults(t *testing.T) {
 			t.Fatalf("expected %s mutation changed %s: got %#v, want %#v", mutation.name, mutated.name, got, want)
 		}
 	}
-	for _, case := range slices.Backward(cases) {
-		if got := Audit(case.input); got != baseline[case.name] {
-			t.Fatalf("permutation changed %s: got %#v, want %#v", case.name, got, baseline[case.name])
+	for _, testCase := range slices.Backward(cases) {
+		if got := Audit(testCase.input); got != baseline[testCase.name] {
+			t.Fatalf("permutation changed %s: got %#v, want %#v", testCase.name, got, baseline[testCase.name])
 		}
 	}
 }
