@@ -42,6 +42,14 @@ jobs:
             --expected-sha "$EXACT_SHA" \
             --output "$RUNNER_TEMP/repository-projection/split-plan.json"
 
+      - name: Apply metric-selected density rewrites
+        run: |
+          go run ./bootstrap/line-density-rewriter \
+            --root "$RUNNER_TEMP/repository-projection/materialized" \
+            --plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/density-report.json"
+
       - name: Test the restored logical module
         working-directory: ${{ runner.temp }}/repository-projection/materialized
         env:
@@ -57,5 +65,6 @@ jobs:
           path: |
             ${{ runner.temp }}/repository-projection/evidence.json
             ${{ runner.temp }}/repository-projection/split-plan.json
+            ${{ runner.temp }}/repository-projection/density-report.json
           if-no-files-found: error
           retention-days: 14
