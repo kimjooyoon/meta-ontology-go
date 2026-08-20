@@ -44,7 +44,7 @@ func cutoverGit(root string, input []byte, arguments ...string) ([]byte, error) 
 
 func zeroStrings(data []byte) []string {
 	values := []string{}
-	for _, value := range bytes.Split(data, []byte{0}) {
+	for value := range bytes.SplitSeq(data, []byte{0}) {
 		if len(value) != 0 {
 			values = append(values, string(value))
 		}
