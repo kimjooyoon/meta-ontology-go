@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path"
+	"slices"
 	"sort"
 )
 
@@ -16,9 +17,7 @@ func buildObjects(files []trackedFile) map[string]*storedObject {
 		if objectClass(file.kind, file.language) == "source" {
 			extension = ".gooo"
 		}
-		objects[file.objectSHA] = &storedObject{
-			id: file.objectSHA, ext: extension, data: file.data,
-		}
+		objects[file.objectSHA] = &storedObject{id: file.objectSHA, ext: extension, data: file.data}
 	}
 	return objects
 }
@@ -52,7 +51,7 @@ func assignGroup(group []*storedObject, prefix []string, depth int) error {
 	for digit := range partitions {
 		digits = append(digits, digit)
 	}
-	sort.Slice(digits, func(i, j int) bool { return digits[i] < digits[j] })
+	slices.Sort(digits)
 	for _, digit := range digits {
 		next := append(append([]string{}, prefix...), string(digit))
 		if err := assignGroup(partitions[digit], next, depth+1); err != nil {

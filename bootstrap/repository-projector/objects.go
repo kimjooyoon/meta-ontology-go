@@ -19,8 +19,8 @@ func readTracked(root string, paths []string) ([]trackedFile, error) {
 		if err != nil {
 			return nil, err
 		}
-		file := trackedFile{logical: logical, mode: uint32(info.Mode().Perm())}
-		file.language = languageFor(logical)
+		file := trackedFile{logical: logical, mode: uint32(info.Mode().Perm()),
+			language: languageFor(logical)}
 		switch {
 		case info.Mode().IsRegular():
 			file.kind = "file"
