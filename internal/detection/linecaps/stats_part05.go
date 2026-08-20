@@ -1,6 +1,9 @@
 package linecaps
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/duplicates"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+)
 
 // EvaluateLineMetricIndicators connects raw measurements to policy and its
 // actionable meta operations.
@@ -30,6 +33,11 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 			observations = append(observations, observation)
 		}
 	}
+	duplicateObservations, err := duplicates.Analyze(report.Root)
+	if err != nil {
+		return sourcepolicy.Report{}, err
+	}
+	observations = append(observations, duplicateObservations...)
 	total := report.Total()
 	observations = append(observations,
 		metricObservation(".", sourcepolicy.DimensionGoFiles, total.GoFiles),

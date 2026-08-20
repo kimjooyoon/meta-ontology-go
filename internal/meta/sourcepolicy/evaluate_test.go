@@ -9,11 +9,12 @@ func TestEvaluateSelectsAllTrilemmaBranchesAndOperations(t *testing.T) {
 		{Subject: "go.mod", Dimension: DimensionToolchain, Value: 1},
 		{Subject: "wrapper.go:3:wrapper", Dimension: DimensionRefactorReturn, Value: 1},
 		{Subject: "assign.go:3:assign", Dimension: DimensionRefactorAssign, Value: 2},
+		{Subject: "fixture#sha256:digest", Dimension: DimensionRefactorDuplicate, Value: 1},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(report.Indicators) != 5 || len(report.Actionable()) != 2 || len(report.Failed()) != 1 {
+	if len(report.Indicators) != 6 || len(report.Actionable()) != 3 || len(report.Failed()) != 2 {
 		t.Fatalf("unexpected indicator report: %#v", report)
 	}
 	proofs := map[ProofChoice]bool{}
