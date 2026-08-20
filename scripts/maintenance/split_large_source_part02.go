@@ -14,18 +14,16 @@ func run(opts options) error {
 		return err
 	}
 	if len(paths) == 0 {
-		return fmt.Errorf("no .go or .gooo files found")
+		fmt.Fprintln(os.Stdout, "splitter: no failed source indicators")
+		return nil
 	}
 	summary := 0
 	for _, path := range paths {
-		rewritten, unsplittable, err := refactor(path, opts)
+		rewritten, err := refactor(path, opts)
 		if err != nil {
 			return err
 		}
 		summary += rewritten
-		if unsplittable > 0 {
-			fmt.Fprintf(os.Stdout, "splitter: unsplittable declarations in %s: %d\n", path, unsplittable)
-		}
 	}
 	if opts.write {
 		fmt.Printf("splitter: rewritten=%d files\n", summary)

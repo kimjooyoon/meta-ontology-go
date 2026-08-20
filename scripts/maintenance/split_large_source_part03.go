@@ -38,26 +38,7 @@ func collectTargets(opts options) ([]string, error) {
 		sort.Strings(paths)
 		return dedupe(paths), nil
 	}
-	paths := make([]string, 0)
-	if err := filepath.Walk(opts.root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			if info.Name() == ".git" || info.Name() == "vendor" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if isSourceFile(info.Name()) {
-			paths = append(paths, path)
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	sort.Strings(paths)
-	return paths, nil
+	return collectMetricTargets(opts)
 }
 func isSourceFile(path string) bool {
 	return filepath.Ext(path) == ".go" || filepath.Ext(path) == ".gooo"

@@ -27,12 +27,12 @@ func buildImportMap(file *ast.File) []importSpec {
 	}
 	return result
 }
-func buildChunks(file *ast.File, fset *token.FileSet, decls []ast.Decl, imports []importSpec, maxLines int) ([]declChunk, int) {
+func buildChunks(file *ast.File, fset *token.FileSet, decls []ast.Decl, imports []importSpec, preamble []byte, maxLines int) ([]declChunk, int) {
 	chunks := make([]declChunk, 0)
 	current := declChunk{imports: make(map[string]struct{})}
 	allImports := make(map[string]importSpec, len(imports))
 	for _, imp := range imports {
-		allImports[imp.name] = imp
+		allImports[imp.key()] = imp
 	}
 	unsplittable := 0
 	for _, decl := range decls {
@@ -45,7 +45,7 @@ func buildChunks(file *ast.File, fset *token.FileSet, decls []ast.Decl, imports 
 		}
 		trial.decls = append(trial.decls, decl)
 		trial.fileBodies = append(trial.fileBodies, declSource)
-		if estimatedLines(file.Name.Name, trial, allImports) <= maxLines {
+		if estimatedLines(preamble, file.Name.Name, trial, allImports) <= maxLines {
 			current = trial
 			continue
 		}
@@ -54,7 +54,7 @@ func buildChunks(file *ast.File, fset *token.FileSet, decls []ast.Decl, imports 
 			current = declChunk{imports: make(map[string]struct{})}
 		}
 		trial = declChunk{decls: []ast.Decl{decl}, fileBodies: []string{declSource}, imports: declImports}
-		if estimatedLines(file.Name.Name, trial, allImports) <= maxLines {
+		if estimatedLines(preamble, file.Name.Name, trial, allImports) <= maxLines {
 			current = trial
 			continue
 		}

@@ -1,8 +1,29 @@
 package main
 
 import (
+	"go/ast"
+	"go/format"
+	"go/token"
 	"sort"
+	"strings"
 )
+
+func renderDecl(fset *token.FileSet, decl ast.Decl) string {
+	buf := &strings.Builder{}
+	_ = format.Node(buf, fset, decl)
+	return buf.String()
+}
+
+func lineCount(buf []byte) int {
+	if len(buf) == 0 {
+		return 0
+	}
+	lines := bytesCount(buf, '\n')
+	if buf[len(buf)-1] != '\n' {
+		lines++
+	}
+	return lines
+}
 
 func bytesCount(source []byte, target byte) int {
 	n := 0

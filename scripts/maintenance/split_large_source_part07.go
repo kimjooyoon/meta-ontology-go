@@ -2,26 +2,16 @@ package main
 
 import (
 	"go/ast"
-	"path/filepath"
-	"strings"
 )
 
 func usedImportsForDecl(file *ast.File, decl ast.Decl) map[string]struct{} {
 	used := make(map[string]struct{})
-	knownImports := make(map[string]struct{}, len(file.Imports))
-	for _, imp := range file.Imports {
-		alias := ""
-		if imp.Name != nil {
-			alias = imp.Name.Name
-		} else if path := strings.Trim(imp.Path.Value, "\""); path != "" {
-			alias = filepath.Base(path)
-		}
-		if alias == "" {
-			continue
-		}
-		knownImports[alias] = struct{}{}
-		if alias == "." || alias == "_" {
-			used[alias] = struct{}{}
+	knownImports := make(map[string][]string, len(file.Imports))
+	for _, spec := range buildImportMap(file) {
+		key := spec.key()
+		knownImports[spec.name] = append(knownImports[spec.name], key)
+		if spec.name == "." || spec.name == "_" {
+			used[key] = struct{}{}
 		}
 	}
 	if decl == nil {
@@ -33,11 +23,15 @@ func usedImportsForDecl(file *ast.File, decl ast.Decl) map[string]struct{} {
 			return true
 		}
 		if id, ok := sel.X.(*ast.Ident); ok {
-			if _, ok := knownImports[id.Name]; ok {
-				used[id.Name] = struct{}{}
+			for _, key := range knownImports[id.Name] {
+				used[key] = struct{}{}
 			}
 		}
 		return true
 	})
 	return used
+}
+
+func (i importSpec) key() string {
+	return i.name + "\x00" + i.path
 }

@@ -2,68 +2,57 @@ package main
 
 import (
 	"fmt"
-	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
-func refactor(path string, opts options) (int, int, error) {
+func refactor(path string, opts options) (int, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return 0, 0, err
+		return 0, err
 	}
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, path, data, parser.ParseComments)
 	if err != nil {
-		return 0, 0, nil
+		return 0, fmt.Errorf("parse %s: %w", path, err)
 	}
 	allLines := lineCount(data)
 	if allLines <= opts.maxLines {
-		return 0, 0, nil
+		return 0, nil
+	}
+	if isGeneratedPart(path) {
+		return 0, fmt.Errorf("generated source exceeds cap and is not idempotent: %s", path)
 	}
 	importMap := buildImportMap(file)
 	declarations := filterTopLevelDecls(file.Decls)
 	if len(declarations) == 0 {
-		return 0, 0, nil
+		return 0, fmt.Errorf("no splittable declarations in %s", path)
 	}
-	chunks, unsplittable := buildChunks(file, fset, declarations, importMap, opts.maxLines)
+	if err := validateSplitSafety(file, declarations, importMap); err != nil {
+		return 0, fmt.Errorf("unsafe split %s: %w", path, err)
+	}
+	preamble := sourcePreamble(fset, file, data)
+	chunks, unsplittable := buildChunks(file, fset, declarations, importMap, preamble, opts.maxLines)
+	if unsplittable > 0 {
+		return 0, fmt.Errorf("unsplittable declarations in %s: %d", path, unsplittable)
+	}
 	if len(chunks) <= 1 {
-		return 0, unsplittable, nil
+		return 0, fmt.Errorf("source exceeds cap but cannot be partitioned: %s", path)
+	}
+	generated, err := planGenerated(path, file.Name.Name, preamble, chunks, importMap, opts.maxLines)
+	if err != nil {
+		return 0, err
+	}
+	if err := validateDirectoryProjection(path, generated, opts.maxEntries); err != nil {
+		return 0, err
 	}
 	if opts.write {
-		dir := filepath.Dir(path)
-		base := filepath.Base(path)
-		ext := filepath.Ext(base)
-		stem := strings.TrimSuffix(base, ext)
-		generated := make([]string, 0, len(chunks))
-		for i, chunk := range chunks {
-			next := filepath.Join(dir, fmt.Sprintf("%s_part%02d%s", stem, i+1, ext))
-			generated = append(generated, next)
-			err := writeChunk(next, path, file.Name.Name, chunk, importMap)
-			if err != nil {
-				return 0, unsplittable, err
-			}
+		if err := commitGenerated(path, generated); err != nil {
+			return 0, err
 		}
-		if err := os.Remove(path); err != nil {
-			return 0, unsplittable, err
-		}
-		return 1, unsplittable, nil
+		return 1, nil
 	}
 	fmt.Printf("splitter: would split %s into %d files (orig=%d)\n", path, len(chunks), allLines)
-	return 1, unsplittable, nil
-}
-func filterTopLevelDecls(decls []ast.Decl) []ast.Decl {
-	result := make([]ast.Decl, 0, len(decls))
-	for _, decl := range decls {
-		if gen, ok := decl.(*ast.GenDecl); ok {
-			if gen.Tok == token.IMPORT {
-				continue
-			}
-		}
-		result = append(result, decl)
-	}
-	return result
+	return 1, nil
 }
