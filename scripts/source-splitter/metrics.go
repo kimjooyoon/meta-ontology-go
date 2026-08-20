@@ -15,7 +15,7 @@ type metricReport struct {
 	Meta        struct {
 		Policy struct {
 			MaxFileLines     int `json:"max_file_lines"`
-			MaxDirectEntries int `json:"max_direct_entries"`
+			MaxDirectEntries int `json:"max_direct_directory_entries"`
 		} `json:"policy"`
 		Indicators []metricIndicator `json:"indicators"`
 	} `json:"meta"`
@@ -28,9 +28,9 @@ type metricDirectory struct {
 }
 
 type metricIndicator struct {
-	MetricID     sourcepolicy.Dimension `json:"metric_id"`
-	Subject      string                 `json:"subject"`
-	Satisfied    bool                   `json:"satisfied"`
+	MetricID      sourcepolicy.Dimension `json:"metric_id"`
+	Subject       string                 `json:"subject"`
+	Satisfied     bool                   `json:"satisfied"`
 	MetaOperation sourcepolicy.Operation `json:"meta_operation"`
 }
 

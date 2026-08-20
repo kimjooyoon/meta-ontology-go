@@ -42,8 +42,8 @@ func splitPartPath(subject string, index int) (string, error) {
 	}
 	stem := strings.TrimSuffix(base, ".go")
 	suffix := ""
-	if strings.HasSuffix(stem, "_test") {
-		stem, suffix = strings.TrimSuffix(stem, "_test"), "_test"
+	if before, ok := strings.CutSuffix(stem, "_test"); ok {
+		stem, suffix = before, "_test"
 	}
 	parts := strings.Split(stem, "_")
 	last := parts[len(parts)-1]
@@ -63,7 +63,7 @@ func splitPartPath(subject string, index int) (string, error) {
 
 func wordSet(words string) map[string]bool {
 	result := make(map[string]bool)
-	for _, word := range strings.Fields(words) {
+	for word := range strings.FieldsSeq(words) {
 		result[word] = true
 	}
 	return result

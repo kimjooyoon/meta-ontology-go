@@ -1,29 +1,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
-	"os"
 	"path"
 	"path/filepath"
 )
-
-var errSplitBlocked = errors.New("split blocked")
-
-type splitPart struct {
-	Path    string
-	Subject string
-	Data    []byte
-}
-
-type splitPlan struct {
-	Directory string
-	Mode      os.FileMode
-	Parts     []splitPart
-}
 
 func planSource(root, subject string, limit int) (splitPlan, error) {
 	var plan splitPlan
@@ -31,18 +13,9 @@ func planSource(root, subject string, limit int) (splitPlan, error) {
 	if err != nil {
 		return plan, err
 	}
-	source, err := os.ReadFile(target)
+	info, fset, file, err := parseSource(target, subject)
 	if err != nil {
-		return plan, fmt.Errorf("read %s: %w", subject, err)
-	}
-	info, err := os.Stat(target)
-	if err != nil {
-		return plan, fmt.Errorf("stat %s: %w", subject, err)
-	}
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, subject, source, parser.ParseComments|parser.AllErrors)
-	if err != nil {
-		return plan, fmt.Errorf("parse %s: %w", subject, err)
+		return plan, err
 	}
 	declarations := sourceDeclarations(file)
 	groups := make([][]ast.Decl, 0)
@@ -88,19 +61,4 @@ func planSource(root, subject string, limit int) (splitPlan, error) {
 		plan.Parts[index] = splitPart{Path: partPath, Subject: partSubject, Data: data}
 	}
 	return plan, nil
-}
-
-func sourceDeclarations(file *ast.File) []ast.Decl {
-	declarations := make([]ast.Decl, 0, len(file.Decls))
-	for _, declaration := range file.Decls {
-		general, isImport := declaration.(*ast.GenDecl)
-		if !isImport || general.Tok != token.IMPORT {
-			declarations = append(declarations, declaration)
-		}
-	}
-	return declarations
-}
-
-func positionLine(fset *token.FileSet, declaration ast.Decl) int {
-	return fset.Position(declaration.Pos()).Line
 }

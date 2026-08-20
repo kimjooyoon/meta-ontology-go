@@ -31,14 +31,18 @@ package fixture
 
 import "fmt"
 
-func first() string { return fmt.Sprint("a") }
+func first() string {
+	return fmt.Sprint("a")
+}
 
-func second() int { return 2 }
+func second() int {
+	return 2
+}
 `
 	if err := os.WriteFile(filepath.Join(root, subject), []byte(source), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	plan, err := planSource(root, subject, 7)
+	plan, err := planSource(root, subject, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +50,7 @@ func second() int { return 2 }
 		t.Fatalf("unexpected parts: %#v", plan.Parts)
 	}
 	for _, part := range plan.Parts {
-		if physicalLines(part.Data) > 7 || !strings.Contains(string(part.Data), "//go:build linux") {
+		if physicalLines(part.Data) > 10 || !strings.Contains(string(part.Data), "//go:build linux") {
 			t.Fatalf("invalid split part %s:\n%s", part.Subject, part.Data)
 		}
 	}
