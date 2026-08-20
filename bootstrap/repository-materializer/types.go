@@ -15,22 +15,22 @@ type manifest struct {
 }
 
 type entry struct {
-	Logical       string `json:"logical"`
-	Backing       string `json:"backing"`
-	ObjectSHA     string `json:"object_sha256"`
-	ContentSHA    string `json:"content_sha256"`
-	Kind          string `json:"kind"`
-	Language      string `json:"language,omitempty"`
-	Mode          uint32 `json:"mode"`
-	Lines         int    `json:"lines"`
+	Logical    string `json:"logical"`
+	Backing    string `json:"backing"`
+	ObjectSHA  string `json:"object_sha256"`
+	ContentSHA string `json:"content_sha256"`
+	Kind       string `json:"kind"`
+	Language   string `json:"language,omitempty"`
+	Mode       uint32 `json:"mode"`
+	Lines      int    `json:"lines"`
 }
 
 type indexState struct {
-	TreeOID       string
-	Replacement   string
-	Unbound       int
-	Dirty         int
-	Unexpected    int
+	TreeOID     string
+	Replacement string
+	Unbound     int
+	Dirty       int
+	Unexpected  int
 }
 
 type indicator struct {
@@ -50,8 +50,8 @@ type evidence struct {
 	LogicalTreeOID    string      `json:"logical_tree_oid"`
 	ReplacementCommit string      `json:"replacement_commit,omitempty"`
 	Entries           int         `json:"entries"`
-	Restored           int         `json:"restored"`
-	Indicators         []indicator `json:"indicators"`
+	Restored          int         `json:"restored"`
+	Indicators        []indicator `json:"indicators"`
 }
 
 func (item entry) gitMode() string {
