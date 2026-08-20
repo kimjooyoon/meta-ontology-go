@@ -19,7 +19,7 @@ func execute(input activationConfig) error {
 	if err != nil {
 		return err
 	}
-	if physical != source.Entries+1 || logical != source.Entries {
+	if physical == 0 || logical != source.Entries {
 		return fmt.Errorf("activation input cardinality is not exact")
 	}
 	if err := requireEmpty(settings.storage); err != nil {

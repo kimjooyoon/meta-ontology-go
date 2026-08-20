@@ -29,6 +29,12 @@ runs:
         activation_evidence="$work/activation-evidence.json"
         projection_evidence="$projector_work/evidence.json"
         git_dir="$(git -C "$GITHUB_WORKSPACE" rev-parse --absolute-git-dir)"
+        {
+          echo "storage-root=$storage_root"
+          echo "materialization-evidence=$materializer_work/materialization-evidence.json"
+          echo "activation-evidence=$activation_evidence"
+          echo "projection-evidence=$projection_evidence"
+        } >> "$GITHUB_OUTPUT"
         if test -f "$GITHUB_WORKSPACE/projection/catalog/manifest.json"; then
           physical_root="$GITHUB_WORKSPACE"
         else
@@ -54,9 +60,3 @@ runs:
           echo "GIT_WORK_TREE=$GITHUB_WORKSPACE"
           echo "GIT_INDEX_FILE=$git_index"
         } >> "$GITHUB_ENV"
-        {
-          echo "storage-root=$storage_root"
-          echo "materialization-evidence=$materializer_work/materialization-evidence.json"
-          echo "activation-evidence=$activation_evidence"
-          echo "projection-evidence=$projection_evidence"
-        } >> "$GITHUB_OUTPUT"
