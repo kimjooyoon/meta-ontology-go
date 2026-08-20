@@ -37,16 +37,16 @@ type cutoverIndicator struct {
 }
 
 type cutoverEvidence struct {
-	Schema             string              `json:"schema"`
-	SourceSHA          string              `json:"source_sha"`
-	LogicalOriginSHA   string              `json:"logical_origin_sha"`
-	AuthoritySHA256    string              `json:"authority_sha256"`
-	CandidateSHA256    string              `json:"candidate_sha256"`
-	LogicalEntries     int                 `json:"logical_entries"`
-	PhysicalEntries    int                 `json:"physical_entries"`
-	PlannedPaths       int                 `json:"planned_paths"`
-	Applied            bool                `json:"applied"`
-	Indicators         []cutoverIndicator  `json:"indicators"`
+	Schema           string             `json:"schema"`
+	SourceSHA        string             `json:"source_sha"`
+	LogicalOriginSHA string             `json:"logical_origin_sha"`
+	AuthoritySHA256  string             `json:"authority_sha256"`
+	CandidateSHA256  string             `json:"candidate_sha256"`
+	LogicalEntries   int                `json:"logical_entries"`
+	PhysicalEntries  int                `json:"physical_entries"`
+	PlannedPaths     int                `json:"planned_paths"`
+	Applied          bool               `json:"applied"`
+	Indicators       []cutoverIndicator `json:"indicators"`
 }
 
 func metric(id, operation, proof string, value int, blocking bool) cutoverIndicator {
