@@ -1,7 +1,8 @@
 package pressurecoverage
 
 func fixture() Input {
-	input := Input{
+
+	return Input{
 		Schema:                  SchemaVersion,
 		RequestedK:              21,
 		MinimumIndependent:      2,
@@ -17,7 +18,7 @@ func fixture() Input {
 		},
 		RequiredPressureIDs: []string{"pressure-z", "pressure-a", "pressure-b", "pressure-aa"},
 	}
-	return input
+
 }
 func bindingField(input Input, role string) string {
 	switch role {

@@ -8,7 +8,8 @@ func ObserveCoverage(input ObligationCoverageInput) ObligationCoverageResult {
 	return ObserveObligationCoverage(input)
 }
 func coverageResultFor(input ObligationCoverageInput) ObligationCoverageResult {
-	result := ObligationCoverageResult{
+
+	return ObligationCoverageResult{
 		SchemaVersion:         ObligationCoverageSchemaVersion,
 		UncoveredRootIDs:      []string{},
 		RequiredObligationIDs: []string{},
@@ -16,7 +17,7 @@ func coverageResultFor(input ObligationCoverageInput) ObligationCoverageResult {
 		SnapshotDigest: input.SnapshotDigest,
 		RegistryDigest: input.Registry.Digest,
 		GraphDigest:    input.Graph.Digest()}
-	return result
+
 }
 func coverageInputReason(input ObligationCoverageInput) CoverageReason {
 	if input.SchemaVersion != ObligationCoverageSchemaVersion {

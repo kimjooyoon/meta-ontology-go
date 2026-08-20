@@ -37,8 +37,9 @@ func rawEvidenceFact(evidenceID string, start int) Fact {
 	return fact
 }
 func cloneFactDelta(delta FactDelta) FactDelta {
-	clone := FactDelta{Added: cloneFacts(delta.Added), Removed: cloneFacts(delta.Removed)}
-	return clone
+
+	return FactDelta{Added: cloneFacts(delta.Added), Removed: cloneFacts(delta.Removed)}
+
 }
 func cloneFacts(facts FactSet) FactSet {
 	if facts == nil {
