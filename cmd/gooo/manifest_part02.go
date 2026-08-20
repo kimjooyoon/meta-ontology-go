@@ -20,14 +20,7 @@ func buildProjectionManifest(filename, generatedFile string, source []byte, prev
 		return projectionManifest{}, err
 	}
 	protectedEqual := len(previous) == 0 || equalSlotBodies(previousSlots, currentSlots)
-	response := adapter.Response{
-		Schema:           adapter.ProtocolSchema,
-		Fixture:          filename,
-		Operation:        adapter.OperationGenerate,
-		Status:           adapter.StatusPass,
-		Observed:         observed,
-		PromotionEligible: false,
-	}
+	response := projectionResponse(filename, result, observed, protectedEqual)
 	response.Evidence, err = response.ProjectEvidence("gooo", adapter.StageGoooAuthoritative)
 	if err != nil {
 		return projectionManifest{}, err
