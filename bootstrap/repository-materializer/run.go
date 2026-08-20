@@ -36,3 +36,17 @@ func execute(input config) error {
 	fmt.Printf("repository-materializer: restored=%d tree=%s replacement=%t\n", restored, state.TreeOID, state.Replacement != "")
 	return nil
 }
+
+func unexpectedPhysical(tracked map[string]string, model manifest) int {
+	expected := map[string]bool{"projection/catalog/manifest.json": true}
+	for _, item := range model.Entries {
+		expected[item.Backing] = true
+	}
+	unexpected := 0
+	for name := range tracked {
+		if !expected[name] {
+			unexpected++
+		}
+	}
+	return unexpected
+}

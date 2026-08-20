@@ -53,3 +53,13 @@ type evidence struct {
 	Restored           int         `json:"restored"`
 	Indicators         []indicator `json:"indicators"`
 }
+
+func (item entry) gitMode() string {
+	if item.Kind == "symlink" {
+		return "120000"
+	}
+	if item.Mode&0o111 != 0 {
+		return "100755"
+	}
+	return "100644"
+}
