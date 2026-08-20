@@ -36,11 +36,12 @@ jobs:
 
       - name: Restore solely from the physical manifest
         run: |
-          go run ./bootstrap/repository-projector \
-            --root "$GITHUB_WORKSPACE" \
-            --physical-root "$RUNNER_TEMP/repository-projection/physical" \
-            --work "$RUNNER_TEMP/repository-restored" \
-            --expected-sha "$EXACT_SHA"
+	          go run ./bootstrap/repository-materializer \
+	            --root "$GITHUB_WORKSPACE" \
+	            --physical-root "$RUNNER_TEMP/repository-projection/physical" \
+	            --work "$RUNNER_TEMP/repository-restored" \
+	            --git-index "$RUNNER_TEMP/repository-restored/logical.index" \
+	            --expected-sha "$EXACT_SHA"
 
       - name: Classify logical source split operations
         run: |
@@ -72,7 +73,10 @@ jobs:
         env:
           GIT_DIR: ${{ github.workspace }}/.git
           GIT_WORK_TREE: ${{ runner.temp }}/repository-restored/materialized
-        run: go test ./...
+	          GIT_INDEX_FILE: ${{ runner.temp }}/repository-restored/logical.index
+	        run: |
+	          test -z "$(git status --porcelain)"
+	          go test ./...
 
       - name: Upload exact-SHA projection indicators
         if: always()
@@ -83,7 +87,8 @@ jobs:
             ${{ runner.temp }}/repository-projection/evidence.json
             ${{ runner.temp }}/repository-projection/split-plan.json
             ${{ runner.temp }}/repository-projection/density-report.json
-            ${{ runner.temp }}/repository-projection/extraction-report.json
-            ${{ runner.temp }}/repository-projection/physical/projection/catalog/manifest.json
+	            ${{ runner.temp }}/repository-projection/extraction-report.json
+	            ${{ runner.temp }}/repository-projection/physical/projection/catalog/manifest.json
+	            ${{ runner.temp }}/repository-restored/materialization-evidence.json
           if-no-files-found: error
           retention-days: 14

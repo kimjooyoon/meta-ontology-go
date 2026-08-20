@@ -63,6 +63,7 @@ func retainedBacking(logical string) (string, bool) {
 		return filepath.ToSlash(filepath.Join("module", logical)), true
 	}
 	if strings.HasPrefix(logical, "bootstrap/") ||
+		strings.HasPrefix(logical, ".github/actions/") ||
 		strings.HasPrefix(logical, ".github/workflows/") {
 		return logical, true
 	}

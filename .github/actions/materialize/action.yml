@@ -1,0 +1,49 @@
+name: Materialize logical repository
+description: Restore the logical tree and bind Git to its projected index
+
+inputs:
+  expected-sha:
+    description: Exact checked-out Git identity
+    required: true
+
+outputs:
+  logical-root:
+    value: ${{ steps.materialize.outputs.logical-root }}
+  storage-root:
+    value: ${{ steps.materialize.outputs.storage-root }}
+  git-index:
+    value: ${{ steps.materialize.outputs.git-index }}
+
+runs:
+  using: composite
+  steps:
+    - id: materialize
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        EXPECTED_SHA: ${{ inputs.expected-sha }}
+      run: |
+        work="$RUNNER_TEMP/meta-go-logical"
+        projection="$RUNNER_TEMP/meta-go-projection"
+        storage="$GITHUB_WORKSPACE"
+        if [ ! -f "$GITHUB_WORKSPACE/projection/catalog/manifest.json" ]; then
+          go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" --work "$projection" --expected-sha "$EXPECTED_SHA"
+          storage="$projection/physical"
+        fi
+        sources=("$GITHUB_WORKSPACE"/bootstrap/repository-materializer/*.go)
+        go run "${sources[@]}" \
+          --root "$GITHUB_WORKSPACE" --physical-root "$storage" --work "$work" \
+          --git-index "$work/logical.index" --expected-sha "$EXPECTED_SHA"
+        logical="$work/materialized"
+        {
+          echo "LOGICAL_WORKSPACE=$logical"
+          echo "PHYSICAL_WORKSPACE=$storage"
+          echo "GIT_DIR=$GITHUB_WORKSPACE/.git"
+          echo "GIT_WORK_TREE=$logical"
+          echo "GIT_INDEX_FILE=$work/logical.index"
+        } >> "$GITHUB_ENV"
+        printf 'cd %q\n' "$logical" >> "$BASH_ENV"
+        echo "logical-root=$logical" >> "$GITHUB_OUTPUT"
+        echo "storage-root=$storage" >> "$GITHUB_OUTPUT"
+        echo "git-index=$work/logical.index" >> "$GITHUB_OUTPUT"
