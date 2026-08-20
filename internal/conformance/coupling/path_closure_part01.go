@@ -1,8 +1,6 @@
 package coupling
 
-import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-)
+import "github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 
 func receiptsClosePath(roots []semantic.ID, receipts map[string]CouplingReceipt, registry registryView, edges map[semantic.ID]semantic.InferenceEdge, claims map[semantic.ID]semantic.SemanticChangeClaim, evidence map[semantic.ID]semantic.InferenceEvidence) bool {
 	rootSet := make(map[semantic.ID]struct{}, len(roots))

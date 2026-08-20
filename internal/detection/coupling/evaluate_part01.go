@@ -1,8 +1,6 @@
 package coupling
 
-import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-)
+import "github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 
 func Evaluate(input Input, authority AuthorityContext) (result Result) {
 	inputDigest := inputIdentityDigest(input, authority)

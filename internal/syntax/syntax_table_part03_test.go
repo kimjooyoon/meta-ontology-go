@@ -1,8 +1,6 @@
 package syntax
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestParseValidTable(t *testing.T) {
 	tests := []struct {

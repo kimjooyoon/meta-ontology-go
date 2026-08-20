@@ -12,41 +12,7 @@ func TestCanonicalDiagnosticOrderSpecialSourceReplay(t *testing.T) {
 		name        string
 		source      string
 		diagnostics syntax.Diagnostics
-	}{
-		{
-			name:   "equal-span",
-			source: "0123456789",
-			diagnostics: syntax.Diagnostics{
-				syntaxDiagnosticAt("equal.gooo", 4, 6, syntax.SeverityError, "a", "alpha"),
-				syntaxDiagnosticAt("equal.gooo", 4, 6, syntax.SeverityError, "b", "beta"),
-				syntaxDiagnosticAt("equal.gooo", 4, 6, syntax.SeverityWarning, "z", "warning"),
-			},
-		},
-		{
-			name:   "crlf",
-			source: "package p\r\nnamespace n\r\n@",
-			diagnostics: syntax.Diagnostics{
-				syntaxDiagnosticAt("crlf.gooo", 11, 12, syntax.SeverityError, "line", "line"),
-				syntaxDiagnosticAt("crlf.gooo", 24, 25, syntax.SeverityError, "late", "late"),
-			},
-		},
-		{
-			name:   "unicode",
-			source: "α😀\r\n終わり",
-			diagnostics: syntax.Diagnostics{
-				syntaxDiagnosticAt("unicode.gooo", 0, 6, syntax.SeverityError, "a", "unicode"),
-				syntaxDiagnosticAt("unicode.gooo", 6, 8, syntax.SeverityWarning, "z", "終わり"),
-			},
-		},
-		{
-			name:   "invalid-utf8",
-			source: invalidUTF8,
-			diagnostics: syntax.Diagnostics{
-				syntaxDiagnosticAt("invalid.gooo", 6, 8, syntax.SeverityError, "crlf", "line"),
-				syntaxDiagnosticAt("invalid.gooo", 10, 11, syntax.SeverityError, "invalid", "byte"),
-			},
-		},
-	}
+	}{{name: "equal-span", source: "0123456789", diagnostics: syntax.Diagnostics{syntaxDiagnosticAt("equal.gooo", 4, 6, syntax.SeverityError, "a", "alpha"), syntaxDiagnosticAt("equal.gooo", 4, 6, syntax.SeverityError, "b", "beta"), syntaxDiagnosticAt("equal.gooo", 4, 6, syntax.SeverityWarning, "z", "warning")}}, {name: "crlf", source: "package p\r\nnamespace n\r\n@", diagnostics: syntax.Diagnostics{syntaxDiagnosticAt("crlf.gooo", 11, 12, syntax.SeverityError, "line", "line"), syntaxDiagnosticAt("crlf.gooo", 24, 25, syntax.SeverityError, "late", "late")}}, {name: "unicode", source: "α😀\r\n終わり", diagnostics: syntax.Diagnostics{syntaxDiagnosticAt("unicode.gooo", 0, 6, syntax.SeverityError, "a", "unicode"), syntaxDiagnosticAt("unicode.gooo", 6, 8, syntax.SeverityWarning, "z", "終わり")}}, {name: "invalid-utf8", source: invalidUTF8, diagnostics: syntax.Diagnostics{syntaxDiagnosticAt("invalid.gooo", 6, 8, syntax.SeverityError, "crlf", "line"), syntaxDiagnosticAt("invalid.gooo", 10, 11, syntax.SeverityError, "invalid", "byte")}}}
 	for _, fixture := range cases {
 		t.Run(fixture.name, func(t *testing.T) {
 			wantRaw := append(syntax.Diagnostics(nil), fixture.diagnostics...)

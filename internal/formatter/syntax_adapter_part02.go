@@ -48,11 +48,7 @@ func (SyntaxAdapter) Adapt(ast any) (*Document, Diagnostics) {
 			if value.FieldsPresent || len(value.Fields) != 0 {
 				return nil, unsupportedDeclarationDiagnostic("entity fields are not representable by the formatter surface", value.Span)
 			}
-			document.Declarations = append(document.Declarations, Declaration{
-				Kind: EntityDeclaration,
-				Name: value.Name,
-				ID:   value.ID,
-			})
+			document.Declarations = append(document.Declarations, Declaration{Kind: EntityDeclaration, Name: value.Name, ID: value.ID})
 		case *syntax.ActivityDecl:
 			if value == nil {
 				return nil, unsupportedDeclarationDiagnostic("nil activity declaration", file.Span)
@@ -65,12 +61,7 @@ func (SyntaxAdapter) Adapt(ast any) (*Document, Diagnostics) {
 			if diagnostic != nil {
 				return nil, Diagnostics{*diagnostic}
 			}
-			declaration := Declaration{
-				Kind:   ActivityDeclaration,
-				Name:   value.Name,
-				Inputs: make([]string, len(inputs)),
-				Output: output,
-			}
+			declaration := Declaration{Kind: ActivityDeclaration, Name: value.Name, Inputs: make([]string, len(inputs)), Output: output}
 			for index, input := range inputs {
 				declaration.Inputs[index] = input.Name
 			}

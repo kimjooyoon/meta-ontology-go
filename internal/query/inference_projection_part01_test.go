@@ -32,10 +32,7 @@ func TestInferenceProjectionCompletenessAndTypedSelectors(t *testing.T) {
 	}
 	for _, row := range result.Edges {
 		edge := byRecord[row.RecordID]
-		if edge.RecordID == "" || row.SubjectID != ID(edge.SubjectID.String()) ||
-			row.ObjectID != ID(edge.ObjectID.String()) || row.Kind != edge.Kind ||
-			row.Phase != edge.Phase.Phase || row.AuthorityLayer != edge.Authority.Layer ||
-			row.AuthorityEffect != edge.Authority.Effect || len(row.Evidence) != 1 {
+		if edge.RecordID == "" || row.SubjectID != ID(edge.SubjectID.String()) || row.ObjectID != ID(edge.ObjectID.String()) || row.Kind != edge.Kind || row.Phase != edge.Phase.Phase || row.AuthorityLayer != edge.Authority.Layer || row.AuthorityEffect != edge.Authority.Effect || len(row.Evidence) != 1 {
 			t.Fatalf("edge lost typed identity: %#v", row)
 		}
 	}
@@ -44,14 +41,7 @@ func TestInferenceProjectionCompletenessAndTypedSelectors(t *testing.T) {
 			t.Fatalf("claim crossed closed semantic-change sum: %#v", row)
 		}
 	}
-	selectors := []InferenceQuery{
-		{RecordID: result.Edges[0].RecordID},
-		{SubjectID: result.Edges[0].SubjectID},
-		{ObjectID: result.Edges[0].ObjectID},
-		{Phase: result.Edges[0].Phase},
-		{Layer: result.Edges[0].AuthorityLayer},
-		{Effect: result.Edges[0].AuthorityEffect},
-	}
+	selectors := []InferenceQuery{{RecordID: result.Edges[0].RecordID}, {SubjectID: result.Edges[0].SubjectID}, {ObjectID: result.Edges[0].ObjectID}, {Phase: result.Edges[0].Phase}, {Layer: result.Edges[0].AuthorityLayer}, {Effect: result.Edges[0].AuthorityEffect}}
 	for _, selector := range selectors {
 		request := inferenceQueryRequest()
 		request.RecordID, request.SubjectID, request.ObjectID = selector.RecordID, selector.SubjectID, selector.ObjectID

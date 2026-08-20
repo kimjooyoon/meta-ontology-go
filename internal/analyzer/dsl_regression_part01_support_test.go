@@ -28,27 +28,19 @@ func runBillingDSLStableIDsDriveGoSignatureAnalysisTest(t *testing.T) {
 		if !ok {
 			continue
 		}
-		if err := registry.Register(Registration{
-			Ref:      SymbolRef{PackagePath: "billing", PackageName: "billing", Name: node.Name},
-			Kind:     kind,
-			Identity: NewIdentity(ir.Namespace.String(), string(node.ID)),
-		}); err != nil {
+		if err := registry.Register(Registration{Ref: SymbolRef{PackagePath: "billing", PackageName: "billing", Name: node.Name}, Kind: kind, Identity: NewIdentity(ir.Namespace.String(), string(node.ID))}); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	result, err := AnalyzePackage([]SourceFile{{
-		Filename:    "generated.go",
-		PackagePath: "billing",
-		Source: []byte(`package billing
+	result, err := AnalyzePackage([]SourceFile{{Filename: "generated.go", PackagePath: "billing", Source: []byte(`package billing
 
 func PayOrder(order Order, method PaymentMethod) Payment { return }
 
 type Order struct{}
 type PaymentMethod struct{}
 type Payment struct{}
-`),
-	}}, registry)
+`)}}, registry)
 	if err != nil {
 		t.Fatal(err)
 	}

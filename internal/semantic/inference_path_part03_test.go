@@ -29,10 +29,7 @@ func TestSemanticChangeClaimsAreClosedAndTotal(t *testing.T) {
 	for _, kind := range []SemanticChangeKind{SemanticDelta, NoSemanticDelta} {
 		t.Run(string(kind), func(t *testing.T) {
 			claim := makeClaim(kind, strings.ToLower(string(kind)))
-			p := InferencePathV1{
-				Version: InferencePathSchemaVersion, Claims: []SemanticChangeClaim{claim},
-				Evidence: []InferenceEvidence{inferenceEvidenceFixture(InferenceEdge{InferenceRecord: claim.InferenceRecord})},
-			}
+			p := InferencePathV1{Version: InferencePathSchemaVersion, Claims: []SemanticChangeClaim{claim}, Evidence: []InferenceEvidence{inferenceEvidenceFixture(InferenceEdge{InferenceRecord: claim.InferenceRecord})}}
 			if err := p.Validate(); err != nil {
 				t.Fatalf("valid claim rejected: %v", err)
 			}

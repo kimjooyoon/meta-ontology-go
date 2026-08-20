@@ -20,10 +20,7 @@ func Validate(source []byte) Report {
 			continue
 		}
 		if event.id == "" && !(event.legacy && event.boundary == End) {
-			result.Issues = append(result.Issues, Issue{
-				Kind: IssueMissingID, Marker: event.kind, Line: event.line,
-				Detail: "marker has no id",
-			})
+			result.Issues = append(result.Issues, Issue{Kind: IssueMissingID, Marker: event.kind, Line: event.line, Detail: "marker has no id"})
 		}
 		if event.kind == Generated && !event.legacy && event.semanticKind == "" {
 			result.Issues = append(result.Issues, Issue{
@@ -72,9 +69,7 @@ func Validate(source []byte) Report {
 			Detail: "marker is not closed",
 		})
 	}
-	sort.SliceStable(result.Issues, func(i, j int) bool {
-		return result.Issues[i].Line < result.Issues[j].Line
-	})
+	sort.SliceStable(result.Issues, func(i, j int) bool { return result.Issues[i].Line < result.Issues[j].Line })
 	sort.SliceStable(result.Regions, func(i, j int) bool { return result.Regions[i].Start < result.Regions[j].Start })
 	return result
 }

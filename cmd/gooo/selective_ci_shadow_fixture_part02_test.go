@@ -59,11 +59,7 @@ func Order() {}
 		t.Fatalf("fixture plan = %#v", plan)
 	}
 	proofBinding := proofsci.SnapshotBinding{Base: baseSnapshot, Head: headSnapshot}
-	proofReceipt := proofsci.CommandReceipt{
-		CommandID: commandIDToID(commandID), ReceiptID: commandIDToID("urn:gooo:shadow/receipt/test"), Status: proofsci.ReceiptVerified,
-		ProviderReceiptDigest: shadowDigest("provider"), PhaseReceiptDigest: shadowDigest("phase"), ResourceReceiptDigest: shadowDigest("resource"),
-		RegistryDigest: registry.Digest, PlanDigest: plan.CanonicalDigest,
-	}
+	proofReceipt := proofsci.CommandReceipt{CommandID: commandIDToID(commandID), ReceiptID: commandIDToID("urn:gooo:shadow/receipt/test"), Status: proofsci.ReceiptVerified, ProviderReceiptDigest: shadowDigest("provider"), PhaseReceiptDigest: shadowDigest("phase"), ResourceReceiptDigest: shadowDigest("resource"), RegistryDigest: registry.Digest, PlanDigest: plan.CanonicalDigest}
 	proofReceipt.Digest = proofReceipt.ExpectedDigest(proofBinding)
 	proofInput := proofsci.Input{
 		Schema: proofsci.SchemaVersion, Snapshots: proofBinding, RegistryDigest: registry.Digest, PlanDigest: plan.CanonicalDigest,
@@ -71,10 +67,7 @@ func Order() {}
 		ObligationIDs: []semantic.ID{commandIDToID(obligationID)}, Paths: []proofsci.Path{proofPath}, CommandReceipts: []proofsci.CommandReceipt{proofReceipt},
 		EvidenceIDs: evidenceIDs, InferencePath: inferencePath,
 	}
-	laneInput := lanesci.Input{
-		SchemaVersion: lanesci.SchemaVersion, RegistryDigest: registry.Digest, BaseSHA: strings.Repeat("a", 40), LaneHeadSHA: strings.Repeat("b", 40),
-		LaneID: "urn:gooo:shadow/lane/main", RegisteredBranch: "agent/cli-check-current2", OwnedPathPrefixes: []string{"cmd/gooo"}, ChangedPaths: []string{"cmd/gooo/selective_ci_shadow.go"},
-	}
+	laneInput := lanesci.Input{SchemaVersion: lanesci.SchemaVersion, RegistryDigest: registry.Digest, BaseSHA: strings.Repeat("a", 40), LaneHeadSHA: strings.Repeat("b", 40), LaneID: "urn:gooo:shadow/lane/main", RegisteredBranch: "agent/cli-check-current2", OwnedPathPrefixes: []string{"cmd/gooo"}, ChangedPaths: []string{"cmd/gooo/selective_ci_shadow.go"}}
 	fixture := shadowFixture{base: base, head: head, planInput: plannerInput, proofInput: proofInput, laneInput: laneInput, entityID: entityID, otherID: otherID, commandID: commandID, commandCPU: commandCPU, commandMemory: commandMemory, sourceBase: sourceBase}
 	fixture.reencodeAll()
 	return fixture

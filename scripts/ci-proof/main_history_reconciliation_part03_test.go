@@ -51,13 +51,7 @@ func validateReconciliationLedger(ledger reconciliationLedger) error {
 	if !sort.StringsAreSorted(ledger.MainOnlyPaths) || len(ledger.MainOnlyPaths) != 1 || ledger.MainOnlyPaths[0] != "go.mod" {
 		return fmt.Errorf("main-only path inventory is not the exact sorted residual set")
 	}
-	expectedMergeBaseBlob := reconciliationGoModEvidence{
-		Path:        "go.mod",
-		BlobSHA:     "9b16c0cd3711c2444ebff1a28ad193c31f06be22",
-		Size:        55,
-		SHA256:      "af4562214f5d56647f7b953c1a74587286bfb1f97c31d3bd8403eda047186323",
-		GoDirective: "go 1.23",
-	}
+	expectedMergeBaseBlob := reconciliationGoModEvidence{Path: "go.mod", BlobSHA: "9b16c0cd3711c2444ebff1a28ad193c31f06be22", Size: 55, SHA256: "af4562214f5d56647f7b953c1a74587286bfb1f97c31d3bd8403eda047186323", GoDirective: "go 1.23"}
 	if !reflect.DeepEqual(ledger.MergeBaseBlob, expectedMergeBaseBlob) {
 		return fmt.Errorf("merge-base go.mod evidence is not exact")
 	}
