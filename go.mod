@@ -6,5 +6,6 @@ tool (
 	github.com/kimjooyoon/meta-ontology-go/scripts/line-metrics
 	github.com/kimjooyoon/meta-ontology-go/scripts/maintenance
 	github.com/kimjooyoon/meta-ontology-go/scripts/refactor-metrics
+	github.com/kimjooyoon/meta-ontology-go/scripts/source-splitter
 	github.com/kimjooyoon/meta-ontology-go/scripts/verify
 )
