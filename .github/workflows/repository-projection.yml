@@ -1,0 +1,44 @@
+name: Repository projection conformance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  roundtrip:
+    name: repository projection roundtrip
+    runs-on: ubuntu-latest
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.EXACT_SHA }}
+
+      - name: Install the declared Go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.27.0
+          cache: false
+
+      - name: Prove physical storage and logical restoration
+        run: |
+          go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" \
+            --work "$RUNNER_TEMP/repository-projection" \
+            --expected-sha "$EXACT_SHA"
+
+      - name: Upload exact-SHA projection indicators
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-projection-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/repository-projection/evidence.json
+          if-no-files-found: error
+          retention-days: 14
