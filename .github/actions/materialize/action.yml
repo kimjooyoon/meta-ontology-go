@@ -1,49 +1,62 @@
 name: Materialize logical repository
-description: Restore the logical tree and bind Git to its projected index
-
+description: Bind physical storage to the exact logical Git workspace
 inputs:
   expected-sha:
-    description: Exact checked-out Git identity
+    description: Exact checked-out commit identity
     required: true
-
 outputs:
-  logical-root:
-    value: ${{ steps.materialize.outputs.logical-root }}
   storage-root:
     value: ${{ steps.materialize.outputs.storage-root }}
-  git-index:
-    value: ${{ steps.materialize.outputs.git-index }}
-
+  materialization-evidence:
+    value: ${{ steps.materialize.outputs.materialization-evidence }}
+  activation-evidence:
+    value: ${{ steps.materialize.outputs.activation-evidence }}
+  projection-evidence:
+    value: ${{ steps.materialize.outputs.projection-evidence }}
 runs:
   using: composite
   steps:
     - id: materialize
+      name: Conform storage, index, and active workspace
       shell: bash
-      working-directory: ${{ github.workspace }}
-      env:
-        EXPECTED_SHA: ${{ inputs.expected-sha }}
       run: |
-        work="$RUNNER_TEMP/meta-go-logical"
-        projection="$RUNNER_TEMP/meta-go-projection"
-        storage="$GITHUB_WORKSPACE"
-        if [ ! -f "$GITHUB_WORKSPACE/projection/catalog/manifest.json" ]; then
-          go run ./bootstrap/repository-projector \
-            --root "$GITHUB_WORKSPACE" --work "$projection" --expected-sha "$EXPECTED_SHA"
-          storage="$projection/physical"
+        set -euo pipefail
+        work="$RUNNER_TEMP/repository-materialize-$GITHUB_JOB"
+        projector_work="$work/projector"
+        materializer_work="$work/materializer"
+        storage_root="$work/storage"
+        git_index="$work/logical.index"
+        activation_evidence="$work/activation-evidence.json"
+        projection_evidence="$projector_work/evidence.json"
+        git_dir="$(git -C "$GITHUB_WORKSPACE" rev-parse --absolute-git-dir)"
+        if test -f "$GITHUB_WORKSPACE/projection/catalog/manifest.json"; then
+          physical_root="$GITHUB_WORKSPACE"
+        else
+          (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" --work "$projector_work" \
+            --expected-sha "${{ inputs.expected-sha }}")
+          physical_root="$projector_work/physical"
         fi
-        sources=("$GITHUB_WORKSPACE"/bootstrap/repository-materializer/*.go)
-        go run "${sources[@]}" \
-          --root "$GITHUB_WORKSPACE" --physical-root "$storage" --work "$work" \
-          --git-index "$work/logical.index" --expected-sha "$EXPECTED_SHA"
-        logical="$work/materialized"
+        go run "$GITHUB_WORKSPACE"/bootstrap/repository-materializer/*.go \
+          --root "$GITHUB_WORKSPACE" --physical-root "$physical_root" \
+          --work "$materializer_work" --git-index "$git_index" \
+          --expected-sha "${{ inputs.expected-sha }}"
+        go run "$GITHUB_WORKSPACE"/bootstrap/workspace-activator/*.go \
+          --root "$physical_root" --logical-root "$materializer_work/materialized" \
+          --storage-root "$storage_root" --git-dir "$git_dir" \
+          --git-index "$git_index" --expected-sha "${{ inputs.expected-sha }}" \
+          --materialization "$materializer_work/materialization-evidence.json" \
+          --evidence "$activation_evidence"
         {
-          echo "LOGICAL_WORKSPACE=$logical"
-          echo "PHYSICAL_WORKSPACE=$storage"
-          echo "GIT_DIR=$GITHUB_WORKSPACE/.git"
-          echo "GIT_WORK_TREE=$logical"
-          echo "GIT_INDEX_FILE=$work/logical.index"
+          echo "LOGICAL_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "PHYSICAL_WORKSPACE=$storage_root"
+          echo "GIT_DIR=$git_dir"
+          echo "GIT_WORK_TREE=$GITHUB_WORKSPACE"
+          echo "GIT_INDEX_FILE=$git_index"
         } >> "$GITHUB_ENV"
-        printf 'cd %q\n' "$logical" >> "$BASH_ENV"
-        echo "logical-root=$logical" >> "$GITHUB_OUTPUT"
-        echo "storage-root=$storage" >> "$GITHUB_OUTPUT"
-        echo "git-index=$work/logical.index" >> "$GITHUB_OUTPUT"
+        {
+          echo "storage-root=$storage_root"
+          echo "materialization-evidence=$materializer_work/materialization-evidence.json"
+          echo "activation-evidence=$activation_evidence"
+          echo "projection-evidence=$projection_evidence"
+        } >> "$GITHUB_OUTPUT"
