@@ -38,9 +38,18 @@ func removeDeclaration(source parsedSource, declaration ast.Decl) ([]byte, []byt
 	return snippet, formatted, nil
 }
 
-func appendDeclaration(target, snippet []byte) ([]byte, error) {
-	combined := make([]byte, 0, len(target)+len(snippet)+2)
-	combined = append(combined, bytes.TrimSpace(target)...)
+func appendDeclaration(target parsedSource, snippet []byte, additions []importAddition) ([]byte, error) {
+	packageEnd := target.Fset.Position(target.File.Name.End()).Offset
+	if packageEnd < 0 || packageEnd > len(target.Source) {
+		return nil, fmt.Errorf("invalid package span in %s", target.Subject)
+	}
+	combined := make([]byte, 0, len(target.Source)+len(snippet)+len(additions)*32)
+	combined = append(combined, target.Source[:packageEnd]...)
+	for _, addition := range additions {
+		combined = append(combined, fmt.Sprintf("\n\nimport %s %q", addition.Name, addition.Path)...)
+	}
+	combined = append(combined, target.Source[packageEnd:]...)
+	combined = bytes.TrimSpace(combined)
 	combined = append(combined, '\n', '\n')
 	combined = append(combined, snippet...)
 	combined = append(combined, '\n')

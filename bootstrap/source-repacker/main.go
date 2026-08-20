@@ -34,6 +34,11 @@ type stagedEdit struct {
 	edit      fileEdit
 }
 
+type importAddition struct {
+	Name string
+	Path string
+}
+
 func checkPlans(cfg config, report metricevidence.Report, indicators []metricevidence.Indicator) error {
 	planned, blocked, matched := 0, 0, 0
 	for _, indicator := range indicators {

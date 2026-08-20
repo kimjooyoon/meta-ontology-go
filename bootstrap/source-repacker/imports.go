@@ -3,6 +3,7 @@ package main
 import (
 	"go/ast"
 	pathpkg "path"
+	"sort"
 	"strconv"
 )
 
@@ -40,30 +41,27 @@ func importBinding(spec *ast.ImportSpec) (string, string, bool) {
 	return name, value, true
 }
 
-func selectorNames(declaration ast.Decl) map[string]bool {
-	result := make(map[string]bool)
-	ast.Inspect(declaration, func(node ast.Node) bool {
-		selector, ok := node.(*ast.SelectorExpr)
-		if !ok {
-			return true
-		}
-		if identifier, ok := selector.X.(*ast.Ident); ok {
-			result[identifier.Name] = true
-		}
-		return true
-	})
-	return result
-}
-
-func targetSupports(source, target parsedSource, declaration ast.Decl) bool {
+func requiredImports(source, target parsedSource, declaration ast.Decl) ([]importAddition, bool) {
 	if source.DotImport {
-		return false
+		return nil, false
 	}
+	additions := make([]importAddition, 0)
 	for name := range selectorNames(declaration) {
 		path, imported := source.Imports[name]
-		if imported && target.Imports[name] != path {
-			return false
+		if !imported {
+			continue
 		}
+		if current, exists := target.Imports[name]; exists {
+			if current != path {
+				return nil, false
+			}
+			continue
+		}
+		if name == "C" {
+			return nil, false
+		}
+		additions = append(additions, importAddition{Name: name, Path: path})
 	}
-	return true
+	sort.Slice(additions, func(i, j int) bool { return additions[i].Name < additions[j].Name })
+	return additions, true
 }

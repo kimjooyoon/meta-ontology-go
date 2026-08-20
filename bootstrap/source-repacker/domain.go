@@ -49,3 +49,18 @@ func words(value string) map[string]bool {
 	}
 	return result
 }
+
+func selectorNames(declaration ast.Decl) map[string]bool {
+	result := make(map[string]bool)
+	ast.Inspect(declaration, func(node ast.Node) bool {
+		selector, ok := node.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		if identifier, ok := selector.X.(*ast.Ident); ok {
+			result[identifier.Name] = true
+		}
+		return true
+	})
+	return result
+}

@@ -27,10 +27,11 @@ func planRepack(root, subject string, limit int) (repackPlan, error) {
 			continue
 		}
 		for _, target := range targets {
-			if !targetSupports(source, target, declaration) {
+			additions, supported := requiredImports(source, target, declaration)
+			if !supported {
 				continue
 			}
-			targetAfter, appendErr := appendDeclaration(target.Source, snippet)
+			targetAfter, appendErr := appendDeclaration(target, snippet, additions)
 			if appendErr != nil {
 				return repackPlan{}, appendErr
 			}
