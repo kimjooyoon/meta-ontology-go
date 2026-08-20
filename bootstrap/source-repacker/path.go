@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -27,4 +28,12 @@ func secureSourcePath(root, subject string) (string, error) {
 		return "", fmt.Errorf("subject escapes repository: %q", subject)
 	}
 	return target, nil
+}
+
+func replaceFile(path string, data []byte, mode os.FileMode) error {
+	temporary, err := stage(path, data, mode)
+	if err != nil {
+		return err
+	}
+	return os.Rename(temporary, path)
 }

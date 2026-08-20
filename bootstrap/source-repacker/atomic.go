@@ -6,11 +6,6 @@ import (
 	"path/filepath"
 )
 
-type stagedEdit struct {
-	temporary string
-	edit      fileEdit
-}
-
 func applyRepack(plan repackPlan) error {
 	if len(plan.Edits) != 2 {
 		return fmt.Errorf("repack requires exactly two edits")
@@ -36,7 +31,7 @@ func applyRepack(plan repackPlan) error {
 	}
 	staged[1].temporary = ""
 	if err := os.Rename(staged[0].temporary, staged[0].edit.Path); err != nil {
-		_, _ = stageAndReplace(staged[1].edit.Path, staged[1].edit.Before, os.FileMode(staged[1].edit.Mode))
+		_ = replaceFile(staged[1].edit.Path, staged[1].edit.Before, os.FileMode(staged[1].edit.Mode))
 		return err
 	}
 	staged[0].temporary = ""
@@ -73,12 +68,4 @@ func stage(path string, data []byte, mode os.FileMode) (string, error) {
 		return "", closeErr
 	}
 	return name, nil
-}
-
-func stageAndReplace(path string, data []byte, mode os.FileMode) (bool, error) {
-	temporary, err := stage(path, data, mode)
-	if err != nil {
-		return false, err
-	}
-	return true, os.Rename(temporary, path)
 }

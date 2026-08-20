@@ -32,7 +32,7 @@ func domainFor(subject string, source []byte, file *ast.File) buildDomain {
 	} else if knownGOOS[last] {
 		suffix = "_" + last
 	}
-	prefix := source[:fileOffset(file.Package, file)]
+	prefix := source[:int(file.Package)-1]
 	constraints := make([]string, 0)
 	for _, line := range strings.Split(string(prefix), "\n") {
 		trimmed := strings.TrimSpace(line)
@@ -42,14 +42,6 @@ func domainFor(subject string, source []byte, file *ast.File) buildDomain {
 	}
 	return buildDomain{Package: file.Name.Name, Test: test, FileSuffix: suffix, Constraints: strings.Join(constraints, "\n")}
 }
-
-func fileOffset(position interface{ IsValid() bool }, file *ast.File) int {
-	if !position.IsValid() {
-		return 0
-	}
-	return int(file.Package) - 1
-}
-
 func words(value string) map[string]bool {
 	result := make(map[string]bool)
 	for word := range strings.FieldsSeq(value) {

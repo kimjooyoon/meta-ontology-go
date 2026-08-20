@@ -20,6 +20,7 @@ func formatPruned(source []byte) ([]byte, error) {
 			if identifier, ok := selector.X.(*ast.Ident); ok {
 				used[identifier.Name] = true
 			}
+		}
 		return true
 	})
 	declarations := make([]ast.Decl, 0, len(file.Decls))

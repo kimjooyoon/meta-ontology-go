@@ -1,25 +1,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
 )
-
-var errRepackBlocked = errors.New("repack blocked")
-
-type fileEdit struct {
-	Path    string
-	Subject string
-	Before  []byte
-	After   []byte
-	Mode    uint32
-}
-
-type repackPlan struct {
-	Edits []fileEdit
-}
 
 func planRepack(root, subject string, limit int) (repackPlan, error) {
 	source, err := loadSource(root, subject)

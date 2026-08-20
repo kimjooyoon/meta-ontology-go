@@ -15,6 +15,25 @@ func main() {
 	}
 }
 
+var errRepackBlocked = errors.New("repack blocked")
+
+type fileEdit struct {
+	Path    string
+	Subject string
+	Before  []byte
+	After   []byte
+	Mode    uint32
+}
+
+type repackPlan struct {
+	Edits []fileEdit
+}
+
+type stagedEdit struct {
+	temporary string
+	edit      fileEdit
+}
+
 func checkPlans(cfg config, report metricevidence.Report, indicators []metricevidence.Indicator) error {
 	planned, blocked, matched := 0, 0, 0
 	for _, indicator := range indicators {
