@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -51,12 +52,7 @@ func readStrictJSON[T any](filename string) (T, error) {
 	return value, nil
 }
 func isProofJob(name string) bool {
-	for _, canonical := range proofJobs {
-		if name == canonical {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(proofJobs, name)
 }
 func validSHA(value string) bool {
 	if len(value) != 40 || value == strings.Repeat("0", 40) {

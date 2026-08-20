@@ -34,7 +34,6 @@ func TestCacheLatencyEvidenceMatrix(t *testing.T) {
 		return
 	}
 	for _, cardinality := range cacheLatencyMatrix {
-		cardinality := cardinality
 		t.Run(fmt.Sprintf("workers/%d", cardinality), func(t *testing.T) {
 			recordLatencyMatrix(t, "workers", cardinality,
 				measureWorkerLatency(t, cardinality, true),

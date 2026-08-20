@@ -1,8 +1,9 @@
 package analyzer
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -19,7 +20,7 @@ func (p MappingPolicy) Canonical() string {
 	for relation := range p.mappings {
 		keys = append(keys, relation)
 	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	slices.Sort(keys)
 	var b strings.Builder
 	b.WriteString(policyDigestSchema)
 	b.WriteByte('\n')
@@ -32,7 +33,7 @@ func (p MappingPolicy) Canonical() string {
 		writeBindingField(&b, mapping.SourceObjectKind.String())
 		writeBindingField(&b, strconv.FormatBool(mapping.Reverse))
 		origins := append([]ObservationOrigin(nil), mapping.AllowedOrigins...)
-		sort.Slice(origins, func(i, j int) bool { return origins[i] < origins[j] })
+		slices.Sort(origins)
 		for _, origin := range origins {
 			writeBindingField(&b, string(origin))
 		}

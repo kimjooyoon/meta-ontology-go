@@ -28,8 +28,8 @@ type Document struct {
 
 // Clone returns a detached document so adapters can safely reuse their AST.
 func (d Document) Clone() Document {
-	clone := Document{Package: d.Package, Namespace: d.Namespace}
-	clone.Declarations = make([]Declaration, len(d.Declarations))
+	clone := Document{Package: d.Package, Namespace: d.Namespace,
+		Declarations: make([]Declaration, len(d.Declarations))}
 	for index, declaration := range d.Declarations {
 		clone.Declarations[index] = declaration
 		clone.Declarations[index].Inputs = append([]string(nil), declaration.Inputs...)

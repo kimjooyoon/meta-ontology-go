@@ -1,5 +1,7 @@
 package workfrontier
 
+import "slices"
+
 func pathKnown(path RepairPath) bool {
 	if path.stableID() == "" || path.ObligationID == "" || path.CPUCoreNSUpperBound == 0 {
 		return false
@@ -60,10 +62,5 @@ func prerequisitesIncomplete(indexes frontierIndexes, ids []string) bool {
 	return false
 }
 func stringsKnown(values []string) bool {
-	for _, value := range values {
-		if value == "" {
-			return false
-		}
-	}
-	return true
+	return !slices.Contains(values, "")
 }

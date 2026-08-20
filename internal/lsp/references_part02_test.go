@@ -48,7 +48,7 @@ func TestCanonicalReferenceLocationsReplayAndNoMutation(t *testing.T) {
 	}
 	original := append([]Reference(nil), references...)
 	want := canonicalReferenceLocations("file:///replay.gooo", "Order", references)
-	for replay := 0; replay < 32; replay++ {
+	for replay := range 32 {
 		got := canonicalReferenceLocations("file:///replay.gooo", "Order", rotateReferences(references, replay))
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("replay %d = %#v, want %#v", replay, got, want)

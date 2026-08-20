@@ -7,9 +7,9 @@ import (
 
 func TestA11Declarations(t *testing.T) {
 	check(t, SafeWorkBindingSchemaV1 == "gooo/safe-work-binding/v1", "schema")
-	check(t, reflect.TypeOf(LegacyWorkID("")).Kind() == reflect.String, "legacy type")
-	check(t, reflect.TypeOf(Digest("")).Kind() == reflect.String, "digest type")
-	check(t, reflect.TypeOf(StableID("")).Kind() == reflect.String, "stable ID type")
+	check(t, reflect.TypeFor[LegacyWorkID]().Kind() == reflect.String, "legacy type")
+	check(t, reflect.TypeFor[Digest]().Kind() == reflect.String, "digest type")
+	check(t, reflect.TypeFor[StableID]().Kind() == reflect.String, "stable ID type")
 	decisions := []struct {
 		value    Decision
 		spelling string
@@ -48,26 +48,26 @@ func TestA11Declarations(t *testing.T) {
 			"reason spelling")
 	}
 	check(t, uint8(EnforcementEffectNoEffect) == 0, "effect value")
-	checkFields(t, reflect.TypeOf(SafeWorkBinding{}), []fieldSpec{
-		{"Schema", reflect.TypeOf(""), "schema"},
-		{"TaskID", reflect.TypeOf(StableID("")), "task_id"},
-		{"PathID", reflect.TypeOf(StableID("")), "path_id"},
-		{"ObligationID", reflect.TypeOf(StableID("")), "obligation_id"},
-		{"SourceSnapshotDigest", reflect.TypeOf(Digest("")), "source_snapshot_digest"},
-		{"SemanticSnapshotDigest", reflect.TypeOf(Digest("")), "semantic_snapshot_digest"},
-		{"PolicyDigest", reflect.TypeOf(Digest("")), "policy_digest"},
-		{"RegistryDigest", reflect.TypeOf(Digest("")), "registry_digest"},
-		{"ToolchainOptionsDigest", reflect.TypeOf(Digest("")), "toolchain_options_digest"},
-		{"BindingDigest", reflect.TypeOf(Digest("")), "binding_digest"},
+	checkFields(t, reflect.TypeFor[SafeWorkBinding](), []fieldSpec{
+		{"Schema", reflect.TypeFor[string](), "schema"},
+		{"TaskID", reflect.TypeFor[StableID](), "task_id"},
+		{"PathID", reflect.TypeFor[StableID](), "path_id"},
+		{"ObligationID", reflect.TypeFor[StableID](), "obligation_id"},
+		{"SourceSnapshotDigest", reflect.TypeFor[Digest](), "source_snapshot_digest"},
+		{"SemanticSnapshotDigest", reflect.TypeFor[Digest](), "semantic_snapshot_digest"},
+		{"PolicyDigest", reflect.TypeFor[Digest](), "policy_digest"},
+		{"RegistryDigest", reflect.TypeFor[Digest](), "registry_digest"},
+		{"ToolchainOptionsDigest", reflect.TypeFor[Digest](), "toolchain_options_digest"},
+		{"BindingDigest", reflect.TypeFor[Digest](), "binding_digest"},
 	})
-	checkFields(t, reflect.TypeOf(ParseResult{}), []fieldSpec{
-		{"Decision", reflect.TypeOf(Decision(0)), ""},
-		{"Reason", reflect.TypeOf(Reason(0)), ""},
-		{"Faults", reflect.TypeOf([]Reason(nil)), ""},
+	checkFields(t, reflect.TypeFor[ParseResult](), []fieldSpec{
+		{"Decision", reflect.TypeFor[Decision](), ""},
+		{"Reason", reflect.TypeFor[Reason](), ""},
+		{"Faults", reflect.TypeFor[[]Reason](), ""},
 		{"FullSuiteRequired", reflect.TypeOf(false), ""},
 		{"ExecutionAuthorized", reflect.TypeOf(false), ""},
-		{"EnforcementEffect", reflect.TypeOf(EnforcementEffect(0)), ""},
-		{"ResultDigest", reflect.TypeOf(Digest("")), ""},
-		{"ReplayDigest", reflect.TypeOf(Digest("")), ""},
+		{"EnforcementEffect", reflect.TypeFor[EnforcementEffect](), ""},
+		{"ResultDigest", reflect.TypeFor[Digest](), ""},
+		{"ReplayDigest", reflect.TypeFor[Digest](), ""},
 	})
 }

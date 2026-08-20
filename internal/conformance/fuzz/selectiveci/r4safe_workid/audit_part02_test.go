@@ -1,6 +1,8 @@
 package r4safe_workid
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier"
 	"testing"
 )
@@ -32,9 +34,9 @@ func TestExpectedLabelsAndPermutationDoNotAffectResults(t *testing.T) {
 			t.Fatalf("expected %s mutation changed %s: got %#v, want %#v", mutation.name, mutated.name, got, want)
 		}
 	}
-	for index := len(cases) - 1; index >= 0; index-- {
-		if got := Audit(cases[index].input); got != baseline[cases[index].name] {
-			t.Fatalf("permutation changed %s: got %#v, want %#v", cases[index].name, got, baseline[cases[index].name])
+	for _, case := range slices.Backward(cases) {
+		if got := Audit(case.input); got != baseline[case.name] {
+			t.Fatalf("permutation changed %s: got %#v, want %#v", case.name, got, baseline[case.name])
 		}
 	}
 }

@@ -10,9 +10,9 @@ func fixtureInput() Input {
 	bindings := make([]RequiredBinding, 0, len(names))
 	partitions := make([]Partition, 0, len(names)*2)
 	for index, name := range names {
-		binding := RequiredBinding{BindingID: bindingID(name), FromFieldID: id("field/" + name + "/from"), ToFieldID: id("field/" + name + "/to"), Kind: kinds[index]}
-		binding.ExpectedStage = "stage:" + name
-		binding.ExpectedReason = "reason:binding-check"
+		binding := RequiredBinding{BindingID: bindingID(name), FromFieldID: id("field/" + name + "/from"), ToFieldID: id("field/" + name + "/to"), Kind: kinds[index],
+			ExpectedStage:  "stage:" + name,
+			ExpectedReason: "reason:binding-check"}
 		bindings = append(bindings, binding)
 		partitions = append(partitions, Partition{PartitionID: id("partition/" + name + "/match"), BindingID: binding.BindingID, Polarity: PolarityMatch, ExpectedStage: binding.ExpectedStage, ExpectedReason: binding.ExpectedReason})
 		partitions = append(partitions, Partition{PartitionID: id("partition/" + name + "/mismatch"), BindingID: binding.BindingID, Polarity: PolarityMismatch, ExpectedStage: binding.ExpectedStage, ExpectedReason: binding.ExpectedReason})

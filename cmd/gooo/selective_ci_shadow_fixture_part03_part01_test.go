@@ -53,7 +53,7 @@ func shadowProofPath(t *testing.T, rootID, obligationID, commandID string, base,
 		}
 		evidenceID := commandIDToID("urn:gooo:shadow/evidence/" + label)
 		evidenceDigest := shadowDigest("evidence/" + label)
-		edge := semantic.InferenceEdge{InferenceRecord: semantic.InferenceRecord{RecordID: commandIDToID("urn:gooo:shadow/record/" + label), SubjectID: subject, ObjectID: object, Rule: rule, Phase: phase, Before: base, After: head, Authority: authority, Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: evidenceDigest}}, Controls: controls}, Kind: kind}
+		edge := semantic.InferenceEdge{RecordID: commandIDToID("urn:gooo:shadow/record/" + label), SubjectID: subject, ObjectID: object, Rule: rule, Phase: phase, Before: base, After: head, Authority: authority, Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: evidenceDigest}}, Controls: controls, Kind: kind}
 		if kind == semantic.InferenceAuthoritativeDeclaration {
 			edge.SourceRoots = []semantic.ID{root}
 		}

@@ -1,6 +1,7 @@
 package cycles
 
 import (
+	"slices"
 	"sort"
 )
 
@@ -43,10 +44,5 @@ func isCyclic(component []ID, adjacency map[ID][]ID) bool {
 	if len(component) > 1 {
 		return true
 	}
-	for _, next := range adjacency[component[0]] {
-		if next == component[0] {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(adjacency[component[0]], component[0])
 }

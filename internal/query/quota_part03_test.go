@@ -1,6 +1,7 @@
 package query
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -16,8 +17,8 @@ func TestEnvelopeTraversalCandidateQuotaUsesRemainingRows(t *testing.T) {
 	for _, fact := range facts {
 		assertAdd(t, first, fact)
 	}
-	for index := len(facts) - 1; index >= 0; index-- {
-		assertAdd(t, second, facts[index])
+	for _, fact := range slices.Backward(facts) {
+		assertAdd(t, second, fact)
 	}
 	beforeHash := first.StableHash()
 	request := traversalEnvelope(root, LayerAll, 1, 2)

@@ -1,7 +1,7 @@
 package bidir
 
 import (
-	"sort"
+	"slices"
 )
 
 // LocalityForDelta computes changed endpoints and their old one-hop neighbors.
@@ -36,18 +36,13 @@ func LocalityBetween(before, after Model) Locality {
 
 // Contains reports whether an ID is touched or affected.
 func (l Locality) Contains(id ID) bool {
-	for _, candidate := range l.Affected {
-		if candidate == id {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(l.Affected, id)
 }
 func sortedIDs(values map[ID]struct{}) []ID {
 	ids := make([]ID, 0, len(values))
 	for id := range values {
 		ids = append(ids, id)
 	}
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	slices.Sort(ids)
 	return ids
 }

@@ -5,10 +5,10 @@ import (
 )
 
 func cloneInferencePath(path semantic.InferencePathV1) semantic.InferencePathV1 {
-	out := semantic.InferencePathV1{Version: path.Version}
-	out.Edges = append([]semantic.InferenceEdge(nil), path.Edges...)
-	out.Claims = append([]semantic.SemanticChangeClaim(nil), path.Claims...)
-	out.Evidence = append([]semantic.InferenceEvidence(nil), path.Evidence...)
+	out := semantic.InferencePathV1{Version: path.Version,
+		Edges:    append([]semantic.InferenceEdge(nil), path.Edges...),
+		Claims:   append([]semantic.SemanticChangeClaim(nil), path.Claims...),
+		Evidence: append([]semantic.InferenceEvidence(nil), path.Evidence...)}
 	for i := range out.Edges {
 		out.Edges[i].SourceRoots = append([]semantic.ID(nil), path.Edges[i].SourceRoots...)
 		out.Edges[i].Evidence = append([]semantic.EvidenceReference(nil), path.Edges[i].Evidence...)

@@ -3,6 +3,7 @@ package analyzer
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"slices"
 	"sort"
 )
 
@@ -27,7 +28,7 @@ func validateLocalityFacts(facts []semantic.FactKey) error {
 }
 func sortedLocalityIDs(ids []semantic.ID) []semantic.ID {
 	copyOf := append([]semantic.ID(nil), ids...)
-	sort.Slice(copyOf, func(i, j int) bool { return copyOf[i] < copyOf[j] })
+	slices.Sort(copyOf)
 	return copyOf
 }
 func sortedLocalityIDsFromSet(ids map[semantic.ID]struct{}) []semantic.ID {

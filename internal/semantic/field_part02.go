@@ -2,6 +2,7 @@ package semantic
 
 import (
 	"fmt"
+	"slices"
 )
 
 func (f Field) Normalized() (Field, error) {
@@ -56,10 +57,5 @@ func (f Field) HasName(name string) bool {
 	if f.Name == canonical {
 		return true
 	}
-	for _, alias := range f.Aliases {
-		if alias == canonical {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(f.Aliases, canonical)
 }

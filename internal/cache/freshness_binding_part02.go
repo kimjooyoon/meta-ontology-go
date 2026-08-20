@@ -2,6 +2,8 @@ package cache
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -30,9 +32,7 @@ func copyFreshnessJobs(jobs map[string]FreshnessJob) map[string]FreshnessJob {
 		return nil
 	}
 	copyOf := make(map[string]FreshnessJob, len(jobs))
-	for name, job := range jobs {
-		copyOf[name] = job
-	}
+	maps.Copy(copyOf, jobs)
 	return copyOf
 }
 func freshnessJobsEqual(left, right map[string]FreshnessJob) bool {
@@ -49,7 +49,7 @@ func freshnessJobsEqual(left, right map[string]FreshnessJob) bool {
 func canonicalEvidence(e EvidenceFreshness) EvidenceFreshness {
 	e.Jobs = copyFreshnessJobs(e.Jobs)
 	e.PredecessorDigests = append([]Digest(nil), e.PredecessorDigests...)
-	sort.Slice(e.PredecessorDigests, func(i, j int) bool { return e.PredecessorDigests[i] < e.PredecessorDigests[j] })
+	slices.Sort(e.PredecessorDigests)
 	e.EvidenceRefs = append([]EvidenceRef(nil), e.EvidenceRefs...)
 	sort.Slice(e.EvidenceRefs, func(i, j int) bool { return e.EvidenceRefs[i].Name < e.EvidenceRefs[j].Name })
 	return e

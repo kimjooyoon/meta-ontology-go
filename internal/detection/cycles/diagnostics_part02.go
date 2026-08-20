@@ -2,6 +2,7 @@ package cycles
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -26,7 +27,7 @@ func (d Diagnostics) Codes() []Code {
 	for code := range seen {
 		result = append(result, code)
 	}
-	sort.Slice(result, func(i, j int) bool { return result[i] < result[j] })
+	slices.Sort(result)
 	return result
 }
 func sortDiagnostics(diagnostics Diagnostics) {

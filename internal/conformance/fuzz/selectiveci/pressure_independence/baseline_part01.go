@@ -4,8 +4,8 @@ package pressureindependence
 // comparison. It observes every declared pressure and never reuses the
 // pressure-independence evaluator's selection helpers.
 func EvaluateBaseline(input Input) BaselineResult {
-	result := BaselineResult{FullSuite: true, LocalizedIDs: []string{}}
-	result.WorkUnits = baselineWork(input)
+	result := BaselineResult{FullSuite: true, LocalizedIDs: []string{},
+		WorkUnits: baselineWork(input)}
 	result.CostReceipt = baselineReceipt(input, result.WorkUnits)
 	if baselineMissing(input) {
 		return baselineUnknown(result, input, ReasonRequiredInputMissing)

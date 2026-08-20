@@ -60,7 +60,7 @@ func TestCanonicalDiagnosticOrderSpecialSourceReplay(t *testing.T) {
 			}
 			originalSource := []byte(fixture.source)
 			originalDiagnostics := append(syntax.Diagnostics(nil), fixture.diagnostics...)
-			for replay := 0; replay < 64; replay++ {
+			for replay := range 64 {
 				permuted := rotateDiagnostics(fixture.diagnostics, replay)
 				result, err := adaptSyntaxResult(fixture.name, fixture.source, &syntax.File{}, permuted)
 				if err != nil {

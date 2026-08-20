@@ -1,7 +1,7 @@
 package bidir
 
 import (
-	"sort"
+	"slices"
 )
 
 func unionNodeIDs(groups ...map[ID]Node) []ID {
@@ -15,7 +15,7 @@ func unionNodeIDs(groups ...map[ID]Node) []ID {
 	for id := range ids {
 		result = append(result, id)
 	}
-	sort.Slice(result, func(i, j int) bool { return result[i] < result[j] })
+	slices.Sort(result)
 	return result
 }
 func mergeThreeWayRelations(base, left, right Model, fingerprints [3]string) ([]Relation, []ThreeWayConflict) {

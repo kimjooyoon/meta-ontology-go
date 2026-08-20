@@ -5,7 +5,7 @@ func (p *jsonParser) parseUnicodeEscape() (rune, bool) {
 		return 0, false
 	}
 	var value rune
-	for index := 0; index < 4; index++ {
+	for index := range 4 {
 		digit, ok := hexValue(p.data[p.offset+index])
 		if !ok {
 			return 0, false
@@ -24,7 +24,7 @@ func (p *jsonParser) parseUnicodeEscape() (rune, bool) {
 	}
 	p.offset += 2
 	var low rune
-	for index := 0; index < 4; index++ {
+	for index := range 4 {
 		digit, ok := hexValue(p.data[p.offset+index])
 		if !ok {
 			return 0, false

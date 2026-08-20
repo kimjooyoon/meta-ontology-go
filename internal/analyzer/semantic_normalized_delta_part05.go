@@ -1,6 +1,8 @@
 package analyzer
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
 )
@@ -30,7 +32,7 @@ func normalizedCandidateFacts(
 		}
 		mapping, mapped := input.Policy.lookup(sourceCandidate.Relation)
 		if !mapped || !mapping.allowsOrigin(sourceCandidate.Origin) {
-			sort.Slice(candidate.Options, func(i, j int) bool { return candidate.Options[i] < candidate.Options[j] })
+			slices.Sort(candidate.Options)
 			output = append(output, candidate)
 			continue
 		}
@@ -55,7 +57,7 @@ func normalizedCandidateFacts(
 	return output, nil
 }
 func sortNormalizedCandidate(candidate *NormalizedCandidateFact) {
-	sort.Slice(candidate.Options, func(i, j int) bool { return candidate.Options[i] < candidate.Options[j] })
+	slices.Sort(candidate.Options)
 	sort.Slice(candidate.Facts, func(i, j int) bool {
 		return candidate.Facts[i].Canonical() < candidate.Facts[j].Canonical()
 	})

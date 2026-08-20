@@ -2,7 +2,7 @@ package semantic
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 )
 
 func (r *TypeRegistry) Register(def TypeDef) error {
@@ -19,13 +19,11 @@ func (r *TypeRegistry) Register(def TypeDef) error {
 	}
 	r.types[normalized.ID] = normalized
 	ref := NameRef{Namespace: normalized.Namespace, Name: normalized.Name}
-	for _, id := range r.names[ref] {
-		if id == normalized.ID {
-			return nil
-		}
+	if slices.Contains(r.names[ref], normalized.ID) {
+		return nil
 	}
 	r.names[ref] = append(r.names[ref], normalized.ID)
-	sort.Slice(r.names[ref], func(i, j int) bool { return r.names[ref][i] < r.names[ref][j] })
+	slices.Sort(r.names[ref])
 	return nil
 }
 func (r TypeRegistry) Resolve(ref TypeRef) (TypeDef, error) {

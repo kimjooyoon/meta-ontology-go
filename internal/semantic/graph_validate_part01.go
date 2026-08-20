@@ -2,7 +2,7 @@ package semantic
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 )
 
 func (g Graph) Validate() error {
@@ -27,7 +27,7 @@ func validateNodes(g Graph, issues *ValidationErrors) {
 	for id := range g.nodes {
 		nodeIDs = append(nodeIDs, id)
 	}
-	sort.Slice(nodeIDs, func(i, j int) bool { return nodeIDs[i] < nodeIDs[j] })
+	slices.Sort(nodeIDs)
 	for _, id := range nodeIDs {
 		node := g.nodes[id]
 		normalized, err := node.Normalized()

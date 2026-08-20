@@ -1,8 +1,9 @@
 package pathclosure
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"sort"
 )
 
 func moreSevere(left, right issueClass) issueClass {
@@ -51,10 +52,8 @@ func decisionWithSemanticClass(result Result, class issueClass) (Status, string)
 	return FAIL_CLOSED, CodeInvalidSemantic
 }
 func appendID(ids []semantic.ID, id semantic.ID) []semantic.ID {
-	for _, existing := range ids {
-		if existing == id {
-			return ids
-		}
+	if slices.Contains(ids, id) {
+		return ids
 	}
 	return append(ids, id)
 }
@@ -66,5 +65,5 @@ func appendIDs(ids, additions []semantic.ID) []semantic.ID {
 	return ids
 }
 func sortIDs(ids []semantic.ID) {
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	slices.Sort(ids)
 }

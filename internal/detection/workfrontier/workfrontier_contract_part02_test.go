@@ -30,7 +30,7 @@ func TestWorkfrontierPermutationReplayIsCanonical(t *testing.T) {
 			if err := json.Unmarshal(object["pressures"], &pressures); err != nil {
 				t.Fatal(err)
 			}
-			for i := 0; i < 100; i++ {
+			for i := range 100 {
 				permutation := append([]json.RawMessage(nil), pressures...)
 				rand.New(rand.NewSource(int64(i+1))).Shuffle(len(permutation), func(a, b int) {
 					permutation[a], permutation[b] = permutation[b], permutation[a]

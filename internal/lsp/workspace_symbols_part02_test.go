@@ -36,7 +36,7 @@ func TestCanonicalWorkspaceSymbolsReplayAndNoMutation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for replay := 0; replay < 64; replay++ {
+	for replay := range 64 {
 		gotJSON, err := json.Marshal(canonicalWorkspaceSymbols(rotateWorkspaceSymbols(symbols, replay)))
 		if err != nil {
 			t.Fatal(err)

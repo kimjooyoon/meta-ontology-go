@@ -30,10 +30,7 @@ func appendPayload(path string, payload []byte) error {
 }
 func writeFullAt(file *os.File, payload []byte, point storageFaultPoint) error {
 	if fault, ok := takeStorageFault(point); ok {
-		partial := fault.partial
-		if partial < 0 {
-			partial = 0
-		}
+		partial := max(fault.partial, 0)
 		if partial > len(payload) {
 			partial = len(payload)
 		}

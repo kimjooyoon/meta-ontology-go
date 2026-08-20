@@ -1,7 +1,7 @@
 package coupling
 
 import (
-	"sort"
+	"slices"
 )
 
 func SortReasons(result *Result) {
@@ -9,6 +9,6 @@ func SortReasons(result *Result) {
 		return
 	}
 	result.Reasons = sortedReasons(result.Reasons)
-	sort.Slice(result.AcceptedSurfaceIDs, func(i, j int) bool { return result.AcceptedSurfaceIDs[i] < result.AcceptedSurfaceIDs[j] })
+	slices.Sort(result.AcceptedSurfaceIDs)
 	result.Digest = stableDigest(resultCanonical(*result))
 }

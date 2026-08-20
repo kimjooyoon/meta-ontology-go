@@ -57,8 +57,11 @@ type Comparison struct {
 	Finding              Finding        `json:"finding"`
 }
 
-func U64(value uint64) *uint64 { return &value }
-func Bool(value bool) *bool    { return &value }
+//go:fix inline
+func U64(value uint64) *uint64 { return new(value) }
+
+//go:fix inline
+func Bool(value bool) *bool { return new(value) }
 func sortedStrings(values []string) []string {
 	result := append([]string(nil), values...)
 	sort.Strings(result)

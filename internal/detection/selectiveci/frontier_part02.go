@@ -1,6 +1,8 @@
 package selectiveci
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/detection/workfrontier"
 )
 
@@ -56,10 +58,8 @@ func orderSelected(ids []string, selected []selectedPath) []selectedPath {
 }
 func firstObligationForCommand(bindings []ObligationBinding, commandID string) string {
 	for _, binding := range bindings {
-		for _, candidate := range binding.CommandIDs {
-			if candidate == commandID {
-				return binding.ID
-			}
+		if slices.Contains(binding.CommandIDs, commandID) {
+			return binding.ID
 		}
 	}
 	return ""

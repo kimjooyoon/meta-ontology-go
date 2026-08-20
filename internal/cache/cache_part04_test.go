@@ -25,7 +25,7 @@ func TestCacheSameKeyComputesOnceConcurrently(t *testing.T) {
 	var computes atomic.Int32
 	var wait sync.WaitGroup
 	wait.Add(workers)
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go func() {
 			defer wait.Done()
 			<-start

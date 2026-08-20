@@ -3,6 +3,7 @@ package selectiveci
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"slices"
 	"sort"
 )
 
@@ -23,7 +24,7 @@ func normalizeIDs(values []semantic.ID, label string) ([]semantic.ID, error) {
 		seen[id] = struct{}{}
 		out = append(out, id)
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	slices.Sort(out)
 	return out, nil
 }
 func equalIDs(left, right []semantic.ID) bool {

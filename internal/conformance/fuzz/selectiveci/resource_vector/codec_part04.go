@@ -15,8 +15,8 @@ func canonicalRelativePath(root, value string) (string, bool) {
 		return "", false
 	}
 	root = strings.TrimSuffix(root, "/")
-	if strings.HasPrefix(value, root+"/") {
-		value = strings.TrimPrefix(value, root+"/")
+	if after, ok := strings.CutPrefix(value, root+"/"); ok {
+		value = after
 	} else if strings.HasPrefix(value, "/") {
 		return "", false
 	}

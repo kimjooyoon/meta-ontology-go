@@ -1,8 +1,8 @@
 package coupling
 
 func Evaluate(input Input) Output {
-	output := Output{Schema: SchemaV1, FixtureID: input.FixtureID, InputDigest: CanonicalInputDigest(input)}
-	output.ObservationCounts = inputObservationCounts(input)
+	output := Output{Schema: SchemaV1, FixtureID: input.FixtureID, InputDigest: CanonicalInputDigest(input),
+		ObservationCounts: inputObservationCounts(input)}
 	if !resourceBindingsEqual(input.Config.ResourceBinding, input.ResourceRegistry) {
 		return finish(output, DecisionUnknown, ReasonResourceUnbound)
 	}

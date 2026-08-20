@@ -1,6 +1,8 @@
 package analyzer
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"testing"
 )
@@ -46,10 +48,5 @@ func adaptGeneratedBillingWithBase(t *testing.T, base semantic.IR, registry *Reg
 	return result
 }
 func containsLocalityID(ids []semantic.ID, want semantic.ID) bool {
-	for _, id := range ids {
-		if id == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ids, want)
 }

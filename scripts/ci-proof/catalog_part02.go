@@ -36,7 +36,7 @@ func parseCatalogDocument(document string) (map[string]catalogDocumentEntry, err
 	const prefix = "<!-- machine-catalog: "
 	const suffix = " -->"
 	entries := make(map[string]catalogDocumentEntry)
-	for _, line := range strings.Split(document, "\n") {
+	for line := range strings.SplitSeq(document, "\n") {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, prefix) {
 			continue

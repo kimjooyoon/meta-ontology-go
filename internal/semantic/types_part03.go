@@ -3,6 +3,7 @@ package semantic
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -58,12 +59,7 @@ func (n Node) HasName(name string) bool {
 	if n.Name == canonical {
 		return true
 	}
-	for _, alias := range n.Aliases {
-		if alias == canonical {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(n.Aliases, canonical)
 }
 func normalizeName(raw string) (string, error) {
 	name := strings.Join(strings.Fields(raw), " ")

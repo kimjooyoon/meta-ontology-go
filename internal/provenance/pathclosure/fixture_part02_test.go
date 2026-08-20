@@ -62,10 +62,10 @@ func reorderedFixture(fixture inferenceFixture) semantic.InferencePathV1 {
 	}
 }
 func clonePath(path semantic.InferencePathV1) semantic.InferencePathV1 {
-	clone := semantic.InferencePathV1{Version: path.Version}
-	clone.Edges = append([]semantic.InferenceEdge(nil), path.Edges...)
-	clone.Claims = append([]semantic.SemanticChangeClaim(nil), path.Claims...)
-	clone.Evidence = append([]semantic.InferenceEvidence(nil), path.Evidence...)
+	clone := semantic.InferencePathV1{Version: path.Version,
+		Edges:    append([]semantic.InferenceEdge(nil), path.Edges...),
+		Claims:   append([]semantic.SemanticChangeClaim(nil), path.Claims...),
+		Evidence: append([]semantic.InferenceEvidence(nil), path.Evidence...)}
 	for index := range clone.Edges {
 		clone.Edges[index].SourceRoots = append([]semantic.ID(nil), path.Edges[index].SourceRoots...)
 		clone.Edges[index].Evidence = append([]semantic.EvidenceReference(nil), path.Edges[index].Evidence...)

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -16,8 +17,8 @@ func TestDerivedQuotaStopsBFSWithoutMutationAndReplays(t *testing.T) {
 	for _, fact := range facts {
 		assertAdd(t, first, fact)
 	}
-	for index := len(facts) - 1; index >= 0; index-- {
-		assertAdd(t, second, facts[index])
+	for _, fact := range slices.Backward(facts) {
+		assertAdd(t, second, fact)
 	}
 	beforeCanonical, beforeHash := first.Canonical(), first.StableHash()
 	request := derivedEnvelope(root, RuleDependsOn, LayerDeterministic, 1, 1)
@@ -31,7 +32,7 @@ func TestDerivedQuotaStopsBFSWithoutMutationAndReplays(t *testing.T) {
 	if first.Canonical() != beforeCanonical || first.StableHash() != beforeHash {
 		t.Fatal("quota-bounded derived query mutated graph state")
 	}
-	for run := 0; run < 3; run++ {
+	for run := range 3 {
 		replay, replayErr := first.Execute(request)
 		if replayErr != nil || replay.Hash != limited.Hash {
 			t.Fatalf("quota-bounded replay %d changed: %#v %v", run, replay, replayErr)

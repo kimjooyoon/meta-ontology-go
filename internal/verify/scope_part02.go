@@ -25,7 +25,7 @@ func CheckPathScopeForBranch(paths []string, branch string) error {
 // directives from the agent/go-version go.mod diff.
 func CheckGoModToolchainDiff(diff string) error {
 	violations := make([]string, 0)
-	for _, line := range strings.Split(diff, "\n") {
+	for line := range strings.SplitSeq(diff, "\n") {
 		if !strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "-") {
 			continue
 		}

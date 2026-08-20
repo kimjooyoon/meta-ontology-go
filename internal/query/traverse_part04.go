@@ -1,6 +1,7 @@
 package query
 
 import (
+	"slices"
 	"sort"
 )
 
@@ -15,12 +16,7 @@ func nextNode(at ID, fact Fact, direction Direction) ID {
 	return fact.Subject
 }
 func containsID(ids []ID, target ID) bool {
-	for _, id := range ids {
-		if id == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(ids, target)
 }
 func extendPath(path Path, fact Fact, next ID, status FactStatus) Path {
 	ids := append(append([]ID(nil), path.IDs...), next)

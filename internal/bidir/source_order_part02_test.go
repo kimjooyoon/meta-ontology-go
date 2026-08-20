@@ -19,7 +19,7 @@ func TestOutputPortOrderSurvivesModelPermutationsAndRepeats(t *testing.T) {
 		t.Fatalf("output port order was not source-authoritative: %v != %v", basePorts, permutedPorts)
 	}
 	want := []ID{"billing://entity/zebra", "billing://entity/apple"}
-	for repeat := 0; repeat < 3; repeat++ {
+	for range 3 {
 		for _, model := range []Model{base, permuted} {
 			written, err := Put(document, model)
 			if err != nil {
@@ -51,7 +51,7 @@ func TestInputPortOrderSurvivesModelPermutationsAndRepeats(t *testing.T) {
 		t.Fatalf("input port order was not source-authoritative: %v != %v", basePorts, permutedPorts)
 	}
 	want := []ID{"billing://entity/zebra", "billing://entity/apple"}
-	for repeat := 0; repeat < 3; repeat++ {
+	for range 3 {
 		for _, model := range []Model{base, permuted} {
 			written, err := Put(document, model)
 			if err != nil {

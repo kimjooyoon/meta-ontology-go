@@ -34,10 +34,7 @@ func selectRepresentatives(groups map[string][]string, requested uint64) []strin
 		keys = append(keys, group)
 	}
 	sort.Strings(keys)
-	limit := effectiveK(requested)
-	if uint64(len(keys)) < limit {
-		limit = uint64(len(keys))
-	}
+	limit := min(uint64(len(keys)), effectiveK(requested))
 	selected := make([]string, 0, limit)
 	for _, group := range keys[:limit] {
 		selected = append(selected, groups[group][0])

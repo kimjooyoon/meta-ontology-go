@@ -39,16 +39,14 @@ func inferenceQueryEdge(
 	}
 	evidenceID := inferenceQueryID("evidence/" + suffix)
 	edge := semantic.InferenceEdge{
-		InferenceRecord: semantic.InferenceRecord{
-			RecordID: inferenceQueryID("record/" + suffix), SubjectID: subject, ObjectID: object,
-			Rule:      semantic.RuleBinding{ID: inferenceQueryID("rule/v1"), Version: "1", Digest: inferenceQueryDigest("rule")},
-			Phase:     phase,
-			Before:    semantic.SnapshotDigests{Source: inferenceQueryDigest("source/" + suffix), Semantic: semanticDigest},
-			After:     semantic.SnapshotDigests{Source: inferenceQueryDigest("source/" + suffix), Semantic: semanticDigest},
-			Authority: authority, Controls: controls,
-			Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: inferenceQueryDigest("evidence-payload/" + suffix)}},
-		},
-		Kind: kind,
+		RecordID: inferenceQueryID("record/" + suffix), SubjectID: subject, ObjectID: object,
+		Rule:      semantic.RuleBinding{ID: inferenceQueryID("rule/v1"), Version: "1", Digest: inferenceQueryDigest("rule")},
+		Phase:     phase,
+		Before:    semantic.SnapshotDigests{Source: inferenceQueryDigest("source/" + suffix), Semantic: semanticDigest},
+		After:     semantic.SnapshotDigests{Source: inferenceQueryDigest("source/" + suffix), Semantic: semanticDigest},
+		Authority: authority, Controls: controls,
+		Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: inferenceQueryDigest("evidence-payload/" + suffix)}},
+		Kind:     kind,
 	}
 	if kind == semantic.InferenceAuthoritativeDeclaration {
 		edge.SourceRoots = []semantic.ID{inferenceQueryID("source-root/" + suffix)}

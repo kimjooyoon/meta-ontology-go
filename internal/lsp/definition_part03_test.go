@@ -16,7 +16,7 @@ func TestDefinitionResolutionReplayIsStable(t *testing.T) {
 	if !ok {
 		t.Fatal("stable ID did not resolve")
 	}
-	for replay := 0; replay < 32; replay++ {
+	for replay := range 32 {
 		got, found := resolveDefinitionSymbol(rotateSymbols(symbols, replay), "stable_id")
 		if !found || !reflect.DeepEqual(got, want) {
 			t.Fatalf("replay %d = %#v/%v, want %#v/true", replay, got, found, want)

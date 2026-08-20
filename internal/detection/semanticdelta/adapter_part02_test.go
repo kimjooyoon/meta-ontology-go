@@ -58,8 +58,7 @@ func TestAdapterApplyRejectsOutOfScopeWithoutCommit(t *testing.T) {
 		commits++
 		return nil
 	})
-	var scopeErr *ScopeError
-	if !errors.As(err, &scopeErr) {
+	if _, ok := errors.AsType[*ScopeError](err); !ok {
 		t.Fatalf("Apply error = %v, want ScopeError", err)
 	}
 	if commits != 0 {

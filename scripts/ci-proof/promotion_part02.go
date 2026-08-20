@@ -29,6 +29,8 @@ func validatePromotionAuthorization(bundle proofBundle) error {
 	}
 	return validatePromotionObservation(bundle.PromotionObservation, bundle)
 }
+
+//go:fix inline
 func stringPointer(value string) *string {
-	return &value
+	return new(value)
 }

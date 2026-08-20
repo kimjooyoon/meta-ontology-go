@@ -47,8 +47,7 @@ func TestMalformedSourceRejectsBeforeDeferredCommit(t *testing.T) {
 	if err == nil {
 		t.Fatal("malformed source was accepted")
 	}
-	var adapterErr AdapterError
-	if errors.As(err, &adapterErr) {
+	if _, ok := errors.AsType[AdapterError](err); ok {
 		t.Fatalf("malformed source returned adapter error instead of parse error: %v", err)
 	}
 	if got := irSnapshot(base); got != before {

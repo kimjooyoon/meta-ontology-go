@@ -54,20 +54,20 @@ func translateSchema(schema string) string {
 	if schema == SchemaV1 {
 		return production.SchemaVersion
 	}
-	if strings.HasPrefix(schema, "binding-coverage/") {
-		return "gooo/selective-ci-binding-coverage/" + strings.TrimPrefix(schema, "binding-coverage/")
+	if after, ok := strings.CutPrefix(schema, "binding-coverage/"); ok {
+		return "gooo/selective-ci-binding-coverage/" + after
 	}
 	return schema
 }
 func translateDigest(digest string) string {
-	if strings.HasPrefix(digest, "sha256:") {
-		return strings.TrimPrefix(digest, "sha256:")
+	if after, ok := strings.CutPrefix(digest, "sha256:"); ok {
+		return after
 	}
 	return digest
 }
 func translateID(id string) string {
-	if strings.HasPrefix(id, "sid:") {
-		return "urn:bindingcoverage:" + strings.TrimPrefix(id, "sid:")
+	if after, ok := strings.CutPrefix(id, "sid:"); ok {
+		return "urn:bindingcoverage:" + after
 	}
 	return id
 }

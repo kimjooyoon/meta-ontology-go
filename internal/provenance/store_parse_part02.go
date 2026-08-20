@@ -38,8 +38,7 @@ func parseLine(path string, lineNumber int, offset int64, raw []byte) (Evidence,
 	return normalized, nil
 }
 func lineDiagnostic(path string, lineNumber int, offset int64, err error) error {
-	var detail *lineError
-	if errors.As(err, &detail) {
+	if detail, ok := errors.AsType[*lineError](err); ok {
 		return corruption(path, lineNumber, offset, detail.kind, detail.err)
 	}
 	return corruption(path, lineNumber, offset, "malformed", err)

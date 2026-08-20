@@ -3,7 +3,7 @@ package pathclosure
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"sort"
+	"slices"
 )
 
 func normalizeR4Path(raw R4Path) (R4Path, error) {
@@ -29,7 +29,7 @@ func normalizeR4Path(raw R4Path) (R4Path, error) {
 }
 func sortedR4IDs(values []semantic.ID) []semantic.ID {
 	out := append([]semantic.ID(nil), values...)
-	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	slices.Sort(out)
 	return out
 }
 

@@ -15,7 +15,7 @@ func readScopeTable(t *testing.T) map[string][]string {
 		t.Fatal(err)
 	}
 	result := make(map[string][]string)
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		cells := strings.Split(line, "|")
 		if len(cells) < 3 {
 			continue
@@ -33,7 +33,7 @@ func readScopeTable(t *testing.T) map[string][]string {
 }
 func tablePaths(cell string) []string {
 	paths := make([]string, 0)
-	for _, value := range strings.Split(cell, ",") {
+	for value := range strings.SplitSeq(cell, ",") {
 		value = strings.TrimSpace(value)
 		if marker := strings.Index(value, " ("); marker >= 0 {
 			value = value[:marker]

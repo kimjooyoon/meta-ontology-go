@@ -23,7 +23,7 @@ type Response struct {
 	Observed          Observed         `json:"observed"`
 	Measurements      Measurements     `json:"measurements"`
 	Evidence          EvidenceArtifact `json:"evidence"`
-	ProducerClaims    ProducerClaims   `json:"producer_claims,omitempty"`
+	ProducerClaims    ProducerClaims   `json:"producer_claims"`
 }
 
 // ProducerClaims are advisory and are never accepted as observer proof.

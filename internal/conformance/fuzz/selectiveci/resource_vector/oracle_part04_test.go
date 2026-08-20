@@ -51,7 +51,7 @@ func TestFairBaselinesAndFiniteProof(t *testing.T) {
 		t.Fatalf("comparison = %#v", comparison)
 	}
 	nonFinite := R4F01()
-	nonFinite.Paths[0].Finite = Bool(false)
+	nonFinite.Paths[0].Finite = new(false)
 	got := Evaluate(nonFinite)
 	if got.Decision != DecisionPass || got.ProofValid || got.Selected == nil || got.Selected.FinitePROVPaths != 2 {
 		t.Fatalf("non-finite proof result = %#v", got)

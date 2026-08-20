@@ -2,7 +2,7 @@ package resourceenvelope
 
 import (
 	"math"
-	"sort"
+	"slices"
 	"testing"
 )
 
@@ -48,7 +48,7 @@ func independentObservation(testCase contractCase) contractObservation {
 }
 func medianAndMax(values []uint64) (uint64, uint64) {
 	ordered := append([]uint64(nil), values...)
-	sort.Slice(ordered, func(left, right int) bool { return ordered[left] < ordered[right] })
+	slices.Sort(ordered)
 	return ordered[len(ordered)/2], ordered[len(ordered)-1]
 }
 func independentPPM(value, baseline uint64) (uint64, bool) {

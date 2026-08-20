@@ -7,7 +7,7 @@ import (
 
 func TestLoopStagesAreOrdered(t *testing.T) {
 	previous := -1
-	for frame := 0; frame < frameCount; frame++ {
+	for frame := range frameCount {
 		stage := loopState(frame).stage
 		if stage < previous {
 			t.Fatalf("stage regressed at frame %d: %d after %d", frame, stage, previous)

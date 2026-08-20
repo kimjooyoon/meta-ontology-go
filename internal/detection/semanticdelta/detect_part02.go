@@ -1,6 +1,7 @@
 package semanticdelta
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -14,10 +15,8 @@ func (r *Report) addFactViolation(operation Operation, fact Fact, endpoint, reas
 
 // AllowsID reports whether an exact identity or configured prefix contains id.
 func (s Scope) AllowsID(id string) bool {
-	for _, candidate := range s.IDs {
-		if candidate == id {
-			return true
-		}
+	if slices.Contains(s.IDs, id) {
+		return true
 	}
 	for _, prefix := range s.Prefixes {
 		if strings.HasPrefix(id, prefix) {
@@ -33,10 +32,5 @@ func (s Scope) AllowsPredicate(predicate string) bool {
 	if len(s.Predicates) == 0 {
 		return true
 	}
-	for _, candidate := range s.Predicates {
-		if candidate == predicate {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.Predicates, predicate)
 }

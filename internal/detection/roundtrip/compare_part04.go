@@ -1,6 +1,8 @@
 package roundtrip
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
 )
@@ -41,6 +43,6 @@ func sortedIDs(values map[semantic.ID]struct{}) []semantic.ID {
 	for value := range values {
 		result = append(result, value)
 	}
-	sort.Slice(result, func(i, j int) bool { return result[i] < result[j] })
+	slices.Sort(result)
 	return result
 }

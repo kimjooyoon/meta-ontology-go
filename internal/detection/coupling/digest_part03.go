@@ -1,6 +1,8 @@
 package coupling
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
 	"strconv"
@@ -9,7 +11,7 @@ import (
 
 func receiptCanonical(receipt CouplingReceipt) string {
 	paths := append([]semantic.ID(nil), receipt.OriginPathIDs...)
-	sort.Slice(paths, func(i, j int) bool { return paths[i] < paths[j] })
+	slices.Sort(paths)
 	evidence := append([]semantic.EvidenceReference(nil), receipt.EvidenceRefs...)
 	sort.Slice(evidence, func(i, j int) bool { return evidence[i].ID < evidence[j].ID })
 	var builder strings.Builder

@@ -27,7 +27,7 @@ func measureProcessLatency(t *testing.T, processes int, prepopulate bool) []cach
 	commands := make([]*exec.Cmd, 0, processes)
 	outputs := make([]*strings.Builder, 0, processes)
 	readyFiles := make([]string, 0, processes)
-	for index := 0; index < processes; index++ {
+	for index := range processes {
 		ready := filepath.Join(root, fmt.Sprintf("ready-%d", index))
 		result := filepath.Join(root, fmt.Sprintf("result-%d", index))
 		output := &strings.Builder{}

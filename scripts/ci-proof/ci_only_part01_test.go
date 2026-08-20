@@ -58,8 +58,8 @@ func TestFeatureBranchProtectionRejectsObservedFreshness(t *testing.T) {
 		name   string
 		mutate func(*branchProtection)
 	}{
-		{name: "observed_at", mutate: func(snapshot *branchProtection) { snapshot.ObservedAt = stringPointer("2026-08-14T00:00:00Z") }},
-		{name: "valid_until", mutate: func(snapshot *branchProtection) { snapshot.ValidUntil = stringPointer("2026-08-14T00:10:00Z") }},
+		{name: "observed_at", mutate: func(snapshot *branchProtection) { snapshot.ObservedAt = new("2026-08-14T00:00:00Z") }},
+		{name: "valid_until", mutate: func(snapshot *branchProtection) { snapshot.ValidUntil = new("2026-08-14T00:10:00Z") }},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			snapshot := bundle.BranchProtection

@@ -1,5 +1,7 @@
 package cache
 
+import "maps"
+
 func benchmarkReceiptMutations() map[string]func(*BenchmarkReceipt) {
 	return map[string]func(*BenchmarkReceipt){
 		"base sha":       func(r *BenchmarkReceipt) { r.BaseSHA = "not-a-commit-sha" },
@@ -29,9 +31,7 @@ func mutateBenchmarkJob(mutate func(*BenchmarkJob)) func(*BenchmarkReceipt) {
 }
 func cloneBenchmarkReceipt(receipt BenchmarkReceipt) BenchmarkReceipt {
 	receipt.Jobs = make(map[string]BenchmarkJob, len(receipt.Jobs))
-	for name, job := range receipt.Jobs {
-		receipt.Jobs[name] = job
-	}
+	maps.Copy(receipt.Jobs, receipt.Jobs)
 	receipt.EvidenceRefs = append([]EvidenceRef(nil), receipt.EvidenceRefs...)
 	return receipt
 }

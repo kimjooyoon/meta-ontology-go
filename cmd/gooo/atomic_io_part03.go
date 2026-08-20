@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 )
 
 func atomicPublishError(writes []atomicWrite, snapshots []outputSnapshot, committed []int, target string, publishErr error) error {
@@ -47,8 +48,8 @@ func captureOutputSnapshot(path string) (outputSnapshot, error) {
 }
 func rollbackAtomicWrites(writes []atomicWrite, snapshots []outputSnapshot, committed []int) error {
 	var firstErr error
-	for index := len(committed) - 1; index >= 0; index-- {
-		writeIndex := committed[index]
+	for _, writeIndex := range slices.Backward(committed) {
+
 		snapshot := snapshots[writeIndex]
 		var err error
 		if snapshot.exists {

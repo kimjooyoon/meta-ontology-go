@@ -3,7 +3,7 @@ package selectiveci
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -42,7 +42,7 @@ func bindEvidenceIDs(input Input) error {
 	for _, evidence := range input.InferencePath.Evidence {
 		actual = append(actual, evidence.ID)
 	}
-	sort.Slice(actual, func(i, j int) bool { return actual[i] < actual[j] })
+	slices.Sort(actual)
 	if equalIDs(actual, input.EvidenceIDs) {
 		return nil
 	}

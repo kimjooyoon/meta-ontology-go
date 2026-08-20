@@ -3,6 +3,7 @@ package bidir
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"slices"
 	"sort"
 )
 
@@ -13,7 +14,7 @@ func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, e
 			ids = append(ids, node.ID)
 		}
 	}
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	slices.Sort(ids)
 	for _, id := range ids {
 		declaration, err := declarationFromNode(nodes[id], updated, registry)
 		if err != nil {

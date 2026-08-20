@@ -53,7 +53,7 @@ func validBranchProtection(bundle proofBundle) branchProtection {
 func freshObserverWindow() (*string, *string) {
 	observed := time.Now().UTC().Add(-time.Minute)
 	validUntil := observed.Add(guardianObserverFreshnessWindow)
-	return stringPointer(observed.Format(time.RFC3339Nano)), stringPointer(validUntil.Format(time.RFC3339Nano))
+	return new(observed.Format(time.RFC3339Nano)), new(validUntil.Format(time.RFC3339Nano))
 }
 
 func unobservedBranchProtection(bundle proofBundle) branchProtection {

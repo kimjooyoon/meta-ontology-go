@@ -39,11 +39,11 @@ func baselineResources(commands map[string]CommandRecord, ids []string) (*Partia
 		}
 	}
 	if resourceKnown {
-		vector.CPUCoreNS, vector.MemoryBytes, vector.PeakMemoryBytes = U64(cpu), U64(memory), U64(peak)
-		vector.WorkUnits = U64(work)
+		vector.CPUCoreNS, vector.MemoryBytes, vector.PeakMemoryBytes = new(cpu), new(memory), new(peak)
+		vector.WorkUnits = new(work)
 	}
 	if pressureKnown {
-		vector.ApplicablePressures, vector.IndependentGroups = U64(applicable), U64(uint64(len(groups)))
+		vector.ApplicablePressures, vector.IndependentGroups = new(applicable), new(uint64(len(groups)))
 	}
 	return vector, resourceKnown, pressureKnown
 }

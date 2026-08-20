@@ -24,7 +24,7 @@ func TestCacheInvalidateKeyConcurrentIsSingleWriter(t *testing.T) {
 	results := make(chan result, workers)
 	var wait sync.WaitGroup
 	wait.Add(workers)
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go func() {
 			defer wait.Done()
 			<-start

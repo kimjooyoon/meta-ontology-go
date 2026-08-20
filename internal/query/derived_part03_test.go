@@ -2,6 +2,7 @@ package query
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -16,8 +17,8 @@ func TestDerivedRulePermutationReplayAndTransitiveCycleBounds(t *testing.T) {
 	for _, fact := range facts {
 		assertAdd(t, first, fact)
 	}
-	for index := len(facts) - 1; index >= 0; index-- {
-		assertAdd(t, second, facts[index])
+	for _, fact := range slices.Backward(facts) {
+		assertAdd(t, second, fact)
 	}
 	request := derivedEnvelope(root, RuleDependsOn, LayerDeterministic, 8, 10)
 	want, err := first.Execute(request)
@@ -56,7 +57,7 @@ func TestDerivedRulePermutationReplayAndTransitiveCycleBounds(t *testing.T) {
 			t.Fatalf("invalid closure row: %#v", row)
 		}
 	}
-	for run := 0; run < 2; run++ {
+	for run := range 2 {
 		replay, err := first.Execute(request)
 		if err != nil || replay.Hash != want.Hash {
 			t.Fatalf("derived replay changed on run %d: %#v %v", run, replay, err)

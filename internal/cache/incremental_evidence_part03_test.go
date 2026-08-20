@@ -9,7 +9,6 @@ import (
 
 func BenchmarkIncrementalSemanticDigest(b *testing.B) {
 	for _, size := range incrementalFixtureSizes {
-		size := size
 		b.Run(strconv.Itoa(size), func(b *testing.B) {
 			fixture := newIncrementalFixture(b, size, false, -1)
 			b.ReportAllocs()
@@ -26,7 +25,7 @@ func BenchmarkIncrementalSemanticDigest(b *testing.B) {
 func newIncrementalFixture(t testing.TB, size int, presentationOnly bool, mutatedFactIndex int) incrementalFixture {
 	t.Helper()
 	fixture := incrementalFixture{size: size, ir: semantic.NewIR("cache-incremental-fixture", semantic.Namespace("cache-perf")), facts: make([]semantic.Fact, size)}
-	for index := 0; index < size; index++ {
+	for index := range size {
 		activityID := semantic.MustIdentity(fmt.Sprintf("fixture://activity/%05d", index))
 		entityID := semantic.MustIdentity(fmt.Sprintf("fixture://entity/%05d", index))
 		if index == mutatedFactIndex {

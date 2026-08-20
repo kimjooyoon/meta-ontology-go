@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"go/ast"
+	"slices"
 )
 
 func isDeclarationName(parent ast.Node, ident *ast.Ident) bool {
@@ -13,16 +14,12 @@ func isDeclarationName(parent ast.Node, ident *ast.Ident) bool {
 			}
 		}
 	case *ast.ValueSpec:
-		for _, name := range current.Names {
-			if name == ident {
-				return true
-			}
+		if slices.Contains(current.Names, ident) {
+			return true
 		}
 	case *ast.Field:
-		for _, name := range current.Names {
-			if name == ident {
-				return true
-			}
+		if slices.Contains(current.Names, ident) {
+			return true
 		}
 	}
 	return false

@@ -43,9 +43,9 @@ func partialEvidence(document Document, base Model, delta FactDelta, observer BX
 		Before: before, After: after, ObserverKind: observer.Kind(), Observed: observation.Observed,
 		Atomic: before == after, NoWrite: before == after,
 	}
-	evidence := BXConflictEvidence{Transactional: SemanticEquivalent(base, result.Model)}
-	evidence.RemovedCreated = removedCreated(base, result.Model, delta)
-	evidence.CandidatePromoted = candidatePromoted(base, delta, result.Model)
+	evidence := BXConflictEvidence{Transactional: SemanticEquivalent(base, result.Model),
+		RemovedCreated:    removedCreated(base, result.Model, delta),
+		CandidatePromoted: candidatePromoted(base, delta, result.Model)}
 	var conflictErr *ReconcileError
 	if !errors.As(reconcileErr, &conflictErr) {
 		evidence.NoWriteObserved = transaction.NoWrite

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -13,8 +14,8 @@ func TestDatalogPositiveRulesReachFixedPointInStableOrder(t *testing.T) {
 	for _, fact := range facts {
 		assertAdd(t, first, fact)
 	}
-	for index := len(facts) - 1; index >= 0; index-- {
-		assertAdd(t, second, facts[index])
+	for _, fact := range slices.Backward(facts) {
+		assertAdd(t, second, fact)
 	}
 	rules := []Rule{
 		{

@@ -31,7 +31,7 @@ func TestSemanticDeltaAndReportAreDeterministicAcrossInputOrder(t *testing.T) {
 		return node
 	}, nil)
 	repeated := CheckGoToIR(fixture.IR, mutated)
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		if got := CheckGoToIR(fixture.IR, mutated).Error(); got != repeated.Error() {
 			t.Fatalf("detector output changed on repeat %d: %q != %q", i, got, repeated.Error())
 		}

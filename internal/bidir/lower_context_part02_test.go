@@ -57,7 +57,7 @@ activity PayOrder(Order) -> Payment`)
 }
 func repeatedLowerDocument(count int) Document {
 	document := Document{Package: "billing", Namespace: "billing"}
-	for index := 0; index < count; index++ {
+	for index := range count {
 		document.Declarations = append(document.Declarations, Declaration{
 			Kind: EntityKind,
 			ID:   ID("billing://entity/item-" + zeroPad(index)),

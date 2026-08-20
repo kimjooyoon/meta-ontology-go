@@ -5,7 +5,7 @@ import (
 )
 
 func TestCandidateFactsStayOutOfAuthoritativeCanonical(t *testing.T) {
-	for repetition := 0; repetition < 10; repetition++ {
+	for repetition := range 10 {
 		reverse := repetition%2 == 1
 		authoritative := candidateHashIR(t, false, reverse)
 		observed := candidateHashIR(t, true, reverse)

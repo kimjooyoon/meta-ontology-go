@@ -2,6 +2,7 @@ package bidir
 
 import (
 	"errors"
+	"slices"
 )
 
 func validateState(state BXStateEvidence) error {
@@ -11,12 +12,7 @@ func validateState(state BXStateEvidence) error {
 	return nil
 }
 func containsString(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(values, want)
 }
 func sameIDs(left, right []ID) bool {
 	if len(left) != len(right) {

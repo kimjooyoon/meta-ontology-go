@@ -42,11 +42,10 @@ func completeFixture() testFixture {
 			panic("unsupported fixture kind")
 		}
 		evidenceID, evidenceDigest := testID("evidence/"+label), testDigest("evidence/"+label)
-		edge := semantic.InferenceEdge{InferenceRecord: semantic.InferenceRecord{
+		edge := semantic.InferenceEdge{
 			RecordID: testID("record/" + label), SubjectID: subject, ObjectID: object, Rule: rule,
 			Phase: phase, Before: base, After: head, Authority: authority,
-			Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: evidenceDigest}}, Controls: controls,
-		}, Kind: kind}
+			Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: evidenceDigest}}, Controls: controls, Kind: kind}
 		if kind == semantic.InferenceAuthoritativeDeclaration {
 			edge.SourceRoots = []semantic.ID{root}
 		}

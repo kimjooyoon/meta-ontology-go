@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 )
 
 func validateFailureJob(job failureJob, binding failureBinding) error {
@@ -15,12 +16,7 @@ func isFailureJobName(name string) bool {
 	if name == "CI proof bundle" {
 		return true
 	}
-	for _, canonical := range proofJobs {
-		if name == canonical {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(proofJobs, name)
 }
 func buildFailureProvenance(manifest failureManifest, binding failureBinding) failureProvenance {
 	runRef := fmt.Sprintf("https://github.com/%s/actions/runs/%d", binding.Repository, binding.RunID)

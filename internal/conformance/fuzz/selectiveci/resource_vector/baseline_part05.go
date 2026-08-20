@@ -1,7 +1,7 @@
 package resourcevector
 
 import (
-	"sort"
+	"slices"
 )
 
 func strictlyBetter(oracle Vector, baseline *PartialVector) bool {
@@ -40,6 +40,6 @@ func PartialVectorValues(vector *PartialVector) []uint64 {
 			values = append(values, *value)
 		}
 	}
-	sort.Slice(values, func(left, right int) bool { return values[left] < values[right] })
+	slices.Sort(values)
 	return values
 }

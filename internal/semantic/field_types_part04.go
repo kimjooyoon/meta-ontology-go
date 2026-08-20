@@ -1,7 +1,7 @@
 package semantic
 
 import (
-	"sort"
+	"slices"
 )
 
 func (r TypeRegistry) lookupName(namespace Namespace, name string) []ID {
@@ -19,7 +19,7 @@ func (r TypeRegistry) lookupName(namespace Namespace, name string) []ID {
 		}
 		ids = append(ids, candidates...)
 	}
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	slices.Sort(ids)
 	unique := ids[:0]
 	for _, id := range ids {
 		if len(unique) == 0 || unique[len(unique)-1] != id {

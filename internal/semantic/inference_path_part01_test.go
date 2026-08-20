@@ -32,16 +32,14 @@ func inferenceEdgeFixture(kind InferenceKind, suffix string) InferenceEdge {
 	}
 	evidenceID := MustIdentity("inference-test://evidence/" + suffix)
 	edge := InferenceEdge{
-		InferenceRecord: InferenceRecord{
-			RecordID:  MustIdentity("inference-test://record/" + suffix),
-			SubjectID: MustIdentity("inference-test://subject/" + suffix),
-			ObjectID:  MustIdentity("inference-test://object/" + suffix),
-			Rule: RuleBinding{
-				ID: MustIdentity("inference-test://rule/v1"), Version: "1", Digest: inferenceTestDigest("rule"),
-			},
-			Phase: phase, Before: before, After: after, Authority: authority, Controls: controls,
-			Evidence: []EvidenceReference{{ID: evidenceID, Digest: inferenceTestDigest("payload/" + suffix)}},
+		RecordID:  MustIdentity("inference-test://record/" + suffix),
+		SubjectID: MustIdentity("inference-test://subject/" + suffix),
+		ObjectID:  MustIdentity("inference-test://object/" + suffix),
+		Rule: RuleBinding{
+			ID: MustIdentity("inference-test://rule/v1"), Version: "1", Digest: inferenceTestDigest("rule"),
 		},
+		Phase: phase, Before: before, After: after, Authority: authority, Controls: controls,
+		Evidence: []EvidenceReference{{ID: evidenceID, Digest: inferenceTestDigest("payload/" + suffix)}},
 	}
 	if kind == InferenceAuthoritativeDeclaration {
 		edge.SourceRoots = []ID{MustIdentity("inference-test://source/root/" + suffix)}

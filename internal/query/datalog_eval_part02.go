@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 )
 
@@ -53,9 +54,7 @@ func applyDatalogRule(
 }
 func bindDatalogAtom(atom DatalogAtom, fact DatalogFact, binding datalogBinding) (datalogBinding, bool) {
 	next := make(datalogBinding, len(binding)+2)
-	for name, value := range binding {
-		next[name] = value
-	}
+	maps.Copy(next, binding)
 	for _, pair := range [][2]DatalogTerm{{atom.Subject, {Constant: fact.Subject}}, {atom.Object, {Constant: fact.Object}}} {
 		if pair[0].Variable != "" {
 			name := strings.TrimPrefix(pair[0].Variable, "?")

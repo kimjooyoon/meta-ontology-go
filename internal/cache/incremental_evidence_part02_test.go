@@ -14,7 +14,6 @@ func TestIncrementalCacheMutationMatrix(t *testing.T) {
 		{name: "dependency closure", mutatedFactIndex: -1, dependencyPart: 3, expectedAffected: func(int) map[int]bool { return map[int]bool{3: true} }},
 	}
 	for _, size := range incrementalFixtureSizes {
-		size := size
 		t.Run(strconv.Itoa(size), func(t *testing.T) {
 			base := newIncrementalFixture(t, size, false, -1)
 			baseDigest, err := SemanticDigest(base.ir)
@@ -31,7 +30,6 @@ func TestIncrementalCacheMutationMatrix(t *testing.T) {
 			}
 			baseParts := newIncrementalParts(t, base, -1)
 			for _, mutation := range mutations {
-				mutation := mutation
 				t.Run(mutation.name, func(t *testing.T) {
 					mutatedIndex := mutation.mutatedFactIndex
 					if mutatedIndex < 0 && mutation.name == "local fact" {

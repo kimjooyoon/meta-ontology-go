@@ -1,13 +1,13 @@
 package bidir
 
 import (
-	"sort"
+	"slices"
 	"strings"
 )
 
 func joinIDs(ids []ID) string {
 	copyIDs := append([]ID(nil), ids...)
-	sort.Slice(copyIDs, func(i, j int) bool { return copyIDs[i] < copyIDs[j] })
+	slices.Sort(copyIDs)
 	values := make([]string, len(copyIDs))
 	for index, id := range copyIDs {
 		values[index] = string(id)

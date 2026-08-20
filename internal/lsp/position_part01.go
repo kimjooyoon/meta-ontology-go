@@ -48,10 +48,7 @@ func OffsetToPosition(source string, offset int) (Position, error) {
 		return Position{}, err
 	}
 	starts := sourceLineStarts(source)
-	line := sort.Search(len(starts), func(index int) bool { return starts[index] > offset }) - 1
-	if line < 0 {
-		line = 0
-	}
+	line := max(sort.Search(len(starts), func(index int) bool { return starts[index] > offset })-1, 0)
 	start := starts[line]
 	return Position{Line: line, Character: utf16Length(source[start:offset])}, nil
 }

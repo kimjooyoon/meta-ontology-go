@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -38,10 +39,5 @@ type Order struct{}
 	}
 }
 func containsRequirement(requirements []ContractRequirement, want ContractRequirement) bool {
-	for _, requirement := range requirements {
-		if requirement == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(requirements, want)
 }

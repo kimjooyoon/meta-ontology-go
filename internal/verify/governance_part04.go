@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"slices"
 	"sort"
 )
 
@@ -20,12 +21,7 @@ func sameStrings(left, right []string) bool {
 	return true
 }
 func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(values, want)
 }
 func canonicalJobs() []string {
 	return []string{"gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"}

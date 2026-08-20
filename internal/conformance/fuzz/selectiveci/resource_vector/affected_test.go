@@ -64,9 +64,9 @@ func TestEachResourceLimitFailsClosedWithoutCompensation(t *testing.T) {
 
 func generous(ceiling *CeilingSet) {
 	value := ^uint64(0)
-	ceiling.CPUCoreNS, ceiling.MemoryBytes, ceiling.PeakMemoryBytes = U64(value), U64(value), U64(value)
-	ceiling.WorkUnits, ceiling.AffectedStableIDs = U64(value), U64(value)
-	ceiling.ApplicablePressures, ceiling.IndependentGroups = U64(value), U64(value)
-	ceiling.UniquePROVRecords, ceiling.FinitePROVPaths = U64(value), U64(value)
-	ceiling.ClosureNumerator, ceiling.ClosureDenominator = U64(value), U64(value)
+	ceiling.CPUCoreNS, ceiling.MemoryBytes, ceiling.PeakMemoryBytes = new(value), new(value), new(value)
+	ceiling.WorkUnits, ceiling.AffectedStableIDs = new(value), new(value)
+	ceiling.ApplicablePressures, ceiling.IndependentGroups = new(value), new(value)
+	ceiling.UniquePROVRecords, ceiling.FinitePROVPaths = new(value), new(value)
+	ceiling.ClosureNumerator, ceiling.ClosureDenominator = new(value), new(value)
 }

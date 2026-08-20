@@ -2,6 +2,7 @@ package couplingexplain
 
 import (
 	"sort"
+	"strings"
 )
 
 func sortedStrings(values []string) []string {
@@ -10,9 +11,9 @@ func sortedStrings(values []string) []string {
 	return result
 }
 func joinIDs(values []string) string {
-	result := ""
+	var result strings.Builder
 	for _, value := range values {
-		result += value + "\x00"
+		result.WriteString(value + "\x00")
 	}
-	return result
+	return result.String()
 }

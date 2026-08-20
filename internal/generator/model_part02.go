@@ -45,7 +45,7 @@ type SourceMapping struct {
 	TypeRefID      string     `json:"type_ref_id,omitempty"`
 	Presence       string     `json:"presence,omitempty"`
 	Cardinality    string     `json:"cardinality,omitempty"`
-	NameSource     SourceSpan `json:"name_source,omitempty"`
+	NameSource     SourceSpan `json:"name_source"`
 	ProfileID      string     `json:"profile_id,omitempty"`
 	ProfileVersion int        `json:"profile_version,omitempty"`
 	ProfileDigest  string     `json:"profile_digest,omitempty"`

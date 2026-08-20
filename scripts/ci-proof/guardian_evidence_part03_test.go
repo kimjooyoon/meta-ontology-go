@@ -30,9 +30,9 @@ func TestGuardianEvidenceRejectsMissingFutureAndExpiredObserverFreshness(t *test
 		evidence.InstallationRepositoryScope.Digest = digestGuardianInstallationScope(evidence.InstallationRepositoryScope)
 	}
 	for name, window := range map[string][2]*string{
-		"missing": {nil, stringPointer("2026-08-14T00:10:00Z")},
-		"future":  {stringPointer("2026-08-14T00:01:00Z"), stringPointer("2026-08-14T00:11:00Z")},
-		"expired": {stringPointer("2026-08-13T23:40:00Z"), stringPointer("2026-08-13T23:50:00Z")},
+		"missing": {nil, new("2026-08-14T00:10:00Z")},
+		"future":  {new("2026-08-14T00:01:00Z"), new("2026-08-14T00:11:00Z")},
+		"expired": {new("2026-08-13T23:40:00Z"), new("2026-08-13T23:50:00Z")},
 	} {
 		t.Run(name, func(t *testing.T) {
 			evidence, bundle := validGuardianEvidenceFixture()
@@ -45,7 +45,7 @@ func TestGuardianEvidenceRejectsMissingFutureAndExpiredObserverFreshness(t *test
 		})
 	}
 	evidence, bundle := validGuardianEvidenceFixture()
-	setFreshness(&evidence, stringPointer("2026-08-13T23:55:00Z"), stringPointer("2026-08-14T00:05:00Z"))
+	setFreshness(&evidence, new("2026-08-13T23:55:00Z"), new("2026-08-14T00:05:00Z"))
 	bundle.BranchProtection = evidence.BranchProtection
 	bundle.DevBranchProtection = evidence.DevBranchProtection
 	if err := validateGuardianEvidenceAt(&evidence, bundle, now); err != nil {

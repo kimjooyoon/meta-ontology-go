@@ -3,6 +3,7 @@ package linecaps
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -47,11 +48,8 @@ func hasFinding(findings []Finding, rule Rule) bool {
 func filterRules(findings []Finding, rules []Rule) []Finding {
 	result := make([]Finding, 0, len(findings))
 	for _, finding := range findings {
-		for _, rule := range rules {
-			if finding.Rule == rule {
-				result = append(result, finding)
-				break
-			}
+		if slices.Contains(rules, finding.Rule) {
+			result = append(result, finding)
 		}
 	}
 	return result

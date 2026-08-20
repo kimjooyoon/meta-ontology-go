@@ -2,6 +2,7 @@ package query
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -20,8 +21,8 @@ func TestEnvelopeTraversalCycleLimitReplaysCanonicalPrefix(t *testing.T) {
 	for _, fact := range facts {
 		assertAdd(t, first, fact)
 	}
-	for index := len(facts) - 1; index >= 0; index-- {
-		assertAdd(t, second, facts[index])
+	for _, fact := range slices.Backward(facts) {
+		assertAdd(t, second, fact)
 	}
 	beforeCanonical, beforeHash, beforeNodes := first.Canonical(), first.StableHash(), first.Nodes()
 	limitedRequest := traversalEnvelope(root, LayerDeterministic, 8, 2)
@@ -51,7 +52,7 @@ func TestEnvelopeTraversalCycleLimitReplaysCanonicalPrefix(t *testing.T) {
 			t.Fatalf("bounded cycle traversal escaped simple path: %#v", path)
 		}
 	}
-	for run := 0; run < 3; run++ {
+	for run := range 3 {
 		replay, replayErr := second.Execute(limitedRequest)
 		if replayErr != nil || replay.Hash != limited.Hash {
 			t.Fatalf("bounded cycle replay %d changed: %#v, err=%v", run, replay, replayErr)

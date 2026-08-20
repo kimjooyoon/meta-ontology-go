@@ -1,6 +1,7 @@
 package bidir
 
 import (
+	"maps"
 	"strings"
 )
 
@@ -12,9 +13,7 @@ func cloneStringMap(values map[string]string) map[string]string {
 		return nil
 	}
 	clone := make(map[string]string, len(values))
-	for key, value := range values {
-		clone[key] = value
-	}
+	maps.Copy(clone, values)
 	return clone
 }
 func stringMapEqual(left, right map[string]string) bool {

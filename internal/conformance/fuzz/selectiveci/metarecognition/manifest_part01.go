@@ -2,6 +2,7 @@ package metarecognition
 
 import (
 	"fmt"
+	"strings"
 )
 
 func Run(cases []Case) (Manifest, error) {
@@ -63,9 +64,9 @@ func equalIDs(left, right []string) bool {
 	return len(left) == len(right) && sortedJoin(left) == sortedJoin(right)
 }
 func sortedJoin(values []string) string {
-	result := ""
+	var result strings.Builder
 	for _, value := range sorted(values) {
-		result += value + "\x00"
+		result.WriteString(value + "\x00")
 	}
-	return result
+	return result.String()
 }

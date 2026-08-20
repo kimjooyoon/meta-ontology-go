@@ -15,7 +15,7 @@ func drawAgents(img *image.Paletted, state phaseState) {
 	drawText(img, 556, 170, "100 PARALLEL AGENTS", 2, textPrimary)
 	drawText(img, 556, 197, "HEURISTIC  /  LOCAL INFERENCE ALLOWED", 1, violet)
 	drawText(img, 556, 214, "10 LANES X 10  |  EXAMPLE WORKLOAD", 1, textMuted)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		col, row := i%10, i/10
 		x, y := 568+col*19, 226+row*19
 		launched := state.attempts > float64(i+1)/108

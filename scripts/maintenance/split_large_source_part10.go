@@ -40,8 +40,8 @@ func generatedPath(path string, part int) (string, error) {
 }
 
 func peelSuffix(value, suffix string) (string, string) {
-	if strings.HasSuffix(value, suffix) {
-		return strings.TrimSuffix(value, suffix), suffix
+	if before, ok := strings.CutSuffix(value, suffix); ok {
+		return before, suffix
 	}
 	return value, ""
 }

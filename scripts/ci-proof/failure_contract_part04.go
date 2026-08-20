@@ -1,20 +1,12 @@
 package main
 
+import "slices"
+
 func isCanonicalFailureJob(name string) bool {
-	for _, canonical := range []string{"gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"} {
-		if name == canonical {
-			return true
-		}
-	}
-	return false
+	return slices.Contains([]string{"gofmt", "go vet", "go test", "go test -race", "Semantic conformance", "CI policy"}, name)
 }
 func containsCode(codes []string, target string) bool {
-	for _, code := range codes {
-		if code == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(codes, target)
 }
 func sameArtifactInputs(left, right []artifactInput) bool {
 	if len(left) != len(right) {

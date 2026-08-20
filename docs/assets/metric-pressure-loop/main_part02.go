@@ -39,7 +39,7 @@ func encodedAssets() ([]byte, []byte, error) {
 		Delay:     make([]int, 0, frameCount),
 		LoopCount: 0,
 	}
-	for frame := 0; frame < frameCount; frame++ {
+	for frame := range frameCount {
 		animation.Image = append(animation.Image, renderFrame(frame))
 		animation.Delay = append(animation.Delay, frameDelay)
 	}

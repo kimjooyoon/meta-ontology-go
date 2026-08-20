@@ -16,7 +16,7 @@ type ReceiptSummary struct {
 	ReceiptDigest  string                      `json:"receipt_digest"`
 	OriginPathID   string                      `json:"origin_path_id"`
 	EvidenceRefs   []string                    `json:"evidence_refs"`
-	Presentation   Presentation                `json:"presentation,omitempty"`
+	Presentation   Presentation                `json:"presentation"`
 }
 type VerifierSummary struct {
 	EvidenceID     string        `json:"evidence_id"`
@@ -26,7 +26,7 @@ type VerifierSummary struct {
 	EvidenceDigest string        `json:"evidence_digest"`
 	VerifierDigest string        `json:"verifier_digest"`
 	EvidenceRefs   []string      `json:"evidence_refs"`
-	Presentation   Presentation  `json:"presentation,omitempty"`
+	Presentation   Presentation  `json:"presentation"`
 }
 
 // VerifiedEnvelope is the adapter seam. Its Verdict and exact digests are

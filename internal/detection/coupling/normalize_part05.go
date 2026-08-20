@@ -1,6 +1,8 @@
 package coupling
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
 )
@@ -58,7 +60,7 @@ func changedManifestEntries(entries []ManifestEntry) []ManifestEntry {
 }
 func sortedIDs(values []semantic.ID) []semantic.ID {
 	result := append([]semantic.ID(nil), values...)
-	sort.Slice(result, func(i, j int) bool { return result[i] < result[j] })
+	slices.Sort(result)
 	return result
 }
 func sortedReasons(values []Reason) []Reason {

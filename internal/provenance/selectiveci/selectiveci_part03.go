@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -35,12 +35,12 @@ func canonicalReceipt(value Receipt) Receipt {
 	copy.VerifiedCommandIDs = append([]semantic.ID(nil), value.VerifiedCommandIDs...)
 	copy.VerifiedObligationIDs = append([]semantic.ID(nil), value.VerifiedObligationIDs...)
 	copy.VerifiedPathIDs = append([]semantic.ID(nil), value.VerifiedPathIDs...)
-	sort.Slice(copy.SelectedCommandIDs, func(i, j int) bool { return copy.SelectedCommandIDs[i] < copy.SelectedCommandIDs[j] })
-	sort.Slice(copy.ObligationIDs, func(i, j int) bool { return copy.ObligationIDs[i] < copy.ObligationIDs[j] })
-	sort.Slice(copy.PathIDs, func(i, j int) bool { return copy.PathIDs[i] < copy.PathIDs[j] })
-	sort.Slice(copy.VerifiedCommandIDs, func(i, j int) bool { return copy.VerifiedCommandIDs[i] < copy.VerifiedCommandIDs[j] })
-	sort.Slice(copy.VerifiedObligationIDs, func(i, j int) bool { return copy.VerifiedObligationIDs[i] < copy.VerifiedObligationIDs[j] })
-	sort.Slice(copy.VerifiedPathIDs, func(i, j int) bool { return copy.VerifiedPathIDs[i] < copy.VerifiedPathIDs[j] })
+	slices.Sort(copy.SelectedCommandIDs)
+	slices.Sort(copy.ObligationIDs)
+	slices.Sort(copy.PathIDs)
+	slices.Sort(copy.VerifiedCommandIDs)
+	slices.Sort(copy.VerifiedObligationIDs)
+	slices.Sort(copy.VerifiedPathIDs)
 	return copy
 }
 func validDigest(value string) bool {

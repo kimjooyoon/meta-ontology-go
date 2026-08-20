@@ -40,7 +40,7 @@ func TestFailureCatalogMatchesCheckedInDocument(t *testing.T) {
 		t.Fatal(err)
 	}
 	counts := make(map[string]int)
-	for _, line := range strings.Split(string(document), "\n") {
+	for line := range strings.SplitSeq(string(document), "\n") {
 		if !strings.HasPrefix(line, "| `CI-") {
 			continue
 		}

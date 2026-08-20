@@ -2,6 +2,7 @@ package query
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -16,8 +17,8 @@ func TestPermutationAndRepeatProduceIdenticalReadResults(t *testing.T) {
 	for _, fact := range facts {
 		assertAdd(t, first, fact)
 	}
-	for index := len(facts) - 1; index >= 0; index-- {
-		assertAdd(t, second, facts[index])
+	for _, fact := range slices.Backward(facts) {
+		assertAdd(t, second, fact)
 	}
 	if first.Canonical() != second.Canonical() || first.StableHash() != second.StableHash() {
 		t.Fatalf("permuted graph changed canonical projection")
@@ -29,7 +30,7 @@ func TestPermutationAndRepeatProduceIdenticalReadResults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for run := 0; run < 5; run++ {
+	for run := range 5 {
 		got, err := second.Traverse(id("billing://activity/pay"), TraversalOptions{MaxDepth: 2})
 		if err != nil {
 			t.Fatal(err)

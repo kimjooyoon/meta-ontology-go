@@ -1,6 +1,7 @@
 package query
 
 import (
+	"slices"
 	"sort"
 )
 
@@ -9,12 +10,7 @@ func (node Node) hasName(name string) bool {
 	if name == "" || node.Name == name {
 		return node.Name == name && name != ""
 	}
-	for _, alias := range node.Aliases {
-		if alias == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(node.Aliases, name)
 }
 func displayNames(node Node) []string {
 	names := make([]string, 0, 1+len(node.Aliases))

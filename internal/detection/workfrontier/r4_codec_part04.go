@@ -5,17 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 )
 
 func joinR4(values []string) string {
-	result := ""
+	var result strings.Builder
 	for index, value := range values {
 		if index != 0 {
-			result += "\x00"
+			result.WriteString("\x00")
 		}
-		result += value
+		result.WriteString(value)
 	}
-	return result
+	return result.String()
 }
 func r4FieldPresent(fields map[string]json.RawMessage, name string) bool {
 	raw, ok := fields[name]

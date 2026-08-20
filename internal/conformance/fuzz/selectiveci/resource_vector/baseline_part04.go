@@ -38,8 +38,8 @@ func baselinePROV(paths []PathRecord, selected map[string]struct{}) (*PartialVec
 		known = false
 	}
 	if known {
-		vector.UniquePROVRecords, vector.FinitePROVPaths = U64(records), U64(finitePaths)
-		vector.ClosureNumerator, vector.ClosureDenominator = U64(numerator), U64(denominator)
+		vector.UniquePROVRecords, vector.FinitePROVPaths = new(records), new(finitePaths)
+		vector.ClosureNumerator, vector.ClosureDenominator = new(numerator), new(denominator)
 	}
 	return vector, known
 }

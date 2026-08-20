@@ -12,13 +12,13 @@ func TestGeneratedResolutionLimitBoundsCartesianExpansionAndReplays(t *testing.T
 	if err := graph.AddNode(Node{ID: business, Kind: EntityNodeKind}); err != nil {
 		t.Fatal(err)
 	}
-	for activityIndex := 0; activityIndex < 24; activityIndex++ {
+	for activityIndex := range 24 {
 		activity := id(fmt.Sprintf("urn:resolution:bounded:activity:%02d", activityIndex))
 		if err := graph.AddNode(Node{ID: activity, Kind: ActivityNodeKind}); err != nil {
 			t.Fatal(err)
 		}
 		assertAdd(t, graph, NewFact(activity, Used, business))
-		for entityIndex := 0; entityIndex < 24; entityIndex++ {
+		for entityIndex := range 24 {
 			rawGenerated := fmt.Sprintf(
 				"urn:resolution:bounded:generated:%02d:%02d", activityIndex, entityIndex,
 			)
@@ -43,7 +43,7 @@ func TestGeneratedResolutionLimitBoundsCartesianExpansionAndReplays(t *testing.T
 	if !reflect.DeepEqual(limited.Deterministic, full.Deterministic[:1]) {
 		t.Fatalf("bounded resolution changed canonical prefix: %#v vs %#v", limited.Deterministic, full.Deterministic[:1])
 	}
-	for run := 0; run < 3; run++ {
+	for run := range 3 {
 		replay, replayErr := graph.ResolveGeneratedCode(limitedRequest)
 		if replayErr != nil || replay.Hash != limited.Hash {
 			t.Fatalf("resolution replay %d changed: %#v, err=%v", run, replay, replayErr)

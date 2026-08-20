@@ -14,7 +14,7 @@ func TestCanonicalDocumentSymbolsReplayAndNoMutation(t *testing.T) {
 	}
 	original := append([]Symbol(nil), symbols...)
 	want := canonicalDocumentSymbols(symbols)
-	for replay := 0; replay < 64; replay++ {
+	for replay := range 64 {
 		got := canonicalDocumentSymbols(rotateSymbols(symbols, replay))
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("replay %d differs:\n got %#v\nwant %#v", replay, got, want)

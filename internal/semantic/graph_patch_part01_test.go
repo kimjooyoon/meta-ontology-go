@@ -51,8 +51,7 @@ func TestValidatePatchPreconditionsRejectsStaleAndMismatchedFields(t *testing.T)
 			if err == nil {
 				t.Fatal("invalid patch was accepted")
 			}
-			var conflict GraphPatchConflict
-			if !errors.As(err, &conflict) {
+			if _, ok := errors.AsType[GraphPatchConflict](err); !ok {
 				t.Fatalf("error is not GraphPatchConflict: %v", err)
 			}
 			if errors.Is(err, ErrGraphPatch) == false {

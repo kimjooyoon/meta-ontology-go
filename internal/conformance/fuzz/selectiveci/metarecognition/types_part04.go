@@ -2,19 +2,15 @@ package metarecognition
 
 import (
 	"encoding/json"
+	"slices"
 	"sort"
 )
 
 func (r Reason) Valid() bool {
-	for _, value := range []Reason{ReasonExactBinding, ReasonRenameBinding, ReasonBlobWithoutID,
+	return slices.Contains([]Reason{ReasonExactBinding, ReasonRenameBinding, ReasonBlobWithoutID,
 		ReasonSourceMapRegistry, ReasonUnknownGraph, ReasonMissedObligation, ReasonGlobalGuard,
 		ReasonSelectedDrift, ReasonOmittedFailure, ReasonNonAuthoritative, ReasonDuplicateReceipt,
-		ReasonConflictingReceipt, ReasonInvalidResource, ReasonExternalMissing} {
-		if r == value {
-			return true
-		}
-	}
-	return false
+		ReasonConflictingReceipt, ReasonInvalidResource, ReasonExternalMissing}, r)
 }
 func (c Case) normalized() Case {
 	c.Expected.LocalizedIDs = sorted(c.Expected.LocalizedIDs)

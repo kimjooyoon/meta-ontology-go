@@ -21,7 +21,6 @@ func measureIncrementalCache(t *testing.T, base, current []incrementalPart, expe
 	}
 	measurement := incrementalMeasurement{started: time.Now()}
 	for _, part := range current {
-		part := part
 		_, data, _, hit, err := cache.GetOrComputePartial(context.Background(), part.spec, func() ([]byte, error) {
 			measurement.recomputations++
 			return []byte(fmt.Sprintf("current:%d:%d:%s", size, part.index, mutation)), nil

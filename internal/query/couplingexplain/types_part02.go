@@ -43,14 +43,14 @@ type CodeBindingSummary struct {
 	SourceMapID         string       `json:"source_map_id"`
 	BindingDigest       string       `json:"binding_digest"`
 	CodeBindingDigest   string       `json:"code_binding_digest"`
-	Presentation        Presentation `json:"presentation,omitempty"`
+	Presentation        Presentation `json:"presentation"`
 }
 type TermSummary struct {
 	TermID           string       `json:"term_id"`
 	SemanticOwnerID  string       `json:"semantic_owner_id"`
 	Version          string       `json:"version"`
 	DefinitionDigest string       `json:"definition_digest"`
-	Presentation     Presentation `json:"presentation,omitempty"`
+	Presentation     Presentation `json:"presentation"`
 }
 type PathStep struct {
 	FromID       string                  `json:"from_id"`
@@ -69,5 +69,5 @@ type PathSummary struct {
 	StepCount    int          `json:"step_count"`
 	PathDigest   string       `json:"path_digest"`
 	Steps        []PathStep   `json:"steps,omitempty"`
-	Presentation Presentation `json:"presentation,omitempty"`
+	Presentation Presentation `json:"presentation"`
 }

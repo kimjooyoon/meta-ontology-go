@@ -56,7 +56,7 @@ type Corpus struct {
 
 func Evaluate(input Input) Result {
 	decision, reason := decide(input)
-	result := Result{Decision: decision, Reason: reason}
-	result.CanonicalDigest = digestResult(input, decision, reason)
+	result := Result{Decision: decision, Reason: reason,
+		CanonicalDigest: digestResult(input, decision, reason)}
 	return result
 }

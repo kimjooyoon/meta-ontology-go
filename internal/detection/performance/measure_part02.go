@@ -34,7 +34,7 @@ func Measure(spec StageSpec, config Config) (Observation, error) {
 func measureOperations(run Runner, iterations int) (uint64, error) {
 	var total uint64
 	var counter Counter
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		counter.reset()
 		if err := run(&counter); err != nil {
 			return 0, err

@@ -28,9 +28,9 @@ type InferenceQuery struct {
 	ChainStartID    ID   `json:"chain_start_id,omitempty"`
 	ChainEndID      ID   `json:"chain_end_id,omitempty"`
 
-	Before   semantic.SnapshotDigests   `json:"before,omitempty"`
-	After    semantic.SnapshotDigests   `json:"after,omitempty"`
-	Controls semantic.InferenceControls `json:"controls,omitempty"`
+	Before   semantic.SnapshotDigests   `json:"before"`
+	After    semantic.SnapshotDigests   `json:"after"`
+	Controls semantic.InferenceControls `json:"controls"`
 
 	Limit    int `json:"limit"`
 	MaxDepth int `json:"max_depth"`

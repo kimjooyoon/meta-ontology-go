@@ -42,8 +42,7 @@ func digestBytes(value []byte) string {
 	return hex.EncodeToString(digest[:])
 }
 func errorCode(err error) string {
-	var envelope *EnvelopeError
-	if errors.As(err, &envelope) {
+	if envelope, ok := errors.AsType[*EnvelopeError](err); ok {
 		return envelope.Code
 	}
 	if errors.Is(err, ErrUnknownEndpoint) {

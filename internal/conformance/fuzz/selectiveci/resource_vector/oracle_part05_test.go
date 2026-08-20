@@ -1,6 +1,7 @@
 package resourcevector
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -18,10 +19,5 @@ func relocate(value, oldRoot, newRoot string) string {
 	return strings.Replace(value, oldRoot, newRoot, 1)
 }
 func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(values, want)
 }

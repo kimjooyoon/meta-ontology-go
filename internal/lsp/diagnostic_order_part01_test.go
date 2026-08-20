@@ -17,7 +17,7 @@ func TestCanonicalDiagnosticOrderReplaysEqualStarts(t *testing.T) {
 		syntaxDiagnosticAt("replay.gooo", 30, 31, syntax.SeverityError, "late", "late"),
 	}
 	want := mapDiagnosticOrder(t, source, raw)
-	for replay := 0; replay < 32; replay++ {
+	for replay := range 32 {
 		permuted := rotateDiagnostics(raw, replay)
 		got := mapDiagnosticOrder(t, source, permuted)
 		if !reflect.DeepEqual(want, got) {
@@ -38,7 +38,7 @@ func TestCanonicalDiagnosticOrderMatchesSyntaxSourceReplay(t *testing.T) {
 	}
 	syntaxView := raw.SortBySpan()
 	want := mapDiagnosticOrder(t, source, syntaxView)
-	for replay := 0; replay < 16; replay++ {
+	for replay := range 16 {
 		mapped := make([]Diagnostic, 0, len(raw))
 		for _, diagnostic := range rotateDiagnostics(raw, replay) {
 			value, err := syntaxDiagnostic(source, diagnostic)

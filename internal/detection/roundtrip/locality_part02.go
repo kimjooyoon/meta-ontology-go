@@ -1,8 +1,9 @@
 package roundtrip
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"sort"
 )
 
 func regionIDs(left, right map[semantic.ID]generatedRegion) []semantic.ID {
@@ -17,6 +18,6 @@ func regionIDs(left, right map[semantic.ID]generatedRegion) []semantic.ID {
 	for id := range values {
 		result = append(result, id)
 	}
-	sort.Slice(result, func(i, j int) bool { return result[i] < result[j] })
+	slices.Sort(result)
 	return result
 }

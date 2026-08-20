@@ -56,7 +56,7 @@ func TestReflectiveFallbackRejectsMalformedInputsDeterministically(t *testing.T)
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
 			var first string
-			for attempt := 0; attempt < 20; attempt++ {
+			for attempt := range 20 {
 				_, _, err := GenerateFrom(testCase.input, Options{})
 				if err == nil || !strings.Contains(err.Error(), testCase.want) {
 					t.Fatalf("expected error containing %q, got %v", testCase.want, err)

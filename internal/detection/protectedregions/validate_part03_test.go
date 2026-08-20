@@ -39,7 +39,7 @@ func TestValidateIsDeterministicAndMissingEndsFollowSourceOrder(t *testing.T) {
 		"//gooo:generated:start id=\"fixture://second\" kind=\"activity\"\n"
 	wantLines := []int{1, 2}
 	var first Report
-	for run := 0; run < 20; run++ {
+	for run := range 20 {
 		report := Validate([]byte(source))
 		if run == 0 {
 			first = report

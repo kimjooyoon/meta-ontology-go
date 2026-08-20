@@ -15,7 +15,7 @@ func startStampedeHelpers(t *testing.T, root, release string) ([]*exec.Cmd, []*s
 	commands := make([]*exec.Cmd, 0, 2)
 	outputs := make([]*strings.Builder, 0, 2)
 	readyFiles := make([]string, 0, 2)
-	for index := 0; index < 2; index++ {
+	for index := range 2 {
 		ready := filepath.Join(root, fmt.Sprintf("ready-%d", index))
 		output := &strings.Builder{}
 		command := exec.Command(os.Args[0], "-test.run", "^TestCacheSameKeyCrossProcessStampede$", "-cache-test-class="+CacheTestClassSlowObservation)
@@ -37,7 +37,7 @@ func startStampedeHelpers(t *testing.T, root, release string) ([]*exec.Cmd, []*s
 func readStampedeResults(t *testing.T, root string, callers int) (int, int) {
 	t.Helper()
 	hits, misses := 0, 0
-	for index := 0; index < callers; index++ {
+	for index := range callers {
 		var result struct {
 			Hit  bool   `json:"hit"`
 			Data string `json:"data"`

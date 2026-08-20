@@ -2,6 +2,7 @@ package cache
 
 import (
 	"errors"
+	"slices"
 	"testing"
 )
 
@@ -47,8 +48,8 @@ func assertBenchmarkReceiptIdentity(t *testing.T, benchmark BenchmarkReceipt) {
 	}
 	reordered := cloneBenchmarkReceipt(benchmark)
 	reordered.Jobs = make(map[string]BenchmarkJob, len(benchmark.Jobs))
-	for index := len(canonicalBenchmarkJobs) - 1; index >= 0; index-- {
-		name := canonicalBenchmarkJobs[index]
+	for _, name := range slices.Backward(canonicalBenchmarkJobs) {
+
 		reordered.Jobs[name] = benchmark.Jobs[name]
 	}
 	reorderedDigest, err := DigestOf(reordered)

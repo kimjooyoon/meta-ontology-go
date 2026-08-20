@@ -17,7 +17,7 @@ func TestAdapterReplayUsesAllEqualStartTieBreaks(t *testing.T) {
 		syntaxDiagnosticAt("cross-view.gooo", 20, 23, syntax.SeverityError, "a.code", "a-message"),
 	}
 	want := expectedAdapterReplay(t, source, raw)
-	for replay := 0; replay < 64; replay++ {
+	for replay := range 64 {
 		permuted := rotateDiagnostics(raw, replay)
 		result, err := adaptSyntaxResult("cross-view.gooo", source, &syntax.File{}, permuted)
 		if err != nil {

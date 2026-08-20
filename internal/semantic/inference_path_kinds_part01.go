@@ -3,7 +3,7 @@ package semantic
 import (
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 )
 
 func (e InferenceEdge) normalized() (InferenceEdge, error) {
@@ -52,7 +52,7 @@ func (e InferenceEdge) normalized() (InferenceEdge, error) {
 		seenRoots[parsed] = struct{}{}
 		roots[i] = parsed
 	}
-	sort.Slice(roots, func(i, j int) bool { return roots[i] < roots[j] })
+	slices.Sort(roots)
 	receipt := e.AcceptanceReceipt
 	if receipt != "" {
 		parsedReceipt, parseErr := ParseIdentity(receipt.String())

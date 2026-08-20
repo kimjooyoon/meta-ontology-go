@@ -1,7 +1,7 @@
 package analyzer
 
 import (
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -31,7 +31,7 @@ func (p MappingPolicy) Validate() error {
 	for relation := range p.mappings {
 		keys = append(keys, relation)
 	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	slices.Sort(keys)
 	for _, relation := range keys {
 		if err := p.validateMapping(p.mappings[relation]); err != nil {
 			return err

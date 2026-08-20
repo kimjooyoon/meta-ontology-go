@@ -1,6 +1,8 @@
 package coupling
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
 	"strconv"
@@ -9,7 +11,7 @@ import (
 
 func resultCanonical(result Result) string {
 	ids := append([]semantic.ID(nil), result.AcceptedSurfaceIDs...)
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+	slices.Sort(ids)
 	reasons := append([]Reason(nil), result.Reasons...)
 	sort.Slice(reasons, func(i, j int) bool {
 		if reasons[i].Code != reasons[j].Code {

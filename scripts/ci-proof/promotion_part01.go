@@ -45,9 +45,9 @@ func promotionAuthorizationFor(bundle proofBundle) *promotionAuthorization {
 	if bundle.BaseRef != "main" {
 		return nil
 	}
-	authorization := &promotionAuthorization{Decision: "FAIL_CLOSED", Code: stringPointer(promotionAuthorizationCode), Operation: "fast_forward", Source: "dev", Target: "main", BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA}
+	authorization := &promotionAuthorization{Decision: "FAIL_CLOSED", Code: new(promotionAuthorizationCode), Operation: "fast_forward", Source: "dev", Target: "main", BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA}
 	if !validPromotionObservation(bundle.PromotionObservation, bundle.Repository, bundle.PRNumber, bundle.BaseSHA, bundle.HeadSHA) {
-		authorization.Code = stringPointer(promotionObservationCode)
+		authorization.Code = new(promotionObservationCode)
 	} else if promotionProofCoreReady(bundle) {
 		authorization.Decision = "PASS"
 		authorization.Code = nil

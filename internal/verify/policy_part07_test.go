@@ -13,7 +13,7 @@ func TestScopeTableMatchesAllowlist(t *testing.T) {
 		t.Fatal(err)
 	}
 	registered := make(map[string]bool)
-	for _, line := range strings.Split(string(table), "\n") {
+	for line := range strings.SplitSeq(string(table), "\n") {
 		cells := strings.Split(line, "|")
 		if len(cells) < 3 {
 			continue

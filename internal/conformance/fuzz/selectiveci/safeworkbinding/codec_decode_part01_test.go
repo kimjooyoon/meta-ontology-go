@@ -1,6 +1,7 @@
 package safeworkbinding
 
 import (
+	"maps"
 	"strings"
 	"testing"
 )
@@ -19,9 +20,7 @@ func decodeValues() map[string]string {
 }
 func decodeDocument(order []string, overrides map[string]string) []byte {
 	values := decodeValues()
-	for field, value := range overrides {
-		values[field] = value
-	}
+	maps.Copy(values, overrides)
 	if order == nil {
 		order = bindingFieldOrder[:]
 	}

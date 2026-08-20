@@ -29,7 +29,7 @@ func productionProofPath(t *testing.T, rootID, obligationID, commandID string, b
 		}
 		evidenceID := productionID("urn:gooo:shadow/evidence/" + label)
 		evidenceDigest := productionDigest("evidence/" + label)
-		edge := semantic.InferenceEdge{InferenceRecord: semantic.InferenceRecord{RecordID: productionID("urn:gooo:shadow/record/" + label), SubjectID: subject, ObjectID: object, Rule: rule, Phase: phase, Before: base, After: head, Authority: authority, Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: evidenceDigest}}, Controls: controls}, Kind: kind}
+		edge := semantic.InferenceEdge{RecordID: productionID("urn:gooo:shadow/record/" + label), SubjectID: subject, ObjectID: object, Rule: rule, Phase: phase, Before: base, After: head, Authority: authority, Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: evidenceDigest}}, Controls: controls, Kind: kind}
 		if kind == semantic.InferenceAuthoritativeDeclaration {
 			edge.SourceRoots = []semantic.ID{root}
 		}

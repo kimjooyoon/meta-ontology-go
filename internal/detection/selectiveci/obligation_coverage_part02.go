@@ -12,10 +12,10 @@ func coverageResultFor(input ObligationCoverageInput) ObligationCoverageResult {
 		SchemaVersion:         ObligationCoverageSchemaVersion,
 		UncoveredRootIDs:      []string{},
 		RequiredObligationIDs: []string{},
-	}
-	result.SnapshotDigest = input.SnapshotDigest
-	result.RegistryDigest = input.Registry.Digest
-	result.GraphDigest = input.Graph.Digest()
+
+		SnapshotDigest: input.SnapshotDigest,
+		RegistryDigest: input.Registry.Digest,
+		GraphDigest:    input.Graph.Digest()}
 	return result
 }
 func coverageInputReason(input ObligationCoverageInput) CoverageReason {

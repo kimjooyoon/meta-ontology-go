@@ -40,7 +40,7 @@ func evaluateBaseline(input Input, selectedIDs []string, fullSuite bool, name st
 		result.Decision, result.Reason = affectedFailure.decision, affectedFailure.reason
 		return result
 	}
-	vector.AffectedStableIDs = U64(affected)
+	vector.AffectedStableIDs = new(affected)
 	prov, provKnown := baselinePROV(input.Paths, selected)
 	mergePartial(vector, prov)
 	result.Vector = vector

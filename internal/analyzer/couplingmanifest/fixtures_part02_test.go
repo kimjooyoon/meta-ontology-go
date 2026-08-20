@@ -35,8 +35,8 @@ func testObservations(snapshot selectiveci.Snapshot, surfaces []detector.Surface
 	return result
 }
 func testBaseline() detector.BaselineConfig {
-	baseline := detector.BaselineConfig{Schema: detector.BaselineSchemaV1, FullSuiteRequired: true}
-	baseline.Digest = stableDigest(testFields(detector.BaselineSchemaV1, strconv.FormatBool(true)))
+	baseline := detector.BaselineConfig{Schema: detector.BaselineSchemaV1, FullSuiteRequired: true,
+		Digest: stableDigest(testFields(detector.BaselineSchemaV1, strconv.FormatBool(true)))}
 	return baseline
 }
 func bindingDigestForTest(surface detector.Surface) string {

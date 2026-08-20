@@ -7,8 +7,7 @@ import (
 )
 
 func shadowDecodeReason(err error) string {
-	var snapshotErr *analyzersci.Error
-	if errors.As(err, &snapshotErr) {
+	if snapshotErr, ok := errors.AsType[*analyzersci.Error](err); ok {
 		return string(snapshotErr.Code)
 	}
 	message := strings.ToLower(err.Error())

@@ -55,9 +55,6 @@ func rejectedInferenceResponse(request InferenceQuery, err error) (InferenceQuer
 		request = normalized
 	}
 	requestHash, _ := request.CanonicalDigest()
-	workLimit := request.MaxWork
-	if workLimit < 0 {
-		workLimit = 0
-	}
+	workLimit := max(request.MaxWork, 0)
 	return rejectedInferenceResponseWithWork(request, requestHash, InferenceWork{Limit: workLimit}, err)
 }

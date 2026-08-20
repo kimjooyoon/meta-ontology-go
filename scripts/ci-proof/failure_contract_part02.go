@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 )
 
@@ -56,10 +57,8 @@ func validateFailureEvidence(manifest failureManifest) error {
 	if !sort.StringsAreSorted(manifest.Rejections) {
 		return fmt.Errorf("failure rejection set is not canonical")
 	}
-	for _, reason := range []string{manifest.MissingReasons.Protection, manifest.MissingReasons.Provenance} {
-		if containsUnknown(reason) {
-			return fmt.Errorf("failure missing reason is unknown")
-		}
+	if slices.ContainsFunc([]string{manifest.MissingReasons.Protection, manifest.MissingReasons.Provenance}, containsUnknown) {
+		return fmt.Errorf("failure missing reason is unknown")
 	}
 	return nil
 }

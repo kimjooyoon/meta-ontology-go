@@ -38,7 +38,7 @@ func TestReportsInvalidStableIDs(t *testing.T) {
 }
 func TestCyclePathIsClosedSimpleAndBounded(t *testing.T) {
 	graph := Graph{}
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		graph.Nodes = append(graph.Nodes, Node{
 			ID: "urn:activity:" + string(rune('a'+i)), Kind: Activity,
 			Namespace: "billing", Name: "Activity" + string(rune('A'+i)),

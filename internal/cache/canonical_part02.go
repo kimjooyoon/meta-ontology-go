@@ -33,7 +33,7 @@ func (e *canonicalEncoder) encode(value reflect.Value) error {
 		}
 		return e.encode(value.Elem())
 	}
-	if value.Type() == reflect.TypeOf(time.Time{}) {
+	if value.Type() == reflect.TypeFor[time.Time]() {
 		return e.encodeTime(value)
 	}
 	switch value.Kind() {

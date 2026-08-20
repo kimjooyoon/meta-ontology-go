@@ -20,7 +20,7 @@ func measureWorkerLatency(t *testing.T, workers int, prepopulate bool) []cacheLa
 	}
 	start := make(chan struct{})
 	results := make(chan cacheLatencySample, workers)
-	for index := 0; index < workers; index++ {
+	for range workers {
 		go func() {
 			<-start
 			started := time.Now()
@@ -37,7 +37,7 @@ func measureWorkerLatency(t *testing.T, workers int, prepopulate bool) []cacheLa
 	}
 	close(start)
 	samples := make([]cacheLatencySample, 0, workers)
-	for index := 0; index < workers; index++ {
+	for range workers {
 		samples = append(samples, <-results)
 	}
 	return samples

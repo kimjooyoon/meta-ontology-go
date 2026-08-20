@@ -15,10 +15,7 @@ func (reader *chunkReader) Read(buffer []byte) (int, error) {
 	if reader.read == len(reader.data) {
 		return 0, io.EOF
 	}
-	size := reader.size
-	if size > len(buffer) {
-		size = len(buffer)
-	}
+	size := min(reader.size, len(buffer))
 	if size > len(reader.data)-reader.read {
 		size = len(reader.data) - reader.read
 	}
@@ -33,10 +30,7 @@ type shortWriter struct {
 }
 
 func (writer *shortWriter) Write(data []byte) (int, error) {
-	size := writer.size
-	if size > len(data) {
-		size = len(data)
-	}
+	size := min(writer.size, len(data))
 	_, _ = writer.output.Write(data[:size])
 	return size, nil
 }

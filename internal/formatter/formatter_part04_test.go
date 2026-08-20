@@ -19,7 +19,7 @@ func parseFixtureActivity(line string) (fixtureDeclaration, bool) {
 	inputs := strings.TrimSpace(left[open+1 : close])
 	var names []string
 	if inputs != "" {
-		for _, input := range strings.Split(inputs, ",") {
+		for input := range strings.SplitSeq(inputs, ",") {
 			names = append(names, strings.TrimSpace(input))
 		}
 	}

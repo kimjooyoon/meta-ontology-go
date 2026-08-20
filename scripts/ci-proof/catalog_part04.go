@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	pathpkg "path"
+	"slices"
 	"strings"
 )
 
@@ -65,10 +66,8 @@ func validateProtectedPushOwnerRegistry(branch string) error {
 	if err := validateFailureProtectedPushBranches(registry.ProtectedPushBranches); err != nil {
 		return err
 	}
-	for _, protectedBranch := range registry.ProtectedPushBranches {
-		if protectedBranch == branch {
-			return nil
-		}
+	if slices.Contains(registry.ProtectedPushBranches, branch) {
+		return nil
 	}
 	return fmt.Errorf("protected push branch %q is not registered", branch)
 }

@@ -3,6 +3,7 @@ package query
 import (
 	"encoding/json"
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -16,8 +17,8 @@ func TestEnvelopeReplayAndPermutationAreCanonical(t *testing.T) {
 	for _, fact := range facts {
 		assertAdd(t, first, fact)
 	}
-	for index := len(facts) - 1; index >= 0; index-- {
-		assertAdd(t, second, facts[index])
+	for _, fact := range slices.Backward(facts) {
+		assertAdd(t, second, fact)
 	}
 	request := traversalEnvelope(id("urn:gooo:activity:pay"), LayerAll, 2, 10)
 	request.Relation = PROVUsed
@@ -26,7 +27,7 @@ func TestEnvelopeReplayAndPermutationAreCanonical(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for run := 0; run < 3; run++ {
+	for range 3 {
 		got, err := second.Execute(request)
 		if err != nil {
 			t.Fatal(err)

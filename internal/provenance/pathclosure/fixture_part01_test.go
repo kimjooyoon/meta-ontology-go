@@ -45,20 +45,18 @@ func manualInferenceEdge(
 	evidenceID := fixtureID("evidence/" + label)
 	evidenceDigest := fixtureDigest("evidence-payload/" + label)
 	edge := semantic.InferenceEdge{
-		InferenceRecord: semantic.InferenceRecord{
-			RecordID: fixtureID("record/" + label), SubjectID: subject, ObjectID: object,
-			Rule:  semantic.RuleBinding{ID: fixtureID("rule/v1"), Version: "1", Digest: fixtureDigest("rule")},
-			Phase: phase,
-			Before: semantic.SnapshotDigests{
-				Source: semantic.StableHashString("source-before/" + label), Semantic: fixtureDigest("semantic-before/" + label),
-			},
-			After: semantic.SnapshotDigests{
-				Source: semantic.StableHashString("source-after/" + label), Semantic: fixtureDigest("semantic-after/" + label),
-			},
-			Authority: authority, Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: evidenceDigest}},
-			Controls: controls,
+		RecordID: fixtureID("record/" + label), SubjectID: subject, ObjectID: object,
+		Rule:  semantic.RuleBinding{ID: fixtureID("rule/v1"), Version: "1", Digest: fixtureDigest("rule")},
+		Phase: phase,
+		Before: semantic.SnapshotDigests{
+			Source: semantic.StableHashString("source-before/" + label), Semantic: fixtureDigest("semantic-before/" + label),
 		},
-		Kind: kind,
+		After: semantic.SnapshotDigests{
+			Source: semantic.StableHashString("source-after/" + label), Semantic: fixtureDigest("semantic-after/" + label),
+		},
+		Authority: authority, Evidence: []semantic.EvidenceReference{{ID: evidenceID, Digest: evidenceDigest}},
+		Controls: controls,
+		Kind:     kind,
 	}
 	if kind == semantic.InferenceAuthoritativeDeclaration {
 		edge.SourceRoots = []semantic.ID{fixtureID("source-root/" + label)}

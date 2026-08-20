@@ -4,6 +4,7 @@ import (
 	"fmt"
 	productionsci "github.com/kimjooyoon/meta-ontology-go/internal/detection/selectiveci"
 	"reflect"
+	"slices"
 	"sort"
 )
 
@@ -60,10 +61,8 @@ func verifyProductionWorkIDs(fixture directFixture, result productionsci.PlanRes
 }
 func directObligationFor(bindings []productionsci.ObligationBinding, commandID string) string {
 	for _, binding := range bindings {
-		for _, candidate := range binding.CommandIDs {
-			if candidate == commandID {
-				return binding.ID
-			}
+		if slices.Contains(binding.CommandIDs, commandID) {
+			return binding.ID
 		}
 	}
 	return ""

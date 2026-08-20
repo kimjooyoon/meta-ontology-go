@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -48,9 +49,7 @@ func matchDatalogPatterns(patterns []DatalogAtom, facts []DatalogFact, budget *d
 }
 func copyDatalogBinding(binding datalogBinding) map[string]ID {
 	copy := make(map[string]ID, len(binding))
-	for name, value := range binding {
-		copy[name] = value
-	}
+	maps.Copy(copy, binding)
 	return copy
 }
 func datalogBindingCanonical(binding datalogBinding) string {

@@ -1,6 +1,8 @@
 package coupling
 
 import (
+	"slices"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
@@ -57,10 +59,8 @@ func validateReceiptChain(
 		return failIssue(ReasonDeltaWithoutSource, receipt.SurfaceID.String())
 	}
 	for _, edge := range chain.Edges {
-		for _, root := range edge.SourceRoots {
-			if root == receipt.AuthoritativeSource.SourceID {
-				return nil
-			}
+		if slices.Contains(edge.SourceRoots, receipt.AuthoritativeSource.SourceID) {
+			return nil
 		}
 	}
 	return failIssue(ReasonMissingAuthorityPath, receipt.SurfaceID.String())

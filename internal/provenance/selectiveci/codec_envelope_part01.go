@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"slices"
 	"sort"
 )
 
@@ -22,10 +23,10 @@ func wireInputFrom(value Input) wireInput {
 	selectedCommands := append([]semantic.ID(nil), value.SelectedCommandIDs...)
 	obligations := append([]semantic.ID(nil), value.ObligationIDs...)
 	evidenceIDs := append([]semantic.ID(nil), value.EvidenceIDs...)
-	sort.Slice(changedRoots, func(i, j int) bool { return changedRoots[i] < changedRoots[j] })
-	sort.Slice(selectedCommands, func(i, j int) bool { return selectedCommands[i] < selectedCommands[j] })
-	sort.Slice(obligations, func(i, j int) bool { return obligations[i] < obligations[j] })
-	sort.Slice(evidenceIDs, func(i, j int) bool { return evidenceIDs[i] < evidenceIDs[j] })
+	slices.Sort(changedRoots)
+	slices.Sort(selectedCommands)
+	slices.Sort(obligations)
+	slices.Sort(evidenceIDs)
 	return wireInput{Schema: value.Schema, Snapshots: wireBindingFrom(value.Snapshots), RegistryDigest: value.RegistryDigest, PlanDigest: value.PlanDigest, ChangedRootIDs: idsToStrings(changedRoots), SelectedCommandIDs: idsToStrings(selectedCommands), ObligationIDs: idsToStrings(obligations), Paths: paths, CommandReceipts: receipts, EvidenceIDs: idsToStrings(evidenceIDs), InferencePath: wirePathSetFrom(value.InferencePath)}
 }
 func inputFromWire(value wireInput) Input {
