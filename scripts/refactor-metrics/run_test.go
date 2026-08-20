@@ -23,7 +23,7 @@ func TestRunChecksAndAppliesExactEvidence(t *testing.T) {
 		MetricID: sourcepolicy.DimensionRefactorAssign, Family: sourcepolicy.FamilyRefactor, Subject: subject,
 		Value: 2, Relation: sourcepolicy.RelationEqual, Satisfied: false, Proof: sourcepolicy.ProofRegression,
 		Producer: "linecaps.Analyze", Consumer: "refactor-planner", Operation: sourcepolicy.OperationCollapseAssign,
-	}}}
+	}}}}
 	payload, err := json.Marshal(report)
 	if err != nil {
 		t.Fatal(err)

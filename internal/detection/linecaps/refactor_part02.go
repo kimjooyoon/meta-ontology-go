@@ -21,7 +21,7 @@ func FunctionIdentity(fset *token.FileSet, node ast.Node) (string, int, bool) {
 }
 
 func CollapseAssignReturn(fset *token.FileSet, node ast.Node, comments []*ast.CommentGroup) bool {
-	body, _, _, _, ok := functionBody(fset, node)
+	body, _, _, _, ok := functionBodyForRefactor(fset, node)
 	if !ok {
 		return false
 	}
