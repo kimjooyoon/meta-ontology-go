@@ -14,6 +14,7 @@ type trackedFile struct {
 	lines     int
 	data      []byte
 	objectSHA string
+	backing   string
 }
 
 type storedObject struct {

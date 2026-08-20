@@ -2,33 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 )
 
-func buildManifest(sha string, files []trackedFile,
-	objects map[string]*storedObject) manifest {
-	entries := make([]manifestEntry, 0, len(files))
-	for _, file := range files {
-		entries = append(entries, manifestEntry{
-			Logical: file.logical, Backing: objects[file.objectSHA].backing,
-			ObjectSHA: file.objectSHA, ContentSHA: contentHash(file.data),
-			Kind: file.kind, Language: file.language,
-			Mode: file.mode, Lines: file.lines,
-		})
-	}
-	sort.Slice(entries, func(i, j int) bool { return entries[i].Logical < entries[j].Logical })
-	return manifest{
-		Schema: "gooo.repository-projection.v1", SourceSHA: sha,
-		Proof: "axiomatic-foundation", Authority: "git-index-at-exact-head",
-		Entries: entries,
-	}
-}
-
 func writeStore(work string, model manifest,
-	objects map[string]*storedObject) (string, error) {
-	root := filepath.Join(work, "stored")
+	objects map[string]*storedObject, files []trackedFile) (string, error) {
+	root := filepath.Join(work, "physical")
 	names := make([]string, 0, len(objects))
 	for name := range objects {
 		names = append(names, name)
@@ -44,7 +26,22 @@ func writeStore(work string, model manifest,
 			return "", err
 		}
 	}
-	catalog := filepath.Join(root, "catalog")
+	for _, file := range files {
+		if file.backing == "" {
+			continue
+		}
+		if file.kind != "file" {
+			return "", fmt.Errorf("retained symlink is unsupported: %s", file.logical)
+		}
+		target := filepath.Join(root, filepath.FromSlash(file.backing))
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return "", err
+		}
+		if err := os.WriteFile(target, file.data, os.FileMode(file.mode)); err != nil {
+			return "", err
+		}
+	}
+	catalog := filepath.Join(root, "projection", "catalog")
 	if err := os.MkdirAll(catalog, 0o755); err != nil {
 		return "", err
 	}

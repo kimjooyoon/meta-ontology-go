@@ -46,7 +46,7 @@ func run(settings config) error {
 		return err
 	}
 	model := buildManifest(settings.expectedSHA, files, objects)
-	stored, err := writeStore(work, model, objects)
+	stored, err := writeStore(work, model, objects, files)
 	if err != nil {
 		return err
 	}

@@ -10,6 +10,9 @@ import (
 func buildObjects(files []trackedFile) map[string]*storedObject {
 	objects := make(map[string]*storedObject)
 	for _, file := range files {
+		if file.backing != "" {
+			continue
+		}
 		if _, exists := objects[file.objectSHA]; exists {
 			continue
 		}
@@ -34,7 +37,7 @@ func assignBacking(objects map[string]*storedObject) error {
 func assignGroup(group []*storedObject, prefix []string, depth int) error {
 	if len(group) <= 10 {
 		for _, object := range group {
-			parts := append([]string{"objects"}, prefix...)
+			parts := append([]string{"projection", "objects"}, prefix...)
 			object.backing = path.Join(append(parts, object.id+object.ext)...)
 		}
 		return nil
@@ -59,16 +62,4 @@ func assignGroup(group []*storedObject, prefix []string, depth int) error {
 		}
 	}
 	return nil
-}
-
-func decimalKey(hexID string) string {
-	key := make([]byte, 0, len(hexID)*2)
-	for _, digit := range []byte(hexID) {
-		value := digit - '0'
-		if digit >= 'a' {
-			value = digit - 'a' + 10
-		}
-		key = append(key, '0'+value/10, '0'+value%10)
-	}
-	return string(key)
 }

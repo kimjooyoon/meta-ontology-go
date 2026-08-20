@@ -76,5 +76,6 @@ jobs:
             ${{ runner.temp }}/repository-projection/split-plan.json
             ${{ runner.temp }}/repository-projection/density-report.json
             ${{ runner.temp }}/repository-projection/extraction-report.json
+            ${{ runner.temp }}/repository-projection/physical/projection/catalog/manifest.json
           if-no-files-found: error
           retention-days: 14
