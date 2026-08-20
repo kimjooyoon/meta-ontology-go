@@ -52,7 +52,12 @@ jobs:
           go list tool
           go build tool
       - name: Require formatted Go
-        run: test -z "$(gofmt -l .)"
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            printf 'gofmt required:\n%s\n' "$unformatted"
+            exit 1
+          fi
 
   vet:
     name: go vet

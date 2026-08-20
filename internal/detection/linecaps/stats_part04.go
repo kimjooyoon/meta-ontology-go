@@ -50,7 +50,7 @@ func (r LineMetricsReport) Summary() string {
 	total, failed := r.Total(), r.Meta.Failed()
 	fmt.Fprintf(&output, "source metrics: commit=%s files=%d dirs=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d indicators=%d failed=%d\n", r.CommitSHA, total.RecursiveFiles, total.RecursiveFolders, total.GoFiles, total.GoooFiles, total.GoLines, total.GoooLines, len(r.Meta.Indicators), len(failed))
 	for _, indicator := range failed {
-		fmt.Fprintf(&output, "  %s\t%s\tvalue=%d limit=%d operation=%s proof=%s\n", indicator.MetricID, indicator.Subject, indicator.Value, indicator.Limit, indicator.MetaOperation, indicator.ProofChoice)
+		fmt.Fprintf(&output, "  %s\t%s\tvalue=%d limit=%d operation=%s proof=%s\n", indicator.MetricID, indicator.Subject, indicator.Value, indicator.Limit, indicator.Operation, indicator.Proof)
 	}
 	return output.String()
 }
