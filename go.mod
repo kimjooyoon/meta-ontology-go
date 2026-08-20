@@ -1,6 +1,6 @@
 module github.com/kimjooyoon/meta-ontology-go
 
-go 1.27rc3
+go 1.27.0
 
 tool (
 	github.com/kimjooyoon/meta-ontology-go/scripts/line-metrics

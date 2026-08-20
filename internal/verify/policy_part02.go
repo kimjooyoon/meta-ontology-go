@@ -22,8 +22,8 @@ func CheckSourcePolicy(root string, files []string, policy LinePolicy) error {
 	for _, path := range sortedUnique(files) {
 		violations = append(violations, checkSourceFile(root, path, policy)...)
 	}
-	if policy.MaxDirectDirectoryIn > 0 {
-		violations = append(violations, checkDirectoryLayout(root, policy.MaxDirectDirectoryIn)...)
+	if policy.MaxDirectDirectoryIn > 0 || policy.RequireHomogeneousDirectories {
+		violations = append(violations, checkDirectoryLayout(root, policy)...)
 	}
 	if len(violations) == 0 {
 		return nil

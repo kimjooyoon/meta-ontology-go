@@ -11,6 +11,7 @@ func (r LineMetricsReport) Text() string {
 	sum := r.Total()
 	fmt.Fprintf(&output, "line metrics: files=%d dirs=%d go_lines=%d gooo_lines=%d\n", sum.RecursiveFiles, sum.RecursiveFolders, sum.GoLines, sum.GoooLines)
 	fmt.Fprintf(&output, "language totals: go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n", sum.GoFiles, sum.GoooFiles, sum.GoLines, sum.GoooLines)
+	fmt.Fprintf(&output, "meta indicators: total=%d blocking=%d failed=%d\n", len(r.Meta.Indicators), r.Meta.BlockingCount(), len(r.Meta.Failed()))
 	writeLanguageFileSection := func(label FileLanguage, title string) {
 		files := orderedFileMetrics(r.Files)
 		count := 0

@@ -1,11 +1,12 @@
 package verify
 
 import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
 )
 
 func discoverSourceFiles(root string) ([]string, error) {
@@ -34,29 +35,19 @@ func discoverSourceFiles(root string) ([]string, error) {
 	sort.Strings(files)
 	return files, err
 }
-func checkDirectoryLayout(root string, maxDirectEntries int) []Violation {
+func checkDirectoryLayout(root string, policy LinePolicy) []Violation {
 	report, err := linecaps.AnalyzeLineMetrics(root)
 	if err != nil {
 		return []Violation{{Path: ".", Rule: "directory layout", Detail: err.Error()}}
 	}
+	meta, err := linecaps.EvaluateLineMetricIndicators(report, policy)
+	if err != nil {
+		return []Violation{{Path: ".", Rule: "directory layout", Detail: err.Error()}}
+	}
 	violations := make([]Violation, 0)
-	for _, directory := range report.Directories {
-		directEntries := directory.DirectFiles + directory.DirectFolders
-		if directEntries > maxDirectEntries {
-			violations = append(violations, Violation{
-				Path:   directory.Path,
-				Rule:   "directory direct entries",
-				Actual: directEntries,
-				Limit:  maxDirectEntries,
-				Detail: "too many direct children",
-			})
-		}
-		if directory.DirectFolders > 0 && directory.DirectFiles > 0 {
-			violations = append(violations, Violation{
-				Path:   directory.Path,
-				Rule:   "directory mixed entries",
-				Detail: "must contain either files or folders, not both",
-			})
+	for _, indicator := range meta.Failed() {
+		if violation, ok := directoryIndicatorViolation(indicator); ok {
+			violations = append(violations, violation)
 		}
 	}
 	return violations

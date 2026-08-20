@@ -2,6 +2,8 @@ package verify
 
 import (
 	"fmt"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 // Violation is one deterministic policy failure.
@@ -20,20 +22,12 @@ func (v Violation) Error() string {
 	return fmt.Sprintf("%s: %s: got %d, limit %d", v.Path, v.Rule, v.Actual, v.Limit)
 }
 
-// LinePolicy defines deterministic source constraints used by CI.
-type LinePolicy struct {
-	MaxFileLines         int
-	MaxFunctionLines     int
-	MaxDirectDirectoryIn int
-}
+// LinePolicy aliases the canonical meta-policy used by metrics and tools.
+type LinePolicy = sourcepolicy.Policy
 
 // DefaultLinePolicy returns the currently active repository constraints.
 func DefaultLinePolicy() LinePolicy {
-	return LinePolicy{
-		MaxFileLines:         75,
-		MaxFunctionLines:     75,
-		MaxDirectDirectoryIn: 10,
-	}
+	return sourcepolicy.Default()
 }
 
 // CheckGoCaps checks the DAMP file limit and DRY function limit. If files is

@@ -6,13 +6,15 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 const (
 	// DefaultMaxFileLines is the DAMP file cap used by this repository.
-	DefaultMaxFileLines = 300
+	DefaultMaxFileLines = sourcepolicy.DefaultMaxFileLines
 	// DefaultMaxFunctionLines is the DRY function cap used by this repository.
-	DefaultMaxFunctionLines = 75
+	DefaultMaxFunctionLines = sourcepolicy.DefaultMaxFunctionLines
 )
 
 // Limits contains the inclusive maximum sizes accepted by Analyze.
@@ -21,7 +23,7 @@ type Limits struct {
 	MaxFunctionLines int
 }
 
-// DefaultLimits returns the repository's 300/75 line policy.
+// DefaultLimits returns the canonical repository line policy.
 func DefaultLimits() Limits {
 	return Limits{MaxFileLines: DefaultMaxFileLines, MaxFunctionLines: DefaultMaxFunctionLines}
 }

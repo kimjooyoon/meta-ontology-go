@@ -24,6 +24,8 @@ func run(root string, jsonMode bool) error {
 	if err != nil {
 		return err
 	}
+	report.Repository = os.Getenv("GITHUB_REPOSITORY")
+	report.CommitSHA = os.Getenv("METRICS_COMMIT_SHA")
 	if jsonMode {
 		payload, err := report.JSON()
 		if err != nil {

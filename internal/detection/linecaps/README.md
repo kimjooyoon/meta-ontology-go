@@ -19,8 +19,8 @@ if err := report.Err(); err != nil {
 
 An empty `paths` slice discovers `.go` files below `root`, in lexical order,
 excluding `.git` and `vendor`. `AnalyzeSource` is available when the caller
-already has source bytes. `Limits` are inclusive: 300 file lines and 75
-function lines pass; the 301st or 76th line produces a finding. Named functions,
+already has source bytes. `Limits` are inclusive: 75 file and function lines
+pass; the 76th line produces a finding. Named functions,
 methods, and function literals are measured from `func` through their closing
 brace.
 

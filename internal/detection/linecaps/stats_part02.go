@@ -3,10 +3,11 @@ package linecaps
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 // AnalyzeLineMetrics traverses a workspace and returns folder/file counts and
@@ -54,23 +55,12 @@ func AnalyzeLineMetrics(root string) (LineMetricsReport, error) {
 		ensureDirectoryNode(directories, parent)
 		directories[parent].directFiles++
 		extension := strings.ToLower(filepath.Ext(relative))
-		source, readErr := os.ReadFile(path)
-		if readErr != nil {
-			return readErr
+		metric, metricErr := measureFileMetric(path, relative, extension)
+		if metricErr != nil {
+			return metricErr
 		}
-		sourceLines := lineCount(source)
-		switch extension {
-		case ".go":
-			directories[parent].goFiles++
-			directories[parent].goLines += sourceLines
-			files = append(files, FileMetric{Path: relative, Language: FileLanguageGo, Lines: sourceLines})
-		case ".gooo":
-			directories[parent].goooFiles++
-			directories[parent].goooLines += sourceLines
-			files = append(files, FileMetric{Path: relative, Language: FileLanguageGooo, Lines: sourceLines})
-		default:
-			files = append(files, FileMetric{Path: relative, Language: FileLanguageOther, Lines: sourceLines})
-		}
+		files = append(files, metric)
+		accumulateFileMetric(directories[parent], metric)
 		return nil
 	})
 	if err != nil {
@@ -82,8 +72,8 @@ func AnalyzeLineMetrics(root string) (LineMetricsReport, error) {
 		entries = append(entries, path)
 	}
 	sort.Slice(entries, func(i, j int) bool {
-		iDepth := strings.Count(entries[i], "/")
-		jDepth := strings.Count(entries[j], "/")
+		iDepth := directoryDepth(entries[i])
+		jDepth := directoryDepth(entries[j])
 		if iDepth != jDepth {
 			return iDepth > jDepth
 		}
@@ -95,12 +85,14 @@ func AnalyzeLineMetrics(root string) (LineMetricsReport, error) {
 		}
 		return entries[i] < entries[j]
 	})
+	for _, node := range directories {
+		node.recursiveFiles = node.directFiles
+	}
 	for _, path := range entries {
 		node := directories[path]
 		if node == nil {
 			continue
 		}
-		node.recursiveFiles = node.directFiles
 		if path == "." {
 			continue
 		}
@@ -132,5 +124,11 @@ func AnalyzeLineMetrics(root string) (LineMetricsReport, error) {
 			GoooLines:        node.goooLines,
 		})
 	}
-	return LineMetricsReport{Root: filepath.ToSlash(root), Files: files, Directories: sorted}, nil
+	report := LineMetricsReport{Root: filepath.ToSlash(root), Files: files, Directories: sorted}
+	meta, err := EvaluateLineMetricIndicators(report, sourcepolicy.Default())
+	if err != nil {
+		return LineMetricsReport{}, err
+	}
+	report.Meta = meta
+	return report, nil
 }

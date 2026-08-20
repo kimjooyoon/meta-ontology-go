@@ -17,13 +17,13 @@ func TestAnalyzeLineMetricsTextIncludesPerLanguageRows(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := report.Text()
-	if !strings.Contains(text, "language totals: go_files=1 gooo_files=1 go_lines=2 gooo_lines=2") {
+	if !strings.Contains(text, "language totals: go_files=1 gooo_files=1 go_lines=1 gooo_lines=1") {
 		t.Fatalf("text missing language totals:\n%s", text)
 	}
-	if !strings.Contains(text, "go files: count=1 lines=2") || !strings.Contains(text, "a.go\tlines=2") {
+	if !strings.Contains(text, "go files: count=1 lines=1") || !strings.Contains(text, "a.go\tlines=1") {
 		t.Fatalf("text missing go file rows:\n%s", text)
 	}
-	if !strings.Contains(text, "gooo files: count=1 lines=2") || !strings.Contains(text, "b.gooo\tlines=2") {
+	if !strings.Contains(text, "gooo files: count=1 lines=1") || !strings.Contains(text, "b.gooo\tlines=1") {
 		t.Fatalf("text missing gooo file rows:\n%s", text)
 	}
 }

@@ -1,5 +1,7 @@
 package linecaps
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+
 // FileLanguage indicates which extension is used to classify source files.
 type FileLanguage string
 
@@ -31,9 +33,12 @@ type DirectoryMetric struct {
 
 // LineMetricsReport is the repository's line and layout metric output.
 type LineMetricsReport struct {
-	Root        string            `json:"root"`
-	Files       []FileMetric      `json:"files"`
-	Directories []DirectoryMetric `json:"directories"`
+	Repository  string              `json:"repository,omitempty"`
+	CommitSHA   string              `json:"commit_sha,omitempty"`
+	Root        string              `json:"root"`
+	Files       []FileMetric        `json:"files"`
+	Directories []DirectoryMetric   `json:"directories"`
+	Meta        sourcepolicy.Report `json:"meta"`
 }
 type directoryNode struct {
 	directFolders    int
