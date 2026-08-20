@@ -50,6 +50,43 @@ func TestCISCOPE005ImplementationLanesRejectCrossScopePaths(t *testing.T) {
 	}
 }
 
+func TestCISCOPE008EntityFieldsScopeIsAtomicAndNarrow(t *testing.T) {
+	branch := "agent/entity-fields"
+	allowed := []string{
+		"internal/semantic/graph.go",
+		"internal/syntax/parser.go",
+		"internal/bidir/lens.go",
+		"internal/generator/render.go",
+		"cmd/gooo/main.go",
+		"internal/lsp/server.go",
+	}
+	for _, path := range allowed {
+		if err := CheckPathScopeForBranch([]string{path}, branch); err != nil {
+			t.Errorf("%s should allow %s: %v", branch, path, err)
+		}
+	}
+
+	rejected := []string{
+		".github/ci-governance.json",
+		"scripts/verify/main.go",
+		"docs/spec.md",
+		"examples/billing/main.gooo",
+		"internal/verify/scope.go",
+		"../internal/semantic/graph.go",
+		"/tmp/entity-fields.go",
+		"internal/semantic/../syntax/parser.go",
+		"./internal/semantic/graph.go",
+		"internal//semantic/graph.go",
+		"internal/semantic/./graph.go",
+		"internal\\semantic\\graph.go",
+	}
+	for _, path := range rejected {
+		if err := CheckPathScopeForBranch([]string{path}, branch); err == nil {
+			t.Errorf("%s incorrectly allowed %s", branch, path)
+		}
+	}
+}
+
 func TestCISCOPE006ScopeTableValuesMatchExecutableMap(t *testing.T) {
 	table := readScopeTable(t)
 	for branch, expected := range branchScopeAllowlist {
