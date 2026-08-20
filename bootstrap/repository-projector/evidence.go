@@ -34,18 +34,24 @@ func topologyFailures(root string) (int, int, error) {
 func buildEvidence(sha string, model manifest, objects int,
 	loss, direct, mixed int) evidence {
 	unbound, lineDebt := 0, 0
+	subjects := make([]subject, 0)
 	for _, entry := range model.Entries {
 		if entry.ObjectSHA == "" || entry.Backing == "" {
 			unbound++
 		}
 		if entry.Language != "" && entry.Lines > 75 {
 			lineDebt++
+			subjects = append(subjects, subject{
+				Indicator: "source.line-cap-debt", Logical: entry.Logical,
+				Value: entry.Lines, Limit: 75, Consumer: "logical-source-splitter",
+				Operation: "split-before-storage",
+			})
 		}
 	}
 	proof := "axiomatic-foundation"
 	return evidence{
 		Schema: "gooo.repository-projection-evidence.v1", SourceSHA: sha,
-		TrackedFiles: len(model.Entries), Objects: objects,
+		TrackedFiles: len(model.Entries), Objects: objects, Subjects: subjects,
 		Indicators: []indicator{
 			{ID: "projection.roundtrip-loss", Value: loss, Limit: 0, Blocking: true,
 				Consumer: "repository-materializer", Operation: "restore-logical-tree", Proof: proof},

@@ -52,10 +52,20 @@ type indicator struct {
 	Proof     string `json:"proof_choice"`
 }
 
+type subject struct {
+	Indicator string `json:"indicator"`
+	Logical   string `json:"logical"`
+	Value     int    `json:"value"`
+	Limit     int    `json:"limit"`
+	Consumer  string `json:"consumer"`
+	Operation string `json:"meta_operation"`
+}
+
 type evidence struct {
 	Schema       string      `json:"schema"`
 	SourceSHA    string      `json:"source_sha"`
 	TrackedFiles int         `json:"tracked_files"`
 	Objects      int         `json:"stored_objects"`
 	Indicators   []indicator `json:"indicators"`
+	Subjects     []subject   `json:"subjects"`
 }
