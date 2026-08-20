@@ -166,17 +166,11 @@ jobs:
         run: |
           mkdir -p "$METRICS_DIR"
           go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -json > "$METRICS_DIR/source-metrics.json"
-          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" > "$METRICS_DIR/source-metrics.txt"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -summary > "$METRICS_DIR/source-metrics.txt"
           {
             echo "### Source metrics (go/gooo + folders/files)"
             echo '```text'
             cat "$METRICS_DIR/source-metrics.txt"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          {
-            echo "### Source metrics (json)"
-            echo '```json'
-            cat "$METRICS_DIR/source-metrics.json"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact

@@ -32,6 +32,21 @@ func TestAnalyzeLineMetricsRejectsEmptyRoot(t *testing.T) {
 		t.Fatal("empty root was accepted")
 	}
 }
+
+func TestLineMetricsSummaryIncludesOnlyFailedInventory(t *testing.T) {
+	root := t.TempDir()
+	writeMetricFile(t, root, "short.go", "package metric\n")
+	writeMetricFile(t, root, "long.go", "package metric\n"+strings.Repeat("// evidence\n", 75))
+	report, err := AnalyzeLineMetrics(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	summary := report.Summary()
+	if strings.Contains(summary, "short.go") || !strings.Contains(summary, "long.go") || !strings.Contains(summary, "split-go-declarations") {
+		t.Fatalf("summary did not project failed indicators only:\n%s", summary)
+	}
+}
+
 func directoryForPath(report LineMetricsReport, path string) DirectoryMetric {
 	for _, directory := range report.Directories {
 		if directory.Path == path {

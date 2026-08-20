@@ -44,6 +44,17 @@ func (r LineMetricsReport) Text() string {
 	return output.String()
 }
 
+// Summary returns bounded human output while JSON retains complete evidence.
+func (r LineMetricsReport) Summary() string {
+	var output strings.Builder
+	total, failed := r.Total(), r.Meta.Failed()
+	fmt.Fprintf(&output, "source metrics: commit=%s files=%d dirs=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d indicators=%d failed=%d\n", r.CommitSHA, total.RecursiveFiles, total.RecursiveFolders, total.GoFiles, total.GoooFiles, total.GoLines, total.GoooLines, len(r.Meta.Indicators), len(failed))
+	for _, indicator := range failed {
+		fmt.Fprintf(&output, "  %s\t%s\tvalue=%d limit=%d operation=%s proof=%s\n", indicator.MetricID, indicator.Subject, indicator.Value, indicator.Limit, indicator.MetaOperation, indicator.ProofChoice)
+	}
+	return output.String()
+}
+
 // Total returns aggregate metrics at the repository root.
 func (r LineMetricsReport) Total() DirectoryMetric {
 	if len(r.Directories) == 0 {
