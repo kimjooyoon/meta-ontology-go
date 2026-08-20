@@ -21,8 +21,8 @@ func densityReport(sha string, subjects []rewriteSubject) rewriteReport {
 		Indicators: []rewriteIndicator{
 			{ID: "density.applied", Value: applied, Limit: -1,
 				Consumer: "logical-materializer", Operation: "accept-density-rewrite", Proof: proof},
-			{ID: "density.blocked", Value: blocked, Limit: 0, Blocking: true,
-				Consumer: "line-density-rewriter", Operation: "classify-density-blocker", Proof: proof},
+			{ID: "density.residual", Value: blocked, Limit: 0,
+				Consumer: "source-extractor", Operation: "route-density-residual", Proof: proof},
 		},
 	}
 }
