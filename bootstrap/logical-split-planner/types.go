@@ -24,6 +24,7 @@ type declarationAtom struct {
 type planSubject struct {
 	Logical      string `json:"logical"`
 	Lines        int    `json:"lines"`
+	RequiredSave int    `json:"required_savings"`
 	MaxAtomLines int    `json:"max_atom_lines"`
 	MovableAtoms int    `json:"movable_atoms"`
 	Reason       string `json:"reason"`

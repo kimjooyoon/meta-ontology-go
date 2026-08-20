@@ -56,7 +56,8 @@ func run(root, evidence, expected, output string) error {
 		return err
 	}
 	counts := indicatorCounts(plans)
-	fmt.Printf("logical-split-planner: subjects=%d projectable=%d extraction=%d\n",
-		len(plans), counts["projectable"], len(plans)-counts["projectable"])
+	extraction := len(plans) - counts["projectable"] - counts["density-rewrite"]
+	fmt.Printf("logical-split-planner: subjects=%d projectable=%d density=%d extraction=%d\n",
+		len(plans), counts["projectable"], counts["density-rewrite"], extraction)
 	return requireClassified(report)
 }
