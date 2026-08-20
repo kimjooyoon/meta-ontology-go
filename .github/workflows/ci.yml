@@ -174,6 +174,7 @@ jobs:
           go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -summary > "$METRICS_DIR/source-metrics.txt"
           go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           go run ./scripts/source-splitter -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
+          go run ./bootstrap/source-repacker -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           {
             echo "### Source metrics (go/gooo + folders/files)"
             echo '```text'

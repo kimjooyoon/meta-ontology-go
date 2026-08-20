@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/exactsha"
 )
 
 func main() {
@@ -16,12 +16,8 @@ func main() {
 	}
 }
 
-func repositorySHA(root string) (string, error) {
-	output, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").Output()
-	if err != nil {
-		return "", fmt.Errorf("read repository SHA: %w", err)
-	}
-	return strings.TrimSpace(string(output)), nil
+func verifyRepositorySHA(root, expected string) error {
+	return exactsha.Verify(root, expected)
 }
 
 var errSplitBlocked = errors.New("split blocked")

@@ -6,9 +6,11 @@ import (
 	"go/ast"
 	"go/token"
 	"sort"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricevidence"
 )
 
-func checkSplitPlans(cfg config, report metricReport, indicators []metricIndicator) error {
+func checkSplitPlans(cfg config, report metricevidence.Report, indicators []metricevidence.Indicator) error {
 	planned, blocked, matched := 0, 0, 0
 	for _, indicator := range indicators {
 		if cfg.subject != "" && cfg.subject != indicator.Subject {
@@ -17,7 +19,7 @@ func checkSplitPlans(cfg config, report metricReport, indicators []metricIndicat
 		matched++
 		plan, err := planSource(cfg.root, indicator.Subject, report.Meta.Policy.MaxFileLines)
 		if err == nil {
-			err = report.validateTopology(plan)
+			err = validateTopology(report, plan)
 		}
 		if err == nil {
 			planned++
@@ -36,7 +38,7 @@ func checkSplitPlans(cfg config, report metricReport, indicators []metricIndicat
 	return nil
 }
 
-func (report metricReport) validateTopology(plan splitPlan) error {
+func validateTopology(report metricevidence.Report, plan splitPlan) error {
 	for _, directory := range report.Directories {
 		if directory.Path != plan.Directory {
 			continue
