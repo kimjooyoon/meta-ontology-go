@@ -21,10 +21,7 @@ func collectMetricTargets(opts options) ([]string, error) {
 		return nil, err
 	}
 	paths := make([]string, 0)
-	for _, indicator := range meta.Indicators {
-		if !indicator.Failed {
-			continue
-		}
+	for _, indicator := range meta.Failed() {
 		if indicator.Operation != sourcepolicy.OperationSplitGo && indicator.Operation != sourcepolicy.OperationSplitGooo {
 			continue
 		}
