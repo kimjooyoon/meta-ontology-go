@@ -590,7 +590,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/metric-intervention.yml",
+        ".github/workflows/metric-counterfactual.yml",
         "internal/meta/metriccounterfactualverify/intervention/**",
         "internal/meta/metriccounterfactualverify/intervention/verify/**",
         "internal/verify/scope_part01.go",
