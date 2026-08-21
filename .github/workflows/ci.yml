@@ -43,11 +43,6 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Download exact artifact provenance
-        uses: actions/download-artifact@v4
-        with:
-          name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          path: ci-meta-provenance
       - name: Bind the declared Go 1.27 toolchain
         run: |
           test "$(go env GOVERSION)" = "go1.27.0"
@@ -330,6 +325,11 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Download exact artifact provenance
+        uses: actions/download-artifact@v4
+        with:
+          name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ci-meta-provenance
       - name: Test artifact paginator contract
         run: node scripts/ci-proof/artifacts_test.js
       - name: Collect terminal canonical job evidence
