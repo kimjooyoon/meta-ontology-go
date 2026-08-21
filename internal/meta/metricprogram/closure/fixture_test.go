@@ -22,8 +22,7 @@ func bytesDigest(value []byte) string {
 }
 
 func fixtureInput() closure.Input {
-	source := []byte("package metricmetaprogram
-")
+	source := []byte("package metricmetaprogram\n")
 	program := fixtureProgram(source)
 	programJSON, _ := json.Marshal(program)
 	verificationJSON, _ := json.Marshal(fixtureVerification(program))

@@ -32,13 +32,11 @@ func run(value config) error {
 	if err := writeOutputs(value.outputDir, receiptJSON, reportJSON); err != nil {
 		return err
 	}
-	fmt.Printf("verified: %s artifact=%d files=3
-", report.ReceiptDigest, report.ArtifactID)
+	fmt.Printf("verified: %s artifact=%d files=3\n", report.ReceiptDigest, report.ArtifactID)
 	return nil
 }
 
 func marshal(value any) ([]byte, error) {
 	raw, err := json.MarshalIndent(value, "", "  ")
-	return append(raw, '
-'), err
+	return append(raw, '\n'), err
 }
