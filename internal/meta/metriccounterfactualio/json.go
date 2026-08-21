@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func Digest(value any) (string, error) {
@@ -50,4 +51,16 @@ func Equal(left, right any) bool {
 	leftJSON, leftErr := json.Marshal(left)
 	rightJSON, rightErr := json.Marshal(right)
 	return leftErr == nil && rightErr == nil && bytes.Equal(leftJSON, rightJSON)
+}
+
+func ValidSubject(repository, subjectSHA string) bool {
+	if strings.TrimSpace(repository) == "" || len(subjectSHA) != 40 {
+		return false
+	}
+	for _, char := range subjectSHA {
+		if !strings.ContainsRune("0123456789abcdef", char) {
+			return false
+		}
+	}
+	return true
 }

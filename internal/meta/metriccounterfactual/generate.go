@@ -3,13 +3,12 @@ package metriccounterfactual
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 )
 
 func Generate(repository, subjectSHA string) (Ledger, error) {
-	if !ValidSubject(repository, subjectSHA) {
+	if !artifact.ValidSubject(repository, subjectSHA) {
 		return Ledger{}, fmt.Errorf("invalid repository subject")
 	}
 	manifest, err := BaselineManifest()
@@ -70,16 +69,4 @@ func ValidLedger(value Ledger) bool {
 	digest := value.Digest
 	sealed, err := SealLedger(value)
 	return err == nil && digest == sealed.Digest
-}
-
-func ValidSubject(repository, subjectSHA string) bool {
-	if strings.TrimSpace(repository) == "" || len(subjectSHA) != 40 {
-		return false
-	}
-	for _, char := range subjectSHA {
-		if !strings.ContainsRune("0123456789abcdef", char) {
-			return false
-		}
-	}
-	return true
 }

@@ -8,8 +8,8 @@ import (
 
 type indicatorCheck struct {
 	id, family, trilemma, expected, actual string
-	satisfied                            bool
-	evidence                             any
+	satisfied                              bool
+	evidence                               any
 }
 
 func EvaluateIndicators(manifest Manifest, plan Plan, before, after State, receipts []Receipt, delta Delta) ([]Indicator, error) {
