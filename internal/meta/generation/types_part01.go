@@ -1,6 +1,6 @@
 package generation
 
-const SchemaVersion = "gooo/self-improvement-generation/v4"
+const SchemaVersion = "gooo/self-improvement-generation/v5"
 
 type Decision string
 

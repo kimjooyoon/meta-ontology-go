@@ -7,14 +7,16 @@ import (
 )
 
 func TestActionOutcomeValidationRejectsForgery(t *testing.T) {
-	action := Action{
+	indicator := sourcepolicy.Indicator{
 		MetricID:      "gooo.metric.source.file-lines.v1",
 		Applicability: "APPLICABLE",
 		Blocking:      true,
 	}
-	action.IndicatorOutcome = expectedActionOutcome(
-		action.MetricID, action.Applicability, action.Blocking,
-	)
+	action := Action{
+		IndicatorID: indicatorID(indicator), MetricID: indicator.MetricID,
+		Applicability: indicator.Applicability, Blocking: indicator.Blocking,
+		SourceIndicator: indicator, IndicatorOutcome: indicator.Outcome(),
+	}
 	if err := validateActionOutcomes([]Action{action}); err != nil {
 		t.Fatal(err)
 	}
@@ -28,14 +30,16 @@ func TestActionOutcomeValidationRejectsForgery(t *testing.T) {
 }
 
 func TestExecutionOutcomeValidationRejectsForgery(t *testing.T) {
-	step := ExecutionStep{
+	indicator := sourcepolicy.Indicator{
 		MetricID:      "gooo.metric.refactor.single-return.v1",
 		Applicability: "APPLICABLE",
 		Blocking:      false,
 	}
-	step.IndicatorOutcome = expectedActionOutcome(
-		step.MetricID, step.Applicability, step.Blocking,
-	)
+	step := ExecutionStep{
+		ActionIndicatorID: indicatorID(indicator), MetricID: indicator.MetricID,
+		Applicability: indicator.Applicability, Blocking: indicator.Blocking,
+		SourceIndicator: indicator, IndicatorOutcome: indicator.Outcome(),
+	}
 	if err := validateExecutionOutcomes([]ExecutionStep{step}); err != nil {
 		t.Fatal(err)
 	}
