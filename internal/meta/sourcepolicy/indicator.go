@@ -11,23 +11,23 @@ type Observation struct {
 
 // Indicator joins a metric fact to policy, proof choice, and meta operation.
 type Indicator struct {
-	MetricID           Dimension           `json:"metric_id"`
-	Family             Family              `json:"family"`
-	Subject            string              `json:"subject"`
-	SubjectKind        SubjectKind         `json:"subject_kind"`
-	Value              int                 `json:"value"`
-	Limit              int                 `json:"limit"`
-	Relation           Relation            `json:"relation"`
-	Applicability      Applicability       `json:"applicability"`
-	ApplicabilityRule  string              `json:"applicability_rule_id"`
+	MetricID            Dimension           `json:"metric_id"`
+	Family              Family              `json:"family"`
+	Subject             string              `json:"subject"`
+	SubjectKind         SubjectKind         `json:"subject_kind"`
+	Value               int                 `json:"value"`
+	Limit               int                 `json:"limit"`
+	Relation            Relation            `json:"relation"`
+	Applicability       Applicability       `json:"applicability"`
+	ApplicabilityRule   string              `json:"applicability_rule_id"`
 	ApplicabilityReason ApplicabilityReason `json:"applicability_reason"`
-	Blocking           bool                `json:"blocking"`
-	Satisfied          bool                `json:"satisfied"`
-	Proof              ProofChoice         `json:"proof_choice"`
-	Producer           string              `json:"producer"`
-	Consumer           string              `json:"consumer"`
-	Operation          Operation           `json:"meta_operation"`
-	Detail             string              `json:"detail,omitempty"`
+	Blocking            bool                `json:"blocking"`
+	Satisfied           bool                `json:"satisfied"`
+	Proof               ProofChoice         `json:"proof_choice"`
+	Producer            string              `json:"producer"`
+	Consumer            string              `json:"consumer"`
+	Operation           Operation           `json:"meta_operation"`
+	Detail              string              `json:"detail,omitempty"`
 }
 
 // Report is the deterministic bridge from metrics to meta operations.
@@ -40,7 +40,7 @@ type Report struct {
 func (r Report) Actionable() []Indicator {
 	actionable := make([]Indicator, 0)
 	for _, indicator := range r.Indicators {
-		if indicator.Applicability == ApplicabilityApplicable && !indicator.Satisfied {
+		if indicator.Applicability != ApplicabilityNotApplicable && !indicator.Satisfied {
 			actionable = append(actionable, indicator)
 		}
 	}
@@ -60,7 +60,7 @@ func (r Report) Failed() []Indicator {
 func (r Report) BlockingCount() int {
 	count := 0
 	for _, indicator := range r.Indicators {
-		if indicator.Applicability == ApplicabilityApplicable && indicator.Blocking {
+		if indicator.Applicability != ApplicabilityNotApplicable && indicator.Blocking {
 			count++
 		}
 	}
