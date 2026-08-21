@@ -7,7 +7,7 @@ import (
 
 func TestProjectRootTopologyHasClosedNotApplicableDecision(t *testing.T) {
 	indicator := Indicator{
-		MetricID:      MetricDirectEntries,
+		MetricID:      "gooo.metric.layout.direct-entries.v1",
 		Applicability: "NOT_APPLICABLE",
 		Satisfied:     true,
 	}

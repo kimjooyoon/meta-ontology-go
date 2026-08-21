@@ -12,21 +12,21 @@ func TestIndicatorOutcomeClosesEnforcementEffect(t *testing.T) {
 		{
 			name: "blocking pass",
 			indicator: Indicator{
-				MetricID: MetricFileLines, Blocking: true, Satisfied: true,
+				MetricID: "gooo.metric.source.file-lines.v1", Blocking: true, Satisfied: true,
 			},
 			decision: IndicatorDecisionPass, effect: EnforcementEffectAllow,
 		},
 		{
 			name: "blocking failure",
 			indicator: Indicator{
-				MetricID: MetricFileLines, Blocking: true, Satisfied: false,
+				MetricID: "gooo.metric.source.file-lines.v1", Blocking: true, Satisfied: false,
 			},
 			decision: IndicatorDecisionFailClosed, effect: EnforcementEffectBlock,
 		},
 		{
 			name: "observational failure",
 			indicator: Indicator{
-				MetricID: MetricFileLines, Blocking: false, Satisfied: false,
+				MetricID: "gooo.metric.source.file-lines.v1", Blocking: false, Satisfied: false,
 			},
 			decision: IndicatorDecisionFailClosed, effect: EnforcementEffectNone,
 		},
