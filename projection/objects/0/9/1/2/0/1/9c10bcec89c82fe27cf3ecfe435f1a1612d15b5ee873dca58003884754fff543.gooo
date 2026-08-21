@@ -12,9 +12,17 @@ type definition struct {
 	consumer  string
 }
 
-func definitionFor(policy Policy, dimension Dimension) (definition, error) {
+func definitionFor(policy Policy, observation Observation) (definition, error) {
 	observe := definition{family: FamilyVolume, relation: RelationObserve, proof: ProofCoherence, operation: OperationObserve, consumer: "metric-report"}
-	switch dimension {
+	if policy.ExemptProjectRootTopology && observation.Subject == "." {
+		switch observation.Dimension {
+		case DimensionDirectEntries, DimensionDirectoryKinds:
+			return definition{family: FamilyTopology, relation: RelationObserve,
+				proof: ProofFoundation, operation: OperationExemptRoot,
+				consumer: "repository-projector"}, nil
+		}
+	}
+	switch observation.Dimension {
 	case DimensionGoFiles, DimensionGoooFiles, DimensionGoLines, DimensionGoooLines:
 		return observe, nil
 	case DimensionDirectFiles, DimensionDirectFolders, DimensionRecursiveFiles, DimensionRecursiveFolders:
@@ -49,7 +57,7 @@ func definitionFor(policy Policy, dimension Dimension) (definition, error) {
 	case DimensionToolchain:
 		return definition{family: FamilyConformance, limit: 1, relation: RelationEqual, blocking: true, proof: ProofRegression, operation: OperationSelectToolchain, consumer: "go-toolchain-selector"}, nil
 	default:
-		return definition{}, fmt.Errorf("unknown source metric dimension %q", dimension)
+		return definition{}, fmt.Errorf("unknown source metric dimension %q", observation.Dimension)
 	}
 }
 

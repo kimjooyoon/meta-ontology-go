@@ -10,11 +10,13 @@ func TestEvaluateSelectsAllTrilemmaBranchesAndOperations(t *testing.T) {
 		{Subject: "wrapper.go:3:wrapper", Dimension: DimensionRefactorReturn, Value: 1},
 		{Subject: "assign.go:3:assign", Dimension: DimensionRefactorAssign, Value: 2},
 		{Subject: "fixture#sha256:digest", Dimension: DimensionRefactorDuplicate, Value: 1},
+		{Subject: ".", Dimension: DimensionDirectEntries, Value: 99},
+		{Subject: ".", Dimension: DimensionDirectoryKinds, Value: 2},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(report.Indicators) != 6 || len(report.Actionable()) != 3 || len(report.Failed()) != 2 {
+	if len(report.Indicators) != 8 || len(report.Actionable()) != 3 || len(report.Failed()) != 2 {
 		t.Fatalf("unexpected indicator report: %#v", report)
 	}
 	proofs := map[ProofChoice]bool{}
@@ -28,6 +30,10 @@ func TestEvaluateSelectsAllTrilemmaBranchesAndOperations(t *testing.T) {
 		}
 		if indicator.MetricID == DimensionRefactorAssign && (indicator.Blocking || indicator.Satisfied || indicator.Operation != OperationCollapseAssign) {
 			t.Fatalf("refactor candidate lost its non-blocking operation: %#v", indicator)
+		}
+		if indicator.Subject == "." && (indicator.MetricID == DimensionDirectEntries || indicator.MetricID == DimensionDirectoryKinds) &&
+			(indicator.Blocking || !indicator.Satisfied || indicator.Operation != OperationExemptRoot) {
+			t.Fatalf("project root topology exemption lost its meta operation: %#v", indicator)
 		}
 	}
 	for _, proof := range []ProofChoice{ProofFoundation, ProofCoherence, ProofRegression} {

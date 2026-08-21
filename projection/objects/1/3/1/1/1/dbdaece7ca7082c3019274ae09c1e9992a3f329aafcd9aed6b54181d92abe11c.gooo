@@ -35,6 +35,7 @@ const (
 	OperationCollapseAssign  Operation = "collapse-assign-return"
 	OperationPartition       Operation = "partition-directory"
 	OperationSeparateKinds   Operation = "separate-directory-kinds"
+	OperationExemptRoot      Operation = "exempt-project-root-topology"
 	OperationModernize       Operation = "apply-go-fix"
 	OperationSelectToolchain Operation = "select-toolchain"
 )

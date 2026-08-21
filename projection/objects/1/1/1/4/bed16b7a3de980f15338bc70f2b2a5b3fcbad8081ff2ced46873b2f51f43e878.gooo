@@ -31,7 +31,7 @@ func Evaluate(policy Policy, observations []Observation) (Report, error) {
 }
 
 func evaluateObservation(policy Policy, observation Observation) (Indicator, error) {
-	definition, err := definitionFor(policy, observation.Dimension)
+	definition, err := definitionFor(policy, observation)
 	if err != nil {
 		return Indicator{}, err
 	}

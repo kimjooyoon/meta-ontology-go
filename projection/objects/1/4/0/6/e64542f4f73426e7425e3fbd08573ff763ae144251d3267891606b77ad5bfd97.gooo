@@ -39,3 +39,16 @@ func TestCheckSourcePolicyRejectsTooManyDirectEntries(t *testing.T) {
 		t.Fatal("too many direct entries were accepted")
 	}
 }
+
+func TestCheckSourcePolicyAllowsMixedProjectRoot(t *testing.T) {
+	root := t.TempDir()
+	if err := os.Mkdir(filepath.Join(root, "child"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("project\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := CheckSourcePolicy(root, nil, DefaultLinePolicy()); err != nil {
+		t.Fatal(err)
+	}
+}

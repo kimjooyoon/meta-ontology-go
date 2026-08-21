@@ -59,6 +59,9 @@ func lineCount(data []byte) int {
 }
 
 func retainedBacking(logical string) (string, bool) {
+	if logical == "README.md" {
+		return logical, true
+	}
 	if logical == "go.mod" || logical == "go.sum" {
 		return filepath.ToSlash(filepath.Join("module", logical)), true
 	}
