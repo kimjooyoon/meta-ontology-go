@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace"
 )
 
 func VerifyFiles(ledgerPath, receiptPath, provenancePath, patchPath string) error {
@@ -27,7 +28,7 @@ func VerifyFiles(ledgerPath, receiptPath, provenancePath, patchPath string) erro
 		return err
 	}
 	var ledger Ledger
-	var patch Patch
+	var patch workspace.Patch
 	var receipts generation.ReceiptReport
 	var provenance generation.ArtifactProvenance
 	if err := json.Unmarshal(ledgerPayload, &ledger); err != nil {
@@ -49,7 +50,7 @@ func VerifyFiles(ledgerPath, receiptPath, provenancePath, patchPath string) erro
 	if err := validateLedger(ledger); err != nil {
 		return err
 	}
-	if err := validatePatch(patch); err != nil {
+	if err := workspace.Validate(patch); err != nil {
 		return err
 	}
 	if !bytes.Equal(ledgerPayload, canonicalLedger) || !bytes.Equal(patchPayload, canonicalPatch) ||

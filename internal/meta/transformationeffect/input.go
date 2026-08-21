@@ -41,21 +41,16 @@ func loadInputs(opts Options) (inputSet, error) {
 }
 
 func validateInputs(in inputSet, expected string) error {
-	if !validSHA(expected) || in.metrics.CommitSHA != expected ||
-		in.plan.HeadSHA != expected || in.execution.HeadSHA != expected ||
-		in.receipts.HeadSHA != expected || in.provenance.HeadSHA != expected {
+	if !validSHA(expected) || in.metrics.CommitSHA != expected || in.plan.HeadSHA != expected || in.execution.HeadSHA != expected || in.receipts.HeadSHA != expected || in.provenance.HeadSHA != expected {
 		return fmt.Errorf("artifact head is not exact %s", expected)
 	}
-	if in.metrics.Meta.Schema != sourcepolicy.IndicatorSchema ||
-		!in.metrics.Meta.Policy.ExemptProjectRootTopology || !metricLedgerBound(in) {
+	if in.metrics.Meta.Schema != sourcepolicy.IndicatorSchema || !in.metrics.Meta.Policy.ExemptProjectRootTopology || !metricLedgerBound(in) {
 		return fmt.Errorf("source indicator ledger is not bound")
 	}
 	wantExecution := generation.BuildExecutionManifest(in.plan)
 	wantReceipts := generation.VerifyReceipts(in.plan, in.receipts.Receipts)
 	wantProvenance := generation.BindArtifactProvenance(in.plan, in.execution, in.receipts)
-	if !reflect.DeepEqual(wantExecution, in.execution) ||
-		!reflect.DeepEqual(wantReceipts, in.receipts) ||
-		!reflect.DeepEqual(wantProvenance, in.provenance) {
+	if !reflect.DeepEqual(wantExecution, in.execution) || !reflect.DeepEqual(wantReceipts, in.receipts) || !reflect.DeepEqual(wantProvenance, in.provenance) {
 		return fmt.Errorf("meta artifact replay diverged")
 	}
 	return nil
@@ -63,8 +58,7 @@ func validateInputs(in inputSet, expected string) error {
 
 func metricLedgerBound(in inputSet) bool {
 	ledger := in.plan.IndicatorDecisionLedger
-	if ledger == nil || ledger.IndicatorCount != len(in.metrics.Meta.Indicators) ||
-		len(ledger.Entries) != len(in.metrics.Meta.Indicators) {
+	if ledger == nil || ledger.IndicatorCount != len(in.metrics.Meta.Indicators) || len(ledger.Entries) != len(in.metrics.Meta.Indicators) {
 		return false
 	}
 	left, right := make([]string, 0, len(ledger.Entries)), make([]string, 0, len(ledger.Entries))

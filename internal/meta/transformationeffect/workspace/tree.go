@@ -1,4 +1,4 @@
-package transformationeffect
+package workspace
 
 import (
 	"fmt"
@@ -6,24 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
-type fileState struct {
-	Path   string `json:"path"`
-	Kind   string `json:"kind"`
-	Mode   uint32 `json:"mode"`
-	SHA256 string `json:"sha256"`
-	data   []byte
-}
-
-type treeState struct {
-	Entries []fileState
-	Digest  string
-}
-
-func scanTree(root string) (treeState, error) {
-	state := treeState{Entries: []fileState{}}
+func Scan(root string) (State, error) {
+	state := State{Entries: []Entry{}}
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -33,7 +19,7 @@ func scanTree(root string) (treeState, error) {
 			return err
 		}
 		rel = filepath.ToSlash(rel)
-		if rel == ".git" || strings.HasPrefix(rel, ".git/") {
+		if rel == ".git" {
 			if entry.IsDir() {
 				return filepath.SkipDir
 			}
@@ -61,7 +47,7 @@ func scanTree(root string) (treeState, error) {
 		} else {
 			return fmt.Errorf("unsupported workspace entry %s", rel)
 		}
-		state.Entries = append(state.Entries, fileState{rel, kind, uint32(info.Mode()), hashBytes(data), data})
+		state.Entries = append(state.Entries, Entry{rel, kind, uint32(info.Mode()), hashBytes(data), data})
 		return nil
 	})
 	if err != nil {
@@ -72,7 +58,7 @@ func scanTree(root string) (treeState, error) {
 	return state, nil
 }
 
-func copyTree(state treeState, root string) error {
+func copyTree(state State, root string) error {
 	for _, entry := range state.Entries {
 		path := filepath.Join(root, filepath.FromSlash(entry.Path))
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

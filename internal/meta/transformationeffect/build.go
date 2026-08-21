@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace"
 )
 
 func Build(opts Options) (Result, error) {
@@ -12,7 +13,7 @@ func Build(opts Options) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	sourceBefore, err := scanTree(opts.Root)
+	sourceBefore, err := workspace.Scan(opts.Root)
 	if err != nil {
 		return Result{}, err
 	}
@@ -20,7 +21,7 @@ func Build(opts Options) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	sourceAfter, err := scanTree(opts.Root)
+	sourceAfter, err := workspace.Scan(opts.Root)
 	if err != nil || sourceAfter.Digest != sourceBefore.Digest {
 		return Result{}, fmt.Errorf("source workspace changed outside sandbox: %w", err)
 	}
@@ -36,17 +37,16 @@ func Build(opts Options) (Result, error) {
 	ledger := Ledger{Schema: ledgerSchema, Metaprogram: "scripts/transformation-effect",
 		BaseSHA: in.plan.BaseSHA, HeadSHA: in.plan.HeadSHA, SourceSchema: in.metrics.Meta.Schema,
 		RootTopologyExempt: true, Artifacts: in.digests, InputDigest: hashJSON(in.digests),
-		IndicatorLedgerDigest: in.plan.IndicatorDecisionLedger.Digest,
-		IndicatorLedgerCount: in.plan.IndicatorDecisionLedger.IndicatorCount,
-		Decision: decision, Reason: reason, WorkspaceMode: string(generation.WorkspaceModeDisposable),
+		IndicatorLedgerDigest: in.plan.IndicatorDecisionLedger.Digest, IndicatorLedgerCount: in.plan.IndicatorDecisionLedger.IndicatorCount,
+		Decision:              decision, Reason: reason, WorkspaceMode: string(generation.WorkspaceModeDisposable),
 		WriteBoundary: string(generation.WriteBoundarySandboxOnly), SourceTreeBefore: sourceBefore.Digest,
 		SourceTreeAfter: sourceAfter.Digest, SourceWorkspaceUnchanged: true,
 		SandboxTreeBefore: executed.baseline.Digest, SandboxTreeAfter: executed.final.Digest,
 		Effects: executed.effects, PatchDigest: executed.patch.PatchDigest,
-		InputReceiptReportDigest: in.receipts.ReportDigest,
+		InputReceiptReportDigest:     in.receipts.ReportDigest,
 		GeneratedReceiptReportDigest: executed.receipts.ReportDigest,
-		InputProvenanceDigest: in.provenance.EnvelopeDigest,
-		ExecutedProvenanceDigest: executed.provenance.EnvelopeDigest, Status: "BOUND"}
+		InputProvenanceDigest:        in.provenance.EnvelopeDigest,
+		ExecutedProvenanceDigest:     executed.provenance.EnvelopeDigest, Status: "BOUND"}
 	ledger.Indicators = effectIndicators(ledger, len(in.plan.Selected), executed.receipts.Decision)
 	ledger = sealLedger(ledger)
 	if err := validateLedger(ledger); err != nil {
