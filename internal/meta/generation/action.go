@@ -9,5 +9,7 @@ func candidateKey(candidate candidate) string {
 func actionFor(candidate candidate, id string) Action {
 	return Action{IndicatorID: id, MetricID: candidate.indicator.MetricID, Subject: candidate.indicator.Subject,
 		Operation: candidate.binding.Operation, IndependenceGroupID: candidate.binding.IndependenceGroupID,
-		ProofChoice: candidate.binding.ProofChoice, Executor: candidate.binding.Executor, Priority: candidate.binding.Priority}
+		ProofChoice: candidate.binding.ProofChoice, Executor: candidate.binding.Executor, Evaluator: candidate.binding.Evaluator,
+		RequiredIndicatorIDs: append([]string{}, candidate.binding.RequiredIndicatorIDs...), ReceiptRequired: candidate.binding.ReceiptRequired,
+		Priority: candidate.binding.Priority}
 }

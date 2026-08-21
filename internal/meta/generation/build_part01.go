@@ -17,6 +17,7 @@ func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 		IndicatorsDigest: digestJSON(indicators), FloorDigest: digestJSON(floors),
 		InputDigest: digestJSON(input), RequestedK: requestedK,
 		MinimumIndependent: minimumIndependent, ReplayProof: ProofCoherence,
+		Registry: registry,
 	}
 	if !validSHA(baseSHA) || !validSHA(headSHA) || duplicateIndicators(indicators) {
 		plan.Decision, plan.Reason = DecisionUnknown, ReasonInvalidInput
