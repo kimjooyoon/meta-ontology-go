@@ -683,6 +683,20 @@
       ]
     },
     {
+      "branch": "agent/root-readme-applicability-v16",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/root-readme-indicator",
+        "internal/detection/linecaps",
+        "internal/meta/generation",
+        "internal/meta/sourcepolicy",
+        "internal/verify/scope_part01.go",
+        "scripts/self-improvement-cycle",
+        "scripts/source-subject-witness"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"

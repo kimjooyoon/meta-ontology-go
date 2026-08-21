@@ -29,17 +29,26 @@ func TestRootWithoutReadmeRemainsAnExplicitMetricException(t *testing.T) {
 	for _, indicator := range report.Meta.Indicators {
 		if indicator.Subject != "." ||
 			(indicator.MetricID != sourcepolicy.DimensionDirectEntries &&
-				indicator.MetricID != sourcepolicy.DimensionDirectoryKinds) {
+				indicator.MetricID != sourcepolicy.DimensionDirectoryKinds &&
+				indicator.MetricID != sourcepolicy.DimensionRootREADME) {
 			continue
 		}
 		exemptions++
+		if indicator.MetricID == sourcepolicy.DimensionRootREADME {
+			if indicator.Value != 0 || indicator.Detail != "ontology="+rootREADMEOntology ||
+				indicator.ApplicabilityReason != sourcepolicy.ApplicabilityReasonRootREADMEExempt ||
+				indicator.Operation != sourcepolicy.OperationExemptRootREADME {
+				t.Fatalf("root README exception is not bound to meta code: %#v", indicator)
+			}
+			continue
+		}
 		if indicator.Applicability != sourcepolicy.ApplicabilityNotApplicable ||
 			indicator.ApplicabilityReason != sourcepolicy.ApplicabilityReasonRootTopologyExempt ||
 			indicator.Operation != sourcepolicy.OperationExemptRoot {
 			t.Fatalf("root exception is not bound to meta code: %#v", indicator)
 		}
 	}
-	if exemptions != 2 {
-		t.Fatalf("root topology exemptions = %d", exemptions)
+	if exemptions != 3 {
+		t.Fatalf("root exemptions = %d", exemptions)
 	}
 }

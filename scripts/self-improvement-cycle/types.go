@@ -54,16 +54,6 @@ type MetricsSnapshot struct {
 	GoooLines        int    `json:"gooo_lines"`
 }
 
-type MetricsBinding struct {
-	Schema             string          `json:"schema"`
-	LogicalRoot        MetricsSnapshot `json:"logical_root"`
-	StorageRoot        MetricsSnapshot `json:"storage_root"`
-	RootTopologyExempt bool            `json:"root_topology_exempt"`
-	RootWitnessDigest  string          `json:"root_witness_digest"`
-	RootWitnessCount   int             `json:"root_witness_count"`
-	SemanticDigest     string          `json:"semantic_digest"`
-}
-
 type planDocument struct {
 	SchemaVersion       string `json:"schema_version"`
 	BaseSHA             string `json:"base_sha"`

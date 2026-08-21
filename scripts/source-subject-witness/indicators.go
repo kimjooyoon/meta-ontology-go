@@ -9,6 +9,7 @@ type sourceIndicator struct {
 	Blocking            bool   `json:"blocking"`
 	Consumer            string `json:"consumer"`
 	Decision            string `json:"decision"`
+	Detail              string `json:"detail"`
 	EnforcementEffect   string `json:"enforcement_effect"`
 	EvaluationState     string `json:"evaluation_state"`
 	FailureCode         string `json:"failure_code"`

@@ -33,12 +33,20 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 		return indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleDefault &&
 			indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonCatalogApplicable
 	case sourcepolicy.ApplicabilityNotApplicable:
-		return indicator.Subject == "." &&
-			indicator.SubjectKind == sourcepolicy.SubjectKindProjectRoot &&
-			indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleProjectRootTopology &&
-			indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonRootTopologyExempt &&
-			indicator.Operation == sourcepolicy.OperationExemptRoot &&
-			indicator.Satisfied && !indicator.Blocking
+		if indicator.Subject != "." || indicator.SubjectKind != sourcepolicy.SubjectKindProjectRoot ||
+			!indicator.Satisfied || indicator.Blocking {
+			return false
+		}
+		switch indicator.Operation {
+		case sourcepolicy.OperationExemptRoot:
+			return indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleProjectRootTopology &&
+				indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonRootTopologyExempt
+		case sourcepolicy.OperationExemptRootREADME:
+			return indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleProjectRootREADME &&
+				indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonRootREADMEExempt
+		default:
+			return false
+		}
 	default:
 		return false
 	}

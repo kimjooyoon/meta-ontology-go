@@ -3,11 +3,15 @@ package sourcepolicy
 const (
 	ApplicabilityRuleDefault             = "gooo.catalog.source-policy.default-applicability.v1"
 	ApplicabilityRuleProjectRootTopology = "gooo.catalog.source-policy.project-root-topology.v1"
+	ApplicabilityRuleProjectRootREADME   = "gooo.catalog.source-policy.project-root-readme.v1"
 )
 
 func indicatorApplicability(definition definition) (Applicability, string, ApplicabilityReason) {
-	if definition.operation == OperationExemptRoot {
+	switch definition.operation {
+	case OperationExemptRoot:
 		return ApplicabilityNotApplicable, ApplicabilityRuleProjectRootTopology, ApplicabilityReasonRootTopologyExempt
+	case OperationExemptRootREADME:
+		return ApplicabilityNotApplicable, ApplicabilityRuleProjectRootREADME, ApplicabilityReasonRootREADMEExempt
 	}
 	return ApplicabilityApplicable, ApplicabilityRuleDefault, ApplicabilityReasonCatalogApplicable
 }

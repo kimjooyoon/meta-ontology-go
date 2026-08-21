@@ -9,8 +9,8 @@ func validateSource(report sourceReport, expectedSHA string) error {
 	if report.Meta.Schema != "gooo/indicator-report/v3" || report.Meta.Policy.Schema != "gooo/source-policy/v1" {
 		return fmt.Errorf("source metric schema is unsupported")
 	}
-	if !report.Meta.Policy.ExemptProjectRootTopology {
-		return fmt.Errorf("project root topology exemption is required")
+	if !report.Meta.Policy.ExemptProjectRootTopology || !report.Meta.Policy.ExemptProjectRootREADME {
+		return fmt.Errorf("project root topology and README exemptions are required")
 	}
 	for _, check := range []func() error{
 		func() error { return validateFiles(report.Files) },

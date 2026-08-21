@@ -11,11 +11,12 @@ type ApplicabilityReason string
 const IndicatorSchema = "gooo/indicator-report/v3"
 
 const (
-	FamilyVolume      Family = "volume"
-	FamilyTopology    Family = "topology"
-	FamilyDuplication Family = "duplication"
-	FamilyRefactor    Family = "refactor"
-	FamilyConformance Family = "conformance"
+	FamilyVolume        Family = "volume"
+	FamilyTopology      Family = "topology"
+	FamilyDuplication   Family = "duplication"
+	FamilyRefactor      Family = "refactor"
+	FamilyConformance   Family = "conformance"
+	FamilyDocumentation Family = "documentation"
 )
 
 // ProofChoice makes the Munchausen-trilemma branch explicit for every metric.
@@ -46,18 +47,21 @@ const (
 
 	ApplicabilityReasonCatalogApplicable  ApplicabilityReason = "CATALOG_APPLICABLE"
 	ApplicabilityReasonRootTopologyExempt ApplicabilityReason = "ROOT_TOPOLOGY_EXEMPT"
+	ApplicabilityReasonRootREADMEExempt   ApplicabilityReason = "ROOT_README_EXEMPT"
 )
 
 const (
-	OperationObserve         Operation = "observe"
-	OperationSplitGo         Operation = "split-go-declarations"
-	OperationSplitGooo       Operation = "split-gooo-sections"
-	OperationExtractFunction Operation = "extract-function"
-	OperationInspectWrapper  Operation = "inspect-wrapper"
-	OperationCollapseAssign  Operation = "collapse-assign-return"
-	OperationPartition       Operation = "partition-directory"
-	OperationSeparateKinds   Operation = "separate-directory-kinds"
-	OperationExemptRoot      Operation = "exempt-project-root-topology"
-	OperationModernize       Operation = "apply-go-fix"
-	OperationSelectToolchain Operation = "select-toolchain"
+	OperationObserve           Operation = "observe"
+	OperationSplitGo           Operation = "split-go-declarations"
+	OperationSplitGooo         Operation = "split-gooo-sections"
+	OperationExtractFunction   Operation = "extract-function"
+	OperationInspectWrapper    Operation = "inspect-wrapper"
+	OperationCollapseAssign    Operation = "collapse-assign-return"
+	OperationPartition         Operation = "partition-directory"
+	OperationSeparateKinds     Operation = "separate-directory-kinds"
+	OperationExemptRoot        Operation = "exempt-project-root-topology"
+	OperationExemptRootREADME  Operation = "exempt-project-root-readme"
+	OperationRequireRootREADME Operation = "require-project-root-readme"
+	OperationModernize         Operation = "apply-go-fix"
+	OperationSelectToolchain   Operation = "select-toolchain"
 )

@@ -57,7 +57,7 @@ func buildEnvelope(in inputs, opts options) Envelope {
 }
 
 func metricsProjection(metrics metricsDocument) MetricsBinding {
-	result := MetricsBinding{Schema: metrics.Meta.Schema, RootTopologyExempt: metrics.Meta.Policy.ExemptProjectRootTopology}
+	result := MetricsBinding{Schema: metrics.Meta.Schema, RootTopologyExempt: metrics.Meta.Policy.ExemptProjectRootTopology, RootREADMEExempt: metrics.Meta.Policy.ExemptProjectRootREADME, RootREADMEValue: rootREADMEValue(metrics.Files), RootREADMEOntology: rootREADMEOntology}
 	for _, root := range metrics.Directories {
 		if root.Path == "." {
 			result.LogicalRoot = root

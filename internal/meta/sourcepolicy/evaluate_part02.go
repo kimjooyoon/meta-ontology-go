@@ -2,18 +2,21 @@ package sourcepolicy
 
 import "fmt"
 
-type definition struct {
-	family    Family
-	limit     int
-	relation  Relation
-	blocking  bool
-	proof     ProofChoice
-	operation Operation
-	consumer  string
-}
-
 func definitionFor(policy Policy, observation Observation) (definition, error) {
 	observe := definition{family: FamilyVolume, relation: RelationObserve, proof: ProofCoherence, operation: OperationObserve, consumer: "metric-report"}
+	if observation.Dimension == DimensionRootREADME {
+		if observation.Subject != "." {
+			return definition{}, fmt.Errorf("root README metric requires project-root subject")
+		}
+		if policy.ExemptProjectRootREADME {
+			return definition{family: FamilyDocumentation, relation: RelationObserve,
+				proof: ProofFoundation, operation: OperationExemptRootREADME,
+				consumer: "metric-meta-program"}, nil
+		}
+		return definition{family: FamilyDocumentation, limit: 1, relation: RelationEqual,
+			blocking: true, proof: ProofFoundation, operation: OperationRequireRootREADME,
+			consumer: "repository-documenter"}, nil
+	}
 	if policy.ExemptProjectRootTopology && observation.Subject == "." {
 		switch observation.Dimension {
 		case DimensionDirectEntries, DimensionDirectoryKinds:

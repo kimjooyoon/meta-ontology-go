@@ -16,6 +16,7 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 	sort.Slice(logical, func(i, j int) bool { return logical[i].Path < logical[j].Path })
 	sort.Slice(storage, func(i, j int) bool { return storage[i].Path < storage[j].Path })
+	readmeValue := rootREADMEValue(files)
 	witnesses := make([]subjectWitness, 0, len(files)+len(logical)+len(storage))
 	for _, file := range files {
 		binding, err := fileBinding(file, index)
@@ -28,7 +29,7 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 		witnesses = append(witnesses, directoryWitness("LOGICAL_DIRECTORY", directory, logicalDirectoryBinding()))
 	}
 	for _, directory := range storage {
-		binding, err := storageDirectoryBinding(directory, index)
+		binding, err := storageDirectoryBinding(directory, index, readmeValue)
 		if err != nil {
 			return witnessLedger{}, err
 		}
@@ -37,13 +38,7 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 	sort.Slice(witnesses, func(i, j int) bool { return witnessKey(witnesses[i]) < witnessKey(witnesses[j]) })
 	counts := countWitnesses(witnesses)
 	counts.MetaIndicators = len(report.Meta.Indicators)
-	ledger := witnessLedger{
-		Schema: "gooo/source-subject-witness-ledger/v1", Repository: report.Repository,
-		CommitSHA: report.CommitSHA, SourceSchema: report.Meta.Schema, Policy: report.Meta.Policy,
-		PolicyDigest: digestJSON(report.Meta.Policy), RootTopologyExempt: report.Meta.Policy.ExemptProjectRootTopology,
-		Counts: counts, SubjectWitnessDigest: digestValues(witnesses),
-		MetaIndicatorDigest: digestValues(report.Meta.Indicators), Status: "BOUND", Witnesses: witnesses,
-	}
+	ledger := witnessLedger{Schema: "gooo/source-subject-witness-ledger/v1", Repository: report.Repository, CommitSHA: report.CommitSHA, SourceSchema: report.Meta.Schema, Policy: report.Meta.Policy, PolicyDigest: digestJSON(report.Meta.Policy), RootTopologyExempt: report.Meta.Policy.ExemptProjectRootTopology, RootREADMEExempt: report.Meta.Policy.ExemptProjectRootREADME, Counts: counts, SubjectWitnessDigest: digestValues(witnesses), MetaIndicatorDigest: digestValues(report.Meta.Indicators), Status: "BOUND", Witnesses: witnesses}
 	ledger.Indicators = buildLedgerIndicators(ledger)
 	ledger.IndicatorDigest = digestValues(ledger.Indicators)
 	ledger.SemanticDigest = ledgerSemanticDigest(ledger)
@@ -70,5 +65,5 @@ func countWitnesses(witnesses []subjectWitness) ledgerCounts {
 func itoa(value int) string { return strconv.Itoa(value) }
 
 func ledgerSemanticDigest(ledger witnessLedger) string {
-	return digestJSON([]any{ledger.Schema, ledger.Repository, ledger.CommitSHA, ledger.SourceSchema, ledger.PolicyDigest, ledger.RootTopologyExempt, ledger.Counts, ledger.SubjectWitnessDigest, ledger.MetaIndicatorDigest, ledger.IndicatorDigest})
+	return digestJSON([]any{ledger.Schema, ledger.Repository, ledger.CommitSHA, ledger.SourceSchema, ledger.PolicyDigest, ledger.RootTopologyExempt, ledger.RootREADMEExempt, ledger.Counts, ledger.SubjectWitnessDigest, ledger.MetaIndicatorDigest, ledger.IndicatorDigest})
 }
