@@ -11,6 +11,7 @@ on:
       - 'internal/meta/metriccounterfactual/**'
       - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
+      - 'internal/meta/metricprogram/**'
       - 'internal/meta/metricstrategy/**'
       - 'internal/meta/metrictransition/**'
       - 'internal/meta/sourcepolicy/**'
@@ -18,7 +19,9 @@ on:
       - 'scripts/line-metrics/**'
       - 'scripts/metric-counterfactual/**'
       - 'scripts/metric-intervention/**'
+      - 'scripts/metric-meta-program/**'
       - 'scripts/metric-strategy/**'
+      - 'examples/metric-meta-program/**'
   push:
     branches: [dev, main]
     paths:
@@ -27,13 +30,16 @@ on:
       - 'internal/meta/metriccounterfactual/**'
       - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
+      - 'internal/meta/metricprogram/**'
       - 'internal/meta/metricstrategy/**'
       - 'internal/meta/metrictransition/**'
       - 'internal/meta/sourcepolicy/**'
       - 'scripts/line-metrics/**'
       - 'scripts/metric-counterfactual/**'
       - 'scripts/metric-intervention/**'
+      - 'scripts/metric-meta-program/**'
       - 'scripts/metric-strategy/**'
+      - 'examples/metric-meta-program/**'
 
 permissions:
   contents: read
@@ -246,5 +252,92 @@ jobs:
         with:
           name: metric-strategy-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-strategy/first
+          if-no-files-found: error
+          retention-days: 30
+
+  program:
+    needs: strategy
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Download exact metric strategy evidence
+        uses: actions/download-artifact@v7
+        with:
+          name: metric-strategy-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-meta-program/input
+      - name: Compile, replay, and independently verify the typed Gooo program
+        shell: bash
+        run: |
+          set -euo pipefail
+          input="$RUNNER_TEMP/metric-meta-program/input"
+          first="$RUNNER_TEMP/metric-meta-program/first"
+          replay="$RUNNER_TEMP/metric-meta-program/replay"
+          mkdir -p "$first" "$replay"
+          common=(
+            -strategy "$input/plan.json"
+            -strategy-verification "$input/verification.json"
+          )
+          for target in "$first" "$replay"; do
+            go run ./scripts/metric-meta-program "${common[@]}" -out "$target"
+          done
+          cmp -s "$first/program.json" "$replay/program.json"
+          cmp -s "$first/program.gooo" "$replay/program.gooo"
+          cmp -s "$first/verification.json" "$replay/verification.json"
+          jq -c '{
+            keys: keys,
+            schema,
+            execution_policy,
+            repository_workspace_writes,
+            promotion_authorized,
+            root_policy,
+            operations_type: (.operations | type),
+            operations_length: (.operations | length),
+            bindings_type: (.bindings | type),
+            bindings_length: (.bindings | length),
+            steps
+          }' "$first/program.json"
+          jq -c '{keys: keys} + .' "$first/verification.json"
+          jq -e '
+            .schema == "gooo/metric-meta-program/v1" and
+            .execution_policy == "READ_ONLY_META_PROGRAM" and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false and
+            .root_policy.counts_applicability == "OBSERVED" and
+            .root_policy.topology_applicability == "NOT_APPLICABLE" and
+            .root_policy.readme_requirement == "NOT_APPLICABLE" and
+            (.operations | length) == 8 and
+            (.bindings | length) == 15 and
+            ([.steps[].activity] == [
+              "ObserveCounterfactualBoundary",
+              "PreserveRepositoryWorkspace",
+              "ReplayCounterfactual",
+              "TerminateAtFixedPoint"
+            ])
+          ' "$first/program.json"
+          jq -e '
+            .schema == "gooo/metric-meta-program-verification/v1" and
+            .status == "VERIFIED" and
+            .operation_count == 8 and
+            .binding_count == 15 and
+            .step_count == 4 and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false
+          ' "$first/verification.json"
+          test -s "$first/program.gooo"
+          test -z "$(git status --porcelain)"
+      - name: Upload deterministic typed metric meta-program evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: metric-meta-program-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-meta-program/first
           if-no-files-found: error
           retention-days: 30
