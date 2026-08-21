@@ -2,16 +2,6 @@ package sourcepolicy
 
 import "fmt"
 
-type definition struct {
-	family    Family
-	limit     int
-	relation  Relation
-	blocking  bool
-	proof     ProofChoice
-	operation Operation
-	consumer  string
-}
-
 func definitionFor(policy Policy, observation Observation) (definition, error) {
 	observe := definition{family: FamilyVolume, relation: RelationObserve, proof: ProofCoherence, operation: OperationObserve, consumer: "metric-report"}
 	if observation.Dimension == DimensionRootREADME {

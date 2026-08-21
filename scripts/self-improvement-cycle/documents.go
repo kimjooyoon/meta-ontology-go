@@ -5,10 +5,6 @@ type metricsPolicy struct {
 	ExemptProjectRootREADME   bool `json:"exempt_project_root_readme"`
 }
 
-type metricsFile struct {
-	Path string `json:"path"`
-}
-
 type metricsIndicator struct {
 	MetricID            string `json:"metric_id"`
 	Subject             string `json:"subject"`

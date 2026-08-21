@@ -45,13 +45,7 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 	}
 	observations = append(observations, duplicateObservations...)
 	total := report.Total()
-	observations = append(observations,
-		metricObservation(".", sourcepolicy.DimensionGoFiles, total.GoFiles),
-		metricObservation(".", sourcepolicy.DimensionGoooFiles, total.GoooFiles),
-		metricObservation(".", sourcepolicy.DimensionGoLines, total.GoLines),
-		metricObservation(".", sourcepolicy.DimensionGoooLines, total.GoooLines),
-		rootREADMEObservation(report.Files),
-	)
+	observations = append(observations, metricObservation(".", sourcepolicy.DimensionGoFiles, total.GoFiles), metricObservation(".", sourcepolicy.DimensionGoooFiles, total.GoooFiles), metricObservation(".", sourcepolicy.DimensionGoLines, total.GoLines), metricObservation(".", sourcepolicy.DimensionGoooLines, total.GoooLines), rootREADMEObservation(report.Files))
 	return sourcepolicy.Evaluate(policy, observations)
 }
 
