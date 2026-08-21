@@ -1,0 +1,76 @@
+name: Transformation effect ledger
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  transformation-effect:
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      CI_RUN_ID: ${{ github.event.workflow_run.id }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Download exact meta artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: '*-${{ github.event.workflow_run.head_sha }}'
+          path: ${{ runner.temp }}/meta-inputs
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Execute, verify, and replay sandbox effects
+        shell: bash
+        run: |
+          set -euo pipefail
+          inputs="$RUNNER_TEMP/meta-inputs"
+          first="$RUNNER_TEMP/transformation-effect/first"
+          replay="$RUNNER_TEMP/transformation-effect/replay"
+          mkdir -p "$first" "$replay"
+          common=(
+            -root "$GITHUB_WORKSPACE"
+            -metrics "$inputs/source-line-metrics-$HEAD_SHA/source-metrics.json"
+            -plan "$inputs/self-improvement-generation-$HEAD_SHA/self-improvement-plan.json"
+            -execution "$inputs/self-improvement-execution-$HEAD_SHA/self-improvement-execution.json"
+            -receipts "$inputs/self-improvement-receipts-$HEAD_SHA/self-improvement-receipts.json"
+            -provenance "$inputs/self-improvement-provenance-$HEAD_SHA/self-improvement-provenance.json"
+            -expected-sha "$HEAD_SHA"
+          )
+          for target in "$first" "$replay"; do
+            go run ./scripts/transformation-effect "${common[@]}" \
+              -output "$target/ledger.json" \
+              -generated-receipts "$target/receipts.json" \
+              -executed-provenance "$target/provenance.json" \
+              -patch "$target/patch.json"
+          done
+          for file in ledger.json receipts.json provenance.json patch.json; do
+            cmp -s "$first/$file" "$replay/$file"
+          done
+          go run ./scripts/transformation-effect \
+            -verify "$first/ledger.json" \
+            -generated-receipts "$first/receipts.json" \
+            -executed-provenance "$first/provenance.json" \
+            -patch "$first/patch.json"
+      - name: Upload exact-head transformation effects
+        uses: actions/upload-artifact@v6
+        with:
+          name: transformation-effect-${{ github.event.workflow_run.head_sha }}
+          path: ${{ runner.temp }}/transformation-effect/first
+          if-no-files-found: error
+          retention-days: 30

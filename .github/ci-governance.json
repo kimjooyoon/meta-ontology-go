@@ -94,6 +94,7 @@
     {"branch": "agent/testing-research", "paths": ["docs/research/testing.md"]},
     {"branch": "agent/testing-research-contracts", "paths": ["docs/research/testing.md"]},
     {"branch": "agent/testing-research-followup", "paths": ["docs/research/testing.md"]},
+    {"branch": "agent/transformation-effect-v5", "paths": [".github/agent-scope-table.md", ".github/ci-governance.json", ".github/workflows/transformation-effect.yml", "internal/meta/transformationeffect/**", "internal/verify/scope_part01.go", "scripts/transformation-effect/**"]},
     {"branch": "agent/zerolang-research", "paths": ["docs/research/zerolang.md"]},
     {"branch": "agent/zerolang-experiments", "paths": ["docs/research/zerolang.md"]}
   ],
