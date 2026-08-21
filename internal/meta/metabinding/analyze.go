@@ -22,13 +22,10 @@ func Build(root string, in input) (Report, sourcepolicy.Indicator, error) {
 	self := selfIndicator(countUnbound(source, index))
 	all := append(append([]sourcepolicy.Indicator(nil), source...), self)
 	summary, witnesses := summarize(all, index)
-	summary.SourceIndicators = len(source)
-	summary.RecursiveIndicators = len(all)
-	summary.RegistryOperations = len(registry)
 	report := Report{
 		Schema: Schema, CommitSHA: in.document.CommitSHA, Repository: in.document.Repository,
 		SourceMetricsDigest: in.sourceDigest, RegistryDigest: digestJSON(registry),
-		OntologyPath: OntologyPath, OntologyDigest: ontologyDigest,
+		OntologyDigest: ontologyDigest,
 		Decision: "PASS", Reason: "META_BINDING_COMPLETE",
 		Summary: summary, SelfIndicator: self, Witnesses: witnesses,
 	}

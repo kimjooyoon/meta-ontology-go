@@ -43,8 +43,7 @@ func Augment(in input, indicator sourcepolicy.Indicator) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	raw := make(map[string]json.RawMessage, len(in.raw))
-	maps.Copy(raw, in.raw)
+	raw := maps.Clone(in.raw)
 	raw["meta"] = encodedMeta
 	data, err := json.MarshalIndent(raw, "", "  ")
 	if err != nil {

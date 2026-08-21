@@ -21,8 +21,8 @@ func canonicalRegistry() []Binding {
 		operation := string(binding.Operation)
 		activity := map[string]string{
 			"collapse-assign-return": "CollapseAssignReturn",
-			"split-go-declarations": "SplitGoDeclarations",
-			"split-gooo-sections": "SplitGoooSections",
+			"split-go-declarations":  "SplitGoDeclarations",
+			"split-gooo-sections":    "SplitGoooSections",
 		}[operation]
 		if activity == "" {
 			activity = operation

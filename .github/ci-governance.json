@@ -697,6 +697,16 @@
       ]
     },
     {
+      "branch": "agent/meta-binding-coverage-v17",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/meta-binding-coverage",
+        "internal/meta/metabinding",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"

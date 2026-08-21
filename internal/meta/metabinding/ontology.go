@@ -16,12 +16,9 @@ func readOntology(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	required := [][]byte{
-		[]byte("package metabindingcoverage"),
-		[]byte("activity ResolveIndicatorOperation("),
-		[]byte("activity BindOntologyAuthority("),
-		[]byte("activity BindIndicatorMetaProgram("),
-	}
+	required := [][]byte{[]byte("package metabindingcoverage"),
+		[]byte("activity ResolveIndicatorOperation("), []byte("activity BindOntologyAuthority("),
+		[]byte("activity BindIndicatorMetaProgram(")}
 	for _, token := range required {
 		if !bytes.Contains(data, token) {
 			return "", fmt.Errorf("meta-binding ontology is missing %q", token)

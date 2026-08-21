@@ -30,7 +30,6 @@ func summarize(indicators []sourcepolicy.Indicator, index map[string]Binding) (S
 		}
 		witnesses[operation] = witness
 	}
-	summary.UsedOperations = len(witnesses)
 	total := summary.BoundIndicators + summary.UnboundIndicators
 	if total != 0 {
 		summary.CoverageBasisPoints = summary.BoundIndicators * 10000 / total
@@ -63,12 +62,12 @@ func selfIndicator(unbound int) sourcepolicy.Indicator {
 		MetricID: sourcepolicy.Dimension(MetricID), Family: sourcepolicy.Family("meta"),
 		Subject: ".", SubjectKind: sourcepolicy.SubjectKind("PROJECT_ROOT"),
 		Value: unbound, Limit: 0, Relation: sourcepolicy.Relation("less_or_equal"),
-		Applicability: sourcepolicy.Applicability("APPLICABLE"),
-		ApplicabilityRule: "gooo.catalog.source-policy.default-applicability.v1",
+		Applicability:       sourcepolicy.Applicability("APPLICABLE"),
+		ApplicabilityRule:   "gooo.catalog.source-policy.default-applicability.v1",
 		ApplicabilityReason: sourcepolicy.ApplicabilityReason("CATALOG_APPLICABLE"),
-		Blocking: true, Satisfied: unbound == 0, Proof: sourcepolicy.ProofChoice("coherence"),
+		Blocking:            true, Satisfied: unbound == 0, Proof: sourcepolicy.ProofChoice("coherence"),
 		Producer: "metabinding.Build", Consumer: "self-improvement-cycle",
 		Operation: sourcepolicy.Operation("bind-indicator-meta-program"),
-		Detail: "ontology=" + OntologyPath,
+		Detail:    "ontology=" + OntologyPath,
 	}
 }

@@ -41,13 +41,9 @@ type Witness struct {
 }
 
 type Summary struct {
-	SourceIndicators    int            `json:"source_indicators"`
-	RecursiveIndicators int            `json:"recursive_indicators"`
-	BoundIndicators     int            `json:"bound_indicators"`
-	UnboundIndicators   int            `json:"unbound_indicators"`
-	CoverageBasisPoints int            `json:"coverage_basis_points"`
-	RegistryOperations  int            `json:"registry_operations"`
-	UsedOperations      int            `json:"used_operations"`
+	BoundIndicators     int `json:"bound_indicators"`
+	UnboundIndicators   int `json:"unbound_indicators"`
+	CoverageBasisPoints int `json:"coverage_basis_points"`
 }
 
 type Report struct {
@@ -56,7 +52,6 @@ type Report struct {
 	Repository          string                 `json:"repository"`
 	SourceMetricsDigest string                 `json:"source_metrics_digest"`
 	RegistryDigest      string                 `json:"registry_digest"`
-	OntologyPath        string                 `json:"ontology_path"`
 	OntologyDigest      string                 `json:"ontology_digest"`
 	Decision            string                 `json:"decision"`
 	Reason              string                 `json:"reason"`
