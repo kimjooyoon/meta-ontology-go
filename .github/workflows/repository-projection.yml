@@ -1,0 +1,92 @@
+name: Repository projection conformance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  roundtrip:
+    name: repository projection roundtrip
+    runs-on: ubuntu-latest
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.EXACT_SHA }}
+
+      - name: Install the declared Go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.27.0
+          cache: false
+
+      - name: Materialize and activate the logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.EXACT_SHA }}
+
+      - name: Plan CI-authorized tracked-tree cutover
+        run: |
+          mkdir -p "$RUNNER_TEMP/repository-projection"
+          go run ./bootstrap/repository-cutover \
+            --root "$GITHUB_WORKSPACE" \
+            --physical-root "${{ steps.materialize.outputs.storage-root }}" \
+            --authority-manifest "${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json" \
+            --expected-sha "$EXACT_SHA" \
+            --evidence "$RUNNER_TEMP/repository-projection/cutover-evidence.json"
+
+      - name: Classify logical source split operations
+        run: |
+          mkdir -p "$RUNNER_TEMP/repository-projection"
+          go run ./bootstrap/logical-split-planner \
+            --root "$GITHUB_WORKSPACE" \
+            --evidence "${{ steps.materialize.outputs.projection-evidence }}" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/split-plan.json"
+
+      - name: Apply metric-selected density rewrites
+        run: |
+          go run ./bootstrap/line-density-rewriter \
+            --root "$GITHUB_WORKSPACE" \
+            --plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/density-report.json"
+
+      - name: Apply metric-selected helper extractions
+        run: |
+          go run ./bootstrap/function-extractor \
+            --root "$GITHUB_WORKSPACE" \
+            --plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
+            --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/extraction-report.json"
+
+      - name: Test the restored logical module
+        run: |
+          test -z "$(git status --porcelain)"
+          go test ./...
+
+      - name: Upload exact-SHA projection indicators
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-projection-${{ env.EXACT_SHA }}
+          path: |
+            ${{ steps.materialize.outputs.projection-evidence }}
+            ${{ runner.temp }}/repository-projection/split-plan.json
+            ${{ runner.temp }}/repository-projection/density-report.json
+            ${{ runner.temp }}/repository-projection/extraction-report.json
+            ${{ runner.temp }}/repository-projection/cutover-evidence.json
+            ${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json
+            ${{ steps.materialize.outputs.materialization-evidence }}
+            ${{ steps.materialize.outputs.activation-evidence }}
+          if-no-files-found: error
+          retention-days: 14

@@ -36,10 +36,33 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Bind the declared Go 1.27 toolchain
+        run: |
+          test "$(go env GOVERSION)" = "go1.27.0"
+          go version
+      - name: Require Go modernizers and module graph at a fixed point
+        run: |
+          go fix ./...
+          go mod tidy
+          git diff --exit-code
+      - name: Compile module-declared meta tools
+        run: |
+          go list tool
+          go build tool
       - name: Require formatted Go
-        run: test -z "$(gofmt -l .)"
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            printf 'gofmt required:\n%s\n' "$unformatted"
+            exit 1
+          fi
 
   vet:
     name: go vet
@@ -52,8 +75,13 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: go vet ./...
 
   test:
@@ -67,8 +95,13 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: go test ./...
 
   race:
@@ -82,8 +115,13 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: go test -race ./...
 
   semantic:
@@ -97,13 +135,19 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Semantic conformance (staged verifier promotion)
         env:
           # Stage 0 is the current trust boundary. Advancing it requires a
           # deterministic CI-authorized governance change documented in .github/conformance-plan.md.
           GOOO_CONFORMANCE_STAGE: "0"
+          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
         run: ./scripts/semantic-conformance.sh
 
   policy:
@@ -119,8 +163,13 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Record CI event source
         env:
           CI_EVENT: ${{ github.event_name }}
@@ -146,8 +195,36 @@ jobs:
           actual_head="$(git rev-parse HEAD)"
           test "$actual_head" = "$EXPECTED_HEAD"
           git rev-parse --verify "$EXPECTED_BASE^{commit}" >/dev/null
+      - name: Emit source metrics (go/gooo + folders/files)
+        env:
+          METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: |
+          mkdir -p "$METRICS_DIR"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -json > "$METRICS_DIR/source-metrics.json"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -summary > "$METRICS_DIR/source-metrics.txt"
+          go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
+          go run ./scripts/source-splitter -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
+          go run ./bootstrap/source-repacker -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
+          {
+            echo "### Source metrics (go/gooo + folders/files)"
+            echo '```text'
+            cat "$METRICS_DIR/source-metrics.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload source metrics artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/source-metrics.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Check DAMP/DRY caps
         if: github.event_name == 'pull_request'
+        env:
+          GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
+          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
+          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
         run: go run ./scripts/verify --caps-only
       - name: Check changed-file scope, Go size caps, and PR target
         if: github.event_name == 'pull_request'
@@ -170,6 +247,7 @@ jobs:
           GOOO_SCOPE_BRANCH: ${{ github.ref_name }}
           GOOO_PR_HEAD: ""
           GOOO_PR_BASE: ""
+          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
         run: go run ./scripts/verify
   evidence:
     name: CI evidence
@@ -184,8 +262,13 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Test artifact paginator contract
         run: node scripts/ci-proof/artifacts_test.js
       - name: Collect terminal canonical job evidence
@@ -289,8 +372,13 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download canonical evidence
         uses: actions/download-artifact@v4
         with:
@@ -584,8 +672,13 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download exact proof evidence
         if: ${{ always() }}
         uses: actions/download-artifact@v4

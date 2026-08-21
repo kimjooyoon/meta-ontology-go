@@ -1,0 +1,70 @@
+name: Materialize logical repository
+description: Bind physical storage to the exact logical Git workspace
+inputs:
+  expected-sha:
+    description: Exact checked-out commit identity
+    required: true
+outputs:
+  storage-root:
+    value: ${{ steps.materialize.outputs.storage-root }}
+  materialization-evidence:
+    value: ${{ steps.materialize.outputs.materialization-evidence }}
+  activation-evidence:
+    value: ${{ steps.materialize.outputs.activation-evidence }}
+  projection-evidence:
+    value: ${{ steps.materialize.outputs.projection-evidence }}
+runs:
+  using: composite
+  steps:
+    - id: materialize
+      name: Conform storage, index, and active workspace
+      shell: bash
+      run: |
+        set -euo pipefail
+        work="$RUNNER_TEMP/repository-materialize-$GITHUB_JOB"
+        projector_work="$work/projector"
+        materializer_work="$work/materializer"
+        storage_root="$work/storage"
+        git_index="$work/logical.index"
+        activation_evidence="$work/activation-evidence.json"
+        projection_evidence="$projector_work/evidence.json"
+        git_dir="$(git -C "$GITHUB_WORKSPACE" rev-parse --absolute-git-dir)"
+        physical_checkout=false
+        {
+          echo "storage-root=$storage_root"
+          echo "materialization-evidence=$materializer_work/materialization-evidence.json"
+          echo "activation-evidence=$activation_evidence"
+          echo "projection-evidence=$projection_evidence"
+        } >> "$GITHUB_OUTPUT"
+        if test -f "$GITHUB_WORKSPACE/projection/catalog/manifest.json"; then
+          physical_root="$GITHUB_WORKSPACE"
+          physical_checkout=true
+        else
+          (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" --work "$projector_work" \
+            --expected-sha "${{ inputs.expected-sha }}")
+          physical_root="$projector_work/physical"
+        fi
+        go run "$GITHUB_WORKSPACE"/bootstrap/repository-materializer/*.go \
+          --root "$GITHUB_WORKSPACE" --physical-root "$physical_root" \
+          --work "$materializer_work" --git-index "$git_index" \
+          --expected-sha "${{ inputs.expected-sha }}"
+        go run "$GITHUB_WORKSPACE"/bootstrap/workspace-activator/*.go \
+          --root "$physical_root" --logical-root "$materializer_work/materialized" \
+          --storage-root "$storage_root" --git-dir "$git_dir" \
+          --git-index "$git_index" --expected-sha "${{ inputs.expected-sha }}" \
+          --materialization "$materializer_work/materialization-evidence.json" \
+          --evidence "$activation_evidence"
+        if test "$physical_checkout" = true; then
+          export GIT_DIR="$git_dir" GIT_WORK_TREE="$GITHUB_WORKSPACE" GIT_INDEX_FILE="$git_index"
+          (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" --work "$projector_work" \
+            --expected-sha "${{ inputs.expected-sha }}")
+        fi
+        {
+          echo "LOGICAL_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "PHYSICAL_WORKSPACE=$storage_root"
+          echo "GIT_DIR=$git_dir"
+          echo "GIT_WORK_TREE=$GITHUB_WORKSPACE"
+          echo "GIT_INDEX_FILE=$git_index"
+        } >> "$GITHUB_ENV"
