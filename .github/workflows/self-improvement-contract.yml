@@ -1,0 +1,51 @@
+name: Self-improvement contract
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Self-improvement contract
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+
+      - name: Compile and replay the Gooo meta-contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/self-improvement-contract"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./scripts/self-improvement-contract \
+              -contract examples/self-improvement/main.gooo \
+              -commit "$HEAD_SHA" \
+              -output "$output/$pass.json"
+          done
+          cmp "$output/first.json" "$output/second.json"
+          test "$(jq -r .status "$output/first.json")" = PASS
+
+      - name: Upload exact-head self-improvement contract
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-contract-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/self-improvement-contract/first.json
+          if-no-files-found: error
