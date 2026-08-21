@@ -44,13 +44,12 @@ func newReport(limit int, artifacts []artifactEvidence, provenance provenanceEnv
 			Envelope: provenance.EnvelopeDigest, Replay: provenance.ReplayDigest,
 		},
 		Artifacts: artifacts,
-	}
-	report.Indicators = []metricIndicator{
-		{ID: "foundation.artifact-coverage", Route: "FOUNDATION", Verdict: "PASS", Relation: "=", Value: strconv.Itoa(len(artifacts)), Limit: "5"},
-		{ID: "coherence.provenance-binding", Route: "COHERENCE", Verdict: "PASS", Relation: "=", Value: provenance.Decision, Limit: "BOUND"},
-		{ID: "regression.canonical-projection", Route: "REGRESSION", Verdict: "PASS", Relation: "sha256", Value: input, Limit: "replay-equal"},
-		{ID: "coherence.summary-bytes", Route: "COHERENCE", Verdict: "PASS", Relation: "<=", Value: "0", Limit: strconv.Itoa(limit)},
-	}
+		Indicators: []metricIndicator{
+			{ID: "foundation.artifact-coverage", Route: "FOUNDATION", Verdict: "PASS", Relation: "=", Value: strconv.Itoa(len(artifacts)), Limit: "5"},
+			{ID: "coherence.provenance-binding", Route: "COHERENCE", Verdict: "PASS", Relation: "=", Value: provenance.Decision, Limit: "BOUND"},
+			{ID: "regression.canonical-projection", Route: "REGRESSION", Verdict: "PASS", Relation: "sha256", Value: input, Limit: "replay-equal"},
+			{ID: "coherence.summary-bytes", Route: "COHERENCE", Verdict: "PASS", Relation: "<=", Value: "0", Limit: strconv.Itoa(limit)},
+		}}
 	return report
 }
 
