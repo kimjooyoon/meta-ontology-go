@@ -8,7 +8,7 @@ import (
 
 type config struct {
 	metrics, effect, receipts, provenance, patch, expected, ciRun string
-	outputState, outputLedger, verifyState, verifyLedger           string
+	outputState, outputLedger, verifyState, verifyLedger          string
 }
 
 func parseConfig(args []string) (config, error) {

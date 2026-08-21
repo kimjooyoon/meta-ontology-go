@@ -12,13 +12,13 @@ type metricMetaEnvelope struct {
 }
 
 type rootIndicator struct {
-	MetricID           string `json:"metric_id"`
-	Subject            string `json:"subject"`
-	Value              int    `json:"value"`
-	Applicability      string `json:"applicability"`
+	MetricID            string `json:"metric_id"`
+	Subject             string `json:"subject"`
+	Value               int    `json:"value"`
+	Applicability       string `json:"applicability"`
 	ApplicabilityReason string `json:"applicability_reason"`
-	Blocking           bool   `json:"blocking"`
-	Satisfied          bool   `json:"satisfied"`
+	Blocking            bool   `json:"blocking"`
+	Satisfied           bool   `json:"satisfied"`
 }
 
 func rootPolicy(raw []byte, counts Counts) (RootPolicy, error) {

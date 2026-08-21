@@ -37,21 +37,21 @@ type Indicator struct {
 }
 
 type TransitionLedger struct {
-	Schema              string           `json:"schema"`
-	Status              string           `json:"status"`
-	Decision            string           `json:"decision"`
-	Reason              string           `json:"reason"`
-	Repository          string           `json:"repository"`
-	CommitSHA           string           `json:"commit_sha"`
-	CIRunID             string           `json:"ci_run_id"`
-	Before              StateReference   `json:"before"`
-	After               StateReference   `json:"after"`
-	Delta               MetricDelta      `json:"delta"`
-	Effect              EffectEvidence   `json:"effect"`
-	RootPolicy          RootPolicy       `json:"root_policy"`
-	Indicators          []Indicator      `json:"indicators"`
-	PromotionAuthorized bool             `json:"promotion_authorized"`
-	Digest              string           `json:"digest"`
+	Schema              string         `json:"schema"`
+	Status              string         `json:"status"`
+	Decision            string         `json:"decision"`
+	Reason              string         `json:"reason"`
+	Repository          string         `json:"repository"`
+	CommitSHA           string         `json:"commit_sha"`
+	CIRunID             string         `json:"ci_run_id"`
+	Before              StateReference `json:"before"`
+	After               StateReference `json:"after"`
+	Delta               MetricDelta    `json:"delta"`
+	Effect              EffectEvidence `json:"effect"`
+	RootPolicy          RootPolicy     `json:"root_policy"`
+	Indicators          []Indicator    `json:"indicators"`
+	PromotionAuthorized bool           `json:"promotion_authorized"`
+	Digest              string         `json:"digest"`
 }
 
 type Result struct {

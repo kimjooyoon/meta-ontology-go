@@ -10,13 +10,13 @@ import (
 
 type Options struct {
 	MetricsPath, EffectPath, ReceiptsPath, ProvenancePath, PatchPath string
-	ExpectedSHA, CIRunID                                            string
+	ExpectedSHA, CIRunID                                             string
 }
 
 type inputSet struct {
 	metrics, effect, receipts, provenance, patch []byte
-	report                                      linecaps.LineMetricsReport
-	effectDocument                              effectEnvelope
+	report                                       linecaps.LineMetricsReport
+	effectDocument                               effectEnvelope
 }
 
 type effectEnvelope struct {
