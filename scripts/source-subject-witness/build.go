@@ -70,7 +70,5 @@ func countWitnesses(witnesses []subjectWitness) ledgerCounts {
 func itoa(value int) string { return strconv.Itoa(value) }
 
 func ledgerSemanticDigest(ledger witnessLedger) string {
-	return digestJSON([]any{ledger.Schema, ledger.Repository, ledger.CommitSHA, ledger.SourceSchema,
-		ledger.PolicyDigest, ledger.RootTopologyExempt, ledger.Counts, ledger.SubjectWitnessDigest,
-		ledger.MetaIndicatorDigest, ledger.IndicatorDigest})
+	return digestJSON([]any{ledger.Schema, ledger.Repository, ledger.CommitSHA, ledger.SourceSchema, ledger.PolicyDigest, ledger.RootTopologyExempt, ledger.Counts, ledger.SubjectWitnessDigest, ledger.MetaIndicatorDigest, ledger.IndicatorDigest})
 }
