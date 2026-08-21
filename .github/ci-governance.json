@@ -633,6 +633,18 @@
       ]
     },
     {
+      "branch": "agent/metric-meta-program-v11",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/metric-meta-program/**",
+        "internal/meta/metricprogram/**",
+        "internal/meta/metricprogram/verify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program/**"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"
