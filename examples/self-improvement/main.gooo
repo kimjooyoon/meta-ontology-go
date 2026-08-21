@@ -1,0 +1,26 @@
+package selfimprovement
+namespace meta
+
+entity SourceTree id "gooo://meta/source-tree"
+entity SourceMetrics id "gooo://meta/source-metrics"
+entity GenerationPlan id "gooo://meta/generation-plan"
+entity ExecutionManifest id "gooo://meta/execution-manifest"
+entity Receipt id "gooo://meta/receipt"
+entity Evidence id "gooo://meta/evidence"
+entity ProofChoice id "gooo://meta/proof-choice"
+
+entity Foundation id "proof://foundation"
+entity Coherence id "proof://coherence"
+entity Regression id "proof://regression"
+
+entity SourceRepacker id "executor://bootstrap/source-repacker"
+entity RefactorMetrics id "executor://scripts/refactor-metrics"
+entity SourceSplitter id "executor://scripts/source-splitter"
+
+activity Measure(SourceTree) -> SourceMetrics
+activity ChooseProof(Foundation, Coherence, Regression) -> ProofChoice
+activity Plan(SourceMetrics, ProofChoice) -> GenerationPlan
+activity Execute(GenerationPlan, SourceRepacker, RefactorMetrics, SourceSplitter) -> ExecutionManifest
+activity Evaluate(ExecutionManifest) -> Receipt
+activity Verify(Receipt) -> Evidence
+activity Improve(Evidence) -> SourceTree
