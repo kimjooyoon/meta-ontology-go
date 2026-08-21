@@ -31,14 +31,14 @@ type Baseline struct {
 }
 
 type Projection struct {
-	DimensionID   string `json:"dimension_id"`
-	Kind          string `json:"kind"`
-	Baseline      int    `json:"baseline"`
-	PredictedDelta int   `json:"predicted_delta"`
-	ObservedDelta int    `json:"observed_delta"`
-	Residual      int    `json:"residual"`
-	Projected     int    `json:"projected"`
-	Status        string `json:"status"`
+	DimensionID    string `json:"dimension_id"`
+	Kind           string `json:"kind"`
+	Baseline       int    `json:"baseline"`
+	PredictedDelta int    `json:"predicted_delta"`
+	ObservedDelta  int    `json:"observed_delta"`
+	Residual       int    `json:"residual"`
+	Projected      int    `json:"projected"`
+	Status         string `json:"status"`
 	EvidenceDigest string `json:"evidence_digest"`
 }
 
