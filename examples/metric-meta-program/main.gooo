@@ -1,0 +1,21 @@
+package metricmetaprogram
+namespace metricmetaprogram
+
+entity SourceMetrics id "gooo://metric-meta-program/entity/source-metrics"
+entity BoundMetrics id "gooo://metric-meta-program/entity/bound-metrics"
+entity RootPolicy id "gooo://metric-meta-program/entity/root-policy"
+entity DimensionRegistry id "gooo://metric-meta-program/entity/dimension-registry"
+entity ProjectedMetrics id "gooo://metric-meta-program/entity/projected-metrics"
+entity CounterfactualBoundary id "gooo://metric-meta-program/entity/counterfactual-boundary"
+entity WorkspaceReceipt id "gooo://metric-meta-program/entity/workspace-receipt"
+entity VerificationEvidence id "gooo://metric-meta-program/entity/verification-evidence"
+entity FixedPointReceipt id "gooo://metric-meta-program/entity/fixed-point-receipt"
+
+activity BindExactSourceMetrics(SourceMetrics) -> BoundMetrics
+activity ExemptProjectRootTopology(BoundMetrics) -> RootPolicy
+activity InterpretDimensionRegistry(RootPolicy) -> DimensionRegistry
+activity ProjectAlgebraicRootState(SourceMetrics) -> ProjectedMetrics
+activity ObserveCounterfactualBoundary(ProjectedMetrics) -> CounterfactualBoundary
+activity PreserveRepositoryWorkspace(CounterfactualBoundary) -> WorkspaceReceipt
+activity ReplayCounterfactual(WorkspaceReceipt) -> VerificationEvidence
+activity TerminateAtFixedPoint(VerificationEvidence) -> FixedPointReceipt
