@@ -47,9 +47,7 @@ func buildEnvelope(in inputs, opts options) Envelope {
 	left, right := projectEnvelope(in, opts), projectEnvelope(in, opts)
 	leftBytes, _ := json.Marshal(left.Envelope)
 	rightBytes, _ := json.Marshal(right.Envelope)
-	left.Envelope.Indicators = cycleIndicators(
-		left.Validation, left.Envelope, bytes.Equal(leftBytes, rightBytes),
-	)
+	left.Envelope.Indicators = cycleIndicators(left.Validation, left.Envelope, bytes.Equal(leftBytes, rightBytes))
 	finishEnvelope(&left.Envelope)
 	canonical := left.Envelope
 	canonical.EnvelopeDigest, canonical.ReplayDigest = "", ""
