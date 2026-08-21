@@ -29,12 +29,12 @@ func validDomainEvidence(bundle proofBundle) domainEvidence {
 
 func validBranchProtection(bundle proofBundle) branchProtection {
 	tokenSource := "not_observed"
-	if bundle.BaseRef == "main" {
+	if isPromotionBundle(bundle) {
 		tokenSource = "github_app_installation"
 	}
 	observedAt, validUntil := freshObserverWindow()
 	protection := branchProtection{Repository: bundle.Repository, Branch: bundle.BaseRef, PolicySHA: bundle.Digests.Policy, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef, TokenSource: tokenSource, AppInstallationID: 42, AppSlug: "guardian", ReadStatus: "verified", Exists: true, Strict: true, RequiredChecks: append([]string(nil), proofJobs...), RequiredCheckBindings: requiredCheckBindingsFor(proofJobs), EnforceAdmins: true, RequiredReviews: 0, DismissStaleReviews: false, RequireLastPushApproval: false, LinearHistory: true, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, ObservedAt: observedAt, ValidUntil: validUntil}
-	if bundle.BaseRef != "main" {
+	if !isPromotionBundle(bundle) {
 		protection.ReadStatus = "unavailable"
 		protection.Exists = false
 		protection.Strict = false

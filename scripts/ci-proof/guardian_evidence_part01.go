@@ -20,9 +20,9 @@ func validateGuardianEvidence(evidence *guardianEvidence, bundle proofBundle) er
 	return validateGuardianEvidenceAt(evidence, bundle, time.Now().UTC())
 }
 func validateGuardianEvidenceAt(evidence *guardianEvidence, bundle proofBundle, now time.Time) error {
-	if bundle.BaseRef != "main" {
+	if !isPromotionBundle(bundle) {
 		if evidence != nil {
-			return fmt.Errorf("guardian evidence is not allowed on a dev feature proof")
+			return fmt.Errorf("guardian evidence is not allowed on a non-promotion proof")
 		}
 		return nil
 	}
@@ -44,7 +44,7 @@ func validateGuardianEvidenceAt(evidence *guardianEvidence, bundle proofBundle, 
 	if evidence.WorkflowID <= 0 || evidence.WorkflowPath != ".github/workflows/ci-guardian.yml" || evidence.RunEvent != "pull_request_target" || evidence.RunStatus != "completed" || evidence.RunConclusion != "success" || evidence.RunNumber <= 0 || evidence.GuardianJobID <= 0 || evidence.GuardianJobName != "CI guardian" || evidence.GuardianJobStatus != "completed" || evidence.GuardianJobConclusion != "success" || evidence.GuardianJobHeadSHA != evidence.HeadSHA || evidence.CheckRunID <= 0 || evidence.GuardianJobID != evidence.CheckRunID || evidence.CheckRunName != "CI guardian" || evidence.CheckRunAppID != 15368 || evidence.CheckRunStatus != "completed" || evidence.CheckRunConclusion != "success" || evidence.CheckRunHeadSHA != evidence.HeadSHA || evidence.CheckSuiteID <= 0 {
 		return fmt.Errorf("guardian observer run, job, or check identity is incomplete")
 	}
-	if err := validateBranchProtectionAt(evidence.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: evidence.BaseSHA, HeadSHA: evidence.HeadSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{BaseRef: "main"}, now); err != nil {
+	if err := validateBranchProtectionAt(evidence.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: evidence.BaseSHA, HeadSHA: evidence.HeadSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{Event: "pull_request", BaseRef: "main"}, now); err != nil {
 		return fmt.Errorf("guardian branch protection evidence is invalid: %w", err)
 	}
 	if err := validateTrustedBranchProtectionAt(evidence.DevBranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: evidence.BaseSHA, HeadSHA: evidence.HeadSHA, EventRef: evidence.EventRef, CheckoutRef: evidence.WorkflowSHA, RunID: evidence.RunID, Attempt: evidence.RunAttempt, WorkflowSHA: evidence.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, "dev", now); err != nil {

@@ -42,6 +42,7 @@ func TestCIBranchProtectionMissingReasonCanonicalizesForBothStatuses(t *testing.
 func TestCIGateRejectionsUseMachineEvidenceWithoutHumanReviews(t *testing.T) {
 	bundle := validProof()
 	context := contextInput{
+		Event: bundle.Event, BaseRef: bundle.BaseRef, Route: proofRouteFeatureDev,
 		Actor: "builder", Builder: "builder", Gate: "CI policy", BranchProtection: bundle.BranchProtection,
 		ScopeDecision: "passed", FixtureStatus: "verified", SourceStatus: "verified", SemanticStatus: "verified", ProvenanceStatus: "verified",
 		ArtifactsStatus: "verified", WriteEffect: "none", NoWrite: true,

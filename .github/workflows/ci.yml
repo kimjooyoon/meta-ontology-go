@@ -333,7 +333,9 @@ jobs:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ci-meta-provenance
       - name: Test artifact paginator contract
-        run: node scripts/ci-proof/artifacts_test.js
+        run: |
+          node scripts/ci-proof/artifacts_test.js
+          node scripts/ci-proof/route_test.js
       - name: Collect terminal canonical job evidence
         uses: actions/github-script@v8
         with:
@@ -491,6 +493,20 @@ jobs:
           test -s ci-generated/first/semantic.gooo.go
           test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
           test -z "$(git diff --name-only)"
+      - name: Compile deterministic proof route
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const pull = context.payload.pull_request;
+            const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
+            const route = require('./scripts/ci-proof/route');
+            const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
+            const headSha = pull ? pull.head.sha : context.sha;
+            const evidence = route.buildProofRouteEvidence({
+              event: context.eventName, eventRef: context.ref, baseRef, headSha,
+            });
+            fs.writeFileSync('ci-proof-route.json', JSON.stringify(evidence, null, 2) + '\n');
       - name: Select exact Guardian promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main'
         uses: actions/github-script@v8
@@ -622,11 +638,18 @@ jobs:
             const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
             const baseSha = pull ? pull.base.sha : context.payload.before;
             const headSha = pull ? pull.head.sha : context.sha;
+            const routePolicy = require('./scripts/ci-proof/route');
+            const routeEvidence = JSON.parse(fs.readFileSync('ci-proof-route.json', 'utf8'));
+            routePolicy.validateProofRouteEvidence(routeEvidence, {
+              event: context.eventName, eventRef: context.ref, baseRef, headSha,
+            });
+            const proofRoute = routeEvidence.route;
+            const isPromotion = proofRoute === 'promotion_main';
             const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
             const domainEvidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-domain-evidence.json', 'utf8'));
             let guardianEvidence = null;
             let promotionObservation = null;
-            if (baseRef === 'main') {
+            if (isPromotion) {
               if (!fs.existsSync('ci-guardian-evidence.json')) throw new Error('main promotion proof requires exact Guardian evidence');
               guardianEvidence = JSON.parse(fs.readFileSync('ci-guardian-evidence.json', 'utf8'));
               if (fs.existsSync('ci-promotion-observation.json')) promotionObservation = JSON.parse(fs.readFileSync('ci-promotion-observation.json', 'utf8'));
@@ -668,7 +691,7 @@ jobs:
               valid_until: null,
               digest_sha256: ''
             };
-            if (baseRef === 'main') {
+            if (isPromotion) {
               if (!guardianEvidence.branch_protection) throw new Error('Guardian envelope is missing trusted branch protection evidence');
               protection = guardianEvidence.branch_protection;
             } else {
@@ -692,7 +715,7 @@ jobs:
             const checkoutRef = headSha;
             const contextData = {
               repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
-              base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
+              proof_route: proofRoute, base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
               actor: context.actor, builder: context.actor, gate: 'CI policy',
               branch_protected: protection.exists, branch_protection: protection, dev_branch_protection: guardianEvidence ? guardianEvidence.dev_branch_protection : null, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
@@ -718,6 +741,7 @@ jobs:
             ci-proof.json
             provenance-receipt.jsonl
             ci-jobs.json
+            ci-proof-route.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14

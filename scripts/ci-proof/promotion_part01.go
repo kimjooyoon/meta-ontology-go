@@ -13,15 +13,15 @@ func validPromotionObservation(observation *promotionObservation, repository str
 	return observation != nil && observation.Repository == repository && observation.PRNumber == prNumber && observation.Action != "" && observation.State == "open" && !observation.Draft && !observation.Merged && observation.Mergeable && observation.MergeableState == "clean" && observation.BaseRepo == repository && observation.BaseRef == "main" && observation.BaseSHA == baseSHA && observation.HeadRepo == repository && observation.HeadRef == "dev" && observation.HeadSHA == headSHA && validSHA(observation.BaseSHA) && validSHA(observation.HeadSHA) && validSHA(observation.LiveDevSHA) && validSHA(observation.LiveMainSHA) && observation.LiveDevSHA == headSHA && observation.LiveMainSHA == baseSHA && observation.Topology.Status == "ahead" && observation.Topology.AheadBy > 0 && observation.Topology.BehindBy == 0 && observation.Topology.MergeBaseSHA == baseSHA
 }
 func validPromotionObservationForContext(context contextInput) bool {
-	if context.BaseRef != "main" {
+	if !isPromotionContext(context) {
 		return context.PromotionObservation == nil
 	}
 	return validPromotionObservation(context.PromotionObservation, context.Repository, context.PRNumber, context.BaseSHA, context.HeadSHA)
 }
 func validatePromotionObservation(observation *promotionObservation, bundle proofBundle) error {
-	if bundle.BaseRef != "main" {
+	if !isPromotionBundle(bundle) {
 		if observation != nil {
-			return fmt.Errorf("promotion observation is not allowed on a feature proof")
+			return fmt.Errorf("promotion observation is not allowed on a non-promotion proof")
 		}
 		return nil
 	}
@@ -42,7 +42,7 @@ func promotionProofCoreReady(bundle proofBundle) bool {
 	return validateArtifacts(bundle.Artifacts, bundle.RunID, bundle.RunAttempt) == nil
 }
 func promotionAuthorizationFor(bundle proofBundle) *promotionAuthorization {
-	if bundle.BaseRef != "main" {
+	if !isPromotionBundle(bundle) {
 		return nil
 	}
 	authorization := &promotionAuthorization{Decision: "FAIL_CLOSED", Code: new(promotionAuthorizationCode), Operation: "fast_forward", Source: "dev", Target: "main", BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA}

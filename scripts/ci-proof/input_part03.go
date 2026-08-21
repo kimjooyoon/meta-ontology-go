@@ -19,9 +19,9 @@ func validateBranchProtectionAt(protection branchProtection, evidence evidenceIn
 	if protection.Digest != digestBranchProtection(protection) {
 		return fmt.Errorf("branch protection snapshot digest mismatch")
 	}
-	if context.BaseRef == "dev" {
-		if protection.Branch != "dev" || protection.TokenSource != "not_observed" || protection.ReadStatus != "unavailable" || protection.Exists || protection.Strict || len(protection.RequiredChecks) != 0 || len(protection.RequiredCheckBindings) != 0 || protection.MissingReason != "trusted_guardian_required" || protection.EventRef != context.EventRef || protection.CheckoutRef != context.CheckoutRef || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA || protection.ObservedAt != nil || protection.ValidUntil != nil {
-			return fmt.Errorf("feature proof must keep branch protection explicitly unobserved")
+	if !isPromotionContext(context) {
+		if protection.Branch != context.BaseRef || protection.TokenSource != "not_observed" || protection.ReadStatus != "unavailable" || protection.Exists || protection.Strict || len(protection.RequiredChecks) != 0 || len(protection.RequiredCheckBindings) != 0 || protection.MissingReason != "trusted_guardian_required" || protection.EventRef != context.EventRef || protection.CheckoutRef != context.CheckoutRef || protection.RunID != evidence.RunID || protection.RunAttempt != evidence.Attempt || protection.WorkflowSHA != evidence.WorkflowSHA || protection.ObservedAt != nil || protection.ValidUntil != nil {
+			return fmt.Errorf("non-promotion proof must keep branch protection explicitly unobserved")
 		}
 		return nil
 	}

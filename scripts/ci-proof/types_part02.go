@@ -3,6 +3,7 @@ package main
 type contextInput struct {
 	Repository           string                `json:"repository"`
 	Event                string                `json:"event"`
+	Route                string                `json:"proof_route"`
 	Ref                  string                `json:"ref"`
 	EventRef             string                `json:"event_ref"`
 	CheckoutRef          string                `json:"checkout_ref"`
