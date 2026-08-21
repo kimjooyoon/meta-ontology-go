@@ -3,28 +3,28 @@ package generation
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
 type Binding struct {
-	Operation           sourcepolicy.Operation `json:"operation"`
-	IndependenceGroupID string                 `json:"independence_group_id"`
-	ProofChoice         ProofChoice            `json:"proof_choice"`
-	Executor            string                 `json:"executor"`
-	Evaluator           string                 `json:"evaluator"`
+	Operation            sourcepolicy.Operation `json:"operation"`
+	IndependenceGroupID  string                 `json:"independence_group_id"`
+	ProofChoice          ProofChoice            `json:"proof_choice"`
+	Executor             string                 `json:"executor"`
+	Evaluator            string                 `json:"evaluator"`
 	RequiredIndicatorIDs []string              `json:"required_indicator_ids"`
-	ReceiptRequired     bool                   `json:"receipt_required"`
-	Priority            uint32                 `json:"priority"`
+	ReceiptRequired      bool                   `json:"receipt_required"`
+	Priority             uint32                 `json:"priority"`
 }
 
 type Action struct {
-	IndicatorID         string                 `json:"indicator_id"`
-	MetricID            sourcepolicy.Dimension `json:"metric_id"`
-	Subject             string                 `json:"subject"`
-	Operation           sourcepolicy.Operation `json:"meta_operation"`
-	IndependenceGroupID string                 `json:"independence_group_id"`
-	ProofChoice         ProofChoice            `json:"proof_choice"`
-	Executor            string                 `json:"executor"`
-	Evaluator           string                 `json:"evaluator"`
+	IndicatorID          string                 `json:"indicator_id"`
+	MetricID             sourcepolicy.Dimension `json:"metric_id"`
+	Subject              string                 `json:"subject"`
+	Operation            sourcepolicy.Operation `json:"meta_operation"`
+	IndependenceGroupID  string                 `json:"independence_group_id"`
+	ProofChoice          ProofChoice            `json:"proof_choice"`
+	Executor             string                 `json:"executor"`
+	Evaluator            string                 `json:"evaluator"`
 	RequiredIndicatorIDs []string              `json:"required_indicator_ids"`
-	ReceiptRequired     bool                   `json:"receipt_required"`
-	Priority            uint32                 `json:"priority"`
+	ReceiptRequired      bool                   `json:"receipt_required"`
+	Priority             uint32                 `json:"priority"`
 }
 
 type Plan struct {
