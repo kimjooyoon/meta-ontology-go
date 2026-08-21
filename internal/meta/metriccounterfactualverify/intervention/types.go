@@ -18,7 +18,6 @@ type RootPolicy struct {
 	TopologyReason        string `json:"topology_reason"`
 	READMERequirement     string `json:"readme_requirement"`
 }
-
 type Baseline struct {
 	Schema                string            `json:"schema"`
 	RepositoryStateSchema string            `json:"repository_state_schema"`

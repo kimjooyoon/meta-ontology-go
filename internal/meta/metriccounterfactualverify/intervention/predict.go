@@ -42,7 +42,6 @@ func Predict(manifest metric.Manifest, plan metric.Plan) (metric.Delta, error) {
 	delta.ChangedDirectories = len(changedDirectories)
 	return delta, nil
 }
-
 func predictAppend(languages map[string]string, mutation metric.Mutation, delta *metric.Delta) error {
 	language, exists := languages[mutation.Path]
 	if !exists {
@@ -51,7 +50,6 @@ func predictAppend(languages map[string]string, mutation metric.Mutation, delta 
 	addLanguage(delta, language, 0, artifact.CountLines([]byte(mutation.Content)))
 	return nil
 }
-
 func predictCreate(languages map[string]string, directories map[string]bool, mutation metric.Mutation, delta *metric.Delta) error {
 	if _, exists := languages[mutation.Path]; exists {
 		return fmt.Errorf("create target %q already exists", mutation.Path)
