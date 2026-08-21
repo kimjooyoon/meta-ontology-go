@@ -50,3 +50,16 @@ func exitError(err error) {
 	fmt.Fprintln(os.Stderr, err)
 	os.Exit(2)
 }
+
+func validContractIndicators(contract contractDocument) bool {
+	counts := map[string]int{}
+	for _, indicator := range contract.Indicators {
+		if indicator.Verdict != "PASS" {
+			return false
+		}
+		counts[indicator.Route]++
+	}
+	return len(contract.Indicators) == 7 &&
+		counts["FOUNDATION"] == 3 && counts["COHERENCE"] == 3 &&
+		counts["REGRESSION"] == 1
+}

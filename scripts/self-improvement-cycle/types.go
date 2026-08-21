@@ -29,6 +29,7 @@ type Envelope struct {
 	Reason                 string        `json:"reason"`
 	ContractSemanticHash   string        `json:"contract_semantic_hash"`
 	ContractRegistryDigest string        `json:"contract_registry_digest"`
+	SourceMetrics          MetricsBinding `json:"source_metrics"`
 	IndicatorLedgerDigest  string        `json:"indicator_ledger_digest"`
 	IndicatorLedgerCount   int           `json:"indicator_ledger_count"`
 	Artifacts              []ArtifactRef `json:"artifacts"`
@@ -38,4 +39,34 @@ type Envelope struct {
 	PromotionAuthorized    bool          `json:"promotion_authorized"`
 	EnvelopeDigest         string        `json:"envelope_digest"`
 	ReplayDigest           string        `json:"replay_digest"`
+}
+
+type MetricsSnapshot struct {
+	Path             string `json:"path"`
+	SubjectKind      string `json:"subject_kind"`
+	DirectFolders    int    `json:"direct_folders"`
+	DirectFiles      int    `json:"direct_files"`
+	RecursiveFolders int    `json:"recursive_folders"`
+	RecursiveFiles   int    `json:"recursive_files"`
+	GoFiles          int    `json:"go_files"`
+	GoooFiles        int    `json:"gooo_files"`
+	GoLines          int    `json:"go_lines"`
+	GoooLines        int    `json:"gooo_lines"`
+}
+
+type MetricsBinding struct {
+	Schema         string          `json:"schema"`
+	LogicalRoot    MetricsSnapshot `json:"logical_root"`
+	StorageRoot    MetricsSnapshot `json:"storage_root"`
+	SemanticDigest string          `json:"semantic_digest"`
+}
+
+type planDocument struct {
+	SchemaVersion       string `json:"schema_version"`
+	BaseSHA             string `json:"base_sha"`
+	HeadSHA             string `json:"head_sha"`
+	PlanDigest          string `json:"plan_digest"`
+	Decision            string `json:"decision"`
+	Reason              string `json:"reason"`
+	PromotionAuthorized bool   `json:"promotion_authorized"`
 }

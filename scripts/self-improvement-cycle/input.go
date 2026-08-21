@@ -65,3 +65,10 @@ func decodeDocument[T any](path string) (document[T], error) {
 	result.FileSHA256 = digestBytes(data)
 	return result, nil
 }
+
+func validMetricRoot(root MetricsSnapshot) bool {
+	return root.Path == "." && root.SubjectKind == "PROJECT_ROOT" &&
+		root.DirectFolders >= 0 && root.DirectFiles >= 0 &&
+		root.RecursiveFolders >= root.DirectFolders && root.RecursiveFiles >= root.DirectFiles &&
+		root.GoFiles >= 0 && root.GoooFiles >= 0 && root.GoLines >= 0 && root.GoooLines >= 0
+}

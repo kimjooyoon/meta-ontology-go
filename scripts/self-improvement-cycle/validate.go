@@ -1,8 +1,8 @@
 package main
 
 type validation struct {
-	Schemas, Context, Heads, Contract bool
-	States, Links, Ledger, Digests    bool
+	Schemas, Context, Heads, Contract, Metrics bool
+	States, Links, Ledger, Digests             bool
 }
 
 func validateInputs(in inputs, opts options) validation {
@@ -15,7 +15,8 @@ func validateInputs(in inputs, opts options) validation {
 			execution.SchemaVersion == "gooo/meta-operation-execution/v6" &&
 			receipts.SchemaVersion == "gooo/meta-operation-receipt-report/v2" &&
 			provenance.SchemaVersion == "gooo/meta-artifact-provenance/v1" &&
-			contract.Schema == "gooo/self-improvement-contract/v1",
+			contract.Schema == "gooo/self-improvement-contract/v1" &&
+			in.Metrics.Value.Meta.Schema == "gooo/indicator-report/v3",
 		Context: opts.runID > 0 && (opts.branch == "dev" || opts.branch == "main") &&
 			(opts.conclusion == "success" || opts.conclusion == "failure"),
 		Heads: validSHA(opts.headSHA) && in.Metrics.Value.CommitSHA == opts.headSHA &&
@@ -23,10 +24,11 @@ func validateInputs(in inputs, opts options) validation {
 			receipts.HeadSHA == opts.headSHA && provenance.HeadSHA == opts.headSHA &&
 			contract.CommitSHA == opts.headSHA && validSHA(base) &&
 			execution.BaseSHA == base && receipts.BaseSHA == base && provenance.BaseSHA == base,
-		Contract: contract.Status == "PASS" && !contract.PromotionAuthorized &&
-			validDigest(contract.SourceSHA256) && validDigest(contract.SemanticHash) &&
-			validDigest(contract.RegistryDigest) && validContractIndicators(contract) &&
-			validContractCoverage(contract),
+			Contract: contract.Status == "PASS" && !contract.PromotionAuthorized &&
+				validDigest(contract.SourceSHA256) && validDigest(contract.SemanticHash) &&
+				validDigest(contract.RegistryDigest) && validContractIndicators(contract) &&
+				validContractCoverage(contract),
+			Metrics: validMetrics(in.Metrics.Value),
 		States: plan.Decision != "" && plan.Reason != "" &&
 			execution.Decision != "" && execution.Reason != "" &&
 			receipts.Decision != "" && receipts.Reason != "" &&
@@ -49,27 +51,28 @@ func validateInputs(in inputs, opts options) validation {
 	}
 }
 
-func validContractIndicators(contract contractDocument) bool {
-	counts := map[string]int{}
-	for _, indicator := range contract.Indicators {
-		if indicator.Verdict != "PASS" {
-			return false
-		}
-		counts[indicator.Route]++
-	}
-	return len(contract.Indicators) == 7 &&
-		counts["FOUNDATION"] == 3 && counts["COHERENCE"] == 3 &&
-		counts["REGRESSION"] == 1
-}
-
-func validContractCoverage(contract contractDocument) bool {
-	if len(contract.ExecutorCoverage) != 3 {
+func validMetrics(metrics metricsDocument) bool {
+	binding := metricsProjection(metrics)
+	if metrics.Meta.Schema != "gooo/indicator-report/v3" ||
+		!metrics.Meta.Policy.ExemptProjectRootTopology ||
+		!validDigest(binding.SemanticDigest) ||
+		!validMetricRoot(binding.LogicalRoot) || !validMetricRoot(binding.StorageRoot) {
 		return false
 	}
-	for _, coverage := range contract.ExecutorCoverage {
-		if !coverage.Covered {
-			return false
+	expected, exemptions := metricExpectations(binding), 0
+	for _, indicator := range metrics.Meta.Indicators {
+		if indicator.Subject != "." {
+			continue
+		}
+		if value, ok := expected[indicator.MetricID]; ok {
+			if value != indicator.Value || indicator.Applicability != "APPLICABLE" ||
+				indicator.Blocking || indicator.Decision != "PASS" {
+				return false
+			}
+			delete(expected, indicator.MetricID)
+		} else if rootException(indicator, binding.StorageRoot) {
+			exemptions++
 		}
 	}
-	return true
+	return len(expected) == 0 && exemptions == 2
 }

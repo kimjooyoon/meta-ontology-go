@@ -1,17 +1,30 @@
 package main
 
-type metricsDocument struct {
-	CommitSHA string `json:"commit_sha"`
+type metricsPolicy struct {
+	ExemptProjectRootTopology bool `json:"exempt_project_root_topology"`
 }
 
-type planDocument struct {
-	SchemaVersion       string `json:"schema_version"`
-	BaseSHA             string `json:"base_sha"`
-	HeadSHA             string `json:"head_sha"`
-	PlanDigest          string `json:"plan_digest"`
+type metricsIndicator struct {
+	MetricID            string `json:"metric_id"`
+	Subject             string `json:"subject"`
+	Value               int    `json:"value"`
+	Applicability       string `json:"applicability"`
+	ApplicabilityReason string `json:"applicability_reason"`
+	Blocking            bool   `json:"blocking"`
 	Decision            string `json:"decision"`
-	Reason              string `json:"reason"`
-	PromotionAuthorized bool   `json:"promotion_authorized"`
+}
+
+type metricsMeta struct {
+	Schema     string             `json:"schema"`
+	Policy     metricsPolicy      `json:"policy"`
+	Indicators []metricsIndicator `json:"indicators"`
+}
+
+type metricsDocument struct {
+	CommitSHA          string            `json:"commit_sha"`
+	Meta               metricsMeta       `json:"meta"`
+	Directories        []MetricsSnapshot `json:"directories"`
+	StorageDirectories []MetricsSnapshot `json:"storage_directories"`
 }
 
 type executionDocument struct {
@@ -53,23 +66,4 @@ type provenanceDocument struct {
 	Reason                        string `json:"reason"`
 	PromotionAuthorized           bool   `json:"promotion_authorized"`
 	EnvelopeDigest                string `json:"envelope_digest"`
-}
-
-type contractIndicator struct {
-	Route   string `json:"route"`
-	Verdict string `json:"verdict"`
-}
-type contractCoverage struct {
-	Covered bool `json:"covered"`
-}
-type contractDocument struct {
-	Schema              string              `json:"schema"`
-	CommitSHA           string              `json:"commit_sha"`
-	SourceSHA256        string              `json:"source_sha256"`
-	SemanticHash        string              `json:"semantic_hash"`
-	RegistryDigest      string              `json:"registry_digest"`
-	Status              string              `json:"status"`
-	PromotionAuthorized bool                `json:"promotion_authorized"`
-	Indicators          []contractIndicator `json:"indicators"`
-	ExecutorCoverage    []contractCoverage  `json:"executor_coverage"`
 }
