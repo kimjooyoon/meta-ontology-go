@@ -17,8 +17,7 @@ func TestEnvelopeBindsTheCompleteCycle(t *testing.T) {
 	if !envelope.SourceMetrics.RootTopologyExempt || envelope.SourceMetrics.RootWitnessCount != 10 {
 		t.Fatalf("root witness = %#v", envelope.SourceMetrics)
 	}
-	if envelope.PromotionAuthorized || !validDigest(envelope.EnvelopeDigest) ||
-		!validDigest(envelope.ReplayDigest) {
+	if envelope.PromotionAuthorized || !validDigest(envelope.EnvelopeDigest) || !validDigest(envelope.ReplayDigest) {
 		t.Fatalf("invalid envelope digests or authority: %#v", envelope)
 	}
 }
@@ -60,10 +59,7 @@ func metricsFixture(head string) metricsDocument {
 	logical := MetricsSnapshot{Path: ".", SubjectKind: "PROJECT_ROOT", DirectFolders: 7, DirectFiles: 7, RecursiveFolders: 115, RecursiveFiles: 2802, GoFiles: 2689, GoooFiles: 5, GoLines: 144046, GoooLines: 56}
 	storage := MetricsSnapshot{Path: ".", SubjectKind: "PROJECT_ROOT", DirectFolders: 4, DirectFiles: 1, RecursiveFolders: 684, RecursiveFiles: 2796, GoFiles: 73, GoooFiles: 2616, GoLines: 4028, GoooLines: 140033}
 	binding := MetricsBinding{LogicalRoot: logical, StorageRoot: storage}
-	indicators := []metricsIndicator{
-		{MetricID: "gooo.metric.layout.direct-entries.v1", Subject: ".", Value: 5, Applicability: "NOT_APPLICABLE", ApplicabilityReason: "ROOT_TOPOLOGY_EXEMPT", Decision: "NOT_APPLICABLE"},
-		{MetricID: "gooo.metric.layout.entry-kinds.v1", Subject: ".", Value: 2, Applicability: "NOT_APPLICABLE", ApplicabilityReason: "ROOT_TOPOLOGY_EXEMPT", Decision: "NOT_APPLICABLE"},
-	}
+	indicators := []metricsIndicator{{MetricID: "gooo.metric.layout.direct-entries.v1", Subject: ".", Value: 5, Applicability: "NOT_APPLICABLE", ApplicabilityReason: "ROOT_TOPOLOGY_EXEMPT", Decision: "NOT_APPLICABLE"}, {MetricID: "gooo.metric.layout.entry-kinds.v1", Subject: ".", Value: 2, Applicability: "NOT_APPLICABLE", ApplicabilityReason: "ROOT_TOPOLOGY_EXEMPT", Decision: "NOT_APPLICABLE"}}
 	for id, value := range metricExpectations(binding) {
 		indicators = append(indicators, metricsIndicator{MetricID: id, Subject: ".", Value: value, Applicability: "APPLICABLE", Decision: "PASS"})
 	}
@@ -74,7 +70,5 @@ func metricsFixture(head string) metricsDocument {
 func contractFixture(head, digest string) contractDocument {
 	indicators := []contractIndicator{{"FOUNDATION", "PASS"}, {"FOUNDATION", "PASS"}, {"FOUNDATION", "PASS"}, {"COHERENCE", "PASS"}, {"COHERENCE", "PASS"}, {"COHERENCE", "PASS"}, {"REGRESSION", "PASS"}}
 	coverage := []contractCoverage{{true}, {true}, {true}}
-	return contractDocument{Schema: "gooo/self-improvement-contract/v1", CommitSHA: head,
-		SourceSHA256: digest, SemanticHash: digest, RegistryDigest: digest,
-		Status: "PASS", Indicators: indicators, ExecutorCoverage: coverage}
+	return contractDocument{Schema: "gooo/self-improvement-contract/v1", CommitSHA: head, SourceSHA256: digest, SemanticHash: digest, RegistryDigest: digest, Status: "PASS", Indicators: indicators, ExecutorCoverage: coverage}
 }

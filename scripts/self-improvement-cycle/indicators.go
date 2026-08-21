@@ -48,16 +48,7 @@ func verdict(pass bool) string {
 }
 
 func metricExpectations(metrics MetricsBinding) map[string]int {
-	return map[string]int{
-		"gooo.metric.layout.direct-files.v1":      metrics.StorageRoot.DirectFiles,
-		"gooo.metric.layout.direct-folders.v1":    metrics.StorageRoot.DirectFolders,
-		"gooo.metric.layout.recursive-files.v1":   metrics.StorageRoot.RecursiveFiles,
-		"gooo.metric.layout.recursive-folders.v1": metrics.StorageRoot.RecursiveFolders,
-		"gooo.metric.source.go-files.v1":          metrics.LogicalRoot.GoFiles,
-		"gooo.metric.source.go-lines.v1":          metrics.LogicalRoot.GoLines,
-		"gooo.metric.source.gooo-files.v1":        metrics.LogicalRoot.GoooFiles,
-		"gooo.metric.source.gooo-lines.v1":        metrics.LogicalRoot.GoooLines,
-	}
+	return map[string]int{"gooo.metric.layout.direct-files.v1": metrics.StorageRoot.DirectFiles, "gooo.metric.layout.direct-folders.v1": metrics.StorageRoot.DirectFolders, "gooo.metric.layout.recursive-files.v1": metrics.StorageRoot.RecursiveFiles, "gooo.metric.layout.recursive-folders.v1": metrics.StorageRoot.RecursiveFolders, "gooo.metric.source.go-files.v1": metrics.LogicalRoot.GoFiles, "gooo.metric.source.go-lines.v1": metrics.LogicalRoot.GoLines, "gooo.metric.source.gooo-files.v1": metrics.LogicalRoot.GoooFiles, "gooo.metric.source.gooo-lines.v1": metrics.LogicalRoot.GoooLines}
 }
 
 func rootException(indicator metricsIndicator, root MetricsSnapshot) bool {
@@ -73,7 +64,5 @@ func rootException(indicator metricsIndicator, root MetricsSnapshot) bool {
 	} else if indicator.MetricID != "gooo.metric.layout.direct-entries.v1" {
 		return false
 	}
-	return indicator.Value == expected && indicator.Applicability == "NOT_APPLICABLE" &&
-		indicator.ApplicabilityReason == "ROOT_TOPOLOGY_EXEMPT" &&
-		!indicator.Blocking && indicator.Decision == "NOT_APPLICABLE"
+	return indicator.Value == expected && indicator.Applicability == "NOT_APPLICABLE" && indicator.ApplicabilityReason == "ROOT_TOPOLOGY_EXEMPT" && !indicator.Blocking && indicator.Decision == "NOT_APPLICABLE"
 }

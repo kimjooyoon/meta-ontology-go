@@ -52,9 +52,7 @@ func buildEnvelope(in inputs, opts options) Envelope {
 	canonical := left.Envelope
 	canonical.EnvelopeDigest, canonical.ReplayDigest = "", ""
 	left.Envelope.EnvelopeDigest = digestJSON(canonical)
-	left.Envelope.ReplayDigest = digestJSON(struct {
-		EnvelopeDigest, ArtifactSetDigest, InputDigest string
-	}{left.Envelope.EnvelopeDigest, left.Envelope.ArtifactSetDigest, left.Envelope.InputDigest})
+	left.Envelope.ReplayDigest = digestJSON(struct{ EnvelopeDigest, ArtifactSetDigest, InputDigest string }{left.Envelope.EnvelopeDigest, left.Envelope.ArtifactSetDigest, left.Envelope.InputDigest})
 	return left.Envelope
 }
 
