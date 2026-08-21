@@ -10,9 +10,22 @@ import (
 )
 
 func TestIndicatorDecisionLedgerClosesAllTrilemmaRoutes(t *testing.T) {
-	exempt := sourcepolicy.Indicator{}
-	conforming := sourcepolicy.Indicator{Applicable: true, Satisfied: true}
-	repair := sourcepolicy.Indicator{Applicable: true, Satisfied: false, Blocking: true}
+	exempt := sourcepolicy.Indicator{
+		Applicability: sourcepolicy.ApplicabilityNotApplicable,
+		Satisfied:     true,
+		Proof:         sourcepolicy.ProofFoundation,
+	}
+	conforming := sourcepolicy.Indicator{
+		Applicability: sourcepolicy.ApplicabilityApplicable,
+		Satisfied:     true,
+		Proof:         sourcepolicy.ProofCoherence,
+	}
+	repair := sourcepolicy.Indicator{
+		Applicability: sourcepolicy.ApplicabilityApplicable,
+		Satisfied:     false,
+		Blocking:      true,
+		Proof:         sourcepolicy.ProofRegression,
+	}
 	action := Action{
 		IndicatorID:      indicatorID(repair),
 		Blocking:         repair.Blocking,
@@ -51,7 +64,12 @@ func TestIndicatorDecisionLedgerClosesAllTrilemmaRoutes(t *testing.T) {
 }
 
 func TestIndicatorDecisionLedgerRejectsMissingRepair(t *testing.T) {
-	indicator := sourcepolicy.Indicator{Applicable: true, Satisfied: false, Blocking: true}
+	indicator := sourcepolicy.Indicator{
+		Applicability: sourcepolicy.ApplicabilityApplicable,
+		Satisfied:     false,
+		Blocking:      true,
+		Proof:         sourcepolicy.ProofRegression,
+	}
 	_, err := BuildIndicatorDecisionLedger([]sourcepolicy.Indicator{indicator}, nil)
 	if err == nil || !strings.Contains(err.Error(), "no selected repair") {
 		t.Fatalf("BuildIndicatorDecisionLedger() error = %v, want missing repair", err)
@@ -59,7 +77,11 @@ func TestIndicatorDecisionLedgerRejectsMissingRepair(t *testing.T) {
 }
 
 func TestIndicatorDecisionLedgerRejectsForgedDigest(t *testing.T) {
-	indicator := sourcepolicy.Indicator{Applicable: true, Satisfied: true}
+	indicator := sourcepolicy.Indicator{
+		Applicability: sourcepolicy.ApplicabilityApplicable,
+		Satisfied:     true,
+		Proof:         sourcepolicy.ProofCoherence,
+	}
 	ledger, err := BuildIndicatorDecisionLedger([]sourcepolicy.Indicator{indicator}, nil)
 	if err != nil {
 		t.Fatalf("BuildIndicatorDecisionLedger() error = %v", err)

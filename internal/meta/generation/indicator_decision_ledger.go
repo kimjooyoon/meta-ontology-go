@@ -18,9 +18,9 @@ const IndicatorDecisionLedgerSchemaVersion = "gooo/indicator-decision-ledger/v1"
 type TrilemmaRoute string
 
 const (
-	TrilemmaRouteFoundationalStop TrilemmaRoute = "FOUNDATIONAL_STOP"
-	TrilemmaRouteCoherenceClosure TrilemmaRoute = "COHERENCE_CLOSURE"
-	TrilemmaRouteRegressiveRepair TrilemmaRoute = "REGRESSIVE_REPAIR"
+	TrilemmaRouteFoundation TrilemmaRoute = "FOUNDATION"
+	TrilemmaRouteCoherence  TrilemmaRoute = "COHERENCE"
+	TrilemmaRouteRegression TrilemmaRoute = "REGRESSION"
 )
 
 type IndicatorDisposition string
@@ -81,36 +81,42 @@ func BuildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions [
 		seenIndicators[id] = struct{}{}
 
 		action, hasAction := actionsByIndicator[id]
+		route, err := indicatorTrilemmaRoute(indicator.Proof)
+		if err != nil {
+			return IndicatorDecisionLedger{}, fmt.Errorf("indicator %q: %w", id, err)
+		}
 		entry := IndicatorDecisionLedgerEntry{
 			IndicatorID:      id,
 			SourceIndicator:  indicator,
 			IndicatorOutcome: indicator.Outcome(),
+			TrilemmaRoute:    route,
 		}
-		switch {
-		case !indicator.Applicable:
-			if indicator.Satisfied {
-				return IndicatorDecisionLedger{}, fmt.Errorf("not-applicable indicator %q cannot be satisfied", id)
+		switch indicator.Applicability {
+		case sourcepolicy.ApplicabilityNotApplicable:
+			if !indicator.Satisfied {
+				return IndicatorDecisionLedger{}, fmt.Errorf("not-applicable indicator %q must be closed", id)
 			}
 			if hasAction {
 				return IndicatorDecisionLedger{}, fmt.Errorf("not-applicable indicator %q selected an action", id)
 			}
-			entry.TrilemmaRoute = TrilemmaRouteFoundationalStop
 			entry.Disposition = IndicatorDispositionExempt
-		case indicator.Satisfied:
-			if hasAction {
-				return IndicatorDecisionLedger{}, fmt.Errorf("conforming indicator %q selected an action", id)
+		case sourcepolicy.ApplicabilityApplicable:
+			if indicator.Satisfied {
+				if hasAction {
+					return IndicatorDecisionLedger{}, fmt.Errorf("conforming indicator %q selected an action", id)
+				}
+				entry.Disposition = IndicatorDispositionConforming
+				break
 			}
-			entry.TrilemmaRoute = TrilemmaRouteCoherenceClosure
-			entry.Disposition = IndicatorDispositionConforming
-		default:
 			if !hasAction {
 				return IndicatorDecisionLedger{}, fmt.Errorf("violating indicator %q has no selected repair", id)
 			}
 			actionCopy := action
-			entry.TrilemmaRoute = TrilemmaRouteRegressiveRepair
 			entry.Disposition = IndicatorDispositionRepairSelected
 			entry.Action = &actionCopy
 			selected[id] = struct{}{}
+		default:
+			return IndicatorDecisionLedger{}, fmt.Errorf("indicator %q has unknown applicability %q", id, indicator.Applicability)
 		}
 		entries = append(entries, entry)
 	}
@@ -129,11 +135,11 @@ func BuildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions [
 	}
 	for _, entry := range entries {
 		switch entry.TrilemmaRoute {
-		case TrilemmaRouteFoundationalStop:
+		case TrilemmaRouteFoundation:
 			ledger.FoundationalCount++
-		case TrilemmaRouteCoherenceClosure:
+		case TrilemmaRouteCoherence:
 			ledger.CoherenceCount++
-		case TrilemmaRouteRegressiveRepair:
+		case TrilemmaRouteRegression:
 			ledger.RegressiveCount++
 		}
 	}
@@ -143,6 +149,19 @@ func BuildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions [
 	}
 	ledger.Digest = digest
 	return ledger, nil
+}
+
+func indicatorTrilemmaRoute(proof sourcepolicy.ProofChoice) (TrilemmaRoute, error) {
+	switch proof {
+	case sourcepolicy.ProofFoundation:
+		return TrilemmaRouteFoundation, nil
+	case sourcepolicy.ProofCoherence:
+		return TrilemmaRouteCoherence, nil
+	case sourcepolicy.ProofRegression:
+		return TrilemmaRouteRegression, nil
+	default:
+		return "", fmt.Errorf("unknown proof choice %q", proof)
+	}
 }
 
 func (ledger IndicatorDecisionLedger) Validate() error {
