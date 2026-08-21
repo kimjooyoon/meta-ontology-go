@@ -603,6 +603,7 @@
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go",
         "scripts/ci-proof/build_part01.go",
         "scripts/ci-proof/ci_only_part03_test.go",
         "scripts/ci-proof/guardian_evidence_part01.go",
