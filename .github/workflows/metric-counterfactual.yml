@@ -1,0 +1,90 @@
+name: Metric counterfactual conformance
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/metric-counterfactual.yml'
+      - 'internal/meta/metriccounterfactual/**'
+      - 'internal/meta/metriccounterfactualio/**'
+      - 'internal/meta/metriccounterfactualverify/**'
+      - 'internal/verify/scope_part01.go'
+      - 'scripts/metric-counterfactual/**'
+  push:
+    branches: [dev, main]
+    paths:
+      - '.github/workflows/metric-counterfactual.yml'
+      - 'internal/meta/metriccounterfactual/**'
+      - 'internal/meta/metriccounterfactualio/**'
+      - 'internal/meta/metriccounterfactualverify/**'
+      - 'scripts/metric-counterfactual/**'
+
+permissions:
+  contents: read
+
+jobs:
+  counterfactual:
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Generate, replay, and independently constrain the counterfactual
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$RUNNER_TEMP/metric-counterfactual/first"
+          replay="$RUNNER_TEMP/metric-counterfactual/replay"
+          mkdir -p "$first" "$replay"
+          common=(
+            -mode generate
+            -repository "$GITHUB_REPOSITORY"
+            -subject-sha "$SUBJECT_SHA"
+          )
+          go run ./scripts/metric-counterfactual "${common[@]}" -output "$first/ledger.json"
+          go run ./scripts/metric-counterfactual "${common[@]}" -output "$replay/ledger.json"
+          cmp -s "$first/ledger.json" "$replay/ledger.json"
+          go run ./scripts/metric-counterfactual \
+            -mode verify \
+            -ledger "$first/ledger.json" \
+            -output "$first/verification.json"
+          jq -e '
+            .schema == "gooo/metric-counterfactual-ledger/v1" and
+            .execution_policy == "DISPOSABLE_TEMP_ROOT_ONLY" and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false and
+            .before.root_policy.counts_applicability == "OBSERVED" and
+            .before.root_policy.topology_applicability == "NOT_APPLICABLE" and
+            .before.root_policy.readme_requirement == "NOT_APPLICABLE" and
+            .delta.direct_folders == 1 and
+            .delta.recursive_folders == 2 and
+            .delta.recursive_files == 1 and
+            .delta.go_files == 1 and
+            .delta.go_lines == 3 and
+            .delta.gooo_files == 0 and
+            .delta.gooo_lines == 1 and
+            .delta.changed_files == 2 and
+            .delta.changed_directories == 4 and
+            all(.indicators[]; .status == "SATISFIED")
+          ' "$first/ledger.json"
+          jq -e '
+            .schema == "gooo/metric-counterfactual-verification/v1" and
+            .status == "VERIFIED" and
+            .promotion_authorized == false
+          ' "$first/verification.json"
+          test -z "$(git status --porcelain)"
+      - name: Upload deterministic counterfactual evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: metric-counterfactual-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-counterfactual/first
+          if-no-files-found: error
+          retention-days: 30
