@@ -4,29 +4,25 @@ import "fmt"
 
 func cycleIndicators(check validation, envelope Envelope, replay bool) []Indicator {
 	return []Indicator{
-		{ID: "foundation.artifact-schemas", Route: "FOUNDATION",
-			Verdict: verdict(check.Schemas), Relation: "=", Value: fmt.Sprint(check.Schemas), Limit: "true"},
-		{ID: "foundation.ci-run-binding", Route: "FOUNDATION",
-			Verdict: verdict(check.Context), Relation: "=", Value: fmt.Sprint(check.Context), Limit: "true"},
-		{ID: "foundation.exact-head-binding", Route: "FOUNDATION",
-			Verdict: verdict(check.Heads), Relation: "=", Value: fmt.Sprint(check.Heads), Limit: "true"},
-		{ID: "foundation.gooo-contract-binding", Route: "FOUNDATION",
-			Verdict: verdict(check.Contract), Relation: "=", Value: fmt.Sprint(check.Contract), Limit: "true"},
-		{ID: "coherence.artifact-state", Route: "COHERENCE",
-			Verdict: verdict(check.States), Relation: "=", Value: fmt.Sprint(check.States), Limit: "true"},
-		{ID: "coherence.plan-execution-receipt-provenance", Route: "COHERENCE",
-			Verdict: verdict(check.Links), Relation: "=", Value: fmt.Sprint(check.Links), Limit: "true"},
-		{ID: "coherence.indicator-ledger-binding", Route: "COHERENCE",
-			Verdict: verdict(check.Ledger), Relation: "=", Value: fmt.Sprint(check.Ledger), Limit: "true"},
-			{ID: "coherence.content-addressed-cycle", Route: "COHERENCE",
-				Verdict: verdict(check.Digests), Relation: "sha256",
-				Value: envelope.ArtifactSetDigest, Limit: "bound"},
-			{ID: "coherence.source-metrics-semantics", Route: "COHERENCE",
-				Verdict: verdict(check.Metrics), Relation: "sha256",
-				Value: envelope.SourceMetrics.SemanticDigest, Limit: "bound"},
-			{ID: "regression.canonical-replay", Route: "REGRESSION",
-			Verdict: verdict(replay), Relation: "=", Value: fmt.Sprint(replay), Limit: "true"},
+		cycleBooleanIndicator("foundation.artifact-schemas", "FOUNDATION", check.Schemas),
+		cycleBooleanIndicator("foundation.ci-run-binding", "FOUNDATION", check.Context),
+		cycleBooleanIndicator("foundation.exact-head-binding", "FOUNDATION", check.Heads),
+		cycleBooleanIndicator("foundation.gooo-contract-binding", "FOUNDATION", check.Contract),
+		cycleBooleanIndicator("coherence.artifact-state", "COHERENCE", check.States),
+		cycleBooleanIndicator("coherence.plan-execution-receipt-provenance", "COHERENCE", check.Links),
+		cycleBooleanIndicator("coherence.indicator-ledger-binding", "COHERENCE", check.Ledger),
+		cycleDigestIndicator("coherence.content-addressed-cycle", envelope.ArtifactSetDigest, check.Digests),
+		cycleDigestIndicator("coherence.source-metrics-semantics", envelope.SourceMetrics.SemanticDigest, check.Metrics),
+		cycleBooleanIndicator("regression.canonical-replay", "REGRESSION", replay),
 	}
+}
+
+func cycleBooleanIndicator(id, route string, pass bool) Indicator {
+	return Indicator{ID: id, Route: route, Verdict: verdict(pass), Relation: "=", Value: fmt.Sprint(pass), Limit: "true"}
+}
+
+func cycleDigestIndicator(id, value string, pass bool) Indicator {
+	return Indicator{ID: id, Route: "COHERENCE", Verdict: verdict(pass), Relation: "sha256", Value: value, Limit: "bound"}
 }
 
 func finishEnvelope(envelope *Envelope) {

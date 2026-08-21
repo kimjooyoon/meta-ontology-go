@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 )
 
-const envelopeSchema = "gooo/self-improvement-cycle-envelope/v2"
-const metaprogram = "scripts/self-improvement-cycle"
+const envelopeSchema, metaprogram = "gooo/self-improvement-cycle-envelope/v2", "scripts/self-improvement-cycle"
 
 type projection struct {
 	Envelope   Envelope
@@ -33,10 +32,10 @@ func projectEnvelope(in inputs, opts options) projection {
 	return projection{Envelope: Envelope{
 		Schema: envelopeSchema, Metaprogram: metaprogram,
 		BaseSHA: plan.BaseSHA, HeadSHA: opts.headSHA,
-			CIWorkflowRunID: opts.runID, CIHeadBranch: opts.branch, CIConclusion: opts.conclusion,
-			ContractSemanticHash: contract.SemanticHash, ContractRegistryDigest: contract.RegistryDigest,
-			SourceMetrics: metrics,
-			IndicatorLedgerDigest: provenance.IndicatorDecisionLedgerDigest,
+		CIWorkflowRunID: opts.runID, CIHeadBranch: opts.branch, CIConclusion: opts.conclusion,
+		ContractSemanticHash: contract.SemanticHash, ContractRegistryDigest: contract.RegistryDigest,
+		SourceMetrics:         metrics,
+		IndicatorLedgerDigest: provenance.IndicatorDecisionLedgerDigest,
 		IndicatorLedgerCount:  provenance.IndicatorDecisionLedgerCount,
 		Artifacts:             artifacts, ArtifactSetDigest: artifactSetDigest,
 		InputDigest: digestJSON(context), Indicators: []Indicator{},

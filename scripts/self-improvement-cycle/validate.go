@@ -11,24 +11,21 @@ func validateInputs(in inputs, opts options) validation {
 	contract := in.Contract.Value
 	base := plan.BaseSHA
 	return validation{
-		Schemas: plan.SchemaVersion == "gooo/self-improvement-generation/v6" &&
-			execution.SchemaVersion == "gooo/meta-operation-execution/v6" &&
+		Schemas: plan.SchemaVersion == "gooo/self-improvement-generation/v6" && execution.SchemaVersion == "gooo/meta-operation-execution/v6" &&
 			receipts.SchemaVersion == "gooo/meta-operation-receipt-report/v2" &&
-			provenance.SchemaVersion == "gooo/meta-artifact-provenance/v1" &&
-			contract.Schema == "gooo/self-improvement-contract/v1" &&
+			provenance.SchemaVersion == "gooo/meta-artifact-provenance/v1" && contract.Schema == "gooo/self-improvement-contract/v1" &&
 			in.Metrics.Value.Meta.Schema == "gooo/indicator-report/v3",
 		Context: opts.runID > 0 && (opts.branch == "dev" || opts.branch == "main") &&
 			(opts.conclusion == "success" || opts.conclusion == "failure"),
-		Heads: validSHA(opts.headSHA) && in.Metrics.Value.CommitSHA == opts.headSHA &&
-			plan.HeadSHA == opts.headSHA && execution.HeadSHA == opts.headSHA &&
+		Heads: validSHA(opts.headSHA) && in.Metrics.Value.CommitSHA == opts.headSHA && plan.HeadSHA == opts.headSHA &&
+			execution.HeadSHA == opts.headSHA &&
 			receipts.HeadSHA == opts.headSHA && provenance.HeadSHA == opts.headSHA &&
-			contract.CommitSHA == opts.headSHA && validSHA(base) &&
-			execution.BaseSHA == base && receipts.BaseSHA == base && provenance.BaseSHA == base,
-			Contract: contract.Status == "PASS" && !contract.PromotionAuthorized &&
-				validDigest(contract.SourceSHA256) && validDigest(contract.SemanticHash) &&
-				validDigest(contract.RegistryDigest) && validContractIndicators(contract) &&
-				validContractCoverage(contract),
-			Metrics: validMetrics(in.Metrics.Value),
+			contract.CommitSHA == opts.headSHA && validSHA(base) && execution.BaseSHA == base &&
+			receipts.BaseSHA == base && provenance.BaseSHA == base,
+		Contract: contract.Status == "PASS" && !contract.PromotionAuthorized &&
+			validDigest(contract.SourceSHA256) && validDigest(contract.SemanticHash) && validDigest(contract.RegistryDigest) &&
+			validContractIndicators(contract) && validContractCoverage(contract),
+		Metrics: validMetrics(in.Metrics.Value),
 		States: plan.Decision != "" && plan.Reason != "" &&
 			execution.Decision != "" && execution.Reason != "" &&
 			receipts.Decision != "" && receipts.Reason != "" &&

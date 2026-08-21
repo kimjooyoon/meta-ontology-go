@@ -23,9 +23,8 @@ func TestEnvelopeBindsTheCompleteCycle(t *testing.T) {
 func TestEnvelopeRejectsAPlanLinkDrift(t *testing.T) {
 	opts, in := cycleFixture()
 	in.Execution.Value.PlanDigest = strings.Repeat("2", 64)
-	envelope := buildEnvelope(in, opts)
-	if envelope.Status != "OPEN" {
-		t.Fatalf("status = %s, want OPEN", envelope.Status)
+	if status := buildEnvelope(in, opts).Status; status != "OPEN" {
+		t.Fatalf("status = %s, want OPEN", status)
 	}
 }
 
@@ -39,8 +38,7 @@ func TestEnvelopeRejectsRootExceptionDrift(t *testing.T) {
 
 func cycleFixture() (options, inputs) {
 	head, base, digest := strings.Repeat("a", 40), strings.Repeat("b", 40), strings.Repeat("1", 64)
-	ledger := "sha256:" + digest
-	docHash := strings.Repeat("3", 64)
+	ledger, docHash := "sha256:"+digest, strings.Repeat("3", 64)
 	opts := options{headSHA: head, branch: "dev", conclusion: "success", runID: 42}
 	in := inputs{
 		Metrics:    document[metricsDocument]{Value: metricsFixture(head), FileSHA256: docHash},
