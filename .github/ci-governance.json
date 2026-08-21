@@ -663,6 +663,17 @@
       ]
     },
     {
+      "branch": "agent/metric-meta-program-closure-v14",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/metric-meta-program-closure/**",
+        "internal/meta/metricprogram/closure/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program-closure/**"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"

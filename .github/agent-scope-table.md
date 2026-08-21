@@ -97,5 +97,6 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/metric-meta-program-v11` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `examples/metric-meta-program/**`, `internal/meta/metricprogram/**`, `internal/meta/metricprogram/verify/**`, `internal/verify/scope_part01.go`, `scripts/metric-meta-program/**` |
 | `agent/metric-meta-program-ci-v12` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/metric-counterfactual.yml`, `internal/verify/scope_part01.go` |
 | `agent/metric-meta-program-closure-v13` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/metric-counterfactual.yml`, `internal/verify/scope_part01.go` |
+| `agent/metric-meta-program-closure-v14` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `examples/metric-meta-program-closure/**`, `internal/meta/metricprogram/closure/**`, `internal/verify/scope_part01.go`, `scripts/metric-meta-program-closure/**` |
 | `agent/zerolang-experiments` | `docs/research/zerolang.md` |
 | `agent/zerolang-research` | `docs/research/zerolang.md` |
