@@ -19,22 +19,21 @@ func BindArtifactProvenance(
 		ReceiptReportDigest:           receipts.ReportDigest,
 		IndicatorDecisionLedgerDigest: ledgerDigest,
 		IndicatorDecisionLedgerCount:  ledgerCount,
-	}
-	envelope.Indicators = []ArtifactProvenanceIndicator{
-		artifactProvenanceIndicator("foundation.plan-ledger", TrilemmaRouteFoundation,
-			artifactBindingVerdict(planCanonical, ledgerDigest != ""),
-			plan.PlanDigest, ledgerDigest, strconv.Itoa(ledgerCount)),
-		artifactProvenanceIndicator("coherence.execution-ledger", TrilemmaRouteCoherence,
-			artifactBindingVerdict(executionCanonical,
-				executionMatchesProvenance(plan, execution, ledgerDigest, ledgerCount)),
-			execution.PlanDigest, execution.IndicatorDecisionLedgerDigest),
-		artifactProvenanceIndicator("coherence.receipt-ledger", TrilemmaRouteCoherence,
-			artifactBindingVerdict(receiptsCanonical,
-				receiptsMatchProvenance(plan, receipts, ledgerDigest, ledgerCount)),
-			receipts.PlanDigest, receipts.IndicatorDecisionLedgerDigest),
-		artifactProvenanceIndicator("regression.canonical-replay", TrilemmaRouteRegression,
-			artifactBindingVerdict(planCanonical && executionCanonical && receiptsCanonical, true),
-			plan.PlanDigest, execution.ReplayDigest, receipts.ReplayDigest),
-	}
+		Indicators: []ArtifactProvenanceIndicator{
+			artifactProvenanceIndicator("foundation.plan-ledger", TrilemmaRouteFoundation,
+				artifactBindingVerdict(planCanonical, ledgerDigest != ""),
+				plan.PlanDigest, ledgerDigest, strconv.Itoa(ledgerCount)),
+			artifactProvenanceIndicator("coherence.execution-ledger", TrilemmaRouteCoherence,
+				artifactBindingVerdict(executionCanonical,
+					executionMatchesProvenance(plan, execution, ledgerDigest, ledgerCount)),
+				execution.PlanDigest, execution.IndicatorDecisionLedgerDigest),
+			artifactProvenanceIndicator("coherence.receipt-ledger", TrilemmaRouteCoherence,
+				artifactBindingVerdict(receiptsCanonical,
+					receiptsMatchProvenance(plan, receipts, ledgerDigest, ledgerCount)),
+				receipts.PlanDigest, receipts.IndicatorDecisionLedgerDigest),
+			artifactProvenanceIndicator("regression.canonical-replay", TrilemmaRouteRegression,
+				artifactBindingVerdict(planCanonical && executionCanonical && receiptsCanonical, true),
+				plan.PlanDigest, execution.ReplayDigest, receipts.ReplayDigest),
+		}}
 	return finishArtifactProvenance(envelope)
 }
