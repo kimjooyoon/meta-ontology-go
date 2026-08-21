@@ -674,6 +674,15 @@
       ]
     },
     {
+      "branch": "agent/metric-meta-program-closure-v15",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"
