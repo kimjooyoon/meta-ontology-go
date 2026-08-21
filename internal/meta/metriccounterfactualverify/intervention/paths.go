@@ -30,7 +30,7 @@ func directoryChain(file string) []string {
 		return chain
 	}
 	current := ""
-	for _, part := range strings.Split(directory, "/") {
+	for part := range strings.SplitSeq(directory, "/") {
 		current = path.Join(current, part)
 		chain = append(chain, current)
 	}
