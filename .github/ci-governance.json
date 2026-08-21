@@ -591,8 +591,8 @@
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/metric-intervention.yml",
-        "internal/meta/metricintervention/**",
-        "internal/meta/metricinterventionverify/**",
+        "internal/meta/metriccounterfactualverify/intervention/**",
+        "internal/meta/metriccounterfactualverify/intervention/verify/**",
         "internal/verify/scope_part01.go",
         "scripts/metric-intervention/**"
       ]

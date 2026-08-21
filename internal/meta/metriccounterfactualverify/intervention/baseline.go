@@ -21,12 +21,12 @@ func LoadBaseline(metricsPath, repository, subjectSHA string) (Baseline, error) 
 	if report.Meta.Schema != sourcepolicy.IndicatorSchema || report.Meta.Policy.Schema != sourcepolicy.Schema {
 		return Baseline{}, fmt.Errorf("source metric policy schema is invalid")
 	}
-	if !report.Meta.Policy.ExemptProjectRootTopology || !rootTopologyExempt(report.Meta) {
-		return Baseline{}, fmt.Errorf("project root topology exemption is not evidenced")
-	}
 	root, err := projectRootCounts(report.Directories)
 	if err != nil {
 		return Baseline{}, err
+	}
+	if !report.Meta.Policy.ExemptProjectRootTopology || !rootEvidenceComplete(report.Meta, root) {
+		return Baseline{}, fmt.Errorf("project root topology exemption is not evidenced")
 	}
 	report.Root, report.StorageRoot = "", ""
 	sourceDigest, err := artifact.Digest(report)
@@ -53,18 +53,4 @@ func projectRootCounts(metrics []linecaps.DirectoryMetric) (metrictransition.Cou
 		return counts, err
 	}
 	return metrictransition.Counts{}, fmt.Errorf("logical source metrics have no project root")
-}
-
-func rootTopologyExempt(report sourcepolicy.Report) bool {
-	found := false
-	for _, indicator := range report.Indicators {
-		if indicator.SubjectKind != sourcepolicy.SubjectKindProjectRoot || indicator.Family != sourcepolicy.FamilyTopology {
-			continue
-		}
-		found = true
-		if indicator.Applicability != sourcepolicy.ApplicabilityNotApplicable || indicator.ApplicabilityReason != sourcepolicy.ApplicabilityReasonRootTopologyExempt {
-			return false
-		}
-	}
-	return found
 }

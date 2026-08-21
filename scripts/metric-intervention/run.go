@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
-	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricintervention"
-	verify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricinterventionverify"
+	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
+	verify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention/verify"
 )
 
 func run() error {

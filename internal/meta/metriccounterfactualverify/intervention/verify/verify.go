@@ -5,7 +5,7 @@ import (
 
 	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 	counterverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify"
-	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricintervention"
+	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
 )
 
 func Replay(metricsPath string, ledger metric.Ledger) (Receipt, error) {
