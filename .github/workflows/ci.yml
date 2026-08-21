@@ -748,7 +748,6 @@ jobs:
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-proof-input
-          if-no-files-found: ignore
       - name: Capture exact failure tuple
         uses: actions/github-script@v8
         env:

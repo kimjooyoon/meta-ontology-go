@@ -36,7 +36,7 @@ func indicators(report Report, replayEqual bool) []Indicator {
 		},
 		{
 			ID: "foundation.exact-head-binding", Route: "FOUNDATION",
-			Verdict: verdict(commitPattern.MatchString(report.CommitSHA)),
+			Verdict:  verdict(commitPattern.MatchString(report.CommitSHA)),
 			Relation: "matches", Value: report.CommitSHA, Limit: "40-lower-hex",
 		},
 		{
@@ -47,7 +47,7 @@ func indicators(report Report, replayEqual bool) []Indicator {
 		},
 		{
 			ID: "coherence.action-input-schema", Route: "COHERENCE",
-			Verdict: verdict(report.InvalidInputsTotal == 0),
+			Verdict:  verdict(report.InvalidInputsTotal == 0),
 			Relation: "=", Value: fmt.Sprint(report.InvalidInputsTotal), Limit: "0",
 		},
 		{

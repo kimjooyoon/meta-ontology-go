@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	usesPattern  = regexp.MustCompile(
+	usesPattern = regexp.MustCompile(
 		`^\s*(?:-\s*)?uses:\s*([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([^\s#]+)`,
 	)
 	majorPattern = regexp.MustCompile(`^v([0-9]+)(?:\..*)?$`)
