@@ -586,6 +586,18 @@
       ]
     },
     {
+      "branch": "agent/metric-intervention-v8",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-intervention.yml",
+        "internal/meta/metricintervention/**",
+        "internal/meta/metricinterventionverify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-intervention/**"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"
