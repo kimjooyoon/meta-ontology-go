@@ -621,6 +621,18 @@
       ]
     },
     {
+      "branch": "agent/metric-strategy-v10",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/meta/metricstrategy/**",
+        "internal/meta/metricstrategy/verify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-strategy/**"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"

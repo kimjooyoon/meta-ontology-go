@@ -11,12 +11,14 @@ on:
       - 'internal/meta/metriccounterfactual/**'
       - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
+      - 'internal/meta/metricstrategy/**'
       - 'internal/meta/metrictransition/**'
       - 'internal/meta/sourcepolicy/**'
       - 'internal/verify/scope_part01.go'
       - 'scripts/line-metrics/**'
       - 'scripts/metric-counterfactual/**'
       - 'scripts/metric-intervention/**'
+      - 'scripts/metric-strategy/**'
   push:
     branches: [dev, main]
     paths:
@@ -25,11 +27,13 @@ on:
       - 'internal/meta/metriccounterfactual/**'
       - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
+      - 'internal/meta/metricstrategy/**'
       - 'internal/meta/metrictransition/**'
       - 'internal/meta/sourcepolicy/**'
       - 'scripts/line-metrics/**'
       - 'scripts/metric-counterfactual/**'
       - 'scripts/metric-intervention/**'
+      - 'scripts/metric-strategy/**'
 
 permissions:
   contents: read
@@ -165,5 +169,82 @@ jobs:
         with:
           name: metric-intervention-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-intervention/first
+          if-no-files-found: error
+          retention-days: 30
+
+  strategy:
+    needs: intervention
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Download exact intervention evidence
+        uses: actions/download-artifact@v7
+        with:
+          name: metric-intervention-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-strategy/input
+      - name: Synthesize, replay, and independently verify the trilemma choice
+        shell: bash
+        run: |
+          set -euo pipefail
+          input="$RUNNER_TEMP/metric-strategy/input"
+          first="$RUNNER_TEMP/metric-strategy/first"
+          replay="$RUNNER_TEMP/metric-strategy/replay"
+          mkdir -p "$first" "$replay"
+          common=(
+            -metrics "$input/source-metrics.json"
+            -intervention "$input/ledger.json"
+            -intervention-verification "$input/verification.json"
+          )
+          for target in "$first" "$replay"; do
+            go run ./scripts/metric-strategy "${common[@]}" \
+              -mode generate \
+              -repository "$GITHUB_REPOSITORY" \
+              -subject-sha "$SUBJECT_SHA" \
+              -output "$target/plan.json"
+          done
+          cmp -s "$first/plan.json" "$replay/plan.json"
+          go run ./scripts/metric-strategy "${common[@]}" \
+            -mode verify \
+            -plan "$first/plan.json" \
+            -output "$first/verification.json"
+          jq -e '
+            .schema == "gooo/metric-meta-strategy/v1" and
+            .execution_policy == "READ_ONLY_ARTIFACT_SYNTHESIS" and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false and
+            .root_policy.counts_applicability == "OBSERVED" and
+            .root_policy.topology_applicability == "NOT_APPLICABLE" and
+            .root_policy.readme_requirement == "NOT_APPLICABLE" and
+            .policy.choices == ["FOUNDATION", "COHERENCE", "REGRESSION"] and
+            ([.candidates[].proof_choice] == ["FOUNDATION", "COHERENCE", "REGRESSION"]) and
+            (.bindings | length) == 15 and
+            all(.bindings[]; .status == "SATISFIED" and (.meta_operation | length) > 0) and
+            .selection.proof_choice == "REGRESSION" and
+            .selection.decision == "HOLD_FIXED_POINT" and
+            .selection.meta_operation == "terminate-at-fixed-point"
+          ' "$first/plan.json"
+          jq -e '
+            .schema == "gooo/metric-meta-strategy-verification/v1" and
+            .status == "VERIFIED" and
+            .binding_count == 15 and
+            .candidate_count == 3 and
+            .selected_proof_choice == "REGRESSION" and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false
+          ' "$first/verification.json"
+          test -z "$(git status --porcelain)"
+      - name: Upload deterministic metric strategy evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: metric-strategy-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-strategy/first
           if-no-files-found: error
           retention-days: 30
