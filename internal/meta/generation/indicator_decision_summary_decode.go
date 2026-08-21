@@ -21,6 +21,9 @@ func (plan *Plan) UnmarshalJSON(payload []byte) error {
 	if wire.Summary != candidate.indicatorDecisionSummary() {
 		return fmt.Errorf("indicator decision summary does not match plan")
 	}
+	if err := validateActionOutcomes(candidate.Selected); err != nil {
+		return err
+	}
 	*plan = candidate
 	return nil
 }
@@ -39,6 +42,9 @@ func (manifest *ExecutionManifest) UnmarshalJSON(payload []byte) error {
 	candidate := ExecutionManifest(wire.plainManifest)
 	if wire.Summary != candidate.indicatorDecisionSummary() {
 		return fmt.Errorf("indicator decision summary does not match execution manifest")
+	}
+	if err := validateExecutionOutcomes(candidate.Steps); err != nil {
+		return err
 	}
 	*manifest = candidate
 	return nil

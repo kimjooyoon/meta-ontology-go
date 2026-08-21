@@ -21,6 +21,8 @@ type Action struct {
 	Applicability        sourcepolicy.Applicability       `json:"applicability"`
 	ApplicabilityRule    string                           `json:"applicability_rule_id"`
 	ApplicabilityReason  sourcepolicy.ApplicabilityReason `json:"applicability_reason"`
+	Blocking             bool                             `json:"blocking"`
+	IndicatorOutcome     sourcepolicy.IndicatorOutcome    `json:"indicator_outcome"`
 	MetricProofChoice    sourcepolicy.ProofChoice         `json:"metric_proof_choice"`
 	MetricProducer       string                           `json:"metric_producer"`
 	MetricConsumer       string                           `json:"metric_consumer"`

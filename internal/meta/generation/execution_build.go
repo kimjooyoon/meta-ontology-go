@@ -38,6 +38,7 @@ func executionStepFor(action Action) ExecutionStep {
 		MetricID:          action.MetricID, Subject: action.Subject,
 		SubjectKind: action.SubjectKind, Applicability: action.Applicability,
 		ApplicabilityRule: action.ApplicabilityRule, ApplicabilityReason: action.ApplicabilityReason,
+		Blocking: action.Blocking, IndicatorOutcome: action.IndicatorOutcome,
 		MetricProofChoice: action.MetricProofChoice, MetricProducer: action.MetricProducer,
 		MetricConsumer:      action.MetricConsumer,
 		Operation:           action.Operation,
