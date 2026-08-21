@@ -5,10 +5,7 @@ import (
 	"encoding/json"
 )
 
-const (
-	envelopeSchema = "gooo/self-improvement-cycle-envelope/v1"
-	metaprogram    = "scripts/self-improvement-cycle"
-)
+const envelopeSchema, metaprogram = "gooo/self-improvement-cycle-envelope/v2", "scripts/self-improvement-cycle"
 
 type projection struct {
 	Envelope   Envelope
@@ -18,9 +15,10 @@ type projection struct {
 func projectEnvelope(in inputs, opts options) projection {
 	plan, execution := in.Plan.Value, in.Execution.Value
 	receipts, provenance, contract := in.Receipts.Value, in.Provenance.Value, in.Contract.Value
+	metrics := metricsProjection(in.Metrics.Value)
 	artifacts := []ArtifactRef{
 		{Kind: "contract", Schema: contract.Schema, FileSHA256: in.Contract.FileSHA256, SemanticDigest: contract.SemanticHash, Decision: contract.Status},
-		{Kind: "source-metrics", Schema: "gooo/source-line-metrics/unversioned", FileSHA256: in.Metrics.FileSHA256, SemanticDigest: in.Metrics.Value.CommitSHA, Decision: "OBSERVED"},
+		{Kind: "source-metrics", Schema: metrics.Schema, FileSHA256: in.Metrics.FileSHA256, SemanticDigest: metrics.SemanticDigest, Decision: "OBSERVED"},
 		{Kind: "generation-plan", Schema: plan.SchemaVersion, FileSHA256: in.Plan.FileSHA256, SemanticDigest: plan.PlanDigest, Decision: plan.Decision},
 		{Kind: "execution-manifest", Schema: execution.SchemaVersion, FileSHA256: in.Execution.FileSHA256, SemanticDigest: execution.ManifestDigest, Decision: execution.Decision},
 		{Kind: "receipt-report", Schema: receipts.SchemaVersion, FileSHA256: in.Receipts.FileSHA256, SemanticDigest: receipts.ReportDigest, Decision: receipts.Decision},
@@ -36,6 +34,7 @@ func projectEnvelope(in inputs, opts options) projection {
 		BaseSHA: plan.BaseSHA, HeadSHA: opts.headSHA,
 		CIWorkflowRunID: opts.runID, CIHeadBranch: opts.branch, CIConclusion: opts.conclusion,
 		ContractSemanticHash: contract.SemanticHash, ContractRegistryDigest: contract.RegistryDigest,
+		SourceMetrics:         metrics,
 		IndicatorLedgerDigest: provenance.IndicatorDecisionLedgerDigest,
 		IndicatorLedgerCount:  provenance.IndicatorDecisionLedgerCount,
 		Artifacts:             artifacts, ArtifactSetDigest: artifactSetDigest,
@@ -48,9 +47,7 @@ func buildEnvelope(in inputs, opts options) Envelope {
 	left, right := projectEnvelope(in, opts), projectEnvelope(in, opts)
 	leftBytes, _ := json.Marshal(left.Envelope)
 	rightBytes, _ := json.Marshal(right.Envelope)
-	left.Envelope.Indicators = cycleIndicators(
-		left.Validation, left.Envelope, bytes.Equal(leftBytes, rightBytes),
-	)
+	left.Envelope.Indicators = cycleIndicators(left.Validation, left.Envelope, bytes.Equal(leftBytes, rightBytes))
 	finishEnvelope(&left.Envelope)
 	canonical := left.Envelope
 	canonical.EnvelopeDigest, canonical.ReplayDigest = "", ""
@@ -59,4 +56,20 @@ func buildEnvelope(in inputs, opts options) Envelope {
 		EnvelopeDigest, ArtifactSetDigest, InputDigest string
 	}{left.Envelope.EnvelopeDigest, left.Envelope.ArtifactSetDigest, left.Envelope.InputDigest})
 	return left.Envelope
+}
+
+func metricsProjection(metrics metricsDocument) MetricsBinding {
+	result := MetricsBinding{Schema: metrics.Meta.Schema}
+	for _, root := range metrics.Directories {
+		if root.Path == "." {
+			result.LogicalRoot = root
+		}
+	}
+	for _, root := range metrics.StorageDirectories {
+		if root.Path == "." {
+			result.StorageRoot = root
+		}
+	}
+	result.SemanticDigest = digestJSON(result)
+	return result
 }

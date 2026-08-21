@@ -13,6 +13,25 @@ var (
 	ledgerPattern = regexp.MustCompile("^sha256:[0-9a-f]{64}$")
 )
 
+type contractIndicator struct {
+	Route   string `json:"route"`
+	Verdict string `json:"verdict"`
+}
+type contractCoverage struct {
+	Covered bool `json:"covered"`
+}
+type contractDocument struct {
+	Schema              string              `json:"schema"`
+	CommitSHA           string              `json:"commit_sha"`
+	SourceSHA256        string              `json:"source_sha256"`
+	SemanticHash        string              `json:"semantic_hash"`
+	RegistryDigest      string              `json:"registry_digest"`
+	Status              string              `json:"status"`
+	PromotionAuthorized bool                `json:"promotion_authorized"`
+	Indicators          []contractIndicator `json:"indicators"`
+	ExecutorCoverage    []contractCoverage  `json:"executor_coverage"`
+}
+
 func digestBytes(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])
@@ -39,4 +58,16 @@ func validFileDigests(in inputs) bool {
 	return validDigest(in.Metrics.FileSHA256) && validDigest(in.Plan.FileSHA256) &&
 		validDigest(in.Execution.FileSHA256) && validDigest(in.Receipts.FileSHA256) &&
 		validDigest(in.Provenance.FileSHA256) && validDigest(in.Contract.FileSHA256)
+}
+
+func validContractCoverage(contract contractDocument) bool {
+	if len(contract.ExecutorCoverage) != 3 {
+		return false
+	}
+	for _, coverage := range contract.ExecutorCoverage {
+		if !coverage.Covered {
+			return false
+		}
+	}
+	return true
 }
