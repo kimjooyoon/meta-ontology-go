@@ -5,9 +5,9 @@ import (
 )
 
 func validatePromotionAuthorization(bundle proofBundle) error {
-	if bundle.BaseRef != "main" {
+	if !isPromotionBundle(bundle) {
 		if bundle.PromotionAuthorization != nil || bundle.PromotionObservation != nil {
-			return fmt.Errorf("promotion authorization is not allowed on a feature proof")
+			return fmt.Errorf("promotion authorization is not allowed on a non-promotion proof")
 		}
 		return nil
 	}

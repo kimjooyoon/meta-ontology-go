@@ -30,7 +30,10 @@ func gateRejections(inputs proofInputs) []string {
 	if c.ScopeDecision != "passed" {
 		failures = append(failures, "scope_not_passed")
 	}
-	if c.BaseRef == "main" {
+	if !validContextProofRoute(c) {
+		failures = append(failures, "proof_route_invalid")
+	}
+	if isPromotionContext(c) {
 		if c.GuardianEvidence == nil || c.BranchProtection.ReadStatus != "verified" || !branchProtectionReadyFor(c.BranchProtection, "main") || c.DevBranchProtection.ReadStatus != "verified" || !branchProtectionReadyFor(c.DevBranchProtection, "dev") {
 			failures = append(failures, "main_protection_not_verified")
 		}
