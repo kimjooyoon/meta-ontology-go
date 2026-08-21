@@ -218,28 +218,23 @@ jobs:
           cmp -s "$METRICS_DIR/self-improvement-provenance.json" "$METRICS_DIR/self-improvement-provenance-replay.json"
           go run ./scripts/source-splitter -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           go run ./bootstrap/source-repacker -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
-          {
-            echo "### Source metrics (go/gooo + folders/files)"
-            echo '```text'
-            cat "$METRICS_DIR/source-metrics.txt"
-            echo '```'
-            echo "### Deterministic self-improvement generation"
-            echo '```json'
-            cat "$METRICS_DIR/self-improvement-plan.json"
-            echo '```'
-            echo "### Deterministic sandbox execution manifest"
-            echo '```json'
-            cat "$METRICS_DIR/self-improvement-execution.json"
-            echo '```'
-            echo "### Deterministic conformance receipt report"
-            echo '```json'
-            cat "$METRICS_DIR/self-improvement-receipts.json"
-            echo '```'
-            echo "### Deterministic artifact provenance envelope"
-            echo '```json'
-            cat "$METRICS_DIR/self-improvement-provenance.json"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          go run ./scripts/meta-summary \
+            -metrics "$METRICS_DIR/source-metrics.json" \
+            -plan "$METRICS_DIR/self-improvement-plan.json" \
+            -execution "$METRICS_DIR/self-improvement-execution.json" \
+            -receipts "$METRICS_DIR/self-improvement-receipts.json" \
+            -provenance "$METRICS_DIR/self-improvement-provenance.json" \
+            -output "$METRICS_DIR/ci-summary.md" -report "$METRICS_DIR/ci-summary.json"
+          go run ./scripts/meta-summary \
+            -metrics "$METRICS_DIR/source-metrics.json" \
+            -plan "$METRICS_DIR/self-improvement-plan.json" \
+            -execution "$METRICS_DIR/self-improvement-execution.json" \
+            -receipts "$METRICS_DIR/self-improvement-receipts.json" \
+            -provenance "$METRICS_DIR/self-improvement-provenance.json" \
+            -output "$METRICS_DIR/ci-summary-replay.md" -report "$METRICS_DIR/ci-summary-replay.json"
+          cmp -s "$METRICS_DIR/ci-summary.md" "$METRICS_DIR/ci-summary-replay.md"
+          cmp -s "$METRICS_DIR/ci-summary.json" "$METRICS_DIR/ci-summary-replay.json"
+          cat "$METRICS_DIR/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact
         uses: actions/upload-artifact@v4
         with:
@@ -275,6 +270,13 @@ jobs:
           path: ${{ runner.temp }}/source-metrics/self-improvement-provenance.json
           if-no-files-found: error
           retention-days: 30
+      - name: Upload CI summary indicator artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-summary-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/ci-summary.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Check DAMP/DRY caps
         if: github.event_name == 'pull_request'
         env:
