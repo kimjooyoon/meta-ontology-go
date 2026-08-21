@@ -5,7 +5,7 @@ import (
 )
 
 func validateProof(bundle proofBundle) error {
-	if bundle.Schema != proofSchema || bundle.Repository == "" || bundle.Event == "" || !validEventRef(bundle.Event, bundle.EventRef) || bundle.Ref == "" || bundle.EventRef != bundle.Ref || bundle.CheckoutRef == "" || bundle.CheckoutRef != bundle.HeadSHA || bundle.BaseRef == "" || bundle.RunID <= 0 || bundle.RunAttempt <= 0 || bundle.PRNumber < 0 || bundle.WriteEffect != "none" || !bundle.NoWrite {
+	if bundle.Schema != proofSchema || bundle.Repository == "" || bundle.Event == "" || !validEventRef(bundle.Event, bundle.EventRef) || bundle.Ref == "" || bundle.EventRef != bundle.Ref || bundle.CheckoutRef == "" || bundle.CheckoutRef != bundle.HeadSHA || bundle.BaseRef == "" || bundle.RunID <= 0 || bundle.RunAttempt <= 0 || bundle.PRNumber < 0 || bundle.WriteEffect != "none" || !bundle.NoWrite || !artifactProvenanceBound(bundle.ArtifactProvenance, bundle.BaseSHA, bundle.HeadSHA) {
 		return fmt.Errorf("proof metadata is incomplete")
 	}
 	if !validSHA(bundle.BaseSHA) || !validSHA(bundle.HeadSHA) || !validSHA(bundle.WorkflowSHA) || bundle.BaseSHA == bundle.HeadSHA {

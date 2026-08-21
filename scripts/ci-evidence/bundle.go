@@ -16,6 +16,9 @@ func validateEvidence(bundle evidence) error {
 	if len(bundle.Jobs) != len(canonicalJobs) {
 		return fmt.Errorf("CI evidence must contain all six canonical jobs")
 	}
+	if !artifactProvenanceBound(bundle.ArtifactProvenance, bundle.BaseSHA, bundle.HeadSHA) {
+		return fmt.Errorf("CI evidence artifact provenance is missing or unbound")
+	}
 	seenIDs := make(map[int64]bool, len(bundle.Jobs))
 	for index, job := range bundle.Jobs {
 		if job.Name != canonicalJobs[index] || job.ID <= 0 || seenIDs[job.ID] || job.Status != "completed" || job.Conclusion != "success" || job.HeadSHA != bundle.HeadSHA || job.RunID != bundle.RunID || job.RunAttempt != bundle.RunAttempt {

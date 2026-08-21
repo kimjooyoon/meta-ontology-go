@@ -1,9 +1,9 @@
 package main
 
 const (
-	evidenceSchema       = "gooo/ci-evidence/v2"
-	proofSchema          = "gooo/ci-proof/v3"
-	receiptSchema        = "gooo/provenance-receipt/v3"
+	evidenceSchema       = "gooo/ci-evidence/v3"
+	proofSchema          = "gooo/ci-proof/v4"
+	receiptSchema        = "gooo/provenance-receipt/v4"
 	domainEvidenceSchema = "gooo/domain-evidence/v2"
 )
 
@@ -37,19 +37,20 @@ type promotionInput struct {
 	BranchProtectionRequired bool     `json:"branch_protection_required"`
 }
 type evidenceInput struct {
-	Schema      string          `json:"schema"`
-	Repository  string          `json:"repository"`
-	Event       string          `json:"event"`
-	EventRef    string          `json:"event_ref"`
-	CheckoutRef string          `json:"checkout_ref"`
-	BaseRef     string          `json:"base_ref"`
-	BaseSHA     string          `json:"base_sha"`
-	HeadSHA     string          `json:"head_sha"`
-	RunID       int64           `json:"run_id"`
-	Attempt     int64           `json:"run_attempt"`
-	WorkflowSHA string          `json:"workflow_sha"`
-	Jobs        []jobInput      `json:"jobs"`
-	Digests     evidenceDigests `json:"digests"`
+	Schema             string             `json:"schema"`
+	Repository         string             `json:"repository"`
+	Event              string             `json:"event"`
+	EventRef           string             `json:"event_ref"`
+	CheckoutRef        string             `json:"checkout_ref"`
+	BaseRef            string             `json:"base_ref"`
+	BaseSHA            string             `json:"base_sha"`
+	HeadSHA            string             `json:"head_sha"`
+	RunID              int64              `json:"run_id"`
+	Attempt            int64              `json:"run_attempt"`
+	WorkflowSHA        string             `json:"workflow_sha"`
+	Jobs               []jobInput         `json:"jobs"`
+	ArtifactProvenance artifactProvenance `json:"artifact_provenance"`
+	Digests            evidenceDigests    `json:"digests"`
 }
 type evidenceDigests struct {
 	Source    string `json:"source_sha256"`

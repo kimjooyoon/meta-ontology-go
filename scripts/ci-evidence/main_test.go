@@ -63,7 +63,7 @@ func validEvidence() evidence {
 	for index, name := range canonicalJobs {
 		jobs[index] = jobEvidence{ID: int64(index + 1), Name: name, Status: "completed", Conclusion: "success", HeadSHA: head, RunID: 1, RunAttempt: 1}
 	}
-	bundle := evidence{Schema: evidenceSchema, Repository: "owner/repo", Event: "pull_request", EventRef: "refs/pull/1/merge", CheckoutRef: head, BaseRef: "dev", BaseSHA: strings.Repeat("b", 40), HeadSHA: head, RunID: 1, RunAttempt: 1, WorkflowSHA: strings.Repeat("c", 40), Toolchain: "go1.27.0", SlotPreservation: true, NoWriteOutsideGenerated: true, Jobs: jobs, Digests: digests{SourceSHA256: strings.Repeat("1", 64), IRSHA256: strings.Repeat("2", 64), GeneratorFixtureSHA256: strings.Repeat("3", 64), GeneratedOutputSHA256: strings.Repeat("4", 64), SourceMapSHA256: strings.Repeat("5", 64), PolicySHA256: strings.Repeat("6", 64), ToolchainSHA256: strings.Repeat("7", 64)}}
+	bundle := evidence{Schema: evidenceSchema, Repository: "owner/repo", Event: "pull_request", EventRef: "refs/pull/1/merge", CheckoutRef: head, BaseRef: "dev", BaseSHA: strings.Repeat("b", 40), HeadSHA: head, RunID: 1, RunAttempt: 1, WorkflowSHA: strings.Repeat("c", 40), Toolchain: "go1.27.0", SlotPreservation: true, NoWriteOutsideGenerated: true, Jobs: jobs, ArtifactProvenance: artifactProvenanceFixture(strings.Repeat("b", 40), head), Digests: digests{SourceSHA256: strings.Repeat("1", 64), IRSHA256: strings.Repeat("2", 64), GeneratorFixtureSHA256: strings.Repeat("3", 64), GeneratedOutputSHA256: strings.Repeat("4", 64), SourceMapSHA256: strings.Repeat("5", 64), PolicySHA256: strings.Repeat("6", 64), ToolchainSHA256: strings.Repeat("7", 64)}}
 	payload, _ := marshalWithoutBundleDigest(bundle)
 	bundle.Digests.BundleSHA256 = digestBytes(payload)
 	return bundle

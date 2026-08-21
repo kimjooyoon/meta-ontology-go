@@ -38,6 +38,7 @@ type proofBundle struct {
 	BranchProtection       branchProtection        `json:"branch_protection"`
 	DevBranchProtection    branchProtection        `json:"dev_branch_protection"`
 	DomainEvidence         domainEvidence          `json:"domain_evidence"`
+	ArtifactProvenance     artifactProvenance      `json:"artifact_provenance"`
 	Scope                  scopeResult             `json:"scope"`
 	Fixtures               fixtureResult           `json:"fixtures"`
 	Artifacts              []artifactInput         `json:"artifacts"`
