@@ -8,6 +8,7 @@ on:
       - '.github/ci-governance.json'
       - '.github/workflows/metric-counterfactual.yml'
       - 'internal/meta/metriccounterfactual/**'
+      - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
       - 'internal/verify/scope_part01.go'
       - 'scripts/metric-counterfactual/**'
@@ -16,6 +17,7 @@ on:
     paths:
       - '.github/workflows/metric-counterfactual.yml'
       - 'internal/meta/metriccounterfactual/**'
+      - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
       - 'scripts/metric-counterfactual/**'
 

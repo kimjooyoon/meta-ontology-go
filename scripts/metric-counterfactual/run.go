@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactual"
+	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 	verify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify"
 )
 
@@ -24,12 +25,12 @@ func run() error {
 		if err != nil {
 			return err
 		}
-		return metric.WriteJSON(*output, ledger)
+		return artifact.WriteJSON(*output, ledger)
 	case "verify":
 		if *ledgerPath == "" {
 			return fmt.Errorf("-ledger is required")
 		}
-		ledger, err := metric.ReadLedger(*ledgerPath)
+		ledger, err := artifact.ReadJSON[metric.Ledger](*ledgerPath)
 		if err != nil {
 			return err
 		}
@@ -37,7 +38,7 @@ func run() error {
 		if err != nil {
 			return err
 		}
-		return metric.WriteJSON(*output, receipt)
+		return artifact.WriteJSON(*output, receipt)
 	default:
 		return fmt.Errorf("-mode must be generate or verify")
 	}

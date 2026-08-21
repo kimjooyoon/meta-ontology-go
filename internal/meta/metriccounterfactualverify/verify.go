@@ -5,30 +5,12 @@ import (
 	"os"
 
 	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactual"
+	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 )
 
 func Replay(ledger metric.Ledger) (Receipt, error) {
-	if ledger.Schema != metric.LedgerSchema || !metric.ValidLedger(ledger) {
-		return Receipt{}, fmt.Errorf("invalid ledger")
-	}
-	if !metric.ValidManifest(ledger.Manifest) || !metric.ValidPlan(ledger.Plan) ||
-		!metric.ValidState(ledger.Before) || !metric.ValidState(ledger.After) {
-		return Receipt{}, fmt.Errorf("invalid sealed input")
-	}
-	if ledger.PromotionAuthorized || ledger.RepositoryWorkspaceWrites ||
-		ledger.ExecutionPolicy != "DISPOSABLE_TEMP_ROOT_ONLY" {
-		return Receipt{}, fmt.Errorf("unsafe ledger policy")
-	}
-	receiptSetDigest, err := metric.Digest(ledger.Receipts)
-	if err != nil {
+	if err := validateLedger(ledger); err != nil {
 		return Receipt{}, err
-	}
-	if ledger.Evidence.ManifestDigest != ledger.Manifest.Digest ||
-		ledger.Evidence.PlanDigest != ledger.Plan.Digest ||
-		ledger.Evidence.ReceiptSetDigest != receiptSetDigest ||
-		ledger.Evidence.BeforeDigest != ledger.Before.Digest ||
-		ledger.Evidence.AfterDigest != ledger.After.Digest {
-		return Receipt{}, fmt.Errorf("unbound ledger evidence")
 	}
 	root, err := os.MkdirTemp("", "gooo-metric-counterfactual-replay-")
 	if err != nil {
@@ -51,21 +33,16 @@ func Replay(ledger metric.Ledger) (Receipt, error) {
 		return Receipt{}, err
 	}
 	delta := metric.ComputeDelta(before, after)
-	indicators, err := metric.EvaluateIndicators(
-		ledger.Manifest, ledger.Plan, before, after, receipts, delta,
-	)
+	indicators, err := metric.EvaluateIndicators(ledger.Manifest, ledger.Plan, before, after, receipts, delta)
 	if err != nil {
 		return Receipt{}, err
 	}
-	if !metric.CanonicalEqual(before, ledger.Before) ||
-		!metric.CanonicalEqual(after, ledger.After) ||
-		!metric.CanonicalEqual(receipts, ledger.Receipts) ||
-		!metric.CanonicalEqual(delta, ledger.Delta) ||
-		!metric.CanonicalEqual(indicators, ledger.Indicators) ||
-		!metric.AllSatisfied(indicators) {
+	if !artifact.Equal(before, ledger.Before) || !artifact.Equal(after, ledger.After) ||
+		!artifact.Equal(receipts, ledger.Receipts) || !artifact.Equal(delta, ledger.Delta) ||
+		!artifact.Equal(indicators, ledger.Indicators) || !metric.AllSatisfied(indicators) {
 		return Receipt{}, fmt.Errorf("counterfactual replay diverged")
 	}
-	replayDigest, err := metric.Digest(struct {
+	replayDigest, err := artifact.Digest(struct {
 		Before     metric.State       `json:"before"`
 		After      metric.State       `json:"after"`
 		Receipts   []metric.Receipt   `json:"receipts"`
@@ -77,9 +54,8 @@ func Replay(ledger metric.Ledger) (Receipt, error) {
 	}
 	result := Receipt{
 		Schema: Schema, LedgerDigest: ledger.Digest, ReplayDigest: replayDigest,
-		IndicatorCount: len(indicators), Status: "VERIFIED",
-		PromotionAuthorized: false,
+		IndicatorCount: len(indicators), Status: "VERIFIED", PromotionAuthorized: false,
 	}
-	result.Digest, err = metric.Digest(result)
+	result.Digest, err = artifact.Digest(result)
 	return result, err
 }

@@ -1,5 +1,7 @@
 package metriccounterfactual
 
+import artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
+
 const StateSchema = "gooo/metric-counterfactual-state/v1"
 
 type RootPolicy struct {
@@ -47,4 +49,17 @@ type State struct {
 	Totals      Totals            `json:"totals"`
 	RootPolicy  RootPolicy        `json:"root_policy"`
 	Digest      string            `json:"digest"`
+}
+
+func SealState(value State) (State, error) {
+	value.Digest = ""
+	digest, err := artifact.Digest(value)
+	value.Digest = digest
+	return value, err
+}
+
+func ValidState(value State) bool {
+	digest := value.Digest
+	sealed, err := SealState(value)
+	return err == nil && digest == sealed.Digest
 }

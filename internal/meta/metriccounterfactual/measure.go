@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
-	"strings"
+
+	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 )
 
 func Measure(root string) (State, error) {
@@ -37,7 +37,8 @@ func Measure(root string) (State, error) {
 		}
 		files = append(files, FileMetric{
 			Path: relative, Language: languageForPath(relative),
-			Lines: countLines(content), Bytes: len(content), Digest: contentDigest(content),
+			Lines: artifact.CountLines(content), Bytes: len(content),
+			Digest: artifact.ContentDigest(content),
 		})
 		return nil
 	})
@@ -46,71 +47,9 @@ func Measure(root string) (State, error) {
 	}
 	sort.Strings(directories)
 	sort.Slice(files, func(left, right int) bool { return files[left].Path < files[right].Path })
-	metrics := make([]DirectoryMetric, len(directories))
-	index := make(map[string]int, len(directories))
-	for position, directory := range directories {
-		metrics[position].Path = directory
-		index[directory] = position
-	}
-	for _, directory := range directories {
-		if directory == "." {
-			continue
-		}
-		parent := path.Dir(directory)
-		metrics[index[parent]].DirectFolders++
-		for _, ancestor := range ancestorPaths(parent) {
-			metrics[index[ancestor]].RecursiveFolders++
-		}
-	}
-	for _, file := range files {
-		parent := path.Dir(file.Path)
-		metrics[index[parent]].DirectFiles++
-		for _, ancestor := range ancestorPaths(parent) {
-			target := &metrics[index[ancestor]]
-			target.RecursiveFiles++
-			addLanguage(target, file)
-		}
-	}
-	rootMetric := metrics[index["."]]
+	metrics, totals := aggregateMetrics(directories, files)
 	return SealState(State{
 		Schema: StateSchema, Files: files, Directories: metrics,
-		Totals: Totals{
-			DirectFolders: rootMetric.DirectFolders, DirectFiles: rootMetric.DirectFiles,
-			RecursiveFolders: rootMetric.RecursiveFolders, RecursiveFiles: rootMetric.RecursiveFiles,
-			GoFiles: rootMetric.GoFiles, GoooFiles: rootMetric.GoooFiles,
-			GoLines: rootMetric.GoLines, GoooLines: rootMetric.GoooLines,
-		},
-		RootPolicy: ProjectRootPolicy(),
+		Totals: totals, RootPolicy: ProjectRootPolicy(),
 	})
-}
-
-func ancestorPaths(directory string) []string {
-	result := []string{directory}
-	for directory != "." {
-		directory = path.Dir(directory)
-		result = append(result, directory)
-	}
-	return result
-}
-
-func languageForPath(file string) string {
-	switch {
-	case strings.HasSuffix(file, ".gooo"):
-		return "gooo"
-	case strings.HasSuffix(file, ".go"):
-		return "go"
-	default:
-		return "other"
-	}
-}
-
-func addLanguage(directory *DirectoryMetric, file FileMetric) {
-	if file.Language == "go" {
-		directory.GoFiles++
-		directory.GoLines += file.Lines
-	}
-	if file.Language == "gooo" {
-		directory.GoooFiles++
-		directory.GoooLines += file.Lines
-	}
 }

@@ -1,5 +1,7 @@
 package metriccounterfactual
 
+import artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
+
 func ComputeDelta(before, after State) Delta {
 	delta := Delta{
 		DirectFolders:    after.Totals.DirectFolders - before.Totals.DirectFolders,
@@ -19,7 +21,7 @@ func ComputeDelta(before, after State) Delta {
 	for _, file := range after.Files {
 		afterFiles[file.Path] = file
 		previous, found := beforeFiles[file.Path]
-		if !found || !CanonicalEqual(previous, file) {
+		if !found || !artifact.Equal(previous, file) {
 			delta.ChangedFiles++
 		}
 	}
@@ -36,7 +38,7 @@ func ComputeDelta(before, after State) Delta {
 	for _, directory := range after.Directories {
 		afterDirectories[directory.Path] = directory
 		previous, found := beforeDirectories[directory.Path]
-		if !found || !CanonicalEqual(previous, directory) {
+		if !found || !artifact.Equal(previous, directory) {
 			delta.ChangedDirectories++
 		}
 	}
