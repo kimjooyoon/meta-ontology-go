@@ -40,8 +40,13 @@ func AnalyzeLineMetrics(root string) (LineMetricsReport, error) {
 	sorted := make([]DirectoryMetric, 0, len(directories))
 	for _, path := range orderedPaths(directoriesToPaths(directories)) {
 		node := directories[path]
+		subjectKind := sourcepolicy.SubjectKindDirectory
+		if path == "." {
+			subjectKind = sourcepolicy.SubjectKindProjectRoot
+		}
 		sorted = append(sorted, DirectoryMetric{
 			Path:             path,
+			SubjectKind:      subjectKind,
 			DirectFolders:    node.directFolders,
 			DirectFiles:      node.directFiles,
 			RecursiveFolders: node.recursiveFolders,

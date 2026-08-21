@@ -59,8 +59,8 @@ func metricTopologyProducer(report LineMetricsReport) string {
 func writeDirectoryMetrics(output *strings.Builder, plane string, directories []DirectoryMetric) {
 	fmt.Fprintf(output, "%s directories:\n", plane)
 	for _, directory := range orderedDirectoryMetrics(directories) {
-		fmt.Fprintf(output, "%s: direct_folders=%d direct_files=%d folders=%d files=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n",
-			directory.Path, directory.DirectFolders, directory.DirectFiles, directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles, directory.GoooFiles, directory.GoLines, directory.GoooLines,
+		fmt.Fprintf(output, "%s: subject_kind=%s direct_folders=%d direct_files=%d folders=%d files=%d go_files=%d gooo_files=%d go_lines=%d gooo_lines=%d\n",
+			directory.Path, directory.SubjectKind, directory.DirectFolders, directory.DirectFiles, directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles, directory.GoooFiles, directory.GoLines, directory.GoooLines,
 		)
 	}
 }

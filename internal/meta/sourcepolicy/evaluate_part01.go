@@ -27,7 +27,7 @@ func Evaluate(policy Policy, observations []Observation) (Report, error) {
 		}
 		return indicators[i].Value < indicators[j].Value
 	})
-	return Report{Schema: "gooo/indicator-report/v1", Policy: policy, Indicators: indicators}, nil
+	return Report{Schema: IndicatorSchema, Policy: policy, Indicators: indicators}, nil
 }
 
 func evaluateObservation(policy Policy, observation Observation) (Indicator, error) {
@@ -35,6 +35,7 @@ func evaluateObservation(policy Policy, observation Observation) (Indicator, err
 	if err != nil {
 		return Indicator{}, err
 	}
+	applicability, applicabilityRule, applicabilityReason := indicatorApplicability(definition)
 	satisfied := true
 	switch definition.relation {
 	case RelationLessOrEqual:
@@ -46,5 +47,8 @@ func evaluateObservation(policy Policy, observation Observation) (Indicator, err
 	if producer == "" {
 		producer = "meta-observer"
 	}
-	return Indicator{MetricID: observation.Dimension, Family: definition.family, Subject: observation.Subject, Value: observation.Value, Limit: definition.limit, Relation: definition.relation, Blocking: definition.blocking, Satisfied: satisfied, Proof: definition.proof, Producer: producer, Consumer: definition.consumer, Operation: definition.operation, Detail: observation.Detail}, nil
+	if applicability == ApplicabilityNotApplicable {
+		satisfied = true
+	}
+	return Indicator{MetricID: observation.Dimension, Family: definition.family, Subject: observation.Subject, SubjectKind: indicatorSubjectKind(observation), Value: observation.Value, Limit: definition.limit, Relation: definition.relation, Applicability: applicability, ApplicabilityRule: applicabilityRule, ApplicabilityReason: applicabilityReason, Blocking: definition.blocking, Satisfied: satisfied, Proof: definition.proof, Producer: producer, Consumer: definition.consumer, Operation: definition.operation, Detail: observation.Detail}, nil
 }
