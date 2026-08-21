@@ -88,5 +88,6 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/testing-research` | `docs/research/testing.md` |
 | `agent/testing-research-contracts` | `docs/research/testing.md` |
 | `agent/testing-research-followup` | `docs/research/testing.md` |
+| `agent/transformation-effect-v5` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/transformation-effect.yml`, `internal/meta/transformationeffect/**`, `internal/verify/scope_part01.go`, `scripts/transformation-effect/**` |
 | `agent/zerolang-experiments` | `docs/research/zerolang.md` |
 | `agent/zerolang-research` | `docs/research/zerolang.md` |
