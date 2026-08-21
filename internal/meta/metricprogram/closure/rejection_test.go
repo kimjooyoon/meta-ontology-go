@@ -9,8 +9,7 @@ import (
 
 func TestBuildRejectsTamperedSource(t *testing.T) {
 	input := fixtureInput()
-	input.Source = append(input.Source, []byte("entity Tampered
-")...)
+	input.Source = append(input.Source, []byte("entity Tampered\n")...)
 	if _, err := closure.Build(input); err == nil {
 		t.Fatal("expected source digest rejection")
 	}
