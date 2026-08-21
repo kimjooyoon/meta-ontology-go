@@ -63,4 +63,3 @@ func validContractIndicators(contract contractDocument) bool {
 		counts["FOUNDATION"] == 3 && counts["COHERENCE"] == 3 &&
 		counts["REGRESSION"] == 1
 }
-
