@@ -3,7 +3,7 @@ package generation
 func BuildExecutionManifest(plan Plan) ExecutionManifest {
 	manifest := ExecutionManifest{
 		SchemaVersion: ExecutionManifestSchemaVersion,
-		BaseSHA: plan.BaseSHA, HeadSHA: plan.HeadSHA,
+		BaseSHA:       plan.BaseSHA, HeadSHA: plan.HeadSHA,
 		PlanDigest: plan.PlanDigest,
 	}
 	if !receiptPlanKnown(plan) {
@@ -34,13 +34,13 @@ func BuildExecutionManifest(plan Plan) ExecutionManifest {
 func executionStepFor(action Action) ExecutionStep {
 	return ExecutionStep{
 		ActionIndicatorID: action.IndicatorID,
-		MetricID: action.MetricID, Subject: action.Subject,
-		Operation: action.Operation,
+		MetricID:          action.MetricID, Subject: action.Subject,
+		Operation:           action.Operation,
 		IndependenceGroupID: action.IndependenceGroupID,
-		ProofChoice: action.ProofChoice,
-		Executor: action.Executor, Evaluator: action.Evaluator,
+		ProofChoice:         action.ProofChoice,
+		Executor:            action.Executor, Evaluator: action.Evaluator,
 		RequiredIndicatorIDs: append([]string{}, action.RequiredIndicatorIDs...),
-		ReceiptRequired: action.ReceiptRequired, Priority: action.Priority,
+		ReceiptRequired:      action.ReceiptRequired, Priority: action.Priority,
 		WorkspaceMode: WorkspaceModeDisposable,
 		WriteBoundary: WriteBoundarySandboxOnly,
 	}
