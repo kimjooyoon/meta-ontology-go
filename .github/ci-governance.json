@@ -598,6 +598,28 @@
       ]
     },
     {
+      "branch": "agent/proof-route-v9",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "scripts/ci-proof/build_part01.go",
+        "scripts/ci-proof/ci_only_part03_test.go",
+        "scripts/ci-proof/guardian_evidence_part01.go",
+        "scripts/ci-proof/guardian_evidence_part01_test.go",
+        "scripts/ci-proof/input_part03.go",
+        "scripts/ci-proof/main_fixture_test.go",
+        "scripts/ci-proof/promotion_part01.go",
+        "scripts/ci-proof/promotion_part02.go",
+        "scripts/ci-proof/route.go",
+        "scripts/ci-proof/route.js",
+        "scripts/ci-proof/route_test.go",
+        "scripts/ci-proof/route_test.js",
+        "scripts/ci-proof/types_part02.go",
+        "scripts/ci-proof/validate_part01.go"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"

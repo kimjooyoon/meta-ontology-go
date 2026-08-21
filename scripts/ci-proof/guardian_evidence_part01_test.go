@@ -8,7 +8,7 @@ import (
 func validGuardianEvidenceFixture() (guardianEvidence, proofBundle) {
 	base := strings.Repeat("b", 40)
 	head := strings.Repeat("a", 40)
-	bundle := proofBundle{Repository: guardianInstallationRepository, PRNumber: 7, BaseRef: "main", BaseSHA: base, HeadSHA: head, RunID: 300, RunAttempt: 1, Digests: proofDigests{Policy: strings.Repeat("6", 64)}, PromotionObservation: &promotionObservation{Action: "synchronize", Topology: guardianTopology{Status: "ahead", AheadBy: 1, BehindBy: 0, MergeBaseSHA: base}}}
+	bundle := proofBundle{Repository: guardianInstallationRepository, PRNumber: 7, Event: "pull_request", BaseRef: "main", BaseSHA: base, HeadSHA: head, RunID: 300, RunAttempt: 1, Digests: proofDigests{Policy: strings.Repeat("6", 64)}, PromotionObservation: &promotionObservation{Action: "synchronize", Topology: guardianTopology{Status: "ahead", AheadBy: 1, BehindBy: 0, MergeBaseSHA: base}}}
 	observedAt, validUntil := freshObserverWindow()
 	evidence := guardianEvidence{
 		Schema: guardianEvidenceSchema, Route: "promotion_main", CheckName: "CI guardian", Repository: guardianInstallationRepository, PRNumber: 7, Action: "synchronize",
