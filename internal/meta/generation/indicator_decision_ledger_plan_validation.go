@@ -3,6 +3,7 @@ package generation
 import (
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
@@ -27,8 +28,10 @@ func validatePlanIndicatorDecisionLedger(plan Plan) error {
 		return fmt.Errorf("plan indicator decision ledger does not match plan decisions")
 	}
 	normalized := normalizeIndicators(indicators)
+	notApplicable := notApplicableIndicatorIDs(normalized)
+	sort.Strings(notApplicable)
 	if plan.IndicatorsDigest != digestJSON(normalized) ||
-		!reflect.DeepEqual(plan.NotApplicableIndicatorIDs, notApplicableIndicatorIDs(normalized)) {
+		!reflect.DeepEqual(plan.NotApplicableIndicatorIDs, notApplicable) {
 		return fmt.Errorf("plan indicator decision ledger does not match source indicators")
 	}
 	return nil

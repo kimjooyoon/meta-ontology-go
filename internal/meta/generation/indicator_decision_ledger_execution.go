@@ -12,7 +12,7 @@ func planIndicatorDecisionLedgerProvenance(plan Plan) (string, int) {
 func validateExecutionIndicatorLedgerProvenance(manifest ExecutionManifest) error {
 	required := manifest.Decision == ExecutionDecisionFixedPoint || manifest.Decision == ExecutionDecisionProposed
 	if required {
-		if !validDigest(manifest.IndicatorDecisionLedgerDigest) || manifest.IndicatorDecisionLedgerCount < 0 {
+		if !validIndicatorDecisionLedgerDigest(manifest.IndicatorDecisionLedgerDigest) || manifest.IndicatorDecisionLedgerCount < 0 {
 			return fmt.Errorf("executable manifest has invalid indicator decision ledger provenance")
 		}
 		return nil
