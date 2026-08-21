@@ -24,8 +24,3 @@ func Generate(metricsPath, ledgerPath, receiptPath, repository, subjectSHA strin
 	}
 	return sealPlan(plan)
 }
-
-func rootPolicy(value interface{ GetCountsApplicability() string }) RootPolicy {
-	return RootPolicy{}
-}
-
