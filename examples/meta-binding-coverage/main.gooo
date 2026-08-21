@@ -1,0 +1,11 @@
+package metabindingcoverage
+namespace metabindingcoverage
+entity Indicator id "metabinding://entity/indicator"
+entity MetaOperation id "metabinding://entity/meta-operation"
+entity OntologyAuthority id "metabinding://entity/ontology-authority"
+entity BindingWitness id "metabinding://entity/binding-witness"
+entity CoverageReport id "metabinding://entity/coverage-report"
+activity ResolveIndicatorOperation(Indicator, MetaOperation) -> BindingWitness
+activity BindOntologyAuthority(MetaOperation, OntologyAuthority) -> BindingWitness
+activity EvaluateBindingCoverage(BindingWitness) -> CoverageReport
+activity BindIndicatorMetaProgram(CoverageReport) -> CoverageReport
