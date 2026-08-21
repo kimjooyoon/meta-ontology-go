@@ -6,8 +6,10 @@ import (
 )
 
 type receiptInput struct {
-	PlanDigest string             `json:"plan_digest"`
-	Receipts   []OperationReceipt `json:"receipts"`
+	PlanDigest                    string             `json:"plan_digest"`
+	IndicatorDecisionLedgerDigest string             `json:"indicator_decision_ledger_digest,omitempty"`
+	IndicatorDecisionLedgerCount  int                `json:"indicator_decision_ledger_count"`
+	Receipts                      []OperationReceipt `json:"receipts"`
 }
 
 func finishReceiptReport(report ReceiptReport) ReceiptReport {
@@ -27,8 +29,10 @@ func finishReceiptReport(report ReceiptReport) ReceiptReport {
 	sort.Strings(report.UnknownIndicatorIDs)
 	sort.Strings(report.RejectedIndicatorIDs)
 	report.InputDigest = digestJSON(receiptInput{
-		PlanDigest: report.PlanDigest,
-		Receipts:   report.Receipts,
+		PlanDigest:                    report.PlanDigest,
+		IndicatorDecisionLedgerDigest: report.IndicatorDecisionLedgerDigest,
+		IndicatorDecisionLedgerCount:  report.IndicatorDecisionLedgerCount,
+		Receipts:                      report.Receipts,
 	})
 	report.ReportDigest, report.ReplayDigest = "", ""
 	report.ReportDigest = digestJSON(report)

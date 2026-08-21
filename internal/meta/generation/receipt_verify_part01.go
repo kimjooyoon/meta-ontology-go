@@ -7,10 +7,12 @@ func VerifyReceipts(plan Plan, receipts []OperationReceipt) ReceiptReport {
 		BaseSHA:       plan.BaseSHA, HeadSHA: plan.HeadSHA,
 		PlanDigest: plan.PlanDigest, Receipts: normalized,
 	}
-	if !receiptPlanKnown(plan) {
+	if !receiptPlanKnown(plan) || validatePlanIndicatorDecisionLedger(plan) != nil {
 		report.Decision, report.Reason = ReceiptDecisionUnknown, ReceiptReasonInvalidPlan
 		return finishReceiptReport(report)
 	}
+	report.IndicatorDecisionLedgerDigest,
+		report.IndicatorDecisionLedgerCount = planIndicatorDecisionLedgerProvenance(plan)
 	if plan.Decision == DecisionFixedPoint {
 		if len(normalized) != 0 {
 			report.Decision, report.Reason = ReceiptDecisionUnknown, ReceiptReasonSetMismatch
