@@ -23,10 +23,10 @@ type selectionDocument struct {
 }
 
 type coverageDocument struct {
-	BindingCount              int    `json:"binding_count"`
-	ResolvedBindingCount      int    `json:"resolved_binding_count"`
-	RegistryOperationCount    int    `json:"registry_operation_count"`
-	ReferencedOperationCount  int    `json:"referenced_operation_count"`
+	BindingCount               int    `json:"binding_count"`
+	ResolvedBindingCount       int    `json:"resolved_binding_count"`
+	RegistryOperationCount     int    `json:"registry_operation_count"`
+	ReferencedOperationCount   int    `json:"referenced_operation_count"`
 	SelectionOperationResolved bool   `json:"selection_operation_resolved"`
-	Status                    string `json:"status"`
+	Status                     string `json:"status"`
 }

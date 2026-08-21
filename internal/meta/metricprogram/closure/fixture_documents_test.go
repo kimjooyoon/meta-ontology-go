@@ -5,12 +5,12 @@ func fixtureProgram(source []byte) map[string]any {
 		"schema": "gooo/metric-meta-program/v1", "repository": fixtureRepository,
 		"subject_sha": fixtureSHA, "strategy_digest": fixtureDigest("b"),
 		"strategy_verification_digest": fixtureDigest("f"),
-		"execution_policy": "READ_ONLY_META_PROGRAM",
+		"execution_policy":             "READ_ONLY_META_PROGRAM",
 		"root_policy": map[string]any{
-			"counts_applicability": "OBSERVED",
+			"counts_applicability":   "OBSERVED",
 			"topology_applicability": "NOT_APPLICABLE",
-			"topology_reason": "ROOT_TOPOLOGY_EXEMPT",
-			"readme_requirement": "NOT_APPLICABLE",
+			"topology_reason":        "ROOT_TOPOLOGY_EXEMPT",
+			"readme_requirement":     "NOT_APPLICABLE",
 		},
 		"registry_digest": fixtureDigest("c"), "source_digest": bytesDigest(source),
 		"semantic_digest": fixtureDigest("d"), "operations": fixtureOperations(),
@@ -31,7 +31,7 @@ func fixtureProgram(source []byte) map[string]any {
 
 func fixtureVerification(program map[string]any) map[string]any {
 	return map[string]any{
-		"schema": "gooo/metric-meta-program-verification/v1",
+		"schema":      "gooo/metric-meta-program-verification/v1",
 		"subject_sha": fixtureSHA, "strategy_digest": program["strategy_digest"],
 		"program_digest": program["digest"], "registry_digest": program["registry_digest"],
 		"source_digest": program["source_digest"], "semantic_digest": program["semantic_digest"],

@@ -31,7 +31,7 @@ func fixtureInput() closure.Input {
 		Artifact: closure.ArtifactIdentity{
 			ID: 19, Name: "metric-meta-program-" + fixtureSHA,
 			Digest: strings.Repeat("e", 64),
-			URL: "https://github.com/" + fixtureRepository + "/actions/runs/17/artifacts/19",
+			URL:    "https://github.com/" + fixtureRepository + "/actions/runs/17/artifacts/19",
 		},
 		ProgramJSON: programJSON, Source: source, VerificationJSON: verificationJSON,
 	}

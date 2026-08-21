@@ -3,12 +3,12 @@ package main
 import "flag"
 
 type config struct {
-	repository, subjectSHA                   string
+	repository, subjectSHA                    string
 	programPath, sourcePath, verificationPath string
 	artifactName, artifactDigest, artifactURL string
-	outputDir                                string
-	runID, artifactID                        int64
-	runAttempt                               int
+	outputDir                                 string
+	runID, artifactID                         int64
+	runAttempt                                int
 }
 
 func parseConfig() config {
