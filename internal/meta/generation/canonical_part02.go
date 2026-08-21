@@ -22,6 +22,9 @@ func finish(plan Plan) Plan {
 	if plan.Selected == nil {
 		plan.Selected = []Action{}
 	}
+	if plan.NotApplicableIndicatorIDs == nil {
+		plan.NotApplicableIndicatorIDs = []string{}
+	}
 	if plan.UnselectedIndicatorIDs == nil {
 		plan.UnselectedIndicatorIDs = []string{}
 	}
@@ -32,6 +35,7 @@ func finish(plan Plan) Plan {
 		plan.Shortfall = []string{}
 	}
 	sort.Strings(plan.UnselectedIndicatorIDs)
+	sort.Strings(plan.NotApplicableIndicatorIDs)
 	sort.Strings(plan.UnknownIndicatorIDs)
 	sort.Strings(plan.Shortfall)
 	unsigned := plan

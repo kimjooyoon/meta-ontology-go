@@ -15,7 +15,8 @@ type candidate struct {
 func partitionIndicators(indicators []sourcepolicy.Indicator) ([]sourcepolicy.Indicator, []string) {
 	actionable, unknown := make([]sourcepolicy.Indicator, 0), make([]string, 0)
 	for _, indicator := range indicators {
-		if indicator.Satisfied || indicator.Blocking {
+		if indicator.Applicability == sourcepolicy.ApplicabilityNotApplicable ||
+			indicator.Satisfied || indicator.Blocking {
 			continue
 		}
 		if indicator.Operation == "" {

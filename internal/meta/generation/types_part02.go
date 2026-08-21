@@ -14,17 +14,24 @@ type Binding struct {
 }
 
 type Action struct {
-	IndicatorID          string                 `json:"indicator_id"`
-	MetricID             sourcepolicy.Dimension `json:"metric_id"`
-	Subject              string                 `json:"subject"`
-	Operation            sourcepolicy.Operation `json:"meta_operation"`
-	IndependenceGroupID  string                 `json:"independence_group_id"`
-	ProofChoice          ProofChoice            `json:"proof_choice"`
-	Executor             string                 `json:"executor"`
-	Evaluator            string                 `json:"evaluator"`
-	RequiredIndicatorIDs []string               `json:"required_indicator_ids"`
-	ReceiptRequired      bool                   `json:"receipt_required"`
-	Priority             uint32                 `json:"priority"`
+	IndicatorID          string                           `json:"indicator_id"`
+	MetricID             sourcepolicy.Dimension           `json:"metric_id"`
+	Subject              string                           `json:"subject"`
+	SubjectKind          sourcepolicy.SubjectKind         `json:"subject_kind"`
+	Applicability        sourcepolicy.Applicability       `json:"applicability"`
+	ApplicabilityRule    string                           `json:"applicability_rule_id"`
+	ApplicabilityReason  sourcepolicy.ApplicabilityReason `json:"applicability_reason"`
+	MetricProofChoice    sourcepolicy.ProofChoice         `json:"metric_proof_choice"`
+	MetricProducer       string                           `json:"metric_producer"`
+	MetricConsumer       string                           `json:"metric_consumer"`
+	Operation            sourcepolicy.Operation           `json:"meta_operation"`
+	IndependenceGroupID  string                           `json:"independence_group_id"`
+	ProofChoice          ProofChoice                      `json:"proof_choice"`
+	Executor             string                           `json:"executor"`
+	Evaluator            string                           `json:"evaluator"`
+	RequiredIndicatorIDs []string                         `json:"required_indicator_ids"`
+	ReceiptRequired      bool                             `json:"receipt_required"`
+	Priority             uint32                           `json:"priority"`
 }
 
 type Plan struct {
@@ -43,6 +50,7 @@ type Plan struct {
 	Reason                 Reason      `json:"reason"`
 	Registry               []Binding   `json:"registry"`
 	Selected               []Action    `json:"selected"`
+	NotApplicableIndicatorIDs []string `json:"not_applicable_indicator_ids"`
 	UnselectedIndicatorIDs []string    `json:"unselected_indicator_ids"`
 	UnknownIndicatorIDs    []string    `json:"unknown_indicator_ids"`
 	Shortfall              []string    `json:"shortfall"`

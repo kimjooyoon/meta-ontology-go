@@ -1,6 +1,6 @@
 package generation
 
-const SchemaVersion = "gooo/self-improvement-generation/v1"
+const SchemaVersion = "gooo/self-improvement-generation/v2"
 
 type Decision string
 
@@ -15,6 +15,7 @@ const ReasonIndependentActions Reason = "INDEPENDENT_META_OPERATIONS"
 const ReasonExactFixedPoint Reason = "EXACT_FIXED_POINT"
 const ReasonInvalidInput Reason = "INVALID_INPUT"
 const ReasonMissingOperation Reason = "MISSING_META_OPERATION"
+const ReasonApplicabilityUnproven Reason = "APPLICABILITY_UNPROVEN"
 const ReasonPressureShortfall Reason = "INDEPENDENT_PRESSURE_SHORTFALL"
 const ReasonFloorRegression Reason = "FLOOR_REGRESSION"
 

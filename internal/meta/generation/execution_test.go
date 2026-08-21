@@ -36,7 +36,7 @@ func TestBuildExecutionManifestIsDeterministicAndSandboxed(t *testing.T) {
 
 func TestBuildExecutionManifestFailsClosedAndFindsFixedPoint(t *testing.T) {
 	report := sourcepolicy.Report{
-		Policy: sourcepolicy.Default(),
+		Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(),
 		Indicators: []sourcepolicy.Indicator{
 			metric("floor", sourcepolicy.OperationSplitGo, true, true),
 		},

@@ -20,7 +20,7 @@ func TestProjectRootTopologyHasCatalogProvenApplicability(t *testing.T) {
 			rootExemptions++
 			if indicator.SubjectKind != SubjectKindProjectRoot ||
 				indicator.Applicability != ApplicabilityNotApplicable ||
-				indicator.ApplicabilityRule != rootTopologyRule ||
+				indicator.ApplicabilityRule != ApplicabilityRuleProjectRootTopology ||
 				indicator.ApplicabilityReason != ApplicabilityReasonRootTopologyExempt ||
 				indicator.Operation != OperationExemptRoot || indicator.Blocking || !indicator.Satisfied {
 				t.Fatalf("invalid root exemption: %#v", indicator)
@@ -29,7 +29,7 @@ func TestProjectRootTopologyHasCatalogProvenApplicability(t *testing.T) {
 		}
 		if indicator.SubjectKind != SubjectKindDirectory ||
 			indicator.Applicability != ApplicabilityApplicable ||
-			indicator.ApplicabilityRule != defaultApplicabilityRule ||
+			indicator.ApplicabilityRule != ApplicabilityRuleDefault ||
 			indicator.ApplicabilityReason != ApplicabilityReasonCatalogApplicable ||
 			!indicator.Blocking || indicator.Satisfied || indicator.Operation != OperationPartition {
 			t.Fatalf("nested directory lost applicable policy: %#v", indicator)
