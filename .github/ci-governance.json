@@ -64,12 +64,6 @@
       ]
     },
     {
-      "branch": "agent/bidir-research",
-      "paths": [
-        "docs/research/bidirectional.md"
-      ]
-    },
-    {
       "branch": "agent/bidirectional-experiment-contract",
       "paths": [
         "docs/research/bidirectional.md"
@@ -77,6 +71,12 @@
     },
     {
       "branch": "agent/bidirectional-property-matrix",
+      "paths": [
+        "docs/research/bidirectional.md"
+      ]
+    },
+    {
+      "branch": "agent/bidir-research",
       "paths": [
         "docs/research/bidirectional.md"
       ]
@@ -106,7 +106,7 @@
       ]
     },
     {
-      "branch": "agent/ci-alias-refresh",
+      "branch": "agent/ci-ownership-audit-current",
       "paths": [
         ".github/**",
         "scripts/**",
@@ -114,7 +114,15 @@
       ]
     },
     {
-      "branch": "agent/ci-evidence-contract",
+      "branch": "agent/ci-ownership-audit-current2",
+      "paths": [
+        ".github/**",
+        "scripts/**",
+        "internal/verify/**"
+      ]
+    },
+    {
+      "branch": "agent/ci-alias-refresh",
       "paths": [
         ".github/**",
         "scripts/**",
@@ -138,22 +146,6 @@
       ]
     },
     {
-      "branch": "agent/ci-ownership-audit-current",
-      "paths": [
-        ".github/**",
-        "scripts/**",
-        "internal/verify/**"
-      ]
-    },
-    {
-      "branch": "agent/ci-ownership-audit-current2",
-      "paths": [
-        ".github/**",
-        "scripts/**",
-        "internal/verify/**"
-      ]
-    },
-    {
       "branch": "agent/ci-scope-triage",
       "paths": [
         ".github/**",
@@ -170,6 +162,14 @@
       ]
     },
     {
+      "branch": "agent/ci-evidence-contract",
+      "paths": [
+        ".github/**",
+        "scripts/**",
+        "internal/verify/**"
+      ]
+    },
+    {
       "branch": "agent/ci-workflow-stage",
       "paths": [
         ".github/**",
@@ -179,12 +179,6 @@
     },
     {
       "branch": "agent/cli",
-      "paths": [
-        "cmd/gooo/**"
-      ]
-    },
-    {
-      "branch": "agent/cli-bootstrap-contract",
       "paths": [
         "cmd/gooo/**"
       ]
@@ -208,9 +202,9 @@
       ]
     },
     {
-      "branch": "agent/codegen-fixture-adapter",
+      "branch": "agent/cli-bootstrap-contract",
       "paths": [
-        "docs/research/codegen-fixture-adapter.md"
+        "cmd/gooo/**"
       ]
     },
     {
@@ -220,15 +214,21 @@
       ]
     },
     {
-      "branch": "agent/codegen-hypotheses",
+      "branch": "agent/codegen-fixture-adapter",
       "paths": [
-        "docs/research/codegen-experiments.md"
+        "docs/research/codegen-fixture-adapter.md"
       ]
     },
     {
       "branch": "agent/codegen-research",
       "paths": [
         "docs/research/codegen.md"
+      ]
+    },
+    {
+      "branch": "agent/codegen-hypotheses",
+      "paths": [
+        "docs/research/codegen-experiments.md"
       ]
     },
     {
@@ -328,12 +328,6 @@
       ]
     },
     {
-      "branch": "agent/grammar-followup",
-      "paths": [
-        "docs/research/grammar.md"
-      ]
-    },
-    {
       "branch": "agent/grammar-research",
       "paths": [
         "docs/research/grammar.md"
@@ -341,6 +335,12 @@
     },
     {
       "branch": "agent/grammar-review",
+      "paths": [
+        "docs/research/grammar.md"
+      ]
+    },
+    {
+      "branch": "agent/grammar-followup",
       "paths": [
         "docs/research/grammar.md"
       ]
@@ -358,15 +358,9 @@
       ]
     },
     {
-      "branch": "agent/line-cap-detector",
+      "branch": "agent/lsp-research",
       "paths": [
-        "internal/detection/linecaps/**"
-      ]
-    },
-    {
-      "branch": "agent/linecaps",
-      "paths": [
-        "internal/detection/linecaps/**"
+        "docs/research/lsp.md"
       ]
     },
     {
@@ -388,107 +382,15 @@
       ]
     },
     {
-      "branch": "agent/lsp-research",
+      "branch": "agent/linecaps",
       "paths": [
-        "docs/research/lsp.md"
+        "internal/detection/linecaps/**"
       ]
     },
     {
-      "branch": "agent/metric-counterfactual-v7",
+      "branch": "agent/line-cap-detector",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/meta/metriccounterfactual/**",
-        "internal/meta/metriccounterfactualio/**",
-        "internal/meta/metriccounterfactualverify/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-counterfactual/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-intervention-v8",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/meta/metriccounterfactualverify/intervention/**",
-        "internal/meta/metriccounterfactualverify/intervention/verify/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-intervention/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-ci-v12",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-closure-v13",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-closure-v14",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "examples/metric-meta-program-closure/**",
-        "internal/meta/metricprogram/closure/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-meta-program-closure/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-closure-v15",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-v11",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "examples/metric-meta-program/**",
-        "internal/meta/metricprogram/**",
-        "internal/meta/metricprogram/verify/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-meta-program/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-strategy-v10",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/meta/metricstrategy/**",
-        "internal/meta/metricstrategy/verify/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-strategy/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-transition-v6",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-transition.yml",
-        "internal/meta/metrictransition/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-transition/**"
+        "internal/detection/linecaps/**"
       ]
     },
     {
@@ -501,29 +403,6 @@
       "branch": "agent/performance-regression",
       "paths": [
         "internal/detection/performance/**"
-      ]
-    },
-    {
-      "branch": "agent/proof-route-v9",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/verify/scope_part01.go",
-        "scripts/ci-proof/build_part01.go",
-        "scripts/ci-proof/ci_only_part03_test.go",
-        "scripts/ci-proof/guardian_evidence_part01.go",
-        "scripts/ci-proof/guardian_evidence_part01_test.go",
-        "scripts/ci-proof/input_part03.go",
-        "scripts/ci-proof/main_fixture_test.go",
-        "scripts/ci-proof/promotion_part01.go",
-        "scripts/ci-proof/promotion_part02.go",
-        "scripts/ci-proof/route.go",
-        "scripts/ci-proof/route.js",
-        "scripts/ci-proof/route_test.go",
-        "scripts/ci-proof/route_test.js",
-        "scripts/ci-proof/types_part02.go",
-        "scripts/ci-proof/validate_part01.go"
       ]
     },
     {
@@ -599,17 +478,9 @@
       ]
     },
     {
-      "branch": "agent/root-readme-applicability-v16",
+      "branch": "agent/roundtrip-detector",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "examples/root-readme-indicator",
-        "internal/detection/linecaps",
-        "internal/meta/generation",
-        "internal/meta/sourcepolicy",
-        "internal/verify/scope_part01.go",
-        "scripts/self-improvement-cycle",
-        "scripts/source-subject-witness"
+        "internal/detection/roundtrip/**"
       ]
     },
     {
@@ -619,28 +490,15 @@
       ]
     },
     {
-      "branch": "agent/roundtrip-detector",
-      "paths": [
-        "internal/detection/roundtrip/**"
-      ]
-    },
-    {
-      "branch": "agent/security",
-      "paths": [
-        "docs/research/security.md"
-      ]
-    },
-    {
       "branch": "agent/security-research",
       "paths": [
         "docs/research/security.md"
       ]
     },
     {
-      "branch": "agent/self-hosting-bootstrap",
+      "branch": "agent/security",
       "paths": [
-        "docs/research/self-hosting.md",
-        "internal/bootstrap/**"
+        "docs/research/security.md"
       ]
     },
     {
@@ -665,6 +523,13 @@
       "branch": "agent/syntax",
       "paths": [
         "internal/syntax/**"
+      ]
+    },
+    {
+      "branch": "agent/self-hosting-bootstrap",
+      "paths": [
+        "docs/research/self-hosting.md",
+        "internal/bootstrap/**"
       ]
     },
     {
@@ -697,13 +562,148 @@
       ]
     },
     {
-      "branch": "agent/zerolang-experiments",
+      "branch": "agent/metric-transition-v6",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-transition.yml",
+        "internal/meta/metrictransition/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-transition/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-counterfactual-v7",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/meta/metriccounterfactual/**",
+        "internal/meta/metriccounterfactualio/**",
+        "internal/meta/metriccounterfactualverify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-counterfactual/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-intervention-v8",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/meta/metriccounterfactualverify/intervention/**",
+        "internal/meta/metriccounterfactualverify/intervention/verify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-intervention/**"
+      ]
+    },
+    {
+      "branch": "agent/proof-route-v9",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go",
+        "scripts/ci-proof/build_part01.go",
+        "scripts/ci-proof/ci_only_part03_test.go",
+        "scripts/ci-proof/guardian_evidence_part01.go",
+        "scripts/ci-proof/guardian_evidence_part01_test.go",
+        "scripts/ci-proof/input_part03.go",
+        "scripts/ci-proof/main_fixture_test.go",
+        "scripts/ci-proof/promotion_part01.go",
+        "scripts/ci-proof/promotion_part02.go",
+        "scripts/ci-proof/route.go",
+        "scripts/ci-proof/route.js",
+        "scripts/ci-proof/route_test.go",
+        "scripts/ci-proof/route_test.js",
+        "scripts/ci-proof/types_part02.go",
+        "scripts/ci-proof/validate_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/metric-strategy-v10",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/meta/metricstrategy/**",
+        "internal/meta/metricstrategy/verify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-strategy/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-v11",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/metric-meta-program/**",
+        "internal/meta/metricprogram/**",
+        "internal/meta/metricprogram/verify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-ci-v12",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-closure-v13",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-closure-v14",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/metric-meta-program-closure/**",
+        "internal/meta/metricprogram/closure/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program-closure/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-closure-v15",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/root-readme-applicability-v16",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/root-readme-indicator",
+        "internal/detection/linecaps",
+        "internal/meta/generation",
+        "internal/meta/sourcepolicy",
+        "internal/verify/scope_part01.go",
+        "scripts/self-improvement-cycle",
+        "scripts/source-subject-witness"
+      ]
+    },
+    {
+      "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"
       ]
     },
     {
-      "branch": "agent/zerolang-research",
+      "branch": "agent/zerolang-experiments",
       "paths": [
         "docs/research/zerolang.md"
       ]
