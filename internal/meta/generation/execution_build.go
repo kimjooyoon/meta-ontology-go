@@ -4,7 +4,8 @@ func BuildExecutionManifest(plan Plan) ExecutionManifest {
 	manifest := ExecutionManifest{
 		SchemaVersion: ExecutionManifestSchemaVersion,
 		BaseSHA:       plan.BaseSHA, HeadSHA: plan.HeadSHA,
-		PlanDigest: plan.PlanDigest,
+		PlanDigest:                plan.PlanDigest,
+		NotApplicableIndicatorIDs: append([]string{}, plan.NotApplicableIndicatorIDs...),
 	}
 	if !receiptPlanKnown(plan) {
 		manifest.Decision = ExecutionDecisionUnknown
@@ -35,6 +36,10 @@ func executionStepFor(action Action) ExecutionStep {
 	return ExecutionStep{
 		ActionIndicatorID: action.IndicatorID,
 		MetricID:          action.MetricID, Subject: action.Subject,
+		SubjectKind: action.SubjectKind, Applicability: action.Applicability,
+		ApplicabilityRule: action.ApplicabilityRule, ApplicabilityReason: action.ApplicabilityReason,
+		MetricProofChoice: action.MetricProofChoice, MetricProducer: action.MetricProducer,
+		MetricConsumer:      action.MetricConsumer,
 		Operation:           action.Operation,
 		IndependenceGroupID: action.IndependenceGroupID,
 		ProofChoice:         action.ProofChoice,

@@ -35,7 +35,7 @@ func TestVerifyReceiptsIsDeterministicAndNonAuthorizing(t *testing.T) {
 
 func actionableReceiptPlan() Plan {
 	report := sourcepolicy.Report{
-		Policy: sourcepolicy.Default(),
+		Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(),
 		Indicators: []sourcepolicy.Indicator{
 			metric("expression", sourcepolicy.OperationCollapseAssign, false, false),
 			metric("topology", sourcepolicy.OperationSplitGo, false, false),

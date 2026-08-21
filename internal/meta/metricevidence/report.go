@@ -12,6 +12,7 @@ type Report struct {
 	CommitSHA   string      `json:"commit_sha"`
 	Directories []Directory `json:"directories"`
 	Meta        struct {
+		Schema string `json:"schema"`
 		Policy struct {
 			MaxFileLines     int `json:"max_file_lines"`
 			MaxDirectEntries int `json:"max_direct_directory_entries"`
@@ -27,10 +28,17 @@ type Directory struct {
 }
 
 type Indicator struct {
-	MetricID      sourcepolicy.Dimension `json:"metric_id"`
-	Subject       string                 `json:"subject"`
-	Satisfied     bool                   `json:"satisfied"`
-	MetaOperation sourcepolicy.Operation `json:"meta_operation"`
+	MetricID            sourcepolicy.Dimension           `json:"metric_id"`
+	Subject             string                           `json:"subject"`
+	SubjectKind         sourcepolicy.SubjectKind         `json:"subject_kind"`
+	Applicability       sourcepolicy.Applicability       `json:"applicability"`
+	ApplicabilityRule   string                           `json:"applicability_rule_id"`
+	ApplicabilityReason sourcepolicy.ApplicabilityReason `json:"applicability_reason"`
+	Proof               sourcepolicy.ProofChoice         `json:"proof_choice"`
+	Producer            string                           `json:"producer"`
+	Consumer            string                           `json:"consumer"`
+	Satisfied           bool                             `json:"satisfied"`
+	MetaOperation       sourcepolicy.Operation           `json:"meta_operation"`
 }
 
 func Load(path, expectedSHA string) (Report, error) {

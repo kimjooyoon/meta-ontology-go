@@ -17,10 +17,16 @@ func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 		IndicatorsDigest: digestJSON(indicators), FloorDigest: digestJSON(floors),
 		InputDigest: digestJSON(input), RequestedK: requestedK,
 		MinimumIndependent: minimumIndependent, ReplayProof: ProofCoherence,
-		Registry: registry,
+		Registry: registry, NotApplicableIndicatorIDs: notApplicableIndicatorIDs(indicators),
 	}
-	if !validSHA(baseSHA) || !validSHA(headSHA) || duplicateIndicators(indicators) {
+	if report.Schema != sourcepolicy.IndicatorSchema ||
+		!validSHA(baseSHA) || !validSHA(headSHA) || duplicateIndicators(indicators) {
 		plan.Decision, plan.Reason = DecisionUnknown, ReasonInvalidInput
+		return finish(plan)
+	}
+	if failures := applicabilityFailures(indicators); len(failures) != 0 {
+		plan.Decision, plan.Reason = DecisionUnknown, ReasonApplicabilityUnproven
+		plan.UnknownIndicatorIDs = failures
 		return finish(plan)
 	}
 	if _, valid := registryIndex(registry); !valid {
@@ -44,7 +50,7 @@ func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 func blockingIndicators(indicators []sourcepolicy.Indicator) []sourcepolicy.Indicator {
 	result := make([]sourcepolicy.Indicator, 0)
 	for _, indicator := range indicators {
-		if indicator.Blocking {
+		if indicator.Applicability == sourcepolicy.ApplicabilityApplicable && indicator.Blocking {
 			result = append(result, indicator)
 		}
 	}

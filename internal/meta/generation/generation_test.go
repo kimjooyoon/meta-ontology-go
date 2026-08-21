@@ -10,7 +10,7 @@ import (
 
 func TestBuildIsExactFailClosedAndNonAuthorizing(t *testing.T) {
 	base, head := strings.Repeat("a", 40), strings.Repeat("b", 40)
-	fixedReport := sourcepolicy.Report{Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
+	fixedReport := sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
 		metric("floor", sourcepolicy.OperationSplitGo, true, true),
 	}}
 	fixed := Build(base, head, fixedReport)
@@ -20,7 +20,7 @@ func TestBuildIsExactFailClosedAndNonAuthorizing(t *testing.T) {
 	if replay := Build(base, head, fixedReport); !reflect.DeepEqual(fixed, replay) {
 		t.Fatal("same exact input did not replay identically")
 	}
-	report := sourcepolicy.Report{Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
+	report := sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
 		metric("expression", sourcepolicy.OperationCollapseAssign, false, false),
 		metric("topology", sourcepolicy.OperationSplitGo, false, false),
 	}}
@@ -35,7 +35,8 @@ func TestBuildIsExactFailClosedAndNonAuthorizing(t *testing.T) {
 		t.Fatalf("operation registry is not visible in the plan: %+v", planned.Registry)
 	}
 	for _, action := range planned.Selected {
-		if !action.ReceiptRequired || action.Evaluator == "" || len(action.RequiredIndicatorIDs) == 0 {
+		if !action.ReceiptRequired || action.Evaluator == "" || len(action.RequiredIndicatorIDs) == 0 ||
+			!validActionApplicability(action) {
 			t.Fatalf("action lacks conformance obligations: %+v", action)
 		}
 	}
@@ -46,13 +47,13 @@ func TestBuildIsExactFailClosedAndNonAuthorizing(t *testing.T) {
 
 func TestBuildRejectsShortfallAndUnboundMetrics(t *testing.T) {
 	base, head := strings.Repeat("c", 40), strings.Repeat("d", 40)
-	short := sourcepolicy.Report{Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
+	short := sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
 		metric("only-one-group", sourcepolicy.OperationCollapseAssign, false, false),
 	}}
 	if plan := Build(base, head, short); plan.Decision != DecisionUnknown || plan.Reason != ReasonPressureShortfall || len(plan.Selected) != 0 {
 		t.Fatalf("shortfall did not fail closed: %+v", plan)
 	}
-	unbound := sourcepolicy.Report{Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
+	unbound := sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
 		metric("unbound", sourcepolicy.Operation("missing-operation"), false, false),
 	}}
 	if plan := Build(base, head, unbound); plan.Decision != DecisionUnknown || plan.Reason != ReasonMissingOperation {
@@ -61,6 +62,14 @@ func TestBuildRejectsShortfallAndUnboundMetrics(t *testing.T) {
 }
 
 func metric(subject string, operation sourcepolicy.Operation, satisfied, blocking bool) sourcepolicy.Indicator {
+	proof := sourcepolicy.ProofFoundation
+	if operation == sourcepolicy.OperationCollapseAssign {
+		proof = sourcepolicy.ProofRegression
+	}
 	return sourcepolicy.Indicator{MetricID: sourcepolicy.DimensionRefactorAssign, Subject: subject,
-		Satisfied: satisfied, Blocking: blocking, Producer: "test-metric", Consumer: "test-generation", Operation: operation}
+		SubjectKind: sourcepolicy.SubjectKindFunction, Applicability: sourcepolicy.ApplicabilityApplicable,
+		ApplicabilityRule:   sourcepolicy.ApplicabilityRuleDefault,
+		ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable,
+		Satisfied:           satisfied, Blocking: blocking, Proof: proof,
+		Producer: "test-metric", Consumer: "test-generation", Operation: operation}
 }

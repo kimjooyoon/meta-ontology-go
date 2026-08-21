@@ -9,7 +9,8 @@ import (
 func (report Report) GoSplitIndicators() []Indicator {
 	indicators := make([]Indicator, 0)
 	for _, indicator := range report.Meta.Indicators {
-		if !indicator.Satisfied && indicator.MetricID == sourcepolicy.DimensionGoFileLines &&
+		if indicator.Applicability != sourcepolicy.ApplicabilityNotApplicable &&
+			!indicator.Satisfied && indicator.MetricID == sourcepolicy.DimensionGoFileLines &&
 			indicator.MetaOperation == sourcepolicy.OperationSplitGo {
 			indicators = append(indicators, indicator)
 		}

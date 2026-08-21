@@ -17,7 +17,8 @@ func receiptPlanKnown(plan Plan) bool {
 		plan.RegistryDigest != digestJSON(plan.Registry) {
 		return false
 	}
-	if _, valid := selectedActionIndex(plan); !valid {
+	selected, valid := selectedActionIndex(plan)
+	if !valid || !planApplicabilityKnown(plan, selected) {
 		return false
 	}
 	switch plan.Decision {
@@ -44,7 +45,8 @@ func selectedActionIndex(plan Plan) (map[string]Action, bool) {
 		binding, exists := bindings[action.Operation]
 		if !exists || !actionMatchesBinding(action, binding) ||
 			!validActionIndicatorID(action.IndicatorID) ||
-			action.MetricID == "" || action.Subject == "" {
+			action.MetricID == "" || action.Subject == "" ||
+			!validActionApplicability(action) {
 			return nil, false
 		}
 		if _, duplicate := result[action.IndicatorID]; duplicate {
