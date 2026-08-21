@@ -26,7 +26,7 @@ func Build(root string, in input) (Report, sourcepolicy.Indicator, error) {
 		Schema: Schema, CommitSHA: in.document.CommitSHA, Repository: in.document.Repository,
 		SourceMetricsDigest: in.sourceDigest, RegistryDigest: digestJSON(registry),
 		OntologyDigest: ontologyDigest,
-		Decision: "PASS", Reason: "META_BINDING_COMPLETE",
+		Decision:       "PASS", Reason: "META_BINDING_COMPLETE",
 		Summary: summary, SelfIndicator: self, Witnesses: witnesses,
 	}
 	if summary.UnboundIndicators != 0 {
