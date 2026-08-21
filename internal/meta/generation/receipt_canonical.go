@@ -5,7 +5,7 @@ import "sort"
 func SealReceipt(plan Plan, action Action, indicators []IndicatorReceipt) OperationReceipt {
 	receipt := OperationReceipt{
 		SchemaVersion: OperationReceiptSchemaVersion,
-		BaseSHA: plan.BaseSHA, HeadSHA: plan.HeadSHA,
+		BaseSHA:       plan.BaseSHA, HeadSHA: plan.HeadSHA,
 		PlanDigest: plan.PlanDigest, ActionIndicatorID: action.IndicatorID,
 		Operation: action.Operation, Evaluator: action.Evaluator,
 		ProofChoice: action.ProofChoice,

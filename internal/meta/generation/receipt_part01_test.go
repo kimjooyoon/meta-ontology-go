@@ -52,7 +52,7 @@ func passingReceipts(plan Plan) []OperationReceipt {
 			indicators = append(indicators, IndicatorReceipt{
 				ID: identifier, Verdict: IndicatorVerdictPass,
 				EvidenceDigest: digestJSON([]string{action.IndicatorID, identifier}),
-				ProofChoice: action.ProofChoice,
+				ProofChoice:    action.ProofChoice,
 			})
 		}
 		result = append(result, SealReceipt(plan, action, indicators))

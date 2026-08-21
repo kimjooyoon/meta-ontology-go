@@ -4,7 +4,7 @@ func VerifyReceipts(plan Plan, receipts []OperationReceipt) ReceiptReport {
 	normalized := normalizeOperationReceipts(receipts)
 	report := ReceiptReport{
 		SchemaVersion: ReceiptReportSchemaVersion,
-		BaseSHA: plan.BaseSHA, HeadSHA: plan.HeadSHA,
+		BaseSHA:       plan.BaseSHA, HeadSHA: plan.HeadSHA,
 		PlanDigest: plan.PlanDigest, Receipts: normalized,
 	}
 	if !receiptPlanKnown(plan) {
