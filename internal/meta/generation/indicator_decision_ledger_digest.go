@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 )
 
 func indicatorDecisionLedgerDigest(ledger IndicatorDecisionLedger) (string, error) {
@@ -16,6 +17,10 @@ func indicatorDecisionLedgerDigest(ledger IndicatorDecisionLedger) (string, erro
 	}
 	digest := sha256.Sum256(payload)
 	return "sha256:" + hex.EncodeToString(digest[:]), nil
+}
+
+func validIndicatorDecisionLedgerDigest(value string) bool {
+	return strings.HasPrefix(value, "sha256:") && validDigest(strings.TrimPrefix(value, "sha256:"))
 }
 
 func ensureIndicatorLedgerEOF(decoder *json.Decoder) error {

@@ -38,28 +38,29 @@ type Action struct {
 }
 
 type Plan struct {
-	SchemaVersion             string      `json:"schema_version"`
-	BaseSHA                   string      `json:"base_sha"`
-	HeadSHA                   string      `json:"head_sha"`
-	PolicyDigest              string      `json:"policy_digest"`
-	RegistryDigest            string      `json:"registry_digest"`
-	IndicatorsDigest          string      `json:"indicators_digest"`
-	FloorDigest               string      `json:"floor_digest"`
-	InputDigest               string      `json:"input_digest"`
-	RequestedK                uint32      `json:"requested_k"`
-	MinimumIndependent        uint32      `json:"minimum_independent"`
-	ReplayProof               ProofChoice `json:"replay_proof"`
-	Decision                  Decision    `json:"decision"`
-	Reason                    Reason      `json:"reason"`
-	Registry                  []Binding   `json:"registry"`
-	Selected                  []Action    `json:"selected"`
-	NotApplicableIndicatorIDs []string    `json:"not_applicable_indicator_ids"`
-	UnselectedIndicatorIDs    []string    `json:"unselected_indicator_ids"`
-	UnknownIndicatorIDs       []string    `json:"unknown_indicator_ids"`
-	Shortfall                 []string    `json:"shortfall"`
-	PromotionAuthorized       bool        `json:"promotion_authorized"`
-	PlanDigest                string      `json:"plan_digest"`
-	ReplayDigest              string      `json:"replay_digest"`
+	SchemaVersion             string                   `json:"schema_version"`
+	BaseSHA                   string                   `json:"base_sha"`
+	HeadSHA                   string                   `json:"head_sha"`
+	PolicyDigest              string                   `json:"policy_digest"`
+	RegistryDigest            string                   `json:"registry_digest"`
+	IndicatorsDigest          string                   `json:"indicators_digest"`
+	IndicatorDecisionLedger   *IndicatorDecisionLedger `json:"indicator_decision_ledger,omitempty"`
+	FloorDigest               string                   `json:"floor_digest"`
+	InputDigest               string                   `json:"input_digest"`
+	RequestedK                uint32                   `json:"requested_k"`
+	MinimumIndependent        uint32                   `json:"minimum_independent"`
+	ReplayProof               ProofChoice              `json:"replay_proof"`
+	Decision                  Decision                 `json:"decision"`
+	Reason                    Reason                   `json:"reason"`
+	Registry                  []Binding                `json:"registry"`
+	Selected                  []Action                 `json:"selected"`
+	NotApplicableIndicatorIDs []string                 `json:"not_applicable_indicator_ids"`
+	UnselectedIndicatorIDs    []string                 `json:"unselected_indicator_ids"`
+	UnknownIndicatorIDs       []string                 `json:"unknown_indicator_ids"`
+	Shortfall                 []string                 `json:"shortfall"`
+	PromotionAuthorized       bool                     `json:"promotion_authorized"`
+	PlanDigest                string                   `json:"plan_digest"`
+	ReplayDigest              string                   `json:"replay_digest"`
 }
 
 // PromotionAuthorizedByPlan is always false: CI remains the authority.

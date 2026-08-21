@@ -6,12 +6,16 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
-func BuildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions []Action) (IndicatorDecisionLedger, error) {
+func buildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions []Action, deferredIDs []string) (IndicatorDecisionLedger, error) {
 	actionsByIndicator, err := indexLedgerActions(actions)
 	if err != nil {
 		return IndicatorDecisionLedger{}, err
 	}
-	entries, selectedCount, err := buildLedgerEntries(indicators, actionsByIndicator)
+	deferred, err := indexDeferredIndicatorIDs(deferredIDs)
+	if err != nil {
+		return IndicatorDecisionLedger{}, err
+	}
+	entries, selectedCount, deferredCount, err := buildLedgerEntries(indicators, actionsByIndicator, deferred)
 	if err != nil {
 		return IndicatorDecisionLedger{}, err
 	}
@@ -22,6 +26,7 @@ func BuildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions [
 		SchemaVersion:  IndicatorDecisionLedgerSchemaVersion,
 		IndicatorCount: len(entries),
 		SelectedCount:  selectedCount,
+		DeferredCount:  deferredCount,
 		Entries:        entries,
 	}
 	for _, entry := range entries {

@@ -6,21 +6,28 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
-func buildApplicableLedgerEntry(entry IndicatorDecisionLedgerEntry, action Action, hasAction bool) (IndicatorDecisionLedgerEntry, bool, error) {
+func buildApplicableLedgerEntry(entry IndicatorDecisionLedgerEntry, action Action, hasAction, deferred bool) (IndicatorDecisionLedgerEntry, error) {
 	if entry.SourceIndicator.Satisfied {
-		if hasAction {
-			return IndicatorDecisionLedgerEntry{}, false, fmt.Errorf("conforming indicator %q selected an action", entry.IndicatorID)
+		if hasAction || deferred {
+			return IndicatorDecisionLedgerEntry{}, fmt.Errorf("conforming indicator %q selected a repair", entry.IndicatorID)
 		}
 		entry.Disposition = IndicatorDispositionConforming
-		return entry, false, nil
+		return entry, nil
 	}
-	if !hasAction {
-		return IndicatorDecisionLedgerEntry{}, false, fmt.Errorf("violating indicator %q has no selected repair", entry.IndicatorID)
+	if hasAction && deferred {
+		return IndicatorDecisionLedgerEntry{}, fmt.Errorf("violating indicator %q is both selected and deferred", entry.IndicatorID)
 	}
-	actionCopy := action
-	entry.Disposition = IndicatorDispositionRepairSelected
-	entry.Action = &actionCopy
-	return entry, true, nil
+	if hasAction {
+		actionCopy := action
+		entry.Disposition = IndicatorDispositionRepairSelected
+		entry.Action = &actionCopy
+		return entry, nil
+	}
+	if deferred {
+		entry.Disposition = IndicatorDispositionRepairDeferred
+		return entry, nil
+	}
+	return IndicatorDecisionLedgerEntry{}, fmt.Errorf("violating indicator %q has no selected repair", entry.IndicatorID)
 }
 
 func indicatorTrilemmaRoute(proof sourcepolicy.ProofChoice) (TrilemmaRoute, error) {

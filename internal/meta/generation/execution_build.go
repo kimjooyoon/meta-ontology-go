@@ -7,11 +7,12 @@ func BuildExecutionManifest(plan Plan) ExecutionManifest {
 		PlanDigest:                plan.PlanDigest,
 		NotApplicableIndicatorIDs: append([]string{}, plan.NotApplicableIndicatorIDs...),
 	}
-	if !receiptPlanKnown(plan) {
+	if !receiptPlanKnown(plan) || validatePlanIndicatorDecisionLedger(plan) != nil {
 		manifest.Decision = ExecutionDecisionUnknown
 		manifest.Reason = ExecutionReasonInvalidPlan
 		return finishExecutionManifest(manifest)
 	}
+	manifest.IndicatorDecisionLedgerDigest, manifest.IndicatorDecisionLedgerCount = planIndicatorDecisionLedgerProvenance(plan)
 	switch plan.Decision {
 	case DecisionFixedPoint:
 		manifest.Decision = ExecutionDecisionFixedPoint

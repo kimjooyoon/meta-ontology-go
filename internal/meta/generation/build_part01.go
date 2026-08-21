@@ -44,7 +44,7 @@ func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 		plan.UnknownIndicatorIDs = unknown
 		return finish(plan)
 	}
-	return selectActions(plan, actionable, registry)
+	return attachPlanIndicatorDecisionLedger(selectActions(plan, actionable, registry), indicators)
 }
 
 func blockingIndicators(indicators []sourcepolicy.Indicator) []sourcepolicy.Indicator {
