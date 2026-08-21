@@ -63,3 +63,17 @@ func validContractIndicators(contract contractDocument) bool {
 		counts["FOUNDATION"] == 3 && counts["COHERENCE"] == 3 &&
 		counts["REGRESSION"] == 1
 }
+
+func metricWitnessBinding(metrics metricsDocument, binding MetricsBinding) (string, int) {
+	expected := metricExpectations(binding)
+	witnesses, count := map[string]metricsIndicator{}, 0
+	for _, indicator := range metrics.Meta.Indicators {
+		_, observed := expected[indicator.MetricID]
+		if indicator.Subject != "." || (!observed && !rootException(indicator, binding.StorageRoot)) {
+			continue
+		}
+		count++
+		witnesses[indicator.MetricID] = indicator
+	}
+	return digestJSON(map[string]any{"root_topology_exempt": metrics.Meta.Policy.ExemptProjectRootTopology, "indicators": witnesses}), count
+}

@@ -12,7 +12,12 @@ func cycleIndicators(check validation, envelope Envelope, replay bool) []Indicat
 		cycleBooleanIndicator("coherence.plan-execution-receipt-provenance", "COHERENCE", check.Links),
 		cycleBooleanIndicator("coherence.indicator-ledger-binding", "COHERENCE", check.Ledger),
 		cycleDigestIndicator("coherence.content-addressed-cycle", envelope.ArtifactSetDigest, check.Digests),
-		cycleDigestIndicator("coherence.source-metrics-semantics", envelope.SourceMetrics.SemanticDigest, check.Metrics),
+		cycleBooleanIndicator("foundation.source-metrics-schema", "FOUNDATION", check.MetricSchema),
+		cycleBooleanIndicator("foundation.project-root-exemption", "FOUNDATION", check.MetricRootException),
+		cycleBooleanIndicator("coherence.source-metrics-roots", "COHERENCE", check.MetricRoots),
+		cycleBooleanIndicator("coherence.source-metrics-observations", "COHERENCE", check.MetricObservations),
+		cycleDigestIndicator("coherence.source-metrics-witnesses", envelope.SourceMetrics.RootWitnessDigest, check.MetricWitnesses),
+		cycleDigestIndicator("coherence.source-metrics-semantics", envelope.SourceMetrics.SemanticDigest, check.MetricSemantics),
 		cycleBooleanIndicator("regression.canonical-replay", "REGRESSION", replay),
 	}
 }

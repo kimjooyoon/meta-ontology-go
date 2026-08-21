@@ -11,8 +11,11 @@ func TestEnvelopeBindsTheCompleteCycle(t *testing.T) {
 	if envelope.Status != "BOUND" {
 		t.Fatalf("status = %s, want BOUND", envelope.Status)
 	}
-	if len(envelope.Artifacts) != 6 || len(envelope.Indicators) != 10 {
+	if len(envelope.Artifacts) != 6 || len(envelope.Indicators) != 15 {
 		t.Fatalf("artifacts/indicators = %d/%d", len(envelope.Artifacts), len(envelope.Indicators))
+	}
+	if !envelope.SourceMetrics.RootTopologyExempt || envelope.SourceMetrics.RootWitnessCount != 10 {
+		t.Fatalf("root witness = %#v", envelope.SourceMetrics)
 	}
 	if envelope.PromotionAuthorized || !validDigest(envelope.EnvelopeDigest) ||
 		!validDigest(envelope.ReplayDigest) {
@@ -30,9 +33,11 @@ func TestEnvelopeRejectsAPlanLinkDrift(t *testing.T) {
 
 func TestEnvelopeRejectsRootExceptionDrift(t *testing.T) {
 	opts, in := cycleFixture()
+	before := buildEnvelope(in, opts)
 	in.Metrics.Value.Meta.Policy.ExemptProjectRootTopology = false
-	if status := buildEnvelope(in, opts).Status; status != "OPEN" {
-		t.Fatalf("status = %s, want OPEN", status)
+	after := buildEnvelope(in, opts)
+	if after.Status != "OPEN" || after.SourceMetrics.RootWitnessDigest == before.SourceMetrics.RootWitnessDigest {
+		t.Fatalf("root exception drift was not content-addressed: %#v", after.SourceMetrics)
 	}
 }
 

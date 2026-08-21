@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-const envelopeSchema, metaprogram = "gooo/self-improvement-cycle-envelope/v2", "scripts/self-improvement-cycle"
+const envelopeSchema, metaprogram = "gooo/self-improvement-cycle-envelope/v3", "scripts/self-improvement-cycle"
 
 type projection struct {
 	Envelope   Envelope
@@ -59,7 +59,7 @@ func buildEnvelope(in inputs, opts options) Envelope {
 }
 
 func metricsProjection(metrics metricsDocument) MetricsBinding {
-	result := MetricsBinding{Schema: metrics.Meta.Schema}
+	result := MetricsBinding{Schema: metrics.Meta.Schema, RootTopologyExempt: metrics.Meta.Policy.ExemptProjectRootTopology}
 	for _, root := range metrics.Directories {
 		if root.Path == "." {
 			result.LogicalRoot = root
@@ -70,6 +70,7 @@ func metricsProjection(metrics metricsDocument) MetricsBinding {
 			result.StorageRoot = root
 		}
 	}
+	result.RootWitnessDigest, result.RootWitnessCount = metricWitnessBinding(metrics, result)
 	result.SemanticDigest = digestJSON(result)
 	return result
 }

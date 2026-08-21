@@ -1,8 +1,10 @@
 package main
 
 type validation struct {
-	Schemas, Context, Heads, Contract, Metrics bool
-	States, Links, Ledger, Digests             bool
+	Schemas, Context, Heads, Contract                    bool
+	MetricSchema, MetricRootException, MetricRoots       bool
+	MetricObservations, MetricWitnesses, MetricSemantics bool
+	States, Links, Ledger, Digests                        bool
 }
 
 func validateInputs(in inputs, opts options) validation {
@@ -10,6 +12,7 @@ func validateInputs(in inputs, opts options) validation {
 	receipts, provenance := in.Receipts.Value, in.Provenance.Value
 	contract := in.Contract.Value
 	base := plan.BaseSHA
+	metricSchema, metricRootException, metricRoots, metricObservations, metricWitnesses, metricSemantics := validateMetrics(in.Metrics.Value)
 	return validation{
 		Schemas: plan.SchemaVersion == "gooo/self-improvement-generation/v6" && execution.SchemaVersion == "gooo/meta-operation-execution/v6" &&
 			receipts.SchemaVersion == "gooo/meta-operation-receipt-report/v2" &&
@@ -25,7 +28,9 @@ func validateInputs(in inputs, opts options) validation {
 		Contract: contract.Status == "PASS" && !contract.PromotionAuthorized &&
 			validDigest(contract.SourceSHA256) && validDigest(contract.SemanticHash) && validDigest(contract.RegistryDigest) &&
 			validContractIndicators(contract) && validContractCoverage(contract),
-		Metrics: validMetrics(in.Metrics.Value),
+		MetricSchema: metricSchema, MetricRootException: metricRootException,
+		MetricRoots: metricRoots, MetricObservations: metricObservations,
+		MetricWitnesses: metricWitnesses, MetricSemantics: metricSemantics,
 		States: plan.Decision != "" && plan.Reason != "" &&
 			execution.Decision != "" && execution.Reason != "" &&
 			receipts.Decision != "" && receipts.Reason != "" &&
@@ -48,14 +53,12 @@ func validateInputs(in inputs, opts options) validation {
 	}
 }
 
-func validMetrics(metrics metricsDocument) bool {
+func validateMetrics(metrics metricsDocument) (schema, rootExceptionValid, roots, observations, witnesses, semantics bool) {
 	binding := metricsProjection(metrics)
-	if metrics.Meta.Schema != "gooo/indicator-report/v3" ||
-		!metrics.Meta.Policy.ExemptProjectRootTopology ||
-		!validDigest(binding.SemanticDigest) ||
-		!validMetricRoot(binding.LogicalRoot) || !validMetricRoot(binding.StorageRoot) {
-		return false
-	}
+	schema = metrics.Meta.Schema == "gooo/indicator-report/v3"
+	rootExceptionValid = metrics.Meta.Policy.ExemptProjectRootTopology
+	roots = validMetricRoot(binding.LogicalRoot) && validMetricRoot(binding.StorageRoot)
+	observations = true
 	expected, exemptions := metricExpectations(binding), 0
 	for _, indicator := range metrics.Meta.Indicators {
 		if indicator.Subject != "." {
@@ -64,12 +67,21 @@ func validMetrics(metrics metricsDocument) bool {
 		if value, ok := expected[indicator.MetricID]; ok {
 			if value != indicator.Value || indicator.Applicability != "APPLICABLE" ||
 				indicator.Blocking || indicator.Decision != "PASS" {
-				return false
+				observations = false
 			}
 			delete(expected, indicator.MetricID)
 		} else if rootException(indicator, binding.StorageRoot) {
 			exemptions++
 		}
 	}
-	return len(expected) == 0 && exemptions == 2
+	observations = observations && len(expected) == 0
+	rootExceptionValid = rootExceptionValid && exemptions == 2
+	witnessDigest, witnessCount := metricWitnessBinding(metrics, binding)
+	witnesses = binding.RootTopologyExempt == metrics.Meta.Policy.ExemptProjectRootTopology &&
+		binding.RootWitnessDigest == witnessDigest && binding.RootWitnessCount == witnessCount &&
+		witnessCount == 10 && validDigest(witnessDigest)
+	canonical := binding
+	canonical.SemanticDigest = ""
+	semantics = validDigest(binding.SemanticDigest) && binding.SemanticDigest == digestJSON(canonical)
+	return
 }

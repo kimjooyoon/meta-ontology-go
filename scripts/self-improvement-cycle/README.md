@@ -23,3 +23,12 @@ plan-to-execution-to-receipt-to-provenance links, the shared indicator ledger,
 the Gooo contract indicators, executor coverage, and deterministic replay.
 
 The result never authorizes promotion.
+
+## v3 root metric witnesses
+
+The envelope content-addresses the project-root exception policy together with ten
+canonical witnesses: eight Go/Gooo and folder/file observations plus two
+ROOT_TOPOLOGY_EXEMPT topology decisions. FOUNDATION selects schema and exception
+axioms, COHERENCE binds roots, observations, witnesses, and semantic digests, and
+REGRESSION binds canonical replay. The project root still does not require a
+README.md.
