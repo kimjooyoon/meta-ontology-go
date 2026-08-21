@@ -1,19 +1,5 @@
 package generation
 
-func operationReceiptIndex(receipts []OperationReceipt) (map[string]OperationReceipt, bool) {
-	result := make(map[string]OperationReceipt, len(receipts))
-	for _, receipt := range receipts {
-		if receipt.ActionIndicatorID == "" {
-			return nil, false
-		}
-		if _, duplicate := result[receipt.ActionIndicatorID]; duplicate {
-			return nil, false
-		}
-		result[receipt.ActionIndicatorID] = receipt
-	}
-	return result, true
-}
-
 func classifyOperationReceipt(
 	plan Plan,
 	action Action,

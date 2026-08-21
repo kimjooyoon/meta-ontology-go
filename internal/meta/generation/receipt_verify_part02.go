@@ -1,10 +1,5 @@
 package generation
 
-import (
-	"sort"
-	"strings"
-)
-
 func receiptPlanKnown(plan Plan) bool {
 	if plan.SchemaVersion != SchemaVersion || !validSHA(plan.BaseSHA) ||
 		!validSHA(plan.HeadSHA) || plan.PromotionAuthorized ||
@@ -69,17 +64,4 @@ func actionMatchesBinding(action Action, binding Binding) bool {
 		action.Priority == binding.Priority &&
 		digestJSON(action.RequiredIndicatorIDs) ==
 			digestJSON(binding.RequiredIndicatorIDs)
-}
-
-func validActionIndicatorID(value string) bool {
-	return strings.HasPrefix(value, "sha256:") &&
-		validDigest(strings.TrimPrefix(value, "sha256:"))
-}
-
-func sortedSelectedActions(actions []Action) []Action {
-	result := append([]Action{}, actions...)
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].IndicatorID < result[j].IndicatorID
-	})
-	return result
 }
