@@ -16,6 +16,7 @@ const (
 	FamilyDuplication Family = "duplication"
 	FamilyRefactor    Family = "refactor"
 	FamilyConformance Family = "conformance"
+	FamilyDocumentation Family = "documentation"
 )
 
 // ProofChoice makes the Munchausen-trilemma branch explicit for every metric.
@@ -46,6 +47,7 @@ const (
 
 	ApplicabilityReasonCatalogApplicable  ApplicabilityReason = "CATALOG_APPLICABLE"
 	ApplicabilityReasonRootTopologyExempt ApplicabilityReason = "ROOT_TOPOLOGY_EXEMPT"
+	ApplicabilityReasonRootREADMEExempt   ApplicabilityReason = "ROOT_README_EXEMPT"
 )
 
 const (
@@ -58,6 +60,8 @@ const (
 	OperationPartition       Operation = "partition-directory"
 	OperationSeparateKinds   Operation = "separate-directory-kinds"
 	OperationExemptRoot      Operation = "exempt-project-root-topology"
+	OperationExemptRootREADME Operation = "exempt-project-root-readme"
+	OperationRequireRootREADME Operation = "require-project-root-readme"
 	OperationModernize       Operation = "apply-go-fix"
 	OperationSelectToolchain Operation = "select-toolchain"
 )

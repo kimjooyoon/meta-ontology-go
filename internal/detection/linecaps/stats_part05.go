@@ -9,7 +9,7 @@ import (
 // actionable meta operations.
 func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.Policy) (sourcepolicy.Report, error) {
 	topology := metricTopologyDirectories(report)
-	observations := make([]sourcepolicy.Observation, 0, len(report.Files)+len(topology)*6+4)
+	observations := make([]sourcepolicy.Observation, 0, len(report.Files)+len(topology)*6+5)
 	for _, file := range report.Files {
 		dimension := sourcepolicy.Dimension("")
 		switch file.Language {
@@ -50,6 +50,7 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 		metricObservation(".", sourcepolicy.DimensionGoooFiles, total.GoooFiles),
 		metricObservation(".", sourcepolicy.DimensionGoLines, total.GoLines),
 		metricObservation(".", sourcepolicy.DimensionGoooLines, total.GoooLines),
+		rootREADMEObservation(report.Files),
 	)
 	return sourcepolicy.Evaluate(policy, observations)
 }

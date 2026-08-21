@@ -24,6 +24,7 @@ type witnessLedger struct {
 	Policy               sourcePolicy      `json:"policy"`
 	PolicyDigest         string            `json:"policy_digest"`
 	RootTopologyExempt   bool              `json:"root_topology_exempt"`
+	RootREADMEExempt     bool              `json:"root_readme_exempt"`
 	Counts               ledgerCounts      `json:"counts"`
 	SubjectWitnessDigest string            `json:"subject_witness_digest"`
 	MetaIndicatorDigest  string            `json:"meta_indicator_digest"`
@@ -38,7 +39,7 @@ func validateLedger(ledger witnessLedger) error {
 	if ledger.Schema != "gooo/source-subject-witness-ledger/v1" || ledger.Status != "BOUND" {
 		return fmt.Errorf("ledger schema or status is not bound")
 	}
-	if !ledger.RootTopologyExempt || len(ledger.Witnesses) != ledger.Counts.SubjectWitnesses {
+	if !ledger.RootTopologyExempt || !ledger.RootREADMEExempt || len(ledger.Witnesses) != ledger.Counts.SubjectWitnesses {
 		return fmt.Errorf("ledger root policy or witness count is invalid")
 	}
 	previous := ""

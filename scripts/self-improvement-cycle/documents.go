@@ -2,6 +2,11 @@ package main
 
 type metricsPolicy struct {
 	ExemptProjectRootTopology bool `json:"exempt_project_root_topology"`
+	ExemptProjectRootREADME   bool `json:"exempt_project_root_readme"`
+}
+
+type metricsFile struct {
+	Path string `json:"path"`
 }
 
 type metricsIndicator struct {
@@ -12,6 +17,7 @@ type metricsIndicator struct {
 	ApplicabilityReason string `json:"applicability_reason"`
 	Blocking            bool   `json:"blocking"`
 	Decision            string `json:"decision"`
+	Detail              string `json:"detail"`
 }
 
 type metricsMeta struct {
@@ -22,6 +28,7 @@ type metricsMeta struct {
 
 type metricsDocument struct {
 	CommitSHA          string            `json:"commit_sha"`
+	Files              []metricsFile     `json:"files"`
 	Meta               metricsMeta       `json:"meta"`
 	Directories        []MetricsSnapshot `json:"directories"`
 	StorageDirectories []MetricsSnapshot `json:"storage_directories"`

@@ -23,6 +23,7 @@ const (
 	DimensionRecursiveFolders  Dimension = "gooo.metric.layout.recursive-folders.v1"
 	DimensionDirectEntries     Dimension = "gooo.metric.layout.direct-entries.v1"
 	DimensionDirectoryKinds    Dimension = "gooo.metric.layout.entry-kinds.v1"
+	DimensionRootREADME        Dimension = "gooo.metric.documentation.root-readme-presence.v1"
 	DimensionRefactorDuplicate Dimension = "gooo.metric.refactor.duplicate-body.v1"
 	DimensionRefactorReturn    Dimension = "gooo.metric.refactor.single-return.v1"
 	DimensionRefactorAssign    Dimension = "gooo.metric.refactor.assign-return.v1"

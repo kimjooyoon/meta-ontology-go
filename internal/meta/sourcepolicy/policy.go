@@ -18,6 +18,7 @@ type Policy struct {
 	MaxDirectDirectoryIn          int    `json:"max_direct_directory_entries"`
 	RequireHomogeneousDirectories bool   `json:"require_homogeneous_directories"`
 	ExemptProjectRootTopology     bool   `json:"exempt_project_root_topology"`
+	ExemptProjectRootREADME       bool   `json:"exempt_project_root_readme"`
 }
 
 // Default returns the repository policy. Consumers derive indicators from it;
@@ -30,6 +31,7 @@ func Default() Policy {
 		MaxDirectDirectoryIn:          DefaultMaxDirectoryInputs,
 		RequireHomogeneousDirectories: true,
 		ExemptProjectRootTopology:     true,
+		ExemptProjectRootREADME:       true,
 	}
 }
 

@@ -30,7 +30,7 @@ func logicalDirectoryBinding() metaBinding {
 	return derivedBinding("DERIVED_PROJECTION", "observe-logical-directory", "COHERENCE")
 }
 
-func storageDirectoryBinding(directory directoryMetric, index indicatorIndex) (metaBinding, error) {
+func storageDirectoryBinding(directory directoryMetric, index indicatorIndex, readmeValue int) (metaBinding, error) {
 	kinds := 0
 	if directory.DirectFiles > 0 {
 		kinds++
@@ -46,11 +46,17 @@ func storageDirectoryBinding(directory directoryMetric, index indicatorIndex) (m
 		{"gooo.metric.layout.recursive-files.v1", directory.RecursiveFiles},
 		{"gooo.metric.layout.recursive-folders.v1", directory.RecursiveFolders},
 	}
+	if directory.Path == "." {
+		expected = append(expected, expectedMetric{rootREADMEMetric, readmeValue})
+	}
 	rows := make([]sourceIndicator, 0, len(expected))
 	for _, item := range expected {
 		row, err := lookupIndicator(index, directory.SubjectKind, directory.Path, item.id, item.value)
 		if err != nil {
 			return metaBinding{}, err
+		}
+		if item.id == rootREADMEMetric && row.Detail != "ontology="+rootREADMEOntology {
+			return metaBinding{}, fmt.Errorf("root README indicator lost ontology binding")
 		}
 		rows = append(rows, row)
 	}
@@ -60,7 +66,7 @@ func storageDirectoryBinding(directory directoryMetric, index indicatorIndex) (m
 			notApplicable++
 		}
 	}
-	if (directory.Path == "." && notApplicable != 2) || (directory.Path != "." && notApplicable != 0) {
+	if (directory.Path == "." && notApplicable != 3) || (directory.Path != "." && notApplicable != 0) {
 		return metaBinding{}, fmt.Errorf("directory %q has %d topology exemptions", directory.Path, notApplicable)
 	}
 	return sourceBinding(rows, "FOUNDATION"), nil

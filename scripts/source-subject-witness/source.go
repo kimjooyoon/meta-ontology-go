@@ -47,6 +47,7 @@ type sourcePolicy struct {
 	MaxDirectDirectoryEntries     int    `json:"max_direct_directory_entries"`
 	RequireHomogeneousDirectories bool   `json:"require_homogeneous_directories"`
 	ExemptProjectRootTopology     bool   `json:"exempt_project_root_topology"`
+	ExemptProjectRootREADME       bool   `json:"exempt_project_root_readme"`
 }
 
 func loadSource(path string) (sourceReport, error) {
