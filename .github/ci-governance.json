@@ -573,6 +573,18 @@
       ]
     },
     {
+      "branch": "agent/metric-counterfactual-v7",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/meta/metriccounterfactual/**",
+        "internal/meta/metriccounterfactualverify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-counterfactual/**"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"
