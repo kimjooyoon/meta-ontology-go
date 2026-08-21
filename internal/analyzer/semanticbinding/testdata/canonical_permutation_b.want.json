@@ -1,7 +1,0 @@
-{
-  "status": "accepted",
-  "canonical": "bind|billing://entity/order",
-  "records": [
-    {"directive": "bind", "name": "Order", "id": "billing://entity/order"}
-  ]
-}
