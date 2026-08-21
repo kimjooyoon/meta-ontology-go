@@ -2,7 +2,7 @@ package generation
 
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
-const IndicatorDecisionLedgerSchemaVersion = "gooo/indicator-decision-ledger/v1"
+const IndicatorDecisionLedgerSchemaVersion = "gooo/indicator-decision-ledger/v2"
 
 type TrilemmaRoute string
 
@@ -18,6 +18,7 @@ const (
 	IndicatorDispositionExempt         IndicatorDisposition = "EXEMPT"
 	IndicatorDispositionConforming     IndicatorDisposition = "CONFORMING"
 	IndicatorDispositionRepairSelected IndicatorDisposition = "REPAIR_SELECTED"
+	IndicatorDispositionRepairDeferred IndicatorDisposition = "REPAIR_DEFERRED"
 )
 
 // IndicatorDecisionLedgerEntry binds a metric to its proof and meta operation.
@@ -35,6 +36,7 @@ type IndicatorDecisionLedger struct {
 	SchemaVersion     string                         `json:"schema_version"`
 	IndicatorCount    int                            `json:"indicator_count"`
 	SelectedCount     int                            `json:"selected_count"`
+	DeferredCount     int                            `json:"deferred_count"`
 	FoundationalCount int                            `json:"foundational_count"`
 	CoherenceCount    int                            `json:"coherence_count"`
 	RegressiveCount   int                            `json:"regressive_count"`

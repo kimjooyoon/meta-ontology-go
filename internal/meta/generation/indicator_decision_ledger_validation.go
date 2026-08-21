@@ -12,13 +12,17 @@ import (
 func (ledger IndicatorDecisionLedger) Validate() error {
 	indicators := make([]sourcepolicy.Indicator, 0, len(ledger.Entries))
 	actions := make([]Action, 0, ledger.SelectedCount)
+	deferred := make([]string, 0, ledger.DeferredCount)
 	for _, entry := range ledger.Entries {
 		indicators = append(indicators, entry.SourceIndicator)
 		if entry.Action != nil {
 			actions = append(actions, *entry.Action)
 		}
+		if entry.Disposition == IndicatorDispositionRepairDeferred {
+			deferred = append(deferred, entry.IndicatorID)
+		}
 	}
-	rebuilt, err := BuildIndicatorDecisionLedger(indicators, actions)
+	rebuilt, err := buildIndicatorDecisionLedger(indicators, actions, deferred)
 	if err != nil {
 		return err
 	}

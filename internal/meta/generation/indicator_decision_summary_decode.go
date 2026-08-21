@@ -24,6 +24,9 @@ func (plan *Plan) UnmarshalJSON(payload []byte) error {
 	if err := validateActionOutcomes(candidate.Selected); err != nil {
 		return err
 	}
+	if err := validatePlanIndicatorDecisionLedger(candidate); err != nil {
+		return err
+	}
 	*plan = candidate
 	return nil
 }
@@ -44,6 +47,9 @@ func (manifest *ExecutionManifest) UnmarshalJSON(payload []byte) error {
 		return fmt.Errorf("indicator decision summary does not match execution manifest")
 	}
 	if err := validateExecutionOutcomes(candidate.Steps); err != nil {
+		return err
+	}
+	if err := validateExecutionIndicatorLedgerProvenance(candidate); err != nil {
 		return err
 	}
 	*manifest = candidate

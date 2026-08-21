@@ -6,8 +6,10 @@ import (
 )
 
 type executionInput struct {
-	PlanDigest string          `json:"plan_digest"`
-	Steps      []ExecutionStep `json:"steps"`
+	PlanDigest                    string          `json:"plan_digest"`
+	IndicatorDecisionLedgerDigest string          `json:"indicator_decision_ledger_digest,omitempty"`
+	IndicatorDecisionLedgerCount  int             `json:"indicator_decision_ledger_count"`
+	Steps                         []ExecutionStep `json:"steps"`
 }
 
 func finishExecutionManifest(manifest ExecutionManifest) ExecutionManifest {
@@ -19,8 +21,8 @@ func finishExecutionManifest(manifest ExecutionManifest) ExecutionManifest {
 			manifest.Steps[j].ActionIndicatorID
 	})
 	manifest.InputDigest = digestJSON(executionInput{
-		PlanDigest: manifest.PlanDigest,
-		Steps:      manifest.Steps,
+		PlanDigest: manifest.PlanDigest, IndicatorDecisionLedgerDigest: manifest.IndicatorDecisionLedgerDigest,
+		IndicatorDecisionLedgerCount: manifest.IndicatorDecisionLedgerCount, Steps: manifest.Steps,
 	})
 	manifest.ManifestDigest, manifest.ReplayDigest = "", ""
 	manifest.ManifestDigest = digestJSON(manifest)
