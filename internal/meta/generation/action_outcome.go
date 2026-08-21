@@ -21,9 +21,10 @@ func expectedActionOutcome(
 
 func validateActionOutcomes(actions []Action) error {
 	for index, action := range actions {
-		expected := expectedActionOutcome(
-			action.MetricID, action.Applicability, action.Blocking,
-		)
+		if !actionMatchesSourceIndicator(action) {
+			return fmt.Errorf("selected action %d indicator membership mismatch", index)
+		}
+		expected := action.SourceIndicator.Outcome()
 		if action.IndicatorOutcome != expected {
 			return fmt.Errorf("selected action %d indicator outcome mismatch", index)
 		}
@@ -33,9 +34,10 @@ func validateActionOutcomes(actions []Action) error {
 
 func validateExecutionOutcomes(steps []ExecutionStep) error {
 	for index, step := range steps {
-		expected := expectedActionOutcome(
-			step.MetricID, step.Applicability, step.Blocking,
-		)
+		if !stepMatchesSourceIndicator(step) {
+			return fmt.Errorf("execution step %d indicator membership mismatch", index)
+		}
+		expected := step.SourceIndicator.Outcome()
 		if step.IndicatorOutcome != expected {
 			return fmt.Errorf("execution step %d indicator outcome mismatch", index)
 		}

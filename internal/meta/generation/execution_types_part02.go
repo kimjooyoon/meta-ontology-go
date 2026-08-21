@@ -11,6 +11,7 @@ type ExecutionStep struct {
 	ApplicabilityRule    string                           `json:"applicability_rule_id"`
 	ApplicabilityReason  sourcepolicy.ApplicabilityReason `json:"applicability_reason"`
 	Blocking             bool                             `json:"blocking"`
+	SourceIndicator      sourcepolicy.Indicator           `json:"source_indicator"`
 	IndicatorOutcome     sourcepolicy.IndicatorOutcome    `json:"indicator_outcome"`
 	MetricProofChoice    sourcepolicy.ProofChoice         `json:"metric_proof_choice"`
 	MetricProducer       string                           `json:"metric_producer"`
