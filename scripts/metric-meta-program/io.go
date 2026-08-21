@@ -3,35 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 )
-
-const maxInputBytes = 8 << 20
-
-func readBounded(path string) ([]byte, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if !info.Mode().IsRegular() || info.Size() > maxInputBytes {
-		return nil, fmt.Errorf("input is not a bounded regular file")
-	}
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	payload, err := io.ReadAll(io.LimitReader(file, maxInputBytes+1))
-	if err != nil {
-		return nil, err
-	}
-	if len(payload) > maxInputBytes {
-		return nil, fmt.Errorf("input exceeds %d bytes", maxInputBytes)
-	}
-	return payload, nil
-}
 
 func writeArtifacts(directory string, source, program, verification []byte) error {
 	if info, err := os.Lstat(directory); err == nil && info.Mode()&os.ModeSymlink != 0 {

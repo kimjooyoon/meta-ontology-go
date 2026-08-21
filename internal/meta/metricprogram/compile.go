@@ -38,8 +38,8 @@ func Compile(strategyPayload, verificationPayload []byte) (Program, []byte, erro
 		StrategyDigest: strategy.Digest, StrategyVerificationDigest: verification.Digest, ExecutionPolicy: ProgramExecutionPolicy,
 		RootPolicy: strategy.RootPolicy, RegistryDigest: registryDigest, SourcePath: ProgramSourceFilename,
 		SourceDigest: bytesDigest(source), SemanticDigest: semantic, Operations: operations, Bindings: bindings, Steps: steps,
-		Selection: ProgramSelection{ProofChoice: strategy.Selection.ProofChoice, Decision: strategy.Selection.Decision, MetaOperation: strategy.Selection.MetaOperation, Reason: strategy.Selection.Reason},
-		Coverage: Coverage{BindingCount: len(strategy.Bindings), ResolvedBindingCount: len(bindings), RegistryOperationCount: len(operations), ReferencedOperationCount: len(referenced), SelectionOperationResolved: true, Status: "COMPLETE"},
+		Selection:                 ProgramSelection{ProofChoice: strategy.Selection.ProofChoice, Decision: strategy.Selection.Decision, MetaOperation: strategy.Selection.MetaOperation, Reason: strategy.Selection.Reason},
+		Coverage:                  Coverage{BindingCount: len(strategy.Bindings), ResolvedBindingCount: len(bindings), RegistryOperationCount: len(operations), ReferencedOperationCount: len(referenced), SelectionOperationResolved: true, Status: "COMPLETE"},
 		RepositoryWorkspaceWrites: false, PromotionAuthorized: false,
 	}
 	program.Digest, err = valueDigest(program)

@@ -35,17 +35,17 @@ func fixturePayloads(t *testing.T) ([]byte, []byte) {
 	plan := metricprogram.StrategyPlan{
 		Schema: metricprogram.StrategySchemaVersion, Repository: "kimjooyoon/meta-ontology-go", SubjectSHA: "b8626224d7f5ce425f3132a354ec2fd480c659cb",
 		ExecutionPolicy: metricprogram.StrategyExecutionPolicy,
-		Input: metricprogram.StrategyInput{SourceIndicatorSchema: "gooo/indicator-report/v3", SourcePolicySchema: "gooo/source-policy/v1", SourceMetricsDigest: fixtureDigest("metrics"), InterventionSchema: "gooo/metric-intervention-ledger/v1", InterventionDigest: fixtureDigest("intervention"), VerificationSchema: "gooo/metric-intervention-verification/v1", VerificationDigest: fixtureDigest("intervention-verification"), IndicatorCount: len(bindings), ProjectionCount: 10},
-		RootPolicy: metricprogram.RootPolicy{CountsApplicability: "OBSERVED", TopologyApplicability: "NOT_APPLICABLE", TopologyReason: "ROOT_TOPOLOGY_EXEMPT", ReadmeRequirement: "NOT_APPLICABLE"},
-		Policy: metricprogram.StrategyPolicy{Schema: "gooo/munchhausen-strategy-policy/v1", Choices: []string{"FOUNDATION", "COHERENCE", "REGRESSION"}, FailureRule: "FIRST_UNSATISFIED_CANONICAL_FAMILY", FixedPointRule: "REGRESSION_TERMINATES_AT_VERIFIED_ZERO_RESIDUAL"},
-		Bindings: bindings,
+		Input:           metricprogram.StrategyInput{SourceIndicatorSchema: "gooo/indicator-report/v3", SourcePolicySchema: "gooo/source-policy/v1", SourceMetricsDigest: fixtureDigest("metrics"), InterventionSchema: "gooo/metric-intervention-ledger/v1", InterventionDigest: fixtureDigest("intervention"), VerificationSchema: "gooo/metric-intervention-verification/v1", VerificationDigest: fixtureDigest("intervention-verification"), IndicatorCount: len(bindings), ProjectionCount: 10},
+		RootPolicy:      metricprogram.RootPolicy{CountsApplicability: "OBSERVED", TopologyApplicability: "NOT_APPLICABLE", TopologyReason: "ROOT_TOPOLOGY_EXEMPT", ReadmeRequirement: "NOT_APPLICABLE"},
+		Policy:          metricprogram.StrategyPolicy{Schema: "gooo/munchhausen-strategy-policy/v1", Choices: []string{"FOUNDATION", "COHERENCE", "REGRESSION"}, FailureRule: "FIRST_UNSATISFIED_CANONICAL_FAMILY", FixedPointRule: "REGRESSION_TERMINATES_AT_VERIFIED_ZERO_RESIDUAL"},
+		Bindings:        bindings,
 		Candidates: []metricprogram.StrategyCandidate{
 			{ProofChoice: "FOUNDATION", IndicatorIDs: []string{"MIV-FOUNDATION-REGISTRY-003", "MIV-FOUNDATION-ROOT-002", "MIV-FOUNDATION-SUBJECT-001"}, MetaOperations: []string{"bind-exact-source-metrics", "exempt-project-root-topology", "interpret-dimension-registry"}, IndicatorCount: 3, Admissible: true, EvidenceDigest: foundationDigest},
 			{ProofChoice: "COHERENCE", IndicatorIDs: []string{"MIV-COHERENCE-DIRECT-FILES", "MIV-COHERENCE-DIRECT-FOLDERS", "MIV-COHERENCE-GO-FILES", "MIV-COHERENCE-GO-LINES", "MIV-COHERENCE-GOOO-FILES", "MIV-COHERENCE-GOOO-LINES", "MIV-COHERENCE-RECURSIVE-FILES", "MIV-COHERENCE-RECURSIVE-FOLDERS"}, MetaOperations: []string{"project-algebraic-root-state"}, IndicatorCount: 8, Admissible: true, EvidenceDigest: coherenceDigest},
 			{ProofChoice: "REGRESSION", IndicatorIDs: []string{"MIV-REGRESSION-BOUNDARY-002", "MIV-REGRESSION-CHANGED-DIRECTORIES", "MIV-REGRESSION-CHANGED-FILES", "MIV-REGRESSION-REPLAY-001"}, MetaOperations: []string{"observe-counterfactual-boundary", "preserve-repository-workspace", "replay-counterfactual"}, IndicatorCount: 4, Admissible: true, EvidenceDigest: regressionDigest},
 		},
 		Selection: metricprogram.StrategySelection{ProofChoice: "REGRESSION", Decision: "HOLD_FIXED_POINT", MetaOperation: "terminate-at-fixed-point", Reason: "ALL_INDICATORS_SATISFIED_AND_RESIDUALS_ZERO", CandidateDigest: regressionDigest, SourceMetaOperations: []string{"observe-counterfactual-boundary", "preserve-repository-workspace", "replay-counterfactual"}},
-		Digest: planDigest,
+		Digest:    planDigest,
 	}
 	verification := metricprogram.StrategyVerification{Schema: metricprogram.StrategyVerificationSchemaVersion, PlanDigest: planDigest, SourceMetricsDigest: plan.Input.SourceMetricsDigest, InterventionDigest: plan.Input.InterventionDigest, BindingCount: len(bindings), CandidateCount: 3, SelectedProofChoice: "REGRESSION", Status: "VERIFIED", Digest: fixtureDigest("strategy-verification")}
 	return fixtureJSON(t, plan), fixtureJSON(t, verification)
