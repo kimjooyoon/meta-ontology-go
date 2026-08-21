@@ -258,6 +258,10 @@ jobs:
   program:
     needs: strategy
     runs-on: ubuntu-latest
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
+      artifact_url: ${{ steps.upload.outputs.artifact-url }}
     env:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -334,10 +338,155 @@ jobs:
           test -s "$first/program.gooo"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic typed metric meta-program evidence
+        id: upload
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: metric-meta-program-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-meta-program/first
+          if-no-files-found: error
+          retention-days: 30
+
+  program-closure:
+    needs: program
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      PROGRAM_ARTIFACT_ID: ${{ needs.program.outputs.artifact_id }}
+      PROGRAM_ARTIFACT_DIGEST: ${{ needs.program.outputs.artifact_digest }}
+      PROGRAM_ARTIFACT_URL: ${{ needs.program.outputs.artifact_url }}
+      PROGRAM_ARTIFACT_NAME: metric-meta-program-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Download the exact typed meta-program artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ env.PROGRAM_ARTIFACT_NAME }}
+          path: ${{ runner.temp }}/metric-meta-program-closure/input
+      - name: Bind GitHub artifact identity to independently verified meta code
+        shell: bash
+        run: |
+          set -euo pipefail
+          input="$RUNNER_TEMP/metric-meta-program-closure/input"
+          first="$RUNNER_TEMP/metric-meta-program-closure/first"
+          replay="$RUNNER_TEMP/metric-meta-program-closure/replay"
+          mkdir -p "$first" "$replay"
+          test "$PROGRAM_ARTIFACT_ID" -gt 0
+          if [[ "$PROGRAM_ARTIFACT_DIGEST" =~ ^[0-9a-f]{64}$ ]]; then
+            PROGRAM_ARTIFACT_DIGEST="sha256:$PROGRAM_ARTIFACT_DIGEST"
+          fi
+          [[ "$PROGRAM_ARTIFACT_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          test -n "$PROGRAM_ARTIFACT_URL"
+          program_file_digest="sha256:$(sha256sum "$input/program.json" | cut -d " " -f 1)"
+          source_file_digest="sha256:$(sha256sum "$input/program.gooo" | cut -d " " -f 1)"
+          verification_file_digest="sha256:$(sha256sum "$input/verification.json" | cut -d " " -f 1)"
+          program_digest="$(jq -r '.digest' "$input/program.json")"
+          verification_digest="$(jq -r '.digest' "$input/verification.json")"
+          strategy_digest="$(jq -r '.strategy_digest' "$input/program.json")"
+          registry_digest="$(jq -r '.registry_digest' "$input/program.json")"
+          source_digest="$(jq -r '.source_digest' "$input/program.json")"
+          semantic_digest="$(jq -r '.semantic_digest' "$input/program.json")"
+          test "$source_file_digest" = "$source_digest"
+          jq -e --arg subject "$SUBJECT_SHA" '
+            .subject_sha == $subject and
+            .execution_policy == "READ_ONLY_META_PROGRAM" and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false and
+            .root_policy.counts_applicability == "OBSERVED" and
+            .root_policy.topology_applicability == "NOT_APPLICABLE" and
+            .root_policy.readme_requirement == "NOT_APPLICABLE" and
+            (.operations | length) == 8 and
+            (.bindings | length) == 15 and
+            .coverage.status == "COMPLETE"
+          ' "$input/program.json"
+          verification_args=(
+            --arg subject "$SUBJECT_SHA"
+            --arg program "$program_digest"
+            --arg strategy "$strategy_digest"
+            --arg registry "$registry_digest"
+            --arg source "$source_digest"
+            --arg semantic "$semantic_digest"
+          )
+          jq -e "${verification_args[@]}" '
+            .subject_sha == $subject and
+            .program_digest == $program and
+            .strategy_digest == $strategy and
+            .registry_digest == $registry and
+            .source_digest == $source and
+            .semantic_digest == $semantic and
+            .status == "VERIFIED" and
+            .binding_count == 15 and
+            .operation_count == 8 and
+            .step_count == 4 and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false
+          ' "$input/verification.json"
+          receipt_args=(
+            --arg repository "$GITHUB_REPOSITORY"
+            --arg subject_sha "$SUBJECT_SHA"
+            --argjson run_id "$GITHUB_RUN_ID"
+            --argjson run_attempt "$GITHUB_RUN_ATTEMPT"
+            --argjson artifact_id "$PROGRAM_ARTIFACT_ID"
+            --arg artifact_name "$PROGRAM_ARTIFACT_NAME"
+            --arg artifact_digest "$PROGRAM_ARTIFACT_DIGEST"
+            --arg artifact_url "$PROGRAM_ARTIFACT_URL"
+            --arg program_file_digest "$program_file_digest"
+            --arg source_file_digest "$source_file_digest"
+            --arg verification_file_digest "$verification_file_digest"
+            --arg program_digest "$program_digest"
+            --arg verification_digest "$verification_digest"
+            --arg strategy_digest "$strategy_digest"
+            --arg registry_digest "$registry_digest"
+            --arg source_digest "$source_digest"
+            --arg semantic_digest "$semantic_digest"
+          )
+          emit_receipt() {
+            jq -n "${receipt_args[@]}" '{
+                schema: "gooo/metric-meta-program-ci-closure/v1",
+                repository: $repository,
+                subject_sha: $subject_sha,
+                run_id: $run_id,
+                run_attempt: $run_attempt,
+                artifact: {
+                  id: $artifact_id,
+                  name: $artifact_name,
+                  digest: $artifact_digest,
+                  url: $artifact_url
+                },
+                files: {
+                  program: {path: "program.json", digest: $program_file_digest},
+                  source: {path: "program.gooo", digest: $source_file_digest},
+                  verification: {path: "verification.json", digest: $verification_file_digest}
+                },
+                program_digest: $program_digest,
+                verification_digest: $verification_digest,
+                strategy_digest: $strategy_digest,
+                registry_digest: $registry_digest,
+                source_digest: $source_digest,
+                semantic_digest: $semantic_digest,
+                binding_count: 15,
+                operation_count: 8,
+                step_count: 4,
+                status: "VERIFIED",
+                write_effect: "none",
+                promotion_authorized: false
+              }'
+          }
+          emit_receipt > "$first/closure.json"
+          emit_receipt > "$replay/closure.json"
+          cmp -s "$first/closure.json" "$replay/closure.json"
+          jq -e '
+            .schema == "gooo/metric-meta-program-ci-closure/v1" and
+            .status == "VERIFIED" and
+            .write_effect == "none" and
+            .promotion_authorized == false and
+            .binding_count == 15 and
+            .operation_count == 8 and
+            .step_count == 4
+          ' "$first/closure.json"
+      - name: Upload deterministic typed meta-program closure
+        uses: actions/upload-artifact@v6
+        with:
+          name: metric-meta-program-closure-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-meta-program-closure/first
           if-no-files-found: error
           retention-days: 30
