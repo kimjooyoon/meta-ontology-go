@@ -31,7 +31,5 @@ const (
 	ProofRegress    ProofChoice = "REGRESS"
 )
 
-const (
-	requestedK        uint32 = 2
-	minimumIndependent uint32 = 2
-)
+const requestedK uint32 = 2
+const minimumIndependent uint32 = 2
