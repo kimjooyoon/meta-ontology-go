@@ -18,13 +18,13 @@ func TestProofBundleValidatesAndPreservesReceiptSchema(t *testing.T) {
 }
 func TestOldProofAndReceiptSchemasFailClosed(t *testing.T) {
 	bundle := validProof()
-	bundle.Schema = "gooo/ci-proof/v2"
+	bundle.Schema = "gooo/ci-proof/v3"
 	if err := validateProof(bundle); err == nil {
 		t.Fatal("old proof schema was accepted after GuardianEvidence contract migration")
 	}
 	bundle = validProof()
 	receipt := makeReceipt(bundle, contextInput{})
-	receipt.Schema = "gooo/provenance-receipt/v2"
+	receipt.Schema = "gooo/provenance-receipt/v3"
 	filename := writeReceiptFixture(t, receipt)
 	if err := verifyReceipt(filename, bundle); err == nil {
 		t.Fatal("old receipt schema was accepted after GuardianEvidence contract migration")

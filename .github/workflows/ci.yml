@@ -325,6 +325,11 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Download exact artifact provenance
+        uses: actions/download-artifact@v4
+        with:
+          name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ci-meta-provenance
       - name: Test artifact paginator contract
         run: node scripts/ci-proof/artifacts_test.js
       - name: Collect terminal canonical job evidence
@@ -353,7 +358,7 @@ jobs:
           grep -Fq '//gooo:slot:start' ci-generated/first/semantic.gooo.go
           grep -Fq '//gooo:slot:end' ci-generated/first/semantic.gooo.go
           test -z "$(git diff --name-only)"
-          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$|ci-domain/)' || true)"
+          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$|ci-domain/|ci-meta-provenance/)' || true)"
           test -z "$unexpected"
       - name: Capture CLI domain evidence
         run: |
@@ -374,7 +379,7 @@ jobs:
           CI_SLOT_PRESERVATION: "true"
           CI_NO_WRITE_OUTSIDE_GENERATED: "true"
         run: |
-          go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --output ci-evidence.json
+          go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --provenance ci-meta-provenance/self-improvement-provenance.json --output ci-evidence.json
           go run ./scripts/ci-evidence --verify ci-evidence.json
       - name: Write machine-readable domain evidence
         uses: actions/github-script@v7
@@ -798,7 +803,7 @@ jobs:
             if (fs.existsSync(proofPath)) {
               try {
                 proof = JSON.parse(fs.readFileSync(proofPath, 'utf8'));
-                const exactProofTuple = proof.schema === 'gooo/ci-proof/v3'
+                const exactProofTuple = proof.schema === 'gooo/ci-proof/v4'
                   && proof.repository === `${context.repo.owner}/${context.repo.repo}`
                   && proof.event === context.eventName
                   && proof.base_ref === normalizedBaseRef

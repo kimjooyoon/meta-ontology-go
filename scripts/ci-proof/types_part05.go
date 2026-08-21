@@ -22,6 +22,7 @@ type provenanceReceipt struct {
 	BranchProtection       branchProtection        `json:"branch_protection"`
 	DevBranchProtection    branchProtection        `json:"dev_branch_protection"`
 	DomainEvidence         domainEvidence          `json:"domain_evidence"`
+	ArtifactProvenance     artifactProvenance      `json:"artifact_provenance"`
 	Jobs                   []jobInput              `json:"jobs"`
 	Artifacts              []artifactInput         `json:"artifacts"`
 	Digests                receiptDigests          `json:"digests"`

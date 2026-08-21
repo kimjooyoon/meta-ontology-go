@@ -50,7 +50,7 @@ func compareJobs(expected, actual []jobInput, head string, runID, runAttempt int
 	return nil
 }
 func validateEvidenceDigests(root string, evidence evidenceInput) error {
-	if !validDigest(evidence.Digests.Source) || !validDigest(evidence.Digests.IR) || !validDigest(evidence.Digests.Generated) || !validDigest(evidence.Digests.Policy) || !validDigest(evidence.Digests.Toolchain) || !validDigest(evidence.Digests.Bundle) {
+	if !artifactProvenanceBound(evidence.ArtifactProvenance, evidence.BaseSHA, evidence.HeadSHA) || !validDigest(evidence.Digests.Source) || !validDigest(evidence.Digests.IR) || !validDigest(evidence.Digests.Generated) || !validDigest(evidence.Digests.Policy) || !validDigest(evidence.Digests.Toolchain) || !validDigest(evidence.Digests.Bundle) {
 		return fmt.Errorf("CI evidence has missing or malformed digests")
 	}
 	if root == "" {
