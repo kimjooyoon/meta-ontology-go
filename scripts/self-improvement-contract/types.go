@@ -22,28 +22,28 @@ type Indicator struct {
 }
 
 type Report struct {
-	Schema             string             `json:"schema"`
-	Metaprogram        string             `json:"metaprogram"`
-	CommitSHA          string             `json:"commit_sha"`
-	ContractPath       string             `json:"contract_path"`
-	SourceSHA256       string             `json:"source_sha256"`
-	SemanticHash       string             `json:"semantic_hash"`
-	RegistryDigest     string             `json:"registry_digest"`
-	Status             string             `json:"status"`
-	Reason             string             `json:"reason"`
-	EntityCount        int                `json:"entity_count"`
-	ActivityCount      int                `json:"activity_count"`
-	Registry           []RegistryBinding  `json:"registry"`
-	ExecutorCoverage   []ExecutorCoverage `json:"executor_coverage"`
-	Errors             []string           `json:"errors"`
-	Indicators         []Indicator        `json:"indicators"`
-	PromotionAuthorized bool              `json:"promotion_authorized"`
+	Schema              string             `json:"schema"`
+	Metaprogram         string             `json:"metaprogram"`
+	CommitSHA           string             `json:"commit_sha"`
+	ContractPath        string             `json:"contract_path"`
+	SourceSHA256        string             `json:"source_sha256"`
+	SemanticHash        string             `json:"semantic_hash"`
+	RegistryDigest      string             `json:"registry_digest"`
+	Status              string             `json:"status"`
+	Reason              string             `json:"reason"`
+	EntityCount         int                `json:"entity_count"`
+	ActivityCount       int                `json:"activity_count"`
+	Registry            []RegistryBinding  `json:"registry"`
+	ExecutorCoverage    []ExecutorCoverage `json:"executor_coverage"`
+	Errors              []string           `json:"errors"`
+	Indicators          []Indicator        `json:"indicators"`
+	PromotionAuthorized bool               `json:"promotion_authorized"`
 }
 
 type analysis struct {
-	Report      Report
-	SemanticOK  bool
-	LoopOK      bool
-	ExecutorOK  bool
-	TrilemmaOK  bool
+	Report     Report
+	SemanticOK bool
+	LoopOK     bool
+	ExecutorOK bool
+	TrilemmaOK bool
 }

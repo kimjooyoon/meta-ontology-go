@@ -21,7 +21,7 @@ func contractIndicators(result analysis, replay bool) []Indicator {
 	return []Indicator{
 		{
 			ID: "foundation.exact-head-binding", Route: "FOUNDATION",
-			Verdict: verdict(commitPattern.MatchString(report.CommitSHA)),
+			Verdict:  verdict(commitPattern.MatchString(report.CommitSHA)),
 			Relation: "matches", Value: report.CommitSHA, Limit: "40-lower-hex",
 		},
 		{
@@ -67,11 +67,4 @@ func finishReport(report *Report) {
 			return
 		}
 	}
-}
-
-func verdict(pass bool) string {
-	if pass {
-		return "PASS"
-	}
-	return "FAIL"
 }

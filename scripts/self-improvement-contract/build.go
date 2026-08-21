@@ -53,3 +53,10 @@ func sourceDigest(source []byte) string {
 	sum := sha256.Sum256(source)
 	return hex.EncodeToString(sum[:])
 }
+
+func verdict(pass bool) string {
+	if pass {
+		return "PASS"
+	}
+	return "FAIL"
+}

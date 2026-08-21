@@ -33,9 +33,9 @@ func trilemmaChoice(model contractModel, registry []RegistryBinding) bool {
 		return false
 	}
 	expected := map[string]string{
-		"Foundation": "proof://foundation",
-		"Coherence":  "proof://coherence",
-		"Regression": "proof://regression",
+		"Foundation":  "proof://foundation",
+		"Coherence":   "proof://coherence",
+		"Regression":  "proof://regression",
 		"ProofChoice": "gooo://meta/proof-choice",
 	}
 	for name, id := range expected {

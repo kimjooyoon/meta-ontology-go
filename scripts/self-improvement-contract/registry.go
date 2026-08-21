@@ -31,9 +31,9 @@ func registrySnapshot() []RegistryBinding {
 		executor := binding.Executor
 		result = append(result, RegistryBinding{
 			Operation: string(binding.Operation), Executor: executor,
-			ProofChoice: string(binding.ProofChoice),
+			ProofChoice:      string(binding.ProofChoice),
 			ExecutorEntityID: "executor://" + executor,
-			ProofEntityID: proofEntityID(binding.ProofChoice),
+			ProofEntityID:    proofEntityID(binding.ProofChoice),
 		})
 	}
 	sort.Slice(result, func(i, j int) bool {
