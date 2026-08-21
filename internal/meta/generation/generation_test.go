@@ -68,8 +68,8 @@ func metric(subject string, operation sourcepolicy.Operation, satisfied, blockin
 	}
 	return sourcepolicy.Indicator{MetricID: sourcepolicy.DimensionRefactorAssign, Subject: subject,
 		SubjectKind: sourcepolicy.SubjectKindFunction, Applicability: sourcepolicy.ApplicabilityApplicable,
-		ApplicabilityRule: sourcepolicy.ApplicabilityRuleDefault,
+		ApplicabilityRule:   sourcepolicy.ApplicabilityRuleDefault,
 		ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable,
-		Satisfied: satisfied, Blocking: blocking, Proof: proof,
+		Satisfied:           satisfied, Blocking: blocking, Proof: proof,
 		Producer: "test-metric", Consumer: "test-generation", Operation: operation}
 }
