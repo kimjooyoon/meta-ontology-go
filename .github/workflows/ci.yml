@@ -198,12 +198,15 @@ jobs:
       - name: Emit source metrics (go/gooo + folders/files)
         env:
           METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: |
           mkdir -p "$METRICS_DIR"
           go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -json > "$METRICS_DIR/source-metrics.json"
           go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -summary > "$METRICS_DIR/source-metrics.txt"
-          go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
+          go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-plan.json" -check
+          go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-replay.json" -check
+          cmp -s "$METRICS_DIR/self-improvement-plan.json" "$METRICS_DIR/self-improvement-replay.json"
           go run ./scripts/source-splitter -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           go run ./bootstrap/source-repacker -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           {
@@ -211,12 +214,23 @@ jobs:
             echo '```text'
             cat "$METRICS_DIR/source-metrics.txt"
             echo '```'
+            echo "### Deterministic self-improvement generation"
+            echo '```json'
+            cat "$METRICS_DIR/self-improvement-plan.json"
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact
         uses: actions/upload-artifact@v4
         with:
           name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/source-metrics.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload self-improvement generation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/self-improvement-plan.json
           if-no-files-found: error
           retention-days: 30
       - name: Check DAMP/DRY caps
