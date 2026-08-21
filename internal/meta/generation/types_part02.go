@@ -7,6 +7,9 @@ type Binding struct {
 	IndependenceGroupID string                 `json:"independence_group_id"`
 	ProofChoice         ProofChoice            `json:"proof_choice"`
 	Executor            string                 `json:"executor"`
+	Evaluator           string                 `json:"evaluator"`
+	RequiredIndicatorIDs []string              `json:"required_indicator_ids"`
+	ReceiptRequired     bool                   `json:"receipt_required"`
 	Priority            uint32                 `json:"priority"`
 }
 
@@ -18,6 +21,9 @@ type Action struct {
 	IndependenceGroupID string                 `json:"independence_group_id"`
 	ProofChoice         ProofChoice            `json:"proof_choice"`
 	Executor            string                 `json:"executor"`
+	Evaluator           string                 `json:"evaluator"`
+	RequiredIndicatorIDs []string              `json:"required_indicator_ids"`
+	ReceiptRequired     bool                   `json:"receipt_required"`
 	Priority            uint32                 `json:"priority"`
 }
 
@@ -35,6 +41,7 @@ type Plan struct {
 	ReplayProof            ProofChoice `json:"replay_proof"`
 	Decision               Decision    `json:"decision"`
 	Reason                 Reason      `json:"reason"`
+	Registry               []Binding   `json:"registry"`
 	Selected               []Action    `json:"selected"`
 	UnselectedIndicatorIDs []string    `json:"unselected_indicator_ids"`
 	UnknownIndicatorIDs    []string    `json:"unknown_indicator_ids"`
