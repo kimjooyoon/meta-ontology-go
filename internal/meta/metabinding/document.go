@@ -3,6 +3,7 @@ package metabinding
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
@@ -43,9 +44,7 @@ func Augment(in input, indicator sourcepolicy.Indicator) ([]byte, error) {
 		return nil, err
 	}
 	raw := make(map[string]json.RawMessage, len(in.raw))
-	for key, value := range in.raw {
-		raw[key] = value
-	}
+	maps.Copy(raw, in.raw)
 	raw["meta"] = encodedMeta
 	data, err := json.MarshalIndent(raw, "", "  ")
 	if err != nil {

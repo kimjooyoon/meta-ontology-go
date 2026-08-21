@@ -1,16 +1,13 @@
 package metabinding
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 func summarize(indicators []sourcepolicy.Indicator, index map[string]Binding) (Summary, []Witness) {
-	summary := Summary{
-		Families: make(map[string]int), ProofChoices: make(map[string]int),
-	}
+	var summary Summary
 	witnesses := make(map[string]Witness)
 	for _, indicator := range indicators {
 		operation := string(indicator.Operation)
@@ -32,8 +29,6 @@ func summarize(indicators []sourcepolicy.Indicator, index map[string]Binding) (S
 			summary.BoundIndicators++
 		}
 		witnesses[operation] = witness
-		summary.Families[fmt.Sprint(indicator.Family)]++
-		summary.ProofChoices[normalizeProof(fmt.Sprint(indicator.Proof))]++
 	}
 	summary.UsedOperations = len(witnesses)
 	total := summary.BoundIndicators + summary.UnboundIndicators
@@ -69,7 +64,7 @@ func selfIndicator(unbound int) sourcepolicy.Indicator {
 		Subject: ".", SubjectKind: sourcepolicy.SubjectKind("PROJECT_ROOT"),
 		Value: unbound, Limit: 0, Relation: sourcepolicy.Relation("less_or_equal"),
 		Applicability: sourcepolicy.Applicability("APPLICABLE"),
-		ApplicabilityRule: "gooo.catalog.meta-binding.default-applicability.v1",
+		ApplicabilityRule: "gooo.catalog.source-policy.default-applicability.v1",
 		ApplicabilityReason: sourcepolicy.ApplicabilityReason("CATALOG_APPLICABLE"),
 		Blocking: true, Satisfied: unbound == 0, Proof: sourcepolicy.ProofChoice("coherence"),
 		Producer: "metabinding.Build", Consumer: "self-improvement-cycle",

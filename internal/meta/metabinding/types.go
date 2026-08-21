@@ -48,8 +48,6 @@ type Summary struct {
 	CoverageBasisPoints int            `json:"coverage_basis_points"`
 	RegistryOperations  int            `json:"registry_operations"`
 	UsedOperations      int            `json:"used_operations"`
-	Families            map[string]int `json:"families"`
-	ProofChoices        map[string]int `json:"proof_choices"`
 }
 
 type Report struct {

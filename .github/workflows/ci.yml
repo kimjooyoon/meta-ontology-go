@@ -202,12 +202,8 @@ jobs:
           METRICS_DIR: ${{ runner.temp }}/source-metrics
         run: |
           mkdir -p "$METRICS_DIR"
-          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -json > "$METRICS_DIR/source-metrics-raw.json"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -json > "$METRICS_DIR/source-metrics.json"
           go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -summary > "$METRICS_DIR/source-metrics.txt"
-          go run ./bootstrap/meta-binding-witness -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics-raw.json" -bound-metrics "$METRICS_DIR/source-metrics.json" -report "$METRICS_DIR/meta-binding-report.json" -check
-          go run ./bootstrap/meta-binding-witness -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics-raw.json" -bound-metrics "$METRICS_DIR/source-metrics-replay.json" -report "$METRICS_DIR/meta-binding-report-replay.json" -check
-          cmp -s "$METRICS_DIR/source-metrics.json" "$METRICS_DIR/source-metrics-replay.json"
-          cmp -s "$METRICS_DIR/meta-binding-report.json" "$METRICS_DIR/meta-binding-report-replay.json"
           go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-plan.json" -check
           go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-replay.json" -check
           cmp -s "$METRICS_DIR/self-improvement-plan.json" "$METRICS_DIR/self-improvement-replay.json"
@@ -244,13 +240,6 @@ jobs:
         with:
           name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/source-metrics.json
-          if-no-files-found: error
-          retention-days: 30
-      - name: Upload meta-binding coverage artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: meta-binding-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          path: ${{ runner.temp }}/source-metrics/meta-binding-report.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement generation artifact

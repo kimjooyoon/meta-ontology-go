@@ -19,8 +19,16 @@ func canonicalRegistry() []Binding {
 	}
 	for _, binding := range generation.DefaultRegistry() {
 		operation := string(binding.Operation)
+		activity := map[string]string{
+			"collapse-assign-return": "CollapseAssignReturn",
+			"split-go-declarations": "SplitGoDeclarations",
+			"split-gooo-sections": "SplitGoooSections",
+		}[operation]
+		if activity == "" {
+			activity = operation
+		}
 		bindings = append(bindings, Binding{
-			Operation: operation, Activity: generationActivity(operation),
+			Operation: operation, Activity: activity,
 			ProofChoice: normalizeProof(fmt.Sprint(binding.ProofChoice)), Registry: "generation",
 			Executor: binding.Executor, Evaluator: binding.Evaluator,
 		})
@@ -40,19 +48,6 @@ func sourceBindings() []Binding {
 		{Operation: "observe", Activity: "ObserveMetric", ProofChoice: "coherence", Registry: "source-policy"},
 		{Operation: "partition-directory", Activity: "PartitionDirectory", ProofChoice: "foundation", Registry: "source-policy"},
 		{Operation: "separate-directory-kinds", Activity: "SeparateDirectoryKinds", ProofChoice: "foundation", Registry: "source-policy"},
-	}
-}
-
-func generationActivity(operation string) string {
-	switch operation {
-	case "collapse-assign-return":
-		return "CollapseAssignReturn"
-	case "split-go-declarations":
-		return "SplitGoDeclarations"
-	case "split-gooo-sections":
-		return "SplitGoooSections"
-	default:
-		return operation
 	}
 }
 
