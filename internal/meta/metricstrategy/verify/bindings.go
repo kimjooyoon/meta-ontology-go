@@ -2,6 +2,7 @@ package metricstrategyverify
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -27,11 +28,5 @@ func replayBindings(indicators []metric.Indicator) ([]strategy.Binding, error) {
 func replayChoices() []string { return []string{"FOUNDATION", "COHERENCE", "REGRESSION"} }
 
 func replayChoice(value string) bool {
-	for _, choice := range replayChoices() {
-		if value == choice {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(replayChoices(), value)
 }
-

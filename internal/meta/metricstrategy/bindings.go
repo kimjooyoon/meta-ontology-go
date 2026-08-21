@@ -2,6 +2,7 @@ package metricstrategy
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -24,11 +25,5 @@ func buildBindings(indicators []metric.Indicator) ([]Binding, error) {
 }
 
 func knownChoice(value string) bool {
-	for _, choice := range proofChoices() {
-		if value == choice {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(proofChoices(), value)
 }
-
