@@ -291,6 +291,20 @@ jobs:
           cmp -s "$first/program.json" "$replay/program.json"
           cmp -s "$first/program.gooo" "$replay/program.gooo"
           cmp -s "$first/verification.json" "$replay/verification.json"
+          jq -c '{
+            keys: keys,
+            schema,
+            execution_policy,
+            repository_workspace_writes,
+            promotion_authorized,
+            root_policy,
+            registry_type: (.registry | type),
+            registry_length: (.registry | length),
+            bindings_type: (.bindings | type),
+            bindings_length: (.bindings | length),
+            steps
+          }' "$first/program.json"
+          jq -c '{keys: keys} + .' "$first/verification.json"
           jq -e '
             .schema == "gooo/metric-meta-program/v1" and
             .execution_policy == "READ_ONLY_META_PROGRAM" and
@@ -320,6 +334,7 @@ jobs:
           test -s "$first/program.gooo"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic typed metric meta-program evidence
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: metric-meta-program-${{ env.SUBJECT_SHA }}
