@@ -14,13 +14,13 @@ type metaBinding struct {
 }
 
 type subjectWitness struct {
-	Space        string        `json:"space"`
-	Path         string        `json:"path"`
-	SubjectKind  string        `json:"subject_kind"`
-	Language     string        `json:"language,omitempty"`
-	Metrics      []metricValue `json:"metrics"`
-	Meta         metaBinding   `json:"meta"`
-	WitnessDigest string       `json:"witness_digest"`
+	Space         string        `json:"space"`
+	Path          string        `json:"path"`
+	SubjectKind   string        `json:"subject_kind"`
+	Language      string        `json:"language,omitempty"`
+	Metrics       []metricValue `json:"metrics"`
+	Meta          metaBinding   `json:"meta"`
+	WitnessDigest string        `json:"witness_digest"`
 }
 
 func fileWitness(file fileMetric, binding metaBinding) subjectWitness {

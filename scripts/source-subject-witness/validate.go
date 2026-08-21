@@ -1,14 +1,9 @@
 package main
 
-import (
-	"encoding/hex"
-	"fmt"
-	"path/filepath"
-	"strings"
-)
+import "fmt"
 
 func validateSource(report sourceReport, expectedSHA string) error {
-	if report.Repository == "" || report.CommitSHA != expectedSHA || !validSHA(report.CommitSHA) {
+	if report.Repository == "" || report.CommitSHA != expectedSHA || len(report.CommitSHA) != 40 {
 		return fmt.Errorf("source identity is missing or not exact-head bound")
 	}
 	if report.Meta.Schema != "gooo/indicator-report/v3" || report.Meta.Policy.Schema != "gooo/source-policy/v1" {
@@ -17,24 +12,22 @@ func validateSource(report sourceReport, expectedSHA string) error {
 	if !report.Meta.Policy.ExemptProjectRootTopology {
 		return fmt.Errorf("project root topology exemption is required")
 	}
-	if err := validateFiles(report.Files); err != nil {
-		return err
-	}
-	if err := validateDirectories(report.Directories); err != nil {
-		return err
-	}
-	if err := validateDirectories(report.StorageDirectories); err != nil {
-		return err
+	for _, check := range []func() error{
+		func() error { return validateFiles(report.Files) },
+		func() error { return validateDirectories(report.Directories) },
+		func() error { return validateDirectories(report.StorageDirectories) },
+	} {
+		if err := check(); err != nil {
+			return err
+		}
 	}
 	if len(report.Meta.Indicators) == 0 {
 		return fmt.Errorf("source meta indicator ledger is empty")
 	}
 	for _, indicator := range report.Meta.Indicators {
-		if indicator.Subject == "" || indicator.MetricID == "" || !indicator.Satisfied {
-			return fmt.Errorf("source indicator is incomplete or unsatisfied")
-		}
-		if indicator.Decision != "PASS" && indicator.Decision != "NOT_APPLICABLE" {
-			return fmt.Errorf("source indicator %q has decision %q", indicator.MetricID, indicator.Decision)
+		validDecision := indicator.Decision == "PASS" || indicator.Decision == "NOT_APPLICABLE"
+		if indicator.Subject == "" || indicator.MetricID == "" || !indicator.Satisfied || !validDecision {
+			return fmt.Errorf("source indicator %q is incomplete or unsatisfied", indicator.MetricID)
 		}
 	}
 	return nil
@@ -42,17 +35,13 @@ func validateSource(report sourceReport, expectedSHA string) error {
 
 func validateFiles(files []fileMetric) error {
 	seen := make(map[string]bool)
+	languages := map[string]bool{"go": true, "gooo": true, "other": true}
 	for _, file := range files {
-		if !validPath(file.Path, false) || seen[file.Path] || file.Lines < 0 {
+		invalidOther := file.Language == "other" && file.Lines != 0
+		if !validPath(file.Path, false) || seen[file.Path] || file.Lines < 0 || !languages[file.Language] || invalidOther {
 			return fmt.Errorf("file observation %q is invalid or duplicated", file.Path)
 		}
 		seen[file.Path] = true
-		if file.Language != "go" && file.Language != "gooo" && file.Language != "other" {
-			return fmt.Errorf("file %q has unknown language %q", file.Path, file.Language)
-		}
-		if file.Language == "other" && file.Lines != 0 {
-			return fmt.Errorf("other file %q unexpectedly has language lines", file.Path)
-		}
 	}
 	return nil
 }
@@ -60,27 +49,21 @@ func validateFiles(files []fileMetric) error {
 func validateDirectories(directories []directoryMetric) error {
 	seen, roots := make(map[string]bool), 0
 	for _, directory := range directories {
-		if !validPath(directory.Path, true) || seen[directory.Path] {
+		kind := "DIRECTORY"
+		if directory.Path == "." {
+			roots++
+			kind = "PROJECT_ROOT"
+		}
+		metricsValid := nonNegative(directory.DirectFolders, directory.DirectFiles,
+			directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles,
+			directory.GoooFiles, directory.GoLines, directory.GoooLines)
+		if !validPath(directory.Path, true) || seen[directory.Path] || directory.SubjectKind != kind || !metricsValid {
 			return fmt.Errorf("directory observation %q is invalid or duplicated", directory.Path)
 		}
 		seen[directory.Path] = true
-		if directory.Path == "." { roots++; if directory.SubjectKind != "PROJECT_ROOT" { return fmt.Errorf("root kind is not PROJECT_ROOT") } } else if directory.SubjectKind != "DIRECTORY" { return fmt.Errorf("directory %q has kind %q", directory.Path, directory.SubjectKind) }
-		for _, value := range []int{directory.DirectFolders, directory.DirectFiles, directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles, directory.GoooFiles, directory.GoLines, directory.GoooLines} {
-			if value < 0 { return fmt.Errorf("directory %q has a negative metric", directory.Path) }
-		}
 	}
-	if roots != 1 { return fmt.Errorf("directory set has %d project roots", roots) }
+	if roots != 1 {
+		return fmt.Errorf("directory set has %d project roots", roots)
+	}
 	return nil
-}
-
-func validPath(path string, allowRoot bool) bool {
-	if path == "." { return allowRoot }
-	return path != "" && !filepath.IsAbs(path) && filepath.Clean(path) == path &&
-		path != ".." && !strings.HasPrefix(path, "../") && filepath.ToSlash(path) == path
-}
-
-func validSHA(value string) bool {
-	if len(value) != 40 { return false }
-	_, err := hex.DecodeString(value)
-	return err == nil
 }

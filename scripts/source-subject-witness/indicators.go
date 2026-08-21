@@ -61,3 +61,12 @@ type ledgerIndicator struct {
 	Value    string `json:"value"`
 	Limit    string `json:"limit"`
 }
+
+func nonNegative(values ...int) bool {
+	for _, value := range values {
+		if value < 0 {
+			return false
+		}
+	}
+	return true
+}

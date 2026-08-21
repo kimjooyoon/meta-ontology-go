@@ -51,24 +51,20 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 }
 
 func countWitnesses(witnesses []subjectWitness) ledgerCounts {
-	var counts ledgerCounts
+	values := make(map[string]int)
 	for _, witness := range witnesses {
-		counts.SubjectWitnesses++
-		if witness.Meta.Kind == "DERIVED_OBSERVATION" || witness.Meta.Kind == "DERIVED_PROJECTION" {
-			counts.DerivedBindings++
-		}
-		switch witness.Space {
-		case "LOGICAL_FILE":
-			counts.FileWitnesses++
-			if witness.Language == "go" { counts.GoFiles++ } else if witness.Language == "gooo" { counts.GoooFiles++ } else { counts.OtherFiles++ }
-			if witness.Meta.Kind == "SOURCE_INDICATORS" { counts.FileSourceBindings++ }
-		case "LOGICAL_DIRECTORY": counts.LogicalDirectories++
-		case "STORAGE_DIRECTORY":
-			counts.StorageDirectories++
-			if witness.Meta.Kind == "SOURCE_INDICATORS" { counts.StorageSourceBindings++ }
-		}
+		values["subjects"]++
+		values["space:"+witness.Space]++
+		values["language:"+witness.Language]++
+		values["binding:"+witness.Meta.Kind]++
+		values[witness.Space+"\x00"+witness.Meta.Kind]++
 	}
-	return counts
+	return ledgerCounts{
+		FileWitnesses: values["space:LOGICAL_FILE"], GoFiles: values["language:go"], GoooFiles: values["language:gooo"],
+		OtherFiles: values["language:other"], LogicalDirectories: values["space:LOGICAL_DIRECTORY"], StorageDirectories: values["space:STORAGE_DIRECTORY"],
+		FileSourceBindings: values["LOGICAL_FILE\x00SOURCE_INDICATORS"], StorageSourceBindings: values["STORAGE_DIRECTORY\x00SOURCE_INDICATORS"],
+		DerivedBindings: values["binding:DERIVED_OBSERVATION"] + values["binding:DERIVED_PROJECTION"], SubjectWitnesses: values["subjects"],
+	}
 }
 
 func itoa(value int) string { return strconv.Itoa(value) }

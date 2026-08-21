@@ -67,8 +67,7 @@ func storageDirectoryBinding(directory directoryMetric, index indicatorIndex) (m
 }
 
 func sourceBinding(rows []sourceIndicator, route string) metaBinding {
-	return metaBinding{Kind: "SOURCE_INDICATORS", Operation: operationSet(rows), Route: route,
-		IndicatorCount: len(rows), IndicatorDigest: digestValues(rows)}
+	return metaBinding{Kind: "SOURCE_INDICATORS", Operation: operationSet(rows), Route: route, IndicatorCount: len(rows), IndicatorDigest: digestValues(rows)}
 }
 
 func derivedBinding(kind, operation, route string) metaBinding {

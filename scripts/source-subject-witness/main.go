@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func main() {
@@ -59,4 +61,12 @@ func writeJSON(path string, value any) error {
 		return fmt.Errorf("write ledger: %w", err)
 	}
 	return nil
+}
+
+func validPath(path string, allowRoot bool) bool {
+	if path == "." {
+		return allowRoot
+	}
+	return path != "" && !filepath.IsAbs(path) && filepath.Clean(path) == path &&
+		path != ".." && !strings.HasPrefix(path, "../") && filepath.ToSlash(path) == path
 }
