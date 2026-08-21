@@ -701,6 +701,8 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "bootstrap/meta-binding-witness",
         "examples/meta-binding-coverage",
         "internal/meta/metabinding",
         "internal/verify/scope_part01.go"

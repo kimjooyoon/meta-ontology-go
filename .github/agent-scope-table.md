@@ -100,6 +100,6 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/metric-meta-program-closure-v14` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `examples/metric-meta-program-closure/**`, `internal/meta/metricprogram/closure/**`, `internal/verify/scope_part01.go`, `scripts/metric-meta-program-closure/**` |
 | `agent/metric-meta-program-closure-v15` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/metric-counterfactual.yml`, `internal/verify/scope_part01.go` |
 | `agent/root-readme-applicability-v16` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `examples/root-readme-indicator`, `internal/detection/linecaps`, `internal/meta/generation`, `internal/meta/sourcepolicy`, `internal/verify/scope_part01.go`, `scripts/self-improvement-cycle`, `scripts/source-subject-witness` |
-| `agent/meta-binding-coverage-v17` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `examples/meta-binding-coverage`, `internal/meta/metabinding`, `internal/verify/scope_part01.go` |
+| `agent/meta-binding-coverage-v17` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `bootstrap/meta-binding-witness`, `examples/meta-binding-coverage`, `internal/meta/metabinding`, `internal/verify/scope_part01.go` |
 | `agent/zerolang-experiments` | `docs/research/zerolang.md` |
 | `agent/zerolang-research` | `docs/research/zerolang.md` |
