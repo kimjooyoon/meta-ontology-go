@@ -1,0 +1,48 @@
+package generation
+
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+
+type Binding struct {
+	Operation           sourcepolicy.Operation `json:"operation"`
+	IndependenceGroupID string                 `json:"independence_group_id"`
+	ProofChoice         ProofChoice            `json:"proof_choice"`
+	Executor            string                 `json:"executor"`
+	Priority            uint32                 `json:"priority"`
+}
+
+type Action struct {
+	IndicatorID         string                 `json:"indicator_id"`
+	MetricID            sourcepolicy.Dimension `json:"metric_id"`
+	Subject             string                 `json:"subject"`
+	Operation           sourcepolicy.Operation `json:"meta_operation"`
+	IndependenceGroupID string                 `json:"independence_group_id"`
+	ProofChoice         ProofChoice            `json:"proof_choice"`
+	Executor            string                 `json:"executor"`
+	Priority            uint32                 `json:"priority"`
+}
+
+type Plan struct {
+	SchemaVersion          string      `json:"schema_version"`
+	BaseSHA                string      `json:"base_sha"`
+	HeadSHA                string      `json:"head_sha"`
+	PolicyDigest           string      `json:"policy_digest"`
+	RegistryDigest         string      `json:"registry_digest"`
+	IndicatorsDigest       string      `json:"indicators_digest"`
+	FloorDigest            string      `json:"floor_digest"`
+	InputDigest            string      `json:"input_digest"`
+	RequestedK             uint32      `json:"requested_k"`
+	MinimumIndependent     uint32      `json:"minimum_independent"`
+	ReplayProof            ProofChoice `json:"replay_proof"`
+	Decision               Decision    `json:"decision"`
+	Reason                 Reason      `json:"reason"`
+	Selected               []Action    `json:"selected"`
+	UnselectedIndicatorIDs []string    `json:"unselected_indicator_ids"`
+	UnknownIndicatorIDs    []string    `json:"unknown_indicator_ids"`
+	Shortfall              []string    `json:"shortfall"`
+	PromotionAuthorized    bool        `json:"promotion_authorized"`
+	PlanDigest             string      `json:"plan_digest"`
+	ReplayDigest           string      `json:"replay_digest"`
+}
+
+// PromotionAuthorizedByPlan is always false: CI remains the authority.
+func (Plan) PromotionAuthorizedByPlan() bool { return false }
