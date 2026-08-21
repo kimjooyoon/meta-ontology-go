@@ -71,14 +71,14 @@ func Measure(root string) (State, error) {
 			addLanguage(target, file)
 		}
 	}
-	root := metrics[index["."]]
+	rootMetric := metrics[index["."]]
 	return SealState(State{
 		Schema: StateSchema, Files: files, Directories: metrics,
 		Totals: Totals{
-			DirectFolders: root.DirectFolders, DirectFiles: root.DirectFiles,
-			RecursiveFolders: root.RecursiveFolders, RecursiveFiles: root.RecursiveFiles,
-			GoFiles: root.GoFiles, GoooFiles: root.GoooFiles,
-			GoLines: root.GoLines, GoooLines: root.GoooLines,
+			DirectFolders: rootMetric.DirectFolders, DirectFiles: rootMetric.DirectFiles,
+			RecursiveFolders: rootMetric.RecursiveFolders, RecursiveFiles: rootMetric.RecursiveFiles,
+			GoFiles: rootMetric.GoFiles, GoooFiles: rootMetric.GoooFiles,
+			GoLines: rootMetric.GoLines, GoooLines: rootMetric.GoooLines,
 		},
 		RootPolicy: ProjectRootPolicy(),
 	})
