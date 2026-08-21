@@ -26,8 +26,8 @@ func Build(options Options) (Result, error) {
 		Repository: state.Repository, CommitSHA: options.ExpectedSHA, CIRunID: options.CIRunID,
 		Before: before, After: after, Delta: MetricDelta{}, Effect: effect, RootPolicy: state.RootPolicy,
 		PromotionAuthorized: false,
-	}
-	ledger.Indicators = transitionIndicators(state, effect, options.ExpectedSHA)
+
+		Indicators: transitionIndicators(state, effect, options.ExpectedSHA)}
 	ledger, err = sealLedger(ledger)
 	if err != nil {
 		return Result{}, err
