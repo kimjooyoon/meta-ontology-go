@@ -1,0 +1,64 @@
+name: Source subject witness ledger
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  witness:
+    name: Source subject witness ledger
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      (github.event.workflow_run.head_branch == 'dev' ||
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      CI_RUN_ID: ${{ github.event.workflow_run.id }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Download exact source metrics
+        uses: actions/download-artifact@v7
+        with:
+          name: source-line-metrics-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/subject-witness/source
+          github-token: ${{ github.token }}
+          run-id: ${{ env.CI_RUN_ID }}
+
+      - name: Build, verify, and replay subject witnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          input="$RUNNER_TEMP/subject-witness/source/source-metrics.json"
+          output="$RUNNER_TEMP/subject-witness/output"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./scripts/source-subject-witness \
+              -input "$input" -expected-sha "$HEAD_SHA" \
+              -output "$output/$pass.json"
+            go run ./scripts/source-subject-witness \
+              -verify "$output/$pass.json"
+          done
+          cmp "$output/first.json" "$output/second.json"
+
+      - name: Upload exact-head subject witness ledger
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: source-subject-witness-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/subject-witness/output/first.json
+          if-no-files-found: error
