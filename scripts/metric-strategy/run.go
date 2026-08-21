@@ -39,4 +39,3 @@ func run(value options) error {
 		return fmt.Errorf("unsupported metric strategy mode %q", value.mode)
 	}
 }
-

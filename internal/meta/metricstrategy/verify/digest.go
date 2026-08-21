@@ -26,4 +26,3 @@ func sealReceipt(value Receipt) (Receipt, error) {
 	value.Digest = digest
 	return value, err
 }
-

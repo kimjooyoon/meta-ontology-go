@@ -41,4 +41,3 @@ func replayCandidates(bindings []strategy.Binding) ([]strategy.Candidate, error)
 	}
 	return result, nil
 }
-

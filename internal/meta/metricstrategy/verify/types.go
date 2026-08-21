@@ -15,4 +15,3 @@ type Receipt struct {
 	PromotionAuthorized       bool   `json:"promotion_authorized"`
 	Digest                    string `json:"digest"`
 }
-

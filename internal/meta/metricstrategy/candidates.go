@@ -40,4 +40,3 @@ func buildCandidates(bindings []Binding) ([]Candidate, error) {
 	}
 	return candidates, nil
 }
-

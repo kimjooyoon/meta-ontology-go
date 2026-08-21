@@ -45,4 +45,3 @@ func zeroResiduals(projections []metric.Projection) bool {
 	}
 	return true
 }
-

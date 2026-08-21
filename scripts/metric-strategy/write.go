@@ -13,4 +13,3 @@ func writeJSON(path string, value any) error {
 	payload = append(payload, '\n')
 	return os.WriteFile(path, payload, 0o644)
 }
-

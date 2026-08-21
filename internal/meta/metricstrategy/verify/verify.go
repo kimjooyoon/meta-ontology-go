@@ -35,4 +35,3 @@ func Replay(metricsPath, ledgerPath, interventionReceiptPath string, plan strate
 	receipt := Receipt{Schema: ReceiptSchema, PlanDigest: plan.Digest, SourceMetricsDigest: inputs.baseline.SourceMetricsDigest, InterventionDigest: inputs.ledger.Digest, BindingCount: len(bindings), CandidateCount: len(candidates), SelectedProofChoice: plan.Selection.ProofChoice, Status: "VERIFIED", RepositoryWorkspaceWrites: false, PromotionAuthorized: false}
 	return sealReceipt(receipt)
 }
-

@@ -18,11 +18,11 @@ type StrategyPolicy struct {
 }
 
 type Selection struct {
-	ProofChoice         string   `json:"proof_choice"`
-	Decision            string   `json:"decision"`
-	MetaOperation       string   `json:"meta_operation"`
-	Reason              string   `json:"reason"`
-	CandidateDigest     string   `json:"candidate_digest"`
+	ProofChoice          string   `json:"proof_choice"`
+	Decision             string   `json:"decision"`
+	MetaOperation        string   `json:"meta_operation"`
+	Reason               string   `json:"reason"`
+	CandidateDigest      string   `json:"candidate_digest"`
 	SourceMetaOperations []string `json:"source_meta_operations"`
 }
 
@@ -41,4 +41,3 @@ type Plan struct {
 	PromotionAuthorized       bool           `json:"promotion_authorized"`
 	Digest                    string         `json:"digest"`
 }
-

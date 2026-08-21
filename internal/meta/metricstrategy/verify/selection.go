@@ -48,4 +48,3 @@ func replayZeroResiduals(projections []metric.Projection) bool {
 	}
 	return true
 }
-

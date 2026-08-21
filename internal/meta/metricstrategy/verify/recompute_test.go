@@ -22,4 +22,3 @@ func TestReplayCandidatesAndSelectionAreIndependent(t *testing.T) {
 		t.Fatalf("independent strategy replay diverged: %+v %+v", candidates, selection)
 	}
 }
-

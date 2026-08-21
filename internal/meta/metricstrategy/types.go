@@ -26,13 +26,12 @@ type InputEvidence struct {
 }
 
 type Binding struct {
-	IndicatorID   string `json:"indicator_id"`
-	Family        string `json:"family"`
-	Trilemma      string `json:"trilemma"`
-	MetaOperation string `json:"meta_operation"`
-	Expected      string `json:"expected"`
-	Actual        string `json:"actual"`
-	Status        string `json:"status"`
+	IndicatorID    string `json:"indicator_id"`
+	Family         string `json:"family"`
+	Trilemma       string `json:"trilemma"`
+	MetaOperation  string `json:"meta_operation"`
+	Expected       string `json:"expected"`
+	Actual         string `json:"actual"`
+	Status         string `json:"status"`
 	EvidenceDigest string `json:"evidence_digest"`
 }
-

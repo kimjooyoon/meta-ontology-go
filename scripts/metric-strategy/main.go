@@ -8,7 +8,7 @@ import (
 
 type options struct {
 	mode, metrics, intervention, interventionVerification string
-	repository, subjectSHA, plan, output                 string
+	repository, subjectSHA, plan, output                  string
 }
 
 func main() {
@@ -27,4 +27,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-

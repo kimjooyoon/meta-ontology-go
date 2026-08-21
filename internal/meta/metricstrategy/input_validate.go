@@ -41,4 +41,3 @@ func validReceipt(value metricverify.Receipt) bool {
 func rootPolicyOK(value metric.RootPolicy) bool {
 	return value.CountsApplicability == "OBSERVED" && value.TopologyApplicability == "NOT_APPLICABLE" && value.TopologyReason == "ROOT_TOPOLOGY_EXEMPT" && value.READMERequirement == "NOT_APPLICABLE"
 }
-

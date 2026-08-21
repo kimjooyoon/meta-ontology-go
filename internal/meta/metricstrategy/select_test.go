@@ -21,4 +21,3 @@ func TestChooseRepairsFirstCanonicalFailure(t *testing.T) {
 		t.Fatalf("unexpected repair selection: %+v", selection)
 	}
 }
-

@@ -1,9 +1,9 @@
 package metricstrategy
 
 import (
+	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
 	metricverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention/verify"
-	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 )
 
 type inputSet struct {
@@ -28,4 +28,3 @@ func loadInputs(metricsPath, ledgerPath, receiptPath, repository, subjectSHA str
 	inputs := inputSet{baseline: baseline, ledger: ledger, receipt: receipt}
 	return inputs, validateInputs(inputs, repository, subjectSHA)
 }
-

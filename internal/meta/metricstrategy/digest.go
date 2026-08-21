@@ -18,4 +18,3 @@ func ValidPlanDigest(value Plan) bool {
 func proofChoices() []string {
 	return []string{"FOUNDATION", "COHERENCE", "REGRESSION"}
 }
-

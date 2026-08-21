@@ -39,4 +39,3 @@ func loadInputs(metricsPath, ledgerPath, receiptPath string, plan strategy.Plan)
 	}
 	return inputSet{baseline: baseline, ledger: ledger, receipt: receipt}, nil
 }
-
