@@ -7,19 +7,29 @@ on:
       - '.github/agent-scope-table.md'
       - '.github/ci-governance.json'
       - '.github/workflows/metric-counterfactual.yml'
+      - 'internal/detection/linecaps/**'
       - 'internal/meta/metriccounterfactual/**'
       - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
+      - 'internal/meta/metrictransition/**'
+      - 'internal/meta/sourcepolicy/**'
       - 'internal/verify/scope_part01.go'
+      - 'scripts/line-metrics/**'
       - 'scripts/metric-counterfactual/**'
+      - 'scripts/metric-intervention/**'
   push:
     branches: [dev, main]
     paths:
       - '.github/workflows/metric-counterfactual.yml'
+      - 'internal/detection/linecaps/**'
       - 'internal/meta/metriccounterfactual/**'
       - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
+      - 'internal/meta/metrictransition/**'
+      - 'internal/meta/sourcepolicy/**'
+      - 'scripts/line-metrics/**'
       - 'scripts/metric-counterfactual/**'
+      - 'scripts/metric-intervention/**'
 
 permissions:
   contents: read
@@ -86,5 +96,74 @@ jobs:
         with:
           name: metric-counterfactual-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-counterfactual/first
+          if-no-files-found: error
+          retention-days: 30
+
+  intervention:
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Compile the plan into dimensions and constrain every residual
+        env:
+          METRICS_COMMIT_SHA: ${{ env.SUBJECT_SHA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$RUNNER_TEMP/metric-intervention/first"
+          replay="$RUNNER_TEMP/metric-intervention/replay"
+          mkdir -p "$first" "$replay"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "$GITHUB_WORKSPACE" -json > "$first/source-metrics.json"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "$GITHUB_WORKSPACE" -json > "$replay/source-metrics.json"
+          cmp -s "$first/source-metrics.json" "$replay/source-metrics.json"
+          common=(
+            -mode generate
+            -repository "$GITHUB_REPOSITORY"
+            -subject-sha "$SUBJECT_SHA"
+          )
+          go run ./scripts/metric-intervention "${common[@]}" -metrics "$first/source-metrics.json" -output "$first/ledger.json"
+          go run ./scripts/metric-intervention "${common[@]}" -metrics "$replay/source-metrics.json" -output "$replay/ledger.json"
+          cmp -s "$first/ledger.json" "$replay/ledger.json"
+          go run ./scripts/metric-intervention \
+            -mode verify \
+            -metrics "$first/source-metrics.json" \
+            -ledger "$first/ledger.json" \
+            -output "$first/verification.json"
+          jq -e '
+            .schema == "gooo/metric-intervention-ledger/v1" and
+            .execution_policy == "READ_ONLY_REPOSITORY_PLUS_DISPOSABLE_COUNTERFACTUAL" and
+            .scenario_kind == "ALGEBRAIC_ROOT_SCENARIO" and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false and
+            .baseline.repository_state_schema == "gooo/repository-metric-state/v1" and
+            .baseline.root_policy.counts_applicability == "OBSERVED" and
+            .baseline.root_policy.topology_applicability == "NOT_APPLICABLE" and
+            .baseline.root_policy.readme_requirement == "NOT_APPLICABLE" and
+            (.registry.dimensions | length) == 10 and
+            (.projections | length) == 10 and
+            all(.projections[]; .residual == 0 and .status == "SATISFIED" and .projected == (.baseline + .predicted_delta)) and
+            all(.indicators[]; .status == "SATISFIED") and
+            ([.indicators[].family] | unique) == ["COHERENCE", "FOUNDATION", "REGRESSION"]
+          ' "$first/ledger.json"
+          jq -e '
+            .schema == "gooo/metric-intervention-verification/v1" and
+            .status == "VERIFIED" and
+            .projection_count == 10 and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false
+          ' "$first/verification.json"
+          test -z "$(git status --porcelain)"
+      - name: Upload deterministic metric intervention evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: metric-intervention-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-intervention/first
           if-no-files-found: error
           retention-days: 30
