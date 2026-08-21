@@ -8,7 +8,7 @@ type SubjectKind string
 type Applicability string
 type ApplicabilityReason string
 
-const IndicatorSchema = "gooo/indicator-report/v2"
+const IndicatorSchema = "gooo/indicator-report/v3"
 
 const (
 	FamilyVolume      Family = "volume"
