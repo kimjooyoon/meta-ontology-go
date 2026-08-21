@@ -371,6 +371,9 @@ jobs:
           replay="$RUNNER_TEMP/metric-meta-program-closure/replay"
           mkdir -p "$first" "$replay"
           test "$PROGRAM_ARTIFACT_ID" -gt 0
+          if [[ "$PROGRAM_ARTIFACT_DIGEST" =~ ^[0-9a-f]{64}$ ]]; then
+            PROGRAM_ARTIFACT_DIGEST="sha256:$PROGRAM_ARTIFACT_DIGEST"
+          fi
           [[ "$PROGRAM_ARTIFACT_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
           test -n "$PROGRAM_ARTIFACT_URL"
           program_file_digest="sha256:$(sha256sum "$input/program.json" | cut -d " " -f 1)"
@@ -395,7 +398,15 @@ jobs:
             (.bindings | length) == 15 and
             .coverage.status == "COMPLETE"
           ' "$input/program.json"
-          jq -e +            --arg subject "$SUBJECT_SHA" +            --arg program "$program_digest" +            --arg strategy "$strategy_digest" +            --arg registry "$registry_digest" +            --arg source "$source_digest" +            --arg semantic "$semantic_digest" '
+          verification_args=(
+            --arg subject "$SUBJECT_SHA"
+            --arg program "$program_digest"
+            --arg strategy "$strategy_digest"
+            --arg registry "$registry_digest"
+            --arg source "$source_digest"
+            --arg semantic "$semantic_digest"
+          )
+          jq -e "${verification_args[@]}" '
             .subject_sha == $subject and
             .program_digest == $program and
             .strategy_digest == $strategy and
@@ -409,8 +420,27 @@ jobs:
             .repository_workspace_writes == false and
             .promotion_authorized == false
           ' "$input/verification.json"
+          receipt_args=(
+            --arg repository "$GITHUB_REPOSITORY"
+            --arg subject_sha "$SUBJECT_SHA"
+            --argjson run_id "$GITHUB_RUN_ID"
+            --argjson run_attempt "$GITHUB_RUN_ATTEMPT"
+            --argjson artifact_id "$PROGRAM_ARTIFACT_ID"
+            --arg artifact_name "$PROGRAM_ARTIFACT_NAME"
+            --arg artifact_digest "$PROGRAM_ARTIFACT_DIGEST"
+            --arg artifact_url "$PROGRAM_ARTIFACT_URL"
+            --arg program_file_digest "$program_file_digest"
+            --arg source_file_digest "$source_file_digest"
+            --arg verification_file_digest "$verification_file_digest"
+            --arg program_digest "$program_digest"
+            --arg verification_digest "$verification_digest"
+            --arg strategy_digest "$strategy_digest"
+            --arg registry_digest "$registry_digest"
+            --arg source_digest "$source_digest"
+            --arg semantic_digest "$semantic_digest"
+          )
           emit_receipt() {
-            jq -n +              --arg repository "$GITHUB_REPOSITORY" +              --arg subject_sha "$SUBJECT_SHA" +              --argjson run_id "$GITHUB_RUN_ID" +              --argjson run_attempt "$GITHUB_RUN_ATTEMPT" +              --argjson artifact_id "$PROGRAM_ARTIFACT_ID" +              --arg artifact_name "$PROGRAM_ARTIFACT_NAME" +              --arg artifact_digest "$PROGRAM_ARTIFACT_DIGEST" +              --arg artifact_url "$PROGRAM_ARTIFACT_URL" +              --arg program_file_digest "$program_file_digest" +              --arg source_file_digest "$source_file_digest" +              --arg verification_file_digest "$verification_file_digest" +              --arg program_digest "$program_digest" +              --arg verification_digest "$verification_digest" +              --arg strategy_digest "$strategy_digest" +              --arg registry_digest "$registry_digest" +              --arg source_digest "$source_digest" +              --arg semantic_digest "$semantic_digest" '{
+            jq -n "${receipt_args[@]}" '{
                 schema: "gooo/metric-meta-program-ci-closure/v1",
                 repository: $repository,
                 subject_sha: $subject_sha,
