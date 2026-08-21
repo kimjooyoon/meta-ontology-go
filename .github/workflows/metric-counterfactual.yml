@@ -286,20 +286,11 @@ jobs:
             -strategy-verification "$input/verification.json"
           )
           for target in "$first" "$replay"; do
-            go run ./scripts/metric-meta-program "${common[@]}" \
-              -mode generate \
-              -repository "$GITHUB_REPOSITORY" \
-              -subject-sha "$SUBJECT_SHA" \
-              -program-output "$target/program.json" \
-              -source-output "$target/program.gooo"
+            go run ./scripts/metric-meta-program "${common[@]}" -out "$target"
           done
           cmp -s "$first/program.json" "$replay/program.json"
           cmp -s "$first/program.gooo" "$replay/program.gooo"
-          go run ./scripts/metric-meta-program "${common[@]}" \
-            -mode verify \
-            -program "$first/program.json" \
-            -source "$first/program.gooo" \
-            -output "$first/verification.json"
+          cmp -s "$first/verification.json" "$replay/verification.json"
           jq -e '
             .schema == "gooo/metric-meta-program/v1" and
             .execution_policy == "READ_ONLY_META_PROGRAM" and
