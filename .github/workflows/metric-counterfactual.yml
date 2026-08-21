@@ -298,8 +298,8 @@ jobs:
             repository_workspace_writes,
             promotion_authorized,
             root_policy,
-            registry_type: (.registry | type),
-            registry_length: (.registry | length),
+            operations_type: (.operations | type),
+            operations_length: (.operations | length),
             bindings_type: (.bindings | type),
             bindings_length: (.bindings | length),
             steps
@@ -313,9 +313,9 @@ jobs:
             .root_policy.counts_applicability == "OBSERVED" and
             .root_policy.topology_applicability == "NOT_APPLICABLE" and
             .root_policy.readme_requirement == "NOT_APPLICABLE" and
-            (.registry | length) == 8 and
+            (.operations | length) == 8 and
             (.bindings | length) == 15 and
-            ([.steps[].operation] == [
+            ([.steps[].activity] == [
               "ObserveCounterfactualBoundary",
               "PreserveRepositoryWorkspace",
               "ReplayCounterfactual",
