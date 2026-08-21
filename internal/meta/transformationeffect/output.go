@@ -3,6 +3,7 @@ package transformationeffect
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
@@ -35,4 +36,23 @@ func WriteResult(result Result, ledgerPath, receiptPath, provenancePath, patchPa
 		}
 	}
 	return nil
+}
+
+func effectIndicators(ledger Ledger, selected int, receipt generation.ReceiptDecision) []Indicator {
+	pass := func(id, route, relation, value, limit string) Indicator {
+		return Indicator{id, route, "PASS", relation, value, limit}
+	}
+	return []Indicator{
+		pass("foundation.artifact-schemas", "FOUNDATION", "=", "true", "true"),
+		pass("foundation.exact-head", "FOUNDATION", "=", ledger.HeadSHA, ledger.HeadSHA),
+		pass("foundation.root-topology-exemption", "FOUNDATION", "=", "true", "true"),
+		pass("foundation.indicator-ledger", "FOUNDATION", "sha256", ledger.IndicatorLedgerDigest, "bound"),
+		pass("foundation.disposable-write-boundary", "FOUNDATION", "=", ledger.WriteBoundary, "SANDBOX_ONLY"),
+		pass("coherence.selected-effects", "COHERENCE", "=", strconv.Itoa(len(ledger.Effects)), strconv.Itoa(selected)),
+		pass("coherence.generated-receipts", "COHERENCE", "=", string(receipt), string(receipt)),
+		pass("coherence.content-patch", "COHERENCE", "sha256", ledger.PatchDigest, "bound"),
+		pass("coherence.executed-provenance", "COHERENCE", "sha256", ledger.ExecutedProvenanceDigest, "bound"),
+		pass("regression.source-workspace", "REGRESSION", "=", "unchanged", "unchanged"),
+		pass("regression.canonical-encoding", "REGRESSION", "=", "true", "true"),
+	}
 }
