@@ -8,7 +8,7 @@ type Binding struct {
 	ProofChoice          ProofChoice            `json:"proof_choice"`
 	Executor             string                 `json:"executor"`
 	Evaluator            string                 `json:"evaluator"`
-	RequiredIndicatorIDs []string              `json:"required_indicator_ids"`
+	RequiredIndicatorIDs []string               `json:"required_indicator_ids"`
 	ReceiptRequired      bool                   `json:"receipt_required"`
 	Priority             uint32                 `json:"priority"`
 }
@@ -22,7 +22,7 @@ type Action struct {
 	ProofChoice          ProofChoice            `json:"proof_choice"`
 	Executor             string                 `json:"executor"`
 	Evaluator            string                 `json:"evaluator"`
-	RequiredIndicatorIDs []string              `json:"required_indicator_ids"`
+	RequiredIndicatorIDs []string               `json:"required_indicator_ids"`
 	ReceiptRequired      bool                   `json:"receipt_required"`
 	Priority             uint32                 `json:"priority"`
 }
