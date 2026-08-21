@@ -56,81 +56,21 @@ type IndicatorDecisionLedger struct {
 }
 
 func BuildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions []Action) (IndicatorDecisionLedger, error) {
-	actionsByIndicator := make(map[string]Action, len(actions))
-	for _, action := range actions {
-		if !actionMatchesSourceIndicator(action) {
-			return IndicatorDecisionLedger{}, fmt.Errorf("action %q does not match its source indicator", action.IndicatorID)
-		}
-		if !reflect.DeepEqual(action.IndicatorOutcome, action.SourceIndicator.Outcome()) {
-			return IndicatorDecisionLedger{}, fmt.Errorf("action %q carries a forged indicator outcome", action.IndicatorID)
-		}
-		if _, exists := actionsByIndicator[action.IndicatorID]; exists {
-			return IndicatorDecisionLedger{}, fmt.Errorf("duplicate action for indicator %q", action.IndicatorID)
-		}
-		actionsByIndicator[action.IndicatorID] = action
+	actionsByIndicator, err := indexLedgerActions(actions)
+	if err != nil {
+		return IndicatorDecisionLedger{}, err
 	}
-
-	entries := make([]IndicatorDecisionLedgerEntry, 0, len(indicators))
-	seenIndicators := make(map[string]struct{}, len(indicators))
-	selected := make(map[string]struct{}, len(actions))
-	for _, indicator := range indicators {
-		id := indicatorID(indicator)
-		if _, exists := seenIndicators[id]; exists {
-			return IndicatorDecisionLedger{}, fmt.Errorf("duplicate source indicator %q", id)
-		}
-		seenIndicators[id] = struct{}{}
-
-		action, hasAction := actionsByIndicator[id]
-		route, err := indicatorTrilemmaRoute(indicator.Proof)
-		if err != nil {
-			return IndicatorDecisionLedger{}, fmt.Errorf("indicator %q: %w", id, err)
-		}
-		entry := IndicatorDecisionLedgerEntry{
-			IndicatorID:      id,
-			SourceIndicator:  indicator,
-			IndicatorOutcome: indicator.Outcome(),
-			TrilemmaRoute:    route,
-		}
-		switch indicator.Applicability {
-		case sourcepolicy.ApplicabilityNotApplicable:
-			if !indicator.Satisfied {
-				return IndicatorDecisionLedger{}, fmt.Errorf("not-applicable indicator %q must be closed", id)
-			}
-			if hasAction {
-				return IndicatorDecisionLedger{}, fmt.Errorf("not-applicable indicator %q selected an action", id)
-			}
-			entry.Disposition = IndicatorDispositionExempt
-		case sourcepolicy.ApplicabilityApplicable:
-			if indicator.Satisfied {
-				if hasAction {
-					return IndicatorDecisionLedger{}, fmt.Errorf("conforming indicator %q selected an action", id)
-				}
-				entry.Disposition = IndicatorDispositionConforming
-				break
-			}
-			if !hasAction {
-				return IndicatorDecisionLedger{}, fmt.Errorf("violating indicator %q has no selected repair", id)
-			}
-			actionCopy := action
-			entry.Disposition = IndicatorDispositionRepairSelected
-			entry.Action = &actionCopy
-			selected[id] = struct{}{}
-		default:
-			return IndicatorDecisionLedger{}, fmt.Errorf("indicator %q has unknown applicability %q", id, indicator.Applicability)
-		}
-		entries = append(entries, entry)
+	entries, selectedCount, err := buildLedgerEntries(indicators, actionsByIndicator)
+	if err != nil {
+		return IndicatorDecisionLedger{}, err
 	}
-	if len(selected) != len(actionsByIndicator) {
-		return IndicatorDecisionLedger{}, fmt.Errorf("%d actions do not belong to the indicator set", len(actionsByIndicator)-len(selected))
-	}
-
 	sort.Slice(entries, func(left, right int) bool {
 		return entries[left].IndicatorID < entries[right].IndicatorID
 	})
 	ledger := IndicatorDecisionLedger{
 		SchemaVersion:  IndicatorDecisionLedgerSchemaVersion,
 		IndicatorCount: len(entries),
-		SelectedCount:  len(selected),
+		SelectedCount:  selectedCount,
 		Entries:        entries,
 	}
 	for _, entry := range entries {
@@ -149,6 +89,90 @@ func BuildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions [
 	}
 	ledger.Digest = digest
 	return ledger, nil
+}
+
+func indexLedgerActions(actions []Action) (map[string]Action, error) {
+	indexed := make(map[string]Action, len(actions))
+	for _, action := range actions {
+		if !actionMatchesSourceIndicator(action) {
+			return nil, fmt.Errorf("action %q does not match its source indicator", action.IndicatorID)
+		}
+		if !reflect.DeepEqual(action.IndicatorOutcome, action.SourceIndicator.Outcome()) {
+			return nil, fmt.Errorf("action %q carries a forged indicator outcome", action.IndicatorID)
+		}
+		if _, exists := indexed[action.IndicatorID]; exists {
+			return nil, fmt.Errorf("duplicate action for indicator %q", action.IndicatorID)
+		}
+		indexed[action.IndicatorID] = action
+	}
+	return indexed, nil
+}
+
+func buildLedgerEntries(indicators []sourcepolicy.Indicator, actions map[string]Action) ([]IndicatorDecisionLedgerEntry, int, error) {
+	entries := make([]IndicatorDecisionLedgerEntry, 0, len(indicators))
+	seen := make(map[string]struct{}, len(indicators))
+	selectedCount := 0
+	for _, indicator := range indicators {
+		id := indicatorID(indicator)
+		if _, exists := seen[id]; exists {
+			return nil, 0, fmt.Errorf("duplicate source indicator %q", id)
+		}
+		seen[id] = struct{}{}
+		action, hasAction := actions[id]
+		entry, selected, err := buildLedgerEntry(id, indicator, action, hasAction)
+		if err != nil {
+			return nil, 0, err
+		}
+		if selected {
+			selectedCount++
+		}
+		entries = append(entries, entry)
+	}
+	if selectedCount != len(actions) {
+		return nil, 0, fmt.Errorf("%d actions do not belong to the indicator set", len(actions)-selectedCount)
+	}
+	return entries, selectedCount, nil
+}
+
+func buildLedgerEntry(id string, indicator sourcepolicy.Indicator, action Action, hasAction bool) (IndicatorDecisionLedgerEntry, bool, error) {
+	route, err := indicatorTrilemmaRoute(indicator.Proof)
+	if err != nil {
+		return IndicatorDecisionLedgerEntry{}, false, fmt.Errorf("indicator %q: %w", id, err)
+	}
+	entry := IndicatorDecisionLedgerEntry{IndicatorID: id, SourceIndicator: indicator,
+		IndicatorOutcome: indicator.Outcome(), TrilemmaRoute: route}
+	switch indicator.Applicability {
+	case sourcepolicy.ApplicabilityNotApplicable:
+		if !indicator.Satisfied {
+			return IndicatorDecisionLedgerEntry{}, false, fmt.Errorf("not-applicable indicator %q must be closed", id)
+		}
+		if hasAction {
+			return IndicatorDecisionLedgerEntry{}, false, fmt.Errorf("not-applicable indicator %q selected an action", id)
+		}
+		entry.Disposition = IndicatorDispositionExempt
+		return entry, false, nil
+	case sourcepolicy.ApplicabilityApplicable:
+		return buildApplicableLedgerEntry(entry, action, hasAction)
+	default:
+		return IndicatorDecisionLedgerEntry{}, false, fmt.Errorf("indicator %q has unknown applicability %q", id, indicator.Applicability)
+	}
+}
+
+func buildApplicableLedgerEntry(entry IndicatorDecisionLedgerEntry, action Action, hasAction bool) (IndicatorDecisionLedgerEntry, bool, error) {
+	if entry.SourceIndicator.Satisfied {
+		if hasAction {
+			return IndicatorDecisionLedgerEntry{}, false, fmt.Errorf("conforming indicator %q selected an action", entry.IndicatorID)
+		}
+		entry.Disposition = IndicatorDispositionConforming
+		return entry, false, nil
+	}
+	if !hasAction {
+		return IndicatorDecisionLedgerEntry{}, false, fmt.Errorf("violating indicator %q has no selected repair", entry.IndicatorID)
+	}
+	actionCopy := action
+	entry.Disposition = IndicatorDispositionRepairSelected
+	entry.Action = &actionCopy
+	return entry, true, nil
 }
 
 func indicatorTrilemmaRoute(proof sourcepolicy.ProofChoice) (TrilemmaRoute, error) {
