@@ -9,7 +9,7 @@ import (
 func topologyFailures(root string) (int, int, error) {
 	direct, mixed := 0, 0
 	err := filepath.WalkDir(root, func(name string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil || !entry.IsDir() {
+		if walkErr != nil || !entry.IsDir() || filepath.Clean(name) == filepath.Clean(root) {
 			return walkErr
 		}
 		children, err := os.ReadDir(name)
