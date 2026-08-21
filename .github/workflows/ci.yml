@@ -213,6 +213,9 @@ jobs:
           go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts.json"
           go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts-replay.json"
           cmp -s "$METRICS_DIR/self-improvement-receipts.json" "$METRICS_DIR/self-improvement-receipts-replay.json"
+          go run ./scripts/meta-provenance -plan "$METRICS_DIR/self-improvement-plan.json" -execution "$METRICS_DIR/self-improvement-execution.json" -receipts "$METRICS_DIR/self-improvement-receipts.json" -output "$METRICS_DIR/self-improvement-provenance.json"
+          go run ./scripts/meta-provenance -plan "$METRICS_DIR/self-improvement-plan.json" -execution "$METRICS_DIR/self-improvement-execution.json" -receipts "$METRICS_DIR/self-improvement-receipts.json" -output "$METRICS_DIR/self-improvement-provenance-replay.json"
+          cmp -s "$METRICS_DIR/self-improvement-provenance.json" "$METRICS_DIR/self-improvement-provenance-replay.json"
           go run ./scripts/source-splitter -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           go run ./bootstrap/source-repacker -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           {
@@ -231,6 +234,10 @@ jobs:
             echo "### Deterministic conformance receipt report"
             echo '```json'
             cat "$METRICS_DIR/self-improvement-receipts.json"
+            echo '```'
+            echo "### Deterministic artifact provenance envelope"
+            echo '```json'
+            cat "$METRICS_DIR/self-improvement-provenance.json"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact
@@ -259,6 +266,13 @@ jobs:
         with:
           name: self-improvement-receipts-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-receipts.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload self-improvement provenance artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/self-improvement-provenance.json
           if-no-files-found: error
           retention-days: 30
       - name: Check DAMP/DRY caps
