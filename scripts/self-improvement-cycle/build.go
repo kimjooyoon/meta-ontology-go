@@ -37,8 +37,8 @@ func projectEnvelope(in inputs, opts options) projection {
 		CIWorkflowRunID: opts.runID, CIHeadBranch: opts.branch, CIConclusion: opts.conclusion,
 		ContractSemanticHash: contract.SemanticHash, ContractRegistryDigest: contract.RegistryDigest,
 		IndicatorLedgerDigest: provenance.IndicatorDecisionLedgerDigest,
-		IndicatorLedgerCount: provenance.IndicatorDecisionLedgerCount,
-		Artifacts: artifacts, ArtifactSetDigest: artifactSetDigest,
+		IndicatorLedgerCount:  provenance.IndicatorDecisionLedgerCount,
+		Artifacts:             artifacts, ArtifactSetDigest: artifactSetDigest,
 		InputDigest: digestJSON(context), Indicators: []Indicator{},
 		PromotionAuthorized: false,
 	}, Validation: validateInputs(in, opts)}

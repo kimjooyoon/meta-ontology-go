@@ -59,11 +59,9 @@ type contractIndicator struct {
 	Route   string `json:"route"`
 	Verdict string `json:"verdict"`
 }
-
 type contractCoverage struct {
 	Covered bool `json:"covered"`
 }
-
 type contractDocument struct {
 	Schema              string              `json:"schema"`
 	CommitSHA           string              `json:"commit_sha"`
