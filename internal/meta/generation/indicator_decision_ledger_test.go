@@ -27,10 +27,20 @@ func TestIndicatorDecisionLedgerClosesAllTrilemmaRoutes(t *testing.T) {
 		Proof:         sourcepolicy.ProofRegression,
 	}
 	action := Action{
-		IndicatorID:      indicatorID(repair),
-		Blocking:         repair.Blocking,
-		IndicatorOutcome: repair.Outcome(),
-		SourceIndicator:  repair,
+		IndicatorID:         indicatorID(repair),
+		MetricID:            repair.MetricID,
+		Subject:             repair.Subject,
+		SubjectKind:         repair.SubjectKind,
+		Applicability:       repair.Applicability,
+		ApplicabilityRule:   repair.ApplicabilityRule,
+		ApplicabilityReason: repair.ApplicabilityReason,
+		Blocking:            repair.Blocking,
+		SourceIndicator:     repair,
+		IndicatorOutcome:    repair.Outcome(),
+		MetricProofChoice:   repair.Proof,
+		MetricProducer:      repair.Producer,
+		MetricConsumer:      repair.Consumer,
+		Operation:           repair.Operation,
 	}
 
 	ledger, err := BuildIndicatorDecisionLedger(
