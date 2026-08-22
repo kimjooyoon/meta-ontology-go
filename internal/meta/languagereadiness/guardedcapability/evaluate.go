@@ -20,9 +20,9 @@ func Build(source Source) Receipt {
 	summary := summarize(source, coordinates)
 	decision, reason, resolution := decide(summary)
 	receipt := Receipt{Schema: Schema, Decision: decision, Reason: reason,
-		Resolution: resolution, Source: source, Summary: summary, Coordinates: coordinates}
-	receipt.Indicators = indicators(source, summary, coordinates)
-	receipt.Proofs = proofs(coordinates)
+		Resolution: resolution, Source: source, Summary: summary, Coordinates: coordinates,
+		Indicators: indicators(source, summary, coordinates),
+		Proofs:     proofs(coordinates)}
 	seal(&receipt)
 	return receipt
 }

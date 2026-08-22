@@ -231,6 +231,7 @@ jobs:
           cmp "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" \
             "$RUNNER_TEMP/language-readiness-predecessor-selection-b.json"
       - name: Upload exact-head readiness predecessor selection
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
