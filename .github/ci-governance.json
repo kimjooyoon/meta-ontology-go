@@ -1082,6 +1082,19 @@
         "internal/meta/languagereadiness/**",
         "internal/verify/scope_language_readiness.go"
       ]
+    },
+    {
+      "branch": "agent/readiness-guarded-promotion",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/guarded-promotion-witness/**",
+        "docs/language/guarded-promotion.md",
+        "internal/meta/languagereadiness/guardedpromotion/**",
+        "internal/verify/scope_language_readiness.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

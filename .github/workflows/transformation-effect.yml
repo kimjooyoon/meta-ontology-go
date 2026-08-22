@@ -12,6 +12,76 @@ permissions:
   contents: read
 
 jobs:
+  guarded-promotion-receipt:
+    name: guarded-promotion-receipt
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact CI subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 1
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+
+      - name: Select expected boundary decision
+        id: boundary
+        env:
+          SOURCE_EVENT: ${{ github.event.workflow_run.event }}
+          SOURCE_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          case "$SOURCE_EVENT:$SOURCE_BRANCH" in
+            "push:$DEFAULT_BRANCH") decision=AUTHORIZED ;;
+            pull_request:*) decision=DENIED ;;
+            *) decision=FAIL_CLOSED ;;
+          esac
+          printf 'decision=%s\n' "$decision" >> "$GITHUB_OUTPUT"
+
+      - name: Build guarded promotion receipt twice
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          EXPECT_DECISION: ${{ steps.boundary.outputs.decision }}
+          API_URL: ${{ github.api_url }}
+        run: |
+          for replay in a b; do
+            go run ./cmd/guarded-promotion-witness \
+              --repository "$REPOSITORY" \
+              --current-head-sha "$HEAD_SHA" \
+              --source-run-id "$SOURCE_RUN_ID" \
+              --api-url "$API_URL" \
+              --token "$GH_TOKEN" \
+              --expect-decision "$EXPECT_DECISION" \
+              --out "$RUNNER_TEMP/guarded-promotion-$replay.json"
+          done
+
+      - name: Verify deterministic replay
+        run: |
+          cmp "$RUNNER_TEMP/guarded-promotion-a.json" \
+            "$RUNNER_TEMP/guarded-promotion-b.json"
+          cmp "$RUNNER_TEMP/guarded-promotion-a.json.sha256" \
+            "$RUNNER_TEMP/guarded-promotion-b.json.sha256"
+
+      - name: Upload guarded promotion receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guarded-promotion-${{ github.event.workflow_run.head_sha }}
+          path: |
+            ${{ runner.temp }}/guarded-promotion-*.json
+            ${{ runner.temp }}/guarded-promotion-*.sha256
+          if-no-files-found: error
+          retention-days: 30
+
   transformation-effect:
     if: >-
       github.event.workflow_run.event == 'push' &&
