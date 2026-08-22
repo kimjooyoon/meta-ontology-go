@@ -1,0 +1,14 @@
+package directorypartition
+namespace directorypartition
+
+entity SourceMetrics id "gooo://directory-partition/entity/source-metrics"
+entity PartitionPolicy id "gooo://directory-partition/entity/partition-policy"
+entity DirectoryIndicators id "gooo://directory-partition/entity/directory-indicators"
+entity PartitionPlan id "gooo://directory-partition/entity/partition-plan"
+entity ReplayReceipt id "gooo://directory-partition/entity/replay-receipt"
+
+activity BindPartitionFoundation(SourceMetrics) -> PartitionPolicy
+activity ResolvePartitionCandidates(PartitionPolicy) -> DirectoryIndicators
+activity PlanDirectoryPartitions(DirectoryIndicators) -> PartitionPlan
+activity PreserveProjectRootExemption(PartitionPlan) -> PartitionPlan
+activity ReplayDirectoryPartitionPlan(PartitionPlan) -> ReplayReceipt
