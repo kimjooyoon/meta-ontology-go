@@ -32,6 +32,11 @@ func run(cfg config) error {
 	}
 	result, resolution, err := resolveAncestry(ctx, client, cfg, predecessor)
 	if err != nil {
+		if resolution.ReportDigest != "" {
+			if writeErr := writeResolutionFailure(cfg.receipt, resolution); writeErr != nil {
+				return fmt.Errorf("%w; write failure receipt: %v", err, writeErr)
+			}
+		}
 		return err
 	}
 	return writeResolutionResult(cfg, result, resolution)

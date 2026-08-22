@@ -1,9 +1,10 @@
 package predecessorselection
 
 const (
-	Schema             = "gooo/language-readiness-predecessor-selection/v1"
+	Schema             = "gooo/language-readiness-predecessor-selection/v2"
 	DecisionSelected   = "SELECTED"
 	DecisionFailClosed = "FAIL_CLOSED"
+	ProducerJobName    = "language-concept-artifact"
 )
 
 const (
@@ -11,6 +12,7 @@ const (
 	ReasonNotFound    = "READINESS_PREDECESSOR_NOT_FOUND"
 	ReasonUnbound     = "READINESS_PREDECESSOR_CANONICAL_RUN_UNBOUND"
 	ReasonFailed      = "READINESS_PREDECESSOR_RUN_FAILED"
+	ReasonProducer    = "READINESS_PREDECESSOR_PRODUCER_NOT_CONFORMANT"
 	ReasonExpired     = "READINESS_PREDECESSOR_ARTIFACT_EXPIRED"
 	ReasonInvalid     = "READINESS_PREDECESSOR_PAYLOAD_INVALID"
 	ReasonAmbiguous   = "READINESS_PREDECESSOR_AMBIGUOUS"

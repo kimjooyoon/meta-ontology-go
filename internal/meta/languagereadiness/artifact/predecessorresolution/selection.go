@@ -44,29 +44,7 @@ func exactMissing(report predecessorselection.Report) bool {
 		report.Selected == nil && summary.ObservedCandidates == 0 &&
 		summary.ExactHeadCandidates == 0 && summary.CanonicalCandidates == 0 &&
 		summary.SuccessfulCandidates == 0 && summary.AvailableCandidates == 0 &&
+		summary.ProducerConformantCandidates == 0 &&
 		summary.ValidCandidates == 0 && summary.AmbiguousCandidates == 0 &&
 		summary.RepositoryWrites == 0
-}
-
-func exactSelected(report predecessorselection.Report) bool {
-	summary := report.Summary
-	return report.Decision == predecessorselection.DecisionSelected &&
-		report.Reason == predecessorselection.ReasonSelected &&
-		report.Selected != nil && summary.ObservedCandidates == 1 &&
-		summary.ExactHeadCandidates == 1 && summary.CanonicalCandidates == 1 &&
-		summary.SuccessfulCandidates == 1 && summary.AvailableCandidates == 1 &&
-		summary.ValidCandidates == 1 && summary.AmbiguousCandidates == 0 &&
-		summary.RepositoryWrites == 0 && allSelectionProofsPassed(report)
-}
-
-func allSelectionProofsPassed(report predecessorselection.Report) bool {
-	if len(report.Proofs) != 4 {
-		return false
-	}
-	for _, proof := range report.Proofs {
-		if !proof.Passed {
-			return false
-		}
-	}
-	return true
 }

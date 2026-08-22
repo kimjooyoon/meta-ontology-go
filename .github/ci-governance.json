@@ -1129,6 +1129,19 @@
         "internal/verify/readiness_push_continuity_test.go",
         "internal/verify/scope_readiness_push_continuity.go"
       ]
+    },
+    {
+      "branch": "agent/readiness-guarded-capability",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "docs/language/guarded-promotion-capability.md",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/**",
+        "internal/verify/scope_readiness_guarded_capability.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

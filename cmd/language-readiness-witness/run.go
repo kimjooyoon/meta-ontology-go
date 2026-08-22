@@ -20,6 +20,9 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.promotion != "" {
 		paths = append(paths, cfg.promotion)
 	}
+	if cfg.guarded != "" {
+		paths = append(paths, cfg.guarded)
+	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err
 	}

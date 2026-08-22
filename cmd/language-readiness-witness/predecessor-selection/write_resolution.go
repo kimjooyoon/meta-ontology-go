@@ -41,3 +41,11 @@ func writeResolutionResult(cfg config, result predecessorselection.Result,
 		report.ReportDigest)
 	return nil
 }
+
+func writeResolutionFailure(path string, report predecessorresolution.Report) error {
+	reportRaw, err := encodeJSON(report)
+	if err != nil {
+		return err
+	}
+	return writeExclusive(path, reportRaw)
+}
