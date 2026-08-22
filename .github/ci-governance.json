@@ -741,6 +741,18 @@
       ]
     },
     {
+      "branch": "agent/directory-kind-executor-v20",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/directory-kind-witness/**",
+        "internal/meta/actionability/**",
+        "internal/meta/directorykind/**",
+        "internal/meta/metabinding/registry.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/directory-kind-schema-v20",
       "paths": [
         ".github/agent-scope-table.md",

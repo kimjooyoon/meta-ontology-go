@@ -104,6 +104,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/meta-actionability-v18` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `bootstrap/meta-actionability-witness`, `examples/meta-actionability`, `internal/meta/actionability`, `internal/verify/scope_part01.go` |
 | `agent/meta-actionability-ci-v18` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
 | `agent/directory-kind-schema-v20` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/directorykind`, `internal/verify/scope_part01.go` |
+| `agent/directory-kind-executor-v20` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/directory-kind-witness`, `internal/meta/actionability`, `internal/meta/directorykind`, `internal/meta/metabinding/registry.go`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/directorypartition`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-executor-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/directory-partition-witness`, `internal/meta/actionability`, `internal/meta/directorypartition`, `internal/meta/metabinding/registry.go`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-ci-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
