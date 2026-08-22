@@ -819,6 +819,16 @@
       ]
     },
     {
+      "branch": "agent/feedback-predecessor-usecases-v24",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/feedback-predecessor-cycle/**",
+        "internal/meta/feedbackpredecessor/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/semantic-resolution-schema-v23",
       "paths": [
         ".github/agent-scope-table.md",
