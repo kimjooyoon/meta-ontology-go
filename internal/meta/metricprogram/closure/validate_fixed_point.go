@@ -16,7 +16,7 @@ func validateProgramFixedPoint(program programDocument) error {
 		return fmt.Errorf("program selection is not the regression fixed point")
 	}
 	coverage := program.Coverage
-	if coverage.BindingCount != 15 || coverage.ResolvedBindingCount != 15 ||
+	if coverage.BindingCount != canonicalBindingCount || coverage.ResolvedBindingCount != canonicalBindingCount ||
 		coverage.RegistryOperationCount != 8 || coverage.ReferencedOperationCount != 8 ||
 		!coverage.SelectionOperationResolved || coverage.Status != "COMPLETE" {
 		return fmt.Errorf("program coverage is incomplete")

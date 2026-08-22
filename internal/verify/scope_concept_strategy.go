@@ -7,6 +7,7 @@ func init() {
 		".github/workflows/metric-counterfactual.yml",
 		"examples/language-concept-catalog/README.md",
 		"internal/meta/languageconcept",
+		"internal/meta/metricprogram/closure",
 		"internal/meta/metricstrategy",
 		"internal/meta/metricstrategy/verify",
 		"internal/verify/scope_concept_strategy.go",

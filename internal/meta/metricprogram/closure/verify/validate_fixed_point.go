@@ -16,7 +16,7 @@ func validateFixedPoint(program programDocument, verification verificationDocume
 		return fmt.Errorf("fixed-point selection mismatch")
 	}
 	coverage := program.Coverage
-	if coverage.BindingCount != 15 || coverage.ResolvedBindingCount != 15 ||
+	if coverage.BindingCount != canonicalBindingCount || coverage.ResolvedBindingCount != canonicalBindingCount ||
 		coverage.RegistryOperationCount != 8 || coverage.ReferencedOperationCount != 8 ||
 		!coverage.SelectionOperationResolved || coverage.Status != "COMPLETE" {
 		return fmt.Errorf("program coverage mismatch")
