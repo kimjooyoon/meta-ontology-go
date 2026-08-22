@@ -1037,6 +1037,15 @@
         "internal/meta/languagereadiness/**",
         "internal/verify/scope_language_readiness.go"
       ]
+    },
+    {
+      "branch": "agent/quantified-improvement-transition-v31",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/languagereadiness/improvement/**",
+        "internal/verify/scope_language_readiness.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
