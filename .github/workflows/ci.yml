@@ -272,7 +272,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: directory-partition-${{ env.METRICS_COMMIT_SHA }}
-          path: ${{ env.METRICS_DIR }}/directory-partition-report.json
+          path: ${{ runner.temp }}/source-metrics/directory-partition-report.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement generation artifact
