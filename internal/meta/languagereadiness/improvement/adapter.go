@@ -5,7 +5,7 @@ import readiness "github.com/kimjooyoon/meta-ontology-go/internal/meta/languager
 // FromReadiness projects the counted readiness contract into transition input.
 func FromReadiness(source readiness.Snapshot) Snapshot {
 	result := Snapshot{
-		ContractSchema: source.ContractSchema,
+		ContractSchema: source.Schema,
 		RegistryDigest: source.RegistryDigest,
 		Completed:      int64(source.Summary.Completed),
 		Total:          int64(source.Summary.Total),
