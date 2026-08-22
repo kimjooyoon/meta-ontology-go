@@ -23,6 +23,10 @@ func Catalog() []Concept {
 		concept("concept-governed-refactoring", "a metric-selected operation can lack semantic authorization", "every candidate operation is digest-bound to a language concept", "bind-refactoring-concept", "OPERATING",
 			[]string{"internal/meta/metricstrategy"}, []string{"gooo.metric.meta.concept-operation-binding-bps.v1"},
 			UseCase{"unregistered-strategy-operation", "a strategy names an operation without a concept binding", "LOWER_RESOLUTION"}),
+		concept("quantified-improvement", "qualitative progress can conceal an unchanged denominator", "exact predecessor and current receipts prove integer gains without inference", "compare-readiness-receipts", "OPERATING",
+			[]string{"internal/meta/languagereadiness/improvement", "internal/meta/languagereadiness/artifact", "cmd/language-readiness-witness/transition"},
+			[]string{"completed-obligations", "readiness-basis-points", "newly-satisfied", "regressions", "unresolved-evidence"},
+			UseCase{"one-obligation-gain", "comparable 7/24 and 8/24 receipts have one gain and zero regressions", "IMPROVED_PLUS_1_PLUS_417_BPS"}),
 	}
 }
 

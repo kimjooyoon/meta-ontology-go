@@ -1058,6 +1058,18 @@
         "internal/meta/languagereadiness/improvement/adapter.go",
         "internal/verify/scope_language_readiness.go"
       ]
+    },
+    {
+      "branch": "agent/language-readiness-improvement-v33",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/**",
+        "internal/verify/scope_language_readiness.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
