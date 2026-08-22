@@ -13,7 +13,7 @@ func Build(conceptArtifact []byte, headSHA string) (Receipt, error) {
 	if err != nil {
 		return Receipt{}, err
 	}
-	return build(snapshot, headSHA, "")
+	return build(snapshot, headSHA, "", "")
 }
 
 func BuildWithProposalPromotion(
@@ -29,15 +29,16 @@ func BuildWithProposalPromotion(
 	if err != nil {
 		return Receipt{}, err
 	}
-	return build(snapshot, headSHA, promotion.ReportDigest)
+	return build(snapshot, headSHA, promotion.ReportDigest, "")
 }
 
-func build(snapshot readiness.Snapshot, headSHA, promotionDigest string) (Receipt, error) {
+func build(snapshot readiness.Snapshot, headSHA, promotionDigest, capabilityDigest string) (Receipt, error) {
 	input := improvement.FromReadiness(snapshot)
 	receipt := seal(Receipt{
 		Schema:                  Schema,
 		HeadSHA:                 headSHA,
 		ProposalPromotionDigest: promotionDigest,
+		GuardedCapabilityDigest: capabilityDigest,
 		Snapshot:                snapshot,
 		TransitionInput:         input,
 		FixedPoint:              improvement.Evaluate(input, input),

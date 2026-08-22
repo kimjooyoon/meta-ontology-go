@@ -1,10 +1,10 @@
 package languagereadiness
 
 func Evaluate(raw []byte) (Snapshot, error) {
-	return evaluate(raw, "")
+	return evaluate(raw, evidenceDigests{})
 }
 
-func evaluate(raw []byte, proposalPromotionDigest string) (Snapshot, error) {
+func evaluate(raw []byte, evidence evidenceDigests) (Snapshot, error) {
 	artifact, err := decodeArtifact(raw)
 	if err != nil {
 		return Snapshot{}, err
@@ -28,12 +28,12 @@ func evaluate(raw []byte, proposalPromotionDigest string) (Snapshot, error) {
 	}
 	for _, obligation := range obligations {
 		snapshot.Obligations = append(snapshot.Obligations,
-			evaluateObligation(obligation, byID[obligation.ConceptID], proposalPromotionDigest))
+			evaluateObligation(obligation, byID[obligation.ConceptID], evidence))
 	}
 	return summarize(snapshot), nil
 }
 
-func evaluateObligation(obligation Obligation, concepts []conceptEvidence, proposalPromotionDigest string) ObligationResult {
+func evaluateObligation(obligation Obligation, concepts []conceptEvidence, evidence evidenceDigests) ObligationResult {
 	result := ObligationResult{Obligation: obligation}
 	if len(concepts) == 0 {
 		return ObligationResult{Obligation: obligation, Status: "NOT_SATISFIED", Reason: "CONCEPT_NOT_REGISTERED"}
@@ -48,12 +48,12 @@ func evaluateObligation(obligation Obligation, concepts []conceptEvidence, propo
 		result.Status, result.Reason = "NOT_SATISFIED", "CONCEPT_CONFORMANCE_INCOMPLETE"
 		return result
 	}
-	if obligation.ConceptID == autonomousProposalConcept {
-		if proposalPromotionDigest == "" {
-			result.Status, result.Reason = "NOT_SATISFIED", "VERIFIED_PROMOTION_RECEIPT_REQUIRED"
+	if evidenceDigest, reason, required := requiredEvidence(obligation.ConceptID, evidence); required {
+		if evidenceDigest == "" {
+			result.Status, result.Reason = "NOT_SATISFIED", reason
 			return result
 		}
-		result.EvidenceDigest = digestJSON(promotionEvidence{concept, proposalPromotionDigest})
+		result.EvidenceDigest = digestJSON(externalEvidence{concept, evidenceDigest})
 	}
 	result.Status, result.Reason = "SATISFIED", "CONCEPT_CONFORMANCE_EXPLICIT"
 	return result

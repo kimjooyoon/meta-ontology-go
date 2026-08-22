@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload guarded promotion receipt
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: guarded-promotion-${{ github.event.workflow_run.head_sha }}
           path: |
@@ -239,6 +239,41 @@ jobs:
             ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
           if-no-files-found: error
           retention-days: 14
+      - name: Prove guarded promotion capability foundation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          FOUNDATION_ARTIFACT_ID: 9482381929
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive_args=()
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            archive="$RUNNER_TEMP/guarded-capability-foundation.zip"
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$FOUNDATION_ARTIFACT_ID/zip" > "$archive"
+            archive_args=(--foundation-archive "$archive")
+          fi
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/guarded-capability \
+              --root "$GITHUB_WORKSPACE" \
+              --current-head "$HEAD_SHA" \
+              "${archive_args[@]}" \
+              --output "$RUNNER_TEMP/language-readiness-guarded-capability-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
+            "$RUNNER_TEMP/language-readiness-guarded-capability-b.json"
+          go run ./cmd/language-readiness-witness/guarded-capability \
+            --root "$GITHUB_WORKSPACE" \
+            --current-head "$HEAD_SHA" \
+            "${archive_args[@]}" \
+            --check "$RUNNER_TEMP/language-readiness-guarded-capability-a.json"
+      - name: Upload guarded promotion capability
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-guarded-capability-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-guarded-capability-a.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Produce, replay, and consume exact-head concepts
         shell: bash
         run: |
@@ -267,6 +302,7 @@ jobs:
               -root "$GITHUB_WORKSPACE" \
               -input "$first/artifact.json" \
               -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
           done
@@ -275,6 +311,7 @@ jobs:
             -root "$GITHUB_WORKSPACE" \
             -input "$first/artifact.json" \
             -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
           (
