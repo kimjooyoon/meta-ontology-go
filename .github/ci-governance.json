@@ -709,6 +709,17 @@
       ]
     },
     {
+      "branch": "agent/meta-actionability-v18",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "bootstrap/meta-actionability-witness/**",
+        "examples/meta-actionability/**",
+        "internal/meta/actionability/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/zerolang-research",
       "paths": [
         "docs/research/zerolang.md"

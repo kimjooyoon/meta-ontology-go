@@ -23,10 +23,10 @@ func Build(root string, in input) (Report, error) {
 		RegistryDigest: digestJSON(registry), AuthorityDigest: authorityDigest,
 		Decision: decision, Reason: reason, SelectedOperation: selected,
 		RootProofChoice: "foundation", RootMetaOperation: "preserve-project-root-exemption",
-		RootActivity: "PreserveProjectRootExemption",
+		RootActivity:      "PreserveProjectRootExemption",
 		ReplayProofChoice: "regression", ReplayMetaOperation: "replay-actionability-report",
 		ReplayActivity: "ReplayActionabilityReport",
-		Summary: summary, Indicators: kpis(summary), Operations: operations,
+		Summary:        summary, Indicators: kpis(summary), Operations: operations,
 	}
 	report.ReportDigest = digestJSON(report)
 	return report, nil
