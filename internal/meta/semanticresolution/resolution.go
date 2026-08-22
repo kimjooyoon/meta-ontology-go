@@ -3,10 +3,10 @@ package semanticresolution
 const MaxResolutionDescents = 2
 
 type Conflict struct {
-	SourceDecision   string     `json:"source_decision"`
+	SourceDecision    string     `json:"source_decision"`
 	CurrentResolution Resolution `json:"current_resolution"`
-	Descents         int        `json:"descents"`
-	RepositoryWrites int        `json:"repository_writes"`
+	Descents          int        `json:"descents"`
+	RepositoryWrites  int        `json:"repository_writes"`
 }
 
 type Transition struct {
