@@ -27,7 +27,7 @@ func newSemanticReceipt(report, replay feedbackstate.Report, predecessorDigest, 
 	receipt := semanticReceipt{
 		Schema: semanticReceiptSchema, Report: report,
 		PredecessorSelectionReceiptDigest: predecessorDigest,
-		InputDigest: inputDigest, ReplayReportDigest: replay.ReportDigest,
+		InputDigest:                       inputDigest, ReplayReportDigest: replay.ReportDigest,
 		ReplayVerified: report.ReportDigest == replay.ReportDigest,
 	}
 	encoded, _ := json.Marshal(receipt)
