@@ -1,0 +1,78 @@
+name: Feedback predecessor conformance
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev, main]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  predecessor:
+    name: Canonical predecessor receipt
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+      - id: cause
+        name: Resolve predecessor cause
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            sha="$PR_BASE_SHA"
+            branch="$PR_BASE_REF"
+          else
+            sha="$PUSH_BEFORE"
+            branch="$REF_NAME"
+          fi
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ || "$sha" == "0000000000000000000000000000000000000000" ]]; then
+            echo "invalid predecessor cause" >&2
+            exit 1
+          fi
+          printf 'sha=%s\nbranch=%s\n' "$sha" "$branch" >> "$GITHUB_OUTPUT"
+      - name: Collect deterministic predecessor input
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for suffix in a b; do
+            go run ./scripts/feedback-predecessor-ci \
+              --repository "$GITHUB_REPOSITORY" \
+              --predecessor-sha "${{ steps.cause.outputs.sha }}" \
+              --branch "${{ steps.cause.outputs.branch }}" \
+              --workflow "CI [push full]" \
+              --output "$RUNNER_TEMP/predecessor-input-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/predecessor-input-a.json" "$RUNNER_TEMP/predecessor-input-b.json"
+      - name: Evaluate deterministic predecessor receipt
+        run: |
+          for suffix in a b; do
+            go run ./cmd/feedback-predecessor-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --input "$RUNNER_TEMP/predecessor-input-a.json" \
+              --report "$RUNNER_TEMP/predecessor-receipt-$suffix.json" \
+              --check
+          done
+          cmp "$RUNNER_TEMP/predecessor-receipt-a.json" "$RUNNER_TEMP/predecessor-receipt-b.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: feedback-predecessor-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/predecessor-input-a.json
+            ${{ runner.temp }}/predecessor-receipt-a.json
+          if-no-files-found: error
+          retention-days: 30
