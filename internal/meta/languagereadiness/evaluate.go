@@ -36,8 +36,7 @@ func evaluate(raw []byte, proposalPromotionDigest string) (Snapshot, error) {
 func evaluateObligation(obligation Obligation, concepts []conceptEvidence, proposalPromotionDigest string) ObligationResult {
 	result := ObligationResult{Obligation: obligation}
 	if len(concepts) == 0 {
-		return ObligationResult{
-			Obligation: obligation, Status: "NOT_SATISFIED", Reason: "CONCEPT_NOT_REGISTERED"}
+		return ObligationResult{Obligation: obligation, Status: "NOT_SATISFIED", Reason: "CONCEPT_NOT_REGISTERED"}
 	}
 	if len(concepts) != 1 {
 		result.Status, result.Reason = "UNRESOLVED", "CONCEPT_EVIDENCE_NOT_UNIQUE"
