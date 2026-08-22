@@ -9,15 +9,23 @@ func Compare(before, after Report) (BindingTransition, error) {
 	if err := Validate(after, after.HeadSHA); err != nil {
 		return BindingTransition{}, fmt.Errorf("after binding invalid: %w", err)
 	}
-	result := BindingTransition{Schema: BindingTransitionSchema,
-		Decision: "LOWER_RESOLUTION", Reason: "BINDINGS_NOT_COMPARABLE",
-		RegistryDigest: before.RegistryDigest, BeforeHeadSHA: before.HeadSHA,
-		AfterHeadSHA: after.HeadSHA, Total: before.Summary.Total,
-		BeforeStatic: before.Summary.StaticLiteral, AfterStatic: after.Summary.StaticLiteral,
-		BeforeDynamic: before.Summary.DynamicInput, AfterDynamic: after.Summary.DynamicInput,
-		BeforeBPS: before.Summary.DynamicBPS, AfterBPS: after.Summary.DynamicBPS,
-		Unknown: before.Summary.Unknown + after.Summary.Unknown,
-		RepositoryWrites: before.RepositoryWrites + after.RepositoryWrites}
+	result := BindingTransition{
+		Schema:           BindingTransitionSchema,
+		Decision:         "LOWER_RESOLUTION",
+		Reason:           "BINDINGS_NOT_COMPARABLE",
+		RegistryDigest:   before.RegistryDigest,
+		BeforeHeadSHA:    before.HeadSHA,
+		AfterHeadSHA:     after.HeadSHA,
+		Total:            before.Summary.Total,
+		BeforeStatic:     before.Summary.StaticLiteral,
+		AfterStatic:      after.Summary.StaticLiteral,
+		BeforeDynamic:    before.Summary.DynamicInput,
+		AfterDynamic:     after.Summary.DynamicInput,
+		BeforeBPS:        before.Summary.DynamicBPS,
+		AfterBPS:         after.Summary.DynamicBPS,
+		Unknown:          before.Summary.Unknown + after.Summary.Unknown,
+		RepositoryWrites: before.RepositoryWrites + after.RepositoryWrites,
+	}
 	if before.RegistryDigest == after.RegistryDigest && before.Summary.Total == after.Summary.Total {
 		result.Comparable = true
 		result.StaticDelta = result.AfterStatic - result.BeforeStatic

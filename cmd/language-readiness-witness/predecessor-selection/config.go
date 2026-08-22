@@ -3,8 +3,16 @@ package main
 import "flag"
 
 type config struct {
-	root, repository, currentHead, predecessor, branch, workflow string
-	baseline, reference, bindingBaseline, receipt string
+	root            string
+	repository      string
+	currentHead     string
+	predecessor     string
+	branch          string
+	workflow        string
+	baseline        string
+	reference       string
+	bindingBaseline string
+	receipt         string
 }
 
 func parseConfig() config {

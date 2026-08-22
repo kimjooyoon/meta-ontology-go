@@ -20,10 +20,10 @@ type Candidate struct {
 	ReadinessArtifactID     int64  `json:"readiness_artifact_id"`
 	ReadinessArtifactName   string `json:"readiness_artifact_name"`
 	ReadinessExpired        bool   `json:"readiness_expired"`
-	ReadinessPayloadBase64  string `json:"readiness_payload_base64,omitempty"`
+	ReadinessPayloadBase64 string `json:"readiness_payload_base64,omitempty"`
 	BindingArtifactID       int64  `json:"binding_artifact_id"`
 	BindingArtifactName     string `json:"binding_artifact_name"`
 	BindingExpired          bool   `json:"binding_expired"`
-	BindingPayloadBase64    string `json:"binding_payload_base64,omitempty"`
+	BindingPayloadBase64   string `json:"binding_payload_base64,omitempty"`
 	RepositoryWrites        int    `json:"repository_writes"`
 }

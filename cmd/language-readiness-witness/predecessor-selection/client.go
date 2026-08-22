@@ -12,13 +12,16 @@ import (
 
 type githubClient struct {
 	baseURL string
-	token string
-	client *http.Client
+	token   string
+	client  *http.Client
 }
 
 func newGitHubClient(baseURL, token string) *githubClient {
-	return &githubClient{baseURL: strings.TrimRight(baseURL, "/"), token: token,
-		client: &http.Client{Timeout: 30 * time.Second}}
+	return &githubClient{
+		baseURL: strings.TrimRight(baseURL, "/"),
+		token:   token,
+		client:  &http.Client{Timeout: 30 * time.Second},
+	}
 }
 
 func (client *githubClient) getJSON(ctx context.Context, endpoint string, output any) error {

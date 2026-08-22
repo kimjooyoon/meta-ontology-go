@@ -32,14 +32,23 @@ func bindCandidate(candidate Candidate) (Selection, []byte, []byte, error) {
 	}
 	summary := readiness.Snapshot.Summary
 	reference := readinessartifact.FoundationBaseline(readinessartifact.BaselineReference{
-		RunID: candidate.RunID, ArtifactName: candidate.ReadinessArtifactName,
-		HeadSHA: candidate.HeadSHA, FileSHA256: digestBytes(readinessRaw),
-		ArtifactDigest: readiness.ArtifactDigest, SnapshotDigest: readiness.Snapshot.Digest,
-		RegistryDigest: readiness.Snapshot.RegistryDigest, Completed: summary.Completed,
-		Total: summary.Total, BasisPoints: summary.ReadinessBPS,
+		RunID:          candidate.RunID,
+		ArtifactName:   candidate.ReadinessArtifactName,
+		HeadSHA:        candidate.HeadSHA,
+		FileSHA256:     digestBytes(readinessRaw),
+		ArtifactDigest: readiness.ArtifactDigest,
+		SnapshotDigest: readiness.Snapshot.Digest,
+		RegistryDigest: readiness.Snapshot.RegistryDigest,
+		Completed:      summary.Completed,
+		Total:          summary.Total,
+		BasisPoints:    summary.ReadinessBPS,
 	})
-	return Selection{RunID: candidate.RunID, RunAttempt: candidate.RunAttempt,
+	return Selection{
+		RunID:                 candidate.RunID,
+		RunAttempt:            candidate.RunAttempt,
 		ReadinessArtifactID: candidate.ReadinessArtifactID,
-		BindingArtifactID: candidate.BindingArtifactID, Baseline: reference},
+		BindingArtifactID:   candidate.BindingArtifactID,
+		Baseline:            reference,
+	},
 		readinessRaw, bindingRaw, nil
 }

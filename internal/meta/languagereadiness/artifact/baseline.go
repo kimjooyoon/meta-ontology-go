@@ -20,8 +20,8 @@ type BaselineReference struct {
 
 func FoundationBaseline(selected BaselineReference) BaselineReference {
 	result := BaselineReference{
-		Schema:   BaselineReferenceSchema,
-		Workflow: "Transformation effect ledger",
+		Schema:         BaselineReferenceSchema,
+		Workflow:       "Transformation effect ledger",
 		RunID:          selected.RunID,
 		ArtifactName:   selected.ArtifactName,
 		HeadSHA:        selected.HeadSHA,

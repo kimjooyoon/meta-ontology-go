@@ -17,9 +17,13 @@ func writeResult(cfg config, result predecessorselection.Result) error {
 	}
 	outputs := []struct {
 		path string
-		raw []byte
-	}{{cfg.baseline, result.BaselineRaw}, {cfg.reference, referenceRaw},
-		{cfg.bindingBaseline, result.BindingRaw}, {cfg.receipt, reportRaw}}
+		raw  []byte
+	}{
+		{cfg.baseline, result.BaselineRaw},
+		{cfg.reference, referenceRaw},
+		{cfg.bindingBaseline, result.BindingRaw},
+		{cfg.receipt, reportRaw},
+	}
 	for _, output := range outputs {
 		if err := writeExclusive(output.path, output.raw); err != nil {
 			return err
