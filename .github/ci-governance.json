@@ -849,6 +849,15 @@
       ]
     },
     {
+      "branch": "agent/feedback-semantic-witness-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/feedback-payload-envelope-v27",
       "paths": [
         ".github/agent-scope-table.md",
