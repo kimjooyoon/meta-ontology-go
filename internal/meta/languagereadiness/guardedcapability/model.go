@@ -8,7 +8,7 @@ type Source struct {
 	ArtifactID            int64                   `json:"foundation_artifact_id"`
 	ArtifactDigest        string                  `json:"foundation_artifact_digest"`
 	ReportFileSHA         string                  `json:"foundation_report_file_sha256"`
-	FoundationReport     guardedpromotion.Report `json:"foundation_report"`
+	FoundationReport      guardedpromotion.Report `json:"foundation_report"`
 	AncestryObserved      bool                    `json:"ancestry_observed"`
 	FoundationAncestor    bool                    `json:"foundation_ancestor"`
 	GuardTreesObserved    bool                    `json:"guard_trees_observed"`
@@ -22,26 +22,26 @@ type Source struct {
 }
 
 type Summary struct {
-	Satisfied             int  `json:"satisfied"`
-	Total                 int  `json:"total"`
-	NotSatisfied          int  `json:"not_satisfied"`
-	Unresolved            int  `json:"unresolved"`
-	ReadinessBPS          int  `json:"readiness_bps"`
-	FoundationReceipts    int  `json:"foundation_receipts"`
-	EquivalentTrees       int  `json:"equivalent_implementation_trees"`
-	RepositoryWrites      int  `json:"repository_writes"`
-	MutationAuthorized    bool `json:"repository_mutation_authorized"`
+	Satisfied          int  `json:"satisfied"`
+	Total              int  `json:"total"`
+	NotSatisfied       int  `json:"not_satisfied"`
+	Unresolved         int  `json:"unresolved"`
+	ReadinessBPS       int  `json:"readiness_bps"`
+	FoundationReceipts int  `json:"foundation_receipts"`
+	EquivalentTrees    int  `json:"equivalent_implementation_trees"`
+	RepositoryWrites   int  `json:"repository_writes"`
+	MutationAuthorized bool `json:"repository_mutation_authorized"`
 }
 
 type Receipt struct {
-	Schema       string                       `json:"schema"`
-	Decision     string                       `json:"decision"`
-	Reason       string                       `json:"reason"`
-	Resolution   string                       `json:"resolution"`
-	Source       Source                       `json:"source"`
-	Summary      Summary                      `json:"summary"`
+	Schema       string                        `json:"schema"`
+	Decision     string                        `json:"decision"`
+	Reason       string                        `json:"reason"`
+	Resolution   string                        `json:"resolution"`
+	Source       Source                        `json:"source"`
+	Summary      Summary                       `json:"summary"`
 	Coordinates  []guardedpromotion.Coordinate `json:"coordinates"`
 	Indicators   []guardedpromotion.Indicator  `json:"indicators"`
 	Proofs       []guardedpromotion.Proof      `json:"proofs"`
-	ReportDigest string                       `json:"report_digest"`
+	ReportDigest string                        `json:"report_digest"`
 }

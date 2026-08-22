@@ -19,7 +19,7 @@ func indicators(source Source, summary Summary, coordinates []guardedpromotion.C
 func metric(id, class, proof string, value, target int) guardedpromotion.Indicator {
 	return guardedpromotion.Indicator{
 		MetricID: "gooo.metric.language.guarded-capability-" + id + ".v1",
-		Class: class, ProofChoice: proof,
+		Class:    class, ProofChoice: proof,
 		Producer: "internal/meta/languagereadiness/guardedcapability",
 		Consumer: "language-readiness", MetaOperation: "bind-guarded-capability-foundation",
 		Value: value, Target: target, Satisfied: value == target,
