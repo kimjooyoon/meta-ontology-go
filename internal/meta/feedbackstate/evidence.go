@@ -7,17 +7,17 @@ import (
 )
 
 type Indicator struct {
-	MetricID     string `json:"metric_id"`
-	Class        string `json:"class"`
-	Target       int    `json:"target"`
-	Unit         string `json:"unit"`
-	Relation     string `json:"relation"`
-	ProofChoice  string `json:"proof_choice"`
-	Producer     string `json:"producer"`
-	Consumer     string `json:"consumer"`
+	MetricID      string `json:"metric_id"`
+	Class         string `json:"class"`
+	Target        int    `json:"target"`
+	Unit          string `json:"unit"`
+	Relation      string `json:"relation"`
+	ProofChoice   string `json:"proof_choice"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
 	MetaOperation string `json:"meta_operation"`
-	Value        int    `json:"value"`
-	Satisfied    bool   `json:"satisfied"`
+	Value         int    `json:"value"`
+	Satisfied     bool   `json:"satisfied"`
 }
 
 type Proof struct {
@@ -47,7 +47,9 @@ func finish(report Report, observed observation) Report {
 
 func proof(choice, operation string, satisfied bool) Proof {
 	state := "0"
-	if satisfied { state = "10000" }
+	if satisfied {
+		state = "10000"
+	}
 	value := choice + "|" + operation + "|" + state
 	return Proof{choice, operation, satisfied, digest(value)}
 }
@@ -63,6 +65,8 @@ func bytesDigest(value []byte) string {
 }
 
 func boolBPS(value bool) int {
-	if value { return 10000 }
+	if value {
+		return 10000
+	}
 	return 0
 }

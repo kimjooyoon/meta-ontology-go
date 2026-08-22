@@ -29,13 +29,23 @@ func Evaluate(input Input) Report {
 }
 
 func failureReason(input Input, receipt archivedReceipt, observed observation, semanticReason string) string {
-	if !observed.identity { return "PREDECESSOR_RECEIPT_IDENTITY_MISMATCH" }
+	if !observed.identity {
+		return "PREDECESSOR_RECEIPT_IDENTITY_MISMATCH"
+	}
 	if input.Selection.ReceiptDigest == "" || input.Selection.ReceiptDigest != receipt.ReceiptDigest {
 		return "PREDECESSOR_RECEIPT_BINDING_MISMATCH"
 	}
-	if !observed.payload { return "PREDECESSOR_PAYLOAD_DIGEST_MISMATCH" }
-	if !observed.replay { return "PREDECESSOR_REPLAY_UNVERIFIED" }
-	if observed.writes != 0 { return "PREDECESSOR_WRITE_EFFECT" }
-	if !observed.semantic { return semanticReason }
+	if !observed.payload {
+		return "PREDECESSOR_PAYLOAD_DIGEST_MISMATCH"
+	}
+	if !observed.replay {
+		return "PREDECESSOR_REPLAY_UNVERIFIED"
+	}
+	if observed.writes != 0 {
+		return "PREDECESSOR_WRITE_EFFECT"
+	}
+	if !observed.semantic {
+		return semanticReason
+	}
 	return ""
 }

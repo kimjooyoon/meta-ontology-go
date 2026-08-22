@@ -5,7 +5,7 @@ import "testing"
 func TestSemanticUseCases(t *testing.T) {
 	tests := []struct {
 		name, decision, source, from, to, wantDecision, wantReason, wantSnapshot string
-		previous, descents                                                     int
+		previous, descents                                                       int
 	}{
 		{"fixed point", decisionFixed, decisionFixed, "exact_operation", "exact_operation", "READY", "PREDECESSOR_SEMANTIC_SNAPSHOT_READY", decisionFixed, 0, 0},
 		{"improvement", decisionImprove, decisionImprove, "exact_operation", "exact_operation", "READY", "PREDECESSOR_SEMANTIC_SNAPSHOT_READY", decisionImprove, 0, 0},
@@ -34,8 +34,12 @@ func TestSemanticUseCases(t *testing.T) {
 func TestBindingAndWriteEffectsFailClosed(t *testing.T) {
 	input := fixture(decisionFixed, decisionFixed, "exact_operation", "exact_operation", 0, 0)
 	input.PayloadDigest = "sha256:wrong"
-	if report := Evaluate(input); report.Reason != "PREDECESSOR_PAYLOAD_DIGEST_MISMATCH" { t.Fatal(report.Reason) }
+	if report := Evaluate(input); report.Reason != "PREDECESSOR_PAYLOAD_DIGEST_MISMATCH" {
+		t.Fatal(report.Reason)
+	}
 	input = fixture(decisionFixed, decisionFixed, "exact_operation", "exact_operation", 0, 0)
 	input.RepositoryWrites = 1
-	if report := Evaluate(input); report.Reason != "PREDECESSOR_WRITE_EFFECT" { t.Fatal(report.Reason) }
+	if report := Evaluate(input); report.Reason != "PREDECESSOR_WRITE_EFFECT" {
+		t.Fatal(report.Reason)
+	}
 }

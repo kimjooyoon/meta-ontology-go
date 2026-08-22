@@ -1,10 +1,10 @@
 package feedbackstate
 
 const (
-	decisionFixed = "FIXED_POINT"
+	decisionFixed   = "FIXED_POINT"
 	decisionImprove = "IMPROVE"
-	decisionLower = "LOWER_RESOLUTION"
-	decisionClosed = "FAIL_CLOSED"
+	decisionLower   = "LOWER_RESOLUTION"
+	decisionClosed  = "FAIL_CLOSED"
 )
 
 type semanticResult struct {
@@ -30,12 +30,16 @@ func resolve(report archivedReport, receiptDigest string) semanticResult {
 	switch report.Decision {
 	case decisionFixed:
 		valid := report.SourceDecision == decisionFixed && report.Feedback.Decision == decisionFixed && same
-		if !valid { return semanticResult{snapshot, false, "FALSE_FIXED_POINT_REJECTED", 1} }
+		if !valid {
+			return semanticResult{snapshot, false, "FALSE_FIXED_POINT_REJECTED", 1}
+		}
 		snapshot.NextOperation = "none"
 		return semanticResult{snapshot: snapshot, valid: true}
 	case decisionImprove:
 		valid := report.SourceDecision == decisionImprove && report.Feedback.Decision == decisionImprove && same && snapshot.NextOperation != ""
-		if !valid { return semanticResult{snapshot, false, "IMPROVEMENT_OPERATION_UNBOUND", 0} }
+		if !valid {
+			return semanticResult{snapshot, false, "IMPROVEMENT_OPERATION_UNBOUND", 0}
+		}
 		return semanticResult{snapshot: snapshot, valid: true}
 	case decisionLower, decisionClosed:
 		return resolveFailure(snapshot, report)
@@ -48,7 +52,9 @@ func resolveFailure(snapshot Snapshot, report archivedReport) semanticResult {
 	from, fromOK := resolutionIndex(report.FromResolution)
 	to, toOK := resolutionIndex(report.ToResolution)
 	boundFailure := report.SourceDecision == decisionClosed && report.Feedback.Decision == decisionClosed
-	if !boundFailure { return semanticResult{snapshot, false, "FAILURE_DECISION_UNBOUND", 0} }
+	if !boundFailure {
+		return semanticResult{snapshot, false, "FAILURE_DECISION_UNBOUND", 0}
+	}
 	if fromOK && toOK && to == from+1 && report.PreviousDescents == from && report.Descents == to {
 		snapshot.Decision = decisionLower
 		snapshot.NextOperation = "re-evaluate-at-" + report.ToResolution
@@ -63,7 +69,9 @@ func resolveFailure(snapshot Snapshot, report archivedReport) semanticResult {
 
 func resolutionIndex(value string) (int, bool) {
 	for index, candidate := range []string{"exact_operation", "operation_class", "invariant_only"} {
-		if value == candidate { return index, true }
+		if value == candidate {
+			return index, true
+		}
 	}
 	return 0, false
 }

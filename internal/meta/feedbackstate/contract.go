@@ -3,8 +3,8 @@ package feedbackstate
 import "encoding/json"
 
 const (
-	ReportSchema   = "gooo/meta-feedback-semantic-snapshot/v1"
-	ReceiptSchema  = "gooo/meta-artifact-feedback-resolution-receipt/v1"
+	ReportSchema     = "gooo/meta-feedback-semantic-snapshot/v1"
+	ReceiptSchema    = "gooo/meta-artifact-feedback-resolution-receipt/v1"
 	ResolutionSchema = "gooo/meta-artifact-feedback-resolution/v1"
 )
 
