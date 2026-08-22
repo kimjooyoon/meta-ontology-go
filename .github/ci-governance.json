@@ -842,6 +842,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        "bootstrap/function-extractor/recipes.json",
         "examples/language-concept-catalog/**",
         "internal/meta/languageconcept/**",
         "internal/verify/scope_part01.go"
