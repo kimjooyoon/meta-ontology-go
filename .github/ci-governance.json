@@ -849,6 +849,21 @@
       ]
     },
     {
+      "branch": "agent/feedback-semantic-consumer-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "cmd/feedback-semantic-state-witness/**",
+        "examples/feedback-semantic-cycle/**",
+        "internal/meta/feedbackpredecessor/**",
+        "internal/meta/feedbackstate/**",
+        "internal/meta/languageconcept/**",
+        "internal/verify/scope_part01.go",
+        "scripts/feedback-predecessor-ci/**"
+      ]
+    },
+    {
       "branch": "agent/semantic-resolution-schema-v23",
       "paths": [
         ".github/agent-scope-table.md",

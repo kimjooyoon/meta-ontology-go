@@ -1171,11 +1171,32 @@ jobs:
               --check
           done
           cmp "$RUNNER_TEMP/predecessor-receipt-a.json" "$RUNNER_TEMP/predecessor-receipt-b.json"
+      - name: Consume deterministic predecessor semantic state
+        run: |
+          for suffix in a b; do
+            go run ./cmd/feedback-semantic-state-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --input "$RUNNER_TEMP/predecessor-input-a.json" \
+              --predecessor-receipt "$RUNNER_TEMP/predecessor-receipt-a.json" \
+              --report "$RUNNER_TEMP/predecessor-semantic-$suffix.json" \
+              --check
+          done
+          cmp "$RUNNER_TEMP/predecessor-semantic-a.json" "$RUNNER_TEMP/predecessor-semantic-b.json"
+          jq -r '"### Predecessor semantic state\n- decision: \(.report.decision) (\(.report.reason))\n- next: \(.report.snapshot.next_operation)\n- replay verified: \(.replay_verified)\n- receipt digest: \(.receipt_digest)"' "$RUNNER_TEMP/predecessor-semantic-a.json" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v6
         with:
           name: feedback-predecessor-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: |
             ${{ runner.temp }}/predecessor-input-a.json
             ${{ runner.temp }}/predecessor-receipt-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v6
+        with:
+          name: feedback-semantic-state-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/predecessor-input-a.json
+            ${{ runner.temp }}/predecessor-receipt-a.json
+            ${{ runner.temp }}/predecessor-semantic-a.json
           if-no-files-found: error
           retention-days: 30

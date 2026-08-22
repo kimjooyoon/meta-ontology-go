@@ -10,10 +10,10 @@ import (
 
 const receiptLimit = 1 << 20
 
-func decodeReceipt(archive []byte) archivedReceipt {
+func decodeReceipt(archive []byte) decodedReceipt {
 	reader, err := zip.NewReader(bytes.NewReader(archive), int64(len(archive)))
 	if err != nil {
-		return archivedReceipt{}
+		return decodedReceipt{}
 	}
 	for _, file := range reader.File {
 		if path.Base(file.Name) != "artifact-feedback-resolution-receipt.json" ||
@@ -22,18 +22,18 @@ func decodeReceipt(archive []byte) archivedReceipt {
 		}
 		input, err := file.Open()
 		if err != nil {
-			return archivedReceipt{}
+			return decodedReceipt{}
 		}
 		data, readErr := io.ReadAll(io.LimitReader(input, receiptLimit+1))
 		closeErr := input.Close()
 		if readErr != nil || closeErr != nil || len(data) > receiptLimit {
-			return archivedReceipt{}
+			return decodedReceipt{}
 		}
 		var receipt archivedReceipt
 		if json.Unmarshal(data, &receipt) != nil {
-			return archivedReceipt{}
+			return decodedReceipt{}
 		}
-		return receipt
+		return decodedReceipt{Receipt: receipt, Payload: data}
 	}
-	return archivedReceipt{}
+	return decodedReceipt{}
 }

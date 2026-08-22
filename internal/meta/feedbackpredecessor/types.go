@@ -12,6 +12,8 @@ type Candidate struct {
 	Conclusion       string `json:"conclusion"`
 	Expired          bool   `json:"expired"`
 	ReceiptDigest    string `json:"receipt_digest"`
+	PayloadDigest    string `json:"payload_digest,omitempty"`
+	ReceiptPayload   string `json:"receipt_payload_base64,omitempty"`
 	RepositoryWrites int    `json:"repository_writes"`
 }
 

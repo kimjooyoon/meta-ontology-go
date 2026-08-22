@@ -43,21 +43,22 @@ func collect(ctx context.Context, client *githubClient, cfg config) (collection,
 			if artifact.Name != expectedName {
 				continue
 			}
-			receipt := archivedReceipt{}
+			decoded := decodedReceipt{}
 			if !artifact.Expired && run.Conclusion == "success" {
 				archive, err := client.get(ctx, fmt.Sprintf(
 					"/repos/%s/actions/artifacts/%d/zip", cfg.repository, artifact.ID))
 				if err != nil {
 					return collection{}, err
 				}
-				receipt = decodeReceipt(archive)
+				decoded = decodeReceipt(archive)
 			}
 			input.Candidates = append(input.Candidates, feedbackpredecessor.Candidate{
 				ArtifactID: artifact.ID, RunID: run.ID, RunAttempt: run.RunAttempt,
 				ArtifactName: artifact.Name, HeadSHA: run.HeadSHA, HeadBranch: run.HeadBranch,
 				Workflow: run.Name, Event: run.Event, Conclusion: run.Conclusion,
-				Expired: artifact.Expired, ReceiptDigest: receipt.ReceiptDigest,
-				RepositoryWrites: receipt.RepositoryWrites,
+				Expired: artifact.Expired, ReceiptDigest: decoded.Receipt.ReceiptDigest,
+				PayloadDigest: decoded.payloadDigest(), ReceiptPayload: decoded.payloadBase64(),
+				RepositoryWrites: decoded.Receipt.RepositoryWrites,
 			})
 		}
 	}
