@@ -50,12 +50,15 @@ func feedbackDecision(coverageDecision, selected string, summary Summary) (strin
 		return "FAIL_CLOSED", "FEEDBACK_INPUT_STALE", ""
 	case summary.RepositoryWrites != 0:
 		return "FAIL_CLOSED", "FEEDBACK_WRITE_EFFECT", ""
-	case summary.BoundInputs != summary.RequiredInputs:
-		return "FAIL_CLOSED", "FEEDBACK_INPUT_UNBOUND", ""
 	case summary.ReplayBoundInputs != summary.RequiredInputs:
 		return "FAIL_CLOSED", "FEEDBACK_REPLAY_UNBOUND", ""
 	case summary.AmbiguousNextOperations != 0:
 		return "FAIL_CLOSED", "FEEDBACK_NEXT_OPERATION_AMBIGUOUS", ""
+	case unknownCoverageDecision(coverageDecision) &&
+		(summary.RequiredInputs == 0 || summary.BoundInputs == summary.RequiredInputs-1):
+		return "FAIL_CLOSED", "FEEDBACK_COVERAGE_DECISION_UNKNOWN", ""
+	case summary.BoundInputs != summary.RequiredInputs:
+		return "FAIL_CLOSED", "FEEDBACK_INPUT_UNBOUND", ""
 	case coverageDecision == "IMPROVE":
 		return "IMPROVE", "NEXT_META_OPERATION_SELECTED", selected
 	case coverageDecision == "FIXED_POINT":
@@ -63,4 +66,8 @@ func feedbackDecision(coverageDecision, selected string, summary Summary) (strin
 	default:
 		return "FAIL_CLOSED", "FEEDBACK_COVERAGE_DECISION_UNKNOWN", ""
 	}
+}
+
+func unknownCoverageDecision(decision string) bool {
+	return decision != "IMPROVE" && decision != "FIXED_POINT"
 }
