@@ -19,6 +19,9 @@ func canonicalExecutors() []Executor {
 	result = append(result, Executor{Operation: "bind-indicator-meta-program",
 		Activity: "BindIndicatorMetaProgram", ProofChoice: "coherence", Registry: "meta-binding",
 		Executor: "bootstrap/meta-binding-witness", Evaluator: "bootstrap/meta-binding-witness:check"})
+	result = append(result, Executor{Operation: "partition-directory",
+		Activity: "PartitionDirectory", ProofChoice: "foundation", Registry: "source-policy",
+		Executor: "cmd/directory-partition-witness", Evaluator: "cmd/directory-partition-witness:check"})
 	sort.Slice(result, func(left, right int) bool {
 		return result[left].Operation < result[right].Operation
 	})

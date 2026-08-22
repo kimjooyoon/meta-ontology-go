@@ -755,6 +755,7 @@
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         "cmd/directory-partition-witness/**",
+        "internal/meta/actionability/**",
         "internal/meta/directorypartition/**",
         "internal/meta/metabinding/registry.go",
         "internal/verify/scope_part01.go"
