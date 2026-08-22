@@ -13,7 +13,7 @@ func resolveAncestry(ctx context.Context, client *githubClient, cfg config,
 	attempts := make([]predecessorresolution.Attempt, 0,
 		predecessorresolution.SearchLimit)
 	ancestor := immediate
-	for depth := 0; depth < predecessorresolution.SearchLimit; depth++ {
+	for depth := range predecessorresolution.SearchLimit {
 		result, err := selectAncestor(ctx, client, cfg, ancestor)
 		if err != nil {
 			return predecessorselection.Result{}, predecessorresolution.Report{}, err
