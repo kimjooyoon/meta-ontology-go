@@ -234,6 +234,13 @@ jobs:
           go run ./scripts/meta-provenance -plan "$METRICS_DIR/self-improvement-plan.json" -execution "$METRICS_DIR/self-improvement-execution.json" -receipts "$METRICS_DIR/self-improvement-receipts.json" -output "$METRICS_DIR/self-improvement-provenance.json"
           go run ./scripts/meta-provenance -plan "$METRICS_DIR/self-improvement-plan.json" -execution "$METRICS_DIR/self-improvement-execution.json" -receipts "$METRICS_DIR/self-improvement-receipts.json" -output "$METRICS_DIR/self-improvement-provenance-replay.json"
           cmp -s "$METRICS_DIR/self-improvement-provenance.json" "$METRICS_DIR/self-improvement-provenance-replay.json"
+          go run ./scripts/artifact-feedback-resolution-ci -root "$GITHUB_WORKSPACE" -coverage "$METRICS_DIR/operation-artifact/report-1.json" -provenance "$METRICS_DIR/self-improvement-provenance.json" -output "$METRICS_DIR/artifact-feedback-resolution-input.json"
+          go run ./scripts/artifact-feedback-resolution-ci -root "$GITHUB_WORKSPACE" -coverage "$METRICS_DIR/operation-artifact/report-1.json" -provenance "$METRICS_DIR/self-improvement-provenance.json" -output "$METRICS_DIR/artifact-feedback-resolution-input-replay.json"
+          cmp -s "$METRICS_DIR/artifact-feedback-resolution-input.json" "$METRICS_DIR/artifact-feedback-resolution-input-replay.json"
+          go run ./cmd/artifact-feedback-resolution-witness -root "$GITHUB_WORKSPACE" -input "$METRICS_DIR/artifact-feedback-resolution-input.json" -report "$METRICS_DIR/artifact-feedback-resolution-receipt.json" -check
+          go run ./cmd/artifact-feedback-resolution-witness -root "$GITHUB_WORKSPACE" -input "$METRICS_DIR/artifact-feedback-resolution-input.json" -report "$METRICS_DIR/artifact-feedback-resolution-receipt-replay.json" -check
+          cmp -s "$METRICS_DIR/artifact-feedback-resolution-receipt.json" "$METRICS_DIR/artifact-feedback-resolution-receipt-replay.json"
+          jq -r '"### Artifact feedback resolution\n- decision: \(.report.decision) (\(.report.reason))\n- replay verified: \(.replay_verified)\n- receipt digest: \(.receipt_digest)"' "$METRICS_DIR/artifact-feedback-resolution-receipt.json" >> "$GITHUB_STEP_SUMMARY"
           go run ./scripts/source-splitter -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           go run ./bootstrap/source-repacker -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
           go run ./scripts/meta-summary \
@@ -321,6 +328,15 @@ jobs:
         with:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-provenance.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload artifact feedback resolution
+        uses: actions/upload-artifact@v6
+        with:
+          name: artifact-feedback-resolution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/source-metrics/artifact-feedback-resolution-input.json
+            ${{ runner.temp }}/source-metrics/artifact-feedback-resolution-receipt.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload CI summary indicator artifact
