@@ -10,4 +10,3 @@ func CanonicalOperations() []MetaOperation {
 		{ID: "preserve-read-only-feedback", Activity: "PreserveReadOnlyFeedback", ProofChoice: ProofFoundation},
 	}
 }
-

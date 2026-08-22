@@ -33,4 +33,3 @@ func TestMissingRegressionProofFailsClosed(t *testing.T) {
 		t.Fatal("missing regression proof was accepted")
 	}
 }
-

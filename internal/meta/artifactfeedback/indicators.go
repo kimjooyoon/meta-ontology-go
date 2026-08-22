@@ -19,11 +19,6 @@ func CanonicalIndicators() []Indicator {
 	}
 }
 
-func indicator(metric string, class IndicatorClass, target int, unit string, relation Relation,
-	proof ProofChoice, producer, consumer, operation, activity string,
-) Indicator {
-	return Indicator{MetricID: metric, Class: class, Target: target, Unit: unit,
-		Relation: relation, ProofChoice: proof, Producer: producer, Consumer: consumer,
-		MetaOperation: operation, Activity: activity}
+func indicator(metric string, class IndicatorClass, target int, unit string, relation Relation, proof ProofChoice, producer, consumer, operation, activity string) Indicator {
+	return Indicator{MetricID: metric, Class: class, Target: target, Unit: unit, Relation: relation, ProofChoice: proof, Producer: producer, Consumer: consumer, MetaOperation: operation, Activity: activity}
 }
-

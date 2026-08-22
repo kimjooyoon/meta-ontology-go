@@ -48,4 +48,3 @@ func Validate(program Program) error {
 func validProof(proof ProofChoice) bool {
 	return proof == ProofFoundation || proof == ProofCoherence || proof == ProofRegression
 }
-
