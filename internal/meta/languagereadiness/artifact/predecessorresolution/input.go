@@ -13,8 +13,8 @@ type Attempt struct {
 
 type Input struct {
 	Repository              string
-	CurrentHeadSHA           string
-	ImmediatePredecessorSHA  string
-	SearchLimit              int
-	Attempts                 []Attempt
+	CurrentHeadSHA          string
+	ImmediatePredecessorSHA string
+	SearchLimit             int
+	Attempts                []Attempt
 }

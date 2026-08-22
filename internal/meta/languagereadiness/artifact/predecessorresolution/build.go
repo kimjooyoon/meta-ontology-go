@@ -7,9 +7,9 @@ func Build(input Input) (Report, error) {
 		return Report{}, err
 	}
 	report := Report{Schema: Schema, Repository: input.Repository,
-		CurrentHeadSHA: input.CurrentHeadSHA,
+		CurrentHeadSHA:          input.CurrentHeadSHA,
 		ImmediatePredecessorSHA: input.ImmediatePredecessorSHA,
-		Decision: DecisionFailClosed, Reason: ReasonExhausted}
+		Decision:                DecisionFailClosed, Reason: ReasonExhausted}
 	report.Summary.SelectedDepth = -1
 	contiguous := true
 	for index, attempt := range input.Attempts {
@@ -48,9 +48,9 @@ func resolve(report *Report, attempt Attempt) {
 	report.Summary.SelectedAncestors = 1
 	report.Summary.SelectedDepth = attempt.Depth
 	report.Selected = &Resolution{Depth: attempt.Depth,
-		AncestorSHA: attempt.AncestorSHA,
+		AncestorSHA:     attempt.AncestorSHA,
 		SelectionDigest: attempt.Selection.Report.ReportDigest,
-		Baseline: selected.Baseline}
+		Baseline:        selected.Baseline}
 }
 
 func finalize(report *Report, contiguous bool) {

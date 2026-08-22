@@ -20,14 +20,14 @@ type Resolution struct {
 }
 
 type Summary struct {
-	ObservedAttempts    int `json:"observed_attempts"`
-	MissingAttempts     int `json:"missing_attempts"`
-	SelectedAncestors   int `json:"selected_ancestors"`
-	SelectedDepth       int `json:"selected_depth"`
-	SearchLimit         int `json:"search_limit"`
-	ValidCandidates     int `json:"valid_candidates"`
-	AmbiguousCandidates int `json:"ambiguous_candidates"`
-	RepositoryWrites    int `json:"repository_writes"`
+	ObservedAttempts     int `json:"observed_attempts"`
+	MissingAttempts      int `json:"missing_attempts"`
+	SelectedAncestors    int `json:"selected_ancestors"`
+	SelectedDepth        int `json:"selected_depth"`
+	SearchLimit          int `json:"search_limit"`
+	ValidCandidates      int `json:"valid_candidates"`
+	AmbiguousCandidates  int `json:"ambiguous_candidates"`
+	RepositoryWrites     int `json:"repository_writes"`
 	ReadinessDeltaClaims int `json:"readiness_delta_claims"`
 	CoordinatesCompleted int `json:"coordinates_completed"`
 	CoordinatesTotal     int `json:"coordinates_total"`
@@ -52,8 +52,8 @@ type Proof struct {
 type Report struct {
 	Schema                  string           `json:"schema"`
 	Repository              string           `json:"repository"`
-	CurrentHeadSHA           string           `json:"current_head_sha"`
-	ImmediatePredecessorSHA  string           `json:"immediate_predecessor_sha"`
+	CurrentHeadSHA          string           `json:"current_head_sha"`
+	ImmediatePredecessorSHA string           `json:"immediate_predecessor_sha"`
 	Decision                string           `json:"decision"`
 	Reason                  string           `json:"reason"`
 	BlockingSelectionReason string           `json:"blocking_selection_reason,omitempty"`
@@ -61,6 +61,6 @@ type Report struct {
 	Selected                *Resolution      `json:"selected,omitempty"`
 	Summary                 Summary          `json:"summary"`
 	Indicators              []Indicator      `json:"indicators"`
-	Proofs                   []Proof          `json:"proofs"`
-	ReportDigest             string           `json:"report_digest"`
+	Proofs                  []Proof          `json:"proofs"`
+	ReportDigest            string           `json:"report_digest"`
 }
