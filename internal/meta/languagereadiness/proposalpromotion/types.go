@@ -1,7 +1,7 @@
 package proposalpromotion
 
 const (
-	Schema             = "gooo/autonomous-change-proposal-promotion/v1"
+	Schema             = "gooo/autonomous-change-proposal-promotion/v2"
 	DecisionPass       = "PASS"
 	DecisionFailClosed = "FAIL_CLOSED"
 	ReasonReady        = "MERGED_CHANGE_PROPOSAL_PROMOTION_READY"

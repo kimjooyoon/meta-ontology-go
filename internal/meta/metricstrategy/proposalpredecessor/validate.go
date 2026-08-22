@@ -25,14 +25,19 @@ func Validate(report Report) error {
 	if report.Schema != Schema || report.Repository == "" || !validSHA(report.CurrentSubjectSHA) || !validSHA(report.PredecessorSHA) {
 		return fmt.Errorf("proposal predecessor report identity is invalid")
 	}
-	if report.Summary.RepositoryWrites != 0 || report.Summary.ValidCandidates < 0 || report.Summary.AmbiguousCandidates < 0 || report.Summary.UnresolvedCandidates < 0 || report.Summary.ProofsTotal != 5 {
+	if report.Summary.RepositoryWrites != 0 || report.Summary.ValidCandidates < 0 ||
+		report.Summary.AmbiguousCandidates < 0 || report.Summary.UnresolvedCandidates < 0 ||
+		report.Summary.ObservedJobs < 0 || report.Summary.ExactJobs < 0 ||
+		report.Summary.ProofsTotal != 5 {
 		return fmt.Errorf("proposal predecessor summary is invalid")
 	}
 	ready := report.Decision == "SELECTED" && report.Reason == "PROPOSAL_PREDECESSOR_SELECTED"
 	if ready != (report.Selected != nil) || ready != (report.Summary.SelectionBPS == 10000) || ready != (report.Summary.ProofsPassed == 5) {
 		return fmt.Errorf("proposal predecessor decision diverged")
 	}
-	if ready && (!candidateSelectedReady(*report.Selected, report.PredecessorSHA) || report.Summary.ValidCandidates != 1 || report.Summary.AmbiguousCandidates != 0 || report.Summary.UnresolvedCandidates != 0) {
+	if ready && (!candidateSelectedReady(*report.Selected, report.PredecessorSHA) ||
+		report.Summary.ExactJobs != 1 || report.Summary.ValidCandidates != 1 ||
+		report.Summary.AmbiguousCandidates != 0 || report.Summary.UnresolvedCandidates != 0) {
 		return fmt.Errorf("proposal predecessor selected evidence diverged")
 	}
 	if !reflect.DeepEqual(report.Indicators, buildIndicators(report.Summary)) {

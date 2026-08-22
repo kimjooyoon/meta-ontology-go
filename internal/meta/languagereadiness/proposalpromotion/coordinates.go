@@ -11,17 +11,22 @@ func buildCoordinates(currentHead, evidenceHead string, source Source) []Coordin
 				contract.SubjectSHA == evidenceHead,
 			[]string{selection.PredecessorSHA, selection.HeadSHA,
 				contract.SubjectSHA, evidenceHead}),
-		coordinate("canonical-push-workflow", "COHERENCE",
+		coordinate("canonical-push-synthesis", "COHERENCE",
 			selection.Event == "push" && selection.Status == "completed" &&
-				selection.Conclusion == "success" &&
 				selection.WorkflowName == "Metric counterfactual conformance" &&
+				selection.SynthesisJobID > 0 && selection.SynthesisJobName == "strategy" &&
+				selection.SynthesisJobStatus == "completed" &&
+				selection.SynthesisJobConclusion == "success" &&
 				selection.ArtifactName == "metric-strategy-"+evidenceHead,
 			[]any{selection.Event, selection.Status, selection.Conclusion,
-				selection.WorkflowName, selection.ArtifactName}),
+				selection.WorkflowName, selection.SynthesisJobID, selection.SynthesisJobName,
+				selection.SynthesisJobStatus, selection.SynthesisJobConclusion,
+				selection.ArtifactName}),
 		coordinate("unique-canonical-artifact", "REGRESSION",
-			selection.ExactRuns == 1 && selection.ExactArtifacts == 1 &&
+			selection.ExactRuns == 1 && selection.ExactJobs == 1 &&
+				selection.ExactArtifacts == 1 &&
 				selection.ValidCandidates == 1 && selection.AmbiguousCandidates == 0,
-			[]int{selection.ExactRuns, selection.ExactArtifacts,
+			[]int{selection.ExactRuns, selection.ExactJobs, selection.ExactArtifacts,
 				selection.ValidCandidates, selection.AmbiguousCandidates}),
 		coordinate("ready-proposal-contract", "COHERENCE",
 			contract.Decision == "PASS" && contract.Satisfied == 8 &&

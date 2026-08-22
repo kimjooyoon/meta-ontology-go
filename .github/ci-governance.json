@@ -1095,6 +1095,18 @@
         "internal/meta/languagereadiness/guardedpromotion/**",
         "internal/verify/scope_language_readiness.go"
       ]
+    },
+    {
+      "branch": "agent/readiness-squash-predecessor",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "docs/language/proposal-synthesis-continuity.md",
+        "internal/meta/languagereadiness/proposalpromotion/**",
+        "internal/meta/metricstrategy/proposalpredecessor/**",
+        "internal/verify/scope_language_readiness.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
