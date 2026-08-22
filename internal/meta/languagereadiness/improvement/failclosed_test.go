@@ -4,7 +4,7 @@ import "testing"
 
 func TestEvaluateFailsClosedWithoutInference(t *testing.T) {
 	cases := []struct {
-		name	 string
+		name   string
 		reason string
 		mutate func(*Snapshot)
 	}{

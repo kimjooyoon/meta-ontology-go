@@ -7,17 +7,17 @@ import (
 )
 
 const (
-	SnapshotSchema		= "gooo/language-readiness-snapshot/v1"
-	TransitionSchema	= "gooo/quantified-improvement-transition/v1"
-	SnapshotTotal			= int64(24)
+	SnapshotSchema   = "gooo/language-readiness-snapshot/v1"
+	TransitionSchema = "gooo/quantified-improvement-transition/v1"
+	SnapshotTotal    = int64(24)
 
-	Satisfied		 EvidenceStatus = "SATISFIED"
+	Satisfied    EvidenceStatus = "SATISFIED"
 	NotSatisfied EvidenceStatus = "NOT_SATISFIED"
-	Unresolved		 EvidenceStatus = "UNRESOLVED"
+	Unresolved   EvidenceStatus = "UNRESOLVED"
 
-	Improved			Decision = "IMPROVED"
-	NoChange			Decision = "NO_CHANGE"
-	Regressed			Decision = "REGRESSED"
+	Improved        Decision = "IMPROVED"
+	NoChange        Decision = "NO_CHANGE"
+	Regressed       Decision = "REGRESSED"
 	LowerResolution Decision = "LOWER_RESOLUTION"
 )
 
@@ -26,18 +26,18 @@ type EvidenceStatus string
 type Decision string
 
 type Evidence struct {
-	ID		string		 `json:"id"`
+	ID     string         `json:"id"`
 	Status EvidenceStatus `json:"status"`
 }
 
 // Snapshot excludes prose so only registered, replayable evidence can count.
 type Snapshot struct {
-	ContractSchema string		 `json:"contract_schema"`
-	RegistryDigest string		 `json:"registry_digest"`
-	Completed			int64			 `json:"completed"`
-	Total				int64			 `json:"total"`
-	BasisPoints		int64			 `json:"basis_points"`
-	Evidence			[]Evidence `json:"evidence"`
+	ContractSchema string     `json:"contract_schema"`
+	RegistryDigest string     `json:"registry_digest"`
+	Completed      int64      `json:"completed"`
+	Total          int64      `json:"total"`
+	BasisPoints    int64      `json:"basis_points"`
+	Evidence       []Evidence `json:"evidence"`
 }
 
 func validDigest(value string) bool {

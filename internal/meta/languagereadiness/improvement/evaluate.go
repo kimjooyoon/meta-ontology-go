@@ -21,17 +21,17 @@ func Evaluate(before, after Snapshot) Transition {
 
 func newTransition(before, after Snapshot) Transition {
 	return Transition{
-		Schema:			TransitionSchema,
-		Decision:		LowerResolution,
-		ReasonCode:		"SNAPSHOT_NOT_COMPARABLE",
-		ContractSchema:	before.ContractSchema,
-		RegistryDigest:	before.RegistryDigest,
-		BeforeCompleted:	before.Completed,
-		AfterCompleted:	after.Completed,
-		Total:			before.Total,
+		Schema:            TransitionSchema,
+		Decision:          LowerResolution,
+		ReasonCode:        "SNAPSHOT_NOT_COMPARABLE",
+		ContractSchema:    before.ContractSchema,
+		RegistryDigest:    before.RegistryDigest,
+		BeforeCompleted:   before.Completed,
+		AfterCompleted:    after.Completed,
+		Total:             before.Total,
 		BeforeBasisPoints: before.BasisPoints,
-		AfterBasisPoints:	after.BasisPoints,
-		Proofs:			proofs(false, false, false, false),
+		AfterBasisPoints:  after.BasisPoints,
+		Proofs:            proofs(false, false, false, false),
 	}
 }
 
