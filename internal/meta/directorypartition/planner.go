@@ -44,10 +44,7 @@ func makeCandidate(source SourceMetrics, target SourceIndicator) (Candidate, err
 	if len(entries) == 0 {
 		return Candidate{}, fmt.Errorf("%s has no direct entries to partition", target.Subject)
 	}
-	needed := (len(entries) + limit - 1) / limit
-	if needed < 1 {
-		needed = 1
-	}
+	needed := max((len(entries)+limit-1)/limit, 1)
 	buckets, status := needed, "REVIEW_REQUIRED"
 	if buckets > limit {
 		buckets, status = limit, "RECURSIVE_REVIEW_REQUIRED"

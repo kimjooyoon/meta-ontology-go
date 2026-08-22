@@ -2,13 +2,6 @@ package directorypartition
 
 import "fmt"
 
-type planCore struct {
-	Summary    Summary     `json:"summary"`
-	Indicators []Indicator `json:"indicators"`
-	Candidates []Candidate `json:"candidates"`
-	Proofs     []Proof     `json:"proofs"`
-}
-
 func Build(source SourceMetrics) (Report, error) {
 	if err := validateSource(source); err != nil {
 		return Report{}, err

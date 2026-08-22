@@ -17,3 +17,10 @@ type Move struct {
 	Kind        string `json:"kind"`
 	Bucket      int    `json:"bucket"`
 }
+
+type planCore struct {
+	Summary    Summary     `json:"summary"`
+	Indicators []Indicator `json:"indicators"`
+	Candidates []Candidate `json:"candidates"`
+	Proofs     []Proof     `json:"proofs"`
+}
