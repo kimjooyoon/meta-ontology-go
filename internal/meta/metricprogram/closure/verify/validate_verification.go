@@ -7,7 +7,7 @@ func validateVerification(program programDocument, verification verificationDocu
 		verification.SubjectSHA != program.SubjectSHA ||
 		verification.Status != "VERIFIED" ||
 		verification.RepositoryWorkspaceWrites || verification.PromotionAuthorized ||
-			verification.BindingCount != canonicalBindingCount || verification.OperationCount != 8 ||
+		verification.BindingCount != canonicalBindingCount || verification.OperationCount != 8 ||
 		verification.StepCount != 4 {
 		return fmt.Errorf("verification contract is invalid")
 	}

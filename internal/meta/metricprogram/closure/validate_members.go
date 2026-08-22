@@ -4,7 +4,7 @@ import "fmt"
 
 func validateProgramMembers(program programDocument) error {
 	if len(program.Operations) != 8 || len(program.Bindings) != canonicalBindingCount ||
-			len(program.Steps) != 4 {
+		len(program.Steps) != 4 {
 		return fmt.Errorf("program cardinality must be operations=8 bindings=30 steps=4")
 	}
 	operations := make(map[string]struct{}, len(program.Operations))
