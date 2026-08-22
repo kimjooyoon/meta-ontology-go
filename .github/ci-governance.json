@@ -808,6 +808,17 @@
       ]
     },
     {
+      "branch": "agent/feedback-predecessor-ci-v24",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go",
+        "internal/verify/workflow_part04_test.go",
+        "scripts/feedback-predecessor-ci/**"
+      ]
+    },
+    {
       "branch": "agent/semantic-resolution-schema-v23",
       "paths": [
         ".github/agent-scope-table.md",

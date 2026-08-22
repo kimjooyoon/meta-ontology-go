@@ -116,6 +116,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/artifact-feedback-resolution-ci-v23` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go`, `scripts/artifact-feedback-resolution-ci` |
 | `agent/feedback-predecessor-selector-v24` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/feedbackpredecessor`, `internal/verify/scope_part01.go` |
 | `agent/feedback-predecessor-cli-v24` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/feedback-predecessor-witness`, `internal/verify/scope_part01.go` |
+| `agent/feedback-predecessor-ci-v24` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go`, `internal/verify/workflow_part04_test.go`, `scripts/feedback-predecessor-ci` |
 | `agent/directory-kind-executor-v20` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/directory-kind-witness`, `internal/meta/actionability`, `internal/meta/directorykind`, `internal/meta/metabinding/registry.go`, `internal/verify/scope_part01.go` |
 | `agent/directory-kind-ci-v20` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/directorypartition`, `internal/verify/scope_part01.go` |
