@@ -10,6 +10,7 @@ This catalog records useful concepts discovered while building Gooo. It does not
 | monotone semantic resolution | uncertainty can look like success | unknown meaning descends toward invariant-only reasoning | conformed |
 | causal feedback chain | any green run can be mistaken for the cause | one exact predecessor receipt becomes explicit state | conformed |
 | CI-selected refactoring | cleanup can be subjective or destructive | metrics choose bounded AST rewrites and demand replay | operating |
+| concept-governed refactoring | a selected operation may lack semantic authority | every candidate operation is digest-bound to a language concept | operating |
 
 ## Executable meaning
 

@@ -20,6 +20,9 @@ func Catalog() []Concept {
 		concept("ci-selected-refactoring", "manual cleanup can outrun its evidence", "CI metrics select bounded AST rewrites before acceptance", "compact-obvious-lines", "OPERATING",
 			[]string{"bootstrap/logical-split-planner", "bootstrap/line-density-rewriter", "bootstrap/function-extractor"}, []string{"source.line-cap-debt"},
 			UseCase{"line-cap-debt", "a Go source has 77 lines under a 75 line cap", "REWRITE_TO_71_AND_REPLAY"}),
+		concept("concept-governed-refactoring", "a metric-selected operation can lack semantic authorization", "every candidate operation is digest-bound to a language concept", "bind-refactoring-concept", "OPERATING",
+			[]string{"internal/meta/metricstrategy"}, []string{"gooo.metric.meta.concept-operation-binding-bps.v1"},
+			UseCase{"unregistered-strategy-operation", "a strategy names an operation without a concept binding", "LOWER_RESOLUTION"}),
 	}
 }
 

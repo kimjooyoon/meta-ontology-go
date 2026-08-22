@@ -1,11 +1,17 @@
 package metricstrategy
 
-func Generate(metricsPath, ledgerPath, receiptPath, repository, subjectSHA string) (Plan, error) {
+import "io/fs"
+
+func Generate(repositoryFS fs.FS, metricsPath, ledgerPath, receiptPath, repository, subjectSHA string) (Plan, error) {
 	inputs, err := loadInputs(metricsPath, ledgerPath, receiptPath, repository, subjectSHA)
 	if err != nil {
 		return Plan{}, err
 	}
 	bindings, err := buildBindings(inputs.ledger.Indicators)
+	if err != nil {
+		return Plan{}, err
+	}
+	bindings, err = bindLanguageConcepts(repositoryFS, bindings)
 	if err != nil {
 		return Plan{}, err
 	}
