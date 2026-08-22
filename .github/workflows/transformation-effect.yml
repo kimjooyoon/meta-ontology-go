@@ -144,33 +144,33 @@ jobs:
             -input "$first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
-        (
-          cd "$readiness_first"
-          sha256sum artifact.json > artifact.json.sha256
-        )
-        improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
-        improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
-        baseline="$RUNNER_TEMP/language-readiness-baseline/artifact.json"
-        mkdir -p "$improvement_first" "$improvement_replay"
-        for target in "$improvement_first" "$improvement_replay"; do
+          (
+            cd "$readiness_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
+          improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
+          baseline="$RUNNER_TEMP/language-readiness-baseline/artifact.json"
+          mkdir -p "$improvement_first" "$improvement_replay"
+          for target in "$improvement_first" "$improvement_replay"; do
+            go run ./cmd/language-readiness-witness/transition \
+              -root "$GITHUB_WORKSPACE" \
+              -before "$baseline" \
+              -after "$readiness_first/artifact.json" \
+              -expected-sha "$HEAD_SHA" \
+              -output "$target/artifact.json"
+          done
+          cmp -s "$improvement_first/artifact.json" "$improvement_replay/artifact.json"
           go run ./cmd/language-readiness-witness/transition \
             -root "$GITHUB_WORKSPACE" \
             -before "$baseline" \
             -after "$readiness_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
-            -output "$target/artifact.json"
-        done
-        cmp -s "$improvement_first/artifact.json" "$improvement_replay/artifact.json"
-        go run ./cmd/language-readiness-witness/transition \
-          -root "$GITHUB_WORKSPACE" \
-          -before "$baseline" \
-          -after "$readiness_first/artifact.json" \
-          -expected-sha "$HEAD_SHA" \
-          -check "$improvement_first/artifact.json"
-        (
-          cd "$improvement_first"
-          sha256sum artifact.json > artifact.json.sha256
-        )
+            -check "$improvement_first/artifact.json"
+          (
+            cd "$improvement_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
       - name: Upload exact-head language concepts
         uses: actions/upload-artifact@v6
         with:
