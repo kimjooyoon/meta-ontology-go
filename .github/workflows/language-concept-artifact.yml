@@ -1,0 +1,53 @@
+name: Language concept artifact
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+jobs:
+  language-concept-artifact:
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Produce, replay, and consume exact-head concepts
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$RUNNER_TEMP/language-concept-artifact/first"
+          replay="$RUNNER_TEMP/language-concept-artifact/replay"
+          mkdir -p "$first" "$replay"
+          for target in "$first" "$replay"; do
+            go run ./cmd/language-concept-artifact-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -output "$target/artifact.json"
+          done
+          cmp -s "$first/artifact.json" "$replay/artifact.json"
+          go run ./cmd/language-concept-artifact-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -check "$first/artifact.json"
+          (
+            cd "$first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+      - name: Upload exact-head language concepts
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-concept-artifact-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-concept-artifact/first
+          if-no-files-found: error
+          retention-days: 30

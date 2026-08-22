@@ -860,6 +860,16 @@
       ]
     },
     {
+      "branch": "agent/language-concept-artifact-ci-v28",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/language-concept-artifact.yml",
+        "cmd/language-concept-artifact-witness",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/feedback-semantic-ci-v27",
       "paths": [
         ".github/agent-scope-table.md",
