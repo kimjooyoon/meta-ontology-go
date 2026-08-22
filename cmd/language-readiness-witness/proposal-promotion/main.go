@@ -8,7 +8,7 @@ import (
 
 type config struct {
 	root, repository, currentHead, predecessorSHA string
-	output, check, apiURL, token                 string
+	output, check, apiURL, token                  string
 }
 
 func main() {

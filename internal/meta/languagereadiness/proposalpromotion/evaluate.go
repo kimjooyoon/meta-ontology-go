@@ -26,7 +26,7 @@ func evaluate(currentHead, evidenceHead string, source Source) Receipt {
 		Schema: Schema, Repository: source.Selection.Repository,
 		CurrentHeadSHA: currentHead, EvidenceHeadSHA: evidenceHead,
 		Decision: decision, Reason: reason,
-		MetaOperation: "promote-verified-change-proposal",
+		MetaOperation:                "promote-verified-change-proposal",
 		Source:                       source,
 		Summary:                      summary,
 		Coordinates:                  coordinates,

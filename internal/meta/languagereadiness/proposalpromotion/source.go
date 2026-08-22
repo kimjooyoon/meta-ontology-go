@@ -6,9 +6,9 @@ type Source struct {
 }
 
 type SelectionSource struct {
-	Repository                   string `json:"repository"`
-	CurrentSubjectSHA            string `json:"current_subject_sha"`
-	PredecessorSHA               string `json:"predecessor_sha"`
+	Repository                  string `json:"repository"`
+	CurrentSubjectSHA           string `json:"current_subject_sha"`
+	PredecessorSHA              string `json:"predecessor_sha"`
 	Decision                    string `json:"decision"`
 	Reason                      string `json:"reason"`
 	ReportDigest                string `json:"report_digest"`

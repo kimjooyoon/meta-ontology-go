@@ -63,12 +63,13 @@ func validHeadSHA(value string) bool {
 const commitHexLength = 40
 
 func validPromotionDigest(receipt Receipt) bool {
-	required := false
-	for _, result := range receipt.Snapshot.Obligations { required = required || (result.ID == "AUTONOMY-CHANGE-PROPOSAL" && result.Status == "SATISFIED") }
-	if !required {
-		return receipt.ProposalPromotionDigest == ""
-	}
 	value := strings.TrimPrefix(receipt.ProposalPromotionDigest, "sha256:")
 	_, err := hex.DecodeString(value)
-	return strings.HasPrefix(receipt.ProposalPromotionDigest, "sha256:") && len(value) == 64 && err == nil
+	for _, result := range receipt.Snapshot.Obligations {
+		if result.ID == "AUTONOMY-CHANGE-PROPOSAL" && result.Status == "SATISFIED" {
+			return strings.HasPrefix(receipt.ProposalPromotionDigest, "sha256:") &&
+				len(value) == 64 && err == nil
+		}
+	}
+	return receipt.ProposalPromotionDigest == ""
 }

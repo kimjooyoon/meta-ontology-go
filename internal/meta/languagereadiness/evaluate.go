@@ -26,9 +26,9 @@ func evaluate(raw []byte, proposalPromotionDigest string) (Snapshot, error) {
 	for _, concept := range artifact.Report.Concepts {
 		byID[concept.ID] = append(byID[concept.ID], concept)
 	}
-		for _, obligation := range obligations {
-			snapshot.Obligations = append(snapshot.Obligations,
-				evaluateObligation(obligation, byID[obligation.ConceptID], proposalPromotionDigest))
+	for _, obligation := range obligations {
+		snapshot.Obligations = append(snapshot.Obligations,
+			evaluateObligation(obligation, byID[obligation.ConceptID], proposalPromotionDigest))
 	}
 	return summarize(snapshot), nil
 }
@@ -36,8 +36,8 @@ func evaluate(raw []byte, proposalPromotionDigest string) (Snapshot, error) {
 func evaluateObligation(obligation Obligation, concepts []conceptEvidence, proposalPromotionDigest string) ObligationResult {
 	result := ObligationResult{Obligation: obligation}
 	if len(concepts) == 0 {
-		result.Status, result.Reason = "NOT_SATISFIED", "CONCEPT_NOT_REGISTERED"
-		return result
+		return ObligationResult{
+			Obligation: obligation, Status: "NOT_SATISFIED", Reason: "CONCEPT_NOT_REGISTERED"}
 	}
 	if len(concepts) != 1 {
 		result.Status, result.Reason = "UNRESOLVED", "CONCEPT_EVIDENCE_NOT_UNIQUE"

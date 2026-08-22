@@ -10,7 +10,7 @@ const (
 func validSource() Source {
 	return Source{
 		Selection: SelectionSource{
-			Repository: "kimjooyoon/meta-ontology-go",
+			Repository:        "kimjooyoon/meta-ontology-go",
 			CurrentSubjectSHA: testCurrent, PredecessorSHA: testEvidence,
 			Decision: "SELECTED", Reason: "PROPOSAL_PREDECESSOR_SELECTED",
 			ReportDigest: "sha256:selection", RunID: 1, RunAttempt: 1,
@@ -24,7 +24,7 @@ func validSource() Source {
 		},
 		Contract: ContractSource{
 			SubjectSHA: testEvidence, Decision: "PASS",
-			Reason: "CHANGE_PROPOSAL_CONTRACT_READY",
+			Reason:     "CHANGE_PROPOSAL_CONTRACT_READY",
 			FileSHA256: "sha256:file", ReportDigest: "sha256:contract",
 			SelectedActions: 2, Satisfied: 8, Total: 8, ReadinessBPS: 10_000,
 		},
