@@ -1,6 +1,8 @@
 name: Transformation effect ledger
 
 on:
+  pull_request:
+    branches: [dev, main]
   workflow_run:
     workflows: [CI]
     types: [completed]
@@ -72,5 +74,56 @@ jobs:
         with:
           name: transformation-effect-${{ github.event.workflow_run.head_sha }}
           path: ${{ runner.temp }}/transformation-effect/first
+          if-no-files-found: error
+          retention-days: 30
+
+  language-concept-artifact:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Produce, replay, and consume exact-head concepts
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$RUNNER_TEMP/language-concept-artifact/first"
+          replay="$RUNNER_TEMP/language-concept-artifact/replay"
+          mkdir -p "$first" "$replay"
+          for target in "$first" "$replay"; do
+            go run ./cmd/language-concept-artifact-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -output "$target/artifact.json"
+          done
+          cmp -s "$first/artifact.json" "$replay/artifact.json"
+          go run ./cmd/language-concept-artifact-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -check "$first/artifact.json"
+          (
+            cd "$first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+      - name: Upload exact-head language concepts
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-concept-artifact-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-concept-artifact/first
           if-no-files-found: error
           retention-days: 30

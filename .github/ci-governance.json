@@ -864,7 +864,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/language-concept-artifact.yml",
+        ".github/workflows/transformation-effect.yml",
         "cmd/language-concept-artifact-witness",
         "internal/verify/scope_part01.go"
       ]

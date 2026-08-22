@@ -132,6 +132,6 @@ func outsideRoot(root, output string) (bool, error) {
 
 func printSummary(stdout io.Writer, artifact languageconcept.Artifact) {
 	fmt.Fprintf(stdout, "language-concept-artifact: decision=%s paths=%d files=%d writes=%d digest=%s\n",
-		artifact.Decision, len(artifact.Bindings.Paths), artifact.Bindings.Files,
+		artifact.Decision, artifact.Bindings.Paths, artifact.Bindings.Files,
 		artifact.RepositoryWrites, artifact.ArtifactDigest)
 }
