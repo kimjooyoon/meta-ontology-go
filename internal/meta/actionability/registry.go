@@ -9,7 +9,7 @@ import (
 )
 
 func canonicalExecutors() []Executor {
-	result := make([]Executor, 0, len(generation.DefaultRegistry())+1)
+	result := make([]Executor, 0, len(generation.DefaultRegistry())+2)
 	for _, binding := range generation.DefaultRegistry() {
 		operation := string(binding.Operation)
 		result = append(result, Executor{Operation: operation, Activity: operation,
@@ -22,6 +22,9 @@ func canonicalExecutors() []Executor {
 	result = append(result, Executor{Operation: "partition-directory",
 		Activity: "PartitionDirectory", ProofChoice: "foundation", Registry: "source-policy",
 		Executor: "cmd/directory-partition-witness", Evaluator: "cmd/directory-partition-witness:check"})
+	result = append(result, Executor{Operation: "separate-directory-kinds",
+		Activity: "SeparateDirectoryKinds", ProofChoice: "foundation", Registry: "source-policy",
+		Executor: "cmd/directory-kind-witness", Evaluator: "cmd/directory-kind-witness:check"})
 	sort.Slice(result, func(left, right int) bool {
 		return result[left].Operation < result[right].Operation
 	})

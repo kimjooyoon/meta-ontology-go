@@ -23,3 +23,10 @@ type Move struct {
 	EntryKind   string `json:"entry_kind"`
 	Language    string `json:"language,omitempty"`
 }
+
+type planCore struct {
+	Summary    Summary     `json:"summary"`
+	Indicators []Indicator `json:"indicators"`
+	Candidates []Candidate `json:"candidates"`
+	Proofs     []Proof     `json:"proofs"`
+}

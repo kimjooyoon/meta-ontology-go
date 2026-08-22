@@ -47,7 +47,7 @@ func sourceBindings() []Binding {
 		{Operation: "inspect-wrapper", Activity: "InspectWrapper", ProofChoice: "coherence", Registry: "source-policy"},
 		{Operation: "observe", Activity: "ObserveMetric", ProofChoice: "coherence", Registry: "source-policy"},
 		{Operation: "partition-directory", Activity: "PartitionDirectory", ProofChoice: "foundation", Registry: "source-policy", Executor: "cmd/directory-partition-witness", Evaluator: "cmd/directory-partition-witness:check"},
-		{Operation: "separate-directory-kinds", Activity: "SeparateDirectoryKinds", ProofChoice: "foundation", Registry: "source-policy"},
+		{Operation: "separate-directory-kinds", Activity: "SeparateDirectoryKinds", ProofChoice: "foundation", Registry: "source-policy", Executor: "cmd/directory-kind-witness", Evaluator: "cmd/directory-kind-witness:check"},
 	}
 }
 
