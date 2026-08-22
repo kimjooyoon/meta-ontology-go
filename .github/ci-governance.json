@@ -812,7 +812,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/feedback-predecessor.yml",
+        ".github/workflows/ci.yml",
         "internal/verify/scope_part01.go",
         "scripts/feedback-predecessor-ci/**"
       ]
