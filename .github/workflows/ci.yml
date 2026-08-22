@@ -221,11 +221,11 @@ jobs:
           jq -r '"### Directory partition\n- decision: \(.decision) (\(.reason))\n- plan digest: \(.plan_digest)"' "$METRICS_DIR/directory-partition-report.json" >> "$GITHUB_STEP_SUMMARY"
           jq -r '"### Meta actionability\n- decision: \(.decision) (\(.reason))\n- indicator coverage: \(.summary.indicator_coverage_basis_points) bps\n- operation coverage: \(.summary.operation_coverage_basis_points) bps\n- selected operation: \(.selected_operation)\n- project-root exemptions: \(.summary.project_root_exemptions)\n- replay proof: \(.replay_proof_choice)"' "$METRICS_DIR/meta-actionability-report.json" >> "$GITHUB_STEP_SUMMARY"
           go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-plan.json" -check
-            go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-replay.json" -check
-            cmp -s "$METRICS_DIR/self-improvement-plan.json" "$METRICS_DIR/self-improvement-replay.json"
-            bash ./scripts/operation-artifact-ci/build-observations.sh "$METRICS_DIR"
-            bash ./scripts/operation-artifact-ci/evaluate.sh "$METRICS_DIR"
-            go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution.json"
+          go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-replay.json" -check
+          cmp -s "$METRICS_DIR/self-improvement-plan.json" "$METRICS_DIR/self-improvement-replay.json"
+          bash ./scripts/operation-artifact-ci/build-observations.sh "$METRICS_DIR"
+          bash ./scripts/operation-artifact-ci/evaluate.sh "$METRICS_DIR"
+          go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution.json"
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution-replay.json"
           cmp -s "$METRICS_DIR/self-improvement-execution.json" "$METRICS_DIR/self-improvement-execution-replay.json"
           go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts.json"
@@ -288,21 +288,21 @@ jobs:
           path: ${{ runner.temp }}/source-metrics/directory-kind-report.json
           if-no-files-found: error
           retention-days: 30
-        - name: Upload self-improvement generation artifact
-          uses: actions/upload-artifact@v6
-          with:
-            name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-            path: ${{ runner.temp }}/source-metrics/self-improvement-plan.json
-            if-no-files-found: error
-            retention-days: 30
-        - name: Upload operation artifact coverage
-          uses: actions/upload-artifact@v6
-          with:
-            name: operation-artifact-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-            path: ${{ runner.temp }}/source-metrics/operation-artifact
-            if-no-files-found: error
-            retention-days: 30
-        - name: Upload self-improvement execution artifact
+      - name: Upload self-improvement generation artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/self-improvement-plan.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload operation artifact coverage
+        uses: actions/upload-artifact@v6
+        with:
+          name: operation-artifact-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/operation-artifact
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload self-improvement execution artifact
         uses: actions/upload-artifact@v6
         with:
           name: self-improvement-execution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
