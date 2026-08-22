@@ -7,7 +7,7 @@ import (
 	"go/token"
 	"path/filepath"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/predecessorbinding"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorbinding"
 )
 
 func scan(root string) ([]predecessorbinding.Observation, error) {

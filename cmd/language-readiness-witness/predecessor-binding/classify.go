@@ -3,7 +3,7 @@ package main
 import (
 	"go/ast"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/predecessorbinding"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorbinding"
 )
 
 func classify(expression ast.Expr, constants map[string]ast.Expr, parameters map[string]bool) predecessorbinding.State {
