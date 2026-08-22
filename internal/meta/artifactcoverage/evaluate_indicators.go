@@ -15,7 +15,9 @@ func evaluateIndicators(definitions []Indicator, summary Summary) ([]KPI, error)
 	result := make([]KPI, 0, len(definitions))
 	for _, definition := range definitions {
 		value, exists := values[definition.MetricID]
-		if !exists { return nil, fmt.Errorf("indicator %q has no runtime value", definition.MetricID) }
+		if !exists {
+			return nil, fmt.Errorf("indicator %q has no runtime value", definition.MetricID)
+		}
 		satisfied := definition.Relation == RelationGreaterOrEqual && value >= definition.Target ||
 			definition.Relation == RelationLessOrEqual && value <= definition.Target
 		result = append(result, KPI{Indicator: definition, Value: value, Satisfied: satisfied})

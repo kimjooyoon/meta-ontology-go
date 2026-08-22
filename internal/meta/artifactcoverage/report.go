@@ -9,7 +9,9 @@ import (
 
 func Marshal(report Report) ([]byte, error) {
 	data, err := json.MarshalIndent(report, "", "  ")
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	return append(data, '\n'), nil
 }
 
@@ -20,7 +22,9 @@ func digestJSON(value any) string {
 }
 
 func validDigest(value string) bool {
-	if len(value) != 71 || !strings.HasPrefix(value, "sha256:") { return false }
+	if len(value) != 71 || !strings.HasPrefix(value, "sha256:") {
+		return false
+	}
 	_, err := hex.DecodeString(strings.TrimPrefix(value, "sha256:"))
 	return err == nil
 }
