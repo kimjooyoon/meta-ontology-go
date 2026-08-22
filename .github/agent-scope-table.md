@@ -120,6 +120,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/feedback-predecessor-usecases-v24` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `examples/feedback-predecessor-cycle`, `internal/meta/feedbackpredecessor`, `internal/verify/scope_part01.go` |
 | `agent/feedback-semantic-snapshot-v25` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/feedbackstate`, `internal/verify/scope_part01.go` |
 | `agent/language-concept-catalog-v26` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `bootstrap/function-extractor/recipes.json`, `examples/language-concept-catalog`, `internal/meta/languageconcept`, `internal/verify/scope_part01.go` |
+| `agent/feedback-semantic-ci-v27` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/meta/languageconcept`, `internal/verify/scope_part01.go` |
 | `agent/feedback-semantic-usecases-v27` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/feedback-semantic-state-witness`, `examples/feedback-semantic-cycle`, `internal/meta/feedbackstate`, `internal/verify/scope_part01.go` |
 | `agent/feedback-semantic-witness-v27` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/feedback-semantic-state-witness`, `internal/verify/scope_part01.go` |
 | `agent/feedback-payload-envelope-v27` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/feedbackpredecessor`, `internal/verify/scope_part01.go`, `scripts/feedback-predecessor-ci` |

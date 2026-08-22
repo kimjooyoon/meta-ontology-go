@@ -849,6 +849,16 @@
       ]
     },
     {
+      "branch": "agent/feedback-semantic-ci-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/meta/languageconcept/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/feedback-semantic-usecases-v27",
       "paths": [
         ".github/agent-scope-table.md",
