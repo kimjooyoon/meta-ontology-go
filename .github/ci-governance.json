@@ -829,6 +829,15 @@
       ]
     },
     {
+      "branch": "agent/feedback-semantic-snapshot-v25",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/semantic-resolution-schema-v23",
       "paths": [
         ".github/agent-scope-table.md",
