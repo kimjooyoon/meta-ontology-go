@@ -59,4 +59,12 @@ func init() {
 		"internal/meta/metricstrategy/proposalpredecessor",
 		"internal/verify/scope_language_readiness.go",
 	}
+	branchScopeAllowlist["agent/readiness-baseline-resolution"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/language-readiness-witness/predecessor-selection",
+		"docs/language/readiness-ancestor-resolution.md",
+		"internal/meta/languagereadiness/artifact/predecessorresolution",
+		"internal/verify/scope_language_readiness.go",
+	}
 }
