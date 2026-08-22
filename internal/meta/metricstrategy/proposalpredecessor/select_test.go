@@ -28,10 +28,9 @@ func TestAmbiguityFailsClosed(t *testing.T) {
 }
 
 func readyCandidate(predecessor string, runID int64) Candidate {
-	return Candidate{Selected: Selected{
+	return Candidate{
 		RunID: runID, RunAttempt: 1, HeadSHA: predecessor, Event: "push", Status: "completed", Conclusion: "success", WorkflowName: workflowName,
 		ArtifactID: runID + 100, ArtifactName: "metric-strategy-" + predecessor,
 		ProposalFileSHA256: "sha256:file", ProposalReportDigest: "sha256:report",
-		ContractSatisfied: 8, ContractTotal: 8, ContractBPS: 10000,
-	}, ProposalPayload: []byte("proposal")}
+		ContractSatisfied: 8, ContractTotal: 8, ContractBPS: 10000, ProposalPayload: []byte("proposal")}
 }

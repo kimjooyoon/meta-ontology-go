@@ -50,7 +50,6 @@ jobs:
     env:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-      PREDECESSOR_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -201,6 +200,7 @@ jobs:
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          PREDECESSOR_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: |
           set -euo pipefail
           input="$RUNNER_TEMP/metric-strategy/input"
