@@ -214,6 +214,10 @@ jobs:
           go run ./cmd/directory-partition-witness -source-metrics "$METRICS_DIR/source-metrics.json" > "$METRICS_DIR/directory-partition-report.json"
           go run ./cmd/directory-partition-witness -source-metrics "$METRICS_DIR/source-metrics.json" -mode check > "$METRICS_DIR/directory-partition-report-replay.json"
           cmp -s "$METRICS_DIR/directory-partition-report.json" "$METRICS_DIR/directory-partition-report-replay.json"
+          go run ./cmd/directory-kind-witness -source-metrics "$METRICS_DIR/source-metrics.json" -mode check > "$METRICS_DIR/directory-kind-report.json"
+          go run ./cmd/directory-kind-witness -source-metrics "$METRICS_DIR/source-metrics.json" -mode check > "$METRICS_DIR/directory-kind-report-replay.json"
+          cmp -s "$METRICS_DIR/directory-kind-report.json" "$METRICS_DIR/directory-kind-report-replay.json"
+          jq -r '"### Directory kind separation\\n- decision: \\(.decision) (\\(.reason))\\n- plan digest: \\(.plan_digest)"' "$METRICS_DIR/directory-kind-report.json" >> "$GITHUB_STEP_SUMMARY"
           jq -r '"### Directory partition\n- decision: \(.decision) (\(.reason))\n- plan digest: \(.plan_digest)"' "$METRICS_DIR/directory-partition-report.json" >> "$GITHUB_STEP_SUMMARY"
           jq -r '"### Meta actionability\n- decision: \(.decision) (\(.reason))\n- indicator coverage: \(.summary.indicator_coverage_basis_points) bps\n- operation coverage: \(.summary.operation_coverage_basis_points) bps\n- selected operation: \(.selected_operation)\n- project-root exemptions: \(.summary.project_root_exemptions)\n- replay proof: \(.replay_proof_choice)"' "$METRICS_DIR/meta-actionability-report.json" >> "$GITHUB_STEP_SUMMARY"
           go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-plan.json" -check
@@ -273,6 +277,13 @@ jobs:
         with:
           name: directory-partition-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/directory-partition-report.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload directory kind separation plan artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: directory-kind-separation-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/directory-kind-report.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement generation artifact
