@@ -37,7 +37,7 @@ func run(cfg config) error {
 				Schema: artifactfeedback.CycleSchema, HeadSHA: provenance.HeadSHA,
 				Status: provenance.Decision, CIConclusion: cfg.ciConclusion,
 				EnvelopeDigest: provenance.EnvelopeDigest,
-				ReplayDigest: provenance.ReplayDigest,
+				ReplayDigest:   provenance.ReplayDigest,
 			},
 			RepositoryWrites: coverage.Summary.RepositoryWrites,
 		},

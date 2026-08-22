@@ -25,9 +25,9 @@ func writeSourceFixtures(t *testing.T, root string) (string, string) {
 	coverage.ReportDigest = fixtureDigest(t, coverage)
 	provenance := provenanceEnvelope{
 		SchemaVersion: "v1", HeadSHA: head, Decision: "BOUND",
-		Reason: "ARTIFACT_PROVENANCE_BOUND",
+		Reason:         "ARTIFACT_PROVENANCE_BOUND",
 		EnvelopeDigest: strings.Repeat("1", 64),
-		ReplayDigest: strings.Repeat("2", 64),
+		ReplayDigest:   strings.Repeat("2", 64),
 	}
 	coveragePath := filepath.Join(root, "coverage.json")
 	provenancePath := filepath.Join(root, "provenance.json")
