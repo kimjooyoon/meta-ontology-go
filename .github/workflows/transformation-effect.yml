@@ -176,7 +176,7 @@ jobs:
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/predecessor-binding \
               --root "$GITHUB_WORKSPACE" \
-              --expected-sha "${{ github.event.workflow_run.head_sha }}" \
+              --expected-sha "$HEAD_SHA" \
               --output "$RUNNER_TEMP/language-readiness-predecessor-binding-$suffix.json" \
               --check
           done
@@ -185,7 +185,7 @@ jobs:
       - name: Upload exact-head predecessor bindings
         uses: actions/upload-artifact@v6
         with:
-          name: language-readiness-predecessor-binding-${{ github.event.workflow_run.head_sha }}
+          name: language-readiness-predecessor-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-predecessor-binding-a.json*
           if-no-files-found: error
           retention-days: 14

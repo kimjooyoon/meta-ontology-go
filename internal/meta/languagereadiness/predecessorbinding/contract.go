@@ -15,10 +15,10 @@ const (
 )
 
 const (
-	ReasonExactlyCounted = "PREDECESSOR_BINDINGS_EXACTLY_COUNTED"
-	ReasonHeadUnknown    = "PREDECESSOR_BINDING_HEAD_UNKNOWN"
+	ReasonExactlyCounted  = "PREDECESSOR_BINDINGS_EXACTLY_COUNTED"
+	ReasonHeadUnknown     = "PREDECESSOR_BINDING_HEAD_UNKNOWN"
 	ReasonEvidenceUnknown = "PREDECESSOR_BINDING_EVIDENCE_UNKNOWN"
-	ReasonWriteEffect    = "PREDECESSOR_BINDING_WRITE_EFFECT"
+	ReasonWriteEffect     = "PREDECESSOR_BINDING_WRITE_EFFECT"
 )
 
 type State string
