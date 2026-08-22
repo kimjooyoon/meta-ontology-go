@@ -31,6 +31,10 @@ func Catalog() []Concept {
 			[]string{"internal/meta/languagereadiness/artifact/predecessorselection", "internal/meta/languagereadiness/artifact/predecessorbinding", "cmd/language-readiness-witness/predecessor-selection"},
 			[]string{"gooo.metric.language.predecessor-dynamic-binding-bps.v1", "gooo.metric.language.predecessor-dynamic-coordinates.v1", "gooo.metric.language.predecessor-static-coordinates.guardrail.v1", "gooo.metric.language.predecessor-unknown-coordinates.guardrail.v1", "gooo.metric.language.predecessor-observer-writes.guardrail.v1"},
 			UseCase{"merged-dynamic-predecessor", "the merged predecessor changes eight static coordinates into eight dynamic inputs with zero unknowns and writes", "IMPROVED_STATIC_8_TO_0_DYNAMIC_0_TO_8_BPS_0_TO_10000"}),
+		concept("autonomous-change-proposal", "a generated proposal can approve itself before merged evidence exists", "the exact merged predecessor proposal is selected and proven before readiness credit", "promote-verified-change-proposal", "OPERATING",
+			[]string{"internal/meta/languagereadiness/proposalpromotion", "internal/meta/metricstrategy/proposalpredecessor", "cmd/language-readiness-witness/proposal-promotion"},
+			[]string{"gooo.metric.language.autonomous-change-proposal-promotion-bps.v1", "gooo.metric.language.autonomous-change-proposal-valid-predecessors.v1", "gooo.metric.language.autonomous-change-proposal-contract-bps.v1", "gooo.metric.language.autonomous-change-proposal-ambiguous-predecessors.guardrail.v1", "gooo.metric.language.autonomous-change-proposal-unresolved.guardrail.v1", "gooo.metric.language.autonomous-change-proposal-observer-writes.guardrail.v1", "gooo.metric.language.autonomous-change-proposal-mutation-authority.guardrail.v1"},
+			UseCase{"merged-proposal-predecessor", "one exact merged push artifact has an 8/8 proposal contract with zero ambiguity, unresolved evidence, writes, or mutation authority", "IMPROVED_9_TO_10_OF_24_PLUS_416_BPS"}),
 	}
 }
 

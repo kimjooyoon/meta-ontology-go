@@ -16,7 +16,11 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.check != "" {
 		target = cfg.check
 	}
-	if err := requireExternal(cfg.root, cfg.input, target); err != nil {
+	paths := []string{cfg.input, target}
+	if cfg.promotion != "" {
+		paths = append(paths, cfg.promotion)
+	}
+	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err
 	}
 	if cfg.check != "" {

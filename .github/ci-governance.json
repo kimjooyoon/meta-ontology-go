@@ -1070,6 +1070,18 @@
         "internal/meta/languagereadiness/artifact/**",
         "internal/verify/scope_language_readiness.go"
       ]
+    },
+    {
+      "branch": "agent/readiness-autonomy-change-proposal",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/**",
+        "internal/verify/scope_language_readiness.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

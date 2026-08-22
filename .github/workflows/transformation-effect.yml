@@ -100,6 +100,39 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: 1.27.0
+      - name: Prove merged autonomous change proposal
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/proposal-promotion \
+              --root "$GITHUB_WORKSPACE" \
+              --repository "$GITHUB_REPOSITORY" \
+              --current-head "$HEAD_SHA" \
+              --predecessor-sha "$predecessor_sha" \
+              --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-promotion-b.json"
+          go run ./cmd/language-readiness-witness/proposal-promotion \
+            --root "$GITHUB_WORKSPACE" \
+            --repository "$GITHUB_REPOSITORY" \
+            --current-head "$HEAD_SHA" \
+            --predecessor-sha "$predecessor_sha" \
+            --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+      - name: Upload merged autonomous change proposal promotion
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Select exact readiness predecessor
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -163,6 +196,7 @@ jobs:
             go run ./cmd/language-readiness-witness \
               -root "$GITHUB_WORKSPACE" \
               -input "$first/artifact.json" \
+              -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
           done
@@ -170,6 +204,7 @@ jobs:
           go run ./cmd/language-readiness-witness \
             -root "$GITHUB_WORKSPACE" \
             -input "$first/artifact.json" \
+            -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
           (

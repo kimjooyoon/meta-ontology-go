@@ -32,6 +32,8 @@ func Validate(receipt Receipt) error {
 		return fmt.Errorf("FAIL_CLOSED: readiness basis points %d", summary.ReadinessBPS)
 	case receipt.Snapshot.SourceArtifactDigest == "":
 		return fmt.Errorf("FAIL_CLOSED: source artifact digest is missing")
+	case !validPromotionDigest(receipt):
+		return fmt.Errorf("FAIL_CLOSED: proposal promotion digest is inconsistent")
 	case receipt.Snapshot.Digest != snapshotDigest(receipt.Snapshot):
 		return fmt.Errorf("FAIL_CLOSED: readiness snapshot digest mismatch")
 	}
@@ -59,3 +61,15 @@ func validHeadSHA(value string) bool {
 }
 
 const commitHexLength = 40
+
+func validPromotionDigest(receipt Receipt) bool {
+	value := strings.TrimPrefix(receipt.ProposalPromotionDigest, "sha256:")
+	_, err := hex.DecodeString(value)
+	for _, result := range receipt.Snapshot.Obligations {
+		if result.ID == "AUTONOMY-CHANGE-PROPOSAL" && result.Status == "SATISFIED" {
+			return strings.HasPrefix(receipt.ProposalPromotionDigest, "sha256:") &&
+				len(value) == 64 && err == nil
+		}
+	}
+	return receipt.ProposalPromotionDigest == ""
+}

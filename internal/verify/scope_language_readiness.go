@@ -31,4 +31,13 @@ func init() {
 		"internal/meta/languagereadiness/artifact",
 		"internal/verify/scope_language_readiness.go",
 	}
+	branchScopeAllowlist["agent/readiness-autonomy-change-proposal"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/transformation-effect.yml",
+		"cmd/language-readiness-witness",
+		"internal/meta/languageconcept",
+		"internal/meta/languagereadiness",
+		"internal/verify/scope_language_readiness.go",
+	}
 }
