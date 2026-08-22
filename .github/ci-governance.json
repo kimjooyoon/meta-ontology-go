@@ -1107,6 +1107,17 @@
         "internal/meta/metricstrategy/proposalpredecessor/**",
         "internal/verify/scope_language_readiness.go"
       ]
+    },
+    {
+      "branch": "agent/readiness-baseline-resolution",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/language-readiness-witness/predecessor-selection/**",
+        "docs/language/readiness-ancestor-resolution.md",
+        "internal/meta/languagereadiness/artifact/predecessorresolution/**",
+        "internal/verify/scope_language_readiness.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
