@@ -739,6 +739,15 @@
       "paths": [
         "docs/research/zerolang.md"
       ]
+    },
+    {
+      "branch": "agent/partition-directory-v19",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/directorypartition/**",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
