@@ -21,9 +21,9 @@ func Evaluate(input Input) (Report, error) {
 		Decision: decision, Reason: reason, NextOperation: next,
 		CoverageReportDigest: input.Coverage.ReportDigest, CycleEnvelopeDigest: input.Cycle.EnvelopeDigest,
 		ProgramDigest: digestJSON(program), InputDigest: digestJSON(input), Summary: summary,
-	}
-	report.Indicators = evaluateKPIs(program.Indicators, summary)
-	report.Proofs = feedbackProofs(summary)
+
+		Indicators: evaluateKPIs(program.Indicators, summary),
+		Proofs:     feedbackProofs(summary)}
 	report.ReportDigest = digestJSON(report)
 	return report, nil
 }
