@@ -321,7 +321,7 @@ jobs:
             .root_policy.topology_applicability == "NOT_APPLICABLE" and
             .root_policy.readme_requirement == "NOT_APPLICABLE" and
             (.operations | length) == 8 and
-            (.bindings | length) == 15 and
+            (.bindings | length) == 30 and
             ([.steps[].activity] == [
               "ObserveCounterfactualBoundary",
               "PreserveRepositoryWorkspace",
@@ -333,7 +333,7 @@ jobs:
             .schema == "gooo/metric-meta-program-verification/v1" and
             .status == "VERIFIED" and
             .operation_count == 8 and
-            .binding_count == 15 and
+            .binding_count == 30 and
             .step_count == 4 and
             .repository_workspace_writes == false and
             .promotion_authorized == false
