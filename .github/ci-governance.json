@@ -762,6 +762,16 @@
       ]
     },
     {
+      "branch": "agent/operation-artifact-cli-v21",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/operation-artifact-witness/**",
+        "internal/meta/artifactcoverage/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/operation-artifact-executor-v21",
       "paths": [
         ".github/agent-scope-table.md",

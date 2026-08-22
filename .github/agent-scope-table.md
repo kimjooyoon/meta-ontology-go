@@ -106,6 +106,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/directory-kind-schema-v20` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/directorykind`, `internal/verify/scope_part01.go` |
 | `agent/operation-artifact-schema-v21` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `examples/meta-operation-artifact-coverage`, `internal/meta/artifactcoverage`, `internal/verify/scope_part01.go` |
 | `agent/operation-artifact-executor-v21` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/artifactcoverage`, `internal/verify/scope_part01.go` |
+| `agent/operation-artifact-cli-v21` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/operation-artifact-witness`, `internal/meta/artifactcoverage`, `internal/verify/scope_part01.go` |
 | `agent/directory-kind-executor-v20` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/directory-kind-witness`, `internal/meta/actionability`, `internal/meta/directorykind`, `internal/meta/metabinding/registry.go`, `internal/verify/scope_part01.go` |
 | `agent/directory-kind-ci-v20` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/directorypartition`, `internal/verify/scope_part01.go` |
