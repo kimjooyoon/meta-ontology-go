@@ -102,5 +102,6 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/root-readme-applicability-v16` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `examples/root-readme-indicator`, `internal/detection/linecaps`, `internal/meta/generation`, `internal/meta/sourcepolicy`, `internal/verify/scope_part01.go`, `scripts/self-improvement-cycle`, `scripts/source-subject-witness` |
 | `agent/meta-binding-coverage-v17` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `bootstrap/meta-binding-witness`, `examples/meta-binding-coverage`, `internal/meta/metabinding`, `internal/verify/scope_part01.go` |
 | `agent/meta-actionability-v18` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `bootstrap/meta-actionability-witness`, `examples/meta-actionability`, `internal/meta/actionability`, `internal/verify/scope_part01.go` |
+| `agent/meta-actionability-ci-v18` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
 | `agent/zerolang-experiments` | `docs/research/zerolang.md` |
 | `agent/zerolang-research` | `docs/research/zerolang.md` |
