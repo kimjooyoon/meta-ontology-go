@@ -171,6 +171,24 @@ jobs:
             cd "$improvement_first"
             sha256sum artifact.json > artifact.json.sha256
           )
+      - name: Measure exact predecessor bindings
+        run: |
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/predecessor-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-sha "${{ github.event.workflow_run.head_sha }}" \
+              --output "$RUNNER_TEMP/language-readiness-predecessor-binding-$suffix.json" \
+              --check
+          done
+          cmp "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
+            "$RUNNER_TEMP/language-readiness-predecessor-binding-b.json"
+      - name: Upload exact-head predecessor bindings
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-binding-${{ github.event.workflow_run.head_sha }}
+          path: ${{ runner.temp }}/language-readiness-predecessor-binding-a.json*
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload exact-head language concepts
         uses: actions/upload-artifact@v6
         with:
