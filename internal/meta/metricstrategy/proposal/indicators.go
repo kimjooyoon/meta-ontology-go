@@ -2,10 +2,19 @@ package proposal
 
 import artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 
+type Proof struct {
+	Choice         string `json:"choice"`
+	MetaOperation  string `json:"meta_operation"`
+	Passed         bool   `json:"passed"`
+	EvidenceDigest string `json:"evidence_digest"`
+}
+
 func buildIndicators(summary Summary, actions, writes int, promotion bool) []Indicator {
 	producer, consumer := "proposal.Evaluate", "language-readiness"
 	promotionValue := 0
-	if promotion { promotionValue = 1 }
+	if promotion {
+		promotionValue = 1
+	}
 	return []Indicator{
 		{MetricID: "gooo.metric.language.change-proposal-contract-bps.v1", Class: "outcome", ProofChoice: "COHERENCE", Producer: producer, Consumer: consumer, MetaOperation: "quantify-change-proposal-contract", Value: summary.ReadinessBPS, Target: 10000, Unit: "BASIS_POINT", Satisfied: summary.ReadinessBPS == 10000},
 		{MetricID: "gooo.metric.language.change-proposal-satisfied-coordinates.v1", Class: "driver", ProofChoice: "FOUNDATION", Producer: producer, Consumer: consumer, MetaOperation: "count-satisfied-proposal-coordinates", Value: summary.Satisfied, Target: len(registry), Unit: "COORDINATE", Satisfied: summary.Satisfied == len(registry)},
@@ -23,10 +32,15 @@ func buildProofs(coordinates []Coordinate) ([]Proof, error) {
 		passed := true
 		evidence := make([]string, 0)
 		for _, coordinate := range coordinates {
-			if coordinate.ProofChoice == choice { passed = passed && coordinate.Status == "SATISFIED"; evidence = append(evidence, coordinate.EvidenceDigest) }
+			if coordinate.ProofChoice == choice {
+				passed = passed && coordinate.Status == "SATISFIED"
+				evidence = append(evidence, coordinate.EvidenceDigest)
+			}
 		}
-	digest, err := artifact.Digest(evidence)
-		if err != nil { return nil, err }
+		digest, err := artifact.Digest(evidence)
+		if err != nil {
+			return nil, err
+		}
 		result = append(result, Proof{Choice: choice, MetaOperation: "justify-change-proposal-by-" + choice, Passed: passed, EvidenceDigest: digest})
 	}
 	return result, nil

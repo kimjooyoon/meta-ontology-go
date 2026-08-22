@@ -20,12 +20,12 @@ type Coordinate struct {
 }
 
 type Summary struct {
-	Satisfied       int `json:"satisfied"`
-	Total           int `json:"total"`
-	NotSatisfied    int `json:"not_satisfied"`
-	Unresolved      int `json:"unresolved"`
-	ReadinessBPS    int `json:"readiness_bps"`
-	RatioNumerator  int `json:"ratio_numerator"`
+	Satisfied        int `json:"satisfied"`
+	Total            int `json:"total"`
+	NotSatisfied     int `json:"not_satisfied"`
+	Unresolved       int `json:"unresolved"`
+	ReadinessBPS     int `json:"readiness_bps"`
+	RatioNumerator   int `json:"ratio_numerator"`
 	RatioDenominator int `json:"ratio_denominator"`
 }
 
@@ -40,13 +40,6 @@ type Indicator struct {
 	Target        int    `json:"target"`
 	Unit          string `json:"unit"`
 	Satisfied     bool   `json:"satisfied"`
-}
-
-type Proof struct {
-	Choice         string `json:"choice"`
-	MetaOperation  string `json:"meta_operation"`
-	Passed         bool   `json:"passed"`
-	EvidenceDigest string `json:"evidence_digest"`
 }
 
 type Report struct {

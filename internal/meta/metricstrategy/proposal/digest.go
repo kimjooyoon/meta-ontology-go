@@ -5,6 +5,21 @@ import (
 	strategyverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify"
 )
 
+var registry = []CoordinateSpec{
+	{ID: "exact-strategy-subject", Class: "DRIVER", ProofChoice: "FOUNDATION", MetaOperation: "bind-exact-strategy-subject"},
+	{ID: "verified-strategy-receipt", Class: "DRIVER", ProofChoice: "FOUNDATION", MetaOperation: "verify-strategy-receipt"},
+	{ID: "deterministic-strategy-replay", Class: "GUARDRAIL", ProofChoice: "REGRESSION", MetaOperation: "replay-strategy-plan"},
+	{ID: "concept-governed-trilemma", Class: "DRIVER", ProofChoice: "COHERENCE", MetaOperation: "bind-concept-trilemma-selection"},
+	{ID: "actionable-generation-plan", Class: "OUTCOME", ProofChoice: "COHERENCE", MetaOperation: "propose-independent-meta-operations"},
+	{ID: "independent-action-groups", Class: "DRIVER", ProofChoice: "REGRESSION", MetaOperation: "select-independent-action-groups"},
+	{ID: "executable-conformance-obligations", Class: "DRIVER", ProofChoice: "FOUNDATION", MetaOperation: "bind-executor-evaluator-receipts"},
+	{ID: "read-only-non-authorizing-boundary", Class: "GUARDRAIL", ProofChoice: "FOUNDATION", MetaOperation: "preserve-proposal-boundary"},
+}
+
+func Registry() []CoordinateSpec {
+	return append([]CoordinateSpec(nil), registry...)
+}
+
 func makeCoordinate(index int, status, reason string, evidence any) (Coordinate, error) {
 	digest, err := artifact.Digest(evidence)
 	return Coordinate{CoordinateSpec: registry[index], Status: status, Reason: reason, EvidenceDigest: digest}, err
@@ -39,4 +54,14 @@ func decisionFor(summary Summary) (string, string) {
 		return "NOT_READY", "CHANGE_PROPOSAL_CONTRACT_INCOMPLETE"
 	}
 	return "PASS", "CHANGE_PROPOSAL_CONTRACT_READY"
+}
+
+func coordinateStatus(satisfied, unresolved bool, successReason string) (string, string) {
+	if unresolved {
+		return "UNRESOLVED", "EVIDENCE_RESOLUTION_UNKNOWN"
+	}
+	if !satisfied {
+		return "NOT_SATISFIED", "CONTRACT_COORDINATE_NOT_PROVEN"
+	}
+	return "SATISFIED", successReason
 }

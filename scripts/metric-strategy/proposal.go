@@ -14,13 +14,23 @@ func writeProposalContract(value options) error {
 		return fmt.Errorf("plan, replay-plan, strategy-verification, repository, and subject-sha are required")
 	}
 	first, err := artifact.ReadJSON[strategy.Plan](value.plan)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	replay, err := artifact.ReadJSON[strategy.Plan](value.replayPlan)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	receipt, err := artifact.ReadJSON[strategyverify.Receipt](value.strategyVerification)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	report, err := proposal.Evaluate(value.repository, value.subjectSHA, first, replay, receipt)
-	if err != nil { return err }
-	if err := proposal.Validate(report); err != nil { return err }
+	if err != nil {
+		return err
+	}
+	if err := proposal.Validate(report); err != nil {
+		return err
+	}
 	return writeJSON(value.output, report)
 }

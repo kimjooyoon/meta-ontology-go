@@ -41,3 +41,20 @@ func Validate(report Report) error {
 func knownStatus(value string) bool {
 	return value == "SATISFIED" || value == "NOT_SATISFIED" || value == "UNRESOLVED"
 }
+
+func summarize(coordinates []Coordinate) Summary {
+	summary := Summary{Total: len(coordinates), RatioDenominator: len(coordinates)}
+	for _, coordinate := range coordinates {
+		switch coordinate.Status {
+		case "SATISFIED":
+			summary.Satisfied++
+		case "UNRESOLVED":
+			summary.Unresolved++
+		default:
+			summary.NotSatisfied++
+		}
+	}
+	summary.ReadinessBPS = summary.Satisfied * 10000 / max(summary.Total, 1)
+	summary.RatioNumerator = summary.Satisfied
+	return summary
+}
