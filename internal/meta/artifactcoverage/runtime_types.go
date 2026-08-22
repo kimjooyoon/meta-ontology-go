@@ -6,11 +6,11 @@ const (
 )
 
 type ArtifactObservation struct {
-	Name          string   `json:"name"`
-	HeadSHA       string   `json:"head_sha"`
-	Digest        string   `json:"digest"`
-	ReplayDigest  string   `json:"replay_digest"`
-	EvidenceKeys  []string `json:"evidence_keys"`
+	Name         string   `json:"name"`
+	HeadSHA      string   `json:"head_sha"`
+	Digest       string   `json:"digest"`
+	ReplayDigest string   `json:"replay_digest"`
+	EvidenceKeys []string `json:"evidence_keys"`
 }
 
 type ObservationDocument struct {
