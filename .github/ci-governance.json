@@ -762,6 +762,15 @@
       ]
     },
     {
+      "branch": "agent/semantic-resolution-schema-v23",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/semanticresolution/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/operation-artifact-feedback-executor-v22",
       "paths": [
         ".github/agent-scope-table.md",
