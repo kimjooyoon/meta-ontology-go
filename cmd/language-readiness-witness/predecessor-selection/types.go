@@ -13,7 +13,7 @@ type workflowRun struct {
 	Event      string `json:"event"`
 	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`
-	RunAttempt int `json:"run_attempt"`
+	RunAttempt int    `json:"run_attempt"`
 }
 
 type artifactList struct {
@@ -24,7 +24,7 @@ type artifactList struct {
 type artifactMetadata struct {
 	ID      int64  `json:"id"`
 	Name    string `json:"name"`
-	Expired bool `json:"expired"`
+	Expired bool   `json:"expired"`
 }
 
 type commit struct {

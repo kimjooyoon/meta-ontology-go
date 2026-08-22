@@ -3,11 +3,12 @@ package predecessorselection
 import readinessartifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact"
 
 type Selection struct {
-	RunID               int64                                   `json:"run_id"`
-	RunAttempt          int                                     `json:"run_attempt"`
-	ReadinessArtifactID int64                                   `json:"readiness_artifact_id"`
-	BindingArtifactID   int64                                   `json:"binding_artifact_id"`
-	Baseline            readinessartifact.BaselineReference     `json:"baseline"`
+	RunID               int64 `json:"run_id"`
+	RunAttempt          int   `json:"run_attempt"`
+	ReadinessArtifactID int64 `json:"readiness_artifact_id"`
+	BindingArtifactID   int64 `json:"binding_artifact_id"`
+
+	Baseline readinessartifact.BaselineReference `json:"baseline"`
 }
 
 type Summary struct {
@@ -28,16 +29,16 @@ type Proof struct {
 }
 
 type Report struct {
-	Schema           string     `json:"schema"`
-	Repository       string     `json:"repository"`
-	CurrentHeadSHA   string     `json:"current_head_sha"`
-	PredecessorSHA   string     `json:"predecessor_sha"`
-	Decision         string     `json:"decision"`
-	Reason           string     `json:"reason"`
-	Selected         *Selection `json:"selected,omitempty"`
-	Summary          Summary    `json:"summary"`
-	Proofs           []Proof    `json:"proofs"`
-	ReportDigest     string     `json:"report_digest"`
+	Schema         string     `json:"schema"`
+	Repository     string     `json:"repository"`
+	CurrentHeadSHA string     `json:"current_head_sha"`
+	PredecessorSHA string     `json:"predecessor_sha"`
+	Decision       string     `json:"decision"`
+	Reason         string     `json:"reason"`
+	Selected       *Selection `json:"selected,omitempty"`
+	Summary        Summary    `json:"summary"`
+	Proofs         []Proof    `json:"proofs"`
+	ReportDigest   string     `json:"report_digest"`
 }
 
 type Result struct {

@@ -44,8 +44,8 @@ func bindCandidate(candidate Candidate) (Selection, []byte, []byte, error) {
 		BasisPoints:    summary.ReadinessBPS,
 	})
 	return Selection{
-		RunID:                 candidate.RunID,
-		RunAttempt:            candidate.RunAttempt,
+		RunID:               candidate.RunID,
+		RunAttempt:          candidate.RunAttempt,
 		ReadinessArtifactID: candidate.ReadinessArtifactID,
 		BindingArtifactID:   candidate.BindingArtifactID,
 		Baseline:            reference,
