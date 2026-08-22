@@ -8,7 +8,7 @@ import (
 
 func TestMissingDecisionDoesNotDescend(t *testing.T) {
 	report, err := EvaluateWithResolution(ResolutionInput{
-		Feedback: feedbackFixture(""),
+		Feedback:          feedbackFixture(""),
 		CurrentResolution: semanticresolution.ResolutionExactOperation,
 	})
 	if err != nil {

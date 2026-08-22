@@ -9,19 +9,19 @@ type ResolutionInput struct {
 }
 
 type ResolutionReport struct {
-	Schema             string                        `json:"schema"`
-	Feedback           Report                        `json:"feedback"`
-	SourceDecision     string                        `json:"source_decision"`
-	Decision           string                        `json:"decision"`
-	Reason             string                        `json:"reason"`
-	FromResolution     semanticresolution.Resolution `json:"from_resolution"`
-	ToResolution       semanticresolution.Resolution `json:"to_resolution"`
-	PreviousDescents   int                           `json:"previous_descents"`
-	Descents           int                           `json:"descents"`
-	NextOperation      string                        `json:"next_operation,omitempty"`
-	RepositoryWrites   int                           `json:"repository_writes"`
-	Indicators         []ResolutionIndicator         `json:"indicators"`
-	ReportDigest       string                        `json:"report_digest"`
+	Schema           string                        `json:"schema"`
+	Feedback         Report                        `json:"feedback"`
+	SourceDecision   string                        `json:"source_decision"`
+	Decision         string                        `json:"decision"`
+	Reason           string                        `json:"reason"`
+	FromResolution   semanticresolution.Resolution `json:"from_resolution"`
+	ToResolution     semanticresolution.Resolution `json:"to_resolution"`
+	PreviousDescents int                           `json:"previous_descents"`
+	Descents         int                           `json:"descents"`
+	NextOperation    string                        `json:"next_operation,omitempty"`
+	RepositoryWrites int                           `json:"repository_writes"`
+	Indicators       []ResolutionIndicator         `json:"indicators"`
+	ReportDigest     string                        `json:"report_digest"`
 }
 
 type ResolutionIndicator struct {

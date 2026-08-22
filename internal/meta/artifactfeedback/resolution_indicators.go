@@ -4,10 +4,10 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/meta/semanticresolution"
 
 type resolutionIndicatorSpec struct {
 	metric, unit, operation, activity string
-	class                            semanticresolution.IndicatorClass
-	relation                         semanticresolution.Relation
-	proof                            semanticresolution.ProofChoice
-	target                           int
+	class                             semanticresolution.IndicatorClass
+	relation                          semanticresolution.Relation
+	proof                             semanticresolution.ProofChoice
+	target                            int
 }
 
 var resolutionIndicatorSpecs = []resolutionIndicatorSpec{

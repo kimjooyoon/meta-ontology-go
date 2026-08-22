@@ -8,7 +8,7 @@ import (
 
 func TestUnknownDecisionLowersResolutionWithoutFixedPoint(t *testing.T) {
 	report, err := EvaluateWithResolution(ResolutionInput{
-		Feedback: feedbackFixture("UNKNOWN"),
+		Feedback:          feedbackFixture("UNKNOWN"),
 		CurrentResolution: semanticresolution.ResolutionExactOperation,
 	})
 	if err != nil {
@@ -33,7 +33,7 @@ func TestUnknownDecisionResolutionIsFinite(t *testing.T) {
 		semanticresolution.ResolutionInvariantOnly,
 	} {
 		report, err := EvaluateWithResolution(ResolutionInput{
-			Feedback: feedbackFixture("UNKNOWN"),
+			Feedback:          feedbackFixture("UNKNOWN"),
 			CurrentResolution: current, Descents: descents,
 		})
 		if err != nil {
@@ -45,7 +45,7 @@ func TestUnknownDecisionResolutionIsFinite(t *testing.T) {
 		current, descents = report.ToResolution, report.Descents
 	}
 	report, err := EvaluateWithResolution(ResolutionInput{
-		Feedback: feedbackFixture("UNKNOWN"),
+		Feedback:          feedbackFixture("UNKNOWN"),
 		CurrentResolution: current, Descents: descents,
 	})
 	if err != nil {

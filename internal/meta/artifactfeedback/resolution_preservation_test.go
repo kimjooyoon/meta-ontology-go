@@ -9,7 +9,7 @@ import (
 func TestExplicitFeedbackDecisionsAreNeverLowered(t *testing.T) {
 	for _, decision := range []string{"FIXED_POINT", "IMPROVE"} {
 		report, err := EvaluateWithResolution(ResolutionInput{
-			Feedback: feedbackFixture(decision),
+			Feedback:          feedbackFixture(decision),
 			CurrentResolution: semanticresolution.ResolutionExactOperation,
 		})
 		if err != nil {
@@ -27,7 +27,7 @@ func TestWriteFailureDoesNotDescend(t *testing.T) {
 	feedback := feedbackFixture("UNKNOWN")
 	feedback.RepositoryWrites = 1
 	report, err := EvaluateWithResolution(ResolutionInput{
-		Feedback: feedback,
+		Feedback:          feedback,
 		CurrentResolution: semanticresolution.ResolutionExactOperation,
 	})
 	if err != nil {
@@ -42,7 +42,7 @@ func TestWriteFailureDoesNotDescend(t *testing.T) {
 
 func TestResolutionIndicatorsAreMetaBound(t *testing.T) {
 	report, err := EvaluateWithResolution(ResolutionInput{
-		Feedback: feedbackFixture("UNKNOWN"),
+		Feedback:          feedbackFixture("UNKNOWN"),
 		CurrentResolution: semanticresolution.ResolutionExactOperation,
 	})
 	if err != nil {
