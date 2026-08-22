@@ -760,6 +760,15 @@
         "internal/meta/metabinding/registry.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/partition-directory-ci-v19",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
