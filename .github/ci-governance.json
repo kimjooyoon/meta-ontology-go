@@ -849,6 +849,17 @@
       ]
     },
     {
+      "branch": "agent/feedback-semantic-usecases-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "examples/feedback-semantic-cycle/**",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/feedback-semantic-witness-v27",
       "paths": [
         ".github/agent-scope-table.md",
