@@ -741,6 +741,15 @@
       ]
     },
     {
+      "branch": "agent/directory-kind-schema-v20",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/directorykind/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/partition-directory-v19",
       "paths": [
         ".github/agent-scope-table.md",
