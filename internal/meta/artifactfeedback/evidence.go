@@ -1,15 +1,14 @@
 package artifactfeedback
 
 func evaluateKPIs(indicators []Indicator, summary Summary) []KPI {
-	values := map[string]int{
-		"gooo.metric.meta.next-cycle-feedback.readiness-bps.v1":                   summary.ReadinessBasisPoints,
-		"gooo.metric.meta.feedback-exact-head.coverage-bps.v1":                   summary.ExactHeadInputs * 5000,
-		"gooo.metric.meta.feedback-cycle-bound.coverage-bps.v1":                  summary.BoundInputs * 5000,
-		"gooo.metric.meta.feedback-replay-bound.coverage-bps.v1":                 summary.ReplayBoundInputs * 5000,
-		"gooo.metric.meta.feedback-stale-inputs.guardrail.v1":                    summary.StaleInputs,
-		"gooo.metric.meta.feedback-ambiguous-next-operations.guardrail.v1":        summary.AmbiguousNextOperations,
-		"gooo.metric.meta.feedback-observer-writes.guardrail.v1":                 summary.RepositoryWrites,
-	}
+	values := make(map[string]int, len(indicators))
+	values["gooo.metric.meta.next-cycle-feedback.readiness-bps.v1"] = summary.ReadinessBasisPoints
+	values["gooo.metric.meta.feedback-exact-head.coverage-bps.v1"] = summary.ExactHeadInputs * 5000
+	values["gooo.metric.meta.feedback-cycle-bound.coverage-bps.v1"] = summary.BoundInputs * 5000
+	values["gooo.metric.meta.feedback-replay-bound.coverage-bps.v1"] = summary.ReplayBoundInputs * 5000
+	values["gooo.metric.meta.feedback-stale-inputs.guardrail.v1"] = summary.StaleInputs
+	values["gooo.metric.meta.feedback-ambiguous-next-operations.guardrail.v1"] = summary.AmbiguousNextOperations
+	values["gooo.metric.meta.feedback-observer-writes.guardrail.v1"] = summary.RepositoryWrites
 	result := make([]KPI, 0, len(indicators))
 	for _, indicator := range indicators {
 		value := values[indicator.MetricID]
