@@ -19,4 +19,5 @@ func TestGo127FormatReceipt(t *testing.T) {
 		}
 		t.Logf("FORMAT_RECEIPT %s %s", name, base64.StdEncoding.EncodeToString(formatted))
 	}
+	t.Fail()
 }
