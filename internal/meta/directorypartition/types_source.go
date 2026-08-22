@@ -37,15 +37,15 @@ type SourcePolicy struct {
 }
 
 type SourceIndicator struct {
-	MetricID           string `json:"metric_id"`
-	Subject            string `json:"subject"`
-	SubjectKind        string `json:"subject_kind"`
-	Value              int    `json:"value"`
-	Limit              int    `json:"limit"`
-	Applicability      string `json:"applicability"`
+	MetricID            string `json:"metric_id"`
+	Subject             string `json:"subject"`
+	SubjectKind         string `json:"subject_kind"`
+	Value               int    `json:"value"`
+	Limit               int    `json:"limit"`
+	Applicability       string `json:"applicability"`
 	ApplicabilityReason string `json:"applicability_reason"`
-	Blocking           bool   `json:"blocking"`
-	Satisfied          bool   `json:"satisfied"`
-	ProofChoice        string `json:"proof_choice"`
-	MetaOperation      string `json:"meta_operation"`
+	Blocking            bool   `json:"blocking"`
+	Satisfied           bool   `json:"satisfied"`
+	ProofChoice         string `json:"proof_choice"`
+	MetaOperation       string `json:"meta_operation"`
 }
