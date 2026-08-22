@@ -32,20 +32,6 @@ func directEntries(source SourceMetrics, subject string) []directEntry {
 	return ordered
 }
 
-func availableGroup(subject, base string, occupied map[string]bool) string {
-	for index := 1; ; index++ {
-		name := base
-		if index > 1 {
-			name = fmt.Sprintf("%s_%02d", base, index)
-		}
-		candidate := path.Join(subject, name)
-		if !occupied[candidate] {
-			occupied[candidate] = true
-			return candidate
-		}
-	}
-}
-
 func makeCandidate(source SourceMetrics, target SourceIndicator) (Candidate, error) {
 	if target.Subject == "." {
 		return Candidate{}, fmt.Errorf("project root kind topology is exempt")
