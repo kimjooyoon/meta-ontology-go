@@ -1,22 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-mkdir -p "$OUTPUT_DIR"/{actionability,binding,partition,kind,generation}
-download() {
-  gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" \
-    --name "$1-$HEAD_SHA" --dir "$OUTPUT_DIR/$2"
-}
-download meta-actionability actionability
-download meta-binding-coverage binding
-download directory-partition partition
-download directory-kind-separation kind
-download self-improvement-generation generation
-
-actionability="$OUTPUT_DIR/actionability/meta-actionability-report.json"
-binding="$OUTPUT_DIR/binding/meta-binding-report.json"
-partition="$OUTPUT_DIR/partition/directory-partition-report.json"
-kind="$OUTPUT_DIR/kind/directory-kind-report.json"
-generation="$OUTPUT_DIR/generation/self-improvement-plan.json"
+source_dir="${1:?source metrics directory required}"
+output_dir="$source_dir/operation-artifact"
+head="${METRICS_COMMIT_SHA:?metrics commit SHA required}"
+mkdir -p "$output_dir"
+actionability="$source_dir/meta-actionability-report.json"
+binding="$source_dir/meta-binding-report.json"
+partition="$source_dir/directory-partition-report.json"
+kind="$source_dir/directory-kind-report.json"
+generation="$source_dir/self-improvement-plan.json"
 for report in "$actionability" "$binding" "$partition" "$kind" "$generation"; do
   test -s "$report"
 done
@@ -31,7 +24,7 @@ common='["meta-binding.report","directory-partition.report",
   "split-go-declarations.report","split-gooo-sections.report"]'
 
 jq -n --arg schema 'meta-operation-artifact-observation/v1' \
-  --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" \
+  --arg repository "$GITHUB_REPOSITORY" --arg head "$head" \
   --arg binding "$(digest "$binding")" \
   --arg partition "$(digest "$partition")" \
   --arg kind "$(digest "$kind")" \
@@ -52,5 +45,4 @@ jq -n --arg schema 'meta-operation-artifact-observation/v1' \
       observed($id; "directory-kind-separation-" + $head; $kind)
     else observed($id; "self-improvement-generation-" + $head; $generation)
     end))}
-' >"$OUTPUT_DIR/observations.json"
-
+' >"$output_dir/observations.json"
