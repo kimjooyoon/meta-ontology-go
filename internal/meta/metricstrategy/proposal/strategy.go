@@ -1,6 +1,8 @@
 package proposal
 
 import (
+	"reflect"
+
 	strategy "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy"
 	strategyverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify"
 )
