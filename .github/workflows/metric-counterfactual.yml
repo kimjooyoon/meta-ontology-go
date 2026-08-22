@@ -199,24 +199,12 @@ jobs:
           path: ${{ runner.temp }}/metric-strategy/input
       - name: Synthesize, replay, and independently verify the trilemma choice
         shell: bash
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          PREDECESSOR_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: |
           set -euo pipefail
           input="$RUNNER_TEMP/metric-strategy/input"
           first="$RUNNER_TEMP/metric-strategy/first"
           replay="$RUNNER_TEMP/metric-strategy/replay"
           mkdir -p "$first" "$replay"
-          go run ./scripts/metric-strategy \
-            -mode proposal-predecessor \
-            -repository "$GITHUB_REPOSITORY" \
-            -subject-sha "$SUBJECT_SHA" \
-            -predecessor-sha "$PREDECESSOR_SHA" \
-            -output "$first/proposal-predecessor-selection.json" \
-            -selected-proposal "$first/proposal-predecessor-contract.json"
-          sha256sum "$first/proposal-predecessor-selection.json" > "$first/proposal-predecessor-selection.json.sha256"
-          sha256sum "$first/proposal-predecessor-contract.json" > "$first/proposal-predecessor-contract.json.sha256"
           common=(
             -metrics "$input/source-metrics.json"
             -intervention "$input/ledger.json"
@@ -288,24 +276,59 @@ jobs:
             .repository_writes == 0 and
             .promotion_authorized == false
           ' "$first/proposal-contract.json"
+          test -z "$(git status --porcelain)"
+      - name: Upload deterministic metric strategy evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: metric-strategy-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-strategy/first
+          if-no-files-found: error
+          retention-days: 30
+
+  proposal-continuity:
+    needs: strategy
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      PREDECESSOR_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Verify predecessor continuity independently
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/proposal-continuity"
+          mkdir -p "$out"
+          go run ./scripts/metric-strategy \
+            -mode proposal-predecessor \
+            -repository "$GITHUB_REPOSITORY" \
+            -subject-sha "$SUBJECT_SHA" \
+            -predecessor-sha "$PREDECESSOR_SHA" \
+            -output "$out/selection.json" \
+            -selected-proposal "$out/contract.json"
           jq -e --arg predecessor "$PREDECESSOR_SHA" '
-            .schema == "gooo/autonomous-change-proposal-predecessor-selection/v1" and
+            .schema == "gooo/autonomous-change-proposal-predecessor-selection/v2" and
             .decision == "SELECTED" and
-            .reason == "PROPOSAL_PREDECESSOR_SELECTED" and
             .predecessor_sha == $predecessor and
             .selected.head_sha == $predecessor and
-            .selected.contract_satisfied == 8 and
-            .selected.contract_total == 8 and
-            .selected.contract_bps == 10000 and
-            .selected.contract_unresolved == 0 and
+            .selected.synthesis_job_name == "strategy" and
+            .selected.synthesis_job_status == "completed" and
+            .selected.synthesis_job_conclusion == "success" and
+            .summary.exact_jobs == 1 and
             .summary.valid_candidates == 1 and
-            .summary.ambiguous_candidates == 0 and
             .summary.unresolved_candidates == 0 and
             .summary.selection_bps == 10000 and
             .summary.proofs_passed == 5 and
             .summary.proofs_total == 5 and
             .summary.repository_writes == 0
-          ' "$first/proposal-predecessor-selection.json"
+          ' "$out/selection.json"
           jq -e --arg predecessor "$PREDECESSOR_SHA" '
             .subject_sha == $predecessor and
             .decision == "PASS" and
@@ -314,14 +337,14 @@ jobs:
             .summary.unresolved == 0 and
             .repository_writes == 0 and
             .promotion_authorized == false
-          ' "$first/proposal-predecessor-contract.json"
-          test -z "$(git status --porcelain)"
-      - name: Upload deterministic metric strategy evidence
+          ' "$out/contract.json"
+      - name: Upload proposal continuity evidence
+        if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: metric-strategy-${{ env.SUBJECT_SHA }}
-          path: ${{ runner.temp }}/metric-strategy/first
-          if-no-files-found: error
+          name: proposal-continuity-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/proposal-continuity
+          if-no-files-found: warn
           retention-days: 30
 
   program:
