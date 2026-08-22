@@ -2,6 +2,86 @@
   "schema": "gooo.function-extraction-recipes.v1",
   "recipes": [
     {
+      "subject": "internal/meta/languageconcept/evaluate.go",
+      "operation": "extract-language-concept-bindings",
+      "edits": [
+        {
+          "path": "internal/meta/languageconcept/evaluate.go",
+          "old_lines": [
+            "func codeBindings(repository fs.FS, item Concept) (bool, []string) {",
+            "\tif len(item.CodeBindings) == 0 {",
+            "\t\treturn false, []string{item.ID + \":no-code-binding\"}",
+            "\t}",
+            "\tmissing := make([]string, 0)",
+            "\tfor _, path := range item.CodeBindings {",
+            "\t\tif !fs.ValidPath(path) {",
+            "\t\t\tmissing = append(missing, item.ID+\":\"+path)",
+            "\t\t\tcontinue",
+            "\t\t}",
+            "\t\tif _, err := fs.Stat(repository, path); err != nil {",
+            "\t\t\tmissing = append(missing, item.ID+\":\"+path)",
+            "\t\t}",
+            "\t}",
+            "\treturn len(missing) == 0, missing",
+            "}",
+            "",
+            "func validUseCases(cases []UseCase) bool {",
+            "\tif len(cases) == 0 {",
+            "\t\treturn false",
+            "\t}",
+            "\tfor _, item := range cases {",
+            "\t\tif item.ID == \"\" || item.Trigger == \"\" || item.ExpectedOutcome == \"\" {",
+            "\t\t\treturn false",
+            "\t\t}",
+            "\t}",
+            "\treturn true",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languageconcept/bindings.go",
+          "old_lines": [
+            "package languageconcept"
+          ],
+          "new_lines": [
+            "package languageconcept",
+            "",
+            "import \"io/fs\"",
+            "",
+            "func codeBindings(repository fs.FS, item Concept) (bool, []string) {",
+            "\tif len(item.CodeBindings) == 0 {",
+            "\t\treturn false, []string{item.ID + \":no-code-binding\"}",
+            "\t}",
+            "\tmissing := make([]string, 0)",
+            "\tfor _, path := range item.CodeBindings {",
+            "\t\tif !fs.ValidPath(path) {",
+            "\t\t\tmissing = append(missing, item.ID+\":\"+path)",
+            "\t\t\tcontinue",
+            "\t\t}",
+            "\t\tif _, err := fs.Stat(repository, path); err != nil {",
+            "\t\t\tmissing = append(missing, item.ID+\":\"+path)",
+            "\t\t}",
+            "\t}",
+            "\treturn len(missing) == 0, missing",
+            "}",
+            "",
+            "func validUseCases(cases []UseCase) bool {",
+            "\tif len(cases) == 0 {",
+            "\t\treturn false",
+            "\t}",
+            "\tfor _, item := range cases {",
+            "\t\tif item.ID == \"\" || item.Trigger == \"\" || item.ExpectedOutcome == \"\" {",
+            "\t\t\treturn false",
+            "\t\t}",
+            "\t}",
+            "\treturn true",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
       "subject": "internal/cache/semantic_key_part01_test.go",
       "operation": "extract-result-unwrapper",
       "edits": [
