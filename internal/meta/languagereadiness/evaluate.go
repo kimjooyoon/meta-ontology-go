@@ -33,9 +33,7 @@ func evaluate(raw []byte, proposalPromotionDigest string) (Snapshot, error) {
 	return summarize(snapshot), nil
 }
 
-func evaluateObligation(
-	obligation Obligation, concepts []conceptEvidence, proposalPromotionDigest string,
-) ObligationResult {
+func evaluateObligation(obligation Obligation, concepts []conceptEvidence, proposalPromotionDigest string) ObligationResult {
 	result := ObligationResult{Obligation: obligation}
 	if len(concepts) == 0 {
 		result.Status, result.Reason = "NOT_SATISFIED", "CONCEPT_NOT_REGISTERED"
@@ -56,10 +54,7 @@ func evaluateObligation(
 			result.Status, result.Reason = "NOT_SATISFIED", "VERIFIED_PROMOTION_RECEIPT_REQUIRED"
 			return result
 		}
-		result.EvidenceDigest = digestJSON(struct {
-			Concept         conceptEvidence `json:"concept"`
-			PromotionDigest string          `json:"promotion_digest"`
-		}{concept, proposalPromotionDigest})
+		result.EvidenceDigest = digestJSON(promotionEvidence{concept, proposalPromotionDigest})
 	}
 	result.Status, result.Reason = "SATISFIED", "CONCEPT_CONFORMANCE_EXPLICIT"
 	return result

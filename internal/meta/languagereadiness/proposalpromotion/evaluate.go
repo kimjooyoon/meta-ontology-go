@@ -10,10 +10,10 @@ func evaluate(currentHead, evidenceHead string, source Source) Receipt {
 	}
 	summary := Summary{
 		Satisfied: satisfied, Total: totalCoordinates,
-		NotSatisfied: totalCoordinates - satisfied,
-		Unresolved:   totalCoordinates - satisfied,
-		ReadinessBPS: satisfied * 10_000 / totalCoordinates,
-		ValidPredecessors: source.Selection.ValidCandidates,
+		NotSatisfied:        totalCoordinates - satisfied,
+		Unresolved:          totalCoordinates - satisfied,
+		ReadinessBPS:        satisfied * 10_000 / totalCoordinates,
+		ValidPredecessors:   source.Selection.ValidCandidates,
 		AmbiguousCandidates: source.Selection.AmbiguousCandidates,
 		RepositoryWrites: source.Selection.RepositoryWrites +
 			source.Selection.SelectedRepositoryWrites + source.Contract.RepositoryWrites,
@@ -27,11 +27,12 @@ func evaluate(currentHead, evidenceHead string, source Source) Receipt {
 		CurrentHeadSHA: currentHead, EvidenceHeadSHA: evidenceHead,
 		Decision: decision, Reason: reason,
 		MetaOperation: "promote-verified-change-proposal",
-		Source: source, Summary: summary, Coordinates: coordinates,
-		RepositoryWrites: summary.RepositoryWrites,
+		Source:                       source,
+		Summary:                      summary,
+		Coordinates:                  coordinates,
+		RepositoryWrites:             summary.RepositoryWrites,
 		RepositoryMutationAuthorized: false,
-	}
-	receipt.Indicators = buildIndicators(summary, source)
-	receipt.Proofs = buildProofs(coordinates)
+		Indicators:                   buildIndicators(summary, source),
+		Proofs:                       buildProofs(coordinates)}
 	return seal(receipt)
 }

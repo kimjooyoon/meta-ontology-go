@@ -64,9 +64,7 @@ const commitHexLength = 40
 
 func validPromotionDigest(receipt Receipt) bool {
 	required := false
-	for _, result := range receipt.Snapshot.Obligations {
-		required = required || (result.ID == "AUTONOMY-CHANGE-PROPOSAL" && result.Status == "SATISFIED")
-	}
+	for _, result := range receipt.Snapshot.Obligations { required = required || (result.ID == "AUTONOMY-CHANGE-PROPOSAL" && result.Status == "SATISFIED") }
 	if !required {
 		return receipt.ProposalPromotionDigest == ""
 	}

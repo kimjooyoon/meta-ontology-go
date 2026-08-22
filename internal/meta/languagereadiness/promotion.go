@@ -8,6 +8,11 @@ import (
 
 const autonomousProposalConcept = "autonomous-change-proposal"
 
+type promotionEvidence struct {
+	Concept         conceptEvidence `json:"concept"`
+	PromotionDigest string          `json:"promotion_digest"`
+}
+
 func EvaluateWithProposalPromotion(
 	raw []byte, promotion proposalpromotion.Receipt, expectedHeadSHA string,
 ) (Snapshot, error) {
