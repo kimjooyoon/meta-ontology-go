@@ -7,7 +7,7 @@ const (
 	ReasonCoverageDecisionUnknown   = "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
 	NextOperationReevaluateFeedback = "reevaluate-artifact-feedback"
 
-	MetricResolutionRecovery = "gooo.metric.meta.semantic-resolution-recovery.coverage-bps.v1"
+	MetricResolutionRecovery  = "gooo.metric.meta.semantic-resolution-recovery.coverage-bps.v1"
 	MetricConflictObservation = "gooo.metric.meta.semantic-conflict-observation.coverage-bps.v1"
 	MetricMonotoneDescent     = "gooo.metric.meta.monotone-resolution-descent.coverage-bps.v1"
 	MetricTransitionReplay    = "gooo.metric.meta.resolution-transition-replay.coverage-bps.v1"

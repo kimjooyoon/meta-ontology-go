@@ -23,10 +23,10 @@ func EvaluateWithResolution(input ResolutionInput) (ResolutionReport, error) {
 	}
 	transition := semanticresolution.ResolveSemanticConflict(
 		semanticresolution.Conflict{
-			SourceDecision: input.Feedback.Coverage.Decision,
+			SourceDecision:    input.Feedback.Coverage.Decision,
 			CurrentResolution: input.CurrentResolution,
-			Descents: input.Descents,
-			RepositoryWrites: input.Feedback.RepositoryWrites,
+			Descents:          input.Descents,
+			RepositoryWrites:  input.Feedback.RepositoryWrites,
 		},
 	)
 	report.Decision = transition.Decision
