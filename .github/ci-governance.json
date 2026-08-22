@@ -814,6 +814,7 @@
         ".github/ci-governance.json",
         ".github/workflows/ci.yml",
         "internal/verify/scope_part01.go",
+        "internal/verify/workflow_part04_test.go",
         "scripts/feedback-predecessor-ci/**"
       ]
     },

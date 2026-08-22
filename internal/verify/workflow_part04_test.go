@@ -37,8 +37,8 @@ func TestCIWorkflowUsesImmutableCheckoutForEveryJob(t *testing.T) {
 		t.Fatal(err)
 	}
 	marker := "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
-	if strings.Count(string(workflow), marker) != 8 {
-		t.Fatalf("expected eight immutable checkout refs, got %d", strings.Count(string(workflow), marker))
+	if strings.Count(string(workflow), marker) != 9 {
+		t.Fatalf("expected nine immutable checkout refs, got %d", strings.Count(string(workflow), marker))
 	}
 }
 func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
@@ -56,7 +56,7 @@ func TestCISCOPE008WorkflowKeepsCanonicalJobsOnPullRequests(t *testing.T) {
 	if !strings.Contains(text, "  policy:\n    name: CI policy") {
 		t.Fatal("pull requests do not retain the unconditionally scheduled policy job")
 	}
-	if strings.Count(text, "    name: gofmt\n") != 1 || strings.Count(text, "    name: go vet\n") != 1 || strings.Count(text, "    name: go test\n") != 1 || strings.Count(text, "    name: go test -race\n") != 1 || strings.Count(text, "    name: Semantic conformance\n") != 1 || strings.Count(text, "    name: CI policy\n") != 1 {
+	if strings.Count(text, "    name: gofmt\n") != 1 || strings.Count(text, "    name: go vet\n") != 1 || strings.Count(text, "    name: go test\n") != 1 || strings.Count(text, "    name: go test -race\n") != 1 || strings.Count(text, "    name: Semantic conformance\n") != 1 || strings.Count(text, "    name: CI policy\n") != 1 || strings.Count(text, "    name: Feedback predecessor\n") != 1 {
 		t.Fatal("canonical job names are missing or duplicated")
 	}
 }
