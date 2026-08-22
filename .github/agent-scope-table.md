@@ -104,5 +104,6 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/meta-actionability-v18` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `bootstrap/meta-actionability-witness`, `examples/meta-actionability`, `internal/meta/actionability`, `internal/verify/scope_part01.go` |
 | `agent/meta-actionability-ci-v18` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/directorypartition`, `internal/verify/scope_part01.go` |
+| `agent/partition-directory-executor-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/directory-partition-witness`, `internal/meta/directorypartition`, `internal/meta/metabinding/registry.go`, `internal/verify/scope_part01.go` |
 | `agent/zerolang-experiments` | `docs/research/zerolang.md` |
 | `agent/zerolang-research` | `docs/research/zerolang.md` |
