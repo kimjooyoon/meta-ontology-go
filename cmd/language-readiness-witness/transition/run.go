@@ -19,12 +19,16 @@ func run(args []string, output io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("read baseline: %w", err)
 	}
+	baseline, err := readBaselineReference(value.baselineReference)
+	if err != nil {
+		return fmt.Errorf("read baseline reference: %w", err)
+	}
 	_, after, err := readReadiness(value.after)
 	if err != nil {
 		return fmt.Errorf("read current: %w", err)
 	}
 	receipt, err := readinessartifact.BuildImprovement(
-		beforeRaw, before, after, value.expectedSHA,
+		beforeRaw, before, after, value.expectedSHA, baseline,
 	)
 	if err != nil {
 		return err
