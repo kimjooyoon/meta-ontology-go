@@ -12,7 +12,7 @@ func validateExternalPaths(value config) error {
 	if err != nil || !info.IsDir() {
 		return fmt.Errorf("repository root is unavailable")
 	}
-	paths := []string{value.before, value.after}
+	paths := []string{value.before, value.baselineReference, value.after}
 	if value.output != "" {
 		paths = append(paths, value.output)
 	} else {

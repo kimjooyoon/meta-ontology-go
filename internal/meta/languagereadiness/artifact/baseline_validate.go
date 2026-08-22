@@ -4,10 +4,16 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"reflect"
 )
 
-func ValidateFoundationBaseline(raw []byte, receipt Receipt) error {
-	reference := FoundationBaseline()
+func ValidateFoundationBaseline(
+	raw []byte, receipt Receipt, selected BaselineReference,
+) error {
+	reference := FoundationBaseline(selected)
+	if !reflect.DeepEqual(reference, selected) {
+		return fmt.Errorf("FAIL_CLOSED: readiness baseline reference mismatch")
+	}
 	if digestBytes(raw) != reference.FileSHA256 {
 		return fmt.Errorf("FAIL_CLOSED: readiness baseline file digest mismatch")
 	}

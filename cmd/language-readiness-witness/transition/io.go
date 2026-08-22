@@ -22,6 +22,18 @@ func readReadiness(path string) ([]byte, readinessartifact.Receipt, error) {
 	return raw, receipt, nil
 }
 
+func readBaselineReference(path string) (readinessartifact.BaselineReference, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return readinessartifact.BaselineReference{}, err
+	}
+	var reference readinessartifact.BaselineReference
+	if err := json.Unmarshal(raw, &reference); err != nil {
+		return readinessartifact.BaselineReference{}, err
+	}
+	return reference, nil
+}
+
 func encode(value readinessartifact.ImprovementArtifact) ([]byte, error) {
 	raw, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {

@@ -6,28 +6,29 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/improvement"
 )
 
-func requireFirstImprovement(value improvement.Transition) error {
+func requireAcceptedTransition(value improvement.Transition) error {
 	switch {
-	case value.Decision != improvement.Improved ||
-		value.ReasonCode != "IMPROVEMENT_PROVEN" || !value.Comparable:
-		return fmt.Errorf("FAIL_CLOSED: first improvement decision not proven")
-	case value.BeforeCompleted != 7 || value.AfterCompleted != 8 ||
-		value.Total != improvement.SnapshotTotal:
-		return fmt.Errorf("FAIL_CLOSED: first improvement obligation counts mismatch")
-	case value.CompletedDelta != 1 || value.Gains != 1:
-		return fmt.Errorf("FAIL_CLOSED: first improvement gain mismatch")
-	case value.BeforeBasisPoints != 2916 || value.AfterBasisPoints != 3333 ||
-		value.BasisPointsDelta != 417:
-		return fmt.Errorf("FAIL_CLOSED: first improvement basis points mismatch")
+	case !value.Comparable || value.Total != improvement.SnapshotTotal:
+		return fmt.Errorf("FAIL_CLOSED: readiness transition not comparable")
 	case value.Regressions != 0 || value.BeforeUnresolved != 0 ||
 		value.AfterUnresolved != 0:
-		return fmt.Errorf("FAIL_CLOSED: first improvement guardrail failed")
+		return fmt.Errorf("FAIL_CLOSED: readiness transition guardrail failed")
 	case len(value.Indicators) != 5 || len(value.Proofs) != 4:
-		return fmt.Errorf("FAIL_CLOSED: first improvement evidence incomplete")
+		return fmt.Errorf("FAIL_CLOSED: readiness transition evidence incomplete")
+	case value.Decision == improvement.Improved &&
+		(value.ReasonCode != "IMPROVEMENT_PROVEN" || value.CompletedDelta <= 0 ||
+			value.BasisPointsDelta <= 0 || value.Gains != value.CompletedDelta):
+		return fmt.Errorf("FAIL_CLOSED: readiness improvement arithmetic mismatch")
+	case value.Decision == improvement.NoChange &&
+		(value.ReasonCode != "NO_NUMERIC_CHANGE" || value.CompletedDelta != 0 ||
+			value.BasisPointsDelta != 0 || value.Gains != 0):
+		return fmt.Errorf("FAIL_CLOSED: readiness fixed point arithmetic mismatch")
+	case value.Decision != improvement.Improved && value.Decision != improvement.NoChange:
+		return fmt.Errorf("FAIL_CLOSED: readiness transition decision rejected")
 	}
 	for _, proof := range value.Proofs {
 		if !proof.Passed {
-			return fmt.Errorf("FAIL_CLOSED: first improvement proof %q failed", proof.ID)
+			return fmt.Errorf("FAIL_CLOSED: readiness transition proof %q failed", proof.ID)
 		}
 	}
 	return nil

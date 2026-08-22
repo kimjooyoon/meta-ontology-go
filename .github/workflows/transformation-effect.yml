@@ -100,14 +100,42 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: 1.27.0
-      - name: Download exact readiness baseline
-        uses: actions/download-artifact@v7
+      - name: Select exact readiness predecessor
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for suffix in a b; do
+            baseline_dir="$RUNNER_TEMP/language-readiness-baseline-$suffix"
+            mkdir -p "$baseline_dir"
+            go run ./cmd/language-readiness-witness/predecessor-selection \
+              --root "$GITHUB_WORKSPACE" \
+              --repository "$GITHUB_REPOSITORY" \
+              --current-head "$HEAD_SHA" \
+              --predecessor-sha "${{ github.event.pull_request.base.sha }}" \
+              --branch "dev" \
+              --workflow "Transformation effect ledger" \
+              --baseline "$baseline_dir/artifact.json" \
+              --reference "$RUNNER_TEMP/language-readiness-baseline-reference-$suffix.json" \
+              --binding-baseline "$RUNNER_TEMP/language-readiness-binding-baseline-$suffix.json" \
+              --receipt "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json" \
+            "$RUNNER_TEMP/language-readiness-baseline-b/artifact.json"
+          cmp "$RUNNER_TEMP/language-readiness-baseline-reference-a.json" \
+            "$RUNNER_TEMP/language-readiness-baseline-reference-b.json"
+          cmp "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
+            "$RUNNER_TEMP/language-readiness-binding-baseline-b.json"
+          cmp "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" \
+            "$RUNNER_TEMP/language-readiness-predecessor-selection-b.json"
+      - name: Upload exact-head readiness predecessor selection
+        uses: actions/upload-artifact@v6
         with:
-          name: language-readiness-artifact-fb893cf61db1896c7f9617ae54a8befd2d232f33
-          path: ${{ runner.temp }}/language-readiness-baseline
-          github-token: ${{ github.token }}
-          run-id: 32582965541
-
+          name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-readiness-baseline-reference-a.json
+            ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Produce, replay, and consume exact-head concepts
         shell: bash
         run: |
@@ -150,12 +178,14 @@ jobs:
           )
           improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
           improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
-          baseline="$RUNNER_TEMP/language-readiness-baseline/artifact.json"
+          baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
+          baseline_reference="$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
           mkdir -p "$improvement_first" "$improvement_replay"
           for target in "$improvement_first" "$improvement_replay"; do
             go run ./cmd/language-readiness-witness/transition \
               -root "$GITHUB_WORKSPACE" \
               -before "$baseline" \
+              -baseline-reference "$baseline_reference" \
               -after "$readiness_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
@@ -164,6 +194,7 @@ jobs:
           go run ./cmd/language-readiness-witness/transition \
             -root "$GITHUB_WORKSPACE" \
             -before "$baseline" \
+            -baseline-reference "$baseline_reference" \
             -after "$readiness_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$improvement_first/artifact.json"
@@ -182,6 +213,31 @@ jobs:
           done
           cmp "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
             "$RUNNER_TEMP/language-readiness-predecessor-binding-b.json"
+      - name: Prove exact predecessor binding transition
+        run: |
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/predecessor-binding/transition \
+              --root "$GITHUB_WORKSPACE" \
+              --before "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
+              --after "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
+              --expected-sha "$HEAD_SHA" \
+              --output "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-a.json" \
+            "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-b.json"
+          go run ./cmd/language-readiness-witness/predecessor-binding/transition \
+            --root "$GITHUB_WORKSPACE" \
+            --before "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
+            --after "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
+            --expected-sha "$HEAD_SHA" \
+            --check "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-a.json"
+      - name: Upload exact-head predecessor binding transition
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-binding-transition-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-predecessor-binding-transition-a.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload exact-head predecessor bindings
         uses: actions/upload-artifact@v6
         with:

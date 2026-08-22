@@ -10,7 +10,7 @@ import (
 func ValidateImprovement(
 	beforeRaw []byte, before, after Receipt, receipt ImprovementArtifact,
 ) error {
-	if err := ValidateFoundationBaseline(beforeRaw, before); err != nil {
+	if err := ValidateFoundationBaseline(beforeRaw, before, receipt.Baseline); err != nil {
 		return err
 	}
 	if err := Validate(after); err != nil {
@@ -23,7 +23,7 @@ func ValidateImprovement(
 		receipt.Consumer != improvementConsumer ||
 		receipt.MetaOperation != improvementOperation:
 		return fmt.Errorf("FAIL_CLOSED: improvement meta binding mismatch")
-	case !reflect.DeepEqual(receipt.Baseline, FoundationBaseline()):
+	case !reflect.DeepEqual(receipt.Baseline, FoundationBaseline(receipt.Baseline)):
 		return fmt.Errorf("FAIL_CLOSED: improvement baseline reference mismatch")
 	case !validHeadSHA(receipt.HeadSHA) || receipt.HeadSHA != after.HeadSHA:
 		return fmt.Errorf("FAIL_CLOSED: improvement head mismatch")
@@ -44,7 +44,7 @@ func ValidateImprovement(
 	if !reflect.DeepEqual(receipt.Transition, expected) {
 		return fmt.Errorf("FAIL_CLOSED: improvement transition mismatch")
 	}
-	if err := requireFirstImprovement(receipt.Transition); err != nil {
+	if err := requireAcceptedTransition(receipt.Transition); err != nil {
 		return err
 	}
 	if receipt.ArtifactDigest != sealImprovement(receipt).ArtifactDigest {

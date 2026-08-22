@@ -4,11 +4,12 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/i
 
 func BuildImprovement(
 	beforeRaw []byte, before, after Receipt, headSHA string,
+	baseline BaselineReference,
 ) (ImprovementArtifact, error) {
 	result := sealImprovement(ImprovementArtifact{
 		Schema: ImprovementArtifactSchema, Producer: improvementProducer,
 		Consumer: improvementConsumer, MetaOperation: improvementOperation,
-		Baseline:             FoundationBaseline(),
+		Baseline:             FoundationBaseline(baseline),
 		HeadSHA:              headSHA,
 		BeforeArtifactDigest: before.ArtifactDigest,
 		AfterArtifactDigest:  after.ArtifactDigest,

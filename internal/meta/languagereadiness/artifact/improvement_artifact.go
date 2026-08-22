@@ -3,10 +3,10 @@ package artifact
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/improvement"
 
 const (
-	ImprovementArtifactSchema = "gooo/language-readiness-first-improvement/v1"
+	ImprovementArtifactSchema = "gooo/language-readiness-transition-artifact/v2"
 	improvementProducer       = "artifact.BuildImprovement"
 	improvementConsumer       = "self-improvement-cycle"
-	improvementOperation      = "prove-quantified-improvement"
+	improvementOperation      = "measure-quantified-readiness-transition"
 )
 
 type ImprovementArtifact struct {
