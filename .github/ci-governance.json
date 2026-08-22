@@ -838,6 +838,16 @@
       ]
     },
     {
+      "branch": "agent/language-concept-catalog-v26",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/language-concept-catalog/**",
+        "internal/meta/languageconcept/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/semantic-resolution-schema-v23",
       "paths": [
         ".github/agent-scope-table.md",
