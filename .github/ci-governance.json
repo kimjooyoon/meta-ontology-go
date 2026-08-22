@@ -849,6 +849,17 @@
       ]
     },
     {
+      "branch": "agent/language-concept-artifact-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "bootstrap/function-extractor/recipes.json",
+        "examples/language-concept-catalog/**",
+        "internal/meta/languageconcept/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/feedback-semantic-ci-v27",
       "paths": [
         ".github/agent-scope-table.md",

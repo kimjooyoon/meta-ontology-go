@@ -13,14 +13,17 @@ func buildArtifact(repository fs.FS, concepts []Concept) Artifact {
 	report := Evaluate(repository, concepts)
 	replay := Evaluate(repository, concepts)
 	bindings := observeBindings(repository, concepts)
-	artifact := Artifact{
-		Schema: ArtifactSchema, Producer: "languageconcept.BuildArtifact",
-		Consumer: "self-improvement-cycle",
-		MetaOperation: "bind-language-concept-artifact",
-		CatalogSource: CatalogSourcePath, CatalogDigest: digest(concepts),
-		Report: report, ReplayReportDigest: replay.ReportDigest,
-		ReplayEqual: reflect.DeepEqual(report, replay), Bindings: bindings,
-	}
+	artifact := Artifact{Schema: ArtifactSchema}
+	artifact.Producer = "languageconcept.BuildArtifact"
+	artifact.Consumer = "self-improvement-cycle"
+	artifact.MetaOperation = "bind-language-concept-artifact"
+	artifact.CatalogSource = CatalogSourcePath
+	artifact.CatalogDigest = digest(concepts)
+	artifact.Report = report
+	artifact.ReplayReportDigest = replay.ReportDigest
+	artifact.ReplayEqual = reflect.DeepEqual(report, replay)
+	artifact.Bindings = bindings
+	artifact.RepositoryWrites = 0
 	artifact.Decision, artifact.Reason = artifactDecision(artifact)
 	artifact.ArtifactDigest = artifactDigest(artifact)
 	return artifact
