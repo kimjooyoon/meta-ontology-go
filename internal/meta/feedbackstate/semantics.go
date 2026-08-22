@@ -15,15 +15,9 @@ type semanticResult struct {
 }
 
 func resolve(report archivedReport, receiptDigest string) semanticResult {
-	snapshot := Snapshot{
-		SourceDecision: report.SourceDecision, Decision: report.Decision, Reason: report.Reason,
-		FromResolution: report.FromResolution, ToResolution: report.ToResolution,
-		NextOperation: report.Feedback.NextOperation, PreviousDescents: report.PreviousDescents,
-		Descents: report.Descents, ReceiptDigest: receiptDigest, ReportDigest: report.ReportDigest,
-	}
+	snapshot := Snapshot{SourceDecision: report.SourceDecision, Decision: report.Decision, Reason: report.Reason, FromResolution: report.FromResolution, ToResolution: report.ToResolution, NextOperation: report.Feedback.NextOperation, PreviousDescents: report.PreviousDescents, Descents: report.Descents, ReceiptDigest: receiptDigest, ReportDigest: report.ReportDigest}
 	level, knownResolution := resolutionIndex(report.FromResolution)
-	same := knownResolution && report.FromResolution == report.ToResolution &&
-		report.PreviousDescents == level && report.Descents == level
+	same := knownResolution && report.FromResolution == report.ToResolution && report.PreviousDescents == level && report.Descents == level
 	if report.Reason == "" {
 		return semanticResult{snapshot, false, "FEEDBACK_SEMANTIC_REASON_MISSING", 0}
 	}
