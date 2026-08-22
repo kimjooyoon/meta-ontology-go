@@ -7,11 +7,11 @@ import (
 )
 
 type config struct {
-	root           string
-	actionability  string
-	observations   string
-	report         string
-	check          bool
+	root          string
+	actionability string
+	observations  string
+	report        string
+	check         bool
 }
 
 func main() {
