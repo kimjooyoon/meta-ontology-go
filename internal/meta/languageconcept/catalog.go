@@ -27,6 +27,10 @@ func Catalog() []Concept {
 			[]string{"internal/meta/languagereadiness/improvement", "internal/meta/languagereadiness/artifact", "cmd/language-readiness-witness/transition"},
 			[]string{"completed-obligations", "readiness-basis-points", "newly-satisfied", "regressions", "unresolved-evidence"},
 			UseCase{"one-obligation-gain", "comparable 7/24 and 8/24 receipts have one gain and zero regressions", "IMPROVED_PLUS_1_PLUS_417_BPS"}),
+		concept("verified-transformation-transaction", "a passing proposal can lack a merged predecessor witness", "the merged predecessor receipt is selected and replayed before readiness promotion", "verify-transformation-transaction", "OPERATING",
+			[]string{"internal/meta/languagereadiness/artifact/predecessorselection", "internal/meta/languagereadiness/artifact/predecessorbinding", "cmd/language-readiness-witness/predecessor-selection"},
+			[]string{"gooo.metric.language.predecessor-dynamic-binding-bps.v1", "gooo.metric.language.predecessor-dynamic-coordinates.v1", "gooo.metric.language.predecessor-static-coordinates.guardrail.v1", "gooo.metric.language.predecessor-unknown-coordinates.guardrail.v1", "gooo.metric.language.predecessor-observer-writes.guardrail.v1"},
+			UseCase{"merged-dynamic-predecessor", "the merged predecessor changes eight static coordinates into eight dynamic inputs with zero unknowns and writes", "IMPROVED_STATIC_8_TO_0_DYNAMIC_0_TO_8_BPS_0_TO_10000"}),
 	}
 }
 
