@@ -8,7 +8,7 @@ import (
 
 type options struct {
 	mode, metrics, intervention, interventionVerification string
-	repository, subjectSHA, plan, output                  string
+	root, repository, subjectSHA, plan, output            string
 }
 
 func main() {
@@ -17,6 +17,7 @@ func main() {
 	flag.StringVar(&value.metrics, "metrics", "", "source metric report")
 	flag.StringVar(&value.intervention, "intervention", "", "metric intervention ledger")
 	flag.StringVar(&value.interventionVerification, "intervention-verification", "", "metric intervention verification")
+	flag.StringVar(&value.root, "root", ".", "repository root for language concept binding")
 	flag.StringVar(&value.repository, "repository", "", "repository identity")
 	flag.StringVar(&value.subjectSHA, "subject-sha", "", "exact subject commit")
 	flag.StringVar(&value.plan, "plan", "", "metric strategy plan for verification")

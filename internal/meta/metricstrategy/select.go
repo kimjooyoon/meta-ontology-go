@@ -1,10 +1,17 @@
 package metricstrategy
 
-import metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
+import (
+	"strings"
+
+	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
+)
 
 func choose(candidates []Candidate, projections []metric.Projection, boundarySafe bool) Selection {
 	for _, candidate := range candidates {
 		if candidate.UnsatisfiedCount > 0 {
+			if unresolvedConcept(candidate) {
+				return selection(candidate, "LOWER_RESOLUTION", "lower-semantic-resolution", "CONCEPT_OPERATION_BINDING_UNKNOWN")
+			}
 			return selection(candidate, "REPAIR", firstOperation(candidate), "FIRST_UNSATISFIED_CANONICAL_FAMILY")
 		}
 	}
@@ -12,6 +19,15 @@ func choose(candidates []Candidate, projections []metric.Projection, boundarySaf
 		return selection(candidateFor(candidates, "REGRESSION"), "HOLD_FIXED_POINT", "terminate-at-fixed-point", "ALL_INDICATORS_SATISFIED_AND_RESIDUALS_ZERO")
 	}
 	return selection(candidateFor(candidates, "COHERENCE"), "RECONCILE", "reconcile-metric-state", "FIXED_POINT_NOT_EVIDENCED")
+}
+
+func unresolvedConcept(candidate Candidate) bool {
+	for _, indicatorID := range candidate.IndicatorIDs {
+		if strings.HasPrefix(indicatorID, "gooo.concept.unresolved-") {
+			return true
+		}
+	}
+	return false
 }
 
 func candidateFor(candidates []Candidate, choice string) Candidate {

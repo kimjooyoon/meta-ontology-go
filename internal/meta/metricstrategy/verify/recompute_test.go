@@ -22,3 +22,11 @@ func TestReplayCandidatesAndSelectionAreIndependent(t *testing.T) {
 		t.Fatalf("independent strategy replay diverged: %+v %+v", candidates, selection)
 	}
 }
+
+func TestReplaySelectionLowersUnknownConceptResolution(t *testing.T) {
+	candidates := []strategy.Candidate{{ProofChoice: "FOUNDATION", UnsatisfiedCount: 1, IndicatorIDs: []string{"gooo.concept.unresolved-operation.future.v1"}}, {ProofChoice: "COHERENCE"}, {ProofChoice: "REGRESSION"}}
+	selection := replaySelection(candidates, nil)
+	if selection.Decision != "LOWER_RESOLUTION" || selection.MetaOperation != "lower-semantic-resolution" || selection.Reason != "CONCEPT_OPERATION_BINDING_UNKNOWN" {
+		t.Fatalf("independent semantic descent diverged: %+v", selection)
+	}
+}

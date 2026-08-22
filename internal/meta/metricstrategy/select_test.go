@@ -21,3 +21,11 @@ func TestChooseRepairsFirstCanonicalFailure(t *testing.T) {
 		t.Fatalf("unexpected repair selection: %+v", selection)
 	}
 }
+
+func TestChooseLowersResolutionForUnknownConceptOperation(t *testing.T) {
+	candidates := []Candidate{{ProofChoice: "FOUNDATION", UnsatisfiedCount: 1, IndicatorIDs: []string{"gooo.concept.unresolved-operation.future.v1"}, MetaOperations: []string{"future"}}, {ProofChoice: "COHERENCE"}, {ProofChoice: "REGRESSION"}}
+	selection := choose(candidates, nil, false)
+	if selection.ProofChoice != "FOUNDATION" || selection.Decision != "LOWER_RESOLUTION" || selection.MetaOperation != "lower-semantic-resolution" || selection.Reason != "CONCEPT_OPERATION_BINDING_UNKNOWN" {
+		t.Fatalf("unexpected semantic descent: %+v", selection)
+	}
+}

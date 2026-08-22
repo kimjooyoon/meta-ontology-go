@@ -1,5 +1,7 @@
 package closure_test
 
+const fixtureBindingCount = 30
+
 func fixtureOperations() []map[string]any {
 	activities := []string{"BindExactSourceMetrics", "ExemptProjectRootTopology",
 		"InterpretDimensionRegistry", "ProjectAlgebraicRootState",
@@ -16,7 +18,7 @@ func fixtureOperations() []map[string]any {
 }
 
 func fixtureBindings() []map[string]any {
-	values := make([]map[string]any, 15)
+	values := make([]map[string]any, fixtureBindingCount)
 	for index := range values {
 		values[index] = map[string]any{
 			"indicator_id": "indicator-" + string(rune('a'+index)),
