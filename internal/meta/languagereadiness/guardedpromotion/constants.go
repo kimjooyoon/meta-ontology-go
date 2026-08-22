@@ -7,7 +7,7 @@ const (
 	DecisionDenied     = "DENIED"
 	DecisionFailClosed = "FAIL_CLOSED"
 
-	ReasonAuthorized        = "MERGED_PUSH_PROMOTION_AUTHORIZED"
+	ReasonAuthorized         = "MERGED_PUSH_PROMOTION_AUTHORIZED"
 	ReasonMergedPushRequired = "MERGED_PUSH_REQUIRED"
 	ReasonGuardrailRejected  = "GUARDED_PROMOTION_REJECTED"
 	ReasonEvidenceUnknown    = "GUARDED_PROMOTION_EVIDENCE_UNKNOWN"

@@ -55,9 +55,9 @@ type promotionEnvelope struct {
 	Decision       string `json:"decision"`
 	ReportDigest   string `json:"report_digest"`
 	Summary        struct {
-		Satisfied       int `json:"satisfied"`
-		Total           int `json:"total"`
-		Unresolved      int `json:"unresolved"`
+		Satisfied        int `json:"satisfied"`
+		Total            int `json:"total"`
+		Unresolved       int `json:"unresolved"`
 		RepositoryWrites int `json:"repository_writes"`
 	} `json:"summary"`
 }

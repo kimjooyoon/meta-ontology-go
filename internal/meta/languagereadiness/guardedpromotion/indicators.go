@@ -26,7 +26,7 @@ func Indicators(source Source, summary Summary, coordinates []Coordinate) []Indi
 func indicator(id, class, choice string, value, target int) Indicator {
 	return Indicator{
 		MetricID: "gooo.metric.language.autonomy-guarded-promotion-" + id + ".v1",
-		Class: class, ProofChoice: choice,
+		Class:    class, ProofChoice: choice,
 		Producer: "internal/meta/languagereadiness/guardedpromotion",
 		Consumer: "language-readiness", MetaOperation: "guard-readiness-promotion",
 		Value: value, Target: target, Satisfied: value == target,

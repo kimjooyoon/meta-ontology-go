@@ -7,7 +7,7 @@ func validSource() Source {
 	current := "75b892f4bc661b4a58a5517532c44662dae6eedf"
 	return Source{
 		RequestedRepository: "kimjooyoon/meta-ontology-go",
-		ObservedRepository: "kimjooyoon/meta-ontology-go", DefaultBranch: "dev",
+		ObservedRepository:  "kimjooyoon/meta-ontology-go", DefaultBranch: "dev",
 		CurrentHeadSHA: current, PredecessorSHA: predecessor,
 		Workflow: WorkflowEvidence{
 			RunID: 1, Name: "CI [push full]", Path: CIPath, Event: "push",
@@ -15,11 +15,11 @@ func validSource() Source {
 		},
 		Artifact: ArtifactEvidence{
 			RunID: 2, RunAttempt: 1, RunEvent: "workflow_run", ArtifactID: 3,
-			ArtifactName: PromotionArtifactBase + predecessor,
-			ArtifactDigest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-			FileSHA256: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-			ReportSchema: PromotionSchema,
-			ReportDigest: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+			ArtifactName:         PromotionArtifactBase + predecessor,
+			ArtifactDigest:       "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			FileSHA256:           "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+			ReportSchema:         PromotionSchema,
+			ReportDigest:         "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
 			ReportCurrentHeadSHA: predecessor, ReportDecision: "PASS",
 			ReportSatisfied: 8, ReportTotal: 8,
 		},

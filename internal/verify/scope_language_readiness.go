@@ -40,4 +40,14 @@ func init() {
 		"internal/meta/languagereadiness",
 		"internal/verify/scope_language_readiness.go",
 	}
+	branchScopeAllowlist["agent/readiness-guarded-promotion"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/metric-counterfactual.yml",
+		".github/workflows/transformation-effect.yml",
+		"cmd/guarded-promotion-witness",
+		"docs/language/guarded-promotion.md",
+		"internal/meta/languagereadiness/guardedpromotion",
+		"internal/verify/scope_language_readiness.go",
+	}
 }
