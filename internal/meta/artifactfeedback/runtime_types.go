@@ -3,8 +3,8 @@ package artifactfeedback
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactcoverage"
 
 const (
-	CycleSchema  = "gooo/self-improvement-cycle-envelope/v3"
-	ReportSchema = "gooo/meta-operation-artifact-feedback-report/v1"
+	CycleSchema	= "gooo/self-improvement-cycle-envelope/v3"
+	ReportSchema	= "gooo/meta-operation-artifact-feedback-report/v1"
 )
 
 type CycleObservation struct {
