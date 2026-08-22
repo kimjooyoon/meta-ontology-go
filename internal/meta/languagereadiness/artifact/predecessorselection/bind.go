@@ -43,12 +43,12 @@ func bindCandidate(candidate Candidate) (Selection, []byte, []byte, error) {
 		Total:          summary.Total,
 		BasisPoints:    summary.ReadinessBPS,
 	})
-	return Selection{
+	selection := Selection{
 		RunID:               candidate.RunID,
 		RunAttempt:          candidate.RunAttempt,
 		ReadinessArtifactID: candidate.ReadinessArtifactID,
 		BindingArtifactID:   candidate.BindingArtifactID,
 		Baseline:            reference,
-	},
-		readinessRaw, bindingRaw, nil
+	}
+	return selection, readinessRaw, bindingRaw, nil
 }
