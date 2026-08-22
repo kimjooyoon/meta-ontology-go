@@ -120,10 +120,37 @@ jobs:
             cd "$first"
             sha256sum artifact.json > artifact.json.sha256
           )
+          readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
+          readiness_replay="$RUNNER_TEMP/language-readiness-artifact/replay"
+          mkdir -p "$readiness_first" "$readiness_replay"
+          for target in "$readiness_first" "$readiness_replay"; do
+            go run ./cmd/language-readiness-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -input "$first/artifact.json" \
+              -expected-sha "$HEAD_SHA" \
+              -output "$target/artifact.json"
+          done
+          cmp -s "$readiness_first/artifact.json" "$readiness_replay/artifact.json"
+          go run ./cmd/language-readiness-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -input "$first/artifact.json" \
+            -expected-sha "$HEAD_SHA" \
+            -check "$readiness_first/artifact.json"
+          (
+            cd "$readiness_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
       - name: Upload exact-head language concepts
         uses: actions/upload-artifact@v6
         with:
           name: language-concept-artifact-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-concept-artifact/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head language readiness
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-artifact-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-artifact/first
           if-no-files-found: error
           retention-days: 30
