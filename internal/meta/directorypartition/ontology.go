@@ -45,3 +45,10 @@ func sealReport(report Report) (Report, error) {
 	report.Digest = value
 	return report, err
 }
+
+func initialProofs(ontologyDigest, candidateDigest string) []Proof {
+	return []Proof{
+		{Choice: "foundation", MetaOperation: "bind-partition-ontology", Activity: "BindPartitionFoundation", Satisfied: true, EvidenceDigest: ontologyDigest},
+		{Choice: "coherence", MetaOperation: "resolve-directory-partition-plan", Activity: "ResolvePartitionCandidates", Satisfied: true, EvidenceDigest: candidateDigest},
+	}
+}
