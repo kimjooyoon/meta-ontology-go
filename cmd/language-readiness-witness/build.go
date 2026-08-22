@@ -13,7 +13,14 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 	if err != nil {
 		return readinessartifact.Receipt{}, err
 	}
-	return readinessartifact.Build(raw, cfg.expectedSHA)
+	if cfg.promotion == "" {
+		return readinessartifact.Build(raw, cfg.expectedSHA)
+	}
+	promotion, err := os.ReadFile(cfg.promotion)
+	if err != nil {
+		return readinessartifact.Receipt{}, err
+	}
+	return readinessartifact.BuildWithProposalPromotion(raw, promotion, cfg.expectedSHA)
 }
 
 func printSummary(stdout io.Writer, receipt readinessartifact.Receipt) {

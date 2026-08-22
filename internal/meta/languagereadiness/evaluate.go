@@ -1,6 +1,10 @@
 package languagereadiness
 
 func Evaluate(raw []byte) (Snapshot, error) {
+	return evaluate(raw, "")
+}
+
+func evaluate(raw []byte, proposalPromotionDigest string) (Snapshot, error) {
 	artifact, err := decodeArtifact(raw)
 	if err != nil {
 		return Snapshot{}, err
@@ -22,14 +26,16 @@ func Evaluate(raw []byte) (Snapshot, error) {
 	for _, concept := range artifact.Report.Concepts {
 		byID[concept.ID] = append(byID[concept.ID], concept)
 	}
-	for _, obligation := range obligations {
-		snapshot.Obligations = append(snapshot.Obligations,
-			evaluateObligation(obligation, byID[obligation.ConceptID]))
+		for _, obligation := range obligations {
+			snapshot.Obligations = append(snapshot.Obligations,
+				evaluateObligation(obligation, byID[obligation.ConceptID], proposalPromotionDigest))
 	}
 	return summarize(snapshot), nil
 }
 
-func evaluateObligation(obligation Obligation, concepts []conceptEvidence) ObligationResult {
+func evaluateObligation(
+	obligation Obligation, concepts []conceptEvidence, proposalPromotionDigest string,
+) ObligationResult {
 	result := ObligationResult{Obligation: obligation}
 	if len(concepts) == 0 {
 		result.Status, result.Reason = "NOT_SATISFIED", "CONCEPT_NOT_REGISTERED"
@@ -44,6 +50,16 @@ func evaluateObligation(obligation Obligation, concepts []conceptEvidence) Oblig
 	if !completeConcept(concept) {
 		result.Status, result.Reason = "NOT_SATISFIED", "CONCEPT_CONFORMANCE_INCOMPLETE"
 		return result
+	}
+	if obligation.ConceptID == autonomousProposalConcept {
+		if proposalPromotionDigest == "" {
+			result.Status, result.Reason = "NOT_SATISFIED", "VERIFIED_PROMOTION_RECEIPT_REQUIRED"
+			return result
+		}
+		result.EvidenceDigest = digestJSON(struct {
+			Concept         conceptEvidence `json:"concept"`
+			PromotionDigest string          `json:"promotion_digest"`
+		}{concept, proposalPromotionDigest})
 	}
 	result.Status, result.Reason = "SATISFIED", "CONCEPT_CONFORMANCE_EXPLICIT"
 	return result
