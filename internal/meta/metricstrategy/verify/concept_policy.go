@@ -11,21 +11,21 @@ const replayConceptBindingSchema = "gooo/concept-governed-strategy-binding/v1"
 
 var replayConceptCarriers = map[string]string{
 	"FOUNDATION": "bind-exact-source-metrics",
-	"COHERENCE":  "project-algebraic-root-state",
+	"COHERENCE": "project-algebraic-root-state",
 	"REGRESSION": "replay-counterfactual",
 }
 
 var replayOperationConceptIDs = map[string]string{
-	"bind-exact-source-metrics":       "metric-meta-program",
-	"compact-obvious-lines":           "ci-selected-refactoring",
-	"exempt-project-root-topology":    "effect-bounded-observation",
-	"interpret-dimension-registry":    "metric-meta-program",
-	"lower-semantic-resolution":       "monotone-semantic-resolution",
+	"bind-exact-source-metrics": "metric-meta-program",
+	"compact-obvious-lines": "ci-selected-refactoring",
+	"exempt-project-root-topology": "effect-bounded-observation",
+	"interpret-dimension-registry": "metric-meta-program",
+	"lower-semantic-resolution": "monotone-semantic-resolution",
 	"observe-counterfactual-boundary": "effect-bounded-observation",
-	"preserve-repository-workspace":   "effect-bounded-observation",
-	"project-algebraic-root-state":    "metric-meta-program",
-	"replay-counterfactual":           "causal-feedback-chain",
-	"terminate-at-fixed-point":        "concept-governed-refactoring",
+	"preserve-repository-workspace": "effect-bounded-observation",
+	"project-algebraic-root-state": "metric-meta-program",
+	"replay-counterfactual": "causal-feedback-chain",
+	"terminate-at-fixed-point": "concept-governed-refactoring",
 }
 
 func replayConceptTrilemma(choice string) string {
