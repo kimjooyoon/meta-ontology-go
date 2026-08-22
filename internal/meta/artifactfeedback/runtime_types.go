@@ -3,8 +3,8 @@ package artifactfeedback
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/artifactcoverage"
 
 const (
-	CycleSchema	= "gooo/self-improvement-cycle-envelope/v3"
-	ReportSchema	= "gooo/meta-operation-artifact-feedback-report/v1"
+	CycleSchema  = "gooo/self-improvement-cycle-envelope/v3"
+	ReportSchema = "gooo/meta-operation-artifact-feedback-report/v1"
 )
 
 type CycleObservation struct {
@@ -50,18 +50,18 @@ type Proof struct {
 }
 
 type Report struct {
-	Schema               string    `json:"schema"`
-	CommitSHA            string    `json:"commit_sha"`
-	Repository           string    `json:"repository"`
-	Decision             string    `json:"decision"`
-	Reason               string    `json:"reason"`
-	NextOperation        string    `json:"next_operation,omitempty"`
-	CoverageReportDigest string    `json:"coverage_report_digest"`
-	CycleEnvelopeDigest  string    `json:"cycle_envelope_digest"`
-	ProgramDigest        string    `json:"program_digest"`
-	InputDigest          string    `json:"input_digest"`
-	Summary              Summary   `json:"summary"`
-	Indicators           []KPI     `json:"indicators"`
-	Proofs               []Proof   `json:"proofs"`
-	ReportDigest         string    `json:"report_digest"`
+	Schema               string  `json:"schema"`
+	CommitSHA            string  `json:"commit_sha"`
+	Repository           string  `json:"repository"`
+	Decision             string  `json:"decision"`
+	Reason               string  `json:"reason"`
+	NextOperation        string  `json:"next_operation,omitempty"`
+	CoverageReportDigest string  `json:"coverage_report_digest"`
+	CycleEnvelopeDigest  string  `json:"cycle_envelope_digest"`
+	ProgramDigest        string  `json:"program_digest"`
+	InputDigest          string  `json:"input_digest"`
+	Summary              Summary `json:"summary"`
+	Indicators           []KPI   `json:"indicators"`
+	Proofs               []Proof `json:"proofs"`
+	ReportDigest         string  `json:"report_digest"`
 }
