@@ -15,21 +15,22 @@ var currentConceptIDs = []string{
 func artifactFixture(decision string, conceptIDs ...string) []byte {
 	concepts := make([]conceptEvidence, 0, len(conceptIDs))
 	for _, id := range conceptIDs {
-		concepts = append(concepts, conceptEvidence{
-			ID: id, Stage: "OPERATING",
-			CodeBindings:   []string{"internal/meta/example"},
-			MetricBindings: []string{"gooo.metric.example.v1"},
-			UseCases: []useCaseEvidence{{
-				ID: "explicit-case", Trigger: "explicit input", ExpectedOutcome: "PASS",
-			}},
-		})
+		concept := conceptEvidence{}
+		concept.ID = id
+		concept.Stage = "OPERATING"
+		concept.CodeBindings = []string{"internal/meta/example"}
+		concept.MetricBindings = []string{"gooo.metric.example.v1"}
+		concept.UseCases = []useCaseEvidence{{ID: "explicit-case", Trigger: "explicit input", ExpectedOutcome: "PASS"}}
+		concepts = append(concepts, concept)
 	}
-	artifact := conceptArtifact{
-		Schema: conceptArtifactSchema, Decision: decision,
-		CatalogDigest: "sha256:catalog", ReplayReportDigest: "sha256:report", ReplayEqual: true,
-		Report: conceptReport{Concepts: concepts, ReportDigest: "sha256:report"},
-		ArtifactDigest: "sha256:artifact",
-	}
+	artifact := conceptArtifact{}
+	artifact.Schema = conceptArtifactSchema
+	artifact.Decision = decision
+	artifact.CatalogDigest = "sha256:catalog"
+	artifact.ReplayReportDigest = "sha256:report"
+	artifact.ReplayEqual = true
+	artifact.Report = conceptReport{Concepts: concepts, ReportDigest: "sha256:report"}
+	artifact.ArtifactDigest = "sha256:artifact"
 	raw, err := json.Marshal(artifact)
 	if err != nil {
 		panic(err)
