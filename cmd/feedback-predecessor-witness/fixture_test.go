@@ -16,7 +16,7 @@ func writeFixture(t *testing.T, root string, duplicate bool) string {
 	candidate := feedbackpredecessor.Candidate{
 		ArtifactID: 11, RunID: 22, RunAttempt: 1,
 		ArtifactName: "artifact-feedback-resolution-" + sha,
-		HeadSHA: sha, HeadBranch: "dev", Workflow: "CI", Event: "push",
+		HeadSHA:      sha, HeadBranch: "dev", Workflow: "CI", Event: "push",
 		Conclusion: "success", ReceiptDigest: "sha256:" + strings.Repeat("1", 64),
 	}
 	candidates := []feedbackpredecessor.Candidate{candidate}
