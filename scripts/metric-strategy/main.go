@@ -9,8 +9,11 @@ import (
 type options struct {
 	mode, metrics, intervention, interventionVerification string
 	root, repository, subjectSHA, plan, replayPlan        string
-	strategyVerification, predecessorSHA                 string
-	selectedProposal, githubAPI, output                   string
+	strategyOptions
+}
+
+type strategyOptions struct {
+	strategyVerification, predecessorSHA, selectedProposal, githubAPI, output string
 }
 
 func main() {
