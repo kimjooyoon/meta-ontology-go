@@ -21,10 +21,13 @@ func Select(input Input) (Result, error) {
 		}
 		report.Summary.CanonicalCandidates++
 		report.Summary.RepositoryWrites += candidate.RepositoryWrites
-		if candidate.Conclusion != "success" {
+		if candidate.Conclusion == "success" {
+			report.Summary.SuccessfulCandidates++
+		}
+		if !producerConformant(candidate) {
 			continue
 		}
-		report.Summary.SuccessfulCandidates++
+		report.Summary.ProducerConformantCandidates++
 		if candidate.ReadinessExpired || candidate.BindingExpired {
 			continue
 		}
@@ -62,9 +65,23 @@ func validateInput(input Input) error {
 	for _, candidate := range input.Candidates {
 		if candidate.RunID <= 0 || candidate.RunAttempt <= 0 ||
 			candidate.ReadinessArtifactID <= 0 || candidate.BindingArtifactID <= 0 ||
-			candidate.RepositoryWrites < 0 || !validSHA(candidate.HeadSHA) {
+			candidate.RepositoryWrites < 0 || candidate.ProducerJobMatches < 0 ||
+			!validSHA(candidate.HeadSHA) {
 			return fmt.Errorf("readiness predecessor candidate identity malformed")
+		}
+		if candidate.ProducerJobMatches == 1 &&
+			(candidate.ProducerJobID <= 0 || candidate.ProducerJobRunAttempt <= 0 ||
+				candidate.ProducerJobName == "") {
+			return fmt.Errorf("readiness predecessor producer identity malformed")
 		}
 	}
 	return nil
+}
+
+func producerConformant(candidate Candidate) bool {
+	return candidate.ProducerJobMatches == 1 && candidate.ProducerJobID > 0 &&
+		candidate.ProducerJobRunAttempt == candidate.RunAttempt &&
+		candidate.ProducerJobName == ProducerJobName &&
+		candidate.ProducerJobStatus == "completed" &&
+		candidate.ProducerJobConclusion == "success"
 }

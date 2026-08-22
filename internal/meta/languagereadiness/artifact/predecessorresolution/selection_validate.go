@@ -33,6 +33,7 @@ func knownFailureReason(reason string) bool {
 	case predecessorselection.ReasonNotFound,
 		predecessorselection.ReasonUnbound,
 		predecessorselection.ReasonFailed,
+		predecessorselection.ReasonProducer,
 		predecessorselection.ReasonExpired,
 		predecessorselection.ReasonInvalid,
 		predecessorselection.ReasonAmbiguous,

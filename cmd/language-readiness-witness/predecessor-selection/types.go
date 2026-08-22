@@ -38,6 +38,24 @@ type artifactMetadata struct {
 	Expired bool `json:"expired"`
 }
 
+type workflowJobList struct {
+	TotalCount int `json:"total_count"`
+
+	Jobs []workflowJob `json:"jobs"`
+}
+
+type workflowJob struct {
+	ID int64 `json:"id"`
+
+	Name string `json:"name"`
+
+	Status string `json:"status"`
+
+	Conclusion string `json:"conclusion"`
+
+	RunAttempt int `json:"run_attempt"`
+}
+
 type commit struct {
 	SHA string `json:"sha"`
 
