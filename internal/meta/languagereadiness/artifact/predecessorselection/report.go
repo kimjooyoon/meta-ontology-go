@@ -17,15 +17,15 @@ type Selection struct {
 }
 
 type Summary struct {
-	ObservedCandidates   int `json:"observed_candidates"`
-	ExactHeadCandidates  int `json:"exact_head_candidates"`
-	CanonicalCandidates  int `json:"canonical_candidates"`
-	SuccessfulCandidates int `json:"successful_candidates"`
+	ObservedCandidates           int `json:"observed_candidates"`
+	ExactHeadCandidates          int `json:"exact_head_candidates"`
+	CanonicalCandidates          int `json:"canonical_candidates"`
+	SuccessfulCandidates         int `json:"successful_candidates"`
 	ProducerConformantCandidates int `json:"producer_conformant_candidates"`
-	AvailableCandidates  int `json:"available_candidates"`
-	ValidCandidates      int `json:"valid_candidates"`
-	AmbiguousCandidates  int `json:"ambiguous_candidates"`
-	RepositoryWrites     int `json:"repository_writes"`
+	AvailableCandidates          int `json:"available_candidates"`
+	ValidCandidates              int `json:"valid_candidates"`
+	AmbiguousCandidates          int `json:"ambiguous_candidates"`
+	RepositoryWrites             int `json:"repository_writes"`
 }
 
 type Proof struct {

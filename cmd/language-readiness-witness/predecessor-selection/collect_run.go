@@ -60,17 +60,6 @@ func collectRun(ctx context.Context, client *githubClient, cfg config, predecess
 		BindingExpired: binding.Expired, BindingPayloadBase64: bindingPayload}, true, nil
 }
 
-func findProducerJob(values []workflowJob, name string) (workflowJob, int) {
-	var result workflowJob
-	count := 0
-	for _, value := range values {
-		if value.Name == name {
-			result, count = value, count+1
-		}
-	}
-	return result, count
-}
-
 func findArtifact(values []artifactMetadata, name string) (artifactMetadata, bool) {
 	var result artifactMetadata
 	count := 0

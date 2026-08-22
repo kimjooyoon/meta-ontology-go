@@ -27,7 +27,8 @@ func TestProducerConformanceIsMetricScoped(t *testing.T) {
 	if !producerConformant(candidate) {
 		t.Fatal("unrelated workflow failure contaminated the metric-scoped producer")
 	}
-	summary := Summary{CanonicalCandidates: 1, SuccessfulCandidates: 0,
+	summary := Summary{ObservedCandidates: 1, ExactHeadCandidates: 1,
+		CanonicalCandidates: 1, SuccessfulCandidates: 0,
 		ProducerConformantCandidates: 1, AvailableCandidates: 1, ValidCandidates: 1}
 	if reason := failureReason(summary); reason != "" {
 		t.Fatalf("metric-scoped producer was rejected: %s", reason)
@@ -35,7 +36,8 @@ func TestProducerConformanceIsMetricScoped(t *testing.T) {
 }
 
 func TestProducerConformanceFailsClosedWhenUnknown(t *testing.T) {
-	summary := Summary{CanonicalCandidates: 1, SuccessfulCandidates: 1}
+	summary := Summary{ObservedCandidates: 1, ExactHeadCandidates: 1,
+		CanonicalCandidates: 1, SuccessfulCandidates: 1}
 	if reason := failureReason(summary); reason != ReasonProducer {
 		t.Fatalf("unknown producer reason = %s, want %s", reason, ReasonProducer)
 	}
