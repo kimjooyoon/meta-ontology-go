@@ -1028,6 +1028,14 @@
         ".github/workflows/ci.yml",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/quantified-language-readiness-v30",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/languagereadiness/**"
+      ]
     }
   ],
   "protected_kernel_paths": [

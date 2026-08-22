@@ -8,15 +8,15 @@ import (
 const conceptArtifactSchema = "gooo/language-concept-artifact/v1"
 
 type conceptArtifact struct {
-	Schema               string        `json:"schema"`
-	Decision             string        `json:"decision"`
-	CatalogDigest        string        `json:"catalog_digest"`
-	Report               conceptReport `json:"report"`
-	ReplayReportDigest   string        `json:"replay_report_digest"`
-	ReplayEqual          bool          `json:"replay_equal"`
-	Bindings             bindingState  `json:"bindings"`
-	RepositoryWrites     int           `json:"repository_writes"`
-	ArtifactDigest       string        `json:"artifact_digest"`
+	Schema             string        `json:"schema"`
+	Decision           string        `json:"decision"`
+	CatalogDigest      string        `json:"catalog_digest"`
+	Report             conceptReport `json:"report"`
+	ReplayReportDigest string        `json:"replay_report_digest"`
+	ReplayEqual        bool          `json:"replay_equal"`
+	Bindings           bindingState  `json:"bindings"`
+	RepositoryWrites   int           `json:"repository_writes"`
+	ArtifactDigest     string        `json:"artifact_digest"`
 }
 
 type conceptReport struct {

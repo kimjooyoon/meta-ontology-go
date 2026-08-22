@@ -17,7 +17,7 @@ func artifactFixture(decision string, conceptIDs ...string) []byte {
 	for _, id := range conceptIDs {
 		concepts = append(concepts, conceptEvidence{
 			ID: id, Stage: "OPERATING",
-			CodeBindings: []string{"internal/meta/example"},
+			CodeBindings:   []string{"internal/meta/example"},
 			MetricBindings: []string{"gooo.metric.example.v1"},
 			UseCases: []useCaseEvidence{{
 				ID: "explicit-case", Trigger: "explicit input", ExpectedOutcome: "PASS",

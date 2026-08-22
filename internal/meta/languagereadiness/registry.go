@@ -1,11 +1,9 @@
 package languagereadiness
 
-const (
-	areaLanguage = "LANGUAGE"
-	areaToolchain = "TOOLCHAIN"
-	areaMeta = "META"
-	areaAutonomy = "AUTONOMY"
-)
+const areaLanguage = "LANGUAGE"
+const areaToolchain = "TOOLCHAIN"
+const areaMeta = "META"
+const areaAutonomy = "AUTONOMY"
 
 var obligations = []Obligation{
 	{ID: "LANGUAGE-SYNTAX-ROUNDTRIP", Area: areaLanguage, ProofChoice: "FOUNDATION", ConceptID: "language-syntax-roundtrip"},

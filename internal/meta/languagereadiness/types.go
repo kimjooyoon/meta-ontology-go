@@ -20,25 +20,25 @@ type ObligationResult struct {
 }
 
 type Summary struct {
-	Completed       int `json:"completed"`
-	Total           int `json:"total"`
-	NotSatisfied    int `json:"not_satisfied"`
-	Unresolved      int `json:"unresolved"`
-	ReadinessBPS    int `json:"readiness_bps"`
-	RatioNumerator  int `json:"ratio_numerator"`
+	Completed        int `json:"completed"`
+	Total            int `json:"total"`
+	NotSatisfied     int `json:"not_satisfied"`
+	Unresolved       int `json:"unresolved"`
+	ReadinessBPS     int `json:"readiness_bps"`
+	RatioNumerator   int `json:"ratio_numerator"`
 	RatioDenominator int `json:"ratio_denominator"`
 }
 
 type Indicator struct {
-	MetricID     string `json:"metric_id"`
-	Class        string `json:"class"`
-	ProofChoice  string `json:"proof_choice"`
-	Producer     string `json:"producer"`
-	Consumer     string `json:"consumer"`
+	MetricID      string `json:"metric_id"`
+	Class         string `json:"class"`
+	ProofChoice   string `json:"proof_choice"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
 	MetaOperation string `json:"meta_operation"`
-	Value        int    `json:"value"`
-	Target       int    `json:"target"`
-	Satisfied    bool   `json:"satisfied"`
+	Value         int    `json:"value"`
+	Target        int    `json:"target"`
+	Satisfied     bool   `json:"satisfied"`
 }
 
 type Snapshot struct {
