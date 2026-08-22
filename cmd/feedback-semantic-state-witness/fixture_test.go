@@ -20,7 +20,7 @@ func writeSemanticFixture(t *testing.T, root, decision string) (string, string) 
 		Candidates: []feedbackpredecessor.Candidate{{
 			ArtifactID: 11, RunID: 22, RunAttempt: 1,
 			ArtifactName: "artifact-feedback-resolution-" + sha,
-			HeadSHA: sha, HeadBranch: "dev", Workflow: "CI", Event: "push", Conclusion: "success",
+			HeadSHA:      sha, HeadBranch: "dev", Workflow: "CI", Event: "push", Conclusion: "success",
 			ReceiptDigest: receiptDigest, PayloadDigest: rawDigest(payload),
 			ReceiptPayload: base64.StdEncoding.EncodeToString(payload),
 		}},

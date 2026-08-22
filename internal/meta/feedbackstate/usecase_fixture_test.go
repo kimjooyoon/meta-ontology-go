@@ -8,7 +8,7 @@ import (
 
 type semanticUseCase struct {
 	ID, Decision, SourceDecision, FromResolution, ToResolution string
-	Mutation, WantDecision, WantReason                          string
+	Mutation, WantDecision, WantReason                         string
 	PreviousDescents, Descents                                 int
 }
 
