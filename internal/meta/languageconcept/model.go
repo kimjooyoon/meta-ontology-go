@@ -24,15 +24,15 @@ type Concept struct {
 }
 
 type Summary struct {
-	Concepts              int `json:"concepts"`
-	CodeBound             int `json:"code_bound"`
-	UseCaseBound          int `json:"use_case_bound"`
-	MetricBound           int `json:"metric_bound"`
-	Operating             int `json:"operating"`
-	Conformed             int `json:"conformed"`
-	Unbound               int `json:"unbound"`
-	UnverifiedNovelty     int `json:"unverified_novelty_claims"`
-	RepositoryWrites      int `json:"repository_writes"`
+	Concepts          int `json:"concepts"`
+	CodeBound         int `json:"code_bound"`
+	UseCaseBound      int `json:"use_case_bound"`
+	MetricBound       int `json:"metric_bound"`
+	Operating         int `json:"operating"`
+	Conformed         int `json:"conformed"`
+	Unbound           int `json:"unbound"`
+	UnverifiedNovelty int `json:"unverified_novelty_claims"`
+	RepositoryWrites  int `json:"repository_writes"`
 }
 
 type Report struct {

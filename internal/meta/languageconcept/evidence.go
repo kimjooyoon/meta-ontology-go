@@ -59,5 +59,15 @@ func digest(value any) string {
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
-func coverage(part, whole int) int { if whole == 0 { return 0 }; return part * 10000 / whole }
-func bps(value bool) int { if value { return 10000 }; return 0 }
+func coverage(part, whole int) int {
+	if whole == 0 {
+		return 0
+	}
+	return part * 10000 / whole
+}
+func bps(value bool) int {
+	if value {
+		return 10000
+	}
+	return 0
+}
