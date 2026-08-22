@@ -10,7 +10,7 @@ type ArtifactObservation struct {
 	HeadSHA       string   `json:"head_sha"`
 	Digest        string   `json:"digest"`
 	ReplayDigest  string   `json:"replay_digest"`
-	EvidenceKeys []string `json:"evidence_keys"`
+	EvidenceKeys  []string `json:"evidence_keys"`
 }
 
 type ObservationDocument struct {
