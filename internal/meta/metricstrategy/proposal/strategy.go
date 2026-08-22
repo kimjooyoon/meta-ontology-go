@@ -17,7 +17,11 @@ func strategyCoordinates(repository, subject string, first, replay strategy.Plan
 	verified := validReceipt(receipt) && receipt.Schema == strategyverify.ReceiptSchema && receipt.Status == "VERIFIED" && receipt.PlanDigest == first.Digest && receipt.SourceMetricsDigest == first.Input.SourceMetricsDigest && receipt.InterventionDigest == first.Input.InterventionDigest && receipt.BindingCount == len(first.Bindings) && receipt.CandidateCount == len(first.Candidates) && receipt.SelectedProofChoice == first.Selection.ProofChoice
 	replayed := strategy.ValidPlanDigest(first) && strategy.ValidPlanDigest(replay) && reflect.DeepEqual(first, replay)
 	trilemma, unresolved := validTrilemma(first)
-	values := []struct{ ok, unknown bool; reason string; evidence any }{
+	values := []struct {
+		ok, unknown bool
+		reason      string
+		evidence    any
+	}{
 		{exact, false, "EXACT_STRATEGY_SUBJECT_BOUND", []any{first.Schema, first.Repository, first.SubjectSHA, first.Input}},
 		{verified, false, "STRATEGY_RECEIPT_VERIFIED", receipt},
 		{replayed, false, "STRATEGY_REPLAY_EQUAL", []string{first.Digest, replay.Digest}},

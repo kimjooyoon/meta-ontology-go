@@ -21,7 +21,11 @@ func generationCoordinates() ([]Coordinate, generationFacts, error) {
 	actionable := firstErr == nil && replayErr == nil && bytes.Equal(firstPayload, replayPayload) && first.Decision == generation.DecisionPlan && first.Reason == generation.ReasonIndependentActions && len(first.Selected) == 2 && first.RequestedK == 2 && first.MinimumIndependent == 2
 	independent := independentActions(first.Selected)
 	executable := executableActions(first.Selected)
-	values := []struct{ ok bool; reason string; evidence any }{
+	values := []struct {
+		ok       bool
+		reason   string
+		evidence any
+	}{
 		{actionable, "ACTIONABLE_GENERATION_PLAN_PROVEN", []any{first.Decision, first.Reason, first.PlanDigest, first.ReplayDigest, len(first.Selected)}},
 		{independent, "INDEPENDENT_ACTION_GROUPS_PROVEN", first.Selected},
 		{executable, "EXECUTABLE_CONFORMANCE_OBLIGATIONS_BOUND", first.Registry},
