@@ -1118,6 +1118,17 @@
         "internal/meta/languagereadiness/artifact/predecessorresolution/**",
         "internal/verify/scope_language_readiness.go"
       ]
+    },
+    {
+      "branch": "agent/readiness-push-continuity",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "docs/language/readiness-push-continuity.md",
+        "internal/verify/readiness_push_continuity_test.go",
+        "internal/verify/scope_readiness_push_continuity.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
