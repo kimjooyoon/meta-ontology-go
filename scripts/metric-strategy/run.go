@@ -38,6 +38,8 @@ func run(value options) error {
 		return writeJSON(value.output, receipt)
 	case "proposal-contract":
 		return writeProposalContract(value)
+	case "proposal-predecessor":
+		return writeProposalPredecessor(value)
 	default:
 		return fmt.Errorf("unsupported metric strategy mode %q", value.mode)
 	}
