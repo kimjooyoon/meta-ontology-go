@@ -849,6 +849,16 @@
       ]
     },
     {
+      "branch": "agent/feedback-payload-envelope-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/feedbackpredecessor/**",
+        "internal/verify/scope_part01.go",
+        "scripts/feedback-predecessor-ci/**"
+      ]
+    },
+    {
       "branch": "agent/semantic-resolution-schema-v23",
       "paths": [
         ".github/agent-scope-table.md",
