@@ -762,6 +762,16 @@
       ]
     },
     {
+      "branch": "agent/artifact-feedback-resolution-ci-v23",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go",
+        "scripts/artifact-feedback-resolution-ci/**"
+      ]
+    },
+    {
       "branch": "agent/artifact-feedback-resolution-cli-v23",
       "paths": [
         ".github/agent-scope-table.md",
