@@ -21,9 +21,9 @@ type graphFixture struct {
 }
 
 func buildFixture(concept languageconcept.Concept) (graphFixture, error) {
-	fixture := graphFixture{Targets: make(map[string]queryengine.ID)}
-	fixture.ConceptID = stableID("concept", concept.ID)
-	fixture.OperationID = stableID("operation", concept.MetaOperation)
+	fixture := graphFixture{Targets: make(map[string]queryengine.ID),
+		ConceptID:   stableID("concept", concept.ID),
+		OperationID: stableID("operation", concept.MetaOperation)}
 	fixture.Nodes = append(fixture.Nodes, node(fixture.ConceptID, queryengine.EntityNodeKind, concept.ID), node(fixture.OperationID, queryengine.ActivityNodeKind, concept.MetaOperation))
 	fixture.Facts = append(fixture.Facts, queryengine.NewFact(fixture.ConceptID, queryengine.WasGeneratedBy, fixture.OperationID))
 	appendBindings(&fixture, BindingCode, concept.CodeBindings)

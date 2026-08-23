@@ -18,8 +18,8 @@ func successOrFailureReport(source Source, summary Summary, results []CaseResult
 		Schema: ReportSchema, Decision: DecisionFailClosed, Resolution: ResolutionLower,
 		ReasonCode: "QUERY_CASES_NOT_SATISFIED", Source: source, Summary: summary, Cases: results,
 		RepositoryWrites: 0, MutationAuthorized: false,
-	}
-	report.Stages = stages(summary)
+
+		Stages: stages(summary)}
 	report.Indicators = indicators(summary, report.Resolution)
 	report.Proofs = proofs(summary, source.RegistryDigest)
 	if summary.Satisfied == FixedTotal && summary.Executed == FixedTotal &&
@@ -38,8 +38,8 @@ func failureReport(source Source, reason string) Report {
 		Schema: ReportSchema, Decision: DecisionFailClosed, Resolution: ResolutionLower,
 		ReasonCode: reason, Source: source, Summary: summary,
 		RepositoryWrites: 0, MutationAuthorized: false,
-	}
-	report.Stages = stages(summary)
+
+		Stages: stages(summary)}
 	report.Indicators = indicators(summary, report.Resolution)
 	report.Proofs = proofs(summary, source.RegistryDigest)
 	return finalizeReport(report)

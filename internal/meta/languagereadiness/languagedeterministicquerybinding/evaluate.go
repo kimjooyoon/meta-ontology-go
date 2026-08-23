@@ -9,8 +9,8 @@ func Evaluate(input Input) Artifact {
 		ConceptDigest: input.Concept.ArtifactDigest, ReadinessDigest: input.Readiness.Digest,
 		QueryDigest: input.Query.ReportDigest, Coordinates: boundCoordinates,
 		Summary: summary, RepositoryWrites: 0, MutationAuthorized: false,
-	}
-	artifact.Indicators = indicators(summary)
+
+		Indicators: indicators(summary)}
 	artifact.Proofs = proofs(input, artifact)
 	if summary.BoundCoordinates == FixedCoordinates && allProofsPassed(artifact.Proofs) {
 		artifact.Decision = "PASS"
