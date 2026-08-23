@@ -7,7 +7,7 @@ import (
 )
 
 type config struct {
-	root, outputDir, expectedHead                   string
+	root, outputDir, expectedHead                    string
 	platformID, runner, expectedGOOS, expectedGOARCH string
 }
 

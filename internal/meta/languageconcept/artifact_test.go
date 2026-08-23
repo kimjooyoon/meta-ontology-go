@@ -14,10 +14,10 @@ func TestArtifactBindsCatalogToMetaCodeContent(t *testing.T) {
 	if !artifact.Ready() || !artifact.ReplayEqual {
 		t.Fatalf("got %s/%s replay=%v", artifact.Decision, artifact.Reason, artifact.ReplayEqual)
 	}
-	if artifact.Report.Summary.Concepts != 23 || artifact.Bindings.Paths != 83 {
+	if artifact.Report.Summary.Concepts != 24 || artifact.Bindings.Paths != 87 || artifact.Bindings.Files != 1994 {
 		t.Fatalf("summary=%#v bindings=%#v", artifact.Report.Summary, artifact.Bindings)
 	}
-	if artifact.Bindings.Files == 0 || artifact.Bindings.Bytes == 0 || artifact.RepositoryWrites != 0 {
+	if artifact.Bindings.Bytes == 0 || artifact.RepositoryWrites != 0 {
 		t.Fatalf("effect evidence = %#v writes=%d", artifact.Bindings, artifact.RepositoryWrites)
 	}
 	if artifact.CatalogDigest == "" || artifact.ArtifactDigest == "" {

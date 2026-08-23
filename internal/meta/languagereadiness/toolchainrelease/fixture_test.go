@@ -17,10 +17,10 @@ func validReportFixture(t *testing.T) Report {
 			Reason: "TOOLCHAIN_RELEASE_PLATFORM_READY", Resolution: ResolutionExact,
 			HeadSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Toolchain: ExpectedToolchain,
 			Platform: target, ArchiveFormat: target.ArchiveFormat,
-			Build: BuildEvidence{VCSRevision: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Trimpath: true, BuildVCS: true},
-			Binary: ReplayEvidence{Name: binaryName(target), Digest: "sha256:binary", Bytes: 1, Builds: 2, ReplayEqual: true},
+			Build:   BuildEvidence{VCSRevision: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Trimpath: true, BuildVCS: true},
+			Binary:  ReplayEvidence{Name: binaryName(target), Digest: "sha256:binary", Bytes: 1, Builds: 2, ReplayEqual: true},
 			Archive: ReplayEvidence{Name: archiveName(target), Digest: "sha256:archive", Bytes: 1, Builds: 2, ReplayEqual: true},
-			Smoke: SmokeEvidence{SchemaVersion: "gooo-version/v1", Language: "gooo", Version: "0.1.0-dev", Status: "development"},
+			Smoke:   SmokeEvidence{SchemaVersion: "gooo-version/v1", Language: "gooo", Version: "0.1.0-dev", Status: "development"},
 		}
 		receipt, err = FinalizeReceipt(receipt)
 		if err != nil {

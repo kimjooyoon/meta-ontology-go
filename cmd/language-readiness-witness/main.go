@@ -7,9 +7,9 @@ import (
 )
 
 type config struct {
-	root, input, promotion, guarded, useCases, syntax, diagnostic, packageRuntime                    string
-	toolchainCLI, toolchainFormatFix, toolchainLSP, toolchainConformance, toolchainRelease          string
-	output, check, expectedSHA                                                                    string
+	root, input, promotion, guarded, useCases, syntax, diagnostic, packageRuntime          string
+	toolchainCLI, toolchainFormatFix, toolchainLSP, toolchainConformance, toolchainRelease string
+	output, check, expectedSHA                                                             string
 }
 
 func main() {
