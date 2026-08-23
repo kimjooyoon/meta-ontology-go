@@ -6,7 +6,7 @@ func TestToolchainUseCasesRequireDynamicReceipt(t *testing.T) {
 	obligation := Obligation{ID: "TOOLCHAIN-EXECUTABLE-USE-CASES",
 		Area: areaToolchain, ProofChoice: "COHERENCE", ConceptID: toolchainUseCasesConcept}
 	concept := conceptEvidence{ID: toolchainUseCasesConcept, Stage: "OPERATING",
-		CodeBindings: []string{"internal/meta/languagereadiness/toolchainusecases"},
+		CodeBindings:   []string{"internal/meta/languagereadiness/toolchainusecases"},
 		MetricBindings: []string{"gooo.metric.toolchain.executable-use-cases-readiness-bps.v1"},
 		UseCases: []useCaseEvidence{{ID: "canonical-and-negative-replay",
 			Trigger: "artifact", ExpectedOutcome: "3_OF_3"}}}
