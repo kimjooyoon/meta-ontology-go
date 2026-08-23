@@ -1,0 +1,73 @@
+name: Promotion authorization continuity
+
+on:
+  workflow_run:
+    workflows:
+      - Transformation effect ledger
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: promotion-authorized-continuity-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  promotion-authorized-continuity:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'workflow_run' &&
+      github.event.workflow_run.head_branch == 'dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact transformation subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          cache: true
+      - name: Download exact guarded promotion receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: guarded-promotion-${{ github.event.workflow_run.head_sha }}
+          path: continuity-input/guard
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - name: Download exact rollback route receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: rollback-fixed-point-${{ github.event.workflow_run.head_sha }}
+          path: continuity-input/recovery
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - name: Prove authorized successor twice
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          mapfile -t guard_files < <(find continuity-input/guard -type f -name '*.json' | sort)
+          mapfile -t recovery_files < <(find continuity-input/recovery -type f -name '*.json' | sort)
+          test "${#guard_files[@]}" -eq 1
+          test "${#recovery_files[@]}" -eq 1
+          mkdir -p continuity-output/a continuity-output/b
+          go run ./cmd/promotion-authorized-continuity \
+            --head "$EXPECTED_HEAD" --guard "${guard_files[0]}" \
+            --recovery "${recovery_files[0]}" --out continuity-output/a/report.json
+          go run ./cmd/promotion-authorized-continuity \
+            --head "$EXPECTED_HEAD" --guard "${guard_files[0]}" \
+            --recovery "${recovery_files[0]}" --out continuity-output/b/report.json
+          cmp continuity-output/a/report.json continuity-output/b/report.json
+      - name: Upload authorization continuity receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: promotion-authorized-continuity-${{ github.event.workflow_run.head_sha }}
+          path: continuity-output/a/report.json
+          if-no-files-found: error
+          retention-days: 30

@@ -1159,6 +1159,18 @@
         "internal/meta/transformationeffect/validate_ledger.go",
         "internal/verify/scope_readiness_rollback_fixed_point.go"
       ]
+    },
+    {
+      "branch": "agent/promotion-authorized-continuity",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/promotion-authorized-continuity.yml",
+        "cmd/promotion-authorized-continuity/**",
+        "docs/language/promotion-authorized-continuity.md",
+        "internal/meta/languagereadiness/promotioncontinuity/**",
+        "internal/verify/scope_promotion_authorized_continuity.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
