@@ -50,6 +50,7 @@ func setDrift(actual, expected []string) int {
 		if _, found := actualSet[value]; !found {
 			drift++
 		}
+	}
 	return drift
 }
 
