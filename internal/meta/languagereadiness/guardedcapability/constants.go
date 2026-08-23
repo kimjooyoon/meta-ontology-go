@@ -16,7 +16,7 @@ const (
 	FoundationArtifactID     = int64(9500514949)
 	FoundationArtifactDigest = "sha256:2c4f65b146af7dddf223f75b53d09f2f505d20a86a7b29fcf04b3db20bcd938d"
 	FoundationReportFileSHA  = "sha256:2a1859d7766178d94085488aa1a5490922407378e3a03405f2f34a970622027a"
-	FoundationReportDigest   = "sha256:9ebed6830b873a35074e37ebab3cc92ed67eef672680565b4627605e06db9435c"
+	FoundationReportDigest   = "sha256:9ebed6830b873a35074e37ebab3cc92ed67eef672680565b4627605e06db9435"
 )
 
 const (
