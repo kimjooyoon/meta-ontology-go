@@ -1,0 +1,59 @@
+name: Language deterministic query conformance
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-query:
+    name: Reified deterministic query
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Execute and replay fixed query plans
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/language-deterministic-query"
+          for pass in first second; do
+            go run ./cmd/language-deterministic-query-readiness-binding \
+              -root . \
+              -expected-head "$HEAD_SHA" \
+              -query-output "$root/$pass/query/artifact.json" \
+              -binding-output "$root/$pass/binding/artifact.json"
+          done
+          cmp "$root/first/query/artifact.json" "$root/second/query/artifact.json"
+          cmp "$root/first/binding/artifact.json" "$root/second/binding/artifact.json"
+
+      - name: Upload deterministic query artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-deterministic-query-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-deterministic-query/first/query/artifact.json
+          if-no-files-found: error
+
+      - name: Upload deterministic query readiness binding
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-deterministic-query/first/binding/artifact.json
+          if-no-files-found: error
