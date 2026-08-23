@@ -23,7 +23,7 @@ type SplitGoEvaluationArtifact struct {
 	ProofChoice          string                        `json:"proof_choice"`
 	Receipts             []generation.IndicatorReceipt `json:"receipts"`
 	Resolution           string                        `json:"resolution"`
-	Reasons              []string                      `json:"reasons,omitempty"`
+	Reasons              []string                      `json:"reasons"`
 }
 
 func EvaluateSplitGo(contractRaw, evidenceRaw []byte, requiredIDs []string, proofChoice string) (SplitGoEvaluationArtifact, error) {
