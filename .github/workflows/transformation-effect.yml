@@ -392,6 +392,29 @@ jobs:
             cd "$first"
             sha256sum artifact.json > artifact.json.sha256
           )
+          lsp_first="$RUNNER_TEMP/toolchain-lsp/first"
+          lsp_replay="$RUNNER_TEMP/toolchain-lsp/replay"
+          lsp_corpus="$GITHUB_WORKSPACE/examples/toolchain-lsp/corpus.json"
+          mkdir -p "$lsp_first" "$lsp_replay"
+          for target in "$lsp_first" "$lsp_replay"; do
+            go run ./cmd/toolchain-lsp-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$lsp_corpus" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$lsp_first/artifact.json" "$lsp_replay/artifact.json"
+          go run ./cmd/toolchain-lsp-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$lsp_corpus" \
+            --check "$lsp_first/artifact.json"
+          (
+            cd "$lsp_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
           usecase_first="$RUNNER_TEMP/toolchain-executable-use-cases/first"
           usecase_replay="$RUNNER_TEMP/toolchain-executable-use-cases/replay"
           usecase_registry="$GITHUB_WORKSPACE/examples/toolchain-executable-use-cases/usecases.json"
@@ -755,6 +778,7 @@ jobs:
               -language-package-runtime "$runtime_first/artifact.json" \
               -toolchain-cli "$cli_first/artifact.json" \
               -toolchain-format-fix "$format_fix_first/artifact.json" \
+              -toolchain-lsp "$lsp_first/artifact.json" \
               -toolchain-conformance "$conformance_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
@@ -771,6 +795,7 @@ jobs:
             -language-package-runtime "$runtime_first/artifact.json" \
             -toolchain-cli "$cli_first/artifact.json" \
             -toolchain-format-fix "$format_fix_first/artifact.json" \
+            -toolchain-lsp "$lsp_first/artifact.json" \
             -toolchain-conformance "$conformance_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
@@ -936,6 +961,13 @@ jobs:
         with:
           name: toolchain-conformance-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-conformance/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head toolchain LSP
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-lsp-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-lsp/first
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness

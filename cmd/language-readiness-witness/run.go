@@ -41,6 +41,9 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.toolchainFormatFix != "" {
 		paths = append(paths, cfg.toolchainFormatFix)
 	}
+	if cfg.toolchainLSP != "" {
+		paths = append(paths, cfg.toolchainLSP)
+	}
 	if cfg.toolchainConformance != "" {
 		paths = append(paths, cfg.toolchainConformance)
 	}
@@ -54,6 +57,9 @@ func run(cfg config, stdout io.Writer) error {
 	}
 	if cfg.toolchainConformance != "" && cfg.guarded == "" {
 		return fmt.Errorf("toolchain-conformance requires the complete evidence set")
+	}
+	if cfg.toolchainLSP != "" && cfg.toolchainConformance == "" {
+		return fmt.Errorf("toolchain-lsp requires toolchain-conformance evidence")
 	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err

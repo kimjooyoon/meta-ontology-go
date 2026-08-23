@@ -9,6 +9,7 @@ const (
 	packageRuntimeConcept       = "language-package-runtime"
 	toolchainCLIConcept         = "toolchain-cli"
 	toolchainFormatFixConcept   = "toolchain-format-fix"
+	toolchainLSPConcept         = "toolchain-lsp"
 	toolchainConformanceConcept = "toolchain-conformance"
 )
 
@@ -21,6 +22,7 @@ type evidenceDigests struct {
 	packageRuntime       string
 	toolchainCLI         string
 	toolchainFormatFix   string
+	toolchainLSP         string
 	toolchainConformance string
 }
 
@@ -47,6 +49,8 @@ func requiredEvidence(conceptID string, evidence evidenceDigests) (string, strin
 		return evidence.toolchainCLI, "TOOLCHAIN_CLI_RECEIPT_REQUIRED", true
 	case toolchainFormatFixConcept:
 		return evidence.toolchainFormatFix, "TOOLCHAIN_FORMAT_FIX_RECEIPT_REQUIRED", true
+	case toolchainLSPConcept:
+		return evidence.toolchainLSP, "TOOLCHAIN_LSP_RECEIPT_REQUIRED", true
 	case toolchainConformanceConcept:
 		return evidence.toolchainConformance, "TOOLCHAIN_CONFORMANCE_RECEIPT_REQUIRED", true
 	default:
