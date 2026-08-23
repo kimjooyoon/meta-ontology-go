@@ -1,6 +1,9 @@
 package languagepackageruntime
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 func (registry Registry) Validate() error {
 	if registry.Schema != RegistrySchema || registry.Version != RegistryVersion || len(registry.Cases) != FixedTotal {
@@ -47,8 +50,5 @@ func knownMutation(value string) bool {
 }
 
 func contains(values []string, target string) bool {
-	for _, value := range values {
-		if value == target { return true }
-	}
-	return false
+	return slices.Contains(values, target)
 }

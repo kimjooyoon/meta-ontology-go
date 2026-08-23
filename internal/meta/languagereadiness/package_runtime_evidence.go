@@ -4,7 +4,22 @@ import (
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
 )
+
+func validateProposalPromotion(
+	promotion proposalpromotion.Receipt, expectedHeadSHA string,
+) (string, error) {
+	if err := proposalpromotion.Validate(promotion, expectedHeadSHA); err != nil {
+		return "", fmt.Errorf("verify autonomous proposal promotion: %w", err)
+	}
+	if promotion.Decision != proposalpromotion.DecisionPass {
+		return "", fmt.Errorf(
+			"FAIL_CLOSED: autonomous proposal promotion decision %q", promotion.Decision,
+		)
+	}
+	return promotion.ReportDigest, nil
+}
 
 func validatePackageRuntime(
 	reports []languagepackageruntime.Report, expectedHeadSHA string,
