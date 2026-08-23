@@ -13,7 +13,11 @@ func observeFeatures(responses map[string]rpcMessage) (map[string]observation, i
 	result["hover"] = observation{"ENTITY_ORDER", hoverOK}
 	completion, completionOK := resultAs[lsp.CompletionList](responses["3"])
 	foundCompletion := false
-	for _, item := range completion.Items { if item.Label == "Order" { foundCompletion = true } }
+	for _, item := range completion.Items {
+		if item.Label == "Order" {
+			foundCompletion = true
+		}
+	}
 	completionOK = completionOK && foundCompletion
 	result["completion"] = observation{"ORDER_ITEM", completionOK}
 	definition, definitionOK := resultAs[[]lsp.Location](responses["4"])
@@ -35,11 +39,19 @@ func observeFeatures(responses map[string]rpcMessage) (map[string]observation, i
 }
 
 func documentSymbolNamed(symbols []lsp.DocumentSymbol, name string) bool {
-	for _, symbol := range symbols { if symbol.Name == name { return true } }
+	for _, symbol := range symbols {
+		if symbol.Name == name {
+			return true
+		}
+	}
 	return false
 }
 
 func workspaceSymbolNamed(symbols []lsp.WorkspaceSymbol, name string) bool {
-	for _, symbol := range symbols { if symbol.Name == name && symbol.Location.URI == sessionURI { return true } }
+	for _, symbol := range symbols {
+		if symbol.Name == name && symbol.Location.URI == sessionURI {
+			return true
+		}
+	}
 	return false
 }

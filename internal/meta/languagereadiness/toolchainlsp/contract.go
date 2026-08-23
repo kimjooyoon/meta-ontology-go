@@ -1,13 +1,13 @@
 package toolchainlsp
 
 const (
-	CorpusSchema       = "gooo/toolchain-lsp-corpus/v1"
-	ReportSchema       = "gooo/toolchain-lsp-report/v1"
-	DecisionPass       = "PASS"
-	DecisionFailClosed = "FAIL_CLOSED"
-	ResolutionExact    = "EXACT"
+	CorpusSchema        = "gooo/toolchain-lsp-corpus/v1"
+	ReportSchema        = "gooo/toolchain-lsp-report/v1"
+	DecisionPass        = "PASS"
+	DecisionFailClosed  = "FAIL_CLOSED"
+	ResolutionExact     = "EXACT"
 	ResolutionInvariant = "INVARIANT"
-	MetaOperation      = "project-exact-language-state-to-editor-protocol"
+	MetaOperation       = "project-exact-language-state-to-editor-protocol"
 )
 
 type Case struct {

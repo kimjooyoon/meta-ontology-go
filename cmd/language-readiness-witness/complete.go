@@ -27,7 +27,9 @@ func buildComplete(cfg config, concept, promotion []byte) (readinessartifact.Rec
 	}
 	if cfg.toolchainLSP != "" {
 		input.ToolchainLSP, err = os.ReadFile(cfg.toolchainLSP)
-		if err != nil { return readinessartifact.Receipt{}, err }
+		if err != nil {
+			return readinessartifact.Receipt{}, err
+		}
 	}
 	return readinessartifact.BuildWithCompleteEvidence(input)
 }

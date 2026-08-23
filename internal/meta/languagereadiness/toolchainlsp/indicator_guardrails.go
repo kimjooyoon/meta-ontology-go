@@ -3,7 +3,7 @@ package toolchainlsp
 func guardrailIndicators(s Summary, resolution string) []Indicator {
 	values := []struct {
 		name, proof string
-		value int
+		value       int
 	}{
 		{"missing-cases.guardrail.v1", "FOUNDATION", s.MissingCases},
 		{"unexpected-cases.guardrail.v1", "FOUNDATION", s.UnexpectedCases},

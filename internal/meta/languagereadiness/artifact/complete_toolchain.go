@@ -15,13 +15,17 @@ func buildToolchainSnapshot(input CompleteEvidenceInput, bundle readiness.Promot
 			cliReport, formatFixReport, input.HeadSHA)
 	}
 	conformance, err := decodeCompleteEvidence[metaconformance.Report](input.ToolchainConformance)
-	if err != nil { return readiness.Snapshot{}, err }
+	if err != nil {
+		return readiness.Snapshot{}, err
+	}
 	if len(input.ToolchainLSP) == 0 {
 		return readiness.EvaluateWithToolchainConformance(input.ConceptArtifact, bundle,
 			cliReport, formatFixReport, conformance, input.HeadSHA)
 	}
 	lspReport, err := decodeCompleteEvidence[metalsp.Report](input.ToolchainLSP)
-	if err != nil { return readiness.Snapshot{}, err }
+	if err != nil {
+		return readiness.Snapshot{}, err
+	}
 	return readiness.EvaluateWithToolchainLSP(input.ConceptArtifact, bundle, cliReport,
 		formatFixReport, conformance, lspReport, input.HeadSHA)
 }

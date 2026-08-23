@@ -16,15 +16,33 @@ func summarize(observations map[string]observation, stats runtimeStats, concept 
 	}
 	for _, expected := range caseContract {
 		observed, ok := observations[expected.ID]
-		if !ok { summary.MissingCases++; continue }
-		if observed.Satisfied { summary.CasesSatisfied++ } else { summary.CaseFailures++ }
-		if expected.Group == "PROTOCOL" && observed.Satisfied { summary.ProtocolCases++ }
-		if expected.Group == "COUPLING" && observed.Satisfied { summary.CouplingCases++ }
+		if !ok {
+			summary.MissingCases++
+			continue
+		}
+		if observed.Satisfied {
+			summary.CasesSatisfied++
+		} else {
+			summary.CaseFailures++
+		}
+		if expected.Group == "PROTOCOL" && observed.Satisfied {
+			summary.ProtocolCases++
+		}
+		if expected.Group == "COUPLING" && observed.Satisfied {
+			summary.CouplingCases++
+		}
 	}
 	for id := range observations {
 		found := false
-		for _, expected := range caseContract { if id == expected.ID { found = true; break } }
-		if !found { summary.UnexpectedCases++ }
+		for _, expected := range caseContract {
+			if id == expected.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			summary.UnexpectedCases++
+		}
 	}
 	summary.ReadinessBPS = summary.CasesSatisfied * 10000 / summary.CasesTotal
 	return summary

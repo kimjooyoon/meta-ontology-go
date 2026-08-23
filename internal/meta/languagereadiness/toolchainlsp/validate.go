@@ -3,10 +3,17 @@ package toolchainlsp
 import "fmt"
 
 func Validate(report Report, expectedHeadSHA string) error {
-	if report.Schema != ReportSchema { return fmt.Errorf("toolchain lsp schema mismatch") }
-	if report.HeadSHA != expectedHeadSHA || !validSHA(report.HeadSHA) { return fmt.Errorf("toolchain lsp head mismatch") }
-	digest := report.ReportDigest; report.ReportDigest = ""
-	if digestValue(report) != digest { return fmt.Errorf("toolchain lsp digest mismatch") }
+	if report.Schema != ReportSchema {
+		return fmt.Errorf("toolchain lsp schema mismatch")
+	}
+	if report.HeadSHA != expectedHeadSHA || !validSHA(report.HeadSHA) {
+		return fmt.Errorf("toolchain lsp head mismatch")
+	}
+	digest := report.ReportDigest
+	report.ReportDigest = ""
+	if digestValue(report) != digest {
+		return fmt.Errorf("toolchain lsp digest mismatch")
+	}
 	if report.Decision != DecisionPass || report.Resolution != ResolutionExact || report.Reason != "TOOLCHAIN_LSP_READY" {
 		return fmt.Errorf("toolchain lsp decision %s/%s", report.Decision, report.Resolution)
 	}
@@ -26,9 +33,23 @@ func Validate(report Report, expectedHeadSHA string) error {
 		summary.HeadMismatches+summary.ProofFailures+summary.RepositoryWrites+summary.MutationAuthorities != 0 {
 		return fmt.Errorf("toolchain lsp guardrail is nonzero")
 	}
-	if len(report.Cases) != 22 || len(report.Indicators) != 37 || len(report.Proofs) != 3 { return fmt.Errorf("toolchain lsp evidence count mismatch") }
-	for index, item := range report.Cases { if item.ID != caseContract[index].ID || item.Status != "SATISFIED" || item.EvidenceDigest == "" { return fmt.Errorf("toolchain lsp case %d failed", index) } }
-	for _, item := range report.Indicators { if !item.Satisfied || item.Producer != "toolchainlsp.Evaluate" || item.Consumer != "self-improvement-cycle" || item.MetaOperation != MetaOperation { return fmt.Errorf("toolchain lsp indicator failed") } }
-	for _, proof := range report.Proofs { if !proof.Passed { return fmt.Errorf("toolchain lsp proof failed") } }
+	if len(report.Cases) != 22 || len(report.Indicators) != 37 || len(report.Proofs) != 3 {
+		return fmt.Errorf("toolchain lsp evidence count mismatch")
+	}
+	for index, item := range report.Cases {
+		if item.ID != caseContract[index].ID || item.Status != "SATISFIED" || item.EvidenceDigest == "" {
+			return fmt.Errorf("toolchain lsp case %d failed", index)
+		}
+	}
+	for _, item := range report.Indicators {
+		if !item.Satisfied || item.Producer != "toolchainlsp.Evaluate" || item.Consumer != "self-improvement-cycle" || item.MetaOperation != MetaOperation {
+			return fmt.Errorf("toolchain lsp indicator failed")
+		}
+	}
+	for _, proof := range report.Proofs {
+		if !proof.Passed {
+			return fmt.Errorf("toolchain lsp proof failed")
+		}
+	}
 	return nil
 }

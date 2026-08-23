@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type config struct { root, corpus, concept, expectedHead, output, check string }
+type config struct{ root, corpus, concept, expectedHead, output, check string }
 
 func main() {
 	cfg := config{}
@@ -17,5 +17,8 @@ func main() {
 	flag.StringVar(&cfg.output, "output", "", "new report outside repository")
 	flag.StringVar(&cfg.check, "check", "", "existing report outside repository")
 	flag.Parse()
-	if err := run(cfg, os.Stdout); err != nil { fmt.Fprintln(os.Stderr, err); os.Exit(1) }
+	if err := run(cfg, os.Stdout); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }

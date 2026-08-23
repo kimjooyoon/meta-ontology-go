@@ -7,7 +7,7 @@ import (
 )
 
 type config struct {
-	root, input, promotion, guarded, useCases, syntax, diagnostic, packageRuntime      string
+	root, input, promotion, guarded, useCases, syntax, diagnostic, packageRuntime                    string
 	toolchainCLI, toolchainFormatFix, toolchainLSP, toolchainConformance, output, check, expectedSHA string
 }
 

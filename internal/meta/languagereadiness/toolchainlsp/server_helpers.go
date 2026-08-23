@@ -25,9 +25,13 @@ func resultAs[T any](message rpcMessage) (T, bool) {
 
 func containsName[T interface{ GetName() string }](_ []T, _ string) bool { return false }
 
-func completionContains(items []struct{ Label string `json:"label"` }, name string) bool {
+func completionContains(items []struct {
+	Label string `json:"label"`
+}, name string) bool {
 	for _, item := range items {
-		if item.Label == name { return true }
+		if item.Label == name {
+			return true
+		}
 	}
 	return false
 }
@@ -35,7 +39,9 @@ func completionContains(items []struct{ Label string `json:"label"` }, name stri
 func forbiddenWireFields(raw []byte) int {
 	count := 0
 	for _, field := range []string{"stable_id", "code_symbol_id", "semantic_owner_id", "customWireID"} {
-		if strings.Contains(string(raw), field) { count++ }
+		if strings.Contains(string(raw), field) {
+			count++
+		}
 	}
 	return count
 }

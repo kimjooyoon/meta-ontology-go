@@ -11,15 +11,25 @@ func EvaluateWithToolchainLSP(raw []byte, bundle PromotionEvidence, cliReport me
 	formatFixReport metaff.Report, conformanceReport metaconformance.Report,
 	lspReport metalsp.Report, expectedHeadSHA string) (Snapshot, error) {
 	evidence, err := validatePromotionEvidence(bundle, expectedHeadSHA)
-	if err != nil { return Snapshot{}, err }
+	if err != nil {
+		return Snapshot{}, err
+	}
 	cliDigest, err := validateToolchainCLI([]metacli.Report{cliReport}, expectedHeadSHA)
-	if err != nil { return Snapshot{}, err }
+	if err != nil {
+		return Snapshot{}, err
+	}
 	formatDigest, err := validateToolchainFormatFix([]metaff.Report{formatFixReport}, expectedHeadSHA)
-	if err != nil { return Snapshot{}, err }
+	if err != nil {
+		return Snapshot{}, err
+	}
 	conformanceDigest, err := validateToolchainConformance([]metaconformance.Report{conformanceReport}, expectedHeadSHA)
-	if err != nil { return Snapshot{}, err }
+	if err != nil {
+		return Snapshot{}, err
+	}
 	lspDigest, err := validateToolchainLSP([]metalsp.Report{lspReport}, expectedHeadSHA)
-	if err != nil { return Snapshot{}, err }
+	if err != nil {
+		return Snapshot{}, err
+	}
 	evidence.toolchainCLI, evidence.toolchainFormatFix = cliDigest, formatDigest
 	evidence.toolchainConformance, evidence.toolchainLSP = conformanceDigest, lspDigest
 	return evaluate(raw, evidence)

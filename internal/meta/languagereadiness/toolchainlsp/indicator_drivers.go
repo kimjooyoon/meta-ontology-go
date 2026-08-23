@@ -2,7 +2,7 @@ package toolchainlsp
 
 func driverIndicators(s Summary, resolution string) []Indicator {
 	values := []struct {
-		name, proof string
+		name, proof   string
 		value, target int
 	}{
 		{"executed-cases.v1", "COHERENCE", s.CasesSatisfied, 22},
