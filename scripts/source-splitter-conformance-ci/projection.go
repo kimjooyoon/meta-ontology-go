@@ -13,8 +13,8 @@ type evaluationProjection struct {
 }
 
 type receiptProjection struct {
-	IndicatorID string `json:"indicator_id"`
-	Verdict     string `json:"verdict"`
+	ID      string `json:"id"`
+	Verdict string `json:"verdict"`
 }
 
 type evaluationStats struct {
@@ -39,9 +39,9 @@ func projectEvaluation(raw []byte, required []string) (evaluationStats, error) {
 	}
 	stats := evaluationStats{resolution: projection.Resolution}
 	for index, receipt := range projection.Receipts {
-		if receipt.IndicatorID != required[index] {
+		if receipt.ID != required[index] {
 			return evaluationStats{}, fmt.Errorf(
-				"receipt[%d].indicator_id = %q, want %q", index, receipt.IndicatorID, required[index],
+				"receipt[%d].id = %q, want %q", index, receipt.ID, required[index],
 			)
 		}
 		switch strings.ToUpper(receipt.Verdict) {
@@ -52,7 +52,7 @@ func projectEvaluation(raw []byte, required []string) (evaluationStats, error) {
 		case "UNKNOWN":
 			stats.unknownCount++
 		default:
-			return evaluationStats{}, fmt.Errorf("receipt %q has verdict %q", receipt.IndicatorID, receipt.Verdict)
+			return evaluationStats{}, fmt.Errorf("receipt %q has verdict %q", receipt.ID, receipt.Verdict)
 		}
 	}
 	return stats, nil
