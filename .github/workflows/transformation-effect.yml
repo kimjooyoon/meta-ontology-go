@@ -78,7 +78,7 @@ jobs:
   guarded-promotion-receipt:
     name: guarded-promotion-receipt
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Check out exact CI subject
@@ -159,7 +159,7 @@ jobs:
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -212,7 +212,7 @@ jobs:
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -283,7 +283,7 @@ jobs:
         github.event.workflow_run.head_repository.full_name == github.repository &&
         (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
@@ -1115,7 +1115,7 @@ jobs:
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.head_branch == 'dev'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
