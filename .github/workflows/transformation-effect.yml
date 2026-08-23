@@ -510,14 +510,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
-          FOUNDATION_ARTIFACT_ID: 9482381929
         shell: bash
         run: |
           set -euo pipefail
           archive_args=()
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            foundation_artifact_id="$(
+              go run ./cmd/language-readiness-witness/guarded-capability \
+                --print-foundation-artifact-id
+            )"
+            [[ "$foundation_artifact_id" =~ ^[1-9][0-9]*$ ]]
             archive="$RUNNER_TEMP/guarded-capability-foundation.zip"
-            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$FOUNDATION_ARTIFACT_ID/zip" > "$archive"
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$foundation_artifact_id/zip" > "$archive"
             archive_args=(--foundation-archive "$archive")
           fi
           for suffix in a b; do
