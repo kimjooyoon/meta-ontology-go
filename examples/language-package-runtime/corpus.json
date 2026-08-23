@@ -1,0 +1,24 @@
+{
+  "schema": "gooo/language-package-runtime-cases/v1",
+  "version": "2026-08-23",
+  "cases": [
+    {"id":"POSITIVE:package-graph","kind":"POSITIVE","assertion":"PACKAGE_GRAPH","proof_choice":"COHERENCE","meta_operation":"compile-package-graph"},
+    {"id":"POSITIVE:diamond-order","kind":"POSITIVE","assertion":"DIAMOND_ORDER","proof_choice":"COHERENCE","meta_operation":"order-package-initialization"},
+    {"id":"POSITIVE:multi-source","kind":"POSITIVE","assertion":"MULTI_SOURCE","proof_choice":"COHERENCE","meta_operation":"merge-package-sources"},
+    {"id":"POSITIVE:entry-contract","kind":"POSITIVE","assertion":"ENTRY_CONTRACT","proof_choice":"COHERENCE","meta_operation":"resolve-entry-contract"},
+    {"id":"POSITIVE:package-permutation","kind":"POSITIVE","assertion":"PACKAGE_PERMUTATION","proof_choice":"COHERENCE","meta_operation":"normalize-package-order"},
+    {"id":"POSITIVE:import-permutation","kind":"POSITIVE","assertion":"IMPORT_PERMUTATION","proof_choice":"COHERENCE","meta_operation":"normalize-import-order"},
+    {"id":"POSITIVE:source-permutation","kind":"POSITIVE","assertion":"SOURCE_PERMUTATION","proof_choice":"COHERENCE","meta_operation":"normalize-source-order"},
+    {"id":"POSITIVE:canonical-replay","kind":"POSITIVE","assertion":"CANONICAL_REPLAY","proof_choice":"COHERENCE","meta_operation":"replay-runtime-image"},
+    {"id":"POSITIVE:semantic-binding","kind":"POSITIVE","assertion":"SEMANTIC_BINDING","proof_choice":"COHERENCE","meta_operation":"bind-semantic-digests"},
+    {"id":"POSITIVE:zero-effects","kind":"POSITIVE","assertion":"ZERO_EFFECTS","proof_choice":"COHERENCE","meta_operation":"seal-runtime-effects"},
+    {"id":"GUARDRAIL:unknown-schema","kind":"GUARDRAIL","mutation":"UNKNOWN_SCHEMA","expected_code":"MANIFEST_SCHEMA_UNKNOWN","proof_choice":"REGRESSION","meta_operation":"reject-unknown-manifest"},
+    {"id":"GUARDRAIL:duplicate-package","kind":"GUARDRAIL","mutation":"DUPLICATE_PACKAGE","expected_code":"PACKAGE_PATH_DUPLICATE","proof_choice":"REGRESSION","meta_operation":"reject-duplicate-package"},
+    {"id":"GUARDRAIL:unknown-import","kind":"GUARDRAIL","mutation":"UNKNOWN_IMPORT","expected_code":"PACKAGE_IMPORT_UNKNOWN","proof_choice":"REGRESSION","meta_operation":"reject-unknown-import"},
+    {"id":"GUARDRAIL:import-cycle","kind":"GUARDRAIL","mutation":"IMPORT_CYCLE","expected_code":"PACKAGE_IMPORT_CYCLE","proof_choice":"REGRESSION","meta_operation":"reject-import-cycle"},
+    {"id":"GUARDRAIL:header-mismatch","kind":"GUARDRAIL","mutation":"HEADER_MISMATCH","expected_code":"PACKAGE_HEADER_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-package-header-mismatch"},
+    {"id":"GUARDRAIL:parse-error","kind":"GUARDRAIL","mutation":"PARSE_ERROR","expected_code":"PACKAGE_SOURCE_INVALID","proof_choice":"REGRESSION","meta_operation":"reject-invalid-source"},
+    {"id":"GUARDRAIL:unknown-entry-package","kind":"GUARDRAIL","mutation":"UNKNOWN_ENTRY_PACKAGE","expected_code":"ENTRY_PACKAGE_UNKNOWN","proof_choice":"REGRESSION","meta_operation":"reject-unknown-entry-package"},
+    {"id":"GUARDRAIL:unknown-entry-activity","kind":"GUARDRAIL","mutation":"UNKNOWN_ENTRY_ACTIVITY","expected_code":"ENTRY_ACTIVITY_UNKNOWN","proof_choice":"REGRESSION","meta_operation":"reject-unknown-entry-activity"}
+  ]
+}

@@ -2,10 +2,12 @@ package artifact
 
 import (
 	"encoding/json"
+	"fmt"
 
 	readiness "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
@@ -13,7 +15,7 @@ import (
 
 func BuildWithPromotionEvidence(
 	conceptArtifact, promotionRaw, capabilityRaw, useCaseRaw, syntaxRaw,
-	diagnosticRaw []byte, headSHA string,
+	diagnosticRaw []byte, headSHA string, packageRuntimeRaw ...[]byte,
 ) (Receipt, error) {
 	promotion := proposalpromotion.Receipt{}
 	if err := json.Unmarshal(promotionRaw, &promotion); err != nil {
@@ -35,12 +37,30 @@ func BuildWithPromotionEvidence(
 	if err := json.Unmarshal(diagnosticRaw, &diagnosticReport); err != nil {
 		return Receipt{}, err
 	}
+	packageRuntimeReports, err := decodePackageRuntime(packageRuntimeRaw)
+	if err != nil {
+		return Receipt{}, err
+	}
 	snapshot, err := readiness.EvaluateWithPromotionEvidence(
 		conceptArtifact, promotion, capability, useCases, syntaxReport,
-		diagnosticReport, headSHA,
+		diagnosticReport, headSHA, packageRuntimeReports...,
 	)
 	if err != nil {
 		return Receipt{}, err
 	}
 	return build(snapshot, headSHA, promotion.ReportDigest, capability.ReportDigest)
+}
+
+func decodePackageRuntime(rawValues [][]byte) ([]languagepackageruntime.Report, error) {
+	if len(rawValues) == 0 {
+		return nil, nil
+	}
+	if len(rawValues) != 1 {
+		return nil, fmt.Errorf("package runtime evidence is not unique")
+	}
+	report := languagepackageruntime.Report{}
+	if err := json.Unmarshal(rawValues[0], &report); err != nil {
+		return nil, err
+	}
+	return []languagepackageruntime.Report{report}, nil
 }
