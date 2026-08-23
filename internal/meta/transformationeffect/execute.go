@@ -53,7 +53,7 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 		observations := make([]generation.IndicatorReceipt, 0, len(action.RequiredIndicatorIDs))
 		for _, id := range action.RequiredIndicatorIDs {
 			observations = append(observations, generation.IndicatorReceipt{ID: id,
-				Verdict: generation.IndicatorVerdictPass, EvidenceDigest: hashJSON([]string{evidence, id}), ProofChoice: action.ProofChoice})
+				Verdict: generation.IndicatorVerdictUnknown, EvidenceDigest: hashJSON([]string{evidence, id}), ProofChoice: action.ProofChoice})
 		}
 		receipt := generation.SealReceipt(in.plan, action, observations)
 		sealed = append(sealed, receipt)

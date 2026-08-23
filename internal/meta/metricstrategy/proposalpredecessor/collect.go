@@ -18,7 +18,7 @@ func Collect(ctx context.Context, client *http.Client, apiURL, token, repository
 	if client == nil || apiURL == "" || token == "" || repository == "" || !validSHA(predecessorSHA) {
 		return collection, fmt.Errorf("proposal predecessor collector identity is invalid")
 	}
-	runsURL := fmt.Sprintf("%s/repos/%s/actions/workflows/metric-counterfactual.yml/runs?head_sha=%s&event=push&status=success&per_page=100", strings.TrimRight(apiURL, "/"), repository, url.QueryEscape(predecessorSHA))
+	runsURL := fmt.Sprintf("%s/repos/%s/actions/workflows/metric-counterfactual.yml/runs?head_sha=%s&event=push&status=completed&per_page=100", strings.TrimRight(apiURL, "/"), repository, url.QueryEscape(predecessorSHA))
 	var runs runsEnvelope
 	if err := getJSON(ctx, client, runsURL, token, &runs); err != nil {
 		return collection, err
@@ -68,5 +68,7 @@ func readArchiveFile(file *zip.File) ([]byte, error) {
 }
 
 func canonicalRun(run githubRun) bool {
-	return run.ID > 0 && run.RunAttempt > 0 && run.Event == "push" && run.Status == "completed" && run.Conclusion == "success" && run.Name == workflowName
+	terminal := run.Conclusion == "success" || run.Conclusion == "failure"
+	return run.ID > 0 && run.RunAttempt > 0 && run.Event == "push" &&
+		run.Status == "completed" && terminal && run.Name == workflowName
 }

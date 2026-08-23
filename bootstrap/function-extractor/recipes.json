@@ -293,7 +293,7 @@
             "\t\tif handled, visitErr := collectMetricDirectory(absRoot, path, entry, directories); handled || visitErr != nil {",
             "\t\t\treturn visitErr",
             "\t\t}",
-            "\t\treturn collectMetricFile(absRoot, path, directories, &files)",
+            "\t\treturn collectMetricFile(absRoot, path, directories, \u0026files)",
             "\t})"
           ]
         },
@@ -308,7 +308,7 @@
             "\t\tiDepth := directoryDepth(entries[i])",
             "\t\tjDepth := directoryDepth(entries[j])",
             "\t\tif iDepth != jDepth {",
-            "\t\t\treturn iDepth > jDepth",
+            "\t\t\treturn iDepth \u003e jDepth",
             "\t\t}",
             "\t\tif entries[i] == \".\" {",
             "\t\t\treturn false",
@@ -316,7 +316,7 @@
             "\t\tif entries[j] == \".\" {",
             "\t\t\treturn true",
             "\t\t}",
-            "\t\treturn entries[i] < entries[j]",
+            "\t\treturn entries[i] \u003c entries[j]",
             "\t})"
           ],
           "new_lines": [
@@ -549,7 +549,7 @@
             "\tsort.Slice(entries, func(i, j int) bool {",
             "\t\tiDepth, jDepth := directoryDepth(entries[i]), directoryDepth(entries[j])",
             "\t\tif iDepth != jDepth {",
-            "\t\t\treturn iDepth > jDepth",
+            "\t\t\treturn iDepth \u003e jDepth",
             "\t\t}",
             "\t\tif entries[i] == \".\" {",
             "\t\t\treturn false",
@@ -557,7 +557,7 @@
             "\t\tif entries[j] == \".\" {",
             "\t\t\treturn true",
             "\t\t}",
-            "\t\treturn entries[i] < entries[j]",
+            "\t\treturn entries[i] \u003c entries[j]",
             "\t})",
             "\treturn entries",
             "}"
@@ -598,7 +598,7 @@
             "\t\t\t\treturn err",
             "\t\t\t}",
             "\t\t\tif !bytes.Equal(left, right) {",
-            "\t\t\t\treturn &ConflictError{ID: normalized.ID, Detail: \"same event ID has different canonical bytes\"}",
+            "\t\t\t\treturn \u0026ConflictError{ID: normalized.ID, Detail: \"same event ID has different canonical bytes\"}",
             "\t\t\t}",
             "\t\t\tcontinue",
             "\t\t}"
@@ -648,7 +648,7 @@
             "\t\treturn err",
             "\t}",
             "\tif !bytes.Equal(left, right) {",
-            "\t\treturn &ConflictError{ID: normalized.ID, Detail: \"same event ID has different canonical bytes\"}",
+            "\t\treturn \u0026ConflictError{ID: normalized.ID, Detail: \"same event ID has different canonical bytes\"}",
             "\t}",
             "\treturn nil",
             "}"
@@ -693,14 +693,14 @@
         {
           "path": "internal/syntax/string_part02.go",
           "old_lines": [
-            "\t\tif decoded >= 0xd800 && decoded <= 0xdfff {",
+            "\t\tif decoded \u003e= 0xd800 \u0026\u0026 decoded \u003c= 0xdfff {",
             "\t\t\tl.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), \"unicode escape cannot encode a surrogate code point\")",
             "\t\t\tvalue.WriteString(recovered.String())",
             "\t\t\treturn false",
             "\t\t}"
           ],
           "new_lines": [
-            "\t\tif decoded >= 0xd800 && decoded <= 0xdfff {",
+            "\t\tif decoded \u003e= 0xd800 \u0026\u0026 decoded \u003c= 0xdfff {",
             "\t\t\treturn l.recoverEscape(value, recovered.String(), escapeStart, \"unicode escape cannot encode a surrogate code point\")",
             "\t\t}"
           ]
@@ -727,6 +727,509 @@
             "\tl.addDiagnostic(DiagInvalidEscape, startSpan(l.filename, escapeStart, l.position()), detail)",
             "\tvalue.WriteString(recovered)",
             "\treturn false",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "subject": "cmd/language-deterministic-query-readiness-binding/run.go",
+      "operation": "extract-language-query-binding-io",
+      "edits": [
+        {
+          "path": "cmd/language-deterministic-query-readiness-binding/run.go",
+          "old_lines": [
+            "import (",
+            "\t\"encoding/json\"",
+            "\t\"flag\"",
+            "\t\"fmt\"",
+            "\t\"os\"",
+            "\t\"path/filepath\"",
+            "",
+            "\t\"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept\"",
+            "\treadinessartifact \"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact\"",
+            "\t\"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquery\"",
+            "\t\"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquerybinding\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"flag\"",
+            "\t\"fmt\"",
+            "\t\"os\"",
+            "\t\"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept\"",
+            "\treadinessartifact \"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact\"",
+            "\t\"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquery\"",
+            "\t\"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquerybinding\"",
+            ")"
+          ]
+        },
+        {
+          "path": "cmd/language-deterministic-query-readiness-binding/run.go",
+          "old_lines": [
+            "func loadJSON[T any](path string) (T, error) {",
+            "\tvar value T",
+            "\traw, err := os.ReadFile(path)",
+            "\tif err != nil {",
+            "\t\treturn value, err",
+            "\t}",
+            "\tif err := json.Unmarshal(raw, \u0026value); err != nil {",
+            "\t\treturn value, err",
+            "\t}",
+            "\treturn value, nil",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "cmd/language-deterministic-query-readiness-binding/run.go",
+          "old_lines": [
+            "func writeOutputs(queryPath, bindingPath string, queryReport, binding any) error {",
+            "\tif err := writeJSON(queryPath, queryReport); err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\treturn writeJSON(bindingPath, binding)",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "cmd/language-deterministic-query-readiness-binding/run.go",
+          "old_lines": [
+            "func writeJSON(path string, value any) error {",
+            "\traw, err := json.MarshalIndent(value, \"\", \"  \")",
+            "\tif err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\tif err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\treturn os.WriteFile(path, append(raw, '\\n'), 0o644)",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "cmd/language-deterministic-query-readiness-binding/io.go",
+          "old_lines": [
+            "package main"
+          ],
+          "new_lines": [
+            "package main",
+            "",
+            "import (",
+            "\t\"encoding/json\"",
+            "\t\"os\"",
+            "\t\"path/filepath\"",
+            ")",
+            "",
+            "func loadJSON[T any](path string) (T, error) {",
+            "\tvar value T",
+            "\traw, err := os.ReadFile(path)",
+            "\tif err != nil {",
+            "\t\treturn value, err",
+            "\t}",
+            "\tif err := json.Unmarshal(raw, \u0026value); err != nil {",
+            "\t\treturn value, err",
+            "\t}",
+            "\treturn value, nil",
+            "}",
+            "",
+            "func writeOutputs(queryPath, bindingPath string, queryReport, binding any) error {",
+            "\tif err := writeJSON(queryPath, queryReport); err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\treturn writeJSON(bindingPath, binding)",
+            "}",
+            "",
+            "func writeJSON(path string, value any) error {",
+            "\traw, err := json.MarshalIndent(value, \"\", \"  \")",
+            "\tif err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\tif err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\treturn os.WriteFile(path, append(raw, '\\n'), 0o644)",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "subject": "internal/meta/languagereadiness/languagedeterministicquery/execute_binding.go",
+      "operation": "extract-language-query-response-binding",
+      "edits": [
+        {
+          "path": "internal/meta/languagereadiness/languagedeterministicquery/execute_binding.go",
+          "old_lines": [
+            "func bindResponseEvidence(",
+            "\tevidence Evidence,",
+            "\trequestDigest, replayRequest string,",
+            "\tfirst, replay, permutation queryengine.Response,",
+            "\tgraph, permuted *queryengine.Graph,",
+            ") (Evidence, error) {",
+            "\tfirstDigest, err := first.CanonicalDigest()",
+            "\tif err != nil {",
+            "\t\treturn evidence, err",
+            "\t}",
+            "\treplayDigest, err := replay.CanonicalDigest()",
+            "\tif err != nil {",
+            "\t\treturn evidence, err",
+            "\t}",
+            "\tpermutationDigest, err := permutation.CanonicalDigest()",
+            "\tif err != nil {",
+            "\t\treturn evidence, err",
+            "\t}",
+            "\tevidence.RequestDigest, evidence.ReplayRequest = requestDigest, replayRequest",
+            "\tevidence.ResultDigest, evidence.ReplayResult = firstDigest, replayDigest",
+            "\tevidence.PermutationResult = permutationDigest",
+            "\tevidence.DeterministicRows = len(first.Result.DeterministicMatches)",
+            "\tevidence.CandidateRows = len(first.Result.CandidateMatches)",
+            "\tevidence.GraphAfter = graph.StableHash()",
+            "\tevidence.GraphMutated = evidence.GraphBefore != evidence.GraphAfter || evidence.GraphBefore != permuted.StableHash()",
+            "\treturn evidence, nil",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagedeterministicquery/response_binding.go",
+          "old_lines": [
+            "package languagedeterministicquery"
+          ],
+          "new_lines": [
+            "package languagedeterministicquery",
+            "",
+            "import (",
+            "\tqueryengine \"github.com/kimjooyoon/meta-ontology-go/internal/query\"",
+            ")",
+            "",
+            "func bindResponseEvidence(",
+            "\tevidence Evidence,",
+            "\trequestDigest, replayRequest string,",
+            "\tfirst, replay, permutation queryengine.Response,",
+            "\tgraph, permuted *queryengine.Graph,",
+            ") (Evidence, error) {",
+            "\tfirstDigest, err := first.CanonicalDigest()",
+            "\tif err != nil {",
+            "\t\treturn evidence, err",
+            "\t}",
+            "\treplayDigest, err := replay.CanonicalDigest()",
+            "\tif err != nil {",
+            "\t\treturn evidence, err",
+            "\t}",
+            "\tpermutationDigest, err := permutation.CanonicalDigest()",
+            "\tif err != nil {",
+            "\t\treturn evidence, err",
+            "\t}",
+            "\tevidence.RequestDigest, evidence.ReplayRequest = requestDigest, replayRequest",
+            "\tevidence.ResultDigest, evidence.ReplayResult = firstDigest, replayDigest",
+            "\tevidence.PermutationResult = permutationDigest",
+            "\tevidence.DeterministicRows = len(first.Result.DeterministicMatches)",
+            "\tevidence.CandidateRows = len(first.Result.CandidateMatches)",
+            "\tevidence.GraphAfter = graph.StableHash()",
+            "\tevidence.GraphMutated = evidence.GraphBefore != evidence.GraphAfter || evidence.GraphBefore != permuted.StableHash()",
+            "\treturn evidence, nil",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "subject": "internal/meta/languagereadiness/languagedeterministicquerybinding/contract.go",
+      "operation": "extract-language-query-binding-artifact",
+      "edits": [
+        {
+          "path": "internal/meta/languagereadiness/languagedeterministicquerybinding/contract.go",
+          "old_lines": [
+            "type Indicator struct {",
+            "\tMetricID      string `json:\"metric_id\"`",
+            "\tClass         string `json:\"class\"`",
+            "\tProofChoice   string `json:\"proof_choice\"`",
+            "\tMetaOperation string `json:\"meta_operation\"`",
+            "\tValue         int    `json:\"value\"`",
+            "\tTarget        int    `json:\"target\"`",
+            "\tSatisfied     bool   `json:\"satisfied\"`",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagedeterministicquerybinding/contract.go",
+          "old_lines": [
+            "type Proof struct {",
+            "\tChoice         string `json:\"choice\"`",
+            "\tMetaOperation  string `json:\"meta_operation\"`",
+            "\tEvidenceDigest string `json:\"evidence_digest\"`",
+            "\tPassed         bool   `json:\"passed\"`",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagedeterministicquerybinding/contract.go",
+          "old_lines": [
+            "type Artifact struct {",
+            "\tSchema             string       `json:\"schema\"`",
+            "\tDecision           string       `json:\"decision\"`",
+            "\tResolution         string       `json:\"resolution\"`",
+            "\tReasonCode         string       `json:\"reason_code\"`",
+            "\tExpectedHeadSHA    string       `json:\"expected_head_sha\"`",
+            "\tConceptDigest      string       `json:\"concept_digest\"`",
+            "\tReadinessDigest    string       `json:\"readiness_digest\"`",
+            "\tQueryDigest        string       `json:\"query_digest\"`",
+            "\tCoordinates        []Coordinate `json:\"coordinates\"`",
+            "\tSummary            Summary      `json:\"summary\"`",
+            "\tIndicators         []Indicator  `json:\"indicators\"`",
+            "\tProofs             []Proof      `json:\"proofs\"`",
+            "\tRepositoryWrites   int          `json:\"repository_writes\"`",
+            "\tMutationAuthorized bool         `json:\"mutation_authorized\"`",
+            "\tArtifactDigest     string       `json:\"artifact_digest\"`",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagedeterministicquerybinding/artifact.go",
+          "old_lines": [
+            "package languagedeterministicquerybinding"
+          ],
+          "new_lines": [
+            "package languagedeterministicquerybinding",
+            "",
+            "type Indicator struct {",
+            "\tMetricID      string `json:\"metric_id\"`",
+            "\tClass         string `json:\"class\"`",
+            "\tProofChoice   string `json:\"proof_choice\"`",
+            "\tMetaOperation string `json:\"meta_operation\"`",
+            "\tValue         int    `json:\"value\"`",
+            "\tTarget        int    `json:\"target\"`",
+            "\tSatisfied     bool   `json:\"satisfied\"`",
+            "}",
+            "",
+            "type Proof struct {",
+            "\tChoice         string `json:\"choice\"`",
+            "\tMetaOperation  string `json:\"meta_operation\"`",
+            "\tEvidenceDigest string `json:\"evidence_digest\"`",
+            "\tPassed         bool   `json:\"passed\"`",
+            "}",
+            "",
+            "type Artifact struct {",
+            "\tSchema             string       `json:\"schema\"`",
+            "\tDecision           string       `json:\"decision\"`",
+            "\tResolution         string       `json:\"resolution\"`",
+            "\tReasonCode         string       `json:\"reason_code\"`",
+            "\tExpectedHeadSHA    string       `json:\"expected_head_sha\"`",
+            "\tConceptDigest      string       `json:\"concept_digest\"`",
+            "\tReadinessDigest    string       `json:\"readiness_digest\"`",
+            "\tQueryDigest        string       `json:\"query_digest\"`",
+            "\tCoordinates        []Coordinate `json:\"coordinates\"`",
+            "\tSummary            Summary      `json:\"summary\"`",
+            "\tIndicators         []Indicator  `json:\"indicators\"`",
+            "\tProofs             []Proof      `json:\"proofs\"`",
+            "\tRepositoryWrites   int          `json:\"repository_writes\"`",
+            "\tMutationAuthorized bool         `json:\"mutation_authorized\"`",
+            "\tArtifactDigest     string       `json:\"artifact_digest\"`",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "subject": "internal/meta/languagereadiness/languagegointeroperation/inspection.go",
+      "operation": "extract-language-go-interoperation-api-surface",
+      "edits": [
+        {
+          "path": "internal/meta/languagereadiness/languagegointeroperation/inspection.go",
+          "old_lines": [
+            "import (",
+            "\t\"bytes\"",
+            "\t\"go/ast\"",
+            "\t\"go/format\"",
+            "\t\"go/parser\"",
+            "\t\"go/token\"",
+            "\t\"go/types\"",
+            "\t\"sort\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"bytes\"",
+            "\t\"go/ast\"",
+            "\t\"go/format\"",
+            "\t\"go/parser\"",
+            "\t\"go/token\"",
+            "\t\"go/types\"",
+            ")"
+          ]
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagegointeroperation/inspection.go",
+          "old_lines": [
+            "func apiSurface(pkg *types.Package) ([]string, bool) {",
+            "\tentries := []string{}",
+            "\ttypesBound := true",
+            "\tqualifier := func(other *types.Package) string {",
+            "\t\tif other == pkg {",
+            "\t\t\treturn \"\"",
+            "\t\t}",
+            "\t\treturn other.Path()",
+            "\t}",
+            "\tfor _, name := range pkg.Scope().Names() {",
+            "\t\tobject := pkg.Scope().Lookup(name)",
+            "\t\tif !object.Exported() {",
+            "\t\t\tcontinue",
+            "\t\t}",
+            "\t\tentries = append(entries, types.ObjectString(object, qualifier))",
+            "\t\tentries = append(entries, namedMethods(object, qualifier)...)",
+            "\t\ttypesBound = typesBound && typeIdentityBound(object.Type())",
+            "\t}",
+            "\tsort.Strings(entries)",
+            "\treturn entries, typesBound",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagegointeroperation/inspection.go",
+          "old_lines": [
+            "func namedMethods(object types.Object, qualifier types.Qualifier) []string {",
+            "\ttypeName, ok := object.(*types.TypeName)",
+            "\tif !ok {",
+            "\t\treturn nil",
+            "\t}",
+            "\tnamed, ok := types.Unalias(typeName.Type()).(*types.Named)",
+            "\tif !ok {",
+            "\t\treturn nil",
+            "\t}",
+            "\tmethods := make([]string, 0, named.NumMethods())",
+            "\tfor index := 0; index < named.NumMethods(); index++ {",
+            "\t\tmethod := named.Method(index)",
+            "\t\tif method.Exported() {",
+            "\t\t\tmethods = append(methods, types.ObjectString(method, qualifier))",
+            "\t\t}",
+            "\t}",
+            "\treturn methods",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagegointeroperation/inspection.go",
+          "old_lines": [
+            "func typeIdentityBound(value types.Type) bool {",
+            "\thasher := types.Hasher{}",
+            "\tif alias, ok := value.(*types.Alias); ok {",
+            "\t\treturn hasher.Equal(alias, types.Unalias(alias))",
+            "\t}",
+            "\treturn hasher.Equal(value, value)",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagegointeroperation/inspection.go",
+          "old_lines": [
+            "func syntaxFeatureCounts(file *ast.File) (int, int) {",
+            "\tmethods, aliases := 0, 0",
+            "\tast.Inspect(file, func(node ast.Node) bool {",
+            "\t\tswitch value := node.(type) {",
+            "\t\tcase *ast.FuncDecl:",
+            "\t\t\tif value.Recv != nil && value.Type.TypeParams != nil && len(value.Type.TypeParams.List) > 0 {",
+            "\t\t\t\tmethods++",
+            "\t\t\t}",
+            "\t\tcase *ast.TypeSpec:",
+            "\t\t\tif value.Assign.IsValid() {",
+            "\t\t\t\taliases++",
+            "\t\t\t}",
+            "\t\t}",
+            "\t\treturn true",
+            "\t})",
+            "\treturn methods, aliases",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagegointeroperation/api_surface.go",
+          "old_lines": [
+            "package languagegointeroperation"
+          ],
+          "new_lines": [
+            "package languagegointeroperation",
+            "",
+            "import (",
+            "\t\"go/ast\"",
+            "\t\"go/types\"",
+            "\t\"sort\"",
+            ")",
+            "",
+            "func apiSurface(pkg *types.Package) ([]string, bool) {",
+            "\tentries := []string{}",
+            "\ttypesBound := true",
+            "\tqualifier := func(other *types.Package) string {",
+            "\t\tif other == pkg {",
+            "\t\t\treturn \"\"",
+            "\t\t}",
+            "\t\treturn other.Path()",
+            "\t}",
+            "\tfor _, name := range pkg.Scope().Names() {",
+            "\t\tobject := pkg.Scope().Lookup(name)",
+            "\t\tif !object.Exported() {",
+            "\t\t\tcontinue",
+            "\t\t}",
+            "\t\tentries = append(entries, types.ObjectString(object, qualifier))",
+            "\t\tentries = append(entries, namedMethods(object, qualifier)...)",
+            "\t\ttypesBound = typesBound && typeIdentityBound(object.Type())",
+            "\t}",
+            "\tsort.Strings(entries)",
+            "\treturn entries, typesBound",
+            "}",
+            "",
+            "func namedMethods(object types.Object, qualifier types.Qualifier) []string {",
+            "\ttypeName, ok := object.(*types.TypeName)",
+            "\tif !ok {",
+            "\t\treturn nil",
+            "\t}",
+            "\tnamed, ok := types.Unalias(typeName.Type()).(*types.Named)",
+            "\tif !ok {",
+            "\t\treturn nil",
+            "\t}",
+            "\tmethods := make([]string, 0, named.NumMethods())",
+            "\tfor method := range named.Methods() {",
+            "\t\tmethod := method",
+            "\t\tif method.Exported() {",
+            "\t\t\tmethods = append(methods, types.ObjectString(method, qualifier))",
+            "\t\t}",
+            "\t}",
+            "\treturn methods",
+            "}",
+            "",
+            "func typeIdentityBound(value types.Type) bool {",
+            "\thasher := types.Hasher{}",
+            "\tif alias, ok := value.(*types.Alias); ok {",
+            "\t\treturn hasher.Equal(alias, types.Unalias(alias))",
+            "\t}",
+            "\treturn hasher.Equal(value, value)",
+            "}",
+            "",
+            "func syntaxFeatureCounts(file *ast.File) (int, int) {",
+            "\tmethods, aliases := 0, 0",
+            "\tast.Inspect(file, func(node ast.Node) bool {",
+            "\t\tswitch value := node.(type) {",
+            "\t\tcase *ast.FuncDecl:",
+            "\t\t\tif value.Recv != nil && value.Type.TypeParams != nil && len(value.Type.TypeParams.List) > 0 {",
+            "\t\t\t\tmethods++",
+            "\t\t\t}",
+            "\t\tcase *ast.TypeSpec:",
+            "\t\t\tif value.Assign.IsValid() {",
+            "\t\t\t\taliases++",
+            "\t\t\t}",
+            "\t\t}",
+            "\t\treturn true",
+            "\t})",
+            "\treturn methods, aliases",
             "}"
           ]
         }

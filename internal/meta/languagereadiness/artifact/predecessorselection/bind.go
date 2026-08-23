@@ -44,11 +44,16 @@ func bindCandidate(candidate Candidate) (Selection, []byte, []byte, error) {
 		BasisPoints:    summary.ReadinessBPS,
 	})
 	selection := Selection{
-		RunID:               candidate.RunID,
-		RunAttempt:          candidate.RunAttempt,
-		ReadinessArtifactID: candidate.ReadinessArtifactID,
-		BindingArtifactID:   candidate.BindingArtifactID,
-		Baseline:            reference,
+		RunID:                 candidate.RunID,
+		RunAttempt:            candidate.RunAttempt,
+		WorkflowConclusion:    candidate.Conclusion,
+		ProducerJobID:         candidate.ProducerJobID,
+		ProducerJobRunAttempt: candidate.ProducerJobRunAttempt,
+		ProducerJobName:       candidate.ProducerJobName,
+		ProducerJobConclusion: candidate.ProducerJobConclusion,
+		ReadinessArtifactID:   candidate.ReadinessArtifactID,
+		BindingArtifactID:     candidate.BindingArtifactID,
+		Baseline:              reference,
 	}
 	return selection, readinessRaw, bindingRaw, nil
 }

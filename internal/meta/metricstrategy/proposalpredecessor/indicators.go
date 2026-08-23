@@ -7,6 +7,8 @@ type Summary struct {
 	ExactRuns            int `json:"exact_runs"`
 	ObservedArtifacts    int `json:"observed_artifacts"`
 	ExactArtifacts       int `json:"exact_artifacts"`
+	ObservedJobs         int `json:"observed_jobs"`
+	ExactJobs            int `json:"exact_jobs"`
 	ValidCandidates      int `json:"valid_candidates"`
 	AmbiguousCandidates  int `json:"ambiguous_candidates"`
 	UnresolvedCandidates int `json:"unresolved_candidates"`

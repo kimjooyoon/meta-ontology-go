@@ -50,4 +50,21 @@ func init() {
 		"internal/meta/languagereadiness/guardedpromotion",
 		"internal/verify/scope_language_readiness.go",
 	}
+	branchScopeAllowlist["agent/readiness-squash-predecessor"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/metric-counterfactual.yml",
+		"docs/language/proposal-synthesis-continuity.md",
+		"internal/meta/languagereadiness/proposalpromotion",
+		"internal/meta/metricstrategy/proposalpredecessor",
+		"internal/verify/scope_language_readiness.go",
+	}
+	branchScopeAllowlist["agent/readiness-baseline-resolution"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/language-readiness-witness/predecessor-selection",
+		"docs/language/readiness-ancestor-resolution.md",
+		"internal/meta/languagereadiness/artifact/predecessorresolution",
+		"internal/verify/scope_language_readiness.go",
+	}
 }

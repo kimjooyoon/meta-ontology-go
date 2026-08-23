@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorselection"
 )
 
 func run(cfg config) error {
@@ -32,20 +30,14 @@ func run(cfg config) error {
 	if err != nil {
 		return err
 	}
-	input, err := collect(ctx, client, cfg, predecessor)
+	result, resolution, err := resolveAncestry(ctx, client, cfg, predecessor)
 	if err != nil {
+		if resolution.ReportDigest != "" {
+			if writeErr := writeResolutionFailure(cfg.receipt, resolution); writeErr != nil {
+				return fmt.Errorf("%w; write failure receipt: %v", err, writeErr)
+			}
+		}
 		return err
 	}
-	result, err := predecessorselection.Select(input)
-	if err != nil {
-		return err
-	}
-	replay, err := predecessorselection.Select(input)
-	if err != nil || replay.Report.ReportDigest != result.Report.ReportDigest {
-		return fmt.Errorf("predecessor selection replay mismatch")
-	}
-	if result.Report.Decision != predecessorselection.DecisionSelected {
-		return fmt.Errorf("%s: %s", result.Report.Decision, result.Report.Reason)
-	}
-	return writeResult(cfg, result)
+	return writeResolutionResult(cfg, result, resolution)
 }

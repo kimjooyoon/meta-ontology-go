@@ -1,28 +1,33 @@
 package languagereadiness
 
 import (
-	"fmt"
-
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
 )
-
-const autonomousProposalConcept = "autonomous-change-proposal"
-
-type promotionEvidence struct {
-	Concept         conceptEvidence `json:"concept"`
-	PromotionDigest string          `json:"promotion_digest"`
-}
 
 func EvaluateWithProposalPromotion(
 	raw []byte, promotion proposalpromotion.Receipt, expectedHeadSHA string,
 ) (Snapshot, error) {
-	if err := proposalpromotion.Validate(promotion, expectedHeadSHA); err != nil {
-		return Snapshot{}, fmt.Errorf("verify autonomous proposal promotion: %w", err)
+	digest, err := validateProposalPromotion(promotion, expectedHeadSHA)
+	if err != nil {
+		return Snapshot{}, err
 	}
-	if promotion.Decision != proposalpromotion.DecisionPass {
-		return Snapshot{}, fmt.Errorf(
-			"FAIL_CLOSED: autonomous proposal promotion decision %q", promotion.Decision,
-		)
+	return evaluate(raw, evidenceDigests{proposal: digest})
+}
+
+func EvaluateWithPromotionEvidence(raw []byte, promotion proposalpromotion.Receipt,
+	capability guardedcapability.Receipt, useCases toolchainusecases.Report, syntaxReport languagesyntax.Report,
+	diagnosticReport languagediagnosticprovenance.Report,
+	expectedHeadSHA string, packageRuntime ...languagepackageruntime.Report) (Snapshot, error) {
+	bundle := PromotionEvidence{Promotion: promotion, Capability: capability, UseCases: useCases,
+		Syntax: syntaxReport, Diagnostic: diagnosticReport, PackageRuntime: packageRuntime}
+	evidence, err := validatePromotionEvidence(bundle, expectedHeadSHA)
+	if err != nil {
+		return Snapshot{}, err
 	}
-	return evaluate(raw, promotion.ReportDigest)
+	return evaluate(raw, evidence)
 }

@@ -17,6 +17,12 @@ type Candidate struct {
 	HeadSHA                string `json:"head_sha"`
 	Event                  string `json:"event"`
 	Conclusion             string `json:"conclusion"`
+	ProducerJobID          int64  `json:"producer_job_id"`
+	ProducerJobRunAttempt  int    `json:"producer_job_run_attempt"`
+	ProducerJobName        string `json:"producer_job_name"`
+	ProducerJobStatus      string `json:"producer_job_status"`
+	ProducerJobConclusion  string `json:"producer_job_conclusion"`
+	ProducerJobMatches     int    `json:"producer_job_matches"`
 	ReadinessArtifactID    int64  `json:"readiness_artifact_id"`
 	ReadinessArtifactName  string `json:"readiness_artifact_name"`
 	ReadinessExpired       bool   `json:"readiness_expired"`

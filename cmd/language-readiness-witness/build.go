@@ -20,6 +20,9 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 	if err != nil {
 		return readinessartifact.Receipt{}, err
 	}
+	if cfg.guarded != "" {
+		return buildComplete(cfg, raw, promotion)
+	}
 	return readinessartifact.BuildWithProposalPromotion(raw, promotion, cfg.expectedSHA)
 }
 

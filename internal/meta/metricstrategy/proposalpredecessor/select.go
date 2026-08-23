@@ -3,7 +3,7 @@ package proposalpredecessor
 import "fmt"
 
 func Select(repository, currentSHA, predecessorSHA string, collection Collection) (Report, []byte, error) {
-	summary := Summary{ObservedRuns: collection.ObservedRuns, ExactRuns: collection.ExactRuns, ObservedArtifacts: collection.ObservedArtifacts, ExactArtifacts: collection.ExactArtifacts, ValidCandidates: len(collection.Candidates), UnresolvedCandidates: collection.Unresolved, ProofsTotal: 5}
+	summary := Summary{ObservedRuns: collection.ObservedRuns, ExactRuns: collection.ExactRuns, ObservedArtifacts: collection.ObservedArtifacts, ExactArtifacts: collection.ExactArtifacts, ObservedJobs: collection.ObservedJobs, ExactJobs: collection.ExactJobs, ValidCandidates: len(collection.Candidates), UnresolvedCandidates: collection.Unresolved, ProofsTotal: 5}
 	if len(collection.Candidates) > 1 {
 		summary.AmbiguousCandidates = len(collection.Candidates) - 1
 	}
@@ -17,6 +17,8 @@ func Select(repository, currentSHA, predecessorSHA string, collection Collection
 		reason = "PROPOSAL_PREDECESSOR_AMBIGUOUS"
 	} else if len(collection.Candidates) == 1 && summary.UnresolvedCandidates != 0 {
 		reason = "PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN"
+	} else if len(collection.Candidates) == 1 && summary.ExactJobs != 1 {
+		reason = "PROPOSAL_SYNTHESIS_JOB_CARDINALITY"
 	} else if len(collection.Candidates) == 1 && candidateReady(collection.Candidates[0], predecessorSHA) {
 		candidate := collection.Candidates[0]
 		selected, payload = &candidate.Selected, candidate.ProposalPayload

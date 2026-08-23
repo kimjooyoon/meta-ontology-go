@@ -3,23 +3,29 @@ package predecessorselection
 import readinessartifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact"
 
 type Selection struct {
-	RunID               int64 `json:"run_id"`
-	RunAttempt          int   `json:"run_attempt"`
-	ReadinessArtifactID int64 `json:"readiness_artifact_id"`
-	BindingArtifactID   int64 `json:"binding_artifact_id"`
+	RunID                 int64  `json:"run_id"`
+	RunAttempt            int    `json:"run_attempt"`
+	WorkflowConclusion    string `json:"workflow_conclusion"`
+	ProducerJobID         int64  `json:"producer_job_id"`
+	ProducerJobRunAttempt int    `json:"producer_job_run_attempt"`
+	ProducerJobName       string `json:"producer_job_name"`
+	ProducerJobConclusion string `json:"producer_job_conclusion"`
+	ReadinessArtifactID   int64  `json:"readiness_artifact_id"`
+	BindingArtifactID     int64  `json:"binding_artifact_id"`
 
 	Baseline readinessartifact.BaselineReference `json:"baseline"`
 }
 
 type Summary struct {
-	ObservedCandidates   int `json:"observed_candidates"`
-	ExactHeadCandidates  int `json:"exact_head_candidates"`
-	CanonicalCandidates  int `json:"canonical_candidates"`
-	SuccessfulCandidates int `json:"successful_candidates"`
-	AvailableCandidates  int `json:"available_candidates"`
-	ValidCandidates      int `json:"valid_candidates"`
-	AmbiguousCandidates  int `json:"ambiguous_candidates"`
-	RepositoryWrites     int `json:"repository_writes"`
+	ObservedCandidates           int `json:"observed_candidates"`
+	ExactHeadCandidates          int `json:"exact_head_candidates"`
+	CanonicalCandidates          int `json:"canonical_candidates"`
+	SuccessfulCandidates         int `json:"successful_candidates"`
+	ProducerConformantCandidates int `json:"producer_conformant_candidates"`
+	AvailableCandidates          int `json:"available_candidates"`
+	ValidCandidates              int `json:"valid_candidates"`
+	AmbiguousCandidates          int `json:"ambiguous_candidates"`
+	RepositoryWrites             int `json:"repository_writes"`
 }
 
 type Proof struct {

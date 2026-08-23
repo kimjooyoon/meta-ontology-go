@@ -8,6 +8,16 @@ import (
 )
 
 func collectRun(ctx context.Context, client *http.Client, apiURL, token, repository, predecessorSHA string, run githubRun, collection *Collection) error {
+	job, ready, err := collectSynthesisJob(
+		ctx, client, apiURL, token, repository, run.ID, collection,
+	)
+	if err != nil {
+		return err
+	}
+	if !ready {
+		collection.Unresolved++
+		return nil
+	}
 	artifactsURL := fmt.Sprintf("%s/repos/%s/actions/runs/%d/artifacts?per_page=100", strings.TrimRight(apiURL, "/"), repository, run.ID)
 	var artifacts artifactsEnvelope
 	if err := getJSON(ctx, client, artifactsURL, token, &artifacts); err != nil {
@@ -22,7 +32,7 @@ func collectRun(ctx context.Context, client *http.Client, apiURL, token, reposit
 			continue
 		}
 		collection.ExactArtifacts++
-		candidate, err := collectArtifact(ctx, client, token, predecessorSHA, run, artifact)
+		candidate, err := collectArtifact(ctx, client, token, predecessorSHA, run, job, artifact)
 		if err != nil {
 			collection.Unresolved++
 			continue
@@ -32,7 +42,7 @@ func collectRun(ctx context.Context, client *http.Client, apiURL, token, reposit
 	return nil
 }
 
-func collectArtifact(ctx context.Context, client *http.Client, token, predecessorSHA string, run githubRun, artifact githubArtifact) (Candidate, error) {
+func collectArtifact(ctx context.Context, client *http.Client, token, predecessorSHA string, run githubRun, job githubJob, artifact githubArtifact) (Candidate, error) {
 	if artifact.Expired || artifact.ID < 1 || artifact.ArchiveDownloadURL == "" {
 		return Candidate{}, fmt.Errorf("proposal predecessor artifact is unavailable")
 	}
@@ -50,6 +60,8 @@ func collectArtifact(ctx context.Context, client *http.Client, token, predecesso
 	selected := Selected{
 		RunID: run.ID, RunAttempt: run.RunAttempt, HeadSHA: run.HeadSHA,
 		Event: run.Event, Status: run.Status, Conclusion: run.Conclusion, WorkflowName: run.Name,
+		SynthesisJobID: job.ID, SynthesisJobName: job.Name,
+		SynthesisJobStatus: job.Status, SynthesisJobConclusion: job.Conclusion,
 		ArtifactID: artifact.ID, ArtifactName: artifact.Name, ProposalFileSHA256: fileSHA,
 		ProposalReportDigest: report.ReportDigest, ContractSatisfied: report.Summary.Satisfied,
 		ContractTotal: report.Summary.Total, ContractBPS: report.Summary.ReadinessBPS,
