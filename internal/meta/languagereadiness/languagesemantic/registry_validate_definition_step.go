@@ -7,12 +7,8 @@ import (
 )
 
 func registryValidateDefinitionStep(flow *registry_validateFlowState, definition Definition) bool {
-	if strings.TrimSpace(definition.ID) == "" {
-		{
-			flow.result0 = fmt.Errorf("registry contains an empty case id")
-			flow.done = true
-			return true
-		}
+	if registryValidateDefinitionGuard(flow, definition) {
+		return true
 	}
 	if _, exists := flow.slot01[definition.ID]; exists {
 		{
