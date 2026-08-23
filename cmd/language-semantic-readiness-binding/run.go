@@ -17,9 +17,9 @@ func run(args []string) error {
 	}
 	report, err := languagesemanticbinding.Evaluate(languagesemanticbinding.Input{
 		ExpectedHeadSHA: options.head,
-		ReadinessPath: options.readiness,
-		ConceptPath: options.concept,
-		SemanticPath: options.semantic,
+		ReadinessPath:   options.readiness,
+		ConceptPath:     options.concept,
+		SemanticPath:    options.semantic,
 	})
 	if err != nil {
 		return err
