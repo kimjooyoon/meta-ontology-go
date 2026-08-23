@@ -5,13 +5,15 @@ import (
 
 	readiness "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
 )
 
 func BuildWithPromotionEvidence(
-	conceptArtifact, promotionRaw, capabilityRaw, useCaseRaw, syntaxRaw []byte, headSHA string,
+	conceptArtifact, promotionRaw, capabilityRaw, useCaseRaw, syntaxRaw,
+	diagnosticRaw []byte, headSHA string,
 ) (Receipt, error) {
 	promotion := proposalpromotion.Receipt{}
 	if err := json.Unmarshal(promotionRaw, &promotion); err != nil {
@@ -29,8 +31,13 @@ func BuildWithPromotionEvidence(
 	if err := json.Unmarshal(syntaxRaw, &syntaxReport); err != nil {
 		return Receipt{}, err
 	}
+	diagnosticReport := languagediagnosticprovenance.Report{}
+	if err := json.Unmarshal(diagnosticRaw, &diagnosticReport); err != nil {
+		return Receipt{}, err
+	}
 	snapshot, err := readiness.EvaluateWithPromotionEvidence(
-		conceptArtifact, promotion, capability, useCases, syntaxReport, headSHA,
+		conceptArtifact, promotion, capability, useCases, syntaxReport,
+		diagnosticReport, headSHA,
 	)
 	if err != nil {
 		return Receipt{}, err
