@@ -35,7 +35,7 @@ func TestPromotionJSONRejectsEmptyArchive(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := promotionJSON(buffer.Bytes()); err == nil {
-		 t.Fatal("empty archive was accepted")
+		t.Fatal("empty archive was accepted")
 	}
 }
 
