@@ -98,3 +98,18 @@ and is outside this file-operation denominator.
 
 The gomacro reference motivates explicit program-to-program transformation
 boundaries. Its unrestricted runtime side effects are not adopted here.
+
+## Corpus classification and evidence boundary
+
+examples/source-splitter-conformance is a DECISION_ALGEBRA corpus. Its 18 oracle cases exercise composition of PASS, FAIL, and UNKNOWN across the fixed six-indicator contract; they do not execute or establish the runtime behavior of SplitGo.
+
+The evidence dimensions remain non-compensatory:
+
+- decision-algebra oracle cases: 18/18
+- behavioral indicators observed against a SplitGo implementation: 0/6
+- independent evaluator implementations: 0
+- adapter conformance: 0/1
+- CI observation: 0/1
+- readiness credit: 0
+
+A later behavioral corpus must bind real source bytes, Go build context, emitted candidates, write receipts, and injected faults. It may increase only its own versioned denominator and cannot inherit completion from this decision-algebra corpus.
