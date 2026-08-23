@@ -1450,7 +1450,8 @@
       "branch": "agent/source-splitter-conformance-contract",
       "paths": [
         "docs/language/source-splitter-operation-conformance-v1.md",
-        "examples/source-splitter-conformance/**"
+        "examples/source-splitter-conformance/**",
+        "examples/language-syntax-roundtrip/corpus.json"
       ]
     },
     {
@@ -1472,6 +1473,14 @@
       "paths": [
         ".github/workflows/transformation-effect.yml",
         "scripts/source-splitter-conformance-ci/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-governance-v2",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_source_splitter_conformance.go"
       ]
     }
   ],
