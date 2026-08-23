@@ -18,6 +18,6 @@ const (
 
 	PromotionSchema       = "gooo/autonomous-change-proposal-promotion/v1"
 	PromotionArtifactBase = "language-readiness-proposal-promotion-"
-	TransformationPath    = ".github/workflows/transformation-effect.yml"
+	TransformationPath    = ".github/workflows/proposal-promotion-evidence.yml"
 	CIPath                = ".github/workflows/ci.yml"
 )

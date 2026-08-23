@@ -1,0 +1,104 @@
+name: Proposal promotion evidence ledger
+
+on:
+  workflow_run:
+    workflows: ["CI [push full]"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: proposal-promotion-evidence-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  proposal-promotion-evidence:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Check out exact proposal subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Produce and replay proposal promotion evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/proposal-promotion \
+              --root "$GITHUB_WORKSPACE" \
+              --repository "$GITHUB_REPOSITORY" \
+              --current-head "$HEAD_SHA" \
+              --predecessor-sha "$predecessor_sha" \
+              --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-promotion-b.json"
+          go run ./cmd/language-readiness-witness/proposal-promotion \
+            --root "$GITHUB_WORKSPACE" \
+            --repository "$GITHUB_REPOSITORY" \
+            --current-head "$HEAD_SHA" \
+            --predecessor-sha "$predecessor_sha" \
+            --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+      - name: Project v2 evidence to the unchanged v1 guard contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/proposal-compat \
+              --root "$GITHUB_WORKSPACE" \
+              --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              --expected-sha "$HEAD_SHA" \
+              --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-$suffix.json" \
+              --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-b.json"
+          cmp "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-compat-b.json"
+          go run ./cmd/language-readiness-witness/proposal-compat \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            --expected-sha "$HEAD_SHA" \
+            --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
+            --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
+            --check
+      - name: Upload v1 guard contract
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-legacy-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload v2 proposal evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload compatibility receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-compat-a.json
+          if-no-files-found: error
+          retention-days: 30
