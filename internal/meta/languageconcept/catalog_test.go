@@ -11,7 +11,7 @@ func TestCatalogBindsConceptsToMetaCode(t *testing.T) {
 	if report.Decision != "PASS" || report.Reason != "LANGUAGE_CONCEPT_CATALOG_BOUND" {
 		t.Fatalf("got %s/%s: %v", report.Decision, report.Reason, report.MissingBindings)
 	}
-	if report.Summary.Concepts != 14 || report.Summary.Unbound != 0 || report.Summary.UnverifiedNovelty != 0 {
+	if report.Summary.Concepts != 15 || report.Summary.Unbound != 0 || report.Summary.UnverifiedNovelty != 0 {
 		t.Fatalf("summary = %#v", report.Summary)
 	}
 	if len(report.Indicators) != 7 || len(report.Proofs) != 3 || report.ReportDigest == "" {
@@ -45,6 +45,19 @@ func TestAutonomousProposalBindsPromotionMetrics(t *testing.T) {
 		t.Fatalf("code=%v metrics=%v", item.CodeBindings, item.MetricBindings)
 	}
 	if len(item.UseCases) != 1 || item.UseCases[0].ExpectedOutcome != "IMPROVED_9_TO_10_OF_24_PLUS_416_BPS" {
+		t.Fatalf("use cases = %#v", item.UseCases)
+	}
+}
+
+func TestSemanticModelBindsMetaCodeMetricsAndUseCase(t *testing.T) {
+	item := Catalog()[14]
+	if item.ID != "language-semantic-model" || item.MetaOperation != "prove-staged-semantic-model" || item.Stage != "OPERATING" {
+		t.Fatalf("concept = %#v", item)
+	}
+	if len(item.CodeBindings) != 6 || len(item.MetricBindings) != 19 {
+		t.Fatalf("code=%v metrics=%v", item.CodeBindings, item.MetricBindings)
+	}
+	if len(item.UseCases) != 1 || item.UseCases[0].ExpectedOutcome != "IMPROVED_14_TO_15_OF_24_WITH_18_OF_18_CASES_AND_ZERO_EFFECTS" {
 		t.Fatalf("use cases = %#v", item.UseCases)
 	}
 }
