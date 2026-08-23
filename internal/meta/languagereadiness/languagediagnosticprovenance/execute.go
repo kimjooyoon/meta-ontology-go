@@ -31,8 +31,8 @@ func executePositive(definition Definition) CaseResult {
 	evidence := Evidence{
 		ActualOutcome: "TRACE", Traced: true,
 		PhysicalBound: true, LogicalBound: true,
-		SemanticBound: first.Semantic != nil,
-		LSPProjected: first.Diagnostic.Code != "",
+		SemanticBound:   first.Semantic != nil,
+		LSPProjected:    first.Diagnostic.Code != "",
 		CanonicalReplay: replayed, OrderedDiagnostics: ordered,
 		LineDirectiveRemap: !sameSpan(first.Physical, first.Logical),
 		TypeClassified: definition.Kind == CaseType &&

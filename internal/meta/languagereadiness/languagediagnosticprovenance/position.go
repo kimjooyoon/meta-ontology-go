@@ -15,7 +15,9 @@ type Span struct {
 func oneByteSpan(position Position) Span {
 	end := position
 	end.Offset++
-	end.Column++
+	if end.Column > 0 {
+		end.Column++
+	}
 	return Span{Start: position, End: end}
 }
 

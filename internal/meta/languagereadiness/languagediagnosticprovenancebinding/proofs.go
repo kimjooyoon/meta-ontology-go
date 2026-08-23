@@ -13,23 +13,23 @@ func proofs(input Input, artifact Artifact) []Proof {
 		artifact.Summary.MutationAuthorities == 0
 	return []Proof{
 		{
-			Choice: "FOUNDATION",
+			Choice:        "FOUNDATION",
 			MetaOperation: "bind-versioned-diagnostic-and-readiness-contracts",
 			EvidenceDigest: digestValue(struct{ Concept, Registry string }{
 				input.Concept.ArtifactDigest, input.Provenance.Source.RegistryDigest}),
 			Passed: foundation,
 		},
 		{
-			Choice: "COHERENCE",
-			MetaOperation: "bind-diagnostic-corpus-to-readiness-floor",
+			Choice:         "COHERENCE",
+			MetaOperation:  "bind-diagnostic-corpus-to-readiness-floor",
 			EvidenceDigest: digestValue(input.Readiness.Summary),
-			Passed: coherence,
+			Passed:         coherence,
 		},
 		{
-			Choice: "REGRESSION",
-			MetaOperation: "reject-unresolved-effects-writes-and-mutation",
+			Choice:         "REGRESSION",
+			MetaOperation:  "reject-unresolved-effects-writes-and-mutation",
 			EvidenceDigest: digestValue(artifact.Summary),
-			Passed: regression,
+			Passed:         regression,
 		},
 	}
 }

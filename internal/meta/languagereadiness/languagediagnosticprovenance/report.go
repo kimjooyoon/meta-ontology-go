@@ -38,17 +38,17 @@ type Proof struct {
 }
 
 type Report struct {
-	Schema             string         `json:"schema"`
-	Decision           Decision       `json:"decision"`
-	Resolution         Resolution     `json:"resolution"`
-	ReasonCode         string         `json:"reason_code"`
-	Source             Source         `json:"source"`
-	Summary            Summary        `json:"summary"`
-	Cases              []CaseResult   `json:"cases"`
-	Stages             []StepReceipt  `json:"stages"`
-	Indicators         []Indicator    `json:"indicators"`
-	Proofs             []Proof        `json:"proofs"`
-	RepositoryWrites   int            `json:"repository_writes"`
-	MutationAuthorized bool           `json:"mutation_authorized"`
-	ReportDigest       string         `json:"report_digest"`
+	Schema             string        `json:"schema"`
+	Decision           Decision      `json:"decision"`
+	Resolution         Resolution    `json:"resolution"`
+	ReasonCode         string        `json:"reason_code"`
+	Source             Source        `json:"source"`
+	Summary            Summary       `json:"summary"`
+	Cases              []CaseResult  `json:"cases"`
+	Stages             []StepReceipt `json:"stages"`
+	Indicators         []Indicator   `json:"indicators"`
+	Proofs             []Proof       `json:"proofs"`
+	RepositoryWrites   int           `json:"repository_writes"`
+	MutationAuthorized bool          `json:"mutation_authorized"`
+	ReportDigest       string        `json:"report_digest"`
 }

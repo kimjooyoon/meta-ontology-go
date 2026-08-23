@@ -17,7 +17,7 @@ func proofs(summary Summary, registryDigest string) []Proof {
 		summary.EffectfulStages == 0
 	return []Proof{
 		{
-			Choice: "FOUNDATION",
+			Choice:        "FOUNDATION",
 			MetaOperation: "bind-versioned-diagnostic-provenance-registry",
 			EvidenceDigest: digestJSON(struct {
 				Registry string
@@ -26,14 +26,14 @@ func proofs(summary Summary, registryDigest string) []Proof {
 			Passed: foundation,
 		},
 		{
-			Choice: "COHERENCE",
+			Choice:        "COHERENCE",
 			MetaOperation: "trace-physical-logical-semantic-and-lsp-coordinates",
 			EvidenceDigest: digestJSON(struct{ Traced, Semantic, Replayed int }{
 				summary.Traced, summary.SemanticBindings, summary.CanonicalReplays}),
 			Passed: coherence,
 		},
 		{
-			Choice: "REGRESSION",
+			Choice:        "REGRESSION",
 			MetaOperation: "reject-unknown-missing-ambiguous-and-invalid-provenance",
 			EvidenceDigest: digestJSON(struct{ Rejected, Unknown, Missing, Ambiguous, Invalid int }{
 				summary.GuardrailRejections, summary.UnknownAcceptances,

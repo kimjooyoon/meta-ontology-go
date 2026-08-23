@@ -17,7 +17,7 @@ func positiveDefinitions(kind CaseKind, fixtures []string, stage string) []Defin
 		result = append(result, Definition{
 			ID: string(kind) + ":" + fixture, Kind: kind, Fixture: fixture,
 			ExpectedOutcome: "TRACE", ExpectedStage: stage,
-			ProofChoice: "COHERENCE",
+			ProofChoice:   "COHERENCE",
 			MetaOperation: "normalize-diagnostic-provenance",
 		})
 	}
@@ -42,7 +42,7 @@ func guard(fixture, reason, class string) Definition {
 		ID: "GUARDRAIL:" + fixture, Kind: CaseGuardrail, Fixture: fixture,
 		ExpectedOutcome: "REJECT", ExpectedStage: "NORMALIZE",
 		ExpectedReason: reason, ProofChoice: "REGRESSION",
-		MetaOperation: "fail-closed-diagnostic-provenance",
+		MetaOperation:  "fail-closed-diagnostic-provenance",
 		GuardrailClass: class,
 	}
 }

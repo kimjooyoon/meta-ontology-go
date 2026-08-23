@@ -5,12 +5,12 @@ func Evaluate(input Input) Artifact {
 	summary := summarize(input, boundCoordinates)
 	artifact := Artifact{
 		Schema: Schema, Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION",
-		ReasonCode: "DIAGNOSTIC_PROVENANCE_READINESS_COORDINATE_UNKNOWN",
-		ExpectedHeadSHA: input.ExpectedHeadSHA,
-		ConceptDigest: input.Concept.ArtifactDigest,
-		ReadinessDigest: input.Readiness.Digest,
+		ReasonCode:       "DIAGNOSTIC_PROVENANCE_READINESS_COORDINATE_UNKNOWN",
+		ExpectedHeadSHA:  input.ExpectedHeadSHA,
+		ConceptDigest:    input.Concept.ArtifactDigest,
+		ReadinessDigest:  input.Readiness.Digest,
 		ProvenanceDigest: input.Provenance.ReportDigest,
-		Coordinates: boundCoordinates, Summary: summary,
+		Coordinates:      boundCoordinates, Summary: summary,
 		RepositoryWrites: 0, MutationAuthorized: false,
 		Indicators: indicators(summary),
 	}
@@ -33,16 +33,16 @@ func summarize(input Input, coordinates []Coordinate) Summary {
 	}
 	return Summary{
 		Coordinates: len(coordinates), BoundCoordinates: bound,
-		Unresolved: len(coordinates) - bound,
-		ReadinessCompleted: input.Readiness.Summary.Completed,
-		ReadinessTotal: input.Readiness.Summary.Total,
-		ReadinessBPS: input.Readiness.Summary.ReadinessBPS,
+		Unresolved:          len(coordinates) - bound,
+		ReadinessCompleted:  input.Readiness.Summary.Completed,
+		ReadinessTotal:      input.Readiness.Summary.Total,
+		ReadinessBPS:        input.Readiness.Summary.ReadinessBPS,
 		ProvenanceSatisfied: input.Provenance.Summary.Satisfied,
-		ProvenanceTotal: input.Provenance.Summary.Total,
-		Concepts: input.Concept.Report.Summary.Concepts,
-		MetricBindings: input.Provenance.Summary.MetricBindings,
-		EffectfulStages: input.Provenance.Summary.EffectfulStages,
-		RepositoryWrites: input.Provenance.RepositoryWrites,
+		ProvenanceTotal:     input.Provenance.Summary.Total,
+		Concepts:            input.Concept.Report.Summary.Concepts,
+		MetricBindings:      input.Provenance.Summary.MetricBindings,
+		EffectfulStages:     input.Provenance.Summary.EffectfulStages,
+		RepositoryWrites:    input.Provenance.RepositoryWrites,
 		MutationAuthorities: boolCount(input.Provenance.MutationAuthorized),
 	}
 }

@@ -29,7 +29,7 @@ func sourceMapObservation(fixture string) (Observation, bool) {
 	}
 	mapping := generator.SourceMapping{
 		SemanticID: "billing://" + fixture + "/" + fixture,
-		Kind: fixture, Ordinal: ordinal,
+		Kind:       fixture, Ordinal: ordinal,
 		Source: generator.SourceSpan{
 			URI: "model.gooo", Start: sourceStart, End: sourceEnd,
 		},
@@ -43,7 +43,7 @@ func sourceMapObservation(fixture string) (Observation, bool) {
 		Message: diagnostic.Message, Hardness: "NOT_APPLICABLE",
 		Severity: diagnostic.Severity, Physical: physical, Logical: physical,
 		GeneratedOffset: diagnostic.Span.Start.Offset,
-		SourceMap: generator.SourceMap{Mappings: []generator.SourceMapping{mapping}},
+		SourceMap:       generator.SourceMap{Mappings: []generator.SourceMapping{mapping}},
 		RequireSemantic: true,
 	}, true
 }

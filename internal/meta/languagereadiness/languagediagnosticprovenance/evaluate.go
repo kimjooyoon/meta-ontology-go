@@ -36,12 +36,12 @@ func newSource(input Input, registryDigest, toolchain string) Source {
 		Producer: "languagediagnosticprovenance.Evaluate",
 		Consumer: "self-improvement-cycle", MetaOperation: ExpectedMetaOperation,
 		ConceptArtifactDigest: input.ConceptArtifact.ArtifactDigest,
-		CatalogDigest: input.ConceptArtifact.CatalogDigest,
-		RegistryDigest: registryDigest, Toolchain: toolchain,
-		TokenReference: "https://pkg.go.dev/go/token",
+		CatalogDigest:         input.ConceptArtifact.CatalogDigest,
+		RegistryDigest:        registryDigest, Toolchain: toolchain,
+		TokenReference:   "https://pkg.go.dev/go/token",
 		ScannerReference: "https://pkg.go.dev/go/scanner",
-		TypesReference: "https://pkg.go.dev/go/types",
-		LineDirective: "https://go.dev/wiki/Comments#line-directives",
-		MacroReference: "https://github.com/cosmos72/gomacro",
+		TypesReference:   "https://pkg.go.dev/go/types",
+		LineDirective:    "https://go.dev/wiki/Comments#line-directives",
+		MacroReference:   "https://github.com/cosmos72/gomacro",
 	}
 }
