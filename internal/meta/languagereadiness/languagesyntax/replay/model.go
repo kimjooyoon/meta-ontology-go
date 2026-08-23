@@ -19,19 +19,19 @@ type FileObservation struct {
 }
 
 type Result struct {
-	ObservedDecision  string   `json:"observed_decision"`
-	SourceLines       int      `json:"source_lines"`
-	SourceDigest      string   `json:"source_digest,omitempty"`
-	ASTDigest         string   `json:"ast_digest,omitempty"`
-	CanonicalDigest   string   `json:"canonical_digest,omitempty"`
-	SemanticDigest    string   `json:"semantic_digest,omitempty"`
-	ASTReplayed       bool     `json:"ast_replayed"`
-	ByteReplayed      bool     `json:"byte_replayed"`
-	SemanticReplayed  bool     `json:"semantic_replayed"`
-	GetPut            bool     `json:"get_put"`
-	PutGet            bool     `json:"put_get"`
-	DiagnosticRejected bool    `json:"diagnostic_rejected"`
-	Diagnostics       []string `json:"diagnostics"`
+	ObservedDecision   string   `json:"observed_decision"`
+	SourceLines        int      `json:"source_lines"`
+	SourceDigest       string   `json:"source_digest,omitempty"`
+	ASTDigest          string   `json:"ast_digest,omitempty"`
+	CanonicalDigest    string   `json:"canonical_digest,omitempty"`
+	SemanticDigest     string   `json:"semantic_digest,omitempty"`
+	ASTReplayed        bool     `json:"ast_replayed"`
+	ByteReplayed       bool     `json:"byte_replayed"`
+	SemanticReplayed   bool     `json:"semantic_replayed"`
+	GetPut             bool     `json:"get_put"`
+	PutGet             bool     `json:"put_get"`
+	DiagnosticRejected bool     `json:"diagnostic_rejected"`
+	Diagnostics        []string `json:"diagnostics"`
 }
 
 func sourceLines(raw []byte) int {

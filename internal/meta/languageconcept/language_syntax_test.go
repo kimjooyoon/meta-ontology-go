@@ -8,7 +8,7 @@ func TestLanguageSyntaxConceptBindsReceiptMetaCode(t *testing.T) {
 		item.Stage != "OPERATING" || len(item.CodeBindings) != 6 || len(item.MetricBindings) != 16 {
 		t.Fatalf("concept = %#v", item)
 	}
-	if len(item.UseCases) != 1 || item.UseCases[0].ExpectedOutcome != "IMPROVED_13_TO_14_OF_24_WITH_12_OF_12_CASES" {
+	if len(item.UseCases) != 1 || item.UseCases[0].ExpectedOutcome != "IMPROVED_13_TO_14_OF_24_WITH_15_OF_15_CASES" {
 		t.Fatalf("use cases = %#v", item.UseCases)
 	}
 }

@@ -29,7 +29,7 @@ The source of truth is `internal/meta/languageconcept.Catalog`. CI evaluates eve
 Missing meta code, missing use cases, missing metrics, unknown maturity, or novelty overclaim produces `FAIL_CLOSED`.
 The toolchain executable-use-case concept additionally requires its dynamic
 `3/3` receipt; a catalog row alone receives no readiness credit.
-The language syntax round-trip concept likewise requires its dynamic `12/12`
+The language syntax round-trip concept likewise requires its dynamic `15/15`
 receipt; static parser and formatter bindings alone receive no readiness credit.
 
 ## Current interpretation

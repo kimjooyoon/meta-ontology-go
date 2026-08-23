@@ -1,23 +1,23 @@
 package languagesyntax
 
 type Summary struct {
-	Satisfied           int `json:"satisfied"`
-	Total               int `json:"total"`
-	Executed            int `json:"executed"`
-	NotSatisfied        int `json:"not_satisfied"`
-	Unresolved          int `json:"unresolved"`
-	ReadinessBPS        int `json:"readiness_bps"`
-	ValidCases          int `json:"valid_cases"`
-	InvalidCases        int `json:"invalid_cases"`
-	ASTReplays          int `json:"ast_replays"`
-	ByteReplays         int `json:"byte_replays"`
-	SemanticReplays     int `json:"semantic_replays"`
-	GetPutLaws          int `json:"get_put_laws"`
-	PutGetLaws          int `json:"put_get_laws"`
+	Satisfied            int `json:"satisfied"`
+	Total                int `json:"total"`
+	Executed             int `json:"executed"`
+	NotSatisfied         int `json:"not_satisfied"`
+	Unresolved           int `json:"unresolved"`
+	ReadinessBPS         int `json:"readiness_bps"`
+	ValidCases           int `json:"valid_cases"`
+	InvalidCases         int `json:"invalid_cases"`
+	ASTReplays           int `json:"ast_replays"`
+	ByteReplays          int `json:"byte_replays"`
+	SemanticReplays      int `json:"semantic_replays"`
+	GetPutLaws           int `json:"get_put_laws"`
+	PutGetLaws           int `json:"put_get_laws"`
 	DiagnosticRejections int `json:"diagnostic_rejections"`
-	GoooLines           int `json:"gooo_lines"`
-	UnregisteredGooo    int `json:"unregistered_gooo"`
-	MissingRegistered   int `json:"missing_registered"`
+	GoooLines            int `json:"gooo_lines"`
+	UnregisteredGooo     int `json:"unregistered_gooo"`
+	MissingRegistered    int `json:"missing_registered"`
 }
 
 type Indicator struct {
