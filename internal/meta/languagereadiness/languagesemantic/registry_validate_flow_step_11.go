@@ -5,7 +5,7 @@ import (
 )
 
 func registry_validateFlowStep11(flow *registry_validateFlowState) {
-	for _, name = range flow.slot05 {
+	for _, name := range flow.slot05 {
 		count := 0
 		for _, definition := range flow.slot00.Cases {
 			if definition.Law == name {

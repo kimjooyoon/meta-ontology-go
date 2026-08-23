@@ -5,7 +5,7 @@ import (
 )
 
 func evaluateFlowStep16(flow *evaluateFlowState) {
-	for _, definition = range flow.slot01.Cases {
+	for _, definition := range flow.slot01.Cases {
 		if definition.Kind != CaseSource {
 			continue
 		}

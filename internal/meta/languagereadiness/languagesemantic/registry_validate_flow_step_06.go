@@ -7,7 +7,7 @@ import (
 )
 
 func registry_validateFlowStep06(flow *registry_validateFlowState) {
-	for _, definition = range flow.slot00.Cases {
+	for _, definition := range flow.slot00.Cases {
 		if strings.TrimSpace(definition.ID) == "" {
 			{
 				flow.result0 = fmt.Errorf("registry contains an empty case id")

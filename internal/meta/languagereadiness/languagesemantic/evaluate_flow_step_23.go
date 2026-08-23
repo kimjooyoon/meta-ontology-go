@@ -1,7 +1,7 @@
 package languagesemantic
 
 func evaluateFlowStep21(flow *evaluateFlowState) {
-	for _, definition = range flow.slot01.Cases {
+	for _, definition := range flow.slot01.Cases {
 		if definition.Kind == CaseSource {
 			continue
 		}
