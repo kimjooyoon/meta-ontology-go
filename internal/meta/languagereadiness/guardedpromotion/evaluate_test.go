@@ -54,11 +54,18 @@ func TestBuildDeniesPullRequestWithoutHidingIt(t *testing.T) {
 	}
 }
 
-func TestBuildAcceptsLegacyPromotionEventDuringFoundationMigration(t *testing.T) {
+func TestBuildRejectsLegacyPromotionEventAfterFoundationMigration(t *testing.T) {
 	source := validSource()
 	source.Artifact.RunEvent = "workflow_run"
 	report := Build(source)
-	if report.Decision != DecisionAuthorized || report.Summary.Satisfied != 12 || report.Summary.ReadinessBPS != 10000 {
+	if report.Decision != DecisionDenied || report.Summary.Satisfied != 11 ||
+		report.Summary.Total != 12 || report.Summary.NotSatisfied != 1 ||
+		report.Summary.Unresolved != 0 || report.Summary.ReadinessBPS != 9166 ||
+		report.Summary.ReadinessPromotionAuthorized {
 		t.Fatalf("decision=%s summary=%+v", report.Decision, report.Summary)
+	}
+	coordinate := report.Coordinates[4]
+	if coordinate.ID != "predecessor-promotion-contract" || coordinate.Status != "NOT_SATISFIED" {
+		t.Fatalf("coordinate=%+v", coordinate)
 	}
 }
