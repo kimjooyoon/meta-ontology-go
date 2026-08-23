@@ -1,11 +1,11 @@
 package verify
 
 func init() {
-branchScopeAllowlist["agent/source-splitter-conformance-governance-v2"] = []string{
-	".github/agent-scope-table.md",
-	".github/ci-governance.json",
-	"internal/verify/scope_source_splitter_conformance.go",
-}
+	branchScopeAllowlist["agent/source-splitter-conformance-governance-v2"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"internal/verify/scope_source_splitter_conformance.go",
+	}
 	branchScopeAllowlist["agent/source-splitter-conformance-governance"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
