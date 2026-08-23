@@ -7,7 +7,7 @@ func TestCompatibilityReceiptBindsLegacyProjection(t *testing.T) {
 	legacy := sealLegacy(LegacyReceipt{Schema: LegacySchema, CurrentHeadSHA: head,
 		Decision: DecisionPass, Summary: LegacySummary{Satisfied: 8, Total: 8}})
 	source := Source{ExpectedHeadSHA: head,
-		SourceSchema: "gooo/autonomous-change-proposal-promotion/v2",
+		SourceSchema:   "gooo/autonomous-change-proposal-promotion/v2",
 		SourceDecision: DecisionPass, SourceReportDigest: digestJSON("source-report"),
 		SourceFileSHA256: digestJSON("source-file"), SourceSatisfied: 8, SourceTotal: 8,
 		TargetSchema: LegacySchema, TargetReportDigest: legacy.ReportDigest,
@@ -23,7 +23,8 @@ func TestCompatibilityReceiptBindsLegacyProjection(t *testing.T) {
 }
 
 func TestCompatibilityReceiptRejectsFieldLoss(t *testing.T) {
-	source := Source{SourceSchema: "gooo/autonomous-change-proposal-promotion/v2",
+	source := Source{ExpectedHeadSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		SourceSchema:   "gooo/autonomous-change-proposal-promotion/v2",
 		SourceDecision: DecisionPass, SourceSatisfied: 8, SourceTotal: 8,
 		SourceReportDigest: digestJSON("source"), SourceFileSHA256: digestJSON("file"),
 		TargetSchema: LegacySchema, TargetReportDigest: digestJSON("target"),

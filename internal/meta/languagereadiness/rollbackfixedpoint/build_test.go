@@ -11,7 +11,7 @@ func fixtureSource() Source {
 	return Source{ExpectedHeadSHA: head, Guard: GuardEvidence{
 		FileSHA256: digestJSON("guard-file"), ReportDigest: digestJSON("guard-report"),
 		HeadSHA: head, Decision: guardedpromotion.DecisionFailClosed,
-		Reason: guardedpromotion.ReasonEvidenceUnknown,
+		Reason:     guardedpromotion.ReasonEvidenceUnknown,
 		Resolution: guardedpromotion.ResolutionLower, Satisfied: 10, Total: 12, Unresolved: 2},
 		Transformation: TransformationEvidence{FileSHA256: digestJSON("ledger-file"),
 			LedgerDigest: digestJSON("ledger"), HeadSHA: head, Decision: "FIXED_POINT",

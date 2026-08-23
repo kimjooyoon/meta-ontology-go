@@ -28,8 +28,8 @@ func Collect(guardPath, transformationPath, expectedHead string) Source {
 		ReportDigest: guard.ReportDigest, HeadSHA: guard.Source.CurrentHeadSHA,
 		Decision: guard.Decision, Reason: guard.Reason, Resolution: guard.Resolution,
 		Satisfied: guard.Summary.Satisfied, Total: guard.Summary.Total,
-		Unresolved: guard.Summary.Unresolved,
-		RepositoryWrites: guard.Summary.RepositoryWrites,
+		Unresolved:                   guard.Summary.Unresolved,
+		RepositoryWrites:             guard.Summary.RepositoryWrites,
 		RepositoryMutationAuthorized: guard.Source.RepositoryMutationAuthorized}
 	return collectTransformation(source, transformationPath)
 }
@@ -52,7 +52,7 @@ func collectTransformation(source Source, path string) Source {
 		Decision: ledger.Decision, Reason: ledger.Reason, WorkspaceMode: ledger.WorkspaceMode,
 		WriteBoundary: ledger.WriteBoundary, Effects: len(ledger.Effects),
 		SourceWorkspaceUnchanged: ledger.SourceWorkspaceUnchanged,
-		PromotionAuthorized: ledger.PromotionAuthorized}
+		PromotionAuthorized:      ledger.PromotionAuthorized}
 	source.RepositoryWrites = source.Guard.RepositoryWrites
 	return source
 }

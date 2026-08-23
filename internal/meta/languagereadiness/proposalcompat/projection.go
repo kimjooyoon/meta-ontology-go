@@ -25,9 +25,9 @@ func Build(raw []byte, expectedHead string) (Bundle, error) {
 		SourceDecision: current.Decision, SourceReportDigest: current.ReportDigest,
 		SourceFileSHA256: digestBytes(raw), SourceSatisfied: current.Summary.Satisfied,
 		SourceTotal: current.Summary.Total, SourceUnresolved: current.Summary.Unresolved,
-		SourceRepositoryWrites: current.RepositoryWrites,
+		SourceRepositoryWrites:   current.RepositoryWrites,
 		SourceMutationAuthorized: current.RepositoryMutationAuthorized,
-		TargetSchema: LegacySchema, TargetReportDigest: legacy.ReportDigest,
+		TargetSchema:             LegacySchema, TargetReportDigest: legacy.ReportDigest,
 		TargetFileSHA256: digestBytes(legacyPayload), ProjectedFields: projectedFields}
 	bundle := Bundle{Legacy: legacy, Receipt: buildReceipt(source)}
 	return bundle, Validate(bundle, expectedHead)
