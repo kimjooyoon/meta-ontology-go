@@ -23,7 +23,7 @@ func normalizeSplitGoVerdict(verdict string) string {
 	}
 }
 
-func newSplitGoReceipt(indicatorID, verdict, digest string) (generationReceipt, error) {
+func newSplitGoReceipt(indicatorID, verdict, digest, proofChoice string) (generationReceipt, error) {
 	receipt := reflect.New(reflect.TypeFor[generation.IndicatorReceipt]()).Elem()
 	if err := setSplitGoReceiptField(receipt, []string{"IndicatorID", "ID"}, indicatorID); err != nil {
 		return generationReceipt{}, err
@@ -32,6 +32,9 @@ func newSplitGoReceipt(indicatorID, verdict, digest string) (generationReceipt, 
 		return generationReceipt{}, err
 	}
 	if err := setSplitGoReceiptField(receipt, []string{"EvidenceDigest"}, digest); err != nil {
+		return generationReceipt{}, err
+	}
+	if err := setSplitGoReceiptField(receipt, []string{"ProofChoice"}, proofChoice); err != nil {
 		return generationReceipt{}, err
 	}
 	return receipt.Interface().(generation.IndicatorReceipt), nil

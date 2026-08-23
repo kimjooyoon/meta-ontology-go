@@ -20,12 +20,13 @@ type SplitGoEvaluationArtifact struct {
 	EvidenceBytes        []byte                        `json:"evidence_bytes"`
 	ReportBytes          []byte                        `json:"report_bytes"`
 	RequiredIndicatorIDs []string                      `json:"required_indicator_ids"`
+	ProofChoice          string                        `json:"proof_choice"`
 	Receipts             []generation.IndicatorReceipt `json:"receipts"`
 	Resolution           string                        `json:"resolution"`
 	Reasons              []string                      `json:"reasons,omitempty"`
 }
 
-func EvaluateSplitGo(contractRaw, evidenceRaw []byte, requiredIDs []string) (SplitGoEvaluationArtifact, error) {
+func EvaluateSplitGo(contractRaw, evidenceRaw []byte, requiredIDs []string, proofChoice string) (SplitGoEvaluationArtifact, error) {
 	if err := validateSplitGoRequiredIDs(requiredIDs); err != nil {
 		return SplitGoEvaluationArtifact{}, err
 	}
@@ -37,7 +38,7 @@ func EvaluateSplitGo(contractRaw, evidenceRaw []byte, requiredIDs []string) (Spl
 	if err != nil {
 		return SplitGoEvaluationArtifact{}, fmt.Errorf("marshal SplitGo evaluator report: %w", err)
 	}
-	receipts, resolution, reasons, err := projectSplitGoReport(reportRaw, requiredIDs)
+	receipts, resolution, reasons, err := projectSplitGoReport(reportRaw, requiredIDs, proofChoice)
 	if err != nil {
 		return SplitGoEvaluationArtifact{}, err
 	}
@@ -47,6 +48,7 @@ func EvaluateSplitGo(contractRaw, evidenceRaw []byte, requiredIDs []string) (Spl
 		EvidenceBytes:        bytes.Clone(evidenceRaw),
 		ReportBytes:          reportRaw,
 		RequiredIndicatorIDs: append([]string(nil), requiredIDs...),
+		ProofChoice:          proofChoice,
 		Receipts:             receipts,
 		Resolution:           resolution,
 		Reasons:              reasons,
@@ -57,7 +59,7 @@ func ValidateSplitGoEvaluation(artifact SplitGoEvaluationArtifact) error {
 	if artifact.SchemaVersion != splitGoEvaluationArtifactSchema {
 		return fmt.Errorf("unsupported SplitGo evaluation artifact schema %q", artifact.SchemaVersion)
 	}
-	replayed, err := EvaluateSplitGo(artifact.ContractBytes, artifact.EvidenceBytes, artifact.RequiredIndicatorIDs)
+	replayed, err := EvaluateSplitGo(artifact.ContractBytes, artifact.EvidenceBytes, artifact.RequiredIndicatorIDs, artifact.ProofChoice)
 	if err != nil {
 		return err
 	}
