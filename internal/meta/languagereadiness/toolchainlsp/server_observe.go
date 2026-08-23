@@ -2,6 +2,7 @@ package toolchainlsp
 
 import (
 	"bytes"
+	"maps"
 )
 
 type runtimeStats struct {
@@ -24,14 +25,10 @@ func observeServer(raw []byte, messages []rpcMessage, replay []byte) (map[string
 	stats.Capabilities = capabilityCount
 	result["initialize-capabilities"] = observation{"8_CAPABILITIES", capabilities}
 	features, featureCount := observeFeatures(responses)
-	for id, value := range features {
-		result[id] = value
-	}
+	maps.Copy(result, features)
 	stats.ReadFeatures = featureCount
 	diagnostics, paths := observeDiagnostics(messages)
-	for id, value := range diagnostics {
-		result[id] = value
-	}
+	maps.Copy(result, diagnostics)
 	stats.DiagnosticPaths = paths
 	stats.DiagnosticGaps = 3 - paths
 	unsupported := responses["9"].Error != nil && responses["9"].Error.Code == -32601

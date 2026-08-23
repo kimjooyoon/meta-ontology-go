@@ -1,5 +1,7 @@
 package toolchainlsp
 
+import "maps"
+
 func evaluateRuntime() (map[string]observation, runtimeStats, error) {
 	firstRaw, first, err := executeServerSession()
 	if err != nil {
@@ -14,9 +16,7 @@ func evaluateRuntime() (map[string]observation, runtimeStats, error) {
 	if err != nil {
 		return nil, runtimeStats{}, err
 	}
-	for id, value := range couplingObservations {
-		observations[id] = value
-	}
+	maps.Copy(observations, couplingObservations)
 	stats.NavigationPaths += couplingStats.NavigationPaths
 	stats.FailClosedPaths += couplingStats.FailClosedPaths
 	stats.NonstandardWireFields += couplingStats.NonstandardWireFields
