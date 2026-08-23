@@ -34,6 +34,14 @@ func validDigest(value string) bool {
 	return err == nil && len(decoded) == sha256.Size
 }
 
+func validEvidenceDigest(value string) bool {
+	if validDigest(value) {
+		return true
+	}
+	decoded, err := hex.DecodeString(value)
+	return err == nil && len(decoded) == sha256.Size
+}
+
 func require(condition bool, message string) error {
 	if !condition {
 		return fmt.Errorf("semantic readiness binding: %s", message)

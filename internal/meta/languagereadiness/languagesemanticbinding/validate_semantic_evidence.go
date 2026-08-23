@@ -35,7 +35,7 @@ func validateProofChoices(proofs []semanticProof) error {
 	choices := map[string]int{}
 	for _, proof := range proofs {
 		choices[proof.Choice]++
-		if err := require(proof.Passed && validDigest(proof.EvidenceDigest), "semantic proof rejected"); err != nil {
+		if err := require(proof.Passed && validEvidenceDigest(proof.EvidenceDigest), "semantic proof rejected"); err != nil {
 			return err
 		}
 	}
