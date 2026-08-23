@@ -3,7 +3,6 @@ package operationconformance
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 func EvaluateContract(raw []byte) (ContractReceipt, error) {
@@ -53,12 +52,36 @@ func contractDrift(value contractDocument) string {
 		{"decision_policy.unknown", policy.Unknown == "PRESERVE_UNKNOWN_AND_BLOCK"},
 		{"decision_policy.pass", policy.Pass.PassCount == 6 && policy.Pass.FailCount == 0 && policy.Pass.UnknownCount == 0 && policy.Pass.Decision == "PASS"},
 		{"decision_policy.otherwise", policy.Otherwise == "BLOCK"},
-		{"indicators", reflect.DeepEqual(value.Indicators, fixedIndicators)},
-		{"oracle_cases", len(value.OracleCases) == 18},
 	}
 	for _, check := range checks {
 		if !check.matches {
 			return check.field
+		}
+	}
+	if field := indicatorRegistryDrift(value.Indicators); field != "" {
+		return field
+	}
+	if len(value.OracleCases) != 18 {
+		return "oracle_cases"
+	}
+	return ""
+}
+
+func indicatorRegistryDrift(observed []IndicatorDefinition) string {
+	if len(observed) != len(fixedIndicators) {
+		return "indicators.count"
+	}
+	for index, expected := range fixedIndicators {
+		actual := observed[index]
+		switch {
+		case actual.ID != expected.ID:
+			return fmt.Sprintf("indicators[%d].id", index)
+		case actual.Role != expected.Role:
+			return fmt.Sprintf("indicators[%d].role", index)
+		case actual.Route != expected.Route:
+			return fmt.Sprintf("indicators[%d].route", index)
+		case actual.RuleID != expected.RuleID:
+			return fmt.Sprintf("indicators[%d].rule_id", index)
 		}
 	}
 	return ""
