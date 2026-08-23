@@ -1,0 +1,20 @@
+{
+  "schema": "gooo/language-syntax-roundtrip-corpus/v1",
+  "cases": [
+    {"id":"billing","path":"examples/billing/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"bootstrap","path":"examples/bootstrap/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"conformance","path":"examples/conformance/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"meta-actionability","path":"examples/meta-actionability/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"meta-binding-coverage","path":"examples/meta-binding-coverage/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"meta-operation-artifact-coverage","path":"examples/meta-operation-artifact-coverage/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"metric-meta-program-closure","path":"examples/metric-meta-program-closure/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"metric-meta-program","path":"examples/metric-meta-program/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"root-readme-indicator","path":"examples/root-readme-indicator/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"self-improvement","path":"examples/self-improvement/main.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"roundtrip-minimal","path":"internal/detection/roundtrip/testdata/minimal.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"directory-kind-ontology","path":"internal/meta/directorykind/ontology.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"directory-partition-ontology","path":"internal/meta/directorypartition/ontology.gooo","kind":"VALID","expected_decision":"PASS","proof_choice":"COHERENCE","meta_operation":"replay-language-syntax"},
+    {"id":"unknown-keyword","path":"examples/language-syntax-roundtrip/unknown-keyword.txt","kind":"INVALID","expected_decision":"FAIL_CLOSED","expected_diagnostic":"parse.unexpected-token","proof_choice":"REGRESSION","meta_operation":"reject-invalid-syntax"},
+    {"id":"unterminated-string","path":"examples/language-syntax-roundtrip/unterminated-string.txt","kind":"INVALID","expected_decision":"FAIL_CLOSED","expected_diagnostic":"lex.unterminated-string","proof_choice":"REGRESSION","meta_operation":"reject-invalid-syntax"}
+  ]
+}

@@ -29,8 +29,12 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 		if err != nil {
 			return readinessartifact.Receipt{}, err
 		}
+		syntaxReport, err := os.ReadFile(cfg.syntax)
+		if err != nil {
+			return readinessartifact.Receipt{}, err
+		}
 		return readinessartifact.BuildWithPromotionEvidence(
-			raw, promotion, guarded, useCases, cfg.expectedSHA,
+			raw, promotion, guarded, useCases, syntaxReport, cfg.expectedSHA,
 		)
 	}
 	return readinessartifact.BuildWithProposalPromotion(raw, promotion, cfg.expectedSHA)

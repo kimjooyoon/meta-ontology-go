@@ -411,6 +411,25 @@ jobs:
             --registry "$usecase_registry" \
             --concept-artifact "$first/artifact.json" \
             --check "$usecase_first/artifact.json"
+          syntax_first="$RUNNER_TEMP/language-syntax-roundtrip/first"
+          syntax_replay="$RUNNER_TEMP/language-syntax-roundtrip/replay"
+          syntax_registry="$GITHUB_WORKSPACE/examples/language-syntax-roundtrip/corpus.json"
+          mkdir -p "$syntax_first" "$syntax_replay"
+          for target in "$syntax_first" "$syntax_replay"; do
+            go run ./cmd/language-syntax-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --registry "$syntax_registry" \
+              --concept-artifact "$first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$syntax_first/artifact.json" "$syntax_replay/artifact.json"
+          go run ./cmd/language-syntax-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --registry "$syntax_registry" \
+            --concept-artifact "$first/artifact.json" \
+            --check "$syntax_first/artifact.json"
           readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
           readiness_replay="$RUNNER_TEMP/language-readiness-artifact/replay"
           mkdir -p "$readiness_first" "$readiness_replay"
@@ -421,6 +440,7 @@ jobs:
               -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
               -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
               -toolchain-use-cases "$usecase_first/artifact.json" \
+              -language-syntax-roundtrip "$syntax_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
           done
@@ -431,6 +451,7 @@ jobs:
             -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
             -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
             -toolchain-use-cases "$usecase_first/artifact.json" \
+            -language-syntax-roundtrip "$syntax_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
           (
@@ -525,6 +546,14 @@ jobs:
         with:
           name: toolchain-executable-use-cases-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-executable-use-cases/first/artifact.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload exact-head language syntax roundtrip
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-syntax-roundtrip-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-syntax-roundtrip/first/artifact.json
           if-no-files-found: error
           retention-days: 30
 
