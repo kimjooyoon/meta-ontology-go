@@ -41,8 +41,7 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 	if satisfied == len(coordinates) {
 		decision, reason, resolution = "PASS", "PROMOTION_AUTHORIZED_CONTINUITY_PROVEN", "EXACT"
 	}
-	writes := guard.RepositoryWrites + recovery.SourceRepositoryWrites +
-		recovery.SummaryRepositoryWrites + recovery.RepositoryWrites
+	writes := guard.RepositoryWrites + recovery.SourceRepositoryWrites + recovery.SummaryRepositoryWrites + recovery.RepositoryWrites
 	report := Report{
 		Schema: Schema, Decision: decision, Reason: reason, Resolution: resolution,
 		Producer: "promotioncontinuity.Evaluate", Consumer: "self-improvement-cycle",
