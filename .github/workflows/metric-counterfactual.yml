@@ -34,6 +34,13 @@ permissions:
   contents: read
 
 jobs:
+    paths:
+      - "**"
+      - ".github/workflows/transformation-effect.yml"
+      - "cmd/guarded-promotion-witness/**"
+      - "cmd/language-readiness-witness/**"
+      - "internal/meta/languageconcept/**"
+      - "internal/meta/languagereadiness/**"
   counterfactual:
     runs-on: ubuntu-latest
     env:
