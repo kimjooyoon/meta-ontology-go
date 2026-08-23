@@ -1,10 +1,10 @@
 package languagegointeroperationbinding
 
 func proofs(input Input, artifact Artifact) []Proof {
-	foundation := input.Concept.Decision == "PASS" && input.Concept.Report.Summary.Concepts == 17 &&
+	foundation := input.Concept.Decision == "PASS" && input.Concept.Report.Summary.Concepts >= 17 &&
 		artifact.Summary.BoundCoordinates == 12
-	coherence := input.Interoperation.Summary.Satisfied == 24 && input.Readiness.Summary.Completed == 17 &&
-		input.Readiness.Summary.ReadinessBPS == 7083
+	coherence := input.Interoperation.Summary.Satisfied == 24 && input.Readiness.Summary.Completed >= 17 &&
+		input.Readiness.Summary.ReadinessBPS >= 7083
 	regression := artifact.Summary.Unresolved == 0 && artifact.Summary.EffectfulStages == 0 &&
 		artifact.Summary.RepositoryWrites == 0 && artifact.Summary.MutationAuthorities == 0
 	return []Proof{

@@ -1,0 +1,184 @@
+{
+  "schema": "gooo/language-diagnostic-provenance-cases/v1",
+  "version": "2026-08-23",
+  "cases": [
+    {
+      "id": "SYNTAX:physical-error",
+      "kind": "SYNTAX",
+      "fixture": "physical-error",
+      "expected_outcome": "TRACE",
+      "expected_stage": "PARSE",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "SYNTAX:line-directive",
+      "kind": "SYNTAX",
+      "fixture": "line-directive",
+      "expected_outcome": "TRACE",
+      "expected_stage": "PARSE",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "SYNTAX:multiple-errors",
+      "kind": "SYNTAX",
+      "fixture": "multiple-errors",
+      "expected_outcome": "TRACE",
+      "expected_stage": "PARSE",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "TYPE:undefined-identifier",
+      "kind": "TYPE",
+      "fixture": "undefined-identifier",
+      "expected_outcome": "TRACE",
+      "expected_stage": "TYPE",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "TYPE:assignment-mismatch",
+      "kind": "TYPE",
+      "fixture": "assignment-mismatch",
+      "expected_outcome": "TRACE",
+      "expected_stage": "TYPE",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "TYPE:constraint-violation",
+      "kind": "TYPE",
+      "fixture": "constraint-violation",
+      "expected_outcome": "TRACE",
+      "expected_stage": "TYPE",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "SOURCE_MAP:entity",
+      "kind": "SOURCE_MAP",
+      "fixture": "entity",
+      "expected_outcome": "TRACE",
+      "expected_stage": "FORMAT",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "SOURCE_MAP:field",
+      "kind": "SOURCE_MAP",
+      "fixture": "field",
+      "expected_outcome": "TRACE",
+      "expected_stage": "FORMAT",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "SOURCE_MAP:activity",
+      "kind": "SOURCE_MAP",
+      "fixture": "activity",
+      "expected_outcome": "TRACE",
+      "expected_stage": "FORMAT",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "SOURCE_MAP:slot",
+      "kind": "SOURCE_MAP",
+      "fixture": "slot",
+      "expected_outcome": "TRACE",
+      "expected_stage": "FORMAT",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "normalize-diagnostic-provenance"
+    },
+    {
+      "id": "GUARDRAIL:unknown-origin",
+      "kind": "GUARDRAIL",
+      "fixture": "unknown-origin",
+      "expected_outcome": "REJECT",
+      "expected_stage": "NORMALIZE",
+      "expected_reason": "PROVENANCE_ORIGIN_UNKNOWN",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "fail-closed-diagnostic-provenance",
+      "guardrail_class": "UNKNOWN"
+    },
+    {
+      "id": "GUARDRAIL:unknown-stage",
+      "kind": "GUARDRAIL",
+      "fixture": "unknown-stage",
+      "expected_outcome": "REJECT",
+      "expected_stage": "NORMALIZE",
+      "expected_reason": "PROVENANCE_STAGE_UNKNOWN",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "fail-closed-diagnostic-provenance",
+      "guardrail_class": "UNKNOWN"
+    },
+    {
+      "id": "GUARDRAIL:unknown-severity",
+      "kind": "GUARDRAIL",
+      "fixture": "unknown-severity",
+      "expected_outcome": "REJECT",
+      "expected_stage": "NORMALIZE",
+      "expected_reason": "PROVENANCE_SEVERITY_UNKNOWN",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "fail-closed-diagnostic-provenance",
+      "guardrail_class": "UNKNOWN"
+    },
+    {
+      "id": "GUARDRAIL:empty-code",
+      "kind": "GUARDRAIL",
+      "fixture": "empty-code",
+      "expected_outcome": "REJECT",
+      "expected_stage": "NORMALIZE",
+      "expected_reason": "PROVENANCE_CODE_UNKNOWN",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "fail-closed-diagnostic-provenance",
+      "guardrail_class": "UNKNOWN"
+    },
+    {
+      "id": "GUARDRAIL:missing-physical",
+      "kind": "GUARDRAIL",
+      "fixture": "missing-physical",
+      "expected_outcome": "REJECT",
+      "expected_stage": "NORMALIZE",
+      "expected_reason": "PHYSICAL_POSITION_UNKNOWN",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "fail-closed-diagnostic-provenance",
+      "guardrail_class": "INVALID"
+    },
+    {
+      "id": "GUARDRAIL:invalid-range",
+      "kind": "GUARDRAIL",
+      "fixture": "invalid-range",
+      "expected_outcome": "REJECT",
+      "expected_stage": "NORMALIZE",
+      "expected_reason": "PHYSICAL_RANGE_INVALID",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "fail-closed-diagnostic-provenance",
+      "guardrail_class": "INVALID"
+    },
+    {
+      "id": "GUARDRAIL:missing-source-map",
+      "kind": "GUARDRAIL",
+      "fixture": "missing-source-map",
+      "expected_outcome": "REJECT",
+      "expected_stage": "NORMALIZE",
+      "expected_reason": "SOURCE_MAP_MISSING",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "fail-closed-diagnostic-provenance",
+      "guardrail_class": "MISSING_MAP"
+    },
+    {
+      "id": "GUARDRAIL:ambiguous-source-map",
+      "kind": "GUARDRAIL",
+      "fixture": "ambiguous-source-map",
+      "expected_outcome": "REJECT",
+      "expected_stage": "NORMALIZE",
+      "expected_reason": "SOURCE_MAP_AMBIGUOUS",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "fail-closed-diagnostic-provenance",
+      "guardrail_class": "AMBIGUOUS_MAP"
+    }
+  ]
+}

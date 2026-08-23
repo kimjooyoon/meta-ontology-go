@@ -449,6 +449,33 @@ jobs:
             --registry "$semantic_registry" \
             --syntax-artifact "$syntax_first/artifact.json" \
             --check "$semantic_first/artifact.json"
+          diagnostic_first="$RUNNER_TEMP/language-diagnostic-provenance/first"
+          diagnostic_replay="$RUNNER_TEMP/language-diagnostic-provenance/replay"
+          diagnostic_registry="$GITHUB_WORKSPACE/examples/language-diagnostic-provenance/corpus.json"
+          mkdir -p "$diagnostic_first" "$diagnostic_replay"
+          for target in "$diagnostic_first" "$diagnostic_replay"; do
+            go run ./cmd/language-diagnostic-provenance-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --registry "$diagnostic_registry" \
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'language-diagnostic-provenance artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
+          done
+          cmp -s "$diagnostic_first/artifact.json" "$diagnostic_replay/artifact.json"
+          go run ./cmd/language-diagnostic-provenance-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --registry "$diagnostic_registry" \
+            --check "$diagnostic_first/artifact.json"
+          (
+            cd "$diagnostic_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
           readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
           readiness_replay="$RUNNER_TEMP/language-readiness-artifact/replay"
           mkdir -p "$readiness_first" "$readiness_replay"
@@ -460,6 +487,7 @@ jobs:
               -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
               -toolchain-use-cases "$usecase_first/artifact.json" \
               -language-syntax-roundtrip "$syntax_first/artifact.json" \
+              -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
           done
@@ -471,10 +499,36 @@ jobs:
             -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
             -toolchain-use-cases "$usecase_first/artifact.json" \
             -language-syntax-roundtrip "$syntax_first/artifact.json" \
+            -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
           (
             cd "$readiness_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          diagnostic_binding_first="$RUNNER_TEMP/language-diagnostic-provenance-readiness-binding/first"
+          diagnostic_binding_replay="$RUNNER_TEMP/language-diagnostic-provenance-readiness-binding/replay"
+          mkdir -p "$diagnostic_binding_first" "$diagnostic_binding_replay"
+          for target in "$diagnostic_binding_first" "$diagnostic_binding_replay"; do
+            go run ./cmd/language-diagnostic-provenance-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --readiness "$readiness_first/artifact.json" \
+              --provenance "$diagnostic_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$diagnostic_binding_first/artifact.json" \
+            "$diagnostic_binding_replay/artifact.json"
+          go run ./cmd/language-diagnostic-provenance-readiness-binding \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --readiness "$readiness_first/artifact.json" \
+            --provenance "$diagnostic_first/artifact.json" \
+            --check "$diagnostic_binding_first/artifact.json"
+          (
+            cd "$diagnostic_binding_first"
             sha256sum artifact.json > artifact.json.sha256
           )
           binding_first="$RUNNER_TEMP/language-semantic-readiness-binding/first"
@@ -667,6 +721,20 @@ jobs:
         with:
           name: language-go-interoperation-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-go-interoperation/first/binding
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head diagnostic provenance
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-diagnostic-provenance-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-diagnostic-provenance/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head diagnostic provenance readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-diagnostic-provenance-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-diagnostic-provenance-readiness-binding/first
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness

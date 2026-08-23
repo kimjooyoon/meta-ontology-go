@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
@@ -21,6 +22,7 @@ func EvaluateWithProposalPromotion(
 
 func EvaluateWithPromotionEvidence(raw []byte, promotion proposalpromotion.Receipt,
 	capability guardedcapability.Receipt, useCases toolchainusecases.Report, syntaxReport languagesyntax.Report,
+	diagnosticReport languagediagnosticprovenance.Report,
 	expectedHeadSHA string) (Snapshot, error) {
 	promotionDigest, err := validateProposalPromotion(promotion, expectedHeadSHA)
 	if err != nil {
@@ -44,9 +46,12 @@ func EvaluateWithPromotionEvidence(raw []byte, promotion proposalpromotion.Recei
 	if syntaxReport.Decision != languagesyntax.DecisionPass {
 		return Snapshot{}, fmt.Errorf("FAIL_CLOSED: language syntax decision %q", syntaxReport.Decision)
 	}
+	if err := languagediagnosticprovenance.Validate(diagnosticReport, expectedHeadSHA); err != nil {
+		return Snapshot{}, fmt.Errorf("verify diagnostic provenance: %w", err)
+	}
 	return evaluate(raw, evidenceDigests{
 		proposal: promotionDigest, guarded: capability.ReportDigest, useCases: useCases.ReportDigest,
-		syntax: syntaxReport.ReportDigest,
+		syntax: syntaxReport.ReportDigest, diagnostic: diagnosticReport.ReportDigest,
 	})
 }
 
