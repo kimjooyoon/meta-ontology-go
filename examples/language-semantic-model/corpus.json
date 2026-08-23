@@ -15,6 +15,7 @@
     {"id":"semantic-roundtrip-minimal","kind":"SOURCE","path":"internal/detection/roundtrip/testdata/minimal.gooo","proof_choice":"FOUNDATION","meta_operation":"lower-normalize-replay"},
     {"id":"semantic-directory-kind-ontology","kind":"SOURCE","path":"internal/meta/directorykind/ontology.gooo","proof_choice":"FOUNDATION","meta_operation":"lower-normalize-replay"},
     {"id":"semantic-directory-partition-ontology","kind":"SOURCE","path":"internal/meta/directorypartition/ontology.gooo","proof_choice":"FOUNDATION","meta_operation":"lower-normalize-replay"},
+    {"id":"semantic-source-splitter-conformance","kind":"SOURCE","path":"examples/source-splitter-conformance/main.gooo","proof_choice":"FOUNDATION","meta_operation":"lower-normalize-replay"},
     {"id":"presentation-invariance","kind":"LAW","law":"PRESENTATION_INVARIANCE","proof_choice":"COHERENCE","meta_operation":"prove-presentation-invariance"},
     {"id":"candidate-non-authority","kind":"LAW","law":"CANDIDATE_NON_AUTHORITY","proof_choice":"REGRESSION","meta_operation":"prove-candidate-non-authority"},
     {"id":"deterministic-authority","kind":"LAW","law":"DETERMINISTIC_AUTHORITY","proof_choice":"COHERENCE","meta_operation":"prove-deterministic-authority"},
