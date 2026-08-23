@@ -11,8 +11,8 @@ func EvaluateContract(raw []byte) (ContractReceipt, error) {
 	if err := json.Unmarshal(raw, &document); err != nil {
 		return ContractReceipt{}, fmt.Errorf("FAIL_CLOSED: decode SplitGo contract: %w", err)
 	}
-	if !canonicalContract(document) {
-		return ContractReceipt{}, fmt.Errorf("FAIL_CLOSED: SplitGo contract registry drift")
+	if field := contractDrift(document); field != "" {
+		return ContractReceipt{}, fmt.Errorf("FAIL_CLOSED: SplitGo contract registry drift field=%s", field)
 	}
 	receipt := ContractReceipt{Decision: DecisionPass, ContractID: ContractID,
 		Version: DenominatorVersion, ContractDigest: digestBytes(raw), Total: len(fixedOracleCases)}
@@ -36,15 +36,30 @@ func EvaluateContract(raw []byte) (ContractReceipt, error) {
 	return receipt, nil
 }
 
-func canonicalContract(value contractDocument) bool {
+func contractDrift(value contractDocument) string {
 	denominator := value.Denominator
 	policy := value.DecisionPolicy
-	return value.Schema == ContractSchema && value.ContractID == ContractID &&
-		value.OperationID == OperationID && denominator.Version == DenominatorVersion &&
-		denominator.IndicatorCount == 6 && denominator.OracleCaseCount == 18 &&
-		denominator.ExpectedOutcomes["PASS"] == 6 && denominator.ExpectedOutcomes["FAIL"] == 6 &&
-		denominator.ExpectedOutcomes["UNKNOWN"] == 6 && policy.Unknown == "PRESERVE_UNKNOWN_AND_BLOCK" &&
-		policy.Pass.PassCount == 6 && policy.Pass.FailCount == 0 && policy.Pass.UnknownCount == 0 &&
-		policy.Pass.Decision == "PASS" && policy.Otherwise == "BLOCK" &&
-		reflect.DeepEqual(value.Indicators, fixedIndicators) && len(value.OracleCases) == 18
+	checks := []struct {
+		field   string
+		matches bool
+	}{
+		{"schema", value.Schema == ContractSchema},
+		{"contract_id", value.ContractID == ContractID},
+		{"operation_id", value.OperationID == OperationID},
+		{"denominator.version", denominator.Version == DenominatorVersion},
+		{"denominator.indicator_count", denominator.IndicatorCount == 6},
+		{"denominator.oracle_case_count", denominator.OracleCaseCount == 18},
+		{"denominator.expected_outcomes", denominator.ExpectedOutcomes["PASS"] == 6 && denominator.ExpectedOutcomes["FAIL"] == 6 && denominator.ExpectedOutcomes["UNKNOWN"] == 6},
+		{"decision_policy.unknown", policy.Unknown == "PRESERVE_UNKNOWN_AND_BLOCK"},
+		{"decision_policy.pass", policy.Pass.PassCount == 6 && policy.Pass.FailCount == 0 && policy.Pass.UnknownCount == 0 && policy.Pass.Decision == "PASS"},
+		{"decision_policy.otherwise", policy.Otherwise == "BLOCK"},
+		{"indicators", reflect.DeepEqual(value.Indicators, fixedIndicators)},
+		{"oracle_cases", len(value.OracleCases) == 18},
+	}
+	for _, check := range checks {
+		if !check.matches {
+			return check.field
+		}
+	}
+	return ""
 }
