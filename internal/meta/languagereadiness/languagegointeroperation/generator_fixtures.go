@@ -11,7 +11,8 @@ func generatorFixture(id string) (generator.SemanticIR, bool) {
 	case "two-entities":
 		model.Entities = []generator.Entity{source, artifact}
 	case "builtin-output":
-		model.Activities = []generator.Activity{builtinOutputActivity()}
+		model.Entities = []generator.Entity{entity("entity:render-result", "RenderResult")}
+		model.Activities = []generator.Activity{builtinOutputActivity(model.Entities[0])}
 	case "entity-flow":
 		model.Entities = []generator.Entity{source, artifact}
 		model.Activities = []generator.Activity{flowActivity("activity:compile", "Compile", source, artifact)}
@@ -43,9 +44,8 @@ func flowActivity(id, name string, input, output generator.Entity) generator.Act
 		Outputs: []generator.Port{port("port:"+name+":out", "output", output)}}
 }
 
-func builtinOutputActivity() generator.Activity {
-	return generator.Activity{ID: "activity:render", Name: "Render", GoName: "Render",
-		Outputs: []generator.Port{{ID: "port:render:result", Name: "result", GoName: "result", GoType: "string"}}}
+func builtinOutputActivity(output generator.Entity) generator.Activity {
+	return generator.Activity{ID: "activity:render", Name: "Render", GoName: "Render", Outputs: []generator.Port{{ID: "port:render:result", Name: "result", GoName: "result", EntityID: output.ID, GoType: "string"}}}
 }
 
 func twoInputModel(source, artifact generator.Entity) generator.SemanticIR {
