@@ -24,7 +24,7 @@ func normalizeSplitGoVerdict(verdict string) string {
 }
 
 func newSplitGoReceipt(indicatorID, verdict, digest string) (generationReceipt, error) {
-	receipt := reflect.New(reflect.TypeOf(generation.IndicatorReceipt{})).Elem()
+	receipt := reflect.New(reflect.TypeFor[generation.IndicatorReceipt]()).Elem()
 	if err := setSplitGoReceiptField(receipt, []string{"IndicatorID", "ID"}, indicatorID); err != nil {
 		return generationReceipt{}, err
 	}

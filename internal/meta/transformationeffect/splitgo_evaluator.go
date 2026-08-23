@@ -30,7 +30,7 @@ func invokeSplitGoEvaluator(contractRaw, evidenceRaw []byte) (report any, err er
 	}
 	results := fn.Call([]reflect.Value{contractValue, evidenceValue})
 	if len(results) == 2 {
-		errorType := reflect.TypeOf((*error)(nil)).Elem()
+		errorType := reflect.TypeFor[error]()
 		if !results[1].Type().Implements(errorType) {
 			return nil, fmt.Errorf("unsupported SplitGo evaluator error result %s", results[1].Type())
 		}
