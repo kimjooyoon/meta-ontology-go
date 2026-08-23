@@ -743,6 +743,7 @@ jobs:
             sha256sum artifact.json > artifact.json.sha256
           )
           for target in "$readiness_first" "$readiness_replay"; do
+            rm -f "$target/artifact.json"
             go run ./cmd/language-readiness-witness \
               -root "$GITHUB_WORKSPACE" \
               -input "$first/artifact.json" \
