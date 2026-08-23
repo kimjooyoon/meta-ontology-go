@@ -4,7 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/promotion-authorized-continuity"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
-		".github/workflows/promotion-authorized-continuity.yml",
+		".github/workflows/transformation-effect.yml",
 		"cmd/promotion-authorized-continuity",
 		"docs/language/promotion-authorized-continuity.md",
 		"internal/meta/languagereadiness/promotioncontinuity",

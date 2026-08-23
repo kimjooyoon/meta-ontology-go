@@ -16,11 +16,15 @@ This is a conformance proof, not a quantified improvement claim.
 2. The next merged CI run completes successfully for one exact head SHA.
 3. The transformation workflow emits an `AUTHORIZED / EXACT` guard receipt.
 4. Its recovery join emits `PASS / EXACT / PROMOTION_AUTHORIZED`.
-5. The continuity workflow consumes both artifacts from that same run.
-6. Two independent executions must produce byte-identical receipts.
+5. A continuity job in that same workflow consumes both exact-run artifacts.
+6. The evaluator, independent of both producers, runs twice and must emit
+   byte-identical receipts.
 
 The observer writes only to its Actions artifact directory. It grants no
 repository mutation authority and performs no source-tree mutation.
+It adds zero workflow files: composing one job into the existing transformation
+workflow keeps workflow entry cardinality unchanged, while repository projection
+remains the authority for `storage.direct-entry = 0`.
 
 ## Fixed indicator registry
 

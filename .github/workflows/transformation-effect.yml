@@ -506,3 +506,64 @@ jobs:
           path: ${{ runner.temp }}/language-readiness-improvement/first
           if-no-files-found: error
           retention-days: 30
+
+  promotion-authorized-continuity:
+    name: promotion-authorized-continuity
+    needs:
+      - guarded-promotion-receipt
+      - rollback-fixed-point-recovery
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'dev'
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Check out exact transformation subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Download exact guarded promotion receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: guarded-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/promotion-continuity/guard
+      - name: Download exact rollback route receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: rollback-fixed-point-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/promotion-continuity/recovery
+      - name: Prove authorized successor twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          guard="$RUNNER_TEMP/promotion-continuity/guard/guarded-promotion-a.json"
+          recovery="$RUNNER_TEMP/promotion-continuity/recovery/rollback-fixed-point-a.json"
+          first="$RUNNER_TEMP/promotion-continuity/output/a"
+          replay="$RUNNER_TEMP/promotion-continuity/output/b"
+          test -f "$guard"
+          test -f "$recovery"
+          mkdir -p "$first" "$replay"
+          for target in "$first" "$replay"; do
+            go run ./cmd/promotion-authorized-continuity \
+              --head "$HEAD_SHA" --guard "$guard" --recovery "$recovery" \
+              --out "$target/report.json"
+          done
+          cmp "$first/report.json" "$replay/report.json"
+      - name: Upload authorization continuity receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: promotion-authorized-continuity-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/promotion-continuity/output/a/report.json
+          if-no-files-found: error
+          retention-days: 30
