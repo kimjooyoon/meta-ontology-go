@@ -11,6 +11,14 @@ import (
 )
 
 func run(cfg config, stdout io.Writer) error {
+	if cfg.printFoundationArtifactID {
+		if cfg.root != "" || cfg.currentHead != "" || cfg.foundationArchive != "" ||
+			cfg.output != "" || cfg.check != "" {
+			return fmt.Errorf("print-foundation-artifact-id does not accept receipt inputs")
+		}
+		_, err := fmt.Fprintln(stdout, guardedcapability.FoundationArtifactID)
+		return err
+	}
 	if cfg.root == "" || cfg.currentHead == "" || (cfg.output == "") == (cfg.check == "") {
 		return fmt.Errorf("root, current-head, and exactly one of output or check are required")
 	}

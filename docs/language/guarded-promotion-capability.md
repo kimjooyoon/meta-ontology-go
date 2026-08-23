@@ -9,10 +9,14 @@ exact implementation that produced one real authorized event remains present.
 
 ## Versioned foundation
 
-The FOUNDATION is pull request 399, merge subject
-`027785b635246537354ac7517054b755235ae765`. GitHub Actions run `32599122103`
-produced artifact `9482381929` with archive digest
-`sha256:6fe9223adb6260e644bba5cfb28247291623ba139c4773bb15da139ae3da63f0`.
+The FOUNDATION is pull request 440, merge subject
+`547f13fbcc533ea3ff5b90340bcb0c320f61a475`. GitHub Actions run `32667794738`
+produced artifact `9500514949` with archive digest
+`sha256:2c4f65b146af7dddf223f75b53d09f2f505d20a86a7b29fcf04b3db20bcd938d`.
+The pinned report file digest is
+`sha256:2a1859d7766178d94085488aa1a5490922407378e3a03405f2f34a970622027a`,
+and its replay digest is
+`sha256:9ebed6830b873a35074e37ebab3cc92ed67eef672680565b4627605e06db9435`.
 Its report is `AUTHORIZED`, `12/12`, `10000 BPS`, zero unresolved evidence,
 zero repository writes, and no mutation authority.
 
@@ -20,6 +24,8 @@ CI verifies the external archive when this foundation is introduced. Later
 replays use the byte-identical versioned report and require the foundation to
 be an ancestor of the current subject. The guarded-promotion package tree and
 its witness tree must both equal their foundation Git trees.
+The workflow obtains the artifact ID through the capability witness metadata
+query instead of maintaining a second numeric authority.
 
 ## Indicators
 

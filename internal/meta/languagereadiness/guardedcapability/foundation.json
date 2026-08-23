@@ -7,29 +7,29 @@
     "requested_repository": "kimjooyoon/meta-ontology-go",
     "observed_repository": "kimjooyoon/meta-ontology-go",
     "default_branch": "dev",
-    "current_head_sha": "027785b635246537354ac7517054b755235ae765",
-    "predecessor_sha": "75b892f4bc661b4a58a5517532c44662dae6eedf",
+    "current_head_sha": "547f13fbcc533ea3ff5b90340bcb0c320f61a475",
+    "predecessor_sha": "32fb7db1ab659aef42365ceabd3260e72d95585c",
     "workflow": {
-      "run_id": 32598873898,
+      "run_id": 32667514148,
       "name": "CI [push full]",
       "path": ".github/workflows/ci.yml",
       "event": "push",
       "status": "completed",
       "conclusion": "success",
-      "head_sha": "027785b635246537354ac7517054b755235ae765",
+      "head_sha": "547f13fbcc533ea3ff5b90340bcb0c320f61a475",
       "head_branch": "dev"
     },
     "artifact": {
-      "run_id": 32596988199,
+      "run_id": 32666265748,
       "run_attempt": 1,
-      "run_event": "workflow_run",
-      "artifact_id": 9481819741,
-      "artifact_name": "language-readiness-proposal-promotion-75b892f4bc661b4a58a5517532c44662dae6eedf",
-      "artifact_digest": "sha256:ddaf207826591266123543d4263b61ebada6e1a2817f45f1319b47c0dc991222",
-      "file_sha256": "sha256:5ddfec848f23ef6ad283074184dd45b12571507934c10b9e8efaa43c35701d6b",
+      "run_event": "push",
+      "artifact_id": 9500110661,
+      "artifact_name": "language-readiness-proposal-promotion-32fb7db1ab659aef42365ceabd3260e72d95585c",
+      "artifact_digest": "sha256:127dceffa15c915358831294c603ae998cb83c84b4ad386476d79834546b66c0",
+      "file_sha256": "sha256:39bdad42c2ed5ce88673842cf2b8fd2080baa571142f6a7dae8f014f5a1f0c15",
       "report_schema": "gooo/autonomous-change-proposal-promotion/v1",
-      "report_digest": "sha256:b13f48aeba794d47c45dc41fbbd935230142ff742cb6947ec7c0e066e4d61360",
-      "report_current_head_sha": "75b892f4bc661b4a58a5517532c44662dae6eedf",
+      "report_digest": "sha256:4348e4a9cad7a54ed6432a350a63a7291394bb1fd38cb44def20457d6272533c",
+      "report_current_head_sha": "32fb7db1ab659aef42365ceabd3260e72d95585c",
       "report_decision": "PASS",
       "report_satisfied": 8,
       "report_total": 8,
@@ -37,7 +37,7 @@
       "report_repository_writes": 0
     },
     "observed_runs": 1,
-    "observed_artifacts": 8,
+    "observed_artifacts": 9,
     "valid_candidates": 1,
     "ambiguous_candidates": 0,
     "unresolved_candidates": 0,
@@ -240,5 +240,5 @@
       "evidence_digest": "sha256:dcce4dc5494dd37b1b3fb1e6dcb62f21953d0fb699fff7fdf1eb81f3bb611361"
     }
   ],
-  "report_digest": "sha256:5a1d897ea91843a6f52df95641720fa7d2a09e0ce810487bcddde9097154b959"
+  "report_digest": "sha256:9ebed6830b873a35074e37ebab3cc92ed67eef672680565b4627605e06db9435"
 }
