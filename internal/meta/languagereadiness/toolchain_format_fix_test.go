@@ -6,7 +6,7 @@ func TestToolchainFormatFixRequiresExactDynamicReceipt(t *testing.T) {
 	obligation := Obligation{ID: "TOOLCHAIN-FORMAT-FIX", Area: areaToolchain,
 		ProofChoice: "COHERENCE", ConceptID: toolchainFormatFixConcept}
 	concept := conceptEvidence{ID: toolchainFormatFixConcept, Stage: "OPERATING",
-		CodeBindings: []string{"internal/meta/languagereadiness/toolchainformatfix"},
+		CodeBindings:   []string{"internal/meta/languagereadiness/toolchainformatfix"},
 		MetricBindings: []string{"gooo.metric.toolchain.format-fix-readiness-bps.v1"},
 		UseCases: []useCaseEvidence{{ID: "fixed-format-fix-corpus",
 			Trigger: "12 cases", ExpectedOutcome: "12_OF_12"}}}

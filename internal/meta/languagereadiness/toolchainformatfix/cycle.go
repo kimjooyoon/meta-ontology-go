@@ -27,5 +27,5 @@ func evaluateCycle() cycleEvidence {
 	}
 	return cycleEvidence{applications: 1, fixedPoints: 2,
 		directWrites: change.DirectWrites + fixedAfter.DirectWrites + fixedCanonical.DirectWrites,
-		passed: true}
+		passed:       true}
 }

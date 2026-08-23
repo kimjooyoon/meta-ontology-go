@@ -1,9 +1,9 @@
 package toolchainformatfix
 
 const (
-	unformattedPath = "examples/toolchain-format-fix/unformatted.gooo"
-	canonicalPath   = "examples/toolchain-format-fix/canonical.gooo"
-	malformedPath   = "examples/toolchain-format-fix/malformed.gooo"
+	unformattedPath = "examples/toolchain-format-fix/unformatted.txt"
+	canonicalPath   = "examples/toolchain-format-fix/canonical.txt"
+	malformedPath   = "examples/toolchain-format-fix/malformed.txt"
 	unformatted     = "package billing\nnamespace billing\nentity Payment id \"billing://entity/payment\"\nentity Order id \"billing://entity/order\"\nactivity PayOrder(Order) -> Payment\n"
 	canonical       = "package billing\nnamespace billing\n\nentity Payment id \"billing://entity/payment\"\nentity Order id \"billing://entity/order\"\n\nactivity PayOrder(Order) -> Payment\n"
 )

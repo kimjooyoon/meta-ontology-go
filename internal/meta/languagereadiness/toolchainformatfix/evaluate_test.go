@@ -11,7 +11,7 @@ func TestEvaluateProvesExecutablePlansAndFixedPoints(t *testing.T) {
 	executor := &fakeExecutor{}
 	report := Evaluate(Input{ExpectedHeadSHA: testHead,
 		ConceptArtifact: languageconcept.BuildArtifact(os.DirFS("../../../..")),
-		RegistryRaw: registryFixture(t), Executor: executor})
+		RegistryRaw:     registryFixture(t), Executor: executor})
 	if err := Validate(report, testHead); err != nil {
 		t.Fatal(err)
 	}

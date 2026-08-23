@@ -55,10 +55,6 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return exitFailure
 	}
 }
-func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "usage: gooo <check|generate|roundtrip|query|inspect|graph|analyze|format|fix|provenance|selective-ci|lsp|version> [args]")
-}
-
 var analyzeDeltaToolchain = runtime.Version() + "|" + runtime.GOOS + "/" + runtime.GOARCH
 
 type analyzeDeltaOptions struct {

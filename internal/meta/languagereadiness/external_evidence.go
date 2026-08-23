@@ -12,13 +12,13 @@ const (
 )
 
 type evidenceDigests struct {
-	proposal       string
-	guarded        string
-	useCases       string
-	syntax         string
-	diagnostic     string
-	packageRuntime string
-	toolchainCLI   string
+	proposal           string
+	guarded            string
+	useCases           string
+	syntax             string
+	diagnostic         string
+	packageRuntime     string
+	toolchainCLI       string
 	toolchainFormatFix string
 }
 

@@ -10,7 +10,7 @@ import (
 
 type formatJSON struct {
 	Schema, Command, Status, File, Source, SourceDigest, FormattedDigest string
-	Changed, DirectWrites                                               bool
+	Changed, DirectWrites                                                bool
 }
 
 func inspectOutput(operation string, observed cliruntime.Observation) (bool, int, int) {

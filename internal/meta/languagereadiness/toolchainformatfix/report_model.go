@@ -30,8 +30,8 @@ type CaseResult struct {
 
 type Summary struct {
 	Satisfied, Total, ReadinessBPS, PositivePaths, GuardrailRejections int
-	Executed, Invocations, StructuredOutputs, StructuredPlans         int
-	InMemoryApplications, FixedPoints, ReplayMatches, BinaryBindings  int
+	Executed, Invocations, StructuredOutputs, StructuredPlans          int
+	InMemoryApplications, FixedPoints, ReplayMatches, BinaryBindings   int
 	Unresolved, ExitMismatches, OutputMismatches, ReplayMismatches     int
 	RepositoryWrites, DirectWrites, RegistryDrift                      int
 }
