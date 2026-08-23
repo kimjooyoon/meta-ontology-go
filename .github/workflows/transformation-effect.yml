@@ -53,6 +53,8 @@ jobs:
           EXPECT_DECISION: ${{ steps.boundary.outputs.decision }}
           API_URL: ${{ github.api_url }}
         run: |
+          set +e
+          codes=()
           for replay in a b; do
             go run ./cmd/guarded-promotion-witness \
               --repository "$REPOSITORY" \
@@ -62,7 +64,11 @@ jobs:
               --token "$GH_TOKEN" \
               --expect-decision "$EXPECT_DECISION" \
               --out "$RUNNER_TEMP/guarded-promotion-$replay.json"
+            codes+=("$?")
           done
+          set -e
+          test "${codes[0]}" -eq "${codes[1]}"
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/guarded-promotion-exit-code.txt"
 
       - name: Verify deterministic replay
         run: |
@@ -79,6 +85,62 @@ jobs:
           path: |
             ${{ runner.temp }}/guarded-promotion-*.json
             ${{ runner.temp }}/guarded-promotion-*.sha256
+            ${{ runner.temp }}/guarded-promotion-exit-code.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  rollback-fixed-point-recovery:
+    name: rollback-fixed-point-recovery
+    needs: [guarded-promotion-receipt, transformation-effect]
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - uses: actions/download-artifact@v7
+        with:
+          name: guarded-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/rollback/guard
+      - uses: actions/download-artifact@v7
+        with:
+          name: transformation-effect-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/rollback/transformation
+      - name: Bind fail-closed promotion to an exact fixed point
+        run: |
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/rollback-fixed-point \
+              --root "$GITHUB_WORKSPACE" \
+              --guard "$RUNNER_TEMP/rollback/guard/guarded-promotion-a.json" \
+              --transformation "$RUNNER_TEMP/rollback/transformation/ledger.json" \
+              --expected-sha "$HEAD_SHA" \
+              --output "$RUNNER_TEMP/rollback-fixed-point-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/rollback-fixed-point-a.json" \
+            "$RUNNER_TEMP/rollback-fixed-point-b.json"
+          go run ./cmd/language-readiness-witness/rollback-fixed-point \
+            --root "$GITHUB_WORKSPACE" \
+            --guard "$RUNNER_TEMP/rollback/guard/guarded-promotion-a.json" \
+            --transformation "$RUNNER_TEMP/rollback/transformation/ledger.json" \
+            --expected-sha "$HEAD_SHA" \
+            --output "$RUNNER_TEMP/rollback-fixed-point-a.json" \
+            --check
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: rollback-fixed-point-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/rollback-fixed-point-a.json
           if-no-files-found: error
           retention-days: 30
 
@@ -196,13 +258,48 @@ jobs:
             --current-head "$HEAD_SHA" \
             --predecessor-sha "$predecessor_sha" \
             --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+      - name: Project v2 proposal evidence to the unchanged v1 guard contract
+        run: |
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/proposal-compat \
+              --root "$GITHUB_WORKSPACE" \
+              --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              --expected-sha "$HEAD_SHA" \
+              --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-$suffix.json" \
+              --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-b.json"
+          cmp "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-compat-b.json"
+          go run ./cmd/language-readiness-witness/proposal-compat \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            --expected-sha "$HEAD_SHA" \
+            --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
+            --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
+            --check
       - name: Upload merged autonomous change proposal promotion
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-legacy-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload current v2 proposal evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
           if-no-files-found: error
           retention-days: 14
+      - name: Upload proposal compatibility receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-compat-a.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Select exact readiness predecessor
         env:
           GITHUB_TOKEN: ${{ github.token }}
