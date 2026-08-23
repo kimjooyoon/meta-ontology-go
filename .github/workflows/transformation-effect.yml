@@ -430,6 +430,25 @@ jobs:
             --registry "$syntax_registry" \
             --concept-artifact "$first/artifact.json" \
             --check "$syntax_first/artifact.json"
+          semantic_first="$RUNNER_TEMP/language-semantic-model/first"
+          semantic_replay="$RUNNER_TEMP/language-semantic-model/replay"
+          semantic_registry="$GITHUB_WORKSPACE/examples/language-semantic-model/corpus.json"
+          mkdir -p "$semantic_first" "$semantic_replay"
+          for target in "$semantic_first" "$semantic_replay"; do
+            go run ./cmd/language-semantic-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --registry "$semantic_registry" \
+              --syntax-artifact "$syntax_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$semantic_first/artifact.json" "$semantic_replay/artifact.json"
+          go run ./cmd/language-semantic-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --registry "$semantic_registry" \
+            --syntax-artifact "$syntax_first/artifact.json" \
+            --check "$semantic_first/artifact.json"
           readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
           readiness_replay="$RUNNER_TEMP/language-readiness-artifact/replay"
           mkdir -p "$readiness_first" "$readiness_replay"
@@ -456,6 +475,30 @@ jobs:
             -check "$readiness_first/artifact.json"
           (
             cd "$readiness_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          binding_first="$RUNNER_TEMP/language-semantic-readiness-binding/first"
+          binding_replay="$RUNNER_TEMP/language-semantic-readiness-binding/replay"
+          mkdir -p "$binding_first" "$binding_replay"
+          for target in "$binding_first" "$binding_replay"; do
+            go run ./cmd/language-semantic-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --readiness "$readiness_first/artifact.json" \
+              --concept "$first/artifact.json" \
+              --semantic "$semantic_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$binding_first/artifact.json" "$binding_replay/artifact.json"
+          go run ./cmd/language-semantic-readiness-binding \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --readiness "$readiness_first/artifact.json" \
+            --concept "$first/artifact.json" \
+            --semantic "$semantic_first/artifact.json" \
+            --check "$binding_first/artifact.json"
+          (
+            cd "$binding_first"
             sha256sum artifact.json > artifact.json.sha256
           )
           improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
@@ -532,6 +575,20 @@ jobs:
         with:
           name: language-concept-artifact-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-concept-artifact/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head language semantic model
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-semantic-model-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-semantic-model/first/artifact.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head semantic readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-semantic-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-semantic-readiness-binding/first
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
