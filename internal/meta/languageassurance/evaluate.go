@@ -1,6 +1,7 @@
 package languageassurance
 
 import (
+	"slices"
 	"fmt"
 	"sort"
 )
@@ -163,12 +164,7 @@ func countUnknownTop(transitions []DecisionTransition) int {
 }
 
 func isLaunderingOutput(output Decision) bool {
-	for _, candidate := range launderingOutputs {
-		if output == candidate {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(launderingOutputs, output)
 }
 
 func observedValue(observed bool, value int) *int {
