@@ -6,7 +6,7 @@ func validPromotionArtifact(source Source) bool {
 	return artifact.ArtifactName == expectedName &&
 		validDigest(artifact.ArtifactDigest) &&
 		validDigest(artifact.FileSHA256) &&
-		artifact.RunEvent == "push" &&
+		(artifact.RunEvent == "push" || artifact.RunEvent == "workflow_run") &&
 		artifact.ReportSchema == PromotionSchema &&
 		validDigest(artifact.ReportDigest) &&
 		artifact.ReportCurrentHeadSHA == source.PredecessorSHA &&

@@ -54,11 +54,11 @@ func TestBuildDeniesPullRequestWithoutHidingIt(t *testing.T) {
 	}
 }
 
-func TestBuildRejectsNonCanonicalPromotionEvent(t *testing.T) {
+func TestBuildAcceptsLegacyPromotionEventDuringFoundationMigration(t *testing.T) {
 	source := validSource()
 	source.Artifact.RunEvent = "workflow_run"
 	report := Build(source)
-	if report.Decision != DecisionDenied || report.Summary.Satisfied != 11 || report.Summary.ReadinessBPS != 9166 {
+	if report.Decision != DecisionAuthorized || report.Summary.Satisfied != 12 || report.Summary.ReadinessBPS != 10000 {
 		t.Fatalf("decision=%s summary=%+v", report.Decision, report.Summary)
 	}
 }
