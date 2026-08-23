@@ -18,20 +18,27 @@ func validateReadiness(value readinessArtifact, head, conceptDigest string) (rea
 		return readinessObligation{}, err
 	}
 	summary := snapshot.Summary
-	if err := require(summary.Completed == 15 && summary.Total == 24 && summary.NotSatisfied == 9, "readiness count mismatch"); err != nil {
+	counts := summary.Completed >= SemanticReadinessFloor && summary.Total == 24
+	counts = counts && summary.NotSatisfied == summary.Total-summary.Completed
+	if err := require(counts, "readiness count mismatch"); err != nil {
 		return readinessObligation{}, err
 	}
-	if err := require(summary.Unresolved == 0 && summary.ReadinessBPS == 6250, "readiness resolution mismatch"); err != nil {
+	expectedBPS := summary.Completed * 10000 / summary.Total
+	resolved := summary.Unresolved == 0 && summary.ReadinessBPS == expectedBPS
+	resolved = resolved && summary.ReadinessBPS >= SemanticReadinessBPS
+	if err := require(resolved, "readiness resolution mismatch"); err != nil {
 		return readinessObligation{}, err
 	}
-	if err := require(summary.RatioNumerator == 15 && summary.RatioDenominator == 24, "ratio mismatch"); err != nil {
+	if err := require(summary.RatioNumerator == summary.Completed && summary.RatioDenominator == summary.Total, "ratio mismatch"); err != nil {
 		return readinessObligation{}, err
 	}
 	transition := value.TransitionInput
 	if err := require(transition.ContractSchema == SnapshotSchema && transition.RegistryDigest == snapshot.RegistryDigest, "transition contract mismatch"); err != nil {
 		return readinessObligation{}, err
 	}
-	if err := require(transition.Completed == 15 && transition.Total == 24 && transition.BasisPoints == 6250, "transition count mismatch"); err != nil {
+	transitionCurrent := transition.Completed == summary.Completed && transition.Total == summary.Total
+	transitionCurrent = transitionCurrent && transition.BasisPoints == summary.ReadinessBPS
+	if err := require(transitionCurrent, "transition count mismatch"); err != nil {
 		return readinessObligation{}, err
 	}
 	return semanticObligation(snapshot.Obligations, transition.Evidence)

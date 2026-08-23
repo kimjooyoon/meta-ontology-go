@@ -501,6 +501,28 @@ jobs:
             cd "$binding_first"
             sha256sum artifact.json > artifact.json.sha256
           )
+          query_first="$RUNNER_TEMP/language-deterministic-query/first"
+          query_replay="$RUNNER_TEMP/language-deterministic-query/replay"
+          mkdir -p "$query_first" "$query_replay"
+          for target in "$query_first" "$query_replay"; do
+            go run ./cmd/language-deterministic-query-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --readiness "$readiness_first/artifact.json" \
+              --concept "$first/artifact.json" \
+              --query-output "$target/query/artifact.json" \
+              --binding-output "$target/binding/artifact.json"
+          done
+          cmp -s "$query_first/query/artifact.json" "$query_replay/query/artifact.json"
+          cmp -s "$query_first/binding/artifact.json" "$query_replay/binding/artifact.json"
+          (
+            cd "$query_first/query"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          (
+            cd "$query_first/binding"
+            sha256sum artifact.json > artifact.json.sha256
+          )
           improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
           improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
           baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
@@ -589,6 +611,20 @@ jobs:
         with:
           name: language-semantic-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-semantic-readiness-binding/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head deterministic query
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-deterministic-query-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-deterministic-query/first/query
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head deterministic query readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-deterministic-query/first/binding
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness

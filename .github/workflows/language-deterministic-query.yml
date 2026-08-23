@@ -33,27 +33,17 @@ jobs:
           set -euo pipefail
           root="$RUNNER_TEMP/language-deterministic-query"
           for pass in first second; do
-            go run ./cmd/language-deterministic-query-readiness-binding \
+            go run ./cmd/language-deterministic-query-witness \
               -root . \
               -expected-head "$HEAD_SHA" \
-              -query-output "$root/$pass/query/artifact.json" \
-              -binding-output "$root/$pass/binding/artifact.json"
+              -output "$root/$pass/artifact.json"
           done
-          cmp "$root/first/query/artifact.json" "$root/second/query/artifact.json"
-          cmp "$root/first/binding/artifact.json" "$root/second/binding/artifact.json"
+          cmp "$root/first/artifact.json" "$root/second/artifact.json"
 
       - name: Upload deterministic query artifact
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: language-deterministic-query-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-deterministic-query/first/query/artifact.json
-          if-no-files-found: error
-
-      - name: Upload deterministic query readiness binding
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-deterministic-query/first/binding/artifact.json
+          path: ${{ runner.temp }}/language-deterministic-query/first/artifact.json
           if-no-files-found: error

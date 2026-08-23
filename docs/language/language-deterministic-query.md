@@ -54,3 +54,12 @@ graph mutation, effects, repository writes, and mutation authority.
 - `REGRESSION` rejects candidates, unknowns, mutations, effects, and writes.
 
 This is an uncommon combination, not a novelty claim.
+
+## Compatibility law discovered during implementation
+
+A concept-specific witness cannot require the global catalog to remain frozen
+at the count observed when that concept was introduced. The semantic-model
+binding therefore records the exact current count while checking its versioned
+historical floor and the continued satisfaction of its own obligation. The
+global transition ledger remains the only authority for predecessor-to-current
+improvement.

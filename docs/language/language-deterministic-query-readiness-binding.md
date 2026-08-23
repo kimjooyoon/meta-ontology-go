@@ -1,7 +1,8 @@
 # Deterministic query readiness binding
 
 The binding joins one exact-head concept artifact, one deterministic query
-report, and the fixed 24-obligation language-readiness registry.
+report, and the complete readiness artifact produced by the existing
+transformation ledger. A concept-only readiness approximation is rejected.
 
 It accepts only these exact current-state values:
 

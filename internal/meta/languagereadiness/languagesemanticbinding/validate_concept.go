@@ -8,8 +8,9 @@ func validateConcept(value conceptArtifact) (conceptDefinition, error) {
 		return conceptDefinition{}, err
 	}
 	summary := value.Report.Summary
-	counts := summary.Concepts == 15 && summary.CodeBound == 15 && summary.UseCaseBound == 15
-	counts = counts && summary.MetricBound == 15 && summary.Operating == 13 && summary.Conformed == 2
+	counts := summary.Concepts >= SemanticConceptFloor && summary.CodeBound == summary.Concepts
+	counts = counts && summary.UseCaseBound == summary.Concepts && summary.MetricBound == summary.Concepts
+	counts = counts && summary.Operating+summary.Conformed == summary.Concepts && summary.Conformed >= 2
 	guards := summary.Unbound == 0 && summary.UnverifiedNoveltyClaims == 0 && summary.RepositoryWrites == 0
 	if err := require(value.Report.Decision == "PASS" && counts && guards, "concept catalog mismatch"); err != nil {
 		return conceptDefinition{}, err

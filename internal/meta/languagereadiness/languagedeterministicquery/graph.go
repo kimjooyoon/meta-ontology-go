@@ -47,6 +47,6 @@ func requestFor(definition Definition, fixture graphFixture) queryengine.Request
 func exactRequest(root, target queryengine.ID, relation queryengine.Relation, layer queryengine.Layer) queryengine.Request {
 	return queryengine.Request{
 		Schema: queryengine.QueryEnvelopeSchema, Operation: queryengine.OperationExact,
-		Root: root, Target: target, Relation: relation, Layer: layer, Limit: 1,
+		Root: root, Target: target, Relation: relation, Layer: layer, MaxDepth: 1, Limit: 1,
 	}
 }
