@@ -75,6 +75,104 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  source-splitter-conformance:
+    name: source-splitter-conformance
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: true
+
+      - name: Build isolated SplitGo subject
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/source-splitter-conformance"
+          fixture="$work/fixture"
+          output="$work/output"
+          mkdir -p "$fixture" "$output"
+          cat > "$fixture/go.mod" <<'EOF'
+          module fixture
+
+          go 1.27.0
+          EOF
+          {
+            echo 'package fixture'
+            echo
+            echo 'func Alpha() int {'
+            echo '  total := 0'
+            for value in $(seq 1 40); do echo "  total += $value"; done
+            echo '  return total'
+            echo '}'
+            echo
+            echo 'func Beta() int {'
+            echo '  total := 0'
+            for value in $(seq 41 80); do echo "  total += $value"; done
+            echo '  return total'
+            echo '}'
+          } > "$fixture/fixture.go"
+          cp "$fixture/fixture.go" "$output/source.go"
+
+      - name: Run actor and independent evaluator twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/source-splitter-conformance"
+          fixture="$work/fixture"
+          output="$work/output"
+          METRICS_COMMIT_SHA="$HEAD_SHA" go run ./scripts/line-metrics \
+            -root "$fixture" -storage-root "$fixture" -json > "$output/source-metrics.json"
+          go run ./scripts/source-splitter \
+            -root "$fixture" \
+            -metrics "$output/source-metrics.json" \
+            -sha "$HEAD_SHA" \
+            -subject fixture.go \
+            -evidence-json > "$output/actor-evidence.json"
+          for suffix in a b; do
+            go run ./scripts/source-splitter-conformance-ci \
+              -contract examples/source-splitter-conformance/contract.json \
+              -evidence "$output/actor-evidence.json" \
+              -expected-sha "$HEAD_SHA" \
+              -output "$output/artifact-$suffix.json"
+          done
+          cmp "$output/artifact-a.json" "$output/artifact-b.json"
+          go run ./scripts/source-splitter-conformance-ci \
+            -contract examples/source-splitter-conformance/contract.json \
+            -evidence "$output/actor-evidence.json" \
+            -expected-sha "$HEAD_SHA" \
+            -check "$output/artifact-a.json"
+          cp -R "$fixture" "$output/candidate"
+          sha256sum "$output/artifact-a.json" > "$output/artifact-a.sha256"
+
+      - name: Upload exact-head conformance artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: source-splitter-conformance-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/source-splitter-conformance/output
+          if-no-files-found: error
+          retention-days: 30
+
   guarded-promotion-receipt:
     name: guarded-promotion-receipt
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
