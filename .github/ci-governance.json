@@ -1142,6 +1142,22 @@
         "internal/meta/languagereadiness/**",
         "internal/verify/scope_readiness_guarded_capability.go"
       ]
+    },
+    {
+      "branch": "agent/readiness-rollback-fixed-point",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/proposal-compat/**",
+        "cmd/language-readiness-witness/rollback-fixed-point/**",
+        "docs/language/rollback-fixed-point-recovery.md",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/proposalcompat/**",
+        "internal/meta/languagereadiness/rollbackfixedpoint/**",
+        "internal/meta/transformationeffect/validate_ledger.go",
+        "internal/verify/scope_readiness_rollback_fixed_point.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
