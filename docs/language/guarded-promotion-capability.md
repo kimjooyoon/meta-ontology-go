@@ -9,14 +9,14 @@ exact implementation that produced one real authorized event remains present.
 
 ## Versioned foundation
 
-The FOUNDATION is pull request 440, merge subject
-`547f13fbcc533ea3ff5b90340bcb0c320f61a475`. GitHub Actions run `32667794738`
-produced artifact `9500514949` with archive digest
-`sha256:2c4f65b146af7dddf223f75b53d09f2f505d20a86a7b29fcf04b3db20bcd938d`.
+The FOUNDATION is pull request 442, merge subject
+`d9960ae95ffdc66179de0a1be13364aefeab76ea`. GitHub Actions run `32670602811`
+produced artifact `9501263129` with archive digest
+`sha256:178679f9ed4db0c844edce5ed2103a2cf8a2c59f0ebb3d5c06b6cd051a66d92f`.
 The pinned report file digest is
-`sha256:2a1859d7766178d94085488aa1a5490922407378e3a03405f2f34a970622027a`,
+`sha256:7f379d7eea9875aff3657b3bc77a039da98676cb87e504f25b3957339be2803b`,
 and its replay digest is
-`sha256:9ebed6830b873a35074e37ebab3cc92ed67eef672680565b4627605e06db9435`.
+`sha256:67cdb6610b00f9533c3db462804e67e84d1c037a7625e3bef562a82b515d96bd`.
 Its report is `AUTHORIZED`, `12/12`, `10000 BPS`, zero unresolved evidence,
 zero repository writes, and no mutation authority.
 

@@ -11,12 +11,12 @@ const (
 	ReasonRejected     = "GUARDED_PROMOTION_CAPABILITY_REJECTED"
 	ReasonUnknown      = "GUARDED_PROMOTION_CAPABILITY_EVIDENCE_UNKNOWN"
 
-	FoundationSubjectSHA     = "547f13fbcc533ea3ff5b90340bcb0c320f61a475"
-	FoundationWorkflowRunID  = int64(32667794738)
-	FoundationArtifactID     = int64(9500514949)
-	FoundationArtifactDigest = "sha256:2c4f65b146af7dddf223f75b53d09f2f505d20a86a7b29fcf04b3db20bcd938d"
-	FoundationReportFileSHA  = "sha256:2a1859d7766178d94085488aa1a5490922407378e3a03405f2f34a970622027a"
-	FoundationReportDigest   = "sha256:9ebed6830b873a35074e37ebab3cc92ed67eef672680565b4627605e06db9435"
+	FoundationSubjectSHA     = "d9960ae95ffdc66179de0a1be13364aefeab76ea"
+	FoundationWorkflowRunID  = int64(32670602811)
+	FoundationArtifactID     = int64(9501263129)
+	FoundationArtifactDigest = "sha256:178679f9ed4db0c844edce5ed2103a2cf8a2c59f0ebb3d5c06b6cd051a66d92f"
+	FoundationReportFileSHA  = "sha256:7f379d7eea9875aff3657b3bc77a039da98676cb87e504f25b3957339be2803b"
+	FoundationReportDigest   = "sha256:67cdb6610b00f9533c3db462804e67e84d1c037a7625e3bef562a82b515d96bd"
 )
 
 const (

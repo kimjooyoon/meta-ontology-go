@@ -7,29 +7,29 @@
     "requested_repository": "kimjooyoon/meta-ontology-go",
     "observed_repository": "kimjooyoon/meta-ontology-go",
     "default_branch": "dev",
-    "current_head_sha": "547f13fbcc533ea3ff5b90340bcb0c320f61a475",
-    "predecessor_sha": "32fb7db1ab659aef42365ceabd3260e72d95585c",
+    "current_head_sha": "d9960ae95ffdc66179de0a1be13364aefeab76ea",
+    "predecessor_sha": "8682ea7f3c31aacc415f0c0627c1297f28abd4ed",
     "workflow": {
-      "run_id": 32667514148,
+      "run_id": 32670327857,
       "name": "CI [push full]",
       "path": ".github/workflows/ci.yml",
       "event": "push",
       "status": "completed",
       "conclusion": "success",
-      "head_sha": "547f13fbcc533ea3ff5b90340bcb0c320f61a475",
+      "head_sha": "d9960ae95ffdc66179de0a1be13364aefeab76ea",
       "head_branch": "dev"
     },
     "artifact": {
-      "run_id": 32666265748,
+      "run_id": 32669241973,
       "run_attempt": 1,
       "run_event": "push",
-      "artifact_id": 9500110661,
-      "artifact_name": "language-readiness-proposal-promotion-32fb7db1ab659aef42365ceabd3260e72d95585c",
-      "artifact_digest": "sha256:127dceffa15c915358831294c603ae998cb83c84b4ad386476d79834546b66c0",
-      "file_sha256": "sha256:39bdad42c2ed5ce88673842cf2b8fd2080baa571142f6a7dae8f014f5a1f0c15",
+      "artifact_id": 9500915869,
+      "artifact_name": "language-readiness-proposal-promotion-8682ea7f3c31aacc415f0c0627c1297f28abd4ed",
+      "artifact_digest": "sha256:072759f603a9ff22c0a2101ff3480c43996be4a2293b7cece0bc18bdd960f913",
+      "file_sha256": "sha256:00d93d44d1c5e0db31d51eb0f4ff26249b051b146c2d5dc92a83b16977c6a643",
       "report_schema": "gooo/autonomous-change-proposal-promotion/v1",
-      "report_digest": "sha256:4348e4a9cad7a54ed6432a350a63a7291394bb1fd38cb44def20457d6272533c",
-      "report_current_head_sha": "32fb7db1ab659aef42365ceabd3260e72d95585c",
+      "report_digest": "sha256:302b14100ff7316b03ec1702c6fec32ed9528ff8cdebe3480982b93014ea22de",
+      "report_current_head_sha": "8682ea7f3c31aacc415f0c0627c1297f28abd4ed",
       "report_decision": "PASS",
       "report_satisfied": 8,
       "report_total": 8,
@@ -240,5 +240,5 @@
       "evidence_digest": "sha256:dcce4dc5494dd37b1b3fb1e6dcb62f21953d0fb699fff7fdf1eb81f3bb611361"
     }
   ],
-  "report_digest": "sha256:9ebed6830b873a35074e37ebab3cc92ed67eef672680565b4627605e06db9435"
+  "report_digest": "sha256:67cdb6610b00f9533c3db462804e67e84d1c037a7625e3bef562a82b515d96bd"
 }
