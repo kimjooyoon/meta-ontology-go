@@ -5,6 +5,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/transformation-effect.yml",
+		"cmd/language-readiness-witness/run_test.go",
 		"cmd/language-readiness-witness/proposal-compat",
 		"cmd/language-readiness-witness/rollback-fixed-point",
 		"docs/language/rollback-fixed-point-recovery.md",
