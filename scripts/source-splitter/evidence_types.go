@@ -7,7 +7,7 @@ type splitEvidence struct {
 	Source           splitEvidenceFile      `json:"source"`
 	Candidates       []splitEvidenceFile    `json:"candidates"`
 	BuildContexts    []splitEvidenceContext `json:"build_contexts"`
-	Write            splitWriteEvidence     `json:"write"`
+	Write            splitWriteEvidence     `json:"write_receipt"`
 }
 
 type splitEvidenceFile struct {
