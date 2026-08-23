@@ -523,6 +523,28 @@ jobs:
             cd "$query_first/binding"
             sha256sum artifact.json > artifact.json.sha256
           )
+          interop_first="$RUNNER_TEMP/language-go-interoperation/first"
+          interop_replay="$RUNNER_TEMP/language-go-interoperation/replay"
+          mkdir -p "$interop_first" "$interop_replay"
+          for target in "$interop_first" "$interop_replay"; do
+            go run ./cmd/language-go-interoperation-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --readiness "$readiness_first/artifact.json" \
+              --concept "$first/artifact.json" \
+              --interop-output "$target/interop/artifact.json" \
+              --binding-output "$target/binding/artifact.json"
+          done
+          cmp -s "$interop_first/interop/artifact.json" "$interop_replay/interop/artifact.json"
+          cmp -s "$interop_first/binding/artifact.json" "$interop_replay/binding/artifact.json"
+          (
+            cd "$interop_first/interop"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          (
+            cd "$interop_first/binding"
+            sha256sum artifact.json > artifact.json.sha256
+          )
           improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
           improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
           baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
@@ -625,6 +647,20 @@ jobs:
         with:
           name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-deterministic-query/first/binding
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head Go interoperation
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-go-interoperation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-go-interoperation/first/interop
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head Go interoperation readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-go-interoperation-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-go-interoperation/first/binding
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
