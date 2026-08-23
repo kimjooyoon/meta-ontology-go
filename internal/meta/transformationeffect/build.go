@@ -52,5 +52,8 @@ func Build(opts Options) (Result, error) {
 	if err := validateLedger(ledger); err != nil {
 		return Result{}, err
 	}
+	if err := validateSplitGoEffects(ledger.Effects); err != nil {
+		return Result{}, err
+	}
 	return Result{ledger, executed.patch, executed.receipts, executed.provenance}, nil
 }

@@ -50,14 +50,15 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 		}
 		evidence := hashJSON([]any{action.IndicatorID, hashBytes(preflight), hashBytes(applied),
 			before.Digest, after.Digest, hashJSON(changes), hashBytes(metricPayload), residual})
-		observations := make([]generation.IndicatorReceipt, 0, len(action.RequiredIndicatorIDs))
-		for _, id := range action.RequiredIndicatorIDs {
-			observations = append(observations, generation.IndicatorReceipt{ID: id,
-				Verdict: generation.IndicatorVerdictPass, EvidenceDigest: hashJSON([]string{evidence, id}), ProofChoice: action.ProofChoice})
+		observations, splitGoEvaluation, evidence, err := operationObservations(box.Root, action, applied, evidence)
+		if err != nil {
+			return result, err
 		}
 		receipt := generation.SealReceipt(in.plan, action, observations)
 		sealed = append(sealed, receipt)
-		result.effects = append(result.effects, effectFor(action, before, after, changes, evidence, receipt.ReceiptDigest))
+		effect := effectFor(action, before, after, changes, evidence, receipt.ReceiptDigest)
+		effect.SplitGoEvaluation = splitGoEvaluation
+		result.effects = append(result.effects, effect)
 	}
 	result.final, err = workspace.Scan(box.Root)
 	if err != nil {

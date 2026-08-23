@@ -22,14 +22,7 @@ func runAction(box *workspace.Sandbox, opts Options, plan generation.Plan, actio
 	if executor == "" || action.Executor != executor || action.Evaluator != executor+":check" {
 		return nil, fmt.Errorf("unbound executor for %s", action.Operation)
 	}
-	args := []string{"run", "./" + executor, "-root", box.Root, "-metrics", opts.MetricsPath,
-		"-sha", opts.ExpectedSHA, "-subject", action.Subject}
-	if action.Operation == sourcepolicy.OperationCollapseAssign {
-		args = append(args, "-base-sha", plan.BaseSHA)
-	}
-	if check {
-		args = append(args, "-check")
-	}
+	args := actionArguments(executor, box.Root, opts, plan, action, check)
 	output, err := workspace.RunCombined(box.Root, os.Environ(), "go", args...)
 	if err != nil {
 		return nil, fmt.Errorf("%s check=%t: %w: %s", executor, check, err, output)

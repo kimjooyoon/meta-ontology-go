@@ -160,7 +160,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/zerolang-research` | `docs/research/zerolang.md` |
 | `agent/source-splitter-conformance-governance` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_source_splitter_conformance.go` |
 | `agent/source-splitter-conformance-fail-closed` | `internal/meta/transformationeffect/**` |
-| `agent/source-splitter-conformance-contract` | `docs/language/source-splitter-operation-conformance-v1.md`, `examples/source-splitter-conformance/**` |
+| `agent/source-splitter-conformance-contract` | `docs/language/source-splitter-operation-conformance-v1.md`, `examples/language-syntax-roundtrip/corpus.json`, `examples/source-splitter-conformance/**` |
 | `agent/source-splitter-conformance-evaluator` | `internal/meta/operationconformance/**`, `scripts/source-splitter/**` |
 | `agent/source-splitter-conformance-adapter` | `internal/meta/generation/registry.go`, `internal/meta/transformationeffect/**` |
 | `agent/source-splitter-conformance-ci` | `.github/workflows/transformation-effect.yml`, `scripts/source-splitter-conformance-ci/**` |
