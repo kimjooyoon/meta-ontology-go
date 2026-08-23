@@ -37,14 +37,19 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 		if err != nil {
 			return readinessartifact.Receipt{}, err
 		}
-		packageRuntimeReport, err := os.ReadFile(cfg.packageRuntime)
-		if err != nil {
-			return readinessartifact.Receipt{}, err
-		}
-		return readinessartifact.BuildWithPromotionEvidence(
-			raw, promotion, guarded, useCases, syntaxReport,
-			diagnosticReport, cfg.expectedSHA, packageRuntimeReport,
-		)
+			packageRuntimeReport, err := os.ReadFile(cfg.packageRuntime)
+			if err != nil {
+				return readinessartifact.Receipt{}, err
+			}
+			toolchainCLIReport, err := os.ReadFile(cfg.toolchainCLI)
+			if err != nil {
+				return readinessartifact.Receipt{}, err
+			}
+			return readinessartifact.BuildWithCompleteEvidence(readinessartifact.CompleteEvidenceInput{
+				ConceptArtifact: raw, Promotion: promotion, Capability: guarded, UseCases: useCases,
+				Syntax: syntaxReport, Diagnostic: diagnosticReport, PackageRuntime: packageRuntimeReport,
+				ToolchainCLI: toolchainCLIReport, HeadSHA: cfg.expectedSHA,
+			})
 	}
 	return readinessartifact.BuildWithProposalPromotion(raw, promotion, cfg.expectedSHA)
 }

@@ -503,6 +503,38 @@ jobs:
             cd "$runtime_first"
             sha256sum artifact.json > artifact.json.sha256
           )
+          cli_root="$RUNNER_TEMP/toolchain-cli"
+          cli_binary="$cli_root/gooo"
+          cli_first="$cli_root/first"
+          cli_replay="$cli_root/replay"
+          cli_corpus="$GITHUB_WORKSPACE/examples/toolchain-cli/corpus.json"
+          mkdir -p "$cli_first" "$cli_replay"
+          go build -trimpath -o "$cli_binary" ./cmd/gooo
+          for target in "$cli_first" "$cli_replay"; do
+            go run ./cmd/toolchain-cli-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --executable "$cli_binary" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$cli_corpus" \
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'toolchain-cli artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
+          done
+          cmp -s "$cli_first/artifact.json" "$cli_replay/artifact.json"
+          go run ./cmd/toolchain-cli-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --executable "$cli_binary" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$cli_corpus" \
+            --check "$cli_first/artifact.json"
+          (
+            cd "$cli_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
           readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
           readiness_replay="$RUNNER_TEMP/language-readiness-artifact/replay"
           mkdir -p "$readiness_first" "$readiness_replay"
@@ -516,6 +548,7 @@ jobs:
               -language-syntax-roundtrip "$syntax_first/artifact.json" \
               -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
               -language-package-runtime "$runtime_first/artifact.json" \
+              -toolchain-cli "$cli_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
           done
@@ -529,6 +562,7 @@ jobs:
             -language-syntax-roundtrip "$syntax_first/artifact.json" \
             -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
             -language-package-runtime "$runtime_first/artifact.json" \
+            -toolchain-cli "$cli_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
           (
@@ -771,6 +805,13 @@ jobs:
         with:
           name: language-package-runtime-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-package-runtime/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head toolchain CLI
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-cli-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-cli/first
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
