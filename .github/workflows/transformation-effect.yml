@@ -424,13 +424,32 @@ jobs:
               --output "$target/artifact.json"
           done
           cmp -s "$syntax_first/artifact.json" "$syntax_replay/artifact.json"
-          go run ./cmd/language-syntax-witness \
-            --root "$GITHUB_WORKSPACE" \
-            --head "$HEAD_SHA" \
-            --registry "$syntax_registry" \
-            --concept-artifact "$first/artifact.json" \
-            --check "$syntax_first/artifact.json"
-          readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
+go run ./cmd/language-syntax-witness \
+  --root "$GITHUB_WORKSPACE" \
+  --head "$HEAD_SHA" \
+  --registry "$syntax_registry" \
+  --concept-artifact "$first/artifact.json" \
+  --check "$syntax_first/artifact.json"
+semantic_first="$RUNNER_TEMP/language-semantic-model/first"
+semantic_replay="$RUNNER_TEMP/language-semantic-model/replay"
+semantic_registry="$GITHUB_WORKSPACE/examples/language-semantic-model/corpus.json"
+mkdir -p "$semantic_first" "$semantic_replay"
+for target in "$semantic_first" "$semantic_replay"; do
+  go run ./cmd/language-semantic-witness \
+    --root "$GITHUB_WORKSPACE" \
+    --head "$HEAD_SHA" \
+    --registry "$semantic_registry" \
+    --syntax-artifact "$syntax_first/artifact.json" \
+    --output "$target/artifact.json"
+done
+cmp -s "$semantic_first/artifact.json" "$semantic_replay/artifact.json"
+go run ./cmd/language-semantic-witness \
+  --root "$GITHUB_WORKSPACE" \
+  --head "$HEAD_SHA" \
+  --registry "$semantic_registry" \
+  --syntax-artifact "$syntax_first/artifact.json" \
+  --check "$semantic_first/artifact.json"
+readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
           readiness_replay="$RUNNER_TEMP/language-readiness-artifact/replay"
           mkdir -p "$readiness_first" "$readiness_replay"
           for target in "$readiness_first" "$readiness_replay"; do
@@ -532,6 +551,13 @@ jobs:
         with:
           name: language-concept-artifact-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-concept-artifact/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head language semantic model
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-semantic-model-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-semantic-model/first/artifact.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
