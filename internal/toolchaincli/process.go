@@ -25,8 +25,7 @@ func invoke(executable, root string, arguments []string) (Observation, error) {
 	} else if stdout.overflow || stderr.overflow {
 		result.ExitCode, result.Failure = -1, "INVOCATION_OUTPUT_LIMIT"
 	} else if err != nil {
-		var exitError *exec.ExitError
-		if errors.As(err, &exitError) {
+		if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 			result.ExitCode = exitError.ExitCode()
 		} else {
 			return result, err
