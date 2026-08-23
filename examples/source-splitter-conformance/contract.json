@@ -55,7 +55,7 @@
       "rule_id": "import-alias-path-multiset-v1"
     },
     {
-      "id": "go.initialization-order/v1",
+      "id": "go.initialization.order/v1",
       "role": "OUTCOME",
       "route": "FOUNDATION",
       "rule_id": "initialization-and-lexical-order-v1"
@@ -196,7 +196,7 @@
     },
     {
       "id": "initialization-order/pass",
-      "indicator_id": "go.initialization-order/v1",
+      "indicator_id": "go.initialization.order/v1",
       "expected": "PASS",
       "observation": {
         "evidence_complete": true,
@@ -208,7 +208,7 @@
     },
     {
       "id": "initialization-order/fail",
-      "indicator_id": "go.initialization-order/v1",
+      "indicator_id": "go.initialization.order/v1",
       "expected": "FAIL",
       "observation": {
         "evidence_complete": true,
@@ -220,7 +220,7 @@
     },
     {
       "id": "initialization-order/unknown",
-      "indicator_id": "go.initialization-order/v1",
+      "indicator_id": "go.initialization.order/v1",
       "expected": "UNKNOWN",
       "observation": {
         "evidence_complete": false,
