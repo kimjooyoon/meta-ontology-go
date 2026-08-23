@@ -667,7 +667,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/language-assurance.yml",
+        ".github/workflows/self-improvement-contract.yml",
         "cmd/language-assurance-witness/**",
         "docs/language/language-assurance-kernel.md",
         "examples/language-assurance-kernel/**",
