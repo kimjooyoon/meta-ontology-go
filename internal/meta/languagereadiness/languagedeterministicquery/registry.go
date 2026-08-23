@@ -32,11 +32,7 @@ var fixedMetricBindings = []string{
 	"gooo.metric.language.deterministic-query-mutation-authorities.guardrail.v1",
 }
 
-var fixedUseCases = []string{
-	"query-meta-bindings",
-	"replay-query-plan",
-	"reject-query-unknowns",
-}
+var fixedUseCases = []string{"query-meta-bindings", "replay-query-plan", "reject-query-unknowns"}
 
 func Registry() PlanRegistry {
 	cases := bindingDefinitions()
@@ -48,12 +44,7 @@ func bindingDefinitions() []Definition {
 	bindings := []struct {
 		class string
 		items []string
-	}{
-		{BindingConcept, []string{ConceptID}},
-		{BindingCode, fixedCodeBindings},
-		{BindingMetric, fixedMetricBindings},
-		{BindingUseCase, fixedUseCases},
-	}
+	}{{BindingConcept, []string{ConceptID}}, {BindingCode, fixedCodeBindings}, {BindingMetric, fixedMetricBindings}, {BindingUseCase, fixedUseCases}}
 	definitions := make([]Definition, 0, FixedBindingPlans)
 	for _, binding := range bindings {
 		for _, item := range binding.items {
@@ -64,14 +55,7 @@ func bindingDefinitions() []Definition {
 }
 
 func bindingDefinition(index int, class, binding string) Definition {
-	return Definition{
-		ID:            fmt.Sprintf("binding-%02d", index+1),
-		Kind:          CaseBinding,
-		BindingClass:  class,
-		Binding:       binding,
-		ProofChoice:   bindingProofChoice(class),
-		MetaOperation: "query-reified-meta-binding",
-	}
+	return Definition{ID: fmt.Sprintf("binding-%02d", index+1), Kind: CaseBinding, BindingClass: class, Binding: binding, ProofChoice: bindingProofChoice(class), MetaOperation: "query-reified-meta-binding"}
 }
 
 func bindingProofChoice(class string) string {

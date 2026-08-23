@@ -1,16 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept"
 	readinessartifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquery"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagedeterministicquerybinding"
+	"os"
 )
 
 func run(arguments []string) error {
@@ -54,34 +51,4 @@ func run(arguments []string) error {
 		return fmt.Errorf("query/binding decisions %s/%s", queryReport.Decision, binding.Decision)
 	}
 	return nil
-}
-
-func loadJSON[T any](path string) (T, error) {
-	var value T
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return value, err
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return value, err
-	}
-	return value, nil
-}
-
-func writeOutputs(queryPath, bindingPath string, queryReport, binding any) error {
-	if err := writeJSON(queryPath, queryReport); err != nil {
-		return err
-	}
-	return writeJSON(bindingPath, binding)
-}
-
-func writeJSON(path string, value any) error {
-	raw, err := json.MarshalIndent(value, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(path, append(raw, '\n'), 0o644)
 }

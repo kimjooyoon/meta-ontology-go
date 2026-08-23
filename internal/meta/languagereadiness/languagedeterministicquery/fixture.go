@@ -24,10 +24,7 @@ func buildFixture(concept languageconcept.Concept) (graphFixture, error) {
 	fixture := graphFixture{Targets: make(map[string]queryengine.ID)}
 	fixture.ConceptID = stableID("concept", concept.ID)
 	fixture.OperationID = stableID("operation", concept.MetaOperation)
-	fixture.Nodes = append(fixture.Nodes,
-		node(fixture.ConceptID, queryengine.EntityNodeKind, concept.ID),
-		node(fixture.OperationID, queryengine.ActivityNodeKind, concept.MetaOperation),
-	)
+	fixture.Nodes = append(fixture.Nodes, node(fixture.ConceptID, queryengine.EntityNodeKind, concept.ID), node(fixture.OperationID, queryengine.ActivityNodeKind, concept.MetaOperation))
 	fixture.Facts = append(fixture.Facts, queryengine.NewFact(fixture.ConceptID, queryengine.WasGeneratedBy, fixture.OperationID))
 	appendBindings(&fixture, BindingCode, concept.CodeBindings)
 	appendBindings(&fixture, BindingMetric, concept.MetricBindings)
@@ -56,13 +53,8 @@ func appendBindings(fixture *graphFixture, class string, bindings []string) {
 func appendCandidateLaw(fixture *graphFixture) {
 	fixture.CandidateEntityID = stableID("law-candidate-entity", ConceptID)
 	fixture.CandidateActionID = stableID("law-candidate-action", ConceptID)
-	fixture.Nodes = append(fixture.Nodes,
-		node(fixture.CandidateEntityID, queryengine.EntityNodeKind, "candidate-entity"),
-		node(fixture.CandidateActionID, queryengine.ActivityNodeKind, "candidate-action"),
-	)
-	fixture.Candidates = append(fixture.Candidates, queryengine.NewCandidateFact(
-		fixture.CandidateEntityID, queryengine.WasGeneratedBy, fixture.CandidateActionID, "law-only-candidate",
-	))
+	fixture.Nodes = append(fixture.Nodes, node(fixture.CandidateEntityID, queryengine.EntityNodeKind, "candidate-entity"), node(fixture.CandidateActionID, queryengine.ActivityNodeKind, "candidate-action"))
+	fixture.Candidates = append(fixture.Candidates, queryengine.NewCandidateFact(fixture.CandidateEntityID, queryengine.WasGeneratedBy, fixture.CandidateActionID, "law-only-candidate"))
 }
 
 func stableID(kind, value string) queryengine.ID {
