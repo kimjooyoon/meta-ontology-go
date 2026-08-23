@@ -7,6 +7,7 @@ const (
 	languageSyntaxConcept     = "language-syntax-roundtrip"
 	diagnosticConcept         = "language-diagnostic-provenance"
 	packageRuntimeConcept     = "language-package-runtime"
+	toolchainCLIConcept       = "toolchain-cli"
 )
 
 type evidenceDigests struct {
@@ -16,6 +17,7 @@ type evidenceDigests struct {
 	syntax         string
 	diagnostic     string
 	packageRuntime string
+	toolchainCLI   string
 }
 
 type externalEvidence struct {
@@ -37,6 +39,8 @@ func requiredEvidence(conceptID string, evidence evidenceDigests) (string, strin
 		return evidence.diagnostic, "LANGUAGE_DIAGNOSTIC_PROVENANCE_RECEIPT_REQUIRED", true
 	case packageRuntimeConcept:
 		return evidence.packageRuntime, "LANGUAGE_PACKAGE_RUNTIME_RECEIPT_REQUIRED", true
+	case toolchainCLIConcept:
+		return evidence.toolchainCLI, "TOOLCHAIN_CLI_RECEIPT_REQUIRED", true
 	default:
 		return "", "", false
 	}

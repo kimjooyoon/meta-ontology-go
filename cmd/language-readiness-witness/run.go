@@ -35,11 +35,15 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.packageRuntime != "" {
 		paths = append(paths, cfg.packageRuntime)
 	}
+	if cfg.toolchainCLI != "" {
+		paths = append(paths, cfg.toolchainCLI)
+	}
 	if (cfg.guarded == "") != (cfg.useCases == "") ||
 		(cfg.guarded == "") != (cfg.syntax == "") ||
 		(cfg.guarded == "") != (cfg.diagnostic == "") ||
-		(cfg.guarded == "") != (cfg.packageRuntime == "") {
-		return fmt.Errorf("guarded-capability, toolchain-use-cases, syntax, diagnostic, and package-runtime evidence must be provided together")
+		(cfg.guarded == "") != (cfg.packageRuntime == "") ||
+		(cfg.guarded == "") != (cfg.toolchainCLI == "") {
+		return fmt.Errorf("guarded-capability, use-cases, syntax, diagnostic, package-runtime, and toolchain-cli evidence must be provided together")
 	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err
