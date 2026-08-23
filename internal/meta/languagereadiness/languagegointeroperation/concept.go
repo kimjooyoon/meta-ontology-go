@@ -15,9 +15,7 @@ var fixedCodeBindings = []string{
 	"examples/language-go-interoperation",
 }
 
-var fixedUseCases = []string{
-	"project-gooo-to-go-api", "consume-go-1.27-boundary", "reject-go-boundary-unknowns",
-}
+var fixedUseCases = []string{"project-gooo-to-go-api", "consume-go-1.27-boundary", "reject-go-boundary-unknowns"}
 
 type conceptObservation struct {
 	Concept languageconcept.Concept

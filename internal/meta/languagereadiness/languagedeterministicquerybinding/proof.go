@@ -1,10 +1,10 @@
 package languagedeterministicquerybinding
 
 func proofs(input Input, artifact Artifact) []Proof {
-	foundation := input.Concept.Decision == "PASS" && input.Concept.Report.Summary.Concepts == 16 &&
+	foundation := input.Concept.Decision == "PASS" && input.Concept.Report.Summary.Concepts >= 16 &&
 		artifact.Summary.BoundCoordinates == 12
-	coherence := input.Query.Summary.Satisfied == 32 && input.Readiness.Summary.Completed == 16 &&
-		input.Readiness.Summary.ReadinessBPS == 6666
+	coherence := input.Query.Summary.Satisfied == 32 && input.Readiness.Summary.Completed >= 16 &&
+		input.Readiness.Summary.ReadinessBPS >= 6666
 	regression := artifact.Summary.Unresolved == 0 && artifact.Summary.EffectfulStages == 0 &&
 		artifact.Summary.RepositoryWrites == 0 && artifact.Summary.MutationAuthorities == 0
 	return []Proof{

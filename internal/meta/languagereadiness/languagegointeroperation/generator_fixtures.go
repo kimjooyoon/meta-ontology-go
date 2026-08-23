@@ -39,7 +39,7 @@ func port(id, name string, value generator.Entity) generator.Port {
 
 func flowActivity(id, name string, input, output generator.Entity) generator.Activity {
 	return generator.Activity{ID: id, Name: name, GoName: name,
-		Inputs: []generator.Port{port("port:"+name+":in", "input", input)},
+		Inputs:  []generator.Port{port("port:"+name+":in", "input", input)},
 		Outputs: []generator.Port{port("port:"+name+":out", "output", output)}}
 }
 
@@ -57,8 +57,7 @@ func twoInputModel(source, artifact generator.Entity) generator.SemanticIR {
 
 func twoActivityModel(source, artifact generator.Entity) generator.SemanticIR {
 	compile := flowActivity("activity:compile", "Compile", source, artifact)
-	publish := generator.Activity{ID: "activity:publish", Name: "Publish", GoName: "Publish",
-		Inputs: []generator.Port{port("port:publish:artifact", "artifact", artifact)}}
+	publish := generator.Activity{ID: "activity:publish", Name: "Publish", GoName: "Publish", Inputs: []generator.Port{port("port:publish:artifact", "artifact", artifact)}}
 	return generator.SemanticIR{Package: "interopgen", Entities: []generator.Entity{source, artifact}, Activities: []generator.Activity{compile, publish}}
 }
 
