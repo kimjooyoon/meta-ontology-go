@@ -11,6 +11,7 @@ func init() {
 	}
 	branchScopeAllowlist["agent/source-splitter-conformance-contract"] = []string{
 		"docs/language/source-splitter-operation-conformance-v1.md",
+		"examples/language-syntax-roundtrip/corpus.json",
 		"examples/source-splitter-conformance",
 	}
 	branchScopeAllowlist["agent/source-splitter-conformance-evaluator"] = []string{

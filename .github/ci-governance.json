@@ -1450,7 +1450,8 @@
       "branch": "agent/source-splitter-conformance-contract",
       "paths": [
         "docs/language/source-splitter-operation-conformance-v1.md",
-        "examples/source-splitter-conformance/**"
+        "examples/source-splitter-conformance/**",
+        "examples/language-syntax-roundtrip/corpus.json"
       ]
     },
     {
