@@ -2,25 +2,8 @@ package replay
 
 import (
 	"fmt"
-
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
-
-type LawObservation struct {
-	AnchorPath                     string `json:"anchor_path"`
-	PresentationChanged            bool   `json:"presentation_changed"`
-	PresentationInvariant          bool   `json:"presentation_invariant"`
-	CandidateRecorded              bool   `json:"candidate_recorded"`
-	CandidateNonAuthoritative      bool   `json:"candidate_non_authoritative"`
-	DeterministicRecorded          bool   `json:"deterministic_recorded"`
-	DeterministicAuthoritative     bool   `json:"deterministic_authoritative"`
-	StructureSemanticHash          string `json:"structure_semantic_hash"`
-	PresentationSemanticHash       string `json:"presentation_semantic_hash"`
-	CandidateSemanticHash          string `json:"candidate_semantic_hash"`
-	DeterministicSemanticHash      string `json:"deterministic_semantic_hash"`
-	CandidateCanonicalChanged      bool   `json:"candidate_canonical_changed"`
-	DeterministicCanonicalChanged  bool   `json:"deterministic_canonical_changed"`
-}
 
 func ObserveLaws(anchorPath string, input semantic.IR) (LawObservation, error) {
 	base, err := input.Normalized()
@@ -91,14 +74,4 @@ func ObserveLaws(anchorPath string, input semantic.IR) (LawObservation, error) {
 		CandidateCanonicalChanged:     structure.Canonical() != candidateIR.Canonical(),
 		DeterministicCanonicalChanged: structure.Canonical() != deterministicIR.Canonical(),
 	}, nil
-}
-
-func structureOnly(input semantic.IR) (semantic.IR, error) {
-	out := semantic.NewIR(input.Package, input.Namespace)
-	for _, node := range input.Graph.Nodes() {
-		if err := out.AddNode(node); err != nil {
-			return semantic.IR{}, err
-		}
-	}
-	return out.Normalized()
 }
