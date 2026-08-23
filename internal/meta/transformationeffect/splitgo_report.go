@@ -12,7 +12,7 @@ type splitGoIndicatorCandidate struct {
 	raw     []byte
 }
 
-func projectSplitGoReport(reportRaw []byte, requiredIDs []string) ([]generationReceipt, string, []string, error) {
+func projectSplitGoReport(reportRaw []byte, requiredIDs []string, proofChoice string) ([]generationReceipt, string, []string, error) {
 	var reportTree any
 	if err := json.Unmarshal(reportRaw, &reportTree); err != nil {
 		return nil, "", nil, fmt.Errorf("decode SplitGo evaluator report: %w", err)
@@ -43,7 +43,7 @@ func projectSplitGoReport(reportRaw []byte, requiredIDs []string) ([]generationR
 		if verdict == "UNKNOWN" {
 			resolution = "LOWER_RESOLUTION"
 		}
-		receipt, err := newSplitGoReceipt(id, verdict, splitGoDigestHex(digestMaterial))
+		receipt, err := newSplitGoReceipt(id, verdict, splitGoDigestHex(digestMaterial), proofChoice)
 		if err != nil {
 			return nil, "", nil, err
 		}

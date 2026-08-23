@@ -8,7 +8,7 @@ import (
 func TestProjectSplitGoReportRejectsIncompleteIndicatorSet(t *testing.T) {
 	last := len(splitGoTestIndicatorIDs) - 1
 	report := splitGoTestReport("PASS", "PASS", splitGoTestIndicatorIDs[:last])
-	receipts, resolution, reasons, err := projectSplitGoReport(report, splitGoTestIndicatorIDs)
+	receipts, resolution, reasons, err := projectSplitGoReport(report, splitGoTestIndicatorIDs, "FOUNDATION")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestProjectSplitGoReportPreservesExplicitFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	receipts, resolution, reasons, err := projectSplitGoReport(report, splitGoTestIndicatorIDs)
+	receipts, resolution, reasons, err := projectSplitGoReport(report, splitGoTestIndicatorIDs, "FOUNDATION")
 	if err != nil {
 		t.Fatal(err)
 	}

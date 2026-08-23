@@ -13,22 +13,23 @@ type Indicator struct {
 }
 
 type Effect struct {
-	ActionIndicatorID  string `json:"action_indicator_id"`
-	MetricID           string `json:"metric_id"`
-	Subject            string `json:"subject"`
-	SubjectKind        string `json:"subject_kind"`
-	Operation          string `json:"operation"`
-	Executor           string `json:"executor"`
-	Evaluator          string `json:"evaluator"`
-	ProofChoice        string `json:"proof_choice"`
-	BeforeTreeDigest   string `json:"before_tree_digest"`
-	AfterTreeDigest    string `json:"after_tree_digest"`
-	ChangedPathCount   int    `json:"changed_path_count"`
-	ChangedPathDigest  string `json:"changed_path_digest"`
-	ResidualActionable int    `json:"residual_actionable_count"`
-	EvaluatorEvidence  string `json:"evaluator_evidence_digest"`
-	ReceiptDigest      string `json:"receipt_digest"`
-	Status             string `json:"status"`
+	ActionIndicatorID  string                     `json:"action_indicator_id"`
+	MetricID           string                     `json:"metric_id"`
+	Subject            string                     `json:"subject"`
+	SubjectKind        string                     `json:"subject_kind"`
+	Operation          string                     `json:"operation"`
+	Executor           string                     `json:"executor"`
+	Evaluator          string                     `json:"evaluator"`
+	ProofChoice        string                     `json:"proof_choice"`
+	BeforeTreeDigest   string                     `json:"before_tree_digest"`
+	AfterTreeDigest    string                     `json:"after_tree_digest"`
+	ChangedPathCount   int                        `json:"changed_path_count"`
+	ChangedPathDigest  string                     `json:"changed_path_digest"`
+	ResidualActionable int                        `json:"residual_actionable_count"`
+	EvaluatorEvidence  string                     `json:"evaluator_evidence_digest"`
+	ReceiptDigest      string                     `json:"receipt_digest"`
+	Status             string                     `json:"status"`
+	SplitGoEvaluation  *SplitGoEvaluationArtifact `json:"split_go_evaluation,omitempty"`
 }
 
 type Ledger struct {

@@ -7,7 +7,7 @@ import (
 
 func TestProjectSplitGoReportPassesExactFixedDenominator(t *testing.T) {
 	report := splitGoTestReport("PASS", "PASS", splitGoTestIndicatorIDs)
-	receipts, resolution, reasons, err := projectSplitGoReport(report, splitGoTestIndicatorIDs)
+	receipts, resolution, reasons, err := projectSplitGoReport(report, splitGoTestIndicatorIDs, "FOUNDATION")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestProjectSplitGoReportPassesExactFixedDenominator(t *testing.T) {
 
 func TestProjectSplitGoReportLowersUnknownTopDecision(t *testing.T) {
 	report := splitGoTestReport("UNRECOGNIZED", "PASS", splitGoTestIndicatorIDs)
-	receipts, resolution, reasons, err := projectSplitGoReport(report, splitGoTestIndicatorIDs)
+	receipts, resolution, reasons, err := projectSplitGoReport(report, splitGoTestIndicatorIDs, "FOUNDATION")
 	if err != nil {
 		t.Fatal(err)
 	}
