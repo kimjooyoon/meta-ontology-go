@@ -535,6 +535,36 @@ jobs:
             cd "$cli_first"
             sha256sum artifact.json > artifact.json.sha256
           )
+          format_fix_root="$RUNNER_TEMP/toolchain-format-fix"
+          format_fix_first="$format_fix_root/first"
+          format_fix_replay="$format_fix_root/replay"
+          format_fix_corpus="$GITHUB_WORKSPACE/examples/toolchain-format-fix/corpus.json"
+          mkdir -p "$format_fix_first" "$format_fix_replay"
+          for target in "$format_fix_first" "$format_fix_replay"; do
+            go run ./cmd/toolchain-format-fix-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --executable "$cli_binary" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$format_fix_corpus" \
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'toolchain-format-fix artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
+          done
+          cmp -s "$format_fix_first/artifact.json" "$format_fix_replay/artifact.json"
+          go run ./cmd/toolchain-format-fix-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --executable "$cli_binary" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$format_fix_corpus" \
+            --check "$format_fix_first/artifact.json"
+          (
+            cd "$format_fix_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
           readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
           readiness_replay="$RUNNER_TEMP/language-readiness-artifact/replay"
           mkdir -p "$readiness_first" "$readiness_replay"
@@ -549,6 +579,7 @@ jobs:
               -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
               -language-package-runtime "$runtime_first/artifact.json" \
               -toolchain-cli "$cli_first/artifact.json" \
+              -toolchain-format-fix "$format_fix_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
           done
@@ -563,6 +594,7 @@ jobs:
             -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
             -language-package-runtime "$runtime_first/artifact.json" \
             -toolchain-cli "$cli_first/artifact.json" \
+            -toolchain-format-fix "$format_fix_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
           (
@@ -812,6 +844,13 @@ jobs:
         with:
           name: toolchain-cli-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-cli/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head toolchain format/fix
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-format-fix-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-format-fix/first
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
