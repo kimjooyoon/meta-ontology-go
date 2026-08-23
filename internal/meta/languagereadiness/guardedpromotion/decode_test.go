@@ -67,3 +67,10 @@ func TestPromotionEvidenceWorkflowSeparatesProducerFromJudge(t *testing.T) {
 		t.Fatal("promotion evidence producer depends on its judge")
 	}
 }
+
+func TestUseCaseSuccessfulMetricEvidenceFeedsNextPromotion(t *testing.T) {
+	const want = ".github/workflows/metric-counterfactual.yml"
+	if TransformationPath != want {
+		t.Fatalf("promotion evidence workflow = %q, want %q", TransformationPath, want)
+	}
+}
