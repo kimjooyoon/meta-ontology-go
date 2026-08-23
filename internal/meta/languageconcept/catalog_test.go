@@ -11,7 +11,7 @@ func TestCatalogBindsConceptsToMetaCode(t *testing.T) {
 	if report.Decision != "PASS" || report.Reason != "LANGUAGE_CONCEPT_CATALOG_BOUND" {
 		t.Fatalf("got %s/%s: %v", report.Decision, report.Reason, report.MissingBindings)
 	}
-	if report.Summary.Concepts != 22 || report.Summary.Unbound != 0 || report.Summary.UnverifiedNovelty != 0 {
+	if report.Summary.Concepts != 23 || report.Summary.Unbound != 0 || report.Summary.UnverifiedNovelty != 0 {
 		t.Fatalf("summary = %#v", report.Summary)
 	}
 	if len(report.Indicators) != 7 || len(report.Proofs) != 3 || report.ReportDigest == "" {
