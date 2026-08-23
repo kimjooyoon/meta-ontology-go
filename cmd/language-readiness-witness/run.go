@@ -16,37 +16,7 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.check != "" {
 		target = cfg.check
 	}
-	paths := []string{cfg.input, target}
-	if cfg.promotion != "" {
-		paths = append(paths, cfg.promotion)
-	}
-	if cfg.guarded != "" {
-		paths = append(paths, cfg.guarded)
-	}
-	if cfg.useCases != "" {
-		paths = append(paths, cfg.useCases)
-	}
-	if cfg.syntax != "" {
-		paths = append(paths, cfg.syntax)
-	}
-	if cfg.diagnostic != "" {
-		paths = append(paths, cfg.diagnostic)
-	}
-	if cfg.packageRuntime != "" {
-		paths = append(paths, cfg.packageRuntime)
-	}
-	if cfg.toolchainCLI != "" {
-		paths = append(paths, cfg.toolchainCLI)
-	}
-	if cfg.toolchainFormatFix != "" {
-		paths = append(paths, cfg.toolchainFormatFix)
-	}
-	if cfg.toolchainLSP != "" {
-		paths = append(paths, cfg.toolchainLSP)
-	}
-	if cfg.toolchainConformance != "" {
-		paths = append(paths, cfg.toolchainConformance)
-	}
+	paths := completePaths(cfg, target)
 	if (cfg.guarded == "") != (cfg.useCases == "") ||
 		(cfg.guarded == "") != (cfg.syntax == "") ||
 		(cfg.guarded == "") != (cfg.diagnostic == "") ||
@@ -60,6 +30,9 @@ func run(cfg config, stdout io.Writer) error {
 	}
 	if cfg.toolchainLSP != "" && cfg.toolchainConformance == "" {
 		return fmt.Errorf("toolchain-lsp requires toolchain-conformance evidence")
+	}
+	if cfg.toolchainRelease != "" && cfg.toolchainLSP == "" {
+		return fmt.Errorf("toolchain cross-platform release requires toolchain-lsp evidence")
 	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err

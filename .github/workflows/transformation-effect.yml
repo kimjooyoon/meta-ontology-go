@@ -12,6 +12,69 @@ permissions:
   contents: read
 
 jobs:
+  cross-platform-release:
+    name: cross-platform release (${{ matrix.platform }})
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+          - platform: darwin-amd64
+            runner: macos-15-intel
+            goos: darwin
+            goarch: amd64
+          - platform: windows-amd64
+            runner: windows-2025
+            goos: windows
+            goarch: amd64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Build, execute, and replay native release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/toolchain-release-${{ matrix.platform }}"
+          go run ./cmd/toolchain-release-platform-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --output-dir "$output" \
+            --expected-head "$HEAD_SHA" \
+            --platform-id "${{ matrix.platform }}" \
+            --runner "${{ matrix.runner }}" \
+            --expected-goos "${{ matrix.goos }}" \
+            --expected-goarch "${{ matrix.goarch }}"
+      - name: Upload exact platform release receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-release-platform-${{ matrix.platform }}-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-release-${{ matrix.platform }}
+          if-no-files-found: error
+          retention-days: 30
+
   guarded-promotion-receipt:
     name: guarded-promotion-receipt
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -210,6 +273,7 @@ jobs:
           retention-days: 30
 
   language-concept-artifact:
+    needs: [cross-platform-release]
     if: >-
       github.event_name == 'pull_request' ||
       (
@@ -232,6 +296,12 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: 1.27.0
+      - name: Download exact platform release receipts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: toolchain-release-platform-*-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-release-platforms
+          merge-multiple: true
       - name: Prove merged autonomous change proposal
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -392,6 +462,30 @@ jobs:
             cd "$first"
             sha256sum artifact.json > artifact.json.sha256
           )
+          release_first="$RUNNER_TEMP/toolchain-cross-platform-release/first"
+          release_replay="$RUNNER_TEMP/toolchain-cross-platform-release/replay"
+          release_corpus="$GITHUB_WORKSPACE/examples/toolchain-cross-platform-release/corpus.json"
+          release_receipts="$RUNNER_TEMP/toolchain-release-platforms"
+          mkdir -p "$release_first" "$release_replay"
+          for target in "$release_first" "$release_replay"; do
+            go run ./cmd/toolchain-release-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$release_corpus" \
+              --receipts "$release_receipts" \
+              --output "$target/artifact.json" \
+              --bundle "$target/bundle"
+          done
+          diff -qr "$release_first" "$release_replay"
+          go run ./cmd/toolchain-release-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$release_corpus" \
+            --receipts "$release_receipts" \
+            --check "$release_first/artifact.json" \
+            --bundle "$release_first/bundle"
           lsp_first="$RUNNER_TEMP/toolchain-lsp/first"
           lsp_replay="$RUNNER_TEMP/toolchain-lsp/replay"
           lsp_corpus="$GITHUB_WORKSPACE/examples/toolchain-lsp/corpus.json"
@@ -780,6 +874,7 @@ jobs:
               -toolchain-format-fix "$format_fix_first/artifact.json" \
               -toolchain-lsp "$lsp_first/artifact.json" \
               -toolchain-conformance "$conformance_first/artifact.json" \
+              -toolchain-cross-platform-release "$release_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
           done
@@ -797,6 +892,7 @@ jobs:
             -toolchain-format-fix "$format_fix_first/artifact.json" \
             -toolchain-lsp "$lsp_first/artifact.json" \
             -toolchain-conformance "$conformance_first/artifact.json" \
+            -toolchain-cross-platform-release "$release_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
           (
@@ -968,6 +1064,13 @@ jobs:
         with:
           name: toolchain-lsp-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-lsp/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head cross-platform release
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-cross-platform-release-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-cross-platform-release/first
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
