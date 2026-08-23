@@ -31,6 +31,12 @@ func buildComplete(cfg config, concept, promotion []byte) (readinessartifact.Rec
 			return readinessartifact.Receipt{}, err
 		}
 	}
+	if cfg.toolchainRelease != "" {
+		input.ToolchainRelease, err = os.ReadFile(cfg.toolchainRelease)
+		if err != nil {
+			return readinessartifact.Receipt{}, err
+		}
+	}
 	return readinessartifact.BuildWithCompleteEvidence(input)
 }
 

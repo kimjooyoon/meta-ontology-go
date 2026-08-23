@@ -12,5 +12,6 @@ type CompleteEvidenceInput struct {
 	ToolchainFormatFix   []byte
 	ToolchainLSP         []byte
 	ToolchainConformance []byte
+	ToolchainRelease     []byte
 	HeadSHA              string
 }

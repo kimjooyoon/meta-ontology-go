@@ -6,6 +6,7 @@ import (
 	metaconformance "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance"
 	metaff "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix"
 	metalsp "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainlsp"
+	release "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease"
 )
 
 func buildToolchainSnapshot(input CompleteEvidenceInput, bundle readiness.PromotionEvidence,
@@ -26,6 +27,14 @@ func buildToolchainSnapshot(input CompleteEvidenceInput, bundle readiness.Promot
 	if err != nil {
 		return readiness.Snapshot{}, err
 	}
-	return readiness.EvaluateWithToolchainLSP(input.ConceptArtifact, bundle, cliReport,
-		formatFixReport, conformance, lspReport, input.HeadSHA)
+	if len(input.ToolchainRelease) == 0 {
+		return readiness.EvaluateWithToolchainLSP(input.ConceptArtifact, bundle, cliReport,
+			formatFixReport, conformance, lspReport, input.HeadSHA)
+	}
+	releaseReport, err := decodeCompleteEvidence[release.Report](input.ToolchainRelease)
+	if err != nil {
+		return readiness.Snapshot{}, err
+	}
+	return readiness.EvaluateWithToolchainCrossPlatformRelease(input.ConceptArtifact, bundle,
+		cliReport, formatFixReport, conformance, lspReport, releaseReport, input.HeadSHA)
 }
