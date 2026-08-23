@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
+
+const splitGoEvidenceOperationID = "gooo/meta/generation/SplitGo"
 
 func applySplitWithEvidence(cfg config, plan splitPlan, output io.Writer) error {
 	source, err := os.ReadFile(plan.Parts[0].Path)
@@ -34,7 +34,7 @@ func applySplitWithEvidence(cfg config, plan splitPlan, output io.Writer) error 
 		candidates[index] = splitEvidenceFile{Path: part.Subject, Data: part.Data}
 	}
 	evidence := splitEvidence{
-		OperationID: string(sourcepolicy.OperationSplitGo), ExpectedHeadSHA: cfg.sha,
+		OperationID: splitGoEvidenceOperationID, ExpectedHeadSHA: cfg.sha,
 		EvidenceComplete: true,
 		Source:           splitEvidenceFile{Path: cfg.subject, Data: source}, Candidates: candidates,
 		BuildContexts: splitEvidenceBuildContexts(),
