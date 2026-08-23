@@ -1,12 +1,9 @@
 package languagesemanticbinding
 
+import "slices"
+
 func contains(values []string, expected string) bool {
-	for _, value := range values {
-		if value == expected {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(values, expected)
 }
 
 func sameSet(left, right []string) bool {
