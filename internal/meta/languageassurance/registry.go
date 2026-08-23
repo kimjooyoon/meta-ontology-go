@@ -17,8 +17,8 @@ const (
 	ReasonTopDecisionUnknown  = "ASSURANCE_TOP_DECISION_UNKNOWN"
 	ReasonGovernanceViolation = "ASSURANCE_GOVERNANCE_VIOLATION"
 
-	MetricSelfMinting = "gooo.metric.governance.self-minting-paths.v1"
-	MetricRoleConflict = "gooo.metric.governance.role-conflict-paths.v1"
+	MetricSelfMinting       = "gooo.metric.governance.self-minting-paths.v1"
+	MetricRoleConflict      = "gooo.metric.governance.role-conflict-paths.v1"
 	MetricUnknownLaundering = "gooo.metric.epistemic.unknown-laundering.v1"
 )
 
@@ -37,26 +37,11 @@ var denominatorV1 = []ObligationDefinition{
 	obligation("gooo.metric.ecosystem.external-conformance.v1", PriorityP2, ClassOutcome, ProofRegression, "verify-external-conformance"),
 }
 
-var operatingOperations = map[string]string{
-	MetricSelfMinting:       "detect-self-minting-paths",
-	MetricRoleConflict:      "detect-role-conflict-paths",
-	MetricUnknownLaundering: "detect-unknown-laundering",
-}
+var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering"}
 
-var conflictPairs = []RolePair{
-	{Left: RoleContractAuthor, Right: RoleEvaluatorAuthor},
-	{Left: RoleImplementer, Right: RolePromoter},
-	{Left: RoleEvaluatorAuthor, Right: RoleAuditor},
-	{Left: RolePolicyAdopter, Right: RolePromoter},
-	{Left: RoleAdapterAuthor, Right: RoleAuditor},
-}
+var conflictPairs = []RolePair{{Left: RoleContractAuthor, Right: RoleEvaluatorAuthor}, {Left: RoleImplementer, Right: RolePromoter}, {Left: RoleEvaluatorAuthor, Right: RoleAuditor}, {Left: RolePolicyAdopter, Right: RolePromoter}, {Left: RoleAdapterAuthor, Right: RoleAuditor}}
 
-var launderingOutputs = []Decision{
-	DecisionPass,
-	DecisionFixedPoint,
-	DecisionAuthorized,
-	DecisionAllow,
-}
+var launderingOutputs = []Decision{DecisionPass, DecisionFixedPoint, DecisionAuthorized, DecisionAllow}
 
 func Denominator() []ObligationDefinition {
 	return append([]ObligationDefinition(nil), denominatorV1...)

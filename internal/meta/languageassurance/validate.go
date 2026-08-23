@@ -3,38 +3,8 @@ package languageassurance
 import (
 	"encoding/hex"
 	"fmt"
-	"reflect"
+	"slices"
 )
-
-func Validate(report Report) error {
-	if report.Schema != ReportSchema || report.DenominatorID != DenominatorID {
-		return fmt.Errorf("language assurance report identity is malformed")
-	}
-	if len(report.Denominator) != 12 || len(report.Obligations) != 12 || len(report.MetaOperations) != 5 || len(report.Indicators) != 5 {
-		return fmt.Errorf("language assurance report cardinality is malformed")
-	}
-	if report.ReportDigest == "" {
-		return fmt.Errorf("language assurance report digest is missing")
-	}
-	expected, err := Evaluate(report.SubjectSHA, report.Transaction)
-	if err != nil {
-		return err
-	}
-	if !reflect.DeepEqual(report, expected) {
-		return fmt.Errorf("language assurance report does not replay")
-	}
-	return nil
-}
-
-func ValidateForSubject(report Report, subjectSHA string) error {
-	if err := Validate(report); err != nil {
-		return err
-	}
-	if report.SubjectSHA != subjectSHA {
-		return fmt.Errorf("language assurance report does not bind the exact subject")
-	}
-	return nil
-}
 
 func validateInput(subjectSHA string, transaction Transaction) error {
 	if !validSHA(subjectSHA) {
@@ -90,27 +60,14 @@ func roleSet(roles []Role) map[Role]bool {
 }
 
 func validRole(role Role) bool {
-	switch role {
-	case RoleContractAuthor, RoleImplementer, RoleEvaluatorAuthor, RoleAdapterAuthor, RolePolicyAdopter, RolePromoter, RoleAuditor:
-		return true
-	default:
-		return false
-	}
+	return slices.Contains([]Role{RoleContractAuthor, RoleImplementer, RoleEvaluatorAuthor, RoleAdapterAuthor, RolePolicyAdopter, RolePromoter, RoleAuditor}, role)
 }
 
 func validDecision(decision Decision) bool {
-	switch decision {
-	case DecisionUnknown, DecisionPass, DecisionFail, DecisionFixedPoint, DecisionAuthorized, DecisionAllow, DecisionBlock:
-		return true
-	default:
-		return false
-	}
+	return slices.Contains([]Decision{DecisionUnknown, DecisionPass, DecisionFail, DecisionFixedPoint, DecisionAuthorized, DecisionAllow, DecisionBlock}, decision)
 }
 
 func validSHA(value string) bool {
-	if len(value) != 40 {
-		return false
-	}
 	_, err := hex.DecodeString(value)
-	return err == nil
+	return len(value) == 40 && err == nil
 }
