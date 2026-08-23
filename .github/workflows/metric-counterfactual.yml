@@ -30,28 +30,6 @@ on:
       - 'examples/metric-meta-program/**'
   push:
     branches: [dev, main]
-    paths:
-      - '.github/workflows/metric-counterfactual.yml'
-      - '.github/workflows/transformation-effect.yml'
-      - 'cmd/guarded-promotion-witness/**'
-      - 'cmd/language-readiness-witness/**'
-      - 'internal/detection/linecaps/**'
-      - 'internal/meta/languageconcept/**'
-      - 'internal/meta/languagereadiness/**'
-      - 'internal/meta/metriccounterfactual/**'
-      - 'internal/meta/metriccounterfactualio/**'
-      - 'internal/meta/metriccounterfactualverify/**'
-      - 'internal/meta/metricprogram/**'
-      - 'internal/meta/metricstrategy/**'
-      - 'internal/meta/metrictransition/**'
-      - 'internal/meta/sourcepolicy/**'
-      - 'scripts/line-metrics/**'
-      - 'scripts/metric-counterfactual/**'
-      - 'scripts/metric-intervention/**'
-      - 'scripts/metric-meta-program/**'
-      - 'scripts/metric-strategy/**'
-      - 'examples/metric-meta-program/**'
-
 permissions:
   contents: read
 
