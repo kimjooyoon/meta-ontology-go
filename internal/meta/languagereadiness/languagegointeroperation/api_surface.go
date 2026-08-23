@@ -39,7 +39,6 @@ func namedMethods(object types.Object, qualifier types.Qualifier) []string {
 	}
 	methods := make([]string, 0, named.NumMethods())
 	for method := range named.Methods() {
-		method := method
 		if method.Exported() {
 			methods = append(methods, types.ObjectString(method, qualifier))
 		}
