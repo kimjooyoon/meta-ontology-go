@@ -28,7 +28,7 @@ func fixtureInput(t *testing.T) Input {
 		value := map[string]any{
 			"schema": definition.Schema, "decision": DecisionPass,
 			"resolution": ResolutionExact,
-			"source": map[string]any{"expected_head_sha": fixtureHead},
+			"source":     map[string]any{"expected_head_sha": fixtureHead},
 			"summary": map[string]any{"total": definition.Cases,
 				"satisfied": definition.Cases, "executed": definition.Cases,
 				"unresolved": 0},
@@ -49,7 +49,7 @@ func fixtureConcept(t *testing.T) []byte {
 		useCases[index] = map[string]string{"id": id}
 	}
 	value := map[string]any{"decision": DecisionPass,
-		"catalog_digest": "sha256:" + strings.Repeat("b", 64),
+		"catalog_digest":  "sha256:" + strings.Repeat("b", 64),
 		"artifact_digest": "sha256:" + strings.Repeat("c", 64),
 		"report": map[string]any{"concepts": []any{map[string]any{
 			"id": ExpectedConceptID, "meta_operation": ExpectedMetaOperation,

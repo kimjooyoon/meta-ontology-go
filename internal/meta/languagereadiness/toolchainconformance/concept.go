@@ -36,11 +36,11 @@ func inspectConcept(raw []byte) (conceptCounts, error) {
 		return conceptCounts{}, fmt.Errorf("conformance concept binding drift")
 	}
 	return conceptCounts{
-		ArtifactDigest: artifact.ArtifactDigest,
-		CatalogDigest: artifact.CatalogDigest,
+		ArtifactDigest:  artifact.ArtifactDigest,
+		CatalogDigest:   artifact.CatalogDigest,
 		ConceptBindings: 1,
-		CodeBindings: len(item.CodeBindings),
-		MetricBindings: len(item.MetricBindings),
+		CodeBindings:    len(item.CodeBindings),
+		MetricBindings:  len(item.MetricBindings),
 		UseCaseBindings: len(item.UseCases),
 	}, nil
 }

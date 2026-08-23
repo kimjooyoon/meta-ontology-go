@@ -32,7 +32,7 @@ func seal(report Report) Report {
 
 func digestArtifacts(artifacts map[string][]byte) string {
 	type item struct {
-		ID string `json:"id"`
+		ID  string `json:"id"`
 		Raw []byte `json:"raw"`
 	}
 	items := make([]item, 0, len(fixedSurfaces)+1)

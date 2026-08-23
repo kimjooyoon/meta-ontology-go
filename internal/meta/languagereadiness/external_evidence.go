@@ -1,26 +1,26 @@
 package languagereadiness
 
 const (
-	autonomousProposalConcept = "autonomous-change-proposal"
-	guardedPromotionConcept   = "guarded-exact-promotion"
-	toolchainUseCasesConcept  = "toolchain-executable-use-cases"
-	languageSyntaxConcept     = "language-syntax-roundtrip"
-	diagnosticConcept         = "language-diagnostic-provenance"
-	packageRuntimeConcept     = "language-package-runtime"
-	toolchainCLIConcept       = "toolchain-cli"
-	toolchainFormatFixConcept = "toolchain-format-fix"
+	autonomousProposalConcept   = "autonomous-change-proposal"
+	guardedPromotionConcept     = "guarded-exact-promotion"
+	toolchainUseCasesConcept    = "toolchain-executable-use-cases"
+	languageSyntaxConcept       = "language-syntax-roundtrip"
+	diagnosticConcept           = "language-diagnostic-provenance"
+	packageRuntimeConcept       = "language-package-runtime"
+	toolchainCLIConcept         = "toolchain-cli"
+	toolchainFormatFixConcept   = "toolchain-format-fix"
 	toolchainConformanceConcept = "toolchain-conformance"
 )
 
 type evidenceDigests struct {
-	proposal           string
-	guarded            string
-	useCases           string
-	syntax             string
-	diagnostic         string
-	packageRuntime     string
-	toolchainCLI       string
-	toolchainFormatFix string
+	proposal             string
+	guarded              string
+	useCases             string
+	syntax               string
+	diagnostic           string
+	packageRuntime       string
+	toolchainCLI         string
+	toolchainFormatFix   string
 	toolchainConformance string
 }
 

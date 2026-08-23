@@ -14,7 +14,7 @@ func buildProofs(summary Summary, source Source) []Proof {
 		{Choice: "FOUNDATION", MetaOperation: "bind-fixed-surface-corpus",
 			EvidenceDigest: digestValue(struct {
 				Registry string
-				Concept string
+				Concept  string
 			}{source.RegistryDigest, source.ConceptArtifactDigest}), Passed: foundation},
 		{Choice: "COHERENCE", MetaOperation: "join-exact-head-tool-receipts",
 			EvidenceDigest: digestValue(struct {

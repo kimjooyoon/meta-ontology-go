@@ -7,8 +7,8 @@ func metric(id, class, proof string, value, target int,
 		satisfied = value <= target
 	}
 	return Indicator{MetricID: id, Class: class, ProofChoice: proof,
-		Producer: "toolchainconformance.Evaluate",
-		Consumer: "self-improvement-cycle",
+		Producer:      "toolchainconformance.Evaluate",
+		Consumer:      "self-improvement-cycle",
 		MetaOperation: ExpectedMetaOperation, Resolution: ResolutionExact,
 		Value: value, Target: target, Relation: relation, Satisfied: satisfied}
 }

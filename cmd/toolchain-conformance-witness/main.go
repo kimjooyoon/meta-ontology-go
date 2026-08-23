@@ -8,7 +8,7 @@ import (
 
 type config struct {
 	root, head, concept, corpus, syntax, semantic, query, interop string
-	diagnostic, runtime, cli, formatFix, useCases, output, check string
+	diagnostic, runtime, cli, formatFix, useCases, output, check  string
 }
 
 func main() {
