@@ -23,6 +23,12 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.guarded != "" {
 		paths = append(paths, cfg.guarded)
 	}
+	if cfg.useCases != "" {
+		paths = append(paths, cfg.useCases)
+	}
+	if (cfg.guarded == "") != (cfg.useCases == "") {
+		return fmt.Errorf("guarded-capability and toolchain-use-cases must be provided together")
+	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 type config struct {
-	root, input, promotion, guarded, output, check, expectedSHA string
+	root, input, promotion, guarded, useCases, output, check, expectedSHA string
 }
 
 func main() {
@@ -16,6 +16,7 @@ func main() {
 	flag.StringVar(&cfg.input, "input", "", "language concept artifact outside the repository")
 	flag.StringVar(&cfg.promotion, "proposal-promotion", "", "verified proposal promotion outside the repository")
 	flag.StringVar(&cfg.guarded, "guarded-capability", "", "verified guarded capability outside the repository")
+	flag.StringVar(&cfg.useCases, "toolchain-use-cases", "", "verified executable use cases outside the repository")
 	flag.StringVar(&cfg.output, "output", "", "readiness artifact path outside the repository")
 	flag.StringVar(&cfg.check, "check", "", "existing readiness artifact outside the repository")
 	flag.StringVar(&cfg.expectedSHA, "expected-sha", "", "exact 40 character commit sha")
