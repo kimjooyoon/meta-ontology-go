@@ -15,9 +15,11 @@ type BehavioralCase struct {
 }
 
 type BehavioralCorpus struct {
-	Schema, ContractID, Version string
-	CaseCount                   int              `json:"case_count"`
-	Cases                       []BehavioralCase `json:"cases"`
+	Schema     string           `json:"schema"`
+	ContractID string           `json:"contract_id"`
+	Version    string           `json:"version"`
+	CaseCount  int              `json:"case_count"`
+	Cases      []BehavioralCase `json:"cases"`
 }
 
 var fixedBehavioralCases = []BehavioralCase{
