@@ -15,10 +15,10 @@ type guardEnvelope struct {
 		CurrentHeadSHA string `json:"current_head_sha"`
 	} `json:"source"`
 	Summary struct {
-		Satisfied                   int  `json:"satisfied"`
-		Total                       int  `json:"total"`
-		Unresolved                  int  `json:"unresolved"`
-		RepositoryWrites            int  `json:"repository_writes"`
+		Satisfied                    int  `json:"satisfied"`
+		Total                        int  `json:"total"`
+		Unresolved                   int  `json:"unresolved"`
+		RepositoryWrites             int  `json:"repository_writes"`
 		ReadinessPromotionAuthorized bool `json:"readiness_promotion_authorized"`
 		RepositoryMutationAuthorized bool `json:"repository_mutation_authorized"`
 	} `json:"summary"`
@@ -39,9 +39,9 @@ func readGuard(file string) (GuardEvidence, error) {
 		ReportDigest: envelope.ReportDigest, HeadSHA: envelope.Source.CurrentHeadSHA,
 		Decision: envelope.Decision, Reason: envelope.Reason, Resolution: envelope.Resolution,
 		Satisfied: envelope.Summary.Satisfied, Total: envelope.Summary.Total,
-		Unresolved: envelope.Summary.Unresolved,
-		RepositoryWrites: envelope.Summary.RepositoryWrites,
+		Unresolved:          envelope.Summary.Unresolved,
+		RepositoryWrites:    envelope.Summary.RepositoryWrites,
 		PromotionAuthorized: envelope.Summary.ReadinessPromotionAuthorized,
-		MutationAuthorized: envelope.Summary.RepositoryMutationAuthorized,
+		MutationAuthorized:  envelope.Summary.RepositoryMutationAuthorized,
 	}, nil
 }

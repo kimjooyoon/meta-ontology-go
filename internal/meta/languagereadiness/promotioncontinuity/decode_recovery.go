@@ -12,17 +12,17 @@ type recoveryEnvelope struct {
 	Reason     string `json:"reason"`
 	Resolution string `json:"resolution"`
 	Mode       string `json:"mode"`
-	Source struct {
+	Source     struct {
 		ExpectedHeadSHA string `json:"expected_head_sha"`
-		Guard struct {
+		Guard           struct {
 			Decision, Resolution string
 		} `json:"guard"`
 		Transformation struct {
-			Decision                  string `json:"decision"`
-			WriteBoundary             string `json:"write_boundary"`
-			Effects                   int    `json:"effects"`
-			SourceWorkspaceUnchanged  bool   `json:"source_workspace_unchanged"`
-			PromotionAuthorized       bool   `json:"promotion_authorized"`
+			Decision                 string `json:"decision"`
+			WriteBoundary            string `json:"write_boundary"`
+			Effects                  int    `json:"effects"`
+			SourceWorkspaceUnchanged bool   `json:"source_workspace_unchanged"`
+			PromotionAuthorized      bool   `json:"promotion_authorized"`
 		} `json:"transformation"`
 		RepositoryWrites int `json:"repository_writes"`
 	} `json:"source"`
@@ -56,15 +56,15 @@ func readRecovery(file string) (RecoveryEvidence, error) {
 		GuardResolution: e.Source.Guard.Resolution, Satisfied: e.Summary.Satisfied,
 		Total: e.Summary.Total, Unresolved: e.Summary.Unresolved,
 		ReadinessBPS: e.Summary.ReadinessBPS, RecoveredFixedPoints: e.Summary.RecoveredFixedPoints,
-		AuthorizedPromotions: e.Summary.AuthorizedPromotions,
-		TransformationDecision: e.Source.Transformation.Decision,
-		TransformationEffects: e.Source.Transformation.Effects,
-		WriteBoundary: e.Source.Transformation.WriteBoundary,
-		SourceWorkspaceUnchanged: e.Source.Transformation.SourceWorkspaceUnchanged,
+		AuthorizedPromotions:        e.Summary.AuthorizedPromotions,
+		TransformationDecision:      e.Source.Transformation.Decision,
+		TransformationEffects:       e.Source.Transformation.Effects,
+		WriteBoundary:               e.Source.Transformation.WriteBoundary,
+		SourceWorkspaceUnchanged:    e.Source.Transformation.SourceWorkspaceUnchanged,
 		TransformationAuthorization: e.Source.Transformation.PromotionAuthorized,
-		SourceRepositoryWrites: e.Source.RepositoryWrites,
-		SummaryRepositoryWrites: e.Summary.RepositoryWrites,
-		RepositoryWrites: e.RepositoryWrites,
-		MutationAuthorized: e.RepositoryMutationAuthorized,
+		SourceRepositoryWrites:      e.Source.RepositoryWrites,
+		SummaryRepositoryWrites:     e.Summary.RepositoryWrites,
+		RepositoryWrites:            e.RepositoryWrites,
+		MutationAuthorized:          e.RepositoryMutationAuthorized,
 	}, nil
 }
