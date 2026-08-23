@@ -459,7 +459,11 @@ jobs:
               --expected-head "$HEAD_SHA" \
               --concept "$first/artifact.json" \
               --registry "$diagnostic_registry" \
-              --output "$target/artifact.json"
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'language-diagnostic-provenance artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
           done
           cmp -s "$diagnostic_first/artifact.json" "$diagnostic_replay/artifact.json"
           go run ./cmd/language-diagnostic-provenance-witness \

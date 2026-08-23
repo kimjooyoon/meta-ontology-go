@@ -17,11 +17,7 @@ var fixedCodeBindings = []string{
 	"examples/language-diagnostic-provenance",
 }
 
-var fixedUseCases = []string{
-	"trace-generated-diagnostic",
-	"trace-line-directed-diagnostic",
-	"reject-ambiguous-or-unknown-provenance",
-}
+var fixedUseCases = []string{"trace-generated-diagnostic", "trace-line-directed-diagnostic", "reject-ambiguous-or-unknown-provenance"}
 
 func observeConcept(artifact languageconcept.Artifact) (int, error) {
 	if artifact.Decision != "PASS" || !artifact.Ready() || !artifact.ReplayEqual {

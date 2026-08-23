@@ -35,7 +35,8 @@ func run(cfg config) error {
 		return err
 	}
 	if err := languagediagnosticprovenance.Validate(report, cfg.head); err != nil {
-		return err
+		return fmt.Errorf("%w: reason=%s summary=%+v",
+			err, report.ReasonCode, report.Summary)
 	}
 	return nil
 }
