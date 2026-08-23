@@ -3,13 +3,14 @@ package generation
 import (
 	"sort"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 func DefaultRegistry() []Binding {
 	return []Binding{
 		{Operation: sourcepolicy.OperationCollapseAssign, IndependenceGroupID: "expression-shape", ProofChoice: ProofRegress, Executor: "scripts/refactor-metrics", Evaluator: "scripts/refactor-metrics:check", RequiredIndicatorIDs: []string{"go.ast.single-match/v1", "go.comments.preserved/v1", "go.format.fixed-point/v1"}, ReceiptRequired: true, Priority: 10},
-		{Operation: sourcepolicy.OperationSplitGo, IndependenceGroupID: "source-topology", ProofChoice: ProofFoundation, Executor: "scripts/source-splitter", Evaluator: "scripts/source-splitter:check", RequiredIndicatorIDs: []string{"filesystem.atomic-replacement/v1", "go.filename.build-semantics/v1", "go.header.preserved/v1", "go.import.identity/v1", "go.initialization.order/v1"}, ReceiptRequired: true, Priority: 20},
+		{Operation: sourcepolicy.OperationSplitGo, IndependenceGroupID: "source-topology", ProofChoice: ProofFoundation, Executor: "scripts/source-splitter", Evaluator: "scripts/source-splitter:check", RequiredIndicatorIDs: operationconformance.SplitGoV1IndicatorIDs(), ReceiptRequired: true, Priority: 20},
 		{Operation: sourcepolicy.OperationSplitGooo, IndependenceGroupID: "source-topology", ProofChoice: ProofFoundation, Executor: "bootstrap/source-repacker", Evaluator: "bootstrap/source-repacker:check", RequiredIndicatorIDs: []string{"filesystem.atomic-replacement/v1", "gooo.filename.semantics/v1", "gooo.parser-domain/v1"}, ReceiptRequired: true, Priority: 20},
 	}
 }
