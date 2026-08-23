@@ -55,6 +55,7 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return exitFailure
 	}
 }
+
 var analyzeDeltaToolchain = runtime.Version() + "|" + runtime.GOOS + "/" + runtime.GOARCH
 
 type analyzeDeltaOptions struct {
