@@ -45,10 +45,15 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 		if err != nil {
 			return readinessartifact.Receipt{}, err
 		}
+		toolchainFormatFixReport, err := os.ReadFile(cfg.toolchainFormatFix)
+		if err != nil {
+			return readinessartifact.Receipt{}, err
+		}
 		return readinessartifact.BuildWithCompleteEvidence(readinessartifact.CompleteEvidenceInput{
 			ConceptArtifact: raw, Promotion: promotion, Capability: guarded, UseCases: useCases,
 			Syntax: syntaxReport, Diagnostic: diagnosticReport, PackageRuntime: packageRuntimeReport,
-			ToolchainCLI: toolchainCLIReport, HeadSHA: cfg.expectedSHA,
+			ToolchainCLI: toolchainCLIReport, ToolchainFormatFix: toolchainFormatFixReport,
+			HeadSHA: cfg.expectedSHA,
 		})
 	}
 	return readinessartifact.BuildWithProposalPromotion(raw, promotion, cfg.expectedSHA)

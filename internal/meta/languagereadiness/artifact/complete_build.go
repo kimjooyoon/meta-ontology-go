@@ -8,6 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
 	metacli "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli"
+	metaff "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
 )
 
@@ -40,10 +41,15 @@ func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {
 	if err != nil {
 		return Receipt{}, err
 	}
+	formatFixReport, err := decodeCompleteEvidence[metaff.Report](input.ToolchainFormatFix)
+	if err != nil {
+		return Receipt{}, err
+	}
 	bundle := readiness.PromotionEvidence{Promotion: promotion, Capability: capability,
 		UseCases: useCases, Syntax: syntaxReport, Diagnostic: diagnostic,
 		PackageRuntime: []languagepackageruntime.Report{runtimeReport}}
-	snapshot, err := readiness.EvaluateWithToolchainCLI(input.ConceptArtifact, bundle, cliReport, input.HeadSHA)
+	snapshot, err := readiness.EvaluateWithToolchainFormatFix(
+		input.ConceptArtifact, bundle, cliReport, formatFixReport, input.HeadSHA)
 	if err != nil {
 		return Receipt{}, err
 	}

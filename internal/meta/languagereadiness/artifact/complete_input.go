@@ -9,5 +9,6 @@ type CompleteEvidenceInput struct {
 	Diagnostic      []byte
 	PackageRuntime  []byte
 	ToolchainCLI    []byte
+	ToolchainFormatFix []byte
 	HeadSHA         string
 }

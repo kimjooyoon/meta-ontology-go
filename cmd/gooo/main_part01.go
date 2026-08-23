@@ -38,6 +38,10 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return runGraph(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "analyze":
 		return runAnalyze(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+	case "format":
+		return runFormat(args[1:], OSFileReader{}, stdout, stderr)
+	case "fix":
+		return runFix(args[1:], OSFileReader{}, stdout, stderr)
 	case "provenance":
 		return runProvenance(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "selective-ci":
@@ -52,7 +56,7 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 	}
 }
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "usage: gooo <check|generate|roundtrip|query|inspect|graph|analyze|provenance|selective-ci|lsp|version> [args]")
+	fmt.Fprintln(writer, "usage: gooo <check|generate|roundtrip|query|inspect|graph|analyze|format|fix|provenance|selective-ci|lsp|version> [args]")
 }
 
 var analyzeDeltaToolchain = runtime.Version() + "|" + runtime.GOOS + "/" + runtime.GOARCH
