@@ -42,4 +42,3 @@ type Contract struct {
 	UnknownPolicy UnknownPolicy
 	Indicators    []IndicatorDefinition
 }
-
