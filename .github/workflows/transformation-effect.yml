@@ -477,6 +477,30 @@ jobs:
             cd "$readiness_first"
             sha256sum artifact.json > artifact.json.sha256
           )
+          binding_first="$RUNNER_TEMP/language-semantic-readiness-binding/first"
+          binding_replay="$RUNNER_TEMP/language-semantic-readiness-binding/replay"
+          mkdir -p "$binding_first" "$binding_replay"
+          for target in "$binding_first" "$binding_replay"; do
+            go run ./cmd/language-semantic-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --readiness "$readiness_first/artifact.json" \
+              --concept "$first/artifact.json" \
+              --semantic "$semantic_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$binding_first/artifact.json" "$binding_replay/artifact.json"
+          go run ./cmd/language-semantic-readiness-binding \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --readiness "$readiness_first/artifact.json" \
+            --concept "$first/artifact.json" \
+            --semantic "$semantic_first/artifact.json" \
+            --check "$binding_first/artifact.json"
+          (
+            cd "$binding_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
           improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
           improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
           baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
@@ -558,6 +582,13 @@ jobs:
         with:
           name: language-semantic-model-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-semantic-model/first/artifact.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head semantic readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-semantic-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-semantic-readiness-binding/first
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
