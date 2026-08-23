@@ -14,10 +14,26 @@ func TestPromotionEvidenceWorkflowSeparatesProducerFromJudge(t *testing.T) {
 		t.Fatal(err)
 	}
 	workflow := string(raw)
+	for _, fragment := range []string{
+		"name: Metric counterfactual conformance",
+		"actions: read",
+	} {
+		if !strings.Contains(workflow, fragment) {
+			t.Fatalf("promotion evidence authority is missing %q", fragment)
+		}
+	}
+	start := strings.Index(workflow, "\n  proposal-promotion-evidence:\n")
+	if start < 0 {
+		t.Fatal("promotion evidence producer job is missing")
+	}
+	producerTail := workflow[start+1:]
+	end := strings.Index(producerTail, "\n  program:\n")
+	if end < 0 {
+		t.Fatal("promotion evidence producer boundary is missing")
+	}
+	producer := producerTail[:end]
 	required := []string{
-		"name: Proposal promotion evidence ledger",
-		`workflows: ["CI [push full]"]`,
-		"github.event.workflow_run.conclusion == 'success'",
+		"needs: strategy",
 		"GOTOOLCHAIN: go1.27.0",
 		"persist-credentials: false",
 		"go run ./cmd/language-readiness-witness/proposal-promotion",
@@ -26,12 +42,16 @@ func TestPromotionEvidenceWorkflowSeparatesProducerFromJudge(t *testing.T) {
 		"name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}",
 	}
 	for _, fragment := range required {
-		if !strings.Contains(workflow, fragment) {
+		if !strings.Contains(producer, fragment) {
 			t.Fatalf("promotion evidence workflow is missing %q", fragment)
 		}
 	}
-	for _, forbidden := range []string{"promotion-authorized-continuity", "guarded-promotion-receipt"} {
-		if strings.Contains(workflow, forbidden) {
+	for _, forbidden := range []string{
+		"needs: proposal-continuity",
+		"promotion-authorized-continuity",
+		"guarded-promotion-receipt",
+	} {
+		if strings.Contains(producer, forbidden) {
 			t.Fatalf("promotion evidence producer depends on judge %q", forbidden)
 		}
 	}
