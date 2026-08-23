@@ -27,11 +27,11 @@ func TestPromotionEvidenceWorkflowSeparatesProducerFromJudge(t *testing.T) {
 		t.Fatal("promotion evidence producer job is missing")
 	}
 	producerTail := workflow[start+1:]
-	end := strings.Index(producerTail, "\n  program:\n")
-	if end < 0 {
+	before, _, ok := strings.Cut(producerTail, "\n  program:\n")
+	if !ok {
 		t.Fatal("promotion evidence producer boundary is missing")
 	}
-	producer := producerTail[:end]
+	producer := before
 	required := []string{
 		"needs: strategy",
 		"GOTOOLCHAIN: go1.27.0",
