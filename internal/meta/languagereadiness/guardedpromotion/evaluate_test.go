@@ -14,7 +14,7 @@ func validSource() Source {
 			Status: "completed", Conclusion: "success", HeadSHA: current, HeadBranch: "dev",
 		},
 		Artifact: ArtifactEvidence{
-			RunID: 2, RunAttempt: 1, RunEvent: "workflow_run", ArtifactID: 3,
+			RunID: 2, RunAttempt: 1, RunEvent: "push", ArtifactID: 3,
 			ArtifactName:         PromotionArtifactBase + predecessor,
 			ArtifactDigest:       "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 			FileSHA256:           "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -51,5 +51,14 @@ func TestBuildDeniesPullRequestWithoutHidingIt(t *testing.T) {
 	}
 	if report.Summary.Satisfied != 10 || report.Summary.ReadinessBPS != 8333 {
 		t.Fatalf("summary=%+v", report.Summary)
+	}
+}
+
+func TestBuildAcceptsLegacyPromotionEventDuringFoundationMigration(t *testing.T) {
+	source := validSource()
+	source.Artifact.RunEvent = "workflow_run"
+	report := Build(source)
+	if report.Decision != DecisionAuthorized || report.Summary.Satisfied != 12 || report.Summary.ReadinessBPS != 10000 {
+		t.Fatalf("decision=%s summary=%+v", report.Decision, report.Summary)
 	}
 }
