@@ -8,14 +8,21 @@ import (
 	metalsp "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainlsp"
 )
 
+type conceptItem struct {
+	ID             string            `json:"id"`
+	MetaOperation  string            `json:"meta_operation"`
+	Stage          string            `json:"stage"`
+	CodeBindings   []string          `json:"code_bindings"`
+	MetricBindings []string          `json:"metric_bindings"`
+	UseCases       []json.RawMessage `json:"use_cases"`
+}
+
 type conceptArtifact struct {
 	Decision       string `json:"decision"`
 	ArtifactDigest string `json:"artifact_digest"`
-	Report struct { Concepts []struct {
-		ID, MetaOperation, Stage string
-		CodeBindings, MetricBindings []string
-		UseCases []json.RawMessage
-	} `json:"concepts"` } `json:"report"`
+	Report         struct {
+		Concepts []conceptItem `json:"concepts"`
+	} `json:"report"`
 }
 
 func readConcept(path string) (metalsp.ConceptBinding, error) {
@@ -23,7 +30,7 @@ func readConcept(path string) (metalsp.ConceptBinding, error) {
 	if err != nil { return metalsp.ConceptBinding{}, err }
 	var artifact conceptArtifact
 	if err := json.Unmarshal(raw, &artifact); err != nil { return metalsp.ConceptBinding{}, err }
-	var found *struct { ID, MetaOperation, Stage string; CodeBindings, MetricBindings []string; UseCases []json.RawMessage }
+	var found *conceptItem
 	for index := range artifact.Report.Concepts {
 		item := &artifact.Report.Concepts[index]
 		if item.ID == "toolchain-lsp" { if found != nil { return metalsp.ConceptBinding{}, fmt.Errorf("duplicate toolchain-lsp concept") }; found = item }

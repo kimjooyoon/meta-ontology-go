@@ -603,7 +603,6 @@ jobs:
               -language-package-runtime "$runtime_first/artifact.json" \
               -toolchain-cli "$cli_first/artifact.json" \
               -toolchain-format-fix "$format_fix_first/artifact.json" \
-              -toolchain-lsp "$lsp_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
               -output "$target/artifact.json"
           done
@@ -619,7 +618,6 @@ jobs:
             -language-package-runtime "$runtime_first/artifact.json" \
             -toolchain-cli "$cli_first/artifact.json" \
             -toolchain-format-fix "$format_fix_first/artifact.json" \
-            -toolchain-lsp "$lsp_first/artifact.json" \
             -expected-sha "$HEAD_SHA" \
             -check "$readiness_first/artifact.json"
           (
