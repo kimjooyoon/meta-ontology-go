@@ -1,0 +1,270 @@
+{
+  "schema": "gooo/operation-conformance-contract/v1",
+  "contract_id": "gooo/source-splitter/split-go-conformance/v1",
+  "operation_id": "gooo/meta/generation/SplitGo",
+  "denominator": {
+    "version": "split-go-indicators/v1",
+    "indicator_count": 6,
+    "oracle_case_count": 18,
+    "expected_outcomes": {
+      "PASS": 6,
+      "FAIL": 6,
+      "UNKNOWN": 6
+    }
+  },
+  "decision_policy": {
+    "unknown": "PRESERVE_UNKNOWN_AND_BLOCK",
+    "pass": {
+      "pass_count": 6,
+      "fail_count": 0,
+      "unknown_count": 0,
+      "decision": "PASS"
+    },
+    "otherwise": "BLOCK"
+  },
+  "assurance": {
+    "grade": "E0_SAME_REPOSITORY_CONTRACT",
+    "evaluated_indicator_count": 0,
+    "runtime_observed_indicator_count": 0,
+    "independent_implementation_count": 0,
+    "readiness_transition_count": 0
+  },
+  "indicators": [
+    {
+      "id": "filesystem.atomic-replacement/v1",
+      "role": "GUARDRAIL",
+      "route": "COHERENCE",
+      "rule_id": "atomic-replacement-v1"
+    },
+    {
+      "id": "go.filename.build-semantics/v1",
+      "role": "DRIVER",
+      "route": "FOUNDATION",
+      "rule_id": "build-selected-file-set-v1"
+    },
+    {
+      "id": "go.header.preserved/v1",
+      "role": "GUARDRAIL",
+      "route": "REGRESSION",
+      "rule_id": "header-byte-digest-v1"
+    },
+    {
+      "id": "go.import.identity/v1",
+      "role": "OUTCOME",
+      "route": "FOUNDATION",
+      "rule_id": "import-alias-path-multiset-v1"
+    },
+    {
+      "id": "go.initialization-order/v1",
+      "role": "OUTCOME",
+      "route": "FOUNDATION",
+      "rule_id": "initialization-and-lexical-order-v1"
+    },
+    {
+      "id": "go.package.conformance/v1",
+      "role": "OUTCOME",
+      "route": "FOUNDATION",
+      "rule_id": "selected-package-set-v1"
+    }
+  ],
+  "oracle_cases": [
+    {
+      "id": "atomic-replacement/pass",
+      "indicator_id": "filesystem.atomic-replacement/v1",
+      "expected": "PASS",
+      "observation": {
+        "evidence_complete": true,
+        "replacement_mode": "ATOMIC_RENAME_SAME_FILESYSTEM",
+        "writes_outside_declared_targets": 0
+      }
+    },
+    {
+      "id": "atomic-replacement/fail",
+      "indicator_id": "filesystem.atomic-replacement/v1",
+      "expected": "FAIL",
+      "observation": {
+        "evidence_complete": true,
+        "replacement_mode": "DIRECT_OVERWRITE",
+        "writes_outside_declared_targets": 0
+      }
+    },
+    {
+      "id": "atomic-replacement/unknown",
+      "indicator_id": "filesystem.atomic-replacement/v1",
+      "expected": "UNKNOWN",
+      "observation": {
+        "evidence_complete": false,
+        "replacement_mode": "UNOBSERVED",
+        "writes_outside_declared_targets": null
+      }
+    },
+    {
+      "id": "build-semantics/pass",
+      "indicator_id": "go.filename.build-semantics/v1",
+      "expected": "PASS",
+      "observation": {
+        "evidence_complete": true,
+        "build_context_digest_before": "ctx-linux-amd64-cgo0-v1",
+        "build_context_digest_after": "ctx-linux-amd64-cgo0-v1",
+        "selected_file_set_digest_before": "fileset-a",
+        "selected_file_set_digest_after": "fileset-a"
+      }
+    },
+    {
+      "id": "build-semantics/fail",
+      "indicator_id": "go.filename.build-semantics/v1",
+      "expected": "FAIL",
+      "observation": {
+        "evidence_complete": true,
+        "build_context_digest_before": "ctx-linux-amd64-cgo0-v1",
+        "build_context_digest_after": "ctx-linux-amd64-cgo0-v1",
+        "selected_file_set_digest_before": "fileset-a",
+        "selected_file_set_digest_after": "fileset-b"
+      }
+    },
+    {
+      "id": "build-semantics/unknown",
+      "indicator_id": "go.filename.build-semantics/v1",
+      "expected": "UNKNOWN",
+      "observation": {
+        "evidence_complete": false,
+        "build_context_digest_before": "ctx-linux-amd64-cgo0-v1",
+        "build_context_digest_after": null,
+        "selected_file_set_digest_before": "fileset-a",
+        "selected_file_set_digest_after": null
+      }
+    },
+    {
+      "id": "header-preserved/pass",
+      "indicator_id": "go.header.preserved/v1",
+      "expected": "PASS",
+      "observation": {
+        "evidence_complete": true,
+        "header_digest_before": "sha256:header-a",
+        "header_digest_after": "sha256:header-a"
+      }
+    },
+    {
+      "id": "header-preserved/fail",
+      "indicator_id": "go.header.preserved/v1",
+      "expected": "FAIL",
+      "observation": {
+        "evidence_complete": true,
+        "header_digest_before": "sha256:header-a",
+        "header_digest_after": "sha256:header-b"
+      }
+    },
+    {
+      "id": "header-preserved/unknown",
+      "indicator_id": "go.header.preserved/v1",
+      "expected": "UNKNOWN",
+      "observation": {
+        "evidence_complete": false,
+        "header_digest_before": "sha256:header-a",
+        "header_digest_after": null
+      }
+    },
+    {
+      "id": "import-identity/pass",
+      "indicator_id": "go.import.identity/v1",
+      "expected": "PASS",
+      "observation": {
+        "evidence_complete": true,
+        "import_multiset_digest_before": "sha256:imports-a",
+        "import_multiset_digest_after": "sha256:imports-a"
+      }
+    },
+    {
+      "id": "import-identity/fail",
+      "indicator_id": "go.import.identity/v1",
+      "expected": "FAIL",
+      "observation": {
+        "evidence_complete": true,
+        "import_multiset_digest_before": "sha256:imports-a",
+        "import_multiset_digest_after": "sha256:imports-b"
+      }
+    },
+    {
+      "id": "import-identity/unknown",
+      "indicator_id": "go.import.identity/v1",
+      "expected": "UNKNOWN",
+      "observation": {
+        "evidence_complete": false,
+        "import_multiset_digest_before": "sha256:imports-a",
+        "import_multiset_digest_after": null
+      }
+    },
+    {
+      "id": "initialization-order/pass",
+      "indicator_id": "go.initialization-order/v1",
+      "expected": "PASS",
+      "observation": {
+        "evidence_complete": true,
+        "initialization_graph_digest_before": "sha256:init-graph-a",
+        "initialization_graph_digest_after": "sha256:init-graph-a",
+        "lexical_order_digest_before": "sha256:lexical-a",
+        "lexical_order_digest_after": "sha256:lexical-a"
+      }
+    },
+    {
+      "id": "initialization-order/fail",
+      "indicator_id": "go.initialization-order/v1",
+      "expected": "FAIL",
+      "observation": {
+        "evidence_complete": true,
+        "initialization_graph_digest_before": "sha256:init-graph-a",
+        "initialization_graph_digest_after": "sha256:init-graph-a",
+        "lexical_order_digest_before": "sha256:lexical-a",
+        "lexical_order_digest_after": "sha256:lexical-b"
+      }
+    },
+    {
+      "id": "initialization-order/unknown",
+      "indicator_id": "go.initialization-order/v1",
+      "expected": "UNKNOWN",
+      "observation": {
+        "evidence_complete": false,
+        "initialization_graph_digest_before": "sha256:init-graph-a",
+        "initialization_graph_digest_after": null,
+        "lexical_order_digest_before": "sha256:lexical-a",
+        "lexical_order_digest_after": null
+      }
+    },
+    {
+      "id": "package-conformance/pass",
+      "indicator_id": "go.package.conformance/v1",
+      "expected": "PASS",
+      "observation": {
+        "evidence_complete": true,
+        "selected_file_count": 2,
+        "parsed_file_count": 2,
+        "package_name_count": 1,
+        "package_names": ["fixture"]
+      }
+    },
+    {
+      "id": "package-conformance/fail",
+      "indicator_id": "go.package.conformance/v1",
+      "expected": "FAIL",
+      "observation": {
+        "evidence_complete": true,
+        "selected_file_count": 2,
+        "parsed_file_count": 2,
+        "package_name_count": 2,
+        "package_names": ["fixture", "other"]
+      }
+    },
+    {
+      "id": "package-conformance/unknown",
+      "indicator_id": "go.package.conformance/v1",
+      "expected": "UNKNOWN",
+      "observation": {
+        "evidence_complete": false,
+        "selected_file_count": 2,
+        "parsed_file_count": null,
+        "package_name_count": null,
+        "package_names": null
+      }
+    }
+  ]
+}
