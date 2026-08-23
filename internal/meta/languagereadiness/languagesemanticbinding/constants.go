@@ -1,7 +1,7 @@
 package languagesemanticbinding
 
 const (
-	Schema                  = "gooo/language-semantic-readiness-binding/v1"
+	Schema                  = "gooo/language-semantic-readiness-binding/v2"
 	ReadinessSchema         = "gooo/language-readiness-artifact/v2"
 	SnapshotSchema          = "gooo/language-readiness-snapshot/v1"
 	ContractSchema          = "gooo/self-improving-language-obligations/v1"
@@ -12,4 +12,7 @@ const (
 	ObligationID            = "LANGUAGE-SEMANTIC-MODEL"
 	MetaOperation           = "prove-staged-semantic-model"
 	ExpectedCoordinates     = 12
+	SemanticReadinessFloor  = 15
+	SemanticReadinessBPS    = 6250
+	SemanticConceptFloor    = 15
 )
