@@ -108,7 +108,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          work="$RUNNER_TEMP/source-splitter-conformance"
+          work="$GITHUB_WORKSPACE/.ci-tmp/source-splitter-conformance"
           fixture="$work/fixture"
           output="$work/output"
           mkdir -p "$fixture" "$output"
@@ -138,7 +138,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          work="$RUNNER_TEMP/source-splitter-conformance"
+          work="$GITHUB_WORKSPACE/.ci-tmp/source-splitter-conformance"
           fixture="$work/fixture"
           output="$work/output"
           METRICS_COMMIT_SHA="$HEAD_SHA" go run ./scripts/line-metrics \
@@ -169,7 +169,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: source-splitter-conformance-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/source-splitter-conformance/output
+          path: .ci-tmp/source-splitter-conformance/output
           if-no-files-found: error
           retention-days: 30
 
