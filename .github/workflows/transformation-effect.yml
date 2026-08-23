@@ -527,20 +527,20 @@ jobs:
           interop_replay="$RUNNER_TEMP/language-go-interoperation/replay"
           mkdir -p "$interop_first" "$interop_replay"
           for target in "$interop_first" "$interop_replay"; do
-  go run ./cmd/language-go-interoperation-readiness-binding \
-    --root "$GITHUB_WORKSPACE" \
-    --expected-head "$HEAD_SHA" \
-    --readiness "$readiness_first/artifact.json" \
-    --concept "$first/artifact.json" \
-    --interop-output "$target/interop/artifact.json" \
-    --binding-output "$target/binding/artifact.json" || {
-      printf '%s\n' 'language-go-interoperation artifact:' >&2
-      cat "$target/interop/artifact.json" >&2
-      printf '%s\n' 'language-go-interoperation binding artifact:' >&2
-      cat "$target/binding/artifact.json" >&2
-      exit 1
-    }
-done
+            go run ./cmd/language-go-interoperation-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --readiness "$readiness_first/artifact.json" \
+              --concept "$first/artifact.json" \
+              --interop-output "$target/interop/artifact.json" \
+              --binding-output "$target/binding/artifact.json" || {
+                printf '%s\n' 'language-go-interoperation artifact:' >&2
+                cat "$target/interop/artifact.json" >&2
+                printf '%s\n' 'language-go-interoperation binding artifact:' >&2
+                cat "$target/binding/artifact.json" >&2
+                exit 1
+              }
+          done
           cmp -s "$interop_first/interop/artifact.json" "$interop_replay/interop/artifact.json"
           cmp -s "$interop_first/binding/artifact.json" "$interop_replay/binding/artifact.json"
           (
