@@ -42,8 +42,8 @@ func buildArtifact(opts options) (artifact, error) {
 	}
 	return artifact{
 		Schema: artifactSchema, HeadSHA: opts.expectedSHA,
-		ContractOperationID: contractOperationID,
-		RegistryOperationID: registryOperationID,
+		ContractOperationID:  contractOperationID,
+		RegistryOperationID:  registryOperationID,
 		RequiredIndicatorIDs: required, Denominator: len(required),
 		Actual: actual, MissingEvidence: missing,
 	}, nil
