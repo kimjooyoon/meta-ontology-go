@@ -12,7 +12,10 @@ func proofs(summary Summary, registryDigest string) []Proof {
 		summary.UnknownAcceptances == 0 && summary.ImportAcceptances == 0 && summary.EffectfulStages == 0
 	return []Proof{
 		{Choice: "FOUNDATION", MetaOperation: "bind-versioned-go-interoperation-registry",
-			EvidenceDigest: digestJSON(struct{ Registry string; Summary Summary }{registryDigest, summary}), Passed: foundation},
+			EvidenceDigest: digestJSON(struct {
+				Registry string
+				Summary  Summary
+			}{registryDigest, summary}), Passed: foundation},
 		{Choice: "COHERENCE", MetaOperation: "reify-project-normalize-and-replay-go-api",
 			EvidenceDigest: digestJSON(struct{ Generator, Go127, Replay, Identity int }{8, 8, summary.CanonicalReplays, summary.TypeIdentityReplays}), Passed: coherence},
 		{Choice: "REGRESSION", MetaOperation: "reject-invalid-unknown-and-ambient-authority",

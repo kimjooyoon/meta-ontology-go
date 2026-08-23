@@ -14,7 +14,7 @@ func executeGuardrailCase(definition Definition) CaseResult {
 	if failure == nil {
 		evidence := Evidence{ActualOutcome: "ACCEPT", InvalidAccepted: true,
 			UnknownAccepted: definition.Fixture == "unknown-payload",
-			ImportAccepted: definition.Fixture == "import-authority"}
+			ImportAccepted:  definition.Fixture == "import-authority"}
 		return finishCase(definition, evidence, false)
 	}
 	evidence := rejectedEvidence(failure.Stage, failure.Code)

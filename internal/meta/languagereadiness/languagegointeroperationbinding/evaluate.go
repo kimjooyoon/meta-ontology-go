@@ -28,9 +28,9 @@ func summarize(input Input, coordinates []Coordinate) Summary {
 		ReadinessCompleted: input.Readiness.Summary.Completed, ReadinessTotal: input.Readiness.Summary.Total,
 		ReadinessBPS: input.Readiness.Summary.ReadinessBPS, InteropSatisfied: input.Interoperation.Summary.Satisfied,
 		InteropTotal: input.Interoperation.Summary.Total, Concepts: input.Concept.Report.Summary.Concepts,
-		MetricBindings: input.Interoperation.Summary.MetricBindings,
-		EffectfulStages: input.Interoperation.Summary.EffectfulStages,
-		RepositoryWrites: input.Interoperation.RepositoryWrites,
+		MetricBindings:      input.Interoperation.Summary.MetricBindings,
+		EffectfulStages:     input.Interoperation.Summary.EffectfulStages,
+		RepositoryWrites:    input.Interoperation.RepositoryWrites,
 		MutationAuthorities: boolCount(input.Interoperation.MutationAuthorized)}
 }
 

@@ -49,8 +49,8 @@ func guardrailFixture(id string) ([]byte, bool) {
 }
 
 var guardrailSources = map[string]string{
-	"parse-error":          "package interop\nfunc",
-	"type-mismatch":       "package interop\nfunc Broken() int { return \"x\" }\n",
+	"parse-error":           "package interop\nfunc",
+	"type-mismatch":         "package interop\nfunc Broken() int { return \"x\" }\n",
 	"duplicate-declaration": "package interop\ntype Duplicate struct{}\ntype Duplicate int\n",
 	"undefined-identifier":  "package interop\nfunc Broken() Missing { return Missing{} }\n",
 	"import-authority":      "package interop\nimport \"fmt\"\nfunc Print() { fmt.Println() }\n",
