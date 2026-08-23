@@ -2,14 +2,14 @@ package languagedeterministicquery
 
 func newSource(input Input, registryDigest string) Source {
 	return Source{
-		ExpectedHeadSHA: input.ExpectedHeadSHA,
-		ConceptID: ConceptID,
-		Producer: "languagedeterministicquery.Evaluate",
-		Consumer: "self-improvement-cycle",
-		MetaOperation: ExpectedMetaOperation,
+		ExpectedHeadSHA:       input.ExpectedHeadSHA,
+		ConceptID:             ConceptID,
+		Producer:              "languagedeterministicquery.Evaluate",
+		Consumer:              "self-improvement-cycle",
+		MetaOperation:         ExpectedMetaOperation,
 		ConceptArtifactDigest: input.ConceptArtifact.ArtifactDigest,
-		CatalogDigest: input.ConceptArtifact.CatalogDigest,
-		RegistryDigest: registryDigest,
+		CatalogDigest:         input.ConceptArtifact.CatalogDigest,
+		RegistryDigest:        registryDigest,
 	}
 }
 

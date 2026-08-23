@@ -31,11 +31,11 @@ func summarize(input Input, coordinates []Coordinate) Summary {
 	return Summary{
 		Coordinates: len(coordinates), BoundCoordinates: bound, Unresolved: len(coordinates) - bound,
 		ReadinessCompleted: input.Readiness.Summary.Completed,
-		ReadinessTotal: input.Readiness.Summary.Total, ReadinessBPS: input.Readiness.Summary.ReadinessBPS,
+		ReadinessTotal:     input.Readiness.Summary.Total, ReadinessBPS: input.Readiness.Summary.ReadinessBPS,
 		QuerySatisfied: input.Query.Summary.Satisfied, QueryTotal: input.Query.Summary.Total,
 		Concepts: input.Concept.Report.Summary.Concepts, MetricBindings: input.Query.Summary.MetricBindings,
-		EffectfulStages: input.Query.Summary.EffectfulStages,
-		RepositoryWrites: input.Query.RepositoryWrites,
+		EffectfulStages:     input.Query.Summary.EffectfulStages,
+		RepositoryWrites:    input.Query.RepositoryWrites,
 		MutationAuthorities: boolCount(input.Query.MutationAuthorized),
 	}
 }
