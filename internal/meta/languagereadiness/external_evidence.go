@@ -9,6 +9,7 @@ const (
 	packageRuntimeConcept     = "language-package-runtime"
 	toolchainCLIConcept       = "toolchain-cli"
 	toolchainFormatFixConcept = "toolchain-format-fix"
+	toolchainConformanceConcept = "toolchain-conformance"
 )
 
 type evidenceDigests struct {
@@ -20,6 +21,7 @@ type evidenceDigests struct {
 	packageRuntime     string
 	toolchainCLI       string
 	toolchainFormatFix string
+	toolchainConformance string
 }
 
 type externalEvidence struct {
@@ -45,6 +47,8 @@ func requiredEvidence(conceptID string, evidence evidenceDigests) (string, strin
 		return evidence.toolchainCLI, "TOOLCHAIN_CLI_RECEIPT_REQUIRED", true
 	case toolchainFormatFixConcept:
 		return evidence.toolchainFormatFix, "TOOLCHAIN_FORMAT_FIX_RECEIPT_REQUIRED", true
+	case toolchainConformanceConcept:
+		return evidence.toolchainConformance, "TOOLCHAIN_CONFORMANCE_RECEIPT_REQUIRED", true
 	default:
 		return "", "", false
 	}

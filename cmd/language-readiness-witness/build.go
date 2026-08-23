@@ -21,40 +21,7 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 		return readinessartifact.Receipt{}, err
 	}
 	if cfg.guarded != "" {
-		guarded, err := os.ReadFile(cfg.guarded)
-		if err != nil {
-			return readinessartifact.Receipt{}, err
-		}
-		useCases, err := os.ReadFile(cfg.useCases)
-		if err != nil {
-			return readinessartifact.Receipt{}, err
-		}
-		syntaxReport, err := os.ReadFile(cfg.syntax)
-		if err != nil {
-			return readinessartifact.Receipt{}, err
-		}
-		diagnosticReport, err := os.ReadFile(cfg.diagnostic)
-		if err != nil {
-			return readinessartifact.Receipt{}, err
-		}
-		packageRuntimeReport, err := os.ReadFile(cfg.packageRuntime)
-		if err != nil {
-			return readinessartifact.Receipt{}, err
-		}
-		toolchainCLIReport, err := os.ReadFile(cfg.toolchainCLI)
-		if err != nil {
-			return readinessartifact.Receipt{}, err
-		}
-		toolchainFormatFixReport, err := os.ReadFile(cfg.toolchainFormatFix)
-		if err != nil {
-			return readinessartifact.Receipt{}, err
-		}
-		return readinessartifact.BuildWithCompleteEvidence(readinessartifact.CompleteEvidenceInput{
-			ConceptArtifact: raw, Promotion: promotion, Capability: guarded, UseCases: useCases,
-			Syntax: syntaxReport, Diagnostic: diagnosticReport, PackageRuntime: packageRuntimeReport,
-			ToolchainCLI: toolchainCLIReport, ToolchainFormatFix: toolchainFormatFixReport,
-			HeadSHA: cfg.expectedSHA,
-		})
+		return buildComplete(cfg, raw, promotion)
 	}
 	return readinessartifact.BuildWithProposalPromotion(raw, promotion, cfg.expectedSHA)
 }

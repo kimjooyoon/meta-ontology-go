@@ -14,6 +14,7 @@ This catalog records useful concepts discovered while building Gooo. It does not
 | toolchain executable use cases | examples can exist without executing rejection paths | one canonical path and two tamper paths emit an exact replayed receipt | operating |
 | language syntax round-trip | syntax examples may not prove preservation | the complete registered corpus replays AST, canonical bytes, semantics, and lens laws | operating |
 | toolchain format/fix | repair tools can write before proving meaning | a data-only plan is applied in memory and replayed to an explicit fixed point | operating |
+| toolchain conformance | green tools can disagree on identity or authority | nine exact-head receipts close under one versioned meta ledger | operating |
 
 ## Executable meaning
 
@@ -34,6 +35,9 @@ The language syntax round-trip concept likewise requires its dynamic `15/15`
 receipt; static parser and formatter bindings alone receive no readiness credit.
 The toolchain format/fix concept requires its independent dynamic `12/12`
 receipt; a formatter implementation or command name alone receives no credit.
+The toolchain conformance concept requires its independent dynamic `9/9`
+surface receipt and `13/13` in-memory rejection paths; individual green tools
+alone receive no credit.
 
 ## Current interpretation
 

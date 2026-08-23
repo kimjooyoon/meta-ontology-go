@@ -41,6 +41,9 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.toolchainFormatFix != "" {
 		paths = append(paths, cfg.toolchainFormatFix)
 	}
+	if cfg.toolchainConformance != "" {
+		paths = append(paths, cfg.toolchainConformance)
+	}
 	if (cfg.guarded == "") != (cfg.useCases == "") ||
 		(cfg.guarded == "") != (cfg.syntax == "") ||
 		(cfg.guarded == "") != (cfg.diagnostic == "") ||
@@ -48,6 +51,9 @@ func run(cfg config, stdout io.Writer) error {
 		(cfg.guarded == "") != (cfg.toolchainCLI == "") ||
 		(cfg.guarded == "") != (cfg.toolchainFormatFix == "") {
 		return fmt.Errorf("guarded-capability, use-cases, syntax, diagnostic, package-runtime, toolchain-cli, and toolchain-format-fix evidence must be provided together")
+	}
+	if cfg.toolchainConformance != "" && cfg.guarded == "" {
+		return fmt.Errorf("toolchain-conformance requires the complete evidence set")
 	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err

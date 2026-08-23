@@ -8,6 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
 	metacli "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli"
+	metaconformance "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance"
 	metaff "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
 )
@@ -48,8 +49,19 @@ func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {
 	bundle := readiness.PromotionEvidence{Promotion: promotion, Capability: capability,
 		UseCases: useCases, Syntax: syntaxReport, Diagnostic: diagnostic,
 		PackageRuntime: []languagepackageruntime.Report{runtimeReport}}
-	snapshot, err := readiness.EvaluateWithToolchainFormatFix(
-		input.ConceptArtifact, bundle, cliReport, formatFixReport, input.HeadSHA)
+	var snapshot readiness.Snapshot
+	if len(input.ToolchainConformance) == 0 {
+		snapshot, err = readiness.EvaluateWithToolchainFormatFix(
+			input.ConceptArtifact, bundle, cliReport, formatFixReport, input.HeadSHA)
+	} else {
+		conformance, decodeErr := decodeCompleteEvidence[metaconformance.Report](
+			input.ToolchainConformance)
+		if decodeErr != nil {
+			return Receipt{}, decodeErr
+		}
+		snapshot, err = readiness.EvaluateWithToolchainConformance(
+			input.ConceptArtifact, bundle, cliReport, formatFixReport, conformance, input.HeadSHA)
+	}
 	if err != nil {
 		return Receipt{}, err
 	}

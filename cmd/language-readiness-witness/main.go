@@ -7,7 +7,8 @@ import (
 )
 
 type config struct {
-	root, input, promotion, guarded, useCases, syntax, diagnostic, packageRuntime, toolchainCLI, toolchainFormatFix, output, check, expectedSHA string
+	root, input, promotion, guarded, useCases, syntax, diagnostic, packageRuntime string
+	toolchainCLI, toolchainFormatFix, toolchainConformance, output, check, expectedSHA string
 }
 
 func main() {
@@ -22,6 +23,7 @@ func main() {
 	flag.StringVar(&cfg.packageRuntime, "language-package-runtime", "", "verified package runtime receipt outside the repository")
 	flag.StringVar(&cfg.toolchainCLI, "toolchain-cli", "", "verified toolchain CLI receipt outside the repository")
 	flag.StringVar(&cfg.toolchainFormatFix, "toolchain-format-fix", "", "verified toolchain format/fix receipt outside the repository")
+	flag.StringVar(&cfg.toolchainConformance, "toolchain-conformance", "", "verified toolchain conformance receipt outside the repository")
 	flag.StringVar(&cfg.output, "output", "", "readiness artifact path outside the repository")
 	flag.StringVar(&cfg.check, "check", "", "existing readiness artifact outside the repository")
 	flag.StringVar(&cfg.expectedSHA, "expected-sha", "", "exact 40 character commit sha")

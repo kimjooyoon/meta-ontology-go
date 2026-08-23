@@ -10,5 +10,6 @@ type CompleteEvidenceInput struct {
 	PackageRuntime     []byte
 	ToolchainCLI       []byte
 	ToolchainFormatFix []byte
+	ToolchainConformance []byte
 	HeadSHA            string
 }
