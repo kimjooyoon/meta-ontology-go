@@ -1407,31 +1407,73 @@
         "internal/meta/languagereadiness/external_evidence.go",
         "internal/meta/languagereadiness/toolchain_lsp_evidence.go",
         "internal/meta/languagereadiness/toolchain_lsp_promotion.go",
-          "internal/meta/languagereadiness/toolchainlsp/**",
-          "internal/verify/scope_toolchain_lsp.go"
-        ]
-      },
-      {
-        "branch": "agent/toolchain-cross-platform-release",
-        "paths": [
-          ".github/agent-scope-table.md",
-          ".github/ci-governance.json",
-          ".github/workflows/transformation-effect.yml",
-          "cmd/language-readiness-witness/**",
-          "cmd/toolchain-release-platform-witness/**",
-          "cmd/toolchain-release-witness/**",
-          "docs/language/toolchain-cross-platform-release-readiness.md",
-          "docs/language/toolchain-cross-platform-release.md",
-          "examples/toolchain-cross-platform-release/**",
-          "internal/meta/languageconcept/**",
-          "internal/meta/languagereadiness/artifact/**",
-          "internal/meta/languagereadiness/external_evidence.go",
-          "internal/meta/languagereadiness/toolchain_cross_platform_release_evidence.go",
-          "internal/meta/languagereadiness/toolchain_cross_platform_release_promotion.go",
-          "internal/meta/languagereadiness/toolchainrelease/**",
-          "internal/verify/scope_toolchain_cross_platform_release.go"
-        ]
-      }
+        "internal/meta/languagereadiness/toolchainlsp/**",
+        "internal/verify/scope_toolchain_lsp.go"
+      ]
+    },
+    {
+      "branch": "agent/toolchain-cross-platform-release",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "cmd/toolchain-release-platform-witness/**",
+        "cmd/toolchain-release-witness/**",
+        "docs/language/toolchain-cross-platform-release-readiness.md",
+        "docs/language/toolchain-cross-platform-release.md",
+        "examples/toolchain-cross-platform-release/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/**",
+        "internal/meta/languagereadiness/external_evidence.go",
+        "internal/meta/languagereadiness/toolchain_cross_platform_release_evidence.go",
+        "internal/meta/languagereadiness/toolchain_cross_platform_release_promotion.go",
+        "internal/meta/languagereadiness/toolchainrelease/**",
+        "internal/verify/scope_toolchain_cross_platform_release.go"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-governance",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_source_splitter_conformance.go"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-fail-closed",
+      "paths": [
+        "internal/meta/transformationeffect/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-contract",
+      "paths": [
+        "docs/language/source-splitter-operation-conformance-v1.md",
+        "examples/source-splitter-conformance/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-evaluator",
+      "paths": [
+        "internal/meta/operationconformance/**",
+        "scripts/source-splitter/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-adapter",
+      "paths": [
+        "internal/meta/generation/registry.go",
+        "internal/meta/transformationeffect/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-ci",
+      "paths": [
+        ".github/workflows/transformation-effect.yml",
+        "scripts/source-splitter-conformance-ci/**"
+      ]
+    }
   ],
   "protected_kernel_paths": [
     ".github/workflows/**",
