@@ -2,10 +2,6 @@ package toolchainlsp
 
 import (
 	"bytes"
-	"encoding/json"
-	"strings"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 )
 
 type runtimeStats struct {
@@ -64,26 +60,3 @@ func observeServer(raw []byte, messages []rpcMessage, replay []byte) (map[string
 	}
 	return result, stats
 }
-
-func observeUTF16() bool {
-	source := "a😀b\r\nΩ"
-	position, err := lsp.OffsetToPosition(source, len("a😀"))
-	if err != nil || position.Character != 3 {
-		return false
-	}
-	offset, err := lsp.PositionToOffset(source, position)
-	return err == nil && offset == len("a😀")
-}
-
-func boolCount(values ...bool) int {
-	count := 0
-	for _, value := range values {
-		if value {
-			count++
-		}
-	}
-	return count
-}
-
-var _ = json.RawMessage{}
-var _ = strings.Contains
