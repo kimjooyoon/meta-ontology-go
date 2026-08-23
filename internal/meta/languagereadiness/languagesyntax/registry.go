@@ -33,6 +33,7 @@ func expectedRegistry() Registry {
 		valid("roundtrip-minimal", "internal/detection/roundtrip/testdata/minimal.gooo"),
 		valid("directory-kind-ontology", "internal/meta/directorykind/ontology.gooo"),
 		valid("directory-partition-ontology", "internal/meta/directorypartition/ontology.gooo"),
+		valid("source-splitter-conformance", "examples/source-splitter-conformance/main.gooo"),
 		invalid("unknown-keyword", "examples/language-syntax-roundtrip/unknown-keyword.txt", "parse.unexpected-token"),
 		invalid("unterminated-string", "examples/language-syntax-roundtrip/unterminated-string.txt", "lex.unterminated-string"),
 	}}
