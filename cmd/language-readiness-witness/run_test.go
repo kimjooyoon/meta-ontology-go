@@ -13,7 +13,7 @@ import (
 
 const testSHA = "0000000000000000000000000000000000000000"
 
-func TestRunPublishesExactTwelveOfTwentyFour(t *testing.T) {
+func TestRunPublishesExactThirteenOfTwentyFour(t *testing.T) {
 	root, err := filepath.Abs(filepath.Join("..", ".."))
 	if err != nil {
 		t.Fatal(err)
@@ -39,8 +39,8 @@ func TestRunPublishesExactTwelveOfTwentyFour(t *testing.T) {
 	if err := json.Unmarshal(data, &receipt); err != nil {
 		t.Fatal(err)
 	}
-	if receipt.Snapshot.Summary.Completed != 12 || receipt.Snapshot.Summary.Total != 24 ||
-		receipt.Snapshot.Summary.ReadinessBPS != 5000 || receipt.FixedPoint.Decision != improvement.NoChange {
+	if receipt.Snapshot.Summary.Completed != 13 || receipt.Snapshot.Summary.Total != 24 ||
+		receipt.Snapshot.Summary.ReadinessBPS != 5416 || receipt.FixedPoint.Decision != improvement.NoChange {
 		t.Fatalf("receipt = %+v", receipt)
 	}
 }
