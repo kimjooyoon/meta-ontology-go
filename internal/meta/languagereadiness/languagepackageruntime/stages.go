@@ -11,7 +11,10 @@ func stages(source Source, summary Summary) []Stage {
 	result := make([]Stage, len(definitions))
 	input := digestValue(source)
 	for index, definition := range definitions {
-		output := digestValue(struct{ Previous, Operation string; Summary Summary }{input, definition.operation, summary})
+		output := digestValue(struct {
+			Previous, Operation string
+			Summary             Summary
+		}{input, definition.operation, summary})
 		result[index] = Stage{Sequence: index + 1, Name: definition.name,
 			MetaOperation: definition.operation, InputDigest: input, OutputDigest: output}
 		input = output

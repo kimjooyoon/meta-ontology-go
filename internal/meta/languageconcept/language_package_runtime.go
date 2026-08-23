@@ -1,13 +1,13 @@
 package languageconcept
 
 var languagePackageRuntimeConcept = Concept{
-	ID: "language-package-runtime",
-	Problem: "Parsed .gooo files did not form a deterministic multi-package runtime unit.",
+	ID:             "language-package-runtime",
+	Problem:        "Parsed .gooo files did not form a deterministic multi-package runtime unit.",
 	PositiveEffect: "A fixed corpus now proves canonical package initialization and activity-contract resolution.",
-	MetaOperation: "evaluate-language-package-runtime",
-	Rarity: "UNCOMMON_COMBINATION",
-	Stage: "OPERATING",
-	NoveltyClaim: false,
+	MetaOperation:  "evaluate-language-package-runtime",
+	Rarity:         "UNCOMMON_COMBINATION",
+	Stage:          "OPERATING",
+	NoveltyClaim:   false,
 	CodeBindings: []string{
 		"internal/packageruntime",
 		"internal/meta/languagereadiness/languagepackageruntime",

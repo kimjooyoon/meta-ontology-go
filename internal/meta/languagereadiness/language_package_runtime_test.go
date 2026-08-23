@@ -6,7 +6,7 @@ func TestLanguagePackageRuntimeRequiresDynamicReceipt(t *testing.T) {
 	obligation := Obligation{ID: "LANGUAGE-PACKAGE-RUNTIME",
 		Area: areaLanguage, ProofChoice: "FOUNDATION", ConceptID: packageRuntimeConcept}
 	concept := conceptEvidence{ID: packageRuntimeConcept, Stage: "OPERATING",
-		CodeBindings: []string{"internal/meta/languagereadiness/languagepackageruntime"},
+		CodeBindings:   []string{"internal/meta/languagereadiness/languagepackageruntime"},
 		MetricBindings: []string{"gooo.metric.language.package-runtime-readiness-bps.v1"},
 		UseCases: []useCaseEvidence{{ID: "fixed-package-runtime-corpus",
 			Trigger: "18 cases", ExpectedOutcome: "18_OF_18"}}}

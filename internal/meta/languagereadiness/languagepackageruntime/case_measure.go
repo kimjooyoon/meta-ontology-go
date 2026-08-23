@@ -18,7 +18,9 @@ func semanticBindings(runtime packageruntime.Result) int {
 	count := 0
 	for _, image := range runtime.Image.Packages {
 		for _, source := range image.Sources {
-			if source.SemanticDigest != "" { count++ }
+			if source.SemanticDigest != "" {
+				count++
+			}
 		}
 	}
 	return count
@@ -26,7 +28,9 @@ func semanticBindings(runtime packageruntime.Result) int {
 
 func packageSources(runtime packageruntime.Result, packagePath string) int {
 	for _, image := range runtime.Image.Packages {
-		if image.Path == packagePath { return len(image.Sources) }
+		if image.Path == packagePath {
+			return len(image.Sources)
+		}
 	}
 	return 0
 }
@@ -36,4 +40,9 @@ func isPermutation(assertion string) bool {
 		assertion == "SOURCE_PERMUTATION"
 }
 
-func boolCount(value bool) int { if value { return 1 }; return 0 }
+func boolCount(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}

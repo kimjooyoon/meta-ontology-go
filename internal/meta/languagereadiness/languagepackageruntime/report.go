@@ -1,11 +1,11 @@
 package languagepackageruntime
 
 type Source struct {
-	ExpectedHeadSHA string `json:"expected_head_sha"`
-	GoVersion       string `json:"go_version"`
-	ConceptDigest   string `json:"concept_digest"`
-	RegistryDigest  string `json:"registry_digest"`
-	ManifestSchema  string `json:"manifest_schema"`
+	ExpectedHeadSHA  string `json:"expected_head_sha"`
+	GoVersion        string `json:"go_version"`
+	ConceptDigest    string `json:"concept_digest"`
+	RegistryDigest   string `json:"registry_digest"`
+	ManifestSchema   string `json:"manifest_schema"`
 	ObservationKnown bool   `json:"observation_known"`
 }
 

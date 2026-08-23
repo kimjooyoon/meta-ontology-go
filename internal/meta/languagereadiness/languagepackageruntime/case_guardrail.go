@@ -15,12 +15,16 @@ func executeGuardrail(definition Definition) CaseResult {
 	}
 	result.Observed, result.Reason = failureCode(err), err.Error()
 	result.Satisfied = result.Observed == definition.ExpectedCode
-	if result.Satisfied { result.Reason = "INVALID_RUNTIME_REJECTED" }
+	if result.Satisfied {
+		result.Reason = "INVALID_RUNTIME_REJECTED"
+	}
 	return result
 }
 
 func failureCode(err error) string {
 	failure := new(packageruntime.Failure)
-	if errors.As(err, &failure) { return failure.Code }
+	if errors.As(err, &failure) {
+		return failure.Code
+	}
 	return "UNKNOWN_FAILURE"
 }

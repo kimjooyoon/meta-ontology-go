@@ -11,13 +11,25 @@ func lowerResolution(source Source, reason string) Report {
 }
 
 func allIndicators(indicators []Indicator) bool {
-	if len(indicators) != FixedIndicators { return false }
-	for _, indicator := range indicators { if !indicator.Satisfied { return false } }
+	if len(indicators) != FixedIndicators {
+		return false
+	}
+	for _, indicator := range indicators {
+		if !indicator.Satisfied {
+			return false
+		}
+	}
 	return true
 }
 
 func allProofs(proofs []Proof) bool {
-	if len(proofs) != 3 { return false }
-	for _, proof := range proofs { if !proof.Passed { return false } }
+	if len(proofs) != 3 {
+		return false
+	}
+	for _, proof := range proofs {
+		if !proof.Passed {
+			return false
+		}
+	}
 	return true
 }

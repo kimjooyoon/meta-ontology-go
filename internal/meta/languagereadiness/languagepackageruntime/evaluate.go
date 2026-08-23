@@ -24,8 +24,11 @@ func Evaluate(input Input) Report {
 	}
 	results := make([]CaseResult, 0, FixedTotal)
 	for _, definition := range registry.Cases {
-		if definition.Kind == "POSITIVE" { results = append(results, executePositive(definition, baseline))
-		} else { results = append(results, executeGuardrail(definition)) }
+		if definition.Kind == "POSITIVE" {
+			results = append(results, executePositive(definition, baseline))
+		} else {
+			results = append(results, executeGuardrail(definition))
+		}
 	}
 	summary := summarize(registry.Cases, results)
 	report := Report{Schema: ReportSchema, Decision: DecisionClosed, Resolution: ResolutionExact,

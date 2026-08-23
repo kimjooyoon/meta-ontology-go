@@ -22,8 +22,8 @@ type Decision string
 type Resolution string
 
 const (
-	DecisionPass   Decision   = "PASS"
-	DecisionClosed Decision   = "FAIL_CLOSED"
+	DecisionPass    Decision   = "PASS"
+	DecisionClosed  Decision   = "FAIL_CLOSED"
 	ResolutionExact Resolution = "EXACT"
 	ResolutionLower Resolution = "LOWER_RESOLUTION"
 )

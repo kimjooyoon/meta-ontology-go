@@ -5,7 +5,7 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime"
 func baseManifest() packageruntime.Manifest {
 	return packageruntime.Manifest{
 		Schema: packageruntime.ManifestSchema,
-		Entry: packageruntime.EntrySpec{PackagePath: "example/app", Activity: "Run"},
+		Entry:  packageruntime.EntrySpec{PackagePath: "example/app", Activity: "Run"},
 		Packages: []packageruntime.PackageSpec{
 			packageSpec("example/core", "core", nil, source("core.gooo", `package core
 namespace core

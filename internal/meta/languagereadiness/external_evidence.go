@@ -10,11 +10,11 @@ const (
 )
 
 type evidenceDigests struct {
-	proposal   string
-	guarded    string
-	useCases   string
-	syntax     string
-	diagnostic string
+	proposal       string
+	guarded        string
+	useCases       string
+	syntax         string
+	diagnostic     string
 	packageRuntime string
 }
 

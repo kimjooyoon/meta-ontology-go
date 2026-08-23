@@ -8,7 +8,9 @@ import (
 
 func digestValue(value any) string {
 	raw, err := json.Marshal(value)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	digest := sha256.Sum256(raw)
 	return "sha256:" + hex.EncodeToString(digest[:])
 }
