@@ -30,10 +30,18 @@ func run(ctx context.Context, config config) error {
 	if report.Decision != config.expectDecision {
 		return fmt.Errorf("guarded promotion decision = %s, want %s", report.Decision, config.expectDecision)
 	}
-	fmt.Printf("decision=%s satisfied=%d total=%d bps=%d writes=%d\n",
+	fmt.Printf("decision=%s satisfied=%d total=%d bps=%d writes=%d feeds-next-promotion=%t\n",
 		report.Decision, report.Summary.Satisfied, report.Summary.Total,
-		report.Summary.ReadinessBPS, report.Summary.RepositoryWrites)
+		report.Summary.ReadinessBPS, report.Summary.RepositoryWrites, feedsNextPromotion(report))
 	return nil
+}
+
+func feedsNextPromotion(report guardedpromotion.Report) bool {
+	const fixedCoordinateDenominator = 8
+	return report.Summary.Satisfied == fixedCoordinateDenominator &&
+		report.Summary.Total == fixedCoordinateDenominator &&
+		report.Summary.ReadinessBPS == 10_000 &&
+		report.Summary.RepositoryWrites == 0
 }
 
 func writeReport(path string, report guardedpromotion.Report) error {
