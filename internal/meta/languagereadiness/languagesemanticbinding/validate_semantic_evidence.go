@@ -1,7 +1,7 @@
 package languagesemanticbinding
 
 func validateSemanticEvidence(value semanticArtifact, metrics []string) error {
-	if err := require(len(value.Cases) == 18, "semantic case denominator mismatch"); err != nil {
+	if err := require(len(value.Cases) == 19, "semantic case denominator mismatch"); err != nil {
 		return err
 	}
 	for _, item := range value.Cases {
