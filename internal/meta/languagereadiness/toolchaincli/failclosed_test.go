@@ -11,7 +11,7 @@ func TestUnknownRegistryLowersCLIResolution(t *testing.T) {
 	executor := &fakeExecutor{}
 	report := Evaluate(Input{ExpectedHeadSHA: testHead,
 		ConceptArtifact: languageconcept.BuildArtifact(os.DirFS("../../../..")),
-		RegistryRaw: []byte("{\"schema\":\"unknown\"}"), Executor: executor})
+		RegistryRaw:     []byte("{\"schema\":\"unknown\"}"), Executor: executor})
 	if err := Validate(report, testHead); err != nil {
 		t.Fatal(err)
 	}
@@ -25,7 +25,7 @@ func TestUnknownRegistryLowersCLIResolution(t *testing.T) {
 func TestUnknownTopDecisionIsRejected(t *testing.T) {
 	report := Evaluate(Input{ExpectedHeadSHA: testHead,
 		ConceptArtifact: languageconcept.BuildArtifact(os.DirFS("../../../..")),
-		RegistryRaw: registryFixture(t), Executor: &fakeExecutor{}})
+		RegistryRaw:     registryFixture(t), Executor: &fakeExecutor{}})
 	report.Decision = "FIXED_POINT"
 	report = seal(report)
 	if Validate(report, testHead) == nil {
@@ -36,7 +36,7 @@ func TestUnknownTopDecisionIsRejected(t *testing.T) {
 func TestRepositoryWriteFailsClosedExactly(t *testing.T) {
 	report := Evaluate(Input{ExpectedHeadSHA: testHead,
 		ConceptArtifact: languageconcept.BuildArtifact(os.DirFS("../../../..")),
-		RegistryRaw: registryFixture(t), Executor: &fakeExecutor{writeOn: 1}})
+		RegistryRaw:     registryFixture(t), Executor: &fakeExecutor{writeOn: 1}})
 	if err := Validate(report, testHead); err != nil {
 		t.Fatal(err)
 	}

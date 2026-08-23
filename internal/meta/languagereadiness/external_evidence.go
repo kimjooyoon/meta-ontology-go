@@ -6,8 +6,8 @@ const (
 	toolchainUseCasesConcept  = "toolchain-executable-use-cases"
 	languageSyntaxConcept     = "language-syntax-roundtrip"
 	diagnosticConcept         = "language-diagnostic-provenance"
-		packageRuntimeConcept     = "language-package-runtime"
-		toolchainCLIConcept       = "toolchain-cli"
+	packageRuntimeConcept     = "language-package-runtime"
+	toolchainCLIConcept       = "toolchain-cli"
 )
 
 type evidenceDigests struct {
@@ -16,8 +16,8 @@ type evidenceDigests struct {
 	useCases       string
 	syntax         string
 	diagnostic     string
-		packageRuntime string
-		toolchainCLI   string
+	packageRuntime string
+	toolchainCLI   string
 }
 
 type externalEvidence struct {

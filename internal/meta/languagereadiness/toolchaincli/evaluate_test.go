@@ -12,7 +12,7 @@ func TestEvaluateExecutesExactCLIContract(t *testing.T) {
 	executor := &fakeExecutor{}
 	report := Evaluate(Input{ExpectedHeadSHA: testHead,
 		ConceptArtifact: languageconcept.BuildArtifact(repository),
-		RegistryRaw: registryFixture(t), Executor: executor})
+		RegistryRaw:     registryFixture(t), Executor: executor})
 	if err := Validate(report, testHead); err != nil {
 		t.Fatal(err)
 	}
