@@ -7,8 +7,8 @@ import (
 )
 
 type evidenceEnvelope struct {
-	OperationID string `json:"operation_id"`
-	HeadSHA     string `json:"head_sha"`
+	OperationID     string `json:"operation_id"`
+	ExpectedHeadSHA string `json:"expected_head_sha"`
 }
 
 func buildArtifact(opts options) (artifact, error) {
@@ -57,8 +57,8 @@ func validateEnvelope(raw []byte, expectedSHA string) error {
 	if envelope.OperationID != contractOperationID {
 		return fmt.Errorf("operation_id = %q, want %q", envelope.OperationID, contractOperationID)
 	}
-	if envelope.HeadSHA != expectedSHA {
-		return fmt.Errorf("head_sha = %q, want %q", envelope.HeadSHA, expectedSHA)
+	if envelope.ExpectedHeadSHA != expectedSHA {
+		return fmt.Errorf("expected_head_sha = %q, want %q", envelope.ExpectedHeadSHA, expectedSHA)
 	}
 	return nil
 }

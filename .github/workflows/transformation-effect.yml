@@ -166,6 +166,7 @@ jobs:
           sha256sum "$output/artifact-a.json" > "$output/artifact-a.sha256"
 
       - name: Upload exact-head conformance artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: source-splitter-conformance-${{ env.HEAD_SHA }}
