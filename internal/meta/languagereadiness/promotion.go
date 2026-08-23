@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
 )
@@ -19,7 +20,7 @@ func EvaluateWithProposalPromotion(
 }
 
 func EvaluateWithPromotionEvidence(raw []byte, promotion proposalpromotion.Receipt,
-	capability guardedcapability.Receipt, useCases toolchainusecases.Report,
+	capability guardedcapability.Receipt, useCases toolchainusecases.Report, syntaxReport languagesyntax.Report,
 	expectedHeadSHA string) (Snapshot, error) {
 	promotionDigest, err := validateProposalPromotion(promotion, expectedHeadSHA)
 	if err != nil {
@@ -37,8 +38,15 @@ func EvaluateWithPromotionEvidence(raw []byte, promotion proposalpromotion.Recei
 	if useCases.Decision != toolchainusecases.DecisionPass {
 		return Snapshot{}, fmt.Errorf("FAIL_CLOSED: executable use case decision %q", useCases.Decision)
 	}
+	if err := languagesyntax.Validate(syntaxReport, expectedHeadSHA); err != nil {
+		return Snapshot{}, fmt.Errorf("verify language syntax roundtrip: %w", err)
+	}
+	if syntaxReport.Decision != languagesyntax.DecisionPass {
+		return Snapshot{}, fmt.Errorf("FAIL_CLOSED: language syntax decision %q", syntaxReport.Decision)
+	}
 	return evaluate(raw, evidenceDigests{
 		proposal: promotionDigest, guarded: capability.ReportDigest, useCases: useCases.ReportDigest,
+		syntax: syntaxReport.ReportDigest,
 	})
 }
 

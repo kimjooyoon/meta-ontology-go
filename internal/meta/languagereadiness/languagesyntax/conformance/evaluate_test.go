@@ -1,0 +1,51 @@
+package languagesyntax_test
+
+import (
+	"bytes"
+	"io/fs"
+	"os"
+	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
+)
+
+const testHead = "0000000000000000000000000000000000000000"
+
+func fixture(t *testing.T) (fs.FS, []byte) {
+	t.Helper()
+	repository := os.DirFS("../../../../..")
+	raw, err := fs.ReadFile(repository, "examples/language-syntax-roundtrip/corpus.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return repository, raw
+}
+
+func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
+	repository, raw := fixture(t)
+	report := languagesyntax.Evaluate(repository, testHead, raw, languageconcept.BuildArtifact(repository))
+	if err := languagesyntax.Validate(report, testHead); err != nil {
+		t.Fatal(err)
+	}
+	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
+		report.Summary.Satisfied != 12 || report.Summary.ValidCases != 10 ||
+		report.Summary.InvalidCases != 2 || report.Summary.Unresolved != 0 || report.Summary.GoooLines <= 0 {
+		t.Fatalf("report = %#v", report)
+	}
+}
+
+func TestUnknownRegistryLowersResolution(t *testing.T) {
+	repository, canonical := fixture(t)
+	unknownField := bytes.Replace(canonical, []byte("{"), []byte(`{"unknown":true,`), 1)
+	for _, raw := range [][]byte{[]byte(`{"schema":"UNKNOWN","cases":[]}`), unknownField} {
+		report := languagesyntax.Evaluate(repository, testHead, raw, languageconcept.BuildArtifact(repository))
+		if err := languagesyntax.Validate(report, testHead); err != nil {
+			t.Fatal(err)
+		}
+		if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
+			report.Summary.Executed != 0 || report.Summary.Unresolved != 12 {
+			t.Fatalf("unknown registry was not lowered: %#v", report)
+		}
+	}
+}

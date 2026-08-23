@@ -26,8 +26,11 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.useCases != "" {
 		paths = append(paths, cfg.useCases)
 	}
-	if (cfg.guarded == "") != (cfg.useCases == "") {
-		return fmt.Errorf("guarded-capability and toolchain-use-cases must be provided together")
+	if cfg.syntax != "" {
+		paths = append(paths, cfg.syntax)
+	}
+	if (cfg.guarded == "") != (cfg.useCases == "") || (cfg.guarded == "") != (cfg.syntax == "") {
+		return fmt.Errorf("guarded-capability, toolchain-use-cases, and language-syntax-roundtrip must be provided together")
 	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err
