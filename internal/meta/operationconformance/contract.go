@@ -66,23 +66,3 @@ func contractDrift(value contractDocument) string {
 	}
 	return ""
 }
-
-func indicatorRegistryDrift(observed []IndicatorDefinition) string {
-	if len(observed) != len(fixedIndicators) {
-		return "indicators.count"
-	}
-	for index, expected := range fixedIndicators {
-		actual := observed[index]
-		switch {
-		case actual.ID != expected.ID:
-			return fmt.Sprintf("indicators[%d].id", index)
-		case actual.Role != expected.Role:
-			return fmt.Sprintf("indicators[%d].role", index)
-		case actual.Route != expected.Route:
-			return fmt.Sprintf("indicators[%d].route", index)
-		case actual.RuleID != expected.RuleID:
-			return fmt.Sprintf("indicators[%d].rule_id", index)
-		}
-	}
-	return ""
-}
