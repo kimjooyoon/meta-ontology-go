@@ -700,6 +700,84 @@ jobs:
             cd "$interop_first/binding"
             sha256sum artifact.json > artifact.json.sha256
           )
+          conformance_root="$RUNNER_TEMP/toolchain-conformance"
+          conformance_first="$conformance_root/first"
+          conformance_replay="$conformance_root/replay"
+          conformance_corpus="$GITHUB_WORKSPACE/examples/toolchain-conformance/corpus.json"
+          mkdir -p "$conformance_first" "$conformance_replay"
+          for target in "$conformance_first" "$conformance_replay"; do
+            go run ./cmd/toolchain-conformance-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$conformance_corpus" \
+              --syntax "$syntax_first/artifact.json" \
+              --semantic "$semantic_first/artifact.json" \
+              --query "$query_first/query/artifact.json" \
+              --interop "$interop_first/interop/artifact.json" \
+              --diagnostic "$diagnostic_first/artifact.json" \
+              --runtime "$runtime_first/artifact.json" \
+              --cli "$cli_first/artifact.json" \
+              --format-fix "$format_fix_first/artifact.json" \
+              --use-cases "$usecase_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$conformance_first/artifact.json" "$conformance_replay/artifact.json"
+          go run ./cmd/toolchain-conformance-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$conformance_corpus" \
+            --syntax "$syntax_first/artifact.json" \
+            --semantic "$semantic_first/artifact.json" \
+            --query "$query_first/query/artifact.json" \
+            --interop "$interop_first/interop/artifact.json" \
+            --diagnostic "$diagnostic_first/artifact.json" \
+            --runtime "$runtime_first/artifact.json" \
+            --cli "$cli_first/artifact.json" \
+            --format-fix "$format_fix_first/artifact.json" \
+            --use-cases "$usecase_first/artifact.json" \
+            --check "$conformance_first/artifact.json"
+          (
+            cd "$conformance_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          for target in "$readiness_first" "$readiness_replay"; do
+            rm -f "$target/artifact.json"
+            go run ./cmd/language-readiness-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -input "$first/artifact.json" \
+              -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
+              -toolchain-use-cases "$usecase_first/artifact.json" \
+              -language-syntax-roundtrip "$syntax_first/artifact.json" \
+              -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
+              -language-package-runtime "$runtime_first/artifact.json" \
+              -toolchain-cli "$cli_first/artifact.json" \
+              -toolchain-format-fix "$format_fix_first/artifact.json" \
+              -toolchain-conformance "$conformance_first/artifact.json" \
+              -expected-sha "$HEAD_SHA" \
+              -output "$target/artifact.json"
+          done
+          cmp -s "$readiness_first/artifact.json" "$readiness_replay/artifact.json"
+          go run ./cmd/language-readiness-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -input "$first/artifact.json" \
+            -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
+            -toolchain-use-cases "$usecase_first/artifact.json" \
+            -language-syntax-roundtrip "$syntax_first/artifact.json" \
+            -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
+            -language-package-runtime "$runtime_first/artifact.json" \
+            -toolchain-cli "$cli_first/artifact.json" \
+            -toolchain-format-fix "$format_fix_first/artifact.json" \
+            -toolchain-conformance "$conformance_first/artifact.json" \
+            -expected-sha "$HEAD_SHA" \
+            -check "$readiness_first/artifact.json"
+          (
+            cd "$readiness_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
           improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
           improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
           baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
@@ -851,6 +929,13 @@ jobs:
         with:
           name: toolchain-format-fix-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-format-fix/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head toolchain conformance
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-conformance-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-conformance/first
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
