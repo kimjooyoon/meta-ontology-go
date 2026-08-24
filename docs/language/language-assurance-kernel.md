@@ -4,7 +4,7 @@ This kernel measures whether a candidate change can manufacture the evidence tha
 
 ## Frozen denominator
 
-`gooo/language-assurance-denominator/v1` contains exactly 12 obligations. The current report is intentionally partial: 4 obligations are operating, 8 are not implemented, and integer implementation coverage is exactly `(4 * 10000) / 12 = 3333 basis points`.
+`gooo/language-assurance-denominator/v1` contains exactly 12 obligations. The current report is intentionally partial: 5 obligations are operating, 7 are not implemented, and integer implementation coverage is exactly `(5 * 10000) / 12 = 4166 basis points`.
 
 | Priority | Required indicator | Meta operation | Initial status |
 | --- | --- | --- | --- |
@@ -12,7 +12,7 @@ This kernel measures whether a candidate change can manufacture the evidence tha
 | P0 | `gooo.metric.governance.role-conflict-paths.v1` | `detect-role-conflict-paths` | OPERATING |
 | P0 | `gooo.metric.epistemic.unknown-laundering.v1` | `detect-unknown-laundering` | OPERATING |
 | P0 | `gooo.metric.evidence.exact-snapshot-binding.v1` | `bind-exact-snapshot` | OPERATING |
-| P0 | `gooo.metric.evidence.raw-reconstruction.v1` | `reconstruct-raw-evidence` | NOT_IMPLEMENTED |
+| P0 | `gooo.metric.evidence.raw-reconstruction.v1` | `reconstruct-raw-evidence` | OPERATING |
 | P0 | `gooo.metric.effects.write-set-exactness.v1` | `observe-exact-write-set` | NOT_IMPLEMENTED |
 | P1 | `gooo.metric.semantic.source-backed-authority.v1` | `bind-source-backed-authority` | NOT_IMPLEMENTED |
 | P1 | `gooo.metric.semantic.candidate-leakage.v1` | `detect-candidate-leakage` | NOT_IMPLEMENTED |
@@ -25,12 +25,12 @@ The report embeds the denominator and its SHA-256 digest. A missing meta operati
 
 ## Operating indicators
 
-The evaluator emits exactly six observations:
+The evaluator emits exactly seven observations:
 
 | Class | Count | Meaning |
 | --- | ---: | --- |
 | OUTCOME | 1 | frozen-denominator implementation coverage |
-| DRIVER | 2 | transaction evidence-group coverage and exact snapshot binding |
+| DRIVER | 3 | transaction evidence-group coverage, exact snapshot binding, and raw reconstruction |
 | GUARDRAIL | 3 | self-minting, role-conflict, and UNKNOWN-laundering paths |
 
 Each indicator names its producer and meta operation. The proof choices cover the Munchhausen trilemma explicitly: `FOUNDATION`, `COHERENCE`, and `REGRESSION`.
@@ -51,7 +51,9 @@ UNKNOWN laundering is one path for each transition from `UNKNOWN` to `PASS`, `FI
 
 Exact snapshot binding requires exactly three unique bindings named `authority_routes`, `role_bindings`, and `decision_transitions`. Its value is `(bindings matching the evaluated subject SHA * 10000) / 3`. A missing binding produces JSON `null` and `FAIL_CLOSED / ASSURANCE_EVIDENCE_UNKNOWN`; a known mismatch produces `BLOCK / ASSURANCE_SNAPSHOT_BINDING_MISMATCH`. One mismatch is exactly `2 / 3 = 6666 basis points`.
 
-An exact, violation-free transaction receives `ALLOW_LIMITED`, not `PASS`, because only 4 of 12 obligations operate. A detected governance or exact-snapshot violation receives `BLOCK`.
+Raw reconstruction requires exactly one receipt from `gooo-independent-json-reconstructor-v1`. The separate standard-library command does not import the subject evaluator: it reconstructs normalized observations and the candidate decision from the exact-subject raw transaction, pins the frozen denominator digest, and emits a receipt. Missing receipt evidence produces JSON `null` and `FAIL_CLOSED / ASSURANCE_EVIDENCE_UNKNOWN`. A structurally valid receipt that differs from the evaluator's expected normalized observation produces exactly `0 / 1 = 0 basis points` and `BLOCK / ASSURANCE_RAW_RECONSTRUCTION_MISMATCH`.
+
+An exact, violation-free transaction receives `ALLOW_LIMITED`, not `PASS`, because only 5 of 12 obligations operate. A detected governance, exact-snapshot, or raw-reconstruction violation receives `BLOCK`.
 
 ## Executable use cases
 
@@ -62,11 +64,12 @@ An exact, violation-free transaction receives `ALLOW_LIMITED`, not `PASS`, becau
 | `role-conflict.json` | `BLOCK` | role-conflict 1 |
 | `unknown-laundering.json` | `FAIL_CLOSED` | UNKNOWN-laundering 1 |
 | `snapshot-mismatch.json` | `BLOCK` | snapshot mismatch 1; exact binding 6666 bps |
+| `raw-reconstruction-mismatch.json` | `BLOCK` | reconstruction mismatch 1; reconstruction 0 bps |
 
-The committed fixtures are transaction templates. CI binds their three evidence groups to the exact checked-out head before evaluation; the mismatch fixture replaces one binding with the all-zero non-object SHA. The witness writes only to a path outside the repository. CI evaluates every materialized fixture twice, compares report bytes, checks the exact counts, and uploads the first report set.
+The committed fixtures are transaction templates. CI binds their three evidence groups to the exact checked-out head, runs the evaluator-independent reconstructor twice, compares receipt bytes, and injects the receipt before evaluation. The two mismatch fixtures alter one snapshot binding or one reconstructed candidate after receipt generation. Both commands write only outside the repository. CI evaluates every materialized fixture twice, compares report bytes, checks exact counts, and uploads raw transactions, reconstruction receipts, reports, and their manifest together.
 
 ## Go 1.27 and metaprogramming boundary
 
 CI uses Go `1.27.0` and `go fix -diff`. The official Go command contract makes `-diff` non-mutating and non-zero when a modernization patch exists, so CI can enforce fixes without writing to the candidate tree. Go 1.27 adds the `atomictypes`, `embedlit`, `slicesbackward`, and `unsafefuncs` modernizers. See the [Go 1.27 release notes](https://go.dev/doc/go1.27) and [`go fix` command documentation](https://go.dev/cmd/go/).
 
-[gomacro](https://github.com/cosmos72/gomacro) is a useful comparison point for runtime Go interpretation and AST-to-AST Lisp-like macros. This PR does not claim those capabilities. Its meta-level contribution is narrower: executable code observes the authority graph of another code-changing transaction and emits a replayable, fail-closed decision.
+[gomacro](https://github.com/cosmos72/gomacro) is a useful comparison point for runtime Go interpretation and AST-to-AST Lisp-like macros. This PR does not claim those capabilities. Its meta-level contribution is narrower: one executable observes an authority graph, while a separately implemented executable reconstructs the same normalized conclusion from raw evidence; disagreement remains visible and blocks promotion.

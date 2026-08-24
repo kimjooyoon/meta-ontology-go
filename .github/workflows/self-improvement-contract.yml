@@ -70,25 +70,35 @@ jobs:
         run: test "$(go env GOVERSION)" = "go1.27.0"
 
       - name: Require Go 1.27 fixes to be already applied
-        run: go fix -diff ./internal/meta/languageassurance ./cmd/language-assurance-witness
+        run: go fix -diff ./internal/meta/languageassurance ./cmd/language-assurance-witness ./cmd/language-assurance-reconstructor
 
       - name: Run assurance regressions
-        run: go test ./internal/meta/languageassurance ./cmd/language-assurance-witness
+        run: go test ./internal/meta/languageassurance ./cmd/language-assurance-witness ./cmd/language-assurance-reconstructor
 
-      - name: Execute and replay five assurance use cases
+      - name: Require evaluator-independent reconstruction imports
+        shell: bash
+        run: |
+          set -euo pipefail
+          if go list -deps ./cmd/language-assurance-reconstructor | grep -Fxq 'github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance'; then
+            echo 'raw reconstructor imports the subject evaluator' >&2
+            exit 1
+          fi
+
+      - name: Execute and replay six assurance use cases
         shell: bash
         run: |
           set -euo pipefail
           output="$RUNNER_TEMP/language-assurance"
-          mkdir -p "$output/first" "$output/replay" "$output/runtime"
+          mkdir -p "$output/first/raw" "$output/first/receipts" "$output/replay/receipts" "$output/runtime"
           declare -A expected=(
             [independent]=ALLOW_LIMITED
             [self-minting]=BLOCK
             [role-conflict]=BLOCK
             [unknown-laundering]=FAIL_CLOSED
-            [snapshot-mismatch]=BLOCK
-          )
-          for fixture in independent self-minting role-conflict unknown-laundering snapshot-mismatch; do
+	            [snapshot-mismatch]=BLOCK
+	            [raw-reconstruction-mismatch]=BLOCK
+	          )
+	          for fixture in independent self-minting role-conflict unknown-laundering snapshot-mismatch raw-reconstruction-mismatch; do
             jq --arg sha "$HEAD_SHA" --arg fixture "$fixture" '
               .snapshot_bindings = [
                 {"evidence_id":"authority_routes","subject_sha":$sha},
@@ -98,8 +108,22 @@ jobs:
               if $fixture == "snapshot-mismatch" then
                 .snapshot_bindings[2].subject_sha = "0000000000000000000000000000000000000000"
               else . end
-            ' "examples/language-assurance-kernel/$fixture.json" > "$output/runtime/$fixture.json"
-            for pass in first replay; do
+	            ' "examples/language-assurance-kernel/$fixture.json" > "$output/first/raw/$fixture.json"
+	            for pass in first replay; do
+	              go run ./cmd/language-assurance-reconstructor \
+	                -root "$GITHUB_WORKSPACE" \
+	                -subject-sha "$HEAD_SHA" \
+	                -input "$output/first/raw/$fixture.json" \
+	                -output "$output/$pass/receipts/$fixture.json"
+	            done
+	            cmp "$output/first/receipts/$fixture.json" "$output/replay/receipts/$fixture.json"
+	            jq --slurpfile receipt "$output/first/receipts/$fixture.json" --arg fixture "$fixture" '
+	              .raw_reconstructions = [$receipt[0]] |
+	              if $fixture == "raw-reconstruction-mismatch" then
+	                .raw_reconstructions[0].observation.candidate_decision = "BLOCK"
+	              else . end
+	            ' "$output/first/raw/$fixture.json" > "$output/runtime/$fixture.json"
+	            for pass in first replay; do
               go run ./cmd/language-assurance-witness \
                 -root "$GITHUB_WORKSPACE" \
                 -subject-sha "$HEAD_SHA" \
@@ -113,18 +137,22 @@ jobs:
             .assurance_decision == "PARTIAL" and
             .candidate_decision == "ALLOW_LIMITED" and
             .summary.denominator_total == 12 and
-            .summary.operating == 4 and
-            .summary.not_implemented == 8 and
-            .summary.implementation_coverage_bps == 3333 and
+	            .summary.operating == 5 and
+	            .summary.not_implemented == 7 and
+	            .summary.implementation_coverage_bps == 4166 and
             .summary.snapshot_bindings_observed == 3 and
             .summary.snapshot_bindings_required == 3 and
             .summary.exact_snapshot_binding_bps == 10000 and
-            .summary.snapshot_mismatch_paths == 0 and
+	            .summary.snapshot_mismatch_paths == 0 and
+	            .summary.raw_reconstructions_observed == 1 and
+	            .summary.raw_reconstructions_required == 1 and
+	            .summary.raw_reconstruction_bps == 10000 and
+	            .summary.raw_reconstruction_mismatch_paths == 0 and
             .summary.self_minting_paths == 0 and
             .summary.role_conflict_paths == 0 and
             .summary.unknown_laundering_paths == 0 and
             ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
-            ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and
+	            ([.indicators[] | select(.class == "DRIVER")] | length) == 3 and
             ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3
           ' "$output/first/independent.json"
           jq -e '.candidate_decision == "BLOCK" and .summary.self_minting_paths == 1' "$output/first/self-minting.json"
@@ -141,8 +169,15 @@ jobs:
             .candidate_resolution == "EXACT" and
             .summary.exact_snapshot_binding_bps == 6666 and
             .summary.snapshot_mismatch_paths == 1
-          ' "$output/first/snapshot-mismatch.json"
-          sha256sum "$output"/first/*.json > "$output/first/manifest.sha256"
+	          ' "$output/first/snapshot-mismatch.json"
+	          jq -e '
+	            .candidate_decision == "BLOCK" and
+	            .candidate_reason == "ASSURANCE_RAW_RECONSTRUCTION_MISMATCH" and
+	            .candidate_resolution == "EXACT" and
+	            .summary.raw_reconstruction_bps == 0 and
+	            .summary.raw_reconstruction_mismatch_paths == 1
+	          ' "$output/first/raw-reconstruction-mismatch.json"
+	          (cd "$output/first" && find . -type f -name '*.json' -print0 | sort -z | xargs -0 sha256sum > manifest.sha256)
 
       - name: Upload exact-head language assurance reports
         uses: actions/upload-artifact@v6

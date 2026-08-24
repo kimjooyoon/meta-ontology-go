@@ -23,6 +23,7 @@ type Transaction struct {
 	RoleBindings        []RoleBinding        `json:"role_bindings"`
 	DecisionTransitions []DecisionTransition `json:"decision_transitions"`
 	SnapshotBindings    []SnapshotBinding    `json:"snapshot_bindings"`
+	RawReconstructions  []RawReconstructionReceipt `json:"raw_reconstructions"`
 }
 
 type ObligationDefinition struct {
@@ -51,6 +52,9 @@ type Finding struct {
 	EvidenceID  string   `json:"evidence_id,omitempty"`
 	ExpectedSHA string   `json:"expected_sha,omitempty"`
 	ObservedSHA string   `json:"observed_sha,omitempty"`
+	VerifierID     string `json:"verifier_id,omitempty"`
+	ExpectedDigest string `json:"expected_digest,omitempty"`
+	ObservedDigest string `json:"observed_digest,omitempty"`
 }
 
 type Indicator struct {
