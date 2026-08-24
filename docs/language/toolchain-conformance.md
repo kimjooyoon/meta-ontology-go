@@ -8,7 +8,7 @@ already emitted by the language and toolchain.
 The fixed `gooo/toolchain-conformance-corpus/v1` denominator contains:
 
 - 9 tool surfaces
-- 158 executable source cases
+- 160 executable source cases
 - 151 source indicators
 - 27 source proofs
 - 13 in-memory drift mutations

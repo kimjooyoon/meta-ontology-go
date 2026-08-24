@@ -7,6 +7,7 @@ func init() {
 		".github/workflows/self-improvement-contract.yml",
 		"cmd/external-conformance-activation-witness",
 		"docs/language/language-semantic-readiness-binding.md",
+		"docs/language/toolchain-conformance.md",
 		"examples/external-conformance-activation",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/meta/languageassurance/digest.go",
@@ -18,8 +19,10 @@ func init() {
 		"internal/meta/languagereadiness/languagesyntax",
 		"examples/language-semantic-model/corpus.json",
 		"examples/language-semantic-model/README.md",
+		"examples/toolchain-conformance/corpus.json",
 		"internal/meta/languagereadiness/languagesemantic",
 		"internal/meta/languagereadiness/languagesemanticbinding",
+		"internal/meta/languagereadiness/toolchainconformance",
 		"internal/verify/scope_external_conformance_activation.go",
 	}
 }
