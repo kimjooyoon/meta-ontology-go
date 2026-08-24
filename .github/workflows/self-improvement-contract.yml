@@ -518,3 +518,65 @@ jobs:
           name: source-authority-activation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/source-authority-activation
           if-no-files-found: error
+
+  candidate-leakage-shadow:
+    name: Candidate leakage shadow
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.SUBJECT_SHA }}
+      - name: Require Go 1.27 fixes and shadow regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix -diff ./internal/meta/languageassurance/candidateleakage ./cmd/candidate-leakage-witness > "$RUNNER_TEMP/candidate-leakage-fix.diff"
+          if test -s "$RUNNER_TEMP/candidate-leakage-fix.diff"; then
+            cat "$RUNNER_TEMP/candidate-leakage-fix.diff"
+            exit 1
+          fi
+          go test ./internal/meta/languageassurance/candidateleakage ./cmd/candidate-leakage-witness
+      - name: Generate exact candidate boundary evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/candidate-leakage-shadow"
+          mkdir -p "$work/replay"
+          cases="isolated-candidate authorized-transition denied-fixed-point-leak fail-closed-allow-leak unknown-promotion digest-mismatch"
+          go run ./cmd/candidate-leakage-witness --subject-sha "$SUBJECT_SHA" --case suite --output "$work/suite.json"
+          for case_id in $cases; do
+            go run ./cmd/candidate-leakage-witness --subject-sha "$SUBJECT_SHA" --case "$case_id" --output "$work/$case_id.json"
+          done
+          go run ./cmd/candidate-leakage-witness --subject-sha "$SUBJECT_SHA" --case suite --output "$work/replay/suite.json"
+          cmp "$work/suite.json" "$work/replay/suite.json"
+          (cd "$work" && sha256sum suite.json isolated-candidate.json authorized-transition.json denied-fixed-point-leak.json fail-closed-allow-leak.json unknown-promotion.json digest-mismatch.json > manifest.sha256)
+      - name: Assert shadow decision algebra
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/candidate-leakage-shadow"
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and .summary.cases_total == 6 and .summary.cases_passed == 6 and .summary.exact_pass == 2 and .summary.exact_fail_closed == 2 and .summary.invariant_fail_closed == 2 and .summary.coverage_bps == 10000 and .repository_writes == 0 and .promotion_credit_bps == 0' "$work/suite.json"
+          for receipt in denied-fixed-point-leak fail-closed-allow-leak; do
+            jq -e '.decision == "FAIL_CLOSED" and .resolution == "EXACT" and .reason == "CANDIDATE_LEAKAGE_DETECTED" and .summary.leakage_paths == 1' "$work/$receipt.json"
+          done
+          for receipt in unknown-promotion digest-mismatch; do
+            jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .summary.unknown_paths == 1 and .summary.leakage_paths == 0' "$work/$receipt.json"
+          done
+      - name: Upload candidate leakage shadow receipts
+        uses: actions/upload-artifact@v6
+        with:
+          name: candidate-leakage-shadow-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/candidate-leakage-shadow
+          if-no-files-found: error
