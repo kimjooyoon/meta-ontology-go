@@ -256,6 +256,85 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  external-conformance-activation:
+    name: External conformance activation
+    needs:
+      - assurance
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PREDECESSOR_SHA: 2104e3fcede21572951c266cd7b61fd38f386aef
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.SUBJECT_SHA }}
+      - name: Download activated assurance report
+        uses: actions/download-artifact@v6
+        with:
+          name: language-assurance-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/language-assurance
+      - name: Require Go 1.27 fixes and activation regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix -diff ./internal/meta/languageassurance/externalconformanceactivation ./cmd/external-conformance-activation-witness > "$RUNNER_TEMP/external-conformance-activation-fix.diff"
+          if test -s "$RUNNER_TEMP/external-conformance-activation-fix.diff"; then
+            cat "$RUNNER_TEMP/external-conformance-activation-fix.diff"
+            exit 1
+          fi
+          go test ./internal/meta/languageassurance/externalconformanceactivation ./cmd/external-conformance-activation-witness
+      - name: Apply only the exact merged eligibility transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="internal/meta/languageassurance/externalconformanceactivation/evidence"
+          out="$RUNNER_TEMP/external-conformance-activation"
+          mkdir -p "$out"
+          : > "$out/assurance-unavailable.json"
+          cp "$evidence/merge.json" "$out/merge-mismatch.json"
+          printf '\n' >> "$out/merge-mismatch.json"
+          jq '.decision = "UNKNOWN" | .resolution = "UNKNOWN"' "$evidence/eligibility.json" > "$out/eligibility-unknown-input.json"
+          jq '.decision = "FIXED_POINT" | .resolution = "EXACT"' "$evidence/eligibility.json" > "$out/eligibility-fixed-point-input.json"
+          jq '.decision = "SURPRISE" | .resolution = "EXACT"' "$evidence/eligibility.json" > "$out/eligibility-unrecognized-input.json"
+          jq '.candidate_decision = "UNKNOWN" | .candidate_resolution = "UNKNOWN"' "$evidence/assurance.json" > "$out/assurance-unknown-input.json"
+          jq '.state = "UNKNOWN"' "$evidence/merge.json" > "$out/merge-unknown-input.json"
+          witness="go run ./cmd/external-conformance-activation-witness"
+          for pass in exact replay; do
+            $witness --assurance "$evidence/assurance.json" --eligibility "$evidence/eligibility.json" --merge "$evidence/merge.json" --subject-sha "$SUBJECT_SHA" --out "$out/$pass.json"
+          done
+          cmp "$out/exact.json" "$out/replay.json"
+          $witness --assurance "$out/assurance-unavailable.json" --eligibility "$evidence/eligibility.json" --merge "$evidence/merge.json" --subject-sha "$SUBJECT_SHA" --out "$out/unavailable.json"
+          $witness --assurance "$evidence/assurance.json" --eligibility "$evidence/eligibility.json" --merge "$out/merge-mismatch.json" --subject-sha "$SUBJECT_SHA" --out "$out/digest-mismatch.json"
+          for decision in unknown fixed-point unrecognized; do
+            $witness --assurance "$evidence/assurance.json" --eligibility "$out/eligibility-$decision-input.json" --merge "$evidence/merge.json" --subject-sha "$SUBJECT_SHA" --out "$out/eligibility-$decision.json"
+          done
+          $witness --assurance "$out/assurance-unknown-input.json" --eligibility "$evidence/eligibility.json" --merge "$evidence/merge.json" --subject-sha "$SUBJECT_SHA" --out "$out/assurance-unknown.json"
+          $witness --assurance "$evidence/assurance.json" --eligibility "$evidence/eligibility.json" --merge "$out/merge-unknown-input.json" --subject-sha "$SUBJECT_SHA" --out "$out/merge-unknown.json"
+          jq -e '.decision == "APPLIED" and .resolution == "EXACT" and .reason == "EXTERNAL_CONFORMANCE_ASSURANCE_ACTIVATED" and .summary.denominator_total == 12 and .summary.before_operating == 11 and .summary.after_operating == 12 and .summary.before_coverage_bps == 9166 and .summary.after_coverage_bps == 10000 and .summary.capsules_total == 3 and .summary.capsules_exact == 3 and .summary.capsule_coverage_bps == 10000 and .summary.predecessor_semantics_bps == 10000 and .summary.eligibility_indicators_satisfied == 18 and .summary.parent_completed == 6 and .summary.parent_total == 8 and .summary.parent_known_failures == 2 and .summary.selected_completed == 10 and .summary.selected_total == 10 and .summary.external_executions == 4 and .repository_writes == 0 and .transition_applied == 1' "$out/exact.json"
+          jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 2 and ([.indicators[] | select(.class == "DRIVER")] | length) == 4 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 4 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 4 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 4 and ([.indicators[] | select(.satisfied == true)] | length) == 10' "$out/exact.json"
+          for receipt in unavailable eligibility-unknown eligibility-fixed-point eligibility-unrecognized assurance-unknown merge-unknown; do
+            jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .transition_applied == 0 and .repository_writes == 0' "$out/$receipt.json"
+          done
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .transition_applied == 0 and .repository_writes == 0' "$out/digest-mismatch.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.ecosystem.external-conformance.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "verify-external-conformance")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          sha256sum "$out"/*.json > "$out/manifest.sha256"
+      - name: Upload external conformance activation receipts
+        uses: actions/upload-artifact@v6
+        with:
+          name: external-conformance-activation-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-conformance-activation
+          if-no-files-found: error
+          retention-days: 30
+
   source-authority-shadow:
     name: Source authority shadow
     runs-on: ubuntu-latest

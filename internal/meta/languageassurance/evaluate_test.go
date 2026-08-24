@@ -40,7 +40,7 @@ func TestAssuranceDecisionMatrix(t *testing.T) {
 				wantSnapshot = 10000
 			}
 			report := evaluateForTest(t, transaction)
-			if report.AssuranceDecision != AssurancePartial || report.CandidateDecision != test.decision || report.CandidateReason != test.reason || report.Summary.Operating != 11 || report.Summary.DenominatorTotal != 12 || report.Summary.ImplementationCoverageBPS != 9166 {
+			if report.AssuranceDecision != AssurancePartial || report.CandidateDecision != test.decision || report.CandidateReason != test.reason || report.Summary.Operating != 12 || report.Summary.DenominatorTotal != 12 || report.Summary.ImplementationCoverageBPS != 10000 {
 				t.Fatalf("decision=%s/%s reason=%s coverage=%d/%d", report.AssuranceDecision, report.CandidateDecision, report.CandidateReason, report.Summary.Operating, report.Summary.DenominatorTotal)
 			}
 			if metricValue(report.Summary.SelfMintingPaths) != test.wantSelf || metricValue(report.Summary.RoleConflictPaths) != test.wantRole || metricValue(report.Summary.UnknownLaunderingPaths) != test.wantLaundering || metricValue(report.Summary.UnknownTopDecisions) != test.wantUnknown || metricValue(report.Summary.ExactSnapshotBindingBPS) != wantSnapshot || metricValue(report.Summary.SnapshotMismatchPaths) != test.wantSnapshotPaths {
