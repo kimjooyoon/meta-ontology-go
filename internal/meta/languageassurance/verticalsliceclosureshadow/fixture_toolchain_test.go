@@ -8,7 +8,7 @@ func toolchainFixture(head string) []byte {
 		surfaceFixture("language-semantic-model", "gooo/language-semantic-model/v1", head, 20),
 		surfaceFixture("toolchain-executable-use-cases", "gooo/toolchain-executable-use-cases/v1", head, 3),
 	}
-	for index := 0; index < 6; index++ {
+	for index := range 6 {
 		surfaces = append(surfaces, surfaceFixture(
 			fmt.Sprintf("other-%d", index), "gooo/other/v1", head, 1))
 	}
@@ -35,7 +35,7 @@ func releaseFixture(head string) []byte {
 		cases = append(cases, map[string]any{"id": target + "-go127-toolchain",
 			"target_id": target, "observed": "go1.27.0", "expected": "go1.27.0"})
 	}
-	for index := 0; index < 17; index++ {
+	for index := range 17 {
 		cases = append(cases, map[string]any{"id": fmt.Sprintf("case-%02d", index),
 			"observed": "EXACT", "expected": "EXACT"})
 	}
