@@ -1598,10 +1598,6 @@
         "examples/language-semantic-model",
         "internal/meta/languagereadiness/toolchainconformance",
         "examples/toolchain-conformance",
-        "internal/meta/languagereadiness/languagesemantic",
-        "examples/language-semantic-model",
-        "internal/meta/languagereadiness/toolchainconformance",
-        "examples/toolchain-conformance",
         "internal/verify/scope_rollback_integrity_activation.go"
       ]
     },
