@@ -137,9 +137,9 @@ jobs:
             .assurance_decision == "PARTIAL" and
             .candidate_decision == "ALLOW_LIMITED" and
             .summary.denominator_total == 12 and
-                      .summary.operating == 5 and
-                      .summary.not_implemented == 7 and
-                      .summary.implementation_coverage_bps == 4166 and
+                      .summary.operating == 6 and
+                      .summary.not_implemented == 6 and
+                      .summary.implementation_coverage_bps == 5000 and
             .summary.snapshot_bindings_observed == 3 and
             .summary.snapshot_bindings_required == 3 and
             .summary.exact_snapshot_binding_bps == 10000 and
@@ -153,7 +153,7 @@ jobs:
             .summary.unknown_laundering_paths == 0 and
             ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
                       ([.indicators[] | select(.class == "DRIVER")] | length) == 3 and
-            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 4
           ' "$output/first/independent.json"
           jq -e '.candidate_decision == "BLOCK" and .summary.self_minting_paths == 1' "$output/first/self-minting.json"
           jq -e '.candidate_decision == "BLOCK" and .summary.role_conflict_paths == 1' "$output/first/role-conflict.json"
@@ -186,3 +186,43 @@ jobs:
           path: ${{ runner.temp }}/language-assurance/first
           if-no-files-found: error
           retention-days: 30
+
+  write-set-exactness:
+    name: Write-set exactness
+    runs-on: ubuntu-latest
+    env:
+      EXACT_SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.x'
+      - name: Check generated assurance bindings
+        run: go run ./cmd/language-assurance-witness/assurance-generator --check
+      - name: Produce exact, changed, and mismatch receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt_dir="${RUNNER_TEMP}/write-set-receipts"
+          sandbox="${RUNNER_TEMP}/write-set-sandbox"
+          mkdir -p "${receipt_dir}" "${sandbox}"
+          denominator='sha256:e5b266ceeaeb0757a40096fb661982a263370b1e08945dfedbe34f96eb237a02'
+          go run ./cmd/language-assurance-witness/write-set-observer snapshot --root internal/meta/languageassurance --output "${receipt_dir}/kernel-before.json"
+          go test ./internal/meta/languageassurance
+          go run ./cmd/language-assurance-witness/write-set-observer snapshot --root internal/meta/languageassurance --output "${receipt_dir}/kernel-after.json"
+          go run ./cmd/language-assurance-witness/write-set-observer compare --before "${receipt_dir}/kernel-before.json" --after "${receipt_dir}/kernel-after.json" --output "${receipt_dir}/kernel-exact.json" --expect PASS --subject-sha "${EXACT_SUBJECT_SHA}" --denominator-digest "${denominator}"
+          printf 'before\n' > "${sandbox}/value.txt"
+          go run ./cmd/language-assurance-witness/write-set-observer snapshot --root "${sandbox}" --output "${receipt_dir}/sandbox-before.json"
+          printf 'after\n' > "${sandbox}/value.txt"
+          go run ./cmd/language-assurance-witness/write-set-observer snapshot --root "${sandbox}" --output "${receipt_dir}/sandbox-after.json"
+          go run ./cmd/language-assurance-witness/write-set-observer compare --before "${receipt_dir}/sandbox-before.json" --after "${receipt_dir}/sandbox-after.json" --declared value.txt --output "${receipt_dir}/declared-exact.json" --expect PASS --subject-sha "${EXACT_SUBJECT_SHA}" --denominator-digest "${denominator}"
+          go run ./cmd/language-assurance-witness/write-set-observer compare --before "${receipt_dir}/sandbox-before.json" --after "${receipt_dir}/sandbox-after.json" --output "${receipt_dir}/undeclared-mismatch.json" --expect BLOCK --subject-sha "${EXACT_SUBJECT_SHA}" --denominator-digest "${denominator}"
+      - name: Upload write-set receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: write-set-exactness-${{ env.EXACT_SUBJECT_SHA }}
+          path: ${{ runner.temp }}/write-set-receipts
+          if-no-files-found: error

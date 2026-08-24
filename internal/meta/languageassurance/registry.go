@@ -39,7 +39,7 @@ var denominatorV1 = []ObligationDefinition{
 	obligation("gooo.metric.ecosystem.external-conformance.v1", PriorityP2, ClassOutcome, ProofRegression, "verify-external-conformance"),
 }
 
-var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot", MetricRawReconstruction: "reconstruct-raw-evidence"}
+var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot", MetricRawReconstruction: "reconstruct-raw-evidence", "gooo.metric.effects.write-set-exactness.v1": "observe-exact-write-set"}
 
 var snapshotEvidenceIDs = []string{"authority_routes", "role_bindings", "decision_transitions"}
 
@@ -60,6 +60,7 @@ func CanonicalMetaOperations() []MetaOperation {
 		{ID: "detect-unknown-laundering", Activity: "DetectUnknownLaundering", ProofChoice: ProofRegression},
 		{ID: "bind-exact-snapshot", Activity: "BindExactSnapshot", ProofChoice: ProofFoundation},
 		{ID: "reconstruct-raw-evidence", Activity: "ReconstructRawEvidence", ProofChoice: ProofRegression},
+		{ID: "observe-exact-write-set", Activity: "ObserveExactWriteSet", ProofChoice: ProofRegression},
 	}
 }
 

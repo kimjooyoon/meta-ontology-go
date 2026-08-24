@@ -13,7 +13,7 @@ This kernel measures whether a candidate change can manufacture the evidence tha
 | P0 | `gooo.metric.epistemic.unknown-laundering.v1` | `detect-unknown-laundering` | OPERATING |
 | P0 | `gooo.metric.evidence.exact-snapshot-binding.v1` | `bind-exact-snapshot` | OPERATING |
 | P0 | `gooo.metric.evidence.raw-reconstruction.v1` | `reconstruct-raw-evidence` | OPERATING |
-| P0 | `gooo.metric.effects.write-set-exactness.v1` | `observe-exact-write-set` | NOT_IMPLEMENTED |
+| P0 | `gooo.metric.effects.write-set-exactness.v1` | `observe-exact-write-set` | OPERATING |
 | P1 | `gooo.metric.semantic.source-backed-authority.v1` | `bind-source-backed-authority` | NOT_IMPLEMENTED |
 | P1 | `gooo.metric.semantic.candidate-leakage.v1` | `detect-candidate-leakage` | NOT_IMPLEMENTED |
 | P1 | `gooo.metric.semantic.changed-surface-receipt-totality.v1` | `totalize-changed-surface-receipts` | NOT_IMPLEMENTED |
@@ -73,3 +73,17 @@ The committed fixtures are transaction templates. CI binds their three evidence 
 CI uses Go `1.27.0` and `go fix -diff`. The official Go command contract makes `-diff` non-mutating and non-zero when a modernization patch exists, so CI can enforce fixes without writing to the candidate tree. Go 1.27 adds the `atomictypes`, `embedlit`, `slicesbackward`, and `unsafefuncs` modernizers. See the [Go 1.27 release notes](https://go.dev/doc/go1.27) and [`go fix` command documentation](https://go.dev/cmd/go/).
 
 [gomacro](https://github.com/cosmos72/gomacro) is a useful comparison point for runtime Go interpretation and AST-to-AST Lisp-like macros. This PR does not claim those capabilities. Its meta-level contribution is narrower: one executable observes an authority graph, while a separately implemented executable reconstructs the same normalized conclusion from raw evidence; disagreement remains visible and blocks promotion.
+
+
+## Exact write-set meta-operation
+
+`gooo.metric.effects.write-set-exactness.v1` is operated by
+`observe-exact-write-set / ObserveExactWriteSet / REGRESSION`. An independent
+standard-library observer snapshots files before and after execution, derives the
+changed path set, and compares it with the declared path set. Equal sets produce
+`10000 bps / PASS / EXACT`; unequal sets produce `0 bps / BLOCK / EXACT`;
+unavailable evidence produces
+`FAIL_CLOSED / WRITE_SET_EVIDENCE_UNKNOWN / INVARIANT_ONLY`.
+
+The receipt binds the exact subject SHA and frozen denominator digest. It is
+produced in CI while the evaluator keeps repository writes at exactly zero.
