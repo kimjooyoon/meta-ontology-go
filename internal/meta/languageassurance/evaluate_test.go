@@ -6,12 +6,12 @@ const testSHA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 func TestAssuranceDecisionMatrix(t *testing.T) {
 	tests := []struct {
-		name                                            string
+		name                                                                  string
 		selfMinting, roleConflict, missing, missingSnapshot, mismatchSnapshot bool
-		input, output                                   Decision
-		decision, reason                                string
-		wantSelf, wantRole, wantLaundering, wantUnknown int
-		wantSnapshot, wantSnapshotPaths                 int
+		input, output                                                         Decision
+		decision, reason                                                      string
+		wantSelf, wantRole, wantLaundering, wantUnknown                       int
+		wantSnapshot, wantSnapshotPaths                                       int
 	}{
 		{name: "independent", decision: CandidateAllowLimited, reason: ReasonBoundaryClear},
 		{name: "self-minting", selfMinting: true, decision: CandidateBlock, reason: ReasonGovernanceViolation, wantSelf: 1},
@@ -37,10 +37,16 @@ func TestAssuranceDecisionMatrix(t *testing.T) {
 			} else if test.input != "" {
 				transaction.DecisionTransitions[0].Input, transaction.DecisionTransitions[0].Output = test.input, test.output
 			}
-			if test.missingSnapshot { transaction.SnapshotBindings = nil }
-			if test.mismatchSnapshot { transaction.SnapshotBindings[2].SubjectSHA = "0000000000000000000000000000000000000000" }
+			if test.missingSnapshot {
+				transaction.SnapshotBindings = nil
+			}
+			if test.mismatchSnapshot {
+				transaction.SnapshotBindings[2].SubjectSHA = "0000000000000000000000000000000000000000"
+			}
 			wantSnapshot := test.wantSnapshot
-			if wantSnapshot == 0 { wantSnapshot = 10000 }
+			if wantSnapshot == 0 {
+				wantSnapshot = 10000
+			}
 			report := evaluateForTest(t, transaction)
 			if report.AssuranceDecision != AssurancePartial || report.CandidateDecision != test.decision || report.CandidateReason != test.reason || report.Summary.Operating != 4 || report.Summary.DenominatorTotal != 12 || report.Summary.ImplementationCoverageBPS != 3333 {
 				t.Fatalf("decision=%s/%s reason=%s coverage=%d/%d", report.AssuranceDecision, report.CandidateDecision, report.CandidateReason, report.Summary.Operating, report.Summary.DenominatorTotal)
@@ -64,7 +70,12 @@ func evaluateForTest(t *testing.T, transaction Transaction) Report {
 	return report
 }
 
-func metricValue(value *int) int { if value == nil { return -1 }; return *value }
+func metricValue(value *int) int {
+	if value == nil {
+		return -1
+	}
+	return *value
+}
 
 func independentTransaction() Transaction {
 	return Transaction{Schema: TransactionSchema, TransactionID: "independent", AuthorityRoutes: []AuthorityRoute{{RuleID: "promotion-v1", AuthoredBy: "contract-author", PromotedBy: "promoter"}}, RoleBindings: []RoleBinding{{Principal: "contract-author", Roles: []Role{RoleContractAuthor}}, {Principal: "promoter", Roles: []Role{RolePromoter}}}, DecisionTransitions: []DecisionTransition{{ID: "promotion", Input: DecisionPass, Output: DecisionAuthorized}}, SnapshotBindings: []SnapshotBinding{{EvidenceID: "authority_routes", SubjectSHA: testSHA}, {EvidenceID: "role_bindings", SubjectSHA: testSHA}, {EvidenceID: "decision_transitions", SubjectSHA: testSHA}}}

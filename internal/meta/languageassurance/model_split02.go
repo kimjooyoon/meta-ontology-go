@@ -40,17 +40,17 @@ type MetaOperation struct {
 }
 
 type Finding struct {
-	MetricID   string   `json:"metric_id"`
-	PathID     string   `json:"path_id"`
-	Principal  string   `json:"principal,omitempty"`
-	RuleID     string   `json:"rule_id,omitempty"`
-	Roles      []Role   `json:"roles,omitempty"`
-	DecisionID string   `json:"decision_id,omitempty"`
-	Input      Decision `json:"input,omitempty"`
-	Output     Decision `json:"output,omitempty"`
-	EvidenceID string   `json:"evidence_id,omitempty"`
-	ExpectedSHA string  `json:"expected_sha,omitempty"`
-	ObservedSHA string  `json:"observed_sha,omitempty"`
+	MetricID    string   `json:"metric_id"`
+	PathID      string   `json:"path_id"`
+	Principal   string   `json:"principal,omitempty"`
+	RuleID      string   `json:"rule_id,omitempty"`
+	Roles       []Role   `json:"roles,omitempty"`
+	DecisionID  string   `json:"decision_id,omitempty"`
+	Input       Decision `json:"input,omitempty"`
+	Output      Decision `json:"output,omitempty"`
+	EvidenceID  string   `json:"evidence_id,omitempty"`
+	ExpectedSHA string   `json:"expected_sha,omitempty"`
+	ObservedSHA string   `json:"observed_sha,omitempty"`
 }
 
 type Indicator struct {

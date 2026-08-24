@@ -48,7 +48,9 @@ func validateInput(subjectSHA string, transaction Transaction) error {
 		}
 		decisions[transition.ID] = true
 	}
-	if !validSnapshotBindings(transaction.SnapshotBindings) { return fmt.Errorf("language assurance snapshot binding is malformed") }
+	if !validSnapshotBindings(transaction.SnapshotBindings) {
+		return fmt.Errorf("language assurance snapshot binding is malformed")
+	}
 	return nil
 }
 
@@ -60,16 +62,25 @@ func roleSet(roles []Role) map[Role]bool {
 	return result
 }
 
-func validRole(role Role) bool { return slices.Contains([]Role{RoleContractAuthor, RoleImplementer, RoleEvaluatorAuthor, RoleAdapterAuthor, RolePolicyAdopter, RolePromoter, RoleAuditor}, role) }
+func validRole(role Role) bool {
+	return slices.Contains([]Role{RoleContractAuthor, RoleImplementer, RoleEvaluatorAuthor, RoleAdapterAuthor, RolePolicyAdopter, RolePromoter, RoleAuditor}, role)
+}
 
-func validDecision(decision Decision) bool { return slices.Contains([]Decision{DecisionUnknown, DecisionPass, DecisionFail, DecisionFixedPoint, DecisionAuthorized, DecisionAllow, DecisionBlock}, decision) }
+func validDecision(decision Decision) bool {
+	return slices.Contains([]Decision{DecisionUnknown, DecisionPass, DecisionFail, DecisionFixedPoint, DecisionAuthorized, DecisionAllow, DecisionBlock}, decision)
+}
 
-func validSHA(value string) bool { _, err := hex.DecodeString(value); return len(value) == 40 && err == nil }
+func validSHA(value string) bool {
+	_, err := hex.DecodeString(value)
+	return len(value) == 40 && err == nil
+}
 
 func validSnapshotBindings(bindings []SnapshotBinding) bool {
 	seen := make(map[string]bool, len(bindings))
 	for _, binding := range bindings {
-		if seen[binding.EvidenceID] || !slices.Contains(snapshotEvidenceIDs, binding.EvidenceID) || !validSHA(binding.SubjectSHA) { return false }
+		if seen[binding.EvidenceID] || !slices.Contains(snapshotEvidenceIDs, binding.EvidenceID) || !validSHA(binding.SubjectSHA) {
+			return false
+		}
 		seen[binding.EvidenceID] = true
 	}
 	return true

@@ -39,9 +39,9 @@ func Evaluate(subjectSHA string, transaction Transaction) (Report, error) {
 		RoleConflictPaths:         observedValue(rolesObserved, roleConflicts),
 		UnknownLaunderingPaths:    observedValue(decisionsObserved, unknownLaundering),
 		UnknownTopDecisions:       observedValue(decisionsObserved, unknownTop),
-		SnapshotBindingsObserved: len(transaction.SnapshotBindings), SnapshotBindingsRequired: len(snapshotEvidenceIDs),
+		SnapshotBindingsObserved:  len(transaction.SnapshotBindings), SnapshotBindingsRequired: len(snapshotEvidenceIDs),
 		ExactSnapshotBindingBPS: snapshotBPS, SnapshotMismatchPaths: snapshotPaths,
-		RepositoryWrites:          0,
+		RepositoryWrites: 0,
 	}
 	summary.UnresolvedIndicators = unresolved(summary.SelfMintingPaths, summary.RoleConflictPaths, summary.UnknownLaunderingPaths, summary.ExactSnapshotBindingBPS)
 	summary.ViolatedGuardrails = positive(summary.SelfMintingPaths, summary.RoleConflictPaths, summary.UnknownLaunderingPaths)
