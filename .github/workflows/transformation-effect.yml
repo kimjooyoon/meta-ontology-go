@@ -1783,3 +1783,40 @@ jobs:
           path: ${{ runner.temp }}/external-ecosystem-execution
           if-no-files-found: ignore
           retention-days: 30
+
+  language-delivery-scorecard:
+    name: language-delivery-scorecard
+    needs:
+      - language-concept-artifact
+      - user-journey-scorecard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Reduce fixed language delivery contract
+        shell: bash
+        run: bash scripts/language-delivery-scorecard/main.sh
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-delivery-scorecard-${{ env.HEAD_SHA }}
+          path: |
+            delivery-output/report.json
+            delivery-output/unknown-report.json
+            delivery-evidence/manifest.json
+          if-no-files-found: error
+          retention-days: 30

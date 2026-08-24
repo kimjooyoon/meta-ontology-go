@@ -14,7 +14,7 @@ func TestArtifactBindsCatalogToMetaCodeContent(t *testing.T) {
 	if !artifact.Ready() || !artifact.ReplayEqual {
 		t.Fatalf("got %s/%s replay=%v", artifact.Decision, artifact.Reason, artifact.ReplayEqual)
 	}
-	if artifact.Report.Summary.Concepts != 24 || artifact.Bindings.Paths != 87 || artifact.Bindings.Files != 1994 {
+	if artifact.Report.Summary.Concepts != 25 || artifact.Bindings.Paths != 90 || artifact.Bindings.Files != 2030 {
 		t.Fatalf("summary=%#v bindings=%#v", artifact.Report.Summary, artifact.Bindings)
 	}
 	if artifact.Bindings.Bytes == 0 || artifact.RepositoryWrites != 0 {
