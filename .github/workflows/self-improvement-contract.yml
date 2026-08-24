@@ -502,9 +502,11 @@ jobs:
           go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/block.json"
           go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/replay/block.json"
           cmp "$out/block.json" "$out/replay/block.json"
+          jq . "$out/block.json"
           jq -e '.decision == "BLOCK" and .resolution == "INVARIANT_ONLY" and .reason == "SOURCE_AUTHORITY_BASELINE_NOT_NOT_IMPLEMENTED" and .summary.denominator_total == 12 and .summary.before_operating == 10 and .summary.after_operating == 10 and .summary.before_coverage_bps == 8333 and .summary.after_coverage_bps == 8333 and .repository_writes == 0 and .promotion_applied == 0' "$out/block.json"
           sha256sum "$out/block.json" > "$out/manifest.sha256"
       - name: Upload repeated-promotion guard receipts
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: source-authority-promotion-guard-${{ env.SUBJECT_SHA }}
