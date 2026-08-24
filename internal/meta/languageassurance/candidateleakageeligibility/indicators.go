@@ -30,3 +30,18 @@ func indicator(id, class, proof, operation, unit, relation, resolution string, v
 		MetaOperation: operation, Unit: unit, Relation: relation, Resolution: resolution,
 		Value: value, Target: target, Satisfied: satisfied}
 }
+
+type Indicator struct {
+	MetricID      string `json:"metric_id"`
+	Class         string `json:"class"`
+	ProofChoice   string `json:"proof_choice"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
+	MetaOperation string `json:"meta_operation"`
+	Unit          string `json:"unit"`
+	Relation      string `json:"relation"`
+	Resolution    string `json:"resolution"`
+	Value         int    `json:"value"`
+	Target        int    `json:"target"`
+	Satisfied     bool   `json:"satisfied"`
+}

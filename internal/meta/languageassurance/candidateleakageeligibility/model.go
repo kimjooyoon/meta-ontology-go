@@ -10,65 +10,53 @@ type ArtifactBinding struct {
 }
 
 type Transition struct {
-	MetricID          string `json:"metric_id"`
-	MetaOperation     string `json:"meta_operation"`
-	FromStatus        string `json:"from_status"`
-	FromResolution    string `json:"from_resolution"`
-	EligibleStatus    string `json:"eligible_status"`
+	MetricID           string `json:"metric_id"`
+	MetaOperation      string `json:"meta_operation"`
+	FromStatus         string `json:"from_status"`
+	FromResolution     string `json:"from_resolution"`
+	EligibleStatus     string `json:"eligible_status"`
 	EligibleResolution string `json:"eligible_resolution"`
 }
 
 type Summary struct {
-	DenominatorTotal  int `json:"denominator_total"`
-	BeforeOperating   int `json:"before_operating"`
-	AfterOperating    int `json:"after_operating"`
-	BeforeCoverageBPS int `json:"before_coverage_bps"`
-	AfterCoverageBPS  int `json:"after_coverage_bps"`
-	CapsulesTotal     int `json:"capsules_total"`
-	CapsulesExact     int `json:"capsules_exact"`
+	DenominatorTotal   int `json:"denominator_total"`
+	BeforeOperating    int `json:"before_operating"`
+	AfterOperating     int `json:"after_operating"`
+	BeforeCoverageBPS  int `json:"before_coverage_bps"`
+	AfterCoverageBPS   int `json:"after_coverage_bps"`
+	CapsulesTotal      int `json:"capsules_total"`
+	CapsulesExact      int `json:"capsules_exact"`
 	CapsuleCoverageBPS int `json:"capsule_coverage_bps"`
-	ShadowCasesTotal  int `json:"shadow_cases_total"`
-	ShadowCasesPassed int `json:"shadow_cases_passed"`
-	EligiblePaths     int `json:"eligible_paths"`
-	UnknownPaths      int `json:"unknown_paths"`
-	BlockedPaths      int `json:"blocked_paths"`
-}
-
-type Indicator struct {
-	MetricID, Class, ProofChoice, Producer, Consumer string
-	MetaOperation, Unit, Relation, Resolution        string
-	Value, Target                                    int
-	Satisfied                                        bool
-}
-
-type Report struct {
-	Schema, SubjectSHA, EvidenceSubjectSHA string
-	Decision, Resolution, EnforcementEffect, Reason string
-	DenominatorID, DenominatorDigest string
-	Artifacts []ArtifactBinding
-	Transition Transition
-	Summary Summary
-	Indicators []Indicator
-	MetaOperations []MetaOperationBinding
-	RepositoryWrites int
-	PromotionApplied int
-	ReportDigest string
+	ShadowCasesTotal   int `json:"shadow_cases_total"`
+	ShadowCasesPassed  int `json:"shadow_cases_passed"`
+	EligiblePaths      int `json:"eligible_paths"`
+	UnknownPaths       int `json:"unknown_paths"`
+	BlockedPaths       int `json:"blocked_paths"`
 }
 
 type Definition struct {
-	ID, ExpectedDecision, ExpectedResolution, ExpectedReason string
+	ID                 string `json:"id"`
+	ExpectedDecision   string `json:"expected_decision"`
+	ExpectedResolution string `json:"expected_resolution"`
+	ExpectedReason     string `json:"expected_reason"`
 }
 
 type CaseResult struct {
 	Definition Definition `json:"definition"`
-	Passed bool `json:"passed"`
-	Report Report `json:"report"`
+	Passed     bool       `json:"passed"`
+	Report     Report     `json:"report"`
 }
 
 type Suite struct {
-	Schema, SubjectSHA, DenominatorID, DenominatorDigest string
-	Decision, Resolution string
-	Cases []CaseResult
-	CasesTotal, CasesPassed, CoverageBPS int
-	SuiteDigest string
+	Schema            string       `json:"schema"`
+	SubjectSHA        string       `json:"subject_sha"`
+	DenominatorID     string       `json:"denominator_id"`
+	DenominatorDigest string       `json:"denominator_digest"`
+	Decision          string       `json:"decision"`
+	Resolution        string       `json:"resolution"`
+	Cases             []CaseResult `json:"cases"`
+	CasesTotal        int          `json:"cases_total"`
+	CasesPassed       int          `json:"cases_passed"`
+	CoverageBPS       int          `json:"coverage_bps"`
+	SuiteDigest       string       `json:"suite_digest"`
 }

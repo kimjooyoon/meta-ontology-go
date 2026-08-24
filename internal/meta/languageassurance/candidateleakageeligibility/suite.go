@@ -61,10 +61,14 @@ func RunSuite(subjectSHA string) Suite {
 			definition.ExpectedResolution && report.Reason == definition.ExpectedReason && report.RepositoryWrites == 0 &&
 			report.PromotionApplied == 0
 		suite.Cases[index] = CaseResult{Definition: definition, Passed: passed, Report: report}
-		if passed { suite.CasesPassed++ }
+		if passed {
+			suite.CasesPassed++
+		}
 	}
 	suite.CasesTotal = len(definitions)
-	if suite.CasesPassed != suite.CasesTotal { suite.Decision, suite.Resolution = DecisionFailClosed, ResolutionInvariant }
+	if suite.CasesPassed != suite.CasesTotal {
+		suite.Decision, suite.Resolution = DecisionFailClosed, ResolutionInvariant
+	}
 	suite.CoverageBPS = suite.CasesPassed * 10_000 / suite.CasesTotal
 	return sealSuite(suite)
 }

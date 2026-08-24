@@ -39,3 +39,23 @@ func sealSuite(suite Suite) Suite {
 	suite.SuiteDigest = digestJSON(suite)
 	return suite
 }
+
+type Report struct {
+	Schema             string                 `json:"schema"`
+	SubjectSHA         string                 `json:"subject_sha"`
+	EvidenceSubjectSHA string                 `json:"evidence_subject_sha"`
+	Decision           string                 `json:"decision"`
+	Resolution         string                 `json:"resolution"`
+	EnforcementEffect  string                 `json:"enforcement_effect"`
+	Reason             string                 `json:"reason"`
+	DenominatorID      string                 `json:"denominator_id"`
+	DenominatorDigest  string                 `json:"denominator_digest"`
+	Artifacts          []ArtifactBinding      `json:"artifacts"`
+	Transition         Transition             `json:"transition"`
+	Summary            Summary                `json:"summary"`
+	Indicators         []Indicator            `json:"indicators"`
+	MetaOperations     []MetaOperationBinding `json:"meta_operations"`
+	RepositoryWrites   int                    `json:"repository_writes"`
+	PromotionApplied   int                    `json:"promotion_applied"`
+	ReportDigest       string                 `json:"report_digest"`
+}
