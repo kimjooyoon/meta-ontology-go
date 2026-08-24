@@ -1420,3 +1420,71 @@ jobs:
           path: ${{ runner.temp }}/vertical-slice-closure-eligibility
           if-no-files-found: error
           retention-days: 14
+
+  external-ecosystem-reference-conformance:
+    name: external ecosystem reference conformance
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Fetch immutable external reference documents
+        shell: bash
+        env:
+          EVIDENCE_DIR: ${{ runner.temp }}/external-ecosystem-reference/evidence
+          OUTPUT_DIR: ${{ runner.temp }}/external-ecosystem-reference/output
+          UPSTREAM_SHA: cf0d4bf32da393dbda97e3572f216731013ffa55
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR" "$OUTPUT_DIR"
+          : > "$EVIDENCE_DIR/README.md"
+          : > "$EVIDENCE_DIR/go.mod"
+          readme_status=EXACT
+          gomod_status=EXACT
+          if ! curl --fail --silent --show-error --location --retry 2 "https://raw.githubusercontent.com/cosmos72/gomacro/$UPSTREAM_SHA/README.md" -o "$EVIDENCE_DIR/README.md"; then readme_status=UNAVAILABLE; : > "$EVIDENCE_DIR/README.md"; fi
+          if ! curl --fail --silent --show-error --location --retry 2 "https://raw.githubusercontent.com/cosmos72/gomacro/$UPSTREAM_SHA/go.mod" -o "$EVIDENCE_DIR/go.mod"; then gomod_status=UNAVAILABLE; : > "$EVIDENCE_DIR/go.mod"; fi
+          jq -n --arg readme "$readme_status" --arg gomod "$gomod_status" --arg upstream "$UPSTREAM_SHA" '{schema:"gooo/external-fetch/v1",upstream_sha:$upstream,readme:$readme,go_mod:$gomod}' > "$OUTPUT_DIR/fetch.json"
+      - name: Generate fixed external reference receipts
+        shell: bash
+        env:
+          EVIDENCE_DIR: ${{ runner.temp }}/external-ecosystem-reference/evidence
+          OUTPUT_DIR: ${{ runner.temp }}/external-ecosystem-reference/output
+        run: |
+          set -euo pipefail
+          go run ./cmd/external-ecosystem-conformance-witness --subject-sha "$SUBJECT_SHA" --readme "$EVIDENCE_DIR/README.md" --go-mod "$EVIDENCE_DIR/go.mod" --output "$OUTPUT_DIR/suite.json"
+          for case_id in exact readme-unavailable gomod-unavailable unknown-relation readme-digest-mismatch gomod-digest-mismatch commit-mismatch license-mismatch external-execution observed-write; do
+            go run ./cmd/external-ecosystem-conformance-witness --subject-sha "$SUBJECT_SHA" --case "$case_id" --readme "$EVIDENCE_DIR/README.md" --go-mod "$EVIDENCE_DIR/go.mod" --output "$OUTPUT_DIR/$case_id.json"
+          done
+          go run ./cmd/external-ecosystem-conformance-witness --subject-sha "$SUBJECT_SHA" --readme "$EVIDENCE_DIR/README.md" --go-mod "$EVIDENCE_DIR/go.mod" --output "$OUTPUT_DIR/replay.json"
+          cmp "$OUTPUT_DIR/suite.json" "$OUTPUT_DIR/replay.json"
+      - name: Verify external reference semantics
+        shell: bash
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/external-ecosystem-reference/output
+        run: |
+          set -euo pipefail
+          jq -e '.decision == "REFERENCE_BOUND" and .resolution == "EXACT" and .cases_total == 10 and .cases_passed == 10 and .coverage_bps == 10000 and .reference_bound_exact == 1 and .unknown_fail_closed == 3 and .invariant_fail_closed == 6 and .repository_writes == 0 and .external_executions == 0 and .official_mutations == 0' "$OUTPUT_DIR/suite.json"
+          jq -e '.decision == "REFERENCE_BOUND" and .resolution == "EXACT" and .enforcement_effect == "NO_EFFECT" and .summary.reference_denominator == 8 and .summary.bound_capabilities == 8 and .summary.implemented_capabilities == 0 and .summary.language_before_operating == 10 and .summary.language_official_after == 10 and .repository_writes == 0 and .external_executions == 0 and .promotion_applied == 0' "$OUTPUT_DIR/exact.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .enforcement_effect == "BLOCK" and .reason == "EXTERNAL_ECOSYSTEM_RELATION_UNKNOWN"' "$OUTPUT_DIR/unknown-relation.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .enforcement_effect == "BLOCK" and .reason == "EXTERNAL_ECOSYSTEM_EXECUTION_OBSERVED"' "$OUTPUT_DIR/external-execution.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .enforcement_effect == "BLOCK" and .reason == "EXTERNAL_ECOSYSTEM_WRITE_OBSERVED"' "$OUTPUT_DIR/observed-write.json"
+          sha256sum "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/manifest.sha256"
+      - name: Upload external ecosystem reference artifact
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-ecosystem-reference-conformance-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-ecosystem-reference/output
+          if-no-files-found: error
+          retention-days: 14
