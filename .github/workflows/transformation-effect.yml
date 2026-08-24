@@ -1787,11 +1787,8 @@ jobs:
   language-delivery-scorecard:
     name: language-delivery-scorecard
     needs:
+      - language-concept-artifact
       - user-journey-scorecard
-      - toolchain-conformance
-      - toolchain-lsp
-      - toolchain-cross-platform-release
-      - language-readiness-artifact
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
