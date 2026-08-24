@@ -15,23 +15,23 @@ type CaseResult struct {
 }
 
 type Suite struct {
-	Schema             string       `json:"schema"`
-	SubjectSHA         string       `json:"subject_sha"`
-	DenominatorID      string       `json:"denominator_id"`
-	DenominatorDigest  string       `json:"denominator_digest"`
-	Decision           string       `json:"decision"`
-	Resolution         string       `json:"resolution"`
-	Cases              []CaseResult `json:"cases"`
-	Passed             int          `json:"passed"`
-	Total              int          `json:"total"`
-	ExactExpected      int          `json:"exact_expected"`
-	UnknownExpected    int          `json:"unknown_expected"`
-	InvariantExpected  int          `json:"invariant_expected"`
-	CoverageBPS        int          `json:"coverage_bps"`
-	RepositoryWrites   int          `json:"repository_writes"`
-	OfficialMutations  int          `json:"official_mutations"`
-	PromotionApplied   int          `json:"promotion_applied"`
-	SuiteDigest        string       `json:"suite_digest"`
+	Schema            string       `json:"schema"`
+	SubjectSHA        string       `json:"subject_sha"`
+	DenominatorID     string       `json:"denominator_id"`
+	DenominatorDigest string       `json:"denominator_digest"`
+	Decision          string       `json:"decision"`
+	Resolution        string       `json:"resolution"`
+	Cases             []CaseResult `json:"cases"`
+	Passed            int          `json:"passed"`
+	Total             int          `json:"total"`
+	ExactExpected     int          `json:"exact_expected"`
+	UnknownExpected   int          `json:"unknown_expected"`
+	InvariantExpected int          `json:"invariant_expected"`
+	CoverageBPS       int          `json:"coverage_bps"`
+	RepositoryWrites  int          `json:"repository_writes"`
+	OfficialMutations int          `json:"official_mutations"`
+	PromotionApplied  int          `json:"promotion_applied"`
+	SuiteDigest       string       `json:"suite_digest"`
 }
 
 var definitions = []Definition{

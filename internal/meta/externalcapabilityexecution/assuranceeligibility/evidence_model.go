@@ -6,7 +6,7 @@ type assuranceReport struct {
 	DenominatorID     string `json:"denominator_id"`
 	DenominatorDigest string `json:"denominator_digest"`
 	ReportDigest      string `json:"report_digest"`
-	Summary struct {
+	Summary           struct {
 		DenominatorTotal           int `json:"denominator_total"`
 		Operating                  int `json:"operating"`
 		NotImplemented             int `json:"not_implemented"`
@@ -83,29 +83,29 @@ type parentBinding struct {
 }
 
 type capabilityReport struct {
-	Schema                    string        `json:"schema"`
-	SubjectSHA                string        `json:"subject_sha"`
-	Decision                  string        `json:"decision"`
-	Resolution                string        `json:"resolution"`
-	EnforcementEffect         string        `json:"enforcement_effect"`
-	Reason                    string        `json:"reason"`
-	Completed                 int           `json:"completed"`
-	Total                     int           `json:"total"`
-	BasisPoints               int           `json:"basis_points"`
-	DriverCompleted           int           `json:"driver_completed"`
-	DriverTotal               int           `json:"driver_total"`
-	OutcomeCompleted          int           `json:"outcome_completed"`
-	OutcomeTotal              int           `json:"outcome_total"`
-	GuardrailCompleted        int           `json:"guardrail_completed"`
-	GuardrailTotal            int           `json:"guardrail_total"`
-	ExternalExecutions        int           `json:"external_executions"`
-	ExternalRepositoryWrites  int           `json:"external_repository_writes"`
-	OfficialMutationCount     int           `json:"official_mutation_count"`
-	PromotionCount            int           `json:"promotion_count"`
-	RepositoryWrites          int           `json:"repository_writes"`
-	UnknownIndicators         int           `json:"unknown_indicators"`
-	ObservationDigest         string        `json:"observation_digest"`
-	Parent                    parentBinding `json:"parent"`
+	Schema                   string        `json:"schema"`
+	SubjectSHA               string        `json:"subject_sha"`
+	Decision                 string        `json:"decision"`
+	Resolution               string        `json:"resolution"`
+	EnforcementEffect        string        `json:"enforcement_effect"`
+	Reason                   string        `json:"reason"`
+	Completed                int           `json:"completed"`
+	Total                    int           `json:"total"`
+	BasisPoints              int           `json:"basis_points"`
+	DriverCompleted          int           `json:"driver_completed"`
+	DriverTotal              int           `json:"driver_total"`
+	OutcomeCompleted         int           `json:"outcome_completed"`
+	OutcomeTotal             int           `json:"outcome_total"`
+	GuardrailCompleted       int           `json:"guardrail_completed"`
+	GuardrailTotal           int           `json:"guardrail_total"`
+	ExternalExecutions       int           `json:"external_executions"`
+	ExternalRepositoryWrites int           `json:"external_repository_writes"`
+	OfficialMutationCount    int           `json:"official_mutation_count"`
+	PromotionCount           int           `json:"promotion_count"`
+	RepositoryWrites         int           `json:"repository_writes"`
+	UnknownIndicators        int           `json:"unknown_indicators"`
+	ObservationDigest        string        `json:"observation_digest"`
+	Parent                   parentBinding `json:"parent"`
 }
 
 type capabilityReference struct {
@@ -147,11 +147,11 @@ type capabilitySuite struct {
 }
 
 type evidence struct {
-	Assurance assuranceReport
-	ParentReport parentReport
-	ParentObservation parentObservation
-	ParentSuite parentSuite
-	CapabilityReport capabilityReport
+	Assurance             assuranceReport
+	ParentReport          parentReport
+	ParentObservation     parentObservation
+	ParentSuite           parentSuite
+	CapabilityReport      capabilityReport
 	CapabilityObservation capabilityObservation
-	CapabilitySuite capabilitySuite
+	CapabilitySuite       capabilitySuite
 }

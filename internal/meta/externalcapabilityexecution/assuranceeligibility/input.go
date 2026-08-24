@@ -13,13 +13,13 @@ type Input struct {
 func NewInput(subjectSHA string, parentReport, parentObservation, parentSuite,
 	capabilityReport, capabilityObservation, capabilitySuite []byte) Input {
 	return Input{SubjectSHA: subjectSHA, Payloads: map[string][]byte{
-		AssuranceName: append([]byte(nil), assuranceEvidence...),
-		ParentReportName: append([]byte(nil), parentReport...),
-		ParentObservationName: append([]byte(nil), parentObservation...),
-		ParentSuiteName: append([]byte(nil), parentSuite...),
-		CapabilityReportName: append([]byte(nil), capabilityReport...),
+		AssuranceName:             append([]byte(nil), assuranceEvidence...),
+		ParentReportName:          append([]byte(nil), parentReport...),
+		ParentObservationName:     append([]byte(nil), parentObservation...),
+		ParentSuiteName:           append([]byte(nil), parentSuite...),
+		CapabilityReportName:      append([]byte(nil), capabilityReport...),
 		CapabilityObservationName: append([]byte(nil), capabilityObservation...),
-		CapabilitySuiteName: append([]byte(nil), capabilitySuite...),
+		CapabilitySuiteName:       append([]byte(nil), capabilitySuite...),
 	}}
 }
 

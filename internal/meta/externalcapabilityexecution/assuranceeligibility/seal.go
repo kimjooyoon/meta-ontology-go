@@ -13,7 +13,9 @@ func digestBytes(value []byte) string {
 
 func digestJSON(value any) string {
 	encoded, err := json.Marshal(value)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	return digestBytes(encoded)
 }
 
@@ -30,9 +32,13 @@ func sealSuite(suite Suite) Suite {
 }
 
 func validSHA(value string) bool {
-	if len(value) != 40 { return false }
+	if len(value) != 40 {
+		return false
+	}
 	for _, character := range value {
-		if (character < '0' || character > '9') && (character < 'a' || character > 'f') { return false }
+		if (character < '0' || character > '9') && (character < 'a' || character > 'f') {
+			return false
+		}
 	}
 	return true
 }

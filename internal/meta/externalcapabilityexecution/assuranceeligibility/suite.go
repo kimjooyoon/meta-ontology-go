@@ -4,8 +4,8 @@ import "reflect"
 
 func RunSuite(base Input) Suite {
 	suite := Suite{Schema: SuiteSchema, SubjectSHA: base.SubjectSHA, DenominatorID: SuiteDenominator,
-		Decision: DecisionEligible, Resolution: ResolutionExact, Cases: make([]CaseResult, len(definitions))}
-	suite.DenominatorDigest = digestJSON(definitions)
+		Decision: DecisionEligible, Resolution: ResolutionExact, Cases: make([]CaseResult, len(definitions)),
+		DenominatorDigest: digestJSON(definitions)}
 	for index, definition := range definitions {
 		input, _ := CaseInput(base, definition.ID)
 		report := Evaluate(input)
@@ -13,11 +13,16 @@ func RunSuite(base Input) Suite {
 			report.Resolution == definition.ExpectedResolution &&
 			report.EnforcementEffect == definition.ExpectedEffect && report.Reason == definition.ExpectedReason
 		suite.Cases[index] = CaseResult{Definition: definition, Passed: passed, Report: report}
-		if passed { suite.Passed++ }
+		if passed {
+			suite.Passed++
+		}
 		switch report.Resolution {
-		case ResolutionExact: suite.ExactExpected++
-		case ResolutionUnknown: suite.UnknownExpected++
-		case ResolutionInvariant: suite.InvariantExpected++
+		case ResolutionExact:
+			suite.ExactExpected++
+		case ResolutionUnknown:
+			suite.UnknownExpected++
+		case ResolutionInvariant:
+			suite.InvariantExpected++
 		}
 	}
 	suite.Total = len(definitions)

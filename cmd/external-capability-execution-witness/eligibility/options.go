@@ -9,7 +9,7 @@ import (
 type options struct {
 	subjectSHA, parentReport, parentObservation, parentSuite string
 	capabilityReport, capabilityObservation, capabilitySuite string
-	report, suite string
+	report, suite                                            string
 }
 
 func parseOptions(arguments []string, stderr io.Writer) (options, error) {
@@ -25,7 +25,9 @@ func parseOptions(arguments []string, stderr io.Writer) (options, error) {
 	set.StringVar(&value.capabilitySuite, "capability-suite", "", "capability suite")
 	set.StringVar(&value.report, "report", "", "eligibility report output")
 	set.StringVar(&value.suite, "suite", "", "eligibility suite output")
-	if err := set.Parse(arguments); err != nil { return options{}, err }
+	if err := set.Parse(arguments); err != nil {
+		return options{}, err
+	}
 	if value.subjectSHA == "" || value.parentReport == "" || value.parentObservation == "" ||
 		value.parentSuite == "" || value.capabilityReport == "" || value.capabilityObservation == "" ||
 		value.capabilitySuite == "" || value.report == "" || value.suite == "" {
