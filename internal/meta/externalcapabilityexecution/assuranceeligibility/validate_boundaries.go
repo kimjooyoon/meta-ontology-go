@@ -26,6 +26,7 @@ func validCapability(value evidence) bool {
 		parent.Completed == 6 && parent.Total == 8 && parent.BasisPoints == 7500 &&
 		observation.Schema == "gooo/external-capability-observation/v1" && observation.Available &&
 		observation.ReplayExact && observation.ExternalExecutions == 4 &&
+		len(observation.UnknownEvents) == 0 &&
 		report.ObservationDigest == observation.ObservationDigest &&
 		suite.Schema == "gooo/external-capability-conformance/v1" &&
 		suite.Decision == "CAPABILITY_EXECUTABLE" && suite.Resolution == ResolutionExact &&

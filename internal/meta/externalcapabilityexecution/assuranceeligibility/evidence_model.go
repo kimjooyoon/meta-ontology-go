@@ -126,7 +126,7 @@ type capabilityObservation struct {
 	RepositoryWrites         int                 `json:"repository_writes"`
 	OfficialMutationCount    int                 `json:"official_mutation_count"`
 	PromotionCount           int                 `json:"promotion_count"`
-	UnknownEvents            int                 `json:"unknown_events"`
+	UnknownEvents            []string            `json:"unknown_events"`
 	Reference                capabilityReference `json:"reference"`
 }
 
