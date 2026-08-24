@@ -4,7 +4,7 @@ This kernel measures whether a candidate change can manufacture the evidence tha
 
 ## Frozen denominator
 
-`gooo/language-assurance-denominator/v1` contains exactly 12 obligations. The current report is intentionally partial: 5 obligations are operating, 7 are not implemented, and integer implementation coverage is exactly `(5 * 10000) / 12 = 4166 basis points`.
+`gooo/language-assurance-denominator/v1` contains exactly 12 obligations. The current report is intentionally partial: 7 obligations are operating, 5 are not implemented, and integer implementation coverage is exactly `(7 * 10000) / 12 = 5833 basis points`.
 
 | Priority | Required indicator | Meta operation | Initial status |
 | --- | --- | --- | --- |
@@ -14,7 +14,7 @@ This kernel measures whether a candidate change can manufacture the evidence tha
 | P0 | `gooo.metric.evidence.exact-snapshot-binding.v1` | `bind-exact-snapshot` | OPERATING |
 | P0 | `gooo.metric.evidence.raw-reconstruction.v1` | `reconstruct-raw-evidence` | OPERATING |
 | P0 | `gooo.metric.effects.write-set-exactness.v1` | `observe-exact-write-set` | OPERATING |
-| P1 | `gooo.metric.semantic.source-backed-authority.v1` | `bind-source-backed-authority` | NOT_IMPLEMENTED |
+| P1 | `gooo.metric.semantic.source-backed-authority.v1` | `bind-source-backed-authority` | OPERATING |
 | P1 | `gooo.metric.semantic.candidate-leakage.v1` | `detect-candidate-leakage` | NOT_IMPLEMENTED |
 | P1 | `gooo.metric.semantic.changed-surface-receipt-totality.v1` | `totalize-changed-surface-receipts` | NOT_IMPLEMENTED |
 | P1 | `gooo.metric.operation.rollback-integrity.v1` | `verify-rollback-integrity` | NOT_IMPLEMENTED |
@@ -25,13 +25,13 @@ The report embeds the denominator and its SHA-256 digest. A missing meta operati
 
 ## Operating indicators
 
-The evaluator emits exactly seven observations:
+The evaluator emits exactly eight observations:
 
 | Class | Count | Meaning |
 | --- | ---: | --- |
 | OUTCOME | 1 | frozen-denominator implementation coverage |
 | DRIVER | 3 | transaction evidence-group coverage, exact snapshot binding, and raw reconstruction |
-| GUARDRAIL | 3 | self-minting, role-conflict, and UNKNOWN-laundering paths |
+| GUARDRAIL | 4 | self-minting, role-conflict, UNKNOWN-laundering, and exact write-set paths |
 
 Each indicator names its producer and meta operation. The proof choices cover the Munchhausen trilemma explicitly: `FOUNDATION`, `COHERENCE`, and `REGRESSION`.
 
@@ -53,7 +53,7 @@ Exact snapshot binding requires exactly three unique bindings named `authority_r
 
 Raw reconstruction requires exactly one receipt from `gooo-independent-json-reconstructor-v1`. The separate standard-library command does not import the subject evaluator: it reconstructs normalized observations and the candidate decision from the exact-subject raw transaction, pins the frozen denominator digest, and emits a receipt. Missing receipt evidence produces JSON `null` and `FAIL_CLOSED / ASSURANCE_EVIDENCE_UNKNOWN`. A structurally valid receipt that differs from the evaluator's expected normalized observation produces exactly `0 / 1 = 0 basis points` and `BLOCK / ASSURANCE_RAW_RECONSTRUCTION_MISMATCH`.
 
-An exact, violation-free transaction receives `ALLOW_LIMITED`, not `PASS`, because only 5 of 12 obligations operate. A detected governance, exact-snapshot, or raw-reconstruction violation receives `BLOCK`.
+An exact, violation-free transaction receives `ALLOW_LIMITED`, not `PASS`, because only 7 of 12 obligations operate. A detected governance, exact-snapshot, or raw-reconstruction violation receives `BLOCK`.
 
 ## Executable use cases
 

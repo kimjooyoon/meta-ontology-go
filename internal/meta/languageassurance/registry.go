@@ -61,14 +61,13 @@ func CanonicalMetaOperations() []MetaOperation {
 		{ID: "bind-exact-snapshot", Activity: "BindExactSnapshot", ProofChoice: ProofFoundation},
 		{ID: "reconstruct-raw-evidence", Activity: "ReconstructRawEvidence", ProofChoice: ProofRegression},
 		{ID: "observe-exact-write-set", Activity: "ObserveExactWriteSet", ProofChoice: ProofRegression},
+		{ID: "bind-source-backed-authority", Activity: "BindSourceBackedAuthority", ProofChoice: ProofFoundation},
 	}
 }
 
 func RoleConflictPairs() []RolePair { return append([]RolePair(nil), conflictPairs...) }
 
 func UnknownLaunderingOutputs() []Decision { return append([]Decision(nil), launderingOutputs...) }
-
-func SnapshotEvidenceIDs() []string { return append([]string(nil), snapshotEvidenceIDs...) }
 
 func obligation(metricID string, priority Priority, class IndicatorClass, proof ProofChoice, operation string) ObligationDefinition {
 	return ObligationDefinition{MetricID: metricID, Priority: priority, Class: class, ProofChoice: proof, RequiredMetaOperation: operation}

@@ -5,8 +5,12 @@ func Evaluate(subjectSHA string, transaction Transaction) (Report, error) {
 		return Report{}, err
 	}
 	definitions := Denominator()
+	activeOperations, err := operatingOperationSet()
+	if err != nil {
+		return Report{}, err
+	}
 	operations := CanonicalMetaOperations()
-	obligations, operating := observeObligations(definitions)
+	obligations, operating := observeObligations(definitions, activeOperations)
 	findings := append(detectSelfMinting(transaction), detectRoleConflicts(transaction)...)
 	findings = append(findings, detectUnknownLaundering(transaction)...)
 	findings = append(findings, detectSnapshotMismatches(subjectSHA, transaction)...)
@@ -53,12 +57,12 @@ func Evaluate(subjectSHA string, transaction Transaction) (Report, error) {
 	return report, nil
 }
 
-func observeObligations(definitions []ObligationDefinition) ([]ObligationObservation, int) {
+func observeObligations(definitions []ObligationDefinition, activeOperations map[string]string) ([]ObligationObservation, int) {
 	observations := make([]ObligationObservation, 0, len(definitions))
 	operating := 0
 	for _, definition := range definitions {
 		observation := ObligationObservation{MetricID: definition.MetricID, Status: "NOT_IMPLEMENTED", Resolution: ResolutionNone}
-		if operation, ok := operatingOperations[definition.MetricID]; ok {
+		if operation, ok := activeOperations[definition.MetricID]; ok {
 			observation.Status, observation.Resolution, observation.MetaOperation = "OPERATING", ResolutionExact, operation
 			operating++
 		}
