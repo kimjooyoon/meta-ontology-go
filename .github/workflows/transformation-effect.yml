@@ -1488,3 +1488,110 @@ jobs:
           path: ${{ runner.temp }}/external-ecosystem-reference/output
           if-no-files-found: error
           retention-days: 14
+
+  external-ecosystem-go127-baseline:
+    name: external ecosystem Go 1.27 baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      GOTOOLCHAIN: local
+      GOWORK: "off"
+      GOFLAGS: -mod=readonly
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+          path: gooo
+      - name: Checkout pinned gomacro
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: cosmos72/gomacro
+          ref: cf0d4bf32da393dbda97e3572f216731013ffa55
+          fetch-depth: 1
+          path: gomacro
+      - name: Set up exact Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Allocate isolated caches
+        run: |
+          printf 'GOCACHE=%s\n' "$RUNNER_TEMP/go-build" >> "$GITHUB_ENV"
+          printf 'GOMODCACHE=%s\n' "$RUNNER_TEMP/go-mod" >> "$GITHUB_ENV"
+      - name: Conform with Go 1.27 tools
+        working-directory: gooo
+        run: |
+          test -z "$(git status --porcelain --untracked-files=all)"
+          go fix ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness
+          find internal/meta/externalecosystemexecution cmd/external-ecosystem-execution-witness -name '*.go' -type f -print0 | xargs -0 gofmt -w
+          git diff --binary > "$RUNNER_TEMP/go-1.27-tools.patch"
+          if test -s "$RUNNER_TEMP/go-1.27-tools.patch"; then
+            git diff --stat
+            exit 1
+          fi
+      - name: Upload Go 1.27 correction
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: go-1.27-tool-correction-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/go-1.27-tools.patch
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Run fixed conformance tests
+        working-directory: gooo
+        run: |
+          go test -count=1 ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness
+          go test -count=1 ./internal/verify
+      - name: Observe twice and replay
+        working-directory: gooo
+        run: |
+          result="$RUNNER_TEMP/external-ecosystem-execution"
+          mkdir -p "$result"
+          observe_status=0
+          go run ./cmd/external-ecosystem-execution-witness \
+            --mode observe --source-root "$GITHUB_WORKSPACE/gooo" --external-root "$GITHUB_WORKSPACE/gomacro" \
+            --observation "$result/observation.json" --report "$result/report.json" \
+            --suite "$result/suite.json" || observe_status=$?
+          test "$observe_status" -eq 1
+          replay_status=0
+          go run ./cmd/external-ecosystem-execution-witness \
+            --mode replay --observation "$result/observation.json" \
+            --report "$result/replay-report.json" --suite "$result/replay-suite.json" || replay_status=$?
+          test "$replay_status" -eq 1
+          cmp "$result/report.json" "$result/replay-report.json"
+          cmp "$result/suite.json" "$result/replay-suite.json"
+      - name: Assert exact baseline
+        run: |
+          result="$RUNNER_TEMP/external-ecosystem-execution"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "EXACT"' "$result/report.json"
+          jq -e '.completed == 6 and .total == 8 and .basis_points == 7500' "$result/report.json"
+          jq -e '.unknown_indicators == 0 and .external_executions == 2 and .repository_writes == 0' "$result/report.json"
+          jq -e '.official_mutation_count == 0 and .promotion_count == 0' "$result/report.json"
+          jq -e '([.indicators[].status] | map(select(. == "SATISFIED")) | length) == 6' "$result/report.json"
+          jq -e '([.indicators[].status] | map(select(. == "UNSATISFIED")) | length) == 2' "$result/report.json"
+          jq -e '([.proofs[] | select(.mode == "FOUNDATION" or .mode == "REGRESSION") | .status] | all(. == "SATISFIED"))' "$result/report.json"
+          jq -e '([.proofs[] | select(.mode == "COHERENCE") | .status] | all(. == "UNSATISFIED"))' "$result/report.json"
+          jq -e '.passed == 10 and .total == 10 and .unresolved == 0 and .unknown_expected == 3 and .invariant_expected == 6' "$result/suite.json"
+          jq -e '.reference.binding_exact == true and (.runs | length) == 2' "$result/observation.json"
+          jq -e '([.runs[] | .exit_code == 1 and .passed == false and (.unknown_events | length) == 0] | all)' "$result/observation.json"
+          jq -e '([.runs[].normalized_sha256] | unique) == ["sha256:0bb017f6c946d799c5fef316462dd03ad667fcfbfd99a69c1d1cfe61c4812f93"]' "$result/observation.json"
+          jq -e '([.runs[] | [.outcomes[] | select(.action == "fail" or .action == "build-fail")] | length] | all(. == 8))' "$result/observation.json"
+          jq -e '.official_mutation_count == 0 and .promotion_count == 0' "$result/observation.json"
+      - name: Seal execution evidence
+        run: |
+          result="$RUNNER_TEMP/external-ecosystem-execution"
+          cd "$result"
+          sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > manifest.sha256
+      - name: Upload execution evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-ecosystem-go127-baseline-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-ecosystem-execution
+          if-no-files-found: ignore
+          retention-days: 30
