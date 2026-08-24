@@ -1972,6 +1972,450 @@
           ]
         }
       ]
+    },
+    {
+      "subject": "internal/meta/externalecosystemexecution/evaluate.go",
+      "operation": "extract-execution-proof-status",
+      "edits": [
+        {
+          "path": "internal/meta/externalecosystemexecution/evaluate.go",
+          "old_lines": [
+            "func groupStatus(items []Indicator) string {",
+            "\tstatus := \"SATISFIED\"",
+            "\tfor _, item := range items {",
+            "\t\tif item.Status == \"UNKNOWN\" {",
+            "\t\t\treturn \"UNKNOWN\"",
+            "\t\t}",
+            "\t\tif item.Status != \"SATISFIED\" {",
+            "\t\t\tstatus = \"UNSATISFIED\"",
+            "\t\t}",
+            "\t}",
+            "\treturn status",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/contract.go",
+          "old_lines": [
+            "func DenominatorDigest() string { return Digest(denominator) }"
+          ],
+          "new_lines": [
+            "func DenominatorDigest() string { return Digest(denominator) }",
+            "",
+            "func groupStatus(items []Indicator) string {",
+            "\tstatus := \"SATISFIED\"",
+            "\tfor _, item := range items {",
+            "\t\tif item.Status == \"UNKNOWN\" {",
+            "\t\t\treturn \"UNKNOWN\"",
+            "\t\t}",
+            "\t\tif item.Status != \"SATISFIED\" {",
+            "\t\t\tstatus = \"UNSATISFIED\"",
+            "\t\t}",
+            "\t}",
+            "\treturn status",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "subject": "internal/meta/externalecosystemexecution/events.go",
+      "operation": "partition-go127-event-observer",
+      "edits": [
+        {
+          "path": "internal/meta/externalecosystemexecution/events.go",
+          "old_lines": [
+            "import (",
+            "\t\"bufio\"",
+            "\t\"bytes\"",
+            "\t\"context\"",
+            "\t\"encoding/json\"",
+            "\t\"os/exec\"",
+            "\t\"sort\"",
+            "\t\"strings\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"bufio\"",
+            "\t\"bytes\"",
+            "\t\"context\"",
+            "\t\"encoding/json\"",
+            "\t\"os/exec\"",
+            ")"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/events.go",
+          "old_lines": [
+            "type goEvent struct {",
+            "\tAction     string `json:\"Action\"`",
+            "\tPackage    string `json:\"Package\"`",
+            "\tTest       string `json:\"Test\"`",
+            "\tImportPath string `json:\"ImportPath\"`",
+            "\tOutput     string `json:\"Output\"`",
+            "\tOutputType string `json:\"OutputType\"`",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/events.go",
+          "old_lines": [
+            "\tknown := map[string]bool{\"start\": true, \"run\": true, \"pause\": true, \"cont\": true, \"pass\": true,",
+            "\t\t\"bench\": true, \"fail\": true, \"output\": true, \"skip\": true, \"build-output\": true, \"build-fail\": true}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/events.go",
+          "old_lines": [
+            "\t\tif !known[event.Action] {"
+          ],
+          "new_lines": [
+            "\t\tif !knownEventActions[event.Action] {"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/events.go",
+          "old_lines": [
+            "\toutcomes := make([]Outcome, 0, len(final))",
+            "\tfor _, item := range final {",
+            "\t\toutcomes = append(outcomes, item)",
+            "\t}",
+            "\tsort.Slice(outcomes, func(i, j int) bool {",
+            "\t\tif outcomes[i].Package == outcomes[j].Package {",
+            "\t\t\treturn outcomes[i].Test < outcomes[j].Test",
+            "\t\t}",
+            "\t\treturn outcomes[i].Package < outcomes[j].Package",
+            "\t})",
+            "\tunknowns := make([]string, 0, len(unknown))",
+            "\tfor item := range unknown {",
+            "\t\tunknowns = append(unknowns, item)",
+            "\t}",
+            "\tsort.Strings(unknowns)",
+            "\treturn outcomes, unknowns, diagnostics, count"
+          ],
+          "new_lines": [
+            "\toutcomes, unknowns := normalizedEventResults(final, unknown)",
+            "\treturn outcomes, unknowns, diagnostics, count"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/events.go",
+          "old_lines": [
+            "func diagnosticEvent(event goEvent) bool {",
+            "\tif event.Action == \"build-output\" {",
+            "\t\treturn event.Output != \"\"",
+            "\t}",
+            "\treturn event.Action == \"output\" && event.Output != \"\" &&",
+            "\t\t(event.OutputType == \"error\" || event.OutputType == \"error-continue\")",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/events.go",
+          "old_lines": [
+            "func hasFailure(outcomes []Outcome) bool {",
+            "\tfor _, item := range outcomes {",
+            "\t\tif item.Action == \"fail\" || item.Action == \"build-fail\" {",
+            "\t\t\treturn true",
+            "\t\t}",
+            "\t}",
+            "\treturn false",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/model.go",
+          "old_lines": [
+            "type Outcome struct {",
+            "\tPackage string `json:\"package\"`",
+            "\tTest    string `json:\"test,omitempty\"`",
+            "\tAction  string `json:\"action\"`",
+            "}"
+          ],
+          "new_lines": [
+            "type Outcome struct {",
+            "\tPackage string `json:\"package\"`",
+            "\tTest    string `json:\"test,omitempty\"`",
+            "\tAction  string `json:\"action\"`",
+            "}",
+            "",
+            "type goEvent struct {",
+            "\tAction     string `json:\"Action\"`",
+            "\tPackage    string `json:\"Package\"`",
+            "\tTest       string `json:\"Test\"`",
+            "\tImportPath string `json:\"ImportPath\"`",
+            "\tOutput     string `json:\"Output\"`",
+            "\tOutputType string `json:\"OutputType\"`",
+            "}",
+            "",
+            "var knownEventActions = map[string]bool{\"start\": true, \"run\": true, \"pause\": true, \"cont\": true, \"pass\": true,",
+            "\t\"bench\": true, \"fail\": true, \"output\": true, \"skip\": true, \"build-output\": true, \"build-fail\": true}"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/observe.go",
+          "old_lines": [
+            "import (",
+            "\t\"bytes\"",
+            "\t\"context\"",
+            "\t\"encoding/json\"",
+            "\t\"os\"",
+            "\t\"path/filepath\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"context\"",
+            "\t\"path/filepath\"",
+            "\t\"sort\"",
+            "\t\"strings\"",
+            ")"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/observe.go",
+          "old_lines": [
+            "func loadReference(sourceRoot string, external RepositoryState, moduleGo string) ReferenceReceipt {",
+            "\tpath := filepath.Join(sourceRoot, referenceEvidencePath)",
+            "\tb, err := os.ReadFile(path)",
+            "\tavailable := err == nil",
+            "\texact := available && json.Valid(b) && bytes.Contains(b, []byte(ExpectedCommit)) &&",
+            "\t\tbytes.Contains(b, []byte(ExpectedTree)) && bytes.Contains(b, []byte(ExpectedModuleGo))",
+            "\treturn ReferenceReceipt{",
+            "\t\tAvailable: available, BindingExact: exact, ContractVersion: ReferenceContractVersion,",
+            "\t\tDecision: ExpectedReferenceDecision, Resolution: \"EXACT\", URL: ExpectedReferenceURL,",
+            "\t\tCommit: external.Commit, Tree: external.Tree, ModuleGo: moduleGo,",
+            "\t\tEvidencePath: referenceEvidencePath, EvidenceSHA256: Digest(b),",
+            "\t}",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/observe.go",
+          "old_lines": [
+            "\treturn Observation{",
+            "\t\tSchema: ObservationSchema, Reference: loadReference(sourceRoot, externalBefore, moduleGo),",
+            "\t\tGoVersion: goVersion, Runs: runs, SourceBefore: sourceBefore, SourceAfter: sourceAfter,",
+            "\t\tExternalBefore: externalBefore, ExternalAfter: externalAfter,",
+            "\t}, nil",
+            "}"
+          ],
+          "new_lines": [
+            "\treturn Observation{",
+            "\t\tSchema: ObservationSchema, Reference: loadReference(sourceRoot, externalBefore, moduleGo),",
+            "\t\tGoVersion: goVersion, Runs: runs, SourceBefore: sourceBefore, SourceAfter: sourceAfter,",
+            "\t\tExternalBefore: externalBefore, ExternalAfter: externalAfter,",
+            "\t}, nil",
+            "}",
+            "",
+            "func diagnosticEvent(event goEvent) bool {",
+            "\tif event.Action == \"build-output\" {",
+            "\t\treturn event.Output != \"\"",
+            "\t}",
+            "\treturn event.Action == \"output\" && event.Output != \"\" &&",
+            "\t\t(event.OutputType == \"error\" || event.OutputType == \"error-continue\")",
+            "}",
+            "",
+            "func normalizedEventResults(final map[string]Outcome, unknown map[string]bool) ([]Outcome, []string) {",
+            "\toutcomes := make([]Outcome, 0, len(final))",
+            "\tfor _, item := range final {",
+            "\t\toutcomes = append(outcomes, item)",
+            "\t}",
+            "\tsort.Slice(outcomes, func(i, j int) bool {",
+            "\t\tif outcomes[i].Package == outcomes[j].Package {",
+            "\t\t\treturn outcomes[i].Test < outcomes[j].Test",
+            "\t\t}",
+            "\t\treturn outcomes[i].Package < outcomes[j].Package",
+            "\t})",
+            "\tunknowns := make([]string, 0, len(unknown))",
+            "\tfor item := range unknown {",
+            "\t\tunknowns = append(unknowns, item)",
+            "\t}",
+            "\tsort.Strings(unknowns)",
+            "\treturn outcomes, unknowns",
+            "}"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/command.go",
+          "old_lines": [
+            "import (",
+            "\t\"bufio\"",
+            "\t\"context\"",
+            "\t\"os\"",
+            "\t\"os/exec\"",
+            "\t\"strings\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"bufio\"",
+            "\t\"bytes\"",
+            "\t\"context\"",
+            "\t\"encoding/json\"",
+            "\t\"os\"",
+            "\t\"path/filepath\"",
+            "\t\"strings\"",
+            ")"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/command.go",
+          "old_lines": [
+            "func commandText(ctx context.Context, dir, name string, args ...string) (string, error) {",
+            "\tcmd := exec.CommandContext(ctx, name, args...)",
+            "\tcmd.Dir, cmd.Env = dir, controlledEnv()",
+            "\tb, err := cmd.Output()",
+            "\treturn strings.TrimSpace(string(b)), err",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/command.go",
+          "old_lines": [
+            "\treturn \"\", scanner.Err()",
+            "}"
+          ],
+          "new_lines": [
+            "\treturn \"\", scanner.Err()",
+            "}",
+            "",
+            "func loadReference(sourceRoot string, external RepositoryState, moduleGo string) ReferenceReceipt {",
+            "\tpath := filepath.Join(sourceRoot, referenceEvidencePath)",
+            "\tb, err := os.ReadFile(path)",
+            "\tavailable := err == nil",
+            "\texact := available && json.Valid(b) && bytes.Contains(b, []byte(ExpectedCommit)) &&",
+            "\t\tbytes.Contains(b, []byte(ExpectedTree)) && bytes.Contains(b, []byte(ExpectedModuleGo))",
+            "\treturn ReferenceReceipt{",
+            "\t\tAvailable: available, BindingExact: exact, ContractVersion: ReferenceContractVersion,",
+            "\t\tDecision: ExpectedReferenceDecision, Resolution: \"EXACT\", URL: ExpectedReferenceURL,",
+            "\t\tCommit: external.Commit, Tree: external.Tree, ModuleGo: moduleGo,",
+            "\t\tEvidencePath: referenceEvidencePath, EvidenceSHA256: Digest(b),",
+            "\t}",
+            "}"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/contract.go",
+          "old_lines": [
+            "import (",
+            "\t\"crypto/sha256\"",
+            "\t\"encoding/hex\"",
+            "\t\"encoding/json\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"context\"",
+            "\t\"crypto/sha256\"",
+            "\t\"encoding/hex\"",
+            "\t\"encoding/json\"",
+            "\t\"os/exec\"",
+            "\t\"strings\"",
+            ")"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/contract.go",
+          "old_lines": [
+            "func DenominatorDigest() string { return Digest(denominator) }"
+          ],
+          "new_lines": [
+            "func DenominatorDigest() string { return Digest(denominator) }",
+            "",
+            "func commandText(ctx context.Context, dir, name string, args ...string) (string, error) {",
+            "\tcmd := exec.CommandContext(ctx, name, args...)",
+            "\tcmd.Dir, cmd.Env = dir, controlledEnv()",
+            "\tb, err := cmd.Output()",
+            "\treturn strings.TrimSpace(string(b)), err",
+            "}"
+          ]
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/report.go",
+          "old_lines": [
+            "type Proof struct {",
+            "\tMode   string `json:\"mode\"`",
+            "\tStatus string `json:\"status\"`",
+            "\tReason string `json:\"reason\"`",
+            "}"
+          ],
+          "new_lines": [
+            "type Proof struct {",
+            "\tMode   string `json:\"mode\"`",
+            "\tStatus string `json:\"status\"`",
+            "\tReason string `json:\"reason\"`",
+            "}",
+            "",
+            "func hasFailure(outcomes []Outcome) bool {",
+            "\tfor _, item := range outcomes {",
+            "\t\tif item.Action == \"fail\" || item.Action == \"build-fail\" {",
+            "\t\t\treturn true",
+            "\t\t}",
+            "\t}",
+            "\treturn false",
+            "}"
+          ]
+        }
+      ]
+    },
+    {
+      "subject": "internal/meta/externalecosystemexecution/indicators.go",
+      "operation": "extract-execution-indicator-constructor",
+      "edits": [
+        {
+          "path": "internal/meta/externalecosystemexecution/indicators.go",
+          "old_lines": [
+            "func indicator(c Criterion, status, reason string) Indicator {",
+            "\tn := 0",
+            "\tif status == \"SATISFIED\" {",
+            "\t\tn = 1",
+            "\t}",
+            "\treturn Indicator{c.ID, c.Kind, status, n, 1, reason}",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/externalecosystemexecution/report.go",
+          "old_lines": [
+            "type Indicator struct {",
+            "\tID          string `json:\"id\"`",
+            "\tKind        string `json:\"kind\"`",
+            "\tStatus      string `json:\"status\"`",
+            "\tNumerator   int    `json:\"numerator\"`",
+            "\tDenominator int    `json:\"denominator\"`",
+            "\tReason      string `json:\"reason\"`",
+            "}"
+          ],
+          "new_lines": [
+            "type Indicator struct {",
+            "\tID          string `json:\"id\"`",
+            "\tKind        string `json:\"kind\"`",
+            "\tStatus      string `json:\"status\"`",
+            "\tNumerator   int    `json:\"numerator\"`",
+            "\tDenominator int    `json:\"denominator\"`",
+            "\tReason      string `json:\"reason\"`",
+            "}",
+            "",
+            "func indicator(c Criterion, status, reason string) Indicator {",
+            "\tn := 0",
+            "\tif status == \"SATISFIED\" {",
+            "\t\tn = 1",
+            "\t}",
+            "\treturn Indicator{c.ID, c.Kind, status, n, 1, reason}",
+            "}"
+          ]
+        }
+      ]
     }
   ]
 }
