@@ -137,9 +137,9 @@ jobs:
             .assurance_decision == "PARTIAL" and
             .candidate_decision == "ALLOW_LIMITED" and
             .summary.denominator_total == 12 and
-                      .summary.operating == 8 and
-                      .summary.not_implemented == 4 and
-                      .summary.implementation_coverage_bps == 6666 and
+                      .summary.operating == 9 and
+                      .summary.not_implemented == 3 and
+                      .summary.implementation_coverage_bps == 7500 and
             .summary.snapshot_bindings_observed == 3 and
             .summary.snapshot_bindings_required == 3 and
             .summary.exact_snapshot_binding_bps == 10000 and

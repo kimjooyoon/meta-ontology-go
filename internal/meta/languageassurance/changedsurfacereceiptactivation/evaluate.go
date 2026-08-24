@@ -19,7 +19,7 @@ func Evaluate(input Input) Receipt {
 		BeforeCoverageBPS: 6666, AfterCoverageBPS: after * 10000 / 12,
 		CapsulesTotal: 2, CapsulesExact: rawExact, CapsuleCoverageBPS: rawExact * 10000 / 2,
 		PredecessorSemanticsBPS: semanticExact * 10000 / 2,
-		UnknownPaths: unknown, BlockedPaths: blocked}
+		UnknownPaths:            unknown, BlockedPaths: blocked}
 	receipt := Receipt{Schema: Schema, SubjectSHA: input.SubjectSHA, PredecessorSHA: PredecessorSHA,
 		Decision: decision, Resolution: resolution, Reason: reason,
 		DenominatorID: DenominatorID, DenominatorDigest: digestValue(Denominator()),

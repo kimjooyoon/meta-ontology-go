@@ -10,7 +10,7 @@ var eligibilityCapsule []byte
 
 func EmbeddedInput(subjectSHA string) Input {
 	return Input{SubjectSHA: subjectSHA,
-		Assurance: append([]byte(nil), assuranceCapsule...),
+		Assurance:   append([]byte(nil), assuranceCapsule...),
 		Eligibility: append([]byte(nil), eligibilityCapsule...)}
 }
 
