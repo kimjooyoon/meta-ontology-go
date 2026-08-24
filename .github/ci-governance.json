@@ -1630,6 +1630,18 @@
         "internal/meta/languageassurance/rollbackintegrityshadow/**",
         "internal/verify/scope_rollback_integrity_shadow.go"
       ]
+    },
+    {
+      "branch": "agent/rollback-integrity-eligibility",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/rollback-integrity-eligibility-witness",
+        "examples/rollback-integrity-eligibility",
+        "internal/meta/languageassurance/rollbackintegrityeligibility",
+        "internal/verify/scope_changed_surface_receipt_eligibility.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
