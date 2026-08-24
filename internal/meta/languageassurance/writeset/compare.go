@@ -22,25 +22,3 @@ func Compare(subjectSHA, denominatorDigest string, before, after Snapshot, decla
 	}
 	return bindReceipt(base)
 }
-
-func validSnapshot(snapshot Snapshot) bool {
-	if snapshot.Schema != SnapshotSchema || snapshot.RootDigest != digestEntries(snapshot.Entries) { return false }
-	previous := ""
-	for index, entry := range snapshot.Entries {
-		paths, valid := normalizePaths([]string{entry.Path})
-		if !valid || len(paths) != 1 || paths[0] != entry.Path || entry.Digest == "" || (index > 0 && entry.Path <= previous) { return false }
-		previous = entry.Path
-	}
-	return true
-}
-
-func changedPaths(before, after Snapshot) []string {
-	left, right := make(map[string]Entry, len(before.Entries)), make(map[string]Entry, len(after.Entries))
-	for _, entry := range before.Entries { left[entry.Path] = entry }
-	for _, entry := range after.Entries { right[entry.Path] = entry }
-	candidates := make([]string, 0, len(left)+len(right))
-	for candidate := range left { if right[candidate] != left[candidate] { candidates = append(candidates, candidate) } }
-	for candidate := range right { if _, exists := left[candidate]; !exists { candidates = append(candidates, candidate) } }
-	result, _ := normalizePaths(candidates)
-	return result
-}

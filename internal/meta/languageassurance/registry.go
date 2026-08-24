@@ -39,8 +39,7 @@ var denominatorV1 = []ObligationDefinition{
 	obligation("gooo.metric.ecosystem.external-conformance.v1", PriorityP2, ClassOutcome, ProofRegression, "verify-external-conformance"),
 }
 
-var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot", MetricRawReconstruction: "reconstruct-raw-evidence", "gooo.metric.effects.write-set-exactness.v1": "observe-exact-write-set",
-}
+var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot", MetricRawReconstruction: "reconstruct-raw-evidence", "gooo.metric.effects.write-set-exactness.v1": "observe-exact-write-set"}
 
 var snapshotEvidenceIDs = []string{"authority_routes", "role_bindings", "decision_transitions"}
 

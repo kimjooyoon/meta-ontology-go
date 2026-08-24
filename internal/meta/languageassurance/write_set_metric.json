@@ -5,7 +5,7 @@
   "proof_choice": "REGRESSION",
   "meta_operation": "observe-exact-write-set",
   "activity": "ObserveExactWriteSet",
-  "producer": "internal/meta/writeset.Compare",
+  "producer": "internal/meta/languageassurance/writeset.Compare",
   "consumer": "language-assurance-gate",
   "unit": "paths",
   "relation": "LESS_OR_EQUAL"
