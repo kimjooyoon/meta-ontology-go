@@ -3,18 +3,18 @@ package verticalsliceclosureeligibility
 import "encoding/json"
 
 type assuranceCapsule struct {
-	Schema string `json:"schema"`
-	SubjectSHA string `json:"subject_sha"`
-	DenominatorID string `json:"denominator_id"`
+	Schema            string `json:"schema"`
+	SubjectSHA        string `json:"subject_sha"`
+	DenominatorID     string `json:"denominator_id"`
 	DenominatorDigest string `json:"denominator_digest"`
-	ReportDigest string `json:"report_digest"`
-	Summary struct {
-		DenominatorTotal int `json:"denominator_total"`
-		Operating int `json:"operating"`
-		NotImplemented int `json:"not_implemented"`
+	ReportDigest      string `json:"report_digest"`
+	Summary           struct {
+		DenominatorTotal          int `json:"denominator_total"`
+		Operating                 int `json:"operating"`
+		NotImplemented            int `json:"not_implemented"`
 		ImplementationCoverageBPS int `json:"implementation_coverage_bps"`
-		UnknownTopDecisions int `json:"unknown_top_decisions"`
-		RepositoryWrites int `json:"repository_writes"`
+		UnknownTopDecisions       int `json:"unknown_top_decisions"`
+		RepositoryWrites          int `json:"repository_writes"`
 	} `json:"summary"`
 }
 
