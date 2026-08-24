@@ -5,6 +5,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/transformation-effect.yml",
+		".github/workflows/repository-projection.yml",
 		"bootstrap/function-extractor/recipes.json",
 		"cmd/external-ecosystem-execution-witness",
 		"examples/external-ecosystem-execution",
