@@ -9,6 +9,7 @@ func buildIndicators(summary Summary) []Indicator {
 		indicator("gooo.metric.assurance.implementation-coverage-bps.v1", ClassOutcome, ProofCoherence, "freeze-assurance-denominator", &coverage, 10000, "basis_points", RelationGreaterOrEqual),
 		indicator("gooo.metric.assurance.transaction-evidence-coverage-bps.v1", ClassDriver, ProofFoundation, "observe-transaction-evidence", &evidence, 10000, "basis_points", RelationGreaterOrEqual),
 		indicator(MetricSnapshotBinding, ClassDriver, ProofFoundation, "bind-exact-snapshot", summary.ExactSnapshotBindingBPS, 10000, "basis_points", RelationGreaterOrEqual),
+		indicator(MetricRawReconstruction, ClassDriver, ProofRegression, "reconstruct-raw-evidence", summary.RawReconstructionBPS, 10000, "basis_points", RelationGreaterOrEqual),
 		indicator(MetricSelfMinting, ClassGuardrail, ProofFoundation, "detect-self-minting-paths", summary.SelfMintingPaths, 0, "paths", RelationLessOrEqual),
 		indicator(MetricRoleConflict, ClassGuardrail, ProofCoherence, "detect-role-conflict-paths", summary.RoleConflictPaths, 0, "paths", RelationLessOrEqual),
 		indicator(MetricUnknownLaundering, ClassGuardrail, ProofRegression, "detect-unknown-laundering", summary.UnknownLaunderingPaths, 0, "paths", RelationLessOrEqual),

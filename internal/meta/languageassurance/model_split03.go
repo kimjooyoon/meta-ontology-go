@@ -30,9 +30,10 @@ type Summary struct {
 	SnapshotBindingsRequired  int  `json:"snapshot_bindings_required"`
 	ExactSnapshotBindingBPS   *int `json:"exact_snapshot_binding_bps"`
 	SnapshotMismatchPaths     *int `json:"snapshot_mismatch_paths"`
-	UnresolvedIndicators      int  `json:"unresolved_indicators"`
-	ViolatedGuardrails        int  `json:"violated_guardrails"`
-	RepositoryWrites          int  `json:"repository_writes"`
+	RawReconstructionSummary
+	UnresolvedIndicators int `json:"unresolved_indicators"`
+	ViolatedGuardrails   int `json:"violated_guardrails"`
+	RepositoryWrites     int `json:"repository_writes"`
 }
 
 type Report struct {

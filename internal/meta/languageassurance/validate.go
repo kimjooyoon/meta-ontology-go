@@ -51,6 +51,9 @@ func validateInput(subjectSHA string, transaction Transaction) error {
 	if !validSnapshotBindings(transaction.SnapshotBindings) {
 		return fmt.Errorf("language assurance snapshot binding is malformed")
 	}
+	if !validRawReconstructions(transaction.RawReconstructions) {
+		return fmt.Errorf("language assurance raw reconstruction is malformed")
+	}
 	return nil
 }
 
