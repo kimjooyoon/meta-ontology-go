@@ -3,7 +3,7 @@ package assuranceeligibility
 func validParent(value evidence) bool {
 	report, suite := value.ParentReport, value.ParentSuite
 	return report.Schema == "external-ecosystem-execution-report/v1" &&
-		report.ContractVersion == "external-ecosystem-conformance/v1" && report.Decision == DecisionFailClosed &&
+		report.ContractVersion == "external-ecosystem-execution/v1" && report.Decision == DecisionFailClosed &&
 		report.Resolution == ResolutionExact && report.Reason == "EXECUTION_INVARIANT_VIOLATED" &&
 		report.DenominatorVersion == "external-ecosystem-execution-denominator/v1" &&
 		report.DenominatorDigest == ParentDenominator && report.Completed == 6 && report.Total == 8 &&
