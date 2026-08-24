@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/changed-surface-receipt-activation-denominator/v1",
+  "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+  "meta_operation": "totalize-changed-surface-receipts",
+  "predecessor_sha": "1b9acfaac0ff2d1a2353de6c5019d515ab542eb3",
+  "cases": [
+    {"id": "exact", "decision": "APPLIED", "resolution": "EXACT", "transition": 1},
+    {"id": "unavailable", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN", "transition": 0},
+    {"id": "digest-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "transition": 0}
+  ],
+  "transition": {
+    "operating": {"before": 8, "after": 9, "total": 12},
+    "coverage_bps": {"before": 6666, "after": 7500}
+  },
+  "repository_writes": 0
+}
