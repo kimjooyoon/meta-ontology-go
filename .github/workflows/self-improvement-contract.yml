@@ -754,10 +754,10 @@ jobs:
           out="$RUNNER_TEMP/changed-surface-receipt-shadow"
           mkdir -p "$out"
           for case_id in exact zero-change missing orphan duplicate unknown-top; do
-            go run ./cmd/changed-surface-receipt-witness --case "$case_id" --subject-sha "$SUBJECT_SHA" --out "$out/$case_id.json"
+            go run ./cmd/changed-surface-receipt-witness --case "$case_id" --subject-sha "$SUBJECT_SHA" --output "$out/$case_id.json"
           done
-          go run ./cmd/changed-surface-receipt-witness --suite --subject-sha "$SUBJECT_SHA" --out "$out/suite.json"
-          go run ./cmd/changed-surface-receipt-witness --case exact --subject-sha "$SUBJECT_SHA" --out "$out/replay.json"
+          go run ./cmd/changed-surface-receipt-witness --case suite --subject-sha "$SUBJECT_SHA" --output "$out/suite.json"
+          go run ./cmd/changed-surface-receipt-witness --case exact --subject-sha "$SUBJECT_SHA" --output "$out/replay.json"
           cmp "$out/exact.json" "$out/replay.json"
           jq -e '.decision == "FIXED_POINT" and .resolution == "EXACT" and .summary.changed_surfaces == 2 and .summary.receipt_surfaces == 2 and .summary.bound_surfaces == 2 and .summary.totality_bps == 10000 and .repository_writes == 0' "$out/exact.json"
           jq -e '.decision == "FIXED_POINT" and .resolution == "EXACT" and .summary.changed_surfaces == 0 and .summary.receipt_surfaces == 0 and .summary.totality_bps == 10000 and .repository_writes == 0' "$out/zero-change.json"

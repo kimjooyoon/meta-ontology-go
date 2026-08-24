@@ -24,7 +24,9 @@ func TestExactReceiptTotalityHasNoEffects(t *testing.T) {
 	}
 	counts := map[string]int{}
 	for _, indicator := range report.Indicators {
-		if !indicator.Satisfied { t.Fatalf("indicator=%+v", indicator) }
+		if !indicator.Satisfied {
+			t.Fatalf("indicator=%+v", indicator)
+		}
 		counts[indicator.Class]++
 		counts[indicator.ProofChoice]++
 	}
