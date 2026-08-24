@@ -39,7 +39,7 @@ func manifestGlobalIssue(manifest SourceManifest, head string) string {
 	if manifest.WorkflowRunID <= 0 || manifest.WorkflowName != "Transformation effect ledger" {
 		return "SOURCE_WORKFLOW_IDENTITY_UNKNOWN"
 	}
-	if manifest.WorkflowDecision != "success" || manifest.RepositoryWrites != 0 {
+	if (manifest.WorkflowDecision != "success" && manifest.WorkflowDecision != "upstream_jobs_success") || manifest.RepositoryWrites != 0 {
 		return "SOURCE_WORKFLOW_NOT_EXACT"
 	}
 	if len(manifest.Artifacts) != len(sourceOrder) {

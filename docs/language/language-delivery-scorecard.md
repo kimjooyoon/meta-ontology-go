@@ -34,6 +34,8 @@ The denominator is a versioned Gooo product contract, not a claim that all langu
 
 These links define scope hints only. CI artifacts, canonical contract meta-code, and exact commit binding remain the decision authority.
 
+The scorecard runs as a downstream job in the existing Transformation effect ledger. This keeps GitHub's direct workflow-file requirement inside the repository's ten-entry physical topology limit.
+
 ## No inference
 
 Timing and RSS remain runner-scoped observations. No historical improvement is claimed without a comparable predecessor using the same 36 IDs. Adding a capability requires an executable receipt, a meta-operation binding, and an explicit transition from `NOT_IMPLEMENTED` to evidence-backed evaluation.
