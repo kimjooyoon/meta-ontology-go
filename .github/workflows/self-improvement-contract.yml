@@ -580,3 +580,68 @@ jobs:
           name: candidate-leakage-shadow-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/candidate-leakage-shadow
           if-no-files-found: error
+
+  candidate-leakage-eligibility:
+    name: Candidate leakage eligibility
+    needs: assurance
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.SUBJECT_SHA }}
+      - name: Download current official assurance
+        uses: actions/download-artifact@v6
+        with:
+          name: language-assurance-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/language-assurance
+      - name: Require Go 1.27 fixes and eligibility regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix -diff ./internal/meta/languageassurance/candidateleakageeligibility ./cmd/candidate-leakage-eligibility-witness > "$RUNNER_TEMP/candidate-leakage-eligibility-fix.diff"
+          if test -s "$RUNNER_TEMP/candidate-leakage-eligibility-fix.diff"; then
+            cat "$RUNNER_TEMP/candidate-leakage-eligibility-fix.diff"
+            exit 1
+          fi
+          go test ./internal/meta/languageassurance/candidateleakageeligibility ./cmd/candidate-leakage-eligibility-witness
+      - name: Generate read-only eligibility evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/candidate-leakage-eligibility"
+          mkdir -p "$out/replay"
+          for case_id in exact unavailable digest-mismatch; do
+            go run ./cmd/candidate-leakage-eligibility-witness --subject-sha "$SUBJECT_SHA" --case "$case_id" --output "$out/$case_id.json"
+          done
+          go run ./cmd/candidate-leakage-eligibility-witness --subject-sha "$SUBJECT_SHA" --case suite --output "$out/suite.json"
+          go run ./cmd/candidate-leakage-eligibility-witness --subject-sha "$SUBJECT_SHA" --case suite --output "$out/replay/suite.json"
+          cmp "$out/suite.json" "$out/replay/suite.json"
+          sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" "$out/suite.json" > "$out/manifest.sha256"
+      - name: Assert eligibility without promotion
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/candidate-leakage-eligibility"
+          jq -e '.decision == "ELIGIBLE" and .resolution == "EXACT" and .enforcement_effect == "NO_EFFECT" and .summary.denominator_total == 12 and .summary.before_operating == 7 and .summary.after_operating == 8 and .summary.before_coverage_bps == 5833 and .summary.after_coverage_bps == 6666 and .summary.capsules_total == 2 and .summary.capsules_exact == 2 and .summary.capsule_coverage_bps == 10000 and .summary.shadow_cases_total == 6 and .summary.shadow_cases_passed == 6 and .repository_writes == 0 and .promotion_applied == 0' "$out/exact.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "CANDIDATE_LEAKAGE_EVIDENCE_UNAVAILABLE" and .promotion_applied == 0' "$out/unavailable.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "CANDIDATE_LEAKAGE_CAPSULE_DIGEST_MISMATCH" and .promotion_applied == 0' "$out/digest-mismatch.json"
+          jq -e '.cases_total == 3 and .cases_passed == 3 and .coverage_bps == 10000' "$out/suite.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 7 and .summary.not_implemented == 5 and .summary.implementation_coverage_bps == 5833 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "NOT_IMPLEMENTED" and .resolution == "NONE")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+      - name: Upload candidate leakage eligibility receipts
+        uses: actions/upload-artifact@v6
+        with:
+          name: candidate-leakage-eligibility-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/candidate-leakage-eligibility
+          if-no-files-found: error
