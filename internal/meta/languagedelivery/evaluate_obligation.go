@@ -25,8 +25,8 @@ func evaluateObligation(item Obligation, sources []SourceObservation, decoded de
 		result.Status = StatusNotSatisfied
 	}
 	result.EvidenceDigest = digestValue(struct {
-		Item string
-		State SourceObservation
+		Item     string
+		State    SourceObservation
 		Observed int
 	}{item.ID, state, result.Observed})
 	return result

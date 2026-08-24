@@ -4,7 +4,7 @@ type ReadinessArtifact struct {
 	Schema   string `json:"schema"`
 	Decision string `json:"decision"`
 	HeadSHA  string `json:"head_sha"`
-	Report struct {
+	Report   struct {
 		Schema           string                `json:"schema"`
 		Decision         string                `json:"decision"`
 		Obligations      []ReadinessObligation `json:"obligations"`

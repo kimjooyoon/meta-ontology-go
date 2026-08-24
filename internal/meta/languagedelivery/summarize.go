@@ -2,7 +2,7 @@ package languagedelivery
 
 func summarize(results []ObligationResult, sources []SourceObservation, decoded decodedEvidence) Summary {
 	summary := Summary{
-		Coordinates: coordinates(results),
+		Coordinates:       coordinates(results),
 		MetaBindingsTotal: len(results), SourceReceiptsTotal: len(sourceOrder),
 		SelfMintedCredits: 0,
 	}

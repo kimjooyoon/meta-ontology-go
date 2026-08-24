@@ -21,9 +21,9 @@ func evaluate(value options, stdout, stderr io.Writer) int {
 	paths := map[languagedelivery.SourceName]string{
 		languagedelivery.SourceUserJourney: value.user,
 		languagedelivery.SourceConformance: value.conformance,
-		languagedelivery.SourceLSP: value.lsp,
-		languagedelivery.SourceRelease: value.release,
-		languagedelivery.SourceReadiness: value.readiness,
+		languagedelivery.SourceLSP:         value.lsp,
+		languagedelivery.SourceRelease:     value.release,
+		languagedelivery.SourceReadiness:   value.readiness,
 	}
 	evidence, err := languagedelivery.ReadEvidence(paths)
 	if err != nil {

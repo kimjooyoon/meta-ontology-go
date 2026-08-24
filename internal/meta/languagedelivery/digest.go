@@ -23,8 +23,8 @@ func factsDigest(report Report) string {
 	return digestValue(struct {
 		ContractDigest string
 		ManifestDigest string
-		Summary Summary
-		Sources []SourceObservation
-		Obligations []ObligationResult
+		Summary        Summary
+		Sources        []SourceObservation
+		Obligations    []ObligationResult
 	}{report.ContractDigest, report.ManifestDigest, report.Summary, report.Sources, report.Obligations})
 }

@@ -1,15 +1,15 @@
 package languagedelivery
 
 type NamedCoordinates struct {
-	Name        string `json:"name"`
+	Name        string      `json:"name"`
 	Coordinates Coordinates `json:"coordinates"`
 }
 
 type InternalReadiness struct {
-	Claim        string `json:"claim"`
-	Satisfied    int    `json:"satisfied"`
-	Total        int    `json:"total"`
-	BasisPoints  int    `json:"basis_points"`
+	Claim       string `json:"claim"`
+	Satisfied   int    `json:"satisfied"`
+	Total       int    `json:"total"`
+	BasisPoints int    `json:"basis_points"`
 }
 
 type EffectSummary struct {
@@ -18,16 +18,16 @@ type EffectSummary struct {
 }
 
 type Summary struct {
-	Coordinates       Coordinates       `json:"coordinates"`
-	ByClass           []NamedCoordinates `json:"by_class"`
-	ByOwner           []NamedCoordinates `json:"by_owner"`
-	MetaBindings      int               `json:"meta_bindings"`
-	MetaBindingsTotal int               `json:"meta_bindings_total"`
-	SourceReceipts    int               `json:"source_receipts"`
-	SourceReceiptsTotal int             `json:"source_receipts_total"`
-	SelfMintedCredits int               `json:"self_minted_credits"`
-	InternalReadiness InternalReadiness `json:"internal_readiness"`
-	Effects           EffectSummary     `json:"effects"`
+	Coordinates         Coordinates        `json:"coordinates"`
+	ByClass             []NamedCoordinates `json:"by_class"`
+	ByOwner             []NamedCoordinates `json:"by_owner"`
+	MetaBindings        int                `json:"meta_bindings"`
+	MetaBindingsTotal   int                `json:"meta_bindings_total"`
+	SourceReceipts      int                `json:"source_receipts"`
+	SourceReceiptsTotal int                `json:"source_receipts_total"`
+	SelfMintedCredits   int                `json:"self_minted_credits"`
+	InternalReadiness   InternalReadiness  `json:"internal_readiness"`
+	Effects             EffectSummary      `json:"effects"`
 }
 
 type AudienceView struct {

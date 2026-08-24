@@ -5,9 +5,9 @@ func CanonicalContract() Contract {
 	obligations = append(obligations, governorObligations()...)
 	return Contract{
 		Schema: ContractSchema, ContractID: ContractID, Version: 1,
-		Scope: "Gooo v0.1 observable delivery; not universal language completeness",
+		Scope:         "Gooo v0.1 observable delivery; not universal language completeness",
 		AudienceOrder: append([]Audience(nil), audienceOrder...),
-		Obligations: obligations,
+		Obligations:   obligations,
 		NotClaimed: []string{
 			"universal programming-language completeness",
 			"production readiness",

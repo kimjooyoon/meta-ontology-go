@@ -32,10 +32,10 @@ type JourneyReceipt struct {
 	Source     struct {
 		ExpectedHeadSHA string `json:"expected_head_sha"`
 	} `json:"source"`
-	Journeys []JourneyEvidence `json:"journeys"`
-	Indicators []UpstreamIndicator `json:"indicators"`
-	RepositoryWrites int `json:"repository_writes"`
-	MutationAuthority bool `json:"mutation_authority"`
+	Journeys          []JourneyEvidence   `json:"journeys"`
+	Indicators        []UpstreamIndicator `json:"indicators"`
+	RepositoryWrites  int                 `json:"repository_writes"`
+	MutationAuthority bool                `json:"mutation_authority"`
 }
 
 type JourneyEvidence struct {

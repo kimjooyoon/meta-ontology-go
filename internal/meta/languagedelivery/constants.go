@@ -16,15 +16,15 @@ const (
 )
 
 const (
-	AudienceUser       Audience = "USER"
-	AudienceToolAuthor Audience = "TOOL_AUTHOR"
-	AudienceGovernor   Audience = "GOVERNOR"
+	AudienceUser       Audience       = "USER"
+	AudienceToolAuthor Audience       = "TOOL_AUTHOR"
+	AudienceGovernor   Audience       = "GOVERNOR"
 	ClassOutcome       IndicatorClass = "OUTCOME"
 	ClassDriver        IndicatorClass = "DRIVER"
 	ClassGuardrail     IndicatorClass = "GUARDRAIL"
-	ProofFoundation    ProofChoice = "FOUNDATION"
-	ProofCoherence     ProofChoice = "COHERENCE"
-	ProofRegression    ProofChoice = "REGRESSION"
+	ProofFoundation    ProofChoice    = "FOUNDATION"
+	ProofCoherence     ProofChoice    = "COHERENCE"
+	ProofRegression    ProofChoice    = "REGRESSION"
 )
 
 const (
@@ -48,10 +48,10 @@ const (
 )
 
 const (
-	StatusSatisfied     ResultStatus = "SATISFIED"
+	StatusSatisfied      ResultStatus = "SATISFIED"
 	StatusNotImplemented ResultStatus = "NOT_IMPLEMENTED"
-	StatusNotSatisfied  ResultStatus = "NOT_SATISFIED"
-	StatusUnknown       ResultStatus = "UNKNOWN"
+	StatusNotSatisfied   ResultStatus = "NOT_SATISFIED"
+	StatusUnknown        ResultStatus = "UNKNOWN"
 )
 
 var audienceOrder = []Audience{AudienceUser, AudienceToolAuthor, AudienceGovernor}
