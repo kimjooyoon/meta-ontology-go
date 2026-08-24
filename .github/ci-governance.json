@@ -874,6 +874,19 @@
       ]
     },
     {
+      "branch": "agent/repository-topology-usecase",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "cmd/repository-topology-witness/**",
+        "docs/language/repository-topology-use-case.md",
+        "examples/repository-topology-use-case/**",
+        "internal/meta/repositorytopology/**",
+        "internal/verify/scope_repository_topology_usecase.go"
+      ]
+    },
+    {
       "branch": "agent/line-cap-detector",
       "paths": [
         "internal/detection/linecaps/**"
