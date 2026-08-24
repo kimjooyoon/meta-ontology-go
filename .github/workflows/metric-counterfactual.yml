@@ -11,6 +11,9 @@ on:
       - '.github/workflows/transformation-effect.yml'
       - 'cmd/guarded-promotion-witness/**'
       - 'cmd/language-readiness-witness/**'
+      - 'cmd/repository-topology-witness/**'
+      - 'docs/language/repository-topology-use-case.md'
+      - 'examples/meta-binding-coverage/main.gooo'
       - 'internal/detection/linecaps/**'
       - 'internal/meta/languageconcept/**'
       - 'internal/meta/languagereadiness/**'
@@ -28,6 +31,10 @@ on:
       - 'scripts/metric-meta-program/**'
       - 'scripts/metric-strategy/**'
       - 'examples/metric-meta-program/**'
+      - 'examples/repository-topology-use-case/**'
+      - 'examples/root-readme-indicator/main.gooo'
+      - 'internal/meta/repositorytopology/**'
+      - 'internal/verify/scope_repository_topology_usecase.go'
   push:
     branches: [dev, main]
     paths:
@@ -35,6 +42,7 @@ on:
       - '.github/workflows/transformation-effect.yml'
       - 'cmd/guarded-promotion-witness/**'
       - 'cmd/language-readiness-witness/**'
+      - 'cmd/repository-topology-witness/**'
       - 'internal/meta/languageconcept/**'
       - 'internal/meta/languagereadiness/**'
 permissions:
@@ -103,6 +111,86 @@ jobs:
         with:
           name: metric-counterfactual-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-counterfactual/first
+          if-no-files-found: error
+          retention-days: 30
+
+  repository-topology-use-case:
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact repository subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+      - name: Bind the declared Go 1.27 toolchain
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Produce bound metrics and audience-specific topology views
+        shell: bash
+        env:
+          METRICS_COMMIT_SHA: ${{ env.SUBJECT_SHA }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/repository-topology"
+          mkdir -p "$work/first" "$work/replay" "$work/negative"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "$GITHUB_WORKSPACE" -json > "$work/source-raw.json"
+          go run ./bootstrap/meta-binding-witness -root "$GITHUB_WORKSPACE" -metrics "$work/source-raw.json" -bound-metrics "$work/source.json" -report "$work/binding.json" -check
+          common=(
+            -root "$GITHUB_WORKSPACE"
+            -source-metrics "$work/source.json"
+            -root-ontology examples/root-readme-indicator/main.gooo
+            -binding-ontology examples/meta-binding-coverage/main.gooo
+            -repository "$GITHUB_REPOSITORY"
+            -expected-head "$SUBJECT_SHA"
+          )
+          go run ./cmd/repository-topology-witness "${common[@]}" -output "$work/first/report.json"
+          go run ./cmd/repository-topology-witness "${common[@]}" -output "$work/replay/report.json"
+          cmp -s "$work/first/report.json" "$work/replay/report.json"
+          go run ./cmd/repository-topology-witness "${common[@]}" -output "$work/first/report.json" -check
+          jq -e '
+            .schema == "gooo/repository-topology-receipt/v1" and
+            .status == "PASS" and .decision == "PASS" and .resolution == "EXACT" and
+            .summary.coordinates.satisfied == 10 and .summary.coordinates.total == 10 and
+            .summary.coordinates.basis_points == 10000 and
+            .summary.rows.files_exact == .summary.rows.files_observed and
+            .summary.rows.directories_exact == .summary.rows.directories_observed and
+            .summary.root.topology_exemptions == 2 and .summary.root.readme_exemptions == 1 and
+            .summary.meta.bound_indicators == .summary.meta.indicators and
+            .summary.meta.binding_witnesses == 1 and .summary.meta.unknown_decisions == 0 and
+            ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 5 and
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 4 and
+            (.views[] | select(.audience == "READER") | .satisfied == 4 and .total == 4) and
+            (.views[] | select(.audience == "IMPLEMENTER") | .satisfied == 7 and .total == 7) and
+            (.views[] | select(.audience == "GOVERNOR") | .satisfied == 10 and .total == 10) and
+            .repository_workspace_writes == 0 and .mutation_authority == false and .replay_verified == true
+          ' "$work/first/report.json"
+          known_fail_closed="$(jq '[.meta.indicators[] | select(.decision == "FAIL_CLOSED")] | length' "$work/source.json")"
+          jq -e --argjson expected "$known_fail_closed" '.summary.meta.known_fail_closed == $expected' "$work/first/report.json"
+          jq '(.directories[] | select(.path == ".") | .recursive_files) += 1' "$work/source.json" > "$work/negative/count.json"
+          jq '(.meta.indicators[0].applicability) = "UNKNOWN"' "$work/source.json" > "$work/negative/unknown.json"
+          for case in count unknown; do
+            changed=("${common[@]}")
+            changed[3]="$work/negative/$case.json"
+            go run ./cmd/repository-topology-witness "${changed[@]}" -output "$work/negative/$case-report.json"
+          done
+          go run ./cmd/repository-topology-witness "${common[@]}" -expected-head UNKNOWN -output "$work/negative/head-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY"' "$work/negative/count-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/unknown-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/head-report.json"
+          jq -r '"### Repository topology receipt\n- decision: \(.decision) / \(.resolution)\n- READER: \(.views[0].satisfied)/\(.views[0].total)\n- IMPLEMENTER: \(.views[1].satisfied)/\(.views[1].total)\n- GOVERNOR: \(.views[2].satisfied)/\(.views[2].total)\n- files/directories: \(.summary.rows.files_observed)/\(.summary.rows.directories_observed)\n- Go: \(.summary.languages.go_files) files, \(.summary.languages.go_lines) lines\n- Gooo: \(.summary.languages.gooo_files) files, \(.summary.languages.gooo_lines) lines\n- known fail-closed source indicators: \(.summary.meta.known_fail_closed)\n- root exceptions: topology \(.summary.root.topology_exemptions), README \(.summary.root.readme_exemptions)\n- digest: \(.digest)"' "$work/first/report.json" >> "$GITHUB_STEP_SUMMARY"
+          test -z "$(git status --porcelain)"
+      - name: Upload exact-head repository topology receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: repository-topology-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/repository-topology
           if-no-files-found: error
           retention-days: 30
 
