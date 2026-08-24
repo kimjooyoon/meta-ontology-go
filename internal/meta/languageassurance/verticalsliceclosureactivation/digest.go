@@ -13,7 +13,9 @@ func digestBytes(raw []byte) string {
 
 func digestValue(value any) string {
 	raw, err := json.Marshal(value)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	return digestBytes(raw)
 }
 
@@ -24,7 +26,9 @@ func seal(receipt *Receipt) {
 }
 
 func validSHA(value string) bool {
-	if len(value) != 40 { return false }
+	if len(value) != 40 {
+		return false
+	}
 	_, err := hex.DecodeString(value)
 	return err == nil
 }

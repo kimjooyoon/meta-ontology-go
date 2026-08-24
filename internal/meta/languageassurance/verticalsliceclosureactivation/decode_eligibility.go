@@ -13,8 +13,8 @@ type eligibilityReport struct {
 	AssuranceDenominatorDigest string                 `json:"assurance_denominator_digest"`
 	ShadowDenominatorDigest    string                 `json:"shadow_denominator_digest"`
 	Artifacts                  []eligibilityArtifact  `json:"artifacts"`
-	Transition                 eligibilityTransition `json:"transition"`
-	Summary                    eligibilitySummary    `json:"summary"`
+	Transition                 eligibilityTransition  `json:"transition"`
+	Summary                    eligibilitySummary     `json:"summary"`
 	Indicators                 []eligibilityIndicator `json:"indicators"`
 	MetaOperations             []eligibilityOperation `json:"meta_operations"`
 	RepositoryWrites           int                    `json:"repository_writes"`
@@ -38,24 +38,24 @@ type eligibilityTransition struct {
 }
 
 type eligibilitySummary struct {
-	DenominatorTotal          int `json:"denominator_total"`
-	BeforeOperating           int `json:"before_operating"`
-	EligibleOperating         int `json:"eligible_operating"`
-	OfficialOperating         int `json:"official_operating"`
-	BeforeCoverageBPS         int `json:"before_coverage_bps"`
-	EligibleCoverageBPS       int `json:"eligible_coverage_bps"`
-	OfficialCoverageBPS       int `json:"official_coverage_bps"`
-	CapsulesTotal             int `json:"capsules_total"`
-	CapsulesExact             int `json:"capsules_exact"`
-	CapsuleCoverageBPS        int `json:"capsule_coverage_bps"`
-	BoundariesTotal           int `json:"boundaries_total"`
-	BoundariesSatisfied       int `json:"boundaries_satisfied"`
-	LinksTotal                int `json:"links_total"`
-	LinksSatisfied            int `json:"links_satisfied"`
-	EligiblePaths             int `json:"eligible_paths"`
-	UnknownPaths              int `json:"unknown_paths"`
-	BlockedPaths              int `json:"blocked_paths"`
-	ObservedRepositoryWrites  int `json:"observed_repository_writes"`
+	DenominatorTotal         int `json:"denominator_total"`
+	BeforeOperating          int `json:"before_operating"`
+	EligibleOperating        int `json:"eligible_operating"`
+	OfficialOperating        int `json:"official_operating"`
+	BeforeCoverageBPS        int `json:"before_coverage_bps"`
+	EligibleCoverageBPS      int `json:"eligible_coverage_bps"`
+	OfficialCoverageBPS      int `json:"official_coverage_bps"`
+	CapsulesTotal            int `json:"capsules_total"`
+	CapsulesExact            int `json:"capsules_exact"`
+	CapsuleCoverageBPS       int `json:"capsule_coverage_bps"`
+	BoundariesTotal          int `json:"boundaries_total"`
+	BoundariesSatisfied      int `json:"boundaries_satisfied"`
+	LinksTotal               int `json:"links_total"`
+	LinksSatisfied           int `json:"links_satisfied"`
+	EligiblePaths            int `json:"eligible_paths"`
+	UnknownPaths             int `json:"unknown_paths"`
+	BlockedPaths             int `json:"blocked_paths"`
+	ObservedRepositoryWrites int `json:"observed_repository_writes"`
 }
 
 type eligibilityIndicator struct {

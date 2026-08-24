@@ -9,9 +9,11 @@ func init() {
 		"docs/language/language-semantic-model.md",
 		"docs/language/language-semantic-readiness-binding.md",
 		"docs/language/language-syntax-roundtrip.md",
+		"docs/language/toolchain-conformance.md",
 		"examples/language-semantic-model",
 		"examples/language-syntax-roundtrip/README.md",
 		"examples/language-syntax-roundtrip/corpus.json",
+		"examples/toolchain-conformance/corpus.json",
 		"examples/vertical-slice-closure-activation",
 		"internal/meta/languageassurance/digest.go",
 		"internal/meta/languageassurance/evaluate_test.go",
@@ -21,6 +23,7 @@ func init() {
 		"internal/meta/languagereadiness/languagesemantic",
 		"internal/meta/languagereadiness/languagesemanticbinding",
 		"internal/meta/languagereadiness/languagesyntax",
+		"internal/meta/languagereadiness/toolchainconformance",
 		"internal/verify/scope_vertical_slice_closure_activation.go",
 	}
 }

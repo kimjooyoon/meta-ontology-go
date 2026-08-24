@@ -11,7 +11,9 @@ func Evaluate(input Input) Receipt {
 		transitionApplied, blocked, after = 1, 0, 11
 	}
 	unknown := 0
-	if resolution == ResolutionUnknown { unknown = 1 }
+	if resolution == ResolutionUnknown {
+		unknown = 1
+	}
 	boundariesTotal, boundariesSatisfied, linksTotal, linksSatisfied := 0, 0, 0, 0
 	indicatorTotal, indicatorSatisfied, operationObserved := 0, 0, 0
 	if eligibilityExact == 1 {
@@ -25,7 +27,7 @@ func Evaluate(input Input) Receipt {
 		BeforeCoverageBPS: 8333, AfterCoverageBPS: after * 10000 / 12,
 		CapsulesTotal: 2, CapsulesExact: rawExact, CapsuleCoverageBPS: rawExact * 5000,
 		PredecessorSemanticsBPS: (assuranceExact + eligibilityExact) * 5000,
-		BoundariesTotal: boundariesTotal, BoundariesSatisfied: boundariesSatisfied,
+		BoundariesTotal:         boundariesTotal, BoundariesSatisfied: boundariesSatisfied,
 		LinksTotal: linksTotal, LinksSatisfied: linksSatisfied,
 		EligibilityIndicatorsTotal: indicatorTotal, EligibilityIndicatorsSatisfied: indicatorSatisfied,
 		MetaOperationsRequired: 6, MetaOperationsObserved: operationObserved,
@@ -35,7 +37,7 @@ func Evaluate(input Input) Receipt {
 		DenominatorID: DenominatorID, DenominatorDigest: digestValue(Denominator()),
 		EligibilityReportDigest: EligibilityReportHash, Artifacts: artifactBindings(input),
 		Transition: Transition{MetricID: MetricID, MetaOperation: MetaOperation, FromStatus: "NOT_IMPLEMENTED", FromResolution: "NONE", ToStatus: "OPERATING", ToResolution: ResolutionExact},
-		Summary: summary, Indicators: buildIndicators(summary, transitionApplied, resolution), MetaOperations: activationMetaOperations(),
+		Summary:    summary, Indicators: buildIndicators(summary, transitionApplied, resolution), MetaOperations: activationMetaOperations(),
 		RepositoryWrites: 0, TransitionApplied: transitionApplied}
 	seal(&receipt)
 	return receipt

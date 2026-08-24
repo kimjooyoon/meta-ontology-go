@@ -24,7 +24,9 @@ func activationMetaOperations() []MetaOperationBinding {
 
 func indicator(id, class, proof, operation, unit, relation string, value, target int, resolution string) Indicator {
 	satisfied := value >= target
-	if relation == "LESS_OR_EQUAL" { satisfied = value <= target }
+	if relation == "LESS_OR_EQUAL" {
+		satisfied = value <= target
+	}
 	return Indicator{MetricID: id, Class: class, ProofChoice: proof,
 		Producer: "verticalsliceclosureactivation.Evaluate", Consumer: "language-assurance-gate",
 		MetaOperation: operation, Unit: unit, Relation: relation, Resolution: resolution,
