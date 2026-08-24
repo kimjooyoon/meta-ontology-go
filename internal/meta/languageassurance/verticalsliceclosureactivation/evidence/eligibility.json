@@ -1,0 +1,204 @@
+{
+  "schema": "gooo/vertical-slice-closure-eligibility/v1",
+  "subject_sha": "3920551d8db1226810832f6f924783b2fddf4ccd",
+  "assurance_subject_sha": "145b81c8bb8e4b1eb46cb10af0ea21a6b6be51b5",
+  "shadow_evidence_head": "5a6f3535ed6984fa8ed4bd9806638f246d9c0263",
+  "decision": "ELIGIBLE",
+  "resolution": "EXACT",
+  "enforcement_effect": "NO_EFFECT",
+  "reason": "VERTICAL_SLICE_CLOSURE_PROMOTION_ELIGIBLE",
+  "assurance_denominator_id": "gooo/language-assurance-denominator/v1",
+  "assurance_denominator_digest": "sha256:e5b266ceeaeb0757a40096fb661982a263370b1e08945dfedbe34f96eb237a02",
+  "shadow_denominator_digest": "sha256:6b4b3793133313d430d4c53792baf04cb17fc0fd9ac5592aeb33bc01c0ad6962",
+  "artifacts": [
+    {
+      "name": "language-assurance",
+      "artifact_id": 9518495029,
+      "archive_digest": "sha256:48663ffb5d413de23b6efc90cb08229d7c56cef4798a0545aa89510a3f21781f",
+      "capsule_digest": "sha256:13581ebf64e0e3a512d1e8b3ca05de05e14d4453b64f3c7eff8e3b854a89d969",
+      "observed_digest": "sha256:13581ebf64e0e3a512d1e8b3ca05de05e14d4453b64f3c7eff8e3b854a89d969",
+      "exact": true
+    },
+    {
+      "name": "vertical-slice-closure-shadow",
+      "artifact_id": 9520815531,
+      "archive_digest": "sha256:25852404b2b1a8cba987bddaeede9d852ff11e7cff18aba1988bd8563641d6d8",
+      "capsule_digest": "sha256:a3aa917fbc47a2485f5252497ce8f83a6dfbf607fc6e0f923e1ac45551d8ffea",
+      "observed_digest": "sha256:a3aa917fbc47a2485f5252497ce8f83a6dfbf607fc6e0f923e1ac45551d8ffea",
+      "exact": true
+    }
+  ],
+  "transition": {
+    "metric_id": "gooo.metric.capability.vertical-slice-closure.v1",
+    "meta_operation": "qualify-vertical-slice-closure",
+    "from_status": "NOT_IMPLEMENTED",
+    "from_resolution": "NONE",
+    "eligible_status": "OPERATING",
+    "eligible_resolution": "EXACT",
+    "official_status": "NOT_IMPLEMENTED",
+    "official_resolution": "NONE"
+  },
+  "summary": {
+    "denominator_total": 12,
+    "before_operating": 10,
+    "eligible_operating": 11,
+    "official_operating": 10,
+    "before_coverage_bps": 8333,
+    "eligible_coverage_bps": 9166,
+    "official_coverage_bps": 8333,
+    "capsules_total": 2,
+    "capsules_exact": 2,
+    "capsule_coverage_bps": 10000,
+    "boundaries_total": 6,
+    "boundaries_satisfied": 6,
+    "links_total": 12,
+    "links_satisfied": 12,
+    "eligible_paths": 1,
+    "unknown_paths": 0,
+    "blocked_paths": 0,
+    "observed_repository_writes": 0
+  },
+  "indicators": [
+    {
+      "metric_id": "gooo.metric.capability.vertical-slice-eligibility.v1",
+      "class": "OUTCOME",
+      "proof_choice": "COHERENCE",
+      "producer": "verticalsliceclosureeligibility.Evaluate",
+      "consumer": "language-assurance-activation-gate",
+      "meta_operation": "qualify-vertical-slice-closure",
+      "unit": "paths",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 1,
+      "target": 1,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.vertical-slice-assurance-capsule.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "verticalsliceclosureeligibility.Evaluate",
+      "consumer": "language-assurance-activation-gate",
+      "meta_operation": "consume-fixed-assurance",
+      "unit": "capsules",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 1,
+      "target": 1,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.vertical-slice-shadow-capsule.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "verticalsliceclosureeligibility.Evaluate",
+      "consumer": "language-assurance-activation-gate",
+      "meta_operation": "consume-merged-vertical-shadow",
+      "unit": "capsules",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 1,
+      "target": 1,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.vertical-slice-boundaries.v1",
+      "class": "DRIVER",
+      "proof_choice": "COHERENCE",
+      "producer": "verticalsliceclosureeligibility.Evaluate",
+      "consumer": "language-assurance-activation-gate",
+      "meta_operation": "bind-vertical-slice-boundaries",
+      "unit": "boundaries",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 6,
+      "target": 6,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.vertical-slice-links.v1",
+      "class": "DRIVER",
+      "proof_choice": "COHERENCE",
+      "producer": "verticalsliceclosureeligibility.Evaluate",
+      "consumer": "language-assurance-activation-gate",
+      "meta_operation": "bind-vertical-slice-links",
+      "unit": "links",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 12,
+      "target": 12,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.epistemic.vertical-slice-eligibility-unknown.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "verticalsliceclosureeligibility.Evaluate",
+      "consumer": "language-assurance-activation-gate",
+      "meta_operation": "preserve-unknown-decision",
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.effects.vertical-slice-eligibility-writes.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "verticalsliceclosureeligibility.Evaluate",
+      "consumer": "language-assurance-activation-gate",
+      "meta_operation": "preserve-read-only-eligibility",
+      "unit": "writes",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.capability.vertical-slice-eligibility-applied.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "verticalsliceclosureeligibility.Evaluate",
+      "consumer": "language-assurance-activation-gate",
+      "meta_operation": "deny-eligibility-side-effects",
+      "unit": "transitions",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    }
+  ],
+  "meta_operations": [
+    {
+      "id": "consume-fixed-assurance",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "consume-merged-vertical-shadow",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "qualify-vertical-slice-closure",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "preserve-unknown-decision",
+      "proof_choice": "REGRESSION"
+    },
+    {
+      "id": "preserve-read-only-eligibility",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "deny-eligibility-side-effects",
+      "proof_choice": "COHERENCE"
+    }
+  ],
+  "repository_writes": 0,
+  "promotion_applied": 0,
+  "report_digest": "sha256:ce9a0a7c48ab063a70559272b2a0ed164754968fa26346fb13ad07ff728f3b73"
+}
