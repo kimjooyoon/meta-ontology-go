@@ -37,7 +37,7 @@ func runGoTest(ctx context.Context, root string, index int) RunObservation {
 	return RunObservation{
 		Index: index, ExitCode: exitCode, Passed: passed, EventCount: events,
 		RawSHA256: Digest(stdout.Bytes()), StderrSHA256: Digest(stderr.Bytes()),
-		StderrLineCount: bytes.Count(stderr.Bytes(), []byte{'\n'}),
+		StderrLineCount:  bytes.Count(stderr.Bytes(), []byte{'\n'}),
 		NormalizedSHA256: Digest(outcomes), Outcomes: outcomes,
 		UnknownEvents: unknown, Diagnostics: diagnostics,
 	}
@@ -96,7 +96,9 @@ func parseEvents(data []byte) ([]Outcome, []string, []string, int) {
 }
 
 func diagnosticEvent(event goEvent) bool {
-	if event.Action == "build-output" { return event.Output != "" }
+	if event.Action == "build-output" {
+		return event.Output != ""
+	}
 	return event.Action == "output" && event.Output != "" &&
 		(event.OutputType == "error" || event.OutputType == "error-continue")
 }
