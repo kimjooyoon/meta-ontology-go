@@ -9,17 +9,6 @@ type ArtifactBinding struct {
 	Exact bool `json:"exact"`
 }
 
-type Transition struct {
-	MetricID string `json:"metric_id"`
-	MetaOperation string `json:"meta_operation"`
-	FromStatus string `json:"from_status"`
-	FromResolution string `json:"from_resolution"`
-	EligibleStatus string `json:"eligible_status"`
-	EligibleResolution string `json:"eligible_resolution"`
-	OfficialStatus string `json:"official_status"`
-	OfficialResolution string `json:"official_resolution"`
-}
-
 type Summary struct {
 	DenominatorTotal int `json:"denominator_total"`
 	BeforeOperating int `json:"before_operating"`

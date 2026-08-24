@@ -39,6 +39,7 @@ func Evaluate(input Input) Report {
 
 func baseReport(input Input) Report {
 	artifacts := bindings(input)
+	exact := countExact(artifacts)
 	return Report{
 		Schema: ReportSchema, SubjectSHA: input.SubjectSHA,
 		AssuranceSubjectSHA: AssuranceEvidenceSubject, ShadowEvidenceHead: ShadowEvidenceHead,
@@ -50,8 +51,8 @@ func baseReport(input Input) Report {
 		Artifacts: artifacts, Transition: eligibilityTransition(), MetaOperations: MetaOperations(),
 		Summary: Summary{DenominatorTotal: 12, BeforeOperating: 10, EligibleOperating: 10,
 			OfficialOperating: 10, BeforeCoverageBPS: 8333, EligibleCoverageBPS: 8333,
-			OfficialCoverageBPS: 8333, CapsulesTotal: 2, CapsulesExact: countExact(artifacts),
-			CapsuleCoverageBPS: countExact(artifacts) * 5000, BlockedPaths: 1},
+			OfficialCoverageBPS: 8333, CapsulesTotal: 2, CapsulesExact: exact,
+			CapsuleCoverageBPS: exact * 5000, BlockedPaths: 1},
 	}
 }
 
@@ -66,11 +67,4 @@ func lower(report Report, resolution, reason string) Report {
 func finish(report Report) Report {
 	report.Indicators = buildIndicators(report)
 	return sealReport(report)
-}
-
-func eligibilityTransition() Transition {
-	return Transition{MetricID: MetricID, MetaOperation: MetaOperation,
-		FromStatus: "NOT_IMPLEMENTED", FromResolution: "NONE",
-		EligibleStatus: "OPERATING", EligibleResolution: ResolutionExact,
-		OfficialStatus: "NOT_IMPLEMENTED", OfficialResolution: "NONE"}
 }
