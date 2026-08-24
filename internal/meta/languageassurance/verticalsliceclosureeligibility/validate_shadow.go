@@ -13,7 +13,7 @@ func validBoundaries(values []boundary) bool {
 		if !ok || value.Value != target[0] || value.Target != target[1] ||
 			value.LinksSatisfied != target[2] || value.LinksTotal != target[2] ||
 			value.Status != "SATISFIED" || value.Resolution != ResolutionExact ||
-			value.HeadSHA != "64a529d71d2fc76000e345b4dd86ad982ebb679e" ||
+			value.HeadSHA != ShadowEvidenceHead ||
 			!value.EvidenceAvailable || value.UnknownTopDecision || value.KnownFailure ||
 			value.RepositoryWrites != 0 {
 			return false
