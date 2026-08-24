@@ -28,7 +28,7 @@ const (
 )
 
 const (
-	AssuranceCapsuleHash  = "sha256:b6d03b8905bc9d0ac2d1773d0b3dd273743244fa9366ed33bcb4e5d4c5e363ec"
+	AssuranceCapsuleHash   = "sha256:b6d03b8905bc9d0ac2d1773d0b3dd273743244fa9366ed33bcb4e5d4c5e363ec"
 	EligibilityCapsuleHash = "sha256:f5e2d8f35c3f052adad9edc8e05612a3e0aa13f1c336e8e9bc86dafb3b675c10"
 	MergeCapsuleHash       = "sha256:2972619d7bc2d42fc24e5b6557dfb781e3c84aa836e0dbe9b6c9f4e26be13295"
 	AssuranceReportHash    = "sha256:9cf5725a2071f83fede528d2fc5bb45d3eaa0dd35bb43bc4622da64a7fe9ca42"

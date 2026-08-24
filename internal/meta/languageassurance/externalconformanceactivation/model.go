@@ -28,11 +28,11 @@ type Transition struct {
 }
 
 type validation struct {
-	Eligibility     eligibilityReport
-	RawExact        int
-	AssuranceExact  int
+	Eligibility      eligibilityReport
+	RawExact         int
+	AssuranceExact   int
 	EligibilityExact int
-	MergeExact      int
-	Reason          string
-	Resolution      string
+	MergeExact       int
+	Reason           string
+	Resolution       string
 }

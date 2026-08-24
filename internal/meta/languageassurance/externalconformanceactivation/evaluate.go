@@ -18,7 +18,7 @@ func Evaluate(input Input) Receipt {
 	summary := Summary{DenominatorTotal: 12, BeforeOperating: 11, AfterOperating: after,
 		BeforeCoverageBPS: 9166, AfterCoverageBPS: after * 10000 / 12,
 		CapsulesTotal: 3, CapsulesExact: state.RawExact, CapsuleCoverageBPS: state.RawExact * 10000 / 3,
-		PredecessorSemanticsBPS: semanticsExact * 10000 / 3,
+		PredecessorSemanticsBPS:    semanticsExact * 10000 / 3,
 		EligibilityIndicatorsTotal: s.IndicatorTotal, EligibilityIndicatorsSatisfied: s.IndicatorCompleted,
 		ParentCompleted: s.ParentCompleted, ParentTotal: s.ParentTotal, ParentKnownFailures: s.ParentKnownFailures,
 		SelectedCompleted: s.CapabilityCompleted, SelectedTotal: s.CapabilityTotal, ExternalExecutions: s.ExternalExecutions,

@@ -146,6 +146,14 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "external-conformance-activation",
+      "path": "examples/external-conformance-activation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
     }
   ]
 }
