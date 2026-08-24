@@ -15,9 +15,9 @@ func init() {
 		"internal/meta/languageassurance/registry_accessors.go",
 		"internal/meta/languageassurance/source_authority_activation.go",
 		"internal/meta/languagereadiness/languagesyntax",
-	"examples/language-semantic-model/corpus.json",
-	"examples/language-semantic-model/README.md",
-	"internal/meta/languagereadiness/languagesemantic",
+		"examples/language-semantic-model/corpus.json",
+		"examples/language-semantic-model/README.md",
+		"internal/meta/languagereadiness/languagesemantic",
 		"internal/verify/scope_external_conformance_activation.go",
 	}
 }
