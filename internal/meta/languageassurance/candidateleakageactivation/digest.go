@@ -24,3 +24,11 @@ func seal(receipt *Receipt) {
 	copy.ReportDigest = ""
 	receipt.ReportDigest = digestValue(copy)
 }
+
+func validSHA(value string) bool {
+	if len(value) != 40 {
+		return false
+	}
+	_, err := hex.DecodeString(value)
+	return err == nil
+}

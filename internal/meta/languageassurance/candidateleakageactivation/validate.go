@@ -1,7 +1,6 @@
 package candidateleakageactivation
 
 import (
-	"encoding/hex"
 	"encoding/json"
 
 	eligibility "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageeligibility"
@@ -55,7 +54,7 @@ func validAssurance(report assuranceReport) bool {
 func validEligibility(report eligibility.Report) bool {
 	copy := report
 	copy.ReportDigest = ""
-	if report.Schema != eligibility.ReportSchema || report.SubjectSHA != PredecessorSHA || report.EvidenceSubjectSHA != EvidenceSubjectSHA || report.Decision != eligibility.DecisionEligible || report.Resolution != eligibility.ResolutionExact || report.EnforcementEffect != eligibility.EnforcementNoEffect || report.Reason != eligibility.ReasonEligible {
+	if report.Schema != eligibility.ReportSchema || report.SubjectSHA != PredecessorSHA || report.EvidenceSubjectSHA != EvidenceSubjectSHA || report.Decision != eligibility.DecisionEligible || report.Resolution != eligibility.ResolutionExact || report.EnforcementEffect != "NO_EFFECT" || report.Reason != eligibility.ReasonEligible {
 		return false
 	}
 	if report.DenominatorID != EligibilityDenominatorID || report.DenominatorDigest == "" || report.ReportDigest != EligibilityReportHash || digestValue(copy) != EligibilityReportHash || report.RepositoryWrites != 0 || report.PromotionApplied != 0 {
@@ -66,12 +65,4 @@ func validEligibility(report eligibility.Report) bool {
 		return false
 	}
 	return s.DenominatorTotal == 12 && s.BeforeOperating == 7 && s.AfterOperating == 8 && s.BeforeCoverageBPS == 5833 && s.AfterCoverageBPS == 6666 && s.CapsulesTotal == 2 && s.CapsulesExact == 2 && s.CapsuleCoverageBPS == 10000 && s.ShadowCasesTotal == 6 && s.ShadowCasesPassed == 6 && s.EligiblePaths == 1 && s.UnknownPaths == 0 && s.BlockedPaths == 0 && len(report.MetaOperations) == 5 && validEligibilityIndicators(report.Indicators)
-}
-
-func validSHA(value string) bool {
-	if len(value) != 40 {
-		return false
-	}
-	_, err := hex.DecodeString(value)
-	return err == nil
 }
