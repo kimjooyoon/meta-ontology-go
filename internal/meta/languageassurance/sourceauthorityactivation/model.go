@@ -18,12 +18,12 @@ type ArtifactBinding struct {
 }
 
 type Transition struct {
-	MetricID      string `json:"metric_id"`
-	MetaOperation string `json:"meta_operation"`
-	FromStatus    string `json:"from_status"`
+	MetricID       string `json:"metric_id"`
+	MetaOperation  string `json:"meta_operation"`
+	FromStatus     string `json:"from_status"`
 	FromResolution string `json:"from_resolution"`
-	ToStatus      string `json:"to_status"`
-	ToResolution  string `json:"to_resolution"`
+	ToStatus       string `json:"to_status"`
+	ToResolution   string `json:"to_resolution"`
 }
 
 type Summary struct {
@@ -41,20 +41,20 @@ type Summary struct {
 }
 
 type Receipt struct {
-	Schema                    string            `json:"schema"`
-	SubjectSHA                string            `json:"subject_sha"`
-	PredecessorSHA            string            `json:"predecessor_sha"`
-	Decision                  string            `json:"decision"`
-	Resolution                string            `json:"resolution"`
-	Reason                    string            `json:"reason"`
-	DenominatorID             string            `json:"denominator_id"`
-	DenominatorDigest         string            `json:"denominator_digest"`
-	EligibilityReportDigest   string            `json:"eligibility_report_digest"`
-	Artifacts                 []ArtifactBinding `json:"artifacts"`
-	Transition                Transition        `json:"transition"`
-	Summary                   Summary           `json:"summary"`
-	Indicators                []Indicator       `json:"indicators"`
-	RepositoryWrites          int               `json:"repository_writes"`
-	TransitionApplied         int               `json:"transition_applied"`
-	ReportDigest              string            `json:"report_digest"`
+	Schema                  string            `json:"schema"`
+	SubjectSHA              string            `json:"subject_sha"`
+	PredecessorSHA          string            `json:"predecessor_sha"`
+	Decision                string            `json:"decision"`
+	Resolution              string            `json:"resolution"`
+	Reason                  string            `json:"reason"`
+	DenominatorID           string            `json:"denominator_id"`
+	DenominatorDigest       string            `json:"denominator_digest"`
+	EligibilityReportDigest string            `json:"eligibility_report_digest"`
+	Artifacts               []ArtifactBinding `json:"artifacts"`
+	Transition              Transition        `json:"transition"`
+	Summary                 Summary           `json:"summary"`
+	Indicators              []Indicator       `json:"indicators"`
+	RepositoryWrites        int               `json:"repository_writes"`
+	TransitionApplied       int               `json:"transition_applied"`
+	ReportDigest            string            `json:"report_digest"`
 }
