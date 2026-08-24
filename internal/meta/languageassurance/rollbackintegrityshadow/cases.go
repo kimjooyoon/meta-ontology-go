@@ -17,10 +17,10 @@ func baseSource() rollbackfixedpoint.Source {
 	return rollbackfixedpoint.Source{ExpectedHeadSHA: PredecessorSHA,
 		Guard: rollbackfixedpoint.GuardEvidence{FileSHA256: digest("a"),
 			ReportDigest: digest("b"), HeadSHA: PredecessorSHA,
-			Decision: guardedpromotion.DecisionFailClosed,
-			Reason: guardedpromotion.ReasonEvidenceUnknown,
+			Decision:   guardedpromotion.DecisionFailClosed,
+			Reason:     guardedpromotion.ReasonEvidenceUnknown,
 			Resolution: guardedpromotion.ResolutionLower,
-			Satisfied: 10, Total: 12, Unresolved: 2},
+			Satisfied:  10, Total: 12, Unresolved: 2},
 		Transformation: rollbackfixedpoint.TransformationEvidence{
 			FileSHA256: digest("c"), LedgerDigest: digest("d"), HeadSHA: PredecessorSHA,
 			Decision: "FIXED_POINT", Reason: "EXACT_FIXED_POINT",
@@ -37,7 +37,9 @@ func authorize(source *rollbackfixedpoint.Source) {
 
 func unknownDecision(source *rollbackfixedpoint.Source) { source.Guard.Decision = "FUTURE_DECISION" }
 func addEffect(source *rollbackfixedpoint.Source)       { source.Transformation.Effects = 1 }
-func mutateSource(source *rollbackfixedpoint.Source)    { source.Transformation.SourceWorkspaceUnchanged = false }
+func mutateSource(source *rollbackfixedpoint.Source) {
+	source.Transformation.SourceWorkspaceUnchanged = false
+}
 func addWrite(source *rollbackfixedpoint.Source) {
 	source.RepositoryWrites, source.Guard.RepositoryWrites = 1, 1
 }

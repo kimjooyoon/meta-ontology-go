@@ -21,14 +21,14 @@ const (
 )
 
 type assuranceSummary struct {
-	DenominatorTotal      int `json:"denominator_total"`
-	Operating             int `json:"operating"`
-	NotImplemented        int `json:"not_implemented"`
-	CoverageBPS           int `json:"implementation_coverage_bps"`
-	UnknownTopDecisions   int `json:"unknown_top_decisions"`
-	UnresolvedIndicators  int `json:"unresolved_indicators"`
-	ViolatedGuardrails     int `json:"violated_guardrails"`
-	RepositoryWrites      int `json:"repository_writes"`
+	DenominatorTotal     int `json:"denominator_total"`
+	Operating            int `json:"operating"`
+	NotImplemented       int `json:"not_implemented"`
+	CoverageBPS          int `json:"implementation_coverage_bps"`
+	UnknownTopDecisions  int `json:"unknown_top_decisions"`
+	UnresolvedIndicators int `json:"unresolved_indicators"`
+	ViolatedGuardrails   int `json:"violated_guardrails"`
+	RepositoryWrites     int `json:"repository_writes"`
 }
 
 type assuranceObligation struct {
