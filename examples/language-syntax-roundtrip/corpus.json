@@ -124,6 +124,15 @@
       "meta_operation": "reject-invalid-syntax"
     },
     {
+      "id": "source-execution-invalid",
+      "path": "examples/language-source-execution/invalid.gooo",
+      "kind": "INVALID",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_diagnostic": "parse.unexpected-token",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "reject-invalid-syntax"
+    },
+    {
       "id": "source-splitter-conformance",
       "path": "examples/source-splitter-conformance/main.gooo",
       "kind": "VALID",

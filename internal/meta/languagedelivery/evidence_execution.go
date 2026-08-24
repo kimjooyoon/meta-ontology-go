@@ -1,13 +1,13 @@
 package languagedelivery
 
 type ExecutionReceipt struct {
-	Schema             string `json:"schema"`
-	HeadSHA            string `json:"head_sha"`
-	Decision           string `json:"decision"`
-	Resolution         string `json:"resolution"`
-	RepositoryWrites   int    `json:"repository_writes"`
-	MutationAuthority  bool   `json:"mutation_authority"`
-	Summary            ExecutionSummary `json:"summary"`
+	Schema            string           `json:"schema"`
+	HeadSHA           string           `json:"head_sha"`
+	Decision          string           `json:"decision"`
+	Resolution        string           `json:"resolution"`
+	RepositoryWrites  int              `json:"repository_writes"`
+	MutationAuthority bool             `json:"mutation_authority"`
+	Summary           ExecutionSummary `json:"summary"`
 }
 
 type ExecutionSummary struct {

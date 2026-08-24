@@ -1,4 +1,4 @@
-package broken
-namespace broken
+package invalid
+namespace invalid
 
-activity
+unknown Thing

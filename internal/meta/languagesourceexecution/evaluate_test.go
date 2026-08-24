@@ -23,11 +23,14 @@ func testInput(t *testing.T) Input {
 		}
 		return raw
 	}
-	positive := marshal(sourceexecution.Execute(sourceexecution.Request{"fixture.gooo", source, "Execute"}))
+	positive := marshal(sourceexecution.Execute(sourceexecution.Request{
+		Filename: "fixture.gooo", Source: source, Entry: "Execute"}))
 	return Input{Contract: CanonicalContract(), HeadSHA: "0123456789012345678901234567890123456789",
 		Positive: positive, Replay: append([]byte(nil), positive...),
-		UnknownEntry: marshal(sourceexecution.Execute(sourceexecution.Request{"fixture.gooo", source, "Missing"})),
-		InvalidSyntax: marshal(sourceexecution.Execute(sourceexecution.Request{"broken.gooo", "activity", "Missing"}))}
+		UnknownEntry: marshal(sourceexecution.Execute(sourceexecution.Request{
+			Filename: "fixture.gooo", Source: source, Entry: "Missing"})),
+		InvalidSyntax: marshal(sourceexecution.Execute(sourceexecution.Request{
+			Filename: "broken.gooo", Source: "activity", Entry: "Missing"}))}
 }
 
 func TestEvaluateSourceExecutionContract(t *testing.T) {
