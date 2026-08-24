@@ -2,9 +2,9 @@ package languageassurance
 
 const (
 	RawReconstructionSchema = "gooo/language-assurance-raw-reconstruction/v1"
-	RawVerifierID            = "gooo-independent-json-reconstructor-v1"
-	MetricRawReconstruction  = "gooo.metric.evidence.raw-reconstruction.v1"
-	ReasonRawMismatch        = "ASSURANCE_RAW_RECONSTRUCTION_MISMATCH"
+	RawVerifierID           = "gooo-independent-json-reconstructor-v1"
+	MetricRawReconstruction = "gooo.metric.evidence.raw-reconstruction.v1"
+	ReasonRawMismatch       = "ASSURANCE_RAW_RECONSTRUCTION_MISMATCH"
 )
 
 type RawObservation struct {
@@ -24,17 +24,17 @@ type RawObservation struct {
 }
 
 type RawReconstructionReceipt struct {
-	Schema                string         `json:"schema"`
-	VerifierID            string         `json:"verifier_id"`
-	SubjectSHA            string         `json:"subject_sha"`
-	DenominatorDigest     string         `json:"denominator_digest"`
-	RawTransactionDigest  string         `json:"raw_transaction_digest"`
-	Observation           RawObservation `json:"observation"`
+	Schema               string         `json:"schema"`
+	VerifierID           string         `json:"verifier_id"`
+	SubjectSHA           string         `json:"subject_sha"`
+	DenominatorDigest    string         `json:"denominator_digest"`
+	RawTransactionDigest string         `json:"raw_transaction_digest"`
+	Observation          RawObservation `json:"observation"`
 }
 
 type RawReconstructionSummary struct {
-	RawReconstructionsObserved    int  `json:"raw_reconstructions_observed"`
-	RawReconstructionsRequired    int  `json:"raw_reconstructions_required"`
-	RawReconstructionBPS          *int `json:"raw_reconstruction_bps"`
+	RawReconstructionsObserved     int  `json:"raw_reconstructions_observed"`
+	RawReconstructionsRequired     int  `json:"raw_reconstructions_required"`
+	RawReconstructionBPS           *int `json:"raw_reconstruction_bps"`
 	RawReconstructionMismatchPaths *int `json:"raw_reconstruction_mismatch_paths"`
 }

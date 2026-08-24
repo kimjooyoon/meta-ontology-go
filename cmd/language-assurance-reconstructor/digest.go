@@ -8,7 +8,9 @@ import (
 
 func digest(value any) (string, error) {
 	raw, err := json.Marshal(value)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	sum := sha256.Sum256(raw)
 	return "sha256:" + hex.EncodeToString(sum[:]), nil
 }
@@ -19,6 +21,8 @@ func validSHA(value string) bool {
 }
 
 func observed(observed bool, value int) *int {
-	if !observed { return nil }
+	if !observed {
+		return nil
+	}
 	return &value
 }
