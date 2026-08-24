@@ -711,3 +711,67 @@ jobs:
           name: candidate-leakage-activation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/candidate-leakage-activation
           if-no-files-found: error
+
+  changed-surface-receipt-shadow:
+    name: Changed surface receipt shadow
+    needs:
+      - assurance
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.SUBJECT_SHA }}
+      - name: Download operating assurance report
+        uses: actions/download-artifact@v6
+        with:
+          name: language-assurance-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/language-assurance
+      - name: Require Go 1.27 fixes and receipt regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix -diff ./internal/meta/languageassurance/changedsurfacereceipt ./cmd/changed-surface-receipt-witness > "$RUNNER_TEMP/changed-surface-receipt-fix.diff"
+          if test -s "$RUNNER_TEMP/changed-surface-receipt-fix.diff"; then
+            cat "$RUNNER_TEMP/changed-surface-receipt-fix.diff"
+            exit 1
+          fi
+          go test ./internal/meta/languageassurance/changedsurfacereceipt ./cmd/changed-surface-receipt-witness
+      - name: Prove changed surface receipt totality in shadow
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/changed-surface-receipt-shadow"
+          mkdir -p "$out"
+          for case_id in exact zero-change missing orphan duplicate unknown-top; do
+            go run ./cmd/changed-surface-receipt-witness --case "$case_id" --subject-sha "$SUBJECT_SHA" --out "$out/$case_id.json"
+          done
+          go run ./cmd/changed-surface-receipt-witness --suite --subject-sha "$SUBJECT_SHA" --out "$out/suite.json"
+          go run ./cmd/changed-surface-receipt-witness --case exact --subject-sha "$SUBJECT_SHA" --out "$out/replay.json"
+          cmp "$out/exact.json" "$out/replay.json"
+          jq -e '.decision == "FIXED_POINT" and .resolution == "EXACT" and .summary.changed_surfaces == 2 and .summary.receipt_surfaces == 2 and .summary.bound_surfaces == 2 and .summary.totality_bps == 10000 and .repository_writes == 0' "$out/exact.json"
+          jq -e '.decision == "FIXED_POINT" and .resolution == "EXACT" and .summary.changed_surfaces == 0 and .summary.receipt_surfaces == 0 and .summary.totality_bps == 10000 and .repository_writes == 0' "$out/zero-change.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .summary.missing_receipts == 1 and .summary.unknown_paths == 1 and .summary.blocked_paths == 1 and .repository_writes == 0' "$out/missing.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .summary.orphan_receipts == 1 and .repository_writes == 0' "$out/orphan.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .summary.duplicate_receipts == 1 and .repository_writes == 0' "$out/duplicate.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .summary.unknown_receipts == 1 and .summary.unknown_paths == 1 and .repository_writes == 0' "$out/unknown-top.json"
+          jq -e '.decision == "FIXED_POINT" and .resolution == "EXACT" and .cases_total == 6 and .cases_passed == 6 and .coverage_bps == 10000' "$out/suite.json"
+          jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.changed-surface-receipt-totality.v1" and .status == "NOT_IMPLEMENTED" and .resolution == "NONE" and .meta_operation == "totalize-changed-surface-receipts")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          sha256sum "$out/exact.json" "$out/zero-change.json" "$out/missing.json" "$out/orphan.json" "$out/duplicate.json" "$out/unknown-top.json" "$out/suite.json" > "$out/manifest.sha256"
+      - name: Upload changed surface receipt shadow receipts
+        uses: actions/upload-artifact@v6
+        with:
+          name: changed-surface-receipt-shadow-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/changed-surface-receipt-shadow
+          if-no-files-found: error
