@@ -34,9 +34,12 @@ type RunObservation struct {
 	Passed           bool      `json:"passed"`
 	EventCount       int       `json:"event_count"`
 	RawSHA256        string    `json:"raw_sha256"`
+	StderrSHA256     string    `json:"stderr_sha256"`
+	StderrLineCount  int       `json:"stderr_line_count"`
 	NormalizedSHA256 string    `json:"normalized_sha256"`
 	Outcomes         []Outcome `json:"outcomes"`
 	UnknownEvents    []string  `json:"unknown_events"`
+	Diagnostics      []string  `json:"diagnostics"`
 }
 
 type RegressionReceipt struct {

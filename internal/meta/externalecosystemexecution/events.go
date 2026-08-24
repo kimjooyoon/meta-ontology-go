@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os/exec"
 	"sort"
+	"strings"
 )
 
 type goEvent struct {
@@ -14,13 +15,15 @@ type goEvent struct {
 	Package    string `json:"Package"`
 	Test       string `json:"Test"`
 	ImportPath string `json:"ImportPath"`
+	Output     string `json:"Output"`
+	OutputType string `json:"OutputType"`
 }
 
 func runGoTest(ctx context.Context, root string, index int) RunObservation {
 	cmd := exec.CommandContext(ctx, "go", "test", "-json", "-count=1", "./...")
 	cmd.Dir, cmd.Env = root, controlledEnv()
-	var output bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &output, &output
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	err := cmd.Run()
 	exitCode := 0
 	if err != nil {
@@ -29,14 +32,21 @@ func runGoTest(ctx context.Context, root string, index int) RunObservation {
 			exitCode = e.ExitCode()
 		}
 	}
-	outcomes, unknown, events := parseEvents(output.Bytes())
+	outcomes, unknown, diagnostics, events := parseEvents(stdout.Bytes())
 	passed := exitCode == 0 && len(outcomes) > 0 && len(unknown) == 0 && !hasFailure(outcomes)
-	return RunObservation{index, exitCode, passed, events, Digest(output.Bytes()), Digest(outcomes), outcomes, unknown}
+	return RunObservation{
+		Index: index, ExitCode: exitCode, Passed: passed, EventCount: events,
+		RawSHA256: Digest(stdout.Bytes()), StderrSHA256: Digest(stderr.Bytes()),
+		StderrLineCount: bytes.Count(stderr.Bytes(), []byte{'\n'}),
+		NormalizedSHA256: Digest(outcomes), Outcomes: outcomes,
+		UnknownEvents: unknown, Diagnostics: diagnostics,
+	}
 }
 
-func parseEvents(data []byte) ([]Outcome, []string, int) {
+func parseEvents(data []byte) ([]Outcome, []string, []string, int) {
 	final := map[string]Outcome{}
 	unknown := map[string]bool{}
+	diagnostics := make([]string, 0, 64)
 	known := map[string]bool{"start": true, "run": true, "pause": true, "cont": true, "pass": true,
 		"bench": true, "fail": true, "output": true, "skip": true, "build-output": true, "build-fail": true}
 	scanner, count := bufio.NewScanner(bytes.NewReader(data)), 0
@@ -51,6 +61,9 @@ func parseEvents(data []byte) ([]Outcome, []string, int) {
 		if !known[event.Action] {
 			unknown[event.Action] = true
 			continue
+		}
+		if len(diagnostics) < 64 && diagnosticEvent(event) {
+			diagnostics = append(diagnostics, strings.TrimSpace(event.Output))
 		}
 		if event.Action == "pass" || event.Action == "fail" || event.Action == "skip" {
 			if event.Package != "" {
@@ -79,7 +92,13 @@ func parseEvents(data []byte) ([]Outcome, []string, int) {
 		unknowns = append(unknowns, item)
 	}
 	sort.Strings(unknowns)
-	return outcomes, unknowns, count
+	return outcomes, unknowns, diagnostics, count
+}
+
+func diagnosticEvent(event goEvent) bool {
+	if event.Action == "build-output" { return event.Output != "" }
+	return event.Action == "output" && event.Output != "" &&
+		(event.OutputType == "error" || event.OutputType == "error-continue")
 }
 
 func hasFailure(outcomes []Outcome) bool {
