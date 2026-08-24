@@ -61,7 +61,15 @@ run_scorecard() {
     --out "$output"
 }
 
+set +e
 run_scorecard examples/language-delivery-scorecard/contract.json delivery-evidence/manifest.json "$user_journey" delivery-output/report.json
+scorecard_code=$?
+set -e
+if [[ "$scorecard_code" != "0" ]]; then
+  jq -r '.sources[] | select(.state != "PASS") | "language delivery source: \(.source) state=\(.state) reason=\(.reason) decision=\(.decision) resolution=\(.resolution)"' delivery-output/report.json
+  jq -r '.obligations[] | select(.status == "UNKNOWN" or .status == "NOT_SATISFIED") | "language delivery obligation: \(.id) status=\(.status) reason=\(.reason) observed=\(.observed) expected=\(.expected)"' delivery-output/report.json
+  exit "$scorecard_code"
+fi
 jq -e '.decision == "INCOMPLETE" and .resolution == "EXACT"' delivery-output/report.json
 jq -e '.summary.coordinates == {satisfied:31,not_implemented:5,not_satisfied:0,unknown:0,total:36,basis_points:8611}' delivery-output/report.json
 jq -e '[.views[] | [.audience,.coordinates.satisfied,.coordinates.total]] == [["USER",9,12],["TOOL_AUTHOR",19,24],["GOVERNOR",31,36]]' delivery-output/report.json

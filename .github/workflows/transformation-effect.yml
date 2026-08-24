@@ -1812,7 +1812,8 @@ jobs:
       - name: Reduce fixed language delivery contract
         shell: bash
         run: bash scripts/language-delivery-scorecard/main.sh
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: language-delivery-scorecard-${{ env.HEAD_SHA }}
           path: |
