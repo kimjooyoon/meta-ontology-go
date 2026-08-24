@@ -4,12 +4,12 @@ func Evaluate(observation Observation) Report {
 	report := Report{
 		Schema: ReportSchema, SubjectSHA: observation.SubjectSHA,
 		Total: MetricDenominator, Parent: observation.Parent,
-		ExternalExecutions: observation.ExternalExecutions,
-		RepositoryWrites: observation.RepositoryWrites,
+		ExternalExecutions:       observation.ExternalExecutions,
+		RepositoryWrites:         observation.RepositoryWrites,
 		ExternalRepositoryWrites: observation.ExternalRepositoryWrites,
-		ObservationDigest: observation.ObservationDigest,
-	}
-	report.Indicators = makeIndicators(observation)
+		ObservationDigest:        observation.ObservationDigest,
+
+		Indicators: makeIndicators(observation)}
 	for _, metric := range report.Indicators {
 		if metric.Status == StatusSatisfied {
 			report.Completed++

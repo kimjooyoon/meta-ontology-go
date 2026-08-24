@@ -22,9 +22,9 @@ func indicator(suffix, class, proof, operation string, known, exact bool, value,
 	}
 	return Indicator{
 		MetricID: "gooo.metric.external-capability." + suffix + ".v1",
-		Class: class, ProofChoice: proof,
-		Producer: "externalcapabilityexecution.Evaluate",
-		Consumer: "external-capability-go127-gate",
+		Class:    class, ProofChoice: proof,
+		Producer:      "externalcapabilityexecution.Evaluate",
+		Consumer:      "external-capability-go127-gate",
 		MetaOperation: operation, Unit: "checks", Relation: relation,
 		Resolution: resolution, Value: value, Target: target, Status: metricStatus,
 	}

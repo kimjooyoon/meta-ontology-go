@@ -27,7 +27,7 @@ func prepareTools(workspace, externalRoot string) (capabilityTools, error) {
 	}
 	tools := capabilityTools{
 		Evaluator: filepath.Join(workspace, "evaluate-gomacro"),
-		Gomacro: filepath.Join(workspace, "gomacro"),
+		Gomacro:   filepath.Join(workspace, "gomacro"),
 	}
 	code, output, err := runCommand(harness, commandEnvironment("GOWORK=off", "GOFLAGS=-mod=mod"),
 		"go", "build", "-o", tools.Evaluator, ".")

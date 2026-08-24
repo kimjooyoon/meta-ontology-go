@@ -13,16 +13,16 @@ const (
 	MetricDenominator = 10
 	SuiteDenominator  = 15
 
-	DecisionExecutable = "CAPABILITY_EXECUTABLE"
-	DecisionFailClosed = "FAIL_CLOSED"
-	ResolutionExact    = "EXACT"
-	ResolutionUnknown  = "UNKNOWN"
+	DecisionExecutable  = "CAPABILITY_EXECUTABLE"
+	DecisionFailClosed  = "FAIL_CLOSED"
+	ResolutionExact     = "EXACT"
+	ResolutionUnknown   = "UNKNOWN"
 	ResolutionInvariant = "INVARIANT_ONLY"
-	EffectNoEffect     = "NO_EFFECT"
-	EffectBlock        = "BLOCK"
-	StatusSatisfied    = "SATISFIED"
-	StatusUnsatisfied  = "UNSATISFIED"
-	StatusUnknown      = "UNKNOWN"
+	EffectNoEffect      = "NO_EFFECT"
+	EffectBlock         = "BLOCK"
+	StatusSatisfied     = "SATISFIED"
+	StatusUnsatisfied   = "UNSATISFIED"
+	StatusUnknown       = "UNKNOWN"
 
 	ReasonExecutable = "CAPABILITY_EXECUTION_EXACT_PARENT_FAIL_CLOSED"
 	ReasonUnknown    = "CAPABILITY_EXECUTION_EVIDENCE_UNKNOWN"

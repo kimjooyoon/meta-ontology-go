@@ -21,7 +21,7 @@ func observeReference(root string) (Reference, error) {
 	}
 	return Reference{
 		RepositoryURL: strings.TrimSuffix(repository, ".git"),
-		CommitSHA: commit, TreeSHA: tree, GoVersion: version,
+		CommitSHA:     commit, TreeSHA: tree, GoVersion: version,
 	}, nil
 }
 
