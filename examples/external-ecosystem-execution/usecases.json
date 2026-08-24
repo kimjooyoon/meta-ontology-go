@@ -21,6 +21,19 @@
     "known_invariant_failure_cases": 6,
     "exact_success_cases": 1
   },
+  "observed_baseline": {
+    "decision": "FAIL_CLOSED",
+    "resolution": "EXACT",
+    "completed": 6,
+    "total": 8,
+    "basis_points": 7500,
+    "terminal_outcomes_per_run": 981,
+    "pass_outcomes_per_run": 953,
+    "skip_outcomes_per_run": 20,
+    "fail_outcomes_per_run": 7,
+    "build_fail_outcomes_per_run": 1,
+    "normalized_sha256": "sha256:0bb017f6c946d799c5fef316462dd03ad667fcfbfd99a69c1d1cfe61c4812f93"
+  },
   "boundaries": {
     "source_writes": 0,
     "external_checkout_writes": 0,
