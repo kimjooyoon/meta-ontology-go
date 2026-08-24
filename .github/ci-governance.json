@@ -1488,6 +1488,19 @@
         ".github/workflows/transformation-effect.yml",
         "scripts/source-splitter-conformance-ci/**"
       ]
+    },
+    {
+      "branch": "agent/source-authority-shadow",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/source-authority-shadow-witness/**",
+        "examples/language-assurance-kernel/source-authority-shadow.json",
+        "examples/language-assurance-kernel/source-backed-authority-shadow.md",
+        "internal/meta/languageassurance/sourceauthorityshadow/**",
+        "internal/verify/scope_source_authority_shadow.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
