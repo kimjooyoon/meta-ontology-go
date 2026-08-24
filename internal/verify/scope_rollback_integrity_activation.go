@@ -6,6 +6,7 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/self-improvement-contract.yml",
 		"cmd/rollback-integrity-activation-witness",
+		"examples/language-syntax-roundtrip/README.md",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"examples/rollback-integrity-activation",
 		"internal/meta/languageassurance/rollbackintegrityactivation",
