@@ -137,9 +137,9 @@ jobs:
             .assurance_decision == "PARTIAL" and
             .candidate_decision == "ALLOW_LIMITED" and
             .summary.denominator_total == 12 and
-                      .summary.operating == 8 and
-                      .summary.not_implemented == 4 and
-                      .summary.implementation_coverage_bps == 6666 and
+                      .summary.operating == 9 and
+                      .summary.not_implemented == 3 and
+                      .summary.implementation_coverage_bps == 7500 and
             .summary.snapshot_bindings_observed == 3 and
             .summary.snapshot_bindings_required == 3 and
             .summary.exact_snapshot_binding_bps == 10000 and
@@ -433,7 +433,7 @@ jobs:
           go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/block.json"
           go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/replay/block.json"
           cmp "$out/block.json" "$out/replay/block.json"
-          jq -e '.decision == "BLOCK" and .resolution == "INVARIANT_ONLY" and .reason == "SOURCE_AUTHORITY_BASELINE_NOT_NOT_IMPLEMENTED" and .summary.denominator_total == 12 and .summary.before_operating == 8 and .summary.after_operating == 8 and .summary.before_coverage_bps == 6666 and .summary.after_coverage_bps == 6666 and .repository_writes == 0 and .promotion_applied == 0' "$out/block.json"
+          jq -e '.decision == "BLOCK" and .resolution == "INVARIANT_ONLY" and .reason == "SOURCE_AUTHORITY_BASELINE_NOT_NOT_IMPLEMENTED" and .summary.denominator_total == 12 and .summary.before_operating == 9 and .summary.after_operating == 9 and .summary.before_coverage_bps == 7500 and .summary.after_coverage_bps == 7500 and .repository_writes == 0 and .promotion_applied == 0' "$out/block.json"
           sha256sum "$out/block.json" > "$out/manifest.sha256"
       - name: Upload repeated-promotion guard receipts
         uses: actions/upload-artifact@v6
@@ -510,7 +510,7 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "ACTIVATION_EVIDENCE_UNAVAILABLE" and .transition_applied == 0 and .repository_writes == 0' "$out/unavailable.json"
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "ACTIVATION_CAPSULE_DIGEST_MISMATCH" and .transition_applied == 0 and .repository_writes == 0' "$out/digest-mismatch.json"
           jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
-          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.source-backed-authority.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "bind-source-backed-authority")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.source-backed-authority.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "bind-source-backed-authority")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload source authority activation receipts
         uses: actions/upload-artifact@v6
@@ -638,7 +638,7 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "CANDIDATE_LEAKAGE_EVIDENCE_UNAVAILABLE" and .promotion_applied == 0' "$out/unavailable.json"
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "CANDIDATE_LEAKAGE_CAPSULE_DIGEST_MISMATCH" and .promotion_applied == 0' "$out/digest-mismatch.json"
           jq -e '.cases_total == 3 and .cases_passed == 3 and .coverage_bps == 10000' "$out/suite.json"
-          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
       - name: Upload candidate leakage eligibility receipts
         uses: actions/upload-artifact@v6
         with:
@@ -703,7 +703,7 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "CANDIDATE_LEAKAGE_ACTIVATION_EVIDENCE_UNAVAILABLE" and .transition_applied == 0 and .repository_writes == 0' "$out/unavailable.json"
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "CANDIDATE_LEAKAGE_ACTIVATION_CAPSULE_DIGEST_MISMATCH" and .transition_applied == 0 and .repository_writes == 0' "$out/digest-mismatch.json"
           jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
-          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload candidate leakage activation receipts
         uses: actions/upload-artifact@v6
@@ -769,7 +769,7 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "CHANGED_SURFACE_RECEIPT_DECISION_UNKNOWN" and .summary.missing_receipts == 1 and .summary.unknown_receipts == 1 and .summary.totality_bps == 0 and .summary.unknown_paths == 1 and .summary.blocked_paths == 1 and .repository_writes == 0' "$out/unknown-top.json"
           jq -e '.decision == "FIXED_POINT" and .resolution == "EXACT" and .cases_total == 6 and .cases_passed == 6 and .coverage_bps == 10000' "$out/suite.json"
           jq -e '.denominator_id == "gooo/changed-surface-receipt-denominator/v1" and .enforcement_effect == "OBSERVE_ONLY" and ([.meta_operations[] | select(.id == "totalize-changed-surface-receipts" and .proof_choice == "COHERENCE")] | length) == 1 and ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
-          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.changed-surface-receipt-totality.v1" and .status == "NOT_IMPLEMENTED" and .resolution == "NONE")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.changed-surface-receipt-totality.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "totalize-changed-surface-receipts")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/zero-change.json" "$out/missing.json" "$out/orphan.json" "$out/duplicate.json" "$out/unknown-top.json" "$out/suite.json" > "$out/manifest.sha256"
       - name: Upload changed surface receipt shadow receipts
         if: ${{ always() }}
@@ -839,10 +839,76 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "CHANGED_SURFACE_RECEIPT_CAPSULE_DIGEST_MISMATCH" and .summary.unknown_paths == 1 and .summary.blocked_paths == 1 and .repository_writes == 0 and .promotion_applied == 0' "$out/digest-mismatch.json"
           jq -e '.decision == "ELIGIBLE" and .resolution == "EXACT" and .cases_total == 3 and .cases_passed == 3 and .coverage_bps == 10000' "$out/suite.json"
           jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
-          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.changed-surface-receipt-totality.v1" and .status == "NOT_IMPLEMENTED" and .resolution == "NONE")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.changed-surface-receipt-totality.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "totalize-changed-surface-receipts")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
       - name: Upload changed surface receipt eligibility receipts
         uses: actions/upload-artifact@v6
         with:
           name: changed-surface-receipt-eligibility-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/changed-surface-receipt-eligibility
+          if-no-files-found: error
+
+  changed-surface-receipt-activation:
+    name: Changed surface receipt activation
+    needs:
+      - assurance
+      - changed-surface-receipt-eligibility
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PREDECESSOR_SHA: 1b9acfaac0ff2d1a2353de6c5019d515ab542eb3
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.SUBJECT_SHA }}
+      - name: Download operating assurance report
+        uses: actions/download-artifact@v6
+        with:
+          name: language-assurance-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/language-assurance
+      - name: Require Go 1.27 fixes and activation regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix -diff ./internal/meta/languageassurance/changedsurfacereceiptactivation ./cmd/changed-surface-receipt-activation-witness > "$RUNNER_TEMP/changed-surface-receipt-activation-fix.diff"
+          if test -s "$RUNNER_TEMP/changed-surface-receipt-activation-fix.diff"; then
+            cat "$RUNNER_TEMP/changed-surface-receipt-activation-fix.diff"
+            exit 1
+          fi
+          go test ./internal/meta/languageassurance/changedsurfacereceiptactivation ./cmd/changed-surface-receipt-activation-witness
+      - name: Apply the exact receipt predecessor transition
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="internal/meta/languageassurance/changedsurfacereceiptactivation/evidence"
+          out="$RUNNER_TEMP/changed-surface-receipt-activation"
+          mkdir -p "$out"
+          cp "$evidence/assurance.json" "$out/assurance-mismatch.json"
+          printf '\n' >> "$out/assurance-mismatch.json"
+          : > "$out/assurance-unavailable.json"
+          for pass in exact replay; do
+            go run ./cmd/changed-surface-receipt-activation-witness --assurance "$evidence/assurance.json" --eligibility "$evidence/eligibility.json" --subject-sha "$SUBJECT_SHA" --out "$out/$pass.json"
+          done
+          cmp "$out/exact.json" "$out/replay.json"
+          go run ./cmd/changed-surface-receipt-activation-witness --assurance "$out/assurance-unavailable.json" --eligibility "$evidence/eligibility.json" --subject-sha "$SUBJECT_SHA" --out "$out/unavailable.json"
+          go run ./cmd/changed-surface-receipt-activation-witness --assurance "$out/assurance-mismatch.json" --eligibility "$evidence/eligibility.json" --subject-sha "$SUBJECT_SHA" --out "$out/digest-mismatch.json"
+          jq -e '.decision == "APPLIED" and .resolution == "EXACT" and .reason == "CHANGED_SURFACE_RECEIPT_ACTIVATED" and .summary.denominator_total == 12 and .summary.before_operating == 8 and .summary.after_operating == 9 and .summary.before_coverage_bps == 6666 and .summary.after_coverage_bps == 7500 and .summary.capsules_total == 2 and .summary.capsules_exact == 2 and .summary.capsule_coverage_bps == 10000 and .summary.predecessor_semantics_bps == 10000 and .repository_writes == 0 and .transition_applied == 1 and ([.artifacts[] | select(.exact == true)] | length) == 2' "$out/exact.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "CHANGED_SURFACE_RECEIPT_ACTIVATION_EVIDENCE_UNAVAILABLE" and .transition_applied == 0 and .repository_writes == 0' "$out/unavailable.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "CHANGED_SURFACE_RECEIPT_ACTIVATION_CAPSULE_DIGEST_MISMATCH" and .transition_applied == 0 and .repository_writes == 0' "$out/digest-mismatch.json"
+          jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.changed-surface-receipt-totality.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "totalize-changed-surface-receipts")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
+      - name: Upload changed surface receipt activation receipts
+        uses: actions/upload-artifact@v6
+        with:
+          name: changed-surface-receipt-activation-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/changed-surface-receipt-activation
           if-no-files-found: error
