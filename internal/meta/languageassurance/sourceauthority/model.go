@@ -1,19 +1,19 @@
 package sourceauthority
 
 type Contract struct {
-	Schema             string      `json:"schema"`
-	MetricID           string      `json:"metric_id"`
-	MetaOperation      string      `json:"meta_operation"`
-	ProofChoice        string      `json:"proof_choice"`
-	DenominatorID      string      `json:"denominator_id"`
-	AdoptionState      string      `json:"adoption_state"`
-	ReadinessCredit    int         `json:"readiness_credit"`
-	Measurement        Measurement `json:"measurement"`
-	States             StateAxes   `json:"states"`
-	Rules              []string    `json:"rules"`
-	UnknownEvidence    FailureMode `json:"unknown_evidence"`
-	EmptyDenominator   FailureMode `json:"empty_denominator"`
-	Scope              Scope       `json:"scope"`
+	Schema           string      `json:"schema"`
+	MetricID         string      `json:"metric_id"`
+	MetaOperation    string      `json:"meta_operation"`
+	ProofChoice      string      `json:"proof_choice"`
+	DenominatorID    string      `json:"denominator_id"`
+	AdoptionState    string      `json:"adoption_state"`
+	ReadinessCredit  int         `json:"readiness_credit"`
+	Measurement      Measurement `json:"measurement"`
+	States           StateAxes   `json:"states"`
+	Rules            []string    `json:"rules"`
+	UnknownEvidence  FailureMode `json:"unknown_evidence"`
+	EmptyDenominator FailureMode `json:"empty_denominator"`
+	Scope            Scope       `json:"scope"`
 }
 
 type Measurement struct {
