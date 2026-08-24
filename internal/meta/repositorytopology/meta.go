@@ -32,6 +32,9 @@ func (s *inspection) inspectMeta() {
 		if indicator.Producer != "" && indicator.Consumer != "" && indicator.MetaOperation != "" && knownProof(indicator.ProofChoice) {
 			s.metaBound++
 		}
+		if indicator.Decision == "FAIL_CLOSED" {
+			s.knownFailClosed++
+		}
 		if indicator.MetricID == "gooo.metric.meta.unbound-indicators.v1" && indicator.Value == 0 && indicator.Satisfied && strings.Contains(indicator.Detail, "examples/meta-binding-coverage/main.gooo") {
 			s.bindingWitnesses++
 		}
@@ -48,5 +51,9 @@ func (s *inspection) inspectMeta() {
 }
 
 func knownApplicability(value string) bool { return value == "APPLICABLE" || value == "NOT_APPLICABLE" }
-func knownProof(value string) bool { return value == "foundation" || value == "coherence" || value == "regression" }
-func knownDecision(value string) bool { return value == "PASS" || value == "FAIL" || value == "NOT_APPLICABLE" }
+func knownProof(value string) bool {
+	return value == "foundation" || value == "coherence" || value == "regression"
+}
+func knownDecision(value string) bool {
+	return value == "PASS" || value == "FAIL" || value == "FAIL_CLOSED" || value == "NOT_APPLICABLE"
+}

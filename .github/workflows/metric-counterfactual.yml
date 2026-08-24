@@ -170,6 +170,8 @@ jobs:
             (.views[] | select(.audience == "GOVERNOR") | .satisfied == 10 and .total == 10) and
             .repository_workspace_writes == 0 and .mutation_authority == false and .replay_verified == true
           ' "$work/first/report.json"
+          known_fail_closed="$(jq '[.meta.indicators[] | select(.decision == "FAIL_CLOSED")] | length' "$work/source.json")"
+          jq -e --argjson expected "$known_fail_closed" '.summary.meta.known_fail_closed == $expected' "$work/first/report.json"
           jq '(.directories[] | select(.path == ".") | .recursive_files) += 1' "$work/source.json" > "$work/negative/count.json"
           jq '(.meta.indicators[0].applicability) = "UNKNOWN"' "$work/source.json" > "$work/negative/unknown.json"
           for case in count unknown; do
@@ -181,7 +183,7 @@ jobs:
           jq -e '.status == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY"' "$work/negative/count-report.json"
           jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/unknown-report.json"
           jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/head-report.json"
-          jq -r '"### Repository topology receipt\n- decision: \(.decision) / \(.resolution)\n- READER: \(.views[0].satisfied)/\(.views[0].total)\n- IMPLEMENTER: \(.views[1].satisfied)/\(.views[1].total)\n- GOVERNOR: \(.views[2].satisfied)/\(.views[2].total)\n- files/directories: \(.summary.rows.files_observed)/\(.summary.rows.directories_observed)\n- Go: \(.summary.languages.go_files) files, \(.summary.languages.go_lines) lines\n- Gooo: \(.summary.languages.gooo_files) files, \(.summary.languages.gooo_lines) lines\n- root exceptions: topology \(.summary.root.topology_exemptions), README \(.summary.root.readme_exemptions)\n- digest: \(.digest)"' "$work/first/report.json" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"### Repository topology receipt\n- decision: \(.decision) / \(.resolution)\n- READER: \(.views[0].satisfied)/\(.views[0].total)\n- IMPLEMENTER: \(.views[1].satisfied)/\(.views[1].total)\n- GOVERNOR: \(.views[2].satisfied)/\(.views[2].total)\n- files/directories: \(.summary.rows.files_observed)/\(.summary.rows.directories_observed)\n- Go: \(.summary.languages.go_files) files, \(.summary.languages.go_lines) lines\n- Gooo: \(.summary.languages.gooo_files) files, \(.summary.languages.gooo_lines) lines\n- known fail-closed source indicators: \(.summary.meta.known_fail_closed)\n- root exceptions: topology \(.summary.root.topology_exemptions), README \(.summary.root.readme_exemptions)\n- digest: \(.digest)"' "$work/first/report.json" >> "$GITHUB_STEP_SUMMARY"
           test -z "$(git status --porcelain)"
       - name: Upload exact-head repository topology receipt
         if: always()

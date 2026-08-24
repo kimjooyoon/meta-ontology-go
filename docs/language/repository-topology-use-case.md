@@ -18,6 +18,10 @@ ontology, meta-binding, and decision-vocabulary evidence. `GOVERNOR` exposes
 all 10/10 coordinates, including exact subject identity, root exceptions, and
 the no-mutation guardrail. A lower view never promotes a higher view.
 
+Known upstream `FAIL_CLOSED` decisions remain visible as an exact count and do
+not become unknown evidence or PASS. Only values outside the versioned decision
+vocabulary lower the receipt resolution.
+
 The project root is observed for raw direct and recursive counts. Its topology
 limits are exactly two `NOT_APPLICABLE` indicators, and its missing README rule
 is exactly one `NOT_APPLICABLE` indicator. Any other applicability value is

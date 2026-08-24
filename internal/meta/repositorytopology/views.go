@@ -3,10 +3,10 @@ package repositorytopology
 func (s *inspection) summary(satisfied int) Summary {
 	return Summary{
 		Coordinates: Counter{Satisfied: satisfied, Total: 10, BasisPoints: satisfied * 1000},
-		Rows: RowSummary{FilesObserved: len(s.source.Files), FilesExact: s.fileRowsExact, DirectoriesObserved: len(s.source.Directories), DirectoriesExact: s.directoryRowsExact, DuplicatePaths: s.duplicates},
-		Languages: LanguageSummary{GoFiles: s.goFiles, GoooFiles: s.goooFiles, GoLines: s.goLines, GoooLines: s.goooLines},
-		Meta: MetaSummary{Indicators: len(s.source.Meta.Indicators), BoundIndicators: s.metaBound, BindingWitnesses: s.bindingWitnesses, UnknownDecisions: s.unknownDecisions},
-		Root: RootSummary{TopologyExemptions: s.rootTopology, READMEExemptions: s.rootREADME},
+		Rows:        RowSummary{FilesObserved: len(s.source.Files), FilesExact: s.fileRowsExact, DirectoriesObserved: len(s.source.Directories), DirectoriesExact: s.directoryRowsExact, DuplicatePaths: s.duplicates},
+		Languages:   LanguageSummary{GoFiles: s.goFiles, GoooFiles: s.goooFiles, GoLines: s.goLines, GoooLines: s.goooLines},
+		Meta:        MetaSummary{Indicators: len(s.source.Meta.Indicators), BoundIndicators: s.metaBound, BindingWitnesses: s.bindingWitnesses, UnknownDecisions: s.unknownDecisions, KnownFailClosed: s.knownFailClosed},
+		Root:        RootSummary{TopologyExemptions: s.rootTopology, READMEExemptions: s.rootREADME},
 	}
 }
 
@@ -24,7 +24,10 @@ func (s *inspection) rootLanguageExact(language string) bool {
 }
 
 func buildViews(indicators []Indicator) []AudienceView {
-	specs := []struct{ audience, resolution string; ids []string }{
+	specs := []struct {
+		audience, resolution string
+		ids                  []string
+	}{
 		{"READER", "COUNT_ROWS", []string{"rows.files", "rows.directories", "aggregate.go", "aggregate.gooo"}},
 		{"IMPLEMENTER", "META_BOUND", []string{"ontology.binding", "rows.files", "rows.directories", "aggregate.go", "aggregate.gooo", "meta.binding", "vocabulary.decisions"}},
 		{"GOVERNOR", "FULL_RECEIPT", indicatorIDs(indicators)},
@@ -34,11 +37,15 @@ func buildViews(indicators []Indicator) []AudienceView {
 		satisfied := 0
 		for _, id := range spec.ids {
 			for _, indicator := range indicators {
-				if indicator.ID == id && indicator.Satisfied { satisfied++ }
+				if indicator.ID == id && indicator.Satisfied {
+					satisfied++
+				}
 			}
 		}
 		decision := "FAIL_CLOSED"
-		if satisfied == len(spec.ids) { decision = "PASS" }
+		if satisfied == len(spec.ids) {
+			decision = "PASS"
+		}
 		views = append(views, AudienceView{Audience: spec.audience, Decision: decision, Resolution: spec.resolution, Satisfied: satisfied, Total: len(spec.ids), BasisPoints: satisfied * 10000 / len(spec.ids), IndicatorIDs: spec.ids})
 	}
 	return views
@@ -46,7 +53,9 @@ func buildViews(indicators []Indicator) []AudienceView {
 
 func indicatorIDs(indicators []Indicator) []string {
 	ids := make([]string, len(indicators))
-	for i, indicator := range indicators { ids[i] = indicator.ID }
+	for i, indicator := range indicators {
+		ids[i] = indicator.ID
+	}
 	return ids
 }
 

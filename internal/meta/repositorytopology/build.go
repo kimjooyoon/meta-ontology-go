@@ -9,14 +9,15 @@ import (
 )
 
 type inspection struct {
-	source                                      SourceReport
+	source                                        SourceReport
 	identityExact, ontologyExact, rootPolicyExact bool
-	fileRowsExact, directoryRowsExact           int
-	duplicates, metaBound, bindingWitnesses      int
-	unknownDecisions, rootTopology, rootREADME   int
-	goFiles, goooFiles, goLines, goooLines       int
-	actualLines                                 map[string]int
-	lowerResolution                             bool
+	fileRowsExact, directoryRowsExact             int
+	duplicates, metaBound, bindingWitnesses       int
+	unknownDecisions, knownFailClosed             int
+	rootTopology, rootREADME                      int
+	goFiles, goooFiles, goLines, goooLines        int
+	actualLines                                   map[string]int
+	lowerResolution                               bool
 }
 
 func Evaluate(sourceJSON, rootOntology, bindingOntology []byte, root, repository, head string) (Report, error) {

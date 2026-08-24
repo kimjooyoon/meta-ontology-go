@@ -9,17 +9,17 @@ type Summary struct {
 }
 
 type Counter struct {
-	Satisfied  int `json:"satisfied"`
-	Total      int `json:"total"`
+	Satisfied   int `json:"satisfied"`
+	Total       int `json:"total"`
 	BasisPoints int `json:"basis_points"`
 }
 
 type RowSummary struct {
-	FilesObserved      int `json:"files_observed"`
-	FilesExact         int `json:"files_exact"`
+	FilesObserved       int `json:"files_observed"`
+	FilesExact          int `json:"files_exact"`
 	DirectoriesObserved int `json:"directories_observed"`
-	DirectoriesExact  int `json:"directories_exact"`
-	DuplicatePaths     int `json:"duplicate_paths"`
+	DirectoriesExact    int `json:"directories_exact"`
+	DuplicatePaths      int `json:"duplicate_paths"`
 }
 
 type LanguageSummary struct {
@@ -30,10 +30,11 @@ type LanguageSummary struct {
 }
 
 type MetaSummary struct {
-	Indicators        int `json:"indicators"`
-	BoundIndicators   int `json:"bound_indicators"`
-	BindingWitnesses  int `json:"binding_witnesses"`
-	UnknownDecisions  int `json:"unknown_decisions"`
+	Indicators       int `json:"indicators"`
+	BoundIndicators  int `json:"bound_indicators"`
+	BindingWitnesses int `json:"binding_witnesses"`
+	UnknownDecisions int `json:"unknown_decisions"`
+	KnownFailClosed  int `json:"known_fail_closed"`
 }
 
 type RootSummary struct {

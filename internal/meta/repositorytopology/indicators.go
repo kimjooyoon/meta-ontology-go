@@ -42,4 +42,9 @@ func metric(id, class, proof string, satisfied bool, observed, expected int) Ind
 	return Indicator{ID: id, Class: class, ProofChoice: proof, Satisfied: satisfied, Observed: observed, Expected: expected}
 }
 
-func boolInt(value bool) int { if value { return 1 }; return 0 }
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}
