@@ -60,9 +60,21 @@ jobs:
         run: |
           test -z "$(git status --porcelain --untracked-files=all)"
           go fix ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness
-          test -z "$(git status --porcelain --untracked-files=all)"
-          unformatted="$(find internal/meta/externalecosystemexecution cmd/external-ecosystem-execution-witness -name '*.go' -type f -print0 | xargs -0 gofmt -l)"
-          test -z "$unformatted"
+          find internal/meta/externalecosystemexecution cmd/external-ecosystem-execution-witness -name '*.go' -type f -print0 | xargs -0 gofmt -w
+          git diff --binary > "$RUNNER_TEMP/go-1.27-tools.patch"
+          if test -s "$RUNNER_TEMP/go-1.27-tools.patch"; then
+            git diff --stat
+            exit 1
+          fi
+
+      - name: Upload Go 1.27 correction
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-1.27-tool-correction-${{ github.run_id }}
+          path: ${{ runner.temp }}/go-1.27-tools.patch
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Run fixed conformance tests
         working-directory: gooo
