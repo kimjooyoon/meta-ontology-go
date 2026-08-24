@@ -1,0 +1,14 @@
+{
+  "schema": "gooo/rollback-integrity-shadow-evidence/v1",
+  "metric_id": "gooo.metric.operation.rollback-integrity.v1",
+  "meta_operation": "verify-rollback-integrity",
+  "implementation_meta_operation": "recover-guarded-fixed-point",
+  "predecessor_sha": "4b8758428951e3e208b42cb568cc208cbe83dea9",
+  "assurance_artifact_id": 9512887001,
+  "assurance_artifact_digest": "sha256:5863ebbcdd2b3cd477d028414bd39ff1cb222bc11f21864d57c98953d30d050c",
+  "assurance_payload_digest": "sha256:4641750a0d3299524088d4b56678d594ee2873c0a13eaea25332709cfd9471ac",
+  "case_denominator": 7,
+  "coordinate_denominator": 70,
+  "repository_writes": 0,
+  "promotion_applied": 0
+}
