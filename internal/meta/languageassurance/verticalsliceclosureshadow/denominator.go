@@ -34,8 +34,8 @@ func decodeDenominator(raw []byte) (denominator, error) {
 func validateDenominator(value denominator) error {
 	expected := expectedBoundarySpecs()
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
-		value.DenominatorID != "gooo.denominator.capability.vertical-slice-closure.v2" ||
-		value.Version != 2 || len(value.Boundaries) != len(expected) {
+		value.DenominatorID != "gooo.denominator.capability.vertical-slice-closure.v3" ||
+		value.Version != 3 || len(value.Boundaries) != len(expected) {
 		return fmt.Errorf("denominator header mismatch")
 	}
 	links := 0
@@ -53,11 +53,11 @@ func validateDenominator(value denominator) error {
 
 func expectedBoundarySpecs() []boundarySpec {
 	return []boundarySpec{
-		{"syntax", languagesyntax.ReportSchema, "prove-language-syntax-roundtrip", 18, 1},
-		{"semantics", "gooo/language-semantic-model/v1", "prove-staged-semantic-model", 21, 2},
+		{"syntax", languagesyntax.ReportSchema, "prove-language-syntax-roundtrip", 19, 1},
+		{"semantics", "gooo/language-semantic-model/v1", "prove-staged-semantic-model", 22, 2},
 		{"binding", "gooo/language-semantic-readiness-binding/v2", "bind-semantic-readiness-evidence", 12, 2},
 		{"use-cases", toolchainusecases.ReportSchema, "execute-versioned-use-cases", 3, 1},
-		{"toolchain", toolchainconformance.Schema, toolchainconformance.ExpectedMetaOperation, 158, 3},
+		{"toolchain", toolchainconformance.Schema, toolchainconformance.ExpectedMetaOperation, 160, 3},
 		{"release", toolchainrelease.ReportSchema, toolchainrelease.MetaOperation, 20, 3},
 	}
 }

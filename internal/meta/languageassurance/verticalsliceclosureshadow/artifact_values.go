@@ -4,20 +4,20 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	summary := artifact.Summary
 	switch id {
 	case "syntax":
-		return summary.Satisfied, status(summary.Satisfied == 18 && summary.Total == 18 &&
-			summary.Executed == 18 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
+		return summary.Satisfied, status(summary.Satisfied == 19 && summary.Total == 19 &&
+			summary.Executed == 19 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
 			summary.ReadinessBPS == 10000)
 	case "semantics":
-		return summary.Satisfied, status(summary.Satisfied == 21 && summary.Total == 21 &&
-			summary.Executed == 21 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
+		return summary.Satisfied, status(summary.Satisfied == 22 && summary.Total == 22 &&
+			summary.Executed == 22 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
 			summary.ReadinessBPS == 10000 && summary.StageOrderViolations == 0 &&
 			summary.EffectfulStages == 0 && summary.RegistryDrift == 0)
 	case "binding":
 		return summary.BoundCoordinates, status(summary.Coordinates == 12 &&
 			summary.BoundCoordinates == 12 && summary.Unresolved == 0 &&
 			summary.ReadinessCompleted == 21 && summary.ReadinessTotal == 24 &&
-			summary.ReadinessBPS == 8750 && summary.SemanticSatisfied == 21 &&
-			summary.SemanticTotal == 21 && summary.EffectfulStages == 0 &&
+			summary.ReadinessBPS == 8750 && summary.SemanticSatisfied == 22 &&
+			summary.SemanticTotal == 22 && summary.EffectfulStages == 0 &&
 			summary.MutationAuthorities == 0)
 	case "use-cases":
 		return summary.Satisfied, status(summary.Satisfied == 3 && summary.Total == 3 &&
@@ -26,8 +26,8 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	case "toolchain":
 		return summary.CasesSatisfied, status(summary.SurfacesSatisfied == 9 &&
 			summary.SurfacesTotal == 9 && len(artifact.Surfaces) == 9 &&
-			summary.CasesSatisfied == 158 && summary.CasesTotal == 158 &&
-			summary.ExecutedCases == 158 && summary.CaseReadinessBPS == 10000 &&
+			summary.CasesSatisfied == 160 && summary.CasesTotal == 160 &&
+			summary.ExecutedCases == 160 && summary.CaseReadinessBPS == 10000 &&
 			summary.IndicatorsSatisfied == summary.IndicatorsTotal &&
 			summary.ProofsPassed == summary.ProofsTotal &&
 			summary.TamperRejections == 13 && summary.TamperTotal == 13)
