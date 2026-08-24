@@ -1,15 +1,15 @@
 package candidateleakage
 
 type Summary struct {
-	BoundaryPaths             int `json:"boundary_paths"`
-	LeakagePaths              int `json:"leakage_paths"`
-	UnknownPaths              int `json:"unknown_paths"`
-	BlockedPaths              int `json:"blocked_paths"`
-	AuthorizedPaths           int `json:"authorized_paths"`
-	BoundaryBindingBPS        int `json:"boundary_binding_bps"`
-	PromotionAuthorityBPS     int `json:"promotion_authority_bps"`
-	RepositoryWrites          int `json:"repository_writes"`
-	PromotionCreditBPS        int `json:"promotion_credit_bps"`
+	BoundaryPaths         int `json:"boundary_paths"`
+	LeakagePaths          int `json:"leakage_paths"`
+	UnknownPaths          int `json:"unknown_paths"`
+	BlockedPaths          int `json:"blocked_paths"`
+	AuthorizedPaths       int `json:"authorized_paths"`
+	BoundaryBindingBPS    int `json:"boundary_binding_bps"`
+	PromotionAuthorityBPS int `json:"promotion_authority_bps"`
+	RepositoryWrites      int `json:"repository_writes"`
+	PromotionCreditBPS    int `json:"promotion_credit_bps"`
 }
 
 type Indicator struct {
@@ -59,15 +59,15 @@ type SuiteSummary struct {
 }
 
 type Suite struct {
-	Schema            string       `json:"schema"`
-	SubjectSHA        string       `json:"subject_sha"`
-	DenominatorID     string       `json:"denominator_id"`
-	DenominatorDigest string       `json:"denominator_digest"`
-	Decision          string       `json:"decision"`
-	Resolution        string       `json:"resolution"`
-	Cases             []CaseResult `json:"cases"`
-	Summary           SuiteSummary `json:"summary"`
-	RepositoryWrites  int          `json:"repository_writes"`
-	PromotionCreditBPS int         `json:"promotion_credit_bps"`
-	SuiteDigest       string       `json:"suite_digest"`
+	Schema             string       `json:"schema"`
+	SubjectSHA         string       `json:"subject_sha"`
+	DenominatorID      string       `json:"denominator_id"`
+	DenominatorDigest  string       `json:"denominator_digest"`
+	Decision           string       `json:"decision"`
+	Resolution         string       `json:"resolution"`
+	Cases              []CaseResult `json:"cases"`
+	Summary            SuiteSummary `json:"summary"`
+	RepositoryWrites   int          `json:"repository_writes"`
+	PromotionCreditBPS int          `json:"promotion_credit_bps"`
+	SuiteDigest        string       `json:"suite_digest"`
 }

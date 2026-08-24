@@ -9,7 +9,7 @@ type Candidate struct {
 }
 
 type Promotion struct {
-	SubjectSHA     string `json:"subject_sha"`
+	SubjectSHA      string `json:"subject_sha"`
 	CandidateDigest string `json:"candidate_digest"`
 	EvidenceDigest  string `json:"evidence_digest"`
 	Decision        string `json:"decision"`
