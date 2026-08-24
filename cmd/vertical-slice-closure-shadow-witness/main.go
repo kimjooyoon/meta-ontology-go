@@ -9,8 +9,8 @@ import (
 type config struct {
 	assurance, head, syntax, semantics, binding string
 	useCases, toolchain, release, output        string
-	unavailableBoundary                        string
-	unavailableAssurance                       bool
+	unavailableBoundary                         string
+	unavailableAssurance                        bool
 }
 
 func main() {

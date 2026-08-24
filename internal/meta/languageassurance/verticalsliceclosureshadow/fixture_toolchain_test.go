@@ -40,7 +40,7 @@ func releaseFixture(head string) []byte {
 			"observed": "EXACT", "expected": "EXACT"})
 	}
 	return fixtureJSON(map[string]any{
-		"schema": "gooo/toolchain-cross-platform-release-report/v1",
+		"schema":   "gooo/toolchain-cross-platform-release-report/v1",
 		"decision": "PASS", "resolution": "EXACT", "head_sha": head,
 		"report_digest": fixtureDigest("f"), "repository_writes": 0,
 		"summary": map[string]any{"cases_satisfied": 20, "cases_total": 20,
