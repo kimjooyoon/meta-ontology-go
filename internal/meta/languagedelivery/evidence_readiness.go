@@ -1,8 +1,8 @@
 package languagedelivery
 
 type ReadinessArtifact struct {
-	Schema  string `json:"schema"`
-	HeadSHA string `json:"head_sha"`
+	Schema   string `json:"schema"`
+	HeadSHA  string `json:"head_sha"`
 	Snapshot struct {
 		Schema           string                `json:"schema"`
 		Decision         string                `json:"decision"`
