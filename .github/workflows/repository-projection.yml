@@ -85,6 +85,7 @@ jobs:
             '{schema:$schema,expected:$expected,observed:$observed,expected_count:($expected|length),observed_count:($observed|length),untracked_count:$untracked,exact:($expected==$observed and $untracked==0)}' > "$report"
           jq -e '.exact == true and .expected_count == .observed_count and .untracked_count == 0' "$report"
           diff -u "$expected" "$observed"
+          git diff --binary > "$RUNNER_TEMP/repository-projection/authorized-rewrite.patch"
           go test ./...
 
       - name: Upload exact-SHA projection indicators
@@ -100,6 +101,7 @@ jobs:
             ${{ runner.temp }}/repository-projection/write-set-evidence.json
             ${{ runner.temp }}/repository-projection/authorized-write-set.txt
             ${{ runner.temp }}/repository-projection/observed-write-set.txt
+            ${{ runner.temp }}/repository-projection/authorized-rewrite.patch
             ${{ runner.temp }}/repository-projection/cutover-evidence.json
             ${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json
             ${{ steps.materialize.outputs.materialization-evidence }}
