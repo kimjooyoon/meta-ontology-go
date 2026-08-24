@@ -471,7 +471,10 @@
         "internal/meta/languageassurance/registry_accessors.go",
         "internal/meta/languageassurance/source_authority_activation.go",
         "internal/meta/languagereadiness/languagesyntax/**",
-        "internal/verify/scope_external_conformance_activation.go"
+        "internal/verify/scope_external_conformance_activation.go",
+        "examples/language-semantic-model/corpus.json",
+        "examples/language-semantic-model/README.md",
+        "internal/meta/languagereadiness/languagesemantic/**"
       ]
     },
     {
