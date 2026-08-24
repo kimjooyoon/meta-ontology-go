@@ -26,7 +26,7 @@ func observeRule(rule EvidenceRule, decoded decodedEvidence) (int, string) {
 				return 1, "READINESS_OBLIGATION_EXACT"
 			}
 		}
-	case EvidenceLSPCounter, EvidenceConformance, EvidenceRelease:
+	case EvidenceLSPCounter, EvidenceConformance, EvidenceRelease, EvidenceExecution:
 		return observeCounter(rule, decoded)
 	}
 	return 0, "REQUIRED_EVIDENCE_NOT_SATISFIED"
