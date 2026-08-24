@@ -1527,8 +1527,11 @@ jobs:
         working-directory: gooo
         run: |
           test -z "$(git status --porcelain --untracked-files=all)"
-          go fix ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness
-          find internal/meta/externalecosystemexecution cmd/external-ecosystem-execution-witness -name '*.go' -type f -print0 | xargs -0 gofmt -w
+          go fix ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness \
+            ./internal/meta/externalcapabilityexecution ./cmd/external-capability-execution-witness
+          find internal/meta/externalecosystemexecution cmd/external-ecosystem-execution-witness \
+            internal/meta/externalcapabilityexecution cmd/external-capability-execution-witness \
+            -name '*.go' -type f -print0 | xargs -0 gofmt -w
           git diff --binary > "$RUNNER_TEMP/go-1.27-tools.patch"
           if test -s "$RUNNER_TEMP/go-1.27-tools.patch"; then
             git diff --stat
@@ -1546,6 +1549,7 @@ jobs:
         working-directory: gooo
         run: |
           go test -count=1 ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness
+          go test -count=1 ./internal/meta/externalcapabilityexecution ./cmd/external-capability-execution-witness
           go test -count=1 ./internal/verify
       - name: Observe twice and replay
         working-directory: gooo
@@ -1582,6 +1586,48 @@ jobs:
           jq -e '([.runs[].normalized_sha256] | unique) == ["sha256:0bb017f6c946d799c5fef316462dd03ad667fcfbfd99a69c1d1cfe61c4812f93"]' "$result/observation.json"
           jq -e '([.runs[] | [.outcomes[] | select(.action == "fail" or .action == "build-fail")] | length] | all(. == 8))' "$result/observation.json"
           jq -e '.official_mutation_count == 0 and .promotion_count == 0' "$result/observation.json"
+      - name: Execute capability-scoped metaprogramming twice
+        working-directory: gooo
+        run: |
+          parent="$RUNNER_TEMP/external-ecosystem-execution/report.json"
+          result="$RUNNER_TEMP/external-capability-execution"
+          mkdir -p "$result"
+          go run ./cmd/external-capability-execution-witness \
+            --mode observe --subject-sha "$SUBJECT_SHA" \
+            --source-root "$GITHUB_WORKSPACE/gooo" --external-root "$GITHUB_WORKSPACE/gomacro" \
+            --parent-report "$parent" --observation "$result/observation.json" \
+            --report "$result/report.json" --suite "$result/suite.json"
+          go run ./cmd/external-capability-execution-witness \
+            --mode replay --observation "$result/observation.json" \
+            --report "$result/replay-report.json" --suite "$result/replay-suite.json"
+          cmp "$result/report.json" "$result/replay-report.json"
+          cmp "$result/suite.json" "$result/replay-suite.json"
+      - name: Assert exact capability boundary
+        run: |
+          result="$RUNNER_TEMP/external-capability-execution"
+          jq -e '.decision == "CAPABILITY_EXECUTABLE" and .resolution == "EXACT"' "$result/report.json"
+          jq -e '.completed == 10 and .total == 10 and .basis_points == 10000' "$result/report.json"
+          jq -e '.driver_completed == 4 and .outcome_completed == 3 and .guardrail_completed == 3' "$result/report.json"
+          jq -e '.external_executions == 4 and .repository_writes == 0 and .external_repository_writes == 0' "$result/report.json"
+          jq -e '.parent.decision == "FAIL_CLOSED" and .parent.resolution == "EXACT"' "$result/report.json"
+          jq -e '.parent.completed == 6 and .parent.total == 8 and .parent.basis_points == 7500' "$result/report.json"
+          jq -e '.official_mutation_count == 0 and .promotion_count == 0' "$result/report.json"
+          jq -e '([.proofs[].status] | all(. == "SATISFIED"))' "$result/report.json"
+          jq -e '.passed == 15 and .total == 15 and .unknown_expected == 3 and .invariant_expected == 11' "$result/suite.json"
+          jq -e '.available == true and .replay_exact == true and (.runs | length) == 2' "$result/observation.json"
+          jq -e '([.runs[] | .status == "SATISFIED" and .arithmetic == "42" and .function == "55"] | all)' "$result/observation.json"
+      - name: Seal capability evidence
+        run: |
+          cd "$RUNNER_TEMP/external-capability-execution"
+          sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > manifest.sha256
+      - name: Upload capability evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-capability-go127-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-capability-execution
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Seal execution evidence
         run: |
           result="$RUNNER_TEMP/external-ecosystem-execution"
