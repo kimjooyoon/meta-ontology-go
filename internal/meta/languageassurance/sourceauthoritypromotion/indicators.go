@@ -1,10 +1,18 @@
 package sourceauthoritypromotion
 
 type Indicator struct {
-	MetricID, Class, ProofChoice, Producer, Consumer string
-	MetaOperation, Unit, Relation, Resolution        string
-	Value, Target                                    int
-	Satisfied                                        bool
+	MetricID      string `json:"metric_id"`
+	Class         string `json:"class"`
+	ProofChoice   string `json:"proof_choice"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
+	MetaOperation string `json:"meta_operation"`
+	Unit          string `json:"unit"`
+	Relation      string `json:"relation"`
+	Resolution    string `json:"resolution"`
+	Value         int    `json:"value"`
+	Target        int    `json:"target"`
+	Satisfied     bool   `json:"satisfied"`
 }
 
 func buildIndicators(baselineOK, evidenceOK, eligible bool) []Indicator {
