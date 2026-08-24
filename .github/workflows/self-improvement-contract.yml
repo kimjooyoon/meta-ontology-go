@@ -187,6 +187,78 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  source-authority-shadow:
+    name: Source authority shadow
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+
+      - name: Require Go 1.27 fixes to be already applied
+        run: go fix -diff ./internal/meta/languageassurance/sourceauthorityeval ./internal/meta/languageassurance/sourceauthorityshadow ./cmd/source-authority-shadow-witness
+
+      - name: Run source authority shadow regressions
+        run: go test ./internal/meta/languageassurance/sourceauthorityeval ./internal/meta/languageassurance/sourceauthorityshadow ./cmd/source-authority-shadow-witness
+
+      - name: Bind exact-head pinned source input
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/source-authority-shadow"
+          mkdir -p "$output"
+          jq --arg sha "$HEAD_SHA" '.subject_sha = $sha' \
+            examples/language-assurance-kernel/source-authority-shadow.json > "$output/input.json"
+
+      - name: Execute and replay source authority shadow
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/source-authority-shadow"
+          for pass in first replay; do
+            go run ./cmd/source-authority-shadow-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -input "$output/input.json" \
+              -output "$output/$pass.json" \
+              -expected-sha "$HEAD_SHA" \
+              -check
+          done
+          cmp "$output/first.json" "$output/replay.json"
+          jq -e --arg sha "$HEAD_SHA" '
+            .schema == "gooo/source-backed-authority-shadow-receipt/v1" and
+            .mode == "SHADOW" and .expected_sha == $sha and .subject_sha == $sha and
+            .observation == "SATISFIED" and .resolution == "EXACT" and
+            .enforcement == "ALLOW" and .gate_effect == "NO_EFFECT" and
+            .promotion_credit_bps == 0 and .repository_writes == 0 and
+            .evaluation.summary.accepted_facts == 1 and
+            .evaluation.summary.backed_facts == 1 and
+            .evaluation.summary.coverage_bps == 10000 and
+            (.evaluation.receipts | length) == 1 and
+            ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3
+          ' "$output/first.json"
+          (cd "$output" && sha256sum input.json first.json > manifest.sha256)
+
+      - name: Upload exact-head source authority shadow receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: source-authority-shadow-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/source-authority-shadow
+          if-no-files-found: error
+          retention-days: 30
+
   write-set-exactness:
     name: Write-set exactness
     runs-on: ubuntu-latest
