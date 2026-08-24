@@ -443,7 +443,7 @@ jobs:
           jq -e '[.indicators[] | select(.class == "OUTCOME")] | length == 1' "$out/eligible.json"
           jq -e '[.indicators[] | select(.class == "DRIVER")] | length == 2' "$out/eligible.json"
           jq -e '[.indicators[] | select(.class == "GUARDRAIL")] | length == 3' "$out/eligible.json"
-          jq -e '[.indicators[] | select(.ProofChoice == "FOUNDATION")] | length == 3' "$out/eligible.json"
+          jq -e '[.indicators[] | select(.proof_choice == "FOUNDATION")] | length == 3' "$out/eligible.json"
           sha256sum "$out/eligible.json" "$out/upstream-block.json" "$out/baseline-block.json" > "$out/manifest.sha256"
       - name: Upload promotion eligibility receipts
         uses: actions/upload-artifact@v6

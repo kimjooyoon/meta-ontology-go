@@ -46,20 +46,20 @@ type Evidence struct {
 }
 
 type Transition struct {
-	MetricID          string `json:"metric_id"`
-	MetaOperation     string `json:"meta_operation"`
-	FromStatus        string `json:"from_status"`
-	FromResolution    string `json:"from_resolution"`
-	EligibleStatus    string `json:"eligible_status"`
+	MetricID           string `json:"metric_id"`
+	MetaOperation      string `json:"meta_operation"`
+	FromStatus         string `json:"from_status"`
+	FromResolution     string `json:"from_resolution"`
+	EligibleStatus     string `json:"eligible_status"`
 	EligibleResolution string `json:"eligible_resolution"`
 }
 
 type Summary struct {
-	DenominatorTotal int `json:"denominator_total"`
-	BeforeOperating  int `json:"before_operating"`
-	AfterOperating   int `json:"after_operating"`
+	DenominatorTotal  int `json:"denominator_total"`
+	BeforeOperating   int `json:"before_operating"`
+	AfterOperating    int `json:"after_operating"`
 	BeforeCoverageBPS int `json:"before_coverage_bps"`
-	AfterCoverageBPS int `json:"after_coverage_bps"`
-	EligiblePaths    int `json:"eligible_paths"`
-	BlockedPaths     int `json:"blocked_paths"`
+	AfterCoverageBPS  int `json:"after_coverage_bps"`
+	EligiblePaths     int `json:"eligible_paths"`
+	BlockedPaths      int `json:"blocked_paths"`
 }

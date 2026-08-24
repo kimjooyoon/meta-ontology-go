@@ -21,7 +21,9 @@ func TestEvaluateFailsClosed(t *testing.T) {
 			if report.Decision != DecisionBlock || report.Resolution != ResolutionInvariantOnly || report.Reason != test.reason {
 				t.Fatalf("unknown evidence was not blocked: %#v", report)
 			}
-			if report.PromotionApplied != 0 || report.RepositoryWrites != 0 { t.Fatalf("blocked report had effects: %#v", report) }
+			if report.PromotionApplied != 0 || report.RepositoryWrites != 0 {
+				t.Fatalf("blocked report had effects: %#v", report)
+			}
 		})
 	}
 }

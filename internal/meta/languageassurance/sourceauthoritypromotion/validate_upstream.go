@@ -57,7 +57,9 @@ func validSnapshot(snapshot *upstreamSnapshot) bool {
 func validIndicatorSplit(indicators []upstreamIndicator) bool {
 	counts := map[string]int{}
 	for _, indicator := range indicators {
-		if !indicator.Satisfied { return false }
+		if !indicator.Satisfied {
+			return false
+		}
 		counts[indicator.Class]++
 		counts[indicator.ProofChoice]++
 	}

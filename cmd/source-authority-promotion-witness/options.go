@@ -18,7 +18,9 @@ func parseOptions(args []string) (options, error) {
 	set.StringVar(&result.upstream, "upstream", "", "upstream conformance report")
 	set.StringVar(&result.subjectSHA, "subject-sha", "", "exact subject commit")
 	set.StringVar(&result.output, "out", "", "exclusive output path")
-	if err := set.Parse(args); err != nil { return result, err }
+	if err := set.Parse(args); err != nil {
+		return result, err
+	}
 	if result.assurance == "" || result.upstream == "" || result.subjectSHA == "" || result.output == "" {
 		return result, errors.New("--assurance, --upstream, --subject-sha, and --out are required")
 	}

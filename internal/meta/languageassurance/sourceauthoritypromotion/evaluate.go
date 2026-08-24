@@ -48,7 +48,9 @@ func finish(report Report, eligible, baselineOK, evidenceOK bool, reason string)
 }
 
 func coverage(value, total int) int {
-	if total == 0 { return 0 }
+	if total == 0 {
+		return 0
+	}
 	return value * 10000 / total
 }
 

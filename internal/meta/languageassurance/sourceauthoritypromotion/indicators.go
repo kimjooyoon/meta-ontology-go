@@ -3,8 +3,8 @@ package sourceauthoritypromotion
 type Indicator struct {
 	MetricID, Class, ProofChoice, Producer, Consumer string
 	MetaOperation, Unit, Relation, Resolution        string
-	Value, Target                                   int
-	Satisfied                                       bool
+	Value, Target                                    int
+	Satisfied                                        bool
 }
 
 func buildIndicators(baselineOK, evidenceOK, eligible bool) []Indicator {
@@ -24,7 +24,9 @@ func indicator(id, class, proof, operation string, satisfied, basisPoints bool) 
 		value, resolution = 10000, ResolutionExact
 	}
 	unit := "basis_points"
-	if !basisPoints { unit = "paths" }
+	if !basisPoints {
+		unit = "paths"
+	}
 	return Indicator{MetricID: id, Class: class, ProofChoice: proof,
 		Producer: "sourceauthoritypromotion.Evaluate", Consumer: "language-assurance-promotion-gate",
 		MetaOperation: operation, Unit: unit, Relation: "GREATER_OR_EQUAL",
