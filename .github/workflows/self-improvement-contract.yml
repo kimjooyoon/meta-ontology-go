@@ -433,7 +433,7 @@ jobs:
           go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/block.json"
           go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/replay/block.json"
           cmp "$out/block.json" "$out/replay/block.json"
-          jq -e '.decision == "BLOCK" and .resolution == "INVARIANT_ONLY" and .reason == "SOURCE_AUTHORITY_BASELINE_NOT_NOT_IMPLEMENTED" and .summary.denominator_total == 12 and .summary.before_operating == 8 and .summary.after_operating == 8 and .summary.before_coverage_bps == 6666 and .summary.after_coverage_bps == 6666 and .repository_writes == 0 and .promotion_applied == 0' "$out/block.json"
+          jq -e '.decision == "BLOCK" and .resolution == "INVARIANT_ONLY" and .reason == "SOURCE_AUTHORITY_BASELINE_NOT_NOT_IMPLEMENTED" and .summary.denominator_total == 12 and .summary.before_operating == 9 and .summary.after_operating == 9 and .summary.before_coverage_bps == 7500 and .summary.after_coverage_bps == 7500 and .repository_writes == 0 and .promotion_applied == 0' "$out/block.json"
           sha256sum "$out/block.json" > "$out/manifest.sha256"
       - name: Upload repeated-promotion guard receipts
         uses: actions/upload-artifact@v6
@@ -510,7 +510,7 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "ACTIVATION_EVIDENCE_UNAVAILABLE" and .transition_applied == 0 and .repository_writes == 0' "$out/unavailable.json"
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "ACTIVATION_CAPSULE_DIGEST_MISMATCH" and .transition_applied == 0 and .repository_writes == 0' "$out/digest-mismatch.json"
           jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
-          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.source-backed-authority.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "bind-source-backed-authority")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.source-backed-authority.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "bind-source-backed-authority")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload source authority activation receipts
         uses: actions/upload-artifact@v6
@@ -638,7 +638,7 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "CANDIDATE_LEAKAGE_EVIDENCE_UNAVAILABLE" and .promotion_applied == 0' "$out/unavailable.json"
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "CANDIDATE_LEAKAGE_CAPSULE_DIGEST_MISMATCH" and .promotion_applied == 0' "$out/digest-mismatch.json"
           jq -e '.cases_total == 3 and .cases_passed == 3 and .coverage_bps == 10000' "$out/suite.json"
-          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
       - name: Upload candidate leakage eligibility receipts
         uses: actions/upload-artifact@v6
         with:
@@ -703,7 +703,7 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .reason == "CANDIDATE_LEAKAGE_ACTIVATION_EVIDENCE_UNAVAILABLE" and .transition_applied == 0 and .repository_writes == 0' "$out/unavailable.json"
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "CANDIDATE_LEAKAGE_ACTIVATION_CAPSULE_DIGEST_MISMATCH" and .transition_applied == 0 and .repository_writes == 0' "$out/digest-mismatch.json"
           jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
-          jq -e '.summary.denominator_total == 12 and .summary.operating == 8 and .summary.not_implemented == 4 and .summary.implementation_coverage_bps == 6666 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
+          jq -e '.summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload candidate leakage activation receipts
         uses: actions/upload-artifact@v6
