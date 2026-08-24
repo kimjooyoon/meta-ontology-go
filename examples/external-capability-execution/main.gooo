@@ -1,0 +1,14 @@
+package externalcapabilityexecution
+namespace externalcapabilityexecution
+
+entity PinnedReference id "gooo://external-capability/entity/pinned-reference"
+entity ParentCompatibility id "gooo://external-capability/entity/parent-compatibility"
+entity EmbeddedEvaluation id "gooo://external-capability/entity/embedded-evaluation"
+entity InterpretedFunction id "gooo://external-capability/entity/interpreted-function"
+entity ASTMacroGeneration id "gooo://external-capability/entity/ast-macro-generation"
+entity CapabilityReceipt id "gooo://external-capability/entity/capability-receipt"
+
+activity BindPinnedReference(PinnedReference) -> EmbeddedEvaluation
+activity ExecuteInterpretedFunction(EmbeddedEvaluation) -> InterpretedFunction
+activity GenerateCodeFromAST(InterpretedFunction) -> ASTMacroGeneration
+activity PreserveParentFailure(ASTMacroGeneration, ParentCompatibility) -> CapabilityReceipt
