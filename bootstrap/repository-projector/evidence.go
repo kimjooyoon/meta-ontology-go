@@ -17,6 +17,7 @@ func topologyFailures(root string) (int, int, error) {
 			return err
 		}
 		if len(children) > 10 {
+			fmt.Printf("repository-projector: direct-entry path=%s children=%d\n", name, len(children))
 			direct++
 		}
 		hasDirectory, hasFile := false, false

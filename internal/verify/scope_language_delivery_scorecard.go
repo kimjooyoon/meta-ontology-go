@@ -5,6 +5,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/transformation-effect.yml",
+		"bootstrap/repository-projector/evidence.go",
 		"cmd/language-delivery-scorecard",
 		"docs/language/language-delivery-scorecard.md",
 		"examples/language-delivery-scorecard",
