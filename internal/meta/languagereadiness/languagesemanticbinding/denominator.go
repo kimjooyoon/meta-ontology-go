@@ -1,10 +1,10 @@
 package languagesemanticbinding
 
 const (
-	syntaxCaseDenominator        = 17
-	syntaxValidSourceDenominator = 15
+	syntaxCaseDenominator        = 18
+	syntaxValidSourceDenominator = 16
 	syntaxInvalidCaseDenominator = 2
-	syntaxGoooLineDenominator    = 225
-	semanticCaseDenominator      = 20
-	semanticSourceDenominator    = 15
+	syntaxGoooLineDenominator    = 245
+	semanticCaseDenominator      = 21
+	semanticSourceDenominator    = 16
 )
