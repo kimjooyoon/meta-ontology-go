@@ -1364,7 +1364,6 @@ jobs:
     env:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
-      OUTPUT_DIR: ${{ runner.temp }}/vertical-slice-closure-eligibility
     steps:
       - name: Checkout exact subject
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -1377,6 +1376,8 @@ jobs:
           cache: false
       - name: Generate fixed eligibility receipts
         shell: bash
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/vertical-slice-closure-eligibility
         run: |
           set -euo pipefail
           mkdir -p "$OUTPUT_DIR"
@@ -1388,6 +1389,8 @@ jobs:
           cmp "$OUTPUT_DIR/suite.json" "$OUTPUT_DIR/replay.json"
       - name: Verify exact eligibility semantics
         shell: bash
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/vertical-slice-closure-eligibility
         run: |
           set -euo pipefail
           jq -e '
@@ -1414,6 +1417,6 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: vertical-slice-closure-eligibility-${{ env.SUBJECT_SHA }}
-          path: ${{ env.OUTPUT_DIR }}
+          path: ${{ runner.temp }}/vertical-slice-closure-eligibility
           if-no-files-found: error
           retention-days: 14
