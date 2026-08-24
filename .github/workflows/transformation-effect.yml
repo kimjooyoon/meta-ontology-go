@@ -1295,6 +1295,98 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  user-journey-scorecard:
+    name: user-journey-scorecard
+    needs: [language-concept-artifact]
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Download exact functional CLI receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: toolchain-cli-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/user-journey/upstream
+      - name: Observe user journeys and reduce audience views
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/user-journey"
+          binary="$work/gooo"
+          contract="$GITHUB_WORKSPACE/examples/user-journey-scorecard/contract.json"
+          upstream="$work/upstream/artifact.json"
+          mkdir -p "$work/first" "$work/replay" "$work/negative"
+          go build -trimpath -o "$binary" ./cmd/gooo
+          bash ./scripts/user-journey-profile/main.sh "$binary" "$GITHUB_WORKSPACE" "$HEAD_SHA" "$work/profile.json" 5
+          common=(
+            -root "$GITHUB_WORKSPACE"
+            -executable "$binary"
+            -expected-head "$HEAD_SHA"
+            -contract "$contract"
+            -upstream "$upstream"
+            -profile "$work/profile.json"
+          )
+          go run ./cmd/user-journey-scorecard "${common[@]}" -output "$work/first/report.json"
+          go run ./cmd/user-journey-scorecard "${common[@]}" -output "$work/replay/report.json"
+          cmp -s "$work/first/report.json" "$work/replay/report.json"
+          go run ./cmd/user-journey-scorecard "${common[@]}" -check "$work/first/report.json"
+          jq -e '
+            .schema == "gooo/user-journey-scorecard/v1" and
+            .status == "PASS" and .decision == "PASS" and .resolution == "EXACT" and
+            .summary.coordinates.satisfied == 15 and .summary.coordinates.total == 15 and
+            .summary.functional.upstream_cases == 12 and .summary.functional.positive_journeys == 6 and
+            .summary.resources.samples_observed == 30 and .summary.resources.samples_expected == 30 and
+            .summary.resources.envelopes_passed == 6 and
+            .summary.meta.bindings == 18 and .summary.meta.unknowns == 0 and
+            (.views[] | select(.Audience == "USER") | .Satisfied == 6 and .Total == 6) and
+            (.views[] | select(.Audience == "TOOL_AUTHOR") | .Satisfied == 10 and .Total == 10) and
+            (.views[] | select(.Audience == "GOVERNOR") | .Satisfied == 15 and .Total == 15) and
+            .resource_observation_mode == "RUNNER_SCOPED_NONDETERMINISTIC" and
+            .resource_measurement_replay_authority == false and .reducer_replay_verified == true and
+            .repository_writes == 0 and .mutation_authority == false
+          ' "$work/first/report.json"
+          jq '.subject_sha = "UNKNOWN"' "$work/profile.json" > "$work/negative/head.json"
+          jq '(.samples[0].max_rss_kib) = 262145' "$work/profile.json" > "$work/negative/rss.json"
+          jq '.samples = .samples[:-1]' "$work/profile.json" > "$work/negative/missing.json"
+          for case in head rss missing; do
+            changed=("${common[@]}")
+            changed[11]="$work/negative/$case.json"
+            go run ./cmd/user-journey-scorecard "${changed[@]}" -output "$work/negative/$case-report.json"
+          done
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/head-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .summary.resources.rss_violations == 1' "$work/negative/rss-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/missing-report.json"
+          jq -r '"### Gooo user journey scorecard\n- decision: \(.decision) / \(.resolution)\n- USER: \(.views[0].Satisfied)/\(.views[0].Total)\n- TOOL_AUTHOR: \(.views[1].Satisfied)/\(.views[1].Total)\n- GOVERNOR: \(.views[2].Satisfied)/\(.views[2].Total)\n- functional CLI: \(.summary.functional.upstream_cases)/12\n- samples: \(.summary.resources.samples_observed)/\(.summary.resources.samples_expected)\n- binary: \(.summary.resources.binary_size_bytes) bytes / \(.summary.resources.binary_size_limit) limit\n- measurement mode: \(.resource_observation_mode)\n- receipt: \(.digest)\n\n| journey | wall ms min/median/max | RSS KiB min/median/max |\n| --- | ---: | ---: |", (.journeys[] | "| \(.ID) | \(.WallMinMS)/\(.WallMedianMS)/\(.WallMaxMS) | \(.RSSMinKiB)/\(.RSSMedianKiB)/\(.RSSMaxKiB) |")' "$work/first/report.json" >> "$GITHUB_STEP_SUMMARY"
+          test -z "$(git status --porcelain)"
+      - name: Upload exact-head user journey scorecard
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: user-journey-scorecard-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/user-journey
+          if-no-files-found: error
+          retention-days: 30
+
   promotion-authorized-continuity:
     name: promotion-authorized-continuity
     needs:
