@@ -10,10 +10,10 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v1` registry contains exactly 16 cases: 14 valid `.gooo` sources and two
+The `v1` registry contains exactly 17 cases: 15 valid `.gooo` sources and two
 invalid text fixtures. CI also walks the repository and requires the observed
-`.gooo` path set to equal the 14 registered valid paths. The current fixed
-corpus contains exactly 205 physical Gooo lines, and each file carries its
+`.gooo` path set to equal the 15 registered valid paths. The current fixed
+corpus contains exactly 225 physical Gooo lines, and each file carries its
 individual line count and source digest.
 
 ## Indicators
@@ -34,7 +34,7 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 14 valid cases satisfy all five preservation laws |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 15 valid cases satisfy all five preservation laws |
 | REGRESSION | reject-invalid-syntax-with-zero-effects | both diagnostics reject and writes and authority remain zero |
 
 ## CI authority

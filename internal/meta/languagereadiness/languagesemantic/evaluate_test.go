@@ -18,6 +18,31 @@ func TestValidateSyntaxReceiptRejectsUnknownDecision(t *testing.T) {
 	}
 }
 
+func TestValidateSyntaxReceiptAcceptsVersionedDenominator(t *testing.T) {
+	head := "0123456789012345678901234567890123456789"
+	receipt := syntaxReceipt{
+		Schema:     "gooo/language-syntax-roundtrip/v1",
+		Decision:   "PASS",
+		Resolution: "EXACT",
+		Summary: SyntaxSummary{
+			Satisfied:    17,
+			Total:        17,
+			ValidCases:   15,
+			InvalidCases: 2,
+			GoooLines:    225,
+		},
+		Source: syntaxSource{
+			ExpectedHeadSHA:  head,
+			GoooFiles:        make([]GoooFile, expectedSources),
+			ObservationKnown: true,
+			ConceptBound:     true,
+		},
+	}
+	if err := validateSyntaxReceipt(receipt, head); err != nil {
+		t.Fatalf("versioned syntax denominator must remain consumable: %v", err)
+	}
+}
+
 func TestRegistryRejectsUnknownLaw(t *testing.T) {
 	registry := Registry{Schema: RegistrySchema, Version: "test", Cases: make([]Definition, FixedTotal)}
 	for index := range registry.Cases {

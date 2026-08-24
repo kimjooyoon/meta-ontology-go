@@ -8,7 +8,7 @@ func buildIndicators(summary Summary) []Indicator {
 		{"gooo.metric.language.semantic-readiness-binding-bps.v1", "OUTCOME", "COHERENCE", "bind-semantic-readiness-evidence", 10000, 10000},
 		{"gooo.metric.language.semantic-readiness-bound-coordinates.v1", "DRIVER", "FOUNDATION", "bind-exact-artifact-coordinates", summary.BoundCoordinates, ExpectedCoordinates},
 		{"gooo.metric.language.semantic-readiness-completed-obligations.v1", "DRIVER", "COHERENCE", "bind-semantic-readiness-floor", summary.ReadinessCompleted, SemanticReadinessFloor},
-		{"gooo.metric.language.semantic-readiness-executed-cases.v1", "DRIVER", "COHERENCE", "bind-semantic-corpus", summary.SemanticSatisfied, 19},
+		{"gooo.metric.language.semantic-readiness-executed-cases.v1", "DRIVER", "COHERENCE", "bind-semantic-corpus", summary.SemanticSatisfied, semanticCaseDenominator},
 		{"gooo.metric.language.semantic-readiness-metric-bindings.v1", "DRIVER", "FOUNDATION", "bind-concept-metrics", summary.MetricBindings, 19},
 		{"gooo.metric.language.semantic-readiness-unresolved.guardrail.v1", "GUARDRAIL", "FOUNDATION", "lower-binding-resolution", summary.Unresolved, 0},
 		{"gooo.metric.language.semantic-readiness-effects.guardrail.v1", "GUARDRAIL", "REGRESSION", "seal-semantic-effects", summary.EffectfulStages, 0},
