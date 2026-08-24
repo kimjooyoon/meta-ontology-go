@@ -951,7 +951,7 @@ jobs:
           assurance="$RUNNER_TEMP/rollback-integrity/assurance/independent.json"
           baseline="internal/meta/languageassurance/rollbackintegrityshadow/evidence/assurance.json"
           mkdir -p "$out"
-          jq -e --arg subject "$SUBJECT_SHA" '.subject_sha == $subject and .summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.operation.rollback-integrity.v1" and .status == "NOT_IMPLEMENTED" and .resolution == "NONE" and .meta_operation == "")] | length) == 1' "$assurance"
+          jq -e --arg subject "$SUBJECT_SHA" '.subject_sha == $subject and .summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.operation.rollback-integrity.v1" and .status == "NOT_IMPLEMENTED" and .resolution == "NONE" and (.meta_operation == null or .meta_operation == ""))] | length) == 1' "$assurance"
           for suffix in a b; do
             go run ./cmd/rollback-integrity-shadow-witness -assurance "$baseline" -output "$out/exact-$suffix.json"
           done
