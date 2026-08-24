@@ -29,7 +29,7 @@ var denominatorV1 = []ObligationDefinition{
 	obligation(MetricRoleConflict, PriorityP0, ClassGuardrail, ProofCoherence, "detect-role-conflict-paths"),
 	obligation(MetricUnknownLaundering, PriorityP0, ClassGuardrail, ProofRegression, "detect-unknown-laundering"),
 	obligation(MetricSnapshotBinding, PriorityP0, ClassDriver, ProofFoundation, "bind-exact-snapshot"),
-	obligation("gooo.metric.evidence.raw-reconstruction.v1", PriorityP0, ClassDriver, ProofRegression, "reconstruct-raw-evidence"),
+	obligation(MetricRawReconstruction, PriorityP0, ClassDriver, ProofRegression, "reconstruct-raw-evidence"),
 	obligation("gooo.metric.effects.write-set-exactness.v1", PriorityP0, ClassGuardrail, ProofRegression, "observe-exact-write-set"),
 	obligation("gooo.metric.semantic.source-backed-authority.v1", PriorityP1, ClassDriver, ProofFoundation, "bind-source-backed-authority"),
 	obligation("gooo.metric.semantic.candidate-leakage.v1", PriorityP1, ClassGuardrail, ProofCoherence, "detect-candidate-leakage"),
@@ -39,7 +39,7 @@ var denominatorV1 = []ObligationDefinition{
 	obligation("gooo.metric.ecosystem.external-conformance.v1", PriorityP2, ClassOutcome, ProofRegression, "verify-external-conformance"),
 }
 
-var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot"}
+var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot", MetricRawReconstruction: "reconstruct-raw-evidence"}
 
 var snapshotEvidenceIDs = []string{"authority_routes", "role_bindings", "decision_transitions"}
 
@@ -59,6 +59,7 @@ func CanonicalMetaOperations() []MetaOperation {
 		{ID: "detect-role-conflict-paths", Activity: "DetectRoleConflictPaths", ProofChoice: ProofCoherence},
 		{ID: "detect-unknown-laundering", Activity: "DetectUnknownLaundering", ProofChoice: ProofRegression},
 		{ID: "bind-exact-snapshot", Activity: "BindExactSnapshot", ProofChoice: ProofFoundation},
+		{ID: "reconstruct-raw-evidence", Activity: "ReconstructRawEvidence", ProofChoice: ProofRegression},
 	}
 }
 

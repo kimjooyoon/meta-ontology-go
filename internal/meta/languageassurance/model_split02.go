@@ -17,12 +17,13 @@ type SnapshotBinding struct {
 }
 
 type Transaction struct {
-	Schema              string               `json:"schema"`
-	TransactionID       string               `json:"transaction_id"`
-	AuthorityRoutes     []AuthorityRoute     `json:"authority_routes"`
-	RoleBindings        []RoleBinding        `json:"role_bindings"`
-	DecisionTransitions []DecisionTransition `json:"decision_transitions"`
-	SnapshotBindings    []SnapshotBinding    `json:"snapshot_bindings"`
+	Schema              string                     `json:"schema"`
+	TransactionID       string                     `json:"transaction_id"`
+	AuthorityRoutes     []AuthorityRoute           `json:"authority_routes"`
+	RoleBindings        []RoleBinding              `json:"role_bindings"`
+	DecisionTransitions []DecisionTransition       `json:"decision_transitions"`
+	SnapshotBindings    []SnapshotBinding          `json:"snapshot_bindings"`
+	RawReconstructions  []RawReconstructionReceipt `json:"raw_reconstructions"`
 }
 
 type ObligationDefinition struct {
@@ -40,17 +41,20 @@ type MetaOperation struct {
 }
 
 type Finding struct {
-	MetricID    string   `json:"metric_id"`
-	PathID      string   `json:"path_id"`
-	Principal   string   `json:"principal,omitempty"`
-	RuleID      string   `json:"rule_id,omitempty"`
-	Roles       []Role   `json:"roles,omitempty"`
-	DecisionID  string   `json:"decision_id,omitempty"`
-	Input       Decision `json:"input,omitempty"`
-	Output      Decision `json:"output,omitempty"`
-	EvidenceID  string   `json:"evidence_id,omitempty"`
-	ExpectedSHA string   `json:"expected_sha,omitempty"`
-	ObservedSHA string   `json:"observed_sha,omitempty"`
+	MetricID       string   `json:"metric_id"`
+	PathID         string   `json:"path_id"`
+	Principal      string   `json:"principal,omitempty"`
+	RuleID         string   `json:"rule_id,omitempty"`
+	Roles          []Role   `json:"roles,omitempty"`
+	DecisionID     string   `json:"decision_id,omitempty"`
+	Input          Decision `json:"input,omitempty"`
+	Output         Decision `json:"output,omitempty"`
+	EvidenceID     string   `json:"evidence_id,omitempty"`
+	ExpectedSHA    string   `json:"expected_sha,omitempty"`
+	ObservedSHA    string   `json:"observed_sha,omitempty"`
+	VerifierID     string   `json:"verifier_id,omitempty"`
+	ExpectedDigest string   `json:"expected_digest,omitempty"`
+	ObservedDigest string   `json:"observed_digest,omitempty"`
 }
 
 type Indicator struct {
