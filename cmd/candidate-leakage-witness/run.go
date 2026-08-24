@@ -3,9 +3,14 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakage"
 )
+
+func main() {
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
 
 func run(arguments []string, stdout, stderr io.Writer) int {
 	options, err := parseOptions(arguments, stderr)
