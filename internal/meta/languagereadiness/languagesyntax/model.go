@@ -11,8 +11,8 @@ const (
 	ResolutionLower = "LOWER_RESOLUTION"
 	KindValid       = "VALID"
 	KindInvalid     = "INVALID"
-	totalCases      = 18
-	validCases      = 16
+	totalCases      = 19
+	validCases      = 17
 	invalidCases    = 2
 	invalidDigest   = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )

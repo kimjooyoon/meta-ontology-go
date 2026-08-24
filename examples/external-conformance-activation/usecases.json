@@ -1,0 +1,14 @@
+{
+  "schema": "gooo/external-conformance-activation-usecases/v1",
+  "total": 8,
+  "cases": [
+    {"id": "activate-exact-merged-proof", "effect": "APPLY_TRANSITION"},
+    {"id": "lower-missing-evidence-resolution", "effect": "BLOCK"},
+    {"id": "block-capsule-mismatch", "effect": "BLOCK"},
+    {"id": "preserve-eligibility-unknown", "effect": "BLOCK"},
+    {"id": "reject-fixed-point-laundering", "effect": "BLOCK"},
+    {"id": "reject-unrecognized-top-decision", "effect": "BLOCK"},
+    {"id": "preserve-assurance-unknown", "effect": "BLOCK"},
+    {"id": "preserve-merge-unknown", "effect": "BLOCK"}
+  ]
+}

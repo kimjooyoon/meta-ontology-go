@@ -6,13 +6,14 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/candidateleakageactivation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/changedsurfacereceiptactivation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/externalconformanceactivation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/rollbackintegrityactivation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/sourceauthorityactivation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/verticalsliceclosureactivation"
 )
 
 func operatingOperationSet() (map[string]string, error) {
-	operations := make(map[string]string, len(operatingOperations)+5)
+	operations := make(map[string]string, len(operatingOperations)+6)
 	maps.Copy(operations, operatingOperations)
 	metricID, operation, err := sourceauthorityactivation.OperatingOperation()
 	if err != nil {
@@ -52,6 +53,14 @@ func operatingOperationSet() (map[string]string, error) {
 	}
 	if metricID != "gooo.metric.capability.vertical-slice-closure.v1" || operation != "close-vertical-slice" {
 		return nil, fmt.Errorf("vertical slice closure activation operation mismatch")
+	}
+	operations[metricID] = operation
+	metricID, operation, err = externalconformanceactivation.OperatingOperation()
+	if err != nil {
+		return nil, fmt.Errorf("external conformance activation: %w", err)
+	}
+	if metricID != "gooo.metric.ecosystem.external-conformance.v1" || operation != "verify-external-conformance" {
+		return nil, fmt.Errorf("external conformance activation operation mismatch")
 	}
 	operations[metricID] = operation
 	return operations, nil

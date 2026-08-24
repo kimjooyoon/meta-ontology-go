@@ -47,10 +47,6 @@ var conflictPairs = []RolePair{{Left: RoleContractAuthor, Right: RoleEvaluatorAu
 
 var launderingOutputs = []Decision{DecisionPass, DecisionFixedPoint, DecisionAuthorized, DecisionAllow}
 
-func Denominator() []ObligationDefinition {
-	return append([]ObligationDefinition(nil), denominatorV1...)
-}
-
 func CanonicalMetaOperations() []MetaOperation {
 	return []MetaOperation{
 		{ID: "freeze-assurance-denominator", Activity: "FreezeAssuranceDenominator", ProofChoice: ProofCoherence},
@@ -62,14 +58,10 @@ func CanonicalMetaOperations() []MetaOperation {
 		{ID: "reconstruct-raw-evidence", Activity: "ReconstructRawEvidence", ProofChoice: ProofRegression},
 		{ID: "observe-exact-write-set", Activity: "ObserveExactWriteSet", ProofChoice: ProofRegression},
 		{ID: "bind-source-backed-authority", Activity: "BindSourceBackedAuthority", ProofChoice: ProofFoundation},
-		{ID: "detect-candidate-leakage", Activity: "DetectCandidateLeakage", ProofChoice: ProofCoherence}, {ID: "totalize-changed-surface-receipts", Activity: "TotalizeChangedSurfaceReceipts", ProofChoice: ProofCoherence}, {ID: "verify-rollback-integrity", Activity: "VerifyRollbackIntegrity", ProofChoice: ProofRegression}, {ID: "close-vertical-slice", Activity: "CloseVerticalSlice", ProofChoice: ProofCoherence},
+		{ID: "detect-candidate-leakage", Activity: "DetectCandidateLeakage", ProofChoice: ProofCoherence},
+		{ID: "totalize-changed-surface-receipts", Activity: "TotalizeChangedSurfaceReceipts", ProofChoice: ProofCoherence},
+		{ID: "verify-rollback-integrity", Activity: "VerifyRollbackIntegrity", ProofChoice: ProofRegression},
+		{ID: "close-vertical-slice", Activity: "CloseVerticalSlice", ProofChoice: ProofCoherence},
+		{ID: "verify-external-conformance", Activity: "VerifyExternalConformance", ProofChoice: ProofRegression},
 	}
-}
-
-func RoleConflictPairs() []RolePair { return append([]RolePair(nil), conflictPairs...) }
-
-func UnknownLaunderingOutputs() []Decision { return append([]Decision(nil), launderingOutputs...) }
-
-func obligation(metricID string, priority Priority, class IndicatorClass, proof ProofChoice, operation string) ObligationDefinition {
-	return ObligationDefinition{MetricID: metricID, Priority: priority, Class: class, ProofChoice: proof, RequiredMetaOperation: operation}
 }
