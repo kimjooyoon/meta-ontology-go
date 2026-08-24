@@ -1,10 +1,10 @@
 # User journey scorecard
 
-This contract projects the existing 12-case `gooo` CLI receipt into six
+This contract projects the existing 12-case `gooo` CLI receipt into seven
 positive user journeys and observes each journey five times on `ubuntu-24.04`.
-The fixed sample denominator is therefore 30.
+The fixed sample denominator is therefore 35.
 
-`USER` sees 6 coordinates, `TOOL_AUTHOR` sees 10, and `GOVERNOR` sees all 15.
+`USER` sees 6 indicator coordinates, `TOOL_AUTHOR` sees 10, and `GOVERNOR` sees all 15.
 Every view references the same exact-head functional receipt and the same
 runner-scoped resource profile.
 

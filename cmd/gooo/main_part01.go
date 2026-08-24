@@ -24,6 +24,8 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return exitUsage
 	}
 	switch args[0] {
+	case "run":
+		return runSource(args[1:], OSFileReader{}, stdout, stderr)
 	case "check":
 		return runCheck(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "generate":

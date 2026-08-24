@@ -37,6 +37,8 @@ func artifactPrefix(name SourceName) string {
 		return "toolchain-lsp-"
 	case SourceRelease:
 		return "toolchain-cross-platform-release-"
+	case SourceExecution:
+		return "language-source-execution-"
 	case SourceReadiness:
 		return "language-readiness-artifact-"
 	default:

@@ -37,6 +37,8 @@ func ReadEvidence(paths map[SourceName]string) (EvidenceSet, error) {
 			set.LSP = data
 		case SourceRelease:
 			set.Release = data
+		case SourceExecution:
+			set.Execution = data
 		case SourceReadiness:
 			set.Readiness = data
 		}

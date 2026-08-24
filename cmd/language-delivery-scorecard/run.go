@@ -7,7 +7,7 @@ import (
 )
 
 type options struct {
-	head, contract, manifest, user, conformance, lsp, release, readiness, out string
+	head, contract, manifest, user, conformance, lsp, release, execution, readiness, out string
 }
 
 func run(args []string, stdout, stderr io.Writer) int {
@@ -21,6 +21,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags.StringVar(&value.conformance, "conformance", "", "toolchain conformance receipt")
 	flags.StringVar(&value.lsp, "lsp", "", "toolchain LSP receipt")
 	flags.StringVar(&value.release, "release", "", "cross-platform release receipt")
+	flags.StringVar(&value.execution, "execution", "", "language source execution receipt")
 	flags.StringVar(&value.readiness, "readiness", "", "internal readiness artifact")
 	flags.StringVar(&value.out, "out", "", "output report JSON")
 	if err := flags.Parse(args); err != nil {
