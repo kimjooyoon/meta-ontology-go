@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/candidate-leakage-activation-denominator/v1",
+  "cases": [
+    {
+      "id": "exact",
+      "expected_decision": "APPLIED",
+      "expected_resolution": "EXACT",
+      "expected_reason": "CANDIDATE_LEAKAGE_ACTIVATED"
+    },
+    {
+      "id": "unavailable",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "UNKNOWN",
+      "expected_reason": "CANDIDATE_LEAKAGE_ACTIVATION_EVIDENCE_UNAVAILABLE"
+    },
+    {
+      "id": "digest-mismatch",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "INVARIANT_ONLY",
+      "expected_reason": "CANDIDATE_LEAKAGE_ACTIVATION_CAPSULE_DIGEST_MISMATCH"
+    }
+  ]
+}
