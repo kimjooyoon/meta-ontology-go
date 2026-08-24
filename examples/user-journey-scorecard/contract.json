@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/user-journey-scorecard-contract/v1",
+  "version": 1,
+  "samples_per_journey": 5,
+  "wall_ms_limit": 5000,
+  "max_rss_kib_limit": 262144,
+  "binary_size_bytes_limit": 33554432,
+  "source": "examples/billing/main.gooo",
+  "journeys": [
+    {"id":"version-text","operation":"VERSION_TEXT","arguments":["version"],"proof_choice":"FOUNDATION","meta_operation":"measure-version-text-resource"},
+    {"id":"version-json","operation":"VERSION_JSON","arguments":["version","--json"],"proof_choice":"FOUNDATION","meta_operation":"measure-version-json-resource"},
+    {"id":"check-text","operation":"CHECK_TEXT","arguments":["check","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-syntax-check-resource"},
+    {"id":"check-json","operation":"CHECK_JSON","arguments":["check","--json","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-structured-check-resource"},
+    {"id":"roundtrip-json","operation":"ROUNDTRIP_JSON","arguments":["roundtrip","--json","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-roundtrip-resource"},
+    {"id":"semantic-check","operation":"SEMANTIC_CHECK","arguments":["check","--semantic","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-semantic-check-resource"}
+  ]
+}
