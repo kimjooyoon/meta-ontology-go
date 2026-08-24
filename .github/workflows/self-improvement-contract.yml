@@ -298,3 +298,82 @@ jobs:
           name: write-set-exactness-${{ env.EXACT_SUBJECT_SHA }}
           path: ${{ runner.temp }}/write-set-receipts
           if-no-files-found: error
+
+  source-authority-upstream:
+    name: Source authority upstream
+    runs-on: ubuntu-latest
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ env.EXACT_SHA }}
+
+      - name: Install Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+
+      - name: Materialize and activate the logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.EXACT_SHA }}
+
+      - name: Check Go 1.27 fixes
+        run: |
+          fix_diff="$(go fix -diff ./internal/meta/languageassurance/sourceauthorityupstream ./cmd/source-authority-upstream-witness)"
+          test -z "$fix_diff" || { printf '%s\n' "$fix_diff"; exit 1; }
+
+      - name: Test upstream producer
+        run: go test ./internal/meta/languageassurance/sourceauthorityupstream ./cmd/source-authority-upstream-witness
+
+      - name: Observe immutable upstream twice
+        run: |
+          mkdir -p "$RUNNER_TEMP/source-authority-upstream"
+          go run ./cmd/source-authority-upstream-witness \
+            --expected-sha "$EXACT_SHA" \
+            --output-dir "$RUNNER_TEMP/source-authority-upstream/first"
+          go run ./cmd/source-authority-upstream-witness \
+            --expected-sha "$EXACT_SHA" \
+            --output-dir "$RUNNER_TEMP/source-authority-upstream/replay"
+          cmp "$RUNNER_TEMP/source-authority-upstream/first/manifest.sha256" \
+            "$RUNNER_TEMP/source-authority-upstream/replay/manifest.sha256"
+
+      - name: Verify fixed upstream denominator
+        run: |
+          suite="$RUNNER_TEMP/source-authority-upstream/first/suite.json"
+          jq -e --arg sha "$EXACT_SHA" '
+            .schema == "gooo/upstream-source-conformance/v1" and
+            .subject_sha == $sha and
+            .denominator_id == "gooo/upstream-source-conformance-denominator/v1" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .summary.cases_total == 3 and .summary.cases_passed == 3 and
+            .summary.exact_allow == 1 and .summary.fail_closed == 2 and
+            .summary.coverage_bps == 10000 and
+            .repository_writes == 0 and .promotion_credit_bps == 0
+          ' "$suite"
+          jq -e '
+            .observation == "SATISFIED" and .resolution == "EXACT" and .enforcement == "ALLOW" and
+            .snapshot.digest == "sha256:29362aa311de0f24c66f41cc65a8b6ffd996baf37e048b5a72db63172aae5bf2" and
+            .snapshot.bytes == 77 and
+            ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and
+            ([.indicators[] | select(.satisfied == true)] | length) == 6
+          ' "$RUNNER_TEMP/source-authority-upstream/first/exact.json"
+          jq -e '.observation == "UNKNOWN" and .resolution == "INVARIANT_ONLY" and .enforcement == "BLOCK" and .reason == "SOURCE_DIGEST_MISMATCH"' \
+            "$RUNNER_TEMP/source-authority-upstream/first/digest-mismatch.json"
+          jq -e '.observation == "UNKNOWN" and .resolution == "INVARIANT_ONLY" and .enforcement == "BLOCK" and .reason == "AUTHORITY_SCOPE_MISMATCH" and .snapshot == null' \
+            "$RUNNER_TEMP/source-authority-upstream/first/authority-mismatch.json"
+
+      - name: Upload exact upstream receipts
+        uses: actions/upload-artifact@v6
+        with:
+          name: source-authority-upstream-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/source-authority-upstream
+          if-no-files-found: error
+          retention-days: 14
