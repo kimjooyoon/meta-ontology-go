@@ -1,13 +1,5 @@
 package externalecosystemexecution
 
-func indicator(c Criterion, status, reason string) Indicator {
-	n := 0
-	if status == "SATISFIED" {
-		n = 1
-	}
-	return Indicator{c.ID, c.Kind, status, n, 1, reason}
-}
-
 func buildIndicators(o *Observation) []Indicator {
 	c := Criteria()
 	if o == nil {

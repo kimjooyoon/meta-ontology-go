@@ -6,18 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"os/exec"
-	"sort"
 	"strings"
 )
-
-type goEvent struct {
-	Action     string `json:"Action"`
-	Package    string `json:"Package"`
-	Test       string `json:"Test"`
-	ImportPath string `json:"ImportPath"`
-	Output     string `json:"Output"`
-	OutputType string `json:"OutputType"`
-}
 
 func runGoTest(ctx context.Context, root string, index int) RunObservation {
 	cmd := exec.CommandContext(ctx, "go", "test", "-json", "-count=1", "./...")
@@ -47,8 +37,7 @@ func parseEvents(data []byte) ([]Outcome, []string, []string, int) {
 	final := map[string]Outcome{}
 	unknown := map[string]bool{}
 	diagnostics := make([]string, 0, 64)
-	known := map[string]bool{"start": true, "run": true, "pause": true, "cont": true, "pass": true,
-		"bench": true, "fail": true, "output": true, "skip": true, "build-output": true, "build-fail": true}
+
 	scanner, count := bufio.NewScanner(bytes.NewReader(data)), 0
 	scanner.Buffer(make([]byte, 64*1024), 16*1024*1024)
 	for scanner.Scan() {
@@ -58,7 +47,7 @@ func parseEvents(data []byte) ([]Outcome, []string, []string, int) {
 			unknown["invalid-json"] = true
 			continue
 		}
-		if !known[event.Action] {
+		if !knownEventActions[event.Action] {
 			unknown[event.Action] = true
 			continue
 		}
@@ -77,37 +66,6 @@ func parseEvents(data []byte) ([]Outcome, []string, []string, int) {
 	if scanner.Err() != nil {
 		unknown["scanner-error"] = true
 	}
-	outcomes := make([]Outcome, 0, len(final))
-	for _, item := range final {
-		outcomes = append(outcomes, item)
-	}
-	sort.Slice(outcomes, func(i, j int) bool {
-		if outcomes[i].Package == outcomes[j].Package {
-			return outcomes[i].Test < outcomes[j].Test
-		}
-		return outcomes[i].Package < outcomes[j].Package
-	})
-	unknowns := make([]string, 0, len(unknown))
-	for item := range unknown {
-		unknowns = append(unknowns, item)
-	}
-	sort.Strings(unknowns)
+	outcomes, unknowns := normalizedEventResults(final, unknown)
 	return outcomes, unknowns, diagnostics, count
-}
-
-func diagnosticEvent(event goEvent) bool {
-	if event.Action == "build-output" {
-		return event.Output != ""
-	}
-	return event.Action == "output" && event.Output != "" &&
-		(event.OutputType == "error" || event.OutputType == "error-continue")
-}
-
-func hasFailure(outcomes []Outcome) bool {
-	for _, item := range outcomes {
-		if item.Action == "fail" || item.Action == "build-fail" {
-			return true
-		}
-	}
-	return false
 }

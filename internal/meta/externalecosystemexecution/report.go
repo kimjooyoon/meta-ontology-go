@@ -9,10 +9,27 @@ type Indicator struct {
 	Reason      string `json:"reason"`
 }
 
+func indicator(c Criterion, status, reason string) Indicator {
+	n := 0
+	if status == "SATISFIED" {
+		n = 1
+	}
+	return Indicator{c.ID, c.Kind, status, n, 1, reason}
+}
+
 type Proof struct {
 	Mode   string `json:"mode"`
 	Status string `json:"status"`
 	Reason string `json:"reason"`
+}
+
+func hasFailure(outcomes []Outcome) bool {
+	for _, item := range outcomes {
+		if item.Action == "fail" || item.Action == "build-fail" {
+			return true
+		}
+	}
+	return false
 }
 
 type Report struct {

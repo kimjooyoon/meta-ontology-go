@@ -68,16 +68,3 @@ func proofs(o *Observation, indicators []Indicator) []Proof {
 	}
 	return append(result, Proof{Mode: "REGRESSION", Status: status, Reason: "FIXED_NEGATIVE_SUITE"})
 }
-
-func groupStatus(items []Indicator) string {
-	status := "SATISFIED"
-	for _, item := range items {
-		if item.Status == "UNKNOWN" {
-			return "UNKNOWN"
-		}
-		if item.Status != "SATISFIED" {
-			status = "UNSATISFIED"
-		}
-	}
-	return status
-}

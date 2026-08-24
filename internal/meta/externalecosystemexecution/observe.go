@@ -1,11 +1,9 @@
 package externalecosystemexecution
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"os"
 	"path/filepath"
+	"sort"
 )
 
 const referenceEvidencePath = "internal/meta/externalecosystemconformance/evidence/gomacro.json"
@@ -43,16 +41,29 @@ func Observe(ctx context.Context, sourceRoot, externalRoot string) (Observation,
 	}, nil
 }
 
-func loadReference(sourceRoot string, external RepositoryState, moduleGo string) ReferenceReceipt {
-	path := filepath.Join(sourceRoot, referenceEvidencePath)
-	b, err := os.ReadFile(path)
-	available := err == nil
-	exact := available && json.Valid(b) && bytes.Contains(b, []byte(ExpectedCommit)) &&
-		bytes.Contains(b, []byte(ExpectedTree)) && bytes.Contains(b, []byte(ExpectedModuleGo))
-	return ReferenceReceipt{
-		Available: available, BindingExact: exact, ContractVersion: ReferenceContractVersion,
-		Decision: ExpectedReferenceDecision, Resolution: "EXACT", URL: ExpectedReferenceURL,
-		Commit: external.Commit, Tree: external.Tree, ModuleGo: moduleGo,
-		EvidencePath: referenceEvidencePath, EvidenceSHA256: Digest(b),
+func diagnosticEvent(event goEvent) bool {
+	if event.Action == "build-output" {
+		return event.Output != ""
 	}
+	return event.Action == "output" && event.Output != "" &&
+		(event.OutputType == "error" || event.OutputType == "error-continue")
+}
+
+func normalizedEventResults(final map[string]Outcome, unknown map[string]bool) ([]Outcome, []string) {
+	outcomes := make([]Outcome, 0, len(final))
+	for _, item := range final {
+		outcomes = append(outcomes, item)
+	}
+	sort.Slice(outcomes, func(i, j int) bool {
+		if outcomes[i].Package == outcomes[j].Package {
+			return outcomes[i].Test < outcomes[j].Test
+		}
+		return outcomes[i].Package < outcomes[j].Package
+	})
+	unknowns := make([]string, 0, len(unknown))
+	for item := range unknown {
+		unknowns = append(unknowns, item)
+	}
+	sort.Strings(unknowns)
+	return outcomes, unknowns
 }

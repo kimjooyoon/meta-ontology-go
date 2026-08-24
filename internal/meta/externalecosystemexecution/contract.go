@@ -1,9 +1,12 @@
 package externalecosystemexecution
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"os/exec"
+	"strings"
 )
 
 const (
@@ -47,3 +50,23 @@ func Digest(value any) string {
 }
 
 func DenominatorDigest() string { return Digest(denominator) }
+
+func commandText(ctx context.Context, dir, name string, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.Dir, cmd.Env = dir, controlledEnv()
+	b, err := cmd.Output()
+	return strings.TrimSpace(string(b)), err
+}
+
+func groupStatus(items []Indicator) string {
+	status := "SATISFIED"
+	for _, item := range items {
+		if item.Status == "UNKNOWN" {
+			return "UNKNOWN"
+		}
+		if item.Status != "SATISFIED" {
+			status = "UNSATISFIED"
+		}
+	}
+	return status
+}

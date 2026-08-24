@@ -28,6 +28,18 @@ type Outcome struct {
 	Action  string `json:"action"`
 }
 
+type goEvent struct {
+	Action     string `json:"Action"`
+	Package    string `json:"Package"`
+	Test       string `json:"Test"`
+	ImportPath string `json:"ImportPath"`
+	Output     string `json:"Output"`
+	OutputType string `json:"OutputType"`
+}
+
+var knownEventActions = map[string]bool{"start": true, "run": true, "pause": true, "cont": true, "pass": true,
+	"bench": true, "fail": true, "output": true, "skip": true, "build-output": true, "build-fail": true}
+
 type RunObservation struct {
 	Index            int       `json:"index"`
 	ExitCode         int       `json:"exit_code"`

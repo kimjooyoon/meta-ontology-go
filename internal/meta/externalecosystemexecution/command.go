@@ -2,9 +2,11 @@ package externalecosystemexecution
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"encoding/json"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -23,13 +25,6 @@ func controlledEnv() []string {
 		}
 	}
 	return append(env, "GOTOOLCHAIN=local", "GOWORK=off", "GOFLAGS=-mod=readonly")
-}
-
-func commandText(ctx context.Context, dir, name string, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, name, args...)
-	cmd.Dir, cmd.Env = dir, controlledEnv()
-	b, err := cmd.Output()
-	return strings.TrimSpace(string(b)), err
 }
 
 func captureRepository(ctx context.Context, root string) (RepositoryState, error) {
@@ -62,4 +57,18 @@ func moduleGoVersion(path string) (string, error) {
 		}
 	}
 	return "", scanner.Err()
+}
+
+func loadReference(sourceRoot string, external RepositoryState, moduleGo string) ReferenceReceipt {
+	path := filepath.Join(sourceRoot, referenceEvidencePath)
+	b, err := os.ReadFile(path)
+	available := err == nil
+	exact := available && json.Valid(b) && bytes.Contains(b, []byte(ExpectedCommit)) &&
+		bytes.Contains(b, []byte(ExpectedTree)) && bytes.Contains(b, []byte(ExpectedModuleGo))
+	return ReferenceReceipt{
+		Available: available, BindingExact: exact, ContractVersion: ReferenceContractVersion,
+		Decision: ExpectedReferenceDecision, Resolution: "EXACT", URL: ExpectedReferenceURL,
+		Commit: external.Commit, Tree: external.Tree, ModuleGo: moduleGo,
+		EvidencePath: referenceEvidencePath, EvidenceSHA256: Digest(b),
+	}
 }
