@@ -59,10 +59,8 @@ func CanonicalMetaOperations() []MetaOperation {
 		{ID: "detect-role-conflict-paths", Activity: "DetectRoleConflictPaths", ProofChoice: ProofCoherence},
 		{ID: "detect-unknown-laundering", Activity: "DetectUnknownLaundering", ProofChoice: ProofRegression},
 		{ID: "bind-exact-snapshot", Activity: "BindExactSnapshot", ProofChoice: ProofFoundation},
-		{ID: "reconstruct-raw-evidence", Activity: "ReconstructRawEvidence", ProofChoice: ProofRegression}, MetaOperation{ID: "observe-exact-write-set",
-
-			Activity: "ObserveExactWriteSet", ProofChoice: "REGRESSION",
-		},
+		{ID: "reconstruct-raw-evidence", Activity: "ReconstructRawEvidence", ProofChoice: ProofRegression},
+		{ID: "observe-exact-write-set", Activity: "ObserveExactWriteSet", ProofChoice: ProofRegression},
 	}
 }
 

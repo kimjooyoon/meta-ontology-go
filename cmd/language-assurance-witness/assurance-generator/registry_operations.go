@@ -24,11 +24,11 @@ func addMetaOperation(file *ast.File, spec metricSpec) error {
 			if !ok {
 				continue
 			}
-			expression, err := parser.ParseExpr(fmt.Sprintf("MetaOperation{ID:%q, Activity:%q, ProofChoice:%q}", spec.MetaOperation, spec.Activity, spec.ProofChoice))
+			expression, err := parser.ParseExpr(fmt.Sprintf("[]MetaOperation{{ID:%q, Activity:%q, ProofChoice:ProofRegression}}", spec.MetaOperation, spec.Activity))
 			if err != nil {
 				return err
 			}
-			literal.Elts = append(literal.Elts, expression)
+			literal.Elts = append(literal.Elts, expression.(*ast.CompositeLit).Elts[0])
 			return nil
 		}
 	}
