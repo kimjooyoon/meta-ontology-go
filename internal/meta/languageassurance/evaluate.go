@@ -11,6 +11,7 @@ func Evaluate(subjectSHA string, transaction Transaction) (Report, error) {
 	obligations, operating := observeObligations(definitions)
 	findings := append(detectSelfMinting(transaction), detectRoleConflicts(transaction)...)
 	findings = append(findings, detectUnknownLaundering(transaction)...)
+	findings = append(findings, detectSnapshotMismatches(subjectSHA, transaction)...)
 	sort.Slice(findings, func(i, j int) bool {
 		return findings[i].MetricID+findings[i].PathID < findings[j].MetricID+findings[j].PathID
 	})
@@ -23,6 +24,8 @@ func Evaluate(subjectSHA string, transaction Transaction) (Report, error) {
 	roleConflicts := countFindings(findings, MetricRoleConflict)
 	unknownLaundering := countFindings(findings, MetricUnknownLaundering)
 	unknownTop := countUnknownTop(transaction.DecisionTransitions)
+	snapshotMismatches := countFindings(findings, MetricSnapshotBinding)
+	snapshotBPS, snapshotPaths := observeSnapshotBindings(transaction.SnapshotBindings, snapshotMismatches)
 
 	summary := Summary{
 		DenominatorTotal:          len(definitions),
@@ -36,9 +39,11 @@ func Evaluate(subjectSHA string, transaction Transaction) (Report, error) {
 		RoleConflictPaths:         observedValue(rolesObserved, roleConflicts),
 		UnknownLaunderingPaths:    observedValue(decisionsObserved, unknownLaundering),
 		UnknownTopDecisions:       observedValue(decisionsObserved, unknownTop),
+		SnapshotBindingsObserved: len(transaction.SnapshotBindings), SnapshotBindingsRequired: len(snapshotEvidenceIDs),
+		ExactSnapshotBindingBPS: snapshotBPS, SnapshotMismatchPaths: snapshotPaths,
 		RepositoryWrites:          0,
 	}
-	summary.UnresolvedIndicators = unresolved(summary.SelfMintingPaths, summary.RoleConflictPaths, summary.UnknownLaunderingPaths)
+	summary.UnresolvedIndicators = unresolved(summary.SelfMintingPaths, summary.RoleConflictPaths, summary.UnknownLaunderingPaths, summary.ExactSnapshotBindingBPS)
 	summary.ViolatedGuardrails = positive(summary.SelfMintingPaths, summary.RoleConflictPaths, summary.UnknownLaunderingPaths)
 	decision, reason, resolution := decide(summary)
 	indicators := buildIndicators(summary)
@@ -48,7 +53,7 @@ func Evaluate(subjectSHA string, transaction Transaction) (Report, error) {
 		DenominatorDigest: digest(definitions), AssuranceDecision: AssurancePartial,
 		CandidateDecision: decision, CandidateReason: reason, CandidateResolution: resolution,
 		Denominator: definitions, Obligations: obligations, MetaOperations: operations,
-		RoleConflictPairs: RoleConflictPairs(), UnknownLaunderingOutputs: UnknownLaunderingOutputs(),
+		RoleConflictPairs: RoleConflictPairs(), UnknownLaunderingOutputs: UnknownLaunderingOutputs(), SnapshotEvidenceIDs: SnapshotEvidenceIDs(),
 		Transaction: transaction, Findings: findings, Indicators: indicators, Summary: summary,
 	}
 	seal(&report)

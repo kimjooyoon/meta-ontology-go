@@ -15,18 +15,20 @@ const (
 	ReasonBoundaryClear       = "IMPLEMENTED_ASSURANCE_BOUNDARY_CLEAR"
 	ReasonEvidenceUnknown     = "ASSURANCE_EVIDENCE_UNKNOWN"
 	ReasonTopDecisionUnknown  = "ASSURANCE_TOP_DECISION_UNKNOWN"
+	ReasonSnapshotMismatch    = "ASSURANCE_SNAPSHOT_BINDING_MISMATCH"
 	ReasonGovernanceViolation = "ASSURANCE_GOVERNANCE_VIOLATION"
 
 	MetricSelfMinting       = "gooo.metric.governance.self-minting-paths.v1"
 	MetricRoleConflict      = "gooo.metric.governance.role-conflict-paths.v1"
 	MetricUnknownLaundering = "gooo.metric.epistemic.unknown-laundering.v1"
+	MetricSnapshotBinding   = "gooo.metric.evidence.exact-snapshot-binding.v1"
 )
 
 var denominatorV1 = []ObligationDefinition{
 	obligation(MetricSelfMinting, PriorityP0, ClassGuardrail, ProofFoundation, "detect-self-minting-paths"),
 	obligation(MetricRoleConflict, PriorityP0, ClassGuardrail, ProofCoherence, "detect-role-conflict-paths"),
 	obligation(MetricUnknownLaundering, PriorityP0, ClassGuardrail, ProofRegression, "detect-unknown-laundering"),
-	obligation("gooo.metric.evidence.exact-snapshot-binding.v1", PriorityP0, ClassDriver, ProofFoundation, "bind-exact-snapshot"),
+	obligation(MetricSnapshotBinding, PriorityP0, ClassDriver, ProofFoundation, "bind-exact-snapshot"),
 	obligation("gooo.metric.evidence.raw-reconstruction.v1", PriorityP0, ClassDriver, ProofRegression, "reconstruct-raw-evidence"),
 	obligation("gooo.metric.effects.write-set-exactness.v1", PriorityP0, ClassGuardrail, ProofRegression, "observe-exact-write-set"),
 	obligation("gooo.metric.semantic.source-backed-authority.v1", PriorityP1, ClassDriver, ProofFoundation, "bind-source-backed-authority"),
@@ -37,7 +39,9 @@ var denominatorV1 = []ObligationDefinition{
 	obligation("gooo.metric.ecosystem.external-conformance.v1", PriorityP2, ClassOutcome, ProofRegression, "verify-external-conformance"),
 }
 
-var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering"}
+var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot"}
+
+var snapshotEvidenceIDs = []string{"authority_routes", "role_bindings", "decision_transitions"}
 
 var conflictPairs = []RolePair{{Left: RoleContractAuthor, Right: RoleEvaluatorAuthor}, {Left: RoleImplementer, Right: RolePromoter}, {Left: RoleEvaluatorAuthor, Right: RoleAuditor}, {Left: RolePolicyAdopter, Right: RolePromoter}, {Left: RoleAdapterAuthor, Right: RoleAuditor}}
 
@@ -54,16 +58,15 @@ func CanonicalMetaOperations() []MetaOperation {
 		{ID: "detect-self-minting-paths", Activity: "DetectSelfMintingPaths", ProofChoice: ProofFoundation},
 		{ID: "detect-role-conflict-paths", Activity: "DetectRoleConflictPaths", ProofChoice: ProofCoherence},
 		{ID: "detect-unknown-laundering", Activity: "DetectUnknownLaundering", ProofChoice: ProofRegression},
+		{ID: "bind-exact-snapshot", Activity: "BindExactSnapshot", ProofChoice: ProofFoundation},
 	}
 }
 
-func RoleConflictPairs() []RolePair {
-	return append([]RolePair(nil), conflictPairs...)
-}
+func RoleConflictPairs() []RolePair { return append([]RolePair(nil), conflictPairs...) }
 
-func UnknownLaunderingOutputs() []Decision {
-	return append([]Decision(nil), launderingOutputs...)
-}
+func UnknownLaunderingOutputs() []Decision { return append([]Decision(nil), launderingOutputs...) }
+
+func SnapshotEvidenceIDs() []string { return append([]string(nil), snapshotEvidenceIDs...) }
 
 func obligation(metricID string, priority Priority, class IndicatorClass, proof ProofChoice, operation string) ObligationDefinition {
 	return ObligationDefinition{MetricID: metricID, Priority: priority, Class: class, ProofChoice: proof, RequiredMetaOperation: operation}

@@ -1,5 +1,17 @@
 package languageassurance
 
+type ObligationObservation struct {
+	MetricID      string     `json:"metric_id"`
+	Status        string     `json:"status"`
+	Resolution    Resolution `json:"resolution"`
+	MetaOperation string     `json:"meta_operation,omitempty"`
+}
+
+type RolePair struct {
+	Left  Role `json:"left"`
+	Right Role `json:"right"`
+}
+
 type Summary struct {
 	DenominatorTotal          int  `json:"denominator_total"`
 	Operating                 int  `json:"operating"`
@@ -12,6 +24,10 @@ type Summary struct {
 	RoleConflictPaths         *int `json:"role_conflict_paths"`
 	UnknownLaunderingPaths    *int `json:"unknown_laundering_paths"`
 	UnknownTopDecisions       *int `json:"unknown_top_decisions"`
+	SnapshotBindingsObserved  int  `json:"snapshot_bindings_observed"`
+	SnapshotBindingsRequired  int  `json:"snapshot_bindings_required"`
+	ExactSnapshotBindingBPS   *int `json:"exact_snapshot_binding_bps"`
+	SnapshotMismatchPaths     *int `json:"snapshot_mismatch_paths"`
 	UnresolvedIndicators      int  `json:"unresolved_indicators"`
 	ViolatedGuardrails        int  `json:"violated_guardrails"`
 	RepositoryWrites          int  `json:"repository_writes"`
@@ -32,6 +48,7 @@ type Report struct {
 	MetaOperations           []MetaOperation         `json:"meta_operations"`
 	RoleConflictPairs        []RolePair              `json:"role_conflict_pairs"`
 	UnknownLaunderingOutputs []Decision              `json:"unknown_laundering_outputs"`
+	SnapshotEvidenceIDs      []string                `json:"snapshot_evidence_ids"`
 	Transaction              Transaction             `json:"transaction"`
 	Findings                 []Finding               `json:"findings"`
 	Indicators               []Indicator             `json:"indicators"`

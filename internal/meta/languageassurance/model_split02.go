@@ -11,12 +11,18 @@ type DecisionTransition struct {
 	Output Decision `json:"output"`
 }
 
+type SnapshotBinding struct {
+	EvidenceID string `json:"evidence_id"`
+	SubjectSHA string `json:"subject_sha"`
+}
+
 type Transaction struct {
 	Schema              string               `json:"schema"`
 	TransactionID       string               `json:"transaction_id"`
 	AuthorityRoutes     []AuthorityRoute     `json:"authority_routes"`
 	RoleBindings        []RoleBinding        `json:"role_bindings"`
 	DecisionTransitions []DecisionTransition `json:"decision_transitions"`
+	SnapshotBindings    []SnapshotBinding    `json:"snapshot_bindings"`
 }
 
 type ObligationDefinition struct {
@@ -33,18 +39,6 @@ type MetaOperation struct {
 	ProofChoice ProofChoice `json:"proof_choice"`
 }
 
-type ObligationObservation struct {
-	MetricID      string     `json:"metric_id"`
-	Status        string     `json:"status"`
-	Resolution    Resolution `json:"resolution"`
-	MetaOperation string     `json:"meta_operation,omitempty"`
-}
-
-type RolePair struct {
-	Left  Role `json:"left"`
-	Right Role `json:"right"`
-}
-
 type Finding struct {
 	MetricID   string   `json:"metric_id"`
 	PathID     string   `json:"path_id"`
@@ -54,6 +48,9 @@ type Finding struct {
 	DecisionID string   `json:"decision_id,omitempty"`
 	Input      Decision `json:"input,omitempty"`
 	Output     Decision `json:"output,omitempty"`
+	EvidenceID string   `json:"evidence_id,omitempty"`
+	ExpectedSHA string  `json:"expected_sha,omitempty"`
+	ObservedSHA string  `json:"observed_sha,omitempty"`
 }
 
 type Indicator struct {
