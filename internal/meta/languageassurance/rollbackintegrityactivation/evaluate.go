@@ -27,11 +27,11 @@ func Evaluate(input Input) Receipt {
 		BeforeCoverageBPS: 7500, AfterCoverageBPS: after * 10000 / 12,
 		CapsulesTotal: 2, CapsulesExact: rawExact, CapsuleCoverageBPS: rawExact * 10000 / 2,
 		PredecessorSemanticsBPS: semanticExact * 10000 / 2,
-		ShadowCasesTotal: shadowTotal, ShadowCasesPassed: shadowPassed,
+		ShadowCasesTotal:        shadowTotal, ShadowCasesPassed: shadowPassed,
 		ShadowReplaysTotal: replayTotal, ShadowReplaysExact: replayExact,
 		MetaOperationsRequired: 6, MetaOperationsObserved: observedOperations,
 		MetaOperationCoverageBPS: observedOperations * 10000 / 6,
-		UnknownPaths: unknown, BlockedPaths: blocked,
+		UnknownPaths:             unknown, BlockedPaths: blocked,
 	}
 	receipt := Receipt{
 		Schema: Schema, SubjectSHA: input.SubjectSHA, PredecessorSHA: PredecessorSHA,
