@@ -32,11 +32,17 @@ type assuranceSummary struct {
 }
 
 type assuranceObligation struct {
-	MetricID, Status, Resolution, MetaOperation string
+	MetricID      string `json:"metric_id"`
+	Status        string `json:"status"`
+	Resolution    string `json:"resolution"`
+	MetaOperation string `json:"meta_operation"`
 }
 
 type assuranceReport struct {
-	Schema, SubjectSHA, AssuranceDecision, CandidateDecision string
-	Summary                                                  assuranceSummary
-	Obligations                                              []assuranceObligation
+	Schema            string                `json:"schema"`
+	SubjectSHA        string                `json:"subject_sha"`
+	AssuranceDecision string                `json:"assurance_decision"`
+	CandidateDecision string                `json:"candidate_decision"`
+	Summary           assuranceSummary      `json:"summary"`
+	Obligations       []assuranceObligation `json:"obligations"`
 }

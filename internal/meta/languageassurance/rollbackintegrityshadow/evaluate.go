@@ -33,7 +33,7 @@ func failureReport(raw []byte, resolution, reason string) Report {
 	report := Report{Schema: Schema, MetricID: MetricID, MetaOperation: MetaOperation,
 		Decision: DecisionFailClosed, Reason: reason, Resolution: resolution,
 		EnforcementEffect: EnforcementNoEffect, EvidenceDigest: digestBytes(raw),
-		Summary: summary, RepositoryWrites: 0, PromotionApplied: 0}
-	report.Indicators = buildIndicators(summary, false)
+		Summary: summary, RepositoryWrites: 0, PromotionApplied: 0,
+		Indicators: buildIndicators(summary, false)}
 	return seal(report)
 }
