@@ -52,6 +52,34 @@
       ]
     },
     {
+      "branch": "agent/artifact-feedback-resolution-ci-v23",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go",
+        "scripts/artifact-feedback-resolution-ci/**"
+      ]
+    },
+    {
+      "branch": "agent/artifact-feedback-resolution-cli-v23",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/artifact-feedback-resolution-witness/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/artifact-feedback-resolution-executor-v23",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/artifactfeedback/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/bidir",
       "paths": [
         "internal/bidir/**"
@@ -64,6 +92,12 @@
       ]
     },
     {
+      "branch": "agent/bidir-research",
+      "paths": [
+        "docs/research/bidirectional.md"
+      ]
+    },
+    {
       "branch": "agent/bidirectional-experiment-contract",
       "paths": [
         "docs/research/bidirectional.md"
@@ -71,12 +105,6 @@
     },
     {
       "branch": "agent/bidirectional-property-matrix",
-      "paths": [
-        "docs/research/bidirectional.md"
-      ]
-    },
-    {
-      "branch": "agent/bidir-research",
       "paths": [
         "docs/research/bidirectional.md"
       ]
@@ -106,23 +134,15 @@
       ]
     },
     {
-      "branch": "agent/ci-ownership-audit-current",
-      "paths": [
-        ".github/**",
-        "scripts/**",
-        "internal/verify/**"
-      ]
-    },
-    {
-      "branch": "agent/ci-ownership-audit-current2",
-      "paths": [
-        ".github/**",
-        "scripts/**",
-        "internal/verify/**"
-      ]
-    },
-    {
       "branch": "agent/ci-alias-refresh",
+      "paths": [
+        ".github/**",
+        "scripts/**",
+        "internal/verify/**"
+      ]
+    },
+    {
+      "branch": "agent/ci-evidence-contract",
       "paths": [
         ".github/**",
         "scripts/**",
@@ -146,6 +166,22 @@
       ]
     },
     {
+      "branch": "agent/ci-ownership-audit-current",
+      "paths": [
+        ".github/**",
+        "scripts/**",
+        "internal/verify/**"
+      ]
+    },
+    {
+      "branch": "agent/ci-ownership-audit-current2",
+      "paths": [
+        ".github/**",
+        "scripts/**",
+        "internal/verify/**"
+      ]
+    },
+    {
       "branch": "agent/ci-scope-triage",
       "paths": [
         ".github/**",
@@ -162,14 +198,6 @@
       ]
     },
     {
-      "branch": "agent/ci-evidence-contract",
-      "paths": [
-        ".github/**",
-        "scripts/**",
-        "internal/verify/**"
-      ]
-    },
-    {
       "branch": "agent/ci-workflow-stage",
       "paths": [
         ".github/**",
@@ -179,6 +207,12 @@
     },
     {
       "branch": "agent/cli",
+      "paths": [
+        "cmd/gooo/**"
+      ]
+    },
+    {
+      "branch": "agent/cli-bootstrap-contract",
       "paths": [
         "cmd/gooo/**"
       ]
@@ -202,9 +236,9 @@
       ]
     },
     {
-      "branch": "agent/cli-bootstrap-contract",
+      "branch": "agent/codegen-fixture-adapter",
       "paths": [
-        "cmd/gooo/**"
+        "docs/research/codegen-fixture-adapter.md"
       ]
     },
     {
@@ -214,9 +248,9 @@
       ]
     },
     {
-      "branch": "agent/codegen-fixture-adapter",
+      "branch": "agent/codegen-hypotheses",
       "paths": [
-        "docs/research/codegen-fixture-adapter.md"
+        "docs/research/codegen-experiments.md"
       ]
     },
     {
@@ -226,9 +260,18 @@
       ]
     },
     {
-      "branch": "agent/codegen-hypotheses",
+      "branch": "agent/concept-governed-refactoring-v29",
       "paths": [
-        "docs/research/codegen-experiments.md"
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "examples/language-concept-catalog/README.md",
+        "internal/meta/languageconcept",
+        "internal/meta/metricprogram/closure",
+        "internal/meta/metricstrategy",
+        "internal/meta/metricstrategy/verify",
+        "internal/verify/scope_concept_strategy.go",
+        "scripts/metric-strategy"
       ]
     },
     {
@@ -257,6 +300,36 @@
       ]
     },
     {
+      "branch": "agent/directory-kind-ci-v20",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/directory-kind-executor-v20",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/directory-kind-witness/**",
+        "internal/meta/actionability/**",
+        "internal/meta/directorykind/**",
+        "internal/meta/metabinding/registry.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/directory-kind-schema-v20",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/directorykind/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/docs",
       "paths": [
         "AGENTS.md",
@@ -264,6 +337,94 @@
         "README.md",
         "docs/**",
         "examples/**"
+      ]
+    },
+    {
+      "branch": "agent/feedback-payload-envelope-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/feedbackpredecessor/**",
+        "internal/verify/scope_part01.go",
+        "scripts/feedback-predecessor-ci/**"
+      ]
+    },
+    {
+      "branch": "agent/feedback-predecessor-ci-v24",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go",
+        "internal/verify/workflow_part04_test.go",
+        "scripts/feedback-predecessor-ci/**"
+      ]
+    },
+    {
+      "branch": "agent/feedback-predecessor-cli-v24",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-predecessor-witness/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/feedback-predecessor-selector-v24",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/feedbackpredecessor/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/feedback-predecessor-usecases-v24",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/feedback-predecessor-cycle/**",
+        "internal/meta/feedbackpredecessor/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/feedback-semantic-ci-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/meta/languageconcept/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/feedback-semantic-snapshot-v25",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/feedback-semantic-usecases-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "examples/feedback-semantic-cycle/**",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/feedback-semantic-witness-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "internal/verify/scope_part01.go"
       ]
     },
     {
@@ -328,6 +489,12 @@
       ]
     },
     {
+      "branch": "agent/grammar-followup",
+      "paths": [
+        "docs/research/grammar.md"
+      ]
+    },
+    {
       "branch": "agent/grammar-research",
       "paths": [
         "docs/research/grammar.md"
@@ -335,12 +502,6 @@
     },
     {
       "branch": "agent/grammar-review",
-      "paths": [
-        "docs/research/grammar.md"
-      ]
-    },
-    {
-      "branch": "agent/grammar-followup",
       "paths": [
         "docs/research/grammar.md"
       ]
@@ -358,9 +519,209 @@
       ]
     },
     {
-      "branch": "agent/lsp-research",
+      "branch": "agent/language-assurance-kernel",
       "paths": [
-        "docs/research/lsp.md"
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "bootstrap/function-extractor/recipes.json",
+        "cmd/language-assurance-witness/**",
+        "docs/language/language-assurance-kernel.md",
+        "examples/language-assurance-kernel/**",
+        "internal/meta/languageassurance/**",
+        "internal/verify/scope_language_assurance.go"
+      ]
+    },
+    {
+      "branch": "agent/language-concept-artifact-ci-v28",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-concept-artifact-witness",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/language-concept-artifact-v27",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "bootstrap/function-extractor/recipes.json",
+        "examples/language-concept-catalog/**",
+        "internal/meta/languageconcept/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/language-concept-catalog-v26",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "bootstrap/function-extractor/recipes.json",
+        "examples/language-concept-catalog/**",
+        "internal/meta/languageconcept/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/language-deterministic-query",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "bootstrap/function-extractor/recipes.json",
+        "cmd/language-deterministic-query-readiness-binding/**",
+        "cmd/language-deterministic-query-witness/**",
+        "cmd/language-readiness-witness/run_test.go",
+        "docs/language/language-deterministic-query-readiness-binding.md",
+        "docs/language/language-deterministic-query.md",
+        "examples/language-deterministic-query/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/languagedeterministicquery/**",
+        "internal/meta/languagereadiness/languagedeterministicquerybinding/**",
+        "internal/meta/languagereadiness/languagesemanticbinding/**",
+        "internal/verify/scope_language_deterministic_query.go"
+      ]
+    },
+    {
+      "branch": "agent/language-diagnostic-provenance",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-diagnostic-provenance-readiness-binding/**",
+        "cmd/language-diagnostic-provenance-witness/**",
+        "cmd/language-readiness-witness/**",
+        "docs/language/language-diagnostic-provenance-readiness-binding.md",
+        "docs/language/language-diagnostic-provenance.md",
+        "examples/language-diagnostic-provenance/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/**",
+        "internal/meta/languagereadiness/external_evidence.go",
+        "internal/meta/languagereadiness/language_diagnostic_provenance_test.go",
+        "internal/meta/languagereadiness/languagediagnosticprovenance/**",
+        "internal/meta/languagereadiness/languagediagnosticprovenancebinding/**",
+        "internal/meta/languagereadiness/languagegointeroperationbinding/**",
+        "internal/meta/languagereadiness/promotion.go",
+        "internal/verify/scope_language_diagnostic_provenance.go"
+      ]
+    },
+    {
+      "branch": "agent/language-go-interoperation",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "bootstrap/function-extractor/recipes.json",
+        "cmd/language-go-interoperation-readiness-binding/**",
+        "cmd/language-go-interoperation-witness/**",
+        "cmd/language-readiness-witness/run_test.go",
+        "docs/language/language-deterministic-query-readiness-floor.md",
+        "docs/language/language-go-interoperation-readiness-binding.md",
+        "docs/language/language-go-interoperation.md",
+        "examples/language-go-interoperation/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/languagedeterministicquerybinding/**",
+        "internal/meta/languagereadiness/languagegointeroperation/**",
+        "internal/meta/languagereadiness/languagegointeroperationbinding/**",
+        "internal/verify/scope_language_go_interoperation.go"
+      ]
+    },
+    {
+      "branch": "agent/language-package-runtime",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-package-runtime-witness/**",
+        "cmd/language-readiness-witness/**",
+        "docs/language/language-package-runtime-readiness.md",
+        "docs/language/language-package-runtime.md",
+        "examples/language-package-runtime/**",
+        "internal/packageruntime/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/build_evidence.go",
+        "internal/meta/languagereadiness/external_evidence.go",
+        "internal/meta/languagereadiness/language_package_runtime_test.go",
+        "internal/meta/languagereadiness/languagepackageruntime/**",
+        "internal/meta/languagereadiness/package_runtime_evidence.go",
+        "internal/meta/languagereadiness/promotion.go",
+        "internal/verify/scope_language_package_runtime.go"
+      ]
+    },
+    {
+      "branch": "agent/language-readiness-artifact-v32",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "internal/meta/languagereadiness/artifact/**",
+        "internal/meta/languagereadiness/improvement/adapter.go",
+        "internal/verify/scope_language_readiness.go"
+      ]
+    },
+    {
+      "branch": "agent/language-readiness-improvement-v33",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/**",
+        "internal/verify/scope_language_readiness.go"
+      ]
+    },
+    {
+      "branch": "agent/language-semantic-model",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/run_test.go",
+        "cmd/language-semantic-readiness-binding/**",
+        "cmd/language-semantic-witness/**",
+        "docs/language/language-semantic-model.md",
+        "docs/language/language-semantic-readiness-binding.md",
+        "examples/language-semantic-model/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/languagesemantic/**",
+        "internal/meta/languagereadiness/languagesemanticbinding/**",
+        "internal/verify/scope_language_semantic_model.go"
+      ]
+    },
+    {
+      "branch": "agent/language-syntax-roundtrip",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "cmd/language-syntax-witness/**",
+        "docs/language/language-syntax-roundtrip.md",
+        "examples/language-concept-catalog/README.md",
+        "examples/language-syntax-roundtrip/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/build_evidence.go",
+        "internal/meta/languagereadiness/external_evidence.go",
+        "internal/meta/languagereadiness/language_syntax_test.go",
+        "internal/meta/languagereadiness/languagesyntax/**",
+        "internal/meta/languagereadiness/promotion.go",
+        "internal/verify/scope_language_syntax_roundtrip.go"
+      ]
+    },
+    {
+      "branch": "agent/line-cap-detector",
+      "paths": [
+        "internal/detection/linecaps/**"
+      ]
+    },
+    {
+      "branch": "agent/linecaps",
+      "paths": [
+        "internal/detection/linecaps/**"
       ]
     },
     {
@@ -382,15 +743,226 @@
       ]
     },
     {
-      "branch": "agent/linecaps",
+      "branch": "agent/lsp-research",
       "paths": [
-        "internal/detection/linecaps/**"
+        "docs/research/lsp.md"
       ]
     },
     {
-      "branch": "agent/line-cap-detector",
+      "branch": "agent/meta-actionability-ci-v18",
       "paths": [
-        "internal/detection/linecaps/**"
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/meta-actionability-v18",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "bootstrap/meta-actionability-witness/**",
+        "examples/meta-actionability/**",
+        "internal/meta/actionability/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/meta-binding-coverage-v17",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "bootstrap/meta-binding-witness",
+        "examples/meta-binding-coverage",
+        "internal/meta/metabinding",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/metric-counterfactual-v7",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/meta/metriccounterfactual/**",
+        "internal/meta/metriccounterfactualio/**",
+        "internal/meta/metriccounterfactualverify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-counterfactual/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-intervention-v8",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/meta/metriccounterfactualverify/intervention/**",
+        "internal/meta/metriccounterfactualverify/intervention/verify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-intervention/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-ci-v12",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-closure-v13",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-closure-v14",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/metric-meta-program-closure/**",
+        "internal/meta/metricprogram/closure/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program-closure/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-closure-v15",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/metric-meta-program-v11",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/metric-meta-program/**",
+        "internal/meta/metricprogram/**",
+        "internal/meta/metricprogram/verify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-strategy-v10",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "internal/meta/metricstrategy/**",
+        "internal/meta/metricstrategy/verify/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-strategy/**"
+      ]
+    },
+    {
+      "branch": "agent/metric-transition-v6",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-transition.yml",
+        "internal/meta/metrictransition/**",
+        "internal/verify/scope_part01.go",
+        "scripts/metric-transition/**"
+      ]
+    },
+    {
+      "branch": "agent/operation-artifact-ci-v21",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go",
+        "scripts/operation-artifact-ci/**"
+      ]
+    },
+    {
+      "branch": "agent/operation-artifact-cli-v21",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/operation-artifact-witness/**",
+        "internal/meta/artifactcoverage/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/operation-artifact-executor-v21",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/artifactcoverage/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/operation-artifact-feedback-executor-v22",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/artifactfeedback/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/operation-artifact-feedback-schema-v22",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/artifactfeedback/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/operation-artifact-schema-v21",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/meta-operation-artifact-coverage/**",
+        "internal/meta/artifactcoverage/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/partition-directory-ci-v19",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/partition-directory-executor-v19",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/directory-partition-witness/**",
+        "internal/meta/actionability/**",
+        "internal/meta/directorypartition/**",
+        "internal/meta/metabinding/registry.go",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/partition-directory-v19",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/directorypartition/**",
+        "internal/verify/scope_part01.go"
       ]
     },
     {
@@ -403,6 +975,41 @@
       "branch": "agent/performance-regression",
       "paths": [
         "internal/detection/performance/**"
+      ]
+    },
+    {
+      "branch": "agent/promotion-authorized-continuity",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/promotion-authorized-continuity/**",
+        "docs/language/promotion-authorized-continuity.md",
+        "internal/meta/languagereadiness/promotioncontinuity/**",
+        "internal/verify/scope_promotion_authorized_continuity.go"
+      ]
+    },
+    {
+      "branch": "agent/proof-route-v9",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_part01.go",
+        "scripts/ci-proof/build_part01.go",
+        "scripts/ci-proof/ci_only_part03_test.go",
+        "scripts/ci-proof/guardian_evidence_part01.go",
+        "scripts/ci-proof/guardian_evidence_part01_test.go",
+        "scripts/ci-proof/input_part03.go",
+        "scripts/ci-proof/main_fixture_test.go",
+        "scripts/ci-proof/promotion_part01.go",
+        "scripts/ci-proof/promotion_part02.go",
+        "scripts/ci-proof/route.go",
+        "scripts/ci-proof/route.js",
+        "scripts/ci-proof/route_test.go",
+        "scripts/ci-proof/route_test.js",
+        "scripts/ci-proof/types_part02.go",
+        "scripts/ci-proof/validate_part01.go"
       ]
     },
     {
@@ -466,581 +1073,12 @@
       ]
     },
     {
-      "branch": "agent/query-engine",
-      "paths": [
-        "internal/query/**"
-      ]
-    },
-    {
-      "branch": "agent/query-research",
-      "paths": [
-        "docs/research/query.md"
-      ]
-    },
-    {
-      "branch": "agent/roundtrip-detector",
-      "paths": [
-        "internal/detection/roundtrip/**"
-      ]
-    },
-    {
-      "branch": "agent/roundtrip-detection",
-      "paths": [
-        "internal/detection/roundtrip/**"
-      ]
-    },
-    {
-      "branch": "agent/security-research",
-      "paths": [
-        "docs/research/security.md"
-      ]
-    },
-    {
-      "branch": "agent/security",
-      "paths": [
-        "docs/research/security.md"
-      ]
-    },
-    {
-      "branch": "agent/semantic",
-      "paths": [
-        "internal/semantic/**"
-      ]
-    },
-    {
-      "branch": "agent/semantic-delta-detector",
-      "paths": [
-        "internal/detection/semanticdelta/**"
-      ]
-    },
-    {
-      "branch": "agent/semanticdelta",
-      "paths": [
-        "internal/detection/semanticdelta/**"
-      ]
-    },
-    {
-      "branch": "agent/syntax",
-      "paths": [
-        "internal/syntax/**"
-      ]
-    },
-    {
-      "branch": "agent/self-hosting-bootstrap",
-      "paths": [
-        "docs/research/self-hosting.md",
-        "internal/bootstrap/**"
-      ]
-    },
-    {
-      "branch": "agent/testing-research",
-      "paths": [
-        "docs/research/testing.md"
-      ]
-    },
-    {
-      "branch": "agent/testing-research-contracts",
-      "paths": [
-        "docs/research/testing.md"
-      ]
-    },
-    {
-      "branch": "agent/testing-research-followup",
-      "paths": [
-        "docs/research/testing.md"
-      ]
-    },
-    {
-      "branch": "agent/transformation-effect-v5",
+      "branch": "agent/quantified-improvement-transition-v31",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "internal/meta/transformationeffect/**",
-        "internal/verify/scope_part01.go",
-        "scripts/transformation-effect/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-transition-v6",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-transition.yml",
-        "internal/meta/metrictransition/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-transition/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-counterfactual-v7",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/meta/metriccounterfactual/**",
-        "internal/meta/metriccounterfactualio/**",
-        "internal/meta/metriccounterfactualverify/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-counterfactual/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-intervention-v8",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/meta/metriccounterfactualverify/intervention/**",
-        "internal/meta/metriccounterfactualverify/intervention/verify/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-intervention/**"
-      ]
-    },
-    {
-      "branch": "agent/proof-route-v9",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/verify/scope_part01.go",
-        "scripts/ci-proof/build_part01.go",
-        "scripts/ci-proof/ci_only_part03_test.go",
-        "scripts/ci-proof/guardian_evidence_part01.go",
-        "scripts/ci-proof/guardian_evidence_part01_test.go",
-        "scripts/ci-proof/input_part03.go",
-        "scripts/ci-proof/main_fixture_test.go",
-        "scripts/ci-proof/promotion_part01.go",
-        "scripts/ci-proof/promotion_part02.go",
-        "scripts/ci-proof/route.go",
-        "scripts/ci-proof/route.js",
-        "scripts/ci-proof/route_test.go",
-        "scripts/ci-proof/route_test.js",
-        "scripts/ci-proof/types_part02.go",
-        "scripts/ci-proof/validate_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/metric-strategy-v10",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/meta/metricstrategy/**",
-        "internal/meta/metricstrategy/verify/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-strategy/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-v11",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "examples/metric-meta-program/**",
-        "internal/meta/metricprogram/**",
-        "internal/meta/metricprogram/verify/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-meta-program/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-ci-v12",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-closure-v13",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/language-assurance-kernel",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "bootstrap/function-extractor/recipes.json",
-        "cmd/language-assurance-witness/**",
-        "docs/language/language-assurance-kernel.md",
-        "examples/language-assurance-kernel/**",
-        "internal/meta/languageassurance/**",
-        "internal/verify/scope_language_assurance.go"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-closure-v14",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "examples/metric-meta-program-closure/**",
-        "internal/meta/metricprogram/closure/**",
-        "internal/verify/scope_part01.go",
-        "scripts/metric-meta-program-closure/**"
-      ]
-    },
-    {
-      "branch": "agent/metric-meta-program-closure-v15",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/root-readme-applicability-v16",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "examples/root-readme-indicator",
-        "internal/detection/linecaps",
-        "internal/meta/generation",
-        "internal/meta/sourcepolicy",
-        "internal/verify/scope_part01.go",
-        "scripts/self-improvement-cycle",
-        "scripts/source-subject-witness"
-      ]
-    },
-    {
-      "branch": "agent/meta-binding-coverage-v17",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "bootstrap/meta-binding-witness",
-        "examples/meta-binding-coverage",
-        "internal/meta/metabinding",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/meta-actionability-v18",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "bootstrap/meta-actionability-witness/**",
-        "examples/meta-actionability/**",
-        "internal/meta/actionability/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/meta-actionability-ci-v18",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/zerolang-research",
-      "paths": [
-        "docs/research/zerolang.md"
-      ]
-    },
-    {
-      "branch": "agent/zerolang-experiments",
-      "paths": [
-        "docs/research/zerolang.md"
-      ]
-    },
-    {
-      "branch": "agent/directory-kind-ci-v20",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/directory-kind-executor-v20",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "cmd/directory-kind-witness/**",
-        "internal/meta/actionability/**",
-        "internal/meta/directorykind/**",
-        "internal/meta/metabinding/registry.go",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/artifact-feedback-resolution-ci-v23",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/verify/scope_part01.go",
-        "scripts/artifact-feedback-resolution-ci/**"
-      ]
-    },
-    {
-      "branch": "agent/artifact-feedback-resolution-cli-v23",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "cmd/artifact-feedback-resolution-witness/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/artifact-feedback-resolution-executor-v23",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/artifactfeedback/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/feedback-predecessor-selector-v24",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/feedbackpredecessor/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/feedback-predecessor-cli-v24",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "cmd/feedback-predecessor-witness/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/feedback-predecessor-ci-v24",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/verify/scope_part01.go",
-        "internal/verify/workflow_part04_test.go",
-        "scripts/feedback-predecessor-ci/**"
-      ]
-    },
-    {
-      "branch": "agent/feedback-predecessor-usecases-v24",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "examples/feedback-predecessor-cycle/**",
-        "internal/meta/feedbackpredecessor/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/feedback-semantic-snapshot-v25",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/feedbackstate/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/language-concept-catalog-v26",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "bootstrap/function-extractor/recipes.json",
-        "examples/language-concept-catalog/**",
-        "internal/meta/languageconcept/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/language-concept-artifact-v27",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "bootstrap/function-extractor/recipes.json",
-        "examples/language-concept-catalog/**",
-        "internal/meta/languageconcept/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/concept-governed-refactoring-v29",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "examples/language-concept-catalog/README.md",
-        "internal/meta/languageconcept",
-        "internal/meta/metricprogram/closure",
-        "internal/meta/metricstrategy",
-        "internal/meta/metricstrategy/verify",
-        "internal/verify/scope_concept_strategy.go",
-        "scripts/metric-strategy"
-      ]
-    },
-    {
-      "branch": "agent/language-concept-artifact-ci-v28",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-concept-artifact-witness",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/feedback-semantic-ci-v27",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/meta/languageconcept/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/feedback-semantic-usecases-v27",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "cmd/feedback-semantic-state-witness/**",
-        "examples/feedback-semantic-cycle/**",
-        "internal/meta/feedbackstate/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/feedback-semantic-witness-v27",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "cmd/feedback-semantic-state-witness/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/feedback-payload-envelope-v27",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/feedbackpredecessor/**",
-        "internal/verify/scope_part01.go",
-        "scripts/feedback-predecessor-ci/**"
-      ]
-    },
-    {
-      "branch": "agent/semantic-resolution-schema-v23",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/semanticresolution/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/operation-artifact-feedback-executor-v22",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/artifactfeedback/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/operation-artifact-feedback-schema-v22",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/artifactfeedback/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/operation-artifact-ci-v21",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/verify/scope_part01.go",
-        "scripts/operation-artifact-ci/**"
-      ]
-    },
-    {
-      "branch": "agent/operation-artifact-cli-v21",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "cmd/operation-artifact-witness/**",
-        "internal/meta/artifactcoverage/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/operation-artifact-executor-v21",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/artifactcoverage/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/operation-artifact-schema-v21",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "examples/meta-operation-artifact-coverage/**",
-        "internal/meta/artifactcoverage/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/directory-kind-schema-v20",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/directorykind/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/partition-directory-v19",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/directorypartition/**",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/partition-directory-executor-v19",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "cmd/directory-partition-witness/**",
-        "internal/meta/actionability/**",
-        "internal/meta/directorypartition/**",
-        "internal/meta/metabinding/registry.go",
-        "internal/verify/scope_part01.go"
-      ]
-    },
-    {
-      "branch": "agent/partition-directory-ci-v19",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/ci.yml",
-        "internal/verify/scope_part01.go"
+        "internal/meta/languagereadiness/improvement/**",
+        "internal/verify/scope_language_readiness.go"
       ]
     },
     {
@@ -1053,36 +1091,15 @@
       ]
     },
     {
-      "branch": "agent/quantified-improvement-transition-v31",
+      "branch": "agent/query-engine",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/meta/languagereadiness/improvement/**",
-        "internal/verify/scope_language_readiness.go"
+        "internal/query/**"
       ]
     },
     {
-      "branch": "agent/language-readiness-artifact-v32",
+      "branch": "agent/query-research",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-readiness-witness/**",
-        "internal/meta/languagereadiness/artifact/**",
-        "internal/meta/languagereadiness/improvement/adapter.go",
-        "internal/verify/scope_language_readiness.go"
-      ]
-    },
-    {
-      "branch": "agent/language-readiness-improvement-v33",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-readiness-witness/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/artifact/**",
-        "internal/verify/scope_language_readiness.go"
+        "docs/research/query.md"
       ]
     },
     {
@@ -1095,6 +1112,30 @@
         "internal/meta/languageconcept/**",
         "internal/meta/languagereadiness/**",
         "internal/verify/scope_language_readiness.go"
+      ]
+    },
+    {
+      "branch": "agent/readiness-baseline-resolution",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/language-readiness-witness/predecessor-selection/**",
+        "docs/language/readiness-ancestor-resolution.md",
+        "internal/meta/languagereadiness/artifact/predecessorresolution/**",
+        "internal/verify/scope_language_readiness.go"
+      ]
+    },
+    {
+      "branch": "agent/readiness-guarded-capability",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "docs/language/guarded-promotion-capability.md",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/**",
+        "internal/verify/scope_readiness_guarded_capability.go"
       ]
     },
     {
@@ -1111,29 +1152,6 @@
       ]
     },
     {
-      "branch": "agent/readiness-squash-predecessor",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "docs/language/proposal-synthesis-continuity.md",
-        "internal/meta/languagereadiness/proposalpromotion/**",
-        "internal/meta/metricstrategy/proposalpredecessor/**",
-        "internal/verify/scope_language_readiness.go"
-      ]
-    },
-    {
-      "branch": "agent/readiness-baseline-resolution",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "cmd/language-readiness-witness/predecessor-selection/**",
-        "docs/language/readiness-ancestor-resolution.md",
-        "internal/meta/languagereadiness/artifact/predecessorresolution/**",
-        "internal/verify/scope_language_readiness.go"
-      ]
-    },
-    {
       "branch": "agent/readiness-push-continuity",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1142,19 +1160,6 @@
         "docs/language/readiness-push-continuity.md",
         "internal/verify/readiness_push_continuity_test.go",
         "internal/verify/scope_readiness_push_continuity.go"
-      ]
-    },
-    {
-      "branch": "agent/readiness-guarded-capability",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-readiness-witness/**",
-        "docs/language/guarded-promotion-capability.md",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/**",
-        "internal/verify/scope_readiness_guarded_capability.go"
       ]
     },
     {
@@ -1175,159 +1180,191 @@
       ]
     },
     {
-      "branch": "agent/promotion-authorized-continuity",
+      "branch": "agent/readiness-squash-predecessor",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/promotion-authorized-continuity/**",
-        "docs/language/promotion-authorized-continuity.md",
-        "internal/meta/languagereadiness/promotioncontinuity/**",
-        "internal/verify/scope_promotion_authorized_continuity.go"
+        ".github/workflows/metric-counterfactual.yml",
+        "docs/language/proposal-synthesis-continuity.md",
+        "internal/meta/languagereadiness/proposalpromotion/**",
+        "internal/meta/metricstrategy/proposalpredecessor/**",
+        "internal/verify/scope_language_readiness.go"
       ]
     },
     {
-      "branch": "agent/toolchain-executable-usecases",
+      "branch": "agent/root-readme-applicability-v16",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-readiness-witness/**",
-        "cmd/toolchain-usecase-witness/**",
-        "docs/language/toolchain-executable-use-cases.md",
-        "examples/language-concept-catalog/README.md",
-        "examples/toolchain-executable-use-cases/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/artifact/build_evidence.go",
-        "internal/meta/languagereadiness/external_evidence.go",
-        "internal/meta/languagereadiness/promotion.go",
-        "internal/meta/languagereadiness/toolchain_usecases_test.go",
-        "internal/meta/languagereadiness/toolchainusecases/**",
-        "internal/verify/scope_toolchain_executable_usecases.go"
+        "examples/root-readme-indicator",
+        "internal/detection/linecaps",
+        "internal/meta/generation",
+        "internal/meta/sourcepolicy",
+        "internal/verify/scope_part01.go",
+        "scripts/self-improvement-cycle",
+        "scripts/source-subject-witness"
       ]
     },
     {
-      "branch": "agent/language-syntax-roundtrip",
+      "branch": "agent/roundtrip-detection",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-readiness-witness/**",
-        "cmd/language-syntax-witness/**",
-        "docs/language/language-syntax-roundtrip.md",
-        "examples/language-concept-catalog/README.md",
-        "examples/language-syntax-roundtrip/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/artifact/build_evidence.go",
-        "internal/meta/languagereadiness/external_evidence.go",
-        "internal/meta/languagereadiness/language_syntax_test.go",
-        "internal/meta/languagereadiness/languagesyntax/**",
-        "internal/meta/languagereadiness/promotion.go",
-        "internal/verify/scope_language_syntax_roundtrip.go"
+        "internal/detection/roundtrip/**"
       ]
     },
     {
-      "branch": "agent/language-semantic-model",
+      "branch": "agent/roundtrip-detector",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-readiness-witness/run_test.go",
-        "cmd/language-semantic-readiness-binding/**",
-        "cmd/language-semantic-witness/**",
-        "docs/language/language-semantic-model.md",
-        "docs/language/language-semantic-readiness-binding.md",
-        "examples/language-semantic-model/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/languagesemantic/**",
-        "internal/meta/languagereadiness/languagesemanticbinding/**",
-        "internal/verify/scope_language_semantic_model.go"
+        "internal/detection/roundtrip/**"
       ]
     },
     {
-      "branch": "agent/language-deterministic-query",
+      "branch": "agent/security",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "bootstrap/function-extractor/recipes.json",
-        "cmd/language-deterministic-query-readiness-binding/**",
-        "cmd/language-deterministic-query-witness/**",
-        "cmd/language-readiness-witness/run_test.go",
-        "docs/language/language-deterministic-query-readiness-binding.md",
-        "docs/language/language-deterministic-query.md",
-        "examples/language-deterministic-query/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/languagedeterministicquery/**",
-        "internal/meta/languagereadiness/languagedeterministicquerybinding/**",
-        "internal/meta/languagereadiness/languagesemanticbinding/**",
-        "internal/verify/scope_language_deterministic_query.go"
+        "docs/research/security.md"
       ]
     },
     {
-      "branch": "agent/language-go-interoperation",
+      "branch": "agent/security-research",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "bootstrap/function-extractor/recipes.json",
-        "cmd/language-go-interoperation-readiness-binding/**",
-        "cmd/language-go-interoperation-witness/**",
-        "cmd/language-readiness-witness/run_test.go",
-        "docs/language/language-deterministic-query-readiness-floor.md",
-        "docs/language/language-go-interoperation-readiness-binding.md",
-        "docs/language/language-go-interoperation.md",
-        "examples/language-go-interoperation/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/languagedeterministicquerybinding/**",
-        "internal/meta/languagereadiness/languagegointeroperation/**",
-        "internal/meta/languagereadiness/languagegointeroperationbinding/**",
-        "internal/verify/scope_language_go_interoperation.go"
+        "docs/research/security.md"
       ]
     },
     {
-      "branch": "agent/language-diagnostic-provenance",
+      "branch": "agent/self-hosting-bootstrap",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-diagnostic-provenance-readiness-binding/**",
-        "cmd/language-diagnostic-provenance-witness/**",
-        "cmd/language-readiness-witness/**",
-        "docs/language/language-diagnostic-provenance-readiness-binding.md",
-        "docs/language/language-diagnostic-provenance.md",
-        "examples/language-diagnostic-provenance/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/artifact/**",
-        "internal/meta/languagereadiness/external_evidence.go",
-        "internal/meta/languagereadiness/language_diagnostic_provenance_test.go",
-        "internal/meta/languagereadiness/languagediagnosticprovenance/**",
-        "internal/meta/languagereadiness/languagediagnosticprovenancebinding/**",
-        "internal/meta/languagereadiness/languagegointeroperationbinding/**",
-        "internal/meta/languagereadiness/promotion.go",
-        "internal/verify/scope_language_diagnostic_provenance.go"
+        "docs/research/self-hosting.md",
+        "internal/bootstrap/**"
       ]
     },
     {
-      "branch": "agent/language-package-runtime",
+      "branch": "agent/semantic",
+      "paths": [
+        "internal/semantic/**"
+      ]
+    },
+    {
+      "branch": "agent/semantic-delta-detector",
+      "paths": [
+        "internal/detection/semanticdelta/**"
+      ]
+    },
+    {
+      "branch": "agent/semantic-resolution-schema-v23",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        "internal/meta/semanticresolution/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/semanticdelta",
+      "paths": [
+        "internal/detection/semanticdelta/**"
+      ]
+    },
+    {
+      "branch": "agent/source-authority-promotion",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/source-authority-promotion-witness",
+        "examples/source-authority-promotion",
+        "internal/meta/languageassurance/sourceauthoritypromotion",
+        "internal/verify/scope_source_authority_promotion.go"
+      ]
+    },
+    {
+      "branch": "agent/source-authority-shadow",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/source-authority-shadow-witness/**",
+        "examples/language-assurance-kernel/source-authority-shadow.json",
+        "examples/language-assurance-kernel/source-backed-authority-shadow.md",
+        "internal/meta/languageassurance/sourceauthorityshadow/**",
+        "internal/verify/scope_source_authority_shadow.go"
+      ]
+    },
+    {
+      "branch": "agent/source-authority-upstream",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/source-authority-upstream-witness/**",
+        "examples/source-authority-upstream/**",
+        "internal/meta/languageassurance/sourceauthorityupstream/**",
+        "internal/verify/scope_source_authority_upstream.go"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-adapter",
+      "paths": [
+        "internal/meta/generation/registry.go",
+        "internal/meta/transformationeffect/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-ci",
+      "paths": [
         ".github/workflows/transformation-effect.yml",
-        "cmd/language-package-runtime-witness/**",
-        "cmd/language-readiness-witness/**",
-        "docs/language/language-package-runtime-readiness.md",
-        "docs/language/language-package-runtime.md",
-        "examples/language-package-runtime/**",
-        "internal/packageruntime/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/artifact/build_evidence.go",
-        "internal/meta/languagereadiness/external_evidence.go",
-        "internal/meta/languagereadiness/language_package_runtime_test.go",
-        "internal/meta/languagereadiness/languagepackageruntime/**",
-        "internal/meta/languagereadiness/package_runtime_evidence.go",
-        "internal/meta/languagereadiness/promotion.go",
-        "internal/verify/scope_language_package_runtime.go"
+        "scripts/source-splitter-conformance-ci/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-contract",
+      "paths": [
+        "docs/language/source-splitter-operation-conformance-v1.md",
+        "examples/source-splitter-conformance/**",
+        "examples/language-syntax-roundtrip/corpus.json"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-evaluator",
+      "paths": [
+        "internal/meta/operationconformance/**",
+        "scripts/source-splitter/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-fail-closed",
+      "paths": [
+        "internal/meta/transformationeffect/**"
+      ]
+    },
+    {
+      "branch": "agent/source-splitter-conformance-governance",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_source_splitter_conformance.go"
+      ]
+    },
+    {
+      "branch": "agent/syntax",
+      "paths": [
+        "internal/syntax/**"
+      ]
+    },
+    {
+      "branch": "agent/testing-research",
+      "paths": [
+        "docs/research/testing.md"
+      ]
+    },
+    {
+      "branch": "agent/testing-research-contracts",
+      "paths": [
+        "docs/research/testing.md"
+      ]
+    },
+    {
+      "branch": "agent/testing-research-followup",
+      "paths": [
+        "docs/research/testing.md"
       ]
     },
     {
@@ -1354,6 +1391,69 @@
         "internal/meta/languagereadiness/toolchain_cli_test.go",
         "internal/meta/languagereadiness/toolchaincli/**",
         "internal/verify/scope_toolchain_cli.go"
+      ]
+    },
+    {
+      "branch": "agent/toolchain-conformance",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "cmd/toolchain-conformance-witness/**",
+        "docs/language/toolchain-conformance-readiness.md",
+        "docs/language/toolchain-conformance.md",
+        "examples/language-concept-catalog/README.md",
+        "examples/toolchain-conformance/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/**",
+        "internal/meta/languagereadiness/external_evidence.go",
+        "internal/meta/languagereadiness/toolchain_conformance_evidence.go",
+        "internal/meta/languagereadiness/toolchain_conformance_promotion.go",
+        "internal/meta/languagereadiness/toolchain_conformance_test.go",
+        "internal/meta/languagereadiness/toolchainconformance/**",
+        "internal/verify/scope_toolchain_conformance.go"
+      ]
+    },
+    {
+      "branch": "agent/toolchain-cross-platform-release",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "cmd/toolchain-release-platform-witness/**",
+        "cmd/toolchain-release-witness/**",
+        "docs/language/toolchain-cross-platform-release-readiness.md",
+        "docs/language/toolchain-cross-platform-release.md",
+        "examples/toolchain-cross-platform-release/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/**",
+        "internal/meta/languagereadiness/external_evidence.go",
+        "internal/meta/languagereadiness/toolchain_cross_platform_release_evidence.go",
+        "internal/meta/languagereadiness/toolchain_cross_platform_release_promotion.go",
+        "internal/meta/languagereadiness/toolchainrelease/**",
+        "internal/verify/scope_toolchain_cross_platform_release.go"
+      ]
+    },
+    {
+      "branch": "agent/toolchain-executable-usecases",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "cmd/toolchain-usecase-witness/**",
+        "docs/language/toolchain-executable-use-cases.md",
+        "examples/language-concept-catalog/README.md",
+        "examples/toolchain-executable-use-cases/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagereadiness/artifact/build_evidence.go",
+        "internal/meta/languagereadiness/external_evidence.go",
+        "internal/meta/languagereadiness/promotion.go",
+        "internal/meta/languagereadiness/toolchain_usecases_test.go",
+        "internal/meta/languagereadiness/toolchainusecases/**",
+        "internal/verify/scope_toolchain_executable_usecases.go"
       ]
     },
     {
@@ -1384,28 +1484,6 @@
       ]
     },
     {
-      "branch": "agent/toolchain-conformance",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-readiness-witness/**",
-        "cmd/toolchain-conformance-witness/**",
-        "docs/language/toolchain-conformance-readiness.md",
-        "docs/language/toolchain-conformance.md",
-        "examples/language-concept-catalog/README.md",
-        "examples/toolchain-conformance/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/artifact/**",
-        "internal/meta/languagereadiness/external_evidence.go",
-        "internal/meta/languagereadiness/toolchain_conformance_evidence.go",
-        "internal/meta/languagereadiness/toolchain_conformance_promotion.go",
-        "internal/meta/languagereadiness/toolchain_conformance_test.go",
-        "internal/meta/languagereadiness/toolchainconformance/**",
-        "internal/verify/scope_toolchain_conformance.go"
-      ]
-    },
-    {
       "branch": "agent/toolchain-lsp",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1426,92 +1504,26 @@
       ]
     },
     {
-      "branch": "agent/toolchain-cross-platform-release",
+      "branch": "agent/transformation-effect-v5",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/transformation-effect.yml",
-        "cmd/language-readiness-witness/**",
-        "cmd/toolchain-release-platform-witness/**",
-        "cmd/toolchain-release-witness/**",
-        "docs/language/toolchain-cross-platform-release-readiness.md",
-        "docs/language/toolchain-cross-platform-release.md",
-        "examples/toolchain-cross-platform-release/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagereadiness/artifact/**",
-        "internal/meta/languagereadiness/external_evidence.go",
-        "internal/meta/languagereadiness/toolchain_cross_platform_release_evidence.go",
-        "internal/meta/languagereadiness/toolchain_cross_platform_release_promotion.go",
-        "internal/meta/languagereadiness/toolchainrelease/**",
-        "internal/verify/scope_toolchain_cross_platform_release.go"
+        "internal/meta/transformationeffect/**",
+        "internal/verify/scope_part01.go",
+        "scripts/transformation-effect/**"
       ]
     },
     {
-      "branch": "agent/source-splitter-conformance-governance",
+      "branch": "agent/zerolang-experiments",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        "internal/verify/scope_source_splitter_conformance.go"
+        "docs/research/zerolang.md"
       ]
     },
     {
-      "branch": "agent/source-splitter-conformance-fail-closed",
+      "branch": "agent/zerolang-research",
       "paths": [
-        "internal/meta/transformationeffect/**"
-      ]
-    },
-    {
-      "branch": "agent/source-splitter-conformance-contract",
-      "paths": [
-        "docs/language/source-splitter-operation-conformance-v1.md",
-        "examples/source-splitter-conformance/**",
-        "examples/language-syntax-roundtrip/corpus.json"
-      ]
-    },
-    {
-      "branch": "agent/source-splitter-conformance-evaluator",
-      "paths": [
-        "internal/meta/operationconformance/**",
-        "scripts/source-splitter/**"
-      ]
-    },
-    {
-      "branch": "agent/source-splitter-conformance-adapter",
-      "paths": [
-        "internal/meta/generation/registry.go",
-        "internal/meta/transformationeffect/**"
-      ]
-    },
-    {
-      "branch": "agent/source-splitter-conformance-ci",
-      "paths": [
-        ".github/workflows/transformation-effect.yml",
-        "scripts/source-splitter-conformance-ci/**"
-      ]
-    },
-    {
-      "branch": "agent/source-authority-shadow",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "cmd/source-authority-shadow-witness/**",
-        "examples/language-assurance-kernel/source-authority-shadow.json",
-        "examples/language-assurance-kernel/source-backed-authority-shadow.md",
-        "internal/meta/languageassurance/sourceauthorityshadow/**",
-        "internal/verify/scope_source_authority_shadow.go"
-      ]
-    },
-    {
-      "branch": "agent/source-authority-upstream",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "cmd/source-authority-upstream-witness/**",
-        "examples/source-authority-upstream/**",
-        "internal/meta/languageassurance/sourceauthorityupstream/**",
-        "internal/verify/scope_source_authority_upstream.go"
+        "docs/research/zerolang.md"
       ]
     }
   ],

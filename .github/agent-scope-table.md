@@ -167,3 +167,4 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/source-splitter-conformance-evaluator` | `internal/meta/operationconformance/**`, `scripts/source-splitter/**` |
 | `agent/source-splitter-conformance-adapter` | `internal/meta/generation/registry.go`, `internal/meta/transformationeffect/**` |
 | `agent/source-splitter-conformance-ci` | `.github/workflows/transformation-effect.yml`, `scripts/source-splitter-conformance-ci/**` |
+| `agent/source-authority-promotion` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/self-improvement-contract.yml`, `cmd/source-authority-promotion-witness`, `examples/source-authority-promotion`, `internal/meta/languageassurance/sourceauthoritypromotion`, `internal/verify/scope_source_authority_promotion.go` |

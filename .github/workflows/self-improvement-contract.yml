@@ -377,3 +377,77 @@ jobs:
           path: ${{ runner.temp }}/source-authority-upstream
           if-no-files-found: error
           retention-days: 14
+
+  source-authority-promotion-eligibility:
+    name: Source authority promotion eligibility
+    needs:
+      - assurance
+      - source-authority-upstream
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    env:
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.SUBJECT_SHA }}
+      - name: Download language assurance baseline
+        uses: actions/download-artifact@v6
+        with:
+          name: language-assurance-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/language-assurance
+      - name: Download immutable upstream evidence
+        uses: actions/download-artifact@v6
+        with:
+          name: source-authority-upstream-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/source-authority-upstream
+      - name: Require Go 1.27 fixes and targeted tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix -diff ./internal/meta/languageassurance/sourceauthoritypromotion ./cmd/source-authority-promotion-witness > "$RUNNER_TEMP/source-authority-promotion-fix.diff"
+          if test -s "$RUNNER_TEMP/source-authority-promotion-fix.diff"; then
+            cat "$RUNNER_TEMP/source-authority-promotion-fix.diff"
+            exit 1
+          fi
+          go test ./internal/meta/languageassurance/sourceauthoritypromotion ./cmd/source-authority-promotion-witness
+      - name: Evaluate fixed eligibility denominator
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/source-authority-promotion"
+          mkdir -p "$out/replay"
+          assurance="$RUNNER_TEMP/language-assurance/independent.json"
+          upstream="$RUNNER_TEMP/source-authority-upstream/first/suite.json"
+          jq '.decision = "UNKNOWN"' "$upstream" > "$out/upstream-unknown.json"
+          jq '(.obligations[] | select(.metric_id == "gooo.metric.semantic.source-backed-authority.v1")) |= (.status = "OPERATING" | .resolution = "EXACT")' "$assurance" > "$out/baseline-operating.json"
+          go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/eligible.json"
+          go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$out/upstream-unknown.json" --subject-sha "$SUBJECT_SHA" --out "$out/upstream-block.json"
+          go run ./cmd/source-authority-promotion-witness --assurance "$out/baseline-operating.json" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/baseline-block.json"
+          go run ./cmd/source-authority-promotion-witness --assurance "$assurance" --upstream "$upstream" --subject-sha "$SUBJECT_SHA" --out "$out/replay/eligible.json"
+          cmp "$out/eligible.json" "$out/replay/eligible.json"
+          jq -e '.decision == "ELIGIBLE" and .resolution == "EXACT" and .enforcement == "NO_EFFECT" and .summary.denominator_total == 12 and .summary.before_operating == 6 and .summary.after_operating == 7 and .summary.before_coverage_bps == 5000 and .summary.after_coverage_bps == 5833 and .repository_writes == 0 and .promotion_applied == 0' "$out/eligible.json"
+          jq -e '.decision == "BLOCK" and .resolution == "INVARIANT_ONLY" and .reason == "UPSTREAM_SOURCE_EVIDENCE_NOT_EXACT" and .promotion_applied == 0' "$out/upstream-block.json"
+          jq -e '.decision == "BLOCK" and .resolution == "INVARIANT_ONLY" and .reason == "SOURCE_AUTHORITY_BASELINE_NOT_NOT_IMPLEMENTED" and .promotion_applied == 0' "$out/baseline-block.json"
+          jq -e '[.indicators[] | select(.class == "OUTCOME")] | length == 1' "$out/eligible.json"
+          jq -e '[.indicators[] | select(.class == "DRIVER")] | length == 2' "$out/eligible.json"
+          jq -e '[.indicators[] | select(.class == "GUARDRAIL")] | length == 3' "$out/eligible.json"
+          jq -e '[.indicators[] | select(.proof_choice == "FOUNDATION")] | length == 3' "$out/eligible.json"
+          sha256sum "$out/eligible.json" "$out/upstream-block.json" "$out/baseline-block.json" > "$out/manifest.sha256"
+      - name: Upload promotion eligibility receipts
+        uses: actions/upload-artifact@v6
+        with:
+          name: source-authority-promotion-eligibility-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/source-authority-promotion
+          if-no-files-found: error
