@@ -1,6 +1,6 @@
 package userjourneyscorecard
 
-import "sort"
+import "slices"
 
 func summarizeJourney(definition JourneyDefinition, samples []Sample, contract Contract) (JourneyStats, bool) {
 	stats := JourneyStats{ID: definition.ID, Operation: definition.Operation, Arguments: definition.Arguments, Samples: len(samples)}
@@ -28,8 +28,8 @@ func summarizeJourney(definition JourneyDefinition, samples []Sample, contract C
 	}
 	stats.OutputReplay = complete && len(samples) > 0
 	if len(samples) > 0 {
-		sort.Slice(walls, func(i, j int) bool { return walls[i] < walls[j] })
-		sort.Slice(memory, func(i, j int) bool { return memory[i] < memory[j] })
+		slices.Sort(walls)
+		slices.Sort(memory)
 		middle := len(samples) / 2
 		stats.WallMinMS, stats.WallMedianMS, stats.WallMaxMS = walls[0], walls[middle], walls[len(walls)-1]
 		stats.RSSMinKiB, stats.RSSMedianKiB, stats.RSSMaxKiB = memory[0], memory[middle], memory[len(memory)-1]
@@ -37,11 +37,4 @@ func summarizeJourney(definition JourneyDefinition, samples []Sample, contract C
 	stats.EnvelopePassed = stats.Successful == contract.SamplesPerJourney && stats.OutputReplay &&
 		stats.WallMaxMS <= contract.WallMSLimit && stats.RSSMaxKiB <= contract.MaxRSSKiBLimit
 	return stats, complete
-}
-
-func max(left, right int64) int64 {
-	if right > left {
-		return right
-	}
-	return left
 }
