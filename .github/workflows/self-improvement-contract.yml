@@ -915,8 +915,8 @@ jobs:
 
   rollback-integrity-shadow:
     name: Rollback integrity shadow
-    needs: [language-assurance-kernel]
-    if: ${{ always() && needs['language-assurance-kernel'].result == 'success' }}
+    needs: [assurance]
+    if: ${{ always() && needs.assurance.result == 'success' }}
     runs-on: ubuntu-24.04
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
