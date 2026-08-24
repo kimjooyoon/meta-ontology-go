@@ -22,8 +22,8 @@ func metric(id, class, proof, operation, unit, relation string, value, target in
 	}
 	return Indicator{
 		MetricID: id, Class: class, ProofChoice: proof,
-		Producer: "externalecosystemconformance.Evaluate",
-		Consumer: "external-ecosystem-reference-gate",
+		Producer:      "externalecosystemconformance.Evaluate",
+		Consumer:      "external-ecosystem-reference-gate",
 		MetaOperation: operation, Unit: unit, Relation: relation,
 		Resolution: resolution, Value: value, Target: target, Satisfied: satisfied,
 	}
