@@ -2043,6 +2043,7 @@
             "\t\"context\"",
             "\t\"encoding/json\"",
             "\t\"os/exec\"",
+            "\t\"strings\"",
             ")"
           ]
         },
@@ -2174,7 +2175,6 @@
             "\t\"context\"",
             "\t\"path/filepath\"",
             "\t\"sort\"",
-            "\t\"strings\"",
             ")"
           ]
         },
