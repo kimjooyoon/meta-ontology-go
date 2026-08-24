@@ -1565,12 +1565,15 @@
     },
     {
       "branch": "agent/candidate-leakage-activation",
+      "branch": "agent/rollback-integrity-activation",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/self-improvement-contract.yml",
         "cmd/candidate-leakage-activation-witness",
+        "cmd/rollback-integrity-activation-witness",
         "examples/candidate-leakage-activation",
+        "examples/rollback-integrity-activation",
         "internal/meta/languageassurance/candidateleakageactivation",
         "internal/meta/languageassurance/digest.go",
         "internal/meta/languageassurance/evaluate_test.go",
