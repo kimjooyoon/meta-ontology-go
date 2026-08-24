@@ -49,3 +49,83 @@ jobs:
           name: self-improvement-contract-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/self-improvement-contract/first.json
           if-no-files-found: error
+
+  assurance:
+    name: Language assurance kernel
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+
+      - name: Require Go 1.27 fixes to be already applied
+        run: go fix -diff ./internal/meta/languageassurance ./cmd/language-assurance-witness
+
+      - name: Run assurance regressions
+        run: go test ./internal/meta/languageassurance ./cmd/language-assurance-witness
+
+      - name: Execute and replay four assurance use cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-assurance"
+          mkdir -p "$output/first" "$output/replay"
+          declare -A expected=(
+            [independent]=ALLOW_LIMITED
+            [self-minting]=BLOCK
+            [role-conflict]=BLOCK
+            [unknown-laundering]=FAIL_CLOSED
+          )
+          for fixture in independent self-minting role-conflict unknown-laundering; do
+            for pass in first replay; do
+              go run ./cmd/language-assurance-witness \
+                -root "$GITHUB_WORKSPACE" \
+                -subject-sha "$HEAD_SHA" \
+                -input "examples/language-assurance-kernel/$fixture.json" \
+                -output "$output/$pass/$fixture.json" \
+                -expect-candidate "${expected[$fixture]}"
+            done
+            cmp "$output/first/$fixture.json" "$output/replay/$fixture.json"
+          done
+          jq -e '
+            .assurance_decision == "PARTIAL" and
+            .candidate_decision == "ALLOW_LIMITED" and
+            .summary.denominator_total == 12 and
+            .summary.operating == 3 and
+            .summary.not_implemented == 9 and
+            .summary.implementation_coverage_bps == 2500 and
+            .summary.self_minting_paths == 0 and
+            .summary.role_conflict_paths == 0 and
+            .summary.unknown_laundering_paths == 0 and
+            ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 1 and
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3
+          ' "$output/first/independent.json"
+          jq -e '.candidate_decision == "BLOCK" and .summary.self_minting_paths == 1' "$output/first/self-minting.json"
+          jq -e '.candidate_decision == "BLOCK" and .summary.role_conflict_paths == 1' "$output/first/role-conflict.json"
+          jq -e '
+            .candidate_decision == "FAIL_CLOSED" and
+            .candidate_reason == "ASSURANCE_TOP_DECISION_UNKNOWN" and
+            .summary.unknown_laundering_paths == 1 and
+            .summary.unknown_top_decisions == 1
+          ' "$output/first/unknown-laundering.json"
+          sha256sum "$output"/first/*.json > "$output/first/manifest.sha256"
+
+      - name: Upload exact-head language assurance reports
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-assurance-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-assurance/first
+          if-no-files-found: error
+          retention-days: 30
