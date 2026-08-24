@@ -26,8 +26,7 @@ func run(arguments []string, stdout, stderr io.Writer) int {
 	}
 	input, ok := verticalsliceclosureeligibility.CaseInput(options.caseID, options.subjectSHA)
 	if !ok {
-		fmt.Fprintf(stderr, "unknown fixed case %q
-", options.caseID)
+		fmt.Fprintf(stderr, "unknown fixed case %q\n", options.caseID)
 		return 2
 	}
 	report := verticalsliceclosureeligibility.Evaluate(input)

@@ -41,11 +41,9 @@ func CaseInput(id, subjectSHA string) (Input, bool) {
 	case "shadow-unavailable":
 		input.Shadow.Payload = nil
 	case "assurance-digest-mismatch":
-		input.Assurance.Payload = append(input.Assurance.Payload, '
-')
+		input.Assurance.Payload = append(input.Assurance.Payload, '\n')
 	case "shadow-digest-mismatch":
-		input.Shadow.Payload = append(input.Shadow.Payload, '
-')
+		input.Shadow.Payload = append(input.Shadow.Payload, '\n')
 	case "unknown-top-decision":
 		rewriteShadow(&input, func(value *shadowCapsule) { value.Decision = "UNKNOWN" })
 	case "semantic-link-mismatch":
