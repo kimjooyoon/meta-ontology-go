@@ -1355,3 +1355,68 @@ jobs:
           path: ${{ runner.temp }}/promotion-continuity/output/a/report.json
           if-no-files-found: error
           retention-days: 30
+
+  vertical-slice-closure-eligibility:
+    name: vertical slice closure eligibility
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Generate fixed eligibility receipts
+        shell: bash
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/vertical-slice-closure-eligibility
+        run: |
+          set -euo pipefail
+          mkdir -p "$OUTPUT_DIR"
+          go run ./cmd/vertical-slice-closure-eligibility-witness             --subject-sha "$SUBJECT_SHA" --output "$OUTPUT_DIR/suite.json"
+          for case_id in exact assurance-unavailable shadow-unavailable assurance-digest-mismatch             shadow-digest-mismatch unknown-top-decision semantic-link-mismatch observed-write; do
+            go run ./cmd/vertical-slice-closure-eligibility-witness               --subject-sha "$SUBJECT_SHA" --case "$case_id"               --output "$OUTPUT_DIR/$case_id.json"
+          done
+          go run ./cmd/vertical-slice-closure-eligibility-witness             --subject-sha "$SUBJECT_SHA" --output "$OUTPUT_DIR/replay.json"
+          cmp "$OUTPUT_DIR/suite.json" "$OUTPUT_DIR/replay.json"
+      - name: Verify exact eligibility semantics
+        shell: bash
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/vertical-slice-closure-eligibility
+        run: |
+          set -euo pipefail
+          jq -e '
+            .decision == "ELIGIBLE" and .resolution == "EXACT" and
+            .cases_total == 8 and .cases_passed == 8 and .coverage_bps == 10000 and
+            .eligible_exact == 1 and .unknown_fail_closed == 3 and
+            .invariant_fail_closed == 4 and .repository_writes == 0 and
+            .promotion_applied == 0
+          ' "$OUTPUT_DIR/suite.json"
+          jq -e '
+            .decision == "ELIGIBLE" and .resolution == "EXACT" and
+            .summary.before_operating == 10 and .summary.eligible_operating == 11 and
+            .summary.official_operating == 10 and .repository_writes == 0 and
+            .promotion_applied == 0
+          ' "$OUTPUT_DIR/exact.json"
+          jq -e '
+            .decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and
+            .enforcement_effect == "BLOCK" and
+            .reason == "VERTICAL_SLICE_ELIGIBILITY_DECISION_UNKNOWN"
+          ' "$OUTPUT_DIR/unknown-top-decision.json"
+          sha256sum "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/manifest.sha256"
+      - name: Upload vertical slice eligibility artifact
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: vertical-slice-closure-eligibility-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/vertical-slice-closure-eligibility
+          if-no-files-found: error
+          retention-days: 14
