@@ -1,15 +1,14 @@
 package languagedelivery
 
 type ReadinessArtifact struct {
-	Schema   string `json:"schema"`
-	Decision string `json:"decision"`
-	HeadSHA  string `json:"head_sha"`
-	Report   struct {
+	Schema  string `json:"schema"`
+	HeadSHA string `json:"head_sha"`
+	Snapshot struct {
 		Schema           string                `json:"schema"`
 		Decision         string                `json:"decision"`
 		Obligations      []ReadinessObligation `json:"obligations"`
 		RepositoryWrites int                   `json:"repository_writes"`
-	} `json:"report"`
+	} `json:"snapshot"`
 }
 
 type ReadinessObligation struct {

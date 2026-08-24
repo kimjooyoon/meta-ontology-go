@@ -30,13 +30,13 @@ func inspectReadiness(data []byte, head string, receipt *ReadinessArtifact, entr
 	if err := unmarshalReceipt(data, receipt); err != nil {
 		return unknownObservation(SourceReadiness, entry, "SOURCE_JSON_UNKNOWN")
 	}
-	observation := baseObservation(SourceReadiness, entry, receipt.Schema, receipt.Decision, "EXACT")
-	observation.RepositoryWrites = receipt.Report.RepositoryWrites
+	observation := baseObservation(SourceReadiness, entry, receipt.Schema, receipt.Snapshot.Decision, "EXACT")
+	observation.RepositoryWrites = receipt.Snapshot.RepositoryWrites
 	if receipt.HeadSHA != "" && receipt.HeadSHA != head {
 		return headUnknown(observation)
 	}
-	if receipt.Report.Decision != "PASS" {
-		observation.Decision = receipt.Report.Decision
+	if receipt.Snapshot.Decision != "PASS" {
+		observation.Decision = receipt.Snapshot.Decision
 	}
-	return finalizeObservation(observation, receipt.Schema, "gooo/language-readiness-artifact/v1")
+	return finalizeObservation(observation, receipt.Schema, "gooo/language-readiness-artifact/v2")
 }

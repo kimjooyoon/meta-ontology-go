@@ -30,8 +30,8 @@ func groupByOwner(results []ObligationResult) []NamedCoordinates {
 }
 
 func internalReadiness(receipt ReadinessArtifact) InternalReadiness {
-	value := InternalReadiness{Claim: "INTERNAL_SELF_IMPROVEMENT_CONTRACT", Total: len(receipt.Report.Obligations)}
-	for _, item := range receipt.Report.Obligations {
+	value := InternalReadiness{Claim: "INTERNAL_SELF_IMPROVEMENT_CONTRACT", Total: len(receipt.Snapshot.Obligations)}
+	for _, item := range receipt.Snapshot.Obligations {
 		if item.Status == "SATISFIED" {
 			value.Satisfied++
 		}

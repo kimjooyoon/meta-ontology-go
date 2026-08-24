@@ -21,7 +21,7 @@ func observeRule(rule EvidenceRule, decoded decodedEvidence) (int, string) {
 			}
 		}
 	case EvidenceReadiness:
-		for _, item := range decoded.Readiness.Report.Obligations {
+		for _, item := range decoded.Readiness.Snapshot.Obligations {
 			if item.ID == rule.ID && item.Status == "SATISFIED" {
 				return 1, "READINESS_OBLIGATION_EXACT"
 			}
