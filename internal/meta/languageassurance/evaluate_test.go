@@ -12,16 +12,7 @@ func TestAssuranceDecisionMatrix(t *testing.T) {
 		decision, reason                                                      string
 		wantSelf, wantRole, wantLaundering, wantUnknown                       int
 		wantSnapshot, wantSnapshotPaths                                       int
-	}{
-		{name: "independent", decision: CandidateAllowLimited, reason: ReasonBoundaryClear},
-		{name: "self-minting", selfMinting: true, decision: CandidateBlock, reason: ReasonGovernanceViolation, wantSelf: 1},
-		{name: "role-conflict", roleConflict: true, decision: CandidateBlock, reason: ReasonGovernanceViolation, wantRole: 1},
-		{name: "unknown-fixed-point", input: DecisionUnknown, output: DecisionFixedPoint, decision: CandidateFailClosed, reason: ReasonTopDecisionUnknown, wantLaundering: 1, wantUnknown: 1},
-		{name: "unknown-block", input: DecisionUnknown, output: DecisionBlock, decision: CandidateFailClosed, reason: ReasonTopDecisionUnknown, wantUnknown: 1},
-		{name: "missing-evidence", missing: true, decision: CandidateFailClosed, reason: ReasonEvidenceUnknown, wantLaundering: -1, wantUnknown: -1},
-		{name: "missing-snapshot", missingSnapshot: true, decision: CandidateFailClosed, reason: ReasonEvidenceUnknown, wantSnapshot: -1, wantSnapshotPaths: -1},
-		{name: "snapshot-mismatch", mismatchSnapshot: true, decision: CandidateBlock, reason: ReasonSnapshotMismatch, wantSnapshot: 6666, wantSnapshotPaths: 1},
-	}
+	}{{name: "independent", decision: CandidateAllowLimited, reason: ReasonBoundaryClear}, {name: "self-minting", selfMinting: true, decision: CandidateBlock, reason: ReasonGovernanceViolation, wantSelf: 1}, {name: "role-conflict", roleConflict: true, decision: CandidateBlock, reason: ReasonGovernanceViolation, wantRole: 1}, {name: "unknown-fixed-point", input: DecisionUnknown, output: DecisionFixedPoint, decision: CandidateFailClosed, reason: ReasonTopDecisionUnknown, wantLaundering: 1, wantUnknown: 1}, {name: "unknown-block", input: DecisionUnknown, output: DecisionBlock, decision: CandidateFailClosed, reason: ReasonTopDecisionUnknown, wantUnknown: 1}, {name: "missing-evidence", missing: true, decision: CandidateFailClosed, reason: ReasonEvidenceUnknown, wantLaundering: -1, wantUnknown: -1}, {name: "missing-snapshot", missingSnapshot: true, decision: CandidateFailClosed, reason: ReasonEvidenceUnknown, wantSnapshot: -1, wantSnapshotPaths: -1}, {name: "snapshot-mismatch", mismatchSnapshot: true, decision: CandidateBlock, reason: ReasonSnapshotMismatch, wantSnapshot: 6666, wantSnapshotPaths: 1}}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			transaction := independentTransaction()

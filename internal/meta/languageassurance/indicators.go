@@ -20,9 +20,7 @@ func indicator(metricID string, class IndicatorClass, proof ProofChoice, operati
 	if value == nil {
 		resolution = ResolutionUnknown
 	}
-	return Indicator{MetricID: metricID, Class: class, ProofChoice: proof, Producer: Producer,
-		Consumer: Consumer, MetaOperation: operation, Value: value, Target: target, Unit: unit,
-		Relation: relation, Resolution: resolution, Satisfied: satisfies(value, target, relation)}
+	return Indicator{MetricID: metricID, Class: class, ProofChoice: proof, Producer: Producer, Consumer: Consumer, MetaOperation: operation, Value: value, Target: target, Unit: unit, Relation: relation, Resolution: resolution, Satisfied: satisfies(value, target, relation)}
 }
 
 func decide(summary Summary) (string, string, Resolution) {

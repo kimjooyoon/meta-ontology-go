@@ -1,5 +1,7 @@
 package languageassurance
 
+import "slices"
+
 type ObligationObservation struct {
 	MetricID      string     `json:"metric_id"`
 	Status        string     `json:"status"`
@@ -54,4 +56,19 @@ type Report struct {
 	Indicators               []Indicator             `json:"indicators"`
 	Summary                  Summary                 `json:"summary"`
 	ReportDigest             string                  `json:"report_digest"`
+}
+
+func validDecision(decision Decision) bool {
+	return slices.Contains([]Decision{DecisionUnknown, DecisionPass, DecisionFail, DecisionFixedPoint, DecisionAuthorized, DecisionAllow, DecisionBlock}, decision)
+}
+
+func validSnapshotBindings(bindings []SnapshotBinding) bool {
+	seen := make(map[string]bool, len(bindings))
+	for _, binding := range bindings {
+		if seen[binding.EvidenceID] || !slices.Contains(snapshotEvidenceIDs, binding.EvidenceID) || !validSHA(binding.SubjectSHA) {
+			return false
+		}
+		seen[binding.EvidenceID] = true
+	}
+	return true
 }
