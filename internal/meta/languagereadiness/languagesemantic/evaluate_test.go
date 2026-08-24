@@ -25,11 +25,11 @@ func TestValidateSyntaxReceiptAcceptsVersionedDenominator(t *testing.T) {
 		Decision:   "PASS",
 		Resolution: "EXACT",
 		Summary: SyntaxSummary{
-			Satisfied:    17,
-			Total:        17,
-			ValidCases:   15,
+			Satisfied:    18,
+			Total:        18,
+			ValidCases:   16,
 			InvalidCases: 2,
-			GoooLines:    225,
+			GoooLines:    245,
 		},
 		Source: syntaxSource{
 			ExpectedHeadSHA:  head,

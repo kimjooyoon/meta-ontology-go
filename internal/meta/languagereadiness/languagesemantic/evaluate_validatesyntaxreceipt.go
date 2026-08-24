@@ -17,8 +17,8 @@ func validateSyntaxReceipt(receipt syntaxReceipt, expectedHead string) error {
 	if !receipt.Source.ObservationKnown || !receipt.Source.ConceptBound {
 		return fmt.Errorf("syntax evidence is not dynamically bound")
 	}
-	if receipt.Summary.Satisfied != 17 || receipt.Summary.Total != 17 || receipt.Summary.ValidCases != 15 || receipt.Summary.InvalidCases != 2 || receipt.Summary.GoooLines != 225 {
-		return fmt.Errorf("syntax evidence denominator does not match 17 cases / 15 files / 225 lines")
+	if receipt.Summary.Satisfied != 18 || receipt.Summary.Total != 18 || receipt.Summary.ValidCases != 16 || receipt.Summary.InvalidCases != 2 || receipt.Summary.GoooLines != 245 {
+		return fmt.Errorf("syntax evidence denominator does not match 18 cases / 16 files / 245 lines")
 	}
 	if len(receipt.Source.GoooFiles) != expectedSources {
 		return fmt.Errorf("syntax evidence contains %d Gooo files, want %d", len(receipt.Source.GoooFiles), expectedSources)

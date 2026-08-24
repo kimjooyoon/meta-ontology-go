@@ -29,8 +29,8 @@ func toolchainLinks(surfaces []artifactSurface, head string) int {
 		schema string
 		cases  int
 	}{
-		"language-syntax-roundtrip":      {"gooo/language-syntax-roundtrip/v1", 17},
-		"language-semantic-model":        {"gooo/language-semantic-model/v1", 20},
+		"language-syntax-roundtrip":      {"gooo/language-syntax-roundtrip/v1", 18},
+		"language-semantic-model":        {"gooo/language-semantic-model/v1", 21},
 		"toolchain-executable-use-cases": {"gooo/toolchain-executable-use-cases/v1", 3},
 	}
 	links := 0

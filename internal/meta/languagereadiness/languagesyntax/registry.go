@@ -37,6 +37,7 @@ func expectedRegistry() Registry {
 		invalid("unterminated-string", "examples/language-syntax-roundtrip/unterminated-string.txt", "lex.unterminated-string"),
 		valid("source-splitter-conformance", "examples/source-splitter-conformance/main.gooo"),
 		valid("rollback-integrity-activation", "examples/rollback-integrity-activation/main.gooo"),
+		valid("vertical-slice-closure-activation", "examples/vertical-slice-closure-activation/main.gooo"),
 	}}
 }
 

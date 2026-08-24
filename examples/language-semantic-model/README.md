@@ -2,9 +2,9 @@
 
 This use case produces a deterministic, read-only receipt for the staged Gooo semantic model.
 
-The fixed denominator is 20 cases:
+The fixed denominator is 21 cases:
 
-- 15 repository `.gooo` files lowered twice to normalized `semantic.IR`
+- 16 repository `.gooo` files lowered twice to normalized `semantic.IR`
 - 3 authority laws derived from an observed IR
 - 2 fail-closed syntax rejections inherited from the exact-head syntax receipt
 

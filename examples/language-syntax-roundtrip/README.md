@@ -1,8 +1,8 @@
 # Language syntax round-trip corpus
 
 `corpus.json` is the versioned denominator for `LANGUAGE-SYNTAX-ROUNDTRIP`.
-It registers all 15 repository `.gooo` files and two invalid fixtures. The
-registered valid corpus contains exactly 225 physical Gooo lines.
+It registers all 16 repository `.gooo` files and two invalid fixtures. The
+registered valid corpus contains exactly 245 physical Gooo lines.
 
 CI rejects an unregistered `.gooo` file, a missing registered file, an unknown
 registry field, a replay mismatch, any repository write, or mutation authority.

@@ -134,6 +134,22 @@
       ]
     },
     {
+      "branch": "agent/candidate-leakage-activation",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/candidate-leakage-activation-witness",
+        "examples/candidate-leakage-activation",
+        "internal/meta/languageassurance/candidateleakageactivation",
+        "internal/meta/languageassurance/digest.go",
+        "internal/meta/languageassurance/evaluate_test.go",
+        "internal/meta/languageassurance/registry.go",
+        "internal/meta/languageassurance/source_authority_activation.go",
+        "internal/verify/scope_candidate_leakage_activation.go"
+      ]
+    },
+    {
       "branch": "agent/candidate-leakage-contract",
       "paths": [
         ".github/agent-scope-table.md",
@@ -155,6 +171,46 @@
         "examples/candidate-leakage-eligibility",
         "internal/meta/languageassurance/candidateleakageeligibility",
         "internal/verify/scope_candidate_leakage_eligibility.go"
+      ]
+    },
+    {
+      "branch": "agent/changed-surface-receipt-activation",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/changed-surface-receipt-activation-witness",
+        "examples/changed-surface-receipt-activation",
+        "internal/meta/languageassurance/changedsurfacereceiptactivation",
+        "internal/meta/languageassurance/digest.go",
+        "internal/meta/languageassurance/evaluate_test.go",
+        "internal/meta/languageassurance/registry.go",
+        "internal/meta/languageassurance/source_authority_activation.go",
+        "internal/verify/scope_changed_surface_receipt_activation.go"
+      ]
+    },
+    {
+      "branch": "agent/changed-surface-receipt-eligibility",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/changed-surface-receipt-eligibility-witness",
+        "examples/changed-surface-receipt-eligibility",
+        "internal/meta/languageassurance/changedsurfacereceipteligibility",
+        "internal/verify/scope_changed_surface_receipt_eligibility.go"
+      ]
+    },
+    {
+      "branch": "agent/changed-surface-receipt-shadow",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/changed-surface-receipt-witness",
+        "examples/changed-surface-receipt-shadow",
+        "internal/meta/languageassurance/changedsurfacereceipt",
+        "internal/verify/scope_changed_surface_receipt.go"
       ]
     },
     {
@@ -364,6 +420,18 @@
       ]
     },
     {
+      "branch": "agent/external-ecosystem-conformance",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/external-ecosystem-conformance-witness/**",
+        "examples/external-ecosystem-conformance/**",
+        "internal/meta/externalecosystemconformance/**",
+        "internal/verify/scope_external_ecosystem_conformance.go"
+      ]
+    },
+    {
       "branch": "agent/feedback-payload-envelope-v27",
       "paths": [
         ".github/agent-scope-table.md",
@@ -461,18 +529,6 @@
       "branch": "agent/freshness-detection",
       "paths": [
         "internal/detection/freshness/**"
-      ]
-    },
-    {
-      "branch": "agent/external-ecosystem-conformance",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/external-ecosystem-conformance-witness/**",
-        "examples/external-ecosystem-conformance/**",
-        "internal/meta/externalecosystemconformance/**",
-        "internal/verify/scope_external_ecosystem_conformance.go"
       ]
     },
     {
@@ -1228,6 +1284,57 @@
       ]
     },
     {
+      "branch": "agent/rollback-integrity-activation",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/rollback-integrity-activation-witness",
+        "examples/language-syntax-roundtrip/README.md",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/rollback-integrity-activation",
+        "internal/meta/languageassurance/rollbackintegrityactivation",
+        "internal/meta/languageassurance/digest.go",
+        "internal/meta/languageassurance/evaluate_test.go",
+        "internal/meta/languageassurance/registry.go",
+        "internal/meta/languageassurance/source_authority_activation.go",
+        "internal/meta/languagereadiness/languagesyntax",
+        "internal/meta/languagereadiness/languagesemantic",
+        "internal/meta/languagereadiness/languagesemanticbinding",
+        "docs/language/language-semantic-model.md",
+        "docs/language/language-semantic-readiness-binding.md",
+        "docs/language/language-syntax-roundtrip.md",
+        "examples/language-semantic-model",
+        "internal/meta/languagereadiness/toolchainconformance",
+        "examples/toolchain-conformance",
+        "internal/verify/scope_rollback_integrity_activation.go"
+      ]
+    },
+    {
+      "branch": "agent/rollback-integrity-eligibility",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/rollback-integrity-eligibility-witness",
+        "examples/rollback-integrity-eligibility",
+        "internal/meta/languageassurance/rollbackintegrityeligibility",
+        "internal/verify/scope_rollback_integrity_eligibility.go"
+      ]
+    },
+    {
+      "branch": "agent/rollback-integrity-shadow",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/rollback-integrity-shadow-witness/**",
+        "examples/rollback-integrity-shadow/**",
+        "internal/meta/languageassurance/rollbackintegrityshadow/**",
+        "internal/verify/scope_rollback_integrity_shadow.go"
+      ]
+    },
+    {
       "branch": "agent/root-readme-applicability-v16",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1564,122 +1671,45 @@
       ]
     },
     {
-      "branch": "agent/zerolang-experiments",
-      "paths": [
-        "docs/research/zerolang.md"
-      ]
-    },
-    {
-      "branch": "agent/zerolang-research",
-      "paths": [
-        "docs/research/zerolang.md"
-      ]
-    },
-    {
-      "branch": "agent/candidate-leakage-activation",
+      "branch": "agent/vertical-slice-closure-activation",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/self-improvement-contract.yml",
-        "cmd/candidate-leakage-activation-witness",
-        "examples/candidate-leakage-activation",
-        "internal/meta/languageassurance/candidateleakageactivation",
-        "internal/meta/languageassurance/digest.go",
-        "internal/meta/languageassurance/evaluate_test.go",
-        "internal/meta/languageassurance/registry.go",
-        "internal/meta/languageassurance/source_authority_activation.go",
-        "internal/verify/scope_candidate_leakage_activation.go"
-      ]
-    },
-    {
-      "branch": "agent/rollback-integrity-activation",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "cmd/rollback-integrity-activation-witness",
-        "examples/language-syntax-roundtrip/README.md",
-        "examples/language-syntax-roundtrip/corpus.json",
-        "examples/rollback-integrity-activation",
-        "internal/meta/languageassurance/rollbackintegrityactivation",
-        "internal/meta/languageassurance/digest.go",
-        "internal/meta/languageassurance/evaluate_test.go",
-        "internal/meta/languageassurance/registry.go",
-        "internal/meta/languageassurance/source_authority_activation.go",
-        "internal/meta/languagereadiness/languagesyntax",
-        "internal/meta/languagereadiness/languagesemantic",
-        "internal/meta/languagereadiness/languagesemanticbinding",
+        "cmd/vertical-slice-closure-activation-witness/**",
         "docs/language/language-semantic-model.md",
         "docs/language/language-semantic-readiness-binding.md",
         "docs/language/language-syntax-roundtrip.md",
-        "examples/language-semantic-model",
-        "internal/meta/languagereadiness/toolchainconformance",
-        "examples/toolchain-conformance",
-        "internal/verify/scope_rollback_integrity_activation.go"
-      ]
-    },
-    {
-      "branch": "agent/changed-surface-receipt-shadow",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "cmd/changed-surface-receipt-witness",
-        "examples/changed-surface-receipt-shadow",
-        "internal/meta/languageassurance/changedsurfacereceipt",
-        "internal/verify/scope_changed_surface_receipt.go"
-      ]
-    },
-    {
-      "branch": "agent/changed-surface-receipt-eligibility",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "cmd/changed-surface-receipt-eligibility-witness",
-        "examples/changed-surface-receipt-eligibility",
-        "internal/meta/languageassurance/changedsurfacereceipteligibility",
-        "internal/verify/scope_changed_surface_receipt_eligibility.go"
-      ]
-    },
-    {
-      "branch": "agent/changed-surface-receipt-activation",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "cmd/changed-surface-receipt-activation-witness",
-        "examples/changed-surface-receipt-activation",
-        "internal/meta/languageassurance/changedsurfacereceiptactivation",
+        "docs/language/toolchain-conformance.md",
+        "examples/language-semantic-model/**",
+        "examples/language-syntax-roundtrip/README.md",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/toolchain-conformance/corpus.json",
+        "examples/vertical-slice-closure-shadow/README.md",
+        "examples/vertical-slice-closure-activation/**",
         "internal/meta/languageassurance/digest.go",
         "internal/meta/languageassurance/evaluate_test.go",
         "internal/meta/languageassurance/registry.go",
         "internal/meta/languageassurance/source_authority_activation.go",
-        "internal/verify/scope_changed_surface_receipt_activation.go"
+        "internal/meta/languageassurance/verticalsliceclosureactivation/**",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/**",
+        "internal/meta/languagereadiness/languagesemantic/**",
+        "internal/meta/languagereadiness/languagesemanticbinding/**",
+        "internal/meta/languagereadiness/languagesyntax/**",
+        "internal/meta/languagereadiness/toolchainconformance/**",
+        "internal/verify/scope_vertical_slice_closure_activation.go"
       ]
     },
     {
-      "branch": "agent/rollback-integrity-shadow",
+      "branch": "agent/vertical-slice-closure-eligibility",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "cmd/rollback-integrity-shadow-witness/**",
-        "examples/rollback-integrity-shadow/**",
-        "internal/meta/languageassurance/rollbackintegrityshadow/**",
-        "internal/verify/scope_rollback_integrity_shadow.go"
-      ]
-    },
-    {
-      "branch": "agent/rollback-integrity-eligibility",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/self-improvement-contract.yml",
-        "cmd/rollback-integrity-eligibility-witness",
-        "examples/rollback-integrity-eligibility",
-        "internal/meta/languageassurance/rollbackintegrityeligibility",
-        "internal/verify/scope_rollback_integrity_eligibility.go"
+        ".github/workflows/transformation-effect.yml",
+        "cmd/vertical-slice-closure-eligibility-witness",
+        "examples/vertical-slice-closure-eligibility",
+        "internal/meta/languageassurance/verticalsliceclosureeligibility",
+        "internal/verify/scope_vertical_slice_closure_eligibility.go"
       ]
     },
     {
@@ -1695,15 +1725,15 @@
       ]
     },
     {
-      "branch": "agent/vertical-slice-closure-eligibility",
+      "branch": "agent/zerolang-experiments",
       "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/vertical-slice-closure-eligibility-witness",
-        "examples/vertical-slice-closure-eligibility",
-        "internal/meta/languageassurance/verticalsliceclosureeligibility",
-        "internal/verify/scope_vertical_slice_closure_eligibility.go"
+        "docs/research/zerolang.md"
+      ]
+    },
+    {
+      "branch": "agent/zerolang-research",
+      "paths": [
+        "docs/research/zerolang.md"
       ]
     }
   ],
