@@ -25,8 +25,8 @@ func Evaluate(input Input) Receipt {
 		EligibilityReportDigest: EligibilityReportHash, Artifacts: artifactBindings(input),
 		Transition: Transition{MetricID: MetricID, MetaOperation: MetaOperation,
 			FromStatus: "NOT_IMPLEMENTED", FromResolution: "NONE", ToStatus: "OPERATING", ToResolution: ResolutionExact},
-		Summary: summary, RepositoryWrites: 0, TransitionApplied: transitionApplied}
-	receipt.Indicators = buildIndicators(summary, transitionApplied, resolution)
+		Summary: summary, RepositoryWrites: 0, TransitionApplied: transitionApplied,
+		Indicators: buildIndicators(summary, transitionApplied, resolution)}
 	seal(&receipt)
 	return receipt
 }
