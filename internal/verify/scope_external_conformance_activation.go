@@ -6,6 +6,7 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/self-improvement-contract.yml",
 		"cmd/external-conformance-activation-witness",
+		"docs/language/language-semantic-readiness-binding.md",
 		"examples/external-conformance-activation",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/meta/languageassurance/digest.go",
@@ -18,6 +19,7 @@ func init() {
 		"examples/language-semantic-model/corpus.json",
 		"examples/language-semantic-model/README.md",
 		"internal/meta/languagereadiness/languagesemantic",
+		"internal/meta/languagereadiness/languagesemanticbinding",
 		"internal/verify/scope_external_conformance_activation.go",
 	}
 }
