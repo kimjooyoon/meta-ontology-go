@@ -26,16 +26,16 @@ type Receipt struct {
 }
 
 type Indicator struct {
-	MetricID     string `json:"metric_id"`
-	Class        string `json:"class"`
-	ProofChoice  string `json:"proof_choice"`
-	Producer     string `json:"producer"`
-	Consumer     string `json:"consumer"`
+	MetricID      string `json:"metric_id"`
+	Class         string `json:"class"`
+	ProofChoice   string `json:"proof_choice"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
 	MetaOperation string `json:"meta_operation"`
-	Value        int    `json:"value"`
-	Target       int    `json:"target"`
-	Unit         string `json:"unit"`
-	Relation     string `json:"relation"`
-	Resolution   string `json:"resolution"`
-	Satisfied    bool   `json:"satisfied"`
+	Value         int    `json:"value"`
+	Target        int    `json:"target"`
+	Unit          string `json:"unit"`
+	Relation      string `json:"relation"`
+	Resolution    string `json:"resolution"`
+	Satisfied     bool   `json:"satisfied"`
 }
