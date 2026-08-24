@@ -70,16 +70,16 @@ jobs:
         run: test "$(go env GOVERSION)" = "go1.27.0"
 
       - name: Require Go 1.27 fixes to be already applied
-        run: go fix -diff ./internal/meta/languageassurance ./cmd/language-assurance-witness ./cmd/language-assurance-reconstructor
+        run: go fix -diff ./internal/meta/languageassurance ./cmd/language-assurance-witness ./cmd/language-assurance-witness/reconstructor
 
       - name: Run assurance regressions
-        run: go test ./internal/meta/languageassurance ./cmd/language-assurance-witness ./cmd/language-assurance-reconstructor
+        run: go test ./internal/meta/languageassurance ./cmd/language-assurance-witness ./cmd/language-assurance-witness/reconstructor
 
       - name: Require evaluator-independent reconstruction imports
         shell: bash
         run: |
           set -euo pipefail
-          if go list -deps ./cmd/language-assurance-reconstructor | grep -Fxq 'github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance'; then
+          if go list -deps ./cmd/language-assurance-witness/reconstructor | grep -Fxq 'github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance'; then
             echo 'raw reconstructor imports the subject evaluator' >&2
             exit 1
           fi
@@ -110,7 +110,7 @@ jobs:
               else . end
                       ' "examples/language-assurance-kernel/$fixture.json" > "$output/first/raw/$fixture.json"
                       for pass in first replay; do
-                        go run ./cmd/language-assurance-reconstructor \
+                        go run ./cmd/language-assurance-witness/reconstructor \
                           -root "$GITHUB_WORKSPACE" \
                           -subject-sha "$HEAD_SHA" \
                           -input "$output/first/raw/$fixture.json" \
