@@ -62,6 +62,7 @@ func CanonicalMetaOperations() []MetaOperation {
 		{ID: "reconstruct-raw-evidence", Activity: "ReconstructRawEvidence", ProofChoice: ProofRegression},
 		{ID: "observe-exact-write-set", Activity: "ObserveExactWriteSet", ProofChoice: ProofRegression},
 		{ID: "bind-source-backed-authority", Activity: "BindSourceBackedAuthority", ProofChoice: ProofFoundation},
+		{ID: "detect-candidate-leakage", Activity: "DetectCandidateLeakage", ProofChoice: ProofCoherence},
 	}
 }
 
