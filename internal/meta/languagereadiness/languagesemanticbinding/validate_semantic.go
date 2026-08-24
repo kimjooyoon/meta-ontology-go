@@ -17,10 +17,10 @@ func validateSemantic(value semanticArtifact, head string, metrics []string) err
 		return err
 	}
 	syntax := source.SyntaxSummary
-	if err := require(syntax.Satisfied == 16 && syntax.Total == 16 && syntax.ValidCases == 14, "syntax inheritance mismatch"); err != nil {
+	if err := require(syntax.Satisfied == 17 && syntax.Total == 17 && syntax.ValidCases == 15, "syntax inheritance mismatch"); err != nil {
 		return err
 	}
-	if err := require(syntax.InvalidCases == 2 && syntax.GoooLines == 205, "syntax denominator mismatch"); err != nil {
+	if err := require(syntax.InvalidCases == 2 && syntax.GoooLines == 225, "syntax denominator mismatch"); err != nil {
 		return err
 	}
 	if err := validateSemanticSummary(value.Summary); err != nil {

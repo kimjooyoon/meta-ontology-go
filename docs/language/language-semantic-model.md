@@ -4,7 +4,7 @@
 
 The semantic model is not credited because a Go type named `IR` exists. It is credited only when executable meta-code binds a fixed source set, lowers each source twice, normalizes both results, compares authoritative meaning, provenance, and exact evidence, then seals an effect receipt.
 
-The versioned denominator is 19 cases. The exact target is 19/19 and 10000 basis points. The source component contains 14 `.gooo` files and 205 physical lines proven by the upstream syntax receipt. The added 31-line source-splitter decision-algebra program is credited only for lowering, normalization, and replay here; it does not establish SplitGo runtime behavior.
+The versioned denominator is 20 cases. The exact target is 20/20 and 10000 basis points. The source component contains 15 `.gooo` files and 225 physical lines proven by the upstream syntax receipt. The 31-line source-splitter decision-algebra program and 20-line rollback-integrity activation program are credited only for lowering, normalization, and replay here; they do not establish runtime behavior or merge authority.
 
 ## Stages
 
@@ -27,7 +27,7 @@ These laws connect the metric to `semantic.IR.SemanticCanonical`, not to a textu
 
 ## Munchhausen choices
 
-- `FOUNDATION`: bind the versioned 19-case registry and exact-head 16-case syntax receipt.
+- `FOUNDATION`: bind the versioned 20-case registry and exact-head 17-case syntax receipt.
 - `COHERENCE`: replay normalized IR, authoritative meaning, provenance, exact evidence, and the two positive authority laws.
 - `REGRESSION`: reject invalid syntax, candidate authority escalation, unknown evidence, effects, writes, and mutation authority.
 
