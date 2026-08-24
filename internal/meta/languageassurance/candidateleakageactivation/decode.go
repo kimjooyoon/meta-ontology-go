@@ -18,8 +18,8 @@ type assuranceSummary struct {
 }
 
 type assuranceObligation struct {
-	MetricID     string `json:"metric_id"`
-	Status       string `json:"status"`
-	Resolution   string `json:"resolution"`
+	MetricID      string `json:"metric_id"`
+	Status        string `json:"status"`
+	Resolution    string `json:"resolution"`
 	MetaOperation string `json:"meta_operation"`
 }
