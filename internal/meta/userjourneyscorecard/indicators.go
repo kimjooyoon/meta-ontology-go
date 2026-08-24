@@ -2,7 +2,7 @@ package userjourneyscorecard
 
 func (s *inspection) indicators() []Indicator {
 	expectedSamples := len(s.contract.Journeys) * s.contract.SamplesPerJourney
-	effects := s.repositoryWrites + boolInt(s.upstream.MutationAuthorized)
+	effects := int64(s.repositoryWrites) + boolInt(s.upstream.MutationAuthorized)
 	return []Indicator{
 		metric("functional.cli-contract", "OUTCOME", "FOUNDATION", "consume-toolchain-cli-receipt", boolInt(s.upstreamPassed), 1),
 		metric("functional.user-journeys", "OUTCOME", "COHERENCE", "execute-user-positive-paths", int64(s.journeysPassed), 6),
@@ -18,7 +18,7 @@ func (s *inspection) indicators() []Indicator {
 		metric("guardrail.wall", "GUARDRAIL", "REGRESSION", "bound-wall-observations", int64(s.wallViolations), 0),
 		metric("guardrail.rss", "GUARDRAIL", "REGRESSION", "bound-rss-observations", int64(s.rssViolations), 0),
 		metric("guardrail.binary-size", "GUARDRAIL", "REGRESSION", "bound-binary-size", int64(s.binaryViolations), 0),
-		metric("guardrail.effects", "GUARDRAIL", "REGRESSION", "deny-repository-mutation", int64(effects), 0),
+		metric("guardrail.effects", "GUARDRAIL", "REGRESSION", "deny-repository-mutation", effects, 0),
 	}
 }
 
