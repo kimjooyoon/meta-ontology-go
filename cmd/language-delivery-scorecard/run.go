@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagedelivery"
 )
 
 type options struct {
