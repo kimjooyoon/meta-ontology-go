@@ -11,18 +11,18 @@ type Snapshot struct {
 }
 
 type Indicator struct {
-	MetricID     string `json:"metric_id"`
-	Class        string `json:"class"`
-	ProofChoice  string `json:"proof_choice"`
+	MetricID      string `json:"metric_id"`
+	Class         string `json:"class"`
+	ProofChoice   string `json:"proof_choice"`
 	MetaOperation string `json:"meta_operation"`
-	Producer     string `json:"producer"`
-	Consumer     string `json:"consumer"`
-	Resolution   string `json:"resolution"`
-	Unit         string `json:"unit"`
-	Value        int    `json:"value"`
-	Target       int    `json:"target"`
-	Relation     string `json:"relation"`
-	Satisfied    bool   `json:"satisfied"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
+	Resolution    string `json:"resolution"`
+	Unit          string `json:"unit"`
+	Value         int    `json:"value"`
+	Target        int    `json:"target"`
+	Relation      string `json:"relation"`
+	Satisfied     bool   `json:"satisfied"`
 }
 
 type Receipt struct {
@@ -46,17 +46,17 @@ type CaseResult struct {
 	ExpectedObservation string  `json:"expected_observation"`
 	ExpectedResolution  string  `json:"expected_resolution"`
 	ExpectedEnforcement string  `json:"expected_enforcement"`
-	ExpectedReason       string  `json:"expected_reason"`
-	Passed               bool    `json:"passed"`
-	Receipt              Receipt `json:"receipt"`
+	ExpectedReason      string  `json:"expected_reason"`
+	Passed              bool    `json:"passed"`
+	Receipt             Receipt `json:"receipt"`
 }
 
 type SuiteSummary struct {
-	CasesTotal      int `json:"cases_total"`
-	CasesPassed     int `json:"cases_passed"`
-	ExactAllow      int `json:"exact_allow"`
-	FailClosed      int `json:"fail_closed"`
-	CoverageBPS     int `json:"coverage_bps"`
+	CasesTotal  int `json:"cases_total"`
+	CasesPassed int `json:"cases_passed"`
+	ExactAllow  int `json:"exact_allow"`
+	FailClosed  int `json:"fail_closed"`
+	CoverageBPS int `json:"coverage_bps"`
 }
 
 type Suite struct {

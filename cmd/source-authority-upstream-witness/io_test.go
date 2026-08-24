@@ -12,7 +12,7 @@ func TestWriteArtifactsRefusesExistingDirectory(t *testing.T) {
 	suite := sourceauthorityupstream.Suite{
 		Schema: sourceauthorityupstream.SuiteSchema,
 		Cases: []sourceauthorityupstream.CaseResult{{
-			ID: sourceauthorityupstream.CaseExact,
+			ID:      sourceauthorityupstream.CaseExact,
 			Receipt: sourceauthorityupstream.Receipt{Schema: sourceauthorityupstream.ReceiptSchema},
 		}},
 	}

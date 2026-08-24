@@ -27,8 +27,8 @@ func RunSuite(ctx context.Context, subjectSHA string, fetcher Fetcher) Suite {
 	authorityRequest := request
 	authorityRequest.Authority.Repository = "cosmos72/not-gomacro"
 	receipts := map[string]Receipt{
-		CaseExact: Observe(ctx, policy, request, fetcher),
-		CaseDigestMismatch: Observe(ctx, digestPolicy, request, fetcher),
+		CaseExact:             Observe(ctx, policy, request, fetcher),
+		CaseDigestMismatch:    Observe(ctx, digestPolicy, request, fetcher),
 		CaseAuthorityMismatch: Observe(ctx, policy, authorityRequest, fetcher),
 	}
 	suite := Suite{Schema: SuiteSchema, SubjectSHA: subjectSHA, DenominatorID: DenominatorID, DenominatorDigest: digestValue(fixedDenominator)}
