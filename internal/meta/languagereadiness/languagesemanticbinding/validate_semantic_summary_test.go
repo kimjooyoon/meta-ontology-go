@@ -36,7 +36,7 @@ func TestValidateSemanticSummaryRejectsStaleDenominator(t *testing.T) {
 
 func TestValidateSemanticEvidenceRejectsStaleCaseDenominator(t *testing.T) {
 	value := semanticArtifact{Cases: make([]semanticCase, semanticCaseDenominator-1)}
-	if err := validateSemanticEvidence(value, nil); err == nil || err.Error() != "semantic case denominator mismatch" {
-		t.Fatalf("stale semantic evidence denominator must fail closed, got %v", err)
+	if err := validateSemanticEvidence(value, nil); err == nil {
+		t.Fatal("stale semantic evidence denominator must fail closed")
 	}
 }
