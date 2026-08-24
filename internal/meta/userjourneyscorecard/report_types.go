@@ -9,18 +9,18 @@ type Summary struct {
 }
 
 type Counter struct {
-	Satisfied  int `json:"satisfied"`
-	Total      int `json:"total"`
+	Satisfied   int `json:"satisfied"`
+	Total       int `json:"total"`
 	BasisPoints int `json:"basis_points"`
 }
 
 type FunctionalSummary struct {
-	UpstreamCases       int `json:"upstream_cases"`
-	PositiveJourneys    int `json:"positive_journeys"`
-	OutputReplays       int `json:"output_replays"`
-	StructuredOutputs   int `json:"structured_outputs"`
-	LanguageOperations  int `json:"language_operations"`
-	DeclaredCommands    int `json:"declared_commands"`
+	UpstreamCases      int `json:"upstream_cases"`
+	PositiveJourneys   int `json:"positive_journeys"`
+	OutputReplays      int `json:"output_replays"`
+	StructuredOutputs  int `json:"structured_outputs"`
+	LanguageOperations int `json:"language_operations"`
+	DeclaredCommands   int `json:"declared_commands"`
 }
 
 type ResourceSummary struct {
@@ -45,13 +45,13 @@ type EffectSummary struct {
 }
 
 type JourneyStats struct {
-	ID, Operation                       string
-	Arguments                           []string `json:"arguments"`
-	Samples, Successful                 int
-	OutputReplay, EnvelopePassed        bool
-	WallMinMS, WallMedianMS, WallMaxMS  int64
-	RSSMinKiB, RSSMedianKiB, RSSMaxKiB  int64
-	StdoutMaxBytes, StderrMaxBytes      int64
+	ID, Operation                      string
+	Arguments                          []string `json:"arguments"`
+	Samples, Successful                int
+	OutputReplay, EnvelopePassed       bool
+	WallMinMS, WallMedianMS, WallMaxMS int64
+	RSSMinKiB, RSSMedianKiB, RSSMaxKiB int64
+	StdoutMaxBytes, StderrMaxBytes     int64
 }
 
 type Indicator struct {

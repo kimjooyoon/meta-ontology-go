@@ -9,17 +9,17 @@ import (
 )
 
 type inspection struct {
-	contract Contract
-	profile  Profile
-	upstream metacli.Report
-	stats    []JourneyStats
+	contract                                 Contract
+	profile                                  Profile
+	upstream                                 metacli.Report
+	stats                                    []JourneyStats
 	upstreamPassed, binaryBound, sourceBound bool
 	journeysPassed, envelopesPassed          int
-	samplesObserved, outputReplays            int
-	metaBindings, unknowns                    int
-	wallViolations, rssViolations             int
-	binaryViolations, repositoryWrites        int
-	lowerResolution                           bool
+	samplesObserved, outputReplays           int
+	metaBindings, unknowns                   int
+	wallViolations, rssViolations            int
+	binaryViolations, repositoryWrites       int
+	lowerResolution                          bool
 }
 
 func Evaluate(root, executable, head string, contractRaw, upstreamRaw, profileRaw []byte) (Report, error) {
