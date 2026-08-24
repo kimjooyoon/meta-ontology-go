@@ -59,9 +59,8 @@ func RunSuite(subjectSHA string) Suite {
 	for index, definition := range definitions {
 		input, _ := CaseInput(definition.ID, subjectSHA)
 		report := Evaluate(input)
-		passed := report.Decision == definition.ExpectedDecision && report.Resolution ==
-			definition.ExpectedResolution && report.Reason == definition.ExpectedReason &&
-			report.RepositoryWrites == 0 && report.PromotionApplied == 0
+		passed := report.Decision == definition.ExpectedDecision && report.Resolution == definition.ExpectedResolution &&
+			report.Reason == definition.ExpectedReason && report.RepositoryWrites == 0 && report.PromotionApplied == 0
 		suite.Cases[index] = CaseResult{Definition: definition, Passed: passed, Report: report}
 		if passed {
 			suite.CasesPassed++

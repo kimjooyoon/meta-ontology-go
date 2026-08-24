@@ -26,8 +26,7 @@ func exactDigests(input Input) bool {
 }
 
 func validSemantics(assurance assuranceCapsule, report shadowReportCapsule, suite shadowSuiteCapsule) bool {
-	return assurance.Schema == "gooo/language-assurance-report/v1" && assurance.SubjectSHA == EvidenceSubjectSHA &&
-		assurance.DenominatorDigest == "sha256:e5b266ceeaeb0757a40096fb661982a263370b1e08945dfedbe34f96eb237a02" &&
+	return assurance.Schema == "gooo/language-assurance-report/v1" && assurance.SubjectSHA == EvidenceSubjectSHA && assurance.DenominatorDigest == "sha256:e5b266ceeaeb0757a40096fb661982a263370b1e08945dfedbe34f96eb237a02" &&
 		assurance.Summary.DenominatorTotal == 12 && assurance.Summary.Operating == 8 && assurance.Summary.NotImplemented == 4 &&
 		assurance.Summary.ImplementationCoverageBPS == 6666 && assurance.Summary.UnresolvedIndicators == 0 &&
 		assurance.Summary.ViolatedGuardrails == 0 && assurance.Summary.RepositoryWrites == 0 && assuranceBaseline(assurance) &&
