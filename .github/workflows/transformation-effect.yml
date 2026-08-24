@@ -962,6 +962,86 @@ jobs:
             cd "$conformance_first"
             sha256sum artifact.json > artifact.json.sha256
           )
+          go fix ./internal/meta/languageassurance/verticalsliceclosureshadow \
+            ./cmd/vertical-slice-closure-shadow-witness
+          test -z "$(git status --porcelain)"
+          test -z "$(gofmt -l internal/meta/languageassurance/verticalsliceclosureshadow \
+            cmd/vertical-slice-closure-shadow-witness)"
+          go test ./internal/meta/languageassurance/verticalsliceclosureshadow \
+            ./cmd/vertical-slice-closure-shadow-witness
+          vertical_root="$RUNNER_TEMP/vertical-slice-closure-shadow"
+          vertical_first="$vertical_root/first"
+          vertical_replay="$vertical_root/replay"
+          mkdir -p "$vertical_first" "$vertical_replay"
+          for target in "$vertical_first" "$vertical_replay"; do
+            go run ./cmd/vertical-slice-closure-shadow-witness \
+              --assurance internal/meta/languageassurance/verticalsliceclosureshadow/evidence/assurance.json \
+              --head "$HEAD_SHA" \
+              --syntax "$syntax_first/artifact.json" \
+              --semantics "$semantic_first/artifact.json" \
+              --binding "$binding_first/artifact.json" \
+              --use-cases "$usecase_first/artifact.json" \
+              --toolchain "$conformance_first/artifact.json" \
+              --release "$release_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$vertical_first/artifact.json" "$vertical_replay/artifact.json"
+          jq '.decision = "FUTURE_DECISION"' "$semantic_first/artifact.json" \
+            > "$vertical_root/semantic-unknown.json"
+          jq '.source.syntax_artifact_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$semantic_first/artifact.json" > "$vertical_root/semantic-link-mismatch.json"
+          jq '.repository_writes = 1' "$usecase_first/artifact.json" \
+            > "$vertical_root/use-case-write.json"
+          for variant in unavailable unknown link-mismatch write; do
+            semantic="$semantic_first/artifact.json"
+            use_case="$usecase_first/artifact.json"
+            unavailable=""
+            case "$variant" in
+              unavailable) unavailable="--unavailable-boundary semantics" ;;
+              unknown) semantic="$vertical_root/semantic-unknown.json" ;;
+              link-mismatch) semantic="$vertical_root/semantic-link-mismatch.json" ;;
+              write) use_case="$vertical_root/use-case-write.json" ;;
+            esac
+            go run ./cmd/vertical-slice-closure-shadow-witness \
+              --assurance internal/meta/languageassurance/verticalsliceclosureshadow/evidence/assurance.json \
+              --head "$HEAD_SHA" \
+              --syntax "$syntax_first/artifact.json" \
+              --semantics "$semantic" \
+              --binding "$binding_first/artifact.json" \
+              --use-cases "$use_case" \
+              --toolchain "$conformance_first/artifact.json" \
+              --release "$release_first/artifact.json" \
+              $unavailable --output "$vertical_root/$variant.json"
+          done
+          jq -e '.decision == "SHADOW_PASS" and .resolution == "EXACT" and
+            .enforcement_effect == "NO_EFFECT" and .summary.denominator_total == 12 and
+            .summary.before_operating == 10 and .summary.projected_operating == 11 and
+            .summary.before_coverage_bps == 8333 and .summary.projected_coverage_bps == 9166 and
+            .summary.boundaries_total == 6 and .summary.boundaries_satisfied == 6 and
+            .summary.links_total == 12 and .summary.links_satisfied == 12 and
+            .repository_writes == 0 and .promotion_applied == 0' "$vertical_first/artifact.json"
+          jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and
+            ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and
+            ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and
+            ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1' \
+            "$vertical_first/artifact.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+            .summary.unknown_boundaries > 0 and .summary.projected_operating == 10' \
+            "$vertical_root/unavailable.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+            .summary.unknown_top_decisions == 1 and .summary.projected_operating == 10' \
+            "$vertical_root/unknown.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and
+            .summary.blocked_boundaries > 0 and .summary.projected_operating == 10' \
+            "$vertical_root/link-mismatch.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and
+            .summary.observed_repository_writes == 1 and .summary.projected_operating == 10' \
+            "$vertical_root/write.json"
+          sha256sum "$vertical_first/artifact.json" "$vertical_root/unavailable.json" \
+            "$vertical_root/unknown.json" "$vertical_root/link-mismatch.json" \
+            "$vertical_root/write.json" > "$vertical_root/manifest.sha256"
           for target in "$readiness_first" "$readiness_replay"; do
             rm -f "$target/artifact.json"
             go run ./cmd/language-readiness-witness \
@@ -1196,6 +1276,14 @@ jobs:
         with:
           name: language-syntax-roundtrip-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-syntax-roundtrip/first/artifact.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload exact-head vertical slice closure shadow
+        uses: actions/upload-artifact@v7
+        with:
+          name: vertical-slice-closure-shadow-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/vertical-slice-closure-shadow
           if-no-files-found: error
           retention-days: 30
 

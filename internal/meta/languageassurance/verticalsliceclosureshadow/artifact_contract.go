@@ -1,0 +1,86 @@
+package verticalsliceclosureshadow
+
+func validArtifactSubject(id string, artifact artifactEnvelope, head string) bool {
+	if !validSHA(head) {
+		return false
+	}
+	if id == "release" {
+		return artifact.HeadSHA == head
+	}
+	return artifact.Source.ExpectedHeadSHA == head &&
+		(artifact.HeadSHA == "" || artifact.HeadSHA == head)
+}
+
+func observedMetaOperation(id string, artifact artifactEnvelope) string {
+	if artifact.MetaOperation != "" {
+		return artifact.MetaOperation
+	}
+	if artifact.Source.MetaOperation != "" {
+		return artifact.Source.MetaOperation
+	}
+	return codeMetaOperation(id)
+}
+
+func mutationAuthorityPresent(id string, artifact artifactEnvelope) bool {
+	if artifact.MutationAuthorized != nil && *artifact.MutationAuthorized {
+		return true
+	}
+	return id != "release" && artifact.MutationAuthorized == nil
+}
+
+func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
+	summary := artifact.Summary
+	switch id {
+	case "syntax":
+		return summary.Satisfied, status(summary.Satisfied == 17 && summary.Total == 17 &&
+			summary.Executed == 17 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
+			summary.ReadinessBPS == 10000)
+	case "semantics":
+		return summary.Satisfied, status(summary.Satisfied == 20 && summary.Total == 20 &&
+			summary.Executed == 20 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
+			summary.ReadinessBPS == 10000 && summary.StageOrderViolations == 0 &&
+			summary.EffectfulStages == 0 && summary.RegistryDrift == 0)
+	case "binding":
+		return summary.BoundCoordinates, status(summary.Coordinates == 12 &&
+			summary.BoundCoordinates == 12 && summary.Unresolved == 0 &&
+			summary.ReadinessCompleted == 21 && summary.ReadinessTotal == 24 &&
+			summary.ReadinessBPS == 8750 && summary.SemanticSatisfied == 20 &&
+			summary.SemanticTotal == 20 && summary.EffectfulStages == 0 &&
+			summary.MutationAuthorities == 0)
+	case "use-cases":
+		return summary.Satisfied, status(summary.Satisfied == 3 && summary.Total == 3 &&
+			summary.Executed == 3 && summary.NotSatisfied == 0 &&
+			summary.Unresolved == 0 && summary.ReadinessBPS == 10000)
+	case "toolchain":
+		return summary.CasesSatisfied, status(summary.SurfacesSatisfied == 9 &&
+			summary.SurfacesTotal == 9 && len(artifact.Surfaces) == 9 &&
+			summary.CasesSatisfied == 156 && summary.CasesTotal == 156 &&
+			summary.ExecutedCases == 156 && summary.CaseReadinessBPS == 10000 &&
+			summary.IndicatorsSatisfied == summary.IndicatorsTotal &&
+			summary.ProofsPassed == summary.ProofsTotal &&
+			summary.TamperRejections == 13 && summary.TamperTotal == 13)
+	case "release":
+		return summary.CasesSatisfied, status(summary.CasesSatisfied == 20 &&
+			summary.CasesTotal == 20 && len(artifact.Cases) == 20 &&
+			summary.ReadinessBPS == 10000 && summary.PlatformReceipts == 3 &&
+			summary.OperatingSystems == 3 && allReleaseCasesExact(artifact.Cases))
+	default:
+		return 0, StatusBlocked
+	}
+}
+
+func status(satisfied bool) string {
+	if satisfied {
+		return StatusSatisfied
+	}
+	return StatusBlocked
+}
+
+func allReleaseCasesExact(cases []artifactCase) bool {
+	for _, item := range cases {
+		if item.Observed == "" || item.Observed != item.Expected {
+			return false
+		}
+	}
+	return true
+}
