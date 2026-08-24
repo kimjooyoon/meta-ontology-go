@@ -46,7 +46,7 @@ func Validate(report Report) error {
 	if report.Schema != ReportSchema || report.DenominatorID != DenominatorID {
 		return fmt.Errorf("language assurance report identity is malformed")
 	}
-	if len(report.Denominator) != 12 || len(report.Obligations) != 12 || len(report.MetaOperations) != 8 || len(report.Indicators) != 8 {
+	if len(report.Denominator) != 12 || len(report.Obligations) != 12 || len(report.MetaOperations) != 9 || len(report.Indicators) != 8 {
 		return fmt.Errorf("language assurance report cardinality is malformed")
 	}
 	if report.ReportDigest == "" {

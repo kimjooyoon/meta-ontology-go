@@ -22,6 +22,7 @@ const (
 	MetricRoleConflict      = "gooo.metric.governance.role-conflict-paths.v1"
 	MetricUnknownLaundering = "gooo.metric.epistemic.unknown-laundering.v1"
 	MetricSnapshotBinding   = "gooo.metric.evidence.exact-snapshot-binding.v1"
+	MetricSourceAuthority   = "gooo.metric.semantic.source-backed-authority.v1"
 )
 
 var denominatorV1 = []ObligationDefinition{
@@ -31,7 +32,7 @@ var denominatorV1 = []ObligationDefinition{
 	obligation(MetricSnapshotBinding, PriorityP0, ClassDriver, ProofFoundation, "bind-exact-snapshot"),
 	obligation(MetricRawReconstruction, PriorityP0, ClassDriver, ProofRegression, "reconstruct-raw-evidence"),
 	obligation("gooo.metric.effects.write-set-exactness.v1", PriorityP0, ClassGuardrail, ProofRegression, "observe-exact-write-set"),
-	obligation("gooo.metric.semantic.source-backed-authority.v1", PriorityP1, ClassDriver, ProofFoundation, "bind-source-backed-authority"),
+	obligation(MetricSourceAuthority, PriorityP1, ClassDriver, ProofFoundation, "bind-source-backed-authority"),
 	obligation("gooo.metric.semantic.candidate-leakage.v1", PriorityP1, ClassGuardrail, ProofCoherence, "detect-candidate-leakage"),
 	obligation("gooo.metric.semantic.changed-surface-receipt-totality.v1", PriorityP1, ClassDriver, ProofCoherence, "totalize-changed-surface-receipts"),
 	obligation("gooo.metric.operation.rollback-integrity.v1", PriorityP1, ClassGuardrail, ProofRegression, "verify-rollback-integrity"),
@@ -39,7 +40,7 @@ var denominatorV1 = []ObligationDefinition{
 	obligation("gooo.metric.ecosystem.external-conformance.v1", PriorityP2, ClassOutcome, ProofRegression, "verify-external-conformance"),
 }
 
-var operatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot", MetricRawReconstruction: "reconstruct-raw-evidence", "gooo.metric.effects.write-set-exactness.v1": "observe-exact-write-set"}
+var baseOperatingOperations = map[string]string{MetricSelfMinting: "detect-self-minting-paths", MetricRoleConflict: "detect-role-conflict-paths", MetricUnknownLaundering: "detect-unknown-laundering", MetricSnapshotBinding: "bind-exact-snapshot", MetricRawReconstruction: "reconstruct-raw-evidence", "gooo.metric.effects.write-set-exactness.v1": "observe-exact-write-set"}
 
 var snapshotEvidenceIDs = []string{"authority_routes", "role_bindings", "decision_transitions"}
 
@@ -61,6 +62,7 @@ func CanonicalMetaOperations() []MetaOperation {
 		{ID: "bind-exact-snapshot", Activity: "BindExactSnapshot", ProofChoice: ProofFoundation},
 		{ID: "reconstruct-raw-evidence", Activity: "ReconstructRawEvidence", ProofChoice: ProofRegression},
 		{ID: "observe-exact-write-set", Activity: "ObserveExactWriteSet", ProofChoice: ProofRegression},
+		{ID: "bind-source-backed-authority", Activity: "BindSourceBackedAuthority", ProofChoice: ProofFoundation},
 	}
 }
 
