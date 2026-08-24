@@ -24,7 +24,7 @@ func validInput(t *testing.T) Input {
 		AssuranceDecision: "PARTIAL", CandidateDecision: "ALLOW_LIMITED", Denominator: definitions, Obligations: obligations,
 		Summary: assuranceSummary{DenominatorTotal: 12, Operating: 6, NotImplemented: 6, ImplementationCoverageBPS: 5000}}
 	snapshot := &upstreamSnapshot{Digest: "sha256:29362aa311de0f24c66f41cc65a8b6ffd996baf37e048b5a72db63172aae5bf2", Bytes: 77,
-		Authority: upstreamAuthority{Repository: "cosmos72/gomacro", Revision: "cf0d4bf32da393dbda97e3572f216731013ffa55", Path: "README.md"}, upstreamSelection: upstreamSelection{StartLine: 1, EndLine: 1}}
+		Authority: upstreamAuthority{Repository: "cosmos72/gomacro", Revision: "cf0d4bf32da393dbda97e3572f216731013ffa55", Path: "README.md"}, Selection: upstreamSelection{StartLine: 1, EndLine: 1}}
 	indicators := []upstreamIndicator{{Class: "OUTCOME", ProofChoice: "COHERENCE", Satisfied: true},
 		{Class: "DRIVER", ProofChoice: "FOUNDATION", Satisfied: true}, {Class: "DRIVER", ProofChoice: "FOUNDATION", Satisfied: true},
 		{Class: "GUARDRAIL", ProofChoice: "REGRESSION", Satisfied: true}, {Class: "GUARDRAIL", ProofChoice: "FOUNDATION", Satisfied: true},
