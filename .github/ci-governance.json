@@ -432,6 +432,18 @@
       ]
     },
     {
+      "branch": "agent/external-ecosystem-conformance-execution",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/external-ecosystem-execution.yml",
+        "cmd/external-ecosystem-execution-witness/**",
+        "examples/external-ecosystem-execution/**",
+        "internal/meta/externalecosystemexecution/**",
+        "internal/verify/scope_external_ecosystem_execution.go"
+      ]
+    },
+    {
       "branch": "agent/feedback-payload-envelope-v27",
       "paths": [
         ".github/agent-scope-table.md",

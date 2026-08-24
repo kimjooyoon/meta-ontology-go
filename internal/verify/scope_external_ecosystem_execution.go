@@ -4,7 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/external-ecosystem-conformance-execution"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
-		".github/workflows/transformation-effect.yml",
+		".github/workflows/external-ecosystem-execution.yml",
 		"cmd/external-ecosystem-execution-witness",
 		"examples/external-ecosystem-execution",
 		"internal/meta/externalecosystemexecution",
