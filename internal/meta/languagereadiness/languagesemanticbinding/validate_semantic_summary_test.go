@@ -4,15 +4,15 @@ import "testing"
 
 func exactSemanticSummary() semanticSummary {
 	return semanticSummary{
-		Satisfied:                  20,
-		Total:                      20,
-		Executed:                   20,
+		Satisfied:                  semanticCaseDenominator,
+		Total:                      semanticCaseDenominator,
+		Executed:                   semanticCaseDenominator,
 		ReadinessBPS:               10000,
-		SourceModels:               15,
-		NormalizedIRs:              15,
-		SemanticReplays:            15,
-		ProvenanceReplays:          15,
-		EvidenceReplays:            15,
+		SourceModels:               semanticSourceDenominator,
+		NormalizedIRs:              semanticSourceDenominator,
+		SemanticReplays:            semanticSourceDenominator,
+		ProvenanceReplays:          semanticSourceDenominator,
+		EvidenceReplays:            semanticSourceDenominator,
 		PresentationLaws:           1,
 		CandidateAuthorityLaws:     1,
 		DeterministicAuthorityLaws: 1,
@@ -28,8 +28,15 @@ func TestValidateSemanticSummaryAcceptsVersionedDenominator(t *testing.T) {
 
 func TestValidateSemanticSummaryRejectsStaleDenominator(t *testing.T) {
 	summary := exactSemanticSummary()
-	summary.Satisfied, summary.Total, summary.Executed = 19, 19, 19
+	summary.Satisfied, summary.Total, summary.Executed = semanticCaseDenominator-1, semanticCaseDenominator-1, semanticCaseDenominator-1
 	if err := validateSemanticSummary(summary); err == nil {
 		t.Fatal("stale semantic denominator must fail closed")
+	}
+}
+
+func TestValidateSemanticEvidenceRejectsStaleCaseDenominator(t *testing.T) {
+	value := semanticArtifact{Cases: make([]semanticCase, semanticCaseDenominator-1)}
+	if err := validateSemanticEvidence(value, nil); err == nil || err.Error() != "semantic case denominator mismatch" {
+		t.Fatalf("stale semantic evidence denominator must fail closed, got %v", err)
 	}
 }
