@@ -13,6 +13,7 @@ func init() {
 		"internal/meta/languageassurance/evaluate_test.go",
 		"internal/meta/languageassurance/registry.go",
 		"internal/meta/languageassurance/source_authority_activation.go",
+		"internal/meta/languagereadiness/languagesyntax",
 		"internal/verify/scope_rollback_integrity_activation.go",
 	}
 }
