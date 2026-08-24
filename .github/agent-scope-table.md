@@ -19,6 +19,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/cache-experiment-followup` | `docs/research/cache.md` |
 | `agent/cache-research` | `docs/research/cache.md` |
 | `agent/candidate-leakage-contract` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/self-improvement-contract.yml`, `cmd/candidate-leakage-witness`, `examples/candidate-leakage-shadow`, `internal/meta/languageassurance/candidateleakage`, `internal/verify/scope_candidate_leakage.go` |
+| `agent/candidate-leakage-eligibility` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/self-improvement-contract.yml`, `cmd/candidate-leakage-eligibility-witness`, `examples/candidate-leakage-eligibility`, `internal/meta/languageassurance/candidateleakageeligibility`, `internal/verify/scope_candidate_leakage_eligibility.go` |
 | `agent/ci-evidence-contract` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-ownership-audit` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-ownership-audit-current` | `.github/**`, `scripts/**`, `internal/verify/**` |

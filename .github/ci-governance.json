@@ -146,6 +146,18 @@
       ]
     },
     {
+      "branch": "agent/candidate-leakage-eligibility",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "cmd/candidate-leakage-eligibility-witness",
+        "examples/candidate-leakage-eligibility",
+        "internal/meta/languageassurance/candidateleakageeligibility",
+        "internal/verify/scope_candidate_leakage_eligibility.go"
+      ]
+    },
+    {
       "branch": "agent/ci-alias-refresh",
       "paths": [
         ".github/**",
