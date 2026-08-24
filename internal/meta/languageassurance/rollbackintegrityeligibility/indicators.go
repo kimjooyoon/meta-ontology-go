@@ -13,14 +13,14 @@ func MetaOperations() []MetaOperationBinding {
 
 func buildIndicators(summary Summary, resolution string) []Indicator {
 	return []Indicator{
-		indicator("gooo.metric.operation.rollback-integrity.eligibility-bps.v1", "OUTCOME", "REGRESSION",
-			"evaluate-rollback-eligibility", "basis_points", "GREATER_OR_EQUAL", resolution,
+		indicator("gooo.metric.operation.rollback-integrity.eligibility-bps.v1", "OUTCOME", "COHERENCE",
+			"compare-rollback-shadow-replays", "basis_points", "GREATER_OR_EQUAL", resolution,
 			summary.EligiblePaths*10_000, 10_000),
 		indicator("gooo.metric.evidence.rollback-integrity-eligibility-capsule-bps.v1", "DRIVER", "FOUNDATION",
 			"consume-rollback-shadow-replay-b", "basis_points", "GREATER_OR_EQUAL", resolution,
 			summary.CapsuleCoverageBPS, 10_000),
-		indicator("gooo.metric.meta.rollback-integrity-eligibility-operation-bps.v1", "DRIVER", "COHERENCE",
-			"compare-rollback-shadow-replays", "basis_points", "GREATER_OR_EQUAL", resolution,
+		indicator("gooo.metric.meta.rollback-integrity-eligibility-operation-bps.v1", "DRIVER", "FOUNDATION",
+			"consume-rollback-shadow-replay-a", "basis_points", "GREATER_OR_EQUAL", resolution,
 			summary.MetaOperationCoverageBPS, 10_000),
 		indicator("gooo.metric.epistemic.rollback-integrity-eligibility-unknown.v1", "GUARDRAIL", "REGRESSION",
 			"evaluate-rollback-eligibility", "paths", "LESS_OR_EQUAL", ResolutionExact,

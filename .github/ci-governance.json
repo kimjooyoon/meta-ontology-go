@@ -1640,7 +1640,7 @@
         "cmd/rollback-integrity-eligibility-witness",
         "examples/rollback-integrity-eligibility",
         "internal/meta/languageassurance/rollbackintegrityeligibility",
-        "internal/verify/scope_changed_surface_receipt_eligibility.go"
+        "internal/verify/scope_rollback_integrity_eligibility.go"
       ]
     }
   ],

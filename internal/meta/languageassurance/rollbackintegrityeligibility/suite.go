@@ -47,15 +47,6 @@ func CaseInput(id, subjectSHA string) (Input, bool) {
 	return input, true
 }
 
-func denominatorContract() Suite {
-	suite := Suite{Schema: SuiteSchema, DenominatorID: DenominatorID, Cases: make([]CaseResult, len(definitions))}
-	for index, definition := range definitions {
-		suite.Cases[index].Definition = definition
-	}
-	suite.DenominatorDigest = digestJSON(suite.Cases)
-	return suite
-}
-
 func RunSuite(subjectSHA string) Suite {
 	suite := denominatorContract()
 	suite.SubjectSHA, suite.Decision, suite.Resolution = subjectSHA, DecisionEligible, ResolutionExact
