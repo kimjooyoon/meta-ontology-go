@@ -2,7 +2,6 @@ package externalcapabilityexecution
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"path/filepath"
 )
@@ -28,8 +27,7 @@ func executeRun(workspace, externalRoot string, tools capabilityTools, index int
 	if err != nil {
 		return CapabilityRun{}, err
 	}
-	var evaluated evaluatorResult
-	evalJSON := json.Unmarshal(evalOutput, &evaluated) == nil
+	evaluated, evalJSON := decodeEvaluator(evalOutput)
 	runRoot := filepath.Join(workspace, "macro", string(rune('0'+index)))
 	if err := os.MkdirAll(runRoot, 0o755); err != nil {
 		return CapabilityRun{}, err
@@ -52,7 +50,9 @@ func executeRun(workspace, externalRoot string, tools capabilityTools, index int
 	generated, _ := os.ReadFile(filepath.Join(runRoot, "make_fibonacci.go"))
 	run := CapabilityRun{
 		RunID: "run-" + string(rune('0'+index)), Arithmetic: evaluated.Arithmetic,
-		Function: evaluated.Function, EvaluatorExitCode: evalCode, MacroExitCode: macroCode,
+		Function: evaluated.Function, EvaluatorExitCode: evalCode,
+		EvaluatorOutputBytes: len(evalOutput), EvaluatorOutputSHA256: digestBytes(evalOutput),
+		MacroExitCode: macroCode,
 		MacroGeneratedSHA256: digestBytes(generated), MacroExpectedSHA256: digestBytes(expected),
 	}
 	exact := evalCode == 0 && evalJSON && run.Arithmetic == "42" && run.Function == "55"
