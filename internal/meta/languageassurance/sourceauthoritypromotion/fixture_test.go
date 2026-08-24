@@ -11,11 +11,13 @@ func validInput(t *testing.T) Input {
 	subject := "fixture-subject-sha"
 	definitions := make([]assuranceDefinition, 12)
 	obligations := make([]assuranceObligation, 12)
-	for index := 0; index < 12; index++ {
+	for index := range 12 {
 		metric := fmt.Sprintf("fixture.metric.%d", index)
 		definitions[index] = assuranceDefinition{MetricID: metric, Priority: "P1", Class: "DRIVER", ProofChoice: "FOUNDATION", RequiredMetaOperation: "fixture"}
 		obligations[index] = assuranceObligation{MetricID: metric, Status: "NOT_IMPLEMENTED", Resolution: "NONE"}
-		if index < 6 { obligations[index].Status, obligations[index].Resolution = "OPERATING", ResolutionExact }
+		if index < 6 {
+			obligations[index].Status, obligations[index].Resolution = "OPERATING", ResolutionExact
+		}
 	}
 	definitions[6] = assuranceDefinition{MetricID: SourceMetric, Priority: "P1", Class: "DRIVER", ProofChoice: "FOUNDATION", RequiredMetaOperation: SourceOperation}
 	obligations[6] = assuranceObligation{MetricID: SourceMetric, Status: "NOT_IMPLEMENTED", Resolution: "NONE"}
@@ -31,10 +33,10 @@ func validInput(t *testing.T) Input {
 		{Class: "GUARDRAIL", ProofChoice: "COHERENCE", Satisfied: true}}
 	upstream := upstreamDocument{Schema: UpstreamSchema, SubjectSHA: subject, Decision: "PASS", Resolution: ResolutionExact,
 		DenominatorID: UpstreamDenominator, DenominatorDigest: UpstreamDigest,
-		Summary: upstreamSummary{CasesTotal: 3, CasesPassed: 3, ExactAllow: 1, FailClosed: 2, CoverageBPS: 10000}}
-	upstream.Cases = []upstreamCase{fixtureCase("exact", "SATISFIED", ResolutionExact, "ALLOW", "SOURCE_SNAPSHOT_EXACT", snapshot, indicators),
-		fixtureCase("digest-mismatch", "UNKNOWN", ResolutionInvariantOnly, DecisionBlock, "SOURCE_DIGEST_MISMATCH", snapshot, nil),
-		fixtureCase("authority-mismatch", "UNKNOWN", ResolutionInvariantOnly, DecisionBlock, "AUTHORITY_SCOPE_MISMATCH", nil, nil)}
+		Summary: upstreamSummary{CasesTotal: 3, CasesPassed: 3, ExactAllow: 1, FailClosed: 2, CoverageBPS: 10000},
+		Cases: []upstreamCase{fixtureCase("exact", "SATISFIED", ResolutionExact, "ALLOW", "SOURCE_SNAPSHOT_EXACT", snapshot, indicators),
+			fixtureCase("digest-mismatch", "UNKNOWN", ResolutionInvariantOnly, DecisionBlock, "SOURCE_DIGEST_MISMATCH", snapshot, nil),
+			fixtureCase("authority-mismatch", "UNKNOWN", ResolutionInvariantOnly, DecisionBlock, "AUTHORITY_SCOPE_MISMATCH", nil, nil)}}
 	assuranceJSON, _ := json.Marshal(assurance)
 	upstreamJSON, _ := json.Marshal(upstream)
 	return Input{SubjectSHA: subject, AssuranceJSON: assuranceJSON, UpstreamJSON: upstreamJSON}

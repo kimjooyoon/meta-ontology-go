@@ -381,7 +381,7 @@ jobs:
   source-authority-promotion-eligibility:
     name: Source authority promotion eligibility
     needs:
-      - language-assurance-kernel
+      - assurance
       - source-authority-upstream
     runs-on: ubuntu-latest
     permissions:
