@@ -52,7 +52,7 @@ func executeRun(workspace, externalRoot string, tools capabilityTools, index int
 		RunID: "run-" + string(rune('0'+index)), Arithmetic: evaluated.Arithmetic,
 		Function: evaluated.Function, EvaluatorExitCode: evalCode,
 		EvaluatorOutputBytes: len(evalOutput), EvaluatorOutputSHA256: digestBytes(evalOutput),
-		MacroExitCode: macroCode,
+		MacroExitCode:        macroCode,
 		MacroGeneratedSHA256: digestBytes(generated), MacroExpectedSHA256: digestBytes(expected),
 	}
 	exact := evalCode == 0 && evalJSON && run.Arithmetic == "42" && run.Function == "55"
