@@ -38,6 +38,7 @@ func expectedRegistry() Registry {
 		valid("source-splitter-conformance", "examples/source-splitter-conformance/main.gooo"),
 		valid("rollback-integrity-activation", "examples/rollback-integrity-activation/main.gooo"),
 		valid("vertical-slice-closure-activation", "examples/vertical-slice-closure-activation/main.gooo"),
+		valid("external-conformance-activation", "examples/external-conformance-activation/main.gooo"),
 	}}
 }
 
