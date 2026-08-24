@@ -949,13 +949,15 @@ jobs:
           set -euo pipefail
           out="$RUNNER_TEMP/rollback-integrity/shadow"
           assurance="$RUNNER_TEMP/rollback-integrity/assurance/independent.json"
+          baseline="internal/meta/languageassurance/rollbackintegrityshadow/evidence/assurance.json"
           mkdir -p "$out"
+          jq -e --arg subject "$SUBJECT_SHA" '.subject_sha == $subject and .summary.denominator_total == 12 and .summary.operating == 9 and .summary.not_implemented == 3 and .summary.implementation_coverage_bps == 7500 and ([.obligations[] | select(.metric_id == "gooo.metric.operation.rollback-integrity.v1" and .status == "NOT_IMPLEMENTED" and .resolution == "NONE" and .meta_operation == "")] | length) == 1' "$assurance"
           for suffix in a b; do
-            go run ./cmd/rollback-integrity-shadow-witness -assurance "$assurance" -output "$out/exact-$suffix.json"
+            go run ./cmd/rollback-integrity-shadow-witness -assurance "$baseline" -output "$out/exact-$suffix.json"
           done
           cmp "$out/exact-a.json" "$out/exact-b.json"
           go run ./cmd/rollback-integrity-shadow-witness -unavailable -output "$out/unavailable.json"
-          jq '.summary.operating = 8' "$assurance" > "$out/assurance-mismatch.json"
+          jq '.summary.operating = 8' "$baseline" > "$out/assurance-mismatch.json"
           go run ./cmd/rollback-integrity-shadow-witness -assurance "$out/assurance-mismatch.json" -output "$out/digest-mismatch.json"
           jq -e '.decision == "SHADOW_PASS" and .resolution == "EXACT" and .enforcement_effect == "NO_EFFECT" and .summary.denominator_total == 12 and .summary.before_operating == 9 and .summary.projected_operating == 10 and .summary.before_coverage_bps == 7500 and .summary.projected_coverage_bps == 8333 and .summary.cases_total == 7 and .summary.cases_passed == 7 and .summary.case_coverage_bps == 10000 and .summary.meta_reports_valid == 7 and .summary.coordinates_total == 70 and .summary.terminal_cases == 2 and .summary.unknown_decision_cases == 1 and .summary.known_reject_cases == 4 and .repository_writes == 0 and .promotion_applied == 0' "$out/exact-a.json"
           jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact-a.json"
