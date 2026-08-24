@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/external-ecosystem-reference-usecases/v1",
+  "denominator": 3,
+  "cases": [
+    {
+      "id": "pinned-reference",
+      "input": "two exact documents at the pinned commit",
+      "decision": "REFERENCE_BOUND",
+      "resolution": "EXACT",
+      "official_language_mutations": 0
+    },
+    {
+      "id": "upstream-unavailable",
+      "input": "one pinned document is unavailable",
+      "decision": "FAIL_CLOSED",
+      "resolution": "UNKNOWN",
+      "enforcement_effect": "BLOCK"
+    },
+    {
+      "id": "unrestricted-effects",
+      "input": "an external execution is observed",
+      "decision": "FAIL_CLOSED",
+      "resolution": "INVARIANT_ONLY",
+      "enforcement_effect": "BLOCK"
+    }
+  ]
+}

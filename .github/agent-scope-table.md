@@ -46,6 +46,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/detection` | `internal/detection/**` |
 | `agent/detection-cycles` | `internal/detection/cycles/**` |
 | `agent/docs` | `AGENTS.md`, `CONTRIBUTING.md`, `README.md`, `docs/**`, `examples/**` |
+| `agent/external-ecosystem-conformance` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/transformation-effect.yml`, `cmd/external-ecosystem-conformance-witness`, `examples/external-ecosystem-conformance`, `internal/meta/externalecosystemconformance`, `internal/verify/scope_external_ecosystem_conformance.go` |
 | `agent/formatter` | `internal/formatter/**` |
 | `agent/freshness-detection` | `internal/detection/freshness/**` |
 | `agent/freshness-research` | `internal/research/freshness/**`, `docs/research/**` |
