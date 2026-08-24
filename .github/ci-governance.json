@@ -464,6 +464,18 @@
       ]
     },
     {
+      "branch": "agent/external-ecosystem-conformance",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/external-ecosystem-conformance-witness/**",
+        "examples/external-ecosystem-conformance/**",
+        "internal/meta/externalecosystemconformance/**",
+        "internal/verify/scope_external_ecosystem_conformance.go"
+      ]
+    },
+    {
       "branch": "agent/freshness-research",
       "paths": [
         "internal/research/freshness/**",
