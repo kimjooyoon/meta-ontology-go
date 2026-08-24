@@ -27,8 +27,8 @@ func exactBundle() Bundle {
 			ID: "fact-1", State: "ACCEPTED", Claim: content,
 			ClaimDigest: digest, SourceRef: "source-1",
 			SourceSnapshotDigest: digest,
-			Span: Span{Start: 0, End: len(content), Digest: digest},
-			AuthorityRef: "authority-1",
+			Span:                 Span{Start: 0, End: len(content), Digest: digest},
+			AuthorityRef:         "authority-1",
 		}},
 	}
 }

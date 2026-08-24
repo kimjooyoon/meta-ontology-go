@@ -40,8 +40,7 @@ func TestKnownViolationsBlockExactly(t *testing.T) {
 			report := Evaluate(bundle)
 			if report.Observation != "NOT_SATISFIED" ||
 				report.Resolution != "EXACT" || report.Enforcement != "BLOCK" {
-				t.Fatalf("outcome = %s/%s/%s",
-					report.Observation, report.Resolution, report.Enforcement)
+				t.Fatalf("outcome = %s/%s/%s", report.Observation, report.Resolution, report.Enforcement)
 			}
 			if report.Receipts[0].Reason != test.reason {
 				t.Fatalf("reason = %q want %q", report.Receipts[0].Reason, test.reason)
@@ -54,15 +53,13 @@ func TestUnknownAndErrorRemainDistinct(t *testing.T) {
 	missing := exactBundle()
 	missing.Sources = nil
 	unknown := Evaluate(missing)
-	if unknown.Observation != "UNKNOWN" ||
-		unknown.Resolution != "INVARIANT_ONLY" || unknown.Enforcement != "BLOCK" {
+	if unknown.Observation != "UNKNOWN" || unknown.Resolution != "INVARIANT_ONLY" || unknown.Enforcement != "BLOCK" {
 		t.Fatalf("unknown outcome = %+v", unknown)
 	}
 	duplicate := exactBundle()
 	duplicate.Sources = append(duplicate.Sources, duplicate.Sources[0])
 	failed := Evaluate(duplicate)
-	if failed.Observation != "ERROR" ||
-		failed.Resolution != "EXACT" || failed.Enforcement != "BLOCK" {
+	if failed.Observation != "ERROR" || failed.Resolution != "EXACT" || failed.Enforcement != "BLOCK" {
 		t.Fatalf("error outcome = %+v", failed)
 	}
 }

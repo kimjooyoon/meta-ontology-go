@@ -13,7 +13,7 @@ type FactReceipt struct {
 	FactID       string `json:"fact_id"`
 	SourceRef    string `json:"source_ref"`
 	AuthorityRef string `json:"authority_ref"`
-	Observation string `json:"observation"`
-	Resolution  string `json:"resolution"`
-	Reason      string `json:"reason"`
+	Observation  string `json:"observation"`
+	Resolution   string `json:"resolution"`
+	Reason       string `json:"reason"`
 }
