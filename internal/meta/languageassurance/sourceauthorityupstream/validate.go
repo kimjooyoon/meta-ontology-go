@@ -58,5 +58,6 @@ func validHex(value string, size int) bool {
 		if (character < '0' || character > '9') && (character < 'a' || character > 'f') {
 			return false
 		}
+	}
 	return true
 }
