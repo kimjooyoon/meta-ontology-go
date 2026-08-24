@@ -1616,7 +1616,6 @@ jobs:
           jq -e '.passed == 15 and .total == 15 and .unknown_expected == 3 and .invariant_expected == 11' "$result/suite.json"
           jq -e '.available == true and .replay_exact == true and (.runs | length) == 2' "$result/observation.json"
           jq -e '([.runs[] | .status == "SATISFIED" and .arithmetic == "42" and .function == "55"] | all)' "$result/observation.json"
-      - name: Seal capability evidence
       - name: Evaluate external assurance eligibility twice
         working-directory: gooo
         run: |
