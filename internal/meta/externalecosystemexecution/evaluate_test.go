@@ -3,8 +3,12 @@ package externalecosystemexecution
 import "testing"
 
 func TestFixedDenominator(t *testing.T) {
-	if got := len(Criteria()); got != 8 { t.Fatalf("criteria=%d, want 8", got) }
-	if DenominatorDigest() == "" { t.Fatal("denominator digest is empty") }
+	if got := len(Criteria()); got != 8 {
+		t.Fatalf("criteria=%d, want 8", got)
+	}
+	if DenominatorDigest() == "" {
+		t.Fatal("denominator digest is empty")
+	}
 }
 
 func TestConformanceSuite(t *testing.T) {

@@ -16,24 +16,24 @@ type Proof struct {
 }
 
 type Report struct {
-	Schema                 string           `json:"schema"`
-	ContractVersion        string           `json:"contract_version"`
-	DenominatorVersion     string           `json:"denominator_version"`
-	DenominatorDigest      string           `json:"denominator_digest"`
-	Decision               string           `json:"decision"`
-	Resolution             string           `json:"resolution"`
-	Reason                 string           `json:"reason"`
-	Completed              int              `json:"completed"`
-	Total                  int              `json:"total"`
-	BasisPoints            int              `json:"basis_points"`
-	UnknownIndicators      int              `json:"unknown_indicators"`
-	ExternalExecutions     int              `json:"external_executions"`
-	RepositoryWrites       int              `json:"repository_writes"`
-	OfficialMutationCount  int              `json:"official_mutation_count"`
-	PromotionCount         int              `json:"promotion_count"`
-	Reference              ReferenceReceipt `json:"reference"`
-	Indicators             []Indicator      `json:"indicators"`
-	Proofs                 []Proof          `json:"proofs"`
+	Schema                string           `json:"schema"`
+	ContractVersion       string           `json:"contract_version"`
+	DenominatorVersion    string           `json:"denominator_version"`
+	DenominatorDigest     string           `json:"denominator_digest"`
+	Decision              string           `json:"decision"`
+	Resolution            string           `json:"resolution"`
+	Reason                string           `json:"reason"`
+	Completed             int              `json:"completed"`
+	Total                 int              `json:"total"`
+	BasisPoints           int              `json:"basis_points"`
+	UnknownIndicators     int              `json:"unknown_indicators"`
+	ExternalExecutions    int              `json:"external_executions"`
+	RepositoryWrites      int              `json:"repository_writes"`
+	OfficialMutationCount int              `json:"official_mutation_count"`
+	PromotionCount        int              `json:"promotion_count"`
+	Reference             ReferenceReceipt `json:"reference"`
+	Indicators            []Indicator      `json:"indicators"`
+	Proofs                []Proof          `json:"proofs"`
 }
 
 type SuiteCase struct {

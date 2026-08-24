@@ -12,18 +12,30 @@ const referenceEvidencePath = "internal/meta/externalecosystemconformance/eviden
 
 func Observe(ctx context.Context, sourceRoot, externalRoot string) (Observation, error) {
 	sourceBefore, err := captureRepository(ctx, sourceRoot)
-	if err != nil { return Observation{}, err }
+	if err != nil {
+		return Observation{}, err
+	}
 	externalBefore, err := captureRepository(ctx, externalRoot)
-	if err != nil { return Observation{}, err }
+	if err != nil {
+		return Observation{}, err
+	}
 	goVersion, err := commandText(ctx, sourceRoot, "go", "env", "GOVERSION")
-	if err != nil { return Observation{}, err }
+	if err != nil {
+		return Observation{}, err
+	}
 	moduleGo, err := moduleGoVersion(filepath.Join(externalRoot, "go.mod"))
-	if err != nil { return Observation{}, err }
+	if err != nil {
+		return Observation{}, err
+	}
 	runs := []RunObservation{runGoTest(ctx, externalRoot, 1), runGoTest(ctx, externalRoot, 2)}
 	externalAfter, err := captureRepository(ctx, externalRoot)
-	if err != nil { return Observation{}, err }
+	if err != nil {
+		return Observation{}, err
+	}
 	sourceAfter, err := captureRepository(ctx, sourceRoot)
-	if err != nil { return Observation{}, err }
+	if err != nil {
+		return Observation{}, err
+	}
 	return Observation{
 		Schema: ObservationSchema, Reference: loadReference(sourceRoot, externalBefore, moduleGo),
 		GoVersion: goVersion, Runs: runs, SourceBefore: sourceBefore, SourceAfter: sourceAfter,
