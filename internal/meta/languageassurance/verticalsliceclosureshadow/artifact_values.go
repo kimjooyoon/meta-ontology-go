@@ -4,8 +4,8 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	summary := artifact.Summary
 	switch id {
 	case "syntax":
-		return summary.Satisfied, status(summary.Satisfied == 19 && summary.Total == 19 &&
-			summary.Executed == 19 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
+		return summary.Satisfied, status(summary.Satisfied == 20 && summary.Total == 20 &&
+			summary.Executed == 20 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
 			summary.ReadinessBPS == 10000)
 	case "semantics":
 		return summary.Satisfied, status(summary.Satisfied == 22 && summary.Total == 22 &&
@@ -26,8 +26,8 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	case "toolchain":
 		return summary.CasesSatisfied, status(summary.SurfacesSatisfied == 9 &&
 			summary.SurfacesTotal == 9 && len(artifact.Surfaces) == 9 &&
-			summary.CasesSatisfied == 160 && summary.CasesTotal == 160 &&
-			summary.ExecutedCases == 160 && summary.CaseReadinessBPS == 10000 &&
+			summary.CasesSatisfied == 161 && summary.CasesTotal == 161 &&
+			summary.ExecutedCases == 161 && summary.CaseReadinessBPS == 10000 &&
 			summary.IndicatorsSatisfied == summary.IndicatorsTotal &&
 			summary.ProofsPassed == summary.ProofsTotal &&
 			summary.TamperRejections == 13 && summary.TamperTotal == 13)
