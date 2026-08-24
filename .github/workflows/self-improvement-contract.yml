@@ -75,24 +75,35 @@ jobs:
       - name: Run assurance regressions
         run: go test ./internal/meta/languageassurance ./cmd/language-assurance-witness
 
-      - name: Execute and replay four assurance use cases
+      - name: Execute and replay five assurance use cases
         shell: bash
         run: |
           set -euo pipefail
           output="$RUNNER_TEMP/language-assurance"
-          mkdir -p "$output/first" "$output/replay"
+          mkdir -p "$output/first" "$output/replay" "$output/runtime"
           declare -A expected=(
             [independent]=ALLOW_LIMITED
             [self-minting]=BLOCK
             [role-conflict]=BLOCK
             [unknown-laundering]=FAIL_CLOSED
+            [snapshot-mismatch]=BLOCK
           )
-          for fixture in independent self-minting role-conflict unknown-laundering; do
+          for fixture in independent self-minting role-conflict unknown-laundering snapshot-mismatch; do
+            jq --arg sha "$HEAD_SHA" --arg fixture "$fixture" '
+              .snapshot_bindings = [
+                {"evidence_id":"authority_routes","subject_sha":$sha},
+                {"evidence_id":"role_bindings","subject_sha":$sha},
+                {"evidence_id":"decision_transitions","subject_sha":$sha}
+              ] |
+              if $fixture == "snapshot-mismatch" then
+                .snapshot_bindings[2].subject_sha = "0000000000000000000000000000000000000000"
+              else . end
+            ' "examples/language-assurance-kernel/$fixture.json" > "$output/runtime/$fixture.json"
             for pass in first replay; do
               go run ./cmd/language-assurance-witness \
                 -root "$GITHUB_WORKSPACE" \
                 -subject-sha "$HEAD_SHA" \
-                -input "examples/language-assurance-kernel/$fixture.json" \
+                -input "$output/runtime/$fixture.json" \
                 -output "$output/$pass/$fixture.json" \
                 -expect-candidate "${expected[$fixture]}"
             done
@@ -102,14 +113,18 @@ jobs:
             .assurance_decision == "PARTIAL" and
             .candidate_decision == "ALLOW_LIMITED" and
             .summary.denominator_total == 12 and
-            .summary.operating == 3 and
-            .summary.not_implemented == 9 and
-            .summary.implementation_coverage_bps == 2500 and
+            .summary.operating == 4 and
+            .summary.not_implemented == 8 and
+            .summary.implementation_coverage_bps == 3333 and
+            .summary.snapshot_bindings_observed == 3 and
+            .summary.snapshot_bindings_required == 3 and
+            .summary.exact_snapshot_binding_bps == 10000 and
+            .summary.snapshot_mismatch_paths == 0 and
             .summary.self_minting_paths == 0 and
             .summary.role_conflict_paths == 0 and
             .summary.unknown_laundering_paths == 0 and
             ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
-            ([.indicators[] | select(.class == "DRIVER")] | length) == 1 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and
             ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3
           ' "$output/first/independent.json"
           jq -e '.candidate_decision == "BLOCK" and .summary.self_minting_paths == 1' "$output/first/self-minting.json"
@@ -120,6 +135,13 @@ jobs:
             .summary.unknown_laundering_paths == 1 and
             .summary.unknown_top_decisions == 1
           ' "$output/first/unknown-laundering.json"
+          jq -e '
+            .candidate_decision == "BLOCK" and
+            .candidate_reason == "ASSURANCE_SNAPSHOT_BINDING_MISMATCH" and
+            .candidate_resolution == "EXACT" and
+            .summary.exact_snapshot_binding_bps == 6666 and
+            .summary.snapshot_mismatch_paths == 1
+          ' "$output/first/snapshot-mismatch.json"
           sha256sum "$output"/first/*.json > "$output/first/manifest.sha256"
 
       - name: Upload exact-head language assurance reports

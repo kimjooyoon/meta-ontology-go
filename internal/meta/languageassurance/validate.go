@@ -48,6 +48,9 @@ func validateInput(subjectSHA string, transaction Transaction) error {
 		}
 		decisions[transition.ID] = true
 	}
+	if !validSnapshotBindings(transaction.SnapshotBindings) {
+		return fmt.Errorf("language assurance snapshot binding is malformed")
+	}
 	return nil
 }
 
@@ -61,10 +64,6 @@ func roleSet(roles []Role) map[Role]bool {
 
 func validRole(role Role) bool {
 	return slices.Contains([]Role{RoleContractAuthor, RoleImplementer, RoleEvaluatorAuthor, RoleAdapterAuthor, RolePolicyAdopter, RolePromoter, RoleAuditor}, role)
-}
-
-func validDecision(decision Decision) bool {
-	return slices.Contains([]Decision{DecisionUnknown, DecisionPass, DecisionFail, DecisionFixedPoint, DecisionAuthorized, DecisionAllow, DecisionBlock}, decision)
 }
 
 func validSHA(value string) bool {

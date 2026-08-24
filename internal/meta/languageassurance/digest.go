@@ -23,11 +23,30 @@ func seal(report *Report) {
 	report.ReportDigest = digest(copy)
 }
 
+func detectSnapshotMismatches(subjectSHA string, transaction Transaction) []Finding {
+	var findings []Finding
+	for _, binding := range transaction.SnapshotBindings {
+		if binding.SubjectSHA != subjectSHA {
+			findings = append(findings, Finding{MetricID: MetricSnapshotBinding, PathID: "snapshot/" + binding.EvidenceID, EvidenceID: binding.EvidenceID, ExpectedSHA: subjectSHA, ObservedSHA: binding.SubjectSHA})
+		}
+	}
+	return findings
+}
+
+func observeSnapshotBindings(bindings []SnapshotBinding, mismatches int) (*int, *int) {
+	if len(bindings) != len(snapshotEvidenceIDs) {
+		return nil, nil
+	}
+	exact, paths := len(snapshotEvidenceIDs)-mismatches, mismatches
+	bps := exact * 10000 / len(snapshotEvidenceIDs)
+	return &bps, &paths
+}
+
 func Validate(report Report) error {
 	if report.Schema != ReportSchema || report.DenominatorID != DenominatorID {
 		return fmt.Errorf("language assurance report identity is malformed")
 	}
-	if len(report.Denominator) != 12 || len(report.Obligations) != 12 || len(report.MetaOperations) != 5 || len(report.Indicators) != 5 {
+	if len(report.Denominator) != 12 || len(report.Obligations) != 12 || len(report.MetaOperations) != 6 || len(report.Indicators) != 6 {
 		return fmt.Errorf("language assurance report cardinality is malformed")
 	}
 	if report.ReportDigest == "" {

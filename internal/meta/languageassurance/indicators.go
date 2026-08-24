@@ -8,6 +8,7 @@ func buildIndicators(summary Summary) []Indicator {
 	return []Indicator{
 		indicator("gooo.metric.assurance.implementation-coverage-bps.v1", ClassOutcome, ProofCoherence, "freeze-assurance-denominator", &coverage, 10000, "basis_points", RelationGreaterOrEqual),
 		indicator("gooo.metric.assurance.transaction-evidence-coverage-bps.v1", ClassDriver, ProofFoundation, "observe-transaction-evidence", &evidence, 10000, "basis_points", RelationGreaterOrEqual),
+		indicator(MetricSnapshotBinding, ClassDriver, ProofFoundation, "bind-exact-snapshot", summary.ExactSnapshotBindingBPS, 10000, "basis_points", RelationGreaterOrEqual),
 		indicator(MetricSelfMinting, ClassGuardrail, ProofFoundation, "detect-self-minting-paths", summary.SelfMintingPaths, 0, "paths", RelationLessOrEqual),
 		indicator(MetricRoleConflict, ClassGuardrail, ProofCoherence, "detect-role-conflict-paths", summary.RoleConflictPaths, 0, "paths", RelationLessOrEqual),
 		indicator(MetricUnknownLaundering, ClassGuardrail, ProofRegression, "detect-unknown-laundering", summary.UnknownLaunderingPaths, 0, "paths", RelationLessOrEqual),
@@ -19,9 +20,7 @@ func indicator(metricID string, class IndicatorClass, proof ProofChoice, operati
 	if value == nil {
 		resolution = ResolutionUnknown
 	}
-	return Indicator{MetricID: metricID, Class: class, ProofChoice: proof, Producer: Producer,
-		Consumer: Consumer, MetaOperation: operation, Value: value, Target: target, Unit: unit,
-		Relation: relation, Resolution: resolution, Satisfied: satisfies(value, target, relation)}
+	return Indicator{MetricID: metricID, Class: class, ProofChoice: proof, Producer: Producer, Consumer: Consumer, MetaOperation: operation, Value: value, Target: target, Unit: unit, Relation: relation, Resolution: resolution, Satisfied: satisfies(value, target, relation)}
 }
 
 func decide(summary Summary) (string, string, Resolution) {
@@ -30,6 +29,9 @@ func decide(summary Summary) (string, string, Resolution) {
 	}
 	if summary.UnknownTopDecisions != nil && *summary.UnknownTopDecisions > 0 {
 		return CandidateFailClosed, ReasonTopDecisionUnknown, ResolutionInvariantOnly
+	}
+	if summary.ExactSnapshotBindingBPS != nil && *summary.ExactSnapshotBindingBPS < 10000 {
+		return CandidateBlock, ReasonSnapshotMismatch, ResolutionExact
 	}
 	if summary.ViolatedGuardrails > 0 {
 		return CandidateBlock, ReasonGovernanceViolation, ResolutionExact

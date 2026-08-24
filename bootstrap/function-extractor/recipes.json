@@ -1898,6 +1898,80 @@
           ]
         }
       ]
+    },
+    {
+      "subject": "internal/meta/languageassurance/validate.go",
+      "operation": "partition-language-assurance-snapshot-validation",
+      "edits": [
+        {
+          "path": "internal/meta/languageassurance/validate.go",
+          "old_lines": [
+            "func validDecision(decision Decision) bool {",
+            "\treturn slices.Contains([]Decision{DecisionUnknown, DecisionPass, DecisionFail, DecisionFixedPoint, DecisionAuthorized, DecisionAllow, DecisionBlock}, decision)",
+            "}",
+            ""
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languageassurance/validate.go",
+          "old_lines": [
+            "",
+            "func validSnapshotBindings(bindings []SnapshotBinding) bool {",
+            "\tseen := make(map[string]bool, len(bindings))",
+            "\tfor _, binding := range bindings {",
+            "\t\tif seen[binding.EvidenceID] || !slices.Contains(snapshotEvidenceIDs, binding.EvidenceID) || !validSHA(binding.SubjectSHA) {",
+            "\t\t\treturn false",
+            "\t\t}",
+            "\t\tseen[binding.EvidenceID] = true",
+            "\t}",
+            "\treturn true",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languageassurance/model_split03.go",
+          "old_lines": [
+            "package languageassurance",
+            "",
+            "type ObligationObservation struct {"
+          ],
+          "new_lines": [
+            "package languageassurance",
+            "",
+            "import \"slices\"",
+            "",
+            "type ObligationObservation struct {"
+          ]
+        },
+        {
+          "path": "internal/meta/languageassurance/model_split03.go",
+          "old_lines": [
+            "\tReportDigest             string                  `json:\"report_digest\"`",
+            "}"
+          ],
+          "new_lines": [
+            "\tReportDigest             string                  `json:\"report_digest\"`",
+            "}",
+            "",
+            "func validDecision(decision Decision) bool {",
+            "\treturn slices.Contains([]Decision{DecisionUnknown, DecisionPass, DecisionFail, DecisionFixedPoint, DecisionAuthorized, DecisionAllow, DecisionBlock}, decision)",
+            "}",
+            "",
+            "func validSnapshotBindings(bindings []SnapshotBinding) bool {",
+            "\tseen := make(map[string]bool, len(bindings))",
+            "\tfor _, binding := range bindings {",
+            "\t\tif seen[binding.EvidenceID] || !slices.Contains(snapshotEvidenceIDs, binding.EvidenceID) || !validSHA(binding.SubjectSHA) {",
+            "\t\t\treturn false",
+            "\t\t}",
+            "\t\tseen[binding.EvidenceID] = true",
+            "\t}",
+            "\treturn true",
+            "}"
+          ]
+        }
+      ]
     }
   ]
 }
