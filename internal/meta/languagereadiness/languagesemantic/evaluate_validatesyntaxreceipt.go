@@ -27,6 +27,9 @@ func validateSyntaxReceipt(receipt syntaxReceipt, expectedHead string) error {
 		return fmt.Errorf("syntax evidence contains %d Gooo files, want %d",
 			len(receipt.Source.GoooFiles), expectedSyntaxFiles)
 	}
+	if err := validateSyntaxCases(receipt.Cases); err != nil {
+		return err
+	}
 	if receipt.RepositoryWrites != 0 || receipt.MutationAuthorized {
 		return fmt.Errorf("syntax evidence crossed the read-only effect boundary")
 	}

@@ -37,10 +37,34 @@ func TestValidateSyntaxReceiptAcceptsVersionedDenominator(t *testing.T) {
 			ObservationKnown: true,
 			ConceptBound:     true,
 		},
+		Cases: versionedSyntaxCases(),
 	}
 	if err := validateSyntaxReceipt(receipt, head); err != nil {
 		t.Fatalf("versioned syntax denominator must remain consumable: %v", err)
 	}
+}
+
+func TestSemanticSourceProjectionPreservesUnknowns(t *testing.T) {
+	cases := versionedSyntaxCases()
+	receipt := syntaxReceipt{Cases: cases, Source: syntaxSource{GoooFiles: []GoooFile{
+		{Path: cases[0].Definition.Path}, {Path: cases[19].Definition.Path}, {Path: "unknown.gooo"}}}}
+	paths := semanticSourcePaths(receipt)
+	if len(paths) != 2 || paths[0] != cases[0].Definition.Path || paths[1] != "unknown.gooo" {
+		t.Fatalf("semantic source paths = %#v", paths)
+	}
+}
+
+func versionedSyntaxCases() []syntaxCase {
+	cases := make([]syntaxCase, expectedSyntaxCases)
+	for index := range cases {
+		id := string(rune('a' + index))
+		cases[index].Definition.ID, cases[index].Definition.Path = id, id+".gooo"
+		cases[index].Definition.Kind = "VALID"
+		if index >= expectedSyntaxValid {
+			cases[index].Definition.Kind = "INVALID"
+		}
+	}
+	return cases
 }
 
 func TestRegistryRejectsUnknownLaw(t *testing.T) {
