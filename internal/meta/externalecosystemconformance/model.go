@@ -1,5 +1,7 @@
 package externalecosystemconformance
 
+import "strings"
+
 type Document struct {
 	ID     string `json:"id"`
 	URL    string `json:"url"`
@@ -47,4 +49,18 @@ type Indicator struct {
 	Value         int    `json:"value"`
 	Target        int    `json:"target"`
 	Satisfied     bool   `json:"satisfied"`
+}
+
+func validModule(raw []byte) bool {
+	modulePath, goVersion := "", ""
+	for _, line := range strings.Split(string(raw), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 && fields[0] == "module" {
+			modulePath = fields[1]
+		}
+		if len(fields) == 2 && fields[0] == "go" {
+			goVersion = fields[1]
+		}
+	}
+	return modulePath == ExpectedModule && goVersion == ExpectedGoVersion
 }

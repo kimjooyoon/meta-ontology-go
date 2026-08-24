@@ -3,7 +3,6 @@ package externalecosystemconformance
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"strings"
 )
 
 func digest(raw []byte) string {
@@ -66,18 +65,4 @@ func validateCapsule(c Capsule) (string, string) {
 func knownRelation(value string) bool {
 	return value == "STRUCTURAL_HINT" || value == "DOCUMENTED_LIMITATION" ||
 		value == "GUARDRAIL_CONTRAST"
-}
-
-func validModule(raw []byte) bool {
-	modulePath, goVersion := "", ""
-	for _, line := range strings.Split(string(raw), "\n") {
-		fields := strings.Fields(line)
-		if len(fields) == 2 && fields[0] == "module" {
-			modulePath = fields[1]
-		}
-		if len(fields) == 2 && fields[0] == "go" {
-			goVersion = fields[1]
-		}
-	}
-	return modulePath == ExpectedModule && goVersion == ExpectedGoVersion
 }
