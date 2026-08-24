@@ -10,7 +10,7 @@ func syntaxFixture(head string) []byte {
 		"mutation_authorized": false,
 		"source": map[string]any{"expected_head_sha": head,
 			"concept_artifact_digest": fixtureDigest("1")},
-		"summary": map[string]any{"satisfied": 17, "total": 17, "executed": 17,
+		"summary": map[string]any{"satisfied": 18, "total": 18, "executed": 18,
 			"not_satisfied": 0, "unresolved": 0, "readiness_bps": 10000}})
 }
 
@@ -22,7 +22,7 @@ func semanticFixture(head string, syntax []byte) []byte {
 			"meta_operation":         "prove-staged-semantic-model",
 			"syntax_artifact_digest": digestBytes(syntax),
 			"syntax_report_digest":   fixtureDigest("a")},
-		"summary": map[string]any{"satisfied": 20, "total": 20, "executed": 20,
+		"summary": map[string]any{"satisfied": 21, "total": 21, "executed": 21,
 			"not_satisfied": 0, "unresolved": 0, "readiness_bps": 10000,
 			"stage_order_violations": 0, "effectful_stages": 0, "registry_drift": 0}})
 }
@@ -38,7 +38,7 @@ func bindingFixture(head string, semantic []byte) []byte {
 			"semantic_report_digest": fixtureDigest("b")},
 		"summary": map[string]any{"coordinates": 12, "bound_coordinates": 12,
 			"unresolved": 0, "readiness_completed": 21, "readiness_total": 24,
-			"readiness_bps": 8750, "semantic_satisfied": 20, "semantic_total": 20,
+			"readiness_bps": 8750, "semantic_satisfied": 21, "semantic_total": 21,
 			"effectful_stages": 0, "mutation_authorities": 0}})
 }
 

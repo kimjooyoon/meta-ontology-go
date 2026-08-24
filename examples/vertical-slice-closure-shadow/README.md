@@ -23,12 +23,16 @@ this metric closes one vertical capability, not every language obligation.
 
 | Boundary | Exact requirement |
 |---|---|
-| syntax | 17/17 registered cases |
-| semantics | 20/20 staged semantic cases |
+| syntax | 18/18 registered cases |
+| semantics | 21/21 staged semantic cases |
 | binding | 12/12 semantic coordinates |
 | executable use cases | 3/3 versioned paths |
-| toolchain | 9/9 surfaces and 156/156 cases |
+| toolchain | 9/9 surfaces and 158/158 cases |
 | release | 3/3 Go 1.27.0 platforms and 20/20 cases |
+
+The current observer uses boundary denominator `v2`. The archived evidence and
+the eligibility and activation capsules retain the exact `v1` denominator
+digest that authorized the original transition.
 
 ## Resolution rules
 
