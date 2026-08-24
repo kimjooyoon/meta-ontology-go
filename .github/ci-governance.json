@@ -424,7 +424,6 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/repository-projection.yml",
         ".github/workflows/transformation-effect.yml",
         "cmd/external-ecosystem-conformance-witness/**",
         "examples/external-ecosystem-conformance/**",
@@ -437,6 +436,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        ".github/workflows/repository-projection.yml",
         ".github/workflows/transformation-effect.yml",
         "bootstrap/function-extractor/recipes.json",
         "cmd/external-ecosystem-execution-witness/**",
