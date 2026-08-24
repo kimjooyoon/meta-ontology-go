@@ -123,6 +123,7 @@ jobs:
           sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > SHA256SUMS
 
       - name: Upload execution evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: external-ecosystem-execution-${{ github.run_id }}
