@@ -1,0 +1,40 @@
+{
+  "schema": "gooo/external-conformance-eligibility-use-cases/v1",
+  "fixed_denominators": {
+    "indicators": 18,
+    "regression_cases": 20,
+    "assurance_obligations": 12
+  },
+  "use_cases": [
+    {
+      "id": "promotion-review-without-promotion",
+      "input": "seven sealed CI artifacts",
+      "expected": "ELIGIBLE_SHADOW/EXACT/NO_EFFECT",
+      "official_transition_count": 0
+    },
+    {
+      "id": "preserve-whole-project-failure",
+      "input": "gomacro whole-suite execution",
+      "expected_completed": 6,
+      "expected_total": 8,
+      "expected_known_failures": 2
+    },
+    {
+      "id": "preserve-selected-capability-success",
+      "input": "gomacro evaluator and AST macro execution",
+      "expected_completed": 10,
+      "expected_total": 10,
+      "expected_external_executions": 4
+    },
+    {
+      "id": "lower-resolution-on-unknown",
+      "input": "unknown assurance or execution decision",
+      "expected": "FAIL_CLOSED/UNKNOWN/BLOCK"
+    }
+  ],
+  "non_claims": [
+    "whole gomacro compatibility",
+    "overall Gooo language completion",
+    "ecosystem adoption"
+  ]
+}

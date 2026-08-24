@@ -1528,7 +1528,7 @@ jobs:
         run: |
           test -z "$(git status --porcelain --untracked-files=all)"
           go fix ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness \
-            ./internal/meta/externalcapabilityexecution ./cmd/external-capability-execution-witness
+            ./internal/meta/externalcapabilityexecution/... ./cmd/external-capability-execution-witness/...
           find internal/meta/externalecosystemexecution cmd/external-ecosystem-execution-witness \
             internal/meta/externalcapabilityexecution cmd/external-capability-execution-witness \
             -name '*.go' -type f -print0 | xargs -0 gofmt -w
@@ -1549,7 +1549,7 @@ jobs:
         working-directory: gooo
         run: |
           go test -count=1 ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness
-          go test -count=1 ./internal/meta/externalcapabilityexecution ./cmd/external-capability-execution-witness
+          go test -count=1 ./internal/meta/externalcapabilityexecution/... ./cmd/external-capability-execution-witness/...
           go test -count=1 ./internal/verify
       - name: Observe twice and replay
         working-directory: gooo
@@ -1616,6 +1616,56 @@ jobs:
           jq -e '.passed == 15 and .total == 15 and .unknown_expected == 3 and .invariant_expected == 11' "$result/suite.json"
           jq -e '.available == true and .replay_exact == true and (.runs | length) == 2' "$result/observation.json"
           jq -e '([.runs[] | .status == "SATISFIED" and .arithmetic == "42" and .function == "55"] | all)' "$result/observation.json"
+      - name: Evaluate external assurance eligibility twice
+        working-directory: gooo
+        run: |
+          parent="$RUNNER_TEMP/external-ecosystem-execution"
+          capability="$RUNNER_TEMP/external-capability-execution"
+          result="$RUNNER_TEMP/external-conformance-eligibility"
+          mkdir -p "$result"
+          for prefix in "" replay-; do
+            go run ./cmd/external-capability-execution-witness/eligibility \
+              --subject-sha "$SUBJECT_SHA" \
+              --parent-report "$parent/report.json" --parent-observation "$parent/observation.json" \
+              --parent-suite "$parent/suite.json" --capability-report "$capability/report.json" \
+              --capability-observation "$capability/observation.json" --capability-suite "$capability/suite.json" \
+              --report "$result/${prefix}report.json" --suite "$result/${prefix}suite.json"
+          done
+          cmp "$result/report.json" "$result/replay-report.json"
+          cmp "$result/suite.json" "$result/replay-suite.json"
+          cp internal/meta/externalcapabilityexecution/assuranceeligibility/evidence/assurance.json "$result/assurance.json"
+          cp "$parent/report.json" "$result/parent-report.json"
+          cp "$parent/observation.json" "$result/parent-observation.json"
+          cp "$parent/suite.json" "$result/parent-suite.json"
+          cp "$capability/report.json" "$result/capability-report.json"
+          cp "$capability/observation.json" "$result/capability-observation.json"
+          cp "$capability/suite.json" "$result/capability-suite.json"
+      - name: Assert external assurance eligibility boundary
+        run: |
+          result="$RUNNER_TEMP/external-conformance-eligibility"
+          jq -e '.decision == "ELIGIBLE_SHADOW" and .resolution == "EXACT" and .enforcement_effect == "NO_EFFECT"' "$result/report.json"
+          jq -e '.summary.indicator_completed == 18 and .summary.indicator_total == 18 and .summary.indicator_coverage_bps == 10000' "$result/report.json"
+          jq -e '.summary.driver_completed == 7 and .summary.outcome_completed == 4 and .summary.guardrail_completed == 7' "$result/report.json"
+          jq -e '.summary.before_operating == 11 and .summary.projected_operating == 12 and .summary.official_operating == 11' "$result/report.json"
+          jq -e '.summary.parent_completed == 6 and .summary.parent_total == 8 and .summary.parent_known_failures == 2' "$result/report.json"
+          jq -e '.summary.capability_completed == 10 and .summary.capability_total == 10 and .summary.capability_suite_passed == 15' "$result/report.json"
+          jq -e '.repository_writes == 0 and .official_mutation_count == 0 and .promotion_applied == 0' "$result/report.json"
+          jq -e '.transition.official_status == "NOT_IMPLEMENTED" and .transition.eligible_status == "OPERATING"' "$result/report.json"
+          jq -e '([.proofs[] | .status] | all(. == "SATISFIED"))' "$result/report.json"
+          jq -e '.passed == 20 and .total == 20 and .coverage_bps == 10000' "$result/suite.json"
+          jq -e '.exact_expected == 1 and .unknown_expected == 10 and .invariant_expected == 9' "$result/suite.json"
+      - name: Seal external assurance eligibility evidence
+        run: |
+          cd "$RUNNER_TEMP/external-conformance-eligibility"
+          sha256sum *.json > manifest.sha256
+      - name: Upload external assurance eligibility evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-conformance-eligibility-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-conformance-eligibility
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Seal capability evidence
         run: |
           cd "$RUNNER_TEMP/external-capability-execution"
