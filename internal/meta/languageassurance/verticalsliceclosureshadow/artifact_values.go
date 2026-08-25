@@ -26,8 +26,8 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	case "toolchain":
 		return summary.CasesSatisfied, status(summary.SurfacesSatisfied == 9 &&
 			summary.SurfacesTotal == 9 && len(artifact.Surfaces) == 9 &&
-			summary.CasesSatisfied == 161 && summary.CasesTotal == 161 &&
-			summary.ExecutedCases == 161 && summary.CaseReadinessBPS == 10000 &&
+			summary.CasesSatisfied == 165 && summary.CasesTotal == 165 &&
+			summary.ExecutedCases == 165 && summary.CaseReadinessBPS == 10000 &&
 			summary.IndicatorsSatisfied == summary.IndicatorsTotal &&
 			summary.ProofsPassed == summary.ProofsTotal &&
 			summary.TamperRejections == 13 && summary.TamperTotal == 13)
