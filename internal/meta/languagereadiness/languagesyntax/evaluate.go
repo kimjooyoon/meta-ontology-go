@@ -2,7 +2,6 @@ package languagesyntax
 
 import (
 	"io/fs"
-	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
@@ -67,17 +66,4 @@ func compareCorpus(registry Registry, observed []replay.FileObservation) ([]stri
 		}
 	}
 	return extra, missing
-}
-
-func registryPaths(registry Registry) []string {
-	paths := []string{}
-	for _, definition := range registry.Cases {
-		if strings.HasSuffix(definition.Path, ".gooo") {
-			paths = append(paths, definition.Path)
-		}
-	}
-	for _, unit := range registry.PackageUnits {
-		paths = append(paths, unit.Members...)
-	}
-	return paths
 }

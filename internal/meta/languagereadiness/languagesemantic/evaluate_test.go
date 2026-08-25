@@ -39,9 +39,7 @@ func TestValidateSyntaxReceiptAcceptsVersionedDenominator(t *testing.T) {
 func TestSemanticSourceProjectionPreservesUnknowns(t *testing.T) {
 	cases := versionedSyntaxCases()
 	packages := versionedSyntaxPackages()
-	receipt := syntaxReceipt{Cases: cases, Source: syntaxSource{PackageUnits: packages,
-		GoooFiles: []GoooFile{{Path: cases[0].Definition.Path}, {Path: packages[0].Members[0]},
-			{Path: cases[19].Definition.Path}, {Path: "unknown.gooo"}}}}
+	receipt := syntaxReceipt{Cases: cases, Source: syntaxSource{PackageUnits: packages, GoooFiles: []GoooFile{{Path: cases[0].Definition.Path}, {Path: packages[0].Members[0]}, {Path: cases[19].Definition.Path}, {Path: "unknown.gooo"}}}}
 	paths := semanticSourcePaths(receipt)
 	if len(paths) != 2 || paths[0] != cases[0].Definition.Path || paths[1] != "unknown.gooo" {
 		t.Fatalf("semantic source paths = %#v", paths)
@@ -49,11 +47,7 @@ func TestSemanticSourceProjectionPreservesUnknowns(t *testing.T) {
 }
 
 func versionedSyntaxPackages() []syntaxPackageUnit {
-	return []syntaxPackageUnit{{ID: "billing-package", Path: "examples/billing-package",
-		Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"},
-		Entry:   "PayOrder", ReportSchema: "gooo/language-package-execution-report/v1",
-		MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES",
-		ExecutionIndicator: "PACKAGE_EXECUTIONS"}}
+	return []syntaxPackageUnit{{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: "gooo/language-package-execution-report/v1", MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}}
 }
 
 func versionedSyntaxCases() []syntaxCase {

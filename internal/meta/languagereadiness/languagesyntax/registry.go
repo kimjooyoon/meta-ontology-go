@@ -13,8 +13,7 @@ import (
 
 func expectedRegistry() Registry {
 	valid := func(id, path string) CaseDefinition {
-		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass,
-			ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax"}
+		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax"}
 	}
 	invalid := func(id, path, diagnostic string) CaseDefinition {
 		return CaseDefinition{ID: id, Path: path, Kind: KindInvalid, ExpectedDecision: DecisionClosed,
@@ -68,8 +67,7 @@ func decodeRegistry(raw []byte) (Registry, error) {
 func unresolvedCases(source Source) []CaseResult {
 	results := make([]CaseResult, 0, totalCases)
 	for _, definition := range expectedRegistry().Cases {
-		item := CaseResult{Definition: definition,
-			Evidence: replay.Result{ObservedDecision: replay.DecisionUnknown}, Status: "UNRESOLVED"}
+		item := CaseResult{Definition: definition, Evidence: replay.Result{ObservedDecision: replay.DecisionUnknown}, Status: "UNRESOLVED"}
 		item.EvidenceDigest = caseDigest(item, source)
 		results = append(results, item)
 	}
