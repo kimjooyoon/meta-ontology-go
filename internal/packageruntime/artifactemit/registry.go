@@ -10,13 +10,16 @@ type emitter struct {
 	project func(packageReceipt) Artifact
 }
 
-var emitterRegistry = []emitter{
-	{kind: OperationManifestKind, project: projectOperationManifest},
+func emitterRegistry() []emitter {
+	return []emitter{
+		{kind: OperationManifestKind, project: projectOperationManifest},
+	}
 }
 
 func RegisteredKinds() []string {
-	kinds := make([]string, len(emitterRegistry))
-	for index, registered := range emitterRegistry {
+	registeredEmitters := emitterRegistry()
+	kinds := make([]string, len(registeredEmitters))
+	for index, registered := range registeredEmitters {
 		kinds[index] = registered.kind
 	}
 	return kinds
@@ -39,7 +42,7 @@ func Emit(kind string, payload []byte) Artifact {
 	if source.Effects.RepositoryWrites != 0 || source.Effects.MutationAuthority {
 		return failed(kind, "EXACT", "PACKAGE_EFFECTS_OBSERVED")
 	}
-	for _, registered := range emitterRegistry {
+	for _, registered := range emitterRegistry() {
 		if registered.kind == kind {
 			return registered.project(source)
 		}

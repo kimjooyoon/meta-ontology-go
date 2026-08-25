@@ -21,5 +21,6 @@ func projectOperationManifest(source packageReceipt) Artifact {
 }
 
 func registryReceipt() ExtensionRegistry {
-	return ExtensionRegistry{RegisteredEmitters: len(emitterRegistry), Kinds: RegisteredKinds()}
+	registeredEmitters := emitterRegistry()
+	return ExtensionRegistry{RegisteredEmitters: len(registeredEmitters), Kinds: RegisteredKinds()}
 }
