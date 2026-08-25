@@ -38,7 +38,7 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 	sort.Slice(witnesses, func(i, j int) bool { return witnessKey(witnesses[i]) < witnessKey(witnesses[j]) })
 	counts := countWitnesses(witnesses)
 	counts.MetaIndicators = len(report.Meta.Indicators)
-	ledger := witnessLedger{Schema: "gooo/source-subject-witness-ledger/v1", Repository: report.Repository, CommitSHA: report.CommitSHA, SourceSchema: report.Meta.Schema, Policy: report.Meta.Policy, PolicyDigest: digestJSON(report.Meta.Policy), RootTopologyExempt: report.Meta.Policy.ExemptProjectRootTopology, RootREADMEExempt: report.Meta.Policy.ExemptProjectRootREADME, Counts: counts, SubjectWitnessDigest: digestValues(witnesses), MetaIndicatorDigest: digestValues(report.Meta.Indicators), Status: "BOUND", Witnesses: witnesses}
+	ledger := witnessLedger{Schema: "gooo/source-subject-witness-ledger/v2", Repository: report.Repository, CommitSHA: report.CommitSHA, SourceSchema: report.Meta.Schema, Policy: report.Meta.Policy, PolicyDigest: digestJSON(report.Meta.Policy), RootTopologyExempt: report.Meta.Policy.ExemptProjectRootTopology, RootREADMEExempt: report.Meta.Policy.ExemptProjectRootREADME, Counts: counts, SubjectWitnessDigest: digestValues(witnesses), MetaIndicatorDigest: digestValues(report.Meta.Indicators), Status: "BOUND", Witnesses: witnesses}
 	ledger.Indicators = buildLedgerIndicators(ledger)
 	ledger.IndicatorDigest = digestValues(ledger.Indicators)
 	ledger.SemanticDigest = ledgerSemanticDigest(ledger)
@@ -53,12 +53,18 @@ func countWitnesses(witnesses []subjectWitness) ledgerCounts {
 		values["language:"+witness.Language]++
 		values["binding:"+witness.Meta.Kind]++
 		values[witness.Space+"\x00"+witness.Meta.Kind]++
+		values["source:applicable"] += witness.Meta.ApplicableIndicators
+		values["source:not-applicable"] += witness.Meta.NotApplicableIndicators
+		if witness.Space == "STORAGE_DIRECTORY" && witness.Path == workflowDiscoveryPath {
+			values["workflow-discovery"] += witness.Meta.NotApplicableIndicators
+		}
 	}
 	return ledgerCounts{
 		FileWitnesses: values["space:LOGICAL_FILE"], GoFiles: values["language:go"], GoooFiles: values["language:gooo"],
 		OtherFiles: values["language:other"], LogicalDirectories: values["space:LOGICAL_DIRECTORY"], StorageDirectories: values["space:STORAGE_DIRECTORY"],
 		FileSourceBindings: values["LOGICAL_FILE\x00SOURCE_INDICATORS"], StorageSourceBindings: values["STORAGE_DIRECTORY\x00SOURCE_INDICATORS"],
 		DerivedBindings: values["binding:DERIVED_OBSERVATION"] + values["binding:DERIVED_PROJECTION"], SubjectWitnesses: values["subjects"],
+		SourceIndicatorsApplicable: values["source:applicable"], SourceIndicatorsNotApplicable: values["source:not-applicable"], WorkflowDiscoveryExemptions: values["workflow-discovery"],
 	}
 }
 
