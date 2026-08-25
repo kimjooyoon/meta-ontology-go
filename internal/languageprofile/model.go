@@ -39,18 +39,18 @@ type Sample struct {
 }
 
 type Summary struct {
-	SamplesRequested          int    `json:"samples_requested"`
-	SamplesObserved           int    `json:"samples_observed"`
-	SuccessfulExecutions      int    `json:"successful_executions"`
-	ExecutionDigestVariants   int    `json:"execution_digest_variants"`
-	WallObservations          int    `json:"wall_observations"`
-	AllocationObservations    int    `json:"allocation_observations"`
-	WallMinNanoseconds        int64  `json:"wall_min_nanoseconds"`
-	WallMedianNanoseconds     int64  `json:"wall_median_nanoseconds"`
-	WallMaxNanoseconds        int64  `json:"wall_max_nanoseconds"`
-	TotalAllocMinBytes        uint64 `json:"total_alloc_min_bytes"`
-	TotalAllocMedianBytes     uint64 `json:"total_alloc_median_bytes"`
-	TotalAllocMaxBytes        uint64 `json:"total_alloc_max_bytes"`
+	SamplesRequested        int    `json:"samples_requested"`
+	SamplesObserved         int    `json:"samples_observed"`
+	SuccessfulExecutions    int    `json:"successful_executions"`
+	ExecutionDigestVariants int    `json:"execution_digest_variants"`
+	WallObservations        int    `json:"wall_observations"`
+	AllocationObservations  int    `json:"allocation_observations"`
+	WallMinNanoseconds      int64  `json:"wall_min_nanoseconds"`
+	WallMedianNanoseconds   int64  `json:"wall_median_nanoseconds"`
+	WallMaxNanoseconds      int64  `json:"wall_max_nanoseconds"`
+	TotalAllocMinBytes      uint64 `json:"total_alloc_min_bytes"`
+	TotalAllocMedianBytes   uint64 `json:"total_alloc_median_bytes"`
+	TotalAllocMaxBytes      uint64 `json:"total_alloc_max_bytes"`
 }
 
 type Effects struct {

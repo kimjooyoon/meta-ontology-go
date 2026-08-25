@@ -61,7 +61,7 @@ func topDecisionUnknown(input Input) bool {
 func closed(input Input, resolution, reason string, unknowns int) Report {
 	facts := observeFacts(input)
 	summary := Summary{Coordinates: Counter{Total: ExpectedIndicators}, Unknowns: unknowns,
-		Effects: EffectSummary{RepositoryWrites: facts.writes, MutationAuthority: facts.mutation},
+		Effects:    EffectSummary{RepositoryWrites: facts.writes, MutationAuthority: facts.mutation},
 		NotClaimed: ExpectedNonClaims, Compiler: CompilerSummary{ExecutableDigest: input.ExecutableDigest}}
 	report := Report{Schema: ReportSchema, Decision: "FAIL_CLOSED", Resolution: resolution, Reason: reason,
 		Interpretation: "NO_LANGUAGE_QUALITY_CLAIM", SubjectSHA: input.SubjectSHA, ContractID: input.Contract.ID,

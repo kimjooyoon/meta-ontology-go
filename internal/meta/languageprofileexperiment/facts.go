@@ -9,12 +9,12 @@ import (
 )
 
 type observedFacts struct {
-	profiles, samples, successful, sourceCoherence int
+	profiles, samples, successful, sourceCoherence     int
 	variants, wallObservations, allocationObservations int
-	wallMin, wallMedian, wallMax int64
-	allocMin, allocMedian, allocMax uint64
-	go127Runtimes, unknownRejections, writes int
-	mutation, nonClaims, executableBound bool
+	wallMin, wallMedian, wallMax                       int64
+	allocMin, allocMedian, allocMax                    uint64
+	go127Runtimes, unknownRejections, writes           int
+	mutation, nonClaims, executableBound               bool
 }
 
 func observeFacts(input Input) observedFacts {

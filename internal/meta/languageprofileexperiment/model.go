@@ -12,8 +12,8 @@ type Input struct {
 }
 
 type Counter struct {
-	Satisfied  int `json:"satisfied"`
-	Total      int `json:"total"`
+	Satisfied   int `json:"satisfied"`
+	Total       int `json:"total"`
 	BasisPoints int `json:"basis_points"`
 }
 
@@ -40,7 +40,7 @@ type ResourceSummary struct {
 
 type CompilerSummary struct {
 	ExecutableDigest string `json:"executable_digest"`
-	Go127Runtimes     int    `json:"go127_runtimes"`
+	Go127Runtimes    int    `json:"go127_runtimes"`
 }
 
 type EffectSummary struct {
@@ -49,18 +49,18 @@ type EffectSummary struct {
 }
 
 type Summary struct {
-	Coordinates              Counter         `json:"coordinates"`
-	Profiles                 int             `json:"profiles"`
-	Samples                  int             `json:"samples"`
-	SuccessfulExecutions     int             `json:"successful_executions"`
-	SourceCoherence          int             `json:"source_coherence"`
-	ExecutionDigestVariants  int             `json:"execution_digest_variants"`
-	Resources                ResourceSummary `json:"resources"`
-	Compiler                 CompilerSummary `json:"compiler"`
-	UnknownEntryRejections   int             `json:"unknown_entry_rejections"`
-	Effects                  EffectSummary   `json:"effects"`
-	NotClaimed               int             `json:"not_claimed"`
-	Unknowns                 int             `json:"unknowns"`
+	Coordinates             Counter         `json:"coordinates"`
+	Profiles                int             `json:"profiles"`
+	Samples                 int             `json:"samples"`
+	SuccessfulExecutions    int             `json:"successful_executions"`
+	SourceCoherence         int             `json:"source_coherence"`
+	ExecutionDigestVariants int             `json:"execution_digest_variants"`
+	Resources               ResourceSummary `json:"resources"`
+	Compiler                CompilerSummary `json:"compiler"`
+	UnknownEntryRejections  int             `json:"unknown_entry_rejections"`
+	Effects                 EffectSummary   `json:"effects"`
+	NotClaimed              int             `json:"not_claimed"`
+	Unknowns                int             `json:"unknowns"`
 }
 
 type View struct {
