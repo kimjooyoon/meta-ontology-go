@@ -1,6 +1,6 @@
 package languagepackageexecution
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/packageexecution"
+import "github.com/kimjooyoon/meta-ontology-go/internal/language/packageexecution"
 
 func Evaluate(input Input) Report {
 	report := Report{Schema: ReportSchema, HeadSHA: input.HeadSHA, Cases: []CaseResult{}, Indicators: []Indicator{}, Proofs: []Proof{}, Views: []AudienceView{}}

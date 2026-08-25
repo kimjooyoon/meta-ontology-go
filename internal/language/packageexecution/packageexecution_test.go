@@ -7,7 +7,7 @@ import (
 )
 
 func TestExecuteMultiFilePackageAndReplay(t *testing.T) {
-	sources, err := LoadDirectory(filepath.Join("..", "..", "examples", "billing-package"))
+	sources, err := LoadDirectory(filepath.Join("..", "..", "..", "examples", "billing-package"))
 	if err != nil {
 		t.Fatal(err)
 	}

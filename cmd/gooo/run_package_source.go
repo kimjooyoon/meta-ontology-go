@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/packageexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/language/packageexecution"
 )
 
 func maybeRunSourcePackage(args []string, stdout, stderr io.Writer) (bool, int) {

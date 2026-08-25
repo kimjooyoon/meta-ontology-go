@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/packageexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/language/packageexecution"
 )
 
 func TestEvaluateFixedPackageCases(t *testing.T) {
