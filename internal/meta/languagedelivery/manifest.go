@@ -40,7 +40,7 @@ func artifactPrefix(name SourceName) string {
 	case SourceExecution:
 		return "language-source-execution-"
 	case SourceProfile:
-		return "language-profile-"
+		return "language-source-execution-"
 	case SourceReadiness:
 		return "language-readiness-artifact-"
 	default:
