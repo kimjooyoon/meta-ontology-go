@@ -26,11 +26,7 @@ func buildManifest(sha string, files []trackedFile,
 		})
 	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].Logical < entries[j].Logical })
-	return manifest{
-		Schema: "gooo.repository-projection.v1", SourceSHA: sha,
-		Proof: "axiomatic-foundation", Authority: "git-index-at-exact-head",
-		Entries: entries,
-	}
+	return manifest{Schema: "gooo.repository-projection.v1", SourceSHA: sha, Proof: "axiomatic-foundation", Authority: "git-index-at-exact-head", Entries: entries}
 }
 
 func writeEvidence(work string, report projectionevidence.Report) error {

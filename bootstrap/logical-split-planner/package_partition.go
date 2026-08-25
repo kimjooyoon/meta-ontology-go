@@ -10,13 +10,13 @@ import (
 const packagePartitionSchema = "gooo.go-package-partition-recipe.v1"
 
 type packagePartitionRecipe struct {
-	Schema        string             `json:"schema"`
-	Subject       string             `json:"subject"`
-	Moves         []packageMove      `json:"moves"`
-	Creates       []packageCreate    `json:"creates"`
-	Rewrites      []packageRewrite   `json:"rewrites"`
-	Ranges        []packageRange     `json:"ranges"`
-	ExpectedShape packageShape       `json:"expected_shape"`
+	Schema        string           `json:"schema"`
+	Subject       string           `json:"subject"`
+	Moves         []packageMove    `json:"moves"`
+	Creates       []packageCreate  `json:"creates"`
+	Rewrites      []packageRewrite `json:"rewrites"`
+	Ranges        []packageRange   `json:"ranges"`
+	ExpectedShape packageShape     `json:"expected_shape"`
 }
 
 type packageMove struct {
@@ -29,17 +29,11 @@ type packageCreate struct {
 
 type packageRewrite struct {
 	Path, Old, New string
-	ExpectedCount int `json:"expected_count"`
+	ExpectedCount  int `json:"expected_count"`
 }
 
 type packageRange struct {
 	Path, Start, End, Replacement string
-}
-
-type packageShape struct {
-	BranchEntries int            `json:"branch_entries"`
-	MaxEntries    int            `json:"max_entries"`
-	Leaves        map[string]int `json:"leaves"`
 }
 
 func runPackagePartition(root, recipeName, expectedSHA, output string) error {
@@ -66,11 +60,14 @@ func runPackagePartition(root, recipeName, expectedSHA, output string) error {
 		return fmt.Errorf("unsupported package partition recipe")
 	}
 	writes := make(map[string]bool)
+	if packageShapeSatisfied(absolute, recipe) {
+		return writePackagePartitionReceipt(output, expectedSHA, recipe, writes, true)
+	}
 	if err := applyPackageRecipe(absolute, recipe, writes); err != nil {
 		return err
 	}
 	if err := requirePackageShape(absolute, recipe); err != nil {
 		return err
 	}
-	return writePackagePartitionReceipt(output, expectedSHA, recipe, writes)
+	return writePackagePartitionReceipt(output, expectedSHA, recipe, writes, false)
 }

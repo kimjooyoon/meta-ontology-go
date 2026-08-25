@@ -51,3 +51,9 @@ type planReport struct {
 	Subjects   []planSubject   `json:"subjects"`
 	Indicators []planIndicator `json:"indicators"`
 }
+
+type packageShape struct {
+	BranchEntries int            `json:"branch_entries"`
+	MaxEntries    int            `json:"max_entries"`
+	Leaves        map[string]int `json:"leaves"`
+}
