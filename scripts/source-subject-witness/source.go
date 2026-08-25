@@ -9,6 +9,7 @@ import (
 type sourceReport struct {
 	Repository         string            `json:"repository"`
 	CommitSHA          string            `json:"commit_sha"`
+	Root               directoryMetric   `json:"root"`
 	Files              []fileMetric      `json:"files"`
 	Directories        []directoryMetric `json:"directories"`
 	StorageDirectories []directoryMetric `json:"storage_directories"`

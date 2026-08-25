@@ -41,7 +41,6 @@ func storageDirectoryBinding(directory directoryMetric, index indicatorIndex, re
 	expected := []expectedMetric{{"gooo.metric.layout.direct-entries.v1", directory.DirectFiles + directory.DirectFolders}, {"gooo.metric.layout.direct-files.v1", directory.DirectFiles}, {"gooo.metric.layout.direct-folders.v1", directory.DirectFolders}, {"gooo.metric.layout.entry-kinds.v1", kinds}, {"gooo.metric.layout.recursive-files.v1", directory.RecursiveFiles}, {"gooo.metric.layout.recursive-folders.v1", directory.RecursiveFolders}}
 	if directory.Path == "." {
 		expected = append(expected, expectedMetric{rootREADMEMetric, readmeValue})
-		expected = append(expected, rootSummaryMetrics(directory)...)
 	}
 	rows := make([]sourceIndicator, 0, len(expected))
 	for _, item := range expected {
@@ -51,9 +50,6 @@ func storageDirectoryBinding(directory directoryMetric, index indicatorIndex, re
 		}
 		if item.id == rootREADMEMetric && row.Detail != "ontology="+rootREADMEOntology {
 			return metaBinding{}, fmt.Errorf("root README indicator lost ontology binding")
-		}
-		if err := validateRootSummaryIndicator(row); err != nil {
-			return metaBinding{}, err
 		}
 		rows = append(rows, row)
 	}

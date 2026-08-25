@@ -10,6 +10,10 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 		return witnessLedger{}, err
 	}
 	index := indexIndicators(report.Meta.Indicators)
+	rootSummary, err := compileRootSummaryWitness(report.Root, index)
+	if err != nil {
+		return witnessLedger{}, err
+	}
 	functions, err := compileFunctionWitnesses(report.Meta.Indicators)
 	if err != nil {
 		return witnessLedger{}, err
@@ -21,7 +25,7 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 	sort.Slice(logical, func(i, j int) bool { return logical[i].Path < logical[j].Path })
 	sort.Slice(storage, func(i, j int) bool { return storage[i].Path < storage[j].Path })
 	readmeValue := rootREADMEValue(files)
-	witnesses := make([]subjectWitness, 0, len(files)+len(functions)+len(logical)+len(storage))
+	witnesses := make([]subjectWitness, 0, len(files)+len(functions)+len(logical)+len(storage)+1)
 	for _, file := range files {
 		binding, err := fileBinding(file, index)
 		if err != nil {
@@ -29,6 +33,7 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 		}
 		witnesses = append(witnesses, fileWitness(file, binding))
 	}
+	witnesses = append(witnesses, rootSummary)
 	witnesses = append(witnesses, functions...)
 	for _, directory := range logical {
 		witnesses = append(witnesses, directoryWitness("LOGICAL_DIRECTORY", directory, logicalDirectoryBinding()))
