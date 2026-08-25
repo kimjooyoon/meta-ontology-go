@@ -26,6 +26,7 @@
   "rewrites": [
     {"Path": "bootstrap/repository-projector/evidence/evidence.go", "Old": "func buildEvidence(sha string, model manifest, objects, loss int, topology topologyEvidence) evidence {", "New": "func Build(sha string, entries []Entry, objects, loss int, topology Topology) Report {", "expected_count": 1},
     {"Path": "bootstrap/repository-projector/evidence/evidence.go", "Old": "for _, entry := range model.Entries {", "New": "for _, entry := range entries {", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/evidence/evidence.go", "Old": "TrackedFiles: len(model.Entries)", "New": "TrackedFiles: len(entries)", "expected_count": 1},
     {"Path": "bootstrap/repository-projector/evidence/evidence_guard.go", "Old": "func requireBlockingZero(report evidence) error {", "New": "func RequireBlockingZero(report Report) error {", "expected_count": 1},
     {"Path": "bootstrap/repository-projector/evidence/evidence_topology_scan.go", "Old": "func topologyFailures(root string) (topologyEvidence, error) {", "New": "func Scan(root string) (Topology, error) {", "expected_count": 1},
     {"Path": "bootstrap/repository-projector/command/main.go", "Old": "\t\"log\"\n\t\"path/filepath\"", "New": "\t\"log\"\n\t\"path/filepath\"\n\n\tprojectionevidence \"github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence\"", "expected_count": 1},
