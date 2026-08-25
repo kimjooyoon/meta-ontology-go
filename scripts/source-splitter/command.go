@@ -20,6 +20,9 @@ func run(args []string) error {
 		return err
 	}
 	indicators := report.GoSplitIndicators()
+	if cfg.plan != "" {
+		return runBatch(cfg, report, indicators)
+	}
 	if cfg.check {
 		return checkSplitPlans(cfg, report, indicators)
 	}

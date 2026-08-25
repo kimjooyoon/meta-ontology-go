@@ -69,6 +69,25 @@ jobs:
             --expected-sha "$EXACT_SHA" \
             --output "$RUNNER_TEMP/repository-projection/extraction-report.json"
 
+      - name: Apply metric-selected logical source splits
+        run: |
+          go run ./scripts/line-metrics \
+            -root "$GITHUB_WORKSPACE" \
+            -storage-root "${{ steps.materialize.outputs.storage-root }}" \
+            -json > "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json"
+          go run ./bootstrap/meta-binding-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json" \
+            -bound-metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
+            -report "$RUNNER_TEMP/repository-projection/split-binding-report.json" \
+            -check
+          go run ./scripts/source-splitter \
+            -root "$GITHUB_WORKSPACE" \
+            -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
+            -sha "$EXACT_SHA" \
+            -plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
+            -output "$RUNNER_TEMP/repository-projection/split-report.json"
+
       - name: Verify authorized rewrites and test the logical module
         run: |
           expected="$RUNNER_TEMP/repository-projection/authorized-write-set.txt"
@@ -81,11 +100,12 @@ jobs:
             --expected-sha "$EXACT_SHA" \
             --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
             --extraction-report "$RUNNER_TEMP/repository-projection/extraction-report.json" \
+            --split-report "$RUNNER_TEMP/repository-projection/split-report.json" \
             --observed-write-set "$observed" \
             --untracked-paths "$untracked" \
             --expected-output "$expected" \
             --output "$report"
-          jq -e '.schema == "gooo.authorized-rewrite-write-set.v2" and .decision == "PASS" and .resolution == "EXACT" and .exact == true and .coordinates.unknowns == 0' "$report"
+          jq -e '.schema == "gooo.authorized-rewrite-write-set.v3" and .decision == "PASS" and .resolution == "EXACT" and .exact == true and .coordinates.unknowns == 0' "$report"
           diff -u "$expected" "$observed"
           while IFS= read -r path; do
             test -z "$path" || git add -N -- "$path"
@@ -97,6 +117,7 @@ jobs:
             echo
             jq -r '(.indicators[]|select(.id=="density.applied")|.value) as $applied | (.indicators[]|select(.id=="density.residual")|.value) as $residual | "- density rewrites: `\($applied)/\($applied+$residual)`"' "$RUNNER_TEMP/repository-projection/density-report.json"
             jq -r '(.indicators[]|select(.id=="extraction.observed")|.value) as $observed | (.indicators[]|select(.id=="extraction.applied")|.value) as $applied | (.indicators[]|select(.id=="extraction.created")|.value) as $created | (.indicators[]|select(.id=="extraction.unhandled")|.value) as $unhandled | "- helper extractions: `\($applied)/\($observed)`\n- generated helper files: `\($created)`\n- unhandled residuals: `\($unhandled)`"' "$RUNNER_TEMP/repository-projection/extraction-report.json"
+            jq -r '"- logical source splits: `\(.coordinates.applied_subjects)/\(.coordinates.selected_subjects)`\n- split-created files: `\(.coordinates.created_paths)`\n- split decision: `\(.decision) / \(.resolution)`"' "$RUNNER_TEMP/repository-projection/split-report.json"
             jq -r '"- authorized paths: `\(.coordinates.observed_paths)/\(.coordinates.expected_paths)`\n- recipe-declared creations: `\(.coordinates.untracked_paths)/\(.coordinates.created_paths)`\n- unclassified paths: `\(.coordinates.unclassified_untracked_paths)`\n- decision: `\(.decision) / \(.resolution)`"' "$report"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -110,6 +131,10 @@ jobs:
             ${{ runner.temp }}/repository-projection/split-plan.json
             ${{ runner.temp }}/repository-projection/density-report.json
             ${{ runner.temp }}/repository-projection/extraction-report.json
+            ${{ runner.temp }}/repository-projection/split-source-metrics-raw.json
+            ${{ runner.temp }}/repository-projection/split-source-metrics.json
+            ${{ runner.temp }}/repository-projection/split-binding-report.json
+            ${{ runner.temp }}/repository-projection/split-report.json
             ${{ runner.temp }}/repository-projection/write-set-evidence.json
             ${{ runner.temp }}/repository-projection/authorized-write-set.txt
             ${{ runner.temp }}/repository-projection/observed-write-set.txt

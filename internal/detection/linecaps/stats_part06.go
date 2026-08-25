@@ -8,7 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
-func directoryMetricObservations(directory DirectoryMetric) []sourcepolicy.Observation {
+func directoryMetricObservations(root string, directory DirectoryMetric) []sourcepolicy.Observation {
 	kinds := 0
 	if directory.DirectFiles > 0 {
 		kinds++
@@ -16,7 +16,9 @@ func directoryMetricObservations(directory DirectoryMetric) []sourcepolicy.Obser
 	if directory.DirectFolders > 0 {
 		kinds++
 	}
-	return []sourcepolicy.Observation{metricObservation(directory.Path, sourcepolicy.DimensionDirectFiles, directory.DirectFiles), metricObservation(directory.Path, sourcepolicy.DimensionDirectFolders, directory.DirectFolders), metricObservation(directory.Path, sourcepolicy.DimensionRecursiveFiles, directory.RecursiveFiles), metricObservation(directory.Path, sourcepolicy.DimensionRecursiveFolders, directory.RecursiveFolders), metricObservation(directory.Path, sourcepolicy.DimensionDirectEntries, directory.DirectFiles+directory.DirectFolders), metricObservation(directory.Path, sourcepolicy.DimensionDirectoryKinds, kinds)}
+	observations := []sourcepolicy.Observation{metricObservation(directory.Path, sourcepolicy.DimensionDirectFiles, directory.DirectFiles), metricObservation(directory.Path, sourcepolicy.DimensionDirectFolders, directory.DirectFolders), metricObservation(directory.Path, sourcepolicy.DimensionRecursiveFiles, directory.RecursiveFiles), metricObservation(directory.Path, sourcepolicy.DimensionRecursiveFolders, directory.RecursiveFolders), metricObservation(directory.Path, sourcepolicy.DimensionDirectEntries, directory.DirectFiles+directory.DirectFolders), metricObservation(directory.Path, sourcepolicy.DimensionDirectoryKinds, kinds)}
+	observations[4].Detail = workflowDiscoveryDetail(root, directory)
+	return observations
 }
 
 func directoryDepth(path string) int {

@@ -6,21 +6,25 @@ import (
 	"strings"
 )
 
-func loadInputs(densityName, extractionName, observedName, untrackedName string) (densityReport, extractionReport, []string, []string, error) {
+func loadInputs(densityName, extractionName, splitName, observedName, untrackedName string) (densityReport, extractionReport, splitReport, []string, []string, error) {
 	var density densityReport
 	if err := readJSON(densityName, &density); err != nil {
-		return density, extractionReport{}, nil, nil, err
+		return density, extractionReport{}, splitReport{}, nil, nil, err
 	}
 	var extraction extractionReport
 	if err := readJSON(extractionName, &extraction); err != nil {
-		return density, extraction, nil, nil, err
+		return density, extraction, splitReport{}, nil, nil, err
+	}
+	var split splitReport
+	if err := readJSON(splitName, &split); err != nil {
+		return density, extraction, split, nil, nil, err
 	}
 	observed, err := readPaths(observedName)
 	if err != nil {
-		return density, extraction, nil, nil, err
+		return density, extraction, split, nil, nil, err
 	}
 	untracked, err := readPaths(untrackedName)
-	return density, extraction, observed, untracked, err
+	return density, extraction, split, observed, untracked, err
 }
 
 func readPaths(name string) ([]string, error) {

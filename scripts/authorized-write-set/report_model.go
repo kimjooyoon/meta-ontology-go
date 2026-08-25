@@ -5,6 +5,7 @@ type coordinates struct {
 	SourceReceiptsTotal int `json:"source_receipts_total"`
 	DensityPaths        int `json:"density_paths"`
 	ExtractionPaths     int `json:"extraction_paths"`
+	SplitPaths          int `json:"split_paths"`
 	OverlapPaths        int `json:"overlap_paths"`
 	ExpectedPaths       int `json:"expected_paths"`
 	ObservedPaths       int `json:"observed_paths"`

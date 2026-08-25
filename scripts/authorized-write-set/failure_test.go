@@ -6,29 +6,29 @@ import (
 )
 
 func TestReduceLowersUnknownSourceReceipt(t *testing.T) {
-	density, extraction := exactReports()
+	density, extraction, split := exactReports()
 	density.Schema = "future"
-	report := reduce("abc", density, extraction, nil, nil)
+	report := reduce("abc", density, extraction, split, nil, nil)
 	if report.Decision != "FAIL_CLOSED" || report.Resolution != "LOWER_RESOLUTION" ||
-		report.Reason != "DENSITY_RECEIPT_UNKNOWN" || report.Coordinates.SourceReceipts != 1 ||
+		report.Reason != "DENSITY_RECEIPT_UNKNOWN" || report.Coordinates.SourceReceipts != 2 ||
 		report.Coordinates.Unknowns != 1 {
 		t.Fatalf("report=%#v", report)
 	}
 }
 
 func TestReduceLowersUnknownDensityStatus(t *testing.T) {
-	density, extraction := exactReports()
+	density, extraction, split := exactReports()
 	density.Subjects[0].Status = "future"
-	report := reduce("abc", density, extraction, nil, nil)
+	report := reduce("abc", density, extraction, split, nil, nil)
 	if report.Resolution != "LOWER_RESOLUTION" || report.Reason != "DENSITY_PATH_UNKNOWN" ||
-		report.Coordinates.SourceReceipts != 1 || report.Coordinates.Unknowns != 1 {
+		report.Coordinates.SourceReceipts != 2 || report.Coordinates.Unknowns != 1 {
 		t.Fatalf("report=%#v", report)
 	}
 }
 
 func TestEvidenceUsesVersionedLowercaseFields(t *testing.T) {
-	density, extraction := exactReports()
-	report := reduce("abc", density, extraction, []string{"a.go", "c.go"}, nil)
+	density, extraction, split := exactReports()
+	report := reduce("abc", density, extraction, split, []string{"a.go", "c.go"}, nil)
 	data, err := json.Marshal(report)
 	if err != nil {
 		t.Fatal(err)
@@ -48,18 +48,18 @@ func TestEvidenceUsesVersionedLowercaseFields(t *testing.T) {
 }
 
 func TestReduceLowersNonCanonicalPath(t *testing.T) {
-	density, extraction := exactReports()
+	density, extraction, split := exactReports()
 	extraction.Subjects[0].Files[0] = "../a.go"
-	report := reduce("abc", density, extraction, nil, nil)
+	report := reduce("abc", density, extraction, split, nil, nil)
 	if report.Resolution != "LOWER_RESOLUTION" || report.Reason != "EXTRACTION_PATH_UNKNOWN" {
 		t.Fatalf("report=%#v", report)
 	}
 }
 
 func TestReduceRejectsKnownExtractionResidual(t *testing.T) {
-	density, extraction := exactReports()
+	density, extraction, split := exactReports()
 	extraction.Unhandled = []string{"pending.go"}
-	report := reduce("abc", density, extraction, []string{"a.go", "c.go"}, nil)
+	report := reduce("abc", density, extraction, split, []string{"a.go", "c.go"}, nil)
 	if report.Resolution != "EXACT" || report.Reason != "EXTRACTION_RESIDUAL_PRESENT" ||
 		report.Coordinates.Unknowns != 0 {
 		t.Fatalf("report=%#v", report)
