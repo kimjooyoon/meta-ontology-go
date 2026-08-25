@@ -21,7 +21,7 @@ func TestRunEmitProjectsOperationManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 	if artifact.Decision != "PASS" || artifact.Operation.Activity != "PayOrder" ||
-		len(artifact.Definitions.Files) != 2 || artifact.Extensions.RegisteredEmitters != 1 {
+		len(artifact.Definitions.Files) != 2 || artifact.Extensions.RegisteredEmitters != 2 {
 		t.Fatalf("artifact=%#v", artifact)
 	}
 }
