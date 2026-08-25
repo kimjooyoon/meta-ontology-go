@@ -5,9 +5,9 @@ import "testing"
 func TestEvaluateObservesMinimalValueWithoutQualityClaim(t *testing.T) {
 	report := Evaluate(validInput())
 	if report.Decision != "PASS" || report.Interpretation != "MINIMAL_VALUE_OBSERVED" ||
-		report.Summary.Coordinates.Satisfied != 13 || report.Summary.Coordinates.Total != 13 ||
-		len(report.Views) != 3 || report.Views[0].Satisfied != 6 || report.Views[1].Satisfied != 10 ||
-		report.Views[2].Satisfied != 13 || len(report.NotClaimed) != 4 {
+		report.Summary.Coordinates.Satisfied != 15 || report.Summary.Coordinates.Total != 15 ||
+		len(report.Views) != 3 || report.Views[0].Satisfied != 6 || report.Views[1].Satisfied != 12 ||
+		report.Views[2].Satisfied != 15 || len(report.NotClaimed) != 5 {
 		t.Fatalf("report=%#v", report)
 	}
 }

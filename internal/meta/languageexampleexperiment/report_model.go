@@ -1,6 +1,6 @@
 package languageexampleexperiment
 
-const ReportSchema = "gooo/language-example-experiment-report/v1"
+const ReportSchema = "gooo/language-example-experiment-report/v2"
 
 type Report struct {
 	Schema         string      `json:"schema"`

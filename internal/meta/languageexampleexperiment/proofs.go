@@ -3,8 +3,9 @@ package languageexampleexperiment
 func proofs(values []Indicator) []Proof {
 	return []Proof{
 		makeProof("FOUNDATION", "Gooo sources, emitter registry, samples, and non-claims are fixed",
-			"bind-experiment-foundation", values, "compiler.source-files", "compiler.gooo-definition-bps",
-			"compiler.emitter-registry", "resource.samples", "guardrail.non-claims"),
+			"bind-experiment-foundation", values, "value.artifact-digest-integrity", "compiler.source-files",
+			"compiler.gooo-definition-bps", "compiler.emitter-registry", "resource.samples",
+			"resource.valid-samples", "guardrail.non-claims"),
 		makeProof("COHERENCE", "the emitted operation agrees with the independent golden",
 			"compare-operation-projection", values, "value.primary-artifact", "value.golden-match"),
 		makeProof("REGRESSION", "replay, resources, unknown emitters, and effects remain bounded",

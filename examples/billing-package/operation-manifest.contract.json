@@ -1,6 +1,6 @@
 {
-  "schema": "gooo/language-example-experiment-contract/v1",
-  "id": "billing-operation-manifest-v1",
+  "schema": "gooo/language-example-experiment-contract/v2",
+  "id": "billing-operation-manifest-v2",
   "artifact_schema": "gooo/operation-manifest/v1",
   "emitter_kind": "operation-manifest",
   "example_path": "examples/billing-package",
@@ -12,8 +12,9 @@
     "registered_emitters": 3,
     "resource_samples": 5,
     "unknown_emitter_rejections": 1,
-    "indicators": 13,
-    "not_claimed": 4
+    "artifact_digest_checks": 3,
+    "indicators": 15,
+    "not_claimed": 5
   },
   "limits": {
     "wall_ms": 2000,
@@ -22,6 +23,7 @@
   },
   "not_claimed": [
     "business correctness",
+    "value-level computation",
     "production readiness",
     "performance beyond this runner and fixed sample set",
     "general-purpose code generation"

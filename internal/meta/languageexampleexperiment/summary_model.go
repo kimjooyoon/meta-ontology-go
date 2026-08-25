@@ -21,6 +21,7 @@ type Coordinates struct {
 
 type ValueSummary struct {
 	PrimaryArtifacts     int `json:"primary_artifacts"`
+	ArtifactDigestChecks int `json:"artifact_digest_checks"`
 	GoldenMatches        int `json:"golden_matches"`
 	DeterministicReplays int `json:"deterministic_replays"`
 }
@@ -35,6 +36,7 @@ type CompilerSummary struct {
 
 type ResourceSummary struct {
 	Samples          int   `json:"samples"`
+	ValidSamples     int   `json:"valid_samples"`
 	MaxWallMS        int64 `json:"max_wall_ms"`
 	MaxRSSKiB        int64 `json:"max_rss_kib"`
 	BinaryBytes      int64 `json:"binary_bytes"`
