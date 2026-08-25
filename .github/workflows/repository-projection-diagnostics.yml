@@ -99,7 +99,8 @@ jobs:
           set -e
           test "$status" -eq 0
           evidence="$work/projector/evidence.json"
-          jq -e --arg sha "$EXACT_SHA" '
+          workflow_count=$(find .github/workflows -maxdepth 1 -type f \( -name '*.yml' -o -name '*.yaml' \) | wc -l | tr -d ' ')
+          jq -e --arg sha "$EXACT_SHA" --argjson workflows "$workflow_count" '
             .schema=="gooo.repository-projection-evidence.v1" and .source_sha==$sha and
             (.indicators[]|select(.id=="projection.roundtrip-loss")|.value==0) and
             (.indicators[]|select(.id=="projection.unbound-entry")|.value==0) and
@@ -108,7 +109,7 @@ jobs:
             (.indicators[]|select(.id=="storage.bootstrap-direct-entry")|.value==1 and .limit==1 and .blocking==true) and
             (.indicators[]|select(.id=="storage.direct-entry-unclassified")|.value==0 and .blocking==true) and
             (.indicators[]|select(.id=="storage.mixed-kind")|.value==0) and
-            ([.subjects[]|select(.indicator=="storage.bootstrap-direct-entry" and .physical==".github/workflows" and .value==15 and .limit==10 and .consumer=="github-actions" and .meta_operation=="preserve-workflow-discovery" and .applicability=="NOT_APPLICABLE" and .applicability_reason=="GITHUB_WORKFLOW_DISCOVERY_ROOT")]|length)==1 and
+            ([.subjects[]|select(.indicator=="storage.bootstrap-direct-entry" and .physical==".github/workflows" and .value==$workflows and .limit==10 and .consumer=="github-actions" and .meta_operation=="preserve-workflow-discovery" and .applicability=="NOT_APPLICABLE" and .applicability_reason=="GITHUB_WORKFLOW_DISCOVERY_ROOT")]|length)==1 and
             ([.subjects[]|select(.physical==".")]|length)==0
           ' "$evidence"
           cat "$work/projector.log"

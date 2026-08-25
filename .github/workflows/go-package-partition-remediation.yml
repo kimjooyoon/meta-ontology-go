@@ -1,0 +1,89 @@
+name: Go package partition remediation
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/actions/materialize/**'
+      - '.github/workflows/go-package-partition-remediation.yml'
+      - '.github/workflows/repository-projection-diagnostics.yml'
+      - 'bootstrap/function-extractor/recipes.json'
+      - 'bootstrap/logical-split-planner/**'
+      - 'bootstrap/repository-projector/**'
+      - 'examples/repository-projection-diagnostics/package-partition.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  GOTOOLCHAIN: local
+
+jobs:
+  partition:
+    name: CI-authorized Go package partition
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXACT_SHA }}
+          fetch-depth: 0
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          check-latest: true
+      - name: Apply recipe only in a disposable checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/go-package-partition"
+          candidate="$work/candidate"
+          mkdir -p "$candidate"
+          git archive "$EXACT_SHA" | tar -x -C "$candidate"
+          git -C "$candidate" init --quiet
+          git -C "$candidate" config user.name 'package-partition-ci'
+          git -C "$candidate" config user.email 'package-partition@example.invalid'
+          git -C "$candidate" add --all
+          git -C "$candidate" commit --quiet -m baseline
+          GOOO_DISPOSABLE_ROOT="$candidate" go run ./bootstrap/logical-split-planner \
+            --root "$candidate" \
+            --expected-sha "$EXACT_SHA" \
+            --package-partition-recipe "$GITHUB_WORKSPACE/examples/repository-projection-diagnostics/package-partition.json" \
+            --output "$work/receipt.json"
+          (cd "$candidate" && go fix ./bootstrap/logical-split-planner ./bootstrap/repository-projector/...)
+          gofmt -w "$candidate/bootstrap/repository-projector/command" \
+            "$candidate/bootstrap/repository-projector/evidence"
+          jq -r '.write_set[]' "$work/receipt.json" > "$work/expected-write-set.txt"
+          while IFS= read -r file; do
+            if test -e "$candidate/$file"; then
+              git -C "$candidate" add -N -- "$file"
+            fi
+          done < "$work/expected-write-set.txt"
+          git -C "$candidate" diff --name-only --no-renames | sort > "$work/observed-write-set.txt"
+          cmp "$work/expected-write-set.txt" "$work/observed-write-set.txt"
+          while IFS= read -r file; do
+            git -C "$candidate" add -A -- "$file"
+          done < "$work/expected-write-set.txt"
+          git -C "$candidate" commit --quiet -m 'Apply CI-authorized Go package partition'
+          transformed_sha=$(git -C "$candidate" rev-parse HEAD)
+          (cd "$candidate" && go test ./bootstrap/repository-projector/...)
+          (cd "$candidate" && go run ./bootstrap/repository-projector/command \
+            --root "$candidate" --work "$work/post-projection" --expected-sha "$transformed_sha")
+          git -C "$candidate" diff --binary HEAD^ HEAD > "$work/authorized-package-partition.patch"
+          cp "$work/post-projection/evidence.json" "$work/post-partition-projection.json"
+          {
+            echo '### Go package partition remediation'
+            echo
+            jq -r '"- decision: `\(.decision) / \(.resolution)`\n- moved files: `\(.moved_files)`\n- created files: `\(.created_files)`\n- exact write paths: `\(.write_set|length)`\n- repository writes: `\(.effects.repository_writes)`"' "$work/receipt.json"
+            jq -r '"- post direct-entry blockers: `\(.indicators[]|select(.id==\"storage.direct-entry\")|.value)`\n- post mixed-kind blockers: `\(.indicators[]|select(.id==\"storage.mixed-kind\")|.value)`"' "$work/post-partition-projection.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload exact remediation artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: go-package-partition-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/go-package-partition
+          if-no-files-found: error

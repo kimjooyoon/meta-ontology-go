@@ -13,8 +13,15 @@ func main() {
 	evidence := flag.String("evidence", "", "exact projection evidence")
 	expected := flag.String("expected-sha", "", "required source SHA")
 	output := flag.String("output", "", "split plan output")
+	packageRecipe := flag.String("package-partition-recipe", "", "exact Go package partition recipe")
 	flag.Parse()
-	if err := run(*root, *evidence, *expected, *output); err != nil {
+	var err error
+	if *packageRecipe != "" {
+		err = runPackagePartition(*root, *packageRecipe, *expected, *output)
+	} else {
+		err = run(*root, *evidence, *expected, *output)
+	}
+	if err != nil {
 		log.Fatal(err)
 	}
 }
