@@ -27,6 +27,20 @@ jobs:
           go-version: 1.27.0
           cache: false
 
+      - name: Bind clean exact-SHA logical split metrics
+        run: |
+          mkdir -p "$RUNNER_TEMP/repository-projection"
+          go run ./scripts/line-metrics \
+            -root "$GITHUB_WORKSPACE" \
+            -storage-root "$GITHUB_WORKSPACE" \
+            -json > "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json"
+          go run ./bootstrap/meta-binding-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json" \
+            -bound-metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
+            -report "$RUNNER_TEMP/repository-projection/split-binding-report.json" \
+            -check
+
       - name: Materialize and activate the logical workspace
         id: materialize
         uses: ./.github/actions/materialize
@@ -51,19 +65,6 @@ jobs:
             --evidence "${{ steps.materialize.outputs.projection-evidence }}" \
             --expected-sha "$EXACT_SHA" \
             --output "$RUNNER_TEMP/repository-projection/split-plan.json"
-
-      - name: Bind exact-SHA logical split metrics
-        run: |
-          go run ./scripts/line-metrics \
-            -root "$GITHUB_WORKSPACE" \
-            -storage-root "${{ steps.materialize.outputs.storage-root }}" \
-            -json > "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json"
-          go run ./bootstrap/meta-binding-witness \
-            -root "$GITHUB_WORKSPACE" \
-            -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json" \
-            -bound-metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
-            -report "$RUNNER_TEMP/repository-projection/split-binding-report.json" \
-            -check
 
       - name: Apply metric-selected density rewrites
         run: |
