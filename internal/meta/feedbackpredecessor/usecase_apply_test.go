@@ -7,6 +7,7 @@ func applyUseCase(input *Input, state string) {
 		input.Candidates = nil
 	case "unsuccessful":
 		input.Candidates[0].Conclusion = "failure"
+		input.Candidates[0].ReceiptDigest = ""
 	case "expired":
 		input.Candidates[0].Expired = true
 	case "malformed_receipt":

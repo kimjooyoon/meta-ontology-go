@@ -508,7 +508,8 @@
         ".github/workflows/ci.yml",
         "cmd/feedback-predecessor-witness/**",
         "examples/feedback-predecessor-cycle/**",
-        "internal/meta/feedbackpredecessor/**"
+        "internal/meta/feedbackpredecessor/**",
+        "internal/verify/scope_feedback_predecessor_baseline.go"
       ]
     },
     {

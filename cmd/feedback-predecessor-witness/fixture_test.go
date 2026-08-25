@@ -50,6 +50,7 @@ func writeUnsuccessfulFixture(t *testing.T, root string) string {
 		t.Fatal(err)
 	}
 	input.Candidates[0].Conclusion = "failure"
+	input.Candidates[0].ReceiptDigest = ""
 	data, _ = json.Marshal(input)
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		t.Fatal(err)

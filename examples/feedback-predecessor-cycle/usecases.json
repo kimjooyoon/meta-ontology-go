@@ -66,7 +66,7 @@
       "expected_continuity_bps": 10000,
       "expected_ambiguity": 0,
       "expected_writes": 0,
-      "expected_satisfied_indicators": 6,
+      "expected_satisfied_indicators": 5,
       "operator_action": "re-evaluate-predecessor-at-exact-operation"
     },
     {
