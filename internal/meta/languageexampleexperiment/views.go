@@ -6,7 +6,8 @@ func views(values []Indicator) []View {
 		"guardrail.wall", "guardrail.rss", "guardrail.binary",
 	}
 	tool := append(append([]string{}, user...),
-		"compiler.source-files", "compiler.gooo-definition-bps", "compiler.emitter-registry", "resource.samples")
+		"value.artifact-digest-integrity", "compiler.source-files", "compiler.gooo-definition-bps",
+		"compiler.emitter-registry", "resource.samples", "resource.valid-samples")
 	governor := make([]string, len(values))
 	for index, value := range values {
 		governor[index] = value.ID

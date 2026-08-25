@@ -1,16 +1,25 @@
 package languageexampleexperiment
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit"
+)
 
 func summarize(input Input) Summary {
 	artifact, profile := input.Artifact, input.Profile
 	summary := Summary{NotClaimed: len(input.Contract.NotClaimed)}
 	summary.Value.PrimaryArtifacts = profile.PrimaryArtifacts
+	for _, candidate := range []artifactemit.Artifact{artifact, input.Replay, input.UnknownEmitter} {
+		if artifactemit.ValidDigest(candidate) {
+			summary.Value.ArtifactDigestChecks++
+		}
+	}
 	if reflect.DeepEqual(artifact.Package, input.Golden.Package) &&
 		reflect.DeepEqual(artifact.Operation, input.Golden.Operation) {
 		summary.Value.GoldenMatches = 1
 	}
-	if artifact.Digest != "" && artifact.Digest == input.Replay.Digest {
+	if reflect.DeepEqual(artifact, input.Replay) {
 		summary.Value.DeterministicReplays = 1
 	}
 	summary.Compiler.SourceFiles = len(artifact.Definitions.Files)
@@ -21,7 +30,10 @@ func summarize(input Input) Summary {
 	}
 	summary.Compiler.RegisteredEmitters = artifact.Extensions.RegisteredEmitters
 	summary.Resources.Samples, summary.Resources.BinaryBytes = len(profile.Samples), profile.BinaryBytes
-	for _, sample := range profile.Samples {
+	for index, sample := range profile.Samples {
+		if sampleValid(sample, index) {
+			summary.Resources.ValidSamples++
+		}
 		if sample.WallMS > summary.Resources.MaxWallMS {
 			summary.Resources.MaxWallMS = sample.WallMS
 		}

@@ -7,12 +7,14 @@ func indicators(summary Summary, fixed Fixed) []Indicator {
 	}
 	return []Indicator{
 		metric("value.primary-artifact", "OUTCOME", "FOUNDATION", "count-primary-artifacts", int64(summary.Value.PrimaryArtifacts), int64(fixed.PrimaryArtifacts)),
+		metric("value.artifact-digest-integrity", "DRIVER", "FOUNDATION", "verify-content-bound-artifact-digests", int64(summary.Value.ArtifactDigestChecks), int64(fixed.ArtifactDigestChecks)),
 		metric("value.golden-match", "OUTCOME", "COHERENCE", "compare-domain-golden", int64(summary.Value.GoldenMatches), 1),
-		metric("value.deterministic-replay", "OUTCOME", "REGRESSION", "compare-artifact-digests", int64(summary.Value.DeterministicReplays), int64(fixed.DeterministicReplays)),
+		metric("value.deterministic-replay", "OUTCOME", "REGRESSION", "compare-complete-artifacts", int64(summary.Value.DeterministicReplays), int64(fixed.DeterministicReplays)),
 		metric("compiler.source-files", "DRIVER", "FOUNDATION", "count-bound-gooo-sources", int64(summary.Compiler.SourceFiles), int64(fixed.SourceFiles)),
 		metric("compiler.gooo-definition-bps", "DRIVER", "FOUNDATION", "measure-definition-language-ratio", int64(summary.Compiler.GoooDefinitionBPS), 10000),
 		metric("compiler.emitter-registry", "DRIVER", "FOUNDATION", "count-registered-emitters", int64(summary.Compiler.RegisteredEmitters), int64(fixed.RegisteredEmitters)),
 		metric("resource.samples", "DRIVER", "FOUNDATION", "count-runner-samples", int64(summary.Resources.Samples), int64(fixed.ResourceSamples)),
+		metric("resource.valid-samples", "DRIVER", "FOUNDATION", "validate-ordered-resource-samples", int64(summary.Resources.ValidSamples), int64(fixed.ResourceSamples)),
 		metric("guardrail.wall", "GUARDRAIL", "REGRESSION", "bound-observed-wall-time", int64(summary.Resources.WallViolations), 0),
 		metric("guardrail.rss", "GUARDRAIL", "REGRESSION", "bound-observed-peak-rss", int64(summary.Resources.RSSViolations), 0),
 		metric("guardrail.binary", "GUARDRAIL", "REGRESSION", "bound-observed-binary-size", int64(summary.Resources.BinaryViolations), 0),

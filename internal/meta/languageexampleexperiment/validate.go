@@ -1,30 +1,33 @@
 package languageexampleexperiment
 
-import (
-	"strings"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit"
-)
+import "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit"
 
 func rejectInput(input Input) (string, string) {
 	contract, profile := input.Contract, input.Profile
-	if contract.Schema != ContractSchema || contract.ID == "" || contract.ArtifactSchema != artifactemit.OperationManifestSchema ||
-		contract.EmitterKind != artifactemit.OperationManifestKind || contract.Fixed.Indicators != 13 ||
-		contract.Fixed.NotClaimed != len(contract.NotClaimed) {
+	if !ContractValid(contract) {
 		return "EXPERIMENT_CONTRACT_INVALID", "EXACT"
 	}
 	if profile.Schema != ProfileSchema || profile.SubjectSHA != input.ExpectedHead ||
-		!strings.HasPrefix(profile.ExecutableDigest, "sha256:") {
+		!artifactemit.ValidSHA256(profile.ExecutableDigest) {
 		return "EXPERIMENT_PROFILE_IDENTITY_MISMATCH", "EXACT"
 	}
-	if input.Artifact.Decision != "PASS" || input.Replay.Decision != "PASS" {
-		return "ARTIFACT_DECISION_UNKNOWN", "LOWER_RESOLUTION"
+	if reason, resolution := rejectDecisions(input); reason != "" {
+		return reason, resolution
 	}
 	if input.Artifact.Schema != contract.ArtifactSchema || input.Replay.Schema != contract.ArtifactSchema ||
 		input.UnknownEmitter.Schema != contract.ArtifactSchema || input.Artifact.Kind != contract.EmitterKind ||
-		input.Replay.Kind != contract.EmitterKind || !strings.HasPrefix(input.Artifact.Digest, "sha256:") ||
-		!strings.HasPrefix(input.Replay.Digest, "sha256:") {
+		input.Replay.Kind != contract.EmitterKind {
 		return "ARTIFACT_IDENTITY_MISMATCH", "EXACT"
+	}
+	if !artifactemit.ValidDigest(input.Artifact) || !artifactemit.ValidDigest(input.Replay) ||
+		!artifactemit.ValidDigest(input.UnknownEmitter) {
+		return "ARTIFACT_DIGEST_INVALID", "EXACT"
+	}
+	if !profileEvidenceValid(profile, contract.Fixed) {
+		return "PROFILE_SAMPLE_INVALID", "EXACT"
+	}
+	if !artifactEffectsValid(input) {
+		return "EVIDENCE_EFFECTS_INVALID", "EXACT"
 	}
 	return "", ""
 }

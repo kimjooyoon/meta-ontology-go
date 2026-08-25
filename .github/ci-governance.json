@@ -874,6 +874,18 @@
       ]
     },
     {
+      "branch": "agent/gooo-closed-value",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/billing-package",
+        "internal/meta/languageexampleexperiment",
+        "internal/packageruntime/artifactemit",
+        "internal/verify/scope_gooo_closed_value.go",
+        "scripts/language-example-experiment"
+      ]
+    },
+    {
       "branch": "agent/language-package-runtime",
       "paths": [
         ".github/agent-scope-table.md",

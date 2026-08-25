@@ -32,11 +32,19 @@ func Evaluate(input Input) Report {
 
 func mismatchReason(values []Indicator) string {
 	for _, value := range values {
-		if value.ID == "value.golden-match" && !value.Satisfied {
-			return "ARTIFACT_GOLDEN_MISMATCH"
-		}
-		if value.ID == "counterexample.unknown-emitter" && !value.Satisfied {
-			return "UNKNOWN_EMITTER_NOT_REJECTED"
+		if !value.Satisfied {
+			switch value.ID {
+			case "value.artifact-digest-integrity":
+				return "ARTIFACT_DIGEST_INVALID"
+			case "value.golden-match":
+				return "ARTIFACT_GOLDEN_MISMATCH"
+			case "value.deterministic-replay":
+				return "ARTIFACT_REPLAY_MISMATCH"
+			case "resource.valid-samples":
+				return "PROFILE_SAMPLE_INVALID"
+			case "counterexample.unknown-emitter":
+				return "UNKNOWN_EMITTER_NOT_REJECTED"
+			}
 		}
 	}
 	return "EXPERIMENT_CONTRACT_MISMATCH"

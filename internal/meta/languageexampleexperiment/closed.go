@@ -3,7 +3,7 @@ package languageexampleexperiment
 func closedReport(input Input, reason, resolution string) Report {
 	total := input.Contract.Fixed.Indicators
 	if total < 1 {
-		total = 13
+		total = 15
 	}
 	return finishReport(Report{
 		Schema: ReportSchema, Decision: "FAIL_CLOSED", Resolution: resolution, Reason: reason,
