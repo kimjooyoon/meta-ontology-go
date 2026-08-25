@@ -36,13 +36,13 @@ func summarize(value facts, executable string, indicators []Indicator) Summary {
 		Coordinates: coordinates(indicators), Receipts: value.Receipts,
 		DeclaredTests: value.DeclaredTests, ExecutedTests: value.ExecutedTests,
 		PassedTests: value.PassedTests, SourceCoherence: value.SourceCoherence,
-		ReceiptDigestVariants: value.ReceiptDigestVariants,
+		ReceiptDigestVariants:   value.ReceiptDigestVariants,
 		ExecutionDigestVariants: value.ExecutionDigestVariants,
-		AssertionRejections: value.AssertionRejections,
-		MissingTestRejections: value.MissingTestRejections,
-		NonClaims: value.NonClaims, Unknowns: value.Unknowns,
+		AssertionRejections:     value.AssertionRejections,
+		MissingTestRejections:   value.MissingTestRejections,
+		NonClaims:               value.NonClaims, Unknowns: value.Unknowns,
 		Compiler: Compiler{ExecutableDigest: executable, Go127Runtimes: value.Go127Runtimes},
-		Effects: Effects{RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority},
+		Effects:  Effects{RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority},
 	}
 }
 

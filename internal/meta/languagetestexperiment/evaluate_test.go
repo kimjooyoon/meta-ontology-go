@@ -12,8 +12,8 @@ func TestEvaluatePassesFixedContractAndLowersUnknown(t *testing.T) {
 	missing := languagetest.Observe(languagetest.Request{Filename: "missing.gooo", Source: missingFixture})
 	input := Input{
 		SubjectSHA: "subject", ExecutableDigest: "sha256:binary", Contract: fixedContract(),
-		First: Observation{Runtime: "go1.27.0", Receipt: positive},
-		Replay: Observation{Runtime: "go1.27.0", Receipt: positive},
+		First:            Observation{Runtime: "go1.27.0", Receipt: positive},
+		Replay:           Observation{Runtime: "go1.27.0", Receipt: positive},
 		AssertionFailure: failure, Missing: missing,
 	}
 	report, err := Evaluate(input)

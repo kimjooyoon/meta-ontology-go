@@ -20,14 +20,14 @@ type Input struct {
 }
 
 type Counter struct {
-	Satisfied int `json:"satisfied"`
-	Total     int `json:"total"`
+	Satisfied   int `json:"satisfied"`
+	Total       int `json:"total"`
 	BasisPoints int `json:"basis_points"`
 }
 
 type Compiler struct {
 	ExecutableDigest string `json:"executable_digest"`
-	Go127Runtimes     int    `json:"go127_runtimes"`
+	Go127Runtimes    int    `json:"go127_runtimes"`
 }
 
 type Effects struct {
@@ -36,20 +36,20 @@ type Effects struct {
 }
 
 type Summary struct {
-	Coordinates               Counter  `json:"coordinates"`
-	Receipts                  int      `json:"receipts"`
-	DeclaredTests             int      `json:"declared_tests"`
-	ExecutedTests             int      `json:"executed_tests"`
-	PassedTests               int      `json:"passed_tests"`
-	SourceCoherence           int      `json:"source_coherence"`
-	ReceiptDigestVariants     int      `json:"receipt_digest_variants"`
-	ExecutionDigestVariants   int      `json:"execution_digest_variants"`
-	AssertionRejections       int      `json:"assertion_rejections"`
-	MissingTestRejections     int      `json:"missing_test_rejections"`
-	NonClaims                 int      `json:"non_claims"`
-	Unknowns                  int      `json:"unknowns"`
-	Compiler                  Compiler `json:"compiler"`
-	Effects                   Effects  `json:"effects"`
+	Coordinates             Counter  `json:"coordinates"`
+	Receipts                int      `json:"receipts"`
+	DeclaredTests           int      `json:"declared_tests"`
+	ExecutedTests           int      `json:"executed_tests"`
+	PassedTests             int      `json:"passed_tests"`
+	SourceCoherence         int      `json:"source_coherence"`
+	ReceiptDigestVariants   int      `json:"receipt_digest_variants"`
+	ExecutionDigestVariants int      `json:"execution_digest_variants"`
+	AssertionRejections     int      `json:"assertion_rejections"`
+	MissingTestRejections   int      `json:"missing_test_rejections"`
+	NonClaims               int      `json:"non_claims"`
+	Unknowns                int      `json:"unknowns"`
+	Compiler                Compiler `json:"compiler"`
+	Effects                 Effects  `json:"effects"`
 }
 
 type Indicator struct {
