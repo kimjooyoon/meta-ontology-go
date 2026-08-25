@@ -1,12 +1,12 @@
 package artifactemit
 
 const (
-	OperationManifestKind          = "operation-manifest"
-	OperationManifestSchema        = "gooo/operation-manifest/v1"
-	SymbolicInvocationSchemaKind   = "symbolic-invocation-schema"
-	SymbolicInvocationArtifact     = "gooo/symbolic-invocation-schema-artifact/v1"
-	SymbolicInvocationResolution   = "SYMBOLIC_ONLY"
-	JSONSchemaDraft202012          = "https://json-schema.org/draft/2020-12/schema"
+	OperationManifestKind        = "operation-manifest"
+	OperationManifestSchema      = "gooo/operation-manifest/v1"
+	SymbolicInvocationSchemaKind = "symbolic-invocation-schema"
+	SymbolicInvocationArtifact   = "gooo/symbolic-invocation-schema-artifact/v1"
+	SymbolicInvocationResolution = "SYMBOLIC_ONLY"
+	JSONSchemaDraft202012        = "https://json-schema.org/draft/2020-12/schema"
 )
 
 type Artifact struct {
