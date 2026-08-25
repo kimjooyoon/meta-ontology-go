@@ -1,5 +1,7 @@
 package main
 
+import "slices"
+
 func readOnlyObservation(model contractModel) bool {
 	if model.Entities["LanguageExperimentReceipt"] != "gooo://meta/language-experiment-receipt" ||
 		model.Entities["ReadOnlyImprovementInput"] != "gooo://meta/read-only-improvement-input" ||
@@ -13,10 +15,8 @@ func readOnlyObservation(model contractModel) bool {
 		if activity.Output == "ReadOnlyImprovementInput" {
 			return false
 		}
-		for _, input := range activity.Inputs {
-			if input == "ReadOnlyImprovementInput" {
-				return false
-			}
+		if slices.Contains(activity.Inputs, "ReadOnlyImprovementInput") {
+			return false
 		}
 	}
 	return true
