@@ -14,7 +14,7 @@ func TestTopologyFailuresExposeRelativePhysicalSubject(t *testing.T) {
 	if err := os.MkdirAll(dense, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	for index := 0; index < 11; index++ {
+	for index := range 11 {
 		name := filepath.Join(dense, fmt.Sprintf("entry-%02d", index))
 		if err := os.WriteFile(name, []byte("evidence\n"), 0o644); err != nil {
 			t.Fatal(err)
@@ -37,7 +37,7 @@ func TestTopologyFailuresExposeRelativePhysicalSubject(t *testing.T) {
 
 func TestTopologyFailuresExcludeProjectRoot(t *testing.T) {
 	root := t.TempDir()
-	for index := 0; index < 11; index++ {
+	for index := range 11 {
 		name := filepath.Join(root, fmt.Sprintf("root-entry-%02d", index))
 		if err := os.WriteFile(name, []byte("root evidence\n"), 0o644); err != nil {
 			t.Fatal(err)
