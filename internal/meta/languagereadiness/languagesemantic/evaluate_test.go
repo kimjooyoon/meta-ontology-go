@@ -47,7 +47,7 @@ func TestSemanticSourceProjectionPreservesUnknowns(t *testing.T) {
 }
 
 func versionedSyntaxPackages() []syntaxPackageUnit {
-	return []syntaxPackageUnit{{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: "gooo/language-package-execution-report/v1", MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}}
+	return expectedSyntaxPackageUnits()
 }
 
 func versionedSyntaxCases() []syntaxCase {
