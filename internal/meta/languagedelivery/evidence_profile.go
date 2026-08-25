@@ -11,10 +11,10 @@ type ProfileReceipt struct {
 }
 
 type ProfileSummary struct {
-	Profiles       int `json:"profiles"`
-	Samples        int `json:"samples"`
-	Unknowns       int `json:"unknowns"`
-	Effects        struct {
+	Profiles int `json:"profiles"`
+	Samples  int `json:"samples"`
+	Unknowns int `json:"unknowns"`
+	Effects  struct {
 		RepositoryWrites  int  `json:"repository_writes"`
 		MutationAuthority bool `json:"mutation_authority"`
 	} `json:"effects"`
