@@ -8,6 +8,7 @@
       "expected_decision": "EXACT",
       "expected_reason": "CURRENT_ATTEMPT_ARTIFACT_BOUND",
       "expected_resolution": "run_attempt",
+      "expected_next_operation": "consume-current-attempt-artifact",
       "expected_consumption_authorized": true,
       "expected_selected_attempt": 2,
       "expected_fallback_distance": 0
@@ -19,6 +20,7 @@
       "expected_decision": "LOWER_RESOLUTION",
       "expected_reason": "CURRENT_ATTEMPT_ARTIFACT_UNAVAILABLE",
       "expected_resolution": "run_lineage",
+      "expected_next_operation": "evaluate-rerun-concurrency-lane",
       "expected_consumption_authorized": false,
       "expected_selected_attempt": 1,
       "expected_fallback_distance": 1
@@ -30,6 +32,7 @@
       "expected_decision": "FAIL_CLOSED",
       "expected_reason": "ARTIFACT_LINEAGE_NOT_FOUND",
       "expected_resolution": "none",
+      "expected_next_operation": "evaluate-rerun-concurrency-lane",
       "expected_consumption_authorized": false,
       "expected_selected_attempt": 0,
       "expected_fallback_distance": 0
@@ -41,6 +44,7 @@
       "expected_decision": "FAIL_CLOSED",
       "expected_reason": "ARTIFACT_LINEAGE_AMBIGUOUS",
       "expected_resolution": "none",
+      "expected_next_operation": "repair-artifact-lineage",
       "expected_consumption_authorized": false,
       "expected_selected_attempt": 0,
       "expected_fallback_distance": 0
@@ -53,6 +57,7 @@
       "expected_decision": "FAIL_CLOSED",
       "expected_reason": "ARTIFACT_LINEAGE_INVALID",
       "expected_resolution": "none",
+      "expected_next_operation": "repair-artifact-lineage",
       "expected_consumption_authorized": false,
       "expected_selected_attempt": 0,
       "expected_fallback_distance": 0
@@ -65,6 +70,7 @@
       "expected_decision": "FAIL_CLOSED",
       "expected_reason": "ARTIFACT_LINEAGE_NAME_MALFORMED",
       "expected_resolution": "none",
+      "expected_next_operation": "repair-artifact-lineage",
       "expected_consumption_authorized": false,
       "expected_selected_attempt": 0,
       "expected_fallback_distance": 0
@@ -76,6 +82,7 @@
       "expected_decision": "FAIL_CLOSED",
       "expected_reason": "ARTIFACT_LINEAGE_FUTURE_ATTEMPT",
       "expected_resolution": "none",
+      "expected_next_operation": "repair-artifact-lineage",
       "expected_consumption_authorized": false,
       "expected_selected_attempt": 0,
       "expected_fallback_distance": 0
