@@ -1,9 +1,9 @@
 {
-  "schema": "gooo/operation-interface/v1",
+  "schema": "gooo/operation-manifest/v1",
   "decision": "PASS",
-  "resolution": "INTERFACE_ONLY",
-  "reason": "OPERATION_INTERFACE_EMITTED",
-  "kind": "operation-interface",
+  "resolution": "EXACT",
+  "reason": "OPERATION_MANIFEST_EMITTED",
+  "kind": "operation-manifest",
   "subject_digest": "sha256:14d4ce3669226139d0cdfd813d75fd8cf1afe4f006dd0173ea6a41a9ec08174f",
   "package": {
     "path": "billing-package",
@@ -25,7 +25,18 @@
   },
   "definitions": {
     "language": "gooo",
-    "files": []
+    "files": [
+      {
+        "filename": "activity.gooo",
+        "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3",
+        "declaration_count": 1
+      },
+      {
+        "filename": "entities.gooo",
+        "digest": "sha256:02b7a8cacdc6e00de1c753b372e252f85c4891b9b8c9b3d3e0dda742ab8809df",
+        "declaration_count": 2
+      }
+    ]
   },
   "extensions": {
     "registered_emitters": 2,
@@ -38,5 +49,5 @@
     "repository_writes": 0,
     "mutation_authority": false
   },
-  "digest": "sha256:2dd48c153e2e431b3122f7d55de84f0d64ac86b6c36d29847e612300998b3ff3"
+  "digest": "sha256:183bfdfadebbb9340742716d1aa31389f4d8d0b34af855da756c450ef6c4b0ac"
 }

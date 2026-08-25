@@ -6,7 +6,7 @@ work="${RUNNER_TEMP:-/tmp}/artifact-resolution-experiment"
 binary="$work/gooo"
 reducer="$work/artifact-resolution-experiment"
 contract="$root/examples/billing-package/artifact-resolution.contract.json"
-manifest_golden="$root/examples/billing-package/operation-manifest.golden.json"
+manifest_golden="$root/examples/billing-package/operation-manifest.artifact.golden.json"
 interface_golden="$root/examples/billing-package/operation-interface.golden.json"
 mkdir -p "$work"
 
