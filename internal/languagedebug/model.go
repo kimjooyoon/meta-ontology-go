@@ -25,24 +25,24 @@ type Effects struct {
 }
 
 type Receipt struct {
-	Schema            string            `json:"schema"`
-	Decision          Decision          `json:"decision"`
-	Reason            string            `json:"reason"`
-	Resolution        string            `json:"resolution"`
-	State             string            `json:"state"`
-	Filename          string            `json:"filename"`
-	SourceDigest      string            `json:"source_digest"`
-	SemanticDigest    string            `json:"semantic_digest"`
-	ExecutionDigest   string            `json:"execution_digest"`
-	Entry             json.RawMessage   `json:"entry"`
-	Breakpoint        string            `json:"breakpoint"`
-	CurrentEvent      *Event            `json:"current_event,omitempty"`
-	Trace             []Event           `json:"trace"`
-	RemainingEvents   int               `json:"remaining_events"`
-	Diagnostics       []json.RawMessage `json:"diagnostics"`
-	Effects           Effects           `json:"effects"`
-	NonClaims         []string          `json:"non_claims"`
-	Digest            string            `json:"digest"`
+	Schema          string            `json:"schema"`
+	Decision        Decision          `json:"decision"`
+	Reason          string            `json:"reason"`
+	Resolution      string            `json:"resolution"`
+	State           string            `json:"state"`
+	Filename        string            `json:"filename"`
+	SourceDigest    string            `json:"source_digest"`
+	SemanticDigest  string            `json:"semantic_digest"`
+	ExecutionDigest string            `json:"execution_digest"`
+	Entry           json.RawMessage   `json:"entry"`
+	Breakpoint      string            `json:"breakpoint"`
+	CurrentEvent    *Event            `json:"current_event,omitempty"`
+	Trace           []Event           `json:"trace"`
+	RemainingEvents int               `json:"remaining_events"`
+	Diagnostics     []json.RawMessage `json:"diagnostics"`
+	Effects         Effects           `json:"effects"`
+	NonClaims       []string          `json:"non_claims"`
+	Digest          string            `json:"digest"`
 }
 
 func CanonicalNonClaims() []string {

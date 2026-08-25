@@ -11,9 +11,9 @@ func testInput(t *testing.T) Input {
 	t.Helper()
 	return Input{
 		SubjectSHA: string(makeHex('a', 40)), ExecutableDigest: digest('d'),
-		Contract: fixedContract(),
-		First: languagedebug.Observe(executionFixture(t), "SOURCE_PARSED"),
-		Second: languagedebug.Observe(executionFixture(t), "ACTIVITY_INVOKED"),
+		Contract:          fixedContract(),
+		First:             languagedebug.Observe(executionFixture(t), "SOURCE_PARSED"),
+		Second:            languagedebug.Observe(executionFixture(t), "ACTIVITY_INVOKED"),
 		UnknownBreakpoint: languagedebug.Observe(executionFixture(t), "MISSING"),
 	}
 }
