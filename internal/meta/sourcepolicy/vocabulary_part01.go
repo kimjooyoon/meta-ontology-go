@@ -48,6 +48,9 @@ const (
 	ApplicabilityReasonCatalogApplicable  ApplicabilityReason = "CATALOG_APPLICABLE"
 	ApplicabilityReasonRootTopologyExempt ApplicabilityReason = "ROOT_TOPOLOGY_EXEMPT"
 	ApplicabilityReasonRootREADMEExempt   ApplicabilityReason = "ROOT_README_EXEMPT"
+	ApplicabilityReasonWorkflowDiscovery  ApplicabilityReason = "GITHUB_WORKFLOW_DISCOVERY_ROOT"
+
+	WorkflowDiscoveryObservationDetail = "topology=github-workflow-discovery-root"
 )
 
 const (
@@ -62,6 +65,7 @@ const (
 	OperationExemptRoot        Operation = "exempt-project-root-topology"
 	OperationExemptRootREADME  Operation = "exempt-project-root-readme"
 	OperationRequireRootREADME Operation = "require-project-root-readme"
+	OperationPreserveWorkflow  Operation = "preserve-workflow-discovery"
 	OperationModernize         Operation = "apply-go-fix"
 	OperationSelectToolchain   Operation = "select-toolchain"
 )

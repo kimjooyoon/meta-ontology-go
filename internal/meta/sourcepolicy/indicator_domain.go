@@ -4,6 +4,7 @@ const (
 	ApplicabilityRuleDefault             = "gooo.catalog.source-policy.default-applicability.v1"
 	ApplicabilityRuleProjectRootTopology = "gooo.catalog.source-policy.project-root-topology.v1"
 	ApplicabilityRuleProjectRootREADME   = "gooo.catalog.source-policy.project-root-readme.v1"
+	ApplicabilityRuleWorkflowDiscovery   = "gooo.catalog.source-policy.github-workflow-discovery.v1"
 )
 
 func indicatorApplicability(definition definition) (Applicability, string, ApplicabilityReason) {
@@ -12,6 +13,8 @@ func indicatorApplicability(definition definition) (Applicability, string, Appli
 		return ApplicabilityNotApplicable, ApplicabilityRuleProjectRootTopology, ApplicabilityReasonRootTopologyExempt
 	case OperationExemptRootREADME:
 		return ApplicabilityNotApplicable, ApplicabilityRuleProjectRootREADME, ApplicabilityReasonRootREADMEExempt
+	case OperationPreserveWorkflow:
+		return ApplicabilityNotApplicable, ApplicabilityRuleWorkflowDiscovery, ApplicabilityReasonWorkflowDiscovery
 	}
 	return ApplicabilityApplicable, ApplicabilityRuleDefault, ApplicabilityReasonCatalogApplicable
 }

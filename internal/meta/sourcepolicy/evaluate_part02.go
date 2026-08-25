@@ -17,6 +17,11 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 			blocking: true, proof: ProofFoundation, operation: OperationRequireRootREADME,
 			consumer: "repository-documenter"}, nil
 	}
+	if observation.Subject == ".github/workflows" && observation.Dimension == DimensionDirectEntries &&
+		observation.Detail == WorkflowDiscoveryObservationDetail {
+		return definition{family: FamilyTopology, relation: RelationObserve, proof: ProofFoundation,
+			operation: OperationPreserveWorkflow, consumer: "github-actions"}, nil
+	}
 	if policy.ExemptProjectRootTopology && observation.Subject == "." {
 		switch observation.Dimension {
 		case DimensionDirectEntries, DimensionDirectoryKinds:

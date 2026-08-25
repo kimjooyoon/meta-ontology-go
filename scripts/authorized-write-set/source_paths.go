@@ -1,14 +1,18 @@
 package main
 
-func sourceIssue(expectedSHA string, density densityReport, extraction extractionReport) (string, int) {
+func sourceIssue(expectedSHA string, density densityReport, extraction extractionReport, split splitReport) (string, int) {
 	densityExact := density.Schema == densitySchema && density.SourceSHA == expectedSHA
 	extractionExact := extraction.Schema == extractionSchema && extraction.SourceSHA == expectedSHA
-	receipts := boolInt(densityExact) + boolInt(extractionExact)
+	splitExact := split.Schema == splitSchema && split.SourceSHA == expectedSHA
+	receipts := boolInt(densityExact) + boolInt(extractionExact) + boolInt(splitExact)
 	if !densityExact {
 		return "DENSITY_RECEIPT_UNKNOWN", receipts
 	}
 	if !extractionExact {
 		return "EXTRACTION_RECEIPT_UNKNOWN", receipts
+	}
+	if !splitExact {
+		return "SPLIT_RECEIPT_UNKNOWN", receipts
 	}
 	return "", receipts
 }
@@ -54,13 +58,16 @@ func extractionPaths(report extractionReport) (map[string]bool, map[string]bool,
 	return paths, createdPaths, true
 }
 
-func unionPaths(left, right map[string]bool) map[string]bool {
-	result := make(map[string]bool, len(left)+len(right))
-	for value := range left {
-		result[value] = true
+func splitPaths(report splitReport) (map[string]bool, map[string]bool, bool) {
+	decisionExact := report.Decision == "PASS" || report.Decision == "FIXED_POINT"
+	coordinates := report.Coordinates
+	if !decisionExact || report.Resolution != "EXACT" || !report.Exact || coordinates.Unknowns != 0 ||
+		coordinates.Selected != coordinates.Applied || coordinates.Applied != len(report.Subjects) {
+		return nil, nil, false
 	}
-	for value := range right {
-		result[value] = true
+	paths, created, exact := extractionPaths(extractionReport{Subjects: report.Subjects, Unhandled: report.Unhandled})
+	if !exact || len(paths) != coordinates.Changed || len(created) != coordinates.Created {
+		return nil, nil, false
 	}
-	return result
+	return paths, created, true
 }

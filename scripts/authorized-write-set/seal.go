@@ -22,7 +22,7 @@ func seal(report evidence) evidence {
 			Observed: c.UnclassifiedPaths, Expected: 0, Satisfied: c.UnclassifiedPaths == 0},
 	}
 	report.Proofs = []proof{
-		{Choice: "FOUNDATION", MetaOperation: "validate-rewrite-source-receipts", Passed: c.SourceReceipts == 2 && c.Unknowns == 0},
+		{Choice: "FOUNDATION", MetaOperation: "validate-rewrite-source-receipts", Passed: c.SourceReceipts == c.SourceReceiptsTotal && c.Unknowns == 0},
 		{Choice: "COHERENCE", MetaOperation: metaOperation, Passed: report.Exact},
 		{Choice: "REGRESSION", MetaOperation: "reject-unclassified-untracked-rewrites", Passed: c.UnclassifiedPaths == 0},
 	}
