@@ -47,9 +47,9 @@ func CanonicalContract() Contract {
 	return Contract{
 		Schema: ContractSchema, ID: "billing-operation-manifest-v2",
 		ArtifactSchema: artifactemit.OperationManifestSchema,
-		EmitterKind: artifactemit.OperationManifestKind,
-		ExamplePath: "examples/billing-package",
-		GoldenPath: "examples/billing-package/operation-manifest.golden.json",
+		EmitterKind:    artifactemit.OperationManifestKind,
+		ExamplePath:    "examples/billing-package",
+		GoldenPath:     "examples/billing-package/operation-manifest.golden.json",
 		Fixed: Fixed{SourceFiles: 2, PrimaryArtifacts: 1, DeterministicReplays: 1,
 			RegisteredEmitters: 3, ResourceSamples: 5, UnknownEmitterRejections: 1,
 			ArtifactDigestChecks: 3, Indicators: 15, NotClaimed: 5},

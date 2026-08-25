@@ -15,7 +15,7 @@ func validInput() Input {
 	}
 	return Input{
 		ExpectedHead: "head", Contract: CanonicalContract(),
-		Golden: Golden{Package: artifact.Package, Operation: artifact.Operation},
+		Golden:   Golden{Package: artifact.Package, Operation: artifact.Operation},
 		Artifact: artifact, Replay: artifact,
 		UnknownEmitter: fixtureEmitter("not-registered", "PayOrder"),
 		Profile: Profile{Schema: ProfileSchema, SubjectSHA: "head",
