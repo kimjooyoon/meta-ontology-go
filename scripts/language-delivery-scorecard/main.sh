@@ -84,7 +84,7 @@ run_scorecard examples/language-delivery-scorecard/contract.json delivery-output
 unknown_code=$?
 set -e
 [[ "$unknown_code" == "1" ]]
-jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.coordinates.unknown==6' delivery-output/unknown-report.json
+jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.coordinates.unknown==7' delivery-output/unknown-report.json
 
 jq 'del(.obligations[-1])' examples/language-delivery-scorecard/contract.json > delivery-output/drift-contract.json
 if run_scorecard delivery-output/drift-contract.json delivery-evidence/manifest.json "$user_journey" delivery-output/drift-report.json; then
