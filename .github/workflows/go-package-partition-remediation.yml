@@ -79,7 +79,7 @@ jobs:
             echo '### Go package partition remediation'
             echo
             jq -r '"- decision: `\(.decision) / \(.resolution)`\n- moved files: `\(.moved_files)`\n- created files: `\(.created_files)`\n- exact write paths: `\(.write_set|length)`\n- repository writes: `\(.effects.repository_writes)`"' "$work/receipt.json"
-            jq -r '"- post direct-entry blockers: `\(.indicators[]|select(.id==\"storage.direct-entry\")|.value)`\n- post mixed-kind blockers: `\(.indicators[]|select(.id==\"storage.mixed-kind\")|.value)`"' "$work/post-partition-projection.json"
+            jq -r '"- post direct-entry blockers: `\(.indicators[]|select(.id=="storage.direct-entry")|.value)`\n- post mixed-kind blockers: `\(.indicators[]|select(.id=="storage.mixed-kind")|.value)`"' "$work/post-partition-projection.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact remediation artifact
         uses: actions/upload-artifact@v6
