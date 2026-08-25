@@ -3750,6 +3750,280 @@
           ]
         }
       ]
+    },
+    {
+      "subject": "bootstrap/logical-split-planner/package_partition.go",
+      "operation": "extract-package-partition-shape",
+      "edits": [
+        {
+          "path": "bootstrap/logical-split-planner/package_partition.go",
+          "old_lines": [
+            "type packageShape struct {",
+            "\tBranchEntries int            `json:\"branch_entries\"`",
+            "\tMaxEntries    int            `json:\"max_entries\"`",
+            "\tLeaves        map[string]int `json:\"leaves\"`",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "bootstrap/logical-split-planner/types.go",
+          "old_lines": [
+            "type planReport struct {",
+            "\tSchema     string          `json:\"schema\"`",
+            "\tSourceSHA  string          `json:\"source_sha\"`",
+            "\tSubjects   []planSubject   `json:\"subjects\"`",
+            "\tIndicators []planIndicator `json:\"indicators\"`",
+            "}"
+          ],
+          "new_lines": [
+            "type planReport struct {",
+            "\tSchema     string          `json:\"schema\"`",
+            "\tSourceSHA  string          `json:\"source_sha\"`",
+            "\tSubjects   []planSubject   `json:\"subjects\"`",
+            "\tIndicators []planIndicator `json:\"indicators\"`",
+            "}",
+            "",
+            "type packageShape struct {",
+            "\tBranchEntries int            `json:\"branch_entries\"`",
+            "\tMaxEntries    int            `json:\"max_entries\"`",
+            "\tLeaves        map[string]int `json:\"leaves\"`",
+            "}"
+          ]
+        },
+        {
+          "path": "bootstrap/logical-split-planner/package_partition.go",
+          "old_lines": [
+            "\twrites := make(map[string]bool)"
+          ],
+          "new_lines": [
+            "\twrites := make(map[string]bool)",
+            "\tif packageShapeSatisfied(absolute, recipe) {",
+            "\t\treturn writePackagePartitionReceipt(output, expectedSHA, recipe, writes, true)",
+            "\t}"
+          ]
+        },
+        {
+          "path": "bootstrap/logical-split-planner/package_partition.go",
+          "old_lines": [
+            "\treturn writePackagePartitionReceipt(output, expectedSHA, recipe, writes)"
+          ],
+          "new_lines": [
+            "\treturn writePackagePartitionReceipt(output, expectedSHA, recipe, writes, false)"
+          ]
+        }
+      ]
+    },
+    {
+      "subject": "bootstrap/logical-split-planner/package_partition_receipt.go",
+      "operation": "extract-package-partition-receipt-helpers",
+      "edits": [
+        {
+          "path": "bootstrap/logical-split-planner/package_partition_receipt.go",
+          "old_lines": [
+            "import (",
+            "\t\"crypto/sha256\"",
+            "\t\"encoding/hex\"",
+            "\t\"encoding/json\"",
+            "\t\"fmt\"",
+            "\t\"os\"",
+            "\t\"sort\"",
+            "\t\"strings\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"fmt\"",
+            "\t\"os\"",
+            "\t\"strings\"",
+            ")"
+          ]
+        },
+        {
+          "path": "bootstrap/logical-split-planner/package_partition_receipt.go",
+          "old_lines": [
+            "func requirePackageShape(root string, recipe packagePartitionRecipe) error {",
+            "\tbranch, err := sourcePath(root, recipe.Subject)",
+            "\tif err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\tentries, err := os.ReadDir(branch)",
+            "\tif err != nil || len(entries) != recipe.ExpectedShape.BranchEntries {",
+            "\t\treturn fmt.Errorf(\"partition branch shape mismatch\")",
+            "\t}",
+            "\tfor _, entry := range entries {",
+            "\t\tif !entry.IsDir() {",
+            "\t\t\treturn fmt.Errorf(\"partition branch mixes entry kinds\")",
+            "\t\t}",
+            "\t}",
+            "\tfor leaf, expected := range recipe.ExpectedShape.Leaves {",
+            "\t\tentries, err := os.ReadDir(branch + string(os.PathSeparator) + leaf)",
+            "\t\tif err != nil || len(entries) != expected || len(entries) > recipe.ExpectedShape.MaxEntries {",
+            "\t\t\treturn fmt.Errorf(\"partition leaf shape mismatch: %s\", leaf)",
+            "\t\t}",
+            "\t}",
+            "\treturn nil",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "bootstrap/logical-split-planner/paths.go",
+          "old_lines": [
+            "import (",
+            "\t\"bytes\"",
+            "\t\"fmt\"",
+            "\t\"path/filepath\"",
+            "\t\"strings\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"bytes\"",
+            "\t\"fmt\"",
+            "\t\"os\"",
+            "\t\"path/filepath\"",
+            "\t\"strings\"",
+            ")"
+          ]
+        },
+        {
+          "path": "bootstrap/logical-split-planner/paths.go",
+          "old_lines": [
+            "func physicalLines(data []byte) int {",
+            "\tif len(data) == 0 {",
+            "\t\treturn 0",
+            "\t}",
+            "\tlines := bytes.Count(data, []byte{'\\n'})",
+            "\tif data[len(data)-1] != '\\n' {",
+            "\t\tlines++",
+            "\t}",
+            "\treturn lines",
+            "}"
+          ],
+          "new_lines": [
+            "func physicalLines(data []byte) int {",
+            "\tif len(data) == 0 {",
+            "\t\treturn 0",
+            "\t}",
+            "\tlines := bytes.Count(data, []byte{'\\n'})",
+            "\tif data[len(data)-1] != '\\n' {",
+            "\t\tlines++",
+            "\t}",
+            "\treturn lines",
+            "}",
+            "",
+            "func packageShapeSatisfied(root string, recipe packagePartitionRecipe) bool {",
+            "\treturn requirePackageShape(root, recipe) == nil",
+            "}",
+            "",
+            "func requirePackageShape(root string, recipe packagePartitionRecipe) error {",
+            "\tbranch, err := sourcePath(root, recipe.Subject)",
+            "\tif err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\tentries, err := os.ReadDir(branch)",
+            "\tif err != nil || len(entries) != recipe.ExpectedShape.BranchEntries {",
+            "\t\treturn fmt.Errorf(\"partition branch shape mismatch\")",
+            "\t}",
+            "\tfor _, entry := range entries {",
+            "\t\tif !entry.IsDir() {",
+            "\t\t\treturn fmt.Errorf(\"partition branch mixes entry kinds\")",
+            "\t\t}",
+            "\t}",
+            "\tfor leaf, expected := range recipe.ExpectedShape.Leaves {",
+            "\t\tentries, err := os.ReadDir(branch + string(os.PathSeparator) + leaf)",
+            "\t\tif err != nil || len(entries) != expected || len(entries) > recipe.ExpectedShape.MaxEntries {",
+            "\t\t\treturn fmt.Errorf(\"partition leaf shape mismatch: %s\", leaf)",
+            "\t\t}",
+            "\t}",
+            "\treturn nil",
+            "}"
+          ]
+        },
+        {
+          "path": "bootstrap/logical-split-planner/package_partition_receipt.go",
+          "old_lines": [
+            "func writePackagePartitionReceipt(name, sha string, recipe packagePartitionRecipe, writes map[string]bool) error {",
+            "\tpaths := make([]string, 0, len(writes))",
+            "\tfor path := range writes {",
+            "\t\tpaths = append(paths, path)",
+            "\t}",
+            "\tsort.Strings(paths)",
+            "\treceipt := map[string]any{\"schema\": \"gooo.go-package-partition-receipt.v1\", \"decision\": \"PASS\", \"resolution\": \"EXACT\", \"reason\": \"GO_PACKAGE_PARTITION_APPLIED\", \"source_sha\": sha, \"subject\": recipe.Subject, \"meta_operation\": \"partition-go-package\", \"moved_files\": len(recipe.Moves), \"created_files\": len(recipe.Creates), \"rewrites\": len(recipe.Rewrites) + len(recipe.Ranges), \"write_set\": paths, \"expected_shape\": recipe.ExpectedShape, \"effects\": map[string]any{\"repository_writes\": 0, \"mutation_authority\": false, \"disposable_writes\": len(paths)}}",
+            "\tsealed, err := json.Marshal(receipt)",
+            "\tif err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\tdigest := sha256.Sum256(sealed)",
+            "\treceipt[\"digest\"] = \"sha256:\" + hex.EncodeToString(digest[:])",
+            "\tpayload, err := json.MarshalIndent(receipt, \"\", \"  \")",
+            "\tif err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\treturn os.WriteFile(name, append(payload, '\\n'), 0o644)",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "bootstrap/logical-split-planner/load.go",
+          "old_lines": [
+            "import (",
+            "\t\"encoding/json\"",
+            "\t\"fmt\"",
+            "\t\"os\"",
+            ")"
+          ],
+          "new_lines": [
+            "import (",
+            "\t\"crypto/sha256\"",
+            "\t\"encoding/hex\"",
+            "\t\"encoding/json\"",
+            "\t\"fmt\"",
+            "\t\"os\"",
+            "\t\"sort\"",
+            ")"
+          ]
+        },
+        {
+          "path": "bootstrap/logical-split-planner/load.go",
+          "old_lines": [
+            "\treturn selected, nil",
+            "}"
+          ],
+          "new_lines": [
+            "\treturn selected, nil",
+            "}",
+            "",
+            "func writePackagePartitionReceipt(name, sha string, recipe packagePartitionRecipe, writes map[string]bool, fixed bool) error {",
+            "\tpaths := make([]string, 0, len(writes))",
+            "\tfor path := range writes {",
+            "\t\tpaths = append(paths, path)",
+            "\t}",
+            "\tsort.Strings(paths)",
+            "\tdecision, reason := \"PASS\", \"GO_PACKAGE_PARTITION_APPLIED\"",
+            "\tmoved, created, rewrites := len(recipe.Moves), len(recipe.Creates), len(recipe.Rewrites)+len(recipe.Ranges)",
+            "\tif fixed {",
+            "\t\tdecision, reason = \"FIXED_POINT\", \"GO_PACKAGE_PARTITION_ALREADY_APPLIED\"",
+            "\t\tmoved, created, rewrites = 0, 0, 0",
+            "\t}",
+            "\treceipt := map[string]any{\"schema\": \"gooo.go-package-partition-receipt.v1\", \"decision\": decision, \"resolution\": \"EXACT\", \"reason\": reason, \"source_sha\": sha, \"subject\": recipe.Subject, \"meta_operation\": \"partition-go-package\", \"moved_files\": moved, \"created_files\": created, \"rewrites\": rewrites, \"write_set\": paths, \"expected_shape\": recipe.ExpectedShape, \"effects\": map[string]any{\"repository_writes\": 0, \"mutation_authority\": false, \"disposable_writes\": len(paths)}}",
+            "\tsealed, err := json.Marshal(receipt)",
+            "\tif err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\tdigest := sha256.Sum256(sealed)",
+            "\treceipt[\"digest\"] = \"sha256:\" + hex.EncodeToString(digest[:])",
+            "\tpayload, err := json.MarshalIndent(receipt, \"\", \"  \")",
+            "\tif err != nil {",
+            "\t\treturn err",
+            "\t}",
+            "\treturn os.WriteFile(name, append(payload, '\\n'), 0o644)",
+            "}"
+          ]
+        }
+      ]
     }
   ]
 }
