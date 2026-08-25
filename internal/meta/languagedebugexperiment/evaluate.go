@@ -16,8 +16,8 @@ func Evaluate(input Input) (Report, error) {
 		Decision: "PASS", Reason: "DEBUG_EXPERIMENT_SATISFIED", Resolution: "EXACT",
 		Indicators: indicators, Views: buildViews(indicators),
 		RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority,
-	}
-	report.Summary = summarize(value, input.ExecutableDigest, indicators)
+
+		Summary: summarize(value, input.ExecutableDigest, indicators)}
 	if reason != "" {
 		report.Decision = "FAIL_CLOSED"
 		report.Reason = reason
@@ -39,7 +39,7 @@ func summarize(value facts, executable string, indicators []Indicator) Summary {
 		CurrentEvents: value.CurrentEvents, RemainingEvents: value.RemainingEvents,
 		UnknownBreakpointRejections: value.UnknownBreakpointRejections, Unknowns: value.Unknowns,
 		Compiler: Compiler{ExecutableDigest: executable, Go127Runtimes: value.Go127Runtimes},
-		Effects: Effects{RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority},
+		Effects:  Effects{RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority},
 	}
 }
 
