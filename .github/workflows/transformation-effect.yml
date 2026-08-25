@@ -1791,6 +1791,7 @@ jobs:
     needs:
       - language-concept-artifact
       - language-source-execution
+      - language-profile
       - user-journey-scorecard
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -1860,5 +1861,44 @@ jobs:
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-output
+          if-no-files-found: error
+          retention-days: 30
+
+  language-profile:
+    name: language-profile
+    needs: [language-concept-artifact]
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Produce exact-head language profile evidence
+        shell: bash
+        run: bash scripts/language-profile-experiment/main.sh
+      - name: Upload exact-head language profile artifact
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-profile-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-profile-experiment
           if-no-files-found: error
           retention-days: 30

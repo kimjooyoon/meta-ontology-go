@@ -8,7 +8,7 @@ import (
 func ValidateContract(contract Contract) error {
 	want := CanonicalContract()
 	if !reflect.DeepEqual(contract, want) {
-		return fmt.Errorf("LANGUAGE_DELIVERY_CONTRACT_V2_DRIFT")
+		return fmt.Errorf("LANGUAGE_DELIVERY_CONTRACT_V3_DRIFT")
 	}
 	counts := map[Audience]int{}
 	ids := map[string]bool{}

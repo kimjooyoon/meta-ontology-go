@@ -6,5 +6,5 @@ import (
 )
 
 func printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "usage: gooo <run|emit|check|generate|roundtrip|query|inspect|graph|analyze|format|fix|provenance|selective-ci|lsp|version> [args]")
+	fmt.Fprintln(writer, "usage: gooo <run|profile|emit|check|generate|roundtrip|query|inspect|graph|analyze|format|fix|provenance|selective-ci|lsp|version> [args]")
 }

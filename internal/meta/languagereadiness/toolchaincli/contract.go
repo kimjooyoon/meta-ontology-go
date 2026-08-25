@@ -9,7 +9,7 @@ const (
 	FixedGuardrails     = 6
 	FixedIndicators     = 18
 	ExpectedRuns        = 24
-	ExpectedCommands    = 15
+	ExpectedCommands    = 16
 	ExpectedStructured  = 3
 	ExpectedLanguageOps = 4
 )
