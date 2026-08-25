@@ -34,9 +34,7 @@ func canonicalRegistry() []Binding {
 		})
 	}
 	bindings = append(bindings, sourceBindings()...)
-	sort.Slice(bindings, func(left, right int) bool {
-		return bindings[left].Operation < bindings[right].Operation
-	})
+	sort.Slice(bindings, func(left, right int) bool { return bindings[left].Operation < bindings[right].Operation })
 	return bindings
 }
 

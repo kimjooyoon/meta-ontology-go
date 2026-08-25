@@ -26,19 +26,19 @@ type splitBatchProof struct {
 }
 
 type splitBatchReport struct {
-	Schema        string                `json:"schema"`
-	SourceSHA     string                `json:"source_sha"`
-	Decision      string                `json:"decision"`
-	Resolution    string                `json:"resolution"`
-	Reason        string                `json:"reason"`
-	MetaOperation string                `json:"meta_operation"`
-	Selected      []string              `json:"selected"`
-	Unhandled     []string              `json:"unhandled"`
-	Subjects      []splitBatchSubject   `json:"subjects"`
-	Coordinates   splitBatchCoordinates `json:"coordinates"`
-	Indicators    []splitBatchIndicator `json:"indicators"`
-	Proofs        []splitBatchProof     `json:"proofs"`
-	SuccessorProjectionRequired bool    `json:"successor_projection_required"`
-	Exact         bool                  `json:"exact"`
-	Digest        string                `json:"digest"`
+	Schema                      string                `json:"schema"`
+	SourceSHA                   string                `json:"source_sha"`
+	Decision                    string                `json:"decision"`
+	Resolution                  string                `json:"resolution"`
+	Reason                      string                `json:"reason"`
+	MetaOperation               string                `json:"meta_operation"`
+	Selected                    []string              `json:"selected"`
+	Unhandled                   []string              `json:"unhandled"`
+	Subjects                    []splitBatchSubject   `json:"subjects"`
+	Coordinates                 splitBatchCoordinates `json:"coordinates"`
+	Indicators                  []splitBatchIndicator `json:"indicators"`
+	Proofs                      []splitBatchProof     `json:"proofs"`
+	SuccessorProjectionRequired bool                  `json:"successor_projection_required"`
+	Exact                       bool                  `json:"exact"`
+	Digest                      string                `json:"digest"`
 }
