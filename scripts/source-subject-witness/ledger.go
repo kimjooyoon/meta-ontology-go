@@ -1,17 +1,17 @@
 package main
 
 type ledgerCounts struct {
-	FileWitnesses         int `json:"file_witnesses"`
-	GoFiles               int `json:"go_files"`
-	GoooFiles             int `json:"gooo_files"`
-	OtherFiles            int `json:"other_files"`
-	LogicalDirectories    int `json:"logical_directories"`
-	StorageDirectories    int `json:"storage_directories"`
-	FileSourceBindings    int `json:"file_source_bindings"`
-	StorageSourceBindings int `json:"storage_source_bindings"`
-	DerivedBindings       int `json:"derived_bindings"`
-	SubjectWitnesses      int `json:"subject_witnesses"`
-	MetaIndicators        int `json:"meta_indicators"`
+	FileWitnesses                 int `json:"file_witnesses"`
+	GoFiles                       int `json:"go_files"`
+	GoooFiles                     int `json:"gooo_files"`
+	OtherFiles                    int `json:"other_files"`
+	LogicalDirectories            int `json:"logical_directories"`
+	StorageDirectories            int `json:"storage_directories"`
+	FileSourceBindings            int `json:"file_source_bindings"`
+	StorageSourceBindings         int `json:"storage_source_bindings"`
+	DerivedBindings               int `json:"derived_bindings"`
+	SubjectWitnesses              int `json:"subject_witnesses"`
+	MetaIndicators                int `json:"meta_indicators"`
 	SourceIndicatorsApplicable    int `json:"source_indicators_applicable"`
 	SourceIndicatorsNotApplicable int `json:"source_indicators_not_applicable"`
 	WorkflowDiscoveryExemptions   int `json:"workflow_discovery_exemptions"`
