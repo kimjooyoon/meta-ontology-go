@@ -13,5 +13,5 @@ receipt means only that this fixed projection was observed. It does not claim
 business correctness, production readiness, general code generation, or
 performance outside the recorded runner samples.
 
-The emitter registry initially contains one kind. That count is an extension
-surface measurement, not a language-quality score.
+The emitter registry contains three kinds. That count is an extension-surface
+measurement, not a language-quality score.

@@ -19,8 +19,12 @@ func projectOperationInterface(source packageReceipt) Artifact {
 }
 
 func schemaForKind(kind string) string {
-	if kind == OperationInterfaceKind {
+	switch kind {
+	case OperationInterfaceKind:
 		return OperationInterfaceSchema
+	case SymbolicInvocationSchemaKind:
+		return SymbolicInvocationArtifact
+	default:
+		return OperationManifestSchema
 	}
-	return OperationManifestSchema
 }

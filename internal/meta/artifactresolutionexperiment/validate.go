@@ -17,7 +17,7 @@ func validate(input Input) string {
 		return "CONTRACT_SCHEMA_INVALID"
 	}
 	if contract.ManifestDefinitions != 2 || contract.InterfaceDefinitions != 0 ||
-		contract.RegisteredEmitters != 2 || contract.Indicators != ExpectedIndicators ||
+		contract.RegisteredEmitters != 3 || contract.Indicators != ExpectedIndicators ||
 		contract.NotClaimedCount != ExpectedNonClaims || len(contract.NotClaimed) != ExpectedNonClaims {
 		return "CONTRACT_DENOMINATOR_INVALID"
 	}

@@ -7,7 +7,8 @@ import (
 )
 
 func registryObserved(input Input) int {
-	expectedKinds := []string{artifactemit.OperationInterfaceKind, artifactemit.OperationManifestKind}
+	expectedKinds := []string{artifactemit.OperationInterfaceKind, artifactemit.OperationManifestKind,
+		artifactemit.SymbolicInvocationSchemaKind}
 	manifest := input.Manifest.Extensions
 	public := input.Interface.Extensions
 	if manifest.RegisteredEmitters != input.Contract.RegisteredEmitters ||

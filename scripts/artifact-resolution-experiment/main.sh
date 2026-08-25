@@ -70,7 +70,7 @@ jq -n --arg subject "$HEAD_SHA" \
 phase="REDUCE"
 "$reducer" -input "$work/input.json" -output "$work/report.json"
 "$reducer" -input "$work/input.json" -check "$work/report.json"
-jq -e '.decision=="PASS" and .resolution=="EXACT" and .summary.coordinates.satisfied==13 and .summary.coordinates.total==13 and (.views[]|select(.audience=="USER")|.satisfied==5 and .total==5) and (.views[]|select(.audience=="TOOL_AUTHOR")|.satisfied==10 and .total==10) and (.views[]|select(.audience=="GOVERNOR")|.satisfied==13 and .total==13) and .summary.resolution.manifest_definitions==2 and .summary.resolution.interface_definitions==0 and .summary.resolution.registered_emitters==2 and .summary.unknowns==0' "$work/report.json"
+jq -e '.decision=="PASS" and .resolution=="EXACT" and .summary.coordinates.satisfied==13 and .summary.coordinates.total==13 and (.views[]|select(.audience=="USER")|.satisfied==5 and .total==5) and (.views[]|select(.audience=="TOOL_AUTHOR")|.satisfied==10 and .total==10) and (.views[]|select(.audience=="GOVERNOR")|.satisfied==13 and .total==13) and .summary.resolution.manifest_definitions==2 and .summary.resolution.interface_definitions==0 and .summary.resolution.registered_emitters==3 and .summary.unknowns==0' "$work/report.json"
 
 phase="COUNTERFACTUAL"
 jq '.interface.decision="UNKNOWN"' "$work/input.json" > "$work/unknown-top-input.json"

@@ -7,8 +7,9 @@ import (
 )
 
 func validInput() Input {
-	extensions := artifactemit.ExtensionRegistry{RegisteredEmitters: 2,
-		Kinds: []string{artifactemit.OperationInterfaceKind, artifactemit.OperationManifestKind}}
+	extensions := artifactemit.ExtensionRegistry{RegisteredEmitters: 3,
+		Kinds: []string{artifactemit.OperationInterfaceKind, artifactemit.OperationManifestKind,
+			artifactemit.SymbolicInvocationSchemaKind}}
 	manifest := artifactemit.Artifact{Schema: artifactemit.OperationManifestSchema,
 		Decision: "PASS", Resolution: "EXACT", Reason: "OPERATION_MANIFEST_EMITTED",
 		Kind: artifactemit.OperationManifestKind, SubjectDigest: "sha256:subject",
@@ -27,7 +28,7 @@ func validInput() Input {
 		Reason: "EMITTER_UNKNOWN"}
 	contract := Contract{Schema: ContractSchema, ID: "fixture",
 		ManifestSchema: artifactemit.OperationManifestSchema, InterfaceSchema: artifactemit.OperationInterfaceSchema,
-		ManifestDefinitions: 2, InterfaceDefinitions: 0, RegisteredEmitters: 2,
+		ManifestDefinitions: 2, InterfaceDefinitions: 0, RegisteredEmitters: 3,
 		Indicators: ExpectedIndicators, NotClaimedCount: ExpectedNonClaims,
 		NotClaimed: []string{"a", "b", "c", "d"}}
 	return Input{SubjectSHA: strings.Repeat("a", 40), Contract: contract,
