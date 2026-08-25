@@ -74,16 +74,17 @@ jobs:
           expected="$RUNNER_TEMP/repository-projection/authorized-write-set.txt"
           observed="$RUNNER_TEMP/repository-projection/observed-write-set.txt"
           report="$RUNNER_TEMP/repository-projection/write-set-evidence.json"
-          jq -r '.subjects[].changed_files[]' "$RUNNER_TEMP/repository-projection/extraction-report.json" | sort -u > "$expected"
           git diff --name-only | sort -u > "$observed"
           untracked="$(git ls-files --others --exclude-standard | wc -l | tr -d ' ')"
-          expected_json="$(jq -Rsc 'split("\n") | map(select(length > 0))' "$expected")"
-          observed_json="$(jq -Rsc 'split("\n") | map(select(length > 0))' "$observed")"
-          jq -n --arg schema "gooo.authorized-rewrite-write-set.v1" \
-            --argjson expected "$expected_json" --argjson observed "$observed_json" \
-            --argjson untracked "$untracked" \
-            '{schema:$schema,expected:$expected,observed:$observed,expected_count:($expected|length),observed_count:($observed|length),untracked_count:$untracked,exact:($expected==$observed and $untracked==0)}' > "$report"
-          jq -e '.exact == true and .expected_count == .observed_count and .untracked_count == 0' "$report"
+          go run ./bootstrap/authorized-write-set \
+            --expected-sha "$EXACT_SHA" \
+            --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
+            --extraction-report "$RUNNER_TEMP/repository-projection/extraction-report.json" \
+            --observed-write-set "$observed" \
+            --untracked-count "$untracked" \
+            --expected-output "$expected" \
+            --output "$report"
+          jq -e '.schema == "gooo.authorized-rewrite-write-set.v2" and .decision == "PASS" and .resolution == "EXACT" and .exact == true and .coordinates.unknowns == 0' "$report"
           diff -u "$expected" "$observed"
           git diff --binary > "$RUNNER_TEMP/repository-projection/authorized-rewrite.patch"
           go test ./...
