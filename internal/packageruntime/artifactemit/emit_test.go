@@ -23,7 +23,7 @@ func TestEmitLowersUnknownPackageDecision(t *testing.T) {
 func TestEmitRegistryRejectsUnknownKind(t *testing.T) {
 	artifact := Emit("not-registered", validReceiptJSON(t))
 	if artifact.Decision != "FAIL_CLOSED" || artifact.Reason != "EMITTER_UNKNOWN" ||
-		artifact.Extensions.RegisteredEmitters != 1 {
+		artifact.Extensions.RegisteredEmitters != 2 {
 		t.Fatalf("artifact=%#v", artifact)
 	}
 }

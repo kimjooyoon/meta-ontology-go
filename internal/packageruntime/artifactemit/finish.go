@@ -8,7 +8,7 @@ import (
 
 func failed(kind, resolution, reason string) Artifact {
 	return finish(Artifact{
-		Schema: OperationManifestSchema, Decision: "FAIL_CLOSED", Resolution: resolution,
+		Schema: schemaForKind(kind), Decision: "FAIL_CLOSED", Resolution: resolution,
 		Reason: reason, Kind: kind, Definitions: DefinitionSet{Language: "gooo", Files: []Definition{}},
 		Extensions: registryReceipt(),
 	})

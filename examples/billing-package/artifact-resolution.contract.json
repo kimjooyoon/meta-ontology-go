@@ -1,0 +1,17 @@
+{
+  "schema": "gooo/artifact-resolution-experiment-contract/v1",
+  "id": "billing-operation-resolution-v1",
+  "manifest_schema": "gooo/operation-manifest/v1",
+  "interface_schema": "gooo/operation-interface/v1",
+  "manifest_definitions": 2,
+  "interface_definitions": 0,
+  "registered_emitters": 2,
+  "indicators": 13,
+  "not_claimed_count": 4,
+  "not_claimed": [
+    "interface completeness",
+    "compatibility stability",
+    "production readiness",
+    "general-purpose generation"
+  ]
+}
