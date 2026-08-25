@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 const (
-	rootUnboundMetric       = "gooo.metric.meta.unbound-indicators.v1"
+	rootUnboundMetric      = "gooo.metric.meta.unbound-indicators.v1"
 	rootBaseIndicatorCount = 7
 	rootSummaryCount       = 5
 )
