@@ -63,7 +63,7 @@ reduce "$golden" "$output/first.json" "$output/report.json"
 jq -e '.decision=="PASS" and .resolution=="EXACT" and .interpretation=="MINIMAL_VALUE_OBSERVED"' "$output/report.json"
 jq -e '.summary.coordinates=={satisfied:13,total:13,basis_points:10000}' "$output/report.json"
 jq -e '[.views[]|[.audience,.satisfied,.total]]==[["USER",6,6],["TOOL_AUTHOR",10,10],["GOVERNOR",13,13]]' "$output/report.json"
-jq -e '.summary.compiler=={source_files:2,gooo_files:2,go_files:0,gooo_definition_basis_points:10000,registered_emitters:1}' "$output/report.json"
+jq -e '.summary.compiler=={source_files:2,gooo_files:2,go_files:0,gooo_definition_basis_points:10000,registered_emitters:2}' "$output/report.json"
 jq -e '.summary.resources.samples==5 and .summary.resources.wall_violations==0 and .summary.resources.rss_violations==0 and .summary.resources.binary_violations==0' "$output/report.json"
 jq -e '.summary.counterexamples.unknown_emitter_rejections==1 and .summary.effects.repository_writes==0 and .summary.effects.mutation_authority==false and (.not_claimed|length)==4' "$output/report.json"
 
