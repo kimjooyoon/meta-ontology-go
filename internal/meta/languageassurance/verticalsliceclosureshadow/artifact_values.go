@@ -4,20 +4,20 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	summary := artifact.Summary
 	switch id {
 	case "syntax":
-		return summary.Satisfied, status(summary.Satisfied == 20 && summary.Total == 20 &&
-			summary.Executed == 20 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
-			summary.ReadinessBPS == 10000)
-	case "semantics":
 		return summary.Satisfied, status(summary.Satisfied == 22 && summary.Total == 22 &&
 			summary.Executed == 22 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
+			summary.ReadinessBPS == 10000)
+	case "semantics":
+		return summary.Satisfied, status(summary.Satisfied == 24 && summary.Total == 24 &&
+			summary.Executed == 24 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
 			summary.ReadinessBPS == 10000 && summary.StageOrderViolations == 0 &&
 			summary.EffectfulStages == 0 && summary.RegistryDrift == 0)
 	case "binding":
 		return summary.BoundCoordinates, status(summary.Coordinates == 12 &&
 			summary.BoundCoordinates == 12 && summary.Unresolved == 0 &&
 			summary.ReadinessCompleted == 21 && summary.ReadinessTotal == 24 &&
-			summary.ReadinessBPS == 8750 && summary.SemanticSatisfied == 22 &&
-			summary.SemanticTotal == 22 && summary.EffectfulStages == 0 &&
+			summary.ReadinessBPS == 8750 && summary.SemanticSatisfied == 24 &&
+			summary.SemanticTotal == 24 && summary.EffectfulStages == 0 &&
 			summary.MutationAuthorities == 0)
 	case "use-cases":
 		return summary.Satisfied, status(summary.Satisfied == 3 && summary.Total == 3 &&
