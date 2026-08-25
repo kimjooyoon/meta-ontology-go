@@ -10,6 +10,9 @@ import (
 
 const (
 	directIndicator        = "storage.direct-entry"
+	directObservedIndicator = "storage.direct-entry-observed"
+	directUnboundIndicator = "storage.direct-entry-unclassified"
+	bootstrapDirectIndicator = "storage.bootstrap-direct-entry"
 	mixedIndicator         = "storage.mixed-kind"
 	maxStoredDirectEntries = 10
 	maxStoredKinds         = 1
@@ -32,11 +35,23 @@ func topologyFailures(root string) (topologyEvidence, error) {
 		}
 		physical := filepath.ToSlash(relative)
 		if len(children) > maxStoredDirectEntries {
-			result.Direct++
-			result.Subjects = append(result.Subjects, subject{
+			result.ObservedDirect++
+			item := subject{
 				Indicator: directIndicator, Physical: physical, Value: len(children), Limit: maxStoredDirectEntries,
 				Consumer: "radix-sharder", Operation: "split-object-bucket",
-			})
+				Applicability: "APPLICABLE", ApplicabilityReason: "GENERIC_PHYSICAL_DIRECTORY",
+			}
+			if workflowDiscoveryRoot(physical, children) {
+				result.ExemptDirect++
+				item.Indicator = bootstrapDirectIndicator
+				item.Consumer = "github-actions"
+				item.Operation = "preserve-workflow-discovery"
+				item.Applicability = "NOT_APPLICABLE"
+				item.ApplicabilityReason = "GITHUB_WORKFLOW_DISCOVERY_ROOT"
+			} else {
+				result.Direct++
+			}
+			result.Subjects = append(result.Subjects, item)
 		}
 		hasDirectory, hasFile := false, false
 		for _, child := range children {
@@ -60,6 +75,20 @@ func topologyFailures(root string) (topologyEvidence, error) {
 	})
 	return result, err
 }
+
+func workflowDiscoveryRoot(physical string, children []os.DirEntry) bool {
+	if physical != ".github/workflows" || len(children) == 0 {
+		return false
+	}
+	for _, child := range children {
+		extension := strings.ToLower(filepath.Ext(child.Name()))
+		if child.IsDir() || child.Type()&os.ModeSymlink != 0 || (extension != ".yml" && extension != ".yaml") {
+			return false
+		}
+	}
+	return true
+}
+
 func buildEvidence(sha string, model manifest, objects, loss int, topology topologyEvidence) evidence {
 	unbound, lineDebt := 0, 0
 	subjects := append([]subject(nil), topology.Subjects...)
@@ -77,6 +106,7 @@ func buildEvidence(sha string, model manifest, objects, loss int, topology topol
 		}
 	}
 	proof := topologyProof
+	unclassifiedDirect := topology.ObservedDirect - topology.Direct - topology.ExemptDirect
 	return evidence{
 		Schema: "gooo.repository-projection-evidence.v1", SourceSHA: sha,
 		TrackedFiles: len(model.Entries), Objects: objects, Subjects: subjects,
@@ -85,8 +115,14 @@ func buildEvidence(sha string, model manifest, objects, loss int, topology topol
 				Consumer: "repository-materializer", Operation: "restore-logical-tree", Proof: proof},
 			{ID: "projection.unbound-entry", Value: unbound, Limit: 0, Blocking: true,
 				Consumer: "repository-projector", Operation: "bind-content-object", Proof: proof},
+			{ID: directObservedIndicator, Value: topology.ObservedDirect, Limit: -1, Blocking: false,
+				Consumer: "repository-topology-classifier", Operation: "observe-direct-object-buckets", Proof: proof},
 			{ID: directIndicator, Value: topology.Direct, Limit: 0, Blocking: true,
 				Consumer: "radix-sharder", Operation: "split-object-bucket", Proof: proof},
+			{ID: bootstrapDirectIndicator, Value: topology.ExemptDirect, Limit: 1, Blocking: true,
+				Consumer: "github-actions", Operation: "preserve-workflow-discovery", Proof: proof},
+			{ID: directUnboundIndicator, Value: unclassifiedDirect, Limit: 0, Blocking: true,
+				Consumer: "repository-topology-classifier", Operation: "classify-direct-object-buckets", Proof: proof},
 			{ID: mixedIndicator, Value: topology.Mixed, Limit: 0, Blocking: true,
 				Consumer: "radix-sharder", Operation: "separate-branch-leaf", Proof: proof},
 			{ID: "source.line-cap-debt", Value: lineDebt, Limit: 0, Blocking: false,
