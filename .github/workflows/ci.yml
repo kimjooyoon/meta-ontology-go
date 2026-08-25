@@ -1171,8 +1171,14 @@ jobs:
               --check
           done
           cmp "$RUNNER_TEMP/predecessor-receipt-a.json" "$RUNNER_TEMP/predecessor-receipt-b.json"
-      - name: Consume deterministic predecessor semantic state
+          jq -r '"### Predecessor selection\n- decision: \(.report.decision) (\(.report.reason))\n- resolution: \(.report.resolution)\n- promotion authorized: \(.report.promotion_authorized)\n- next: \(.report.next_operation)\n- exact readiness: \(.report.indicators[0].value)/10000\n- continuity: \(.report.indicators[1].value)/10000"' "$RUNNER_TEMP/predecessor-receipt-a.json" >> "$GITHUB_STEP_SUMMARY"
+      - id: semantic
+        name: Consume deterministic predecessor semantic state
         run: |
+          if jq -e '.report.decision == "LOWER_RESOLUTION"' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
+            echo "emitted=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           for suffix in a b; do
             go run ./cmd/feedback-semantic-state-witness \
               --root "$GITHUB_WORKSPACE" \
@@ -1182,6 +1188,7 @@ jobs:
               --check
           done
           cmp "$RUNNER_TEMP/predecessor-semantic-a.json" "$RUNNER_TEMP/predecessor-semantic-b.json"
+          echo "emitted=true" >> "$GITHUB_OUTPUT"
           jq -r '"### Predecessor semantic state\n- decision: \(.report.decision) (\(.report.reason))\n- next: \(.report.snapshot.next_operation)\n- replay verified: \(.replay_verified)\n- receipt digest: \(.receipt_digest)"' "$RUNNER_TEMP/predecessor-semantic-a.json" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v6
         with:
@@ -1192,6 +1199,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@v6
+        if: steps.semantic.outputs.emitted == 'true'
         with:
           name: feedback-semantic-state-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: |

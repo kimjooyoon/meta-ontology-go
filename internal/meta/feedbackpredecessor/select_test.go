@@ -21,7 +21,8 @@ func TestSelectBindsUniqueCanonicalPredecessor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Decision != DecisionSelected || report.Selected == nil ||
+	if report.Decision != DecisionSelected || report.Resolution != ResolutionExact ||
+		!report.PromotionAuthorized || !Consumable(report) || report.Selected == nil ||
 		report.Selected.ArtifactID != 11 || report.ReportDigest == "" {
 		t.Fatalf("selection = %#v", report)
 	}
@@ -32,7 +33,7 @@ func TestSelectBindsUniqueCanonicalPredecessor(t *testing.T) {
 		}
 		proofs[metric.ProofChoice] = true
 	}
-	if len(report.Indicators) != 7 || !proofs[ProofFoundation] ||
+	if len(report.Indicators) != 8 || !proofs[ProofFoundation] ||
 		!proofs[ProofCoherence] || !proofs[ProofRegression] {
 		t.Fatalf("proof choices = %#v", proofs)
 	}
@@ -45,7 +46,6 @@ func TestSelectFailsClosedByCause(t *testing.T) {
 		reason string
 	}{
 		{"stale", func(in *Input) { in.Candidates[0].HeadSHA = strings.Repeat("b", 40) }, ReasonNotFound},
-		{"unsuccessful", func(in *Input) { in.Candidates[0].Conclusion = "failure" }, ReasonUnsuccessful},
 		{"unbound receipt", func(in *Input) { in.Candidates[0].ReceiptDigest = "" }, ReasonReceiptUnbound},
 		{"write effect", func(in *Input) { in.Candidates[0].RepositoryWrites = 1 }, ReasonWriteEffect},
 		{"ambiguous", func(in *Input) {
@@ -61,7 +61,7 @@ func TestSelectFailsClosedByCause(t *testing.T) {
 				t.Fatal(err)
 			}
 			if report.Decision != DecisionFailClosed || report.Reason != test.reason ||
-				report.Selected != nil {
+				Consumable(report) || report.Selected != nil {
 				t.Fatalf("selection = %#v", report)
 			}
 		})
