@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer"
 	"io"
 	"os"
 	"runtime"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer"
+	"github.com/kimjooyoon/meta-ontology-go/internal/languageprofile"
 )
 
 const (
@@ -25,6 +27,8 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 	switch args[0] {
 	case "run":
 		return runSource(args[1:], OSFileReader{}, stdout, stderr)
+	case "profile":
+		return runProfile(args[1:], OSFileReader{}, languageprofile.RuntimeMeasurer{}, stdout, stderr)
 	case "check":
 		return runCheck(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "generate":
