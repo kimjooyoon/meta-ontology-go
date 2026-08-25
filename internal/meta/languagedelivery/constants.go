@@ -9,7 +9,7 @@ type ResultStatus string
 
 const (
 	ContractSchema = "gooo/language-delivery-contract/v1"
-	ManifestSchema = "gooo/language-delivery-source-manifest/v3"
+	ManifestSchema = "gooo/language-delivery-source-manifest/v4"
 	ReportSchema   = "gooo/language-delivery-scorecard/v1"
 	ContractID     = "gooo-v0.2-observable-delivery"
 	MetaOperation  = "reduce-fixed-language-delivery-contract"
