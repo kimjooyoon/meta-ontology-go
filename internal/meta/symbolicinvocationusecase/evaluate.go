@@ -106,11 +106,11 @@ func collectFacts(input Input) (facts, string, string) {
 		return facts{}, reasonEvidenceInvalid, "INVARIANT_ONLY"
 	}
 	effects := Effects{
-		RepositoryWrites: receipt.Effects.RepositoryWrites + artifact.Effects.RepositoryWrites + observation.Effects.RepositoryWrites,
+		RepositoryWrites:  receipt.Effects.RepositoryWrites + artifact.Effects.RepositoryWrites + observation.Effects.RepositoryWrites,
 		MutationAuthority: receipt.Effects.MutationAuthority || artifact.Effects.MutationAuthority || observation.Effects.MutationAuthority,
 	}
 	value := facts{
-		UserDecisions: observation.AcceptedInstances + observation.RejectedInstances,
+		UserDecisions:     observation.AcceptedInstances + observation.RejectedInstances,
 		AcceptedInstances: observation.AcceptedInstances, RejectedInstances: observation.RejectedInstances,
 		DeterministicReplays: receipt.DeterministicReplays, Source: receipt.Source, Effects: effects,
 		Producer: ProducerBinding{

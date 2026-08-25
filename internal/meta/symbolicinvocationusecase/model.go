@@ -30,19 +30,19 @@ type Input struct {
 }
 
 type ProducerReceipt struct {
-	Schema               string            `json:"schema"`
-	Decision             string            `json:"decision"`
-	Resolution           string            `json:"resolution"`
-	Reason               string            `json:"reason"`
-	SubjectSHA           string            `json:"subject_sha"`
-	Compiler             CompilerEvidence  `json:"compiler"`
-	Source               SourceCoordinate  `json:"source"`
-	Artifact             ArtifactEvidence  `json:"artifact"`
+	Schema               string             `json:"schema"`
+	Decision             string             `json:"decision"`
+	Resolution           string             `json:"resolution"`
+	Reason               string             `json:"reason"`
+	SubjectSHA           string             `json:"subject_sha"`
+	Compiler             CompilerEvidence   `json:"compiler"`
+	Source               SourceCoordinate   `json:"source"`
+	Artifact             ArtifactEvidence   `json:"artifact"`
 	Validation           ValidationEvidence `json:"validation"`
-	DeterministicReplays int               `json:"deterministic_replays"`
-	Resources            ResourceEvidence  `json:"resources"`
-	Effects              Effects           `json:"effects"`
-	NotClaimed           []string          `json:"not_claimed"`
+	DeterministicReplays int                `json:"deterministic_replays"`
+	Resources            ResourceEvidence   `json:"resources"`
+	Effects              Effects            `json:"effects"`
+	NotClaimed           []string           `json:"not_claimed"`
 }
 
 type CompilerEvidence struct {
@@ -61,11 +61,11 @@ type SourceCoordinate struct {
 }
 
 type ArtifactEvidence struct {
-	Kind             string `json:"kind"`
-	ArtifactSchema   string `json:"artifact_schema"`
-	Digest           string `json:"digest"`
+	Kind              string `json:"kind"`
+	ArtifactSchema    string `json:"artifact_schema"`
+	Digest            string `json:"digest"`
 	JSONSchemaDialect string `json:"json_schema_dialect"`
-	JSONSchemaDigest string `json:"json_schema_digest"`
+	JSONSchemaDigest  string `json:"json_schema_digest"`
 }
 
 type ValidationEvidence struct {
@@ -105,17 +105,17 @@ type ArtifactExtensions struct {
 }
 
 type Observation struct {
-	Schema              string  `json:"schema"`
-	Decision            string  `json:"decision"`
-	Resolution          string  `json:"resolution"`
-	Reason              string  `json:"reason"`
-	SubjectSHA          string  `json:"subject_sha"`
-	ArtifactDigest      string  `json:"artifact_digest"`
-	JSONSchemaDigest    string  `json:"json_schema_digest"`
-	ToolDigest          string  `json:"tool_digest"`
-	AcceptedInstances   int     `json:"accepted_instances"`
-	RejectedInstances   int     `json:"rejected_instances"`
-	Effects             Effects `json:"effects"`
+	Schema            string  `json:"schema"`
+	Decision          string  `json:"decision"`
+	Resolution        string  `json:"resolution"`
+	Reason            string  `json:"reason"`
+	SubjectSHA        string  `json:"subject_sha"`
+	ArtifactDigest    string  `json:"artifact_digest"`
+	JSONSchemaDigest  string  `json:"json_schema_digest"`
+	ToolDigest        string  `json:"tool_digest"`
+	AcceptedInstances int     `json:"accepted_instances"`
+	RejectedInstances int     `json:"rejected_instances"`
+	Effects           Effects `json:"effects"`
 }
 
 type Effects struct {
@@ -149,15 +149,15 @@ type View struct {
 }
 
 type ProducerBinding struct {
-	ReceiptSchema       string `json:"receipt_schema"`
-	ArtifactSchema      string `json:"artifact_schema"`
-	ArtifactDigest      string `json:"artifact_digest"`
-	JSONSchemaDigest    string `json:"json_schema_digest"`
-	Validator           string `json:"validator"`
-	ValidatorDigest     string `json:"validator_digest"`
-	CompilerBinaryBytes int64  `json:"compiler_binary_bytes"`
+	ReceiptSchema        string `json:"receipt_schema"`
+	ArtifactSchema       string `json:"artifact_schema"`
+	ArtifactDigest       string `json:"artifact_digest"`
+	JSONSchemaDigest     string `json:"json_schema_digest"`
+	Validator            string `json:"validator"`
+	ValidatorDigest      string `json:"validator_digest"`
+	CompilerBinaryBytes  int64  `json:"compiler_binary_bytes"`
 	CompilerBinaryDigest string `json:"compiler_binary_digest"`
-	RegisteredEmitters  int    `json:"registered_emitters"`
+	RegisteredEmitters   int    `json:"registered_emitters"`
 }
 
 type ResourceObservation struct {
