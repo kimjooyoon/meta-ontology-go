@@ -18,18 +18,21 @@ func runBatch(cfg config, metrics metricevidence.Report, indicators []metricevid
 	selected := make([]logicalSplitSubject, 0)
 	seen := map[string]bool{}
 	for _, subject := range logical.Subjects {
+		if seen[subject.Logical] || !metricevidence.Contains(indicators, subject.Logical) {
+			return fmt.Errorf("logical subject %q has unknown metric routing", subject.Logical)
+		}
+		seen[subject.Logical] = true
 		if subject.Reason != "projectable" {
 			continue
 		}
 		if subject.Consumer != "logical-source-splitter" || subject.Operation != splitBatchOperation ||
-			seen[subject.Logical] || !metricevidence.Contains(indicators, subject.Logical) {
+			subject.Logical == "" {
 			return fmt.Errorf("projectable subject %q has unknown routing", subject.Logical)
 		}
-		seen[subject.Logical] = true
 		selected = append(selected, subject)
 	}
-	if len(selected) != len(indicators) {
-		return fmt.Errorf("projectable subjects=%d actionable indicators=%d", len(selected), len(indicators))
+	if len(seen) != len(indicators) {
+		return fmt.Errorf("logical subjects=%d actionable indicators=%d", len(seen), len(indicators))
 	}
 	sort.Slice(selected, func(i, j int) bool { return selected[i].Logical < selected[j].Logical })
 	plans := make([]plannedSplit, 0, len(selected))

@@ -33,8 +33,15 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 		return indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleDefault &&
 			indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonCatalogApplicable
 	case sourcepolicy.ApplicabilityNotApplicable:
-		if indicator.Subject != "." || indicator.SubjectKind != sourcepolicy.SubjectKindProjectRoot ||
-			!indicator.Satisfied || indicator.Blocking {
+		if !indicator.Satisfied || indicator.Blocking {
+			return false
+		}
+		if indicator.Operation == sourcepolicy.OperationPreserveWorkflow {
+			return indicator.Subject == ".github/workflows" && indicator.SubjectKind == sourcepolicy.SubjectKindDirectory &&
+				indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleWorkflowDiscovery &&
+				indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonWorkflowDiscovery
+		}
+		if indicator.Subject != "." || indicator.SubjectKind != sourcepolicy.SubjectKindProjectRoot {
 			return false
 		}
 		switch indicator.Operation {

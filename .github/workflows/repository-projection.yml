@@ -52,6 +52,19 @@ jobs:
             --expected-sha "$EXACT_SHA" \
             --output "$RUNNER_TEMP/repository-projection/split-plan.json"
 
+      - name: Bind exact-SHA logical split metrics
+        run: |
+          go run ./scripts/line-metrics \
+            -root "$GITHUB_WORKSPACE" \
+            -storage-root "${{ steps.materialize.outputs.storage-root }}" \
+            -json > "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json"
+          go run ./bootstrap/meta-binding-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json" \
+            -bound-metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
+            -report "$RUNNER_TEMP/repository-projection/split-binding-report.json" \
+            -check
+
       - name: Apply metric-selected density rewrites
         run: |
           go run ./bootstrap/line-density-rewriter \
@@ -71,16 +84,6 @@ jobs:
 
       - name: Apply metric-selected logical source splits
         run: |
-          go run ./scripts/line-metrics \
-            -root "$GITHUB_WORKSPACE" \
-            -storage-root "${{ steps.materialize.outputs.storage-root }}" \
-            -json > "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json"
-          go run ./bootstrap/meta-binding-witness \
-            -root "$GITHUB_WORKSPACE" \
-            -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json" \
-            -bound-metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
-            -report "$RUNNER_TEMP/repository-projection/split-binding-report.json" \
-            -check
           go run ./scripts/source-splitter \
             -root "$GITHUB_WORKSPACE" \
             -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
