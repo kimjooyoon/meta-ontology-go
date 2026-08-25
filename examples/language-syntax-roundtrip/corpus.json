@@ -194,6 +194,19 @@
       "meta_reducer": "languagepackageexecution.Evaluate",
       "source_files_indicator": "PACKAGE_SOURCE_FILES",
       "execution_indicator": "PACKAGE_EXECUTIONS"
+    },
+    {
+      "id": "symbolic-invocation-schema",
+      "path": "examples/symbolic-invocation-schema",
+      "members": [
+        "examples/symbolic-invocation-schema/activity.gooo",
+        "examples/symbolic-invocation-schema/entities.gooo"
+      ],
+      "entry": "Checkout",
+      "report_schema": "gooo/language-package-execution-report/v1",
+      "meta_reducer": "languagepackageexecution.Evaluate",
+      "source_files_indicator": "PACKAGE_SOURCE_FILES",
+      "execution_indicator": "PACKAGE_EXECUTIONS"
     }
   ]
 }

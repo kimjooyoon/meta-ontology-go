@@ -24,6 +24,11 @@ func expectedRegistry() Registry {
 		Entry:   "PayOrder", ReportSchema: languagepackageexecution.ReportSchema,
 		MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES",
 		ExecutionIndicator: "PACKAGE_EXECUTIONS"}
+	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema",
+		Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo"},
+		Entry:   "Checkout", ReportSchema: languagepackageexecution.ReportSchema,
+		MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES",
+		ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
 		valid("billing", "examples/billing/main.gooo"),
 		valid("language-test-pass", "examples/language-test/main.gooo"),
@@ -47,7 +52,7 @@ func expectedRegistry() Registry {
 		valid("rollback-integrity-activation", "examples/rollback-integrity-activation/main.gooo"),
 		valid("vertical-slice-closure-activation", "examples/vertical-slice-closure-activation/main.gooo"),
 		valid("external-conformance-activation", "examples/external-conformance-activation/main.gooo"),
-	}, PackageUnits: []PackageDefinition{packageUnit}}
+	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {

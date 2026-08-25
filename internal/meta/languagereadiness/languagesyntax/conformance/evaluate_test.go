@@ -30,9 +30,9 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 	}
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
 		report.Summary.Satisfied != 22 || report.Summary.ValidCases != 19 ||
-		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 || report.Summary.GoooLines != 294 ||
-		len(report.Source.GoooFiles) != 22 || len(report.Source.PackageUnits) != 1 ||
-		len(report.Source.PackageUnits[0].Members) != 2 {
+		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 || report.Summary.GoooLines != 304 ||
+		len(report.Source.GoooFiles) != 24 || len(report.Source.PackageUnits) != 2 ||
+		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 2 {
 		t.Fatalf("report = %#v", report)
 	}
 }
