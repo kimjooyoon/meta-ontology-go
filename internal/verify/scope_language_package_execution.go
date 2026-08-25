@@ -2,6 +2,7 @@ package verify
 
 func init() {
 	branchScopeAllowlist["agent/language-multi-file-execution"] = []string{
+		"bootstrap/function-extractor/recipes.json",
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/ci.yml",

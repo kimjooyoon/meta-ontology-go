@@ -810,6 +810,7 @@
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/ci.yml",
+        "bootstrap/function-extractor/recipes.json",
         "cmd/gooo/run_package_source.go",
         "cmd/gooo/run_package_source_test.go",
         "cmd/gooo/run_source_part01.go",
