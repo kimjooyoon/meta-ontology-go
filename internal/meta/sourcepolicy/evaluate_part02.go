@@ -9,18 +9,14 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 			return definition{}, fmt.Errorf("root README metric requires project-root subject")
 		}
 		if policy.ExemptProjectRootREADME {
-			return definition{family: FamilyDocumentation, relation: RelationObserve,
-				proof: ProofFoundation, operation: OperationExemptRootREADME,
-				consumer: "metric-meta-program"}, nil
+			return definition{family: FamilyDocumentation, relation: RelationObserve, proof: ProofFoundation, operation: OperationExemptRootREADME, consumer: "metric-meta-program"}, nil
 		}
 		return definition{family: FamilyDocumentation, limit: 1, relation: RelationEqual,
 			blocking: true, proof: ProofFoundation, operation: OperationRequireRootREADME,
 			consumer: "repository-documenter"}, nil
 	}
-	if observation.Subject == ".github/workflows" && observation.Dimension == DimensionDirectEntries &&
-		observation.Detail == WorkflowDiscoveryObservationDetail {
-		return definition{family: FamilyTopology, relation: RelationObserve, proof: ProofFoundation,
-			operation: OperationPreserveWorkflow, consumer: "github-actions"}, nil
+	if observation.Subject == ".github/workflows" && observation.Dimension == DimensionDirectEntries && observation.Detail == WorkflowDiscoveryObservationDetail {
+		return definition{family: FamilyTopology, relation: RelationObserve, proof: ProofFoundation, operation: OperationPreserveWorkflow, consumer: "github-actions"}, nil
 	}
 	if policy.ExemptProjectRootTopology && observation.Subject == "." {
 		switch observation.Dimension {
