@@ -4,7 +4,7 @@ func CanonicalContract() Contract {
 	obligations := append(userObligations(), toolObligations()...)
 	obligations = append(obligations, governorObligations()...)
 	return Contract{
-		Schema: ContractSchema, ContractID: ContractID, Version: 3,
+		Schema: ContractSchema, ContractID: ContractID, Version: 2,
 		Scope:         "Gooo v0.2 observable delivery; not universal language completeness",
 		AudienceOrder: append([]Audience(nil), audienceOrder...),
 		Obligations:   obligations,

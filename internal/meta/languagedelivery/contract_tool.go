@@ -1,7 +1,7 @@
 package languagedelivery
 
 func toolObligations() []Obligation {
-	return bindProfileObligation([]Obligation{
+	return []Obligation{
 		obligation("TOOL-STRUCTURED-OUTPUT", AudienceToolAuthor, ClassDriver, "consume versioned machine output", rule(SourceUserJourney, EvidenceIndicator, "functional.structured-output", "", 1), "decode-versioned-tool-output", ProofFoundation),
 		obligation("TOOL-FORMAT-FIX", AudienceToolAuthor, ClassDriver, "format and plan bounded fixes", rule(SourceConformance, EvidenceSurface, "toolchain-format-fix", "", 1), "consume-format-fix-receipt", ProofCoherence),
 		obligation("TOOL-LSP-DIAGNOSTICS", AudienceToolAuthor, ClassDriver, "receive editor diagnostics", rule(SourceLSP, EvidenceLSPCounter, "", "diagnostic_paths", 3), "project-lsp-diagnostics", ProofCoherence),
@@ -14,5 +14,5 @@ func toolObligations() []Obligation {
 		obligation("TOOL-DIAGNOSTIC-PROVENANCE", AudienceToolAuthor, ClassDriver, "trace diagnostics to source and meaning", rule(SourceConformance, EvidenceSurface, "language-diagnostic-provenance", "", 1), "consume-diagnostic-provenance", ProofRegression),
 		obligation("TOOL-DEBUGGER", AudienceToolAuthor, ClassDriver, "debug executing Gooo code", missing(), "require-debugger-receipt", ProofCoherence),
 		obligation("TOOL-PROFILER", AudienceToolAuthor, ClassDriver, "profile executing Gooo code", missing(), "require-profiler-receipt", ProofRegression),
-	})
+	}
 }

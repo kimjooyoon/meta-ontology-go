@@ -24,11 +24,3 @@ func TestObserveRuleDispatchesExecutionCounters(t *testing.T) {
 		})
 	}
 }
-
-func TestObserveRuleDispatchesProfileCounter(t *testing.T) {
-	decoded := decodedEvidence{Profile: ProfileReceipt{Summary: ProfileSummary{Profiles: 2}}}
-	got, reason := observeRule(EvidenceRule{Kind: EvidenceProfile, Counter: "profiles"}, decoded)
-	if got != 2 || reason != "PROFILE_RECEIPTS_OBSERVED" {
-		t.Fatalf("observeRule() = (%d, %q)", got, reason)
-	}
-}
