@@ -2,6 +2,7 @@ package artifactemit
 
 import (
 	"encoding/json"
+	"sort"
 	"strings"
 )
 
@@ -13,6 +14,7 @@ type emitter struct {
 func emitterRegistry() []emitter {
 	return []emitter{
 		{kind: OperationManifestKind, project: projectOperationManifest},
+		{kind: OperationInterfaceKind, project: projectOperationInterface},
 	}
 }
 
@@ -22,6 +24,7 @@ func RegisteredKinds() []string {
 	for index, registered := range registeredEmitters {
 		kinds[index] = registered.kind
 	}
+	sort.Strings(kinds)
 	return kinds
 }
 
