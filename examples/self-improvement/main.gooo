@@ -8,6 +8,8 @@ entity ExecutionManifest id "gooo://meta/execution-manifest"
 entity Receipt id "gooo://meta/receipt"
 entity Evidence id "gooo://meta/evidence"
 entity ProofChoice id "gooo://meta/proof-choice"
+entity LanguageExperimentReceipt id "gooo://meta/language-experiment-receipt"
+entity ReadOnlyImprovementInput id "gooo://meta/read-only-improvement-input"
 
 entity Foundation id "proof://foundation"
 entity Coherence id "proof://coherence"
@@ -23,4 +25,5 @@ activity Plan(SourceMetrics, ProofChoice) -> GenerationPlan
 activity Execute(GenerationPlan, SourceRepacker, RefactorMetrics, SourceSplitter) -> ExecutionManifest
 activity Evaluate(ExecutionManifest) -> Receipt
 activity Verify(Receipt) -> Evidence
+activity Observe(LanguageExperimentReceipt) -> ReadOnlyImprovementInput
 activity Improve(Evidence) -> SourceTree

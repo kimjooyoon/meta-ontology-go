@@ -13,3 +13,9 @@ non-deterministic replay.
 
 The declaration does not authorize promotion. GitHub Actions remains the
 external conformance authority.
+
+The language experiment enters through `Observe` as a
+`ReadOnlyImprovementInput`. No other activity consumes that value yet. This
+keeps candidate generation, execution, mutation, and automatic adoption at
+zero while making the next extension point explicit in Gooo rather than only
+in a metric report.

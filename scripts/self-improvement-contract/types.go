@@ -46,4 +46,5 @@ type analysis struct {
 	LoopOK     bool
 	ExecutorOK bool
 	TrilemmaOK bool
+	ObservationOK bool
 }
