@@ -9,7 +9,6 @@ type LanguageTestReceipt struct {
 	Resolution        string              `json:"resolution"`
 	Summary           LanguageTestSummary `json:"summary"`
 	Views             []LanguageTestView  `json:"views"`
-	NotClaimed        []string            `json:"not_claimed"`
 	RepositoryWrites  int                 `json:"repository_writes"`
 	MutationAuthority bool                `json:"mutation_authority"`
 }
@@ -24,6 +23,7 @@ type LanguageTestSummary struct {
 	AssertionRejections     int                     `json:"assertion_rejections"`
 	MissingTestRejections   int                     `json:"missing_test_rejections"`
 	Unknowns                int                     `json:"unknowns"`
+	NonClaims               int                     `json:"non_claims"`
 	Compiler                LanguageTestCompiler    `json:"compiler"`
 	Effects                 LanguageTestEffects     `json:"effects"`
 }
@@ -87,7 +87,7 @@ func languageTestBoundaryExact(receipt LanguageTestReceipt) bool {
 		receipt.Summary.ReceiptDigestVariants == 1 && receipt.Summary.ExecutionDigestVariants == 1 &&
 		receipt.Summary.AssertionRejections == 1 && receipt.Summary.MissingTestRejections == 1 &&
 		compiler.Go127Runtimes == 2 && len(compiler.ExecutableDigest) == 71 && compiler.ExecutableDigest[:7] == "sha256:" &&
-		len(receipt.NotClaimed) == 3 && languageTestViewsExact(receipt.Views)
+		receipt.Summary.NonClaims == 3 && languageTestViewsExact(receipt.Views)
 }
 
 func languageTestViewsExact(views []LanguageTestView) bool {
