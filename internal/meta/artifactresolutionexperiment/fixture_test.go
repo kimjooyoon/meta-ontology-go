@@ -12,7 +12,7 @@ func validInput() Input {
 	manifest := artifactemit.Artifact{Schema: artifactemit.OperationManifestSchema,
 		Decision: "PASS", Resolution: "EXACT", Reason: "OPERATION_MANIFEST_EMITTED",
 		Kind: artifactemit.OperationManifestKind, SubjectDigest: "sha256:subject",
-		Package: artifactemit.Package{Path: "billing", Name: "billing", Namespace: "billing"},
+		Package:   artifactemit.Package{Path: "billing", Name: "billing", Namespace: "billing"},
 		Operation: artifactemit.Operation{Activity: "PayOrder"},
 		Definitions: artifactemit.DefinitionSet{Language: "gooo", Files: []artifactemit.Definition{
 			{Filename: "activity.gooo", Digest: "sha256:a", DeclarationCount: 1},
