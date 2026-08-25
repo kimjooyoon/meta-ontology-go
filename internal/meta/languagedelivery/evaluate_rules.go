@@ -26,7 +26,7 @@ func observeRule(rule EvidenceRule, decoded decodedEvidence) (int, string) {
 				return 1, "READINESS_OBLIGATION_EXACT"
 			}
 		}
-	case EvidenceLSPCounter, EvidenceConformance, EvidenceRelease:
+	case EvidenceLSPCounter, EvidenceConformance, EvidenceRelease, EvidenceExecution:
 		return observeCounter(rule, decoded)
 	}
 	return 0, "REQUIRED_EVIDENCE_NOT_SATISFIED"
@@ -48,6 +48,15 @@ func observeCounter(rule EvidenceRule, decoded decodedEvidence) (int, string) {
 			return decoded.Release.Summary.NativeSmokes, "RELEASE_SMOKE_COUNTER_OBSERVED"
 		}
 		return decoded.Release.Summary.PlatformReceipts, "RELEASE_PLATFORM_COUNTER_OBSERVED"
+	case EvidenceExecution:
+		switch rule.Counter {
+		case "source_executions":
+			return decoded.Execution.Summary.SourceExecutions, "SOURCE_EXECUTIONS_OBSERVED"
+		case "deterministic_replays":
+			return decoded.Execution.Summary.DeterministicReplays, "SOURCE_EXECUTION_REPLAYS_OBSERVED"
+		case "diagnostic_rejections":
+			return decoded.Execution.Summary.DiagnosticRejections, "SOURCE_EXECUTION_DIAGNOSTICS_OBSERVED"
+		}
 	}
 	return 0, "COUNTER_UNKNOWN"
 }

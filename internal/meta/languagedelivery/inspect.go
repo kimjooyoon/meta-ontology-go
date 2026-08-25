@@ -28,6 +28,8 @@ func inspectOne(source SourceName, data []byte, head string, decoded *decodedEvi
 		return inspectLSP(data, head, &decoded.LSP, entry)
 	case SourceRelease:
 		return inspectRelease(data, head, &decoded.Release, entry)
+	case SourceExecution:
+		return inspectExecution(data, head, &decoded.Execution, entry)
 	case SourceReadiness:
 		return inspectReadiness(data, head, &decoded.Readiness, entry)
 	default:

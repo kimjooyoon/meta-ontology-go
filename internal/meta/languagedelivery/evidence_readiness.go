@@ -21,5 +21,6 @@ type decodedEvidence struct {
 	Conformance ConformanceReceipt
 	LSP         LSPReceipt
 	Release     ReleaseReceipt
+	Execution   ExecutionReceipt
 	Readiness   ReadinessArtifact
 }

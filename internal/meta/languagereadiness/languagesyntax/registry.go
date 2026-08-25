@@ -35,6 +35,7 @@ func expectedRegistry() Registry {
 		valid("directory-partition-ontology", "internal/meta/directorypartition/ontology.gooo"),
 		invalid("unknown-keyword", "examples/language-syntax-roundtrip/unknown-keyword.txt", "parse.unexpected-token"),
 		invalid("unterminated-string", "examples/language-syntax-roundtrip/unterminated-string.txt", "lex.unterminated-string"),
+		invalid("source-execution-invalid", "examples/language-source-execution/invalid.gooo", "parse.unexpected-token"),
 		valid("source-splitter-conformance", "examples/source-splitter-conformance/main.gooo"),
 		valid("rollback-integrity-activation", "examples/rollback-integrity-activation/main.gooo"),
 		valid("vertical-slice-closure-activation", "examples/vertical-slice-closure-activation/main.gooo"),

@@ -13,11 +13,15 @@ The 24/24 receipt must never be described as universal language completeness. Th
 
 ## Fixed reader projections
 
-The v1 contract owns exactly 12 obligations per reader. Views are cumulative and reduce the same fact set:
+The v2 contract owns exactly 12 obligations per reader. Views are cumulative and reduce the same fact set:
 
 `USER subset TOOL_AUTHOR subset GOVERNOR`
 
 Every view carries both its projection decision and the global receipt decision. A local projection therefore cannot hide a global fail-closed state.
+
+The v2 executable receipt coordinates are `USER 9/12`, cumulative
+`TOOL_AUTHOR 19/24`, and cumulative `GOVERNOR 31/36`. Five obligations remain
+explicitly `NOT_IMPLEMENTED`; this is still an `INCOMPLETE` global decision.
 
 ## Status semantics
 

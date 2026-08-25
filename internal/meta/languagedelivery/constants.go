@@ -11,7 +11,7 @@ const (
 	ContractSchema = "gooo/language-delivery-contract/v1"
 	ManifestSchema = "gooo/language-delivery-source-manifest/v1"
 	ReportSchema   = "gooo/language-delivery-scorecard/v1"
-	ContractID     = "gooo-v0.1-observable-delivery"
+	ContractID     = "gooo-v0.2-observable-delivery"
 	MetaOperation  = "reduce-fixed-language-delivery-contract"
 )
 
@@ -32,6 +32,7 @@ const (
 	SourceConformance SourceName = "TOOLCHAIN_CONFORMANCE"
 	SourceLSP         SourceName = "TOOLCHAIN_LSP"
 	SourceRelease     SourceName = "CROSS_PLATFORM_RELEASE"
+	SourceExecution   SourceName = "LANGUAGE_SOURCE_EXECUTION"
 	SourceReadiness   SourceName = "LANGUAGE_READINESS"
 	SourceNone        SourceName = "NONE"
 )
@@ -43,6 +44,7 @@ const (
 	EvidenceLSPCounter    EvidenceKind = "LSP_COUNTER"
 	EvidenceConformance   EvidenceKind = "CONFORMANCE_COUNTER"
 	EvidenceRelease       EvidenceKind = "RELEASE_COUNTER"
+	EvidenceExecution     EvidenceKind = "SOURCE_EXECUTION_COUNTER"
 	EvidenceReadiness     EvidenceKind = "READINESS_OBLIGATION"
 	EvidenceUnimplemented EvidenceKind = "UNIMPLEMENTED"
 )
@@ -55,4 +57,4 @@ const (
 )
 
 var audienceOrder = []Audience{AudienceUser, AudienceToolAuthor, AudienceGovernor}
-var sourceOrder = []SourceName{SourceUserJourney, SourceConformance, SourceLSP, SourceRelease, SourceReadiness}
+var sourceOrder = []SourceName{SourceUserJourney, SourceConformance, SourceLSP, SourceRelease, SourceExecution, SourceReadiness}

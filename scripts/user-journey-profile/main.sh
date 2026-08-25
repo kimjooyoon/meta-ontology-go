@@ -50,6 +50,7 @@ profile CHECK_TEXT check "$source"
 profile CHECK_JSON check --json "$source"
 profile ROUNDTRIP_JSON roundtrip --json "$source"
 profile SEMANTIC_CHECK check --semantic "$source"
+profile RUN_SOURCE run --json --entry PayOrder "$source"
 
 mkdir -p "$(dirname "$output")"
 jq -s --arg subject_sha "$head" --arg os "${ImageOS:-ubuntu24}" \

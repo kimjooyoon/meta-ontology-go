@@ -44,7 +44,7 @@ func (s *inspection) buildReport(head string, contractRaw, upstreamRaw, profileR
 
 func expectedContract() Contract {
 	source := "examples/billing/main.gooo"
-	return Contract{Schema: "gooo/user-journey-scorecard-contract/v1", Version: 1,
+	return Contract{Schema: "gooo/user-journey-scorecard-contract/v1", Version: 2,
 		SamplesPerJourney: 5, WallMSLimit: 5000, MaxRSSKiBLimit: 262144,
 		BinarySizeLimit: 33554432, Source: source, Journeys: []JourneyDefinition{
 			{ID: "version-text", Operation: "VERSION_TEXT", Arguments: []string{"version"}, ProofChoice: "FOUNDATION", MetaOperation: "measure-version-text-resource"},
@@ -53,5 +53,6 @@ func expectedContract() Contract {
 			{ID: "check-json", Operation: "CHECK_JSON", Arguments: []string{"check", "--json", source}, ProofChoice: "COHERENCE", MetaOperation: "measure-structured-check-resource"},
 			{ID: "roundtrip-json", Operation: "ROUNDTRIP_JSON", Arguments: []string{"roundtrip", "--json", source}, ProofChoice: "COHERENCE", MetaOperation: "measure-roundtrip-resource"},
 			{ID: "semantic-check", Operation: "SEMANTIC_CHECK", Arguments: []string{"check", "--semantic", source}, ProofChoice: "COHERENCE", MetaOperation: "measure-semantic-check-resource"},
+			{ID: "run-source", Operation: "RUN_SOURCE", Arguments: []string{"run", "--json", "--entry", "PayOrder", source}, ProofChoice: "COHERENCE", MetaOperation: "measure-source-execution-resource"},
 		}}
 }

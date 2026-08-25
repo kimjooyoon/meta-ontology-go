@@ -3,16 +3,7 @@ package languagesemantic
 import "testing"
 
 func TestValidateSyntaxReceiptRejectsUnknownDecision(t *testing.T) {
-	receipt := syntaxReceipt{
-		Schema:     "gooo/language-syntax-roundtrip/v1",
-		Decision:   "UNKNOWN",
-		Resolution: "EXACT",
-		Source: syntaxSource{
-			ExpectedHeadSHA:  "0123456789012345678901234567890123456789",
-			ObservationKnown: true,
-			ConceptBound:     true,
-		},
-	}
+	receipt := syntaxReceipt{Schema: "gooo/language-syntax-roundtrip/v1", Decision: "UNKNOWN", Resolution: "EXACT", Source: syntaxSource{ExpectedHeadSHA: "0123456789012345678901234567890123456789", ObservationKnown: true, ConceptBound: true}}
 	if err := validateSyntaxReceipt(receipt, receipt.Source.ExpectedHeadSHA); err == nil {
 		t.Fatal("unknown syntax decision must lower semantic resolution")
 	}
@@ -25,22 +16,45 @@ func TestValidateSyntaxReceiptAcceptsVersionedDenominator(t *testing.T) {
 		Decision:   "PASS",
 		Resolution: "EXACT",
 		Summary: SyntaxSummary{
-			Satisfied:    19,
-			Total:        19,
-			ValidCases:   17,
-			InvalidCases: 2,
-			GoooLines:    262,
+			Satisfied:    expectedSyntaxCases,
+			Total:        expectedSyntaxCases,
+			ValidCases:   expectedSyntaxValid,
+			InvalidCases: expectedSyntaxInvalid,
+			GoooLines:    expectedSyntaxLines,
 		},
 		Source: syntaxSource{
 			ExpectedHeadSHA:  head,
-			GoooFiles:        make([]GoooFile, expectedSources),
+			GoooFiles:        make([]GoooFile, expectedSyntaxFiles),
 			ObservationKnown: true,
 			ConceptBound:     true,
 		},
+		Cases: versionedSyntaxCases(),
 	}
 	if err := validateSyntaxReceipt(receipt, head); err != nil {
 		t.Fatalf("versioned syntax denominator must remain consumable: %v", err)
 	}
+}
+
+func TestSemanticSourceProjectionPreservesUnknowns(t *testing.T) {
+	cases := versionedSyntaxCases()
+	receipt := syntaxReceipt{Cases: cases, Source: syntaxSource{GoooFiles: []GoooFile{{Path: cases[0].Definition.Path}, {Path: cases[19].Definition.Path}, {Path: "unknown.gooo"}}}}
+	paths := semanticSourcePaths(receipt)
+	if len(paths) != 2 || paths[0] != cases[0].Definition.Path || paths[1] != "unknown.gooo" {
+		t.Fatalf("semantic source paths = %#v", paths)
+	}
+}
+
+func versionedSyntaxCases() []syntaxCase {
+	cases := make([]syntaxCase, expectedSyntaxCases)
+	for index := range cases {
+		id := string(rune('a' + index))
+		cases[index].Definition.ID, cases[index].Definition.Path = id, id+".gooo"
+		cases[index].Definition.Kind = "VALID"
+		if index >= expectedSyntaxValid {
+			cases[index].Definition.Kind = "INVALID"
+		}
+	}
+	return cases
 }
 
 func TestRegistryRejectsUnknownLaw(t *testing.T) {

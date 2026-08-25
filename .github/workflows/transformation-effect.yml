@@ -1354,10 +1354,10 @@ jobs:
             .schema == "gooo/user-journey-scorecard/v1" and
             .status == "PASS" and .decision == "PASS" and .resolution == "EXACT" and
             .summary.coordinates.satisfied == 15 and .summary.coordinates.total == 15 and
-            .summary.functional.upstream_cases == 12 and .summary.functional.positive_journeys == 6 and
-            .summary.resources.samples_observed == 30 and .summary.resources.samples_expected == 30 and
-            .summary.resources.envelopes_passed == 6 and
-            .summary.meta.bindings == 18 and .summary.meta.unknowns == 0 and
+            .summary.functional.upstream_cases == 12 and .summary.functional.positive_journeys == 7 and
+            .summary.resources.samples_observed == 35 and .summary.resources.samples_expected == 35 and
+            .summary.resources.envelopes_passed == 7 and
+            .summary.meta.bindings == 19 and .summary.meta.unknowns == 0 and
             (.views[] | select(.Audience == "USER") | .Satisfied == 6 and .Total == 6) and
             (.views[] | select(.Audience == "TOOL_AUTHOR") | .Satisfied == 10 and .Total == 10) and
             (.views[] | select(.Audience == "GOVERNOR") | .Satisfied == 15 and .Total == 15) and
@@ -1788,6 +1788,7 @@ jobs:
     name: language-delivery-scorecard
     needs:
       - language-concept-artifact
+      - language-source-execution
       - user-journey-scorecard
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -1811,12 +1812,51 @@ jobs:
       - name: Reduce fixed language delivery contract
         shell: bash
         run: bash scripts/language-delivery-scorecard/main.sh
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: language-delivery-scorecard-${{ env.HEAD_SHA }}
           path: |
             delivery-output/report.json
             delivery-output/unknown-report.json
             delivery-evidence/manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
+  language-source-execution:
+    name: language-source-execution
+    needs: [language-concept-artifact]
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Execute Gooo source and reduce fixed receipts
+        shell: bash
+        run: bash scripts/language-source-execution/main.sh
+      - name: Upload exact-head source execution artifact
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-source-execution-${{ env.HEAD_SHA }}
+          path: source-execution-output
           if-no-files-found: error
           retention-days: 30

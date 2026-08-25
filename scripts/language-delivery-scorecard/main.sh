@@ -20,6 +20,7 @@ specs=(
   'TOOLCHAIN_CONFORMANCE|toolchain-conformance|artifact.json|conformance'
   'TOOLCHAIN_LSP|toolchain-lsp|artifact.json|lsp'
   'CROSS_PLATFORM_RELEASE|toolchain-cross-platform-release|artifact.json|release'
+  'LANGUAGE_SOURCE_EXECUTION|language-source-execution|artifact.json|execution'
   'LANGUAGE_READINESS|language-readiness-artifact|artifact.json|readiness'
 )
 : > delivery-evidence/entries.jsonl
@@ -55,16 +56,25 @@ run_scorecard() {
     --conformance "$conformance" \
     --lsp "$lsp" \
     --release "$release" \
+    --execution "$execution" \
     --readiness "$readiness" \
     --out "$output"
 }
 
+set +e
 run_scorecard examples/language-delivery-scorecard/contract.json delivery-evidence/manifest.json "$user_journey" delivery-output/report.json
+scorecard_code=$?
+set -e
+if [[ "$scorecard_code" != "0" ]]; then
+  jq -r '.sources[] | select(.state != "PASS") | "language delivery source: \(.source) state=\(.state) reason=\(.reason) decision=\(.decision) resolution=\(.resolution)"' delivery-output/report.json
+  jq -r '.obligations[] | select(.status == "UNKNOWN" or .status == "NOT_SATISFIED") | "language delivery obligation: \(.id) status=\(.status) reason=\(.reason) observed=\(.observed) expected=\(.expected)"' delivery-output/report.json
+  exit "$scorecard_code"
+fi
 jq -e '.decision == "INCOMPLETE" and .resolution == "EXACT"' delivery-output/report.json
-jq -e '.summary.coordinates == {satisfied:28,not_implemented:8,not_satisfied:0,unknown:0,total:36,basis_points:7777}' delivery-output/report.json
-jq -e '[.views[] | [.audience,.coordinates.satisfied,.coordinates.total]] == [["USER",6,12],["TOOL_AUTHOR",16,24],["GOVERNOR",28,36]]' delivery-output/report.json
+jq -e '.summary.coordinates == {satisfied:31,not_implemented:5,not_satisfied:0,unknown:0,total:36,basis_points:8611}' delivery-output/report.json
+jq -e '[.views[] | [.audience,.coordinates.satisfied,.coordinates.total]] == [["USER",9,12],["TOOL_AUTHOR",19,24],["GOVERNOR",31,36]]' delivery-output/report.json
 jq -e '.summary.internal_readiness.satisfied == 24 and .summary.internal_readiness.total == 24' delivery-output/report.json
-jq -e '.summary.meta_bindings == 36 and .summary.effects.repository_writes == 0 and .summary.effects.mutation_authority == false' delivery-output/report.json
+jq -e '.summary.meta_bindings == 36 and .summary.source_receipts == 6 and .summary.source_receipts_total == 6 and .summary.effects.repository_writes == 0 and .summary.effects.mutation_authority == false' delivery-output/report.json
 
 jq '.decision="UNKNOWN"' "$user_journey" > delivery-output/unknown-user.json
 unknown_digest="sha256:$(sha256sum delivery-output/unknown-user.json | cut -d' ' -f1)"

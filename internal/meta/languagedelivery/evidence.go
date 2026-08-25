@@ -5,6 +5,7 @@ type EvidenceSet struct {
 	Conformance []byte
 	LSP         []byte
 	Release     []byte
+	Execution   []byte
 	Readiness   []byte
 }
 
@@ -18,6 +19,8 @@ func (set EvidenceSet) Bytes(source SourceName) []byte {
 		return set.LSP
 	case SourceRelease:
 		return set.Release
+	case SourceExecution:
+		return set.Execution
 	case SourceReadiness:
 		return set.Readiness
 	default:

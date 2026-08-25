@@ -29,7 +29,7 @@ func toolchainLinks(surfaces []artifactSurface, head string) int {
 		schema string
 		cases  int
 	}{
-		"language-syntax-roundtrip":      {"gooo/language-syntax-roundtrip/v1", 19},
+		"language-syntax-roundtrip":      {"gooo/language-syntax-roundtrip/v1", 20},
 		"language-semantic-model":        {"gooo/language-semantic-model/v1", 22},
 		"toolchain-executable-use-cases": {"gooo/toolchain-executable-use-cases/v1", 3},
 	}

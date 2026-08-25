@@ -2,6 +2,7 @@ package languagesyntax
 
 import (
 	"io/fs"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
@@ -48,7 +49,7 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 func compareCorpus(registry Registry, observed []replay.FileObservation) ([]string, []string) {
 	expected, present := map[string]bool{}, map[string]bool{}
 	for _, definition := range registry.Cases {
-		if definition.Kind == KindValid {
+		if strings.HasSuffix(definition.Path, ".gooo") {
 			expected[definition.Path] = true
 		}
 	}
@@ -61,7 +62,7 @@ func compareCorpus(registry Registry, observed []replay.FileObservation) ([]stri
 	}
 	missing := []string{}
 	for _, definition := range registry.Cases {
-		if definition.Kind == KindValid && !present[definition.Path] {
+		if strings.HasSuffix(definition.Path, ".gooo") && !present[definition.Path] {
 			missing = append(missing, definition.Path)
 		}
 	}

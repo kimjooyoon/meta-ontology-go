@@ -10,7 +10,7 @@ func syntaxFixture(head string) []byte {
 		"mutation_authorized": false,
 		"source": map[string]any{"expected_head_sha": head,
 			"concept_artifact_digest": fixtureDigest("1")},
-		"summary": map[string]any{"satisfied": 19, "total": 19, "executed": 19,
+		"summary": map[string]any{"satisfied": 20, "total": 20, "executed": 20,
 			"not_satisfied": 0, "unresolved": 0, "readiness_bps": 10000}})
 }
 

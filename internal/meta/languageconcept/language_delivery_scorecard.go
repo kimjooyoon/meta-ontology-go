@@ -17,8 +17,8 @@ var languageDeliveryScorecardConcept = Concept{
 	},
 	MetricBindings: delivery.MetricIDs(),
 	UseCases: []UseCase{
-		{ID: "known-delivery-gaps", Trigger: "eight fixed obligations have no executable receipt", ExpectedOutcome: "INCOMPLETE_28_OF_36"},
-		{ID: "reader-resolution", Trigger: "user, tool author, and governor inspect the same facts", ExpectedOutcome: "6_OF_12_16_OF_24_28_OF_36"},
+		{ID: "known-delivery-gaps", Trigger: "five fixed obligations have no executable receipt", ExpectedOutcome: "INCOMPLETE_31_OF_36"},
+		{ID: "reader-resolution", Trigger: "user, tool author, and governor inspect the same facts", ExpectedOutcome: "9_OF_12_19_OF_24_31_OF_36"},
 		{ID: "unknown-source-receipt", Trigger: "an upstream decision is not explicit PASS", ExpectedOutcome: "FAIL_CLOSED_LOWER_RESOLUTION"},
 	},
 }

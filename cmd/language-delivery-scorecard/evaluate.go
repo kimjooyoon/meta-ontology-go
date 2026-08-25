@@ -23,6 +23,7 @@ func evaluate(value options, stdout, stderr io.Writer) int {
 		languagedelivery.SourceConformance: value.conformance,
 		languagedelivery.SourceLSP:         value.lsp,
 		languagedelivery.SourceRelease:     value.release,
+		languagedelivery.SourceExecution:   value.execution,
 		languagedelivery.SourceReadiness:   value.readiness,
 	}
 	evidence, err := languagedelivery.ReadEvidence(paths)

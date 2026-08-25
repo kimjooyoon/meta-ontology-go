@@ -1,6 +1,6 @@
 {
   "schema": "gooo/user-journey-scorecard-contract/v1",
-  "version": 1,
+  "version": 2,
   "samples_per_journey": 5,
   "wall_ms_limit": 5000,
   "max_rss_kib_limit": 262144,
@@ -12,6 +12,7 @@
     {"id":"check-text","operation":"CHECK_TEXT","arguments":["check","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-syntax-check-resource"},
     {"id":"check-json","operation":"CHECK_JSON","arguments":["check","--json","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-structured-check-resource"},
     {"id":"roundtrip-json","operation":"ROUNDTRIP_JSON","arguments":["roundtrip","--json","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-roundtrip-resource"},
-    {"id":"semantic-check","operation":"SEMANTIC_CHECK","arguments":["check","--semantic","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-semantic-check-resource"}
+    {"id":"semantic-check","operation":"SEMANTIC_CHECK","arguments":["check","--semantic","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-semantic-check-resource"},
+    {"id":"run-source","operation":"RUN_SOURCE","arguments":["run","--json","--entry","PayOrder","examples/billing/main.gooo"],"proof_choice":"COHERENCE","meta_operation":"measure-source-execution-resource"}
   ]
 }
