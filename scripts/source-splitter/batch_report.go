@@ -16,7 +16,7 @@ func readLogicalSplitPlan(name string) (logicalSplitPlan, error) {
 	return report, err
 }
 
-func buildSplitBatchReport(sha string, plans []plannedSplit, subjects []splitBatchSubject) splitBatchReport {
+func buildSplitBatchReport(sha string, plans []plannedSplit, subjects []splitBatchSubject, deferred int) splitBatchReport {
 	selected := make([]string, len(plans))
 	changed, created := 0, 0
 	for index, item := range plans {
@@ -31,10 +31,10 @@ func buildSplitBatchReport(sha string, plans []plannedSplit, subjects []splitBat
 		decision, reason = "FIXED_POINT", "NO_PROJECTABLE_SUBJECTS"
 	}
 	coordinates := splitBatchCoordinates{SelectedSubjects: len(selected), AppliedSubjects: len(subjects),
-		ChangedPaths: changed, CreatedPaths: created}
+		ChangedPaths: changed, CreatedPaths: created, DeferredTopology: deferred}
 	report := splitBatchReport{Schema: splitBatchSchema, SourceSHA: sha, Decision: decision, Resolution: "EXACT",
 		Reason: reason, MetaOperation: splitBatchOperation, Selected: selected, Subjects: subjects,
-		Coordinates: coordinates, Exact: len(selected) == len(subjects)}
+		Coordinates: coordinates, SuccessorProjectionRequired: deferred != 0, Exact: len(selected) == len(subjects)}
 	report.Indicators = []splitBatchIndicator{
 		{ID: "split.selected", Class: "DRIVER", ProofChoice: "FOUNDATION", MetaOperation: splitBatchOperation,
 			Observed: len(selected), Expected: len(selected), Satisfied: true},
@@ -42,10 +42,12 @@ func buildSplitBatchReport(sha string, plans []plannedSplit, subjects []splitBat
 			Observed: len(subjects), Expected: len(selected), Satisfied: report.Exact},
 		{ID: "guardrail.unknown", Class: "GUARDRAIL", ProofChoice: "REGRESSION", MetaOperation: splitBatchOperation,
 			Observed: coordinates.Unknowns, Expected: 0, Satisfied: coordinates.Unknowns == 0},
+		{ID: "split.topology-deferred", Class: "DRIVER", ProofChoice: "REGRESSION", MetaOperation: "project-generated-paths",
+			Observed: deferred, Expected: 0, Satisfied: deferred == 0},
 	}
 	report.Proofs = []splitBatchProof{{Choice: "FOUNDATION", MetaOperation: "select-projectable-subjects", Passed: true},
 		{Choice: "COHERENCE", MetaOperation: splitBatchOperation, Passed: report.Exact},
-		{Choice: "REGRESSION", MetaOperation: "reject-incomplete-split-evidence", Passed: coordinates.Unknowns == 0}}
+		{Choice: "REGRESSION", MetaOperation: "project-generated-paths", Passed: deferred == 0}}
 	return sealSplitBatchReport(report)
 }
 

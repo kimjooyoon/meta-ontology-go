@@ -5,6 +5,7 @@ type splitBatchCoordinates struct {
 	AppliedSubjects  int `json:"applied_subjects"`
 	ChangedPaths     int `json:"changed_paths"`
 	CreatedPaths     int `json:"created_paths"`
+	DeferredTopology int `json:"deferred_topology_subjects"`
 	Unknowns         int `json:"unknowns"`
 }
 
@@ -37,6 +38,7 @@ type splitBatchReport struct {
 	Coordinates   splitBatchCoordinates `json:"coordinates"`
 	Indicators    []splitBatchIndicator `json:"indicators"`
 	Proofs        []splitBatchProof     `json:"proofs"`
+	SuccessorProjectionRequired bool    `json:"successor_projection_required"`
 	Exact         bool                  `json:"exact"`
 	Digest        string                `json:"digest"`
 }
