@@ -55,6 +55,23 @@ cp \
 cp "$profile_build/gooo" source-execution-output/profile/gooo
 cp "$profile_build/language-profile-experiment" source-execution-output/profile/language-profile-experiment
 
+bash scripts/language-debug-experiment/main.sh
+debug_work="${RUNNER_TEMP:-/tmp}/language-debug-experiment"
+debug_build="${RUNNER_TEMP:-/tmp}/language-debug-build"
+mkdir -p source-execution-output/debug
+cp \
+  "$debug_work/unformatted.txt" \
+  "$debug_work/first.json" \
+  "$debug_work/second.json" \
+  "$debug_work/unknown-breakpoint.json" \
+  "$debug_work/input.json" \
+  "$debug_work/report.json" \
+  "$debug_work/unknown-top-input.json" \
+  "$debug_work/unknown-top-report.json" \
+  source-execution-output/debug/
+cp "$debug_build/gooo" source-execution-output/debug/gooo
+cp "$debug_build/language-debug-experiment" source-execution-output/debug/language-debug-experiment
+
 git diff --exit-code
 
 {

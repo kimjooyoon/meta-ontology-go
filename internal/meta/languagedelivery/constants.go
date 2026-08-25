@@ -9,7 +9,7 @@ type ResultStatus string
 
 const (
 	ContractSchema = "gooo/language-delivery-contract/v1"
-	ManifestSchema = "gooo/language-delivery-source-manifest/v2"
+	ManifestSchema = "gooo/language-delivery-source-manifest/v3"
 	ReportSchema   = "gooo/language-delivery-scorecard/v1"
 	ContractID     = "gooo-v0.2-observable-delivery"
 	MetaOperation  = "reduce-fixed-language-delivery-contract"
@@ -34,6 +34,7 @@ const (
 	SourceRelease     SourceName = "CROSS_PLATFORM_RELEASE"
 	SourceExecution   SourceName = "LANGUAGE_SOURCE_EXECUTION"
 	SourceProfile     SourceName = "LANGUAGE_PROFILE"
+	SourceDebug       SourceName = "LANGUAGE_DEBUG"
 	SourceReadiness   SourceName = "LANGUAGE_READINESS"
 	SourceNone        SourceName = "NONE"
 )
@@ -47,6 +48,7 @@ const (
 	EvidenceRelease       EvidenceKind = "RELEASE_COUNTER"
 	EvidenceExecution     EvidenceKind = "SOURCE_EXECUTION_COUNTER"
 	EvidenceProfile       EvidenceKind = "PROFILE_COUNTER"
+	EvidenceDebug         EvidenceKind = "DEBUG_COUNTER"
 	EvidenceReadiness     EvidenceKind = "READINESS_OBLIGATION"
 	EvidenceUnimplemented EvidenceKind = "UNIMPLEMENTED"
 )
@@ -59,4 +61,4 @@ const (
 )
 
 var audienceOrder = []Audience{AudienceUser, AudienceToolAuthor, AudienceGovernor}
-var sourceOrder = []SourceName{SourceUserJourney, SourceConformance, SourceLSP, SourceRelease, SourceExecution, SourceProfile, SourceReadiness}
+var sourceOrder = []SourceName{SourceUserJourney, SourceConformance, SourceLSP, SourceRelease, SourceExecution, SourceProfile, SourceDebug, SourceReadiness}

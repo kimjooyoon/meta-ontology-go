@@ -23,5 +23,6 @@ type decodedEvidence struct {
 	Release     ReleaseReceipt
 	Execution   ExecutionReceipt
 	Profile     ProfileReceipt
+	Debug       DebugReceipt
 	Readiness   ReadinessArtifact
 }

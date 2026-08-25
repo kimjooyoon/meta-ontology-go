@@ -7,6 +7,7 @@ type EvidenceSet struct {
 	Release     []byte
 	Execution   []byte
 	Profile     []byte
+	Debug       []byte
 	Readiness   []byte
 }
 
@@ -24,6 +25,8 @@ func (set EvidenceSet) Bytes(source SourceName) []byte {
 		return set.Execution
 	case SourceProfile:
 		return set.Profile
+	case SourceDebug:
+		return set.Debug
 	case SourceReadiness:
 		return set.Readiness
 	default:

@@ -41,6 +41,8 @@ func ReadEvidence(paths map[SourceName]string) (EvidenceSet, error) {
 			set.Execution = data
 		case SourceProfile:
 			set.Profile = data
+		case SourceDebug:
+			set.Debug = data
 		case SourceReadiness:
 			set.Readiness = data
 		}
