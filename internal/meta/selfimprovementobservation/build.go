@@ -1,10 +1,5 @@
 package selfimprovementobservation
 
-import (
-	"bytes"
-	"encoding/json"
-)
-
 type projection struct {
 	Observation Observation
 	Validation  validation
