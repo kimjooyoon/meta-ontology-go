@@ -1,0 +1,106 @@
+name: Symbolic invocation user use case
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/symbolic-invocation-usecase.yml'
+      - 'cmd/gooo/**'
+      - 'cmd/symbolic-invocation-usecase/**'
+      - 'examples/symbolic-invocation-schema/**'
+      - 'examples/symbolic-invocation-usecase/**'
+      - 'internal/packageruntime/artifactemit/**'
+      - 'internal/meta/symbolicinvocationusecase/**'
+      - 'scripts/symbolic-invocation-schema/**'
+      - 'scripts/symbolic-invocation-usecase/**'
+      - 'go.mod'
+      - 'go.sum'
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/symbolic-invocation-usecase.yml'
+      - 'cmd/gooo/**'
+      - 'cmd/symbolic-invocation-usecase/**'
+      - 'examples/symbolic-invocation-schema/**'
+      - 'examples/symbolic-invocation-usecase/**'
+      - 'internal/packageruntime/artifactemit/**'
+      - 'internal/meta/symbolicinvocationusecase/**'
+      - 'scripts/symbolic-invocation-schema/**'
+      - 'scripts/symbolic-invocation-usecase/**'
+      - 'go.mod'
+      - 'go.sum'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: symbolic-invocation-usecase-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  producer:
+    name: Produce exact-head symbolic schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          check-latest: true
+      - name: Produce schema evidence through merged compiler path
+        run: bash scripts/symbolic-invocation-schema/main.sh
+      - name: Locate one producer boundary
+        id: locate
+        shell: bash
+        run: |
+          mapfile -t receipts < <(find "$RUNNER_TEMP" "$GITHUB_WORKSPACE" -type f -path '*/symbolic-invocation-schema*/receipt.json' | sort -u)
+          test "${#receipts[@]}" -eq 1
+          producer_path=$(dirname "${receipts[0]}")
+          test -f "$producer_path/artifact.json"
+          test -f "$producer_path/schema.json"
+          test -f "$producer_path/bin/jv"
+          echo "path=$producer_path" >> "$GITHUB_OUTPUT"
+      - name: Upload producer evidence boundary
+        uses: actions/upload-artifact@v6
+        with:
+          name: symbolic-invocation-schema-producer-${{ env.HEAD_SHA }}
+          path: ${{ steps.locate.outputs.path }}
+          if-no-files-found: error
+
+  consumer:
+    name: Reduce independent user observation
+    needs: producer
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          check-latest: true
+      - name: Download exact producer evidence
+        uses: actions/download-artifact@v6
+        with:
+          name: symbolic-invocation-schema-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/symbolic-invocation-schema-producer
+      - name: Observe and reduce fixed user decisions
+        run: bash scripts/symbolic-invocation-usecase/main.sh "$RUNNER_TEMP/symbolic-invocation-schema-producer"
+      - name: Upload user-use-case receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: symbolic-invocation-usecase-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/symbolic-invocation-usecase
+          if-no-files-found: error
