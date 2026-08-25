@@ -1,0 +1,96 @@
+name: Repository projection diagnostics
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/repository-projection-diagnostics.yml'
+      - 'bootstrap/repository-projector/**'
+      - 'examples/repository-projection-diagnostics/**'
+      - 'go.mod'
+      - 'go.sum'
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/repository-projection-diagnostics.yml'
+      - 'bootstrap/repository-projector/**'
+      - 'examples/repository-projection-diagnostics/**'
+      - 'go.mod'
+      - 'go.sum'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-projection-diagnostics-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  diagnose:
+    name: Resolve physical topology subjects
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXACT_SHA }}
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          check-latest: true
+      - name: Conform diagnostic code
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix ./bootstrap/repository-projector
+          git diff --exit-code -- bootstrap/repository-projector
+          gofmt -l bootstrap/repository-projector | tee "$RUNNER_TEMP/repository-projector-unformatted.txt"
+          test ! -s "$RUNNER_TEMP/repository-projector-unformatted.txt"
+          go test ./bootstrap/repository-projector
+      - name: Observe the fail-closed storage subject
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/repository-projection-diagnostics"
+          mkdir -p "$work"
+          set +e
+          go run ./bootstrap/repository-projector \
+            --root "$GITHUB_WORKSPACE" \
+            --work "$work/projector" \
+            --expected-sha "$EXACT_SHA" \
+            > "$work/projector.log" 2>&1
+          status=$?
+          set -e
+          test "$status" -eq 1
+          evidence="$work/projector/evidence.json"
+          jq -e --arg sha "$EXACT_SHA" '
+            .schema=="gooo.repository-projection-evidence.v1" and .source_sha==$sha and
+            (.indicators[]|select(.id=="projection.roundtrip-loss")|.value==0) and
+            (.indicators[]|select(.id=="projection.unbound-entry")|.value==0) and
+            (.indicators[]|select(.id=="storage.direct-entry")|.value==1 and .limit==0 and .blocking==true) and
+            (.indicators[]|select(.id=="storage.mixed-kind")|.value==0) and
+            ([.subjects[]|select(.indicator=="storage.direct-entry" and .physical!="" and .value>.limit and .consumer=="radix-sharder" and .meta_operation=="split-object-bucket")]|length)==1 and
+            ([.subjects[]|select(.physical==".")]|length)==0
+          ' "$evidence"
+          cat "$work/projector.log"
+          {
+            echo '### Repository projection diagnostic'
+            echo
+            jq -r '.subjects[]|select(.indicator=="storage.direct-entry" or .indicator=="storage.mixed-kind")|"- \(.indicator): `\(.physical)` = \(.value), limit \(.limit), operation `\(.meta_operation)`"' "$evidence"
+            echo '- decision: `FAIL_CLOSED` (guard unchanged)'
+            echo '- repository writes: `0`'
+          } >> "$GITHUB_STEP_SUMMARY"
+          sha256sum "$evidence" > "$work/evidence.json.sha256"
+          cp "$RUNNER_TEMP/repository-projector-unformatted.txt" "$work/unformatted.txt"
+      - name: Upload exact-head diagnostic evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: repository-projection-diagnostics-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/repository-projection-diagnostics
+          if-no-files-found: error

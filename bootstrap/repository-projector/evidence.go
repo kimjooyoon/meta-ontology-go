@@ -4,10 +4,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 )
 
-func topologyFailures(root string) (int, int, error) {
-	direct, mixed := 0, 0
+const (
+	directIndicator        = "storage.direct-entry"
+	mixedIndicator         = "storage.mixed-kind"
+	maxStoredDirectEntries = 10
+	maxStoredKinds         = 1
+	topologyProof          = "axiomatic-foundation"
+)
+
+func topologyFailures(root string) (topologyEvidence, error) {
+	result := topologyEvidence{}
 	err := filepath.WalkDir(root, func(name string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil || !entry.IsDir() || filepath.Clean(name) == filepath.Clean(root) {
 			return walkErr
@@ -16,8 +26,17 @@ func topologyFailures(root string) (int, int, error) {
 		if err != nil {
 			return err
 		}
-		if len(children) > 10 {
-			direct++
+		relative, err := filepath.Rel(root, name)
+		if err != nil {
+			return err
+		}
+		physical := filepath.ToSlash(relative)
+		if len(children) > maxStoredDirectEntries {
+			result.Direct++
+			result.Subjects = append(result.Subjects, subject{
+				Indicator: directIndicator, Physical: physical, Value: len(children), Limit: maxStoredDirectEntries,
+				Consumer: "radix-sharder", Operation: "split-object-bucket",
+			})
 		}
 		hasDirectory, hasFile := false, false
 		for _, child := range children {
@@ -25,15 +44,25 @@ func topologyFailures(root string) (int, int, error) {
 			hasFile = hasFile || !child.IsDir()
 		}
 		if hasDirectory && hasFile {
-			mixed++
+			result.Mixed++
+			result.Subjects = append(result.Subjects, subject{
+				Indicator: mixedIndicator, Physical: physical, Value: 2, Limit: maxStoredKinds,
+				Consumer: "radix-sharder", Operation: "separate-branch-leaf",
+			})
 		}
 		return nil
 	})
-	return direct, mixed, err
+	sort.Slice(result.Subjects, func(i, j int) bool {
+		if result.Subjects[i].Indicator == result.Subjects[j].Indicator {
+			return result.Subjects[i].Physical < result.Subjects[j].Physical
+		}
+		return result.Subjects[i].Indicator < result.Subjects[j].Indicator
+	})
+	return result, err
 }
-func buildEvidence(sha string, model manifest, objects, loss, direct, mixed int) evidence {
+func buildEvidence(sha string, model manifest, objects, loss int, topology topologyEvidence) evidence {
 	unbound, lineDebt := 0, 0
-	subjects := make([]subject, 0)
+	subjects := append([]subject(nil), topology.Subjects...)
 	for _, entry := range model.Entries {
 		if entry.ObjectSHA == "" || entry.Backing == "" {
 			unbound++
@@ -47,7 +76,7 @@ func buildEvidence(sha string, model manifest, objects, loss, direct, mixed int)
 			})
 		}
 	}
-	proof := "axiomatic-foundation"
+	proof := topologyProof
 	return evidence{
 		Schema: "gooo.repository-projection-evidence.v1", SourceSHA: sha,
 		TrackedFiles: len(model.Entries), Objects: objects, Subjects: subjects,
@@ -56,9 +85,9 @@ func buildEvidence(sha string, model manifest, objects, loss, direct, mixed int)
 				Consumer: "repository-materializer", Operation: "restore-logical-tree", Proof: proof},
 			{ID: "projection.unbound-entry", Value: unbound, Limit: 0, Blocking: true,
 				Consumer: "repository-projector", Operation: "bind-content-object", Proof: proof},
-			{ID: "storage.direct-entry", Value: direct, Limit: 0, Blocking: true,
+			{ID: directIndicator, Value: topology.Direct, Limit: 0, Blocking: true,
 				Consumer: "radix-sharder", Operation: "split-object-bucket", Proof: proof},
-			{ID: "storage.mixed-kind", Value: mixed, Limit: 0, Blocking: true,
+			{ID: mixedIndicator, Value: topology.Mixed, Limit: 0, Blocking: true,
 				Consumer: "radix-sharder", Operation: "separate-branch-leaf", Proof: proof},
 			{ID: "source.line-cap-debt", Value: lineDebt, Limit: 0, Blocking: false,
 				Consumer: "logical-source-splitter", Operation: "split-before-storage", Proof: proof},
@@ -68,8 +97,24 @@ func buildEvidence(sha string, model manifest, objects, loss, direct, mixed int)
 func requireBlockingZero(report evidence) error {
 	for _, metric := range report.Indicators {
 		if metric.Blocking && metric.Value > metric.Limit {
+			details := blockingSubjectDetails(report.Subjects, metric.ID)
+			if details != "" {
+				return fmt.Errorf("blocking indicator %s=%d subjects=%s", metric.ID, metric.Value, details)
+			}
 			return fmt.Errorf("blocking indicator %s=%d", metric.ID, metric.Value)
 		}
 	}
 	return nil
+}
+
+func blockingSubjectDetails(subjects []subject, indicatorID string) string {
+	details := make([]string, 0)
+	for _, item := range subjects {
+		if item.Indicator != indicatorID || item.Physical == "" {
+			continue
+		}
+		details = append(details, fmt.Sprintf("%s(%d>%d)", item.Physical, item.Value, item.Limit))
+	}
+	sort.Strings(details)
+	return strings.Join(details, ",")
 }
