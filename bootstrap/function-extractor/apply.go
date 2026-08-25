@@ -9,15 +9,14 @@ import (
 
 func stageExtractions(root string, plans map[string]planSubject, residual []string,
 	recipes []extractionRecipe) (map[string]stagedFile, []extractionSubject, []string, error) {
-	bySubject := make(map[string]extractionRecipe, len(recipes))
-	for _, recipe := range recipes {
-		if _, exists := bySubject[recipe.Subject]; exists {
-			return nil, nil, nil, fmt.Errorf("duplicate recipe %s", recipe.Subject)
-		}
-		bySubject[recipe.Subject] = recipe
+	bySubject, err := indexRecipes(recipes)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 	buffers := make(map[string][]byte)
+	created := make(map[string]bool)
 	changedBySubject := make(map[string][]string)
+	createdBySubject := make(map[string][]string)
 	unhandled := make([]string, 0)
 	for _, logical := range residual {
 		recipe, exists := bySubject[logical]
@@ -44,8 +43,16 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 			buffers[edit.Path] = bytes.Replace(data, oldText, newText, 1)
 			changedBySubject[logical] = appendUnique(changedBySubject[logical], edit.Path)
 		}
+		paths, err := stageCreations(root, recipe, buffers, created)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		for _, path := range paths {
+			changedBySubject[logical] = appendUnique(changedBySubject[logical], path)
+			createdBySubject[logical] = appendUnique(createdBySubject[logical], path)
+		}
 	}
-	staged, err := formatStaged(root, buffers)
+	staged, err := formatStaged(root, buffers, created)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -56,13 +63,15 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 			continue
 		}
 		sort.Strings(files)
+		createdFiles := createdBySubject[logical]
+		sort.Strings(createdFiles)
 		source, exists := staged[logical]
 		if !exists {
 			return nil, nil, nil, fmt.Errorf("recipe did not rewrite subject %s", logical)
 		}
 		subjects = append(subjects, extractionSubject{
 			Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.data),
-			Files: files, Consumer: "function-extractor",
+			Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor",
 			Operation: bySubject[logical].Operation, Proof: "axiomatic-foundation",
 		})
 	}

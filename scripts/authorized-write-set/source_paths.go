@@ -30,17 +30,28 @@ func densityPaths(report densityReport) (map[string]bool, bool) {
 	return result, true
 }
 
-func extractionPaths(report extractionReport) (map[string]bool, bool) {
-	values := make([]string, 0)
+func extractionPaths(report extractionReport) (map[string]bool, map[string]bool, bool) {
+	values, created := make([]string, 0), make([]string, 0)
 	for _, subject := range report.Subjects {
 		values = append(values, subject.Files...)
+		created = append(created, subject.Created...)
 	}
 	for _, value := range report.Unhandled {
 		if !canonicalPath(value) {
-			return nil, false
+			return nil, nil, false
 		}
 	}
-	return pathSet(values)
+	paths, pathsExact := pathSet(values)
+	createdPaths, createdExact := pathSet(created)
+	if !pathsExact || !createdExact {
+		return nil, nil, false
+	}
+	for value := range createdPaths {
+		if !paths[value] {
+			return nil, nil, false
+		}
+	}
+	return paths, createdPaths, true
 }
 
 func unionPaths(left, right map[string]bool) map[string]bool {

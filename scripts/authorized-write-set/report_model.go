@@ -8,7 +8,9 @@ type coordinates struct {
 	OverlapPaths        int `json:"overlap_paths"`
 	ExpectedPaths       int `json:"expected_paths"`
 	ObservedPaths       int `json:"observed_paths"`
+	CreatedPaths        int `json:"created_paths"`
 	UntrackedPaths      int `json:"untracked_paths"`
+	UnclassifiedPaths   int `json:"unclassified_untracked_paths"`
 	Unknowns            int `json:"unknowns"`
 }
 type indicator struct {
@@ -39,6 +41,8 @@ type evidence struct {
 	MetaOperation string      `json:"meta_operation"`
 	Expected      []string    `json:"expected"`
 	Observed      []string    `json:"observed"`
+	ExpectedCreated []string  `json:"expected_created"`
+	ObservedCreated []string  `json:"observed_created"`
 	Coordinates   coordinates `json:"coordinates"`
 	Indicators    []indicator `json:"indicators"`
 	Proofs        []proof     `json:"proofs"`

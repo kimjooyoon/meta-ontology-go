@@ -12,7 +12,7 @@ func exactReports() (densityReport, extractionReport) {
 
 func TestReduceUnionsDensityAndExtractionReceipts(t *testing.T) {
 	density, extraction := exactReports()
-	report := reduce("abc", density, extraction, []string{"c.go", "a.go"}, 0)
+	report := reduce("abc", density, extraction, []string{"c.go", "a.go"}, nil)
 	if report.Decision != "PASS" || report.Resolution != "EXACT" || !report.Exact {
 		t.Fatalf("decision=%s resolution=%s reason=%s", report.Decision, report.Resolution, report.Reason)
 	}
@@ -29,7 +29,7 @@ func TestReduceUnionsDensityAndExtractionReceipts(t *testing.T) {
 
 func TestReduceKnownMismatchKeepsExactResolution(t *testing.T) {
 	density, extraction := exactReports()
-	report := reduce("abc", density, extraction, []string{"a.go"}, 0)
+	report := reduce("abc", density, extraction, []string{"a.go"}, nil)
 	if report.Decision != "FAIL_CLOSED" || report.Resolution != "EXACT" ||
 		report.Reason != "WRITE_SET_NOT_EXACT" || report.Coordinates.Unknowns != 0 {
 		t.Fatalf("report=%#v", report)
@@ -38,8 +38,18 @@ func TestReduceKnownMismatchKeepsExactResolution(t *testing.T) {
 
 func TestReduceRejectsUntrackedPath(t *testing.T) {
 	density, extraction := exactReports()
-	report := reduce("abc", density, extraction, []string{"a.go", "c.go"}, 1)
-	if report.Reason != "WRITE_SET_NOT_EXACT" || report.Coordinates.UntrackedPaths != 1 {
+	report := reduce("abc", density, extraction, []string{"a.go", "c.go", "rogue.go"}, []string{"rogue.go"})
+	if report.Reason != "WRITE_SET_NOT_EXACT" || report.Coordinates.UnclassifiedPaths != 1 {
+		t.Fatalf("report=%#v", report)
+	}
+}
+
+func TestReduceAcceptsRecipeDeclaredCreation(t *testing.T) {
+	density, extraction := exactReports()
+	extraction.Subjects[0].Created = []string{"c.go"}
+	report := reduce("abc", density, extraction, []string{"a.go", "c.go"}, []string{"c.go"})
+	if report.Decision != "PASS" || report.Coordinates.CreatedPaths != 1 ||
+		report.Coordinates.UnclassifiedPaths != 0 {
 		t.Fatalf("report=%#v", report)
 	}
 }

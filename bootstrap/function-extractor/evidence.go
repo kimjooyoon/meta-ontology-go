@@ -23,13 +23,14 @@ type densitySubject struct {
 }
 
 type extractionSubject struct {
-	Logical   string   `json:"logical"`
-	Before    int      `json:"before_lines"`
-	After     int      `json:"after_lines"`
-	Files     []string `json:"changed_files"`
-	Consumer  string   `json:"consumer"`
-	Operation string   `json:"meta_operation"`
-	Proof     string   `json:"proof_choice"`
+	Logical      string   `json:"logical"`
+	Before       int      `json:"before_lines"`
+	After        int      `json:"after_lines"`
+	Files        []string `json:"changed_files"`
+	CreatedFiles []string `json:"created_files,omitempty"`
+	Consumer     string   `json:"consumer"`
+	Operation    string   `json:"meta_operation"`
+	Proof        string   `json:"proof_choice"`
 }
 
 type extractionIndicator struct {

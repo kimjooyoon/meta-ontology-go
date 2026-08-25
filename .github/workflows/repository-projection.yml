@@ -73,21 +73,32 @@ jobs:
         run: |
           expected="$RUNNER_TEMP/repository-projection/authorized-write-set.txt"
           observed="$RUNNER_TEMP/repository-projection/observed-write-set.txt"
+          untracked="$RUNNER_TEMP/repository-projection/untracked-write-set.txt"
           report="$RUNNER_TEMP/repository-projection/write-set-evidence.json"
-          git diff --name-only | sort -u > "$observed"
-          untracked="$(git ls-files --others --exclude-standard | wc -l | tr -d ' ')"
+          git ls-files --others --exclude-standard | sort -u > "$untracked"
+          { git diff --name-only; cat "$untracked"; } | sort -u > "$observed"
           go run ./scripts/authorized-write-set \
             --expected-sha "$EXACT_SHA" \
             --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
             --extraction-report "$RUNNER_TEMP/repository-projection/extraction-report.json" \
             --observed-write-set "$observed" \
-            --untracked-count "$untracked" \
+            --untracked-paths "$untracked" \
             --expected-output "$expected" \
             --output "$report"
           jq -e '.schema == "gooo.authorized-rewrite-write-set.v2" and .decision == "PASS" and .resolution == "EXACT" and .exact == true and .coordinates.unknowns == 0' "$report"
           diff -u "$expected" "$observed"
+          while IFS= read -r path; do
+            test -z "$path" || git add -N -- "$path"
+          done < "$untracked"
           git diff --binary > "$RUNNER_TEMP/repository-projection/authorized-rewrite.patch"
           go test ./...
+          {
+            echo '### Meta extraction indicators'
+            echo
+            jq -r '(.indicators[]|select(.id=="density.applied")|.value) as $applied | (.indicators[]|select(.id=="density.residual")|.value) as $residual | "- density rewrites: `\($applied)/\($applied+$residual)`"' "$RUNNER_TEMP/repository-projection/density-report.json"
+            jq -r '(.indicators[]|select(.id=="extraction.observed")|.value) as $observed | (.indicators[]|select(.id=="extraction.applied")|.value) as $applied | (.indicators[]|select(.id=="extraction.created")|.value) as $created | (.indicators[]|select(.id=="extraction.unhandled")|.value) as $unhandled | "- helper extractions: `\($applied)/\($observed)`\n- generated helper files: `\($created)`\n- unhandled residuals: `\($unhandled)`"' "$RUNNER_TEMP/repository-projection/extraction-report.json"
+            jq -r '"- authorized paths: `\(.coordinates.observed_paths)/\(.coordinates.expected_paths)`\n- recipe-declared creations: `\(.coordinates.untracked_paths)/\(.coordinates.created_paths)`\n- unclassified paths: `\(.coordinates.unclassified_untracked_paths)`\n- decision: `\(.decision) / \(.resolution)`"' "$report"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload exact-SHA projection indicators
         if: always()
@@ -102,6 +113,7 @@ jobs:
             ${{ runner.temp }}/repository-projection/write-set-evidence.json
             ${{ runner.temp }}/repository-projection/authorized-write-set.txt
             ${{ runner.temp }}/repository-projection/observed-write-set.txt
+            ${{ runner.temp }}/repository-projection/untracked-write-set.txt
             ${{ runner.temp }}/repository-projection/authorized-rewrite.patch
             ${{ runner.temp }}/repository-projection/cutover-evidence.json
             ${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json

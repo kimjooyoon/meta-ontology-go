@@ -45,6 +45,7 @@ func run(root, plan, density, expected, output string) error {
 	if err := commitStaged(staged); err != nil {
 		return err
 	}
-	fmt.Printf("function-extractor: residual=%d applied=%d\n", len(residual), len(subjects))
+	fmt.Printf("function-extractor: residual=%d applied=%d created=%d\n",
+		len(residual), len(subjects), createdCount(subjects))
 	return nil
 }
