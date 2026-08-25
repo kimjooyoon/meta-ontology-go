@@ -69,11 +69,7 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 		if !exists {
 			return nil, nil, nil, fmt.Errorf("recipe did not rewrite subject %s", logical)
 		}
-		subjects = append(subjects, extractionSubject{
-			Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.data),
-			Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor",
-			Operation: bySubject[logical].Operation, Proof: "axiomatic-foundation",
-		})
+		subjects = append(subjects, extractionSubject{Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.data), Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor", Operation: bySubject[logical].Operation, Proof: "axiomatic-foundation"})
 	}
 	return staged, subjects, unhandled, nil
 }

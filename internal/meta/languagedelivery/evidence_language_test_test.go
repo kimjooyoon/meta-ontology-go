@@ -10,8 +10,7 @@ func TestCanonicalLanguageTestUsesExternalReceipt(t *testing.T) {
 		if obligation.ID != "USER-LANGUAGE-TEST" {
 			continue
 		}
-		if obligation.Evidence.Source != SourceTest || obligation.Evidence.Kind != EvidenceTest ||
-			obligation.Evidence.Counter != "passed_tests" || obligation.Evidence.Target != 2 {
+		if obligation.Evidence.Source != SourceTest || obligation.Evidence.Kind != EvidenceTest || obligation.Evidence.Counter != "passed_tests" || obligation.Evidence.Target != 2 {
 			t.Fatalf("language test evidence = %#v", obligation.Evidence)
 		}
 		return
@@ -48,24 +47,7 @@ func TestObserveRuleDispatchesLanguageTestCounter(t *testing.T) {
 }
 
 func exactLanguageTestReceipt(head string) LanguageTestReceipt {
-	return LanguageTestReceipt{
-		Schema: languageTestReportSchema, SubjectSHA: head, Decision: "PASS", Resolution: "EXACT",
-		Summary: LanguageTestSummary{
-			Coordinates:   LanguageTestCoordinates{Satisfied: 12, Total: 12, BasisPoints: 10000},
-			DeclaredTests: 2, ExecutedTests: 2, PassedTests: 2,
-			ReceiptDigestVariants: 1, ExecutionDigestVariants: 1,
-			AssertionRejections: 1, MissingTestRejections: 1, NonClaims: 3,
-			Compiler: LanguageTestCompiler{
-				ExecutableDigest: "sha256:88fdc432c8cfec498cf58a4bc2a1072439dae099fcbc03412403ed78feeff26d",
-				Go127Runtimes:    2,
-			},
-		},
-		Views: []LanguageTestView{
-			{Audience: "USER", Resolution: "USER_VISIBLE", Satisfied: 4, Total: 4, BasisPoints: 10000},
-			{Audience: "TOOL_AUTHOR", Resolution: "TOOL_CONTRACT", Satisfied: 8, Total: 8, BasisPoints: 10000},
-			{Audience: "GOVERNOR", Resolution: "FULL_RECEIPT", Satisfied: 12, Total: 12, BasisPoints: 10000},
-		},
-	}
+	return LanguageTestReceipt{Schema: languageTestReportSchema, SubjectSHA: head, Decision: "PASS", Resolution: "EXACT", Summary: LanguageTestSummary{Coordinates: LanguageTestCoordinates{Satisfied: 12, Total: 12, BasisPoints: 10000}, DeclaredTests: 2, ExecutedTests: 2, PassedTests: 2, ReceiptDigestVariants: 1, ExecutionDigestVariants: 1, AssertionRejections: 1, MissingTestRejections: 1, NonClaims: 3, Compiler: LanguageTestCompiler{ExecutableDigest: "sha256:88fdc432c8cfec498cf58a4bc2a1072439dae099fcbc03412403ed78feeff26d", Go127Runtimes: 2}}, Views: []LanguageTestView{{Audience: "USER", Resolution: "USER_VISIBLE", Satisfied: 4, Total: 4, BasisPoints: 10000}, {Audience: "TOOL_AUTHOR", Resolution: "TOOL_CONTRACT", Satisfied: 8, Total: 8, BasisPoints: 10000}, {Audience: "GOVERNOR", Resolution: "FULL_RECEIPT", Satisfied: 12, Total: 12, BasisPoints: 10000}}}
 }
 
 func marshalLanguageTest(t *testing.T, receipt LanguageTestReceipt) []byte {

@@ -32,21 +32,21 @@ type effects struct {
 	MutationAuthority bool `json:"mutation_authority"`
 }
 type evidence struct {
-	Schema        string      `json:"schema"`
-	Decision      string      `json:"decision"`
-	Resolution    string      `json:"resolution"`
-	Reason        string      `json:"reason"`
-	Audience      string      `json:"audience"`
-	SourceSHA     string      `json:"source_sha"`
-	MetaOperation string      `json:"meta_operation"`
-	Expected      []string    `json:"expected"`
-	Observed      []string    `json:"observed"`
-	ExpectedCreated []string  `json:"expected_created"`
-	ObservedCreated []string  `json:"observed_created"`
-	Coordinates   coordinates `json:"coordinates"`
-	Indicators    []indicator `json:"indicators"`
-	Proofs        []proof     `json:"proofs"`
-	Effects       effects     `json:"effects"`
-	Exact         bool        `json:"exact"`
-	Digest        string      `json:"digest"`
+	Schema          string      `json:"schema"`
+	Decision        string      `json:"decision"`
+	Resolution      string      `json:"resolution"`
+	Reason          string      `json:"reason"`
+	Audience        string      `json:"audience"`
+	SourceSHA       string      `json:"source_sha"`
+	MetaOperation   string      `json:"meta_operation"`
+	Expected        []string    `json:"expected"`
+	Observed        []string    `json:"observed"`
+	ExpectedCreated []string    `json:"expected_created"`
+	ObservedCreated []string    `json:"observed_created"`
+	Coordinates     coordinates `json:"coordinates"`
+	Indicators      []indicator `json:"indicators"`
+	Proofs          []proof     `json:"proofs"`
+	Effects         effects     `json:"effects"`
+	Exact           bool        `json:"exact"`
+	Digest          string      `json:"digest"`
 }
