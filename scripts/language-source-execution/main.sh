@@ -79,3 +79,6 @@ git diff --exit-code
   echo
   jq -r '"- decision: \(.decision) / \(.resolution)\n- cases: \(.summary.cases_satisfied)/\(.summary.cases_total)\n- executions: \(.summary.source_executions)\n- deterministic replays: \(.summary.deterministic_replays)\n- diagnostic rejections: \(.summary.diagnostic_rejections)\n- repository writes: \(.summary.repository_writes)\n- receipt: \(.digest)"' source-execution-output/artifact.json
 } >> "$GITHUB_STEP_SUMMARY"
+
+language_test_output="${GITHUB_WORKSPACE:-$(pwd)}/source-execution-output/test"
+bash scripts/language-test-experiment/main.sh "$language_test_output"
