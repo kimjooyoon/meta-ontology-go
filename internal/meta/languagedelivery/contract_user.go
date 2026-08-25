@@ -1,6 +1,6 @@
 package languagedelivery
 
-func userObligations() []Obligation {
+func baseUserObligations() []Obligation {
 	return []Obligation{
 		obligation("USER-CLI-IDENTITY", AudienceUser, ClassOutcome, "identify the installed Gooo executable", rule(SourceUserJourney, EvidenceJourney, "version-text", "", 1), "observe-installed-language-identity", ProofFoundation),
 		obligation("USER-COMMAND-DISCOVERY", AudienceUser, ClassOutcome, "discover the declared command surface", rule(SourceUserJourney, EvidenceIndicator, "functional.declared-commands", "", 1), "project-user-command-surface", ProofFoundation),

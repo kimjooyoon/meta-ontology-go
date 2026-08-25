@@ -8,9 +8,12 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution"
 )
 
-const runSourceUsage = "usage: gooo run [--json] --entry <activity> <file.gooo>"
+const runSourceUsage = "usage: gooo run [--json] --entry <activity> <file.gooo|package-directory>"
 
 func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int {
+	if handled, code := maybeRunSourcePackage(args, stdout, stderr); handled {
+		return code
+	}
 	args, jsonMode := parseJSONFlag(args)
 	options, err := parseRunSourceArguments(args)
 	if err != nil {

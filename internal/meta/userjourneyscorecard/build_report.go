@@ -42,7 +42,7 @@ func (s *inspection) buildReport(head string, contractRaw, upstreamRaw, profileR
 	return report
 }
 
-func expectedContract() Contract {
+func expectedContractBase() Contract {
 	source := "examples/billing/main.gooo"
 	return Contract{Schema: "gooo/user-journey-scorecard-contract/v1", Version: 2,
 		SamplesPerJourney: 5, WallMSLimit: 5000, MaxRSSKiBLimit: 262144,
