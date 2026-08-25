@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 func validateLedger(ledger witnessLedger) error {
-	if ledger.Schema != "gooo/source-subject-witness-ledger/v2" || ledger.Status != "BOUND" {
+	if ledger.Schema != "gooo/source-subject-witness-ledger/v3" || ledger.Status != "BOUND" {
 		return fmt.Errorf("ledger schema or status is not bound")
 	}
 	if !ledger.RootTopologyExempt || !ledger.RootREADMEExempt || len(ledger.Witnesses) != ledger.Counts.SubjectWitnesses {
@@ -11,6 +11,9 @@ func validateLedger(ledger witnessLedger) error {
 	}
 	if ledger.Counts.WorkflowDiscoveryExemptions != 1 {
 		return fmt.Errorf("ledger has %d workflow discovery exemptions, want 1", ledger.Counts.WorkflowDiscoveryExemptions)
+	}
+	if ledger.Counts.FunctionSourceBindings != ledger.Counts.FunctionWitnesses || ledger.Counts.RootSummaryIndicators != rootSummaryCount {
+		return fmt.Errorf("ledger function or root summary meta coverage is incomplete")
 	}
 	if ledger.Counts.SourceIndicatorsApplicable+ledger.Counts.SourceIndicatorsNotApplicable != ledger.Counts.MetaIndicators {
 		return fmt.Errorf("ledger source indicator applicability partition is incomplete")

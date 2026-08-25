@@ -2,13 +2,16 @@ package main
 
 type ledgerCounts struct {
 	FileWitnesses                 int `json:"file_witnesses"`
+	FunctionWitnesses             int `json:"function_witnesses"`
 	GoFiles                       int `json:"go_files"`
 	GoooFiles                     int `json:"gooo_files"`
 	OtherFiles                    int `json:"other_files"`
 	LogicalDirectories            int `json:"logical_directories"`
 	StorageDirectories            int `json:"storage_directories"`
 	FileSourceBindings            int `json:"file_source_bindings"`
+	FunctionSourceBindings        int `json:"function_source_bindings"`
 	StorageSourceBindings         int `json:"storage_source_bindings"`
+	RootSummaryIndicators         int `json:"root_summary_indicators"`
 	DerivedBindings               int `json:"derived_bindings"`
 	SubjectWitnesses              int `json:"subject_witnesses"`
 	MetaIndicators                int `json:"meta_indicators"`
