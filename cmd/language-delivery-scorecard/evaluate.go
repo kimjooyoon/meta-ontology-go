@@ -25,6 +25,7 @@ func evaluate(value options, stdout, stderr io.Writer) int {
 		languagedelivery.SourceRelease:     value.release,
 		languagedelivery.SourceExecution:   value.execution,
 		languagedelivery.SourceProfile:     value.profile,
+		languagedelivery.SourceDebug:       value.debug,
 		languagedelivery.SourceReadiness:   value.readiness,
 	}
 	evidence, err := languagedelivery.ReadEvidence(paths)

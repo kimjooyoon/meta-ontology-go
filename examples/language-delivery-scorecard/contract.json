@@ -1,7 +1,7 @@
 {
   "schema": "gooo/language-delivery-contract/v1",
   "contract_id": "gooo-v0.2-observable-delivery",
-  "version": 3,
+  "version": 4,
   "scope": "Gooo v0.2 observable delivery; not universal language completeness",
   "audience_order": [
     "USER",
@@ -321,9 +321,10 @@
       "class": "DRIVER",
       "outcome": "debug executing Gooo code",
       "evidence": {
-        "source": "NONE",
-        "kind": "UNIMPLEMENTED",
-        "target": 1
+        "source": "LANGUAGE_DEBUG",
+        "kind": "DEBUG_COUNTER",
+        "counter": "paused_sessions",
+        "target": 2
       },
       "meta_operation": "require-debugger-receipt",
       "proof_choice": "COHERENCE"

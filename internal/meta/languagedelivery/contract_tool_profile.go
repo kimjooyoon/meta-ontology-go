@@ -12,5 +12,5 @@ func bindProfileObligation(items []Obligation) []Obligation {
 	if matched != 1 {
 		panic("languagedelivery: TOOL-PROFILER denominator drift")
 	}
-	return items
+	return bindDebugObligation(items)
 }
