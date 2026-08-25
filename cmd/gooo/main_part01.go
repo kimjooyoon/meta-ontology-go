@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer"
 	"io"
 	"os"
@@ -53,8 +52,7 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 	case "version":
 		return runVersion(args[1:], stdout, stderr)
 	default:
-		fmt.Fprintf(stderr, "gooo: command %q is not implemented yet\n", args[0])
-		return exitFailure
+		return runExtensionCommand(args, stdout, stderr)
 	}
 }
 
