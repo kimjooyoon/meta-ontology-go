@@ -22,6 +22,7 @@ type decodedEvidence struct {
 	LSP         LSPReceipt
 	Release     ReleaseReceipt
 	Execution   ExecutionReceipt
+	LanguageTest LanguageTestReceipt
 	Profile     ProfileReceipt
 	Debug       DebugReceipt
 	Readiness   ReadinessArtifact

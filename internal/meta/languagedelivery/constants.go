@@ -33,6 +33,7 @@ const (
 	SourceLSP         SourceName = "TOOLCHAIN_LSP"
 	SourceRelease     SourceName = "CROSS_PLATFORM_RELEASE"
 	SourceExecution   SourceName = "LANGUAGE_SOURCE_EXECUTION"
+	SourceTest        SourceName = "LANGUAGE_TEST"
 	SourceProfile     SourceName = "LANGUAGE_PROFILE"
 	SourceDebug       SourceName = "LANGUAGE_DEBUG"
 	SourceReadiness   SourceName = "LANGUAGE_READINESS"
@@ -47,6 +48,7 @@ const (
 	EvidenceConformance   EvidenceKind = "CONFORMANCE_COUNTER"
 	EvidenceRelease       EvidenceKind = "RELEASE_COUNTER"
 	EvidenceExecution     EvidenceKind = "SOURCE_EXECUTION_COUNTER"
+	EvidenceTest          EvidenceKind = "LANGUAGE_TEST_COUNTER"
 	EvidenceProfile       EvidenceKind = "PROFILE_COUNTER"
 	EvidenceDebug         EvidenceKind = "DEBUG_COUNTER"
 	EvidenceReadiness     EvidenceKind = "READINESS_OBLIGATION"
@@ -61,4 +63,4 @@ const (
 )
 
 var audienceOrder = []Audience{AudienceUser, AudienceToolAuthor, AudienceGovernor}
-var sourceOrder = []SourceName{SourceUserJourney, SourceConformance, SourceLSP, SourceRelease, SourceExecution, SourceProfile, SourceDebug, SourceReadiness}
+var sourceOrder = []SourceName{SourceUserJourney, SourceConformance, SourceLSP, SourceRelease, SourceExecution, SourceTest, SourceProfile, SourceDebug, SourceReadiness}
