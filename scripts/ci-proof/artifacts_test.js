@@ -29,6 +29,7 @@ function testLineageUseCases() {
     assert.strictEqual(first.decision, usecase.expected_decision, `${usecase.id} decision`);
     assert.strictEqual(first.reason, usecase.expected_reason, `${usecase.id} reason`);
     assert.strictEqual(first.resolution, usecase.expected_resolution, `${usecase.id} resolution`);
+    assert.strictEqual(first.next_operation, usecase.expected_next_operation, `${usecase.id} next operation`);
     assert.strictEqual(first.exact_consumption_authorized, usecase.expected_consumption_authorized, `${usecase.id} consumption`);
     assert.strictEqual(first.summary.selected_attempt, usecase.expected_selected_attempt, `${usecase.id} selected attempt`);
     assert.strictEqual(first.summary.fallback_distance_attempts, usecase.expected_fallback_distance, `${usecase.id} fallback distance`);

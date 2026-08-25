@@ -156,12 +156,12 @@ function selectArtifactLineage(artifacts, stem, runId, currentAttempt) {
     decision = FAIL_CLOSED;
     reason = 'ARTIFACT_LINEAGE_NOT_FOUND';
     resolution = 'none';
-    nextOperation = 'rerun-all-jobs';
+    nextOperation = 'evaluate-rerun-concurrency-lane';
   } else if (selected.run_attempt !== currentAttempt) {
     decision = LOWER_RESOLUTION;
     reason = 'CURRENT_ATTEMPT_ARTIFACT_UNAVAILABLE';
     resolution = 'run_lineage';
-    nextOperation = 'rerun-all-jobs';
+    nextOperation = 'evaluate-rerun-concurrency-lane';
   }
 
   return finalizeLineageReport({

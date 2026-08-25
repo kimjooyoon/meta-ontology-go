@@ -21,7 +21,7 @@ permissions:
   # administration: read must not be added here.
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.run_attempt > 1 && format('replay-{0}', github.run_id) || 'head' }}
   cancel-in-progress: true
 
 jobs:
@@ -401,10 +401,11 @@ jobs:
         with:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ci-meta-provenance
-      - name: Test artifact paginator contract
+      - name: Test CI proof selector contracts
         run: |
           node scripts/ci-proof/artifacts_test.js
           node scripts/ci-proof/route_test.js
+          node scripts/ci-proof/concurrency_test.js
       - name: Collect terminal canonical job evidence
         uses: actions/github-script@v8
         with:
@@ -513,6 +514,39 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Resolve CI concurrency lane
+        id: concurrency-lane
+        uses: actions/github-script@v8
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_WORKFLOW: ${{ github.workflow }}
+          CI_CONCURRENCY_SCOPE: ${{ github.event.pull_request.number || github.ref }}
+        with:
+          script: |
+            const fs = require('fs');
+            const {buildConcurrencyReceipt} = require('./scripts/ci-proof/concurrency');
+            const report = buildConcurrencyReceipt(fs.readFileSync('.github/workflows/ci.yml', 'utf8'), {
+              workflow: process.env.CI_WORKFLOW,
+              scope: process.env.CI_CONCURRENCY_SCOPE,
+              run_id: Number(context.runId),
+              run_attempt: Number(process.env.CI_RUN_ATTEMPT || 1),
+            });
+            fs.writeFileSync('ci-concurrency-lane.json', JSON.stringify(report, null, 2) + '\n');
+            await core.summary
+              .addHeading('CI concurrency lane')
+              .addTable([
+                [{data: 'indicator', header: true}, {data: 'value', header: true}],
+                ['decision', report.decision],
+                ['reason', report.reason],
+                ['lane class', report.lane_class],
+                ['resolved group', report.resolved_group],
+                ['head preemption risk', String(report.summary.head_preemption_risk)],
+                ['repository writes', String(report.summary.repository_writes)],
+              ])
+              .write();
+            if (report.decision !== 'EXACT' || !report.execution_authorized) {
+              core.setFailed(`${report.decision}: ${report.reason}; next=${report.next_operation}`);
+            }
       - name: Resolve canonical evidence lineage
         id: evidence-lineage
         uses: actions/github-script@v8
@@ -845,6 +879,7 @@ jobs:
             provenance-receipt.jsonl
             ci-jobs.json
             ci-proof-route.json
+            ci-concurrency-lane.json
             ci-artifact-lineage.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
