@@ -3,7 +3,7 @@ package languagesyntax
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 
 const (
-	RegistrySchema  = "gooo/language-syntax-roundtrip-corpus/v1"
+	RegistrySchema  = "gooo/language-syntax-roundtrip-corpus/v2"
 	ReportSchema    = "gooo/language-syntax-roundtrip/v1"
 	DecisionPass    = "PASS"
 	DecisionClosed  = "FAIL_CLOSED"
@@ -11,15 +11,16 @@ const (
 	ResolutionLower = "LOWER_RESOLUTION"
 	KindValid       = "VALID"
 	KindInvalid     = "INVALID"
-	totalCases      = 22
-	validCases      = 19
+	totalCases      = 20
+	validCases      = 17
 	invalidCases    = 3
 	invalidDigest   = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )
 
 type Registry struct {
-	Schema string           `json:"schema"`
-	Cases  []CaseDefinition `json:"cases"`
+	Schema       string              `json:"schema"`
+	Cases        []CaseDefinition    `json:"cases"`
+	PackageUnits []PackageDefinition `json:"package_units"`
 }
 
 type CaseDefinition struct {
@@ -30,6 +31,17 @@ type CaseDefinition struct {
 	ExpectedDiagnostic string `json:"expected_diagnostic,omitempty"`
 	ProofChoice        string `json:"proof_choice"`
 	MetaOperation      string `json:"meta_operation"`
+}
+
+type PackageDefinition struct {
+	ID                   string   `json:"id"`
+	Path                 string   `json:"path"`
+	Members              []string `json:"members"`
+	Entry                string   `json:"entry"`
+	ReportSchema         string   `json:"report_schema"`
+	MetaReducer          string   `json:"meta_reducer"`
+	SourceFilesIndicator string   `json:"source_files_indicator"`
+	ExecutionIndicator   string   `json:"execution_indicator"`
 }
 
 type Source struct {
@@ -43,6 +55,7 @@ type Source struct {
 	GoooFiles               []replay.FileObservation `json:"gooo_files"`
 	UnregisteredGooo        []string                 `json:"unregistered_gooo"`
 	MissingRegistered       []string                 `json:"missing_registered"`
+	PackageUnits            []PackageDefinition      `json:"package_units"`
 	ConceptRepositoryWrites int                      `json:"concept_repository_writes"`
 }
 

@@ -1,25 +1,9 @@
 {
-  "schema": "gooo/language-syntax-roundtrip-corpus/v1",
+  "schema": "gooo/language-syntax-roundtrip-corpus/v2",
   "cases": [
     {
       "id": "billing",
       "path": "examples/billing/main.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
-      "id": "billing-package-activity",
-      "path": "examples/billing-package/activity.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
-      "id": "billing-package-entities",
-      "path": "examples/billing-package/entities.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
@@ -179,6 +163,21 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax"
+    }
+  ],
+  "package_units": [
+    {
+      "id": "billing-package",
+      "path": "examples/billing-package",
+      "members": [
+        "examples/billing-package/activity.gooo",
+        "examples/billing-package/entities.gooo"
+      ],
+      "entry": "PayOrder",
+      "report_schema": "gooo/language-package-execution-report/v1",
+      "meta_reducer": "languagepackageexecution.Evaluate",
+      "source_files_indicator": "PACKAGE_SOURCE_FILES",
+      "execution_indicator": "PACKAGE_EXECUTIONS"
     }
   ]
 }

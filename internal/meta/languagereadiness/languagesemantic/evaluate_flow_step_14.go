@@ -12,9 +12,18 @@ func semanticSourcePaths(receipt syntaxReceipt) []string {
 		path := filepath.ToSlash(filepath.Clean(item.Definition.Path))
 		kinds[path] = item.Definition.Kind
 	}
+	packageMembers := map[string]bool{}
+	for _, unit := range receipt.Source.PackageUnits {
+		for _, member := range unit.Members {
+			packageMembers[filepath.ToSlash(filepath.Clean(member))] = true
+		}
+	}
 	paths := make([]string, 0, len(receipt.Source.GoooFiles))
 	for _, file := range receipt.Source.GoooFiles {
 		path := filepath.ToSlash(filepath.Clean(file.Path))
+		if packageMembers[path] {
+			continue
+		}
 		kind, registered := kinds[path]
 		if !registered || kind == "VALID" {
 			paths = append(paths, path)

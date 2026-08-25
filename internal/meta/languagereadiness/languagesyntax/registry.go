@@ -7,6 +7,7 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
@@ -19,10 +20,13 @@ func expectedRegistry() Registry {
 		return CaseDefinition{ID: id, Path: path, Kind: KindInvalid, ExpectedDecision: DecisionClosed,
 			ExpectedDiagnostic: diagnostic, ProofChoice: "REGRESSION", MetaOperation: "reject-invalid-syntax"}
 	}
+	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package",
+		Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"},
+		Entry:   "PayOrder", ReportSchema: languagepackageexecution.ReportSchema,
+		MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES",
+		ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
 		valid("billing", "examples/billing/main.gooo"),
-		valid("billing-package-activity", "examples/billing-package/activity.gooo"),
-		valid("billing-package-entities", "examples/billing-package/entities.gooo"),
 		valid("bootstrap", "examples/bootstrap/main.gooo"),
 		valid("conformance", "examples/conformance/main.gooo"),
 		valid("meta-actionability", "examples/meta-actionability/main.gooo"),
@@ -42,7 +46,7 @@ func expectedRegistry() Registry {
 		valid("rollback-integrity-activation", "examples/rollback-integrity-activation/main.gooo"),
 		valid("vertical-slice-closure-activation", "examples/vertical-slice-closure-activation/main.gooo"),
 		valid("external-conformance-activation", "examples/external-conformance-activation/main.gooo"),
-	}}
+	}, PackageUnits: []PackageDefinition{packageUnit}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {

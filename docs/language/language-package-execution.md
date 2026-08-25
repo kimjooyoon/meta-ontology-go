@@ -6,6 +6,8 @@
 
 The CI contract contains exactly 5 cases: positive execution, deterministic replay, package-header rejection, duplicate-declaration rejection, and source-count rejection. The denominator changes only by changing the versioned contract and its meta reducer together.
 
+The syntax corpus observes the two physical files but registers them as one `package_unit`. It does not evaluate `activity.gooo` as a complete program because `Order` and `Receipt` live in `entities.gooo`. The package unit binds directly to `languagepackageexecution.Evaluate`, `PACKAGE_SOURCE_FILES`, and `PACKAGE_EXECUTIONS`, so file coverage and combined semantic execution remain separate, non-overlapping facts.
+
 The human-visible indicators are exact counters:
 
 | Indicator | Target | Meaning |

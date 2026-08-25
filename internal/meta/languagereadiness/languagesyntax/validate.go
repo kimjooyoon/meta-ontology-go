@@ -20,6 +20,10 @@ func Validate(report Report, expectedHead string) error {
 	if report.Source.ObservationKnown && report.Source.CorpusDigest != digestJSON(report.Source.GoooFiles) {
 		return fmt.Errorf("language syntax corpus digest mismatch")
 	}
+	if report.Source.RegistryDigest == registryDigest() &&
+		!reflect.DeepEqual(report.Source.PackageUnits, expectedRegistry().PackageUnits) {
+		return fmt.Errorf("language syntax package-unit binding mismatch")
+	}
 	definitions := make([]CaseDefinition, 0, len(report.Cases))
 	for _, item := range report.Cases {
 		definitions = append(definitions, item.Definition)

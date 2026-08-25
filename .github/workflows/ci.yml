@@ -1215,7 +1215,7 @@ jobs:
         env:
           EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: scripts/language-package-execution/main.sh "$RUNNER_TEMP/language-package-execution"
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: language-package-execution-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/language-package-execution

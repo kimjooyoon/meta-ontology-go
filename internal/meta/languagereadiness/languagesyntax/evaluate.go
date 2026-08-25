@@ -24,6 +24,7 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 		return finish(report)
 	}
 	report.Source.RegistryDigest = registryDigest()
+	report.Source.PackageUnits = append([]PackageDefinition(nil), registry.PackageUnits...)
 	report.Source.ConceptBound = conceptBound(repository, artifact)
 	observed, observationErr := replay.Observe(repository)
 	if observationErr == nil {
@@ -48,10 +49,9 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 
 func compareCorpus(registry Registry, observed []replay.FileObservation) ([]string, []string) {
 	expected, present := map[string]bool{}, map[string]bool{}
-	for _, definition := range registry.Cases {
-		if strings.HasSuffix(definition.Path, ".gooo") {
-			expected[definition.Path] = true
-		}
+	registered := registryPaths(registry)
+	for _, path := range registered {
+		expected[path] = true
 	}
 	extra := []string{}
 	for _, file := range observed {
@@ -61,10 +61,23 @@ func compareCorpus(registry Registry, observed []replay.FileObservation) ([]stri
 		}
 	}
 	missing := []string{}
-	for _, definition := range registry.Cases {
-		if strings.HasSuffix(definition.Path, ".gooo") && !present[definition.Path] {
-			missing = append(missing, definition.Path)
+	for _, path := range registered {
+		if !present[path] {
+			missing = append(missing, path)
 		}
 	}
 	return extra, missing
+}
+
+func registryPaths(registry Registry) []string {
+	paths := []string{}
+	for _, definition := range registry.Cases {
+		if strings.HasSuffix(definition.Path, ".gooo") {
+			paths = append(paths, definition.Path)
+		}
+	}
+	for _, unit := range registry.PackageUnits {
+		paths = append(paths, unit.Members...)
+	}
+	return paths
 }
