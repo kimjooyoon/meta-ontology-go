@@ -37,3 +37,22 @@ func writeFixture(t *testing.T, root string, duplicate bool) string {
 	}
 	return path
 }
+
+func writeUnsuccessfulFixture(t *testing.T, root string) string {
+	t.Helper()
+	path := writeFixture(t, root, false)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var input feedbackpredecessor.Input
+	if err := json.Unmarshal(data, &input); err != nil {
+		t.Fatal(err)
+	}
+	input.Candidates[0].Conclusion = "failure"
+	data, _ = json.Marshal(input)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}

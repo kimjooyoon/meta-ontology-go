@@ -501,6 +501,17 @@
       ]
     },
     {
+      "branch": "agent/feedback-predecessor-baseline",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "cmd/feedback-predecessor-witness/**",
+        "examples/feedback-predecessor-cycle/**",
+        "internal/meta/feedbackpredecessor/**"
+      ]
+    },
+    {
       "branch": "agent/feedback-payload-envelope-v27",
       "paths": [
         ".github/agent-scope-table.md",

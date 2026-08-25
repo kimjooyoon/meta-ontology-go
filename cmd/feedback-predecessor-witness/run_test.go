@@ -47,3 +47,16 @@ func TestRunCheckRejectsAmbiguousPredecessor(t *testing.T) {
 		t.Fatal("ambiguous predecessor was accepted")
 	}
 }
+
+func TestRunCheckAllowsNonPromotingBaseline(t *testing.T) {
+	root := t.TempDir()
+	input := writeUnsuccessfulFixture(t, root)
+	report := filepath.Join(t.TempDir(), "receipt.json")
+	rejected, err := run(config{root: root, input: input, report: report, check: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rejected {
+		t.Fatal("lower-resolution baseline was rejected")
+	}
+}

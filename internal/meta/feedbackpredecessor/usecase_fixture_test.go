@@ -43,7 +43,10 @@ func TestFeedbackPredecessorUseCases(t *testing.T) {
 			}
 			if report.Decision != usecase.ExpectedDecision ||
 				report.Reason != usecase.ExpectedReason ||
+				report.Resolution != usecase.ExpectedResolution ||
+				report.PromotionAuthorized != usecase.ExpectedPromotion ||
 				values["gooo.metric.meta.predecessor-feedback-readiness.coverage-bps.v1"] != usecase.ExpectedReadinessBPS ||
+				values["gooo.metric.meta.predecessor-cycle-continuity.coverage-bps.v1"] != usecase.ExpectedContinuityBPS ||
 				values["gooo.metric.meta.predecessor-ambiguity.guardrail.v1"] != usecase.ExpectedAmbiguity ||
 				values["gooo.metric.meta.predecessor-observer-writes.guardrail.v1"] != usecase.ExpectedWrites ||
 				satisfied != usecase.ExpectedSatisfied || len(proofs) != 3 {

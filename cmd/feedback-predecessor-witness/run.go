@@ -48,5 +48,5 @@ func run(cfg config) (bool, error) {
 	}
 	fmt.Printf("feedback-predecessor: decision=%s reason=%s digest=%s\n",
 		report.Decision, report.Reason, report.ReportDigest)
-	return cfg.check && report.Decision == feedbackpredecessor.DecisionFailClosed, nil
+	return cfg.check && !feedbackpredecessor.Consumable(report), nil
 }

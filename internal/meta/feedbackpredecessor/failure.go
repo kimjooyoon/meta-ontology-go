@@ -8,14 +8,14 @@ func failureReason(summary Summary) string {
 		return ReasonNotFound
 	case summary.CanonicalCandidates == 0:
 		return ReasonCanonicalUnbound
-	case summary.SuccessfulCandidates == 0:
-		return ReasonUnsuccessful
 	case summary.AvailableCandidates == 0:
 		return ReasonUnavailable
 	case summary.ReceiptBoundCandidates == 0:
 		return ReasonReceiptUnbound
 	case summary.AmbiguousCandidates != 0:
 		return ReasonAmbiguous
+	case summary.SuccessfulCandidates == 0:
+		return ReasonUnsuccessful
 	default:
 		return ""
 	}

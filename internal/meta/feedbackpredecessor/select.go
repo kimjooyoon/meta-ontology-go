@@ -9,13 +9,7 @@ func Select(input Input) (Report, error) {
 	summary, eligible := summarize(input)
 	report := Report{Schema: Schema, Repository: input.Repository,
 		PredecessorSHA: input.PredecessorSHA, Summary: summary}
-	report.Decision, report.Reason = DecisionFailClosed, failureReason(summary)
-	if report.Reason == "" {
-		candidate := eligible[0]
-		report.Decision, report.Reason = DecisionSelected, ReasonSelected
-		report.Selected = &Selection{ArtifactID: candidate.ArtifactID, RunID: candidate.RunID,
-			RunAttempt: candidate.RunAttempt, ReceiptDigest: candidate.ReceiptDigest}
-	}
+	decide(&report, eligible)
 	report.Indicators = indicators(report)
 	report.ReportDigest = digestJSON(report)
 	return report, nil

@@ -1,9 +1,10 @@
 package feedbackpredecessor
 
-const Schema = "gooo/meta-feedback-predecessor-selection/v1"
+const Schema = "gooo/meta-feedback-predecessor-selection/v2"
 
 const (
 	DecisionSelected   = "SELECTED"
+	DecisionLower      = "LOWER_RESOLUTION"
 	DecisionFailClosed = "FAIL_CLOSED"
 )
 
@@ -16,6 +17,16 @@ const (
 	ReasonReceiptUnbound   = "PREDECESSOR_FEEDBACK_RECEIPT_UNBOUND"
 	ReasonAmbiguous        = "PREDECESSOR_FEEDBACK_AMBIGUOUS"
 	ReasonWriteEffect      = "PREDECESSOR_FEEDBACK_WRITE_EFFECT"
+)
+
+const (
+	ResolutionExact     = "exact_operation"
+	ResolutionClass     = "operation_class"
+	ResolutionInvariant = "invariant_only"
+
+	OperationConsume    = "consume-predecessor-semantic-state"
+	OperationReevaluate = "re-evaluate-predecessor-at-exact-operation"
+	OperationHalt       = "halt"
 )
 
 const (
