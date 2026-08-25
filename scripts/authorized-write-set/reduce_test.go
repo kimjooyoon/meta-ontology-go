@@ -4,10 +4,10 @@ import "testing"
 
 func exactReports() (densityReport, extractionReport) {
 	return densityReport{Schema: densitySchema, SourceSHA: "abc", Subjects: []densitySubject{
-			{Logical: "a.go", Status: "applied"}, {Logical: "blocked.go", Status: "blocked"},
-		}}, extractionReport{Schema: extractionSchema, SourceSHA: "abc", Subjects: []extractionSubject{
-			{Files: []string{"a.go", "c.go"}},
-		}}
+		{Logical: "a.go", Status: "applied"}, {Logical: "blocked.go", Status: "blocked"},
+	}}, extractionReport{Schema: extractionSchema, SourceSHA: "abc", Subjects: []extractionSubject{
+		{Files: []string{"a.go", "c.go"}},
+	}}
 }
 
 func TestReduceUnionsDensityAndExtractionReceipts(t *testing.T) {
