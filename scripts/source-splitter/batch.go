@@ -38,15 +38,13 @@ func runBatch(cfg config, metrics metricevidence.Report, indicators []metricevid
 	plans := make([]plannedSplit, 0, len(selected))
 	for _, subject := range selected {
 		plan, planErr := planSource(cfg.root, subject.Logical, metrics.Meta.Policy.MaxFileLines)
-		if planErr == nil {
-			planErr = validateTopology(metrics, plan)
-		}
 		if planErr != nil {
 			return fmt.Errorf("plan %s: %w", subject.Logical, planErr)
 		}
 		plans = append(plans, plannedSplit{logical: subject.Logical, plan: plan})
 	}
-	if err := validateBatchTopology(metrics, plans); err != nil {
+	deferredTopology, err := batchTopologyDeferrals(metrics, plans)
+	if err != nil {
 		return err
 	}
 	applied := make([]splitBatchSubject, 0, len(plans))
@@ -63,5 +61,5 @@ func runBatch(cfg config, metrics metricevidence.Report, indicators []metricevid
 		}
 		applied = append(applied, subject)
 	}
-	return writeSplitBatchReport(cfg.output, buildSplitBatchReport(cfg.sha, plans, applied))
+	return writeSplitBatchReport(cfg.output, buildSplitBatchReport(cfg.sha, plans, applied, deferredTopology))
 }
