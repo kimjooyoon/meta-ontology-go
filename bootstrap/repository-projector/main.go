@@ -66,7 +66,7 @@ func run(settings config) error {
 	if err := writeEvidence(work, report); err != nil {
 		return err
 	}
-	fmt.Printf("repository-projector: tracked=%d objects=%d loss=%d direct=%d mixed=%d\n",
-		len(files), len(objects), loss, topology.Direct, topology.Mixed)
+	fmt.Printf("repository-projector: tracked=%d objects=%d loss=%d observed_direct=%d direct=%d exempt_direct=%d mixed=%d\n",
+		len(files), len(objects), loss, topology.ObservedDirect, topology.Direct, topology.ExemptDirect, topology.Mixed)
 	return requireBlockingZero(report)
 }

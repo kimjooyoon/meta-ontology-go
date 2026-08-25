@@ -81,9 +81,12 @@ jobs:
           test "$fixture_status" -eq 1
           jq -e --arg sha "$fixture_sha" '
             .source_sha==$sha and
+            (.indicators[]|select(.id=="storage.direct-entry-observed")|.value==1) and
             (.indicators[]|select(.id=="storage.direct-entry")|.value==1) and
+            (.indicators[]|select(.id=="storage.bootstrap-direct-entry")|.value==0) and
+            (.indicators[]|select(.id=="storage.direct-entry-unclassified")|.value==0) and
             (.indicators[]|select(.id=="storage.mixed-kind")|.value==0) and
-            ([.subjects[]|select(.indicator=="storage.direct-entry" and .physical=="bootstrap/dense" and .value==11 and .limit==10)]|length)==1 and
+            ([.subjects[]|select(.indicator=="storage.direct-entry" and .physical=="bootstrap/dense" and .value==11 and .limit==10 and .applicability=="APPLICABLE")]|length)==1 and
             ([.subjects[]|select(.physical==".")]|length)==0
           ' "$work/fixture-projector/evidence.json"
           set +e
@@ -94,23 +97,29 @@ jobs:
             > "$work/projector.log" 2>&1
           status=$?
           set -e
-          test "$status" -eq 1
+          test "$status" -eq 0
           evidence="$work/projector/evidence.json"
           jq -e --arg sha "$EXACT_SHA" '
             .schema=="gooo.repository-projection-evidence.v1" and .source_sha==$sha and
             (.indicators[]|select(.id=="projection.roundtrip-loss")|.value==0) and
             (.indicators[]|select(.id=="projection.unbound-entry")|.value==0) and
-            (.indicators[]|select(.id=="storage.direct-entry")|.value==1 and .limit==0 and .blocking==true) and
+            (.indicators[]|select(.id=="storage.direct-entry-observed")|.value==1 and .blocking==false) and
+            (.indicators[]|select(.id=="storage.direct-entry")|.value==0 and .limit==0 and .blocking==true) and
+            (.indicators[]|select(.id=="storage.bootstrap-direct-entry")|.value==1 and .limit==1 and .blocking==true) and
+            (.indicators[]|select(.id=="storage.direct-entry-unclassified")|.value==0 and .blocking==true) and
             (.indicators[]|select(.id=="storage.mixed-kind")|.value==0) and
-            ([.subjects[]|select(.indicator=="storage.direct-entry" and .physical!="" and .value>.limit and .consumer=="radix-sharder" and .meta_operation=="split-object-bucket")]|length)==1 and
+            ([.subjects[]|select(.indicator=="storage.bootstrap-direct-entry" and .physical==".github/workflows" and .value==15 and .limit==10 and .consumer=="github-actions" and .meta_operation=="preserve-workflow-discovery" and .applicability=="NOT_APPLICABLE" and .applicability_reason=="GITHUB_WORKFLOW_DISCOVERY_ROOT")]|length)==1 and
             ([.subjects[]|select(.physical==".")]|length)==0
           ' "$evidence"
           cat "$work/projector.log"
           {
             echo '### Repository projection diagnostic'
             echo
-            jq -r '.subjects[]|select(.indicator=="storage.direct-entry" or .indicator=="storage.mixed-kind")|"- \(.indicator): `\(.physical)` = \(.value), limit \(.limit), operation `\(.meta_operation)`"' "$evidence"
-            echo '- decision: `FAIL_CLOSED` (guard unchanged)'
+            jq -r '.subjects[]|select(.indicator|startswith("storage."))|"- \(.indicator): `\(.physical)` = \(.value), limit \(.limit), applicability `\(.applicability)`, reason `\(.applicability_reason)`, operation `\(.meta_operation)`"' "$evidence"
+            echo '- observed direct subjects: `1`'
+            echo '- classified subjects: `1`'
+            echo '- blocking direct subjects: `0`'
+            echo '- decision: `PASS / EXACT`'
             echo '- repository writes: `0`'
           } >> "$GITHUB_STEP_SUMMARY"
           sha256sum "$evidence" > "$work/evidence.json.sha256"
