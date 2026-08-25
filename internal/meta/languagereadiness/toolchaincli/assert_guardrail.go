@@ -6,7 +6,7 @@ import (
 	cliruntime "github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
-const rootUsage = "usage: gooo <run|check|generate|roundtrip|query|inspect|graph|analyze|format|fix|provenance|selective-ci|lsp|version> [args]\n"
+const rootUsage = "usage: gooo <run|emit|check|generate|roundtrip|query|inspect|graph|analyze|format|fix|provenance|selective-ci|lsp|version> [args]\n"
 
 func inspectGuardrail(operation string, observed cliruntime.Observation) outputEvidence {
 	expected := map[string]string{
