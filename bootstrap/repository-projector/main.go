@@ -58,15 +58,15 @@ func run(settings config) error {
 	if err != nil {
 		return err
 	}
-	direct, mixed, err := topologyFailures(stored)
+	topology, err := topologyFailures(stored)
 	if err != nil {
 		return err
 	}
-	report := buildEvidence(settings.expectedSHA, model, len(objects), loss, direct, mixed)
+	report := buildEvidence(settings.expectedSHA, model, len(objects), loss, topology)
 	if err := writeEvidence(work, report); err != nil {
 		return err
 	}
 	fmt.Printf("repository-projector: tracked=%d objects=%d loss=%d direct=%d mixed=%d\n",
-		len(files), len(objects), loss, direct, mixed)
+		len(files), len(objects), loss, topology.Direct, topology.Mixed)
 	return requireBlockingZero(report)
 }

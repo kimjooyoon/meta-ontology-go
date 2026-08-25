@@ -57,10 +57,17 @@ type indicator struct {
 type subject struct {
 	Indicator string `json:"indicator"`
 	Logical   string `json:"logical"`
+	Physical  string `json:"physical,omitempty"`
 	Value     int    `json:"value"`
 	Limit     int    `json:"limit"`
 	Consumer  string `json:"consumer"`
 	Operation string `json:"meta_operation"`
+}
+
+type topologyEvidence struct {
+	Direct   int
+	Mixed    int
+	Subjects []subject
 }
 
 type evidence struct {
