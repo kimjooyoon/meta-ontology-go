@@ -4,8 +4,8 @@ import "fmt"
 
 func toolchainFixture(head string) []byte {
 	surfaces := []any{
-		surfaceFixture("language-syntax-roundtrip", "gooo/language-syntax-roundtrip/v1", head, 20),
-		surfaceFixture("language-semantic-model", "gooo/language-semantic-model/v1", head, 22),
+		surfaceFixture("language-syntax-roundtrip", "gooo/language-syntax-roundtrip/v1", head, 22),
+		surfaceFixture("language-semantic-model", "gooo/language-semantic-model/v1", head, 24),
 		surfaceFixture("toolchain-executable-use-cases", "gooo/toolchain-executable-use-cases/v1", head, 3),
 	}
 	for index := range 6 {
@@ -17,7 +17,7 @@ func toolchainFixture(head string) []byte {
 		"repository_writes": 0, "mutation_authorized": false,
 		"source": map[string]any{"expected_head_sha": head},
 		"summary": map[string]any{"surfaces_satisfied": 9, "surfaces_total": 9,
-			"cases_satisfied": 161, "cases_total": 161, "executed_cases": 161,
+			"cases_satisfied": 165, "cases_total": 165, "executed_cases": 165,
 			"case_readiness_bps": 10000, "indicators_satisfied": 151,
 			"indicators_total": 151, "proofs_passed": 27, "proofs_total": 27,
 			"tamper_rejections": 13, "tamper_total": 13},
