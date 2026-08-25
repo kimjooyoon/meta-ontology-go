@@ -1,14 +1,15 @@
 package languagedelivery
 
 type EvidenceSet struct {
-	UserJourney []byte
-	Conformance []byte
-	LSP         []byte
-	Release     []byte
-	Execution   []byte
-	Profile     []byte
-	Debug       []byte
-	Readiness   []byte
+	UserJourney  []byte
+	Conformance  []byte
+	LSP          []byte
+	Release      []byte
+	Execution    []byte
+	LanguageTest []byte
+	Profile      []byte
+	Debug        []byte
+	Readiness    []byte
 }
 
 func (set EvidenceSet) Bytes(source SourceName) []byte {
@@ -23,6 +24,8 @@ func (set EvidenceSet) Bytes(source SourceName) []byte {
 		return set.Release
 	case SourceExecution:
 		return set.Execution
+	case SourceTest:
+		return set.LanguageTest
 	case SourceProfile:
 		return set.Profile
 	case SourceDebug:

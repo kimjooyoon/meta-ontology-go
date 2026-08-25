@@ -21,6 +21,7 @@ specs=(
   'TOOLCHAIN_LSP|toolchain-lsp|artifact.json|lsp'
   'CROSS_PLATFORM_RELEASE|toolchain-cross-platform-release|artifact.json|release'
   'LANGUAGE_SOURCE_EXECUTION|language-source-execution|artifact.json|execution'
+  'LANGUAGE_TEST|language-source-execution|test/report.json|language_test'
   'LANGUAGE_PROFILE|language-source-execution|profile/report.json|profile'
   'LANGUAGE_DEBUG|language-source-execution|debug/report.json|debug'
   'LANGUAGE_READINESS|language-readiness-artifact|artifact.json|readiness'
@@ -46,10 +47,10 @@ for spec in "${specs[@]}"; do
   printf -v "$key" '%s' "$report"
 done
 
-jq -s --arg sha "$HEAD_SHA" --argjson run "$GITHUB_RUN_ID" '{schema:"gooo/language-delivery-source-manifest/v3",subject_sha:$sha,workflow_run_id:$run,workflow_name:"Transformation effect ledger",workflow_decision:"upstream_jobs_success",artifacts:.,repository_writes:0}' delivery-evidence/entries.jsonl > delivery-evidence/manifest.json
+jq -s --arg sha "$HEAD_SHA" --argjson run "$GITHUB_RUN_ID" '{schema:"gooo/language-delivery-source-manifest/v4",subject_sha:$sha,workflow_run_id:$run,workflow_name:"Transformation effect ledger",workflow_decision:"upstream_jobs_success",artifacts:.,repository_writes:0}' delivery-evidence/entries.jsonl > delivery-evidence/manifest.json
 
 run_scorecard() {
-  local contract=$1 manifest=$2 user=$3 output=$4
+  local contract=$1 manifest=$2 user=$3 test=$4 output=$5
   go run ./cmd/language-delivery-scorecard \
     --expected-head "$HEAD_SHA" \
     --contract "$contract" \
@@ -59,6 +60,7 @@ run_scorecard() {
     --lsp "$lsp" \
     --release "$release" \
     --execution "$execution" \
+    --language-test "$test" \
     --profile "$profile" \
     --debug "$debug" \
     --readiness "$readiness" \
@@ -66,7 +68,7 @@ run_scorecard() {
 }
 
 set +e
-run_scorecard examples/language-delivery-scorecard/contract.json delivery-evidence/manifest.json "$user_journey" delivery-output/report.json
+run_scorecard examples/language-delivery-scorecard/contract.json delivery-evidence/manifest.json "$user_journey" "$language_test" delivery-output/report.json
 scorecard_code=$?
 set -e
 if [[ "$scorecard_code" != "0" ]]; then
@@ -75,27 +77,40 @@ if [[ "$scorecard_code" != "0" ]]; then
   exit "$scorecard_code"
 fi
 jq -e '.decision == "INCOMPLETE" and .resolution == "EXACT"' delivery-output/report.json
-jq -e '.summary.coordinates == {satisfied:34,not_implemented:2,not_satisfied:0,unknown:0,total:36,basis_points:9444}' delivery-output/report.json
-jq -e '[.views[] | [.audience,.coordinates.satisfied,.coordinates.total]] == [["USER",10,12],["TOOL_AUTHOR",22,24],["GOVERNOR",34,36]]' delivery-output/report.json
+jq -e '.summary.coordinates == {satisfied:35,not_implemented:1,not_satisfied:0,unknown:0,total:36,basis_points:9722}' delivery-output/report.json
+jq -e '[.views[] | [.audience,.coordinates.satisfied,.coordinates.total]] == [["USER",11,12],["TOOL_AUTHOR",23,24],["GOVERNOR",35,36]]' delivery-output/report.json
 jq -e '.summary.internal_readiness.satisfied == 24 and .summary.internal_readiness.total == 24' delivery-output/report.json
-jq -e '.summary.meta_bindings == 36 and .summary.source_receipts == 8 and .summary.source_receipts_total == 8 and .summary.effects.repository_writes == 0 and .summary.effects.mutation_authority == false' delivery-output/report.json
+jq -e '.summary.meta_bindings == 36 and .summary.source_receipts == 9 and .summary.source_receipts_total == 9 and .summary.effects.repository_writes == 0 and .summary.effects.mutation_authority == false' delivery-output/report.json
+jq -e '.obligations[] | select(.id=="USER-LANGUAGE-TEST") | .status=="SATISFIED" and .reason=="LANGUAGE_TESTS_PASSED" and .source=="LANGUAGE_TEST" and .observed==2 and .expected==2' delivery-output/report.json
 
 jq '.decision="UNKNOWN"' "$user_journey" > delivery-output/unknown-user.json
 unknown_digest="sha256:$(sha256sum delivery-output/unknown-user.json | cut -d' ' -f1)"
 jq --arg digest "$unknown_digest" '(.artifacts[] | select(.source=="USER_JOURNEY") | .report_digest)=$digest' delivery-evidence/manifest.json > delivery-output/unknown-manifest.json
 set +e
-run_scorecard examples/language-delivery-scorecard/contract.json delivery-output/unknown-manifest.json delivery-output/unknown-user.json delivery-output/unknown-report.json
+run_scorecard examples/language-delivery-scorecard/contract.json delivery-output/unknown-manifest.json delivery-output/unknown-user.json "$language_test" delivery-output/unknown-user-report.json
 unknown_code=$?
 set -e
 [[ "$unknown_code" == "1" ]]
-jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.coordinates.unknown==7' delivery-output/unknown-report.json
+jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.coordinates.unknown==7' delivery-output/unknown-user-report.json
+
+language_test_unknown="delivery-evidence/language_test/test/unknown-top-report.json"
+[[ -f "$language_test_unknown" ]]
+language_test_unknown_digest="sha256:$(sha256sum "$language_test_unknown" | cut -d' ' -f1)"
+jq --arg digest "$language_test_unknown_digest" '(.artifacts[] | select(.source=="LANGUAGE_TEST") | .report_digest)=$digest' delivery-evidence/manifest.json > delivery-output/unknown-test-manifest.json
+set +e
+run_scorecard examples/language-delivery-scorecard/contract.json delivery-output/unknown-test-manifest.json "$user_journey" "$language_test_unknown" delivery-output/unknown-report.json
+language_test_unknown_code=$?
+set -e
+[[ "$language_test_unknown_code" == "1" ]]
+jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.coordinates=={satisfied:34,not_implemented:1,not_satisfied:0,unknown:1,total:36,basis_points:9444}' delivery-output/unknown-report.json
+jq -e '.obligations[] | select(.id=="USER-LANGUAGE-TEST") | .status=="UNKNOWN" and .reason=="LANGUAGE_TEST_RECEIPT_UNKNOWN"' delivery-output/unknown-report.json
 
 jq 'del(.obligations[-1])' examples/language-delivery-scorecard/contract.json > delivery-output/drift-contract.json
-if run_scorecard delivery-output/drift-contract.json delivery-evidence/manifest.json "$user_journey" delivery-output/drift-report.json; then
+if run_scorecard delivery-output/drift-contract.json delivery-evidence/manifest.json "$user_journey" "$language_test" delivery-output/drift-report.json; then
   exit 1
 fi
 jq '(.obligations[] | select(.id=="USER-RUN-SOURCE") | .evidence)={source:"USER_JOURNEY",kind:"JOURNEY",id:"version-text",target:1}' examples/language-delivery-scorecard/contract.json > delivery-output/self-minted-contract.json
-if run_scorecard delivery-output/self-minted-contract.json delivery-evidence/manifest.json "$user_journey" delivery-output/self-minted-report.json; then
+if run_scorecard delivery-output/self-minted-contract.json delivery-evidence/manifest.json "$user_journey" "$language_test" delivery-output/self-minted-report.json; then
   exit 1
 fi
 
