@@ -54,6 +54,6 @@ type ExtensionRegistry struct {
 }
 
 type Effects struct {
-	RepositoryWrites int  `json:"repository_writes"`
+	RepositoryWrites  int  `json:"repository_writes"`
 	MutationAuthority bool `json:"mutation_authority"`
 }

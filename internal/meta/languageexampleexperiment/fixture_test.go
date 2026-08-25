@@ -17,7 +17,7 @@ func validInput() Input {
 			{Filename: "entities.gooo", Digest: "sha256:b", DeclarationCount: 2},
 		}},
 		Extensions: artifactemit.ExtensionRegistry{RegisteredEmitters: 1, Kinds: []string{"operation-manifest"}},
-		Digest: "sha256:artifact",
+		Digest:     "sha256:artifact",
 	}
 	contract := Contract{
 		Schema: ContractSchema, ID: "fixture", ArtifactSchema: artifactemit.OperationManifestSchema,
@@ -25,7 +25,7 @@ func validInput() Input {
 		Fixed: Fixed{SourceFiles: 2, PrimaryArtifacts: 1, DeterministicReplays: 1,
 			RegisteredEmitters: 1, ResourceSamples: 2, UnknownEmitterRejections: 1,
 			Indicators: 13, NotClaimed: 4},
-		Limits: Limits{WallMS: 100, RSSKiB: 100, BinaryBytes: 1000},
+		Limits:     Limits{WallMS: 100, RSSKiB: 100, BinaryBytes: 1000},
 		NotClaimed: []string{"a", "b", "c", "d"},
 	}
 	return Input{
