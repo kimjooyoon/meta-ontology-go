@@ -44,13 +44,12 @@ profile() {
 }
 
 source='examples/billing/main.gooo'
-profile VERSION_TEXT version
-profile VERSION_JSON version --json
-profile CHECK_TEXT check "$source"
-profile CHECK_JSON check --json "$source"
-profile ROUNDTRIP_JSON roundtrip --json "$source"
-profile SEMANTIC_CHECK check --semantic "$source"
-profile RUN_SOURCE run --json --entry PayOrder "$source"
+contract='examples/user-journey-scorecard/contract.json'
+while IFS= read -r journey; do
+  operation="$(jq -r '.operation' <<<"$journey")"
+  mapfile -t arguments < <(jq -r '.arguments[]' <<<"$journey")
+  profile "$operation" "${arguments[@]}"
+done < <(jq -c '.journeys[]' "$root/$contract")
 
 mkdir -p "$(dirname "$output")"
 jq -s --arg subject_sha "$head" --arg os "${ImageOS:-ubuntu24}" \

@@ -420,42 +420,6 @@
       ]
     },
     {
-      "branch": "agent/external-ecosystem-conformance",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/external-ecosystem-conformance-witness/**",
-        "examples/external-ecosystem-conformance/**",
-        "internal/meta/externalecosystemconformance/**",
-        "internal/verify/scope_external_ecosystem_conformance.go"
-      ]
-    },
-    {
-      "branch": "agent/external-capability-execution",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/external-capability-execution-witness/**",
-        "examples/external-capability-execution/**",
-        "internal/meta/externalcapabilityexecution/**",
-        "internal/verify/scope_external_capability_execution.go"
-      ]
-    },
-    {
-      "branch": "agent/external-assurance-eligibility",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/external-capability-execution-witness/**",
-        "examples/external-capability-execution/**",
-        "internal/meta/externalcapabilityexecution/**",
-        "internal/verify/scope_external_capability_execution.go"
-      ]
-    },
-    {
       "branch": "agent/external-assurance-activation",
       "paths": [
         ".github/agent-scope-table.md",
@@ -484,6 +448,42 @@
         "internal/meta/languagereadiness/languagesemantic/**",
         "internal/meta/languagereadiness/languagesemanticbinding/**",
         "internal/meta/languagereadiness/toolchainconformance/**"
+      ]
+    },
+    {
+      "branch": "agent/external-assurance-eligibility",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/external-capability-execution-witness/**",
+        "examples/external-capability-execution/**",
+        "internal/meta/externalcapabilityexecution/**",
+        "internal/verify/scope_external_capability_execution.go"
+      ]
+    },
+    {
+      "branch": "agent/external-capability-execution",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/external-capability-execution-witness/**",
+        "examples/external-capability-execution/**",
+        "internal/meta/externalcapabilityexecution/**",
+        "internal/verify/scope_external_capability_execution.go"
+      ]
+    },
+    {
+      "branch": "agent/external-ecosystem-conformance",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/external-ecosystem-conformance-witness/**",
+        "examples/external-ecosystem-conformance/**",
+        "internal/meta/externalecosystemconformance/**",
+        "internal/verify/scope_external_ecosystem_conformance.go"
       ]
     },
     {
@@ -726,6 +726,21 @@
       ]
     },
     {
+      "branch": "agent/language-delivery-scorecard",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-delivery-scorecard/**",
+        "docs/language/language-delivery-scorecard.md",
+        "examples/language-delivery-scorecard/**",
+        "internal/meta/languageconcept/**",
+        "internal/meta/languagedelivery/**",
+        "internal/verify/scope_language_delivery_scorecard.go",
+        "scripts/language-delivery-scorecard/**"
+      ]
+    },
+    {
       "branch": "agent/language-deterministic-query",
       "paths": [
         ".github/agent-scope-table.md",
@@ -787,6 +802,36 @@
         "internal/meta/languagereadiness/languagegointeroperation/**",
         "internal/meta/languagereadiness/languagegointeroperationbinding/**",
         "internal/verify/scope_language_go_interoperation.go"
+      ]
+    },
+    {
+      "branch": "agent/language-multi-file-execution",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "bootstrap/function-extractor/recipes.json",
+        "cmd/gooo/run_package_source.go",
+        "cmd/gooo/run_package_source_test.go",
+        "cmd/gooo/run_source_part01.go",
+        "cmd/gooo/run_source_part02.go",
+        "cmd/language-package-execution-witness",
+        "docs/language/language-package-execution.md",
+        "examples/billing-package",
+        "examples/language-delivery-scorecard/contract.json",
+        "examples/language-package-execution",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/user-journey-scorecard/contract.json",
+        "internal/meta/languageconcept/artifact_test.go",
+        "internal/meta/languagedelivery",
+        "internal/meta/languagepackageexecution",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/userjourneyscorecard",
+        "internal/packageruntime/packageexecution",
+        "internal/verify/scope_language_package_execution.go",
+        "scripts/language-package-execution"
       ]
     },
     {
@@ -854,6 +899,32 @@
       ]
     },
     {
+      "branch": "agent/language-source-execution",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/gooo",
+        "cmd/language-delivery-scorecard",
+        "cmd/language-source-execution-witness",
+        "docs/language/language-delivery-scorecard.md",
+        "docs/language/language-source-execution.md",
+        "examples/language-delivery-scorecard",
+        "examples/language-source-execution",
+        "examples/user-journey-scorecard",
+        "internal/meta/languageconcept",
+        "internal/meta/languagedelivery",
+        "internal/meta/languagereadiness/toolchaincli",
+        "internal/meta/languagesourceexecution",
+        "internal/meta/userjourneyscorecard",
+        "internal/sourceexecution",
+        "internal/verify/scope_language_source_execution.go",
+        "scripts/language-delivery-scorecard",
+        "scripts/language-source-execution",
+        "scripts/user-journey-profile"
+      ]
+    },
+    {
       "branch": "agent/language-syntax-roundtrip",
       "paths": [
         ".github/agent-scope-table.md",
@@ -871,33 +942,6 @@
         "internal/meta/languagereadiness/languagesyntax/**",
         "internal/meta/languagereadiness/promotion.go",
         "internal/verify/scope_language_syntax_roundtrip.go"
-      ]
-    },
-    {
-      "branch": "agent/repository-topology-usecase",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/metric-counterfactual.yml",
-        "cmd/repository-topology-witness/**",
-        "docs/language/repository-topology-use-case.md",
-        "examples/repository-topology-use-case/**",
-        "internal/meta/repositorytopology/**",
-        "internal/verify/scope_repository_topology_usecase.go"
-      ]
-    },
-    {
-      "branch": "agent/user-journey-scorecard",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/user-journey-scorecard/**",
-        "docs/language/user-journey-scorecard.md",
-        "examples/user-journey-scorecard/**",
-        "internal/meta/userjourneyscorecard/**",
-        "internal/verify/scope_user_journey_scorecard.go",
-        "scripts/user-journey-profile/**"
       ]
     },
     {
@@ -1166,6 +1210,16 @@
       ]
     },
     {
+      "branch": "agent/projection-write-set-union",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/repository-projection.yml",
+        "internal/verify/scope_projection_write_set_union.go",
+        "scripts/authorized-write-set"
+      ]
+    },
+    {
       "branch": "agent/promotion-authorized-continuity",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1377,6 +1431,19 @@
         "internal/meta/languagereadiness/proposalpromotion/**",
         "internal/meta/metricstrategy/proposalpredecessor/**",
         "internal/verify/scope_language_readiness.go"
+      ]
+    },
+    {
+      "branch": "agent/repository-topology-usecase",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "cmd/repository-topology-witness/**",
+        "docs/language/repository-topology-use-case.md",
+        "examples/repository-topology-use-case/**",
+        "internal/meta/repositorytopology/**",
+        "internal/verify/scope_repository_topology_usecase.go"
       ]
     },
     {
@@ -1767,6 +1834,20 @@
       ]
     },
     {
+      "branch": "agent/user-journey-scorecard",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/user-journey-scorecard/**",
+        "docs/language/user-journey-scorecard.md",
+        "examples/user-journey-scorecard/**",
+        "internal/meta/userjourneyscorecard/**",
+        "internal/verify/scope_user_journey_scorecard.go",
+        "scripts/user-journey-profile/**"
+      ]
+    },
+    {
       "branch": "agent/vertical-slice-closure-activation",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1818,57 +1899,6 @@
         "examples/vertical-slice-closure-shadow/**",
         "internal/meta/languageassurance/verticalsliceclosureshadow/**",
         "internal/verify/scope_vertical_slice_closure_shadow.go"
-      ]
-    },
-    {
-      "branch": "agent/language-delivery-scorecard",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/language-delivery-scorecard/**",
-        "docs/language/language-delivery-scorecard.md",
-        "examples/language-delivery-scorecard/**",
-        "internal/meta/languageconcept/**",
-        "internal/meta/languagedelivery/**",
-        "internal/verify/scope_language_delivery_scorecard.go",
-        "scripts/language-delivery-scorecard/**"
-      ]
-    },
-    {
-      "branch": "agent/language-source-execution",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
-        "cmd/gooo",
-        "cmd/language-delivery-scorecard",
-        "cmd/language-source-execution-witness",
-        "docs/language/language-delivery-scorecard.md",
-        "docs/language/language-source-execution.md",
-        "examples/language-delivery-scorecard",
-        "examples/language-source-execution",
-        "examples/user-journey-scorecard",
-        "internal/meta/languageconcept",
-        "internal/meta/languagedelivery",
-        "internal/meta/languagereadiness/toolchaincli",
-        "internal/meta/languagesourceexecution",
-        "internal/meta/userjourneyscorecard",
-        "internal/sourceexecution",
-        "internal/verify/scope_language_source_execution.go",
-        "scripts/language-delivery-scorecard",
-        "scripts/language-source-execution",
-        "scripts/user-journey-profile"
-      ]
-    },
-    {
-      "branch": "agent/projection-write-set-union",
-      "paths": [
-        ".github/agent-scope-table.md",
-        ".github/ci-governance.json",
-        ".github/workflows/repository-projection.yml",
-        "internal/verify/scope_projection_write_set_union.go",
-        "scripts/authorized-write-set"
       ]
     },
     {

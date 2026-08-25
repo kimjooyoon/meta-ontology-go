@@ -7,6 +7,8 @@ const (
 	expectedSyntaxCases   = 20
 	expectedSyntaxValid   = 17
 	expectedSyntaxInvalid = 3
-	expectedSyntaxFiles   = 18
-	expectedSyntaxLines   = 266
+	expectedSyntaxFiles   = 20
+	expectedSyntaxLines   = 275
+	expectedPackageUnits  = 1
+	expectedPackageFiles  = 2
 )

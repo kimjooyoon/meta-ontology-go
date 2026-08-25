@@ -27,11 +27,30 @@ func validateSyntaxReceipt(receipt syntaxReceipt, expectedHead string) error {
 		return fmt.Errorf("syntax evidence contains %d Gooo files, want %d",
 			len(receipt.Source.GoooFiles), expectedSyntaxFiles)
 	}
+	if err := validateSyntaxPackages(receipt.Source.PackageUnits); err != nil {
+		return err
+	}
 	if err := validateSyntaxCases(receipt.Cases); err != nil {
 		return err
 	}
 	if receipt.RepositoryWrites != 0 || receipt.MutationAuthorized {
 		return fmt.Errorf("syntax evidence crossed the read-only effect boundary")
+	}
+	return nil
+}
+
+func validateSyntaxPackages(units []syntaxPackageUnit) error {
+	if len(units) != expectedPackageUnits {
+		return fmt.Errorf("syntax evidence contains %d package units, want %d", len(units), expectedPackageUnits)
+	}
+	unit := units[0]
+	if unit.ID != "billing-package" || unit.Path != "examples/billing-package" || unit.Entry != "PayOrder" ||
+		unit.ReportSchema != "gooo/language-package-execution-report/v1" ||
+		unit.MetaReducer != "languagepackageexecution.Evaluate" ||
+		unit.SourceFilesIndicator != "PACKAGE_SOURCE_FILES" || unit.ExecutionIndicator != "PACKAGE_EXECUTIONS" ||
+		len(unit.Members) != expectedPackageFiles || unit.Members[0] != "examples/billing-package/activity.gooo" ||
+		unit.Members[1] != "examples/billing-package/entities.gooo" {
+		return fmt.Errorf("syntax evidence package-unit binding is not canonical")
 	}
 	return nil
 }

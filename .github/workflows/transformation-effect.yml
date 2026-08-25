@@ -1335,6 +1335,8 @@ jobs:
           binary="$work/gooo"
           contract="$GITHUB_WORKSPACE/examples/user-journey-scorecard/contract.json"
           upstream="$work/upstream/artifact.json"
+          expected_journeys="$(jq '.journeys | length' "$contract")"
+          expected_samples="$(jq '.samples_per_journey * (.journeys | length)' "$contract")"
           mkdir -p "$work/first" "$work/replay" "$work/negative"
           go build -trimpath -o "$binary" ./cmd/gooo
           bash ./scripts/user-journey-profile/main.sh "$binary" "$GITHUB_WORKSPACE" "$HEAD_SHA" "$work/profile.json" 5
@@ -1350,14 +1352,14 @@ jobs:
           go run ./cmd/user-journey-scorecard "${common[@]}" -output "$work/replay/report.json"
           cmp -s "$work/first/report.json" "$work/replay/report.json"
           go run ./cmd/user-journey-scorecard "${common[@]}" -check "$work/first/report.json"
-          jq -e '
+          jq -e --argjson expected_journeys "$expected_journeys" --argjson expected_samples "$expected_samples" '
             .schema == "gooo/user-journey-scorecard/v1" and
             .status == "PASS" and .decision == "PASS" and .resolution == "EXACT" and
             .summary.coordinates.satisfied == 15 and .summary.coordinates.total == 15 and
-            .summary.functional.upstream_cases == 12 and .summary.functional.positive_journeys == 7 and
-            .summary.resources.samples_observed == 35 and .summary.resources.samples_expected == 35 and
-            .summary.resources.envelopes_passed == 7 and
-            .summary.meta.bindings == 19 and .summary.meta.unknowns == 0 and
+            .summary.functional.upstream_cases == 12 and .summary.functional.positive_journeys == $expected_journeys and
+            .summary.resources.samples_observed == $expected_samples and .summary.resources.samples_expected == $expected_samples and
+            .summary.resources.envelopes_passed == $expected_journeys and
+            .summary.meta.bindings == (.summary.functional.upstream_cases + $expected_journeys) and .summary.meta.unknowns == 0 and
             (.views[] | select(.Audience == "USER") | .Satisfied == 6 and .Total == 6) and
             (.views[] | select(.Audience == "TOOL_AUTHOR") | .Satisfied == 10 and .Total == 10) and
             (.views[] | select(.Audience == "GOVERNOR") | .Satisfied == 15 and .Total == 15) and

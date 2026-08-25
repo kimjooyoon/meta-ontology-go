@@ -7,18 +7,23 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
 func expectedRegistry() Registry {
 	valid := func(id, path string) CaseDefinition {
-		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass,
-			ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax"}
+		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax"}
 	}
 	invalid := func(id, path, diagnostic string) CaseDefinition {
 		return CaseDefinition{ID: id, Path: path, Kind: KindInvalid, ExpectedDecision: DecisionClosed,
 			ExpectedDiagnostic: diagnostic, ProofChoice: "REGRESSION", MetaOperation: "reject-invalid-syntax"}
 	}
+	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package",
+		Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"},
+		Entry:   "PayOrder", ReportSchema: languagepackageexecution.ReportSchema,
+		MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES",
+		ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
 		valid("billing", "examples/billing/main.gooo"),
 		valid("bootstrap", "examples/bootstrap/main.gooo"),
@@ -40,7 +45,7 @@ func expectedRegistry() Registry {
 		valid("rollback-integrity-activation", "examples/rollback-integrity-activation/main.gooo"),
 		valid("vertical-slice-closure-activation", "examples/vertical-slice-closure-activation/main.gooo"),
 		valid("external-conformance-activation", "examples/external-conformance-activation/main.gooo"),
-	}}
+	}, PackageUnits: []PackageDefinition{packageUnit}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {
@@ -62,8 +67,7 @@ func decodeRegistry(raw []byte) (Registry, error) {
 func unresolvedCases(source Source) []CaseResult {
 	results := make([]CaseResult, 0, totalCases)
 	for _, definition := range expectedRegistry().Cases {
-		item := CaseResult{Definition: definition,
-			Evidence: replay.Result{ObservedDecision: replay.DecisionUnknown}, Status: "UNRESOLVED"}
+		item := CaseResult{Definition: definition, Evidence: replay.Result{ObservedDecision: replay.DecisionUnknown}, Status: "UNRESOLVED"}
 		item.EvidenceDigest = caseDigest(item, source)
 		results = append(results, item)
 	}

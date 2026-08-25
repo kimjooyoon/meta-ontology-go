@@ -71,8 +71,8 @@ if [[ "$scorecard_code" != "0" ]]; then
   exit "$scorecard_code"
 fi
 jq -e '.decision == "INCOMPLETE" and .resolution == "EXACT"' delivery-output/report.json
-jq -e '.summary.coordinates == {satisfied:31,not_implemented:5,not_satisfied:0,unknown:0,total:36,basis_points:8611}' delivery-output/report.json
-jq -e '[.views[] | [.audience,.coordinates.satisfied,.coordinates.total]] == [["USER",9,12],["TOOL_AUTHOR",19,24],["GOVERNOR",31,36]]' delivery-output/report.json
+jq -e '.summary.coordinates == {satisfied:32,not_implemented:4,not_satisfied:0,unknown:0,total:36,basis_points:8888}' delivery-output/report.json
+jq -e '[.views[] | [.audience,.coordinates.satisfied,.coordinates.total]] == [["USER",10,12],["TOOL_AUTHOR",20,24],["GOVERNOR",32,36]]' delivery-output/report.json
 jq -e '.summary.internal_readiness.satisfied == 24 and .summary.internal_readiness.total == 24' delivery-output/report.json
 jq -e '.summary.meta_bindings == 36 and .summary.source_receipts == 6 and .summary.source_receipts_total == 6 and .summary.effects.repository_writes == 0 and .summary.effects.mutation_authority == false' delivery-output/report.json
 
@@ -84,7 +84,7 @@ run_scorecard examples/language-delivery-scorecard/contract.json delivery-output
 unknown_code=$?
 set -e
 [[ "$unknown_code" == "1" ]]
-jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.coordinates.unknown==6' delivery-output/unknown-report.json
+jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.coordinates.unknown==7' delivery-output/unknown-report.json
 
 jq 'del(.obligations[-1])' examples/language-delivery-scorecard/contract.json > delivery-output/drift-contract.json
 if run_scorecard delivery-output/drift-contract.json delivery-evidence/manifest.json "$user_journey" delivery-output/drift-report.json; then

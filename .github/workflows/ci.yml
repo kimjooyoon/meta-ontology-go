@@ -1200,3 +1200,24 @@ jobs:
             ${{ runner.temp }}/predecessor-semantic-a.json
           if-no-files-found: error
           retention-days: 30
+
+  language-package-execution:
+    name: Language package execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Conform package execution through Go 1.27
+        env:
+          EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: scripts/language-package-execution/main.sh "$RUNNER_TEMP/language-package-execution"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: language-package-execution-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/language-package-execution
+          if-no-files-found: error
+          retention-days: 14
