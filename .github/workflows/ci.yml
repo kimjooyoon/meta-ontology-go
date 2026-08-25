@@ -513,10 +513,44 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Resolve canonical evidence lineage
+        id: evidence-lineage
+        uses: actions/github-script@v8
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const {listWorkflowArtifacts, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
+            const rows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+            const attempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+            const report = selectArtifactLineage(rows, 'ci-evidence', context.runId, attempt);
+            const replay = selectArtifactLineage(rows.slice().reverse(), 'ci-evidence', context.runId, attempt);
+            if (report.report_digest !== replay.report_digest) throw new Error('artifact lineage replay digest mismatch');
+            fs.writeFileSync('ci-artifact-lineage.json', JSON.stringify(report, null, 2) + '\n');
+            await core.summary
+              .addHeading('CI artifact lineage')
+              .addTable([
+                [{data: 'indicator', header: true}, {data: 'value', header: true}],
+                ['decision', report.decision],
+                ['reason', report.reason],
+                ['current attempt', String(report.current_attempt)],
+                ['selected attempt', String(report.summary.selected_attempt)],
+                ['fallback distance', String(report.summary.fallback_distance_attempts)],
+                ['ambiguity', String(report.summary.ambiguous_candidates)],
+                ['repository writes', String(report.summary.repository_writes)],
+              ])
+              .write();
+            if (report.decision !== 'EXACT' || !report.exact_consumption_authorized) {
+              core.setFailed(`${report.decision}: ${report.reason}; next=${report.next_operation}`);
+              return;
+            }
+            core.setOutput('artifact-name', report.selected.name);
       - name: Download canonical evidence
         uses: actions/download-artifact@v7
         with:
-          name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
       - name: Collect terminal canonical jobs
         uses: actions/github-script@v8
@@ -811,6 +845,7 @@ jobs:
             provenance-receipt.jsonl
             ci-jobs.json
             ci-proof-route.json
+            ci-artifact-lineage.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
@@ -837,6 +872,7 @@ jobs:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download exact proof evidence
         if: ${{ always() }}
+        continue-on-error: true
         uses: actions/download-artifact@v7
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}

@@ -222,6 +222,18 @@
       ]
     },
     {
+      "branch": "agent/ci-artifact-lineage",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "examples/ci-artifact-lineage/**",
+        "internal/verify/scope_ci_artifact_lineage.go",
+        "scripts/ci-proof/artifacts.js",
+        "scripts/ci-proof/artifacts_test.js"
+      ]
+    },
+    {
       "branch": "agent/ci-evidence-contract",
       "paths": [
         ".github/**",
