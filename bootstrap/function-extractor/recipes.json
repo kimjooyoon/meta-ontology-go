@@ -2687,11 +2687,11 @@
       ]
     },
     {
-      "subject": "bootstrap/repository-projector/evidence.go",
+      "subject": "bootstrap/repository-projector/evidence/evidence.go",
       "operation": "extract-projection-topology-boundaries",
       "edits": [
         {
-          "path": "bootstrap/repository-projector/evidence.go",
+          "path": "bootstrap/repository-projector/evidence/evidence.go",
           "old_lines": [
             "import (",
             "\t\"fmt\"",
@@ -2704,7 +2704,7 @@
           "new_lines": []
         },
         {
-          "path": "bootstrap/repository-projector/evidence.go",
+          "path": "bootstrap/repository-projector/evidence/evidence.go",
           "old_lines": [
             "func topologyFailures(root string) (topologyEvidence, error) {",
             "\tresult := topologyEvidence{}",
@@ -2767,7 +2767,7 @@
           "new_lines": []
         },
         {
-          "path": "bootstrap/repository-projector/evidence.go",
+          "path": "bootstrap/repository-projector/evidence/evidence.go",
           "old_lines": [
             "func workflowDiscoveryRoot(physical string, children []os.DirEntry) bool {",
             "\tif physical != \".github/workflows\" || len(children) == 0 {",
@@ -2786,7 +2786,7 @@
           "new_lines": []
         },
         {
-          "path": "bootstrap/repository-projector/evidence.go",
+          "path": "bootstrap/repository-projector/evidence/evidence.go",
           "old_lines": [
             "func requireBlockingZero(report evidence) error {",
             "\tfor _, metric := range report.Indicators {",
@@ -2818,7 +2818,7 @@
       ],
       "creates": [
         {
-          "path": "bootstrap/repository-projector/evidence_topology_scan.go",
+          "path": "bootstrap/repository-projector/evidence/evidence_topology_scan.go",
           "lines": [
             "package main",
             "",
@@ -2888,7 +2888,7 @@
           ]
         },
         {
-          "path": "bootstrap/repository-projector/evidence_topology_workflow.go",
+          "path": "bootstrap/repository-projector/evidence/evidence_topology_workflow.go",
           "lines": [
             "package main",
             "",
@@ -2914,7 +2914,7 @@
           ]
         },
         {
-          "path": "bootstrap/repository-projector/evidence_guard.go",
+          "path": "bootstrap/repository-projector/evidence/evidence_guard.go",
           "lines": [
             "package main",
             "",
@@ -2953,11 +2953,11 @@
       ]
     },
     {
-      "subject": "bootstrap/repository-projector/types.go",
+      "subject": "bootstrap/repository-projector/command/types.go",
       "operation": "extract-projection-storage-types",
       "edits": [
         {
-          "path": "bootstrap/repository-projector/types.go",
+          "path": "bootstrap/repository-projector/command/types.go",
           "old_lines": [
             "type config struct {",
             "\troot        string",
@@ -2990,7 +2990,7 @@
       ],
       "creates": [
         {
-          "path": "bootstrap/repository-projector/storage_types.go",
+          "path": "bootstrap/repository-projector/command/storage_types.go",
           "lines": [
             "package main",
             "",

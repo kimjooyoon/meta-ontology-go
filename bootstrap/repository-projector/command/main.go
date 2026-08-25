@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+
+	projectionevidence "github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence"
 )
 
 func main() {
@@ -58,15 +60,15 @@ func run(settings config) error {
 	if err != nil {
 		return err
 	}
-	topology, err := topologyFailures(stored)
+	topology, err := projectionevidence.Scan(stored)
 	if err != nil {
 		return err
 	}
-	report := buildEvidence(settings.expectedSHA, model, len(objects), loss, topology)
+	report := projectionevidence.Build(settings.expectedSHA, model.Entries, len(objects), loss, topology)
 	if err := writeEvidence(work, report); err != nil {
 		return err
 	}
 	fmt.Printf("repository-projector: tracked=%d objects=%d loss=%d observed_direct=%d direct=%d exempt_direct=%d mixed=%d\n",
 		len(files), len(objects), loss, topology.ObservedDirect, topology.Direct, topology.ExemptDirect, topology.Mixed)
-	return requireBlockingZero(report)
+	return projectionevidence.RequireBlockingZero(report)
 }

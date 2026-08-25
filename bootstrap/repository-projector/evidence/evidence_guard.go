@@ -1,4 +1,4 @@
-package main
+package evidence
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func requireBlockingZero(report evidence) error {
+func RequireBlockingZero(report Report) error {
 	for _, metric := range report.Indicators {
 		if metric.Blocking && metric.Value > metric.Limit {
 			details := blockingSubjectDetails(report.Subjects, metric.ID)
