@@ -21,6 +21,8 @@ func expectedRegistry() Registry {
 	}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
 		valid("billing", "examples/billing/main.gooo"),
+		valid("billing-package-activity", "examples/billing-package/activity.gooo"),
+		valid("billing-package-entities", "examples/billing-package/entities.gooo"),
 		valid("bootstrap", "examples/bootstrap/main.gooo"),
 		valid("conformance", "examples/conformance/main.gooo"),
 		valid("meta-actionability", "examples/meta-actionability/main.gooo"),

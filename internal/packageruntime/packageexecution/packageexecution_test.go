@@ -26,7 +26,7 @@ func TestExecuteMultiFilePackageAndReplay(t *testing.T) {
 }
 
 func TestExecuteRejectsHeaderMismatch(t *testing.T) {
-	sources, err := LoadDirectory(filepath.Join("..", "..", "examples", "billing-package"))
+	sources, err := LoadDirectory(filepath.Join("..", "..", "..", "examples", "billing-package"))
 	if err != nil {
 		t.Fatal(err)
 	}

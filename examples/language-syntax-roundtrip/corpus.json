@@ -10,6 +10,22 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "billing-package-activity",
+      "path": "examples/billing-package/activity.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "billing-package-entities",
+      "path": "examples/billing-package/entities.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "bootstrap",
       "path": "examples/bootstrap/main.gooo",
       "kind": "VALID",
