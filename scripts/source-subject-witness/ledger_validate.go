@@ -18,8 +18,14 @@ func validateLedger(ledger witnessLedger) error {
 	if ledger.Counts.SourceIndicatorsApplicable+ledger.Counts.SourceIndicatorsNotApplicable != ledger.Counts.MetaIndicators {
 		return fmt.Errorf("ledger source indicator applicability partition is incomplete")
 	}
-	previous := ""
+	previous, rootSummaries := "", 0
 	for _, witness := range ledger.Witnesses {
+		if witness.Space == rootSummarySpace {
+			rootSummaries++
+			if witness.Path != "." || witness.SubjectKind != "PROJECT_ROOT" || witness.Meta.IndicatorCount != rootSummaryCount {
+				return fmt.Errorf("logical source summary witness is outside the exact catalog")
+			}
+		}
 		key := witnessKey(witness)
 		if previous != "" && key <= previous {
 			return fmt.Errorf("witness order is not canonical at %q", key)
@@ -28,6 +34,9 @@ func validateLedger(ledger witnessLedger) error {
 		if sealWitness(witness).WitnessDigest != witness.WitnessDigest {
 			return fmt.Errorf("witness digest mismatch at %q", key)
 		}
+	}
+	if rootSummaries != 1 {
+		return fmt.Errorf("ledger has %d logical source summary witnesses, want 1", rootSummaries)
 	}
 	counts := countWitnesses(ledger.Witnesses)
 	counts.MetaIndicators = ledger.Counts.MetaIndicators

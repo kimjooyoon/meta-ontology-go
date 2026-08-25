@@ -3,9 +3,8 @@ package main
 import "fmt"
 
 const (
-	rootUnboundMetric      = "gooo.metric.meta.unbound-indicators.v1"
-	rootBaseIndicatorCount = 7
-	rootSummaryCount       = 5
+	rootUnboundMetric = "gooo.metric.meta.unbound-indicators.v1"
+	rootSummaryCount  = 5
 )
 
 func rootSummaryMetrics(directory directoryMetric) []expectedMetric {
@@ -20,16 +19,18 @@ func rootSummaryMetrics(directory directoryMetric) []expectedMetric {
 
 func validateRootSummaryIndicator(row sourceIndicator) error {
 	if !isRootSummaryMetric(row.MetricID) {
-		return nil
+		return fmt.Errorf("root summary indicator %q is outside the exact catalog", row.MetricID)
 	}
-	wantOperation, wantProducer, wantConsumer, wantProof, wantBlocking := "observe", "linecaps.AnalyzeLineMetrics", "metric-report", "coherence", false
+	wantOperation, wantProducer, wantConsumer, wantEffect, wantBlocking := "observe", "linecaps.AnalyzeLineMetrics", "metric-report", "NO_EFFECT", false
 	if row.MetricID == rootUnboundMetric {
-		wantOperation, wantProducer, wantConsumer, wantBlocking = "bind-indicator-meta-program", "metabinding.Build", "self-improvement-cycle", true
-		if row.Value != 0 || row.Relation != "less_or_equal" || row.Detail != "ontology=examples/meta-binding-coverage/main.gooo" {
+		wantOperation, wantProducer, wantConsumer, wantEffect, wantBlocking = "bind-indicator-meta-program", "metabinding.Build", "self-improvement-cycle", "ALLOW", true
+		if row.Value != 0 || row.Limit != 0 || row.Relation != "less_or_equal" || row.Detail != "ontology=examples/meta-binding-coverage/main.gooo" {
 			return fmt.Errorf("root unbound indicator lost its exact zero-value ontology binding")
 		}
+	} else if row.Value < 0 || row.Limit != 0 || row.Relation != "observe" {
+		return fmt.Errorf("root source observation %q lost its non-negative observation contract", row.MetricID)
 	}
-	if row.Subject != "." || row.SubjectKind != "PROJECT_ROOT" || row.MetaOperation != wantOperation || row.Producer != wantProducer || row.Consumer != wantConsumer || row.ProofChoice != wantProof || row.Blocking != wantBlocking || !exactApplicable(row) {
+	if row.Subject != "." || row.SubjectKind != "PROJECT_ROOT" || row.MetaOperation != wantOperation || row.Producer != wantProducer || row.Consumer != wantConsumer || row.ProofChoice != "coherence" || row.EnforcementEffect != wantEffect || row.Blocking != wantBlocking || !exactApplicable(row) {
 		return fmt.Errorf("root summary indicator %q is outside the exact catalog", row.MetricID)
 	}
 	return nil
