@@ -10,10 +10,6 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 		return witnessLedger{}, err
 	}
 	index := indexIndicators(report.Meta.Indicators)
-	rootSummary, err := compileRootSummaryWitness(report.Root, index)
-	if err != nil {
-		return witnessLedger{}, err
-	}
 	functions, err := compileFunctionWitnesses(report.Meta.Indicators)
 	if err != nil {
 		return witnessLedger{}, err
@@ -24,6 +20,10 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 	sort.Slice(logical, func(i, j int) bool { return logical[i].Path < logical[j].Path })
 	sort.Slice(storage, func(i, j int) bool { return storage[i].Path < storage[j].Path })
+	rootSummary, err := compileRootSummaryWitness(logical, index)
+	if err != nil {
+		return witnessLedger{}, err
+	}
 	readmeValue := rootREADMEValue(files)
 	witnesses := make([]subjectWitness, 0, len(files)+len(functions)+len(logical)+len(storage)+1)
 	for _, file := range files {
