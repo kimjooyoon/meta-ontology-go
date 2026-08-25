@@ -18,6 +18,7 @@ var conceptCarriers = map[string]string{
 var operationConceptIDs = map[string]string{
 	"bind-exact-source-metrics":       "metric-meta-program",
 	"compact-obvious-lines":           "ci-selected-refactoring",
+	"extract-function":                "ci-selected-refactoring",
 	"exempt-project-root-topology":    "effect-bounded-observation",
 	"interpret-dimension-registry":    "metric-meta-program",
 	"lower-semantic-resolution":       "monotone-semantic-resolution",
