@@ -19,6 +19,7 @@ func init() {
 		"examples/user-journey-scorecard/contract.json",
 		"internal/meta/languageconcept/artifact_test.go",
 		"internal/meta/languagedelivery",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
 		"internal/meta/languagepackageexecution",
 		"internal/meta/userjourneyscorecard",
