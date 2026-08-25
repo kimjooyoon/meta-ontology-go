@@ -21,7 +21,7 @@ git diff --exit-code -- internal/packageruntime/packageexecution internal/meta/l
 
 go build -o "$output/gooo" ./cmd/gooo
 "$output/gooo" run --entry PayOrder examples/billing-package > "$output/cli-receipt.json"
-go run ./cmd/language-package-execution-witness --head "${GITHUB_SHA:-0000000000000000000000000000000000000000}" --root "$root" --out "$output/report.json"
+go run ./cmd/language-package-execution-witness --head "${EXACT_SHA:-${GITHUB_SHA:-0000000000000000000000000000000000000000}}" --root "$root" --out "$output/report.json"
 
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   jq -r '"### Gooo package execution\n\n| Metric | Observed | Target |\n| --- | ---: | ---: |\n" + ([.indicators[] | "| `\(.id)` | \(.value) | \(.target) |"] | join("\n")) + "\n\nDecision: `\(.decision)` / `\(.resolution)`"' "$output/report.json" >> "$GITHUB_STEP_SUMMARY"

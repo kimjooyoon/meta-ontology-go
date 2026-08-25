@@ -4,7 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/language-multi-file-execution"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
-		".github/workflows/language-package-execution.yml",
+		".github/workflows/ci.yml",
 		"cmd/gooo/run_package_source.go",
 		"cmd/gooo/run_package_source_test.go",
 		"cmd/gooo/run_source_part01.go",
