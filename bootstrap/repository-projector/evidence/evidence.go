@@ -1,4 +1,4 @@
-package main
+package evidence
 
 const (
 	directIndicator          = "storage.direct-entry"
@@ -11,10 +11,10 @@ const (
 	topologyProof            = "axiomatic-foundation"
 )
 
-func buildEvidence(sha string, model manifest, objects, loss int, topology topologyEvidence) evidence {
+func Build(sha string, entries []Entry, objects, loss int, topology Topology) Report {
 	unbound, lineDebt := 0, 0
 	subjects := append([]subject(nil), topology.Subjects...)
-	for _, entry := range model.Entries {
+	for _, entry := range entries {
 		if entry.ObjectSHA == "" || entry.Backing == "" {
 			unbound++
 		}
@@ -31,7 +31,7 @@ func buildEvidence(sha string, model manifest, objects, loss int, topology topol
 	unclassifiedDirect := topology.ObservedDirect - topology.Direct - topology.ExemptDirect
 	return evidence{
 		Schema: "gooo.repository-projection-evidence.v1", SourceSHA: sha,
-		TrackedFiles: len(model.Entries), Objects: objects, Subjects: subjects,
+		TrackedFiles: len(entries), Objects: objects, Subjects: subjects,
 		Indicators: []indicator{
 			{ID: "projection.roundtrip-loss", Value: loss, Limit: 0, Blocking: true,
 				Consumer: "repository-materializer", Operation: "restore-logical-tree", Proof: proof},

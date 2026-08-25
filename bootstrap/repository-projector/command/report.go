@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+
+	projectionevidence "github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence"
 )
 
 func buildManifest(sha string, files []trackedFile,
@@ -31,7 +33,7 @@ func buildManifest(sha string, files []trackedFile,
 	}
 }
 
-func writeEvidence(work string, report evidence) error {
+func writeEvidence(work string, report projectionevidence.Report) error {
 	encoded, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		return err

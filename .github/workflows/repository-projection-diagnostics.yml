@@ -48,11 +48,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          go fix ./bootstrap/repository-projector
+          go fix ./bootstrap/repository-projector/...
           git diff --exit-code -- bootstrap/repository-projector
           gofmt -l bootstrap/repository-projector | tee "$RUNNER_TEMP/repository-projector-unformatted.txt"
           test ! -s "$RUNNER_TEMP/repository-projector-unformatted.txt"
-          go test ./bootstrap/repository-projector
+          go test ./bootstrap/repository-projector/...
       - name: Observe the fail-closed storage subject
         shell: bash
         run: |
@@ -71,7 +71,7 @@ jobs:
           git -C "$fixture" commit --quiet -m fixture
           fixture_sha=$(git -C "$fixture" rev-parse HEAD)
           set +e
-          go run ./bootstrap/repository-projector \
+          go run ./bootstrap/repository-projector/command \
             --root "$fixture" \
             --work "$work/fixture-projector" \
             --expected-sha "$fixture_sha" \
@@ -90,7 +90,7 @@ jobs:
             ([.subjects[]|select(.physical==".")]|length)==0
           ' "$work/fixture-projector/evidence.json"
           set +e
-          go run ./bootstrap/repository-projector \
+          go run ./bootstrap/repository-projector/command \
             --root "$GITHUB_WORKSPACE" \
             --work "$work/projector" \
             --expected-sha "$EXACT_SHA" \

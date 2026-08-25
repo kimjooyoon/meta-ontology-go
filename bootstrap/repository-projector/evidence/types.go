@@ -1,6 +1,6 @@
-package main
+package evidence
 
-type manifestEntry struct {
+type Entry struct {
 	Logical    string `json:"logical"`
 	Backing    string `json:"backing"`
 	ObjectSHA  string `json:"object_sha256"`
@@ -11,15 +11,7 @@ type manifestEntry struct {
 	Lines      int    `json:"lines,omitempty"`
 }
 
-type manifest struct {
-	Schema    string          `json:"schema"`
-	SourceSHA string          `json:"source_sha"`
-	Proof     string          `json:"proof_choice"`
-	Authority string          `json:"proof_authority"`
-	Entries   []manifestEntry `json:"entries"`
-}
-
-type indicator struct {
+type Indicator struct {
 	ID        string `json:"id"`
 	Value     int    `json:"value"`
 	Limit     int    `json:"limit"`
@@ -29,7 +21,7 @@ type indicator struct {
 	Proof     string `json:"proof_choice"`
 }
 
-type subject struct {
+type Subject struct {
 	Indicator           string `json:"indicator"`
 	Logical             string `json:"logical"`
 	Physical            string `json:"physical,omitempty"`
@@ -41,19 +33,24 @@ type subject struct {
 	ApplicabilityReason string `json:"applicability_reason,omitempty"`
 }
 
-type topologyEvidence struct {
+type Topology struct {
 	ObservedDirect int
 	Direct         int
 	ExemptDirect   int
 	Mixed          int
-	Subjects       []subject
+	Subjects       []Subject
 }
 
-type evidence struct {
+type Report struct {
 	Schema       string      `json:"schema"`
 	SourceSHA    string      `json:"source_sha"`
 	TrackedFiles int         `json:"tracked_files"`
 	Objects      int         `json:"stored_objects"`
-	Indicators   []indicator `json:"indicators"`
-	Subjects     []subject   `json:"subjects"`
+	Indicators   []Indicator `json:"indicators"`
+	Subjects     []Subject   `json:"subjects"`
 }
+
+type indicator = Indicator
+type subject = Subject
+type topologyEvidence = Topology
+type evidence = Report

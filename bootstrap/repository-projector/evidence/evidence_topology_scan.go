@@ -1,4 +1,4 @@
-package main
+package evidence
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	"sort"
 )
 
-func topologyFailures(root string) (topologyEvidence, error) {
+func Scan(root string) (Topology, error) {
 	result := topologyEvidence{}
 	err := filepath.WalkDir(root, func(name string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil || !entry.IsDir() || filepath.Clean(name) == filepath.Clean(root) {
