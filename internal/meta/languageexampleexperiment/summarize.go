@@ -1,6 +1,10 @@
 package languageexampleexperiment
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/artifactemit"
+)
 
 func summarize(input Input) Summary {
 	artifact, profile := input.Artifact, input.Profile
