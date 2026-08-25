@@ -25,8 +25,10 @@ func validateSource(report sourceReport, expectedSHA string) error {
 		return fmt.Errorf("source meta indicator ledger is empty")
 	}
 	for _, indicator := range report.Meta.Indicators {
+		validApplicability := indicator.Applicability == "APPLICABLE" || indicator.Applicability == "NOT_APPLICABLE"
 		validDecision := indicator.Decision == "PASS" || indicator.Decision == "NOT_APPLICABLE"
-		if indicator.Subject == "" || indicator.MetricID == "" || !indicator.Satisfied || !validDecision {
+		consistentApplicability := (indicator.Applicability == "NOT_APPLICABLE") == (indicator.Decision == "NOT_APPLICABLE")
+		if indicator.Subject == "" || indicator.MetricID == "" || !indicator.Satisfied || !validApplicability || !validDecision || !consistentApplicability {
 			return fmt.Errorf("source indicator %q is incomplete or unsatisfied", indicator.MetricID)
 		}
 	}
