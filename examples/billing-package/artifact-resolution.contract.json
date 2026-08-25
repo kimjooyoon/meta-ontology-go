@@ -5,7 +5,7 @@
   "interface_schema": "gooo/operation-interface/v1",
   "manifest_definitions": 2,
   "interface_definitions": 0,
-  "registered_emitters": 2,
+  "registered_emitters": 3,
   "indicators": 13,
   "not_claimed_count": 4,
   "not_claimed": [

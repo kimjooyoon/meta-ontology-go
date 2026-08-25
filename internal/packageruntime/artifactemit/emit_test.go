@@ -23,7 +23,20 @@ func TestEmitLowersUnknownPackageDecision(t *testing.T) {
 func TestEmitRegistryRejectsUnknownKind(t *testing.T) {
 	artifact := Emit("not-registered", validReceiptJSON(t))
 	if artifact.Decision != "FAIL_CLOSED" || artifact.Reason != "EMITTER_UNKNOWN" ||
-		artifact.Extensions.RegisteredEmitters != 2 {
+		artifact.Extensions.RegisteredEmitters != 3 {
+		t.Fatalf("artifact=%#v", artifact)
+	}
+}
+
+func TestEmitProjectsSymbolicInvocationSchema(t *testing.T) {
+	artifact := Emit(SymbolicInvocationSchemaKind, validReceiptJSON(t))
+	schema := artifact.JSONSchema
+	if artifact.Decision != "PASS" || artifact.Resolution != SymbolicInvocationResolution ||
+		artifact.Schema != SymbolicInvocationArtifact || schema == nil ||
+		schema.Dialect != JSONSchemaDraft202012 || schema.Properties.Activity.Const != "PayOrder" ||
+		len(schema.Properties.Inputs.PrefixItems) != 1 ||
+		schema.Properties.Inputs.PrefixItems[0].Const != "urn:order" ||
+		schema.Properties.Inputs.MinItems != 1 || schema.Properties.Inputs.MaxItems != 1 {
 		t.Fatalf("artifact=%#v", artifact)
 	}
 }

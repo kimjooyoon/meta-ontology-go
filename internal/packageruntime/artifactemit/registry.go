@@ -15,6 +15,7 @@ func emitterRegistry() []emitter {
 	return []emitter{
 		{kind: OperationManifestKind, project: projectOperationManifest},
 		{kind: OperationInterfaceKind, project: projectOperationInterface},
+		{kind: SymbolicInvocationSchemaKind, project: projectSymbolicInvocationSchema},
 	}
 }
 

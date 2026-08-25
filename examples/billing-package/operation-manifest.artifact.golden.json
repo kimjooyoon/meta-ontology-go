@@ -39,10 +39,11 @@
     ]
   },
   "extensions": {
-    "registered_emitters": 2,
+    "registered_emitters": 3,
     "kinds": [
       "operation-interface",
-      "operation-manifest"
+      "operation-manifest",
+      "symbolic-invocation-schema"
     ]
   },
   "effects": {

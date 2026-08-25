@@ -9,7 +9,7 @@
     "source_files": 2,
     "primary_artifacts": 1,
     "deterministic_replays": 1,
-    "registered_emitters": 2,
+    "registered_emitters": 3,
     "resource_samples": 5,
     "unknown_emitter_rejections": 1,
     "indicators": 13,
