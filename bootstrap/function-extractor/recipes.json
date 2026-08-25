@@ -2632,6 +2632,59 @@
           "new_lines": []
         }
       ]
+    },
+    {
+      "subject": "internal/meta/languagereadiness/languagesyntax/evaluate.go",
+      "operation": "extract-language-syntax-registry-paths",
+      "edits": [
+        {
+          "path": "internal/meta/languagereadiness/languagesyntax/evaluate.go",
+          "old_lines": [
+            "func registryPaths(registry Registry) []string {",
+            "\tpaths := []string{}",
+            "\tfor _, definition := range registry.Cases {",
+            "\t\tif strings.HasSuffix(definition.Path, \".gooo\") {",
+            "\t\t\tpaths = append(paths, definition.Path)",
+            "\t\t}",
+            "\t}",
+            "\tfor _, unit := range registry.PackageUnits {",
+            "\t\tpaths = append(paths, unit.Members...)",
+            "\t}",
+            "\treturn paths",
+            "}"
+          ],
+          "new_lines": []
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagesyntax/corpus_paths.go",
+          "old_lines": [
+            "// gooo:language-syntax-registry-paths-extraction"
+          ],
+          "new_lines": [
+            "import \"strings\"",
+            "",
+            "func registryPaths(registry Registry) []string {",
+            "\tpaths := []string{}",
+            "\tfor _, definition := range registry.Cases {",
+            "\t\tif strings.HasSuffix(definition.Path, \".gooo\") {",
+            "\t\t\tpaths = append(paths, definition.Path)",
+            "\t\t}",
+            "\t}",
+            "\tfor _, unit := range registry.PackageUnits {",
+            "\t\tpaths = append(paths, unit.Members...)",
+            "\t}",
+            "\treturn paths",
+            "}"
+          ]
+        },
+        {
+          "path": "internal/meta/languagereadiness/languagesyntax/evaluate.go",
+          "old_lines": [
+            "\t\"strings\""
+          ],
+          "new_lines": []
+        }
+      ]
     }
   ]
 }
