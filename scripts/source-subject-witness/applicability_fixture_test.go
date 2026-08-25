@@ -14,6 +14,7 @@ func workflowDiscoveryFixture() (directoryMetric, []sourceIndicator) {
 	for _, metric := range metrics {
 		rows = append(rows, sourceIndicator{Subject: directory.Path, SubjectKind: directory.SubjectKind, MetricID: metric.id, Value: metric.value, Applicability: "APPLICABLE", Decision: "PASS", Satisfied: true, MetaOperation: "observe"})
 	}
+	rows[3].MetaOperation = "separate-directory-kinds"
 	rows[0].Applicability = "NOT_APPLICABLE"
 	rows[0].ApplicabilityRuleID = workflowDiscoveryRule
 	rows[0].ApplicabilityReason = "GITHUB_WORKFLOW_DISCOVERY_ROOT"
