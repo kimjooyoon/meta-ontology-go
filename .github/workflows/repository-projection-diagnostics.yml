@@ -59,6 +59,33 @@ jobs:
           set -euo pipefail
           work="$RUNNER_TEMP/repository-projection-diagnostics"
           mkdir -p "$work"
+          fixture="$work/fixture-repository"
+          mkdir -p "$fixture/bootstrap/dense"
+          for index in $(seq -w 0 10); do
+            printf 'fixture evidence\n' > "$fixture/bootstrap/dense/entry-$index.txt"
+          done
+          git -C "$fixture" init --quiet
+          git -C "$fixture" config user.name 'projection-diagnostic'
+          git -C "$fixture" config user.email 'projection-diagnostic@example.invalid'
+          git -C "$fixture" add .
+          git -C "$fixture" commit --quiet -m fixture
+          fixture_sha=$(git -C "$fixture" rev-parse HEAD)
+          set +e
+          go run ./bootstrap/repository-projector \
+            --root "$fixture" \
+            --work "$work/fixture-projector" \
+            --expected-sha "$fixture_sha" \
+            > "$work/fixture-projector.log" 2>&1
+          fixture_status=$?
+          set -e
+          test "$fixture_status" -eq 1
+          jq -e --arg sha "$fixture_sha" '
+            .source_sha==$sha and
+            (.indicators[]|select(.id=="storage.direct-entry")|.value==1) and
+            (.indicators[]|select(.id=="storage.mixed-kind")|.value==0) and
+            ([.subjects[]|select(.indicator=="storage.direct-entry" and .physical=="bootstrap/dense" and .value==11 and .limit==10)]|length)==1 and
+            ([.subjects[]|select(.physical==".")]|length)==0
+          ' "$work/fixture-projector/evidence.json"
           set +e
           go run ./bootstrap/repository-projector \
             --root "$GITHUB_WORKSPACE" \
