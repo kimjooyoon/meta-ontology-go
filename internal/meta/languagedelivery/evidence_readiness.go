@@ -17,13 +17,13 @@ type ReadinessObligation struct {
 }
 
 type decodedEvidence struct {
-	Journey     JourneyReceipt
-	Conformance ConformanceReceipt
-	LSP         LSPReceipt
-	Release     ReleaseReceipt
-	Execution   ExecutionReceipt
+	Journey      JourneyReceipt
+	Conformance  ConformanceReceipt
+	LSP          LSPReceipt
+	Release      ReleaseReceipt
+	Execution    ExecutionReceipt
 	LanguageTest LanguageTestReceipt
-	Profile     ProfileReceipt
-	Debug       DebugReceipt
-	Readiness   ReadinessArtifact
+	Profile      ProfileReceipt
+	Debug        DebugReceipt
+	Readiness    ReadinessArtifact
 }

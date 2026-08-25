@@ -3,15 +3,15 @@ package languagedelivery
 const languageTestReportSchema = "gooo/language-test-experiment-report/v1"
 
 type LanguageTestReceipt struct {
-	Schema            string                  `json:"schema"`
-	SubjectSHA        string                  `json:"subject_sha"`
-	Decision          string                  `json:"decision"`
-	Resolution        string                  `json:"resolution"`
-	Summary           LanguageTestSummary     `json:"summary"`
-	Views             []LanguageTestView      `json:"views"`
-	NotClaimed        []string                `json:"not_claimed"`
-	RepositoryWrites  int                     `json:"repository_writes"`
-	MutationAuthority bool                    `json:"mutation_authority"`
+	Schema            string              `json:"schema"`
+	SubjectSHA        string              `json:"subject_sha"`
+	Decision          string              `json:"decision"`
+	Resolution        string              `json:"resolution"`
+	Summary           LanguageTestSummary `json:"summary"`
+	Views             []LanguageTestView  `json:"views"`
+	NotClaimed        []string            `json:"not_claimed"`
+	RepositoryWrites  int                 `json:"repository_writes"`
+	MutationAuthority bool                `json:"mutation_authority"`
 }
 
 type LanguageTestSummary struct {
@@ -36,7 +36,7 @@ type LanguageTestCoordinates struct {
 
 type LanguageTestCompiler struct {
 	ExecutableDigest string `json:"executable_digest"`
-	Go127Runtimes     int    `json:"go127_runtimes"`
+	Go127Runtimes    int    `json:"go127_runtimes"`
 }
 
 type LanguageTestEffects struct {

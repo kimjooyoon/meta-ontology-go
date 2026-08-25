@@ -51,13 +51,13 @@ func exactLanguageTestReceipt(head string) LanguageTestReceipt {
 	return LanguageTestReceipt{
 		Schema: languageTestReportSchema, SubjectSHA: head, Decision: "PASS", Resolution: "EXACT",
 		Summary: LanguageTestSummary{
-			Coordinates: LanguageTestCoordinates{Satisfied: 12, Total: 12, BasisPoints: 10000},
+			Coordinates:   LanguageTestCoordinates{Satisfied: 12, Total: 12, BasisPoints: 10000},
 			DeclaredTests: 2, ExecutedTests: 2, PassedTests: 2,
 			ReceiptDigestVariants: 1, ExecutionDigestVariants: 1,
 			AssertionRejections: 1, MissingTestRejections: 1,
 			Compiler: LanguageTestCompiler{
 				ExecutableDigest: "sha256:88fdc432c8cfec498cf58a4bc2a1072439dae099fcbc03412403ed78feeff26d",
-				Go127Runtimes: 2,
+				Go127Runtimes:    2,
 			},
 		},
 		Views: []LanguageTestView{

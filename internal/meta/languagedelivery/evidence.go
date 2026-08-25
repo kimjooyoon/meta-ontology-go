@@ -1,15 +1,15 @@
 package languagedelivery
 
 type EvidenceSet struct {
-	UserJourney []byte
-	Conformance []byte
-	LSP         []byte
-	Release     []byte
-	Execution   []byte
+	UserJourney  []byte
+	Conformance  []byte
+	LSP          []byte
+	Release      []byte
+	Execution    []byte
 	LanguageTest []byte
-	Profile     []byte
-	Debug       []byte
-	Readiness   []byte
+	Profile      []byte
+	Debug        []byte
+	Readiness    []byte
 }
 
 func (set EvidenceSet) Bytes(source SourceName) []byte {
