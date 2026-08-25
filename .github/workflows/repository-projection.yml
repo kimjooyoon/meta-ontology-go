@@ -76,7 +76,7 @@ jobs:
           report="$RUNNER_TEMP/repository-projection/write-set-evidence.json"
           git diff --name-only | sort -u > "$observed"
           untracked="$(git ls-files --others --exclude-standard | wc -l | tr -d ' ')"
-          go run ./bootstrap/authorized-write-set \
+          go run ./scripts/authorized-write-set \
             --expected-sha "$EXACT_SHA" \
             --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
             --extraction-report "$RUNNER_TEMP/repository-projection/extraction-report.json" \
