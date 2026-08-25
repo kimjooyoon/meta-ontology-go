@@ -84,7 +84,7 @@ jq -s --arg head "$HEAD_SHA" --arg binary_digest "$binary_digest" \
 
 after_workspace=$(git status --porcelain=v1 --untracked-files=all)
 test "$before_workspace" = "$after_workspace"
-jq -e '.decision=="PASS" and .source=={gooo_files:1,go_files:0,gooo_lines:8,files:4,directories:0} and
+jq -e '.decision=="PASS" and .source=={gooo_files:2,go_files:0,gooo_lines:10,files:5,directories:0} and
   .validation.accepted_instances==1 and .validation.rejected_instances==1 and
   .deterministic_replays==1 and .resources.sample_count==5 and
   .effects=={repository_writes:0,mutation_authority:false}' "$work/receipt.json"
