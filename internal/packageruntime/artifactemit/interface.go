@@ -9,7 +9,7 @@ func projectOperationInterface(source packageReceipt) Artifact {
 	return finish(Artifact{
 		Schema: OperationInterfaceSchema, Decision: "PASS",
 		Resolution: OperationInterfaceResolution,
-		Reason: "OPERATION_INTERFACE_EMITTED", Kind: OperationInterfaceKind,
+		Reason:     "OPERATION_INTERFACE_EMITTED", Kind: OperationInterfaceKind,
 		SubjectDigest: source.Digest,
 		Package:       Package{Path: source.PackagePath, Name: source.Package, Namespace: source.Namespace},
 		Operation:     Operation{Activity: entry.Activity, Inputs: entry.Inputs, Output: entry.Output},
