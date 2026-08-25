@@ -10,6 +10,22 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "language-test-pass",
+      "path": "examples/language-test/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "language-test-failing-assertion",
+      "path": "examples/language-test/failing.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "bootstrap",
       "path": "examples/bootstrap/main.gooo",
       "kind": "VALID",

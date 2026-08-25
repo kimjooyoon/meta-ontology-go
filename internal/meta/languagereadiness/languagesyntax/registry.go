@@ -26,6 +26,8 @@ func expectedRegistry() Registry {
 		ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
 		valid("billing", "examples/billing/main.gooo"),
+		valid("language-test-pass", "examples/language-test/main.gooo"),
+		valid("language-test-failing-assertion", "examples/language-test/failing.gooo"),
 		valid("bootstrap", "examples/bootstrap/main.gooo"),
 		valid("conformance", "examples/conformance/main.gooo"),
 		valid("meta-actionability", "examples/meta-actionability/main.gooo"),

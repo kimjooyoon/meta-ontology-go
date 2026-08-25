@@ -10,6 +10,20 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-language-test-pass",
+      "kind": "SOURCE",
+      "path": "examples/language-test/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-test-failing-assertion",
+      "kind": "SOURCE",
+      "path": "examples/language-test/failing.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "semantic-bootstrap",
       "kind": "SOURCE",
       "path": "examples/bootstrap/main.gooo",
