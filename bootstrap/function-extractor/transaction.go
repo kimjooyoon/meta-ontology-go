@@ -7,9 +7,10 @@ import (
 )
 
 type transactionFile struct {
-	name   string
-	temp   string
-	backup string
+	name    string
+	temp    string
+	backup  string
+	created bool
 }
 
 func commitStaged(staged map[string]stagedFile) error {
@@ -22,7 +23,7 @@ func commitStaged(staged map[string]stagedFile) error {
 	for _, path := range paths {
 		stage := staged[path]
 		file := transactionFile{name: stage.name,
-			temp: stage.name + ".extract.tmp", backup: stage.name + ".extract.bak"}
+			temp: stage.name + ".extract.tmp", backup: stage.name + ".extract.bak", created: stage.created}
 		if _, err := os.Stat(file.temp); !os.IsNotExist(err) {
 			return fmt.Errorf("temporary extraction path exists: %s", file.temp)
 		}
@@ -37,19 +38,14 @@ func commitStaged(staged map[string]stagedFile) error {
 	}
 	committed := 0
 	for index, file := range files {
-		if err := os.Rename(file.name, file.backup); err != nil {
-			rollbackTransactions(files, committed)
-			return err
-		}
-		if err := os.Rename(file.temp, file.name); err != nil {
-			_ = os.Rename(file.backup, file.name)
+		if err := installTransaction(file); err != nil {
 			rollbackTransactions(files, committed)
 			return err
 		}
 		committed = index + 1
 	}
 	for _, file := range files {
-		if err := os.Remove(file.backup); err != nil {
+		if err := removeTransactionBackup(file); err != nil {
 			return err
 		}
 	}
@@ -58,8 +54,7 @@ func commitStaged(staged map[string]stagedFile) error {
 
 func rollbackTransactions(files []transactionFile, committed int) {
 	for index := committed - 1; index >= 0; index-- {
-		_ = os.Remove(files[index].name)
-		_ = os.Rename(files[index].backup, files[index].name)
+		restoreTransaction(files[index])
 	}
 	cleanupTransactions(files)
 }

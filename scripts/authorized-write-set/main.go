@@ -8,8 +8,7 @@ import (
 )
 
 type options struct {
-	expectedSHA, density, extraction, observed, expectedOut, output string
-	untracked                                                       int
+	expectedSHA, density, extraction, observed, untracked, expectedOut, output string
 }
 
 func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }
@@ -22,18 +21,18 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags.StringVar(&value.density, "density-report", "", "line density receipt")
 	flags.StringVar(&value.extraction, "extraction-report", "", "function extraction receipt")
 	flags.StringVar(&value.observed, "observed-write-set", "", "observed changed paths")
-	flags.IntVar(&value.untracked, "untracked-count", -1, "untracked workspace paths")
+	flags.StringVar(&value.untracked, "untracked-paths", "", "observed untracked path list")
 	flags.StringVar(&value.expectedOut, "expected-output", "", "authorized path output")
 	flags.StringVar(&value.output, "output", "", "evidence JSON output")
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
 	if value.expectedSHA == "" || value.density == "" || value.extraction == "" ||
-		value.observed == "" || value.expectedOut == "" || value.output == "" {
+		value.observed == "" || value.untracked == "" || value.expectedOut == "" || value.output == "" {
 		fmt.Fprintln(stderr, "authorized-write-set: required input missing")
 		return 2
 	}
-	density, extraction, observed, err := loadInputs(value.density, value.extraction, value.observed)
+	density, extraction, observed, untracked, err := loadInputs(value.density, value.extraction, value.observed, value.untracked)
 	var report evidence
 	if err != nil {
 		report = evidence{Schema: evidenceSchema, Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION",
@@ -41,7 +40,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 			MetaOperation: metaOperation, Coordinates: coordinates{SourceReceiptsTotal: 2, Unknowns: 2}}
 		report = seal(report)
 	} else {
-		report = reduce(value.expectedSHA, density, extraction, observed, value.untracked)
+		report = reduce(value.expectedSHA, density, extraction, observed, untracked)
 	}
 	if err := writeOutputs(value.expectedOut, value.output, report); err != nil {
 		fmt.Fprintf(stderr, "authorized-write-set: write: %v\n", err)

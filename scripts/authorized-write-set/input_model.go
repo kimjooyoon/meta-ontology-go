@@ -23,5 +23,6 @@ type extractionReport struct {
 	Unhandled []string            `json:"unhandled"`
 }
 type extractionSubject struct {
-	Files []string `json:"changed_files"`
+	Files   []string `json:"changed_files"`
+	Created []string `json:"created_files"`
 }
