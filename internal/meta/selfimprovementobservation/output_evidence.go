@@ -1,10 +1,10 @@
 package selfimprovementobservation
 
 type Authority struct {
-	RepositoryWrites           int  `json:"repository_writes"`
-	MutationAuthorized         bool `json:"mutation_authorized"`
-	ExecutionAuthorized        bool `json:"execution_authorized"`
-	PromotionAuthorized        bool `json:"promotion_authorized"`
+	RepositoryWrites            int  `json:"repository_writes"`
+	MutationAuthorized          bool `json:"mutation_authorized"`
+	ExecutionAuthorized         bool `json:"execution_authorized"`
+	PromotionAuthorized         bool `json:"promotion_authorized"`
 	AutomaticAdoptionAuthorized bool `json:"automatic_adoption_authorized"`
 }
 

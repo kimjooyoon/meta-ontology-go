@@ -5,8 +5,8 @@ type validation struct {
 	FixedDenominators, MinimalValueState            bool
 	ValueWitnesses, CompilerWitnesses               bool
 	ResourceWitnesses, MetaOperations               bool
-	Proofs, Views, Counterexamples                   bool
-	SourceEffects, ReadOnlyAuthority                 bool
+	Proofs, Views, Counterexamples                  bool
+	SourceEffects, ReadOnlyAuthority                bool
 }
 
 func validateInputs(in Inputs, opts Options) validation {

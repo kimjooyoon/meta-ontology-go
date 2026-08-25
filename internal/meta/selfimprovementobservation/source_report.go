@@ -1,14 +1,14 @@
 package selfimprovementobservation
 
 type SourceReport struct {
-	Schema         string        `json:"schema"`
-	Decision       string        `json:"decision"`
-	Resolution     string        `json:"resolution"`
-	Reason         string        `json:"reason"`
-	Interpretation string        `json:"interpretation"`
-	SubjectSHA     string        `json:"subject_sha"`
-	ContractID     string        `json:"contract_id"`
-	Summary        SourceSummary `json:"summary"`
+	Schema         string            `json:"schema"`
+	Decision       string            `json:"decision"`
+	Resolution     string            `json:"resolution"`
+	Reason         string            `json:"reason"`
+	Interpretation string            `json:"interpretation"`
+	SubjectSHA     string            `json:"subject_sha"`
+	ContractID     string            `json:"contract_id"`
+	Summary        SourceSummary     `json:"summary"`
 	Indicators     []SourceIndicator `json:"indicators"`
 	Views          []SourceView      `json:"views"`
 	Proofs         []SourceProof     `json:"proofs"`
@@ -29,7 +29,7 @@ type SourceSummary struct {
 }
 
 type CountSummary struct {
-	Satisfied  int `json:"satisfied"`
-	Total      int `json:"total"`
+	Satisfied   int `json:"satisfied"`
+	Total       int `json:"total"`
 	BasisPoints int `json:"basis_points"`
 }

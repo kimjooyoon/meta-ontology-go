@@ -21,8 +21,8 @@ func project(in Inputs, opts Options) projection {
 		Schema: observationSchema, Metaprogram: metaprogram, SubjectSHA: opts.HeadSHA,
 		SourceWorkflowRunID: opts.SourceRunID, ContractID: report.ContractID,
 		Summary: ObservationSummary{
-			SourceCoordinates: report.Summary.Coordinates,
-			Counterexamples: CountSummary{Satisfied: counterexamples.Satisfied, Total: counterexamples.Total, BasisPoints: basisPoints(counterexamples.Satisfied, counterexamples.Total)},
+			SourceCoordinates:   report.Summary.Coordinates,
+			Counterexamples:     CountSummary{Satisfied: counterexamples.Satisfied, Total: counterexamples.Total, BasisPoints: basisPoints(counterexamples.Satisfied, counterexamples.Total)},
 			GoooDefinitionFiles: report.Summary.Compiler.GoooFiles, GoDefinitionFiles: report.Summary.Compiler.GoFiles,
 			ResourceSamples: report.Summary.Resources.ValidSamples, MaxWallMS: report.Summary.Resources.MaxWallMS,
 			MaxRSSKiB: report.Summary.Resources.MaxRSSKiB, BinaryBytes: report.Summary.Resources.BinaryBytes,

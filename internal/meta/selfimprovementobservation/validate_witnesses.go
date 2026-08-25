@@ -30,9 +30,9 @@ func validCounterexamples(report CounterexampleReport) bool {
 func validNotClaims(values []string) bool {
 	expected := map[string]bool{
 		"business correctness": true, "value-level computation": true,
-		"production readiness": true,
+		"production readiness":                                true,
 		"performance beyond this runner and fixed sample set": true,
-		"general-purpose code generation": true,
+		"general-purpose code generation":                     true,
 	}
 	if len(values) != len(expected) {
 		return false

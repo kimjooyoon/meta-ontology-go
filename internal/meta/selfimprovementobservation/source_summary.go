@@ -8,11 +8,11 @@ type SourceValue struct {
 }
 
 type SourceCompiler struct {
-	SourceFiles                   int `json:"source_files"`
-	GoooFiles                     int `json:"gooo_files"`
-	GoFiles                       int `json:"go_files"`
-	GoooDefinitionBasisPoints     int `json:"gooo_definition_basis_points"`
-	RegisteredEmitters            int `json:"registered_emitters"`
+	SourceFiles               int `json:"source_files"`
+	GoooFiles                 int `json:"gooo_files"`
+	GoFiles                   int `json:"go_files"`
+	GoooDefinitionBasisPoints int `json:"gooo_definition_basis_points"`
+	RegisteredEmitters        int `json:"registered_emitters"`
 }
 
 type SourceResources struct {

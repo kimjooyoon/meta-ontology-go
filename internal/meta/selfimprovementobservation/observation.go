@@ -11,24 +11,24 @@ type Options struct {
 }
 
 type Observation struct {
-	Schema               string             `json:"schema"`
-	Metaprogram          string             `json:"metaprogram"`
-	SubjectSHA           string             `json:"subject_sha"`
-	SourceWorkflowRunID  int64              `json:"source_workflow_run_id"`
-	ContractID           string             `json:"contract_id"`
-	Decision             string             `json:"decision"`
-	Resolution           string             `json:"resolution"`
-	Reason               string             `json:"reason"`
-	Interpretation       string             `json:"interpretation"`
-	Summary              ObservationSummary `json:"summary"`
-	Authority            Authority          `json:"authority"`
-	Artifacts            []ArtifactRef      `json:"artifacts"`
-	InputDigest          string             `json:"input_digest"`
-	Indicators           []Indicator        `json:"indicators"`
-	Views                []View             `json:"views"`
-	Proofs               []Proof            `json:"proofs"`
-	NotClaimed           []string           `json:"not_claimed"`
-	Digest               string             `json:"digest"`
+	Schema              string             `json:"schema"`
+	Metaprogram         string             `json:"metaprogram"`
+	SubjectSHA          string             `json:"subject_sha"`
+	SourceWorkflowRunID int64              `json:"source_workflow_run_id"`
+	ContractID          string             `json:"contract_id"`
+	Decision            string             `json:"decision"`
+	Resolution          string             `json:"resolution"`
+	Reason              string             `json:"reason"`
+	Interpretation      string             `json:"interpretation"`
+	Summary             ObservationSummary `json:"summary"`
+	Authority           Authority          `json:"authority"`
+	Artifacts           []ArtifactRef      `json:"artifacts"`
+	InputDigest         string             `json:"input_digest"`
+	Indicators          []Indicator        `json:"indicators"`
+	Views               []View             `json:"views"`
+	Proofs              []Proof            `json:"proofs"`
+	NotClaimed          []string           `json:"not_claimed"`
+	Digest              string             `json:"digest"`
 }
 
 type ObservationSummary struct {

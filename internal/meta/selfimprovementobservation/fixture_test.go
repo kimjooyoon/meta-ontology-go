@@ -19,13 +19,13 @@ func validFixture() (Inputs, Options) {
 		SubjectSHA: head, ContractID: "billing-operation-manifest-v2",
 		Summary: SourceSummary{
 			Coordinates: CountSummary{15, 15, 10000}, Value: SourceValue{1, 3, 1, 1},
-			Compiler: SourceCompiler{2, 2, 0, 10000, 3},
-			Resources: SourceResources{5, 5, 5, 10724, 12529067, 0, 0, 0},
+			Compiler:        SourceCompiler{2, 2, 0, 10000, 3},
+			Resources:       SourceResources{5, 5, 5, 10724, 12529067, 0, 0, 0},
 			Counterexamples: SourceCounterexamples{1}, Effects: SourceEffects{}, NotClaimed: 5,
 		},
 		Indicators: indicators, Views: sourceViews(indicators),
-		Proofs: []SourceProof{{"FOUNDATION", "foundation", "foundation-op", facts, true}, {"COHERENCE", "coherence", "coherence-op", facts, true}, {"REGRESSION", "regression", "regression-op", facts, true}},
-		NotClaimed: []string{"business correctness", "value-level computation", "production readiness", "performance beyond this runner and fixed sample set", "general-purpose code generation"},
+		Proofs:      []SourceProof{{"FOUNDATION", "foundation", "foundation-op", facts, true}, {"COHERENCE", "coherence", "coherence-op", facts, true}, {"REGRESSION", "regression", "regression-op", facts, true}},
+		NotClaimed:  []string{"business correctness", "value-level computation", "production readiness", "performance beyond this runner and fixed sample set", "general-purpose code generation"},
 		FactsDigest: facts,
 	}
 	report.Digest = digestJSON(report)
