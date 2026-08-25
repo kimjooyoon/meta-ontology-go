@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/language/packageexecution"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagepackageexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution"
 )
 
 type options struct {

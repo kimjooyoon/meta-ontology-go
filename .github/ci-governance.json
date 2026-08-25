@@ -820,10 +820,10 @@
         "examples/language-delivery-scorecard/contract.json",
         "examples/language-package-execution",
         "examples/user-journey-scorecard/contract.json",
-        "internal/language/packageexecution",
         "internal/meta/languagedelivery",
         "internal/meta/languagepackageexecution",
         "internal/meta/userjourneyscorecard",
+        "internal/packageruntime/packageexecution",
         "internal/verify/scope_language_package_execution.go",
         "scripts/language-package-execution"
       ]

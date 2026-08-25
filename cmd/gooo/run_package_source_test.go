@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/language/packageexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution"
 )
 
 func TestRunSourceAcceptsPackageDirectory(t *testing.T) {

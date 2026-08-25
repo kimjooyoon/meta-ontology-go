@@ -18,7 +18,7 @@ func init() {
 		"internal/meta/languagedelivery",
 		"internal/meta/languagepackageexecution",
 		"internal/meta/userjourneyscorecard",
-		"internal/language/packageexecution",
+		"internal/packageruntime/packageexecution",
 		"internal/verify/scope_language_package_execution.go",
 		"scripts/language-package-execution",
 	}

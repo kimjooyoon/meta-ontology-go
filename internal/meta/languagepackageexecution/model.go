@@ -1,6 +1,6 @@
 package languagepackageexecution
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/language/packageexecution"
+import "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution"
 
 const (
 	ContractSchema = "gooo/language-package-execution-contract/v1"
