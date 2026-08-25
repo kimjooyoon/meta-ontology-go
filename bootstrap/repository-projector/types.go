@@ -55,14 +55,14 @@ type indicator struct {
 }
 
 type subject struct {
-	Indicator          string `json:"indicator"`
-	Logical            string `json:"logical"`
-	Physical           string `json:"physical,omitempty"`
-	Value              int    `json:"value"`
-	Limit              int    `json:"limit"`
-	Consumer           string `json:"consumer"`
-	Operation          string `json:"meta_operation"`
-	Applicability      string `json:"applicability,omitempty"`
+	Indicator           string `json:"indicator"`
+	Logical             string `json:"logical"`
+	Physical            string `json:"physical,omitempty"`
+	Value               int    `json:"value"`
+	Limit               int    `json:"limit"`
+	Consumer            string `json:"consumer"`
+	Operation           string `json:"meta_operation"`
+	Applicability       string `json:"applicability,omitempty"`
 	ApplicabilityReason string `json:"applicability_reason,omitempty"`
 }
 

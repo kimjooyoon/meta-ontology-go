@@ -9,14 +9,14 @@ import (
 )
 
 const (
-	directIndicator        = "storage.direct-entry"
-	directObservedIndicator = "storage.direct-entry-observed"
-	directUnboundIndicator = "storage.direct-entry-unclassified"
+	directIndicator          = "storage.direct-entry"
+	directObservedIndicator  = "storage.direct-entry-observed"
+	directUnboundIndicator   = "storage.direct-entry-unclassified"
 	bootstrapDirectIndicator = "storage.bootstrap-direct-entry"
-	mixedIndicator         = "storage.mixed-kind"
-	maxStoredDirectEntries = 10
-	maxStoredKinds         = 1
-	topologyProof          = "axiomatic-foundation"
+	mixedIndicator           = "storage.mixed-kind"
+	maxStoredDirectEntries   = 10
+	maxStoredKinds           = 1
+	topologyProof            = "axiomatic-foundation"
 )
 
 func topologyFailures(root string) (topologyEvidence, error) {
