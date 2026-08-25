@@ -26,10 +26,6 @@ type Measurement struct {
 	TotalAllocBytes uint64 `json:"total_alloc_bytes"`
 }
 
-type Measurer interface {
-	Measure(func() sourceexecution.Receipt) (sourceexecution.Receipt, Measurement)
-}
-
 type Sample struct {
 	Sequence        int    `json:"sequence"`
 	Decision        string `json:"decision"`

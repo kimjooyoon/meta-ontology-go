@@ -9,11 +9,7 @@ import (
 )
 
 func Observe(request Request) Receipt {
-	receipt := Receipt{
-		Schema: ReceiptSchema, Resolution: ResolutionExact, Filename: request.Filename,
-		SourceDigest: digestBytes([]byte(request.Source)), Cases: []Case{}, Diagnostics: []Diagnostic{},
-		Effects: Effects{}, NonClaims: nonClaims(),
-	}
+	receipt := Receipt{Schema: ReceiptSchema, Resolution: ResolutionExact, Filename: request.Filename, SourceDigest: digestBytes([]byte(request.Source)), Cases: []Case{}, Diagnostics: []Diagnostic{}, Effects: Effects{}, NonClaims: nonClaims()}
 	if strings.TrimSpace(request.Filename) == "" || request.Source == "" {
 		return reject(receipt, "REQUEST", "LANGUAGE_TEST_REQUEST_INVALID", "filename and source are required")
 	}
@@ -30,9 +26,7 @@ func Observe(request Request) Receipt {
 	}
 	receipt.Summary.Declared = len(specifications)
 	for _, specification := range specifications {
-		execution := sourceexecution.Execute(sourceexecution.Request{
-			Filename: request.Filename, Source: request.Source, Entry: specification.entry,
-		})
+		execution := sourceexecution.Execute(sourceexecution.Request{Filename: request.Filename, Source: request.Source, Entry: specification.entry})
 		testCase := Case{
 			Name: specification.name, MarkerID: specification.markerID, Entry: specification.entry,
 			Assertion: "OUTPUT_ENTITY", Expected: entities[specification.expected],
@@ -42,10 +36,7 @@ func Observe(request Request) Receipt {
 		if execution.Decision != sourceexecutionDecisionPass {
 			testCase.Reason = "LANGUAGE_TEST_EXECUTION_FAILED"
 			receipt.Summary.Failed++
-			receipt.Diagnostics = append(receipt.Diagnostics, Diagnostic{
-				Stage: "EXECUTE", Code: testCase.Reason,
-				Message: fmt.Sprintf("activity %q did not produce an execution receipt", specification.entry),
-			})
+			receipt.Diagnostics = append(receipt.Diagnostics, Diagnostic{Stage: "EXECUTE", Code: testCase.Reason, Message: fmt.Sprintf("activity %q did not produce an execution receipt", specification.entry)})
 			receipt.Cases = append(receipt.Cases, testCase)
 			continue
 		}
@@ -60,10 +51,7 @@ func Observe(request Request) Receipt {
 		} else {
 			testCase.Reason = "LANGUAGE_TEST_ASSERTION_FAILED"
 			receipt.Summary.Failed++
-			receipt.Diagnostics = append(receipt.Diagnostics, Diagnostic{
-				Stage: "ASSERT", Code: testCase.Reason,
-				Message: fmt.Sprintf("activity %q produced %q, expected %q", specification.entry, testCase.Observed.Name, testCase.Expected.Name),
-			})
+			receipt.Diagnostics = append(receipt.Diagnostics, Diagnostic{Stage: "ASSERT", Code: testCase.Reason, Message: fmt.Sprintf("activity %q produced %q, expected %q", specification.entry, testCase.Observed.Name, testCase.Expected.Name)})
 		}
 		receipt.Cases = append(receipt.Cases, testCase)
 	}

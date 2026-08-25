@@ -16,19 +16,10 @@ func expectedRegistry() Registry {
 		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax"}
 	}
 	invalid := func(id, path, diagnostic string) CaseDefinition {
-		return CaseDefinition{ID: id, Path: path, Kind: KindInvalid, ExpectedDecision: DecisionClosed,
-			ExpectedDiagnostic: diagnostic, ProofChoice: "REGRESSION", MetaOperation: "reject-invalid-syntax"}
+		return CaseDefinition{ID: id, Path: path, Kind: KindInvalid, ExpectedDecision: DecisionClosed, ExpectedDiagnostic: diagnostic, ProofChoice: "REGRESSION", MetaOperation: "reject-invalid-syntax"}
 	}
-	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package",
-		Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"},
-		Entry:   "PayOrder", ReportSchema: languagepackageexecution.ReportSchema,
-		MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES",
-		ExecutionIndicator: "PACKAGE_EXECUTIONS"}
-	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema",
-		Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo"},
-		Entry:   "Checkout", ReportSchema: languagepackageexecution.ReportSchema,
-		MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES",
-		ExecutionIndicator: "PACKAGE_EXECUTIONS"}
+	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
+	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema", Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo"}, Entry: "Checkout", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
 		valid("billing", "examples/billing/main.gooo"),
 		valid("language-test-pass", "examples/language-test/main.gooo"),
