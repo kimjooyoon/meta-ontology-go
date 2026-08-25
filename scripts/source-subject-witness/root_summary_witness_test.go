@@ -12,7 +12,7 @@ func TestRootSummaryCompilesInLogicalCoordinateSpace(t *testing.T) {
 	if storageBinding.IndicatorCount != 7 || storageBinding.ApplicableIndicators != 4 || storageBinding.NotApplicableIndicators != 3 {
 		t.Fatalf("storage root applicability = %d/%d/%d", storageBinding.IndicatorCount, storageBinding.ApplicableIndicators, storageBinding.NotApplicableIndicators)
 	}
-	summary, err := compileRootSummaryWitness(root, index)
+	summary, err := compileRootSummaryWitness([]directoryMetric{root}, index)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,13 +24,16 @@ func TestRootSummaryCompilesInLogicalCoordinateSpace(t *testing.T) {
 func TestRootSummaryRejectsCoordinateAndCatalogMismatch(t *testing.T) {
 	_, root, rows := rootFixture()
 	root.GoFiles++
-	if _, err := compileRootSummaryWitness(root, indexIndicators(rows)); err == nil {
+	if _, err := compileRootSummaryWitness([]directoryMetric{root}, indexIndicators(rows)); err == nil {
 		t.Fatal("logical source coordinate mismatch was accepted")
 	}
 	root.GoFiles--
 	rows[len(rows)-1].MetaOperation = "unknown"
-	if _, err := compileRootSummaryWitness(root, indexIndicators(rows)); err == nil {
+	if _, err := compileRootSummaryWitness([]directoryMetric{root}, indexIndicators(rows)); err == nil {
 		t.Fatal("unknown root meta operation was accepted")
+	}
+	if _, err := compileRootSummaryWitness([]directoryMetric{root, root}, indexIndicators(rows)); err == nil {
+		t.Fatal("duplicate logical project roots were accepted")
 	}
 }
 
