@@ -14,7 +14,7 @@ func Observe(request Request, measurer Measurer) Receipt {
 	receipt := Receipt{
 		Schema: ReceiptSchema, Filename: request.Filename, Entry: request.Entry,
 		SourceDigest: digestBytes([]byte(request.Source)), Samples: []Sample{}, Effects: Effects{},
-		Runner: Runner{GoVersion: runtime.Version(), OS: runtime.GOOS, Architecture: runtime.GOARCH},
+		Runner:     Runner{GoVersion: runtime.Version(), OS: runtime.GOOS, Architecture: runtime.GOARCH},
 		NotClaimed: DefaultNonClaims(),
 	}
 	if strings.TrimSpace(request.Filename) == "" || request.Source == "" || strings.TrimSpace(request.Entry) == "" ||

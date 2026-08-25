@@ -23,7 +23,7 @@ func validInput() Input {
 	unknown.Entry = "Missing"
 	return Input{SubjectSHA: strings.Repeat("a", 40), ExecutableDigest: "sha256:" + strings.Repeat("b", 64),
 		Contract: ExpectedContract(), First: languageprofile.Observe(request, &experimentMeasurer{}),
-		Replay: languageprofile.Observe(request, &experimentMeasurer{}),
+		Replay:       languageprofile.Observe(request, &experimentMeasurer{}),
 		UnknownEntry: languageprofile.Observe(unknown, &experimentMeasurer{})}
 }
 

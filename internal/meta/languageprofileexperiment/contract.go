@@ -14,14 +14,14 @@ const (
 )
 
 type Contract struct {
-	Schema             string `json:"schema"`
-	ID                 string `json:"contract_id"`
-	ProfileSchema      string `json:"profile_schema"`
-	Profiles           int    `json:"profiles"`
-	SamplesPerProfile  int    `json:"samples_per_profile"`
-	RunnerGoPrefix     string `json:"runner_go_prefix"`
-	Indicators         int    `json:"indicators"`
-	NotClaimedCount    int    `json:"not_claimed_count"`
+	Schema            string `json:"schema"`
+	ID                string `json:"contract_id"`
+	ProfileSchema     string `json:"profile_schema"`
+	Profiles          int    `json:"profiles"`
+	SamplesPerProfile int    `json:"samples_per_profile"`
+	RunnerGoPrefix    string `json:"runner_go_prefix"`
+	Indicators        int    `json:"indicators"`
+	NotClaimedCount   int    `json:"not_claimed_count"`
 }
 
 func ExpectedContract() Contract {

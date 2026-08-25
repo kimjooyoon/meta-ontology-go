@@ -1,7 +1,7 @@
 {
   "schema": "gooo/language-delivery-contract/v1",
   "contract_id": "gooo-v0.2-observable-delivery",
-  "version": 2,
+  "version": 3,
   "scope": "Gooo v0.2 observable delivery; not universal language completeness",
   "audience_order": [
     "USER",
@@ -334,9 +334,10 @@
       "class": "DRIVER",
       "outcome": "profile executing Gooo code",
       "evidence": {
-        "source": "NONE",
-        "kind": "UNIMPLEMENTED",
-        "target": 1
+        "source": "LANGUAGE_PROFILE",
+        "kind": "PROFILE_COUNTER",
+        "counter": "profiles",
+        "target": 2
       },
       "meta_operation": "require-profiler-receipt",
       "proof_choice": "REGRESSION"
