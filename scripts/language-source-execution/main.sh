@@ -36,6 +36,25 @@ unknown_code=$?
 set -e
 [[ "$unknown_code" == "1" ]]
 jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.unknowns>0' source-execution-output/unknown-artifact.json
+
+bash scripts/language-profile-experiment/main.sh
+profile_work="${RUNNER_TEMP:-/tmp}/language-profile-experiment"
+profile_build="${RUNNER_TEMP:-/tmp}/language-profile-build"
+mkdir -p source-execution-output/profile
+cp \
+  "$profile_work/preflight.json" \
+  "$profile_work/unformatted.txt" \
+  "$profile_work/first.json" \
+  "$profile_work/replay.json" \
+  "$profile_work/unknown-entry.json" \
+  "$profile_work/input.json" \
+  "$profile_work/report.json" \
+  "$profile_work/unknown-top-input.json" \
+  "$profile_work/unknown-top-report.json" \
+  source-execution-output/profile/
+cp "$profile_build/gooo" source-execution-output/profile/gooo
+cp "$profile_build/language-profile-experiment" source-execution-output/profile/language-profile-experiment
+
 git diff --exit-code
 
 {
