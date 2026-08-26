@@ -22,6 +22,7 @@ func init() {
 		"internal/meta/languagereadiness/languagesemantic/registry_definition.go",
 		"internal/meta/languagereadiness/languagesemanticbinding/denominator.go",
 		"internal/meta/languagereadiness/languagesemanticbinding/validate_semantic_summary_test.go",
+		"internal/meta/languagereadiness/languagesyntax/model.go",
 		"internal/meta/languagereadiness/toolchainconformance/contract.go",
 		"internal/meta/languagereadiness/toolchainconformance/corpus.go",
 		"internal/meta/languagereadiness/toolchainconformance/evaluate_test.go",
