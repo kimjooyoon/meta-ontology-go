@@ -91,7 +91,7 @@ jq -s --arg head "$HEAD_SHA" --arg binary_digest "$binary_digest" \
 
 after_workspace=$(git status --porcelain=v1 --untracked-files=all)
 test "$before_workspace" = "$after_workspace"
-jq -e '.decision=="PASS" and .source=={gooo_files:2,go_files:0,gooo_lines:10,files:5,directories:0} and
+jq -e '.decision=="PASS" and .source=={gooo_files:3,go_files:0,gooo_lines:16,files:6,directories:0} and
   .validation.accepted_instances==1 and .validation.rejected_instances==1 and
   .validation.generated_instances==1 and .validation.generated_golden_matches==1 and
   .deterministic_replays==1 and .resources.sample_count==5 and
@@ -118,3 +118,4 @@ bash "$(dirname "$0")/compile-value-contract.sh"
 bash "$(dirname "$0")/compile-value-reachability.sh"
 
 bash "$(dirname "$0")/compile-reader-resolution.sh"
+bash "$(dirname "$0")/compile-reader-request.sh"

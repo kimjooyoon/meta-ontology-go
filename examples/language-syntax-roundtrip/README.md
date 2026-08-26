@@ -11,7 +11,7 @@ Every complete single-file case records its physical Gooo line count and proves
 AST shape, canonical bytes, semantic hash, GetPut, and PutGet. The invalid cases
 must emit their registered diagnostic and fail closed.
 
-The four members of `examples/billing-package` and
+The five members of `examples/billing-package` and
 `examples/symbolic-invocation-schema` are not complete programs when read
 alone. Registry `v2` routes them as two package units to
 `languagepackageexecution.Evaluate`, `PACKAGE_SOURCE_FILES`, and
