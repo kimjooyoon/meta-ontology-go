@@ -1,7 +1,7 @@
 package verify
 
 func init() {
-	branchScopeAllowlist["agent/gooo-closed-generation-example"] = []string{
+	paths := []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		"examples/symbolic-invocation-schema",
@@ -12,4 +12,6 @@ func init() {
 		"scripts/symbolic-invocation-schema",
 		"scripts/symbolic-invocation-usecase",
 	}
+	branchScopeAllowlist["agent/gooo-closed-generation-example"] = paths
+	branchScopeAllowlist["agent/gooo-reader-resolution-projection"] = paths
 }

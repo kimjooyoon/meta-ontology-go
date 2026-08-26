@@ -116,3 +116,5 @@ jq -e '.decision=="PASS" and .source=={gooo_files:2,go_files:0,gooo_lines:10,fil
 
 bash "$(dirname "$0")/compile-value-contract.sh"
 bash "$(dirname "$0")/compile-value-reachability.sh"
+
+bash "$(dirname "$0")/compile-reader-resolution.sh"
