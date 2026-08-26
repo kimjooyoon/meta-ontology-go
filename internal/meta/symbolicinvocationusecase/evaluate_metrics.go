@@ -7,7 +7,7 @@ func buildIndicators(contract Contract, value facts) []Indicator {
 	}
 	return []Indicator{
 		indicator("user.validation-decisions", "OUTCOME", "COHERENCE", "sum-external-user-decisions", value.UserDecisions, contract.ExpectedAcceptedInstances+contract.ExpectedRejectedInstances),
-		indicator("user.generated-instances", "OUTCOME", "FOUNDATION", "project-generated-symbolic-invocation", value.GeneratedInstances, contract.ExpectedGeneratedInstances),
+		indicator("user.generated-instances", "OUTCOME", "FOUNDATION", "project-generated-symbolic-invocation", value.GeneratedInstances, contract.ExpectedGeneratedCount),
 		indicator("user.accepted-instances", "DRIVER", "FOUNDATION", "count-externally-accepted-instances", value.AcceptedInstances, contract.ExpectedAcceptedInstances),
 		indicator("user.rejected-instances", "DRIVER", "REGRESSION", "count-externally-rejected-instances", value.RejectedInstances, contract.ExpectedRejectedInstances),
 		indicator("user.generated-golden-matches", "DRIVER", "COHERENCE", "compare-generated-invocation-golden", value.GoldenMatches, contract.ExpectedGoldenMatches),

@@ -9,7 +9,7 @@ func invocationFacts(input Input) facts {
 	return facts{
 		UserDecisions:     observation.AcceptedInstances + observation.RejectedInstances,
 		AcceptedInstances: observation.AcceptedInstances, RejectedInstances: observation.RejectedInstances,
-		GeneratedInstances: observation.GeneratedInstances, GoldenMatches: observation.GoldenMatches,
+		GeneratedInstances: observation.GeneratedCount, GoldenMatches: observation.GoldenMatches,
 		DeterministicReplays: receipt.DeterministicReplays, Source: receipt.Source, Effects: effects,
 		Producer: ProducerBinding{
 			ReceiptSchema: receipt.Schema, ArtifactSchema: artifact.Schema, ArtifactDigest: artifact.Digest,
