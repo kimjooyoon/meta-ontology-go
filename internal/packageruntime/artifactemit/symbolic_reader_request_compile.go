@@ -16,10 +16,11 @@ func CompileSymbolicReaderRequest(
 		AudienceKnown:   symbolicReaderRequestAudienceKnown(request.Audience),
 		ResolutionKnown: symbolicReaderRequestResolutionKnown(request.ExpectedResolution),
 		ReaderPresent:   readerPresent,
+
+		ReaderCountBound:       readerPresent && symbolicReaderRequestCountBound(reader),
+		ResolutionMatches:      readerPresent && symbolicReaderRequestResolutionMatches(request, reader),
+		SourceIndicatorsUnique: readerPresent && symbolicReaderRequestIDsUnique(reader.IndicatorIDs),
 	}
-	checks.ReaderCountBound = readerPresent && symbolicReaderRequestCountBound(reader)
-	checks.ResolutionMatches = readerPresent && symbolicReaderRequestResolutionMatches(request, reader)
-	checks.SourceIndicatorsUnique = readerPresent && symbolicReaderRequestIDsUnique(reader.IndicatorIDs)
 	checks.IndicatorsSelected = checks.ReaderCountBound && len(reader.IndicatorIDs) > 0
 	checks.OutputSourceBound = checks.SourceContractValid &&
 		symbolicReaderValidDigest(request.SourceDigest) &&
