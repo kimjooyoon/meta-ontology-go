@@ -68,8 +68,10 @@ jobs:
             internal/valueexecution/measurement.go \
             internal/valueexecution/cases.go \
             internal/valueexecution/counterexamples.go \
+            internal/valueexecution/counterexample_results.go \
             internal/valueexecution/helpers.go \
             internal/valueexecution/indicators.go \
+            internal/valueexecution/indicator_results.go \
             internal/valueexecution/validate.go \
             internal/valueexecution/evaluate_test.go \
             scripts/language-value-witness/main.go

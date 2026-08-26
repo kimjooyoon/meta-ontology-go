@@ -63,15 +63,3 @@ func buildProofs(report Report, checks evidence) []Proof {
 		}{report.Cases, report.Counterexamples}), Passed: checks.valueCasesExact && checks.outputsObserved && checks.deterministicReplay && checks.counterexamplesExact && checks.overflowFailClosed},
 	}
 }
-
-func allIndicatorsSatisfied(indicators []Indicator) bool {
-	if len(indicators) != 16 {
-		return false
-	}
-	for _, indicator := range indicators {
-		if !indicator.Satisfied {
-			return false
-		}
-	}
-	return true
-}
