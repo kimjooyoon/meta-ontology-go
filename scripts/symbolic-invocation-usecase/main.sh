@@ -7,22 +7,55 @@ root="${GITHUB_WORKSPACE:-$(pwd)}"
 work="${RUNNER_TEMP:-/tmp}/symbolic-invocation-usecase"
 build="${RUNNER_TEMP:-/tmp}/symbolic-invocation-usecase-build"
 reducer="$build/symbolic-invocation-usecase"
+reader_observer="$build/symbolic-reader-request-observer"
 contract="$root/examples/symbolic-invocation-usecase/contract.json"
-paths=(cmd/symbolic-invocation-usecase internal/meta/symbolicinvocationusecase)
+paths=(cmd/symbolic-invocation-usecase internal/meta/symbolicinvocationusecase scripts/symbolic-invocation-usecase/reader-observation)
 mkdir -p "$work" "$build"
 
-go fix ./cmd/symbolic-invocation-usecase ./internal/meta/symbolicinvocationusecase
+go fix ./cmd/symbolic-invocation-usecase ./internal/meta/symbolicinvocationusecase ./scripts/symbolic-invocation-usecase/reader-observation
 git diff --exit-code -- "${paths[@]}"
 mapfile -t go_files < <(find "${paths[@]}" -name '*.go' -type f | sort)
 gofmt -l "${go_files[@]}" | tee "$work/unformatted.txt"
 test ! -s "$work/unformatted.txt"
-go test ./cmd/symbolic-invocation-usecase ./internal/meta/symbolicinvocationusecase
+go test ./cmd/symbolic-invocation-usecase ./internal/meta/symbolicinvocationusecase ./scripts/symbolic-invocation-usecase/reader-observation
 go build -trimpath -o "$reducer" ./cmd/symbolic-invocation-usecase
+go build -trimpath -o "$reader_observer" ./scripts/symbolic-invocation-usecase/reader-observation
 
-for file in receipt.json artifact.json schema.json generated-accepted.json bin/jv; do
+for file in receipt.json artifact.json schema.json generated-accepted.json symbolic-reader-request-result.json bin/jv; do
   test -f "$producer/$file"
 done
 chmod +x "$producer/bin/jv"
+
+reader_observation="$work/symbolic-reader-request-user-observation.json"
+"$reader_observer" \
+  -input "$producer/symbolic-reader-request-result.json" \
+  -output "$reader_observation" \
+  -expected-subject-sha "$HEAD_SHA"
+jq -e --arg subject "$HEAD_SHA" '
+  .schema=="gooo/symbolic-reader-request-user-observation/v1" and
+  .metric_id=="gooo.metric.user.symbolic-reader-request-observation.v1" and
+  .subject_sha==$subject and .source.subject_sha==$subject and
+  .decision=="PASS" and .resolution=="USER_OBSERVATION_ONLY" and
+  .reason=="CANONICAL_READER_REQUEST_OBSERVED" and
+  .coordinates=={satisfied:10,total:10,basis_points:10000} and
+  .classes==[
+    {class:"OUTCOME",satisfied:3,total:3},
+    {class:"DRIVER",satisfied:3,total:3},
+    {class:"GUARDRAIL",satisfied:4,total:4}
+  ] and
+  .proofs==[
+    {proof_choice:"FOUNDATION",satisfied:4,total:4},
+    {proof_choice:"COHERENCE",satisfied:3,total:3},
+    {proof_choice:"REGRESSION",satisfied:3,total:3}
+  ] and
+  .effects=={repository_writes:0,mutation_authority:false} and
+  .promotion_credit_bps==0 and
+  (.source.artifact_digest|startswith("sha256:")) and
+  (.source.file_digest|startswith("sha256:")) and
+  (.digest|startswith("sha256:")) and
+  (.not_claimed|index("exact-head cross-job artifact transport")!=null)
+' "$reader_observation"
+
 jq -S . "$root/examples/symbolic-invocation-schema/accepted.json" > "$work/accepted-golden.json"
 cmp -s "$producer/generated-accepted.json" "$work/accepted-golden.json"
 "$producer/bin/jv" "$producer/schema.json" "$producer/generated-accepted.json" > "$work/accepted-validation.txt"
@@ -108,9 +141,10 @@ if "$reducer" -input "$work/generated-link-mismatch-input.json" -output "$work/g
 fi
 jq -e '.decision=="FAIL_CLOSED" and .resolution=="INVARIANT_ONLY" and .reason=="SYMBOLIC_INVOCATION_USECASE_LINK_MISMATCH" and .summary.coordinates.satisfied==0 and .summary.coordinates.total==8' "$work/generated-link-mismatch-report.json"
 
-sha256sum "$work/report.json" "$work/unknown-report.json" "$work/link-mismatch-report.json" "$work/generated-link-mismatch-report.json" > "$work/manifest.sha256"
+sha256sum "$work/report.json" "$work/unknown-report.json" "$work/link-mismatch-report.json" "$work/generated-link-mismatch-report.json" "$reader_observation" > "$work/manifest.sha256"
 git diff --exit-code -- "${paths[@]}"
 jq -r '"### Symbolic invocation user use case\n- decision: \(.decision) / \(.resolution)\n- indicators: \(.summary.coordinates.satisfied)/\(.summary.coordinates.total)\n- generated invocation / golden match: \(.summary.generated_instances)/\(.summary.generated_golden_matches)\n- user decisions: \(.summary.user_decisions)\n- accepted: \(.summary.accepted_instances)\n- rejected: \(.summary.rejected_instances)\n- runner samples: \(.summary.resources.samples)\n- max wall: \(.summary.resources.max_wall_ms) ms\n- max RSS: \(.summary.resources.max_rss_kib) KiB\n- repository writes: \(.repository_writes)\n- promotion credit: \(.promotion_credit_bps) bps\n- receipt: \(.digest)"' "$work/report.json" >> "$GITHUB_STEP_SUMMARY"
+jq -r '"### Compiled reader request: user observation\n- decision: \(.decision) / \(.resolution)\n- indicators: \(.coordinates.satisfied)/\(.coordinates.total)\n- classes: \([.classes[]|"\(.class)=\(.satisfied)/\(.total)"]|join(", "))\n- proofs: \([.proofs[]|"\(.proof_choice)=\(.satisfied)/\(.total)"]|join(", "))\n- source subject: \(.source.subject_sha)\n- repository writes: \(.effects.repository_writes)\n- promotion credit: \(.promotion_credit_bps) bps\n- receipt: \(.digest)\n- cross-job transport claim: excluded"' "$reader_observation" >> "$GITHUB_STEP_SUMMARY"
 
 bash "$(dirname "$0")/validate-generated-conformance.sh" "$1"
 bash "$(dirname "$0")/validate-generated-unknown-resolution.sh" "$1"
