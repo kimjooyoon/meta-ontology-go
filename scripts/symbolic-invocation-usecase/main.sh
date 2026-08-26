@@ -73,7 +73,7 @@ jq -e '
   .summary.user_decisions==2 and .summary.accepted_instances==1 and .summary.rejected_instances==1 and
   .summary.generated_instances==1 and .summary.generated_golden_matches==1 and
   .summary.deterministic_replays==1 and .summary.unknowns==0 and
-  .summary.source=={gooo_files:2,go_files:0,gooo_lines:10,files:5,directories:0} and
+  .summary.source=={gooo_files:3,go_files:0,gooo_lines:16,files:6,directories:0} and
   .summary.producer.registered_emitters==3 and .summary.resources.mode=="RUNNER_SCOPED_NONDETERMINISTIC" and
   .summary.resources.measurement_replay_authority==false and .summary.resources.samples==5 and
   .promotion_credit_bps==0 and .repository_writes==0 and .mutation_authority==false and
