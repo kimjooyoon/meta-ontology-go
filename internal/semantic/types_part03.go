@@ -3,7 +3,6 @@ package semantic
 import (
 	"fmt"
 	"slices"
-	"strings"
 )
 
 func (n Node) Normalized() (Node, error) {
