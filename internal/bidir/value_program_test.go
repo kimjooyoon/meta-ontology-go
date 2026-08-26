@@ -46,7 +46,7 @@ func TestActivityValueProgramBindsThroughCoreIRAndUnknownAttributesFailClosed(t 
 	}
 	unknown := document
 	unknown.Declarations = append([]Declaration(nil), document.Declarations...)
-	activity := unknown.Declarations[1]
+	activity = unknown.Declarations[1]
 	activity.Attributes = map[string]string{
 		ActivityValueProgramAttribute: "int.add:1",
 		"gooo:activity:unknown":       "must-fail-closed",
