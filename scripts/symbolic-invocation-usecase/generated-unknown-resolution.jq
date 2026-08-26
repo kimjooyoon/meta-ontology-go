@@ -160,4 +160,4 @@ def audience_view($indicators; $audience; $resolution):
       "production readiness",
       "generalized verdict algebra"
     ]
-  };
+  }
