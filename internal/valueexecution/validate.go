@@ -12,7 +12,7 @@ func Validate(report Report, headSHA string) error {
 		return fmt.Errorf("value witness identity is invalid")
 	}
 	if report.Decision != DecisionProven || report.Reason != ReasonExactWitness || report.Resolution != ResolutionCoreValue {
-		return fmt.Errorf("value witness failed closed: %s / %s / %s", report.Decision, report.Reason, report.Resolution)
+		return fmt.Errorf("value witness failed closed: %s / %s / %s / %s", report.Decision, report.Reason, report.Resolution, firstUnsatisfiedIndicator(report.Indicators))
 	}
 	if report.ValueProgram != "int.add:1" || report.Registry.RegisteredOperations != 1 || report.Registry.InvokedOperations != 1 {
 		return fmt.Errorf("value program registry is not exact")
@@ -35,7 +35,7 @@ func Validate(report Report, headSHA string) error {
 	if report.Summary.CoreIRProgramPreserved != coordinate(1, 1) || report.Summary.CoreIRFingerprintSensitive != coordinate(1, 1) || report.Summary.CoreIRUnknownAttributeFailClosed != coordinate(1, 1) {
 		return fmt.Errorf("core IR resolution boundary is not explicit")
 	}
-	if len(report.Indicators) != 18 || !allIndicatorsSatisfied(report.Indicators) || len(report.Views) != 3 || len(report.Proofs) != 3 {
+	if len(report.Indicators) != ValueIndicatorCount || !allIndicatorsSatisfied(report.Indicators) || len(report.Views) != 3 || len(report.Proofs) != 3 {
 		return fmt.Errorf("indicator or proof denominator changed")
 	}
 	expectedViews := []int{5, 14, 18}

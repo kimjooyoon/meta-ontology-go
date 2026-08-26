@@ -1,7 +1,7 @@
 package valueexecution
 
 func evaluateProgram(report Report, source []byte, program Program) Report {
-	report.Resolution = ResolutionCoreValue
+	report.Resolution = ResolutionBidirValue
 	report.Activity = program.Activity
 	report.ValueProgram = program.Text
 	report.ValueProgramDigest = digestBytes([]byte(program.Text))
@@ -31,9 +31,18 @@ func evaluateProgram(report Report, source []byte, program Program) Report {
 	report.Indicators = buildIndicators(checks)
 	report.Views = buildViews(report.Indicators)
 	report.Proofs = buildProofs(report, checks)
-	if allIndicatorsSatisfied(report.Indicators) && measured.baselineReason == ReasonProgramMissing {
-		report.Decision = DecisionProven
-		report.Reason = ReasonExactWitness
+	if measured.coreIRProgramPreserved && measured.coreIRFingerprintSensitive && measured.coreIRUnknownAttributeFailClosed {
+		report.Resolution = ResolutionCoreValue
 	}
+	if !allIndicatorsSatisfied(report.Indicators) {
+		report.Reason = ReasonIndicatorUnsatisfied
+		return finalize(report)
+	}
+	if measured.baselineReason != ReasonProgramMissing {
+		report.Reason = measured.baselineReason
+		return finalize(report)
+	}
+	report.Decision = DecisionProven
+	report.Reason = ReasonExactWitness
 	return finalize(report)
 }

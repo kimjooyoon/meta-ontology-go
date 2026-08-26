@@ -16,6 +16,7 @@ const (
 	ReasonSignatureArityUnsupported = "VALUE_SIGNATURE_ARITY_UNSUPPORTED"
 	ReasonInputArityMismatch        = "VALUE_INPUT_ARITY_MISMATCH"
 	ReasonIntegerOverflow           = "VALUE_INTEGER_OVERFLOW"
+	ReasonIndicatorUnsatisfied      = "VALUE_INDICATOR_UNSATISFIED"
 )
 
 type Failure struct {

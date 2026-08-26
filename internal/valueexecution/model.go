@@ -6,7 +6,9 @@ const (
 	DecisionFailClosed   = "FAIL_CLOSED"
 	ReasonExactWitness   = "VALUE_WITNESS_EXACT"
 	ResolutionCoreValue  = "CORE_IR_ACTIVITY_VALUE_PROGRAM"
+	ResolutionBidirValue = "BIDIR_ACTIVITY_SEMANTIC"
 	ResolutionSyntaxOnly = "SYNTAX_ONLY"
+	ValueIndicatorCount  = 18
 )
 
 type Report struct {
