@@ -13,9 +13,6 @@ func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document,
 		if err := checkLowerContext(ctx); err != nil {
 			return nil, nil, err
 		}
-		if len(declaration.Attributes) > 0 {
-			return nil, nil, fmt.Errorf("semantic IR does not support declaration attributes")
-		}
 		id, err := declarationIdentity(namespace.String(), declaration)
 		if err != nil {
 			return nil, nil, err
@@ -30,6 +27,9 @@ func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document,
 		}
 		node, err := semantic.NewNode(kind, semanticID, namespace, declaration.Name)
 		if err != nil {
+			return nil, nil, err
+		}
+		if err := bindSemanticValueProgram(declaration, &node); err != nil {
 			return nil, nil, err
 		}
 		if len(declaration.Fields) > 0 {

@@ -58,5 +58,18 @@ func (p *Parser) parseActivity() *ActivityDecl {
 	if !result.Span.IsEmpty() {
 		activity.Span.End = result.Span.End
 	}
+	if p.at(TokenIdentifier) && p.peek().Value == "computes" {
+		p.advance()
+		activity.ValueProgramPresent = true
+		p.skipIllegal()
+		if p.at(TokenString) {
+			program := p.advance()
+			activity.ValueProgram = program.Value
+			activity.ValueProgramSpan = program.Span
+			activity.Span.End = program.Span.End
+		} else {
+			p.error(DiagExpectedString, p.peek().Span, "expected quoted activity value program")
+		}
+	}
 	return activity
 }

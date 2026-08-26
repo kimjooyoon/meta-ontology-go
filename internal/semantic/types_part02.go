@@ -1,16 +1,19 @@
 package semantic
 
 // Node is a semantic declaration. Name and Aliases are presentation and
-// lookup metadata; ID, Kind, Namespace, and latent field structure are the
-// semantic identity boundary. Fields are valid only on Entity nodes.
+// lookup metadata; ID, Kind, Namespace, latent field structure, and an
+// optional activity value program are the semantic identity boundary.
+// Fields are valid only on Entity nodes; ValueProgram is valid only on
+// Activity nodes and carries no execution authority.
 type Node struct {
-	ID        ID
-	Kind      Kind
-	Namespace Namespace
-	Name      string
-	Aliases   []string
-	Fields    []Field `json:"fields,omitempty"`
-	Span      Span
+	ID           ID
+	Kind         Kind
+	Namespace    Namespace
+	Name         string
+	Aliases      []string
+	Fields       []Field `json:"fields,omitempty"`
+	ValueProgram string  `json:"value_program,omitempty"`
+	Span         Span
 }
 
 func NewNode(kind Kind, id ID, namespace Namespace, name string) (Node, error) {
