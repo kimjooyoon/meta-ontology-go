@@ -50,9 +50,9 @@ type Observation struct {
 	ToolDigest        string  `json:"tool_digest"`
 	AcceptedInstances int     `json:"accepted_instances"`
 	RejectedInstances int     `json:"rejected_instances"`
-	GeneratedCount    int    `json:"generated_instances"`
-	GoldenMatches     int    `json:"generated_golden_matches"`
-	GeneratedDigest   string `json:"generated_instance_digest"`
+	GeneratedCount    int     `json:"generated_instances"`
+	GoldenMatches     int     `json:"generated_golden_matches"`
+	GeneratedDigest   string  `json:"generated_instance_digest"`
 	Effects           Effects `json:"effects"`
 }
 
