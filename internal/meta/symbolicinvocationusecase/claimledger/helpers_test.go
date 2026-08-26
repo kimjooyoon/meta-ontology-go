@@ -6,7 +6,7 @@ func inScope(id, path, operator, route, stage, step string, expected json.RawMes
 	return ClaimSpec{
 		ID: id, Kind: "OBLIGATION", Modality: "MUST", Subject: "subject", Predicate: "predicate",
 		Scope: "IN_SCOPE", ProofRoute: route, Coordinate: Coordinate{Stage: stage, Step: step},
-		Evidence:      &EvidenceSpec{Paths: []string{path}, Operator: operator, Expected: expected},
+		Evidence:      &EvidenceSpec{Source: "observation", Paths: []string{path}, Operator: operator, Expected: expected},
 		UnknownReason: id + "_MISSING", RefutedReason: id + "_INVALID",
 	}
 }

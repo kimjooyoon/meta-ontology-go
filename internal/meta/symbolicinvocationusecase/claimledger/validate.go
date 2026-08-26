@@ -44,7 +44,7 @@ func validateClaim(spec ClaimSpec, seen map[string]bool) error {
 		}
 		return nil
 	}
-	if spec.Scope != "IN_SCOPE" || spec.Evidence == nil || len(spec.Evidence.Paths) == 0 {
+	if spec.Scope != "IN_SCOPE" || spec.Evidence == nil || spec.Evidence.Source == "" || len(spec.Evidence.Paths) == 0 {
 		return fmt.Errorf("in-scope claim %q has no evidence selector", spec.ID)
 	}
 	if !validOperator(spec.Evidence.Operator) {

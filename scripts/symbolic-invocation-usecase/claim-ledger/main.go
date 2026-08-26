@@ -12,11 +12,12 @@ import (
 func main() {
 	contractPath := flag.String("contract", "", "claim ledger contract")
 	observationPath := flag.String("observation", "", "reader observation JSON")
+	runtimePath := flag.String("runtime-evidence", "", "subject-bound runtime evidence JSON")
 	subject := flag.String("subject", "", "exact subject commit")
 	outputPath := flag.String("out", "", "claim ledger output")
 	flag.Parse()
-	if *contractPath == "" || *observationPath == "" || *subject == "" || *outputPath == "" {
-		fail("contract, observation, subject, and out are required")
+	if *contractPath == "" || *observationPath == "" || *runtimePath == "" || *subject == "" || *outputPath == "" {
+		fail("contract, observation, runtime-evidence, subject, and out are required")
 	}
 	contractData, err := os.ReadFile(*contractPath)
 	if err != nil {
@@ -26,7 +27,11 @@ func main() {
 	if err != nil {
 		fail("read observation: %v", err)
 	}
-	report, err := claimledger.Project(contractData, observationData, *subject)
+	runtimeData, err := os.ReadFile(*runtimePath)
+	if err != nil {
+		fail("read runtime evidence: %v", err)
+	}
+	report, err := claimledger.Project(contractData, observationData, runtimeData, *subject)
 	if err != nil {
 		fail("project claim ledger: %v", err)
 	}
