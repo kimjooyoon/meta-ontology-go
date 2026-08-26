@@ -36,7 +36,7 @@ func exactResolution(t *testing.T) predecessorresolution.Report {
 	report, err := predecessorresolution.Build(predecessorresolution.Input{
 		Repository: "owner/repository", CurrentHeadSHA: current,
 		ImmediatePredecessorSHA: ancestors[0],
-		SearchLimit: predecessorresolution.SearchLimit, Attempts: attempts,
+		SearchLimit:             predecessorresolution.SearchLimit, Attempts: attempts,
 	})
 	if err != nil {
 		t.Fatal(err)

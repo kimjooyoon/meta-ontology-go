@@ -12,8 +12,8 @@ func observeSource(input predecessorresolution.Report, expectedHead string) Sour
 	source := Source{
 		CurrentHeadSHA: input.CurrentHeadSHA, ImmediatePredecessorSHA: input.ImmediatePredecessorSHA,
 		ResolutionDigest: input.ReportDigest,
-		ResolutionValid: predecessorresolution.Validate(input) == nil,
-		HeadBound: input.CurrentHeadSHA == expectedHead,
+		ResolutionValid:  predecessorresolution.Validate(input) == nil,
+		HeadBound:        input.CurrentHeadSHA == expectedHead,
 		ObservedAttempts: summary.ObservedAttempts, MissingAttempts: summary.MissingAttempts,
 		SearchLimit: summary.SearchLimit, SelectedAncestors: summary.SelectedAncestors,
 		ValidCandidates: summary.ValidCandidates, AmbiguousCandidates: summary.AmbiguousCandidates,
