@@ -1,23 +1,29 @@
 package verticalsliceclosureshadow
 
+import (
+	languagesemantic "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic"
+	languagesyntax "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
+	toolchainconformance "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance"
+)
+
 func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	summary := artifact.Summary
 	switch id {
 	case "syntax":
-		return summary.Satisfied, status(summary.Satisfied == 22 && summary.Total == 22 &&
-			summary.Executed == 22 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
+		return summary.Satisfied, status(summary.Satisfied == languagesyntax.FixedTotal && summary.Total == languagesyntax.FixedTotal &&
+			summary.Executed == languagesyntax.FixedTotal && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
 			summary.ReadinessBPS == 10000)
 	case "semantics":
-		return summary.Satisfied, status(summary.Satisfied == 24 && summary.Total == 24 &&
-			summary.Executed == 24 && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
+		return summary.Satisfied, status(summary.Satisfied == languagesemantic.FixedTotal && summary.Total == languagesemantic.FixedTotal &&
+			summary.Executed == languagesemantic.FixedTotal && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
 			summary.ReadinessBPS == 10000 && summary.StageOrderViolations == 0 &&
 			summary.EffectfulStages == 0 && summary.RegistryDrift == 0)
 	case "binding":
 		return summary.BoundCoordinates, status(summary.Coordinates == 12 &&
 			summary.BoundCoordinates == 12 && summary.Unresolved == 0 &&
 			summary.ReadinessCompleted == 21 && summary.ReadinessTotal == 24 &&
-			summary.ReadinessBPS == 8750 && summary.SemanticSatisfied == 24 &&
-			summary.SemanticTotal == 24 && summary.EffectfulStages == 0 &&
+			summary.ReadinessBPS == 8750 && summary.SemanticSatisfied == languagesemantic.FixedTotal &&
+			summary.SemanticTotal == languagesemantic.FixedTotal && summary.EffectfulStages == 0 &&
 			summary.MutationAuthorities == 0)
 	case "use-cases":
 		return summary.Satisfied, status(summary.Satisfied == 3 && summary.Total == 3 &&
@@ -26,8 +32,8 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	case "toolchain":
 		return summary.CasesSatisfied, status(summary.SurfacesSatisfied == 9 &&
 			summary.SurfacesTotal == 9 && len(artifact.Surfaces) == 9 &&
-			summary.CasesSatisfied == 165 && summary.CasesTotal == 165 &&
-			summary.ExecutedCases == 165 && summary.CaseReadinessBPS == 10000 &&
+			summary.CasesSatisfied == toolchainconformance.ExpectedCaseCount && summary.CasesTotal == toolchainconformance.ExpectedCaseCount &&
+			summary.ExecutedCases == toolchainconformance.ExpectedCaseCount && summary.CaseReadinessBPS == 10000 &&
 			summary.IndicatorsSatisfied == summary.IndicatorsTotal &&
 			summary.ProofsPassed == summary.ProofsTotal &&
 			summary.TamperRejections == 13 && summary.TamperTotal == 13)

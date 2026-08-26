@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	languagesemantic "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic"
 	languagesyntax "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	toolchainconformance "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainconformance"
 	toolchainrelease "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainrelease"
@@ -34,8 +35,8 @@ func decodeDenominator(raw []byte) (denominator, error) {
 func validateDenominator(value denominator) error {
 	expected := expectedBoundarySpecs()
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
-		value.DenominatorID != "gooo.denominator.capability.vertical-slice-closure.v5" ||
-		value.Version != 5 || len(value.Boundaries) != len(expected) {
+		value.DenominatorID != "gooo.denominator.capability.vertical-slice-closure.v6" ||
+		value.Version != 6 || len(value.Boundaries) != len(expected) {
 		return fmt.Errorf("denominator header mismatch")
 	}
 	links := 0
@@ -53,8 +54,8 @@ func validateDenominator(value denominator) error {
 
 func expectedBoundarySpecs() []boundarySpec {
 	return []boundarySpec{
-		{"syntax", languagesyntax.ReportSchema, "prove-language-syntax-roundtrip", 22, 1},
-		{"semantics", "gooo/language-semantic-model/v1", "prove-staged-semantic-model", 24, 2},
+		{"syntax", languagesyntax.ReportSchema, "prove-language-syntax-roundtrip", languagesyntax.FixedTotal, 1},
+		{"semantics", languagesemantic.ReportSchema, "prove-staged-semantic-model", languagesemantic.FixedTotal, 2},
 		{"binding", "gooo/language-semantic-readiness-binding/v2", "bind-semantic-readiness-evidence", 12, 2},
 		{"use-cases", toolchainusecases.ReportSchema, "execute-versioned-use-cases", 3, 1},
 		{"toolchain", toolchainconformance.Schema, toolchainconformance.ExpectedMetaOperation,

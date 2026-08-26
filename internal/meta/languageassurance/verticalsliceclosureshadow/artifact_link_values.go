@@ -1,6 +1,11 @@
 package verticalsliceclosureshadow
 
-import "strings"
+import (
+	"strings"
+
+	languagesemantic "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesemantic"
+	languagesyntax "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
+)
 
 func semanticLinks(semantic, syntax artifactEnvelope, syntaxRaw []byte) int {
 	links := 0
@@ -29,8 +34,8 @@ func toolchainLinks(surfaces []artifactSurface, head string) int {
 		schema string
 		cases  int
 	}{
-		"language-syntax-roundtrip":      {"gooo/language-syntax-roundtrip/v1", 22},
-		"language-semantic-model":        {"gooo/language-semantic-model/v1", 24},
+		"language-syntax-roundtrip":      {languagesyntax.ReportSchema, languagesyntax.FixedTotal},
+		"language-semantic-model":        {languagesemantic.ReportSchema, languagesemantic.FixedTotal},
 		"toolchain-executable-use-cases": {"gooo/toolchain-executable-use-cases/v1", 3},
 	}
 	links := 0
