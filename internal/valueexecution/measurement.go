@@ -5,14 +5,14 @@ import (
 )
 
 type measurement struct {
-	baselineReason        string
-	passedCases           int
-	replayedCases         int
-	passedCounterexamples int
-	fingerprintSensitive  bool
-	coreIRFingerprint     string
+	baselineReason                                     string
+	passedCases                                        int
+	replayedCases                                      int
+	passedCounterexamples                              int
+	fingerprintSensitive                               bool
+	coreIRFingerprint                                  string
 	coreIRProgramPreserved, coreIRFingerprintSensitive bool
-	coreIRUnknownAttributeFailClosed                    bool
+	coreIRUnknownAttributeFailClosed                   bool
 }
 
 type evidence struct {
@@ -21,7 +21,7 @@ type evidence struct {
 	signatureSupported, valueCasesExact, outputsObserved          bool
 	deterministicReplay, counterexamplesExact                     bool
 	unknownFailClosed, operandFailClosed, overflowFailClosed      bool
-	coreIRProgramPreserved, coreIRFingerprintSensitive           bool
+	coreIRProgramPreserved, coreIRFingerprintSensitive            bool
 	coreIRUnknownAttributeFailClosed                              bool
 }
 
@@ -35,8 +35,8 @@ func measure(filename string, source []byte, program Program, cases []CaseResult
 		baselineReason: compileReason(filename, baseline, program.Activity),
 		passedCases:    passed, replayedCases: replayed, passedCounterexamples: counterexampleCount(counters),
 		fingerprintSensitive: changedErr == nil && changed.SemanticFingerprint != program.SemanticFingerprint,
-		coreIRFingerprint: coreIR.fingerprint, coreIRProgramPreserved: coreIR.programPreserved,
-		coreIRFingerprintSensitive: coreIR.fingerprintSensitive,
+		coreIRFingerprint:    coreIR.fingerprint, coreIRProgramPreserved: coreIR.programPreserved,
+		coreIRFingerprintSensitive:       coreIR.fingerprintSensitive,
 		coreIRUnknownAttributeFailClosed: coreIR.unknownAttributeFailClosed,
 	}
 }
@@ -49,11 +49,11 @@ func (measured measurement) evidence(program Program, counters []CounterexampleR
 		operandParsed: program.Operand == 1, signatureSupported: program.operation.Arity == 1,
 		valueCasesExact: measured.passedCases == 5, outputsObserved: measured.passedCases == 5,
 		deterministicReplay: measured.replayedCases == 5, counterexamplesExact: measured.passedCounterexamples == 8,
-		unknownFailClosed:  counterexamplePassed(counters, "unknown-operation"),
-		operandFailClosed:  counterexamplePassed(counters, "malformed-operand"),
-		overflowFailClosed: counterexamplePassed(counters, "integer-overflow"),
-		coreIRProgramPreserved: measured.coreIRProgramPreserved,
-		coreIRFingerprintSensitive: measured.coreIRFingerprintSensitive,
+		unknownFailClosed:                counterexamplePassed(counters, "unknown-operation"),
+		operandFailClosed:                counterexamplePassed(counters, "malformed-operand"),
+		overflowFailClosed:               counterexamplePassed(counters, "integer-overflow"),
+		coreIRProgramPreserved:           measured.coreIRProgramPreserved,
+		coreIRFingerprintSensitive:       measured.coreIRFingerprintSensitive,
 		coreIRUnknownAttributeFailClosed: measured.coreIRUnknownAttributeFailClosed,
 	}
 }

@@ -22,9 +22,9 @@ func evaluateProgram(report Report, source []byte, program Program) Report {
 		ValueCasesPassed: measured.passedCases, ValueCasesTotal: len(report.Cases),
 		CounterexamplesPassed: measured.passedCounterexamples, CounterexamplesTotal: len(report.Counterexamples),
 		ValueOutputsObserved: measured.passedCases, DeterministicReplays: measured.replayedCases,
-		RepositoryWrites: 0,
-		CoreIRProgramPreserved: coordinate(boolInt(measured.coreIRProgramPreserved), 1),
-		CoreIRFingerprintSensitive: coordinate(boolInt(measured.coreIRFingerprintSensitive), 1),
+		RepositoryWrites:                 0,
+		CoreIRProgramPreserved:           coordinate(boolInt(measured.coreIRProgramPreserved), 1),
+		CoreIRFingerprintSensitive:       coordinate(boolInt(measured.coreIRFingerprintSensitive), 1),
 		CoreIRUnknownAttributeFailClosed: coordinate(boolInt(measured.coreIRUnknownAttributeFailClosed), 1),
 	}
 	checks := measured.evidence(program, report.Counterexamples)

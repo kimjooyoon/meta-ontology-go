@@ -6,14 +6,14 @@ package semantic
 // Fields are valid only on Entity nodes; ValueProgram is valid only on
 // Activity nodes and carries no execution authority.
 type Node struct {
-	ID        ID
-	Kind      Kind
-	Namespace Namespace
-	Name      string
-	Aliases   []string
-	Fields    []Field `json:"fields,omitempty"`
-	ValueProgram string `json:"value_program,omitempty"`
-	Span      Span
+	ID           ID
+	Kind         Kind
+	Namespace    Namespace
+	Name         string
+	Aliases      []string
+	Fields       []Field `json:"fields,omitempty"`
+	ValueProgram string  `json:"value_program,omitempty"`
+	Span         Span
 }
 
 func NewNode(kind Kind, id ID, namespace Namespace, name string) (Node, error) {

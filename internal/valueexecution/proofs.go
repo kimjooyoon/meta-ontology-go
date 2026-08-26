@@ -9,7 +9,7 @@ func buildProofs(report Report, checks evidence) []Proof {
 		},
 		{
 			Choice: "COHERENCE", Claim: "bidir and core fingerprints vary with the registry-bound program",
-			MetaOperation: "compile-registry-bound-program",
+			MetaOperation:  "compile-registry-bound-program",
 			EvidenceDigest: digestValue([]string{report.SemanticFingerprint, report.CoreIRFingerprint, report.ValueProgramDigest}),
 			Passed: checks.semanticBound && checks.fingerprintSensitive && checks.coreIRFingerprintSensitive &&
 				checks.registryKnown && checks.operandParsed && checks.signatureSupported,
