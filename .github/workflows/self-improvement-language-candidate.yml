@@ -70,12 +70,17 @@ jobs:
           else
             input="$RUNNER_TEMP/candidate/observation/first.json"
           fi
+          source_run_id="$(jq -r '.source_workflow_run_id' "$input")"
+          if ! [[ "$source_run_id" =~ ^[1-9][0-9]*$ ]]; then
+            echo "observation source workflow run id is unknown" >&2
+            exit 1
+          fi
           output="$RUNNER_TEMP/candidate/output"
           mkdir -p "$output"
           for pass in first second; do
             go run ./scripts/self-improvement-candidate \
               -contract examples/self-improvement/candidate.gooo \
-              -head-sha "$HEAD_SHA" -source-run-id "$SOURCE_RUN_ID" \
+              -head-sha "$HEAD_SHA" -source-run-id "$source_run_id" \
               -observation "$input" -output "$output/$pass.json" -check
           done
           cmp "$output/first.json" "$output/second.json"
