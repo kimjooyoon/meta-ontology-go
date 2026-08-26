@@ -106,6 +106,14 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "self-improvement-transport",
+      "path": "examples/self-improvement/transport.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "language-value-witness",
       "path": "examples/language-value-witness/main.gooo",
       "kind": "VALID",

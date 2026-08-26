@@ -6,6 +6,7 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/self-improvement-language-candidate.yml",
 		".github/workflows/self-improvement-language-observation.yml",
+		"examples/language-syntax-roundtrip/corpus.json",
 		"examples/self-improvement/TRANSPORT.md",
 		"examples/self-improvement/transport.gooo",
 		"internal/meta/selfimprovementtransport",
