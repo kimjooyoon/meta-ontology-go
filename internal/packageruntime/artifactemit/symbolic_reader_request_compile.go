@@ -13,7 +13,7 @@ func CompileSymbolicReaderRequest(
 		SourceContractValid:       decoded && symbolicReaderRequestSourceValid(projection, subjectSHA),
 		SourceReadOnly: decoded && projection.Effects.RepositoryWrites == 0 &&
 			!projection.Effects.MutationAuthority && projection.PromotionCreditBPS == 0,
-		AudienceKnown:  symbolicReaderRequestAudienceKnown(request.Audience),
+		AudienceKnown:   symbolicReaderRequestAudienceKnown(request.Audience),
 		ResolutionKnown: symbolicReaderRequestResolutionKnown(request.ExpectedResolution),
 		ReaderPresent:   readerPresent,
 	}
