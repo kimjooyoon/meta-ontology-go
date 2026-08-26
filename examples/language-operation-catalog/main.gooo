@@ -1,0 +1,5 @@
+package operationcatalog
+namespace operationcatalog
+entity Integer id "gooo://operation-catalog/entity/integer"
+activity IncrementOne(Integer) -> Integer computes "int.add:1"
+activity IncrementTwo(Integer) -> Integer
