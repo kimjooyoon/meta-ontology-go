@@ -12,10 +12,13 @@ source_report="$output_dir/generated-conformance-report.json"
 producer_artifact="$producer_dir/artifact.json"
 producer_receipt="$producer_dir/receipt.json"
 evaluator="$script_dir/generated-unknown-resolution.jq"
+integrity_evaluator="$script_dir/generated-unknown-integrity.jq"
 counterfactual="$output_dir/generated-unknown-counterfactual.json"
 report="$output_dir/generated-unknown-resolution-report.json"
+integrity_receipt="$output_dir/generated-unknown-integrity-receipt.json"
+manifest="$output_dir/generated-unknown-manifest.sha256"
 
-for required in "$source_report" "$producer_artifact" "$producer_receipt" "$evaluator"; do
+for required in "$source_report" "$producer_artifact" "$producer_receipt" "$evaluator" "$integrity_evaluator"; do
   test -f "$required"
 done
 
@@ -144,9 +147,77 @@ digest=$(printf '%s' "$canonical" | sha256sum | awk '{print $1}')
 jq --arg digest "sha256:$digest" '. + {digest: $digest}' "$report_tmp" > "$sealed_tmp"
 mv "$sealed_tmp" "$report"
 
+counterfactual_file_digest=$(sha256sum "$counterfactual" | awk '{print $1}')
+report_file_digest=$(sha256sum "$report" | awk '{print $1}')
+integrity_input_tmp=$(mktemp "$output_dir/.generated-unknown-integrity-input.XXXXXX")
+integrity_report_tmp=$(mktemp "$output_dir/.generated-unknown-integrity-report.XXXXXX")
+integrity_sealed_tmp=$(mktemp "$output_dir/.generated-unknown-integrity-sealed.XXXXXX")
+trap 'rm -f "$counterfactual_tmp" "$report_tmp" "$sealed_tmp" "$integrity_input_tmp" "$integrity_report_tmp" "$integrity_sealed_tmp"' EXIT
+
+jq -n \
+  --arg sha "$HEAD_SHA" \
+  --arg counterfactual_digest "sha256:$counterfactual_file_digest" \
+  --arg report_digest "sha256:$report_file_digest" \
+  --argjson repository_writes "$repository_writes" '
+  {
+    schema: "gooo/generated-unknown-integrity-input/v1",
+    subject_sha: $sha,
+    manifest_path: "generated-unknown-manifest.sha256",
+    files: [
+      {
+        path: "generated-unknown-counterfactual.json",
+        digest: $counterfactual_digest
+      },
+      {
+        path: "generated-unknown-resolution-report.json",
+        digest: $report_digest
+      }
+    ],
+    effects: {
+      repository_writes: $repository_writes,
+      mutation_authority: false
+    }
+  }
+' > "$integrity_input_tmp"
+
+jq -f "$integrity_evaluator" "$integrity_input_tmp" > "$integrity_report_tmp"
+jq -e --arg sha "$HEAD_SHA" '
+  .schema == "gooo/generated-unknown-integrity-receipt/v1"
+  and .subject_sha == $sha
+  and .decision == "PASS"
+  and .resolution == "EXACT"
+  and .reason == "GENERATED_UNKNOWN_PAYLOADS_BOUND"
+  and .manifest.payload_bindings == 2
+  and .coordinates.satisfied == 3
+  and .coordinates.total == 3
+  and .coordinates.basis_points == 10000
+  and ([.indicators[] | select(.satisfied == false)] | length) == 0
+  and .promotion_credit_bps == 0
+  and .repository_writes == 0
+  and .mutation_authority == false
+' "$integrity_report_tmp" >/dev/null
+
+integrity_canonical=$(jq -S -c 'del(.digest)' "$integrity_report_tmp")
+integrity_digest=$(printf '%s' "$integrity_canonical" | sha256sum | awk '{print $1}')
+jq --arg digest "sha256:$integrity_digest" '. + {digest: $digest}' "$integrity_report_tmp" > "$integrity_sealed_tmp"
+mv "$integrity_sealed_tmp" "$integrity_receipt"
+
+(
+  cd "$output_dir"
+  sha256sum \
+    generated-unknown-counterfactual.json \
+    generated-unknown-resolution-report.json > generated-unknown-manifest.sha256
+  test "$(wc -l < generated-unknown-manifest.sha256)" -eq 2
+  sha256sum -c generated-unknown-manifest.sha256
+)
+
 printf 'generated unknown resolution: %s %s %s %s/%s\n' \
   "$(jq -r '.decision' "$report")" \
   "$(jq -r '.resolution' "$report")" \
   "$(jq -r '.conformance.decision' "$report")" \
   "$(jq -r '.conformance.coordinates.satisfied' "$report")" \
   "$(jq -r '.conformance.coordinates.total' "$report")"
+printf 'generated unknown integrity: %s %s/%s\n' \
+  "$(jq -r '.decision' "$integrity_receipt")" \
+  "$(jq -r '.coordinates.satisfied' "$integrity_receipt")" \
+  "$(jq -r '.coordinates.total' "$integrity_receipt")"
