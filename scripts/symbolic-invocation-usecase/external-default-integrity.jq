@@ -4,6 +4,7 @@ def expected_paths:
     "external-default-structural-validation.txt",
     "external-default-envelope.json",
     "external-default-observation.json",
+    "external-default-compiler-reachability.json",
     "external-default-coverage-report.json"
   ];
 
@@ -38,9 +39,9 @@ def digest_binding($input; $path):
 | ($indicators | length) as $total
 | ([$indicators[] | select(.satisfied)] | length) as $satisfied
 | {
-    schema: "gooo/external-default-integrity-receipt/v1",
+    schema: "gooo/external-default-integrity-receipt/v2",
     subject_sha: $input.subject_sha,
-    metric_id: "gooo.metric.guardrail.external-default-defense-integrity.v1",
+    metric_id: "gooo.metric.guardrail.external-default-defense-integrity.v2",
     decision: (if $satisfied == $total then "PASS" else "FAIL_CLOSED" end),
     resolution: (if $satisfied == $total then "EXACT" else "INVARIANT_ONLY" end),
     reason: (if $satisfied == $total
