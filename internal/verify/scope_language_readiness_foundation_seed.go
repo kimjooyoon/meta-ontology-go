@@ -6,7 +6,10 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/transformation-effect.yml",
 		"cmd/language-readiness-witness/foundation-seed",
+		"examples/language-semantic-model/corpus.json",
 		"internal/meta/languagereadiness/artifact/foundationseed",
+		"internal/meta/languagereadiness/languagesemantic/evaluate_test.go",
+		"internal/meta/languagereadiness/languagesemantic/model.go",
 		"internal/meta/languagereadiness/languagesemantic/registry_definition.go",
 		"internal/verify/scope_language_readiness_foundation_seed.go",
 	}
