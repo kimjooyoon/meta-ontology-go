@@ -91,10 +91,10 @@ jq -e --arg sha "$HEAD_SHA" '
   and .subject_sha == $sha
   and .decision == "PASS"
   and .resolution == "EXACT"
-  and .source.gooo_files == 2
+  and .source.gooo_files == 3
   and .source.go_files == 0
-  and .source.gooo_lines == 10
-  and .source.files == 5
+  and .source.gooo_lines == 16
+  and .source.files == 6
   and .source.directories == 0
   and .effects.repository_writes == 0
   and .effects.mutation_authority == false
