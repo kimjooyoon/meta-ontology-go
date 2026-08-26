@@ -41,7 +41,7 @@ def audience_view($indicators; $audience; $resolution):
       "FOUNDATION";
       "count-compiler-source-gooo-files";
       $input.source.gooo_files;
-      2;
+      3;
       ["TOOL_AUTHOR", "GOVERNOR"]
     ),
     indicator(
@@ -59,7 +59,7 @@ def audience_view($indicators; $audience; $resolution):
       "FOUNDATION";
       "sum-compiler-source-gooo-lines";
       $input.source.gooo_lines;
-      10;
+      16;
       ["TOOL_AUTHOR", "GOVERNOR"]
     ),
     indicator(
