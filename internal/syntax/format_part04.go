@@ -31,6 +31,10 @@ func formatActivity(output *strings.Builder, activity *ActivityDecl) error {
 	}
 	output.WriteString(") -> ")
 	output.WriteString(result)
+	if activity.ValueProgramPresent || activity.ValueProgram != "" {
+		output.WriteString(" computes ")
+		output.WriteString(quoteString(activity.ValueProgram))
+	}
 	return nil
 }
 func activityParameters(activity *ActivityDecl) ([]NameRef, error) {

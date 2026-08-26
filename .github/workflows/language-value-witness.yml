@@ -1,0 +1,97 @@
+name: Language value witness
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/language-value-witness.yml
+      - examples/language-value-witness/**
+      - internal/bidir/**
+      - internal/syntax/**
+      - internal/valueexecution/**
+      - scripts/language-value-witness/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/language-value-witness.yml
+      - examples/language-value-witness/**
+      - internal/bidir/**
+      - internal/syntax/**
+      - internal/valueexecution/**
+      - scripts/language-value-witness/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-value-level-computation:
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          check-latest: true
+      - name: Go 1.27 fix and canonical format conformance
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix ./internal/valueexecution ./scripts/language-value-witness
+          gofmt -w \
+            internal/syntax/ast_part03.go \
+            internal/syntax/activity_parser.go \
+            internal/syntax/format_part04.go \
+            internal/syntax/value_program_test.go \
+            internal/bidir/lower_part05.go \
+            internal/bidir/value_program.go \
+            internal/bidir/value_program_test.go \
+            internal/valueexecution/model.go \
+            internal/valueexecution/failure.go \
+            internal/valueexecution/digest.go \
+            internal/valueexecution/registry.go \
+            internal/valueexecution/compile.go \
+            internal/valueexecution/evaluate.go \
+            internal/valueexecution/indicators.go \
+            internal/valueexecution/validate.go \
+            internal/valueexecution/evaluate_test.go \
+            scripts/language-value-witness/main.go
+          git diff --exit-code -- \
+            internal/syntax internal/bidir internal/valueexecution \
+            scripts/language-value-witness
+      - name: Compile parser, semantic binding, and value executor
+        run: go test ./internal/syntax ./internal/bidir ./internal/valueexecution
+      - name: Replay exact Gooo value witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-value-witness"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./scripts/language-value-witness \
+              -source examples/language-value-witness/main.gooo \
+              -activity Increment -head-sha "$HEAD_SHA" \
+              -output "$output/$pass.json" -check
+          done
+          cmp "$output/first.json" "$output/second.json"
+          {
+            echo "### Gooo value witness"
+            jq -r '"- decision: `\(.decision)` at `\(.resolution)`"' "$output/first.json"
+            jq -r '"- value cases: `\(.summary.value_cases_passed)/\(.summary.value_cases_total)`; outputs: `\(.summary.value_outputs_observed)`"' "$output/first.json"
+            jq -r '"- counterexamples: `\(.summary.counterexamples_passed)/\(.summary.counterexamples_total)`; replays: `\(.summary.deterministic_replays)/5`"' "$output/first.json"
+            jq -r '"- scoped improvement: `\(.improvement.before.satisfied)/\(.improvement.before.total) -> \(.improvement.after.satisfied)/\(.improvement.after.total)`"' "$output/first.json"
+            jq -r '"- reader views: `\(.views[0].satisfied)/\(.views[0].total)`, `\(.views[1].satisfied)/\(.views[1].total)`, `\(.views[2].satisfied)/\(.views[2].total)`"' "$output/first.json"
+            jq -r '"- core IR preservation: `\(.summary.core_ir_program_preserved.satisfied)/\(.summary.core_ir_program_preserved.total)`; fail-closed guard: `\(.summary.core_ir_fail_closed.satisfied)/\(.summary.core_ir_fail_closed.total)`"' "$output/first.json"
+            jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.repository_mutation_authorized)`"' "$output/first.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload exact-head value witness
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-value-witness-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-witness/first.json
+          if-no-files-found: error
+          retention-days: 14
