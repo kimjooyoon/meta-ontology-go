@@ -5,6 +5,9 @@ type ValidationEvidence struct {
 	ToolDigest        string `json:"tool_digest"`
 	AcceptedInstances int    `json:"accepted_instances"`
 	RejectedInstances int    `json:"rejected_instances"`
+	GeneratedCount    int    `json:"generated_instances"`
+	GoldenMatches     int    `json:"generated_golden_matches"`
+	GeneratedDigest   string `json:"generated_instance_digest"`
 }
 
 type ResourceEvidence struct {
@@ -47,12 +50,10 @@ type Observation struct {
 	ToolDigest        string  `json:"tool_digest"`
 	AcceptedInstances int     `json:"accepted_instances"`
 	RejectedInstances int     `json:"rejected_instances"`
+	GeneratedCount    int     `json:"generated_instances"`
+	GoldenMatches     int     `json:"generated_golden_matches"`
+	GeneratedDigest   string  `json:"generated_instance_digest"`
 	Effects           Effects `json:"effects"`
-}
-
-type Effects struct {
-	RepositoryWrites  int  `json:"repository_writes"`
-	MutationAuthority bool `json:"mutation_authority"`
 }
 
 type Counter struct {

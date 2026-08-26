@@ -47,6 +47,7 @@ type InvocationSchema struct {
 	Title                string                     `json:"title"`
 	Type                 string                     `json:"type"`
 	Properties           InvocationSchemaProperties `json:"properties"`
+	Examples             []InvocationExample        `json:"examples"`
 	Required             []string                   `json:"required"`
 	AdditionalProperties bool                       `json:"additionalProperties"`
 }

@@ -34,6 +34,8 @@ type Summary struct {
 	UserDecisions        int                 `json:"user_decisions"`
 	AcceptedInstances    int                 `json:"accepted_instances"`
 	RejectedInstances    int                 `json:"rejected_instances"`
+	GeneratedInstances   int                 `json:"generated_instances"`
+	GoldenMatches        int                 `json:"generated_golden_matches"`
 	DeterministicReplays int                 `json:"deterministic_replays"`
 	Unknowns             int                 `json:"unknowns"`
 	Source               SourceCoordinate    `json:"source"`
@@ -57,16 +59,4 @@ type Report struct {
 	MutationAuthority  bool        `json:"mutation_authority"`
 	NotClaimed         []string    `json:"not_claimed"`
 	Digest             string      `json:"digest"`
-}
-
-type facts struct {
-	UserDecisions        int
-	AcceptedInstances    int
-	RejectedInstances    int
-	DeterministicReplays int
-	Unknowns             int
-	Source               SourceCoordinate
-	Producer             ProducerBinding
-	Resources            ResourceObservation
-	Effects              Effects
 }

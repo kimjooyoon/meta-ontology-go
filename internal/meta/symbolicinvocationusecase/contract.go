@@ -19,6 +19,8 @@ func CanonicalContract() Contract {
 		ExpectedDirectories:          0,
 		ExpectedAcceptedInstances:    1,
 		ExpectedRejectedInstances:    1,
+		ExpectedGeneratedCount:       1,
+		ExpectedGoldenMatches:        1,
 		ExpectedDeterministicReplays: 1,
 		ExpectedResourceSamples:      5,
 		ExpectedRepositoryWrites:     0,

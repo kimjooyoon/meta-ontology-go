@@ -31,13 +31,17 @@ func identityFailure(input Input) string {
 	}
 	if !validDigest(receipt.Compiler.BinaryDigest) || !validDigest(receipt.Artifact.Digest) ||
 		!validDigest(receipt.Artifact.JSONSchemaDigest) || !validDigest(receipt.Validation.ToolDigest) ||
+		!validDigest(receipt.Validation.GeneratedDigest) ||
 		!validDigest(artifact.Digest) || !validDigest(observation.ArtifactDigest) ||
-		!validDigest(observation.JSONSchemaDigest) || !validDigest(observation.ToolDigest) {
+		!validDigest(observation.JSONSchemaDigest) || !validDigest(observation.ToolDigest) ||
+		!validDigest(observation.GeneratedDigest) {
 		return reasonEvidenceInvalid
 	}
 	if receipt.Artifact.ArtifactSchema != artifact.Schema || receipt.Artifact.Digest != artifact.Digest ||
 		receipt.Artifact.JSONSchemaDigest != observation.JSONSchemaDigest ||
-		receipt.Validation.ToolDigest != observation.ToolDigest || artifact.Digest != observation.ArtifactDigest {
+		receipt.Validation.ToolDigest != observation.ToolDigest ||
+		receipt.Validation.GeneratedDigest != observation.GeneratedDigest ||
+		artifact.Digest != observation.ArtifactDigest {
 		return reasonLinkMismatch
 	}
 	return ""

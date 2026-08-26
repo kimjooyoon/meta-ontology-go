@@ -27,6 +27,7 @@ func Evaluate(input Input) (Report, error) {
 		Summary: Summary{
 			Coordinates: coordinates, UserDecisions: value.UserDecisions,
 			AcceptedInstances: value.AcceptedInstances, RejectedInstances: value.RejectedInstances,
+			GeneratedInstances: value.GeneratedInstances, GoldenMatches: value.GoldenMatches,
 			DeterministicReplays: value.DeterministicReplays, Unknowns: value.Unknowns,
 			Source: value.Source, Producer: value.Producer, Resources: value.Resources, Effects: value.Effects,
 		},

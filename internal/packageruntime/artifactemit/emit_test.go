@@ -36,6 +36,8 @@ func TestEmitProjectsSymbolicInvocationSchema(t *testing.T) {
 		schema.Dialect != JSONSchemaDraft202012 || schema.Properties.Activity.Const != "PayOrder" ||
 		len(schema.Properties.Inputs.PrefixItems) != 1 ||
 		schema.Properties.Inputs.PrefixItems[0].Const != "urn:order" ||
+		len(schema.Examples) != 1 || schema.Examples[0].Activity != "PayOrder" ||
+		len(schema.Examples[0].Inputs) != 1 || schema.Examples[0].Inputs[0] != "urn:order" ||
 		schema.Properties.Inputs.MinItems != 1 || schema.Properties.Inputs.MaxItems != 1 {
 		t.Fatalf("artifact=%#v", artifact)
 	}

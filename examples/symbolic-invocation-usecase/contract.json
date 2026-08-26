@@ -11,6 +11,8 @@
   "expected_directories": 0,
   "expected_accepted_instances": 1,
   "expected_rejected_instances": 1,
+  "expected_generated_instances": 1,
+  "expected_generated_golden_matches": 1,
   "expected_deterministic_replays": 1,
   "expected_resource_samples": 5,
   "expected_repository_writes": 0,
