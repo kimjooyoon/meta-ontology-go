@@ -7,11 +7,11 @@ type SymbolicInvocationConformance struct {
 	Decision           string              `json:"decision"`
 	Resolution         string              `json:"resolution"`
 	Reason             string              `json:"reason"`
-	GeneratedVectors   int                 `json:"generated_vectors"`
-	HandwrittenVectors int                 `json:"handwritten_vectors"`
-	Vectors            []ConformanceVector `json:"vectors"`
-	Effects            Effects             `json:"effects"`
-	NotClaimed         []string            `json:"not_claimed"`
+	GeneratedVectors           int                 `json:"generated_vectors"`
+	EmbeddedHandwrittenVectors int                 `json:"embedded_handwritten_vectors"`
+	Vectors                    []ConformanceVector `json:"vectors"`
+	Effects                    Effects             `json:"effects"`
+	NotClaimed                 []string            `json:"not_claimed"`
 }
 
 type ConformanceVector struct {

@@ -8,10 +8,11 @@ the JSON Schema; they are not maintained as runtime fixtures.
 
 | Measurement | Before | Target |
 | --- | ---: | ---: |
-| Compiler-generated validation vectors | 1/2 | 2/2 |
-| Generated ACCEPT vectors | 1/1 | 1/1 |
+| Compiler-emitted conformance vectors | 0/2 | 2/2 |
+| Generated ACCEPT vectors | 0/1 | 1/1 |
 | Generated REJECT vectors | 0/1 | 1/1 |
-| Handwritten runtime vectors | 1 | 0 |
+| Embedded handwritten vectors | 0 | 0 |
+| Existing external fixture replacements | 0/2 | 0/2 |
 | Repository writes | 0 | 0 |
 | Mutation authorities | 0 | 0 |
 
@@ -20,7 +21,10 @@ input identifiers. `reject-missing-activity` is a REGRESSION projection that
 removes the schema-required activity coordinate. Each vector names the compiler
 meta-operation that produced it.
 
-The first increment is intentionally `STRUCTURAL_ONLY`. It does not claim that
-an external validator observed either verdict. External validation, value-level
-execution, domain correctness, production readiness, and generalized
-performance remain outside this experiment until separate CI evidence exists.
+The first increment is intentionally `STRUCTURAL_ONLY`. Existing accepted and
+rejected files remain independent external fixtures; this increment does not
+replace them. It also does not claim that an external validator observed either
+generated verdict. External validation, external fixture replacement,
+value-level execution, domain correctness, production readiness, and
+generalized performance remain outside the experiment until separate CI
+evidence exists.

@@ -39,8 +39,8 @@ func projectSymbolicConformance(artifact Artifact) *SymbolicInvocationConformanc
 	return &SymbolicInvocationConformance{
 		Schema: SymbolicInvocationConformanceSchema, Decision: "PASS",
 		Resolution: "STRUCTURAL_ONLY", Reason: "SYMBOLIC_CONFORMANCE_VECTORS_PROJECTED",
-		GeneratedVectors: len(vectors), HandwrittenVectors: 0, Vectors: vectors,
+		GeneratedVectors: len(vectors), EmbeddedHandwrittenVectors: 0, Vectors: vectors,
 		Effects: artifact.Effects,
-		NotClaimed: []string{"external validation", "value-level execution", "domain correctness", "production readiness"},
+		NotClaimed: []string{"external validation", "external fixture replacement", "value-level execution", "domain correctness", "production readiness"},
 	}
 }

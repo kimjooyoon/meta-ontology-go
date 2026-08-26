@@ -24,7 +24,7 @@ func TestSymbolicConformanceVectorsAreCompilerProjected(t *testing.T) {
 		conformance.Decision != "PASS" || conformance.Resolution != "STRUCTURAL_ONLY" {
 		t.Fatalf("unexpected conformance identity: %+v", conformance)
 	}
-	if conformance.GeneratedVectors != 2 || conformance.HandwrittenVectors != 0 ||
+	if conformance.GeneratedVectors != 2 || conformance.EmbeddedHandwrittenVectors != 0 ||
 		len(conformance.Vectors) != 2 {
 		t.Fatalf("unexpected vector counts: %+v", conformance)
 	}
