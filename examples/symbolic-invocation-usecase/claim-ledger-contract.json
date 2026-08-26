@@ -1,0 +1,172 @@
+{
+  "schema": "gooo/claim-ledger-contract/v1",
+  "metric": "gooo.metric.user.symbolic-reader-request-claim-ledger.v1",
+  "expected": {
+    "fixed_claim_total": 12,
+    "in_scope_claim_total": 8,
+    "discharged_total": 4,
+    "unknown_total": 4,
+    "refuted_total": 0,
+    "excluded_total": 4,
+    "open_claim_total": 4,
+    "discharge_basis_points": 5000,
+    "false_promotion_count": 0,
+    "proof_routes": {
+      "foundation": 4,
+      "coherence": 4,
+      "regression": 4
+    },
+    "claim_set_decision": "FAIL_CLOSED",
+    "resolution": "STAGE_LOCAL"
+  },
+  "claims": [
+    {
+      "id": "reader-observation-schema",
+      "kind": "ASSERTION",
+      "modality": "MUST",
+      "subject": "reader-observation",
+      "predicate": "schema-is-canonical",
+      "scope": "IN_SCOPE",
+      "proof_route": "FOUNDATION",
+      "coordinate": {"stage": "OBSERVE", "step": "decode-schema"},
+      "evidence": {"paths": ["schema"], "operator": "EQUALS", "expected": "gooo/symbolic-reader-request-user-observation/v1"},
+      "unknown_reason": "OBSERVATION_SCHEMA_MISSING",
+      "refuted_reason": "OBSERVATION_SCHEMA_MISMATCH"
+    },
+    {
+      "id": "reader-observation-subject",
+      "kind": "ASSERTION",
+      "modality": "MUST",
+      "subject": "reader-observation",
+      "predicate": "subject-is-exact-head",
+      "scope": "IN_SCOPE",
+      "proof_route": "FOUNDATION",
+      "coordinate": {"stage": "OBSERVE", "step": "bind-subject"},
+      "evidence": {"paths": ["subject", "subject_sha"], "operator": "EQUALS", "expected": "$SUBJECT_SHA"},
+      "unknown_reason": "OBSERVATION_SUBJECT_MISSING",
+      "refuted_reason": "OBSERVATION_SUBJECT_MISMATCH"
+    },
+    {
+      "id": "reader-observation-decision",
+      "kind": "ASSERTION",
+      "modality": "MUST",
+      "subject": "reader-observation",
+      "predicate": "decision-is-pass",
+      "scope": "IN_SCOPE",
+      "proof_route": "COHERENCE",
+      "coordinate": {"stage": "OBSERVE", "step": "read-decision"},
+      "evidence": {"paths": ["decision"], "operator": "EQUALS", "expected": "PASS"},
+      "unknown_reason": "OBSERVATION_DECISION_MISSING",
+      "refuted_reason": "OBSERVATION_DECISION_NOT_PASS"
+    },
+    {
+      "id": "reader-observation-resolution",
+      "kind": "ASSERTION",
+      "modality": "MUST",
+      "subject": "reader-observation",
+      "predicate": "resolution-is-user-observation-only",
+      "scope": "IN_SCOPE",
+      "proof_route": "COHERENCE",
+      "coordinate": {"stage": "OBSERVE", "step": "read-resolution"},
+      "evidence": {"paths": ["resolution"], "operator": "EQUALS", "expected": "USER_OBSERVATION_ONLY"},
+      "unknown_reason": "OBSERVATION_RESOLUTION_MISSING",
+      "refuted_reason": "OBSERVATION_RESOLUTION_MISMATCH"
+    },
+    {
+      "id": "exact-head-cross-job-transport",
+      "kind": "OBLIGATION",
+      "modality": "MUST",
+      "subject": "artifact-transport",
+      "predicate": "exact-head-attestation-is-verified",
+      "scope": "IN_SCOPE",
+      "proof_route": "REGRESSION",
+      "coordinate": {"stage": "TRANSPORT", "step": "verify-exact-head-attestation"},
+      "evidence": {"paths": ["transport.exact_head_attestation"], "operator": "EQUALS", "expected": true},
+      "unknown_reason": "CROSS_JOB_ATTESTATION_MISSING",
+      "refuted_reason": "CROSS_JOB_ATTESTATION_INVALID"
+    },
+    {
+      "id": "peak-rss-measurement",
+      "kind": "OBLIGATION",
+      "modality": "MUST",
+      "subject": "reader-observation-execution",
+      "predicate": "peak-rss-kib-is-recorded",
+      "scope": "IN_SCOPE",
+      "proof_route": "REGRESSION",
+      "coordinate": {"stage": "OBSERVE", "step": "capture-peak-rss"},
+      "evidence": {"paths": ["performance.peak_rss_kib"], "operator": "POSITIVE_INTEGER"},
+      "unknown_reason": "PEAK_RSS_MEASUREMENT_MISSING",
+      "refuted_reason": "PEAK_RSS_MEASUREMENT_INVALID"
+    },
+    {
+      "id": "authorization-boundary",
+      "kind": "OBLIGATION",
+      "modality": "MUST",
+      "subject": "reader-observation-execution",
+      "predicate": "authorization-boundary-is-enforced",
+      "scope": "IN_SCOPE",
+      "proof_route": "FOUNDATION",
+      "coordinate": {"stage": "CONFORM", "step": "verify-authorization-boundary"},
+      "evidence": {"paths": ["authorization.enforced"], "operator": "EQUALS", "expected": true},
+      "unknown_reason": "AUTHORIZATION_EVIDENCE_MISSING",
+      "refuted_reason": "AUTHORIZATION_EVIDENCE_INVALID"
+    },
+    {
+      "id": "general-gooo-execution",
+      "kind": "OBLIGATION",
+      "modality": "MUST",
+      "subject": "gooo-language",
+      "predicate": "arbitrary-value-program-is-executable",
+      "scope": "IN_SCOPE",
+      "proof_route": "COHERENCE",
+      "coordinate": {"stage": "COMPILE", "step": "execute-general-value-program"},
+      "evidence": {"paths": ["language.arbitrary_program_execution"], "operator": "EQUALS", "expected": true},
+      "unknown_reason": "GENERAL_EXECUTION_EVIDENCE_MISSING",
+      "refuted_reason": "GENERAL_EXECUTION_EVIDENCE_INVALID"
+    },
+    {
+      "id": "human-comprehension",
+      "kind": "CANDIDATE",
+      "modality": "MAY",
+      "subject": "human-reader",
+      "predicate": "understands-observation",
+      "scope": "EXCLUDED",
+      "proof_route": "COHERENCE",
+      "coordinate": {"stage": "OBSERVE", "step": "assess-human-comprehension"},
+      "excluded_reason": "NON_MACHINE_CLAIM_EXCLUDED"
+    },
+    {
+      "id": "production-readiness",
+      "kind": "CANDIDATE",
+      "modality": "MAY",
+      "subject": "gooo-language",
+      "predicate": "is-production-ready",
+      "scope": "EXCLUDED",
+      "proof_route": "REGRESSION",
+      "coordinate": {"stage": "PROMOTE", "step": "assess-production-readiness"},
+      "excluded_reason": "OUTSIDE_EXPERIMENT_SCOPE"
+    },
+    {
+      "id": "performance-determinism",
+      "kind": "CANDIDATE",
+      "modality": "MAY",
+      "subject": "reader-observation-execution",
+      "predicate": "performance-is-deterministic",
+      "scope": "EXCLUDED",
+      "proof_route": "REGRESSION",
+      "coordinate": {"stage": "OBSERVE", "step": "replay-performance-sample"},
+      "excluded_reason": "MULTI_RUN_EXPERIMENT_NOT_IN_SCOPE"
+    },
+    {
+      "id": "os-sandbox",
+      "kind": "CANDIDATE",
+      "modality": "MAY",
+      "subject": "reader-observation-execution",
+      "predicate": "runs-in-an-os-sandbox",
+      "scope": "EXCLUDED",
+      "proof_route": "FOUNDATION",
+      "coordinate": {"stage": "CONFORM", "step": "verify-os-sandbox"},
+      "excluded_reason": "OS_SANDBOX_NOT_CLAIMED"
+    }
+  ]
+}
