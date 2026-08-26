@@ -13,6 +13,8 @@ type Contract struct {
 	ExpectedDirectories          int    `json:"expected_directories"`
 	ExpectedAcceptedInstances    int    `json:"expected_accepted_instances"`
 	ExpectedRejectedInstances    int    `json:"expected_rejected_instances"`
+	ExpectedGeneratedInstances   int    `json:"expected_generated_instances"`
+	ExpectedGeneratedGoldenMatches int  `json:"expected_generated_golden_matches"`
 	ExpectedDeterministicReplays int    `json:"expected_deterministic_replays"`
 	ExpectedResourceSamples      int    `json:"expected_resource_samples"`
 	ExpectedRepositoryWrites     int    `json:"expected_repository_writes"`

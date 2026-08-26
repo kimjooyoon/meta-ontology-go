@@ -8,8 +8,10 @@ document:
 gooo emit --kind symbolic-invocation-schema --entry Checkout examples/symbolic-invocation-schema
 ```
 
-An independent validator in GitHub Actions checks one accepted instance and
-one rejected counterexample. Generated files stay in runner temporary storage.
+The schema also contains one invocation example generated from the activity
+name and ordered entity IDs. GitHub Actions compares that generated example to
+an independent golden, then asks an independent validator to accept it and
+reject one counterexample. Generated files stay in runner temporary storage.
 
 The schema validates symbolic identity and input order only. It does not claim
 value-level types, domain correctness, production readiness, or performance

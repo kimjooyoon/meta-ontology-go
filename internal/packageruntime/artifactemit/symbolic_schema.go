@@ -3,8 +3,10 @@ package artifactemit
 func projectSymbolicInvocationSchema(source packageReceipt) Artifact {
 	entry := source.Execution.Entry
 	prefixItems := make([]ConstSchema, len(entry.Inputs))
+	inputIDs := make([]string, len(entry.Inputs))
 	for index, input := range entry.Inputs {
 		prefixItems[index] = ConstSchema{Const: input.ID}
+		inputIDs[index] = input.ID
 	}
 	return finish(Artifact{
 		Schema: SymbolicInvocationArtifact, Decision: "PASS",
@@ -21,6 +23,7 @@ func projectSymbolicInvocationSchema(source packageReceipt) Artifact {
 				Inputs: TupleSchema{Type: "array", PrefixItems: prefixItems, Items: false,
 					MinItems: len(prefixItems), MaxItems: len(prefixItems)},
 			},
+			Examples: []InvocationExample{{Activity: entry.Activity, Inputs: inputIDs}},
 			Required: []string{"activity", "inputs"}, AdditionalProperties: false,
 		},
 		Extensions: registryReceipt(), Effects: source.Effects,

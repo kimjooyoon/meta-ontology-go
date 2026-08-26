@@ -29,11 +29,15 @@ jq -e '.decision=="PASS" and .resolution=="SYMBOLIC_ONLY" and
   .reason=="SYMBOLIC_INVOCATION_SCHEMA_EMITTED" and .kind=="symbolic-invocation-schema" and
   .schema=="gooo/symbolic-invocation-schema-artifact/v1" and
   .json_schema."$schema"=="https://json-schema.org/draft/2020-12/schema" and
+  (.json_schema.examples|length)==1 and
   .extensions.registered_emitters==3 and .effects.repository_writes==0 and
   .effects.mutation_authority==false' "$work/artifact.json"
 jq '.json_schema' "$work/artifact.json" > "$work/schema.json"
+jq -S '.json_schema.examples[0]' "$work/artifact.json" > "$work/generated-accepted.json"
+jq -S . "$example/accepted.json" > "$work/independent-accepted.json"
+cmp -s "$work/generated-accepted.json" "$work/independent-accepted.json"
 
-"$validator" "$work/schema.json" "$example/accepted.json" > "$work/accepted-validation.txt"
+"$validator" "$work/schema.json" "$work/generated-accepted.json" > "$work/accepted-validation.txt"
 set +e
 "$validator" "$work/schema.json" "$example/rejected.json" > "$work/rejected-validation.txt" 2>&1
 rejected_code=$?
@@ -61,9 +65,11 @@ binary_bytes=$(stat -c '%s' "$binary")
 binary_digest="sha256:$(sha256sum "$binary" | cut -d' ' -f1)"
 validator_digest="sha256:$(sha256sum "$validator" | cut -d' ' -f1)"
 schema_digest="sha256:$(sha256sum "$work/schema.json" | cut -d' ' -f1)"
+generated_instance_digest="sha256:$(sha256sum "$work/generated-accepted.json" | cut -d' ' -f1)"
 
 jq -s --arg head "$HEAD_SHA" --arg binary_digest "$binary_digest" \
 	--arg validator_digest "$validator_digest" --arg schema_digest "$schema_digest" \
+	--arg generated_instance_digest "$generated_instance_digest" \
 	--argjson binary_bytes "$binary_bytes" --argjson gooo_files "$gooo_files" \
 	--argjson go_files "$go_files_count" --argjson gooo_lines "$gooo_lines" \
 	--argjson files "$files" --argjson directories "$directories" \
@@ -76,7 +82,8 @@ jq -s --arg head "$HEAD_SHA" --arg binary_digest "$binary_digest" \
 	artifact:{kind:$artifact[0].kind,artifact_schema:$artifact[0].schema,digest:$artifact[0].digest,
 	json_schema_dialect:$artifact[0].json_schema."$schema",json_schema_digest:$schema_digest},
 	validation:{tool:"github.com/santhosh-tekuri/jsonschema/cmd/jv@v0.7.0",tool_digest:$validator_digest,
-	accepted_instances:1,rejected_instances:1},deterministic_replays:1,
+	accepted_instances:1,rejected_instances:1,generated_instances:1,generated_golden_matches:1,
+	generated_instance_digest:$generated_instance_digest},deterministic_replays:1,
 	resources:{samples:.,sample_count:length,max_wall_ms:(map(.wall_ms)|max),max_rss_kib:(map(.rss_kib)|max)},
 	effects:{repository_writes:0,mutation_authority:false},
 	not_claimed:["value-level types","domain correctness","production readiness","performance beyond this runner and fixed samples"]}' \
@@ -86,6 +93,7 @@ after_workspace=$(git status --porcelain=v1 --untracked-files=all)
 test "$before_workspace" = "$after_workspace"
 jq -e '.decision=="PASS" and .source=={gooo_files:2,go_files:0,gooo_lines:10,files:5,directories:0} and
   .validation.accepted_instances==1 and .validation.rejected_instances==1 and
+  .validation.generated_instances==1 and .validation.generated_golden_matches==1 and
   .deterministic_replays==1 and .resources.sample_count==5 and
   .effects=={repository_writes:0,mutation_authority:false}' "$work/receipt.json"
 
@@ -96,6 +104,7 @@ jq -e '.decision=="PASS" and .source=={gooo_files:2,go_files:0,gooo_lines:10,fil
 	echo '|---|---:|'
 	jq -r '"| Gooo files / lines | \(.source.gooo_files) / \(.source.gooo_lines) |",
 		"| Go files / nested directories | \(.source.go_files) / \(.source.directories) |",
+		"| Generated invocation / golden match | \(.validation.generated_instances) / \(.validation.generated_golden_matches) |",
 		"| Deterministic replays | \(.deterministic_replays) / 1 |",
 		"| External accepted / rejected | \(.validation.accepted_instances) / \(.validation.rejected_instances) |",
 		"| Runner samples | \(.resources.sample_count) |",

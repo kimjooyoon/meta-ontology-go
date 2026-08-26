@@ -5,6 +5,9 @@ type ValidationEvidence struct {
 	ToolDigest        string `json:"tool_digest"`
 	AcceptedInstances int    `json:"accepted_instances"`
 	RejectedInstances int    `json:"rejected_instances"`
+	GeneratedInstances     int    `json:"generated_instances"`
+	GeneratedGoldenMatches int    `json:"generated_golden_matches"`
+	GeneratedDigest        string `json:"generated_instance_digest"`
 }
 
 type ResourceEvidence struct {
@@ -47,6 +50,9 @@ type Observation struct {
 	ToolDigest        string  `json:"tool_digest"`
 	AcceptedInstances int     `json:"accepted_instances"`
 	RejectedInstances int     `json:"rejected_instances"`
+	GeneratedInstances     int    `json:"generated_instances"`
+	GeneratedGoldenMatches int    `json:"generated_golden_matches"`
+	GeneratedDigest        string `json:"generated_instance_digest"`
 	Effects           Effects `json:"effects"`
 }
 

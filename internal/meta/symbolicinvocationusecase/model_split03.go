@@ -34,6 +34,8 @@ type Summary struct {
 	UserDecisions        int                 `json:"user_decisions"`
 	AcceptedInstances    int                 `json:"accepted_instances"`
 	RejectedInstances    int                 `json:"rejected_instances"`
+	GeneratedInstances   int                 `json:"generated_instances"`
+	GeneratedGoldenMatches int               `json:"generated_golden_matches"`
 	DeterministicReplays int                 `json:"deterministic_replays"`
 	Unknowns             int                 `json:"unknowns"`
 	Source               SourceCoordinate    `json:"source"`
@@ -63,6 +65,8 @@ type facts struct {
 	UserDecisions        int
 	AcceptedInstances    int
 	RejectedInstances    int
+	GeneratedInstances   int
+	GeneratedGoldenMatches int
 	DeterministicReplays int
 	Unknowns             int
 	Source               SourceCoordinate
