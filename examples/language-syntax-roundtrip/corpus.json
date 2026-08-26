@@ -224,7 +224,8 @@
       "path": "examples/symbolic-invocation-schema",
       "members": [
         "examples/symbolic-invocation-schema/activity.gooo",
-        "examples/symbolic-invocation-schema/entities.gooo"
+        "examples/symbolic-invocation-schema/entities.gooo",
+        "examples/symbolic-invocation-schema/reader-request.gooo"
       ],
       "entry": "Checkout",
       "report_schema": "gooo/language-package-execution-report/v1",
