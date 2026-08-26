@@ -1,5 +1,7 @@
 package artifactemit
 
+import "slices"
+
 func symbolicReaderMetricViews(
 	indicators []SymbolicValueContractIndicator,
 ) []SymbolicValueContractView {
@@ -32,10 +34,5 @@ func symbolicReaderMetricViews(
 }
 
 func symbolicReaderHasAudience(audiences []string, expected string) bool {
-	for _, audience := range audiences {
-		if audience == expected {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(audiences, expected)
 }
