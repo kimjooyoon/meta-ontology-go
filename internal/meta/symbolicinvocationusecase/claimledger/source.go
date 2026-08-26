@@ -27,7 +27,7 @@ func buildSources(observationData, runtimeData []byte, subject string) (map[stri
 }
 
 func decodeSource(name string, data []byte) sourceState {
-	state := sourceState{InputRecord: InputRecord{Name: name}, Value: map[string]any{}}
+	state := sourceState{Name: name, Value: map[string]any{}}
 	if len(data) == 0 {
 		state.Status, state.Reason = "MISSING", strings.ToUpper(name)+"_EVIDENCE_MISSING"
 		return state
