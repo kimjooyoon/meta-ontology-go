@@ -35,6 +35,7 @@ func project(path string, source []byte, commit string) analysis {
 	result.LoopOK = closedLoop(model)
 	result.ExecutorOK = completeCoverage(result.Report.ExecutorCoverage)
 	result.TrilemmaOK = trilemmaChoice(model, registry)
+	result.ObservationOK = readOnlyObservation(model)
 	return result
 }
 

@@ -19,7 +19,7 @@ func TestContractClosesLanguageSelfImprovementLoop(t *testing.T) {
 	if report.Status != "PASS" {
 		t.Fatalf("status = %s, errors = %v", report.Status, report.Errors)
 	}
-	if report.EntityCount != 13 || report.ActivityCount != 7 {
+	if report.EntityCount != 15 || report.ActivityCount != 8 {
 		t.Fatalf("model = %d entities/%d activities",
 			report.EntityCount, report.ActivityCount)
 	}
@@ -30,6 +30,19 @@ func TestContractClosesLanguageSelfImprovementLoop(t *testing.T) {
 		if indicator.Verdict != "PASS" {
 			t.Fatalf("indicator %s = %s", indicator.ID, indicator.Verdict)
 		}
+	}
+}
+
+func TestContractRejectsObservationConsumption(t *testing.T) {
+	path := filepath.Join("..", "..", "examples", "self-improvement", "main.gooo")
+	source, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	open := strings.Replace(string(source), "activity Improve(Evidence) -> SourceTree", "activity Improve(Evidence, ReadOnlyImprovementInput) -> SourceTree", 1)
+	report := buildReport(path, []byte(open), strings.Repeat("c", 40))
+	if report.Status != "FAIL" {
+		t.Fatalf("status = %s, want FAIL", report.Status)
 	}
 }
 

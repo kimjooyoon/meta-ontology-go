@@ -24,6 +24,11 @@ the Gooo contract indicators, executor coverage, and deterministic replay.
 
 The result never authorizes promotion.
 
+The compiled Gooo contract also declares an isolated read-only language
+observation input. This envelope does not claim that the generation plan has
+consumed it; the separate observation workflow binds the real experiment
+receipt while keeping candidate generation and every authority bit at zero.
+
 ## v3 root metric witnesses
 
 The envelope content-addresses the project-root exception policy together with ten

@@ -1,0 +1,81 @@
+name: Self-improvement language observation
+
+on:
+  pull_request:
+    branches: [dev]
+  workflow_run:
+    workflows: ["Language example experiment"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  observation:
+    name: Bind read-only language observation
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+      SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
+      EVENT_NAME: ${{ github.event_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Download exact language experiment
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v7
+        with:
+          name: language-example-experiment-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/observation/input
+          github-token: ${{ github.token }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+
+      - name: Reproduce exact language experiment for PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: bash scripts/language-example-experiment/main.sh
+
+      - name: Compile Gooo observation contract and replay input
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            input="$RUNNER_TEMP/observation/input"
+          else
+            input="$RUNNER_TEMP/language-example-experiment"
+          fi
+          output="$RUNNER_TEMP/observation/output"
+          mkdir -p "$output"
+          go run ./scripts/self-improvement-contract \
+            -contract examples/self-improvement/main.gooo \
+            -commit "$HEAD_SHA" -output "$output/contract.json" -check
+          for pass in first second; do
+            go run ./scripts/self-improvement-observation \
+              -head-sha "$HEAD_SHA" -source-run-id "$SOURCE_RUN_ID" \
+              -report "$input/report.json" \
+              -counterexamples "$input/counterexamples.json" \
+              -contract "$output/contract.json" \
+              -output "$output/$pass.json" -check
+          done
+          cmp "$output/first.json" "$output/second.json"
+
+      - name: Upload exact-head read-only observation
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-language-observation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/observation/output/first.json
+          if-no-files-found: error

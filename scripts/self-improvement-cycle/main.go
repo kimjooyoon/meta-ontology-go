@@ -59,7 +59,7 @@ func validContractIndicators(contract contractDocument) bool {
 		}
 		counts[indicator.Route]++
 	}
-	return len(contract.Indicators) == 7 &&
-		counts["FOUNDATION"] == 3 && counts["COHERENCE"] == 3 &&
+	return len(contract.Indicators) == 8 &&
+		counts["FOUNDATION"] == 3 && counts["COHERENCE"] == 4 &&
 		counts["REGRESSION"] == 1
 }
