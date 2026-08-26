@@ -11,6 +11,8 @@ func init() {
 		"internal/meta/languagereadiness/languagesemantic/evaluate_test.go",
 		"internal/meta/languagereadiness/languagesemantic/model.go",
 		"internal/meta/languagereadiness/languagesemantic/registry_definition.go",
+		"internal/meta/languagereadiness/languagesemanticbinding/denominator.go",
+		"internal/meta/languagereadiness/languagesemanticbinding/validate_semantic_summary_test.go",
 		"internal/verify/scope_language_readiness_foundation_seed.go",
 	}
 }
