@@ -31,13 +31,13 @@ func Evaluate(repository fs.FS, contractPath, expectedRepository string, expecte
 		SourceObservationDigest: digestBytes(observationRaw), ActualArchiveDigest: actualArchiveDigest,
 		Producer: producer, Transport: metadata,
 		NotClaimed: []string{"artifact-name-proves-subject", "archive-digest-authenticates-producer", "whole-language-transport-complete"},
-	}
-	report.Obligations = evaluateObligations(evaluationInput{
-		contract: contract, contractErr: contractErr, expectedRepository: expectedRepository,
-		expectedRunID: expectedRunID, source: source, sourceErr: sourceErr,
-		observationRaw: observationRaw, producer: producer, producerErr: producerErr,
-		metadata: metadata, metadataErr: metadataErr, actualArchiveDigest: actualArchiveDigest,
-	})
+
+		Obligations: evaluateObligations(evaluationInput{
+			contract: contract, contractErr: contractErr, expectedRepository: expectedRepository,
+			expectedRunID: expectedRunID, source: source, sourceErr: sourceErr,
+			observationRaw: observationRaw, producer: producer, producerErr: producerErr,
+			metadata: metadata, metadataErr: metadataErr, actualArchiveDigest: actualArchiveDigest,
+		})}
 	reduce(&report)
 	report.Digest = reportDigest(report)
 	return report
