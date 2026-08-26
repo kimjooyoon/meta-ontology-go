@@ -29,10 +29,10 @@ func buildSymbolicReaderRequestResult(
 			Digest: projection.Digest, FileDigest: symbolicReaderBytesDigest(projectionPayload),
 		},
 		View: view, Coordinates: checks.coordinates(),
-		Classes: symbolicReaderRequestClasses(checks),
+		Classes:    symbolicReaderRequestClasses(checks),
 		Indicators: symbolicReaderRequestIndicators(checks),
-		Proofs: symbolicReaderRequestProofs(checks),
-		Effects: SymbolicReaderRequestEffects{}, PromotionCreditBPS: 0,
+		Proofs:     symbolicReaderRequestProofs(checks),
+		Effects:    SymbolicReaderRequestEffects{}, PromotionCreditBPS: 0,
 		NotClaimed: []string{
 			"reader comprehension", "arbitrary Gooo value-program execution",
 			"external user adoption", "domain correctness", "production readiness",

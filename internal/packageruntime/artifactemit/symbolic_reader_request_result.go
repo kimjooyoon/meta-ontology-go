@@ -1,7 +1,7 @@
 package artifactemit
 
 type SymbolicReaderRequestEffects struct {
-	RepositoryWrites int  `json:"repository_writes"`
+	RepositoryWrites  int  `json:"repository_writes"`
 	MutationAuthority bool `json:"mutation_authority"`
 }
 

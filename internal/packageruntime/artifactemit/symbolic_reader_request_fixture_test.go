@@ -20,7 +20,7 @@ func symbolicReaderRequestProjectionFixture() SymbolicValueReaderProjection {
 		MetricID: symbolicReaderProjectionMetric, Decision: "PASS",
 		Resolution: "READER_PROJECTION_ONLY", Reason: "CANONICAL_READER_PROJECTIONS_BOUND",
 		Source: SymbolicValueReaderProjectionSource{
-			Schema: "gooo/symbolic-invocation-value-reachability/v1",
+			Schema:   "gooo/symbolic-invocation-value-reachability/v1",
 			MetricID: "gooo.metric.compiler.symbolic-value-reachability.v1",
 			Decision: "PASS", Resolution: "SCHEMA_VALUE_REACHABILITY_ONLY",
 			ReachabilityDigest: digest, FileDigest: digest,
@@ -31,7 +31,7 @@ func symbolicReaderRequestProjectionFixture() SymbolicValueReaderProjection {
 			symbolicReaderRequestReaderFixture("GOVERNOR", "FULL_RECEIPT", "SOURCE_BOUND_RECEIPT_ONLY", 11),
 		},
 		Coordinates: SymbolicValueContractCoordinates{Satisfied: 18, Total: 18, BasisPoints: 10000},
-		Effects: SymbolicValueContractEffects{},
+		Effects:     SymbolicValueContractEffects{},
 	}
 	value.Digest = symbolicReaderProjectionDigest(value)
 	return value
