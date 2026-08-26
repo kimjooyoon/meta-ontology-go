@@ -54,10 +54,14 @@ for output_path in "$external_input" "$validation" "$envelope" "$observation" "$
 done
 
 cp "$user_source" "$external_input"
-"$validator" "$schema" "$external_input" > "$validation" 2>&1
+validator_exit_code=0
+"$validator" "$schema" "$external_input" > "$validation" 2>&1 || validator_exit_code=$?
+test "$validator_exit_code" -eq 1
 test -s "$validation"
+printf 'external default structural validation: REJECT exit=%s\n' "$validator_exit_code"
 
 artifact_digest=$(jq -er '.digest' "$artifact")
+schema_digest="sha256:$(sha256sum "$schema" | awk '{print $1}')"
 contract_digest=$(jq -er '.digest' "$contract")
 contract_artifact_digest=$(jq -er '.source_artifact_digest' "$contract")
 validator_digest=$(jq -er '.summary.validator_digest' "$external_report")
@@ -94,9 +98,9 @@ jq -n \
     },
     vector: {
       id: "external-default-empty-inputs",
-      expected: "ACCEPT",
+      expected: "REJECT",
       proof_choice: "REGRESSION",
-      meta_operation: "exercise-compiler-default-value-policy",
+      meta_operation: "exercise-compiler-default-defense-counterfactually",
       instance: $instance[0]
     },
     contract: $contract[0],
@@ -111,7 +115,7 @@ seal_json "$tmp_dir/envelope-1.json" "$envelope"
 
 jq -e --arg contract_digest "$contract_digest" '
   .source.vector_id == "external-default-empty-inputs"
-  and .source.expected == "ACCEPT"
+  and .source.expected == "REJECT"
   and .source.contract_digest == $contract_digest
   and .source.rule_id == "default"
   and .decision == "FAIL_CLOSED"
@@ -147,9 +151,13 @@ jq -n \
   --arg input_digest "$input_digest" \
   --arg validation_digest "$validation_digest" \
   --arg artifact_digest "$artifact_digest" \
+  --arg schema_digest "$schema_digest" \
   --arg contract_digest "$contract_digest" \
   --arg validator_digest "$validator_digest" \
+  --argjson validator_exit_code "$validator_exit_code" \
   --argjson repository_writes "$repository_writes" \
+  --slurpfile schema "$schema" \
+  --slurpfile contract "$contract" \
   --slurpfile envelope "$envelope" \
   --slurpfile observation "$observation" '
   {
@@ -158,11 +166,16 @@ jq -n \
     source: {
       input_digest: $input_digest,
       validation_digest: $validation_digest,
-      structural_decision: "ACCEPT",
+      structural_decision: "REJECT",
+      validator_exit_code: $validator_exit_code,
+      projection_mode: "COUNTERFACTUAL_AFTER_STRUCTURAL_REJECT",
       artifact_digest: $artifact_digest,
+      schema_digest: $schema_digest,
       contract_digest: $contract_digest,
       validator_digest: $validator_digest
     },
+    structural_schema: $schema[0],
+    value_contract: $contract[0],
     envelope: $envelope[0],
     observation: $observation[0],
     replay_matches: [true, true],
@@ -175,28 +188,31 @@ jq -e --arg sha "$HEAD_SHA" '
   .schema == "gooo/external-default-coverage-report/v1"
   and .subject_sha == $sha
   and .decision == "PASS"
-  and .resolution == "DEFAULT_POLICY_COVERAGE_ONLY"
-  and .reason == "STRUCTURAL_ACCEPT_VALUE_FAIL_CLOSED_OBSERVED"
-  and .contrast.structural_decision == "ACCEPT"
+  and .resolution == "COUNTERFACTUAL_DEFENSE_ONLY"
+  and .reason == "STRUCTURAL_REJECT_COUNTERFACTUAL_DEFAULT_FAIL_CLOSED"
+  and .contrast.structural_decision == "REJECT"
   and .contrast.value_decision == "FAIL_CLOSED"
   and .contrast.selected_rule == "default"
   and .contrast.user_decision == "OBSERVED_FAIL_CLOSED"
-  and .coordinates.satisfied == 11
-  and .coordinates.total == 11
+  and .contrast.projection_mode == "COUNTERFACTUAL_AFTER_STRUCTURAL_REJECT"
+  and .contrast.schema_entails_ready_rule == true
+  and .contrast.default_reachable_after_structural_gate == false
+  and .coordinates.satisfied == 13
+  and .coordinates.total == 13
   and .coordinates.basis_points == 10000
   and .classes == [
     {"class":"OUTCOME","satisfied":3,"total":3},
-    {"class":"DRIVER","satisfied":4,"total":4},
-    {"class":"GUARDRAIL","satisfied":4,"total":4}
+    {"class":"DRIVER","satisfied":5,"total":5},
+    {"class":"GUARDRAIL","satisfied":5,"total":5}
   ]
   and .views == [
-    {"audience":"USER","resolution":"USER_VISIBLE","satisfied":7,"total":7,"basis_points":10000},
-    {"audience":"TOOL_AUTHOR","resolution":"TOOL_CONTRACT","satisfied":9,"total":9,"basis_points":10000},
-    {"audience":"GOVERNOR","resolution":"FULL_RECEIPT","satisfied":11,"total":11,"basis_points":10000}
+    {"audience":"USER","resolution":"USER_VISIBLE","satisfied":8,"total":8,"basis_points":10000},
+    {"audience":"TOOL_AUTHOR","resolution":"TOOL_CONTRACT","satisfied":11,"total":11,"basis_points":10000},
+    {"audience":"GOVERNOR","resolution":"FULL_RECEIPT","satisfied":13,"total":13,"basis_points":10000}
   ]
   and .proofs == [
-    {"proof_choice":"FOUNDATION","satisfied":4,"total":4},
-    {"proof_choice":"COHERENCE","satisfied":3,"total":3},
+    {"proof_choice":"FOUNDATION","satisfied":5,"total":5},
+    {"proof_choice":"COHERENCE","satisfied":4,"total":4},
     {"proof_choice":"REGRESSION","satisfied":4,"total":4}
   ]
   and .effects.executed_invocations == 0
@@ -241,7 +257,7 @@ jq -e --arg sha "$HEAD_SHA" '
   and .subject_sha == $sha
   and .decision == "PASS"
   and .resolution == "EXACT"
-  and .reason == "EXTERNAL_DEFAULT_COVERAGE_PAYLOADS_BOUND"
+  and .reason == "EXTERNAL_DEFAULT_DEFENSE_PAYLOADS_BOUND"
   and .manifest.payload_bindings == 5
   and .coordinates.satisfied == 6
   and .coordinates.total == 6
@@ -265,13 +281,14 @@ seal_json "$tmp_dir/integrity-receipt.json" "$integrity_receipt"
   sha256sum -c external-default-manifest.sha256
 )
 
-printf 'external default coverage: %s %s/%s structural=%s value=%s selected=%s false_ready=%s\n' \
+printf 'external default defense: %s %s/%s structural=%s value=%s selected=%s reachable=%s false_ready=%s\n' \
   "$(jq -r '.decision' "$report")" \
   "$(jq -r '.coordinates.satisfied' "$report")" \
   "$(jq -r '.coordinates.total' "$report")" \
   "$(jq -r '.contrast.structural_decision' "$report")" \
   "$(jq -r '.contrast.value_decision' "$report")" \
   "$(jq -r '.contrast.selected_rule' "$report")" \
+  "$(jq -r '.contrast.default_reachable_after_structural_gate' "$report")" \
   "$(jq -r '.indicators[] | select(.id == "guardrail.false-ready-envelopes") | .observed' "$report")"
 printf 'external default integrity: %s %s/%s payloads=%s\n' \
   "$(jq -r '.decision' "$integrity_receipt")" \

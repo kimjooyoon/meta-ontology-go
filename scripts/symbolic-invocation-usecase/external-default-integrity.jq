@@ -13,7 +13,7 @@ def digest_binding($input; $path):
       id: ("guardrail.payload-digest." + $path),
       class: "GUARDRAIL",
       proof_choice: "FOUNDATION",
-      meta_operation: "bind-external-default-coverage-payload",
+      meta_operation: "bind-external-default-defense-payload",
       path: $path,
       observed: $observed,
       expected: 1,
@@ -29,7 +29,7 @@ def digest_binding($input; $path):
       id: "guardrail.manifest-entry-shape",
       class: "GUARDRAIL",
       proof_choice: "COHERENCE",
-      meta_operation: "compare-exact-default-coverage-manifest",
+      meta_operation: "compare-exact-default-defense-manifest",
       observed: (if $shape_exact then 1 else 0 end),
       expected: 1,
       satisfied: $shape_exact
@@ -40,12 +40,12 @@ def digest_binding($input; $path):
 | {
     schema: "gooo/external-default-integrity-receipt/v1",
     subject_sha: $input.subject_sha,
-    metric_id: "gooo.metric.guardrail.external-default-integrity.v1",
+    metric_id: "gooo.metric.guardrail.external-default-defense-integrity.v1",
     decision: (if $satisfied == $total then "PASS" else "FAIL_CLOSED" end),
     resolution: (if $satisfied == $total then "EXACT" else "INVARIANT_ONLY" end),
     reason: (if $satisfied == $total
-      then "EXTERNAL_DEFAULT_COVERAGE_PAYLOADS_BOUND"
-      else "EXTERNAL_DEFAULT_COVERAGE_BINDING_INCOMPLETE"
+      then "EXTERNAL_DEFAULT_DEFENSE_PAYLOADS_BOUND"
+      else "EXTERNAL_DEFAULT_DEFENSE_BINDING_INCOMPLETE"
       end),
     manifest: {path: $input.manifest_path, payload_bindings: ($input.files | length)},
     files: $input.files,

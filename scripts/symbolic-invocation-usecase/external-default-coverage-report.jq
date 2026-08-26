@@ -22,9 +22,47 @@ def audience_view($indicators; $audience; $resolution):
       basis_points: (if $total == 0 then 0 else (($satisfied * 10000 / $total) | floor) end)
     };
 
+def required_property($schema; $name):
+  (($schema.required // []) | index($name)) != null;
+
+def schema_guarantees_non_empty_activity($schema):
+  ($schema.properties.activity.const? // null) as $activity
+  | required_property($schema; "activity")
+    and (($activity | type) == "string")
+    and (($activity | length) > 0);
+
+def schema_guarantees_non_empty_inputs($schema):
+  ($schema.properties.inputs // {}) as $inputs
+  | ($inputs.prefixItems // []) as $prefix_items
+  | ($inputs.minItems // 0) as $min_items
+  | required_property($schema; "inputs")
+    and $inputs.type == "array"
+    and (($min_items | type) == "number")
+    and $min_items >= 1
+    and $inputs.items == false
+    and (($prefix_items | length) >= $min_items)
+    and ([$prefix_items[]
+      | (.const? // null) as $value
+      | (($value | type) == "string" and ($value | length) > 0)
+    ] | all);
+
+def schema_entails_complete_ready($schema; $contract):
+  schema_guarantees_non_empty_activity($schema)
+  and schema_guarantees_non_empty_inputs($schema)
+  and any($contract.rules[]?;
+    .id == "complete-symbolic-invocation"
+    and .match.activity == "NON_EMPTY"
+    and .match.inputs == "NON_EMPTY"
+    and .decision == "READY"
+    and .resolution == "VALUE_EXACT"
+  );
+
 . as $input
 | (if ($input.source.input_digest | test("^sha256:[0-9a-f]{64}$")) then 1 else 0 end) as $user_inputs
-| (if $input.source.structural_decision == "ACCEPT" then 1 else 0 end) as $structural_accepts
+| (if $input.source.structural_decision == "REJECT" and $input.source.validator_exit_code == 1 then 1 else 0 end) as $structural_rejects
+| schema_entails_complete_ready($input.structural_schema; $input.value_contract) as $schema_entails_ready
+| (if $schema_entails_ready then 1 else 0 end) as $schema_ready_entailments
+| (if $schema_entails_ready then 0 else 1 end) as $default_post_schema_reachability
 | (if $input.envelope.source.contract_digest == $input.source.contract_digest then 1 else 0 end) as $contract_bindings
 | (if $input.envelope.source.rule_id == "default" then 1 else 0 end) as $default_selections
 | (if $input.envelope.decision == "FAIL_CLOSED" and $input.envelope.resolution == "LOWER_RESOLUTION" then 1 else 0 end) as $failed_envelopes
@@ -37,9 +75,11 @@ def audience_view($indicators; $audience; $resolution):
     | map(select(. == true)) | length) as $mutation_authorities
 | [
     indicator("user.external-inputs"; "DRIVER"; "FOUNDATION"; "count-external-user-value-inputs"; $user_inputs; 1; ["USER", "TOOL_AUTHOR", "GOVERNOR"]),
-    indicator("external.structural-accepts"; "DRIVER"; "COHERENCE"; "count-pinned-schema-accepts"; $structural_accepts; 1; ["USER", "TOOL_AUTHOR", "GOVERNOR"]),
+    indicator("external.structural-rejects"; "DRIVER"; "COHERENCE"; "count-pinned-schema-rejects"; $structural_rejects; 1; ["USER", "TOOL_AUTHOR", "GOVERNOR"]),
+    indicator("compiler.schema-ready-entailments"; "DRIVER"; "FOUNDATION"; "compare-generated-schema-to-ready-rule"; $schema_ready_entailments; 1; ["TOOL_AUTHOR", "GOVERNOR"]),
+    indicator("compiler.default-post-schema-reachability"; "GUARDRAIL"; "COHERENCE"; "count-default-paths-reachable-after-structural-gate"; $default_post_schema_reachability; 0; ["USER", "TOOL_AUTHOR", "GOVERNOR"]),
     indicator("source.compiler-contract-bindings"; "DRIVER"; "FOUNDATION"; "bind-compiler-default-policy-contract"; $contract_bindings; 1; ["TOOL_AUTHOR", "GOVERNOR"]),
-    indicator("compiler.default-policy-selections"; "OUTCOME"; "REGRESSION"; "select-unmatched-value-default-policy"; $default_selections; 1; ["USER", "TOOL_AUTHOR", "GOVERNOR"]),
+    indicator("compiler.counterfactual-default-selections"; "OUTCOME"; "REGRESSION"; "select-unmatched-value-default-counterfactually"; $default_selections; 1; ["USER", "TOOL_AUTHOR", "GOVERNOR"]),
     indicator("user.fail-closed-envelopes"; "OUTCOME"; "REGRESSION"; "count-default-fail-closed-envelopes"; $failed_envelopes; 1; ["USER", "TOOL_AUTHOR", "GOVERNOR"]),
     indicator("user.blocked-observations"; "OUTCOME"; "COHERENCE"; "reduce-default-failure-for-user"; $blocked_observations; 1; ["USER", "TOOL_AUTHOR", "GOVERNOR"]),
     indicator("tool.deterministic-replay-matches"; "DRIVER"; "REGRESSION"; "compare-default-projection-and-consumer-replays"; $replay_matches; 2; ["TOOL_AUTHOR", "GOVERNOR"]),
@@ -63,12 +103,12 @@ def audience_view($indicators; $audience; $resolution):
 | {
     schema: "gooo/external-default-coverage-report/v1",
     subject_sha: $input.subject_sha,
-    metric_id: "gooo.metric.user.external-default-coverage.v1",
+    metric_id: "gooo.metric.user.external-default-defense.v1",
     decision: (if $satisfied == $total then "PASS" else "FAIL_CLOSED" end),
-    resolution: (if $satisfied == $total then "DEFAULT_POLICY_COVERAGE_ONLY" else "INVARIANT_ONLY" end),
+    resolution: (if $satisfied == $total then "COUNTERFACTUAL_DEFENSE_ONLY" else "INVARIANT_ONLY" end),
     reason: (if $satisfied == $total
-      then "STRUCTURAL_ACCEPT_VALUE_FAIL_CLOSED_OBSERVED"
-      else "EXTERNAL_DEFAULT_POLICY_COVERAGE_INCOMPLETE"
+      then "STRUCTURAL_REJECT_COUNTERFACTUAL_DEFAULT_FAIL_CLOSED"
+      else "EXTERNAL_DEFAULT_DEFENSE_INCOMPLETE"
       end),
     source: $input.source,
     contrast: {
@@ -76,7 +116,10 @@ def audience_view($indicators; $audience; $resolution):
       value_decision: $input.envelope.decision,
       value_resolution: $input.envelope.resolution,
       selected_rule: $input.envelope.source.rule_id,
-      user_decision: $input.observation.decision
+      user_decision: $input.observation.decision,
+      projection_mode: $input.source.projection_mode,
+      schema_entails_ready_rule: $schema_entails_ready,
+      default_reachable_after_structural_gate: ($default_post_schema_reachability > 0)
     },
     coordinates: {
       satisfied: $satisfied,
@@ -116,6 +159,8 @@ def audience_view($indicators; $audience; $resolution):
     not_claimed: [
       "generalized arbitrary user input",
       "coverage of every default-policy value shape",
+      "reachable default selection after structural conformance",
+      "generic JSON Schema-to-value-contract entailment",
       "effect execution",
       "complete interpreter semantics",
       "domain correctness",
