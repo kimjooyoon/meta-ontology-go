@@ -9,7 +9,7 @@ var expectedEntities = map[string]string{
 }
 
 var expectedActivities = map[string][2]string{
-	"SelectMissingCapability":       {"ReadOnlyImprovementInput", "MissingCapability"},
+	"SelectMissingCapability":      {"ReadOnlyImprovementInput", "MissingCapability"},
 	"ProposeNonExecutingCandidate": {"MissingCapability", "NonExecutingImprovementCandidate"},
 }
 
