@@ -373,6 +373,8 @@ jobs:
 
   language-concept-artifact:
     needs: [cross-platform-release]
+    outputs:
+      predecessor-mode: ${{ steps.readiness-predecessor.outputs.mode }}
     if: >-
       github.event_name == 'pull_request' ||
       (
@@ -470,12 +472,16 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Select exact readiness predecessor
+        id: readiness-predecessor
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          mode=""
           for suffix in a b; do
             baseline_dir="$RUNNER_TEMP/language-readiness-baseline-$suffix"
             mkdir -p "$baseline_dir"
+            set +e
             go run ./cmd/language-readiness-witness/predecessor-selection \
               --root "$GITHUB_WORKSPACE" \
               --repository "$GITHUB_REPOSITORY" \
@@ -487,15 +493,44 @@ jobs:
               --reference "$RUNNER_TEMP/language-readiness-baseline-reference-$suffix.json" \
               --binding-baseline "$RUNNER_TEMP/language-readiness-binding-baseline-$suffix.json" \
               --receipt "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
+            selection_status=$?
+            set -e
+            if [[ "$selection_status" -eq 0 ]]; then
+              observed_mode="RESOLVED"
+            else
+              go run ./cmd/language-readiness-witness/foundation-seed \
+                --root "$GITHUB_WORKSPACE" \
+                --input "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json" \
+                --expected-head "$HEAD_SHA" \
+                --output "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json" \
+                --check
+              observed_mode="FOUNDATION"
+            fi
+            if [[ -n "$mode" && "$mode" != "$observed_mode" ]]; then
+              echo "predecessor mode replay mismatch" >&2
+              exit 1
+            fi
+            mode="$observed_mode"
           done
-          cmp "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json" \
-            "$RUNNER_TEMP/language-readiness-baseline-b/artifact.json"
-          cmp "$RUNNER_TEMP/language-readiness-baseline-reference-a.json" \
-            "$RUNNER_TEMP/language-readiness-baseline-reference-b.json"
-          cmp "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
-            "$RUNNER_TEMP/language-readiness-binding-baseline-b.json"
           cmp "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" \
             "$RUNNER_TEMP/language-readiness-predecessor-selection-b.json"
+          if [[ "$mode" == "RESOLVED" ]]; then
+            cmp "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json" \
+              "$RUNNER_TEMP/language-readiness-baseline-b/artifact.json"
+            cmp "$RUNNER_TEMP/language-readiness-baseline-reference-a.json" \
+              "$RUNNER_TEMP/language-readiness-baseline-reference-b.json"
+            cmp "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
+              "$RUNNER_TEMP/language-readiness-binding-baseline-b.json"
+          else
+            cmp "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" \
+              "$RUNNER_TEMP/language-readiness-foundation-seed-b.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-binding-baseline-a.json"
+            jq -r '"### Readiness foundation seed\n- decision: `\(.decision)`\n- coordinates: `\(.summary.satisfied)/\(.summary.total)`\n- ancestry exhaustion: `\(.source.missing_attempts)/\(.source.search_limit)`\n- readiness delta claims: `\(.source.readiness_delta_claims)`\n- repository writes: `\(.source.repository_writes)`\n- authority: denied"' \
+              "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
       - name: Upload exact-head readiness predecessor selection
         if: always()
         uses: actions/upload-artifact@v6
@@ -504,6 +539,7 @@ jobs:
           path: |
             ${{ runner.temp }}/language-readiness-baseline-reference-a.json
             ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
+            ${{ runner.temp }}/language-readiness-foundation-seed-a.json
           if-no-files-found: error
           retention-days: 14
       - name: Prove guarded promotion capability foundation
@@ -546,6 +582,8 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Produce, replay, and consume exact-head concepts
+        env:
+          PREDECESSOR_MODE: ${{ steps.readiness-predecessor.outputs.mode }}
         shell: bash
         run: |
           set -euo pipefail
@@ -1082,32 +1120,34 @@ jobs:
             cd "$readiness_first"
             sha256sum artifact.json > artifact.json.sha256
           )
-          improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
-          improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
-          baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
-          baseline_reference="$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
-          mkdir -p "$improvement_first" "$improvement_replay"
-          for target in "$improvement_first" "$improvement_replay"; do
+          if [[ "$PREDECESSOR_MODE" == "RESOLVED" ]]; then
+            improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
+            improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
+            baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
+            baseline_reference="$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
+            mkdir -p "$improvement_first" "$improvement_replay"
+            for target in "$improvement_first" "$improvement_replay"; do
+              go run ./cmd/language-readiness-witness/transition \
+                -root "$GITHUB_WORKSPACE" \
+                -before "$baseline" \
+                -baseline-reference "$baseline_reference" \
+                -after "$readiness_first/artifact.json" \
+                -expected-sha "$HEAD_SHA" \
+                -output "$target/artifact.json"
+            done
+            cmp -s "$improvement_first/artifact.json" "$improvement_replay/artifact.json"
             go run ./cmd/language-readiness-witness/transition \
               -root "$GITHUB_WORKSPACE" \
               -before "$baseline" \
               -baseline-reference "$baseline_reference" \
               -after "$readiness_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
-              -output "$target/artifact.json"
-          done
-          cmp -s "$improvement_first/artifact.json" "$improvement_replay/artifact.json"
-          go run ./cmd/language-readiness-witness/transition \
-            -root "$GITHUB_WORKSPACE" \
-            -before "$baseline" \
-            -baseline-reference "$baseline_reference" \
-            -after "$readiness_first/artifact.json" \
-            -expected-sha "$HEAD_SHA" \
-            -check "$improvement_first/artifact.json"
-          (
-            cd "$improvement_first"
-            sha256sum artifact.json > artifact.json.sha256
-          )
+              -check "$improvement_first/artifact.json"
+            (
+              cd "$improvement_first"
+              sha256sum artifact.json > artifact.json.sha256
+            )
+          fi
       - name: Measure exact predecessor bindings
         run: |
           for suffix in a b; do
@@ -1120,6 +1160,7 @@ jobs:
           cmp "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
             "$RUNNER_TEMP/language-readiness-predecessor-binding-b.json"
       - name: Prove exact predecessor binding transition
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
         run: |
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/predecessor-binding/transition \
@@ -1138,6 +1179,7 @@ jobs:
             --expected-sha "$HEAD_SHA" \
             --check "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-a.json"
       - name: Upload exact-head predecessor binding transition
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-binding-transition-${{ env.HEAD_SHA }}
@@ -1288,6 +1330,7 @@ jobs:
           retention-days: 30
 
       - name: Upload exact-head quantified improvement
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
         uses: actions/upload-artifact@v7
         with:
           name: language-readiness-improvement-${{ env.HEAD_SHA }}
@@ -1299,13 +1342,16 @@ jobs:
     name: user-journey-scorecard
     needs: [language-concept-artifact]
     if: >-
-      github.event_name == 'pull_request' ||
+      needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED' &&
       (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        github.event_name == 'pull_request' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository &&
+          (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        )
       )
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -1792,6 +1838,7 @@ jobs:
       - language-concept-artifact
       - language-source-execution
       - user-journey-scorecard
+    if: needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -1829,13 +1876,16 @@ jobs:
     name: language-source-execution
     needs: [language-concept-artifact]
     if: >-
-      github.event_name == 'pull_request' ||
+      needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED' &&
       (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        github.event_name == 'pull_request' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository &&
+          (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        )
       )
     runs-on: ubuntu-24.04
     timeout-minutes: 15
