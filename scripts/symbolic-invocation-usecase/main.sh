@@ -111,3 +111,5 @@ jq -e '.decision=="FAIL_CLOSED" and .resolution=="INVARIANT_ONLY" and .reason=="
 sha256sum "$work/report.json" "$work/unknown-report.json" "$work/link-mismatch-report.json" "$work/generated-link-mismatch-report.json" > "$work/manifest.sha256"
 git diff --exit-code -- "${paths[@]}"
 jq -r '"### Symbolic invocation user use case\n- decision: \(.decision) / \(.resolution)\n- indicators: \(.summary.coordinates.satisfied)/\(.summary.coordinates.total)\n- generated invocation / golden match: \(.summary.generated_instances)/\(.summary.generated_golden_matches)\n- user decisions: \(.summary.user_decisions)\n- accepted: \(.summary.accepted_instances)\n- rejected: \(.summary.rejected_instances)\n- runner samples: \(.summary.resources.samples)\n- max wall: \(.summary.resources.max_wall_ms) ms\n- max RSS: \(.summary.resources.max_rss_kib) KiB\n- repository writes: \(.repository_writes)\n- promotion credit: \(.promotion_credit_bps) bps\n- receipt: \(.digest)"' "$work/report.json" >> "$GITHUB_STEP_SUMMARY"
+
+bash "$(dirname "$0")/validate-generated-conformance.sh" "$1"
