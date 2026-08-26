@@ -993,6 +993,9 @@
         "examples/language-syntax-roundtrip/corpus.json",
         "examples/self-improvement/TRANSPORT.md",
         "examples/self-improvement/transport.gooo",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
         "internal/meta/selfimprovementtransport",
         "internal/verify/scope_gooo_exact_subject_transport.go",
         "scripts/self-improvement-transport"
