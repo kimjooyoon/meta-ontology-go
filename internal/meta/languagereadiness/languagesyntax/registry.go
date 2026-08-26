@@ -21,8 +21,7 @@ func expectedRegistry() Registry {
 	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema", Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo"}, Entry: "Checkout", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
-		valid("billing", "examples/billing/main.gooo"),
-		valid("language-test-pass", "examples/language-test/main.gooo"),
+		valid("billing", "examples/billing/main.gooo"), valid("language-test-pass", "examples/language-test/main.gooo"),
 		valid("language-test-failing-assertion", "examples/language-test/failing.gooo"),
 		valid("bootstrap", "examples/bootstrap/main.gooo"),
 		valid("conformance", "examples/conformance/main.gooo"),
@@ -35,6 +34,7 @@ func expectedRegistry() Registry {
 		valid("self-improvement", "examples/self-improvement/main.gooo"),
 		valid("self-improvement-candidate", "examples/self-improvement/candidate.gooo"),
 		valid("language-value-witness", "examples/language-value-witness/main.gooo"),
+		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),
 		valid("roundtrip-minimal", "internal/detection/roundtrip/testdata/minimal.gooo"),
 		valid("directory-kind-ontology", "internal/meta/directorykind/ontology.gooo"),
 		valid("directory-partition-ontology", "internal/meta/directorypartition/ontology.gooo"),
