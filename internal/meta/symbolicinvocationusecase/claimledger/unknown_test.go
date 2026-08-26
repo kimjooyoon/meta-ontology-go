@@ -11,7 +11,7 @@ func TestUnknownIsLocalizedAndCannotPass(t *testing.T) {
 	expected := ExpectedMetrics{
 		FixedClaimTotal: 3, InScopeClaimTotal: 2, DischargedTotal: 1, UnknownTotal: 1,
 		ExcludedTotal: 1, OpenClaimTotal: 1, DischargeBasisPoints: 5000,
-		ProofRoutes: ProofRouteCounts{Foundation: 1, Coherence: 1, Regression: 1},
+		ProofRoutes:      ProofRouteCounts{Foundation: 1, Coherence: 1, Regression: 1},
 		ClaimSetDecision: "FAIL_CLOSED", Resolution: "STAGE_LOCAL",
 	}
 	report, err := Project(testContract(claims, expected), []byte(`{"schema":"observed/v1"}`), "abc")

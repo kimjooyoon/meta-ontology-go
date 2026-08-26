@@ -8,7 +8,7 @@ func TestRefutedEvidenceIsConformantButNeverPromoted(t *testing.T) {
 	}
 	expected := ExpectedMetrics{
 		FixedClaimTotal: 1, InScopeClaimTotal: 1, RefutedTotal: 1,
-		ProofRoutes: ProofRouteCounts{Foundation: 1},
+		ProofRoutes:      ProofRouteCounts{Foundation: 1},
 		ClaimSetDecision: "FAIL_CLOSED", Resolution: "CLAIM_LOCAL",
 	}
 	report, err := Project(testContract(claims, expected), []byte(`{"decision":"UNKNOWN"}`), "abc")
