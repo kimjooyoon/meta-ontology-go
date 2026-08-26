@@ -34,7 +34,7 @@ func symbolicValueReachabilityFixtureMap() map[string]any {
 		},
 		"examples": []any{map[string]any{
 			"activity": "Checkout",
-			"inputs": []any{"urn:gooo:checkout:cart", "urn:gooo:checkout:payment-method"},
+			"inputs":   []any{"urn:gooo:checkout:cart", "urn:gooo:checkout:payment-method"},
 		}},
 		"required": []any{"activity", "inputs"}, "additionalProperties": false,
 	}

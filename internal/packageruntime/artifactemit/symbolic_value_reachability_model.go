@@ -30,11 +30,11 @@ type SymbolicValueReachabilitySource struct {
 }
 
 type SymbolicValueReachabilitySummary struct {
-	PolicyBranches       int `json:"policy_branches"`
-	ReachableRules       int `json:"reachable_rules"`
-	DefenseOnlyRules     int `json:"defense_only_rules"`
-	ReachableDefaults    int `json:"reachable_defaults"`
-	DefenseOnlyDefaults  int `json:"defense_only_defaults"`
+	PolicyBranches        int `json:"policy_branches"`
+	ReachableRules        int `json:"reachable_rules"`
+	DefenseOnlyRules      int `json:"defense_only_rules"`
+	ReachableDefaults     int `json:"reachable_defaults"`
+	DefenseOnlyDefaults   int `json:"defense_only_defaults"`
 	UnknownPolicyBranches int `json:"unknown_policy_branches"`
 }
 
@@ -59,8 +59,8 @@ type SymbolicValueDefaultReachability struct {
 
 type symbolicValueReachabilityAnalysis struct {
 	SchemaProfileSupported bool
-	SchemaEntailsReady      bool
-	Rules                   []SymbolicValueRuleReachability
-	Default                 SymbolicValueDefaultReachability
-	Summary                 SymbolicValueReachabilitySummary
+	SchemaEntailsReady     bool
+	Rules                  []SymbolicValueRuleReachability
+	Default                SymbolicValueDefaultReachability
+	Summary                SymbolicValueReachabilitySummary
 }

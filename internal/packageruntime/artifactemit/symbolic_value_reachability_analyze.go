@@ -34,16 +34,16 @@ func analyzeSymbolicValueReachability(artifact Artifact, contract SymbolicValueC
 	if entailsReady && symbolicValueDefaultRecognized(contract.Default) {
 		defaultReachability = SymbolicValueDefaultReachability{
 			Reachability: "UNREACHABLE", Role: "DEFENSE_IN_DEPTH",
-			Reason: "GENERATED_SCHEMA_ENTAILS_COMPLETE_READY_RULE",
+			Reason:      "GENERATED_SCHEMA_ENTAILS_COMPLETE_READY_RULE",
 			ProofChoice: contract.Default.ProofChoice, MetaOperation: contract.Default.MetaOperation,
 		}
 	}
 	return symbolicValueReachabilityAnalysis{
 		SchemaProfileSupported: supported,
-		SchemaEntailsReady:      entailsReady,
-		Rules:                   rules,
-		Default:                 defaultReachability,
-		Summary:                 summarizeSymbolicValueReachability(rules, defaultReachability),
+		SchemaEntailsReady:     entailsReady,
+		Rules:                  rules,
+		Default:                defaultReachability,
+		Summary:                summarizeSymbolicValueReachability(rules, defaultReachability),
 	}
 }
 
