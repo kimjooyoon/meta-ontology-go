@@ -36,8 +36,8 @@ func buildCandidate(sourceDigest string, policy gapPolicy) Candidate {
 	candidate := Candidate{Schema: CandidateSchema, SourceObservationDigest: sourceDigest,
 		GapID: policy.GapID, SourceNonClaim: policy.SourceNonClaim,
 		ExperimentKind: policy.ExperimentKind, Before: coordinate(0, 1), Target: coordinate(1, 1),
-		ProofChoice: policy.ProofChoice, MetaOperation: policy.MetaOperation}
-	candidate.ID = digestJSON(struct{ Source, Policy string }{sourceDigest, PolicyVersion + ":" + policy.GapID})
+		ProofChoice: policy.ProofChoice, MetaOperation: policy.MetaOperation,
+		ID: digestJSON(struct{ Source, Policy string }{sourceDigest, PolicyVersion + ":" + policy.GapID})}
 	candidate.Digest = candidateDigest(candidate)
 	return candidate
 }

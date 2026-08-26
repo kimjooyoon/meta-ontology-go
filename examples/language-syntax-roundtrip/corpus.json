@@ -98,6 +98,14 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "self-improvement-candidate",
+      "path": "examples/self-improvement/candidate.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "roundtrip-minimal",
       "path": "internal/detection/roundtrip/testdata/minimal.gooo",
       "kind": "VALID",

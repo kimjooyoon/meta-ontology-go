@@ -11,11 +11,11 @@ func validSource(head string, runID int64) sourceObservation {
 			Counterexamples: coordinate(6, 6), GoooDefinitionFiles: 2, GoDefinitionFiles: 0,
 			ResourceSamples: 5, MaxWallMS: 12, MaxRSSKiB: 10712, BinaryBytes: 12529067},
 		NotClaimed: append([]string{}, expectedSourceNonClaims...)}
-	for index := 0; index < 3; index++ {
+	for range 3 {
 		source.Artifacts = append(source.Artifacts, sourceArtifact{Kind: "artifact", Schema: "schema",
 			FileDigest: digest, SemanticDigest: digest, Decision: "PASS"})
 	}
-	for index := 0; index < 16; index++ {
+	for range 16 {
 		source.Indicators = append(source.Indicators, sourceIndicator{ID: "indicator", Class: "DRIVER",
 			ProofChoice: "FOUNDATION", MetaOperation: "observe", Value: 1, Target: 1, Satisfied: true})
 	}
