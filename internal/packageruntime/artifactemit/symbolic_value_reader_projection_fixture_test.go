@@ -39,7 +39,8 @@ func symbolicReaderFixture() []byte {
 			{Audience: "GOVERNOR", Resolution: "FULL_RECEIPT", Satisfied: 11, Total: 11, BasisPoints: 10000},
 		},
 	}
-	source.Digest = symbolicReaderReachabilityDigest(source)
+	canonical, _ := canonicalSymbolicValueReachability(source)
+	source.Digest = symbolicReaderBytesDigest(canonical)
 	payload, _ := json.Marshal(source)
 	return payload
 }
@@ -50,7 +51,8 @@ func symbolicReaderMutate(
 	var source SymbolicValueReachability
 	_ = json.Unmarshal(symbolicReaderFixture(), &source)
 	mutate(&source)
-	source.Digest = symbolicReaderReachabilityDigest(source)
+	canonical, _ := canonicalSymbolicValueReachability(source)
+	source.Digest = symbolicReaderBytesDigest(canonical)
 	payload, _ := json.Marshal(source)
 	return payload
 }

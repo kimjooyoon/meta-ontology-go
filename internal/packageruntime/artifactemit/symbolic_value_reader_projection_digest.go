@@ -13,8 +13,7 @@ func symbolicReaderBytesDigest(payload []byte) string {
 }
 
 func symbolicReaderReachabilityDigest(value SymbolicValueReachability) string {
-	value.Digest = ""
-	payload, _ := json.Marshal(value)
+	payload, _ := canonicalSymbolicValueReachability(value)
 	return symbolicReaderBytesDigest(payload)
 }
 
