@@ -3,6 +3,7 @@ package claimledger
 type Evidence struct {
 	ID                  string `json:"id"`
 	ClaimID             string `json:"claim_id"`
+	Source              string `json:"source"`
 	Status              string `json:"status"`
 	SourcePath          string `json:"source_path"`
 	SourceDigest        string `json:"source_digest"`

@@ -1,15 +1,15 @@
 {
-  "schema": "gooo/claim-ledger-contract/v1",
-  "metric": "gooo.metric.user.symbolic-reader-request-claim-ledger.v1",
+  "schema": "gooo/claim-ledger-contract/v2",
+  "metric": "gooo.metric.user.symbolic-reader-request-claim-ledger.v2",
   "expected": {
     "fixed_claim_total": 12,
     "in_scope_claim_total": 8,
-    "discharged_total": 4,
-    "unknown_total": 4,
+    "discharged_total": 5,
+    "unknown_total": 3,
     "refuted_total": 0,
     "excluded_total": 4,
-    "open_claim_total": 4,
-    "discharge_basis_points": 5000,
+    "open_claim_total": 3,
+    "discharge_basis_points": 6250,
     "false_promotion_count": 0,
     "proof_routes": {
       "foundation": 4,
@@ -29,7 +29,7 @@
       "scope": "IN_SCOPE",
       "proof_route": "FOUNDATION",
       "coordinate": {"stage": "OBSERVE", "step": "decode-schema"},
-      "evidence": {"paths": ["schema"], "operator": "EQUALS", "expected": "gooo/symbolic-reader-request-user-observation/v1"},
+      "evidence": {"source": "observation", "paths": ["schema"], "operator": "EQUALS", "expected": "gooo/symbolic-reader-request-user-observation/v1"},
       "unknown_reason": "OBSERVATION_SCHEMA_MISSING",
       "refuted_reason": "OBSERVATION_SCHEMA_MISMATCH"
     },
@@ -42,7 +42,7 @@
       "scope": "IN_SCOPE",
       "proof_route": "FOUNDATION",
       "coordinate": {"stage": "OBSERVE", "step": "bind-subject"},
-      "evidence": {"paths": ["subject", "subject_sha"], "operator": "EQUALS", "expected": "$SUBJECT_SHA"},
+      "evidence": {"source": "observation", "paths": ["subject", "subject_sha"], "operator": "EQUALS", "expected": "$SUBJECT_SHA"},
       "unknown_reason": "OBSERVATION_SUBJECT_MISSING",
       "refuted_reason": "OBSERVATION_SUBJECT_MISMATCH"
     },
@@ -55,7 +55,7 @@
       "scope": "IN_SCOPE",
       "proof_route": "COHERENCE",
       "coordinate": {"stage": "OBSERVE", "step": "read-decision"},
-      "evidence": {"paths": ["decision"], "operator": "EQUALS", "expected": "PASS"},
+      "evidence": {"source": "observation", "paths": ["decision"], "operator": "EQUALS", "expected": "PASS"},
       "unknown_reason": "OBSERVATION_DECISION_MISSING",
       "refuted_reason": "OBSERVATION_DECISION_NOT_PASS"
     },
@@ -68,7 +68,7 @@
       "scope": "IN_SCOPE",
       "proof_route": "COHERENCE",
       "coordinate": {"stage": "OBSERVE", "step": "read-resolution"},
-      "evidence": {"paths": ["resolution"], "operator": "EQUALS", "expected": "USER_OBSERVATION_ONLY"},
+      "evidence": {"source": "observation", "paths": ["resolution"], "operator": "EQUALS", "expected": "USER_OBSERVATION_ONLY"},
       "unknown_reason": "OBSERVATION_RESOLUTION_MISSING",
       "refuted_reason": "OBSERVATION_RESOLUTION_MISMATCH"
     },
@@ -81,7 +81,7 @@
       "scope": "IN_SCOPE",
       "proof_route": "REGRESSION",
       "coordinate": {"stage": "TRANSPORT", "step": "verify-exact-head-attestation"},
-      "evidence": {"paths": ["transport.exact_head_attestation"], "operator": "EQUALS", "expected": true},
+      "evidence": {"source": "transport", "paths": ["exact_head_attestation"], "operator": "EQUALS", "expected": true},
       "unknown_reason": "CROSS_JOB_ATTESTATION_MISSING",
       "refuted_reason": "CROSS_JOB_ATTESTATION_INVALID"
     },
@@ -94,7 +94,7 @@
       "scope": "IN_SCOPE",
       "proof_route": "REGRESSION",
       "coordinate": {"stage": "OBSERVE", "step": "capture-peak-rss"},
-      "evidence": {"paths": ["performance.peak_rss_kib"], "operator": "POSITIVE_INTEGER"},
+      "evidence": {"source": "runtime", "paths": ["measurement.peak_rss_kib"], "operator": "POSITIVE_INTEGER"},
       "unknown_reason": "PEAK_RSS_MEASUREMENT_MISSING",
       "refuted_reason": "PEAK_RSS_MEASUREMENT_INVALID"
     },
@@ -107,7 +107,7 @@
       "scope": "IN_SCOPE",
       "proof_route": "FOUNDATION",
       "coordinate": {"stage": "CONFORM", "step": "verify-authorization-boundary"},
-      "evidence": {"paths": ["authorization.enforced"], "operator": "EQUALS", "expected": true},
+      "evidence": {"source": "authorization", "paths": ["enforced"], "operator": "EQUALS", "expected": true},
       "unknown_reason": "AUTHORIZATION_EVIDENCE_MISSING",
       "refuted_reason": "AUTHORIZATION_EVIDENCE_INVALID"
     },
@@ -120,7 +120,7 @@
       "scope": "IN_SCOPE",
       "proof_route": "COHERENCE",
       "coordinate": {"stage": "COMPILE", "step": "execute-general-value-program"},
-      "evidence": {"paths": ["language.arbitrary_program_execution"], "operator": "EQUALS", "expected": true},
+      "evidence": {"source": "language", "paths": ["arbitrary_program_execution"], "operator": "EQUALS", "expected": true},
       "unknown_reason": "GENERAL_EXECUTION_EVIDENCE_MISSING",
       "refuted_reason": "GENERAL_EXECUTION_EVIDENCE_INVALID"
     },

@@ -3,8 +3,8 @@ package claimledger
 import "encoding/json"
 
 const (
-	ContractSchema = "gooo/claim-ledger-contract/v1"
-	ReportSchema   = "gooo/claim-ledger/v1"
+	ContractSchema = "gooo/claim-ledger-contract/v2"
+	ReportSchema   = "gooo/claim-ledger/v2"
 )
 
 type Coordinate struct {
@@ -13,6 +13,7 @@ type Coordinate struct {
 }
 
 type EvidenceSpec struct {
+	Source   string          `json:"source"`
 	Paths    []string        `json:"paths"`
 	Operator string          `json:"operator"`
 	Expected json.RawMessage `json:"expected,omitempty"`
