@@ -43,8 +43,8 @@ type RegistrySummary struct {
 }
 
 type Coordinate struct {
-	Satisfied  int `json:"satisfied"`
-	Total      int `json:"total"`
+	Satisfied   int `json:"satisfied"`
+	Total       int `json:"total"`
 	BasisPoints int `json:"basis_points"`
 }
 
@@ -54,68 +54,4 @@ type Improvement struct {
 	After          Coordinate `json:"after"`
 	BeforeEvidence string     `json:"before_evidence"`
 	AfterEvidence  string     `json:"after_evidence"`
-}
-
-type CaseResult struct {
-	ID             string `json:"id"`
-	Input          int64  `json:"input"`
-	Expected       int64  `json:"expected"`
-	Actual         int64  `json:"actual"`
-	Replay         int64  `json:"replay"`
-	Passed         bool   `json:"passed"`
-	ReplayMatched  bool   `json:"replay_matched"`
-}
-
-type CounterexampleResult struct {
-	ID             string `json:"id"`
-	ExpectedReason string `json:"expected_reason"`
-	ActualReason   string `json:"actual_reason"`
-	ReplayReason   string `json:"replay_reason"`
-	Passed         bool   `json:"passed"`
-	ReplayMatched  bool   `json:"replay_matched"`
-}
-
-type Indicator struct {
-	ID            string `json:"id"`
-	Class         string `json:"class"`
-	ProofChoice   string `json:"proof_choice"`
-	MetaOperation string `json:"meta_operation"`
-	Value         int    `json:"value"`
-	Target        int    `json:"target"`
-	Satisfied     bool   `json:"satisfied"`
-}
-
-type View struct {
-	Audience     string   `json:"audience"`
-	Resolution   string   `json:"resolution"`
-	Satisfied    int      `json:"satisfied"`
-	Total        int      `json:"total"`
-	BasisPoints  int      `json:"basis_points"`
-	IndicatorIDs []string `json:"indicator_ids"`
-}
-
-type Proof struct {
-	Choice         string `json:"choice"`
-	Claim          string `json:"claim"`
-	MetaOperation  string `json:"meta_operation"`
-	EvidenceDigest string `json:"evidence_digest"`
-	Passed         bool   `json:"passed"`
-}
-
-type Summary struct {
-	ValueCasesPassed       int        `json:"value_cases_passed"`
-	ValueCasesTotal        int        `json:"value_cases_total"`
-	CounterexamplesPassed  int        `json:"counterexamples_passed"`
-	CounterexamplesTotal   int        `json:"counterexamples_total"`
-	ValueOutputsObserved   int        `json:"value_outputs_observed"`
-	DeterministicReplays   int        `json:"deterministic_replays"`
-	RepositoryWrites       int        `json:"repository_writes"`
-	CoreIRProgramPreserved Coordinate `json:"core_ir_program_preserved"`
-	CoreIRFailClosed       Coordinate `json:"core_ir_fail_closed"`
-}
-
-type Authority struct {
-	RepositoryMutationAuthorized bool `json:"repository_mutation_authorized"`
-	PromotionAuthorized          bool `json:"promotion_authorized"`
-	AutomaticAdoptionAuthorized  bool `json:"automatic_adoption_authorized"`
 }

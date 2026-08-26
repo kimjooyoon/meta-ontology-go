@@ -6,7 +6,9 @@ on:
     paths:
       - .github/workflows/language-value-witness.yml
       - examples/language-value-witness/**
+      - examples/language-syntax-roundtrip/corpus.json
       - internal/bidir/**
+      - internal/meta/languagereadiness/languagesyntax/**
       - internal/syntax/**
       - internal/valueexecution/**
       - scripts/language-value-witness/**
@@ -15,7 +17,9 @@ on:
     paths:
       - .github/workflows/language-value-witness.yml
       - examples/language-value-witness/**
+      - examples/language-syntax-roundtrip/corpus.json
       - internal/bidir/**
+      - internal/meta/languagereadiness/languagesyntax/**
       - internal/syntax/**
       - internal/valueexecution/**
       - scripts/language-value-witness/**
@@ -46,16 +50,25 @@ jobs:
             internal/syntax/ast_part03.go \
             internal/syntax/activity_parser.go \
             internal/syntax/format_part04.go \
+            internal/syntax/format_value_program.go \
             internal/syntax/value_program_test.go \
             internal/bidir/lower_part05.go \
             internal/bidir/value_program.go \
             internal/bidir/value_program_test.go \
             internal/valueexecution/model.go \
+            internal/valueexecution/model_evidence.go \
+            internal/valueexecution/model_summary.go \
             internal/valueexecution/failure.go \
             internal/valueexecution/digest.go \
             internal/valueexecution/registry.go \
             internal/valueexecution/compile.go \
+            internal/valueexecution/program.go \
             internal/valueexecution/evaluate.go \
+            internal/valueexecution/evaluation.go \
+            internal/valueexecution/measurement.go \
+            internal/valueexecution/cases.go \
+            internal/valueexecution/counterexamples.go \
+            internal/valueexecution/helpers.go \
             internal/valueexecution/indicators.go \
             internal/valueexecution/validate.go \
             internal/valueexecution/evaluate_test.go \

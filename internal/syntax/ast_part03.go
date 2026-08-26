@@ -33,9 +33,9 @@ type ActivityDecl struct {
 	ValueProgram        string
 	ValueProgramSpan    Span
 	ValueProgramPresent bool
-	Span     Span
-	Name     string
-	NameSpan Span
+	Span                Span
+	Name                string
+	NameSpan            Span
 
 	// Inputs and Output are the compact grammar-facing names. Parameters and
 	// Result retain descriptive names for newer consumers.

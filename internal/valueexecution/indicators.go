@@ -57,7 +57,10 @@ func buildProofs(report Report, checks evidence) []Proof {
 	return []Proof{
 		{Choice: "FOUNDATION", Claim: "the Gooo source explicitly declares a value program and lower semantic loss fails closed", MetaOperation: "bind-explicit-source", EvidenceDigest: report.SourceDigest, Passed: checks.sourceParsed && checks.programPresent && checks.coreIRFailClosed},
 		{Choice: "COHERENCE", Claim: "the activity model, operation registry, and semantic fingerprint agree", MetaOperation: "compile-registry-bound-program", EvidenceDigest: digestValue([]string{report.SemanticFingerprint, report.ValueProgramDigest}), Passed: checks.semanticBound && checks.fingerprintSensitive && checks.registryKnown && checks.operandParsed && checks.signatureSupported},
-		{Choice: "REGRESSION", Claim: "fixed value cases and fail-closed counterexamples replay exactly", MetaOperation: "replay-value-witness-corpus", EvidenceDigest: digestValue(struct{ Cases []CaseResult; Counterexamples []CounterexampleResult }{report.Cases, report.Counterexamples}), Passed: checks.valueCasesExact && checks.outputsObserved && checks.deterministicReplay && checks.counterexamplesExact && checks.overflowFailClosed},
+		{Choice: "REGRESSION", Claim: "fixed value cases and fail-closed counterexamples replay exactly", MetaOperation: "replay-value-witness-corpus", EvidenceDigest: digestValue(struct {
+			Cases           []CaseResult
+			Counterexamples []CounterexampleResult
+		}{report.Cases, report.Counterexamples}), Passed: checks.valueCasesExact && checks.outputsObserved && checks.deterministicReplay && checks.counterexamplesExact && checks.overflowFailClosed},
 	}
 }
 
