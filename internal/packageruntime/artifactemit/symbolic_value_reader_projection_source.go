@@ -4,7 +4,7 @@ func symbolicReaderSourceChecks(
 	source SymbolicValueReachability,
 	subjectSHA string,
 ) symbolicReaderChecks {
-	checks := symbolicReaderChecks{
+	return symbolicReaderChecks{
 		Schema:     source.Schema == "gooo/symbolic-invocation-value-reachability/v1",
 		Subject:    subjectSHA != "" && source.SubjectSHA == subjectSHA,
 		Metric:     source.MetricID == "gooo.metric.compiler.symbolic-value-reachability.v1",
@@ -17,7 +17,6 @@ func symbolicReaderSourceChecks(
 		UnknownBranches:   source.Summary.UnknownPolicyBranches == 0,
 		UniqueIndicatorID: symbolicReaderUniqueIndicatorIDs(source.Indicators),
 	}
-	return checks
 }
 
 func symbolicReaderProjectionSource(
