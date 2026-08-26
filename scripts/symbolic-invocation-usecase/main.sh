@@ -113,3 +113,4 @@ git diff --exit-code -- "${paths[@]}"
 jq -r '"### Symbolic invocation user use case\n- decision: \(.decision) / \(.resolution)\n- indicators: \(.summary.coordinates.satisfied)/\(.summary.coordinates.total)\n- generated invocation / golden match: \(.summary.generated_instances)/\(.summary.generated_golden_matches)\n- user decisions: \(.summary.user_decisions)\n- accepted: \(.summary.accepted_instances)\n- rejected: \(.summary.rejected_instances)\n- runner samples: \(.summary.resources.samples)\n- max wall: \(.summary.resources.max_wall_ms) ms\n- max RSS: \(.summary.resources.max_rss_kib) KiB\n- repository writes: \(.repository_writes)\n- promotion credit: \(.promotion_credit_bps) bps\n- receipt: \(.digest)"' "$work/report.json" >> "$GITHUB_STEP_SUMMARY"
 
 bash "$(dirname "$0")/validate-generated-conformance.sh" "$1"
+bash "$(dirname "$0")/validate-generated-unknown-resolution.sh" "$1"
