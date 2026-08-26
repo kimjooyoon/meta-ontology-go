@@ -13,7 +13,7 @@ func runtimeEvidence(subject, observationDigest string, peakRSS int) []byte {
 		"source": map[string]any{"observation_digest": observationDigest},
 		"producer": map[string]any{
 			"tool": "GNU time", "binary_path": "/usr/bin/time",
-			"binary_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+			"binary_digest":  "sha256:0000000000000000000000000000000000000000000000000000000000000000",
 			"version_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
 		},
 		"measurement": map[string]any{

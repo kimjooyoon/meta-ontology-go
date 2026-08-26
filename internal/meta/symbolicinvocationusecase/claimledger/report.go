@@ -25,18 +25,18 @@ type Conformance struct {
 }
 
 type Report struct {
-	Schema            string      `json:"schema"`
-	Subject           string      `json:"subject"`
-	Metric            string      `json:"metric"`
-	ContractDigest    string      `json:"contract_digest"`
-	ObservationDigest string      `json:"observation_digest"`
-	RuntimeDigest     string      `json:"runtime_evidence_digest"`
+	Schema            string        `json:"schema"`
+	Subject           string        `json:"subject"`
+	Metric            string        `json:"metric"`
+	ContractDigest    string        `json:"contract_digest"`
+	ObservationDigest string        `json:"observation_digest"`
+	RuntimeDigest     string        `json:"runtime_evidence_digest"`
 	Inputs            []InputRecord `json:"inputs"`
-	ClaimSet          Verdict     `json:"claim_set"`
-	Conformance       Conformance `json:"conformance"`
-	Metrics           Metrics     `json:"metrics"`
-	OpenClaimIDs      []string    `json:"open_claim_ids"`
-	Claims            []Claim     `json:"claims"`
-	Evidence          []Evidence  `json:"evidence"`
-	Events            []Event     `json:"events"`
+	ClaimSet          Verdict       `json:"claim_set"`
+	Conformance       Conformance   `json:"conformance"`
+	Metrics           Metrics       `json:"metrics"`
+	OpenClaimIDs      []string      `json:"open_claim_ids"`
+	Claims            []Claim       `json:"claims"`
+	Evidence          []Evidence    `json:"evidence"`
+	Events            []Event       `json:"events"`
 }
