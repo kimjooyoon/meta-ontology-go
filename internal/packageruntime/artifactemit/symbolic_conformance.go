@@ -28,7 +28,7 @@ func projectSymbolicConformance(artifact Artifact) *SymbolicInvocationConformanc
 		{
 			ID: "accept-exact", Expected: "ACCEPT", ProofChoice: "FOUNDATION",
 			MetaOperation: "project-exact-symbolic-invocation",
-			Instance: ConformanceInstance{Activity: artifact.Operation.Activity, Inputs: inputs},
+			Instance:      ConformanceInstance{Activity: artifact.Operation.Activity, Inputs: inputs},
 		},
 		{
 			ID: "reject-missing-activity", Expected: "REJECT", ProofChoice: "REGRESSION",
@@ -40,7 +40,7 @@ func projectSymbolicConformance(artifact Artifact) *SymbolicInvocationConformanc
 		Schema: SymbolicInvocationConformanceSchema, Decision: "PASS",
 		Resolution: "STRUCTURAL_ONLY", Reason: "SYMBOLIC_CONFORMANCE_VECTORS_PROJECTED",
 		GeneratedVectors: len(vectors), EmbeddedHandwrittenVectors: 0, Vectors: vectors,
-		Effects: artifact.Effects,
+		Effects:    artifact.Effects,
 		NotClaimed: []string{"external validation", "external fixture replacement", "value-level execution", "domain correctness", "production readiness"},
 	}
 }

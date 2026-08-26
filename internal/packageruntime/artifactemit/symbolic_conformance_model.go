@@ -3,10 +3,10 @@ package artifactemit
 const SymbolicInvocationConformanceSchema = "gooo/symbolic-invocation-conformance/v1"
 
 type SymbolicInvocationConformance struct {
-	Schema             string              `json:"schema"`
-	Decision           string              `json:"decision"`
-	Resolution         string              `json:"resolution"`
-	Reason             string              `json:"reason"`
+	Schema                     string              `json:"schema"`
+	Decision                   string              `json:"decision"`
+	Resolution                 string              `json:"resolution"`
+	Reason                     string              `json:"reason"`
 	GeneratedVectors           int                 `json:"generated_vectors"`
 	EmbeddedHandwrittenVectors int                 `json:"embedded_handwritten_vectors"`
 	Vectors                    []ConformanceVector `json:"vectors"`
