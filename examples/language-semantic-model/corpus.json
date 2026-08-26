@@ -1,6 +1,6 @@
 {
   "schema": "gooo/language-semantic-model-corpus/v1",
-  "version": "2026-08-25",
+  "version": "2026-08-26",
   "cases": [
     {
       "id": "semantic-billing",
@@ -83,6 +83,27 @@
       "id": "semantic-self-improvement",
       "kind": "SOURCE",
       "path": "examples/self-improvement/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-self-improvement-candidate",
+      "kind": "SOURCE",
+      "path": "examples/self-improvement/candidate.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-value-witness",
+      "kind": "SOURCE",
+      "path": "examples/language-value-witness/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-operation-catalog",
+      "kind": "SOURCE",
+      "path": "examples/language-operation-catalog/main.gooo",
       "proof_choice": "FOUNDATION",
       "meta_operation": "lower-normalize-replay"
     },
