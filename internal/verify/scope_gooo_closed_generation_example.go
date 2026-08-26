@@ -13,6 +13,14 @@ func init() {
 		"scripts/symbolic-invocation-usecase",
 	}
 	branchScopeAllowlist["agent/gooo-closed-generation-example"] = paths
+	branchScopeAllowlist["agent/gooo-stage-claim-ledger"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"examples/symbolic-invocation-usecase",
+		"internal/meta/symbolicinvocationusecase",
+		"internal/verify/scope_gooo_closed_generation_example.go",
+		"scripts/symbolic-invocation-usecase",
+	}
 	branchScopeAllowlist["agent/gooo-reader-resolution-projection"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",

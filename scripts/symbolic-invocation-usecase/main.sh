@@ -9,15 +9,15 @@ build="${RUNNER_TEMP:-/tmp}/symbolic-invocation-usecase-build"
 reducer="$build/symbolic-invocation-usecase"
 reader_observer="$build/symbolic-reader-request-observer"
 contract="$root/examples/symbolic-invocation-usecase/contract.json"
-paths=(cmd/symbolic-invocation-usecase internal/meta/symbolicinvocationusecase scripts/symbolic-invocation-usecase/reader-observation)
+paths=(cmd/symbolic-invocation-usecase internal/meta/symbolicinvocationusecase scripts/symbolic-invocation-usecase/reader-observation scripts/symbolic-invocation-usecase/claim-ledger)
 mkdir -p "$work" "$build"
 
-go fix ./cmd/symbolic-invocation-usecase ./internal/meta/symbolicinvocationusecase ./scripts/symbolic-invocation-usecase/reader-observation
+go fix ./cmd/symbolic-invocation-usecase ./internal/meta/symbolicinvocationusecase ./internal/meta/symbolicinvocationusecase/claimledger ./scripts/symbolic-invocation-usecase/reader-observation ./scripts/symbolic-invocation-usecase/claim-ledger
 git diff --exit-code -- "${paths[@]}"
 mapfile -t go_files < <(find "${paths[@]}" -name '*.go' -type f | sort)
 gofmt -l "${go_files[@]}" | tee "$work/unformatted.txt"
 test ! -s "$work/unformatted.txt"
-go test ./cmd/symbolic-invocation-usecase ./internal/meta/symbolicinvocationusecase ./scripts/symbolic-invocation-usecase/reader-observation
+go test ./cmd/symbolic-invocation-usecase ./internal/meta/symbolicinvocationusecase ./internal/meta/symbolicinvocationusecase/claimledger ./scripts/symbolic-invocation-usecase/reader-observation ./scripts/symbolic-invocation-usecase/claim-ledger
 go build -trimpath -o "$reducer" ./cmd/symbolic-invocation-usecase
 go build -trimpath -o "$reader_observer" ./scripts/symbolic-invocation-usecase/reader-observation
 
@@ -150,3 +150,89 @@ bash "$(dirname "$0")/validate-generated-conformance.sh" "$1"
 bash "$(dirname "$0")/validate-generated-unknown-resolution.sh" "$1"
 bash "$(dirname "$0")/validate-generated-value-projection.sh" "$1"
 bash "$(dirname "$0")/validate-external-default-coverage.sh" "$1"
+
+# Project every user-visible assertion into a fixed, append-only claim ledger.
+claim_ledger_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+claim_ledger_candidates="$({
+  find "${RUNNER_TEMP:?RUNNER_TEMP is required}" "${claim_ledger_root}" \
+    -type f -name 'symbolic-reader-request-user-observation.json' -print
+} | sort -u)"
+claim_ledger_candidate_count="$(printf '%s\n' "${claim_ledger_candidates}" | sed '/^$/d' | wc -l | tr -d ' ')"
+if [[ "${claim_ledger_candidate_count}" != "1" ]]; then
+  printf 'claim-ledger: expected one reader observation, found %s\n' "${claim_ledger_candidate_count}" >&2
+  exit 1
+fi
+claim_ledger_observation="${claim_ledger_candidates}"
+claim_ledger_output="$(dirname "${claim_ledger_observation}")/symbolic-reader-request-claim-ledger.json"
+claim_ledger_binary="${RUNNER_TEMP}/gooo-symbolic-reader-claim-ledger"
+claim_ledger_contract="${claim_ledger_root}/examples/symbolic-invocation-usecase/claim-ledger-contract.json"
+(
+  cd "${claim_ledger_root}"
+  go build -trimpath -o "${claim_ledger_binary}" ./scripts/symbolic-invocation-usecase/claim-ledger
+)
+"${claim_ledger_binary}" \
+  -contract "${claim_ledger_contract}" \
+  -observation "${claim_ledger_observation}" \
+  -subject "${HEAD_SHA:?HEAD_SHA is required}" \
+  -out "${claim_ledger_output}"
+
+jq -e '
+  .schema == "gooo/claim-ledger/v1" and
+  (.contract_digest | startswith("sha256:")) and
+  (.observation_digest | startswith("sha256:")) and
+  .conformance.decision == "PASS" and
+  .claim_set.decision == "FAIL_CLOSED" and
+  .claim_set.resolution == "STAGE_LOCAL" and
+  .metrics.fixed_claim_total == 12 and
+  .metrics.in_scope_claim_total == 8 and
+  .metrics.discharged_total == 4 and
+  .metrics.unknown_total == 4 and
+  .metrics.excluded_total == 4 and
+  .metrics.open_claim_total == 4 and
+  .metrics.discharge_basis_points == 5000 and
+  .metrics.false_promotion_count == 0 and
+  .metrics.proof_routes == {"foundation": 4, "coherence": 4, "regression": 4} and
+  ([.claims[] | select(.status == "UNKNOWN") |
+    select((.coordinate.stage | length) > 0 and (.coordinate.step | length) > 0 and (.reason | length) > 0)] | length) == 4 and
+  ([.claims[] | select(.status == "DISCHARGED")] | length) == 4
+' "${claim_ledger_output}" >/dev/null
+
+claim_ledger_manifest="$(dirname "${claim_ledger_observation}")/symbolic-reader-request-claim-ledger-manifest.json"
+claim_ledger_report_digest="sha256:$(sha256sum "${claim_ledger_output}" | cut -d' ' -f1)"
+jq -n --arg subject "${HEAD_SHA}" --arg report_digest "${claim_ledger_report_digest}" \
+  --arg contract_digest "$(jq -er '.contract_digest' "${claim_ledger_output}")" \
+  --arg observation_digest "$(jq -er '.observation_digest' "${claim_ledger_output}")" '{
+    schema:"gooo/symbolic-reader-request-claim-ledger-manifest/v1",
+    subject_sha:$subject,
+    metric_id:"gooo.metric.user.symbolic-reader-request-claim-ledger.v1",
+    report_file:"symbolic-reader-request-claim-ledger.json",
+    report_digest:$report_digest,
+    contract_digest:$contract_digest,
+    observation_digest:$observation_digest,
+    conformance_decision:"PASS",
+    claim_set_decision:"FAIL_CLOSED",
+    resolution:"STAGE_LOCAL",
+    fixed_claim_total:12,
+    in_scope_claim_total:8,
+    discharged_total:4,
+    unknown_total:4,
+    excluded_total:4,
+    false_promotion_count:0
+  }' >"${claim_ledger_manifest}"
+
+if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+  {
+    printf '### Gooo claim ledger\n\n'
+    printf -- '- claim set: `%s` at `%s` resolution\n' \
+      "$(jq -r '.claim_set.decision' "${claim_ledger_output}")" \
+      "$(jq -r '.claim_set.resolution' "${claim_ledger_output}")"
+    printf -- '- discharged: `%s/%s` scoped claims (`%s` basis points)\n' \
+      "$(jq -r '.metrics.discharged_total' "${claim_ledger_output}")" \
+      "$(jq -r '.metrics.in_scope_claim_total' "${claim_ledger_output}")" \
+      "$(jq -r '.metrics.discharge_basis_points' "${claim_ledger_output}")"
+    printf -- '- unknown: `%s`, excluded: `%s`, false promotions: `%s`\n' \
+      "$(jq -r '.metrics.unknown_total' "${claim_ledger_output}")" \
+      "$(jq -r '.metrics.excluded_total' "${claim_ledger_output}")" \
+      "$(jq -r '.metrics.false_promotion_count' "${claim_ledger_output}")"
+  } >>"${GITHUB_STEP_SUMMARY}"
+fi
