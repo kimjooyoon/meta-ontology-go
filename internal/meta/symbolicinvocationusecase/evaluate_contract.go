@@ -27,9 +27,9 @@ func contractFailure(input Input) string {
 	if observation.AcceptedInstances != contract.ExpectedAcceptedInstances ||
 		observation.RejectedInstances != contract.ExpectedRejectedInstances ||
 		receipt.Validation.GeneratedInstances != contract.ExpectedGeneratedInstances ||
-		receipt.Validation.GeneratedGoldenMatches != contract.ExpectedGeneratedGoldenMatches ||
+		receipt.Validation.GoldenMatches != contract.ExpectedGoldenMatches ||
 		observation.GeneratedInstances != contract.ExpectedGeneratedInstances ||
-		observation.GeneratedGoldenMatches != contract.ExpectedGeneratedGoldenMatches ||
+		observation.GoldenMatches != contract.ExpectedGoldenMatches ||
 		!validResources(receipt.Resources, contract.ExpectedResourceSamples) {
 		return reasonEvidenceInvalid
 	}

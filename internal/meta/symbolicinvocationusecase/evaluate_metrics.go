@@ -10,7 +10,7 @@ func buildIndicators(contract Contract, value facts) []Indicator {
 		indicator("user.generated-instances", "OUTCOME", "FOUNDATION", "project-generated-symbolic-invocation", value.GeneratedInstances, contract.ExpectedGeneratedInstances),
 		indicator("user.accepted-instances", "DRIVER", "FOUNDATION", "count-externally-accepted-instances", value.AcceptedInstances, contract.ExpectedAcceptedInstances),
 		indicator("user.rejected-instances", "DRIVER", "REGRESSION", "count-externally-rejected-instances", value.RejectedInstances, contract.ExpectedRejectedInstances),
-		indicator("user.generated-golden-matches", "DRIVER", "COHERENCE", "compare-generated-invocation-golden", value.GeneratedGoldenMatches, contract.ExpectedGeneratedGoldenMatches),
+		indicator("user.generated-golden-matches", "DRIVER", "COHERENCE", "compare-generated-invocation-golden", value.GoldenMatches, contract.ExpectedGoldenMatches),
 		indicator("guardrail.deterministic-replays", "GUARDRAIL", "FOUNDATION", "count-producer-replays", value.DeterministicReplays, contract.ExpectedDeterministicReplays),
 		indicator("guardrail.repository-writes", "GUARDRAIL", "FOUNDATION", "sum-cross-boundary-writes", value.Effects.RepositoryWrites, contract.ExpectedRepositoryWrites),
 		indicator("guardrail.mutation-authorities", "GUARDRAIL", "COHERENCE", "join-cross-boundary-authority", mutationAuthorities, contract.ExpectedMutationAuthorities),

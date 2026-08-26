@@ -52,11 +52,6 @@ type InvocationSchema struct {
 	AdditionalProperties bool                       `json:"additionalProperties"`
 }
 
-type InvocationExample struct {
-	Activity string   `json:"activity"`
-	Inputs   []string `json:"inputs"`
-}
-
 type InvocationSchemaProperties struct {
 	Activity ConstSchema `json:"activity"`
 	Inputs   TupleSchema `json:"inputs"`
