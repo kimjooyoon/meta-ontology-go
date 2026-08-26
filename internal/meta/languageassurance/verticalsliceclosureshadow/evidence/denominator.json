@@ -1,7 +1,7 @@
 {
   "schema": "gooo/vertical-slice-boundary-denominator/v1",
-  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v8",
-  "version": 8,
+  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v9",
+  "version": 9,
   "boundaries": [
     {
       "id": "syntax",
@@ -35,7 +35,7 @@
       "id": "toolchain",
       "schema": "gooo/toolchain-conformance-report/v1",
       "meta_operation": "close-toolchain-conformance-ledger",
-      "target": 171,
+      "target": 173,
       "link_target": 3
     },
     {
