@@ -7,8 +7,8 @@ const (
 	expectedSyntaxCases   = 25
 	expectedSyntaxValid   = 22
 	expectedSyntaxInvalid = 3
-	expectedSyntaxFiles   = 27
-	expectedSyntaxLines   = 327
+	expectedSyntaxFiles   = 28
+	expectedSyntaxLines   = 333
 )
 
 func expectedSyntaxPackageUnits() []syntaxPackageUnit {
@@ -26,7 +26,7 @@ func expectedSyntaxPackageUnits() []syntaxPackageUnit {
 		{
 			ID:                   "symbolic-invocation-schema",
 			Path:                 "examples/symbolic-invocation-schema",
-			Members:              []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo"},
+			Members:              []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo", "examples/symbolic-invocation-schema/reader-request.gooo"},
 			Entry:                "Checkout",
 			ReportSchema:         "gooo/language-package-execution-report/v1",
 			MetaReducer:          "languagepackageexecution.Evaluate",
