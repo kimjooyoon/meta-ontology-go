@@ -81,6 +81,15 @@ def audience_view($indicators; $audience; $resolution):
       ["TOOL_AUTHOR", "GOVERNOR"]
     ),
     indicator(
+      "source.compiler-value-contract-bindings";
+      "DRIVER";
+      "FOUNDATION";
+      "bind-compiler-symbolic-value-contract";
+      $input.source.contract_bindings;
+      1;
+      ["TOOL_AUTHOR", "GOVERNOR"]
+    ),
+    indicator(
       "user.value-projections";
       "OUTCOME";
       "COHERENCE";

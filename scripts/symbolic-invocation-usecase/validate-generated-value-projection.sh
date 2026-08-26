@@ -11,6 +11,8 @@ output_dir="$RUNNER_TEMP/symbolic-invocation-usecase"
 producer_artifact="$producer_dir/artifact.json"
 producer_receipt="$producer_dir/receipt.json"
 external_report="$output_dir/generated-conformance-report.json"
+value_contract="$producer_dir/symbolic-value-contract.json"
+value_contract_manifest="$producer_dir/symbolic-value-contract-manifest.sha256"
 projector="$script_dir/project-generated-value-envelope.jq"
 consumer="$script_dir/consume-generated-value-envelope.jq"
 report_evaluator="$script_dir/generated-value-projection-report.jq"
@@ -28,12 +30,39 @@ for required in \
   "$producer_artifact" \
   "$producer_receipt" \
   "$external_report" \
+  "$value_contract" \
+  "$value_contract_manifest" \
   "$projector" \
   "$consumer" \
   "$report_evaluator" \
   "$integrity_evaluator"; do
   test -f "$required"
 done
+
+(
+  cd "$producer_dir"
+  test "$(wc -l < symbolic-value-contract-manifest.sha256)" -eq 1
+  sha256sum -c symbolic-value-contract-manifest.sha256
+)
+
+jq -e --arg sha "$HEAD_SHA" '
+  .schema == "gooo/symbolic-invocation-value-contract/v1"
+  and .subject_sha == $sha
+  and .decision == "PASS"
+  and .resolution == "VALUE_CONTRACT_ONLY"
+  and .coordinates.satisfied == 8
+  and .coordinates.total == 8
+  and (.rules | length) == 2
+  and .default.decision == "FAIL_CLOSED"
+  and .default.resolution == "LOWER_RESOLUTION"
+  and .effects.repository_writes == 0
+  and .effects.mutation_authority == false
+' "$value_contract" >/dev/null
+
+contract_expected_digest=$(jq -er '.digest' "$value_contract")
+contract_canonical=$(jq -S -c 'del(.digest)' "$value_contract")
+contract_observed_digest="sha256:$(printf '%s' "$contract_canonical" | sha256sum | awk '{print $1}')"
+test "$contract_expected_digest" = "$contract_observed_digest"
 
 jq -e '
   .schema == "gooo/symbolic-invocation-schema-artifact/v1"
@@ -92,10 +121,13 @@ external_artifact_digest=$(jq -er '.summary.artifact_digest' "$external_report")
 validator_digest=$(jq -er '.validation.tool_digest' "$producer_receipt")
 external_validator_digest=$(jq -er '.summary.validator_digest' "$external_report")
 external_report_digest=$(jq -er '.digest' "$external_report")
+contract_digest=$(jq -er '.digest' "$value_contract")
+contract_artifact_digest=$(jq -er '.source_artifact_digest' "$value_contract")
 
 test "$artifact_digest" = "$receipt_artifact_digest"
 test "$artifact_digest" = "$external_artifact_digest"
 test "$validator_digest" = "$external_validator_digest"
+test "$artifact_digest" = "$contract_artifact_digest"
 
 repository_writes=0
 for output_path in \
@@ -126,6 +158,7 @@ make_projection_input() {
     --arg artifact_digest "$artifact_digest" \
     --arg external_report_digest "$external_report_digest" \
     --arg validator_digest "$validator_digest" \
+    --slurpfile contract "$value_contract" \
     --argjson repository_writes "$repository_writes" '
     . as $artifact
     | ($artifact.conformance.vectors[] | select(.id == $vector_id)) as $vector
@@ -138,6 +171,7 @@ make_projection_input() {
           validator_digest: $validator_digest
         },
         vector: $vector,
+        contract: $contract[0],
         effects: {
           repository_writes: $repository_writes,
           mutation_authority: false
@@ -181,11 +215,13 @@ seal_json "$tmp_dir/failed-1.json" "$failed_envelope"
 verify_sealed_json "$ready_envelope"
 verify_sealed_json "$failed_envelope"
 
-jq -e '
+jq -e --arg contract_digest "$contract_digest" '
   .schema == "gooo/symbolic-invocation-value-envelope/v1"
   and .language == "gooo"
   and .source.vector_id == "accept-exact"
   and .source.expected == "ACCEPT"
+  and .source.contract_digest == $contract_digest
+  and .source.rule_id == "complete-symbolic-invocation"
   and .decision == "READY"
   and .resolution == "VALUE_EXACT"
   and .reason == "SYMBOLIC_INVOCATION_VALUE_PROJECTED"
@@ -202,11 +238,13 @@ jq -e '
   and .effects.mutation_authority == false
 ' "$ready_envelope" >/dev/null
 
-jq -e '
+jq -e --arg contract_digest "$contract_digest" '
   .schema == "gooo/symbolic-invocation-value-envelope/v1"
   and .language == "gooo"
   and .source.vector_id == "reject-missing-activity"
   and .source.expected == "REJECT"
+  and .source.contract_digest == $contract_digest
+  and .source.rule_id == "missing-activity"
   and .decision == "FAIL_CLOSED"
   and .resolution == "LOWER_RESOLUTION"
   and .reason == "SYMBOLIC_INVOCATION_VALUE_INCOMPLETE"
@@ -250,6 +288,7 @@ jq -n \
   --arg sha "$HEAD_SHA" \
   --slurpfile receipt "$producer_receipt" \
   --slurpfile external "$external_report" \
+  --slurpfile contract "$value_contract" \
   --slurpfile ready "$ready_envelope" \
   --slurpfile failed "$failed_envelope" \
   --slurpfile ready_observation "$ready_observation" \
@@ -265,6 +304,9 @@ jq -n \
       directories: $receipt[0].source.directories,
       generated_vectors: $external[0].summary.generated_vectors,
       external_decisions: $external[0].summary.external_decisions,
+      contract_bindings: 1,
+      contract_digest: $contract[0].digest,
+      contract_coordinates: $contract[0].coordinates,
       artifact_digest: $external[0].summary.artifact_digest,
       external_report_digest: $external[0].digest,
       validator_digest: $external[0].summary.validator_digest
@@ -282,21 +324,21 @@ jq -e --arg sha "$HEAD_SHA" '
   and .decision == "PASS"
   and .resolution == "VALUE_PROJECTION_ONLY"
   and .reason == "GENERATED_VALUES_PROJECTED_AND_OBSERVED"
-  and .coordinates.satisfied == 14
-  and .coordinates.total == 14
+  and .coordinates.satisfied == 15
+  and .coordinates.total == 15
   and .coordinates.basis_points == 10000
   and .classes == [
     {"class":"OUTCOME","satisfied":4,"total":4},
-    {"class":"DRIVER","satisfied":6,"total":6},
+    {"class":"DRIVER","satisfied":7,"total":7},
     {"class":"GUARDRAIL","satisfied":4,"total":4}
   ]
   and .views == [
     {"audience":"USER","resolution":"USER_VISIBLE","satisfied":6,"total":6,"basis_points":10000},
-    {"audience":"TOOL_AUTHOR","resolution":"TOOL_CONTRACT","satisfied":12,"total":12,"basis_points":10000},
-    {"audience":"GOVERNOR","resolution":"FULL_RECEIPT","satisfied":14,"total":14,"basis_points":10000}
+    {"audience":"TOOL_AUTHOR","resolution":"TOOL_CONTRACT","satisfied":13,"total":13,"basis_points":10000},
+    {"audience":"GOVERNOR","resolution":"FULL_RECEIPT","satisfied":15,"total":15,"basis_points":10000}
   ]
   and .proofs == [
-    {"proof_choice":"FOUNDATION","satisfied":6,"total":6},
+    {"proof_choice":"FOUNDATION","satisfied":7,"total":7},
     {"proof_choice":"COHERENCE","satisfied":5,"total":5},
     {"proof_choice":"REGRESSION","satisfied":3,"total":3}
   ]
