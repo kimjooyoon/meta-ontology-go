@@ -115,3 +115,4 @@ jq -r '"### Symbolic invocation user use case\n- decision: \(.decision) / \(.res
 bash "$(dirname "$0")/validate-generated-conformance.sh" "$1"
 bash "$(dirname "$0")/validate-generated-unknown-resolution.sh" "$1"
 bash "$(dirname "$0")/validate-generated-value-projection.sh" "$1"
+bash "$(dirname "$0")/validate-external-default-coverage.sh" "$1"
