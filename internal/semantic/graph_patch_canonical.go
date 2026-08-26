@@ -65,7 +65,7 @@ func canonicalPatchRequest(r GraphPatchRequest) graphPatchCanonicalRequest {
 	}
 }
 
-func marshalGraphPatch(value interface{}) string {
+func marshalGraphPatch(value any) string {
 	encoded, err := json.Marshal(value)
 	if err != nil {
 		panic("semantic graph patch canonicalization failed: " + err.Error())

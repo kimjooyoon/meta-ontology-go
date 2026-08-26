@@ -1,0 +1,153 @@
+name: Repository projection conformance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  roundtrip:
+    name: repository projection roundtrip
+    runs-on: ubuntu-latest
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      METRICS_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.EXACT_SHA }}
+
+      - name: Install the declared Go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.27.0
+          cache: false
+
+      - name: Bind clean exact-SHA logical split metrics
+        run: |
+          mkdir -p "$RUNNER_TEMP/repository-projection"
+          go run ./scripts/line-metrics \
+            -root "$GITHUB_WORKSPACE" \
+            -storage-root "$GITHUB_WORKSPACE" \
+            -json > "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json"
+          go run ./bootstrap/meta-binding-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics-raw.json" \
+            -bound-metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
+            -report "$RUNNER_TEMP/repository-projection/split-binding-report.json" \
+            -check
+
+      - name: Materialize and activate the logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.EXACT_SHA }}
+
+      - name: Plan CI-authorized tracked-tree cutover
+        run: |
+          mkdir -p "$RUNNER_TEMP/repository-projection"
+          go run ./bootstrap/repository-cutover \
+            --root "$GITHUB_WORKSPACE" \
+            --physical-root "${{ steps.materialize.outputs.storage-root }}" \
+            --authority-manifest "${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json" \
+            --expected-sha "$EXACT_SHA" \
+            --evidence "$RUNNER_TEMP/repository-projection/cutover-evidence.json"
+
+      - name: Classify logical source split operations
+        run: |
+          mkdir -p "$RUNNER_TEMP/repository-projection"
+          go run ./bootstrap/logical-split-planner \
+            --root "$GITHUB_WORKSPACE" \
+            --evidence "${{ steps.materialize.outputs.projection-evidence }}" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/split-plan.json"
+
+      - name: Apply metric-selected density rewrites
+        run: |
+          go run ./bootstrap/line-density-rewriter \
+            --root "$GITHUB_WORKSPACE" \
+            --plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/density-report.json"
+
+      - name: Apply metric-selected helper extractions
+        run: |
+          go run ./bootstrap/function-extractor \
+            --root "$GITHUB_WORKSPACE" \
+            --plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
+            --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
+            --expected-sha "$EXACT_SHA" \
+            --output "$RUNNER_TEMP/repository-projection/extraction-report.json"
+
+      - name: Apply metric-selected logical source splits
+        run: |
+          go run ./scripts/source-splitter \
+            -root "$GITHUB_WORKSPACE" \
+            -metrics "$RUNNER_TEMP/repository-projection/split-source-metrics.json" \
+            -sha "$EXACT_SHA" \
+            -plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
+            -output "$RUNNER_TEMP/repository-projection/split-report.json"
+
+      - name: Verify authorized rewrites and test the logical module
+        run: |
+          expected="$RUNNER_TEMP/repository-projection/authorized-write-set.txt"
+          observed="$RUNNER_TEMP/repository-projection/observed-write-set.txt"
+          untracked="$RUNNER_TEMP/repository-projection/untracked-write-set.txt"
+          report="$RUNNER_TEMP/repository-projection/write-set-evidence.json"
+          git ls-files --others --exclude-standard | sort -u > "$untracked"
+          { git diff --name-only; cat "$untracked"; } | sort -u > "$observed"
+          go run ./scripts/authorized-write-set \
+            --expected-sha "$EXACT_SHA" \
+            --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
+            --extraction-report "$RUNNER_TEMP/repository-projection/extraction-report.json" \
+            --split-report "$RUNNER_TEMP/repository-projection/split-report.json" \
+            --observed-write-set "$observed" \
+            --untracked-paths "$untracked" \
+            --expected-output "$expected" \
+            --output "$report"
+          jq -e '.schema == "gooo.authorized-rewrite-write-set.v3" and .decision == "PASS" and .resolution == "EXACT" and .exact == true and .coordinates.unknowns == 0' "$report"
+          diff -u "$expected" "$observed"
+          while IFS= read -r path; do
+            test -z "$path" || git add -N -- "$path"
+          done < "$untracked"
+          git diff --binary > "$RUNNER_TEMP/repository-projection/authorized-rewrite.patch"
+          go test ./...
+          {
+            echo '### Meta extraction indicators'
+            echo
+            jq -r '(.indicators[]|select(.id=="density.applied")|.value) as $applied | (.indicators[]|select(.id=="density.residual")|.value) as $residual | "- density rewrites: `\($applied)/\($applied+$residual)`"' "$RUNNER_TEMP/repository-projection/density-report.json"
+            jq -r '(.indicators[]|select(.id=="extraction.observed")|.value) as $observed | (.indicators[]|select(.id=="extraction.applied")|.value) as $applied | (.indicators[]|select(.id=="extraction.created")|.value) as $created | (.indicators[]|select(.id=="extraction.unhandled")|.value) as $unhandled | "- helper extractions: `\($applied)/\($observed)`\n- generated helper files: `\($created)`\n- unhandled residuals: `\($unhandled)`"' "$RUNNER_TEMP/repository-projection/extraction-report.json"
+            jq -r '"- logical source splits: `\(.coordinates.applied_subjects)/\(.coordinates.selected_subjects)`\n- split-created files: `\(.coordinates.created_paths)`\n- successor topology checks: `\(.coordinates.deferred_topology_subjects)`\n- split decision: `\(.decision) / \(.resolution)`"' "$RUNNER_TEMP/repository-projection/split-report.json"
+            jq -r '"- authorized paths: `\(.coordinates.observed_paths)/\(.coordinates.expected_paths)`\n- recipe-declared creations: `\(.coordinates.untracked_paths)/\(.coordinates.created_paths)`\n- unclassified paths: `\(.coordinates.unclassified_untracked_paths)`\n- decision: `\(.decision) / \(.resolution)`"' "$report"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload exact-SHA projection indicators
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-projection-${{ env.EXACT_SHA }}
+          path: |
+            ${{ steps.materialize.outputs.projection-evidence }}
+            ${{ runner.temp }}/repository-projection/split-plan.json
+            ${{ runner.temp }}/repository-projection/density-report.json
+            ${{ runner.temp }}/repository-projection/extraction-report.json
+            ${{ runner.temp }}/repository-projection/split-source-metrics-raw.json
+            ${{ runner.temp }}/repository-projection/split-source-metrics.json
+            ${{ runner.temp }}/repository-projection/split-binding-report.json
+            ${{ runner.temp }}/repository-projection/split-report.json
+            ${{ runner.temp }}/repository-projection/write-set-evidence.json
+            ${{ runner.temp }}/repository-projection/authorized-write-set.txt
+            ${{ runner.temp }}/repository-projection/observed-write-set.txt
+            ${{ runner.temp }}/repository-projection/untracked-write-set.txt
+            ${{ runner.temp }}/repository-projection/authorized-rewrite.patch
+            ${{ runner.temp }}/repository-projection/cutover-evidence.json
+            ${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json
+            ${{ steps.materialize.outputs.materialization-evidence }}
+            ${{ steps.materialize.outputs.activation-evidence }}
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,18 @@
+{
+  "schema": "gooo/changed-surface-receipt-eligibility-denominator/v1",
+  "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+  "meta_operation": "totalize-changed-surface-receipts",
+  "evidence_subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+  "capsules_total": 3,
+  "cases": [
+    {"id": "exact", "decision": "ELIGIBLE", "resolution": "EXACT", "effect": "NO_EFFECT"},
+    {"id": "unavailable", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN", "effect": "BLOCK"},
+    {"id": "digest-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "effect": "BLOCK"}
+  ],
+  "projected_transition": {
+    "operating": {"before": 8, "after": 9, "total": 12},
+    "coverage_bps": {"before": 6666, "after": 7500}
+  },
+  "repository_writes": 0,
+  "promotion_applied": 0
+}

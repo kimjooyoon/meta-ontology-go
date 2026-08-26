@@ -45,8 +45,7 @@ func (graph Graph) rejectedResolution(request ResolutionRequest, err error) (Res
 }
 
 func resolutionErrorCode(err error) string {
-	var envelope *EnvelopeError
-	if errors.As(err, &envelope) {
+	if envelope, ok := errors.AsType[*EnvelopeError](err); ok {
 		return envelope.Code
 	}
 	if errors.Is(err, ErrUnknownEndpoint) {

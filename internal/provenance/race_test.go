@@ -10,16 +10,13 @@ func TestConcurrentAppendsRemainOneCanonicalChain(t *testing.T) {
 	store := New(filepath.Join(t.TempDir(), "race.jsonl"))
 	const count = 32
 	var wait sync.WaitGroup
-	for index := 0; index < count; index++ {
-		index := index
-		wait.Add(1)
-		go func() {
-			defer wait.Done()
+	for index := range count {
+		wait.Go(func() {
 			record := testRecord("event/race/"+string(rune('a'+index)), "semantic/race/"+string(rune('a'+index)), StatusVerified)
 			if err := store.Append(record); err != nil {
 				t.Errorf("concurrent append %d: %v", index, err)
 			}
-		}()
+		})
 	}
 	wait.Wait()
 	snapshot, err := store.Read(ReadOptions{})

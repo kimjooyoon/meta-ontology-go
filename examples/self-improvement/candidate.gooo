@@ -1,0 +1,9 @@
+package selfimprovement
+namespace selfimprovement
+
+entity ReadOnlyImprovementInput id "gooo://self-improvement/entity/read-only-improvement-input"
+entity MissingCapability id "gooo://self-improvement/entity/missing-capability"
+entity NonExecutingImprovementCandidate id "gooo://self-improvement/entity/non-executing-improvement-candidate"
+
+activity SelectMissingCapability(ReadOnlyImprovementInput) -> MissingCapability
+activity ProposeNonExecutingCandidate(MissingCapability) -> NonExecutingImprovementCandidate

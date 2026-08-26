@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/language-debug-experiment-contract/v1",
+  "version": 1,
+  "expected_debug_receipts": 2,
+  "expected_paused_sessions": 2,
+  "expected_breakpoints_reached": 2,
+  "expected_trace_events": 4,
+  "expected_subject_coherence": 2,
+  "expected_execution_digest_variants": 1,
+  "expected_current_events": 2,
+  "expected_remaining_events": 4,
+  "expected_go127_runtimes": 2,
+  "expected_unknown_breakpoint_rejections": 1,
+  "expected_non_claims": 3
+}

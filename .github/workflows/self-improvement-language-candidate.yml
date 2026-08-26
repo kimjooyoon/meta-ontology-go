@@ -1,0 +1,94 @@
+name: Self-improvement non-executing candidate
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/self-improvement-language-candidate.yml
+      - examples/self-improvement/candidate.gooo
+      - examples/self-improvement/CANDIDATE.md
+      - internal/meta/selfimprovementcandidate/**
+      - internal/meta/languagereadiness/languagesyntax/**
+      - scripts/self-improvement-candidate/**
+  workflow_run:
+    workflows: [Self-improvement language observation]
+    types: [completed]
+    branches: [dev]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  propose-non-executing-candidate:
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+      SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
+      EVENT_NAME: ${{ github.event_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          check-latest: true
+      - name: Download exact read-only observation
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: self-improvement-language-observation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/candidate/input
+      - name: Reproduce exact observation for PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/language-example-experiment/main.sh
+          input="$RUNNER_TEMP/language-example-experiment"
+          output="$RUNNER_TEMP/candidate/observation"
+          mkdir -p "$output"
+          go run ./scripts/self-improvement-contract \
+            -contract examples/self-improvement/main.gooo \
+            -commit "$HEAD_SHA" -output "$output/contract.json" -check
+          go run ./scripts/self-improvement-observation \
+            -head-sha "$HEAD_SHA" -source-run-id "$SOURCE_RUN_ID" \
+            -report "$input/report.json" -counterexamples "$input/counterexamples.json" \
+            -contract "$output/contract.json" -output "$output/first.json" -check
+      - name: Compile Gooo candidate contract and replay proposal
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            input="$RUNNER_TEMP/candidate/input/first.json"
+          else
+            input="$RUNNER_TEMP/candidate/observation/first.json"
+          fi
+          source_run_id="$(jq -r '.source_workflow_run_id' "$input")"
+          if ! [[ "$source_run_id" =~ ^[1-9][0-9]*$ ]]; then
+            echo "observation source workflow run id is unknown" >&2
+            exit 1
+          fi
+          output="$RUNNER_TEMP/candidate/output"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./scripts/self-improvement-candidate \
+              -contract examples/self-improvement/candidate.gooo \
+              -head-sha "$HEAD_SHA" -source-run-id "$source_run_id" \
+              -observation "$input" -output "$output/$pass.json" -check
+          done
+          cmp "$output/first.json" "$output/second.json"
+          jq -r '"candidate: \(.decision) \(.summary.candidate_count), achieved \(.summary.achieved_delta)/1, target \(.summary.target_delta)/1"' "$output/first.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload exact-head non-executing candidate
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-nonexecuting-candidate-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/candidate/output/first.json
+          if-no-files-found: error
+          retention-days: 14

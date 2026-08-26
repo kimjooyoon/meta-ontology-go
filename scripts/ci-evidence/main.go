@@ -11,6 +11,7 @@ func main() {
 	root := flag.String("root", ".", "repository root")
 	jobsPath := flag.String("jobs", "ci-jobs.json", "workflow jobs JSON")
 	generated := flag.String("generated", "ci-generated/first", "generated output directory")
+	provenance := flag.String("provenance", "", "artifact provenance envelope")
 	output := flag.String("output", "ci-evidence.json", "evidence output")
 	verifyPath := flag.String("verify", "", "verify an existing evidence file")
 	flag.Parse()
@@ -18,7 +19,7 @@ func main() {
 	if *verifyPath != "" {
 		err = verifyFile(*verifyPath)
 	} else {
-		err = build(*root, *jobsPath, *generated, *output)
+		err = build(*root, *jobsPath, *generated, *provenance, *output)
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -26,7 +27,7 @@ func main() {
 	}
 }
 
-func build(root, jobsPath, generated, output string) error {
+func build(root, jobsPath, generated, provenancePath, output string) error {
 	jobsData, err := os.ReadFile(jobsPath)
 	if err != nil {
 		return fmt.Errorf("read workflow jobs: %w", err)
@@ -39,6 +40,11 @@ func build(root, jobsPath, generated, output string) error {
 	if err != nil {
 		return err
 	}
+	provenance, err := readArtifactProvenance(
+		provenancePath, metadata.BaseSHA, metadata.HeadSHA)
+	if err != nil {
+		return err
+	}
 	jobs, err := normalizeJobs(apiJobs, metadata.HeadSHA, metadata.RunID, metadata.RunAttempt)
 	if err != nil {
 		return err
@@ -47,7 +53,7 @@ func build(root, jobsPath, generated, output string) error {
 	if err != nil {
 		return err
 	}
-	bundle := evidence{Schema: evidenceSchema, Repository: metadata.Repository, Event: metadata.Event, EventRef: metadata.EventRef, CheckoutRef: metadata.CheckoutRef, BaseRef: metadata.BaseRef, BaseSHA: metadata.BaseSHA, HeadSHA: metadata.HeadSHA, RunID: metadata.RunID, RunAttempt: metadata.RunAttempt, WorkflowSHA: metadata.WorkflowSHA, Toolchain: metadata.Toolchain, SlotPreservation: os.Getenv("CI_SLOT_PRESERVATION") == "true", NoWriteOutsideGenerated: os.Getenv("CI_NO_WRITE_OUTSIDE_GENERATED") == "true", Jobs: jobs, Digests: digestSet}
+	bundle := evidence{Schema: evidenceSchema, Repository: metadata.Repository, Event: metadata.Event, EventRef: metadata.EventRef, CheckoutRef: metadata.CheckoutRef, BaseRef: metadata.BaseRef, BaseSHA: metadata.BaseSHA, HeadSHA: metadata.HeadSHA, RunID: metadata.RunID, RunAttempt: metadata.RunAttempt, WorkflowSHA: metadata.WorkflowSHA, Toolchain: metadata.Toolchain, SlotPreservation: os.Getenv("CI_SLOT_PRESERVATION") == "true", NoWriteOutsideGenerated: os.Getenv("CI_NO_WRITE_OUTSIDE_GENERATED") == "true", Jobs: jobs, ArtifactProvenance: provenance, Digests: digestSet}
 	payload, err := json.Marshal(bundle)
 	if err != nil {
 		return fmt.Errorf("marshal evidence payload: %w", err)

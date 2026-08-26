@@ -1,0 +1,1914 @@
+name: Transformation effect ledger
+
+on:
+  pull_request:
+    branches: [dev, main]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  cross-platform-release:
+    name: cross-platform release (${{ matrix.platform }})
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+          - platform: darwin-amd64
+            runner: macos-15-intel
+            goos: darwin
+            goarch: amd64
+          - platform: windows-amd64
+            runner: windows-2025
+            goos: windows
+            goarch: amd64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Build, execute, and replay native release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/toolchain-release-${{ matrix.platform }}"
+          go run ./cmd/toolchain-release-platform-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --output-dir "$output" \
+            --expected-head "$HEAD_SHA" \
+            --platform-id "${{ matrix.platform }}" \
+            --runner "${{ matrix.runner }}" \
+            --expected-goos "${{ matrix.goos }}" \
+            --expected-goarch "${{ matrix.goarch }}"
+      - name: Upload exact platform release receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-release-platform-${{ matrix.platform }}-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-release-${{ matrix.platform }}
+          if-no-files-found: error
+          retention-days: 30
+
+  source-splitter-conformance:
+    name: source-splitter-conformance
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: true
+
+      - name: Build isolated SplitGo subject
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$GITHUB_WORKSPACE/.ci-tmp/source-splitter-conformance"
+          fixture="$work/fixture"
+          output="$work/output"
+          mkdir -p "$fixture" "$output"
+          cat > "$fixture/go.mod" <<'EOF'
+          module fixture
+
+          go 1.27.0
+          EOF
+          {
+            echo 'package fixture'
+            echo
+            echo 'func Alpha() int {'
+            echo '  total := 0'
+            for value in $(seq 1 40); do echo "  total += $value"; done
+            echo '  return total'
+            echo '}'
+            echo
+            echo 'func Beta() int {'
+            echo '  total := 0'
+            for value in $(seq 41 80); do echo "  total += $value"; done
+            echo '  return total'
+            echo '}'
+          } > "$fixture/fixture.go"
+          cp "$fixture/fixture.go" "$output/source.go"
+
+      - name: Run actor and independent evaluator twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$GITHUB_WORKSPACE/.ci-tmp/source-splitter-conformance"
+          fixture="$work/fixture"
+          output="$work/output"
+          METRICS_COMMIT_SHA="$HEAD_SHA" go run ./scripts/line-metrics \
+            -root "$fixture" -storage-root "$fixture" -json > "$output/source-metrics.json"
+          go run ./scripts/source-splitter \
+            -root "$fixture" \
+            -metrics "$output/source-metrics.json" \
+            -sha "$HEAD_SHA" \
+            -subject fixture.go \
+            -evidence-json > "$output/actor-evidence.json"
+          for suffix in a b; do
+            go run ./scripts/source-splitter-conformance-ci \
+              -contract examples/source-splitter-conformance/contract.json \
+              -evidence "$output/actor-evidence.json" \
+              -expected-sha "$HEAD_SHA" \
+              -output "$output/artifact-$suffix.json"
+          done
+          cmp "$output/artifact-a.json" "$output/artifact-b.json"
+          go run ./scripts/source-splitter-conformance-ci \
+            -contract examples/source-splitter-conformance/contract.json \
+            -evidence "$output/actor-evidence.json" \
+            -expected-sha "$HEAD_SHA" \
+            -check "$output/artifact-a.json"
+          cp -R "$fixture" "$output/candidate"
+          sha256sum "$output/artifact-a.json" > "$output/artifact-a.sha256"
+
+      - name: Upload exact-head conformance artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: source-splitter-conformance-${{ env.HEAD_SHA }}
+          path: .ci-tmp/source-splitter-conformance/output
+          if-no-files-found: error
+          retention-days: 30
+
+  guarded-promotion-receipt:
+    name: guarded-promotion-receipt
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact CI subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 1
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+
+      - name: Select expected boundary decision
+        id: boundary
+        env:
+          SOURCE_EVENT: ${{ github.event.workflow_run.event }}
+          SOURCE_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          case "$SOURCE_EVENT:$SOURCE_BRANCH" in
+            "push:$DEFAULT_BRANCH") decision=AUTHORIZED ;;
+            pull_request:*) decision=DENIED ;;
+            *) decision=FAIL_CLOSED ;;
+          esac
+          printf 'decision=%s\n' "$decision" >> "$GITHUB_OUTPUT"
+
+      - name: Build guarded promotion receipt twice
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          EXPECT_DECISION: ${{ steps.boundary.outputs.decision }}
+          API_URL: ${{ github.api_url }}
+        run: |
+          set +e
+          codes=()
+          for replay in a b; do
+            go run ./cmd/guarded-promotion-witness \
+              --repository "$REPOSITORY" \
+              --current-head-sha "$HEAD_SHA" \
+              --source-run-id "$SOURCE_RUN_ID" \
+              --api-url "$API_URL" \
+              --token "$GH_TOKEN" \
+              --expect-decision "$EXPECT_DECISION" \
+              --out "$RUNNER_TEMP/guarded-promotion-$replay.json"
+            codes+=("$?")
+          done
+          set -e
+          test "${codes[0]}" -eq "${codes[1]}"
+          printf '%s\n' "${codes[0]}" > "$RUNNER_TEMP/guarded-promotion-exit-code.txt"
+
+      - name: Verify deterministic replay
+        run: |
+          cmp "$RUNNER_TEMP/guarded-promotion-a.json" \
+            "$RUNNER_TEMP/guarded-promotion-b.json"
+          cmp "$RUNNER_TEMP/guarded-promotion-a.json.sha256" \
+            "$RUNNER_TEMP/guarded-promotion-b.json.sha256"
+
+      - name: Upload guarded promotion receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: guarded-promotion-${{ github.event.workflow_run.head_sha }}
+          path: |
+            ${{ runner.temp }}/guarded-promotion-*.json
+            ${{ runner.temp }}/guarded-promotion-*.sha256
+            ${{ runner.temp }}/guarded-promotion-exit-code.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  rollback-fixed-point-recovery:
+    name: rollback-fixed-point-recovery
+    needs: [guarded-promotion-receipt, transformation-effect]
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - uses: actions/download-artifact@v7
+        with:
+          name: guarded-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/rollback/guard
+      - uses: actions/download-artifact@v7
+        with:
+          name: transformation-effect-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/rollback/transformation
+      - name: Bind fail-closed promotion to an exact fixed point
+        run: |
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/rollback-fixed-point \
+              --root "$GITHUB_WORKSPACE" \
+              --guard "$RUNNER_TEMP/rollback/guard/guarded-promotion-a.json" \
+              --transformation "$RUNNER_TEMP/rollback/transformation/ledger.json" \
+              --expected-sha "$HEAD_SHA" \
+              --output "$RUNNER_TEMP/rollback-fixed-point-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/rollback-fixed-point-a.json" \
+            "$RUNNER_TEMP/rollback-fixed-point-b.json"
+          go run ./cmd/language-readiness-witness/rollback-fixed-point \
+            --root "$GITHUB_WORKSPACE" \
+            --guard "$RUNNER_TEMP/rollback/guard/guarded-promotion-a.json" \
+            --transformation "$RUNNER_TEMP/rollback/transformation/ledger.json" \
+            --expected-sha "$HEAD_SHA" \
+            --output "$RUNNER_TEMP/rollback-fixed-point-a.json" \
+            --check
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: rollback-fixed-point-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/rollback-fixed-point-a.json
+          if-no-files-found: error
+          retention-days: 30
+
+  transformation-effect:
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      CI_RUN_ID: ${{ github.event.workflow_run.id }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Download exact meta artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: '*-${{ github.event.workflow_run.head_sha }}'
+          path: ${{ runner.temp }}/meta-inputs
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - name: Execute, verify, and replay sandbox effects
+        shell: bash
+        run: |
+          set -euo pipefail
+          inputs="$RUNNER_TEMP/meta-inputs"
+          first="$RUNNER_TEMP/transformation-effect/first"
+          replay="$RUNNER_TEMP/transformation-effect/replay"
+          mkdir -p "$first" "$replay"
+          common=(
+            -root "$GITHUB_WORKSPACE"
+            -metrics "$inputs/source-line-metrics-$HEAD_SHA/source-metrics.json"
+            -plan "$inputs/self-improvement-generation-$HEAD_SHA/self-improvement-plan.json"
+            -execution "$inputs/self-improvement-execution-$HEAD_SHA/self-improvement-execution.json"
+            -receipts "$inputs/self-improvement-receipts-$HEAD_SHA/self-improvement-receipts.json"
+            -provenance "$inputs/self-improvement-provenance-$HEAD_SHA/self-improvement-provenance.json"
+            -expected-sha "$HEAD_SHA"
+          )
+          for target in "$first" "$replay"; do
+            go run ./scripts/transformation-effect "${common[@]}" \
+              -output "$target/ledger.json" \
+              -generated-receipts "$target/receipts.json" \
+              -executed-provenance "$target/provenance.json" \
+              -patch "$target/patch.json"
+          done
+          for file in ledger.json receipts.json provenance.json patch.json; do
+            cmp -s "$first/$file" "$replay/$file"
+          done
+          go run ./scripts/transformation-effect \
+            -verify "$first/ledger.json" \
+            -generated-receipts "$first/receipts.json" \
+            -executed-provenance "$first/provenance.json" \
+            -patch "$first/patch.json"
+      - name: Upload exact-head transformation effects
+        uses: actions/upload-artifact@v6
+        with:
+          name: transformation-effect-${{ github.event.workflow_run.head_sha }}
+          path: ${{ runner.temp }}/transformation-effect/first
+          if-no-files-found: error
+          retention-days: 30
+
+  language-concept-artifact:
+    needs: [cross-platform-release]
+    outputs:
+      predecessor-mode: ${{ steps.readiness-predecessor.outputs.mode }}
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Download exact platform release receipts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: toolchain-release-platform-*-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-release-platforms
+          merge-multiple: true
+      - name: Prove merged autonomous change proposal
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/proposal-promotion \
+              --root "$GITHUB_WORKSPACE" \
+              --repository "$GITHUB_REPOSITORY" \
+              --current-head "$HEAD_SHA" \
+              --predecessor-sha "$predecessor_sha" \
+              --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-promotion-b.json"
+          go run ./cmd/language-readiness-witness/proposal-promotion \
+            --root "$GITHUB_WORKSPACE" \
+            --repository "$GITHUB_REPOSITORY" \
+            --current-head "$HEAD_SHA" \
+            --predecessor-sha "$predecessor_sha" \
+            --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+      - name: Project v2 proposal evidence to the unchanged v1 guard contract
+        run: |
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/proposal-compat \
+              --root "$GITHUB_WORKSPACE" \
+              --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              --expected-sha "$HEAD_SHA" \
+              --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-$suffix.json" \
+              --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-b.json"
+          cmp "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-compat-b.json"
+          go run ./cmd/language-readiness-witness/proposal-compat \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            --expected-sha "$HEAD_SHA" \
+            --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
+            --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
+            --check
+      - name: Upload merged autonomous change proposal promotion
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-legacy-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload current v2 proposal evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload proposal compatibility receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-compat-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Select exact readiness predecessor
+        id: readiness-predecessor
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mode=""
+          for suffix in a b; do
+            baseline_dir="$RUNNER_TEMP/language-readiness-baseline-$suffix"
+            mkdir -p "$baseline_dir"
+            set +e
+            go run ./cmd/language-readiness-witness/predecessor-selection \
+              --root "$GITHUB_WORKSPACE" \
+              --repository "$GITHUB_REPOSITORY" \
+              --current-head "$HEAD_SHA" \
+              --predecessor-sha "${{ github.event.pull_request.base.sha }}" \
+              --branch "dev" \
+              --workflow "Transformation effect ledger" \
+              --baseline "$baseline_dir/artifact.json" \
+              --reference "$RUNNER_TEMP/language-readiness-baseline-reference-$suffix.json" \
+              --binding-baseline "$RUNNER_TEMP/language-readiness-binding-baseline-$suffix.json" \
+              --receipt "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
+            selection_status=$?
+            set -e
+            if [[ "$selection_status" -eq 0 ]]; then
+              observed_mode="RESOLVED"
+            else
+              go run ./cmd/language-readiness-witness/foundation-seed \
+                --root "$GITHUB_WORKSPACE" \
+                --input "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json" \
+                --expected-head "$HEAD_SHA" \
+                --output "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json" \
+                --check
+              observed_mode="FOUNDATION"
+            fi
+            if [[ -n "$mode" && "$mode" != "$observed_mode" ]]; then
+              echo "predecessor mode replay mismatch" >&2
+              exit 1
+            fi
+            mode="$observed_mode"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" \
+            "$RUNNER_TEMP/language-readiness-predecessor-selection-b.json"
+          if [[ "$mode" == "RESOLVED" ]]; then
+            cmp "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json" \
+              "$RUNNER_TEMP/language-readiness-baseline-b/artifact.json"
+            cmp "$RUNNER_TEMP/language-readiness-baseline-reference-a.json" \
+              "$RUNNER_TEMP/language-readiness-baseline-reference-b.json"
+            cmp "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
+              "$RUNNER_TEMP/language-readiness-binding-baseline-b.json"
+          else
+            cmp "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" \
+              "$RUNNER_TEMP/language-readiness-foundation-seed-b.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-binding-baseline-a.json"
+            jq -r '"### Readiness foundation seed\n- decision: `\(.decision)`\n- coordinates: `\(.summary.satisfied)/\(.summary.total)`\n- ancestry exhaustion: `\(.source.missing_attempts)/\(.source.search_limit)`\n- readiness delta claims: `\(.source.readiness_delta_claims)`\n- repository writes: `\(.source.repository_writes)`\n- authority: denied"' \
+              "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+      - name: Upload exact-head readiness predecessor selection
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-readiness-baseline-reference-a.json
+            ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
+            ${{ runner.temp }}/language-readiness-foundation-seed-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Prove guarded promotion capability foundation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive_args=()
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            foundation_artifact_id="$(
+              go run ./cmd/language-readiness-witness/guarded-capability \
+                --print-foundation-artifact-id
+            )"
+            [[ "$foundation_artifact_id" =~ ^[1-9][0-9]*$ ]]
+            archive="$RUNNER_TEMP/guarded-capability-foundation.zip"
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$foundation_artifact_id/zip" > "$archive"
+            archive_args=(--foundation-archive "$archive")
+          fi
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/guarded-capability \
+              --root "$GITHUB_WORKSPACE" \
+              --current-head "$HEAD_SHA" \
+              "${archive_args[@]}" \
+              --output "$RUNNER_TEMP/language-readiness-guarded-capability-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
+            "$RUNNER_TEMP/language-readiness-guarded-capability-b.json"
+          go run ./cmd/language-readiness-witness/guarded-capability \
+            --root "$GITHUB_WORKSPACE" \
+            --current-head "$HEAD_SHA" \
+            "${archive_args[@]}" \
+            --check "$RUNNER_TEMP/language-readiness-guarded-capability-a.json"
+      - name: Upload guarded promotion capability
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-guarded-capability-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-guarded-capability-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Produce, replay, and consume exact-head concepts
+        env:
+          PREDECESSOR_MODE: ${{ steps.readiness-predecessor.outputs.mode }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$RUNNER_TEMP/language-concept-artifact/first"
+          replay="$RUNNER_TEMP/language-concept-artifact/replay"
+          mkdir -p "$first" "$replay"
+          for target in "$first" "$replay"; do
+            go run ./cmd/language-concept-artifact-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -output "$target/artifact.json"
+          done
+          cmp -s "$first/artifact.json" "$replay/artifact.json"
+          go run ./cmd/language-concept-artifact-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -check "$first/artifact.json"
+          (
+            cd "$first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          release_first="$RUNNER_TEMP/toolchain-cross-platform-release/first"
+          release_replay="$RUNNER_TEMP/toolchain-cross-platform-release/replay"
+          release_corpus="$GITHUB_WORKSPACE/examples/toolchain-cross-platform-release/corpus.json"
+          release_receipts="$RUNNER_TEMP/toolchain-release-platforms"
+          mkdir -p "$release_first" "$release_replay"
+          for target in "$release_first" "$release_replay"; do
+            go run ./cmd/toolchain-release-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$release_corpus" \
+              --receipts "$release_receipts" \
+              --output "$target/artifact.json" \
+              --bundle "$target/bundle"
+          done
+          diff -qr "$release_first" "$release_replay"
+          go run ./cmd/toolchain-release-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$release_corpus" \
+            --receipts "$release_receipts" \
+            --check "$release_first/artifact.json" \
+            --bundle "$release_first/bundle"
+          lsp_first="$RUNNER_TEMP/toolchain-lsp/first"
+          lsp_replay="$RUNNER_TEMP/toolchain-lsp/replay"
+          lsp_corpus="$GITHUB_WORKSPACE/examples/toolchain-lsp/corpus.json"
+          mkdir -p "$lsp_first" "$lsp_replay"
+          for target in "$lsp_first" "$lsp_replay"; do
+            go run ./cmd/toolchain-lsp-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$lsp_corpus" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$lsp_first/artifact.json" "$lsp_replay/artifact.json"
+          go run ./cmd/toolchain-lsp-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$lsp_corpus" \
+            --check "$lsp_first/artifact.json"
+          (
+            cd "$lsp_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          usecase_first="$RUNNER_TEMP/toolchain-executable-use-cases/first"
+          usecase_replay="$RUNNER_TEMP/toolchain-executable-use-cases/replay"
+          usecase_registry="$GITHUB_WORKSPACE/examples/toolchain-executable-use-cases/usecases.json"
+          mkdir -p "$usecase_first" "$usecase_replay"
+          for target in "$usecase_first" "$usecase_replay"; do
+            go run ./cmd/toolchain-usecase-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --registry "$usecase_registry" \
+              --concept-artifact "$first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$usecase_first/artifact.json" "$usecase_replay/artifact.json"
+          go run ./cmd/toolchain-usecase-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --registry "$usecase_registry" \
+            --concept-artifact "$first/artifact.json" \
+            --check "$usecase_first/artifact.json"
+          syntax_first="$RUNNER_TEMP/language-syntax-roundtrip/first"
+          syntax_replay="$RUNNER_TEMP/language-syntax-roundtrip/replay"
+          syntax_registry="$GITHUB_WORKSPACE/examples/language-syntax-roundtrip/corpus.json"
+          mkdir -p "$syntax_first" "$syntax_replay"
+          for target in "$syntax_first" "$syntax_replay"; do
+            go run ./cmd/language-syntax-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --registry "$syntax_registry" \
+              --concept-artifact "$first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$syntax_first/artifact.json" "$syntax_replay/artifact.json"
+          go run ./cmd/language-syntax-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --registry "$syntax_registry" \
+            --concept-artifact "$first/artifact.json" \
+            --check "$syntax_first/artifact.json"
+          semantic_first="$RUNNER_TEMP/language-semantic-model/first"
+          semantic_replay="$RUNNER_TEMP/language-semantic-model/replay"
+          semantic_registry="$GITHUB_WORKSPACE/examples/language-semantic-model/corpus.json"
+          mkdir -p "$semantic_first" "$semantic_replay"
+          for target in "$semantic_first" "$semantic_replay"; do
+            go run ./cmd/language-semantic-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --registry "$semantic_registry" \
+              --syntax-artifact "$syntax_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$semantic_first/artifact.json" "$semantic_replay/artifact.json"
+          go run ./cmd/language-semantic-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --registry "$semantic_registry" \
+            --syntax-artifact "$syntax_first/artifact.json" \
+            --check "$semantic_first/artifact.json"
+          diagnostic_first="$RUNNER_TEMP/language-diagnostic-provenance/first"
+          diagnostic_replay="$RUNNER_TEMP/language-diagnostic-provenance/replay"
+          diagnostic_registry="$GITHUB_WORKSPACE/examples/language-diagnostic-provenance/corpus.json"
+          mkdir -p "$diagnostic_first" "$diagnostic_replay"
+          for target in "$diagnostic_first" "$diagnostic_replay"; do
+            go run ./cmd/language-diagnostic-provenance-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --registry "$diagnostic_registry" \
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'language-diagnostic-provenance artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
+          done
+          cmp -s "$diagnostic_first/artifact.json" "$diagnostic_replay/artifact.json"
+          go run ./cmd/language-diagnostic-provenance-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --registry "$diagnostic_registry" \
+            --check "$diagnostic_first/artifact.json"
+          (
+            cd "$diagnostic_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          runtime_first="$RUNNER_TEMP/language-package-runtime/first"
+          runtime_replay="$RUNNER_TEMP/language-package-runtime/replay"
+          runtime_corpus="$GITHUB_WORKSPACE/examples/language-package-runtime/corpus.json"
+          mkdir -p "$runtime_first" "$runtime_replay"
+          for target in "$runtime_first" "$runtime_replay"; do
+            go run ./cmd/language-package-runtime-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$runtime_corpus" \
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'language-package-runtime artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
+          done
+          cmp -s "$runtime_first/artifact.json" "$runtime_replay/artifact.json"
+          go run ./cmd/language-package-runtime-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$runtime_corpus" \
+            --check "$runtime_first/artifact.json"
+          (
+            cd "$runtime_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          cli_root="$RUNNER_TEMP/toolchain-cli"
+          cli_binary="$cli_root/gooo"
+          cli_first="$cli_root/first"
+          cli_replay="$cli_root/replay"
+          cli_corpus="$GITHUB_WORKSPACE/examples/toolchain-cli/corpus.json"
+          mkdir -p "$cli_first" "$cli_replay"
+          go build -trimpath -o "$cli_binary" ./cmd/gooo
+          for target in "$cli_first" "$cli_replay"; do
+            go run ./cmd/toolchain-cli-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --executable "$cli_binary" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$cli_corpus" \
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'toolchain-cli artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
+          done
+          cmp -s "$cli_first/artifact.json" "$cli_replay/artifact.json"
+          go run ./cmd/toolchain-cli-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --executable "$cli_binary" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$cli_corpus" \
+            --check "$cli_first/artifact.json"
+          (
+            cd "$cli_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          format_fix_root="$RUNNER_TEMP/toolchain-format-fix"
+          format_fix_first="$format_fix_root/first"
+          format_fix_replay="$format_fix_root/replay"
+          format_fix_corpus="$GITHUB_WORKSPACE/examples/toolchain-format-fix/corpus.json"
+          mkdir -p "$format_fix_first" "$format_fix_replay"
+          for target in "$format_fix_first" "$format_fix_replay"; do
+            go run ./cmd/toolchain-format-fix-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --executable "$cli_binary" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$format_fix_corpus" \
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'toolchain-format-fix artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
+          done
+          cmp -s "$format_fix_first/artifact.json" "$format_fix_replay/artifact.json"
+          go run ./cmd/toolchain-format-fix-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --executable "$cli_binary" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$format_fix_corpus" \
+            --check "$format_fix_first/artifact.json"
+          (
+            cd "$format_fix_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          readiness_first="$RUNNER_TEMP/language-readiness-artifact/first"
+          readiness_replay="$RUNNER_TEMP/language-readiness-artifact/replay"
+          mkdir -p "$readiness_first" "$readiness_replay"
+          for target in "$readiness_first" "$readiness_replay"; do
+            go run ./cmd/language-readiness-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -input "$first/artifact.json" \
+              -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
+              -toolchain-use-cases "$usecase_first/artifact.json" \
+              -language-syntax-roundtrip "$syntax_first/artifact.json" \
+              -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
+              -language-package-runtime "$runtime_first/artifact.json" \
+              -toolchain-cli "$cli_first/artifact.json" \
+              -toolchain-format-fix "$format_fix_first/artifact.json" \
+              -expected-sha "$HEAD_SHA" \
+              -output "$target/artifact.json"
+          done
+          cmp -s "$readiness_first/artifact.json" "$readiness_replay/artifact.json"
+          go run ./cmd/language-readiness-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -input "$first/artifact.json" \
+            -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
+            -toolchain-use-cases "$usecase_first/artifact.json" \
+            -language-syntax-roundtrip "$syntax_first/artifact.json" \
+            -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
+            -language-package-runtime "$runtime_first/artifact.json" \
+            -toolchain-cli "$cli_first/artifact.json" \
+            -toolchain-format-fix "$format_fix_first/artifact.json" \
+            -expected-sha "$HEAD_SHA" \
+            -check "$readiness_first/artifact.json"
+          (
+            cd "$readiness_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          diagnostic_binding_first="$RUNNER_TEMP/language-diagnostic-provenance-readiness-binding/first"
+          diagnostic_binding_replay="$RUNNER_TEMP/language-diagnostic-provenance-readiness-binding/replay"
+          mkdir -p "$diagnostic_binding_first" "$diagnostic_binding_replay"
+          for target in "$diagnostic_binding_first" "$diagnostic_binding_replay"; do
+            go run ./cmd/language-diagnostic-provenance-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --readiness "$readiness_first/artifact.json" \
+              --provenance "$diagnostic_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$diagnostic_binding_first/artifact.json" \
+            "$diagnostic_binding_replay/artifact.json"
+          go run ./cmd/language-diagnostic-provenance-readiness-binding \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --readiness "$readiness_first/artifact.json" \
+            --provenance "$diagnostic_first/artifact.json" \
+            --check "$diagnostic_binding_first/artifact.json"
+          (
+            cd "$diagnostic_binding_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          binding_first="$RUNNER_TEMP/language-semantic-readiness-binding/first"
+          binding_replay="$RUNNER_TEMP/language-semantic-readiness-binding/replay"
+          mkdir -p "$binding_first" "$binding_replay"
+          for target in "$binding_first" "$binding_replay"; do
+            go run ./cmd/language-semantic-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --readiness "$readiness_first/artifact.json" \
+              --concept "$first/artifact.json" \
+              --semantic "$semantic_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$binding_first/artifact.json" "$binding_replay/artifact.json"
+          go run ./cmd/language-semantic-readiness-binding \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --readiness "$readiness_first/artifact.json" \
+            --concept "$first/artifact.json" \
+            --semantic "$semantic_first/artifact.json" \
+            --check "$binding_first/artifact.json"
+          (
+            cd "$binding_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          query_first="$RUNNER_TEMP/language-deterministic-query/first"
+          query_replay="$RUNNER_TEMP/language-deterministic-query/replay"
+          mkdir -p "$query_first" "$query_replay"
+          for target in "$query_first" "$query_replay"; do
+            go run ./cmd/language-deterministic-query-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --readiness "$readiness_first/artifact.json" \
+              --concept "$first/artifact.json" \
+              --query-output "$target/query/artifact.json" \
+              --binding-output "$target/binding/artifact.json"
+          done
+          cmp -s "$query_first/query/artifact.json" "$query_replay/query/artifact.json"
+          cmp -s "$query_first/binding/artifact.json" "$query_replay/binding/artifact.json"
+          (
+            cd "$query_first/query"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          (
+            cd "$query_first/binding"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          interop_first="$RUNNER_TEMP/language-go-interoperation/first"
+          interop_replay="$RUNNER_TEMP/language-go-interoperation/replay"
+          mkdir -p "$interop_first" "$interop_replay"
+          for target in "$interop_first" "$interop_replay"; do
+            go run ./cmd/language-go-interoperation-readiness-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --readiness "$readiness_first/artifact.json" \
+              --concept "$first/artifact.json" \
+              --interop-output "$target/interop/artifact.json" \
+              --binding-output "$target/binding/artifact.json" || {
+                printf '%s\n' 'language-go-interoperation artifact:' >&2
+                cat "$target/interop/artifact.json" >&2
+                printf '%s\n' 'language-go-interoperation binding artifact:' >&2
+                cat "$target/binding/artifact.json" >&2
+                exit 1
+              }
+          done
+          cmp -s "$interop_first/interop/artifact.json" "$interop_replay/interop/artifact.json"
+          cmp -s "$interop_first/binding/artifact.json" "$interop_replay/binding/artifact.json"
+          (
+            cd "$interop_first/interop"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          (
+            cd "$interop_first/binding"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          conformance_root="$RUNNER_TEMP/toolchain-conformance"
+          conformance_first="$conformance_root/first"
+          conformance_replay="$conformance_root/replay"
+          conformance_corpus="$GITHUB_WORKSPACE/examples/toolchain-conformance/corpus.json"
+          mkdir -p "$conformance_first" "$conformance_replay"
+          for target in "$conformance_first" "$conformance_replay"; do
+            go run ./cmd/toolchain-conformance-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$HEAD_SHA" \
+              --concept "$first/artifact.json" \
+              --corpus "$conformance_corpus" \
+              --syntax "$syntax_first/artifact.json" \
+              --semantic "$semantic_first/artifact.json" \
+              --query "$query_first/query/artifact.json" \
+              --interop "$interop_first/interop/artifact.json" \
+              --diagnostic "$diagnostic_first/artifact.json" \
+              --runtime "$runtime_first/artifact.json" \
+              --cli "$cli_first/artifact.json" \
+              --format-fix "$format_fix_first/artifact.json" \
+              --use-cases "$usecase_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$conformance_first/artifact.json" "$conformance_replay/artifact.json"
+          go run ./cmd/toolchain-conformance-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$HEAD_SHA" \
+            --concept "$first/artifact.json" \
+            --corpus "$conformance_corpus" \
+            --syntax "$syntax_first/artifact.json" \
+            --semantic "$semantic_first/artifact.json" \
+            --query "$query_first/query/artifact.json" \
+            --interop "$interop_first/interop/artifact.json" \
+            --diagnostic "$diagnostic_first/artifact.json" \
+            --runtime "$runtime_first/artifact.json" \
+            --cli "$cli_first/artifact.json" \
+            --format-fix "$format_fix_first/artifact.json" \
+            --use-cases "$usecase_first/artifact.json" \
+            --check "$conformance_first/artifact.json"
+          (
+            cd "$conformance_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          go fix ./internal/meta/languageassurance/verticalsliceclosureshadow \
+            ./cmd/vertical-slice-closure-shadow-witness
+          test -z "$(git status --porcelain)"
+          test -z "$(gofmt -l internal/meta/languageassurance/verticalsliceclosureshadow \
+            cmd/vertical-slice-closure-shadow-witness)"
+          go test ./internal/meta/languageassurance/verticalsliceclosureshadow \
+            ./cmd/vertical-slice-closure-shadow-witness
+          vertical_root="$RUNNER_TEMP/vertical-slice-closure-shadow"
+          vertical_first="$vertical_root/first"
+          vertical_replay="$vertical_root/replay"
+          mkdir -p "$vertical_first" "$vertical_replay"
+          for target in "$vertical_first" "$vertical_replay"; do
+            go run ./cmd/vertical-slice-closure-shadow-witness \
+              --assurance internal/meta/languageassurance/verticalsliceclosureshadow/evidence/assurance.json \
+              --head "$HEAD_SHA" \
+              --syntax "$syntax_first/artifact.json" \
+              --semantics "$semantic_first/artifact.json" \
+              --binding "$binding_first/artifact.json" \
+              --use-cases "$usecase_first/artifact.json" \
+              --toolchain "$conformance_first/artifact.json" \
+              --release "$release_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          cmp -s "$vertical_first/artifact.json" "$vertical_replay/artifact.json"
+          jq '.decision = "FUTURE_DECISION"' "$semantic_first/artifact.json" \
+            > "$vertical_root/semantic-unknown.json"
+          jq '.source.syntax_artifact_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$semantic_first/artifact.json" > "$vertical_root/semantic-link-mismatch.json"
+          jq '.repository_writes = 1' "$usecase_first/artifact.json" \
+            > "$vertical_root/use-case-write.json"
+          for variant in unavailable unknown link-mismatch write; do
+            semantic="$semantic_first/artifact.json"
+            use_case="$usecase_first/artifact.json"
+            unavailable=""
+            case "$variant" in
+              unavailable) unavailable="--unavailable-boundary semantics" ;;
+              unknown) semantic="$vertical_root/semantic-unknown.json" ;;
+              link-mismatch) semantic="$vertical_root/semantic-link-mismatch.json" ;;
+              write) use_case="$vertical_root/use-case-write.json" ;;
+            esac
+            go run ./cmd/vertical-slice-closure-shadow-witness \
+              --assurance internal/meta/languageassurance/verticalsliceclosureshadow/evidence/assurance.json \
+              --head "$HEAD_SHA" \
+              --syntax "$syntax_first/artifact.json" \
+              --semantics "$semantic" \
+              --binding "$binding_first/artifact.json" \
+              --use-cases "$use_case" \
+              --toolchain "$conformance_first/artifact.json" \
+              --release "$release_first/artifact.json" \
+              $unavailable --output "$vertical_root/$variant.json"
+          done
+          jq -e '.decision == "SHADOW_PASS" and .resolution == "EXACT" and
+            .enforcement_effect == "NO_EFFECT" and .summary.denominator_total == 12 and
+            .summary.before_operating == 10 and .summary.projected_operating == 11 and
+            .summary.before_coverage_bps == 8333 and .summary.projected_coverage_bps == 9166 and
+            .summary.boundaries_total == 6 and .summary.boundaries_satisfied == 6 and
+            .summary.links_total == 12 and .summary.links_satisfied == 12 and
+            .repository_writes == 0 and .promotion_applied == 0' "$vertical_first/artifact.json"
+          jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and
+            ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and
+            ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and
+            ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1' \
+            "$vertical_first/artifact.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+            .summary.unknown_boundaries > 0 and .summary.projected_operating == 10' \
+            "$vertical_root/unavailable.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+            .summary.unknown_top_decisions == 1 and .summary.projected_operating == 10' \
+            "$vertical_root/unknown.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and
+            .summary.blocked_boundaries > 0 and .summary.projected_operating == 10' \
+            "$vertical_root/link-mismatch.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and
+            .summary.observed_repository_writes == 1 and .summary.projected_operating == 10' \
+            "$vertical_root/write.json"
+          sha256sum "$vertical_first/artifact.json" "$vertical_root/unavailable.json" \
+            "$vertical_root/unknown.json" "$vertical_root/link-mismatch.json" \
+            "$vertical_root/write.json" > "$vertical_root/manifest.sha256"
+          for target in "$readiness_first" "$readiness_replay"; do
+            rm -f "$target/artifact.json"
+            go run ./cmd/language-readiness-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -input "$first/artifact.json" \
+              -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
+              -toolchain-use-cases "$usecase_first/artifact.json" \
+              -language-syntax-roundtrip "$syntax_first/artifact.json" \
+              -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
+              -language-package-runtime "$runtime_first/artifact.json" \
+              -toolchain-cli "$cli_first/artifact.json" \
+              -toolchain-format-fix "$format_fix_first/artifact.json" \
+              -toolchain-lsp "$lsp_first/artifact.json" \
+              -toolchain-conformance "$conformance_first/artifact.json" \
+              -toolchain-cross-platform-release "$release_first/artifact.json" \
+              -expected-sha "$HEAD_SHA" \
+              -output "$target/artifact.json"
+          done
+          cmp -s "$readiness_first/artifact.json" "$readiness_replay/artifact.json"
+          go run ./cmd/language-readiness-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -input "$first/artifact.json" \
+            -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
+            -toolchain-use-cases "$usecase_first/artifact.json" \
+            -language-syntax-roundtrip "$syntax_first/artifact.json" \
+            -language-diagnostic-provenance "$diagnostic_first/artifact.json" \
+            -language-package-runtime "$runtime_first/artifact.json" \
+            -toolchain-cli "$cli_first/artifact.json" \
+            -toolchain-format-fix "$format_fix_first/artifact.json" \
+            -toolchain-lsp "$lsp_first/artifact.json" \
+            -toolchain-conformance "$conformance_first/artifact.json" \
+            -toolchain-cross-platform-release "$release_first/artifact.json" \
+            -expected-sha "$HEAD_SHA" \
+            -check "$readiness_first/artifact.json"
+          (
+            cd "$readiness_first"
+            sha256sum artifact.json > artifact.json.sha256
+          )
+          if [[ "$PREDECESSOR_MODE" == "RESOLVED" ]]; then
+            improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
+            improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
+            baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
+            baseline_reference="$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
+            mkdir -p "$improvement_first" "$improvement_replay"
+            for target in "$improvement_first" "$improvement_replay"; do
+              go run ./cmd/language-readiness-witness/transition \
+                -root "$GITHUB_WORKSPACE" \
+                -before "$baseline" \
+                -baseline-reference "$baseline_reference" \
+                -after "$readiness_first/artifact.json" \
+                -expected-sha "$HEAD_SHA" \
+                -output "$target/artifact.json"
+            done
+            cmp -s "$improvement_first/artifact.json" "$improvement_replay/artifact.json"
+            go run ./cmd/language-readiness-witness/transition \
+              -root "$GITHUB_WORKSPACE" \
+              -before "$baseline" \
+              -baseline-reference "$baseline_reference" \
+              -after "$readiness_first/artifact.json" \
+              -expected-sha "$HEAD_SHA" \
+              -check "$improvement_first/artifact.json"
+            (
+              cd "$improvement_first"
+              sha256sum artifact.json > artifact.json.sha256
+            )
+          fi
+      - name: Measure exact predecessor bindings
+        run: |
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/predecessor-binding \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-sha "$HEAD_SHA" \
+              --output "$RUNNER_TEMP/language-readiness-predecessor-binding-$suffix.json" \
+              --check
+          done
+          cmp "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
+            "$RUNNER_TEMP/language-readiness-predecessor-binding-b.json"
+      - name: Prove exact predecessor binding transition
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
+        run: |
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/predecessor-binding/transition \
+              --root "$GITHUB_WORKSPACE" \
+              --before "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
+              --after "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
+              --expected-sha "$HEAD_SHA" \
+              --output "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-a.json" \
+            "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-b.json"
+          go run ./cmd/language-readiness-witness/predecessor-binding/transition \
+            --root "$GITHUB_WORKSPACE" \
+            --before "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
+            --after "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
+            --expected-sha "$HEAD_SHA" \
+            --check "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-a.json"
+      - name: Upload exact-head predecessor binding transition
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-binding-transition-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-predecessor-binding-transition-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload exact-head predecessor bindings
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-predecessor-binding-a.json*
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload exact-head language concepts
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-concept-artifact-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-concept-artifact/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head language semantic model
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-semantic-model-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-semantic-model/first/artifact.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head semantic readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-semantic-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-semantic-readiness-binding/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head deterministic query
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-deterministic-query-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-deterministic-query/first/query
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head deterministic query readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-deterministic-query/first/binding
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head Go interoperation
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-go-interoperation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-go-interoperation/first/interop
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head Go interoperation readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-go-interoperation-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-go-interoperation/first/binding
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head diagnostic provenance
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-diagnostic-provenance-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-diagnostic-provenance/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head diagnostic provenance readiness binding
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-diagnostic-provenance-readiness-binding-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-diagnostic-provenance-readiness-binding/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head language package runtime
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-package-runtime-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-package-runtime/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head toolchain CLI
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-cli-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-cli/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head toolchain format/fix
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-format-fix-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-format-fix/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head toolchain conformance
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-conformance-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-conformance/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head toolchain LSP
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-lsp-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-lsp/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head cross-platform release
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-cross-platform-release-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-cross-platform-release/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact-head language readiness
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-artifact-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-artifact/first
+          if-no-files-found: error
+
+      - name: Upload exact-head executable use cases
+        uses: actions/upload-artifact@v6
+        with:
+          name: toolchain-executable-use-cases-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/toolchain-executable-use-cases/first/artifact.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload exact-head language syntax roundtrip
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-syntax-roundtrip-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-syntax-roundtrip/first/artifact.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload exact-head vertical slice closure shadow
+        uses: actions/upload-artifact@v7
+        with:
+          name: vertical-slice-closure-shadow-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/vertical-slice-closure-shadow
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload exact-head quantified improvement
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-readiness-improvement-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-improvement/first
+          if-no-files-found: error
+          retention-days: 30
+
+  user-journey-scorecard:
+    name: user-journey-scorecard
+    needs: [language-concept-artifact]
+    if: >-
+      needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED' &&
+      (
+        github.event_name == 'pull_request' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository &&
+          (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        )
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Download exact functional CLI receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: toolchain-cli-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/user-journey/upstream
+      - name: Observe user journeys and reduce audience views
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/user-journey"
+          binary="$work/gooo"
+          contract="$GITHUB_WORKSPACE/examples/user-journey-scorecard/contract.json"
+          upstream="$work/upstream/artifact.json"
+          expected_journeys="$(jq '.journeys | length' "$contract")"
+          expected_samples="$(jq '.samples_per_journey * (.journeys | length)' "$contract")"
+          mkdir -p "$work/first" "$work/replay" "$work/negative"
+          go build -trimpath -o "$binary" ./cmd/gooo
+          bash ./scripts/user-journey-profile/main.sh "$binary" "$GITHUB_WORKSPACE" "$HEAD_SHA" "$work/profile.json" 5
+          common=(
+            -root "$GITHUB_WORKSPACE"
+            -executable "$binary"
+            -expected-head "$HEAD_SHA"
+            -contract "$contract"
+            -upstream "$upstream"
+            -profile "$work/profile.json"
+          )
+          go run ./cmd/user-journey-scorecard "${common[@]}" -output "$work/first/report.json"
+          go run ./cmd/user-journey-scorecard "${common[@]}" -output "$work/replay/report.json"
+          cmp -s "$work/first/report.json" "$work/replay/report.json"
+          go run ./cmd/user-journey-scorecard "${common[@]}" -check "$work/first/report.json"
+          jq -e --argjson expected_journeys "$expected_journeys" --argjson expected_samples "$expected_samples" '
+            .schema == "gooo/user-journey-scorecard/v1" and
+            .status == "PASS" and .decision == "PASS" and .resolution == "EXACT" and
+            .summary.coordinates.satisfied == 15 and .summary.coordinates.total == 15 and
+            .summary.functional.upstream_cases == 12 and .summary.functional.positive_journeys == $expected_journeys and
+            .summary.resources.samples_observed == $expected_samples and .summary.resources.samples_expected == $expected_samples and
+            .summary.resources.envelopes_passed == $expected_journeys and
+            .summary.meta.bindings == (.summary.functional.upstream_cases + $expected_journeys) and .summary.meta.unknowns == 0 and
+            (.views[] | select(.Audience == "USER") | .Satisfied == 6 and .Total == 6) and
+            (.views[] | select(.Audience == "TOOL_AUTHOR") | .Satisfied == 10 and .Total == 10) and
+            (.views[] | select(.Audience == "GOVERNOR") | .Satisfied == 15 and .Total == 15) and
+            .resource_observation_mode == "RUNNER_SCOPED_NONDETERMINISTIC" and
+            .resource_measurement_replay_authority == false and .reducer_replay_verified == true and
+            .repository_writes == 0 and .mutation_authority == false
+          ' "$work/first/report.json"
+          jq '.subject_sha = "UNKNOWN"' "$work/profile.json" > "$work/negative/head.json"
+          jq '(.samples[0].max_rss_kib) = 262145' "$work/profile.json" > "$work/negative/rss.json"
+          jq '.samples = .samples[:-1]' "$work/profile.json" > "$work/negative/missing.json"
+          for case in head rss missing; do
+            changed=("${common[@]}")
+            changed[11]="$work/negative/$case.json"
+            go run ./cmd/user-journey-scorecard "${changed[@]}" -output "$work/negative/$case-report.json"
+          done
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/head-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .summary.resources.rss_violations == 1' "$work/negative/rss-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/missing-report.json"
+          jq -r '"### Gooo user journey scorecard\n- decision: \(.decision) / \(.resolution)\n- USER: \(.views[0].Satisfied)/\(.views[0].Total)\n- TOOL_AUTHOR: \(.views[1].Satisfied)/\(.views[1].Total)\n- GOVERNOR: \(.views[2].Satisfied)/\(.views[2].Total)\n- functional CLI: \(.summary.functional.upstream_cases)/12\n- samples: \(.summary.resources.samples_observed)/\(.summary.resources.samples_expected)\n- binary: \(.summary.resources.binary_size_bytes) bytes / \(.summary.resources.binary_size_limit) limit\n- measurement mode: \(.resource_observation_mode)\n- receipt: \(.digest)\n\n| journey | wall ms min/median/max | RSS KiB min/median/max |\n| --- | ---: | ---: |", (.journeys[] | "| \(.ID) | \(.WallMinMS)/\(.WallMedianMS)/\(.WallMaxMS) | \(.RSSMinKiB)/\(.RSSMedianKiB)/\(.RSSMaxKiB) |")' "$work/first/report.json" >> "$GITHUB_STEP_SUMMARY"
+          test -z "$(git status --porcelain)"
+      - name: Upload exact-head user journey scorecard
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: user-journey-scorecard-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/user-journey
+          if-no-files-found: error
+          retention-days: 30
+
+  promotion-authorized-continuity:
+    name: promotion-authorized-continuity
+    needs:
+      - guarded-promotion-receipt
+      - rollback-fixed-point-recovery
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'dev'
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Check out exact transformation subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+      - name: Download exact guarded promotion receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: guarded-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/promotion-continuity/guard
+      - name: Download exact rollback route receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: rollback-fixed-point-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/promotion-continuity/recovery
+      - name: Prove authorized successor twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          guard="$RUNNER_TEMP/promotion-continuity/guard/guarded-promotion-a.json"
+          recovery="$RUNNER_TEMP/promotion-continuity/recovery/rollback-fixed-point-a.json"
+          first="$RUNNER_TEMP/promotion-continuity/output/a"
+          replay="$RUNNER_TEMP/promotion-continuity/output/b"
+          test -f "$guard"
+          test -f "$recovery"
+          mkdir -p "$first" "$replay"
+          for target in "$first" "$replay"; do
+            go run ./cmd/promotion-authorized-continuity \
+              --head "$HEAD_SHA" --guard "$guard" --recovery "$recovery" \
+              --out "$target/report.json"
+          done
+          cmp "$first/report.json" "$replay/report.json"
+      - name: Upload authorization continuity receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: promotion-authorized-continuity-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/promotion-continuity/output/a/report.json
+          if-no-files-found: error
+          retention-days: 30
+
+  vertical-slice-closure-eligibility:
+    name: vertical slice closure eligibility
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Generate fixed eligibility receipts
+        shell: bash
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/vertical-slice-closure-eligibility
+        run: |
+          set -euo pipefail
+          mkdir -p "$OUTPUT_DIR"
+          go run ./cmd/vertical-slice-closure-eligibility-witness             --subject-sha "$SUBJECT_SHA" --output "$OUTPUT_DIR/suite.json"
+          for case_id in exact assurance-unavailable shadow-unavailable assurance-digest-mismatch             shadow-digest-mismatch unknown-top-decision semantic-link-mismatch observed-write; do
+            go run ./cmd/vertical-slice-closure-eligibility-witness               --subject-sha "$SUBJECT_SHA" --case "$case_id"               --output "$OUTPUT_DIR/$case_id.json"
+          done
+          go run ./cmd/vertical-slice-closure-eligibility-witness             --subject-sha "$SUBJECT_SHA" --output "$OUTPUT_DIR/replay.json"
+          cmp "$OUTPUT_DIR/suite.json" "$OUTPUT_DIR/replay.json"
+      - name: Verify exact eligibility semantics
+        shell: bash
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/vertical-slice-closure-eligibility
+        run: |
+          set -euo pipefail
+          jq -e '
+            .decision == "ELIGIBLE" and .resolution == "EXACT" and
+            .cases_total == 8 and .cases_passed == 8 and .coverage_bps == 10000 and
+            .eligible_exact == 1 and .unknown_fail_closed == 3 and
+            .invariant_fail_closed == 4 and .repository_writes == 0 and
+            .promotion_applied == 0
+          ' "$OUTPUT_DIR/suite.json"
+          jq -e '
+            .decision == "ELIGIBLE" and .resolution == "EXACT" and
+            .summary.before_operating == 10 and .summary.eligible_operating == 11 and
+            .summary.official_operating == 10 and .repository_writes == 0 and
+            .promotion_applied == 0
+          ' "$OUTPUT_DIR/exact.json"
+          jq -e '
+            .decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and
+            .enforcement_effect == "BLOCK" and
+            .reason == "VERTICAL_SLICE_ELIGIBILITY_DECISION_UNKNOWN"
+          ' "$OUTPUT_DIR/unknown-top-decision.json"
+          sha256sum "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/manifest.sha256"
+      - name: Upload vertical slice eligibility artifact
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: vertical-slice-closure-eligibility-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/vertical-slice-closure-eligibility
+          if-no-files-found: error
+          retention-days: 14
+
+  external-ecosystem-reference-conformance:
+    name: external ecosystem reference conformance
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Fetch immutable external reference documents
+        shell: bash
+        env:
+          EVIDENCE_DIR: ${{ runner.temp }}/external-ecosystem-reference/evidence
+          OUTPUT_DIR: ${{ runner.temp }}/external-ecosystem-reference/output
+          UPSTREAM_SHA: cf0d4bf32da393dbda97e3572f216731013ffa55
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR" "$OUTPUT_DIR"
+          : > "$EVIDENCE_DIR/README.md"
+          : > "$EVIDENCE_DIR/go.mod"
+          readme_status=EXACT
+          gomod_status=EXACT
+          if ! curl --fail --silent --show-error --location --retry 2 "https://raw.githubusercontent.com/cosmos72/gomacro/$UPSTREAM_SHA/README.md" -o "$EVIDENCE_DIR/README.md"; then readme_status=UNAVAILABLE; : > "$EVIDENCE_DIR/README.md"; fi
+          if ! curl --fail --silent --show-error --location --retry 2 "https://raw.githubusercontent.com/cosmos72/gomacro/$UPSTREAM_SHA/go.mod" -o "$EVIDENCE_DIR/go.mod"; then gomod_status=UNAVAILABLE; : > "$EVIDENCE_DIR/go.mod"; fi
+          jq -n --arg readme "$readme_status" --arg gomod "$gomod_status" --arg upstream "$UPSTREAM_SHA" '{schema:"gooo/external-fetch/v1",upstream_sha:$upstream,readme:$readme,go_mod:$gomod}' > "$OUTPUT_DIR/fetch.json"
+      - name: Generate fixed external reference receipts
+        shell: bash
+        env:
+          EVIDENCE_DIR: ${{ runner.temp }}/external-ecosystem-reference/evidence
+          OUTPUT_DIR: ${{ runner.temp }}/external-ecosystem-reference/output
+        run: |
+          set -euo pipefail
+          go run ./cmd/external-ecosystem-conformance-witness --subject-sha "$SUBJECT_SHA" --readme "$EVIDENCE_DIR/README.md" --go-mod "$EVIDENCE_DIR/go.mod" --output "$OUTPUT_DIR/suite.json"
+          for case_id in exact readme-unavailable gomod-unavailable unknown-relation readme-digest-mismatch gomod-digest-mismatch commit-mismatch license-mismatch external-execution observed-write; do
+            go run ./cmd/external-ecosystem-conformance-witness --subject-sha "$SUBJECT_SHA" --case "$case_id" --readme "$EVIDENCE_DIR/README.md" --go-mod "$EVIDENCE_DIR/go.mod" --output "$OUTPUT_DIR/$case_id.json"
+          done
+          go run ./cmd/external-ecosystem-conformance-witness --subject-sha "$SUBJECT_SHA" --readme "$EVIDENCE_DIR/README.md" --go-mod "$EVIDENCE_DIR/go.mod" --output "$OUTPUT_DIR/replay.json"
+          cmp "$OUTPUT_DIR/suite.json" "$OUTPUT_DIR/replay.json"
+      - name: Verify external reference semantics
+        shell: bash
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/external-ecosystem-reference/output
+        run: |
+          set -euo pipefail
+          jq -e '.decision == "REFERENCE_BOUND" and .resolution == "EXACT" and .cases_total == 10 and .cases_passed == 10 and .coverage_bps == 10000 and .reference_bound_exact == 1 and .unknown_fail_closed == 3 and .invariant_fail_closed == 6 and .repository_writes == 0 and .external_executions == 0 and .official_mutations == 0' "$OUTPUT_DIR/suite.json"
+          jq -e '.decision == "REFERENCE_BOUND" and .resolution == "EXACT" and .enforcement_effect == "NO_EFFECT" and .summary.reference_denominator == 8 and .summary.bound_capabilities == 8 and .summary.implemented_capabilities == 0 and .summary.language_before_operating == 10 and .summary.language_official_after == 10 and .repository_writes == 0 and .external_executions == 0 and .promotion_applied == 0' "$OUTPUT_DIR/exact.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .enforcement_effect == "BLOCK" and .reason == "EXTERNAL_ECOSYSTEM_RELATION_UNKNOWN"' "$OUTPUT_DIR/unknown-relation.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .enforcement_effect == "BLOCK" and .reason == "EXTERNAL_ECOSYSTEM_EXECUTION_OBSERVED"' "$OUTPUT_DIR/external-execution.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .enforcement_effect == "BLOCK" and .reason == "EXTERNAL_ECOSYSTEM_WRITE_OBSERVED"' "$OUTPUT_DIR/observed-write.json"
+          sha256sum "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/manifest.sha256"
+      - name: Upload external ecosystem reference artifact
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-ecosystem-reference-conformance-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-ecosystem-reference/output
+          if-no-files-found: error
+          retention-days: 14
+
+  external-ecosystem-go127-baseline:
+    name: external ecosystem Go 1.27 baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      GOTOOLCHAIN: local
+      GOWORK: "off"
+      GOFLAGS: -mod=readonly
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+          path: gooo
+      - name: Checkout pinned gomacro
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: cosmos72/gomacro
+          ref: cf0d4bf32da393dbda97e3572f216731013ffa55
+          fetch-depth: 1
+          path: gomacro
+      - name: Set up exact Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Allocate isolated caches
+        run: |
+          printf 'GOCACHE=%s\n' "$RUNNER_TEMP/go-build" >> "$GITHUB_ENV"
+          printf 'GOMODCACHE=%s\n' "$RUNNER_TEMP/go-mod" >> "$GITHUB_ENV"
+      - name: Conform with Go 1.27 tools
+        working-directory: gooo
+        run: |
+          test -z "$(git status --porcelain --untracked-files=all)"
+          go fix ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness \
+            ./internal/meta/externalcapabilityexecution/... ./cmd/external-capability-execution-witness/...
+          find internal/meta/externalecosystemexecution cmd/external-ecosystem-execution-witness \
+            internal/meta/externalcapabilityexecution cmd/external-capability-execution-witness \
+            -name '*.go' -type f -print0 | xargs -0 gofmt -w
+          git diff --binary > "$RUNNER_TEMP/go-1.27-tools.patch"
+          if test -s "$RUNNER_TEMP/go-1.27-tools.patch"; then
+            git diff --stat
+            exit 1
+          fi
+      - name: Upload Go 1.27 correction
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: go-1.27-tool-correction-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/go-1.27-tools.patch
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Run fixed conformance tests
+        working-directory: gooo
+        run: |
+          go test -count=1 ./internal/meta/externalecosystemexecution ./cmd/external-ecosystem-execution-witness
+          go test -count=1 ./internal/meta/externalcapabilityexecution/... ./cmd/external-capability-execution-witness/...
+          go test -count=1 ./internal/verify
+      - name: Observe twice and replay
+        working-directory: gooo
+        run: |
+          result="$RUNNER_TEMP/external-ecosystem-execution"
+          mkdir -p "$result"
+          observe_status=0
+          go run ./cmd/external-ecosystem-execution-witness \
+            --mode observe --source-root "$GITHUB_WORKSPACE/gooo" --external-root "$GITHUB_WORKSPACE/gomacro" \
+            --observation "$result/observation.json" --report "$result/report.json" \
+            --suite "$result/suite.json" || observe_status=$?
+          test "$observe_status" -eq 1
+          replay_status=0
+          go run ./cmd/external-ecosystem-execution-witness \
+            --mode replay --observation "$result/observation.json" \
+            --report "$result/replay-report.json" --suite "$result/replay-suite.json" || replay_status=$?
+          test "$replay_status" -eq 1
+          cmp "$result/report.json" "$result/replay-report.json"
+          cmp "$result/suite.json" "$result/replay-suite.json"
+      - name: Assert exact baseline
+        run: |
+          result="$RUNNER_TEMP/external-ecosystem-execution"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "EXACT"' "$result/report.json"
+          jq -e '.completed == 6 and .total == 8 and .basis_points == 7500' "$result/report.json"
+          jq -e '.unknown_indicators == 0 and .external_executions == 2 and .repository_writes == 0' "$result/report.json"
+          jq -e '.official_mutation_count == 0 and .promotion_count == 0' "$result/report.json"
+          jq -e '([.indicators[].status] | map(select(. == "SATISFIED")) | length) == 6' "$result/report.json"
+          jq -e '([.indicators[].status] | map(select(. == "UNSATISFIED")) | length) == 2' "$result/report.json"
+          jq -e '([.proofs[] | select(.mode == "FOUNDATION" or .mode == "REGRESSION") | .status] | all(. == "SATISFIED"))' "$result/report.json"
+          jq -e '([.proofs[] | select(.mode == "COHERENCE") | .status] | all(. == "UNSATISFIED"))' "$result/report.json"
+          jq -e '.passed == 10 and .total == 10 and .unresolved == 0 and .unknown_expected == 3 and .invariant_expected == 6' "$result/suite.json"
+          jq -e '.reference.binding_exact == true and (.runs | length) == 2' "$result/observation.json"
+          jq -e '([.runs[] | .exit_code == 1 and .passed == false and (.unknown_events | length) == 0] | all)' "$result/observation.json"
+          jq -e '([.runs[].normalized_sha256] | unique) == ["sha256:0bb017f6c946d799c5fef316462dd03ad667fcfbfd99a69c1d1cfe61c4812f93"]' "$result/observation.json"
+          jq -e '([.runs[] | [.outcomes[] | select(.action == "fail" or .action == "build-fail")] | length] | all(. == 8))' "$result/observation.json"
+          jq -e '.official_mutation_count == 0 and .promotion_count == 0' "$result/observation.json"
+      - name: Execute capability-scoped metaprogramming twice
+        working-directory: gooo
+        run: |
+          parent="$RUNNER_TEMP/external-ecosystem-execution/report.json"
+          result="$RUNNER_TEMP/external-capability-execution"
+          mkdir -p "$result"
+          go run ./cmd/external-capability-execution-witness \
+            --mode observe --subject-sha "$SUBJECT_SHA" \
+            --source-root "$GITHUB_WORKSPACE/gooo" --external-root "$GITHUB_WORKSPACE/gomacro" \
+            --parent-report "$parent" --observation "$result/observation.json" \
+            --report "$result/report.json" --suite "$result/suite.json"
+          go run ./cmd/external-capability-execution-witness \
+            --mode replay --observation "$result/observation.json" \
+            --report "$result/replay-report.json" --suite "$result/replay-suite.json"
+          cmp "$result/report.json" "$result/replay-report.json"
+          cmp "$result/suite.json" "$result/replay-suite.json"
+      - name: Assert exact capability boundary
+        run: |
+          result="$RUNNER_TEMP/external-capability-execution"
+          jq -e '.decision == "CAPABILITY_EXECUTABLE" and .resolution == "EXACT"' "$result/report.json"
+          jq -e '.completed == 10 and .total == 10 and .basis_points == 10000' "$result/report.json"
+          jq -e '.driver_completed == 4 and .outcome_completed == 3 and .guardrail_completed == 3' "$result/report.json"
+          jq -e '.external_executions == 4 and .repository_writes == 0 and .external_repository_writes == 0' "$result/report.json"
+          jq -e '.parent.decision == "FAIL_CLOSED" and .parent.resolution == "EXACT"' "$result/report.json"
+          jq -e '.parent.completed == 6 and .parent.total == 8 and .parent.basis_points == 7500' "$result/report.json"
+          jq -e '.official_mutation_count == 0 and .promotion_count == 0' "$result/report.json"
+          jq -e '([.proofs[].status] | all(. == "SATISFIED"))' "$result/report.json"
+          jq -e '.passed == 15 and .total == 15 and .unknown_expected == 3 and .invariant_expected == 11' "$result/suite.json"
+          jq -e '.available == true and .replay_exact == true and (.runs | length) == 2' "$result/observation.json"
+          jq -e '([.runs[] | .status == "SATISFIED" and .arithmetic == "42" and .function == "55"] | all)' "$result/observation.json"
+      - name: Evaluate external assurance eligibility twice
+        working-directory: gooo
+        run: |
+          parent="$RUNNER_TEMP/external-ecosystem-execution"
+          capability="$RUNNER_TEMP/external-capability-execution"
+          result="$RUNNER_TEMP/external-conformance-eligibility"
+          mkdir -p "$result"
+          for prefix in "" replay-; do
+            go run ./cmd/external-capability-execution-witness/eligibility \
+              --subject-sha "$SUBJECT_SHA" \
+              --parent-report "$parent/report.json" --parent-observation "$parent/observation.json" \
+              --parent-suite "$parent/suite.json" --capability-report "$capability/report.json" \
+              --capability-observation "$capability/observation.json" --capability-suite "$capability/suite.json" \
+              --report "$result/${prefix}report.json" --suite "$result/${prefix}suite.json"
+          done
+          cmp "$result/report.json" "$result/replay-report.json"
+          cmp "$result/suite.json" "$result/replay-suite.json"
+          cp internal/meta/externalcapabilityexecution/assuranceeligibility/evidence/assurance.json "$result/assurance.json"
+          cp "$parent/report.json" "$result/parent-report.json"
+          cp "$parent/observation.json" "$result/parent-observation.json"
+          cp "$parent/suite.json" "$result/parent-suite.json"
+          cp "$capability/report.json" "$result/capability-report.json"
+          cp "$capability/observation.json" "$result/capability-observation.json"
+          cp "$capability/suite.json" "$result/capability-suite.json"
+      - name: Assert external assurance eligibility boundary
+        run: |
+          result="$RUNNER_TEMP/external-conformance-eligibility"
+          jq -e '.decision == "ELIGIBLE_SHADOW" and .resolution == "EXACT" and .enforcement_effect == "NO_EFFECT"' "$result/report.json"
+          jq -e '.summary.indicator_completed == 18 and .summary.indicator_total == 18 and .summary.indicator_coverage_bps == 10000' "$result/report.json"
+          jq -e '.summary.driver_completed == 7 and .summary.outcome_completed == 4 and .summary.guardrail_completed == 7' "$result/report.json"
+          jq -e '.summary.before_operating == 11 and .summary.projected_operating == 12 and .summary.official_operating == 11' "$result/report.json"
+          jq -e '.summary.parent_completed == 6 and .summary.parent_total == 8 and .summary.parent_known_failures == 2' "$result/report.json"
+          jq -e '.summary.capability_completed == 10 and .summary.capability_total == 10 and .summary.capability_suite_passed == 15' "$result/report.json"
+          jq -e '.repository_writes == 0 and .official_mutation_count == 0 and .promotion_applied == 0' "$result/report.json"
+          jq -e '.transition.official_status == "NOT_IMPLEMENTED" and .transition.eligible_status == "OPERATING"' "$result/report.json"
+          jq -e '([.proofs[] | .status] | all(. == "SATISFIED"))' "$result/report.json"
+          jq -e '.passed == 20 and .total == 20 and .coverage_bps == 10000' "$result/suite.json"
+          jq -e '.exact_expected == 1 and .unknown_expected == 10 and .invariant_expected == 9' "$result/suite.json"
+      - name: Seal external assurance eligibility evidence
+        run: |
+          cd "$RUNNER_TEMP/external-conformance-eligibility"
+          sha256sum *.json > manifest.sha256
+      - name: Upload external assurance eligibility evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-conformance-eligibility-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-conformance-eligibility
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Seal capability evidence
+        run: |
+          cd "$RUNNER_TEMP/external-capability-execution"
+          sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > manifest.sha256
+      - name: Upload capability evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-capability-go127-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-capability-execution
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Seal execution evidence
+        run: |
+          result="$RUNNER_TEMP/external-ecosystem-execution"
+          cd "$result"
+          sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > manifest.sha256
+      - name: Upload execution evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-ecosystem-go127-baseline-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-ecosystem-execution
+          if-no-files-found: ignore
+          retention-days: 30
+
+  language-delivery-scorecard:
+    name: language-delivery-scorecard
+    needs:
+      - language-concept-artifact
+      - language-source-execution
+      - user-journey-scorecard
+    if: needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Reduce fixed language delivery contract
+        shell: bash
+        run: bash scripts/language-delivery-scorecard/main.sh
+      - if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-delivery-scorecard-${{ env.HEAD_SHA }}
+          path: |
+            delivery-output/report.json
+            delivery-output/unknown-report.json
+            delivery-evidence/manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
+  language-source-execution:
+    name: language-source-execution
+    needs: [language-concept-artifact]
+    if: >-
+      needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED' &&
+      (
+        github.event_name == 'pull_request' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository &&
+          (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        )
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Execute Gooo source and reduce fixed receipts
+        shell: bash
+        run: bash scripts/language-source-execution/main.sh
+      - name: Upload exact-head source execution artifact
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-source-execution-${{ env.HEAD_SHA }}
+          path: source-execution-output
+          if-no-files-found: error
+          retention-days: 30

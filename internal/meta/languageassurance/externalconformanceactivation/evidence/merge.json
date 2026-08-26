@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/github-pull-request-merge-proof/v1",
+  "repository": "kimjooyoon/meta-ontology-go",
+  "pull_request": 474,
+  "state": "MERGED",
+  "base_sha": "6e9a65b48bfa734968813014532203c15a5d0e3f",
+  "head_sha": "0fa760bdcb9c90e386d85978bff1c6552e8b503a",
+  "merge_commit_sha": "2104e3fcede21572951c266cd7b61fd38f386aef",
+  "merged_at": "2026-08-24T18:42:01Z"
+}

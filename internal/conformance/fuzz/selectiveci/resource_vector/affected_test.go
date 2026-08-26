@@ -44,10 +44,10 @@ func TestEachResourceLimitFailsClosedWithoutCompensation(t *testing.T) {
 		name  string
 		limit func(*CeilingSet)
 	}{
-		{name: "cpu", limit: func(ceiling *CeilingSet) { ceiling.CPUCoreNS = U64(32) }},
-		{name: "memory", limit: func(ceiling *CeilingSet) { ceiling.MemoryBytes = U64(223) }},
-		{name: "work", limit: func(ceiling *CeilingSet) { ceiling.WorkUnits = U64(17) }},
-		{name: "prov", limit: func(ceiling *CeilingSet) { ceiling.UniquePROVRecords = U64(11) }},
+		{name: "cpu", limit: func(ceiling *CeilingSet) { ceiling.CPUCoreNS = new(uint64(32)) }},
+		{name: "memory", limit: func(ceiling *CeilingSet) { ceiling.MemoryBytes = new(uint64(223)) }},
+		{name: "work", limit: func(ceiling *CeilingSet) { ceiling.WorkUnits = new(uint64(17)) }},
+		{name: "prov", limit: func(ceiling *CeilingSet) { ceiling.UniquePROVRecords = new(uint64(11)) }},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -64,9 +64,9 @@ func TestEachResourceLimitFailsClosedWithoutCompensation(t *testing.T) {
 
 func generous(ceiling *CeilingSet) {
 	value := ^uint64(0)
-	ceiling.CPUCoreNS, ceiling.MemoryBytes, ceiling.PeakMemoryBytes = U64(value), U64(value), U64(value)
-	ceiling.WorkUnits, ceiling.AffectedStableIDs = U64(value), U64(value)
-	ceiling.ApplicablePressures, ceiling.IndependentGroups = U64(value), U64(value)
-	ceiling.UniquePROVRecords, ceiling.FinitePROVPaths = U64(value), U64(value)
-	ceiling.ClosureNumerator, ceiling.ClosureDenominator = U64(value), U64(value)
+	ceiling.CPUCoreNS, ceiling.MemoryBytes, ceiling.PeakMemoryBytes = new(value), new(value), new(value)
+	ceiling.WorkUnits, ceiling.AffectedStableIDs = new(value), new(value)
+	ceiling.ApplicablePressures, ceiling.IndependentGroups = new(value), new(value)
+	ceiling.UniquePROVRecords, ceiling.FinitePROVPaths = new(value), new(value)
+	ceiling.ClosureNumerator, ceiling.ClosureDenominator = new(value), new(value)
 }

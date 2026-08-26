@@ -21,7 +21,7 @@ permissions:
   # administration: read must not be added here.
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.run_attempt > 1 && format('replay-{0}', github.run_id) || 'head' }}
   cancel-in-progress: true
 
 jobs:
@@ -29,81 +29,125 @@ jobs:
     name: gofmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Bind the declared Go 1.27 toolchain
+        run: |
+          test "$(go env GOVERSION)" = "go1.27.0"
+          go version
+      - name: Require Go modernizers and module graph at a fixed point
+        run: |
+          go fix ./...
+          go mod tidy
+          git diff --exit-code
+      - name: Compile module-declared meta tools
+        run: |
+          go list tool
+          go build tool
       - name: Require formatted Go
-        run: test -z "$(gofmt -l .)"
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            printf 'gofmt required:\n%s\n' "$unformatted"
+            exit 1
+          fi
 
   vet:
     name: go vet
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: go vet ./...
 
   test:
     name: go test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: go test ./...
 
   race:
     name: go test -race
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: go test -race ./...
 
   semantic:
     name: Semantic conformance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Semantic conformance (staged verifier promotion)
         env:
           # Stage 0 is the current trust boundary. Advancing it requires a
           # deterministic CI-authorized governance change documented in .github/conformance-plan.md.
           GOOO_CONFORMANCE_STAGE: "0"
+          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
         run: ./scripts/semantic-conformance.sh
 
   policy:
@@ -112,15 +156,20 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Record CI event source
         env:
           CI_EVENT: ${{ github.event_name }}
@@ -146,8 +195,163 @@ jobs:
           actual_head="$(git rev-parse HEAD)"
           test "$actual_head" = "$EXPECTED_HEAD"
           git rev-parse --verify "$EXPECTED_BASE^{commit}" >/dev/null
+      - name: Emit source metrics (go/gooo + folders/files)
+        env:
+          METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: |
+          mkdir -p "$METRICS_DIR"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -json > "$METRICS_DIR/source-metrics-raw.json"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "${{ steps.materialize.outputs.storage-root }}" -summary > "$METRICS_DIR/source-metrics.txt"
+          go run ./bootstrap/meta-binding-witness -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics-raw.json" -bound-metrics "$METRICS_DIR/source-metrics.json" -report "$METRICS_DIR/meta-binding-report.json" -check
+          go run ./bootstrap/meta-binding-witness -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics-raw.json" -bound-metrics "$METRICS_DIR/source-metrics-replay.json" -report "$METRICS_DIR/meta-binding-report-replay.json" -check
+          cmp -s "$METRICS_DIR/source-metrics.json" "$METRICS_DIR/source-metrics-replay.json"
+          cmp -s "$METRICS_DIR/meta-binding-report.json" "$METRICS_DIR/meta-binding-report-replay.json"
+          go run ./bootstrap/meta-actionability-witness -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -binding "$METRICS_DIR/meta-binding-report.json" -report "$METRICS_DIR/meta-actionability-report.json" -check
+          go run ./bootstrap/meta-actionability-witness -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -binding "$METRICS_DIR/meta-binding-report.json" -report "$METRICS_DIR/meta-actionability-report-replay.json" -check
+          cmp -s "$METRICS_DIR/meta-actionability-report.json" "$METRICS_DIR/meta-actionability-report-replay.json"
+          go run ./cmd/directory-partition-witness -source-metrics "$METRICS_DIR/source-metrics.json" > "$METRICS_DIR/directory-partition-report.json"
+          go run ./cmd/directory-partition-witness -source-metrics "$METRICS_DIR/source-metrics.json" -mode check > "$METRICS_DIR/directory-partition-report-replay.json"
+          cmp -s "$METRICS_DIR/directory-partition-report.json" "$METRICS_DIR/directory-partition-report-replay.json"
+          go run ./cmd/directory-kind-witness -source-metrics "$METRICS_DIR/source-metrics.json" -mode check > "$METRICS_DIR/directory-kind-report.json"
+          go run ./cmd/directory-kind-witness -source-metrics "$METRICS_DIR/source-metrics.json" -mode check > "$METRICS_DIR/directory-kind-report-replay.json"
+          cmp -s "$METRICS_DIR/directory-kind-report.json" "$METRICS_DIR/directory-kind-report-replay.json"
+          jq -r '"### Directory kind separation\\n- decision: \\(.decision) (\\(.reason))\\n- plan digest: \\(.plan_digest)"' "$METRICS_DIR/directory-kind-report.json" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"### Directory partition\n- decision: \(.decision) (\(.reason))\n- plan digest: \(.plan_digest)"' "$METRICS_DIR/directory-partition-report.json" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"### Meta actionability\n- decision: \(.decision) (\(.reason))\n- indicator coverage: \(.summary.indicator_coverage_basis_points) bps\n- operation coverage: \(.summary.operation_coverage_basis_points) bps\n- selected operation: \(.selected_operation)\n- project-root exemptions: \(.summary.project_root_exemptions)\n- replay proof: \(.replay_proof_choice)"' "$METRICS_DIR/meta-actionability-report.json" >> "$GITHUB_STEP_SUMMARY"
+          go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-plan.json" -check
+          go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -base-sha "$GENERATION_BASE_SHA" -plan "$METRICS_DIR/self-improvement-replay.json" -check
+          cmp -s "$METRICS_DIR/self-improvement-plan.json" "$METRICS_DIR/self-improvement-replay.json"
+          bash ./scripts/operation-artifact-ci/build-observations.sh "$METRICS_DIR"
+          bash ./scripts/operation-artifact-ci/evaluate.sh "$METRICS_DIR"
+          go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution.json"
+          go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution-replay.json"
+          cmp -s "$METRICS_DIR/self-improvement-execution.json" "$METRICS_DIR/self-improvement-execution-replay.json"
+          go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts.json"
+          go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts-replay.json"
+          cmp -s "$METRICS_DIR/self-improvement-receipts.json" "$METRICS_DIR/self-improvement-receipts-replay.json"
+          go run ./scripts/meta-provenance -plan "$METRICS_DIR/self-improvement-plan.json" -execution "$METRICS_DIR/self-improvement-execution.json" -receipts "$METRICS_DIR/self-improvement-receipts.json" -output "$METRICS_DIR/self-improvement-provenance.json"
+          go run ./scripts/meta-provenance -plan "$METRICS_DIR/self-improvement-plan.json" -execution "$METRICS_DIR/self-improvement-execution.json" -receipts "$METRICS_DIR/self-improvement-receipts.json" -output "$METRICS_DIR/self-improvement-provenance-replay.json"
+          cmp -s "$METRICS_DIR/self-improvement-provenance.json" "$METRICS_DIR/self-improvement-provenance-replay.json"
+          go run ./scripts/artifact-feedback-resolution-ci -root "$GITHUB_WORKSPACE" -coverage "$METRICS_DIR/operation-artifact/report-1.json" -provenance "$METRICS_DIR/self-improvement-provenance.json" -output "$METRICS_DIR/artifact-feedback-resolution-input.json"
+          go run ./scripts/artifact-feedback-resolution-ci -root "$GITHUB_WORKSPACE" -coverage "$METRICS_DIR/operation-artifact/report-1.json" -provenance "$METRICS_DIR/self-improvement-provenance.json" -output "$METRICS_DIR/artifact-feedback-resolution-input-replay.json"
+          cmp -s "$METRICS_DIR/artifact-feedback-resolution-input.json" "$METRICS_DIR/artifact-feedback-resolution-input-replay.json"
+          go run ./cmd/artifact-feedback-resolution-witness -root "$GITHUB_WORKSPACE" -input "$METRICS_DIR/artifact-feedback-resolution-input.json" -report "$METRICS_DIR/artifact-feedback-resolution-receipt.json" -check
+          go run ./cmd/artifact-feedback-resolution-witness -root "$GITHUB_WORKSPACE" -input "$METRICS_DIR/artifact-feedback-resolution-input.json" -report "$METRICS_DIR/artifact-feedback-resolution-receipt-replay.json" -check
+          cmp -s "$METRICS_DIR/artifact-feedback-resolution-receipt.json" "$METRICS_DIR/artifact-feedback-resolution-receipt-replay.json"
+          jq -r '"### Artifact feedback resolution\n- decision: \(.report.decision) (\(.report.reason))\n- replay verified: \(.replay_verified)\n- receipt digest: \(.receipt_digest)"' "$METRICS_DIR/artifact-feedback-resolution-receipt.json" >> "$GITHUB_STEP_SUMMARY"
+          go run ./scripts/source-splitter -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
+          go run ./bootstrap/source-repacker -root "$GITHUB_WORKSPACE" -metrics "$METRICS_DIR/source-metrics.json" -sha "$METRICS_COMMIT_SHA" -check
+          go run ./scripts/meta-summary \
+            -metrics "$METRICS_DIR/source-metrics.json" \
+            -plan "$METRICS_DIR/self-improvement-plan.json" \
+            -execution "$METRICS_DIR/self-improvement-execution.json" \
+            -receipts "$METRICS_DIR/self-improvement-receipts.json" \
+            -provenance "$METRICS_DIR/self-improvement-provenance.json" \
+            -output "$METRICS_DIR/ci-summary.md" -report "$METRICS_DIR/ci-summary.json"
+          go run ./scripts/meta-summary \
+            -metrics "$METRICS_DIR/source-metrics.json" \
+            -plan "$METRICS_DIR/self-improvement-plan.json" \
+            -execution "$METRICS_DIR/self-improvement-execution.json" \
+            -receipts "$METRICS_DIR/self-improvement-receipts.json" \
+            -provenance "$METRICS_DIR/self-improvement-provenance.json" \
+            -output "$METRICS_DIR/ci-summary-replay.md" -report "$METRICS_DIR/ci-summary-replay.json"
+          cmp -s "$METRICS_DIR/ci-summary.md" "$METRICS_DIR/ci-summary-replay.md"
+          cmp -s "$METRICS_DIR/ci-summary.json" "$METRICS_DIR/ci-summary-replay.json"
+          cat "$METRICS_DIR/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload source metrics artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/source-metrics.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload meta-binding coverage artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-binding-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/meta-binding-report.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload meta-actionability artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-actionability-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/meta-actionability-report.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload directory partition plan artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: directory-partition-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/directory-partition-report.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload directory kind separation plan artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: directory-kind-separation-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/directory-kind-report.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload self-improvement generation artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/self-improvement-plan.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload operation artifact coverage
+        uses: actions/upload-artifact@v6
+        with:
+          name: operation-artifact-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/operation-artifact
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload self-improvement execution artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-execution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/self-improvement-execution.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload self-improvement receipt artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-receipts-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/self-improvement-receipts.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload self-improvement provenance artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/self-improvement-provenance.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload artifact feedback resolution
+        uses: actions/upload-artifact@v6
+        with:
+          name: artifact-feedback-resolution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/source-metrics/artifact-feedback-resolution-input.json
+            ${{ runner.temp }}/source-metrics/artifact-feedback-resolution-receipt.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload CI summary indicator artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ci-summary-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/source-metrics/ci-summary.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Check DAMP/DRY caps
         if: github.event_name == 'pull_request'
+        env:
+          GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
+          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
+          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
         run: go run ./scripts/verify --caps-only
       - name: Check changed-file scope, Go size caps, and PR target
         if: github.event_name == 'pull_request'
@@ -170,6 +374,7 @@ jobs:
           GOOO_SCOPE_BRANCH: ${{ github.ref_name }}
           GOOO_PR_HEAD: ""
           GOOO_PR_BASE: ""
+          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
         run: go run ./scripts/verify
   evidence:
     name: CI evidence
@@ -177,19 +382,32 @@ jobs:
     if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
-      - name: Test artifact paginator contract
-        run: node scripts/ci-proof/artifacts_test.js
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Download exact artifact provenance
+        uses: actions/download-artifact@v7
+        with:
+          name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: ci-meta-provenance
+      - name: Test CI proof selector contracts
+        run: |
+          node scripts/ci-proof/artifacts_test.js
+          node scripts/ci-proof/route_test.js
+          node scripts/ci-proof/concurrency_test.js
       - name: Collect terminal canonical job evidence
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ github.token }}
           script: |
@@ -214,7 +432,7 @@ jobs:
           grep -Fq '//gooo:slot:start' ci-generated/first/semantic.gooo.go
           grep -Fq '//gooo:slot:end' ci-generated/first/semantic.gooo.go
           test -z "$(git diff --name-only)"
-          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$|ci-domain/)' || true)"
+          unexpected="$(git status --porcelain | grep -vE '^\?\? (ci-generated/|ci-jobs.json$|ci-evidence.json$|ci-domain/|ci-meta-provenance/)' || true)"
           test -z "$unexpected"
       - name: Capture CLI domain evidence
         run: |
@@ -235,10 +453,10 @@ jobs:
           CI_SLOT_PRESERVATION: "true"
           CI_NO_WRITE_OUTSIDE_GENERATED: "true"
         run: |
-          go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --output ci-evidence.json
+          go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --provenance ci-meta-provenance/self-improvement-provenance.json --output ci-evidence.json
           go run ./scripts/ci-evidence --verify ci-evidence.json
       - name: Write machine-readable domain evidence
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -267,7 +485,7 @@ jobs:
             domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
             fs.writeFileSync('ci-domain-evidence.json', JSON.stringify(domain, null, 2) + '\n');
       - name: Upload CI evidence bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -282,22 +500,94 @@ jobs:
     if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Resolve CI concurrency lane
+        id: concurrency-lane
+        uses: actions/github-script@v8
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_WORKFLOW: ${{ github.workflow }}
+          CI_CONCURRENCY_SCOPE: ${{ github.event.pull_request.number || github.ref }}
+        with:
+          script: |
+            const fs = require('fs');
+            const {buildConcurrencyReceipt} = require('./scripts/ci-proof/concurrency');
+            const report = buildConcurrencyReceipt(fs.readFileSync('.github/workflows/ci.yml', 'utf8'), {
+              workflow: process.env.CI_WORKFLOW,
+              scope: process.env.CI_CONCURRENCY_SCOPE,
+              run_id: Number(context.runId),
+              run_attempt: Number(process.env.CI_RUN_ATTEMPT || 1),
+            });
+            fs.writeFileSync('ci-concurrency-lane.json', JSON.stringify(report, null, 2) + '\n');
+            await core.summary
+              .addHeading('CI concurrency lane')
+              .addTable([
+                [{data: 'indicator', header: true}, {data: 'value', header: true}],
+                ['decision', report.decision],
+                ['reason', report.reason],
+                ['lane class', report.lane_class],
+                ['resolved group', report.resolved_group],
+                ['head preemption risk', String(report.summary.head_preemption_risk)],
+                ['repository writes', String(report.summary.repository_writes)],
+              ])
+              .write();
+            if (report.decision !== 'EXACT' || !report.execution_authorized) {
+              core.setFailed(`${report.decision}: ${report.reason}; next=${report.next_operation}`);
+            }
+      - name: Resolve canonical evidence lineage
+        id: evidence-lineage
+        uses: actions/github-script@v8
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const {listWorkflowArtifacts, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
+            const rows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+            const attempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+            const report = selectArtifactLineage(rows, 'ci-evidence', context.runId, attempt);
+            const replay = selectArtifactLineage(rows.slice().reverse(), 'ci-evidence', context.runId, attempt);
+            if (report.report_digest !== replay.report_digest) throw new Error('artifact lineage replay digest mismatch');
+            fs.writeFileSync('ci-artifact-lineage.json', JSON.stringify(report, null, 2) + '\n');
+            await core.summary
+              .addHeading('CI artifact lineage')
+              .addTable([
+                [{data: 'indicator', header: true}, {data: 'value', header: true}],
+                ['decision', report.decision],
+                ['reason', report.reason],
+                ['current attempt', String(report.current_attempt)],
+                ['selected attempt', String(report.summary.selected_attempt)],
+                ['fallback distance', String(report.summary.fallback_distance_attempts)],
+                ['ambiguity', String(report.summary.ambiguous_candidates)],
+                ['repository writes', String(report.summary.repository_writes)],
+              ])
+              .write();
+            if (report.decision !== 'EXACT' || !report.exact_consumption_authorized) {
+              core.setFailed(`${report.decision}: ${report.reason}; next=${report.next_operation}`);
+              return;
+            }
+            core.setOutput('artifact-name', report.selected.name);
       - name: Download canonical evidence
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
-          name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
       - name: Collect terminal canonical jobs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
@@ -340,9 +630,23 @@ jobs:
           test -s ci-generated/first/semantic.gooo.go
           test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
           test -z "$(git diff --name-only)"
+      - name: Compile deterministic proof route
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const pull = context.payload.pull_request;
+            const {normalizeBaseRef} = require('./scripts/ci-proof/refs');
+            const route = require('./scripts/ci-proof/route');
+            const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
+            const headSha = pull ? pull.head.sha : context.sha;
+            const evidence = route.buildProofRouteEvidence({
+              event: context.eventName, eventRef: context.ref, baseRef, headSha,
+            });
+            fs.writeFileSync('ci-proof-route.json', JSON.stringify(evidence, null, 2) + '\n');
       - name: Select exact Guardian promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -429,7 +733,7 @@ jobs:
           test -s ci-guardian-input/ci-guardian.json
       - name: Validate Guardian promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ github.token }}
           script: |
@@ -458,7 +762,7 @@ jobs:
             const bundle = {schema: 'gooo/ci-guardian-evidence/v1', route: manifest.route, check_name: manifest.check_name, repository: manifest.repository, pr_number: manifest.pull_request_number, action: manifest.action, base_repo: manifest.base_repo, base_ref: manifest.base_ref, base_sha: manifest.base_sha, head_repo: manifest.head_repo, head_ref: manifest.head_ref, head_sha: manifest.head_sha, workflow_ref: manifest.workflow_ref, workflow_sha: manifest.workflow_sha, runtime_ref: manifest.runtime_ref, runtime_sha: manifest.runtime_sha, event_ref: manifest.event_ref, default_branch: manifest.default_branch, observer_environment: manifest.observer_environment, observer_environment_snapshot: manifest.observer_environment_snapshot, observer_environment_digest: manifest.observer_environment_digest, head_binding_status: manifest.head_binding_status, run_id: selection.run_id, run_attempt: selection.run_attempt, workflow_id: selection.workflow_id, workflow_path: selection.workflow_path, run_event: selection.run_event, run_status: selection.run_status, run_conclusion: selection.run_conclusion, run_created_at: selection.run_created_at, run_number: selection.run_number, live_refs_before: manifest.live_refs_before, live_refs_after: manifest.live_refs_after, topology: manifest.topology, branch_protection: manifest.branch_protection, dev_branch_protection: manifest.dev_branch_protection, artifact_id: selection.artifact.id, artifact_name: selection.artifact.name, artifact_size: selection.artifact.size, artifact_expired: selection.artifact.expired, artifact_digest: selection.artifact.digest, manifest_bundle_sha256: manifest.bundle_sha256, guardian_job_id: selection.job.id, guardian_job_name: selection.job.name, guardian_job_status: selection.job.status, guardian_job_conclusion: selection.job.conclusion, guardian_job_head_sha: selection.job.head_sha, check_run_id: selection.check.id, check_run_name: selection.check.name, check_run_app_id: selection.check.app_id, check_run_status: selection.check.status, check_run_conclusion: selection.check.conclusion, check_run_head_sha: selection.check.head_sha, check_suite_id: selection.check.suite_id, decision: manifest.decision, code: manifest.code, bundle_sha256: manifest.bundle_sha256};
             fs.writeFileSync('ci-guardian-evidence.json', JSON.stringify(bundle, null, 2) + '\n');
       - name: Collect proof context
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -471,11 +775,18 @@ jobs:
             const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
             const baseSha = pull ? pull.base.sha : context.payload.before;
             const headSha = pull ? pull.head.sha : context.sha;
+            const routePolicy = require('./scripts/ci-proof/route');
+            const routeEvidence = JSON.parse(fs.readFileSync('ci-proof-route.json', 'utf8'));
+            routePolicy.validateProofRouteEvidence(routeEvidence, {
+              event: context.eventName, eventRef: context.ref, baseRef, headSha,
+            });
+            const proofRoute = routeEvidence.route;
+            const isPromotion = proofRoute === 'promotion_main';
             const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
             const domainEvidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-domain-evidence.json', 'utf8'));
             let guardianEvidence = null;
             let promotionObservation = null;
-            if (baseRef === 'main') {
+            if (isPromotion) {
               if (!fs.existsSync('ci-guardian-evidence.json')) throw new Error('main promotion proof requires exact Guardian evidence');
               guardianEvidence = JSON.parse(fs.readFileSync('ci-guardian-evidence.json', 'utf8'));
               if (fs.existsSync('ci-promotion-observation.json')) promotionObservation = JSON.parse(fs.readFileSync('ci-promotion-observation.json', 'utf8'));
@@ -517,7 +828,7 @@ jobs:
               valid_until: null,
               digest_sha256: ''
             };
-            if (baseRef === 'main') {
+            if (isPromotion) {
               if (!guardianEvidence.branch_protection) throw new Error('Guardian envelope is missing trusted branch protection evidence');
               protection = guardianEvidence.branch_protection;
             } else {
@@ -541,7 +852,7 @@ jobs:
             const checkoutRef = headSha;
             const contextData = {
               repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
-              base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
+              proof_route: proofRoute, base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
               actor: context.actor, builder: context.actor, gate: 'CI policy',
               branch_protected: protection.exists, branch_protection: protection, dev_branch_protection: guardianEvidence ? guardianEvidence.dev_branch_protection : null, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
@@ -560,13 +871,16 @@ jobs:
         run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
       - name: Upload proof and provenance receipt
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ci-proof.json
             provenance-receipt.jsonl
             ci-jobs.json
+            ci-proof-route.json
+            ci-concurrency-lane.json
+            ci-artifact-lineage.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
@@ -577,24 +891,29 @@ jobs:
     if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version-file: go.mod
-          cache: true
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download exact proof evidence
         if: ${{ always() }}
-        uses: actions/download-artifact@v4
+        continue-on-error: true
+        uses: actions/download-artifact@v7
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-proof-input
-          if-no-files-found: ignore
       - name: Capture exact failure tuple
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
@@ -649,7 +968,7 @@ jobs:
             if (fs.existsSync(proofPath)) {
               try {
                 proof = JSON.parse(fs.readFileSync(proofPath, 'utf8'));
-                const exactProofTuple = proof.schema === 'gooo/ci-proof/v3'
+                const exactProofTuple = proof.schema === 'gooo/ci-proof/v4'
                   && proof.repository === `${context.repo.owner}/${context.repo.repo}`
                   && proof.event === context.eventName
                   && proof.base_ref === normalizedBaseRef
@@ -846,7 +1165,7 @@ jobs:
           jq -r '"- failure_codes: `\(.failure_codes | join(", "))`\n- owner_branch: `\(.owner_branch)` ref `\(.owner_ref)`\n- catalog_digest: `\(.catalog_digest)`\n- artifact_status: `\(.artifact_status)` reason `\(.artifact_reason)` refs \(.artifact_refs | map([.id, .name, .size_bytes, .digest, .run_id, .run_attempt] | @csv) | join("; "))\n- proof_artifact_ref: \(.proof_artifact_ref // "none" | tostring)\n- rejections: \(.rejections | join(", "))"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
       - name: Upload failure reason manifest
         if: ${{ always() && hashFiles('ci-failure.json') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ci-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-failure.json
@@ -854,9 +1173,130 @@ jobs:
           retention-days: 14
       - name: Upload no-failure closure manifest
         if: ${{ always() && hashFiles('ci-closure.json') != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ci-closure-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-closure.json
+          if-no-files-found: error
+          retention-days: 14
+
+  feedback-predecessor:
+    name: Feedback predecessor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - id: cause
+        name: Resolve predecessor cause
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            sha="$PR_BASE_SHA"
+            branch="$PR_BASE_REF"
+          else
+            sha="$PUSH_BEFORE"
+            branch="$REF_NAME"
+          fi
+          if [[ ! "$sha" =~ ^[0-9a-f]{40}$ || "$sha" == "0000000000000000000000000000000000000000" ]]; then
+            echo "invalid predecessor cause" >&2
+            exit 1
+          fi
+          printf 'sha=%s\nbranch=%s\n' "$sha" "$branch" >> "$GITHUB_OUTPUT"
+      - name: Collect deterministic predecessor input
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for suffix in a b; do
+            go run ./scripts/feedback-predecessor-ci \
+              --repository "$GITHUB_REPOSITORY" \
+              --predecessor-sha "${{ steps.cause.outputs.sha }}" \
+              --branch "${{ steps.cause.outputs.branch }}" \
+              --workflow "CI [push full]" \
+              --output "$RUNNER_TEMP/predecessor-input-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/predecessor-input-a.json" "$RUNNER_TEMP/predecessor-input-b.json"
+      - name: Evaluate deterministic predecessor receipt
+        run: |
+          for suffix in a b; do
+            go run ./cmd/feedback-predecessor-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --input "$RUNNER_TEMP/predecessor-input-a.json" \
+              --report "$RUNNER_TEMP/predecessor-receipt-$suffix.json" \
+              --check
+          done
+          cmp "$RUNNER_TEMP/predecessor-receipt-a.json" "$RUNNER_TEMP/predecessor-receipt-b.json"
+          jq -r '"### Predecessor selection\n- decision: \(.report.decision) (\(.report.reason))\n- resolution: \(.report.resolution)\n- promotion authorized: \(.report.promotion_authorized)\n- next: \(.report.next_operation)\n- exact readiness: \(.report.indicators[0].value)/10000\n- continuity: \(.report.indicators[1].value)/10000"' "$RUNNER_TEMP/predecessor-receipt-a.json" >> "$GITHUB_STEP_SUMMARY"
+      - id: semantic
+        name: Consume deterministic predecessor semantic state
+        run: |
+          if jq -e '.report.decision == "LOWER_RESOLUTION"' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
+            echo "emitted=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          for suffix in a b; do
+            go run ./cmd/feedback-semantic-state-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --input "$RUNNER_TEMP/predecessor-input-a.json" \
+              --predecessor-receipt "$RUNNER_TEMP/predecessor-receipt-a.json" \
+              --report "$RUNNER_TEMP/predecessor-semantic-$suffix.json" \
+              --check
+          done
+          cmp "$RUNNER_TEMP/predecessor-semantic-a.json" "$RUNNER_TEMP/predecessor-semantic-b.json"
+          echo "emitted=true" >> "$GITHUB_OUTPUT"
+          jq -r '"### Predecessor semantic state\n- decision: \(.report.decision) (\(.report.reason))\n- next: \(.report.snapshot.next_operation)\n- replay verified: \(.replay_verified)\n- receipt digest: \(.receipt_digest)"' "$RUNNER_TEMP/predecessor-semantic-a.json" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: feedback-predecessor-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/predecessor-input-a.json
+            ${{ runner.temp }}/predecessor-receipt-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v6
+        if: steps.semantic.outputs.emitted == 'true'
+        with:
+          name: feedback-semantic-state-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/predecessor-input-a.json
+            ${{ runner.temp }}/predecessor-receipt-a.json
+            ${{ runner.temp }}/predecessor-semantic-a.json
+          if-no-files-found: error
+          retention-days: 30
+
+  language-package-execution:
+    name: Language package execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Conform package execution through Go 1.27
+        env:
+          EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: scripts/language-package-execution/main.sh "$RUNNER_TEMP/language-package-execution"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: language-package-execution-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/language-package-execution
           if-no-files-found: error
           retention-days: 14

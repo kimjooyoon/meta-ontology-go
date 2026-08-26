@@ -1,0 +1,44 @@
+package valuecatalog
+
+type Summary struct {
+	BaselineCasesPassed         int        `json:"baseline_cases_passed"`
+	BaselineCasesTotal          int        `json:"baseline_cases_total"`
+	ExtensionCasesPassed        int        `json:"extension_cases_passed"`
+	ExtensionCasesTotal         int        `json:"extension_cases_total"`
+	UnknownCounterexamplePassed bool       `json:"unknown_counterexample_passed"`
+	RepositoryWrites            int        `json:"repository_writes"`
+	CoreFingerprintSensitive    Coordinate `json:"core_fingerprint_sensitive"`
+}
+
+type Authority struct {
+	RepositoryMutationAuthorized bool `json:"repository_mutation_authorized"`
+	PromotionAuthorized          bool `json:"promotion_authorized"`
+	AutomaticAdoptionAuthorized  bool `json:"automatic_adoption_authorized"`
+}
+
+type Indicator struct {
+	ID            string `json:"id"`
+	Class         string `json:"class"`
+	ProofChoice   string `json:"proof_choice"`
+	MetaOperation string `json:"meta_operation"`
+	Value         int    `json:"value"`
+	Target        int    `json:"target"`
+	Satisfied     bool   `json:"satisfied"`
+}
+
+type View struct {
+	Audience     string   `json:"audience"`
+	Resolution   string   `json:"resolution"`
+	Satisfied    int      `json:"satisfied"`
+	Total        int      `json:"total"`
+	BasisPoints  int      `json:"basis_points"`
+	IndicatorIDs []string `json:"indicator_ids"`
+}
+
+type Proof struct {
+	Choice         string `json:"choice"`
+	Claim          string `json:"claim"`
+	MetaOperation  string `json:"meta_operation"`
+	EvidenceDigest string `json:"evidence_digest"`
+	Passed         bool   `json:"passed"`
+}

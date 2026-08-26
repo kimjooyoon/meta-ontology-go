@@ -1,0 +1,22 @@
+{
+  "schema": "gooo/rollback-integrity-activation-provenance/v1",
+  "predecessor_sha": "0908088ab35447098671263ffa7290c0363f7404",
+  "workflow_run_id": 32715215231,
+  "artifacts": [
+    {
+      "id": 9515629846,
+      "name": "language-assurance-0908088ab35447098671263ffa7290c0363f7404",
+      "digest": "sha256:547576f410897dc8d662c990e2827333405e305158bd75e269c1361aed82b9e9",
+      "capsule": "internal/meta/languageassurance/rollbackintegrityactivation/evidence/assurance.json",
+      "capsule_digest": "sha256:e57279b58a03b90c8dad1f4f86b3f17023cf217c4c63fdfd9fd2f1a8e8d1fae8"
+    },
+    {
+      "id": 9515667591,
+      "name": "rollback-integrity-eligibility-0908088ab35447098671263ffa7290c0363f7404",
+      "digest": "sha256:ede353397fcabb56328181c0b78a293aba0d00e0cafcb9dc443565d6943e4fef",
+      "capsule": "internal/meta/languageassurance/rollbackintegrityactivation/evidence/eligibility.json",
+      "capsule_digest": "sha256:29059e16b53b18177e391796bb6d9cffa85f2872f22722f5e7a387b1b16d51bc",
+      "semantic_digest": "sha256:0354624c036750dd84dd1fb2f49969f4cf9e94ab5ea609c1dbf29b8443be12a4"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schema": "gooo/vertical-slice-boundary-denominator/v1",
+  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v6",
+  "version": 6,
+  "boundaries": [
+    {
+      "id": "syntax",
+      "schema": "gooo/language-syntax-roundtrip/v1",
+      "meta_operation": "prove-language-syntax-roundtrip",
+      "target": 25,
+      "link_target": 1
+    },
+    {
+      "id": "semantics",
+      "schema": "gooo/language-semantic-model/v1",
+      "meta_operation": "prove-staged-semantic-model",
+      "target": 27,
+      "link_target": 2
+    },
+    {
+      "id": "binding",
+      "schema": "gooo/language-semantic-readiness-binding/v2",
+      "meta_operation": "bind-semantic-readiness-evidence",
+      "target": 12,
+      "link_target": 2
+    },
+    {
+      "id": "use-cases",
+      "schema": "gooo/toolchain-executable-use-cases/v1",
+      "meta_operation": "execute-versioned-use-cases",
+      "target": 3,
+      "link_target": 1
+    },
+    {
+      "id": "toolchain",
+      "schema": "gooo/toolchain-conformance-report/v1",
+      "meta_operation": "close-toolchain-conformance-ledger",
+      "target": 171,
+      "link_target": 3
+    },
+    {
+      "id": "release",
+      "schema": "gooo/toolchain-cross-platform-release-report/v1",
+      "meta_operation": "assemble-exact-cross-platform-release",
+      "target": 20,
+      "link_target": 3
+    }
+  ]
+}

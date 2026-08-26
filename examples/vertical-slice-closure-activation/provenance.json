@@ -1,0 +1,8 @@
+{
+  "schema": "gooo/vertical-slice-closure-activation-provenance/v1",
+  "predecessor_sha": "3920551d8db1226810832f6f924783b2fddf4ccd",
+  "artifacts": [
+    {"id": 9525256269, "name": "language-assurance-3920551d8db1226810832f6f924783b2fddf4ccd", "digest": "sha256:e640b072baafdfe59e504edaabca377588176c6ff76bcbeb4efb95f496d1f831", "capsule": "internal/meta/languageassurance/verticalsliceclosureactivation/evidence/assurance.json", "capsule_digest": "sha256:ba6d4e7bb8db487fbac31e5e8d34e9826f86bb20b04a34094c7cd269aedf17bc"},
+    {"id": 9525476954, "name": "vertical-slice-closure-eligibility-3920551d8db1226810832f6f924783b2fddf4ccd", "digest": "sha256:b0a9b2262eef5562b6d2c3cdebfc98c1c69928772d8a319eb4ea9947a0ec0c65", "capsule": "internal/meta/languageassurance/verticalsliceclosureactivation/evidence/eligibility.json", "capsule_digest": "sha256:5c53ad1ee6c436c7ed788a31cb9d270791ea4958ec1f50db08d5792cf501ed3b", "semantic_digest": "sha256:ce9a0a7c48ab063a70559272b2a0ed164754968fa26346fb13ad07ff728f3b73"}
+  ]
+}

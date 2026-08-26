@@ -1,0 +1,30 @@
+{
+  "schema": "gooo/vertical-slice-closure-shadow-use-cases/v1",
+  "cases": [
+    {
+      "id": "exact-six-boundary-chain",
+      "expected_decision": "SHADOW_PASS",
+      "expected_resolution": "EXACT"
+    },
+    {
+      "id": "missing-semantic-evidence",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "LOWER_RESOLUTION"
+    },
+    {
+      "id": "unknown-semantic-decision",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "LOWER_RESOLUTION"
+    },
+    {
+      "id": "broken-syntax-semantic-link",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "INVARIANT_ONLY"
+    },
+    {
+      "id": "observer-write",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "INVARIANT_ONLY"
+    }
+  ]
+}

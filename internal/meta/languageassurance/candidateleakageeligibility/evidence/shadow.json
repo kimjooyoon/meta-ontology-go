@@ -1,0 +1,1053 @@
+{
+  "schema": "gooo/candidate-leakage-conformance/v1",
+  "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+  "denominator_id": "gooo/candidate-leakage-denominator/v1",
+  "denominator_digest": "sha256:7053f28b9b0619d98694dbc04fef30d2a29589fcd7c959b8c2ec4887f43307da",
+  "decision": "PASS",
+  "resolution": "EXACT",
+  "cases": [
+    {
+      "definition": {
+        "id": "isolated-candidate",
+        "expected_decision": "PASS",
+        "expected_resolution": "EXACT",
+        "expected_effect": "NO_EFFECT",
+        "expected_reason": "CANDIDATE_REMAINS_NON_AUTHORITATIVE",
+        "expected_leakage_paths": 0,
+        "expected_unknown_paths": 0
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/candidate-leakage-report/v1",
+        "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+        "decision": "PASS",
+        "resolution": "EXACT",
+        "enforcement_effect": "NO_EFFECT",
+        "reason": "CANDIDATE_REMAINS_NON_AUTHORITATIVE",
+        "denominator_id": "gooo/candidate-leakage-denominator/v1",
+        "denominator_digest": "sha256:7053f28b9b0619d98694dbc04fef30d2a29589fcd7c959b8c2ec4887f43307da",
+        "input": {
+          "schema": "gooo/candidate-leakage-input/v1",
+          "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+          "candidate": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "decision": "ALLOW_LIMITED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "promotion": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "candidate_digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "evidence_digest": "sha256:dad747842b61bcb27027f68e224bf20b8307a459c95e56ef9d90fb1403527702",
+            "decision": "DENIED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "official": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "status": "NOT_IMPLEMENTED",
+            "decision": "BLOCK",
+            "resolution": "NONE",
+            "meta_operation": "promote-candidate-state"
+          }
+        },
+        "summary": {
+          "boundary_paths": 1,
+          "leakage_paths": 0,
+          "unknown_paths": 0,
+          "blocked_paths": 0,
+          "authorized_paths": 0,
+          "boundary_binding_bps": 10000,
+          "promotion_authority_bps": 10000,
+          "repository_writes": 0,
+          "promotion_credit_bps": 0
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.candidate-leakage-paths.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "detect-candidate-leakage",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.candidate-boundary-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "observe-candidate-envelope",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.promotion-authority-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "bind-promotion-authority",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.candidate-unknown-laundering.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.effects.candidate-leakage-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-read-only",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.candidate-shadow-promotion-credit.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "deny-shadow-promotion-credit",
+            "unit": "basis_points",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-candidate-leakage-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-candidate-envelope",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-promotion-authority",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "detect-candidate-leakage",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-candidate-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "deny-shadow-promotion-credit",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "report_digest": "sha256:2dff55bcb99adbb59c44317d7f9b0af4390612ca2c4c10b94e18e6302d9bdc62"
+      }
+    },
+    {
+      "definition": {
+        "id": "authorized-transition",
+        "expected_decision": "PASS",
+        "expected_resolution": "EXACT",
+        "expected_effect": "NO_EFFECT",
+        "expected_reason": "EXACT_PROMOTION_BOUND",
+        "expected_leakage_paths": 0,
+        "expected_unknown_paths": 0
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/candidate-leakage-report/v1",
+        "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+        "decision": "PASS",
+        "resolution": "EXACT",
+        "enforcement_effect": "NO_EFFECT",
+        "reason": "EXACT_PROMOTION_BOUND",
+        "denominator_id": "gooo/candidate-leakage-denominator/v1",
+        "denominator_digest": "sha256:7053f28b9b0619d98694dbc04fef30d2a29589fcd7c959b8c2ec4887f43307da",
+        "input": {
+          "schema": "gooo/candidate-leakage-input/v1",
+          "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+          "candidate": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "decision": "ALLOW_LIMITED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "promotion": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "candidate_digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "evidence_digest": "sha256:dad747842b61bcb27027f68e224bf20b8307a459c95e56ef9d90fb1403527702",
+            "decision": "AUTHORIZED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "official": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "status": "OPERATING",
+            "decision": "ALLOW",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          }
+        },
+        "summary": {
+          "boundary_paths": 1,
+          "leakage_paths": 0,
+          "unknown_paths": 0,
+          "blocked_paths": 0,
+          "authorized_paths": 1,
+          "boundary_binding_bps": 10000,
+          "promotion_authority_bps": 10000,
+          "repository_writes": 0,
+          "promotion_credit_bps": 0
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.candidate-leakage-paths.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "detect-candidate-leakage",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.candidate-boundary-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "observe-candidate-envelope",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.promotion-authority-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "bind-promotion-authority",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.candidate-unknown-laundering.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.effects.candidate-leakage-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-read-only",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.candidate-shadow-promotion-credit.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "deny-shadow-promotion-credit",
+            "unit": "basis_points",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-candidate-leakage-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-candidate-envelope",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-promotion-authority",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "detect-candidate-leakage",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-candidate-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "deny-shadow-promotion-credit",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "report_digest": "sha256:80d8d5083be68b4aaab9b628d620bb830156a7f64915302ea91558a21b88b7f2"
+      }
+    },
+    {
+      "definition": {
+        "id": "denied-fixed-point-leak",
+        "expected_decision": "FAIL_CLOSED",
+        "expected_resolution": "EXACT",
+        "expected_effect": "BLOCK",
+        "expected_reason": "CANDIDATE_LEAKAGE_DETECTED",
+        "expected_leakage_paths": 1,
+        "expected_unknown_paths": 0
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/candidate-leakage-report/v1",
+        "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+        "decision": "FAIL_CLOSED",
+        "resolution": "EXACT",
+        "enforcement_effect": "BLOCK",
+        "reason": "CANDIDATE_LEAKAGE_DETECTED",
+        "denominator_id": "gooo/candidate-leakage-denominator/v1",
+        "denominator_digest": "sha256:7053f28b9b0619d98694dbc04fef30d2a29589fcd7c959b8c2ec4887f43307da",
+        "input": {
+          "schema": "gooo/candidate-leakage-input/v1",
+          "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+          "candidate": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "decision": "ALLOW_LIMITED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "promotion": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "candidate_digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "evidence_digest": "sha256:dad747842b61bcb27027f68e224bf20b8307a459c95e56ef9d90fb1403527702",
+            "decision": "DENIED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "official": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "status": "OPERATING",
+            "decision": "FIXED_POINT",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          }
+        },
+        "summary": {
+          "boundary_paths": 1,
+          "leakage_paths": 1,
+          "unknown_paths": 0,
+          "blocked_paths": 1,
+          "authorized_paths": 0,
+          "boundary_binding_bps": 10000,
+          "promotion_authority_bps": 10000,
+          "repository_writes": 0,
+          "promotion_credit_bps": 0
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.candidate-leakage-paths.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "detect-candidate-leakage",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 1,
+            "target": 0,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.evidence.candidate-boundary-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "observe-candidate-envelope",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.promotion-authority-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "bind-promotion-authority",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.candidate-unknown-laundering.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.effects.candidate-leakage-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-read-only",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.candidate-shadow-promotion-credit.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "deny-shadow-promotion-credit",
+            "unit": "basis_points",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-candidate-leakage-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-candidate-envelope",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-promotion-authority",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "detect-candidate-leakage",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-candidate-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "deny-shadow-promotion-credit",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "report_digest": "sha256:41701d51665e038718a782eb65ca586010eb2905e8337a163d90307a7781603c"
+      }
+    },
+    {
+      "definition": {
+        "id": "fail-closed-allow-leak",
+        "expected_decision": "FAIL_CLOSED",
+        "expected_resolution": "EXACT",
+        "expected_effect": "BLOCK",
+        "expected_reason": "CANDIDATE_LEAKAGE_DETECTED",
+        "expected_leakage_paths": 1,
+        "expected_unknown_paths": 0
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/candidate-leakage-report/v1",
+        "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+        "decision": "FAIL_CLOSED",
+        "resolution": "EXACT",
+        "enforcement_effect": "BLOCK",
+        "reason": "CANDIDATE_LEAKAGE_DETECTED",
+        "denominator_id": "gooo/candidate-leakage-denominator/v1",
+        "denominator_digest": "sha256:7053f28b9b0619d98694dbc04fef30d2a29589fcd7c959b8c2ec4887f43307da",
+        "input": {
+          "schema": "gooo/candidate-leakage-input/v1",
+          "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+          "candidate": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "decision": "ALLOW_LIMITED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "promotion": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "candidate_digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "evidence_digest": "sha256:dad747842b61bcb27027f68e224bf20b8307a459c95e56ef9d90fb1403527702",
+            "decision": "FAIL_CLOSED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "official": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "status": "OPERATING",
+            "decision": "ALLOW",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          }
+        },
+        "summary": {
+          "boundary_paths": 1,
+          "leakage_paths": 1,
+          "unknown_paths": 0,
+          "blocked_paths": 1,
+          "authorized_paths": 0,
+          "boundary_binding_bps": 10000,
+          "promotion_authority_bps": 10000,
+          "repository_writes": 0,
+          "promotion_credit_bps": 0
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.candidate-leakage-paths.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "detect-candidate-leakage",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 1,
+            "target": 0,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.evidence.candidate-boundary-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "observe-candidate-envelope",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.promotion-authority-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "bind-promotion-authority",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 10000,
+            "target": 10000,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.candidate-unknown-laundering.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.effects.candidate-leakage-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-read-only",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.candidate-shadow-promotion-credit.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "deny-shadow-promotion-credit",
+            "unit": "basis_points",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-candidate-leakage-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-candidate-envelope",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-promotion-authority",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "detect-candidate-leakage",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-candidate-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "deny-shadow-promotion-credit",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "report_digest": "sha256:3ee27afc15d74c4db7bab0557240561e2d4b6ac1acf0d9a557085955f3e288ec"
+      }
+    },
+    {
+      "definition": {
+        "id": "unknown-promotion",
+        "expected_decision": "FAIL_CLOSED",
+        "expected_resolution": "INVARIANT_ONLY",
+        "expected_effect": "BLOCK",
+        "expected_reason": "CANDIDATE_BOUNDARY_DECISION_UNKNOWN",
+        "expected_leakage_paths": 0,
+        "expected_unknown_paths": 1
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/candidate-leakage-report/v1",
+        "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+        "decision": "FAIL_CLOSED",
+        "resolution": "INVARIANT_ONLY",
+        "enforcement_effect": "BLOCK",
+        "reason": "CANDIDATE_BOUNDARY_DECISION_UNKNOWN",
+        "denominator_id": "gooo/candidate-leakage-denominator/v1",
+        "denominator_digest": "sha256:7053f28b9b0619d98694dbc04fef30d2a29589fcd7c959b8c2ec4887f43307da",
+        "input": {
+          "schema": "gooo/candidate-leakage-input/v1",
+          "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+          "candidate": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "decision": "ALLOW_LIMITED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "promotion": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "candidate_digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "evidence_digest": "sha256:dad747842b61bcb27027f68e224bf20b8307a459c95e56ef9d90fb1403527702",
+            "decision": "UNKNOWN",
+            "resolution": "INVARIANT_ONLY",
+            "meta_operation": "promote-candidate-state"
+          },
+          "official": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "status": "NOT_IMPLEMENTED",
+            "decision": "BLOCK",
+            "resolution": "NONE",
+            "meta_operation": "promote-candidate-state"
+          }
+        },
+        "summary": {
+          "boundary_paths": 1,
+          "leakage_paths": 0,
+          "unknown_paths": 1,
+          "blocked_paths": 1,
+          "authorized_paths": 0,
+          "boundary_binding_bps": 0,
+          "promotion_authority_bps": 0,
+          "repository_writes": 0,
+          "promotion_credit_bps": 0
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.candidate-leakage-paths.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "detect-candidate-leakage",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.candidate-boundary-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "observe-candidate-envelope",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 0,
+            "target": 10000,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.evidence.promotion-authority-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "bind-promotion-authority",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 0,
+            "target": 10000,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.candidate-unknown-laundering.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 1,
+            "target": 0,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.effects.candidate-leakage-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-read-only",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.candidate-shadow-promotion-credit.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "deny-shadow-promotion-credit",
+            "unit": "basis_points",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-candidate-leakage-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-candidate-envelope",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-promotion-authority",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "detect-candidate-leakage",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-candidate-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "deny-shadow-promotion-credit",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "report_digest": "sha256:7df0235398aac4d09c8115d46ddfb013e125f65dc9d634fa03a12d573a95fb68"
+      }
+    },
+    {
+      "definition": {
+        "id": "digest-mismatch",
+        "expected_decision": "FAIL_CLOSED",
+        "expected_resolution": "INVARIANT_ONLY",
+        "expected_effect": "BLOCK",
+        "expected_reason": "CANDIDATE_DIGEST_BINDING_UNKNOWN",
+        "expected_leakage_paths": 0,
+        "expected_unknown_paths": 1
+      },
+      "passed": true,
+      "report": {
+        "schema": "gooo/candidate-leakage-report/v1",
+        "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+        "decision": "FAIL_CLOSED",
+        "resolution": "INVARIANT_ONLY",
+        "enforcement_effect": "BLOCK",
+        "reason": "CANDIDATE_DIGEST_BINDING_UNKNOWN",
+        "denominator_id": "gooo/candidate-leakage-denominator/v1",
+        "denominator_digest": "sha256:7053f28b9b0619d98694dbc04fef30d2a29589fcd7c959b8c2ec4887f43307da",
+        "input": {
+          "schema": "gooo/candidate-leakage-input/v1",
+          "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+          "candidate": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "digest": "sha256:4e98052b2eea002088e61fe92fb0725d0cfdea828acf8ee7e9d4f20c087be988",
+            "decision": "ALLOW_LIMITED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "promotion": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "candidate_digest": "sha256:b00e779b544e78aa970362d734ec8ba9388415ceba3ee699bd5d6ad1d0d5b53d",
+            "evidence_digest": "sha256:dad747842b61bcb27027f68e224bf20b8307a459c95e56ef9d90fb1403527702",
+            "decision": "AUTHORIZED",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          },
+          "official": {
+            "subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+            "status": "OPERATING",
+            "decision": "ALLOW",
+            "resolution": "EXACT",
+            "meta_operation": "promote-candidate-state"
+          }
+        },
+        "summary": {
+          "boundary_paths": 1,
+          "leakage_paths": 0,
+          "unknown_paths": 1,
+          "blocked_paths": 1,
+          "authorized_paths": 0,
+          "boundary_binding_bps": 0,
+          "promotion_authority_bps": 0,
+          "repository_writes": 0,
+          "promotion_credit_bps": 0
+        },
+        "indicators": [
+          {
+            "metric_id": "gooo.metric.semantic.candidate-leakage-paths.v1",
+            "class": "OUTCOME",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "detect-candidate-leakage",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.evidence.candidate-boundary-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "observe-candidate-envelope",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 0,
+            "target": 10000,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.evidence.promotion-authority-binding-bps.v1",
+            "class": "DRIVER",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "bind-promotion-authority",
+            "unit": "basis_points",
+            "relation": "GREATER_OR_EQUAL",
+            "resolution": "INVARIANT_ONLY",
+            "value": 0,
+            "target": 10000,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.epistemic.candidate-unknown-laundering.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "REGRESSION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-unknown",
+            "unit": "paths",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 1,
+            "target": 0,
+            "satisfied": false
+          },
+          {
+            "metric_id": "gooo.metric.effects.candidate-leakage-writes.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "FOUNDATION",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "preserve-candidate-read-only",
+            "unit": "writes",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          },
+          {
+            "metric_id": "gooo.metric.semantic.candidate-shadow-promotion-credit.v1",
+            "class": "GUARDRAIL",
+            "proof_choice": "COHERENCE",
+            "producer": "candidateleakage.Evaluate",
+            "consumer": "candidate-leakage-shadow-gate",
+            "meta_operation": "deny-shadow-promotion-credit",
+            "unit": "basis_points",
+            "relation": "LESS_OR_EQUAL",
+            "resolution": "EXACT",
+            "value": 0,
+            "target": 0,
+            "satisfied": true
+          }
+        ],
+        "meta_operations": [
+          {
+            "id": "freeze-candidate-leakage-denominator",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "observe-candidate-envelope",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "bind-promotion-authority",
+            "proof_choice": "FOUNDATION"
+          },
+          {
+            "id": "detect-candidate-leakage",
+            "proof_choice": "COHERENCE"
+          },
+          {
+            "id": "preserve-candidate-unknown",
+            "proof_choice": "REGRESSION"
+          },
+          {
+            "id": "deny-shadow-promotion-credit",
+            "proof_choice": "FOUNDATION"
+          }
+        ],
+        "report_digest": "sha256:ccdf40db6f26e19e36ab13c3744608ef42cb696809e98bceea9322dd3051cd0b"
+      }
+    }
+  ],
+  "summary": {
+    "cases_total": 6,
+    "cases_passed": 6,
+    "exact_pass": 2,
+    "exact_fail_closed": 2,
+    "invariant_fail_closed": 2,
+    "coverage_bps": 10000
+  },
+  "repository_writes": 0,
+  "promotion_credit_bps": 0,
+  "suite_digest": "sha256:c45654ef50847069089d31bdddeb6d112da4e8333ba805754eba11a125d424d1"
+}

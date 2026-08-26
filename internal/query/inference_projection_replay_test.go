@@ -28,17 +28,15 @@ func TestInferenceProjectionReplayIsRaceSafeAndReadOnly(t *testing.T) {
 	const replays = 20
 	var wait sync.WaitGroup
 	errorsCh := make(chan error, workers*replays)
-	for worker := 0; worker < workers; worker++ {
-		wait.Add(1)
-		go func() {
-			defer wait.Done()
-			for replay := 0; replay < replays; replay++ {
+	for range workers {
+		wait.Go(func() {
+			for range replays {
 				got, replayErr := projection.Execute(request)
 				if replayErr != nil || got.CanonicalDigestValue() != wantDigest {
 					errorsCh <- errors.New("inference replay digest changed")
 				}
 			}
-		}()
+		})
 	}
 	wait.Wait()
 	close(errorsCh)
