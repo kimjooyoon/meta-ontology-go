@@ -14,7 +14,7 @@ func TestUnknownIsLocalizedAndCannotPass(t *testing.T) {
 		ProofRoutes:      ProofRouteCounts{Foundation: 1, Coherence: 1, Regression: 1},
 		ClaimSetDecision: "FAIL_CLOSED", Resolution: "STAGE_LOCAL",
 	}
-	report, err := Project(testContract(claims, expected), []byte(`{"schema":"observed/v1"}`), "abc")
+	report, err := Project(testContract(claims, expected), []byte(`{"schema":"observed/v1"}`), nil, "abc")
 	if err != nil {
 		t.Fatal(err)
 	}

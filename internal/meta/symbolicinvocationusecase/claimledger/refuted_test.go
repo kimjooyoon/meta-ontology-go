@@ -11,7 +11,7 @@ func TestRefutedEvidenceIsConformantButNeverPromoted(t *testing.T) {
 		ProofRoutes:      ProofRouteCounts{Foundation: 1},
 		ClaimSetDecision: "FAIL_CLOSED", Resolution: "CLAIM_LOCAL",
 	}
-	report, err := Project(testContract(claims, expected), []byte(`{"decision":"UNKNOWN"}`), "abc")
+	report, err := Project(testContract(claims, expected), []byte(`{"decision":"UNKNOWN"}`), nil, "abc")
 	if err != nil {
 		t.Fatal(err)
 	}

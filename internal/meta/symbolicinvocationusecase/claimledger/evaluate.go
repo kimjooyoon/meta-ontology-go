@@ -1,28 +1,24 @@
 package claimledger
 
-import "strings"
-
-func projectEvidence(report *Report, claim Claim, spec ClaimSpec, observation map[string]any, subject string) {
+func projectEvidence(report *Report, claim Claim, spec ClaimSpec, sources map[string]sourceState, subject string) {
 	report.Metrics.InScopeClaimTotal++
 	evidenceID := "evidence:" + spec.ID
 	claim.EvidenceRefs = []string{evidenceID}
-	path, observed, found := lookupAny(observation, spec.Evidence.Paths)
-	evidence := Evidence{
-		ID: evidenceID, ClaimID: spec.ID,
-		SourcePath: strings.Join(spec.Evidence.Paths, "|"), SourceDigest: report.ObservationDigest,
-	}
+	evidence, observed, found, unknownReason := selectEvidence(spec, sources, evidenceID)
 	if !found {
-		evidence.Status = "MISSING"
-		claim.Status, claim.Truth, claim.Reason = "UNKNOWN", "UNDETERMINED", spec.UnknownReason
+		claim.Status, claim.Truth, claim.Reason = "UNKNOWN", "UNDETERMINED", unknownReason
 		report.Metrics.UnknownTotal++
 		report.OpenClaimIDs = append(report.OpenClaimIDs, spec.ID)
 		report.Evidence = append(report.Evidence, evidence)
-		addEvent(report, spec, "EVIDENCE_MISSING", evidence.Status, claim.Reason, evidenceID)
+		eventType := "EVIDENCE_MISSING"
+		if evidence.Status == "REJECTED" {
+			eventType = "EVIDENCE_REJECTED"
+		}
+		addEvent(report, spec, eventType, evidence.Status, claim.Reason, evidenceID)
 		addEvent(report, spec, "CLAIM_UNKNOWN", claim.Status, claim.Reason, evidenceID)
 		report.Claims = append(report.Claims, claim)
 		return
 	}
-	evidence.SourcePath = path
 	matched, expectedDigest := evidenceMatches(*spec.Evidence, observed, subject)
 	evidence.ObservedValueDigest = digestValue(observed)
 	evidence.ExpectedValueDigest = expectedDigest

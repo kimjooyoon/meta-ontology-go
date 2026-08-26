@@ -30,6 +30,8 @@ type Report struct {
 	Metric            string      `json:"metric"`
 	ContractDigest    string      `json:"contract_digest"`
 	ObservationDigest string      `json:"observation_digest"`
+	RuntimeDigest     string      `json:"runtime_evidence_digest"`
+	Inputs            []InputRecord `json:"inputs"`
 	ClaimSet          Verdict     `json:"claim_set"`
 	Conformance       Conformance `json:"conformance"`
 	Metrics           Metrics     `json:"metrics"`

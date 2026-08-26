@@ -27,10 +27,35 @@ done
 chmod +x "$producer/bin/jv"
 
 reader_observation="$work/symbolic-reader-request-user-observation.json"
-"$reader_observer" \
+reader_runtime_evidence="$work/symbolic-reader-request-runtime-evidence.json"
+reader_peak_rss="$work/symbolic-reader-request-peak-rss-kib.txt"
+reader_time_version="$work/gnu-time-version.txt"
+test -x /usr/bin/time
+/usr/bin/time --version >"$reader_time_version"
+grep -Eq 'GNU [Tt]ime' "$reader_time_version"
+/usr/bin/time -f '%M' -o "$reader_peak_rss" "$reader_observer" \
   -input "$producer/symbolic-reader-request-result.json" \
   -output "$reader_observation" \
   -expected-subject-sha "$HEAD_SHA"
+peak_rss_kib="$(tr -d '[:space:]' <"$reader_peak_rss")"
+if ! [[ "$peak_rss_kib" =~ ^[1-9][0-9]*$ ]]; then
+  printf 'runtime-evidence: invalid peak RSS KiB %q\n' "$peak_rss_kib" >&2
+  exit 1
+fi
+reader_observation_digest="sha256:$(sha256sum "$reader_observation" | cut -d' ' -f1)"
+reader_time_digest="sha256:$(sha256sum /usr/bin/time | cut -d' ' -f1)"
+reader_time_version_digest="sha256:$(sha256sum "$reader_time_version" | cut -d' ' -f1)"
+jq -n --arg subject "$HEAD_SHA" --arg observation_digest "$reader_observation_digest" \
+  --arg time_digest "$reader_time_digest" --arg version_digest "$reader_time_version_digest" \
+  --argjson peak_rss_kib "$peak_rss_kib" '{
+    schema:"gooo/runtime-measurement-evidence/v1",
+    subject_sha:$subject,
+    coordinate:{stage:"OBSERVE",step:"capture-peak-rss"},
+    source:{observation_digest:$observation_digest},
+    producer:{tool:"GNU time",binary_path:"/usr/bin/time",binary_digest:$time_digest,version_digest:$version_digest},
+    measurement:{target:"symbolic-reader-request-observer",peak_rss_kib:$peak_rss_kib,unit:"KiB"},
+    effects:{repository_writes:0,mutation_authority:false}
+  }' >"$reader_runtime_evidence"
 jq -e --arg subject "$HEAD_SHA" '
   .schema=="gooo/symbolic-reader-request-user-observation/v1" and
   .metric_id=="gooo.metric.user.symbolic-reader-request-observation.v1" and
@@ -164,6 +189,8 @@ if [[ "${claim_ledger_candidate_count}" != "1" ]]; then
 fi
 claim_ledger_observation="${claim_ledger_candidates}"
 claim_ledger_output="$(dirname "${claim_ledger_observation}")/symbolic-reader-request-claim-ledger.json"
+claim_ledger_runtime_evidence="$(dirname "${claim_ledger_observation}")/symbolic-reader-request-runtime-evidence.json"
+test -f "${claim_ledger_runtime_evidence}"
 claim_ledger_binary="${RUNNER_TEMP}/gooo-symbolic-reader-claim-ledger"
 claim_ledger_contract="${claim_ledger_root}/examples/symbolic-invocation-usecase/claim-ledger-contract.json"
 (
@@ -173,49 +200,58 @@ claim_ledger_contract="${claim_ledger_root}/examples/symbolic-invocation-usecase
 "${claim_ledger_binary}" \
   -contract "${claim_ledger_contract}" \
   -observation "${claim_ledger_observation}" \
+  -runtime-evidence "${claim_ledger_runtime_evidence}" \
   -subject "${HEAD_SHA:?HEAD_SHA is required}" \
   -out "${claim_ledger_output}"
 
 jq -e '
-  .schema == "gooo/claim-ledger/v1" and
+  .schema == "gooo/claim-ledger/v2" and
   (.contract_digest | startswith("sha256:")) and
   (.observation_digest | startswith("sha256:")) and
+  (.runtime_evidence_digest | startswith("sha256:")) and
+  ([.inputs[] | select(.name == "runtime" and .status == "VERIFIED" and .reason == "SUBJECT_AND_OBSERVATION_BOUND")] | length) == 1 and
   .conformance.decision == "PASS" and
   .claim_set.decision == "FAIL_CLOSED" and
   .claim_set.resolution == "STAGE_LOCAL" and
   .metrics.fixed_claim_total == 12 and
   .metrics.in_scope_claim_total == 8 and
-  .metrics.discharged_total == 4 and
-  .metrics.unknown_total == 4 and
+  .metrics.discharged_total == 5 and
+  .metrics.unknown_total == 3 and
   .metrics.excluded_total == 4 and
-  .metrics.open_claim_total == 4 and
-  .metrics.discharge_basis_points == 5000 and
+  .metrics.open_claim_total == 3 and
+  .metrics.discharge_basis_points == 6250 and
   .metrics.false_promotion_count == 0 and
   .metrics.proof_routes == {"foundation": 4, "coherence": 4, "regression": 4} and
   ([.claims[] | select(.status == "UNKNOWN") |
-    select((.coordinate.stage | length) > 0 and (.coordinate.step | length) > 0 and (.reason | length) > 0)] | length) == 4 and
-  ([.claims[] | select(.status == "DISCHARGED")] | length) == 4
+    select((.coordinate.stage | length) > 0 and (.coordinate.step | length) > 0 and (.reason | length) > 0)] | length) == 3 and
+  ([.claims[] | select(.status == "DISCHARGED")] | length) == 5 and
+  ([.claims[] | select(.id == "peak-rss-measurement" and .status == "DISCHARGED")] | length) == 1 and
+  ([.evidence[] | select(.claim_id == "peak-rss-measurement" and .source == "runtime" and .status == "VERIFIED")] | length) == 1
 ' "${claim_ledger_output}" >/dev/null
 
 claim_ledger_manifest="$(dirname "${claim_ledger_observation}")/symbolic-reader-request-claim-ledger-manifest.json"
 claim_ledger_report_digest="sha256:$(sha256sum "${claim_ledger_output}" | cut -d' ' -f1)"
 jq -n --arg subject "${HEAD_SHA}" --arg report_digest "${claim_ledger_report_digest}" \
   --arg contract_digest "$(jq -er '.contract_digest' "${claim_ledger_output}")" \
-  --arg observation_digest "$(jq -er '.observation_digest' "${claim_ledger_output}")" '{
-    schema:"gooo/symbolic-reader-request-claim-ledger-manifest/v1",
+  --arg observation_digest "$(jq -er '.observation_digest' "${claim_ledger_output}")" \
+  --arg runtime_digest "$(jq -er '.runtime_evidence_digest' "${claim_ledger_output}")" \
+  --argjson peak_rss_kib "$(jq -er '.measurement.peak_rss_kib' "${claim_ledger_runtime_evidence}")" '{
+    schema:"gooo/symbolic-reader-request-claim-ledger-manifest/v2",
     subject_sha:$subject,
-    metric_id:"gooo.metric.user.symbolic-reader-request-claim-ledger.v1",
+    metric_id:"gooo.metric.user.symbolic-reader-request-claim-ledger.v2",
     report_file:"symbolic-reader-request-claim-ledger.json",
     report_digest:$report_digest,
     contract_digest:$contract_digest,
     observation_digest:$observation_digest,
+    runtime_evidence_digest:$runtime_digest,
+    peak_rss_kib:$peak_rss_kib,
     conformance_decision:"PASS",
     claim_set_decision:"FAIL_CLOSED",
     resolution:"STAGE_LOCAL",
     fixed_claim_total:12,
     in_scope_claim_total:8,
-    discharged_total:4,
-    unknown_total:4,
+    discharged_total:5,
+    unknown_total:3,
     excluded_total:4,
     false_promotion_count:0
   }' >"${claim_ledger_manifest}"
@@ -234,5 +270,7 @@ if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
       "$(jq -r '.metrics.unknown_total' "${claim_ledger_output}")" \
       "$(jq -r '.metrics.excluded_total' "${claim_ledger_output}")" \
       "$(jq -r '.metrics.false_promotion_count' "${claim_ledger_output}")"
+    printf -- '- reader observer peak RSS: `%s KiB`\n' \
+      "$(jq -r '.measurement.peak_rss_kib' "${claim_ledger_runtime_evidence}")"
   } >>"${GITHUB_STEP_SUMMARY}"
 fi
