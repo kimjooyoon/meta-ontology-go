@@ -7,7 +7,7 @@ import (
 
 const (
 	extensionDeclaration = "activity IncrementTwo(Integer) -> Integer"
-	extensionProgramLine  = extensionDeclaration + " computes \"int.add:2\""
+	extensionProgramLine = extensionDeclaration + " computes \"int.add:2\""
 )
 
 func catalogSources(source []byte) ([]byte, []byte, error) {

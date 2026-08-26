@@ -29,14 +29,14 @@ func Evaluate(filesystem fs.FS, sourcePath, headSHA string) Report {
 	report.Baseline, report.Extension = observed.baseline, observed.extension
 	report.Improvement = Improvement{
 		ID: "source-only-catalog-extension", Before: coordinate(0, 1),
-		After: coordinate(boolInt(observed.extensionPresent), 1),
+		After:          coordinate(boolInt(observed.extensionPresent), 1),
 		BeforeEvidence: observed.beforeReason, AfterEvidence: report.SourceDigest,
 	}
 	report.Summary = Summary{
 		BaselineCasesPassed: report.Baseline.Passed, BaselineCasesTotal: len(catalogInputs),
 		ExtensionCasesPassed: report.Extension.Passed, ExtensionCasesTotal: len(catalogInputs),
 		UnknownCounterexamplePassed: observed.unknownReason == valueexecution.ReasonProgramUnknown,
-		RepositoryWrites: 0, CoreFingerprintSensitive: coordinate(boolInt(observed.coreFingerprintSensitive), 1),
+		RepositoryWrites:            0, CoreFingerprintSensitive: coordinate(boolInt(observed.coreFingerprintSensitive), 1),
 	}
 	report.Indicators = buildIndicators(report)
 	report.Views = buildViews(report.Indicators)

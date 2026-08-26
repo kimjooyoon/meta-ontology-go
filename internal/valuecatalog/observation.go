@@ -7,11 +7,11 @@ import (
 )
 
 type observation struct {
-	baselineSource, candidateSource              []byte
-	actualCore, baselineCore                     coreObservation
-	baseline, extension                          ProgramResult
-	beforeReason, unknownReason                   string
-	extensionPresent, coreFingerprintSensitive   bool
+	baselineSource, candidateSource            []byte
+	actualCore, baselineCore                   coreObservation
+	baseline, extension                        ProgramResult
+	beforeReason, unknownReason                string
+	extensionPresent, coreFingerprintSensitive bool
 }
 
 func observe(path string, source []byte) (observation, error) {

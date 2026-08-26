@@ -35,6 +35,7 @@ func expectedRegistry() Registry {
 		valid("self-improvement", "examples/self-improvement/main.gooo"),
 		valid("self-improvement-candidate", "examples/self-improvement/candidate.gooo"),
 		valid("language-value-witness", "examples/language-value-witness/main.gooo"),
+		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),
 		valid("roundtrip-minimal", "internal/detection/roundtrip/testdata/minimal.gooo"),
 		valid("directory-kind-ontology", "internal/meta/directorykind/ontology.gooo"),
 		valid("directory-partition-ontology", "internal/meta/directorypartition/ontology.gooo"),
