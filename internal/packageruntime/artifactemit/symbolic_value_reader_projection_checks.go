@@ -1,24 +1,24 @@
 package artifactemit
 
 type symbolicReaderChecks struct {
-	Schema            bool
-	Subject           bool
-	Metric            bool
-	Decision          bool
-	Resolution        bool
-	InternalDigest    bool
-	UpstreamDigests   bool
-	UnknownBranches   bool
-	UniqueIndicatorID bool
-	UserPresent       bool
-	ToolPresent       bool
-	GovernorPresent   bool
-	UserCountBound    bool
-	ToolCountBound    bool
+	Schema             bool
+	Subject            bool
+	Metric             bool
+	Decision           bool
+	Resolution         bool
+	InternalDigest     bool
+	UpstreamDigests    bool
+	UnknownBranches    bool
+	UniqueIndicatorID  bool
+	UserPresent        bool
+	ToolPresent        bool
+	GovernorPresent    bool
+	UserCountBound     bool
+	ToolCountBound     bool
 	GovernorCountBound bool
-	UserNested        bool
-	ToolNested        bool
-	ReaderResolutions bool
+	UserNested         bool
+	ToolNested         bool
+	ReaderResolutions  bool
 }
 
 func (checks symbolicReaderChecks) passed() bool {

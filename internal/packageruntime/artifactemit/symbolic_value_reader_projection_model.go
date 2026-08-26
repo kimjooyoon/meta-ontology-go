@@ -23,21 +23,21 @@ type SymbolicValueReaderProjectionView struct {
 }
 
 type SymbolicValueReaderProjection struct {
-	Schema             string                                `json:"schema"`
-	SubjectSHA         string                                `json:"subject_sha"`
-	MetricID           string                                `json:"metric_id"`
-	Decision           string                                `json:"decision"`
-	Resolution         string                                `json:"resolution"`
-	Reason             string                                `json:"reason"`
-	Source             SymbolicValueReaderProjectionSource   `json:"source"`
-	Readers            []SymbolicValueReaderProjectionView   `json:"readers"`
-	Coordinates        SymbolicValueContractCoordinates      `json:"coordinates"`
-	Classes            []SymbolicValueContractClass          `json:"classes"`
-	Indicators         []SymbolicValueContractIndicator      `json:"indicators"`
-	Views              []SymbolicValueContractView           `json:"views"`
-	Proofs             []SymbolicValueContractProof          `json:"proofs"`
-	Effects            SymbolicValueContractEffects          `json:"effects"`
-	PromotionCreditBPS int                                   `json:"promotion_credit_bps"`
-	NotClaimed         []string                              `json:"not_claimed"`
-	Digest             string                                `json:"digest,omitempty"`
+	Schema             string                              `json:"schema"`
+	SubjectSHA         string                              `json:"subject_sha"`
+	MetricID           string                              `json:"metric_id"`
+	Decision           string                              `json:"decision"`
+	Resolution         string                              `json:"resolution"`
+	Reason             string                              `json:"reason"`
+	Source             SymbolicValueReaderProjectionSource `json:"source"`
+	Readers            []SymbolicValueReaderProjectionView `json:"readers"`
+	Coordinates        SymbolicValueContractCoordinates    `json:"coordinates"`
+	Classes            []SymbolicValueContractClass        `json:"classes"`
+	Indicators         []SymbolicValueContractIndicator    `json:"indicators"`
+	Views              []SymbolicValueContractView         `json:"views"`
+	Proofs             []SymbolicValueContractProof        `json:"proofs"`
+	Effects            SymbolicValueContractEffects        `json:"effects"`
+	PromotionCreditBPS int                                 `json:"promotion_credit_bps"`
+	NotClaimed         []string                            `json:"not_claimed"`
+	Digest             string                              `json:"digest,omitempty"`
 }

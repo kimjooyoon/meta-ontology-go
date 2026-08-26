@@ -23,10 +23,10 @@ func symbolicReaderFixture() []byte {
 		})
 	}
 	source := SymbolicValueReachability{
-		Schema: "gooo/symbolic-invocation-value-reachability/v1",
+		Schema:     "gooo/symbolic-invocation-value-reachability/v1",
 		SubjectSHA: strings.Repeat("a", 40),
-		MetricID: "gooo.metric.compiler.symbolic-value-reachability.v1",
-		Decision: "PASS", Resolution: "SCHEMA_VALUE_REACHABILITY_ONLY",
+		MetricID:   "gooo.metric.compiler.symbolic-value-reachability.v1",
+		Decision:   "PASS", Resolution: "SCHEMA_VALUE_REACHABILITY_ONLY",
 		Source: SymbolicValueReachabilitySource{
 			ArtifactDigest: "sha256:" + strings.Repeat("b", 64),
 			ContractDigest: "sha256:" + strings.Repeat("c", 64),
