@@ -28,6 +28,7 @@ func (n Node) Canonical() string {
 	for _, alias := range n.Aliases {
 		writeCanonicalField(&b, alias)
 	}
+	writeCanonicalNodeValueProgram(&b, n.ValueProgram)
 	writeCanonicalSpan(&b, n.Span)
 	for _, field := range n.Fields {
 		b.WriteString(field.Canonical())
@@ -44,6 +45,7 @@ func (n Node) SemanticCanonical() string {
 	writeCanonicalField(&b, n.ID.String())
 	writeCanonicalField(&b, n.Kind.String())
 	writeCanonicalField(&b, n.Namespace.String())
+	writeCanonicalNodeValueProgram(&b, n.ValueProgram)
 	for _, field := range n.Fields {
 		b.WriteString(field.SemanticCanonical())
 		b.WriteByte('\n')

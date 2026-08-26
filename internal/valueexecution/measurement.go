@@ -2,9 +2,6 @@ package valueexecution
 
 import (
 	"bytes"
-	"strings"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 )
 
 type measurement struct {
@@ -13,7 +10,9 @@ type measurement struct {
 	replayedCases         int
 	passedCounterexamples int
 	fingerprintSensitive  bool
-	coreIRFailClosed      bool
+	coreIRFingerprint     string
+	coreIRProgramPreserved, coreIRFingerprintSensitive bool
+	coreIRUnknownAttributeFailClosed                    bool
 }
 
 type evidence struct {
@@ -22,20 +21,23 @@ type evidence struct {
 	signatureSupported, valueCasesExact, outputsObserved          bool
 	deterministicReplay, counterexamplesExact                     bool
 	unknownFailClosed, operandFailClosed, overflowFailClosed      bool
-	coreIRFailClosed                                              bool
+	coreIRProgramPreserved, coreIRFingerprintSensitive           bool
+	coreIRUnknownAttributeFailClosed                              bool
 }
 
 func measure(filename string, source []byte, program Program, cases []CaseResult, counters []CounterexampleResult) measurement {
 	baseline := bytes.Replace(source, []byte(` computes "`+program.Text+`"`), nil, 1)
 	changedSource := bytes.Replace(source, []byte(program.Text), []byte("int.add:2"), 1)
 	changed, changedErr := Compile(filename, changedSource, program.Activity)
-	_, coreIRErr := bidir.LowerDocument(program.document)
+	coreIR := measureCoreIR(program)
 	passed, replayed := caseCounts(cases)
 	return measurement{
 		baselineReason: compileReason(filename, baseline, program.Activity),
 		passedCases:    passed, replayedCases: replayed, passedCounterexamples: counterexampleCount(counters),
 		fingerprintSensitive: changedErr == nil && changed.SemanticFingerprint != program.SemanticFingerprint,
-		coreIRFailClosed:     coreIRErr != nil && strings.Contains(coreIRErr.Error(), "semantic IR does not support declaration attributes"),
+		coreIRFingerprint: coreIR.fingerprint, coreIRProgramPreserved: coreIR.programPreserved,
+		coreIRFingerprintSensitive: coreIR.fingerprintSensitive,
+		coreIRUnknownAttributeFailClosed: coreIR.unknownAttributeFailClosed,
 	}
 }
 
@@ -49,6 +51,9 @@ func (measured measurement) evidence(program Program, counters []CounterexampleR
 		deterministicReplay: measured.replayedCases == 5, counterexamplesExact: measured.passedCounterexamples == 8,
 		unknownFailClosed:  counterexamplePassed(counters, "unknown-operation"),
 		operandFailClosed:  counterexamplePassed(counters, "malformed-operand"),
-		overflowFailClosed: counterexamplePassed(counters, "integer-overflow"), coreIRFailClosed: measured.coreIRFailClosed,
+		overflowFailClosed: counterexamplePassed(counters, "integer-overflow"),
+		coreIRProgramPreserved: measured.coreIRProgramPreserved,
+		coreIRFingerprintSensitive: measured.coreIRFingerprintSensitive,
+		coreIRUnknownAttributeFailClosed: measured.coreIRUnknownAttributeFailClosed,
 	}
 }

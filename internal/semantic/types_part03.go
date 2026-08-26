@@ -1,7 +1,6 @@
 package semantic
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -35,12 +34,17 @@ func (n Node) Normalized() (Node, error) {
 	if err != nil {
 		return Node{}, fmt.Errorf("%w: fields: %w", ErrInvalidNode, err)
 	}
+	valueProgram, err := normalizeActivityValueProgram(n.Kind, n.ValueProgram)
+	if err != nil {
+		return Node{}, err
+	}
 
 	n.ID = id
 	n.Namespace = ns
 	n.Name = name
 	n.Aliases = aliases
 	n.Fields = fields
+	n.ValueProgram = valueProgram
 	n.Span = span
 	return n, nil
 }
@@ -60,11 +64,4 @@ func (n Node) HasName(name string) bool {
 		return true
 	}
 	return slices.Contains(n.Aliases, canonical)
-}
-func normalizeName(raw string) (string, error) {
-	name := strings.Join(strings.Fields(raw), " ")
-	if name == "" {
-		return "", errors.New("name is empty")
-	}
-	return name, nil
 }

@@ -8,6 +8,7 @@ on:
       - examples/language-value-witness/**
       - examples/language-syntax-roundtrip/corpus.json
       - internal/bidir/**
+      - internal/semantic/**
       - internal/meta/languagereadiness/languagesyntax/**
       - internal/syntax/**
       - internal/valueexecution/**
@@ -19,6 +20,7 @@ on:
       - examples/language-value-witness/**
       - examples/language-syntax-roundtrip/corpus.json
       - internal/bidir/**
+      - internal/semantic/**
       - internal/meta/languagereadiness/languagesyntax/**
       - internal/syntax/**
       - internal/valueexecution/**
@@ -45,7 +47,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          go fix ./internal/valueexecution ./scripts/language-value-witness
+          go fix ./internal/semantic ./internal/bidir ./internal/valueexecution ./scripts/language-value-witness
           gofmt -w \
             internal/syntax/ast_part03.go \
             internal/syntax/activity_parser.go \
@@ -53,8 +55,14 @@ jobs:
             internal/syntax/format_value_program.go \
             internal/syntax/value_program_test.go \
             internal/bidir/lower_part05.go \
+            internal/bidir/lower_document_part03.go \
+            internal/bidir/lower_value_program.go \
             internal/bidir/value_program.go \
             internal/bidir/value_program_test.go \
+            internal/semantic/types_part02.go \
+            internal/semantic/types_part03.go \
+            internal/semantic/node_value_program.go \
+            internal/semantic/canonical_part01.go \
             internal/valueexecution/model.go \
             internal/valueexecution/model_evidence.go \
             internal/valueexecution/model_summary.go \
@@ -66,20 +74,23 @@ jobs:
             internal/valueexecution/evaluate.go \
             internal/valueexecution/evaluation.go \
             internal/valueexecution/measurement.go \
+            internal/valueexecution/core_ir_measurement.go \
             internal/valueexecution/cases.go \
             internal/valueexecution/counterexamples.go \
             internal/valueexecution/counterexample_results.go \
             internal/valueexecution/helpers.go \
             internal/valueexecution/indicators.go \
             internal/valueexecution/indicator_results.go \
+            internal/valueexecution/views.go \
+            internal/valueexecution/proofs.go \
             internal/valueexecution/validate.go \
             internal/valueexecution/evaluate_test.go \
             scripts/language-value-witness/main.go
           git diff --exit-code -- \
-            internal/syntax internal/bidir internal/valueexecution \
+            internal/syntax internal/bidir internal/semantic internal/valueexecution \
             scripts/language-value-witness
       - name: Compile parser, semantic binding, and value executor
-        run: go test ./internal/syntax ./internal/bidir ./internal/valueexecution
+        run: go test ./internal/syntax ./internal/bidir ./internal/semantic ./internal/valueexecution
       - name: Replay exact Gooo value witness
         shell: bash
         run: |
@@ -100,7 +111,7 @@ jobs:
             jq -r '"- counterexamples: `\(.summary.counterexamples_passed)/\(.summary.counterexamples_total)`; replays: `\(.summary.deterministic_replays)/5`"' "$output/first.json"
             jq -r '"- scoped improvement: `\(.improvement.before.satisfied)/\(.improvement.before.total) -> \(.improvement.after.satisfied)/\(.improvement.after.total)`"' "$output/first.json"
             jq -r '"- reader views: `\(.views[0].satisfied)/\(.views[0].total)`, `\(.views[1].satisfied)/\(.views[1].total)`, `\(.views[2].satisfied)/\(.views[2].total)`"' "$output/first.json"
-            jq -r '"- core IR preservation: `\(.summary.core_ir_program_preserved.satisfied)/\(.summary.core_ir_program_preserved.total)`; fail-closed guard: `\(.summary.core_ir_fail_closed.satisfied)/\(.summary.core_ir_fail_closed.total)`"' "$output/first.json"
+            jq -r '"- core IR preservation: `\(.summary.core_ir_program_preserved.satisfied)/\(.summary.core_ir_program_preserved.total)`; fingerprint: `\(.summary.core_ir_fingerprint_sensitive.satisfied)/\(.summary.core_ir_fingerprint_sensitive.total)`; unknown-attribute guard: `\(.summary.core_ir_unknown_attribute_fail_closed.satisfied)/\(.summary.core_ir_unknown_attribute_fail_closed.total)`"' "$output/first.json"
             jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.repository_mutation_authorized)`"' "$output/first.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head value witness

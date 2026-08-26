@@ -1,11 +1,11 @@
 package valueexecution
 
 const (
-	ReportSchema         = "gooo.language.value-witness/v1"
+	ReportSchema         = "gooo.language.value-witness/v2"
 	DecisionProven       = "VALUE_WITNESS_PROVEN"
 	DecisionFailClosed   = "FAIL_CLOSED"
 	ReasonExactWitness   = "VALUE_WITNESS_EXACT"
-	ResolutionBidirValue = "BIDIR_ACTIVITY_SEMANTIC"
+	ResolutionCoreValue  = "CORE_IR_ACTIVITY_VALUE_PROGRAM"
 	ResolutionSyntaxOnly = "SYNTAX_ONLY"
 )
 
@@ -20,6 +20,7 @@ type Report struct {
 	SourceBytes         int                    `json:"source_bytes"`
 	SourceLines         int                    `json:"source_lines"`
 	SemanticFingerprint string                 `json:"semantic_fingerprint"`
+	CoreIRFingerprint   string                 `json:"core_ir_fingerprint"`
 	Activity            string                 `json:"activity"`
 	ValueProgram        string                 `json:"value_program"`
 	ValueProgramDigest  string                 `json:"value_program_digest"`

@@ -11,13 +11,13 @@ func Validate(report Report, headSHA string) error {
 	if report.Schema != ReportSchema || report.HeadSHA != headSHA || !commitPattern.MatchString(headSHA) {
 		return fmt.Errorf("value witness identity is invalid")
 	}
-	if report.Decision != DecisionProven || report.Reason != ReasonExactWitness || report.Resolution != ResolutionBidirValue {
+	if report.Decision != DecisionProven || report.Reason != ReasonExactWitness || report.Resolution != ResolutionCoreValue {
 		return fmt.Errorf("value witness failed closed: %s / %s / %s", report.Decision, report.Reason, report.Resolution)
 	}
 	if report.ValueProgram != "int.add:1" || report.Registry.RegisteredOperations != 1 || report.Registry.InvokedOperations != 1 {
 		return fmt.Errorf("value program registry is not exact")
 	}
-	if !validDigest(report.SourceDigest) || !validDigest(report.ValueProgramDigest) || report.SemanticFingerprint == "" {
+	if !validDigest(report.SourceDigest) || !validDigest(report.ValueProgramDigest) || report.SemanticFingerprint == "" || report.CoreIRFingerprint == "" {
 		return fmt.Errorf("value witness digests are invalid")
 	}
 	if err := requireExactCount("value cases", report.Summary.ValueCasesPassed, 5); err != nil {
@@ -32,13 +32,13 @@ func Validate(report Report, headSHA string) error {
 	if report.Improvement.ID != "value-level-computation" || report.Improvement.Before != coordinate(0, 1) || report.Improvement.After != coordinate(1, 1) || report.Improvement.BeforeEvidence != ReasonProgramMissing {
 		return fmt.Errorf("improvement coordinate is not exact")
 	}
-	if report.Summary.CoreIRProgramPreserved != coordinate(0, 1) || report.Summary.CoreIRFailClosed != coordinate(1, 1) {
+	if report.Summary.CoreIRProgramPreserved != coordinate(1, 1) || report.Summary.CoreIRFingerprintSensitive != coordinate(1, 1) || report.Summary.CoreIRUnknownAttributeFailClosed != coordinate(1, 1) {
 		return fmt.Errorf("core IR resolution boundary is not explicit")
 	}
-	if len(report.Indicators) != 16 || !allIndicatorsSatisfied(report.Indicators) || len(report.Views) != 3 || len(report.Proofs) != 3 {
+	if len(report.Indicators) != 18 || !allIndicatorsSatisfied(report.Indicators) || len(report.Views) != 3 || len(report.Proofs) != 3 {
 		return fmt.Errorf("indicator or proof denominator changed")
 	}
-	expectedViews := []int{5, 12, 16}
+	expectedViews := []int{5, 14, 18}
 	for index, view := range report.Views {
 		if view.Total != expectedViews[index] || view.Satisfied != view.Total || view.BasisPoints != 10_000 {
 			return fmt.Errorf("view %d is not exact", index)

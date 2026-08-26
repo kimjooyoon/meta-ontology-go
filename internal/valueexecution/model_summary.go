@@ -8,8 +8,9 @@ type Summary struct {
 	ValueOutputsObserved   int        `json:"value_outputs_observed"`
 	DeterministicReplays   int        `json:"deterministic_replays"`
 	RepositoryWrites       int        `json:"repository_writes"`
-	CoreIRProgramPreserved Coordinate `json:"core_ir_program_preserved"`
-	CoreIRFailClosed       Coordinate `json:"core_ir_fail_closed"`
+	CoreIRProgramPreserved           Coordinate `json:"core_ir_program_preserved"`
+	CoreIRFingerprintSensitive       Coordinate `json:"core_ir_fingerprint_sensitive"`
+	CoreIRUnknownAttributeFailClosed Coordinate `json:"core_ir_unknown_attribute_fail_closed"`
 }
 
 type Authority struct {

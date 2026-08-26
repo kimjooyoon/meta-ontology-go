@@ -24,7 +24,7 @@ func newReport(sourcePath, headSHA string) Report {
 		Schema: ReportSchema, Decision: DecisionFailClosed, Reason: ReasonSourceReadFailed,
 		Resolution: ResolutionSyntaxOnly, HeadSHA: headSHA, SourcePath: sourcePath,
 		NonClaims: []string{
-			"general expression language", "arbitrary value types", "core semantic IR value-program preservation",
+			"general expression language", "arbitrary value types", "core IR execution or code generation",
 			"runtime memory or performance bounds", "repository mutation, promotion, or automatic adoption",
 		},
 	}
