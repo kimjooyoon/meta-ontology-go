@@ -4,12 +4,17 @@ on:
   pull_request:
     branches: [dev]
     paths:
+      - .github/workflows/self-improvement-language-observation.yml
       - .github/workflows/self-improvement-language-candidate.yml
       - examples/self-improvement/candidate.gooo
+      - examples/self-improvement/transport.gooo
+      - examples/self-improvement/TRANSPORT.md
       - examples/self-improvement/CANDIDATE.md
       - internal/meta/selfimprovementcandidate/**
+      - internal/meta/selfimprovementtransport/**
       - internal/meta/languagereadiness/languagesyntax/**
       - scripts/self-improvement-candidate/**
+      - scripts/self-improvement-transport/**
   workflow_run:
     workflows: [Self-improvement language observation]
     types: [completed]
@@ -26,25 +31,102 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
-      HEAD_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+      TOOLING_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.run_attempt || 1 }}
       EVENT_NAME: ${{ github.event_name }}
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ env.HEAD_SHA }}
+          ref: ${{ env.TOOLING_SHA }}
+          persist-credentials: false
       - uses: actions/setup-go@v6
         with:
           go-version: 1.27.x
           check-latest: true
-      - name: Download exact read-only observation
+      - name: Compile transport metaprogram from workflow authority
         if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v6
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool="$RUNNER_TEMP/candidate/transport-tool"
+          mkdir -p "$tool"
+          go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
+          cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
+      - name: Locate and download immutable observation artifact
+        if: github.event_name == 'workflow_run'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          transport="$RUNNER_TEMP/candidate/transport"
+          input="$RUNNER_TEMP/candidate/input"
+          mkdir -p "$transport" "$input"
+          run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID")"
+          artifacts_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100")"
+          matches="$(jq \
+            --arg name self-improvement-language-observation \
+            --argjson run "$SOURCE_RUN_ID" \
+            --argjson attempt "$SOURCE_RUN_ATTEMPT" \
+            '[.artifacts[] | select(.name == $name and .expired == false and .workflow_run.id == $run and .workflow_run.run_attempt == $attempt)]' \
+            <<<"$artifacts_json")"
+          if [ "$(jq 'length' <<<"$matches")" -ne 1 ]; then
+            echo "TRANSPORT/locate-immutable-artifact: expected one exact run-attempt artifact" >&2
+            exit 1
+          fi
+          artifact="$(jq '.[0]' <<<"$matches")"
+          jq -n \
+            --arg schema gooo/github-actions-artifact-transport/v1 \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --argjson run "$run_json" \
+            --argjson artifact "$artifact" \
+            '{schema:$schema,repository:$repository,producer_run_id:$run.id,producer_run_attempt:$run.run_attempt,orchestration_head_sha:$run.head_sha,workflow_path:$run.path,artifact_id:$artifact.id,artifact_name:$artifact.name,artifact_digest:$artifact.digest,artifact_size_bytes:$artifact.size_in_bytes}' \
+            > "$transport/metadata.json"
+          artifact_id="$(jq -r '.id' <<<"$artifact")"
+          archive="$transport/observation.zip"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+            -o "$archive"
+          printf 'sha256:%s\n' "$(sha256sum "$archive" | cut -d' ' -f1)" > "$transport/archive-digest.txt"
+          unzip -q "$archive" -d "$input"
+          test -f "$input/first.json"
+          test -f "$input/producer.json"
+      - name: Verify producer-declared subject and lower unsigned resolution
+        id: verify-transport
+        if: github.event_name == 'workflow_run'
+        shell: bash
+        run: |
+          set -euo pipefail
+          input="$RUNNER_TEMP/candidate/input"
+          transport="$RUNNER_TEMP/candidate/transport"
+          "$RUNNER_TEMP/candidate/transport-tool/self-improvement-transport" \
+            -mode consume \
+            -contract "$RUNNER_TEMP/candidate/transport-tool/transport.gooo" \
+            -repository "$GITHUB_REPOSITORY" -run-id "$SOURCE_RUN_ID" \
+            -observation "$input/first.json" -producer "$input/producer.json" \
+            -metadata "$transport/metadata.json" \
+            -archive-digest "$(cat "$transport/archive-digest.txt")" \
+            -output "$transport/receipt.json" -check-read-only
+          subject_sha="$(jq -r '.subject_sha' "$transport/receipt.json")"
+          if ! [[ "$subject_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "CONSUME/recompute-subject-digest: invalid producer subject" >&2
+            exit 1
+          fi
+          echo "HEAD_SHA=$subject_sha" >> "$GITHUB_ENV"
+          echo "subject_sha=$subject_sha" >> "$GITHUB_OUTPUT"
+          jq -r '"transport: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_obligation_total) (\(.metrics.coverage_basis_points) bps), unknown \(.open_obligation_ids | join(","))"' \
+            "$transport/receipt.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Checkout verified producer subject
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@v5
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-          name: self-improvement-language-observation-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/candidate/input
+          ref: ${{ steps.verify-transport.outputs.subject_sha }}
+          persist-credentials: false
       - name: Reproduce exact observation for PR
         if: github.event_name == 'pull_request'
         shell: bash
@@ -88,7 +170,9 @@ jobs:
       - name: Upload exact-head non-executing candidate
         uses: actions/upload-artifact@v6
         with:
-          name: self-improvement-nonexecuting-candidate-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/candidate/output/first.json
+          name: self-improvement-nonexecuting-candidate-${{ github.event_name == 'workflow_run' && steps.verify-transport.outputs.subject_sha || env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/candidate/output/first.json
+            ${{ runner.temp }}/candidate/transport/receipt.json
           if-no-files-found: error
           retention-days: 14
