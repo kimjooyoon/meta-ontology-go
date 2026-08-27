@@ -3,6 +3,8 @@ package semanticdeltareceipt
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -27,7 +29,15 @@ type MetaContract struct {
 }
 
 func ReadMetaContract() (MetaContract, error) {
-	raw, err := os.ReadFile(MetaSourcePath)
+	metaPath := MetaSourcePath
+	if _, err := os.Stat(metaPath); err != nil {
+		_, filename, _, ok := runtime.Caller(0)
+		if !ok {
+			return MetaContract{}, fmt.Errorf("locate meta source")
+		}
+		metaPath = filepath.Join(filepath.Dir(filename), "../../../..", MetaSourcePath)
+	}
+	raw, err := os.ReadFile(metaPath)
 	if err != nil {
 		return MetaContract{}, err
 	}
