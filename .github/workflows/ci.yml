@@ -115,9 +115,10 @@ jobs:
             .issue.stage == "CONSUMER" and .issue.step == "parse-source" and
             .issue.reason == "REQUIRED_RAW_SOURCE_MISSING"' \
             "$work/missing-source/verification.json"
-          jq -e '.semantic.status == "PASS" and .semantic.semantic_digest_changed and
+          jq -e '.semantic.status == "PASS" and .semantic.raw_source_digest_changed and
+            .semantic.semantic_digest_changed and
             .semantic.decision_changed and .semantic.transition_changed and
-            .nonsemantic.status == "PASS" and
+            .nonsemantic.status == "PASS" and .nonsemantic.raw_source_digest_changed and
             (.nonsemantic.semantic_digest_changed | not) and
             (.nonsemantic.decision_changed | not) and
             (.nonsemantic.transition_changed | not)' "$work/interventions/interventions.json"

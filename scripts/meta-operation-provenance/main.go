@@ -79,10 +79,9 @@ func runInterventions(source []byte, workspaceRoot string) (operationprovenance.
 	if err != nil {
 		return operationprovenance.InterventionReport{}, fmt.Errorf("nonsemantic intervention: %w", err)
 	}
-	baseResult := interventionResult("baseline", "baseline", base, base, base)
-	semanticResult := interventionResult("semantic-consumer-removal", "semantic", base, semanticReceipt, semanticReceipt)
-	nonsemanticResult := interventionResult("comment-only", "nonsemantic", base, nonsemanticReceipt, nonsemanticReceipt)
-	semanticResult.Status = "PASS"
+	baseResult := interventionResult("baseline", "baseline", base, base)
+	semanticResult := interventionResult("semantic-consumer-removal", "semantic", base, semanticReceipt)
+	nonsemanticResult := interventionResult("comment-only", "nonsemantic", base, nonsemanticReceipt)
 	semanticResult.Status = interventionStatus(semanticResult, true)
 	nonsemanticResult.Status = interventionStatus(nonsemanticResult, false)
 	result := operationprovenance.InterventionReport{Schema: "gooo/meta-operation-provenance-intervention/v1", Base: baseResult, Semantic: semanticResult, Nonsemantic: nonsemanticResult}
@@ -94,21 +93,22 @@ func interventionStatus(result operationprovenance.InterventionResult, semantic 
 	if semantic && result.SemanticDigestChanged && (result.DecisionChanged || result.TransitionChanged) {
 		return "PASS"
 	}
-	if !semantic && result.SemanticDigestChanged == false && result.DecisionChanged == false && result.TransitionChanged == false {
+	if !semantic && result.RawSourceDigestChanged && !result.SemanticDigestChanged && !result.DecisionChanged && !result.TransitionChanged {
 		return "PASS"
 	}
 	return "FAIL"
 }
 
-func interventionResult(id, kind string, base, mutated, _ operationprovenance.Receipt) operationprovenance.InterventionResult {
+func interventionResult(id, kind string, base, mutated operationprovenance.Receipt) operationprovenance.InterventionResult {
 	decisionChanged := decisionFingerprint(base) != decisionFingerprint(mutated)
 	transitionChanged := transitionFingerprint(base) != transitionFingerprint(mutated)
 	return operationprovenance.InterventionResult{
 		ID: id, Kind: kind, RawSourceDigest: mutated.SourceDigest,
 		CanonicalSemanticDigest: mutated.CanonicalSemanticDigest, ReceiptDigest: mutated.Digest,
 		DecisionFingerprint: decisionFingerprint(mutated), TransitionFingerprint: transitionFingerprint(mutated),
-		SemanticDigestChanged: mutated.CanonicalSemanticDigest != base.CanonicalSemanticDigest,
-		DecisionChanged:       decisionChanged, TransitionChanged: transitionChanged,
+		RawSourceDigestChanged: mutated.SourceDigest != base.SourceDigest,
+		SemanticDigestChanged:  mutated.CanonicalSemanticDigest != base.CanonicalSemanticDigest,
+		DecisionChanged:        decisionChanged, TransitionChanged: transitionChanged,
 	}
 }
 

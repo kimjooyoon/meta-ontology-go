@@ -8,6 +8,7 @@ type InterventionResult struct {
 	ReceiptDigest           string `json:"receipt_digest"`
 	DecisionFingerprint     string `json:"decision_fingerprint"`
 	TransitionFingerprint   string `json:"transition_fingerprint"`
+	RawSourceDigestChanged  bool   `json:"raw_source_digest_changed"`
 	SemanticDigestChanged   bool   `json:"semantic_digest_changed"`
 	DecisionChanged         bool   `json:"decision_changed"`
 	TransitionChanged       bool   `json:"transition_changed"`
