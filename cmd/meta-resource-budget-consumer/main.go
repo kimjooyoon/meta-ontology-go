@@ -12,15 +12,25 @@ func main() {
 	inputPath := flag.String("input", "", "raw producer evidence input")
 	outputPath := flag.String("output", "", "independent consumer report output")
 	sourceDir := flag.String("source-dir", "", "source directory for entry discovery")
+	discoverJSON := flag.Bool("discover-json", false, "emit source-derived entry and digest bindings")
 	label := flag.String("label", "current-evidence", "evidence label")
 	flag.Parse()
 	if *sourceDir != "" && *inputPath == "" && *outputPath == "" {
-		entry, err := languageresourcebudgetconsumer.DiscoverEntry(*sourceDir)
+		discovery, err := languageresourcebudgetconsumer.DiscoverSource(*sourceDir)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		fmt.Println(entry)
+		if *discoverJSON {
+			data, encodeErr := languageresourcebudgetconsumer.EncodeDiscovery(discovery)
+			if encodeErr != nil {
+				fmt.Fprintln(os.Stderr, encodeErr)
+				os.Exit(1)
+			}
+			_, _ = os.Stdout.Write(data)
+		} else {
+			fmt.Println(discovery.Activity)
+		}
 		return
 	}
 	if *inputPath == "" || *outputPath == "" {

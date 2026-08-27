@@ -6,7 +6,7 @@
     "examples/meta-resource-budget/entities.gooo"
   ],
   "samples_per_operation": 3,
-  "indicators": 22,
+  "indicators": 19,
   "operations": [
     {"id":"source-check","stage":"LOWER","step":"parse-source","meta_operation":"observe-source-receipt","proof_choice":"FOUNDATION","output":"RECEIPT"},
     {"id":"project-manifest","stage":"PROJECT","step":"project-operation-manifest","meta_operation":"project-generated-operation","proof_choice":"COHERENCE","output":"GENERATED"},

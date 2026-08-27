@@ -13,24 +13,31 @@ type SourceMeaning struct {
 	Output         Binding   `json:"output"`
 	SourceDigest   string    `json:"source_digest"`
 	SemanticDigest string    `json:"semantic_digest"`
+	TargetDigest   string    `json:"target_digest"`
 }
 
 type ArtifactMeaning struct {
-	Activity string    `json:"activity"`
-	Inputs   []Binding `json:"inputs"`
-	Output   Binding   `json:"output"`
-	Decision string    `json:"decision"`
-	Reason   string    `json:"reason"`
+	Activity            string    `json:"activity"`
+	Inputs              []Binding `json:"inputs"`
+	Output              Binding   `json:"output"`
+	Decision            string    `json:"decision"`
+	Reason              string    `json:"reason"`
+	SourceReceiptDigest string    `json:"source_receipt_digest"`
+	ArtifactDigest      string    `json:"artifact_digest"`
+	ReplayDigest        string    `json:"replay_digest"`
 }
 
 type ResourceOperation struct {
-	Operation         string `json:"operation"`
-	Samples           int    `json:"samples"`
-	WallMaxNS         int64  `json:"wall_max_ns"`
-	PeakRSSMaxKiB     int64  `json:"peak_rss_max_kib"`
-	ReceiptMaxBytes   int64  `json:"receipt_max_bytes"`
-	GeneratedMaxBytes int64  `json:"generated_max_bytes"`
-	BudgetViolations  int    `json:"budget_violations"`
+	Operation         string            `json:"operation"`
+	Samples           int               `json:"samples"`
+	MissingSamples    int               `json:"missing_samples"`
+	InvalidSamples    int               `json:"invalid_samples"`
+	WallMaxNS         int64             `json:"wall_max_ns"`
+	PeakRSSMaxKiB     int64             `json:"peak_rss_max_kib"`
+	ReceiptMaxBytes   int64             `json:"receipt_max_bytes"`
+	GeneratedMaxBytes int64             `json:"generated_max_bytes"`
+	BudgetViolations  int               `json:"budget_violations"`
+	MetricStatus      map[string]string `json:"metric_status"`
 }
 
 type ResourceEnvelope struct {
@@ -43,18 +50,11 @@ type ResourceEnvelope struct {
 	PerOperation    []ResourceOperation `json:"per_operation"`
 }
 
-type ImportBoundary struct {
-	ProducerImplementationImported bool `json:"producer_implementation_imported"`
-	ReducerImplementationImported  bool `json:"reducer_implementation_imported"`
-	Independent                    bool `json:"independent"`
-	Numerator                      int  `json:"numerator"`
-	Denominator                    int  `json:"denominator"`
-}
-
 type Provenance struct {
 	RawSourceFiles      int    `json:"raw_source_files"`
 	RawOperationOutputs int    `json:"raw_operation_outputs"`
 	RawResourceSamples  int    `json:"raw_resource_samples"`
+	RawEvidenceDigest   string `json:"raw_evidence_digest"`
 	EvidenceDigest      string `json:"evidence_digest"`
 	ConsumerPackage     string `json:"consumer_package"`
 }
@@ -73,22 +73,23 @@ type ClaimTransition struct {
 }
 
 type Report struct {
-	Schema             string              `json:"schema"`
-	Label              string              `json:"label"`
-	EvidenceClass      string              `json:"evidence_class"`
-	Decision           string              `json:"decision"`
-	Resolution         string              `json:"resolution"`
-	Reason             string              `json:"reason"`
-	SemanticDecision   string              `json:"semantic_decision"`
-	SemanticResolution string              `json:"semantic_resolution"`
-	SemanticReason     string              `json:"semantic_reason"`
-	Source             SourceMeaning       `json:"source"`
-	Artifact           ArtifactMeaning     `json:"artifact"`
-	Resource           ResourceEnvelope    `json:"resource"`
-	WriteSet           WriteSetObservation `json:"write_set"`
-	Imports            ImportBoundary      `json:"imports"`
-	Provenance         Provenance          `json:"provenance"`
-	ClaimTransitions   []ClaimTransition   `json:"claim_transitions"`
-	FactsDigest        string              `json:"facts_digest"`
-	Digest             string              `json:"digest"`
+	Schema             string                `json:"schema"`
+	Label              string                `json:"label"`
+	EvidenceClass      string                `json:"evidence_class"`
+	Decision           string                `json:"decision"`
+	Resolution         string                `json:"resolution"`
+	Reason             string                `json:"reason"`
+	SemanticDecision   string                `json:"semantic_decision"`
+	SemanticResolution string                `json:"semantic_resolution"`
+	SemanticClaimState string                `json:"semantic_claim_state"`
+	SemanticReason     string                `json:"semantic_reason"`
+	Source             SourceMeaning         `json:"source"`
+	Artifact           ArtifactMeaning       `json:"artifact"`
+	Resource           ResourceEnvelope      `json:"resource"`
+	WriteSets          []WriteSetObservation `json:"write_sets"`
+	Imports            ImportScan            `json:"imports"`
+	Provenance         Provenance            `json:"provenance"`
+	ClaimTransitions   []ClaimTransition     `json:"claim_transitions"`
+	FactsDigest        string                `json:"facts_digest"`
+	Digest             string                `json:"digest"`
 }

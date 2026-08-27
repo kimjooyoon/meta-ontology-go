@@ -1,20 +1,24 @@
 package languageresourcebudget
 
-import "sort"
+import (
+	"bytes"
+	"encoding/base64"
+	"sort"
+)
 
 func Evaluate(input Input, caseName string) Report {
 	report := baseReport(input, caseName)
 	if input.Schema != InputSchema {
 		return closeReport(report, "EXACT", "INPUT_SCHEMA_UNKNOWN", "NO_CLAIM")
 	}
-	if !positiveSHA(input.ExpectedHead) || !validContract(input.Contract) {
+	if !positiveSHA(input.ExpectedHead) || !validContract(input.Contract) || input.ContractDigest != digestValue(input.Contract) {
 		return closeReport(report, "EXACT", "CONTRACT_OR_SUBJECT_INVALID", "NO_CLAIM")
 	}
 	if !validRunner(input.Producer.Runner) {
 		return closeReport(report, "LOWER_RESOLUTION", "RUNNER_IDENTITY_UNKNOWN", "SEMANTIC_EXACT_RESOURCE_UNKNOWN")
 	}
-	report.WriteSet = input.Producer.WriteSet
-	report.Summary.WriteSet = input.Producer.WriteSet
+	report.WriteSets = append([]WriteSetObservation(nil), input.Producer.WriteSets...)
+	report.Summary.WriteSets = append([]WriteSetObservation(nil), input.Producer.WriteSets...)
 	writeSetTo, writeSetReason := writeSetTransition(input)
 	report.ReadOnlyResolution = "EXACT"
 	if writeSetTo == "OPEN" {
@@ -22,10 +26,9 @@ func Evaluate(input Input, caseName string) Report {
 	}
 	report.Semantic, _ = verifyProducer(input)
 	if report.Semantic.Reason == "" {
-		report.Semantic.Reason = "SEMANTIC_PRODUCER_EVIDENCE_INVALID"
+		report.Semantic = Semantic{Decision: "FAIL_CLOSED", Resolution: "EXACT", ClaimState: "REFUTED", Reason: "SEMANTIC_PRODUCER_EVIDENCE_INVALID"}
 	}
-	semanticErr := report.Semantic.Decision != "PASS"
-	complete, summaries, budgetViolations, missing := summarizeResources(input)
+	complete, summaries, budgetViolations, missing := summarizeResources(input, report.Semantic)
 	report.Summary.Resources = summaries
 	report.Summary.Operations = len(input.Contract.Operations)
 	report.Summary.Samples = len(input.Observations)
@@ -33,22 +36,25 @@ func Evaluate(input Input, caseName string) Report {
 	report.Summary.GoFiles = input.Producer.GoFiles
 	report.Summary.Runner = input.Producer.Runner
 	report.Summary.Effects = input.Producer.Effects
+	report.Summary.EvidenceDigest = rawEvidenceDigest(input)
 	report.Summary.Semantic = report.Semantic
 	report.Effects = input.Producer.Effects
-	report.Indicators = buildIndicators(input, summaries, complete, semanticErr, budgetViolations)
+	report.Indicators = buildIndicators(input, summaries, complete, report.Semantic, budgetViolations)
 	report.Summary.Coordinates = coordinates(report.Indicators)
-	report.Cases = []CaseResult{caseResult(caseName, complete, missing, budgetViolations, semanticErr)}
+	report.Summary.Unknowns = report.Summary.Coordinates.Unknown
+	report.Cases = []CaseResult{caseResult(caseName, input.EvidenceClass, complete, missing, budgetViolations, report.Semantic)}
 	report.NotClaimed = append([]string(nil), input.Contract.NotClaimed...)
+	report.Transitions = buildTransitions(report.Semantic, complete, missing, budgetViolations, writeSetTo, writeSetReason)
 	if writeSetTo == "REFUTED" {
-		report.Transitions = buildTransitions(report.Semantic, complete, budgetViolations, semanticErr, writeSetTo, writeSetReason)
 		return finish(report, "EXACT", "EFFECT_BOUNDARY_VIOLATED", "NO_CLAIM")
 	}
 	if writeSetTo == "OPEN" {
-		report.Transitions = buildTransitions(report.Semantic, complete, budgetViolations, semanticErr, writeSetTo, writeSetReason)
 		return finish(report, "LOWER_RESOLUTION", "EFFECT_OBSERVATION_MISSING", "SEMANTIC_EXACT_RESOURCE_UNKNOWN")
 	}
-	report.Transitions = buildTransitions(report.Semantic, complete, budgetViolations, semanticErr, writeSetTo, writeSetReason)
-	if semanticErr {
+	if report.Semantic.ClaimState == "OPEN" {
+		return finish(report, "LOWER_RESOLUTION", report.Semantic.Reason, "SEMANTIC_CLAIM_OPEN_RESOURCE_UNKNOWN")
+	}
+	if report.Semantic.ClaimState == "REFUTED" {
 		return finish(report, "EXACT", report.Semantic.Reason, "NO_SEMANTIC_CLAIM")
 	}
 	if missing {
@@ -74,8 +80,10 @@ func finish(report Report, resolution, reason, interpretation string) Report {
 	if reason == "RESOURCE_ENVELOPE_OBSERVED" {
 		report.Decision = "PASS"
 	}
-	if report.Semantic.Decision == "PASS" && !hasMissing(report) {
+	if len(report.Transitions) >= 2 && report.Transitions[0].To == "DISCHARGED" && report.Transitions[1].To != "OPEN" && report.Transitions[2].To == "DISCHARGED" {
 		report.ResourceResolution = "RUNNER_SCOPED"
+	} else {
+		report.ResourceResolution = "LOWER_RESOLUTION"
 	}
 	if len(report.Transitions) >= 3 && report.Transitions[2].To == "OPEN" {
 		report.ReadOnlyResolution = "LOWER_RESOLUTION"
@@ -102,17 +110,59 @@ func closeReport(report Report, resolution, reason, interpretation string) Repor
 	return finish(report, resolution, reason, interpretation)
 }
 
+func rawEvidenceDigest(input Input) string {
+	return digestValue(struct {
+		Sources      []RawSource
+		Outputs      []RawOutput
+		Observations []Observation
+		WriteSets    []WriteSetObservation
+	}{input.Producer.SourceFiles, input.Producer.RawOutputs, input.Observations, input.Producer.WriteSets})
+}
+
 func writeSetTransition(input Input) (string, string) {
-	value := input.Producer.WriteSet
-	if input.Producer.Effects.RepositoryWrites != 0 || input.Producer.Effects.MutationAuthority || value.RepositoryWrites != 0 || value.MutationAuthority || value.DiffExitCode != 0 || len(value.ChangedPaths) != 0 || value.UntrackedFileCount != 0 {
+	if input.Producer.Effects.RepositoryWrites != 0 || input.Producer.Effects.MutationAuthority {
 		return "REFUTED", "EFFECT_BOUNDARY_VIOLATED"
 	}
-	if value.Schema != "gooo/meta-resource-budget-write-set/v1" || value.Producer != Producer || value.Consumer != Consumer ||
-		!gitDigest(value.BeforeTreeDigest) || !gitDigest(value.AfterTreeDigest) || !contentDigest(value.WriteSetDigest) ||
-		value.BeforeTreeDigest != value.AfterTreeDigest || value.Reason != "GIT_DIFF_EXIT_0_AND_WRITE_SET_EMPTY" {
+	if len(input.Producer.WriteSets) != len(input.Contract.Operations) {
 		return "OPEN", "EFFECT_OBSERVATION_MISSING"
 	}
-	return "DISCHARGED", "EFFECT_BOUNDARY_VERIFIED"
+	seen := make(map[string]bool, len(input.Producer.WriteSets))
+	open := false
+	for _, value := range input.Producer.WriteSets {
+		if seen[value.Operation] {
+			return "REFUTED", "EFFECT_BOUNDARY_VIOLATED"
+		}
+		seen[value.Operation] = true
+		if value.RepositoryWrites != 0 || value.MutationAuthority || value.DiffExitCode != 0 || len(value.ChangedPaths) != 0 || value.UntrackedFileCount != 0 {
+			return "REFUTED", "EFFECT_BOUNDARY_VIOLATED"
+		}
+		if value.Schema != "gooo/meta-resource-budget-write-set/v1" || value.Producer != Producer || value.Consumer != Consumer ||
+			!gitDigest(value.BeforeTreeDigest) || !gitDigest(value.AfterTreeDigest) || !contentDigest(value.WriteSetDigest) ||
+			value.BeforeTreeDigest != value.AfterTreeDigest || !value.AuthorityObserved || !value.BeforeStatusObserved || !value.AfterStatusObserved || value.MutationAuthority ||
+			value.SampleStart != 1 || value.SampleEnd != input.Contract.SamplesPerOp ||
+			value.Reason != "NET_REPOSITORY_STATE_UNCHANGED_ACROSS_OPERATION_WINDOW" {
+			open = true
+			continue
+		}
+		before, beforeErr := decodeStatus(value.BeforeStatusBase64)
+		after, afterErr := decodeStatus(value.AfterStatusBase64)
+		if beforeErr != nil || afterErr != nil || value.WriteSetDigest != statusDigest(before, after) {
+			open = true
+			continue
+		}
+		if !bytes.Equal(before, after) {
+			return "REFUTED", "EFFECT_BOUNDARY_VIOLATED"
+		}
+	}
+	for _, spec := range input.Contract.Operations {
+		if !seen[spec.ID] {
+			open = true
+		}
+	}
+	if open {
+		return "OPEN", "EFFECT_OBSERVATION_MISSING"
+	}
+	return "DISCHARGED", "NET_REPOSITORY_STATE_UNCHANGED"
 }
 
 func writeSetTransitionOnly(input Input) string {
@@ -120,47 +170,46 @@ func writeSetTransitionOnly(input Input) string {
 	return value
 }
 
-func gitDigest(value string) bool { return len(value) == 40 && isHex(value) }
+func decodeStatus(value string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(value)
+}
 
-func summarizeResources(input Input) (bool, []ResourceSummary, int, bool) {
-	values := append([]Observation(nil), input.Observations...)
-	sort.Slice(values, func(left, right int) bool {
-		if values[left].Operation != values[right].Operation {
-			return values[left].Operation < values[right].Operation
-		}
-		return values[left].Sequence < values[right].Sequence
-	})
-	complete := len(values) == len(input.Contract.Operations)*input.Contract.SamplesPerOp
-	missing := false
-	operationViolations := 0
+func statusDigest(before, after []byte) string {
+	value := append(append([]byte(nil), before...), 0)
+	value = append(value, after...)
+	return digestBytes(value)
+}
+
+func summarizeResources(input Input, semantic Semantic) (bool, []ResourceSummary, int, bool) {
+	byOperation := make(map[string][]Observation, len(input.Contract.Operations))
+	for _, value := range input.Observations {
+		byOperation[value.Operation] = append(byOperation[value.Operation], value)
+	}
+	complete, missing := true, false
 	summaries := make([]ResourceSummary, 0, len(input.Contract.Operations))
 	for _, spec := range input.Contract.Operations {
-		operationViolations := 0
-		group := make([]Observation, 0, input.Contract.SamplesPerOp)
-		for _, value := range values {
-			if value.Operation == spec.ID {
-				group = append(group, value)
-			}
-		}
-		if len(group) != input.Contract.SamplesPerOp {
+		group := append([]Observation(nil), byOperation[spec.ID]...)
+		sort.SliceStable(group, func(left, right int) bool { return group[left].Sequence < group[right].Sequence })
+		summary := ResourceSummary{Operation: spec.ID, Samples: len(group)}
+		if len(group) < input.Contract.SamplesPerOp {
+			summary.MissingSamples = input.Contract.SamplesPerOp - len(group)
 			complete, missing = false, true
 		}
-		for index, value := range group {
-			if value.Sequence != index+1 || !validObservation(value, spec, input) {
-				complete = false
-			}
-			operationViolations += budgetViolation(value, input.Contract.Limits)
+		if len(group) > input.Contract.SamplesPerOp {
+			summary.InvalidSamples = len(group) - input.Contract.SamplesPerOp
+			complete = false
 		}
-		walls := make([]int64, len(group))
-		for index := range group {
-			walls[index] = group[index].WallTimeNS
-		}
-		sort.Slice(walls, func(i, j int) bool { return walls[i] < walls[j] })
-		summary := ResourceSummary{Operation: spec.ID, Samples: len(group), BudgetViolations: operationViolations}
-		if len(walls) > 0 {
-			summary.WallMinNS, summary.WallMedianNS, summary.WallMaxNS = walls[0], walls[len(walls)/2], walls[len(walls)-1]
-		}
+		walls := make([]int64, 0, len(group))
 		for _, value := range group {
+			if value.Sequence < 1 || value.Sequence > input.Contract.SamplesPerOp || !validObservation(value, spec, input, semantic) {
+				summary.InvalidSamples++
+				complete = false
+				continue
+			}
+			walls = append(walls, value.WallTimeNS)
+			if budgetViolation(value, input.Contract.Limits) > 0 {
+				summary.BudgetViolations++
+			}
 			if value.PeakRSSKiB > summary.PeakRSSMaxKiB {
 				summary.PeakRSSMaxKiB = value.PeakRSSKiB
 			}
@@ -171,7 +220,16 @@ func summarizeResources(input Input) (bool, []ResourceSummary, int, bool) {
 				summary.GeneratedMax = value.GeneratedBytes
 			}
 		}
+		sort.Slice(walls, func(left, right int) bool { return walls[left] < walls[right] })
+		if len(walls) > 0 {
+			summary.WallMinNS, summary.WallMedianNS, summary.WallMaxNS = walls[0], walls[len(walls)/2], walls[len(walls)-1]
+		}
 		summaries = append(summaries, summary)
+	}
+	for operationID, values := range byOperation {
+		if _, ok := operation(operationID, input.Contract); !ok && len(values) > 0 {
+			complete = false
+		}
 	}
 	violations := 0
 	for _, summary := range summaries {
@@ -180,42 +238,49 @@ func summarizeResources(input Input) (bool, []ResourceSummary, int, bool) {
 	return complete, summaries, violations, missing
 }
 
-func validObservation(value Observation, spec Operation, input Input) bool {
+func validObservation(value Observation, spec Operation, input Input, semantic Semantic) bool {
 	return value.Schema == ObservationSchema && value.SubjectSHA == input.ExpectedHead && value.Producer == Producer && value.Consumer == Consumer &&
-		value.Stage == spec.Stage && value.Step == spec.Step && value.MetaOperation == spec.MetaOperation && value.ProofChoice == spec.ProofChoice &&
+		value.Operation == spec.ID && value.Stage == spec.Stage && value.Step == spec.Step && value.MetaOperation == spec.MetaOperation && value.ProofChoice == spec.ProofChoice &&
 		value.Reason == "RUNNER_RESOURCE_OBSERVED" && value.ExitCode == 0 && value.WallTimeNS > 0 && value.PeakRSSKiB > 0 &&
-		value.ReceiptBytes >= 0 && value.GeneratedBytes >= 0 && len(value.OutputDigest) > 0
+		value.ReceiptBytes >= 0 && value.GeneratedBytes >= 0 && contentDigest(value.OutputDigest) &&
+		value.SourceRawDigest == semantic.SourceDigest && value.SourceSemanticDigest == semantic.SemanticDigest && value.EntryDigest == semantic.TargetDigest && value.TargetDigest == semantic.TargetDigest
 }
 
 func budgetViolation(value Observation, limits Limits) int {
-	limitNS := limits.WallTimeMS * 1000000
-	if value.WallTimeNS > limitNS || value.PeakRSSKiB > limits.PeakRSSKiB || value.ReceiptBytes > limits.ReceiptBytes || value.GeneratedBytes > limits.GeneratedBytes {
+	if value.WallTimeNS > limits.WallTimeMS*1000000 || value.PeakRSSKiB > limits.PeakRSSKiB || value.ReceiptBytes > limits.ReceiptBytes || value.GeneratedBytes > limits.GeneratedBytes {
 		return 1
 	}
 	return 0
 }
 
 func coordinates(values []Indicator) Counter {
-	satisfied := 0
+	result := Counter{}
 	for _, value := range values {
-		if value.Satisfied {
-			satisfied++
+		switch value.Status {
+		case "NOT_APPLICABLE":
+			continue
+		case "SATISFIED":
+			result.Satisfied++
+		case "REFUTED":
+			result.Refuted++
+		case "UNKNOWN":
+			result.Unknown++
 		}
 	}
-	basis := 0
-	if len(values) > 0 {
-		basis = satisfied * 10000 / len(values)
+	result.Total = result.Satisfied + result.Refuted + result.Unknown
+	if result.Total > 0 {
+		result.BasisPoints = result.Satisfied * 10000 / result.Total
 	}
-	return Counter{Satisfied: satisfied, Total: len(values), BasisPoints: basis}
+	return result
 }
 
-func hasMissing(report Report) bool { return report.Reason == "RESOURCE_SAMPLE_MISSING" }
-
-func caseResult(name string, complete, missing bool, violations int, semanticErr bool) CaseResult {
-	result := CaseResult{Name: name, Decision: "PASS", Resolution: "EXACT", Reason: "CASE_EXPECTATION_MET"}
+func caseResult(name, evidenceClass string, complete, missing bool, violations int, semantic Semantic) CaseResult {
+	result := CaseResult{Name: name, EvidenceClass: evidenceClass, Decision: "PASS", Resolution: "EXACT", Reason: "CASE_EXPECTATION_MET"}
 	switch {
-	case semanticErr:
-		result.Decision, result.Reason, result.Impact = "FAIL_CLOSED", "SEMANTIC_CLAIM_REJECTED", "SEMANTIC_CLAIM"
+	case semantic.ClaimState == "OPEN":
+		result.Decision, result.Resolution, result.Reason, result.Impact = "FAIL_CLOSED", "LOWER_RESOLUTION", semantic.Reason, "SEMANTIC_CLAIM_OPEN"
+	case semantic.ClaimState == "REFUTED":
+		result.Decision, result.Reason, result.Impact = "FAIL_CLOSED", semantic.Reason, "SEMANTIC_CLAIM"
 	case missing:
 		result.Decision, result.Resolution, result.Reason, result.Impact = "FAIL_CLOSED", "LOWER_RESOLUTION", "RESOURCE_SAMPLE_MISSING", "RESOURCE_CLAIM_ONLY_AND_RESOLUTION_LOWERED"
 	case !complete:

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -49,6 +50,7 @@ type binding struct {
 type sourceMeaning struct {
 	SourceDigest   string
 	SemanticDigest string
+	TargetDigest   string
 	Package        string
 	Namespace      string
 	Activity       string
@@ -59,37 +61,49 @@ type sourceMeaning struct {
 func verifyProducer(input Input) (Semantic, error) {
 	meaning, err := reconstructSourceMeaning(input)
 	if err != nil {
-		return Semantic{}, err
+		return semanticFailure(err.Error(), sourceMeaning{})
 	}
 	if input.Producer.SourceDigest != meaning.SourceDigest {
-		return Semantic{}, fmt.Errorf("SOURCE_DIGEST_MISMATCH")
+		return semanticFailure("SOURCE_DIGEST_MISMATCH", meaning)
+	}
+
+	semantic := Semantic{SourceDigest: meaning.SourceDigest, SemanticDigest: meaning.SemanticDigest, TargetDigest: meaning.TargetDigest}
+	if input.Producer.SourceReceiptBase64 == "" {
+		return semanticFailure("SOURCE_RECEIPT_PAYLOAD_MISSING", meaning)
 	}
 	sourcePayload, err := decodePayload(input.Producer.SourceReceiptBase64)
 	if err != nil {
-		return Semantic{}, fmt.Errorf("SOURCE_RECEIPT_INVALID")
+		return semanticFailure("SOURCE_RECEIPT_PAYLOAD_MISSING", meaning)
 	}
 	var source sourceReceipt
 	if err := json.Unmarshal(sourcePayload, &source); err != nil {
-		return Semantic{}, fmt.Errorf("SOURCE_RECEIPT_INVALID")
+		return semanticFailure("SOURCE_RECEIPT_INVALID", meaning)
 	}
 	if source.SchemaVersion != "gooo/diagnostics/v1" || source.Command != "check" || source.Status != "ok" ||
-		source.File != firstSourceFilename(input) || len(source.Diagnostics) != 0 {
-		return Semantic{}, fmt.Errorf("SOURCE_RECEIPT_NOT_EXACT")
+		source.File != firstSourceFilename(input.Producer.SourceFiles) || len(source.Diagnostics) != 0 {
+		return semanticFailure("SOURCE_RECEIPT_NOT_EXACT", meaning)
+	}
+
+	if input.Producer.ArtifactBase64 == "" {
+		return semanticFailure("ARTIFACT_PAYLOAD_MISSING", meaning)
 	}
 	artifactPayload, err := decodePayload(input.Producer.ArtifactBase64)
 	if err != nil {
-		return Semantic{}, fmt.Errorf("ARTIFACT_INVALID")
+		return semanticFailure("ARTIFACT_PAYLOAD_MISSING", meaning)
+	}
+	if input.Producer.ReplayBase64 == "" {
+		return semanticFailure("REPLAY_PAYLOAD_MISSING", meaning)
 	}
 	replayPayload, err := decodePayload(input.Producer.ReplayBase64)
 	if err != nil {
-		return Semantic{}, fmt.Errorf("REPLAY_INVALID")
+		return semanticFailure("REPLAY_PAYLOAD_MISSING", meaning)
 	}
 	var first, replay artifact
 	if err := json.Unmarshal(artifactPayload, &first); err != nil {
-		return Semantic{}, fmt.Errorf("ARTIFACT_INVALID")
+		return semanticFailure("ARTIFACT_INVALID", meaning)
 	}
 	if err := json.Unmarshal(replayPayload, &replay); err != nil {
-		return Semantic{}, fmt.Errorf("REPLAY_INVALID")
+		return semanticFailure("REPLAY_INVALID", meaning)
 	}
 	valid := func(value artifact) bool {
 		return value.Schema == "gooo/operation-manifest/v1" && value.Decision == "PASS" && value.Resolution == "EXACT" &&
@@ -100,22 +114,124 @@ func verifyProducer(input Input) (Semantic, error) {
 			value.Effects.RepositoryWrites == 0 && !value.Effects.MutationAuthority &&
 			contentDigest(value.SubjectDigest) && contentDigest(value.Digest)
 	}
-	if !valid(first) || !valid(replay) {
-		return Semantic{}, fmt.Errorf("ARTIFACT_SEMANTICS_INVALID")
-	}
 	firstDigest, replayDigest := digestBytes(artifactPayload), digestBytes(replayPayload)
+	semantic.ArtifactDigest, semantic.ReplayDigest = firstDigest, replayDigest
+	if !valid(first) || !valid(replay) {
+		return semanticFailureWithValue("ARTIFACT_SEMANTICS_INVALID", meaning, semantic)
+	}
 	if !bytes.Equal(artifactPayload, replayPayload) {
-		return Semantic{Decision: "FAIL_CLOSED", Resolution: "EXACT", Reason: "ARTIFACT_REPLAY_MISMATCH", SourceDigest: meaning.SourceDigest, SemanticDigest: meaning.SemanticDigest, ArtifactDigest: firstDigest, ReplayDigest: replayDigest}, fmt.Errorf("ARTIFACT_REPLAY_MISMATCH")
+		return semanticFailureWithValue("ARTIFACT_REPLAY_MISMATCH", meaning, semantic)
 	}
-	if !boundOutputDigest(input, "source-check", sourcePayload) ||
-		!boundOutputDigest(input, "project-manifest", artifactPayload) ||
-		!boundOutputDigest(input, "replay-manifest", replayPayload) {
-		return Semantic{Decision: "FAIL_CLOSED", Resolution: "EXACT", Reason: "PRODUCER_OUTPUT_DIGEST_MISMATCH", SourceDigest: meaning.SourceDigest, SemanticDigest: meaning.SemanticDigest, ArtifactDigest: firstDigest, ReplayDigest: replayDigest}, fmt.Errorf("PRODUCER_OUTPUT_DIGEST_MISMATCH")
+	if err := verifyRawOutputs(input, meaning, sourcePayload, artifactPayload, replayPayload); err != nil {
+		return semanticFailureWithValue(err.Error(), meaning, semantic)
 	}
-	return Semantic{Decision: "PASS", Resolution: "EXACT", Reason: "SEMANTIC_SOURCE_LOWERING_AND_ARTIFACT_REPLAY_STABLE", SourceDigest: meaning.SourceDigest, SemanticDigest: meaning.SemanticDigest, ArtifactDigest: firstDigest, ReplayDigest: replayDigest}, nil
+	semantic.Decision, semantic.Resolution, semantic.ClaimState = "PASS", "EXACT", "DISCHARGED"
+	semantic.Reason = "SEMANTIC_SOURCE_LOWERING_AND_ARTIFACT_REPLAY_STABLE"
+	return semantic, nil
+}
+
+func semanticFailure(reason string, meaning sourceMeaning) (Semantic, error) {
+	return semanticFailureWithValue(reason, meaning, Semantic{SourceDigest: meaning.SourceDigest, SemanticDigest: meaning.SemanticDigest, TargetDigest: meaning.TargetDigest})
+}
+
+func semanticFailureWithValue(reason string, meaning sourceMeaning, semantic Semantic) (Semantic, error) {
+	semantic.Decision, semantic.Reason = "FAIL_CLOSED", reason
+	if missingSemanticReason(reason) {
+		semantic.Resolution, semantic.ClaimState = "LOWER_RESOLUTION", "OPEN"
+	} else {
+		semantic.Resolution, semantic.ClaimState = "EXACT", "REFUTED"
+	}
+	return semantic, fmt.Errorf(reason)
+}
+
+func missingSemanticReason(reason string) bool {
+	return strings.Contains(reason, "MISSING") || reason == "SOURCE_FILE_SET_MISSING" || reason == "RAW_OPERATION_OUTPUTS_MISSING"
+}
+
+func verifyRawOutputs(input Input, meaning sourceMeaning, sourcePayload, artifactPayload, replayPayload []byte) error {
+	expected := len(input.Contract.Operations)
+	if len(input.Producer.RawOutputs) < expected {
+		return fmt.Errorf("RAW_OPERATION_OUTPUTS_MISSING")
+	}
+	byKey := make(map[string]RawOutput, len(input.Producer.RawOutputs))
+	for _, raw := range input.Producer.RawOutputs {
+		if raw.Operation == "" || raw.Sequence != 1 || raw.PayloadBase64 == "" {
+			return fmt.Errorf("RAW_OPERATION_OUTPUT_MISSING")
+		}
+		key := outputKey(raw.Operation, raw.Sequence)
+		if _, exists := byKey[key]; exists {
+			return fmt.Errorf("RAW_OPERATION_OUTPUT_DUPLICATE")
+		}
+		payload, err := decodePayload(raw.PayloadBase64)
+		if err != nil {
+			return fmt.Errorf("RAW_OPERATION_OUTPUT_INVALID")
+		}
+		spec, ok := operation(raw.Operation, input.Contract)
+		if !ok || raw.Kind != spec.Output {
+			return fmt.Errorf("RAW_OPERATION_OUTPUT_TARGET_MISMATCH")
+		}
+		byKey[key] = raw
+		if !outputObservationsMatch(input.Observations, raw.Operation, digestBytes(payload), meaning) {
+			return fmt.Errorf("PRODUCER_OUTPUT_BINDING_MISMATCH")
+		}
+	}
+	for _, spec := range input.Contract.Operations {
+		if _, ok := byKey[outputKey(spec.ID, 1)]; !ok {
+			return fmt.Errorf("RAW_OPERATION_OUTPUT_MISSING")
+		}
+	}
+	if !bytes.Equal(firstOutput(byKey, "source-check"), sourcePayload) ||
+		!bytes.Equal(firstOutput(byKey, "project-manifest"), artifactPayload) ||
+		!bytes.Equal(firstOutput(byKey, "replay-manifest"), replayPayload) {
+		return fmt.Errorf("PRODUCER_OUTPUT_PAYLOAD_MISMATCH")
+	}
+	return nil
+}
+
+func firstOutput(outputs map[string]RawOutput, operationID string) []byte {
+	value, ok := outputs[outputKey(operationID, 1)]
+	if !ok {
+		return nil
+	}
+	payload, _ := decodePayload(value.PayloadBase64)
+	return payload
+}
+
+func outputKey(operationID string, sequence int) string {
+	return fmt.Sprintf("%s#%d", operationID, sequence)
+}
+
+func outputDigestForObservation(observations []Observation, operationID string, sequence int, digest string) bool {
+	count := 0
+	for _, observation := range observations {
+		if observation.Operation == operationID && observation.Sequence == sequence {
+			count++
+			if observation.OutputDigest != digest {
+				return false
+			}
+		}
+	}
+	return count == 1
+}
+
+func outputObservationsMatch(observations []Observation, operationID, digest string, meaning sourceMeaning) bool {
+	count := 0
+	for _, observation := range observations {
+		if observation.Operation != operationID {
+			continue
+		}
+		count++
+		if observation.OutputDigest != digest || observation.SourceRawDigest != meaning.SourceDigest || observation.SourceSemanticDigest != meaning.SemanticDigest || observation.EntryDigest != meaning.TargetDigest || observation.TargetDigest != meaning.TargetDigest {
+			return false
+		}
+	}
+	return count > 0
 }
 
 func reconstructSourceMeaning(input Input) (sourceMeaning, error) {
+	if len(input.Producer.SourceFiles) < input.Producer.SourceFileCount || len(input.Producer.SourceFiles) < len(input.Contract.SourcePaths) {
+		return sourceMeaning{}, fmt.Errorf("SOURCE_FILE_SET_MISSING")
+	}
 	if len(input.Producer.SourceFiles) != input.Producer.SourceFileCount || len(input.Producer.SourceFiles) != len(input.Contract.SourcePaths) {
 		return sourceMeaning{}, fmt.Errorf("SOURCE_FILE_SET_INVALID")
 	}
@@ -124,12 +240,15 @@ func reconstructSourceMeaning(input Input) (sourceMeaning, error) {
 	var declarations []syntax.Declaration
 	var packageName, namespace string
 	for index, raw := range sources {
-		if raw.Filename == "" {
+		if raw.Filename == "" || !strings.HasSuffix(raw.Filename, ".gooo") {
 			return sourceMeaning{}, fmt.Errorf("SOURCE_FILE_SET_INVALID")
 		}
 		content, err := decodePayload(raw.ContentBase64)
-		if err != nil || len(content) == 0 {
+		if err != nil {
 			return sourceMeaning{}, fmt.Errorf("SOURCE_PAYLOAD_INVALID")
+		}
+		if len(content) == 0 {
+			return sourceMeaning{}, fmt.Errorf("SOURCE_PAYLOAD_MISSING")
 		}
 		file, diagnostics := syntax.ParseFile(raw.Filename, string(content))
 		if file == nil || diagnostics.HasErrors() || file.Package == nil || file.Namespace == nil {
@@ -187,7 +306,9 @@ func reconstructSourceMeaning(input Input) (sourceMeaning, error) {
 	if !ok {
 		return sourceMeaning{}, fmt.Errorf("SOURCE_OUTPUT_ENTITY_UNKNOWN")
 	}
-	return sourceMeaning{SourceDigest: sourceSetDigest(sources), SemanticDigest: "sha256:" + ir.StableHash(), Package: packageName, Namespace: namespace, Activity: activity.Name, Inputs: inputs, Output: binding{Name: outputName, ID: output.ID}}, nil
+	meaning := sourceMeaning{SourceDigest: sourceSetDigest(sources), SemanticDigest: "sha256:" + ir.StableHash(), Package: packageName, Namespace: namespace, Activity: activity.Name, Inputs: inputs, Output: binding{Name: outputName, ID: output.ID}}
+	meaning.TargetDigest = targetDigest(meaning)
+	return meaning, nil
 }
 
 func firstSourceFilename(input Input) string {
@@ -205,11 +326,22 @@ func sourceSetDigest(sources []RawSource) string {
 	var payload bytes.Buffer
 	for _, raw := range values {
 		content, _ := decodePayload(raw.ContentBase64)
-		digest := sha256.Sum256(content)
-		payload.WriteString(hex.EncodeToString(digest[:]))
-		payload.WriteByte('\n')
+		payload.WriteString(raw.Filename)
+		payload.WriteByte(0)
+		payload.Write(content)
+		payload.WriteByte(0)
 	}
 	return digestBytes(payload.Bytes())
+}
+
+func targetDigest(meaning sourceMeaning) string {
+	return digestValue(struct {
+		Package   string
+		Namespace string
+		Activity  string
+		Inputs    []binding
+		Output    binding
+	}{meaning.Package, meaning.Namespace, meaning.Activity, meaning.Inputs, meaning.Output})
 }
 
 func bindingsEqual(left, right []binding) bool {
@@ -225,12 +357,3 @@ func bindingsEqual(left, right []binding) bool {
 }
 
 func decodePayload(value string) ([]byte, error) { return base64.StdEncoding.DecodeString(value) }
-
-func boundOutputDigest(input Input, operation string, output []byte) bool {
-	for _, value := range input.Observations {
-		if value.Operation == operation && value.Sequence == 1 {
-			return value.OutputDigest == digestBytes(output)
-		}
-	}
-	return false
-}
