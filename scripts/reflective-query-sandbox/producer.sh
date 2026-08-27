@@ -36,6 +36,8 @@ if [ "$(cat "$before_status")" != "$after" ]; then
 	exit 1
 fi
 
+echo 'producer validation snapshot:'
+jq '{contract: {source_nodes, source_facts, claim_count, denominator, attempt_count, reflective_queries, safe_queries, denied_mutations, unknown_targets, refuted_attempts, transition_count, satisfied_indicators}, attempts: [.attempts[] | {id, operation, decision, resolution, reason, api_outcome}], effects, claims: [.claims[] | {claim_id, from, to, reason, evidence_attempt}]}' "$output/observation.json"
 jq -e --arg sha "$HEAD_SHA" '
   .schema == "gooo/reflective-query-sandbox-observation/v2" and
   .subject_sha == $sha and
