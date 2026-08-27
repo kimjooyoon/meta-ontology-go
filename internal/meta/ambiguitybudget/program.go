@@ -138,3 +138,12 @@ func subjectDecision(program ProgramObservation, budget IntegerSet) (string, str
 	}
 	return "PASS", "EXACT", "AMBIGUITY_BUDGET_WITHIN_LIMIT"
 }
+
+func contains(values []string, value string) bool {
+	for _, candidate := range values {
+		if candidate == value {
+			return true
+		}
+	}
+	return false
+}

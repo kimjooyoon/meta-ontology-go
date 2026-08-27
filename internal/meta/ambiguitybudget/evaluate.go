@@ -16,7 +16,6 @@ func Evaluate(input Input) Receipt {
 
 	receipt.Cases = make([]CaseReceipt, 0, len(input.Contract.Cases))
 	receipt.Claims = make([]ClaimTransition, 0, len(input.Contract.Cases))
-	budget := policyCounts(receipt.BudgetPolicy)
 	for _, contractCase := range input.Contract.Cases {
 		program, _ := findCase(source, contractCase.Activity)
 		result := caseReceipt(source.Digest, source.SemanticDigest, program, receipt.BudgetPolicy)
