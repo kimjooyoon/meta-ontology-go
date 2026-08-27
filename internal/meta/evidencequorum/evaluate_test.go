@@ -79,6 +79,7 @@ func fixtureInput() Input {
 	producer.Digest = digestJSON(producer)
 	unknownProducer := producer
 	unknownProducer.Decision = DecisionUnknown
+	unknownProducer.Digest = ""
 	unknownProducer.Digest = digestJSON(unknownProducer)
 	newReceipt := func(id, role, group, value string, confidence int) []byte {
 		claim := contract.Claim
