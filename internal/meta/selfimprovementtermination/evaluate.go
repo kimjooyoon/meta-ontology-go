@@ -15,7 +15,7 @@ func Evaluate(input Input) (Receipt, error) {
 	if err := ValidateInput(input); err != nil {
 		return Receipt{}, err
 	}
-	class := classify(input)
+	class := effectiveClassification(input)
 	receipt := Receipt{
 		Schema: ReceiptSchema, Metaprogram: Metaprogram, Repository: input.Repository,
 		Subject: input.Subject, Producer: input.Producer, Consumer: input.Consumer,
@@ -33,7 +33,8 @@ func Evaluate(input Input) (Receipt, error) {
 	}
 	receipt.ClaimTransitions = transitions(class, len(input.Trace))
 	receipt.Indicators = indicators(input.Interventions)
-	receipt.Conformance = ConformanceSummary{Satisfied: len(receipt.Indicators), Total: IndicatorTotal, BasisPoints: basisPoints(len(receipt.Indicators), IndicatorTotal), Aggregation: ConformanceAggregation}
+	satisfied := countSatisfied(receipt.Indicators)
+	receipt.Conformance = ConformanceSummary{Satisfied: satisfied, Total: IndicatorTotal, BasisPoints: basisPoints(satisfied, IndicatorTotal), Aggregation: ConformanceAggregation}
 	receipt = seal(receipt)
 	if err := ValidateReceipt(receipt, input); err != nil {
 		return Receipt{}, fmt.Errorf("termination receipt: %w", err)
@@ -85,14 +86,30 @@ func ValidateInput(input Input) error {
 			intervention.SemanticBeforeDigest != input.Source.SemanticDigest {
 			return invalid("intervention %d is not source-bound", index+1)
 		}
+		baselineClass := classify(input)
+		expectedBaseline := interventionOutcome(input.Source.SourceDigest, input.Source.SemanticDigest, baselineClass, len(input.Trace))
+		if !reflect.DeepEqual(intervention.Baseline, expectedBaseline) {
+			return invalid("intervention %d baseline outcome is not source-bound", index+1)
+		}
+		if !validInterventionOutcome(intervention.Intervened) ||
+			intervention.Intervened.SourceDigest != intervention.SourceAfterDigest ||
+			intervention.Intervened.SemanticDigest != intervention.SemanticAfterDigest {
+			return invalid("intervention %d intervened outcome is not source-bound", index+1)
+		}
 		switch intervention.ID {
 		case "semantic-trace":
 			if intervention.SemanticAfterDigest == intervention.SemanticBeforeDigest || !intervention.SemanticChanged || intervention.Reason != "SEMANTIC_TRACE_INTERVENTION_CHANGES_SEMANTIC_DIGEST" {
 				return invalid("semantic intervention is not semantic")
 			}
+			if !canonicalOpenTransition(intervention.Intervened.ClaimTransitions) {
+				return invalid("semantic intervention does not carry a canonical open claim transition")
+			}
 		case "nonsemantic-comment":
 			if intervention.SemanticAfterDigest != intervention.SemanticBeforeDigest || intervention.SemanticChanged || intervention.Reason != "NONSEMANTIC_COMMENT_INTERVENTION_PRESERVES_SEMANTIC_DIGEST" {
 				return invalid("comment intervention changed semantic meaning")
+			}
+			if !sameOutcome(intervention.Baseline, intervention.Intervened) {
+				return invalid("comment intervention changed the subject outcome")
 			}
 		default:
 			return invalid("intervention %d is unknown", index+1)
@@ -120,7 +137,7 @@ func classify(input Input) classification {
 	if cycleStart >= 0 {
 		return classification{DecisionCycle, ResolutionExact, ReceiptBound, ReasonCycle, final.AfterState, ClaimRefuted, period, len(states), repeatedStates, false}
 	}
-	if final.Decision == UpstreamNoChange {
+	if input.UpstreamDecision == UpstreamNoChange && final.Decision == UpstreamNoChange {
 		return classification{DecisionFixedPoint, ResolutionExact, ReceiptBound, ReasonNoChange, final.AfterState, ClaimDischarged, 0, len(states), repeatedStates, true}
 	}
 	diverging := len(input.Trace) == input.MaxSteps
@@ -131,6 +148,19 @@ func classify(input Input) classification {
 		return classification{DecisionDivergence, ResolutionLower, ReceiptBound, ReasonDivergence, final.AfterState, ClaimOpen, 0, len(states), repeatedStates, false}
 	}
 	return classification{DecisionInProgress, ResolutionLower, ReceiptBound, ReasonInProgress, final.AfterState, ClaimOpen, 0, len(states), repeatedStates, false}
+}
+
+func effectiveClassification(input Input) classification {
+	class := classify(input)
+	if len(input.Interventions) > 0 {
+		semantic := input.Interventions[0]
+		if semantic.SemanticChanged && semantic.Baseline.Decision == semantic.Intervened.Decision &&
+			semantic.Baseline.Resolution == semantic.Intervened.Resolution {
+			class = classification{DecisionFailClosed, ResolutionLower, ReceiptFailClosed, ReasonDigestOnly,
+				class.finalState, ClaimOpen, class.period, class.stateCount, class.repeatedStates, false}
+		}
+	}
+	return class
 }
 
 func repeatedState(states []string) (int, int) {
@@ -165,8 +195,31 @@ func transitions(class classification, finalStep int) []ClaimTransition {
 	}
 }
 
+func interventionOutcome(sourceDigest, semanticDigest string, class classification, finalStep int) InterventionOutcome {
+	return InterventionOutcome{SourceDigest: sourceDigest, SemanticDigest: semanticDigest,
+		Decision: class.decision, Resolution: class.resolution,
+		ClaimTransitions: transitions(class, finalStep)}
+}
+
+func validInterventionOutcome(outcome InterventionOutcome) bool {
+	return validDigest(outcome.SourceDigest) && validDigest(outcome.SemanticDigest) &&
+		outcome.Decision != "" && outcome.Resolution != "" && len(outcome.ClaimTransitions) == 2
+}
+
+func canonicalOpenTransition(transitions []ClaimTransition) bool {
+	return len(transitions) == 2 && transitions[0].Stage == ClaimStage && transitions[0].Step == 0 &&
+		transitions[0].From == ClaimOpen && transitions[0].To == ClaimOpen && transitions[0].Reason == "TRACE_BOUND" &&
+		transitions[1].Stage == ClaimStage && transitions[1].From == ClaimOpen && transitions[1].To == ClaimOpen &&
+		transitions[1].Step > 0 && transitions[1].Reason != ""
+}
+
+func sameOutcome(left, right InterventionOutcome) bool {
+	return left.Decision == right.Decision && left.Resolution == right.Resolution &&
+		reflect.DeepEqual(left.ClaimTransitions, right.ClaimTransitions)
+}
+
 func ValidateReceipt(receipt Receipt, input Input) error {
-	class := classify(input)
+	class := effectiveClassification(input)
 	want := receiptForValidation(input, class)
 	want.ReceiptDigest, want.ReplayDigest = receipt.ReceiptDigest, receipt.ReplayDigest
 	if !reflect.DeepEqual(receipt, want) {
@@ -195,6 +248,8 @@ func receiptForValidation(input Input, class classification) Receipt {
 		}, Conformance: ConformanceSummary{Satisfied: IndicatorTotal, Total: IndicatorTotal, BasisPoints: 10000, Aggregation: ConformanceAggregation},
 		Authority: Authority{ReadOnly: true}, Indicators: indicators(input.Interventions),
 	}
+	receipt.Conformance.Satisfied = countSatisfied(receipt.Indicators)
+	receipt.Conformance.BasisPoints = basisPoints(receipt.Conformance.Satisfied, receipt.Conformance.Total)
 	return receipt
 }
 

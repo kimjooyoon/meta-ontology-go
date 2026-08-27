@@ -31,6 +31,7 @@ const (
 	ReasonInProgress       = "TRACE_ENDED_BEFORE_TERMINATION"
 	ReasonDivergence       = "STRICTLY_GROWING_BOUNDARY_NO_FIXED_POINT"
 	ReasonDecisionUnknown  = "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
+	ReasonDigestOnly       = "DIGEST_ONLY_BINDING"
 	SourcePath             = "examples/self-improvement-termination/main.gooo"
 	SourceProgramSchema    = "termination-case/v2"
 	InterventionSchema     = "termination-intervention/v1"
@@ -74,18 +75,28 @@ type Observation struct {
 	Reason      string `json:"reason"`
 }
 
+type InterventionOutcome struct {
+	SourceDigest     string            `json:"source_digest"`
+	SemanticDigest   string            `json:"semantic_digest"`
+	Decision         string            `json:"decision"`
+	Resolution       string            `json:"resolution"`
+	ClaimTransitions []ClaimTransition `json:"claim_transitions"`
+}
+
 type Intervention struct {
-	ID                   string `json:"id"`
-	Schema               string `json:"schema"`
-	Stage                string `json:"stage"`
-	Step                 int    `json:"step"`
-	Reason               string `json:"reason"`
-	SourceBeforeDigest   string `json:"source_before_digest"`
-	SourceAfterDigest    string `json:"source_after_digest"`
-	SemanticBeforeDigest string `json:"semantic_before_digest"`
-	SemanticAfterDigest  string `json:"semantic_after_digest"`
-	SourceChanged        bool   `json:"source_changed"`
-	SemanticChanged      bool   `json:"semantic_changed"`
+	ID                   string              `json:"id"`
+	Schema               string              `json:"schema"`
+	Stage                string              `json:"stage"`
+	Step                 int                 `json:"step"`
+	Reason               string              `json:"reason"`
+	SourceBeforeDigest   string              `json:"source_before_digest"`
+	SourceAfterDigest    string              `json:"source_after_digest"`
+	SemanticBeforeDigest string              `json:"semantic_before_digest"`
+	SemanticAfterDigest  string              `json:"semantic_after_digest"`
+	SourceChanged        bool                `json:"source_changed"`
+	SemanticChanged      bool                `json:"semantic_changed"`
+	Baseline             InterventionOutcome `json:"baseline"`
+	Intervened           InterventionOutcome `json:"intervened"`
 }
 
 type Authority struct {

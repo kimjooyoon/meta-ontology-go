@@ -49,6 +49,26 @@ func TestUnknownUpstreamEmitsLocalizedFailClosedReceipt(t *testing.T) {
 	}
 }
 
+func TestDigestOnlyBindingRemainsOpen(t *testing.T) {
+	input := fixedPointInput()
+	semantic := &input.Interventions[0]
+	semantic.Intervened.Decision = semantic.Baseline.Decision
+	semantic.Intervened.Resolution = semantic.Baseline.Resolution
+	semantic.Intervened.ClaimTransitions = []ClaimTransition{
+		{Stage: ClaimStage, Step: 0, From: ClaimOpen, To: ClaimOpen, Reason: "TRACE_BOUND"},
+		{Stage: ClaimStage, Step: 1, From: ClaimOpen, To: ClaimOpen, Reason: ReasonDigestOnly},
+	}
+	receipt, err := Evaluate(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Decision != DecisionFailClosed || receipt.Resolution != ResolutionLower ||
+		receipt.Reason != ReasonDigestOnly || receipt.Outcome.ClaimState != ClaimOpen ||
+		receipt.Outcome.TerminationProven || receipt.Conformance.Satisfied != 1 {
+		t.Fatalf("digest-only binding was promoted: %#v", receipt)
+	}
+}
+
 func TestCycleTakesPrecedenceOverLaterNoChange(t *testing.T) {
 	input := cycleInput()
 	input.MaxSteps = 4
@@ -56,6 +76,8 @@ func TestCycleTakesPrecedenceOverLaterNoChange(t *testing.T) {
 		Stage: TraceStage, Step: 3, BeforeState: state("a"), AfterState: state("a"),
 		BeforeRank: 1, AfterRank: 1, Decision: UpstreamNoChange, Reason: ReasonNoChange,
 	})
+	input = baseInput(input.MaxSteps, input.Trace)
+	input.UpstreamDecision = UpstreamNoChange
 	receipt, err := Evaluate(input)
 	if err != nil {
 		t.Fatal(err)
@@ -68,22 +90,35 @@ func TestCycleTakesPrecedenceOverLaterNoChange(t *testing.T) {
 func baseInput(maxSteps int, trace []Observation) Input {
 	sourceDigest := digestBytes([]byte("source"))
 	semanticDigest := digestBytes([]byte("semantic"))
-	return Input{Schema: InputSchema, Repository: "kimjooyoon/meta-ontology-go", Subject: Consumer,
+	input := Input{Schema: InputSchema, Repository: "kimjooyoon/meta-ontology-go", Subject: Consumer,
 		Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation, ProofChoice: ProofChoice,
 		Stage: TraceStage, Source: SourceCausality{Path: SourcePath, SourceDigest: sourceDigest,
 			SemanticDigest: semanticDigest, CaseID: "test", CaseProgramDigest: digestBytes([]byte("program"))},
 		UpstreamDecision: UpstreamChanged, MaxSteps: maxSteps, Trace: trace,
-		Interventions: []Intervention{
-			{ID: "semantic-trace", Schema: InterventionSchema, Stage: InterventionStage, Step: 1,
-				Reason: "SEMANTIC_TRACE_INTERVENTION_CHANGES_SEMANTIC_DIGEST", SourceBeforeDigest: sourceDigest,
-				SourceAfterDigest: digestBytes([]byte("semantic-source")), SemanticBeforeDigest: semanticDigest,
-				SemanticAfterDigest: digestBytes([]byte("semantic-after")), SourceChanged: true, SemanticChanged: true},
-			{ID: "nonsemantic-comment", Schema: InterventionSchema, Stage: InterventionStage, Step: 2,
-				Reason: "NONSEMANTIC_COMMENT_INTERVENTION_PRESERVES_SEMANTIC_DIGEST", SourceBeforeDigest: sourceDigest,
-				SourceAfterDigest: digestBytes([]byte("comment-source")), SemanticBeforeDigest: semanticDigest,
-				SemanticAfterDigest: semanticDigest, SourceChanged: true, SemanticChanged: false},
-		},
 	}
+	baseClass := classify(input)
+	targetMaxSteps, targetUpstream, targetTrace := semanticInterventionTarget(baseClass)
+	targetObservations, err := parseTrace(targetTrace)
+	if err != nil {
+		panic(err)
+	}
+	semanticClass := classify(Input{UpstreamDecision: targetUpstream, MaxSteps: targetMaxSteps, Trace: targetObservations})
+	baselineOutcome := interventionOutcome(sourceDigest, semanticDigest, baseClass, len(trace))
+	semanticOutcome := interventionOutcome(digestBytes([]byte("semantic-source")), digestBytes([]byte("semantic-after")), semanticClass, len(targetObservations))
+	commentOutcome := interventionOutcome(digestBytes([]byte("comment-source")), semanticDigest, baseClass, len(trace))
+	input.Interventions = []Intervention{
+		{ID: "semantic-trace", Schema: InterventionSchema, Stage: InterventionStage, Step: 1,
+			Reason: "SEMANTIC_TRACE_INTERVENTION_CHANGES_SEMANTIC_DIGEST", SourceBeforeDigest: sourceDigest,
+			SourceAfterDigest: semanticOutcome.SourceDigest, SemanticBeforeDigest: semanticDigest,
+			SemanticAfterDigest: semanticOutcome.SemanticDigest, SourceChanged: true, SemanticChanged: true,
+			Baseline: baselineOutcome, Intervened: semanticOutcome},
+		{ID: "nonsemantic-comment", Schema: InterventionSchema, Stage: InterventionStage, Step: 2,
+			Reason: "NONSEMANTIC_COMMENT_INTERVENTION_PRESERVES_SEMANTIC_DIGEST", SourceBeforeDigest: sourceDigest,
+			SourceAfterDigest: commentOutcome.SourceDigest, SemanticBeforeDigest: semanticDigest,
+			SemanticAfterDigest: semanticDigest, SourceChanged: true, SemanticChanged: false,
+			Baseline: baselineOutcome, Intervened: commentOutcome},
+	}
+	return input
 }
 
 func state(value string) string { return stateDigest(value) }
@@ -97,6 +132,11 @@ func fixedPointInput() Input {
 	input := baseInput(4, []Observation{{Stage: TraceStage, Step: 1, BeforeState: state("a"), AfterState: state("a"),
 		BeforeRank: 4, AfterRank: 4, Decision: UpstreamNoChange, Reason: ReasonNoChange}})
 	input.UpstreamDecision = UpstreamNoChange
+	baseClass := classify(input)
+	baseline := interventionOutcome(input.Source.SourceDigest, input.Source.SemanticDigest, baseClass, len(input.Trace))
+	input.Interventions[0].Baseline = baseline
+	input.Interventions[1].Baseline = baseline
+	input.Interventions[1].Intervened = baseline
 	return input
 }
 
@@ -115,5 +155,10 @@ func divergenceInput() Input {
 func unknownInput() Input {
 	input := fixedPointInput()
 	input.UpstreamDecision = "FUTURE_DECISION"
+	baseClass := classify(input)
+	baseline := interventionOutcome(input.Source.SourceDigest, input.Source.SemanticDigest, baseClass, len(input.Trace))
+	input.Interventions[0].Baseline = baseline
+	input.Interventions[1].Baseline = baseline
+	input.Interventions[1].Intervened = baseline
 	return input
 }

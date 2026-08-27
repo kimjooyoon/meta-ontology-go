@@ -40,11 +40,7 @@ func BuildInput(root, repository, sourcePath, caseID string) (Input, error) {
 		if item.ID != caseID {
 			continue
 		}
-		interventions, err := buildInterventions(model.Path, model.raw, item.Program, model.SemanticDigest)
-		if err != nil {
-			return Input{}, err
-		}
-		return Input{
+		input := Input{
 			Schema: InputSchema, Repository: repository, Subject: Consumer,
 			Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation,
 			ProofChoice: ProofChoice, Stage: TraceStage,
@@ -54,8 +50,14 @@ func BuildInput(root, repository, sourcePath, caseID string) (Input, error) {
 				CaseProgramDigest: item.ProgramDigest,
 			},
 			UpstreamDecision: item.UpstreamDecision, MaxSteps: item.MaxSteps,
-			Trace: append([]Observation(nil), item.Trace...), Interventions: interventions,
-		}, nil
+			Trace: append([]Observation(nil), item.Trace...),
+		}
+		interventions, err := buildInterventions(model.Path, model.raw, item.Program, model.SemanticDigest, item)
+		if err != nil {
+			return Input{}, err
+		}
+		input.Interventions = interventions
+		return input, nil
 	}
 	return Input{}, fmt.Errorf("termination source case %q is not declared", caseID)
 }
@@ -75,29 +77,52 @@ func LoadSource(root, sourcePath string) (SourceModel, error) {
 		return SourceModel{}, err
 	}
 	model := SourceModel{Path: canonicalPath, SourceDigest: digestBytes(raw), SemanticDigest: semanticDigest, raw: append([]byte(nil), raw...)}
+	cases, err := sourceCases(ir)
+	if err != nil {
+		return SourceModel{}, err
+	}
+	model.Cases = cases
+	if len(model.Cases) == 0 {
+		return SourceModel{}, fmt.Errorf("termination source declares no executable cases")
+	}
+	return model, nil
+}
+
+func sourceCases(ir semantic.IR) ([]SourceCase, error) {
+	cases := make([]SourceCase, 0)
 	for _, node := range ir.Graph.Nodes() {
 		if node.Kind != semantic.Activity || !strings.HasPrefix(node.ValueProgram, SourceProgramSchema+"|") {
 			continue
 		}
 		item, err := parseSourceCase(node.ValueProgram)
 		if err != nil {
-			return SourceModel{}, fmt.Errorf("source activity %q: %w", node.Name, err)
+			return nil, fmt.Errorf("source activity %q: %w", node.Name, err)
 		}
 		item.Activity = node.Name
 		item.Program = node.ValueProgram
 		item.ProgramDigest = digestBytes([]byte(node.ValueProgram))
-		model.Cases = append(model.Cases, item)
+		cases = append(cases, item)
 	}
-	if len(model.Cases) == 0 {
-		return SourceModel{}, fmt.Errorf("termination source declares no executable cases")
-	}
-	sort.Slice(model.Cases, func(i, j int) bool { return model.Cases[i].ID < model.Cases[j].ID })
-	for index := 1; index < len(model.Cases); index++ {
-		if model.Cases[index-1].ID == model.Cases[index].ID {
-			return SourceModel{}, fmt.Errorf("termination source case %q is duplicated", model.Cases[index].ID)
+	sort.Slice(cases, func(i, j int) bool { return cases[i].ID < cases[j].ID })
+	for index := 1; index < len(cases); index++ {
+		if cases[index-1].ID == cases[index].ID {
+			return nil, fmt.Errorf("termination source case %q is duplicated", cases[index].ID)
 		}
 	}
-	return model, nil
+	return cases, nil
+}
+
+func findSourceCase(ir semantic.IR, caseID string) (SourceCase, error) {
+	cases, err := sourceCases(ir)
+	if err != nil {
+		return SourceCase{}, err
+	}
+	for _, item := range cases {
+		if item.ID == caseID {
+			return item, nil
+		}
+	}
+	return SourceCase{}, fmt.Errorf("termination source case %q is not declared after intervention", caseID)
 }
 
 func parseAndLower(filename string, raw []byte) (string, semantic.IR, error) {
@@ -144,8 +169,8 @@ func parseSourceCase(program string) (SourceCase, error) {
 	if err != nil {
 		return SourceCase{}, err
 	}
-	if len(trace) > maxSteps {
-		return SourceCase{}, fmt.Errorf("value program trace exceeds max_steps")
+	if len(trace) == 0 || len(trace) > maxSteps {
+		return SourceCase{}, fmt.Errorf("value program trace length is outside max_steps")
 	}
 	return SourceCase{ID: values["id"], UpstreamDecision: values["upstream"], MaxSteps: maxSteps, Trace: trace}, nil
 }
@@ -171,30 +196,106 @@ func parseTrace(raw string) ([]Observation, error) {
 	return trace, nil
 }
 
-func buildInterventions(filename string, raw []byte, program, semanticBefore string) ([]Intervention, error) {
-	semanticSource := strings.Replace(string(raw), program, program+"|intervention=semantic-trace", 1)
+func buildInterventions(filename string, raw []byte, program, semanticBefore string, baseline SourceCase) ([]Intervention, error) {
+	baseClass := classify(Input{UpstreamDecision: baseline.UpstreamDecision, MaxSteps: baseline.MaxSteps, Trace: baseline.Trace})
+	targetMaxSteps, targetUpstream, targetTrace := semanticInterventionTarget(baseClass)
+	semanticProgram, err := rewriteSourceProgram(program, targetMaxSteps, targetUpstream, targetTrace)
+	if err != nil {
+		return nil, err
+	}
+	semanticSource := strings.Replace(string(raw), program, semanticProgram, 1)
 	if semanticSource == string(raw) {
 		return nil, fmt.Errorf("semantic intervention did not find the selected computes value")
 	}
-	semanticAfter, _, err := parseAndLower(filename, []byte(semanticSource))
+	semanticAfter, semanticIR, err := parseAndLower(filename, []byte(semanticSource))
 	if err != nil {
 		return nil, err
 	}
-	commentSource := append([]byte("// nonsemantic comment intervention\n"), raw...)
-	commentAfter, _, err := parseAndLower(filename, commentSource)
+	semanticCase, err := findSourceCase(semanticIR, baseline.ID)
 	if err != nil {
 		return nil, err
+	}
+	semanticClass := classify(Input{UpstreamDecision: semanticCase.UpstreamDecision, MaxSteps: semanticCase.MaxSteps, Trace: semanticCase.Trace})
+	commentSource := append([]byte("// nonsemantic comment intervention\n"), raw...)
+	commentAfter, commentIR, err := parseAndLower(filename, commentSource)
+	if err != nil {
+		return nil, err
+	}
+	commentCase, err := findSourceCase(commentIR, baseline.ID)
+	if err != nil {
+		return nil, err
+	}
+	commentClass := classify(Input{UpstreamDecision: commentCase.UpstreamDecision, MaxSteps: commentCase.MaxSteps, Trace: commentCase.Trace})
+	sourceBefore := digestBytes(raw)
+	semanticIntervention := InterventionOutcome{
+		SourceDigest: digestBytes([]byte(semanticSource)), SemanticDigest: semanticAfter,
+		Decision: semanticClass.decision, Resolution: semanticClass.resolution,
+		ClaimTransitions: transitions(semanticClass, len(semanticCase.Trace)),
+	}
+	commentIntervention := InterventionOutcome{
+		SourceDigest: digestBytes(commentSource), SemanticDigest: commentAfter,
+		Decision: commentClass.decision, Resolution: commentClass.resolution,
+		ClaimTransitions: transitions(commentClass, len(commentCase.Trace)),
+	}
+	baselineOutcome := InterventionOutcome{
+		SourceDigest: sourceBefore, SemanticDigest: semanticBefore,
+		Decision: baseClass.decision, Resolution: baseClass.resolution,
+		ClaimTransitions: transitions(baseClass, len(baseline.Trace)),
 	}
 	return []Intervention{
 		{ID: "semantic-trace", Schema: InterventionSchema, Stage: InterventionStage, Step: 1,
 			Reason:             "SEMANTIC_TRACE_INTERVENTION_CHANGES_SEMANTIC_DIGEST",
-			SourceBeforeDigest: digestBytes(raw), SourceAfterDigest: digestBytes([]byte(semanticSource)),
+			SourceBeforeDigest: sourceBefore, SourceAfterDigest: semanticIntervention.SourceDigest,
 			SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: semanticAfter,
-			SourceChanged: true, SemanticChanged: semanticBefore != semanticAfter},
+			SourceChanged: true, SemanticChanged: semanticBefore != semanticAfter,
+			Baseline: baselineOutcome, Intervened: semanticIntervention},
 		{ID: "nonsemantic-comment", Schema: InterventionSchema, Stage: InterventionStage, Step: 2,
 			Reason:             "NONSEMANTIC_COMMENT_INTERVENTION_PRESERVES_SEMANTIC_DIGEST",
-			SourceBeforeDigest: digestBytes(raw), SourceAfterDigest: digestBytes(commentSource),
+			SourceBeforeDigest: sourceBefore, SourceAfterDigest: commentIntervention.SourceDigest,
 			SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: commentAfter,
-			SourceChanged: true, SemanticChanged: semanticBefore != commentAfter},
+			SourceChanged: true, SemanticChanged: semanticBefore != commentAfter,
+			Baseline: baselineOutcome, Intervened: commentIntervention},
 	}, nil
+}
+
+func semanticInterventionTarget(base classification) (int, string, string) {
+	if base.decision == DecisionInProgress {
+		return 1, UpstreamChanged, "1,semantic-a,semantic-b,0,1,CHANGED,METAPROGRAM_STATE_CHANGED"
+	}
+	return 4, UpstreamChanged, "1,semantic-a,semantic-b,0,1,CHANGED,METAPROGRAM_STATE_CHANGED"
+}
+
+func rewriteSourceProgram(program string, maxSteps int, upstream, trace string) (string, error) {
+	parts := strings.Split(program, "|")
+	if len(parts) < 2 || parts[0] != SourceProgramSchema {
+		return "", fmt.Errorf("cannot rewrite non-case computes value")
+	}
+	found := map[string]bool{}
+	for index := 1; index < len(parts); index++ {
+		key, value, ok := strings.Cut(parts[index], "=")
+		if !ok {
+			return "", fmt.Errorf("cannot rewrite malformed computes field %q", parts[index])
+		}
+		switch key {
+		case "max_steps":
+			parts[index] = fmt.Sprintf("max_steps=%d", maxSteps)
+			found[key] = true
+		case "upstream":
+			parts[index] = "upstream=" + upstream
+			found[key] = true
+		case "trace":
+			parts[index] = "trace=" + trace
+			found[key] = true
+		default:
+			if value == "" {
+				return "", fmt.Errorf("cannot rewrite empty computes field %q", key)
+			}
+		}
+	}
+	for _, key := range []string{"max_steps", "upstream", "trace"} {
+		if !found[key] {
+			return "", fmt.Errorf("cannot rewrite computes value without %s", key)
+		}
+	}
+	return strings.Join(parts, "|"), nil
 }

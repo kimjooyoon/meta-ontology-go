@@ -28,14 +28,31 @@ localized as `FAIL_CLOSED` with reason
 `FEEDBACK_COVERAGE_DECISION_UNKNOWN`; it can never become a fixed point merely
 because a trace contains no change.
 
-The conformance section has a fixed denominator of two, without aggregation:
-one semantic trace intervention must change the semantic digest, and one
-comment-only intervention must preserve it. All five source cases therefore
-report `2/2 = 10000` conformance basis points. This is a source-causality
-check, not a termination score and never means “termination proven.” The
-receipt also binds the source digest, lowered semantic digest, selected
-computes-value digest, trace digest, producer/consumer/meta-operation/proof
-choice, and read-only authority.
+Each generated receipt carries independently recomputed baseline and
+intervened source digest, lowered semantic digest, decision, resolution, and
+claim-transition evidence. The semantic intervention rewrites the selected
+`trace`, `upstream`, and, when needed, `max_steps` fields in the executable
+computes value, then parses, lowers, and classifies that altered source again:
+
+| source case | baseline | semantic intervention | comment-only intervention |
+| --- | --- | --- | --- |
+| `fixed-point` | `FIXED_POINT/EXACT`, `OPEN -> DISCHARGED` | `IN_PROGRESS/LOWER_RESOLUTION`, `OPEN -> OPEN` | preserved exactly |
+| `cycle-2` | `CYCLE/EXACT`, `OPEN -> REFUTED` | `IN_PROGRESS/LOWER_RESOLUTION`, `OPEN -> OPEN` | preserved exactly |
+| `in-progress` | `IN_PROGRESS/LOWER_RESOLUTION`, `OPEN -> OPEN` | `DIVERGENCE_POSSIBLE/LOWER_RESOLUTION`, `OPEN -> OPEN` | preserved exactly |
+| `divergence-possible` | `DIVERGENCE_POSSIBLE/LOWER_RESOLUTION`, `OPEN -> OPEN` | `IN_PROGRESS/LOWER_RESOLUTION`, `OPEN -> OPEN` | preserved exactly |
+| `unknown-upstream` | `FAIL_CLOSED/LOWER_RESOLUTION`, `OPEN -> OPEN` | `IN_PROGRESS/LOWER_RESOLUTION`, `OPEN -> OPEN` | preserved exactly |
+
+The fixed conformance denominator is two, without aggregation: one semantic
+trace intervention must change the subject decision or resolution and produce
+a canonical `OPEN` claim transition; one comment-only intervention must change
+only the raw source digest while preserving semantic digest, outcome, and claim
+transitions. This is a source-causality check, not a termination score and
+never means “termination proven.” If a semantic digest changes without a
+subject outcome change, the result is `FAIL_CLOSED/LOWER_RESOLUTION` with
+`DIGEST_ONLY_BINDING`, claim `OPEN`, and the semantic indicator is not
+satisfied. The receipt also binds the source digest, lowered semantic digest,
+selected computes-value digest, trace digest, producer/consumer/meta-operation/
+proof choice, and read-only authority.
 
 The independent judge owns a copied wire model and independently parses,
 lowers, recomputes, and seals the expected receipt. It imports zero packages
@@ -91,5 +108,7 @@ Rejected shortcuts:
 The source is registered in the syntax, semantic, toolchain, and vertical-slice
 corpora. The workflow runs Go 1.27, produces receipts from the source, replays
 them, runs the independent judge, checks the exact transition matrix, and
-rejects a forged promotion. It performs no repository writes and does not
-merge or promote the claim.
+asserts `semantic_causal_cases=1/1` and
+`nonsemantic_preservation_cases=1/1`. It rejects both a forged receipt and a
+forged receipt whose digest fields have been resealed. It performs no
+repository writes and does not merge or promote the claim.

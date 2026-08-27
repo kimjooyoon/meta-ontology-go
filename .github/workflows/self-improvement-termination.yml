@@ -35,6 +35,12 @@ jobs:
           go version
       - name: Check the Gooo termination contract
         run: go run ./cmd/gooo check examples/self-improvement-termination/main.gooo
+      - name: Check independent judge import boundary
+        run: |
+          if rg -n 'github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtermination"' internal/meta/selfimprovementtermination/verify; then
+            echo "independent judge imports the producer package"
+            exit 1
+          fi
       - name: Check vertical-slice intervention corpus registration
         run: |
           jq -e '(.source_path == "examples/self-improvement-termination/main.gooo") and (.denominator_total == 2) and (.aggregation == "NONE") and (.cases | length == 2)' \
@@ -76,7 +82,7 @@ jobs:
               --argjson repeated_states "${expected_repeated_states[$index]}" \
               --argjson period "${expected_periods[$index]}" \
               --arg source "$SOURCE_PATH" \
-              '(.source.path == $source) and (.resolution == $resolution) and (.decision == $decision) and (.status == $status) and (.reason == $reason) and (.outcome.claim_state == $claim) and (.outcome.observed_steps == $steps) and (.outcome.state_count == $state_count) and (.outcome.repeated_states == $repeated_states) and (.outcome.detected_period == $period) and (.conformance.satisfied == 2) and (.conformance.total == 2) and (.conformance.basis_points == 10000) and (.conformance.aggregation == "NONE") and ((.outcome.termination_proven == true) == ($decision == "FIXED_POINT")) and (.interventions | length == 2) and (.interventions[0].semantic_changed == true) and (.interventions[1].semantic_changed == false) and (.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"}) and (.claim_transitions[1].step == (.observations | length)) and (.claim_transitions[1].from == "OPEN") and (.claim_transitions[1].to == $claim) and (.claim_transitions[1].reason == $reason)' \
+              '(.source.path == $source) and (.resolution == $resolution) and (.decision == $decision) and (.status == $status) and (.reason == $reason) and (.outcome.claim_state == $claim) and (.outcome.observed_steps == $steps) and (.outcome.state_count == $state_count) and (.outcome.repeated_states == $repeated_states) and (.outcome.detected_period == $period) and (.conformance.satisfied == 2) and (.conformance.total == 2) and (.conformance.basis_points == 10000) and (.conformance.aggregation == "NONE") and ((.outcome.termination_proven == true) == ($decision == "FIXED_POINT")) and (.interventions | length == 2) and (.interventions[0].semantic_changed == true) and (.interventions[1].semantic_changed == false) and (.interventions[0].baseline.source_digest == .source.source_digest) and (.interventions[0].baseline.semantic_digest == .source.semantic_digest) and (.interventions[0].baseline.decision == $decision) and (.interventions[0].baseline.resolution == $resolution) and (.interventions[0].intervened.source_digest == .interventions[0].source_after_digest) and (.interventions[0].intervened.semantic_digest == .interventions[0].semantic_after_digest) and (.interventions[0].intervened.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"}) and (.interventions[1].intervened.source_digest == .interventions[1].source_after_digest) and (.interventions[1].intervened.semantic_digest == .source.semantic_digest) and (.interventions[1].intervened.decision == .interventions[1].baseline.decision) and (.interventions[1].intervened.resolution == .interventions[1].baseline.resolution) and (.interventions[1].intervened.claim_transitions == .interventions[1].baseline.claim_transitions) and (.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"}) and (.claim_transitions[1].step == (.observations | length)) and (.claim_transitions[1].from == "OPEN") and (.claim_transitions[1].to == $claim) and (.claim_transitions[1].reason == $reason)' \
               "$receipt"
             jq -e --arg decision "${expected_decisions[$index]}" \
               --arg resolution "${expected_resolutions[$index]}" \
@@ -86,7 +92,21 @@ jobs:
               '.independent == true and (.decision == $decision) and (.resolution == $resolution) and (.status == $status) and (.reason == $reason) and (.claim_state == $claim) and (.conformance.satisfied == 2) and (.conformance.total == 2) and (.conformance.basis_points == 10000) and (.conformance.aggregation == "NONE") and ((.termination_proven == true) == ($decision == "FIXED_POINT")) and (.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"}) and (.claim_transitions[1].step > 0) and (.claim_transitions[1].from == "OPEN") and (.claim_transitions[1].to == $claim) and (.claim_transitions[1].reason == $reason)' \
               "$judge"
             jq -r '"- " + .case_id + ": " + .decision + "/" + .resolution + ", claim=" + .claim_state + ", conformance=" + (.conformance.satisfied|tostring) + "/" + (.conformance.total|tostring)' "$judge" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '"  baseline=" + .interventions[0].baseline.decision + "/" + .interventions[0].baseline.resolution + "/" + .interventions[0].baseline.claim_transitions[1].to + "; semantic=" + .interventions[0].intervened.decision + "/" + .interventions[0].intervened.resolution + "/" + .interventions[0].intervened.claim_transitions[1].to + "; comment=" + .interventions[1].intervened.decision + "/" + .interventions[1].intervened.resolution + "/" + .interventions[1].intervened.claim_transitions[1].to' "$receipt" >> "$GITHUB_STEP_SUMMARY"
           done
+      - name: Assert intervention causality and preservation
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/self-improvement-termination
+        run: |
+          set -euo pipefail
+          semantic_causal_cases="$(jq '[.interventions[] | select(.id == "semantic-trace" and .source_changed == true and .semantic_changed == true and ((.baseline.decision != .intervened.decision) or (.baseline.resolution != .intervened.resolution)) and .intervened.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"} and .intervened.claim_transitions[1].from == "OPEN" and .intervened.claim_transitions[1].to == "OPEN")] | length' "$OUTPUT_DIR/fixed-point-receipt.json")"
+          test "$semantic_causal_cases" -eq 1
+          test "$(jq -r '.interventions[0].intervened.decision + "/" + .interventions[0].intervened.resolution + "/" + .interventions[0].intervened.claim_transitions[1].to' "$OUTPUT_DIR/fixed-point-receipt.json")" = "IN_PROGRESS/LOWER_RESOLUTION/OPEN"
+          echo "semantic_causal_cases=1/1" >> "$GITHUB_STEP_SUMMARY"
+          nonsemantic_preservation_cases="$(jq '[.interventions[] | select(.id == "nonsemantic-comment" and .source_changed == true and .semantic_changed == false and .semantic_before_digest == .semantic_after_digest and .baseline.decision == .intervened.decision and .baseline.resolution == .intervened.resolution and .baseline.claim_transitions == .intervened.claim_transitions)] | length' "$OUTPUT_DIR/fixed-point-receipt.json")"
+          test "$nonsemantic_preservation_cases" -eq 1
+          test "$(jq -r '.interventions[1].intervened.semantic_digest == .interventions[1].baseline.semantic_digest and (.interventions[1].intervened.claim_transitions == .interventions[1].baseline.claim_transitions)' "$OUTPUT_DIR/fixed-point-receipt.json")" = "true"
+          echo "nonsemantic_preservation_cases=1/1" >> "$GITHUB_STEP_SUMMARY"
       - name: Reject a forged fixed-point promotion
         env:
           OUTPUT_DIR: ${{ runner.temp }}/self-improvement-termination
@@ -100,6 +120,45 @@ jobs:
             --case cycle-2 \
             --receipt "$OUTPUT_DIR/forged-cycle.json"; then
             echo "independent judge accepted a forged fixed point"
+            exit 1
+          fi
+      - name: Reject a forged and resealed fixed-point promotion
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/self-improvement-termination
+        run: |
+          set -euo pipefail
+          python3 - "$OUTPUT_DIR/cycle-2-receipt.json" "$OUTPUT_DIR/forged-resealed-cycle.json" <<'PY'
+          import hashlib
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              receipt = json.load(stream)
+          receipt["decision"] = "FIXED_POINT"
+          receipt["resolution"] = "EXACT"
+          receipt["status"] = "BOUND"
+          receipt["reason"] = "NO_CHANGE_FIXED_POINT_OBSERVED"
+          receipt["outcome"]["termination_proven"] = True
+          receipt["outcome"]["claim_state"] = "DISCHARGED"
+          receipt["claim_transitions"][1]["to"] = "DISCHARGED"
+          receipt["claim_transitions"][1]["reason"] = "NO_CHANGE_FIXED_POINT_OBSERVED"
+          receipt["receipt_digest"] = ""
+          receipt["replay_digest"] = ""
+          canonical = json.dumps(receipt, ensure_ascii=False, separators=(",", ":")).encode()
+          receipt["receipt_digest"] = "sha256:" + hashlib.sha256(canonical).hexdigest()
+          replay = {"InputDigest": receipt["input_digest"], "TraceDigest": receipt["trace_digest"], "ReceiptDigest": receipt["receipt_digest"]}
+          receipt["replay_digest"] = "sha256:" + hashlib.sha256(json.dumps(replay, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+          with open(sys.argv[2], "w", encoding="utf-8") as stream:
+              json.dump(receipt, stream, ensure_ascii=False, indent=2)
+              stream.write("\n")
+          PY
+          if go run ./cmd/self-improvement-termination-judge \
+            --root "$GITHUB_WORKSPACE" \
+            --source examples/self-improvement-termination/main.gooo \
+            --repository kimjooyoon/meta-ontology-go \
+            --case cycle-2 \
+            --receipt "$OUTPUT_DIR/forged-resealed-cycle.json"; then
+            echo "independent judge accepted a forged and resealed fixed point"
             exit 1
           fi
       - name: Upload termination receipts

@@ -57,6 +57,7 @@ const (
 	reasonInProgress       = "TRACE_ENDED_BEFORE_TERMINATION"
 	reasonDivergence       = "STRICTLY_GROWING_BOUNDARY_NO_FIXED_POINT"
 	reasonDecisionUnknown  = "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
+	reasonDigestOnly       = "DIGEST_ONLY_BINDING"
 )
 
 type wireInput struct {
@@ -94,18 +95,28 @@ type wireObservation struct {
 	Reason      string `json:"reason"`
 }
 
+type wireInterventionOutcome struct {
+	SourceDigest     string                `json:"source_digest"`
+	SemanticDigest   string                `json:"semantic_digest"`
+	Decision         string                `json:"decision"`
+	Resolution       string                `json:"resolution"`
+	ClaimTransitions []wireClaimTransition `json:"claim_transitions"`
+}
+
 type wireIntervention struct {
-	ID                   string `json:"id"`
-	Schema               string `json:"schema"`
-	Stage                string `json:"stage"`
-	Step                 int    `json:"step"`
-	Reason               string `json:"reason"`
-	SourceBeforeDigest   string `json:"source_before_digest"`
-	SourceAfterDigest    string `json:"source_after_digest"`
-	SemanticBeforeDigest string `json:"semantic_before_digest"`
-	SemanticAfterDigest  string `json:"semantic_after_digest"`
-	SourceChanged        bool   `json:"source_changed"`
-	SemanticChanged      bool   `json:"semantic_changed"`
+	ID                   string                  `json:"id"`
+	Schema               string                  `json:"schema"`
+	Stage                string                  `json:"stage"`
+	Step                 int                     `json:"step"`
+	Reason               string                  `json:"reason"`
+	SourceBeforeDigest   string                  `json:"source_before_digest"`
+	SourceAfterDigest    string                  `json:"source_after_digest"`
+	SemanticBeforeDigest string                  `json:"semantic_before_digest"`
+	SemanticAfterDigest  string                  `json:"semantic_after_digest"`
+	SourceChanged        bool                    `json:"source_changed"`
+	SemanticChanged      bool                    `json:"semantic_changed"`
+	Baseline             wireInterventionOutcome `json:"baseline"`
+	Intervened           wireInterventionOutcome `json:"intervened"`
 }
 
 type wireAuthority struct {
@@ -245,7 +256,7 @@ func Verify(root, requestedSourcePath, repository, caseID string, receiptRaw []b
 	if err := validateInput(input); err != nil {
 		return Report{}, err
 	}
-	class := classify(input)
+	class := effectiveClassification(input)
 	expected := receiptForValidation(input, class)
 	actual, err := decodeReceipt(receiptRaw)
 	if err != nil {
@@ -284,28 +295,51 @@ func loadSource(root, requestedPath string) (sourceModel, error) {
 		return sourceModel{}, err
 	}
 	model := sourceModel{Path: canonicalPath, SourceDigest: digestBytes(raw), SemanticDigest: semanticDigest, Raw: append([]byte(nil), raw...)}
+	cases, err := sourceCases(ir)
+	if err != nil {
+		return sourceModel{}, err
+	}
+	model.Cases = cases
+	if len(model.Cases) == 0 {
+		return sourceModel{}, fmt.Errorf("independent judge: source declares no executable cases")
+	}
+	return model, nil
+}
+
+func sourceCases(ir semantic.IR) ([]sourceCase, error) {
+	cases := make([]sourceCase, 0)
 	for _, node := range ir.Graph.Nodes() {
 		if node.Kind != semantic.Activity || !strings.HasPrefix(node.ValueProgram, sourceProgramSchema+"|") {
 			continue
 		}
 		item, err := parseSourceCase(node.ValueProgram)
 		if err != nil {
-			return sourceModel{}, fmt.Errorf("independent judge: source activity %q: %w", node.Name, err)
+			return nil, fmt.Errorf("independent judge: source activity %q: %w", node.Name, err)
 		}
 		item.Program = node.ValueProgram
 		item.ProgramDigest = digestBytes([]byte(node.ValueProgram))
-		model.Cases = append(model.Cases, item)
+		cases = append(cases, item)
 	}
-	sort.Slice(model.Cases, func(left, right int) bool { return model.Cases[left].ID < model.Cases[right].ID })
-	if len(model.Cases) == 0 {
-		return sourceModel{}, fmt.Errorf("independent judge: source declares no executable cases")
-	}
-	for index := 1; index < len(model.Cases); index++ {
-		if model.Cases[index-1].ID == model.Cases[index].ID {
-			return sourceModel{}, fmt.Errorf("independent judge: source case %q is duplicated", model.Cases[index].ID)
+	sort.Slice(cases, func(left, right int) bool { return cases[left].ID < cases[right].ID })
+	for index := 1; index < len(cases); index++ {
+		if cases[index-1].ID == cases[index].ID {
+			return nil, fmt.Errorf("independent judge: source case %q is duplicated", cases[index].ID)
 		}
 	}
-	return model, nil
+	return cases, nil
+}
+
+func findSourceCase(ir semantic.IR, caseID string) (sourceCase, error) {
+	cases, err := sourceCases(ir)
+	if err != nil {
+		return sourceCase{}, err
+	}
+	for _, item := range cases {
+		if item.ID == caseID {
+			return item, nil
+		}
+	}
+	return sourceCase{}, fmt.Errorf("independent judge: source case %q is not declared after intervention", caseID)
 }
 
 func parseAndLower(filename string, raw []byte) (string, semantic.IR, error) {
@@ -384,49 +418,115 @@ func buildInput(model sourceModel, repository, caseID string) (wireInput, error)
 		if item.ID != caseID {
 			continue
 		}
-		interventions, err := buildInterventions(model.Raw, item.Program, model.SemanticDigest)
-		if err != nil {
-			return wireInput{}, err
-		}
-		return wireInput{
+		input := wireInput{
 			Schema: inputSchema, Repository: repository, Subject: consumer,
 			Producer: producer, Consumer: consumer, MetaOperation: metaOperation,
 			ProofChoice: proofChoice, Stage: traceStage,
 			Source: wireSource{Path: model.Path, SourceDigest: model.SourceDigest, SemanticDigest: model.SemanticDigest,
 				CaseID: item.ID, CaseProgramDigest: item.ProgramDigest},
 			UpstreamDecision: item.UpstreamDecision, MaxSteps: item.MaxSteps,
-			Trace: append([]wireObservation(nil), item.Trace...), Interventions: interventions,
-		}, nil
+			Trace: append([]wireObservation(nil), item.Trace...),
+		}
+		interventions, err := buildInterventions(model, item)
+		if err != nil {
+			return wireInput{}, err
+		}
+		input.Interventions = interventions
+		return input, nil
 	}
 	return wireInput{}, fmt.Errorf("independent judge: source case %q is not declared", caseID)
 }
 
-func buildInterventions(raw []byte, program, semanticBefore string) ([]wireIntervention, error) {
-	semanticSource := strings.Replace(string(raw), program, program+"|intervention=semantic-trace", 1)
-	if semanticSource == string(raw) {
+func buildInterventions(model sourceModel, baseline sourceCase) ([]wireIntervention, error) {
+	baseClass := classify(wireInput{UpstreamDecision: baseline.UpstreamDecision, MaxSteps: baseline.MaxSteps, Trace: baseline.Trace})
+	targetMaxSteps, targetUpstream, targetTrace := semanticInterventionTarget(baseClass)
+	semanticProgram, err := rewriteSourceProgram(baseline.Program, targetMaxSteps, targetUpstream, targetTrace)
+	if err != nil {
+		return nil, err
+	}
+	semanticSource := strings.Replace(string(model.Raw), baseline.Program, semanticProgram, 1)
+	if semanticSource == string(model.Raw) {
 		return nil, fmt.Errorf("independent judge: semantic intervention did not find selected computes value")
 	}
-	semanticAfter, _, err := parseAndLower(sourcePath, []byte(semanticSource))
+	semanticAfter, semanticIR, err := parseAndLower(sourcePath, []byte(semanticSource))
 	if err != nil {
 		return nil, err
 	}
-	commentSource := append([]byte("// nonsemantic comment intervention\n"), raw...)
-	commentAfter, _, err := parseAndLower(sourcePath, commentSource)
+	semanticCase, err := findSourceCase(semanticIR, baseline.ID)
 	if err != nil {
 		return nil, err
 	}
+	semanticClass := classify(wireInput{UpstreamDecision: semanticCase.UpstreamDecision, MaxSteps: semanticCase.MaxSteps, Trace: semanticCase.Trace})
+	commentSource := append([]byte("// nonsemantic comment intervention\n"), model.Raw...)
+	commentAfter, commentIR, err := parseAndLower(sourcePath, commentSource)
+	if err != nil {
+		return nil, err
+	}
+	commentCase, err := findSourceCase(commentIR, baseline.ID)
+	if err != nil {
+		return nil, err
+	}
+	commentClass := classify(wireInput{UpstreamDecision: commentCase.UpstreamDecision, MaxSteps: commentCase.MaxSteps, Trace: commentCase.Trace})
+	sourceBefore := digestBytes(model.Raw)
+	baselineOutcome := interventionOutcome(sourceBefore, model.SemanticDigest, baseClass, len(baseline.Trace))
+	semanticOutcome := interventionOutcome(digestBytes([]byte(semanticSource)), semanticAfter, semanticClass, len(semanticCase.Trace))
+	commentOutcome := interventionOutcome(digestBytes(commentSource), commentAfter, commentClass, len(commentCase.Trace))
 	return []wireIntervention{
 		{ID: "semantic-trace", Schema: interventionSchema, Stage: interventionStage, Step: 1,
 			Reason:             "SEMANTIC_TRACE_INTERVENTION_CHANGES_SEMANTIC_DIGEST",
-			SourceBeforeDigest: digestBytes(raw), SourceAfterDigest: digestBytes([]byte(semanticSource)),
-			SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: semanticAfter,
-			SourceChanged: true, SemanticChanged: semanticBefore != semanticAfter},
+			SourceBeforeDigest: sourceBefore, SourceAfterDigest: semanticOutcome.SourceDigest,
+			SemanticBeforeDigest: model.SemanticDigest, SemanticAfterDigest: semanticAfter,
+			SourceChanged: true, SemanticChanged: model.SemanticDigest != semanticAfter,
+			Baseline: baselineOutcome, Intervened: semanticOutcome},
 		{ID: "nonsemantic-comment", Schema: interventionSchema, Stage: interventionStage, Step: 2,
 			Reason:             "NONSEMANTIC_COMMENT_INTERVENTION_PRESERVES_SEMANTIC_DIGEST",
-			SourceBeforeDigest: digestBytes(raw), SourceAfterDigest: digestBytes(commentSource),
-			SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: commentAfter,
-			SourceChanged: true, SemanticChanged: semanticBefore != commentAfter},
+			SourceBeforeDigest: sourceBefore, SourceAfterDigest: commentOutcome.SourceDigest,
+			SemanticBeforeDigest: model.SemanticDigest, SemanticAfterDigest: commentAfter,
+			SourceChanged: true, SemanticChanged: model.SemanticDigest != commentAfter,
+			Baseline: baselineOutcome, Intervened: commentOutcome},
 	}, nil
+}
+
+func semanticInterventionTarget(base classification) (int, string, string) {
+	if base.decision == decisionInProgress {
+		return 1, upstreamChanged, "1,semantic-a,semantic-b,0,1,CHANGED,METAPROGRAM_STATE_CHANGED"
+	}
+	return 4, upstreamChanged, "1,semantic-a,semantic-b,0,1,CHANGED,METAPROGRAM_STATE_CHANGED"
+}
+
+func rewriteSourceProgram(program string, maxSteps int, upstream, trace string) (string, error) {
+	parts := strings.Split(program, "|")
+	if len(parts) < 2 || parts[0] != sourceProgramSchema {
+		return "", fmt.Errorf("independent judge: cannot rewrite non-case computes value")
+	}
+	found := map[string]bool{}
+	for index := 1; index < len(parts); index++ {
+		key, value, ok := strings.Cut(parts[index], "=")
+		if !ok {
+			return "", fmt.Errorf("independent judge: cannot rewrite malformed computes field %q", parts[index])
+		}
+		switch key {
+		case "max_steps":
+			parts[index] = fmt.Sprintf("max_steps=%d", maxSteps)
+			found[key] = true
+		case "upstream":
+			parts[index] = "upstream=" + upstream
+			found[key] = true
+		case "trace":
+			parts[index] = "trace=" + trace
+			found[key] = true
+		default:
+			if value == "" {
+				return "", fmt.Errorf("independent judge: cannot rewrite empty computes field %q", key)
+			}
+		}
+	}
+	for _, key := range []string{"max_steps", "upstream", "trace"} {
+		if !found[key] {
+			return "", fmt.Errorf("independent judge: cannot rewrite computes value without %s", key)
+		}
+	}
+	return strings.Join(parts, "|"), nil
 }
 
 func validateInput(input wireInput) error {
@@ -472,14 +572,30 @@ func validateInput(input wireInput) error {
 			intervention.SourceAfterDigest == intervention.SourceBeforeDigest || intervention.SemanticBeforeDigest != input.Source.SemanticDigest {
 			return fmt.Errorf("independent judge: intervention %d is not source-bound", index+1)
 		}
+		baselineClass := classify(input)
+		expectedBaseline := interventionOutcome(input.Source.SourceDigest, input.Source.SemanticDigest, baselineClass, len(input.Trace))
+		if !reflect.DeepEqual(intervention.Baseline, expectedBaseline) {
+			return fmt.Errorf("independent judge: intervention %d baseline outcome is not source-bound", index+1)
+		}
+		if !validInterventionOutcome(intervention.Intervened) ||
+			intervention.Intervened.SourceDigest != intervention.SourceAfterDigest ||
+			intervention.Intervened.SemanticDigest != intervention.SemanticAfterDigest {
+			return fmt.Errorf("independent judge: intervention %d intervened outcome is not source-bound", index+1)
+		}
 		switch intervention.ID {
 		case "semantic-trace":
 			if intervention.SemanticAfterDigest == intervention.SemanticBeforeDigest || !intervention.SemanticChanged || intervention.Reason != "SEMANTIC_TRACE_INTERVENTION_CHANGES_SEMANTIC_DIGEST" {
 				return fmt.Errorf("independent judge: semantic intervention is not semantic")
 			}
+			if !canonicalOpenTransition(intervention.Intervened.ClaimTransitions) {
+				return fmt.Errorf("independent judge: semantic intervention does not carry a canonical open claim transition")
+			}
 		case "nonsemantic-comment":
 			if intervention.SemanticAfterDigest != intervention.SemanticBeforeDigest || intervention.SemanticChanged || intervention.Reason != "NONSEMANTIC_COMMENT_INTERVENTION_PRESERVES_SEMANTIC_DIGEST" {
 				return fmt.Errorf("independent judge: comment intervention changed semantic meaning")
+			}
+			if !sameOutcome(intervention.Baseline, intervention.Intervened) {
+				return fmt.Errorf("independent judge: comment intervention changed the subject outcome")
 			}
 		default:
 			return fmt.Errorf("independent judge: intervention %d is unknown", index+1)
@@ -507,7 +623,7 @@ func classify(input wireInput) classification {
 	if cycleStart >= 0 {
 		return classification{decisionCycle, resolutionExact, receiptBound, reasonCycle, final.AfterState, claimRefuted, period, len(states), repeatedStates, false}
 	}
-	if final.Decision == upstreamNoChange {
+	if input.UpstreamDecision == upstreamNoChange && final.Decision == upstreamNoChange {
 		return classification{decisionFixedPoint, resolutionExact, receiptBound, reasonNoChange, final.AfterState, claimDischarged, 0, len(states), repeatedStates, true}
 	}
 	diverging := len(input.Trace) == input.MaxSteps
@@ -518,6 +634,19 @@ func classify(input wireInput) classification {
 		return classification{decisionDivergence, resolutionLower, receiptBound, reasonDivergence, final.AfterState, claimOpen, 0, len(states), repeatedStates, false}
 	}
 	return classification{decisionInProgress, resolutionLower, receiptBound, reasonInProgress, final.AfterState, claimOpen, 0, len(states), repeatedStates, false}
+}
+
+func effectiveClassification(input wireInput) classification {
+	class := classify(input)
+	if len(input.Interventions) > 0 {
+		semantic := input.Interventions[0]
+		if semantic.SemanticChanged && semantic.Baseline.Decision == semantic.Intervened.Decision &&
+			semantic.Baseline.Resolution == semantic.Intervened.Resolution {
+			class = classification{decisionFailClosed, resolutionLower, receiptFailClosed, reasonDigestOnly,
+				class.finalState, claimOpen, class.period, class.stateCount, class.repeatedStates, false}
+		}
+	}
+	return class
 }
 
 func repeatedState(states []string) (int, int) {
@@ -547,7 +676,32 @@ func receiptForValidation(input wireInput, class classification) wireReceipt {
 		}, Conformance: wireConformance{Satisfied: indicatorTotal, Total: indicatorTotal, BasisPoints: 10000, Aggregation: conformanceAggregation},
 		Authority: wireAuthority{ReadOnly: true}, Indicators: indicators(input.Interventions),
 	}
+	receipt.Conformance.Satisfied = countSatisfied(receipt.Indicators)
+	receipt.Conformance.BasisPoints = basisPoints(receipt.Conformance.Satisfied, receipt.Conformance.Total)
 	return receipt
+}
+
+func interventionOutcome(sourceDigest, semanticDigest string, class classification, finalStep int) wireInterventionOutcome {
+	return wireInterventionOutcome{SourceDigest: sourceDigest, SemanticDigest: semanticDigest,
+		Decision: class.decision, Resolution: class.resolution,
+		ClaimTransitions: transitions(class, finalStep)}
+}
+
+func validInterventionOutcome(outcome wireInterventionOutcome) bool {
+	return validDigest(outcome.SourceDigest) && validDigest(outcome.SemanticDigest) &&
+		outcome.Decision != "" && outcome.Resolution != "" && len(outcome.ClaimTransitions) == 2
+}
+
+func canonicalOpenTransition(transitions []wireClaimTransition) bool {
+	return len(transitions) == 2 && transitions[0].Stage == claimStage && transitions[0].Step == 0 &&
+		transitions[0].From == claimOpen && transitions[0].To == claimOpen && transitions[0].Reason == "TRACE_BOUND" &&
+		transitions[1].Stage == claimStage && transitions[1].From == claimOpen && transitions[1].To == claimOpen &&
+		transitions[1].Step > 0 && transitions[1].Reason != ""
+}
+
+func sameOutcome(left, right wireInterventionOutcome) bool {
+	return left.Decision == right.Decision && left.Resolution == right.Resolution &&
+		reflect.DeepEqual(left.ClaimTransitions, right.ClaimTransitions)
 }
 
 func transitions(class classification, finalStep int) []wireClaimTransition {
@@ -571,13 +725,47 @@ func indicators(interventions []wireIntervention) []wireIndicator {
 }
 
 func indicator(intervention wireIntervention, id, route, reason string) wireIndicator {
+	satisfied := false
+	limit := ""
+	switch intervention.ID {
+	case "semantic-trace":
+		satisfied = intervention.SourceChanged && intervention.SemanticChanged &&
+			(intervention.Baseline.Decision != intervention.Intervened.Decision ||
+				intervention.Baseline.Resolution != intervention.Intervened.Resolution) &&
+			canonicalOpenTransition(intervention.Intervened.ClaimTransitions)
+		limit = "source_changed=true;semantic_changed=true;decision_or_resolution_changed;canonical_open_claim"
+	case "nonsemantic-comment":
+		satisfied = intervention.SourceChanged && !intervention.SemanticChanged &&
+			intervention.SemanticBeforeDigest == intervention.SemanticAfterDigest &&
+			sameOutcome(intervention.Baseline, intervention.Intervened)
+		limit = "source_changed=true;semantic_changed=false;semantic_digest_same;outcome_same"
+	}
 	return wireIndicator{
 		ID: id, Route: route, Producer: producer, Consumer: consumer,
 		MetaOperation: metaOperation, ProofChoice: proofChoice, Stage: interventionStage,
 		Step: intervention.Step, Reason: reason,
-		Value: fmt.Sprintf("source_changed=%t;semantic_changed=%t", intervention.SourceChanged, intervention.SemanticChanged),
-		Limit: "source_changed=true;semantic_changed=true|false", Satisfied: true,
+		Value: fmt.Sprintf("baseline=%s/%s;intervened=%s/%s;claim=%s", intervention.Baseline.Decision,
+			intervention.Baseline.Resolution, intervention.Intervened.Decision, intervention.Intervened.Resolution,
+			intervention.Intervened.ClaimTransitions[len(intervention.Intervened.ClaimTransitions)-1].To),
+		Limit: limit, Satisfied: satisfied,
 	}
+}
+
+func countSatisfied(indicators []wireIndicator) int {
+	satisfied := 0
+	for _, indicator := range indicators {
+		if indicator.Satisfied {
+			satisfied++
+		}
+	}
+	return satisfied
+}
+
+func basisPoints(satisfied, total int) int {
+	if total == 0 {
+		return 0
+	}
+	return satisfied * 10000 / total
 }
 
 func decodeReceipt(raw []byte) (wireReceipt, error) {
