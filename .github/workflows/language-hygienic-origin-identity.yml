@@ -104,6 +104,9 @@ jobs:
             .metrics.fixed_case_denominator == 2 and
             .metrics.fixed_claim_denominator == 4 and
             .metrics.unknown_path_total == 1 and
+            .metrics.open_claim_total == 1 and
+            .metrics.observed_claim_total == 5 and
+            ([.claims[] | select(.status == "OPEN")] | length) == 1 and
             ([.unknowns[] | select(.stage != "" and .step != "" and .reason != "")] | length) == 1
           ' "$output/unknown-first.json"
           {

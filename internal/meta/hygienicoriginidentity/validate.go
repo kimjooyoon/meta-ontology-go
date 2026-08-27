@@ -17,8 +17,8 @@ func Validate(report Report, expectedUnknown bool, expectedHead string) error {
 	if report.Source.HeadSHA != expectedHead || !validSHA(expectedHead) {
 		return fmt.Errorf("receipt head is not the expected exact subject")
 	}
-	if len(report.Cases) != ExpectedCaseTotal || len(report.Claims) != ExpectedClaimTotal {
-		return fmt.Errorf("receipt denominator changed: cases %d/%d claims %d/%d", len(report.Cases), ExpectedCaseTotal, len(report.Claims), ExpectedClaimTotal)
+	if len(report.Cases) != ExpectedCaseTotal || (len(report.Claims) != ExpectedClaimTotal && len(report.Claims) != ExpectedClaimTotal+1) {
+		return fmt.Errorf("receipt denominator changed: cases %d/%d claims %d/%d or %d", len(report.Cases), ExpectedCaseTotal, len(report.Claims), ExpectedClaimTotal, ExpectedClaimTotal+1)
 	}
 	if report.Metrics.FixedCaseDenominator != ExpectedCaseTotal || report.Metrics.FixedClaimDenominator != ExpectedClaimTotal ||
 		report.Metrics.ObservedCaseTotal != ExpectedCaseTotal || report.Metrics.ObservedClaimTotal != ExpectedClaimTotal ||
@@ -39,13 +39,16 @@ func Validate(report Report, expectedUnknown bool, expectedHead string) error {
 		return fmt.Errorf("read-only authority was not preserved")
 	}
 	if expectedUnknown {
-		if report.Decision != DecisionUnknown || report.Resolution != ResolutionLower || len(report.Unknowns) != ExpectedUnknownPath || report.Metrics.UnknownPathTotal != ExpectedUnknownPath {
+		if report.Decision != DecisionUnknown || report.Resolution != ResolutionLower || len(report.Unknowns) != ExpectedUnknownPath || report.Metrics.UnknownPathTotal != ExpectedUnknownPath || len(report.Claims) != ExpectedClaimTotal+1 || report.Metrics.ObservedClaimTotal != ExpectedClaimTotal+1 || report.Metrics.OpenClaimTotal != 1 {
 			return fmt.Errorf("expected one explicit UNKNOWN path")
 		}
 		for _, unknown := range report.Unknowns {
 			if unknown.Stage == "" || unknown.Step == "" || unknown.Reason == "" {
 				return fmt.Errorf("UNKNOWN path lost stage/step/reason")
 			}
+		}
+		if report.Claims[len(report.Claims)-1].ID != "unknown.scope-provenance" || report.Claims[len(report.Claims)-1].Status != StatusOpen {
+			return fmt.Errorf("UNKNOWN path lost its OPEN claim")
 		}
 	} else if report.Decision != DecisionPass || report.Resolution != ResolutionExact || len(report.Unknowns) != 0 || report.Metrics.UnknownPathTotal != 0 {
 		return fmt.Errorf("expected exact PASS without unknown paths")
@@ -101,13 +104,16 @@ func validateClaims(claims []Claim) error {
 		"hygienic.origin-identity":  StatusDischarged,
 		"hygienic.scope-provenance": StatusDischarged,
 	}
-	if len(statusByID) != len(want) {
+	if len(statusByID) != len(want) && len(statusByID) != len(want)+1 {
 		return fmt.Errorf("claim denominator changed")
 	}
 	for id, expected := range want {
 		if statusByID[id] != expected {
 			return fmt.Errorf("claim %q status=%q want %q", id, statusByID[id], expected)
 		}
+	}
+	if len(statusByID) == len(want)+1 && statusByID["unknown.scope-provenance"] != StatusOpen {
+		return fmt.Errorf("unknown guardrail claim is not OPEN")
 	}
 	return nil
 }

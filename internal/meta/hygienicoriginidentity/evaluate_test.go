@@ -58,6 +58,9 @@ func TestEvaluateRetainsUnknownCoordinates(t *testing.T) {
 	if report.Decision != DecisionUnknown || report.Unknowns[0].Stage != "scope-resolution" {
 		t.Fatalf("unknown report = %#v", report)
 	}
+	if report.Metrics.OpenClaimTotal != 1 || report.Claims[len(report.Claims)-1].Status != StatusOpen {
+		t.Fatalf("unknown claims = %#v", report.Claims)
+	}
 }
 
 func TestValidateRejectsChangedSafeResolution(t *testing.T) {

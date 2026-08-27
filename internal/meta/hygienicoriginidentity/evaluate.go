@@ -60,6 +60,14 @@ func Evaluate(files fs.FS, sourcePath, headSHA string) (Report, error) {
 		report.Cases = append(report.Cases, observed)
 		report.Claims = append(report.Claims, claimsFor(observed)...)
 	}
+	if len(report.Unknowns) > 0 {
+		report.Claims = append(report.Claims, Claim{
+			ID:          "unknown.scope-provenance",
+			CaseID:      "unknown",
+			Proposition: "scope provenance is available to resolve the generated binding",
+			Status:      StatusOpen,
+		})
+	}
 	report.Metrics = measure(report.Cases, report.Claims, report.Unknowns)
 	if len(report.Unknowns) > 0 {
 		report.Decision = DecisionUnknown

@@ -38,8 +38,9 @@ The fixed denominator is four preservation claims over two cases. The baseline
 receipt therefore reports 2 discharged, 2 refuted, 0 open, and 4/4 classified
 (10,000 basis points of classification coverage). Preservation satisfaction is
 2/4 (5,000 basis points), making the counterexample visible instead of hiding
-it in a pass rate. The unknown guardrail keeps the same denominator and adds
-one explicit unknown path.
+it in a pass rate. The unknown guardrail keeps the same fixed denominator,
+adds one explicit unknown path, and carries one separate `OPEN` guardrail
+claim.
 
 ## Research and design decisions
 
