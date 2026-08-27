@@ -797,6 +797,7 @@ type interventionReport struct {
 	RepositoryMutationAuthorized      bool               `json:"repository_mutation_authorized"`
 	TempArtifactWriteAuthorized       bool               `json:"temp_artifact_write_authorized"`
 	RepositoryNetStatusUnchanged      bool               `json:"repository_net_status_unchanged"`
+	RepositoryNetState                 string             `json:"repository_net_state"`
 	RepositoryActualOrTransientWrites string             `json:"repository_actual_or_transient_writes"`
 	RepositoryNetStatusObserved       bool               `json:"repository_net_status_observed"`
 	ExecutedEffects                   int                `json:"executed_effects"`
@@ -969,7 +970,7 @@ func observeCommentMetric(interventionRaw, consumerRaw, source []byte, headSHA s
 	if err := decodeStrict(consumerRaw, &consumer); err != nil {
 		return metricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/parse-consumer/INTERVENTION_CONSUMER_RECEIPT_NOT_STRICT: %w", err)
 	}
-	if report.Schema != interventionReportSchema || report.HeadSHA != headSHA || report.SourcePath != model.SourcePath || report.SourceDigest != model.DigestBytes(source) || consumer.Schema != interventionConsumerSchema || consumer.HeadSHA != headSHA {
+	if report.Schema != interventionReportSchema || report.HeadSHA != headSHA || report.SourcePath != model.SourcePath || report.SourceDigest != model.DigestBytes(source) || report.RepositoryNetState != model.RepositoryNetStateUnknown || consumer.Schema != interventionConsumerSchema || consumer.HeadSHA != headSHA {
 		return metricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/bind-receipts/INTERVENTION_TOP_RESULT_INVALID")
 	}
 	var observed *interventionCase
