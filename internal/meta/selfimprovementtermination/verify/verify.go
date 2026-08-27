@@ -106,7 +106,9 @@ func validReceipt(input termination.Input, receipt termination.Receipt, class cl
 	for index, indicator := range receipt.Indicators {
 		if indicator.ID != indicatorIDs[index] || !indicator.Satisfied || indicator.Route != "TERMINATION" ||
 			indicator.Producer != termination.Producer || indicator.Consumer != termination.Consumer ||
-			indicator.MetaOperation != termination.MetaOperation || indicator.ProofChoice != termination.ProofChoice {
+			indicator.MetaOperation != termination.MetaOperation || indicator.ProofChoice != termination.ProofChoice ||
+			indicator.Stage != termination.ClaimStage || indicator.Step != 0 || indicator.Value != "true" ||
+			indicator.Limit != "true" || indicator.Reason != indicatorReasons[index] {
 			return fmt.Errorf("independent judge: indicator %d is not bound", index+1)
 		}
 	}
@@ -123,6 +125,13 @@ var indicatorIDs = []string{
 	"gooo.termination.no-change-branch.v1", "gooo.termination.cycle-branch.v1",
 	"gooo.termination.divergence-branch.v1", "gooo.termination.progress-branch.v1",
 	"gooo.termination.claim-transition.v1", "gooo.termination.read-only-authority.v1",
+}
+
+var indicatorReasons = []string{
+	"INPUT_SCHEMA_BOUND", "PRODUCER_CONSUMER_BOUND", "TRACE_WITHIN_FIXED_BUDGET",
+	"CONTIGUOUS_STATE_CHAIN", "NO_CHANGE_BRANCH_EXACT", "CYCLE_BRANCH_EXACT",
+	"DIVERGENCE_IS_ONLY_POSSIBLE", "IN_PROGRESS_BRANCH_EXACT", "CLAIM_TRANSITION_BOUND",
+	"READ_ONLY_NO_PROMOTION",
 }
 
 func classify(trace []termination.Observation, maxSteps int) classification {
