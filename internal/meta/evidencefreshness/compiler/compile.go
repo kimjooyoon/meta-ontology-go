@@ -39,7 +39,10 @@ func Compile(filename string, source []byte) (Result, error) {
 	if err := ValidatePolicy(policy); err != nil {
 		return Result{}, err
 	}
-	return Result{Policy: policy, PolicyDigest: model.DigestJSON(policy), SemanticDigest: ir.StableHash(), IR: ir}, nil
+	// The repository IR exposes a bare hex stable hash. Evidence artifacts use
+	// the shared sha256:<hex> digest grammar, so preserve the same canonical IR
+	// bytes while normalizing the wire representation at this boundary.
+	return Result{Policy: policy, PolicyDigest: model.DigestJSON(policy), SemanticDigest: model.DigestBytes([]byte(ir.SemanticCanonical())), IR: ir}, nil
 }
 
 func ValidatePolicy(policy model.FreshnessPolicy) error {
