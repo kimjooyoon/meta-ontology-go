@@ -1256,3 +1256,84 @@ jobs:
           path: ${{ runner.temp }}/rollback-integrity/shadow
           if-no-files-found: error
           retention-days: 30
+
+  meta-circular-boundary:
+    name: Meta-circular boundary
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+
+      - name: Test and vet the meta-circular boundary
+        run: |
+          go test ./internal/meta/metacircularboundary
+          go vet ./cmd/meta-circular-boundary-witness ./internal/meta/metacircularboundary
+
+      - name: Replay the exact-head witness twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/meta-circular-boundary"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./cmd/meta-circular-boundary-witness \
+              --source examples/meta-circular-boundary/main.gooo \
+              --head-sha "$HEAD_SHA" \
+              --output "$output/$pass.json" \
+              --check
+          done
+          cmp "$output/first.json" "$output/second.json"
+
+      - name: Check the fixed denominator and independent decision
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/meta-circular-boundary/first.json"
+          jq -e '
+            .schema == "gooo/meta-circular-boundary-report/v1" and
+            .scope == "READ_ONLY_META_CIRCULAR_BOUNDARY" and
+            .decision == "PASS" and
+            .resolution == "EXACT" and
+            .reason == "META_CIRCULAR_BOUNDARY_PROVEN" and
+            (.cases | length) == 4 and
+            (.receipts | length) == 4 and
+            (.indicators | length) == 10 and
+            .summary.cases_total == 4 and
+            .summary.cases_passed == 4 and
+            .summary.case_coverage_bps == 10000 and
+            .summary.description_bound == 4 and
+            .summary.explicit_authorizations == 1 and
+            .summary.allowed_executions == 1 and
+            .summary.description_only_blocked == 1 and
+            .summary.forged_blocked == 1 and
+            .summary.out_of_scope_blocked == 1 and
+            .summary.escalation_paths == 0 and
+            .summary.replay_matches == 4 and
+            .summary.repository_writes == 0 and
+            .summary.mutation_authority == 0 and
+            .repository_writes == 0 and
+            .mutation_authority == false and
+            ([.indicators[] | select(.satisfied == false)] | length) == 0 and
+            .independent_judge.decision == "PASS"
+          ' "$receipt"
+
+      - name: Upload meta-circular boundary receipts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-circular-boundary-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-circular-boundary
+          if-no-files-found: error
+          retention-days: 30

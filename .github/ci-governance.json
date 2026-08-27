@@ -512,6 +512,7 @@
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/meta-circular-boundary.yml",
+        ".github/workflows/self-improvement-contract.yml",
         "cmd/meta-circular-boundary-witness/**",
         "examples/language-semantic-model/corpus.json",
         "examples/language-syntax-roundtrip/corpus.json",
