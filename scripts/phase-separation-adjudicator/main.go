@@ -659,7 +659,7 @@ func deriveUnknown(records []sourceRecord) unknownResult {
 		return unknownResult{Decision: decisionUnknown, Coordinate: coordinate{Stage: "SOURCE", Step: "DECODE", Reason: reasonUnknownContract}, ClaimState: stateOpen, PreviousDigest: zeroDigest}
 	}
 	record := records[0]
-	return unknownResult{Decision: decisionUnknown, Coordinate: coordinate{Stage: record.Stage, Step: record.Step, Reason: record.DeclaredReason}, ClaimState: stateOpen, EvidenceDigest: evidenceDigest(derivedRecord{sourceRecord: record}), Provenance: record.Provenance, PreviousDigest: zeroDigest}
+	return unknownResult{Decision: decisionUnknown, Coordinate: coordinate{Stage: record.Stage, Step: record.Step, Reason: record.DeclaredReason}, ClaimState: stateOpen, EvidenceDigest: evidenceDigest(record), Provenance: record.Provenance, PreviousDigest: zeroDigest}
 }
 
 func semanticIntervention(mainFile, leakFile parsedFile, base evaluation) intervention {
@@ -759,7 +759,7 @@ func targetDigest(record sourceRecord) string {
 	return digestString(strings.Join([]string{"target", record.ToValueID, record.ToLiteralClass}, "|"))
 }
 
-func evidenceDigest(record derivedRecord) string {
+func evidenceDigest(record sourceRecord) string {
 	return digestString("source-value-program|" + record.Program)
 }
 
