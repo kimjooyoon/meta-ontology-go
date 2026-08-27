@@ -180,7 +180,7 @@ func reconstructSource(sourcePath string, source []byte) (sourceModel, error) {
 			Predicate: fields["predicate"], ExpectedValue: fields["expected"], ObservedValue: fields["observed"],
 			ObservedMaterial: fields["observed_material"], ProviderClass: fields["provider_class"], Provenance: fields["provenance"],
 			ObservationQuality: fields["observation_quality"],
-			RevisionRelation:   fields["revision_relation"], SupersedesEvidenceDigest: fields["supersedes_evidence_digest"],
+			RevisionRelation:   fields["revision_relation"], SupersedesEvidenceDigest: fields["supersedes_evidence_digest"], SupersedesClaimID: fields["supersedes_claim_id"],
 			PolicyID: fields["policy_id"], PolicyDigest: fields["policy_digest"], Producer: fields["producer"],
 			Consumer: fields["consumer"], MetaOperation: fields["meta_operation"], ProofChoice: fields["proof_choice"],
 			Coordinate:    Coordinate{Stage: fields["stage"], Step: fields["step"]},
@@ -226,7 +226,7 @@ func observationFields(program string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, key := range []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed_material", "observation_quality", "provider_class", "provenance", "revision_relation", "supersedes_evidence_digest", "policy_id", "policy_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
+	for _, key := range []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed_material", "observation_quality", "provider_class", "provenance", "revision_relation", "supersedes_evidence_digest", "supersedes_claim_id", "policy_id", "policy_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
 		if fields[key] == "" {
 			return nil, fmt.Errorf("missing source field %q", key)
 		}
@@ -265,7 +265,7 @@ func knownPolicyField(key string) bool {
 }
 
 func knownObservationField(key string) bool {
-	for _, known := range []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed", "observed_material", "observation_quality", "provider_class", "provenance", "revision_relation", "supersedes_evidence_digest", "policy_id", "policy_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
+	for _, known := range []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed", "observed_material", "observation_quality", "provider_class", "provenance", "revision_relation", "supersedes_evidence_digest", "supersedes_claim_id", "policy_id", "policy_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
 		if key == known {
 			return true
 		}
@@ -328,8 +328,14 @@ func validateObservation(observation Observation, policy RevisionPolicy) error {
 	if observation.RevisionRelation == RevisionNone && observation.SupersedesEvidenceDigest != noEvidenceTarget {
 		return fmt.Errorf("non-correction observation must target none")
 	}
+	if observation.RevisionRelation == RevisionNone && observation.SupersedesClaimID != noEvidenceTarget {
+		return fmt.Errorf("non-correction observation must target no claim")
+	}
 	if observation.RevisionRelation == RevisionSupersedes && observation.SupersedesEvidenceDigest != noEvidenceTarget && !validDigest(observation.SupersedesEvidenceDigest) {
 		return fmt.Errorf("correction target must be a canonical evidence digest or explicit none")
+	}
+	if observation.RevisionRelation == RevisionSupersedes && observation.SupersedesClaimID != noEvidenceTarget && !strings.HasPrefix(observation.SupersedesClaimID, "gooo://nonmonotonic-refutation/claim/") {
+		return fmt.Errorf("correction target claim must be canonical claim ID or explicit none")
 	}
 	if observation.RevisionRelation == RevisionNone && observation.SupersedesEvidenceDigest == "" {
 		return fmt.Errorf("supersession target is required even when none")
@@ -353,7 +359,7 @@ func EvidenceDigest(observation Observation) string {
 		ClaimID: observation.ClaimID, Proposition: observation.Proposition, TargetAddress: observation.TargetAddress,
 		ObservedMaterial: observation.ObservedMaterial, ObservedValue: observation.ObservedValue,
 		ObservationQuality: observation.ObservationQuality, ProviderClass: observation.ProviderClass, Sequence: observation.Sequence,
-		SupersededEvidenceDigest: observation.SupersedesEvidenceDigest,
+		SupersededEvidenceDigest: observation.SupersedesEvidenceDigest, SupersededClaimID: observation.SupersedesClaimID,
 	})
 }
 

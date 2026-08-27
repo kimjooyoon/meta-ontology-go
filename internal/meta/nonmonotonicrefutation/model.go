@@ -79,6 +79,7 @@ type EvidenceMaterial struct {
 	ProviderClass            string `json:"provider_class"`
 	Sequence                 int    `json:"sequence"`
 	SupersededEvidenceDigest string `json:"superseded_evidence_digest"`
+	SupersededClaimID        string `json:"superseded_claim_id"`
 }
 
 // Observation is a source-backed fixture recipe. It contains no computed
@@ -103,6 +104,7 @@ type Observation struct {
 	EvidenceDigest           string     `json:"evidence_digest"`
 	RevisionRelation         string     `json:"revision_relation"`
 	SupersedesEvidenceDigest string     `json:"supersedes_evidence_digest"`
+	SupersedesClaimID        string     `json:"supersedes_claim_id"`
 	PolicyID                 string     `json:"policy_id"`
 	PolicyDigest             string     `json:"policy_digest"`
 	Producer                 string     `json:"producer"`

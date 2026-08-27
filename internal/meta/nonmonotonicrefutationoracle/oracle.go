@@ -186,7 +186,7 @@ func reconstructSource(source []byte) (sourceModel, string) {
 			ID: observationID, Activity: activity.Name, ClaimID: claimID, Sequence: len(model.Contract.Observations) + 1,
 			Proposition: fields["proposition"], Subject: fields["subject"], Input: fields["input"], Predicate: fields["predicate"], ExpectedValue: fields["expected"], ObservedValue: fields["observed"],
 			ObservedMaterial: fields["observed_material"], ObservationQuality: fields["observation_quality"], ProviderClass: fields["provider_class"], Provenance: fields["provenance"],
-			RevisionRelation: fields["revision_relation"], SupersedesEvidenceDigest: fields["supersedes_evidence_digest"], PolicyID: fields["policy_id"], PolicyDigest: fields["policy_digest"],
+			RevisionRelation: fields["revision_relation"], SupersedesEvidenceDigest: fields["supersedes_evidence_digest"], SupersedesClaimID: fields["supersedes_claim_id"], PolicyID: fields["policy_id"], PolicyDigest: fields["policy_digest"],
 			Producer: fields["producer"], Consumer: fields["consumer"], MetaOperation: fields["meta_operation"], ProofChoice: fields["proof_choice"], Coordinate: coordinate{Stage: fields["stage"], Step: fields["step"]}, TargetAddress: subjectID + "|" + inputID,
 		}
 		if !validObservation(observation, model.Contract.Policy) {
@@ -216,7 +216,7 @@ func parsePolicyProgram(program string) (map[string]string, bool) {
 }
 
 func parseObservationProgram(program string) (map[string]string, bool) {
-	return parseFields(program, "meta.observe:v3", knownObservationField, []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed", "observed_material", "observation_quality", "provider_class", "provenance", "revision_relation", "supersedes_evidence_digest", "policy_id", "policy_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"})
+	return parseFields(program, "meta.observe:v3", knownObservationField, []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed", "observed_material", "observation_quality", "provider_class", "provenance", "revision_relation", "supersedes_evidence_digest", "supersedes_claim_id", "policy_id", "policy_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"})
 }
 
 func parseFields(program, marker string, known func(string) bool, required []string) (map[string]string, bool) {
@@ -252,7 +252,7 @@ func knownPolicyField(key string) bool {
 }
 
 func knownObservationField(key string) bool {
-	for _, known := range []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed", "observed_material", "observation_quality", "provider_class", "provenance", "revision_relation", "supersedes_evidence_digest", "policy_id", "policy_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
+	for _, known := range []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed", "observed_material", "observation_quality", "provider_class", "provenance", "revision_relation", "supersedes_evidence_digest", "supersedes_claim_id", "policy_id", "policy_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
 		if key == known {
 			return true
 		}
@@ -291,7 +291,13 @@ func validObservation(observation sourceObservation, policy revisionPolicy) bool
 	if observation.RevisionRelation == revisionNone && observation.SupersedesEvidenceDigest != noEvidenceTarget {
 		return false
 	}
+	if observation.RevisionRelation == revisionNone && observation.SupersedesClaimID != noEvidenceTarget {
+		return false
+	}
 	if observation.RevisionRelation == revisionSupersedes && observation.SupersedesEvidenceDigest != noEvidenceTarget && !validDigest(observation.SupersedesEvidenceDigest) {
+		return false
+	}
+	if observation.RevisionRelation == revisionSupersedes && observation.SupersedesClaimID != noEvidenceTarget && !strings.HasPrefix(observation.SupersedesClaimID, "gooo://nonmonotonic-refutation/claim/") {
 		return false
 	}
 	return observation.RevisionRelation != revisionNone || observation.SupersedesEvidenceDigest != ""
@@ -309,7 +315,7 @@ func evidenceDigest(observation sourceObservation) string {
 	return digestJSON(evidenceMaterial{
 		ClaimID: observation.ClaimID, Proposition: observation.Proposition, TargetAddress: observation.TargetAddress,
 		ObservedMaterial: observation.ObservedMaterial, ObservedValue: observation.ObservedValue, ObservationQuality: observation.ObservationQuality,
-		ProviderClass: observation.ProviderClass, Sequence: observation.Sequence, SupersededEvidenceDigest: observation.SupersedesEvidenceDigest,
+		ProviderClass: observation.ProviderClass, Sequence: observation.Sequence, SupersededEvidenceDigest: observation.SupersedesEvidenceDigest, SupersededClaimID: observation.SupersedesClaimID,
 	})
 }
 
@@ -390,8 +396,9 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 		claim := model.Contract.Claims[caseNumber]
 		relation := classify(claim, observation)
 		proofAdmitted, proofReason := admitProof(model.Contract.Policy, observation, claimObservationCount[observation.ClaimID])
+		target := correctionTarget(transitions, observation)
 		after, accepted, revisionReason := revise(model.Contract.Policy, before, relation, observation, transitions, proofAdmitted)
-		transition := Transition{Sequence: index + 1, CaseID: cases[caseNumber].ID, ClaimID: observation.ClaimID, Before: before, After: after, Accepted: accepted, EvidenceID: observation.ID, Relation: relation, RevisionRelation: observation.RevisionRelation, SupersedesEvidenceDigest: observation.SupersedesEvidenceDigest, EvidenceBasis: evidenceBasis(observation), EvidenceDigest: observation.EvidenceDigest, EvidenceProvenance: observation.Provenance, ProviderClass: observation.ProviderClass, ProofChoice: observation.ProofChoice, ProofAdmitted: proofAdmitted, ProofAdmission: proofReason, Coordinate: coordinate{Stage: observation.Coordinate.Stage, Step: observation.Coordinate.Step, Reason: revisionReason}, PreviousDigest: previousDigest}
+		transition := Transition{Sequence: index + 1, CaseID: cases[caseNumber].ID, ClaimID: observation.ClaimID, Before: before, After: after, Accepted: accepted, EvidenceID: observation.ID, Relation: relation, RevisionRelation: observation.RevisionRelation, SupersedesEvidenceDigest: observation.SupersedesEvidenceDigest, CorrectionTargetClaimID: target.ClaimID, CorrectionTargetTransitionDigest: target.TransitionDigest, CorrectionTargetStatus: target.Status, CorrectionTargetActive: target.Active, EvidenceBasis: evidenceBasis(observation), EvidenceDigest: observation.EvidenceDigest, EvidenceProvenance: observation.Provenance, ProviderClass: observation.ProviderClass, ProofChoice: observation.ProofChoice, ProofAdmitted: proofAdmitted, ProofAdmission: proofReason, Coordinate: coordinate{Stage: observation.Coordinate.Stage, Step: observation.Coordinate.Step, Reason: revisionReason}, PreviousDigest: previousDigest}
 		transition.TransitionDigest = transitionDigest(transition)
 		previousDigest = transition.TransitionDigest
 		transitions = append(transitions, transition)
@@ -524,8 +531,15 @@ func revise(policy revisionPolicy, before, relation string, observation sourceOb
 		if observation.RevisionRelation != policy.CorrectionRelation || observation.RevisionRelation != revisionSupersedes {
 			return before, false, "UNTARGETED_SUPPORT_RETAINS_REFUTED"
 		}
-		if policy.CorrectionTarget != policyCorrectionTargetEvidence || observation.SupersedesEvidenceDigest == noEvidenceTarget || !hasExactRefutationEvidence(prior, observation.SupersedesEvidenceDigest) {
-			return before, false, "CORRECTION_TARGET_NOT_FOUND_CURRENT_STATE_RETAINED"
+		if policy.CorrectionTarget != policyCorrectionTargetEvidence || observation.SupersedesEvidenceDigest == noEvidenceTarget || !hasExactRefutationEvidence(prior, observation) {
+			switch correctionTarget(prior, observation).Status {
+			case "CLAIM_MISMATCH":
+				return before, false, "CORRECTION_TARGET_CLAIM_MISMATCH_CURRENT_STATE_RETAINED"
+			case "STALE_REFUTATION":
+				return before, false, "CORRECTION_TARGET_STALE_REFUTATION_CURRENT_STATE_RETAINED"
+			default:
+				return before, false, "CORRECTION_TARGET_NOT_FOUND_CURRENT_STATE_RETAINED"
+			}
 		}
 		return statusDischarged, true, "TARGETED_CORRECTION_SUPERSEDES_EXACT_REFUTATION"
 	case relationContradicts:
@@ -545,17 +559,65 @@ func revise(policy revisionPolicy, before, relation string, observation sourceOb
 	}
 }
 
-func hasExactRefutationEvidence(prior []Transition, target string) bool {
+type correctionTargetResult struct {
+	ClaimID          string
+	EvidenceDigest   string
+	TransitionDigest string
+	Status           string
+	Active           bool
+}
+
+func hasExactRefutationEvidence(prior []Transition, observation sourceObservation) bool {
+	target := correctionTarget(prior, observation)
+	if target.ClaimID != observation.ClaimID || target.Status != "CURRENT_REFUTATION" || !target.Active {
+		return false
+	}
 	for _, transition := range prior {
-		if transition.Relation == relationContradicts && transition.Accepted && transition.Before == statusDischarged && transition.After == statusRefuted && transition.EvidenceDigest == target {
+		if transition.ClaimID == observation.ClaimID && transition.TransitionDigest == target.TransitionDigest && transition.EvidenceDigest == observation.SupersedesEvidenceDigest && transition.Accepted && transition.Relation == relationContradicts && transition.Before == statusDischarged && transition.After == statusRefuted {
 			return true
 		}
 	}
 	return false
 }
 
+func correctionTarget(prior []Transition, observation sourceObservation) correctionTargetResult {
+	target := correctionTargetResult{ClaimID: observation.SupersedesClaimID, EvidenceDigest: observation.SupersedesEvidenceDigest, Status: "NONE"}
+	if observation.RevisionRelation != revisionSupersedes || target.ClaimID == noEvidenceTarget || target.EvidenceDigest == noEvidenceTarget {
+		return target
+	}
+	latestAccepted := -1
+	for index, transition := range prior {
+		if transition.ClaimID == target.ClaimID && transition.Accepted {
+			latestAccepted = index
+		}
+	}
+	for index, transition := range prior {
+		if transition.ClaimID != target.ClaimID || transition.EvidenceDigest != target.EvidenceDigest {
+			continue
+		}
+		target.TransitionDigest = transition.TransitionDigest
+		if transition.Relation != relationContradicts || !transition.Accepted || transition.Before != statusDischarged || transition.After != statusRefuted {
+			target.Status = "NOT_REFUTATION"
+			return target
+		}
+		if target.ClaimID != observation.ClaimID {
+			target.Status = "CLAIM_MISMATCH"
+			return target
+		}
+		if latestAccepted != index {
+			target.Status = "STALE_REFUTATION"
+			return target
+		}
+		target.Status = "CURRENT_REFUTATION"
+		target.Active = true
+		return target
+	}
+	target.Status = "NOT_FOUND"
+	return target
+}
+
 func evidenceBasis(observation sourceObservation) string {
-	return fmt.Sprintf("fixture_knowledge=%s current_evidence_candidate=%s claim=%s proposition=%s target=%s input=%s observed_material=%s observed=%s quality=%s provenance=%s digest=%s policy=%s/%s revision=%s supersedes=%s", observation.ProviderClass, observation.ID, observation.ClaimID, observation.Proposition, observation.TargetAddress, observation.Input, observation.ObservedMaterial, observation.ObservedValue, observation.ObservationQuality, observation.Provenance, observation.EvidenceDigest, observation.PolicyID, observation.PolicyDigest, observation.RevisionRelation, observation.SupersedesEvidenceDigest)
+	return fmt.Sprintf("fixture_knowledge=%s current_evidence_candidate=%s claim=%s proposition=%s target=%s input=%s observed_material=%s observed=%s quality=%s provenance=%s digest=%s policy=%s/%s revision=%s supersedes_claim=%s supersedes=%s", observation.ProviderClass, observation.ID, observation.ClaimID, observation.Proposition, observation.TargetAddress, observation.Input, observation.ObservedMaterial, observation.ObservedValue, observation.ObservationQuality, observation.Provenance, observation.EvidenceDigest, observation.PolicyID, observation.PolicyDigest, observation.RevisionRelation, observation.SupersedesClaimID, observation.SupersedesEvidenceDigest)
 }
 
 func subjectResolution(cases []CaseResult, metrics Metrics) SubjectResolution {

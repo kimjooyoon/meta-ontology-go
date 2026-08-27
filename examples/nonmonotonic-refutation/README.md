@@ -12,15 +12,16 @@ The fixture's `observed` values exercise the semantics but do not establish
 external domain truth. The source supplies no computed evidence digest;
 producer and consumer independently hash canonical evidence material binding
 claim ID, proposition, target address, observed material/value, fixture class,
-sequence, and any superseded evidence digest.
+sequence, superseded claim ID, and any superseded evidence digest.
 
 The policy is itself source-bound metadata, not an implicit Go switch:
 
 - `UNKNOWN` and `INSUFFICIENT` retain the prior accepted state and lower
   resolution;
 - ordinary `SUPPORTS` cannot erase `REFUTED`;
-- `SUPERSEDES` may correct `REFUTED` only when its target is the exact prior
-  `CONTRADICTS` evidence digest;
+- `SUPERSEDES` may correct `REFUTED` only when its target claim ID and evidence
+  digest identify the currently active accepted refutation; the receipt also
+  records the resolved target transition digest and current/stale status;
 - `FOUNDATION`, `COHERENCE`, and `REGRESSION` each have bounded deterministic
   admission rules recorded on every ledger attempt.
 
@@ -79,6 +80,10 @@ regressions without local Go execution:
 - ordinary `SUPPORTS` after `REFUTED` remains `REFUTED`;
 - the valid gamma target discharges only with the exact prior evidence digest;
 - wrong or missing correction targets remain `REFUTED` with lower resolution;
+- an exact refutation digest from another claim is rejected;
+- a same-claim refutation that is stale because later accepted evidence exists
+  is rejected;
+- only the same-claim current exact refutation is accepted for correction;
 - a proof-rule rejection remains at the prior state;
 - changing gamma's fixture value changes semantic digest, relation, and state;
 - comment-only changes raw digest only and preserve semantic digest, relation,
@@ -87,7 +92,8 @@ regressions without local Go execution:
   reconstruction and the independent evidence model.
 
 CI exposes each of the ten correction numerators and denominators separately,
-with `correction_count=10/10`, plus source counts, producer-import
+with `correction_count=10/10`, and the three target regressions separately as
+`target_correction_count=3/3`, plus source counts, producer-import
 independence, persistent rows/transitions, tamper rejection, scoped effects,
 and no mutation/promotion.
 

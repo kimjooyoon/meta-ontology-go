@@ -39,6 +39,7 @@ type evidenceMaterial struct {
 	ProviderClass            string `json:"provider_class"`
 	Sequence                 int    `json:"sequence"`
 	SupersededEvidenceDigest string `json:"superseded_evidence_digest"`
+	SupersededClaimID        string `json:"superseded_claim_id"`
 }
 
 type sourceObservation struct {
@@ -59,6 +60,7 @@ type sourceObservation struct {
 	EvidenceDigest           string     `json:"evidence_digest"`
 	RevisionRelation         string     `json:"revision_relation"`
 	SupersedesEvidenceDigest string     `json:"supersedes_evidence_digest"`
+	SupersedesClaimID        string     `json:"supersedes_claim_id"`
 	PolicyID                 string     `json:"policy_id"`
 	PolicyDigest             string     `json:"policy_digest"`
 	Producer                 string     `json:"producer"`
@@ -117,26 +119,30 @@ type producerInput struct {
 }
 
 type Transition struct {
-	Sequence                 int        `json:"sequence"`
-	CaseID                   string     `json:"case_id"`
-	ClaimID                  string     `json:"claim_id"`
-	Before                   string     `json:"before"`
-	After                    string     `json:"after"`
-	Accepted                 bool       `json:"accepted"`
-	EvidenceID               string     `json:"evidence_id"`
-	Relation                 string     `json:"relation"`
-	RevisionRelation         string     `json:"revision_relation"`
-	SupersedesEvidenceDigest string     `json:"supersedes_evidence_digest"`
-	EvidenceBasis            string     `json:"evidence_basis"`
-	EvidenceDigest           string     `json:"evidence_digest"`
-	EvidenceProvenance       string     `json:"evidence_provenance"`
-	ProviderClass            string     `json:"provider_class"`
-	ProofChoice              string     `json:"proof_choice"`
-	ProofAdmitted            bool       `json:"proof_admitted"`
-	ProofAdmission           string     `json:"proof_admission"`
-	Coordinate               coordinate `json:"coordinate"`
-	PreviousDigest           string     `json:"previous_digest,omitempty"`
-	TransitionDigest         string     `json:"transition_digest"`
+	Sequence                         int        `json:"sequence"`
+	CaseID                           string     `json:"case_id"`
+	ClaimID                          string     `json:"claim_id"`
+	Before                           string     `json:"before"`
+	After                            string     `json:"after"`
+	Accepted                         bool       `json:"accepted"`
+	EvidenceID                       string     `json:"evidence_id"`
+	Relation                         string     `json:"relation"`
+	RevisionRelation                 string     `json:"revision_relation"`
+	SupersedesEvidenceDigest         string     `json:"supersedes_evidence_digest"`
+	CorrectionTargetClaimID          string     `json:"correction_target_claim_id"`
+	CorrectionTargetTransitionDigest string     `json:"correction_target_transition_digest"`
+	CorrectionTargetStatus           string     `json:"correction_target_status"`
+	CorrectionTargetActive           bool       `json:"correction_target_active"`
+	EvidenceBasis                    string     `json:"evidence_basis"`
+	EvidenceDigest                   string     `json:"evidence_digest"`
+	EvidenceProvenance               string     `json:"evidence_provenance"`
+	ProviderClass                    string     `json:"provider_class"`
+	ProofChoice                      string     `json:"proof_choice"`
+	ProofAdmitted                    bool       `json:"proof_admitted"`
+	ProofAdmission                   string     `json:"proof_admission"`
+	Coordinate                       coordinate `json:"coordinate"`
+	PreviousDigest                   string     `json:"previous_digest,omitempty"`
+	TransitionDigest                 string     `json:"transition_digest"`
 }
 
 type CaseResult struct {

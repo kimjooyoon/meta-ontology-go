@@ -117,7 +117,7 @@ func TestRejectedEvidencePreservesPriorAcceptedState(t *testing.T) {
 
 func TestOrdinarySupportCannotEraseRefutation(t *testing.T) {
 	report := judgeVariant(t,
-		"revision_relation=SUPERSEDES;supersedes_evidence_digest=sha256:4d2ff3ef401c9c0ad241b002349690b7c1f2e2f829c1d62369ec7447385987a5", "revision_relation=NONE;supersedes_evidence_digest=none")
+		"revision_relation=SUPERSEDES;supersedes_claim_id=gooo://nonmonotonic-refutation/claim/gamma;supersedes_evidence_digest=sha256:949793233625c5aa4cc86984436630fe5c2443dec264d3e32678e830603d8ae5", "revision_relation=NONE;supersedes_claim_id=none;supersedes_evidence_digest=none")
 	if report.Decision != "PASS" || report.Transitions[5].Relation != "SUPPORTS" || report.Transitions[5].Before != "REFUTED" || report.Transitions[5].After != "REFUTED" || report.Transitions[5].Accepted || report.Cases[2].CurrentStatus != "REFUTED" {
 		t.Fatalf("ordinary support after refutation = %#v", report)
 	}
@@ -129,7 +129,7 @@ func TestProofChoiceAndCorrectionTargetAreCausal(t *testing.T) {
 		t.Fatalf("proof rejection = %#v", proofRejected)
 	}
 
-	wrongTarget := judgeVariant(t, "supersedes_evidence_digest=sha256:4d2ff3ef401c9c0ad241b002349690b7c1f2e2f829c1d62369ec7447385987a5", "supersedes_evidence_digest=sha256:0000000000000000000000000000000000000000000000000000000000000000")
+	wrongTarget := judgeVariant(t, "supersedes_evidence_digest=sha256:949793233625c5aa4cc86984436630fe5c2443dec264d3e32678e830603d8ae5", "supersedes_evidence_digest=sha256:0000000000000000000000000000000000000000000000000000000000000000")
 	if wrongTarget.Decision != "PASS" || wrongTarget.Transitions[5].After != "REFUTED" || wrongTarget.Transitions[5].Accepted || wrongTarget.Resolution != "LOWER_RESOLUTION" {
 		t.Fatalf("wrong correction target = %#v", wrongTarget)
 	}
