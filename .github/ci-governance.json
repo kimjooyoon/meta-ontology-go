@@ -1035,6 +1035,17 @@
       ]
     },
     {
+      "branch": "agent/gooo-attestation-resolution",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-attestation-resolution.yml",
+        "internal/meta/selfimprovementattestation",
+        "internal/verify/scope_gooo_attestation_resolution.go",
+        "scripts/self-improvement-attestation"
+      ]
+    },
+    {
       "branch": "agent/language-package-runtime",
       "paths": [
         ".github/agent-scope-table.md",
