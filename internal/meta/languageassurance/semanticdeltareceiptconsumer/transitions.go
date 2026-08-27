@@ -2,8 +2,6 @@ package semanticdeltareceiptconsumer
 
 import "strings"
 
-const boundedClaimID = "gooo://semantic-delta/claim/bounded-equivalence"
-
 func claimLedger(before, after projectedSource, class string, reasons ...string) ([]Claim, []ClaimTransition) {
 	from, to, why := statusOpen, statusOpen, "BOUNDED_EQUIVALENCE_OPEN"
 	if class == classPreserved {

@@ -213,7 +213,7 @@ func validIdentityFaultAlgorithmBinding(path string, bytes int, digest string) b
 }
 
 func identityFaultSourcePath() (string, bool) {
-	path, _, _, ok := runtime.Caller(0)
+	_, path, _, ok := runtime.Caller(0)
 	return path, ok
 }
 
@@ -313,7 +313,7 @@ func validateIdentityFaultMapping(rows []IdentityFaultMappingRow, oldIDs, newIDs
 }
 
 func validateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observation IdentityFaultSourcePair, artifact identityFaultArtifact, rows []IdentityFaultMappingRow, oldToNew, newToOld map[string]string) (IdentityFaultGraphEvidence, string) {
-	graph, mappedOldToNew, mappedNewToOld, reason := validateIdentityFaultMapping(rows, identityIDs(original), identityIDs(faulted), oldToNew)
+	graph, mappedOldToNew, mappedNewToOld, reason := validateIdentityFaultMapping(rows, identityFaultIDs(original), identityFaultIDs(faulted), oldToNew)
 	graph.SemanticSlotDenominator = identityFaultSemanticSlotDenominator
 	graph.SemanticSlotUnique, graph.SemanticSlotTotal = identitySemanticSlotCoverage(original)
 	if reason != "" {

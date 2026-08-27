@@ -190,7 +190,7 @@ func MarshalIdentityFaultReceiptEvidence(receipt IdentityFaultReceipt) []byte {
 }
 
 func identityFaultAlgorithmBinding() (string, string, int, string) {
-	path, _, _, ok := runtime.Caller(0)
+	_, path, _, ok := runtime.Caller(0)
 	if !ok {
 		return identityFaultAlgorithm, identityFaultSource, 0, ""
 	}
