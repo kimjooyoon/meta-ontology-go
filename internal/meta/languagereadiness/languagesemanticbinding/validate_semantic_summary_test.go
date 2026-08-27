@@ -3,11 +3,11 @@ package languagesemanticbinding
 import "testing"
 
 func TestVersionedDenominatorsMatchActivatedCorpus(t *testing.T) {
-	if syntaxCaseDenominator != 32 || syntaxValidSourceDenominator != 29 || syntaxInvalidCaseDenominator != 3 || syntaxGoooLineDenominator != 433 {
-		t.Fatal("syntax denominator must match the activated 32-case, 29-source, 433-line corpus")
+	if syntaxCaseDenominator != 33 || syntaxValidSourceDenominator != 30 || syntaxInvalidCaseDenominator != 3 || syntaxGoooLineDenominator != 449 {
+		t.Fatal("syntax denominator must match the activated 33-case, 30-source, 449-line corpus")
 	}
-	if semanticCaseDenominator != 34 || semanticSourceDenominator != 29 {
-		t.Fatal("semantic denominator must match the activated 34-case, 29-source corpus")
+	if semanticCaseDenominator != 35 || semanticSourceDenominator != 30 {
+		t.Fatal("semantic denominator must match the activated 35-case, 30-source corpus")
 	}
 }
 
