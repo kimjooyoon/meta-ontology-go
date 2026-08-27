@@ -36,9 +36,9 @@ v2 vectors (with `D`, `O`, and `R` meaning `DISCHARGED`, `OPEN`, and
 
 | Candidate | Coordinate vector (`numerator/denominator status`) | Counterexamples | Unknown locations |
 | --- | --- | ---: | ---: |
-| `derive` | `1/1 D, 1/1 D, 2/2 D, 2/2 D, 0/1 O, 1/1 D, 0/3 O` | 2 | 2 |
-| `replay` | `1/1 D, 0/1 R, 1/2 O, 1/2 O, 1/1 D, 1/1 D, 0/3 O` | 1 | 1 |
-| `reflect` | `1/1 D, 1/1 D, 0/2 R, 0/2 R, 0/1 R, 1/1 D, 0/3 O` | 0 | 0 |
+| `derive` | `1/1 D, 1/1 D, 2/2 D, 2/2 D, 0/1 O, 1/1 D, 0/3 R` | 2 | 2 |
+| `replay` | `1/1 D, 0/1 R, 1/2 O, 1/2 O, 1/1 D, 1/1 D, 0/3 R` | 1 | 1 |
+| `reflect` | `1/1 D, 1/1 D, 0/2 R, 0/2 R, 0/1 R, 1/1 D, 0/3 R` | 0 | 0 |
 
 `D`, `O`, and `R` stand for `DISCHARGED`, `OPEN`, and `REFUTED`. These are
 evidence states, not a quality score. Counterexample IDs and unknown paths are
@@ -75,10 +75,19 @@ The current producer intentionally demonstrates the falsifier: all three
 semantic interventions produce `REFUTED / DIGEST_ONLY_BINDING`, yielding
 `causal_cases 0/3`, `digest_only_cases 3`, and
 `hardcoded_fixture_cases 3`. The semantic source values do change, but the
-receipt semantic projection, decision, and claim transitions do not. All three
+receipt semantic projection, decision, and receipt claim transitions do not.
+The independent audit ledger records the direct claim transitions below. All three
 comment-only interventions are `DISCHARGED` because their raw source digests
 change while their semantic projections and decisions remain equal. This is a
 diagnostic finding about source binding, not a winner declaration.
+
+The causality transition ledger has the fixed denominator `9` (`3 operations ×
+3 intervention claims`): `REFUTED 3/9`, `DISCHARGED 6/9`, and `OPEN 0/9`.
+Each baseline source-observation claim is `OPEN -> DISCHARGED`, each semantic
+causality claim is `OPEN -> REFUTED / DIGEST_ONLY_BINDING`, and each
+non-semantic invariance claim is `OPEN -> DISCHARGED /
+SEMANTIC_PROJECTION_PRESERVED`. The `0/3` coordinate is only the count; its
+status is `REFUTED` because these direct transitions are present.
 
 The CI workflow checks each baseline, semantic, and comment-only `.gooo`
 source, produces two deterministic receipt passes for every case, observes

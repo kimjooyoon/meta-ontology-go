@@ -12,6 +12,8 @@
   "causality_manifest_path": "examples/experiment-portfolio/causality-manifest.json",
   "causality_coordinate_id": "source-semantic-causality",
   "causality_denominator": 3,
+  "causality_transition_denominator": 9,
+  "causality_transition_denominator_reason": "three operations x three intervention claims",
   "candidates": [
     {
       "id": "derive",

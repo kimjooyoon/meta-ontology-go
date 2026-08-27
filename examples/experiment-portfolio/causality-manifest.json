@@ -6,6 +6,8 @@
   "predecessor_contract_digest": "sha256:889c669db94229c8391446533dfffb51f7e53d165e5afdae8d3a5a6878751981",
   "coordinate_id": "source-semantic-causality",
   "cases_per_candidate": 3,
+  "transition_denominator": 9,
+  "transition_denominator_reason": "three operations x three intervention claims",
   "required_receipt_fields": [
     "semantic_value",
     "decision",

@@ -6,14 +6,16 @@ var requiredCausalityReceiptFields = []string{"semantic_value", "decision", "cla
 
 func ExpectedCausalityManifest() CausalityManifest {
 	return CausalityManifest{
-		Schema:                    CausalityManifestSchema,
-		ManifestID:                "meta-ontology-source-semantic-causality-v1",
-		Version:                   1,
-		PredecessorContractID:     ExpectedContractV1().ID,
-		PredecessorContractDigest: predecessorContractDigest,
-		CoordinateID:              "source-semantic-causality",
-		CasesPerCandidate:         ExpectedCausalCases,
-		RequiredReceiptFields:     append([]string(nil), requiredCausalityReceiptFields...),
+		Schema:                      CausalityManifestSchema,
+		ManifestID:                  "meta-ontology-source-semantic-causality-v1",
+		Version:                     1,
+		PredecessorContractID:       ExpectedContractV1().ID,
+		PredecessorContractDigest:   predecessorContractDigest,
+		CoordinateID:                "source-semantic-causality",
+		CasesPerCandidate:           ExpectedCausalCases,
+		TransitionDenominator:       ExpectedCausalTransitions,
+		TransitionDenominatorReason: causalityTransitionDenominatorReason,
+		RequiredReceiptFields:       append([]string(nil), requiredCausalityReceiptFields...),
 		Cases: []CausalityCaseContract{
 			{CandidateID: "derive", SourcePath: "examples/experiment-portfolio/alternatives/derive.gooo", OperationValueBefore: "meta.portfolio.derive-coordinate", OperationValueAfter: "meta.portfolio.derive-coordinate:semantic-intervention", NonSemanticComment: "source-semantic-causality non-semantic derive", RequiredChangeFields: append([]string(nil), requiredCausalityReceiptFields...)},
 			{CandidateID: "replay", SourcePath: "examples/experiment-portfolio/alternatives/replay.gooo", OperationValueBefore: "meta.portfolio.replay-independent", OperationValueAfter: "meta.portfolio.replay-independent:semantic-intervention", NonSemanticComment: "source-semantic-causality non-semantic replay", RequiredChangeFields: append([]string(nil), requiredCausalityReceiptFields...)},
@@ -29,6 +31,8 @@ func causalityManifestReason(contract Contract, manifest CausalityManifest) stri
 		manifest.PredecessorContractDigest != contract.PredecessorContractDigest ||
 		manifest.CoordinateID != contract.CausalityCoordinateID ||
 		manifest.CasesPerCandidate != ExpectedCausalCases ||
+		manifest.TransitionDenominator != contract.CausalityTransitionDenominator ||
+		manifest.TransitionDenominatorReason != contract.CausalityTransitionDenominatorReason ||
 		!reflect.DeepEqual(manifest.RequiredReceiptFields, requiredCausalityReceiptFields) {
 		return "CAUSALITY_MANIFEST_IDENTITY_INVALID"
 	}

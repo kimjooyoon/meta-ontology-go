@@ -40,7 +40,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "experiment-portfolio-causality: output: %v\n", err)
 		return 2
 	}
-	fmt.Fprintf(stdout, "causality audit: %s %s causal_cases=%d/%d digest_only_cases=%d hardcoded_fixture_cases=%d unknowns=%d\n", report.Decision, report.Resolution, report.Summary.CausalCases.Observed, report.Summary.CausalCases.Total, report.Summary.DigestOnlyCases, report.Summary.HardcodedFixtureCases, report.Summary.Unknowns)
+	fmt.Fprintf(stdout, "causality audit: %s %s causal_cases=%d/%d digest_only_cases=%d hardcoded_fixture_cases=%d unknowns=%d transitions=refuted %d/%d discharged %d/%d open %d/%d\n", report.Decision, report.Resolution, report.Summary.CausalCases.Observed, report.Summary.CausalCases.Total, report.Summary.DigestOnlyCases, report.Summary.HardcodedFixtureCases, report.Summary.Unknowns, report.TransitionSummary.Refuted.Numerator, report.TransitionSummary.Refuted.Denominator, report.TransitionSummary.Discharged.Numerator, report.TransitionSummary.Discharged.Denominator, report.TransitionSummary.Open.Numerator, report.TransitionSummary.Open.Denominator)
 	if report.Resolution == "EXACT" {
 		return 0
 	}

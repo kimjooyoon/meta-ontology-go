@@ -79,6 +79,13 @@ func closedCausality(input CausalityInput, reason string) CausalityReport {
 			CausalCases: CausalCaseCount{Observed: 0, Total: ExpectedCandidates},
 			Unknowns:    1,
 		},
+		TransitionSummary: CausalityTransitionSummary{
+			FixedDenominator: ExpectedCausalTransitions,
+			Refuted:          TransitionBucket{Denominator: ExpectedCausalTransitions},
+			Discharged:       TransitionBucket{Denominator: ExpectedCausalTransitions},
+			Open:             TransitionBucket{Numerator: ExpectedCausalTransitions, Denominator: ExpectedCausalTransitions},
+			Reason:           causalityTransitionDenominatorReason,
+		},
 		UnknownFindings: []CausalityUnknown{{Stage: "CAUSALITY_VALIDATION", Step: "validate-input", Reason: reason}},
 		NotClaimed:      append([]string(nil), notClaimed...),
 		FactsDigest:     digestValue(input),

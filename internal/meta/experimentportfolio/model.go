@@ -86,15 +86,17 @@ type SourceObservation struct {
 }
 
 type CausalityManifest struct {
-	Schema                    string                  `json:"schema"`
-	ManifestID                string                  `json:"manifest_id"`
-	Version                   int                     `json:"version"`
-	PredecessorContractID     string                  `json:"predecessor_contract_id"`
-	PredecessorContractDigest string                  `json:"predecessor_contract_digest"`
-	CoordinateID              string                  `json:"coordinate_id"`
-	CasesPerCandidate         int                     `json:"cases_per_candidate"`
-	RequiredReceiptFields     []string                `json:"required_receipt_fields"`
-	Cases                     []CausalityCaseContract `json:"cases"`
+	Schema                      string                  `json:"schema"`
+	ManifestID                  string                  `json:"manifest_id"`
+	Version                     int                     `json:"version"`
+	PredecessorContractID       string                  `json:"predecessor_contract_id"`
+	PredecessorContractDigest   string                  `json:"predecessor_contract_digest"`
+	CoordinateID                string                  `json:"coordinate_id"`
+	CasesPerCandidate           int                     `json:"cases_per_candidate"`
+	TransitionDenominator       int                     `json:"transition_denominator"`
+	TransitionDenominatorReason string                  `json:"transition_denominator_reason"`
+	RequiredReceiptFields       []string                `json:"required_receipt_fields"`
+	Cases                       []CausalityCaseContract `json:"cases"`
 }
 
 type CausalityCaseContract struct {
@@ -128,19 +130,20 @@ type CausalityInput struct {
 }
 
 type CausalCaseResult struct {
-	CaseID           string            `json:"case_id"`
-	Kind             string            `json:"kind"`
-	SourcePath       string            `json:"source_path"`
-	SourceDigest     string            `json:"source_digest"`
-	SemanticValue    string            `json:"semantic_value"`
-	ReceiptDigest    string            `json:"receipt_digest"`
-	Decision         string            `json:"decision"`
-	Status           string            `json:"status"`
-	Stage            string            `json:"stage"`
-	Step             string            `json:"step"`
-	Reason           string            `json:"reason"`
-	ClaimTransitions []ClaimTransition `json:"claim_transitions"`
-	CoordinateVector []Coordinate      `json:"coordinate_vector"`
+	CaseID                  string            `json:"case_id"`
+	Kind                    string            `json:"kind"`
+	SourcePath              string            `json:"source_path"`
+	SourceDigest            string            `json:"source_digest"`
+	SemanticValue           string            `json:"semantic_value"`
+	ReceiptDigest           string            `json:"receipt_digest"`
+	Decision                string            `json:"decision"`
+	Status                  string            `json:"status"`
+	Stage                   string            `json:"stage"`
+	Step                    string            `json:"step"`
+	Reason                  string            `json:"reason"`
+	ClaimTransitions        []ClaimTransition `json:"claim_transitions"`
+	ReceiptClaimTransitions []ClaimTransition `json:"receipt_claim_transitions"`
+	CoordinateVector        []Coordinate      `json:"coordinate_vector"`
 }
 
 type CausalitySampleResult struct {
@@ -172,6 +175,19 @@ type CausalCaseCount struct {
 	Total    int `json:"total"`
 }
 
+type TransitionBucket struct {
+	Numerator   int `json:"numerator"`
+	Denominator int `json:"denominator"`
+}
+
+type CausalityTransitionSummary struct {
+	FixedDenominator int              `json:"fixed_denominator"`
+	Refuted          TransitionBucket `json:"refuted"`
+	Discharged       TransitionBucket `json:"discharged"`
+	Open             TransitionBucket `json:"open"`
+	Reason           string           `json:"reason"`
+}
+
 type CausalityUnknown struct {
 	CandidateID string `json:"candidate_id"`
 	CaseID      string `json:"case_id"`
@@ -188,20 +204,21 @@ type CausalitySummary struct {
 }
 
 type CausalityReport struct {
-	Schema          string                  `json:"schema"`
-	Decision        string                  `json:"decision"`
-	Resolution      string                  `json:"resolution"`
-	Reason          string                  `json:"reason"`
-	Interpretation  string                  `json:"interpretation"`
-	SubjectSHA      string                  `json:"subject_sha"`
-	ContractID      string                  `json:"contract_id"`
-	Manifest        CausalityManifest       `json:"manifest"`
-	Samples         []CausalitySampleResult `json:"samples"`
-	Summary         CausalitySummary        `json:"summary"`
-	UnknownFindings []CausalityUnknown      `json:"unknown_findings"`
-	NotClaimed      []string                `json:"not_claimed"`
-	FactsDigest     string                  `json:"facts_digest"`
-	Digest          string                  `json:"digest"`
+	Schema            string                     `json:"schema"`
+	Decision          string                     `json:"decision"`
+	Resolution        string                     `json:"resolution"`
+	Reason            string                     `json:"reason"`
+	Interpretation    string                     `json:"interpretation"`
+	SubjectSHA        string                     `json:"subject_sha"`
+	ContractID        string                     `json:"contract_id"`
+	Manifest          CausalityManifest          `json:"manifest"`
+	Samples           []CausalitySampleResult    `json:"samples"`
+	Summary           CausalitySummary           `json:"summary"`
+	TransitionSummary CausalityTransitionSummary `json:"transition_summary"`
+	UnknownFindings   []CausalityUnknown         `json:"unknown_findings"`
+	NotClaimed        []string                   `json:"not_claimed"`
+	FactsDigest       string                     `json:"facts_digest"`
+	Digest            string                     `json:"digest"`
 }
 
 type CandidateComparison struct {

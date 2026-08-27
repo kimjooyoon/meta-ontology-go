@@ -59,19 +59,20 @@ func EvaluateCausality(input CausalityInput) CausalityReport {
 		reason = "SEMANTIC_CAUSALITY_CONTRACT_REFUTED"
 	}
 	report := CausalityReport{
-		Schema:          CausalityReportSchema,
-		Decision:        decision,
-		Resolution:      "EXACT",
-		Reason:          reason,
-		Interpretation:  "THREE_CASE_SOURCE_SEMANTIC_CAUSALITY_WITHOUT_AGGREGATION",
-		SubjectSHA:      input.SubjectSHA,
-		ContractID:      input.Contract.ID,
-		Manifest:        input.Manifest,
-		Samples:         results,
-		Summary:         summary,
-		UnknownFindings: unknowns,
-		NotClaimed:      append([]string(nil), input.Contract.NotClaimed...),
-		FactsDigest:     digestValue(input),
+		Schema:            CausalityReportSchema,
+		Decision:          decision,
+		Resolution:        "EXACT",
+		Reason:            reason,
+		Interpretation:    "THREE_CASE_SOURCE_SEMANTIC_CAUSALITY_WITHOUT_AGGREGATION",
+		SubjectSHA:        input.SubjectSHA,
+		ContractID:        input.Contract.ID,
+		Manifest:          input.Manifest,
+		Samples:           results,
+		Summary:           summary,
+		TransitionSummary: summarizeCausalityTransitions(results, input.Manifest),
+		UnknownFindings:   unknowns,
+		NotClaimed:        append([]string(nil), input.Contract.NotClaimed...),
+		FactsDigest:       digestValue(input),
 	}
 	return sealCausalityReport(report)
 }
@@ -93,6 +94,7 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 	result.Baseline.Stage = "BASELINE"
 	result.Baseline.Step = "bind-receipt"
 	result.Baseline.Reason = "BASELINE_BOUND"
+	setCausalTransition(&result.Baseline, "DISCHARGED", "BASELINE", "bind-receipt", "SOURCE_OBSERVATION_BOUND")
 	result.SourceSemanticValueChanged = sample.Baseline.Observation.SemanticValue != sample.Semantic.Observation.SemanticValue
 	result.SourceDigestChanged = sample.Baseline.Observation.SourceDigest != sample.Semantic.Observation.SourceDigest
 	result.SemanticProjectionChanged = !reflect.DeepEqual(receiptSemanticProjectionOf(sample.Baseline.Receipt), receiptSemanticProjectionOf(sample.Semantic.Receipt))
@@ -126,6 +128,8 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 		result.Semantic.Stage = unknowns[0].Stage
 		result.Semantic.Step = unknowns[0].Step
 		result.Semantic.Reason = unknowns[0].Reason
+		setCausalTransition(&result.Semantic, "OPEN", unknowns[0].Stage, unknowns[0].Step, unknowns[0].Reason)
+		setCausalTransition(&result.NonSemantic, "OPEN", "NON_SEMANTIC_INTERVENTION", "observe-source", "NON_SEMANTIC_INTERVENTION_NOT_OBSERVED")
 		return result, unknowns
 	}
 	if result.NonSemanticProjectionChanged || result.NonSemanticDecisionChanged {
@@ -137,12 +141,14 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 		result.NonSemantic.Stage = result.Stage
 		result.NonSemantic.Step = result.Step
 		result.NonSemantic.Reason = result.Reason
+		setCausalTransition(&result.NonSemantic, "REFUTED", result.Stage, result.Step, result.Reason)
 		return result, nil
 	}
 	result.NonSemantic.Status = "DISCHARGED"
 	result.NonSemantic.Stage = "NON_SEMANTIC_INTERVENTION"
 	result.NonSemantic.Step = "compare-receipt-projection"
 	result.NonSemantic.Reason = "SEMANTIC_PROJECTION_PRESERVED"
+	setCausalTransition(&result.NonSemantic, "DISCHARGED", result.NonSemantic.Stage, result.NonSemantic.Step, result.NonSemantic.Reason)
 	if !containsAll(result.ChangedFields, result.RequiredChangeFields) {
 		result.Status = "REFUTED"
 		result.Stage = "SEMANTIC_INTERVENTION"
@@ -158,31 +164,44 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 			result.Reason = "SEMANTIC_INTERVENTION_NOT_BOUND_TO_CONTRACTED_RECEIPT_FIELD"
 		}
 		result.Semantic.Reason = result.Reason
+		setCausalTransition(&result.Semantic, "REFUTED", result.Stage, result.Step, result.Reason)
 		return result, nil
 	}
 	result.Semantic.Status = "DISCHARGED"
 	result.Semantic.Stage = "SEMANTIC_INTERVENTION"
 	result.Semantic.Step = "compare-receipt-projection"
 	result.Semantic.Reason = "CONTRACTED_RECEIPT_FIELD_CHANGED"
+	setCausalTransition(&result.Semantic, "DISCHARGED", result.Semantic.Stage, result.Semantic.Step, result.Semantic.Reason)
 	return result, nil
 }
 
 func makeCausalCaseResult(input CausalityCaseInput) CausalCaseResult {
 	return CausalCaseResult{
-		CaseID:           input.CaseID,
-		Kind:             input.Kind,
-		SourcePath:       input.Observation.SourcePath,
-		SourceDigest:     input.Observation.SourceDigest,
-		SemanticValue:    input.Observation.SemanticValue,
-		ReceiptDigest:    input.Receipt.Digest,
-		Decision:         input.Receipt.Decision,
-		Status:           "OPEN",
-		Stage:            "CAUSALITY",
-		Step:             "bind-receipt",
-		Reason:           "receipt bound to observed source",
-		ClaimTransitions: append([]ClaimTransition{}, input.Receipt.ClaimTransitions...),
-		CoordinateVector: append([]Coordinate{}, input.Receipt.CoordinateVector...),
+		CaseID:                  input.CaseID,
+		Kind:                    input.Kind,
+		SourcePath:              input.Observation.SourcePath,
+		SourceDigest:            input.Observation.SourceDigest,
+		SemanticValue:           input.Observation.SemanticValue,
+		ReceiptDigest:           input.Receipt.Digest,
+		Decision:                input.Receipt.Decision,
+		Status:                  "OPEN",
+		Stage:                   "CAUSALITY",
+		Step:                    "bind-receipt",
+		Reason:                  "receipt bound to observed source",
+		ClaimTransitions:        []ClaimTransition{{ID: input.CaseID + "-claim", From: "OPEN", To: "OPEN", Stage: "CAUSALITY", Step: "await-evidence", Reason: "evidence not yet adjudicated"}},
+		ReceiptClaimTransitions: append([]ClaimTransition{}, input.Receipt.ClaimTransitions...),
+		CoordinateVector:        append([]Coordinate{}, input.Receipt.CoordinateVector...),
 	}
+}
+
+func setCausalTransition(result *CausalCaseResult, to, stage, step, reason string) {
+	if len(result.ClaimTransitions) == 0 {
+		result.ClaimTransitions = []ClaimTransition{{ID: result.CaseID + "-claim", From: "OPEN"}}
+	}
+	result.ClaimTransitions[0].To = to
+	result.ClaimTransitions[0].Stage = stage
+	result.ClaimTransitions[0].Step = step
+	result.ClaimTransitions[0].Reason = reason
 }
 
 func receiptSemanticProjectionOf(receipt Receipt) receiptSemanticProjection {
@@ -234,4 +253,35 @@ func containsAll(values, required []string) bool {
 
 func causalityUnknown(candidateID, caseID, stage, step, reason string) CausalityUnknown {
 	return CausalityUnknown{CandidateID: candidateID, CaseID: caseID, Stage: stage, Step: step, Reason: reason}
+}
+
+func summarizeCausalityTransitions(results []CausalitySampleResult, manifest CausalityManifest) CausalityTransitionSummary {
+	refuted, discharged, open := 0, 0, 0
+	for _, sample := range results {
+		for _, result := range []CausalCaseResult{sample.Baseline, sample.Semantic, sample.NonSemantic} {
+			if len(result.ClaimTransitions) == 0 {
+				open++
+				continue
+			}
+			switch result.ClaimTransitions[0].To {
+			case "REFUTED":
+				refuted++
+			case "DISCHARGED":
+				discharged++
+			default:
+				open++
+			}
+		}
+	}
+	denominator := manifest.TransitionDenominator
+	if denominator == 0 {
+		denominator = ExpectedCausalTransitions
+	}
+	return CausalityTransitionSummary{
+		FixedDenominator: denominator,
+		Refuted:          TransitionBucket{Numerator: refuted, Denominator: denominator},
+		Discharged:       TransitionBucket{Numerator: discharged, Denominator: denominator},
+		Open:             TransitionBucket{Numerator: open, Denominator: denominator},
+		Reason:           manifest.TransitionDenominatorReason,
+	}
 }

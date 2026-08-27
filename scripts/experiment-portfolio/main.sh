@@ -110,7 +110,7 @@ jq -e '
   ([.candidates[].coordinate_vector[].status] | index("REFUTED")) != null and
   ([.candidates[].coordinate_vector[].status] | index("DISCHARGED")) != null and
   ([.proofs[] | select(.choice == "NO_AGGREGATION") | .passed] | . == [true]) and
-  (.candidates | all(.coordinate_vector[0].denominator == 1 and .coordinate_vector[1].denominator == 1 and .coordinate_vector[2].denominator == 2 and .coordinate_vector[3].denominator == 2 and .coordinate_vector[4].denominator == 1 and .coordinate_vector[5].denominator == 1 and .coordinate_vector[6].id == "source-semantic-causality" and .coordinate_vector[6].denominator == 3 and .coordinate_vector[6].status == "OPEN")) and
+  (.candidates | all(.coordinate_vector[0].denominator == 1 and .coordinate_vector[1].denominator == 1 and .coordinate_vector[2].denominator == 2 and .coordinate_vector[3].denominator == 2 and .coordinate_vector[4].denominator == 1 and .coordinate_vector[5].denominator == 1 and .coordinate_vector[6].id == "source-semantic-causality" and .coordinate_vector[6].denominator == 3 and .coordinate_vector[6].status == "REFUTED" and .coordinate_vector[6].reason == "three semantic interventions are directly refuted as digest-only bindings")) and
   (has("score") | not) and (has("winner") | not)
 ' "$work/report.json"
 
@@ -157,10 +157,22 @@ jq -e '
   .summary.digest_only_cases == 3 and
   .summary.hardcoded_fixture_cases == 3 and
   .summary.unknowns == 0 and
+  .transition_summary.fixed_denominator == 9 and
+  .transition_summary.refuted == {numerator:3,denominator:9} and
+  .transition_summary.discharged == {numerator:6,denominator:9} and
+  .transition_summary.open == {numerator:0,denominator:9} and
+  .transition_summary.reason == "three operations x three intervention claims" and
   (.samples | length) == 3 and
   (.samples | all(
+    .baseline.status == "DISCHARGED" and
+    .baseline.claim_transitions[0].from == "OPEN" and
+    .baseline.claim_transitions[0].to == "DISCHARGED" and
+    .baseline.claim_transitions[0].reason == "SOURCE_OBSERVATION_BOUND" and
     .semantic.status == "REFUTED" and
     .semantic.reason == "DIGEST_ONLY_BINDING" and
+    .semantic.claim_transitions[0].from == "OPEN" and
+    .semantic.claim_transitions[0].to == "REFUTED" and
+    .semantic.claim_transitions[0].reason == "DIGEST_ONLY_BINDING" and
     .source_semantic_value_changed == true and
     .source_digest_changed == true and
     .nonsemantic_source_digest_changed == true and
@@ -172,14 +184,37 @@ jq -e '
     .hardcoded_fixture == true and
     .nonsemantic.status == "DISCHARGED" and
     .nonsemantic.reason == "SEMANTIC_PROJECTION_PRESERVED" and
+    .nonsemantic.claim_transitions[0].from == "OPEN" and
+    .nonsemantic.claim_transitions[0].to == "DISCHARGED" and
+    .nonsemantic.claim_transitions[0].reason == "SEMANTIC_PROJECTION_PRESERVED" and
     .nonsemantic.source_digest != .baseline.source_digest and
     .nonsemantic.semantic_value == .baseline.semantic_value and
-    .nonsemantic.claim_transitions == .baseline.claim_transitions and
-    .semantic.claim_transitions == .baseline.claim_transitions and
+    (.baseline.claim_transitions | length) == 1 and
+    (.semantic.claim_transitions | length) == 1 and
+    (.nonsemantic.claim_transitions | length) == 1 and
     (.changed_fields | length) == 0
   )) and
   (has("score") | not) and (has("winner") | not)
 ' "$work/causality-report.json"
+
+jq '.samples[0].semantic.receipt.coordinate_vector[0].numerator = 0' "$work/causality-input.json" > "$work/causality-forged-input.json"
+if "$causal_evaluator" -input "$work/causality-forged-input.json" -output "$work/causality-forged-report.json"; then
+	echo "forged causality receipt unexpectedly passed" >&2
+	exit 1
+fi
+jq -e '.decision == "FAIL_CLOSED" and .reason == "PORTFOLIO_RECEIPT_DIGEST_INVALID" and .summary.unknowns == 1' "$work/causality-forged-report.json"
+
+jq 'del(.samples[0].semantic.claim_transitions[0])' "$work/causality-report.json" > "$work/causality-transition-deleted-report.json"
+if "$causal_evaluator" -input "$work/causality-input.json" -check "$work/causality-transition-deleted-report.json"; then
+	echo "deleted causality transition unexpectedly passed" >&2
+	exit 1
+fi
+
+jq '.samples[0].semantic.status = "OPEN" | .samples[0].semantic.claim_transitions[0].to = "OPEN"' "$work/causality-report.json" > "$work/causality-open-laundered-report.json"
+if "$causal_evaluator" -input "$work/causality-input.json" -check "$work/causality-open-laundered-report.json"; then
+	echo "open causality status laundering unexpectedly passed" >&2
+	exit 1
+fi
 
 jq -r '
   "### Meta-programming experiment portfolio",
@@ -198,6 +233,7 @@ jq -r '
   "- digest_only_cases: \(.summary.digest_only_cases)",
   "- hardcoded_fixture_cases: \(.summary.hardcoded_fixture_cases)",
   "- unknowns: \(.summary.unknowns)",
+  "- transitions: refuted=\(.transition_summary.refuted.numerator)/\(.transition_summary.refuted.denominator), discharged=\(.transition_summary.discharged.numerator)/\(.transition_summary.discharged.denominator), open=\(.transition_summary.open.numerator)/\(.transition_summary.open.denominator)",
   ("- claim transitions: " + ([.samples[] | "\(.candidate_id): baseline=\(.baseline.claim_transitions|length), semantic=\(.semantic.claim_transitions|length), nonsemantic=\(.nonsemantic.claim_transitions|length)"] | join("; "))),
   ("- semantic intervention: " + ([.samples[] | "\(.candidate_id)=\(.semantic.status)/\(.semantic.reason)"] | join("; "))),
   ("- non-semantic intervention: " + ([.samples[] | "\(.candidate_id)=\(.nonsemantic.status)/\(.nonsemantic.reason)"] | join("; ")))

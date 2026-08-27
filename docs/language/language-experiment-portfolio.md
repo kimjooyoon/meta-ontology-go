@@ -49,6 +49,15 @@ rank, or winner. A semantic source change with no contracted receipt change is
 `NON_SEMANTIC_SEMANTIC_DRIFT`; missing evidence is fail-closed with its exact
 stage/step/reason.
 
+The fixed transition denominator is `9`: three operations multiplied by the
+three intervention claims (baseline observation, semantic causality, and
+non-semantic invariance). The current evidence yields `REFUTED 3/9`,
+`DISCHARGED 6/9`, and `OPEN 0/9`. Baseline source observation claims transition
+from `OPEN` to `DISCHARGED`; semantic causality claims transition from `OPEN`
+to `REFUTED`; and non-semantic invariance claims transition from `OPEN` to
+`DISCHARGED`. A `0/3` coordinate is a count and does not override its derived
+`REFUTED` status.
+
 The numerator is an observed integer from the receipt. `OPEN`, `DISCHARGED`, and
 `REFUTED` are kept alongside it. The protocol has no aggregate score, rank,
 winner, estimated improvement, or weighted average. A refuted coordinate is
