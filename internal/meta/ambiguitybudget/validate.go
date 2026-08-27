@@ -63,7 +63,9 @@ func Validate(receipt Receipt) error {
 			intervention.ClaimBefore.Proposition == "" || intervention.ClaimAfter.Proposition == "" ||
 			!validDigest(intervention.ClaimBefore.PropositionDigest) || !validDigest(intervention.ClaimAfter.PropositionDigest) ||
 			!validDigest(intervention.ClaimBefore.EvidenceDigest) || !validDigest(intervention.ClaimAfter.EvidenceDigest) {
-			return fmt.Errorf("AMBIGUITY_RECEIPT_INTERVENTION_INVALID")
+			return fmt.Errorf("AMBIGUITY_RECEIPT_INTERVENTION_INVALID id=%q satisfied=%t before=%+v/%s/%s after=%+v/%s/%s", intervention.ID, intervention.Satisfied,
+				intervention.CountsBefore, intervention.ClassBefore, intervention.DecisionBefore,
+				intervention.CountsAfter, intervention.ClassAfter, intervention.DecisionAfter)
 		}
 	}
 	for _, proof := range receipt.Proofs {
