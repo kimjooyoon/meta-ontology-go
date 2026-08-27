@@ -28,7 +28,6 @@ jobs:
     env:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-      PROOF_CARRYING_OUTPUT: ${{ runner.temp }}/proof-carrying-artifact-output
     steps:
       - name: Check out the exact source identity
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -42,6 +41,8 @@ jobs:
           cache: true
       - name: Run proof-carrying artifact conformance
         shell: bash
+        env:
+          PROOF_CARRYING_OUTPUT: ${{ runner.temp }}/proof-carrying-artifact-output
         run: bash scripts/language-proof-carrying-artifact/main.sh
       - name: Upload proof-carrying artifact evidence
         if: always()
