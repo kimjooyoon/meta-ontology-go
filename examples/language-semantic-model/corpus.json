@@ -178,6 +178,13 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-ci-plan",
+      "kind": "SOURCE",
+      "path": "examples/ci-plan/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",

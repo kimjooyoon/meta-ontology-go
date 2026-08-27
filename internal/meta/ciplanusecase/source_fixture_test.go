@@ -1,0 +1,15 @@
+package ciplanusecase
+
+const scorecardSource = `package ciplan
+namespace ciplan
+
+entity ChangeSet id "gooo://meta/ci-plan/entity/change-set"
+entity CheckPlan id "gooo://meta/ci-plan/entity/check-plan"
+entity VerificationReceipt id "gooo://meta/ci-plan/entity/verification-receipt"
+
+activity SelectGoCheck(ChangeSet) -> CheckPlan computes "ci.rule:go:v1"
+activity SelectDocsCheck(ChangeSet) -> CheckPlan computes "ci.rule:docs:v1"
+activity SelectYAMLCheck(ChangeSet) -> CheckPlan computes "ci.rule:yaml:v1"
+activity PlanCI(ChangeSet) -> CheckPlan computes "ci.plan:v1"
+activity VerifyCIPlan(CheckPlan) -> VerificationReceipt computes "ci.verify:v1"
+`

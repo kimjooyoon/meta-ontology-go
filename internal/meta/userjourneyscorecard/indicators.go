@@ -13,7 +13,7 @@ func (s *inspection) indicators() []Indicator {
 		metric("profile.output-replay", "DRIVER", "REGRESSION", "compare-user-visible-output", int64(s.outputReplays), expectedJourneys),
 		metric("functional.structured-output", "DRIVER", "COHERENCE", "decode-user-json-output", int64(s.upstream.Summary.StructuredOutputs), 3),
 		metric("functional.language-operations", "DRIVER", "COHERENCE", "execute-language-operations", int64(s.upstream.Summary.LanguageOperations), 4),
-		metric("functional.declared-commands", "DRIVER", "FOUNDATION", "observe-cli-surface", int64(s.upstream.Summary.DeclaredCommands), 18),
+		metric("functional.declared-commands", "DRIVER", "FOUNDATION", "observe-cli-surface", int64(s.upstream.Summary.DeclaredCommands), 19),
 		metric("binding.binary", "DRIVER", "FOUNDATION", "bind-profiled-executable", boolInt(s.binaryBound && s.sourceBound), 1),
 		metric("binding.meta-operations", "DRIVER", "FOUNDATION", "join-functional-and-resource-meta-operations", int64(s.metaBindings), expectedMetaBindings),
 		metric("guardrail.unknown", "GUARDRAIL", "FOUNDATION", "lower-unknown-observation", int64(s.unknowns), 0),
