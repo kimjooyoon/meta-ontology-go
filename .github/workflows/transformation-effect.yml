@@ -7,9 +7,9 @@ on:
     workflows: [CI]
     types: [completed]
 
-permissions:
-  actions: read
-  contents: read
+    permissions:
+      actions: read
+      contents: read
 
 jobs:
   cross-platform-release:
