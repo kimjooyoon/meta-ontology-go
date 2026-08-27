@@ -1,0 +1,125 @@
+name: Language hygienic origin identity
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/language-hygienic-origin-identity.yml
+      - examples/language-hygienic-origin-identity/**
+      - internal/meta/hygienicoriginidentity/**
+      - internal/verify/scope_gooo_hygienic_origin_identity.go
+      - scripts/language-hygienic-origin-identity/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/language-hygienic-origin-identity.yml
+      - examples/language-hygienic-origin-identity/**
+      - internal/meta/hygienicoriginidentity/**
+      - internal/verify/scope_gooo_hygienic_origin_identity.go
+      - scripts/language-hygienic-origin-identity/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove-origin-identity:
+    name: Hygienic origin identity
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          check-latest: true
+      - name: Go 1.27 canonical format conformance
+        shell: bash
+        run: |
+          set -euo pipefail
+          format_diff="$(gofmt -d \
+            internal/meta/hygienicoriginidentity \
+            internal/verify/scope_gooo_hygienic_origin_identity.go \
+            scripts/language-hygienic-origin-identity)"
+          test -z "$format_diff"
+      - name: Check actual Gooo sources
+        run: |
+          set -euo pipefail
+          go run ./cmd/gooo check examples/language-hygienic-origin-identity/main.gooo
+          go run ./cmd/gooo check examples/language-hygienic-origin-identity/unknown.gooo
+      - name: Run independent judge and replay exact receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test ./internal/meta/hygienicoriginidentity ./scripts/language-hygienic-origin-identity
+          output="$RUNNER_TEMP/language-hygienic-origin-identity"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./scripts/language-hygienic-origin-identity \
+              -source examples/language-hygienic-origin-identity/main.gooo \
+              -head-sha "$HEAD_SHA" -output "$output/main-$pass.json" -check
+            go run ./scripts/language-hygienic-origin-identity \
+              -source examples/language-hygienic-origin-identity/unknown.gooo \
+              -head-sha "$HEAD_SHA" -output "$output/unknown-$pass.json" \
+              -check -expect-unknown
+          done
+          cmp "$output/main-first.json" "$output/main-second.json"
+          cmp "$output/unknown-first.json" "$output/unknown-second.json"
+          jq -e '
+            .schema == "gooo/hygienic-origin-identity/v1" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .producer == "gooo://hygienic-origin-identity/producer/name-generator" and
+            .consumer == "gooo://hygienic-origin-identity/consumer/binding-site" and
+            .meta_operation == "generate-name-preserving-origin-and-scope" and
+            .proof_choice == "ORIGIN_SCOPE_EQUIVALENCE" and
+            .metrics.fixed_case_denominator == 2 and
+            .metrics.fixed_claim_denominator == 4 and
+            .metrics.observed_case_total == 2 and
+            .metrics.observed_claim_total == 4 and
+            .metrics.same_spelling_case_total == 2 and
+            .metrics.captured_case_total == 1 and
+            .metrics.non_captured_case_total == 1 and
+            .metrics.classified_claim_total == 4 and
+            .metrics.discharged_claim_total == 2 and
+            .metrics.refuted_claim_total == 2 and
+            .metrics.open_claim_total == 0 and
+            .metrics.classification_coverage_bps == 10000 and
+            .metrics.preservation_satisfaction_bps == 5000 and
+            .metrics.unknown_path_total == 0 and
+            (.unknowns | length) == 0 and
+            .authority.repository_writes == 0 and
+            .authority.repository_mutation_authorized == false and
+            ([.cases[] | select(.same_spelling == true)] | length) == 2 and
+            ([.cases[] | select(.captured == true)] | length) == 1 and
+            ([.claims[] | select(.status == "DISCHARGED")] | length) == 2 and
+            ([.claims[] | select(.status == "REFUTED")] | length) == 2
+          ' "$output/main-first.json"
+          jq -e '
+            .schema == "gooo/hygienic-origin-identity/v1" and
+            .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
+            .metrics.fixed_case_denominator == 2 and
+            .metrics.fixed_claim_denominator == 4 and
+            .metrics.unknown_path_total == 1 and
+            ([.unknowns[] | select(.stage != "" and .step != "" and .reason != "")] | length) == 1
+          ' "$output/unknown-first.json"
+          {
+            echo '### Gooo hygienic origin identity'
+            jq -r '"- decision: `\(.decision)` / `\(.resolution)`"' "$output/main-first.json"
+            jq -r '"- fixed denominator: `\(.metrics.classified_claim_total)/\(.metrics.fixed_claim_denominator)`; discharged `\(.metrics.discharged_claim_total)`; refuted `\(.metrics.refuted_claim_total)`"' "$output/main-first.json"
+            jq -r '"- same spelling: `\(.metrics.same_spelling_case_total)/\(.metrics.fixed_case_denominator)`; captured `\(.metrics.captured_case_total)`; non-captured `\(.metrics.non_captured_case_total)`"' "$output/main-first.json"
+            jq -r '"- unknown guardrail: `\(.decision)` at `\(.unknowns[0].stage // "none")/\(.unknowns[0].step // "none")/\(.unknowns[0].reason // "none")`"' "$output/unknown-first.json"
+            jq -r '"- receipt digest: `\(.receipt_digest)`; repository writes: `\(.authority.repository_writes)`"' "$output/main-first.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload exact-head origin identity receipts
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-hygienic-origin-identity-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-hygienic-origin-identity/main-first.json
+            ${{ runner.temp }}/language-hygienic-origin-identity/unknown-first.json
+          if-no-files-found: error
+          retention-days: 14
