@@ -144,7 +144,7 @@ func traceFile(changedFile string, edges []ImpactEdge, claims map[string]Claim, 
 	paths := []PathEvidence{}
 	unknowns := []UnknownCause{}
 	queue := []traceState{{node: changedFile}}
-	seen := map[string]struct{}{changedFile + "|"}
+	seen := map[string]struct{}{changedFile + "|": {}}
 	for len(queue) > 0 {
 		state := queue[0]
 		queue = queue[1:]
