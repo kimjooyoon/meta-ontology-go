@@ -6,8 +6,8 @@ func TestVersionedDenominatorsMatchActivatedCorpus(t *testing.T) {
 	if syntaxCaseDenominator != 30 || syntaxValidSourceDenominator != 27 || syntaxInvalidCaseDenominator != 3 || syntaxGoooLineDenominator != 441 {
 		t.Fatal("syntax denominator must match the activated 30-case, 27-source, 441-line corpus")
 	}
-	if semanticCaseDenominator != 31 || semanticSourceDenominator != 26 {
-		t.Fatal("semantic denominator must match the activated 31-case, 26-source corpus")
+	if semanticCaseDenominator != 32 || semanticSourceDenominator != 27 {
+		t.Fatal("semantic denominator must match the activated 32-case, 27-source corpus")
 	}
 }
 
