@@ -196,7 +196,7 @@ func observeSource(path string, raw []byte) (sourceObservation, error) {
 	if err := ir.Validate(); err != nil {
 		return sourceObservation{Path: path, Digest: digestBytes(raw), Lowering: canonicalLowering}, err
 	}
-	observation := sourceObservation{Path: path, Digest: digestBytes(raw), SemanticDigest: ir.StableHash(), Lowering: canonicalLowering,
+	observation := sourceObservation{Path: path, Digest: digestBytes(raw), SemanticDigest: "sha256:" + ir.StableHash(), Lowering: canonicalLowering,
 		Package: ir.Package, Namespace: ir.Namespace.String()}
 	for _, node := range ir.Graph.Nodes() {
 		switch node.Kind {

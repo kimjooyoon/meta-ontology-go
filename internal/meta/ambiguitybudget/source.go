@@ -24,7 +24,7 @@ func observeSource(path string, raw []byte) (SourceObservation, error) {
 		return SourceObservation{Path: path, Digest: digestBytes(raw), Lowering: canonicalLowering}, fmt.Errorf("source semantic validation is unknown: %w", err)
 	}
 
-	observation := SourceObservation{Path: path, Digest: digestBytes(raw), SemanticDigest: ir.StableHash(), Lowering: canonicalLowering,
+	observation := SourceObservation{Path: path, Digest: digestBytes(raw), SemanticDigest: "sha256:" + ir.StableHash(), Lowering: canonicalLowering,
 		Package: ir.Package, Namespace: ir.Namespace.String()}
 	for _, node := range ir.Graph.Nodes() {
 		switch node.Kind {
