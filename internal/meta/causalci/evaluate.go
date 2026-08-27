@@ -34,10 +34,13 @@ func evaluateWithBinding(observationRaw []byte, sourcePath string, source []byte
 	policy.Source.BindingMode = bindingMode
 	policy.Source.ObservedCheckoutSHA = observation.ObservedCheckoutSHA
 	policy.Source.HeadPathObjectID = observation.HeadPathObjectID
+	policy.Source.ObjectFormat = observation.ObjectFormat
+	policy.Source.ActualSourceObjectID = GitBlobObjectIDForFormat(source, observation.ObjectFormat)
 	policy.Source.SourceBytesDigest = digestBytes(source)
-	if bindingMode == "HEAD" && (observation.ObservedCheckoutSHA != observation.HeadSHA || observation.SourceBytesDigest != digestBytes(source) || observation.HeadPathObjectID != GitBlobObjectID(source)) {
+	if bindingMode == "HEAD" && (observation.ObservedCheckoutSHA != observation.HeadSHA || observation.SourceBytesDigest != digestBytes(source) || observation.HeadPathObjectID != policy.Source.ActualSourceObjectID) {
 		policy.Contradictions = append([]PolicyContradiction{{Stage: "SOURCE_BINDING", Step: "validate-exact-head", Reason: ReasonSourceBinding}}, policy.Contradictions...)
 	}
+	attachContradictionTargets(&policy, observation)
 
 	receipt := Receipt{
 		Schema: ReceiptSchema, Scope: ReceiptScope, Source: policy.Source,
@@ -48,15 +51,16 @@ func evaluateWithBinding(observationRaw []byte, sourcePath string, source []byte
 		IndicatorInventory:  ExactInventory{ExpectedIDs: indicatorIDSlice()},
 		IndependentVerifier: IndependentVerifier{ID: "gooo://consumer/causal-ci-selection", Mode: "INDEPENDENT_RECONSTRUCTION", Required: true, Capability: "SEPARATE_PROCESS"},
 	}
-	receipt.Conformance = conformanceFor(policy)
 	receipt.Subjects = evaluateSubjects(observation, policy)
 	receipt.ClaimTransitions = appendClaimTransitions(observation, policy, receipt.Subjects, receipt.ObservationDigest)
 	receipt.Metrics = deriveMetrics(observation, policy, receipt)
-	receipt.CheckInventory.ObservedIDs = checkIDs(policy.Checks)
-	receipt.IndicatorInventory.ObservedIDs = indicatorIDsFromPolicy(receipt.Indicators)
 	receipt.Indicators = deriveIndicators(observation, policy, receipt)
 	receipt.IndicatorInventory.ObservedIDs = indicatorIDsFromPolicy(receipt.Indicators)
+	receipt.CheckInventory.ObservedIDs = checkIDs(policy.Checks)
 	receipt.Metrics.FixedIndicatorSatisfied = satisfiedIndicators(receipt.Indicators)
+	receipt.PolicyContradictions = append([]PolicyContradiction(nil), policy.Contradictions...)
+	receipt.PlanGate = derivePlanGate(observation, receipt)
+	receipt.Conformance = conformanceFor(policy, receipt.PlanGate)
 	receipt.PlanDigest, err = planDigest(receipt)
 	if err != nil {
 		return Receipt{}, err
@@ -76,20 +80,53 @@ func deriveOperation(observation Observation) Operation {
 	}
 }
 
-func conformanceFor(policy PolicyGraph) Conformance {
+func conformanceFor(policy PolicyGraph, gate PlanGate) Conformance {
 	if len(policy.Contradictions) > 0 {
 		value := policy.Contradictions[0]
 		return Conformance{Decision: ConformanceFailClosed, Coordinate: Coordinate{Stage: value.Stage, Step: value.Step, Reason: value.Reason}}
 	}
+	if gate.Decision != PlanGatePass {
+		return Conformance{Decision: ConformanceFailClosed, Coordinate: Coordinate{Stage: stageConformance, Step: "final-plan-gate", Reason: "PLAN_FINAL_GATE_FAILED"}}
+	}
 	return Conformance{Decision: ConformancePass, Coordinate: Coordinate{Stage: stageConformance, Step: stepLower, Reason: "GOOO_POLICY_SEMANTIC_GRAPH_RECONSTRUCTED"}}
+}
+
+func derivePlanGate(observation Observation, receipt Receipt) PlanGate {
+	inventoriesExact := sameIDs(receipt.CheckInventory.ExpectedIDs, receipt.CheckInventory.ObservedIDs) && sameIDs(receipt.IndicatorInventory.ExpectedIDs, receipt.IndicatorInventory.ObservedIDs)
+	coverageExact := receipt.Metrics.SubjectUniverseCount == len(observation.ChangedFiles) && receipt.Metrics.SubjectCoverageNumerator == receipt.Metrics.SubjectCoverageDenominator && receipt.Metrics.SubjectCoverageDenominator == receipt.Metrics.SubjectUniverseCount && len(receipt.Subjects) == receipt.Metrics.SubjectUniverseCount
+	indicatorsValid := validIndicators(receipt.Indicators) && receipt.Metrics.FixedIndicatorDenominator == FixedIndicatorDenominator
+	claimsValid := validClaimTransitions(receipt.ClaimTransitions)
+	gate := PlanGate{Observed: boolInt(inventoriesExact && coverageExact && indicatorsValid && claimsValid), Denominator: 1, InventoryExact: inventoriesExact, SubjectCoverageExact: coverageExact, IndicatorsValid: indicatorsValid, ClaimTransitionsValid: claimsValid}
+	if inventoriesExact && coverageExact && indicatorsValid && claimsValid {
+		gate.Decision = PlanGatePass
+	} else {
+		gate.Decision = PlanGateFailClosed
+	}
+	return gate
+}
+
+func validIndicators(values []Indicator) bool {
+	if len(values) != FixedIndicatorDenominator {
+		return false
+	}
+	seen := map[string]struct{}{}
+	for _, value := range values {
+		if value.ID == "" || value.Denominator != 1 || value.Observed != boolInt(value.Satisfied) {
+			return false
+		}
+		if _, exists := seen[value.ID]; exists {
+			return false
+		}
+		seen[value.ID] = struct{}{}
+	}
+	return sameIDs(indicatorIDSlice(), indicatorIDsFromPolicy(values))
 }
 
 func evaluateSubjects(observation Observation, policy PolicyGraph) []SubjectResolution {
 	changed := sortedChangedFiles(observation.ChangedFiles)
 	result := make([]SubjectResolution, 0, len(changed))
 	for _, file := range changed {
-		if len(policy.Contradictions) > 0 {
-			contradiction := policy.Contradictions[0]
+		if contradiction, ok := targetedContradiction(policy, file.Path); ok {
 			result = append(result, SubjectResolution{Path: file.Path, Resolution: ResolutionFailClosed, Coordinate: Coordinate{Stage: contradiction.Stage, Step: contradiction.Step, Reason: contradiction.Reason}, SelectedChecks: []CheckChoice{}})
 			continue
 		}
@@ -101,6 +138,50 @@ func evaluateSubjects(observation Observation, policy PolicyGraph) []SubjectReso
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Path < result[j].Path })
 	return result
+}
+
+func attachContradictionTargets(policy *PolicyGraph, observation Observation) {
+	for index := range policy.Contradictions {
+		contradiction := &policy.Contradictions[index]
+		if contradiction.SubjectPath == "" {
+			contradiction.SubjectPath = observation.SourcePath
+		}
+		if len(contradiction.Edges) == 0 {
+			canonical := contradiction.Stage + "\x00" + contradiction.Step + "\x00" + contradiction.Reason + "\x00" + contradiction.SubjectPath
+			contradiction.Edges = []string{"policy-edge:missing:" + strings.TrimPrefix(digestBytes([]byte(canonical)), "sha256:")}
+		}
+		if len(contradiction.ClaimInstanceIDs) == 0 {
+			for _, claim := range observation.PriorClaims {
+				if claim.SubjectPath == contradiction.SubjectPath && claim.Proposition == ReasonCompleteRoute {
+					contradiction.ClaimInstanceIDs = append(contradiction.ClaimInstanceIDs, claim.InstanceID)
+				}
+			}
+			sort.Strings(contradiction.ClaimInstanceIDs)
+		}
+	}
+}
+
+func targetedContradiction(policy PolicyGraph, path string) (PolicyContradiction, bool) {
+	for _, contradiction := range policy.Contradictions {
+		if contradiction.SubjectPath == path {
+			return contradiction, true
+		}
+	}
+	return PolicyContradiction{}, false
+}
+
+func contradictionTargetsClaim(policy PolicyGraph, claim PriorClaimObservation) (PolicyContradiction, bool) {
+	for _, contradiction := range policy.Contradictions {
+		if contradiction.SubjectPath != claim.SubjectPath {
+			continue
+		}
+		for _, claimID := range contradiction.ClaimInstanceIDs {
+			if claimID == claim.InstanceID {
+				return contradiction, true
+			}
+		}
+	}
+	return PolicyContradiction{}, false
 }
 
 func selectedSubject(path string, policy PolicyGraph) SubjectResolution {
@@ -142,12 +223,8 @@ func appendClaimTransitions(observation Observation, policy PolicyGraph, subject
 	for index, claim := range prior {
 		after, resolution, reason := claim.State, PlanNone, ReasonClaimLowered
 		stage, step := stageClaimLedger, stepClaimTransition
-		if len(policy.Contradictions) > 0 {
-			if claim.Proposition == ReasonCompleteRoute {
-				after, reason, stage, step = ClaimRefuted, ReasonClaimRefuted, stageConformance, stepValidatePolicy
-			} else {
-				reason = ReasonUnrelatedContradiction
-			}
+		if contradiction, linked := contradictionTargetsClaim(policy, claim); linked {
+			after, resolution, reason, stage, step = ClaimRefuted, PlanNone, ReasonClaimRefuted, contradiction.Stage, contradiction.Step
 		} else if subject, exists := byPath[claim.SubjectPath]; exists {
 			switch subject.Resolution {
 			case ResolutionSelected:
@@ -168,11 +245,8 @@ func appendClaimTransitions(observation Observation, policy PolicyGraph, subject
 					reason = ReasonUnknownRefuted
 				}
 			case ResolutionFailClosed:
-				if claim.Proposition == ReasonCompleteRoute {
-					after, reason = ClaimRefuted, ReasonClaimRefuted
-				} else {
-					reason = ReasonUnrelatedContradiction
-				}
+				resolution = PlanNone
+				reason = ReasonUnrelatedContradiction
 			}
 		}
 		if claim.State == ClaimRefuted && after != ClaimRefuted {
@@ -228,7 +302,7 @@ func deriveMetrics(observation Observation, policy PolicyGraph, receipt Receipt)
 func deriveIndicators(observation Observation, policy PolicyGraph, receipt Receipt) []Indicator {
 	state := receipt.Operation.ObservedRepositoryState
 	values := []bool{
-		len(policy.Contradictions) == 0 && policy.Source.ParsedDigest != "" && policy.Source.SemanticDigest != "",
+		policy.Source.ParsedDigest != "" && policy.Source.SemanticDigest != "",
 		len(receipt.Subjects) == len(observation.ChangedFiles),
 		unknownSubjectsDescendFully(receipt.Subjects),
 		validClaimTransitions(receipt.ClaimTransitions),

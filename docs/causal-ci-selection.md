@@ -28,21 +28,24 @@ ledger observation and is joined to each observed path by CI.
 
 The receipt separates conformance from subject resolution:
 
-- `conformance.decision=PASS` means the registered Gooo policy was parsed,
+- `conformance.decision=PLAN_RECONSTRUCTION_CONFORMANCE_PASS` means the registered Gooo policy was parsed,
   lowered, and reconstructed. It does not mean any check ran.
 - A subject with a complete claim-mediated path is `SELECTED` and receives a
   selective plan with `CLAIM_IMPACT_REASON`.
 - A subject not bound to the source authority is `UNKNOWN`; the plan descends
   to the fixed six-check suite and carries the exact
   `CAUSAL_SELECTION/observe-subject/SOURCE_NOT_BOUND_TO_POLICY` cause.
-- A contradictory policy path is `FAIL_CLOSED`; each subject has no plan and
-  the conformance coordinate is retained.
+- A contradictory policy path is `FAIL_CLOSED` only for its structurally linked
+  subject; unrelated changed paths remain `UNKNOWN` and descend to the full
+  suite. The exact contradiction target and claim-instance IDs are retained.
 
 This is explicitly a `PLAN_ONLY` artifact. The producer receipt records
 `execution.result=UNKNOWN`; it does not claim that a selected check ran. A
 separate consumer process reparses and relowers the raw source and observation.
 Only its separate adjudication receipt may report an observed exit/result and
-source reconstruction `1/1` or `4/4`.
+source reconstruction `1/1` or `4/4`. That receipt preserves one exact
+source-plan binding tuple per variant: plan digest, expected raw/source bytes
+digest, actual consumer source digest/object ID, logical path, and binding mode.
 
 ## Claim ledger
 
@@ -83,7 +86,8 @@ producer receipt without reparsing and relowering the raw source.
 ## Isolation and fixed inventories
 
 The before/after repository observations are snapshots of tracked and
-untracked paths plus content digests. They produce
+untracked paths plus Git-tree-style kind, mode, symlink-target digest, object
+format, object ID, and content digests. They produce
 `NET_REPOSITORY_STATE_UNCHANGED` and changed path/content counts; transient
 writes and global mutation authority remain `UNKNOWN`, because a net snapshot
 cannot prove that no transient write occurred. The six checks, six indicators,
@@ -91,10 +95,12 @@ and four intervention variants use exact expected/observed ID inventories.
 Changed-file counts are reported as a PR-SHA subject-universe digest/count and
 coverage, not as a fixed improvement denominator.
 
-The adjudication artifact preserves exact `go1.27.0`, `go version`,
+The plan-adjudication artifact preserves exact `go1.27.0`, `go version`,
 `go env GOVERSION`, the registered `go tool fix help` inventory, and
-`go fix -diff` stdout/stderr/exit/digests. Conformance requires exit `0` and
-an empty diff.
+`go fix -diff` stdout/stderr/exit/digests, exact command argv/cwd, subject
+HEAD/tree and module digests, package-universe count/digest, and a live old
+syntax fixture. Full-suite conformance requires exit `0` and an empty diff;
+the fixture separately requires a nonzero exit and nonempty diff (`1/1`).
 
 ## Build-graph research boundary
 

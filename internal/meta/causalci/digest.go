@@ -29,8 +29,17 @@ func ClaimInstanceID(templateID, subjectPath, proposition string) string {
 // the repository. It lets both producer and consumer detect source mutation
 // between observation and reconstruction.
 func GitBlobObjectID(data []byte) string {
+	return GitBlobObjectIDForFormat(data, "sha1")
+}
+
+func GitBlobObjectIDForFormat(data []byte, format string) string {
 	header := []byte(fmt.Sprintf("blob %d\x00", len(data)))
-	hash := sha1.Sum(append(header, data...))
+	payload := append(header, data...)
+	if strings.EqualFold(format, "sha256") {
+		hash := sha256.Sum256(payload)
+		return hex.EncodeToString(hash[:])
+	}
+	hash := sha1.Sum(payload)
 	return hex.EncodeToString(hash[:])
 }
 
@@ -54,17 +63,21 @@ func receiptDigest(value Receipt) (string, error) {
 
 func planDigest(value Receipt) (string, error) {
 	projection := struct {
-		ObservationDigest string              `json:"observation_digest"`
-		Operation         Operation           `json:"operation"`
-		ExecutionMode     string              `json:"execution_mode"`
-		Conformance       Conformance         `json:"conformance"`
-		Subjects          []SubjectResolution `json:"subjects"`
-		ClaimTransitions  []ClaimTransition   `json:"claim_transitions"`
+		ObservationDigest string                `json:"observation_digest"`
+		Operation         Operation             `json:"operation"`
+		ExecutionMode     string                `json:"execution_mode"`
+		Conformance       Conformance           `json:"conformance"`
+		PlanGate          PlanGate              `json:"plan_gate"`
+		Contradictions    []PolicyContradiction `json:"policy_contradictions"`
+		Subjects          []SubjectResolution   `json:"subjects"`
+		ClaimTransitions  []ClaimTransition     `json:"claim_transitions"`
 	}{
 		ObservationDigest: value.ObservationDigest,
 		Operation:         value.Operation,
 		ExecutionMode:     value.ExecutionMode,
 		Conformance:       value.Conformance,
+		PlanGate:          value.PlanGate,
+		Contradictions:    value.PolicyContradictions,
 		Subjects:          value.Subjects,
 		ClaimTransitions:  value.ClaimTransitions,
 	}

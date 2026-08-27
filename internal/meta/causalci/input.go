@@ -23,7 +23,7 @@ func decodeObservation(raw []byte) (Observation, error) {
 }
 
 func validateObservation(value Observation) error {
-	if value.Schema != ObservationSchema || value.Repository == "" || value.BaseSHA == "" || value.HeadSHA == "" || value.ObservedCheckoutSHA == "" || filepath.Ext(value.SourcePath) != ".gooo" || value.HeadPathObjectID == "" || value.SourceBytesDigest == "" {
+	if value.Schema != ObservationSchema || value.Repository == "" || value.BaseSHA == "" || value.HeadSHA == "" || value.ObservedCheckoutSHA == "" || filepath.Ext(value.SourcePath) != ".gooo" || (value.ObjectFormat != "sha1" && value.ObjectFormat != "sha256") || value.HeadPathObjectID == "" || value.SourceBytesDigest == "" {
 		return fmt.Errorf("%s: observation identity", ReasonMalformedObservation)
 	}
 	seenPaths := map[string]struct{}{}
@@ -72,7 +72,7 @@ func validateSnapshot(value RepositorySnapshot) error {
 	})
 	seen := map[string]struct{}{}
 	for _, entry := range entries {
-		if entry.Path == "" || entry.ContentDigest == "" {
+		if entry.Path == "" || entry.Kind == "" || entry.Mode == "" || entry.ContentDigest == "" || (entry.ObjectFormat != "sha1" && entry.ObjectFormat != "sha256") || entry.ObjectID == "" || (entry.Kind == "symlink" && entry.SymlinkTargetDigest == "") {
 			return fmt.Errorf("%s: isolation snapshot entry", ReasonMalformedObservation)
 		}
 		if _, exists := seen[entry.Path]; exists {
@@ -106,10 +106,8 @@ func repositoryState(value IsolationObservation) RepositoryStateObservation {
 			changedContents++
 			continue
 		}
-		if left.Tracked != right.Tracked {
+		if !sameRepositoryEntry(left, right) {
 			changedPaths++
-		}
-		if left.ContentDigest != right.ContentDigest {
 			changedContents++
 		}
 	}
@@ -118,6 +116,10 @@ func repositoryState(value IsolationObservation) RepositoryStateObservation {
 		state = ObservedStateUnchanged
 	}
 	return RepositoryStateObservation{NetState: state, ChangedPathCount: changedPaths, ChangedContentCount: changedContents, TransientWrites: ObservedUnknown, GlobalMutationAuthority: ObservedUnknown}
+}
+
+func sameRepositoryEntry(left, right RepositoryEntry) bool {
+	return left.Path == right.Path && left.Tracked == right.Tracked && left.Kind == right.Kind && left.Mode == right.Mode && left.SymlinkTargetDigest == right.SymlinkTargetDigest && left.ContentDigest == right.ContentDigest && left.ObjectFormat == right.ObjectFormat && left.ObjectID == right.ObjectID
 }
 
 func snapshotEntries(value RepositorySnapshot) map[string]RepositoryEntry {

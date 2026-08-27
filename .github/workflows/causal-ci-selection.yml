@@ -54,12 +54,24 @@ jobs:
           mkdir -p "$RUNNER_TEMP/causal-ci-selection"
           go version > "$RUNNER_TEMP/causal-ci-selection/go-version.txt"
           go env GOVERSION > "$RUNNER_TEMP/causal-ci-selection/go-env-goversion.txt"
+          git rev-parse HEAD > "$RUNNER_TEMP/causal-ci-selection/go-subject-head.txt"
+          git rev-parse HEAD^{tree} > "$RUNNER_TEMP/causal-ci-selection/go-subject-tree.txt"
+          git rev-parse --show-object-format > "$RUNNER_TEMP/causal-ci-selection/go-object-format.txt"
+          pwd > "$RUNNER_TEMP/causal-ci-selection/go-command-cwd.txt"
+          sha256sum go.mod | awk '{print "sha256:" $1}' > "$RUNNER_TEMP/causal-ci-selection/go-mod-digest.txt"
+          if test -f go.sum; then sha256sum go.sum | awk '{print "sha256:" $1}' > "$RUNNER_TEMP/causal-ci-selection/go-sum-digest.txt"; else printf '%s\n' ABSENT > "$RUNNER_TEMP/causal-ci-selection/go-sum-digest.txt"; fi
+          go list ./... > "$RUNNER_TEMP/causal-ci-selection/go-list.txt"
           go tool fix help > "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help.txt" 2> "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help-stderr.txt"
           set +e
           go fix -diff ./... > "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stdout.txt" 2> "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stderr.txt"
           fix_exit=$?
           set -e
           printf '%s\n' "$fix_exit" > "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-exit.txt"
+          set +e
+          go fix -diff ./internal/meta/causalci/testdata/causal-ci-selection-fix-fixture > "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stdout.txt" 2> "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stderr.txt"
+          active_fix_exit=$?
+          set -e
+          printf '%s\n' "$active_fix_exit" > "$RUNNER_TEMP/causal-ci-selection/go-active-fix-exit.txt"
           test "$(go env GOVERSION)" = "go1.27.0"
       - name: Validate the real Gooo source
         run: |
@@ -105,24 +117,31 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/causal-ci-selection/adjudications"
+          mkdir -p "$RUNNER_TEMP/causal-ci-selection/process"
           set +e
           go run ./cmd/causal-ci-selection-consumer \
             -input "$RUNNER_TEMP/causal-ci-selection/observation.json" -source-file "$SOURCE_PATH" \
             -logical-source "$SOURCE_PATH" -receipt "$RUNNER_TEMP/causal-ci-selection/plans/base-receipt.json" \
-            -variant-id base -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/base.json"
+            -variant-id base -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/base.json" \
+            > "$RUNNER_TEMP/causal-ci-selection/process/base.stdout" 2> "$RUNNER_TEMP/causal-ci-selection/process/base.stderr"
           consumer_exit=$?
           set -e
-          printf '%s\n' "$consumer_exit" > "$RUNNER_TEMP/causal-ci-selection/adjudications/base-process-exit.txt"
+          printf '%s\n' "$consumer_exit" > "$RUNNER_TEMP/causal-ci-selection/process/base-os-exit.txt"
       - name: Adjudicate base consumer execution and Go evidence
         run: |
           set -euo pipefail
           go run ./scripts/causal-ci-selection \
             -mode adjudicate -scope base -input "$RUNNER_TEMP/causal-ci-selection/observation.json" \
             -plans-dir "$RUNNER_TEMP/causal-ci-selection/plans" -adjudication-dir "$RUNNER_TEMP/causal-ci-selection/adjudications" \
+            -process-dir "$RUNNER_TEMP/causal-ci-selection/process" -source-files "base=$SOURCE_PATH" \
             -go-version "$RUNNER_TEMP/causal-ci-selection/go-version.txt" -go-env "$RUNNER_TEMP/causal-ci-selection/go-env-goversion.txt" \
             -fix-help "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help.txt" -fix-help-stderr "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help-stderr.txt" \
             -fix-stdout "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stdout.txt" -fix-stderr "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stderr.txt" \
             -fix-exit "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-exit.txt" \
+            -subject-head "$RUNNER_TEMP/causal-ci-selection/go-subject-head.txt" -subject-tree "$RUNNER_TEMP/causal-ci-selection/go-subject-tree.txt" \
+            -object-format "$RUNNER_TEMP/causal-ci-selection/go-object-format.txt" -go-mod-digest "$RUNNER_TEMP/causal-ci-selection/go-mod-digest.txt" \
+            -go-sum-digest "$RUNNER_TEMP/causal-ci-selection/go-sum-digest.txt" -go-list "$RUNNER_TEMP/causal-ci-selection/go-list.txt" -go-cwd "$RUNNER_TEMP/causal-ci-selection/go-command-cwd.txt" \
+            -active-fix-stdout "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stdout.txt" -active-fix-stderr "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stderr.txt" -active-fix-exit "$RUNNER_TEMP/causal-ci-selection/go-active-fix-exit.txt" \
             -output "$RUNNER_TEMP/causal-ci-selection/adjudication.json"
       - name: Produce semantic, nonsemantic, and contradiction plans
         run: |
@@ -147,10 +166,11 @@ jobs:
             go run ./cmd/causal-ci-selection-consumer \
               -input "$RUNNER_TEMP/causal-ci-selection/observation.json" -source-file "$variant_source" \
               -logical-source "$SOURCE_PATH" -receipt "$RUNNER_TEMP/causal-ci-selection/intervention-plans/$variant-receipt.json" \
-              -variant-id "$variant" -intervention -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/$variant.json"
+              -variant-id "$variant" -intervention -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/$variant.json" \
+              > "$RUNNER_TEMP/causal-ci-selection/process/$variant.stdout" 2> "$RUNNER_TEMP/causal-ci-selection/process/$variant.stderr"
             variant_exit=$?
             set -e
-            printf '%s\n' "$variant_exit" > "$RUNNER_TEMP/causal-ci-selection/adjudications/$variant-process-exit.txt"
+            printf '%s\n' "$variant_exit" > "$RUNNER_TEMP/causal-ci-selection/process/$variant-os-exit.txt"
           done
       - name: Adjudicate all intervention executions
         run: |
@@ -158,10 +178,15 @@ jobs:
           go run ./scripts/causal-ci-selection \
             -mode adjudicate -scope interventions -input "$RUNNER_TEMP/causal-ci-selection/observation.json" \
             -plans-dir "$RUNNER_TEMP/causal-ci-selection/intervention-plans" -adjudication-dir "$RUNNER_TEMP/causal-ci-selection/adjudications" \
+            -process-dir "$RUNNER_TEMP/causal-ci-selection/process" -source-files "base=$SOURCE_PATH,semantic=examples/causal-ci-selection/semantic-intervention.gooo,nonsemantic=examples/causal-ci-selection/nonsemantic-intervention.gooo,contradiction=examples/causal-ci-selection/contradiction-intervention.gooo" \
             -go-version "$RUNNER_TEMP/causal-ci-selection/go-version.txt" -go-env "$RUNNER_TEMP/causal-ci-selection/go-env-goversion.txt" \
             -fix-help "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help.txt" -fix-help-stderr "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help-stderr.txt" \
             -fix-stdout "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stdout.txt" -fix-stderr "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stderr.txt" \
             -fix-exit "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-exit.txt" \
+            -subject-head "$RUNNER_TEMP/causal-ci-selection/go-subject-head.txt" -subject-tree "$RUNNER_TEMP/causal-ci-selection/go-subject-tree.txt" \
+            -object-format "$RUNNER_TEMP/causal-ci-selection/go-object-format.txt" -go-mod-digest "$RUNNER_TEMP/causal-ci-selection/go-mod-digest.txt" \
+            -go-sum-digest "$RUNNER_TEMP/causal-ci-selection/go-sum-digest.txt" -go-list "$RUNNER_TEMP/causal-ci-selection/go-list.txt" -go-cwd "$RUNNER_TEMP/causal-ci-selection/go-command-cwd.txt" \
+            -active-fix-stdout "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stdout.txt" -active-fix-stderr "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stderr.txt" -active-fix-exit "$RUNNER_TEMP/causal-ci-selection/go-active-fix-exit.txt" \
             -output "$RUNNER_TEMP/causal-ci-selection/intervention-adjudication.json"
       - name: Assert exact inventories, unknown execution model, and causal evidence
         shell: bash
@@ -176,9 +201,11 @@ jobs:
           test "$(jq -r '.head_path_object_id' "$observation")" != ""
           test "$(jq -r '.source_bytes_digest' "$observation")" != ""
           test "$(jq -r 'has("decision") or has("known") or has("selected_checks") or has("reason")' "$observation")" = "false"
-          jq -e --arg source "$SOURCE_PATH" --argjson changed "$changed_count" '
+          jq -e --arg source "$SOURCE_PATH" --arg head "$HEAD_SHA" --argjson changed "$changed_count" '
             .schema == "gooo/causal-ci-selection-receipt/v2" and .scope == "CAUSAL_SELECTION_PLAN" and .execution_mode == "PLAN_ONLY" and
             .execution.result == "UNKNOWN" and .execution.capability == "PLAN_ONLY" and
+            .conformance.decision == "PLAN_RECONSTRUCTION_CONFORMANCE_PASS" and
+            .plan_gate.decision == "PLAN_FINAL_GATE_PASS" and .plan_gate.observed == 1 and .plan_gate.denominator == 1 and .plan_gate.inventory_exact and .plan_gate.subject_coverage_exact and .plan_gate.indicators_valid and .plan_gate.claim_transitions_valid and
             .metrics.subject_universe_count == $changed and .metrics.subject_coverage_numerator == $changed and
             .metrics.subject_coverage_denominator == $changed and .metrics.full_suite_check_denominator == 6 and
             .operation.declared_plan_capability == "PLAN_ONLY" and
@@ -187,6 +214,8 @@ jobs:
             .operation.observed_repository_state.changed_content_count == 0 and
             .operation.observed_repository_state.transient_writes == "UNKNOWN" and
             .operation.observed_repository_state.global_mutation_authority == "UNKNOWN" and
+            .policy_contradictions == [] and .source.object_format != "" and .source.actual_source_object_id != "" and
+            ([.source_plan_binding[] | select(.variant_id == "base") | .exact] | all) and ([.source_plan_binding[] | select(.variant_id == "base") | .plan_receipt_digest, .expected_source_raw_digest, .expected_source_bytes_digest, .expected_source_object_id, .expected_object_format, .actual_consumer_source_bytes_digest, .actual_consumer_source_object_id, .logical_source_path, .binding_mode, .expected_binding_mode] | all(. != "")) and
             .check_inventory.expected_ids == ["gofmt","go-vet","go-test","go-test-race","semantic-conformance","ci-policy"] and
             .check_inventory.observed_ids == .check_inventory.expected_ids and
             .indicator_inventory.expected_ids == ["semantic-policy-derived","changed-file-observation-bound","unknown-descends-to-full","claim-transition-append-only","isolation-state-observed","plan-only-no-execution-claim"] and
@@ -198,8 +227,8 @@ jobs:
             ([.claim_transitions[] | select(.subject_path == $source and .proposition == "selected check is sufficient/passed")][0].after == "OPEN") and
             ([.subjects[] | select(.resolution == "UNKNOWN") | .selected_checks | length] | all(. == 6))
           ' "$receipt"
-          jq -e '.schema == "gooo/causal-ci-selection-adjudication/v1" and .decision == "PASS" and .source_reconstruction_numerator == 1 and .source_reconstruction_denominator == 1 and .go_runtime.expected_version == "go1.27.0" and .go_runtime.go_env_goversion == "go1.27.0" and .go_runtime.fix_diff_exit_code == 0 and .go_runtime.fix_diff_stdout_bytes == 0 and .go_runtime.conformant == true and .adjudications[0].consumer_identity == "gooo://consumer/causal-ci-selection/process"' "$root/adjudication.json"
-          jq -e '
+          jq -e --arg head "$HEAD_SHA" --arg source "$SOURCE_PATH" '.schema == "gooo/causal-ci-selection-plan-adjudication/v1" and .scope == "PLAN_RECONSTRUCTION_CONFORMANCE" and .decision == "PLAN_RECONSTRUCTION_CONFORMANCE_PASS" and .source_plan_binding_numerator == 1 and .source_plan_binding_denominator == 1 and .source_reconstruction_numerator == 1 and .source_reconstruction_denominator == 1 and (.source_plan_binding | length == 1) and ([.source_plan_binding[].exact] | all) and ([.source_plan_binding[] | (.expected_source_raw_digest == .expected_source_bytes_digest and .expected_source_raw_digest == .actual_consumer_source_bytes_digest and .expected_source_object_id == .actual_consumer_source_object_id and .expected_object_format != "" and .logical_source_path == $source and .binding_mode == .expected_binding_mode and .binding_mode == "HEAD")] | all) and .selected_check_execution_schema == "gooo/causal-ci-selection-selected-check-execution/v1" and .selected_check_execution == "UNKNOWN" and .selected_check_execution_numerator == 0 and .selected_check_execution_denominator == 1 and .process_evidence[0].observed_os_exit_code == .adjudications[0].exit_code and .process_evidence[0].observed_stderr_bytes == 0 and .go_runtime.expected_version == "go1.27.0" and (.go_runtime.go_version | startswith("go version go1.27.0 ")) and .go_runtime.go_env_goversion == "go1.27.0" and .go_runtime.fix_help_command_argv == ["go","tool","fix","help"] and .go_runtime.fix_diff_command_argv == ["go","fix","-diff","./..."] and .go_runtime.package_list_command_argv == ["go","list","./..."] and .go_runtime.command_cwd != "" and .go_runtime.subject_head_sha == $head and .go_runtime.subject_tree_id != "" and .go_runtime.object_format != "" and .go_runtime.fix_diff_exit_code == 0 and .go_runtime.fix_diff_stdout_bytes == 0 and .go_runtime.fix_diff_stderr_allowed and .go_runtime.fix_help_stderr_bytes == 0 and .go_runtime.package_universe_count > 0 and .go_runtime.package_universe_numerator == .go_runtime.package_universe_denominator and .go_runtime.package_universe_numerator == .go_runtime.package_universe_count and .go_runtime.package_universe_digest != "" and ([.go_runtime.fixer_inventory[] | select(. == "atomictypes" or . == "embedlit" or . == "slicesbackward" or . == "unsafefuncs" or . == "waitgroupgo")] | length) == 5 and .go_runtime.required_fixers_satisfied == 5 and .go_runtime.required_fixers_denominator == 5 and .go_runtime.removed_fixer_id == "fmtappendf" and .go_runtime.removed_fixer_present == false and .go_runtime.removed_fixer_numerator == 0 and .go_runtime.removed_fixer_denominator == 1 and .go_runtime.active_fix_fixture.expected_diff and .go_runtime.active_fix_fixture.observed_diff and .go_runtime.active_fix_fixture.numerator == 1 and .go_runtime.active_fix_fixture.denominator == 1 and .go_runtime.active_fix_fixture.conformant == true and .go_runtime.conformant == true and .adjudications[0].consumer_identity == "gooo://consumer/causal-ci-selection/process"' "$root/adjudication.json"
+          jq -e --arg source "$SOURCE_PATH" '
             .schema == "gooo/causal-ci-selection-intervention/v1" and
             .expected_variant_ids == ["base","semantic","nonsemantic","contradiction"] and
             .observed_variant_ids == .expected_variant_ids and
@@ -208,27 +237,38 @@ jobs:
             .base.source.raw_digest != .semantic.source.raw_digest and .base.source.semantic_digest != .semantic.source.semantic_digest and
             .base.plan_digest != .semantic.plan_digest and .base.source.raw_digest != .nonsemantic.source.raw_digest and
             .base.source.parsed_digest == .nonsemantic.source.parsed_digest and .base.source.semantic_digest == .nonsemantic.source.semantic_digest and
-            .base.plan_digest == .nonsemantic.plan_digest and .contradiction.conformance.decision == "FAIL_CLOSED" and
-            ([.contradiction.claim_transitions[] | select(.proposition == "complete policy route reconstructed") | .after] | any(. == "REFUTED")) and
+            .base.plan_digest == .nonsemantic.plan_digest and
+            ([.base.plan_gate, .semantic.plan_gate, .nonsemantic.plan_gate, .contradiction.plan_gate] | all(.observed == 1 and .denominator == 1 and .decision == "PLAN_FINAL_GATE_PASS")) and
+            .contradiction.conformance.decision == "FAIL_CLOSED" and
+            ([.contradiction.policy_contradictions[] | select(.subject_path == $source) | .claim_instance_ids | length] | all(. == 1)) and
+            ([.contradiction.claim_transitions[] | select(.subject_path == $source and .proposition == "complete policy route reconstructed") | .after] | all(. == "REFUTED")) and
+            ([.contradiction.claim_transitions[] | select(.subject_path != $source and .proposition == "complete policy route reconstructed") | .after] | all(. == "OPEN")) and
+            ([.contradiction.subjects[] | select(.path != $source) | .resolution] | all(. == "UNKNOWN")) and
             ([.contradiction.claim_transitions[] | select(.proposition == "selected check is sufficient/passed") | .after] | all(. != "REFUTED"))
           ' "$root/interventions.json"
-          jq -e '.schema == "gooo/causal-ci-selection-adjudication/v1" and .decision == "PASS" and .source_reconstruction_numerator == 4 and .source_reconstruction_denominator == 4 and .observed_variant_ids == .expected_variant_ids and ([.adjudications[].result] | all(. == "PASS"))' "$root/intervention-adjudication.json"
+          jq -e --arg source "$SOURCE_PATH" '.schema == "gooo/causal-ci-selection-plan-adjudication/v1" and .scope == "PLAN_RECONSTRUCTION_CONFORMANCE" and .decision == "PLAN_RECONSTRUCTION_CONFORMANCE_PASS" and .source_plan_binding_numerator == 4 and .source_plan_binding_denominator == 4 and .source_reconstruction_numerator == 4 and .source_reconstruction_denominator == 4 and (.source_plan_binding | length == 4) and ([.source_plan_binding[].exact] | all) and ([.source_plan_binding[] | (.expected_source_raw_digest == .expected_source_bytes_digest and .expected_source_raw_digest == .actual_consumer_source_bytes_digest and .expected_source_object_id == .actual_consumer_source_object_id and .expected_object_format != "" and .logical_source_path == $source and .binding_mode == .expected_binding_mode)] | all) and .selected_check_execution_schema == "gooo/causal-ci-selection-selected-check-execution/v1" and .selected_check_execution == "UNKNOWN" and .selected_check_execution_numerator == 0 and .selected_check_execution_denominator == 1 and .observed_variant_ids == .expected_variant_ids and ([.adjudications[].result] | all(. == "PASS")) and ([.process_evidence[].observed_os_exit_code] | all(. == 0)) and ([.process_evidence[].observed_stderr_bytes] | all(. == 0)) and ([.process_evidence[] | .self_reported_exit_code == .observed_os_exit_code] | all)' "$root/intervention-adjudication.json"
           if rg -n 'github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci"' internal/meta/causalci/consumer --glob '*.go'; then
             echo 'consumer imports producer package'
             exit 1
           fi
           jq -n '{schema:"gooo/causal-ci-selection-import-audit/v1", producer_import_numerator:0, producer_import_denominator:1, source:"CI static import audit"}' > "$root/producer-import-audit.json"
+          go_package_count="$(jq -r '.go_runtime.package_universe_count' "$root/adjudication.json")"
           {
             echo '### Causal CI selection'
             echo "- subject universe: ${changed_count} changed PR paths observed from ${HEAD_SHA}"
             echo '- producer plan: consumer execution `UNKNOWN`; no execution fraction is asserted by the plan receipt'
-            echo '- base consumer adjudication: `1/1` after an independent consumer process observed PASS'
-            echo '- intervention consumer adjudication: `4/4` after four independent consumer processes observed PASS'
+            echo '- base process evidence: `1/1` with shell exit/stdout/stderr captured and matched to the self-report'
+            echo '- intervention process evidence: `4/4` with shell exit/stdout/stderr captured and matched to each self-report'
             echo '- fixed check inventory: `6` exact IDs; fixed indicator inventory: `6` exact IDs'
             echo '- repository state: `NET_REPOSITORY_STATE_UNCHANGED`, changed paths `0`, changed contents `0`, transient writes and global mutation authority `UNKNOWN`'
             echo '- source binding: checkout SHA, `HEAD:path` object ID, and source byte digest recorded'
             echo '- claim transitions: exact route proposition can discharge; check sufficiency remains OPEN without execution evidence'
-            echo '- semantic intervention changes semantic policy and plan; nonsemantic intervention preserves semantic policy and plan; contradiction refutes only the route proposition'
+            echo '- semantic intervention changes semantic policy and plan; nonsemantic intervention preserves semantic policy and plan; scoped contradiction refutes only its linked route claim'
+            echo '- selected check execution: `UNKNOWN` (`0/1`); process observations prove plan reconstruction only'
+            echo '- Go 1.27: exact command argv, subject HEAD/tree, Git object format, go.mod/go.sum, package universe digest, fixer inventory, and active fixture evidence captured'
+            echo "- Go package universe: ${go_package_count}/${go_package_count} with digest"
+            echo '- active outdated fixer fixture: `1/1` expected diff observed'
+            echo '- Go fixer gate: required modernizers `5/5`; removed `fmtappendf` observed `0/1`'
             echo '- independent consumer producer-import audit: `0/1`'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload causal selection evidence
@@ -243,10 +283,18 @@ jobs:
             ${{ runner.temp }}/causal-ci-selection/adjudication.json
             ${{ runner.temp }}/causal-ci-selection/intervention-adjudication.json
             ${{ runner.temp }}/causal-ci-selection/adjudications/*.json
+            ${{ runner.temp }}/causal-ci-selection/process/*
             ${{ runner.temp }}/causal-ci-selection/go-version.txt
             ${{ runner.temp }}/causal-ci-selection/go-env-goversion.txt
+            ${{ runner.temp }}/causal-ci-selection/go-subject-*.txt
+            ${{ runner.temp }}/causal-ci-selection/go-object-format.txt
+            ${{ runner.temp }}/causal-ci-selection/go-command-cwd.txt
+            ${{ runner.temp }}/causal-ci-selection/go-mod-digest.txt
+            ${{ runner.temp }}/causal-ci-selection/go-sum-digest.txt
+            ${{ runner.temp }}/causal-ci-selection/go-list.txt
             ${{ runner.temp }}/causal-ci-selection/go-tool-fix-help*.txt
             ${{ runner.temp }}/causal-ci-selection/go-fix-diff-*.txt
+            ${{ runner.temp }}/causal-ci-selection/go-active-fix-*.txt
             ${{ runner.temp }}/causal-ci-selection/producer-import-audit.json
           if-no-files-found: error
           retention-days: 14

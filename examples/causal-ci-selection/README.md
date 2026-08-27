@@ -10,9 +10,9 @@ claim + prior state -> discharged | open/lower-resolution | refuted
 
 The JSON passed to the producer is not a case corpus. CI creates it from the
 actual pull-request `git diff` and isolation snapshots. It contains paths,
-statuses, prior claim observations, and tracked/untracked content snapshots; it
+statuses, prior claim observations, and tracked/untracked Git-tree snapshots; it
 contains no known flag, decision, selected check, or reason. The observation
-also binds source bytes to the observed checkout SHA and `HEAD:path` blob.
+also binds source bytes to the observed checkout SHA, Git object format, and `HEAD:path` blob.
 
 [`prior-claims.json`](prior-claims.json) is the raw predecessor ledger
 observation. CI derives a unique instance ID from template ID, proposition,
@@ -22,9 +22,10 @@ predecessor state while evaluating the plan.
 The producer parses, formats, lowers, and semantically hashes the `.gooo`
 source before reconstructing the policy. The separate `consumer` package does
 the same from raw source and raw observation and does not import the producer.
-The producer receipt is plan-only with execution `UNKNOWN`; a separate consumer
-process writes the adjudication receipt and is the only source of observed
-consumer result fractions.
+The producer receipt is plan-only with execution `UNKNOWN`; a separate process
+observation records the consumer's self-report, while a plan-adjudication
+receipt compares it with shell exit/stdout/stderr evidence. This proves plan
+reconstruction only; selected-check execution remains `UNKNOWN`.
 
 `semantic-intervention.gooo` changes the semantic target from `go-test` to
 `go-vet`; `nonsemantic-intervention.gooo` changes comments/layout only;

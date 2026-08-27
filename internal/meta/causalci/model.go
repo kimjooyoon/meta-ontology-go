@@ -9,6 +9,7 @@ type Observation struct {
 	HeadSHA             string                   `json:"head_sha"`
 	ObservedCheckoutSHA string                   `json:"observed_checkout_sha"`
 	SourcePath          string                   `json:"source_path"`
+	ObjectFormat        string                   `json:"object_format"`
 	HeadPathObjectID    string                   `json:"head_path_object_id"`
 	SourceBytesDigest   string                   `json:"source_bytes_digest"`
 	ChangedFiles        []ChangedFileObservation `json:"changed_files"`
@@ -46,9 +47,14 @@ type RepositorySnapshot struct {
 }
 
 type RepositoryEntry struct {
-	Path          string `json:"path"`
-	Tracked       bool   `json:"tracked"`
-	ContentDigest string `json:"content_digest"`
+	Path                string `json:"path"`
+	Tracked             bool   `json:"tracked"`
+	Kind                string `json:"kind"`
+	Mode                string `json:"mode"`
+	SymlinkTargetDigest string `json:"symlink_target_digest,omitempty"`
+	ContentDigest       string `json:"content_digest"`
+	ObjectFormat        string `json:"object_format"`
+	ObjectID            string `json:"object_id"`
 }
 
 // PolicyGraph is generated from parsed, lowered, semantic Gooo source.
@@ -65,14 +71,16 @@ type PolicyGraph struct {
 }
 
 type SourceEvidence struct {
-	Path                string `json:"path"`
-	BindingMode         string `json:"binding_mode"`
-	ObservedCheckoutSHA string `json:"observed_checkout_sha"`
-	HeadPathObjectID    string `json:"head_path_object_id"`
-	SourceBytesDigest   string `json:"source_bytes_digest"`
-	RawDigest           string `json:"raw_digest"`
-	ParsedDigest        string `json:"parsed_digest"`
-	SemanticDigest      string `json:"semantic_digest"`
+	Path                 string `json:"path"`
+	BindingMode          string `json:"binding_mode"`
+	ObservedCheckoutSHA  string `json:"observed_checkout_sha"`
+	HeadPathObjectID     string `json:"head_path_object_id"`
+	ObjectFormat         string `json:"object_format"`
+	ActualSourceObjectID string `json:"actual_source_object_id"`
+	SourceBytesDigest    string `json:"source_bytes_digest"`
+	RawDigest            string `json:"raw_digest"`
+	ParsedDigest         string `json:"parsed_digest"`
+	SemanticDigest       string `json:"semantic_digest"`
 }
 
 type Check struct {
@@ -97,10 +105,12 @@ type PriorStateRule struct {
 }
 
 type PolicyContradiction struct {
-	Stage  string   `json:"stage"`
-	Step   string   `json:"step"`
-	Reason string   `json:"reason"`
-	Edges  []string `json:"edges"`
+	Stage            string   `json:"stage"`
+	Step             string   `json:"step"`
+	Reason           string   `json:"reason"`
+	SubjectPath      string   `json:"subject_path,omitempty"`
+	ClaimInstanceIDs []string `json:"claim_instance_ids,omitempty"`
+	Edges            []string `json:"edges"`
 }
 
 type Coordinate struct {
@@ -228,34 +238,48 @@ type ExecutionStatus struct {
 	Coordinate Coordinate `json:"coordinate"`
 }
 
+type PlanGate struct {
+	Decision              string `json:"decision"`
+	Observed              int    `json:"observed"`
+	Denominator           int    `json:"denominator"`
+	InventoryExact        bool   `json:"inventory_exact"`
+	SubjectCoverageExact  bool   `json:"subject_coverage_exact"`
+	IndicatorsValid       bool   `json:"indicators_valid"`
+	ClaimTransitionsValid bool   `json:"claim_transitions_valid"`
+}
+
 type Receipt struct {
-	Schema              string              `json:"schema"`
-	Scope               string              `json:"scope"`
-	Source              SourceEvidence      `json:"source"`
-	ObservationDigest   string              `json:"observation_digest"`
-	Operation           Operation           `json:"operation"`
-	ExecutionMode       string              `json:"execution_mode"`
-	Execution           ExecutionStatus     `json:"execution"`
-	Conformance         Conformance         `json:"conformance"`
-	Subjects            []SubjectResolution `json:"subjects"`
-	ClaimTransitions    []ClaimTransition   `json:"claim_transitions"`
-	Metrics             Metrics             `json:"metrics"`
-	CheckInventory      ExactInventory      `json:"check_inventory"`
-	IndicatorInventory  ExactInventory      `json:"indicator_inventory"`
-	Indicators          []Indicator         `json:"indicators"`
-	IndependentVerifier IndependentVerifier `json:"independent_verifier"`
-	PlanDigest          string              `json:"plan_digest"`
-	Digest              string              `json:"digest"`
+	Schema               string                `json:"schema"`
+	Scope                string                `json:"scope"`
+	Source               SourceEvidence        `json:"source"`
+	ObservationDigest    string                `json:"observation_digest"`
+	Operation            Operation             `json:"operation"`
+	ExecutionMode        string                `json:"execution_mode"`
+	Execution            ExecutionStatus       `json:"execution"`
+	Conformance          Conformance           `json:"conformance"`
+	PlanGate             PlanGate              `json:"plan_gate"`
+	PolicyContradictions []PolicyContradiction `json:"policy_contradictions"`
+	Subjects             []SubjectResolution   `json:"subjects"`
+	ClaimTransitions     []ClaimTransition     `json:"claim_transitions"`
+	Metrics              Metrics               `json:"metrics"`
+	CheckInventory       ExactInventory        `json:"check_inventory"`
+	IndicatorInventory   ExactInventory        `json:"indicator_inventory"`
+	Indicators           []Indicator           `json:"indicators"`
+	IndependentVerifier  IndependentVerifier   `json:"independent_verifier"`
+	PlanDigest           string                `json:"plan_digest"`
+	Digest               string                `json:"digest"`
 }
 
 type InterventionResult struct {
-	ID               string              `json:"id"`
-	Source           SourceEvidence      `json:"source"`
-	Conformance      Conformance         `json:"conformance"`
-	Subjects         []SubjectResolution `json:"subjects"`
-	ClaimTransitions []ClaimTransition   `json:"claim_transitions"`
-	Execution        ExecutionStatus     `json:"execution"`
-	PlanDigest       string              `json:"plan_digest"`
+	ID                   string                `json:"id"`
+	Source               SourceEvidence        `json:"source"`
+	Conformance          Conformance           `json:"conformance"`
+	PlanGate             PlanGate              `json:"plan_gate"`
+	PolicyContradictions []PolicyContradiction `json:"policy_contradictions"`
+	Subjects             []SubjectResolution   `json:"subjects"`
+	ClaimTransitions     []ClaimTransition     `json:"claim_transitions"`
+	Execution            ExecutionStatus       `json:"execution"`
+	PlanDigest           string                `json:"plan_digest"`
 }
 
 type InterventionReport struct {
@@ -275,10 +299,12 @@ type InterventionReport struct {
 type ConsumerAdjudication struct {
 	Schema            string     `json:"schema"`
 	VariantID         string     `json:"variant_id"`
+	LogicalSourcePath string     `json:"logical_source_path"`
+	BindingMode       string     `json:"binding_mode"`
 	PlanReceiptDigest string     `json:"plan_receipt_digest"`
 	InputDigest       string     `json:"input_digest"`
 	SourceBytesDigest string     `json:"source_bytes_digest"`
-	OutputDigest      string     `json:"output_digest"`
+	ResultDigest      string     `json:"result_digest"`
 	ConsumerIdentity  string     `json:"consumer_identity"`
 	ExitCode          int        `json:"exit_code"`
 	Result            string     `json:"result"`
@@ -286,33 +312,104 @@ type ConsumerAdjudication struct {
 	Digest            string     `json:"digest"`
 }
 
+type ProcessExecutionEvidence struct {
+	VariantID            string `json:"variant_id"`
+	SelfReportedExitCode int    `json:"self_reported_exit_code"`
+	SelfReportedResult   string `json:"self_reported_result"`
+	ObservedOSExitCode   int    `json:"observed_os_exit_code"`
+	ObservedStdoutDigest string `json:"observed_stdout_digest"`
+	ObservedStdoutBytes  int    `json:"observed_stdout_bytes"`
+	ObservedStderrDigest string `json:"observed_stderr_digest"`
+	ObservedStderrBytes  int    `json:"observed_stderr_bytes"`
+	ResultDigest         string `json:"result_digest"`
+}
+
+type SourcePlanBindingEvidence struct {
+	VariantID                       string `json:"variant_id"`
+	PlanReceiptDigest               string `json:"plan_receipt_digest"`
+	ExpectedSourceRawDigest         string `json:"expected_source_raw_digest"`
+	ExpectedSourceBytesDigest       string `json:"expected_source_bytes_digest"`
+	ExpectedSourceObjectID          string `json:"expected_source_object_id"`
+	ExpectedObjectFormat            string `json:"expected_object_format"`
+	ActualConsumerSourceBytesDigest string `json:"actual_consumer_source_bytes_digest"`
+	ActualConsumerSourceObjectID    string `json:"actual_consumer_source_object_id"`
+	LogicalSourcePath               string `json:"logical_source_path"`
+	BindingMode                     string `json:"binding_mode"`
+	ExpectedBindingMode             string `json:"expected_binding_mode"`
+	Exact                           bool   `json:"exact"`
+}
+
 type GoRuntimeEvidence struct {
-	ExpectedVersion     string   `json:"expected_version"`
-	GoVersion           string   `json:"go_version"`
-	GoEnvGOVERSION      string   `json:"go_env_goversion"`
-	FixerInventory      []string `json:"fixer_inventory"`
-	FixHelpDigest       string   `json:"fix_help_digest"`
-	FixHelpStderrDigest string   `json:"fix_help_stderr_digest"`
-	FixHelpStderrBytes  int      `json:"fix_help_stderr_bytes"`
-	FixDiffStdoutDigest string   `json:"fix_diff_stdout_digest"`
-	FixDiffStderrDigest string   `json:"fix_diff_stderr_digest"`
-	FixDiffStdoutBytes  int      `json:"fix_diff_stdout_bytes"`
-	FixDiffStderrBytes  int      `json:"fix_diff_stderr_bytes"`
-	FixDiffExitCode     int      `json:"fix_diff_exit_code"`
-	Conformant          bool     `json:"conformant"`
+	ExpectedVersion            string             `json:"expected_version"`
+	GoVersion                  string             `json:"go_version"`
+	GoEnvGOVERSION             string             `json:"go_env_goversion"`
+	FixerInventory             []string           `json:"fixer_inventory"`
+	FixHelpDigest              string             `json:"fix_help_digest"`
+	FixHelpStderrDigest        string             `json:"fix_help_stderr_digest"`
+	FixHelpStderrBytes         int                `json:"fix_help_stderr_bytes"`
+	FixDiffStdoutDigest        string             `json:"fix_diff_stdout_digest"`
+	FixDiffStderrDigest        string             `json:"fix_diff_stderr_digest"`
+	FixDiffStdoutBytes         int                `json:"fix_diff_stdout_bytes"`
+	FixDiffStderrBytes         int                `json:"fix_diff_stderr_bytes"`
+	FixDiffStderrAllowed       bool               `json:"fix_diff_stderr_allowed"`
+	FixDiffExitCode            int                `json:"fix_diff_exit_code"`
+	FixHelpCommandArgv         []string           `json:"fix_help_command_argv"`
+	FixDiffCommandArgv         []string           `json:"fix_diff_command_argv"`
+	CommandCWD                 string             `json:"command_cwd"`
+	SubjectHeadSHA             string             `json:"subject_head_sha"`
+	SubjectTreeID              string             `json:"subject_tree_id"`
+	ObjectFormat               string             `json:"object_format"`
+	GoModDigest                string             `json:"go_mod_digest"`
+	GoSumDigest                string             `json:"go_sum_digest"`
+	PackageUniverseCount       int                `json:"package_universe_count"`
+	PackageUniverseNumerator   int                `json:"package_universe_numerator"`
+	PackageUniverseDenominator int                `json:"package_universe_denominator"`
+	PackageUniverseDigest      string             `json:"package_universe_digest"`
+	PackageListCommandArgv     []string           `json:"package_list_command_argv"`
+	RequiredFixers             []string           `json:"required_fixers"`
+	RequiredFixersSatisfied    int                `json:"required_fixers_satisfied"`
+	RequiredFixersDenominator  int                `json:"required_fixers_denominator"`
+	RemovedFixerID             string             `json:"removed_fixer_id"`
+	RemovedFixerPresent        bool               `json:"removed_fixer_present"`
+	RemovedFixerNumerator      int                `json:"removed_fixer_numerator"`
+	RemovedFixerDenominator    int                `json:"removed_fixer_denominator"`
+	ActiveFixFixture           FixFixtureEvidence `json:"active_fix_fixture"`
+	Conformant                 bool               `json:"conformant"`
+}
+
+type FixFixtureEvidence struct {
+	CommandArgv  []string `json:"command_argv"`
+	ExitCode     int      `json:"exit_code"`
+	StdoutDigest string   `json:"stdout_digest"`
+	StdoutBytes  int      `json:"stdout_bytes"`
+	StderrDigest string   `json:"stderr_digest"`
+	StderrBytes  int      `json:"stderr_bytes"`
+	ExpectedDiff bool     `json:"expected_diff"`
+	ObservedDiff bool     `json:"observed_diff"`
+	Numerator    int      `json:"numerator"`
+	Denominator  int      `json:"denominator"`
+	Conformant   bool     `json:"conformant"`
 }
 
 type AdjudicationReceipt struct {
-	Schema                    string                 `json:"schema"`
-	Scope                     string                 `json:"scope"`
-	ObservationDigest         string                 `json:"observation_digest"`
-	ExpectedVariantIDs        []string               `json:"expected_variant_ids"`
-	ObservedVariantIDs        []string               `json:"observed_variant_ids"`
-	Adjudications             []ConsumerAdjudication `json:"adjudications"`
-	SourceReconstructionNumer int                    `json:"source_reconstruction_numerator"`
-	SourceReconstructionDenom int                    `json:"source_reconstruction_denominator"`
-	Decision                  string                 `json:"decision"`
-	Coordinate                Coordinate             `json:"coordinate"`
-	GoRuntime                 GoRuntimeEvidence      `json:"go_runtime"`
-	Digest                    string                 `json:"digest"`
+	Schema                       string                      `json:"schema"`
+	Scope                        string                      `json:"scope"`
+	ObservationDigest            string                      `json:"observation_digest"`
+	ExpectedVariantIDs           []string                    `json:"expected_variant_ids"`
+	ObservedVariantIDs           []string                    `json:"observed_variant_ids"`
+	Adjudications                []ConsumerAdjudication      `json:"adjudications"`
+	ProcessEvidence              []ProcessExecutionEvidence  `json:"process_evidence"`
+	SourcePlanBinding            []SourcePlanBindingEvidence `json:"source_plan_binding"`
+	SourcePlanBindingNumer       int                         `json:"source_plan_binding_numerator"`
+	SourcePlanBindingDenom       int                         `json:"source_plan_binding_denominator"`
+	SourceReconstructionNumer    int                         `json:"source_reconstruction_numerator"`
+	SourceReconstructionDenom    int                         `json:"source_reconstruction_denominator"`
+	Decision                     string                      `json:"decision"`
+	Coordinate                   Coordinate                  `json:"coordinate"`
+	SelectedCheckExecutionSchema string                      `json:"selected_check_execution_schema"`
+	SelectedCheckExecution       string                      `json:"selected_check_execution"`
+	SelectedCheckExecutionNumer  int                         `json:"selected_check_execution_numerator"`
+	SelectedCheckExecutionDenom  int                         `json:"selected_check_execution_denominator"`
+	GoRuntime                    GoRuntimeEvidence           `json:"go_runtime"`
+	Digest                       string                      `json:"digest"`
 }

@@ -18,13 +18,13 @@ import (
 )
 
 const (
-	observationSchema  = "gooo/causal-ci-selection-observation/v2"
-	receiptSchema      = "gooo/causal-ci-selection-receipt/v2"
-	receiptScope       = "CAUSAL_SELECTION_PLAN"
-	adjudicationSchema = "gooo/causal-ci-selection-adjudication/v1"
-
-	conformancePass              = "PASS"
+	observationSchema            = "gooo/causal-ci-selection-observation/v2"
+	receiptSchema                = "gooo/causal-ci-selection-receipt/v2"
+	receiptScope                 = "CAUSAL_SELECTION_PLAN"
+	conformancePass              = "PLAN_RECONSTRUCTION_CONFORMANCE_PASS"
 	conformanceFailClosed        = "FAIL_CLOSED"
+	planGatePass                 = "PLAN_FINAL_GATE_PASS"
+	planGateFailClosed           = "PLAN_FINAL_GATE_FAIL_CLOSED"
 	resolutionSelected           = "SELECTED"
 	resolutionUnknown            = "UNKNOWN"
 	resolutionFailClosed         = "FAIL_CLOSED"
@@ -44,9 +44,9 @@ const (
 	observedUnknown              = "UNKNOWN"
 	reasonCompleteRoute          = "complete policy route reconstructed"
 	reasonClaimDischarged        = "COMPLETE_POLICY_ROUTE_RECONSTRUCTED"
-	reasonClaimLowered           = "UNKNOWN_PATH_PRESERVED_OPEN"
-	reasonUnknownDischarged      = "DISCHARGED_STATE_PRESERVED_UNDER_UNKNOWN_PATH"
-	reasonUnknownRefuted         = "REFUTED_STATE_PRESERVED_UNDER_UNKNOWN_PATH"
+	reasonClaimLowered           = "OPEN_STATE_LOWERED_TO_FULL_SUITE_UNDER_UNKNOWN_PATH"
+	reasonUnknownDischarged      = "DISCHARGED_STATE_PERSISTED_UNDER_UNKNOWN_PATH"
+	reasonUnknownRefuted         = "REFUTED_STATE_PERSISTED_UNDER_UNKNOWN_PATH"
 	reasonPlanOnlyOpen           = "PLAN_ONLY_EXECUTION_NOT_OBSERVED"
 	reasonUnrelatedContradiction = "UNRELATED_POLICY_CONTRADICTION_CANNOT_REFUTE"
 	reasonClaimRefuted           = "STRUCTURALLY_LINKED_POLICY_CONTRADICTION"
@@ -118,7 +118,7 @@ func decodeObservation(raw []byte) (Observation, error) {
 	if err := decoder.Decode(&value); err != nil {
 		return Observation{}, fmt.Errorf("decode raw observation: %w", err)
 	}
-	if value.Schema != observationSchema || value.Repository == "" || value.BaseSHA == "" || value.HeadSHA == "" || value.ObservedCheckoutSHA == "" || filepath.Ext(value.SourcePath) != ".gooo" || value.HeadPathObjectID == "" || value.SourceBytesDigest == "" {
+	if value.Schema != observationSchema || value.Repository == "" || value.BaseSHA == "" || value.HeadSHA == "" || value.ObservedCheckoutSHA == "" || filepath.Ext(value.SourcePath) != ".gooo" || (value.ObjectFormat != "sha1" && value.ObjectFormat != "sha256") || value.HeadPathObjectID == "" || value.SourceBytesDigest == "" {
 		return Observation{}, fmt.Errorf("malformed raw observation")
 	}
 	seen := map[string]struct{}{}
@@ -169,7 +169,7 @@ func validateSnapshot(value RepositorySnapshot) error {
 	sort.Slice(entries, func(i, j int) bool { return entries[i].Path < entries[j].Path })
 	seen := map[string]struct{}{}
 	for _, entry := range entries {
-		if entry.Path == "" || entry.ContentDigest == "" {
+		if entry.Path == "" || entry.Kind == "" || entry.Mode == "" || entry.ContentDigest == "" || (entry.ObjectFormat != "sha1" && entry.ObjectFormat != "sha256") || entry.ObjectID == "" || (entry.Kind == "symlink" && entry.SymlinkTargetDigest == "") {
 			return fmt.Errorf("malformed isolation snapshot entry")
 		}
 		if _, exists := seen[entry.Path]; exists {
@@ -364,20 +364,16 @@ func evaluate(raw []byte, observation Observation, policy PolicyGraph, source []
 	}
 	policy.Source.ObservedCheckoutSHA = observation.ObservedCheckoutSHA
 	policy.Source.HeadPathObjectID = observation.HeadPathObjectID
+	policy.Source.ObjectFormat = observation.ObjectFormat
+	policy.Source.ActualSourceObjectID = gitBlobIDForFormat(source, observation.ObjectFormat)
 	policy.Source.SourceBytesDigest = digestBytes(source)
-	if !intervention && (observation.ObservedCheckoutSHA != observation.HeadSHA || observation.SourceBytesDigest != digestBytes(source) || observation.HeadPathObjectID != gitBlobID(source)) {
+	if !intervention && (observation.ObservedCheckoutSHA != observation.HeadSHA || observation.SourceBytesDigest != digestBytes(source) || observation.HeadPathObjectID != policy.Source.ActualSourceObjectID) {
 		policy.Contradictions = append([]PolicyContradiction{{Stage: "SOURCE_BINDING", Step: "validate-exact-head", Reason: reasonSourceBinding}}, policy.Contradictions...)
 	}
 	receipt := Receipt{Schema: receiptSchema, Scope: receiptScope, Source: policy.Source, ObservationDigest: digestBytes(raw), Operation: operation(observation), ExecutionMode: capabilityPlanOnly, Execution: ExecutionStatus{Result: executionUnknown, Capability: capabilityPlanOnly, Coordinate: Coordinate{Stage: "ADJUDICATION", Step: "await-consumer", Reason: "CONSUMER_PROCESS_NOT_RUN"}}, CheckInventory: ExactInventory{ExpectedIDs: fixedCheckIDs[:]}, IndicatorInventory: ExactInventory{ExpectedIDs: indicatorIDs()}, IndependentVerifier: IndependentVerifier{ID: "gooo://consumer/causal-ci-selection", Mode: "INDEPENDENT_RECONSTRUCTION", Required: true, Capability: "SEPARATE_PROCESS"}}
-	if len(policy.Contradictions) > 0 {
-		value := policy.Contradictions[0]
-		receipt.Conformance = Conformance{Decision: conformanceFailClosed, Coordinate: Coordinate{Stage: value.Stage, Step: value.Step, Reason: value.Reason}}
-	} else {
-		receipt.Conformance = Conformance{Decision: conformancePass, Coordinate: Coordinate{Stage: "CONFORMANCE", Step: "lower", Reason: "GOOO_POLICY_SEMANTIC_GRAPH_RECONSTRUCTED"}}
-	}
+	attachContradictionTargets(&policy, observation)
 	for _, file := range sortedFiles(observation.ChangedFiles) {
-		if len(policy.Contradictions) > 0 {
-			value := policy.Contradictions[0]
+		if value, ok := targetedContradiction(policy, file.Path); ok {
 			receipt.Subjects = append(receipt.Subjects, SubjectResolution{Path: file.Path, Resolution: resolutionFailClosed, Coordinate: Coordinate{Stage: value.Stage, Step: value.Step, Reason: value.Reason}, SelectedChecks: []CheckChoice{}})
 		} else if file.Path != observation.SourcePath || file.Status == "D" {
 			receipt.Subjects = append(receipt.Subjects, unknown(file, observation.SourcePath))
@@ -397,8 +393,104 @@ func evaluate(raw []byte, observation Observation, policy PolicyGraph, source []
 	receipt.CheckInventory.ObservedIDs = checkIDs(policy.Checks)
 	receipt.IndicatorInventory.ObservedIDs = indicatorIDsFromPolicy(receipt.Indicators)
 	receipt.Metrics.FixedIndicatorSatisfied = satisfiedIndicators(receipt.Indicators)
+	receipt.PolicyContradictions = append([]PolicyContradiction(nil), policy.Contradictions...)
+	receipt.PlanGate = derivePlanGate(observation, receipt)
+	receipt.Conformance = conformanceFor(policy, receipt.PlanGate)
 	receipt.PlanDigest, _ = planDigest(receipt)
 	return receipt
+}
+
+func conformanceFor(policy PolicyGraph, gate PlanGate) Conformance {
+	if len(policy.Contradictions) > 0 {
+		value := policy.Contradictions[0]
+		return Conformance{Decision: conformanceFailClosed, Coordinate: Coordinate{Stage: value.Stage, Step: value.Step, Reason: value.Reason}}
+	}
+	if gate.Decision != planGatePass {
+		return Conformance{Decision: conformanceFailClosed, Coordinate: Coordinate{Stage: "CONFORMANCE", Step: "final-plan-gate", Reason: "PLAN_FINAL_GATE_FAILED"}}
+	}
+	return Conformance{Decision: conformancePass, Coordinate: Coordinate{Stage: "CONFORMANCE", Step: "lower", Reason: "GOOO_POLICY_SEMANTIC_GRAPH_RECONSTRUCTED"}}
+}
+
+func derivePlanGate(observation Observation, receipt Receipt) PlanGate {
+	inventoriesExact := sameIDs(receipt.CheckInventory.ExpectedIDs, receipt.CheckInventory.ObservedIDs) && sameIDs(receipt.IndicatorInventory.ExpectedIDs, receipt.IndicatorInventory.ObservedIDs)
+	coverageExact := receipt.Metrics.SubjectUniverseCount == len(observation.ChangedFiles) && receipt.Metrics.SubjectCoverageNumerator == receipt.Metrics.SubjectCoverageDenominator && receipt.Metrics.SubjectCoverageDenominator == receipt.Metrics.SubjectUniverseCount && len(receipt.Subjects) == receipt.Metrics.SubjectUniverseCount
+	indicatorsValid := validIndicators(receipt.Indicators) && receipt.Metrics.FixedIndicatorDenominator == fixedIndicatorDenominator
+	claimsValid := validTransitions(receipt.ClaimTransitions)
+	gate := PlanGate{Observed: boolInt(inventoriesExact && coverageExact && indicatorsValid && claimsValid), Denominator: 1, InventoryExact: inventoriesExact, SubjectCoverageExact: coverageExact, IndicatorsValid: indicatorsValid, ClaimTransitionsValid: claimsValid}
+	if inventoriesExact && coverageExact && indicatorsValid && claimsValid {
+		gate.Decision = planGatePass
+	} else {
+		gate.Decision = planGateFailClosed
+	}
+	return gate
+}
+
+func validIndicators(values []Indicator) bool {
+	if len(values) != fixedIndicatorDenominator {
+		return false
+	}
+	seen := map[string]struct{}{}
+	for _, value := range values {
+		if value.ID == "" || value.Denominator != 1 || value.Observed != boolInt(value.Satisfied) {
+			return false
+		}
+		if _, exists := seen[value.ID]; exists {
+			return false
+		}
+		seen[value.ID] = struct{}{}
+	}
+	return sameIDs(indicatorIDs(), indicatorIDsFromPolicy(values))
+}
+
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}
+
+func attachContradictionTargets(policy *PolicyGraph, observation Observation) {
+	for index := range policy.Contradictions {
+		contradiction := &policy.Contradictions[index]
+		if contradiction.SubjectPath == "" {
+			contradiction.SubjectPath = observation.SourcePath
+		}
+		if len(contradiction.Edges) == 0 {
+			canonical := contradiction.Stage + "\x00" + contradiction.Step + "\x00" + contradiction.Reason + "\x00" + contradiction.SubjectPath
+			contradiction.Edges = []string{"policy-edge:missing:" + strings.TrimPrefix(digestBytes([]byte(canonical)), "sha256:")}
+		}
+		if len(contradiction.ClaimInstanceIDs) == 0 {
+			for _, claim := range observation.PriorClaims {
+				if claim.SubjectPath == contradiction.SubjectPath && claim.Proposition == reasonCompleteRoute {
+					contradiction.ClaimInstanceIDs = append(contradiction.ClaimInstanceIDs, claim.InstanceID)
+				}
+			}
+			sort.Strings(contradiction.ClaimInstanceIDs)
+		}
+	}
+}
+
+func targetedContradiction(policy PolicyGraph, path string) (PolicyContradiction, bool) {
+	for _, contradiction := range policy.Contradictions {
+		if contradiction.SubjectPath == path {
+			return contradiction, true
+		}
+	}
+	return PolicyContradiction{}, false
+}
+
+func contradictionTargetsClaim(policy PolicyGraph, claim PriorClaimObservation) (PolicyContradiction, bool) {
+	for _, contradiction := range policy.Contradictions {
+		if contradiction.SubjectPath != claim.SubjectPath {
+			continue
+		}
+		for _, claimID := range contradiction.ClaimInstanceIDs {
+			if claimID == claim.InstanceID {
+				return contradiction, true
+			}
+		}
+	}
+	return PolicyContradiction{}, false
 }
 
 func operation(observation Observation) Operation {
@@ -463,12 +555,8 @@ func transitions(observation Observation, policy PolicyGraph, subjects []Subject
 	for index, claim := range prior {
 		after, resolution, reason := claim.State, planNone, reasonClaimLowered
 		stage, step := "CLAIM_LEDGER", "append-transition"
-		if len(policy.Contradictions) > 0 {
-			if claim.Proposition == reasonCompleteRoute {
-				after, reason, stage, step = claimRefuted, reasonClaimRefuted, "CONFORMANCE", "validate-policy"
-			} else {
-				reason = reasonUnrelatedContradiction
-			}
+		if contradiction, linked := contradictionTargetsClaim(policy, claim); linked {
+			after, resolution, reason, stage, step = claimRefuted, planNone, reasonClaimRefuted, contradiction.Stage, contradiction.Step
 		} else if subject, exists := byPath[claim.SubjectPath]; exists {
 			switch subject.Resolution {
 			case resolutionSelected:
@@ -489,11 +577,8 @@ func transitions(observation Observation, policy PolicyGraph, subjects []Subject
 					reason = reasonUnknownRefuted
 				}
 			case resolutionFailClosed:
-				if claim.Proposition == reasonCompleteRoute {
-					after, reason = claimRefuted, reasonClaimRefuted
-				} else {
-					reason = reasonUnrelatedContradiction
-				}
+				resolution = planNone
+				reason = reasonUnrelatedContradiction
 			}
 		}
 		if claim.State == claimRefuted {
@@ -549,7 +634,7 @@ func metrics(observation Observation, policy PolicyGraph, receipt Receipt) Metri
 func indicators(observation Observation, policy PolicyGraph, receipt Receipt) []Indicator {
 	state := receipt.Operation.ObservedRepositoryState
 	values := []bool{
-		len(policy.Contradictions) == 0 && policy.Source.ParsedDigest != "" && policy.Source.SemanticDigest != "",
+		policy.Source.ParsedDigest != "" && policy.Source.SemanticDigest != "",
 		len(receipt.Subjects) == len(observation.ChangedFiles),
 		unknownSubjectsDescendFully(receipt.Subjects),
 		validTransitions(receipt.ClaimTransitions),
@@ -599,13 +684,15 @@ func validTransitions(values []ClaimTransition) bool {
 
 func planDigest(value Receipt) (string, error) {
 	projection := struct {
-		ObservationDigest string              `json:"observation_digest"`
-		Operation         Operation           `json:"operation"`
-		ExecutionMode     string              `json:"execution_mode"`
-		Conformance       Conformance         `json:"conformance"`
-		Subjects          []SubjectResolution `json:"subjects"`
-		ClaimTransitions  []ClaimTransition   `json:"claim_transitions"`
-	}{value.ObservationDigest, value.Operation, value.ExecutionMode, value.Conformance, value.Subjects, value.ClaimTransitions}
+		ObservationDigest string                `json:"observation_digest"`
+		Operation         Operation             `json:"operation"`
+		ExecutionMode     string                `json:"execution_mode"`
+		Conformance       Conformance           `json:"conformance"`
+		PlanGate          PlanGate              `json:"plan_gate"`
+		Contradictions    []PolicyContradiction `json:"policy_contradictions"`
+		Subjects          []SubjectResolution   `json:"subjects"`
+		ClaimTransitions  []ClaimTransition     `json:"claim_transitions"`
+	}{value.ObservationDigest, value.Operation, value.ExecutionMode, value.Conformance, value.PlanGate, value.PolicyContradictions, value.Subjects, value.ClaimTransitions}
 	return digestJSON(projection)
 }
 
@@ -658,10 +745,8 @@ func repositoryState(value IsolationObservation) RepositoryStateObservation {
 			changedContents++
 			continue
 		}
-		if left.Tracked != right.Tracked {
+		if !sameRepositoryEntry(left, right) {
 			changedPaths++
-		}
-		if left.ContentDigest != right.ContentDigest {
 			changedContents++
 		}
 	}
@@ -670,6 +755,10 @@ func repositoryState(value IsolationObservation) RepositoryStateObservation {
 		state = observedStateUnchanged
 	}
 	return RepositoryStateObservation{NetState: state, ChangedPathCount: changedPaths, ChangedContentCount: changedContents, TransientWrites: observedUnknown, GlobalMutationAuthority: observedUnknown}
+}
+
+func sameRepositoryEntry(left, right RepositoryEntry) bool {
+	return left.Path == right.Path && left.Tracked == right.Tracked && left.Kind == right.Kind && left.Mode == right.Mode && left.SymlinkTargetDigest == right.SymlinkTargetDigest && left.ContentDigest == right.ContentDigest && left.ObjectFormat == right.ObjectFormat && left.ObjectID == right.ObjectID
 }
 
 func sortedFiles(values []ChangedFileObservation) []ChangedFileObservation {
@@ -690,7 +779,7 @@ func sortedClaims(values []PriorClaimObservation) []PriorClaimObservation {
 }
 
 func validateReceipt(actual, expected Receipt, observationRaw []byte, sourcePath string, source []byte) error {
-	if actual.Schema != receiptSchema || actual.Scope != receiptScope || actual.Source.Path != sourcePath || actual.Source.RawDigest != digestBytes(source) || actual.Source.SourceBytesDigest != digestBytes(source) || actual.ObservationDigest != digestBytes(observationRaw) {
+	if actual.Schema != receiptSchema || actual.Scope != receiptScope || actual.Source.Path != sourcePath || actual.Source.RawDigest != digestBytes(source) || actual.Source.SourceBytesDigest != digestBytes(source) || actual.Source.ObjectFormat == "" || actual.Source.ActualSourceObjectID != gitBlobIDForFormat(source, actual.Source.ObjectFormat) || actual.ObservationDigest != digestBytes(observationRaw) {
 		return fmt.Errorf("receipt source binding mismatch")
 	}
 	if actual.ExecutionMode != capabilityPlanOnly || actual.Execution.Result != executionUnknown || actual.IndependentVerifier.ID != "gooo://consumer/causal-ci-selection" || actual.IndependentVerifier.Mode != "INDEPENDENT_RECONSTRUCTION" || !actual.IndependentVerifier.Required || actual.IndependentVerifier.Capability != "SEPARATE_PROCESS" || !sameIDs(actual.CheckInventory.ExpectedIDs, actual.CheckInventory.ObservedIDs) || !sameIDs(actual.IndicatorInventory.ExpectedIDs, actual.IndicatorInventory.ObservedIDs) {
@@ -760,8 +849,17 @@ func claimInstanceID(templateID, subjectPath, proposition string) string {
 }
 
 func gitBlobID(data []byte) string {
+	return gitBlobIDForFormat(data, "sha1")
+}
+
+func gitBlobIDForFormat(data []byte, format string) string {
 	header := []byte(fmt.Sprintf("blob %d\x00", len(data)))
-	sum := sha1.Sum(append(header, data...))
+	payload := append(header, data...)
+	if strings.EqualFold(format, "sha256") {
+		sum := sha256.Sum256(payload)
+		return hex.EncodeToString(sum[:])
+	}
+	sum := sha1.Sum(payload)
 	return hex.EncodeToString(sum[:])
 }
 

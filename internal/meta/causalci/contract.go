@@ -1,14 +1,19 @@
 package causalci
 
 const (
-	ObservationSchema  = "gooo/causal-ci-selection-observation/v2"
-	ReceiptSchema      = "gooo/causal-ci-selection-receipt/v2"
-	ReportSchema       = "gooo/causal-ci-selection-intervention/v1"
-	AdjudicationSchema = "gooo/causal-ci-selection-adjudication/v1"
-	ReceiptScope       = "CAUSAL_SELECTION_PLAN"
+	ObservationSchema            = "gooo/causal-ci-selection-observation/v2"
+	ReceiptSchema                = "gooo/causal-ci-selection-receipt/v2"
+	ReportSchema                 = "gooo/causal-ci-selection-intervention/v1"
+	ProcessObservationSchema     = "gooo/causal-ci-selection-process-observation/v1"
+	PlanAdjudicationSchema       = "gooo/causal-ci-selection-plan-adjudication/v1"
+	SelectedCheckExecutionSchema = "gooo/causal-ci-selection-selected-check-execution/v1"
+	ReceiptScope                 = "CAUSAL_SELECTION_PLAN"
+	PlanAdjudicationScope        = "PLAN_RECONSTRUCTION_CONFORMANCE"
 
-	ConformancePass       = "PASS"
+	ConformancePass       = "PLAN_RECONSTRUCTION_CONFORMANCE_PASS"
 	ConformanceFailClosed = "FAIL_CLOSED"
+	PlanGatePass          = "PLAN_FINAL_GATE_PASS"
+	PlanGateFailClosed    = "PLAN_FINAL_GATE_FAIL_CLOSED"
 
 	ResolutionSelected   = "SELECTED"
 	ResolutionUnknown    = "UNKNOWN"
@@ -42,9 +47,9 @@ const (
 	ReasonCompletePath           = "COMPLETE_CLAIM_SURFACE_CHECK_PATH"
 	ReasonCompleteRoute          = "complete policy route reconstructed"
 	ReasonClaimDischarged        = "COMPLETE_POLICY_ROUTE_RECONSTRUCTED"
-	ReasonClaimLowered           = "UNKNOWN_PATH_PRESERVED_OPEN"
-	ReasonUnknownDischarged      = "DISCHARGED_STATE_PRESERVED_UNDER_UNKNOWN_PATH"
-	ReasonUnknownRefuted         = "REFUTED_STATE_PRESERVED_UNDER_UNKNOWN_PATH"
+	ReasonClaimLowered           = "OPEN_STATE_LOWERED_TO_FULL_SUITE_UNDER_UNKNOWN_PATH"
+	ReasonUnknownDischarged      = "DISCHARGED_STATE_PERSISTED_UNDER_UNKNOWN_PATH"
+	ReasonUnknownRefuted         = "REFUTED_STATE_PERSISTED_UNDER_UNKNOWN_PATH"
 	ReasonPlanOnlyOpen           = "PLAN_ONLY_EXECUTION_NOT_OBSERVED"
 	ReasonUnrelatedContradiction = "UNRELATED_POLICY_CONTRADICTION_CANNOT_REFUTE"
 	ReasonClaimRefuted           = "STRUCTURALLY_LINKED_POLICY_CONTRADICTION"

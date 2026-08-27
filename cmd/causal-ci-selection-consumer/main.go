@@ -37,6 +37,9 @@ func main() {
 	}
 	var receipt struct {
 		Digest string `json:"digest"`
+		Source struct {
+			BindingMode string `json:"binding_mode"`
+		} `json:"source"`
 	}
 	if err := json.Unmarshal(receiptRaw, &receipt); err != nil {
 		fail(err)
@@ -60,7 +63,7 @@ func main() {
 	if verifyErr != nil {
 		outputMaterial = []byte(result + ":" + verifyErr.Error())
 	}
-	value := consumer.ConsumerAdjudication{Schema: "gooo/causal-ci-selection-adjudication/v1", VariantID: *variantID, PlanReceiptDigest: receipt.Digest, InputDigest: bytesDigest(input), SourceBytesDigest: bytesDigest(source), OutputDigest: bytesDigest(outputMaterial), ConsumerIdentity: "gooo://consumer/causal-ci-selection/process", ExitCode: exitCode, Result: result, Coordinate: coordinate}
+	value := consumer.ConsumerAdjudication{Schema: "gooo/causal-ci-selection-process-observation/v1", VariantID: *variantID, LogicalSourcePath: *logicalPath, BindingMode: receipt.Source.BindingMode, PlanReceiptDigest: receipt.Digest, InputDigest: bytesDigest(input), SourceBytesDigest: bytesDigest(source), ResultDigest: bytesDigest(outputMaterial), ConsumerIdentity: "gooo://consumer/causal-ci-selection/process", ExitCode: exitCode, Result: result, Coordinate: coordinate}
 	value.Digest = digestWithoutDigest(value)
 	if err := writeJSON(*outputPath, value); err != nil {
 		fail(err)
