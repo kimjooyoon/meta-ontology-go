@@ -283,7 +283,7 @@ func validateObservation(value observation, sourcePath, subject string) (int, in
 	if !strings.HasPrefix(runtime.Version(), "go1.27") || value.Contract.GoVersion != runtime.Version() {
 		return 0, 0, coordinates{}, fmt.Errorf("runtime=%s contract=%s", runtime.Version(), value.Contract.GoVersion)
 	}
-	if value.Effects.RepositoryStatusBefore == nil || value.Effects.RepositoryStatusAfter == nil || !reflect.DeepEqual(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter) || len(value.Effects.NetRepositoryChanges) != 0 || value.Effects.MutationAuthority || value.Effects.MutationOutcome != "REJECTED" || value.Effects.MutationAPI == "" {
+	if value.Effects.RepositoryStatusBefore == nil || value.Effects.RepositoryStatusAfter == nil || !reflect.DeepEqual(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter) || !reflect.DeepEqual(changedLines(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter), value.Effects.NetRepositoryChanges) || len(value.Effects.NetRepositoryChanges) != 0 || value.Effects.MutationAuthority || value.Effects.MutationOutcome != "REJECTED" || value.Effects.MutationAPI == "" {
 		return 0, 0, coordinates{}, errors.New("observed effects do not prove the reported net repository relation and mutation boundary")
 	}
 	wantAttempts, authority, api, outcome, apiError, err := reconstructAttempts(ir, graph, model, semanticDigest, value.Effects)
@@ -630,6 +630,9 @@ func buildClaimTransitions(claims []claimSpec, attempts []attempt, fx effects, m
 		final := registration
 		final.Sequence = sequence + 1
 		final.Stage, final.Step, final.Reason, final.From, final.To, final.PreviousDigest, final.ObservedMaterialDigest = result.Stage, result.Step, result.Reason, claim.PriorState, result.To, previous, result.Material
+		if claim.PredicateID == "claim-ledger-chained" && final.PreviousDigest != registration.Digest {
+			final.Stage, final.Step, final.Reason, final.To, final.ObservedMaterialDigest = "RESOLVE", "verify-claim-ledger-chain", "CLAIM_LEDGER_CHAIN_BROKEN", claim.PriorState, registration.Digest
+		}
 		final.Digest = transitionDigest(final)
 		values = append(values, final)
 		previous = final.Digest
@@ -740,6 +743,29 @@ func immutableRejection(value attempt) bool {
 }
 func reflectRepositoryNet(fx effects) bool {
 	return fx.RepositoryStatusBefore != nil && fx.RepositoryStatusAfter != nil && len(fx.NetRepositoryChanges) == 0 && stringSliceEqual(fx.RepositoryStatusBefore, fx.RepositoryStatusAfter)
+}
+
+func changedLines(before, after []string) []string {
+	left, right := map[string]struct{}{}, map[string]struct{}{}
+	for _, line := range before {
+		left[line] = struct{}{}
+	}
+	for _, line := range after {
+		right[line] = struct{}{}
+	}
+	changed := []string{}
+	for line := range left {
+		if _, ok := right[line]; !ok {
+			changed = append(changed, "BEFORE:"+line)
+		}
+	}
+	for line := range right {
+		if _, ok := left[line]; !ok {
+			changed = append(changed, "AFTER:"+line)
+		}
+	}
+	sort.Strings(changed)
+	return changed
 }
 func stringSliceEqual(left, right []string) bool {
 	if len(left) != len(right) {

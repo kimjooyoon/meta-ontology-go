@@ -25,6 +25,11 @@ func buildClaimTransitions(claims []claimSpec, attempts []Attempt, effects Effec
 		observation.Sequence = sequence + 1
 		observation.Stage, observation.Step, observation.Reason = result.Stage, result.Step, result.Reason
 		observation.From, observation.To, observation.PreviousDigest = claim.PriorState, result.To, previous
+		if claim.PredicateID == "claim-ledger-chained" && observation.PreviousDigest != registration.Digest {
+			result = predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "verify-claim-ledger-chain", Reason: "CLAIM_LEDGER_CHAIN_BROKEN", Material: registration.Digest}
+			observation.Stage, observation.Step, observation.Reason = result.Stage, result.Step, result.Reason
+			observation.To, observation.ObservedMaterialDigest = result.To, result.Material
+		}
 		observation.ObservedMaterialDigest = result.Material
 		observation.Digest = digestTransition(observation)
 		transitions = append(transitions, observation)
