@@ -63,6 +63,7 @@ func main() {
 	report := contract.CausalityReport{Schema: interventionSchema, Cases: cases}
 	report.Summary.Total = len(cases)
 	for _, item := range cases {
+		fmt.Printf("causality case: %+v\n", item)
 		if item.Passed {
 			report.Summary.Passed++
 		}
