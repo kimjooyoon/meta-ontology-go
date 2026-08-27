@@ -14,21 +14,26 @@ func run(args []string) int {
 	}
 	contractRaw, err := os.ReadFile(options.contract)
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	contract, err := ambiguitybudget.DecodeContract(contractRaw)
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	source, err := os.ReadFile(options.source)
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	receipt := ambiguitybudget.Evaluate(ambiguitybudget.Input{SubjectSHA: options.head, Contract: contract, Source: source})
 	if err := ambiguitybudget.WriteReceipt(options.output, receipt); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	if err := printReceipt(receipt); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	if receipt.ConformanceDecision != "PASS" {

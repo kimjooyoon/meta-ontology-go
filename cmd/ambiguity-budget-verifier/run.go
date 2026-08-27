@@ -14,21 +14,26 @@ func run(args []string) int {
 	}
 	contract, err := os.ReadFile(options.contract)
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	receipt, err := os.ReadFile(options.receipt)
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	source, err := os.ReadFile(options.source)
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	result, err := judge.Evaluate(contract, receipt, source)
 	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	if err := judge.WriteResult(options.output, result); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	fmt.Printf("ambiguity budget judge: conformance=%s/%s subject=%s/%s checks=%d denominator=%d\n",
