@@ -6,8 +6,8 @@ func closeLifecycle(receipt *LifecycleReceipt) {
 	firstUnknown := -1
 	for index, indicator := range receipt.Indicators {
 		claim := LifecycleClaim{
-			ClaimID: lifecycleDefinitions[index].ClaimID,
-			Stage: indicator.Coordinate.Stage + "/" + indicator.Coordinate.Step,
+			ClaimID:   lifecycleDefinitions[index].ClaimID,
+			Stage:     indicator.Coordinate.Stage + "/" + indicator.Coordinate.Step,
 			Statement: lifecycleDefinitions[index].Statement,
 		}
 		if indicator.Status == StatusVerified {
