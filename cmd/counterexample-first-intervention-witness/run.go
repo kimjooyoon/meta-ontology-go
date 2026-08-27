@@ -20,7 +20,7 @@ func run(args []string) int {
 		}
 		return raw
 	}
-	before, semanticAfter, commentAfter, corpusRaw := read(options.before), read(options.semanticAfter), read(options.commentAfter), read(options.corpus)
+	before, semanticAfter, commentAfter, metaAfter, corpusRaw := read(options.before), read(options.semanticAfter), read(options.commentAfter), read(options.metaAfter), read(options.corpus)
 	if !ok {
 		return 2
 	}
@@ -28,7 +28,7 @@ func run(args []string) int {
 	if err != nil {
 		return 2
 	}
-	report, err := counterexamplefirstcompiler.AnalyzeInterventions(before, semanticAfter, commentAfter, corpus)
+	report, err := counterexamplefirstcompiler.AnalyzeInterventions(before, semanticAfter, commentAfter, metaAfter, corpus)
 	if err != nil {
 		return 2
 	}

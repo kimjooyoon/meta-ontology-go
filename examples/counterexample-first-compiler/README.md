@@ -1,28 +1,46 @@
 # Counterexample-first meta compilation
 
 This is a bounded, read-only vertical experiment over one real Gooo
-transformation: `syntax.ParseFile` followed by `bidir.Lower`. The Gooo source
-declares the candidate policy as `CanonicalEntityID(... ) computes
-"identity:v1"`; the policy is then applied to the lowered entity nodes.
+transformation: `syntax.ParseFile` followed by `bidir.Lower`. The source
+declares `CanonicalEntityID(... ) computes "identity:v1"` and a connected
+four-stage meta graph:
 
-The corpus contains raw source inputs only. The producer executes every
-observed input, compares lowered IDs with the policy predicate, discovers a
-violation, and runs a deterministic shrinker. The shrinker executes each
-immediate candidate and records the final local-minimality proof as a
-numerator/denominator. A compile decision can be promoted only after the same
-minimal source is re-executed through the resolution input and the observed
-predicate passes.
+```text
+CanonicalEntityID
+  -[CompilationClaim]-> DiscoverMinimalCounterexample
+  -[MinimalCounterexample]-> BindResolutionEvidence
+  -[ResolutionEvidence]-> PromoteOnlyAfterResolution
+```
 
-The independent judge repeats ParseFile, Lower, predicate evaluation, shrinking,
-and resolution from the raw source/corpus. It does not import the producer
-package or a shared outcome table. Receipts preserve actual diagnostics,
-lowering errors, semantic digests, producer/consumer/meta-operation/proof
-choice, append-only claim transitions, and UNKNOWN stage/step/reason.
+The compiler reconstructs those `used`/`wasGeneratedBy` edges from lowered
+facts. Missing or disconnected activities authorize no counterexample,
+resolution, or promotion decision. The meta-operation intervention removes
+the binding activity and must change per-case receipts and claim transitions;
+the comment-only intervention must preserve them.
 
-The CI artifact also contains a semantic intervention (`identity:v1` to
-`identity:v2`) and a comment-only intervention. The former must change the
-semantic digest, first minimal counterexample, and claim-transition digest; the
-latter must preserve semantic digest and decision evidence.
+The corpus contains raw source, five unique claim propositions, and five
+distinct observation predicates. It contains no failing/minimal/accepted or
+expected-decision fields. The producer executes each supplied source, compares
+observed lowering output with the predicate, discovers violations, and applies
+a deterministic finite neighborhood shrinker. The claim is only
+`FINITE_NEIGHBORHOOD_IRREDUCIBLE`: every candidate in the declared immediate
+neighborhood was executed and did not preserve the violation. This is not a
+global or cost minimum.
 
-This does not claim general compiler correctness, global minimality, theorem
-proving, unbounded corpus coverage, or repository mutation authority.
+For the resolved case, the resolution input names an operation only. The
+producer generates the repair source by transforming the minimum counterexample
+itself, records before/after source digests and a repair delta digest, then
+reruns the same claim and predicate. Only that observed pass can append
+`REFUTED -> DISCHARGED` and promote.
+
+The independent judge repeats ParseFile, Lower, fact-graph inspection,
+predicate evaluation, shrinking, and repair from raw source/corpus inputs. It
+does not import the producer package or a shared conclusion table. Receipts
+preserve parse/lower observations, semantic digests, graph authorization,
+producer/consumer/meta-operation/proof choice, per-claim transition evidence,
+and exact unknown coordinates. A missing source is
+`INPUT_OBSERVATION/source-acquisition/SOURCE_NOT_PROVIDED` with decision
+`UNKNOWN`, resolution `LOWER_RESOLUTION`, and claim state `OPEN`.
+
+This does not claim general compiler correctness, global or cost minimality,
+theorem proving, unbounded corpus coverage, or repository mutation authority.

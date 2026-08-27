@@ -27,6 +27,14 @@ func ResolutionDigest(value ResolutionEvidence) string {
 	return DigestValue(value)
 }
 
+func PropositionDigest(claimID, proposition, predicateID string) string {
+	return DigestValue(struct {
+		ClaimID     string `json:"claim_id"`
+		Proposition string `json:"proposition"`
+		PredicateID string `json:"predicate_id"`
+	}{claimID, proposition, predicateID})
+}
+
 func ReceiptDigest(value DecisionReceipt) string {
 	value.Digest = ""
 	return DigestValue(value)

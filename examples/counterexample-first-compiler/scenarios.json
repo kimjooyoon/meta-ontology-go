@@ -1,24 +1,25 @@
 {
-  "schema": "gooo/counterexample-first-scenarios/v2",
+  "schema": "gooo/counterexample-first-scenarios/v3",
   "version": 1,
   "scenarios": [
     {
       "id": "resolved-minimal-counterexample",
       "candidate": {
         "id": "candidate-identity-drift-long",
-        "claim": "the lowered entity identity follows the canonical identity rule",
+        "claim_id": "claim-resolved-repair",
+        "predicate_id": "identity-drift-detected",
+        "claim": "the candidate identity drift can be repaired by canonicalizing the same minimal source",
         "source": "package counterexamplefirst\nnamespace counterexamplefirst\n\nentity CompilationClaim id \"gooo://counterexample-first/entity/compilation-claim?noise=1&drift=1\"\nentity MinimalCounterexample id \"gooo://counterexample-first/entity/minimal-counterexample\"\nentity ResolutionEvidence id \"gooo://counterexample-first/entity/resolution-evidence\"\nentity CompilationDecision id \"gooo://counterexample-first/entity/compilation-decision\"\n\nactivity CanonicalEntityID(CompilationClaim) -> CompilationClaim computes \"identity:v1\"\nactivity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample\nactivity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence\nactivity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision\n"
       },
-      "resolution_input": {
-        "id": "resolution-replay-canonical",
-        "source": "package counterexamplefirst\nnamespace counterexamplefirst\n\nentity CompilationClaim id \"gooo://counterexample-first/entity/compilation-claim\"\nentity MinimalCounterexample id \"gooo://counterexample-first/entity/minimal-counterexample\"\nentity ResolutionEvidence id \"gooo://counterexample-first/entity/resolution-evidence\"\nentity CompilationDecision id \"gooo://counterexample-first/entity/compilation-decision\"\n\nactivity CanonicalEntityID(CompilationClaim) -> CompilationClaim computes \"identity:v1\"\nactivity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample\nactivity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence\nactivity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision\n"
-      }
+      "resolution_input": {"id":"resolution-replay-canonical","operation":"canonicalize-entity-id"}
     },
     {
       "id": "canonical-control",
       "candidate": {
         "id": "candidate-canonical-source",
-        "claim": "a canonical source is not evidence that a failing boundary was resolved",
+        "claim_id": "claim-canonical-control",
+        "predicate_id": "canonical-source-admissible",
+        "claim": "a canonical candidate has no observed identity violation but is insufficient evidence for promotion",
         "source": "package counterexamplefirst\nnamespace counterexamplefirst\n\nentity CompilationClaim id \"gooo://counterexample-first/entity/compilation-claim\"\nentity MinimalCounterexample id \"gooo://counterexample-first/entity/minimal-counterexample\"\nentity ResolutionEvidence id \"gooo://counterexample-first/entity/resolution-evidence\"\nentity CompilationDecision id \"gooo://counterexample-first/entity/compilation-decision\"\n\nactivity CanonicalEntityID(CompilationClaim) -> CompilationClaim computes \"identity:v1\"\nactivity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample\nactivity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence\nactivity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision\n"
       }
     },
@@ -26,7 +27,9 @@
       "id": "unresolved-counterexample",
       "candidate": {
         "id": "candidate-identity-drift",
-        "claim": "an observed identity drift may be promoted without a repair rerun",
+        "claim_id": "claim-unresolved-boundary",
+        "predicate_id": "resolution-required",
+        "claim": "an identity violation without repair evidence remains refuted",
         "source": "package counterexamplefirst\nnamespace counterexamplefirst\n\nentity CompilationClaim id \"gooo://counterexample-first/entity/compilation-claim?drift=1\"\nentity MinimalCounterexample id \"gooo://counterexample-first/entity/minimal-counterexample\"\nentity ResolutionEvidence id \"gooo://counterexample-first/entity/resolution-evidence\"\nentity CompilationDecision id \"gooo://counterexample-first/entity/compilation-decision\"\n\nactivity CanonicalEntityID(CompilationClaim) -> CompilationClaim computes \"identity:v1\"\nactivity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample\nactivity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence\nactivity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision\n"
       }
     },
@@ -34,7 +37,9 @@
       "id": "comment-only-control",
       "candidate": {
         "id": "candidate-comment-only",
-        "claim": "presentation-only comments preserve the semantic lowering digest",
+        "claim_id": "claim-comment-invariance",
+        "predicate_id": "semantic-digest-invariant",
+        "claim": "comment-only source changes preserve semantic lowering and predicate evidence",
         "source": "package counterexamplefirst\nnamespace counterexamplefirst\n\n// comment-only intervention: no semantic token changes\nentity CompilationClaim id \"gooo://counterexample-first/entity/compilation-claim\"\nentity MinimalCounterexample id \"gooo://counterexample-first/entity/minimal-counterexample\"\nentity ResolutionEvidence id \"gooo://counterexample-first/entity/resolution-evidence\"\nentity CompilationDecision id \"gooo://counterexample-first/entity/compilation-decision\"\n\nactivity CanonicalEntityID(CompilationClaim) -> CompilationClaim computes \"identity:v1\"\nactivity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample\nactivity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence\nactivity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision\n"
       }
     },
@@ -42,7 +47,9 @@
       "id": "unobserved-input",
       "candidate": {
         "id": "candidate-source-not-provided",
-        "claim": "an absent source must retain UNKNOWN rather than infer a decision",
+        "claim_id": "claim-source-acquisition",
+        "predicate_id": "source-acquisition-present",
+        "claim": "absent source acquisition retains UNKNOWN rather than inferring a decision",
         "source": null
       }
     }

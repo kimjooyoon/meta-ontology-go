@@ -1,34 +1,36 @@
 {
-  "schema": "gooo/counterexample-first-compiler-contract/v2",
-  "id": "counterexample-first-meta-compilation-v2",
-  "version": 2,
+  "schema": "gooo/counterexample-first-compiler-contract/v3",
+  "id": "counterexample-first-meta-compilation-v3",
+  "version": 3,
   "source_path": "examples/counterexample-first-compiler/main.gooo",
   "package": "counterexamplefirst",
   "namespace": "counterexamplefirst",
   "producer": "counterexample-first-compiler",
   "consumer": "independent-counterexample-first-judge",
   "meta_operation": "compile-after-counterexample-resolution",
-  "predicate": {
-    "id": "canonical-entity-id",
-    "operation": "syntax.ParseFile->bidir.Lower",
-    "rule": "identity:v1",
-    "source_fact": "activity CanonicalEntityID computes value program",
-    "failure_rule": "lowered Entity.ID != canonical identity(namespace, kind, name)"
-  },
+  "predicates": [
+    {"id":"identity-drift-detected","kind":"ENTITY_ID_DRIFT","operation":"syntax.ParseFile->bidir.Lower","rule":"identity:v1","source_fact":"lowered Entity.ID","failure_rule":"entity ID mismatch emits a counterexample"},
+    {"id":"canonical-source-admissible","kind":"CANONICAL_SOURCE","operation":"syntax.ParseFile->bidir.Lower","rule":"identity:v1","source_fact":"lowered Entity.ID","failure_rule":"entity ID mismatch prevents canonical-source admissibility"},
+    {"id":"resolution-required","kind":"RESOLUTION_REQUIRED","operation":"syntax.ParseFile->bidir.Lower","rule":"identity:v1","source_fact":"counterexample predicate","failure_rule":"observed identity drift requires a repair rerun"},
+    {"id":"semantic-digest-invariant","kind":"SEMANTIC_DIGEST","operation":"syntax.ParseFile->bidir.Lower","rule":"identity:v1","source_fact":"semantic IR stable hash","failure_rule":"candidate semantic digest differs from the baseline"},
+    {"id":"source-acquisition-present","kind":"SOURCE_ACQUISITION","operation":"syntax.ParseFile->bidir.Lower","rule":"identity:v1","source_fact":"raw corpus source","failure_rule":"source absence is not an observable execution"}
+  ],
   "fixed_denominator": {
-    "version": "counterexample-first-denominator/v2",
+    "version": "counterexample-first-denominator/v3",
     "cases": 5,
+    "unique_claims": 5,
+    "unique_predicates": 5,
     "indicators": 12,
     "claim_transitions": 15,
     "unknown_coordinates": 1,
     "corpus_inputs": 5
   },
   "cases": [
-    {"id":"resolved-minimal-counterexample","input_kind":"mutated-source","proof_choice":"COUNTEREXAMPLE_RESOLUTION","meta_operation":"promote-after-resolution"},
-    {"id":"canonical-control","input_kind":"canonical-source","proof_choice":"COUNTEREXAMPLE_REQUIRED","meta_operation":"require-counterexample-before-compile"},
-    {"id":"unresolved-counterexample","input_kind":"mutated-source","proof_choice":"COUNTEREXAMPLE_RESOLUTION","meta_operation":"block-unresolved-counterexample"},
-    {"id":"comment-only-control","input_kind":"comment-only-source","proof_choice":"COMMENT_ONLY_INVARIANCE","meta_operation":"preserve-semantic-digest"},
-    {"id":"unobserved-input","input_kind":"unobserved-source","proof_choice":"UNKNOWN_PRESERVATION","meta_operation":"preserve-unknown-coordinate"}
+    {"id":"resolved-minimal-counterexample","claim_id":"claim-resolved-repair","proposition":"the candidate identity drift can be repaired by canonicalizing the same minimal source","predicate_id":"identity-drift-detected","input_kind":"mutated-source","proof_choice":"COUNTEREXAMPLE_RESOLUTION","meta_operation":"promote-after-resolution"},
+    {"id":"canonical-control","claim_id":"claim-canonical-control","proposition":"a canonical candidate has no observed identity violation but is insufficient evidence for promotion","predicate_id":"canonical-source-admissible","input_kind":"canonical-source","proof_choice":"COUNTEREXAMPLE_REQUIRED","meta_operation":"require-counterexample-before-compile"},
+    {"id":"unresolved-counterexample","claim_id":"claim-unresolved-boundary","proposition":"an identity violation without repair evidence remains refuted","predicate_id":"resolution-required","input_kind":"mutated-source","proof_choice":"COUNTEREXAMPLE_RESOLUTION","meta_operation":"block-unresolved-counterexample"},
+    {"id":"comment-only-control","claim_id":"claim-comment-invariance","proposition":"comment-only source changes preserve semantic lowering and predicate evidence","predicate_id":"semantic-digest-invariant","input_kind":"comment-only-source","proof_choice":"COMMENT_ONLY_INVARIANCE","meta_operation":"preserve-semantic-digest"},
+    {"id":"unobserved-input","claim_id":"claim-source-acquisition","proposition":"absent source acquisition retains UNKNOWN rather than inferring a decision","predicate_id":"source-acquisition-present","input_kind":"unobserved-source","proof_choice":"UNKNOWN_PRESERVATION","meta_operation":"preserve-unknown-coordinate"}
   ],
-  "not_claimed": ["general compiler correctness", "global minimality", "theorem proving", "unbounded corpus coverage", "repository mutation"]
+  "not_claimed": ["general compiler correctness", "global or cost minimality", "theorem proving", "unbounded corpus coverage", "repository mutation"]
 }

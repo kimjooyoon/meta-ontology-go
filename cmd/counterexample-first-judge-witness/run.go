@@ -21,7 +21,8 @@ type effectsEvidence struct {
 	BeforeStatusDigest string `json:"before_status_digest"`
 	AfterStatusDigest  string `json:"after_status_digest"`
 	RepositoryWrites   int    `json:"repository_writes"`
-	MutationAuthority  bool   `json:"mutation_authority"`
+	MutationAuthority  string `json:"mutation_authority"`
+	CapabilityEvidence string `json:"capability_evidence"`
 }
 
 func run(args []string) int {
@@ -59,20 +60,20 @@ func run(args []string) int {
 		return 2
 	}
 	var effects effectsEvidence
-	if err := json.Unmarshal(effectsRaw, &effects); err != nil || effects.Schema != "gooo/counterexample-first-effects/v1" ||
+	if err := json.Unmarshal(effectsRaw, &effects); err != nil || effects.Schema != "gooo/counterexample-first-effects/v2" ||
 		effects.BeforeStatusDigest == "" || effects.AfterStatusDigest == "" || effects.RepositoryWrites < 0 ||
-		effects.BeforeStatusDigest != effects.AfterStatusDigest {
+		effects.BeforeStatusDigest != effects.AfterStatusDigest || effects.MutationAuthority == "" {
 		return 2
 	}
 	report := counterexamplefirstjudge.Evaluate(cf.JudgeInput{Contract: contract, HeadSHA: options.head,
 		SourcePath: options.source, Source: source, Corpus: corpus, Receipts: receipts,
 		ProducerDependencies: independence.ProducerDependencies,
-		WorkspaceEffects:     cf.Effects{RepositoryWrites: effects.RepositoryWrites, MutationAuthority: effects.MutationAuthority}})
+		WorkspaceEffects:     cf.Effects{RepositoryWrites: effects.RepositoryWrites, MutationAuthority: effects.MutationAuthority, CapabilityEvidence: effects.CapabilityEvidence}})
 	if err := cf.WriteReport(options.out, report); err != nil {
 		return 2
 	}
-	fmt.Printf("counterexample-first judge: %s cases=%d/%d indicators=%d/%d\n", report.Decision,
-		report.Summary.CasesSatisfied, report.Summary.CasesTotal, satisfied(report.Indicators), len(report.Indicators))
+	fmt.Printf("counterexample-first judge: %s receipts=%d/%d indicators=%d/%d\n", report.Decision,
+		report.Summary.ReceiptsReconstructed, report.Summary.CasesTotal, satisfied(report.Indicators), len(report.Indicators))
 	if report.Decision != "PASS" {
 		return 1
 	}

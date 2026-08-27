@@ -1,0 +1,13 @@
+package counterexamplefirst
+namespace counterexamplefirst
+
+// Meta-operation intervention: removing the binding stage breaks the lowered
+// data edge required before promotion.
+entity CompilationClaim id "gooo://counterexample-first/entity/compilation-claim"
+entity MinimalCounterexample id "gooo://counterexample-first/entity/minimal-counterexample"
+entity ResolutionEvidence id "gooo://counterexample-first/entity/resolution-evidence"
+entity CompilationDecision id "gooo://counterexample-first/entity/compilation-decision"
+
+activity CanonicalEntityID(CompilationClaim) -> CompilationClaim computes "identity:v1"
+activity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample
+activity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision

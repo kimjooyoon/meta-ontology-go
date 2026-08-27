@@ -35,6 +35,6 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: counterexample-first-compiler-${{ env.HEAD_SHA }}
-          path: counterexample-first-output
+          path: ${{ runner.temp }}/counterexample-first-output-${{ env.HEAD_SHA }}
           if-no-files-found: error
           retention-days: 30
