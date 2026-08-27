@@ -3,7 +3,7 @@ package metainvocation
 import "testing"
 
 const testSource = `package ciplan
-namespace meta.ciplan
+namespace ciplan
 
 entity ChangeSet id "gooo://meta/ci-plan/entity/change-set"
 entity CheckPlan id "gooo://meta/ci-plan/entity/check-plan"

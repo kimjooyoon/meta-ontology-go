@@ -32,8 +32,8 @@ var languageCIPlanUsecaseConcept = concept(
 		"gooo.metric.ci-plan.mutation-authority.guardrail.v1",
 	},
 	UseCase{
-		ID: "changed-files-to-ci-receipt",
-		Trigger: "a user supplies changed repository paths to the PlanCI activity",
+		ID:              "changed-files-to-ci-receipt",
+		Trigger:         "a user supplies changed repository paths to the PlanCI activity",
 		ExpectedOutcome: "4 PASS, 4 FAIL_CLOSED, and 4 causally located UNKNOWN cases replay with zero writes",
 	},
 )

@@ -15,7 +15,7 @@ func (reader invokeReader) ReadFile(path string) ([]byte, error) {
 func TestInvokeCommandExposesMetaProgramDecision(t *testing.T) {
 	reader := invokeReader{
 		"main.gooo": []byte(`package ciplan
-namespace meta.ciplan
+namespace ciplan
 entity ChangeSet id "gooo://meta/ci-plan/entity/change-set"
 entity CheckPlan id "gooo://meta/ci-plan/entity/check-plan"
 entity VerificationReceipt id "gooo://meta/ci-plan/entity/verification-receipt"
@@ -37,7 +37,7 @@ activity VerifyCIPlan(CheckPlan) -> VerificationReceipt computes "ci.verify:v1"
 func TestInvokeCommandReturnsFailureForLowerResolution(t *testing.T) {
 	reader := invokeReader{
 		"main.gooo": []byte(`package ciplan
-namespace meta.ciplan
+namespace ciplan
 entity ChangeSet id "gooo://meta/ci-plan/entity/change-set"
 entity CheckPlan id "gooo://meta/ci-plan/entity/check-plan"
 entity VerificationReceipt id "gooo://meta/ci-plan/entity/verification-receipt"

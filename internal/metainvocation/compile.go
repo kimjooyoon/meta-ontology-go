@@ -57,8 +57,8 @@ func coordinate(path string, span syntax.Span) SourceCoordinate {
 
 func validateProgram(program Program) error {
 	requiredEntities := map[string]string{
-		"ChangeSet": "gooo://meta/ci-plan/entity/change-set",
-		"CheckPlan": "gooo://meta/ci-plan/entity/check-plan",
+		"ChangeSet":           "gooo://meta/ci-plan/entity/change-set",
+		"CheckPlan":           "gooo://meta/ci-plan/entity/check-plan",
 		"VerificationReceipt": "gooo://meta/ci-plan/entity/verification-receipt",
 	}
 	for name, id := range requiredEntities {
@@ -67,11 +67,11 @@ func validateProgram(program Program) error {
 		}
 	}
 	requiredOperations := map[string]string{
-		"SelectGoCheck": operationGoRule,
+		"SelectGoCheck":   operationGoRule,
 		"SelectDocsCheck": operationDocsRule,
 		"SelectYAMLCheck": operationYAMLRule,
-		"PlanCI": operationPlan,
-		"VerifyCIPlan": operationVerify,
+		"PlanCI":          operationPlan,
+		"VerifyCIPlan":    operationVerify,
 	}
 	for activity, operation := range requiredOperations {
 		if program.Operations[activity].Program != operation {

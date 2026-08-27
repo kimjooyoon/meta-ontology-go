@@ -33,18 +33,18 @@ type ChangeSet struct {
 }
 
 type RuleEvidence struct {
-	ID          string           `json:"id"`
-	Operation   string           `json:"operation"`
-	File        string           `json:"file"`
-	SpecDigest  string           `json:"spec_digest"`
-	Source      SourceCoordinate `json:"source"`
+	ID         string           `json:"id"`
+	Operation  string           `json:"operation"`
+	File       string           `json:"file"`
+	SpecDigest string           `json:"spec_digest"`
+	Source     SourceCoordinate `json:"source"`
 }
 
 type PlannedCheck struct {
-	ID       string         `json:"id"`
-	Command  string         `json:"command"`
-	Files    []string       `json:"files"`
-	Reasons  []RuleEvidence `json:"reasons"`
+	ID      string         `json:"id"`
+	Command string         `json:"command"`
+	Files   []string       `json:"files"`
+	Reasons []RuleEvidence `json:"reasons"`
 }
 
 type CheckPlan struct {
@@ -74,7 +74,7 @@ type Claim struct {
 }
 
 type Effects struct {
-	RepositoryWrites int  `json:"repository_writes"`
+	RepositoryWrites  int  `json:"repository_writes"`
 	MutationAuthority bool `json:"mutation_authority"`
 }
 
@@ -106,11 +106,11 @@ type Report struct {
 }
 
 type OperationSpec struct {
-	ID               string `json:"id"`
-	InputEntity      string `json:"input_entity"`
-	OutputEntity     string `json:"output_entity"`
-	Phase            string `json:"phase"`
-	RepositoryWrites int    `json:"repository_writes"`
+	ID                string `json:"id"`
+	InputEntity       string `json:"input_entity"`
+	OutputEntity      string `json:"output_entity"`
+	Phase             string `json:"phase"`
+	RepositoryWrites  int    `json:"repository_writes"`
 	MutationAuthority bool   `json:"mutation_authority"`
 }
 

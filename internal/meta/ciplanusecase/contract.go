@@ -25,7 +25,7 @@ func FixedContract() Contract {
 			{ID: "unknown-python", ExpectedDecision: "UNKNOWN", ProofChoice: "FOUNDATION"},
 			{ID: "unknown-toml", ExpectedDecision: "UNKNOWN", ProofChoice: "FOUNDATION"},
 		},
-		Limits: Limits{MaxWallMS: 5000, MaxPeakRSSKiB: 262144, MaxReceiptBytes: 65536},
+		Limits:     Limits{MaxWallMS: 5000, MaxPeakRSSKiB: 262144, MaxReceiptBytes: 65536},
 		NotClaimed: []string{"check-execution", "full-language-semantic-correctness", "general-build-planning", "comparative-performance", "production-or-external-effects"},
 	}
 }
