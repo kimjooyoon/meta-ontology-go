@@ -1,13 +1,13 @@
 package selfimprovementattestation
 
 type Request struct {
-	TransportReceipt        TransportReceipt
-	ArchiveDigest           string
-	ArchiveProducer         Producer
+	TransportReceipt         TransportReceipt
+	ArchiveDigest            string
+	ArchiveProducer          Producer
 	ArchiveObservationDigest string
-	Verification            []VerificationItem
-	VerifierExitCode        int
-	VerifierVersion         string
+	Verification             []VerificationItem
+	VerifierExitCode         int
+	VerifierVersion          string
 }
 
 type Checker struct {
@@ -18,17 +18,17 @@ type Checker struct {
 }
 
 type ProducerIdentity struct {
-	WorkflowRef         string `json:"workflow_ref"`
-	WorkflowSHA         string `json:"workflow_sha"`
-	RunID               int64  `json:"run_id"`
-	RunAttempt          int    `json:"run_attempt"`
-	ArtifactID          int64  `json:"artifact_id"`
-	SubjectName         string `json:"subject_name"`
-	SubjectDigest       string `json:"subject_digest"`
-	SignerURI           string `json:"signer_uri"`
-	Issuer              string `json:"issuer"`
-	RunnerEnvironment   string `json:"runner_environment"`
-	VerifiedTimestamps  int    `json:"verified_timestamps"`
+	WorkflowRef        string `json:"workflow_ref"`
+	WorkflowSHA        string `json:"workflow_sha"`
+	RunID              int64  `json:"run_id"`
+	RunAttempt         int    `json:"run_attempt"`
+	ArtifactID         int64  `json:"artifact_id"`
+	SubjectName        string `json:"subject_name"`
+	SubjectDigest      string `json:"subject_digest"`
+	SignerURI          string `json:"signer_uri"`
+	Issuer             string `json:"issuer"`
+	RunnerEnvironment  string `json:"runner_environment"`
+	VerifiedTimestamps int    `json:"verified_timestamps"`
 }
 
 type ClaimTransition struct {

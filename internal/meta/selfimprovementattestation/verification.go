@@ -46,7 +46,10 @@ func verificationMismatches(request Request, result *VerificationResult) []strin
 	}
 	expectedURI := "https://github.com/" + producer.WorkflowRef
 	expectedRun := fmt.Sprintf("https://github.com/%s/actions/runs/%d/attempts/%d", transport.Repository, producer.RunID, producer.RunAttempt)
-	checks := []struct{ failed bool; reason string }{
+	checks := []struct {
+		failed bool
+		reason string
+	}{
 		{certificate.Issuer != oidcIssuer, "PRODUCER_OIDC_ISSUER_MISMATCH"},
 		{certificate.SubjectAlternativeName != expectedURI || certificate.BuildSignerURI != expectedURI, "PRODUCER_SIGNER_IDENTITY_MISMATCH"},
 		{certificate.GitHubWorkflowRepository != transport.Repository, "PRODUCER_WORKFLOW_REPOSITORY_MISMATCH"},
@@ -68,11 +71,4 @@ func verificationMismatches(request Request, result *VerificationResult) []strin
 		}
 	}
 	return reasons
-}
-
-func subjectMatches(subjects []Subject, name, digest string) bool {
-	if len(subjects) != 1 || !strings.HasPrefix(digest, "sha256:") {
-		return false
-	}
-	return subjects[0].Name == name && subjects[0].Digest["sha256"] == strings.TrimPrefix(digest, "sha256:")
 }

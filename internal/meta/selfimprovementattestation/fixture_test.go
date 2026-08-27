@@ -13,9 +13,9 @@ func validRequest() Request {
 		RepositoryURI: "https://github.com/owner/repo", SubjectSHA: commit, CheckoutSHA: commit,
 		WorkflowRef: "owner/repo/.github/workflows/self-improvement-language-observation.yml@refs/heads/dev",
 		WorkflowSHA: workflowSHA, RunID: 12, RunAttempt: 1, Job: "observation",
-		ArtifactName: "self-improvement-language-observation",
+		ArtifactName:   "self-improvement-language-observation",
 		LogicalSubject: LogicalSubject{Name: "first.json", Digest: observationDigest, Bytes: 10},
-		Decision: "BOUND", Resolution: "EXACT", Reason: "PRODUCER_SUBJECT_BOUND", Digest: "sha256:producer",
+		Decision:       "BOUND", Resolution: "EXACT", Reason: "PRODUCER_SUBJECT_BOUND", Digest: "sha256:producer",
 	}
 	obligations := fixtureObligations()
 	prior := TransportReceipt{

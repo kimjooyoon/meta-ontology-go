@@ -6,13 +6,13 @@ import (
 )
 
 type options struct {
-	receiptPath    string
-	archivePath    string
-	verification   string
-	verifierExit   int
+	receiptPath     string
+	archivePath     string
+	verification    string
+	verifierExit    int
 	verifierVersion string
-	output         string
-	check          bool
+	output          string
+	check           bool
 }
 
 func main() {

@@ -15,22 +15,22 @@ type Signature struct {
 }
 
 type Certificate struct {
-	SubjectAlternativeName    string `json:"subjectAlternativeName"`
-	Issuer                    string `json:"issuer"`
-	GitHubWorkflowTrigger     string `json:"githubWorkflowTrigger"`
-	GitHubWorkflowSHA         string `json:"githubWorkflowSHA"`
-	GitHubWorkflowName        string `json:"githubWorkflowName"`
-	GitHubWorkflowRepository  string `json:"githubWorkflowRepository"`
-	GitHubWorkflowRef         string `json:"githubWorkflowRef"`
-	BuildSignerURI            string `json:"buildSignerURI"`
-	BuildSignerDigest         string `json:"buildSignerDigest"`
-	RunnerEnvironment         string `json:"runnerEnvironment"`
-	SourceRepositoryURI       string `json:"sourceRepositoryURI"`
-	SourceRepositoryDigest    string `json:"sourceRepositoryDigest"`
-	SourceRepositoryRef       string `json:"sourceRepositoryRef"`
-	BuildConfigURI            string `json:"buildConfigURI"`
-	BuildConfigDigest         string `json:"buildConfigDigest"`
-	RunInvocationURI          string `json:"runInvocationURI"`
+	SubjectAlternativeName   string `json:"subjectAlternativeName"`
+	Issuer                   string `json:"issuer"`
+	GitHubWorkflowTrigger    string `json:"githubWorkflowTrigger"`
+	GitHubWorkflowSHA        string `json:"githubWorkflowSHA"`
+	GitHubWorkflowName       string `json:"githubWorkflowName"`
+	GitHubWorkflowRepository string `json:"githubWorkflowRepository"`
+	GitHubWorkflowRef        string `json:"githubWorkflowRef"`
+	BuildSignerURI           string `json:"buildSignerURI"`
+	BuildSignerDigest        string `json:"buildSignerDigest"`
+	RunnerEnvironment        string `json:"runnerEnvironment"`
+	SourceRepositoryURI      string `json:"sourceRepositoryURI"`
+	SourceRepositoryDigest   string `json:"sourceRepositoryDigest"`
+	SourceRepositoryRef      string `json:"sourceRepositoryRef"`
+	BuildConfigURI           string `json:"buildConfigURI"`
+	BuildConfigDigest        string `json:"buildConfigDigest"`
+	RunInvocationURI         string `json:"runInvocationURI"`
 }
 
 type Statement struct {
