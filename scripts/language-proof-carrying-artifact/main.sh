@@ -132,20 +132,24 @@ coherent_evidence_digest="sha256:$(printf '%s' "$coherent_evidence_body" | sha25
 coherent_body="$(jq -c --arg receipt_digest "$coherent_operation_digest" --arg old "$old_operation_evidence_digest" --arg new "$coherent_evidence_digest" '.evidence |= map(if .kind == "OPERATION" then .receipt_digest=$receipt_digest | .evidence_digest=$new else . end) | .claims |= map(.evidence_digests |= map(if . == $old then $new else . end) | .digest="") | .prior_ledger.entries |= map(.evidence_digests |= map(if . == $old then $new else . end)) | .digest=""' "$output/artifact.json")"
 for i in 0 1 2 3 4; do
   claim_body="$(jq -c --argjson i "$i" '.claims[$i].digest=""' <<< "$coherent_body")"
-  claim_digest="sha256:$(printf '%s' "$claim_body" | jq -c --argjson i "$i" '.claims[$i]' | sha256sum | awk '{print $1}')"
+  claim_canonical="$(jq -c --argjson i "$i" '.claims[$i]' <<< "$claim_body")"
+  claim_digest="sha256:$(printf '%s' "$claim_canonical" | sha256sum | awk '{print $1}')"
   coherent_body="$(jq -c --argjson i "$i" --arg digest "$claim_digest" '.claims[$i].digest=$digest' <<< "$coherent_body")"
 done
 previous=""
 for i in 0 1 2 3 4; do
   entry_body="$(jq -c --argjson i "$i" --arg previous "$previous" '.prior_ledger.entries[$i].previous_digest=$previous | .prior_ledger.entries[$i].digest=""' <<< "$coherent_body")"
-  entry_digest="sha256:$(printf '%s' "$entry_body" | jq -c --argjson i "$i" '.prior_ledger.entries[$i]' | sha256sum | awk '{print $1}')"
+  entry_canonical="$(jq -c --argjson i "$i" '.prior_ledger.entries[$i]' <<< "$entry_body")"
+  entry_digest="sha256:$(printf '%s' "$entry_canonical" | sha256sum | awk '{print $1}')"
   coherent_body="$(jq -c --argjson i "$i" --arg previous "$previous" --arg digest "$entry_digest" '.prior_ledger.entries[$i].previous_digest=$previous | .prior_ledger.entries[$i].digest=$digest' <<< "$coherent_body")"
   previous="$entry_digest"
 done
 ledger_body="$(jq -c '.prior_ledger.digest=""' <<< "$coherent_body")"
-ledger_digest="sha256:$(printf '%s' "$ledger_body" | jq -c '.prior_ledger' | sha256sum | awk '{print $1}')"
+ledger_canonical="$(jq -c '.prior_ledger' <<< "$ledger_body")"
+ledger_digest="sha256:$(printf '%s' "$ledger_canonical" | sha256sum | awk '{print $1}')"
 coherent_body="$(jq -c --arg digest "$ledger_digest" '.prior_ledger.digest=$digest' <<< "$coherent_body")"
-coherent_artifact_digest="sha256:$(printf '%s' "$coherent_body" | jq -c '.digest=""' | sha256sum | awk '{print $1}')"
+coherent_artifact_canonical="$(jq -c '.digest=""' <<< "$coherent_body")"
+coherent_artifact_digest="sha256:$(printf '%s' "$coherent_artifact_canonical" | sha256sum | awk '{print $1}')"
 jq -c --arg digest "$coherent_artifact_digest" '.digest=$digest' <<< "$coherent_body" > "$output/coherent-tamper.json"
 
 # An unrelated evidence tamper reseals the inner and outer digests while
