@@ -1,0 +1,26 @@
+package selfimprovementtermination
+namespace meta
+
+entity TerminationInput id "gooo://meta/termination/input"
+entity RunStep id "gooo://meta/termination/run-step"
+entity StateRelation id "gooo://meta/termination/state-relation"
+entity CycleWitness id "gooo://meta/termination/cycle-witness"
+entity DivergenceWitness id "gooo://meta/termination/divergence-witness"
+entity TerminationClaim id "gooo://meta/termination/claim"
+entity TerminationReceipt id "gooo://meta/termination/receipt"
+entity IndependentJudgement id "gooo://meta/termination/independent-judgement"
+
+entity Producer id "gooo://meta/termination/producer/selfimprovementtermination"
+entity Consumer id "gooo://meta/termination/consumer/self-improvement-cycle"
+entity MetaOperation id "gooo://meta/termination/operation/prove-termination"
+entity ProofChoice id "gooo://meta/termination/proof/termination"
+entity TraceStage id "gooo://meta/termination/stage/meta-run"
+entity ClaimTransitionStage id "gooo://meta/termination/stage/claim"
+
+activity ObserveMetaRun(TerminationInput) -> RunStep computes "selfimprovementtermination.Observe"
+activity CompareState(RunStep) -> StateRelation computes "selfimprovementtermination.Compare"
+activity DetectCycle(StateRelation) -> CycleWitness computes "selfimprovementtermination.DetectCycle"
+activity BoundDivergence(StateRelation) -> DivergenceWitness computes "selfimprovementtermination.BoundDivergence"
+activity ClassifyTermination(CycleWitness, DivergenceWitness) -> TerminationClaim computes "selfimprovementtermination.Classify"
+activity EmitTerminationReceipt(TerminationClaim) -> TerminationReceipt computes "selfimprovementtermination.EmitReceipt"
+activity JudgeTermination(TerminationReceipt) -> IndependentJudgement computes "selfimprovementtermination.IndependentJudge"

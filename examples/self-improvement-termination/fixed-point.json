@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/self-improvement-termination-input/v1",
+  "repository": "kimjooyoon/meta-ontology-go",
+  "subject": "self-improvement-cycle",
+  "producer": "selfimprovementtermination.Evaluate",
+  "consumer": "self-improvement-cycle",
+  "meta_operation": "prove-self-improvement-termination",
+  "proof_choice": "TERMINATION",
+  "stage": "META_RUN",
+  "max_steps": 4,
+  "trace": [
+    {
+      "stage": "META_RUN",
+      "step": 1,
+      "before_state": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "after_state": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "before_rank": 4,
+      "after_rank": 4,
+      "decision": "NO_CHANGE",
+      "reason": "NO_CHANGE_FIXED_POINT_OBSERVED"
+    }
+  ]
+}
