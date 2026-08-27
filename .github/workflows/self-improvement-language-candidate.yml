@@ -53,6 +53,7 @@ jobs:
           tool="$RUNNER_TEMP/candidate/transport-tool"
           mkdir -p "$tool"
           go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
+          go build -o "$tool/select-transport-artifact" ./scripts/self-improvement-transport-selector
           cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
       - name: Locate and download immutable observation artifact
         if: github.event_name == 'workflow_run'
@@ -64,27 +65,15 @@ jobs:
           transport="$RUNNER_TEMP/candidate/transport"
           input="$RUNNER_TEMP/candidate/input"
           mkdir -p "$transport" "$input"
-          run_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID")"
-          artifacts_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100")"
-          matches="$(jq \
-            --arg name self-improvement-language-observation \
-            --argjson run "$SOURCE_RUN_ID" \
-            --argjson attempt "$SOURCE_RUN_ATTEMPT" \
-            '[.artifacts[] | select(.name == $name and .expired == false and .workflow_run.id == $run and .workflow_run.run_attempt == $attempt)]' \
-            <<<"$artifacts_json")"
-          if [ "$(jq 'length' <<<"$matches")" -ne 1 ]; then
-            echo "TRANSPORT/locate-immutable-artifact: expected one exact run-attempt artifact" >&2
-            exit 1
-          fi
-          artifact="$(jq '.[0]' <<<"$matches")"
-          jq -n \
-            --arg schema gooo/github-actions-artifact-transport/v1 \
-            --arg repository "$GITHUB_REPOSITORY" \
-            --argjson run "$run_json" \
-            --argjson artifact "$artifact" \
-            '{schema:$schema,repository:$repository,producer_run_id:$run.id,producer_run_attempt:$run.run_attempt,orchestration_head_sha:$run.head_sha,workflow_path:$run.path,artifact_id:$artifact.id,artifact_name:$artifact.name,artifact_digest:$artifact.digest,artifact_size_bytes:$artifact.size_in_bytes}' \
-            > "$transport/metadata.json"
-          artifact_id="$(jq -r '.id' <<<"$artifact")"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$transport/run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$transport/artifacts.json"
+          "$RUNNER_TEMP/candidate/transport-tool/select-transport-artifact" \
+            -run "$transport/run.json" -artifacts "$transport/artifacts.json" \
+            -repository "$GITHUB_REPOSITORY" -expected-run-id "$SOURCE_RUN_ID" \
+            -expected-run-attempt "$SOURCE_RUN_ATTEMPT" \
+            -artifact-name self-improvement-language-observation \
+            -output "$transport/metadata.json"
+          artifact_id="$(jq -r '.artifact_id' "$transport/metadata.json")"
           archive="$transport/observation.zip"
           curl --fail --location --silent --show-error \
             -H "Authorization: Bearer $GH_TOKEN" \
