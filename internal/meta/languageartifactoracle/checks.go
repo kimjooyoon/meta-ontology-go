@@ -27,7 +27,9 @@ func compareArtifact(want projection, artifact sourceArtifact, filename, sourceD
 	result := make([]CheckResult, len(fixedChecks))
 	for index, spec := range fixedChecks {
 		status, observed := "FAIL", "false"
-		if values[index] { status, observed = "PASS", "true" }
+		if values[index] {
+			status, observed = "PASS", "true"
+		}
 		result[index] = CheckResult{ID: spec.id, Status: status, ProofChoice: spec.proof,
 			MetaOperation: spec.operation, Expected: "true", Observed: observed}
 	}
@@ -41,7 +43,9 @@ func semanticCoherent(artifact sourceArtifact) bool {
 
 func firstFailedCheck(checks []CheckResult) string {
 	for _, check := range checks {
-		if check.Status == "FAIL" { return check.ID }
+		if check.Status == "FAIL" {
+			return check.ID
+		}
 	}
 	return ""
 }

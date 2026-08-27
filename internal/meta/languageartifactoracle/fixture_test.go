@@ -31,6 +31,20 @@ func artifactFixture() sourceArtifact {
 
 func artifactJSON(artifact sourceArtifact) []byte {
 	raw, err := json.Marshal(artifact)
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 	return append(raw, '\n')
+}
+
+func cloneArtifact(artifact sourceArtifact) sourceArtifact {
+	raw, err := json.Marshal(artifact)
+	if err != nil {
+		panic(err)
+	}
+	var clone sourceArtifact
+	if err := json.Unmarshal(raw, &clone); err != nil {
+		panic(err)
+	}
+	return clone
 }

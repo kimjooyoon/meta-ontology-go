@@ -29,7 +29,7 @@ func failedReport(head, reason string) Report {
 	report := Report{Schema: ReportSchema, Scope: ReportScope, HeadSHA: head,
 		Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Reason: reason,
 		Summary: Summary{CasesTotal: CaseTotal, UnknownChecks: CaseTotal * CheckTotal},
-		Cases: []CaseResult{}, Indicators: []Indicator{},
+		Cases:   []CaseResult{}, Indicators: []Indicator{},
 		NotClaimed: []string{"artifact binding without a canonical oracle contract"}}
 	report.Digest = reportDigest(report)
 	return report

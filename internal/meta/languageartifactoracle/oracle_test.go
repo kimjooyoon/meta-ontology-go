@@ -4,11 +4,11 @@ import "testing"
 
 func TestIndependentOracleBoundaries(t *testing.T) {
 	genuine := artifactFixture()
-	forged := genuine
+	forged := cloneArtifact(genuine)
 	forged.Entry.Output.ID = "forged://entity/payment"
 	forged.Events[3].Subject = "forged://entity/payment"
 	forged.Digest = artifactDigest(forged)
-	unknown := genuine
+	unknown := cloneArtifact(genuine)
 	unknown.Decision = "UNKNOWN"
 	unknown.Digest = artifactDigest(unknown)
 	cases := []struct {

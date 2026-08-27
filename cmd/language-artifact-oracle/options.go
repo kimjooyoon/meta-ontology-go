@@ -3,7 +3,7 @@ package main
 import "flag"
 
 type options struct {
-	head, contract, source, unsupported, entry string
+	head, contract, source, unsupported, entry          string
 	genuine, forged, unknown, legacy, independence, out string
 }
 

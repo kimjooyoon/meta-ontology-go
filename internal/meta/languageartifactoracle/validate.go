@@ -27,7 +27,9 @@ func Validate(report Report) error {
 		}
 	}
 	for _, indicator := range report.Indicators {
-		if !indicator.Satisfied { return fmt.Errorf("ARTIFACT_ORACLE_INDICATOR_MISMATCH") }
+		if !indicator.Satisfied {
+			return fmt.Errorf("ARTIFACT_ORACLE_INDICATOR_MISMATCH")
+		}
 	}
 	if report.RepositoryWrites != 0 || report.MutationAuthority || report.Digest != reportDigest(report) {
 		return fmt.Errorf("ARTIFACT_ORACLE_EFFECT_OR_DIGEST_MISMATCH")

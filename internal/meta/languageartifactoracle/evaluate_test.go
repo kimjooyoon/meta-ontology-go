@@ -4,10 +4,10 @@ import "testing"
 
 func TestSuiteCapturesSharedValidatorCounterexample(t *testing.T) {
 	genuine := artifactFixture()
-	forged := genuine
+	forged := cloneArtifact(genuine)
 	forged.Entry.Output.ID, forged.Events[3].Subject = "forged://payment", "forged://payment"
 	forged.Digest = artifactDigest(forged)
-	unknown := genuine
+	unknown := cloneArtifact(genuine)
 	unknown.Decision, unknown.Digest = "UNKNOWN", ""
 	unknown.Digest = artifactDigest(unknown)
 	legacy := []byte(`{"decision":"PASS","summary":{"cases_satisfied":4,"cases_total":4}}`)
@@ -17,5 +17,7 @@ func TestSuiteCapturesSharedValidatorCounterexample(t *testing.T) {
 		Genuine: artifactJSON(genuine), Forged: artifactJSON(forged),
 		UnknownDecision: artifactJSON(unknown), LegacyAcceptance: legacy,
 		Independence: IndependenceEvidence{Schema: IndependenceSchema, ProducerDependencies: 0}})
-	if err := Validate(report); err != nil { t.Fatal(err) }
+	if err := Validate(report); err != nil {
+		t.Fatal(err)
+	}
 }
