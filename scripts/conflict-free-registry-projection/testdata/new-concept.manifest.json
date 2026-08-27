@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/language-concept-manifest/v1",
+  "stable_id": "language-registry-projection-fixture",
+  "concept": {
+    "problem": "a new concept should not require edits to existing global registration files",
+    "positive_effect": "one local manifest deterministically extends the generated projection",
+    "meta_operation": "project-local-registry-manifest",
+    "rarity": "UNCOMMON_COMBINATION",
+    "stage": "OPERATING",
+    "novelty_claim": false
+  },
+  "code_bindings": ["scripts/conflict-free-registry-projection"],
+  "metric_bindings": ["gooo.metric.language.registry-projection-fixture.v1"],
+  "use_cases": [
+    {
+      "id": "add-local-concept",
+      "trigger": "a fourth concept is added as one local manifest",
+      "expected_outcome": "GENERATED_PROJECTION_CHANGES_WITH_EXISTING_INPUTS_UNCHANGED"
+    }
+  ],
+  "verification_strategies": ["FOUNDATION", "COHERENCE", "REGRESSION"],
+  "corpus": [],
+  "registry": [],
+  "denominators": [{"id": "gooo/registry-projection-fixture/v1", "values": {"cases": 1}}],
+  "documentation": [],
+  "comments": ["Proof-only fixture; not part of the bounded production slice."]
+}

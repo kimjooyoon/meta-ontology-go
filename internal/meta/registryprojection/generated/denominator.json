@@ -1,0 +1,50 @@
+{
+  "schema": "gooo/conflict-free-registry-denominator/v1",
+  "section_digest": "sha256:581efb6cb6f49c5307cbf5458cd7af38d3a22bf45a84c262a3e51cee7b312143",
+  "entries": [
+    {
+      "stable_id": "language-semantic-model",
+      "id": "gooo/language-semantic-binding/v1",
+      "semantic_digest": "sha256:e98074ed83915e815016458cb46a4f9f9dd84bd3bd37be127d14b44b75c2435f",
+      "values": {
+        "syntax_cases": 30,
+        "syntax_lines": 428,
+        "syntax_sources": 27
+      }
+    },
+    {
+      "stable_id": "language-semantic-model",
+      "id": "gooo/language-semantic-model/v1",
+      "semantic_digest": "sha256:e98074ed83915e815016458cb46a4f9f9dd84bd3bd37be127d14b44b75c2435f",
+      "values": {
+        "authority_laws": 3,
+        "cases": 32,
+        "source_units": 27,
+        "upstream_rejections": 2
+      }
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "id": "gooo/language-syntax-roundtrip/v2",
+      "semantic_digest": "sha256:d6707eb78614772171d8c6b5a619d6cc3ee29961ef4e28409e06e537d5e9f02e",
+      "values": {
+        "cases": 30,
+        "gooo_lines": 428,
+        "invalid_cases": 3,
+        "valid_sources": 27
+      }
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "id": "gooo/toolchain-conformance-corpus/v1",
+      "semantic_digest": "sha256:c744c307c20b8c4705820e4042aa823c177ab707a70bbb4c128c75b108032489",
+      "values": {
+        "cases": 160,
+        "indicators": 151,
+        "proofs": 27,
+        "surfaces": 9,
+        "tamper_cases": 13
+      }
+    }
+  ]
+}

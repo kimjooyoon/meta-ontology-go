@@ -1,0 +1,246 @@
+{
+  "schema": "gooo/conflict-free-registry-projection/v1",
+  "catalog": [
+    {
+      "stable_id": "language-semantic-model",
+      "source_manifest": "examples/language-semantic-model/concept.manifest.json",
+      "problem": "syntax expansion can blur semantic authority and ambient effects",
+      "positive_effect": "normalized IR replay separates meaning, provenance, evidence, and sealed effects",
+      "meta_operation": "prove-staged-semantic-model",
+      "rarity": "UNCOMMON_COMBINATION",
+      "stage": "OPERATING",
+      "novelty_claim": false,
+      "code_bindings": [
+        "cmd/language-semantic-witness",
+        "examples/language-semantic-model",
+        "internal/bidir",
+        "internal/meta/languagereadiness/languagesemantic",
+        "internal/semantic",
+        "internal/syntax"
+      ],
+      "metric_bindings": [
+        "gooo.metric.language.semantic-model-readiness-bps.v1",
+        "gooo.metric.language.semantic-model-registry-drift.guardrail.v1",
+        "gooo.metric.language.semantic-model-source-replays.v1"
+      ],
+      "use_cases": [
+        {
+          "id": "staged-semantic-authority-replay",
+          "trigger": "thirteen sources, three authority laws, and two upstream rejections are replayed",
+          "expected_outcome": "IMPROVED_14_TO_15_OF_24_WITH_18_OF_18_CASES_AND_ZERO_EFFECTS"
+        }
+      ],
+      "verification_strategies": [
+        "COHERENCE",
+        "FOUNDATION",
+        "REGRESSION"
+      ]
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "source_manifest": "examples/language-syntax-roundtrip/concept.manifest.json",
+      "problem": "syntax examples can exist without proving AST, byte, semantic, and lens preservation",
+      "positive_effect": "a complete versioned corpus emits a deterministic external preservation receipt",
+      "meta_operation": "prove-language-syntax-roundtrip",
+      "rarity": "UNCOMMON_COMBINATION",
+      "stage": "OPERATING",
+      "novelty_claim": false,
+      "code_bindings": [
+        "cmd/gooo",
+        "cmd/language-syntax-witness",
+        "examples/language-syntax-roundtrip",
+        "internal/bidir",
+        "internal/meta/languagereadiness/languagesyntax",
+        "internal/syntax"
+      ],
+      "metric_bindings": [
+        "gooo.metric.language.syntax-roundtrip-executed-cases.v1",
+        "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
+        "gooo.metric.language.syntax-roundtrip-registry-drift.guardrail.v1"
+      ],
+      "use_cases": [
+        {
+          "id": "complete-syntax-corpus-replay",
+          "trigger": "seventeen complete source units and three invalid fixtures replay while two package members route to package execution",
+          "expected_outcome": "IMPROVED_13_TO_14_OF_24_WITH_20_OF_20_CASES"
+        }
+      ],
+      "verification_strategies": [
+        "COHERENCE",
+        "FOUNDATION",
+        "REGRESSION"
+      ]
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "source_manifest": "examples/toolchain-conformance/concept.manifest.json",
+      "problem": "independent green tools can disagree on schema, commit identity, evidence, or effect authority",
+      "positive_effect": "a versioned metaprogram closes nine exact-head tool receipts and rejects bounded drift in memory",
+      "meta_operation": "close-toolchain-conformance-ledger",
+      "rarity": "UNCOMMON_COMBINATION",
+      "stage": "OPERATING",
+      "novelty_claim": false,
+      "code_bindings": [
+        "cmd/toolchain-conformance-witness",
+        "examples/toolchain-conformance",
+        "internal/meta/languagereadiness/toolchainconformance"
+      ],
+      "metric_bindings": [
+        "gooo.metric.language.toolchain-conformance-mutation-rejections.v1",
+        "gooo.metric.language.toolchain-conformance-readiness-bps.v1",
+        "gooo.metric.language.toolchain-conformance-registry-drift.guardrail.v1"
+      ],
+      "use_cases": [
+        {
+          "id": "effect-authority-boundary",
+          "trigger": "a receipt reports writes or mutation authority",
+          "expected_outcome": "ZERO_WRITES_ZERO_AUTHORITIES"
+        },
+        {
+          "id": "in-memory-drift-rejection",
+          "trigger": "CI applies thirteen bounded receipt mutations",
+          "expected_outcome": "13_OF_13_FAIL_CLOSED"
+        },
+        {
+          "id": "same-head-surface-closure",
+          "trigger": "CI joins nine versioned tool receipts",
+          "expected_outcome": "9_OF_9_SURFACES_152_OF_152_CASES"
+        }
+      ],
+      "verification_strategies": [
+        "COHERENCE",
+        "FOUNDATION",
+        "REGRESSION"
+      ]
+    }
+  ],
+  "corpus": [
+    {
+      "stable_id": "language-semantic-model",
+      "path": "examples/language-semantic-model/corpus.json",
+      "role": "VERSIONED_CORPUS",
+      "bytes": 7356,
+      "digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "role": "VERSIONED_CORPUS",
+      "bytes": 8981,
+      "digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "path": "examples/toolchain-conformance/corpus.json",
+      "role": "VERSIONED_CORPUS",
+      "bytes": 2508,
+      "digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"
+    }
+  ],
+  "registry": [
+    {
+      "stable_id": "language-semantic-model",
+      "path": "internal/meta/languagereadiness/languagesemantic/registry_definition.go",
+      "role": "HANDWRITTEN_REGISTRY",
+      "bytes": 1432,
+      "digest": "sha256:69bbdc16548e5c4fe7128526503327b6b519a9b15f8f9bf6f63d8b8f99574c0d"
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "path": "internal/meta/languagereadiness/languagesyntax/registry.go",
+      "role": "HANDWRITTEN_REGISTRY",
+      "bytes": 5280,
+      "digest": "sha256:6150c3ad30ac750c462d10756d72e2aef9a9325f99a93fb3edfaeecdf1eaae66"
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "path": "internal/meta/languagereadiness/toolchainconformance/corpus.go",
+      "role": "HANDWRITTEN_REGISTRY",
+      "bytes": 2193,
+      "digest": "sha256:4c6b402091c5c0bc514ea4d5a1d90606dc0a93d01f5457e37c94f89c7b2231aa"
+    }
+  ],
+  "denominator": [
+    {
+      "stable_id": "language-semantic-model",
+      "id": "gooo/language-semantic-binding/v1",
+      "semantic_digest": "sha256:e98074ed83915e815016458cb46a4f9f9dd84bd3bd37be127d14b44b75c2435f",
+      "values": {
+        "syntax_cases": 30,
+        "syntax_lines": 428,
+        "syntax_sources": 27
+      }
+    },
+    {
+      "stable_id": "language-semantic-model",
+      "id": "gooo/language-semantic-model/v1",
+      "semantic_digest": "sha256:e98074ed83915e815016458cb46a4f9f9dd84bd3bd37be127d14b44b75c2435f",
+      "values": {
+        "authority_laws": 3,
+        "cases": 32,
+        "source_units": 27,
+        "upstream_rejections": 2
+      }
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "id": "gooo/language-syntax-roundtrip/v2",
+      "semantic_digest": "sha256:d6707eb78614772171d8c6b5a619d6cc3ee29961ef4e28409e06e537d5e9f02e",
+      "values": {
+        "cases": 30,
+        "gooo_lines": 428,
+        "invalid_cases": 3,
+        "valid_sources": 27
+      }
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "id": "gooo/toolchain-conformance-corpus/v1",
+      "semantic_digest": "sha256:c744c307c20b8c4705820e4042aa823c177ab707a70bbb4c128c75b108032489",
+      "values": {
+        "cases": 160,
+        "indicators": 151,
+        "proofs": 27,
+        "surfaces": 9,
+        "tamper_cases": 13
+      }
+    }
+  ],
+  "documentation": [
+    {
+      "stable_id": "language-semantic-model",
+      "path": "docs/language/language-semantic-model.md",
+      "role": "LANGUAGE_DOCUMENTATION",
+      "bytes": 2631,
+      "digest": "sha256:17dadd546e4a0f80fb91580b06ce2d9f108a440e8f14b322ac490b7f277df786"
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "path": "docs/language/language-syntax-roundtrip.md",
+      "role": "LANGUAGE_DOCUMENTATION",
+      "bytes": 2294,
+      "digest": "sha256:6e227f4b6447542d7540adbf7c6f0ae636da87b4dd6e1f2ca6e5be583fe7ba8b"
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "path": "docs/language/toolchain-conformance.md",
+      "role": "LANGUAGE_DOCUMENTATION",
+      "bytes": 1425,
+      "digest": "sha256:2cc309db2333dc35dae67782890fabb89f22f66d17ee1543d57dfc8fde5a8b8c"
+    },
+    {
+      "stable_id": "language-semantic-model",
+      "path": "examples/language-semantic-model/README.md",
+      "role": "LOCAL_README",
+      "bytes": 1362,
+      "digest": "sha256:98339ca6d6062beb3c2536804c8432c9f8c696c7b56d0e317129d2f1774283ac"
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "path": "examples/language-syntax-roundtrip/README.md",
+      "role": "LOCAL_README",
+      "bytes": 1147,
+      "digest": "sha256:b8ec3009cb82233ca1903eda1bb70ad7adea4a127ab76b349561e13f53e50dc5"
+    }
+  ]
+}

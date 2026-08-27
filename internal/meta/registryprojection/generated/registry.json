@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/conflict-free-registry-registry/v1",
+  "section_digest": "sha256:fd20fbe9d7a3add6c0326aa4daca68c5712e988c199d16992adbb3a949bed10f",
+  "entries": [
+    {
+      "stable_id": "language-semantic-model",
+      "path": "internal/meta/languagereadiness/languagesemantic/registry_definition.go",
+      "role": "HANDWRITTEN_REGISTRY",
+      "bytes": 1432,
+      "digest": "sha256:69bbdc16548e5c4fe7128526503327b6b519a9b15f8f9bf6f63d8b8f99574c0d"
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "path": "internal/meta/languagereadiness/languagesyntax/registry.go",
+      "role": "HANDWRITTEN_REGISTRY",
+      "bytes": 5280,
+      "digest": "sha256:6150c3ad30ac750c462d10756d72e2aef9a9325f99a93fb3edfaeecdf1eaae66"
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "path": "internal/meta/languagereadiness/toolchainconformance/corpus.go",
+      "role": "HANDWRITTEN_REGISTRY",
+      "bytes": 2193,
+      "digest": "sha256:4c6b402091c5c0bc514ea4d5a1d90606dc0a93d01f5457e37c94f89c7b2231aa"
+    }
+  ]
+}

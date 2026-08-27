@@ -1,0 +1,54 @@
+{
+  "schema": "gooo/language-concept-manifest/v1",
+  "stable_id": "language-semantic-model",
+  "concept": {
+    "problem": "syntax expansion can blur semantic authority and ambient effects",
+    "positive_effect": "normalized IR replay separates meaning, provenance, evidence, and sealed effects",
+    "meta_operation": "prove-staged-semantic-model",
+    "rarity": "UNCOMMON_COMBINATION",
+    "stage": "OPERATING",
+    "novelty_claim": false
+  },
+  "code_bindings": [
+    "internal/syntax",
+    "internal/bidir",
+    "internal/semantic",
+    "internal/meta/languagereadiness/languagesemantic",
+    "cmd/language-semantic-witness",
+    "examples/language-semantic-model"
+  ],
+  "metric_bindings": [
+    "gooo.metric.language.semantic-model-readiness-bps.v1",
+    "gooo.metric.language.semantic-model-source-replays.v1",
+    "gooo.metric.language.semantic-model-registry-drift.guardrail.v1"
+  ],
+  "use_cases": [
+    {
+      "id": "staged-semantic-authority-replay",
+      "trigger": "thirteen sources, three authority laws, and two upstream rejections are replayed",
+      "expected_outcome": "IMPROVED_14_TO_15_OF_24_WITH_18_OF_18_CASES_AND_ZERO_EFFECTS"
+    }
+  ],
+  "verification_strategies": ["FOUNDATION", "COHERENCE", "REGRESSION"],
+  "corpus": [
+    {"path": "examples/language-semantic-model/corpus.json", "role": "VERSIONED_CORPUS"}
+  ],
+  "registry": [
+    {"path": "internal/meta/languagereadiness/languagesemantic/registry_definition.go", "role": "HANDWRITTEN_REGISTRY"}
+  ],
+  "denominators": [
+    {
+      "id": "gooo/language-semantic-model/v1",
+      "values": {"cases": 32, "source_units": 27, "authority_laws": 3, "upstream_rejections": 2}
+    },
+    {
+      "id": "gooo/language-semantic-binding/v1",
+      "values": {"syntax_cases": 30, "syntax_sources": 27, "syntax_lines": 428}
+    }
+  ],
+  "documentation": [
+    {"path": "examples/language-semantic-model/README.md", "role": "LOCAL_README"},
+    {"path": "docs/language/language-semantic-model.md", "role": "LANGUAGE_DOCUMENTATION"}
+  ],
+  "comments": ["The local manifest owns this concept's semantic registration input."]
+}

@@ -1,0 +1,50 @@
+{
+  "schema": "gooo/language-concept-manifest/v1",
+  "stable_id": "language-syntax-roundtrip",
+  "concept": {
+    "problem": "syntax examples can exist without proving AST, byte, semantic, and lens preservation",
+    "positive_effect": "a complete versioned corpus emits a deterministic external preservation receipt",
+    "meta_operation": "prove-language-syntax-roundtrip",
+    "rarity": "UNCOMMON_COMBINATION",
+    "stage": "OPERATING",
+    "novelty_claim": false
+  },
+  "code_bindings": [
+    "internal/syntax",
+    "internal/bidir",
+    "internal/meta/languagereadiness/languagesyntax",
+    "cmd/gooo",
+    "cmd/language-syntax-witness",
+    "examples/language-syntax-roundtrip"
+  ],
+  "metric_bindings": [
+    "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
+    "gooo.metric.language.syntax-roundtrip-executed-cases.v1",
+    "gooo.metric.language.syntax-roundtrip-registry-drift.guardrail.v1"
+  ],
+  "use_cases": [
+    {
+      "id": "complete-syntax-corpus-replay",
+      "trigger": "seventeen complete source units and three invalid fixtures replay while two package members route to package execution",
+      "expected_outcome": "IMPROVED_13_TO_14_OF_24_WITH_20_OF_20_CASES"
+    }
+  ],
+  "verification_strategies": ["FOUNDATION", "COHERENCE", "REGRESSION"],
+  "corpus": [
+    {"path": "examples/language-syntax-roundtrip/corpus.json", "role": "VERSIONED_CORPUS"}
+  ],
+  "registry": [
+    {"path": "internal/meta/languagereadiness/languagesyntax/registry.go", "role": "HANDWRITTEN_REGISTRY"}
+  ],
+  "denominators": [
+    {
+      "id": "gooo/language-syntax-roundtrip/v2",
+      "values": {"cases": 30, "valid_sources": 27, "invalid_cases": 3, "gooo_lines": 428}
+    }
+  ],
+  "documentation": [
+    {"path": "examples/language-syntax-roundtrip/README.md", "role": "LOCAL_README"},
+    {"path": "docs/language/language-syntax-roundtrip.md", "role": "LANGUAGE_DOCUMENTATION"}
+  ],
+  "comments": ["The local manifest owns this concept's semantic registration input."]
+}

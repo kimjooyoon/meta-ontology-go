@@ -1,0 +1,118 @@
+{
+  "schema": "gooo/conflict-free-registry-catalog/v1",
+  "section_digest": "sha256:6f15eccf4f4225f35bbad079c17f21802cdeb83f0bb9980d62073b370ffe8518",
+  "entries": [
+    {
+      "stable_id": "language-semantic-model",
+      "source_manifest": "examples/language-semantic-model/concept.manifest.json",
+      "problem": "syntax expansion can blur semantic authority and ambient effects",
+      "positive_effect": "normalized IR replay separates meaning, provenance, evidence, and sealed effects",
+      "meta_operation": "prove-staged-semantic-model",
+      "rarity": "UNCOMMON_COMBINATION",
+      "stage": "OPERATING",
+      "novelty_claim": false,
+      "code_bindings": [
+        "cmd/language-semantic-witness",
+        "examples/language-semantic-model",
+        "internal/bidir",
+        "internal/meta/languagereadiness/languagesemantic",
+        "internal/semantic",
+        "internal/syntax"
+      ],
+      "metric_bindings": [
+        "gooo.metric.language.semantic-model-readiness-bps.v1",
+        "gooo.metric.language.semantic-model-registry-drift.guardrail.v1",
+        "gooo.metric.language.semantic-model-source-replays.v1"
+      ],
+      "use_cases": [
+        {
+          "id": "staged-semantic-authority-replay",
+          "trigger": "thirteen sources, three authority laws, and two upstream rejections are replayed",
+          "expected_outcome": "IMPROVED_14_TO_15_OF_24_WITH_18_OF_18_CASES_AND_ZERO_EFFECTS"
+        }
+      ],
+      "verification_strategies": [
+        "COHERENCE",
+        "FOUNDATION",
+        "REGRESSION"
+      ]
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "source_manifest": "examples/language-syntax-roundtrip/concept.manifest.json",
+      "problem": "syntax examples can exist without proving AST, byte, semantic, and lens preservation",
+      "positive_effect": "a complete versioned corpus emits a deterministic external preservation receipt",
+      "meta_operation": "prove-language-syntax-roundtrip",
+      "rarity": "UNCOMMON_COMBINATION",
+      "stage": "OPERATING",
+      "novelty_claim": false,
+      "code_bindings": [
+        "cmd/gooo",
+        "cmd/language-syntax-witness",
+        "examples/language-syntax-roundtrip",
+        "internal/bidir",
+        "internal/meta/languagereadiness/languagesyntax",
+        "internal/syntax"
+      ],
+      "metric_bindings": [
+        "gooo.metric.language.syntax-roundtrip-executed-cases.v1",
+        "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
+        "gooo.metric.language.syntax-roundtrip-registry-drift.guardrail.v1"
+      ],
+      "use_cases": [
+        {
+          "id": "complete-syntax-corpus-replay",
+          "trigger": "seventeen complete source units and three invalid fixtures replay while two package members route to package execution",
+          "expected_outcome": "IMPROVED_13_TO_14_OF_24_WITH_20_OF_20_CASES"
+        }
+      ],
+      "verification_strategies": [
+        "COHERENCE",
+        "FOUNDATION",
+        "REGRESSION"
+      ]
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "source_manifest": "examples/toolchain-conformance/concept.manifest.json",
+      "problem": "independent green tools can disagree on schema, commit identity, evidence, or effect authority",
+      "positive_effect": "a versioned metaprogram closes nine exact-head tool receipts and rejects bounded drift in memory",
+      "meta_operation": "close-toolchain-conformance-ledger",
+      "rarity": "UNCOMMON_COMBINATION",
+      "stage": "OPERATING",
+      "novelty_claim": false,
+      "code_bindings": [
+        "cmd/toolchain-conformance-witness",
+        "examples/toolchain-conformance",
+        "internal/meta/languagereadiness/toolchainconformance"
+      ],
+      "metric_bindings": [
+        "gooo.metric.language.toolchain-conformance-mutation-rejections.v1",
+        "gooo.metric.language.toolchain-conformance-readiness-bps.v1",
+        "gooo.metric.language.toolchain-conformance-registry-drift.guardrail.v1"
+      ],
+      "use_cases": [
+        {
+          "id": "effect-authority-boundary",
+          "trigger": "a receipt reports writes or mutation authority",
+          "expected_outcome": "ZERO_WRITES_ZERO_AUTHORITIES"
+        },
+        {
+          "id": "in-memory-drift-rejection",
+          "trigger": "CI applies thirteen bounded receipt mutations",
+          "expected_outcome": "13_OF_13_FAIL_CLOSED"
+        },
+        {
+          "id": "same-head-surface-closure",
+          "trigger": "CI joins nine versioned tool receipts",
+          "expected_outcome": "9_OF_9_SURFACES_152_OF_152_CASES"
+        }
+      ],
+      "verification_strategies": [
+        "COHERENCE",
+        "FOUNDATION",
+        "REGRESSION"
+      ]
+    }
+  ]
+}

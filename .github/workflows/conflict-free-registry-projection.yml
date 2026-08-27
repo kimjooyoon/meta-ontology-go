@@ -1,0 +1,105 @@
+name: Conflict-free registry projection
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  projection:
+    if: github.event.pull_request.base.ref == 'dev'
+    name: registry projection conformance
+    runs-on: ubuntu-latest
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Check out the exact pull request head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.EXACT_SHA }}
+
+      - name: Install Go 1.27.0 exactly
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.27.0
+          cache: false
+
+      - name: Assert the exact toolchain
+        run: test "$(go version | awk '{print $3}')" = "go1.27.0"
+
+      - name: Validate formatting in CI
+        run: |
+          files=(
+            scripts/conflict-free-registry-projection/*.go
+            scripts/conflict-free-registry-projection-consumer/*.go
+          )
+          test -z "$(gofmt -l "${files[@]}")"
+
+      - name: Compile focused producer and independent consumer
+        run: go vet ./scripts/conflict-free-registry-projection ./scripts/conflict-free-registry-projection-consumer
+
+      - name: Generate into a temporary directory and preserve repository net-state
+        run: |
+          work="$RUNNER_TEMP/conflict-free-registry-projection"
+          mkdir -p "$work"
+          git status --porcelain --untracked-files=all > "$work/repository-before.txt"
+          go run ./scripts/conflict-free-registry-projection generate \
+            -root "$GITHUB_WORKSPACE" \
+            -output "$work/generated"
+          git status --porcelain --untracked-files=all > "$work/repository-after.txt"
+          cmp "$work/repository-before.txt" "$work/repository-after.txt"
+          go run ./scripts/conflict-free-registry-projection check \
+            -root "$GITHUB_WORKSPACE" \
+            -output "$work/generated"
+
+      - name: Check the committed projection is fresh
+        run: go run ./scripts/conflict-free-registry-projection check -root "$GITHUB_WORKSPACE"
+
+      - name: Reconstruct the projection with the independent consumer
+        run: |
+          work="$RUNNER_TEMP/conflict-free-registry-projection"
+          go run ./scripts/conflict-free-registry-projection-consumer \
+            -root "$GITHUB_WORKSPACE" \
+            -output "$work/consumer-projection.json"
+          cmp "$work/consumer-projection.json" \
+            internal/meta/registryprojection/generated/projection.json
+
+      - name: Run the semantic evidence gate
+        run: |
+          work="$RUNNER_TEMP/conflict-free-registry-projection"
+          go run ./scripts/conflict-free-registry-projection prove \
+            -root "$GITHUB_WORKSPACE" \
+            -evidence "$work/evidence.json" > "$work/evidence.stdout.json"
+          jq -e '
+            .decision == "PASS" and
+            .baseline_touchpoints == 12 and
+            .metric_deltas.manual_global_edits_required.before.numerator == 12 and
+            .metric_deltas.manual_global_edits_required.after.numerator == 0 and
+            .metric_deltas.projection_conflict_surface_bps.before.basis_points == 10000 and
+            .metric_deltas.projection_conflict_surface_bps.after.basis_points == 0 and
+            .projection_replay.decision == "PASS" and
+            .manifest_order_invariant.decision == "PASS" and
+            .semantic_manifest_causality.decision == "PASS" and
+            .comment_only_invariant.decision == "PASS" and
+            .new_concept_fixture.decision == "PASS" and
+            ([.failure_contracts[].diagnostic.decision] | all(. == "FAIL_CLOSED")) and
+            ([.failure_contracts[].diagnostic.stage] | all(length > 0)) and
+            ([.failure_contracts[].diagnostic.step] | all(length > 0)) and
+            ([.failure_contracts[].diagnostic.reason] | all(length > 0)) and
+            ([.strategies[] | select(.selected and .decision == "PASS")] | length) == 3 and
+            ([.claims[].proposition] | length) == ([.claims[].proposition] | unique | length) and
+            ([.claims[].target_digest] | length) == ([.claims[].target_digest] | unique | length) and
+            .repository_net_state.net_state_equal == true and
+            .mutation_authority == "UNKNOWN"
+          ' "$work/evidence.json"
+
+      - name: Publish projection evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conflict-free-registry-projection-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/conflict-free-registry-projection
+          if-no-files-found: error
+          retention-days: 14

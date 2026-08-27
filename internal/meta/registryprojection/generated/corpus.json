@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/conflict-free-registry-corpus/v1",
+  "section_digest": "sha256:31f682fc0eb8e7b83776ed4ba5545c9e05c72569efb7feb412efa8d6061facb7",
+  "entries": [
+    {
+      "stable_id": "language-semantic-model",
+      "path": "examples/language-semantic-model/corpus.json",
+      "role": "VERSIONED_CORPUS",
+      "bytes": 7356,
+      "digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"
+    },
+    {
+      "stable_id": "language-syntax-roundtrip",
+      "path": "examples/language-syntax-roundtrip/corpus.json",
+      "role": "VERSIONED_CORPUS",
+      "bytes": 8981,
+      "digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"
+    },
+    {
+      "stable_id": "toolchain-conformance",
+      "path": "examples/toolchain-conformance/corpus.json",
+      "role": "VERSIONED_CORPUS",
+      "bytes": 2508,
+      "digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"
+    }
+  ]
+}
