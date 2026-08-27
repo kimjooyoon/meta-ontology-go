@@ -19,7 +19,7 @@ func TestContractClosesLanguageSelfImprovementLoop(t *testing.T) {
 	if report.Status != "PASS" {
 		t.Fatalf("status = %s, errors = %v", report.Status, report.Errors)
 	}
-	if report.EntityCount != 15 || report.ActivityCount != 8 {
+	if report.EntityCount != 18 || report.ActivityCount != 9 {
 		t.Fatalf("model = %d entities/%d activities",
 			report.EntityCount, report.ActivityCount)
 	}
