@@ -255,7 +255,7 @@ func sameChanges(left, right []Change) bool {
 		return false
 	}
 	for index := range left {
-		if left[index] != right[index] {
+		if left[index].ObligationID != right[index].ObligationID {
 			return false
 		}
 	}
