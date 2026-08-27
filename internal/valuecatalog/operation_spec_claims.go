@@ -10,7 +10,7 @@ func buildOperationClaims(report Report) []Claim {
 		}
 		claims = append(claims, Claim{
 			ClaimID: "gooo.claim.operation-spec." + check.id + ".v1",
-			Stage: check.stage, Statement: check.statement, Status: status, EvidenceDigest: evidence,
+			Stage:   check.stage, Statement: check.statement, Status: status, EvidenceDigest: evidence,
 		})
 	}
 	return claims
@@ -31,7 +31,7 @@ func closeOperationSpec(report Report) Report {
 		MetricID: OperationSpecMetricID, FixedAxisTotal: OperationSpecAxisTotal,
 		VerifiedTotal: verified, CoverageBasisPoints: verified * 10_000 / OperationSpecAxisTotal,
 		UnknownPathCount: boolInt(report.Decision == DecisionFailClosed),
-		OpenClaims: len(report.Claims) - discharged, DischargedClaims: discharged,
+		OpenClaims:       len(report.Claims) - discharged, DischargedClaims: discharged,
 	}
 	return report
 }

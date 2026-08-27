@@ -59,8 +59,8 @@ func Evaluate(filesystem fs.FS, sourcePath, headSHA string) Report {
 func newReport(path, head string) Report {
 	return Report{
 		Schema: ReportSchema, Decision: DecisionFailClosed, Reason: ReasonSourceReadFailed,
-			Resolution: ResolutionSyntaxOnly, SourcePath: path, HeadSHA: head,
-			ProcessCoordinate: ProcessCoordinate{Stage: "READ", Step: "read-catalog-source", Reason: ReasonSourceReadFailed},
+		Resolution: ResolutionSyntaxOnly, SourcePath: path, HeadSHA: head,
+		ProcessCoordinate: ProcessCoordinate{Stage: "READ", Step: "read-catalog-source", Reason: ReasonSourceReadFailed},
 		NonClaims: []string{
 			"source-only catalog extension achieved in the baseline", "arbitrary primitive operations",
 			"general expressions or multi-file linking", "runtime memory or performance bounds",

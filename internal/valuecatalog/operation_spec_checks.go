@@ -23,7 +23,7 @@ func operationSpecChecks(report Report) []operationSpecCheck {
 		valueexecution.ValidateOperationIR(report.Extension.Operation) == nil
 	evidence := digestValue(struct {
 		Specs     []valueexecution.OperationSpec
-		Baseline valueexecution.OperationIR
+		Baseline  valueexecution.OperationIR
 		Extension valueexecution.OperationIR
 	}{report.OperationSpecs, report.Baseline.Operation, report.Extension.Operation})
 	return []operationSpecCheck{

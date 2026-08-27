@@ -38,10 +38,10 @@ type OperationSpecMetrics struct {
 }
 
 type Claim struct {
-	ClaimID       string `json:"claim_id"`
-	Stage         string `json:"stage"`
-	Statement     string `json:"statement"`
-	Status        string `json:"status"`
+	ClaimID        string `json:"claim_id"`
+	Stage          string `json:"stage"`
+	Statement      string `json:"statement"`
+	Status         string `json:"status"`
 	EvidenceDigest string `json:"evidence_digest"`
 }
 

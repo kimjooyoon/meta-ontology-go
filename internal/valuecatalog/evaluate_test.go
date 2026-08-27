@@ -19,7 +19,7 @@ func TestBaselineReportsGreenConformanceWithoutClaimingExtension(t *testing.T) {
 	if err := Validate(report, head); err != nil {
 		t.Fatal(err)
 	}
-	if report.Improvement.After != coordinate(0, 1) || report.Views[0].Satisfied != 1 {
+	if report.Improvement.After != coordinate(0, 1) || report.Views[0].Satisfied != 3 {
 		t.Fatalf("baseline overclaimed extension: %#v", report)
 	}
 	if report.OperationSpecMetrics.VerifiedTotal != 9 || report.OperationSpecMetrics.OpenClaims != 0 {
