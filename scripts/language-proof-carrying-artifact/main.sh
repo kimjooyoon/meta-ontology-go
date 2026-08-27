@@ -26,13 +26,14 @@ recipe="examples/language-proof-carrying-artifact/recipe.json"
 contract="examples/language-proof-carrying-artifact/contract.json"
 
 snapshot_repo() {
-  local target="$1" entries path kind digest
-  entries="$(git ls-files -co --exclude-standard -z | while IFS= read -r -d '' path; do
+  local target="$1" entries_file path kind digest
+  entries_file="$target.entries.json"
+  git ls-files -co --exclude-standard -z | while IFS= read -r -d '' path; do
     if git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then kind="TRACKED"; else kind="UNTRACKED"; fi
     if [ -f "$path" ]; then digest="sha256:$(sha256sum -- "$path" | awk '{print $1}')"; else digest="MISSING"; fi
     jq -cn --arg kind "$kind" --arg path "$path" --arg digest "$digest" '{kind:$kind,path:$path,digest:$digest}'
-  done | jq -s 'sort_by(.path)')"
-  jq -n --arg schema "gooo/repository-write-set-snapshot/v1" --argjson entries "$entries" '{schema:$schema,version:1,entries:$entries}' > "$target"
+  done | jq -s 'sort_by(.path)' > "$entries_file"
+  jq -n --arg schema "gooo/repository-write-set-snapshot/v1" --slurpfile entries "$entries_file" '{schema:$schema,version:1,entries:$entries[0]}' > "$target"
 }
 
 snapshot_repo "$output/repository-before.json"
@@ -58,12 +59,13 @@ test "$producer_import_numerator" -eq 0
 test "$producer_import_denominator" -gt 0
 
 make_write_set() {
-  local after_entries after_digest changed
+  local after_entries after_digest changed changed_file
   snapshot_repo "$output/repository-after.json"
   after_entries="$(jq -c '.entries' "$output/repository-after.json")"
   after_digest="sha256:$(printf '%s' "$after_entries" | sha256sum | awk '{print $1}')"
-  changed="$(jq -n --argjson before "$before_entries" --argjson after "$after_entries" 'def by_path: reduce .[] as $item ({}; .[$item.path] = $item); ($before | by_path) as $b | ($after | by_path) as $a | (($b | keys) + ($a | keys) | unique | sort) as $paths | [$paths[] as $path | if ($b[$path] != null and $a[$path] != null and $b[$path] == $a[$path]) then empty else {path:$path,before_digest:($b[$path].digest // ""),after_digest:($a[$path].digest // ""),before_kind:($b[$path].kind // ""),after_kind:($a[$path].kind // "")} end]')"
-  jq -n --arg schema "gooo/repository-write-set-observation/v1" --argjson before "$before_entries" --argjson after "$after_entries" --argjson changed "$changed" --arg before_digest "$before_digest" --arg after_digest "$after_digest" '{schema:$schema,version:1,before:$before,after:$after,changed:$changed,before_digest:$before_digest,after_digest:$after_digest,repository_writes:($changed|length),mutation_authority:false,digest:""}' > "$output/write-set.json"
+  changed_file="$output/repository-write-set-changed.json"
+  jq -n --slurpfile before "$output/repository-before.json" --slurpfile after "$output/repository-after.json" 'def by_path: reduce .[] as $item ({}; .[$item.path] = $item); ($before[0].entries | by_path) as $b | ($after[0].entries | by_path) as $a | (($b | keys) + ($a | keys) | unique | sort) as $paths | [$paths[] as $path | if ($b[$path] != null and $a[$path] != null and $b[$path] == $a[$path]) then empty else {path:$path,before_digest:($b[$path].digest // ""),after_digest:($a[$path].digest // ""),before_kind:($b[$path].kind // ""),after_kind:($a[$path].kind // "")} end]' > "$changed_file"
+  jq -n --arg schema "gooo/repository-write-set-observation/v1" --slurpfile before "$output/repository-before.json" --slurpfile after "$output/repository-after.json" --slurpfile changed "$changed_file" --arg before_digest "$before_digest" --arg after_digest "$after_digest" '{schema:$schema,version:1,before:$before[0].entries,after:$after[0].entries,changed:$changed[0],before_digest:$before_digest,after_digest:$after_digest,repository_writes:($changed[0]|length),mutation_authority:false,digest:""}' > "$output/write-set.json"
 }
 
 produce_artifact() {
