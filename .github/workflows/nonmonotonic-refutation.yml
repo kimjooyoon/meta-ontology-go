@@ -162,7 +162,7 @@ jobs:
           sed '/activity ObserveAlpha1/ s/observation_quality=SUFFICIENT/observation_quality=UNRESOLVED/' "$source" > "$variants/unknown-open.gooo"
           sed '/activity ObserveBeta2/ s/observation_quality=SUFFICIENT/observation_quality=UNRESOLVED/' "$source" > "$variants/unknown-after-discharged.gooo"
           sed '/activity ObserveGamma3/ s/;observed=1;observed_material=/;observed=;observed_material=/' "$source" > "$variants/insufficient-after-refuted.gooo"
-          sed '/activity ObserveGamma3/ s/supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/gamma;supersedes_evidence_digest=sha256:[0-9a-f]*/supersedes_claim_id=none;supersedes_evidence_digest=none/' "$source" > "$variants/ordinary-support-after-refuted.gooo"
+          sed '/activity ObserveGamma3/ s/revision_relation=SUPERSEDES;supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/gamma;supersedes_evidence_digest=sha256:[0-9a-f]*/revision_relation=NONE;supersedes_claim_id=none;supersedes_evidence_digest=none/' "$source" > "$variants/ordinary-support-after-refuted.gooo"
           sed "/activity ObserveGamma3/ s/supersedes_evidence_digest=$gamma2_digest/supersedes_evidence_digest=$zero_digest/" "$source" > "$variants/wrong-target.gooo"
           sed '/activity ObserveGamma3/ s/supersedes_evidence_digest=sha256:[0-9a-f]*/supersedes_evidence_digest=none/' "$source" > "$variants/missing-target.gooo"
           sed '/activity ObserveGamma3/ s/proof_choice=REGRESSION/proof_choice=FOUNDATION/' "$source" > "$variants/proof-rejected.gooo"
