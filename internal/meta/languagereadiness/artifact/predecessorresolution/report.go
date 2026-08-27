@@ -20,18 +20,18 @@ type Resolution struct {
 }
 
 type Summary struct {
-	ObservedAttempts     int `json:"observed_attempts"`
-	MissingAttempts      int `json:"missing_attempts"`
-	SelectedAncestors    int `json:"selected_ancestors"`
-	SelectedDepth        int `json:"selected_depth"`
-	SearchLimit          int `json:"search_limit"`
-	ValidCandidates      int `json:"valid_candidates"`
-	AmbiguousCandidates  int `json:"ambiguous_candidates"`
-	RepositoryWrites     int `json:"repository_writes"`
+	ObservedAttempts     int  `json:"observed_attempts"`
+	MissingAttempts      int  `json:"missing_attempts"`
+	SelectedAncestors    int  `json:"selected_ancestors"`
+	SelectedDepth        int  `json:"selected_depth"`
+	SearchLimit          int  `json:"search_limit"`
+	ValidCandidates      int  `json:"valid_candidates"`
+	AmbiguousCandidates  int  `json:"ambiguous_candidates"`
+	RepositoryWrites     int  `json:"repository_writes"`
 	ReadinessDeltaClaims *int `json:"readiness_delta_claims"`
-	CoordinatesCompleted int `json:"coordinates_completed"`
-	CoordinatesTotal     int `json:"coordinates_total"`
-	BasisPoints          int `json:"basis_points"`
+	CoordinatesCompleted int  `json:"coordinates_completed"`
+	CoordinatesTotal     int  `json:"coordinates_total"`
+	BasisPoints          int  `json:"basis_points"`
 }
 
 type Indicator struct {
@@ -61,10 +61,10 @@ type Report struct {
 	Selected                *Resolution      `json:"selected,omitempty"`
 	// Decision describes readiness/predecessor availability. Conformance is
 	// intentionally separate: a well-formed fail-closed report can conform.
-	Conformance             string           `json:"conformance"`
-	Resolution              string           `json:"resolution"`
-	Summary                 Summary          `json:"summary"`
-	Indicators              []Indicator      `json:"indicators"`
-	Proofs                  []Proof          `json:"proofs"`
-	ReportDigest            string           `json:"report_digest"`
+	Conformance  string      `json:"conformance"`
+	Resolution   string      `json:"resolution"`
+	Summary      Summary     `json:"summary"`
+	Indicators   []Indicator `json:"indicators"`
+	Proofs       []Proof     `json:"proofs"`
+	ReportDigest string      `json:"report_digest"`
 }

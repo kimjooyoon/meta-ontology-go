@@ -10,7 +10,7 @@ func Build(input Input) (Report, error) {
 		CurrentHeadSHA:          input.CurrentHeadSHA,
 		ImmediatePredecessorSHA: input.ImmediatePredecessorSHA,
 		Decision:                DecisionFailClosed, Reason: ReasonExhausted,
-		Conformance:             ConformancePass, Resolution: ResolutionLower}
+		Conformance: ConformancePass, Resolution: ResolutionLower}
 	report.Summary.SelectedDepth = -1
 	contiguous := true
 	for index, attempt := range input.Attempts {
