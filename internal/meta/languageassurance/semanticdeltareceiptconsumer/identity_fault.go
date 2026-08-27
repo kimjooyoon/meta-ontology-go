@@ -278,6 +278,14 @@ func validateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observa
 	oldIDs := consumerSortedIDs(original)
 	newIDs := consumerSortedIDs(faulted)
 	graph := consumerGraphForRecords(original, newIDs)
+	if graph.SemanticSlotUnique != graph.SemanticSlotTotal {
+		reason := "IDENTITY_SEMANTIC_SLOT_AMBIGUOUS"
+		return identityFaultGraphFailure(graph, reason), reason
+	}
+	if graph.SemanticSlotUnique != identityFaultSemanticSlotDenominator || graph.SemanticSlotTotal != identityFaultSemanticSlotDenominator {
+		reason := "IDENTITY_SEMANTIC_SLOT_DENOMINATOR_MISMATCH"
+		return identityFaultGraphFailure(graph, reason), reason
+	}
 	expectedEdges, reason := consumerExpectedOrdinalEdges(original, observation, artifact)
 	if reason != "" {
 		return identityFaultGraphFailure(graph, reason), reason

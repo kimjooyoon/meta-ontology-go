@@ -229,8 +229,12 @@ after both independent graph proofs pass. CI records forbidden imports as
 `FAIL_CLOSED / LOWER_RESOLUTION / PRODUCER_IMPORT_FORBIDDEN`.
 The asymmetric probes tamper the producer evidence bytes while comparing them
 with a fresh consumer raw reconstruction, then reverse the direction; both
-must be mismatches (`2/2`) without passing either receipt into the other
-algorithm.
+must be mismatches (`2/2`), recorded as `FIXED_POINT / EXACT`, without passing
+either receipt into the other algorithm. A separate production cardinality probe runs the fixed three-case
+inventory (`6/6` unique, `8/8` unique, and `6/7` with one duplicate); it must
+reject all three (`3/3`) with denominator mismatch for missing/extra slots and
+semantic-slot ambiguity for the duplicate. Cardinality mismatch is recorded at
+`identity-fault / rekey-graph / IDENTITY_SEMANTIC_SLOT_DENOMINATOR_MISMATCH`.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical

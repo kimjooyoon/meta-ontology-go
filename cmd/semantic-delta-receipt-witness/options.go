@@ -11,6 +11,7 @@ type options struct {
 	oldExpectation, newExpectation, persistenceManifest                                                                              string
 	semanticClaimManifest, identityFault, persistenceBefore, persistenceAfter, persistenceAlternateBefore, persistenceAlternateAfter string
 	tamperMatrix, evolution, persistenceProbe                                                                                        bool
+	identityFaultCardinality                                                                                                         bool
 }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
@@ -29,6 +30,7 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	set.BoolVar(&result.evolution, "evolution", false, "reconstruct claim identity expectation evolution")
 	set.StringVar(&result.semanticClaimManifest, "semantic-claim-manifest", "", "reconstruct semantic claim delta fixtures from raw source")
 	set.BoolVar(&result.persistenceProbe, "persistence-probe", false, "compare two raw-source persistence observations")
+	set.BoolVar(&result.identityFaultCardinality, "identity-fault-cardinality", false, "exercise the fixed identity-fault semantic-slot cardinality cases")
 	set.StringVar(&result.identityFault, "identity-fault", "", "apply a separately declared identity fault to the alternate observation")
 	set.StringVar(&result.persistenceBefore, "persistence-before", "", "persistence baseline before source")
 	set.StringVar(&result.persistenceAfter, "persistence-after", "", "persistence baseline after source")
@@ -57,6 +59,9 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	}
 	if result.identityFault != "" && !result.persistenceProbe {
 		return options{}, fmt.Errorf("--identity-fault requires --persistence-probe")
+	}
+	if result.identityFaultCardinality && (!result.persistenceProbe || result.identityFault == "") {
+		return options{}, fmt.Errorf("--identity-fault-cardinality requires --persistence-probe and --identity-fault")
 	}
 	if result.evolution {
 		return result, nil

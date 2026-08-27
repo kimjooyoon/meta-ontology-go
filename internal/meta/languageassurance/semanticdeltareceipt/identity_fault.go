@@ -323,6 +323,10 @@ func validateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observa
 		reason = "IDENTITY_SEMANTIC_SLOT_AMBIGUOUS"
 		return identityFaultGraphFailure(graph, reason), reason
 	}
+	if graph.SemanticSlotUnique != identityFaultSemanticSlotDenominator || graph.SemanticSlotTotal != identityFaultSemanticSlotDenominator {
+		reason = "IDENTITY_SEMANTIC_SLOT_DENOMINATOR_MISMATCH"
+		return identityFaultGraphFailure(graph, reason), reason
+	}
 	if !identityFaultRecordsMatch(original, faulted, observation, artifact, mappedOldToNew, mappedNewToOld) {
 		reason = "IDENTITY_FAULT_MAPPING_RULE_MISMATCH"
 		return identityFaultGraphFailure(graph, reason), reason
@@ -341,6 +345,17 @@ func validateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observa
 	}
 	graph.Decision, graph.Resolution, graph.Stage, graph.Step, graph.Reason = "PASS", ResolutionExact, "identity-fault", "rekey-graph", "IDENTITY_FAULT_GRAPH_EXACT"
 	return graph, ""
+}
+
+// ValidateIdentityFaultGraph is the producer's public production validation
+// entry point for raw observations and mapping rows. It reconstructs the
+// mapping maps from the supplied rows before invoking the graph validator.
+func ValidateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observation IdentityFaultSourcePair, rule string, rows []IdentityFaultMappingRow) (IdentityFaultGraphEvidence, string) {
+	graph, oldToNew, newToOld, reason := validateIdentityFaultMapping(rows, identityFaultIDs(original), identityFaultIDs(faulted), nil)
+	if reason != "" {
+		return identityFaultGraphFailure(graph, reason), reason
+	}
+	return validateIdentityFaultGraph(original, faulted, observation, identityFaultArtifact{Rule: rule}, rows, oldToNew, newToOld)
 }
 
 func identityFaultGraphFailure(graph IdentityFaultGraphEvidence, reason string) IdentityFaultGraphEvidence {

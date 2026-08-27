@@ -63,6 +63,90 @@ func TestConsumerRejectsDuplicateSemanticOrdinalSlot(t *testing.T) {
 	}
 }
 
+func TestConsumerIdentityFaultCardinalityCounterexamplesUsePublicEntry(t *testing.T) {
+	receipt := consumerIdentityFaultFixtureReceipt(t)
+	cases := []struct {
+		id            string
+		unique, total int
+		reason        string
+	}{
+		{id: "six-unique-slots", unique: 6, total: 6, reason: "IDENTITY_SEMANTIC_SLOT_DENOMINATOR_MISMATCH"},
+		{id: "eight-unique-slots", unique: 8, total: 8, reason: "IDENTITY_SEMANTIC_SLOT_DENOMINATOR_MISMATCH"},
+		{id: "seven-slots-one-duplicate", unique: 6, total: 7, reason: "IDENTITY_SEMANTIC_SLOT_AMBIGUOUS"},
+	}
+	for _, testCase := range cases {
+		original, faulted, rows := consumerIdentityFaultCardinalityCase(receipt, testCase.id)
+		graph, reason := ValidateIdentityFaultGraph(original, faulted, receipt.Alternate.SourcePair, identityFaultRule, rows)
+		if reason != testCase.reason || graph.Decision != decisionFailClosed || graph.Resolution != resolutionLower || graph.Stage != "identity-fault" || graph.Step != "rekey-graph" || graph.Reason != testCase.reason || graph.SemanticSlotDenominator != 7 || graph.SemanticSlotUnique != testCase.unique || graph.SemanticSlotTotal != testCase.total {
+			t.Fatalf("cardinality case=%s reason=%s graph=%+v want=%s %d/%d", testCase.id, reason, graph, testCase.reason, testCase.unique, testCase.total)
+		}
+	}
+}
+
+func consumerIdentityFaultCardinalityCase(receipt IdentityFaultReceipt, caseID string) ([]ClaimIdentityRecord, []ClaimIdentityRecord, []IdentityFaultMappingRow) {
+	original := append([]ClaimIdentityRecord(nil), receipt.Alternate.Records...)
+	faulted := append([]ClaimIdentityRecord(nil), receipt.FaultedAlternate.Records...)
+	rows := append([]IdentityFaultMappingRow(nil), receipt.Graph.Mapping...)
+	switch caseID {
+	case "six-unique-slots":
+		oldID := original[len(original)-1].StableID
+		newID := ""
+		for _, row := range rows {
+			if row.OldStableID == oldID {
+				newID = row.NewStableID
+			}
+		}
+		original = filterConsumerIdentityFaultRecords(original, oldID)
+		faulted = filterConsumerIdentityFaultRecords(faulted, newID)
+		rows = filterConsumerIdentityFaultRows(rows, oldID)
+	case "eight-unique-slots":
+		originalExtra := original[0]
+		originalExtra.StableID = originalExtra.StableID + "/cardinality-extra"
+		originalExtra.Kind = originalExtra.Kind + "-cardinality-extra"
+		originalExtra.PreservationOf = ""
+		faultedExtra := faulted[0]
+		faultedExtra.StableID = faultedExtra.StableID + "/cardinality-extra"
+		faultedExtra.Kind = originalExtra.Kind
+		faultedExtra.PreservationOf = ""
+		original = append(original, originalExtra)
+		faulted = append(faulted, faultedExtra)
+		rows = append(rows, IdentityFaultMappingRow{OldStableID: originalExtra.StableID, NewStableID: faultedExtra.StableID, Ordinal: 7})
+	case "seven-slots-one-duplicate":
+		copyConsumerIdentityFaultSemanticSlot(&original[1], original[0])
+		copyConsumerIdentityFaultSemanticSlot(&faulted[1], faulted[0])
+	}
+	return original, faulted, rows
+}
+
+func filterConsumerIdentityFaultRecords(records []ClaimIdentityRecord, stableID string) []ClaimIdentityRecord {
+	filtered := make([]ClaimIdentityRecord, 0, len(records)-1)
+	for _, record := range records {
+		if record.StableID != stableID {
+			filtered = append(filtered, record)
+		}
+	}
+	return filtered
+}
+
+func filterConsumerIdentityFaultRows(rows []IdentityFaultMappingRow, oldID string) []IdentityFaultMappingRow {
+	filtered := make([]IdentityFaultMappingRow, 0, len(rows)-1)
+	for _, row := range rows {
+		if row.OldStableID != oldID {
+			filtered = append(filtered, row)
+		}
+	}
+	return filtered
+}
+
+func copyConsumerIdentityFaultSemanticSlot(target *ClaimIdentityRecord, source ClaimIdentityRecord) {
+	target.Kind = source.Kind
+	target.RelationRole = source.RelationRole
+	target.NormalizedProposition = source.NormalizedProposition
+	target.PropositionDigest = source.PropositionDigest
+	target.TargetAddress = source.TargetAddress
+	target.TargetAddressDigest = source.TargetAddressDigest
+}
+
 func consumerIdentityFaultFixtureReceipt(t *testing.T) IdentityFaultReceipt {
 	t.Helper()
 	return IdentityFaultReceiptFromFiles(IdentityFaultInput{

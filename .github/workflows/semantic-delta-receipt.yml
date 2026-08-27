@@ -286,10 +286,10 @@ jobs:
             .identity_fault_receipts_exact == true and .identity_fault_opaque_evidence_exact == true and
             .identity_fault_asymmetric_probe_numerator == 2 and .identity_fault_asymmetric_probe_denominator == 2 and
             .producer_tampered_consumer_raw_mismatch == true and .consumer_tampered_producer_raw_mismatch == true and
-            .producer_tampered_consumer_probe.decision == "PASS" and .producer_tampered_consumer_probe.resolution == "EXACT" and
+            .producer_tampered_consumer_probe.decision == "FIXED_POINT" and .producer_tampered_consumer_probe.resolution == "EXACT" and
             .producer_tampered_consumer_probe.stage == "identity-fault" and .producer_tampered_consumer_probe.step == "compare-tampered-producer-receipt" and
             .producer_tampered_consumer_probe.reason == "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH" and
-            .consumer_tampered_producer_probe.decision == "PASS" and .consumer_tampered_producer_probe.resolution == "EXACT" and
+            .consumer_tampered_producer_probe.decision == "FIXED_POINT" and .consumer_tampered_producer_probe.resolution == "EXACT" and
             .consumer_tampered_producer_probe.stage == "identity-fault" and .consumer_tampered_producer_probe.step == "compare-tampered-consumer-receipt" and
             .consumer_tampered_producer_probe.reason == "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH" and
             .producer_identity_fault_receipt.reconstruction_exact == true and .consumer_identity_fault_receipt.reconstruction_exact == true and
@@ -364,6 +364,24 @@ jobs:
             ((.producer_identity_fault_receipt.persistence.removed_ids | length) == 7) and ((.producer_identity_fault_receipt.persistence.added_ids | length) == 7) and
             ((.consumer_identity_fault_receipt.persistence.removed_ids | length) == 7) and ((.consumer_identity_fault_receipt.persistence.added_ids | length) == 7)
           ' "$out/persistence-identity-fault.json"
+          go run ./cmd/semantic-delta-receipt-witness --persistence-probe --identity-fault-cardinality \
+            --identity-fault "$out/claim-identity-fault.json" \
+            --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
+            --persistence-alternate-before "$root/persistence-equivalent-before.gooo" --persistence-alternate-after "$root/persistence-equivalent-after.gooo" \
+            --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/identity-fault-cardinality.json"
+          jq -e '
+            .schema == "gooo/semantic-delta-claim-identity-fault-cardinality/v1" and
+            .denominator_id == "identity-fault-semantic-slot-cardinality/v1" and
+            .expected_case_ids == ["six-unique-slots","eight-unique-slots","seven-slots-one-duplicate"] and
+            .observed_case_ids == .expected_case_ids and
+            .cardinality_counterexample_numerator == 3 and .cardinality_counterexample_denominator == 3 and
+            .decision == "PASS" and .resolution == "EXACT" and .stage == "identity-fault" and .step == "cardinality-counterexamples" and
+            .reason == "IDENTITY_SEMANTIC_SLOT_CARDINALITY_COUNTEREXAMPLES_EXACT" and
+            ([.cases[] | select(.passed == true and .producer_consumer_exact == true and .producer_decision == "FAIL_CLOSED" and .consumer_decision == "FAIL_CLOSED" and .producer_resolution == "LOWER_RESOLUTION" and .consumer_resolution == "LOWER_RESOLUTION" and .producer_stage == "identity-fault" and .consumer_stage == "identity-fault" and .producer_step == "rekey-graph" and .consumer_step == "rekey-graph" and .producer_denominator == 7 and .consumer_denominator == 7 and .producer_reason == .expected_reason and .consumer_reason == .expected_reason)] | length) == 3 and
+            ([.cases[] | select(.case_id == "six-unique-slots" and .expected_unique == 6 and .expected_total == 6 and .expected_reason == "IDENTITY_SEMANTIC_SLOT_DENOMINATOR_MISMATCH" and .producer_unique == 6 and .producer_total == 6 and .producer_denominator == 7 and .consumer_unique == 6 and .consumer_total == 6 and .consumer_denominator == 7)] | length) == 1 and
+            ([.cases[] | select(.case_id == "eight-unique-slots" and .expected_unique == 8 and .expected_total == 8 and .expected_reason == "IDENTITY_SEMANTIC_SLOT_DENOMINATOR_MISMATCH" and .producer_unique == 8 and .producer_total == 8 and .producer_denominator == 7 and .consumer_unique == 8 and .consumer_total == 8 and .consumer_denominator == 7)] | length) == 1 and
+            ([.cases[] | select(.case_id == "seven-slots-one-duplicate" and .expected_unique == 6 and .expected_total == 7 and .expected_reason == "IDENTITY_SEMANTIC_SLOT_AMBIGUOUS" and .producer_unique == 6 and .producer_total == 7 and .producer_denominator == 7 and .consumer_unique == 6 and .consumer_total == 7 and .consumer_denominator == 7)] | length) == 1
+          ' "$out/identity-fault-cardinality.json"
           producer_algorithm_source='internal/meta/languageassurance/semanticdeltareceipt/identity_fault.go'
           consumer_algorithm_source='internal/meta/languageassurance/semanticdeltareceiptconsumer/identity_fault.go'
           producer_algorithm_bytes="$(wc -c < "$producer_algorithm_source" | tr -d '[:space:]')"
@@ -395,7 +413,7 @@ jobs:
           jq -n --slurpfile report "$out/persistence-identity-fault.json" '
             {asymmetric_receipt_probe_numerator:$report[0].identity_fault_asymmetric_probe_numerator, asymmetric_receipt_probe_denominator:$report[0].identity_fault_asymmetric_probe_denominator, asymmetric_receipt_probe_bps:(if $report[0].identity_fault_asymmetric_probe_numerator == 2 then 10000 else 0 end), producer_tampered_consumer_raw_mismatch:$report[0].producer_tampered_consumer_raw_mismatch, consumer_tampered_producer_raw_mismatch:$report[0].consumer_tampered_producer_raw_mismatch, producer_tampered_consumer_probe:$report[0].producer_tampered_consumer_probe, consumer_tampered_producer_probe:$report[0].consumer_tampered_producer_probe, decision:(if ($report[0].identity_fault_asymmetric_probe_numerator == 2 and $report[0].identity_fault_asymmetric_probe_denominator == 2) then "PASS" else "FAIL_CLOSED" end), resolution:(if ($report[0].identity_fault_asymmetric_probe_numerator == 2 and $report[0].identity_fault_asymmetric_probe_denominator == 2) then "EXACT" else "LOWER_RESOLUTION" end), stage:"identity-fault", step:"asymmetric-opaque-receipt-probes", reason:(if ($report[0].identity_fault_asymmetric_probe_numerator == 2 and $report[0].identity_fault_asymmetric_probe_denominator == 2) then "RECEIPT_TAMPER_DID_NOT_CROSS_INPUT_BOUNDARY" else "ASYMMETRIC_RECEIPT_PROBE_MISMATCH" end)}
           ' > "$out/identity-fault-asymmetric-probes.json"
-          jq -e '.asymmetric_receipt_probe_numerator == 2 and .asymmetric_receipt_probe_denominator == 2 and .asymmetric_receipt_probe_bps == 10000 and .producer_tampered_consumer_raw_mismatch == true and .consumer_tampered_producer_raw_mismatch == true and .producer_tampered_consumer_probe.decision == "PASS" and .producer_tampered_consumer_probe.reason == "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH" and .consumer_tampered_producer_probe.decision == "PASS" and .consumer_tampered_producer_probe.reason == "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH" and .decision == "PASS" and .resolution == "EXACT"' "$out/identity-fault-asymmetric-probes.json"
+          jq -e '.asymmetric_receipt_probe_numerator == 2 and .asymmetric_receipt_probe_denominator == 2 and .asymmetric_receipt_probe_bps == 10000 and .producer_tampered_consumer_raw_mismatch == true and .consumer_tampered_producer_raw_mismatch == true and .producer_tampered_consumer_probe.decision == "FIXED_POINT" and .producer_tampered_consumer_probe.resolution == "EXACT" and .producer_tampered_consumer_probe.reason == "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH" and .consumer_tampered_producer_probe.decision == "FIXED_POINT" and .consumer_tampered_producer_probe.resolution == "EXACT" and .consumer_tampered_producer_probe.reason == "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH" and .decision == "PASS" and .resolution == "EXACT"' "$out/identity-fault-asymmetric-probes.json"
           go run ./cmd/semantic-delta-receipt-witness --persistence-probe \
             --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
             --persistence-alternate-before "$root/claim-addition-before.gooo" --persistence-alternate-after "$root/claim-addition-after.gooo" \

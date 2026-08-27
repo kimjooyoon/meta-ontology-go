@@ -47,6 +47,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 0
 	}
 	if options.persistenceProbe {
+		if options.identityFaultCardinality {
+			return writeJSON(options.output, runIdentityFaultCardinalityProbe(options), stdout, stderr)
+		}
 		return writeJSON(options.output, runPersistenceProbe(options), stdout, stderr)
 	}
 	if options.tamperMatrix {
