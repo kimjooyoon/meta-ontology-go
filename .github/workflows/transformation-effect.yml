@@ -394,7 +394,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
       - name: Download exact platform release receipts
@@ -403,7 +403,8 @@ jobs:
           pattern: toolchain-release-platform-*-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-release-platforms
           merge-multiple: true
-      - name: Prove merged autonomous change proposal
+      - name: Select exact proposal predecessor
+        id: proposal-predecessor
         env:
           GITHUB_TOKEN: ${{ github.token }}
         shell: bash
@@ -414,11 +415,16 @@ jobs:
             predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
           fi
           for suffix in a b; do
+            observation_args=(--observation-replay "$RUNNER_TEMP/language-readiness-proposal-observation.json")
+            if [[ "$suffix" == "a" ]]; then
+              observation_args=(--observation-capture "$RUNNER_TEMP/language-readiness-proposal-observation.json")
+            fi
             go run ./cmd/language-readiness-witness/proposal-promotion \
               --root "$GITHUB_WORKSPACE" \
               --repository "$GITHUB_REPOSITORY" \
               --current-head "$HEAD_SHA" \
               --predecessor-sha "$predecessor_sha" \
+              "${observation_args[@]}" \
               --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
           done
           cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
@@ -429,7 +435,74 @@ jobs:
             --current-head "$HEAD_SHA" \
             --predecessor-sha "$predecessor_sha" \
             --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          proposal_schema="$(jq -r '.schema' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
+          if [[ "$proposal_schema" == "gooo/autonomous-change-proposal-predecessor-resolution/v1" ]]; then
+            jq -e '
+              .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
+              .conformance == "PASS" and .decision == "FAIL_CLOSED" and
+              .resolution == "LOWER_RESOLUTION" and
+              .stage == "proposal-predecessor" and
+              .step == "select-exact-predecessor" and
+              .promotion_authority == false and .readiness_delta == null and
+              (.reason as $reason |
+                ["PROPOSAL_PREDECESSOR_NOT_FOUND",
+                "PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN",
+                "PROPOSAL_PREDECESSOR_AMBIGUOUS",
+                "PROPOSAL_SYNTHESIS_JOB_CARDINALITY",
+                "PROPOSAL_RUN_PAGINATION_INCOMPLETE",
+                "PROPOSAL_JOB_PAGINATION_INCOMPLETE",
+                "PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE",
+                "PROPOSAL_API_UNAVAILABLE",
+                "PROPOSAL_API_PERMISSION_DENIED",
+                "PROPOSAL_RESPONSE_MALFORMED",
+                "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE",
+                "PROPOSAL_REDIRECT_ORIGIN_MISMATCH"] | index($reason)) != null)
+            ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+            echo "mode=BLOCKED" >> "$GITHUB_OUTPUT"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+            jq -r '"### Proposal predecessor conformance\n- conformance: `\(.conformance)`\n- proposal availability/readiness decision: `\(.decision)`\n- resolution: `\(.resolution)`\n- coordinate: `\(.stage)/\(.step)`\n- reason: `\(.reason)`\n- promotion authority: `\(.promotion_authority)`\n- readiness delta: `\(.readiness_delta // "UNKNOWN")`\n- receipt reconstruction: `2/2`"' \
+              "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$proposal_schema" == "gooo/autonomous-change-proposal-promotion/v2" ]]; then
+            jq -e '.schema == "gooo/autonomous-change-proposal-promotion/v2" and .decision == "PASS" and .repository_mutation_authorized == false' \
+              "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+            echo "mode=SELECTED" >> "$GITHUB_OUTPUT"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "FAIL_CLOSED: malformed proposal predecessor receipt" >&2
+            exit 1
+          fi
+      - name: Upload proposal predecessor raw observation cache
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-observation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-observation.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload proposal predecessor resolution receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-predecessor-receipt-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Assert blocked proposal predecessor remains non-authorizing
+        if: steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode == 'BLOCKED'
+        run: |
+          set -euo pipefail
+          test "${{ steps.proposal-predecessor.outputs.conformance-exit-code }}" = "0"
+          jq -e '
+            .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
+            .conformance == "PASS" and .decision == "FAIL_CLOSED" and
+            .resolution == "LOWER_RESOLUTION" and
+            .stage == "proposal-predecessor" and .step == "select-exact-predecessor" and
+            .promotion_authority == false and .readiness_delta == null and
+            .selection.decision != "SELECTED"
+          ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          echo "proposal predecessor BLOCKED conformance exited 0; proposal projection, promotion, and readiness authority are skipped"
       - name: Project v2 proposal evidence to the unchanged v1 guard contract
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         run: |
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/proposal-compat \
@@ -451,6 +524,7 @@ jobs:
             --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
             --check
       - name: Upload merged autonomous change proposal promotion
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
@@ -458,6 +532,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload current v2 proposal evidence
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
@@ -465,6 +540,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload proposal compatibility receipt
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
@@ -473,6 +549,7 @@ jobs:
           retention-days: 30
       - name: Select exact readiness predecessor
         id: readiness-predecessor
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -718,7 +795,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload readiness predecessor failure receipt
-        if: always()
+        if: always() && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-receipt-${{ env.HEAD_SHA }}
@@ -726,7 +803,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload optional readiness predecessor diagnostics
-        if: always()
+        if: always() && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-diagnostic-${{ env.HEAD_SHA }}
@@ -737,7 +814,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       - name: Prove guarded promotion capability foundation
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
@@ -770,7 +847,7 @@ jobs:
             "${archive_args[@]}" \
             --check "$RUNNER_TEMP/language-readiness-guarded-capability-a.json"
       - name: Upload guarded promotion capability
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-guarded-capability-${{ env.HEAD_SHA }}
@@ -778,7 +855,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Produce, replay, and consume exact-head concepts
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         env:
           PREDECESSOR_MODE: ${{ steps.readiness-predecessor.outputs.mode }}
         shell: bash
@@ -1346,7 +1423,7 @@ jobs:
             )
           fi
       - name: Measure exact predecessor bindings
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         run: |
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/predecessor-binding \
@@ -1385,7 +1462,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload exact-head predecessor bindings
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-binding-${{ env.HEAD_SHA }}
@@ -1393,7 +1470,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload exact-head language concepts
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-concept-artifact-${{ env.HEAD_SHA }}
@@ -1401,7 +1478,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language semantic model
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-semantic-model-${{ env.HEAD_SHA }}
@@ -1409,7 +1486,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head semantic readiness binding
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-semantic-readiness-binding-${{ env.HEAD_SHA }}
@@ -1417,7 +1494,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head deterministic query
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-deterministic-query-${{ env.HEAD_SHA }}
@@ -1425,7 +1502,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head deterministic query readiness binding
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
@@ -1433,7 +1510,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head Go interoperation
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-go-interoperation-${{ env.HEAD_SHA }}
@@ -1441,7 +1518,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head Go interoperation readiness binding
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-go-interoperation-readiness-binding-${{ env.HEAD_SHA }}
@@ -1449,7 +1526,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head diagnostic provenance
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-diagnostic-provenance-${{ env.HEAD_SHA }}
@@ -1457,7 +1534,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head diagnostic provenance readiness binding
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-diagnostic-provenance-readiness-binding-${{ env.HEAD_SHA }}
@@ -1465,7 +1542,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language package runtime
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-package-runtime-${{ env.HEAD_SHA }}
@@ -1473,7 +1550,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head toolchain CLI
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-cli-${{ env.HEAD_SHA }}
@@ -1481,7 +1558,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head toolchain format/fix
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-format-fix-${{ env.HEAD_SHA }}
@@ -1489,7 +1566,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head toolchain conformance
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-conformance-${{ env.HEAD_SHA }}
@@ -1497,7 +1574,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head toolchain LSP
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-lsp-${{ env.HEAD_SHA }}
@@ -1505,7 +1582,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head cross-platform release
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-cross-platform-release-${{ env.HEAD_SHA }}
@@ -1513,7 +1590,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-artifact-${{ env.HEAD_SHA }}
@@ -1521,7 +1598,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload exact-head executable use cases
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-executable-use-cases-${{ env.HEAD_SHA }}
@@ -1530,7 +1607,7 @@ jobs:
           retention-days: 30
 
       - name: Upload exact-head language syntax roundtrip
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-syntax-roundtrip-${{ env.HEAD_SHA }}
@@ -1539,7 +1616,7 @@ jobs:
           retention-days: 30
 
       - name: Upload exact-head vertical slice closure shadow
-        if: steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v7
         with:
           name: vertical-slice-closure-shadow-${{ env.HEAD_SHA }}

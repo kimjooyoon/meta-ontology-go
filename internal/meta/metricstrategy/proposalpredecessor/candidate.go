@@ -25,7 +25,7 @@ func collectRun(ctx context.Context, client *http.Client, apiURL, token, reposit
 	}
 	collection.ObservedArtifacts += len(artifacts.Artifacts)
 	if artifacts.TotalCount != len(artifacts.Artifacts) {
-		return fmt.Errorf("proposal predecessor artifact pagination is unresolved")
+		return &Failure{Reason: ReasonArtifactPaginationIncomplete}
 	}
 	for _, artifact := range artifacts.Artifacts {
 		if artifact.Name != "metric-strategy-"+predecessorSHA {
@@ -35,6 +35,9 @@ func collectRun(ctx context.Context, client *http.Client, apiURL, token, reposit
 		candidate, err := collectArtifact(ctx, client, token, predecessorSHA, run, job, artifact)
 		if err != nil {
 			collection.Unresolved++
+			if collection.FailureReason == "" {
+				collection.FailureReason = FailureReason(err)
+			}
 			continue
 		}
 		collection.Candidates = append(collection.Candidates, candidate)
@@ -44,18 +47,21 @@ func collectRun(ctx context.Context, client *http.Client, apiURL, token, reposit
 
 func collectArtifact(ctx context.Context, client *http.Client, token, predecessorSHA string, run githubRun, job githubJob, artifact githubArtifact) (Candidate, error) {
 	if artifact.Expired || artifact.ID < 1 || artifact.ArchiveDownloadURL == "" {
-		return Candidate{}, fmt.Errorf("proposal predecessor artifact is unavailable")
+		return Candidate{}, &Failure{Reason: ReasonArtifactPayloadUnavailable, Err: fmt.Errorf("proposal predecessor artifact is unavailable")}
 	}
 	archive, err := getBytes(ctx, client, artifact.ArchiveDownloadURL, token)
 	if err != nil {
-		return Candidate{}, err
+		if FailureReason(err) != "" {
+			return Candidate{}, err
+		}
+		return Candidate{}, &Failure{Reason: ReasonArtifactPayloadUnavailable, Err: err}
 	}
 	payload, report, fileSHA, err := decodeProposalArchive(archive)
 	if err != nil {
 		return Candidate{}, err
 	}
 	if report.SubjectSHA != predecessorSHA || report.Decision != "PASS" || report.Reason != "CHANGE_PROPOSAL_CONTRACT_READY" {
-		return Candidate{}, fmt.Errorf("proposal predecessor contract identity diverged")
+		return Candidate{}, &Failure{Reason: ReasonArtifactPayloadUnavailable, Err: fmt.Errorf("proposal predecessor contract identity diverged")}
 	}
 	selected := Selected{
 		RunID: run.ID, RunAttempt: run.RunAttempt, HeadSHA: run.HeadSHA,

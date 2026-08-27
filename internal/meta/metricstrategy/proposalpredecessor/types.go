@@ -1,6 +1,28 @@
 package proposalpredecessor
 
-const Schema = "gooo/autonomous-change-proposal-predecessor-selection/v2"
+const (
+	Schema                             = "gooo/autonomous-change-proposal-predecessor-selection/v2"
+	ResolutionSchema                   = "gooo/autonomous-change-proposal-predecessor-resolution/v1"
+	ReasonSelected                     = "PROPOSAL_PREDECESSOR_SELECTED"
+	ReasonNotFound                     = "PROPOSAL_PREDECESSOR_NOT_FOUND"
+	ReasonAmbiguous                    = "PROPOSAL_PREDECESSOR_AMBIGUOUS"
+	ReasonEvidenceUnknown              = "PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN"
+	ReasonJobCardinality               = "PROPOSAL_SYNTHESIS_JOB_CARDINALITY"
+	ReasonRunPaginationIncomplete      = "PROPOSAL_RUN_PAGINATION_INCOMPLETE"
+	ReasonJobPaginationIncomplete      = "PROPOSAL_JOB_PAGINATION_INCOMPLETE"
+	ReasonArtifactPaginationIncomplete = "PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE"
+	ReasonAPIUnavailable               = "PROPOSAL_API_UNAVAILABLE"
+	ReasonAPIPermissionDenied          = "PROPOSAL_API_PERMISSION_DENIED"
+	ReasonResponseMalformed            = "PROPOSAL_RESPONSE_MALFORMED"
+	ReasonArtifactPayloadUnavailable   = "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE"
+	ReasonRedirectOriginMismatch       = "PROPOSAL_REDIRECT_ORIGIN_MISMATCH"
+
+	ResolutionConformancePass = "PASS"
+	ResolutionFailClosed      = "FAIL_CLOSED"
+	ResolutionLower           = "LOWER_RESOLUTION"
+	ResolutionStage           = "proposal-predecessor"
+	ResolutionStep            = "select-exact-predecessor"
+)
 
 type Selected struct {
 	RunID                  int64  `json:"run_id"`
@@ -40,6 +62,7 @@ type Collection struct {
 	ExactJobs         int
 	Unresolved        int
 	Candidates        []Candidate
+	FailureReason     string
 }
 
 type Report struct {
@@ -57,5 +80,22 @@ type Report struct {
 }
 
 func (report Report) Ready() bool {
-	return report.Decision == "SELECTED" && report.Reason == "PROPOSAL_PREDECESSOR_SELECTED"
+	return report.Decision == "SELECTED" && report.Reason == ReasonSelected
+}
+
+type ResolutionReceipt struct {
+	Schema             string  `json:"schema"`
+	Repository         string  `json:"repository"`
+	CurrentHeadSHA     string  `json:"current_head_sha"`
+	PredecessorSHA     string  `json:"predecessor_sha"`
+	Conformance        string  `json:"conformance"`
+	Decision           string  `json:"decision"`
+	Reason             string  `json:"reason"`
+	Resolution         string  `json:"resolution"`
+	Stage              string  `json:"stage"`
+	Step               string  `json:"step"`
+	PromotionAuthority bool    `json:"promotion_authority"`
+	ReadinessDelta     *int    `json:"readiness_delta"`
+	Selection          *Report `json:"selection,omitempty"`
+	ReportDigest       string  `json:"report_digest"`
 }

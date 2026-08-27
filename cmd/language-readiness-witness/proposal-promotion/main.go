@@ -9,6 +9,7 @@ import (
 type config struct {
 	root, repository, currentHead, predecessorSHA string
 	output, check, apiURL, token                  string
+	observationCapture, observationReplay         string
 }
 
 func main() {
@@ -22,6 +23,8 @@ func main() {
 	flag.StringVar(&cfg.predecessorSHA, "predecessor-sha", "", "merged evidence commit sha")
 	flag.StringVar(&cfg.output, "output", "", "new receipt outside the repository")
 	flag.StringVar(&cfg.check, "check", "", "existing receipt outside the repository")
+	flag.StringVar(&cfg.observationCapture, "observation-capture", "", "raw GitHub observation cache outside the repository")
+	flag.StringVar(&cfg.observationReplay, "observation-replay", "", "raw GitHub observation cache to replay")
 	flag.Parse()
 	if err := run(cfg); err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -12,7 +14,12 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
 )
 
-func run(cfg config) error {
+type buildResult struct {
+	promotion  *proposalpromotion.Receipt
+	resolution *proposalpredecessor.ResolutionReceipt
+}
+
+func run(cfg config) (runErr error) {
 	if cfg.root == "" || cfg.repository == "" || cfg.currentHead == "" ||
 		cfg.predecessorSHA == "" || cfg.token == "" {
 		return fmt.Errorf("root, repository, current-head, predecessor-sha, and GITHUB_TOKEN are required")
@@ -27,47 +34,149 @@ func run(cfg config) error {
 	if err := requireExternal(cfg.root, target); err != nil {
 		return err
 	}
-	receipt, err := build(cfg)
+	if cfg.check != "" {
+		return checkReceipt(cfg.check, cfg.currentHead)
+	}
+	store, err := openProposalObservationStore(cfg.observationCapture, cfg.observationReplay)
 	if err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(receipt, "", "  ")
+	defer func() {
+		if closeErr := store.close(); runErr == nil && closeErr != nil {
+			runErr = closeErr
+		}
+	}()
+	client, err := newProposalHTTPClient(cfg.apiURL, store)
 	if err != nil {
 		return err
 	}
-	data = append(data, '\n')
-	if cfg.output != "" {
-		if err := writeExclusive(cfg.output, data); err != nil {
-			return err
+	result, err := build(cfg, client)
+	if err != nil {
+		var replayErr *proposalObservationReplayError
+		if errors.As(err, &replayErr) {
+			return fmt.Errorf("FAIL_CLOSED: proposal predecessor observation replay: %w", err)
 		}
-	} else {
-		actual, err := os.ReadFile(cfg.check)
-		if err != nil {
-			return err
-		}
-		if !bytes.Equal(actual, data) {
-			return fmt.Errorf("FAIL_CLOSED: proposal promotion replay mismatch")
-		}
+		return err
 	}
+	data, err := marshalResult(result)
+	if err != nil {
+		return err
+	}
+	if err := writeExclusive(cfg.output, data); err != nil {
+		return err
+	}
+	if result.resolution != nil {
+		fmt.Printf("proposal-predecessor: conformance=%s decision=%s resolution=%s stage=%s step=%s reason=%s promotion_authority=false readiness_delta=null digest=%s\n",
+			result.resolution.Conformance, result.resolution.Decision, result.resolution.Resolution,
+			result.resolution.Stage, result.resolution.Step, result.resolution.Reason,
+			result.resolution.ReportDigest)
+		return nil
+	}
+	receipt := *result.promotion
 	fmt.Printf("proposal-promotion: decision=%s coordinates=%d/%d bps=%d writes=%d digest=%s\n",
 		receipt.Decision, receipt.Summary.Satisfied, receipt.Summary.Total,
 		receipt.Summary.ReadinessBPS, receipt.RepositoryWrites, receipt.ReportDigest)
 	return nil
 }
 
-func build(cfg config) (proposalpromotion.Receipt, error) {
+func build(cfg config, client *http.Client) (buildResult, error) {
 	collection, err := proposalpredecessor.Collect(
-		context.Background(), http.DefaultClient, cfg.apiURL, cfg.token,
+		context.Background(), client, cfg.apiURL, cfg.token,
 		cfg.repository, cfg.predecessorSHA,
 	)
 	if err != nil {
-		return proposalpromotion.Receipt{}, err
+		reason := proposalpredecessor.FailureReason(err)
+		if !proposalpredecessor.KnownFailureReason(reason) {
+			return buildResult{}, err
+		}
+		resolution, resolutionErr := proposalpredecessor.BuildResolution(
+			cfg.repository, cfg.currentHead, cfg.predecessorSHA, reason, nil,
+		)
+		if resolutionErr != nil {
+			return buildResult{}, resolutionErr
+		}
+		return buildResult{resolution: &resolution}, nil
 	}
 	selection, contract, err := proposalpredecessor.Select(
 		cfg.repository, cfg.currentHead, cfg.predecessorSHA, collection,
 	)
 	if err != nil {
-		return proposalpromotion.Receipt{}, err
+		if !proposalpredecessor.KnownFailureReason(selection.Reason) {
+			return buildResult{}, err
+		}
+		resolution, resolutionErr := proposalpredecessor.BuildResolution(
+			cfg.repository, cfg.currentHead, cfg.predecessorSHA, selection.Reason, &selection,
+		)
+		if resolutionErr != nil {
+			return buildResult{}, resolutionErr
+		}
+		return buildResult{resolution: &resolution}, nil
 	}
-	return proposalpromotion.Build(cfg.currentHead, cfg.predecessorSHA, selection, contract)
+	receipt, err := proposalpromotion.Build(cfg.currentHead, cfg.predecessorSHA, selection, contract)
+	if err != nil {
+		return buildResult{}, err
+	}
+	return buildResult{promotion: &receipt}, nil
+}
+
+func marshalResult(result buildResult) ([]byte, error) {
+	var value any
+	switch {
+	case result.promotion != nil && result.resolution == nil:
+		value = result.promotion
+	case result.promotion == nil && result.resolution != nil:
+		value = result.resolution
+	default:
+		return nil, fmt.Errorf("proposal predecessor result has invalid alternatives")
+	}
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(data, '\n'), nil
+}
+
+func checkReceipt(path, expectedHead string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	var header struct {
+		Schema string `json:"schema"`
+	}
+	if err := decoder.Decode(&header); err != nil {
+		return fmt.Errorf("FAIL_CLOSED: malformed proposal receipt: %w", err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return fmt.Errorf("FAIL_CLOSED: proposal receipt has trailing content")
+	}
+	switch header.Schema {
+	case proposalpromotion.Schema:
+		var receipt proposalpromotion.Receipt
+		if err := decodeStrict(data, &receipt); err != nil {
+			return err
+		}
+		return proposalpromotion.Validate(receipt, expectedHead)
+	case proposalpredecessor.ResolutionSchema:
+		var receipt proposalpredecessor.ResolutionReceipt
+		if err := decodeStrict(data, &receipt); err != nil {
+			return err
+		}
+		return proposalpredecessor.ValidateResolution(receipt)
+	default:
+		return fmt.Errorf("FAIL_CLOSED: unknown proposal receipt schema %q", header.Schema)
+	}
+}
+
+func decodeStrict(data []byte, target any) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return fmt.Errorf("FAIL_CLOSED: malformed proposal receipt: %w", err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return fmt.Errorf("FAIL_CLOSED: proposal receipt has trailing content")
+	}
+	return nil
 }

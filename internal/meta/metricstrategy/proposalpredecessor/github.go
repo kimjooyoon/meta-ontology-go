@@ -2,6 +2,7 @@ package proposalpredecessor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -39,22 +40,33 @@ type artifactsEnvelope struct {
 func getBytes(ctx context.Context, client *http.Client, targetURL, token string) ([]byte, error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, targetURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, &Failure{Reason: ReasonResponseMalformed, Err: err}
 	}
 	request.Header.Set("Accept", "application/vnd.github+json")
 	request.Header.Set("Authorization", "Bearer "+token)
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, err
+		var redirectFailure interface{ RedirectOriginMismatch() }
+		if errors.As(err, &redirectFailure) {
+			return nil, &Failure{Reason: ReasonRedirectOriginMismatch, Err: err}
+		}
+		return nil, &Failure{Reason: ReasonAPIUnavailable, Err: err}
 	}
 	defer response.Body.Close()
-	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return nil, fmt.Errorf("GitHub response status %d", response.StatusCode)
+	payload, readErr := io.ReadAll(io.LimitReader(response.Body, maximumResponseBytes+1))
+	if readErr != nil || len(payload) > maximumResponseBytes {
+		if readErr == nil {
+			readErr = fmt.Errorf("response exceeds fixed bound")
+		}
+		return nil, &Failure{Reason: ReasonResponseMalformed, Err: readErr}
 	}
-	payload, err := io.ReadAll(io.LimitReader(response.Body, maximumResponseBytes+1))
-	if err != nil || len(payload) > maximumResponseBytes {
-		return nil, fmt.Errorf("GitHub response exceeds fixed bound: %w", err)
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		reason := ReasonAPIUnavailable
+		if response.StatusCode == http.StatusForbidden {
+			reason = ReasonAPIPermissionDenied
+		}
+		return nil, &Failure{Reason: reason, Err: fmt.Errorf("GitHub response status %d", response.StatusCode)}
 	}
 	return payload, nil
 }

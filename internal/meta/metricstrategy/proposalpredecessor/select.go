@@ -10,19 +10,21 @@ func Select(repository, currentSHA, predecessorSHA string, collection Collection
 	if len(collection.Candidates) == 0 && summary.UnresolvedCandidates == 0 {
 		summary.UnresolvedCandidates = 1
 	}
-	decision, reason := "FAIL_CLOSED", "PROPOSAL_PREDECESSOR_NOT_FOUND"
+	decision, reason := "FAIL_CLOSED", ReasonNotFound
 	var selected *Selected
 	var payload []byte
 	if len(collection.Candidates) > 1 {
-		reason = "PROPOSAL_PREDECESSOR_AMBIGUOUS"
+		reason = ReasonAmbiguous
 	} else if len(collection.Candidates) == 1 && summary.UnresolvedCandidates != 0 {
-		reason = "PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN"
+		reason = ReasonEvidenceUnknown
 	} else if len(collection.Candidates) == 1 && summary.ExactJobs != 1 {
-		reason = "PROPOSAL_SYNTHESIS_JOB_CARDINALITY"
+		reason = ReasonJobCardinality
 	} else if len(collection.Candidates) == 1 && candidateReady(collection.Candidates[0], predecessorSHA) {
 		candidate := collection.Candidates[0]
 		selected, payload = &candidate.Selected, candidate.ProposalPayload
-		decision, reason, summary.SelectionBPS = "SELECTED", "PROPOSAL_PREDECESSOR_SELECTED", 10000
+		decision, reason, summary.SelectionBPS = "SELECTED", ReasonSelected, 10000
+	} else if collection.FailureReason != "" {
+		reason = collection.FailureReason
 	}
 	proofs, err := buildProofs(selected, predecessorSHA, summary)
 	if err != nil {
