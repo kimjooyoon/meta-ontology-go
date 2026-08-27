@@ -1,0 +1,13 @@
+package reflectivequerysandbox
+namespace reflectivequerysandbox
+
+entity ProgramStructure id "gooo://reflective-query-sandbox/entity/program-structure"
+entity ClaimCatalog id "gooo://reflective-query-sandbox/entity/claim-catalog"
+entity MetricCatalog id "gooo://reflective-query-sandbox/entity/metric-catalog"
+entity QueryReceipt id "gooo://reflective-query-sandbox/entity/query-receipt"
+entity MutationRequest id "gooo://reflective-query-sandbox/entity/mutation-request"
+
+activity ReflectStructure(ProgramStructure) -> QueryReceipt computes "reflect.query:structure"
+activity ReflectClaims(ClaimCatalog) -> QueryReceipt computes "reflect.query:claims"
+activity ReflectMetrics(MetricCatalog) -> QueryReceipt computes "reflect.query:metrics"
+activity AttemptMutation(MutationRequest) -> QueryReceipt computes "reflect.attempt:mutation-denied"

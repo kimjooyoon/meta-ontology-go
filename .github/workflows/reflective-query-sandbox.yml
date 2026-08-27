@@ -1,0 +1,106 @@
+name: Reflective query sandbox
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - ".github/workflows/reflective-query-sandbox.yml"
+      - "examples/reflective-query-sandbox/**"
+      - "internal/meta/reflectivequerysandbox/**"
+      - "scripts/reflective-query-sandbox/**"
+      - "internal/bidir/**"
+      - "internal/query/**"
+      - "internal/semantic/**"
+      - "internal/syntax/**"
+      - "cmd/gooo/**"
+      - "go.mod"
+      - "go.sum"
+  push:
+    branches: [dev]
+    paths:
+      - ".github/workflows/reflective-query-sandbox.yml"
+      - "examples/reflective-query-sandbox/**"
+      - "internal/meta/reflectivequerysandbox/**"
+      - "scripts/reflective-query-sandbox/**"
+      - "internal/bidir/**"
+      - "internal/query/**"
+      - "internal/semantic/**"
+      - "internal/syntax/**"
+      - "cmd/gooo/**"
+      - "go.mod"
+      - "go.sum"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reflective-query-sandbox-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: local
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  producer:
+    name: Produce read-only reflection observation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.0"
+          cache: true
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Produce and replay exact-head observation
+        run: bash scripts/reflective-query-sandbox/producer.sh
+      - name: Upload exact producer boundary
+        uses: actions/upload-artifact@v6
+        with:
+          name: reflective-query-sandbox-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/reflective-query-sandbox/producer
+          if-no-files-found: error
+          retention-days: 30
+
+  consumer:
+    name: Independently verify reflection boundary
+    needs: producer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.0"
+          cache: true
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Download exact producer observation
+        uses: actions/download-artifact@v7
+        with:
+          name: reflective-query-sandbox-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/reflective-query-sandbox/producer
+      - name: Consume and replay independent receipt
+        run: bash scripts/reflective-query-sandbox/consumer.sh "$RUNNER_TEMP/reflective-query-sandbox/producer"
+      - name: Upload independent receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: reflective-query-sandbox-consumer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/reflective-query-sandbox/consumer
+          if-no-files-found: error
+          retention-days: 30
