@@ -1,0 +1,101 @@
+name: Causal CI selection
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/causal-ci-selection.yml
+      - docs/causal-ci-selection.md
+      - examples/causal-ci-selection/**
+      - internal/meta/causalci/**
+      - scripts/causal-ci-selection/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/causal-ci-selection.yml
+      - docs/causal-ci-selection.md
+      - examples/causal-ci-selection/**
+      - internal/meta/causalci/**
+      - scripts/causal-ci-selection/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  causal-selection:
+    name: Causal CI selection receipt
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Bind Go 1.27 and validate the real Gooo source
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          go run ./cmd/gooo check examples/causal-ci-selection/main.gooo
+      - name: Compile and exercise the causal selector in CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test ./internal/meta/causalci
+          output="$RUNNER_TEMP/causal-ci-selection"
+          mkdir -p "$output"
+          for pass in a b; do
+            go run ./scripts/causal-ci-selection \
+              -input examples/causal-ci-selection/cases.json \
+              -source examples/causal-ci-selection/main.gooo \
+              -output "$output/receipt-$pass.json" -check
+          done
+          cmp -s "$output/receipt-a.json" "$output/receipt-b.json"
+          go run ./scripts/causal-ci-selection \
+            -input examples/causal-ci-selection/cases.json \
+            -source examples/causal-ci-selection/main.gooo \
+            -verify "$output/receipt-a.json"
+          jq -e '
+            .schema == "gooo/causal-ci-selection-receipt/v1" and
+            .scope == "READ_ONLY_CAUSAL_SELECTION" and
+            .decision == "PASS" and
+            .metrics.case_total == 3 and
+            .metrics.fixed_check_denominator == 6 and
+            .metrics.fixed_indicator_denominator == 6 and
+            .metrics.claim_transition_total == 3 and
+            (.indicators | length) == 6 and
+            ([.indicators[].satisfied] | all) and
+            .cases[0].decision == "SELECTED" and
+            .cases[0].selected_checks[0].check_id == "go-test" and
+            .cases[1].decision == "FULL_FALLBACK" and
+            (.cases[1].selected_checks | length) == 6 and
+            .cases[1].coordinate.reason == "OWNER_RESOLUTION_UNAVAILABLE" and
+            .cases[2].decision == "REJECTED" and
+            (.cases[2].selected_checks | length) == 0 and
+            .independent_verifier.mode == "INDEPENDENT_REPLAY" and
+            .operation.mutation_authority == false and
+            .operation.read_only == true
+          ' "$output/receipt-a.json"
+          {
+            echo '### Causal CI selection'
+            echo '- source: `examples/causal-ci-selection/main.gooo` (GOOO_SOURCE)'
+            echo '- fixed check denominator: `6`'
+            echo '- fixed indicators: `6/6`'
+            echo '- scenarios: `SELECTED`, `FULL_FALLBACK`, `REJECTED` = `1/1/1`'
+            echo '- unknown descent: `6/6` checks; reason `OWNER_RESOLUTION_UNAVAILABLE`'
+            echo '- independent replay: `PASS`'
+            echo '- repository writes / merge authority: `0 / false`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload causal selection receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: causal-ci-selection-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/causal-ci-selection/receipt-a.json
+          if-no-files-found: error
+          retention-days: 14

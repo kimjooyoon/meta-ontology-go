@@ -1,0 +1,127 @@
+{
+  "schema": "gooo/causal-ci-selection-input/v1",
+  "source_path": "examples/causal-ci-selection/main.gooo",
+  "operation": {
+    "producer": "gooo://producer/causal-ci-selection",
+    "consumer": "gooo://consumer/github-actions",
+    "meta_operation": "causal-ci-select",
+    "proof_choice": "CLAIM_IMPACT_REASON",
+    "mutation_authority": false,
+    "read_only": true
+  },
+  "policy": {
+    "schema": "gooo/causal-ci-selection-policy/v1",
+    "full_suite_id": "full-suite",
+    "checks": [
+      {"id": "gofmt", "ordinal": 1, "scope": "canonical-ci", "description": "format proof"},
+      {"id": "go-vet", "ordinal": 2, "scope": "canonical-ci", "description": "static proof"},
+      {"id": "go-test", "ordinal": 3, "scope": "canonical-ci", "description": "unit proof"},
+      {"id": "go-test-race", "ordinal": 4, "scope": "canonical-ci", "description": "race proof"},
+      {"id": "semantic-conformance", "ordinal": 5, "scope": "canonical-ci", "description": "semantic proof"},
+      {"id": "ci-policy", "ordinal": 6, "scope": "canonical-ci", "description": "policy proof"}
+    ]
+  },
+  "claim_transitions": [
+    {
+      "sequence": 1,
+      "claim_id": "claim:source-authority",
+      "before": "UNOBSERVED",
+      "after": "OBSERVED",
+      "event": "SOURCE_CLAIM_REGISTERED",
+      "coordinate": {"stage": "CLAIM_LEDGER", "step": "append", "reason": "GOOO_ASSERTION"},
+      "evidence_digest": "source-evidence-001"
+    },
+    {
+      "sequence": 2,
+      "claim_id": "claim:source-authority",
+      "before": "OBSERVED",
+      "after": "EXACT_BOUND",
+      "event": "SOURCE_CLAIM_BOUND_TO_SPAN",
+      "coordinate": {"stage": "CLAIM_LEDGER", "step": "bind", "reason": "EXACT_SOURCE_DIGEST"},
+      "evidence_digest": "source-evidence-002"
+    },
+    {
+      "sequence": 3,
+      "claim_id": "claim:source-authority",
+      "before": "EXACT_BOUND",
+      "after": "PRESERVED",
+      "event": "CLAIM_CARRIED_IN_RECEIPT",
+      "coordinate": {"stage": "CLAIM_LEDGER", "step": "carry-forward", "reason": "APPEND_ONLY_TRANSITION"},
+      "evidence_digest": "source-evidence-003"
+    }
+  ],
+  "cases": [
+    {
+      "id": "selection",
+      "changed_files": ["internal/meta/causalci/evaluate.go"],
+      "claims": [
+        {"id": "claim:source-authority", "question": "does the changed source affect a declared CI claim?", "state": "EXACT_BOUND"}
+      ],
+      "impact_edges": [
+        {
+          "id": "S1",
+          "from": "internal/meta/causalci/evaluate.go",
+          "to": "claim:source-authority",
+          "kind": "CHANGES_CLAIM",
+          "known": true,
+          "reason": "source span binds claim",
+          "coordinate": {"stage": "CAUSAL_SELECTION", "step": "trace-impact", "reason": "SOURCE_SPAN_BOUND"}
+        },
+        {
+          "id": "S2",
+          "from": "claim:source-authority",
+          "to": "check:go-test",
+          "kind": "CLAIM_REQUIRES_CHECK",
+          "known": true,
+          "reason": "receipt behavior requires the unit proof",
+          "coordinate": {"stage": "CAUSAL_SELECTION", "step": "choose-check", "reason": "CLAIM_TO_CHECK"}
+        }
+      ]
+    },
+    {
+      "id": "full-fallback",
+      "changed_files": ["internal/meta/causalci/evaluate.go"],
+      "claims": [
+        {"id": "claim:source-authority", "question": "can the changed source owner be resolved?", "state": "UNKNOWN"}
+      ],
+      "impact_edges": [
+        {
+          "id": "F1",
+          "from": "internal/meta/causalci/evaluate.go",
+          "to": "claim:source-authority",
+          "kind": "CHANGES_CLAIM",
+          "known": false,
+          "reason": "OWNER_RESOLUTION_UNAVAILABLE",
+          "coordinate": {"stage": "CAUSAL_SELECTION", "step": "trace-impact", "reason": "OWNER_RESOLUTION_UNAVAILABLE"}
+        }
+      ]
+    },
+    {
+      "id": "rejection",
+      "changed_files": ["internal/meta/causalci/evaluate.go"],
+      "claims": [
+        {"id": "claim:source-authority", "question": "is every check reference registered?", "state": "EXACT_BOUND"}
+      ],
+      "impact_edges": [
+        {
+          "id": "R1",
+          "from": "internal/meta/causalci/evaluate.go",
+          "to": "claim:source-authority",
+          "kind": "CHANGES_CLAIM",
+          "known": true,
+          "reason": "source span binds claim",
+          "coordinate": {"stage": "CAUSAL_SELECTION", "step": "trace-impact", "reason": "SOURCE_SPAN_BOUND"}
+        },
+        {
+          "id": "R2",
+          "from": "claim:source-authority",
+          "to": "check:missing",
+          "kind": "CLAIM_REQUIRES_CHECK",
+          "known": true,
+          "reason": "unregistered check reference",
+          "coordinate": {"stage": "CAUSAL_SELECTION", "step": "validate-graph", "reason": "UNREGISTERED_CHECK"}
+        }
+      ]
+    }
+  ]
+}

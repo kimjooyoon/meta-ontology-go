@@ -1,0 +1,5 @@
+package causalselection
+namespace causalselection
+entity ChangedFile id "gooo://causal-ci-selection/entity/changed-file"
+entity CIPlan id "gooo://causal-ci-selection/entity/ci-plan"
+activity SelectChecks(ChangedFile) -> CIPlan computes "causal-ci.select"
