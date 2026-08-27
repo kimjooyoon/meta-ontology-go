@@ -18,7 +18,7 @@ func runSuite(subjectSHA, outputPath string) Suite {
 		input := producer.Input{CaseID: definition.ID, SubjectSHA: subjectSHA, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath}
 		report := evaluate(input, "")
 		semanticCoverageAccepted := report.Receipt.SemanticCoverageBPS == 10000 || definition.ExpectedResolution == producer.ResolutionLower
-		casePassed := metaErr == nil && report.IndependentVerdict.Passed && report.IndependentVerdict.Decision == definition.ExpectedDecision && report.IndependentVerdict.Resolution == definition.ExpectedResolution && report.IndependentVerdict.Classification == definition.ExpectedClass && report.IndependentVerdict.Reason == definition.ExpectedReason && report.IndependentVerdict.Stage == definition.ExpectedStage && report.IndependentVerdict.Step == definition.ExpectedStep && report.Receipt.DenominatorVersion == producer.DenominatorVersion && report.Receipt.DenominatorCases == len(definitions) && semanticCoverageAccepted
+		casePassed := metaErr == nil && report.IndependentVerdict.Passed && report.IndependentVerdict.Decision == definition.ExpectedDecision && report.IndependentVerdict.Resolution == definition.ExpectedResolution && report.IndependentVerdict.Classification == definition.ExpectedClass && report.IndependentVerdict.Reason == definition.ExpectedReason && report.Receipt.Stage == definition.ExpectedStage && report.Receipt.Step == definition.ExpectedStep && report.Receipt.DenominatorVersion == producer.DenominatorVersion && report.Receipt.DenominatorCases == len(definitions) && semanticCoverageAccepted
 		if casePassed {
 			passed++
 		}
