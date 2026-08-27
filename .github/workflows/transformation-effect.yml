@@ -2069,3 +2069,47 @@ jobs:
           path: artifact-oracle-output
           if-no-files-found: error
           retention-days: 30
+
+  language-source-binding-promotion:
+    name: language-source-binding-promotion
+    needs: [language-source-execution, language-artifact-oracle]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      SOURCE_EXECUTION_INPUT: source-execution-input
+      ARTIFACT_ORACLE_INPUT: artifact-oracle-input
+      PROMOTION_OUTPUT: source-binding-promotion-output
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+      - name: Bind the declared Go 1.27 toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Download structural source execution evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: language-source-execution-${{ env.HEAD_SHA }}
+          path: source-execution-input
+      - name: Download independent source binding evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: language-artifact-oracle-${{ env.HEAD_SHA }}
+          path: artifact-oracle-input
+      - name: Promote only the independently bound claim
+        shell: bash
+        run: bash scripts/language-source-binding-promotion/main.sh
+      - name: Upload append-only source binding promotion receipt
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-source-binding-promotion-${{ env.HEAD_SHA }}
+          path: source-binding-promotion-output
+          if-no-files-found: error
+          retention-days: 30
