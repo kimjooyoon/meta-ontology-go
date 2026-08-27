@@ -44,11 +44,11 @@ type ReaderView struct {
 }
 
 type FoundationBinding struct {
-	ArtifactID        int64  `json:"artifact_id"`
-	ArtifactName      string `json:"artifact_name"`
-	ArchiveDigest     string `json:"archive_digest"`
-	ProducerRunID     int64  `json:"producer_run_id"`
-	ProducerSubject   string `json:"producer_subject_sha"`
-	PriorReceipt      string `json:"prior_receipt_digest"`
-	EvidenceDigest    string `json:"evidence_digest"`
+	ArtifactID      int64  `json:"artifact_id"`
+	ArtifactName    string `json:"artifact_name"`
+	ArchiveDigest   string `json:"archive_digest"`
+	ProducerRunID   int64  `json:"producer_run_id"`
+	ProducerSubject string `json:"producer_subject_sha"`
+	PriorReceipt    string `json:"prior_receipt_digest"`
+	EvidenceDigest  string `json:"evidence_digest"`
 }

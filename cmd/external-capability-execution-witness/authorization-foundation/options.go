@@ -7,7 +7,7 @@ import (
 
 type options struct {
 	subject, foundation, metadata, prior, current string
-	receipt, suite, summary                      string
+	receipt, suite, summary                       string
 }
 
 func parseOptions(args []string) (options, error) {
