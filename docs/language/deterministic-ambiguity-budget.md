@@ -1,74 +1,80 @@
 # Deterministic ambiguity budget
 
-This PR records a bounded experiment for interpreting ambiguity in semantic
-meta-operations. It does not add a confidence score and does not infer intent
-from natural language.
+This experiment measures interpretation ambiguity as an integer set, not as
+probability or natural-language confidence. It is a read-only meta-operation:
+the repository effect is fixed at zero writes and zero mutation authority.
 
-## Decision rule
+## Executable source and rule
 
-The observation is an integer set:
+The real [`.gooo` source](../../examples/ambiguity-budget/main.gooo) is the
+observation authority. Its canonical `computes` declarations contain the
+fixed budget `(2,1,2)` and all four observed case sets:
 
-`A = (c, b, e)`
+| case | observed set | subject result |
+| --- | --- | --- |
+| zero | `(1,0,1)` | `PASS / EXACT` |
+| boundary | `(2,1,2)` | `PASS / EXACT` |
+| over | `(3,2,3)` | `FAIL_CLOSED / LOWER_RESOLUTION` |
+| unknown | `(2,1,2)` with unknown input | `UNKNOWN / LOWER_RESOLUTION` |
 
-where `c` is the number of interpretation candidates, `b` is the number of
-unresolved branches, and `e` is the number of evidence paths that must be
-reconciled. The contract supplies a fixed upper bound `B = (2, 1, 2)`.
+The coordinates count interpretation candidates, unresolved branches, and
+evidence paths. A known set is within the budget only when every coordinate is
+within its corresponding limit. Any excess descends to lower resolution.
+Unknown input remains unknown and keeps its claim transition `OPEN`.
 
-For a known observation, the deterministic rule is:
+The JSON [contract](../../examples/ambiguity-budget/contract.json) contains
+only stable source identity, case IDs, intervention IDs, and the fixed
+denominator. It intentionally does not repeat the budget, case counts, class,
+decision, or reason as evidence. The producer parses with
+`syntax.ParseFile -> bidir.Lower`, validates the canonical semantic IR, and
+then reads the lowered `computes` programs. The independent verifier repeats
+that parse/lowering and rule evaluation without importing the producer.
 
-`A <= B` coordinate-by-coordinate → `PASS / EXACT`;
+`CONFORMANCE_DECISION` describes whether the receipt matches the executable
+source and contract. `SUBJECT_DECISION` describes the case vector. Therefore a
+receipt can conform while the subject remains `MIXED / LOWER_RESOLUTION`; an
+expected `UNKNOWN` is not converted into an aggregate `PASS / EXACT`.
 
-`A_i > B_i` for any coordinate → `FAIL_CLOSED / LOWER_RESOLUTION`.
-
-An unknown observation is `UNKNOWN / LOWER_RESOLUTION`, with an explicit
-`stage`, `step`, and `reason`. It does not erase the claim transition that led
-to the lower-resolution result. The receipt has a fixed denominator of `12`:
-four cases × three integer coordinates. This is a count of obligations, not a
-percentage or confidence estimate.
+Every persistent claim transition records `stage`, `step`, `reason`, and an
+evidence digest. The receipt carries the producer, consumer, meta-operation,
+proof choice, source/semantic digests, and zero-effect guard. There is no
+aggregate score: the fixed denominator is `2`, counting the two declared
+interventions, not the twelve integer coordinates.
 
 ## Adopted and rejected principles
 
 Scott and Johnstone’s paper, [“Recognition is not parsing — SPPF-style parsing
 from cubic recognisers”](https://doi.org/10.1016/j.scico.2009.07.001), presents
 SPPF-style representations for all possible derivations while sharing common
-structure. The experiment adopts the key accounting boundary: alternatives
-remain observable objects until a later operation resolves them. It does not
-adopt an SPPF implementation because the current `.gooo` syntax parser is a
-deterministic stage-0 parser and this PR is explicitly an independent
-read-only meta-operation.
+structure. The experiment adopts the accounting boundary that alternatives
+remain observable objects until a later operation resolves them. It rejects
+an SPPF implementation here because the `.gooo` parser is a deterministic
+stage-0 parser and this experiment needs an independent integer ledger.
 
 Economopoulos’s [*Generalised LR parsing algorithms* thesis](https://ir.cwi.nl/pub/14233/14233B.pdf), especially §§4.4–4.4.1,
 describes reduce/reduce conflicts, local ambiguity, and packing multiple
 derivations into a shared forest. The experiment adopts explicit branch and
-evidence-path accounting and rejects an implicit shift/reduce choice as
-evidence that one interpretation is more probable. It also rejects the
-thesis’s parser-specific graph structures as an implementation dependency:
-the receipt records only the deterministic integer boundary needed by this
-experiment.
+evidence-path accounting. It rejects treating a shift/reduce choice as
+probability, confidence, or evidence of semantic correctness, and it does not
+make parser-specific graph structures an implementation dependency.
 
-Thus the adopted principle is “make alternatives and the cost of resolving
-them explicit.” Rejected principles are probability, confidence prose,
-default disambiguation, and semantic-correctness claims. The `not_claimed`
-array makes those boundaries machine-readable.
+The adopted principle is: make alternatives and the cost of resolving them
+explicit as integer observations and meta-operations. Rejected principles are
+probability, confidence prose, default disambiguation, intent recognition,
+and semantic-correctness claims. The `not_claimed` array makes the boundary
+machine-readable.
 
-## Evidence contract
+## Interventions and falsification
 
-The producer reads the real [ambiguity-budget `.gooo` source](../../examples/ambiguity-budget/main.gooo), binds its source digest and declaration counts, and
-emits a data-only receipt. The independent verifier does not import the
-producer package: it re-reads the source, recomputes its digest and declaration
-counts, recomputes the decision rule, checks all twelve coordinate indicators,
-checks the claim-transition list, and validates the receipt digest.
+The semantic intervention increments the boundary case’s candidate count from
+`2` to `3`; the source and semantic digests change and the subject descends to
+`FAIL_CLOSED / LOWER_RESOLUTION`. The nonsemantic intervention inserts only a
+comment; the source digest changes while the lowered semantic digest, counts,
+and subject result remain unchanged. Both are replayed in memory and recorded
+in the receipt.
 
-The producer, consumer, meta-operation, and proof choices are explicit on the
-receipt and every indicator. Repository writes and mutation authority are
-fixed at zero/false. The four cases are zero (`1/0/1`), boundary (`2/1/2`),
-over (`3/2/3`), and unknown. The over and unknown cases are expected
-counterexamples: the whole experiment can pass only when those lower-resolution
-transitions are observed exactly.
-
-## Falsification
-
-The claim is falsified by any nondeterministic replay; by an over-budget case
-remaining exact; by an unknown case losing its coordinate or transition; by a
-changed denominator; by a forged source digest, receipt digest, or transition
-accepted by the independent verifier; or by any non-zero repository effect.
+The claim is falsified by nondeterministic replay; an over-budget case that
+remains exact; an unknown case that loses its coordinate or `OPEN` transition;
+duplicated observed counts in the contract; a forged source, semantic, or
+receipt digest accepted by the judge; a producer import in the judge; a changed
+denominator; or any non-zero repository effect.

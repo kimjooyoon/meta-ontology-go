@@ -31,15 +31,15 @@ func run(args []string) int {
 	if err := printReceipt(receipt); err != nil {
 		return 2
 	}
-	if receipt.Decision != "PASS" {
+	if receipt.ConformanceDecision != "PASS" {
 		return 1
 	}
 	return 0
 }
 
 func printReceipt(receipt ambiguitybudget.Receipt) error {
-	fmt.Printf("ambiguity budget: %s %s cases=%d/%d coordinates=%d/%d\n", receipt.Decision, receipt.Resolution,
-		receipt.Summary.CasesSatisfied, receipt.Summary.CasesTotal,
-		receipt.Summary.CoordinatesSatisfied, receipt.Summary.CoordinatesTotal)
+	fmt.Printf("ambiguity budget: conformance=%s/%s subject=%s/%s cases=%d interventions=%d denominator=%d\n",
+		receipt.ConformanceDecision, receipt.ConformanceResolution, receipt.SubjectDecision, receipt.SubjectResolution,
+		receipt.Summary.CasesTotal, receipt.Summary.InterventionsTotal, receipt.Summary.FixedDenominator)
 	return nil
 }

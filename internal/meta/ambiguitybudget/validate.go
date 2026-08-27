@@ -3,38 +3,34 @@ package ambiguitybudget
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 func validateContract(contract Contract) string {
 	if contract.Schema != ContractSchema || contract.ID == "" || contract.SourcePath == "" ||
-		contract.SourcePackage == "" || contract.SourceNamespace == "" {
+		contract.SourcePackage == "" || contract.SourceNamespace == "" || contract.BudgetActivity == "" {
 		return "CONTRACT_SCHEMA_INVALID"
 	}
-	if contract.SourceEntities < 1 || contract.SourceActivities < 1 || contract.FixedDenominator != FixedDenominator ||
-		contract.Budget != (IntegerSet{InterpretationCandidates: 2, UnresolvedBranches: 1, EvidencePaths: 2}) {
+	if contract.FixedDenominator != FixedDenominator {
 		return "CONTRACT_DENOMINATOR_INVALID"
 	}
-	if len(contract.Cases) != ExpectedCaseTotal || len(contract.NotClaimed) != 4 {
-		return "CONTRACT_CASE_TOTAL_INVALID"
+	if len(contract.Cases) != ExpectedCaseTotal || len(contract.Interventions) != ExpectedInterventions || len(contract.NotClaimed) != 4 {
+		return "CONTRACT_CARDINALITY_INVALID"
 	}
-	seen := map[string]bool{}
-	classes := map[string]bool{}
-	for _, spec := range contract.Cases {
-		if spec.ID == "" || seen[spec.ID] || classes[spec.Class] || spec.Coordinate.Stage == "" || spec.Coordinate.Step == "" || spec.Coordinate.Reason == "" || spec.Claim.CaseID != spec.ID {
+	caseIDs, activities := map[string]bool{}, map[string]bool{}
+	for _, item := range contract.Cases {
+		if item.ID == "" || item.Activity == "" || caseIDs[item.ID] || activities[item.Activity] {
 			return "CONTRACT_CASE_ID_INVALID"
 		}
-		seen[spec.ID], classes[spec.Class] = true, true
-		if !validCounts(spec.Counts) || spec.Claim.From == "" || spec.Claim.To == "" || spec.Claim.Reason == "" {
-			return "CONTRACT_CASE_COUNTS_INVALID"
-		}
-		if spec.InputState != "KNOWN" && spec.InputState != "UNKNOWN" {
-			return "CONTRACT_INPUT_STATE_INVALID"
-		}
+		caseIDs[item.ID], activities[item.Activity] = true, true
 	}
-	for _, class := range []string{"ZERO", "BOUNDARY", "OVER", "UNKNOWN"} {
-		if !classes[class] {
-			return "CONTRACT_CASE_CLASS_INVALID"
+	interventionIDs := map[string]bool{}
+	for _, item := range contract.Interventions {
+		if item.ID == "" || item.TargetActivity == "" || interventionIDs[item.ID] ||
+			(item.Kind != "SEMANTIC" && item.Kind != "NONSEMANTIC") {
+			return "CONTRACT_INTERVENTION_INVALID"
 		}
+		interventionIDs[item.ID] = true
 	}
 	return ""
 }
@@ -42,28 +38,42 @@ func validateContract(contract Contract) string {
 func Validate(receipt Receipt) error {
 	if receipt.Schema != ReceiptSchema || !validSHA(receipt.SubjectSHA) || receipt.ContractID == "" ||
 		receipt.Producer != Producer || receipt.Consumer != Consumer || receipt.MetaOperation != MetaOperation ||
-		receipt.Decision != "PASS" || receipt.Resolution != "EXACT" || receipt.Reason != "AMBIGUITY_BUDGET_CONTRACT_SATISFIED" {
+		receipt.ConformanceDecision != "PASS" || receipt.ConformanceResolution != "EXACT" ||
+		receipt.ConformanceReason != "CONFORMANCE_CASES_MATCHED" || receipt.SubjectDecision != "MIXED" ||
+		receipt.SubjectResolution != "LOWER_RESOLUTION" || receipt.SubjectReason == "" {
 		return fmt.Errorf("AMBIGUITY_RECEIPT_IDENTITY_INVALID")
 	}
-	if receipt.Summary.CasesTotal != ExpectedCaseTotal || receipt.Summary.CasesSatisfied != ExpectedCaseTotal ||
-		receipt.Summary.CoordinatesTotal != FixedDenominator || receipt.Summary.CoordinatesSatisfied != FixedDenominator ||
-		receipt.Summary.FixedDenominator != FixedDenominator || receipt.Summary.ZeroAmbiguityCases != 1 ||
-		receipt.Summary.BoundaryCases != 1 || receipt.Summary.OverBudgetCases != 1 || receipt.Summary.UnknownCases != 1 ||
-		receipt.Summary.LowerResolutionCases != 2 || receipt.Effects.RepositoryWrites != 0 || receipt.Effects.MutationAuthority ||
-		len(receipt.Cases) != ExpectedCaseTotal || len(receipt.Claims) != ExpectedCaseTotal || len(receipt.Indicators) != FixedDenominator ||
-		len(receipt.Proofs) != 3 || len(receipt.NotClaimed) != 4 {
+	if receipt.Budget != expectedBudget() || receipt.Summary != expectedSummary() ||
+		receipt.Effects != (Effects{}) || len(receipt.Cases) != ExpectedCaseTotal ||
+		len(receipt.Claims) != ExpectedCaseTotal || len(receipt.Indicators) != ExpectedCaseTotal*IntegerDimensions ||
+		len(receipt.Interventions) != ExpectedInterventions || len(receipt.Proofs) != 3 || len(receipt.NotClaimed) != 4 {
 		return fmt.Errorf("AMBIGUITY_RECEIPT_SUMMARY_INVALID")
 	}
-	if receipt.Coordinate.Stage != "ambiguity-budget" || receipt.Coordinate.Step != "seal-receipt" {
-		return fmt.Errorf("AMBIGUITY_RECEIPT_COORDINATE_INVALID")
+	if receipt.SubjectCoordinate.Stage != "ambiguity-budget" || receipt.SubjectCoordinate.Step != "subject-resolution" || receipt.SubjectCoordinate.Reason != receipt.SubjectReason {
+		return fmt.Errorf("AMBIGUITY_RECEIPT_SUBJECT_COORDINATE_INVALID")
+	}
+	if receipt.Source.Lowering != canonicalLowering || !validDigest(receipt.Source.Digest) || !validDigest(receipt.Source.SemanticDigest) ||
+		len(receipt.Source.Programs) != ExpectedCaseTotal+1 || receipt.Source.Activities != ExpectedCaseTotal+1 {
+		return fmt.Errorf("AMBIGUITY_RECEIPT_SOURCE_INVALID")
 	}
 	ids := make([]string, 0, len(receipt.Cases))
 	for index, result := range receipt.Cases {
-		if result.Status != "SATISFIED" || result.ID == "" || result.Claim.CaseID != result.ID || result.Coordinate.Stage == "" || result.Coordinate.Step == "" || result.Coordinate.Reason == "" {
+		if result.ID == "" || result.Activity == "" || result.Class == "" || result.Program == "" ||
+			!validCounts(result.Counts) || !validDigest(result.ProgramDigest) || !validDigest(result.EvidenceDigest) ||
+			result.Conformance != "MATCH" || result.Coordinate.Stage != "ambiguity-budget" ||
+			result.Coordinate.Step != "case:"+result.ID || result.Coordinate.Reason != result.Reason ||
+			result.Claim.CaseID != result.ID || result.Claim.From != "AMBIGUITY_OBSERVED" ||
+			result.Claim.Stage != result.Coordinate.Stage || result.Claim.Step != result.Coordinate.Step ||
+			result.Claim.Reason != result.Reason || result.Claim.EvidenceDigest != result.EvidenceDigest ||
+			result.Claim.EvidenceDigest == "" || receipt.Claims[index] != result.Claim {
 			return fmt.Errorf("AMBIGUITY_RECEIPT_CASE_INVALID")
 		}
-		if receipt.Claims[index] != result.Claim {
-			return fmt.Errorf("AMBIGUITY_RECEIPT_CLAIM_TRANSITION_LOST")
+		if result.InputState == "UNKNOWN" {
+			if result.Decision != "UNKNOWN" || result.Resolution != "LOWER_RESOLUTION" || result.Reason != "AMBIGUITY_INPUT_UNKNOWN" || result.Claim.To != "OPEN" {
+				return fmt.Errorf("AMBIGUITY_RECEIPT_UNKNOWN_TRANSITION_INVALID")
+			}
+		} else if result.Claim.To != result.Resolution {
+			return fmt.Errorf("AMBIGUITY_RECEIPT_CLAIM_TRANSITION_INVALID")
 		}
 		ids = append(ids, result.ID)
 	}
@@ -71,29 +81,54 @@ func Validate(receipt Receipt) error {
 		return fmt.Errorf("AMBIGUITY_RECEIPT_CASE_DUPLICATE")
 	}
 	for _, indicator := range receipt.Indicators {
-		if indicator.Producer != Producer || indicator.Consumer != Consumer || indicator.MetaOperation != MetaOperation || !indicator.Satisfied || indicator.Observed != indicator.Expected {
+		if indicator.CaseID == "" || indicator.Dimension == "" || indicator.ProofChoice == "" ||
+			indicator.Producer != Producer || indicator.Consumer != Consumer || indicator.MetaOperation != MetaOperation ||
+			indicator.Relation != "<=" || indicator.Evaluation == "" || !validDigest(indicator.EvidenceDigest) {
 			return fmt.Errorf("AMBIGUITY_RECEIPT_INDICATOR_INVALID")
 		}
 	}
+	for _, intervention := range receipt.Interventions {
+		if intervention.ID == "" || intervention.Kind == "" || intervention.TargetActivity == "" || !intervention.Satisfied ||
+			!validDigest(intervention.SourceDigestBefore) || !validDigest(intervention.SourceDigestAfter) ||
+			!validDigest(intervention.SemanticDigestBefore) || !validDigest(intervention.SemanticDigestAfter) ||
+			!validDigest(intervention.EvidenceDigest) {
+			return fmt.Errorf("AMBIGUITY_RECEIPT_INTERVENTION_INVALID")
+		}
+	}
 	for _, proof := range receipt.Proofs {
-		if proof.Producer != Producer || proof.Consumer != Consumer || !proof.Passed || proof.EvidenceDigest == "" {
+		if proof.Producer != Producer || proof.Consumer != Consumer || proof.MetaOperation == "" ||
+			proof.Choice == "" || !proof.Passed || !validDigest(proof.EvidenceDigest) {
 			return fmt.Errorf("AMBIGUITY_RECEIPT_PROOF_INVALID")
 		}
 	}
-	if receipt.Digest != receiptDigest(receipt) {
+	if !validDigest(receipt.FactsDigest) || !validDigest(receipt.Digest) || receipt.Digest != receiptDigest(receipt) {
 		return fmt.Errorf("AMBIGUITY_RECEIPT_DIGEST_INVALID")
 	}
 	return nil
 }
 
+func expectedSummary() Summary {
+	return Summary{CasesTotal: ExpectedCaseTotal, KnownCases: 3, ZeroAmbiguityCases: 1, BoundaryCases: 1,
+		OverBudgetCases: 1, UnknownCases: 1, LowerResolutionCases: 2, OpenClaims: 1,
+		IntegerDimensions: IntegerDimensions, InterventionsTotal: ExpectedInterventions, FixedDenominator: FixedDenominator}
+}
+
+func validSHA(value string) bool {
+	return len(value) == 40 && strings.Trim(value, "0123456789abcdefABCDEF") == ""
+}
+
+func validDigest(value string) bool {
+	return len(value) == len("sha256:")+64 && strings.HasPrefix(value, "sha256:") && strings.Trim(value[len("sha256:"):], "0123456789abcdef") == ""
+}
+
 func unique(values []string) []string {
 	result := append([]string(nil), values...)
 	sort.Strings(result)
-	output := result[:0]
+	out := result[:0]
 	for _, value := range result {
-		if len(output) == 0 || output[len(output)-1] != value {
-			output = append(output, value)
+		if len(out) == 0 || out[len(out)-1] != value {
+			out = append(out, value)
 		}
 	}
-	return output
+	return out
 }

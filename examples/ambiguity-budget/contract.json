@@ -1,62 +1,20 @@
 {
-  "schema": "gooo/ambiguity-budget-contract/v1",
-  "id": "gooo://ambiguity-budget/contract/v1",
+  "schema": "gooo/ambiguity-budget-contract/v2",
+  "id": "gooo://ambiguity-budget/contract/v2",
   "source_path": "examples/ambiguity-budget/main.gooo",
   "source_package": "ambiguitybudget",
   "source_namespace": "ambiguitybudget",
-  "source_entities": 4,
-  "source_activities": 4,
-  "budget": {
-    "interpretation_candidates": 2,
-    "unresolved_branches": 1,
-    "evidence_paths": 2
-  },
-  "fixed_denominator": 12,
+  "budget_activity": "FixedBudget",
+  "fixed_denominator": 2,
   "cases": [
-    {
-      "id": "zero-ambiguity",
-      "class": "ZERO",
-      "input_state": "KNOWN",
-      "counts": {"interpretation_candidates": 1, "unresolved_branches": 0, "evidence_paths": 1},
-      "expected_decision": "PASS",
-      "expected_resolution": "EXACT",
-      "expected_reason": "AMBIGUITY_BUDGET_WITHIN_LIMIT",
-      "coordinate": {"stage": "ambiguity-budget", "step": "zero-ambiguity", "reason": "AMBIGUITY_BUDGET_WITHIN_LIMIT"},
-      "claim": {"case_id": "zero-ambiguity", "from": "AMBIGUITY_OBSERVED", "to": "EXACT", "reason": "AMBIGUITY_BUDGET_WITHIN_LIMIT"}
-    },
-    {
-      "id": "boundary-ambiguity",
-      "class": "BOUNDARY",
-      "input_state": "KNOWN",
-      "counts": {"interpretation_candidates": 2, "unresolved_branches": 1, "evidence_paths": 2},
-      "expected_decision": "PASS",
-      "expected_resolution": "EXACT",
-      "expected_reason": "AMBIGUITY_BUDGET_WITHIN_LIMIT",
-      "coordinate": {"stage": "ambiguity-budget", "step": "boundary-ambiguity", "reason": "AMBIGUITY_BUDGET_WITHIN_LIMIT"},
-      "claim": {"case_id": "boundary-ambiguity", "from": "AMBIGUITY_OBSERVED", "to": "EXACT", "reason": "AMBIGUITY_BUDGET_WITHIN_LIMIT"}
-    },
-    {
-      "id": "over-budget-ambiguity",
-      "class": "OVER",
-      "input_state": "KNOWN",
-      "counts": {"interpretation_candidates": 3, "unresolved_branches": 2, "evidence_paths": 3},
-      "expected_decision": "FAIL_CLOSED",
-      "expected_resolution": "LOWER_RESOLUTION",
-      "expected_reason": "AMBIGUITY_BUDGET_EXCEEDED",
-      "coordinate": {"stage": "ambiguity-budget", "step": "over-budget-ambiguity", "reason": "AMBIGUITY_BUDGET_EXCEEDED"},
-      "claim": {"case_id": "over-budget-ambiguity", "from": "AMBIGUITY_OBSERVED", "to": "LOWER_RESOLUTION", "reason": "AMBIGUITY_BUDGET_EXCEEDED"}
-    },
-    {
-      "id": "unknown-ambiguity",
-      "class": "UNKNOWN",
-      "input_state": "UNKNOWN",
-      "counts": {"interpretation_candidates": 2, "unresolved_branches": 1, "evidence_paths": 2},
-      "expected_decision": "UNKNOWN",
-      "expected_resolution": "LOWER_RESOLUTION",
-      "expected_reason": "AMBIGUITY_INPUT_UNKNOWN",
-      "coordinate": {"stage": "ambiguity-budget", "step": "unknown-ambiguity", "reason": "AMBIGUITY_INPUT_UNKNOWN"},
-      "claim": {"case_id": "unknown-ambiguity", "from": "AMBIGUITY_OBSERVED", "to": "LOWER_RESOLUTION", "reason": "AMBIGUITY_INPUT_UNKNOWN"}
-    }
+    {"id": "zero-ambiguity", "activity": "ZeroAmbiguity"},
+    {"id": "boundary-ambiguity", "activity": "BoundaryAmbiguity"},
+    {"id": "over-budget-ambiguity", "activity": "OverBudgetAmbiguity"},
+    {"id": "unknown-ambiguity", "activity": "UnknownAmbiguity"}
+  ],
+  "interventions": [
+    {"id": "semantic-count-crosses-boundary", "kind": "SEMANTIC", "target_activity": "BoundaryAmbiguity"},
+    {"id": "nonsemantic-comment-only", "kind": "NONSEMANTIC", "target_activity": "BoundaryAmbiguity"}
   ],
   "not_claimed": [
     "NATURAL_LANGUAGE_CONFIDENCE",

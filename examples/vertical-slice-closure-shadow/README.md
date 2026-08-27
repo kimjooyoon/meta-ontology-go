@@ -34,6 +34,11 @@ The current observer uses boundary denominator `v11`. The archived evidence and
 the eligibility and activation capsules retain the exact `v1` denominator
 digest that authorized the original transition.
 
+The vertical-slice corpus also registers the read-only
+`examples/ambiguity-budget/main.gooo` source as an executable ambiguity
+observation. This registration is descriptive only: it does not change the
+six-boundary denominator, readiness score, or promotion state.
+
 ## Resolution rules
 
 Missing evidence or an unknown top decision becomes

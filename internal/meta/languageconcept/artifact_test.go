@@ -14,7 +14,7 @@ func TestArtifactBindsCatalogToMetaCodeContent(t *testing.T) {
 	if !artifact.Ready() || !artifact.ReplayEqual {
 		t.Fatalf("got %s/%s replay=%v", artifact.Decision, artifact.Reason, artifact.ReplayEqual)
 	}
-	if artifact.Report.Summary.Concepts != 28 || artifact.Bindings.Paths != 102 {
+	if artifact.Report.Summary.Concepts != 29 || artifact.Bindings.Paths != 116 {
 		t.Fatalf("summary=%#v bindings=%#v", artifact.Report.Summary, artifact.Bindings)
 	}
 	replay := BuildArtifact(repository)

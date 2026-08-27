@@ -178,6 +178,13 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-deterministic-ambiguity-budget",
+      "kind": "SOURCE",
+      "path": "examples/ambiguity-budget/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",

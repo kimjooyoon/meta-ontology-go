@@ -227,6 +227,14 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "deterministic-ambiguity-budget",
+      "path": "examples/ambiguity-budget/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
     }
   ],
   "package_units": [

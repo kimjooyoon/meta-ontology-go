@@ -1,5 +1,8 @@
 {
   "schema": "gooo/vertical-slice-closure-shadow-use-cases/v1",
+  "source_paths": [
+    "examples/ambiguity-budget/main.gooo"
+  ],
   "cases": [
     {
       "id": "exact-six-boundary-chain",

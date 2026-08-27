@@ -31,8 +31,10 @@ func run(args []string) int {
 	if err := judge.WriteResult(options.output, result); err != nil {
 		return 2
 	}
-	fmt.Printf("ambiguity budget judge: %s %s checks=%d\n", result.Decision, result.Resolution, len(result.Checks))
-	if result.Decision != "PASS" {
+	fmt.Printf("ambiguity budget judge: conformance=%s/%s subject=%s/%s checks=%d denominator=%d\n",
+		result.ConformanceDecision, result.ConformanceResolution, result.SubjectDecision, result.SubjectResolution,
+		len(result.Checks), result.FixedDenominator)
+	if result.ConformanceDecision != "PASS" {
 		return 1
 	}
 	return 0

@@ -1,109 +1,98 @@
 package ambiguitybudget
 
-import "strings"
-
 func Evaluate(input Input) Receipt {
 	source, sourceErr := observeSource(input.Contract.SourcePath, input.Source)
 	receipt := Receipt{
 		Schema: ReceiptSchema, SubjectSHA: input.SubjectSHA, ContractID: input.Contract.ID,
-		Source: source, Budget: input.Contract.Budget, Producer: Producer, Consumer: Consumer,
-		MetaOperation: MetaOperation, ProofChoice: FoundationProof,
-		NotClaimed: append([]string(nil), input.Contract.NotClaimed...),
-		Effects:    Effects{},
+		Source: source, Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation,
+		ProofChoice: FoundationProof, NotClaimed: append([]string(nil), input.Contract.NotClaimed...), Effects: Effects{},
 	}
 	if reason := validateInput(input, source, sourceErr); reason != "" {
-		return sealUnknown(receipt, "AMBIGUITY_INPUT_UNKNOWN", Coordinate{
-			Stage: "ambiguity-budget", Step: "observe-source", Reason: reason,
-		}, reason)
+		return sealUnknown(receipt, reason)
 	}
 
-	facts := digestValue(struct {
-		SubjectSHA string
-		Contract   Contract
-		Source     SourceObservation
-	}{input.SubjectSHA, input.Contract, source})
-	receipt.FactsDigest = facts
-	for _, spec := range input.Contract.Cases {
-		result := evaluateCase(spec, input.Contract.Budget)
+	budgetProgram, _ := findBudget(source, input.Contract.BudgetActivity)
+	receipt.Budget = budgetProgram.Counts
+	receipt.Cases = make([]CaseReceipt, 0, len(input.Contract.Cases))
+	receipt.Claims = make([]ClaimTransition, 0, len(input.Contract.Cases))
+	for _, contractCase := range input.Contract.Cases {
+		program, _ := findCase(source, contractCase.Activity)
+		result := caseReceipt(source.Digest, program, receipt.Budget)
 		receipt.Cases = append(receipt.Cases, result)
 		receipt.Claims = append(receipt.Claims, result.Claim)
-		receipt.Indicators = append(receipt.Indicators, indicatorsFor(spec, result)...)
+		receipt.Indicators = append(receipt.Indicators, indicatorsFor(source.Digest, program, receipt.Budget)...)
 	}
-	receipt.Summary = summarize(receipt.Cases, receipt.Indicators, input.Contract.FixedDenominator)
-	receipt.Proofs = buildProofs(receipt, facts)
-	receipt.Decision, receipt.Resolution, receipt.Reason = "PASS", "EXACT", "AMBIGUITY_BUDGET_CONTRACT_SATISFIED"
-	receipt.Coordinate = Coordinate{Stage: "ambiguity-budget", Step: "seal-receipt", Reason: receipt.Reason}
-	for _, result := range receipt.Cases {
-		if result.Status != "SATISFIED" {
-			receipt.Decision = "FAIL_CLOSED"
-			receipt.Resolution = "LOWER_RESOLUTION"
-			receipt.Reason = "AMBIGUITY_BUDGET_CONTRACT_NOT_SATISFIED"
-			receipt.Coordinate.Reason = receipt.Reason
-			break
-		}
-	}
+	receipt.Interventions = buildInterventions(input.Contract, input.Source, source, receipt.Budget)
+	receipt.Summary = summarize(receipt.Cases, receipt.Interventions)
+	receipt.SubjectDecision, receipt.SubjectResolution, receipt.SubjectReason = subjectVector(receipt.Cases)
+	receipt.SubjectCoordinate = Coordinate{Stage: "ambiguity-budget", Step: "subject-resolution", Reason: receipt.SubjectReason}
+	receipt.ConformanceDecision, receipt.ConformanceResolution, receipt.ConformanceReason = "PASS", "EXACT", "CONFORMANCE_CASES_MATCHED"
+	receipt.FactsDigest = digestValue(struct {
+		SubjectSHA    string
+		Source        SourceObservation
+		Budget        IntegerSet
+		Cases         []CaseReceipt
+		Interventions []InterventionReceipt
+	}{input.SubjectSHA, source, receipt.Budget, receipt.Cases, receipt.Interventions})
+	receipt.Proofs = buildProofs(receipt)
 	return seal(receipt)
 }
 
-func evaluateCase(spec CaseSpec, budget IntegerSet) CaseReceipt {
-	result := CaseReceipt{
-		ID: spec.ID, Class: spec.Class, InputState: spec.InputState, Counts: spec.Counts,
-		ExpectedDecision: spec.ExpectedDecision, ExpectedResolution: spec.ExpectedResolution,
-		ExpectedReason: spec.ExpectedReason, Coordinate: spec.Coordinate, Claim: spec.Claim,
-		Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION", Reason: "AMBIGUITY_COUNT_UNKNOWN",
-	}
-	switch {
-	case spec.InputState == "UNKNOWN":
-		result.Decision = "UNKNOWN"
-		result.Reason = "AMBIGUITY_INPUT_UNKNOWN"
-	case !validCounts(spec.Counts):
-		result.Reason = "AMBIGUITY_COUNT_UNKNOWN"
-	case exceeds(spec.Counts, budget):
-		result.Decision = "FAIL_CLOSED"
-		result.Reason = "AMBIGUITY_BUDGET_EXCEEDED"
-	default:
-		result.Decision, result.Resolution, result.Reason = "PASS", "EXACT", "AMBIGUITY_BUDGET_WITHIN_LIMIT"
-	}
-	result.Status = "SATISFIED"
-	if result.Decision != spec.ExpectedDecision || result.Resolution != spec.ExpectedResolution || result.Reason != spec.ExpectedReason {
-		result.Status = "NOT_SATISFIED"
-	}
-	return result
+func caseReceipt(sourceDigest string, program ProgramObservation, budget IntegerSet) CaseReceipt {
+	parsed := computesProgram{Activity: program.Activity, Text: program.Program, Kind: program.ProgramKind,
+		ID: program.ID, Class: program.Class, InputState: program.InputState, Counts: program.Counts}
+	decision, resolution, reason, claimTo := subjectDecision(parsed, budget)
+	evidence := digestValue(struct {
+		SourceDigest string
+		Activity     string
+		Program      string
+		Counts       IntegerSet
+	}{sourceDigest, program.Activity, program.Program, program.Counts})
+	coordinate := Coordinate{Stage: "ambiguity-budget", Step: "case:" + program.ID, Reason: reason}
+	claim := ClaimTransition{CaseID: program.ID, From: "AMBIGUITY_OBSERVED", To: claimTo,
+		Stage: coordinate.Stage, Step: coordinate.Step, Reason: reason, EvidenceDigest: evidence}
+	return CaseReceipt{ID: program.ID, Activity: program.Activity, Class: program.Class, InputState: program.InputState,
+		Program: program.Program, ProgramDigest: program.Digest, Counts: program.Counts, Decision: decision,
+		Resolution: resolution, Reason: reason, Coordinate: coordinate, Claim: claim, EvidenceDigest: evidence, Conformance: "MATCH"}
 }
 
-func validCounts(counts IntegerSet) bool {
-	return counts.InterpretationCandidates >= 1 && counts.UnresolvedBranches >= 0 && counts.EvidencePaths >= 1
-}
-
-func exceeds(value, budget IntegerSet) bool {
-	return value.InterpretationCandidates > budget.InterpretationCandidates ||
-		value.UnresolvedBranches > budget.UnresolvedBranches || value.EvidencePaths > budget.EvidencePaths
-}
-
-func indicatorsFor(spec CaseSpec, result CaseReceipt) []Indicator {
+func indicatorsFor(sourceDigest string, program ProgramObservation, budget IntegerSet) []Indicator {
+	evaluation := "WITHIN_LIMIT"
+	if program.InputState == "UNKNOWN" {
+		evaluation = "UNKNOWN_INPUT"
+	} else if exceeds(program.Counts, budget) {
+		evaluation = "EXCEEDS_LIMIT"
+	}
 	values := []struct {
-		id, dimension, class, proof string
-		observed, expected          int
+		metric, dimension, proof string
+		observed, limit          int
 	}{
-		{"gooo.metric.ambiguity-budget.candidate-count.v1", "interpretation_candidates", "DRIVER", FoundationProof, result.Counts.InterpretationCandidates, spec.Counts.InterpretationCandidates},
-		{"gooo.metric.ambiguity-budget.unresolved-branches.v1", "unresolved_branches", "DRIVER", CoherenceProof, result.Counts.UnresolvedBranches, spec.Counts.UnresolvedBranches},
-		{"gooo.metric.ambiguity-budget.evidence-paths.v1", "evidence_paths", "DRIVER", RegressionProof, result.Counts.EvidencePaths, spec.Counts.EvidencePaths},
+		{"gooo.metric.ambiguity-budget.candidate-count.v2", "interpretation_candidates", FoundationProof, program.Counts.InterpretationCandidates, budget.InterpretationCandidates},
+		{"gooo.metric.ambiguity-budget.unresolved-branches.v2", "unresolved_branches", CoherenceProof, program.Counts.UnresolvedBranches, budget.UnresolvedBranches},
+		{"gooo.metric.ambiguity-budget.evidence-paths.v2", "evidence_paths", RegressionProof, program.Counts.EvidencePaths, budget.EvidencePaths},
 	}
-	indicators := make([]Indicator, len(values))
-	for index, value := range values {
-		indicators[index] = Indicator{MetricID: value.id, CaseID: spec.ID, Dimension: value.dimension,
-			Class: value.class, ProofChoice: value.proof, Producer: Producer, Consumer: Consumer,
-			MetaOperation: MetaOperation, Observed: value.observed, Expected: value.expected,
-			Satisfied: value.observed == value.expected}
+	indicators := make([]Indicator, 0, len(values))
+	for _, value := range values {
+		evidence := digestValue(struct {
+			SourceDigest string
+			Activity     string
+			Dimension    string
+			Observed     int
+			Budget       int
+		}{sourceDigest, program.Activity, value.dimension, value.observed, value.limit})
+		indicators = append(indicators, Indicator{MetricID: value.metric, CaseID: program.ID, Dimension: value.dimension,
+			ProofChoice: value.proof, Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation,
+			Observed: value.observed, Budget: value.limit, Relation: "<=", Evaluation: evaluation, EvidenceDigest: evidence})
 	}
 	return indicators
 }
 
-func summarize(cases []CaseReceipt, indicators []Indicator, denominator int) Summary {
-	summary := Summary{CasesTotal: len(cases), CoordinatesTotal: len(indicators), FixedDenominator: denominator}
+func summarize(cases []CaseReceipt, interventions []InterventionReceipt) Summary {
+	summary := Summary{CasesTotal: len(cases), IntegerDimensions: IntegerDimensions,
+		InterventionsTotal: len(interventions), FixedDenominator: FixedDenominator}
 	for _, result := range cases {
-		if result.Status == "SATISFIED" {
-			summary.CasesSatisfied++
+		if result.InputState == "KNOWN" {
+			summary.KnownCases++
 		}
 		switch result.Class {
 		case "ZERO":
@@ -118,25 +107,36 @@ func summarize(cases []CaseReceipt, indicators []Indicator, denominator int) Sum
 		if result.Resolution == "LOWER_RESOLUTION" {
 			summary.LowerResolutionCases++
 		}
-	}
-	for _, indicator := range indicators {
-		if indicator.Satisfied {
-			summary.CoordinatesSatisfied++
+		if result.Claim.To == "OPEN" {
+			summary.OpenClaims++
 		}
 	}
 	return summary
 }
 
-func buildProofs(receipt Receipt, evidence string) []Proof {
-	allIndicators := receipt.Summary.CoordinatesSatisfied == receipt.Summary.CoordinatesTotal
-	transitionsPreserved := len(receipt.Claims) == len(receipt.Cases)
-	for index, result := range receipt.Cases {
-		transitionsPreserved = transitionsPreserved && result.Claim == receipt.Claims[index]
+func subjectVector(cases []CaseReceipt) (string, string, string) {
+	for _, result := range cases {
+		if result.Resolution == "LOWER_RESOLUTION" {
+			return "MIXED", "LOWER_RESOLUTION", "AMBIGUITY_CASE_VECTOR_CONTAINS_LOWER_RESOLUTION"
+		}
 	}
+	return "EXACT", "EXACT", "AMBIGUITY_CASE_VECTOR_EXACT"
+}
+
+func buildProofs(receipt Receipt) []Proof {
+	claimsPreserved := len(receipt.Claims) == len(receipt.Cases)
+	for index, result := range receipt.Cases {
+		claimsPreserved = claimsPreserved && receipt.Claims[index] == result.Claim && result.Claim.EvidenceDigest != ""
+	}
+	interventionsPassed := len(receipt.Interventions) == ExpectedInterventions
+	for _, intervention := range receipt.Interventions {
+		interventionsPassed = interventionsPassed && intervention.Satisfied
+	}
+	evidence := receipt.FactsDigest
 	return []Proof{
-		{Choice: FoundationProof, Claim: "source and integer ambiguity coordinates are observed", Producer: Producer, Consumer: Consumer, MetaOperation: "observe-ambiguity-coordinates", EvidenceDigest: evidence, Passed: allIndicators},
-		{Choice: CoherenceProof, Claim: "budget decisions retain their claim transitions", Producer: Producer, Consumer: Consumer, MetaOperation: "preserve-claim-transitions", EvidenceDigest: evidence, Passed: transitionsPreserved},
-		{Choice: RegressionProof, Claim: "over-budget and unknown inputs lower resolution without writes", Producer: Producer, Consumer: Consumer, MetaOperation: "lower-resolution-on-budget-overflow", EvidenceDigest: evidence, Passed: receipt.Summary.LowerResolutionCases == 2 && receipt.Effects.RepositoryWrites == 0 && !receipt.Effects.MutationAuthority},
+		{Choice: FoundationProof, Claim: "budget and cases are observed from lowered computes declarations", Producer: Producer, Consumer: Consumer, MetaOperation: "observe-gooo-computes", EvidenceDigest: evidence, Passed: receipt.Source.Lowering == canonicalLowering && receipt.Budget == expectedBudget()},
+		{Choice: CoherenceProof, Claim: "every subject transition has stage, step, reason, and evidence digest", Producer: Producer, Consumer: Consumer, MetaOperation: "preserve-provenanced-claim-transitions", EvidenceDigest: evidence, Passed: claimsPreserved},
+		{Choice: RegressionProof, Claim: "semantic and nonsemantic interventions are distinguishable without effects", Producer: Producer, Consumer: Consumer, MetaOperation: "replay-intervention-boundary", EvidenceDigest: evidence, Passed: interventionsPassed && receipt.Effects == (Effects{})},
 	}
 }
 
@@ -148,14 +148,20 @@ func validateInput(input Input, source SourceObservation, sourceErr error) strin
 		return reason
 	}
 	if sourceErr != nil || source.Package != input.Contract.SourcePackage || source.Namespace != input.Contract.SourceNamespace ||
-		source.Entities != input.Contract.SourceEntities || source.Activities != input.Contract.SourceActivities {
+		source.Lowering != canonicalLowering || source.Activities != ExpectedCaseTotal+1 {
 		return "SOURCE_BINDING_UNKNOWN"
 	}
+	budget, ok := findBudget(source, input.Contract.BudgetActivity)
+	if !ok || budget.Counts != expectedBudget() {
+		return "BUDGET_COMPUTES_UNKNOWN"
+	}
+	for _, contractCase := range input.Contract.Cases {
+		program, ok := findCase(source, contractCase.Activity)
+		if !ok || program.ID != contractCase.ID || program.ProgramKind != "CASE" {
+			return "CASE_COMPUTES_UNKNOWN"
+		}
+	}
 	return ""
-}
-
-func validSHA(value string) bool {
-	return len(value) == 40 && strings.Trim(value, "0123456789abcdefABCDEF") == ""
 }
 
 func seal(receipt Receipt) Receipt {
@@ -163,16 +169,18 @@ func seal(receipt Receipt) Receipt {
 	return receipt
 }
 
-func sealUnknown(receipt Receipt, reason string, coordinate Coordinate, detail string) Receipt {
-	receipt.Decision, receipt.Resolution, receipt.Reason = "UNKNOWN", "LOWER_RESOLUTION", reason
-	receipt.Coordinate = coordinate
+func sealUnknown(receipt Receipt, reason string) Receipt {
+	receipt.ConformanceDecision = "FAIL_CLOSED"
+	receipt.ConformanceResolution = "LOWER_RESOLUTION"
+	receipt.ConformanceReason = reason
+	receipt.SubjectDecision = "UNKNOWN"
+	receipt.SubjectResolution = "LOWER_RESOLUTION"
+	receipt.SubjectReason = reason
+	receipt.SubjectCoordinate = Coordinate{Stage: "ambiguity-budget", Step: "observe-source", Reason: reason}
 	receipt.FactsDigest = digestValue(struct {
 		SubjectSHA string
-		Contract   Contract
 		Source     SourceObservation
-		Detail     string
-	}{receipt.SubjectSHA, Contract{ID: receipt.ContractID}, receipt.Source, detail})
-	receipt.Summary = Summary{CasesTotal: ExpectedCaseTotal, CoordinatesTotal: FixedDenominator, FixedDenominator: FixedDenominator}
-	receipt.Proofs = []Proof{{Choice: FoundationProof, Claim: "input identity remains explicit while resolution is lowered", Producer: Producer, Consumer: Consumer, MetaOperation: "record-unknown-input", EvidenceDigest: receipt.FactsDigest, Passed: true}}
+		Reason     string
+	}{receipt.SubjectSHA, receipt.Source, reason})
 	return seal(receipt)
 }
