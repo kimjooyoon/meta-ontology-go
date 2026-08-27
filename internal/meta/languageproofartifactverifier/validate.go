@@ -83,6 +83,10 @@ func Validate(report Report) error {
 		return err
 	}
 	if report.BundleDigest != "" {
+		preliminary := canonicalPreliminaryProjection(report)
+		if report.ConsumerReceipt.PreliminaryDigest != preliminary.Digest {
+			return &ValidationError{Coordinate: Coordinate{"CONSUME_BUNDLE", "consumer-receipt", "PRELIMINARY_BINDING_MISMATCH"}, Detail: "consumer receipt preliminary digest does not match the canonical projection"}
+		}
 		if report.ConsumerReceipt.Schema != ConsumerReceiptSchema || report.ConsumerReceipt.Version != 1 || report.ConsumerReceipt.Authority != "READ_ONLY_CONSUMPTION" ||
 			report.ConsumerReceipt.Producer != ProducerID || report.ConsumerReceipt.Consumer != ConsumerID || !validDigest(report.ConsumerReceipt.PreliminaryDigest) || report.ConsumerReceipt.TargetPath != "artifact.json" ||
 			!report.ConsumerReceipt.OutputExists || !validDigest(report.ConsumerReceipt.TargetDigest) || !validDigest(report.ConsumerReceipt.OutputDigest) || !validDigest(report.ConsumerReceipt.AttestationDigest) ||
@@ -143,25 +147,31 @@ func ValidatePreliminary(report Report) error {
 		return fmt.Errorf("proof-carrying preliminary summary mismatch")
 	}
 	if err := validateIndicatorInventory(report, wantBundleMetric, wantConsumerMetric); err != nil {
-		return err
+		return preliminaryValidationError(Coordinate{"EVALUATE", "preliminary-inventory", "PRELIMINARY_INDICATOR_INVENTORY_MISMATCH"}, err)
 	}
 	if err := validateCaseResults(report); err != nil {
 		return err
 	}
+	if err := validateOpenLedger(report.PriorLedger); err != nil {
+		return preliminaryValidationError(Coordinate{"CONSUME_LEDGER", "preliminary-ledger", "PRELIMINARY_CLAIM_LEDGER_MISMATCH"}, err)
+	}
+	if err := validateFinalLedger(report.Ledger, report.PriorLedger); err != nil {
+		return preliminaryValidationError(Coordinate{"CONSUME_LEDGER", "preliminary-ledger", "PRELIMINARY_CLAIM_LEDGER_MISMATCH"}, err)
+	}
 	if err := validateLedgerAgainstValidCase(report); err != nil {
-		return err
+		return preliminaryValidationError(Coordinate{"CONSUME_LEDGER", "preliminary-ledger", "PRELIMINARY_CLAIM_LEDGER_MISMATCH"}, err)
 	}
 	if err := validateTransitions(report.Transitions); err != nil {
-		return err
+		return preliminaryValidationError(Coordinate{"CONSUME", "preliminary-transition-chain", "PRELIMINARY_TRANSITION_CHAIN_MISMATCH"}, err)
 	}
 	if err := validateTransitionsAgainstClaims(report); err != nil {
-		return err
+		return preliminaryValidationError(Coordinate{"CONSUME", "preliminary-transition-chain", "PRELIMINARY_TRANSITION_CHAIN_MISMATCH"}, err)
 	}
 	if err := validateInterventions(report.Interventions); err != nil {
 		return err
 	}
 	if err := validateProofInventory(report, true); err != nil {
-		return err
+		return preliminaryValidationError(Coordinate{"VERIFY_PROOF", "preliminary-proof-gate", "PRELIMINARY_PROOF_NOT_SATISFIED"}, err)
 	}
 	if len(report.Counterexamples) != CounterexampleTotal || !counterexampleInventoryOK(report.Counterexamples) {
 		return fmt.Errorf("proof-carrying preliminary counterexample inventory mismatch")
@@ -170,6 +180,65 @@ func ValidatePreliminary(report Report) error {
 		return fmt.Errorf("proof-carrying preliminary report digest mismatch")
 	}
 	return nil
+}
+
+// canonicalPreliminaryProjection removes only the consumer observation from a
+// valid final report. Everything that establishes the historical subject and
+// its producer-side evidence remains byte-for-byte represented in the
+// projection, so the receipt must bind to this digest rather than to an
+// arbitrary self-consistent claim.
+func canonicalPreliminaryProjection(report Report) Report {
+	preliminary := report
+	preliminary.ConsumerReceipt = ConsumerReceipt{}
+	preliminary.ArtifactUseAuthority = ""
+	preliminary.Summary.ConsumerRechecks = 0
+	preliminary.ConformanceDecision = "FAIL_CLOSED"
+	preliminary.ConformanceResolution = "LOWER_RESOLUTION"
+	preliminary.ConformanceReason = "CONSUMER_RECHECK_NOT_OBSERVED"
+	preliminary.ConformanceCoordinate = Coordinate{"CONSUME_BUNDLE", "consumer-recheck", preliminary.ConformanceReason}
+	preliminary.PreliminaryDecision = preliminary.ConformanceDecision
+	preliminary.PreliminaryResolution = preliminary.ConformanceResolution
+	preliminary.PreliminaryReason = preliminary.ConformanceReason
+	preliminary.PreliminaryCoordinate = preliminary.ConformanceCoordinate
+	preliminary.Indicators = indicators(preliminary.Summary)
+	preliminary.Proofs = proofs(preliminary, preliminary.Cases)
+	preliminary.Digest = reportDigest(preliminary)
+	return preliminary
+}
+
+// ResealReportDigest is a fixture-only helper exposed to the CI verifier
+// command. It recomputes the report envelope after a deliberate mutation;
+// semantic validators still decide whether the resealed report is valid.
+func ResealReportDigest(report Report) Report {
+	report.Digest = reportDigest(report)
+	return report
+}
+
+// ResealFinalPreliminaryDigest creates a coherent final-report fixture whose
+// receipt, attestation, and outer report all agree on an intentionally chosen
+// preliminary digest. Validate must still reject it unless that digest is the
+// canonical preliminary projection.
+func ResealFinalPreliminaryDigest(report Report, preliminaryDigest string) Report {
+	receipt := report.ConsumerReceipt
+	receipt.PreliminaryDigest = preliminaryDigest
+	report.ConsumerReceipt = receipt
+	report.ConsumerReceipt.AttestationDigest = attestationDigest(report)
+	report.ConsumerReceipt.Digest = consumerReceiptDigest(report.ConsumerReceipt)
+	report.Digest = reportDigest(report)
+	return report
+}
+
+type ValidationError struct {
+	Coordinate Coordinate
+	Detail     string
+}
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("proof-carrying validation rejected at stage=%s step=%s reason=%s: %s", e.Coordinate.Stage, e.Coordinate.Step, e.Coordinate.Reason, e.Detail)
+}
+
+func preliminaryValidationError(coordinate Coordinate, detail error) error {
+	return &ValidationError{Coordinate: coordinate, Detail: detail.Error()}
 }
 
 func expectedSummary(denominator, bundleMetric, consumerMetric int) Summary {

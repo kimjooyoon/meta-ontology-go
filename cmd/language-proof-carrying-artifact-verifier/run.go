@@ -31,6 +31,7 @@ type options struct {
 	recipeOnly, missingAttachment, wrongAttachmentDigest, unrelatedTampered, staleHead, unauthorizedConsumer string
 	claimProposition, claimDependency, claimProofChoice, claimTarget, unauthorizedBundle                     string
 	bundle, packBundle, bundleInputs, checkout, consumerReceipt                                              string
+	resealReport, coherentPreliminaryTamper, preliminaryDigest                                               string
 }
 
 func run(args []string) int {
@@ -74,15 +75,59 @@ func run(args []string) int {
 	flags.StringVar(&value.bundleInputs, "bundle-inputs", "", "bundle input manifest")
 	flags.StringVar(&value.checkout, "checkout", "", "checkout evidence")
 	flags.StringVar(&value.consumerReceipt, "consumer-receipt", "", "actual downstream consumer receipt")
+	flags.StringVar(&value.resealReport, "reseal-report", "", "fixture report to reseal after mutation")
+	flags.StringVar(&value.coherentPreliminaryTamper, "coherent-preliminary-tamper", "", "final report fixture to reseal with a chosen preliminary digest")
+	flags.StringVar(&value.preliminaryDigest, "preliminary-digest", "", "chosen preliminary digest for a coherent fixture")
 	if flags.Parse(args) != nil {
 		return 2
 	}
-	if value.check != "" {
-		report, err := verifier.LoadReport(value.check)
-		if err != nil || (verifier.Validate(report) != nil && verifier.ValidatePreliminary(report) != nil) {
+	writeRawReport := func(path string, report verifier.Report) int {
+		raw, err := json.MarshalIndent(report, "", "  ")
+		if err != nil || os.WriteFile(path, append(raw, '\n'), 0o644) != nil {
 			return 1
 		}
 		return 0
+	}
+	if value.resealReport != "" {
+		if value.output == "" {
+			return 2
+		}
+		report, err := verifier.LoadReport(value.resealReport)
+		if err != nil {
+			return 1
+		}
+		return writeRawReport(value.output, verifier.ResealReportDigest(report))
+	}
+	if value.coherentPreliminaryTamper != "" {
+		if value.output == "" || value.preliminaryDigest == "" {
+			return 2
+		}
+		report, err := verifier.LoadReport(value.coherentPreliminaryTamper)
+		if err != nil {
+			return 1
+		}
+		return writeRawReport(value.output, verifier.ResealFinalPreliminaryDigest(report, value.preliminaryDigest))
+	}
+	if value.check != "" {
+		report, err := verifier.LoadReport(value.check)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", err)
+			return 1
+		}
+		finalErr := verifier.Validate(report)
+		if finalErr == nil {
+			return 0
+		}
+		if report.ConformanceDecision == "PASS" || report.ArtifactUseAuthority != "" {
+			fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", finalErr)
+			return 1
+		}
+		preliminaryErr := verifier.ValidatePreliminary(report)
+		if preliminaryErr == nil {
+			return 0
+		}
+		fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", preliminaryErr)
+		return 1
 	}
 	if value.packBundle != "" {
 		if value.head == "" || value.bundleInputs == "" || value.checkout == "" {

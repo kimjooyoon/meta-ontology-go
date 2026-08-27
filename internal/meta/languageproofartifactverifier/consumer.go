@@ -61,13 +61,9 @@ func attestationDigest(report Report) string {
 }
 
 func attestationDigestFor(report Report, receipt ConsumerReceipt) string {
-	preliminaryDigest := receipt.PreliminaryDigest
-	if preliminaryDigest == "" {
-		preliminaryDigest = report.Digest
-	}
 	return digestValue(consumerAttestation{Decision: report.ConformanceDecision, Resolution: report.ConformanceResolution, Reason: report.ConformanceReason,
 		Authority: report.ArtifactUseAuthority, SubjectDecision: report.SubjectArtifactDecision, BundleDigest: report.BundleDigest,
-		PreliminaryDigest: preliminaryDigest, Producer: report.Producer, Consumer: report.Consumer, TargetPath: receipt.TargetPath, TargetDigest: receipt.TargetDigest})
+		PreliminaryDigest: receipt.PreliminaryDigest, Producer: report.Producer, Consumer: report.Consumer, TargetPath: receipt.TargetPath, TargetDigest: receipt.TargetDigest})
 }
 
 func consumerAttestedReport(report Report) Report {
@@ -79,17 +75,13 @@ func consumerAttestedReport(report Report) Report {
 	return report
 }
 
-func expectedConsumerReceipt(report Report, targetPath string, target []byte) ConsumerReceipt {
+func expectedConsumerReceipt(report Report, preliminaryDigest, targetPath string, target []byte) ConsumerReceipt {
 	targetDigest := digestBytes(target)
 	outputDigest := digestValue(struct {
 		TargetPath   string `json:"target_path"`
 		TargetDigest string `json:"target_digest"`
 		Authority    string `json:"authority"`
 	}{targetPath, targetDigest, "READ_ONLY_CONSUMPTION"})
-	preliminaryDigest := report.ConsumerReceipt.PreliminaryDigest
-	if preliminaryDigest == "" {
-		preliminaryDigest = report.Digest
-	}
 	receipt := ConsumerReceipt{Schema: ConsumerReceiptSchema, Version: 1, PreliminaryDigest: preliminaryDigest, Producer: report.Producer, Consumer: report.Consumer,
 		TargetPath: targetPath, TargetDigest: targetDigest, OutputDigest: outputDigest, OutputExists: true, Authority: "READ_ONLY_CONSUMPTION"}
 	receipt.AttestationDigest = attestationDigestFor(report, receipt)
@@ -138,7 +130,10 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 		// exact final report by this kernel, including all cases, indicators,
 		// proofs, bindings, and the receipt for the reconstructed target.
 		attested.Summary.ConsumerRechecks = 1
-		attested.ConsumerReceipt = expectedConsumerReceipt(attested, targetPath, raw)
+		// ValidatePreliminary above proves that report.Digest is the exact
+		// producer/consumer-independent preliminary subject. Do not inherit a
+		// digest from a receipt field while creating the first receipt.
+		attested.ConsumerReceipt = expectedConsumerReceipt(attested, report.Digest, targetPath, raw)
 		attested.Indicators = indicators(attested.Summary)
 		attested.Proofs = proofs(attested, attested.Cases)
 		attested.ConformanceDecision, attested.ConformanceResolution, attested.ConformanceReason = "PASS", "EXACT", "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED"
@@ -149,7 +144,14 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 			return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")
 		}
 	}
-	receipt := expectedConsumerReceipt(attested, targetPath, raw)
+	if finalReport && report.ConsumerReceipt.PreliminaryDigest != canonicalPreliminaryProjection(report).Digest {
+		return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer receipt preliminary binding does not match canonical projection")
+	}
+	preliminaryDigest := report.ConsumerReceipt.PreliminaryDigest
+	if !finalReport {
+		preliminaryDigest = report.Digest
+	}
+	receipt := expectedConsumerReceipt(attested, preliminaryDigest, targetPath, raw)
 	if finalReport && !reflect.DeepEqual(receipt, report.ConsumerReceipt) {
 		return ConsumerReceipt{}, consumerError(ConsumerErrorReceiptMismatch, "consumer receipt does not match report")
 	}

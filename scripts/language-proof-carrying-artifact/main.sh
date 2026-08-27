@@ -230,26 +230,33 @@ go run ./cmd/language-proof-carrying-artifact-verifier -bundle "$output/bundle.j
 jq -e '.conformance_decision == "FAIL_CLOSED" and .conformance_resolution == "LOWER_RESOLUTION" and .conformance_reason == "CONSUMER_RECHECK_NOT_OBSERVED" and .conformance_coordinate.stage == "CONSUME_BUNDLE" and .conformance_coordinate.step == "consumer-recheck" and .summary.bundle_only_verification == 1 and .summary.consumer_rechecks == 0 and ([.indicators[] | select(.satisfied == false)] | length) == 1' "$output/bundle-preliminary-report.json"
 jq -e '.consumer_receipt.output_exists == false and .consumer_receipt.target_digest == "" and .consumer_receipt.output_digest == "" and .artifact_use_authority == "" and ([.proofs[] | select(.consumer_gate_open == true)] | length) == 2' "$output/bundle-preliminary-report.json"
 
+preliminary_negative_fixture_total=6
+preliminary_negative_fixture_observed=0
 assert_preliminary_rejected() {
-  local name="$1" filter="$2" fixture="$output/$1.json" consumer_log="$output/$1-consumer.log"
-  jq -c "$filter" "$output/bundle-preliminary-report.json" > "$fixture"
-  if go run ./cmd/language-proof-carrying-artifact-verifier -check "$fixture"; then
+  local name="$1" filter="$2" expected="$3" raw_fixture="$output/$1-mutated.json" fixture="$output/$1.json" check_log="$output/$1-check.log" consumer_log="$output/$1-consumer.log"
+  jq -c "$filter" "$output/bundle-preliminary-report.json" > "$raw_fixture"
+  go run ./cmd/language-proof-carrying-artifact-verifier -reseal-report "$raw_fixture" -output "$fixture"
+  if go run ./cmd/language-proof-carrying-artifact-verifier -check "$fixture" > "$check_log" 2>&1; then
     echo "$name preliminary unexpectedly validated by CLI" >&2
     exit 1
   fi
+  rg -F "$expected" "$check_log"
   if go run ./cmd/language-proof-carrying-artifact-consumer -bundle "$output/bundle.json" -report "$fixture" -target artifact.json -out "$output/$name-consumer-receipt.json" > "$consumer_log" 2>&1; then
     echo "$name preliminary unexpectedly lifted by consumer" >&2
     exit 1
   fi
   rg -F 'ATTESTATION_MISMATCH' "$consumer_log"
+  preliminary_negative_fixture_observed=$((preliminary_negative_fixture_observed + 1))
 }
 
-assert_preliminary_rejected "preliminary-38-of-40" '.indicators[2].value = 38 | .indicators[2].target = 40 | .indicators[2].satisfied = false'
-assert_preliminary_rejected "preliminary-duplicate-metric" '.indicators[1].metric_id = .indicators[0].metric_id'
-assert_preliminary_rejected "preliminary-missing-metric" 'del(.indicators[1])'
-assert_preliminary_rejected "preliminary-proof-false" '.proofs[0].passed = false'
-assert_preliminary_rejected "preliminary-broken-transition" '.claim_transitions[0].digest = ""'
-assert_preliminary_rejected "preliminary-invalid-claim-ledger" '.prior_ledger.entries[0].status = "DISCHARGED"'
+assert_preliminary_rejected "preliminary-38-of-40" '.indicators[2].value = 38 | .indicators[2].target = 40 | .indicators[2].satisfied = false' 'stage=EVALUATE step=preliminary-inventory reason=PRELIMINARY_INDICATOR_INVENTORY_MISMATCH'
+assert_preliminary_rejected "preliminary-duplicate-metric" '.indicators[1].metric_id = .indicators[0].metric_id' 'stage=EVALUATE step=preliminary-inventory reason=PRELIMINARY_INDICATOR_INVENTORY_MISMATCH'
+assert_preliminary_rejected "preliminary-missing-metric" 'del(.indicators[1])' 'stage=EVALUATE step=preliminary-inventory reason=PRELIMINARY_INDICATOR_INVENTORY_MISMATCH'
+assert_preliminary_rejected "preliminary-proof-false" '.proofs[0].passed = false' 'stage=VERIFY_PROOF step=preliminary-proof-gate reason=PRELIMINARY_PROOF_NOT_SATISFIED'
+assert_preliminary_rejected "preliminary-broken-transition" '.claim_transitions[0].digest = ""' 'stage=CONSUME step=preliminary-transition-chain reason=PRELIMINARY_TRANSITION_CHAIN_MISMATCH'
+assert_preliminary_rejected "preliminary-invalid-claim-ledger" '.prior_ledger.entries[0].status = "DISCHARGED"' 'stage=CONSUME_LEDGER step=preliminary-ledger reason=PRELIMINARY_CLAIM_LEDGER_MISMATCH'
+test "$preliminary_negative_fixture_observed" -eq "$preliminary_negative_fixture_total"
+jq -n --argjson total "$preliminary_negative_fixture_total" --argjson observed "$preliminary_negative_fixture_observed" '{schema:"gooo/preliminary-negative-fixture-ledger/v1",total:$total,observed:$observed,stale_digest_only_rejections:0,validator_and_consumer_checked:true}' > "$output/preliminary-negative-fixture-ledger.json"
 
 jq '.digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' "$output/bundle.json" > "$output/corrupt-bundle.json"
 if run_verifier "$output/missing-bundle-report.json" "$output/no-such-bundle.json" > "$output/missing-bundle.log" 2>&1; then
@@ -268,6 +275,18 @@ jq -e '.conformance_decision == "FAIL_CLOSED" and .conformance_resolution == "LO
 go run ./cmd/language-proof-carrying-artifact-verifier -check "$output/report.json"
 go run ./cmd/language-proof-carrying-artifact-verifier -check "$output/bundle-preliminary-report.json"
 go run ./cmd/language-proof-carrying-artifact-verifier -check "$output/bundle-report.json"
+fake_preliminary_digest="sha256:0000000000000000000000000000000000000000000000000000000000000000"
+go run ./cmd/language-proof-carrying-artifact-verifier -coherent-preliminary-tamper "$output/bundle-report.json" -preliminary-digest "$fake_preliminary_digest" -output "$output/coherent-preliminary-binding-tamper.json"
+if go run ./cmd/language-proof-carrying-artifact-verifier -check "$output/coherent-preliminary-binding-tamper.json" > "$output/coherent-preliminary-binding-tamper-check.log" 2>&1; then
+  echo "coherent preliminary binding tamper unexpectedly validated" >&2
+  exit 1
+fi
+rg -F 'stage=CONSUME_BUNDLE step=consumer-receipt reason=PRELIMINARY_BINDING_MISMATCH' "$output/coherent-preliminary-binding-tamper-check.log"
+if go run ./cmd/language-proof-carrying-artifact-consumer -bundle "$output/bundle.json" -report "$output/coherent-preliminary-binding-tamper.json" -target artifact.json -out "$output/coherent-preliminary-binding-tamper-receipt.json" > "$output/coherent-preliminary-binding-tamper-consumer.log" 2>&1; then
+  echo "coherent preliminary binding tamper unexpectedly consumed" >&2
+  exit 1
+fi
+rg -F 'ATTESTATION_MISMATCH' "$output/coherent-preliminary-binding-tamper-consumer.log"
 if go run ./cmd/language-proof-carrying-artifact-consumer -bundle "$output/bundle.json" -report "$output/bundle-report.json" -target missing-target.json -out "$output/target-missing-receipt.json" > "$output/target-missing.log" 2>&1; then
   echo "target-missing consumer unexpectedly succeeded" >&2
   exit 1
