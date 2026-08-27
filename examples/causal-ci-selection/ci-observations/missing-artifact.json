@@ -4,6 +4,7 @@
   "run_id": 33088310894,
   "job_id": 98574425650,
   "job_name": "language-concept-artifact",
+  "source_class": "SYNTHETIC_FIXTURE",
   "cases": [
     {
       "run_id": 33088310894,
@@ -11,6 +12,8 @@
       "job_name": "language-concept-artifact",
       "id": "missing-artifact",
       "endpoint": "/repos/kimjooyoon/meta-ontology-go/actions/runs/33070067804/artifacts?per_page=100",
+      "endpoint_class": "ACTIONS_RUN_ARTIFACTS_LIST",
+      "source_class": "SYNTHETIC_FIXTURE",
       "required_permission": "actions: read",
       "http_status": 200,
       "process_exit_code": 0,
@@ -19,7 +22,7 @@
       "stdout": "",
       "stderr": "",
       "artifacts": [
-        {"id": "metric-strategy-1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc", "path": "proposal.json", "expected": true, "present": false}
+        {"id": "metric-strategy-1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc", "path": "proposal.json", "kind": "ARTIFACT", "expected": true, "present": false}
       ],
       "provenance": "FIXED_MISSING_ARTIFACT_CASE"
     }

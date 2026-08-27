@@ -4,6 +4,7 @@
   "run_id": 33088310894,
   "job_id": 98574425650,
   "job_name": "language-concept-artifact",
+  "source_class": "SYNTHETIC_FIXTURE",
   "cases": [
     {
       "run_id": 33088310894,
@@ -11,6 +12,8 @@
       "job_name": "language-concept-artifact",
       "id": "malformed-http-200",
       "endpoint": "/repos/kimjooyoon/meta-ontology-go/actions/workflows/metric-counterfactual.yml/runs?head_sha=1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc&event=push&status=completed&per_page=100",
+      "endpoint_class": "ACTIONS_WORKFLOW_RUNS_LIST",
+      "source_class": "SYNTHETIC_FIXTURE",
       "required_permission": "actions: read",
       "http_status": 200,
       "process_exit_code": 0,

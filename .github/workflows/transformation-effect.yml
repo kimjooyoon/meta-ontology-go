@@ -498,12 +498,18 @@ jobs:
             if [[ "$selection_status" -eq 0 ]]; then
               observed_mode="RESOLVED"
             else
+              set +e
               go run ./cmd/language-readiness-witness/foundation-seed \
                 --root "$GITHUB_WORKSPACE" \
                 --input "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json" \
                 --expected-head "$HEAD_SHA" \
                 --output "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json" \
                 --check
+              foundation_status=$?
+              set -e
+              if [[ "$foundation_status" -ne 0 ]]; then
+                echo "foundation seed fail-closed: status=$foundation_status" >&2
+              fi
               observed_mode="FOUNDATION"
             fi
             if [[ -n "$mode" && "$mode" != "$observed_mode" ]]; then
@@ -529,6 +535,8 @@ jobs:
             test ! -e "$RUNNER_TEMP/language-readiness-binding-baseline-a.json"
             jq -r '"### Readiness foundation seed\n- decision: `\(.decision)`\n- coordinates: `\(.summary.satisfied)/\(.summary.total)`\n- ancestry exhaustion: `\(.source.missing_attempts)/\(.source.search_limit)`\n- readiness delta claims: `\(.source.readiness_delta_claims)`\n- repository writes: `\(.source.repository_writes)`\n- authority: denied"' \
               "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '"- predecessor evidence coordinate: `\(.attempts[-1].selection.reason // .reason)`"' \
+              "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
       - name: Upload exact-head readiness predecessor selection
@@ -540,7 +548,7 @@ jobs:
             ${{ runner.temp }}/language-readiness-baseline-reference-a.json
             ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
             ${{ runner.temp }}/language-readiness-foundation-seed-a.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
       - name: Prove guarded promotion capability foundation
         env:

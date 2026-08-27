@@ -36,12 +36,21 @@ capability; repository state is observed from path/content snapshots while
 transient writes and global mutation authority remain `UNKNOWN`.
 
 `ci-observations/` is a separate raw API/process evidence surface. It keeps
-four exact cases apart: normal HTTP 200, the observed PR #551
-`proposal-promotion` HTTP 403, malformed HTTP 200, and missing artifact. The
-consumer derives the rows from endpoint, required permission, HTTP status,
-process exit/status, and output bytes. The 403 row is
-`UNKNOWN / LOWER_RESOLUTION` with coordinate
-`proposal-promotion/fetch-github-evidence/CI_PERMISSION_DENIED`; its three
-missing predecessor evidence files are causal children, not three more root
-causes. This surface is separate from plan reconstruction and leaves
-selected-check execution `UNKNOWN`.
+The normal HTTP 200, malformed HTTP 200, and missing-artifact cases are three
+`SYNTHETIC_FIXTURE` cases. The observed PR #551 `proposal-promotion` HTTP 403
+is the sole `HISTORICAL_FIXTURE`. The consumer derives the rows from endpoint,
+required
+permission, HTTP status, process exit/status, and output bytes. The 403 row is
+`HISTORICAL_FIXTURE`, classified `UNKNOWN / LOWER_RESOLUTION` at
+`proposal-promotion/fetch-github-evidence/CI_PERMISSION_DENIED`; it is not
+the current actual case, and its three co-located artifacts plus upload-step
+observation have no observed dependency edge, so they remain
+`CAUSAL_RELATION_UNKNOWN`.
+
+The current exact-head observation is `CURRENT_EVIDENCE`: run `33098087709`,
+job `98608698224`, with `actions: read` present and no 403. Its root is
+`OPEN / LOWER_RESOLUTION / WORKFLOW_RUN_PAGINATION_INCOMPLETE`; the three
+missing predecessor files are downstream `3/3` only because workflow ordering
+is observed. If current evidence is unavailable, the receipt uses
+`OPEN / LOWER_RESOLUTION / CURRENT_CI_EVIDENCE_UNAVAILABLE` and never
+substitutes the historical 403. Selected-check execution remains `UNKNOWN`.

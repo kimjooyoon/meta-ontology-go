@@ -1,0 +1,20 @@
+{
+  "schema": "gooo/causal-ci-selection-pagination-fixtures/v1",
+  "source_class": "SYNTHETIC_FIXTURE",
+  "expected_ids": [
+    "normal-multi-page",
+    "repeated-next-link",
+    "page-cap-exceeded",
+    "malformed-link",
+    "duplicate-run-id",
+    "last-page"
+  ],
+  "cases": [
+    {"id": "normal-multi-page", "expected_reason": "", "pages": [{"url": "runs?page=1", "status": 200, "body_digest": "sha256:0eb236e50de35c59c03b63629624351af778cc33fbc55a92254e3c29e58e6255", "next_link_digest": "sha256:19258a4266a9190a1e4730b99efa5e8dfc60023146e9c26766738c0ebf389cf7"}, {"url": "runs?page=2", "status": 200, "body_digest": "sha256:0f6724ab77e487b74587299fac8c3336030f4157c86202d5a3f5ca64a6059442", "next_link_digest": "sha256:2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d"}]},
+    {"id": "repeated-next-link", "expected_reason": "WORKFLOW_RUN_NEXT_LINK_REPEATED", "pages": [{"url": "runs?page=1", "status": 200, "body_digest": "sha256:0eb236e50de35c59c03b63629624351af778cc33fbc55a92254e3c29e58e6255", "next_link_digest": "sha256:04b27e05aea40db3df0bdf333809eaca63b786749710f932e7c159a3968f29d9"}]},
+    {"id": "page-cap-exceeded", "expected_reason": "WORKFLOW_RUN_PAGE_CAP_EXCEEDED", "pages": [{"url": "runs?page=1000", "status": 200, "body_digest": "sha256:128c21223f98c10c976269a1285ddc9fa97095c1c79fe725d6bdce33e689ec8f", "next_link_digest": "sha256:27ffce4e6bd83951045efea1b60ad28eaf622d86d60db5ee29c72b541e1f7db0"}]},
+    {"id": "malformed-link", "expected_reason": "WORKFLOW_RUN_LINK_MALFORMED", "pages": [{"url": "runs?page=1", "status": 200, "body_digest": "sha256:0eb236e50de35c59c03b63629624351af778cc33fbc55a92254e3c29e58e6255", "next_link_digest": "sha256:60ec9bb7299d85e0cdd35d4058fabd7cb6bdc9b788c6efde44427e9bb9234e13"}]},
+    {"id": "duplicate-run-id", "expected_reason": "WORKFLOW_RUN_DUPLICATE_ID", "pages": [{"url": "runs?page=1", "status": 200, "body_digest": "sha256:0eb236e50de35c59c03b63629624351af778cc33fbc55a92254e3c29e58e6255", "next_link_digest": "sha256:19258a4266a9190a1e4730b99efa5e8dfc60023146e9c26766738c0ebf389cf7"}, {"url": "runs?page=2", "status": 200, "body_digest": "sha256:e24a5a32c9b8c8637ee33cd72bff6a05a140a48891a1c1a3b06447e1900b6446", "next_link_digest": "sha256:2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d"}]},
+    {"id": "last-page", "expected_reason": "", "pages": [{"url": "runs?page=1", "status": 200, "body_digest": "sha256:3547cb112ac4489af2310c0626cdba6f3097a2ad5a3b42ddd3b59c76c7a079a3", "next_link_digest": "sha256:2e1cfa82b035c26cbbbdae632cea070514eb8b773f616aaeaf668e2f0be8f10d"}]}
+  ]
+}

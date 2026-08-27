@@ -58,7 +58,7 @@ func evaluateWithBinding(observationRaw []byte, sourcePath string, source []byte
 	receipt.IndicatorInventory.ObservedIDs = indicatorIDsFromPolicy(receipt.Indicators)
 	receipt.CheckInventory.ObservedIDs = checkIDs(policy.Checks)
 	receipt.Metrics.FixedIndicatorSatisfied = satisfiedIndicators(receipt.Indicators)
-	receipt.PolicyContradictions = append([]PolicyContradiction(nil), policy.Contradictions...)
+	receipt.PolicyContradictions = contradictionInventory(policy.Contradictions)
 	receipt.PlanGate = derivePlanGate(observation, receipt)
 	receipt.Conformance = conformanceFor(policy, receipt.PlanGate)
 	receipt.PlanDigest, err = planDigest(receipt)
@@ -81,14 +81,54 @@ func deriveOperation(observation Observation) Operation {
 }
 
 func conformanceFor(policy PolicyGraph, gate PlanGate) Conformance {
-	if len(policy.Contradictions) > 0 {
-		value := policy.Contradictions[0]
-		return Conformance{Decision: ConformanceFailClosed, Coordinate: Coordinate{Stage: value.Stage, Step: value.Step, Reason: value.Reason}}
+	inventory := contradictionInventory(policy.Contradictions)
+	inventoryDigest, _ := digestJSON(inventory)
+	conformance := Conformance{RootContradictionInventory: inventory, RootContradictionInventoryDigest: inventoryDigest}
+	if len(inventory) > 0 {
+		value := inventory[0]
+		conformance.Decision = ConformanceFailClosed
+		conformance.Coordinate = Coordinate{Stage: value.Stage, Step: value.Step, Reason: value.Reason}
+		return conformance
 	}
 	if gate.Decision != PlanGatePass {
-		return Conformance{Decision: ConformanceFailClosed, Coordinate: Coordinate{Stage: stageConformance, Step: "final-plan-gate", Reason: "PLAN_FINAL_GATE_FAILED"}}
+		conformance.Decision = ConformanceFailClosed
+		conformance.Coordinate = Coordinate{Stage: stageConformance, Step: "final-plan-gate", Reason: "PLAN_FINAL_GATE_FAILED"}
+		return conformance
 	}
-	return Conformance{Decision: ConformancePass, Coordinate: Coordinate{Stage: stageConformance, Step: stepLower, Reason: "GOOO_POLICY_SEMANTIC_GRAPH_RECONSTRUCTED"}}
+	conformance.Decision = ConformancePass
+	conformance.Coordinate = Coordinate{Stage: stageConformance, Step: stepLower, Reason: "GOOO_POLICY_SEMANTIC_GRAPH_RECONSTRUCTED"}
+	return conformance
+}
+
+func contradictionInventory(values []PolicyContradiction) []PolicyContradiction {
+	result := make([]PolicyContradiction, len(values))
+	for index, value := range values {
+		result[index] = value
+		result[index].Edges = sortedUniqueStrings(value.Edges)
+		result[index].ClaimInstanceIDs = sortedUniqueStrings(value.ClaimInstanceIDs)
+	}
+	sort.Slice(result, func(i, j int) bool { return contradictionKey(result[i]) < contradictionKey(result[j]) })
+	return result
+}
+
+func contradictionKey(value PolicyContradiction) string {
+	return strings.Join([]string{value.Stage, value.Step, value.Reason, value.SubjectPath, strings.Join(value.Edges, "\x00"), strings.Join(value.ClaimInstanceIDs, "\x00")}, "\x00")
+}
+
+func sortedUniqueStrings(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+	result := append([]string(nil), values...)
+	sort.Strings(result)
+	unique := result[:0]
+	for _, value := range result {
+		if value == "" || (len(unique) > 0 && unique[len(unique)-1] == value) {
+			continue
+		}
+		unique = append(unique, value)
+	}
+	return unique
 }
 
 func derivePlanGate(observation Observation, receipt Receipt) PlanGate {
@@ -141,29 +181,39 @@ func evaluateSubjects(observation Observation, policy PolicyGraph) []SubjectReso
 }
 
 func attachContradictionTargets(policy *PolicyGraph, observation Observation) {
+	actualEdges := map[string]struct{}{}
+	for _, edge := range policy.Edges {
+		actualEdges[edge.ID] = struct{}{}
+	}
 	for index := range policy.Contradictions {
 		contradiction := &policy.Contradictions[index]
+		var parsedEdges []string
+		for _, edgeID := range contradiction.Edges {
+			if _, exists := actualEdges[edgeID]; exists {
+				parsedEdges = append(parsedEdges, edgeID)
+			}
+		}
+		contradiction.Edges = sortedUniqueStrings(parsedEdges)
+		contradiction.ClaimInstanceIDs = nil
+		if len(contradiction.Edges) == 0 {
+			continue
+		}
 		if contradiction.SubjectPath == "" {
 			contradiction.SubjectPath = observation.SourcePath
 		}
-		if len(contradiction.Edges) == 0 {
-			canonical := contradiction.Stage + "\x00" + contradiction.Step + "\x00" + contradiction.Reason + "\x00" + contradiction.SubjectPath
-			contradiction.Edges = []string{"policy-edge:missing:" + strings.TrimPrefix(digestBytes([]byte(canonical)), "sha256:")}
-		}
-		if len(contradiction.ClaimInstanceIDs) == 0 {
-			for _, claim := range observation.PriorClaims {
-				if claim.SubjectPath == contradiction.SubjectPath && claim.Proposition == ReasonCompleteRoute {
-					contradiction.ClaimInstanceIDs = append(contradiction.ClaimInstanceIDs, claim.InstanceID)
-				}
+		for _, claim := range observation.PriorClaims {
+			if claim.SubjectPath == contradiction.SubjectPath && claim.Proposition == ReasonCompleteRoute {
+				contradiction.ClaimInstanceIDs = append(contradiction.ClaimInstanceIDs, claim.InstanceID)
 			}
-			sort.Strings(contradiction.ClaimInstanceIDs)
 		}
+		contradiction.ClaimInstanceIDs = sortedUniqueStrings(contradiction.ClaimInstanceIDs)
 	}
+	policy.Contradictions = contradictionInventory(policy.Contradictions)
 }
 
 func targetedContradiction(policy PolicyGraph, path string) (PolicyContradiction, bool) {
 	for _, contradiction := range policy.Contradictions {
-		if contradiction.SubjectPath == path {
+		if contradictionHasActualEdges(policy, contradiction) && contradiction.SubjectPath == path {
 			return contradiction, true
 		}
 	}
@@ -172,7 +222,7 @@ func targetedContradiction(policy PolicyGraph, path string) (PolicyContradiction
 
 func contradictionTargetsClaim(policy PolicyGraph, claim PriorClaimObservation) (PolicyContradiction, bool) {
 	for _, contradiction := range policy.Contradictions {
-		if contradiction.SubjectPath != claim.SubjectPath {
+		if !contradictionHasActualEdges(policy, contradiction) || contradiction.SubjectPath != claim.SubjectPath {
 			continue
 		}
 		for _, claimID := range contradiction.ClaimInstanceIDs {
@@ -182,6 +232,22 @@ func contradictionTargetsClaim(policy PolicyGraph, claim PriorClaimObservation) 
 		}
 	}
 	return PolicyContradiction{}, false
+}
+
+func contradictionHasActualEdges(policy PolicyGraph, contradiction PolicyContradiction) bool {
+	if len(contradiction.Edges) == 0 {
+		return false
+	}
+	actual := map[string]struct{}{}
+	for _, edge := range policy.Edges {
+		actual[edge.ID] = struct{}{}
+	}
+	for _, edgeID := range contradiction.Edges {
+		if _, exists := actual[edgeID]; !exists {
+			return false
+		}
+	}
+	return true
 }
 
 func selectedSubject(path string, policy PolicyGraph) SubjectResolution {

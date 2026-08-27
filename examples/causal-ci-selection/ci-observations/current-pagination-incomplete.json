@@ -1,0 +1,44 @@
+{
+  "schema": "gooo/causal-ci-selection-ci-evidence-observation/v1",
+  "repository": "kimjooyoon/meta-ontology-go",
+  "run_id": 33098087709,
+  "job_id": 98608698224,
+  "job_name": "language-concept-artifact",
+  "source_class": "CURRENT_EVIDENCE",
+  "cases": [
+    {
+      "run_id": 33098087709,
+      "job_id": 98608698224,
+      "job_name": "language-concept-artifact",
+      "id": "current-pagination-incomplete",
+      "endpoint": "/repos/kimjooyoon/meta-ontology-go/actions/workflows/transformation-effect.yml/runs?branch=dev&event=workflow_run&head_sha=1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc&per_page=100&status=completed",
+      "endpoint_class": "ACTIONS_WORKFLOW_RUNS_LIST",
+      "source_class": "CURRENT_EVIDENCE",
+      "required_permission": "actions: read",
+      "http_status": 200,
+      "process_exit_code": 1,
+      "process_status": "EXITED",
+      "response_body": "",
+      "stdout": "",
+      "stderr": "workflow run pagination incomplete\n",
+      "pages": [
+        {
+          "endpoint_class": "ACTIONS_WORKFLOW_RUNS_LIST",
+          "url": "/repos/kimjooyoon/meta-ontology-go/actions/workflows/transformation-effect.yml/runs?branch=dev&event=workflow_run&head_sha=1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc&per_page=100&status=completed",
+          "page_number": 1,
+          "http_status": 200,
+          "body_digest": "UNAVAILABLE",
+          "body_bytes": 0,
+          "next_link_digest": "UNAVAILABLE",
+          "observed": false
+        }
+      ],
+      "artifacts": [
+        {"id": "language-readiness-predecessor-selection-a", "path": "language-readiness-predecessor-selection-a.json", "kind": "ARTIFACT", "expected": true, "present": false, "dependency_observed": true, "dependency_evidence": "workflow step order observed: Select exact readiness predecessor -> Upload exact-head readiness predecessor selection"},
+        {"id": "language-readiness-baseline-reference-a", "path": "language-readiness-baseline-reference-a.json", "kind": "ARTIFACT", "expected": true, "present": false, "dependency_observed": true, "dependency_evidence": "workflow step order observed: Select exact readiness predecessor -> Upload exact-head readiness predecessor selection"},
+        {"id": "language-readiness-foundation-seed-a", "path": "language-readiness-foundation-seed-a.json", "kind": "ARTIFACT", "expected": true, "present": false, "dependency_observed": true, "dependency_evidence": "workflow step order observed: Select exact readiness predecessor -> Upload exact-head readiness predecessor selection"}
+      ],
+      "provenance": "CURRENT_GITHUB_ACTIONS_OBSERVATION head=72760f13be19d474fe97b9d4f85513464be2acdc run=33098087709 job=98608698224 step=Select exact readiness predecessor"
+    }
+  ]
+}

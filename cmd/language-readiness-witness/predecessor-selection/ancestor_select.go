@@ -31,7 +31,11 @@ func resolveAncestry(ctx context.Context, client *githubClient, cfg config,
 		}
 		attempts = append(attempts, attempt)
 		if terminal {
-			return finishAncestry(cfg, immediate, result, attempts)
+			selected, resolution, finishErr := finishAncestry(cfg, immediate, result, attempts)
+			if finishErr != nil {
+				return selected, resolution, finishErr
+			}
+			return selected, resolution, nil
 		}
 		ancestor = attempt.ParentSHA
 	}

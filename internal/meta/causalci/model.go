@@ -190,8 +190,10 @@ type ClaimTransition struct {
 }
 
 type Conformance struct {
-	Decision   string     `json:"decision"`
-	Coordinate Coordinate `json:"coordinate"`
+	Decision                         string                `json:"decision"`
+	Coordinate                       Coordinate            `json:"coordinate"`
+	RootContradictionInventory       []PolicyContradiction `json:"root_contradiction_inventory"`
+	RootContradictionInventoryDigest string                `json:"root_contradiction_inventory_digest"`
 }
 
 type ExactInventory struct {

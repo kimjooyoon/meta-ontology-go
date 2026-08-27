@@ -113,24 +113,33 @@ minimum declared permission `actions: read` for its GitHub Actions API calls.
 
 The raw observations in
 [`ci-observations/`](../examples/causal-ci-selection/ci-observations/) keep
-transport facts and process facts only. They include separate cases for a
-normal HTTP 200, the observed PR #551 run `33088310894` / job `98574425650`
-HTTP 403, a malformed 200 response, and a successful response with a missing
-artifact. The derived evidence row records endpoint, required permission,
-HTTP status, process exit/status, response/stdout/stderr byte counts and
-digests. The 403 is classified as
-`UNKNOWN / LOWER_RESOLUTION` at
+transport facts and process facts only. The normal HTTP 200, malformed 200,
+and missing-artifact cases are `SYNTHETIC_FIXTURE`; the observed PR #551 run
+`33088310894` / job `98574425650` HTTP 403 is the sole
+`HISTORICAL_FIXTURE`. The 403 is `UNKNOWN / LOWER_RESOLUTION` at
 `proposal-promotion / fetch-github-evidence / CI_PERMISSION_DENIED`; it is
-not a semantic contradiction or a fixed point. The three missing predecessor
-selection files are linked to that one row as causal children, yielding root
-cause `1/1` and downstream missing artifacts `3/3`.
+not a semantic contradiction or a fixed point. Its three co-located artifact
+files and the upload-step observation have no observed dependency edge and
+therefore remain `CAUSAL_RELATION_UNKNOWN`.
 
-The four cases are replay fixtures, not claims that a new API request ran in
-this plan workflow. Their provenance distinguishes the historical GitHub
-Actions observation from the three fixed counterexamples. Process exit and
-HTTP status are both preserved, so an arbitrary exit code alone cannot be
-treated as a counterexample. A failed API fetch remains fail-closed at the
-lower resolution and must not be promoted to plan or semantic failure.
+The current exact-head observation is separate. Run `33098087709`, job
+`98608698224`, had `actions: read`, did not reproduce 403, and failed at
+`Select exact readiness predecessor` with
+`WORKFLOW_RUN_PAGINATION_INCOMPLETE`. It is recorded as
+`CURRENT_EVIDENCE`, `OPEN / LOWER_RESOLUTION`, with current root `1/1` and
+the three missing predecessor files as downstream `3/3` only because the
+workflow step ordering is observed. If current evidence is absent, the
+receipt uses `OPEN / LOWER_RESOLUTION / CURRENT_CI_EVIDENCE_UNAVAILABLE`
+with root `0/1`; a historical 403 is never substituted for current evidence.
+
+The predecessor selector now follows every GitHub `Link: rel="next"` page
+until actual termination, records page URL/status/body and next-link
+digests, and distinguishes incomplete totals, repeated links, page caps,
+malformed links, duplicate run IDs, and malformed responses. The
+[`pagination-fixtures.json`](../examples/causal-ci-selection/pagination-fixtures.json)
+keeps normal multi-page, last-page, and each fail-closed case separate.
+Process exit and HTTP status are both preserved, so an arbitrary exit code
+alone cannot be treated as a counterexample.
 
 ## Build-graph research boundary
 

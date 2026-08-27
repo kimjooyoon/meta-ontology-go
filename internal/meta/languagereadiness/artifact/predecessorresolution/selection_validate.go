@@ -37,7 +37,22 @@ func knownFailureReason(reason string) bool {
 		predecessorselection.ReasonExpired,
 		predecessorselection.ReasonInvalid,
 		predecessorselection.ReasonAmbiguous,
-		predecessorselection.ReasonWriteEffect:
+		predecessorselection.ReasonWriteEffect,
+		predecessorselection.ReasonHTTPFailure,
+		predecessorselection.ReasonPaginationIncomplete,
+		predecessorselection.ReasonPaginationRepeated,
+		predecessorselection.ReasonPaginationCap,
+		predecessorselection.ReasonPaginationMalformed,
+		predecessorselection.ReasonPaginationDuplicate,
+		predecessorselection.ReasonResponseMalformed,
+		"ARTIFACT_HTTP_FAILURE", "ARTIFACT_NEXT_LINK_REPEATED",
+		"ARTIFACT_PAGE_CAP_EXCEEDED", "ARTIFACT_LINK_MALFORMED",
+		"ARTIFACT_DUPLICATE_ID", "ARTIFACT_RESPONSE_MALFORMED",
+		"ARTIFACT_PAGINATION_INCOMPLETE", "JOB_HTTP_FAILURE",
+		"JOB_NEXT_LINK_REPEATED", "JOB_PAGE_CAP_EXCEEDED",
+		"JOB_LINK_MALFORMED", "JOB_DUPLICATE_ID",
+		"JOB_RESPONSE_MALFORMED", "JOB_PAGINATION_INCOMPLETE",
+		"ARTIFACT_PAYLOAD_UNAVAILABLE":
 		return true
 	default:
 		return false

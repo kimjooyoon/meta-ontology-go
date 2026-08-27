@@ -15,25 +15,31 @@ func collect(ctx context.Context, client *githubClient, cfg config, predecessor 
 		"status": {"completed"}, "head_sha": {predecessor}, "per_page": {"100"}}
 	endpoint := fmt.Sprintf("/repos/%s/actions/workflows/transformation-effect.yml/runs?%s",
 		cfg.repository, query.Encode())
-	var runs workflowRunList
-	if err := client.getJSON(ctx, endpoint, &runs); err != nil {
-		return predecessorselection.Input{}, err
-	}
-	if runs.TotalCount != len(runs.WorkflowRuns) {
-		return predecessorselection.Input{}, fmt.Errorf("workflow run pagination incomplete")
-	}
 	input := predecessorselection.Input{Repository: cfg.repository,
 		CurrentHeadSHA: cfg.currentHead, PredecessorSHA: predecessor,
-		Branch: cfg.branch, Workflow: cfg.workflow}
-	for _, run := range runs.WorkflowRuns {
-		candidate, ok, err := collectRun(ctx, client, cfg, predecessor, run)
-		if err != nil {
-			return predecessorselection.Input{}, err
+		Branch: cfg.branch, Workflow: cfg.workflow,
+		Pagination: predecessorselection.Pagination{Pages: []predecessorselection.PaginationPage{}}}
+	runs, pages, failureReason := collectWorkflowRuns(ctx, client, endpoint)
+	input.Pagination.Pages = append(input.Pagination.Pages, pages...)
+	if failureReason != "" {
+		input.Pagination.PageCount = len(input.Pagination.Pages)
+		input.Pagination.FailureReason = failureReason
+		return input, nil
+	}
+	for _, run := range runs {
+		candidate, ok, runPages, failureReason := collectRun(ctx, client, cfg, predecessor, run)
+		input.Pagination.Pages = append(input.Pagination.Pages, runPages...)
+		if failureReason != "" {
+			input.Pagination.PageCount = len(input.Pagination.Pages)
+			input.Pagination.FailureReason = failureReason
+			return input, nil
 		}
 		if ok {
 			input.Candidates = append(input.Candidates, candidate)
 		}
 	}
+	input.Pagination.PageCount = len(input.Pagination.Pages)
+	input.Pagination.Complete = true
 	sort.Slice(input.Candidates, func(i, j int) bool {
 		return input.Candidates[i].RunID < input.Candidates[j].RunID
 	})

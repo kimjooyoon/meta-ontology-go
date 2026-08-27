@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -354,8 +355,8 @@ func interventions(inputPath, sourcePath, semanticPath, nonsemanticPath, contrad
 }
 
 func ciEvidence(directory, actualCaseID, outputPath string) error {
-	if directory == "" || actualCaseID == "" || outputPath == "" {
-		return fmt.Errorf("ci-evidence requires directory, actual-case, and output")
+	if directory == "" || outputPath == "" {
+		return fmt.Errorf("ci-evidence requires directory and output")
 	}
 	entries, err := os.ReadDir(directory)
 	if err != nil {
@@ -377,6 +378,13 @@ func ciEvidence(directory, actualCaseID, outputPath string) error {
 		if decodeErr := decoder.Decode(&observation); decodeErr != nil {
 			return fmt.Errorf("decode CI evidence fixture %s: %w", entry.Name(), decodeErr)
 		}
+		var trailing any
+		if decodeErr := decoder.Decode(&trailing); decodeErr != io.EOF {
+			if decodeErr == nil {
+				return fmt.Errorf("CI evidence fixture %s has trailing JSON", entry.Name)
+			}
+			return fmt.Errorf("CI evidence fixture %s has trailing bytes: %w", entry.Name, decodeErr)
+		}
 		observations = append(observations, observation)
 	}
 	result, err := causalci.AdjudicateCIEvidence(observations, actualCaseID)
@@ -386,7 +394,7 @@ func ciEvidence(directory, actualCaseID, outputPath string) error {
 	if err := writeJSON(outputPath, result); err != nil {
 		return err
 	}
-	actualOutcome := "UNKNOWN"
+	actualOutcome := causalci.CIEvidenceOutcomeOpen
 	for _, row := range result.Rows {
 		if row.CaseID == result.ActualCaseID {
 			actualOutcome = row.Outcome
@@ -497,7 +505,14 @@ func adjudicate(scope, inputPath, plansDir, adjudicationDir, processDir, sourceF
 	if err := ciDecoder.Decode(&ciEvidence); err != nil {
 		return fmt.Errorf("decode CI evidence adjudication: %w", err)
 	}
-	if ciEvidence.Schema != causalci.CIEvidenceAdjudicationSchema || ciEvidence.Scope != causalci.CIEvidenceAdjudicationScope || ciEvidence.Digest == "" || ciEvidence.ActualRootCauseNumerator != 1 || ciEvidence.ActualRootCauseDenominator != 1 || ciEvidence.ActualResolution != causalci.CIEvidenceResolutionLowered || ciEvidence.ActualCoordinate.Stage != "proposal-promotion" || ciEvidence.ActualCoordinate.Step != "fetch-github-evidence" || ciEvidence.ActualCoordinate.Reason != causalci.CIEvidenceReasonPermission {
+	var trailingCIEvidence any
+	if decodeErr := ciDecoder.Decode(&trailingCIEvidence); decodeErr != io.EOF {
+		return fmt.Errorf("CI evidence adjudication has trailing data")
+	}
+	if err := causalci.ValidateCIEvidenceAdjudication(ciEvidence); err != nil {
+		return err
+	}
+	if ciEvidence.Schema != causalci.CIEvidenceAdjudicationSchema || ciEvidence.Scope != causalci.CIEvidenceAdjudicationScope || ciEvidence.ActualRootCauseDenominator != 1 || ciEvidence.ActualResolution != causalci.CIEvidenceResolutionLowered || ciEvidence.ActualCoordinate.Stage != "proposal-promotion" || ciEvidence.ActualCoordinate.Step != "fetch-github-evidence" || (ciEvidence.ActualCoordinate.Reason != causalci.CIEvidenceReasonPaginationIncomplete && ciEvidence.ActualCoordinate.Reason != causalci.CIEvidenceReasonCurrentUnavailable) || ciEvidence.CurrentPermissionNumerator != 0 || ciEvidence.CurrentPermissionDenominator != 1 {
 		return fmt.Errorf("invalid CI causal evidence adjudication")
 	}
 	decision := causalci.ConformanceFailClosed

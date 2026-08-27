@@ -48,6 +48,7 @@ func TestContradictionTargetsOneSubjectAndClaimInstance(t *testing.T) {
 	observation := Observation{SourcePath: sourcePath, ChangedFiles: []ChangedFileObservation{{Path: sourcePath, Status: "M"}, {Path: unrelatedPath, Status: "M"}}, PriorClaims: []PriorClaimObservation{sourceClaim, unrelatedClaim}}
 	policy := PolicyGraph{
 		Source: SourceEvidence{Path: sourcePath},
+		Edges:  []PolicyEdge{{ID: "policy-edge:exact"}},
 		Contradictions: []PolicyContradiction{{
 			Stage: stageConformance, Step: stepValidatePolicy, Reason: ReasonContradictoryPolicy,
 			SubjectPath: sourcePath, ClaimInstanceIDs: []string{sourceClaim.InstanceID}, Edges: []string{"policy-edge:exact"},
@@ -76,5 +77,29 @@ func TestContradictionTargetsOneSubjectAndClaimInstance(t *testing.T) {
 				t.Fatalf("unrelated same-proposition claim did not remain open at lower resolution: %#v", transition)
 			}
 		}
+	}
+}
+
+func TestMissingContradictionEdgeDoesNotBindSubjectOrClaim(t *testing.T) {
+	sourcePath := "policy.gooo"
+	claim := PriorClaimObservation{TemplateID: "claim-template:causal-route", SubjectPath: sourcePath, Proposition: ReasonCompleteRoute, State: ClaimOpen, Provenance: "git://observation/policy.gooo"}
+	claim.InstanceID = ClaimInstanceID(claim.TemplateID, claim.SubjectPath, claim.Proposition)
+	observation := Observation{SourcePath: sourcePath, ChangedFiles: []ChangedFileObservation{{Path: sourcePath, Status: "M"}}, PriorClaims: []PriorClaimObservation{claim}}
+	policy := PolicyGraph{Source: SourceEvidence{Path: sourcePath}, Contradictions: []PolicyContradiction{{Stage: stageConformance, Step: stepValidatePolicy, Reason: "REQUIRED_CAUSAL_POLICY_VALUE_MISSING", SubjectPath: sourcePath}}}
+	attachContradictionTargets(&policy, observation)
+	if len(policy.Contradictions) != 1 || len(policy.Contradictions[0].Edges) != 0 || len(policy.Contradictions[0].ClaimInstanceIDs) != 0 {
+		t.Fatalf("missing policy edge became evidence: %#v", policy.Contradictions)
+	}
+	subject := evaluateSubjects(observation, policy)[0]
+	if subject.Resolution == ResolutionFailClosed {
+		t.Fatalf("missing policy edge fail-closed a subject: %#v", subject)
+	}
+	transition := appendClaimTransitions(observation, policy, []SubjectResolution{subject}, "sha256:observation")[0]
+	if transition.After != ClaimOpen || transition.Reason != ReasonClaimLowered {
+		t.Fatalf("missing policy edge refuted or discharged claim: %#v", transition)
+	}
+	conformance := conformanceFor(policy, PlanGate{Decision: PlanGatePass})
+	if conformance.Decision != ConformanceFailClosed || len(conformance.RootContradictionInventory) != 1 || conformance.RootContradictionInventoryDigest == "" {
+		t.Fatalf("root contradiction inventory was not preserved: %#v", conformance)
 	}
 }

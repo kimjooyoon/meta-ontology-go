@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -15,6 +16,13 @@ func decodeObservation(raw []byte) (Observation, error) {
 	var observation Observation
 	if err := decoder.Decode(&observation); err != nil {
 		return Observation{}, fmt.Errorf("decode raw observation: %w", err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return Observation{}, fmt.Errorf("raw observation has trailing JSON")
+		}
+		return Observation{}, fmt.Errorf("raw observation has trailing bytes: %w", err)
 	}
 	if err := validateObservation(observation); err != nil {
 		return Observation{}, err
