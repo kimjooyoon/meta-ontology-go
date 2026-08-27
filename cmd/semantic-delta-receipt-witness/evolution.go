@@ -587,11 +587,15 @@ func persistenceFailureReason(producerMapping, consumerMapping persistenceMappin
 		if !uniqueNonemptyIDs(mapping.BaselineIDs) || !uniqueNonemptyIDs(mapping.AlternateIDs) {
 			return "DUPLICATE_STABLE_CLAIM_ID"
 		}
-		if mapping.SemanticTargetPreserved != expectedTotal || mapping.SemanticTargetTotal != expectedTotal {
-			return "SEMANTIC_TARGET_CHANGED"
+		rawOnlySet := mapping.ClaimRecreatedDueOnlyToRaw > 0 && len(mapping.RemovedIDs) == mapping.ClaimRecreatedDueOnlyToRaw && len(mapping.AddedIDs) == mapping.ClaimRecreatedDueOnlyToRaw
+		if rawOnlySet {
+			return "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST"
 		}
 		if len(mapping.RemovedIDs) != 0 || len(mapping.AddedIDs) != 0 || mapping.StableIdentityPreserved != expectedTotal || mapping.StableIdentityTotal != expectedTotal || len(mapping.BaselineIDs) != expectedTotal || len(mapping.AlternateIDs) != expectedTotal {
 			return "CLAIM_SET_CHANGED"
+		}
+		if mapping.SemanticTargetPreserved != expectedTotal || mapping.SemanticTargetTotal != expectedTotal {
+			return "SEMANTIC_TARGET_CHANGED"
 		}
 		if mapping.RawEvidenceChanged != expectedTotal || mapping.RawEvidenceTotal != expectedTotal {
 			return "RAW_EVIDENCE_UNCHANGED"

@@ -61,7 +61,7 @@ func projectSourceSide(filename string, raw []byte, before bool) (projectedSourc
 		result.semanticComponents = append(result.semanticComponents, component(componentRelation, fact.Subject.String(), fact.Predicate.String(), fact.SemanticCanonical()))
 	}
 	result.semanticComponents = append(result.semanticComponents, component(componentFingerprint, "source-ir", "stable-hash", ir.SemanticCanonical()))
-	result.claims = claimsFromFacts(result.facts, filename, result.rawDigest, result.semanticDigest, before)
+	result.claims = claimsFromFacts(result.facts, filename, result.rawDigest, result.semanticDigest, before, claimIdentityVersionForRaw(raw))
 	sort.Slice(result.nodes, func(i, j int) bool { return result.nodes[i].ID < result.nodes[j].ID })
 	sort.Slice(result.facts, func(i, j int) bool { return factLess(result.facts[i], result.facts[j]) })
 	sort.Slice(result.claims, func(i, j int) bool { return result.claims[i].ID < result.claims[j].ID })

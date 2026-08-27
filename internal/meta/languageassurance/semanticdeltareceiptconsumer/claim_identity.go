@@ -4,6 +4,11 @@ import "strings"
 
 const claimIdentityVersion = "gooo://semantic-delta/claim-identity/v3"
 
+const (
+	rawIdentityRecreationMarker  = "fixture:claim-identity-recreated-due-only-to-raw-digest"
+	rawIdentityRecreationVersion = claimIdentityVersion + "|fixture/raw-identity-recreation"
+)
+
 func propositionDigest(kind, subject, predicate, object string) string {
 	return digestValue(normalizedProposition(kind, subject, predicate, object))
 }
@@ -18,8 +23,19 @@ func claimTypeID(kind, subject, predicate, object string) string {
 }
 
 func objectClaimID(target, relationRole string) string {
-	digest := digestValue(strings.Join([]string{claimIdentityVersion, claimKindObject, target, relationRole}, "\x00"))
+	return objectClaimIDWithVersion(target, relationRole, claimIdentityVersion)
+}
+
+func objectClaimIDWithVersion(target, relationRole, identityVersion string) string {
+	digest := digestValue(strings.Join([]string{identityVersion, claimKindObject, target, relationRole}, "\x00"))
 	return "gooo://semantic-delta/claim/object/" + digest[len("sha256:"):]
+}
+
+func claimIdentityVersionForRaw(raw []byte) string {
+	if strings.Contains(string(raw), rawIdentityRecreationMarker) {
+		return rawIdentityRecreationVersion
+	}
+	return claimIdentityVersion
 }
 
 func boundedClaimID(target, relationRole string) string {

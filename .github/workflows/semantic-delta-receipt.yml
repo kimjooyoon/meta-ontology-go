@@ -267,6 +267,34 @@ jobs:
             .producer_persistence.reason == "SEMANTIC_TARGET_CHANGED" and .consumer_persistence.reason == "SEMANTIC_TARGET_CHANGED" and
             .reason == "SEMANTIC_TARGET_CHANGED" and .producer_persistence.semantic_target_preserved < .producer_persistence.semantic_target_total
           ' "$out/persistence-semantic-target-drift.json"
+          go run ./cmd/semantic-delta-receipt-witness --persistence-probe \
+            --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
+            --persistence-alternate-before "$root/persistence-raw-recreation-before.gooo" --persistence-alternate-after "$root/persistence-raw-recreation-after.gooo" \
+            --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/persistence-raw-recreation.json"
+          jq -e '
+            .reconstruction_exact == true and .persistence_satisfied == false and
+            .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+            .producer_persistence.decision == "FAIL_CLOSED" and .producer_persistence.resolution == "LOWER_RESOLUTION" and
+            .consumer_persistence.decision == "FAIL_CLOSED" and .consumer_persistence.resolution == "LOWER_RESOLUTION" and
+            .producer_persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
+            .consumer_persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
+            .reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
+            .expected_claim_total == 7 and
+            .producer_persistence.claim_recreated_due_only_to_raw_digest == 4 and
+            .consumer_persistence.claim_recreated_due_only_to_raw_digest == 4 and
+            .producer_persistence.claim_recreated_due_only_to_raw_digest_total == 7 and
+            .consumer_persistence.claim_recreated_due_only_to_raw_digest_total == 7 and
+            .producer_persistence.semantic_target_preserved == 7 and
+            .consumer_persistence.semantic_target_preserved == 7 and
+            .producer_persistence.semantic_evidence_preserved == 7 and
+            .consumer_persistence.semantic_evidence_preserved == 7 and
+            .producer_persistence.raw_evidence_changed == 7 and
+            .consumer_persistence.raw_evidence_changed == 7 and
+            .producer_persistence.evidence_only_changes == 7 and
+            .consumer_persistence.evidence_only_changes == 7 and
+            ((.producer_persistence.removed_ids | length) == 4) and ((.producer_persistence.added_ids | length) == 4) and
+            ((.consumer_persistence.removed_ids | length) == 4) and ((.consumer_persistence.added_ids | length) == 4)
+          ' "$out/persistence-raw-recreation.json"
           jq -e '.receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "project-source" and .receipt.step == "parse-lower" and .receipt.reason == "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE" and .independent_verdict.passed == true' "$out/duplicate-stable-id.json"
           sha256sum "$out"/*.json > "$out/manifest.sha256"
 
@@ -288,6 +316,8 @@ jobs:
           go run ./cmd/gooo check examples/semantic-delta-receipt/formatting-after.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-removal-before.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-removal-after.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-raw-recreation-before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-raw-recreation-after.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-addition-before.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-addition-after.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-equivalent-before.gooo

@@ -184,8 +184,15 @@ semantic evidence and target, evidence-only change for every claim, no
 raw-only recreation, and explicit `FIXED_POINT / EXACT` decisions from both
 implementations. Identical raw pairs therefore fail closed with
 `RAW_EVIDENCE_UNCHANGED`; semantic-target drift fails closed with
-`SEMANTIC_TARGET_CHANGED`. Historical v1-to-v3 migration remains separate
-accounting and cannot satisfy these predicates.
+`SEMANTIC_TARGET_CHANGED`. The fixture-scoped raw-identity-recreation pair
+deliberately models an implementation that salts object IDs from an explicit
+source marker after canonical parsing/lowering. Its semantic evidence and
+targets remain equal, but four of seven persistent IDs are recreated. Both
+implementations must classify that raw-source observation as
+`FAIL_CLOSED / LOWER_RESOLUTION / CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST`,
+while ordinary added/removed claims remain `CLAIM_SET_CHANGED`. Historical
+v1-to-v3 migration remains separate accounting and cannot satisfy these
+predicates.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical

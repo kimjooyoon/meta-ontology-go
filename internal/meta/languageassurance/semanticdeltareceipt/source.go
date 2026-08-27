@@ -58,7 +58,7 @@ func projectSourceSide(filename string, raw []byte, before bool) (projectedSourc
 		result.semanticComponents = append(result.semanticComponents, component(ComponentRelation, fact.Subject.String(), fact.Predicate.String(), fact.SemanticCanonical()))
 	}
 	result.semanticComponents = append(result.semanticComponents, component(ComponentFingerprint, "source-ir", "stable-hash", ir.SemanticCanonical()))
-	result.claims = claimsFromFacts(result.facts, filename, result.rawDigest, result.semanticDigest, before)
+	result.claims = claimsFromFacts(result.facts, filename, result.rawDigest, result.semanticDigest, before, claimIdentityVersionForRaw(raw))
 	sort.Slice(result.nodes, func(i, j int) bool { return result.nodes[i].ID < result.nodes[j].ID })
 	sort.Slice(result.facts, func(i, j int) bool { return factLess(result.facts[i], result.facts[j]) })
 	sort.Slice(result.claims, func(i, j int) bool { return result.claims[i].ID < result.claims[j].ID })
@@ -84,7 +84,7 @@ func semanticComponentLess(left, right SemanticComponent) bool {
 	return left.Predicate < right.Predicate
 }
 
-func claimsFromFacts(facts []Fact, filename, rawDigest, semanticDigest string, before bool) []Claim {
+func claimsFromFacts(facts []Fact, filename, rawDigest, semanticDigest string, before bool, identityVersion string) []Claim {
 	claims := make([]Claim, 0, len(facts))
 	for _, fact := range facts {
 		subject, predicate, object := fact.Subject, "uses", fact.Object
@@ -100,7 +100,7 @@ func claimsFromFacts(facts []Fact, filename, rawDigest, semanticDigest string, b
 		} else {
 			relationRole += "|after"
 		}
-		claim := Claim{ID: objectClaimID(target, relationRole), ClaimTypeID: claimTypeID(ClaimKindObject, subject, predicate, object), Kind: ClaimKindObject, Subject: subject, Predicate: predicate, Object: object, Status: StatusOpen, Stage: "semantic-extraction", Step: "bind-canonical-fact", Reason: "CANONICAL_LOWERING_BOUND", NormalizedProposition: normalized, PropositionDigest: proposition, TargetAddress: target, TargetAddressDigest: targetAddressDigest(target), RelationRole: relationRole}
+		claim := Claim{ID: objectClaimIDWithVersion(target, relationRole, identityVersion), ClaimTypeID: claimTypeID(ClaimKindObject, subject, predicate, object), Kind: ClaimKindObject, Subject: subject, Predicate: predicate, Object: object, Status: StatusOpen, Stage: "semantic-extraction", Step: "bind-canonical-fact", Reason: "CANONICAL_LOWERING_BOUND", NormalizedProposition: normalized, PropositionDigest: proposition, TargetAddress: target, TargetAddressDigest: targetAddressDigest(target), RelationRole: relationRole}
 		if before {
 			claim.BeforeSourcePath = filename
 			claim.BeforeSourceDigest, claim.BeforeSemanticDigest = rawDigest, semanticDigest

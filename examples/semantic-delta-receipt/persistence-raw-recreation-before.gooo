@@ -1,0 +1,10 @@
+package fixture
+namespace semanticdeltafixture
+
+// fixture:claim-identity-recreated-due-only-to-raw-digest
+// This fixture deliberately models a nonsemantic identity salt after
+// canonical parsing/lowering; the semantic source remains unchanged.
+entity Order id "gooo://semantic-delta/entity/order"
+entity Payment id "gooo://semantic-delta/entity/payment"
+
+activity PayOrder( Order ) -> Payment

@@ -2,7 +2,7 @@ package semanticdeltareceiptconsumer
 
 import "sort"
 
-func claimsFromFacts(facts []Fact, filename, rawDigest, semanticDigest string, before bool) []Claim {
+func claimsFromFacts(facts []Fact, filename, rawDigest, semanticDigest string, before bool, identityVersion string) []Claim {
 	claims := make([]Claim, 0, len(facts))
 	for _, fact := range facts {
 		subject, predicate, object := fact.Subject, "uses", fact.Object
@@ -18,7 +18,7 @@ func claimsFromFacts(facts []Fact, filename, rawDigest, semanticDigest string, b
 		} else {
 			relationRole += "|after"
 		}
-		claim := Claim{ID: objectClaimID(target, relationRole), ClaimTypeID: claimTypeID(claimKindObject, subject, predicate, object), Kind: claimKindObject, Subject: subject, Predicate: predicate, Object: object, Status: statusOpen, Stage: "semantic-extraction", Step: "bind-canonical-fact", Reason: "CANONICAL_LOWERING_BOUND", NormalizedProposition: normalized, PropositionDigest: proposition, TargetAddress: target, TargetAddressDigest: targetAddressDigest(target), RelationRole: relationRole}
+		claim := Claim{ID: objectClaimIDWithVersion(target, relationRole, identityVersion), ClaimTypeID: claimTypeID(claimKindObject, subject, predicate, object), Kind: claimKindObject, Subject: subject, Predicate: predicate, Object: object, Status: statusOpen, Stage: "semantic-extraction", Step: "bind-canonical-fact", Reason: "CANONICAL_LOWERING_BOUND", NormalizedProposition: normalized, PropositionDigest: proposition, TargetAddress: target, TargetAddressDigest: targetAddressDigest(target), RelationRole: relationRole}
 		if before {
 			claim.BeforeSourcePath = filename
 			claim.BeforeSourceDigest, claim.BeforeSemanticDigest = rawDigest, semanticDigest

@@ -68,34 +68,47 @@ func CompareClaimIdentityRecords(baseline, alternate []ClaimIdentityRecord) Clai
 	for _, record := range alternate {
 		byID[record.StableID] = record
 	}
-	byStableTarget := make(map[string]ClaimIdentityRecord, len(alternate))
+	byStableTarget := make(map[string][]ClaimIdentityRecord, len(alternate))
 	for _, record := range alternate {
-		byStableTarget[stableRecordKey(record)] = record
+		key := stableTargetKey(record)
+		byStableTarget[key] = append(byStableTarget[key], record)
 	}
+	matchedAlternate := make(map[string]bool, len(alternate))
 	for _, before := range baseline {
 		after, ok := byID[before.StableID]
+		comparisonAfter := after
+		stableTargetMatch := false
+		if !ok {
+			candidates := byStableTarget[stableTargetKey(before)]
+			if len(candidates) == 1 && !matchedAlternate[candidates[0].StableID] {
+				comparisonAfter = candidates[0]
+				stableTargetMatch = true
+				matchedAlternate[comparisonAfter.StableID] = true
+			}
+		}
 		if ok && stableRecordEqual(before, after) {
 			result.StableIdentityPreserved++
 		}
-		if ok && semanticTargetEqual(before, after) {
+		if (ok || stableTargetMatch) && semanticTargetEqual(before, comparisonAfter) {
 			result.SemanticTargetPreserved++
 		}
-		if ok && semanticEvidenceEqual(before, after) {
+		if (ok || stableTargetMatch) && semanticEvidenceEqual(before, comparisonAfter) {
 			result.SemanticEvidencePreserved++
 		}
-		if ok && rawDigestChanged(before, after) && semanticEvidenceEqual(before, after) && semanticTargetEqual(before, after) {
+		if (ok || stableTargetMatch) && rawDigestChanged(before, comparisonAfter) && semanticEvidenceEqual(before, comparisonAfter) && semanticTargetEqual(before, comparisonAfter) {
 			result.EvidenceOnlyChanges++
 		}
-		if ok && rawDigestChanged(before, after) {
+		if (ok || stableTargetMatch) && rawDigestChanged(before, comparisonAfter) {
 			result.RawEvidenceChanged++
 		}
-		if !ok {
-			if _, recreated := byStableTarget[stableRecordKey(before)]; recreated {
-				result.ClaimRecreatedDueOnlyToRaw++
-			}
+		if stableTargetMatch && rawDigestChanged(before, comparisonAfter) && semanticEvidenceEqual(before, comparisonAfter) && semanticTargetEqual(before, comparisonAfter) {
+			result.ClaimRecreatedDueOnlyToRaw++
 		}
 	}
-	if len(baseline) == 0 || len(alternate) != len(baseline) {
+	rawOnlySet := result.ClaimRecreatedDueOnlyToRaw > 0 && len(result.RemovedIDs) == result.ClaimRecreatedDueOnlyToRaw && len(result.AddedIDs) == result.ClaimRecreatedDueOnlyToRaw
+	if rawOnlySet {
+		result.Reason = "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST"
+	} else if len(baseline) == 0 || len(alternate) != len(baseline) || len(result.RemovedIDs) != 0 || len(result.AddedIDs) != 0 || result.StableIdentityPreserved != len(baseline) {
 		result.Reason = "CLAIM_SET_CHANGED"
 	} else if result.SemanticTargetPreserved != len(baseline) {
 		result.Reason = "SEMANTIC_TARGET_CHANGED"
@@ -105,8 +118,6 @@ func CompareClaimIdentityRecords(baseline, alternate []ClaimIdentityRecord) Clai
 		result.Reason = "SEMANTIC_EVIDENCE_CHANGED"
 	} else if result.EvidenceOnlyChanges != len(baseline) {
 		result.Reason = "EVIDENCE_ONLY_INTERVENTION_UNPROVEN"
-	} else if len(result.RemovedIDs) != 0 || len(result.AddedIDs) != 0 || result.StableIdentityPreserved != len(baseline) {
-		result.Reason = "CLAIM_SET_CHANGED"
 	} else if result.ClaimRecreatedDueOnlyToRaw != 0 {
 		result.Reason = "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST"
 	} else {
@@ -137,6 +148,10 @@ func uniqueRecords(records []ClaimIdentityRecord) bool {
 
 func stableRecordKey(record ClaimIdentityRecord) string {
 	return record.Kind + "\x00" + record.RelationRole + "\x00" + record.NormalizedProposition + "\x00" + record.PropositionDigest + "\x00" + record.TargetAddress + "\x00" + record.TargetAddressDigest + "\x00" + record.PreservationOf
+}
+
+func stableTargetKey(record ClaimIdentityRecord) string {
+	return record.Kind + "\x00" + record.RelationRole + "\x00" + record.NormalizedProposition + "\x00" + record.PropositionDigest + "\x00" + record.TargetAddress + "\x00" + record.TargetAddressDigest
 }
 
 func stableRecordEqual(left, right ClaimIdentityRecord) bool {
