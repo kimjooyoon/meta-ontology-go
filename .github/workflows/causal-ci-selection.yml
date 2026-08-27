@@ -235,7 +235,7 @@ jobs:
             .operation.observed_repository_state.transient_writes == "UNKNOWN" and
             .operation.observed_repository_state.global_mutation_authority == "UNKNOWN" and
             .policy_contradictions == [] and .conformance.root_contradiction_inventory == [] and .conformance.root_contradiction_inventory_digest != "" and .source.object_format != "" and .source.actual_source_object_id != "" and
-            ([.source_plan_binding[] | select(.variant_id == "base") | .exact] | all) and ([.source_plan_binding[] | select(.variant_id == "base") | .plan_receipt_digest, .expected_source_raw_digest, .expected_source_bytes_digest, .expected_source_object_id, .expected_object_format, .actual_consumer_source_bytes_digest, .actual_consumer_source_object_id, .logical_source_path, .binding_mode, .expected_binding_mode] | all(. != "")) and
+            .independent_verifier.id == "gooo://consumer/causal-ci-selection" and .independent_verifier.mode == "INDEPENDENT_RECONSTRUCTION" and .independent_verifier.required == true and .independent_verifier.capability == "SEPARATE_PROCESS" and
             .check_inventory.expected_ids == ["gofmt","go-vet","go-test","go-test-race","semantic-conformance","ci-policy"] and
             .check_inventory.observed_ids == .check_inventory.expected_ids and
             .indicator_inventory.expected_ids == ["semantic-policy-derived","changed-file-observation-bound","unknown-descends-to-full","claim-transition-append-only","isolation-state-observed","plan-only-no-execution-claim"] and
