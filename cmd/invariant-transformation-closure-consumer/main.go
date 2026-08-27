@@ -22,10 +22,12 @@ func main() {
 	secondProjectionPath := flag.String("second-projection", "", "second artifact semantic projection")
 	outputTamperPath := flag.String("output-tamper", "", "artifact with semantic output tamper")
 	authorizationTamperPath := flag.String("authorization-tamper", "", "artifact with authorization digest tamper")
+	interventionReportPath := flag.String("intervention-report", "", "producer intervention report")
+	interventionConsumerPath := flag.String("intervention-consumer-receipt", "", "independent intervention consumer receipt")
 	outputPath := flag.String("output", "", "final closure receipt")
 	flag.Parse()
-	if *sourcePath == "" || *headSHA == "" || *firstReportPath == "" || *secondReportPath == "" || *firstProjectionPath == "" || *secondProjectionPath == "" || *outputTamperPath == "" || *authorizationTamperPath == "" || *outputPath == "" {
-		fail("-source, -head-sha, -first-report, -second-report, -first-projection, -second-projection, -output-tamper, -authorization-tamper, and -output are required")
+	if *sourcePath == "" || *headSHA == "" || *firstReportPath == "" || *secondReportPath == "" || *firstProjectionPath == "" || *secondProjectionPath == "" || *outputTamperPath == "" || *authorizationTamperPath == "" || *interventionReportPath == "" || *interventionConsumerPath == "" || *outputPath == "" {
+		fail("-source, -head-sha, -first-report, -second-report, -first-projection, -second-projection, -output-tamper, -authorization-tamper, -intervention-report, -intervention-consumer-receipt, and -output are required")
 	}
 	source, err := os.ReadFile(*sourcePath)
 	if err != nil {
@@ -38,6 +40,14 @@ func main() {
 	if err := decodeStrictFile(*secondReportPath, &secondReport); err != nil {
 		fail(err.Error())
 	}
+	interventionReport, err := os.ReadFile(*interventionReportPath)
+	if err != nil {
+		fail(err.Error())
+	}
+	interventionConsumer, err := os.ReadFile(*interventionConsumerPath)
+	if err != nil {
+		fail(err.Error())
+	}
 	firstProjection, err := decodeProjection(*firstProjectionPath)
 	if err != nil {
 		fail(err.Error())
@@ -46,7 +56,7 @@ func main() {
 	if err != nil {
 		fail(err.Error())
 	}
-	closure, err := reportconsumer.Close(firstReport, secondReport, firstProjection, secondProjection, source, *headSHA, *outputTamperPath, *authorizationTamperPath)
+	closure, err := reportconsumer.Close(firstReport, secondReport, firstProjection, secondProjection, source, *headSHA, *outputTamperPath, *authorizationTamperPath, interventionReport, interventionConsumer)
 	if err != nil {
 		fail(err.Error())
 	}

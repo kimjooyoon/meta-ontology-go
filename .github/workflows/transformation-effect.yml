@@ -2158,6 +2158,7 @@ jobs:
             cmd/invariant-transformation-report-consumer/main.go \
             cmd/invariant-transformation-artifact-semantic-consumer/main.go \
             cmd/invariant-transformation-closure-consumer/main.go \
+            cmd/invariant-transformation-closure-verifier/main.go \
             cmd/invariant-transformation-intervention-witness/main.go \
             cmd/invariant-transformation-intervention-consumer-witness/main.go \
             internal/meta/invarianttransformation/model/model.go \
@@ -2371,47 +2372,6 @@ jobs:
           fi
           grep -F 'ARTIFACT_OBSERVATION/compare/ARTIFACT_PROVENANCE_MISMATCH' "$tamper/artifact-authorization-tamper.log"
           echo 'artifact-content semantic tamper rejected: 1/1; authorization coherent tamper rejected: 1/1' >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Build final artifact closure receipt
-        shell: bash
-        run: |
-          set -euo pipefail
-          root="$RUNNER_TEMP/invariant-transformation"
-          tamper="$root/artifact-regressions"
-          go run ./cmd/invariant-transformation-closure-consumer \
-            -source examples/invariant-transformation/main.gooo \
-            -head-sha "$HEAD_SHA" \
-            -first-report "$root/first/report.json" \
-            -second-report "$root/second/report.json" \
-            -first-projection "$root/first/artifact-semantic-projection.json" \
-            -second-projection "$root/second/artifact-semantic-projection.json" \
-            -output-tamper "$tamper/artifact-semantic-output-tamper.bin" \
-            -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
-            -output "$root/final-closure.json"
-          jq -e --arg head_sha "$HEAD_SHA" '
-            .schema == "gooo/invariant-transformation-closure-receipt/v1" and
-            .head_sha == $head_sha and .decision == "PASS" and .resolution == "EXACT" and
-            .preliminary_decision_scope == "PRELIMINARY_BOUNDED_WITNESS_PENDING_ARTIFACT_CLOSURE" and
-            (.first_report_digest | startswith("sha256:")) and (.second_report_digest | startswith("sha256:")) and
-            .artifact_bytes_observed == 2 and .expected_artifact_bytes == 2 and
-            .raw_provenance_bindings == 2 and .expected_raw_provenance_bindings == 2 and
-            .authorization_bindings == 2 and .expected_authorization_bindings == 2 and
-            .semantic_equality_observed == 1 and .expected_semantic_equality == 1 and
-            .output_semantic_tamper_rejected == 1 and .expected_output_semantic_tamper_rejections == 1 and
-            .authorization_tamper_rejected == 1 and .expected_authorization_tamper_rejections == 1 and
-            .final_closure_gate_observed == 1 and .expected_final_closure_gate == 1 and
-            (.first_artifact.path | length) > 0 and (.first_artifact.raw_digest | startswith("sha256:")) and
-            (.first_artifact.source_digest | startswith("sha256:")) and (.first_artifact.subject_sha == $head_sha) and
-            (.first_artifact.observed_authorization_digest == .first_artifact.expected_authorization_digest) and
-            (.first_artifact.effect_digest | startswith("sha256:")) and (.first_artifact.semantic_digest | startswith("sha256:")) and
-            (.second_artifact.path | length) > 0 and (.second_artifact.raw_digest | startswith("sha256:")) and
-            (.second_artifact.source_digest | startswith("sha256:")) and (.second_artifact.subject_sha == $head_sha) and
-            (.second_artifact.observed_authorization_digest == .second_artifact.expected_authorization_digest) and
-            (.second_artifact.effect_digest | startswith("sha256:")) and (.second_artifact.semantic_digest | startswith("sha256:"))
-          ' "$root/final-closure.json"
-          test "$(jq -r '.first_report_digest' "$root/final-closure.json")" = "$(jq -r '.digest' "$root/first/report.json")"
-          test "$(jq -r '.second_report_digest' "$root/final-closure.json")" = "$(jq -r '.digest' "$root/second/report.json")"
-          echo 'final artifact closure gate: 1/1; artifact bytes observed: 2/2; raw provenance binding: 2/2; authorization binding: 2/2; semantic equality: 1/1; output semantic tamper rejection: 1/1; authorization tamper rejection: 1/1' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Reject forged repository observations
         shell: bash
@@ -2659,6 +2619,15 @@ jobs:
             .coherent_tamper_rejected == 1 and .expected_coherent_tamper_rejections == 1 and
             .content_observation_coherent_tamper_rejected == 1 and
             .expected_content_observation_coherent_tamper_rejections == 1 and
+            .comment_only.case_id == "nonsemantic-source-intervention" and
+            .comment_only.baseline_raw_digest != .comment_only.mutated_raw_digest and
+            .comment_only.baseline_provenance_digest != .comment_only.mutated_provenance_digest and
+            .comment_only.semantic_digest_equal == true and .comment_only.decision_equal == true and
+            .comment_only.claim_transitions_equal == true and
+            .comment_only.stage == "INTERVENTION" and
+            .comment_only.step == "compare-nonsemantic-projection-and-decision" and
+            .comment_only.reason == "NONSEMANTIC_PROJECTION_AND_DECISION_PRESERVED" and
+            (.comment_only.evidence_digest | startswith("sha256:")) and (.comment_only.digest | startswith("sha256:")) and
             .unknown_effect_scopes == 1 and .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_state == "UNKNOWN" and
             .repository_path_authorization == false and .ambient_process_authority == "UNKNOWN" and .repository_actual_or_transient_writes == "UNKNOWN"
           ' "$output/consumer-verification.json"
@@ -2672,20 +2641,157 @@ jobs:
             jq -r '"- independent consumer: reconstructed=\(.reconstructed_cases)/\(.expected_cases), actual-replay=\(.actual_replay)/\(.expected_actual_replay), artifact-observed=\(.artifact_observed), coherent-tamper-rejected=\(.coherent_tamper_rejected)/\(.expected_coherent_tamper_rejections), content-observation-tamper-rejected=\(.content_observation_coherent_tamper_rejected)/\(.expected_content_observation_coherent_tamper_rejections)"' "$output/consumer-verification.json"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Build and independently verify final closure inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/invariant-transformation"
+          tamper="$root/artifact-regressions"
+          auth_digest='sha256:1111111111111111111111111111111111111111111111111111111111111111'
+          source_digest='sha256:2222222222222222222222222222222222222222222222222222222222222222'
+          multi_auth="$tamper/artifact-authorization-multi-field.bin"
+          artifact_path="$(jq -r '.path' "$root/first/artifact-semantic-projection.json")"
+          sed -e "s/^authorization=.*/authorization=$auth_digest/" -e "s/^source=.*/source=$source_digest/" "$artifact_path" > "$multi_auth"
+          multi_output="$tamper/artifact-output-multi-field.bin"
+          sed -e 's/^output=6$/output=7/' -e 's/^input=2$/input=3/' "$artifact_path" > "$multi_output"
+          go run ./cmd/invariant-transformation-closure-consumer \
+            -source examples/invariant-transformation/main.gooo \
+            -head-sha "$HEAD_SHA" \
+            -first-report "$root/first/report.json" \
+            -second-report "$root/second/report.json" \
+            -first-projection "$root/first/artifact-semantic-projection.json" \
+            -second-projection "$root/second/artifact-semantic-projection.json" \
+            -output-tamper "$tamper/artifact-semantic-output-tamper.bin" \
+            -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+            -intervention-report "$root/intervention/first/report.json" \
+            -intervention-consumer-receipt "$root/intervention/consumer-verification.json" \
+            -output "$root/final-closure.json"
+          jq -e --arg head_sha "$HEAD_SHA" '
+            .schema == "gooo/invariant-transformation-closure-receipt/v2" and
+            .head_sha == $head_sha and .decision == "PASS" and .resolution == "EXACT" and
+            .preliminary_decision_scope == "PRELIMINARY_BOUNDED_WITNESS_PENDING_ARTIFACT_CLOSURE" and
+            .expected_metric_evidence == 11 and .observed_metric_evidence == 11 and
+            (.metric_inventory_digest | startswith("sha256:")) and
+            ([.metric_evidence[].metric_id] == [
+              "artifact-bytes/first", "artifact-bytes/second", "semantic-equality/pair",
+              "raw-provenance/first", "raw-provenance/second", "authorization/first", "authorization/second",
+              "output-tamper", "authorization-tamper", "comment-only/semantic-preservation", "final-closure"
+            ]) and
+            ([.metric_evidence[].address] | unique | length) == 11 and
+            ([.metric_evidence[].observed_evidence_digest] | unique | length) == 11 and
+            ([.metric_evidence[].decision] | all(. == "PASS")) and
+            ([.metric_evidence[].resolution] | all(. == "EXACT")) and
+            ([.metric_evidence[].observed_evidence_digest] | all(startswith("sha256:"))) and
+            .artifact_bytes_observed == 2 and .expected_artifact_bytes == 2 and
+            .raw_provenance_bindings == 2 and .expected_raw_provenance_bindings == 2 and
+            .authorization_bindings == 2 and .expected_authorization_bindings == 2 and
+            .semantic_equality_observed == 1 and .expected_semantic_equality == 1 and
+            .output_semantic_tamper_rejected == 1 and .expected_output_semantic_tamper_rejections == 1 and
+            .authorization_tamper_rejected == 1 and .expected_authorization_tamper_rejections == 1 and
+            .comment_only_preservation_observed == 1 and .expected_comment_only_preservation == 1 and
+            .final_closure_gate_observed == 1 and .expected_final_closure_gate == 1 and
+            .output_tamper_receipt.rejected == true and .output_tamper_receipt.changed_field == "output" and
+            .output_tamper_receipt.semantic_digest_equal == false and
+            .output_tamper_receipt.baseline_raw_digest != .output_tamper_receipt.tampered_raw_digest and
+            .authorization_tamper_receipt.rejected == true and .authorization_tamper_receipt.changed_field == "authorization" and
+            .authorization_tamper_receipt.semantic_digest_equal == true and
+            .authorization_tamper_receipt.baseline_raw_digest != .authorization_tamper_receipt.tampered_raw_digest and
+            .first_artifact.raw_digest != "" and .second_artifact.raw_digest != "" and
+            .first_artifact.semantic_digest == .second_artifact.semantic_digest and
+            .first_artifact.observed_authorization_digest == .first_artifact.expected_authorization_digest and
+            .second_artifact.observed_authorization_digest == .second_artifact.expected_authorization_digest
+          ' "$root/final-closure.json"
+          go run ./cmd/invariant-transformation-closure-verifier \
+            -closure "$root/final-closure.json" \
+            -source examples/invariant-transformation/main.gooo \
+            -head-sha "$HEAD_SHA" \
+            -first-report "$root/first/report.json" \
+            -second-report "$root/second/report.json" \
+            -first-projection "$root/first/artifact-semantic-projection.json" \
+            -second-projection "$root/second/artifact-semantic-projection.json" \
+            -output-tamper "$tamper/artifact-semantic-output-tamper.bin" \
+            -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+            -intervention-report "$root/intervention/first/report.json" \
+            -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
+          expect_reject() {
+            expected="$1"
+            log="$2"
+            shift 2
+            if "$@" >"$log" 2>&1; then
+              echo "expected rejection: $expected" >&2
+              cat "$log" >&2
+              exit 1
+            fi
+            grep -F "$expected" "$log"
+          }
+          jq '.metric_evidence[1] = .metric_evidence[0]' "$root/final-closure.json" > "$tamper/duplicate-metric.json"
+          expect_reject 'ARTIFACT_CLOSURE/metrics/duplicate-metric-row/DUPLICATE_METRIC_ID' "$tamper/duplicate-metric.log" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$tamper/duplicate-metric.json" \
+              -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
+          jq '.metric_evidence |= .[0:10]' "$root/final-closure.json" > "$tamper/missing-metric.json"
+          expect_reject 'ARTIFACT_CLOSURE/metrics/missing-metric-row/MISSING_METRIC_ID' "$tamper/missing-metric.log" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$tamper/missing-metric.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
+          jq '.metric_evidence[0].metric_id = "replaced-metric"' "$root/final-closure.json" > "$tamper/replaced-metric.json"
+          expect_reject 'ARTIFACT_CLOSURE/metrics/unexpected-metric-row/UNEXPECTED_METRIC_ID' "$tamper/replaced-metric.log" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$tamper/replaced-metric.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
+          expect_reject 'ARTIFACT_CLOSURE/authorization-tamper/compare/AUTHORIZATION_TAMPER_NOT_AUTHORIZATION_ONLY' "$tamper/multi-auth.log" \
+            go run ./cmd/invariant-transformation-closure-consumer \
+              -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$multi_auth" \
+              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json" \
+              -output "$tamper/multi-auth-closure.json"
+          expect_reject 'ARTIFACT_CLOSURE/output-tamper/compare/OUTPUT_TAMPER_NOT_OUTPUT_ONLY' "$tamper/multi-output.log" \
+            go run ./cmd/invariant-transformation-closure-consumer \
+              -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$multi_output" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json" \
+              -output "$tamper/multi-output-closure.json"
+          echo 'closure metric inventory: 11/11; artifact bytes: 2/2; semantic equality: 1/1; raw provenance: 2/2; authorization: 2/2; output tamper: 1/1; authorization tamper: 1/1; comment-only preservation: 1/1; final closure: 1/1' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Publish exact metrics and authority boundary
         shell: bash
         run: |
           set -euo pipefail
           test "$(cat "$RUNNER_TEMP/invariant-transformation-observed-head.txt")" = "$HEAD_SHA"
           jq -e --arg head_sha "$HEAD_SHA" '
-            .schema == "gooo/invariant-transformation-closure-receipt/v1" and
+            .schema == "gooo/invariant-transformation-closure-receipt/v2" and
             .head_sha == $head_sha and .decision == "PASS" and .resolution == "EXACT" and
+            .expected_metric_evidence == 11 and .observed_metric_evidence == 11 and
+            (.metric_inventory_digest | startswith("sha256:")) and
+            ([.metric_evidence[].metric_id] | length) == 11 and
+            ([.metric_evidence[].address] | unique | length) == 11 and
+            ([.metric_evidence[].observed_evidence_digest] | unique | length) == 11 and
+            ([.metric_evidence[].decision] | all(. == "PASS")) and
+            ([.metric_evidence[].resolution] | all(. == "EXACT")) and
+            ([.metric_evidence[].observed_evidence_digest] | all(startswith("sha256:"))) and
             .artifact_bytes_observed == 2 and .expected_artifact_bytes == 2 and
             .raw_provenance_bindings == 2 and .expected_raw_provenance_bindings == 2 and
             .authorization_bindings == 2 and .expected_authorization_bindings == 2 and
             .semantic_equality_observed == 1 and .expected_semantic_equality == 1 and
             .output_semantic_tamper_rejected == 1 and .authorization_tamper_rejected == 1 and
-            .final_closure_gate_observed == 1 and .expected_final_closure_gate == 1
+            .comment_only_preservation_observed == 1 and .expected_comment_only_preservation == 1 and
+            .final_closure_gate_observed == 1 and .expected_final_closure_gate == 1 and
+            .output_tamper_receipt.changed_field == "output" and .output_tamper_receipt.rejected == true and
+            .authorization_tamper_receipt.changed_field == "authorization" and .authorization_tamper_receipt.rejected == true
           ' "$RUNNER_TEMP/invariant-transformation/final-closure.json"
           jq -e --arg execution "$HEAD_SHA::first" --arg head_sha "$HEAD_SHA" '
             .schema == "gooo/invariant-transformation-report/v2" and

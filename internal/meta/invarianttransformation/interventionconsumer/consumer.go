@@ -65,7 +65,31 @@ type Audit struct {
 	RepositoryPathAuthorization                        bool                   `json:"repository_path_authorization"`
 	AmbientProcessAuthority                            string                 `json:"ambient_process_authority"`
 	UnknownEffectScopes                                int                    `json:"unknown_effect_scopes"`
+	CommentOnly                                        CommentOnlyReceipt     `json:"comment_only"`
 	Digest                                             string                 `json:"digest"`
+}
+
+type CommentOnlyReceipt struct {
+	Schema                   string `json:"schema"`
+	CaseID                   string `json:"case_id"`
+	BaselineRawDigest        string `json:"baseline_raw_digest"`
+	MutatedRawDigest         string `json:"mutated_raw_digest"`
+	BaselineProvenanceDigest string `json:"baseline_provenance_digest"`
+	MutatedProvenanceDigest  string `json:"mutated_provenance_digest"`
+	BaselineSemanticDigest   string `json:"baseline_semantic_digest"`
+	MutatedSemanticDigest    string `json:"mutated_semantic_digest"`
+	SemanticDigestEqual      bool   `json:"semantic_digest_equal"`
+	BaselineDecision         string `json:"baseline_decision"`
+	MutatedDecision          string `json:"mutated_decision"`
+	DecisionEqual            bool   `json:"decision_equal"`
+	BaselineTransitionDigest string `json:"baseline_transition_digest"`
+	MutatedTransitionDigest  string `json:"mutated_transition_digest"`
+	ClaimTransitionsEqual    bool   `json:"claim_transitions_equal"`
+	Stage                    string `json:"stage"`
+	Step                     string `json:"step"`
+	Reason                   string `json:"reason"`
+	EvidenceDigest           string `json:"evidence_digest"`
+	Digest                   string `json:"digest"`
 }
 
 type coordinateWire struct {
@@ -262,7 +286,47 @@ func VerifyReport(raw, source []byte, headSHA string, dependency DependencyBound
 	if independentlyVerify(contentTampered, source, headSHA, dependency) == nil {
 		return Audit{}, fmt.Errorf("content observation coherent tamper was accepted")
 	}
-	return Audit{Schema: consumerSchema, HeadSHA: headSHA, ProducerDependencyImports: dependency.ProducerDependencyImports, AllowedProducerDependencyImports: dependency.AllowedProducerDependencyImports, ReconstructedCases: len(observed.Cases), ExpectedCases: 3, ActualReplay: 3, ExpectedActualReplay: 3, ArtifactEvidence: dependency.ArtifactEvidence, ArtifactObserved: true, CoherentTamperRejected: 1, ExpectedCoherentTamperRejections: 1, ContentObservationCoherentTamperRejected: 1, ExpectedContentObservationCoherentTamperRejections: 1, Decision: "PASS", Resolution: model.ResolutionExact, Reason: "INDEPENDENT_SOURCE_RECONSTRUCTION_AND_EFFECT_OBSERVATION", RepositoryNetStatusObserved: observed.RepositoryNetStatusObserved, RepositoryNetStatusUnchanged: observed.RepositoryNetStatusUnchanged, RepositoryActualOrTransientWrites: observed.RepositoryActualOrTransientWrites, UnknownEffectScopes: observed.UnknownEffectScopes}, nil
+	commentOnly, err := buildCommentOnlyReceipt(source, headSHA)
+	if err != nil {
+		return Audit{}, err
+	}
+	audit := Audit{Schema: consumerSchema, HeadSHA: headSHA, ProducerDependencyImports: dependency.ProducerDependencyImports, AllowedProducerDependencyImports: dependency.AllowedProducerDependencyImports, ReconstructedCases: len(observed.Cases), ExpectedCases: 3, ActualReplay: 3, ExpectedActualReplay: 3, ArtifactEvidence: dependency.ArtifactEvidence, ArtifactObserved: true, CoherentTamperRejected: 1, ExpectedCoherentTamperRejections: 1, ContentObservationCoherentTamperRejected: 1, ExpectedContentObservationCoherentTamperRejections: 1, Decision: "PASS", Resolution: model.ResolutionExact, Reason: "INDEPENDENT_SOURCE_RECONSTRUCTION_AND_EFFECT_OBSERVATION", RepositoryNetStatusObserved: observed.RepositoryNetStatusObserved, RepositoryNetStatusUnchanged: observed.RepositoryNetStatusUnchanged, RepositoryActualOrTransientWrites: observed.RepositoryActualOrTransientWrites, UnknownEffectScopes: observed.UnknownEffectScopes, CommentOnly: commentOnly}
+	audit.Digest = model.Digest(audit)
+	return audit, nil
+}
+
+func buildCommentOnlyReceipt(source []byte, headSHA string) (CommentOnlyReceipt, error) {
+	mutated, err := mutateNonSemantic(source)
+	if err != nil {
+		return CommentOnlyReceipt{}, err
+	}
+	baselineFixture, err := parseFixture(source)
+	if err != nil {
+		return CommentOnlyReceipt{}, err
+	}
+	mutatedFixture, err := parseFixture(mutated)
+	if err != nil {
+		return CommentOnlyReceipt{}, err
+	}
+	baselineReceipt := reconstructReceipt(baselineFixture, source, headSHA)
+	mutatedReceipt := reconstructReceipt(mutatedFixture, mutated, headSHA)
+	baselineJudgment := reconstructJudgment(baselineReceipt)
+	mutatedJudgment := reconstructJudgment(mutatedReceipt)
+	receipt := CommentOnlyReceipt{
+		Schema: "gooo/invariant-transformation-comment-only-receipt/v1", CaseID: nonSemanticCaseID,
+		BaselineRawDigest: baselineReceipt.SourceDigest, MutatedRawDigest: mutatedReceipt.SourceDigest,
+		BaselineProvenanceDigest: provenanceDigest(baselineReceipt.SourceDigest, headSHA, nonSemanticCaseID), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, nonSemanticCaseID),
+		BaselineSemanticDigest: baselineFixture.SemanticSourceDigest, MutatedSemanticDigest: mutatedFixture.SemanticSourceDigest, SemanticDigestEqual: baselineFixture.SemanticSourceDigest == mutatedFixture.SemanticSourceDigest,
+		BaselineDecision: baselineJudgment.Decision, MutatedDecision: mutatedJudgment.Decision, DecisionEqual: baselineJudgment.Decision == mutatedJudgment.Decision,
+		BaselineTransitionDigest: model.Digest(transitionWires(baselineReceipt.Claims)), MutatedTransitionDigest: model.Digest(transitionWires(mutatedReceipt.Claims)), ClaimTransitionsEqual: transitionOutcomes(baselineReceipt.Claims, mutatedReceipt.Claims),
+		Stage: "INTERVENTION", Step: nonSemanticStep, Reason: nonSemanticReason,
+	}
+	evidence := receipt
+	evidence.EvidenceDigest = ""
+	evidence.Digest = ""
+	receipt.EvidenceDigest = model.Digest(evidence)
+	receipt.Digest = model.Digest(receipt)
+	return receipt, nil
 }
 
 func decodeReport(raw []byte) (reportWire, error) {
