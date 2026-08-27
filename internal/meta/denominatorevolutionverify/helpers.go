@@ -25,3 +25,17 @@ func receiptText(value *Receipt) string {
 	}
 	return value.Decision + " / " + value.Reason
 }
+
+func guardrailText(value *Guardrail) string {
+	if value == nil {
+		return "missing"
+	}
+	return value.ID + " direction=" + value.Direction + " observed=" + intText(value.Observed) + " allowed_max=" + intText(value.AllowedMax) + " conformance=" + intText(value.ConformanceNumerator) + "/" + intText(value.ConformanceDenominator) + " conforms=" + boolText(value.Conforms)
+}
+
+func boolText(value bool) string {
+	if value {
+		return "true"
+	}
+	return "false"
+}

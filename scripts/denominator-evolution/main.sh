@@ -38,17 +38,28 @@ jq -e '
   .summary.unknown_predecessor_numerator == 1 and .summary.unknown_predecessor_denominator == 1 and
   .summary.addition_reason_numerator == 1 and .summary.addition_reason_denominator == 1 and
   .summary.deletion_reason_numerator == 1 and .summary.deletion_reason_denominator == 1 and
-  .summary.forbidden_estimate_numerator == 0 and .summary.forbidden_estimate_denominator == 1 and
   .repository_writes == 0 and .mutation_authority == false and
+  ([.summary.guardrails[] | select(.id == "gooo.guardrail.denominator.forbidden-estimate.v1" and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
+  ([.summary.guardrails[] | select(.id == "gooo.guardrail.denominator.repository-writes.v1" and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
+  ([.indicators[] | select(.guardrail != null and .guardrail.conforms == true and .guardrail.observed == 0 and .guardrail.allowed_max == 0 and .guardrail.conformance_numerator == 1 and .guardrail.conformance_denominator == 1)] | length) == 2 and
+  ([.cases[] | select(.id == "legal-advance") | .receipt.guardrails[] | select(.direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 2 and
   ([.cases[] | select(.status != "SATISFIED")] | length) == 0 and
   ([.indicators[] | select(.satisfied != true)] | length) == 0
 ' "$work/report-a.json"
-jq -e '.decision == "PASS" and .resolution == "EXACT" and .repository_writes == 0 and .mutation_authority == false and ([.checks[] | select(.status != "PASS")] | length) == 0' "$work/verification-a.json"
+jq -e '
+  .decision == "PASS" and .resolution == "EXACT" and
+  .repository_writes == 0 and .mutation_authority == false and
+  ([.guardrails[] | select(.id == "gooo.guardrail.denominator.forbidden-estimate.v1" and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
+  ([.guardrails[] | select(.id == "gooo.guardrail.denominator.repository-writes.v1" and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
+  ([.checks[] | select(.status != "PASS")] | length) == 0
+' "$work/verification-a.json"
 
 git diff --exit-code
 
 {
   echo "## Denominator evolution experiment"
-  jq -r '"- fixed denominator: \(.denominator.version) / \(.summary.fixed_denominator_numerator)/\(.summary.fixed_denominator_denominator)\n- legal advance: \(.summary.legal_advance_numerator)/\(.summary.legal_advance_denominator)\n- unauthorized changes rejected: \(.summary.unauthorized_rejection_numerator)/\(.summary.unauthorized_rejection_denominator)\n- unknown predecessors rejected: \(.summary.unknown_predecessor_numerator)/\(.summary.unknown_predecessor_denominator)\n- aggregate estimate claims: \(.summary.forbidden_estimate_numerator)/\(.summary.forbidden_estimate_denominator)\n- producer receipt: \(.digest)"' "$work/report-a.json"
+  jq -r '"- fixed denominator: \(.denominator.version) / \(.summary.fixed_denominator_numerator)/\(.summary.fixed_denominator_denominator)\n- legal advance: \(.summary.legal_advance_numerator)/\(.summary.legal_advance_denominator)\n- unauthorized changes rejected: \(.summary.unauthorized_rejection_numerator)/\(.summary.unauthorized_rejection_denominator)\n- unknown predecessors rejected: \(.summary.unknown_predecessor_numerator)/\(.summary.unknown_predecessor_denominator)\n- producer receipt: \(.digest)"' "$work/report-a.json"
+  jq -r '.summary.guardrails[] | "- guardrail \(.id): direction=\(.direction) observed=\(.observed) allowed_max=\(.allowed_max) conformance=\(.conformance_numerator)/\(.conformance_denominator) conforms=\(.conforms)"' "$work/report-a.json"
   jq -r '"- independent decision: \(.decision) / \(.resolution)\n- consumer receipt: \(.digest)"' "$work/verification-a.json"
+  jq -r '.guardrails[] | "- independent guardrail \(.id): direction=\(.direction) observed=\(.observed) allowed_max=\(.allowed_max) conformance=\(.conformance_numerator)/\(.conformance_denominator) conforms=\(.conforms)"' "$work/verification-a.json"
 } >> "$GITHUB_STEP_SUMMARY"

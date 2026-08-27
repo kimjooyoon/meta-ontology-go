@@ -17,6 +17,7 @@ func CanonicalCases() []CaseInput {
 		Deletions: []Change{{ObligationID: "governance/legacy-summary", Reason: "DEPRECATED_DUPLICATE"}},
 		Decision:  "ADVANCE", Reason: "DENOMINATOR_ADVANCE_AUTHORIZED", Coordinate: Coordinate{Stage: "MIGRATE", Step: "issue-receipt", Reason: "DENOMINATOR_ADVANCE_AUTHORIZED"},
 		RepositoryWrites: 0, MutationAuthority: false,
+		Guardrails: makeGuardrails(0, 0),
 	}
 	legalReceipt.Digest = receiptDigest(legalReceipt)
 

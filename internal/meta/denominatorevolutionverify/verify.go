@@ -28,6 +28,7 @@ func Verify(input Input) Verification {
 		verifyCheck("source-digest", "FOUNDATION", "bind-source-digest", "FOUNDATION", "compare-source-digest", reportOK && input.SourceDigest != "" && report.SourceDigest == input.SourceDigest, input.SourceDigest, report.SourceDigest),
 	}
 	if reportOK {
+		verification.Guardrails = recomputeGuardrails(report.Summary.Guardrails)
 		checks = append(checks, verifyDenominator(report, contract)...)
 		checks = append(checks, verifyCases(report, contract)...)
 		checks = append(checks, verifySummary(report)...)
@@ -52,10 +53,20 @@ func decode(raw []byte, value any) bool {
 func verifyDenominator(report Report, contract Contract) []Check {
 	denominatorOK := report.Denominator.Version == DenominatorVersion && len(report.Denominator.Obligations) == DenominatorSize && report.Denominator.Digest == denominatorDigest(report.Denominator)
 	contractOK := contract.Denominator.Version == DenominatorVersion && len(contract.Denominator.Obligations) == DenominatorSize && reflect.DeepEqual(report.Denominator.Obligations, contract.Denominator.Obligations)
-	return []Check{
+	checks := []Check{
 		verifyCheck("fixed-denominator", "FOUNDATION", "bind-fixed-denominator", "FOUNDATION", "compare-member-set", denominatorOK && contractOK, "5 members at "+DenominatorVersion, report.Denominator.Version+" / "+report.Denominator.Digest),
-		verifyCheck("no-composite-estimate", "REGRESSION", "reject-aggregate-estimate", "GUARD", "reject-forbidden-claim", report.Summary.ForbiddenEstimateNumerator == 0 && report.Summary.ForbiddenEstimateDenominator == 1, "0/1", intText(report.Summary.ForbiddenEstimateNumerator)+"/"+intText(report.Summary.ForbiddenEstimateDenominator)),
 	}
+	return append(checks, verifyGuardrails(report.Summary.Guardrails)...)
+}
+
+func verifyGuardrails(values []Guardrail) []Check {
+	expected := expectedGuardrails()
+	checks := make([]Check, 0, len(expected))
+	for _, want := range expected {
+		got := findGuardrail(values, want.ID)
+		checks = append(checks, verifyCheck(want.ID, "REGRESSION", "verify-explicit-guardrail", "GUARD", "compare-observed-to-allowed-max", got != nil && *got == want, guardrailText(&want), guardrailText(got)))
+	}
+	return checks
 }
 
 func verifyCases(report Report, contract Contract) []Check {
@@ -82,8 +93,8 @@ func verifyCases(report Report, contract Contract) []Check {
 
 func verifyLegalReceipt(value Case, spec CaseSpec) []Check {
 	receipt := value.Receipt
-	ok := receipt != nil && receipt.Schema == ReceiptSchema && receipt.Decision == "ADVANCE" && receipt.Reason == "DENOMINATOR_ADVANCE_AUTHORIZED" && receipt.RepositoryWrites == 0 && !receipt.MutationAuthority && receipt.Predecessor.Version == value.Predecessor.Version && receipt.Predecessor.Digest == value.Predecessor.Digest && receipt.Successor.Version == value.Successor.Version && receipt.Successor.Digest == value.Successor.Digest && receipt.Digest == receiptDigest(*receipt) && len(receipt.Additions) == 1 && receipt.Additions[0].ObligationID == "governance/replay-receipt" && receipt.Additions[0].Reason == "NEW_MEASURABLE_OBLIGATION" && len(receipt.Deletions) == 1 && receipt.Deletions[0].ObligationID == "governance/legacy-summary" && receipt.Deletions[0].Reason == "DEPRECATED_DUPLICATE"
-	return []Check{verifyCheck("legal-migration-receipt", spec.ProofChoice, "accept-migration-receipt", "MIGRATE", "replay-receipt", ok, "bound v1 -> v2 receipt", receiptText(receipt))}
+	ok := receipt != nil && receipt.Schema == ReceiptSchema && receipt.Decision == "ADVANCE" && receipt.Reason == "DENOMINATOR_ADVANCE_AUTHORIZED" && receipt.RepositoryWrites == 0 && !receipt.MutationAuthority && guardrailsConform(receipt.Guardrails) && receipt.Predecessor.Version == value.Predecessor.Version && receipt.Predecessor.Digest == value.Predecessor.Digest && receipt.Successor.Version == value.Successor.Version && receipt.Successor.Digest == value.Successor.Digest && receipt.Digest == receiptDigest(*receipt) && len(receipt.Additions) == 1 && receipt.Additions[0].ObligationID == "governance/replay-receipt" && receipt.Additions[0].Reason == "NEW_MEASURABLE_OBLIGATION" && len(receipt.Deletions) == 1 && receipt.Deletions[0].ObligationID == "governance/legacy-summary" && receipt.Deletions[0].Reason == "DEPRECATED_DUPLICATE"
+	return []Check{verifyCheck("legal-migration-receipt", spec.ProofChoice, "accept-migration-receipt", "MIGRATE", "replay-receipt", ok, "bound v1 -> v2 receipt with explicit guardrails", receiptText(receipt))}
 }
 
 func verifyUnauthorized(value Case, spec CaseSpec) []Check {
@@ -98,6 +109,54 @@ func verifyUnknown(value Case, spec CaseSpec) []Check {
 
 func verifySummary(report Report) []Check {
 	summary := report.Summary
-	ok := summary.CasesSatisfied == 3 && summary.CasesTotal == 3 && summary.FixedDenominatorNumerator == 5 && summary.FixedDenominatorDenominator == 5 && summary.LegalAdvanceNumerator == 1 && summary.LegalAdvanceDenominator == 1 && summary.UnauthorizedRejectionNumerator == 1 && summary.UnauthorizedRejectionDenominator == 1 && summary.UnknownPredecessorNumerator == 1 && summary.UnknownPredecessorDenominator == 1 && summary.AdditionReasonNumerator == 1 && summary.AdditionReasonDenominator == 1 && summary.DeletionReasonNumerator == 1 && summary.DeletionReasonDenominator == 1 && summary.ForbiddenEstimateNumerator == 0 && summary.ForbiddenEstimateDenominator == 1 && summary.RepositoryWrites == 0 && summary.MutationAuthorities == 0
-	return []Check{verifyCheck("exact-summary", "FOUNDATION", "bind-exact-counters", "SUMMARY", "compare-numerators-and-denominators", ok, "fixed 5/5 and three separate 1/1 predicates", "summary counters")}
+	ok := summary.CasesSatisfied == 3 && summary.CasesTotal == 3 && summary.FixedDenominatorNumerator == 5 && summary.FixedDenominatorDenominator == 5 && summary.LegalAdvanceNumerator == 1 && summary.LegalAdvanceDenominator == 1 && summary.UnauthorizedRejectionNumerator == 1 && summary.UnauthorizedRejectionDenominator == 1 && summary.UnknownPredecessorNumerator == 1 && summary.UnknownPredecessorDenominator == 1 && summary.AdditionReasonNumerator == 1 && summary.AdditionReasonDenominator == 1 && summary.DeletionReasonNumerator == 1 && summary.DeletionReasonDenominator == 1 && guardrailsConform(summary.Guardrails)
+	return []Check{verifyCheck("exact-summary", "FOUNDATION", "bind-exact-counters", "SUMMARY", "compare-numerators-and-denominators", ok, "fixed 5/5, separate 1/1 predicates, and explicit guardrails", "summary counters and guardrails")}
+}
+
+const (
+	guardrailForbiddenEstimate = "gooo.guardrail.denominator.forbidden-estimate.v1"
+	guardrailRepositoryWrites  = "gooo.guardrail.denominator.repository-writes.v1"
+)
+
+func expectedGuardrails() []Guardrail {
+	return []Guardrail{newGuardrail(guardrailForbiddenEstimate, 0, 0), newGuardrail(guardrailRepositoryWrites, 0, 0)}
+}
+
+func newGuardrail(id string, observed, allowedMax int) Guardrail {
+	conforms := observed <= allowedMax
+	numerator := 0
+	if conforms {
+		numerator = 1
+	}
+	return Guardrail{ID: id, Direction: "AT_MOST", Observed: observed, AllowedMax: allowedMax, ConformanceNumerator: numerator, ConformanceDenominator: 1, Conforms: conforms}
+}
+
+func recomputeGuardrails(values []Guardrail) []Guardrail {
+	result := make([]Guardrail, 0, len(values))
+	for _, value := range values {
+		result = append(result, newGuardrail(value.ID, value.Observed, value.AllowedMax))
+	}
+	return result
+}
+
+func findGuardrail(values []Guardrail, id string) *Guardrail {
+	for index := range values {
+		if values[index].ID == id {
+			return &values[index]
+		}
+	}
+	return nil
+}
+
+func guardrailsConform(values []Guardrail) bool {
+	expected := expectedGuardrails()
+	if len(values) != len(expected) {
+		return false
+	}
+	for index := range expected {
+		if values[index] != expected[index] {
+			return false
+		}
+	}
+	return true
 }

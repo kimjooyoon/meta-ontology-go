@@ -20,7 +20,7 @@ func Validate(report Report) error {
 			return fmt.Errorf("DENOMINATOR_EVOLUTION_CASE_MISMATCH")
 		}
 	}
-	if hasUnsatisfied(report.Indicators) || report.RepositoryWrites != 0 || report.MutationAuthority || report.Digest != reportDigest(report) {
+	if hasUnsatisfied(report.Indicators) || !guardrailsConform(report.Summary.Guardrails) || report.RepositoryWrites != 0 || report.MutationAuthority || report.Digest != reportDigest(report) {
 		return fmt.Errorf("DENOMINATOR_EVOLUTION_EFFECT_OR_DIGEST_MISMATCH")
 	}
 	return nil

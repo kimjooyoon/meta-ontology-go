@@ -83,20 +83,31 @@ type Change struct {
 }
 
 type Receipt struct {
-	Schema            string     `json:"schema"`
-	ID                string     `json:"id"`
-	Producer          string     `json:"producer"`
-	Consumer          string     `json:"consumer"`
-	Predecessor       Ref        `json:"predecessor"`
-	Successor         Ref        `json:"successor"`
-	Additions         []Change   `json:"additions"`
-	Deletions         []Change   `json:"deletions"`
-	Decision          string     `json:"decision"`
-	Reason            string     `json:"reason"`
-	Coordinate        Coordinate `json:"coordinate"`
-	RepositoryWrites  int        `json:"repository_writes"`
-	MutationAuthority bool       `json:"mutation_authority"`
-	Digest            string     `json:"digest"`
+	Schema            string      `json:"schema"`
+	ID                string      `json:"id"`
+	Producer          string      `json:"producer"`
+	Consumer          string      `json:"consumer"`
+	Predecessor       Ref         `json:"predecessor"`
+	Successor         Ref         `json:"successor"`
+	Additions         []Change    `json:"additions"`
+	Deletions         []Change    `json:"deletions"`
+	Decision          string      `json:"decision"`
+	Reason            string      `json:"reason"`
+	Coordinate        Coordinate  `json:"coordinate"`
+	RepositoryWrites  int         `json:"repository_writes"`
+	MutationAuthority bool        `json:"mutation_authority"`
+	Guardrails        []Guardrail `json:"guardrails"`
+	Digest            string      `json:"digest"`
+}
+
+type Guardrail struct {
+	ID                     string `json:"id"`
+	Direction              string `json:"direction"`
+	Observed               int    `json:"observed"`
+	AllowedMax             int    `json:"allowed_max"`
+	ConformanceNumerator   int    `json:"conformance_numerator"`
+	ConformanceDenominator int    `json:"conformance_denominator"`
+	Conforms               bool   `json:"conforms"`
 }
 
 type Coordinate struct {
@@ -135,24 +146,21 @@ type Case struct {
 }
 
 type Summary struct {
-	CasesSatisfied                   int `json:"cases_satisfied"`
-	CasesTotal                       int `json:"cases_total"`
-	FixedDenominatorNumerator        int `json:"fixed_denominator_numerator"`
-	FixedDenominatorDenominator      int `json:"fixed_denominator_denominator"`
-	LegalAdvanceNumerator            int `json:"legal_advance_numerator"`
-	LegalAdvanceDenominator          int `json:"legal_advance_denominator"`
-	UnauthorizedRejectionNumerator   int `json:"unauthorized_rejection_numerator"`
-	UnauthorizedRejectionDenominator int `json:"unauthorized_rejection_denominator"`
-	UnknownPredecessorNumerator      int `json:"unknown_predecessor_numerator"`
-	UnknownPredecessorDenominator    int `json:"unknown_predecessor_denominator"`
-	AdditionReasonNumerator          int `json:"addition_reason_numerator"`
-	AdditionReasonDenominator        int `json:"addition_reason_denominator"`
-	DeletionReasonNumerator          int `json:"deletion_reason_numerator"`
-	DeletionReasonDenominator        int `json:"deletion_reason_denominator"`
-	ForbiddenEstimateNumerator       int `json:"forbidden_estimate_numerator"`
-	ForbiddenEstimateDenominator     int `json:"forbidden_estimate_denominator"`
-	RepositoryWrites                 int `json:"repository_writes"`
-	MutationAuthorities              int `json:"mutation_authorities"`
+	CasesSatisfied                   int         `json:"cases_satisfied"`
+	CasesTotal                       int         `json:"cases_total"`
+	FixedDenominatorNumerator        int         `json:"fixed_denominator_numerator"`
+	FixedDenominatorDenominator      int         `json:"fixed_denominator_denominator"`
+	LegalAdvanceNumerator            int         `json:"legal_advance_numerator"`
+	LegalAdvanceDenominator          int         `json:"legal_advance_denominator"`
+	UnauthorizedRejectionNumerator   int         `json:"unauthorized_rejection_numerator"`
+	UnauthorizedRejectionDenominator int         `json:"unauthorized_rejection_denominator"`
+	UnknownPredecessorNumerator      int         `json:"unknown_predecessor_numerator"`
+	UnknownPredecessorDenominator    int         `json:"unknown_predecessor_denominator"`
+	AdditionReasonNumerator          int         `json:"addition_reason_numerator"`
+	AdditionReasonDenominator        int         `json:"addition_reason_denominator"`
+	DeletionReasonNumerator          int         `json:"deletion_reason_numerator"`
+	DeletionReasonDenominator        int         `json:"deletion_reason_denominator"`
+	Guardrails                       []Guardrail `json:"guardrails"`
 }
 
 type Indicator struct {
@@ -165,6 +173,7 @@ type Indicator struct {
 	Denominator       int        `json:"denominator"`
 	ExpectedNumerator int        `json:"expected_numerator"`
 	Satisfied         bool       `json:"satisfied"`
+	Guardrail         *Guardrail `json:"guardrail,omitempty"`
 }
 
 type Report struct {
@@ -198,19 +207,20 @@ type SourceProjection struct {
 }
 
 type Verification struct {
-	Schema            string   `json:"schema"`
-	HeadSHA           string   `json:"head_sha"`
-	Decision          string   `json:"decision"`
-	Resolution        string   `json:"resolution"`
-	Reason            string   `json:"reason"`
-	Producer          string   `json:"producer"`
-	Consumer          string   `json:"consumer"`
-	ContractDigest    string   `json:"contract_digest"`
-	ReportDigest      string   `json:"report_digest"`
-	SourceDigest      string   `json:"source_digest"`
-	Checks            []Check  `json:"checks"`
-	NotClaimed        []string `json:"not_claimed"`
-	RepositoryWrites  int      `json:"repository_writes"`
-	MutationAuthority bool     `json:"mutation_authority"`
-	Digest            string   `json:"digest"`
+	Schema            string      `json:"schema"`
+	HeadSHA           string      `json:"head_sha"`
+	Decision          string      `json:"decision"`
+	Resolution        string      `json:"resolution"`
+	Reason            string      `json:"reason"`
+	Producer          string      `json:"producer"`
+	Consumer          string      `json:"consumer"`
+	ContractDigest    string      `json:"contract_digest"`
+	ReportDigest      string      `json:"report_digest"`
+	SourceDigest      string      `json:"source_digest"`
+	Checks            []Check     `json:"checks"`
+	NotClaimed        []string    `json:"not_claimed"`
+	Guardrails        []Guardrail `json:"guardrails"`
+	RepositoryWrites  int         `json:"repository_writes"`
+	MutationAuthority bool        `json:"mutation_authority"`
+	Digest            string      `json:"digest"`
 }

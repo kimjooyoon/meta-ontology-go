@@ -12,11 +12,18 @@ receipt agree.
 - Legal advance: `1/1` case, `v1 -> v2`, one addition with `NEW_MEASURABLE_OBLIGATION`, and one deletion with `DEPRECATED_DUPLICATE`.
 - Unauthorized change: `1/1` case rejected as `BLOCK / INVARIANT_ONLY / MIGRATION_RECEIPT_MISSING`.
 - Unknown predecessor: `1/1` case remains `FAIL_CLOSED / UNKNOWN / PREDECESSOR_DIGEST_UNKNOWN`.
-- Forbidden aggregate estimate claims: `0/1`.
-- Repository writes and mutation authority: `0/1` and `false`.
+- Guardrail `gooo.guardrail.denominator.forbidden-estimate.v1`: direction `AT_MOST`, `observed=0`, `allowed_max=0`, `conformance=1/1`, `conforms=true`.
+- Guardrail `gooo.guardrail.denominator.repository-writes.v1`: direction `AT_MOST`, `observed=0`, `allowed_max=0`, `conformance=1/1`, `conforms=true`.
 
 These are separate exact predicates. There is no improvement rate, weighted
 score, percentage, or composite estimate.
+
+The guardrail fields deliberately separate direction, observed value, allowed
+boundary, and pass evidence. A zero is not treated as a pass by implication:
+`observed=0` is compared with `allowed_max=0`, and only the explicit
+`conformance=1/1` plus `conforms=true` records that the guardrail passed. The
+same two guardrails are carried by the legal migration receipt, the producer
+summary, the CI step summary, and the independent consumer output.
 
 ## Gooo and evidence flow
 

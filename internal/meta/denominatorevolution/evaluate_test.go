@@ -13,8 +13,11 @@ func TestCanonicalContractProducesExactReadOnlyReport(t *testing.T) {
 	if report.Summary.LegalAdvanceNumerator != 1 || report.Summary.UnauthorizedRejectionNumerator != 1 || report.Summary.UnknownPredecessorNumerator != 1 {
 		t.Fatalf("case summary = %+v", report.Summary)
 	}
-	if report.Summary.ForbiddenEstimateNumerator != 0 || report.RepositoryWrites != 0 || report.MutationAuthority {
+	if !guardrailsConform(report.Summary.Guardrails) || report.RepositoryWrites != 0 || report.MutationAuthority {
 		t.Fatalf("unsafe summary = %+v", report.Summary)
+	}
+	if report.Cases[0].Receipt == nil || !guardrailsConform(report.Cases[0].Receipt.Guardrails) {
+		t.Fatalf("receipt guardrails = %+v", report.Cases[0].Receipt)
 	}
 }
 

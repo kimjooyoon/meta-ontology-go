@@ -16,7 +16,7 @@ func WriteReport(filename string, report Report) error {
 
 func finishFailure(report Report, reason, resolution string) Report {
 	report.Decision, report.Resolution, report.Reason = "FAIL_CLOSED", resolution, reason
-	report.Summary = Summary{CasesTotal: CaseCount, FixedDenominatorDenominator: DenominatorSize, ForbiddenEstimateDenominator: 1}
+	report.Summary = Summary{CasesTotal: CaseCount, FixedDenominatorDenominator: DenominatorSize, Guardrails: makeGuardrails(0, report.RepositoryWrites)}
 	report.Indicators = []Indicator{}
 	report.Digest = reportDigest(report)
 	return report

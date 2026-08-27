@@ -19,7 +19,7 @@ func Evaluate(input Input) Report {
 	for _, value := range CanonicalCases() {
 		report.Cases = append(report.Cases, evaluateCase(value, base, contract.Policy))
 	}
-	report.Summary = summarize(report.Cases, base)
+	report.Summary = summarize(report.Cases, base, report.RepositoryWrites)
 	report.Indicators = makeIndicators(report.Summary)
 	report.Decision, report.Resolution, report.Reason = "PASS", "EXACT", "DENOMINATOR_EVOLUTION_CONTRACT_SATISFIED"
 	if report.Summary.CasesSatisfied != CaseCount || len(report.Indicators) != 8 || hasUnsatisfied(report.Indicators) {
@@ -113,7 +113,7 @@ func reasonsValid(changes []Change, receipt *MigrationReceipt, allowed []string)
 
 func validReceipt(input CaseInput, additions, deletions []Change, reasonsOK bool) bool {
 	receipt := input.Receipt
-	if receipt == nil || !reasonsOK || receipt.Schema != ReceiptSchema || receipt.Decision != "ADVANCE" || receipt.Reason != "DENOMINATOR_ADVANCE_AUTHORIZED" || receipt.RepositoryWrites != 0 || receipt.MutationAuthority {
+	if receipt == nil || !reasonsOK || receipt.Schema != ReceiptSchema || receipt.Decision != "ADVANCE" || receipt.Reason != "DENOMINATOR_ADVANCE_AUTHORIZED" || receipt.RepositoryWrites != 0 || receipt.MutationAuthority || !guardrailsConform(receipt.Guardrails) {
 		return false
 	}
 	if receipt.Predecessor.Version != input.Predecessor.Version || receipt.Predecessor.Digest != input.Predecessor.Digest || receipt.Successor.Version != input.Successor.Version || receipt.Successor.Digest != input.Successor.Digest {
