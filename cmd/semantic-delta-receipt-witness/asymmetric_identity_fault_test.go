@@ -20,7 +20,7 @@ func TestAsymmetricIdentityFaultReceiptProbesUseRawInputsOnly(t *testing.T) {
 
 	producerTampered := producerBaseline.Receipt
 	producerTampered.Graph.Mapping[0].NewStableID, producerTampered.Graph.Mapping[1].NewStableID = producerTampered.Graph.Mapping[1].NewStableID, producerTampered.Graph.Mapping[0].NewStableID
-	producerTampered.Graph.MappingDigest = jsonDigest(producerTampered.Graph.Mapping)
+	producerTampered.Graph.MappingDigest = identityFaultJSONDigest(producerTampered.Graph.Mapping)
 	producerTampered.Graph.RewrittenReferenceCount = 0
 	producerTampered.Graph.DanglingReferenceCount = 1
 	producerTampered.FaultGraphClosed = false
@@ -35,7 +35,7 @@ func TestAsymmetricIdentityFaultReceiptProbesUseRawInputsOnly(t *testing.T) {
 
 	consumerTampered := consumerBaseline.Receipt
 	consumerTampered.Graph.Mapping[0].NewStableID, consumerTampered.Graph.Mapping[1].NewStableID = consumerTampered.Graph.Mapping[1].NewStableID, consumerTampered.Graph.Mapping[0].NewStableID
-	consumerTampered.Graph.MappingDigest = jsonDigest(consumerTampered.Graph.Mapping)
+	consumerTampered.Graph.MappingDigest = identityFaultJSONDigest(consumerTampered.Graph.Mapping)
 	consumerTampered.Graph.RewrittenReferenceCount = 0
 	consumerTampered.Graph.DanglingReferenceCount = 1
 	consumerTampered.FaultGraphClosed = false
@@ -73,7 +73,7 @@ func asymmetricIdentityFaultInputs(t *testing.T) asymmetricIdentityFaultInput {
 	}
 }
 
-func jsonDigest(value any) string {
+func identityFaultJSONDigest(value any) string {
 	raw, _ := json.Marshal(value)
 	sum := sha256.Sum256(raw)
 	return "sha256:" + hex.EncodeToString(sum[:])
