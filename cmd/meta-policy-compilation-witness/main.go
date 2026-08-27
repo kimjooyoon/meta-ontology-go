@@ -159,7 +159,7 @@ func bindCaseDigests(cases []policycompilation.Case, sourceDigest, semanticDiges
 		if bound[index].ObservedGeneratedJudgeDigest == "GENERATED_JUDGE_DIGEST_FROM_ARTIFACT" {
 			bound[index].ObservedGeneratedJudgeDigest = judgeHash
 		}
-		if bound[index].ObservedIndependentDigest == "SOURCE_DIGEST_FROM_POLICY" {
+		if bound[index].ObservedIndependentDigest == "SOURCE_DIGEST_FROM_POLICY" || bound[index].ObservedIndependentDigest == "SEMANTIC_DIGEST_FROM_POLICY" {
 			bound[index].ObservedIndependentDigest = semanticDigest
 		}
 	}
