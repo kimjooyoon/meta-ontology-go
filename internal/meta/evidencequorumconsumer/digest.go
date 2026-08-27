@@ -3,7 +3,6 @@ package evidencequorumconsumer
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/evidencequorumwire"
 
 func reportDigest(report Report) string {
-	digest := report.Digest
 	report.Digest = ""
 	return evidencequorumwire.DigestJSON(reportWithoutDigest{Report: report})
 }

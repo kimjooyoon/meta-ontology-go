@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/evidencequorumwire"
 )
 
 func decodeStrict[T any](raw []byte) (T, error) {
