@@ -235,7 +235,7 @@ jq -e '.consumer_receipt.output_exists == false and .consumer_receipt.target_dig
 jq -e 'def claim($case;$id): [.cases[] | select(.id == $case) | .claims[] | select(.id == $id)]; (claim("missing-operation-evidence";"operation-receipt-bound") | map(select(.status == "REFUTED" and .resolution == "INVARIANT_ONLY" and .reason == "CLAIM_REFUTED" and .coordinate == {stage:"CONSUME_EVIDENCE",step:"operation-evidence",reason:"PROOF_EVIDENCE_MISSING"} and (.evidence_digests | length) == 1 and all(.evidence_digests[]; test("^sha256:[0-9a-f]{64}$")))) | length) == 1 and (claim("missing-operation-evidence";"recipe-match") | map(select(.status == "REFUTED" and .resolution == "INVARIANT_ONLY" and .reason == "CLAIM_REFUTED" and .coordinate == {stage:"CONSUME_RECIPE",step:"recipe-evidence",reason:"RECIPE_OPERATION_EVIDENCE_MISSING"} and (.evidence_digests | length) == 3)) | length) == 1 and (claim("unrelated-evidence-tamper";"no-byte-authority") | map(select(.status == "REFUTED" and .resolution == "INVARIANT_ONLY" and .reason == "CLAIM_REFUTED" and .coordinate == {stage:"CONSUME_INVARIANT",step:"invariant-evidence",reason:"INVARIANT_EVIDENCE_NOT_PRESERVED"} and (.evidence_digests | length) == 1)) | length) == 1 and (claim("unrelated-evidence-tamper";"recipe-match") | map(select(.status == "OPEN" and .resolution == "LOWER_RESOLUTION" and .reason == "CLAIM_PENDING" and .coordinate == {stage:"CONSUME_RECIPE",step:"recipe-evidence",reason:"RECIPE_INVARIANT_EVIDENCE_NOT_RESOLVED"} and (.evidence_digests | length) == 3)) | length) == 1' "$output/bundle-preliminary-report.json"
 jq -e --slurpfile final "$output/bundle-report.json" '([range(0;16) as $i | range(0;5) as $j | select(.cases[$i].claims[$j].status != $final[0].cases[$i].claims[$j].status) | {case_id:.cases[$i].id,claim_id:.cases[$i].claims[$j].id,from:.cases[$i].claims[$j].status,to:$final[0].cases[$i].claims[$j].status,stage:$final[0].cases[$i].coordinate.stage,step:$final[0].cases[$i].coordinate.step,reason:$final[0].cases[$i].coordinate.reason}] == [{case_id:"bytes-only-no-authority",claim_id:"recipe-match",from:"OPEN",to:"REFUTED",stage:"CONSUME_INPUT",step:"external-evidence",reason:"ARTIFACT_BYTES_NOT_AUTHORITY"}]) and ($final[0].summary.case_discharged_claims == 42 and $final[0].summary.case_open_claims == 22 and $final[0].summary.case_refuted_claims == 16)' "$output/bundle-preliminary-report.json"
 
-preliminary_negative_fixture_total=18
+preliminary_negative_fixture_total=19
 preliminary_negative_fixture_observed=0
 claim_adjudication_fixture_total=2
 claim_adjudication_fixture_observed=0
@@ -300,6 +300,19 @@ rg -F 'ATTESTATION_MISMATCH' "$output/preliminary-claim-adjudication-swap-consum
 rg -F 'stage=VERIFY_CLAIM_STATES step=claim-adjudication reason=CLAIM_ADJUDICATION_EXPECTATION_MISMATCH' "$output/preliminary-claim-adjudication-swap-consumer.log"
 preliminary_negative_fixture_observed=$((preliminary_negative_fixture_observed + 1))
 claim_adjudication_fixture_observed=$((claim_adjudication_fixture_observed + 1))
+
+go run ./cmd/language-proof-carrying-artifact-verifier -case-envelope-tamper "$output/bundle-preliminary-report.json" -case-envelope-case unrelated-evidence-tamper -output "$output/preliminary-case-envelope-overwrite.json"
+if go run ./cmd/language-proof-carrying-artifact-verifier -check "$output/preliminary-case-envelope-overwrite.json" > "$output/preliminary-case-envelope-overwrite-check.log" 2>&1; then
+  echo "preliminary case-envelope overwrite unexpectedly validated by CLI" >&2
+  exit 1
+fi
+rg -F 'stage=VERIFY_CASE_ENVELOPE step=case-envelope reason=CASE_ENVELOPE_MISMATCH' "$output/preliminary-case-envelope-overwrite-check.log"
+if go run ./cmd/language-proof-carrying-artifact-consumer -bundle "$output/bundle.json" -report "$output/preliminary-case-envelope-overwrite.json" -target artifact.json -out "$output/preliminary-case-envelope-overwrite-consumer-receipt.json" > "$output/preliminary-case-envelope-overwrite-consumer.log" 2>&1; then
+  echo "preliminary case-envelope overwrite unexpectedly lifted by consumer"
+  exit 1
+fi
+rg -F 'stage=VERIFY_CASE_ENVELOPE step=case-envelope reason=CASE_ENVELOPE_MISMATCH' "$output/preliminary-case-envelope-overwrite-consumer.log"
+preliminary_negative_fixture_observed=$((preliminary_negative_fixture_observed + 1))
 test "$preliminary_negative_fixture_observed" -eq "$preliminary_negative_fixture_total"
 jq -n --argjson total "$preliminary_negative_fixture_total" --argjson observed "$preliminary_negative_fixture_observed" '{schema:"gooo/preliminary-negative-fixture-ledger/v1",total:$total,observed:$observed,stale_digest_only_rejections:0,validator_and_consumer_checked:true}' > "$output/preliminary-negative-fixture-ledger.json"
 

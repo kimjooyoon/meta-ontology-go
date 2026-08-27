@@ -6,6 +6,44 @@ import (
 	"reflect"
 )
 
+// caseEnvelopeIssue is the case-level observation only. It is reduced from
+// independent observation failures after all claim adjudications have been
+// computed; it never supplies or overwrites a claim-local result.
+type caseEnvelopeIssue struct {
+	Kind       string
+	Resolution string
+	Reason     string
+	Coordinate Coordinate
+}
+
+// caseEnvelopeReductionContract is the fixed aggregate precedence. The
+// order is semantic, not case-specific: a higher-priority observed boundary
+// wins the envelope while every claim keeps its own adjudication and cause.
+var caseEnvelopeReductionContract = []string{
+	"EXTERNAL_EVIDENCE_ABSENT",
+	"OPERATION_EVIDENCE_MISSING",
+	"OPERATION_ATTACHMENT_MISSING",
+	"EVIDENCE_DIGEST_MISMATCH",
+	"LEDGER_MISMATCH",
+	"CLAIM_STRUCTURE_MISMATCH",
+	"SOURCE_RECONSTRUCTION_MISMATCH",
+	"OPERATION_ATTACHMENT_DIGEST_MISMATCH",
+	"OPERATION_RECONSTRUCTION_MISMATCH",
+	"INVARIANT_EVIDENCE_NOT_PRESERVED",
+	"RECIPE_MISMATCH",
+}
+
+func reduceCaseEnvelope(issues []caseEnvelopeIssue) caseEnvelopeIssue {
+	for _, kind := range caseEnvelopeReductionContract {
+		for _, issue := range issues {
+			if issue.Kind == kind {
+				return issue
+			}
+		}
+	}
+	return caseEnvelopeIssue{Kind: "ARTIFACT_INVALID", Resolution: "INVARIANT_ONLY", Reason: "PROOF_CARRYING_ARTIFACT_INVALID", Coordinate: Coordinate{"CONSUME_IDENTITY", "artifact", "PROOF_CARRYING_ARTIFACT_INVALID"}}
+}
+
 // verifyArtifact is the independent consumer kernel. It evaluates each
 // proposition separately and propagates failure only over declared edges.
 func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) observation {
@@ -171,34 +209,45 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_AUTHORITY", "authority-evidence", "AUTHORITY_ATTESTATION_NOT_PRESERVED"}, "consumer-observation"))
 	}
 
-	resolution, reason, stage, step := "INVARIANT_ONLY", "PROOF_CARRYING_ARTIFACT_INVALID", "CONSUME_IDENTITY", "artifact"
-	switch {
-	case len(source) == 0 && len(operation) == 0 && len(recipe) == 0:
-		resolution, reason, stage, step = "LOWER_RESOLUTION", "ARTIFACT_BYTES_NOT_AUTHORITY", "CONSUME_INPUT", "external-evidence"
-	case len(byKind["OPERATION"].Kind) == 0:
-		resolution, reason, stage, step = "LOWER_RESOLUTION", "PROOF_EVIDENCE_MISSING", "CONSUME_EVIDENCE", "operation-evidence"
-	case operationMissing:
-		resolution, reason, stage, step = "LOWER_RESOLUTION", "ARTIFACT_ATTACHMENT_MISSING", "CONSUME_INPUT", "operation-attachment"
-	case evidenceDigestMismatch || duplicateEvidence:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "PROOF_EVIDENCE_DIGEST_MISMATCH", "CONSUME_EVIDENCE", "evidence-digest"
-		if mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"] {
-			reason, step = "INVARIANT_EVIDENCE_NOT_PRESERVED", "invariant-evidence"
-		}
-	case !priorLedgerOK:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "PROOF_EVIDENCE_LEDGER_MISMATCH", "CONSUME_LEDGER", "prior-ledger"
-	case !claimsStructureOK:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "PROOF_CLAIM_STATEMENT_MISMATCH", "CONSUME_CLAIMS", "claim-statement"
-	case !sourceGood:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "SOURCE_RECONSTRUCTION_MISMATCH", "CONSUME_SOURCE", "reconstruct"
-	case !operationGood && operationDecoded && !operationDigestOK:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "OPERATION_ATTACHMENT_DIGEST_MISMATCH", "CONSUME_OPERATION", "attachment-digest"
-	case !operationGood:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "OPERATION_RECONSTRUCTION_MISMATCH", "CONSUME_OPERATION", "receipt"
-	case !invariantGood:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "INVARIANT_EVIDENCE_NOT_PRESERVED", "CONSUME_INVARIANT", "invariant-evidence"
-	case !recipeGood:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "INDEPENDENT_RECIPE_MISMATCH", "CONSUME_RECIPE", "recipe"
+	issues := make([]caseEnvelopeIssue, 0, len(caseEnvelopeReductionContract))
+	if len(source) == 0 && len(operation) == 0 && len(recipe) == 0 {
+		issues = append(issues, caseEnvelopeIssue{"EXTERNAL_EVIDENCE_ABSENT", "LOWER_RESOLUTION", "ARTIFACT_BYTES_NOT_AUTHORITY", Coordinate{"CONSUME_INPUT", "external-evidence", "ARTIFACT_BYTES_NOT_AUTHORITY"}})
 	}
+	if len(byKind["OPERATION"].Kind) == 0 {
+		issues = append(issues, caseEnvelopeIssue{"OPERATION_EVIDENCE_MISSING", "LOWER_RESOLUTION", "PROOF_EVIDENCE_MISSING", Coordinate{"CONSUME_EVIDENCE", "operation-evidence", "PROOF_EVIDENCE_MISSING"}})
+	}
+	if operationMissing {
+		issues = append(issues, caseEnvelopeIssue{"OPERATION_ATTACHMENT_MISSING", "LOWER_RESOLUTION", "ARTIFACT_ATTACHMENT_MISSING", Coordinate{"CONSUME_INPUT", "operation-attachment", "ARTIFACT_ATTACHMENT_MISSING"}})
+	}
+	if evidenceDigestMismatch || duplicateEvidence {
+		if mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"] {
+			issues = append(issues, caseEnvelopeIssue{"INVARIANT_EVIDENCE_NOT_PRESERVED", "INVARIANT_ONLY", "INVARIANT_EVIDENCE_NOT_PRESERVED", Coordinate{"CONSUME_INVARIANT", "invariant-evidence", "INVARIANT_EVIDENCE_NOT_PRESERVED"}})
+		} else {
+			issues = append(issues, caseEnvelopeIssue{"EVIDENCE_DIGEST_MISMATCH", "INVARIANT_ONLY", "PROOF_EVIDENCE_DIGEST_MISMATCH", Coordinate{"CONSUME_EVIDENCE", "evidence-digest", "PROOF_EVIDENCE_DIGEST_MISMATCH"}})
+		}
+	}
+	if !priorLedgerOK {
+		issues = append(issues, caseEnvelopeIssue{"LEDGER_MISMATCH", "INVARIANT_ONLY", "PROOF_EVIDENCE_LEDGER_MISMATCH", Coordinate{"CONSUME_LEDGER", "prior-ledger", "PROOF_EVIDENCE_LEDGER_MISMATCH"}})
+	}
+	if !claimsStructureOK {
+		issues = append(issues, caseEnvelopeIssue{"CLAIM_STRUCTURE_MISMATCH", "INVARIANT_ONLY", "PROOF_CLAIM_STATEMENT_MISMATCH", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}})
+	}
+	if !sourceGood {
+		issues = append(issues, caseEnvelopeIssue{"SOURCE_RECONSTRUCTION_MISMATCH", "INVARIANT_ONLY", "SOURCE_RECONSTRUCTION_MISMATCH", Coordinate{"CONSUME_SOURCE", "reconstruct", "SOURCE_RECONSTRUCTION_MISMATCH"}})
+	}
+	if !operationGood && operationDecoded && !operationDigestOK {
+		issues = append(issues, caseEnvelopeIssue{"OPERATION_ATTACHMENT_DIGEST_MISMATCH", "INVARIANT_ONLY", "OPERATION_ATTACHMENT_DIGEST_MISMATCH", Coordinate{"CONSUME_OPERATION", "attachment-digest", "OPERATION_ATTACHMENT_DIGEST_MISMATCH"}})
+	}
+	if !operationGood {
+		issues = append(issues, caseEnvelopeIssue{"OPERATION_RECONSTRUCTION_MISMATCH", "INVARIANT_ONLY", "OPERATION_RECONSTRUCTION_MISMATCH", Coordinate{"CONSUME_OPERATION", "receipt", "OPERATION_RECONSTRUCTION_MISMATCH"}})
+	}
+	if !invariantGood {
+		issues = append(issues, caseEnvelopeIssue{"INVARIANT_EVIDENCE_NOT_PRESERVED", "INVARIANT_ONLY", "INVARIANT_EVIDENCE_NOT_PRESERVED", Coordinate{"CONSUME_INVARIANT", "invariant-evidence", "INVARIANT_EVIDENCE_NOT_PRESERVED"}})
+	}
+	if !recipeGood {
+		issues = append(issues, caseEnvelopeIssue{"RECIPE_MISMATCH", "INVARIANT_ONLY", "INDEPENDENT_RECIPE_MISMATCH", Coordinate{"CONSUME_RECIPE", "recipe", "INDEPENDENT_RECIPE_MISMATCH"}})
+	}
+	envelope := reduceCaseEnvelope(issues)
 	if authorityGood {
 		claims := exactClaims(artifact.Claims)
 		result := observation{Decision: "PASS", Resolution: "EXACT", Reason: "PROOF_CARRYING_ARTIFACT_AUTHORIZED", Coordinate: Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", "CONSUMER_ONLY_READ_ONLY_AUTHORITY"}, ArtifactDigest: artifactEvidenceDigest, SourceDigest: sourceDigest, SemanticDigest: projection.SemanticDigest, OperationDigest: receipt.Digest, Claims: claims}
@@ -208,7 +257,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 		result.RecipeAttachmentDigest = digestBytes(recipe)
 		return result
 	}
-	return observedFailure(artifact, resolution, reason, stage, step, adjudications, artifactEvidenceDigest, sourceDigest, projection.SemanticDigest, receiptDigestIfValid(receipt))
+	return observedFailure(artifact, envelope.Resolution, envelope.Reason, envelope.Coordinate.Stage, envelope.Coordinate.Step, adjudications, artifactEvidenceDigest, sourceDigest, projection.SemanticDigest, receiptDigestIfValid(receipt))
 }
 
 func observedFailure(artifact Artifact, resolution, reason, stage, step string, adjudications []ClaimAdjudication, artifactDigestValue, sourceDigest, semanticDigest, operationDigest string) observation {

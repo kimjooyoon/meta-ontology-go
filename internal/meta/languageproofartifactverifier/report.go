@@ -41,6 +41,7 @@ type CaseResult struct {
 	ConsumerOutputExists      bool          `json:"consumer_output_exists"`
 	ConsumerErrorClass        string        `json:"consumer_error_class,omitempty"`
 	ConsumerErrorDigest       string        `json:"consumer_error_digest,omitempty"`
+	EnvelopeDigest            string        `json:"envelope_digest"`
 }
 
 type Summary struct {

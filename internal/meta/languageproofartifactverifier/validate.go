@@ -312,6 +312,24 @@ func ResealClaimAdjudication(report Report, firstCase, firstClaim, secondCase, s
 	return report
 }
 
+// ResealCaseEnvelope changes only the aggregate case observation, refreshes
+// its own envelope digest, and refreshes the outer report digest. This makes
+// the fixture coherent at both byte layers so validation must reject the
+// semantic envelope overwrite rather than a stale digest.
+func ResealCaseEnvelope(report Report, caseID string) Report {
+	for index := range report.Cases {
+		if report.Cases[index].ID != caseID {
+			continue
+		}
+		report.Cases[index].ObservedReason = "CASE_ENVELOPE_OVERWRITTEN"
+		report.Cases[index].Coordinate.Reason = report.Cases[index].ObservedReason
+		report.Cases[index].EnvelopeDigest = caseEnvelopeDigest(report.Cases[index])
+		break
+	}
+	report.Digest = reportDigest(report)
+	return report
+}
+
 type ValidationError struct {
 	Coordinate Coordinate
 	Detail     string
@@ -386,23 +404,72 @@ func validateIndicatorInventory(report Report, phase string, bundleMetric, consu
 	return nil
 }
 
+type caseEnvelopeMismatchDetail struct {
+	CaseID           string       `json:"case_id"`
+	Actual           caseEnvelope `json:"actual"`
+	Expected         caseEnvelope `json:"expected"`
+	ActualDigest     string       `json:"actual_digest"`
+	RecomputedDigest string       `json:"recomputed_digest"`
+	ExpectedDigest   string       `json:"expected_digest"`
+}
+
+func validateCaseEnvelopes(cases []CaseResult) error {
+	if !caseInventoryOK(cases) || len(cases) != CaseTotal {
+		return &ValidationError{Coordinate: Coordinate{"VERIFY_CASE_ENVELOPE", "case-envelope", "CASE_ENVELOPE_INVENTORY_MISMATCH"}, Detail: "case envelope inventory is not exactly the canonical 16-case inventory"}
+	}
+	mismatches := make([]caseEnvelopeMismatchDetail, 0)
+	contract := CanonicalContract()
+	coordinates := caseCoordinates()
+	for index, item := range cases {
+		spec := contract.Cases[index]
+		wantCoordinate, ok := coordinates[item.ID]
+		if !ok {
+			return &ValidationError{Coordinate: Coordinate{"VERIFY_CASE_ENVELOPE", "case-envelope", "CASE_ENVELOPE_INVENTORY_MISMATCH"}, Detail: item.ID}
+		}
+		expected := caseEnvelope{ID: spec.ID, Status: "SATISFIED", ExpectedDecision: spec.ExpectedDecision,
+			ExpectedResolution: spec.ExpectedResolution, ExpectedReason: spec.ExpectedReason,
+			ObservedDecision: spec.ExpectedDecision, ObservedResolution: spec.ExpectedResolution,
+			ObservedReason: spec.ExpectedReason, ProofChoice: spec.ProofChoice, MetaOperation: spec.MetaOperation,
+			Coordinate: wantCoordinate}
+		actual := caseEnvelopeValue(item)
+		expectedDigest := digestValue(expected)
+		if actual != expected || item.EnvelopeDigest != caseEnvelopeDigest(item) || item.EnvelopeDigest != expectedDigest {
+			mismatches = append(mismatches, caseEnvelopeMismatchDetail{CaseID: item.ID, Actual: actual, Expected: expected,
+				ActualDigest: item.EnvelopeDigest, RecomputedDigest: caseEnvelopeDigest(item), ExpectedDigest: expectedDigest})
+		}
+	}
+	if len(mismatches) == 0 {
+		return nil
+	}
+	detail, err := json.Marshal(struct {
+		Mismatches []caseEnvelopeMismatchDetail `json:"mismatches"`
+	}{Mismatches: mismatches})
+	if err != nil {
+		return &ValidationError{Coordinate: Coordinate{"VERIFY_CASE_ENVELOPE", "case-envelope", "CASE_ENVELOPE_MISMATCH"}, Detail: "case envelope actual/expected comparison failed"}
+	}
+	return &ValidationError{Coordinate: Coordinate{"VERIFY_CASE_ENVELOPE", "case-envelope", "CASE_ENVELOPE_MISMATCH"}, Detail: string(detail)}
+}
+
 func validateCaseResults(report Report, phase string) error {
+	// Case-envelope reduction is a separate contract from claim adjudication.
+	// A claim-local OPEN or REFUTED state cannot rewrite this observed envelope.
+	if err := validateCaseEnvelopes(report.Cases); err != nil {
+		return err
+	}
+	return validateCaseClaims(report, phase)
+}
+
+func validateCaseClaims(report Report, phase string) error {
 	if !caseInventoryOK(report.Cases) || len(report.Cases) != CaseTotal {
-		return fmt.Errorf("proof-carrying case inventory mismatch")
+		return fmt.Errorf("proof-carrying case claim inventory mismatch")
 	}
 	claimIDs := make([]string, 0, ClaimTemplateTotal)
 	for _, spec := range claimSpecs() {
 		claimIDs = append(claimIDs, spec.ID)
 	}
 	for index, item := range report.Cases {
-		spec := CanonicalContract().Cases[index]
-		wantCoordinate, ok := caseCoordinates()[item.ID]
-		if !ok || item.Status != "SATISFIED" || item.ExpectedDecision != spec.ExpectedDecision || item.ExpectedResolution != spec.ExpectedResolution || item.ExpectedReason != spec.ExpectedReason ||
-			item.ObservedDecision != spec.ExpectedDecision || item.ObservedResolution != spec.ExpectedResolution || item.ObservedReason != spec.ExpectedReason || item.Coordinate != wantCoordinate {
-			return fmt.Errorf("proof-carrying case mismatch: %s", item.ID)
-		}
 		if len(item.Claims) != ClaimTemplateTotal {
-			return fmt.Errorf("proof-carrying case claim count mismatch: %s", item.ID)
+			return fmt.Errorf("proof-carrying case claim inventory mismatch: %s", item.ID)
 		}
 		seen := map[string]bool{}
 		for claimIndex, claim := range item.Claims {

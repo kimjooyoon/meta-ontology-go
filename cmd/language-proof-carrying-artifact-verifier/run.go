@@ -34,6 +34,7 @@ type options struct {
 	resealReport, coherentPreliminaryTamper, preliminaryDigest                                                                string
 	claimStateTamper, claimStateCase, claimStateID, claimState                                                                string
 	claimAdjudicationTamper, claimAdjudicationCase, claimAdjudicationID, claimAdjudicationOtherCase, claimAdjudicationOtherID string
+	caseEnvelopeTamper, caseEnvelopeCase                                                                                      string
 	claimStateExpectations                                                                                                    string
 }
 
@@ -90,6 +91,8 @@ func run(args []string) int {
 	flags.StringVar(&value.claimAdjudicationID, "claim-adjudication-id", "", "first claim ID for claim-adjudication fixture")
 	flags.StringVar(&value.claimAdjudicationOtherCase, "claim-adjudication-other-case", "", "second case ID for claim-adjudication fixture")
 	flags.StringVar(&value.claimAdjudicationOtherID, "claim-adjudication-other-id", "", "second claim ID for claim-adjudication fixture")
+	flags.StringVar(&value.caseEnvelopeTamper, "case-envelope-tamper", "", "coherently resealed case-envelope fixture")
+	flags.StringVar(&value.caseEnvelopeCase, "case-envelope-case", "", "case ID for case-envelope fixture")
 	flags.StringVar(&value.claimStateExpectations, "claim-state-expectations", "", "write validator-owned fixed claim-state expectations")
 	if flags.Parse(args) != nil {
 		return 2
@@ -154,6 +157,16 @@ func run(args []string) int {
 			return 1
 		}
 		return writeRawReport(value.output, verifier.ResealClaimAdjudication(report, value.claimAdjudicationCase, value.claimAdjudicationID, value.claimAdjudicationOtherCase, value.claimAdjudicationOtherID))
+	}
+	if value.caseEnvelopeTamper != "" {
+		if value.output == "" || value.caseEnvelopeCase == "" {
+			return 2
+		}
+		report, err := verifier.LoadReport(value.caseEnvelopeTamper)
+		if err != nil {
+			return 1
+		}
+		return writeRawReport(value.output, verifier.ResealCaseEnvelope(report, value.caseEnvelopeCase))
 	}
 	if value.check != "" {
 		report, err := verifier.LoadReport(value.check)

@@ -47,12 +47,14 @@ func Evaluate(input Input) Report {
 		if observed.Decision == definition.ExpectedDecision && observed.Resolution == definition.ExpectedResolution && observed.Reason == definition.ExpectedReason {
 			status = "SATISFIED"
 		}
-		results = append(results, CaseResult{ID: definition.ID, Status: status,
+		caseResult := CaseResult{ID: definition.ID, Status: status,
 			ExpectedDecision: definition.ExpectedDecision, ExpectedResolution: definition.ExpectedResolution, ExpectedReason: definition.ExpectedReason,
 			ObservedDecision: observed.Decision, ObservedResolution: observed.Resolution, ObservedReason: observed.Reason,
 			ProofChoice: definition.ProofChoice, MetaOperation: definition.MetaOperation, Coordinate: observed.Coordinate,
 			Claims: observed.Claims, ArtifactDigest: observed.ArtifactDigest, SourceDigest: observed.SourceDigest,
-			SemanticDigest: observed.SemanticDigest, OperationDigest: observed.OperationDigest, OperationAttachmentDigest: observed.OperationAttachmentDigest, RecipeAttachmentDigest: observed.RecipeAttachmentDigest, ConsumerTargetDigest: observed.ConsumerTargetDigest, ConsumerOutputDigest: observed.ConsumerOutputDigest, ConsumerOutputExists: observed.ConsumerOutputExists, ConsumerErrorClass: observed.ConsumerErrorClass, ConsumerErrorDigest: observed.ConsumerErrorDigest})
+			SemanticDigest: observed.SemanticDigest, OperationDigest: observed.OperationDigest, OperationAttachmentDigest: observed.OperationAttachmentDigest, RecipeAttachmentDigest: observed.RecipeAttachmentDigest, ConsumerTargetDigest: observed.ConsumerTargetDigest, ConsumerOutputDigest: observed.ConsumerOutputDigest, ConsumerOutputExists: observed.ConsumerOutputExists, ConsumerErrorClass: observed.ConsumerErrorClass, ConsumerErrorDigest: observed.ConsumerErrorDigest}
+		caseResult.EnvelopeDigest = caseEnvelopeDigest(caseResult)
+		results = append(results, caseResult)
 	}
 
 	interventions := evaluateInterventions(input.Interventions, input.HeadSHA, phase)
