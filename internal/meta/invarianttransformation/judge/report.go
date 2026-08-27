@@ -287,11 +287,6 @@ func snapshotTempRoot() string {
 	return os.TempDir()
 }
 
-func withinPath(root, path string) bool {
-	relative, err := filepath.Rel(root, path)
-	return err == nil && relative != "." && relative != ".." && !filepath.IsAbs(relative) && !strings.HasPrefix(relative, ".."+string(os.PathSeparator))
-}
-
 func boolInt(value bool) int {
 	if value {
 		return 1
