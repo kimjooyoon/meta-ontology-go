@@ -11,6 +11,8 @@ producer="$build/experiment-portfolio-receipt"
 evaluator="$build/experiment-portfolio-evaluate"
 causal_source="$build/experiment-portfolio-causal-source"
 causal_evaluator="$build/experiment-portfolio-causality"
+producer_package="github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentportfolio"
+consumer_package="github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentportfolio/causalityconsumer"
 contract="$root/examples/experiment-portfolio/contract.json"
 manifest="$root/examples/experiment-portfolio/causality-manifest.json"
 sources=(derive replay reflect)
@@ -21,6 +23,21 @@ go build -trimpath -o "$producer" ./cmd/experiment-portfolio-receipt
 go build -trimpath -o "$evaluator" ./cmd/experiment-portfolio-evaluate
 go build -trimpath -o "$causal_source" ./cmd/experiment-portfolio-causal-source
 go build -trimpath -o "$causal_evaluator" ./cmd/experiment-portfolio-causality
+
+consumer_deps="$(go list -deps ./cmd/experiment-portfolio-causality)"
+forbidden_producer_deps="$(printf '%s\n' "$consumer_deps" | grep -Fx "$producer_package" || true)"
+if [[ -n "$forbidden_producer_deps" ]]; then
+	echo "causality consumer imports producer implementation: $forbidden_producer_deps" >&2
+	exit 1
+fi
+producer_deps="$(go list -deps ./cmd/experiment-portfolio-receipt)"
+forbidden_consumer_deps="$(printf '%s\n' "$producer_deps" | grep -Fx "$consumer_package" || true)"
+if [[ -n "$forbidden_consumer_deps" ]]; then
+	echo "receipt producer imports causality consumer implementation: $forbidden_consumer_deps" >&2
+	exit 1
+fi
+echo "forbidden producer deps observed=0 allowed_max=0"
+echo "independence contract=1/1"
 
 for candidate in "${sources[@]}"; do
 	source="$root/examples/experiment-portfolio/alternatives/$candidate.gooo"
@@ -197,6 +214,40 @@ jq -e '
   (has("score") | not) and (has("winner") | not)
 ' "$work/causality-report.json"
 
+jq '.samples[0].nonsemantic = (.samples[0].baseline | .case_id = "derive-nonsemantic" | .kind = "NON_SEMANTIC")' \
+	"$work/causality-input.json" > "$work/causality-unknown-input.json"
+if "$causal_evaluator" -input "$work/causality-unknown-input.json" -output "$work/causality-unknown-report.json"; then
+	echo "unknown causality input unexpectedly passed" >&2
+	exit 1
+fi
+jq -e '
+  .decision == "FAIL_CLOSED" and
+  .resolution == "LOWER_RESOLUTION" and
+  .reason == "CAUSALITY_INPUT_UNKNOWN" and
+  .summary.unknowns == 1 and
+  .unknown_findings == [{candidate_id:"derive",case_id:"derive-nonsemantic",stage:"NON_SEMANTIC_INTERVENTION",step:"observe-source",reason:"NON_SEMANTIC_DIGEST_UNCHANGED"}]
+' "$work/causality-unknown-report.json"
+
+jq '.manifest.cases[0].required_change_fields = ["decision"]' \
+	"$work/causality-input.json" > "$work/causality-subset-input.json"
+"$causal_evaluator" -input "$work/causality-subset-input.json" -output "$work/causality-subset-report.json"
+jq -e '
+  .decision == "REFUTED" and
+  .resolution == "EXACT" and
+  .samples[0].required_change_fields == ["decision"] and
+  .samples[0].semantic.status == "REFUTED" and
+  .samples[0].semantic.reason == "DIGEST_ONLY_BINDING"
+' "$work/causality-subset-report.json"
+
+jq '.manifest.cases[0].required_change_fields = []' \
+	"$work/causality-input.json" > "$work/causality-empty-subset-input.json"
+if "$causal_evaluator" -input "$work/causality-empty-subset-input.json" -output "$work/causality-empty-subset-report.json"; then
+	echo "empty required_change_fields unexpectedly passed" >&2
+	exit 1
+fi
+jq -e '.decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and .reason == "CAUSALITY_MANIFEST_CASE_INVALID"' \
+	"$work/causality-empty-subset-report.json"
+
 jq '.samples[0].semantic.receipt.coordinate_vector[0].numerator = 0' "$work/causality-input.json" > "$work/causality-forged-input.json"
 if "$causal_evaluator" -input "$work/causality-forged-input.json" -output "$work/causality-forged-report.json"; then
 	echo "forged causality receipt unexpectedly passed" >&2
@@ -238,3 +289,9 @@ jq -r '
   ("- semantic intervention: " + ([.samples[] | "\(.candidate_id)=\(.semantic.status)/\(.semantic.reason)"] | join("; "))),
   ("- non-semantic intervention: " + ([.samples[] | "\(.candidate_id)=\(.nonsemantic.status)/\(.nonsemantic.reason)"] | join("; ")))
 ' "$work/causality-report.json" >> "$GITHUB_STEP_SUMMARY"
+{
+	echo "- forbidden producer deps observed=0 allowed_max=0"
+	echo "- independence contract=1/1"
+	echo "- unknown regression: FAIL_CLOSED / LOWER_RESOLUTION with stage/step/reason preserved"
+	echo "- required_change_fields: non-empty arbitrary subset accepted; empty subset rejected"
+} >> "$GITHUB_STEP_SUMMARY"

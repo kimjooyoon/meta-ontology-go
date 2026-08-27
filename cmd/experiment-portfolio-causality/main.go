@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentportfolio"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentportfolio/causalityconsumer"
 )
 
 type causalityOptions struct{ input, output, check string }
@@ -24,19 +24,19 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "usage: experiment-portfolio-causality -input <json> (-output <json> | -check <json>)")
 		return 2
 	}
-	input, err := experimentportfolio.ReadCausalityInput(options.input)
+	input, err := causalityconsumer.ReadCausalityInput(options.input)
 	if err != nil {
 		fmt.Fprintf(stderr, "experiment-portfolio-causality: input: %v\n", err)
 		return 2
 	}
-	report := experimentportfolio.EvaluateCausality(input)
+	report := causalityconsumer.EvaluateCausality(input)
 	if options.check != "" {
-		expected, err := experimentportfolio.ReadCausalityReport(options.check)
-		if err != nil || !experimentportfolio.EqualCausality(report, expected) {
+		expected, err := causalityconsumer.ReadCausalityReport(options.check)
+		if err != nil || !causalityconsumer.EqualCausality(report, expected) {
 			fmt.Fprintln(stderr, "experiment-portfolio-causality: replay mismatch")
 			return 1
 		}
-	} else if err := experimentportfolio.WriteCausalityReport(options.output, report); err != nil {
+	} else if err := causalityconsumer.WriteCausalityReport(options.output, report); err != nil {
 		fmt.Fprintf(stderr, "experiment-portfolio-causality: output: %v\n", err)
 		return 2
 	}

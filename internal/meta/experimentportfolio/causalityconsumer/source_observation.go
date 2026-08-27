@@ -1,7 +1,10 @@
-package experimentportfolio
+package causalityconsumer
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -43,4 +46,18 @@ func computedValue(source []byte) (string, error) {
 		return value, nil
 	}
 	return "", fmt.Errorf("computes value is unterminated")
+}
+
+func canonicalSourcePath(path string) string {
+	path = filepath.ToSlash(path)
+	const marker = "examples/experiment-portfolio/"
+	if index := strings.Index(path, marker); index >= 0 {
+		return path[index:]
+	}
+	return path
+}
+
+func sha256Digest(value []byte) string {
+	digest := sha256.Sum256(value)
+	return "sha256:" + hex.EncodeToString(digest[:])
 }

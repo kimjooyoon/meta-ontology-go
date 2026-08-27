@@ -1,4 +1,4 @@
-package experimentportfolio
+package causalityconsumer
 
 import "reflect"
 
@@ -48,9 +48,11 @@ func EvaluateCausality(input CausalityInput) CausalityReport {
 	summary.Unknowns = len(unknowns)
 	decision := "CAUSALITY_DISCHARGED"
 	reason := "SOURCE_SEMANTIC_CAUSALITY_DISCHARGED"
+	resolution := "EXACT"
 	if len(unknowns) > 0 {
 		decision = "FAIL_CLOSED"
 		reason = "CAUSALITY_INPUT_UNKNOWN"
+		resolution = "LOWER_RESOLUTION"
 	} else if summary.DigestOnlyCases > 0 {
 		decision = "REFUTED"
 		reason = "DIGEST_ONLY_BINDING"
@@ -61,7 +63,7 @@ func EvaluateCausality(input CausalityInput) CausalityReport {
 	report := CausalityReport{
 		Schema:            CausalityReportSchema,
 		Decision:          decision,
-		Resolution:        "EXACT",
+		Resolution:        resolution,
 		Reason:            reason,
 		Interpretation:    "THREE_CASE_SOURCE_SEMANTIC_CAUSALITY_WITHOUT_AGGREGATION",
 		SubjectSHA:        input.SubjectSHA,
@@ -155,7 +157,6 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 		result.Step = "compare-receipt-projection"
 		result.Semantic.Status = "REFUTED"
 		result.Semantic.Stage = result.Stage
-		result.Semantic.Step = result.Step
 		if !result.SemanticProjectionChanged {
 			result.Reason = "DIGEST_ONLY_BINDING"
 			result.DigestOnlyBinding = true
@@ -284,4 +285,37 @@ func summarizeCausalityTransitions(results []CausalitySampleResult, manifest Cau
 		Open:             TransitionBucket{Numerator: open, Denominator: denominator},
 		Reason:           manifest.TransitionDenominatorReason,
 	}
+}
+
+func closedCausality(input CausalityInput, reason string) CausalityReport {
+	notClaimed := ExpectedContract().NotClaimed
+	if len(input.Contract.NotClaimed) > 0 {
+		notClaimed = input.Contract.NotClaimed
+	}
+	report := CausalityReport{
+		Schema:         CausalityReportSchema,
+		Decision:       "FAIL_CLOSED",
+		Resolution:     "LOWER_RESOLUTION",
+		Reason:         reason,
+		Interpretation: "NO_CAUSALITY_COMPARISON_CLAIM",
+		SubjectSHA:     input.SubjectSHA,
+		ContractID:     input.Contract.ID,
+		Manifest:       input.Manifest,
+		Samples:        []CausalitySampleResult{},
+		Summary: CausalitySummary{
+			CausalCases: CausalCaseCount{Observed: 0, Total: ExpectedCandidates},
+			Unknowns:    1,
+		},
+		TransitionSummary: CausalityTransitionSummary{
+			FixedDenominator: ExpectedCausalTransitions,
+			Refuted:          TransitionBucket{Denominator: ExpectedCausalTransitions},
+			Discharged:       TransitionBucket{Denominator: ExpectedCausalTransitions},
+			Open:             TransitionBucket{Numerator: ExpectedCausalTransitions, Denominator: ExpectedCausalTransitions},
+			Reason:           causalityTransitionDenominatorReason,
+		},
+		UnknownFindings: []CausalityUnknown{{Stage: "CAUSALITY_VALIDATION", Step: "validate-input", Reason: reason}},
+		NotClaimed:      append([]string(nil), notClaimed...),
+		FactsDigest:     digestValue(input),
+	}
+	return sealCausalityReport(report)
 }

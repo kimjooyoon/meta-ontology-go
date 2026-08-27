@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentportfolio"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentportfolio/causalityconsumer"
 )
 
 type sourceOptions struct {
@@ -31,12 +31,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "experiment-portfolio-causal-source: source: %v\n", err)
 		return 2
 	}
-	observation, err := experimentportfolio.ObserveSource(options.source, source)
+	observation, err := causalityconsumer.ObserveSource(options.source, source)
 	if err != nil {
 		fmt.Fprintf(stderr, "experiment-portfolio-causal-source: %v\n", err)
 		return 1
 	}
-	if err := experimentportfolio.WriteSourceObservation(options.output, observation); err != nil {
+	if err := causalityconsumer.WriteSourceObservation(options.output, observation); err != nil {
 		fmt.Fprintf(stderr, "experiment-portfolio-causal-source: output: %v\n", err)
 		return 2
 	}

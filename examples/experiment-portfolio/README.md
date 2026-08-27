@@ -89,6 +89,18 @@ non-semantic invariance claim is `OPEN -> DISCHARGED /
 SEMANTIC_PROJECTION_PRESERVED`. The `0/3` coordinate is only the count; its
 status is `REFUTED` because these direct transitions are present.
 
+`required_change_fields` is the minimum adoption contract for each case. It
+must contain a non-empty subset of `semantic_value`, `decision`, and
+`claim_transitions`; the consumer checks exactly the declared fields. The
+current three cases declare all three, while CI also exercises a one-field
+`decision` subset and rejects an empty subset.
+
+The causality evaluator is a producer-free package and command. Actions checks
+its dependency graph with `go list -deps`: forbidden producer dependencies are
+`0` with an allowed maximum of `0`, and the independence contract is `1/1`.
+An unknown finding is fail-closed at `LOWER_RESOLUTION`, retaining its exact
+candidate, case, stage, step, and reason.
+
 The CI workflow checks each baseline, semantic, and comment-only `.gooo`
 source, produces two deterministic receipt passes for every case, observes
 the source value independently, adjudicates both the portfolio and causality

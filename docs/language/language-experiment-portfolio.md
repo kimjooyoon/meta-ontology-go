@@ -40,14 +40,22 @@ field (`semantic_value`, `decision`, or `claim_transitions`). A non-semantic
 intervention may change only whitespace/comments: its raw source digest must
 change while the receipt semantic projection and decision stay equal.
 
-The independent causality consumer reports exact case status, stage, step,
-reason, coordinate vectors, and claim transitions. It exposes
+The causality source observer and evaluator live in the producer-free
+`internal/meta/experimentportfolio/causalityconsumer` package. The receipt
+producer package is not in its dependency graph; the JSON field contract is
+the boundary between them. The independent causality consumer reports exact
+case status, stage, step, reason, coordinate vectors, and claim transitions.
+It exposes
 `causal_cases N/N`, `digest_only_cases`, `hardcoded_fixture_cases`, and
 `UNKNOWN` findings without producing a score, aggregate, weighted average,
 rank, or winner. A semantic source change with no contracted receipt change is
 `REFUTED / DIGEST_ONLY_BINDING`; a comment-only semantic drift is refuted with
 `NON_SEMANTIC_SEMANTIC_DRIFT`; missing evidence is fail-closed with its exact
-stage/step/reason.
+stage/step/reason and `LOWER_RESOLUTION`. Each case's
+`required_change_fields` is a non-empty subset of the allowed fields
+(`semantic_value`, `decision`, `claim_transitions`); the consumer requires all
+declared fields and does not silently require undeclared fields. The current
+three cases intentionally declare all three fields.
 
 The fixed transition denominator is `9`: three operations multiplied by the
 three intervention claims (baseline observation, semantic causality, and
@@ -112,7 +120,8 @@ different coordinate.
 
 The intended falsifier is concrete: alter one coordinate, reorder the vector,
 change a status without its numerator, remove an unknown location, forge a
-digest, or add a repository effect. The evaluator must then return
-`FAIL_CLOSED`, and the CI counterfactual must observe that result. This makes
-the comparison protocol itself testable without turning its evidence into a
-winner declaration.
+digest, delete a claim transition, launder a `REFUTED` claim to `OPEN`, or add
+a repository effect. The evaluator must then return `FAIL_CLOSED` with
+`LOWER_RESOLUTION`, and the CI counterfactual must observe that result. This
+makes the comparison protocol itself testable without turning its evidence
+into a winner declaration.
