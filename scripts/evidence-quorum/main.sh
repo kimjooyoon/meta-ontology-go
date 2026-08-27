@@ -54,7 +54,6 @@ emit conflicting-independent consumer consumer-check consumer-1 SUPPORTS 9900
 emit conflicting-independent meta-operation quorum-meta meta-1 SUPPORTS 9900
 emit conflicting-independent consumer contradictory-check contradictory-1 CONTRADICTS 100
 
-emit insufficient-independent producer producer-run producer-1 SUPPORTS 10000
 emit insufficient-independent consumer consumer-check consumer-1 SUPPORTS 10000
 
 receipts_for() {
