@@ -22,6 +22,9 @@ func canonicalExecutors() []Executor {
 	result = append(result, Executor{Operation: "measure-integration-progress",
 		Activity: "MeasureIntegrationProgress", ProofChoice: "foundation", Registry: "integration-progress",
 		Executor: "cmd/integration-progress-witness", Evaluator: "cmd/integration-progress-witness:check"})
+	result = append(result, Executor{Operation: "measure-language-utility",
+		Activity: "MeasureLanguageUtility", ProofChoice: "foundation", Registry: "language-utility",
+		Executor: "cmd/language-utility-witness", Evaluator: "cmd/language-utility-witness:check"})
 	result = append(result, Executor{Operation: "partition-directory",
 		Activity: "PartitionDirectory", ProofChoice: "foundation", Registry: "source-policy",
 		Executor: "cmd/directory-partition-witness", Evaluator: "cmd/directory-partition-witness:check"})
