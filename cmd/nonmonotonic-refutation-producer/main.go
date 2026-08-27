@@ -40,11 +40,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	writes := 0
-	if !bytes.Equal(before, after) {
-		writes = 1
-	}
-	report, err := nonmonotonicrefutation.Produce(*sourcePath, source, writes)
+	netRepositoryStatusUnchanged := bytes.Equal(before, after)
+	report, err := nonmonotonicrefutation.Produce(*sourcePath, source, netRepositoryStatusUnchanged)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

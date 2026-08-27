@@ -14,15 +14,16 @@ import (
 )
 
 type receipt struct {
-	Schema                string                              `json:"schema"`
-	ProducerReceiptDigest string                              `json:"producer_receipt_digest"`
-	Report                nonmonotonicrefutationoracle.Report `json:"report"`
-	ReplayReportDigest    string                              `json:"replay_report_digest"`
-	ReplayVerified        bool                                `json:"replay_verified"`
-	RepositoryWrites      int                                 `json:"repository_writes"`
-	MutationAuthority     bool                                `json:"mutation_authority"`
-	PromotionCount        int                                 `json:"promotion_count"`
-	ReceiptDigest         string                              `json:"receipt_digest"`
+	Schema                       string                              `json:"schema"`
+	ProducerReceiptDigest        string                              `json:"producer_receipt_digest"`
+	Report                       nonmonotonicrefutationoracle.Report `json:"report"`
+	ReplayReportDigest           string                              `json:"replay_report_digest"`
+	ReplayVerified               bool                                `json:"replay_verified"`
+	NetRepositoryStatusUnchanged bool                                `json:"net_repository_status_unchanged"`
+	RepositoryWriteObservation   string                              `json:"repository_write_observation"`
+	MutationAuthorityResolution  string                              `json:"mutation_authority_resolution"`
+	PromotionOperationsObserved  int                                 `json:"promotion_operations_observed"`
+	ReceiptDigest                string                              `json:"receipt_digest"`
 }
 
 func main() {
@@ -65,14 +66,13 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	writes := 0
-	if !bytes.Equal(before, after) {
-		writes = 1
-	}
+	netRepositoryStatusUnchanged := bytes.Equal(before, after)
 	output := receipt{
-		Schema: "gooo/meta-nonmonotonic-refutation-receipt/v3", ProducerReceiptDigest: digestBytes(producer),
+		Schema: "gooo/meta-nonmonotonic-refutation-receipt/v4", ProducerReceiptDigest: digestBytes(producer),
 		Report: report, ReplayReportDigest: replay.ReportDigest, ReplayVerified: report.ReportDigest == replay.ReportDigest,
-		RepositoryWrites: writes, MutationAuthority: false, PromotionCount: 0,
+		NetRepositoryStatusUnchanged: netRepositoryStatusUnchanged,
+		RepositoryWriteObservation:   repositoryStatusObservation(netRepositoryStatusUnchanged),
+		MutationAuthorityResolution:  "UNKNOWN", PromotionOperationsObserved: 0,
 	}
 	output.ReceiptDigest = digestJSON(output)
 	file, err := os.Create(*outputPath)
@@ -99,6 +99,13 @@ func main() {
 
 func repositorySnapshot(root string) ([]byte, error) {
 	return exec.Command("git", "-C", root, "status", "--porcelain=v1", "--untracked-files=all").Output()
+}
+
+func repositoryStatusObservation(unchanged bool) string {
+	if unchanged {
+		return "NONE_OBSERVED_IN_NET_STATUS"
+	}
+	return "NET_STATUS_CHANGED"
 }
 
 func digestBytes(value []byte) string {
