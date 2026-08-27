@@ -88,7 +88,7 @@ jq -e '([.cases[] | select(.status == "SATISFIED")] | length) == 5 and
 
 {
   echo '## Deterministic evidence quorum'
-  jq -r '"- cases: \(.summary.cases_satisfied)/\(.summary.cases_total)\n- sufficient quorum: \([.cases[] | select(.id == \"sufficient-independent\") | .independent_groups] | .[0])/\(.summary.minimum_independent_groups)\n- independent groups total: \(.summary.independent_groups_total)\n- raw evidence: \(.summary.raw_evidence_total)\n- duplicate evidence collapsed: \(.summary.duplicate_evidence_total)\n- conflicts fail-closed: \(.summary.conflict_cases)\n- unknown claims: \(.summary.unknown_claims)\n- claim transitions: \([.cases[].claims[].transitions[]] | length)\n- repository writes: \(.summary.repository_writes)\n- report: \(.digest)"' "$output/report.json"
+  jq -r '"- cases: \(.summary.cases_satisfied)/\(.summary.cases_total)\n- sufficient quorum: \(.cases[0].independent_groups)/\(.summary.minimum_independent_groups)\n- independent groups total: \(.summary.independent_groups_total)\n- raw evidence: \(.summary.raw_evidence_total)\n- duplicate evidence collapsed: \(.summary.duplicate_evidence_total)\n- conflicts fail-closed: \(.summary.conflict_cases)\n- unknown claims: \(.summary.unknown_claims)\n- claim transitions: \([.cases[].claims[].transitions[]] | length)\n- repository writes: \(.summary.repository_writes)\n- report: \(.digest)"' "$output/report.json"
 } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
 
 sha256sum "$output"/report.json "$output"/producer-receipt.json "$output"/producer-replay.json \
