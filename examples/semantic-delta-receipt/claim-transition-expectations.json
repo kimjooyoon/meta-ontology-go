@@ -1,5 +1,5 @@
 {
-  "schema": "gooo/semantic-delta-claim-transition-expectations/v1",
+  "schema": "gooo/semantic-delta-claim-transition-expectations/v2",
   "denominator_id": "gooo://semantic-delta-receipt-denominator/v2",
   "claim_count_contract_version": "v1",
   "fixed_claim_total": 31,
@@ -9,73 +9,490 @@
     {
       "id": "equivalent",
       "expected_claim_ids": [
-        "gooo://semantic-delta/claim/bounded-equivalence/66f292262952ea84c8ac23eb9449710ca57204e514f4e36833684767940e1b60",
-        "gooo://semantic-delta/claim/object/076e480f1d8f8a6f5be62714fd29c43bb9fac17182c54d302fd3f201eb86ab37",
-        "gooo://semantic-delta/claim/object/3ee0af49fd82c6b138e553498eb3b05c53518c69e9d59620b6206f2bb08f5d94",
-        "gooo://semantic-delta/claim/object/ca5fbe67b20bb88cfcca325f2c2bf6450fbe8748dcadabcf23d662ab1f13b02d",
-        "gooo://semantic-delta/claim/object/e99a744d133d9edee432e7678503dccb05595768c80aa7f5fbd5b1a1a6c48ff9",
-        "gooo://semantic-delta/claim/preservation/27dab9efcd5100b3d986ce2c4b6c06d9a5f4ffa157357a9d89ba0a670a13a443",
-        "gooo://semantic-delta/claim/preservation/4c8a011978a24b51506b987f86e490310de83d7114d400517eda15b399089c84"
+        "gooo://semantic-delta/claim/bounded-equivalence/a15494327f237b83080c08cb740112bcafbd2acabecae94e5f3d1407bea98431",
+        "gooo://semantic-delta/claim/object/49e846f56d044c2a3ce25104568ee5cfd8fbe82ad0103fb8ade576be11ba5994",
+        "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b",
+        "gooo://semantic-delta/claim/object/741e1d684e67aac4c1f9c5a5ad74db5b89a72f190b22f71114d05a85a9b1101f",
+        "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5",
+        "gooo://semantic-delta/claim/preservation/29b3a4d5a455c7a9317f679bdbd72101408d2d19bf34de2da51f0488125b2c29",
+        "gooo://semantic-delta/claim/preservation/e881b044d64ce48b793e46c8b7b8b13ec679770657f64189b1eecdd13ac383b1"
       ],
-      "expected_transition_identity_digest": "sha256:98ac39fedd66d71908f803161eb43517d0f952e6660912449ad705a9d37a98bf",
+      "expected_claims": [
+        {
+          "stable_id": "gooo://semantic-delta/claim/bounded-equivalence/a15494327f237b83080c08cb740112bcafbd2acabecae94e5f3d1407bea98431",
+          "kind": "BOUNDED_SEMANTIC_EQUIVALENCE",
+          "relation_role": "bounded-equivalence",
+          "normalized_proposition": "BOUNDED_SEMANTIC_EQUIVALENCE\u0000source-pair\u0000bounded-semantic-equivalence\u0000sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165->sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "proposition_digest": "sha256:77c723817cbb38b841b4056e96b490605da968ae8783b8019f0d6da7a9fc4d92",
+          "target_address": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165->sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "target_address_digest": "sha256:13378039b6f687416c9b46919c7f474b3ca983be6fdbbc7960e99f72e02fa86b",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/equivalent-after.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_after_raw_digest": "sha256:109adde2862ad554ca1b7279bd2f9ddba0c26c77250f4556b7af488b03e8a8d2",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "evidence_after_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/49e846f56d044c2a3ce25104568ee5cfd8fbe82ad0103fb8ade576be11ba5994",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:c4abeedc2c20f56a796ee61c94c13a8d18316f3f69bcfa441502b2afb605348c",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:4d9a4f90494d64ccaad68513d740cdad4f464c59a7ce73a08170ffeca5f489ba",
+          "after_source_path": "examples/semantic-delta-receipt/equivalent-after.gooo",
+          "evidence_after_raw_digest": "sha256:109adde2862ad554ca1b7279bd2f9ddba0c26c77250f4556b7af488b03e8a8d2",
+          "evidence_after_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "proposition_digest": "sha256:d7590db28d3735c7cbad335b6d34d9344d8a81f229ac8242cba55e507dd6085f",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "target_address_digest": "sha256:ee0ed0e50d68857675b6a1607bbfa9efbbeb8653195f8ff9dadf425bb491da78",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/741e1d684e67aac4c1f9c5a5ad74db5b89a72f190b22f71114d05a85a9b1101f",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "proposition_digest": "sha256:d7590db28d3735c7cbad335b6d34d9344d8a81f229ac8242cba55e507dd6085f",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "target_address_digest": "sha256:ee0ed0e50d68857675b6a1607bbfa9efbbeb8653195f8ff9dadf425bb491da78",
+          "after_source_path": "examples/semantic-delta-receipt/equivalent-after.gooo",
+          "evidence_after_raw_digest": "sha256:109adde2862ad554ca1b7279bd2f9ddba0c26c77250f4556b7af488b03e8a8d2",
+          "evidence_after_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:c4abeedc2c20f56a796ee61c94c13a8d18316f3f69bcfa441502b2afb605348c",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:4d9a4f90494d64ccaad68513d740cdad4f464c59a7ce73a08170ffeca5f489ba",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/preservation/29b3a4d5a455c7a9317f679bdbd72101408d2d19bf34de2da51f0488125b2c29",
+          "kind": "BEFORE_CLAIM_PRESERVATION",
+          "relation_role": "preserves",
+          "normalized_proposition": "BEFORE_CLAIM_PRESERVATION\u0000gooo://semantic-delta/claim-type/c4abeedc2c20f56a796ee61c94c13a8d18316f3f69bcfa441502b2afb605348c\u0000preserves\u0000OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:c3f31dc2cb21e438d0bf5299827ee99ca299b996fd8464d170b40d15fd7877d8",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:4d9a4f90494d64ccaad68513d740cdad4f464c59a7ce73a08170ffeca5f489ba",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/equivalent-after.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_after_raw_digest": "sha256:109adde2862ad554ca1b7279bd2f9ddba0c26c77250f4556b7af488b03e8a8d2",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "evidence_after_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "preservation_of": "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/preservation/e881b044d64ce48b793e46c8b7b8b13ec679770657f64189b1eecdd13ac383b1",
+          "kind": "BEFORE_CLAIM_PRESERVATION",
+          "relation_role": "preserves",
+          "normalized_proposition": "BEFORE_CLAIM_PRESERVATION\u0000gooo://semantic-delta/claim-type/d7590db28d3735c7cbad335b6d34d9344d8a81f229ac8242cba55e507dd6085f\u0000preserves\u0000OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "proposition_digest": "sha256:23d783db7fc96a6794e66447e8a364caee35688d7058c56b10be40014cc5e93e",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "target_address_digest": "sha256:ee0ed0e50d68857675b6a1607bbfa9efbbeb8653195f8ff9dadf425bb491da78",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/equivalent-after.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_after_raw_digest": "sha256:109adde2862ad554ca1b7279bd2f9ddba0c26c77250f4556b7af488b03e8a8d2",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "evidence_after_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "preservation_of": "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b"
+        }
+      ],
+      "expected_transition_identity_digest": "sha256:d7be8cd7cb5cabca4fbbe8ae818560cf15eaad2a3d9e5e15bcfb8262e14c4947",
       "expected_claim_total": 7,
-      "case_row_digest": "sha256:0c7af430d05991e4f654ac1d6169a77245cb7168a5ce905deac543c539a88470"
+      "case_row_digest": "sha256:75d636c4cded7228e62768dd7b90a8631cd335020a66f4281883f5e771f273d7"
     },
     {
       "id": "semantic-change",
       "expected_claim_ids": [
-        "gooo://semantic-delta/claim/bounded-equivalence/5593420368771e1063ff2a95f7c7215cea0b768ef1650450d973dc8d6214fc72",
-        "gooo://semantic-delta/claim/object/076e480f1d8f8a6f5be62714fd29c43bb9fac17182c54d302fd3f201eb86ab37",
-        "gooo://semantic-delta/claim/object/0a32cca69d7c02616f57a966e140bab43b0b73ec95d557847f87f422996b0dde",
-        "gooo://semantic-delta/claim/object/ca5fbe67b20bb88cfcca325f2c2bf6450fbe8748dcadabcf23d662ab1f13b02d",
-        "gooo://semantic-delta/claim/object/e9512423c8972c4c6061143abe1f76f17bb368a61208b6a69f64b704c34b770b",
-        "gooo://semantic-delta/claim/preservation/8fc8f9068e76e024849451cb6d40539d1688b2083836a7c2213b5001aa76a4be",
-        "gooo://semantic-delta/claim/preservation/dbf1b27103d64935c492a1e3a83a066f353679c9721518641881f10037efe6ce"
+        "gooo://semantic-delta/claim/bounded-equivalence/a29268611e826bdb3efb9e5f50653b8b97c307b8eb4f8de49584a655a7012be2",
+        "gooo://semantic-delta/claim/object/3d3c53620414afa1399574fa94680d04fd1ab42cd09ff38efec410ff12437b2a",
+        "gooo://semantic-delta/claim/object/49e846f56d044c2a3ce25104568ee5cfd8fbe82ad0103fb8ade576be11ba5994",
+        "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b",
+        "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5",
+        "gooo://semantic-delta/claim/preservation/29b3a4d5a455c7a9317f679bdbd72101408d2d19bf34de2da51f0488125b2c29",
+        "gooo://semantic-delta/claim/preservation/e881b044d64ce48b793e46c8b7b8b13ec679770657f64189b1eecdd13ac383b1"
       ],
-      "expected_transition_identity_digest": "sha256:9a56546ff0a5d5d0a25e86a6fa52c4e1b78e6904dfb5732c7fc435e14c7f10e1",
+      "expected_claims": [
+        {
+          "stable_id": "gooo://semantic-delta/claim/bounded-equivalence/a29268611e826bdb3efb9e5f50653b8b97c307b8eb4f8de49584a655a7012be2",
+          "kind": "BOUNDED_SEMANTIC_EQUIVALENCE",
+          "relation_role": "bounded-equivalence",
+          "normalized_proposition": "BOUNDED_SEMANTIC_EQUIVALENCE\u0000source-pair\u0000bounded-semantic-equivalence\u0000sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165->sha256:6fde0e18e180510a771310b2ded54bfb4a7f6e239bc6594df56b4d7e743a8011",
+          "proposition_digest": "sha256:2ede4b5117967621492f8e39bc15c1c6bdd625c9e22d5018684be1245432c3bd",
+          "target_address": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165->sha256:6fde0e18e180510a771310b2ded54bfb4a7f6e239bc6594df56b4d7e743a8011",
+          "target_address_digest": "sha256:b0e40d16b0836f95cba37afeb774dfa099a8867dd0efbaee2021d38ccd11de2f",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/semantic-after.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_after_raw_digest": "sha256:16b65e19db190f496399cee383fa6cf7d64d27af31bb3183195e48ac707e61a3",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "evidence_after_semantic_digest": "sha256:6fde0e18e180510a771310b2ded54bfb4a7f6e239bc6594df56b4d7e743a8011"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/3d3c53620414afa1399574fa94680d04fd1ab42cd09ff38efec410ff12437b2a",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/reversal",
+          "proposition_digest": "sha256:cdf6d660a3a11e9f1743008299c91fc45673e6b3f69adcc7428a43aaa4a6bfed",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/reversal",
+          "target_address_digest": "sha256:4f6813a6ef230d90d59673b81dfae466350229f383df6aab2458158a43aa3be9",
+          "after_source_path": "examples/semantic-delta-receipt/semantic-after.gooo",
+          "evidence_after_raw_digest": "sha256:16b65e19db190f496399cee383fa6cf7d64d27af31bb3183195e48ac707e61a3",
+          "evidence_after_semantic_digest": "sha256:6fde0e18e180510a771310b2ded54bfb4a7f6e239bc6594df56b4d7e743a8011"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/49e846f56d044c2a3ce25104568ee5cfd8fbe82ad0103fb8ade576be11ba5994",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:c4abeedc2c20f56a796ee61c94c13a8d18316f3f69bcfa441502b2afb605348c",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:4d9a4f90494d64ccaad68513d740cdad4f464c59a7ce73a08170ffeca5f489ba",
+          "after_source_path": "examples/semantic-delta-receipt/semantic-after.gooo",
+          "evidence_after_raw_digest": "sha256:16b65e19db190f496399cee383fa6cf7d64d27af31bb3183195e48ac707e61a3",
+          "evidence_after_semantic_digest": "sha256:6fde0e18e180510a771310b2ded54bfb4a7f6e239bc6594df56b4d7e743a8011"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "proposition_digest": "sha256:d7590db28d3735c7cbad335b6d34d9344d8a81f229ac8242cba55e507dd6085f",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "target_address_digest": "sha256:ee0ed0e50d68857675b6a1607bbfa9efbbeb8653195f8ff9dadf425bb491da78",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:c4abeedc2c20f56a796ee61c94c13a8d18316f3f69bcfa441502b2afb605348c",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:4d9a4f90494d64ccaad68513d740cdad4f464c59a7ce73a08170ffeca5f489ba",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/preservation/29b3a4d5a455c7a9317f679bdbd72101408d2d19bf34de2da51f0488125b2c29",
+          "kind": "BEFORE_CLAIM_PRESERVATION",
+          "relation_role": "preserves",
+          "normalized_proposition": "BEFORE_CLAIM_PRESERVATION\u0000gooo://semantic-delta/claim-type/c4abeedc2c20f56a796ee61c94c13a8d18316f3f69bcfa441502b2afb605348c\u0000preserves\u0000OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:c3f31dc2cb21e438d0bf5299827ee99ca299b996fd8464d170b40d15fd7877d8",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:4d9a4f90494d64ccaad68513d740cdad4f464c59a7ce73a08170ffeca5f489ba",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/semantic-after.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_after_raw_digest": "sha256:16b65e19db190f496399cee383fa6cf7d64d27af31bb3183195e48ac707e61a3",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "evidence_after_semantic_digest": "sha256:6fde0e18e180510a771310b2ded54bfb4a7f6e239bc6594df56b4d7e743a8011",
+          "preservation_of": "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/preservation/e881b044d64ce48b793e46c8b7b8b13ec679770657f64189b1eecdd13ac383b1",
+          "kind": "BEFORE_CLAIM_PRESERVATION",
+          "relation_role": "preserves",
+          "normalized_proposition": "BEFORE_CLAIM_PRESERVATION\u0000gooo://semantic-delta/claim-type/d7590db28d3735c7cbad335b6d34d9344d8a81f229ac8242cba55e507dd6085f\u0000preserves\u0000OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "proposition_digest": "sha256:23d783db7fc96a6794e66447e8a364caee35688d7058c56b10be40014cc5e93e",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "target_address_digest": "sha256:ee0ed0e50d68857675b6a1607bbfa9efbbeb8653195f8ff9dadf425bb491da78",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165",
+          "preservation_of": "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b"
+        }
+      ],
+      "expected_transition_identity_digest": "sha256:f4f8a9b33ccac38d6dc8af0de54f8d5087df3d6b041e01a1614b1a5789a6e781",
       "expected_claim_total": 7,
-      "case_row_digest": "sha256:78bfb2fbd3e75492ffdb4884472a8b7a551e32ac6c089aa60f559beee2dc2768"
+      "case_row_digest": "sha256:c864d14459a95b2bf500cdc85fb9e987f2612e197d546a1dfcf6e3980e0418cd"
     },
     {
       "id": "value-program-change",
       "expected_claim_ids": [
-        "gooo://semantic-delta/claim/bounded-equivalence/325b088dfb4bd871149329c12779110beede0939af91b7ba6a1aa78ea4be481f",
-        "gooo://semantic-delta/claim/object/32b32dcbfd097d7a993d9257aa3e71f428a587e7ec1d8c4ff828764451310c21",
-        "gooo://semantic-delta/claim/object/3542e61467d824bc34f7c1e5f06c1b8441a17857db1690cd66bc4f33c8eccf1c",
-        "gooo://semantic-delta/claim/object/505ae4aca0fe21d575fbb016b4c78b02154af6012071694700aba57e2cfeaa45",
-        "gooo://semantic-delta/claim/object/f9e581eadc7bd32acef2caf4f7c6cc96420f1d14f04943bebc5f1f205e0d0d31",
-        "gooo://semantic-delta/claim/preservation/752caa8c589b0053148356e4791659288387007fa950023e32045b2fa9d010f9",
-        "gooo://semantic-delta/claim/preservation/75fe680b08dd6361ceca166ee1d37a75779bd627fb10c2b4d7a7deeb193b8ef4"
+        "gooo://semantic-delta/claim/bounded-equivalence/3a9b43efac5ce03f595149fd717ecdbb9b8f8bed8ff9e7cbdcb4e7bdbc2021e3",
+        "gooo://semantic-delta/claim/object/30ef009f88e530a3716dc2659d72ed548f0219326f84ea3d818afa7c6cb0b6a3",
+        "gooo://semantic-delta/claim/object/3e737d46d5c64a1803b3324243e2b2aadba8d4576edcf124b1ffef2335ab332a",
+        "gooo://semantic-delta/claim/object/7aaa70aee7cbefe02a6a6aa377757bdfcb5afcb52b2e73a4eaa3c7bf7f38b8c4",
+        "gooo://semantic-delta/claim/object/fb2b1077ec6cbd0934ab14a8abf6f437bbd7d159bbaea283843dc41bd2d013f9",
+        "gooo://semantic-delta/claim/preservation/a65180fdfe721394f51ef9e43d88266fcacc0e8f07e4e493c3195365125b742e",
+        "gooo://semantic-delta/claim/preservation/d81740f35faf17bb81d2bee74d462f04f0408514041d0abffc4e4285f9aa2688"
       ],
-      "expected_transition_identity_digest": "sha256:8b7c0b5e7a48d2244975b7cc56a8e117b91e8723770b43610c29f1b805554536",
+      "expected_claims": [
+        {
+          "stable_id": "gooo://semantic-delta/claim/bounded-equivalence/3a9b43efac5ce03f595149fd717ecdbb9b8f8bed8ff9e7cbdcb4e7bdbc2021e3",
+          "kind": "BOUNDED_SEMANTIC_EQUIVALENCE",
+          "relation_role": "bounded-equivalence",
+          "normalized_proposition": "BOUNDED_SEMANTIC_EQUIVALENCE\u0000source-pair\u0000bounded-semantic-equivalence\u0000sha256:8a137f3d70098b53ffe4c9e769432babd7a20c09eb9b809c3a06222bf6454c2c->sha256:59c634586fcfd0160cdbf8b55ab661e65cd28483dbe49a6fc3038eb762a1440b",
+          "proposition_digest": "sha256:d7fb2100d6766224774a2b412273797106cd24e7c9eebd3ae940f51cd96bce53",
+          "target_address": "sha256:8a137f3d70098b53ffe4c9e769432babd7a20c09eb9b809c3a06222bf6454c2c->sha256:59c634586fcfd0160cdbf8b55ab661e65cd28483dbe49a6fc3038eb762a1440b",
+          "target_address_digest": "sha256:422323d3e52fac694ee5ad39a7c8cf96ccd6f92d398d638fc74255b8ef15f674",
+          "before_source_path": "examples/semantic-delta-receipt/value-program-before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/value-program-after.gooo",
+          "evidence_before_raw_digest": "sha256:c5da040060fa5f070fa523dcfe04feb906b952ea0361d08846bed871c84609aa",
+          "evidence_after_raw_digest": "sha256:4425ac0e57b09c38900decb9ed1907ba95598d411c1d5e1fd22f25a79ae5c0b1",
+          "evidence_before_semantic_digest": "sha256:8a137f3d70098b53ffe4c9e769432babd7a20c09eb9b809c3a06222bf6454c2c",
+          "evidence_after_semantic_digest": "sha256:59c634586fcfd0160cdbf8b55ab661e65cd28483dbe49a6fc3038eb762a1440b"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/30ef009f88e530a3716dc2659d72ed548f0219326f84ea3d818afa7c6cb0b6a3",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/increment\u0000uses\u0000gooo://semantic-delta/entity/counter",
+          "proposition_digest": "sha256:108e4eaec7d6f22632e6728ae0b4b2089996810121a94e13e6200afc33bbfcdf",
+          "target_address": "semanticdeltareceipt://activity/increment\u0000uses\u0000gooo://semantic-delta/entity/counter",
+          "target_address_digest": "sha256:7de852bfc0b70a2f145f08aa3271e8e9a54bb83adeaef4301f3a53acfc2fc079",
+          "before_source_path": "examples/semantic-delta-receipt/value-program-before.gooo",
+          "evidence_before_raw_digest": "sha256:c5da040060fa5f070fa523dcfe04feb906b952ea0361d08846bed871c84609aa",
+          "evidence_before_semantic_digest": "sha256:8a137f3d70098b53ffe4c9e769432babd7a20c09eb9b809c3a06222bf6454c2c"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/3e737d46d5c64a1803b3324243e2b2aadba8d4576edcf124b1ffef2335ab332a",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/increment\u0000generates\u0000gooo://semantic-delta/entity/integer",
+          "proposition_digest": "sha256:ce138780186153a8e1ccd4dc1201a56ecfee20e7fc119e947e66480e41938b04",
+          "target_address": "semanticdeltareceipt://activity/increment\u0000generates\u0000gooo://semantic-delta/entity/integer",
+          "target_address_digest": "sha256:46a5973693882beaf04e39e115c7e37075acc7af2f9193bc28742eeadcbbb045",
+          "before_source_path": "examples/semantic-delta-receipt/value-program-before.gooo",
+          "evidence_before_raw_digest": "sha256:c5da040060fa5f070fa523dcfe04feb906b952ea0361d08846bed871c84609aa",
+          "evidence_before_semantic_digest": "sha256:8a137f3d70098b53ffe4c9e769432babd7a20c09eb9b809c3a06222bf6454c2c"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/7aaa70aee7cbefe02a6a6aa377757bdfcb5afcb52b2e73a4eaa3c7bf7f38b8c4",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/increment\u0000generates\u0000gooo://semantic-delta/entity/integer",
+          "proposition_digest": "sha256:ce138780186153a8e1ccd4dc1201a56ecfee20e7fc119e947e66480e41938b04",
+          "target_address": "semanticdeltareceipt://activity/increment\u0000generates\u0000gooo://semantic-delta/entity/integer",
+          "target_address_digest": "sha256:46a5973693882beaf04e39e115c7e37075acc7af2f9193bc28742eeadcbbb045",
+          "after_source_path": "examples/semantic-delta-receipt/value-program-after.gooo",
+          "evidence_after_raw_digest": "sha256:4425ac0e57b09c38900decb9ed1907ba95598d411c1d5e1fd22f25a79ae5c0b1",
+          "evidence_after_semantic_digest": "sha256:59c634586fcfd0160cdbf8b55ab661e65cd28483dbe49a6fc3038eb762a1440b"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/fb2b1077ec6cbd0934ab14a8abf6f437bbd7d159bbaea283843dc41bd2d013f9",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/increment\u0000uses\u0000gooo://semantic-delta/entity/counter",
+          "proposition_digest": "sha256:108e4eaec7d6f22632e6728ae0b4b2089996810121a94e13e6200afc33bbfcdf",
+          "target_address": "semanticdeltareceipt://activity/increment\u0000uses\u0000gooo://semantic-delta/entity/counter",
+          "target_address_digest": "sha256:7de852bfc0b70a2f145f08aa3271e8e9a54bb83adeaef4301f3a53acfc2fc079",
+          "after_source_path": "examples/semantic-delta-receipt/value-program-after.gooo",
+          "evidence_after_raw_digest": "sha256:4425ac0e57b09c38900decb9ed1907ba95598d411c1d5e1fd22f25a79ae5c0b1",
+          "evidence_after_semantic_digest": "sha256:59c634586fcfd0160cdbf8b55ab661e65cd28483dbe49a6fc3038eb762a1440b"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/preservation/a65180fdfe721394f51ef9e43d88266fcacc0e8f07e4e493c3195365125b742e",
+          "kind": "BEFORE_CLAIM_PRESERVATION",
+          "relation_role": "preserves",
+          "normalized_proposition": "BEFORE_CLAIM_PRESERVATION\u0000gooo://semantic-delta/claim-type/108e4eaec7d6f22632e6728ae0b4b2089996810121a94e13e6200afc33bbfcdf\u0000preserves\u0000OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/increment\u0000uses\u0000gooo://semantic-delta/entity/counter",
+          "proposition_digest": "sha256:ea2ff4bf4ed49bb9d25567478bccea167a585e4bfe1a29afb9e7164f377965bf",
+          "target_address": "semanticdeltareceipt://activity/increment\u0000uses\u0000gooo://semantic-delta/entity/counter",
+          "target_address_digest": "sha256:7de852bfc0b70a2f145f08aa3271e8e9a54bb83adeaef4301f3a53acfc2fc079",
+          "before_source_path": "examples/semantic-delta-receipt/value-program-before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/value-program-after.gooo",
+          "evidence_before_raw_digest": "sha256:c5da040060fa5f070fa523dcfe04feb906b952ea0361d08846bed871c84609aa",
+          "evidence_after_raw_digest": "sha256:4425ac0e57b09c38900decb9ed1907ba95598d411c1d5e1fd22f25a79ae5c0b1",
+          "evidence_before_semantic_digest": "sha256:8a137f3d70098b53ffe4c9e769432babd7a20c09eb9b809c3a06222bf6454c2c",
+          "evidence_after_semantic_digest": "sha256:59c634586fcfd0160cdbf8b55ab661e65cd28483dbe49a6fc3038eb762a1440b",
+          "preservation_of": "gooo://semantic-delta/claim/object/30ef009f88e530a3716dc2659d72ed548f0219326f84ea3d818afa7c6cb0b6a3"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/preservation/d81740f35faf17bb81d2bee74d462f04f0408514041d0abffc4e4285f9aa2688",
+          "kind": "BEFORE_CLAIM_PRESERVATION",
+          "relation_role": "preserves",
+          "normalized_proposition": "BEFORE_CLAIM_PRESERVATION\u0000gooo://semantic-delta/claim-type/ce138780186153a8e1ccd4dc1201a56ecfee20e7fc119e947e66480e41938b04\u0000preserves\u0000OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/increment\u0000generates\u0000gooo://semantic-delta/entity/integer",
+          "proposition_digest": "sha256:1025a798406d3790876520809b91c7157fdc06c040abf1f0c5f0ccb42ef35c1f",
+          "target_address": "semanticdeltareceipt://activity/increment\u0000generates\u0000gooo://semantic-delta/entity/integer",
+          "target_address_digest": "sha256:46a5973693882beaf04e39e115c7e37075acc7af2f9193bc28742eeadcbbb045",
+          "before_source_path": "examples/semantic-delta-receipt/value-program-before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/value-program-after.gooo",
+          "evidence_before_raw_digest": "sha256:c5da040060fa5f070fa523dcfe04feb906b952ea0361d08846bed871c84609aa",
+          "evidence_after_raw_digest": "sha256:4425ac0e57b09c38900decb9ed1907ba95598d411c1d5e1fd22f25a79ae5c0b1",
+          "evidence_before_semantic_digest": "sha256:8a137f3d70098b53ffe4c9e769432babd7a20c09eb9b809c3a06222bf6454c2c",
+          "evidence_after_semantic_digest": "sha256:59c634586fcfd0160cdbf8b55ab661e65cd28483dbe49a6fc3038eb762a1440b",
+          "preservation_of": "gooo://semantic-delta/claim/object/3e737d46d5c64a1803b3324243e2b2aadba8d4576edcf124b1ffef2335ab332a"
+        }
+      ],
+      "expected_transition_identity_digest": "sha256:be4b91b53e4e00485d1f3cc8f9a443a498759bba7d42189c50faa8db767d74c2",
       "expected_claim_total": 7,
-      "case_row_digest": "sha256:ce5b7b480cf47362086344c250a8001f4836fca92488019dfb6d1b0fb7192abc"
+      "case_row_digest": "sha256:ef16f0f5b3d983de6a37cdd900cdeb37afe6cfe96dba23cf99fe4530a83b037b"
     },
     {
       "id": "indeterminate",
       "expected_claim_ids": [
-        "gooo://semantic-delta/claim/bounded-equivalence/a05e925f5f2db34e6943d24d690ba5b4044893fea32c5012477927a953923f2b",
-        "gooo://semantic-delta/claim/object/076e480f1d8f8a6f5be62714fd29c43bb9fac17182c54d302fd3f201eb86ab37",
-        "gooo://semantic-delta/claim/object/ca5fbe67b20bb88cfcca325f2c2bf6450fbe8748dcadabcf23d662ab1f13b02d"
+        "gooo://semantic-delta/claim/bounded-equivalence/cabc9d6da3aefba37631e2f6ede53c766b59642d74df32b44b7f37888251ccfe",
+        "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b",
+        "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5"
       ],
-      "expected_transition_identity_digest": "sha256:4877808d6fe56a0f490b3b5b8b684247be5e376bb51fd0111511866f93e080f9",
+      "expected_claims": [
+        {
+          "stable_id": "gooo://semantic-delta/claim/bounded-equivalence/cabc9d6da3aefba37631e2f6ede53c766b59642d74df32b44b7f37888251ccfe",
+          "kind": "BOUNDED_SEMANTIC_EQUIVALENCE",
+          "relation_role": "bounded-equivalence",
+          "normalized_proposition": "BOUNDED_SEMANTIC_EQUIVALENCE\u0000source-pair\u0000bounded-semantic-equivalence\u0000sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165->",
+          "proposition_digest": "sha256:20d95011659303069cbcb89110ff663ee3236a986549498b2eabce8a77279946",
+          "target_address": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165->",
+          "target_address_digest": "sha256:67e1b6968a4b285bf53de70a0e69074f3ba9d85de0bff2309edd376e42f3767e",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/indeterminate-after.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_after_raw_digest": "sha256:9959d508730ea0e04933150e328bb029b8c6ca466d6f49c96800777ad93ce1ba",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "proposition_digest": "sha256:d7590db28d3735c7cbad335b6d34d9344d8a81f229ac8242cba55e507dd6085f",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000generates\u0000gooo://semantic-delta/entity/payment",
+          "target_address_digest": "sha256:ee0ed0e50d68857675b6a1607bbfa9efbbeb8653195f8ff9dadf425bb491da78",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:c4abeedc2c20f56a796ee61c94c13a8d18316f3f69bcfa441502b2afb605348c",
+          "target_address": "semanticdeltafixture://activity/pay-order\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:4d9a4f90494d64ccaad68513d740cdad4f464c59a7ce73a08170ffeca5f489ba",
+          "before_source_path": "examples/semantic-delta-receipt/before.gooo",
+          "evidence_before_raw_digest": "sha256:31b4933265ec4cbd480ce4a101f131e7bc118ae6c1be3dbe0aae042aaa815b1d",
+          "evidence_before_semantic_digest": "sha256:db693df2b861733eaf4a20a591710487c1e65860556208fb8ea7e944854b3165"
+        }
+      ],
+      "expected_transition_identity_digest": "sha256:c6674a7ef062a88ccf81ac91e53eb52f0d9059ae175bddc85de0bd62713cb97a",
       "expected_claim_total": 3,
-      "case_row_digest": "sha256:00f5d106de1f11a80adcd7c6f0264e7dbfd1b4a455fda42e2d84648d0504812f"
+      "case_row_digest": "sha256:ac60995a1dd864d07d6ab8c668797fecd0691ceb652a770eb3cd759952304530"
     },
     {
       "id": "ambiguous-match",
       "expected_claim_ids": [
-        "gooo://semantic-delta/claim/bounded-equivalence/77e13f6fdc577dd3f7deb0a23264e6585d90e0268213db16272c26f70a96ab3a",
-        "gooo://semantic-delta/claim/object/0823b7a24932ccc2ec9cb9e8f1e70ac7b6060017583fb7908d98f596122b230c",
-        "gooo://semantic-delta/claim/object/473fdc37538e2c08ad366410e652177195af093a16f99e35049f2c2ea71d3b27",
-        "gooo://semantic-delta/claim/object/900ec858ce16d60616190e7a62ec675c2371b18c29551184b65697e832d7df36",
-        "gooo://semantic-delta/claim/object/983399e5cc05ed6403ecc1921cf12ee62d684ddb24d10fc3e29c1c66727890d5",
-        "gooo://semantic-delta/claim/object/bd4b0370d11980c17b02374611db2ff7b7d386d20ea572917bb729829174e16f",
-        "gooo://semantic-delta/claim/object/ca4e7337c73809a27f19fead1915b839604b7992d38e5f2c74216501d300795e"
+        "gooo://semantic-delta/claim/bounded-equivalence/9d598bfd2216e13be93224549e2dac141670da1fed08c57e189fa95321b79653",
+        "gooo://semantic-delta/claim/object/00d972d3bb54f13228614b19ff2ff692cd32863921f3271a6992a19bfad9cc65",
+        "gooo://semantic-delta/claim/object/25536d53378b0dd5242fe2a0a0d2cf5f13987bbb3d6eb12aa04b44b16ee3635b",
+        "gooo://semantic-delta/claim/object/322c05e5d83d6c7da817b03810c89fe0de549d2244548c6e6a98dcf5de873ad4",
+        "gooo://semantic-delta/claim/object/5ca80d10f0da2f2719b347de5cd04eddc04f738be4b3c1ec6021a69bf2e31633",
+        "gooo://semantic-delta/claim/object/7388efa9b56f212ede6e909cb4155e56a8d7938f43ddb4965b0b3886eb35b9f8",
+        "gooo://semantic-delta/claim/object/aedc0ddb2b70c6b9ec057b948045c60b3f170ecc64cb51c737d2b63b63ea9bb8"
       ],
-      "expected_transition_identity_digest": "sha256:8edd7d513422820487f13a445919e77facb3a21967d62f36a414b476f35ba5f8",
+      "expected_claims": [
+        {
+          "stable_id": "gooo://semantic-delta/claim/bounded-equivalence/9d598bfd2216e13be93224549e2dac141670da1fed08c57e189fa95321b79653",
+          "kind": "BOUNDED_SEMANTIC_EQUIVALENCE",
+          "relation_role": "bounded-equivalence",
+          "normalized_proposition": "BOUNDED_SEMANTIC_EQUIVALENCE\u0000source-pair\u0000bounded-semantic-equivalence\u0000sha256:bb277493beaf2b9bccc49bbfea50a4f36bca23fff12073cdfedcdbd9c190b7fd->sha256:2c547dd738d1163883eb4929c82d8ed0da23347ebc1b7a03e4c7dabb7aff3dbf",
+          "proposition_digest": "sha256:6dd444bd04a8c9f6664b4c5978885eb4e0c35052209f5e7fd20e1b9fae19bd12",
+          "target_address": "sha256:bb277493beaf2b9bccc49bbfea50a4f36bca23fff12073cdfedcdbd9c190b7fd->sha256:2c547dd738d1163883eb4929c82d8ed0da23347ebc1b7a03e4c7dabb7aff3dbf",
+          "target_address_digest": "sha256:d33cbe6d097b1c23e48ba817edb55101ced6f2e057bcde5e4aee579d5e6619f4",
+          "before_source_path": "examples/semantic-delta-receipt/ambiguous-before.gooo",
+          "after_source_path": "examples/semantic-delta-receipt/ambiguous-after.gooo",
+          "evidence_before_raw_digest": "sha256:b63f2912877f4994c47d64085ae848f1b81f23572244f32fda13033d2f71ec74",
+          "evidence_after_raw_digest": "sha256:c28bb201f8ae5e758cc3b88ce3ea4ee45c20269a65ff5713903aa75626672d64",
+          "evidence_before_semantic_digest": "sha256:bb277493beaf2b9bccc49bbfea50a4f36bca23fff12073cdfedcdbd9c190b7fd",
+          "evidence_after_semantic_digest": "sha256:2c547dd738d1163883eb4929c82d8ed0da23347ebc1b7a03e4c7dabb7aff3dbf"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/00d972d3bb54f13228614b19ff2ff692cd32863921f3271a6992a19bfad9cc65",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/review\u0000generates\u0000gooo://semantic-delta/entity/reversal",
+          "proposition_digest": "sha256:5fd8a8787a0170571216091fbaf70968b280bfc76ce0e0139e158c5b89ada89e",
+          "target_address": "semanticdeltareceipt://activity/review\u0000generates\u0000gooo://semantic-delta/entity/reversal",
+          "target_address_digest": "sha256:ab80dc9ca7671f03365dc3420f9f3c4d6c3e9e20295d059a3c7a910a70d04f73",
+          "after_source_path": "examples/semantic-delta-receipt/ambiguous-after.gooo",
+          "evidence_after_raw_digest": "sha256:c28bb201f8ae5e758cc3b88ce3ea4ee45c20269a65ff5713903aa75626672d64",
+          "evidence_after_semantic_digest": "sha256:2c547dd738d1163883eb4929c82d8ed0da23347ebc1b7a03e4c7dabb7aff3dbf"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/25536d53378b0dd5242fe2a0a0d2cf5f13987bbb3d6eb12aa04b44b16ee3635b",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "generates|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/review\u0000generates\u0000gooo://semantic-delta/entity/reversal",
+          "proposition_digest": "sha256:5fd8a8787a0170571216091fbaf70968b280bfc76ce0e0139e158c5b89ada89e",
+          "target_address": "semanticdeltareceipt://activity/review\u0000generates\u0000gooo://semantic-delta/entity/reversal",
+          "target_address_digest": "sha256:ab80dc9ca7671f03365dc3420f9f3c4d6c3e9e20295d059a3c7a910a70d04f73",
+          "before_source_path": "examples/semantic-delta-receipt/ambiguous-before.gooo",
+          "evidence_before_raw_digest": "sha256:b63f2912877f4994c47d64085ae848f1b81f23572244f32fda13033d2f71ec74",
+          "evidence_before_semantic_digest": "sha256:bb277493beaf2b9bccc49bbfea50a4f36bca23fff12073cdfedcdbd9c190b7fd"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/322c05e5d83d6c7da817b03810c89fe0de549d2244548c6e6a98dcf5de873ad4",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/review\u0000uses\u0000gooo://semantic-delta/entity/payment",
+          "proposition_digest": "sha256:72fc16582920e8f13ac21465f7700f499eea1179f85133bb1128f4de8343a253",
+          "target_address": "semanticdeltareceipt://activity/review\u0000uses\u0000gooo://semantic-delta/entity/payment",
+          "target_address_digest": "sha256:1bf784af6ce3c57500929a8dc21be7ff6fcf8a0b71e104cf86f59eccb9350bb4",
+          "before_source_path": "examples/semantic-delta-receipt/ambiguous-before.gooo",
+          "evidence_before_raw_digest": "sha256:b63f2912877f4994c47d64085ae848f1b81f23572244f32fda13033d2f71ec74",
+          "evidence_before_semantic_digest": "sha256:bb277493beaf2b9bccc49bbfea50a4f36bca23fff12073cdfedcdbd9c190b7fd"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/5ca80d10f0da2f2719b347de5cd04eddc04f738be4b3c1ec6021a69bf2e31633",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/review\u0000uses\u0000gooo://semantic-delta/entity/reversal",
+          "proposition_digest": "sha256:53e11ea869c685f6e2158f9b3cc85e250d559f437ca3586e9839d8abf45eb950",
+          "target_address": "semanticdeltareceipt://activity/review\u0000uses\u0000gooo://semantic-delta/entity/reversal",
+          "target_address_digest": "sha256:a04eb41f1772fe53d3d317a70d108cbfbf4732fc9d9213496245bcc8ee621dd5",
+          "after_source_path": "examples/semantic-delta-receipt/ambiguous-after.gooo",
+          "evidence_after_raw_digest": "sha256:c28bb201f8ae5e758cc3b88ce3ea4ee45c20269a65ff5713903aa75626672d64",
+          "evidence_after_semantic_digest": "sha256:2c547dd738d1163883eb4929c82d8ed0da23347ebc1b7a03e4c7dabb7aff3dbf"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/7388efa9b56f212ede6e909cb4155e56a8d7938f43ddb4965b0b3886eb35b9f8",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|after",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/review\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:efcb8d8f1056854a0d0713fb83e2084d22ec070e138a23153498ddd2ae2ab235",
+          "target_address": "semanticdeltareceipt://activity/review\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:bfd32acfa3839707004d6451f9a04a09f6ce33a87ccee3ef56d18c422858b4e9",
+          "after_source_path": "examples/semantic-delta-receipt/ambiguous-after.gooo",
+          "evidence_after_raw_digest": "sha256:c28bb201f8ae5e758cc3b88ce3ea4ee45c20269a65ff5713903aa75626672d64",
+          "evidence_after_semantic_digest": "sha256:2c547dd738d1163883eb4929c82d8ed0da23347ebc1b7a03e4c7dabb7aff3dbf"
+        },
+        {
+          "stable_id": "gooo://semantic-delta/claim/object/aedc0ddb2b70c6b9ec057b948045c60b3f170ecc64cb51c737d2b63b63ea9bb8",
+          "kind": "OBJECT_PROPOSITION",
+          "relation_role": "uses|observation|before",
+          "normalized_proposition": "OBJECT_PROPOSITION\u0000semanticdeltareceipt://activity/review\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "proposition_digest": "sha256:efcb8d8f1056854a0d0713fb83e2084d22ec070e138a23153498ddd2ae2ab235",
+          "target_address": "semanticdeltareceipt://activity/review\u0000uses\u0000gooo://semantic-delta/entity/order",
+          "target_address_digest": "sha256:bfd32acfa3839707004d6451f9a04a09f6ce33a87ccee3ef56d18c422858b4e9",
+          "before_source_path": "examples/semantic-delta-receipt/ambiguous-before.gooo",
+          "evidence_before_raw_digest": "sha256:b63f2912877f4994c47d64085ae848f1b81f23572244f32fda13033d2f71ec74",
+          "evidence_before_semantic_digest": "sha256:bb277493beaf2b9bccc49bbfea50a4f36bca23fff12073cdfedcdbd9c190b7fd"
+        }
+      ],
+      "expected_transition_identity_digest": "sha256:cdfe60ab5da2283615d9cb6574375c1d86ad246d4b9fd61b701bc33774219420",
       "expected_claim_total": 7,
-      "case_row_digest": "sha256:183d47a240b5328351a3ea5423434abde7b8c8c9c2186b490ae6d68488f24b29"
+      "case_row_digest": "sha256:adc77bc2e6a10390e96b4959c3134a5fca08331fcfd3ccfc85a581c200ba7c66"
     }
   ]
 }

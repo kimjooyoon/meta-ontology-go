@@ -8,7 +8,8 @@ import (
 
 type options struct {
 	caseID, subjectSHA, observedCheckoutSHA, before, after, effectsBefore, effectsAfter, output string
-	tamperMatrix                                                                                bool
+	oldExpectation, newExpectation                                                              string
+	tamperMatrix, evolution                                                                     bool
 }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
@@ -24,14 +25,23 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	set.StringVar(&result.effectsAfter, "effects-after", "", "post-execution workspace content snapshot")
 	set.StringVar(&result.output, "output", "", "JSON output path")
 	set.BoolVar(&result.tamperMatrix, "tamper-matrix", false, "write the fixed consumer tamper matrix evidence")
+	set.BoolVar(&result.evolution, "evolution", false, "reconstruct claim identity expectation evolution")
+	set.StringVar(&result.oldExpectation, "old-expectation", "examples/semantic-delta-receipt/claim-transition-expectations-v2.json", "old claim identity artifact")
+	set.StringVar(&result.newExpectation, "new-expectation", "examples/semantic-delta-receipt/claim-transition-expectations.json", "new claim identity artifact")
 	if err := set.Parse(args); err != nil {
 		return options{}, err
 	}
 	if result.subjectSHA == "" || result.output == "" {
 		return options{}, fmt.Errorf("--subject-sha and --output are required")
 	}
-	if result.tamperMatrix && (result.caseID != "" || result.before != "" || result.after != "") {
+	if result.tamperMatrix && (result.caseID != "" || result.before != "" || result.after != "" || result.evolution) {
 		return options{}, fmt.Errorf("--tamper-matrix cannot be combined with --case, --before, or --after")
+	}
+	if result.evolution && (result.caseID != "" || result.before != "" || result.after != "" || result.tamperMatrix) {
+		return options{}, fmt.Errorf("--evolution cannot be combined with --case, --before, --after, or --tamper-matrix")
+	}
+	if result.evolution {
+		return result, nil
 	}
 	if result.caseID == "" && !result.tamperMatrix && (result.before == "" || result.after == "") {
 		return options{}, fmt.Errorf("--case or both --before and --after are required")

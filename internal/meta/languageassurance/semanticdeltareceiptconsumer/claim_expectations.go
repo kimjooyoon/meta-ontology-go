@@ -14,7 +14,7 @@ import (
 
 const (
 	ClaimExpectationPath           = "examples/semantic-delta-receipt/claim-transition-expectations.json"
-	claimExpectationSchema         = "gooo/semantic-delta-claim-transition-expectations/v1"
+	claimExpectationSchema         = "gooo/semantic-delta-claim-transition-expectations/v2"
 	claimExpectationDenominatorID  = "gooo://semantic-delta-receipt-denominator/v2"
 	claimCountContractVersion      = "v1"
 	claimCountEquivalent           = 7
@@ -48,11 +48,32 @@ const (
 var claimExpectationCaseIDs = []string{"equivalent", "semantic-change", "value-program-change", "indeterminate", "ambiguous-match"}
 
 type claimIdentityExpectation struct {
-	ID                               string   `json:"id"`
-	ExpectedClaimIDs                 []string `json:"expected_claim_ids"`
-	ExpectedTransitionIdentityDigest string   `json:"expected_transition_identity_digest"`
-	ExpectedClaimTotal               int      `json:"expected_claim_total"`
-	CaseRowDigest                    string   `json:"case_row_digest,omitempty"`
+	ID                               string                `json:"id"`
+	ExpectedClaimIDs                 []string              `json:"expected_claim_ids"`
+	ExpectedClaims                   []ClaimIdentityRecord `json:"expected_claims"`
+	ExpectedTransitionIdentityDigest string                `json:"expected_transition_identity_digest"`
+	ExpectedClaimTotal               int                   `json:"expected_claim_total"`
+	CaseRowDigest                    string                `json:"case_row_digest,omitempty"`
+}
+
+// ClaimIdentityRecord separates persistent proposition identity from the
+// source observations that support it. Evidence may change without creating
+// a new claim row.
+type ClaimIdentityRecord struct {
+	StableID                     string `json:"stable_id"`
+	Kind                         string `json:"kind"`
+	RelationRole                 string `json:"relation_role"`
+	NormalizedProposition        string `json:"normalized_proposition"`
+	PropositionDigest            string `json:"proposition_digest"`
+	TargetAddress                string `json:"target_address"`
+	TargetAddressDigest          string `json:"target_address_digest"`
+	PreservationOf               string `json:"preservation_of,omitempty"`
+	BeforeSourcePath             string `json:"before_source_path,omitempty"`
+	AfterSourcePath              string `json:"after_source_path,omitempty"`
+	EvidenceBeforeRawDigest      string `json:"evidence_before_raw_digest,omitempty"`
+	EvidenceAfterRawDigest       string `json:"evidence_after_raw_digest,omitempty"`
+	EvidenceBeforeSemanticDigest string `json:"evidence_before_semantic_digest,omitempty"`
+	EvidenceAfterSemanticDigest  string `json:"evidence_after_semantic_digest,omitempty"`
 }
 
 type claimIdentityExpectationContract struct {
@@ -84,7 +105,9 @@ type ClaimIdentityComparison struct {
 	ExpectationArtifactDigest        string                `json:"expectation_artifact_digest"`
 	ExpectationCaseRowDigest         string                `json:"expectation_case_row_digest"`
 	ExpectedClaimIDs                 []string              `json:"expected_claim_ids"`
+	ExpectedClaims                   []ClaimIdentityRecord `json:"expected_claims"`
 	ObservedClaimIDs                 []string              `json:"observed_claim_ids"`
+	ObservedClaims                   []ClaimIdentityRecord `json:"observed_claims"`
 	ExpectedTransitionIdentityDigest string                `json:"expected_transition_identity_digest"`
 	ObservedTransitionIdentityDigest string                `json:"observed_transition_identity_digest"`
 	ObservedSourcePair               SourcePairObservation `json:"observed_source_pair"`
@@ -114,6 +137,7 @@ func ValidateFixedClaimIdentity(input Input) ClaimIdentityComparison {
 		return comparison
 	}
 	comparison.ExpectedClaimIDs = append([]string(nil), expectation.ExpectedClaimIDs...)
+	comparison.ExpectedClaims = append([]ClaimIdentityRecord(nil), expectation.ExpectedClaims...)
 	comparison.ExpectedTransitionIdentityDigest = expectation.ExpectedTransitionIdentityDigest
 	comparison.ExpectationCaseRowDigest = expectation.CaseRowDigest
 	comparison.FixedTotal = expectation.ExpectedClaimTotal
@@ -133,6 +157,7 @@ func ValidateFixedClaimIdentity(input Input) ClaimIdentityComparison {
 	}
 	reconstructed := reconstructReceipt(input, beforeRaw, afterRaw)
 	comparison.ObservedClaimIDs = append([]string(nil), reconstructed.ClaimIDInventory...)
+	comparison.ObservedClaims = claimIdentityRecords(reconstructed.ClaimLedger)
 	comparison.ObservedTransitionIdentityDigest = reconstructed.ClaimTransitionIdentityDigest
 	comparison.ObservedSourcePair = SourcePairObservation{BeforePath: input.BeforePath, AfterPath: input.AfterPath, BeforeRawDigest: reconstructed.Before.SourceDigest, AfterRawDigest: reconstructed.After.SourceDigest, BeforeSemanticDigest: reconstructed.Before.SemanticDigest, AfterSemanticDigest: reconstructed.After.SemanticDigest}
 	if comparison.ObservedTransitionIdentityDigest == "" {
@@ -140,6 +165,10 @@ func ValidateFixedClaimIdentity(input Input) ClaimIdentityComparison {
 		return comparison
 	}
 	if err := exactClaimIDInventory(comparison.ExpectedClaimIDs, comparison.ObservedClaimIDs); err != nil {
+		comparison.Reason = claimIdentityInventoryReason
+		return comparison
+	}
+	if err := exactClaimIdentityInventory(comparison.ExpectedClaims, comparison.ObservedClaims); err != nil {
 		comparison.Reason = claimIdentityInventoryReason
 		return comparison
 	}
@@ -208,7 +237,11 @@ func validateClaimExpectationContract(contract claimIdentityExpectationContract)
 	observedTotal := 0
 	for _, expectation := range contract.Cases {
 		fixedTotal, ok := fixedClaimCountForCase(expectation.ID)
-		if !ok || expectation.ExpectedClaimTotal != fixedTotal || len(expectation.ExpectedClaimIDs) != fixedTotal || exactClaimIDInventory(expectation.ExpectedClaimIDs, expectation.ExpectedClaimIDs) != nil || !sha256DigestPattern.MatchString(expectation.ExpectedTransitionIdentityDigest) || expectation.CaseRowDigest != caseRowDigest(expectation) || !sha256DigestPattern.MatchString(expectation.CaseRowDigest) {
+		claimRecordIDs := make([]string, 0, len(expectation.ExpectedClaims))
+		for _, record := range expectation.ExpectedClaims {
+			claimRecordIDs = append(claimRecordIDs, record.StableID)
+		}
+		if !ok || expectation.ExpectedClaimTotal != fixedTotal || len(expectation.ExpectedClaimIDs) != fixedTotal || len(expectation.ExpectedClaims) != fixedTotal || exactClaimIDInventory(expectation.ExpectedClaimIDs, expectation.ExpectedClaimIDs) != nil || exactClaimIDInventory(expectation.ExpectedClaimIDs, claimRecordIDs) != nil || exactClaimIdentityInventory(expectation.ExpectedClaims, expectation.ExpectedClaims) != nil || !validClaimIdentityRecords(expectation.ExpectedClaims) || !sha256DigestPattern.MatchString(expectation.ExpectedTransitionIdentityDigest) || expectation.CaseRowDigest != caseRowDigest(expectation) || !sha256DigestPattern.MatchString(expectation.CaseRowDigest) {
 			return fmt.Errorf("invalid fixed claim expectation %q", expectation.ID)
 		}
 		observedTotal += expectation.ExpectedClaimTotal
@@ -244,6 +277,12 @@ func FixedClaimTotal() int {
 	return claimExpectationFixedTotal
 }
 
+// ValidateClaimIdentityRecords exposes the consumer's stable-identity
+// contract to the evolution witness without exposing producer internals.
+func ValidateClaimIdentityRecords(records []ClaimIdentityRecord) bool {
+	return validClaimIdentityRecords(records)
+}
+
 func ClaimCountContractVersion() string {
 	return claimCountContractVersion
 }
@@ -268,7 +307,11 @@ func fixedClaimCountForCase(caseID string) (int, bool) {
 func caseRowDigest(expectation claimIdentityExpectation) string {
 	expectation.CaseRowDigest = ""
 	expectation.ExpectedClaimIDs = append([]string(nil), expectation.ExpectedClaimIDs...)
+	expectation.ExpectedClaims = append([]ClaimIdentityRecord(nil), expectation.ExpectedClaims...)
 	sort.Strings(expectation.ExpectedClaimIDs)
+	sort.Slice(expectation.ExpectedClaims, func(i, j int) bool {
+		return expectation.ExpectedClaims[i].StableID < expectation.ExpectedClaims[j].StableID
+	})
 	return digestValue(expectation)
 }
 
@@ -309,4 +352,60 @@ func exactClaimIDInventory(expected, observed []string) error {
 		}
 	}
 	return nil
+}
+
+func claimIdentityRecord(claim Claim) ClaimIdentityRecord {
+	return ClaimIdentityRecord{StableID: claim.ID, Kind: claim.Kind, RelationRole: claim.RelationRole, NormalizedProposition: claim.NormalizedProposition, PropositionDigest: claim.PropositionDigest, TargetAddress: claim.TargetAddress, TargetAddressDigest: claim.TargetAddressDigest, PreservationOf: claim.PreservationOf, BeforeSourcePath: claim.BeforeSourcePath, AfterSourcePath: claim.AfterSourcePath, EvidenceBeforeRawDigest: claim.BeforeSourceDigest, EvidenceAfterRawDigest: claim.AfterSourceDigest, EvidenceBeforeSemanticDigest: claim.BeforeSemanticDigest, EvidenceAfterSemanticDigest: claim.AfterSemanticDigest}
+}
+
+func claimIdentityRecords(ledger []Claim) []ClaimIdentityRecord {
+	result := make([]ClaimIdentityRecord, 0, len(ledger))
+	for _, claim := range ledger {
+		result = append(result, claimIdentityRecord(claim))
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].StableID < result[j].StableID })
+	return result
+}
+
+func exactClaimIdentityInventory(expected, observed []ClaimIdentityRecord) error {
+	if len(expected) != len(observed) {
+		return fmt.Errorf("claim identity row count mismatch")
+	}
+	left := append([]ClaimIdentityRecord(nil), expected...)
+	right := append([]ClaimIdentityRecord(nil), observed...)
+	sort.Slice(left, func(i, j int) bool { return left[i].StableID < left[j].StableID })
+	sort.Slice(right, func(i, j int) bool { return right[i].StableID < right[j].StableID })
+	for index := range left {
+		if left[index].StableID == "" || right[index].StableID == "" || left[index].StableID != right[index].StableID || left[index].Kind != right[index].Kind || left[index].RelationRole != right[index].RelationRole || left[index].NormalizedProposition != right[index].NormalizedProposition || left[index].PropositionDigest != right[index].PropositionDigest || left[index].TargetAddress != right[index].TargetAddress || left[index].TargetAddressDigest != right[index].TargetAddressDigest || left[index].PreservationOf != right[index].PreservationOf || left[index].BeforeSourcePath != right[index].BeforeSourcePath || left[index].AfterSourcePath != right[index].AfterSourcePath || left[index].EvidenceBeforeRawDigest != right[index].EvidenceBeforeRawDigest || left[index].EvidenceAfterRawDigest != right[index].EvidenceAfterRawDigest || left[index].EvidenceBeforeSemanticDigest != right[index].EvidenceBeforeSemanticDigest || left[index].EvidenceAfterSemanticDigest != right[index].EvidenceAfterSemanticDigest {
+			return fmt.Errorf("stable claim identity mismatch")
+		}
+	}
+	return nil
+}
+
+func validClaimIdentityRecords(records []ClaimIdentityRecord) bool {
+	seen := make(map[string]bool, len(records))
+	for _, record := range records {
+		if record.StableID == "" || seen[record.StableID] || record.Kind == "" || record.RelationRole == "" || record.NormalizedProposition == "" || !sha256DigestPattern.MatchString(record.PropositionDigest) || record.PropositionDigest != digestValue(record.NormalizedProposition) || record.TargetAddress == "" || record.TargetAddressDigest != targetAddressDigest(record.TargetAddress) || record.StableID != expectedClaimIdentityID(record) {
+			return false
+		}
+		seen[record.StableID] = true
+	}
+	return true
+}
+
+func expectedClaimIdentityID(record ClaimIdentityRecord) string {
+	switch record.Kind {
+	case claimKindObject:
+		return objectClaimID(record.TargetAddress, record.RelationRole)
+	case claimKindBounded:
+		return boundedClaimID(record.TargetAddress, record.RelationRole)
+	case claimKindPreserve:
+		if record.PreservationOf == "" {
+			return ""
+		}
+		return preservationClaimIDForParts(record.PreservationOf, record.TargetAddress, record.RelationRole)
+	default:
+		return ""
+	}
 }

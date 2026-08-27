@@ -114,12 +114,16 @@ func TestFixedClaimExpectationRejectsDrift(t *testing.T) {
 		{name: "claim-replacement", mutate: func(value *claimIdentityExpectationContract) {
 			value.Cases[0].ExpectedClaimIDs[0] = "gooo://semantic-delta/claim/object/replacement"
 		}},
+		{name: "stable-id-duplicate", mutate: func(value *claimIdentityExpectationContract) {
+			value.Cases[0].ExpectedClaims[1].StableID = value.Cases[0].ExpectedClaims[0].StableID
+		}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			copy := contract
 			copy.Cases = append([]claimIdentityExpectation(nil), contract.Cases...)
 			for index := range copy.Cases {
 				copy.Cases[index].ExpectedClaimIDs = append([]string(nil), contract.Cases[index].ExpectedClaimIDs...)
+				copy.Cases[index].ExpectedClaims = append([]ClaimIdentityRecord(nil), contract.Cases[index].ExpectedClaims...)
 			}
 			testCase.mutate(&copy)
 			if validateClaimExpectationContract(copy) == nil {

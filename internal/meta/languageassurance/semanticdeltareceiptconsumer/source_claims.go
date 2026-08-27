@@ -11,10 +11,19 @@ func claimsFromFacts(facts []Fact, filename, rawDigest, semanticDigest string, b
 		}
 		normalized := normalizedProposition(claimKindObject, subject, predicate, object)
 		proposition := propositionDigest(claimKindObject, subject, predicate, object)
-		claim := Claim{ID: objectClaimID(normalized, filename, rawDigest, semanticDigest), ClaimTypeID: claimTypeID(claimKindObject, subject, predicate, object), Kind: claimKindObject, Subject: subject, Predicate: predicate, Object: object, Status: statusOpen, Stage: "semantic-extraction", Step: "bind-canonical-fact", Reason: "CANONICAL_LOWERING_BOUND", NormalizedProposition: normalized, PropositionDigest: proposition, TargetAddress: filename}
+		target := canonicalTargetAddress(subject, predicate, object)
+		relationRole := predicate + "|observation"
 		if before {
+			relationRole += "|before"
+		} else {
+			relationRole += "|after"
+		}
+		claim := Claim{ID: objectClaimID(target, relationRole), ClaimTypeID: claimTypeID(claimKindObject, subject, predicate, object), Kind: claimKindObject, Subject: subject, Predicate: predicate, Object: object, Status: statusOpen, Stage: "semantic-extraction", Step: "bind-canonical-fact", Reason: "CANONICAL_LOWERING_BOUND", NormalizedProposition: normalized, PropositionDigest: proposition, TargetAddress: target, TargetAddressDigest: targetAddressDigest(target), RelationRole: relationRole}
+		if before {
+			claim.BeforeSourcePath = filename
 			claim.BeforeSourceDigest, claim.BeforeSemanticDigest = rawDigest, semanticDigest
 		} else {
+			claim.AfterSourcePath = filename
 			claim.AfterSourceDigest, claim.AfterSemanticDigest = rawDigest, semanticDigest
 		}
 		claims = append(claims, claim)

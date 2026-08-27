@@ -26,7 +26,7 @@ func claimDelta(before, after projectedSource) ClaimDelta {
 		}
 		if len(beforeClaims) == 1 && len(afterClaims) == 1 {
 			if !claimMeaningEqual(beforeClaims[0], afterClaims[0]) {
-				result.Changed = append(result.Changed, ClaimChange{ID: preservationClaimID(beforeClaims[0], afterClaims[0], afterClaims[0].Object), Before: beforeClaims[0], After: afterClaims[0]})
+				result.Changed = append(result.Changed, ClaimChange{ID: preservationClaimID(beforeClaims[0]), Before: beforeClaims[0], After: afterClaims[0]})
 			}
 			continue
 		}

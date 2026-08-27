@@ -103,7 +103,7 @@ func validateMetaContract(contract MetaContract) error {
 	if strings.Join(contract.Layers, ",") != "semantic,structural,textual" {
 		return fmt.Errorf("meta delta layers are incomplete")
 	}
-	if len(contract.ComponentKinds) != TotalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || contract.ClaimIdentity != "object=normalized|target|raw-digest|semantic-digest;preservation=before-id|after-id|target|before-proposition|after-raw|after-semantic;inventory=set-canonical" || contract.TransitionIdentity != "v2:claim-id|from|to|stage|step|reason|target-semantic-digest;sort-by-claim-id" || !sameCaseRecipes(contract.CaseRecipes, Denominator()) {
+	if len(contract.ComponentKinds) != TotalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || contract.ClaimIdentity != "v3:object=proposition-kind|canonical-semantic-fact-target-address|stable-relation-role;evidence=source-path|raw-digest|semantic-digest;preservation=before-proposition-id|canonical-pair-target-address|stable-relation-role;inventory=set-canonical" || contract.TransitionIdentity != "v2:claim-id|from|to|stage|step|reason|target-semantic-digest;sort-by-claim-id" || !sameCaseRecipes(contract.CaseRecipes, Denominator()) {
 		return fmt.Errorf("meta semantic contract coverage is incomplete")
 	}
 	return nil

@@ -63,6 +63,10 @@ type Claim struct {
 	NormalizedProposition string `json:"normalized_proposition"`
 	PropositionDigest     string `json:"proposition_digest"`
 	TargetAddress         string `json:"target_address"`
+	TargetAddressDigest   string `json:"target_address_digest"`
+	RelationRole          string `json:"relation_role"`
+	BeforeSourcePath      string `json:"before_source_path,omitempty"`
+	AfterSourcePath       string `json:"after_source_path,omitempty"`
 	BeforeSourceDigest    string `json:"before_source_digest,omitempty"`
 	AfterSourceDigest     string `json:"after_source_digest,omitempty"`
 	BeforeSemanticDigest  string `json:"before_semantic_digest,omitempty"`

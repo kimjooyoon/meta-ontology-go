@@ -1,0 +1,81 @@
+{
+  "schema": "gooo/semantic-delta-claim-transition-expectations/v1",
+  "denominator_id": "gooo://semantic-delta-receipt-denominator/v2",
+  "claim_count_contract_version": "v1",
+  "fixed_claim_total": 31,
+  "denominator_evolution_receipt": "REQUIRED_FOR_FIXED_CLAIM_COUNT_CHANGE",
+  "fixed_case_total": 5,
+  "cases": [
+    {
+      "id": "equivalent",
+      "expected_claim_ids": [
+        "gooo://semantic-delta/claim/bounded-equivalence/66f292262952ea84c8ac23eb9449710ca57204e514f4e36833684767940e1b60",
+        "gooo://semantic-delta/claim/object/076e480f1d8f8a6f5be62714fd29c43bb9fac17182c54d302fd3f201eb86ab37",
+        "gooo://semantic-delta/claim/object/3ee0af49fd82c6b138e553498eb3b05c53518c69e9d59620b6206f2bb08f5d94",
+        "gooo://semantic-delta/claim/object/ca5fbe67b20bb88cfcca325f2c2bf6450fbe8748dcadabcf23d662ab1f13b02d",
+        "gooo://semantic-delta/claim/object/e99a744d133d9edee432e7678503dccb05595768c80aa7f5fbd5b1a1a6c48ff9",
+        "gooo://semantic-delta/claim/preservation/27dab9efcd5100b3d986ce2c4b6c06d9a5f4ffa157357a9d89ba0a670a13a443",
+        "gooo://semantic-delta/claim/preservation/4c8a011978a24b51506b987f86e490310de83d7114d400517eda15b399089c84"
+      ],
+      "expected_transition_identity_digest": "sha256:98ac39fedd66d71908f803161eb43517d0f952e6660912449ad705a9d37a98bf",
+      "expected_claim_total": 7,
+      "case_row_digest": "sha256:0c7af430d05991e4f654ac1d6169a77245cb7168a5ce905deac543c539a88470"
+    },
+    {
+      "id": "semantic-change",
+      "expected_claim_ids": [
+        "gooo://semantic-delta/claim/bounded-equivalence/5593420368771e1063ff2a95f7c7215cea0b768ef1650450d973dc8d6214fc72",
+        "gooo://semantic-delta/claim/object/076e480f1d8f8a6f5be62714fd29c43bb9fac17182c54d302fd3f201eb86ab37",
+        "gooo://semantic-delta/claim/object/0a32cca69d7c02616f57a966e140bab43b0b73ec95d557847f87f422996b0dde",
+        "gooo://semantic-delta/claim/object/ca5fbe67b20bb88cfcca325f2c2bf6450fbe8748dcadabcf23d662ab1f13b02d",
+        "gooo://semantic-delta/claim/object/e9512423c8972c4c6061143abe1f76f17bb368a61208b6a69f64b704c34b770b",
+        "gooo://semantic-delta/claim/preservation/8fc8f9068e76e024849451cb6d40539d1688b2083836a7c2213b5001aa76a4be",
+        "gooo://semantic-delta/claim/preservation/dbf1b27103d64935c492a1e3a83a066f353679c9721518641881f10037efe6ce"
+      ],
+      "expected_transition_identity_digest": "sha256:9a56546ff0a5d5d0a25e86a6fa52c4e1b78e6904dfb5732c7fc435e14c7f10e1",
+      "expected_claim_total": 7,
+      "case_row_digest": "sha256:78bfb2fbd3e75492ffdb4884472a8b7a551e32ac6c089aa60f559beee2dc2768"
+    },
+    {
+      "id": "value-program-change",
+      "expected_claim_ids": [
+        "gooo://semantic-delta/claim/bounded-equivalence/325b088dfb4bd871149329c12779110beede0939af91b7ba6a1aa78ea4be481f",
+        "gooo://semantic-delta/claim/object/32b32dcbfd097d7a993d9257aa3e71f428a587e7ec1d8c4ff828764451310c21",
+        "gooo://semantic-delta/claim/object/3542e61467d824bc34f7c1e5f06c1b8441a17857db1690cd66bc4f33c8eccf1c",
+        "gooo://semantic-delta/claim/object/505ae4aca0fe21d575fbb016b4c78b02154af6012071694700aba57e2cfeaa45",
+        "gooo://semantic-delta/claim/object/f9e581eadc7bd32acef2caf4f7c6cc96420f1d14f04943bebc5f1f205e0d0d31",
+        "gooo://semantic-delta/claim/preservation/752caa8c589b0053148356e4791659288387007fa950023e32045b2fa9d010f9",
+        "gooo://semantic-delta/claim/preservation/75fe680b08dd6361ceca166ee1d37a75779bd627fb10c2b4d7a7deeb193b8ef4"
+      ],
+      "expected_transition_identity_digest": "sha256:8b7c0b5e7a48d2244975b7cc56a8e117b91e8723770b43610c29f1b805554536",
+      "expected_claim_total": 7,
+      "case_row_digest": "sha256:ce5b7b480cf47362086344c250a8001f4836fca92488019dfb6d1b0fb7192abc"
+    },
+    {
+      "id": "indeterminate",
+      "expected_claim_ids": [
+        "gooo://semantic-delta/claim/bounded-equivalence/a05e925f5f2db34e6943d24d690ba5b4044893fea32c5012477927a953923f2b",
+        "gooo://semantic-delta/claim/object/076e480f1d8f8a6f5be62714fd29c43bb9fac17182c54d302fd3f201eb86ab37",
+        "gooo://semantic-delta/claim/object/ca5fbe67b20bb88cfcca325f2c2bf6450fbe8748dcadabcf23d662ab1f13b02d"
+      ],
+      "expected_transition_identity_digest": "sha256:4877808d6fe56a0f490b3b5b8b684247be5e376bb51fd0111511866f93e080f9",
+      "expected_claim_total": 3,
+      "case_row_digest": "sha256:00f5d106de1f11a80adcd7c6f0264e7dbfd1b4a455fda42e2d84648d0504812f"
+    },
+    {
+      "id": "ambiguous-match",
+      "expected_claim_ids": [
+        "gooo://semantic-delta/claim/bounded-equivalence/77e13f6fdc577dd3f7deb0a23264e6585d90e0268213db16272c26f70a96ab3a",
+        "gooo://semantic-delta/claim/object/0823b7a24932ccc2ec9cb9e8f1e70ac7b6060017583fb7908d98f596122b230c",
+        "gooo://semantic-delta/claim/object/473fdc37538e2c08ad366410e652177195af093a16f99e35049f2c2ea71d3b27",
+        "gooo://semantic-delta/claim/object/900ec858ce16d60616190e7a62ec675c2371b18c29551184b65697e832d7df36",
+        "gooo://semantic-delta/claim/object/983399e5cc05ed6403ecc1921cf12ee62d684ddb24d10fc3e29c1c66727890d5",
+        "gooo://semantic-delta/claim/object/bd4b0370d11980c17b02374611db2ff7b7d386d20ea572917bb729829174e16f",
+        "gooo://semantic-delta/claim/object/ca4e7337c73809a27f19fead1915b839604b7992d38e5f2c74216501d300795e"
+      ],
+      "expected_transition_identity_digest": "sha256:8edd7d513422820487f13a445919e77facb3a21967d62f36a414b476f35ba5f8",
+      "expected_claim_total": 7,
+      "case_row_digest": "sha256:183d47a240b5328351a3ea5423434abde7b8c8c9c2186b490ae6d68488f24b29"
+    }
+  ]
+}

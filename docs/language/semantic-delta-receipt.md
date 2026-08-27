@@ -135,13 +135,22 @@ propositions are separate persistent rows. Persistent statuses are `OPEN`,
   the canonical observation; they are never refuted merely because they are
   new.
 
-Object claim type IDs are proposition digests, while observation instance IDs
-also bind target address, raw source digest, and semantic digest. Preservation
-IDs bind the before instance, after instance, and pair evidence. Each transition
+Object claim type IDs are proposition digests, while persistent claim IDs use
+claim kind, the canonical semantic fact target address
+`subject\x00predicate\x00object`, and stable relation role. The bounded pair
+target is the canonical `before-semantic-address->after-semantic-address`; raw
+paths remain evidence only. Raw
+source paths/digests and observed semantic digests are evidence fields, never
+identity inputs. Preservation IDs bind the before proposition ID, canonical
+target address, and preservation role. Each transition
 records proposition/evidence/previous-event/transition digests in an append-only
 chain. The semantic-change case therefore refutes the old
 payment preservation proposition and discharges the new reversal observation;
 it does not claim that the reversal proposition is false.
+
+This identity recipe is version `v3`; observation-side roles (`before` and
+`after`) are explicit stable relation roles, so the fixed ledger can retain
+both source observations without making raw evidence part of identity.
 
 Every ledger row has exactly one transition linked by claim ID and proposition
 digest, including every `OPEN`, `DISCHARGED`, and `REFUTED` row. The reported
@@ -149,8 +158,12 @@ claim-status coverage is `claims_with_explained_status / total_claims`; it is
 not padded by duplicate events. A comment-only intervention changes the raw
 digest while preserving semantic digests, the semantic decision, and the exact
 logical transition sequence (`kind`, status endpoints, preservation target,
-stage, step, and reason). Instance/evidence digests may still change because
-they deliberately bind the observed raw source.
+stage, step, and reason). Evidence digests may still change because they
+deliberately bind the observed raw source, while persistent IDs remain unchanged.
+The evolution receipt also reports `persistent_claim_identity=31/31` and
+`claim_recreated_due_only_to_raw_digest=0/31`. The latter is computed by an
+independent evidence-only probe: changing source paths and all evidence
+digests must still validate the same v3 ID.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical
@@ -175,9 +188,11 @@ observed tamper IDs, four exact replay context IDs, fixed totals, rejection
 counts, and basis-point coverage. The fixed tamper inventory is 12 IDs and the
 replay-context inventory is 4 IDs; duplicate, missing, extra, or substituted
 IDs fail closed. When the fixed expectation is reconciled to a source-derived
-runtime inventory, `claim-transition-expectation-evolution.json` records both
-artifact digests, every case's added/removed IDs, the unchanged proposition and
-target binding, and the unchanged denominator; it is not an implicit overwrite.
+runtime inventory, the CI-generated
+`claim-transition-expectation-evolution.json` records old/new artifact paths,
+bytes, digests, every case's added/removed IDs, independently reconstructed
+stable identity/evidence rows, and the unchanged denominator; the checked-in
+expectation is never silently overwritten.
 
 The conformance suite's `FIXED_POINT` decision means only that the fixed
 five-case contract was reproduced. `subject_semantic_equivalence` is recorded
@@ -189,6 +204,9 @@ The result is falsifiable. Reordering declarations or adding comments should
 keep the first case semantically preserved. Changing a stable ID, output entity,
 or supported relation must produce a non-empty structural or claim delta.
 Putting an unsupported declaration into the source must remain indeterminate.
+The fixture `duplicate-stable-id-before.gooo` deliberately repeats one
+semantic fact; its duplicate stable identity must remain a fail-closed input,
+not a fixed-case success.
 Mutating one field of a receipt without resealing it must be rejected by the
 independent judge. These tests are intentionally narrower than behavioral
 equivalence: the bounded projector does not cover runtime values, macros,

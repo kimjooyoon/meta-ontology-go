@@ -39,6 +39,9 @@ canonical rows `(claim_id, from_status, to_status, stage, step, reason,
 target_semantic_digest)`, sorted by claim ID. The target semantic digest is the
 claim's after-source semantic digest, falling back to its before-source
 semantic digest when no after target exists.
+Stable claim identity is version `v3`: proposition kind, canonical semantic
+fact target address (`subject\x00predicate\x00object`), and stable relation role; the bounded pair uses canonical before/after semantic addresses. Raw source paths/digests and observed
+semantic digests are evidence/provenance fields and cannot recreate a claim.
 The semantic projection explicitly models node identity, entity fields,
 activity value programs, relation facts, and the IR semantic fingerprint. Its
 declared projection component-kind coverage is `5/5 = 10000` basis points, not
@@ -100,8 +103,10 @@ remain `UNKNOWN`. No activation or promotion is implied. The suite's
 ## Falsification
 
 The claim is falsifiable. Reordering declarations/comments should change only
-raw digests; changing a stable ID, output entity, relation, or activity value
+raw evidence digests; changing a stable ID, output entity, relation, or activity value
 program must move the receipt to `SEMANTIC_CHANGED`. Multiple claims in one
 slot must remain `AMBIGUOUS_CLAIM_MATCH`; unsupported grammar must remain
 `SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE`. Mutating any receipt layer and
 resealing it without recomputing the independent projection must be rejected.
+The duplicate-stable-ID fixture is intentionally outside the fixed denominator:
+repeated identical semantic facts must produce duplicate IDs and fail closed.

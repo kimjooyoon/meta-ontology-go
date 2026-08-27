@@ -19,6 +19,18 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if options.caseID == "suite" {
 		return writeJSON(options.output, runSuite(options.subjectSHA, options.observedCheckoutSHA, options.effectsBefore, options.effectsAfter, options.output), stdout, stderr)
 	}
+	if options.evolution {
+		evidence, err := reconstructEvolution(options.oldExpectation, options.newExpectation)
+		status := writeJSON(options.output, evidence, stdout, stderr)
+		if status != 0 {
+			return status
+		}
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		return 0
+	}
 	if options.tamperMatrix {
 		evidence, err := consumer.BuildTamperMatrix(options.subjectSHA, options.observedCheckoutSHA)
 		status := writeJSON(options.output, evidence, stdout, stderr)
