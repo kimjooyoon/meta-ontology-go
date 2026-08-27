@@ -13,9 +13,14 @@ resource references, and declared denominators. The producer discovers and
 sorts those inputs, verifies ownership paths, non-empty bindings, structured
 metric bindings, resource digests, and source-derived denominators, then
 generates catalog, corpus, registry, denominator, documentation, manifest index,
-projection, and digest outputs. Binding source addresses resolve to used Go AST
-declarations or registration calls and their normalized AST bytes; comment-only
-and unused-string counterexamples fail closed. The independent consumer reads
+projection, and digest outputs. Binding source addresses resolve through a
+complete module-aware, build-selected Go type check to the same `go/types`
+object at declaration and registration use; package errors fail closed. Each
+metric also binds its exact registration-relation literal occurrence, normalized
+occurrence digest, and position-independent semantic relation digest. Comment-
+only position shifts preserve semantic relations while changing raw addresses;
+metric changes and unused, shadowed, cross-package, unrelated-use, and
+unrelated-call counterexamples fail closed. The independent consumer reads
 back its generated output artifact and records its actual path, bytes, and
 digest in each binding receipt. Documentation or workflow self-search is not
 sufficient. The root topology and root README remain explicit exceptions; this
@@ -49,10 +54,10 @@ numerator `0/1`; no number is extracted from prose. A regression clone with
 the prior declared `160` cases must produce `FAIL_CLOSED / DENOMINATOR_SOURCE_MISMATCH`,
 with declared and calculated values side by side in the receipt.
 
-The fixed predicate inventory is 21 IDs: five conformance IDs
+The fixed predicate inventory is 26 IDs: five conformance IDs
 (`independent-manifest-order`, `independent-resource-digests`,
 `independent-denominator-reconciliation`, `independent-binding-registry`, and
-`independent-conformance-consumer`) plus sixteen failure IDs
+`independent-conformance-consumer`) plus 21 failure IDs
 (`consumer-malformed-manifest`, `consumer-missing-manifest`,
 `consumer-cross-directory-manifest`, `consumer-missing-binding`,
 `consumer-stale-denominator`, `consumer-stale-generated-projection`,
@@ -60,12 +65,15 @@ The fixed predicate inventory is 21 IDs: five conformance IDs
 `consumer-binding-output-digest-mismatch`, `consumer-binding-comment-only`,
 `consumer-binding-unused-string`,
 `consumer-binding-cross-package-same-name`, `consumer-binding-shadowed-local`,
-`consumer-binding-unused-declaration`, `consumer-binding-unrelated-use`, and
-`classifier-success-exit-counterexample`). Claims are exactly 21; failure and
-provenance predicates are exactly 16; static failure contracts are exactly 8;
-AST-resolved binding output receipts are exactly 9. Each binding is resolved
-through a typed declaration/use object tuple and includes an exact row digest
-from the consumer's embedded raw output artifact.
+`consumer-binding-unused-declaration`, `consumer-binding-unrelated-use`,
+`consumer-binding-unresolved-import`, `consumer-binding-unrelated-type-error`,
+`consumer-binding-metric-row-swap`, `consumer-binding-different-metric-literal`,
+`consumer-binding-unrelated-call`, and `classifier-success-exit-counterexample`).
+Claims are exactly 26; failure and provenance predicates are exactly 21;
+static failure contracts are exactly 8; typed declaration/use object tuples,
+metric occurrences, semantic relation digests, and output row addresses are
+each exactly 9. Each output receipt includes an exact row digest from the
+consumer's embedded raw output artifact.
 
 ## Meaning gates
 

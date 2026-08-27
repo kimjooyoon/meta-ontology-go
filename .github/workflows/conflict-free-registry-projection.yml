@@ -121,7 +121,9 @@ jobs:
             .projection_replay.decision == "PASS" and
             .manifest_order_invariant.decision == "PASS" and
             .semantic_manifest_causality.decision == "PASS" and
+            .semantic_metric_change.decision == "PASS" and
             .comment_only_invariant.decision == "PASS" and
+            .comment_position_invariant.decision == "PASS" and
             .new_concept_fixture.decision == "PASS" and
             ([.failure_contracts[].diagnostic.decision] | all(. == "FAIL_CLOSED")) and
             ([.failure_contracts[].diagnostic.stage] | all(length > 0)) and
@@ -131,15 +133,21 @@ jobs:
             ([.predicate_observations[] | select(.observed == true)] | length) == ([.predicate_observations] | length) and
             ([.predicate_observations[] | select(.predicate_truth == "TRUE" and .target_address != "" and .target_digest != "")] | length) == ([.predicate_observations] | length) and
             .failure_predicates.numerator == .failure_predicates.denominator and
-            .failure_predicates.denominator == 16 and
+            .failure_predicates.denominator == 21 and
             .binding_predicates.numerator == .binding_predicates.denominator and
             .binding_predicates.denominator == 1 and
-            .claim_transitions.denominator == 21 and
+            .claim_transitions.denominator == 26 and
             .provenance_predicates.numerator == .provenance_predicates.denominator and
-            .failure_predicates.numerator == 16 and
-            .provenance_predicates.denominator == 16 and
+            .failure_predicates.numerator == 21 and
+            .provenance_predicates.denominator == 21 and
             .ast_resolved_bindings.numerator == 9 and
             .ast_resolved_bindings.denominator == 9 and
+            .metric_occurrences.numerator == 9 and
+            .metric_occurrences.denominator == 9 and
+            .unique_semantic_relation_digests.numerator == 9 and
+            .unique_semantic_relation_digests.denominator == 9 and
+            .output_row_addresses.numerator == 9 and
+            .output_row_addresses.denominator == 9 and
             ([.binding_output_receipts[]] | length) == 9 and
             .consumer_output_artifact.observed_path == "embedded://consumer_output_artifact/raw_bytes" and
             .consumer_output_artifact.digest != "" and
@@ -149,16 +157,16 @@ jobs:
             .failure_inventory.decision == "PASS" and
             .claim_inventory.decision == "PASS" and
             .provenance_inventory.decision == "PASS" and
-            .predicate_inventory.expected == ["independent-manifest-order", "independent-resource-digests", "independent-denominator-reconciliation", "independent-binding-registry", "independent-conformance-consumer", "consumer-malformed-manifest", "consumer-missing-manifest", "consumer-cross-directory-manifest", "consumer-missing-binding", "consumer-stale-denominator", "consumer-stale-generated-projection", "consumer-duplicate-stable-id", "consumer-binding-self-search", "consumer-binding-output-digest-mismatch", "consumer-binding-comment-only", "consumer-binding-unused-string", "consumer-binding-cross-package-same-name", "consumer-binding-shadowed-local", "consumer-binding-unused-declaration", "consumer-binding-unrelated-use", "classifier-success-exit-counterexample"] and
-            .failure_inventory.expected == ["consumer-malformed-manifest", "consumer-missing-manifest", "consumer-cross-directory-manifest", "consumer-missing-binding", "consumer-stale-denominator", "consumer-stale-generated-projection", "consumer-duplicate-stable-id", "consumer-binding-self-search", "consumer-binding-output-digest-mismatch", "consumer-binding-comment-only", "consumer-binding-unused-string", "consumer-binding-cross-package-same-name", "consumer-binding-shadowed-local", "consumer-binding-unused-declaration", "consumer-binding-unrelated-use", "classifier-success-exit-counterexample"] and
-            ([.predicate_inventory.expected[]] | length) == 21 and
-            ([.predicate_inventory.observed[]] | length) == 21 and
-            ([.failure_inventory.expected[]] | length) == 16 and
-            ([.failure_inventory.observed[]] | length) == 16 and
-            ([.claim_inventory.expected[]] | length) == 21 and
-            ([.claim_inventory.observed[]] | length) == 21 and
-            ([.provenance_inventory.expected[]] | length) == 16 and
-            ([.provenance_inventory.observed[]] | length) == 16 and
+            .predicate_inventory.expected == ["independent-manifest-order", "independent-resource-digests", "independent-denominator-reconciliation", "independent-binding-registry", "independent-conformance-consumer", "consumer-malformed-manifest", "consumer-missing-manifest", "consumer-cross-directory-manifest", "consumer-missing-binding", "consumer-stale-denominator", "consumer-stale-generated-projection", "consumer-duplicate-stable-id", "consumer-binding-self-search", "consumer-binding-output-digest-mismatch", "consumer-binding-comment-only", "consumer-binding-unused-string", "consumer-binding-cross-package-same-name", "consumer-binding-shadowed-local", "consumer-binding-unused-declaration", "consumer-binding-unrelated-use", "consumer-binding-unresolved-import", "consumer-binding-unrelated-type-error", "consumer-binding-metric-row-swap", "consumer-binding-different-metric-literal", "consumer-binding-unrelated-call", "classifier-success-exit-counterexample"] and
+            .failure_inventory.expected == ["consumer-malformed-manifest", "consumer-missing-manifest", "consumer-cross-directory-manifest", "consumer-missing-binding", "consumer-stale-denominator", "consumer-stale-generated-projection", "consumer-duplicate-stable-id", "consumer-binding-self-search", "consumer-binding-output-digest-mismatch", "consumer-binding-comment-only", "consumer-binding-unused-string", "consumer-binding-cross-package-same-name", "consumer-binding-shadowed-local", "consumer-binding-unused-declaration", "consumer-binding-unrelated-use", "consumer-binding-unresolved-import", "consumer-binding-unrelated-type-error", "consumer-binding-metric-row-swap", "consumer-binding-different-metric-literal", "consumer-binding-unrelated-call", "classifier-success-exit-counterexample"] and
+            ([.predicate_inventory.expected[]] | length) == 26 and
+            ([.predicate_inventory.observed[]] | length) == 26 and
+            ([.failure_inventory.expected[]] | length) == 21 and
+            ([.failure_inventory.observed[]] | length) == 21 and
+            ([.claim_inventory.expected[]] | length) == 26 and
+            ([.claim_inventory.observed[]] | length) == 26 and
+            ([.provenance_inventory.expected[]] | length) == 21 and
+            ([.provenance_inventory.observed[]] | length) == 21 and
             .repository_net_state_predicates.numerator == 1 and
             .claim_transitions.numerator == .claim_transitions.denominator and
             ([.strategies[] | select(.selected and .decision == "PASS")] | length) == 3 and

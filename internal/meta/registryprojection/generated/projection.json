@@ -28,7 +28,7 @@
           "metric_id": "gooo.metric.language.semantic-model-normalized-irs.v1",
           "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#languageSemanticModelMetrics",
           "registration_use_address": "internal/meta/languageconcept/language_semantic_model_concept.go#languageSemanticModelMetrics@19:18",
-          "semantic_digest": "sha256:455ff12444fb1533096d7a21df0e915f41f607ddfa9e234d2e7cf827cc49f6df",
+          "semantic_digest": "sha256:784644a5d31254201c0d1e1771072c1429b6ffdb844df988f5ed7362321bd3f7",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/language-semantic-model/corpus.json",
           "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"
@@ -37,7 +37,7 @@
           "metric_id": "gooo.metric.language.semantic-model-readiness-bps.v1",
           "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#languageSemanticModelMetrics",
           "registration_use_address": "internal/meta/languageconcept/language_semantic_model_concept.go#languageSemanticModelMetrics@19:18",
-          "semantic_digest": "sha256:455ff12444fb1533096d7a21df0e915f41f607ddfa9e234d2e7cf827cc49f6df",
+          "semantic_digest": "sha256:03e3aaf485d5ba65ed32aaa3201557d2f5654222cec6c156fc6eb6353068d7d2",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/language-semantic-model/corpus.json",
           "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"
@@ -46,7 +46,7 @@
           "metric_id": "gooo.metric.language.semantic-model-source-models.v1",
           "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#languageSemanticModelMetrics",
           "registration_use_address": "internal/meta/languageconcept/language_semantic_model_concept.go#languageSemanticModelMetrics@19:18",
-          "semantic_digest": "sha256:455ff12444fb1533096d7a21df0e915f41f607ddfa9e234d2e7cf827cc49f6df",
+          "semantic_digest": "sha256:a946d69504710db6bb9addc7990b3f8205e665bdcc0d70f7b9b2523cc4dba6d0",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/language-semantic-model/corpus.json",
           "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"
@@ -92,7 +92,7 @@
           "metric_id": "gooo.metric.language.syntax-roundtrip-executed-cases.v1",
           "raw_source_address": "internal/meta/languageconcept/catalog.go#concept",
           "registration_use_address": "internal/meta/languageconcept/catalog.go#concept@50:3",
-          "semantic_digest": "sha256:94f83457f7f1af01f1082ba94e6e2d7717741369cb3dea32ec3b3428fa5c93dc",
+          "semantic_digest": "sha256:944880376e57d8e7e249b41d595bc3f2c354073259a85c498f98f5a164db0d50",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/language-syntax-roundtrip/corpus.json",
           "observed_output_digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"
@@ -101,7 +101,7 @@
           "metric_id": "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
           "raw_source_address": "internal/meta/languageconcept/catalog.go#concept",
           "registration_use_address": "internal/meta/languageconcept/catalog.go#concept@50:3",
-          "semantic_digest": "sha256:94f83457f7f1af01f1082ba94e6e2d7717741369cb3dea32ec3b3428fa5c93dc",
+          "semantic_digest": "sha256:a78159d774061c0f2f729b3f7fcf4a5ca803d765150afefb6ea141f82283a4d8",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/language-syntax-roundtrip/corpus.json",
           "observed_output_digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"
@@ -110,7 +110,7 @@
           "metric_id": "gooo.metric.language.syntax-roundtrip-valid-corpus-files.v1",
           "raw_source_address": "internal/meta/languageconcept/catalog.go#concept",
           "registration_use_address": "internal/meta/languageconcept/catalog.go#concept@50:3",
-          "semantic_digest": "sha256:94f83457f7f1af01f1082ba94e6e2d7717741369cb3dea32ec3b3428fa5c93dc",
+          "semantic_digest": "sha256:c21f7b650f1ac92bd43282365c193d9eb0117bbfc8754d4df427ccff8a2b7f7d",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/language-syntax-roundtrip/corpus.json",
           "observed_output_digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"
@@ -153,7 +153,7 @@
           "metric_id": "gooo.metric.toolchain.conformance-case-readiness-bps.v1",
           "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchainConformanceMetricBindings",
           "registration_use_address": "internal/meta/languageconcept/toolchain_conformance.go#toolchainConformanceMetricBindings@18:18",
-          "semantic_digest": "sha256:c1b5e1b68e26ba474973b64eaac70f6133378e803f25b53242ebc436880ef194",
+          "semantic_digest": "sha256:7a1be302c8023621daceb466987bfe80462af1142a652bc52776c6ba327f662b",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/toolchain-conformance/corpus.json",
           "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"
@@ -162,7 +162,7 @@
           "metric_id": "gooo.metric.toolchain.conformance-proof-readiness-bps.v1",
           "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchainConformanceMetricBindings",
           "registration_use_address": "internal/meta/languageconcept/toolchain_conformance.go#toolchainConformanceMetricBindings@18:18",
-          "semantic_digest": "sha256:c1b5e1b68e26ba474973b64eaac70f6133378e803f25b53242ebc436880ef194",
+          "semantic_digest": "sha256:347826e81a90f4e026f42d672bcc3d23d9e96c5134931c0a0a1319015af4e377",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/toolchain-conformance/corpus.json",
           "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"
@@ -171,7 +171,7 @@
           "metric_id": "gooo.metric.toolchain.conformance-readiness-bps.v1",
           "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchainConformanceMetricBindings",
           "registration_use_address": "internal/meta/languageconcept/toolchain_conformance.go#toolchainConformanceMetricBindings@18:18",
-          "semantic_digest": "sha256:c1b5e1b68e26ba474973b64eaac70f6133378e803f25b53242ebc436880ef194",
+          "semantic_digest": "sha256:fac8065983ce2b76d60c771a1cd75b7f9e1f33c568686cb1a0599e9002e36314",
           "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
           "observed_output_address": "examples/toolchain-conformance/corpus.json",
           "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"
@@ -251,7 +251,7 @@
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-binding/v1",
-      "semantic_digest": "sha256:2437ad1f252f3e42d86788122920689b5e8e0d4f57136417296131d65d9e204e",
+      "semantic_digest": "sha256:911112944f5ebd709f36bd99e613b854de2d0d050ac46b7da6de873249c2a69c",
       "values": {
         "syntax_cases": 30,
         "syntax_lines": 428,
@@ -261,7 +261,7 @@
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-model/v1",
-      "semantic_digest": "sha256:2437ad1f252f3e42d86788122920689b5e8e0d4f57136417296131d65d9e204e",
+      "semantic_digest": "sha256:911112944f5ebd709f36bd99e613b854de2d0d050ac46b7da6de873249c2a69c",
       "values": {
         "authority_laws": 3,
         "cases": 32,
@@ -275,7 +275,7 @@
     {
       "stable_id": "language-syntax-roundtrip",
       "id": "gooo/language-syntax-roundtrip/v2",
-      "semantic_digest": "sha256:897934c7e1711e517893f2be6b15c8f0a626eb757caa2ad14df365c2a3de6f3b",
+      "semantic_digest": "sha256:e3c15f63c186a12a4d7834d4d3a1f436d31e50f42616e50343f94f74c7de6297",
       "values": {
         "cases": 30,
         "gooo_lines": 428,
@@ -289,7 +289,7 @@
     {
       "stable_id": "toolchain-conformance",
       "id": "gooo/toolchain-conformance-corpus/v1",
-      "semantic_digest": "sha256:1278c0162de3c836b92b726457a1f26c7e8db0490aff3c79a5b9f1e5bf32f584",
+      "semantic_digest": "sha256:ee578a351738a5c9c57154c6c489b0972498f5b1a6a546c8c9527de33d82e81a",
       "values": {
         "cases": 181,
         "indicators": 151,

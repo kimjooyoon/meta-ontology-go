@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -12,6 +13,7 @@ import (
 	"go/types"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -106,6 +108,10 @@ func validateBindingRegistry(root string, manifest Manifest) *Diagnostic {
 		}
 		semanticDigest, err := resolveBindingSemantic(root, binding.RawSourceAddress, binding.RegistrationUseAddress, binding.MetricID)
 		if err != nil {
+			var typeCheckErr bindingTypeCheckError
+			if errors.As(err, &typeCheckErr) {
+				return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "LOWER_RESOLUTION", Step: "BINDING_PACKAGE_TYPE_CHECK", Reason: "PACKAGE_TYPE_CHECK_FAILED"}
+			}
 			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "UNTRUSTED_BINDING_SOURCE"}
 		}
 		if binding.SemanticDigest != semanticDigest {
@@ -147,67 +153,233 @@ type typedGoPackage struct {
 	Package *types.Package
 }
 
+type bindingTypeCheckError struct{ detail string }
+
+func (e bindingTypeCheckError) Error() string {
+	return "binding package type check failed: " + e.detail
+}
+
+type listedGoPackage struct {
+	Dir             string
+	ImportPath      string
+	GoFiles         []string
+	CgoFiles        []string
+	CompiledGoFiles []string
+	Error           *struct{ Err string }  `json:"Error"`
+	DepsErrors      []struct{ Err string } `json:"DepsErrors"`
+}
+
+type moduleSourceImporter struct {
+	root       string
+	module     string
+	defaultImp types.Importer
+	packages   map[string]*types.Package
+	loading    map[string]bool
+}
+
+func newModuleSourceImporter(root string) *moduleSourceImporter {
+	return &moduleSourceImporter{root: root, module: modulePackagePath(root, ""), defaultImp: importer.Default(), packages: map[string]*types.Package{}, loading: map[string]bool{}}
+}
+
+func (m *moduleSourceImporter) Import(path string) (*types.Package, error) {
+	if !strings.HasPrefix(path, m.module+"/") && path != m.module {
+		return m.defaultImp.Import(path)
+	}
+	if pkg := m.packages[path]; pkg != nil {
+		return pkg, nil
+	}
+	if m.loading[path] {
+		return nil, bindingTypeCheckError{detail: "import cycle at " + path}
+	}
+	m.loading[path] = true
+	defer delete(m.loading, path)
+	listed, err := listGoPackage(m.root, path)
+	if err != nil {
+		return nil, err
+	}
+	fileSet := token.NewFileSet()
+	_, parsed, err := parseListedGoFiles(m.root, listed, fileSet)
+	if err != nil {
+		return nil, err
+	}
+	config := types.Config{Importer: m}
+	var typeErrors []error
+	config.Error = func(err error) { typeErrors = append(typeErrors, err) }
+	checked, checkErr := config.Check(listed.ImportPath, fileSet, parsed, nil)
+	if checkErr != nil || checked == nil || len(typeErrors) > 0 {
+		return nil, bindingTypeCheckError{detail: listed.ImportPath}
+	}
+	m.packages[path] = checked
+	return checked, nil
+}
+
 type bindingDigestPayload struct {
-	PackageIdentity    string `json:"package_identity"`
-	ObjectIdentity     string `json:"object_identity"`
-	DeclarationAST     string `json:"declaration_ast"`
-	RegistrationUseAST string `json:"registration_use_ast"`
+	PackageIdentity         string `json:"package_identity"`
+	ObjectIdentity          string `json:"object_identity"`
+	DeclarationAST          string `json:"declaration_ast"`
+	RegistrationUseAST      string `json:"registration_use_ast"`
+	MetricID                string `json:"metric_id"`
+	MetricOccurrenceAddress string `json:"metric_occurrence_address"`
+	MetricOccurrenceAST     string `json:"metric_occurrence_ast"`
+	MetricOccurrenceDigest  string `json:"metric_occurrence_digest"`
+}
+
+type bindingResolution struct {
+	SemanticDigest          string
+	MetricOccurrenceAddress string
+	MetricOccurrenceDigest  string
 }
 
 func resolveBindingSemantic(root, rawSourceAddress, registrationUseAddress, metricID string) (string, error) {
-	declaration, err := parseGoBindingAddress(rawSourceAddress, false)
+	relation, err := resolveBindingRelation(root, rawSourceAddress, registrationUseAddress, metricID)
 	if err != nil {
 		return "", err
+	}
+	return relation.SemanticDigest, nil
+}
+
+func resolveBindingRelation(root, rawSourceAddress, registrationUseAddress, metricID string) (bindingResolution, error) {
+	declaration, err := parseGoBindingAddress(rawSourceAddress, false)
+	if err != nil {
+		return bindingResolution{}, err
 	}
 	registration, err := parseGoBindingAddress(registrationUseAddress, true)
 	if err != nil {
-		return "", err
+		return bindingResolution{}, err
 	}
 	if filepath.ToSlash(filepath.Dir(declaration.Path)) != filepath.ToSlash(filepath.Dir(registration.Path)) {
-		return "", fmt.Errorf("binding declaration and use are in different packages")
+		return bindingResolution{}, fmt.Errorf("binding declaration and use are in different packages")
 	}
 	packageInfo, err := typeCheckGoPackage(root, declaration.Path)
 	if err != nil {
-		return "", err
+		return bindingResolution{}, err
 	}
 	declarationFile := packageInfo.Files[filepath.ToSlash(declaration.Path)]
 	registrationFile := packageInfo.Files[filepath.ToSlash(registration.Path)]
 	if declarationFile == nil || registrationFile == nil {
-		return "", fmt.Errorf("binding source file is not in typed package")
+		return bindingResolution{}, fmt.Errorf("binding source file is not in typed package")
 	}
 	declarationIdent, declarationNode, err := findDeclaration(declarationFile, declaration.Symbol)
 	if err != nil {
-		return "", err
+		return bindingResolution{}, err
 	}
 	declarationObject := packageInfo.Info.Defs[declarationIdent]
 	if declarationObject == nil {
-		return "", fmt.Errorf("binding declaration has no types object")
+		return bindingResolution{}, fmt.Errorf("binding declaration has no types object")
 	}
 	registrationIdent, registrationNode, err := findRegistrationUse(registrationFile, registration.Symbol, registration.Line, registration.Column, packageInfo.FileSet, packageInfo.Info)
 	if err != nil {
-		return "", err
+		return bindingResolution{}, err
 	}
 	registrationObject := packageInfo.Info.Uses[registrationIdent]
 	if registrationObject == nil || registrationObject != declarationObject {
-		return "", fmt.Errorf("binding registration use resolves to a different object")
+		return bindingResolution{}, fmt.Errorf("binding registration use resolves to a different object")
 	}
-	if !validRegistrationContext(registrationNode, registration.Symbol, metricID) || (!astNodeContainsString(declarationNode, metricID) && !astNodeContainsString(registrationNode, metricID)) {
-		return "", fmt.Errorf("binding registration use is not metric-bearing")
+	if !validRegistrationContext(registrationNode, registration.Symbol, metricID, registrationIdent) || (isCallNode(registrationNode) && !hasCatalogOwner(registrationFile, registrationNode)) {
+		return bindingResolution{}, fmt.Errorf("binding registration use is not a canonical registration relation")
 	}
+	metricAddress, metricAST, metricDigest, err := findMetricOccurrence(packageInfo.FileSet, declarationNode, declaration.Symbol, registrationNode, metricID)
+	if err != nil {
+		return bindingResolution{}, err
+	}
+	metricAddress = canonicalMetricOccurrenceAddress(declaration, registration, metricAddress)
 	declarationAST, err := normalizedAST(packageInfo.FileSet, declarationNode)
 	if err != nil {
-		return "", err
+		return bindingResolution{}, err
 	}
 	registrationAST, err := normalizedAST(packageInfo.FileSet, registrationNode)
 	if err != nil {
-		return "", err
+		return bindingResolution{}, err
 	}
-	objectIdentity := bindingObjectIdentity(packageInfo.FileSet, declarationObject)
-	payload, err := json.Marshal(bindingDigestPayload{PackageIdentity: declarationObject.Pkg().Path(), ObjectIdentity: objectIdentity, DeclarationAST: string(declarationAST), RegistrationUseAST: string(registrationAST)})
+	objectIdentity := bindingObjectIdentity(declarationObject)
+	payload, err := json.Marshal(bindingDigestPayload{PackageIdentity: declarationObject.Pkg().Path(), ObjectIdentity: objectIdentity, DeclarationAST: string(declarationAST), RegistrationUseAST: string(registrationAST), MetricID: metricID, MetricOccurrenceAddress: metricAddress, MetricOccurrenceAST: string(metricAST), MetricOccurrenceDigest: metricDigest})
 	if err != nil {
-		return "", err
+		return bindingResolution{}, err
 	}
-	return digestBytes(payload), nil
+	return bindingResolution{SemanticDigest: digestBytes(payload), MetricOccurrenceAddress: metricAddress, MetricOccurrenceDigest: metricDigest}, nil
+}
+
+func isCallNode(node ast.Node) bool {
+	_, ok := node.(*ast.CallExpr)
+	return ok
+}
+
+func hasCatalogOwner(file *ast.File, target ast.Node) bool {
+	var stack []ast.Node
+	found := false
+	ast.Inspect(file, func(node ast.Node) bool {
+		if node == nil {
+			if len(stack) > 0 {
+				stack = stack[:len(stack)-1]
+			}
+			return true
+		}
+		stack = append(stack, node)
+		if node == target {
+			for _, parent := range stack {
+				if function, ok := parent.(*ast.FuncDecl); ok && function.Name != nil && function.Name.Name == "Catalog" {
+					found = true
+				}
+			}
+			return false
+		}
+		return true
+	})
+	return found
+}
+
+func findMetricOccurrence(fileSet *token.FileSet, declarationNode ast.Node, declarationSymbol string, registrationNode ast.Node, metricID string) (string, []byte, string, error) {
+	type candidate struct {
+		address string
+		ast     []byte
+	}
+	candidates := []candidate{}
+	roots := map[string]ast.Node{}
+	if countMetricLiterals(registrationNode, metricID) > 0 {
+		roots["registration"] = registrationNode
+	} else if value, ok := declarationMetricValue(declarationNode, declarationSymbol); ok {
+		roots["declaration"] = value
+	}
+	for label, root := range roots {
+		ast.Inspect(root, func(node ast.Node) bool {
+			literal, ok := node.(*ast.BasicLit)
+			if !ok || literal.Kind != token.STRING || stringLiteral(literal) != metricID {
+				return true
+			}
+			normalized, err := normalizedAST(fileSet, literal)
+			if err != nil {
+				return false
+			}
+			ordinal := astNodeOrdinal(root, literal)
+			candidates = append(candidates, candidate{address: fmt.Sprintf("%s/literal/%d", label, ordinal), ast: normalized})
+			return true
+		})
+	}
+	if len(candidates) != 1 {
+		return "", nil, "", fmt.Errorf("metric occurrence is not unique in binding relation")
+	}
+	return candidates[0].address, candidates[0].ast, digestBytes(candidates[0].ast), nil
+}
+
+func canonicalMetricOccurrenceAddress(declaration, registration goBindingAddress, structural string) string {
+	source := declaration
+	if strings.HasPrefix(structural, "registration/") {
+		source = registration
+	}
+	return structural + "@" + source.Path + "#" + source.Symbol
+}
+
+func astNodeOrdinal(root, target ast.Node) int {
+	ordinal := 0
+	found := -1
+	ast.Inspect(root, func(node ast.Node) bool {
+		if node == target {
+			found = ordinal
+		}
+		ordinal++
+		return found < 0
+	})
+	return found
 }
 
 func parseGoBindingAddress(address string, requirePosition bool) (goBindingAddress, error) {
@@ -242,41 +414,83 @@ func typeCheckGoPackage(root, declarationPath string) (*typedGoPackage, error) {
 	if directory == "." {
 		directory = ""
 	}
-	absoluteDirectory := filepath.Join(root, filepath.FromSlash(directory))
-	entries, err := os.ReadDir(absoluteDirectory)
+	listed, err := listGoPackage(root, "./"+directory)
 	if err != nil {
 		return nil, err
 	}
 	fileSet := token.NewFileSet()
-	files := map[string]*ast.File{}
-	parsed := make([]*ast.File, 0)
-	for _, entry := range entries {
-		if entry.IsDir() || filepath.Ext(entry.Name()) != ".go" || strings.HasSuffix(entry.Name(), "_test.go") {
-			continue
+	files, parsed, err := parseListedGoFiles(root, listed, fileSet)
+	if err != nil {
+		return nil, err
+	}
+	if len(parsed) == 0 {
+		return nil, bindingTypeCheckError{detail: listed.ImportPath + " has no build-selected source files"}
+	}
+	info := &types.Info{Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{}, Selections: map[*ast.SelectorExpr]*types.Selection{}}
+	config := types.Config{Importer: newModuleSourceImporter(root)}
+	var typeErrors []error
+	config.Error = func(err error) { typeErrors = append(typeErrors, err) }
+	checked, checkErr := config.Check(listed.ImportPath, fileSet, parsed, info)
+	if checkErr != nil || checked == nil || len(typeErrors) > 0 {
+		detail := listed.ImportPath
+		if len(typeErrors) > 0 {
+			detail = typeErrors[0].Error()
+		} else if checkErr != nil {
+			detail = checkErr.Error()
 		}
-		relative := filepath.ToSlash(filepath.Join(directory, entry.Name()))
-		data, err := os.ReadFile(filepath.Join(absoluteDirectory, entry.Name()))
+		return nil, bindingTypeCheckError{detail: detail}
+	}
+	return &typedGoPackage{FileSet: fileSet, Files: files, Info: info, Package: checked}, nil
+}
+
+func listGoPackage(root, packagePath string) (listedGoPackage, error) {
+	command := exec.Command("go", "list", "-json", "-e", "-compiled", packagePath)
+	command.Dir = root
+	data, err := command.Output()
+	if err != nil {
+		return listedGoPackage{}, bindingTypeCheckError{detail: err.Error()}
+	}
+	listed := listedGoPackage{}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if err := decoder.Decode(&listed); err != nil {
+		return listedGoPackage{}, bindingTypeCheckError{detail: err.Error()}
+	}
+	if listed.ImportPath == "" || listed.Error != nil || len(listed.DepsErrors) > 0 {
+		return listedGoPackage{}, bindingTypeCheckError{detail: listed.ImportPath + " has module/load errors"}
+	}
+	return listed, nil
+}
+
+func parseListedGoFiles(root string, listed listedGoPackage, fileSet *token.FileSet) (map[string]*ast.File, []*ast.File, error) {
+	paths := append([]string(nil), listed.CompiledGoFiles...)
+	if len(paths) == 0 {
+		paths = append(paths, listed.GoFiles...)
+		paths = append(paths, listed.CgoFiles...)
+	}
+	files := map[string]*ast.File{}
+	parsed := make([]*ast.File, 0, len(paths))
+	for _, listedPath := range paths {
+		absolute := listedPath
+		if !filepath.IsAbs(absolute) {
+			absolute = filepath.Join(listed.Dir, listedPath)
+		}
+		relative, err := filepath.Rel(root, absolute)
+		if err != nil || strings.HasPrefix(filepath.ToSlash(relative), "../") {
+			return nil, nil, bindingTypeCheckError{detail: "build-selected Go file is outside module root"}
+		}
+		relative = filepath.ToSlash(relative)
+		data, err := os.ReadFile(absolute)
 		if err != nil {
-			return nil, err
+			return nil, nil, bindingTypeCheckError{detail: err.Error()}
 		}
 		file, err := parser.ParseFile(fileSet, relative, data, 0)
 		if err != nil {
-			return nil, err
+			return nil, nil, bindingTypeCheckError{detail: err.Error()}
 		}
 		files[relative] = file
 		parsed = append(parsed, file)
 	}
-	if len(parsed) == 0 {
-		return nil, fmt.Errorf("typed Go package has no source files")
-	}
-	info := &types.Info{Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{}, Selections: map[*ast.SelectorExpr]*types.Selection{}}
-	config := types.Config{Importer: importer.Default(), Error: func(error) {}}
-	packagePath := modulePackagePath(root, directory)
-	checked, _ := config.Check(packagePath, fileSet, parsed, info)
-	if checked == nil {
-		return nil, fmt.Errorf("Go package type checking produced no package")
-	}
-	return &typedGoPackage{FileSet: fileSet, Files: files, Info: info, Package: checked}, nil
+	return files, parsed, nil
 }
 
 func modulePackagePath(root, directory string) string {
@@ -381,16 +595,63 @@ func registrationContext(stack []ast.Node) ast.Node {
 	return fallback
 }
 
-func validRegistrationContext(node ast.Node, symbol, metricID string) bool {
+func validRegistrationContext(node ast.Node, symbol, metricID string, registrationIdent *ast.Ident) bool {
 	switch value := node.(type) {
 	case *ast.CallExpr:
-		return functionName(value.Fun) == symbol
+		return functionName(value.Fun) == symbol && containsIdent(value, registrationIdent) && countMetricLiterals(value, metricID) == 1
 	case *ast.KeyValueExpr:
 		key, ok := value.Key.(*ast.Ident)
-		return ok && (key.Name == "MetricBindings" || key.Name == "MetricID")
+		return ok && (key.Name == "MetricBindings" || key.Name == "MetricID") && containsIdent(value.Value, registrationIdent)
 	default:
 		return false
 	}
+}
+
+func containsIdent(node ast.Node, target *ast.Ident) bool {
+	found := false
+	ast.Inspect(node, func(node ast.Node) bool {
+		if node == target {
+			found = true
+			return false
+		}
+		return !found
+	})
+	return found
+}
+
+func declarationMetricValue(node ast.Node, symbol string) (ast.Node, bool) {
+	if function, ok := node.(*ast.FuncDecl); ok && function.Name != nil && function.Name.Name == symbol && function.Body != nil {
+		return function.Body, true
+	}
+	value, ok := node.(*ast.ValueSpec)
+	if !ok || len(value.Names) == 0 || len(value.Values) == 0 {
+		return nil, false
+	}
+	nameIndex := -1
+	for index, name := range value.Names {
+		if name.Name == symbol {
+			nameIndex = index
+			break
+		}
+	}
+	if nameIndex < 0 || (len(value.Names) != 1 && len(value.Names) != len(value.Values)) {
+		return nil, false
+	}
+	if len(value.Names) == 1 {
+		return value.Values[0], true
+	}
+	return value.Values[nameIndex], true
+}
+
+func countMetricLiterals(node ast.Node, metricID string) int {
+	count := 0
+	ast.Inspect(node, func(node ast.Node) bool {
+		if stringLiteral(node) == metricID {
+			count++
+		}
+		return true
+	})
+	return count
 }
 
 func normalizedAST(fileSet *token.FileSet, node ast.Node) ([]byte, error) {
@@ -401,13 +662,12 @@ func normalizedAST(fileSet *token.FileSet, node ast.Node) ([]byte, error) {
 	return normalized.Bytes(), nil
 }
 
-func bindingObjectIdentity(fileSet *token.FileSet, object types.Object) string {
-	position := fileSet.PositionFor(object.Pos(), false)
+func bindingObjectIdentity(object types.Object) string {
 	packagePath := ""
 	if object.Pkg() != nil {
 		packagePath = object.Pkg().Path()
 	}
-	return fmt.Sprintf("%s|%s|%s|%d:%d|%s", packagePath, object.Name(), position.Filename, position.Line, position.Column, object.Type().String())
+	return fmt.Sprintf("%s|%s|%s", packagePath, object.Name(), object.Type().String())
 }
 
 func astNodeContainsString(node ast.Node, wanted string) bool {

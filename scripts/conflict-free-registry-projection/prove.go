@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -103,7 +104,9 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	evidence.ProjectionReplay = projectionReplay(root, outputDir, loaded, baseOutputs)
 	evidence.ManifestOrderInvariant = manifestOrderInvariant(root, outputDir, loaded, baseOutputs)
 	evidence.SemanticCausality = semanticCausality(root, outputDir, loaded, baseOutputs)
+	evidence.SemanticMetricChange = semanticMetricChange(root, loaded)
 	evidence.CommentInvariant = commentInvariant(root, outputDir, loaded, baseOutputs)
+	evidence.CommentPositionInvariant = commentPositionInvariant(root, loaded)
 	evidence.NewConceptFixture = passedScenario("new-local-concept-fixture", fmt.Sprintf("temporary local manifest changed %d/%d generated outputs and no existing source bytes", len(fixture.Changed), len(baseOutputs)))
 	evidence.FailureContracts = failureContracts(root, loaded, baseOutputs)
 	evidence.DenominatorMismatch, evidence.StaleDenominatorReceipt = denominatorMismatchContract(root, loaded)
@@ -125,6 +128,9 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	evidence.RepositoryNetStatePredicates = predicateMetric(boolInt(evidence.RepositoryNetState.NetStateEqual), 1, decisionForBool(evidence.RepositoryNetState.NetStateEqual), "REGRESSION", "REPOSITORY_NET_STATE", evidence.RepositoryNetState.NetState)
 	evidence.BindingPredicates = bindingPredicateMetric(evidence.PredicateObservations, bindingReceipts)
 	evidence.ASTResolvedBindings = predicateMetric(len(bindingReceipts), expectedBindingReceiptCount, decisionForRatio(len(bindingReceipts), expectedBindingReceiptCount), "FOUNDATION", "AST_BINDING_RESOLUTION", "GO_AST_SYMBOL_AND_OUTPUT_RECEIPT_RECONSTRUCTED")
+	evidence.MetricOccurrences = metricOccurrenceMetric(bindingReceipts)
+	evidence.UniqueSemanticRelationDigests = uniqueSemanticRelationMetric(bindingReceipts)
+	evidence.OutputRowAddresses = uniqueOutputRowMetric(bindingReceipts)
 	evidence.ProvenancePredicates = provenancePredicateMetric(negativePredicates)
 	return evidence, nil
 }
@@ -172,6 +178,47 @@ func semanticCausality(root, outputDir string, loaded []LoadedManifest, base map
 	return passedScenario("semantic-manifest-causality", "rendered semantic manifest bytes were decoded before projection and changed semantic surfaces only")
 }
 
+func semanticMetricChange(root string, loaded []LoadedManifest) ScenarioResult {
+	item, ok := loadedManifestByID(loaded, "language-syntax-roundtrip")
+	if !ok || len(item.Manifest.BindingRegistry) == 0 {
+		return failedScenario("semantic-metric-change", "PASS", "bounded syntax binding was unavailable")
+	}
+	binding := item.Manifest.BindingRegistry[0]
+	before, err := resolveBindingRelation(root, binding.RawSourceAddress, binding.RegistrationUseAddress, binding.MetricID)
+	if err != nil {
+		return failedScenario("semantic-metric-change", "PASS", err.Error())
+	}
+	tempRoot, err := os.MkdirTemp("", "gooo-binding-metric-change-")
+	if err != nil {
+		return failedScenario("semantic-metric-change", "PASS", err.Error())
+	}
+	defer os.RemoveAll(tempRoot)
+	if err := copyTree(root, tempRoot); err != nil {
+		return failedScenario("semantic-metric-change", "PASS", err.Error())
+	}
+	path := filepath.Join(tempRoot, filepath.FromSlash("internal/meta/languageconcept/catalog.go"))
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return failedScenario("semantic-metric-change", "PASS", err.Error())
+	}
+	changedMetric := binding.MetricID + ".changed"
+	mutated := bytes.Replace(raw, []byte(binding.MetricID), []byte(changedMetric), 1)
+	if bytes.Equal(raw, mutated) {
+		return failedScenario("semantic-metric-change", "PASS", "metric literal was not found")
+	}
+	if err := os.WriteFile(path, mutated, 0o644); err != nil {
+		return failedScenario("semantic-metric-change", "PASS", err.Error())
+	}
+	after, err := resolveBindingRelation(tempRoot, binding.RawSourceAddress, binding.RegistrationUseAddress, changedMetric)
+	if err != nil {
+		return failedScenario("semantic-metric-change", "PASS", err.Error())
+	}
+	if before.SemanticDigest == after.SemanticDigest || before.MetricOccurrenceDigest == after.MetricOccurrenceDigest {
+		return failedScenario("semantic-metric-change", "PASS", "metric-specific relation digest did not change")
+	}
+	return passedScenario("semantic-metric-change", "changing the bound metric literal changed its metric-specific relation digest")
+}
+
 func commentInvariant(root, outputDir string, loaded []LoadedManifest, base map[string][]byte) ScenarioResult {
 	mutated, err := renderedMutation(loaded[0], func(manifest *Manifest) { manifest.Comments = append(manifest.Comments, "presentation-only comment") })
 	if err != nil {
@@ -187,6 +234,54 @@ func commentInvariant(root, outputDir string, loaded []LoadedManifest, base map[
 		return failedScenario("comment-only-invariance", "PASS", fmt.Sprintf("changed outputs=%v, want=%v", changed, want))
 	}
 	return passedScenario("comment-only-invariance", "rendered comment-only manifest bytes changed raw digest while semantic projection remained equal")
+}
+
+func commentPositionInvariant(root string, loaded []LoadedManifest) ScenarioResult {
+	item, ok := loadedManifestByID(loaded, "language-syntax-roundtrip")
+	if !ok || len(item.Manifest.BindingRegistry) == 0 {
+		return failedScenario("comment-position-invariance", "PASS", "bounded syntax binding was unavailable")
+	}
+	binding := item.Manifest.BindingRegistry[0]
+	before, err := resolveBindingRelation(root, binding.RawSourceAddress, binding.RegistrationUseAddress, binding.MetricID)
+	if err != nil {
+		return failedScenario("comment-position-invariance", "PASS", err.Error())
+	}
+	tempRoot, err := os.MkdirTemp("", "gooo-binding-comment-shift-")
+	if err != nil {
+		return failedScenario("comment-position-invariance", "PASS", err.Error())
+	}
+	defer os.RemoveAll(tempRoot)
+	if err := copyTree(root, tempRoot); err != nil {
+		return failedScenario("comment-position-invariance", "PASS", err.Error())
+	}
+	path := filepath.Join(tempRoot, filepath.FromSlash("internal/meta/languageconcept/catalog.go"))
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return failedScenario("comment-position-invariance", "PASS", err.Error())
+	}
+	if err := os.WriteFile(path, append([]byte("// comment-only position shift\n"), raw...), 0o644); err != nil {
+		return failedScenario("comment-position-invariance", "PASS", err.Error())
+	}
+	shiftedAddress := strings.Replace(binding.RegistrationUseAddress, "@50:3", "@51:3", 1)
+	after, err := resolveBindingRelation(tempRoot, binding.RawSourceAddress, shiftedAddress, binding.MetricID)
+	if err != nil {
+		return failedScenario("comment-position-invariance", "PASS", err.Error())
+	}
+	rawBefore := digestBytes([]byte(binding.RegistrationUseAddress))
+	rawAfter := digestBytes([]byte(shiftedAddress))
+	if rawBefore == rawAfter || before.SemanticDigest != after.SemanticDigest || before.MetricOccurrenceDigest != after.MetricOccurrenceDigest {
+		return failedScenario("comment-position-invariance", "PASS", "comment-only position shift changed semantic relation")
+	}
+	return passedScenario("comment-position-invariance", "raw registration address changed while semantic relation digest remained equal")
+}
+
+func loadedManifestByID(loaded []LoadedManifest, stableID string) (LoadedManifest, bool) {
+	for _, item := range loaded {
+		if item.Manifest.StableID == stableID {
+			return item, true
+		}
+	}
+	return LoadedManifest{}, false
 }
 
 func renderedMutation(item LoadedManifest, mutate func(*Manifest)) (LoadedManifest, error) {
@@ -304,7 +399,7 @@ func runIndependentConsumerAt(root string) (independentReceipt, error) {
 		return independentReceipt{}, fmt.Errorf("independent consumer binding output receipts were not observed")
 	}
 	for _, binding := range receipt.BindingOutputReceipts {
-		if binding.OutputAddress != embeddedOutputAddress || binding.OutputDigest != digestBytes(outputRaw) || binding.OutputBytes != len(outputRaw) || binding.SemanticDigest == "" || binding.RawSourceAddress == "" || binding.RegistrationUseAddress == "" || binding.OutputRowAddress == "" || binding.OutputRowDigest == "" {
+		if binding.OutputAddress != embeddedOutputAddress || binding.OutputDigest != digestBytes(outputRaw) || binding.OutputBytes != len(outputRaw) || binding.SemanticDigest == "" || binding.MetricOccurrenceAddress == "" || binding.MetricOccurrenceDigest == "" || binding.RawSourceAddress == "" || binding.RegistrationUseAddress == "" || binding.OutputRowAddress == "" || binding.OutputRowDigest == "" {
 			return independentReceipt{}, fmt.Errorf("independent consumer binding output receipt was not observed")
 		}
 	}
@@ -351,8 +446,8 @@ func validateObservedBindingReceipts(root string, receipts []BindingOutputReceip
 		if !ok || row.MetricID != receipt.MetricID || row.RawSourceAddress != receipt.RawSourceAddress || row.RegistrationUseAddress != receipt.RegistrationUseAddress || row.SemanticDigest != receipt.SemanticDigest || row.ConsumerEntryPoint != receipt.ConsumerEntryPoint || receipt.OutputAddress != embeddedOutputAddress || receipt.OutputDigest != digestBytes(outputRaw) || receipt.OutputBytes != len(outputRaw) || receipt.OutputRowDigest != digestJSONValue(row) {
 			return fmt.Errorf("independent consumer binding receipt failed output row reconstruction for %s", receipt.MetricID)
 		}
-		semanticDigest, err := resolveBindingSemantic(root, receipt.RawSourceAddress, receipt.RegistrationUseAddress, receipt.MetricID)
-		if err != nil || semanticDigest != receipt.SemanticDigest {
+		relation, err := resolveBindingRelation(root, receipt.RawSourceAddress, receipt.RegistrationUseAddress, receipt.MetricID)
+		if err != nil || relation.SemanticDigest != receipt.SemanticDigest || relation.MetricOccurrenceAddress != receipt.MetricOccurrenceAddress || relation.MetricOccurrenceDigest != receipt.MetricOccurrenceDigest {
 			return fmt.Errorf("independent consumer binding receipt failed AST reconstruction for %s", receipt.MetricID)
 		}
 	}
@@ -363,7 +458,8 @@ func validateObservedBindingReceipts(root string, receipts []BindingOutputReceip
 }
 
 func bindingOutputRowAddress(stableID, metricID string) string {
-	return embeddedOutputAddress + "#/catalog/" + stableID + "/binding_registry/" + metricID
+	encode := base64.RawURLEncoding.EncodeToString
+	return embeddedOutputAddress + "#/catalog/" + encode([]byte(stableID)) + "/binding_registry/" + encode([]byte(metricID))
 }
 
 func digestJSONValue(value any) string {
@@ -442,6 +538,7 @@ type consumerCommandResult struct {
 
 type consumerFailureCase struct {
 	id, stage, step, reason, rawPath string
+	rawPaths                         []string
 	mutate                           func(string) error
 }
 
@@ -453,7 +550,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 		{id: "consumer-missing-manifest", stage: "FOUNDATION", step: "REQUIRED_MANIFEST", reason: "MISSING_MANIFEST", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json.missing", mutate: func(temp string) error {
 			return os.Rename(filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json"), filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json.missing"))
 		}},
-		{id: "consumer-cross-directory-manifest", stage: "FOUNDATION", step: "MANIFEST_OWNERSHIP", reason: "CROSS_DIRECTORY_MANIFEST", rawPath: "examples/wrong-owner/concept.manifest.json", mutate: func(temp string) error {
+		{id: "consumer-cross-directory-manifest", stage: "FOUNDATION", step: "MANIFEST_OWNERSHIP", reason: "CROSS_DIRECTORY_MANIFEST", rawPath: "examples/wrong-owner/concept.manifest.json", rawPaths: []string{"examples/wrong-owner/concept.manifest.json"}, mutate: func(temp string) error {
 			from := filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json")
 			to := filepath.Join(temp, "examples/wrong-owner/concept.manifest.json")
 			if err := os.MkdirAll(filepath.Dir(to), 0o755); err != nil {
@@ -496,7 +593,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 		{id: "consumer-binding-output-digest-mismatch", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "BINDING_OUTPUT_DIGEST_MISMATCH", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
 			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) { manifest.BindingRegistry[0].ObservedOutputDigest = "sha256:stale" })
 		}},
-		{id: "consumer-binding-comment-only", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+		{id: "consumer-binding-comment-only", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"examples/language-syntax-roundtrip/concept.manifest.json", "scripts/conflict-free-registry-projection/testdata/comment-only-binding.go"}, mutate: func(temp string) error {
 			path := filepath.Join(temp, "scripts/conflict-free-registry-projection/testdata/comment-only-binding.go")
 			if err := os.WriteFile(path, []byte("package testdata\n// gooo.metric.language.syntax-roundtrip-readiness-bps.v1\n"), 0o644); err != nil {
 				return err
@@ -506,7 +603,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 				manifest.BindingRegistry[0].RegistrationUseAddress = "scripts/conflict-free-registry-projection/testdata/comment-only-binding.go#CommentOnly@2:1"
 			})
 		}},
-		{id: "consumer-binding-unused-string", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+		{id: "consumer-binding-unused-string", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"examples/language-syntax-roundtrip/concept.manifest.json", "scripts/conflict-free-registry-projection/testdata/unused-binding.go"}, mutate: func(temp string) error {
 			path := filepath.Join(temp, "scripts/conflict-free-registry-projection/testdata/unused-binding.go")
 			if err := os.WriteFile(path, []byte("package testdata\nvar Unused = \"gooo.metric.language.syntax-roundtrip-readiness-bps.v1\"\n"), 0o644); err != nil {
 				return err
@@ -516,7 +613,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 				manifest.BindingRegistry[0].RegistrationUseAddress = "scripts/conflict-free-registry-projection/testdata/unused-binding.go#Unused@2:5"
 			})
 		}},
-		{id: "consumer-binding-cross-package-same-name", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+		{id: "consumer-binding-cross-package-same-name", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"examples/language-syntax-roundtrip/concept.manifest.json", "scripts/conflict-free-registry-projection/testdata/other-package/same-name.go"}, mutate: func(temp string) error {
 			path := filepath.Join(temp, "scripts/conflict-free-registry-projection/testdata/other-package/same-name.go")
 			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 				return err
@@ -529,7 +626,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 				manifest.BindingRegistry[0].RegistrationUseAddress = "scripts/conflict-free-registry-projection/testdata/other-package/same-name.go#concept@6:2"
 			})
 		}},
-		{id: "consumer-binding-shadowed-local", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+		{id: "consumer-binding-shadowed-local", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"examples/language-syntax-roundtrip/concept.manifest.json", "internal/meta/languageconcept/shadowed-binding.go"}, mutate: func(temp string) error {
 			path := filepath.Join(temp, "internal/meta/languageconcept/shadowed-binding.go")
 			if err := os.WriteFile(path, []byte("package languageconcept\n\nfunc shadowedBindingUse() {\n\tconcept := func(string) {}\n\tconcept(\"gooo.metric.language.syntax-roundtrip-readiness-bps.v1\")\n}\n"), 0o644); err != nil {
 				return err
@@ -539,7 +636,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 				manifest.BindingRegistry[0].RegistrationUseAddress = "internal/meta/languageconcept/shadowed-binding.go#concept@5:2"
 			})
 		}},
-		{id: "consumer-binding-unused-declaration", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+		{id: "consumer-binding-unused-declaration", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"examples/language-syntax-roundtrip/concept.manifest.json", "scripts/conflict-free-registry-projection/testdata/unused-declaration.go"}, mutate: func(temp string) error {
 			path := filepath.Join(temp, "scripts/conflict-free-registry-projection/testdata/unused-declaration.go")
 			if err := os.WriteFile(path, []byte("package testdata\nvar UnusedMetric = \"gooo.metric.language.syntax-roundtrip-readiness-bps.v1\"\n"), 0o644); err != nil {
 				return err
@@ -549,7 +646,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 				manifest.BindingRegistry[0].RegistrationUseAddress = "scripts/conflict-free-registry-projection/testdata/unused-declaration.go#UnusedMetric@2:5"
 			})
 		}},
-		{id: "consumer-binding-unrelated-use", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+		{id: "consumer-binding-unrelated-use", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"examples/language-syntax-roundtrip/concept.manifest.json", "internal/meta/languageconcept/unrelated-binding.go"}, mutate: func(temp string) error {
 			path := filepath.Join(temp, "internal/meta/languageconcept/unrelated-binding.go")
 			if err := os.WriteFile(path, []byte("package languageconcept\nvar _ = concept\n"), 0o644); err != nil {
 				return err
@@ -557,6 +654,33 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
 				manifest.BindingRegistry[0].RawSourceAddress = "internal/meta/languageconcept/catalog.go#concept"
 				manifest.BindingRegistry[0].RegistrationUseAddress = "internal/meta/languageconcept/unrelated-binding.go#concept@2:9"
+			})
+		}},
+		{id: "consumer-binding-unresolved-import", stage: "LOWER_RESOLUTION", step: "BINDING_PACKAGE_TYPE_CHECK", reason: "PACKAGE_TYPE_CHECK_FAILED", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"internal/meta/languageconcept/unresolved-import-binding.go"}, mutate: func(temp string) error {
+			path := filepath.Join(temp, "internal/meta/languageconcept/unresolved-import-binding.go")
+			return os.WriteFile(path, []byte("package languageconcept\n\nimport _ \"example.invalid/unresolved-binding-import\"\n"), 0o644)
+		}},
+		{id: "consumer-binding-unrelated-type-error", stage: "LOWER_RESOLUTION", step: "BINDING_PACKAGE_TYPE_CHECK", reason: "PACKAGE_TYPE_CHECK_FAILED", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"internal/meta/languageconcept/unrelated-type-error-binding.go"}, mutate: func(temp string) error {
+			path := filepath.Join(temp, "internal/meta/languageconcept/unrelated-type-error-binding.go")
+			return os.WriteFile(path, []byte("package languageconcept\n\nvar unrelatedBindingTypeError string = 42\n"), 0o644)
+		}},
+		{id: "consumer-binding-metric-row-swap", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "BINDING_SEMANTIC_DIGEST_MISMATCH", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
+				manifest.BindingRegistry[0].MetricID, manifest.BindingRegistry[1].MetricID = manifest.BindingRegistry[1].MetricID, manifest.BindingRegistry[0].MetricID
+			})
+		}},
+		{id: "consumer-binding-different-metric-literal", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
+				manifest.BindingRegistry[0].RegistrationUseAddress = "internal/meta/languageconcept/catalog.go#concept@5:3"
+			})
+		}},
+		{id: "consumer-binding-unrelated-call", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", rawPaths: []string{"examples/language-syntax-roundtrip/concept.manifest.json", "internal/meta/languageconcept/unrelated-binding-call.go"}, mutate: func(temp string) error {
+			path := filepath.Join(temp, "internal/meta/languageconcept/unrelated-binding-call.go")
+			if err := os.WriteFile(path, []byte("package languageconcept\n\nfunc unrelatedBindingCall() Concept {\n\treturn concept(\"language-syntax-roundtrip\", \"problem\", \"effect\", \"operation\", \"OPERATING\", nil, nil, UseCase{})\n}\n"), 0o644); err != nil {
+				return err
+			}
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
+				manifest.BindingRegistry[0].RegistrationUseAddress = "internal/meta/languageconcept/unrelated-binding-call.go#concept@4:9"
 			})
 		}},
 	}
@@ -572,11 +696,14 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 		}
 		result := consumerCommandResult{ExitCode: -1}
 		var rawInput []byte
+		var rawArtifacts []RawInputArtifact
 		if copyErr == nil {
-			rawInput, _ = os.ReadFile(filepath.Join(temp, filepath.FromSlash(item.rawPath)))
-			result = runConsumerFailureCommand(root, temp)
+			rawInput, rawArtifacts, copyErr = readFailureInput(temp, item)
+			if copyErr == nil {
+				result = runConsumerFailureCommand(root, temp)
+			}
 		}
-		observations = append(observations, failurePredicateObservation(item, result, rawInput))
+		observations = append(observations, failurePredicateObservation(item, result, rawInput, rawArtifacts))
 		_ = os.RemoveAll(temp)
 	}
 	observations = append(observations, successExitCounterexample())
@@ -625,7 +752,28 @@ func parseExactDiagnostic(streams ...[]byte) ([]byte, *Diagnostic) {
 	return nil, nil
 }
 
-func failurePredicateObservation(item consumerFailureCase, result consumerCommandResult, rawInput []byte) PredicateObservation {
+func readFailureInput(temp string, item consumerFailureCase) ([]byte, []RawInputArtifact, error) {
+	paths := append([]string(nil), item.rawPaths...)
+	if len(paths) == 0 {
+		paths = []string{item.rawPath}
+	}
+	sort.Strings(paths)
+	artifacts := make([]RawInputArtifact, 0, len(paths))
+	for _, path := range paths {
+		data, err := os.ReadFile(filepath.Join(temp, filepath.FromSlash(path)))
+		if err != nil {
+			return nil, nil, err
+		}
+		artifacts = append(artifacts, RawInputArtifact{Path: path, Bytes: data, Digest: digestBytes(data)})
+	}
+	envelope, err := json.Marshal(artifacts)
+	if err != nil {
+		return nil, nil, err
+	}
+	return envelope, artifacts, nil
+}
+
+func failurePredicateObservation(item consumerFailureCase, result consumerCommandResult, rawInput []byte, rawArtifacts []RawInputArtifact) PredicateObservation {
 	stage, step, reason, decision := "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"
 	if result.Diagnostic != nil {
 		stage, step, reason, decision = result.Diagnostic.Stage, result.Diagnostic.Step, result.Diagnostic.Reason, result.Diagnostic.Decision
@@ -645,12 +793,14 @@ func failurePredicateObservation(item consumerFailureCase, result consumerComman
 	rawDigest := digestBytes(rawInput)
 	address := "evidence://consumer-failure/" + item.id
 	targetDigest := digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest + fmt.Sprint(result.ExitCode)))
-	return PredicateObservation{ID: item.id, ObservedPredicate: "independent consumer rejects " + item.reason + " with nonzero exit and exact diagnostic fields", TargetAddress: address, TargetDigest: targetDigest, Observed: truth == "TRUE", Decision: decision, PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: rawDigest, RawInputBytes: string(rawInput), ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
+	return PredicateObservation{ID: item.id, ObservedPredicate: "independent consumer rejects " + item.reason + " with nonzero exit and exact diagnostic fields", TargetAddress: address, TargetDigest: targetDigest, Observed: truth == "TRUE", Decision: decision, PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: rawDigest, RawInputBytes: string(rawInput), RawInputArtifacts: rawArtifacts, ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
 }
 
 func successExitCounterexample() PredicateObservation {
 	raw := []byte("{\"decision\":\"FAIL_CLOSED\",\"stage\":\"REGRESSION\",\"step\":\"GENERATED_OUTPUT\",\"reason\":\"STALE_GENERATED_PROJECTION\"}\n")
 	result := runCommand(exec.Command("printf", "%s", string(raw)))
+	rawArtifacts := []RawInputArtifact{{Path: "embedded://classifier-input/diagnostic.json", Bytes: raw, Digest: digestBytes(raw)}}
+	rawInput, _ := json.Marshal(rawArtifacts)
 	rawDigest := digestBytes(raw)
 	diagnosticDigest := digestBytes(result.DiagnosticJSON)
 	address := "evidence://classifier-counterexample/classifier-success-exit-counterexample"
@@ -664,7 +814,7 @@ func successExitCounterexample() PredicateObservation {
 	if observed {
 		truth = "TRUE"
 	}
-	return PredicateObservation{ID: "classifier-success-exit-counterexample", ObservedPredicate: "the failure classifier rejects diagnostic JSON with a success exit as a failure observation", TargetAddress: address, TargetDigest: digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest)), Observed: observed, Decision: "PASS", PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: rawDigest, RawInputBytes: string(raw), ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
+	return PredicateObservation{ID: "classifier-success-exit-counterexample", ObservedPredicate: "the failure classifier rejects diagnostic JSON with a success exit as a failure observation", TargetAddress: address, TargetDigest: digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest)), Observed: observed, Decision: "PASS", PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: digestBytes(rawInput), RawInputBytes: string(rawInput), RawInputArtifacts: rawArtifacts, ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
 }
 
 func consumerFailureAccepted(result consumerCommandResult, expected consumerFailureCase) bool {
@@ -751,7 +901,7 @@ func allProofsPass(evidence Evidence) bool {
 	if len(expectedConformancePredicateIDs) != expectedConformancePredicateCount || hasDuplicateStrings(expectedConformancePredicateIDs) || len(expectedFailurePredicateIDs) != expectedFailurePredicateCount || hasDuplicateStrings(expectedFailurePredicateIDs) {
 		return false
 	}
-	for _, scenario := range []ScenarioResult{evidence.ProjectionReplay, evidence.ManifestOrderInvariant, evidence.SemanticCausality, evidence.CommentInvariant, evidence.NewConceptFixture, evidence.DenominatorMismatch} {
+	for _, scenario := range []ScenarioResult{evidence.ProjectionReplay, evidence.ManifestOrderInvariant, evidence.SemanticCausality, evidence.SemanticMetricChange, evidence.CommentInvariant, evidence.CommentPositionInvariant, evidence.NewConceptFixture, evidence.DenominatorMismatch} {
 		if scenario.Decision != "PASS" {
 			return false
 		}
@@ -776,7 +926,7 @@ func allProofsPass(evidence Evidence) bool {
 	if evidence.ClaimTransitions.Denominator != expectedClaimCount || evidence.FailurePredicates.Denominator != expectedFailurePredicateCount || evidence.ProvenancePredicates.Denominator != expectedFailurePredicateCount {
 		return false
 	}
-	if len(evidence.BindingOutputReceipts) != expectedBindingReceiptCount || evidence.ConsumerOutputArtifact.ObservedPath != embeddedOutputAddress || evidence.ConsumerOutputArtifact.Bytes <= 0 || len(evidence.ConsumerOutputArtifact.RawBytes) != evidence.ConsumerOutputArtifact.Bytes || evidence.ConsumerOutputArtifact.Digest != digestBytes([]byte(evidence.ConsumerOutputArtifact.RawBytes)) {
+	if len(evidence.BindingOutputReceipts) != expectedBindingReceiptCount || evidence.MetricOccurrences.Numerator != expectedBindingReceiptCount || evidence.MetricOccurrences.Denominator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Numerator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Denominator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Numerator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Denominator != expectedBindingReceiptCount || evidence.ConsumerOutputArtifact.ObservedPath != embeddedOutputAddress || evidence.ConsumerOutputArtifact.Bytes <= 0 || len(evidence.ConsumerOutputArtifact.RawBytes) != evidence.ConsumerOutputArtifact.Bytes || evidence.ConsumerOutputArtifact.Digest != digestBytes([]byte(evidence.ConsumerOutputArtifact.RawBytes)) {
 		return false
 	}
 	for _, scenario := range evidence.FailureContracts {
@@ -1115,7 +1265,7 @@ func failurePredicateMetric(predicates []PredicateObservation) PredicateMetric {
 			numerator++
 		}
 	}
-	return predicateMetric(numerator, len(expectedFailurePredicateIDs), decisionForRatio(numerator, len(expectedFailurePredicateIDs)), "REGRESSION", "FAILURE_PREDICATES", "EXACT_DIAGNOSTIC_AND_EXIT_CONTRACTS")
+	return predicateMetric(numerator, expectedFailurePredicateCount, decisionForRatio(numerator, expectedFailurePredicateCount), "REGRESSION", "FAILURE_PREDICATES", "EXACT_DIAGNOSTIC_AND_EXIT_CONTRACTS")
 }
 
 func bindingPredicateMetric(predicates []PredicateObservation, receipts []BindingOutputReceipt) PredicateMetric {
@@ -1128,6 +1278,50 @@ func bindingPredicateMetric(predicates []PredicateObservation, receipts []Bindin
 	return predicateMetric(0, 1, "FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "MISSING_BINDING_PREDICATE")
 }
 
+func metricOccurrenceMetric(receipts []BindingOutputReceipt) PredicateMetric {
+	addresses := map[string]struct{}{}
+	digests := map[string]struct{}{}
+	for _, receipt := range receipts {
+		if receipt.MetricOccurrenceAddress != "" && receipt.MetricOccurrenceDigest != "" {
+			addresses[receipt.MetricOccurrenceAddress] = struct{}{}
+			digests[receipt.MetricOccurrenceDigest] = struct{}{}
+		}
+	}
+	numerator := len(addresses)
+	if len(digests) < numerator {
+		numerator = len(digests)
+	}
+	return predicateMetric(numerator, expectedBindingReceiptCount, decisionForRatio(numerator, expectedBindingReceiptCount), "FOUNDATION", "METRIC_OCCURRENCE", "METRIC_LITERAL_OCCURRENCE_RECONSTRUCTED")
+}
+
+func uniqueSemanticRelationMetric(receipts []BindingOutputReceipt) PredicateMetric {
+	seen := map[string]struct{}{}
+	for _, receipt := range receipts {
+		if receipt.SemanticDigest != "" {
+			seen[receipt.SemanticDigest] = struct{}{}
+		}
+	}
+	return predicateMetric(len(seen), expectedBindingReceiptCount, decisionForRatio(len(seen), expectedBindingReceiptCount), "FOUNDATION", "SEMANTIC_RELATION_UNIQUENESS", "METRIC_SPECIFIC_RELATION_DIGESTS_UNIQUE")
+}
+
+func uniqueOutputRowMetric(receipts []BindingOutputReceipt) PredicateMetric {
+	addresses := map[string]struct{}{}
+	digests := map[string]struct{}{}
+	for _, receipt := range receipts {
+		if receipt.OutputRowAddress != "" {
+			addresses[receipt.OutputRowAddress] = struct{}{}
+		}
+		if receipt.OutputRowDigest != "" {
+			digests[receipt.OutputRowDigest] = struct{}{}
+		}
+	}
+	numerator := len(addresses)
+	if len(digests) < numerator {
+		numerator = len(digests)
+	}
+	return predicateMetric(numerator, expectedBindingReceiptCount, decisionForRatio(numerator, expectedBindingReceiptCount), "COHERENCE", "OUTPUT_ROW_UNIQUENESS", "CANONICAL_OUTPUT_ROW_ADDRESSES_AND_DIGESTS_UNIQUE")
+}
+
 func provenancePredicateMetric(predicates []PredicateObservation) PredicateMetric {
 	numerator := 0
 	byID := make(map[string]PredicateObservation, len(predicates))
@@ -1135,11 +1329,24 @@ func provenancePredicateMetric(predicates []PredicateObservation) PredicateMetri
 		byID[predicate.ID] = predicate
 	}
 	for _, id := range expectedFailurePredicateIDs {
-		if predicate, ok := byID[id]; ok && predicate.ExitCode != -1 && predicate.DiagnosticJSON != "" && predicate.DiagnosticDigest == digestBytes([]byte(predicate.DiagnosticJSON)) && predicate.RawInputDigest == digestBytes([]byte(predicate.RawInputBytes)) && predicate.RawInputBytes != "" && predicate.ContentDigest == predicate.DiagnosticDigest {
+		if predicate, ok := byID[id]; ok && predicate.ExitCode != -1 && predicate.DiagnosticJSON != "" && predicate.DiagnosticDigest == digestBytes([]byte(predicate.DiagnosticJSON)) && rawInputArtifactsValid(predicate) && predicate.ContentDigest == predicate.DiagnosticDigest {
 			numerator++
 		}
 	}
-	return predicateMetric(numerator, len(expectedFailurePredicateIDs), decisionForRatio(numerator, len(expectedFailurePredicateIDs)), "REGRESSION", "PROVENANCE_PREDICATES", "EXIT_DIAGNOSTIC_RAW_INPUT_AND_ARTIFACT_PRESERVED")
+	return predicateMetric(numerator, expectedFailurePredicateCount, decisionForRatio(numerator, expectedFailurePredicateCount), "REGRESSION", "PROVENANCE_PREDICATES", "EXIT_DIAGNOSTIC_RAW_INPUT_AND_ARTIFACT_PRESERVED")
+}
+
+func rawInputArtifactsValid(predicate PredicateObservation) bool {
+	if len(predicate.RawInputArtifacts) == 0 || predicate.RawInputBytes == "" {
+		return false
+	}
+	for _, artifact := range predicate.RawInputArtifacts {
+		if artifact.Path == "" || artifact.Digest != digestBytes(artifact.Bytes) {
+			return false
+		}
+	}
+	envelope, err := json.Marshal(predicate.RawInputArtifacts)
+	return err == nil && string(envelope) == predicate.RawInputBytes && predicate.RawInputDigest == digestBytes(envelope)
 }
 
 func decisionForRatio(numerator, denominator int) string {
