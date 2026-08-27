@@ -19,6 +19,8 @@ current_path="$output_root/current/observations.json"
 effects_path="$output_root/effects.json"
 independence_path="$output_root/independence.json"
 
+jq -e '(.capsule_state == "HISTORICAL_FIXTURE") and ([.references[] | select((has("available") or has("agreement")))] | length) == 0' "$capsule_path" >/dev/null
+
 retrieve_reference() {
   local reference_id="$1"
   local reference_url="$2"

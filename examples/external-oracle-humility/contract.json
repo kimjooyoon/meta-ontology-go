@@ -64,7 +64,7 @@
   "cases": [
     {
       "id": "reference-agreement",
-      "input": "three available primary references with comparative-only relations",
+      "input": "three complete primary references with comparative-only propositions",
       "expected_decision": "REFERENCE_AGREEMENT_OBSERVED",
       "expected_resolution": "EXACT",
       "expected_authority": "GOOO_SOURCE_INTENT",
@@ -72,7 +72,7 @@
     },
     {
       "id": "reference-mismatch",
-      "input": "one available reference claims semantic authority or the wrong claim",
+      "input": "one primary proposition claims semantic authority or the wrong claim",
       "expected_decision": "FAIL_CLOSED",
       "expected_resolution": "EXACT",
       "expected_authority": "GOOO_SOURCE_INTENT",
@@ -80,7 +80,7 @@
     },
     {
       "id": "reference-absence",
-      "input": "a primary reference is unavailable",
+      "input": "a primary reference is absent from the capsule",
       "expected_decision": "FAIL_CLOSED",
       "expected_resolution": "UNKNOWN",
       "expected_authority": "GOOO_SOURCE_INTENT",
