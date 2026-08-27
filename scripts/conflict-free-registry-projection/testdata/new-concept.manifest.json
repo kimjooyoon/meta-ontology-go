@@ -12,7 +12,7 @@
   "code_bindings": ["scripts/conflict-free-registry-projection"],
   "metric_bindings": ["gooo.metric.meta.unbound-indicators.v1"],
   "binding_registry": [
-    {"metric_id": "gooo.metric.meta.unbound-indicators.v1", "raw_source_address": "internal/meta/metabinding/types.go#MetricID", "semantic_digest": "sha256:fcff6ecdac0f98eb98f924ccb5cdc3c2785e56769d17bbf1e46c133904e0f836", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "scripts/conflict-free-registry-projection/README.md", "observed_output_digest": "sha256:ff87504a08f479935d94ee3f1405a07ff478177a1ff10a2231f220a9bcc8715b"}
+    {"metric_id": "gooo.metric.meta.unbound-indicators.v1", "raw_source_address": "internal/meta/metabinding/types.go#MetricID", "registration_use_address": "internal/meta/metabinding/summarize.go#MetricID@62:36", "semantic_digest": "sha256:b25a2b8b06e9929357cf9c914724c537367dc04c566d8417956d951a99ad1fa8", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "scripts/conflict-free-registry-projection/README.md", "observed_output_digest": "sha256:ff87504a08f479935d94ee3f1405a07ff478177a1ff10a2231f220a9bcc8715b"}
   ],
   "use_cases": [
     {

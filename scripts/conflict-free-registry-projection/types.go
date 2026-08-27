@@ -28,15 +28,20 @@ var expectedFailurePredicateIDs = []string{
 	"consumer-binding-output-digest-mismatch",
 	"consumer-binding-comment-only",
 	"consumer-binding-unused-string",
-	"consumer-success-with-diagnostic-counterexample",
+	"consumer-binding-cross-package-same-name",
+	"consumer-binding-shadowed-local",
+	"consumer-binding-unused-declaration",
+	"consumer-binding-unrelated-use",
+	"classifier-success-exit-counterexample",
 }
 
 const (
 	expectedConformancePredicateCount = 5
-	expectedFailurePredicateCount     = 12
-	expectedClaimCount                = 17
+	expectedFailurePredicateCount     = 16
+	expectedClaimCount                = 21
 	expectedFailureContractCount      = 8
 	expectedBindingReceiptCount       = 9
+	embeddedOutputAddress             = "embedded://consumer_output_artifact/raw_bytes"
 )
 
 type UseCase struct {
@@ -61,12 +66,13 @@ type ResourceRef struct {
 }
 
 type BindingRegistryEntry struct {
-	MetricID              string `json:"metric_id"`
-	RawSourceAddress      string `json:"raw_source_address"`
-	SemanticDigest        string `json:"semantic_digest"`
-	ConsumerEntryPoint    string `json:"consumer_entry_point"`
-	ObservedOutputAddress string `json:"observed_output_address"`
-	ObservedOutputDigest  string `json:"observed_output_digest"`
+	MetricID               string `json:"metric_id"`
+	RawSourceAddress       string `json:"raw_source_address"`
+	RegistrationUseAddress string `json:"registration_use_address"`
+	SemanticDigest         string `json:"semantic_digest"`
+	ConsumerEntryPoint     string `json:"consumer_entry_point"`
+	ObservedOutputAddress  string `json:"observed_output_address"`
+	ObservedOutputDigest   string `json:"observed_output_digest"`
 }
 
 type Denominator struct {
@@ -202,22 +208,22 @@ type DenominatorReconciliation struct {
 }
 
 type PredicateObservation struct {
-	ID                 string `json:"id"`
-	ObservedPredicate  string `json:"observed_predicate"`
-	TargetAddress      string `json:"target_address"`
-	TargetDigest       string `json:"target_digest"`
-	Observed           bool   `json:"observed"`
-	Decision           string `json:"decision"`
-	PredicateTruth     string `json:"predicate_truth"`
-	ExitCode           int    `json:"exit_code"`
-	DiagnosticJSON     string `json:"diagnostic_json,omitempty"`
-	DiagnosticDigest   string `json:"diagnostic_json_digest,omitempty"`
-	RawInputDigest     string `json:"raw_input_digest,omitempty"`
-	RawInputBytes      string `json:"raw_input_bytes,omitempty"`
-	ContentDigest      string `json:"content_digest,omitempty"`
-	Stage              string `json:"stage"`
-	Step               string `json:"step"`
-	Reason             string `json:"reason"`
+	ID                string `json:"id"`
+	ObservedPredicate string `json:"observed_predicate"`
+	TargetAddress     string `json:"target_address"`
+	TargetDigest      string `json:"target_digest"`
+	Observed          bool   `json:"observed"`
+	Decision          string `json:"decision"`
+	PredicateTruth    string `json:"predicate_truth"`
+	ExitCode          int    `json:"exit_code"`
+	DiagnosticJSON    string `json:"diagnostic_json,omitempty"`
+	DiagnosticDigest  string `json:"diagnostic_json_digest,omitempty"`
+	RawInputDigest    string `json:"raw_input_digest,omitempty"`
+	RawInputBytes     string `json:"raw_input_bytes,omitempty"`
+	ContentDigest     string `json:"content_digest,omitempty"`
+	Stage             string `json:"stage"`
+	Step              string `json:"step"`
+	Reason            string `json:"reason"`
 }
 
 type SourceDigestComparison struct {
@@ -310,13 +316,16 @@ type ObservedOutputArtifact struct {
 }
 
 type BindingOutputReceipt struct {
-	MetricID           string `json:"metric_id"`
-	RawSourceAddress   string `json:"raw_source_address"`
-	SemanticDigest     string `json:"semantic_digest"`
-	ConsumerEntryPoint string `json:"consumer_entry_point"`
-	OutputAddress      string `json:"output_address"`
-	OutputDigest       string `json:"output_digest"`
-	OutputBytes        int    `json:"output_bytes"`
+	MetricID               string `json:"metric_id"`
+	RawSourceAddress       string `json:"raw_source_address"`
+	RegistrationUseAddress string `json:"registration_use_address"`
+	SemanticDigest         string `json:"semantic_digest"`
+	ConsumerEntryPoint     string `json:"consumer_entry_point"`
+	OutputAddress          string `json:"output_address"`
+	OutputDigest           string `json:"output_digest"`
+	OutputBytes            int    `json:"output_bytes"`
+	OutputRowAddress       string `json:"output_row_address"`
+	OutputRowDigest        string `json:"output_row_digest"`
 }
 
 type Evidence struct {

@@ -49,19 +49,23 @@ numerator `0/1`; no number is extracted from prose. A regression clone with
 the prior declared `160` cases must produce `FAIL_CLOSED / DENOMINATOR_SOURCE_MISMATCH`,
 with declared and calculated values side by side in the receipt.
 
-The fixed predicate inventory is 17 IDs: five conformance IDs
+The fixed predicate inventory is 21 IDs: five conformance IDs
 (`independent-manifest-order`, `independent-resource-digests`,
 `independent-denominator-reconciliation`, `independent-binding-registry`, and
-`independent-conformance-consumer`) plus twelve failure IDs
+`independent-conformance-consumer`) plus sixteen failure IDs
 (`consumer-malformed-manifest`, `consumer-missing-manifest`,
 `consumer-cross-directory-manifest`, `consumer-missing-binding`,
 `consumer-stale-denominator`, `consumer-stale-generated-projection`,
 `consumer-duplicate-stable-id`, `consumer-binding-self-search`,
 `consumer-binding-output-digest-mismatch`, `consumer-binding-comment-only`,
-`consumer-binding-unused-string`, and
-`consumer-success-with-diagnostic-counterexample`). Claims are exactly 17;
-failure and provenance predicates are exactly 12; static failure contracts are
-exactly 8; AST-resolved binding output receipts are exactly 9.
+`consumer-binding-unused-string`,
+`consumer-binding-cross-package-same-name`, `consumer-binding-shadowed-local`,
+`consumer-binding-unused-declaration`, `consumer-binding-unrelated-use`, and
+`classifier-success-exit-counterexample`). Claims are exactly 21; failure and
+provenance predicates are exactly 16; static failure contracts are exactly 8;
+AST-resolved binding output receipts are exactly 9. Each binding is resolved
+through a typed declaration/use object tuple and includes an exact row digest
+from the consumer's embedded raw output artifact.
 
 ## Meaning gates
 

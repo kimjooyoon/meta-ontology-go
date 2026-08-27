@@ -1,11 +1,11 @@
 {
   "schema": "gooo/manual-source-registration-edit-free-registry-denominator/v1",
-  "section_digest": "sha256:2d5c61071676f3945410b3103180e30e5a395f60afeccdc47a2b45a5161e8834",
+  "section_digest": "sha256:bdb5fe3d6691f30767664d2bedd6ff0a45177f434f9ebb5a5a841a932b3e2f9d",
   "entries": [
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-binding/v1",
-      "semantic_digest": "sha256:624cd017cd4068452e8588cb64e57b3251167cc5f37f9f2a8c5bca4adf312f39",
+      "semantic_digest": "sha256:2437ad1f252f3e42d86788122920689b5e8e0d4f57136417296131d65d9e204e",
       "values": {
         "syntax_cases": 30,
         "syntax_lines": 428,
@@ -15,7 +15,7 @@
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-model/v1",
-      "semantic_digest": "sha256:624cd017cd4068452e8588cb64e57b3251167cc5f37f9f2a8c5bca4adf312f39",
+      "semantic_digest": "sha256:2437ad1f252f3e42d86788122920689b5e8e0d4f57136417296131d65d9e204e",
       "values": {
         "authority_laws": 3,
         "cases": 32,
@@ -29,7 +29,7 @@
     {
       "stable_id": "language-syntax-roundtrip",
       "id": "gooo/language-syntax-roundtrip/v2",
-      "semantic_digest": "sha256:7bd3bb758ddc182957b5a40c68b306e4d79d2406af60cb7e6df0b37332e1369d",
+      "semantic_digest": "sha256:897934c7e1711e517893f2be6b15c8f0a626eb757caa2ad14df365c2a3de6f3b",
       "values": {
         "cases": 30,
         "gooo_lines": 428,
@@ -43,7 +43,7 @@
     {
       "stable_id": "toolchain-conformance",
       "id": "gooo/toolchain-conformance-corpus/v1",
-      "semantic_digest": "sha256:444c60448cdee4f5ae803c4ba9b458dcaf341a9ba87b84607ac91972ff2906e8",
+      "semantic_digest": "sha256:1278c0162de3c836b92b726457a1f26c7e8db0490aff3c79a5b9f1e5bf32f584",
       "values": {
         "cases": 181,
         "indicators": 151,

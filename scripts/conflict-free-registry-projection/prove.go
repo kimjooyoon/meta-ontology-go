@@ -256,10 +256,10 @@ func runIndependentConsumer(root string) (int, []PredicateObservation, ObservedO
 	}
 	for _, predicate := range receipt.Predicates {
 		if predicate.ID == "independent-conformance-consumer" && predicate.Observed {
-			return 1, receipt.Predicates, ObservedOutputArtifact{ObservedPath: receipt.OutputArtifact.Path, Digest: receipt.OutputArtifact.Digest, Bytes: receipt.OutputArtifact.Bytes, RawBytes: string(receipt.outputRaw)}, receipt.BindingOutputReceipts, nil
+			return 1, receipt.Predicates, ObservedOutputArtifact{ObservedPath: embeddedOutputAddress, Digest: receipt.OutputArtifact.Digest, Bytes: receipt.OutputArtifact.Bytes, RawBytes: string(receipt.outputRaw)}, receipt.BindingOutputReceipts, nil
 		}
 	}
-	return 0, receipt.Predicates, ObservedOutputArtifact{ObservedPath: receipt.OutputArtifact.Path, Digest: receipt.OutputArtifact.Digest, Bytes: receipt.OutputArtifact.Bytes, RawBytes: string(receipt.outputRaw)}, receipt.BindingOutputReceipts, nil
+	return 0, receipt.Predicates, ObservedOutputArtifact{ObservedPath: embeddedOutputAddress, Digest: receipt.OutputArtifact.Digest, Bytes: receipt.OutputArtifact.Bytes, RawBytes: string(receipt.outputRaw)}, receipt.BindingOutputReceipts, nil
 }
 
 func runIndependentConsumerAt(root string) (independentReceipt, error) {
@@ -297,40 +297,78 @@ func runIndependentConsumerAt(root string) (independentReceipt, error) {
 	if receipt.Decision != "PASS" || len(receipt.Predicates) == 0 {
 		return independentReceipt{}, fmt.Errorf("independent consumer receipt did not discharge predicates")
 	}
-	if receipt.OutputArtifact.Path != outputPath || receipt.OutputArtifact.Bytes != len(outputRaw) || receipt.OutputArtifact.Digest != digestBytes(outputRaw) {
+	if receipt.OutputArtifact.Path != embeddedOutputAddress || receipt.OutputArtifact.Bytes != len(outputRaw) || receipt.OutputArtifact.Digest != digestBytes(outputRaw) {
 		return independentReceipt{}, fmt.Errorf("independent consumer output artifact was not observed")
 	}
-	if len(receipt.BindingOutputReceipts) == 0 {
+	if len(receipt.BindingOutputReceipts) != expectedBindingReceiptCount {
 		return independentReceipt{}, fmt.Errorf("independent consumer binding output receipts were not observed")
 	}
 	for _, binding := range receipt.BindingOutputReceipts {
-		if binding.OutputAddress != outputPath || binding.OutputDigest != digestBytes(outputRaw) || binding.OutputBytes != len(outputRaw) || binding.SemanticDigest == "" || binding.RawSourceAddress == "" {
+		if binding.OutputAddress != embeddedOutputAddress || binding.OutputDigest != digestBytes(outputRaw) || binding.OutputBytes != len(outputRaw) || binding.SemanticDigest == "" || binding.RawSourceAddress == "" || binding.RegistrationUseAddress == "" || binding.OutputRowAddress == "" || binding.OutputRowDigest == "" {
 			return independentReceipt{}, fmt.Errorf("independent consumer binding output receipt was not observed")
 		}
 	}
-	if err := validateObservedBindingReceipts(root, receipt.BindingOutputReceipts, outputPath, digestBytes(outputRaw), len(outputRaw)); err != nil {
+	if err := validateObservedBindingReceipts(root, receipt.BindingOutputReceipts, outputRaw); err != nil {
 		return independentReceipt{}, err
 	}
 	receipt.outputRaw = outputRaw
 	return receipt, nil
 }
 
-func validateObservedBindingReceipts(root string, receipts []BindingOutputReceipt, outputPath, outputDigest string, outputBytes int) error {
+func validateObservedBindingReceipts(root string, receipts []BindingOutputReceipt, outputRaw []byte) error {
 	if len(receipts) != expectedBindingReceiptCount {
 		return fmt.Errorf("independent consumer AST binding receipt count=%d want=%d", len(receipts), expectedBindingReceiptCount)
 	}
-	seen := map[string]struct{}{}
-	for _, receipt := range receipts {
-		if _, ok := seen[receipt.MetricID]; ok {
-			return fmt.Errorf("duplicate independent consumer binding receipt %s", receipt.MetricID)
-		}
-		seen[receipt.MetricID] = struct{}{}
-		semanticDigest, err := resolveBindingSemantic(root, receipt.RawSourceAddress, receipt.MetricID)
-		if err != nil || semanticDigest != receipt.SemanticDigest || receipt.ConsumerEntryPoint != "scripts/conflict-free-registry-projection-consumer/main.go" || receipt.OutputAddress != outputPath || receipt.OutputDigest != outputDigest || receipt.OutputBytes != outputBytes {
-			return fmt.Errorf("independent consumer binding receipt failed reconstruction for %s", receipt.MetricID)
+	var projection Projection
+	decoder := json.NewDecoder(bytes.NewReader(outputRaw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&projection); err != nil {
+		return fmt.Errorf("independent consumer output projection could not be decoded: %w", err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return fmt.Errorf("independent consumer output projection has trailing bytes")
+	}
+	expected := map[string]BindingRegistryEntry{}
+	for _, entry := range projection.Catalog {
+		for _, binding := range entry.BindingRegistry {
+			address := bindingOutputRowAddress(entry.StableID, binding.MetricID)
+			if _, exists := expected[address]; exists {
+				return fmt.Errorf("duplicate independent consumer output row %s", address)
+			}
+			expected[address] = binding
 		}
 	}
+	if len(expected) != expectedBindingReceiptCount {
+		return fmt.Errorf("independent consumer output row count=%d want=%d", len(expected), expectedBindingReceiptCount)
+	}
+	seen := map[string]struct{}{}
+	for _, receipt := range receipts {
+		if _, ok := seen[receipt.OutputRowAddress]; ok {
+			return fmt.Errorf("duplicate independent consumer binding receipt row %s", receipt.OutputRowAddress)
+		}
+		seen[receipt.OutputRowAddress] = struct{}{}
+		row, ok := expected[receipt.OutputRowAddress]
+		if !ok || row.MetricID != receipt.MetricID || row.RawSourceAddress != receipt.RawSourceAddress || row.RegistrationUseAddress != receipt.RegistrationUseAddress || row.SemanticDigest != receipt.SemanticDigest || row.ConsumerEntryPoint != receipt.ConsumerEntryPoint || receipt.OutputAddress != embeddedOutputAddress || receipt.OutputDigest != digestBytes(outputRaw) || receipt.OutputBytes != len(outputRaw) || receipt.OutputRowDigest != digestJSONValue(row) {
+			return fmt.Errorf("independent consumer binding receipt failed output row reconstruction for %s", receipt.MetricID)
+		}
+		semanticDigest, err := resolveBindingSemantic(root, receipt.RawSourceAddress, receipt.RegistrationUseAddress, receipt.MetricID)
+		if err != nil || semanticDigest != receipt.SemanticDigest {
+			return fmt.Errorf("independent consumer binding receipt failed AST reconstruction for %s", receipt.MetricID)
+		}
+	}
+	if len(seen) != len(expected) {
+		return fmt.Errorf("independent consumer output rows were not all receipted")
+	}
 	return nil
+}
+
+func bindingOutputRowAddress(stableID, metricID string) string {
+	return embeddedOutputAddress + "#/catalog/" + stableID + "/binding_registry/" + metricID
+}
+
+func digestJSONValue(value any) string {
+	raw, _ := json.Marshal(value)
+	return digestBytes(raw)
 }
 
 func failureContracts(root string, loaded []LoadedManifest, base map[string][]byte) []ScenarioResult {
@@ -465,6 +503,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 			}
 			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
 				manifest.BindingRegistry[0].RawSourceAddress = "scripts/conflict-free-registry-projection/testdata/comment-only-binding.go#CommentOnly"
+				manifest.BindingRegistry[0].RegistrationUseAddress = "scripts/conflict-free-registry-projection/testdata/comment-only-binding.go#CommentOnly@2:1"
 			})
 		}},
 		{id: "consumer-binding-unused-string", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
@@ -474,6 +513,50 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 			}
 			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
 				manifest.BindingRegistry[0].RawSourceAddress = "scripts/conflict-free-registry-projection/testdata/unused-binding.go#Unused"
+				manifest.BindingRegistry[0].RegistrationUseAddress = "scripts/conflict-free-registry-projection/testdata/unused-binding.go#Unused@2:5"
+			})
+		}},
+		{id: "consumer-binding-cross-package-same-name", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			path := filepath.Join(temp, "scripts/conflict-free-registry-projection/testdata/other-package/same-name.go")
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				return err
+			}
+			if err := os.WriteFile(path, []byte("package otherpackage\n\nfunc concept(string) {}\n\nfunc use() {\n\tconcept(\"gooo.metric.language.syntax-roundtrip-readiness-bps.v1\")\n}\n"), 0o644); err != nil {
+				return err
+			}
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
+				manifest.BindingRegistry[0].RawSourceAddress = "internal/meta/languageconcept/catalog.go#concept"
+				manifest.BindingRegistry[0].RegistrationUseAddress = "scripts/conflict-free-registry-projection/testdata/other-package/same-name.go#concept@6:2"
+			})
+		}},
+		{id: "consumer-binding-shadowed-local", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			path := filepath.Join(temp, "internal/meta/languageconcept/shadowed-binding.go")
+			if err := os.WriteFile(path, []byte("package languageconcept\n\nfunc shadowedBindingUse() {\n\tconcept := func(string) {}\n\tconcept(\"gooo.metric.language.syntax-roundtrip-readiness-bps.v1\")\n}\n"), 0o644); err != nil {
+				return err
+			}
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
+				manifest.BindingRegistry[0].RawSourceAddress = "internal/meta/languageconcept/catalog.go#concept"
+				manifest.BindingRegistry[0].RegistrationUseAddress = "internal/meta/languageconcept/shadowed-binding.go#concept@5:2"
+			})
+		}},
+		{id: "consumer-binding-unused-declaration", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			path := filepath.Join(temp, "scripts/conflict-free-registry-projection/testdata/unused-declaration.go")
+			if err := os.WriteFile(path, []byte("package testdata\nvar UnusedMetric = \"gooo.metric.language.syntax-roundtrip-readiness-bps.v1\"\n"), 0o644); err != nil {
+				return err
+			}
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
+				manifest.BindingRegistry[0].RawSourceAddress = "scripts/conflict-free-registry-projection/testdata/unused-declaration.go#UnusedMetric"
+				manifest.BindingRegistry[0].RegistrationUseAddress = "scripts/conflict-free-registry-projection/testdata/unused-declaration.go#UnusedMetric@2:5"
+			})
+		}},
+		{id: "consumer-binding-unrelated-use", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			path := filepath.Join(temp, "internal/meta/languageconcept/unrelated-binding.go")
+			if err := os.WriteFile(path, []byte("package languageconcept\nvar _ = concept\n"), 0o644); err != nil {
+				return err
+			}
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
+				manifest.BindingRegistry[0].RawSourceAddress = "internal/meta/languageconcept/catalog.go#concept"
+				manifest.BindingRegistry[0].RegistrationUseAddress = "internal/meta/languageconcept/unrelated-binding.go#concept@2:9"
 			})
 		}},
 	}
@@ -570,7 +653,7 @@ func successExitCounterexample() PredicateObservation {
 	result := runCommand(exec.Command("printf", "%s", string(raw)))
 	rawDigest := digestBytes(raw)
 	diagnosticDigest := digestBytes(result.DiagnosticJSON)
-	address := "evidence://consumer-failure/consumer-success-with-diagnostic-counterexample"
+	address := "evidence://classifier-counterexample/classifier-success-exit-counterexample"
 	stage, step, reason := "UNKNOWN", "UNKNOWN", "UNKNOWN"
 	if result.Diagnostic != nil {
 		stage, step, reason = result.Diagnostic.Stage, result.Diagnostic.Step, result.Diagnostic.Reason
@@ -581,7 +664,7 @@ func successExitCounterexample() PredicateObservation {
 	if observed {
 		truth = "TRUE"
 	}
-	return PredicateObservation{ID: "consumer-success-with-diagnostic-counterexample", ObservedPredicate: "a diagnostic JSON with a success exit is rejected as a failure observation", TargetAddress: address, TargetDigest: digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest)), Observed: observed, Decision: "PASS", PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: rawDigest, RawInputBytes: string(raw), ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
+	return PredicateObservation{ID: "classifier-success-exit-counterexample", ObservedPredicate: "the failure classifier rejects diagnostic JSON with a success exit as a failure observation", TargetAddress: address, TargetDigest: digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest)), Observed: observed, Decision: "PASS", PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: rawDigest, RawInputBytes: string(raw), ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
 }
 
 func consumerFailureAccepted(result consumerCommandResult, expected consumerFailureCase) bool {
@@ -693,7 +776,7 @@ func allProofsPass(evidence Evidence) bool {
 	if evidence.ClaimTransitions.Denominator != expectedClaimCount || evidence.FailurePredicates.Denominator != expectedFailurePredicateCount || evidence.ProvenancePredicates.Denominator != expectedFailurePredicateCount {
 		return false
 	}
-	if len(evidence.BindingOutputReceipts) != expectedBindingReceiptCount || evidence.ConsumerOutputArtifact.Bytes <= 0 || len(evidence.ConsumerOutputArtifact.RawBytes) != evidence.ConsumerOutputArtifact.Bytes || evidence.ConsumerOutputArtifact.Digest != digestBytes([]byte(evidence.ConsumerOutputArtifact.RawBytes)) {
+	if len(evidence.BindingOutputReceipts) != expectedBindingReceiptCount || evidence.ConsumerOutputArtifact.ObservedPath != embeddedOutputAddress || evidence.ConsumerOutputArtifact.Bytes <= 0 || len(evidence.ConsumerOutputArtifact.RawBytes) != evidence.ConsumerOutputArtifact.Bytes || evidence.ConsumerOutputArtifact.Digest != digestBytes([]byte(evidence.ConsumerOutputArtifact.RawBytes)) {
 		return false
 	}
 	for _, scenario := range evidence.FailureContracts {

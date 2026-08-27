@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"go/ast"
 	"go/format"
+	"go/importer"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"io"
 	"io/fs"
 	"os"
@@ -20,10 +22,11 @@ import (
 )
 
 const (
-	manifestSchema   = "gooo/language-concept-manifest/v1"
-	projectionSchema = "gooo/manual-source-registration-edit-free-registry-projection/v1"
-	defaultOutput    = "internal/meta/registryprojection/generated"
-	receiptSchema    = "gooo/manual-source-registration-edit-free-registry-consumer-receipt/v1"
+	manifestSchema        = "gooo/language-concept-manifest/v1"
+	projectionSchema      = "gooo/manual-source-registration-edit-free-registry-projection/v1"
+	defaultOutput         = "internal/meta/registryprojection/generated"
+	receiptSchema         = "gooo/manual-source-registration-edit-free-registry-consumer-receipt/v1"
+	embeddedOutputAddress = "embedded://consumer_output_artifact/raw_bytes"
 )
 
 type UseCase struct {
@@ -45,12 +48,13 @@ type ResourceRef struct {
 	Digest string `json:"digest"`
 }
 type BindingRegistryEntry struct {
-	MetricID              string `json:"metric_id"`
-	RawSourceAddress      string `json:"raw_source_address"`
-	SemanticDigest        string `json:"semantic_digest"`
-	ConsumerEntryPoint    string `json:"consumer_entry_point"`
-	ObservedOutputAddress string `json:"observed_output_address"`
-	ObservedOutputDigest  string `json:"observed_output_digest"`
+	MetricID               string `json:"metric_id"`
+	RawSourceAddress       string `json:"raw_source_address"`
+	RegistrationUseAddress string `json:"registration_use_address"`
+	SemanticDigest         string `json:"semantic_digest"`
+	ConsumerEntryPoint     string `json:"consumer_entry_point"`
+	ObservedOutputAddress  string `json:"observed_output_address"`
+	ObservedOutputDigest   string `json:"observed_output_digest"`
 }
 type Denominator struct {
 	ID     string         `json:"id"`
@@ -179,13 +183,16 @@ type OutputArtifact struct {
 	Bytes  int    `json:"bytes"`
 }
 type BindingOutputReceipt struct {
-	MetricID           string `json:"metric_id"`
-	RawSourceAddress   string `json:"raw_source_address"`
-	SemanticDigest     string `json:"semantic_digest"`
-	ConsumerEntryPoint string `json:"consumer_entry_point"`
-	OutputAddress      string `json:"output_address"`
-	OutputDigest       string `json:"output_digest"`
-	OutputBytes        int    `json:"output_bytes"`
+	MetricID               string `json:"metric_id"`
+	RawSourceAddress       string `json:"raw_source_address"`
+	RegistrationUseAddress string `json:"registration_use_address"`
+	SemanticDigest         string `json:"semantic_digest"`
+	ConsumerEntryPoint     string `json:"consumer_entry_point"`
+	OutputAddress          string `json:"output_address"`
+	OutputDigest           string `json:"output_digest"`
+	OutputBytes            int    `json:"output_bytes"`
+	OutputRowAddress       string `json:"output_row_address"`
+	OutputRowDigest        string `json:"output_row_digest"`
 }
 type diagnostic struct {
 	Decision string `json:"decision"`
@@ -421,7 +428,7 @@ func validateBindingRegistry(root string, manifest Manifest) error {
 	}
 	seen := map[string]struct{}{}
 	for _, binding := range manifest.BindingRegistry {
-		if binding.MetricID == "" || binding.RawSourceAddress == "" || binding.SemanticDigest == "" || binding.ConsumerEntryPoint == "" || binding.ObservedOutputAddress == "" || binding.ObservedOutputDigest == "" {
+		if binding.MetricID == "" || binding.RawSourceAddress == "" || binding.RegistrationUseAddress == "" || binding.SemanticDigest == "" || binding.ConsumerEntryPoint == "" || binding.ObservedOutputAddress == "" || binding.ObservedOutputDigest == "" {
 			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "INCOMPLETE_STRUCTURED_BINDING"}}
 		}
 		if _, ok := metricIDs[binding.MetricID]; !ok {
@@ -435,7 +442,7 @@ func validateBindingRegistry(root string, manifest Manifest) error {
 		if len(parts) != 2 || !pathExists(root, parts[0]) || filepath.Ext(parts[0]) != ".go" {
 			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "UNTRUSTED_BINDING_SOURCE"}}
 		}
-		semanticDigest, err := resolveBindingSemantic(root, binding.RawSourceAddress, binding.MetricID)
+		semanticDigest, err := resolveBindingSemantic(root, binding.RawSourceAddress, binding.RegistrationUseAddress, binding.MetricID)
 		if err != nil {
 			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "UNTRUSTED_BINDING_SOURCE"}}
 		}
@@ -464,57 +471,280 @@ func validateBindingRegistry(root string, manifest Manifest) error {
 	return nil
 }
 
-func resolveBindingSemantic(root, rawSourceAddress, metricID string) (string, error) {
-	parts := strings.SplitN(rawSourceAddress, "#", 2)
-	if len(parts) != 2 || parts[1] == "" {
+type goBindingAddress struct {
+	Path   string
+	Symbol string
+	Line   int
+	Column int
+}
+
+type typedGoPackage struct {
+	FileSet *token.FileSet
+	Files   map[string]*ast.File
+	Info    *types.Info
+	Package *types.Package
+}
+
+type bindingDigestPayload struct {
+	PackageIdentity    string `json:"package_identity"`
+	ObjectIdentity     string `json:"object_identity"`
+	DeclarationAST     string `json:"declaration_ast"`
+	RegistrationUseAST string `json:"registration_use_ast"`
+}
+
+func resolveBindingSemantic(root, rawSourceAddress, registrationUseAddress, metricID string) (string, error) {
+	declaration, err := parseGoBindingAddress(rawSourceAddress, false)
+	if err != nil {
+		return "", err
+	}
+	registration, err := parseGoBindingAddress(registrationUseAddress, true)
+	if err != nil {
+		return "", err
+	}
+	if filepath.ToSlash(filepath.Dir(declaration.Path)) != filepath.ToSlash(filepath.Dir(registration.Path)) {
 		return "", os.ErrInvalid
 	}
-	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(parts[0])))
+	packageInfo, err := typeCheckGoPackage(root, declaration.Path)
 	if err != nil {
 		return "", err
 	}
-	fileSet := token.NewFileSet()
-	file, err := parser.ParseFile(fileSet, parts[0], data, 0)
-	if err != nil {
-		return "", err
-	}
-	var matched ast.Node
-	ast.Inspect(file, func(node ast.Node) bool {
-		if matched != nil || node == nil {
-			return matched == nil
-		}
-		switch value := node.(type) {
-		case *ast.ValueSpec:
-			for _, name := range value.Names {
-				if name.Name == parts[1] && astNodeContainsString(value, metricID) {
-					matched = value
-					return false
-				}
-			}
-		case *ast.FuncDecl:
-			if value.Name != nil && value.Name.Name == parts[1] && astNodeContainsString(value, metricID) {
-				matched = value
-				return false
-			}
-		case *ast.CallExpr:
-			if functionName(value.Fun) == "concept" && len(value.Args) > 0 && stringLiteral(value.Args[0]) == parts[1] && astNodeContainsString(value, metricID) {
-				matched = value
-				return false
-			}
-		}
-		return true
-	})
-	if matched == nil {
+	declarationFile := packageInfo.Files[filepath.ToSlash(declaration.Path)]
+	registrationFile := packageInfo.Files[filepath.ToSlash(registration.Path)]
+	if declarationFile == nil || registrationFile == nil {
 		return "", os.ErrNotExist
 	}
-	if isGoIdentifier(parts[1]) && symbolUseCount(root, parts[1]) < 2 {
-		return "", os.ErrInvalid
-	}
-	var normalized bytes.Buffer
-	if err := format.Node(&normalized, fileSet, matched); err != nil {
+	declarationIdent, declarationNode, err := findDeclaration(declarationFile, declaration.Symbol)
+	if err != nil {
 		return "", err
 	}
-	return digest(normalized.Bytes()), nil
+	declarationObject := packageInfo.Info.Defs[declarationIdent]
+	if declarationObject == nil {
+		return "", os.ErrInvalid
+	}
+	registrationIdent, registrationNode, err := findRegistrationUse(registrationFile, registration.Symbol, registration.Line, registration.Column, packageInfo.FileSet, packageInfo.Info)
+	if err != nil {
+		return "", err
+	}
+	registrationObject := packageInfo.Info.Uses[registrationIdent]
+	if registrationObject == nil || registrationObject != declarationObject {
+		return "", os.ErrInvalid
+	}
+	if !validRegistrationContext(registrationNode, registration.Symbol, metricID) || (!astNodeContainsString(declarationNode, metricID) && !astNodeContainsString(registrationNode, metricID)) {
+		return "", os.ErrInvalid
+	}
+	declarationAST, err := normalizedAST(packageInfo.FileSet, declarationNode)
+	if err != nil {
+		return "", err
+	}
+	registrationAST, err := normalizedAST(packageInfo.FileSet, registrationNode)
+	if err != nil {
+		return "", err
+	}
+	objectIdentity := bindingObjectIdentity(packageInfo.FileSet, declarationObject)
+	payload, err := json.Marshal(bindingDigestPayload{PackageIdentity: declarationObject.Pkg().Path(), ObjectIdentity: objectIdentity, DeclarationAST: string(declarationAST), RegistrationUseAST: string(registrationAST)})
+	if err != nil {
+		return "", err
+	}
+	return digest(payload), nil
+}
+
+func parseGoBindingAddress(address string, requirePosition bool) (goBindingAddress, error) {
+	parts := strings.SplitN(address, "#", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" || filepath.IsAbs(parts[0]) || strings.HasPrefix(filepath.ToSlash(filepath.Clean(parts[0])), "../") || filepath.Ext(parts[0]) != ".go" {
+		return goBindingAddress{}, os.ErrInvalid
+	}
+	result := goBindingAddress{Path: filepath.ToSlash(parts[0])}
+	symbol := parts[1]
+	if at := strings.LastIndex(symbol, "@"); at >= 0 {
+		position := strings.Split(symbol[at+1:], ":")
+		if len(position) != 2 || position[0] == "" || position[1] == "" {
+			return goBindingAddress{}, os.ErrInvalid
+		}
+		if _, err := fmt.Sscanf(position[0], "%d", &result.Line); err != nil {
+			return goBindingAddress{}, err
+		}
+		if _, err := fmt.Sscanf(position[1], "%d", &result.Column); err != nil {
+			return goBindingAddress{}, err
+		}
+		symbol = symbol[:at]
+	}
+	if symbol == "" || (requirePosition && (result.Line <= 0 || result.Column <= 0)) || (!requirePosition && (result.Line != 0 || result.Column != 0)) {
+		return goBindingAddress{}, os.ErrInvalid
+	}
+	result.Symbol = symbol
+	return result, nil
+}
+
+func typeCheckGoPackage(root, declarationPath string) (*typedGoPackage, error) {
+	directory := filepath.ToSlash(filepath.Dir(declarationPath))
+	if directory == "." {
+		directory = ""
+	}
+	absoluteDirectory := filepath.Join(root, filepath.FromSlash(directory))
+	entries, err := os.ReadDir(absoluteDirectory)
+	if err != nil {
+		return nil, err
+	}
+	fileSet := token.NewFileSet()
+	files := map[string]*ast.File{}
+	parsed := make([]*ast.File, 0)
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".go" || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		relative := filepath.ToSlash(filepath.Join(directory, entry.Name()))
+		data, err := os.ReadFile(filepath.Join(absoluteDirectory, entry.Name()))
+		if err != nil {
+			return nil, err
+		}
+		file, err := parser.ParseFile(fileSet, relative, data, 0)
+		if err != nil {
+			return nil, err
+		}
+		files[relative] = file
+		parsed = append(parsed, file)
+	}
+	if len(parsed) == 0 {
+		return nil, os.ErrNotExist
+	}
+	info := &types.Info{Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{}, Selections: map[*ast.SelectorExpr]*types.Selection{}}
+	config := types.Config{Importer: importer.Default(), Error: func(error) {}}
+	checked, _ := config.Check(modulePackagePath(root, directory), fileSet, parsed, info)
+	if checked == nil {
+		return nil, os.ErrInvalid
+	}
+	return &typedGoPackage{FileSet: fileSet, Files: files, Info: info, Package: checked}, nil
+}
+
+func modulePackagePath(root, directory string) string {
+	module := "local"
+	if data, err := os.ReadFile(filepath.Join(root, "go.mod")); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && fields[0] == "module" {
+				module = fields[1]
+				break
+			}
+		}
+	}
+	if directory == "" {
+		return module
+	}
+	return module + "/" + filepath.ToSlash(directory)
+}
+
+func findDeclaration(file *ast.File, symbol string) (*ast.Ident, ast.Node, error) {
+	var foundIdent *ast.Ident
+	var foundNode ast.Node
+	for _, declaration := range file.Decls {
+		switch value := declaration.(type) {
+		case *ast.FuncDecl:
+			if value.Name != nil && value.Name.Name == symbol {
+				if foundIdent != nil {
+					return nil, nil, os.ErrInvalid
+				}
+				foundIdent, foundNode = value.Name, value
+			}
+		case *ast.GenDecl:
+			for _, specification := range value.Specs {
+				valueSpec, ok := specification.(*ast.ValueSpec)
+				if !ok {
+					continue
+				}
+				for _, name := range valueSpec.Names {
+					if name.Name == symbol {
+						if foundIdent != nil {
+							return nil, nil, os.ErrInvalid
+						}
+						foundIdent, foundNode = name, valueSpec
+					}
+				}
+			}
+		}
+	}
+	if foundIdent == nil {
+		return nil, nil, os.ErrNotExist
+	}
+	return foundIdent, foundNode, nil
+}
+
+func findRegistrationUse(file *ast.File, symbol string, line, column int, fileSet *token.FileSet, info *types.Info) (*ast.Ident, ast.Node, error) {
+	var stack []ast.Node
+	var foundIdent *ast.Ident
+	var foundNode ast.Node
+	ast.Inspect(file, func(node ast.Node) bool {
+		if node == nil {
+			if len(stack) > 0 {
+				stack = stack[:len(stack)-1]
+			}
+			return true
+		}
+		stack = append(stack, node)
+		ident, ok := node.(*ast.Ident)
+		if !ok || ident.Name != symbol || info.Uses[ident] == nil {
+			return true
+		}
+		position := fileSet.PositionFor(ident.Pos(), false)
+		if position.Line != line || position.Column != column {
+			return true
+		}
+		if foundIdent != nil {
+			foundIdent = nil
+			foundNode = nil
+			return false
+		}
+		foundIdent = ident
+		foundNode = registrationContext(stack)
+		return false
+	})
+	if foundIdent == nil || foundNode == nil {
+		return nil, nil, os.ErrNotExist
+	}
+	return foundIdent, foundNode, nil
+}
+
+func registrationContext(stack []ast.Node) ast.Node {
+	var fallback ast.Node
+	for index := len(stack) - 2; index >= 0; index-- {
+		switch stack[index].(type) {
+		case *ast.KeyValueExpr:
+			return stack[index]
+		case *ast.CallExpr, *ast.BinaryExpr, *ast.AssignStmt, *ast.ValueSpec:
+			if fallback == nil {
+				fallback = stack[index]
+			}
+		}
+	}
+	return fallback
+}
+
+func validRegistrationContext(node ast.Node, symbol, metricID string) bool {
+	switch value := node.(type) {
+	case *ast.CallExpr:
+		return functionName(value.Fun) == symbol
+	case *ast.KeyValueExpr:
+		key, ok := value.Key.(*ast.Ident)
+		return ok && (key.Name == "MetricBindings" || key.Name == "MetricID")
+	default:
+		return false
+	}
+}
+
+func normalizedAST(fileSet *token.FileSet, node ast.Node) ([]byte, error) {
+	var normalized bytes.Buffer
+	if err := format.Node(&normalized, fileSet, node); err != nil {
+		return nil, err
+	}
+	return normalized.Bytes(), nil
+}
+
+func bindingObjectIdentity(fileSet *token.FileSet, object types.Object) string {
+	position := fileSet.PositionFor(object.Pos(), false)
+	packagePath := ""
+	if object.Pkg() != nil {
+		packagePath = object.Pkg().Path()
+	}
+	return fmt.Sprintf("%s|%s|%s|%d:%d|%s", packagePath, object.Name(), position.Filename, position.Line, position.Column, object.Type().String())
 }
 
 func astNodeContainsString(node ast.Node, wanted string) bool {
@@ -547,52 +777,6 @@ func functionName(node ast.Expr) string {
 		return ""
 	}
 	return identifier.Name
-}
-
-func isGoIdentifier(value string) bool {
-	if value == "" || !(value[0] >= 'a' && value[0] <= 'z') && !(value[0] >= 'A' && value[0] <= 'Z') && value[0] != '_' {
-		return false
-	}
-	for _, character := range value[1:] {
-		if !(character >= 'a' && character <= 'z') && !(character >= 'A' && character <= 'Z') && !(character >= '0' && character <= '9') && character != '_' {
-			return false
-		}
-	}
-	return true
-}
-
-func symbolUseCount(root, symbol string) int {
-	count := 0
-	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() {
-			if entry.Name() == ".git" || entry.Name() == ".parallel" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if filepath.Ext(entry.Name()) != ".go" {
-			return nil
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return nil
-		}
-		file, err := parser.ParseFile(token.NewFileSet(), path, data, 0)
-		if err != nil {
-			return nil
-		}
-		ast.Inspect(file, func(node ast.Node) bool {
-			if identifier, ok := node.(*ast.Ident); ok && identifier.Name == symbol {
-				count++
-			}
-			return true
-		})
-		return nil
-	})
-	return count
 }
 
 func buildProjection(root string, loaded []LoadedManifest) (Projection, []DenominatorReconciliation, error) {
@@ -785,6 +969,9 @@ func buildReceipt(root string, projection Projection, reconciliations []Denomina
 			return Receipt{}, os.ErrInvalid
 		}
 	}
+	if _, err := observedProjection(observedOutput); err != nil {
+		return Receipt{}, err
+	}
 	ids := make([]string, 0, len(projection.Catalog))
 	for _, entry := range projection.Catalog {
 		ids = append(ids, entry.StableID)
@@ -795,15 +982,15 @@ func buildReceipt(root string, projection Projection, reconciliations []Denomina
 	bindingReceipts := make([]BindingOutputReceipt, 0)
 	for _, entry := range projection.Catalog {
 		for _, binding := range entry.BindingRegistry {
-			semanticDigest, err := resolveBindingSemantic(root, binding.RawSourceAddress, binding.MetricID)
+			semanticDigest, err := resolveBindingSemantic(root, binding.RawSourceAddress, binding.RegistrationUseAddress, binding.MetricID)
 			if err != nil {
 				return Receipt{}, err
 			}
-			address := outputPath
-			if address == "" {
-				address = "stdout"
+			rowAddress, rowDigest, err := observedBindingRow(observedOutput, entry.StableID, binding)
+			if err != nil {
+				return Receipt{}, err
 			}
-			bindingReceipts = append(bindingReceipts, BindingOutputReceipt{MetricID: binding.MetricID, RawSourceAddress: binding.RawSourceAddress, SemanticDigest: semanticDigest, ConsumerEntryPoint: binding.ConsumerEntryPoint, OutputAddress: address, OutputDigest: digest(observedOutput), OutputBytes: len(observedOutput)})
+			bindingReceipts = append(bindingReceipts, BindingOutputReceipt{MetricID: binding.MetricID, RawSourceAddress: binding.RawSourceAddress, RegistrationUseAddress: binding.RegistrationUseAddress, SemanticDigest: semanticDigest, ConsumerEntryPoint: binding.ConsumerEntryPoint, OutputAddress: embeddedOutputAddress, OutputDigest: digest(observedOutput), OutputBytes: len(observedOutput), OutputRowAddress: rowAddress, OutputRowDigest: rowDigest})
 		}
 	}
 	return Receipt{
@@ -817,9 +1004,51 @@ func buildReceipt(root string, projection Projection, reconciliations []Denomina
 		},
 		ProductionAdoption:    PredicateMetric{Numerator: 0, Denominator: 1, Decision: "UNKNOWN", Stage: "COHERENCE", Step: "PRODUCTION_CONSUMER_ADOPTION", Reason: "NO_PRODUCTION_CONSUMER_EVIDENCE"},
 		UseCaseReceipt:        UseCaseReceiptObservation{SourceArtifact: "examples/toolchain-conformance/corpus.json", Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "HISTORICAL_CORPUS_PRESENT_BUT_EXECUTION_RECEIPT_UNAVAILABLE"},
-		OutputArtifact:        OutputArtifact{Path: outputPath, Digest: digest(observedOutput), Bytes: len(observedOutput)},
+		OutputArtifact:        OutputArtifact{Path: embeddedOutputAddress, Digest: digest(observedOutput), Bytes: len(observedOutput)},
 		BindingOutputReceipts: bindingReceipts,
 	}, nil
+}
+
+func observedProjection(data []byte) (Projection, error) {
+	projection := Projection{}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&projection); err != nil {
+		return Projection{}, err
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return Projection{}, err
+	}
+	return projection, nil
+}
+
+func observedBindingRow(data []byte, stableID string, expected BindingRegistryEntry) (string, string, error) {
+	projection, err := observedProjection(data)
+	if err != nil {
+		return "", "", err
+	}
+	matches := 0
+	var row BindingRegistryEntry
+	for _, entry := range projection.Catalog {
+		if entry.StableID != stableID {
+			continue
+		}
+		for _, binding := range entry.BindingRegistry {
+			if binding.MetricID == expected.MetricID && binding.RawSourceAddress == expected.RawSourceAddress && binding.RegistrationUseAddress == expected.RegistrationUseAddress {
+				matches++
+				row = binding
+			}
+		}
+	}
+	if matches != 1 {
+		return "", "", os.ErrInvalid
+	}
+	address := bindingOutputRowAddress(stableID, expected.MetricID)
+	return address, digest(mustJSON(row)), nil
+}
+
+func bindingOutputRowAddress(stableID, metricID string) string {
+	return embeddedOutputAddress + "#/catalog/" + stableID + "/binding_registry/" + metricID
 }
 func mustJSON(value any) []byte { data, _ := json.Marshal(value); return data }
 func semanticDigest(manifest Manifest) string {

@@ -1,9 +1,9 @@
 {
   "schema": "gooo/manual-source-registration-edit-free-registry-projection-digest/v1",
-  "raw_manifest_digest": "sha256:e023dd64219437e1a566ad8e6d74ebd666d568a3ed69796cfd9eced7344da37d",
-  "semantic_manifest_digest": "sha256:6f9ffd02549d151e02d52871aabaec099e1c9a1ce578ad28b5835948a6637b1d",
-  "projection_digest": "sha256:2e4433163a6928c6347b48cbb54981c0cdc176f0d6ba733e55948b668e00083b",
-  "combined_digest": "sha256:e153deea13685cbd383598caf86ed7aefa0e158b48a7e7277a5fd96c81834727",
+  "raw_manifest_digest": "sha256:af8707dc8790599c822ee321586076edd0fce00eee31fc775febbef8f884a0cc",
+  "semantic_manifest_digest": "sha256:ff148383c37729b0645d27304f020eaa7a1f1c796017a41cb0638fee266137f1",
+  "projection_digest": "sha256:cf9e2035eec28f7c449d919dd94b4589dfb5e3b6793bb8bba474d178c41594ce",
+  "combined_digest": "sha256:688b9dabbaa969ef23e79ce9850fa90e4add4350bfe49bfd074f4e99457232f2",
   "outputs": [
     {
       "path": "internal/meta/registryprojection/generated/README.md",
@@ -12,8 +12,8 @@
     },
     {
       "path": "internal/meta/registryprojection/generated/catalog.json",
-      "digest": "sha256:734fbb7482d2a7d9b345ee2af359b23ee569ce4be6174fd79d2eda4700aa47e5",
-      "bytes": 10350
+      "digest": "sha256:bb1620bd8989ffabd83617d3c537bfd8ffabca12e09c3627977cfcba25e45197",
+      "bytes": 11415
     },
     {
       "path": "internal/meta/registryprojection/generated/corpus.json",
@@ -22,18 +22,18 @@
     },
     {
       "path": "internal/meta/registryprojection/generated/denominator.json",
-      "digest": "sha256:5efd5eea1907a09d9ed7ae9466aab49e10361b1df45a30843f7868bf93805d8a",
+      "digest": "sha256:9901485345e22c6d25f21fee3b12f8a5f03fb0f7c5c7cda26a599ae286eb0eea",
       "bytes": 1756
     },
     {
       "path": "internal/meta/registryprojection/generated/manifest-digests.json",
-      "digest": "sha256:18948c43f01c109bfdf478c8820880b8aa56110a115f1507e74396a440998143",
+      "digest": "sha256:b685685111e4dd413b3311217842835493d4c77953b76fb223c707fce4ca27ba",
       "bytes": 1111
     },
     {
       "path": "internal/meta/registryprojection/generated/projection.json",
-      "digest": "sha256:2e4433163a6928c6347b48cbb54981c0cdc176f0d6ba733e55948b668e00083b",
-      "bytes": 14897
+      "digest": "sha256:cf9e2035eec28f7c449d919dd94b4589dfb5e3b6793bb8bba474d178c41594ce",
+      "bytes": 15962
     },
     {
       "path": "internal/meta/registryprojection/generated/registry.json",
