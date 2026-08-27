@@ -6,7 +6,8 @@ import (
 )
 
 func Validate(report Report) error {
-	if report.Schema != Schema || len(report.Indicators) != IndicatorCount ||
+	if report.Schema != Schema || report.Conformance != ConformancePass ||
+		len(report.Indicators) != IndicatorCount ||
 		len(report.Views) != 3 || len(report.Proofs) != 3 || report.Digest == "" {
 		return fmt.Errorf("foundation seed contract malformed")
 	}

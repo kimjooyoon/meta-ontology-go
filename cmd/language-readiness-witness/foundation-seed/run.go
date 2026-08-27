@@ -37,11 +37,15 @@ func run(cfg config) error {
 	if cfg.check && report.Decision != foundationseed.DecisionAuthorized {
 		return fmt.Errorf("%s: %s", report.Decision, report.Reason)
 	}
+	deltaClaims := "UNKNOWN"
+	if report.Source.ReadinessDeltaClaims != nil {
+		deltaClaims = fmt.Sprintf("%d", *report.Source.ReadinessDeltaClaims)
+	}
 	fmt.Printf("readiness-foundation: decision=%s coordinates=%d/%d "+
-		"attempts=%d/%d writes=%d delta_claims=%d digest=%s\n",
+		"attempts=%d/%d writes=%d delta_claims=%s digest=%s\n",
 		report.Decision, report.Summary.Satisfied, report.Summary.Total,
 		report.Source.MissingAttempts, report.Source.SearchLimit,
-		report.Source.RepositoryWrites, report.Source.ReadinessDeltaClaims,
+		report.Source.RepositoryWrites, deltaClaims,
 		report.Digest)
 	return nil
 }

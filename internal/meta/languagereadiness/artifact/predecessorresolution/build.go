@@ -9,7 +9,8 @@ func Build(input Input) (Report, error) {
 	report := Report{Schema: Schema, Repository: input.Repository,
 		CurrentHeadSHA:          input.CurrentHeadSHA,
 		ImmediatePredecessorSHA: input.ImmediatePredecessorSHA,
-		Decision:                DecisionFailClosed, Reason: ReasonExhausted}
+		Decision:                DecisionFailClosed, Reason: ReasonExhausted,
+		Conformance:             ConformancePass, Resolution: ResolutionLower}
 	report.Summary.SelectedDepth = -1
 	contiguous := true
 	for index, attempt := range input.Attempts {
@@ -45,6 +46,7 @@ func Build(input Input) (Report, error) {
 func resolve(report *Report, attempt Attempt) {
 	selected := attempt.Selection.Report.Selected
 	report.Decision, report.Reason = DecisionResolved, ReasonResolved
+	report.Resolution = ResolutionExact
 	report.Summary.SelectedAncestors = 1
 	report.Summary.SelectedDepth = attempt.Depth
 	report.Selected = &Resolution{Depth: attempt.Depth,
@@ -54,6 +56,10 @@ func resolve(report *Report, attempt Attempt) {
 }
 
 func finalize(report *Report, contiguous bool) {
+	if report.BlockingSelectionReason == "" {
+		value := 0
+		report.Summary.ReadinessDeltaClaims = &value
+	}
 	report.Summary.ObservedAttempts = len(report.Attempts)
 	report.Summary.SearchLimit = SearchLimit
 	report.Indicators = indicators(*report, contiguous)

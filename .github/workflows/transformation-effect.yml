@@ -478,6 +478,34 @@ jobs:
         run: |
           set -euo pipefail
           mode=""
+          status_a=1
+          status_b=1
+          replay_mismatch=0
+          is_known_failure_reason() {
+            case "$1" in
+              ARTIFACT_PAYLOAD_UNAVAILABLE|\
+              WORKFLOW_RUN_HTTP_FAILURE|WORKFLOW_RUN_PAGINATION_INCOMPLETE|\
+              WORKFLOW_RUN_NEXT_LINK_REPEATED|WORKFLOW_RUN_PAGE_CAP_EXCEEDED|\
+              WORKFLOW_RUN_LINK_MALFORMED|WORKFLOW_RUN_LINK_ORIGIN_MISMATCH|\
+              WORKFLOW_RUN_REDIRECT_ORIGIN_MISMATCH|WORKFLOW_RUN_DUPLICATE_ID|\
+              WORKFLOW_RUN_RESPONSE_MALFORMED|\
+              ARTIFACT_HTTP_FAILURE|ARTIFACT_PAGINATION_INCOMPLETE|\
+              ARTIFACT_NEXT_LINK_REPEATED|ARTIFACT_PAGE_CAP_EXCEEDED|\
+              ARTIFACT_LINK_MALFORMED|ARTIFACT_LINK_ORIGIN_MISMATCH|\
+              ARTIFACT_REDIRECT_ORIGIN_MISMATCH|ARTIFACT_DUPLICATE_ID|\
+              ARTIFACT_RESPONSE_MALFORMED|\
+              JOB_HTTP_FAILURE|JOB_PAGINATION_INCOMPLETE|\
+              JOB_NEXT_LINK_REPEATED|JOB_PAGE_CAP_EXCEEDED|\
+              JOB_LINK_MALFORMED|JOB_LINK_ORIGIN_MISMATCH|\
+              JOB_REDIRECT_ORIGIN_MISMATCH|JOB_DUPLICATE_ID|\
+              JOB_RESPONSE_MALFORMED)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
           for suffix in a b; do
             baseline_dir="$RUNNER_TEMP/language-readiness-baseline-$suffix"
             mkdir -p "$baseline_dir"
@@ -495,51 +523,124 @@ jobs:
               --receipt "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
             selection_status=$?
             set -e
+            effective_status="$selection_status"
+            observed_mode="BLOCKED"
             if [[ "$selection_status" -eq 0 ]]; then
               observed_mode="RESOLVED"
             else
               receipt="$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
-              selection_reason="$(jq -r '.attempts[-1].selection.reason // empty' "$receipt")"
-              resolution_reason="$(jq -r '.reason // empty' "$receipt")"
-              if [[ "$selection_reason" != "READINESS_PREDECESSOR_NOT_FOUND" || "$resolution_reason" != "READINESS_ANCESTOR_SEARCH_EXHAUSTED" ]]; then
-                echo "predecessor selection fail-closed: stage=readiness-predecessor step=select-exact-predecessor reason=$selection_reason resolution=LOWER_RESOLUTION" >&2
-                exit "$selection_status"
+              selection_reason="$(jq -r '.attempts[-1].selection.reason // empty' "$receipt" 2>/dev/null || true)"
+              resolution_reason="$(jq -r '.reason // empty' "$receipt" 2>/dev/null || true)"
+              if [[ "$selection_reason" == "READINESS_PREDECESSOR_NOT_FOUND" &&
+                "$resolution_reason" == "READINESS_ANCESTOR_SEARCH_EXHAUSTED" ]]; then
+                if jq -e '
+                  .decision == "FAIL_CLOSED" and
+                  .conformance == "PASS" and
+                  .resolution == "LOWER_RESOLUTION" and
+                  .reason == "READINESS_ANCESTOR_SEARCH_EXHAUSTED" and
+                  .selected == null and
+                  .summary.observed_attempts == .summary.search_limit and
+                  .summary.missing_attempts == .summary.search_limit and
+                  .summary.selected_ancestors == 0 and
+                  (.attempts | length) == .summary.search_limit and
+                  ([.attempts[] | .selection.reason] | all(. == "READINESS_PREDECESSOR_NOT_FOUND")) and
+                  ([.attempts[].selection.pagination.complete] | all) and
+                  ([.attempts[].selection.failure_reason] | all(. == null or . == ""))
+                ' "$receipt"; then
+                  set +e
+                  go run ./cmd/language-readiness-witness/foundation-seed \
+                    --root "$GITHUB_WORKSPACE" \
+                    --input "$receipt" \
+                    --expected-head "$HEAD_SHA" \
+                    --output "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json" \
+                    --check
+                  foundation_status=$?
+                  set -e
+                  if [[ "$foundation_status" -eq 0 ]]; then
+                    effective_status=0
+                    observed_mode="FOUNDATION"
+                  else
+                    effective_status="$foundation_status"
+                    echo "foundation seed fail-closed: stage=readiness-foundation step=seed-foundation reason=FOUNDATION_EVIDENCE_UNKNOWN resolution=LOWER_RESOLUTION" >&2
+                  fi
+                else
+                  effective_status=1
+                  echo "malformed exhaustive predecessor receipt: stage=readiness-predecessor step=select-exact-predecessor reason=READINESS_ANCESTOR_SEARCH_EXHAUSTED resolution=LOWER_RESOLUTION" >&2
+                fi
+              elif is_known_failure_reason "$selection_reason" && jq -e \
+                --arg head "$HEAD_SHA" --arg reason "$selection_reason" '
+                  .current_head_sha == $head and
+                  .decision == "FAIL_CLOSED" and
+                  .conformance == "PASS" and
+                  .resolution == "LOWER_RESOLUTION" and
+                  .reason == "READINESS_ANCESTOR_EVIDENCE_BLOCKED" and
+                  .blocking_selection_reason == $reason and
+                  .summary.readiness_delta_claims == null and
+                  ([.attempts[] | .selection.reason] | index($reason)) != null
+                ' "$receipt"; then
+                effective_status="$selection_status"
+                observed_mode="BLOCKED"
+                echo "predecessor selection fail-closed: stage=readiness-predecessor step=select-exact-predecessor reason=$selection_reason resolution=LOWER_RESOLUTION conformance=PASS" >&2
+              else
+                effective_status=1
+                echo "malformed predecessor failure receipt: stage=readiness-predecessor step=select-exact-predecessor reason=${selection_reason:-UNKNOWN} resolution=LOWER_RESOLUTION" >&2
               fi
-              jq -e '
-                .decision == "FAIL_CLOSED" and
-                .reason == "READINESS_ANCESTOR_SEARCH_EXHAUSTED" and
-                .selected == null and
-                .summary.observed_attempts == .summary.search_limit and
-                .summary.missing_attempts == .summary.search_limit and
-                .summary.selected_ancestors == 0 and
-                (.attempts | length) == .summary.search_limit and
-                ([.attempts[] | .selection.reason] | all(. == "READINESS_PREDECESSOR_NOT_FOUND")) and
-                ([.attempts[].selection.pagination.complete] | all) and
-                ([.attempts[].selection.pagination.failure_reason] | all(. == null or . == ""))
-              ' "$receipt"
-              set +e
-              go run ./cmd/language-readiness-witness/foundation-seed \
-                --root "$GITHUB_WORKSPACE" \
-                --input "$receipt" \
-                --expected-head "$HEAD_SHA" \
-                --output "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json" \
-                --check
-              foundation_status=$?
-              set -e
-              if [[ "$foundation_status" -ne 0 ]]; then
-                echo "foundation seed fail-closed: stage=readiness-foundation step=seed-foundation reason=FOUNDATION_EVIDENCE_UNKNOWN resolution=LOWER_RESOLUTION" >&2
-                exit "$foundation_status"
-              fi
-              observed_mode="FOUNDATION"
             fi
             if [[ -n "$mode" && "$mode" != "$observed_mode" ]]; then
-              echo "predecessor mode replay mismatch" >&2
-              exit 1
+              replay_mismatch=1
             fi
             mode="$observed_mode"
+            if [[ "$suffix" == "a" ]]; then
+              status_a="$effective_status"
+            else
+              status_b="$effective_status"
+            fi
           done
           cmp "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" \
             "$RUNNER_TEMP/language-readiness-predecessor-selection-b.json"
+          if [[ "$replay_mismatch" -ne 0 ]]; then
+            echo "predecessor mode replay mismatch" >&2
+            exit 1
+          fi
+          if [[ "$mode" == "BLOCKED" ]]; then
+            blocked_reason="$(jq -r '.blocking_selection_reason // empty' "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json")"
+            if [[ -n "$blocked_reason" ]]; then
+              jq -e --arg head "$HEAD_SHA" --arg reason "$blocked_reason" '
+                .current_head_sha == $head and
+                .decision == "FAIL_CLOSED" and
+                .conformance == "PASS" and
+                .resolution == "LOWER_RESOLUTION" and
+                .reason == "READINESS_ANCESTOR_EVIDENCE_BLOCKED" and
+                .blocking_selection_reason == $reason and
+                .summary.readiness_delta_claims == null
+              ' "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json"
+            else
+              jq -e '
+                .decision == "FAIL_CLOSED" and
+                .conformance == "PASS" and
+                .resolution == "LOWER_RESOLUTION" and
+                .reason == "READINESS_ANCESTOR_SEARCH_EXHAUSTED" and
+                .selected == null
+              ' "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json"
+              if [[ -f "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" &&
+                -f "$RUNNER_TEMP/language-readiness-foundation-seed-b.json" ]]; then
+                cmp "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" \
+                  "$RUNNER_TEMP/language-readiness-foundation-seed-b.json"
+              fi
+              blocked_reason="FOUNDATION_EVIDENCE_UNKNOWN"
+            fi
+            echo "### Readiness predecessor conformance" >> "$GITHUB_STEP_SUMMARY"
+            echo "- conformance: \`PASS\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- readiness decision: \`FAIL_CLOSED\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- resolution: \`LOWER_RESOLUTION\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- reason: \`$blocked_reason\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- receipt reconstruction: \`2/2\`" >> "$GITHUB_STEP_SUMMARY"
+            exit "$status_a"
+          fi
+          if [[ "$status_a" -ne 0 || "$status_b" -ne 0 ]]; then
+            echo "predecessor replay failed: status_a=$status_a status_b=$status_b" >&2
+            exit "$status_a"
+          fi
           if [[ "$mode" == "RESOLVED" ]]; then
             for suffix in a b; do
               test -f "$RUNNER_TEMP/language-readiness-baseline-$suffix/artifact.json"

@@ -6,7 +6,8 @@ import (
 )
 
 func Validate(report Report) error {
-	if report.Schema != Schema || report.Summary.SearchLimit != SearchLimit ||
+	if report.Schema != Schema || report.Conformance != ConformancePass ||
+		report.Summary.SearchLimit != SearchLimit ||
 		report.Summary.CoordinatesTotal != 10 || report.ReportDigest == "" {
 		return fmt.Errorf("resolution contract malformed")
 	}
@@ -23,12 +24,21 @@ func Validate(report Report) error {
 	if !reflect.DeepEqual(report.Proofs, proofs(report, contiguous)) {
 		return fmt.Errorf("resolution proofs mismatch")
 	}
+	if (report.BlockingSelectionReason == "") !=
+		(report.Summary.ReadinessDeltaClaims != nil) {
+		return fmt.Errorf("resolution delta availability malformed")
+	}
 	if report.Decision == DecisionResolved {
 		if report.Reason != ReasonResolved || report.Selected == nil ||
+			report.Resolution != ResolutionExact ||
 			report.Summary.CoordinatesCompleted != 10 ||
 			report.Summary.BasisPoints != 10000 {
 			return fmt.Errorf("resolved coordinates malformed")
 		}
+	} else if report.Decision == DecisionFailClosed && report.Resolution != ResolutionLower {
+		return fmt.Errorf("fail-closed resolution malformed")
+	} else if report.Decision != DecisionFailClosed {
+		return fmt.Errorf("resolution decision unknown")
 	}
 	return nil
 }

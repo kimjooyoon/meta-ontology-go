@@ -5,7 +5,8 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/a
 func Evaluate(input predecessorresolution.Report, expectedHead string) Report {
 	source := observeSource(input, expectedHead)
 	report := Report{
-		Schema: Schema, Decision: DecisionFailClosed, Reason: ReasonUnknown,
+		Schema: Schema, Conformance: ConformancePass,
+		Decision: DecisionFailClosed, Reason: ReasonUnknown,
 		Resolution: ResolutionLower, Source: source,
 		NonClaims: nonClaims(), Authority: Authority{},
 	}

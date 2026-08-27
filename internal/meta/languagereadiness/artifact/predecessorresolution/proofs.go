@@ -9,7 +9,7 @@ func proofs(report Report, contiguous bool) []Proof {
 		report.Summary.MissingAttempts == report.Summary.SelectedDepth &&
 		report.Summary.AmbiguousCandidates == 0 &&
 		report.Summary.RepositoryWrites == 0 &&
-		report.Summary.ReadinessDeltaClaims == 0
+		report.Summary.ReadinessDeltaClaims != nil && *report.Summary.ReadinessDeltaClaims == 0
 	return []Proof{
 		{ID: "exact-selected-baseline", Choice: "FOUNDATION", Passed: foundation},
 		{ID: "contiguous-ancestry", Choice: "COHERENCE", Passed: coherence},

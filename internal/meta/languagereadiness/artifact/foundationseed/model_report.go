@@ -30,16 +30,17 @@ type Authority struct {
 }
 
 type Report struct {
-	Schema     string      `json:"schema"`
-	Decision   string      `json:"decision"`
-	Reason     string      `json:"reason"`
-	Resolution string      `json:"resolution"`
-	Source     Source      `json:"source"`
-	Summary    Summary     `json:"summary"`
-	Indicators []Indicator `json:"indicators"`
-	Views      []View      `json:"views"`
-	Proofs     []Proof     `json:"proofs"`
-	NonClaims  []string    `json:"non_claims"`
-	Authority  Authority   `json:"authority"`
-	Digest     string      `json:"digest"`
+	Schema      string      `json:"schema"`
+	Conformance string      `json:"conformance"`
+	Decision    string      `json:"decision"`
+	Reason      string      `json:"reason"`
+	Resolution  string      `json:"resolution"`
+	Source      Source      `json:"source"`
+	Summary     Summary     `json:"summary"`
+	Indicators  []Indicator `json:"indicators"`
+	Views       []View      `json:"views"`
+	Proofs      []Proof     `json:"proofs"`
+	NonClaims   []string    `json:"non_claims"`
+	Authority   Authority   `json:"authority"`
+	Digest      string      `json:"digest"`
 }

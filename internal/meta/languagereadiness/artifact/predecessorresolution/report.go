@@ -28,7 +28,7 @@ type Summary struct {
 	ValidCandidates      int `json:"valid_candidates"`
 	AmbiguousCandidates  int `json:"ambiguous_candidates"`
 	RepositoryWrites     int `json:"repository_writes"`
-	ReadinessDeltaClaims int `json:"readiness_delta_claims"`
+	ReadinessDeltaClaims *int `json:"readiness_delta_claims"`
 	CoordinatesCompleted int `json:"coordinates_completed"`
 	CoordinatesTotal     int `json:"coordinates_total"`
 	BasisPoints          int `json:"basis_points"`
@@ -59,6 +59,10 @@ type Report struct {
 	BlockingSelectionReason string           `json:"blocking_selection_reason,omitempty"`
 	Attempts                []AttemptReceipt `json:"attempts"`
 	Selected                *Resolution      `json:"selected,omitempty"`
+	// Decision describes readiness/predecessor availability. Conformance is
+	// intentionally separate: a well-formed fail-closed report can conform.
+	Conformance             string           `json:"conformance"`
+	Resolution              string           `json:"resolution"`
 	Summary                 Summary          `json:"summary"`
 	Indicators              []Indicator      `json:"indicators"`
 	Proofs                  []Proof          `json:"proofs"`

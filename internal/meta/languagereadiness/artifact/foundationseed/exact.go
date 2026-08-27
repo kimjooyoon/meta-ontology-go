@@ -36,7 +36,8 @@ func exactExhaustion(input predecessorresolution.Report, source Source) bool {
 		input.BlockingSelectionReason == "" && input.Selected == nil &&
 		summary.SelectedAncestors == 0 && summary.SelectedDepth == -1 &&
 		summary.ValidCandidates == 0 && summary.AmbiguousCandidates == 0 &&
-		summary.RepositoryWrites == 0 && summary.ReadinessDeltaClaims == 0 &&
+		summary.RepositoryWrites == 0 && summary.ReadinessDeltaClaims != nil &&
+		*summary.ReadinessDeltaClaims == 0 &&
 		exactMissingAttempts(input)
 }
 

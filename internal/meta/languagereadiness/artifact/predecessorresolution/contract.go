@@ -8,6 +8,9 @@ const (
 const (
 	DecisionResolved   = "RESOLVED"
 	DecisionFailClosed = "FAIL_CLOSED"
+	ConformancePass    = "PASS"
+	ResolutionExact    = "EXACT"
+	ResolutionLower    = "LOWER_RESOLUTION"
 )
 
 const (

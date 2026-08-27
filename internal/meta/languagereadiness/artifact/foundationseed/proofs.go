@@ -6,7 +6,8 @@ func proofs(source Source, authority Authority) []Proof {
 	coherence := source.ResolutionValid && source.HeadBound &&
 		source.SearchComplete && source.MissingComplete && source.Contiguous
 	regression := source.AmbiguousCandidates == 0 && source.RepositoryWrites == 0 &&
-		source.ReadinessDeltaClaims == 0 && authorityDenied(authority)
+		source.ReadinessDeltaClaims != nil && *source.ReadinessDeltaClaims == 0 &&
+		authorityDenied(authority)
 	return []Proof{
 		{Choice: "FOUNDATION", Claim: "all bounded ancestors are exactly absent",
 			EvidenceDigest: source.ResolutionDigest, Passed: foundation},

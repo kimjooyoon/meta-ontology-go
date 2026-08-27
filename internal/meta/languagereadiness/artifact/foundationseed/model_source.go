@@ -16,7 +16,7 @@ type Source struct {
 	ValidCandidates         int    `json:"valid_candidates"`
 	AmbiguousCandidates     int    `json:"ambiguous_candidates"`
 	RepositoryWrites        int    `json:"repository_writes"`
-	ReadinessDeltaClaims    int    `json:"readiness_delta_claims"`
+	ReadinessDeltaClaims    *int   `json:"readiness_delta_claims"`
 	ExactExhaustion         bool   `json:"exact_exhaustion"`
 	AuthorityDenied         bool   `json:"authority_denied"`
 }
