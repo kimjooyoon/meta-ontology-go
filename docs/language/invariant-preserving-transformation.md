@@ -90,8 +90,15 @@ The report top-level decision, resolution, reason, repository writes, and
 mutation authority are derived from those adjudicated cases and both source
 variants. An observed contradiction is `FAIL_CLOSED` with `REFUTED`; an
 unobservable obligation is `FAIL_CLOSED` with `OPEN` at lower resolution. The
-report consumer verifies these relationships without calling `Build`; the
-separately named `DeterministicReplay` uses a second `Build` only for
-repeatability and is not presented as independent evidence. CI also tampers a
-case outcome and proves that a resealed `PASS`/`DISCHARGED` artifact is
-rejected.
+separate `interventionconsumer` package and its witness command verify these
+relationships without calling `Build`: they parse the original `.gooo`,
+recreate both interventions, and compare the receipt, decision, resolution,
+reason, claim transitions, and effect boundary. The separately named
+`DeterministicReplay` uses a second `Build` only for repeatability and is not
+presented as independent evidence. CI also changes one case outcome together
+with its claim, denominator, top decision, and resealed digest, then proves
+that the source-bound consumer rejects the coherent-looking artifact.
+
+The consumer dependency boundary is fixed at `producer_dependency_imports=0`
+out of `allowed_producer_dependency_imports=0`; its reconstruction and
+resealed-tamper regression have fixed denominators of `2/2` and `1/1`.

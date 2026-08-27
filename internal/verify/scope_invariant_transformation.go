@@ -7,6 +7,7 @@ func init() {
 		".github/workflows/transformation-effect.yml",
 		"cmd/invariant-transformation-witness",
 		"cmd/invariant-transformation-intervention-witness",
+		"cmd/invariant-transformation-intervention-consumer-witness",
 		"docs/language/invariant-preserving-transformation.md",
 		"examples/invariant-transformation",
 		"examples/language-semantic-model/corpus.json",

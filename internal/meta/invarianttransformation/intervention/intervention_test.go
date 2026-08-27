@@ -46,25 +46,7 @@ func TestReportConsumerAndDeterministicReplayReproduceBothInterventions(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := VerifyReport(report, []byte(testSource), testHead); err != nil {
-		t.Fatal(err)
-	}
 	if err := DeterministicReplay(report, []byte(testSource), testHead); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func TestTamperedCaseCannotRemainPassAndDischarged(t *testing.T) {
-	report, err := Build([]byte(testSource), testHead)
-	if err != nil {
-		t.Fatal(err)
-	}
-	report.Cases[1].Satisfied = false
-	report = seal(report)
-	if report.Decision != "PASS" || report.Cases[1].Claim.Status != model.StatusDischarged {
-		t.Fatalf("tamper setup unexpectedly changed artifact outcome: decision=%s claim=%s", report.Decision, report.Cases[1].Claim.Status)
-	}
-	if err := VerifyReport(report, []byte(testSource), testHead); err == nil {
-		t.Fatal("tampered intervention case remained PASS with a DISCHARGED claim")
 	}
 }

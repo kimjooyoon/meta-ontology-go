@@ -28,9 +28,6 @@ func main() {
 		fail(err.Error())
 	}
 	if *check {
-		if err := intervention.VerifyReport(report, source, *headSHA); err != nil {
-			fail(err.Error())
-		}
 		if err := intervention.DeterministicReplay(report, source, *headSHA); err != nil {
 			fail(err.Error())
 		}
