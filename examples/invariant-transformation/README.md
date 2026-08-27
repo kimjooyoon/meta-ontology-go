@@ -36,7 +36,12 @@ cases, never folded into the four-case authority coverage score:
 Each intervention is a persistent `OPEN -> DISCHARGED` claim with an exact
 `INTERVENTION` stage, comparison step, and reason. CI publishes two separate
 `1/1 (10000 BPS)` denominators and does not produce an aggregate intervention
-score.
+score. The report derives `PASS` only when both claims are discharged; an
+observed contradiction becomes `FAIL_CLOSED` with `REFUTED`, and an
+unobservable obligation becomes `FAIL_CLOSED` with `OPEN` and lower
+resolution. A report consumer checks these derived relationships without
+calling the producer's `Build` function. A separately named deterministic
+replay may call `Build` only to check repeatability.
 
 ## Research basis and limits
 

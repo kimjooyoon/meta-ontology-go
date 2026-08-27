@@ -14,23 +14,27 @@ import (
 )
 
 const (
-	Schema                       = "gooo/invariant-transformation-intervention-report/v1"
-	DenominatorID                = "gooo/invariant-transformation-intervention-denominator/v1"
-	SemanticDenominatorID        = "gooo/invariant-transformation-intervention-semantic-denominator/v1"
-	NonSemanticDenominatorID     = "gooo/invariant-transformation-intervention-nonsemantic-denominator/v1"
-	SemanticCaseID               = "semantic-source-intervention"
-	NonSemanticCaseID            = "nonsemantic-source-intervention"
-	SemanticClaimID              = "semantic-intervention-claim"
-	NonSemanticClaimID           = "nonsemantic-intervention-claim"
-	InterventionStage            = "INTERVENTION"
-	SemanticStep                 = "compare-semantic-projection-and-decision"
-	SemanticReason               = "SEMANTIC_PROJECTION_AND_DECISION_CHANGED"
-	NonSemanticStep              = "compare-nonsemantic-projection-and-decision"
-	NonSemanticReason            = "NONSEMANTIC_PROJECTION_AND_DECISION_PRESERVED"
-	PreservedCaseID              = "preserved-translation"
-	ExpectedSemanticMutation     = "expected=4"
-	OriginalSemanticMutation     = "expected=3"
-	NonSemanticInterventionLabel = "comment-and-whitespace-only"
+	Schema                         = "gooo/invariant-transformation-intervention-report/v1"
+	DenominatorID                  = "gooo/invariant-transformation-intervention-denominator/v1"
+	SemanticDenominatorID          = "gooo/invariant-transformation-intervention-semantic-denominator/v1"
+	NonSemanticDenominatorID       = "gooo/invariant-transformation-intervention-nonsemantic-denominator/v1"
+	SemanticCaseID                 = "semantic-source-intervention"
+	NonSemanticCaseID              = "nonsemantic-source-intervention"
+	SemanticClaimID                = "semantic-intervention-claim"
+	NonSemanticClaimID             = "nonsemantic-intervention-claim"
+	InterventionStage              = "INTERVENTION"
+	SemanticStep                   = "compare-semantic-projection-and-decision"
+	SemanticReason                 = "SEMANTIC_PROJECTION_AND_DECISION_CHANGED"
+	NonSemanticStep                = "compare-nonsemantic-projection-and-decision"
+	NonSemanticReason              = "NONSEMANTIC_PROJECTION_AND_DECISION_PRESERVED"
+	SemanticContradictionReason    = "SEMANTIC_INTERVENTION_CONTRADICTED"
+	NonSemanticContradictionReason = "NONSEMANTIC_INTERVENTION_CONTRADICTED"
+	EvidenceUnobservableReason     = "INTERVENTION_EVIDENCE_UNOBSERVABLE"
+	FailClosedDecision             = "FAIL_CLOSED"
+	PreservedCaseID                = "preserved-translation"
+	ExpectedSemanticMutation       = "expected=4"
+	OriginalSemanticMutation       = "expected=3"
+	NonSemanticInterventionLabel   = "comment-and-whitespace-only"
 )
 
 type FixtureProjection struct {
@@ -48,6 +52,7 @@ type FixtureProjection struct {
 type Claim struct {
 	ID          string             `json:"id"`
 	Status      string             `json:"status"`
+	Resolution  string             `json:"resolution"`
 	Reason      string             `json:"reason"`
 	Coordinate  model.Coordinate   `json:"coordinate"`
 	Transitions []model.Transition `json:"transitions"`
@@ -65,6 +70,13 @@ type FixedDenominator struct {
 	CasesTotal     int              `json:"cases_total"`
 	SemanticChange SliceDenominator `json:"semantic_change"`
 	NonSemantic    SliceDenominator `json:"nonsemantic_change"`
+}
+
+type Failure struct {
+	CaseID string `json:"case_id"`
+	Stage  string `json:"stage"`
+	Step   string `json:"step"`
+	Reason string `json:"reason"`
 }
 
 type Case struct {
@@ -93,6 +105,7 @@ type Case struct {
 	ReasonEqual               bool               `json:"reason_equal"`
 	DecisionChanged           bool               `json:"decision_changed"`
 	ClaimTransitionsEqual     bool               `json:"claim_transitions_equal"`
+	EvidenceObservable        bool               `json:"evidence_observable"`
 	RepositoryWritesZero      bool               `json:"repository_writes_zero"`
 	BaselineRepositoryWrites  int                `json:"baseline_repository_writes"`
 	MutatedRepositoryWrites   int                `json:"mutated_repository_writes"`
@@ -103,18 +116,20 @@ type Case struct {
 }
 
 type Report struct {
-	Schema           string           `json:"schema"`
-	HeadSHA          string           `json:"head_sha"`
-	SourcePath       string           `json:"source_path"`
-	SourceDigest     string           `json:"source_digest"`
-	Denominator      FixedDenominator `json:"denominator"`
-	CaseCount        int              `json:"case_count"`
-	Cases            []Case           `json:"cases"`
-	Decision         string           `json:"decision"`
-	Resolution       string           `json:"resolution"`
-	Reason           string           `json:"reason"`
-	RepositoryWrites int              `json:"repository_writes"`
-	Digest           string           `json:"digest"`
+	Schema            string           `json:"schema"`
+	HeadSHA           string           `json:"head_sha"`
+	SourcePath        string           `json:"source_path"`
+	SourceDigest      string           `json:"source_digest"`
+	Denominator       FixedDenominator `json:"denominator"`
+	CaseCount         int              `json:"case_count"`
+	Cases             []Case           `json:"cases"`
+	Decision          string           `json:"decision"`
+	Resolution        string           `json:"resolution"`
+	Reason            string           `json:"reason"`
+	RepositoryWrites  int              `json:"repository_writes"`
+	MutationAuthority bool             `json:"mutation_authority"`
+	Failure           *Failure         `json:"failure,omitempty"`
+	Digest            string           `json:"digest"`
 }
 
 func Build(source []byte, headSHA string) (Report, error) {
@@ -124,14 +139,16 @@ func Build(source []byte, headSHA string) (Report, error) {
 	if _, err := project(source); err != nil {
 		return Report{}, err
 	}
-	semanticCase, err := buildCase(source, headSHA, SemanticCaseID, "SEMANTIC", "semantic-value-change", mutateSemantic, SemanticClaimID, SemanticStep, SemanticReason)
+	semanticCase, err := buildCase(source, headSHA, SemanticCaseID, "SEMANTIC", "semantic-value-change", mutateSemantic, SemanticClaimID, SemanticStep)
 	if err != nil {
 		return Report{}, err
 	}
-	nonSemanticCase, err := buildCase(source, headSHA, NonSemanticCaseID, "NON_SEMANTIC", NonSemanticInterventionLabel, mutateNonSemantic, NonSemanticClaimID, NonSemanticStep, NonSemanticReason)
+	nonSemanticCase, err := buildCase(source, headSHA, NonSemanticCaseID, "NON_SEMANTIC", NonSemanticInterventionLabel, mutateNonSemantic, NonSemanticClaimID, NonSemanticStep)
 	if err != nil {
 		return Report{}, err
 	}
+	decision, resolution, reason, failure := deriveReport([]Case{semanticCase, nonSemanticCase})
+	repositoryWrites, mutationAuthority := effectTotals([]Case{semanticCase, nonSemanticCase})
 	report := Report{
 		Schema: Schema, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: model.DigestBytes(source),
 		Denominator: FixedDenominator{
@@ -139,15 +156,17 @@ func Build(source []byte, headSHA string) (Report, error) {
 			SemanticChange: SliceDenominator{ID: SemanticDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(semanticCase.Satisfied), CoverageBPS: boolInt(semanticCase.Satisfied) * 10_000},
 			NonSemantic:    SliceDenominator{ID: NonSemanticDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(nonSemanticCase.Satisfied), CoverageBPS: boolInt(nonSemanticCase.Satisfied) * 10_000},
 		},
-		CaseCount: 2, Cases: []Case{semanticCase, nonSemanticCase}, Decision: "PASS", Resolution: model.ResolutionExact,
-		Reason: "FIXED_INTERVENTION_CONTRACT_SATISFIED", RepositoryWrites: 0,
+		CaseCount: 2, Cases: []Case{semanticCase, nonSemanticCase}, Decision: decision, Resolution: resolution,
+		Reason: reason, RepositoryWrites: repositoryWrites, MutationAuthority: mutationAuthority, Failure: failure,
 	}
 	return seal(report), nil
 }
 
-func ValidateReport(report Report, source []byte, headSHA string) error {
+// DeterministicReplay compares a report with a second production replay. It
+// is a determinism check, not the independent consumer judgment.
+func DeterministicReplay(report Report, source []byte, headSHA string) error {
 	if report.Schema != Schema || report.HeadSHA != headSHA || report.SourcePath != model.SourcePath ||
-		report.SourceDigest != model.DigestBytes(source) || report.CaseCount != 2 || report.RepositoryWrites != 0 ||
+		report.SourceDigest != model.DigestBytes(source) || report.CaseCount != 2 ||
 		report.Digest == "" || report.Digest != seal(report).Digest {
 		return fmt.Errorf("intervention report identity or write boundary mismatch")
 	}
@@ -161,7 +180,107 @@ func ValidateReport(report Report, source []byte, headSHA string) error {
 	return nil
 }
 
-func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte) ([]byte, error), claimID, step, reason string) (Case, error) {
+// VerifyReport is the report consumer. It does not call Build: it derives the
+// report decision, claim status, fixed denominators, and effect boundary from
+// the recorded observations and rejects a resealed tampered artifact.
+func VerifyReport(report Report, source []byte, headSHA string) error {
+	if report.Schema != Schema || report.HeadSHA != headSHA || report.SourcePath != model.SourcePath ||
+		report.SourceDigest != model.DigestBytes(source) || report.CaseCount != 2 || len(report.Cases) != 2 ||
+		report.Digest == "" || report.Digest != seal(report).Digest {
+		return fmt.Errorf("intervention report identity or digest mismatch")
+	}
+	for _, item := range report.Cases {
+		if err := verifyCase(item); err != nil {
+			return err
+		}
+	}
+	decision, resolution, reason, failure := deriveReport(report.Cases)
+	repositoryWrites, mutationAuthority := effectTotals(report.Cases)
+	if report.Decision != decision || report.Resolution != resolution || report.Reason != reason ||
+		report.RepositoryWrites != repositoryWrites || report.MutationAuthority != mutationAuthority ||
+		!reflect.DeepEqual(report.Failure, failure) {
+		return fmt.Errorf("intervention report outcome is not derived from case adjudication")
+	}
+	semanticCases, nonSemanticCases := 0, 0
+	semanticSatisfied, nonSemanticSatisfied := 0, 0
+	for _, item := range report.Cases {
+		switch item.Kind {
+		case "SEMANTIC":
+			semanticCases++
+			semanticSatisfied += boolInt(item.Satisfied)
+		case "NON_SEMANTIC":
+			nonSemanticCases++
+			nonSemanticSatisfied += boolInt(item.Satisfied)
+		default:
+			return fmt.Errorf("unknown intervention case kind %q", item.Kind)
+		}
+	}
+	if semanticCases != 1 || nonSemanticCases != 1 || report.Denominator.ID != DenominatorID || report.Denominator.CasesTotal != 2 ||
+		report.Denominator.SemanticChange != (SliceDenominator{ID: SemanticDenominatorID, CasesTotal: 1, CasesSatisfied: semanticSatisfied, CoverageBPS: semanticSatisfied * 10_000}) ||
+		report.Denominator.NonSemantic != (SliceDenominator{ID: NonSemanticDenominatorID, CasesTotal: 1, CasesSatisfied: nonSemanticSatisfied, CoverageBPS: nonSemanticSatisfied * 10_000}) {
+		return fmt.Errorf("intervention denominators are not derived from case adjudication")
+	}
+	return nil
+}
+
+func verifyCase(item Case) error {
+	expectedID, expectedStep := "", ""
+	switch item.Kind {
+	case "SEMANTIC":
+		expectedID, expectedStep = SemanticClaimID, SemanticStep
+	case "NON_SEMANTIC":
+		expectedID, expectedStep = NonSemanticClaimID, NonSemanticStep
+	default:
+		return fmt.Errorf("unknown intervention case kind %q", item.Kind)
+	}
+	if item.Claim.ID != expectedID || item.Claim.Coordinate.Stage != InterventionStage || item.Claim.Coordinate.Step != expectedStep || item.Claim.Coordinate.Reason != item.Claim.Reason ||
+		len(item.Claim.Transitions) != 1 || item.Claim.Transitions[0].From != model.StatusOpen || item.Claim.Transitions[0].To != item.Claim.Status || item.Claim.Transitions[0].Coordinate != item.Claim.Coordinate {
+		return fmt.Errorf("intervention case %s has an invalid persistent claim", item.ID)
+	}
+	expected, resolution, reason := adjudicate(item.Kind, item, item.EvidenceObservable)
+	if item.Satisfied != expected || item.Claim.Status != statusForAdjudication(expected, item.EvidenceObservable) || item.Claim.Resolution != resolution || item.Claim.Reason != reason {
+		return fmt.Errorf("intervention case %s outcome is not adjudicated", item.ID)
+	}
+	if item.RepositoryWritesZero != (item.BaselineRepositoryWrites == 0 && item.MutatedRepositoryWrites == 0 && !item.BaselineMutationAuthority && !item.MutatedMutationAuthority) {
+		return fmt.Errorf("intervention case %s write boundary is not derived", item.ID)
+	}
+	return nil
+}
+
+func deriveReport(cases []Case) (string, string, string, *Failure) {
+	if len(cases) == 2 && cases[0].Satisfied && cases[1].Satisfied {
+		return "PASS", model.ResolutionExact, "FIXED_INTERVENTION_CONTRACT_SATISFIED", nil
+	}
+	for _, item := range cases {
+		if item.Satisfied {
+			continue
+		}
+		failure := &Failure{CaseID: item.ID, Stage: item.Claim.Coordinate.Stage, Step: item.Claim.Coordinate.Step, Reason: item.Claim.Reason}
+		resolution := item.Claim.Resolution
+		if resolution == "" {
+			resolution = model.ResolutionLower
+		}
+		return FailClosedDecision, resolution, formatFailureReason(*failure), failure
+	}
+	failure := &Failure{CaseID: "intervention-denominator", Stage: InterventionStage, Step: "adjudicate-fixed-cases", Reason: "INTERVENTION_CASE_OUTCOME_UNOBSERVABLE"}
+	return FailClosedDecision, model.ResolutionLower, formatFailureReason(*failure), failure
+}
+
+func formatFailureReason(failure Failure) string {
+	return fmt.Sprintf("CASE=%s;STAGE=%s;STEP=%s;REASON=%s", failure.CaseID, failure.Stage, failure.Step, failure.Reason)
+}
+
+func effectTotals(cases []Case) (int, bool) {
+	writes := 0
+	mutationAuthority := false
+	for _, item := range cases {
+		writes += item.BaselineRepositoryWrites + item.MutatedRepositoryWrites
+		mutationAuthority = mutationAuthority || item.BaselineMutationAuthority || item.MutatedMutationAuthority
+	}
+	return writes, mutationAuthority
+}
+
+func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte) ([]byte, error), claimID, step string) (Case, error) {
 	mutated, err := mutate(source)
 	if err != nil {
 		return Case{}, err
@@ -195,9 +314,7 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 	transitionsEqual := reflect.DeepEqual(baselineTransitions, mutatedTransitions)
 	writesZero := baselineReceipt.RepositoryWrites == 0 && mutatedReceipt.RepositoryWrites == 0 &&
 		!baselineReceipt.MutationAuthority && !mutatedReceipt.MutationAuthority
-	claimCoordinate := model.Coordinate{Stage: InterventionStage, Step: step, Reason: reason}
-	claim := Claim{ID: claimID, Status: model.StatusDischarged, Reason: reason, Coordinate: claimCoordinate,
-		Transitions: []model.Transition{{From: model.StatusOpen, To: model.StatusDischarged, Coordinate: claimCoordinate}}}
+	evidenceObservable := baselineJudgment.Independent && mutatedJudgment.Independent
 	caseResult := Case{
 		ID: id, Kind: kind, SourceEdit: edit, BaselineProjection: baselineProjection, MutatedProjection: mutatedProjection,
 		BaselineProjectionDigest: model.Digest(baselineProjection), MutatedProjectionDigest: model.Digest(mutatedProjection),
@@ -209,24 +326,59 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 		RawSourceDigestChanged: rawDigestChanged, ReceiptChanged: receiptChanged, SemanticProjectionEqual: semanticEqual,
 		DecisionEqual: decisionEqual, ResolutionEqual: resolutionEqual, ReasonEqual: reasonEqual,
 		DecisionChanged: !decisionEqual, ClaimTransitionsEqual: transitionsEqual, RepositoryWritesZero: writesZero,
+		EvidenceObservable:       evidenceObservable,
 		BaselineRepositoryWrites: baselineReceipt.RepositoryWrites, MutatedRepositoryWrites: mutatedReceipt.RepositoryWrites,
 		BaselineMutationAuthority: baselineReceipt.MutationAuthority, MutatedMutationAuthority: mutatedReceipt.MutationAuthority,
-		Claim: claim,
 	}
+	caseResult.Satisfied, claimResolution, claimReason := adjudicate(kind, caseResult, evidenceObservable)
+	claimCoordinate := model.Coordinate{Stage: InterventionStage, Step: step, Reason: claimReason}
+	caseResult.Claim = Claim{ID: claimID, Status: statusForAdjudication(caseResult.Satisfied, evidenceObservable), Resolution: claimResolution,
+		Reason: claimReason, Coordinate: claimCoordinate,
+		Transitions: []model.Transition{{From: model.StatusOpen, To: statusForAdjudication(caseResult.Satisfied, evidenceObservable), Coordinate: claimCoordinate}}}
+	return caseResult, nil
+}
+
+func adjudicate(kind string, item Case, evidenceObservable bool) (bool, string, string) {
+	if !evidenceObservable {
+		return false, model.ResolutionLower, EvidenceUnobservableReason
+	}
+	if observationSatisfied(kind, item) {
+		if kind == "SEMANTIC" {
+			return true, model.ResolutionExact, SemanticReason
+		}
+		return true, model.ResolutionExact, NonSemanticReason
+	}
+	if kind == "SEMANTIC" {
+		return false, model.ResolutionInvariant, SemanticContradictionReason
+	}
+	return false, model.ResolutionInvariant, NonSemanticContradictionReason
+}
+
+func observationSatisfied(kind string, item Case) bool {
 	switch kind {
 	case "SEMANTIC":
-		caseResult.Satisfied = baselineJudgment.Independent && mutatedJudgment.Independent && rawDigestChanged && receiptChanged &&
-			!semanticEqual && !decisionEqual && !resolutionEqual && !reasonEqual && !transitionsEqual && writesZero &&
-			baselineJudgment.Decision == model.DecisionAllowed && mutatedJudgment.Decision == model.DecisionRefuted &&
-			mutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
+		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticProjectionEqual &&
+			!item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.ClaimTransitionsEqual &&
+			item.RepositoryWritesZero && item.BaselineJudgment.Decision == model.DecisionAllowed &&
+			item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
 	case "NON_SEMANTIC":
-		caseResult.Satisfied = baselineJudgment.Independent && mutatedJudgment.Independent && rawDigestChanged && receiptChanged &&
-			semanticEqual && decisionEqual && resolutionEqual && reasonEqual && transitionsEqual && writesZero &&
-			baselineJudgment.Decision == model.DecisionAllowed && mutatedJudgment.Decision == model.DecisionAllowed
+		return item.RawSourceDigestChanged && item.ReceiptChanged && item.SemanticProjectionEqual &&
+			item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.ClaimTransitionsEqual &&
+			item.RepositoryWritesZero && item.BaselineJudgment.Decision == model.DecisionAllowed &&
+			item.MutatedJudgment.Decision == model.DecisionAllowed
 	default:
-		return Case{}, fmt.Errorf("unsupported intervention kind %q", kind)
+		return false
 	}
-	return caseResult, nil
+}
+
+func statusForAdjudication(satisfied, evidenceObservable bool) string {
+	if satisfied {
+		return model.StatusDischarged
+	}
+	if evidenceObservable {
+		return model.StatusRefuted
+	}
+	return model.StatusOpen
 }
 
 func project(source []byte) (FixtureProjection, error) {

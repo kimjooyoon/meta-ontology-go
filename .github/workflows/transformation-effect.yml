@@ -2173,6 +2173,9 @@ jobs:
       - name: Run source-bound invariant regressions
         run: go test ./internal/meta/invarianttransformation/...
 
+      - name: Reject tampered intervention outcome
+        run: go test -v ./internal/meta/invarianttransformation/intervention -run '^TestTamperedCaseCannotRemainPassAndDischarged$'
+
       - name: Emit and independently judge every fixed case twice
         shell: bash
         run: |
@@ -2245,9 +2248,15 @@ jobs:
             .denominator.nonsemantic_change.cases_satisfied == 1 and
             .denominator.nonsemantic_change.coverage_bps == 10000 and
             ([.cases[] | select(.kind == "SEMANTIC") | .raw_source_digest_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC") | .receipt_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC") | .semantic_projection_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC") | .decision_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC") | .resolution_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC") | .reason_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC") | .claim_transitions_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC") | .decision_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .raw_source_digest_changed] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .receipt_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .semantic_projection_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .decision_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .resolution_equal] | all) and

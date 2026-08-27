@@ -85,3 +85,13 @@ transitions. The semantic claim uses stage `INTERVENTION`, step
 `SEMANTIC_PROJECTION_AND_DECISION_CHANGED`; the non-semantic claim uses the
 same stage, step `compare-nonsemantic-projection-and-decision`, and reason
 `NONSEMANTIC_PROJECTION_AND_DECISION_PRESERVED`.
+
+The report top-level decision, resolution, reason, repository writes, and
+mutation authority are derived from those adjudicated cases and both source
+variants. An observed contradiction is `FAIL_CLOSED` with `REFUTED`; an
+unobservable obligation is `FAIL_CLOSED` with `OPEN` at lower resolution. The
+report consumer verifies these relationships without calling `Build`; the
+separately named `DeterministicReplay` uses a second `Build` only for
+repeatability and is not presented as independent evidence. CI also tampers a
+case outcome and proves that a resealed `PASS`/`DISCHARGED` artifact is
+rejected.
