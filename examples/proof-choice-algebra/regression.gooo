@@ -1,0 +1,15 @@
+package proofchoice
+namespace proofchoice
+
+// proof-choice {"kind":"claim","id":"claim.regression-replay","choice":"REGRESSION","statement":"the prior receipt and the replay agree","producer":"replay-runner","consumer":"proof-ledger","meta_operation":"compare-regression","stage":"replay","step":"compare","reason":"prior-receipt"}
+// proof-choice {"kind":"metric","id":"metric.regression-coverage","choice":"REGRESSION","statement":"the replay covers every fixed denominator slot","producer":"metric-producer","consumer":"proof-ledger","meta_operation":"measure-regression","stage":"replay","step":"coverage","reason":"fixed-denominator","numerator":3,"denominator":3}
+// proof-choice {"kind":"transition","claim_id":"claim.regression-replay","from":"ASSERTED","to":"PERSISTED","choice":"REGRESSION","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"replay-preserved","persistent":true}
+
+entity PriorReceipt id "gooo://proof-choice/regression/prior-receipt"
+entity RegressionClaim id "gooo://proof-choice/regression/claim"
+entity RegressionMetric id "gooo://proof-choice/regression/metric"
+entity RegressionReceipt id "gooo://proof-choice/regression/receipt"
+
+activity CompareReplay(PriorReceipt) -> RegressionClaim
+activity MeasureReplay(RegressionClaim) -> RegressionMetric
+activity PersistReplay(RegressionClaim) -> RegressionReceipt

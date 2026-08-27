@@ -1,0 +1,15 @@
+package proofchoice
+namespace proofchoice
+
+// proof-choice {"kind":"claim","id":"claim.foundation-anchor","choice":"FOUNDATION","statement":"a stable source identity anchors this claim","producer":"source-author","consumer":"proof-ledger","meta_operation":"bind-foundation","stage":"measure","step":"anchor","reason":"stable-identifier"}
+// proof-choice {"kind":"metric","id":"metric.foundation-coverage","choice":"FOUNDATION","statement":"the anchor covers the declared evidence","producer":"metric-producer","consumer":"proof-ledger","meta_operation":"measure-foundation","stage":"measure","step":"coverage","reason":"fixed-denominator","numerator":3,"denominator":3}
+// proof-choice {"kind":"transition","claim_id":"claim.foundation-anchor","from":"ASSERTED","to":"PERSISTED","choice":"FOUNDATION","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"identity-preserved","persistent":true}
+
+entity SourceFact id "gooo://proof-choice/foundation/source-fact"
+entity FoundationClaim id "gooo://proof-choice/foundation/claim"
+entity FoundationMetric id "gooo://proof-choice/foundation/metric"
+entity FoundationReceipt id "gooo://proof-choice/foundation/receipt"
+
+activity Anchor(SourceFact) -> FoundationClaim
+activity MeasureAnchor(FoundationClaim) -> FoundationMetric
+activity PersistAnchor(FoundationClaim) -> FoundationReceipt

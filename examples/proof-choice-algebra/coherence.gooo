@@ -1,0 +1,15 @@
+package proofchoice
+namespace proofchoice
+
+// proof-choice {"kind":"claim","id":"claim.coherence-closure","choice":"COHERENCE","statement":"the claim agrees with its neighboring claims","producer":"coherence-builder","consumer":"proof-ledger","meta_operation":"check-coherence","stage":"relate","step":"closure","reason":"neighbor-agreement"}
+// proof-choice {"kind":"metric","id":"metric.coherence-coverage","choice":"COHERENCE","statement":"all declared relations are observed","producer":"metric-producer","consumer":"proof-ledger","meta_operation":"measure-coherence","stage":"relate","step":"coverage","reason":"fixed-denominator","numerator":3,"denominator":3}
+// proof-choice {"kind":"transition","claim_id":"claim.coherence-closure","from":"ASSERTED","to":"PERSISTED","choice":"COHERENCE","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"relation-preserved","persistent":true}
+
+entity NeighborClaims id "gooo://proof-choice/coherence/neighbor-claims"
+entity CoherenceClaim id "gooo://proof-choice/coherence/claim"
+entity CoherenceMetric id "gooo://proof-choice/coherence/metric"
+entity CoherenceReceipt id "gooo://proof-choice/coherence/receipt"
+
+activity CheckClosure(NeighborClaims) -> CoherenceClaim
+activity MeasureClosure(CoherenceClaim) -> CoherenceMetric
+activity PersistClosure(CoherenceClaim) -> CoherenceReceipt

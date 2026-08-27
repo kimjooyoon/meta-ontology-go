@@ -1,0 +1,14 @@
+package proofchoice
+namespace proofchoice
+
+// proof-choice {"kind":"claim","id":"claim.contradictory-route","choice":"FOUNDATION","statement":"the claim is anchored","producer":"source-author","consumer":"proof-ledger","meta_operation":"bind-foundation","stage":"measure","step":"anchor","reason":"stable-identifier"}
+// proof-choice {"kind":"claim","id":"claim.contradictory-route","choice":"REGRESSION","statement":"the same claim is instead a replay","producer":"replay-runner","consumer":"proof-ledger","meta_operation":"compare-regression","stage":"replay","step":"compare","reason":"prior-receipt"}
+// proof-choice {"kind":"metric","id":"metric.contradictory-route","choice":"FOUNDATION","statement":"the contradiction cannot be averaged away","producer":"metric-producer","consumer":"proof-ledger","meta_operation":"measure-foundation","stage":"measure","step":"coverage","reason":"fixed-denominator","numerator":3,"denominator":3}
+// proof-choice {"kind":"transition","claim_id":"claim.contradictory-route","from":"ASSERTED","to":"PERSISTED","choice":"FOUNDATION","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"identity-preserved","persistent":true}
+
+entity ContradictorySource id "gooo://proof-choice/contradiction/source"
+entity ContradictoryClaim id "gooo://proof-choice/contradiction/claim"
+entity ContradictoryMetric id "gooo://proof-choice/contradiction/metric"
+
+activity BindContradictory(ContradictorySource) -> ContradictoryClaim
+activity MeasureContradictory(ContradictoryClaim) -> ContradictoryMetric

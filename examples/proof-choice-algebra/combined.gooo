@@ -1,0 +1,17 @@
+package proofchoice
+namespace proofchoice
+
+// proof-choice {"kind":"claim","id":"claim.combined-anchor","choice":"FOUNDATION","statement":"the combined bundle has a stable anchor","producer":"source-author","consumer":"proof-ledger","meta_operation":"bind-foundation","stage":"measure","step":"anchor","reason":"stable-identifier"}
+// proof-choice {"kind":"claim","id":"claim.combined-closure","choice":"COHERENCE","statement":"the combined bundle closes its relation","producer":"coherence-builder","consumer":"proof-ledger","meta_operation":"check-coherence","stage":"relate","step":"closure","reason":"neighbor-agreement"}
+// proof-choice {"kind":"metric","id":"metric.combined-replay","choice":"REGRESSION","statement":"the combined bundle replays exactly","producer":"replay-runner","consumer":"proof-ledger","meta_operation":"measure-regression","stage":"replay","step":"compare","reason":"prior-receipt","numerator":3,"denominator":3}
+// proof-choice {"kind":"transition","claim_id":"claim.combined-anchor","from":"ASSERTED","to":"PERSISTED","choice":"FOUNDATION","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"identity-preserved","persistent":true}
+// proof-choice {"kind":"transition","claim_id":"claim.combined-closure","from":"ASSERTED","to":"PERSISTED","choice":"COHERENCE","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"relation-preserved","persistent":true}
+
+entity StableAnchor id "gooo://proof-choice/combined/stable-anchor"
+entity ClosedRelation id "gooo://proof-choice/combined/closed-relation"
+entity ReplayMetric id "gooo://proof-choice/combined/replay-metric"
+entity CombinedReceipt id "gooo://proof-choice/combined/receipt"
+
+activity BindAnchor(StableAnchor) -> ClosedRelation
+activity MeasureReplay(ClosedRelation) -> ReplayMetric
+activity PersistCombined(ClosedRelation) -> CombinedReceipt

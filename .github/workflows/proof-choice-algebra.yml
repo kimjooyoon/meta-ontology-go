@@ -1,0 +1,74 @@
+name: Proof-choice algebra
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  proof-choice-algebra:
+    name: proof-choice algebra
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Produce, replay, and independently judge all cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/proof-choice-algebra"
+          mkdir -p "$output/first" "$output/replay" "$output/judged"
+          for case in foundation coherence regression combined; do
+            source="examples/proof-choice-algebra/$case.gooo"
+            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -output "$output/first/$case.json" -expect PASS
+            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -output "$output/replay/$case.json" -expect PASS
+            cmp "$output/first/$case.json" "$output/replay/$case.json"
+            go run ./scripts/proof-choice-algebra -mode judge -receipt "$output/first/$case.json" -output "$output/judged/$case.json" -expect PASS
+            jq -e '.decision == "PASS" and .summary.fixed_denominator == 3 and .effects.repository_writes == 0 and .effects.mutation_authority == false and .summary.choice_coverage_bps == 10000 and .summary.persistent_transitions == .summary.claims' "$output/first/$case.json"
+            jq -e '.decision == "PASS" and .independent == true and .digest_match == true' "$output/judged/$case.json"
+          done
+      - name: Require fail-closed omission, contradiction, and unknown context
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/proof-choice-algebra"
+          declare -A reasons=(
+            [missing-choice]=PROOF_CHOICE_MISSING
+            [contradiction]=PROOF_CHOICE_CONTRADICTION
+            [unknown-context]=UNKNOWN_CONTEXT
+          )
+          for case in "${!reasons[@]}"; do
+            source="examples/proof-choice-algebra/$case.gooo"
+            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -output "$output/first/$case.json" -expect FAIL_CLOSED
+            go run ./scripts/proof-choice-algebra -mode judge -receipt "$output/first/$case.json" -output "$output/judged/$case.json" -expect FAIL_CLOSED
+            jq -e --arg reason "${reasons[$case]}" '.decision == "FAIL_CLOSED" and .reason == $reason and .summary.fixed_denominator == 3 and .effects.repository_writes == 0 and .effects.mutation_authority == false' "$output/first/$case.json"
+            jq -e --arg reason "${reasons[$case]}" '.decision == "FAIL_CLOSED" and .reason == $reason and .independent == true and .digest_match == true' "$output/judged/$case.json"
+          done
+      - name: Keep the judge independent
+        shell: bash
+        run: |
+          set -euo pipefail
+          if go list -deps ./internal/meta/proofchoicejudge | grep -Fxq 'github.com/kimjooyoon/meta-ontology-go/internal/meta/proofchoicealgebra'; then
+            echo 'independent judge imports producer evaluator' >&2
+            exit 1
+          fi
+      - name: Upload receipts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: proof-choice-algebra-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/proof-choice-algebra
+          if-no-files-found: error
