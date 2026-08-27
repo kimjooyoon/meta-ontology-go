@@ -315,7 +315,15 @@ func interventions(inputPath, sourcePath, semanticPath, nonsemanticPath, contrad
 	if plansDir == "" {
 		return fmt.Errorf("interventions requires plans-dir")
 	}
-	variants := []struct{ id, path string }{{"base", sourcePath}, {"semantic", semanticPath}, {"nonsemantic", nonsemanticPath}, {"contradiction", contradictionPath}}
+	variants := []struct {
+		id, path string
+		evaluate func([]byte, string, []byte) (causalci.Receipt, error)
+	}{
+		{"base", sourcePath, causalci.Evaluate},
+		{"semantic", semanticPath, causalci.EvaluateIntervention},
+		{"nonsemantic", nonsemanticPath, causalci.EvaluateIntervention},
+		{"contradiction", contradictionPath, causalci.EvaluateIntervention},
+	}
 	results := make([]causalci.InterventionResult, 0, len(variants))
 	observed := make([]string, 0, len(variants))
 	for _, variant := range variants {
@@ -329,9 +337,9 @@ func interventions(inputPath, sourcePath, semanticPath, nonsemanticPath, contrad
 				return err
 			}
 		}
-		receipt, evalErr := causalci.EvaluateIntervention(input, sourcePath, variantSource)
+		receipt, evalErr := variant.evaluate(input, sourcePath, variantSource)
 		if evalErr != nil {
-			return fmt.Errorf("evaluate %s intervention: %w", variant.id, evalErr)
+			return fmt.Errorf("evaluate %s variant: %w", variant.id, evalErr)
 		}
 		if err := writeJSON(filepath.Join(plansDir, variant.id+"-receipt.json"), receipt); err != nil {
 			return err
