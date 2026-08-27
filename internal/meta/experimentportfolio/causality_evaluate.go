@@ -139,6 +139,10 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 		result.NonSemantic.Reason = result.Reason
 		return result, nil
 	}
+	result.NonSemantic.Status = "DISCHARGED"
+	result.NonSemantic.Stage = "NON_SEMANTIC_INTERVENTION"
+	result.NonSemantic.Step = "compare-receipt-projection"
+	result.NonSemantic.Reason = "SEMANTIC_PROJECTION_PRESERVED"
 	if !containsAll(result.ChangedFields, result.RequiredChangeFields) {
 		result.Status = "REFUTED"
 		result.Stage = "SEMANTIC_INTERVENTION"
@@ -160,10 +164,6 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 	result.Semantic.Stage = "SEMANTIC_INTERVENTION"
 	result.Semantic.Step = "compare-receipt-projection"
 	result.Semantic.Reason = "CONTRACTED_RECEIPT_FIELD_CHANGED"
-	result.NonSemantic.Status = "DISCHARGED"
-	result.NonSemantic.Stage = "NON_SEMANTIC_INTERVENTION"
-	result.NonSemantic.Step = "compare-receipt-projection"
-	result.NonSemantic.Reason = "SEMANTIC_PROJECTION_PRESERVED"
 	return result, nil
 }
 
