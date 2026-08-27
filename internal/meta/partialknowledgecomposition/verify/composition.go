@@ -25,6 +25,7 @@ func compose(left, right operand) value {
 	sort.Strings(result.DirectUnknowns)
 	sort.Strings(result.BlockedDependencies)
 	sort.Strings(result.PreservedInvariants)
+	sort.Strings(result.Contributors)
 	switch {
 	case len(result.DirectUnknowns) != 0 && len(result.BlockedDependencies) != 0:
 		result.State = mixedUnresolved

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	independent "github.com/kimjooyoon/meta-ontology-go/internal/meta/partialknowledgecomposition/verify"
@@ -70,6 +71,16 @@ func TestCompositionCalculusKeepsKnowledgeCauses(t *testing.T) {
 				t.Fatalf("top success for %q = %v", current.state, topSuccess)
 			}
 		})
+	}
+}
+
+func TestCompositionIsOrderIndependent(t *testing.T) {
+	left := Operand{Operation: "source", State: StateDirectUnknown}
+	right := Operand{Operation: "binding", State: StateDependencyBlocked, BlockedDependency: "receipt"}
+	forward := Compose(left, right)
+	reverse := Compose(right, left)
+	if !reflect.DeepEqual(forward, reverse) {
+		t.Fatalf("forward composition=%#v, reverse composition=%#v", forward, reverse)
 	}
 }
 

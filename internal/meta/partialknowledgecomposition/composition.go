@@ -19,6 +19,7 @@ func Compose(left, right Operand) Value {
 	value.DirectUnknowns = sortedUnique(value.DirectUnknowns)
 	value.BlockedDependencies = sortedUnique(value.BlockedDependencies)
 	value.PreservedInvariants = sortedUnique(value.PreservedInvariants)
+	slices.Sort(value.Contributors)
 	switch {
 	case len(value.DirectUnknowns) > 0 && len(value.BlockedDependencies) > 0:
 		value.State = StateMixedUnresolved
