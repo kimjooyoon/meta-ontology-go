@@ -36,3 +36,34 @@ fi
 go run ./cmd/gooo check examples/billing/main.gooo
 go test -tags semantic_conformance ./internal/verify -run 'TestSemantic|TestGenerated' -count=1
 ./scripts/generated-freshness.sh
+
+repro_work="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/gooo-reproducibility-semantics"
+mkdir -p "$repro_work"
+head_sha="$(git rev-parse HEAD)"
+go run ./cmd/gooo check examples/reproducibility-semantics/main.gooo
+go run ./scripts/reproducibility-semantics \
+  -mode produce \
+  -source examples/reproducibility-semantics/main.gooo \
+  -head-sha "$head_sha" \
+  -output "$repro_work/receipt.json"
+go run ./scripts/reproducibility-semantics \
+  -mode produce \
+  -source examples/reproducibility-semantics/main.gooo \
+  -head-sha "$head_sha" \
+  -output "$repro_work/receipt-replay.json"
+cmp -s "$repro_work/receipt.json" "$repro_work/receipt-replay.json"
+go run ./scripts/reproducibility-semantics \
+  -mode judge \
+  -source examples/reproducibility-semantics/main.gooo \
+  -head-sha "$head_sha" \
+  -receipt "$repro_work/receipt.json" \
+  -output "$repro_work/judgment.json" \
+  -check
+go run ./scripts/reproducibility-semantics \
+  -mode judge \
+  -source examples/reproducibility-semantics/main.gooo \
+  -head-sha "$head_sha" \
+  -receipt "$repro_work/receipt.json" \
+  -output "$repro_work/judgment-replay.json" \
+  -check
+cmp -s "$repro_work/judgment.json" "$repro_work/judgment-replay.json"

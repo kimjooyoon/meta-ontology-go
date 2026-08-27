@@ -2395,6 +2395,18 @@
         "scripts/ci-plan-usecase",
         "scripts/refactor-metrics/generation.go"
       ]
+    },
+    {
+      "branch": "agent/luna-meta-12-reproducibility-semantics",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/reproducibility-semantics",
+        "internal/meta/reproducibilitysemantics",
+        "internal/verify/scope_reproducibility_semantics.go",
+        "scripts/reproducibility-semantics",
+        "scripts/semantic-conformance.sh"
+      ]
     }
   ],
   "protected_kernel_paths": [
