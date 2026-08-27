@@ -113,7 +113,7 @@ jobs:
           output="$RUNNER_TEMP/meta-circular-boundary"
           deps="$output/consumer-deps.txt"
           go list -deps ./cmd/meta-circular-boundary-consumer-witness > "$deps"
-          forbidden="$(grep -Fx 'github.com/kimjooyoon/meta-ontology-go/internal/meta/metacircularboundary' "$deps" | wc -l | tr -d ' ')"
+          forbidden="$(awk '$0 == "github.com/kimjooyoon/meta-ontology-go/internal/meta/metacircularboundary" { count++ } END { print count + 0 }' "$deps")"
           test "$forbidden" -eq 0
           jq -n \
             --arg consumer "cmd/meta-circular-boundary-consumer-witness" \
