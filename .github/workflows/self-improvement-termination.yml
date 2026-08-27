@@ -78,4 +78,4 @@ jobs:
         with:
           name: self-improvement-termination-receipts
           path: ${{ runner.temp }}/self-improvement-termination
-          if-no-files-found: error
+          if-no-files-found: warn

@@ -76,7 +76,8 @@ func validInput(input termination.Input) error {
 		if changed && observation.Reason != "METAPROGRAM_STATE_CHANGED" {
 			return fmt.Errorf("independent judge: changed reason mismatch at step %d", index+1)
 		}
-		if !changed && (observation.Decision != "NO_CHANGE" || observation.Reason != "NO_CHANGE_FIXED_POINT_OBSERVED") {
+		if !changed && (observation.BeforeRank != observation.AfterRank || observation.Decision != "NO_CHANGE" ||
+			observation.Reason != "NO_CHANGE_FIXED_POINT_OBSERVED") {
 			return fmt.Errorf("independent judge: no-change reason mismatch at step %d", index+1)
 		}
 	}

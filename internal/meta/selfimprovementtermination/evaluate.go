@@ -61,7 +61,8 @@ func ValidateInput(input Input) error {
 			return invalid("step %d breaks the state chain", index+1)
 		}
 		if observation.BeforeState == observation.AfterState {
-			if observation.Decision != "NO_CHANGE" || observation.Reason != "NO_CHANGE_FIXED_POINT_OBSERVED" {
+			if observation.BeforeRank != observation.AfterRank || observation.Decision != "NO_CHANGE" ||
+				observation.Reason != "NO_CHANGE_FIXED_POINT_OBSERVED" {
 				return invalid("step %d claims an unbound no-change", index+1)
 			}
 		} else if observation.Decision != "CHANGED" || observation.Reason != "METAPROGRAM_STATE_CHANGED" {
