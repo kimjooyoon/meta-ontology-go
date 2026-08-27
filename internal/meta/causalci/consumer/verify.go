@@ -73,19 +73,18 @@ const (
 // Verify is the independent consumer boundary. It starts with raw source and
 // raw observation, then parses, lowers, reconstructs, and compares a receipt.
 // This package intentionally does not import the producer package.
-func Verify(observationRaw, sourcePath string, source, receiptRaw []byte) error {
+func Verify(observationRaw []byte, sourcePath string, source, receiptRaw []byte) error {
 	return verify(observationRaw, sourcePath, source, receiptRaw, false)
 }
 
 // VerifyIntervention is the same independent replay with an explicitly
 // supplied intervention source. It does not pretend those bytes are HEAD.
-func VerifyIntervention(observationRaw, sourcePath string, source, receiptRaw []byte) error {
+func VerifyIntervention(observationRaw []byte, sourcePath string, source, receiptRaw []byte) error {
 	return verify(observationRaw, sourcePath, source, receiptRaw, true)
 }
 
-func verify(observationRaw, sourcePath string, source, receiptRaw []byte, intervention bool) error {
-	observationBytes := []byte(observationRaw)
-	observation, err := decodeObservation(observationBytes)
+func verify(observationRaw []byte, sourcePath string, source, receiptRaw []byte, intervention bool) error {
+	observation, err := decodeObservation(observationRaw)
 	if err != nil {
 		return err
 	}
@@ -100,14 +99,14 @@ func verify(observationRaw, sourcePath string, source, receiptRaw []byte, interv
 	if err != nil {
 		return err
 	}
-	expected := evaluate(observationBytes, observation, policy, source, intervention)
+	expected := evaluate(observationRaw, observation, policy, source, intervention)
 	if expected.Digest, err = receiptDigest(expected); err != nil {
 		return err
 	}
 	if actual.Digest != expected.Digest {
 		return fmt.Errorf("receipt digest mismatch")
 	}
-	if err := validateReceipt(actual, expected, observationBytes, sourcePath, source); err != nil {
+	if err := validateReceipt(actual, expected, observationRaw, sourcePath, source); err != nil {
 		return err
 	}
 	return nil
