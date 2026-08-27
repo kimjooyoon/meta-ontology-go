@@ -1015,6 +1015,17 @@
       ]
     },
     {
+      "branch": "agent/gooo-artifact-attempt-binding",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-language-candidate.yml",
+        "internal/meta/selfimprovementtransport",
+        "internal/verify/scope_gooo_artifact_attempt_binding.go",
+        "scripts/self-improvement-transport-selector"
+      ]
+    },
+    {
       "branch": "agent/language-package-runtime",
       "paths": [
         ".github/agent-scope-table.md",
