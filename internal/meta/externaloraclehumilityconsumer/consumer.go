@@ -257,6 +257,7 @@ type Report struct {
 	Schema                       string            `json:"schema"`
 	SubjectSHA                   string            `json:"subject_sha"`
 	Mode                         string            `json:"mode"`
+	SourceContractBinding        bool              `json:"source_contract_binding"`
 	Decision                     string            `json:"decision"`
 	Resolution                   string            `json:"resolution"`
 	Reason                       string            `json:"reason"`
@@ -392,7 +393,8 @@ func Judge(input Input) (Report, error) {
 	indicators := makeIndicators(policyExact, receipt, indep, currentObserved, historical.Complete, historical.Agreement, claims, false, false, readOnly)
 	report := Report{
 		Schema: ReportSchema, SubjectSHA: input.Subject, Mode: modeFor(input.Conformance),
-		Decision: decision, Resolution: resolution, Reason: reason,
+		SourceContractBinding: sourceBinding,
+		Decision:              decision, Resolution: resolution, Reason: reason,
 		ReferenceAgreement: historical.Agreement, SemanticAuthority: semanticAuthority,
 		AuthorityGrant: "NONE", EnforcementEffect: effect, SourcePolicy: lowered.Policy,
 		HistoricalReferences: historical.Results, CurrentReferences: currentResults,
