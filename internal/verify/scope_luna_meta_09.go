@@ -5,6 +5,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/causal-ci-selection.yml",
+		"cmd/causal-ci-selection-consumer",
 		"docs/causal-ci-selection.md",
 		"examples/causal-ci-selection",
 		"internal/meta/causalci",
