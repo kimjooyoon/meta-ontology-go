@@ -1,0 +1,9 @@
+package evidencequorum
+namespace evidencequorum
+
+entity QuorumPolicy id "evidence://policy/quorum"
+entity RequiredEvidencePredicate id "evidence://policy/required-evidence-predicate"
+entity PriorClaimState id "evidence://policy/prior-claim-state"
+entity PolicyReceipt id "evidence://policy/receipt"
+
+activity DefineEvidenceQuorumPolicy(QuorumPolicy, RequiredEvidencePredicate, PriorClaimState) -> PolicyReceipt computes "source_path=examples/evidence-quorum/main.gooo;source_entry=ProduceEvidence;case_denominator=6;threshold=3;required_roles=producer|consumer|meta-operation;required_predicates=SOURCE_ACTIVITY_EXECUTED|RAW_SOURCE_SEMANTIC_RECONSTRUCTED|GENERATED_ARTIFACT_OBSERVED;prior_claim_state=OPEN;contradiction_predicate=VALID_CONTRADICTION;claim_id=evidence-source-claim;claim_statement=the bounded evidence activity is justified by independent evidence;producer=gooo-source-producer;consumer=evidence-quorum-consumer;meta_operation=justify-claim-with-independent-evidence;proof_choice=INDEPENDENT_PROVENANCE_QUORUM;cases=current-quorum|synthetic-duplicate|synthetic-valid-conflict|synthetic-invalid-conflict|insufficient-current|synthetic-unknown"

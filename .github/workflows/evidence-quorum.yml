@@ -1,0 +1,71 @@
+name: Evidence quorum
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - .github/workflows/evidence-quorum.yml
+      - .github/agent-scope-table.md
+      - .github/ci-governance.json
+      - cmd/evidence-quorum-witness/**
+      - cmd/evidence-quorum-source-channel/**
+      - cmd/evidence-quorum-reconstructor/**
+      - cmd/evidence-quorum-artifact-observer/**
+      - cmd/evidence-quorum-counterexample/**
+      - examples/evidence-quorum/**
+      - internal/meta/evidencequorumchannel/**
+      - internal/meta/evidencequorumconsumer/**
+      - internal/meta/evidencequorumpolicy/**
+      - internal/meta/evidencequorumwire/**
+      - internal/meta/languageconcept/**
+      - internal/verify/scope_evidence_quorum.go
+      - scripts/evidence-quorum/**
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-quorum:
+    name: evidence-quorum
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      QUORUM_OUTPUT: evidence-quorum-output
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+      - name: Bind the declared Go 1.27 toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Evaluate structured provenance evidence quorum
+        shell: bash
+        run: bash scripts/evidence-quorum/main.sh
+      - name: Upload evidence quorum and intervention artifacts
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: evidence-quorum-${{ env.HEAD_SHA }}
+          path: evidence-quorum-output
+          if-no-files-found: error
+          retention-days: 30

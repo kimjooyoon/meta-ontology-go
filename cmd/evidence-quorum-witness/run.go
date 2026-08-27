@@ -5,7 +5,8 @@ import (
 	"os"
 	"strings"
 
-	quorum "github.com/kimjooyoon/meta-ontology-go/internal/meta/evidencequorum"
+	consumer "github.com/kimjooyoon/meta-ontology-go/internal/meta/evidencequorumconsumer"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/evidencequorumpolicy"
 )
 
 func run(args []string) error {
@@ -14,115 +15,66 @@ func run(args []string) error {
 		return err
 	}
 	if options.check != "" {
-		report, err := quorum.LoadReport(options.check)
+		report, err := consumer.LoadReport(options.check)
 		if err != nil {
 			return err
 		}
-		return quorum.Validate(report)
+		return consumer.Validate(report)
 	}
-	contractRaw, err := os.ReadFile(options.contract)
+	if options.policy == "" || options.source == "" || options.head == "" || options.sourcePath == "" || options.cases == "" {
+		return fmt.Errorf("--policy, --source, --head, --source-path, and --cases are required")
+	}
+	policyRaw, err := os.ReadFile(options.policy)
 	if err != nil {
 		return err
 	}
-	contract, err := quorum.DecodeContract(contractRaw)
+	policy, err := evidencequorumpolicy.Parse(options.policy, policyRaw)
 	if err != nil {
+		return err
+	}
+	if err := consumer.ValidatePolicy(policy); err != nil {
 		return err
 	}
 	source, err := os.ReadFile(options.source)
 	if err != nil {
 		return err
 	}
-	if options.mode == "emit" {
-		return emitReceipt(options, contract, source)
-	}
-	if options.mode != "evaluate" {
-		return fmt.Errorf("unknown mode %q", options.mode)
-	}
-	receiptGroups, err := readReceiptGroups(options.receipts)
+	cases, err := readCases(options.cases)
 	if err != nil {
 		return err
 	}
-	producerReceipt, err := os.ReadFile(options.producerReceipt)
-	if err != nil {
+	report := consumer.Evaluate(consumer.Input{Policy: policy, HeadSHA: options.head, SourcePath: options.sourcePath, Source: source, Cases: cases})
+	if err := consumer.WriteReport(options.out, report); err != nil {
 		return err
 	}
-	unknownProducerReceipt, err := os.ReadFile(options.unknownProducerReceipt)
-	if err != nil {
+	if err := consumer.Validate(report); err != nil {
 		return err
 	}
-	report := quorum.Evaluate(quorum.Input{Contract: contract, HeadSHA: options.head,
-		SourcePath: options.sourcePath, Source: source, CaseReceipts: receiptGroups,
-		ProducerReceipt: producerReceipt, UnknownProducerReceipt: unknownProducerReceipt})
-	if err := quorum.WriteReport(options.out, report); err != nil {
-		return err
-	}
-	if err := quorum.Validate(report); err != nil {
-		return err
-	}
-	fmt.Printf("evidence quorum: %s %d/%d groups=%d duplicates=%d conflicts=%d\n",
+	fmt.Printf("evidence quorum: %s cases=%d/%d current=%d synthetic=%d groups=%d collapsed=%d\n",
 		report.Decision, report.Summary.CasesSatisfied, report.Summary.CasesTotal,
-		report.Summary.IndependentGroupsTotal, report.Summary.DuplicateEvidenceTotal,
-		report.Summary.ConflictCases)
+		report.Summary.CurrentEvidenceTotal, report.Summary.SyntheticEvidenceTotal,
+		report.Summary.DistinctProvenanceGroups, report.Summary.CollapsedReplicas)
 	return nil
 }
 
-func readReceiptGroups(spec string) ([][][]byte, error) {
-	groups := strings.Split(spec, ";")
-	result := make([][][]byte, 0, len(groups))
-	for _, groupSpec := range groups {
-		paths := strings.Split(groupSpec, ",")
-		group := make([][]byte, 0, len(paths))
-		for _, path := range paths {
-			if path == "" {
-				continue
-			}
-			raw, err := os.ReadFile(path)
-			if err != nil {
-				return nil, err
-			}
-			group = append(group, raw)
+func readCases(spec string) ([]consumer.CaseInput, error) {
+	var result []consumer.CaseInput
+	for _, caseSpec := range strings.Split(spec, ";") {
+		id, paths, ok := strings.Cut(caseSpec, "=")
+		if !ok || strings.TrimSpace(id) == "" {
+			return nil, fmt.Errorf("invalid case spec %q", caseSpec)
 		}
-		result = append(result, group)
+		var receipts [][]byte
+		for _, path := range strings.Split(paths, ",") {
+			if path = strings.TrimSpace(path); path != "" {
+				raw, err := os.ReadFile(path)
+				if err != nil {
+					return nil, err
+				}
+				receipts = append(receipts, raw)
+			}
+		}
+		result = append(result, consumer.CaseInput{ID: strings.TrimSpace(id), Receipts: receipts})
 	}
 	return result, nil
-}
-
-func emitReceipt(options options, contract quorum.Contract, source []byte) error {
-	if options.sourcePath == "" {
-		options.sourcePath = contract.SourcePath
-	}
-	claim := contract.Claim
-	receipt := quorum.Receipt{
-		Schema:        quorum.ReceiptSchema,
-		HeadSHA:       options.head,
-		SourcePath:    options.sourcePath,
-		SourceDigest:  sourceDigest(source),
-		Producer:      claim.Producer,
-		Consumer:      claim.Consumer,
-		MetaOperation: claim.MetaOperation,
-		ProofChoice:   claim.ProofChoice,
-		Decision:      quorum.DecisionPass,
-		Resolution:    quorum.ResolutionExact,
-		Evidence: []quorum.Evidence{{
-			ID:            options.evidenceID,
-			ClaimID:       claim.ID,
-			OriginGroup:   options.originGroup,
-			Role:          options.role,
-			Producer:      claim.Producer,
-			Consumer:      claim.Consumer,
-			MetaOperation: claim.MetaOperation,
-			ProofChoice:   claim.ProofChoice,
-			Value:         options.value,
-			ConfidenceBPS: options.confidenceBPS,
-			SourcePath:    options.sourcePath,
-			SourceDigest:  sourceDigest(source),
-		}},
-		RepositoryWrites:  0,
-		MutationAuthority: false,
-	}
-	return quorum.WriteReceipt(options.out, quorum.SealReceipt(receipt))
-}
-
-func sourceDigest(source []byte) string {
-	return quorum.SourceDigest(source)
 }

@@ -1,60 +1,73 @@
 # Deterministic evidence quorum
 
-This experiment justifies one bounded claim about the real
-`examples/evidence-quorum/main.gooo` source. The Gooo `ProduceEvidence`
-activity is executed by the producer path, and its generated source-execution
-receipt is independently consumed by the quorum evaluator. It is a provenance
-decision, not a general vote and not a confidence score.
+This is a small Gooo meta-semantics experiment. It asks whether the claim
 
-The contract fixes five cases and a minimum of three independent origin groups.
-The required roles are `producer`, `consumer`, and `meta-operation`. A receipt
-records all four semantic coordinates: producer, consumer, meta-operation, and
-proof choice. The evaluator binds every observation to the source path and
-digest, groups observations by `origin_group`, and counts each group once.
+> the bounded evidence activity is justified by independent evidence
 
-The fixed cases are:
+can be discharged without averaging confidence scores. The answer is a
+deterministic quorum over structured provenance, required evidence predicates,
+roles, conflict policy, and a fixed case denominator.
 
-1. Three supporting groups discharge the claim.
-2. The generated producer receipt, one same-origin producer replica, and one
-   consumer receipt contain three quorum observations, but only two
-   independent groups; the claim remains `OPEN`.
-3. Three supporting groups and one independently contradictory group refute the
-   claim, even when the supporting confidence values are higher.
-4. Two supporting groups are insufficient and lower the resolution.
-5. An unknown producer receipt remains `UNKNOWN` with explicit unknown
-   coordinates.
+The actual Gooo subject is [`main.gooo`](main.gooo). The semantic policy is
+authored in [`policy.gooo`](policy.gooo), including `threshold=3`, the three
+required predicates, `prior_claim_state=OPEN`, six cases, and the valid
+contradiction predicate. Canonical parsing and lowering produce the policy
+semantic digest; Go supplies only wire schemas and invariants.
 
-Confidence is preserved as descriptive receipt data and is never averaged,
-weighted, or used as a tie-breaker. A same-origin replica cannot increase the
-quorum. Conflicts fail closed; missing quorum lowers resolution. Each decision
-records an `OPEN` to `DISCHARGED`, `OPEN` to `OPEN`, `OPEN` to `REFUTED`, or
-`OPEN` to `UNKNOWN`
-claim transition with `stage`, `step`, and `reason`.
+## Closed three-channel example
 
-## Research basis
+The dedicated CI workflow executes three different channels:
 
-Adopted from the primary sources:
+1. `cmd/gooo run --json --entry ProduceEvidence` produces the actual
+   `gooo/source-execution-receipt/v1` receipt. A source-channel wrapper keeps
+   that receipt intact and adds its executable digest, sorted dependency list
+   and digest, subject raw/semantic digests, and observation digest.
+2. `cmd/evidence-quorum-reconstructor` parses and lowers raw `main.gooo` on a
+   separate executable path without importing the producer or canonical
+   contract.
+3. `cmd/evidence-quorum-artifact-observer` observes the independently generated
+   Go artifact and its manifest.
 
-- Castro and Liskov's PBFT certificate requires messages from different
-  replicas; its `f+1` and `2f+1` certificate sizes motivate a minimum and a
-  distinct-origin rule. This experiment adopts distinct origin groups and
-  fail-closed conflict handling, but does not claim Byzantine consensus.
-- The W3C PROV Constraints Recommendation treats provenance validation as
-  consistency checking over a recorded history and defines constraints that
-  make reasoning safe. This experiment adopts explicit provenance links,
-  deterministic validation, and a bounded claim graph.
-- W3C PROV-O's Entity/Activity/Agent vocabulary motivates keeping the source,
-  producing action, and responsible roles explicit in every receipt.
+The consumer at `internal/meta/evidencequorumconsumer` receives only raw
+channel receipts and raw `.gooo` bytes. It computes the provenance lineage as
+`executable_digest + dependency_digest`; identical lineages collapse into one
+origin group even when a receipt claims a different label. The baseline has
+exactly **3 current receipts / 3 distinct provenance groups / 0 current
+replicas**, so the fixed quorum is **3/3**.
 
-Rejected for this meta-semantic experiment:
+Four resealed cases are explicitly marked `SYNTHETIC_COUNTEREXAMPLE`: one
+duplicate, one valid contradiction, one invalid contradiction, and one
+unknown. They are not current evidence. Across the six case inputs CI sees
+**21 raw receipt appearances, 3 unique current receipts, 4 unique synthetic
+receipts, 3 provenance groups, and 4 collapsed replicas**. The valid
+contradiction alone yields `REFUTED`; an invalid contradiction yields
+`OPEN + FAIL_CLOSED`; unknown yields `OPEN` with `UNKNOWN/LOWER_RESOLUTION`.
 
-- ordinary vote totals, confidence averages, and trust weights, because they
-  can turn duplicated or correlated evidence into false support;
-- the PBFT `3f+1` replica formula as a direct rule, because these are
-  provenance groups rather than network replicas and no liveness claim is made;
-- signatures, quorum certificates, or full compiler correctness, because the
-  scope is read-only claim justification with a deterministic source digest.
+Every claim record is append-only from `OPEN` and includes a previous state
+digest, evidence digests, structured provenance, stage, step, and reason.
+`conformance_decision` (whether the case behaves according to the experiment)
+is separate from `subject_decision` (what the claim itself says).
 
-Sources: [PBFT certificate algorithm](https://www.usenix.org/legacy/events/osdi2000/castro/castro_html/node4.html),
-[W3C PROV Constraints](https://www.w3.org/TR/2013/REC-prov-constraints-20130430/),
-and [W3C PROV-O](https://www.w3.org/TR/prov-o/).
+## Interventions and limits
+
+CI emits `interventions.json` next to the report:
+
+- changing the policy threshold from 3 to 4 changes the quorum result and the
+  policy semantic digest;
+- adding only comments to the policy preserves the semantic digest, observation
+  digest, and quorum result;
+- both before/after observations remain read-only (`repository_writes=0`,
+  `mutation_authority=false`).
+
+This does not claim full Byzantine consensus, trust in an identity, compiler
+semantic correctness, or confidence-weighted probability. The adopted
+principles are the provenance vocabulary of [W3C PROV-O](https://www.w3.org/TR/prov-o/)
+and its consistency constraints
+([PROV-Constraints](https://www.w3.org/TR/2013/REC-prov-constraints-20130430/));
+the rejected principle is treating repeated/correlated observations as new
+votes. The Byzantine reference is the replica-distinct certificate idea in
+[Castro and Liskov's PBFT description](https://www.usenix.org/legacy/events/osdi2000/castro/castro_html/node4.html),
+which informs independence but is not claimed as a full consensus protocol.
+
+Run `scripts/evidence-quorum/main.sh` only in the dedicated GitHub Actions
+workflow. Local tests are intentionally not part of this experiment.
