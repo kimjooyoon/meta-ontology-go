@@ -89,6 +89,7 @@ jobs:
             .topology.scope == "STATIC_TRIGGER_TOPOLOGY" and
             .topology.workflow_run_subscribers_audited == 5 and
             .topology.workflow_run_subscribers_expected == 5 and
+            .topology.branch_filtered_subscribers_before == 0 and
             .topology.branch_filtered_subscribers == 5 and
             .topology.branch_filtered_subscribers_expected == 5 and
             .topology.duplicate_pr_observation_paths_before == 2 and

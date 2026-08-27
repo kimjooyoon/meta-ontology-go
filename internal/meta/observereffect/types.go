@@ -94,6 +94,7 @@ type TopologyEvidence struct {
 	Scope                                           string               `json:"scope"`
 	WorkflowRunSubscribersAudited                   int                  `json:"workflow_run_subscribers_audited"`
 	WorkflowRunSubscribersExpected                  int                  `json:"workflow_run_subscribers_expected"`
+	BranchFilteredSubscribersBefore                 int                  `json:"branch_filtered_subscribers_before"`
 	BranchFilteredSubscribers                       int                  `json:"branch_filtered_subscribers"`
 	BranchFilteredSubscribersExpected               int                  `json:"branch_filtered_subscribers_expected"`
 	DuplicatePROObservationPathsBefore              int                  `json:"duplicate_pr_observation_paths_before"`

@@ -90,7 +90,8 @@ func buildTopology(root string) TopologyEvidence {
 	return TopologyEvidence{
 		Scope:                         "STATIC_TRIGGER_TOPOLOGY",
 		WorkflowRunSubscribersAudited: len(subscribers), WorkflowRunSubscribersExpected: 5,
-		BranchFilteredSubscribers: filtered, BranchFilteredSubscribersExpected: 5,
+		BranchFilteredSubscribersBefore: 0,
+		BranchFilteredSubscribers:       filtered, BranchFilteredSubscribersExpected: 5,
 		DuplicatePROObservationPathsBefore: 2, DuplicatePROObservationPathsAfter: 1,
 		ExpectedSkippedCIChildRunsPerPRCompletionBefore: 4,
 		ExpectedSkippedCIChildRunsPerPRCompletionAfter:  0,

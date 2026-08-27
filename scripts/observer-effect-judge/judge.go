@@ -159,7 +159,7 @@ var independentTopologyExpectations = []independentTopologyExpectation{
 
 func validateTopology(root string, report observereffect.Report) error {
 	topology := report.Topology
-	if topology.Scope != "STATIC_TRIGGER_TOPOLOGY" || topology.WorkflowRunSubscribersAudited != 5 || topology.WorkflowRunSubscribersExpected != 5 || topology.BranchFilteredSubscribersExpected != 5 || topology.DuplicatePROObservationPathsBefore != 2 || topology.DuplicatePROObservationPathsAfter != 1 || topology.ExpectedSkippedCIChildRunsPerPRCompletionBefore != 4 || topology.ExpectedSkippedCIChildRunsPerPRCompletionAfter != 0 {
+	if topology.Scope != "STATIC_TRIGGER_TOPOLOGY" || topology.WorkflowRunSubscribersAudited != 5 || topology.WorkflowRunSubscribersExpected != 5 || topology.BranchFilteredSubscribersBefore != 0 || topology.BranchFilteredSubscribersExpected != 5 || topology.DuplicatePROObservationPathsBefore != 2 || topology.DuplicatePROObservationPathsAfter != 1 || topology.ExpectedSkippedCIChildRunsPerPRCompletionBefore != 4 || topology.ExpectedSkippedCIChildRunsPerPRCompletionAfter != 0 {
 		return fmt.Errorf("static topology metrics are not exact")
 	}
 	if len(topology.Subscribers) != len(independentTopologyExpectations) || len(topology.CausalEdges) != 4 {
