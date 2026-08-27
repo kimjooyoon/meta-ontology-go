@@ -2,8 +2,6 @@ package nonmonotonicrefutationoracle
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -599,27 +597,4 @@ func finish(report Report, decision, resolution, reason string) Report {
 	report.Decision, report.Resolution, report.Reason = decision, resolution, reason
 	report.ReportDigest = reportDigest(report)
 	return report
-}
-
-func transitionDigest(transition Transition) string {
-	transition.TransitionDigest = ""
-	return digestJSON(transition)
-}
-
-func reportDigest(report Report) string {
-	report.ReportDigest = ""
-	return digestJSON(report)
-}
-
-func digestBytes(value []byte) string {
-	sum := sha256.Sum256(value)
-	return "sha256:" + hex.EncodeToString(sum[:])
-}
-
-func digestJSON(value any) string {
-	encoded, err := json.Marshal(value)
-	if err != nil {
-		panic(err)
-	}
-	return digestBytes(encoded)
 }
