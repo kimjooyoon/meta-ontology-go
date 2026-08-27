@@ -2118,7 +2118,12 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        ".github/workflows/metric-transition.yml",
         ".github/workflows/observer-effect-ledger.yml",
+        ".github/workflows/self-improvement-cycle.yml",
+        ".github/workflows/self-improvement-language-observation.yml",
+        ".github/workflows/source-subject-witness.yml",
+        ".github/workflows/transformation-effect.yml",
         "docs/research/observer-effect-ledger.md",
         "examples/observer-effect-ledger/**",
         "internal/meta/observereffect/**",

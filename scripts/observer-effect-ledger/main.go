@@ -12,6 +12,7 @@ import (
 
 type options struct {
 	mode, root, source                        string
+	topologyRoot                              string
 	ledger, observationReceipt, effectReceipt string
 	allowIntentionalWrite                     bool
 }
@@ -20,6 +21,7 @@ func main() {
 	var opts options
 	flag.StringVar(&opts.mode, "mode", "observe", "observe, unknown, or violate")
 	flag.StringVar(&opts.root, "root", ".", "root whose effects are measured")
+	flag.StringVar(&opts.topologyRoot, "topology-root", "", "root whose workflow trigger topology is audited")
 	flag.StringVar(&opts.source, "source", "", "the actual .gooo source")
 	flag.StringVar(&opts.ledger, "ledger", "", "observer-effect ledger output")
 	flag.StringVar(&opts.observationReceipt, "observation-receipt", "", "observation receipt output")
@@ -44,6 +46,7 @@ func run(opts options) error {
 	}
 	report, observationReceipt, effectReceipt, err := observereffect.Build(observereffect.BuildOptions{
 		Mode: opts.mode, Root: opts.root, SourcePath: opts.source,
+		TopologyRoot:          opts.topologyRoot,
 		AllowIntentionalWrite: opts.allowIntentionalWrite,
 	})
 	if err != nil {

@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect"
@@ -38,7 +40,7 @@ type Judgment struct {
 	Digest              string                         `json:"digest"`
 }
 
-func judge(report observereffect.Report, observationReceipt, effectReceipt observereffect.Receipt) (Judgment, error) {
+func judge(root string, report observereffect.Report, observationReceipt, effectReceipt observereffect.Receipt) (Judgment, error) {
 	if report.Schema != observereffect.LedgerSchema || report.Experiment != observereffect.ExperimentName {
 		return Judgment{}, fmt.Errorf("unexpected observer-effect ledger identity")
 	}
@@ -53,6 +55,9 @@ func judge(report observereffect.Report, observationReceipt, effectReceipt obser
 	}
 	if report.RepositoryWrites != report.Authority.RepositoryWrites {
 		return Judgment{}, fmt.Errorf("repository write count is not authority-bound")
+	}
+	if err := validateTopology(root, report); err != nil {
+		return Judgment{}, err
 	}
 	if report.Authority.OutputWrites != 3 {
 		return Judgment{}, fmt.Errorf("observer output effect count is not fixed")
@@ -73,7 +78,7 @@ func judge(report observereffect.Report, observationReceipt, effectReceipt obser
 	if report.Digest != independentReportDigest(report) {
 		return Judgment{}, fmt.Errorf("ledger digest does not replay")
 	}
-	if report.EvidenceDigest != independentValueDigest([]any{report.Source, report.Observation, report.Effects, report.Unknown, report.ClaimTransition}) {
+	if report.EvidenceDigest != independentValueDigest([]any{report.Source, report.Observation, report.Effects, report.Unknown, report.ClaimTransition, report.Topology, report.RunnerScoped, report.Guardian}) {
 		return Judgment{}, fmt.Errorf("ledger evidence digest does not replay")
 	}
 	if report.ClaimTransition.CurrentState != claimState(report.Decision) || !report.ClaimTransition.Persistent || report.ClaimTransition.Sequence != 2 {
@@ -92,6 +97,7 @@ func judge(report observereffect.Report, observationReceipt, effectReceipt obser
 			{ID: "judge.fixed-denominator", Status: "PASS", Reason: "TWELVE_INDICATORS_RETAINED"},
 			{ID: "judge.receipt-chain", Status: "PASS", Reason: "RECEIPTS_AND_LEDGER_DIGEST_BOUND"},
 			{ID: "judge.authority", Status: "PASS", Reason: "MUTATION_AND_PROMOTION_DENIED"},
+			{ID: "judge.ci-root-of-trust", Status: "PASS", Reason: "EXPECTED_NEGATIVE_REPORTED_NOT_HIDDEN"},
 		},
 	}
 	judgment.Digest = independentJudgmentDigest(judgment)
@@ -99,13 +105,110 @@ func judge(report observereffect.Report, observationReceipt, effectReceipt obser
 }
 
 func independentDecision(report observereffect.Report) (string, string) {
+	if !report.Topology.Exact || report.RepositoryWrites != 0 || report.Observation.RepositoryStorage.Changed {
+		return "FAIL_CLOSED", "EXACT"
+	}
 	if report.Unknown.Reason != "NONE" {
 		return "UNKNOWN", "LOWER_RESOLUTION"
 	}
-	if report.RepositoryWrites != 0 || report.Observation.RepositoryStorage.Changed {
-		return "FAIL_CLOSED", "EXACT"
-	}
 	return "OBSERVED", "EXACT"
+}
+
+type independentTopologyExpectation struct {
+	Path             string
+	Workflow         string
+	TriggerBlock     string
+	PullRequestBlock string
+	Concurrency      string
+}
+
+var independentTopologyExpectations = []independentTopologyExpectation{
+	{
+		Path:             ".github/workflows/transformation-effect.yml",
+		Workflow:         "transformation-effect",
+		TriggerBlock:     "workflow_run:\n    workflows: [CI]\n    types: [completed]\n    branches: [dev, main]",
+		PullRequestBlock: "pull_request:\n    branches: [dev, main]",
+		Concurrency:      "transformation-effect-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.head_branch }}",
+	},
+	{
+		Path:         ".github/workflows/self-improvement-cycle.yml",
+		Workflow:     "self-improvement-cycle",
+		TriggerBlock: "workflow_run:\n    workflows: [\"CI\"]\n    types: [completed]\n    branches: [dev, main]",
+		Concurrency:  "self-improvement-cycle-${{ github.event.workflow_run.head_branch }}",
+	},
+	{
+		Path:         ".github/workflows/source-subject-witness.yml",
+		Workflow:     "source-subject-witness",
+		TriggerBlock: "workflow_run:\n    workflows: [\"CI\"]\n    types: [completed]\n    branches: [dev, main]",
+		Concurrency:  "source-subject-witness-${{ github.event.workflow_run.head_branch }}",
+	},
+	{
+		Path:         ".github/workflows/metric-transition.yml",
+		Workflow:     "metric-transition",
+		TriggerBlock: "workflow_run:\n    workflows: [CI]\n    types: [completed]\n    branches: [dev, main]",
+		Concurrency:  "metric-transition-${{ github.event.workflow_run.head_branch }}",
+	},
+	{
+		Path:             ".github/workflows/self-improvement-language-observation.yml",
+		Workflow:         "self-improvement-language-observation",
+		TriggerBlock:     "workflow_run:\n    workflows: [\"Language example experiment\"]\n    types: [completed]\n    branches: [dev]",
+		PullRequestBlock: "pull_request:\n    branches: [dev]",
+		Concurrency:      "self-improvement-language-observation-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.head_branch }}",
+	},
+}
+
+func validateTopology(root string, report observereffect.Report) error {
+	topology := report.Topology
+	if topology.Scope != "STATIC_TRIGGER_TOPOLOGY" || topology.WorkflowRunSubscribersAudited != 5 || topology.WorkflowRunSubscribersExpected != 5 || topology.BranchFilteredSubscribersExpected != 5 || topology.DuplicatePROObservationPathsBefore != 2 || topology.DuplicatePROObservationPathsAfter != 1 || topology.ExpectedSkippedCIChildRunsPerPRCompletionBefore != 4 || topology.ExpectedSkippedCIChildRunsPerPRCompletionAfter != 0 {
+		return fmt.Errorf("static topology metrics are not exact")
+	}
+	if len(topology.Subscribers) != len(independentTopologyExpectations) || len(topology.CausalEdges) != 4 {
+		return fmt.Errorf("static topology surface is incomplete")
+	}
+	actualFiltered := 0
+	for index, expected := range independentTopologyExpectations {
+		payload, err := os.ReadFile(filepath.Join(root, expected.Path))
+		actual := false
+		if err == nil {
+			text := string(payload)
+			actual = strings.Contains(text, expected.TriggerBlock) && strings.Contains(text, "cancel-in-progress: true") && strings.Contains(text, "group: "+expected.Concurrency) && (expected.PullRequestBlock == "" || strings.Contains(text, expected.PullRequestBlock))
+		}
+		if actual {
+			actualFiltered++
+		}
+		subscriber := topology.Subscribers[index]
+		if subscriber.Workflow != expected.Workflow || subscriber.Status != map[bool]string{true: "PASS", false: "FAIL"}[actual] {
+			return fmt.Errorf("workflow trigger topology subscriber %s is not independently bound", expected.Workflow)
+		}
+	}
+	if topology.BranchFilteredSubscribers != actualFiltered || topology.Exact != (actualFiltered == len(independentTopologyExpectations)) {
+		return fmt.Errorf("workflow trigger topology exactness is inconsistent")
+	}
+	edges := map[string][2]int{
+		"ci-completion-to-skipped-child":        {4, 0},
+		"language-pr-to-observation":            {2, 1},
+		"same-pr-stale-commit-to-cancellation":  {0, 1},
+		"same-branch-stale-run-to-cancellation": {0, 1},
+	}
+	for _, edge := range topology.CausalEdges {
+		want, ok := edges[edge.ID]
+		if !ok || edge.Before != want[0] || edge.After != want[1] || edge.Producer == "" || edge.Consumer == "" || edge.MetaOperation == "" || edge.ProofChoice == "" || edge.Stage == "" || edge.Step == "" || edge.Reason == "" {
+			return fmt.Errorf("causal topology edge %s is not bound", edge.ID)
+		}
+		delete(edges, edge.ID)
+	}
+	if len(edges) != 0 {
+		return fmt.Errorf("causal topology edges are incomplete")
+	}
+	runner := report.RunnerScoped
+	if runner.Scope != "RUNNER_SCOPED" || runner.Source != "GitHub Actions API" || runner.SkippedWorkflowRuns != 59 || runner.QueuedWorkflowRuns != 41 || !runner.TimeDependent || runner.IncludedInFixedDenominator || runner.Producer == "" || runner.Consumer == "" || runner.MetaOperation == "" || runner.ProofChoice == "" || runner.Stage == "" || runner.Step == "" || runner.Reason == "" {
+		return fmt.Errorf("runner-scoped queue evidence is not isolated")
+	}
+	guardian := report.Guardian
+	if guardian.Scope != "CI_TRUST_ROOT" || guardian.Code != "CI-ROOT-OF-TRUST-001" || guardian.ExpectedDecision != "FAIL_CLOSED" || guardian.ExpectedRoute != "BOOTSTRAP_EXPECTED_NEGATIVE" || guardian.RequiredContext || guardian.IncludedInFixedDenominator || guardian.Producer == "" || guardian.Consumer == "" || guardian.MetaOperation == "" || guardian.ProofChoice == "" || guardian.Stage == "" || guardian.Step == "" || guardian.Reason == "" {
+		return fmt.Errorf("CI root-of-trust expected-negative evidence is hidden or malformed")
+	}
+	return nil
 }
 
 func validateEffects(report observereffect.Report) error {

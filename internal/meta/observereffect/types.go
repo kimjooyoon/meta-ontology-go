@@ -58,6 +58,93 @@ type ClaimTransition struct {
 	EvidenceDigest         string `json:"evidence_digest"`
 }
 
+type CausalEdge struct {
+	ID            string `json:"id"`
+	From          string `json:"from"`
+	To            string `json:"to"`
+	Relation      string `json:"relation"`
+	Before        int    `json:"before"`
+	After         int    `json:"after"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
+	MetaOperation string `json:"meta_operation"`
+	ProofChoice   string `json:"proof_choice"`
+	Stage         string `json:"stage"`
+	Step          string `json:"step"`
+	Reason        string `json:"reason"`
+}
+
+type TopologySubscriber struct {
+	Workflow      string `json:"workflow"`
+	Upstream      string `json:"upstream"`
+	Expected      string `json:"expected"`
+	Actual        string `json:"actual"`
+	Concurrency   string `json:"concurrency"`
+	Status        string `json:"status"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
+	MetaOperation string `json:"meta_operation"`
+	ProofChoice   string `json:"proof_choice"`
+	Stage         string `json:"stage"`
+	Step          string `json:"step"`
+	Reason        string `json:"reason"`
+}
+
+type TopologyEvidence struct {
+	Scope                                           string               `json:"scope"`
+	WorkflowRunSubscribersAudited                   int                  `json:"workflow_run_subscribers_audited"`
+	WorkflowRunSubscribersExpected                  int                  `json:"workflow_run_subscribers_expected"`
+	BranchFilteredSubscribers                       int                  `json:"branch_filtered_subscribers"`
+	BranchFilteredSubscribersExpected               int                  `json:"branch_filtered_subscribers_expected"`
+	DuplicatePROObservationPathsBefore              int                  `json:"duplicate_pr_observation_paths_before"`
+	DuplicatePROObservationPathsAfter               int                  `json:"duplicate_pr_observation_paths_after"`
+	ExpectedSkippedCIChildRunsPerPRCompletionBefore int                  `json:"expected_skipped_ci_child_run_objects_per_pr_completion_before"`
+	ExpectedSkippedCIChildRunsPerPRCompletionAfter  int                  `json:"expected_skipped_ci_child_run_objects_per_pr_completion_after"`
+	Subscribers                                     []TopologySubscriber `json:"subscribers"`
+	CausalEdges                                     []CausalEdge         `json:"causal_edges"`
+	Exact                                           bool                 `json:"exact"`
+	Producer                                        string               `json:"producer"`
+	Consumer                                        string               `json:"consumer"`
+	MetaOperation                                   string               `json:"meta_operation"`
+	ProofChoice                                     string               `json:"proof_choice"`
+	Stage                                           string               `json:"stage"`
+	Step                                            string               `json:"step"`
+	Reason                                          string               `json:"reason"`
+}
+
+type RunnerScopedEvidence struct {
+	Scope                      string `json:"scope"`
+	Source                     string `json:"source"`
+	ObservationRef             string `json:"observation_ref"`
+	SkippedWorkflowRuns        int    `json:"skipped_workflow_runs"`
+	QueuedWorkflowRuns         int    `json:"queued_workflow_runs"`
+	TimeDependent              bool   `json:"time_dependent"`
+	IncludedInFixedDenominator bool   `json:"included_in_fixed_denominator"`
+	Producer                   string `json:"producer"`
+	Consumer                   string `json:"consumer"`
+	MetaOperation              string `json:"meta_operation"`
+	ProofChoice                string `json:"proof_choice"`
+	Stage                      string `json:"stage"`
+	Step                       string `json:"step"`
+	Reason                     string `json:"reason"`
+}
+
+type GuardianExpectation struct {
+	Scope                      string `json:"scope"`
+	Code                       string `json:"code"`
+	ExpectedDecision           string `json:"expected_decision"`
+	ExpectedRoute              string `json:"expected_route"`
+	RequiredContext            bool   `json:"required_context"`
+	IncludedInFixedDenominator bool   `json:"included_in_fixed_denominator"`
+	Producer                   string `json:"producer"`
+	Consumer                   string `json:"consumer"`
+	MetaOperation              string `json:"meta_operation"`
+	ProofChoice                string `json:"proof_choice"`
+	Stage                      string `json:"stage"`
+	Step                       string `json:"step"`
+	Reason                     string `json:"reason"`
+}
+
 type Indicator struct {
 	ID            string `json:"id"`
 	Class         string `json:"class"`
@@ -114,24 +201,27 @@ type Receipt struct {
 }
 
 type Report struct {
-	Schema              string          `json:"schema"`
-	Experiment          string          `json:"experiment"`
-	Source              Source          `json:"source"`
-	Observation         Observation     `json:"observation"`
-	Effects             []Effect        `json:"effects"`
-	ReceiptDigests      []string        `json:"receipt_digests"`
-	Unknown             Unknown         `json:"unknown"`
-	Coordinate          Unknown         `json:"coordinate"`
-	Reason              string          `json:"reason"`
-	ClaimTransition     ClaimTransition `json:"claim_transition"`
-	Metrics             Metrics         `json:"metrics"`
-	Authority           Authority       `json:"authority"`
-	RepositoryWrites    int             `json:"repository_writes"`
-	MutationAuthority   bool            `json:"mutation_authority"`
-	PromotionAuthorized bool            `json:"promotion_authorized"`
-	Decision            string          `json:"decision"`
-	Resolution          string          `json:"resolution"`
-	EvidenceDigest      string          `json:"evidence_digest"`
-	Digest              string          `json:"digest"`
-	Indicators          []Indicator     `json:"indicators"`
+	Schema              string               `json:"schema"`
+	Experiment          string               `json:"experiment"`
+	Source              Source               `json:"source"`
+	Observation         Observation          `json:"observation"`
+	Effects             []Effect             `json:"effects"`
+	ReceiptDigests      []string             `json:"receipt_digests"`
+	Unknown             Unknown              `json:"unknown"`
+	Coordinate          Unknown              `json:"coordinate"`
+	Reason              string               `json:"reason"`
+	ClaimTransition     ClaimTransition      `json:"claim_transition"`
+	Topology            TopologyEvidence     `json:"topology"`
+	RunnerScoped        RunnerScopedEvidence `json:"runner_scoped"`
+	Guardian            GuardianExpectation  `json:"guardian_expectation"`
+	Metrics             Metrics              `json:"metrics"`
+	Authority           Authority            `json:"authority"`
+	RepositoryWrites    int                  `json:"repository_writes"`
+	MutationAuthority   bool                 `json:"mutation_authority"`
+	PromotionAuthorized bool                 `json:"promotion_authorized"`
+	Decision            string               `json:"decision"`
+	Resolution          string               `json:"resolution"`
+	EvidenceDigest      string               `json:"evidence_digest"`
+	Digest              string               `json:"digest"`
+	Indicators          []Indicator          `json:"indicators"`
 }

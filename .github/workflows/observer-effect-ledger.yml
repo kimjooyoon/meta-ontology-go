@@ -53,6 +53,7 @@ jobs:
           common=(
             -mode observe
             -root "$GITHUB_WORKSPACE"
+            -topology-root "$GITHUB_WORKSPACE"
             -source "$source"
           )
           for target in first replay; do
@@ -65,6 +66,7 @@ jobs:
             cmp -s "$work/first/$file" "$work/replay/$file"
           done
           go run ./scripts/observer-effect-judge \
+            -root "$GITHUB_WORKSPACE" \
             -ledger "$work/first/ledger.json" \
             -observation-receipt "$work/first/observation-receipt.json" \
             -effect-receipt "$work/first/effect-receipt.json" \
@@ -84,6 +86,26 @@ jobs:
             .unknown.stage == "NONE" and .unknown.step == "NONE" and .unknown.reason == "NONE" and
             .claim_transition.persistent == true and
             .claim_transition.transition == "CLAIMED->SUPPORTED" and
+            .topology.scope == "STATIC_TRIGGER_TOPOLOGY" and
+            .topology.workflow_run_subscribers_audited == 5 and
+            .topology.workflow_run_subscribers_expected == 5 and
+            .topology.branch_filtered_subscribers == 5 and
+            .topology.branch_filtered_subscribers_expected == 5 and
+            .topology.duplicate_pr_observation_paths_before == 2 and
+            .topology.duplicate_pr_observation_paths_after == 1 and
+            .topology.expected_skipped_ci_child_run_objects_per_pr_completion_before == 4 and
+            .topology.expected_skipped_ci_child_run_objects_per_pr_completion_after == 0 and
+            .topology.exact == true and ([.topology.causal_edges[].id] | length) == 4 and
+            .runner_scoped.scope == "RUNNER_SCOPED" and
+            .runner_scoped.skipped_workflow_runs == 59 and
+            .runner_scoped.queued_workflow_runs == 41 and
+            .runner_scoped.time_dependent == true and
+            .runner_scoped.included_in_fixed_denominator == false and
+            .guardian_expectation.code == "CI-ROOT-OF-TRUST-001" and
+            .guardian_expectation.expected_decision == "FAIL_CLOSED" and
+            .guardian_expectation.expected_route == "BOOTSTRAP_EXPECTED_NEGATIVE" and
+            .guardian_expectation.required_context == false and
+            .guardian_expectation.included_in_fixed_denominator == false and
             ([.indicators[] | select(.status == "PASS")] | length) == 12
           ' "$work/first/ledger.json"
           jq -e '
@@ -98,6 +120,7 @@ jobs:
             -observation-receipt "$work/unknown/observation-receipt.json" \
             -effect-receipt "$work/unknown/effect-receipt.json"
           go run ./scripts/observer-effect-judge \
+            -root "$GITHUB_WORKSPACE" \
             -ledger "$work/unknown/ledger.json" \
             -observation-receipt "$work/unknown/observation-receipt.json" \
             -effect-receipt "$work/unknown/effect-receipt.json" \
@@ -106,18 +129,23 @@ jobs:
             .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
             .metrics.fixed_denominator == 12 and .unknown.stage == "OBSERVE" and
             .unknown.step == "capture-environment" and
-            .unknown.reason == "DECLARED_ENVIRONMENT_NOT_AVAILABLE"
+            .unknown.reason == "DECLARED_ENVIRONMENT_NOT_AVAILABLE" and
+            .topology.exact == true and .runner_scoped.scope == "RUNNER_SCOPED" and
+            .runner_scoped.included_in_fixed_denominator == false and
+            .guardian_expectation.code == "CI-ROOT-OF-TRUST-001" and
+            .guardian_expectation.required_context == false
           ' "$work/unknown/ledger.json"
           jq -e '.decision == "PASS" and .subject_decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION"' "$work/unknown/judgment.json"
 
           cp "$source" "$work/violation-root/main.gooo"
           go run ./scripts/observer-effect-ledger \
             -mode violate -allow-intentional-write \
-            -root "$work/violation-root" -source "$source" \
+            -root "$work/violation-root" -topology-root "$GITHUB_WORKSPACE" -source "$source" \
             -ledger "$work/violation/ledger.json" \
             -observation-receipt "$work/violation/observation-receipt.json" \
             -effect-receipt "$work/violation/effect-receipt.json"
           go run ./scripts/observer-effect-judge \
+            -root "$GITHUB_WORKSPACE" \
             -ledger "$work/violation/ledger.json" \
             -observation-receipt "$work/violation/observation-receipt.json" \
             -effect-receipt "$work/violation/effect-receipt.json" \
@@ -126,7 +154,10 @@ jobs:
             .decision == "FAIL_CLOSED" and .resolution == "EXACT" and
             .repository_writes == 1 and .metrics.fixed_denominator == 12 and
             .metrics.satisfied == 11 and .claim_transition.current_state == "REFUTED" and
-            ([.effects[] | select(.domain == "REPOSITORY_STORAGE") | .mutation_attempted] | .[0]) == true
+            ([.effects[] | select(.domain == "REPOSITORY_STORAGE") | .mutation_attempted] | .[0]) == true and
+            .topology.exact == true and .runner_scoped.included_in_fixed_denominator == false and
+            .guardian_expectation.code == "CI-ROOT-OF-TRUST-001" and
+            .guardian_expectation.required_context == false
           ' "$work/violation/ledger.json"
           jq -e '.decision == "PASS" and .subject_decision == "FAIL_CLOSED" and .repository_writes == 1' "$work/violation/judgment.json"
           test -z "$(git status --porcelain)"

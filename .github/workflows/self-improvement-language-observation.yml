@@ -6,6 +6,11 @@ on:
   workflow_run:
     workflows: ["Language example experiment"]
     types: [completed]
+    branches: [dev]
+
+concurrency:
+  group: self-improvement-language-observation-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
 
 permissions:
   actions: read

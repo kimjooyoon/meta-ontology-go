@@ -12,6 +12,7 @@ import (
 type BuildOptions struct {
 	Mode                  string
 	Root                  string
+	TopologyRoot          string
 	SourcePath            string
 	AllowIntentionalWrite bool
 }
@@ -67,11 +68,18 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 			Reason: "DECLARED_ENVIRONMENT_NOT_AVAILABLE",
 		}
 	}
+	topologyRoot := opts.TopologyRoot
+	if topologyRoot == "" {
+		topologyRoot = opts.Root
+	}
+	topology := buildTopology(topologyRoot)
 	decision, resolution := "OBSERVED", "EXACT"
 	if opts.Mode == "unknown" {
 		decision, resolution = "UNKNOWN", "LOWER_RESOLUTION"
-	} else if repositoryChanged {
+	}
+	if !topology.Exact || repositoryChanged {
 		decision = "FAIL_CLOSED"
+		resolution = "EXACT"
 	}
 	observation := Observation{
 		RepositoryStorage: SnapshotDelta{BeforeDigest: before.Digest, AfterDigest: after.Digest, Changed: repositoryChanged},
@@ -90,12 +98,13 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 		Schema: LedgerSchema, Experiment: ExperimentName, Source: source,
 		Observation: observation, Effects: effects, Unknown: unknown,
 		Coordinate: unknown, Reason: unknown.Reason,
-		ClaimTransition: claim, Metrics: metrics, Authority: authority,
+		ClaimTransition: claim, Topology: topology,
+		RunnerScoped: runnerScopedEvidence(), Guardian: guardianExpectation(), Metrics: metrics, Authority: authority,
 		RepositoryWrites: repositoryWrites, MutationAuthority: false,
 		PromotionAuthorized: false, Decision: decision, Resolution: resolution,
 		Indicators: indicators,
 	}
-	report.EvidenceDigest = DigestValue([]any{report.Source, report.Observation, report.Effects, report.Unknown, report.ClaimTransition})
+	report.EvidenceDigest = DigestValue([]any{report.Source, report.Observation, report.Effects, report.Unknown, report.ClaimTransition, report.Topology, report.RunnerScoped, report.Guardian})
 	observationReceipt := makeReceipt("OBSERVATION_RESULT", source, decision, resolution, repositoryWrites, unknown, claim, report.EvidenceDigest)
 	effectReceipt := makeReceipt("OBSERVER_EFFECT", source, decision, resolution, repositoryWrites, unknown, claim, DigestValue(effects))
 	observationReceipt.Digest = ReceiptDigest(observationReceipt)

@@ -12,6 +12,7 @@ import (
 
 type options struct {
 	ledger, observationReceipt, effectReceipt, output string
+	root                                              string
 }
 
 func main() {
@@ -20,6 +21,7 @@ func main() {
 	flag.StringVar(&opts.observationReceipt, "observation-receipt", "", "observation receipt to judge")
 	flag.StringVar(&opts.effectReceipt, "effect-receipt", "", "observer-effect receipt to judge")
 	flag.StringVar(&opts.output, "output", "", "independent judgment output")
+	flag.StringVar(&opts.root, "root", "", "repository root whose workflow topology is independently checked")
 	flag.Parse()
 	if err := run(opts); err != nil {
 		fmt.Fprintln(os.Stderr, "observer-effect-judge:", err)
@@ -28,8 +30,8 @@ func main() {
 }
 
 func run(opts options) error {
-	if opts.ledger == "" || opts.observationReceipt == "" || opts.effectReceipt == "" || opts.output == "" {
-		return fmt.Errorf("ledger, both receipts, and output are required")
+	if opts.ledger == "" || opts.observationReceipt == "" || opts.effectReceipt == "" || opts.output == "" || opts.root == "" {
+		return fmt.Errorf("root, ledger, both receipts, and output are required")
 	}
 	var report observereffect.Report
 	var observationReceipt, effectReceipt observereffect.Receipt
@@ -42,7 +44,7 @@ func run(opts options) error {
 	if err := readJSON(opts.effectReceipt, &effectReceipt); err != nil {
 		return err
 	}
-	judgment, err := judge(report, observationReceipt, effectReceipt)
+	judgment, err := judge(opts.root, report, observationReceipt, effectReceipt)
 	if err != nil {
 		return err
 	}

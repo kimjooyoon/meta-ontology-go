@@ -11,6 +11,10 @@ entity ObservationReceipt id "gooo://observer-effect/entity/observation-receipt"
 entity EffectReceipt id "gooo://observer-effect/entity/effect-receipt"
 entity IndependentJudgment id "gooo://observer-effect/entity/independent-judgment"
 entity PersistentClaim id "gooo://observer-effect/entity/persistent-claim"
+entity TriggerTopologyEvidence id "gooo://observer-effect/entity/trigger-topology-evidence"
+entity CausalTopologyEdge id "gooo://observer-effect/entity/causal-topology-edge"
+entity RunnerScopedEvidence id "gooo://observer-effect/entity/runner-scoped-evidence"
+entity GuardianExpectation id "gooo://observer-effect/entity/guardian-expectation"
 
 activity ObserveRepository(RepositoryStorage) -> ObservationResult
 activity ObserveEnvironment(EnvironmentSnapshot) -> ObservationResult
@@ -21,3 +25,6 @@ activity EmitObservationReceipt(EffectLedger) -> ObservationReceipt
 activity EmitEffectReceipt(EffectLedger) -> EffectReceipt
 activity IndependentlyJudge(EffectLedger, ObservationReceipt, EffectReceipt) -> IndependentJudgment
 activity PersistClaimTransition(IndependentJudgment) -> PersistentClaim
+activity AuditTriggerTopology(TriggerTopologyEvidence) -> CausalTopologyEdge
+activity RecordRunnerScopedEvidence(RunnerScopedEvidence) -> IndependentJudgment
+activity RecordGuardianExpectedNegative(GuardianExpectation) -> IndependentJudgment

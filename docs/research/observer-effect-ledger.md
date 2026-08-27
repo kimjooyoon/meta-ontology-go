@@ -24,6 +24,34 @@ an explicit `stage`, `step`, and `reason`. A persistent claim record advances
 from `CLAIMED` to `SUPPORTED`, `REFUTED`, or `UNKNOWN` with a sequence and prior
 evidence digest.
 
+## Trigger topology as an observer effect
+
+The ledger audits five `workflow_run` subscribers exactly: transformation
+effect, self-improvement cycle, source-subject witness, metric transition, and
+self-improvement language observation. After the change, all five have
+upstream branch filters (`[dev, main]` for CI subscribers and `[dev]` for the
+language experiment), so the static topology records `5/5` audited and `5/5`
+branch-filtered subscribers.
+
+The causal before/after counts are deliberately not converted into the fixed
+12-indicator success percentage:
+
+* duplicate PR observation paths: `2 -> 1`;
+* expected skipped CI-child run objects per PR completion: `4 -> 0`.
+
+The five affected workflow files use branch/PR-identity concurrency groups with
+`cancel-in-progress: true`. Direct PR groups use the PR number, while
+`workflow_run` groups use `head_branch`; the event name is included where both
+event kinds exist. Thus stale commits on one PR or branch are canceled without
+merging different PR identities. A causal edge ledger records which filter or
+concurrency relation causes each before/after count.
+
+The observed Actions API snapshot of `59` skipped and `41` queued objects for
+the latest 100 `workflow_run` objects at dev SHA #540 is a separate
+`RUNNER_SCOPED` evidence record. It is time-dependent, producer-bound, and
+explicitly excluded from the fixed denominator. It is not a claim about the
+static trigger topology or a reproducible CI success rate.
+
 ## Relation to effect systems
 
 Koka is a useful design reference because it tracks side effects in function
@@ -74,3 +102,12 @@ It does not prove that a malicious process could not mutate the root between
 the two scans. It also counts its own three external artifact writes by
 declaration, so the ledger is evidence about a bounded protocol, not a claim
 of metaphysical zero effect.
+
+Changing one of the audited trigger blocks, branch filters, or concurrency
+keys makes the topology evidence inexact. The observer then reports
+`FAIL_CLOSED`, and the independent judge re-reads the workflow files and
+rejects a fabricated exact topology. The protected workflow edits also have
+the known `CI-ROOT-OF-TRUST-001` boundary: the PR-controlled check cannot prove
+its own newly changed CI policy. The expected guardian result is therefore
+reported as bootstrap/advisory evidence rather than hidden or promoted to a
+new required trust root.
