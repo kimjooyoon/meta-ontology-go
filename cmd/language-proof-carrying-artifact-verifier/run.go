@@ -10,8 +10,8 @@ import (
 )
 
 type options struct {
-	head, contract, valid, tampered, coherentTampered, missing, byteOnly, wrongRecipe string
-	source, operation, recipe, independence, writeSet, coherentOperation, output, check string
+	head, contract, valid, tampered, coherentTampered, missing, byteOnly, wrongRecipe                     string
+	source, operation, recipe, independence, writeSet, coherentOperation, output, check                   string
 	semanticArtifact, semanticSource, semanticOperation, commentArtifact, commentSource, commentOperation string
 }
 
