@@ -18,7 +18,9 @@ func claimLedger(before, after projectedSource, class string, reasons ...string)
 	}
 
 	for _, claim := range before.claims {
-		ledger = append(ledger, objectObservation(claim))
+		observed := objectObservation(claim)
+		ledger = append(ledger, observed)
+		transitions = append(transitions, objectObservationTransition(observed))
 	}
 	left, right := claimsBySlot(before.claims), claimsBySlot(after.claims)
 	for _, claim := range before.claims {
@@ -32,11 +34,9 @@ func claimLedger(before, after projectedSource, class string, reasons ...string)
 		transitions = append(transitions, preservationTransition(claim, other, status, preservationReason))
 	}
 	for _, claim := range after.claims {
-		ledger = append(ledger, objectObservation(claim))
-		matches := left[claim.Subject+"\x00"+claim.Predicate]
-		if len(matches) == 0 || (len(matches) == 1 && !claimMeaningEqual(matches[0], claim)) {
-			transitions = append(transitions, objectObservationTransition(claim))
-		}
+		observed := objectObservation(claim)
+		ledger = append(ledger, observed)
+		transitions = append(transitions, objectObservationTransition(observed))
 	}
 	return sealLedger(before, after, uniqueClaims(ledger), transitions)
 }

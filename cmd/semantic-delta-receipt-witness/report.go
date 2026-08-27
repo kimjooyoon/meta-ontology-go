@@ -16,7 +16,6 @@ type Report struct {
 	Receipt            producer.Receipt            `json:"receipt"`
 	IndependentVerdict consumer.Verdict            `json:"independent_verdict"`
 	Indicators         []producer.OperationBinding `json:"indicators"`
-	RepositoryWrites   int                         `json:"repository_writes"`
 	Evidence           Evidence                    `json:"evidence"`
 	ReportDigest       string                      `json:"report_digest"`
 }
@@ -34,6 +33,9 @@ type Evidence struct {
 	Discharged           int    `json:"discharged"`
 	Refuted              int    `json:"refuted"`
 	TransitionChain      int    `json:"transition_chain"`
+	ClaimsExplained      int    `json:"claims_with_explained_status"`
+	TotalClaims          int    `json:"total_claims"`
+	ClaimStatusCoverage  int    `json:"claim_status_coverage_bps"`
 	Decision             string `json:"decision"`
 	Resolution           string `json:"resolution"`
 	Classification       string `json:"classification"`
@@ -45,14 +47,14 @@ type Evidence struct {
 func evaluate(input producer.Input, outputPath string) Report {
 	receipt, err := producer.ProduceFiles(input)
 	if err != nil {
-		return Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, RepositoryWrites: 0, ReportDigest: "read-error"}
+		return Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, ReportDigest: "read-error"}
 	}
 	raw, _ := json.Marshal(receipt)
 	wire := consumer.Receipt{}
 	_ = json.Unmarshal(raw, &wire)
-	verdict := consumer.AdjudicateFiles(consumer.Input{CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, BeforePath: input.BeforePath, AfterPath: input.AfterPath}, wire)
+	verdict := consumer.AdjudicateFiles(consumer.Input{CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA, BeforePath: input.BeforePath, AfterPath: input.AfterPath, EffectsBeforePath: input.EffectsBeforePath, EffectsAfterPath: input.EffectsAfterPath, OutputPath: input.OutputPath}, wire)
 	summary := summaryFor(receipt, verdict)
-	report := Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, Receipt: receipt, IndependentVerdict: verdict, Indicators: bindings(summary), RepositoryWrites: 0, Evidence: evidenceFor(receipt, verdict, summary)}
+	report := Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, Receipt: receipt, IndependentVerdict: verdict, Indicators: bindings(summary), Evidence: evidenceFor(receipt, verdict, summary)}
 	sealReport(&report)
 	return report
 }
@@ -64,15 +66,16 @@ func sealReport(report *Report) {
 }
 
 func summaryFor(receipt producer.Receipt, verdict consumer.Verdict) Summary {
-	result := Summary{CasesTotal: 1, CasesPassed: boolInt(verdict.Passed), AdjudicatedCases: boolInt(verdict.Passed), RepositoryWrites: receipt.RepositoryWrites, ModeledSemanticComponents: receipt.ModeledSemanticComponents, TotalSemanticComponents: receipt.TotalSemanticComponents,
+	result := Summary{CasesTotal: 1, CasesPassed: boolInt(verdict.Passed), AdjudicatedCases: boolInt(verdict.Passed), ChangedPathOrContentCount: receipt.Effects.ChangedPathOrContentCount, ModeledSemanticComponents: receipt.ModeledSemanticComponents, TotalSemanticComponents: receipt.TotalSemanticComponents,
 		TextualChanges:         boolInt(receipt.TextualDelta.Changed),
-		StructuralObservations: boolInt(receipt.StructuralDelta.Status != ""),
+		StructuralObservations: boolInt(receipt.StructuralDelta.Status == "KNOWN"),
 		ClaimTransitionCases:   boolInt(len(receipt.ClaimTransitions) > 0),
 		AddedClaims:            len(receipt.SemanticClaimDelta.Added),
 		RemovedClaims:          len(receipt.SemanticClaimDelta.Removed),
 		ChangedClaims:          len(receipt.SemanticClaimDelta.Changed),
 		TransitionChains:       len(receipt.ClaimTransitions),
 		AmbiguousCases:         boolInt(len(receipt.SemanticClaimDelta.Ambiguous) > 0)}
+	result.ClaimsWithExplainedStatus, result.TotalClaims, result.ClaimStatusCoverageBPS = receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS
 	seen := make(map[string]bool)
 	for _, claim := range receipt.ClaimLedger {
 		if claim.PropositionDigest != "" {
@@ -100,7 +103,7 @@ func summaryFor(receipt producer.Receipt, verdict consumer.Verdict) Summary {
 }
 
 func evidenceFor(receipt producer.Receipt, verdict consumer.Verdict, summary Summary) Evidence {
-	return Evidence{RawBeforeDigest: receipt.Before.SourceDigest, RawAfterDigest: receipt.After.SourceDigest, SemanticBeforeDigest: receipt.Before.SemanticDigest, SemanticAfterDigest: receipt.After.SemanticDigest, DistinctPropositions: summary.DistinctPropositions, Added: summary.AddedClaims, Removed: summary.RemovedClaims, Changed: summary.ChangedClaims, Open: summary.OpenClaims, Discharged: summary.DischargedClaims, Refuted: summary.RefutedClaims, TransitionChain: summary.TransitionChains, Decision: verdict.Decision, Resolution: verdict.Resolution, Classification: verdict.Classification, Stage: verdict.Stage, Step: verdict.Step, Reason: verdict.Reason}
+	return Evidence{RawBeforeDigest: receipt.Before.SourceDigest, RawAfterDigest: receipt.After.SourceDigest, SemanticBeforeDigest: receipt.Before.SemanticDigest, SemanticAfterDigest: receipt.After.SemanticDigest, DistinctPropositions: summary.DistinctPropositions, Added: summary.AddedClaims, Removed: summary.RemovedClaims, Changed: summary.ChangedClaims, Open: summary.OpenClaims, Discharged: summary.DischargedClaims, Refuted: summary.RefutedClaims, TransitionChain: summary.TransitionChains, ClaimsExplained: summary.ClaimsWithExplainedStatus, TotalClaims: summary.TotalClaims, ClaimStatusCoverage: summary.ClaimStatusCoverageBPS, Decision: verdict.Decision, Resolution: verdict.Resolution, Classification: verdict.Classification, Stage: verdict.Stage, Step: verdict.Step, Reason: verdict.Reason}
 }
 
 func boolInt(value bool) int {

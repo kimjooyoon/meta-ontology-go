@@ -24,6 +24,7 @@ type MetaContract struct {
 	ClaimKinds         []string
 	Policies           []string
 	Recipes            []string
+	CaseRecipes        []CaseRecipe
 	DenominatorVersion string
 	DenominatorCases   int
 }
@@ -74,6 +75,10 @@ func ReadMetaContract() (MetaContract, error) {
 					contract.Version = parts[0]
 					contract.DenominatorCases, _ = strconv.Atoi(parts[1])
 				}
+			case strings.HasPrefix(value, "case:"):
+				if recipe, ok := parseCaseRecipe(strings.TrimPrefix(value, "case:")); ok {
+					contract.CaseRecipes = append(contract.CaseRecipes, recipe)
+				}
 			}
 		}
 	}
@@ -92,10 +97,42 @@ func validateMetaContract(contract MetaContract) error {
 	if strings.Join(contract.Layers, ",") != "semantic,structural,textual" {
 		return fmt.Errorf("meta delta layers are incomplete")
 	}
-	if len(contract.ComponentKinds) != TotalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 {
+	if len(contract.ComponentKinds) != TotalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || !sameCaseRecipes(contract.CaseRecipes, Denominator()) {
 		return fmt.Errorf("meta semantic contract coverage is incomplete")
 	}
 	return nil
+}
+
+func parseCaseRecipe(value string) (CaseRecipe, bool) {
+	parts := strings.Split(value, "|")
+	if len(parts) != 3 {
+		return CaseRecipe{}, false
+	}
+	id := parts[0]
+	if !strings.HasPrefix(parts[1], "before:") || !strings.HasPrefix(parts[2], "after:") {
+		return CaseRecipe{}, false
+	}
+	return CaseRecipe{ID: id, BeforePath: strings.TrimPrefix(parts[1], "before:"), AfterPath: strings.TrimPrefix(parts[2], "after:")}, id != ""
+}
+
+func sameCaseRecipes(actual []CaseRecipe, expected []CaseDefinition) bool {
+	if len(actual) != len(expected) {
+		return false
+	}
+	byID := make(map[string]CaseRecipe, len(actual))
+	for _, recipe := range actual {
+		if _, exists := byID[recipe.ID]; exists {
+			return false
+		}
+		byID[recipe.ID] = recipe
+	}
+	for _, definition := range expected {
+		recipe, ok := byID[definition.ID]
+		if !ok || recipe.BeforePath != definition.BeforePath || recipe.AfterPath != definition.AfterPath {
+			return false
+		}
+	}
+	return true
 }
 
 func splitCSV(value string) []string {

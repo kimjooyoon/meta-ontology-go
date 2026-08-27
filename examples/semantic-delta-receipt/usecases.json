@@ -5,5 +5,5 @@
   "meta_operation": "separate-text-structural-semantic-deltas",
   "layers": ["textual_delta", "structural_delta", "semantic_claim_delta"],
   "proof_choices": ["FOUNDATION", "COHERENCE", "REGRESSION"],
-  "repository_writes": 0
+  "effects_observation": "NET_REPOSITORY_STATE_UNCHANGED_WITH_UNKNOWN_TRANSIENT_WRITES_AND_MUTATION_AUTHORITY"
 }

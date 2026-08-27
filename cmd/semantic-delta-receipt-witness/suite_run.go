@@ -8,16 +8,16 @@ const (
 	subjectEquivalenceNotAsserted = "NOT_ASSERTED"
 )
 
-func runSuite(subjectSHA, outputPath string) Suite {
+func runSuite(subjectSHA, observedCheckoutSHA, effectsBefore, effectsAfter, outputPath string) Suite {
 	definitions := producer.Denominator()
 	meta, metaErr := producer.ReadMetaContract()
 	results := make([]CaseResult, 0, len(definitions))
 	summary := Summary{CasesTotal: len(definitions), ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
 	passed := 0
 	for _, definition := range definitions {
-		input := producer.Input{CaseID: definition.ID, SubjectSHA: subjectSHA, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath}
+		input := producer.Input{CaseID: definition.ID, SubjectSHA: subjectSHA, ObservedCheckoutSHA: observedCheckoutSHA, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath, EffectsBeforePath: effectsBefore, EffectsAfterPath: effectsAfter, OutputPath: outputPath}
 		report := evaluate(input, "")
-		semanticCoverageAccepted := report.Receipt.SemanticCoverageBPS == 10000 || definition.ExpectedResolution == producer.ResolutionLower
+		semanticCoverageAccepted := report.Receipt.DeclaredProjectionComponentKindCoverageBPS == 10000 || definition.ExpectedResolution == producer.ResolutionLower
 		casePassed := metaErr == nil && report.IndependentVerdict.Passed && report.IndependentVerdict.Decision == definition.ExpectedDecision && report.IndependentVerdict.Resolution == definition.ExpectedResolution && report.IndependentVerdict.Classification == definition.ExpectedClass && report.IndependentVerdict.Reason == definition.ExpectedReason && report.Receipt.Stage == definition.ExpectedStage && report.Receipt.Step == definition.ExpectedStep && report.Receipt.DenominatorVersion == producer.DenominatorVersion && report.Receipt.DenominatorCases == len(definitions) && semanticCoverageAccepted
 		if casePassed {
 			passed++
@@ -25,6 +25,7 @@ func runSuite(subjectSHA, outputPath string) Suite {
 		results = append(results, CaseResult{Definition: definition, Passed: casePassed, Report: report})
 		mergeSummary(&summary, report, casePassed)
 	}
+	summary.ClaimStatusCoverageBPS = ratio(summary.ClaimsWithExplainedStatus, summary.TotalClaims)
 	contract := contractIncomplete
 	decision, resolution := producer.DecisionFailClosed, producer.ResolutionInvariant
 	reason := ""
@@ -46,7 +47,7 @@ func runSuite(subjectSHA, outputPath string) Suite {
 	if metaErr != nil {
 		metaDigest = ""
 	}
-	suite := Suite{Schema: producer.SuiteSchema, SubjectSHA: subjectSHA, DenominatorID: producer.DenominatorID, DenominatorDigest: denominatorDigest, Decision: decision, Resolution: resolution, Reason: reason, ContractReproduction: contract, SubjectSemanticEquivalence: subjectEquivalenceNotAsserted, SourcePaths: sources, OutputPath: outputPath, Cases: results, Summary: summary, CoverageBPS: ratio(passed, len(definitions)), MetaSourcePath: producer.MetaSourcePath, MetaContractDigest: metaDigest, DenominatorVersion: producer.DenominatorVersion, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
+	suite := Suite{Schema: producer.SuiteSchema, SubjectSHA: subjectSHA, ObservedCheckoutSHA: observedCheckoutSHA, DenominatorID: producer.DenominatorID, DenominatorDigest: denominatorDigest, Decision: decision, Resolution: resolution, Reason: reason, ContractReproduction: contract, SubjectSemanticEquivalence: subjectEquivalenceNotAsserted, SourcePaths: sources, OutputPath: outputPath, Cases: results, Summary: summary, CaseContractCoverageBPS: ratio(passed, len(definitions)), DeclaredProjectionComponentKindCoverageBPS: ratio(producer.ModeledComponentCount, producer.TotalComponentCount), SemanticEquivalenceClaim: subjectEquivalenceNotAsserted, MetaSourcePath: producer.MetaSourcePath, MetaContractDigest: metaDigest, DenominatorVersion: producer.DenominatorVersion, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
 	sealSuite(&suite)
 	return suite
 }
@@ -61,7 +62,9 @@ func mergeSummary(summary *Summary, report Report, passed bool) {
 	summary.SemanticChanged += local.SemanticChanged
 	summary.Indeterminate += local.Indeterminate
 	summary.UnknownPaths += local.UnknownPaths
-	summary.RepositoryWrites += local.RepositoryWrites + report.RepositoryWrites
+	summary.ChangedPathOrContentCount += report.Receipt.Effects.ChangedPathOrContentCount
+	summary.ClaimsWithExplainedStatus += local.ClaimsWithExplainedStatus
+	summary.TotalClaims += local.TotalClaims
 	summary.DistinctPropositions += local.DistinctPropositions
 	summary.AddedClaims += local.AddedClaims
 	summary.RemovedClaims += local.RemovedClaims

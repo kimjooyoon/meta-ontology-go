@@ -10,7 +10,7 @@ func unknownReceipt(receipt Receipt, before, after projectedSource, beforeErr, a
 	receipt.StructuralDelta = StructuralDelta{Status: "UNKNOWN"}
 	receipt.SemanticComponentDelta = SemanticComponentDelta{Status: "UNKNOWN"}
 	receipt.SemanticClaimDelta = ClaimDelta{Status: "UNKNOWN"}
-	receipt.ModeledSemanticComponents, receipt.TotalSemanticComponents, receipt.SemanticCoverageBPS = 0, TotalComponentCount, 0
+	receipt.ModeledSemanticComponents, receipt.TotalSemanticComponents, receipt.DeclaredProjectionComponentKindCoverageBPS = 0, TotalComponentCount, 0
 	receipt.RawDecision, receipt.SemanticDecision = receipt.TextualDelta.Decision, SemanticUnknown
 	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, reason
 	receipt.Stage, receipt.Step = stage, step
@@ -19,6 +19,7 @@ func unknownReceipt(receipt Receipt, before, after projectedSource, beforeErr, a
 	if receipt.TransitionCount > 0 {
 		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
 	}
+	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
 	if beforeErr == nil && afterErr != nil {
 		receipt.After.ParseReason = "UNSUPPORTED_GOOO_SOURCE"
 	}
@@ -29,19 +30,23 @@ func unknownReceipt(receipt Receipt, before, after projectedSource, beforeErr, a
 	return receipt
 }
 
-func subjectUnknown(receipt Receipt, before, after projectedSource) Receipt {
+func subjectUnknown(receipt Receipt, before, after projectedSource, binding string) Receipt {
 	receipt.StructuralDelta = StructuralDelta{Status: "UNKNOWN"}
 	receipt.SemanticComponentDelta = SemanticComponentDelta{Status: "UNKNOWN"}
 	receipt.SemanticClaimDelta = ClaimDelta{Status: "UNKNOWN"}
-	receipt.ModeledSemanticComponents, receipt.TotalSemanticComponents, receipt.SemanticCoverageBPS = 0, TotalComponentCount, 0
+	receipt.ModeledSemanticComponents, receipt.TotalSemanticComponents, receipt.DeclaredProjectionComponentKindCoverageBPS = 0, TotalComponentCount, 0
 	receipt.RawDecision, receipt.SemanticDecision = receipt.TextualDelta.Decision, SemanticUnknown
 	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, ReasonSubject
+	step, reason := subjectCoordinates(receipt.ExpectedSubjectSHA, receipt.ObservedCheckoutSHA)
 	receipt.Stage, receipt.Step = SubjectStage, SubjectStep
-	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(before, after, SubjectStage, SubjectStep, ReasonSubject)
+	receipt.SubjectBinding = binding
+	receipt.Step, receipt.Reason = step, reason
+	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(before, after, receipt.Stage, receipt.Step, receipt.Reason)
 	receipt.TransitionCount = len(receipt.ClaimTransitions)
 	if receipt.TransitionCount > 0 {
 		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
 	}
+	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
 	sealReceipt(&receipt)
 	return receipt
 }
@@ -58,6 +63,7 @@ func ambiguousReceipt(receipt Receipt, before, after projectedSource) Receipt {
 	if receipt.TransitionCount > 0 {
 		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
 	}
+	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
 	sealReceipt(&receipt)
 	return receipt
 }
@@ -66,6 +72,7 @@ func unmodeledReceipt(receipt Receipt, before, after projectedSource) Receipt {
 	receipt.StructuralDelta = structuralDelta(before, after)
 	receipt.SemanticComponentDelta = SemanticComponentDelta{Status: "UNKNOWN"}
 	receipt.SemanticClaimDelta = ClaimDelta{Status: "UNKNOWN", Reason: ReasonUnmodeled}
+	receipt.ModeledSemanticComponents, receipt.TotalSemanticComponents, receipt.DeclaredProjectionComponentKindCoverageBPS = 0, TotalComponentCount, 0
 	receipt.RawDecision, receipt.SemanticDecision = receipt.TextualDelta.Decision, SemanticUnknown
 	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, ReasonUnmodeled
 	receipt.Stage, receipt.Step = "semantic-projection", "compare-stable-hash"
@@ -74,6 +81,7 @@ func unmodeledReceipt(receipt Receipt, before, after projectedSource) Receipt {
 	if receipt.TransitionCount > 0 {
 		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
 	}
+	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
 	sealReceipt(&receipt)
 	return receipt
 }
@@ -84,6 +92,29 @@ func validSubject(value string) bool {
 	}
 	_, err := hex.DecodeString(value)
 	return err == nil
+}
+
+func subjectBinding(expected, observed string) string {
+	if !validSubject(expected) || !validSubject(observed) {
+		return "UNKNOWN"
+	}
+	if expected != observed {
+		return "REFUTED"
+	}
+	return "EXACT"
+}
+
+func subjectCoordinates(expected, observed string) (string, string) {
+	if !validSubject(expected) || !validSubject(observed) {
+		if !validSubject(expected) || (observed != "" && observed != "UNKNOWN") {
+			return "validate-sha", ReasonSubjectSHAInvalid
+		}
+		return "observe-checkout-sha", ReasonSubjectSHAUnavailable
+	}
+	if expected != observed {
+		return "compare-sha", ReasonSubjectSHAMismatch
+	}
+	return SubjectStep, ""
 }
 
 func stringLower(value string) string {

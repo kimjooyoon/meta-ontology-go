@@ -13,7 +13,10 @@ type Summary struct {
 	SemanticChanged           int `json:"semantic_changed"`
 	Indeterminate             int `json:"indeterminate"`
 	UnknownPaths              int `json:"unknown_paths"`
-	RepositoryWrites          int `json:"repository_writes"`
+	ChangedPathOrContentCount int `json:"changed_path_or_content_count"`
+	ClaimsWithExplainedStatus int `json:"claims_with_explained_status"`
+	TotalClaims               int `json:"total_claims"`
+	ClaimStatusCoverageBPS    int `json:"claim_status_coverage_bps"`
 	DistinctPropositions      int `json:"distinct_propositions"`
 	AddedClaims               int `json:"added_claims"`
 	RemovedClaims             int `json:"removed_claims"`
@@ -34,24 +37,27 @@ type CaseResult struct {
 }
 
 type Suite struct {
-	Schema                     string       `json:"schema"`
-	SubjectSHA                 string       `json:"subject_sha"`
-	DenominatorID              string       `json:"denominator_id"`
-	DenominatorDigest          string       `json:"denominator_digest"`
-	Decision                   string       `json:"decision"`
-	Resolution                 string       `json:"resolution"`
-	Reason                     string       `json:"reason,omitempty"`
-	ContractReproduction       string       `json:"contract_reproduction"`
-	SubjectSemanticEquivalence string       `json:"subject_semantic_equivalence"`
-	SourcePaths                []string     `json:"source_paths"`
-	OutputPath                 string       `json:"output_path"`
-	Cases                      []CaseResult `json:"cases"`
-	Summary                    Summary      `json:"summary"`
-	CoverageBPS                int          `json:"coverage_bps"`
-	MetaSourcePath             string       `json:"meta_source_path"`
-	MetaContractDigest         string       `json:"meta_contract_digest"`
-	DenominatorVersion         string       `json:"denominator_version"`
-	ModeledSemanticComponents  int          `json:"modeled_semantic_components"`
-	TotalSemanticComponents    int          `json:"total_semantic_components"`
-	SuiteDigest                string       `json:"suite_digest"`
+	Schema                                     string       `json:"schema"`
+	SubjectSHA                                 string       `json:"subject_sha"`
+	ObservedCheckoutSHA                        string       `json:"observed_checkout_sha"`
+	DenominatorID                              string       `json:"denominator_id"`
+	DenominatorDigest                          string       `json:"denominator_digest"`
+	Decision                                   string       `json:"decision"`
+	Resolution                                 string       `json:"resolution"`
+	Reason                                     string       `json:"reason,omitempty"`
+	ContractReproduction                       string       `json:"contract_reproduction"`
+	SubjectSemanticEquivalence                 string       `json:"subject_semantic_equivalence"`
+	SourcePaths                                []string     `json:"source_paths"`
+	OutputPath                                 string       `json:"output_path"`
+	Cases                                      []CaseResult `json:"cases"`
+	Summary                                    Summary      `json:"summary"`
+	CaseContractCoverageBPS                    int          `json:"case_contract_coverage_bps"`
+	DeclaredProjectionComponentKindCoverageBPS int          `json:"declared_projection_component_kind_coverage_bps"`
+	SemanticEquivalenceClaim                   string       `json:"semantic_equivalence_claim"`
+	MetaSourcePath                             string       `json:"meta_source_path"`
+	MetaContractDigest                         string       `json:"meta_contract_digest"`
+	DenominatorVersion                         string       `json:"denominator_version"`
+	ModeledSemanticComponents                  int          `json:"modeled_semantic_components"`
+	TotalSemanticComponents                    int          `json:"total_semantic_components"`
+	SuiteDigest                                string       `json:"suite_digest"`
 }

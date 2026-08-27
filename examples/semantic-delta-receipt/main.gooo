@@ -26,3 +26,8 @@ activity ProjectSemanticComponents(SourcePair) -> SemanticComponentSet computes 
 activity AdjudicateDelta(DeltaReceipt) -> IndependentVerdict computes "meta.semantic-delta.policy:raw-separate;semantic-separate;fail-closed-lower-resolution"
 activity RecordTransitionLedger(DeltaReceipt) -> TransitionLedger computes "meta.semantic-delta.ledger:open,discharged,refuted,append-only"
 activity ValidateFixedDenominator(SourcePair) -> DenominatorContract computes "meta.semantic-delta.denominator:v2:5"
+activity DeclareEquivalentCase(SourcePair) -> DenominatorContract computes "meta.semantic-delta.case:equivalent|before:examples/semantic-delta-receipt/before.gooo|after:examples/semantic-delta-receipt/equivalent-after.gooo"
+activity DeclareSemanticChangeCase(SourcePair) -> DenominatorContract computes "meta.semantic-delta.case:semantic-change|before:examples/semantic-delta-receipt/before.gooo|after:examples/semantic-delta-receipt/semantic-after.gooo"
+activity DeclareValueProgramCase(SourcePair) -> DenominatorContract computes "meta.semantic-delta.case:value-program-change|before:examples/semantic-delta-receipt/value-program-before.gooo|after:examples/semantic-delta-receipt/value-program-after.gooo"
+activity DeclareUnsupportedCase(SourcePair) -> DenominatorContract computes "meta.semantic-delta.case:indeterminate|before:examples/semantic-delta-receipt/before.gooo|after:examples/semantic-delta-receipt/indeterminate-after.gooo"
+activity DeclareAmbiguousCase(SourcePair) -> DenominatorContract computes "meta.semantic-delta.case:ambiguous-match|before:examples/semantic-delta-receipt/ambiguous-before.gooo|after:examples/semantic-delta-receipt/ambiguous-after.gooo"

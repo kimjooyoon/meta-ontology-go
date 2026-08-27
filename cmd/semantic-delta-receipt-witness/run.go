@@ -16,7 +16,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	if options.caseID == "suite" {
-		return writeJSON(options.output, runSuite(options.subjectSHA, options.output), stdout, stderr)
+		return writeJSON(options.output, runSuite(options.subjectSHA, options.observedCheckoutSHA, options.effectsBefore, options.effectsAfter, options.output), stdout, stderr)
 	}
 	input, err := inputFor(options)
 	if err != nil {
@@ -30,12 +30,12 @@ func inputFor(options options) (producer.Input, error) {
 	if options.caseID != "" {
 		for _, definition := range producer.Denominator() {
 			if definition.ID == options.caseID {
-				return producer.Input{CaseID: definition.ID, SubjectSHA: options.subjectSHA, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath}, nil
+				return producer.Input{CaseID: definition.ID, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath, EffectsBeforePath: options.effectsBefore, EffectsAfterPath: options.effectsAfter, OutputPath: options.output}, nil
 			}
 		}
 		return producer.Input{}, fmt.Errorf("unknown fixed case %q", options.caseID)
 	}
-	return producer.Input{CaseID: "file-pair", SubjectSHA: options.subjectSHA, BeforePath: options.before, AfterPath: options.after}, nil
+	return producer.Input{CaseID: "file-pair", SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA, BeforePath: options.before, AfterPath: options.after, EffectsBeforePath: options.effectsBefore, EffectsAfterPath: options.effectsAfter, OutputPath: options.output}, nil
 }
 
 func writeJSON(path string, value any, stdout, stderr io.Writer) int {

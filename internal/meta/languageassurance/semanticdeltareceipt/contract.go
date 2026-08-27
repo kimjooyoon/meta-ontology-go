@@ -10,49 +10,55 @@ const (
 	Producer      = "semanticdeltareceipt.ProduceFiles"
 	Consumer      = "semanticdeltareceiptconsumer.AdjudicateFiles"
 
-	DecisionFixedPoint    = "FIXED_POINT"
-	DecisionDelta         = "DELTA_OBSERVED"
-	DecisionFailClosed    = "FAIL_CLOSED"
-	ResolutionExact       = "EXACT"
-	ResolutionLower       = "LOWER_RESOLUTION"
-	ResolutionInvariant   = "INVARIANT_ONLY"
-	ClassPreserved        = "SEMANTIC_PRESERVED"
-	ClassChanged          = "SEMANTIC_CHANGED"
-	ClassIndeterminate    = "INDETERMINATE"
-	StatusOpen            = "OPEN"
-	StatusDischarged      = "DISCHARGED"
-	StatusRefuted         = "REFUTED"
-	RawChanged            = "RAW_CHANGED"
-	RawFixedPoint         = "RAW_FIXED_POINT"
-	SemanticPreserved     = "SEMANTIC_PRESERVED"
-	SemanticChanged       = "SEMANTIC_CHANGED"
-	SemanticUnknown       = "SEMANTIC_UNKNOWN"
-	ReasonTextualOnly     = "TEXTUAL_DELTA_WITH_SEMANTIC_FIXED_POINT"
-	ReasonMeaning         = "SEMANTIC_CLAIM_DELTA_OBSERVED"
-	ReasonUnavailable     = "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE"
-	ReasonReceipt         = "SEMANTIC_DELTA_RECEIPT_MISMATCH"
-	ReasonSubject         = "SEMANTIC_DELTA_SUBJECT_UNKNOWN"
-	ReasonComponentDelta  = "SEMANTIC_COMPONENT_DELTA_OBSERVED"
-	ReasonUnmodeled       = "UNMODELED_SEMANTIC_COMPONENT_CHANGED"
-	ReasonAmbiguous       = "AMBIGUOUS_CLAIM_MATCH"
-	ReasonMeta            = "META_CONTRACT_UNAVAILABLE"
-	ReasonDenominatorZero = "DENOMINATOR_ZERO"
-	SubjectStage          = "bind-subject"
-	SubjectStep           = "resolve-subject"
-	UnavailableStage      = "project-source"
-	UnavailableStep       = "parse-lower"
-	ClaimKindBounded      = "BOUNDED_SEMANTIC_EQUIVALENCE"
-	ClaimKindObject       = "OBJECT_PROPOSITION"
-	ClaimKindPreserve     = "BEFORE_CLAIM_PRESERVATION"
-	MetaSourcePath        = "examples/semantic-delta-receipt/main.gooo"
-	DenominatorVersion    = "v2"
-	ModeledComponentCount = 5
-	TotalComponentCount   = 5
-	ComponentNode         = "node-semantic"
-	ComponentField        = "entity-field"
-	ComponentValue        = "activity-value-program"
-	ComponentRelation     = "relation-fact"
-	ComponentFingerprint  = "ir-semantic-fingerprint"
+	DecisionFixedPoint            = "FIXED_POINT"
+	DecisionDelta                 = "DELTA_OBSERVED"
+	DecisionFailClosed            = "FAIL_CLOSED"
+	ResolutionExact               = "EXACT"
+	ResolutionLower               = "LOWER_RESOLUTION"
+	ResolutionInvariant           = "INVARIANT_ONLY"
+	ClassPreserved                = "SEMANTIC_PRESERVED"
+	ClassChanged                  = "SEMANTIC_CHANGED"
+	ClassIndeterminate            = "INDETERMINATE"
+	StatusOpen                    = "OPEN"
+	StatusDischarged              = "DISCHARGED"
+	StatusRefuted                 = "REFUTED"
+	RawChanged                    = "RAW_CHANGED"
+	RawFixedPoint                 = "RAW_FIXED_POINT"
+	SemanticPreserved             = "SEMANTIC_PRESERVED"
+	SemanticChanged               = "SEMANTIC_CHANGED"
+	SemanticUnknown               = "SEMANTIC_UNKNOWN"
+	ReasonTextualOnly             = "TEXTUAL_DELTA_WITH_SEMANTIC_FIXED_POINT"
+	ReasonMeaning                 = "SEMANTIC_CLAIM_DELTA_OBSERVED"
+	ReasonUnavailable             = "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE"
+	ReasonReceipt                 = "SEMANTIC_DELTA_RECEIPT_MISMATCH"
+	ReasonSubject                 = "SEMANTIC_DELTA_SUBJECT_UNKNOWN"
+	ReasonSubjectSHAInvalid       = "SUBJECT_SHA_INVALID"
+	ReasonSubjectSHAUnavailable   = "SUBJECT_SHA_UNAVAILABLE"
+	ReasonSubjectSHAMismatch      = "REFUTED_SUBJECT_SHA_MISMATCH"
+	ReasonComponentDelta          = "SEMANTIC_COMPONENT_DELTA_OBSERVED"
+	ReasonUnmodeled               = "UNMODELED_SEMANTIC_COMPONENT_CHANGED"
+	ReasonAmbiguous               = "AMBIGUOUS_CLAIM_MATCH"
+	ReasonMeta                    = "META_CONTRACT_UNAVAILABLE"
+	ReasonDenominatorZero         = "DENOMINATOR_ZERO"
+	SubjectStage                  = "bind-subject"
+	SubjectStep                   = "resolve-subject"
+	UnavailableStage              = "project-source"
+	UnavailableStep               = "parse-lower"
+	ClaimKindBounded              = "BOUNDED_SEMANTIC_EQUIVALENCE"
+	ClaimKindObject               = "OBJECT_PROPOSITION"
+	ClaimKindPreserve             = "BEFORE_CLAIM_PRESERVATION"
+	MetaSourcePath                = "examples/semantic-delta-receipt/main.gooo"
+	DenominatorVersion            = "v2"
+	ModeledComponentCount         = 5
+	TotalComponentCount           = 5
+	SemanticEquivalenceNotClaimed = "NOT_CLAIMED"
+	EffectsNetStateUnchanged      = "NET_REPOSITORY_STATE_UNCHANGED"
+	EffectsUnknown                = "UNKNOWN"
+	ComponentNode                 = "node-semantic"
+	ComponentField                = "entity-field"
+	ComponentValue                = "activity-value-program"
+	ComponentRelation             = "relation-fact"
+	ComponentFingerprint          = "ir-semantic-fingerprint"
 )
 
 type CaseDefinition struct {
@@ -66,6 +72,12 @@ type CaseDefinition struct {
 	Kind               string `json:"kind"`
 	ExpectedStage      string `json:"expected_stage"`
 	ExpectedStep       string `json:"expected_step"`
+}
+
+type CaseRecipe struct {
+	ID         string `json:"id"`
+	BeforePath string `json:"before_path"`
+	AfterPath  string `json:"after_path"`
 }
 
 func Denominator() []CaseDefinition {

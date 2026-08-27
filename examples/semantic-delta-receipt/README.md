@@ -17,14 +17,16 @@ LOWER_RESOLUTION` at their exact stage/step/reason coordinates.
 
 The producer records the three layers. The consumer is an independent
 adjudicator in a separate package: it rereads both raw sources and recomputes the expected layers
-before accepting the receipt. It rejects a tampered receipt and performs zero
-repository writes. The meta-operation is
+before accepting the receipt. It rejects a tampered receipt and records effects
+from path-plus-content snapshots without claiming mutation authority. The
+meta-operation is
 `separate-text-structural-semantic-deltas`.
 
 The raw decision and semantic decision are separate receipt fields. Claim
 transitions persist `OPEN`, `DISCHARGED`, or `REFUTED`; an unknown subject is
-reported as `FAIL_CLOSED / LOWER_RESOLUTION` with the exact stage `bind-subject`, step
-`resolve-subject`, and reason `SEMANTIC_DELTA_SUBJECT_UNKNOWN`.
+reported as `FAIL_CLOSED / LOWER_RESOLUTION` with the exact stage
+`bind-subject`, step `observe-checkout-sha`, and reason
+`SUBJECT_SHA_UNAVAILABLE`.
 
 Object propositions are not preservation propositions. A changed or removed
 before object claim refutes its separate preservation row; an after-only object
@@ -32,7 +34,8 @@ claim is a canonical source observation and is discharged. Proposition and
 preservation digests stabilize claim IDs, and old rows remain in the receipt.
 The semantic projection explicitly models node identity, entity fields,
 activity value programs, relation facts, and the IR semantic fingerprint. Its
-fixed coverage is `5/5 = 10000` basis points; an uncovered StableHash field is
+declared projection component-kind coverage is `5/5 = 10000` basis points, not
+whole-language semantic coverage; an uncovered StableHash field is
 `UNMODELED_SEMANTIC_COMPONENT_CHANGED`, never preservation.
 
 ## Research decisions
@@ -61,8 +64,9 @@ decide, not evidence that the source is equivalent.
 
 The checked-in `main.gooo` is executable contract input: it declares the layer
 identities, five semantic component kinds, three claim kinds, decision policy,
-ledger recipe, and the `v2:5` denominator. Producer and consumer parse/lower
-that source independently; the Go denominator is only a validator expectation.
+ledger recipe, five case input recipes with before/after addresses, and the
+`v2:5` denominator. Producer and consumer parse/lower that source independently;
+the Go denominator and JSON expected conclusions are validator expectations.
 The suite reports the fixed `5/5 = 10000` contract reproduction. Its subject
 semantic equivalence remains separately `NOT_ASSERTED`.
 
@@ -78,8 +82,12 @@ textual_changed && (structural_delta != empty || semantic_claim_delta != empty)
 Any failed source projection, ambiguous claim match, or receipt replay is
 `INDETERMINATE` and `FAIL_CLOSED`; projection failure uses
 `project-source/parse-lower`, while ambiguity uses `claim-delta/match-claims`.
-No activation or promotion is implied. The suite's `FIXED_POINT` is only fixed
-five-case contract reproduction.
+An unavailable checkout SHA uses `bind-subject/observe-checkout-sha` with
+`SUBJECT_SHA_UNAVAILABLE`; an observed mismatch uses
+`REFUTED_SUBJECT_SHA_MISMATCH`. Net repository equality is observed as
+`NET_REPOSITORY_STATE_UNCHANGED`, while transient writes and mutation authority
+remain `UNKNOWN`. No activation or promotion is implied. The suite's
+`FIXED_POINT` is only fixed five-case contract reproduction.
 
 ## Falsification
 

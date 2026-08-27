@@ -7,7 +7,7 @@ import (
 )
 
 type options struct {
-	caseID, subjectSHA, before, after, output string
+	caseID, subjectSHA, observedCheckoutSHA, before, after, effectsBefore, effectsAfter, output string
 }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
@@ -16,8 +16,11 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	var result options
 	set.StringVar(&result.caseID, "case", "", "fixed case ID or suite")
 	set.StringVar(&result.subjectSHA, "subject-sha", "", "exact candidate SHA")
+	set.StringVar(&result.observedCheckoutSHA, "observed-checkout-sha", "", "observed checkout SHA")
 	set.StringVar(&result.before, "before", "", "before .gooo source")
 	set.StringVar(&result.after, "after", "", "after .gooo source")
+	set.StringVar(&result.effectsBefore, "effects-before", "", "pre-execution workspace content snapshot")
+	set.StringVar(&result.effectsAfter, "effects-after", "", "post-execution workspace content snapshot")
 	set.StringVar(&result.output, "output", "", "JSON output path")
 	if err := set.Parse(args); err != nil {
 		return options{}, err

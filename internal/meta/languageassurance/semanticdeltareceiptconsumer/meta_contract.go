@@ -22,6 +22,7 @@ type metaContract struct {
 	ClaimKinds         []string
 	Policies           []string
 	Recipes            []string
+	CaseRecipes        []caseRecipe
 	DenominatorVersion string
 	DenominatorCases   int
 }
@@ -32,6 +33,12 @@ const (
 	modeledComponentCount = 5
 	totalComponentCount   = 5
 )
+
+type caseRecipe struct {
+	ID         string
+	BeforePath string
+	AfterPath  string
+}
 
 func readMetaContract() (metaContract, error) {
 	metaPath := metaSourcePath
@@ -83,15 +90,53 @@ func readMetaContract() (metaContract, error) {
 					contract.Version = parts[0]
 					contract.DenominatorCases, _ = strconv.Atoi(parts[1])
 				}
+			case strings.HasPrefix(value, "case:"):
+				if recipe, ok := parseCaseRecipeConsumer(strings.TrimPrefix(value, "case:")); ok {
+					contract.CaseRecipes = append(contract.CaseRecipes, recipe)
+				}
 			}
 		}
 	}
 	sort.Strings(contract.ComponentKinds)
 	sort.Strings(contract.ClaimKinds)
-	if contract.Version != denominatorVersion || contract.DenominatorCases != 5 || len(contract.ComponentKinds) != totalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 {
+	if contract.Version != denominatorVersion || contract.DenominatorCases != 5 || len(contract.ComponentKinds) != totalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || !sameCaseRecipesConsumer(contract.CaseRecipes) {
 		return metaContract{}, fmt.Errorf("consumer meta contract incomplete")
 	}
 	return contract, nil
+}
+
+func parseCaseRecipeConsumer(value string) (caseRecipe, bool) {
+	parts := strings.Split(value, "|")
+	if len(parts) != 3 || !strings.HasPrefix(parts[1], "before:") || !strings.HasPrefix(parts[2], "after:") || parts[0] == "" {
+		return caseRecipe{}, false
+	}
+	return caseRecipe{ID: parts[0], BeforePath: strings.TrimPrefix(parts[1], "before:"), AfterPath: strings.TrimPrefix(parts[2], "after:")}, true
+}
+
+func sameCaseRecipesConsumer(actual []caseRecipe) bool {
+	expected := []caseRecipe{
+		{ID: "equivalent", BeforePath: "examples/semantic-delta-receipt/before.gooo", AfterPath: "examples/semantic-delta-receipt/equivalent-after.gooo"},
+		{ID: "semantic-change", BeforePath: "examples/semantic-delta-receipt/before.gooo", AfterPath: "examples/semantic-delta-receipt/semantic-after.gooo"},
+		{ID: "value-program-change", BeforePath: "examples/semantic-delta-receipt/value-program-before.gooo", AfterPath: "examples/semantic-delta-receipt/value-program-after.gooo"},
+		{ID: "indeterminate", BeforePath: "examples/semantic-delta-receipt/before.gooo", AfterPath: "examples/semantic-delta-receipt/indeterminate-after.gooo"},
+		{ID: "ambiguous-match", BeforePath: "examples/semantic-delta-receipt/ambiguous-before.gooo", AfterPath: "examples/semantic-delta-receipt/ambiguous-after.gooo"},
+	}
+	if len(actual) != len(expected) {
+		return false
+	}
+	byID := make(map[string]caseRecipe, len(actual))
+	for _, recipe := range actual {
+		if _, exists := byID[recipe.ID]; exists {
+			return false
+		}
+		byID[recipe.ID] = recipe
+	}
+	for _, recipe := range expected {
+		if byID[recipe.ID] != recipe {
+			return false
+		}
+	}
+	return true
 }
 
 func splitCSVConsumer(value string) []string {

@@ -38,13 +38,15 @@ The experiment adopts these rules:
 | Validation is per change pair | each receipt is rebuilt and adjudicated from its two raw sources |
 | Meaning is anchored to stable identities | nodes and claims use immutable IDs, not display order |
 | Approximation is not exact proof | unsupported syntax becomes `INDETERMINATE / FAIL_CLOSED / LOWER_RESOLUTION` |
-| Evidence is read-only | CI derives tracked-plus-untracked workspace writes and combines that empty set with reported source/output paths |
+| Effects are observed, not inferred | CI derives tracked-plus-untracked path-plus-content snapshots; net equality is `NET_REPOSITORY_STATE_UNCHANGED`, while transient writes and mutation authority remain `UNKNOWN` |
 
 The raw decision is recorded independently as `RAW_CHANGED` or
 `RAW_FIXED_POINT`; the semantic decision is separately recorded as
 `SEMANTIC_PRESERVED`, `SEMANTIC_CHANGED`, or `SEMANTIC_UNKNOWN`. An unknown
 subject is `FAIL_CLOSED / LOWER_RESOLUTION` at stage `bind-subject`, step
-`resolve-subject`, with reason `SEMANTIC_DELTA_SUBJECT_UNKNOWN`. A parse or
+`observe-checkout-sha`, with reason `SUBJECT_SHA_UNAVAILABLE`; invalid SHA uses
+step `validate-sha` and reason `SUBJECT_SHA_INVALID`; an observed mismatch is
+`REFUTED_SUBJECT_SHA_MISMATCH`. A parse or
 lowering failure is likewise `FAIL_CLOSED / LOWER_RESOLUTION` at stage
 `project-source`, step `parse-lower`, with reason
 `SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE`; there is no separate
@@ -53,6 +55,12 @@ lowering failure is likewise `FAIL_CLOSED / LOWER_RESOLUTION` at stage
 The experiment rejects line-count equality as a semantic proof, raw text equality
 as equivalence, and a semantic-diff approximation promoted to `EXACT`. It also
 does not claim whole-program behavioral equivalence or compiler correctness.
+The `declared_projection_component_kind_coverage_bps` value is only coverage of
+the five component kinds declared by `main.gooo`, not whole-language semantic
+coverage. Because the `ir-semantic-fingerprint` component is a catch-all
+StableHash proposition, an unmodeled semantic branch can be hidden behind that
+fingerprint; the receipt therefore records `semantic_equivalence_claim:
+NOT_CLAIMED` and does not promote that digest to exact equivalence.
 
 ## Fixed denominator and cases
 
@@ -68,10 +76,12 @@ by the evaluator:
 | `ambiguous-match` | changed | known | multiple candidates | `INDETERMINATE / FAIL_CLOSED / LOWER_RESOLUTION` |
 
 The suite reports `5/5 = 10000` basis points only when all five defined cases
-are classified exactly. The semantic component denominator is `5/5`; coverage
-below `10000` cannot claim exact semantic equivalence. Repository content
-writes are attested separately from the receipt with tracked and untracked
-path-plus-content digests; the receipt's zero is only an expectation.
+are classified exactly. This is the fixed-contract replay denominator, not a
+whole-language semantic-coverage score. The declared projection component-kind
+denominator is `5/5`; coverage below `10000` cannot claim exact semantic
+equivalence. Repository effects are attested from tracked and untracked
+path-plus-content digests before the final receipt is created, with output
+artifacts kept under `RUNNER_TEMP`.
 
 ## Decision rule
 
@@ -79,7 +89,7 @@ For a pair that both bounded projections can parse:
 
 ```text
 textual_delta.changed && structural_delta == empty && semantic_claim_delta == empty
-  => SEMANTIC_PRESERVED / FIXED_POINT / EXACT only when semantic coverage is 10000
+  => SEMANTIC_PRESERVED / FIXED_POINT / EXACT only when declared projection component-kind coverage is 10000
 
 textual_delta.changed && (structural_delta != empty || semantic_claim_delta != empty)
   => SEMANTIC_CHANGED / DELTA_OBSERVED / EXACT
@@ -99,13 +109,17 @@ Every indicator carries its `producer`, `consumer`, `meta_operation`, `stage`,
 - `FOUNDATION` binds raw bytes, stable identities, and the canonical graph;
 - `COHERENCE` checks that the graph, claim delta, transition, and independent
   verdict agree; and
-- `REGRESSION` checks the no-write boundary.
+- `REGRESSION` checks the observed net-state boundary while leaving transient
+  writes and mutation authority unknown.
 
 `main.gooo` is the semantic contract source. It declares layer identities,
 modeled component kinds (node, entity-field, activity-value-program,
 relation-fact, and IR fingerprint), claim kinds, fail-closed policy, append-only
-ledger recipe, and denominator `v2:5`. Both producer and consumer parse/lower
-it independently and bind its digest into the receipt.
+ledger recipe, five case recipes, and denominator `v2:5`. Both producer and
+consumer parse/lower it independently, reconstruct the case IDs and target
+addresses, and bind its digest into the receipt. The JSON denominator must
+match those source-derived recipes exactly; expected conclusions remain
+validator expectations rather than source declarations.
 
 A transition records the claim ID, claim kind, status before and after, object
 before and after, stage, step, reason, and (for preservation rows) the
@@ -128,6 +142,15 @@ records proposition/evidence/previous-event/transition digests in an append-only
 chain. The semantic-change case therefore refutes the old
 payment preservation proposition and discharges the new reversal observation;
 it does not claim that the reversal proposition is false.
+
+Every ledger row has exactly one transition linked by claim ID and proposition
+digest, including every `OPEN`, `DISCHARGED`, and `REFUTED` row. The reported
+claim-status coverage is `claims_with_explained_status / total_claims`; it is
+not padded by duplicate events. A comment-only intervention changes the raw
+digest while preserving semantic digests, the semantic decision, and the exact
+logical transition sequence (`kind`, status endpoints, preservation target,
+stage, step, and reason). Instance/evidence digests may still change because
+they deliberately bind the observed raw source.
 
 The conformance suite's `FIXED_POINT` decision means only that the fixed
 five-case contract was reproduced. `subject_semantic_equivalence` is recorded

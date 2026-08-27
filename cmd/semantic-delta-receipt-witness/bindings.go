@@ -9,7 +9,7 @@ func bindings(summary Summary) []producer.OperationBinding {
 		binding("gooo.metric.evidence.structural-delta-separation.v1", "DRIVER", "FOUNDATION", "cases", "GREATER_OR_EQUAL", summary.StructuralObservations, summary.CasesTotal, summary.CasesTotal, "derive", "canonical-graph", "STRUCTURAL_GRAPH_BOUND_SEPARATELY"),
 		binding("gooo.metric.semantic.claim-transition-totality.v1", "DRIVER", "FOUNDATION", "cases", "GREATER_OR_EQUAL", summary.ClaimTransitionCases, summary.CasesTotal, summary.CasesTotal, "derive", "claim-transition", "CLAIM_TRANSITIONS_EXPLICIT"),
 		binding("gooo.metric.epistemic.delta-receipt-adjudication.v1", "GUARDRAIL", "COHERENCE", "cases", "GREATER_OR_EQUAL", summary.AdjudicatedCases, summary.CasesTotal, summary.CasesTotal, "adjudicate", "independent-replay", "INDEPENDENT_JUDGE_REPLAYED"),
-		binding("gooo.metric.effects.delta-receipt-writes.v1", "GUARDRAIL", "REGRESSION", "writes", "LESS_OR_EQUAL", summary.RepositoryWrites, 0, summary.CasesTotal, "observe", "read-only-boundary", "NO_REPOSITORY_WRITES"),
+		binding("gooo.metric.effects.delta-receipt-net-state.v1", "GUARDRAIL", "REGRESSION", "changed_paths", "LESS_OR_EQUAL", summary.ChangedPathOrContentCount, 0, summary.CasesTotal, "observe", "workspace-content-snapshot", "NET_REPOSITORY_STATE_UNCHANGED"),
 	}
 }
 

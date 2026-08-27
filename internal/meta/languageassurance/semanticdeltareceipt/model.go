@@ -2,10 +2,28 @@ package semanticdeltareceipt
 
 // Input names checked-in sources; the producer owns reading them.
 type Input struct {
-	CaseID     string `json:"case_id"`
-	SubjectSHA string `json:"subject_sha"`
-	BeforePath string `json:"before_path"`
-	AfterPath  string `json:"after_path"`
+	CaseID              string `json:"case_id"`
+	SubjectSHA          string `json:"subject_sha"`
+	ObservedCheckoutSHA string `json:"observed_checkout_sha"`
+	BeforePath          string `json:"before_path"`
+	AfterPath           string `json:"after_path"`
+	EffectsBeforePath   string `json:"effects_before_path"`
+	EffectsAfterPath    string `json:"effects_after_path"`
+	OutputPath          string `json:"output_path"`
+}
+
+type EffectsObservation struct {
+	Status                    string `json:"status"`
+	BeforeSnapshotPath        string `json:"before_snapshot_path,omitempty"`
+	AfterSnapshotPath         string `json:"after_snapshot_path,omitempty"`
+	BeforeSnapshotDigest      string `json:"before_snapshot_digest,omitempty"`
+	AfterSnapshotDigest       string `json:"after_snapshot_digest,omitempty"`
+	BeforePathCount           int    `json:"before_path_count"`
+	AfterPathCount            int    `json:"after_path_count"`
+	ChangedPathOrContentCount int    `json:"changed_path_or_content_count"`
+	TransientWriteObservation string `json:"transient_write_observation"`
+	MutationAuthority         string `json:"mutation_authority"`
+	OutputLocation            string `json:"output_location"`
 }
 
 type Node struct {

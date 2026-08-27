@@ -15,7 +15,7 @@ func fixture(name string) string {
 }
 
 func TestProducerReadsCanonicalFixturePair(t *testing.T) {
-	receipt, err := ProduceFiles(Input{CaseID: "equivalent", SubjectSHA: candidateSHA, BeforePath: fixture("before.gooo"), AfterPath: fixture("equivalent-after.gooo")})
+	receipt, err := ProduceFiles(Input{CaseID: "equivalent", SubjectSHA: candidateSHA, ObservedCheckoutSHA: candidateSHA, BeforePath: fixture("before.gooo"), AfterPath: fixture("equivalent-after.gooo")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,25 +25,28 @@ func TestProducerReadsCanonicalFixturePair(t *testing.T) {
 	if receipt.StructuralDelta.AddedNodes != nil || receipt.SemanticClaimDelta.Changed != nil {
 		t.Fatalf("presentation change was treated as semantic: %+v", receipt)
 	}
-	if len(receipt.ClaimTransitions) != 3 || receipt.ClaimTransitions[0].Kind != ClaimKindBounded || receipt.ClaimTransitions[0].ToStatus != StatusDischarged {
+	if len(receipt.ClaimTransitions) != 7 || receipt.ClaimsWithExplainedStatus != 7 || receipt.TotalClaims != 7 || receipt.ClaimStatusCoverageBPS != 10000 || receipt.ClaimTransitions[0].Kind != ClaimKindBounded || receipt.ClaimTransitions[0].ToStatus != StatusDischarged {
 		t.Fatalf("transitions=%+v", receipt.ClaimTransitions)
 	}
 	for _, transition := range receipt.ClaimTransitions[1:] {
-		if transition.Kind != ClaimKindPreserve || transition.ToStatus != StatusDischarged {
+		if transition.Kind != ClaimKindPreserve && transition.Kind != ClaimKindObject {
+			t.Fatalf("presentation preservation=%+v", receipt.ClaimTransitions)
+		}
+		if transition.ToStatus != StatusDischarged {
 			t.Fatalf("presentation preservation=%+v", receipt.ClaimTransitions)
 		}
 	}
 }
 
 func TestProducerRecordsSemanticClaimRefutation(t *testing.T) {
-	receipt, err := ProduceFiles(Input{CaseID: "semantic-change", SubjectSHA: candidateSHA, BeforePath: fixture("before.gooo"), AfterPath: fixture("semantic-after.gooo")})
+	receipt, err := ProduceFiles(Input{CaseID: "semantic-change", SubjectSHA: candidateSHA, ObservedCheckoutSHA: candidateSHA, BeforePath: fixture("before.gooo"), AfterPath: fixture("semantic-after.gooo")})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if receipt.Classification != ClassChanged || receipt.SemanticDecision != SemanticChanged || len(receipt.SemanticClaimDelta.Changed) != 1 {
 		t.Fatalf("receipt=%+v", receipt)
 	}
-	if len(receipt.ClaimTransitions) != 4 || receipt.ClaimTransitions[0].ToStatus != StatusRefuted {
+	if len(receipt.ClaimTransitions) != 7 || receipt.ClaimsWithExplainedStatus != 7 || receipt.TotalClaims != 7 || receipt.ClaimStatusCoverageBPS != 10000 || receipt.ClaimTransitions[0].ToStatus != StatusRefuted {
 		t.Fatalf("transitions=%+v", receipt.ClaimTransitions)
 	}
 	preserved, refuted, observed := 0, 0, 0
@@ -58,7 +61,7 @@ func TestProducerRecordsSemanticClaimRefutation(t *testing.T) {
 			observed++
 		}
 	}
-	if preserved != 1 || refuted != 1 || observed != 1 {
+	if preserved != 1 || refuted != 1 || observed != 2 {
 		t.Fatalf("semantic ledger transitions=%+v", receipt.ClaimTransitions)
 	}
 }

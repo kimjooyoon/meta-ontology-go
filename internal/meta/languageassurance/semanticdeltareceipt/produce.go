@@ -29,15 +29,15 @@ func produceBytes(input Input, beforeRaw, afterRaw []byte, meta MetaContract, me
 	if afterSource.path == "" {
 		afterSource = sourceEnvelope(input.AfterPath, afterRaw)
 	}
-	receipt := Receipt{Schema: ReceiptSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation, ProofChoice: "FOUNDATION", Stage: "produce", Step: "separate-delta-layers", MetaSourcePath: MetaSourcePath, MetaContractDigest: meta.Digest, DenominatorVersion: meta.Version, DenominatorCases: meta.DenominatorCases, ModeledSemanticComponents: ModeledComponentCount, TotalSemanticComponents: TotalComponentCount, SemanticCoverageBPS: semanticCoverageBPS(ModeledComponentCount, TotalComponentCount), Before: snapshot(beforeRaw, beforeSource, beforeErr), After: snapshot(afterRaw, afterSource, afterErr), TextualDelta: textualDelta(beforeRaw, afterRaw), RepositoryWrites: 0}
+	receipt := Receipt{Schema: ReceiptSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, ExpectedSubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA, SubjectBinding: subjectBinding(input.SubjectSHA, input.ObservedCheckoutSHA), Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation, ProofChoice: "FOUNDATION", Stage: "produce", Step: "separate-delta-layers", MetaSourcePath: MetaSourcePath, MetaContractDigest: meta.Digest, DenominatorVersion: meta.Version, DenominatorCases: meta.DenominatorCases, ModeledSemanticComponents: ModeledComponentCount, TotalSemanticComponents: TotalComponentCount, DeclaredProjectionComponentKindCoverageBPS: semanticCoverageBPS(ModeledComponentCount, TotalComponentCount), SemanticEquivalenceClaim: SemanticEquivalenceNotClaimed, Before: snapshot(beforeRaw, beforeSource, beforeErr), After: snapshot(afterRaw, afterSource, afterErr), TextualDelta: textualDelta(beforeRaw, afterRaw), Effects: observeEffects(input)}
 	if metaErr != nil {
 		return unknownReceipt(receipt, beforeSource, afterSource, nil, nil, "meta-source", "parse-lower", ReasonMeta)
 	}
 	if beforeErr != nil || afterErr != nil {
 		return unknownReceipt(receipt, beforeSource, afterSource, beforeErr, afterErr)
 	}
-	if !validSubject(input.SubjectSHA) {
-		return subjectUnknown(receipt, beforeSource, afterSource)
+	if receipt.SubjectBinding != "EXACT" {
+		return subjectUnknown(receipt, beforeSource, afterSource, receipt.SubjectBinding)
 	}
 	receipt.StructuralDelta = structuralDelta(beforeSource, afterSource)
 	receipt.SemanticComponentDelta = semanticComponentDelta(beforeSource, afterSource)
@@ -66,6 +66,7 @@ func produceBytes(input Input, beforeRaw, afterRaw []byte, meta MetaContract, me
 	if receipt.TransitionCount > 0 {
 		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
 	}
+	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
 	sealReceipt(&receipt)
 	return receipt
 }
