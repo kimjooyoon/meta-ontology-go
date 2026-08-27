@@ -26,6 +26,11 @@ func sealReceipt(receipt Receipt) Receipt {
 	return receipt
 }
 
+// SealReceipt is used by the independent-intervention harness when it creates
+// a deliberately forged receipt. The consumer still rejects the forged raw
+// provider observation after resealing.
+func SealReceipt(receipt Receipt) Receipt { return sealReceipt(receipt) }
+
 func SealSuite(suite Suite) Suite {
 	suite.SuiteDigest = ""
 	suite.SuiteDigest = digestValue(suite)

@@ -10,8 +10,8 @@ entity ExpansionReceipt id "gooo://capability-scoped-expansion/receipt"
 entity ExpandedSyntax id "gooo://capability-scoped-expansion/expanded-syntax"
 
 activity CapabilityPolicy(ExpansionRequest) -> ExpansionPolicy computes "capability.policy|id=default-deny|default=DENY|authorization=exact-current|effects=NONE|prior=OPEN"
-activity AuthorizeBeforeExpand(ExpansionRequest) -> ExpansionReceipt computes "capability.operation|id=authorize-before-expand|stage=expand|step=authorize-before-expand|prior=OPEN"
-activity BindCapabilityEvidence(CapabilityValue) -> CapabilityEvidence computes "capability.operation|id=bind-capability-evidence|stage=expand|step=bind-capability-evidence|prior=OPEN"
+activity AuthorizeBeforeExpand(ExpansionPolicy) -> ExpansionReceipt computes "capability.operation|id=authorize-before-expand|stage=expand|step=authorize-before-expand|prior=OPEN"
+activity BindCapabilityEvidence(ExpansionReceipt, CapabilityValue) -> CapabilityEvidence computes "capability.operation|id=bind-capability-evidence|stage=expand|step=bind-capability-evidence|prior=OPEN"
 activity ExpandWithCapabilityEvidence(CapabilityEvidence) -> ExpandedSyntax computes "capability.operation|id=expand-with-capability-evidence|stage=expand|step=expand-with-capability-evidence|prior=OPEN"
 
 activity FileReadCapability(ExpansionRequest) -> CapabilityValue computes "capability.declare|id=file-read|kind=file|operation=read|target=pinned-file|policy=default-deny|prior=OPEN|evidence=CURRENT_EVIDENCE"
@@ -24,6 +24,7 @@ activity CaseDenyFileTarget(ExpansionRequest) -> ExpansionCase computes "capabil
 activity CaseDenyTimeTarget(ExpansionRequest) -> ExpansionCase computes "capability.case|id=deny-undeclared-time|requests=logical-time-read@wall-clock|writes=0|mutation=false|promotion=false|prior=OPEN"
 activity CaseDenyEnvironmentTarget(ExpansionRequest) -> ExpansionCase computes "capability.case|id=deny-undeclared-environment|requests=environment-read@HOME|writes=0|mutation=false|promotion=false|prior=OPEN"
 activity CaseDenyNetworkTarget(ExpansionRequest) -> ExpansionCase computes "capability.case|id=deny-undeclared-network|requests=network-read@https://example.invalid/unpinned|writes=0|mutation=false|promotion=false|prior=OPEN"
+activity CaseUnknownHistoricalNetwork(ExpansionRequest) -> ExpansionCase computes "capability.case|id=unknown-historical-network|requests=network-read@https://example.invalid/gooo/pinned-schema|writes=0|mutation=false|promotion=false|prior=OPEN"
 activity CaseDenyRepositoryWrite(ExpansionRequest) -> ExpansionCase computes "capability.case|id=deny-repository-write|requests=file-read@pinned-file|writes=1|mutation=false|promotion=false|prior=OPEN"
 activity CaseDenyMutation(ExpansionRequest) -> ExpansionCase computes "capability.case|id=deny-mutation-authority|requests=file-read@pinned-file|writes=0|mutation=true|promotion=false|prior=OPEN"
 activity CaseUnknownEnvironmentEvidence(ExpansionRequest) -> ExpansionCase computes "capability.case|id=unknown-missing-evidence|requests=environment-read@GOOO_EXPANSION_PROFILE|writes=0|mutation=false|promotion=false|prior=OPEN"

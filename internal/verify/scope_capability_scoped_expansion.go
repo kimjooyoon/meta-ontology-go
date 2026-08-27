@@ -5,6 +5,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/capability-scoped-expansion.yml",
+		"cmd/capability-scoped-expansion-provider",
 		"cmd/capability-scoped-expansion-witness",
 		"docs/language/capability-scoped-expansion.md",
 		"examples/capability-scoped-expansion",

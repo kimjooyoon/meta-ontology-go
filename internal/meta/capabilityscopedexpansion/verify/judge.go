@@ -5,17 +5,21 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const (
-	validSchema         = "gooo/capability-scoped-expansion/v2"
-	validSuiteSchema    = "gooo/capability-scoped-expansion-suite/v2"
-	validProviderSchema = "gooo/capability-scoped-expansion/provider/v2"
+	validSchema         = "gooo/capability-scoped-expansion/v3"
+	validProviderSchema = "gooo/capability-scoped-expansion/provider/v3"
 	validMetaOperation  = "expand-capability-scoped-meta-code"
 	validProducer       = "capabilityscopedexpansion.Evaluate"
 	validConsumer       = "capabilityscopedexpansion.verify.Judge"
@@ -34,8 +38,15 @@ const (
 	caseScheme          = "capability.case"
 	currentEvidence     = "CURRENT_EVIDENCE"
 	historicalFixture   = "HISTORICAL_FIXTURE"
-	fixedIndicatorTotal = 12
+	fixedIndicators     = 12
 )
+
+type ProviderContext struct {
+	RepositoryRoot   string
+	PinnedFile       string
+	LogicalInputPath string
+	SandboxRoot      string
+}
 
 type Verdict struct {
 	Status               string `json:"status"`
@@ -64,19 +75,24 @@ type rawReceipt struct {
 	EnforcementEffect  string               `json:"enforcement_effect"`
 	Reason             string               `json:"reason"`
 	Policy             rawPolicy            `json:"policy"`
+	Graph              rawGraph             `json:"graph"`
 	Declarations       []rawDeclaration     `json:"declarations"`
 	Capabilities       []rawCapability      `json:"capabilities"`
 	Evidence           []rawEvidence        `json:"evidence"`
 	ProviderDigest     string               `json:"provider_digest"`
-	EffectObservations []rawEffect          `json:"effect_observations"`
+	TokenAttempts      []rawToken           `json:"token_attempts"`
+	Execution          rawExecution         `json:"execution"`
+	Artifact           rawArtifact          `json:"artifact"`
+	Propositions       []rawProposition     `json:"propositions"`
 	Unknown            *rawUnknown          `json:"unknown,omitempty"`
 	Authority          rawAuthority         `json:"authority"`
 	Claims             []rawClaim           `json:"claims"`
 	ClaimTransitions   []rawClaimTransition `json:"claim_transitions"`
 	Indicators         []rawIndicator       `json:"indicators"`
 	RepositoryWrites   int                  `json:"repository_writes"`
-	MutationAuthority  bool                 `json:"mutation_authority"`
-	PromotionAuthority bool                 `json:"promotion_authority"`
+	SandboxWrites      int                  `json:"sandbox_writes"`
+	MutationAuthority  string               `json:"mutation_authority"`
+	PromotionAuthority string               `json:"promotion_authority"`
 	ReportDigest       string               `json:"report_digest"`
 }
 
@@ -88,6 +104,7 @@ type rawPolicy struct {
 	PriorClaimState   string `json:"prior_claim_state"`
 	NodeID            string `json:"semantic_value_node_id"`
 }
+
 type rawDeclaration struct {
 	ValueID         string `json:"value_id"`
 	Kind            string `json:"kind"`
@@ -98,334 +115,278 @@ type rawDeclaration struct {
 	EvidenceClass   string `json:"evidence_class"`
 	NodeID          string `json:"node_id"`
 }
-type rawCapability struct{ ValueID, Kind, Operation, Target string }
 
-func (c *rawCapability) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		ValueID   string `json:"value_id"`
-		Kind      string `json:"kind"`
-		Operation string `json:"operation"`
-		Target    string `json:"target"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	c.ValueID, c.Kind, c.Operation, c.Target = value.ValueID, value.Kind, value.Operation, value.Target
-	return nil
+type rawCapability struct {
+	ValueID   string `json:"value_id"`
+	Kind      string `json:"kind"`
+	Operation string `json:"operation"`
+	Target    string `json:"target"`
 }
 
-type rawEvidence struct{ ValueID, Observed, EvidenceClass, EvidenceDigest, Provenance string }
-
-func (e *rawEvidence) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		ValueID        string `json:"value_id"`
-		Observed       string `json:"observed"`
-		EvidenceClass  string `json:"evidence_class"`
-		EvidenceDigest string `json:"evidence_digest"`
-		Provenance     string `json:"provenance"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	e.ValueID, e.Observed, e.EvidenceClass, e.EvidenceDigest, e.Provenance = value.ValueID, value.Observed, value.EvidenceClass, value.EvidenceDigest, value.Provenance
-	return nil
+type rawEvidence struct {
+	ValueID        string `json:"value_id"`
+	Observed       string `json:"observed"`
+	EvidenceClass  string `json:"evidence_class"`
+	EvidenceDigest string `json:"evidence_digest"`
+	Provenance     string `json:"provenance"`
 }
 
-type rawUnknown struct{ Stage, Step, Reason string }
+type rawUnknown struct {
+	Stage  string `json:"stage"`
+	Step   string `json:"step"`
+	Reason string `json:"reason"`
+}
 
-func (u *rawUnknown) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		Stage  string `json:"stage"`
-		Step   string `json:"step"`
-		Reason string `json:"reason"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	u.Stage, u.Step, u.Reason = value.Stage, value.Step, value.Reason
-	return nil
+type rawGraph struct {
+	Facts        []rawGraphFact `json:"facts"`
+	RequiredPath []string       `json:"required_path"`
+	PathDigest   string         `json:"path_digest"`
+	Complete     bool           `json:"complete"`
+}
+
+type rawGraphFact struct {
+	Subject   string `json:"subject"`
+	Predicate string `json:"predicate"`
+	Object    string `json:"object"`
+}
+
+type rawToken struct {
+	Kind          string `json:"kind"`
+	Operation     string `json:"operation"`
+	Target        string `json:"target"`
+	Requested     bool   `json:"requested"`
+	Decision      string `json:"decision"`
+	Issued        bool   `json:"issued"`
+	Reason        string `json:"reason"`
+	PolicyDigest  string `json:"policy_digest"`
+	RequestDigest string `json:"request_digest"`
+}
+
+type rawExecution struct {
+	Requested              bool   `json:"requested"`
+	Decision               string `json:"decision"`
+	Result                 string `json:"result"`
+	ClaimID                string `json:"claim_id"`
+	ClaimState             string `json:"claim_state"`
+	Reason                 string `json:"reason"`
+	ArtifactPath           string `json:"artifact_path"`
+	ArtifactValue          string `json:"artifact_value"`
+	ArtifactBytes          int    `json:"artifact_bytes"`
+	ArtifactDigest         string `json:"artifact_digest"`
+	ArtifactSemanticDigest string `json:"artifact_semantic_digest"`
+	ReparsedSemanticDigest string `json:"reparsed_semantic_digest"`
+}
+
+type rawArtifact struct {
+	Schema                 string `json:"schema"`
+	Present                bool   `json:"present"`
+	Path                   string `json:"path"`
+	Value                  string `json:"value"`
+	Bytes                  int    `json:"bytes"`
+	ContentDigest          string `json:"content_digest"`
+	SemanticDigest         string `json:"semantic_digest"`
+	Reparsed               bool   `json:"reparsed"`
+	ReparsedSemanticDigest string `json:"reparsed_semantic_digest"`
+}
+
+type rawProposition struct {
+	ID             string `json:"id"`
+	Predicate      string `json:"predicate"`
+	Decision       string `json:"decision"`
+	Status         string `json:"status"`
+	EvidenceDigest string `json:"evidence_digest"`
+	Provenance     string `json:"provenance"`
 }
 
 type rawAuthority struct {
-	CapabilitiesRequested, CapabilitiesDeclared, CapabilitiesAuthorized, CapabilitiesDenied, CapabilitiesUnknown                  int
-	CurrentEvidenceCapabilities, CurrentEvidenceDenominator, RequestedRepositoryWrites, RepositoryWrites, EnforcementObservations int
-	RequestedMutationAuthority, RequestedPromotionAuthority, MutationAuthority, PromotionAuthority                                bool
+	CapabilitiesRequested       int    `json:"capabilities_requested"`
+	CapabilitiesDeclared        int    `json:"capabilities_declared"`
+	CapabilitiesAuthorized      int    `json:"capabilities_authorized"`
+	CapabilitiesDenied          int    `json:"capabilities_denied"`
+	CapabilitiesUnknown         int    `json:"capabilities_unknown"`
+	CurrentEvidenceCapabilities int    `json:"current_evidence_capabilities"`
+	CurrentEvidenceDenominator  int    `json:"current_evidence_denominator"`
+	RequestedRepositoryWrites   int    `json:"requested_repository_writes"`
+	RequestedMutationAuthority  bool   `json:"requested_mutation_authority"`
+	RequestedPromotionAuthority bool   `json:"requested_promotion_authority"`
+	RepositoryWrites            int    `json:"repository_writes"`
+	SandboxWrites               int    `json:"sandbox_writes"`
+	MutationAuthority           string `json:"mutation_authority"`
+	PromotionAuthority          string `json:"promotion_authority"`
+	EnforcementObservations     int    `json:"enforcement_observations"`
 }
 
-func (a *rawAuthority) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		CapabilitiesRequested       int  `json:"capabilities_requested"`
-		CapabilitiesDeclared        int  `json:"capabilities_declared"`
-		CapabilitiesAuthorized      int  `json:"capabilities_authorized"`
-		CapabilitiesDenied          int  `json:"capabilities_denied"`
-		CapabilitiesUnknown         int  `json:"capabilities_unknown"`
-		CurrentEvidenceCapabilities int  `json:"current_evidence_capabilities"`
-		CurrentEvidenceDenominator  int  `json:"current_evidence_denominator"`
-		RequestedRepositoryWrites   int  `json:"requested_repository_writes"`
-		RequestedMutationAuthority  bool `json:"requested_mutation_authority"`
-		RequestedPromotionAuthority bool `json:"requested_promotion_authority"`
-		RepositoryWrites            int  `json:"repository_writes"`
-		MutationAuthority           bool `json:"mutation_authority"`
-		PromotionAuthority          bool `json:"promotion_authority"`
-		EnforcementObservations     int  `json:"enforcement_observations"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	a.CapabilitiesRequested, a.CapabilitiesDeclared, a.CapabilitiesAuthorized, a.CapabilitiesDenied, a.CapabilitiesUnknown = value.CapabilitiesRequested, value.CapabilitiesDeclared, value.CapabilitiesAuthorized, value.CapabilitiesDenied, value.CapabilitiesUnknown
-	a.CurrentEvidenceCapabilities, a.CurrentEvidenceDenominator, a.RequestedRepositoryWrites, a.RepositoryWrites, a.EnforcementObservations = value.CurrentEvidenceCapabilities, value.CurrentEvidenceDenominator, value.RequestedRepositoryWrites, value.RepositoryWrites, value.EnforcementObservations
-	a.RequestedMutationAuthority, a.RequestedPromotionAuthority, a.MutationAuthority, a.PromotionAuthority = value.RequestedMutationAuthority, value.RequestedPromotionAuthority, value.MutationAuthority, value.PromotionAuthority
-	return nil
+type rawClaim struct {
+	ID          string `json:"id"`
+	PriorState  string `json:"prior_state"`
+	Status      string `json:"status"`
+	ProofChoice string `json:"proof_choice"`
+	Evidence    string `json:"evidence"`
 }
 
-type rawEffect struct {
-	Kind, Target, Result, Reason, BeforeDigest, AfterDigest      string
-	Requested, BoundaryObserved, ActualMutation, ActualPromotion bool
-	ActualWrites                                                 int
-}
-
-func (e *rawEffect) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		Kind             string `json:"kind"`
-		Target           string `json:"target"`
-		Requested        bool   `json:"requested"`
-		Result           string `json:"result"`
-		Reason           string `json:"reason"`
-		BoundaryObserved bool   `json:"boundary_observed"`
-		BeforeDigest     string `json:"before_digest"`
-		AfterDigest      string `json:"after_digest"`
-		ActualWrites     int    `json:"actual_writes"`
-		ActualMutation   bool   `json:"actual_mutation"`
-		ActualPromotion  bool   `json:"actual_promotion"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	e.Kind, e.Target, e.Result, e.Reason, e.BeforeDigest, e.AfterDigest = value.Kind, value.Target, value.Result, value.Reason, value.BeforeDigest, value.AfterDigest
-	e.Requested, e.BoundaryObserved, e.ActualMutation, e.ActualPromotion, e.ActualWrites = value.Requested, value.BoundaryObserved, value.ActualMutation, value.ActualPromotion, value.ActualWrites
-	return nil
-}
-
-type rawClaim struct{ ID, PriorState, Status, ProofChoice, Evidence string }
-
-func (c *rawClaim) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		ID          string `json:"id"`
-		PriorState  string `json:"prior_state"`
-		Status      string `json:"status"`
-		ProofChoice string `json:"proof_choice"`
-		Evidence    string `json:"evidence"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	c.ID, c.PriorState, c.Status, c.ProofChoice, c.Evidence = value.ID, value.PriorState, value.Status, value.ProofChoice, value.Evidence
-	return nil
-}
-
-type rawClaimTransition struct{ ClaimID, PriorState, NextState, Stage, Step, Reason, EvidenceDigest, Provenance string }
-
-func (c *rawClaimTransition) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		ClaimID        string `json:"claim_id"`
-		PriorState     string `json:"prior_state"`
-		NextState      string `json:"next_state"`
-		Stage          string `json:"stage"`
-		Step           string `json:"step"`
-		Reason         string `json:"reason"`
-		EvidenceDigest string `json:"evidence_digest"`
-		Provenance     string `json:"provenance"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	c.ClaimID, c.PriorState, c.NextState, c.Stage, c.Step, c.Reason, c.EvidenceDigest, c.Provenance = value.ClaimID, value.PriorState, value.NextState, value.Stage, value.Step, value.Reason, value.EvidenceDigest, value.Provenance
-	return nil
+type rawClaimTransition struct {
+	ClaimID        string `json:"claim_id"`
+	PriorState     string `json:"prior_state"`
+	NextState      string `json:"next_state"`
+	Stage          string `json:"stage"`
+	Step           string `json:"step"`
+	Reason         string `json:"reason"`
+	EvidenceDigest string `json:"evidence_digest"`
+	Provenance     string `json:"provenance"`
 }
 
 type rawIndicator struct {
-	ID, Class, Status, Producer, Consumer, MetaOperation, ProofChoice string
-	Observed, Target                                                  int
+	ID            string `json:"id"`
+	Class         string `json:"class"`
+	Status        string `json:"status"`
+	Producer      string `json:"producer"`
+	Consumer      string `json:"consumer"`
+	MetaOperation string `json:"meta_operation"`
+	ProofChoice   string `json:"proof_choice"`
+	Observed      int    `json:"observed"`
+	Target        int    `json:"target"`
 }
 
-func (i *rawIndicator) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		ID            string `json:"id"`
-		Class         string `json:"class"`
-		Status        string `json:"status"`
-		Producer      string `json:"producer"`
-		Consumer      string `json:"consumer"`
-		MetaOperation string `json:"meta_operation"`
-		ProofChoice   string `json:"proof_choice"`
-		Observed      int    `json:"observed"`
-		Target        int    `json:"target"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	i.ID, i.Class, i.Status, i.Producer, i.Consumer, i.MetaOperation, i.ProofChoice, i.Observed, i.Target = value.ID, value.Class, value.Status, value.Producer, value.Consumer, value.MetaOperation, value.ProofChoice, value.Observed, value.Target
-	return nil
+type rawProvider struct {
+	Schema              string           `json:"schema"`
+	Provider            string           `json:"provider"`
+	SubjectSHA          string           `json:"subject_sha"`
+	FileReads           []rawFileRead    `json:"file_reads"`
+	LogicalInputs       []rawLogical     `json:"logical_inputs"`
+	EnvironmentReads    []rawEnvironment `json:"environment_reads"`
+	NetworkReads        []rawNetwork     `json:"network_reads"`
+	TokenAttempts       []rawToken       `json:"token_attempts"`
+	BrokerTokenRequests int              `json:"broker_token_requests"`
+	BrokerTokensIssued  int              `json:"broker_tokens_issued"`
+	BrokerTokenDenials  int              `json:"broker_token_denials"`
+	RepositoryBefore    rawSnapshot      `json:"repository_before"`
+	RepositoryAfter     rawSnapshot      `json:"repository_after"`
+	SandboxBefore       rawSnapshot      `json:"sandbox_before"`
+	SandboxAfter        rawSnapshot      `json:"sandbox_after"`
+	RepositoryWrites    int              `json:"repository_writes"`
+	SandboxWrites       int              `json:"sandbox_writes"`
+	MutationAuthority   string           `json:"mutation_authority"`
+	PromotionAuthority  string           `json:"promotion_authority"`
+	EffectAPIAccess     string           `json:"effect_api_access"`
 }
 
-type providerObservation struct {
-	Schema                   string            `json:"schema"`
-	Provider                 string            `json:"provider"`
-	SubjectSHA               string            `json:"subject_sha"`
-	FileReads                []fileRead        `json:"file_reads"`
-	LogicalInputs            []logicalInput    `json:"logical_inputs"`
-	EnvironmentReads         []environmentRead `json:"environment_reads"`
-	NetworkReads             []networkRead     `json:"network_reads"`
-	EffectAttempts           []rawEffect       `json:"effect_attempts"`
-	SandboxBefore            snapshot          `json:"sandbox_before"`
-	SandboxAfter             snapshot          `json:"sandbox_after"`
-	ActualRepositoryWrites   int               `json:"actual_repository_writes"`
-	ActualMutationAuthority  bool              `json:"actual_mutation_authority"`
-	ActualPromotionAuthority bool              `json:"actual_promotion_authority"`
-}
-type fileRead struct {
-	Target, Path, ContentDigest, EvidenceClass string
-	Observed                                   bool
-}
-
-func (f *fileRead) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		Target        string `json:"target"`
-		Path          string `json:"path"`
-		ContentDigest string `json:"content_digest"`
-		Observed      bool   `json:"observed"`
-		EvidenceClass string `json:"evidence_class"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	f.Target, f.Path, f.ContentDigest, f.EvidenceClass, f.Observed = value.Target, value.Path, value.ContentDigest, value.EvidenceClass, value.Observed
-	return nil
-}
-
-type logicalInput struct {
-	Target, Value, EvidenceClass string
-	Observed                     bool
-}
-
-func (l *logicalInput) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		Target        string `json:"target"`
-		Value         string `json:"value"`
-		Observed      bool   `json:"observed"`
-		EvidenceClass string `json:"evidence_class"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	l.Target, l.Value, l.EvidenceClass, l.Observed = value.Target, value.Value, value.EvidenceClass, value.Observed
-	return nil
-}
-
-type environmentRead struct {
+type rawFileRead struct {
 	Target        string `json:"target"`
-	EvidenceClass string `json:"evidence_class"`
+	Path          string `json:"path"`
+	ContentDigest string `json:"content_digest"`
 	Observed      bool   `json:"observed"`
-}
-type networkRead struct {
-	Target        string `json:"target"`
 	EvidenceClass string `json:"evidence_class"`
-	Observed      bool   `json:"observed"`
-}
-type snapshot struct {
-	Root, Digest string
-	Entries      []string
 }
 
-func (s *snapshot) UnmarshalJSON(raw []byte) error {
-	var value struct {
-		Root    string   `json:"root"`
-		Entries []string `json:"entries"`
-		Digest  string   `json:"digest"`
-	}
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return err
-	}
-	s.Root, s.Entries, s.Digest = value.Root, value.Entries, value.Digest
-	return nil
+type rawLogical struct {
+	Target        string `json:"target"`
+	Path          string `json:"path"`
+	Value         string `json:"value"`
+	Observed      bool   `json:"observed"`
+	EvidenceClass string `json:"evidence_class"`
+}
+
+type rawEnvironment struct {
+	Target        string `json:"target"`
+	Observed      bool   `json:"observed"`
+	EvidenceClass string `json:"evidence_class"`
+}
+
+type rawNetwork struct {
+	Target        string `json:"target"`
+	Observed      bool   `json:"observed"`
+	EvidenceClass string `json:"evidence_class"`
+}
+
+type rawSnapshot struct {
+	Scope   string   `json:"scope"`
+	Root    string   `json:"root"`
+	Entries []string `json:"entries"`
+	Digest  string   `json:"digest"`
+}
+
+type semanticValue struct {
+	scheme string
+	fields map[string]string
+	nodeID string
 }
 
 type sourceModel struct {
-	SourceDigest, SemanticDigest, Package, Namespace string
-	Policy                                           policy
-	Operations                                       []operation
-	Declarations                                     []declaration
-	Cases                                            []caseSpec
-}
-type policy struct{ ID, DefaultDecision, AuthorizationMode, Effects, Prior, NodeID string }
-type operation struct{ ID, Stage, Step, Prior string }
-type declaration struct {
-	ValueID, Kind, Operation, Target, Policy, Prior, Evidence, NodeID string
-}
-type capability struct{ ValueID, Kind, Operation, Target string }
-type caseSpec struct {
-	ID                  string
-	Requests            []capability
-	Writes              int
-	Mutation, Promotion bool
-	Prior               string
+	sourceDigest   string
+	semanticDigest string
+	policy         rawPolicy
+	operations     []rawOperation
+	declarations   []rawDeclaration
+	cases          []rawCase
+	graph          rawGraph
 }
 
-// Judge is an independent consumer: it imports syntax/bidir only, parses and
-// lowers the raw Gooo source, reconstructs the policy/cases, and then consumes
-// raw provider observations. It does not import the producer package.
+type rawOperation struct {
+	ID              string
+	Stage           string
+	Step            string
+	PriorClaimState string
+	NodeID          string
+}
+
+type rawCase struct {
+	ID                          string
+	Requests                    []rawCapability
+	RequestedRepositoryWrites   int
+	RequestedMutationAuthority  bool
+	RequestedPromotionAuthority bool
+	PriorClaimState             string
+	NodeID                      string
+}
+
 func Judge(source, providerRaw, receiptRaw []byte) Verdict {
+	return JudgeWithContext(source, providerRaw, receiptRaw, ProviderContext{})
+}
+
+// JudgeWithContext is deliberately independent of the producer, broker, and
+// expansion engine. It reconstructs source semantics, reobserves provider
+// inputs, reparses the output artifact, and checks the receipt from raw JSON.
+func JudgeWithContext(source, providerRaw, receiptRaw []byte, context ProviderContext) Verdict {
 	model, err := reconstructSource(source)
 	if err != nil {
-		return invalid("source reconstruction: " + err.Error())
+		return fail("source reconstruction: " + err.Error())
 	}
-	provider, err := decodeProvider(providerRaw)
-	if err != nil {
-		return invalid("provider reconstruction: " + err.Error())
+	var provider rawProvider
+	if err := json.Unmarshal(providerRaw, &provider); err != nil {
+		return fail("provider JSON: " + err.Error())
 	}
-	var observed rawReceipt
-	if err := json.Unmarshal(receiptRaw, &observed); err != nil {
-		return invalid("receipt is not JSON")
+	var receipt rawReceipt
+	if err := json.Unmarshal(receiptRaw, &receipt); err != nil {
+		return fail("receipt JSON: " + err.Error())
 	}
-	if err := validateReceiptShape(source, model, provider, providerRaw, observed); err != nil {
-		return invalid(err.Error())
+	if err := validateProvider(provider, context); err != nil {
+		return fail("provider validation: " + err.Error())
 	}
-	item, ok := findCase(model.Cases, observed.CaseID)
+	if receipt.Schema != validSchema || receipt.MetaOperation != validMetaOperation || receipt.Producer != validProducer || receipt.Consumer != validConsumer || receipt.GoVersion != validGoVersion {
+		return fail("receipt identity is not v3")
+	}
+	if receipt.SourceDigest != model.sourceDigest || receipt.SemanticDigest != model.semanticDigest || receipt.ProviderDigest != digestBytes(providerRaw) || receipt.SubjectSHA != provider.SubjectSHA {
+		return fail("receipt digest binding does not match raw source/provider")
+	}
+	item, ok := findCase(model.cases, receipt.CaseID)
 	if !ok {
-		return invalid("receipt case is not a semantic source case")
+		return fail("receipt case is not reconstructed from source")
 	}
-	if !reflect.DeepEqual(observed.Capabilities, rawCapabilities(item)) {
-		return invalid("receipt capabilities are not reconstructed from source values")
+	expected, resolution, reason, unknown := decisionFor(model, provider, item)
+	if receipt.Decision != expected || receipt.Resolution != resolution || receipt.Reason != reason {
+		return fail(fmt.Sprintf("decision mismatch: got %s/%s/%s want %s/%s/%s", receipt.Decision, receipt.Resolution, receipt.Reason, expected, resolution, reason))
 	}
-	if !reflect.DeepEqual(observed.Evidence, rawEvidenceFor(model, provider, item)) {
-		return invalid("receipt evidence is not reconstructed from provider observations")
+	if err := validateReceipt(model, provider, receipt, item, unknown, context); err != nil {
+		return fail("receipt validation: " + err.Error())
 	}
-	wantDecision, wantResolution, wantReason, wantUnknown := expected(model, provider, item)
-	if observed.Decision != wantDecision || observed.Resolution != wantResolution || observed.Reason != wantReason {
-		return invalid(fmt.Sprintf("decision reconstruction disagrees: want %s/%s/%s", wantDecision, wantResolution, wantReason))
+	if receipt.ReportDigest != digestReceipt(receiptRaw) {
+		return fail("receipt seal does not match raw receipt")
 	}
-	wantEffect := "BLOCK"
-	if wantDecision == decisionAllow {
-		wantEffect = "NONE"
-	}
-	if observed.EnforcementEffect != wantEffect {
-		return invalid("receipt enforcement effect disagrees with reconstructed decision")
-	}
-	if err := validateUnknown(observed, wantUnknown); err != nil {
-		return invalid(err.Error())
-	}
-	if err := validateAuthority(provider, model, item, observed); err != nil {
-		return invalid(err.Error())
-	}
-	if err := validateClaims(model, provider, item, observed, wantUnknown); err != nil {
-		return invalid(err.Error())
-	}
-	if err := validateIndicators(observed.Indicators); err != nil {
-		return invalid(err.Error())
-	}
-	if observed.ReportDigest == "" || canonicalDigest(receiptRaw) != observed.ReportDigest {
-		return invalid("receipt digest does not bind raw evidence")
-	}
-	return Verdict{Status: "PASS", Decision: observed.Decision, Resolution: observed.Resolution, Reason: observed.Reason, ReceiptDigest: observed.ReportDigest, SourceReconstruction: "PASS", ProducerImports: 0}
+	return Verdict{Status: "PASS", Decision: receipt.Decision, Resolution: receipt.Resolution, Reason: "INDEPENDENT_SOURCE_PROVIDER_ARTIFACT_REPLAY", ReceiptDigest: receipt.ReportDigest, SourceReconstruction: "PASS"}
+}
+
+func fail(reason string) Verdict {
+	return Verdict{Status: "FAIL", Decision: decisionUnknown, Resolution: resolutionLower, Reason: reason, SourceReconstruction: "FAIL"}
 }
 
 func reconstructSource(source []byte) (sourceModel, error) {
@@ -433,408 +394,700 @@ func reconstructSource(source []byte) (sourceModel, error) {
 	if err := diagnostics.Error(); err != nil {
 		return sourceModel{}, err
 	}
-	if file == nil {
-		return sourceModel{}, fmt.Errorf("syntax AST unavailable")
-	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
 		return sourceModel{}, err
 	}
-	model := sourceModel{SourceDigest: digestBytes(source), SemanticDigest: ir.StableHash(), Package: ir.Package, Namespace: ir.Namespace.String()}
-	type value struct {
-		scheme string
-		fields map[string]string
-		node   string
-	}
-	values := make([]value, 0)
+	values := make([]semanticValue, 0)
 	for _, node := range ir.Graph.Nodes() {
 		if node.ValueProgram == "" {
 			continue
 		}
-		parsed, err := parseValue(node.ValueProgram)
+		value, err := parseSemanticValue(node.ValueProgram)
 		if err != nil {
 			return sourceModel{}, err
 		}
-		values = append(values, value{scheme: parsed.scheme, fields: parsed.fields, node: node.ID.String()})
+		value.nodeID = node.ID.String()
+		values = append(values, value)
 	}
-	for _, value := range values {
-		switch value.scheme {
-		case policyScheme:
-			model.Policy = policy{ID: value.fields["id"], DefaultDecision: value.fields["default"], AuthorizationMode: value.fields["authorization"], Effects: value.fields["effects"], Prior: value.fields["prior"], NodeID: value.node}
-		case operationScheme:
-			model.Operations = append(model.Operations, operation{ID: value.fields["id"], Stage: value.fields["stage"], Step: value.fields["step"], Prior: value.fields["prior"]})
-		case declarationScheme:
-			model.Declarations = append(model.Declarations, declaration{ValueID: value.fields["id"], Kind: value.fields["kind"], Operation: value.fields["operation"], Target: value.fields["target"], Policy: value.fields["policy"], Prior: value.fields["prior"], Evidence: value.fields["evidence"], NodeID: value.node})
-		}
+	model := sourceModel{sourceDigest: digestBytes(source), semanticDigest: ir.StableHash()}
+	if err := model.fromValues(values); err != nil {
+		return sourceModel{}, err
 	}
-	for _, value := range values {
-		if value.scheme != caseScheme {
-			continue
-		}
-		item, err := parseCase(value.fields, model.Declarations)
-		if err != nil {
-			return sourceModel{}, err
-		}
-		model.Cases = append(model.Cases, item)
-	}
-	if model.Package != "capabilityscopedexpansion" || model.Namespace != "capabilityscopedexpansion" || model.Policy.ID == "" || model.Policy.DefaultDecision != "DENY" || model.Policy.Prior != claimOpen || model.Policy.Effects != "NONE" || len(model.Declarations) != 4 || len(model.Cases) != 8 || len(model.Operations) < 3 {
-		return sourceModel{}, fmt.Errorf("semantic source denominator is incomplete")
-	}
+	model.graph = graphProof(ir, model)
 	return model, nil
 }
 
-type parsedValue struct {
-	scheme string
-	fields map[string]string
-}
-
-func parseValue(raw string) (parsedValue, error) {
+func parseSemanticValue(raw string) (semanticValue, error) {
 	parts := strings.Split(raw, "|")
-	if len(parts) < 2 {
-		return parsedValue{}, fmt.Errorf("semantic value has no fields")
+	if len(parts) < 2 || parts[0] == "" {
+		return semanticValue{}, fmt.Errorf("malformed semantic value")
 	}
-	value := parsedValue{scheme: parts[0], fields: make(map[string]string)}
+	value := semanticValue{scheme: parts[0], fields: make(map[string]string)}
 	for _, part := range parts[1:] {
 		key, field, ok := strings.Cut(part, "=")
 		if !ok || key == "" || field == "" {
-			return parsedValue{}, fmt.Errorf("malformed semantic value field")
-		}
-		if _, exists := value.fields[key]; exists {
-			return parsedValue{}, fmt.Errorf("duplicate semantic value field")
+			return semanticValue{}, fmt.Errorf("malformed semantic value field %q", part)
 		}
 		value.fields[key] = field
 	}
 	return value, nil
 }
-func parseCase(fields map[string]string, declarations []declaration) (caseSpec, error) {
-	item := caseSpec{ID: fields["id"], Prior: fields["prior"], Mutation: fields["mutation"] == "true", Promotion: fields["promotion"] == "true"}
-	byID := make(map[string]declaration, len(declarations))
-	for _, declaration := range declarations {
+
+func (model *sourceModel) fromValues(values []semanticValue) error {
+	for _, value := range values {
+		switch value.scheme {
+		case policyScheme:
+			if model.policy.ID != "" {
+				return fmt.Errorf("multiple policies")
+			}
+			model.policy = rawPolicy{ID: value.fields["id"], DefaultDecision: value.fields["default"], AuthorizationMode: value.fields["authorization"], Effects: value.fields["effects"], PriorClaimState: value.fields["prior"], NodeID: value.nodeID}
+		case operationScheme:
+			model.operations = append(model.operations, rawOperation{ID: value.fields["id"], Stage: value.fields["stage"], Step: value.fields["step"], PriorClaimState: value.fields["prior"], NodeID: value.nodeID})
+		case declarationScheme:
+			model.declarations = append(model.declarations, rawDeclaration{ValueID: value.fields["id"], Kind: value.fields["kind"], Operation: value.fields["operation"], Target: value.fields["target"], Policy: value.fields["policy"], PriorClaimState: value.fields["prior"], EvidenceClass: value.fields["evidence"], NodeID: value.nodeID})
+		}
+	}
+	byID := make(map[string]rawDeclaration, len(model.declarations))
+	for _, declaration := range model.declarations {
 		byID[declaration.ValueID] = declaration
 	}
-	for _, request := range strings.Split(fields["requests"], ",") {
-		valueID, target, ok := strings.Cut(request, "@")
-		declaration, exists := byID[valueID]
-		if !ok || !exists {
-			return caseSpec{}, fmt.Errorf("case request is not a declared value")
-		}
-		item.Requests = append(item.Requests, capability{ValueID: valueID, Kind: declaration.Kind, Operation: declaration.Operation, Target: target})
-	}
-	if fields["writes"] != "" {
-		if _, err := fmt.Sscanf(fields["writes"], "%d", &item.Writes); err != nil {
-			return caseSpec{}, err
-		}
-	}
-	if item.ID == "" || item.Prior != claimOpen || len(item.Requests) == 0 {
-		return caseSpec{}, fmt.Errorf("semantic case is incomplete")
-	}
-	return item, nil
-}
-
-func rawCapabilities(item caseSpec) []rawCapability {
-	capabilities := make([]rawCapability, 0, len(item.Requests))
-	for _, request := range item.Requests {
-		capabilities = append(capabilities, rawCapability{ValueID: request.ValueID, Kind: request.Kind, Operation: request.Operation, Target: request.Target})
-	}
-	return capabilities
-}
-
-func rawEvidenceFor(model sourceModel, provider providerObservation, item caseSpec) []rawEvidence {
-	var evidence []rawEvidence
-	for _, request := range item.Requests {
-		declaration, ok := findDeclaration(model.Declarations, request.ValueID)
-		if !ok || declaration.Kind != request.Kind || declaration.Operation != request.Operation || declaration.Target != request.Target {
+	for _, value := range values {
+		if value.scheme != caseScheme {
 			continue
 		}
-		if declaration.Evidence != currentEvidence {
+		item := rawCase{ID: value.fields["id"], PriorClaimState: value.fields["prior"], NodeID: value.nodeID}
+		for _, request := range strings.Split(value.fields["requests"], ",") {
+			valueID, target, ok := strings.Cut(request, "@")
+			declaration, exists := byID[valueID]
+			if !ok || !exists {
+				return fmt.Errorf("case %s has unknown request %q", item.ID, request)
+			}
+			item.Requests = append(item.Requests, rawCapability{ValueID: valueID, Kind: declaration.Kind, Operation: declaration.Operation, Target: target})
+		}
+		if value.fields["writes"] != "" {
+			if _, err := fmt.Sscanf(value.fields["writes"], "%d", &item.RequestedRepositoryWrites); err != nil {
+				return err
+			}
+		}
+		item.RequestedMutationAuthority = value.fields["mutation"] == "true"
+		item.RequestedPromotionAuthority = value.fields["promotion"] == "true"
+		model.cases = append(model.cases, item)
+	}
+	if model.policy.ID == "" || model.policy.DefaultDecision != "DENY" || model.policy.Effects != "NONE" || model.policy.PriorClaimState != claimOpen || len(model.declarations) != 4 || len(model.cases) != 9 {
+		return fmt.Errorf("source denominator or default-deny policy is incomplete")
+	}
+	sort.Slice(model.operations, func(i, j int) bool { return model.operations[i].ID < model.operations[j].ID })
+	sort.Slice(model.declarations, func(i, j int) bool { return model.declarations[i].ValueID < model.declarations[j].ValueID })
+	sort.Slice(model.cases, func(i, j int) bool { return model.cases[i].ID < model.cases[j].ID })
+	return nil
+}
+
+func graphProof(ir semantic.IR, model sourceModel) rawGraph {
+	facts := make([]rawGraphFact, 0, len(ir.Graph.Facts()))
+	for _, fact := range ir.Graph.Facts() {
+		facts = append(facts, rawGraphFact{Subject: fact.Subject.String(), Predicate: fact.Predicate.String(), Object: fact.Object.String()})
+	}
+	policyOutput := generatedEntity(facts, model.policy.NodeID)
+	policyInput := usedEntity(facts, model.policy.NodeID)
+	authorize := operationNode(model, "authorize-before-expand")
+	authorizeOutput := generatedEntity(facts, authorize)
+	bind := operationNode(model, "bind-capability-evidence")
+	bindOutput := generatedEntity(facts, bind)
+	expand := operationNode(model, "expand-with-capability-evidence")
+	expandOutput := generatedEntity(facts, expand)
+	path := []string{policyInput, model.policy.NodeID, policyOutput, authorize, authorizeOutput, bind, bindOutput, expand, expandOutput}
+	complete := true
+	for index := 0; index+1 < len(path); index++ {
+		if path[index] == "" || path[index+1] == "" {
+			complete = false
+			continue
+		}
+		subject, predicate, object := path[index+1], "used", path[index]
+		if index%2 == 1 {
+			subject, predicate, object = path[index+1], "wasGeneratedBy", path[index]
+		}
+		if !graphFactExists(facts, subject, predicate, object) {
+			complete = false
+		}
+	}
+	canonical := append([]string{"path"}, path...)
+	canonical = append(canonical, "facts")
+	for _, fact := range facts {
+		canonical = append(canonical, fact.Subject+"|"+fact.Predicate+"|"+fact.Object)
+	}
+	return rawGraph{Facts: facts, RequiredPath: path, PathDigest: digestBytes([]byte(strings.Join(canonical, "\n"))), Complete: complete}
+}
+
+func operationNode(model sourceModel, id string) string {
+	for _, operation := range model.operations {
+		if operation.ID == id {
+			return operation.NodeID
+		}
+	}
+	return ""
+}
+
+func generatedEntity(facts []rawGraphFact, activity string) string {
+	for _, fact := range facts {
+		if fact.Predicate == "wasGeneratedBy" && fact.Object == activity {
+			return fact.Subject
+		}
+	}
+	return ""
+}
+
+func usedEntity(facts []rawGraphFact, activity string) string {
+	for _, fact := range facts {
+		if fact.Predicate == "used" && fact.Subject == activity {
+			return fact.Object
+		}
+	}
+	return ""
+}
+
+func graphFactExists(facts []rawGraphFact, subject, predicate, object string) bool {
+	for _, fact := range facts {
+		if fact.Subject == subject && fact.Predicate == predicate && fact.Object == object {
+			return true
+		}
+	}
+	return false
+}
+
+func validateProvider(provider rawProvider, context ProviderContext) error {
+	if provider.Schema != validProviderSchema || provider.Provider == "" || provider.SubjectSHA == "" || len(provider.FileReads) != 1 || len(provider.LogicalInputs) != 1 || len(provider.EnvironmentReads) != 1 || len(provider.NetworkReads) != 1 {
+		return fmt.Errorf("provider identity or evidence slots incomplete")
+	}
+	file := provider.FileReads[0]
+	if file.Target != "pinned-file" || !file.Observed || file.EvidenceClass != currentEvidence || file.Path == "" || file.ContentDigest == "" {
+		return fmt.Errorf("current pinned-file observation incomplete")
+	}
+	logical := provider.LogicalInputs[0]
+	if logical.Target != "logical-clock" || logical.Path == "" || logical.Value != "logical-clock:0" || !logical.Observed || logical.EvidenceClass != currentEvidence {
+		return fmt.Errorf("current logical observation incomplete")
+	}
+	if provider.EnvironmentReads[0].Observed || provider.EnvironmentReads[0].EvidenceClass != "UNKNOWN" || provider.NetworkReads[0].Observed || provider.NetworkReads[0].EvidenceClass != historicalFixture {
+		return fmt.Errorf("environment/network evidence was promoted without observation")
+	}
+	if provider.RepositoryBefore.Scope != "repository" || provider.RepositoryAfter.Scope != "repository" || provider.SandboxBefore.Scope != "sandbox" || provider.SandboxAfter.Scope != "sandbox" || provider.RepositoryWrites != 0 || provider.SandboxWrites != 0 || provider.RepositoryBefore.Digest != provider.RepositoryAfter.Digest || provider.SandboxBefore.Digest != provider.SandboxAfter.Digest {
+		return fmt.Errorf("repository and sandbox effects are not separately zero by snapshot")
+	}
+	if provider.MutationAuthority != "NOT_OBSERVED" || provider.PromotionAuthority != "NOT_OBSERVED" || provider.EffectAPIAccess != "NOT_REACHED_WITHOUT_TOKEN" {
+		return fmt.Errorf("unmeasured authority was presented as a boolean result")
+	}
+	if len(provider.TokenAttempts) != 3 || provider.BrokerTokenRequests != 3 || provider.BrokerTokensIssued != 0 || provider.BrokerTokenDenials != 3 {
+		return fmt.Errorf("broker issuance denominator is not 3/0/3")
+	}
+	expectedTokens := []brokerRequestWire{
+		{Kind: "file", Operation: "write", Target: "repository", PolicyID: "default-deny"},
+		{Kind: "mutation", Operation: "mutate", Target: "sandbox", PolicyID: "default-deny"},
+		{Kind: "promotion", Operation: "promote", Target: "repository", PolicyID: "default-deny"},
+	}
+	for index, token := range provider.TokenAttempts {
+		if !token.Requested || token.Decision != decisionDeny || token.Issued || token.PolicyDigest == "" || token.RequestDigest == "" {
+			return fmt.Errorf("effect token was not denied by the broker")
+		}
+		if token.Kind != expectedTokens[index].Kind || token.Operation != expectedTokens[index].Operation || token.Target != expectedTokens[index].Target || token.PolicyDigest != brokerPolicyDigest() || token.RequestDigest != brokerRequestDigest(expectedTokens[index]) {
+			return fmt.Errorf("broker request or digest does not match the declared effect boundary")
+		}
+	}
+	if context.PinnedFile != "" {
+		pinned, err := filepath.Abs(context.PinnedFile)
+		if err != nil {
+			return err
+		}
+		observed, err := filepath.Abs(file.Path)
+		if err != nil || pinned != observed {
+			return fmt.Errorf("provider pinned path does not match consumer context")
+		}
+		contents, err := os.ReadFile(pinned)
+		if err != nil {
+			return fmt.Errorf("consumer pinned-file reobservation: %w", err)
+		}
+		if digestBytes(contents) != file.ContentDigest {
+			return fmt.Errorf("provider pinned bytes failed independent reobservation")
+		}
+	}
+	if context.LogicalInputPath != "" {
+		logicalPath, err := filepath.Abs(context.LogicalInputPath)
+		if err != nil {
+			return err
+		}
+		observed, err := filepath.Abs(logical.Path)
+		if err != nil || logicalPath != observed {
+			return fmt.Errorf("provider logical input path does not match consumer context")
+		}
+		contents, err := os.ReadFile(logicalPath)
+		if err != nil {
+			return fmt.Errorf("consumer logical input reobservation: %w", err)
+		}
+		if strings.TrimSpace(string(contents)) != logical.Value {
+			return fmt.Errorf("provider logical input failed independent reobservation")
+		}
+	}
+	if context.RepositoryRoot != "" {
+		repository, err := snapshotRepository(context.RepositoryRoot)
+		if err != nil {
+			return err
+		}
+		if repository.Digest != provider.RepositoryAfter.Digest || !reflect.DeepEqual(repository.Entries, provider.RepositoryAfter.Entries) {
+			return fmt.Errorf("provider repository snapshot failed independent replay")
+		}
+	}
+	if context.SandboxRoot != "" {
+		sandbox, err := snapshotSandbox(context.SandboxRoot)
+		if err != nil {
+			return err
+		}
+		if sandbox.Digest != provider.SandboxAfter.Digest || !reflect.DeepEqual(sandbox.Entries, provider.SandboxAfter.Entries) {
+			return fmt.Errorf("provider sandbox snapshot failed independent replay")
+		}
+	}
+	return nil
+}
+
+type brokerPolicyWire struct {
+	ID                string
+	DefaultDecision   string
+	AuthorizationMode string
+	Effects           string
+}
+
+type brokerRequestWire struct {
+	Kind      string `json:"kind"`
+	Operation string `json:"operation"`
+	Target    string `json:"target"`
+	PolicyID  string `json:"policy_id"`
+}
+
+func brokerPolicyDigest() string {
+	raw, _ := json.Marshal(brokerPolicyWire{ID: "default-deny", DefaultDecision: "DENY", AuthorizationMode: "exact-current", Effects: "NONE"})
+	return digestBytes(raw)
+}
+
+func brokerRequestDigest(request brokerRequestWire) string {
+	raw, _ := json.Marshal(request)
+	return digestBytes(raw)
+}
+
+func validateReceipt(model sourceModel, provider rawProvider, receipt rawReceipt, item rawCase, unknown *rawUnknown, context ProviderContext) error {
+	if !reflect.DeepEqual(receipt.Policy, model.policy) || !reflect.DeepEqual(receipt.Graph, model.graph) || !reflect.DeepEqual(receipt.Declarations, model.declarations) || !reflect.DeepEqual(receipt.Capabilities, item.Requests) || !reflect.DeepEqual(receipt.TokenAttempts, provider.TokenAttempts) {
+		return fmt.Errorf("receipt did not carry lowered policy, graph, declarations, capabilities, or broker observations")
+	}
+	expectedEvidence := evidenceFor(provider, model.declarations, item.Requests)
+	if !reflect.DeepEqual(receipt.Evidence, expectedEvidence) {
+		return fmt.Errorf("evidence is not reconstructed from raw provider observations")
+	}
+	if receipt.RepositoryWrites != provider.RepositoryWrites || receipt.SandboxWrites != provider.SandboxWrites || receipt.MutationAuthority != provider.MutationAuthority || receipt.PromotionAuthority != provider.PromotionAuthority {
+		return fmt.Errorf("receipt effect snapshots are not bound")
+	}
+	current := currentEvidenceCount(provider, model.declarations)
+	declared := declaredCount(model.declarations, item.Requests)
+	if receipt.Authority.CapabilitiesRequested != len(item.Requests) || receipt.Authority.CapabilitiesDeclared != declared || receipt.Authority.CurrentEvidenceCapabilities != current || receipt.Authority.CurrentEvidenceDenominator != len(model.declarations) || receipt.Authority.RepositoryWrites != provider.RepositoryWrites || receipt.Authority.SandboxWrites != provider.SandboxWrites || receipt.Authority.MutationAuthority != provider.MutationAuthority || receipt.Authority.PromotionAuthority != provider.PromotionAuthority || receipt.Authority.EnforcementObservations != provider.BrokerTokenDenials {
+		return fmt.Errorf("authority counters do not match observations")
+	}
+	if receipt.Authority.RequestedRepositoryWrites != item.RequestedRepositoryWrites || receipt.Authority.RequestedMutationAuthority != item.RequestedMutationAuthority || receipt.Authority.RequestedPromotionAuthority != item.RequestedPromotionAuthority {
+		return fmt.Errorf("effect request flags are not source-derived")
+	}
+	if receipt.Decision == decisionAllow {
+		if receipt.EnforcementEffect != "NONE" || receipt.Authority.CapabilitiesAuthorized != len(item.Requests) {
+			return fmt.Errorf("allow authority is inconsistent")
+		}
+	} else if receipt.EnforcementEffect != "BLOCK" {
+		return fmt.Errorf("blocked decision lacks block effect")
+	}
+	if unknown == nil {
+		if receipt.Unknown != nil {
+			return fmt.Errorf("exact decision unexpectedly has UNKNOWN payload")
+		}
+	} else if !reflect.DeepEqual(receipt.Unknown, unknown) {
+		return fmt.Errorf("UNKNOWN stage/step/reason is not bound")
+	}
+	expectedPropositions := propositions(model, provider, item, receipt)
+	if !reflect.DeepEqual(receipt.Propositions, expectedPropositions) || !uniquePropositions(receipt.Propositions) {
+		return fmt.Errorf("proposition predicates/digests are not unique or source-derived")
+	}
+	if err := validateArtifact(model, provider, item, receipt, context); err != nil {
+		return err
+	}
+	if err := validateClaims(model, provider, item, receipt); err != nil {
+		return err
+	}
+	if len(receipt.Indicators) != fixedIndicators {
+		return fmt.Errorf("indicator repetition is not fixed at %d per receipt", fixedIndicators)
+	}
+	for _, indicator := range receipt.Indicators {
+		if indicator.Producer != validProducer || indicator.Consumer != validConsumer || indicator.MetaOperation != validMetaOperation || indicator.Target != 1 {
+			return fmt.Errorf("indicator provenance is incomplete")
+		}
+	}
+	return nil
+}
+
+func validateArtifact(model sourceModel, provider rawProvider, item rawCase, receipt rawReceipt, context ProviderContext) error {
+	allow := receipt.Decision == decisionAllow
+	if !allow {
+		if receipt.Artifact.Present || receipt.Artifact.Path != "" || receipt.Artifact.ContentDigest != "" || receipt.Artifact.SemanticDigest != "" || receipt.Execution.ArtifactDigest != "" || receipt.Execution.Result != "NOT_EXECUTED" || receipt.Execution.Requested {
+			return fmt.Errorf("blocked decision has an expansion artifact or execution")
+		}
+		if receipt.Execution.ClaimState != claimRefuted && receipt.Decision == decisionDeny || receipt.Execution.ClaimState != claimOpen && receipt.Decision == decisionUnknown {
+			return fmt.Errorf("blocked execution claim state is inconsistent")
+		}
+		return nil
+	}
+	artifact := receipt.Artifact
+	if !artifact.Present || artifact.Schema != "gooo/capability-scoped-expansion/artifact/v1" || artifact.Path == "" || artifact.Value == "" || artifact.Bytes <= 0 || artifact.ContentDigest == "" || artifact.SemanticDigest == "" || !artifact.Reparsed || artifact.ReparsedSemanticDigest != artifact.SemanticDigest {
+		return fmt.Errorf("ALLOW lacks a complete expansion artifact")
+	}
+	fileDigest, logicalValue := "", ""
+	for _, observation := range provider.FileReads {
+		if observation.Target == "pinned-file" && observation.Observed {
+			fileDigest = observation.ContentDigest
+		}
+	}
+	for _, observation := range provider.LogicalInputs {
+		if observation.Target == "logical-clock" && observation.Observed {
+			logicalValue = observation.Value
+		}
+	}
+	expectedValue := fmt.Sprintf("capability.expanded|source=%s|graph=%s|file-digest=%s|logical=%s", model.semanticDigest, model.graph.PathDigest, fileDigest, logicalValue)
+	if artifact.Value != expectedValue || item.ID != "allow-current-file-time" {
+		return fmt.Errorf("expansion artifact value is not bound to current semantic/evidence inputs")
+	}
+	if context.RepositoryRoot != "" {
+		relative, err := filepath.Rel(context.RepositoryRoot, artifact.Path)
+		if err != nil || (relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator))) {
+			return fmt.Errorf("expansion artifact is inside the repository")
+		}
+	}
+	contents, err := os.ReadFile(artifact.Path)
+	if err != nil {
+		return fmt.Errorf("read expansion artifact: %w", err)
+	}
+	if len(contents) != artifact.Bytes || digestBytes(contents) != artifact.ContentDigest || !strings.Contains(string(contents), artifact.Value) {
+		return fmt.Errorf("expansion artifact bytes/value/digest are not bound")
+	}
+	file, diagnostics := syntax.ParseFile(artifact.Path, string(contents))
+	if err := diagnostics.Error(); err != nil {
+		return fmt.Errorf("reparse expansion artifact: %w", err)
+	}
+	ir, err := bidir.Lower(file)
+	if err != nil || ir.StableHash() != artifact.SemanticDigest {
+		return fmt.Errorf("reparsed expansion artifact semantic digest mismatch")
+	}
+	if receipt.Execution.Result != "EXPANDED" || !receipt.Execution.Requested || receipt.Execution.ClaimState != claimDischarged || receipt.Execution.ArtifactDigest != artifact.ContentDigest || receipt.Execution.ArtifactPath != artifact.Path || receipt.Execution.ArtifactSemanticDigest != artifact.SemanticDigest || receipt.Execution.ReparsedSemanticDigest != artifact.SemanticDigest {
+		return fmt.Errorf("execution receipt is not bound to the artifact")
+	}
+	return nil
+}
+
+func validateClaims(model sourceModel, provider rawProvider, item rawCase, receipt rawReceipt) error {
+	expectedTransitions := transitions(model, provider, item, receipt)
+	if !reflect.DeepEqual(receipt.ClaimTransitions, expectedTransitions) {
+		return fmt.Errorf("claim transitions are not append-only proposition transitions")
+	}
+	expectedClaims := claims(expectedTransitions)
+	if !reflect.DeepEqual(receipt.Claims, expectedClaims) {
+		return fmt.Errorf("claims do not preserve unique proposition states")
+	}
+	return nil
+}
+
+func evidenceFor(provider rawProvider, declarations []rawDeclaration, requests []rawCapability) []rawEvidence {
+	result := make([]rawEvidence, 0)
+	for _, request := range requests {
+		declaration, ok := declarationByID(declarations, request.ValueID)
+		if !ok || declaration.Kind != request.Kind || declaration.Operation != request.Operation || declaration.Target != request.Target || declaration.EvidenceClass != currentEvidence {
 			continue
 		}
 		if declaration.Kind == "file" {
 			for _, observation := range provider.FileReads {
 				if observation.Target == declaration.Target && observation.Observed && observation.EvidenceClass == currentEvidence {
-					digest := digestBytes([]byte(request.ValueID + "=" + observation.ContentDigest))
-					evidence = append(evidence, rawEvidence{ValueID: request.ValueID, Observed: observation.ContentDigest, EvidenceClass: currentEvidence, EvidenceDigest: digest, Provenance: "provider.file.read"})
+					result = append(result, rawEvidence{ValueID: declaration.ValueID, Observed: observation.ContentDigest, EvidenceClass: currentEvidence, EvidenceDigest: digestBytes([]byte(declaration.ValueID + "=" + observation.ContentDigest)), Provenance: "provider.file.read"})
 				}
 			}
 		}
 		if declaration.Kind == "time" {
 			for _, observation := range provider.LogicalInputs {
 				if observation.Target == declaration.Target && observation.Observed && observation.EvidenceClass == currentEvidence {
-					digest := digestBytes([]byte(request.ValueID + "=" + observation.Value))
-					evidence = append(evidence, rawEvidence{ValueID: request.ValueID, Observed: observation.Value, EvidenceClass: currentEvidence, EvidenceDigest: digest, Provenance: "provider.logical.input"})
+					result = append(result, rawEvidence{ValueID: declaration.ValueID, Observed: observation.Value, EvidenceClass: currentEvidence, EvidenceDigest: digestBytes([]byte(declaration.ValueID + "=" + observation.Value)), Provenance: "provider.logical.input"})
 				}
 			}
 		}
 	}
-	return evidence
+	return result
 }
 
-func decodeProvider(raw []byte) (providerObservation, error) {
-	var provider providerObservation
-	if err := json.Unmarshal(raw, &provider); err != nil {
-		return providerObservation{}, err
+func propositions(model sourceModel, provider rawProvider, item rawCase, receipt rawReceipt) []rawProposition {
+	result := make([]rawProposition, 0, len(item.Requests)+3)
+	for index, request := range item.Requests {
+		declaration, declared := declarationByID(model.declarations, request.ValueID)
+		predicate := fmt.Sprintf("capability:%s:%s:%s:%s", request.ValueID, request.Kind, request.Operation, request.Target)
+		status, decision, evidenceDigest := claimOpen, decisionUnknown, digestBytes([]byte(predicate))
+		if !declared || declaration.Kind != request.Kind || declaration.Operation != request.Operation || declaration.Target != request.Target {
+			status, decision = claimRefuted, decisionDeny
+		} else if evidence := evidenceFor(provider, model.declarations, []rawCapability{request}); len(evidence) == 1 {
+			status, decision, evidenceDigest = claimDischarged, decisionAllow, evidence[0].EvidenceDigest
+		}
+		result = append(result, rawProposition{ID: fmt.Sprintf("capability:%s:%d", request.ValueID, index), Predicate: predicate, Decision: decision, Status: status, EvidenceDigest: evidenceDigest, Provenance: "source-ir+independent-provider-replay"})
 	}
-	if provider.Schema != validProviderSchema || provider.Provider == "" || provider.SubjectSHA == "" || len(provider.FileReads) != 1 || len(provider.LogicalInputs) != 1 || len(provider.EnvironmentReads) != 1 || len(provider.NetworkReads) != 1 {
-		return providerObservation{}, fmt.Errorf("provider observation shape is incomplete")
-	}
-	if provider.FileReads[0].Target != "pinned-file" || provider.FileReads[0].Path == "" || provider.FileReads[0].ContentDigest == "" || !provider.FileReads[0].Observed || provider.FileReads[0].EvidenceClass != currentEvidence || provider.LogicalInputs[0].Target != "logical-clock" || provider.LogicalInputs[0].Value != "logical-clock:0" || !provider.LogicalInputs[0].Observed || provider.LogicalInputs[0].EvidenceClass != currentEvidence || provider.EnvironmentReads[0].Target != "GOOO_EXPANSION_PROFILE" || provider.EnvironmentReads[0].Observed || provider.EnvironmentReads[0].EvidenceClass != "UNKNOWN" || provider.NetworkReads[0].Target != "https://example.invalid/gooo/pinned-schema" || provider.NetworkReads[0].Observed || provider.NetworkReads[0].EvidenceClass != historicalFixture {
-		return providerObservation{}, fmt.Errorf("provider current evidence is incomplete")
-	}
-	if provider.SandboxBefore.Digest != provider.SandboxAfter.Digest || provider.ActualRepositoryWrites != 0 || provider.ActualMutationAuthority || provider.ActualPromotionAuthority {
-		return providerObservation{}, fmt.Errorf("provider sandbox before/after is not zero effect")
-	}
-	if len(provider.EffectAttempts) != 3 {
-		return providerObservation{}, fmt.Errorf("provider enforcement denominator is incomplete")
-	}
-	for _, effect := range provider.EffectAttempts {
-		if !effect.Requested || effect.Result != "DENIED" || !effect.BoundaryObserved || effect.BeforeDigest != effect.AfterDigest || effect.ActualWrites != 0 || effect.ActualMutation || effect.ActualPromotion {
-			return providerObservation{}, fmt.Errorf("provider did not observe denied effect")
+	result = append(result, rawProposition{ID: "authorization:" + item.ID, Predicate: "authorization:" + item.ID + ":" + model.graph.PathDigest, Decision: receipt.Decision, Status: stateForDecision(receipt.Decision), EvidenceDigest: digestBytes([]byte(model.policy.ID + "=" + model.policy.AuthorizationMode)), Provenance: "lowered-graph-path"})
+	if kind := requestedEffectKind(item); kind != "" {
+		for _, token := range provider.TokenAttempts {
+			if token.Kind == kind {
+				result = append(result, rawProposition{ID: "effect-token:" + kind, Predicate: "effect-token:" + kind + ":" + token.RequestDigest, Decision: token.Decision, Status: tokenState(token), EvidenceDigest: token.RequestDigest, Provenance: "broker.issuance-receipt"})
+				break
+			}
 		}
 	}
-	return provider, nil
+	executionDigest := receipt.SemanticDigest
+	executionPredicate := "execution:expanded-syntax:" + receipt.SemanticDigest
+	if receipt.Decision != decisionAllow {
+		executionDigest = digestBytes([]byte(receipt.CaseID + "=" + receipt.Reason))
+		executionPredicate = "execution:expanded-syntax:" + receipt.CaseID
+	}
+	result = append(result, rawProposition{ID: "execution:expanded-syntax", Predicate: executionPredicate, Decision: receipt.Decision, Status: stateForDecision(receipt.Decision), EvidenceDigest: executionDigest, Provenance: map[bool]string{true: "engine.output-reparse", false: "expansion-gate"}[receipt.Decision == decisionAllow]})
+	return result
 }
 
-func expected(model sourceModel, provider providerObservation, item caseSpec) (string, string, string, *rawUnknown) {
-	op := authorizeOperation(model.Operations)
-	if item.Writes != 0 || item.Mutation || item.Promotion {
-		if effectBoundary(provider) {
-			return decisionDeny, resolutionExact, "CAPABILITY_ENFORCEMENT_OBSERVED", nil
+func uniquePropositions(items []rawProposition) bool {
+	seen := make(map[string]bool, len(items))
+	for _, item := range items {
+		key := item.ID + "|" + item.Predicate + "|" + item.EvidenceDigest
+		if seen[key] {
+			return false
 		}
-		return decisionUnknown, resolutionLower, "CAPABILITY_ENFORCEMENT_NOT_IMPLEMENTED", &rawUnknown{Stage: opStage(op), Step: opStep(op), Reason: "CAPABILITY_ENFORCEMENT_NOT_IMPLEMENTED"}
+		seen[key] = true
 	}
-	for _, value := range item.Requests {
-		declaration, ok := findDeclaration(model.Declarations, value.ValueID)
-		if !ok || declaration.Kind != value.Kind || declaration.Operation != value.Operation || declaration.Target != value.Target {
+	return true
+}
+
+func transitions(model sourceModel, provider rawProvider, item rawCase, receipt rawReceipt) []rawClaimTransition {
+	result := make([]rawClaimTransition, 0, len(receipt.Propositions)+3)
+	for _, proposition := range receipt.Propositions {
+		result = append(result, rawClaimTransition{ClaimID: proposition.ID, PriorState: claimOpen, NextState: proposition.Status, Stage: receipt.Stage, Step: receipt.Step, Reason: receipt.Reason, EvidenceDigest: proposition.EvidenceDigest, Provenance: proposition.Provenance})
+	}
+	result = append(result,
+		rawClaimTransition{ClaimID: "capability-scope-exact", PriorState: model.policy.PriorClaimState, NextState: stateForDecision(receipt.Decision), Stage: receipt.Stage, Step: receipt.Step, Reason: receipt.Reason, EvidenceDigest: receipt.ProviderDigest, Provenance: "source-ir+provider-observation"},
+		rawClaimTransition{ClaimID: "default-deny", PriorState: model.policy.PriorClaimState, NextState: knownState(receipt.Decision), Stage: receipt.Stage, Step: receipt.Step, Reason: receipt.Reason, EvidenceDigest: receipt.ProviderDigest, Provenance: "source-ir+provider-observation"},
+		rawClaimTransition{ClaimID: "effect-ceiling", PriorState: model.policy.PriorClaimState, NextState: effectState(provider), Stage: receipt.Stage, Step: receipt.Step, Reason: "BROKER_TOKEN_DENIALS_OBSERVED", EvidenceDigest: digestBytes([]byte(fmt.Sprintf("%s|%d|%d|%d", provider.Schema, provider.BrokerTokenRequests, provider.BrokerTokensIssued, provider.BrokerTokenDenials))), Provenance: "broker.issuance+repository-sandbox-snapshots"},
+	)
+	return result
+}
+
+func claims(transitions []rawClaimTransition) []rawClaim {
+	result := make([]rawClaim, 0, len(transitions))
+	for _, transition := range transitions {
+		proof, evidence := "PROPOSITION", transition.Provenance
+		if transition.ClaimID == "capability-scope-exact" {
+			proof, evidence = "COHERENCE", "source-ir+provider-observation"
+		}
+		if transition.ClaimID == "default-deny" || transition.ClaimID == "effect-ceiling" {
+			proof = "REGRESSION"
+		}
+		result = append(result, rawClaim{ID: transition.ClaimID, PriorState: transition.PriorState, Status: transition.NextState, ProofChoice: proof, Evidence: evidence})
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
+	return result
+}
+
+func decisionFor(model sourceModel, provider rawProvider, item rawCase) (string, string, string, *rawUnknown) {
+	operation := authorizationOperation(model)
+	if !model.graph.Complete {
+		return decisionUnknown, resolutionLower, "GRAPH_TOPOLOGY_UNOBSERVED", &rawUnknown{Stage: operation.Stage, Step: "graph-reconstruct", Reason: "GRAPH_TOPOLOGY_UNOBSERVED"}
+	}
+	for _, request := range item.Requests {
+		declaration, ok := declarationByID(model.declarations, request.ValueID)
+		if !ok || declaration.Kind != request.Kind || declaration.Operation != request.Operation || declaration.Target != request.Target {
 			return decisionDeny, resolutionExact, "CAPABILITY_NOT_DECLARED", nil
 		}
 	}
-	for _, value := range item.Requests {
-		declaration, _ := findDeclaration(model.Declarations, value.ValueID)
-		if !currentEvidence(provider, declaration) {
-			return decisionUnknown, resolutionLower, "EVIDENCE_UNOBSERVED", &rawUnknown{Stage: opStage(op), Step: "bind-capability-evidence", Reason: "EVIDENCE_UNOBSERVED"}
+	if kind := requestedEffectKind(item); kind != "" {
+		if !deniedToken(provider, kind) {
+			return decisionUnknown, resolutionLower, "CAPABILITY_ENFORCEMENT_NOT_IMPLEMENTED", &rawUnknown{Stage: operation.Stage, Step: "authorize-before-expand", Reason: "CAPABILITY_ENFORCEMENT_NOT_IMPLEMENTED"}
 		}
+		return decisionDeny, resolutionExact, "CAPABILITY_TOKEN_DENIED", nil
 	}
-	if model.Policy.AuthorizationMode != "exact-current" {
+	for _, request := range item.Requests {
+		declaration, _ := declarationByID(model.declarations, request.ValueID)
+		if len(evidenceFor(provider, model.declarations, []rawCapability{request})) == 0 {
+			return decisionUnknown, resolutionLower, "EVIDENCE_UNOBSERVED", &rawUnknown{Stage: operation.Stage, Step: "bind-capability-evidence", Reason: "EVIDENCE_UNOBSERVED"}
+		}
+		_ = declaration
+	}
+	if model.policy.AuthorizationMode != "exact-current" {
 		return decisionDeny, resolutionExact, "POLICY_REJECTED", nil
 	}
 	return decisionAllow, resolutionExact, "CAPABILITY_SCOPE_EXACT", nil
 }
 
-func validateReceiptShape(source []byte, model sourceModel, provider providerObservation, providerRaw []byte, observed rawReceipt) error {
-	if observed.Schema != validSchema || observed.MetaOperation != validMetaOperation || observed.Producer != validProducer || observed.Consumer != validConsumer || observed.GoVersion != validGoVersion || observed.SourceDigest != digestBytes(source) || observed.SemanticDigest != model.SemanticDigest {
-		return fmt.Errorf("receipt semantic identity is not source-bound")
+func authorizationOperation(model sourceModel) rawOperation {
+	for _, operation := range model.operations {
+		if operation.ID == "authorize-before-expand" {
+			return operation
+		}
 	}
-	if observed.SubjectSHA != provider.SubjectSHA || observed.ProviderDigest != digestBytes(providerRaw) || !reflect.DeepEqual(observed.Policy, rawPolicy{ID: model.Policy.ID, DefaultDecision: model.Policy.DefaultDecision, AuthorizationMode: model.Policy.AuthorizationMode, Effects: model.Policy.Effects, PriorClaimState: model.Policy.Prior, NodeID: model.Policy.NodeID}) {
-		return fmt.Errorf("receipt policy/provider binding is inconsistent")
-	}
-	wantDeclarations := make([]rawDeclaration, 0, len(model.Declarations))
-	for _, item := range model.Declarations {
-		wantDeclarations = append(wantDeclarations, rawDeclaration{ValueID: item.ValueID, Kind: item.Kind, Operation: item.Operation, Target: item.Target, Policy: item.Policy, PriorClaimState: item.Prior, EvidenceClass: item.Evidence, NodeID: item.NodeID})
-	}
-	if !reflect.DeepEqual(observed.Declarations, wantDeclarations) {
-		return fmt.Errorf("receipt declarations are not reconstructed from source IR")
-	}
-	if observed.Authority.CurrentEvidenceDenominator != len(model.Declarations) || observed.Authority.CurrentEvidenceCapabilities != currentEvidenceCount(model, provider) || observed.Authority.EnforcementObservations != len(provider.EffectAttempts) {
-		return fmt.Errorf("receipt evidence denominator is inconsistent")
-	}
-	op := authorizeOperation(model.Operations)
-	if observed.Stage != opStage(op) || observed.Step != opStep(op) {
-		return fmt.Errorf("receipt operation is not reconstructed from source IR")
-	}
-	if observed.RepositoryWrites != provider.ActualRepositoryWrites || observed.MutationAuthority != provider.ActualMutationAuthority || observed.PromotionAuthority != provider.ActualPromotionAuthority || !reflect.DeepEqual(observed.EffectObservations, provider.EffectAttempts) {
-		return fmt.Errorf("receipt does not bind before/after enforcement observations")
-	}
-	if len(observed.Indicators) != fixedIndicatorTotal {
-		return fmt.Errorf("fixed indicator denominator mismatch")
-	}
-	return nil
+	return rawOperation{Stage: "UNKNOWN", Step: "UNKNOWN"}
 }
 
-func validateAuthority(provider providerObservation, model sourceModel, item caseSpec, observed rawReceipt) error {
-	if observed.Authority.CapabilitiesRequested != len(item.Requests) || observed.Authority.RequestedRepositoryWrites != item.Writes || observed.Authority.RequestedMutationAuthority != item.Mutation || observed.Authority.RequestedPromotionAuthority != item.Promotion {
-		return fmt.Errorf("authority request is not source-case bound")
-	}
-	if observed.Decision == decisionAllow && (observed.Authority.CapabilitiesAuthorized != len(item.Requests) || observed.Authority.CapabilitiesDenied != 0 || observed.Authority.CapabilitiesUnknown != 0) {
-		return fmt.Errorf("ALLOW authority counters are inconsistent")
-	}
-	if observed.Decision == decisionDeny && (observed.Authority.CapabilitiesAuthorized != 0 || observed.Authority.CapabilitiesDenied != len(item.Requests) || observed.Authority.CapabilitiesUnknown != 0) {
-		return fmt.Errorf("DENY authority counters are inconsistent")
-	}
-	if observed.Decision == decisionUnknown && (observed.Authority.CapabilitiesAuthorized != 0 || observed.Authority.CapabilitiesDenied != 0 || observed.Authority.CapabilitiesUnknown != len(item.Requests)) {
-		return fmt.Errorf("UNKNOWN authority counters are inconsistent")
-	}
-	declared := 0
-	for _, request := range item.Requests {
-		if declaration, ok := findDeclaration(model.Declarations, request.ValueID); ok && declaration.Kind == request.Kind && declaration.Operation == request.Operation && declaration.Target == request.Target {
-			declared++
-		}
-	}
-	if observed.Authority.CapabilitiesDeclared != declared || observed.Authority.CurrentEvidenceCapabilities > observed.Authority.CurrentEvidenceDenominator {
-		return fmt.Errorf("authority counter is out of bounds")
-	}
-	_ = provider
-	_ = model
-	return nil
-}
-
-func validateClaims(model sourceModel, provider providerObservation, item caseSpec, observed rawReceipt, unknown *rawUnknown) error {
-	if len(observed.Claims) != 3 || len(observed.ClaimTransitions) != len(item.Requests)+3 {
-		return fmt.Errorf("claim lifecycle denominator is incomplete")
-	}
-	wantNext := claimOpen
-	if observed.Decision == decisionAllow {
-		wantNext = claimDischarged
-	}
-	if observed.Decision == decisionDeny {
-		wantNext = claimRefuted
-	}
-	seen := make(map[string]bool)
-	for _, transition := range observed.ClaimTransitions {
-		if transition.ClaimID == "capability-scope-exact" {
-			if transition.PriorState != model.Policy.Prior || transition.NextState != wantNext {
-				return fmt.Errorf("scope claim transition is invalid")
-			}
-		}
-		if transition.ClaimID == "default-deny" {
-			if transition.PriorState != model.Policy.Prior || transition.NextState != claimOpen && observed.Decision == decisionUnknown || transition.NextState == "" {
-				return fmt.Errorf("default-deny claim transition is invalid")
-			}
-		}
-		if transition.ClaimID == "effect-ceiling" {
-			if transition.PriorState != model.Policy.Prior || transition.NextState != claimDischarged {
-				return fmt.Errorf("effect claim transition is not observed")
-			}
-		}
-		if strings.HasPrefix(transition.ClaimID, "capability:") && (transition.PriorState != claimOpen || transition.NextState != wantNext) {
-			return fmt.Errorf("capability claim transition is invalid")
-		}
-		if transition.Stage == "" || transition.Step == "" || transition.Reason == "" || transition.EvidenceDigest == "" || transition.Provenance != "source-ir+provider-observation" && transition.Provenance != "sandbox-before-after" {
-			return fmt.Errorf("claim transition lacks provenance")
-		}
-		seen[transition.ClaimID] = true
-	}
-	for _, claim := range observed.Claims {
-		if claim.ID == "" || claim.PriorState != model.Policy.Prior || claim.Status == "" {
-			return fmt.Errorf("claim lacks prior state")
-		}
-		if !seen[claim.ID] {
-			return fmt.Errorf("claim is not backed by append-only transition")
-		}
-	}
-	if unknown != nil && observed.Decision != decisionUnknown {
-		return fmt.Errorf("UNKNOWN evidence attached to known decision")
-	}
-	_ = provider
-	return nil
-}
-
-func validateIndicators(indicators []rawIndicator) error {
-	want := map[string]string{
-		"CSE-current-file-evidence": "OUTCOME/OBSERVATION", "CSE-current-logical-evidence": "OUTCOME/OBSERVATION", "CSE-declaration-kind": "DRIVER/FOUNDATION", "CSE-declaration-operation": "DRIVER/FOUNDATION", "CSE-declaration-target": "DRIVER/FOUNDATION", "CSE-environment-network-lower-resolution": "OUTCOME/EPISTEMIC", "CSE-prior-claim-open": "DRIVER/FOUNDATION", "CSE-provider-enforcement-boundary": "GUARDRAIL/ENFORCEMENT", "CSE-receipt-seal": "DRIVER/COHERENCE", "CSE-sandbox-before-after": "GUARDRAIL/OBSERVATION", "CSE-semantic-policy": "DRIVER/FOUNDATION", "CSE-source-reconstruction": "DRIVER/FOUNDATION",
-	}
-	seen := make(map[string]bool, len(indicators))
-	for _, item := range indicators {
-		if seen[item.ID] || want[item.ID] != item.Class+"/"+item.ProofChoice || item.Producer != validProducer || item.Consumer != validConsumer || item.MetaOperation != validMetaOperation || item.Target != 1 {
-			return fmt.Errorf("indicator provenance or denominator is invalid")
-		}
-		seen[item.ID] = true
-	}
-	if len(seen) != len(want) {
-		return fmt.Errorf("indicator denominator is incomplete")
-	}
-	return nil
-}
-
-func validateUnknown(observed rawReceipt, want *rawUnknown) error {
-	if want == nil {
-		if observed.Unknown != nil {
-			return fmt.Errorf("known receipt carries UNKNOWN evidence")
-		}
-		return nil
-	}
-	if observed.Unknown == nil || observed.Unknown.Stage != want.Stage || observed.Unknown.Step != want.Step || observed.Unknown.Reason != want.Reason {
-		return fmt.Errorf("UNKNOWN stage/step/reason is not reconstructed")
-	}
-	return nil
-}
-
-func effectBoundary(provider providerObservation) bool {
-	for _, effect := range provider.EffectAttempts {
-		if !effect.Requested || effect.Result != "DENIED" || !effect.BoundaryObserved || effect.BeforeDigest != effect.AfterDigest {
-			return false
-		}
-	}
-	return len(provider.EffectAttempts) == 3
-}
-func currentEvidence(provider providerObservation, declaration declaration) bool {
-	if declaration.Evidence != currentEvidence {
-		return false
-	}
-	if declaration.Kind == "file" {
-		for _, item := range provider.FileReads {
-			if item.Target == declaration.Target && item.Observed && item.EvidenceClass == currentEvidence {
-				return true
-			}
-		}
-	}
-	if declaration.Kind == "time" {
-		for _, item := range provider.LogicalInputs {
-			if item.Target == declaration.Target && item.Observed && item.EvidenceClass == currentEvidence {
-				return true
-			}
+func deniedToken(provider rawProvider, kind string) bool {
+	for _, token := range provider.TokenAttempts {
+		if token.Kind == kind && token.Requested && token.Decision == decisionDeny && !token.Issued {
+			return true
 		}
 	}
 	return false
 }
-func currentEvidenceCount(model sourceModel, provider providerObservation) int {
+
+func requestedEffectKind(item rawCase) string {
+	if item.RequestedRepositoryWrites != 0 {
+		return "file"
+	}
+	if item.RequestedMutationAuthority {
+		return "mutation"
+	}
+	if item.RequestedPromotionAuthority {
+		return "promotion"
+	}
+	return ""
+}
+
+func stateForDecision(decision string) string {
+	if decision == decisionAllow {
+		return claimDischarged
+	}
+	if decision == decisionDeny {
+		return claimRefuted
+	}
+	return claimOpen
+}
+
+func knownState(decision string) string {
+	if decision == decisionUnknown {
+		return claimOpen
+	}
+	return claimDischarged
+}
+
+func tokenState(token rawToken) string {
+	if token.Issued {
+		return claimDischarged
+	}
+	if token.Decision == decisionDeny {
+		return claimRefuted
+	}
+	return claimOpen
+}
+
+func effectState(provider rawProvider) string {
+	if provider.BrokerTokenRequests == 3 && provider.BrokerTokenDenials == 3 && provider.BrokerTokensIssued == 0 {
+		return claimDischarged
+	}
+	return claimOpen
+}
+
+func currentEvidenceCount(provider rawProvider, declarations []rawDeclaration) int {
 	count := 0
-	for _, declaration := range model.Declarations {
-		if currentEvidence(provider, declaration) {
+	for _, declaration := range declarations {
+		if len(evidenceFor(provider, declarations, []rawCapability{{ValueID: declaration.ValueID, Kind: declaration.Kind, Operation: declaration.Operation, Target: declaration.Target}})) == 1 {
 			count++
 		}
 	}
 	return count
 }
-func authorizeOperation(operations []operation) operation {
-	for _, item := range operations {
-		if item.ID == "authorize-before-expand" {
-			return item
+
+func declaredCount(declarations []rawDeclaration, requests []rawCapability) int {
+	count := 0
+	for _, request := range requests {
+		declaration, ok := declarationByID(declarations, request.ValueID)
+		if ok && declaration.Kind == request.Kind && declaration.Operation == request.Operation && declaration.Target == request.Target {
+			count++
 		}
 	}
-	return operations[0]
+	return count
 }
-func opStage(item operation) string { return item.Stage }
-func opStep(item operation) string  { return item.Step }
-func findCase(cases []caseSpec, id string) (caseSpec, bool) {
+
+func declarationByID(declarations []rawDeclaration, id string) (rawDeclaration, bool) {
+	for _, declaration := range declarations {
+		if declaration.ValueID == id {
+			return declaration, true
+		}
+	}
+	return rawDeclaration{}, false
+}
+
+func findCase(cases []rawCase, id string) (rawCase, bool) {
 	for _, item := range cases {
 		if item.ID == id {
 			return item, true
 		}
 	}
-	return caseSpec{}, false
-}
-func findDeclaration(declarations []declaration, id string) (declaration, bool) {
-	for _, item := range declarations {
-		if item.ValueID == id {
-			return item, true
-		}
-	}
-	return declaration{}, false
+	return rawCase{}, false
 }
 
-func invalid(reason string) Verdict {
-	return Verdict{Status: "FAIL", Decision: decisionUnknown, Resolution: resolutionLower, Reason: reason, SourceReconstruction: "UNKNOWN", ProducerImports: 0}
+func snapshotRepository(root string) (rawSnapshot, error) {
+	raw, err := exec.Command("git", "-C", root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").Output()
+	if err != nil {
+		return rawSnapshot{}, err
+	}
+	entries := make([]string, 0)
+	for _, relative := range strings.Split(string(raw), "\x00") {
+		if relative == "" {
+			continue
+		}
+		contents, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(relative)))
+		if err != nil {
+			return rawSnapshot{}, err
+		}
+		entries = append(entries, filepath.ToSlash(relative)+"="+digestBytes(contents))
+	}
+	sort.Strings(entries)
+	return snapshot("repository", root, entries), nil
 }
+
+func snapshotSandbox(root string) (rawSnapshot, error) {
+	files, err := os.ReadDir(root)
+	if err != nil {
+		return rawSnapshot{}, err
+	}
+	entries := make([]string, 0)
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		contents, err := os.ReadFile(filepath.Join(root, file.Name()))
+		if err != nil {
+			return rawSnapshot{}, err
+		}
+		entries = append(entries, file.Name()+"="+digestBytes(contents))
+	}
+	sort.Strings(entries)
+	return snapshot("sandbox", root, entries), nil
+}
+
+func snapshot(scope, root string, entries []string) rawSnapshot {
+	return rawSnapshot{Scope: scope, Root: root, Entries: entries, Digest: digestBytes([]byte(strings.Join(entries, "\n")))}
+}
+
 func digestBytes(value []byte) string {
 	sum := sha256.Sum256(value)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
-func canonicalDigest(raw []byte) string {
-	var value map[string]any
+
+func digestReceipt(raw []byte) string {
+	var value any
 	if json.Unmarshal(raw, &value) != nil {
 		return ""
 	}
-	value["report_digest"] = ""
-	normalized, _ := json.Marshal(value)
+	object, ok := value.(map[string]any)
+	if !ok {
+		return ""
+	}
+	object["report_digest"] = ""
+	normalized, err := json.Marshal(value)
+	if err != nil {
+		return ""
+	}
 	return digestBytes(normalized)
 }

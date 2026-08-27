@@ -34,77 +34,115 @@ jobs:
           cache: false
       - name: Require exact Go toolchain
         run: test "$(go env GOVERSION)" = "go1.27.0"
-      - name: Generate provider observations and receipts twice
+      - name: Create raw provider observations and replay witness twice
         shell: bash
         run: |
           set -euo pipefail
           sandbox="$RUNNER_TEMP/capability-scoped-expansion-sandbox"
-          mkdir -p "$sandbox"
+          artifact_root="$RUNNER_TEMP/capability-scoped-expansion-artifacts"
+          mkdir -p "$sandbox" "$artifact_root"
           printf '%s\n' 'pinned-capability-input-v1' > "$sandbox/pinned-input"
+          printf '%s\n' 'logical-clock:0' > "$sandbox/logical-input"
+          go run ./cmd/capability-scoped-expansion-provider \
+            --output "$RUNNER_TEMP/capability-scoped-expansion-provider.json" \
+            --subject-sha "$HEAD_SHA" \
+            --pinned-file "$sandbox/pinned-input" \
+            --logical-input "$sandbox/logical-input" \
+            --sandbox "$sandbox" \
+            --repository-root "$GITHUB_WORKSPACE"
           for pass in first second; do
             output="$RUNNER_TEMP/capability-scoped-expansion/$pass"
             mkdir -p "$output"
             go run ./cmd/capability-scoped-expansion-witness \
               --source examples/capability-scoped-expansion/main.gooo \
+              --provider-json "$RUNNER_TEMP/capability-scoped-expansion-provider.json" \
               --pinned-file "$sandbox/pinned-input" \
+              --logical-input "$sandbox/logical-input" \
               --sandbox "$sandbox" \
-              --output-dir "$output" --subject-sha "$HEAD_SHA"
+              --repository-root "$GITHUB_WORKSPACE" \
+              --artifact-root "$artifact_root" \
+              --output-dir "$output" \
+              --subject-sha "$HEAD_SHA"
           done
-      - name: Compare raw observations and assert fixed denominator
+      - name: Compare independent raw replay and assert fixed denominators
         shell: bash
         run: |
           set -euo pipefail
           base="$RUNNER_TEMP/capability-scoped-expansion"
-          for name in provider-observations.json allow-receipt.json deny-receipt.json unknown-receipt.json suite.json independent-judge.json; do
+          for name in provider-observations.json allow-receipt.json deny-receipt.json unknown-receipt.json suite.json independent-judge.json dependency-observation.json; do
             cmp "$base/first/$name" "$base/second/$name"
           done
-          for name in policy-change.json comment-only.json; do
+          for name in policy-deny-all.json comment-only.json graph-edge-removal.json forged-provider.json forged-provider-input.json forged-provider-resealed-receipt.json; do
             cmp "$base/first/interventions/$name" "$base/second/interventions/$name"
           done
           jq -e '
-            .schema == "gooo/capability-scoped-expansion-suite/v2" and
+            .schema == "gooo/capability-scoped-expansion-suite/v3" and
             .decision == "PASS" and .resolution == "EXACT" and
-            .summary.cases_total == 8 and .summary.cases_passed == 8 and
-            .summary.allow_cases == 1 and .summary.deny_cases == 6 and
-            .summary.unknown_cases == 1 and
-            .summary.capability_requests == 9 and
-            .summary.capability_authorized == 2 and
-            .summary.capability_denied == 6 and
-            .summary.capability_unknown == 1 and
-            .summary.current_evidence_capabilities == 2 and
-            .summary.current_evidence_denominator == 4 and
-            .summary.historical_fixture_capabilities == 1 and
-            .summary.enforcement_observations == 3 and
-            .summary.blocked_write_attempts == 1 and
-            .summary.blocked_mutation_attempts == 1 and
-            .summary.repository_writes == 0 and
-            .summary.mutation_authority == false and
-            .summary.promotion_authority == false and
-            .summary.source_reconstruction_passes == 1 and
-            .summary.source_reconstruction_total == 1 and
-            .summary.producer_import_numerator == 0 and
-            .summary.producer_import_denominator == 1 and
+            .summary.cases_total == 9 and .summary.cases_passed == 9 and
+            .summary.allow_cases == 1 and .summary.deny_cases == 6 and .summary.unknown_cases == 2 and
+            .summary.capability_requests == 10 and .summary.capability_authorized == 2 and
+            .summary.capability_denied == 6 and .summary.capability_unknown == 2 and
+            .summary.current_evidence_capabilities == 2 and .summary.current_evidence_denominator == 4 and
+            .summary.historical_fixture_declarations == 1 and
+            .summary.effect_token_requests == 3 and .summary.tokens_issued == 0 and .summary.token_denials == 3 and
+            .summary.artifact_executions == 1 and .summary.artifacts_absent_for_blocked == 8 and
+            .summary.repository_writes == 0 and .summary.sandbox_writes == 0 and
+            .summary.mutation_authority == "NOT_OBSERVED" and .summary.promotion_authority == "NOT_OBSERVED" and
+            .summary.source_reconstruction_passes == 1 and .summary.source_reconstruction_total == 1 and
+            .summary.consumer_replay_passes == 9 and .summary.consumer_replay_total == 9 and
+            .summary.producer_import_numerator == 0 and .summary.producer_import_denominator == 1 and
+            .denominator.cases == 9 and .denominator.declarations == 4 and .denominator.capability_requests == 10 and
+            .denominator.evidence_slots == 4 and .denominator.effect_token_requests == 3 and
+            .denominator.claims > 0 and .denominator.interventions == 4 and .denominator.indicators_per_receipt == 12 and
             .independent_judge == "PASS"
           ' "$base/first/suite.json"
-          jq -e '.decision == "ALLOW" and .semantic_digest != "" and .authority.current_evidence_capabilities == 2 and .repository_writes == 0 and .mutation_authority == false' "$base/first/allow-receipt.json" >/dev/null
-          jq -e '.decision == "DENY" and .resolution == "EXACT" and .reason == "CAPABILITY_NOT_DECLARED" and .unknown == null and .authority.capabilities_authorized == 0' "$base/first/deny-receipt.json" >/dev/null
-          jq -e '.decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason != ""' "$base/first/unknown-receipt.json" >/dev/null
-          jq -e '.schema == "gooo/capability-scoped-expansion/provider/v2" and (.file_reads | length) == 1 and (.logical_inputs | length) == 1 and (.environment_reads | length) == 1 and .environment_reads[0].observed == false and .environment_reads[0].evidence_class == "UNKNOWN" and (.network_reads | length) == 1 and .network_reads[0].observed == false and .network_reads[0].evidence_class == "HISTORICAL_FIXTURE" and .actual_repository_writes == 0 and .actual_mutation_authority == false and .actual_promotion_authority == false and ([.effect_attempts[] | select(.result == "DENIED" and .boundary_observed == true and .before_digest == .after_digest and .actual_writes == 0)] | length) == 3' "$base/first/provider-observations.json" >/dev/null
-          ! rg -n 'internal/meta/capabilityscopedexpansion' internal/meta/capabilityscopedexpansion/verify/judge.go
-      - name: Assert claim transitions and interventions
+          jq -e '
+            .schema == "gooo/capability-scoped-expansion/provider/v3" and
+            (.file_reads | length) == 1 and .file_reads[0].evidence_class == "CURRENT_EVIDENCE" and
+            (.logical_inputs | length) == 1 and .logical_inputs[0].evidence_class == "CURRENT_EVIDENCE" and
+            .environment_reads[0].observed == false and .environment_reads[0].evidence_class == "UNKNOWN" and
+            .network_reads[0].observed == false and .network_reads[0].evidence_class == "HISTORICAL_FIXTURE" and
+            .broker_token_requests == 3 and .broker_tokens_issued == 0 and .broker_token_denials == 3 and
+            ([.token_attempts[] | select(.requested == true and .decision == "DENY" and .issued == false)] | length) == 3 and
+            .repository_before.scope == "repository" and .repository_after.scope == "repository" and
+            .sandbox_before.scope == "sandbox" and .sandbox_after.scope == "sandbox" and
+            .repository_writes == 0 and .sandbox_writes == 0 and
+            .mutation_authority == "NOT_OBSERVED" and .promotion_authority == "NOT_OBSERVED" and
+            .effect_api_access == "NOT_REACHED_WITHOUT_TOKEN"
+          ' "$base/first/provider-observations.json"
+          jq -e '
+            .decision == "ALLOW" and .artifact.present == true and .artifact.reparsed == true and
+            .artifact.content_digest != "" and .artifact.semantic_digest != "" and
+            .execution.result == "EXPANDED" and .execution.claim_state == "DISCHARGED" and
+            ([.propositions[] | select((.id | startswith("capability:file-read:")) and .status == "DISCHARGED")] | length) == 1 and
+            .repository_writes == 0 and .sandbox_writes == 0 and .mutation_authority == "NOT_OBSERVED"
+          ' "$base/first/allow-receipt.json"
+          jq -e '.decision == "DENY" and .resolution == "EXACT" and .reason == "CAPABILITY_NOT_DECLARED" and .unknown == null and .artifact.present == false' "$base/first/deny-receipt.json"
+          jq -e '.decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason != "" and .artifact.present == false' "$base/first/unknown-receipt.json"
+          jq -e '[.cases[] | select(.case_id == "unknown-historical-network" and .observed_decision == "UNKNOWN")] | length == 1' "$base/first/suite.json"
+          jq -e '.decision == "UNKNOWN" and ([.propositions[] | select(.id == "capability:network-read:0" and .status == "OPEN" and .decision == "UNKNOWN")] | length) == 1 and .execution.claim_state == "OPEN"' "$base/first/receipts/unknown-historical-network-receipt.json"
+          jq -e '.decision == "PASS" and .producer_import_numerator == 0 and .source_reconstruction == "PASS" and .consumer_replay_passes == 9 and .consumer_replay_total == 9 and .dependency_observation.producer_imports == 0 and .dependency_observation.engine_effects_imports == 0 and .dependency_observation.broker_dependency_found == true' "$base/first/independent-judge.json"
+          ! rg -n 'internal/meta/capabilityscopedexpansion[^/]' internal/meta/capabilityscopedexpansion/verify/judge.go
+      - name: Assert propositions, broker boundary, artifacts, and interventions
         shell: bash
         run: |
           set -euo pipefail
           base="$RUNNER_TEMP/capability-scoped-expansion/first"
-          jq -e '[.claim_transitions[] | select(.prior_state == "OPEN" and .next_state == "DISCHARGED" and .stage != "" and .step != "" and .reason != "" and .evidence_digest != "" and .provenance != "")] | length >= 3' "$base/allow-receipt.json" >/dev/null
-          jq -e '.base_decision == "ALLOW" and .changed_decision == "DENY" and .base_claim_status == "DISCHARGED" and .changed_claim_status == "REFUTED" and .decision_preserved == false and .semantic_digest_preserved == false and .independent_judge == "PASS"' "$base/interventions/policy-change.json" >/dev/null
-          jq -e '.base_decision == "ALLOW" and .changed_decision == "ALLOW" and .base_claim_status == "DISCHARGED" and .changed_claim_status == "DISCHARGED" and .decision_preserved == true and .semantic_digest_preserved == true and .base_source_digest != .changed_source_digest and .independent_judge == "PASS"' "$base/interventions/comment-only.json" >/dev/null
+          jq -e '[.claim_transitions[] | select(.prior_state == "OPEN" and .next_state == "DISCHARGED" and .stage != "" and .step != "" and .reason != "" and .evidence_digest != "" and .provenance != "")] | length >= 3' "$base/allow-receipt.json"
+          jq -e '([.propositions[] | select((.id | startswith("capability:file-read:")) and .status == "DISCHARGED")] | length == 1) and ([.propositions[] | select(.id == "effect-token:file" and .status == "REFUTED" and .decision == "DENY")] | length == 1)' "$base/receipts/deny-repository-write-receipt.json"
+          jq -e '.decision == "DENY" and .reason == "CAPABILITY_TOKEN_DENIED" and .artifact.present == false and .execution.result == "NOT_EXECUTED" and .execution.claim_state == "REFUTED"' "$base/receipts/deny-mutation-authority-receipt.json"
+          jq -e '.base_decision == "ALLOW" and .changed_decision == "DENY" and .base_claim_status == "DISCHARGED" and .changed_claim_status == "REFUTED" and .base_artifact_present == true and .changed_artifact_present == false and .base_execution_claim == "DISCHARGED" and .changed_execution_claim == "REFUTED" and .decision_preserved == false and .semantic_digest_preserved == false and .independent_judge == "PASS"' "$base/interventions/policy-deny-all.json"
+          jq -e '.base_decision == "ALLOW" and .changed_decision == "ALLOW" and .base_artifact_present == true and .changed_artifact_present == true and .base_artifact_digest == .changed_artifact_digest and .output_digest_preserved == true and .propositions_preserved == true and .token_decision_preserved == true and .decision_preserved == true and .semantic_digest_preserved == true and .base_source_digest != .changed_source_digest and .independent_judge == "PASS"' "$base/interventions/comment-only.json"
+          jq -e '.base_decision == "ALLOW" and .changed_decision == "UNKNOWN" and .graph_complete == true and .changed_graph_complete == false and .base_artifact_present == true and .changed_artifact_present == false and .changed_execution_claim == "OPEN" and .independent_judge == "PASS"' "$base/interventions/graph-edge-removal.json"
+          jq -e '.forged_provider_rejected == true and .independent_judge == "PASS" and .base_artifact_present == true and .changed_artifact_present == false' "$base/interventions/forged-provider.json"
           {
             echo "### Capability-scoped expansion witness"
+            jq -r '"- denominator: cases `\(.denominator.cases)`, declarations `\(.denominator.declarations)`, requests `\(.denominator.capability_requests)`, evidence slots `\(.denominator.evidence_slots)`, effect token requests `\(.denominator.effect_token_requests)`, claims `\(.denominator.claims)`, interventions `\(.denominator.interventions)`; indicators/receipt `\(.denominator.indicators_per_receipt)`"' "$base/suite.json"
             jq -r '"- cases: `\(.summary.cases_passed)/\(.summary.cases_total)`; ALLOW `\(.summary.allow_cases)`, DENY `\(.summary.deny_cases)`, UNKNOWN `\(.summary.unknown_cases)`"' "$base/suite.json"
-            jq -r '"- CURRENT_EVIDENCE capabilities: `\(.summary.current_evidence_capabilities)/\(.summary.current_evidence_denominator)`; HISTORICAL_FIXTURE `\(.summary.historical_fixture_capabilities)`"' "$base/suite.json"
-            jq -r '"- enforcement observations: `\(.summary.enforcement_observations)`; repository writes `\(.summary.repository_writes)`; mutation authority `\(.summary.mutation_authority)`"' "$base/suite.json"
-            jq -r '"- source reconstruction: `\(.summary.source_reconstruction_passes)/\(.summary.source_reconstruction_total)`; producer imports `\(.summary.producer_import_numerator)/\(.summary.producer_import_denominator)`"' "$base/suite.json"
+            jq -r '"- CURRENT_EVIDENCE capabilities: `\(.summary.current_evidence_capabilities)/\(.summary.current_evidence_denominator)`; HISTORICAL_FIXTURE declarations `\(.summary.historical_fixture_declarations)`"' "$base/suite.json"
+            jq -r '"- broker token requests/issued/denied: `\(.summary.effect_token_requests)/\(.summary.tokens_issued)/\(.summary.token_denials)`; artifacts executed/blocked absent `\(.summary.artifact_executions)/\(.summary.artifacts_absent_for_blocked)`"' "$base/suite.json"
+            jq -r '"- repository writes `\(.summary.repository_writes)`; sandbox writes `\(.summary.sandbox_writes)`; mutation/promotion `\(.summary.mutation_authority)/\(.summary.promotion_authority)`"' "$base/suite.json"
+            jq -r '"- source reconstruction `\(.summary.source_reconstruction_passes)/\(.summary.source_reconstruction_total)`; consumer replay `\(.summary.consumer_replay_passes)/\(.summary.consumer_replay_total)`; producer imports `\(.summary.producer_import_numerator)/\(.summary.producer_import_denominator)`"' "$base/suite.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload capability-scoped receipts
         if: always()

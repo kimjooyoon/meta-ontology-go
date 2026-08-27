@@ -6,39 +6,46 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const (
-	Schema              = "gooo/capability-scoped-expansion/v2"
-	MetaOperation       = "expand-capability-scoped-meta-code"
-	Producer            = "capabilityscopedexpansion.Evaluate"
-	Consumer            = "capabilityscopedexpansion.verify.Judge"
-	GoVersion           = "go1.27.0"
-	DecisionAllow       = "ALLOW"
-	DecisionDeny        = "DENY"
-	DecisionUnknown     = "UNKNOWN"
-	SuitePass           = "PASS"
-	ResolutionExact     = "EXACT"
-	ResolutionLower     = "LOWER_RESOLUTION"
-	EffectNone          = "NONE"
-	EffectBlock         = "BLOCK"
-	CurrentEvidence     = "CURRENT_EVIDENCE"
-	HistoricalFixture   = "HISTORICAL_FIXTURE"
-	ClaimOpen           = "OPEN"
-	ClaimDischarged     = "DISCHARGED"
-	ClaimRefuted        = "REFUTED"
-	PolicyDefaultDeny   = "DENY"
-	PolicyExactCurrent  = "exact-current"
-	PolicyDenyAll       = "deny-all"
-	EffectPolicyNone    = "NONE"
-	ProviderSchema      = "gooo/capability-scoped-expansion/provider/v2"
-	OperationScheme     = "capability.operation"
-	PolicyScheme        = "capability.policy"
-	DeclarationScheme   = "capability.declare"
-	CaseScheme          = "capability.case"
-	FixedIndicatorTotal = 12
-	FixedCaseTotal      = 8
+	Schema                   = "gooo/capability-scoped-expansion/v3"
+	MetaOperation            = "expand-capability-scoped-meta-code"
+	Producer                 = "capabilityscopedexpansion.Evaluate"
+	Consumer                 = "capabilityscopedexpansion.verify.Judge"
+	GoVersion                = "go1.27.0"
+	DecisionAllow            = "ALLOW"
+	DecisionDeny             = "DENY"
+	DecisionUnknown          = "UNKNOWN"
+	SuitePass                = "PASS"
+	ResolutionExact          = "EXACT"
+	ResolutionLower          = "LOWER_RESOLUTION"
+	EffectNone               = "NONE"
+	EffectBlock              = "BLOCK"
+	CurrentEvidence          = "CURRENT_EVIDENCE"
+	HistoricalFixture        = "HISTORICAL_FIXTURE"
+	ClaimOpen                = "OPEN"
+	ClaimDischarged          = "DISCHARGED"
+	ClaimRefuted             = "REFUTED"
+	PolicyDefaultDeny        = "DENY"
+	PolicyExactCurrent       = "exact-current"
+	PolicyDenyAll            = "deny-all"
+	EffectPolicyNone         = "NONE"
+	ProviderSchema           = "gooo/capability-scoped-expansion/provider/v3"
+	BrokerSchema             = "gooo/capability-scoped-expansion/broker/v1"
+	ArtifactSchema           = "gooo/capability-scoped-expansion/artifact/v1"
+	OperationScheme          = "capability.operation"
+	PolicyScheme             = "capability.policy"
+	DeclarationScheme        = "capability.declare"
+	CaseScheme               = "capability.case"
+	IndicatorsPerReceipt     = 12
+	FixedCaseTotal           = 9
+	FixedDeclarationTotal    = 4
+	FixedEvidenceSlotTotal   = 4
+	FixedEffectTokenRequests = 3
+	FixedInterventionTotal   = 4
 )
 
 type SemanticValue struct {
@@ -103,23 +110,44 @@ type SourceModel struct {
 	Operations        []Operation             `json:"operations"`
 	Declarations      []CapabilityDeclaration `json:"declarations"`
 	Cases             []CaseSpec              `json:"cases"`
+	Graph             GraphProof              `json:"graph"`
 	Reconstructed     bool                    `json:"reconstructed"`
 }
 
+type GraphFact struct {
+	Subject   string `json:"subject"`
+	Predicate string `json:"predicate"`
+	Object    string `json:"object"`
+}
+
+type GraphProof struct {
+	Facts        []GraphFact `json:"facts"`
+	RequiredPath []string    `json:"required_path"`
+	PathDigest   string      `json:"path_digest"`
+	Complete     bool        `json:"complete"`
+}
+
 type ProviderObservation struct {
-	Schema                   string                   `json:"schema"`
-	Provider                 string                   `json:"provider"`
-	SubjectSHA               string                   `json:"subject_sha"`
-	FileReads                []FileReadObservation    `json:"file_reads"`
-	LogicalInputs            []LogicalObservation     `json:"logical_inputs"`
-	EnvironmentReads         []EnvironmentObservation `json:"environment_reads"`
-	NetworkReads             []NetworkObservation     `json:"network_reads"`
-	EffectAttempts           []EffectObservation      `json:"effect_attempts"`
-	SandboxBefore            SnapshotObservation      `json:"sandbox_before"`
-	SandboxAfter             SnapshotObservation      `json:"sandbox_after"`
-	ActualRepositoryWrites   int                      `json:"actual_repository_writes"`
-	ActualMutationAuthority  bool                     `json:"actual_mutation_authority"`
-	ActualPromotionAuthority bool                     `json:"actual_promotion_authority"`
+	Schema              string                   `json:"schema"`
+	Provider            string                   `json:"provider"`
+	SubjectSHA          string                   `json:"subject_sha"`
+	FileReads           []FileReadObservation    `json:"file_reads"`
+	LogicalInputs       []LogicalObservation     `json:"logical_inputs"`
+	EnvironmentReads    []EnvironmentObservation `json:"environment_reads"`
+	NetworkReads        []NetworkObservation     `json:"network_reads"`
+	TokenAttempts       []TokenIssuance          `json:"token_attempts"`
+	BrokerTokenRequests int                      `json:"broker_token_requests"`
+	BrokerTokensIssued  int                      `json:"broker_tokens_issued"`
+	BrokerTokenDenials  int                      `json:"broker_token_denials"`
+	RepositoryBefore    SnapshotObservation      `json:"repository_before"`
+	RepositoryAfter     SnapshotObservation      `json:"repository_after"`
+	SandboxBefore       SnapshotObservation      `json:"sandbox_before"`
+	SandboxAfter        SnapshotObservation      `json:"sandbox_after"`
+	RepositoryWrites    int                      `json:"repository_writes"`
+	SandboxWrites       int                      `json:"sandbox_writes"`
+	MutationAuthority   string                   `json:"mutation_authority"`
+	PromotionAuthority  string                   `json:"promotion_authority"`
+	EffectAPIAccess     string                   `json:"effect_api_access"`
 }
 
 type FileReadObservation struct {
@@ -132,6 +160,7 @@ type FileReadObservation struct {
 
 type LogicalObservation struct {
 	Target        string `json:"target"`
+	Path          string `json:"path"`
 	Value         string `json:"value"`
 	Observed      bool   `json:"observed"`
 	EvidenceClass string `json:"evidence_class"`
@@ -150,23 +179,22 @@ type NetworkObservation struct {
 }
 
 type SnapshotObservation struct {
+	Scope   string   `json:"scope"`
 	Root    string   `json:"root"`
 	Entries []string `json:"entries"`
 	Digest  string   `json:"digest"`
 }
 
-type EffectObservation struct {
-	Kind             string `json:"kind"`
-	Target           string `json:"target"`
-	Requested        bool   `json:"requested"`
-	Result           string `json:"result"`
-	Reason           string `json:"reason"`
-	BoundaryObserved bool   `json:"boundary_observed"`
-	BeforeDigest     string `json:"before_digest"`
-	AfterDigest      string `json:"after_digest"`
-	ActualWrites     int    `json:"actual_writes"`
-	ActualMutation   bool   `json:"actual_mutation"`
-	ActualPromotion  bool   `json:"actual_promotion"`
+type TokenIssuance struct {
+	Kind          string `json:"kind"`
+	Operation     string `json:"operation"`
+	Target        string `json:"target"`
+	Requested     bool   `json:"requested"`
+	Decision      string `json:"decision"`
+	Issued        bool   `json:"issued"`
+	Reason        string `json:"reason"`
+	PolicyDigest  string `json:"policy_digest"`
+	RequestDigest string `json:"request_digest"`
 }
 
 type Evidence struct {
@@ -184,20 +212,57 @@ type Unknown struct {
 }
 
 type Authority struct {
-	CapabilitiesRequested       int  `json:"capabilities_requested"`
-	CapabilitiesDeclared        int  `json:"capabilities_declared"`
-	CapabilitiesAuthorized      int  `json:"capabilities_authorized"`
-	CapabilitiesDenied          int  `json:"capabilities_denied"`
-	CapabilitiesUnknown         int  `json:"capabilities_unknown"`
-	CurrentEvidenceCapabilities int  `json:"current_evidence_capabilities"`
-	CurrentEvidenceDenominator  int  `json:"current_evidence_denominator"`
-	RequestedRepositoryWrites   int  `json:"requested_repository_writes"`
-	RequestedMutationAuthority  bool `json:"requested_mutation_authority"`
-	RequestedPromotionAuthority bool `json:"requested_promotion_authority"`
-	RepositoryWrites            int  `json:"repository_writes"`
-	MutationAuthority           bool `json:"mutation_authority"`
-	PromotionAuthority          bool `json:"promotion_authority"`
-	EnforcementObservations     int  `json:"enforcement_observations"`
+	CapabilitiesRequested       int    `json:"capabilities_requested"`
+	CapabilitiesDeclared        int    `json:"capabilities_declared"`
+	CapabilitiesAuthorized      int    `json:"capabilities_authorized"`
+	CapabilitiesDenied          int    `json:"capabilities_denied"`
+	CapabilitiesUnknown         int    `json:"capabilities_unknown"`
+	CurrentEvidenceCapabilities int    `json:"current_evidence_capabilities"`
+	CurrentEvidenceDenominator  int    `json:"current_evidence_denominator"`
+	RequestedRepositoryWrites   int    `json:"requested_repository_writes"`
+	RequestedMutationAuthority  bool   `json:"requested_mutation_authority"`
+	RequestedPromotionAuthority bool   `json:"requested_promotion_authority"`
+	RepositoryWrites            int    `json:"repository_writes"`
+	SandboxWrites               int    `json:"sandbox_writes"`
+	MutationAuthority           string `json:"mutation_authority"`
+	PromotionAuthority          string `json:"promotion_authority"`
+	EnforcementObservations     int    `json:"enforcement_observations"`
+}
+
+type Proposition struct {
+	ID             string `json:"id"`
+	Predicate      string `json:"predicate"`
+	Decision       string `json:"decision"`
+	Status         string `json:"status"`
+	EvidenceDigest string `json:"evidence_digest"`
+	Provenance     string `json:"provenance"`
+}
+
+type ExpansionArtifact struct {
+	Schema                 string `json:"schema"`
+	Present                bool   `json:"present"`
+	Path                   string `json:"path"`
+	Value                  string `json:"value"`
+	Bytes                  int    `json:"bytes"`
+	ContentDigest          string `json:"content_digest"`
+	SemanticDigest         string `json:"semantic_digest"`
+	Reparsed               bool   `json:"reparsed"`
+	ReparsedSemanticDigest string `json:"reparsed_semantic_digest"`
+}
+
+type ExecutionObservation struct {
+	Requested              bool   `json:"requested"`
+	Decision               string `json:"decision"`
+	Result                 string `json:"result"`
+	ClaimID                string `json:"claim_id"`
+	ClaimState             string `json:"claim_state"`
+	Reason                 string `json:"reason"`
+	ArtifactPath           string `json:"artifact_path"`
+	ArtifactValue          string `json:"artifact_value"`
+	ArtifactBytes          int    `json:"artifact_bytes"`
+	ArtifactDigest         string `json:"artifact_digest"`
+	ArtifactSemanticDigest string `json:"artifact_semantic_digest"`
+	ReparsedSemanticDigest string `json:"reparsed_semantic_digest"`
 }
 
 type ClaimTransition struct {
@@ -248,19 +313,24 @@ type Receipt struct {
 	EnforcementEffect  string                  `json:"enforcement_effect"`
 	Reason             string                  `json:"reason"`
 	Policy             Policy                  `json:"policy"`
+	Graph              GraphProof              `json:"graph"`
 	Declarations       []CapabilityDeclaration `json:"declarations"`
 	Capabilities       []CapabilityValue       `json:"capabilities"`
 	Evidence           []Evidence              `json:"evidence"`
 	ProviderDigest     string                  `json:"provider_digest"`
-	EffectObservations []EffectObservation     `json:"effect_observations"`
+	TokenAttempts      []TokenIssuance         `json:"token_attempts"`
+	Execution          ExecutionObservation    `json:"execution"`
+	Artifact           ExpansionArtifact       `json:"artifact"`
+	Propositions       []Proposition           `json:"propositions"`
 	Unknown            *Unknown                `json:"unknown,omitempty"`
 	Authority          Authority               `json:"authority"`
 	Claims             []Claim                 `json:"claims"`
 	ClaimTransitions   []ClaimTransition       `json:"claim_transitions"`
 	Indicators         []Indicator             `json:"indicators"`
 	RepositoryWrites   int                     `json:"repository_writes"`
-	MutationAuthority  bool                    `json:"mutation_authority"`
-	PromotionAuthority bool                    `json:"promotion_authority"`
+	SandboxWrites      int                     `json:"sandbox_writes"`
+	MutationAuthority  string                  `json:"mutation_authority"`
+	PromotionAuthority string                  `json:"promotion_authority"`
 	ReportDigest       string                  `json:"report_digest"`
 }
 
@@ -275,28 +345,47 @@ type CaseResult struct {
 }
 
 type SuiteSummary struct {
-	CasesTotal                    int  `json:"cases_total"`
-	CasesPassed                   int  `json:"cases_passed"`
-	AllowCases                    int  `json:"allow_cases"`
-	DenyCases                     int  `json:"deny_cases"`
-	UnknownCases                  int  `json:"unknown_cases"`
-	CapabilityRequests            int  `json:"capability_requests"`
-	CapabilityAuthorized          int  `json:"capability_authorized"`
-	CapabilityDenied              int  `json:"capability_denied"`
-	CapabilityUnknown             int  `json:"capability_unknown"`
-	CurrentEvidenceCapabilities   int  `json:"current_evidence_capabilities"`
-	CurrentEvidenceDenominator    int  `json:"current_evidence_denominator"`
-	HistoricalFixtureCapabilities int  `json:"historical_fixture_capabilities"`
-	EnforcementObservations       int  `json:"enforcement_observations"`
-	BlockedWriteAttempts          int  `json:"blocked_write_attempts"`
-	BlockedMutationAttempts       int  `json:"blocked_mutation_attempts"`
-	RepositoryWrites              int  `json:"repository_writes"`
-	MutationAuthority             bool `json:"mutation_authority"`
-	PromotionAuthority            bool `json:"promotion_authority"`
-	SourceReconstructionPasses    int  `json:"source_reconstruction_passes"`
-	SourceReconstructionTotal     int  `json:"source_reconstruction_total"`
-	ProducerImportNumerator       int  `json:"producer_import_numerator"`
-	ProducerImportDenominator     int  `json:"producer_import_denominator"`
+	CasesTotal                    int    `json:"cases_total"`
+	CasesPassed                   int    `json:"cases_passed"`
+	AllowCases                    int    `json:"allow_cases"`
+	DenyCases                     int    `json:"deny_cases"`
+	UnknownCases                  int    `json:"unknown_cases"`
+	CapabilityRequests            int    `json:"capability_requests"`
+	CapabilityAuthorized          int    `json:"capability_authorized"`
+	CapabilityDenied              int    `json:"capability_denied"`
+	CapabilityUnknown             int    `json:"capability_unknown"`
+	CurrentEvidenceCapabilities   int    `json:"current_evidence_capabilities"`
+	CurrentEvidenceDenominator    int    `json:"current_evidence_denominator"`
+	HistoricalFixtureDeclarations int    `json:"historical_fixture_declarations"`
+	EffectTokenRequests           int    `json:"effect_token_requests"`
+	TokensIssued                  int    `json:"tokens_issued"`
+	TokenDenials                  int    `json:"token_denials"`
+	EnforcementObservations       int    `json:"enforcement_observations"`
+	BlockedWriteAttempts          int    `json:"blocked_write_attempts"`
+	BlockedMutationAttempts       int    `json:"blocked_mutation_attempts"`
+	RepositoryWrites              int    `json:"repository_writes"`
+	SandboxWrites                 int    `json:"sandbox_writes"`
+	MutationAuthority             string `json:"mutation_authority"`
+	PromotionAuthority            string `json:"promotion_authority"`
+	ArtifactExecutions            int    `json:"artifact_executions"`
+	ArtifactsAbsentForBlocked     int    `json:"artifacts_absent_for_blocked"`
+	SourceReconstructionPasses    int    `json:"source_reconstruction_passes"`
+	SourceReconstructionTotal     int    `json:"source_reconstruction_total"`
+	ConsumerReplayPasses          int    `json:"consumer_replay_passes"`
+	ConsumerReplayTotal           int    `json:"consumer_replay_total"`
+	ProducerImportNumerator       int    `json:"producer_import_numerator"`
+	ProducerImportDenominator     int    `json:"producer_import_denominator"`
+}
+
+type Denominator struct {
+	Cases                int `json:"cases"`
+	Declarations         int `json:"declarations"`
+	CapabilityRequests   int `json:"capability_requests"`
+	EvidenceSlots        int `json:"evidence_slots"`
+	EffectTokenRequests  int `json:"effect_token_requests"`
+	Claims               int `json:"claims"`
+	Interventions        int `json:"interventions"`
+	IndicatorsPerReceipt int `json:"indicators_per_receipt"`
 }
 
 type Suite struct {
@@ -308,11 +397,13 @@ type Suite struct {
 	Decision           string       `json:"decision"`
 	Resolution         string       `json:"resolution"`
 	Summary            SuiteSummary `json:"summary"`
+	Denominator        Denominator  `json:"denominator"`
 	Cases              []CaseResult `json:"cases"`
 	IndependentJudge   string       `json:"independent_judge"`
 	RepositoryWrites   int          `json:"repository_writes"`
-	MutationAuthority  bool         `json:"mutation_authority"`
-	PromotionAuthority bool         `json:"promotion_authority"`
+	SandboxWrites      int          `json:"sandbox_writes"`
+	MutationAuthority  string       `json:"mutation_authority"`
+	PromotionAuthority string       `json:"promotion_authority"`
 	SuiteDigest        string       `json:"suite_digest"`
 }
 
@@ -330,6 +421,23 @@ type Intervention struct {
 	DecisionPreserved       bool   `json:"decision_preserved"`
 	SemanticDigestPreserved bool   `json:"semantic_digest_preserved"`
 	IndependentJudge        string `json:"independent_judge"`
+	BaseArtifactPresent     bool   `json:"base_artifact_present"`
+	ChangedArtifactPresent  bool   `json:"changed_artifact_present"`
+	BaseArtifactDigest      string `json:"base_artifact_digest"`
+	ChangedArtifactDigest   string `json:"changed_artifact_digest"`
+	BaseExecutionClaim      string `json:"base_execution_claim"`
+	ChangedExecutionClaim   string `json:"changed_execution_claim"`
+	GraphComplete           bool   `json:"graph_complete"`
+	ChangedGraphComplete    bool   `json:"changed_graph_complete"`
+	ForgedProviderRejected  bool   `json:"forged_provider_rejected"`
+	BaseOutputDigest        string `json:"base_output_digest"`
+	ChangedOutputDigest     string `json:"changed_output_digest"`
+	OutputDigestPreserved   bool   `json:"output_digest_preserved"`
+	PropositionsPreserved   bool   `json:"propositions_preserved"`
+	TokenDecisionPreserved  bool   `json:"token_decision_preserved"`
+	ForgedProviderDigest    string `json:"forged_provider_digest"`
+	ForgedReceiptDigest     string `json:"forged_receipt_digest"`
+	ForgedJudgeReason       string `json:"forged_judge_reason"`
 }
 
 func ParseSource(source []byte) (SourceModel, error) {
@@ -370,12 +478,91 @@ func ParseSource(source []byte) (SourceModel, error) {
 	if err := model.fromValues(values); err != nil {
 		return SourceModel{}, err
 	}
+	model.Graph = graphProof(ir, model)
 	return model, nil
 }
 
 func ValidateShape(source []byte) error {
-	_, err := ParseSource(source)
-	return err
+	model, err := ParseSource(source)
+	if err != nil {
+		return err
+	}
+	if !model.Graph.Complete {
+		return fmt.Errorf("capability expansion graph topology is incomplete")
+	}
+	return nil
+}
+
+func graphProof(ir semantic.IR, model SourceModel) GraphProof {
+	facts := make([]GraphFact, 0, len(ir.Graph.Facts()))
+	for _, fact := range ir.Graph.Facts() {
+		facts = append(facts, GraphFact{Subject: fact.Subject.String(), Predicate: fact.Predicate.String(), Object: fact.Object.String()})
+	}
+	policyOutput := generatedEntity(ir, model.Policy.SemanticValueNodeID)
+	policyInput := usedEntity(ir, model.Policy.SemanticValueNodeID)
+	authorizeOutput := generatedEntity(ir, operationNode(model, "authorize-before-expand"))
+	bindOutput := generatedEntity(ir, operationNode(model, "bind-capability-evidence"))
+	expandOutput := generatedEntity(ir, operationNode(model, "expand-with-capability-evidence"))
+	path := []string{policyInput, model.Policy.SemanticValueNodeID, policyOutput, operationNode(model, "authorize-before-expand"), authorizeOutput, operationNode(model, "bind-capability-evidence"), bindOutput, operationNode(model, "expand-with-capability-evidence"), expandOutput}
+	complete := true
+	for index := 0; index+1 < len(path); index++ {
+		if path[index] == "" || path[index+1] == "" {
+			complete = false
+			continue
+		}
+		predicate := "used"
+		subject, object := path[index+1], path[index]
+		if index%2 == 1 {
+			predicate, subject, object = "wasGeneratedBy", path[index+1], path[index]
+		}
+		if !graphFactExists(facts, subject, predicate, object) {
+			complete = false
+		}
+	}
+	canonical := make([]string, 0, len(path)+len(facts))
+	canonical = append(canonical, "path")
+	canonical = append(canonical, path...)
+	canonical = append(canonical, "facts")
+	for _, fact := range facts {
+		canonical = append(canonical, fact.Subject+"|"+fact.Predicate+"|"+fact.Object)
+	}
+	return GraphProof{Facts: facts, RequiredPath: path, PathDigest: digestBytes([]byte(strings.Join(canonical, "\n"))), Complete: complete}
+}
+
+func operationNode(model SourceModel, id string) string {
+	for _, operation := range model.Operations {
+		if operation.ID == id {
+			return operation.NodeID
+		}
+	}
+	return ""
+}
+
+func generatedEntity(ir semantic.IR, activity string) string {
+	for _, fact := range ir.Graph.Facts() {
+		if fact.Predicate.String() == "wasGeneratedBy" && fact.Object.String() == activity {
+			return fact.Subject.String()
+		}
+	}
+	return ""
+}
+
+func usedEntity(ir semantic.IR, activity string) string {
+	for _, fact := range ir.Graph.Facts() {
+		if fact.Predicate.String() == "used" && fact.Subject.String() == activity {
+			return fact.Object.String()
+		}
+	}
+	return ""
+}
+
+func graphFactExists(facts []GraphFact, subject, predicate, object string) bool {
+	for _, fact := range facts {
+		if fact.Subject == subject && fact.Predicate == predicate && fact.Object == object {
+			return true
+		}
+	}
+	return false
 }
 
 func parseSemanticValue(raw string) (SemanticValue, error) {

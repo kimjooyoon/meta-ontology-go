@@ -1,130 +1,129 @@
-# Capability-scoped expansion correction
+# Capability-scoped expansion
 
-This PR is an independent philosophy experiment, not a language-readiness or
-general macro-sandbox claim. It corrects the first version by making the
-semantic `.gooo` values and live provider observations authoritative.
+This is an independent philosophy experiment about compile/expansion-time
+authority. It is not a general macro sandbox or a language-readiness claim.
+The experiment makes capability kind, operation, target, policy, and prior
+claim state formal Gooo values, then compares ALLOW, DENY, and UNKNOWN cases
+from the same source.
 
-## Authority boundary
+## Semantic authority boundary
 
-`examples/capability-scoped-expansion/main.gooo` uses the existing Gooo
-`computes "..."` value-program form. The producer and consumer both run:
+`examples/capability-scoped-expansion/main.gooo` is authoritative only after:
 
 ```text
 syntax.ParseFile -> bidir.Lower -> semantic.IR -> canonical semantic digest
 ```
 
-The lowered activity value programs define, as language values:
-
-- `capability.policy`: default `DENY`, authorization mode, effect ceiling, and
-  prior claim state;
-- `capability.declare`: value id, kind, operation, target, policy id, prior
-  claim state, and evidence class;
-- `capability.operation`: expansion stage, authorization step, and prior claim
-  state;
-- `capability.case`: request values and effect probes, without an expected
-  decision field.
-
-Comments, activity names, and source substrings are not inputs to the
-authority decision. The expected result is reconstructed from the lowered
-policy/case values and the raw provider wire.
+The lowered values define `capability.policy`, `capability.declare`,
+`capability.operation`, and `capability.case`. Activity names, comments,
+expected-decision tables, and substring searches are not authority inputs.
+The lowered graph must contain the ordered path
+`ExpansionRequest -> policy -> authorization -> evidence -> ExpandedSyntax`.
+Removing an edge lowers the graph to `UNKNOWN / LOWER_RESOLUTION` and keeps
+the execution claim `OPEN`.
 
 ## Safe vertical slice
 
-The provider performs only two live observations:
+The provider is a separate command that emits raw JSON before the producer
+runs. It observes only:
 
-1. reads a CI-created pinned file in a temporary directory and records its
-   content digest as `CURRENT_EVIDENCE`;
-2. reads a deterministic logical input `logical-clock:0` as
-   `CURRENT_EVIDENCE`.
+1. a CI-created pinned file and its bytes/path digest;
+2. the deterministic logical input `logical-clock:0`.
 
-Environment and network are deliberately not contacted. The raw provider wire
-records explicit non-observation markers: environment is `UNKNOWN`; the
-network declaration is `HISTORICAL_FIXTURE`. Neither marker enters current
-evidence. Thus the fixed capability denominator is four declarations, but only
-`2/4` are `CURRENT_EVIDENCE`.
+The environment is not read and the exact pinned-network target is not
+contacted. The declaration is therefore `UNKNOWN`, while the network
+declaration is `HISTORICAL_FIXTURE`; neither enters `CURRENT_EVIDENCE`.
+The fixed evidence denominator is four declarations and the observed current
+capability count is `2/4`. Historical metadata alone cannot produce ALLOW.
 
-The sandbox provider exposes real request methods for repository write,
-mutation, and promotion. Each request returns `DENIED`, records the before and
-after sandbox digests, and performs no write. If an enforcement result is not
-observed, the producer and consumer emit
-`CAPABILITY_ENFORCEMENT_NOT_IMPLEMENTED / LOWER_RESOLUTION`, never a constant
-denial.
+Effect requests go through a capability broker. The provider makes three
+actual token issuance requests (repository write, mutation, promotion); the
+default-deny broker returns three denial receipts and issues zero tokens.
+The effect API accepts only a broker token, and the expansion engine has no
+effect-API import. Because OS authority is not measured, mutation and
+promotion are reported as `NOT_OBSERVED`, not as false authority claims.
 
-## Fixed denominator and observed result
+Repository and sandbox are different observation scopes. Tracked plus
+untracked repository entries are snapshotted before and after; the temporary
+sandbox is snapshotted separately. The final receipts bind both digests and
+report repository writes and sandbox writes independently.
 
-The source has eight semantic cases. No case stores an expected decision; the
-producer and consumer independently derive it from policy, request values,
-and raw observations.
+## Actual expansion artifact
 
-| fixed cases | ALLOW | DENY | UNKNOWN |
-| ---: | ---: | ---: | ---: |
-| 8 | 1 | 6 | 1 |
+The one ALLOW case executes `ExpandWithCapabilityEvidence` through the engine
+using the current file digest and logical input. It writes a canonical Gooo
+artifact outside the repository, records path/value/bytes/content digest, and
+parses and lowers the generated bytes again. DENY and UNKNOWN cases do not
+produce an artifact.
 
-The expected CI artifact reports:
+## Fixed denominators
 
-| metric | value |
+The CI receipt keeps these denominators distinct:
+
+| denominator | value |
 | --- | ---: |
-| capability requests | 9 |
-| authorized | 2 |
-| denied | 6 |
-| UNKNOWN | 1 |
-| CURRENT_EVIDENCE | 2/4 |
-| HISTORICAL_FIXTURE declarations | 1 |
-| enforcement observations | 3/3 |
-| blocked write probes | 1 |
-| blocked mutation probes | 1 |
-| actual repository writes | 0 |
-| actual mutation authority | false |
-| actual promotion authority | false |
+| cases | 9 |
+| declarations | 4 |
+| capability requests | 10 |
+| evidence slots | 4 |
+| effect token requests | 3 |
+| claims | computed from unique propositions |
+| interventions | 4 |
+| indicators per receipt | 12 |
+
+The expected case result is one ALLOW, six DENY, and two UNKNOWN. Capability
+request outcomes are two authorized, six denied, and two UNKNOWN. The broker
+counts are requests/issued/denied `3/0/3`.
 
 ## Claims and interventions
 
-Every semantic capability starts with prior state `OPEN`. Each receipt appends
-claim transitions containing stage, step, reason, evidence digest, and
-provenance:
+Each capability proposition has a unique predicate and evidence digest. A
+valid current file-read proposition remains `OPEN -> DISCHARGED` even when the
+same case's separate write-token proposition is `OPEN -> REFUTED`. Aggregate
+DENY is not propagated to unrelated subclaims. Missing observations preserve
+`OPEN`; explicit target/policy violations become `REFUTED`.
 
-- successful live observation: `OPEN -> DISCHARGED`;
-- missing live observation: `OPEN -> OPEN`;
-- explicit target/policy violation: `OPEN -> REFUTED`.
+The four CI interventions are:
 
-The artifact contains two interventions:
-
-- semantic policy intervention changes `authorization=exact-current` to
-  `authorization=deny-all`; the allow case changes from `ALLOW` with a
-  `DISCHARGED` scope claim to `DENY` with `REFUTED`;
-- comment-only intervention changes the raw source digest but preserves the
-  canonical semantic digest, decision, and claim transition.
+- `policy-deny-all`: changes authorization and removes the ALLOW artifact;
+- `comment-only`: changes only the raw source digest and preserves semantic
+  digest, token decisions, output digest, and proposition states;
+- `graph-edge-removal`: makes the lowered graph incomplete and yields
+  `UNKNOWN / LOWER_RESOLUTION` with no artifact;
+- `forged-provider`: changes a pinned-file digest, reseals the receipt, and is
+  rejected by the independent consumer's direct reobservation.
 
 ## Independent consumer
 
-`internal/meta/capabilityscopedexpansion/verify` imports only `syntax` and
-`bidir` from the language boundary. It receives raw `.gooo`, raw provider
-observations, and raw receipt JSON. It reconstructs the semantic policy,
-declarations, cases, evidence availability, effect enforcement, claim
-transitions, and receipt digest itself. It does not import the producer. CI
-also checks that producer-package imports are absent from the consumer source.
+`internal/meta/capabilityscopedexpansion/verify` imports no producer package.
+It receives raw `.gooo`, raw provider JSON, and raw receipt JSON; reconstructs
+the source model through parse/lower; reobserves pinned bytes, logical input,
+repository, and sandbox; reparses the expansion artifact; and checks claims,
+graph topology, and receipt sealing. CI calculates `go list -deps` and consumer
+replay counts in a separate dependency/judge artifact. A duplicated table or a
+single source-string search is not used as the reconstruction denominator.
 
-The artifact records source reconstruction `1/1` and producer imports `0/1`.
+## Research basis and rejection rules
 
-## Research basis
-
-The design adopts a phase boundary from the [Racket Reference evaluation
-model](https://docs.racket-lang.org/reference/eval-model.html#%28part._phases%29),
-but rejects treating phase separation as permission to discard observable
-effects. It adopts the explicit compile-time resource warning from the [Rust
-Reference procedural macro](https://doc.rust-lang.org/reference/procedural-macros.html)
-section, but rejects inheriting ambient compiler resources. It adopts narrow
-authority and confused-deputy avoidance from [Miller, Yee, and Shapiro,
-Capability Myths Demolished](https://srl.cs.jhu.edu/pubs/SRL2003-02.pdf), but
-rejects treating a JSON receipt as a complete object-capability system.
+The design adopts explicit phase separation from the [Racket Reference
+evaluation model](https://docs.racket-lang.org/reference/eval-model.html#%28part._phases%29),
+but rejects treating phase separation as permission to inherit ambient
+resources. It adopts the compile-time resource warning in the [Rust Reference
+procedural macro](https://doc.rust-lang.org/reference/procedural-macros.html)
+section, but rejects granting compiler filesystem/network authority by default.
+It adopts narrow authority and confused-deputy avoidance from [Miller, Yee,
+and Shapiro, Capability Myths
+Demolished](https://srl.cs.jhu.edu/pubs/SRL2003-02.pdf), but rejects treating a
+JSON receipt alone as a complete object-capability system.
 
 ## Remaining falsifiability
 
 An independent implementation can still refute this slice by accepting an
-undeclared target, treating missing environment evidence as current, accepting
-a missing provider observation, changing a comment-only semantic digest,
-disagreeing with the raw before/after enforcement result, or importing the
-producer into the consumer. The slice does not yet provide OS-level
-confinement, revocation, delegation, cryptographic authority, real network
-access, or wall-clock observation. Those limitations remain explicit rather
-than being counted as current evidence.
+undeclared target, promoting historical or missing evidence, accepting a
+forged provider after direct reobservation, accepting a missing broker token,
+creating output for DENY/UNKNOWN, accepting the removed graph edge, importing
+the producer into the consumer, or changing comment-only semantic/output
+digests. The slice does not provide OS-level confinement, revocation,
+delegation, cryptographic authority, real network access, or wall-clock
+observation; those are explicitly `NOT_OBSERVED` or lower-resolution rather
+than counted as current evidence.
