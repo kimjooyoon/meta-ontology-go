@@ -14,12 +14,27 @@ The producer emits a receipt with six claims and twelve append-only events:
   dependency-blocked cause;
 - ambiguous evidence remains `OPEN` and is `FAIL_CLOSED`.
 
-The separate judge reparses this source, recomputes the source relation,
-replays every digest chain, and checks every fixed numerator/denominator. It
-does not import the producer's evaluator. The workflow uploads the receipt as
-the result artifact and reports `PASS`, `FAIL_CLOSED`, and `UNKNOWN` case
-counts.
+Each `computes` value is a structured `claim-case/v1` source case containing
+the claim ID, prior state, evidence kind and ID, dependency claim ID, observed
+stage/step/reason, and an expected result used only for conformance comparison.
+The producer and the independent judge each run `syntax.ParseFile` followed by
+`bidir.Lower`, recover the six cases from those value programs, and derive
+states from observed evidence. No activity table or post-hoc claim index is
+authoritative.
 
-The default effect boundary is read-only: repository writes are `0` and
-mutation authority is `false`. The receipt is evidence for this experiment,
-not authority to promote or mutate semantic state.
+The separate judge recomputes the source relation, replays every digest chain,
+and checks every fixed numerator/denominator. It does not import the
+producer's evaluator. The workflow also changes one source evidence kind and
+adds one comment-only intervention: the former must change the semantic
+receipt, decision, and transition, while the latter may change only the raw
+source digest. A separately resealed ledger tamper is rejected by source
+reconstruction.
+
+The receipt separates `conformance_decision` from `subject_resolution` and
+`subject_counts`, so a conformance `PASS` does not hide the three `UNKNOWN`
+cases or the one `FAIL_CLOSED` case.
+
+The default effect boundary is read-only: repository writes are derived from
+before/after repository snapshots and are `0`, mutation authority is `false`,
+and the artifact binds the actual `runtime.Version()`. The receipt is evidence
+for this experiment, not authority to promote or mutate semantic state.

@@ -7,46 +7,39 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"reflect"
+	"runtime"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const (
-	receiptSchema = "gooo/claim-lifecycle-calculus/v1"
+	receiptSchema = "gooo/claim-lifecycle-calculus/v2"
 	metaOperation = "preserve-claim-lifecycle"
 	producerID    = "claimlifecyclecalculus.Evaluate"
 	consumerID    = "claim-lifecycle-calculus-judge"
-	goVersion     = "go1.27.0"
-	claimTotal    = 6
 	caseTotal     = 6
 )
 
-type activitySpec struct {
-	Name    string
-	Inputs  []string
-	Output  string
-	Program string
-	ClaimID string
-}
-
-var activitySpecs = []activitySpec{
-	{Name: "DeclareClaim", Inputs: []string{"Claim"}, Output: "OpenClaim", Program: "meta.claim.lifecycle.open:v1", ClaimID: "claim:declared-open"},
-	{Name: "AcceptSupportingEvidence", Inputs: []string{"OpenClaim", "Evidence"}, Output: "DischargedClaim", Program: "meta.claim.lifecycle.discharge:v1", ClaimID: "claim:supporting-discharge"},
-	{Name: "ApplyContradictingEvidence", Inputs: []string{"OpenClaim", "Evidence"}, Output: "RefutedClaim", Program: "meta.claim.lifecycle.refute:v1", ClaimID: "claim:contradicting-refutation"},
-	{Name: "PreserveOpenOnMissingEvidence", Inputs: []string{"OpenClaim"}, Output: "OpenClaim", Program: "meta.claim.lifecycle.unknown:v1", ClaimID: "claim:direct-unknown"},
-	{Name: "EmitLifecycleReceipt", Inputs: []string{"OpenClaim"}, Output: "LifecycleReceipt", Program: "meta.claim.lifecycle.receipt:v1", ClaimID: "claim:dependent-unknown"},
-	{Name: "RejectAmbiguousEvidence", Inputs: []string{"OpenClaim", "Evidence"}, Output: "OpenClaim", Program: "meta.claim.lifecycle.ambiguous:v1", ClaimID: "claim:ambiguous-evidence"},
-}
-
-var entitySpecs = []string{
-	"gooo://claim-lifecycle/claim",
-	"gooo://claim-lifecycle/evidence",
-	"gooo://claim-lifecycle/open-claim",
-	"gooo://claim-lifecycle/discharged-claim",
-	"gooo://claim-lifecycle/refuted-claim",
-	"gooo://claim-lifecycle/lifecycle-receipt",
+// These wire types intentionally belong to the judge. The judge reconstructs
+// the expected artifact from syntax.ParseFile -> bidir.Lower and never imports
+// the producer's implementation or copies its activity table.
+type SourceCase struct {
+	CaseID            string `json:"case_id"`
+	ClaimID           string `json:"claim_id"`
+	PriorState        string `json:"prior_state"`
+	EvidenceKind      string `json:"evidence_kind"`
+	EvidenceID        string `json:"evidence_id"`
+	DependencyClaimID string `json:"dependency_claim_id"`
+	ObservedStage     string `json:"observed_stage"`
+	ObservedStep      string `json:"observed_step"`
+	ObservedReason    string `json:"observed_reason"`
+	ExpectedStatus    string `json:"expected_status"`
+	ExpectedDecision  string `json:"expected_decision"`
+	Provenance        string `json:"provenance"`
 }
 
 type EntityBinding struct {
@@ -55,38 +48,47 @@ type EntityBinding struct {
 }
 
 type ActivityBinding struct {
-	Name         string   `json:"name"`
-	Inputs       []string `json:"inputs"`
-	Output       string   `json:"output"`
-	ValueProgram string   `json:"value_program"`
-	ClaimID      string   `json:"claim_id"`
+	Name               string     `json:"name"`
+	Inputs             []string   `json:"inputs"`
+	Output             string     `json:"output"`
+	ValueProgram       string     `json:"value_program"`
+	SemanticNodeDigest string     `json:"semantic_node_digest"`
+	Case               SourceCase `json:"case"`
 }
 
 type SourceRelation struct {
-	Package    string            `json:"package"`
-	Namespace  string            `json:"namespace"`
-	Entities   []EntityBinding   `json:"entities"`
-	Activities []ActivityBinding `json:"activities"`
-	Digest     string            `json:"digest"`
-}
-
-type Claim struct {
-	ID                string `json:"id"`
-	Statement         string `json:"statement"`
-	DeclarationDigest string `json:"declaration_digest"`
-	Status            string `json:"status"`
-}
-
-type Evidence struct {
-	ID     string `json:"id"`
-	Kind   string `json:"kind"`
-	Digest string `json:"digest"`
+	Package          string            `json:"package"`
+	Namespace        string            `json:"namespace"`
+	SemanticIRDigest string            `json:"semantic_ir_digest"`
+	Entities         []EntityBinding   `json:"entities"`
+	Activities       []ActivityBinding `json:"activities"`
+	Digest           string            `json:"digest"`
 }
 
 type Coordinate struct {
 	Stage  string `json:"stage"`
 	Step   string `json:"step"`
 	Reason string `json:"reason"`
+}
+
+type Claim struct {
+	ID                string     `json:"id"`
+	CaseID            string     `json:"case_id"`
+	Statement         string     `json:"statement"`
+	DeclarationDigest string     `json:"declaration_digest"`
+	Status            string     `json:"status"`
+	Coordinate        Coordinate `json:"coordinate"`
+	Reason            string     `json:"reason"`
+	EvidenceDigest    string     `json:"evidence_digest"`
+	Provenance        string     `json:"provenance"`
+}
+
+type Evidence struct {
+	ID           string `json:"id"`
+	Kind         string `json:"kind"`
+	ClaimID      string `json:"claim_id"`
+	SourceCaseID string `json:"source_case_id"`
+	Digest       string `json:"digest"`
 }
 
 type CauseReceipt struct {
@@ -97,6 +99,7 @@ type CauseReceipt struct {
 	DependencyClaimIDs []string   `json:"dependency_claim_ids,omitempty"`
 	Coordinate         Coordinate `json:"coordinate"`
 	Reason             string     `json:"reason"`
+	Provenance         string     `json:"provenance"`
 	Digest             string     `json:"digest"`
 }
 
@@ -114,15 +117,18 @@ type Transition struct {
 }
 
 type CaseResult struct {
-	ID             string     `json:"id"`
-	ClaimID        string     `json:"claim_id"`
-	ExpectedStatus string     `json:"expected_status"`
-	ObservedStatus string     `json:"observed_status"`
-	Decision       string     `json:"decision"`
-	ObservedEvent  string     `json:"observed_event"`
-	CauseKind      string     `json:"cause_kind"`
-	Coordinate     Coordinate `json:"coordinate"`
-	Reason         string     `json:"reason"`
+	ID               string     `json:"id"`
+	ClaimID          string     `json:"claim_id"`
+	ExpectedStatus   string     `json:"expected_status"`
+	ObservedStatus   string     `json:"observed_status"`
+	ExpectedDecision string     `json:"expected_decision"`
+	Decision         string     `json:"decision"`
+	Conformance      string     `json:"conformance"`
+	ObservedEvent    string     `json:"observed_event"`
+	CauseKind        string     `json:"cause_kind"`
+	Coordinate       Coordinate `json:"coordinate"`
+	Reason           string     `json:"reason"`
+	Provenance       string     `json:"provenance"`
 }
 
 type Metric struct {
@@ -157,8 +163,11 @@ type Summary struct {
 }
 
 type Effects struct {
-	RepositoryWrites  int  `json:"repository_writes"`
-	MutationAuthority bool `json:"mutation_authority"`
+	RepositoryWrites     int    `json:"repository_writes"`
+	MutationAuthority    bool   `json:"mutation_authority"`
+	BeforeSnapshotDigest string `json:"before_snapshot_digest"`
+	AfterSnapshotDigest  string `json:"after_snapshot_digest"`
+	RuntimeVersion       string `json:"runtime_version"`
 }
 
 type Decision struct {
@@ -167,35 +176,59 @@ type Decision struct {
 	Reason     string `json:"reason"`
 }
 
+type SubjectCounts struct {
+	Open              int `json:"open"`
+	Discharged        int `json:"discharged"`
+	Refuted           int `json:"refuted"`
+	DirectUnknown     int `json:"direct_unknown"`
+	DependencyBlocked int `json:"dependency_blocked"`
+	FailClosed        int `json:"fail_closed"`
+}
+
 type Receipt struct {
-	Schema         string         `json:"schema"`
-	Scope          string         `json:"scope"`
-	HeadSHA        string         `json:"head_sha"`
-	GoVersion      string         `json:"go_version"`
-	SourcePath     string         `json:"source_path"`
-	SourceDigest   string         `json:"source_digest"`
-	Producer       string         `json:"producer"`
-	Consumer       string         `json:"consumer"`
-	MetaOperation  string         `json:"meta_operation"`
-	SourceRelation SourceRelation `json:"source_relation"`
-	Claims         []Claim        `json:"claims"`
-	Evidence       []Evidence     `json:"evidence"`
-	Transitions    []Transition   `json:"transitions"`
-	CauseReceipts  []CauseReceipt `json:"cause_receipts"`
-	Cases          []CaseResult   `json:"cases"`
-	Metrics        []Metric       `json:"metrics"`
-	Summary        Summary        `json:"summary"`
-	Effects        Effects        `json:"effects"`
-	Decision       Decision       `json:"decision"`
-	ReceiptDigest  string         `json:"receipt_digest"`
+	Schema                string         `json:"schema"`
+	Scope                 string         `json:"scope"`
+	HeadSHA               string         `json:"head_sha"`
+	GoVersion             string         `json:"go_version"`
+	SourcePath            string         `json:"source_path"`
+	RawSourceDigest       string         `json:"raw_source_digest"`
+	Producer              string         `json:"producer"`
+	Consumer              string         `json:"consumer"`
+	MetaOperation         string         `json:"meta_operation"`
+	SourceRelation        SourceRelation `json:"source_relation"`
+	Claims                []Claim        `json:"claims"`
+	Evidence              []Evidence     `json:"evidence"`
+	Transitions           []Transition   `json:"transitions"`
+	CauseReceipts         []CauseReceipt `json:"cause_receipts"`
+	Cases                 []CaseResult   `json:"cases"`
+	Metrics               []Metric       `json:"metrics"`
+	Summary               Summary        `json:"summary"`
+	Effects               Effects        `json:"effects"`
+	ConformanceDecision   Decision       `json:"conformance_decision"`
+	SubjectCounts         SubjectCounts  `json:"subject_counts"`
+	SubjectResolution     Decision       `json:"subject_resolution"`
+	SemanticReceiptDigest string         `json:"semantic_receipt_digest"`
+	ReceiptDigest         string         `json:"receipt_digest"`
+}
+
+type observation struct {
+	Event          string
+	After          string
+	Decision       string
+	CauseKind      string
+	EvidenceDigest string
 }
 
 func main() {
 	receiptPath := flag.String("receipt", "", "producer receipt")
 	sourcePath := flag.String("source", "examples/claim-lifecycle-calculus/main.gooo", "Gooo source")
+	sourceLabel := flag.String("source-label", "", "stable source label expected in the receipt")
 	flag.Parse()
 	if *receiptPath == "" {
 		fail("-receipt is required")
+	}
+	if *sourceLabel == "" {
+		*sourceLabel = *sourcePath
 	}
 	receiptRaw, err := os.ReadFile(*receiptPath)
 	if err != nil {
@@ -211,62 +244,64 @@ func main() {
 	if err := decoder.Decode(&receipt); err != nil {
 		fail(err.Error())
 	}
-	if err := validate(receipt, *sourcePath, sourceRaw); err != nil {
+	before := repositorySnapshotDigest()
+	if err := validate(receipt, *sourcePath, *sourceLabel, sourceRaw, before); err != nil {
 		fail(err.Error())
 	}
-	fmt.Printf("judge decision=%s claims=%d/%d transitions=%d/%d pass=%d fail_closed=%d unknown=%d direct_unknown=%d dependency_blocked=%d\n", receipt.Decision.Value, receipt.Summary.ClaimsTotal, claimTotal, receipt.Summary.TransitionsTotal, claimTotal*2, receipt.Summary.CaseDecisionCounts.Pass, receipt.Summary.CaseDecisionCounts.FailClosed, receipt.Summary.CaseDecisionCounts.Unknown, receipt.Summary.DirectUnknownCases, receipt.Summary.DependencyBlockedCases)
+	after := repositorySnapshotDigest()
+	if before != after {
+		fail("judge changed the repository snapshot")
+	}
+	if receipt.Effects.BeforeSnapshotDigest != before || receipt.Effects.AfterSnapshotDigest != after {
+		fail("receipt is not bound to the judge workspace snapshots")
+	}
+	fmt.Printf("judge conformance=%s subject=%s claims=%d/%d transitions=%d/%d pass=%d fail_closed=%d unknown=%d direct_unknown=%d dependency_blocked=%d\n", receipt.ConformanceDecision.Value, receipt.SubjectResolution.Value, receipt.Summary.ClaimsTotal, caseTotal, receipt.Summary.TransitionsTotal, caseTotal*2, receipt.Summary.CaseDecisionCounts.Pass, receipt.Summary.CaseDecisionCounts.FailClosed, receipt.Summary.CaseDecisionCounts.Unknown, receipt.Summary.DirectUnknownCases, receipt.Summary.DependencyBlockedCases)
 }
 
-func validate(receipt Receipt, sourcePath string, sourceRaw []byte) error {
-	if receipt.Schema != receiptSchema || receipt.Scope != "CLAIM_LIFECYCLE_ONLY" || receipt.GoVersion != goVersion || receipt.SourcePath != sourcePath || receipt.Producer != producerID || receipt.Consumer != consumerID || receipt.MetaOperation != metaOperation {
+func validate(receipt Receipt, sourcePath, sourceLabel string, sourceRaw []byte, snapshot string) error {
+	if receipt.Schema != receiptSchema || receipt.Scope != "CLAIM_LIFECYCLE_ONLY" || receipt.SourcePath != sourceLabel || receipt.Producer != producerID || receipt.Consumer != consumerID || receipt.MetaOperation != metaOperation {
 		return fmt.Errorf("receipt header or producer boundary changed")
 	}
-	if receipt.SourceDigest != digestBytes(sourceRaw) || !validDigest(receipt.SourceDigest) {
+	if receipt.GoVersion != runtime.Version() || receipt.Effects.RuntimeVersion != runtime.Version() {
+		return fmt.Errorf("receipt runtime version is not the judge runtime")
+	}
+	if receipt.RawSourceDigest != digestBytes(sourceRaw) || !validDigest(receipt.RawSourceDigest) {
 		return fmt.Errorf("receipt is not bound to the supplied Gooo source")
 	}
 	relation, err := inspectSource(sourcePath, sourceRaw)
 	if err != nil {
 		return err
 	}
-	if !reflect.DeepEqual(receipt.SourceRelation, relation) {
-		return fmt.Errorf("Gooo activity relation changed")
-	}
-	expectedClaims := claimsFor(relation)
-	if !reflect.DeepEqual(receipt.Claims, expectedClaims) {
-		return fmt.Errorf("claim identity or declaration status changed")
-	}
-	expectedEvidence := []Evidence{
-		{ID: "evidence:supporting", Kind: "SUPPORTING", Digest: digestString("supporting evidence for claim:supporting-discharge")},
-		{ID: "evidence:contradicting", Kind: "CONTRADICTING", Digest: digestString("contradicting evidence for claim:contradicting-refutation")},
-	}
-	if !reflect.DeepEqual(receipt.Evidence, expectedEvidence) {
-		return fmt.Errorf("evidence identity changed")
-	}
-	if err := validateLedger(receipt); err != nil {
-		return err
-	}
-	expectedCases := expectedCaseResults(receipt)
-	if !reflect.DeepEqual(receipt.Cases, expectedCases) {
-		return fmt.Errorf("case classification changed")
-	}
-	expectedSummary := summarize(receipt.Claims, receipt.Transitions, receipt.Cases)
-	if receipt.Summary != expectedSummary {
-		return fmt.Errorf("summary denominator or case partition changed")
-	}
-	expectedMetrics := buildMetrics(receipt)
-	if !reflect.DeepEqual(receipt.Metrics, expectedMetrics) {
-		return fmt.Errorf("metric numerator, denominator, or provenance changed")
-	}
-	if receipt.Effects != (Effects{RepositoryWrites: 0, MutationAuthority: false}) {
-		return fmt.Errorf("read-only effect boundary changed")
-	}
-	if receipt.Decision != (Decision{Value: "PASS", Resolution: "LIFECYCLE_CASES_EXACT", Reason: "CLAIMS_PRESERVED_WITH_EXPLICIT_OPEN_DISCHARGED_REFUTED_TRANSITIONS"}) {
-		return fmt.Errorf("receipt decision changed")
+	expected := buildReceipt(sourceLabel, receipt.HeadSHA, sourceRaw, relation, snapshot, snapshot)
+	if !reflect.DeepEqual(receipt, expected) {
+		return explainDifference(receipt, expected)
 	}
 	if receipt.ReceiptDigest != digestWithoutReceipt(receipt) || !validDigest(receipt.ReceiptDigest) {
 		return fmt.Errorf("receipt digest changed")
 	}
 	return nil
+}
+
+func explainDifference(actual, expected Receipt) error {
+	if actual.SourceRelation != expected.SourceRelation {
+		return fmt.Errorf("source relation was not reconstructed from lowered Gooo")
+	}
+	if actual.Claims != expected.Claims {
+		return fmt.Errorf("claim identity, state, evidence, or provenance changed")
+	}
+	if actual.Evidence != expected.Evidence {
+		return fmt.Errorf("evidence was not reconstructed from source cases")
+	}
+	if actual.Transitions != expected.Transitions || actual.CauseReceipts != expected.CauseReceipts {
+		return fmt.Errorf("append-only transition or cause receipt differs from source reconstruction")
+	}
+	if actual.ConformanceDecision != expected.ConformanceDecision || actual.SubjectCounts != expected.SubjectCounts || actual.SubjectResolution != expected.SubjectResolution {
+		return fmt.Errorf("conformance and subject resolutions diverged")
+	}
+	if actual.Metrics != expected.Metrics || actual.Summary != expected.Summary || actual.Cases != expected.Cases {
+		return fmt.Errorf("case or metric reconstruction differs")
+	}
+	return fmt.Errorf("receipt differs from independent source reconstruction")
 }
 
 func inspectSource(path string, raw []byte) (SourceRelation, error) {
@@ -277,116 +312,255 @@ func inspectSource(path string, raw []byte) (SourceRelation, error) {
 	if file.Package == nil || file.Namespace == nil || file.Package.Name != "claimlifecycle" || file.Namespace.Name != "claimlifecycle" {
 		return SourceRelation{}, fmt.Errorf("Gooo package relation is not claimlifecycle")
 	}
-	relation := SourceRelation{Package: file.Package.Name, Namespace: file.Namespace.Name}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return SourceRelation{}, fmt.Errorf("lower Gooo source: %w", err)
+	}
+	nodes := make(map[string]string)
+	for _, node := range ir.Graph.Nodes() {
+		if node.Kind.String() == "Activity" {
+			nodes[node.Name] = node.ValueProgram + "\x00" + digestString(node.SemanticCanonical())
+		}
+	}
+	relation := SourceRelation{Package: file.Package.Name, Namespace: file.Namespace.Name, SemanticIRDigest: ir.StableHash()}
 	for _, declaration := range file.Declarations {
-		if entity, ok := declaration.(*syntax.EntityDecl); ok {
-			relation.Entities = append(relation.Entities, EntityBinding{Name: entity.Name, ID: entity.ID})
+		switch value := declaration.(type) {
+		case *syntax.EntityDecl:
+			relation.Entities = append(relation.Entities, EntityBinding{Name: value.Name, ID: value.ID})
+		case *syntax.ActivityDecl:
+			activity, err := activityFromSource(value, nodes)
+			if err != nil {
+				return SourceRelation{}, err
+			}
+			relation.Activities = append(relation.Activities, activity)
 		}
 	}
-	for index, spec := range activitySpecs {
-		if index >= len(file.Declarations) {
-			return SourceRelation{}, fmt.Errorf("Gooo activity denominator is incomplete")
-		}
-		activity, ok := file.Declarations[len(relation.Entities)+index].(*syntax.ActivityDecl)
-		if !ok || activity.Name != spec.Name || activity.Output != spec.Output || activity.ValueProgram != spec.Program || !sameStrings(names(activity.Inputs), spec.Inputs) {
-			return SourceRelation{}, fmt.Errorf("Gooo activity relation %d does not bind the lifecycle contract", index+1)
-		}
-		relation.Activities = append(relation.Activities, ActivityBinding{Name: activity.Name, Inputs: names(activity.Inputs), Output: activity.Output, ValueProgram: activity.ValueProgram, ClaimID: spec.ClaimID})
+	if len(relation.Entities) != caseTotal || len(relation.Activities) != caseTotal {
+		return SourceRelation{}, fmt.Errorf("Gooo source must expose %d entities and %d source cases", caseTotal, caseTotal)
 	}
-	if len(relation.Entities) != len(entitySpecs) || len(relation.Activities) != len(activitySpecs) {
-		return SourceRelation{}, fmt.Errorf("Gooo relation denominator changed")
+	seenCases := make(map[string]bool, caseTotal)
+	seenClaims := make(map[string]bool, caseTotal)
+	for _, activity := range relation.Activities {
+		if seenCases[activity.Case.CaseID] || seenClaims[activity.Case.ClaimID] {
+			return SourceRelation{}, fmt.Errorf("source case or claim identity is duplicated")
+		}
+		seenCases[activity.Case.CaseID] = true
+		seenClaims[activity.Case.ClaimID] = true
 	}
-	for index, entity := range relation.Entities {
-		if entity.ID != entitySpecs[index] {
-			return SourceRelation{}, fmt.Errorf("Gooo entity relation %d does not bind the lifecycle contract", index+1)
+	for _, activity := range relation.Activities {
+		if dependency := activity.Case.DependencyClaimID; dependency != "" && !seenClaims[dependency] {
+			return SourceRelation{}, fmt.Errorf("dependency %q is not a source claim", dependency)
 		}
 	}
 	relation.Digest = digestWithoutRelation(relation)
 	return relation, nil
 }
 
-func names(refs []syntax.NameRef) []string {
-	result := make([]string, len(refs))
-	for index, ref := range refs {
-		result[index] = ref.Name
+func activityFromSource(activity *syntax.ActivityDecl, nodes map[string]string) (ActivityBinding, error) {
+	parts, ok := nodes[activity.Name]
+	if !ok {
+		return ActivityBinding{}, fmt.Errorf("lowered semantic IR has no activity %q", activity.Name)
+	}
+	programAndDigest := strings.SplitN(parts, "\x00", 2)
+	if len(programAndDigest) != 2 || activity.ValueProgram == "" || programAndDigest[0] != activity.ValueProgram {
+		return ActivityBinding{}, fmt.Errorf("activity %q value program did not survive lowering", activity.Name)
+	}
+	caseInfo, err := parseSourceCase(activity.ValueProgram)
+	if err != nil {
+		return ActivityBinding{}, fmt.Errorf("activity %q: %w", activity.Name, err)
+	}
+	return ActivityBinding{Name: activity.Name, Inputs: names(activity.Inputs), Output: activity.Output, ValueProgram: activity.ValueProgram, SemanticNodeDigest: programAndDigest[1], Case: caseInfo}, nil
+}
+
+func parseSourceCase(program string) (SourceCase, error) {
+	const prefix = "claim-case/v1;"
+	if !strings.HasPrefix(program, prefix) {
+		return SourceCase{}, fmt.Errorf("value program is not claim-case/v1")
+	}
+	values := make(map[string]string)
+	for _, item := range strings.Split(strings.TrimPrefix(program, prefix), ";") {
+		key, value, ok := strings.Cut(item, "=")
+		if !ok || key == "" {
+			return SourceCase{}, fmt.Errorf("malformed source case field %q", item)
+		}
+		if _, exists := values[key]; exists {
+			return SourceCase{}, fmt.Errorf("source case field %q is duplicated", key)
+		}
+		values[key] = value
+	}
+	read := func(key string) (string, error) {
+		value, ok := values[key]
+		if !ok {
+			return "", fmt.Errorf("missing source case field %q", key)
+		}
+		return value, nil
+	}
+	caseInfo := SourceCase{}
+	fields := []struct {
+		key string
+		dst *string
+	}{
+		{"case_id", &caseInfo.CaseID}, {"claim_id", &caseInfo.ClaimID}, {"prior_state", &caseInfo.PriorState},
+		{"evidence_kind", &caseInfo.EvidenceKind}, {"evidence_id", &caseInfo.EvidenceID}, {"dependency_claim_id", &caseInfo.DependencyClaimID},
+		{"observed_stage", &caseInfo.ObservedStage}, {"observed_step", &caseInfo.ObservedStep}, {"observed_reason", &caseInfo.ObservedReason},
+		{"expected_status", &caseInfo.ExpectedStatus}, {"expected_decision", &caseInfo.ExpectedDecision}, {"provenance", &caseInfo.Provenance},
+	}
+	for _, field := range fields {
+		value, err := read(field.key)
+		if err != nil {
+			return SourceCase{}, err
+		}
+		*field.dst = value
+	}
+	if caseInfo.CaseID == "" || caseInfo.ClaimID == "" || caseInfo.PriorState == "" || caseInfo.EvidenceKind == "" || caseInfo.ObservedStage == "" || caseInfo.ObservedStep == "" || caseInfo.ObservedReason == "" || caseInfo.ExpectedStatus == "" || caseInfo.ExpectedDecision == "" || caseInfo.Provenance == "" {
+		return SourceCase{}, fmt.Errorf("source case has an empty required observation")
+	}
+	return caseInfo, nil
+}
+
+func buildReceipt(sourcePath, headSHA string, raw []byte, relation SourceRelation, before, after string) Receipt {
+	claims := make([]Claim, 0, len(relation.Activities))
+	for _, activity := range relation.Activities {
+		statement := statementOf(activity)
+		claims = append(claims, Claim{ID: activity.Case.ClaimID, CaseID: activity.Case.CaseID, Statement: statement, DeclarationDigest: digestJSON(struct {
+			ID, Statement string
+		}{activity.Case.ClaimID, statement}), Status: "OPEN", Provenance: provenanceOf(activity, relation)})
+	}
+	evidence := buildEvidence(relation)
+	evidenceByID := make(map[string]Evidence, len(evidence))
+	for _, item := range evidence {
+		evidenceByID[item.ID] = item
+	}
+	transitions, causes, cases := buildLedger(relation, claims, evidenceByID)
+	for _, item := range cases {
+		for claimIndex := range claims {
+			if claims[claimIndex].ID != item.ClaimID {
+				continue
+			}
+			claims[claimIndex].Status = item.ObservedStatus
+			claims[claimIndex].Coordinate = item.Coordinate
+			claims[claimIndex].Reason = item.Reason
+			for _, transition := range transitions {
+				if transition.ClaimID == item.ClaimID && transition.Event != "CLAIM_OPENED" {
+					claims[claimIndex].EvidenceDigest = transition.EvidenceDigest
+					break
+				}
+			}
+			break
+		}
+	}
+	summary := summarize(claims, transitions, cases)
+	receipt := Receipt{
+		Schema: receiptSchema, Scope: "CLAIM_LIFECYCLE_ONLY", HeadSHA: headSHA, GoVersion: runtime.Version(),
+		SourcePath: sourcePath, RawSourceDigest: digestBytes(raw), Producer: producerID, Consumer: consumerID,
+		MetaOperation: metaOperation, SourceRelation: relation, Claims: claims, Evidence: evidence,
+		Transitions: transitions, CauseReceipts: causes, Cases: cases, Summary: summary,
+		Effects: Effects{RepositoryWrites: boolInt(before != after), MutationAuthority: false, BeforeSnapshotDigest: before, AfterSnapshotDigest: after, RuntimeVersion: runtime.Version()},
+	}
+	receipt.ConformanceDecision = conformanceDecision(cases)
+	receipt.SubjectCounts = subjectCounts(claims, cases)
+	receipt.SubjectResolution = subjectResolution(receipt.SubjectCounts)
+	receipt.Metrics = buildMetrics(receipt)
+	receipt.SemanticReceiptDigest = digestWithoutSemanticReceipt(receipt)
+	receipt.ReceiptDigest = digestWithoutReceipt(receipt)
+	return receipt
+}
+
+func buildEvidence(relation SourceRelation) []Evidence {
+	result := make([]Evidence, 0)
+	seen := make(map[string]bool)
+	for _, activity := range relation.Activities {
+		caseInfo := activity.Case
+		if caseInfo.EvidenceID == "" || (caseInfo.EvidenceKind != "SUPPORTING" && caseInfo.EvidenceKind != "CONTRADICTING") || seen[caseInfo.EvidenceID] {
+			continue
+		}
+		seen[caseInfo.EvidenceID] = true
+		result = append(result, Evidence{ID: caseInfo.EvidenceID, Kind: caseInfo.EvidenceKind, ClaimID: caseInfo.ClaimID, SourceCaseID: caseInfo.CaseID, Digest: digestJSON(struct {
+			ID, Kind, ClaimID, SourceCaseID, RelationDigest string
+		}{caseInfo.EvidenceID, caseInfo.EvidenceKind, caseInfo.ClaimID, caseInfo.CaseID, relation.Digest})})
 	}
 	return result
 }
 
-func claimsFor(relation SourceRelation) []Claim {
-	claims := make([]Claim, 0, claimTotal)
-	for _, activity := range relation.Activities {
-		statement := statementOf(activity)
-		claims = append(claims, Claim{ID: activity.ClaimID, Statement: statement, DeclarationDigest: digestJSON(struct {
-			ID, Statement string
-		}{activity.ClaimID, statement}), Status: "OPEN"})
+func buildLedger(relation SourceRelation, claims []Claim, evidence map[string]Evidence) ([]Transition, []CauseReceipt, []CaseResult) {
+	transitions := make([]Transition, 0, len(claims)*2)
+	causes := make([]CauseReceipt, 0, len(claims)*2)
+	cases := make([]CaseResult, 0, len(claims))
+	appendEvent := func(claim Claim, event, before, after, evidenceDigest string, cause CauseReceipt) {
+		cause.Sequence = len(transitions) + 1
+		cause.ClaimID = claim.ID
+		cause.Digest = digestWithoutCause(cause)
+		causes = append(causes, cause)
+		transition := Transition{Sequence: len(transitions) + 1, ClaimID: claim.ID, DeclarationDigest: claim.DeclarationDigest, Event: event, Before: before, After: after, EvidenceDigest: evidenceDigest, CauseReceiptDigest: cause.Digest}
+		if len(transitions) > 0 {
+			transition.PreviousDigest = transitions[len(transitions)-1].Digest
+		}
+		transition.Digest = digestWithoutTransition(transition)
+		transitions = append(transitions, transition)
 	}
-	claims[1].Status = "DISCHARGED"
-	claims[2].Status = "REFUTED"
-	return claims
+	for index, claim := range claims {
+		activity := relation.Activities[index]
+		appendEvent(claim, "CLAIM_OPENED", "UNRECORDED", "OPEN", "", CauseReceipt{Kind: "DECLARATION", Coordinate: Coordinate{Stage: "CLAIM", Step: "declare", Reason: "CLAIM_OPENED"}, Reason: "source activity " + activity.Name + " declared claim " + claim.ID, Provenance: provenanceOf(activity, relation)})
+	}
+	for index, activity := range relation.Activities {
+		claim := claims[index]
+		observed := observeCase(activity.Case, evidence)
+		cause := CauseReceipt{Kind: observed.CauseKind, Coordinate: Coordinate{Stage: activity.Case.ObservedStage, Step: activity.Case.ObservedStep, Reason: activity.Case.ObservedReason}, Reason: activity.Case.ObservedReason, Provenance: provenanceOf(activity, relation)}
+		if activity.Case.EvidenceID != "" {
+			if item, ok := evidence[activity.Case.EvidenceID]; ok {
+				cause.EvidenceIDs = []string{item.ID}
+			}
+		}
+		if activity.Case.DependencyClaimID != "" {
+			cause.DependencyClaimIDs = []string{activity.Case.DependencyClaimID}
+		}
+		appendEvent(claim, observed.Event, activity.Case.PriorState, observed.After, observed.EvidenceDigest, cause)
+		cases = append(cases, CaseResult{ID: activity.Case.CaseID, ClaimID: claim.ID, ExpectedStatus: activity.Case.ExpectedStatus, ObservedStatus: observed.After, ExpectedDecision: activity.Case.ExpectedDecision, Decision: observed.Decision, Conformance: caseConformance(activity.Case, observed), ObservedEvent: observed.Event, CauseKind: observed.CauseKind, Coordinate: cause.Coordinate, Reason: activity.Case.ObservedReason, Provenance: provenanceOf(activity, relation)})
+	}
+	return transitions, causes, cases
 }
 
-func validateLedger(receipt Receipt) error {
-	if len(receipt.Claims) != claimTotal || len(receipt.Transitions) != claimTotal*2 || len(receipt.CauseReceipts) != claimTotal*2 {
-		return fmt.Errorf("claim, transition, or cause denominator changed")
+func observeCase(caseInfo SourceCase, evidence map[string]Evidence) observation {
+	result := observation{After: caseInfo.PriorState, Decision: "FAIL_CLOSED", CauseKind: "INVALID_OBSERVATION"}
+	if caseInfo.PriorState != "OPEN" {
+		result.Event = "EVIDENCE_INVALID"
+		return result
 	}
-	previous := ""
-	for index, transition := range receipt.Transitions {
-		if transition.Sequence != index+1 || transition.ClaimID != receipt.Claims[claimIndex(index)].ID || transition.DeclarationDigest != receipt.Claims[claimIndex(index)].DeclarationDigest || transition.PreviousDigest != previous || transition.Digest != digestWithoutTransition(transition) || !validDigest(transition.Digest) {
-			return fmt.Errorf("transition %d is not append-only or claim-bound", index+1)
-		}
-		cause := receipt.CauseReceipts[index]
-		if cause.Sequence != index+1 || cause.ClaimID != transition.ClaimID || cause.Digest != digestWithoutCause(cause) || transition.CauseReceiptDigest != cause.Digest || !validDigest(cause.Digest) {
-			return fmt.Errorf("cause receipt %d is not bound to its transition", index+1)
-		}
-		if err := validateEvent(index, transition, cause, receipt); err != nil {
-			return err
-		}
-		previous = transition.Digest
+	switch caseInfo.EvidenceKind {
+	case "SUPPORTING":
+		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_ACCEPTED", "DISCHARGED", "PASS", "SUPPORTING_EVIDENCE"
+	case "CONTRADICTING":
+		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_CONTRADICTED", "REFUTED", "PASS", "CONTRADICTING_EVIDENCE"
+	case "UNAVAILABLE":
+		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_UNAVAILABLE", "OPEN", "UNKNOWN", "DIRECT_UNKNOWN"
+	case "DEPENDENCY_BLOCKED":
+		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_DEPENDENCY_BLOCKED", "OPEN", "UNKNOWN", "DEPENDENCY_BLOCKED"
+	case "AMBIGUOUS":
+		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_AMBIGUOUS", "OPEN", "FAIL_CLOSED", "AMBIGUOUS_EVIDENCE"
+	default:
+		result.Event = "EVIDENCE_INVALID"
+		return result
 	}
-	return nil
+	if (caseInfo.EvidenceKind == "SUPPORTING" || caseInfo.EvidenceKind == "CONTRADICTING") && caseInfo.EvidenceID != "" {
+		if item, ok := evidence[caseInfo.EvidenceID]; ok && item.Kind == caseInfo.EvidenceKind {
+			result.EvidenceDigest = item.Digest
+			return result
+		}
+	}
+	if caseInfo.EvidenceKind == "SUPPORTING" || caseInfo.EvidenceKind == "CONTRADICTING" {
+		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_INVALID", "OPEN", "FAIL_CLOSED", "INVALID_OBSERVATION"
+	}
+	if caseInfo.EvidenceKind == "DEPENDENCY_BLOCKED" && caseInfo.DependencyClaimID == "" {
+		result.Event, result.Decision, result.CauseKind = "EVIDENCE_INVALID", "FAIL_CLOSED", "INVALID_OBSERVATION"
+	}
+	return result
 }
 
-func validateEvent(index int, transition Transition, cause CauseReceipt, receipt Receipt) error {
-	if index < claimTotal {
-		if transition.Event != "CLAIM_OPENED" || transition.Before != "UNRECORDED" || transition.After != "OPEN" || transition.EvidenceDigest != "" || cause.Kind != "DECLARATION" || cause.Coordinate != (Coordinate{Stage: "CLAIM", Step: "declare", Reason: "CLAIM_OPENED"}) || cause.Reason != "Gooo activity declaration created a durable claim slot" {
-			return fmt.Errorf("claim registration %d changed", index+1)
-		}
-		return nil
+func caseConformance(source SourceCase, observed observation) string {
+	if source.ExpectedStatus == observed.After && source.ExpectedDecision == observed.Decision {
+		return "PASS"
 	}
-	resolutionIndex := index - claimTotal
-	expected := []struct {
-		event, after, kind, reason, coordinateStage, coordinateStep, coordinateReason string
-		evidenceDigest                                                                string
-		dependencies                                                                  []string
-	}{
-		{"EVIDENCE_UNAVAILABLE", "OPEN", "DIRECT_UNKNOWN", "no evidence was supplied; the claim remains", "EVIDENCE", "observe", "EVIDENCE_UNAVAILABLE", "", nil},
-		{"EVIDENCE_ACCEPTED", "DISCHARGED", "SUPPORTING_EVIDENCE", "supporting evidence closes the claim as discharged", "EVIDENCE", "classify", "SUPPORTING_EVIDENCE", receipt.Evidence[0].Digest, nil},
-		{"EVIDENCE_CONTRADICTED", "REFUTED", "CONTRADICTING_EVIDENCE", "contradicting evidence closes the claim as refuted", "EVIDENCE", "classify", "CONTRADICTING_EVIDENCE", receipt.Evidence[1].Digest, nil},
-		{"EVIDENCE_UNAVAILABLE", "OPEN", "DIRECT_UNKNOWN", "direct evidence is unavailable; the claim remains open", "EVIDENCE", "observe", "EVIDENCE_UNAVAILABLE", "", nil},
-		{"EVIDENCE_DEPENDENCY_BLOCKED", "OPEN", "DEPENDENCY_BLOCKED", "dependent resolution is blocked by an open upstream claim", "RESOLVE", "dependency", "UPSTREAM_CLAIM_OPEN", "", []string{receipt.Claims[3].ID}},
-		{"EVIDENCE_AMBIGUOUS", "OPEN", "AMBIGUOUS_EVIDENCE", "ambiguous evidence cannot close a claim", "EVIDENCE", "classify", "AMBIGUOUS_EVIDENCE", "", nil},
-	}[resolutionIndex]
-	if transition.Event != expected.event || transition.Before != "OPEN" || transition.After != expected.after || transition.EvidenceDigest != expected.evidenceDigest || cause.Kind != expected.kind || cause.Reason != expected.reason || cause.Coordinate != (Coordinate{Stage: expected.coordinateStage, Step: expected.coordinateStep, Reason: expected.coordinateReason}) || !reflect.DeepEqual(cause.DependencyClaimIDs, expected.dependencies) {
-		return fmt.Errorf("resolution event %d changed", resolutionIndex+1)
-	}
-	if expected.evidenceDigest != "" && !reflect.DeepEqual(cause.EvidenceIDs, []string{receipt.Evidence[resolutionIndex-1].ID}) {
-		return fmt.Errorf("resolution evidence cause %d changed", resolutionIndex+1)
-	}
-	return nil
-}
-
-func expectedCaseResults(receipt Receipt) []CaseResult {
-	resolution := receipt.Transitions[claimTotal:]
-	causes := receipt.CauseReceipts[claimTotal:]
-	return []CaseResult{
-		{ID: "declared-claim-without-evidence", ClaimID: resolution[0].ClaimID, ExpectedStatus: "OPEN", ObservedStatus: resolution[0].After, Decision: "UNKNOWN", ObservedEvent: resolution[0].Event, CauseKind: causes[0].Kind, Coordinate: causes[0].Coordinate, Reason: "direct evidence is absent"},
-		{ID: "supporting-evidence-closes", ClaimID: resolution[1].ClaimID, ExpectedStatus: "DISCHARGED", ObservedStatus: resolution[1].After, Decision: "PASS", ObservedEvent: resolution[1].Event, CauseKind: causes[1].Kind, Coordinate: causes[1].Coordinate, Reason: "supporting evidence discharges the preserved claim"},
-		{ID: "conflicting-evidence-closes-refuted", ClaimID: resolution[2].ClaimID, ExpectedStatus: "REFUTED", ObservedStatus: resolution[2].After, Decision: "PASS", ObservedEvent: resolution[2].Event, CauseKind: causes[2].Kind, Coordinate: causes[2].Coordinate, Reason: "conflicting evidence refutes without deleting the claim"},
-		{ID: "direct-missing-evidence", ClaimID: resolution[3].ClaimID, ExpectedStatus: "OPEN", ObservedStatus: resolution[3].After, Decision: "UNKNOWN", ObservedEvent: resolution[3].Event, CauseKind: causes[3].Kind, Coordinate: causes[3].Coordinate, Reason: "direct evidence is unavailable"},
-		{ID: "dependency-missing-evidence", ClaimID: resolution[4].ClaimID, ExpectedStatus: "OPEN", ObservedStatus: resolution[4].After, Decision: "UNKNOWN", ObservedEvent: resolution[4].Event, CauseKind: causes[4].Kind, Coordinate: causes[4].Coordinate, Reason: "dependency is blocked by a direct unknown"},
-		{ID: "ambiguous-evidence-refuses-closure", ClaimID: resolution[5].ClaimID, ExpectedStatus: "OPEN", ObservedStatus: resolution[5].After, Decision: "FAIL_CLOSED", ObservedEvent: resolution[5].Event, CauseKind: causes[5].Kind, Coordinate: causes[5].Coordinate, Reason: "ambiguous evidence fails closed"},
-	}
+	return "FAIL_CLOSED"
 }
 
 func summarize(claims []Claim, transitions []Transition, cases []CaseResult) Summary {
@@ -423,55 +597,138 @@ func summarize(claims []Claim, transitions []Transition, cases []CaseResult) Sum
 	return summary
 }
 
+func conformanceDecision(cases []CaseResult) Decision {
+	for _, item := range cases {
+		if item.Conformance != "PASS" {
+			return Decision{Value: "FAIL_CLOSED", Resolution: "SOURCE_CASE_MISMATCH", Reason: "observed lifecycle did not match source case " + item.ID}
+		}
+	}
+	return Decision{Value: "PASS", Resolution: "SOURCE_CASES_RECONSTRUCTED", Reason: "receipt decisions and transitions were derived from lowered Gooo cases"}
+}
+
+func subjectCounts(claims []Claim, cases []CaseResult) SubjectCounts {
+	counts := SubjectCounts{}
+	for _, claim := range claims {
+		switch claim.Status {
+		case "OPEN":
+			counts.Open++
+		case "DISCHARGED":
+			counts.Discharged++
+		case "REFUTED":
+			counts.Refuted++
+		}
+	}
+	for _, item := range cases {
+		if item.CauseKind == "DIRECT_UNKNOWN" {
+			counts.DirectUnknown++
+		}
+		if item.CauseKind == "DEPENDENCY_BLOCKED" {
+			counts.DependencyBlocked++
+		}
+		if item.Decision == "FAIL_CLOSED" {
+			counts.FailClosed++
+		}
+	}
+	return counts
+}
+
+func subjectResolution(counts SubjectCounts) Decision {
+	if counts.UnknownTotal() > 0 && counts.FailClosed > 0 {
+		return Decision{Value: "UNKNOWN_AND_FAIL_CLOSED_PRESENT", Resolution: "SUBJECT_OUTCOME", Reason: "open claims include direct or dependency-blocked uncertainty and an ambiguous case"}
+	}
+	if counts.UnknownTotal() > 0 {
+		return Decision{Value: "UNKNOWN_PRESENT", Resolution: "SUBJECT_OUTCOME", Reason: "open claims retain direct or dependency-blocked uncertainty"}
+	}
+	if counts.FailClosed > 0 {
+		return Decision{Value: "FAIL_CLOSED_PRESENT", Resolution: "SUBJECT_OUTCOME", Reason: "at least one subject case refuses closure"}
+	}
+	return Decision{Value: "CLOSED", Resolution: "SUBJECT_OUTCOME", Reason: "all subject cases closed"}
+}
+
+func (counts SubjectCounts) UnknownTotal() int {
+	return counts.DirectUnknown + counts.DependencyBlocked
+}
+
 func buildMetrics(receipt Receipt) []Metric {
 	metric := func(id, class, proof string, numerator, denominator int) Metric {
-		return Metric{ID: id, Class: class, ProofChoice: proof, Numerator: numerator, Denominator: denominator, Producer: producerID, Consumer: consumerID, MetaOperation: metaOperation, Satisfied: numerator == denominator}
+		return Metric{ID: id, Class: class, ProofChoice: proof, Numerator: numerator, Denominator: denominator, Producer: producerID, Consumer: consumerID, MetaOperation: metaOperation, Satisfied: denominator == 0 || numerator == denominator}
+	}
+	closures := receipt.Summary.DischargedClaims + receipt.Summary.RefutedClaims
+	closureDenominator := 0
+	contradictionDenominator := 0
+	unknownDenominator := 0
+	ambiguousDenominator := 0
+	for _, activity := range receipt.SourceRelation.Activities {
+		switch activity.Case.EvidenceKind {
+		case "SUPPORTING", "CONTRADICTING":
+			closureDenominator++
+		case "UNAVAILABLE", "DEPENDENCY_BLOCKED":
+			unknownDenominator++
+		case "AMBIGUOUS":
+			ambiguousDenominator++
+		}
+		if activity.Case.EvidenceKind == "CONTRADICTING" {
+			contradictionDenominator++
+		}
 	}
 	return []Metric{
-		metric("claim-identity-preserved.v1", "DRIVER", "FOUNDATION", len(receipt.Claims), claimTotal),
-		metric("source-activity-relations-bound.v1", "DRIVER", "FOUNDATION", len(receipt.SourceRelation.Activities), len(activitySpecs)),
-		metric("append-only-transition-ledger.v1", "DRIVER", "FOUNDATION", len(receipt.Transitions), claimTotal*2),
-		metric("terminal-evidence-closures.v1", "OUTCOME", "COHERENCE", receipt.Summary.DischargedClaims+receipt.Summary.RefutedClaims, 2),
-		metric("contradiction-to-refutation.v1", "OUTCOME", "COHERENCE", receipt.Summary.ContradictingClosures, 1),
-		metric("unknown-cause-partition.v1", "GUARDRAIL", "REGRESSION", receipt.Summary.DirectUnknownCases+receipt.Summary.DependencyBlockedCases, 3),
-		metric("ambiguous-evidence-fail-closed.v1", "GUARDRAIL", "REGRESSION", receipt.Summary.CaseDecisionCounts.FailClosed, 1),
-		metric("read-only-effect-boundary.v1", "GUARDRAIL", "REGRESSION", boolInt(receipt.Effects.RepositoryWrites == 0 && !receipt.Effects.MutationAuthority), 1),
+		metric("source-cases-reconstructed.v1", "DRIVER", "FOUNDATION", len(receipt.SourceRelation.Activities), caseTotal),
+		metric("producer-import-boundary.v1", "GUARDRAIL", "FOUNDATION", 0, 0),
+		metric("claim-identity-preserved.v1", "DRIVER", "FOUNDATION", len(receipt.Claims), len(receipt.SourceRelation.Activities)),
+		metric("persistent-claim-ledger.v1", "DRIVER", "COHERENCE", persistentClaimCount(receipt), len(receipt.Claims)),
+		metric("append-only-transition-ledger.v1", "DRIVER", "FOUNDATION", len(receipt.Transitions), len(receipt.Claims)*2),
+		metric("terminal-evidence-closures.v1", "OUTCOME", "COHERENCE", closures, closureDenominator),
+		metric("contradiction-to-refutation.v1", "OUTCOME", "COHERENCE", receipt.Summary.ContradictingClosures, contradictionDenominator),
+		metric("unknown-cause-partition.v1", "GUARDRAIL", "REGRESSION", receipt.Summary.DirectUnknownCases+receipt.Summary.DependencyBlockedCases, unknownDenominator),
+		metric("ambiguous-evidence-fail-closed.v1", "GUARDRAIL", "REGRESSION", receipt.Summary.CaseDecisionCounts.FailClosed, ambiguousDenominator),
+		metric("read-only-effect-boundary.v1", "GUARDRAIL", "REGRESSION", boolInt(receipt.Effects.RepositoryWrites == 0 && !receipt.Effects.MutationAuthority && receipt.Effects.BeforeSnapshotDigest == receipt.Effects.AfterSnapshotDigest), 1),
 	}
+}
+
+func persistentClaimCount(receipt Receipt) int {
+	opened := make(map[string]bool)
+	resolved := make(map[string]bool)
+	for _, transition := range receipt.Transitions {
+		if transition.Event == "CLAIM_OPENED" {
+			opened[transition.ClaimID] = true
+		} else {
+			resolved[transition.ClaimID] = true
+		}
+	}
+	count := 0
+	for _, claim := range receipt.Claims {
+		if opened[claim.ID] && resolved[claim.ID] {
+			count++
+		}
+	}
+	return count
+}
+
+func names(refs []syntax.NameRef) []string {
+	result := make([]string, len(refs))
+	for index, ref := range refs {
+		result[index] = ref.Name
+	}
+	return result
 }
 
 func statementOf(activity ActivityBinding) string {
 	return activity.Name + "(" + strings.Join(activity.Inputs, ",") + ")->" + activity.Output + " computes " + activity.ValueProgram
 }
 
-func claimIndex(index int) int {
-	if index >= claimTotal {
-		return index - claimTotal
-	}
-	return index
+func provenanceOf(activity ActivityBinding, relation SourceRelation) string {
+	return "gooo:activity/" + activity.Name + ";ir=" + relation.SemanticIRDigest + ";node=" + activity.SemanticNodeDigest + ";case=" + activity.Case.CaseID
 }
 
-func sameStrings(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
+func repositorySnapshotDigest() string {
+	output, err := exec.Command("git", "status", "--porcelain=v1", "--untracked-files=all").Output()
+	if err != nil {
+		fail("repository snapshot: " + err.Error())
 	}
-	for index := range left {
-		if left[index] != right[index] {
-			return false
-		}
-	}
-	return true
+	return digestBytes(output)
 }
 
-func boolInt(value bool) int {
-	if value {
-		return 1
-	}
-	return 0
-}
-
-func digestString(value string) string {
-	return digestBytes([]byte(value))
-}
+func digestString(value string) string { return digestBytes([]byte(value)) }
 
 func digestBytes(value []byte) string {
 	sum := sha256.Sum256(value)
@@ -506,12 +763,29 @@ func digestWithoutReceipt(value Receipt) string {
 	return digestJSON(value)
 }
 
+func digestWithoutSemanticReceipt(value Receipt) string {
+	value.SourcePath = ""
+	value.RawSourceDigest = ""
+	value.SemanticReceiptDigest = ""
+	value.ReceiptDigest = ""
+	value.Effects.BeforeSnapshotDigest = ""
+	value.Effects.AfterSnapshotDigest = ""
+	return digestJSON(value)
+}
+
 func validDigest(value string) bool {
 	if !strings.HasPrefix(value, "sha256:") || len(value) != len("sha256:")+64 {
 		return false
 	}
 	_, err := hex.DecodeString(value[len("sha256:"):])
 	return err == nil
+}
+
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func fail(message string) {

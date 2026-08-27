@@ -1377,7 +1377,7 @@ jobs:
             --receipt "${receipt}" \
             --source examples/claim-lifecycle-calculus/main.gooo
           jq -e --arg head "${HEAD_SHA}" '
-            .schema == "gooo/claim-lifecycle-calculus/v1" and
+            .schema == "gooo/claim-lifecycle-calculus/v2" and
             .head_sha == $head and
             .go_version == "go1.27.0" and
             (.source_relation.activities | length) == 6 and
@@ -1400,7 +1400,8 @@ jobs:
             ([.metrics[].proof_choice] | unique | sort) == ["COHERENCE", "FOUNDATION", "REGRESSION"] and
             .effects.repository_writes == 0 and
             .effects.mutation_authority == false and
-            .decision.value == "PASS"
+            .conformance_decision.value == "PASS" and
+            .subject_resolution.value == "UNKNOWN_AND_FAIL_CLOSED_PRESENT"
           ' "${receipt}"
           {
             echo '### Claim lifecycle calculus'
@@ -1408,5 +1409,135 @@ jobs:
             jq -r '"- case decisions: PASS \(.summary.case_decision_counts.pass), FAIL_CLOSED \(.summary.case_decision_counts.fail_closed), UNKNOWN \(.summary.case_decision_counts.unknown)"' "${receipt}"
             jq -r '"- lifecycle states: OPEN \(.summary.open_claims), DISCHARGED \(.summary.discharged_claims), REFUTED \(.summary.refuted_claims)"' "${receipt}"
             jq -r '"- UNKNOWN causes: direct \(.summary.direct_unknown_cases), dependency-blocked \(.summary.dependency_blocked_cases)"' "${receipt}"
-            jq -r '"- effects: repository writes \(.effects.repository_writes), mutation authority \(.effects.mutation_authority)"' "${receipt}"
+            jq -r '"- effects: repository writes \(.effects.repository_writes), mutation authority \(.effects.mutation_authority), snapshots \(.effects.before_snapshot_digest == .effects.after_snapshot_digest)"' "${receipt}"
+            jq -r '"- decisions: conformance \(.conformance_decision.value), subject \(.subject_resolution.value)"' "${receipt}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  claim-lifecycle-interventions:
+    name: Claim lifecycle interventions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Compile isolated producer, judge, and tamper fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          format_diff="$(gofmt -d scripts/claim-lifecycle-calculus/main.go scripts/claim-lifecycle-calculus-judge/main.go scripts/claim-lifecycle-calculus-tamper/main.go)"
+          if [[ -n "${format_diff}" ]]; then
+            printf '%s\n' "${format_diff}"
+            exit 1
+          fi
+          go test ./scripts/claim-lifecycle-calculus ./scripts/claim-lifecycle-calculus-judge ./scripts/claim-lifecycle-calculus-tamper
+      - name: Exercise source cases and semantic boundaries
+        shell: bash
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/claim-lifecycle-interventions"
+          mkdir -p "${output}"
+          source="examples/claim-lifecycle-calculus/main.gooo"
+          snapshot() {
+            printf 'sha256:%s' "$(git status --porcelain=v1 --untracked-files=all | sha256sum | awk '{print $1}')"
+          }
+          before="$(snapshot)"
+          go run ./scripts/claim-lifecycle-calculus --source "${source}" --source-label "${source}" --head-sha "${HEAD_SHA}" --output "${output}/baseline.json"
+          after="$(snapshot)"
+          test "${before}" = "${after}"
+          jq -e --arg before "${before}" --arg after "${after}" '.effects.before_snapshot_digest == $before and .effects.after_snapshot_digest == $after and .effects.repository_writes == 0 and .effects.runtime_version == .go_version' "${output}/baseline.json"
+          go run ./scripts/claim-lifecycle-calculus --source "${source}" --source-label "${source}" --head-sha "${HEAD_SHA}" --output "${output}/baseline-replay.json"
+          cmp "${output}/baseline.json" "${output}/baseline-replay.json"
+
+          cp "${source}" "${output}/semantic.gooo"
+          sed -i 's/evidence_kind=CONTRADICTING/evidence_kind=SUPPORTING/' "${output}/semantic.gooo"
+          go run ./scripts/claim-lifecycle-calculus --source "${output}/semantic.gooo" --source-label "semantic-intervention.gooo" --head-sha "${HEAD_SHA}" --output "${output}/semantic.json"
+
+          cp "${source}" "${output}/comment.gooo"
+          printf '\n// comment-only intervention\n' >> "${output}/comment.gooo"
+          go run ./scripts/claim-lifecycle-calculus --source "${output}/comment.gooo" --source-label "comment-only-intervention.gooo" --head-sha "${HEAD_SHA}" --output "${output}/comment.json"
+      - name: Upload producer receipts and source interventions
+        uses: actions/upload-artifact@v6
+        with:
+          name: claim-lifecycle-interventions-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/claim-lifecycle-interventions
+          if-no-files-found: error
+          retention-days: 14
+      - name: Independently judge baseline, interventions, and coherent tamper
+        shell: bash
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/claim-lifecycle-interventions"
+          source="examples/claim-lifecycle-calculus/main.gooo"
+          go run ./scripts/claim-lifecycle-calculus-judge --receipt "${output}/baseline.json" --source "${source}" --source-label "${source}"
+          go run ./scripts/claim-lifecycle-calculus-judge --receipt "${output}/semantic.json" --source "${output}/semantic.gooo" --source-label "semantic-intervention.gooo"
+          go run ./scripts/claim-lifecycle-calculus-judge --receipt "${output}/comment.json" --source "${output}/comment.gooo" --source-label "comment-only-intervention.gooo"
+          go run ./scripts/claim-lifecycle-calculus-tamper --input "${output}/baseline.json" --output "${output}/tampered.json"
+          if go run ./scripts/claim-lifecycle-calculus-judge --receipt "${output}/tampered.json" --source "${source}" --source-label "${source}"; then
+            echo 'coherent resealed tamper was accepted' >&2
+            exit 1
+          fi
+          jq -e --arg head "${HEAD_SHA}" '
+            .schema == "gooo/claim-lifecycle-calculus/v2" and
+            .head_sha == $head and
+            .go_version == "go1.27.0" and
+            (.source_relation.activities | length) == 6 and
+            (.claims | length) == 6 and
+            (.evidence | length) == 2 and
+            (.transitions | length) == 12 and
+            (.cause_receipts | length) == 12 and
+            .summary.claims_total == 6 and
+            .summary.transitions_total == 12 and
+            .summary.cases_total == 6 and
+            .summary.open_claims == 4 and
+            .summary.discharged_claims == 1 and
+            .summary.refuted_claims == 1 and
+            .summary.case_decision_counts.pass == 2 and
+            .summary.case_decision_counts.fail_closed == 1 and
+            .summary.case_decision_counts.unknown == 3 and
+            .summary.direct_unknown_cases == 2 and
+            .summary.dependency_blocked_cases == 1 and
+            ([.transitions[] | select(.event == "EVIDENCE_CONTRADICTED" and .before == "OPEN" and .after == "REFUTED")] | length) == 1 and
+            ([.cause_receipts[] | select(.kind == "CONTRADICTING_EVIDENCE")] | length) == 1 and
+            ([.metrics[].proof_choice] | unique | sort) == ["COHERENCE", "FOUNDATION", "REGRESSION"] and
+            ([.metrics[] | select(.id == "producer-import-boundary.v1") | {numerator, denominator}] | first) == {numerator: 0, denominator: 0} and
+            ([.metrics[] | select(.id == "persistent-claim-ledger.v1") | {numerator, denominator}] | first) == {numerator: 6, denominator: 6} and
+            .effects.repository_writes == 0 and
+            .effects.mutation_authority == false and
+            .conformance_decision.value == "PASS" and
+            .subject_resolution.value == "UNKNOWN_AND_FAIL_CLOSED_PRESENT"
+          ' "${output}/baseline.json"
+          jq -n --slurpfile baseline "${output}/baseline.json" --slurpfile semantic "${output}/semantic.json" --slurpfile comment "${output}/comment.json" '
+            ($baseline[0]) as $b |
+            ($semantic[0]) as $s |
+            ($comment[0]) as $c |
+            ($s.raw_source_digest != $b.raw_source_digest and
+             $s.semantic_receipt_digest != $b.semantic_receipt_digest and
+             $s.source_relation.semantic_ir_digest != $b.source_relation.semantic_ir_digest and
+             $s.transitions != $b.transitions and
+             $s.conformance_decision != $b.conformance_decision) as $semantic_causality |
+            ($c.raw_source_digest != $b.raw_source_digest and
+             $c.semantic_receipt_digest == $b.semantic_receipt_digest and
+             $c.source_relation.semantic_ir_digest == $b.source_relation.semantic_ir_digest and
+             $c.transitions == $b.transitions and
+             $c.conformance_decision == $b.conformance_decision and
+             $c.subject_counts == $b.subject_counts) as $nonsemantic_preservation |
+            {source_cases: "6/6", producer_imports: "0/0", semantic_causality: (if $semantic_causality then "1/1" else "0/1" end), nonsemantic_preservation: (if $nonsemantic_preservation then "1/1" else "0/1" end), persistent_claims: "6/6", coherent_tamper_rejected: "1/1"} |
+            if .semantic_causality == "1/1" and .nonsemantic_preservation == "1/1" then . else error("intervention metric failed") end
+          ' | tee "${output}/intervention-metrics.json"
+          {
+            echo '### Claim lifecycle calculus interventions'
+            jq -r '"- source_cases=\(.source_cases), producer_imports=\(.producer_imports), persistent_claims=\(.persistent_claims)"' "${output}/intervention-metrics.json"
+            jq -r '"- semantic_causality=\(.semantic_causality), nonsemantic_preservation=\(.nonsemantic_preservation), coherent_tamper_rejected=\(.coherent_tamper_rejected)"' "${output}/intervention-metrics.json"
+            jq -r '"- conformance=\(.conformance_decision.value), subject=\(.subject_resolution.value), cases PASS=\(.summary.case_decision_counts.pass) FAIL_CLOSED=\(.summary.case_decision_counts.fail_closed) UNKNOWN=\(.summary.case_decision_counts.unknown)"' "${output}/baseline.json"
           } >> "${GITHUB_STEP_SUMMARY}"

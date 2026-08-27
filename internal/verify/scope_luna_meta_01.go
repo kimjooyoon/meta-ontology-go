@@ -11,5 +11,6 @@ func init() {
 		"internal/verify/scope_luna_meta_01.go",
 		"scripts/claim-lifecycle-calculus",
 		"scripts/claim-lifecycle-calculus-judge",
+		"scripts/claim-lifecycle-calculus-tamper",
 	}
 }
