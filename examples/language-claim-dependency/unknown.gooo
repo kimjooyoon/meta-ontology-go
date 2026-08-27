@@ -1,0 +1,5 @@
+package claimdependency
+namespace claimdependency
+entity Integer id "gooo://claim-dependency/entity/integer"
+activity Root(Integer) -> Integer computes "int.unknown:1"
+activity Derived(Integer) -> Integer computes "int.add:2"

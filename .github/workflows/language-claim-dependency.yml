@@ -1,0 +1,159 @@
+name: Gooo claim dependency causality
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/language-claim-dependency.yml
+      - docs/research/claim-dependency-causality.md
+      - examples/language-claim-dependency/**
+      - internal/meta/claimdependency/**
+      - internal/meta/claimdependencyjudge/**
+      - internal/verify/scope_gooo_claim_dependency.go
+      - scripts/language-claim-dependency/**
+      - scripts/language-claim-dependency-judge/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/language-claim-dependency.yml
+      - docs/research/claim-dependency-causality.md
+      - examples/language-claim-dependency/**
+      - internal/meta/claimdependency/**
+      - internal/meta/claimdependencyjudge/**
+      - internal/verify/scope_gooo_claim_dependency.go
+      - scripts/language-claim-dependency/**
+      - scripts/language-claim-dependency-judge/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  claim-dependency:
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          check-latest: true
+      - name: Format and package checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            internal/meta/claimdependency/contract.go
+            internal/meta/claimdependency/evaluate.go
+            internal/meta/claimdependency/evaluate_test.go
+            internal/meta/claimdependency/model.go
+            internal/meta/claimdependencyjudge/judge.go
+            internal/meta/claimdependencyjudge/judge_test.go
+            internal/verify/scope_gooo_claim_dependency.go
+            scripts/language-claim-dependency/main.go
+            scripts/language-claim-dependency-judge/main.go
+          )
+          test -z "$(gofmt -l "${files[@]}")"
+          go vet ./internal/meta/claimdependency ./internal/meta/claimdependencyjudge ./scripts/language-claim-dependency ./scripts/language-claim-dependency-judge
+          go test ./internal/meta/claimdependency ./internal/meta/claimdependencyjudge
+      - name: Emit receipts and replay independent judge
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/claim-dependency"
+          mkdir -p "$output/first" "$output/second"
+          for pass in first second; do
+            go run ./scripts/language-claim-dependency \
+              -source examples/language-claim-dependency/unknown.gooo \
+              -case direct-unknown -output "$output/$pass/direct-unknown.json" -check
+            go run ./scripts/language-claim-dependency \
+              -source examples/language-claim-dependency/refuted.gooo \
+              -case refuted -output "$output/$pass/refuted.json" -check
+            go run ./scripts/language-claim-dependency \
+              -source examples/language-claim-dependency/main.gooo \
+              -case recovered -output "$output/$pass/recovered.json" -check
+            for case_name in direct-unknown refuted recovered; do
+              go run ./scripts/language-claim-dependency-judge \
+                -receipt "$output/$pass/$case_name.json" \
+                -output "$output/$pass/$case_name-judgment.json"
+            done
+          done
+          for case_name in direct-unknown refuted recovered; do
+            cmp -s "$output/first/$case_name.json" "$output/second/$case_name.json"
+            cmp -s "$output/first/$case_name-judgment.json" "$output/second/$case_name-judgment.json"
+          done
+      - name: Assert exact causal numbers
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/claim-dependency/first"
+          jq -e '
+            .schema == "gooo.meta.claim-dependency-receipt/v1" and
+            .scope == "CLAIM_STATE_PROPAGATION_ONLY" and
+            .subject.case == "direct-unknown" and
+            .subject.producer == "gooo://meta/claim-dependency/producer/v1" and
+            .subject.consumer == "gooo://meta/claim-dependency/independent-judge/v1" and
+            .subject.read_only == true and .subject.repository_writes == 0 and
+            .graph.node_total == 6 and .graph.edge_total == 8 and
+            .metrics.classified_claim_total == 6 and
+            .metrics.open_claim_total == 6 and
+            .metrics.direct_unknown_claim_total == 1 and
+            .metrics.dependency_blocked_claim_total == 5 and
+            .metrics.observed_blocking_edge_total == 8 and
+            .metrics.maximum_cause_path_depth == 2 and
+            .metrics.transition_total == 12 and
+            .metrics.classification_basis_points == 10000 and
+            .decision.value == "FAIL_CLOSED" and
+            .decision.semantic_promotion_authorized == false and
+            .resolutions[5].cause_path == [
+              "gooo.claim.dependency.source-observed.v1",
+              "gooo.claim.dependency.producer-bound.v1",
+              "gooo.claim.dependency.decision-replay-bound.v1"
+            ]
+          ' "$output/direct-unknown.json"
+          jq -e '
+            .subject.case == "refuted" and
+            .metrics.refuted_claim_total == 6 and
+            .metrics.direct_refuted_claim_total == 1 and
+            .metrics.dependency_refuted_claim_total == 5 and
+            .metrics.observed_refuting_edge_total == 8 and
+            .metrics.open_claim_total == 0 and
+            .decision.value == "FAIL_CLOSED" and
+            .decision.resolution == "CAUSAL_REFUTATION"
+          ' "$output/refuted.json"
+          jq -e '
+            .subject.case == "recovered" and
+            .subject.recovery_from_case == "direct-unknown" and
+            .metrics.discharged_claim_total == 6 and
+            .metrics.dependency_recovered_claim_total == 5 and
+            .metrics.observed_recovery_edge_total == 5 and
+            .metrics.refuted_claim_total == 0 and
+            .decision.value == "PASS" and
+            .decision.resolution == "CAUSAL_RECOVERY_DISCHARGED"
+          ' "$output/recovered.json"
+          for case_name in direct-unknown refuted recovered; do
+            jq -e '
+              .schema == "gooo.meta.claim-dependency-judgment/v1" and
+              .accepted == true and .independent_replay == "GRAPH_AND_TRANSITION_REDERIVED" and
+              .read_only == true and .semantic_promotion_authorized == false
+            ' "$output/$case_name-judgment.json"
+          done
+          {
+            echo "### Gooo claim dependency causality"
+            echo ""
+            echo "- fixed denominator: 6 claims / 8 edges / 12 transitions"
+            echo "- direct UNKNOWN: 1 direct / 5 dependency-blocked / 8 blocking edges / depth 2"
+            echo "- refutation: 1 direct / 5 dependency-refuted / 8 refuting edges"
+            echo "- recovery: 6 discharged / 5 dependency-recovered / 5 minimum recovery edges"
+            echo "- authority: read-only / repository writes 0 / semantic promotion 0"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload claim dependency receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: claim-dependency-causality-${{ github.sha }}
+          path: ${{ runner.temp }}/claim-dependency/first
+          if-no-files-found: error
+          retention-days: 14
