@@ -1,27 +1,29 @@
-# Causal CI selection
+# Causal CI selection source authority
 
-This is a read-only meta-program experiment. It makes a CI plan by carrying a
-changed file through an explicit claim and impact path to a fixed six-check
-catalog. A file suffix or directory pattern is never a selection rule.
+`main.gooo` is the policy authority. Its typed activities and semantic value
+programs define:
 
-The real authority input is [`main.gooo`](main.gooo). [`cases.json`](cases.json)
-contains three deliberately fixed scenarios:
+```text
+changed-file -> claim -> surface -> check
+claim + prior state -> discharged | open/lower-resolution | refuted
+```
 
-| Case | Result | Meaning |
-| --- | --- | --- |
-| `selection` | `SELECTED` | A known claim path selects `go-test`. |
-| `full-fallback` | `FULL_FALLBACK` | An unknown owner path descends to all 6 checks and records `OWNER_RESOLUTION_UNAVAILABLE`. |
-| `rejection` | `REJECTED` | An unregistered check reference produces no plan. |
+The JSON passed to the producer is not a case corpus. CI creates it from the
+actual pull-request `git diff` and isolation snapshots. It contains paths,
+statuses, prior claim observations, and before/after repository status; it
+contains no known flag, decision, selected check, or reason.
 
-The producer emits `gooo/causal-ci-selection-receipt/v1`. The receipt carries
-the source digest, the producer/consumer/meta-operation boundary, the proof
-choice for every check, path explanations, fallback coordinates, and an
-append-only claim transition chain. The `gooo://verifier/causal-ci-selection`
-consumer independently recomputes the case decisions and validates the digest;
-it is not a second name for the producer.
+[`prior-claims.json`](prior-claims.json) is the raw predecessor ledger
+observation. CI joins its `OPEN` state to each observed changed path; the
+producer appends the resulting transition and does not invent the predecessor
+state while evaluating the plan.
 
-The check denominator is fixed at 6 (`gofmt`, `go-vet`, `go-test`,
-`go-test-race`, `semantic-conformance`, `ci-policy`). The six binary indicators
-are also fixed. This experiment measures the quality of causal explanation and
-fail-closed descent; it does not execute checks, change refs, authorize merges,
-or claim that the causal graph is complete outside this declared corpus.
+The producer parses, formats, lowers, and semantically hashes the `.gooo`
+source before reconstructing the policy. The separate `consumer` package does
+the same from raw source and raw observation and does not import the producer.
+
+`semantic-intervention.gooo` changes the semantic target from `go-test` to
+`go-vet`; `nonsemantic-intervention.gooo` changes comments/layout only;
+`contradiction-intervention.gooo` declares two selective targets for one
+surface. CI emits an intervention artifact rather than claiming that any
+selected check ran. All outputs are plan-only and repository read-only.

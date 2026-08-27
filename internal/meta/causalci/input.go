@@ -1,87 +1,111 @@
 package causalci
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
 )
 
-func decodeInput(raw []byte) (Input, error) {
-	var input Input
-	if err := json.Unmarshal(raw, &input); err != nil {
-		return Input{}, fmt.Errorf("decode input: %w", err)
+func decodeObservation(raw []byte) (Observation, error) {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	var observation Observation
+	if err := decoder.Decode(&observation); err != nil {
+		return Observation{}, fmt.Errorf("decode raw observation: %w", err)
 	}
-	if err := validateInput(input); err != nil {
-		return Input{}, err
+	if err := validateObservation(observation); err != nil {
+		return Observation{}, err
 	}
-	return input, nil
+	return observation, nil
 }
 
-func validateInput(input Input) error {
-	if input.Schema != InputSchema || input.SourcePath == "" || filepath.Ext(input.SourcePath) != ".gooo" {
-		return fmt.Errorf("%s: %s", ReasonMalformedInput, "source authority")
+func validateObservation(value Observation) error {
+	if value.Schema != ObservationSchema || value.Repository == "" || value.BaseSHA == "" || value.HeadSHA == "" || filepath.Ext(value.SourcePath) != ".gooo" {
+		return fmt.Errorf("%s: observation identity", ReasonMalformedObservation)
 	}
-	if input.Operation.Producer == "" || input.Operation.Consumer == "" || input.Operation.MetaOperation == "" || input.Operation.ProofChoice == "" || input.Operation.MutationAuthority || !input.Operation.ReadOnly {
-		return fmt.Errorf("%s: %s", ReasonMalformedInput, "operation boundary")
+	seen := map[string]struct{}{}
+	for _, changed := range value.ChangedFiles {
+		if changed.Path == "" || strings.Contains(changed.Path, "\t") || changed.Status == "" {
+			return fmt.Errorf("%s: changed-file observation", ReasonMalformedObservation)
+		}
+		if _, exists := seen[changed.Path]; exists {
+			return fmt.Errorf("%s: duplicate changed path %q", ReasonMalformedObservation, changed.Path)
+		}
+		seen[changed.Path] = struct{}{}
 	}
-	if input.Policy.Schema != PolicySchema || input.Policy.FullSuiteID != "full-suite" || len(input.Policy.Checks) != FixedCheckDenominator {
-		return fmt.Errorf("%s: fixed check policy", ReasonMalformedInput)
-	}
-	for index, check := range input.Policy.Checks {
-		if check.ID != requiredCheckIDs[index] || check.Ordinal != index+1 || check.Scope == "" || check.Description == "" {
-			return fmt.Errorf("%s: check catalog ordinal %d", ReasonMalformedInput, index+1)
+	for _, claim := range value.PriorClaims {
+		if claim.ClaimID == "" || claim.SubjectPath == "" || claim.State == "" || claim.Provenance == "" {
+			return fmt.Errorf("%s: prior claim observation", ReasonMalformedObservation)
+		}
+		if claim.State != ClaimOpen && claim.State != ClaimDischarged && claim.State != ClaimRefuted {
+			return fmt.Errorf("%s: unsupported prior claim state %q", ReasonMalformedObservation, claim.State)
 		}
 	}
-	if len(input.Cases) != ScenarioDenominator {
-		return fmt.Errorf("%s: scenario denominator %d", ReasonMalformedInput, ScenarioDenominator)
+	if err := validateSnapshot(value.Isolation.Before); err != nil {
+		return err
 	}
-	for index, expected := range requiredScenarioIDs() {
-		if input.Cases[index].ID != expected {
-			return fmt.Errorf("%s: scenario %d", ReasonMalformedInput, index+1)
-		}
-		if err := validateCaseShape(input.Cases[index]); err != nil {
-			return err
-		}
-	}
-	if len(input.ClaimTransitions) == 0 {
-		return fmt.Errorf("%s: empty claim transition ledger", ReasonMalformedInput)
-	}
-	for index, transition := range input.ClaimTransitions {
-		if transition.Sequence != index+1 || transition.ClaimID == "" || transition.Before == "" || transition.After == "" || transition.Event == "" || transition.EvidenceDigest == "" || !coordinateKnown(transition.Coordinate) {
-			return fmt.Errorf("%s: claim transition %d", ReasonMalformedInput, index+1)
-		}
+	if err := validateSnapshot(value.Isolation.After); err != nil {
+		return err
 	}
 	return nil
 }
 
-func validateCaseShape(value Case) error {
-	if len(value.ChangedFiles) == 0 || len(value.Claims) == 0 || len(value.ImpactEdges) == 0 {
-		return fmt.Errorf("%s: incomplete case %q", ReasonMalformedInput, value.ID)
-	}
-	claims := make(map[string]struct{}, len(value.Claims))
-	for _, claim := range value.Claims {
-		if !strings.HasPrefix(claim.ID, "claim:") || claim.Question == "" || claim.State == "" {
-			return fmt.Errorf("%s: claim in %q", ReasonMalformedInput, value.ID)
-		}
-		if _, exists := claims[claim.ID]; exists {
-			return fmt.Errorf("%s: duplicate claim %q", ReasonMalformedInput, claim.ID)
-		}
-		claims[claim.ID] = struct{}{}
-	}
-	seenEdges := map[string]struct{}{}
-	for _, edge := range value.ImpactEdges {
-		if edge.ID == "" || edge.From == "" || edge.To == "" || edge.Kind == "" || edge.Reason == "" || !coordinateKnown(edge.Coordinate) {
-			return fmt.Errorf("%s: edge in %q", ReasonMalformedInput, value.ID)
-		}
-		if _, exists := seenEdges[edge.ID]; exists {
-			return fmt.Errorf("%s: duplicate edge %q", ReasonMalformedInput, edge.ID)
-		}
-		seenEdges[edge.ID] = struct{}{}
+func validateSnapshot(value RepositorySnapshot) error {
+	digest, err := digestJSON(value.StatusLines)
+	if err != nil || digest != value.StatusDigest {
+		return fmt.Errorf("%s: isolation snapshot digest", ReasonMalformedObservation)
 	}
 	return nil
 }
 
-func coordinateKnown(value Coordinate) bool {
-	return value.Stage != "" && value.Step != "" && value.Reason != ""
+func repositoryWriteCount(value IsolationObservation) int {
+	before := map[string]struct{}{}
+	for _, line := range value.Before.StatusLines {
+		before[line] = struct{}{}
+	}
+	after := map[string]struct{}{}
+	for _, line := range value.After.StatusLines {
+		after[line] = struct{}{}
+	}
+	count := 0
+	for line := range before {
+		if _, exists := after[line]; !exists {
+			count++
+		}
+	}
+	for line := range after {
+		if _, exists := before[line]; !exists {
+			count++
+		}
+	}
+	return count
+}
+
+func sortedChangedFiles(values []ChangedFileObservation) []ChangedFileObservation {
+	result := append([]ChangedFileObservation(nil), values...)
+	for i := 1; i < len(result); i++ {
+		for j := i; j > 0 && result[j].Path < result[j-1].Path; j-- {
+			result[j], result[j-1] = result[j-1], result[j]
+		}
+	}
+	return result
+}
+
+func sortedPriorClaims(values []PriorClaimObservation) []PriorClaimObservation {
+	result := append([]PriorClaimObservation(nil), values...)
+	for i := 1; i < len(result); i++ {
+		for j := i; j > 0 && priorClaimLess(result[j], result[j-1]); j-- {
+			result[j], result[j-1] = result[j-1], result[j]
+		}
+	}
+	return result
+}
+
+func priorClaimLess(left, right PriorClaimObservation) bool {
+	if left.SubjectPath != right.SubjectPath {
+		return left.SubjectPath < right.SubjectPath
+	}
+	return left.ClaimID < right.ClaimID
 }

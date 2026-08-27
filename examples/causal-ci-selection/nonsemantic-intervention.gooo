@@ -1,7 +1,9 @@
+// Presentation-only intervention: comments and layout are not semantic.
 package causalselection
 namespace causalselection
 
 entity ChangedFile id "gooo://causal-ci-selection/surface/changed-file"
+
 entity CausalClaim id "gooo://causal-ci-selection/claim/causal-selection"
 entity PolicySurface id "gooo://causal-ci-selection/surface/semantic-policy"
 entity OpenState id "gooo://causal-ci-selection/claim-state/open"

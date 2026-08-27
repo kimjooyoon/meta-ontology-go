@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/causal-ci-selection-prior-observation/v1",
+  "claims": [
+    {
+      "claim_id": "claim:causal-selection",
+      "state": "OPEN",
+      "provenance": "gooo://causal-ci-selection/prior-claim-ledger"
+    }
+  ]
+}

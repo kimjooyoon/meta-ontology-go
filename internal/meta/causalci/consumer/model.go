@@ -1,7 +1,5 @@
-package causalci
+package consumer
 
-// Observation is the raw, read-only evidence collected by CI. It deliberately
-// contains no conclusion fields such as known, decision, choice, or reason.
 type Observation struct {
 	Schema       string                   `json:"schema"`
 	Repository   string                   `json:"repository"`
@@ -37,20 +35,6 @@ type RepositorySnapshot struct {
 	StatusDigest string   `json:"status_digest"`
 }
 
-// PolicyGraph is generated from the parsed, lowered, semantic Gooo source.
-// It is never read from the raw observation.
-type PolicyGraph struct {
-	Source          SourceEvidence
-	ChangedFileID   string
-	ClaimID         string
-	SurfaceID       string
-	Checks          []Check
-	Edges           []PolicyEdge
-	PriorStates     []PriorStateRule
-	Contradictions  []PolicyContradiction
-	ClaimStateRules map[string]string
-}
-
 type SourceEvidence struct {
 	Path           string `json:"path"`
 	RawDigest      string `json:"raw_digest"`
@@ -84,6 +68,18 @@ type PolicyContradiction struct {
 	Step   string   `json:"step"`
 	Reason string   `json:"reason"`
 	Edges  []string `json:"edges"`
+}
+
+type PolicyGraph struct {
+	Source          SourceEvidence
+	ChangedFileID   string
+	ClaimID         string
+	SurfaceID       string
+	Checks          []Check
+	Edges           []PolicyEdge
+	PriorStates     []PriorStateRule
+	Contradictions  []PolicyContradiction
+	ClaimStateRules map[string]string
 }
 
 type Coordinate struct {
@@ -205,25 +201,4 @@ type Receipt struct {
 	IndependentVerifier IndependentVerifier `json:"independent_verifier"`
 	PlanDigest          string              `json:"plan_digest"`
 	Digest              string              `json:"digest"`
-}
-
-type InterventionResult struct {
-	ID               string              `json:"id"`
-	Source           SourceEvidence      `json:"source"`
-	Conformance      Conformance         `json:"conformance"`
-	Subjects         []SubjectResolution `json:"subjects"`
-	ClaimTransitions []ClaimTransition   `json:"claim_transitions"`
-	PlanDigest       string              `json:"plan_digest"`
-}
-
-type InterventionReport struct {
-	Schema                    string             `json:"schema"`
-	ObservationDigest         string             `json:"observation_digest"`
-	Base                      InterventionResult `json:"base"`
-	Semantic                  InterventionResult `json:"semantic"`
-	Nonsemantic               InterventionResult `json:"nonsemantic"`
-	Contradiction             InterventionResult `json:"contradiction"`
-	SourceReconstructionNumer int                `json:"source_reconstruction_numerator"`
-	SourceReconstructionDenom int                `json:"source_reconstruction_denominator"`
-	Digest                    string             `json:"digest"`
 }

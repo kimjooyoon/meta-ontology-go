@@ -1,57 +1,82 @@
 package causalci
 
 const (
-	InputSchema   = "gooo/causal-ci-selection-input/v1"
-	PolicySchema  = "gooo/causal-ci-selection-policy/v1"
-	ReceiptSchema = "gooo/causal-ci-selection-receipt/v1"
-	ReceiptScope  = "READ_ONLY_CAUSAL_SELECTION"
+	ObservationSchema = "gooo/causal-ci-selection-observation/v2"
+	ReceiptSchema     = "gooo/causal-ci-selection-receipt/v2"
+	ReportSchema      = "gooo/causal-ci-selection-intervention/v1"
+	ReceiptScope      = "READ_ONLY_CAUSAL_SELECTION"
 
-	DecisionPass         = "PASS"
-	DecisionSelected     = "SELECTED"
-	DecisionFullFallback = "FULL_FALLBACK"
-	DecisionRejected     = "REJECTED"
+	ConformancePass       = "PASS"
+	ConformanceFailClosed = "FAIL_CLOSED"
 
-	ResolutionSelective = "SELECTIVE_PLAN"
-	ResolutionFull      = "DESCEND_TO_FULL_SUITE"
-	ResolutionRejected  = "NO_PLAN"
+	ResolutionSelected   = "SELECTED"
+	ResolutionUnknown    = "UNKNOWN"
+	ResolutionFailClosed = "FAIL_CLOSED"
 
-	ReasonCompletePaths  = "COMPLETE_CLAIM_IMPACT_PATHS"
-	ReasonUnknownPath    = "UNKNOWN_IMPACT_PATH"
-	ReasonContradictory  = "CONTRADICTORY_IMPACT_PATH"
-	ReasonUnregistered   = "UNREGISTERED_NODE"
-	ReasonClaimBypass    = "CLAIM_BYPASS"
-	ReasonNoRoute        = "NO_CLAUSAL_ROUTE"
-	ReasonMalformedInput = "MALFORMED_INPUT"
+	PlanSelective = "SELECTIVE_PLAN"
+	PlanFull      = "DESCEND_TO_FULL_SUITE"
+	PlanNone      = "NO_PLAN"
+
+	ClaimOpen       = "OPEN"
+	ClaimDischarged = "DISCHARGED"
+	ClaimRefuted    = "REFUTED"
+
+	ProofCausalPath  = "CLAIM_IMPACT_REASON"
+	ProofFullDescent = "FULL_SUITE_FALLBACK"
+	ProofNone        = "NO_PLAN"
+
+	ReasonMalformedObservation = "MALFORMED_RAW_OBSERVATION"
+	ReasonMalformedPolicy      = "MALFORMED_GOOO_POLICY"
+	ReasonUnknownSubject       = "SOURCE_NOT_BOUND_TO_POLICY"
+	ReasonMissingRoute         = "CAUSAL_ROUTE_NOT_RECONSTRUCTED"
+	ReasonContradictoryPolicy  = "CONTRADICTORY_POLICY_PATH"
+	ReasonCompletePath         = "COMPLETE_CLAIM_SURFACE_CHECK_PATH"
+	ReasonClaimDischarged      = "COMPLETE_PATH_OBSERVED"
+	ReasonClaimLowered         = "UNKNOWN_PATH_PRESERVED_OPEN"
+	ReasonClaimRefuted         = "EXPLICIT_POLICY_CONTRADICTION"
 
 	FixedCheckDenominator     = 6
 	FixedIndicatorDenominator = 6
-	ScenarioDenominator       = 3
 )
 
-var requiredCheckIDs = [...]string{
-	"gofmt",
-	"go-vet",
-	"go-test",
-	"go-test-race",
-	"semantic-conformance",
-	"ci-policy",
-}
+var fixedCheckIDs = [...]string{"gofmt", "go-vet", "go-test", "go-test-race", "semantic-conformance", "ci-policy"}
 
 var indicatorIDs = [...]string{
-	"claim-mediated-paths",
-	"impact-path-reasons",
-	"selection-choice-bound",
-	"unknown-full-descent",
-	"rejection-fail-closed",
-	"persistent-claim-ledger",
+	"semantic-policy-derived",
+	"changed-file-observation-bound",
+	"unknown-descends-to-full",
+	"claim-transition-append-only",
+	"isolation-derived-read-only",
+	"plan-only-no-execution-claim",
 }
 
 const (
-	proofCausalPath  = "CAUSAL_PATH"
-	proofFullDescent = "FULL_SUITE_FALLBACK"
-	proofNone        = "NO_PLAN"
+	programChangedFileToClaim = "causal-ci.changed-file-to-claim/v2"
+	programClaimToSurface     = "causal-ci.claim-to-surface/v2"
+	programSurfaceToCheck     = "causal-ci.surface-to-check/v2"
+	programPriorClaimState    = "causal-ci.prior-claim-state/open/v2"
+	programDischarge          = "causal-ci.claim-transition/discharged/v2"
+	programLowerResolution    = "causal-ci.claim-transition/open-lower-resolution/v2"
+	programRefute             = "causal-ci.claim-transition/refuted/v2"
 )
 
-func requiredScenarioIDs() []string {
-	return []string{"selection", "full-fallback", "rejection"}
+const (
+	stageConformance    = "CONFORMANCE"
+	stageSubject        = "CAUSAL_SELECTION"
+	stageClaimLedger    = "CLAIM_LEDGER"
+	stepParse           = "parse"
+	stepLower           = "lower"
+	stepValidatePolicy  = "validate-policy"
+	stepObserveSubject  = "observe-subject"
+	stepSelectChecks    = "select-checks"
+	stepDescendFull     = "descend-full-suite"
+	stepClaimTransition = "append-transition"
+)
+
+func fixedCheckIDSet() map[string]struct{} {
+	result := make(map[string]struct{}, len(fixedCheckIDs))
+	for _, id := range fixedCheckIDs {
+		result[id] = struct{}{}
+	}
+	return result
 }
