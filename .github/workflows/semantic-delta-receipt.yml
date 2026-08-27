@@ -23,7 +23,7 @@ on:
       - 'go.mod'
       - 'go.sum'
   push:
-    branches: [dev]
+    branches: [dev, agent/luna-meta-20-semantic-delta-receipt]
     paths:
       - '.github/workflows/semantic-delta-receipt.yml'
       - 'cmd/semantic-delta-receipt-witness/**'
