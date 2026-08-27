@@ -1435,8 +1435,8 @@ func ResealCommentTransitionFixture(interventionRaw []byte, kind string) ([]byte
 			continue
 		}
 		found = true
-		if len(item.BaselineClaimTransitions) != 1 {
-			return nil, fmt.Errorf("comment-only transition fixture requires one baseline transition")
+		if len(item.BaselineClaimTransitions) == 0 {
+			return nil, fmt.Errorf("comment-only transition fixture requires a baseline transition")
 		}
 		switch kind {
 		case "state":
