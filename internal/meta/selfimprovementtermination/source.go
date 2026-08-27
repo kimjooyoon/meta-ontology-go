@@ -216,6 +216,10 @@ func buildInterventions(filename string, raw []byte, program, semanticBefore str
 		return nil, err
 	}
 	semanticClass := classify(Input{UpstreamDecision: semanticCase.UpstreamDecision, MaxSteps: semanticCase.MaxSteps, Trace: semanticCase.Trace})
+	if semanticBefore == semanticAfter || (baseClass.decision == semanticClass.decision && baseClass.resolution == semanticClass.resolution) ||
+		!canonicalOpenTransition(transitions(semanticClass, len(semanticCase.Trace))) {
+		return nil, fmt.Errorf("semantic intervention did not causally change the selected trace outcome")
+	}
 	commentSource := append([]byte("// nonsemantic comment intervention\n"), raw...)
 	commentAfter, commentIR, err := parseAndLower(filename, commentSource)
 	if err != nil {

@@ -457,6 +457,10 @@ func buildInterventions(model sourceModel, baseline sourceCase) ([]wireIntervent
 		return nil, err
 	}
 	semanticClass := classify(wireInput{UpstreamDecision: semanticCase.UpstreamDecision, MaxSteps: semanticCase.MaxSteps, Trace: semanticCase.Trace})
+	if model.SemanticDigest == semanticAfter || (baseClass.decision == semanticClass.decision && baseClass.resolution == semanticClass.resolution) ||
+		!canonicalOpenTransition(transitions(semanticClass, len(semanticCase.Trace))) {
+		return nil, fmt.Errorf("independent judge: semantic intervention did not causally change selected trace outcome")
+	}
 	commentSource := append([]byte("// nonsemantic comment intervention\n"), model.Raw...)
 	commentAfter, commentIR, err := parseAndLower(sourcePath, commentSource)
 	if err != nil {
