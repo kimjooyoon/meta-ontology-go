@@ -55,7 +55,7 @@ go run ./scripts/meta-operation-provenance \
 go run ./scripts/meta-operation-provenance \
   -mode verify -source examples/meta-operation-provenance/main.gooo \
   -receipt /tmp/meta-operation-provenance/receipt.json \
-  -consumer-source internal/meta/operationprovenance/verify/verify.go \
+  -consumer-source internal/meta/operationprovenance/verify/core.go \
   -out /tmp/meta-operation-provenance/verification.json
 ```
 

@@ -93,11 +93,11 @@ jobs:
           cmp -s "$work/first/receipt.json" "$work/replay/receipt.json"
           go run ./scripts/meta-operation-provenance -mode verify -source "$source" \
             -receipt "$work/first/receipt.json" \
-            -consumer-source internal/meta/operationprovenance/verify/verify.go \
+            -consumer-source internal/meta/operationprovenance/verify/core.go \
             -out "$work/first/verification.json"
           go run ./scripts/meta-operation-provenance -mode verify \
             -receipt "$work/first/receipt.json" \
-            -consumer-source internal/meta/operationprovenance/verify/verify.go \
+            -consumer-source internal/meta/operationprovenance/verify/core.go \
             -out "$work/missing-source/verification.json"
           go run ./scripts/meta-operation-provenance -mode interventions -source "$source" \
             -workspace-root "$GITHUB_WORKSPACE" -out "$work/interventions/interventions.json"
