@@ -185,6 +185,13 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-observer-effect-ledger",
+      "kind": "SOURCE",
+      "path": "examples/observer-effect-ledger/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",
