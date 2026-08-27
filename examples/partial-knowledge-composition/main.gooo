@@ -1,0 +1,19 @@
+package partialknowledgecomposition
+namespace partialknowledgecomposition
+
+entity MetaValue id "gooo://partial-knowledge-composition/entity/meta-value"
+entity ExactKnowledge id "gooo://partial-knowledge-composition/value/exact"
+entity DirectUnknown id "gooo://partial-knowledge-composition/value/direct-unknown"
+entity DependencyBlocked id "gooo://partial-knowledge-composition/value/dependency-blocked"
+entity InvariantOnly id "gooo://partial-knowledge-composition/value/invariant-only"
+entity MixedUnresolved id "gooo://partial-knowledge-composition/value/mixed-unresolved"
+entity CompositionReceipt id "gooo://partial-knowledge-composition/entity/composition-receipt"
+entity ClaimTransition id "gooo://partial-knowledge-composition/entity/claim-transition"
+entity Producer id "gooo://partial-knowledge-composition/entity/producer"
+entity Consumer id "gooo://partial-knowledge-composition/entity/consumer"
+entity ProofChoice id "gooo://partial-knowledge-composition/entity/proof-choice"
+
+activity Observe(MetaValue) -> MetaValue
+activity Compose(MetaValue, MetaValue) -> MetaValue
+activity PreserveInvariant(MetaValue) -> InvariantOnly
+activity EmitReceipt(CompositionReceipt) -> ClaimTransition
