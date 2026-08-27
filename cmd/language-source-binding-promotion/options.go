@@ -4,8 +4,8 @@ import "flag"
 
 type options struct {
 	contract, head, policySource, policyArtifact, policyReplay string
-	producer, receipt, oracle, unknownProducer, unknownOracle string
-	mismatchedOracle, independence, output, check             string
+	producer, receipt, oracle, unknownProducer, unknownOracle  string
+	mismatchedOracle, independence, output, check              string
 }
 
 func parseOptions(args []string) (options, error) {

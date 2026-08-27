@@ -44,8 +44,8 @@ type Indicator struct {
 }
 
 type Proof struct {
-	Choice        string `json:"choice"`
-	MetaOperation string `json:"meta_operation"`
+	Choice         string `json:"choice"`
+	MetaOperation  string `json:"meta_operation"`
 	EvidenceDigest string `json:"evidence_digest"`
-	Passed        bool   `json:"passed"`
+	Passed         bool   `json:"passed"`
 }

@@ -35,20 +35,20 @@ type receiptEnvelope struct {
 }
 
 type oracleEnvelope struct {
-	Schema               string          `json:"schema"`
-	Scope                string          `json:"scope"`
-	HeadSHA              string          `json:"head_sha"`
-	Decision             string          `json:"decision"`
-	Resolution           string          `json:"resolution"`
-	Reason               string          `json:"reason"`
-	ContractDigest       string          `json:"contract_digest"`
-	IndependenceDigest   string          `json:"independence_digest"`
-	LegacyDigest         string          `json:"legacy_digest"`
-	Cases                json.RawMessage `json:"cases"`
-	Summary              json.RawMessage `json:"summary"`
-	Indicators           json.RawMessage `json:"indicators"`
-	NotClaimed           json.RawMessage `json:"not_claimed"`
-	RepositoryWrites     int             `json:"repository_writes"`
-	MutationAuthority    bool            `json:"mutation_authority"`
-	Digest               string          `json:"digest"`
+	Schema             string          `json:"schema"`
+	Scope              string          `json:"scope"`
+	HeadSHA            string          `json:"head_sha"`
+	Decision           string          `json:"decision"`
+	Resolution         string          `json:"resolution"`
+	Reason             string          `json:"reason"`
+	ContractDigest     string          `json:"contract_digest"`
+	IndependenceDigest string          `json:"independence_digest"`
+	LegacyDigest       string          `json:"legacy_digest"`
+	Cases              json.RawMessage `json:"cases"`
+	Summary            json.RawMessage `json:"summary"`
+	Indicators         json.RawMessage `json:"indicators"`
+	NotClaimed         json.RawMessage `json:"not_claimed"`
+	RepositoryWrites   int             `json:"repository_writes"`
+	MutationAuthority  bool            `json:"mutation_authority"`
+	Digest             string          `json:"digest"`
 }

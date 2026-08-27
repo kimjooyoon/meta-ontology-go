@@ -22,8 +22,8 @@ type oracleCase struct {
 }
 
 type oracleSummary struct {
-	CasesSatisfied           int `json:"cases_satisfied"`
-	CasesTotal               int `json:"cases_total"`
-	ProducerDependencies     int `json:"producer_dependencies"`
+	CasesSatisfied            int `json:"cases_satisfied"`
+	CasesTotal                int `json:"cases_total"`
+	ProducerDependencies      int `json:"producer_dependencies"`
 	SemanticCorrectnessClaims int `json:"semantic_correctness_claims"`
 }

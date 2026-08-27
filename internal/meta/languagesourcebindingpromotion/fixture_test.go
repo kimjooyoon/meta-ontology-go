@@ -31,7 +31,7 @@ func fixtureInput() Input {
 		Producer: jsonBytes(producer), Receipt: jsonBytes(receipt), Oracle: jsonBytes(oracle),
 		UnknownProducer: jsonBytes(unknownProducer), UnknownOracle: jsonBytes(unknownOracle),
 		MismatchedOracle: jsonBytes(mismatchedOracle),
-		Independence: IndependenceEvidence{Schema: IndependenceSchema}}
+		Independence:     IndependenceEvidence{Schema: IndependenceSchema}}
 }
 
 func jsonBytes(value any) []byte {
