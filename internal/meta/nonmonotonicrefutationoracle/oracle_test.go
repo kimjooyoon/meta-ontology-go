@@ -107,7 +107,9 @@ func TestRejectedEvidencePreservesPriorAcceptedState(t *testing.T) {
 		t.Fatalf("unknown after discharge = %#v", unknown)
 	}
 
-	insufficient := judgeVariant(t, ";observed=1;observed_material=fixture:gamma:input-gamma:value-1", ";observed=;observed_material=fixture:gamma:input-gamma:value-1")
+	insufficient := judgeVariant(t,
+		";observed=1;observed_material=fixture:gamma:input-gamma:value-1;observation_quality=SUFFICIENT;provider_class=HISTORICAL_FIXTURE;provenance=fixture-provider-gamma-3",
+		";observed=;observed_material=fixture:gamma:input-gamma:value-1;observation_quality=SUFFICIENT;provider_class=HISTORICAL_FIXTURE;provenance=fixture-provider-gamma-3")
 	if insufficient.Decision != "PASS" || insufficient.Transitions[5].Relation != "INSUFFICIENT" || insufficient.Transitions[5].Before != "REFUTED" || insufficient.Transitions[5].After != "REFUTED" || insufficient.Transitions[5].Accepted {
 		t.Fatalf("insufficient after refutation = %#v", insufficient)
 	}
