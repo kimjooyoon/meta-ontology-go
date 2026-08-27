@@ -49,6 +49,11 @@ jobs:
           source="$GITHUB_WORKSPACE/examples/observer-effect-ledger/main.gooo"
           mkdir -p "$work/first" "$work/replay" "$work/unknown" "$work/violation" "$work/violation-root"
 
+          if rg -n 'github\.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect|internal/meta/observereffect' scripts/observer-effect-judge; then
+            echo "consumer judge must not import the producer observereffect package" >&2
+            exit 1
+          fi
+
           go run ./cmd/gooo check "$source"
           common=(
             -mode observe
@@ -80,9 +85,11 @@ jobs:
             .observation.environment.changed == false and
             .observation.logical_time.changed == false and
             .source.canonical_parse == true and .source.canonical_lowering == true and
-            .source.semantic_digest != "" and
+            .source.semantic_digest != "" and .source.policy == "OUTPUT_OPEN" and .source.policy_digest != "" and
             (.["source"]["interventions"] | length) == 2 and
-            all(.source.interventions[]; .parse_valid == true and .lowering_valid == true and .semantic_invariant == true) and
+            all(.source.interventions[]; .parse_valid == true and .lowering_valid == true) and
+            ([.source.interventions[] | select(.kind == "SEMANTIC_CAUSAL" and .semantic_invariant == false and .causal_change == true and .baseline_policy != .mutated_policy and .baseline_decision != .mutated_decision and .baseline_claim != .mutated_claim and .baseline_coordinate_digest != .mutated_coordinate_digest)] | length) == 1 and
+            ([.source.interventions[] | select(.kind == "NONSEMANTIC_PRESERVATION" and .semantic_invariant == true and .causal_change == false and .baseline_digest == .mutated_digest and .baseline_policy == .mutated_policy and .baseline_decision == .mutated_decision and .baseline_claim == .mutated_claim and .baseline_coordinate_digest == .mutated_coordinate_digest)] | length) == 1 and
             ([.effects[].domain] | sort) == ["ENVIRONMENT", "LOGICAL_TIME", "OUTPUT", "REPOSITORY_STORAGE"] and
             ([.effects[] | select(.domain == "OUTPUT") | .write_count] | .[0]) == 0 and
             ([.effects[] | select(.domain == "OUTPUT") | .status] | .[0]) == "OPEN" and
@@ -128,6 +135,17 @@ jobs:
             ([.coordinates[] | select(.coordinate == "OUTPUT") | .step] | .[0]) == "artifact-write" and
             ([.coordinates[] | select(.coordinate == "OUTPUT") | .reason] | .[0]) == "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED"
           ' "$work/first/ledger.json"
+          producer_import_count="$( (rg -n 'github\.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect|internal/meta/observereffect' scripts/observer-effect-judge || true) | wc -l | tr -d '[:space:]')"
+          semantic_causal_pass="$(jq '[.source.interventions[] | select(.kind == "SEMANTIC_CAUSAL" and .semantic_invariant == false and .causal_change == true)] | length' "$work/first/ledger.json")"
+          semantic_causal_total="$(jq '[.source.interventions[] | select(.kind == "SEMANTIC_CAUSAL")] | length' "$work/first/ledger.json")"
+          nonsemantic_preservation_pass="$(jq '[.source.interventions[] | select(.kind == "NONSEMANTIC_PRESERVATION" and .semantic_invariant == true and .causal_change == false)] | length' "$work/first/ledger.json")"
+          nonsemantic_preservation_total="$(jq '[.source.interventions[] | select(.kind == "NONSEMANTIC_PRESERVATION")] | length' "$work/first/ledger.json")"
+          jq -n \
+            --arg producer_dependency_imports "${producer_import_count}/${producer_import_count}" \
+            --arg semantic_causal_cases "${semantic_causal_pass}/${semantic_causal_total}" \
+            --arg nonsemantic_preservation_cases "${nonsemantic_preservation_pass}/${nonsemantic_preservation_total}" \
+            '{producer_dependency_imports: $producer_dependency_imports, semantic_causal_cases: $semantic_causal_cases, nonsemantic_preservation_cases: $nonsemantic_preservation_cases}' \
+            > "$work/consumer-adjudication-summary.json"
           jq -e '
             .schema == "gooo/observer-effect-judgment/v1" and
             .decision == "PASS" and .subject_decision == "UNKNOWN" and
@@ -135,6 +153,11 @@ jobs:
             .metrics.fixed_denominator == 12 and .mutation_authority == false and
             .repository_writes == 0
           ' "$work/first/judgment.json"
+          jq -e '
+            .producer_dependency_imports == "0/0" and
+            .semantic_causal_cases == "1/1" and
+            .nonsemantic_preservation_cases == "1/1"
+          ' "$work/consumer-adjudication-summary.json"
 
           go run ./scripts/observer-effect-ledger \
             -mode unknown -root "$GITHUB_WORKSPACE" -source "$source" \

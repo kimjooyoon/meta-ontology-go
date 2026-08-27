@@ -23,12 +23,16 @@ instead of silently removing an indicator. The violation mode is `10/12`
 (`8333` basis points).
 
 The observer emits the ledger and two role-specific receipts. The separate
-`observer-effect-judge` executable re-derives the subject decision, effect
-domains, receipt chain, fixed denominator, authority boundary, and persistent
-claim transition. It also re-reads the five workflow files so a trigger,
-branch-filter, or concurrency-key mutation becomes `FAIL_CLOSED`. A `PASS`
-judgment means the evidence is internally valid; it does not authorize a
-repository mutation or promotion.
+`observer-effect-judge` executable uses a consumer-owned wire model and
+re-derives the source policy, semantic intervention outcomes, subject decision,
+effect domains, receipt chain, fixed denominator, authority boundary, and
+persistent claim transition. Its producer dependency count is `0/0`. One
+semantic policy intervention must change the OUTPUT coordinate, decision, and
+claim transition; one comment/quoted-text intervention must preserve them. It
+also re-reads the five workflow files so a trigger, branch-filter, or
+concurrency-key mutation becomes `FAIL_CLOSED`. A `PASS` judgment means the
+evidence is internally valid; it does not authorize a repository mutation or
+promotion.
 
 The static topology evidence keeps exact counts separate from the 12-indicator
 success denominator: subscribers audited `5/5`, branch-filtered `5/5`,
@@ -37,8 +41,10 @@ objects per PR completion `4 -> 0`. The Actions API snapshot of skipped `59`
 and queued `41` is labeled `RUNNER_SCOPED`, `HISTORICAL_FIXTURE`, and `OPEN`,
 with unknown observation time/query and `current_evidence=false`; it is
 time-dependent and excluded from the fixed denominator. The source is bound to
-canonical parse/lowering and comment/quoted-text semantic interventions, so
-raw declaration-looking text cannot establish Gooo semantics. Because this PR changes protected workflow policy, the
+canonical parse/lowering and a computed `OUTPUT_OPEN` policy. Its semantic
+policy intervention is causal, while the comment/quoted-text intervention
+preserves the canonical IR; raw declaration-looking text cannot establish Gooo
+semantics. Because this PR changes protected workflow policy, the
 ledger also reports `CI-ROOT-OF-TRUST-001` as the expected
 `FAIL_CLOSED`/`BOOTSTRAP_EXPECTED_NEGATIVE` guardian result; it is not hidden or
 turned into a required context by this PR.

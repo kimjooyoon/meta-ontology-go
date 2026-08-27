@@ -16,6 +16,7 @@ entity CausalTopologyEdge id "gooo://observer-effect/entity/causal-topology-edge
 entity RunnerScopedEvidence id "gooo://observer-effect/entity/runner-scoped-evidence"
 entity GuardianExpectation id "gooo://observer-effect/entity/guardian-expectation"
 entity SemanticInterventionEvidence id "gooo://observer-effect/entity/semantic-intervention-evidence"
+entity OutputOpenObservationPolicy id "gooo://observer-effect/policy/output/open"
 
 activity ObserveRepository(RepositoryStorage) -> ObservationResult
 activity ObserveEnvironment(EnvironmentSnapshot) -> ObservationResult
@@ -30,3 +31,4 @@ activity AuditTriggerTopology(TriggerTopologyEvidence) -> CausalTopologyEdge
 activity RecordRunnerScopedEvidence(RunnerScopedEvidence) -> IndependentJudgment
 activity RecordGuardianExpectedNegative(GuardianExpectation) -> IndependentJudgment
 activity AdjudicateSemanticIntervention(SemanticInterventionEvidence) -> IndependentJudgment
+activity ComputeOutputObservationPolicy(OutputOpenObservationPolicy) -> ObserverEffect

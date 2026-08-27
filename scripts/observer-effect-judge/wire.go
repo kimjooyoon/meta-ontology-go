@@ -1,4 +1,4 @@
-package observereffect
+package main
 
 const (
 	LedgerSchema     = "gooo/observer-effect-ledger/v1"
@@ -246,27 +246,6 @@ type Authority struct {
 	PromotionAuthorized bool `json:"promotion_authorized"`
 }
 
-type Receipt struct {
-	Schema            string          `json:"schema"`
-	Kind              string          `json:"kind"`
-	Producer          string          `json:"producer"`
-	Consumer          string          `json:"consumer"`
-	MetaOperation     string          `json:"meta_operation"`
-	ProofChoice       string          `json:"proof_choice"`
-	Subject           string          `json:"subject"`
-	SubjectDigest     string          `json:"subject_digest"`
-	Decision          string          `json:"decision"`
-	Resolution        string          `json:"resolution"`
-	RepositoryWrites  int             `json:"repository_writes"`
-	MutationAuthority bool            `json:"mutation_authority"`
-	Unknown           Unknown         `json:"unknown"`
-	Coordinate        Unknown         `json:"coordinate"`
-	Reason            string          `json:"reason"`
-	ClaimTransition   ClaimTransition `json:"claim_transition"`
-	EvidenceDigest    string          `json:"evidence_digest"`
-	Digest            string          `json:"digest"`
-}
-
 type Report struct {
 	Schema              string                   `json:"schema"`
 	Experiment          string                   `json:"experiment"`
@@ -292,4 +271,46 @@ type Report struct {
 	EvidenceDigest      string                   `json:"evidence_digest"`
 	Digest              string                   `json:"digest"`
 	Indicators          []Indicator              `json:"indicators"`
+}
+
+type Receipt struct {
+	Schema            string          `json:"schema"`
+	Kind              string          `json:"kind"`
+	Producer          string          `json:"producer"`
+	Consumer          string          `json:"consumer"`
+	MetaOperation     string          `json:"meta_operation"`
+	ProofChoice       string          `json:"proof_choice"`
+	Subject           string          `json:"subject"`
+	SubjectDigest     string          `json:"subject_digest"`
+	Decision          string          `json:"decision"`
+	Resolution        string          `json:"resolution"`
+	RepositoryWrites  int             `json:"repository_writes"`
+	MutationAuthority bool            `json:"mutation_authority"`
+	Unknown           Unknown         `json:"unknown"`
+	Coordinate        Unknown         `json:"coordinate"`
+	Reason            string          `json:"reason"`
+	ClaimTransition   ClaimTransition `json:"claim_transition"`
+	EvidenceDigest    string          `json:"evidence_digest"`
+	Digest            string          `json:"digest"`
+}
+
+type Judgment struct {
+	Schema              string          `json:"schema"`
+	Producer            string          `json:"producer"`
+	Consumer            string          `json:"consumer"`
+	MetaOperation       string          `json:"meta_operation"`
+	ProofChoice         string          `json:"proof_choice"`
+	Decision            string          `json:"decision"`
+	SubjectDecision     string          `json:"subject_decision"`
+	Resolution          string          `json:"resolution"`
+	RepositoryWrites    int             `json:"repository_writes"`
+	MutationAuthority   bool            `json:"mutation_authority"`
+	PromotionAuthorized bool            `json:"promotion_authorized"`
+	Unknown             Unknown         `json:"unknown"`
+	Coordinate          Unknown         `json:"coordinate"`
+	Reason              string          `json:"reason"`
+	ClaimTransition     ClaimTransition `json:"claim_transition"`
+	Metrics             Metrics         `json:"metrics"`
+	Checks              []Check         `json:"checks"`
+	Digest              string          `json:"digest"`
 }

@@ -64,6 +64,9 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 	repositoryChanged := before.Digest != after.Digest
 	repositoryWrites := changedPathCount(before, after)
 	unknown := primaryUnknown(environment, logicalTime)
+	if source.Policy != observerOutputPolicyOpen {
+		unknown = policyUnknown()
+	}
 	if opts.Mode == "unknown" {
 		unknown = Unknown{
 			Stage:  "OBSERVE",
@@ -84,7 +87,7 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 	}
 	topology := buildTopology(topologyRoot)
 	decision, resolution := "OBSERVED", "EXACT"
-	if !isCanonicalSource(source) || !topology.Exact || repositoryChanged || environment.Changed || logicalTime.Changed {
+	if !isCanonicalSource(source) || source.Policy != observerOutputPolicyOpen || !topology.Exact || repositoryChanged || environment.Changed || logicalTime.Changed {
 		decision = "FAIL_CLOSED"
 		resolution = "EXACT"
 	} else if unknown.Reason != "NONE" || hasOpenOrUnknownCoordinate(environment, logicalTime) {
@@ -101,8 +104,8 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 		Environment: environment,
 		LogicalTime: logicalTime,
 	}
-	effects := buildEffects(observation, repositoryWrites)
-	coordinates := buildCoordinateAdjudications(observation)
+	effects := buildEffects(observation, repositoryWrites, source.Policy)
+	coordinates := buildCoordinateAdjudications(observation, source.Policy)
 	claim := buildClaimTransition(source.Digest, decision, unknown)
 	indicators := buildIndicators(source, observation, effects, claim)
 	metrics := buildMetrics(indicators)
@@ -311,7 +314,8 @@ func envOrDefault(name, fallback string) string {
 	return fallback
 }
 
-func buildEffects(observation Observation, repositoryWrites int) []Effect {
+func buildEffects(observation Observation, repositoryWrites int, policy string) []Effect {
+	output := outputCoordinate(policy)
 	return []Effect{
 		{
 			Domain: "REPOSITORY_STORAGE", ObservedChanged: observation.RepositoryStorage.Changed,
@@ -348,8 +352,8 @@ func buildEffects(observation Observation, repositoryWrites int) []Effect {
 			BeforeDigest: "UNOBSERVED", AfterDigest: "UNOBSERVED", WriteCount: 0,
 			Producer: "observer-effect-ledger", Consumer: "observer-effect-judge",
 			MetaOperation: "plan-observer-output-effect", ProofChoice: "FOUNDATION",
-			Status: "OPEN", Stage: "EMIT_OUTPUT", Step: "artifact-write",
-			Reason: "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED",
+			Status: output.Status, Stage: output.Stage, Step: output.Step,
+			Reason: output.Reason,
 		},
 	}
 }
@@ -361,17 +365,12 @@ func statusFromSnapshot(status string) string {
 	return "UNKNOWN"
 }
 
-func buildCoordinateAdjudications(observation Observation) []CoordinateAdjudication {
+func buildCoordinateAdjudications(observation Observation, policy string) []CoordinateAdjudication {
 	return []CoordinateAdjudication{
 		coordinateFromSnapshot("REPOSITORY_STORAGE", observation.RepositoryStorage, "assert-zero-repository-writes", "REGRESSION"),
 		coordinateFromSnapshot("ENVIRONMENT", observation.Environment, "assert-environment-stability", "COHERENCE"),
 		coordinateFromSnapshot("LOGICAL_TIME", observation.LogicalTime, "assert-logical-time-stability", "COHERENCE"),
-		{
-			Coordinate: "OUTPUT", Status: "OPEN", Resolution: "LOWER_RESOLUTION",
-			BeforeObserved: false, AfterObserved: false, Stage: "EMIT_OUTPUT", Step: "artifact-write",
-			Reason: "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED", Producer: "observer-effect-ledger",
-			Consumer: "observer-effect-judge", MetaOperation: "plan-observer-output-effect", ProofChoice: "FOUNDATION",
-		},
+		outputCoordinate(policy),
 	}
 }
 

@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -22,32 +21,11 @@ type Check struct {
 	Reason string `json:"reason"`
 }
 
-type Judgment struct {
-	Schema              string                         `json:"schema"`
-	Producer            string                         `json:"producer"`
-	Consumer            string                         `json:"consumer"`
-	MetaOperation       string                         `json:"meta_operation"`
-	ProofChoice         string                         `json:"proof_choice"`
-	Decision            string                         `json:"decision"`
-	SubjectDecision     string                         `json:"subject_decision"`
-	Resolution          string                         `json:"resolution"`
-	RepositoryWrites    int                            `json:"repository_writes"`
-	MutationAuthority   bool                           `json:"mutation_authority"`
-	PromotionAuthorized bool                           `json:"promotion_authorized"`
-	Unknown             observereffect.Unknown         `json:"unknown"`
-	Coordinate          observereffect.Unknown         `json:"coordinate"`
-	Reason              string                         `json:"reason"`
-	ClaimTransition     observereffect.ClaimTransition `json:"claim_transition"`
-	Metrics             observereffect.Metrics         `json:"metrics"`
-	Checks              []Check                        `json:"checks"`
-	Digest              string                         `json:"digest"`
-}
-
-func judge(root string, report observereffect.Report, observationReceipt, effectReceipt observereffect.Receipt) (Judgment, error) {
-	if report.Schema != observereffect.LedgerSchema || report.Experiment != observereffect.ExperimentName {
+func judge(root string, report Report, observationReceipt, effectReceipt Receipt) (Judgment, error) {
+	if report.Schema != LedgerSchema || report.Experiment != ExperimentName {
 		return Judgment{}, fmt.Errorf("unexpected observer-effect ledger identity")
 	}
-	if !report.Source.GoooSource || !strings.HasSuffix(report.Source.Path, ".gooo") || report.Source.Digest == "" || len(report.Effects) != 4 || len(report.Indicators) != observereffect.FixedDenominator {
+	if !report.Source.GoooSource || !strings.HasSuffix(report.Source.Path, ".gooo") || report.Source.Digest == "" || len(report.Effects) != 4 || len(report.Indicators) != FixedDenominator {
 		return Judgment{}, fmt.Errorf("ledger does not contain the fixed experiment surface")
 	}
 	if err := validateCanonicalSource(root, report.Source); err != nil {
@@ -94,7 +72,7 @@ func judge(root string, report observereffect.Report, observationReceipt, effect
 		return Judgment{}, fmt.Errorf("persistent claim transition is inconsistent")
 	}
 	judgment := Judgment{
-		Schema: observereffect.JudgmentSchema, Producer: "observer-effect-judge",
+		Schema: JudgmentSchema, Producer: "observer-effect-judge",
 		Consumer: "ci-proof", MetaOperation: "independently-judge-effect-ledger",
 		ProofChoice: "REGRESSION", Decision: "PASS", SubjectDecision: report.Decision,
 		Resolution: report.Resolution, RepositoryWrites: report.RepositoryWrites,
@@ -114,8 +92,8 @@ func judge(root string, report observereffect.Report, observationReceipt, effect
 	return judgment, nil
 }
 
-func independentDecision(report observereffect.Report) (string, string) {
-	if !report.Topology.Exact || report.RepositoryWrites != 0 || report.Observation.RepositoryStorage.Changed || coordinateStatus(report, "REPOSITORY_STORAGE") == "FAIL" || coordinateStatus(report, "ENVIRONMENT") == "FAIL" || coordinateStatus(report, "LOGICAL_TIME") == "FAIL" {
+func independentDecision(report Report) (string, string) {
+	if !report.Topology.Exact || report.RepositoryWrites != 0 || report.Observation.RepositoryStorage.Changed || coordinateStatus(report, "REPOSITORY_STORAGE") == "FAIL" || coordinateStatus(report, "ENVIRONMENT") == "FAIL" || coordinateStatus(report, "LOGICAL_TIME") == "FAIL" || coordinateStatus(report, "OUTPUT") == "FAIL" {
 		return "FAIL_CLOSED", "EXACT"
 	}
 	if report.Unknown.Reason != "NONE" || coordinateStatus(report, "ENVIRONMENT") == "UNKNOWN" || coordinateStatus(report, "LOGICAL_TIME") == "UNKNOWN" || coordinateStatus(report, "OUTPUT") == "OPEN" {
@@ -124,7 +102,7 @@ func independentDecision(report observereffect.Report) (string, string) {
 	return "OBSERVED", "EXACT"
 }
 
-func coordinateStatus(report observereffect.Report, coordinate string) string {
+func coordinateStatus(report Report, coordinate string) string {
 	for _, adjudication := range report.Coordinates {
 		if adjudication.Coordinate == coordinate {
 			return adjudication.Status
@@ -133,7 +111,7 @@ func coordinateStatus(report observereffect.Report, coordinate string) string {
 	return "UNKNOWN"
 }
 
-func validateCanonicalSource(root string, source observereffect.Source) error {
+func validateCanonicalSource(root string, source Source) error {
 	path := source.Path
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(root, path)
@@ -153,61 +131,168 @@ func validateCanonicalSource(root string, source observereffect.Source) error {
 	if err != nil || !source.CanonicalLowering || ir.StableHash() != source.SemanticDigest || !source.GoooSource {
 		return fmt.Errorf("canonical source lowering was not observed")
 	}
-	expected := independentSemanticInterventions(path, payload, source.SemanticDigest)
+	policy := consumerPolicyFromIR(ir)
+	if source.Policy != policy || source.PolicyDigest != consumerPolicyDigest(policy) {
+		return fmt.Errorf("source observation policy was not independently reconstructed")
+	}
+	expected := independentSemanticInterventions(path, payload, source.Digest, source.SemanticDigest, policy)
 	if !reflect.DeepEqual(expected, source.Interventions) {
 		return fmt.Errorf("semantic/comment interventions are not canonical")
 	}
-	for _, intervention := range source.Interventions {
-		if !intervention.SemanticInvariant || !intervention.ParseValid || !intervention.LoweringValid {
-			return fmt.Errorf("semantic intervention %s did not preserve canonical meaning", intervention.Name)
-		}
+	if len(source.Interventions) != 2 || source.Interventions[0].Kind != "SEMANTIC_CAUSAL" || source.Interventions[0].CausalChange != true || source.Interventions[0].SemanticInvariant || source.Interventions[1].Kind != "NONSEMANTIC_PRESERVATION" || !source.Interventions[1].SemanticInvariant || source.Interventions[1].CausalChange {
+		return fmt.Errorf("semantic intervention cases did not independently adjudicate causal and preserving behavior")
 	}
 	return nil
 }
 
 type independentInterventionCase struct {
-	Name     string
-	Mutation string
-	Suffix   string
+	Name        string
+	Kind        string
+	Mutation    string
+	Needle      string
+	Replacement string
+	Suffix      string
 }
 
 var independentInterventionCases = []independentInterventionCase{
 	{
-		Name: "comment-declaration-intervention", Mutation: "append comment-only entity and activity declarations",
-		Suffix: "\n// entity Fake id \"gooo://fake/entity\"\n// activity Fake(Entity) -> Entity\n",
+		Name:        "semantic-output-policy-intervention",
+		Kind:        "SEMANTIC_CAUSAL",
+		Mutation:    "replace the semantic output policy URI with a reseal-required policy URI",
+		Needle:      "gooo://observer-effect/policy/output/open",
+		Replacement: "gooo://observer-effect/policy/output/reseal-required",
 	},
 	{
-		Name: "quoted-text-comment-intervention", Mutation: "append quoted declaration-looking text inside a comment",
-		Suffix: "\n// \"entity Fake\" \"activity Fake(Entity) -> Entity\"\n",
+		Name:     "comment-and-quoted-text-intervention",
+		Kind:     "NONSEMANTIC_PRESERVATION",
+		Mutation: "append comment-only declaration-looking and quoted declaration-looking text",
+		Suffix:   "\n// entity Fake id \"gooo://fake/entity\"\n// activity Fake(Entity) -> Entity\n// \"entity Fake\" \"activity Fake(Entity) -> Entity\"\n",
 	},
 }
 
-func independentSemanticInterventions(filename string, payload []byte, baselineDigest string) []observereffect.SemanticIntervention {
-	interventions := make([]observereffect.SemanticIntervention, 0, len(independentInterventionCases))
+func independentSemanticInterventions(filename string, payload []byte, sourceDigest, baselineDigest, baselinePolicy string) []SemanticIntervention {
+	interventions := make([]SemanticIntervention, 0, len(independentInterventionCases))
+	baseline := consumerProjectOutcome(sourceDigest, baselinePolicy)
 	for _, expected := range independentInterventionCases {
-		mutated := append(append([]byte(nil), payload...), []byte(expected.Suffix)...)
+		mutated := append([]byte(nil), payload...)
+		if expected.Needle != "" {
+			mutated = bytes.Replace(mutated, []byte(expected.Needle), []byte(expected.Replacement), 1)
+		} else {
+			mutated = append(mutated, []byte(expected.Suffix)...)
+		}
 		file, diagnostics := syntax.ParseFile(filename, string(mutated))
 		parseValid := file != nil && !diagnostics.HasErrors()
 		loweringValid := false
 		mutatedDigest := ""
+		mutatedPolicy := ""
 		if parseValid {
 			ir, err := bidir.Lower(file)
 			if err == nil {
 				loweringValid = true
 				mutatedDigest = ir.StableHash()
+				mutatedPolicy = consumerPolicyFromIR(ir)
 			}
 		}
-		interventions = append(interventions, observereffect.SemanticIntervention{
-			Name: expected.Name, Mutation: expected.Mutation,
+		mutatedOutcome := consumerProjectOutcome(independentBytesDigest(mutated), mutatedPolicy)
+		semanticInvariant := parseValid && loweringValid && baselineDigest != "" && mutatedDigest == baselineDigest
+		causalChange := expected.Kind == "SEMANTIC_CAUSAL" && baselinePolicy != "" && mutatedPolicy != "" && baselinePolicy != mutatedPolicy && baseline.Decision != mutatedOutcome.Decision && baseline.Claim.Transition != mutatedOutcome.Claim.Transition && baseline.CoordinateDigest != mutatedOutcome.CoordinateDigest
+		reason := "COMMENT_OR_QUOTED_TEXT_DID_NOT_CHANGE_SEMANTIC_IR"
+		if expected.Kind == "SEMANTIC_CAUSAL" {
+			reason = "SEMANTIC_POLICY_CHANGED_OUTPUT_COORDINATE_DECISION_AND_CLAIM"
+		}
+		interventions = append(interventions, SemanticIntervention{
+			Name: expected.Name, Kind: expected.Kind, Mutation: expected.Mutation,
 			ParseValid: parseValid, LoweringValid: loweringValid,
 			BaselineDigest: baselineDigest, MutatedDigest: mutatedDigest,
-			SemanticInvariant: parseValid && loweringValid && baselineDigest != "" && mutatedDigest == baselineDigest,
-			Producer:          "observer-effect-ledger", Consumer: "observer-effect-judge",
-			MetaOperation: "intervene-comment-and-quoted-text", ProofChoice: "REGRESSION",
-			Stage: "BIND", Step: "parse-and-lower-intervention", Reason: "COMMENT_OR_QUOTED_TEXT_DID_NOT_CHANGE_SEMANTIC_IR",
+			SemanticInvariant: semanticInvariant,
+			BaselinePolicy:    baselinePolicy, MutatedPolicy: mutatedPolicy,
+			Coordinate: "OUTPUT", BaselineDecision: baseline.Decision, MutatedDecision: mutatedOutcome.Decision,
+			BaselineClaim: baseline.Claim.Transition, MutatedClaim: mutatedOutcome.Claim.Transition,
+			BaselineCoordinateDigest: baseline.CoordinateDigest, MutatedCoordinateDigest: mutatedOutcome.CoordinateDigest,
+			CausalChange: causalChange,
+			Producer:     "observer-effect-ledger", Consumer: "observer-effect-judge",
+			MetaOperation: "intervene-semantic-policy-and-comment-text", ProofChoice: "REGRESSION",
+			Stage: "BIND", Step: "parse-lower-and-project-intervention", Reason: reason,
 		})
 	}
 	return interventions
+}
+
+const (
+	consumerOutputPolicyOpen  = "OUTPUT_OPEN"
+	consumerOutputPolicyClose = "OUTPUT_REQUIRES_RESEALED_OBSERVATION"
+)
+
+type consumerSemanticOutcome struct {
+	Policy           string
+	Decision         string
+	Resolution       string
+	Unknown          Unknown
+	Claim            ClaimTransition
+	CoordinateDigest string
+}
+
+func consumerPolicyFromIR(ir interface{ SemanticCanonical() string }) string {
+	if strings.Contains(ir.SemanticCanonical(), "gooo://observer-effect/policy/output/open") {
+		return consumerOutputPolicyOpen
+	}
+	return consumerOutputPolicyClose
+}
+
+func consumerPolicyDigest(policy string) string {
+	return independentValueDigest([]string{"observer-effect-policy/v1", policy})
+}
+
+func consumerProjectOutcome(sourceDigest, policy string) consumerSemanticOutcome {
+	decision, resolution := "UNKNOWN", "LOWER_RESOLUTION"
+	unknown := Unknown{Stage: "EMIT_OUTPUT", Step: "artifact-write", Reason: "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED"}
+	coordinate := consumerOutputCoordinate(policy)
+	if policy != consumerOutputPolicyOpen {
+		decision, resolution = "FAIL_CLOSED", "EXACT"
+		unknown = Unknown{Stage: "ADJUDICATE", Step: "apply-observation-policy", Reason: "SOURCE_POLICY_REQUIRES_OUTPUT_RESEAL"}
+	}
+	return consumerSemanticOutcome{
+		Policy: policy, Decision: decision, Resolution: resolution, Unknown: unknown,
+		Claim:            consumerClaimTransition(sourceDigest, decision, unknown),
+		CoordinateDigest: consumerCoordinateDigest(coordinate),
+	}
+}
+
+func consumerOutputCoordinate(policy string) CoordinateAdjudication {
+	status, resolution, stage, step, reason := "OPEN", "LOWER_RESOLUTION", "EMIT_OUTPUT", "artifact-write", "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED"
+	if policy != consumerOutputPolicyOpen {
+		status, resolution, stage, step, reason = "FAIL", "EXACT", "ADJUDICATE", "apply-observation-policy", "SOURCE_POLICY_REQUIRES_OUTPUT_RESEAL"
+	}
+	return CoordinateAdjudication{
+		Coordinate: "OUTPUT", Status: status, Resolution: resolution,
+		BeforeObserved: false, AfterObserved: false, Stage: stage, Step: step, Reason: reason,
+		Producer: "observer-effect-ledger", Consumer: "observer-effect-judge",
+		MetaOperation: "plan-observer-output-effect", ProofChoice: "FOUNDATION",
+	}
+}
+
+func consumerCoordinateDigest(coordinate CoordinateAdjudication) string {
+	return independentValueDigest([]any{
+		coordinate.Coordinate, coordinate.Status, coordinate.Resolution,
+		coordinate.BeforeObserved, coordinate.AfterObserved,
+		coordinate.Stage, coordinate.Step, coordinate.Reason,
+	})
+}
+
+func consumerClaimTransition(sourceDigest, decision string, unknown Unknown) ClaimTransition {
+	current, transition := "SUPPORTED", "CLAIMED->SUPPORTED"
+	if decision == "FAIL_CLOSED" {
+		current, transition = "REFUTED", "CLAIMED->REFUTED"
+	}
+	if decision == "UNKNOWN" {
+		current, transition = "UNKNOWN", "CLAIMED->UNKNOWN"
+	}
+	return ClaimTransition{
+		ClaimID: "claim.observer.zero-write", Persistent: true, Sequence: 2,
+		PreviousState: "CLAIMED", CurrentState: current, Transition: transition,
+		PreviousEvidenceDigest: independentValueDigest([]string{"claim.observer.zero-write", "CLAIMED", sourceDigest, "1"}),
+		EvidenceDigest:         independentValueDigest([]any{sourceDigest, decision, unknown}),
+	}
 }
 
 func independentBytesDigest(payload []byte) string {
@@ -264,7 +349,7 @@ var independentTopologyExpectations = []independentTopologyExpectation{
 	},
 }
 
-func validateTopology(root string, report observereffect.Report) error {
+func validateTopology(root string, report Report) error {
 	topology := report.Topology
 	if topology.Scope != "STATIC_TRIGGER_TOPOLOGY" || topology.WorkflowRunSubscribersAudited != 5 || topology.WorkflowRunSubscribersExpected != 5 || topology.BranchFilteredSubscribersBefore != 0 || topology.BranchFilteredSubscribersExpected != 5 || topology.DuplicatePROObservationPathsBefore != 2 || topology.DuplicatePROObservationPathsAfter != 1 || topology.ExpectedSkippedCIChildRunsPerPRCompletionBefore != 4 || topology.ExpectedSkippedCIChildRunsPerPRCompletionAfter != 0 {
 		return fmt.Errorf("static topology metrics are not exact")
@@ -323,7 +408,7 @@ func validateTopology(root string, report observereffect.Report) error {
 	return nil
 }
 
-func validateEffects(report observereffect.Report) error {
+func validateEffects(report Report) error {
 	seen := make(map[string]bool, len(report.Effects))
 	for _, effect := range report.Effects {
 		if seen[effect.Domain] || effect.Producer != "observer-effect-ledger" || effect.Consumer != "observer-effect-judge" || effect.MetaOperation == "" || effect.ProofChoice == "" {
@@ -337,7 +422,8 @@ func validateEffects(report observereffect.Report) error {
 		}
 	}
 	output := effectByDomain(report.Effects, "OUTPUT")
-	if output.WriteCount != 0 || output.ObservedChanged || output.MutationAttempted || !output.Planned || output.BeforeDigest != "UNOBSERVED" || output.AfterDigest != "UNOBSERVED" || output.Status != "OPEN" || output.Stage != "EMIT_OUTPUT" || output.Step != "artifact-write" || output.Reason != "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED" {
+	expectedOutput := consumerOutputCoordinate(report.Source.Policy)
+	if output.WriteCount != 0 || output.ObservedChanged || output.MutationAttempted || !output.Planned || output.BeforeDigest != "UNOBSERVED" || output.AfterDigest != "UNOBSERVED" || output.Status != expectedOutput.Status || output.Stage != expectedOutput.Stage || output.Step != expectedOutput.Step || output.Reason != expectedOutput.Reason {
 		return fmt.Errorf("observer output effect is not honestly classified")
 	}
 	repository := effectByDomain(report.Effects, "REPOSITORY_STORAGE")
@@ -346,7 +432,7 @@ func validateEffects(report observereffect.Report) error {
 	}
 	for _, pair := range []struct {
 		domain   string
-		snapshot observereffect.SnapshotDelta
+		snapshot SnapshotDelta
 	}{
 		{domain: "ENVIRONMENT", snapshot: report.Observation.Environment},
 		{domain: "LOGICAL_TIME", snapshot: report.Observation.LogicalTime},
@@ -359,7 +445,7 @@ func validateEffects(report observereffect.Report) error {
 	return nil
 }
 
-func validateCoordinates(report observereffect.Report) error {
+func validateCoordinates(report Report) error {
 	if len(report.Coordinates) != 4 {
 		return fmt.Errorf("coordinate adjudication denominator is not four")
 	}
@@ -372,7 +458,7 @@ func validateCoordinates(report observereffect.Report) error {
 	}
 	for _, expected := range []struct {
 		coordinate string
-		snapshot   observereffect.SnapshotDelta
+		snapshot   SnapshotDelta
 	}{
 		{coordinate: "REPOSITORY_STORAGE", snapshot: report.Observation.RepositoryStorage},
 		{coordinate: "ENVIRONMENT", snapshot: report.Observation.Environment},
@@ -403,8 +489,9 @@ func validateCoordinates(report observereffect.Report) error {
 		}
 	}
 	output := coordinateByName(report.Coordinates, "OUTPUT")
-	if output.Status != "OPEN" || output.Resolution != "LOWER_RESOLUTION" || output.BeforeObserved || output.AfterObserved || output.Stage != "EMIT_OUTPUT" || output.Step != "artifact-write" || output.Reason != "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED" {
-		return fmt.Errorf("output coordinate is not open and lower-resolution")
+	expectedOutput := consumerOutputCoordinate(report.Source.Policy)
+	if output.Status != expectedOutput.Status || output.Resolution != expectedOutput.Resolution || output.BeforeObserved || output.AfterObserved || output.Stage != expectedOutput.Stage || output.Step != expectedOutput.Step || output.Reason != expectedOutput.Reason {
+		return fmt.Errorf("output coordinate is not independently derived from the source policy")
 	}
 	for _, coordinate := range []string{"REPOSITORY_STORAGE", "ENVIRONMENT", "LOGICAL_TIME", "OUTPUT"} {
 		if !seen[coordinate] {
@@ -414,16 +501,16 @@ func validateCoordinates(report observereffect.Report) error {
 	return nil
 }
 
-func coordinateByName(coordinates []observereffect.CoordinateAdjudication, name string) observereffect.CoordinateAdjudication {
+func coordinateByName(coordinates []CoordinateAdjudication, name string) CoordinateAdjudication {
 	for _, coordinate := range coordinates {
 		if coordinate.Coordinate == name {
 			return coordinate
 		}
 	}
-	return observereffect.CoordinateAdjudication{}
+	return CoordinateAdjudication{}
 }
 
-func validateIndicators(report observereffect.Report) error {
+func validateIndicators(report Report) error {
 	expectedIDs := map[string]bool{
 		"OEL-OBS-01": true, "OEL-OBS-02": true, "OEL-OBS-03": true, "OEL-OBS-04": true,
 		"OEL-OBS-05": true, "OEL-OBS-06": true, "OEL-EFF-01": true, "OEL-EFF-02": true,
@@ -473,10 +560,10 @@ func validateIndicators(report observereffect.Report) error {
 			return fmt.Errorf("indicator %s has invalid class", indicator.ID)
 		}
 	}
-	if len(ids) != observereffect.FixedDenominator {
+	if len(ids) != FixedDenominator {
 		return fmt.Errorf("fixed indicator set is incomplete")
 	}
-	if report.Metrics.FixedDenominator != observereffect.FixedDenominator || report.Metrics.Satisfied != pass || report.Metrics.CoverageBasisPoints != pass*10000/observereffect.FixedDenominator {
+	if report.Metrics.FixedDenominator != FixedDenominator || report.Metrics.Satisfied != pass || report.Metrics.CoverageBasisPoints != pass*10000/FixedDenominator {
 		return fmt.Errorf("fixed denominator metrics are not recomputed")
 	}
 	if report.Metrics.ObservationTotal != 6 || report.Metrics.EffectTotal != 4 || report.Metrics.GuardrailTotal != 2 {
@@ -485,7 +572,7 @@ func validateIndicators(report observereffect.Report) error {
 	if report.Metrics.ObservationSatisfied != observations || report.Metrics.EffectSatisfied != effects || report.Metrics.GuardrailSatisfied != guardrails {
 		return fmt.Errorf("indicator class metrics are not recomputed")
 	}
-	if report.Decision == "OBSERVED" && pass != observereffect.FixedDenominator {
+	if report.Decision == "OBSERVED" && pass != FixedDenominator {
 		return fmt.Errorf("observed result did not satisfy all indicators")
 	}
 	return nil
@@ -516,9 +603,9 @@ func boolInt(value bool) int {
 	return 0
 }
 
-func validateReceipts(report observereffect.Report, observationReceipt, effectReceipt observereffect.Receipt) error {
-	for _, receipt := range []observereffect.Receipt{observationReceipt, effectReceipt} {
-		if receipt.Schema != observereffect.ReceiptSchema || receipt.Producer != "observer-effect-ledger" || receipt.Consumer != "observer-effect-judge" || receipt.SubjectDigest != report.Source.Digest || receipt.Decision != report.Decision || receipt.Resolution != report.Resolution || receipt.RepositoryWrites != report.RepositoryWrites || receipt.MutationAuthority || receipt.Coordinate != report.Coordinate || receipt.Reason != report.Reason {
+func validateReceipts(report Report, observationReceipt, effectReceipt Receipt) error {
+	for _, receipt := range []Receipt{observationReceipt, effectReceipt} {
+		if receipt.Schema != ReceiptSchema || receipt.Producer != "observer-effect-ledger" || receipt.Consumer != "observer-effect-judge" || receipt.SubjectDigest != report.Source.Digest || receipt.Decision != report.Decision || receipt.Resolution != report.Resolution || receipt.RepositoryWrites != report.RepositoryWrites || receipt.MutationAuthority || receipt.Coordinate != report.Coordinate || receipt.Reason != report.Reason {
 			return fmt.Errorf("receipt is not bound to the report")
 		}
 		if receipt.Digest != independentReceiptDigest(receipt) {
@@ -540,13 +627,13 @@ func validateReceipts(report observereffect.Report, observationReceipt, effectRe
 	return nil
 }
 
-func effectByDomain(effects []observereffect.Effect, domain string) observereffect.Effect {
+func effectByDomain(effects []Effect, domain string) Effect {
 	for _, effect := range effects {
 		if effect.Domain == domain {
 			return effect
 		}
 	}
-	return observereffect.Effect{}
+	return Effect{}
 }
 
 func claimState(decision string) string {
@@ -560,12 +647,12 @@ func claimState(decision string) string {
 	}
 }
 
-func independentReceiptDigest(receipt observereffect.Receipt) string {
+func independentReceiptDigest(receipt Receipt) string {
 	receipt.Digest = ""
 	return independentValueDigest(receipt)
 }
 
-func independentReportDigest(report observereffect.Report) string {
+func independentReportDigest(report Report) string {
 	report.Digest = ""
 	return independentValueDigest(report)
 }

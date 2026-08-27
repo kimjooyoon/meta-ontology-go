@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect"
 )
 
 type options struct {
@@ -33,8 +31,8 @@ func run(opts options) error {
 	if opts.ledger == "" || opts.observationReceipt == "" || opts.effectReceipt == "" || opts.output == "" || opts.root == "" {
 		return fmt.Errorf("root, ledger, both receipts, and output are required")
 	}
-	var report observereffect.Report
-	var observationReceipt, effectReceipt observereffect.Receipt
+	var report Report
+	var observationReceipt, effectReceipt Receipt
 	if err := readJSON(opts.ledger, &report); err != nil {
 		return err
 	}
