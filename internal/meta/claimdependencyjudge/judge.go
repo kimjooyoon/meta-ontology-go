@@ -604,7 +604,10 @@ func classify(g graph, e evidenceReceipt) ([]string, []transition) {
 				}
 			}
 			if !has || all {
-				state, event, reason = "DISCHARGED", map[bool]string{true: "DEPENDENCY_DISCHARGED", false: "EVIDENCE_ACCEPTED"}[i != 0], map[bool]string{true: "ALL_REQUIRES_UPSTREAM_AND_LOCAL_EVIDENCE", false: "LOCAL_CLAIM_EVIDENCE_PREDICATE"}[i != 0]
+				state, event, reason = "DISCHARGED", "EVIDENCE_ACCEPTED", "LOCAL_CLAIM_EVIDENCE_PREDICATE"
+				if has {
+					event, reason = "DEPENDENCY_DISCHARGED", "ALL_REQUIRES_UPSTREAM_AND_LOCAL_EVIDENCE"
+				}
 			}
 		}
 		states[i] = state
@@ -708,7 +711,7 @@ func buildResolutions(g graph, states []string, outcomes []transition, provenanc
 				}
 			}
 		}
-		value := resolution{ClaimID: c.ClaimID, Axis: c.Axis, PropositionDigest: c.PropositionDigest, State: states[i], Kind: resolutionKind(i, states[i]), ObservedEvent: outcomes[i].Event, Coordinate: outcomes[i].Coordinate, EvidenceDigest: outcomes[i].EvidenceDigest, Provenance: provenance, FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: root, CausePath: idsForPath(path, g), CauseEdgeIDs: ids, CauseEdgeKinds: kinds, CauseTransitionDigests: digests, CauseCoordinate: &outcomes[i].Coordinate}
+		value := resolution{ClaimID: c.ClaimID, Axis: c.Axis, PropositionDigest: c.PropositionDigest, State: states[i], Kind: resolutionKind(i, states[i], outcomes[i]), ObservedEvent: outcomes[i].Event, Coordinate: outcomes[i].Coordinate, EvidenceDigest: outcomes[i].EvidenceDigest, Provenance: provenance, FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: root, CausePath: idsForPath(path, g), CauseEdgeIDs: ids, CauseEdgeKinds: kinds, CauseTransitionDigests: digests, CauseCoordinate: &outcomes[i].Coordinate}
 		if i != 0 {
 			value.FailureResponsibility = "UPSTREAM_CLAIM"
 		}
@@ -720,7 +723,7 @@ func buildResolutions(g graph, states []string, outcomes []transition, provenanc
 	}
 	return result
 }
-func resolutionKind(i int, state string) string {
+func resolutionKind(i int, state string, outcome transition) string {
 	if i == 0 {
 		if state == "REFUTED" {
 			return "DIRECT_REFUTED"
@@ -734,6 +737,9 @@ func resolutionKind(i int, state string) string {
 		return "DEPENDENCY_REFUTED"
 	}
 	if state == "DISCHARGED" {
+		if len(outcome.UpstreamEdgeIDs) == 0 {
+			return "DIRECT_DISCHARGED"
+		}
 		return "DEPENDENCY_DISCHARGED"
 	}
 	return "DEPENDENCY_BLOCKED"

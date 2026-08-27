@@ -7,7 +7,7 @@
 | --- | --- | --- | ---: |
 | `unknown.gooo` | availability → 6 UNKNOWN | direct 1 OPEN, blocked 5 OPEN | 5 / 8 |
 | `refuted.gooo` | contradiction → root explicit, 5 UNKNOWN | direct 1 REFUTED, dependency 2 REFUTED, 3 OPEN | 7 / 8 |
-| `main.gooo` + unknown receipt | acceptance → 6 current | direct 1 + dependency 5 DISCHARGED | 3 / 8 recovery |
+| `main.gooo` + unknown receipt | acceptance → 6 current | direct local 4 + dependency 2 `DISCHARGED` | 3 / 8 recovery |
 
 최소 cause edge 수는 각각 3, 5, 2이며 최대 edge depth는 2다. `SUPPORTS 2`,
 `REQUIRES 3`, `CONTRADICTS 2`, `FAILURE_ENTAILMENT 1`은 모두 artifact의 edge

@@ -54,7 +54,9 @@ digest 목록이다.
 
 UNKNOWN fixture의 관측 인과 edge는 `5/8`(최소 경로 `3/8`), REFUTED fixture는
 `7/8`(최소 경로 `5/8`), recovery는 실제 discharge에 사용된 `3/8`(최소 경로
-`2/8`)이다. recovery edge를 destination이 DISCHARGED라는 이유만으로 세지
+`2/8`)이다. local evidence만으로 discharge된 downstream은 direct local
+evidence로 분류하고, `REQUIRES` upstream이 실제 사용된 경우에만 dependency
+discharge로 분류한다. recovery edge를 destination이 DISCHARGED라는 이유만으로 세지
 않는다. 최대 cause path는 node 수가 아니라 edge depth이며 이 fixture에서는
 `2`다.
 

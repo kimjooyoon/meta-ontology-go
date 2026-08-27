@@ -159,7 +159,7 @@ func Evaluate(source []byte, sourcePath string, evidence EvidenceReceipt, prior 
 	if prior != nil {
 		currentOutcomes = transitions[len(transitions)-ClaimTotal:]
 	}
-	resolutions := buildResolutions(parsed.Graph, states, currentOutcomes, provenance)
+		resolutions := buildResolutions(parsed.Graph, states, currentOutcomes, provenance)
 	metrics := deriveMetrics(parsed.Graph, states, resolutions, currentOutcomes, evidence, prior != nil)
 	decision := decisionFor(states, evidence, prior != nil)
 	subject := Subject{SourcePath: sourcePath, SourceDigest: sourceDigest, SemanticDigest: semanticDigest, Producer: ProducerID, Consumer: ConsumerID, MetaOperation: MetaOperationID, ProofChoice: ProofChoice, ReadOnly: evidence.Snapshot.RepositoryWrites == 0, RepositoryWrites: evidence.Snapshot.RepositoryWrites, AuthorityResolution: authorityResolution(evidence), AuthorityCoordinate: evidence.Capability.Coordinate}
@@ -309,7 +309,10 @@ func classify(graph Graph, evidence EvidenceReceipt) ([]string, []Transition, []
 				}
 			}
 			if !hasRequires || allRequires {
-				state, event, reason = "DISCHARGED", map[bool]string{true: "DEPENDENCY_DISCHARGED", false: "EVIDENCE_ACCEPTED"}[i != 0], map[bool]string{true: "ALL_REQUIRES_UPSTREAM_AND_LOCAL_EVIDENCE", false: "LOCAL_CLAIM_EVIDENCE_PREDICATE"}[i != 0]
+				state, event, reason = "DISCHARGED", "EVIDENCE_ACCEPTED", "LOCAL_CLAIM_EVIDENCE_PREDICATE"
+				if hasRequires {
+					event, reason = "DEPENDENCY_DISCHARGED", "ALL_REQUIRES_UPSTREAM_AND_LOCAL_EVIDENCE"
+				}
 			}
 		}
 		states[i] = state
@@ -428,7 +431,7 @@ func buildResolutions(graph Graph, states []string, outcomes []Transition, prove
 				}
 			}
 		}
-		resolution := Resolution{ClaimID: claim.ClaimID, Axis: claim.Axis, PropositionDigest: claim.PropositionDigest, State: states[i], Kind: resolutionKind(i, states[i]), ObservedEvent: outcomes[i].Event, Coordinate: outcomes[i].Coordinate, EvidenceDigest: outcomes[i].EvidenceDigest, Provenance: provenance, FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: root, CausePath: claimIDs(path, graph), CauseEdgeIDs: edgeIDs, CauseEdgeKinds: kinds, CauseTransitionDigests: transitionDigests, CauseCoordinate: coordinatePointer(outcomes[i].Coordinate)}
+		resolution := Resolution{ClaimID: claim.ClaimID, Axis: claim.Axis, PropositionDigest: claim.PropositionDigest, State: states[i], Kind: resolutionKind(i, states[i], outcomes[i]), ObservedEvent: outcomes[i].Event, Coordinate: outcomes[i].Coordinate, EvidenceDigest: outcomes[i].EvidenceDigest, Provenance: provenance, FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: root, CausePath: claimIDs(path, graph), CauseEdgeIDs: edgeIDs, CauseEdgeKinds: kinds, CauseTransitionDigests: transitionDigests, CauseCoordinate: coordinatePointer(outcomes[i].Coordinate)}
 		if i != 0 {
 			resolution.FailureResponsibility = "UPSTREAM_CLAIM"
 		}
@@ -441,7 +444,7 @@ func buildResolutions(graph Graph, states []string, outcomes []Transition, prove
 	return result
 }
 func coordinatePointer(value Coordinate) *Coordinate { return &value }
-func resolutionKind(index int, state string) string {
+func resolutionKind(index int, state string, outcome Transition) string {
 	if index == 0 {
 		switch state {
 		case "REFUTED":
@@ -456,6 +459,9 @@ func resolutionKind(index int, state string) string {
 	case "REFUTED":
 		return "DEPENDENCY_REFUTED"
 	case "DISCHARGED":
+		if len(outcome.UpstreamEdgeIDs) == 0 {
+			return "DIRECT_DISCHARGED"
+		}
 		return "DEPENDENCY_DISCHARGED"
 	default:
 		return "DEPENDENCY_BLOCKED"
