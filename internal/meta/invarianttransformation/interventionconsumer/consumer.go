@@ -405,7 +405,8 @@ func allowedTempPath(path string) bool {
 	if err != nil {
 		return false
 	}
-	return path != root && filepath.Dir(path) == root
+	relative, err := filepath.Rel(root, path)
+	return relative != "." && relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator))
 }
 
 func artifactBytes(receipt model.Receipt) []byte {
