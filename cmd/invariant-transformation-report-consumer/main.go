@@ -17,6 +17,7 @@ func main() {
 	sourcePath := flag.String("source", "", "Gooo source")
 	headSHA := flag.String("head-sha", "", "exact subject commit")
 	outputPath := flag.String("output", "", "bound report output")
+	artifactProjectionPath := flag.String("artifact-projection", "", "independent generated artifact semantic projection output")
 	flag.Parse()
 	if *reportPath == "" || *beforePath == "" || *afterPath == "" || *sourcePath == "" || *headSHA == "" || *outputPath == "" {
 		fail("-report, -before, -after, -source, -head-sha, and -output are required")
@@ -50,6 +51,22 @@ func main() {
 	}
 	if err := os.WriteFile(*outputPath, append(raw, '\n'), 0o644); err != nil {
 		fail(err.Error())
+	}
+	if *artifactProjectionPath != "" {
+		projection, err := reportconsumer.ArtifactProjection(report, source, *headSHA)
+		if err != nil {
+			fail(err.Error())
+		}
+		projectionRaw, err := json.MarshalIndent(projection, "", "  ")
+		if err != nil {
+			fail(fmt.Sprintf("encode artifact projection: %v", err))
+		}
+		if err := os.MkdirAll(filepath.Dir(*artifactProjectionPath), 0o755); err != nil {
+			fail(err.Error())
+		}
+		if err := os.WriteFile(*artifactProjectionPath, append(projectionRaw, '\n'), 0o644); err != nil {
+			fail(err.Error())
+		}
 	}
 	fmt.Printf("independent report consumer: execution=%s state=%s snapshots=%d/%d\n", report.ExecutionID, report.RepositoryObservation.State, report.Summary.RepositoryNetSnapshotObservations, report.Summary.RepositoryNetSnapshotDenominator)
 }

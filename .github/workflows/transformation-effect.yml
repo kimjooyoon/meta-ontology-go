@@ -2156,6 +2156,7 @@ jobs:
             cmd/invariant-transformation-witness/main.go \
             cmd/invariant-transformation-repository-snapshot/main.go \
             cmd/invariant-transformation-report-consumer/main.go \
+            cmd/invariant-transformation-artifact-semantic-consumer/main.go \
             cmd/invariant-transformation-intervention-witness/main.go \
             cmd/invariant-transformation-intervention-consumer-witness/main.go \
             internal/meta/invarianttransformation/model/model.go \
@@ -2228,7 +2229,8 @@ jobs:
               -report "$pass_output/unbound-report.json" \
               -before "$before/snapshot.json" \
               -after "$after/snapshot.json" \
-              -output "$pass_output/report.json"
+              -output "$pass_output/report.json" \
+              -artifact-projection "$pass_output/artifact-semantic-projection.json"
           done
 
       - name: Compare normalized semantic report projections
@@ -2237,7 +2239,21 @@ jobs:
           set -euo pipefail
           root="$RUNNER_TEMP/invariant-transformation"
           for pass in first second; do
-            jq -S '
+            execution="$HEAD_SHA::$pass"
+            jq -e --arg head_sha "$HEAD_SHA" --arg execution "$execution" '
+              .schema == "gooo/invariant-transformation-artifact-semantic-projection/v1" and
+              .head_sha == $head_sha and .execution_id == $execution and
+              (.path | length) > 0 and (.raw_digest | startswith("sha256:")) and .raw_size > 0 and
+              (.authorization_digest | startswith("sha256:")) and (.effect_digest | startswith("sha256:")) and
+              .semantic.case_id == .case_id and .semantic.subject_sha == $head_sha and
+              (.semantic.source_digest | startswith("sha256:")) and
+              (.semantic.semantic_source_digest | startswith("sha256:")) and
+              (.canonical_semantic_bytes | length) > 0 and
+              (.semantic_digest | startswith("sha256:"))
+            ' "$root/$pass/artifact-semantic-projection.json"
+            jq -S '{schema, head_sha, case_id, semantic, canonical_semantic_bytes, semantic_digest}' \
+              "$root/$pass/artifact-semantic-projection.json" > "$root/$pass/artifact-semantic-projection-normalized.json"
+            jq -S --slurpfile artifact "$root/$pass/artifact-semantic-projection.json" '
               del(
                 .execution_id,
 
@@ -2254,28 +2270,6 @@ jobs:
                 .cases[].receipt.digest,
 
                 .cases[].judgment.authorization_digest,
-
-                .cases[].receipt.effects[].execution_id,
-
-                .cases[].receipt.effects[].artifact_path,
-
-                .cases[].receipt.effects[].artifact_digest,
-
-                .cases[].receipt.effects[].artifact_size,
-
-                .cases[].receipt.effects[].authorization_digest,
-
-                .cases[].receipt.effects[].execution_receipt_digest,
-
-                .cases[].receipt.effects[].artifact.path,
-
-                .cases[].receipt.effects[].artifact.content_digest,
-
-                .cases[].receipt.effects[].artifact.execution_id,
-
-                .cases[].receipt.effects[].artifact.authorization_digest,
-
-                .cases[].receipt.effects[].artifact.effect_receipt_digest,
 
                 .repository_observation.execution_id,
 
@@ -2294,11 +2288,64 @@ jobs:
                 .repository_observation.after.execution_id,
 
                 .repository_observation.after.entries_path
-              )
+              ) |
+              .cases |= map(
+                .receipt.effects |= map(
+                  .execution_id = "<normalized-effect-execution-id>" |
+                  .artifact_path = "<normalized-temp-artifact-path>" |
+                  .artifact_digest = "<normalized-artifact-raw-digest>" |
+                  .artifact_size = "<normalized-artifact-raw-size>" |
+                  .authorization_digest = "<normalized-authorization-digest>" |
+                  .execution_receipt_digest = "<normalized-effect-digest>" |
+                  .artifact |= (
+                    .path = "<normalized-temp-artifact-path>" |
+                    .content_digest = "<normalized-artifact-raw-digest>" |
+                    .size = "<normalized-artifact-raw-size>" |
+                    .execution_id = "<normalized-head-bound-execution-id>" |
+                    .authorization_digest = "<normalized-authorization-digest>" |
+                    .effect_receipt_digest = "<normalized-effect-digest>"
+                  )
+                )
+              ) |
+              .artifact_semantic_projection = ($artifact[0] | {
+                schema, head_sha, case_id, semantic, canonical_semantic_bytes, semantic_digest,
+                dynamic_binding: {
+                  path: "<normalized-temp-artifact-path>",
+                  raw_digest: "<normalized-artifact-raw-digest>",
+                  raw_size: "<normalized-artifact-raw-size>",
+                  execution_id: "<normalized-head-bound-execution-id>",
+                  authorization_digest: "<normalized-authorization-digest>",
+                  effect_digest: "<normalized-effect-digest>"
+                }
+              })
             ' "$root/$pass/report.json" > "$root/$pass/semantic-projection.json"
           done
+          cmp -s "$root/first/artifact-semantic-projection-normalized.json" "$root/second/artifact-semantic-projection-normalized.json"
           cmp -s "$root/first/semantic-projection.json" "$root/second/semantic-projection.json"
+          echo 'artifact semantic projection observed: 2/2; same semantic projection: 1/1' >> "$GITHUB_STEP_SUMMARY"
           echo 'semantic report projection deterministic replay: 1/1' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Reject artifact semantic content tamper
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="$RUNNER_TEMP/invariant-transformation/first"
+          tamper="$RUNNER_TEMP/invariant-transformation/artifact-regressions"
+          mkdir -p "$tamper"
+          artifact_path="$(jq -r '.path' "$base/artifact-semantic-projection.json")"
+          tampered_artifact="$tamper/artifact-semantic-output-tamper.bin"
+          sed 's/^output=6$/output=7/' "$artifact_path" > "$tampered_artifact"
+          grep -q '^output=7$' "$tampered_artifact"
+          if go run ./cmd/invariant-transformation-artifact-semantic-consumer \
+            -artifact "$tampered_artifact" \
+            -expected-projection "$base/artifact-semantic-projection.json" \
+            -head-sha "$HEAD_SHA" > "$tamper/artifact-semantic-tamper.log" 2>&1; then
+            cat "$tamper/artifact-semantic-tamper.log" >&2
+            echo 'expected artifact semantic content tamper rejection' >&2
+            exit 1
+          fi
+          grep -F 'ARTIFACT_SEMANTIC_PROJECTION/compare/ARTIFACT_SEMANTIC_MISMATCH' "$tamper/artifact-semantic-tamper.log"
+          echo 'artifact-content semantic tamper rejected: 1/1' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Reject forged repository observations
         shell: bash
@@ -2542,6 +2589,8 @@ jobs:
             .actual_replay == 3 and .expected_actual_replay == 3 and
             .artifact_observed == true and (.artifact_evidence.path | length) > 0 and
             .coherent_tamper_rejected == 1 and .expected_coherent_tamper_rejections == 1 and
+            .content_observation_coherent_tamper_rejected == 1 and
+            .expected_content_observation_coherent_tamper_rejections == 1 and
             .unknown_effect_scopes == 1 and .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_state == "UNKNOWN" and
             .repository_path_authorization == false and .ambient_process_authority == "UNKNOWN" and .repository_actual_or_transient_writes == "UNKNOWN"
           ' "$output/consumer-verification.json"
@@ -2551,7 +2600,7 @@ jobs:
             jq -r '"- semantic operation change: \(.denominator.semantic_operation_change.cases_satisfied)/\(.denominator.semantic_operation_change.cases_total) (\(.denominator.semantic_operation_change.coverage_bps) BPS)"' "$output/first/report.json"
             jq -r '"- non-semantic change: \(.denominator.nonsemantic_change.cases_satisfied)/\(.denominator.nonsemantic_change.cases_total) (\(.denominator.nonsemantic_change.coverage_bps) BPS)"' "$output/first/report.json"
             jq -r '"- dependency boundary: judge=\(.forbidden_imports)/\(.allowed_forbidden_imports), intervention=\(.producer_dependency_imports)/\(.allowed_producer_dependency_imports), report-consumer=\(.report_consumer_producer_imports)/\(.allowed_report_consumer_producer_imports)"' "$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
-            jq -r '"- independent consumer: reconstructed=\(.reconstructed_cases)/\(.expected_cases), actual-replay=\(.actual_replay)/\(.expected_actual_replay), artifact-observed=\(.artifact_observed), coherent-tamper-rejected=\(.coherent_tamper_rejected)/\(.expected_coherent_tamper_rejections)"' "$output/consumer-verification.json"
+            jq -r '"- independent consumer: reconstructed=\(.reconstructed_cases)/\(.expected_cases), actual-replay=\(.actual_replay)/\(.expected_actual_replay), artifact-observed=\(.artifact_observed), coherent-tamper-rejected=\(.coherent_tamper_rejected)/\(.expected_coherent_tamper_rejections), content-observation-tamper-rejected=\(.content_observation_coherent_tamper_rejected)/\(.expected_content_observation_coherent_tamper_rejections)"' "$output/consumer-verification.json"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact metrics and authority boundary

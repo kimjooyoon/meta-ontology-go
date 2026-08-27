@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/judge"
@@ -17,6 +18,170 @@ import (
 type entry struct {
 	Path   string `json:"path"`
 	Digest string `json:"digest"`
+}
+
+const artifactSemanticProjectionSchema = "gooo/invariant-transformation-artifact-semantic-projection/v1"
+
+// ArtifactSemanticValue contains only fields whose meaning is supplied by the
+// artifact bytes. Execution, authorization, and filesystem identity are kept
+// in ArtifactSemanticProjection as provenance and are deliberately not part of
+// this semantic value.
+type ArtifactSemanticValue struct {
+	CaseID               string `json:"case_id"`
+	Input                int64  `json:"input"`
+	Operation            string `json:"operation"`
+	Output               int64  `json:"output"`
+	SourceDigest         string `json:"source_digest"`
+	SemanticSourceDigest string `json:"semantic_source_digest"`
+	SubjectSHA           string `json:"subject_sha"`
+}
+
+// ArtifactSemanticProjection is an independent observation of the generated
+// artifact. Raw path, bytes, and execution identity are retained so the
+// semantic projection remains provenance-bound; only the explicitly dynamic
+// provenance fields may be normalized for replay comparison.
+type ArtifactSemanticProjection struct {
+	Schema                 string                `json:"schema"`
+	HeadSHA                string                `json:"head_sha"`
+	CaseID                 string                `json:"case_id"`
+	Path                   string                `json:"path"`
+	RawDigest              string                `json:"raw_digest"`
+	RawSize                int                   `json:"raw_size"`
+	ExecutionID            string                `json:"execution_id"`
+	AuthorizationDigest    string                `json:"authorization_digest,omitempty"`
+	EffectDigest           string                `json:"effect_digest,omitempty"`
+	Semantic               ArtifactSemanticValue `json:"semantic"`
+	CanonicalSemanticBytes string                `json:"canonical_semantic_bytes"`
+	SemanticDigest         string                `json:"semantic_digest"`
+}
+
+type artifactFields struct {
+	CaseID               string
+	ExecutionID          string
+	Input                int64
+	Operation            string
+	Output               int64
+	SourceDigest         string
+	SemanticSourceDigest string
+	AuthorizationDigest  string
+	SubjectSHA           string
+}
+
+// ArtifactProjection first validates the independently consumed report and
+// then binds an independently parsed artifact file to the approved effect.
+// It never obtains artifact meaning from producer code or report metadata.
+func ArtifactProjection(report model.Report, source []byte, headSHA string) (ArtifactSemanticProjection, error) {
+	if err := judge.ValidateReport(report, source); err != nil {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/validate-report/REPORT_NOT_INDEPENDENTLY_VALID: %w", err)
+	}
+	var approved *model.Effect
+	var approvedReceipt *model.Receipt
+	for index := range report.Cases {
+		for effectIndex := range report.Cases[index].Receipt.Effects {
+			effect := &report.Cases[index].Receipt.Effects[effectIndex]
+			if effect.Kind != model.EffectApproved {
+				continue
+			}
+			if approved != nil {
+				return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/select-approved-effect/MULTIPLE_APPROVED_ARTIFACTS")
+			}
+			approved = effect
+			approvedReceipt = &report.Cases[index].Receipt
+		}
+	}
+	if approved == nil || approvedReceipt == nil {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/select-approved-effect/APPROVED_ARTIFACT_MISSING")
+	}
+	projection, err := ProjectArtifactFile(approved.Artifact.Path, headSHA)
+	if err != nil {
+		return ArtifactSemanticProjection{}, err
+	}
+	if projection.CaseID != approved.CaseID || projection.ExecutionID != approved.ExecutionID ||
+		projection.RawDigest != approved.Artifact.ContentDigest || projection.RawSize != approved.Artifact.Size ||
+		projection.Semantic.CaseID != approvedReceipt.CaseID || projection.Semantic.Input != approvedReceipt.Evidence.InputValue ||
+		projection.Semantic.Operation != approvedReceipt.Evidence.CandidateOperation || projection.Semantic.Output != approvedReceipt.Evidence.CandidateResult ||
+		projection.Semantic.SourceDigest != report.SourceDigest || projection.Semantic.SemanticSourceDigest != report.SemanticSourceDigest ||
+		projection.Semantic.SubjectSHA != headSHA || projection.ExecutionID != report.ExecutionID {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/bind-effect/ARTIFACT_SEMANTIC_PROVENANCE_MISMATCH")
+	}
+	projection.AuthorizationDigest = approved.Artifact.AuthorizationDigest
+	projection.EffectDigest = approved.ExecutionReceiptDigest
+	return projection, nil
+}
+
+// ProjectArtifactFile reads and parses the actual artifact bytes. It is
+// intentionally usable by a separate command for tamper regressions without
+// importing the producer or trusting an expected artifact digest.
+func ProjectArtifactFile(path, headSHA string) (ArtifactSemanticProjection, error) {
+	if !model.ValidHead(headSHA) || path == "" || !allowedSnapshotPath(path) {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/read/ARTIFACT_PATH_OUTSIDE_SAFE_TEMP_ROOT")
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/read/ARTIFACT_BYTES_UNAVAILABLE: %w", err)
+	}
+	fields, err := parseArtifactBytes(raw)
+	if err != nil {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/parse/ARTIFACT_SEMANTIC_BYTES_INVALID: %w", err)
+	}
+	if !model.ValidExecutionID(headSHA, fields.ExecutionID) || fields.CaseID == "" || !model.ValidDigest(fields.SourceDigest) || !model.ValidDigest(fields.SemanticSourceDigest) || !model.ValidDigest(fields.AuthorizationDigest) || fields.SubjectSHA != headSHA {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/parse/ARTIFACT_PROVENANCE_INVALID")
+	}
+	semantic := ArtifactSemanticValue{
+		CaseID: fields.CaseID, Input: fields.Input, Operation: fields.Operation, Output: fields.Output,
+		SourceDigest: fields.SourceDigest, SemanticSourceDigest: fields.SemanticSourceDigest, SubjectSHA: fields.SubjectSHA,
+	}
+	canonical, err := json.Marshal(semantic)
+	if err != nil {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_SEMANTIC_PROJECTION/encode/CANONICAL_SEMANTIC_BYTES_INVALID: %w", err)
+	}
+	return ArtifactSemanticProjection{
+		Schema: artifactSemanticProjectionSchema, HeadSHA: headSHA, CaseID: fields.CaseID, Path: path,
+		RawDigest: model.DigestBytes(raw), RawSize: len(raw), ExecutionID: fields.ExecutionID,
+		Semantic: semantic, CanonicalSemanticBytes: string(canonical), SemanticDigest: model.DigestBytes(canonical),
+	}, nil
+}
+
+func parseArtifactBytes(raw []byte) (artifactFields, error) {
+	lines := strings.Split(string(raw), "\n")
+	if len(lines) != 11 || lines[0] != "gooo bounded transformation artifact" || lines[len(lines)-1] != "" {
+		return artifactFields{}, fmt.Errorf("unexpected artifact line framing")
+	}
+	keys := []string{"case", "execution", "input", "operation", "output", "source", "semantic-source", "authorization", "subject"}
+	values := make(map[string]string, len(keys))
+	for index, key := range keys {
+		actualKey, value, ok := strings.Cut(lines[index+1], "=")
+		if !ok || actualKey != key || value == "" || values[key] != "" {
+			return artifactFields{}, fmt.Errorf("invalid %s field", key)
+		}
+		values[key] = value
+	}
+	input, err := strconv.ParseInt(values["input"], 10, 64)
+	if err != nil {
+		return artifactFields{}, fmt.Errorf("invalid input: %w", err)
+	}
+	output, err := strconv.ParseInt(values["output"], 10, 64)
+	if err != nil {
+		return artifactFields{}, fmt.Errorf("invalid output: %w", err)
+	}
+	return artifactFields{
+		CaseID: values["case"], ExecutionID: values["execution"], Input: input, Operation: values["operation"], Output: output,
+		SourceDigest: values["source"], SemanticSourceDigest: values["semantic-source"], AuthorizationDigest: values["authorization"], SubjectSHA: values["subject"],
+	}, nil
+}
+
+// CompareArtifactSemanticProjection compares semantic meaning and fixed
+// provenance only. Path, raw bytes, execution ID, authorization digest, and
+// effect digest are allowed to vary between executions and remain available in
+// each source projection for binding/audit.
+func CompareArtifactSemanticProjection(expected, actual ArtifactSemanticProjection) error {
+	if expected.Schema != artifactSemanticProjectionSchema || actual.Schema != artifactSemanticProjectionSchema ||
+		expected.HeadSHA != actual.HeadSHA || expected.CaseID != actual.CaseID ||
+		!reflect.DeepEqual(expected.Semantic, actual.Semantic) || expected.CanonicalSemanticBytes != actual.CanonicalSemanticBytes ||
+		expected.SemanticDigest != actual.SemanticDigest {
+		return fmt.Errorf("ARTIFACT_SEMANTIC_PROJECTION/compare/ARTIFACT_SEMANTIC_MISMATCH")
+	}
+	return nil
 }
 
 // Bind is the independent report consumer boundary. It reads the source and
