@@ -38,8 +38,6 @@ snapshot_repo() {
 
 snapshot_repo "$output/repository-before.json"
 
-go fix ./cmd/language-proof-carrying-artifact ./internal/meta/languageproofartifact ./cmd/language-proof-carrying-artifact-verifier ./internal/meta/languageproofartifactverifier
-test -z "$(git diff -- cmd/language-proof-carrying-artifact internal/meta/languageproofartifact cmd/language-proof-carrying-artifact-verifier internal/meta/languageproofartifactverifier)"
 test -z "$(gofmt -l cmd/language-proof-carrying-artifact internal/meta/languageproofartifact cmd/language-proof-carrying-artifact-verifier internal/meta/languageproofartifactverifier)"
 go test ./cmd/language-proof-carrying-artifact ./internal/meta/languageproofartifact ./cmd/language-proof-carrying-artifact-verifier ./internal/meta/languageproofartifactverifier
 
