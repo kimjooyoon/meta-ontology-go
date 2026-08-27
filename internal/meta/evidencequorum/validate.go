@@ -18,7 +18,7 @@ func Validate(report Report) error {
 		report.Reason != "EVIDENCE_QUORUM_CONTRACT_SATISFIED" || report.Summary != want ||
 		len(report.Cases) != 5 || len(report.Indicators) != 9 || len(report.Proofs) != 5 ||
 		report.RepositoryWrites != 0 || report.MutationAuthority || report.Summary.ConfidenceAggregated {
-		return fmt.Errorf("evidence quorum report shape mismatch")
+		return fmt.Errorf("evidence quorum report shape mismatch: decision=%q resolution=%q reason=%q summary=%+v want=%+v cases=%d indicators=%d proofs=%d writes=%d mutation=%v confidence=%v", report.Decision, report.Resolution, report.Reason, report.Summary, want, len(report.Cases), len(report.Indicators), len(report.Proofs), report.RepositoryWrites, report.MutationAuthority, report.Summary.ConfidenceAggregated)
 	}
 	definitions := CanonicalContract().Cases
 	for index, item := range report.Cases {
