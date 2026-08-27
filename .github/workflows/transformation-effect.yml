@@ -1499,8 +1499,9 @@ jobs:
   vertical-slice-closure-eligibility:
     name: vertical slice closure eligibility
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+permissions:
+  actions: read
+  contents: read
     env:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
@@ -1826,6 +1827,56 @@ jobs:
           path: ${{ runner.temp }}/external-capability-authorization
           if-no-files-found: ignore
           retention-days: 30
+      - name: Download immutable authorization foundation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization-foundation"
+          foundation="examples/external-capability-execution/authorization/foundation.json"
+          mkdir -p "$result/prior"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/9631439149" > "$result/metadata.json"
+          jq -e '.id == 9631439149 and .expired == false' "$result/metadata.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/9631439149/zip" > "$result/foundation.zip"
+          digest=$(jq -r '.archive_digest | sub("^sha256:"; "")' "$foundation")
+          printf '%s  %s\n' "$digest" "$result/foundation.zip" | sha256sum -c -
+          unzip -q "$result/foundation.zip" -d "$result/prior"
+
+      - name: Close capability authorization foundation twice
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization-foundation"
+          current="$RUNNER_TEMP/external-capability-authorization/first-receipt.json"
+          command="./cmd/external-capability-execution-witness/authorization-foundation"
+          for pass in first replay; do
+            go run "$command" --subject-sha "$SUBJECT_SHA" \
+              --foundation examples/external-capability-execution/authorization/foundation.json \
+              --artifact-metadata "$result/metadata.json" \
+              --prior-receipt "$result/prior/first-receipt.json" --current-receipt "$current" \
+              --receipt "$result/$pass-receipt.json" --suite "$result/$pass-suite.json" \
+              --summary "$result/$pass-summary.md"
+          done
+          cmp "$result/first-receipt.json" "$result/replay-receipt.json"
+          cmp "$result/first-suite.json" "$result/replay-suite.json"
+          cmp "$result/first-summary.md" "$result/replay-summary.md"
+          jq -e '.decision == "AUTHORIZED_SHADOW" and .resolution == "EXACT" and .enforcement_effect == "NO_EFFECT"' "$result/first-receipt.json"
+          jq -e '.completed == 10 and .total == 10 and .basis_points == 10000 and .unknown_indicators == 0' "$result/first-receipt.json"
+          jq -e '.open_claims == 0 and .discharged_claims == 10 and .rejected_claims == 0' "$result/first-receipt.json"
+          jq -e '.execution_authority == false and .repository_mutation_authority == false and .promotion_authority == false' "$result/first-receipt.json"
+          jq -e '.decision == "PASS" and .passed == 12 and .total == 12 and .coverage_bps == 10000' "$result/first-suite.json"
+          cat "$result/first-summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Seal capability authorization foundation evidence
+        run: |
+          cd "$RUNNER_TEMP/external-capability-authorization-foundation"
+          sha256sum metadata.json first-receipt.json replay-receipt.json \
+            first-suite.json replay-suite.json first-summary.md replay-summary.md > manifest.sha256
+
+      - name: Upload capability authorization foundation evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-capability-authorization-foundation-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-capability-authorization-foundation
+          retention-days: 30
+
       - name: Evaluate external assurance eligibility twice
         working-directory: gooo
         run: |
