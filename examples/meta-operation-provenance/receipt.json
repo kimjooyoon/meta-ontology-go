@@ -1,12 +1,26 @@
 {
-  "schema": "gooo/meta-operation-provenance-receipt/v1",
+  "schema": "gooo/meta-operation-provenance-receipt/v2",
   "toolchain": "go1.27.0",
-  "repository_workspace_writes": false,
-  "mutation_authority": false,
-  "source_digest": "sha256:de0f3a29f0b760d4724160798d8e91e3d1703374bd5cc089decfecced36666d1",
+  "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+  "canonical_semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+  "source_reconstruction": {
+    "numerator": 7,
+    "denominator": 7,
+    "metric_fields_numerator": 24,
+    "metric_fields_denominator": 24,
+    "scenario_numerator": 16,
+    "scenario_denominator": 16
+  },
+  "workspace_observation": {
+    "before_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "repository_workspace_writes": false,
+    "mutation_authority": false
+  },
   "scenarios": [
     {
       "id": "complete",
+      "mutation": "remove_relation=;dependency=;reason=baseline semantic graph",
       "graph": {
         "nodes": 15,
         "edges": 12,
@@ -19,76 +33,51 @@
       },
       "numerator": 12,
       "denominator": 12,
+      "conformance_decision": "PASS",
+      "subject_resolution": "EXACT",
       "decisions": {
         "PASS": 3
       },
+      "transitions": {
+        "DISCHARGED": 3
+      },
       "metrics": [
         {
-          "id": "MOP-FOUNDATION-001",
-          "family": "FOUNDATION",
+          "id": "MOP-COHERENCE-001",
+          "family": "COHERENCE",
           "claim": "OPEN",
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "evaluation_state": "EVALUATED",
-          "lineage": {
-            "producer": "producer:MOP-FOUNDATION-001",
-            "consumer": "consumer:MOP-FOUNDATION-001",
-            "meta_operation": "operation:MOP-FOUNDATION-001",
-            "evidence_path": "evidence:MOP-FOUNDATION-001"
-          }
-        },
-        {
-          "id": "MOP-COHERENCE-001",
-          "family": "COHERENCE",
-          "claim": "DISCHARGED",
-          "numerator": 4,
-          "denominator": 4,
-          "decision": "PASS",
+          "subject_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-COHERENCE-001",
             "consumer": "consumer:MOP-COHERENCE-001",
             "meta_operation": "operation:MOP-COHERENCE-001",
             "evidence_path": "evidence:MOP-COHERENCE-001"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "DISCHARGED",
+            "conformance_decision": "PASS",
+            "subject_resolution": "EXACT",
+            "transition": "DISCHARGED",
+            "stage": "CLAIM",
+            "step": "discharge-open-claim",
+            "reason": "PASS_DISCHARGES_OPEN_CLAIM",
+            "evidence_digest": "sha256:c6a7cb4b754d57267dc09bec2cc059786a0d76b7165b937819d0e8eec644d83e",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-COHERENCE-001",
+              "consumer": "consumer:MOP-COHERENCE-001",
+              "meta_operation": "operation:MOP-COHERENCE-001",
+              "evidence_path": "evidence:MOP-COHERENCE-001",
+              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph"
+            }
           }
         },
-        {
-          "id": "MOP-REGRESSION-001",
-          "family": "REGRESSION",
-          "claim": "REFUTED",
-          "numerator": 4,
-          "denominator": 4,
-          "decision": "PASS",
-          "evaluation_state": "EVALUATED",
-          "lineage": {
-            "producer": "producer:MOP-REGRESSION-001",
-            "consumer": "consumer:MOP-REGRESSION-001",
-            "meta_operation": "operation:MOP-REGRESSION-001",
-            "evidence_path": "evidence:MOP-REGRESSION-001"
-          }
-        }
-      ]
-    },
-    {
-      "id": "disconnected",
-      "graph": {
-        "nodes": 15,
-        "edges": 11,
-        "edge_kinds": {
-          "CONSUMES": 2,
-          "EVIDENCED_BY": 3,
-          "OPERATES": 3,
-          "PRODUCES": 3
-        }
-      },
-      "numerator": 11,
-      "denominator": 12,
-      "decisions": {
-        "FAIL_CLOSED": 1,
-        "PASS": 2
-      },
-      "metrics": [
         {
           "id": "MOP-FOUNDATION-001",
           "family": "FOUNDATION",
@@ -96,126 +85,76 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
+          "subject_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-FOUNDATION-001",
             "consumer": "consumer:MOP-FOUNDATION-001",
             "meta_operation": "operation:MOP-FOUNDATION-001",
             "evidence_path": "evidence:MOP-FOUNDATION-001"
-          }
-        },
-        {
-          "id": "MOP-COHERENCE-001",
-          "family": "COHERENCE",
-          "claim": "DISCHARGED",
-          "numerator": 3,
-          "denominator": 4,
-          "decision": "FAIL_CLOSED",
-          "evaluation_state": "EVALUATED",
-          "lineage": {
-            "producer": "producer:MOP-COHERENCE-001",
-            "consumer": "",
-            "meta_operation": "operation:MOP-COHERENCE-001",
-            "evidence_path": "evidence:MOP-COHERENCE-001"
           },
-          "issue": {
-            "stage": "LINEAGE",
-            "step": "connect-consumer",
-            "reason": "DISCONNECTED_METRIC",
-            "cause": "DIRECT_CAUSE"
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "DISCHARGED",
+            "conformance_decision": "PASS",
+            "subject_resolution": "EXACT",
+            "transition": "DISCHARGED",
+            "stage": "CLAIM",
+            "step": "discharge-open-claim",
+            "reason": "PASS_DISCHARGES_OPEN_CLAIM",
+            "evidence_digest": "sha256:8b5e29637c7e6c56e31a2a6562c3be4a39c7ae476af71144d34bb27a2eb76642",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-FOUNDATION-001",
+              "consumer": "consumer:MOP-FOUNDATION-001",
+              "meta_operation": "operation:MOP-FOUNDATION-001",
+              "evidence_path": "evidence:MOP-FOUNDATION-001",
+              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph"
+            }
           }
         },
         {
           "id": "MOP-REGRESSION-001",
           "family": "REGRESSION",
-          "claim": "REFUTED",
-          "numerator": 4,
-          "denominator": 4,
-          "decision": "PASS",
-          "evaluation_state": "EVALUATED",
-          "lineage": {
-            "producer": "producer:MOP-REGRESSION-001",
-            "consumer": "consumer:MOP-REGRESSION-001",
-            "meta_operation": "operation:MOP-REGRESSION-001",
-            "evidence_path": "evidence:MOP-REGRESSION-001"
-          }
-        }
-      ]
-    },
-    {
-      "id": "direct-unknown",
-      "graph": {
-        "nodes": 15,
-        "edges": 11,
-        "edge_kinds": {
-          "CONSUMES": 3,
-          "EVIDENCED_BY": 2,
-          "OPERATES": 3,
-          "PRODUCES": 3
-        }
-      },
-      "numerator": 11,
-      "denominator": 12,
-      "decisions": {
-        "PASS": 2,
-        "UNKNOWN": 1
-      },
-      "metrics": [
-        {
-          "id": "MOP-FOUNDATION-001",
-          "family": "FOUNDATION",
           "claim": "OPEN",
-          "numerator": 3,
-          "denominator": 4,
-          "decision": "UNKNOWN",
-          "evaluation_state": "EVALUATED",
-          "lineage": {
-            "producer": "producer:MOP-FOUNDATION-001",
-            "consumer": "consumer:MOP-FOUNDATION-001",
-            "meta_operation": "operation:MOP-FOUNDATION-001",
-            "evidence_path": ""
-          },
-          "issue": {
-            "stage": "BINDING",
-            "step": "evidence-path",
-            "reason": "REQUIRED_EVIDENCE_MISSING",
-            "cause": "DIRECT_CAUSE"
-          }
-        },
-        {
-          "id": "MOP-COHERENCE-001",
-          "family": "COHERENCE",
-          "claim": "DISCHARGED",
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "evaluation_state": "EVALUATED",
-          "lineage": {
-            "producer": "producer:MOP-COHERENCE-001",
-            "consumer": "consumer:MOP-COHERENCE-001",
-            "meta_operation": "operation:MOP-COHERENCE-001",
-            "evidence_path": "evidence:MOP-COHERENCE-001"
-          }
-        },
-        {
-          "id": "MOP-REGRESSION-001",
-          "family": "REGRESSION",
-          "claim": "REFUTED",
-          "numerator": 4,
-          "denominator": 4,
-          "decision": "PASS",
+          "subject_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-REGRESSION-001",
             "consumer": "consumer:MOP-REGRESSION-001",
             "meta_operation": "operation:MOP-REGRESSION-001",
             "evidence_path": "evidence:MOP-REGRESSION-001"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "DISCHARGED",
+            "conformance_decision": "PASS",
+            "subject_resolution": "EXACT",
+            "transition": "DISCHARGED",
+            "stage": "CLAIM",
+            "step": "discharge-open-claim",
+            "reason": "PASS_DISCHARGES_OPEN_CLAIM",
+            "evidence_digest": "sha256:fb649ec7fc97e7f36695231b65af9ca43616f2e4b6a6b33a486ba6c17ddcd6b3",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-REGRESSION-001",
+              "consumer": "consumer:MOP-REGRESSION-001",
+              "meta_operation": "operation:MOP-REGRESSION-001",
+              "evidence_path": "evidence:MOP-REGRESSION-001",
+              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph"
+            }
           }
         }
       ]
     },
     {
       "id": "dependency-blocked",
+      "mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric",
       "graph": {
         "nodes": 15,
         "edges": 11,
@@ -228,11 +167,53 @@
       },
       "numerator": 11,
       "denominator": 12,
+      "conformance_decision": "UNKNOWN",
+      "subject_resolution": "EXACT",
       "decisions": {
         "PASS": 1,
         "UNKNOWN": 2
       },
+      "transitions": {
+        "DISCHARGED": 1,
+        "PRESERVED_OPEN": 2
+      },
       "metrics": [
+        {
+          "id": "MOP-COHERENCE-001",
+          "family": "COHERENCE",
+          "claim": "OPEN",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "subject_resolution": "EXACT",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-COHERENCE-001",
+            "consumer": "consumer:MOP-COHERENCE-001",
+            "meta_operation": "operation:MOP-COHERENCE-001",
+            "evidence_path": "evidence:MOP-COHERENCE-001"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "DISCHARGED",
+            "conformance_decision": "PASS",
+            "subject_resolution": "EXACT",
+            "transition": "DISCHARGED",
+            "stage": "CLAIM",
+            "step": "discharge-open-claim",
+            "reason": "PASS_DISCHARGES_OPEN_CLAIM",
+            "evidence_digest": "sha256:eb7efed3117a61a0fb5d361d3ef2e1d428078dbf5a8a4710f2f30fa51700fc4a",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-COHERENCE-001",
+              "consumer": "consumer:MOP-COHERENCE-001",
+              "meta_operation": "operation:MOP-COHERENCE-001",
+              "evidence_path": "evidence:MOP-COHERENCE-001",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric"
+            }
+          }
+        },
         {
           "id": "MOP-FOUNDATION-001",
           "family": "FOUNDATION",
@@ -240,6 +221,7 @@
           "numerator": 3,
           "denominator": 4,
           "decision": "UNKNOWN",
+          "subject_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-FOUNDATION-001",
@@ -248,34 +230,40 @@
             "evidence_path": ""
           },
           "issue": {
-            "stage": "BINDING",
-            "step": "evidence-path",
-            "reason": "REQUIRED_EVIDENCE_MISSING",
+            "stage": "LINEAGE",
+            "step": "connect-evidence-path",
+            "reason": "REQUIRED_EVIDENCE_RELATION_MISSING",
             "cause": "DIRECT_CAUSE"
-          }
-        },
-        {
-          "id": "MOP-COHERENCE-001",
-          "family": "COHERENCE",
-          "claim": "DISCHARGED",
-          "numerator": 4,
-          "denominator": 4,
-          "decision": "PASS",
-          "evaluation_state": "EVALUATED",
-          "lineage": {
-            "producer": "producer:MOP-COHERENCE-001",
-            "consumer": "consumer:MOP-COHERENCE-001",
-            "meta_operation": "operation:MOP-COHERENCE-001",
-            "evidence_path": "evidence:MOP-COHERENCE-001"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "OPEN",
+            "conformance_decision": "UNKNOWN",
+            "subject_resolution": "EXACT",
+            "transition": "PRESERVED_OPEN",
+            "stage": "CLAIM",
+            "step": "preserve-open-claim",
+            "reason": "UNKNOWN_PRESERVES_OPEN_CLAIM",
+            "evidence_digest": "sha256:6a5b60fcdc0ef3bb6b038f3cddd0b482cda7fb6946945ce0c01338092943b609",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-FOUNDATION-001",
+              "consumer": "consumer:MOP-FOUNDATION-001",
+              "meta_operation": "operation:MOP-FOUNDATION-001",
+              "evidence_path": "",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric"
+            }
           }
         },
         {
           "id": "MOP-REGRESSION-001",
           "family": "REGRESSION",
-          "claim": "REFUTED",
+          "claim": "OPEN",
           "numerator": 4,
           "denominator": 4,
           "decision": "UNKNOWN",
+          "subject_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-REGRESSION-001",
@@ -291,10 +279,314 @@
             "blocked_by": [
               "MOP-FOUNDATION-001"
             ]
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "OPEN",
+            "conformance_decision": "UNKNOWN",
+            "subject_resolution": "EXACT",
+            "transition": "PRESERVED_OPEN",
+            "stage": "CLAIM",
+            "step": "preserve-open-claim",
+            "reason": "UNKNOWN_PRESERVES_OPEN_CLAIM",
+            "evidence_digest": "sha256:ca4c49b099f3f9d7e9dee433117a8ab54b634692d64b6bcd2c85db0a04c792c8",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-REGRESSION-001",
+              "consumer": "consumer:MOP-REGRESSION-001",
+              "meta_operation": "operation:MOP-REGRESSION-001",
+              "evidence_path": "evidence:MOP-REGRESSION-001",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "direct-unknown",
+      "mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent",
+      "graph": {
+        "nodes": 15,
+        "edges": 11,
+        "edge_kinds": {
+          "CONSUMES": 3,
+          "EVIDENCED_BY": 2,
+          "OPERATES": 3,
+          "PRODUCES": 3
+        }
+      },
+      "numerator": 11,
+      "denominator": 12,
+      "conformance_decision": "UNKNOWN",
+      "subject_resolution": "EXACT",
+      "decisions": {
+        "PASS": 2,
+        "UNKNOWN": 1
+      },
+      "transitions": {
+        "DISCHARGED": 2,
+        "PRESERVED_OPEN": 1
+      },
+      "metrics": [
+        {
+          "id": "MOP-COHERENCE-001",
+          "family": "COHERENCE",
+          "claim": "OPEN",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "subject_resolution": "EXACT",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-COHERENCE-001",
+            "consumer": "consumer:MOP-COHERENCE-001",
+            "meta_operation": "operation:MOP-COHERENCE-001",
+            "evidence_path": "evidence:MOP-COHERENCE-001"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "DISCHARGED",
+            "conformance_decision": "PASS",
+            "subject_resolution": "EXACT",
+            "transition": "DISCHARGED",
+            "stage": "CLAIM",
+            "step": "discharge-open-claim",
+            "reason": "PASS_DISCHARGES_OPEN_CLAIM",
+            "evidence_digest": "sha256:d0fde90ae75b3003e8104e8b0eef5343bf3066640e323f4cdd9cd4284e227a78",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-COHERENCE-001",
+              "consumer": "consumer:MOP-COHERENCE-001",
+              "meta_operation": "operation:MOP-COHERENCE-001",
+              "evidence_path": "evidence:MOP-COHERENCE-001",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent"
+            }
+          }
+        },
+        {
+          "id": "MOP-FOUNDATION-001",
+          "family": "FOUNDATION",
+          "claim": "OPEN",
+          "numerator": 3,
+          "denominator": 4,
+          "decision": "UNKNOWN",
+          "subject_resolution": "EXACT",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-FOUNDATION-001",
+            "consumer": "consumer:MOP-FOUNDATION-001",
+            "meta_operation": "operation:MOP-FOUNDATION-001",
+            "evidence_path": ""
+          },
+          "issue": {
+            "stage": "LINEAGE",
+            "step": "connect-evidence-path",
+            "reason": "REQUIRED_EVIDENCE_RELATION_MISSING",
+            "cause": "DIRECT_CAUSE"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "OPEN",
+            "conformance_decision": "UNKNOWN",
+            "subject_resolution": "EXACT",
+            "transition": "PRESERVED_OPEN",
+            "stage": "CLAIM",
+            "step": "preserve-open-claim",
+            "reason": "UNKNOWN_PRESERVES_OPEN_CLAIM",
+            "evidence_digest": "sha256:ca83dfa53fc9fbc87d601fe2349d18bac47ed3e1b3730497811f7806742d49fb",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-FOUNDATION-001",
+              "consumer": "consumer:MOP-FOUNDATION-001",
+              "meta_operation": "operation:MOP-FOUNDATION-001",
+              "evidence_path": "",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent"
+            }
+          }
+        },
+        {
+          "id": "MOP-REGRESSION-001",
+          "family": "REGRESSION",
+          "claim": "OPEN",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "subject_resolution": "EXACT",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-REGRESSION-001",
+            "consumer": "consumer:MOP-REGRESSION-001",
+            "meta_operation": "operation:MOP-REGRESSION-001",
+            "evidence_path": "evidence:MOP-REGRESSION-001"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "DISCHARGED",
+            "conformance_decision": "PASS",
+            "subject_resolution": "EXACT",
+            "transition": "DISCHARGED",
+            "stage": "CLAIM",
+            "step": "discharge-open-claim",
+            "reason": "PASS_DISCHARGES_OPEN_CLAIM",
+            "evidence_digest": "sha256:f36fab285d8f99ff9f75d89a34675a35c6da05eac114789af012fbffbfe146d6",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-REGRESSION-001",
+              "consumer": "consumer:MOP-REGRESSION-001",
+              "meta_operation": "operation:MOP-REGRESSION-001",
+              "evidence_path": "evidence:MOP-REGRESSION-001",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "disconnected",
+      "mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent",
+      "graph": {
+        "nodes": 15,
+        "edges": 11,
+        "edge_kinds": {
+          "CONSUMES": 2,
+          "EVIDENCED_BY": 3,
+          "OPERATES": 3,
+          "PRODUCES": 3
+        }
+      },
+      "numerator": 11,
+      "denominator": 12,
+      "conformance_decision": "FAIL_CLOSED",
+      "subject_resolution": "EXACT",
+      "decisions": {
+        "FAIL_CLOSED": 1,
+        "PASS": 2
+      },
+      "transitions": {
+        "DISCHARGED": 2,
+        "REFUTED": 1
+      },
+      "metrics": [
+        {
+          "id": "MOP-COHERENCE-001",
+          "family": "COHERENCE",
+          "claim": "OPEN",
+          "numerator": 3,
+          "denominator": 4,
+          "decision": "FAIL_CLOSED",
+          "subject_resolution": "EXACT",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-COHERENCE-001",
+            "consumer": "",
+            "meta_operation": "operation:MOP-COHERENCE-001",
+            "evidence_path": "evidence:MOP-COHERENCE-001"
+          },
+          "issue": {
+            "stage": "LINEAGE",
+            "step": "connect-consumer",
+            "reason": "REQUIRED_CONSUMER_RELATION_MISSING",
+            "cause": "DIRECT_CAUSE"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "REFUTED",
+            "conformance_decision": "FAIL_CLOSED",
+            "subject_resolution": "EXACT",
+            "transition": "REFUTED",
+            "stage": "CLAIM",
+            "step": "refute-claim",
+            "reason": "FAIL_CLOSED_IS_EXPLICIT_REFUTATION",
+            "evidence_digest": "sha256:cc8e37f0b467e1cd2da1db08ef5ed93166d0b5c79ddff1d54b0ec20b909bbb1d",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-COHERENCE-001",
+              "consumer": "",
+              "meta_operation": "operation:MOP-COHERENCE-001",
+              "evidence_path": "evidence:MOP-COHERENCE-001",
+              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent"
+            }
+          }
+        },
+        {
+          "id": "MOP-FOUNDATION-001",
+          "family": "FOUNDATION",
+          "claim": "OPEN",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "subject_resolution": "EXACT",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-FOUNDATION-001",
+            "consumer": "consumer:MOP-FOUNDATION-001",
+            "meta_operation": "operation:MOP-FOUNDATION-001",
+            "evidence_path": "evidence:MOP-FOUNDATION-001"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "DISCHARGED",
+            "conformance_decision": "PASS",
+            "subject_resolution": "EXACT",
+            "transition": "DISCHARGED",
+            "stage": "CLAIM",
+            "step": "discharge-open-claim",
+            "reason": "PASS_DISCHARGES_OPEN_CLAIM",
+            "evidence_digest": "sha256:df44e94e32d94d86cbc823a05c4120320d3428c71c2747ff353670f0d31f45ff",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-FOUNDATION-001",
+              "consumer": "consumer:MOP-FOUNDATION-001",
+              "meta_operation": "operation:MOP-FOUNDATION-001",
+              "evidence_path": "evidence:MOP-FOUNDATION-001",
+              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent"
+            }
+          }
+        },
+        {
+          "id": "MOP-REGRESSION-001",
+          "family": "REGRESSION",
+          "claim": "OPEN",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "subject_resolution": "EXACT",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-REGRESSION-001",
+            "consumer": "consumer:MOP-REGRESSION-001",
+            "meta_operation": "operation:MOP-REGRESSION-001",
+            "evidence_path": "evidence:MOP-REGRESSION-001"
+          },
+          "claim_transition": {
+            "prior_claim": "OPEN",
+            "next_claim": "DISCHARGED",
+            "conformance_decision": "PASS",
+            "subject_resolution": "EXACT",
+            "transition": "DISCHARGED",
+            "stage": "CLAIM",
+            "step": "discharge-open-claim",
+            "reason": "PASS_DISCHARGES_OPEN_CLAIM",
+            "evidence_digest": "sha256:eac76d8635aeb1ca5ebee0d4d7aa43af7579eb64e8cea2ef31271ad6f11e4044",
+            "provenance": {
+              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
+              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "producer": "producer:MOP-REGRESSION-001",
+              "consumer": "consumer:MOP-REGRESSION-001",
+              "meta_operation": "operation:MOP-REGRESSION-001",
+              "evidence_path": "evidence:MOP-REGRESSION-001",
+              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent"
+            }
           }
         }
       ]
     }
   ],
-  "digest": "sha256:bf855f9d0c551512c2c1557778ed5b88606f219f11691dc70b66f485195ebfcf"
+  "digest": "sha256:9430730a178879d907602cf98a304219475010b0a22596cfd3637f9238150429"
 }
