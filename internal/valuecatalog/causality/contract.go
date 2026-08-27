@@ -8,17 +8,7 @@ import (
 	"strings"
 )
 
-var claimAxes = [...]string{
-	"catalog-singleton",
-	"identity-versioned",
-	"signature-typed",
-	"operand-typed",
-	"effect-explicit",
-	"determinism-explicit",
-	"failure-set-closed",
-	"authority-zero",
-	"invocation-ir-bound",
-}
+var claimAxes = [...]string{"catalog-singleton", "identity-versioned", "signature-typed", "operand-typed", "effect-explicit", "determinism-explicit", "failure-set-closed", "authority-zero", "invocation-ir-bound"}
 
 type edgeSpec struct {
 	from int
@@ -44,33 +34,15 @@ func buildGraph(claimIDs []string) (GraphContract, error) {
 	if len(claimIDs) != ClaimTotal {
 		return GraphContract{}, fmt.Errorf("claim total: got %d want %d", len(claimIDs), ClaimTotal)
 	}
-	graph := GraphContract{
-		Schema:                     GraphSchema,
-		Authority:                  "DECLARED_EXPERIMENTAL_CONTRACT",
-		Completeness:               "CLOSED_WORLD_OS9_ONLY",
-		SemanticCorrectnessClaimed: false,
-		NodeTotal:                  ClaimTotal,
-		EdgeTotal:                  EdgeTotal,
-		Nodes:                      make([]GraphNode, 0, ClaimTotal),
-		Edges:                      make([]GraphEdge, 0, EdgeTotal),
-	}
+	graph := GraphContract{Schema: GraphSchema, Authority: "DECLARED_EXPERIMENTAL_CONTRACT", Completeness: "CLOSED_WORLD_OS9_ONLY", SemanticCorrectnessClaimed: false, NodeTotal: ClaimTotal, EdgeTotal: EdgeTotal, Nodes: make([]GraphNode, 0, ClaimTotal), Edges: make([]GraphEdge, 0, EdgeTotal)}
 	for index, claimID := range claimIDs {
 		if claimID == "" || !strings.HasSuffix(claimID, claimAxes[index]+".v1") {
 			return GraphContract{}, fmt.Errorf("claim %d does not bind axis %q: %q", index+1, claimAxes[index], claimID)
 		}
-		graph.Nodes = append(graph.Nodes, GraphNode{
-			Ordinal: index + 1,
-			Axis:    claimAxes[index],
-			ClaimID: claimID,
-		})
+		graph.Nodes = append(graph.Nodes, GraphNode{Ordinal: index + 1, Axis: claimAxes[index], ClaimID: claimID})
 	}
 	for index, edge := range edgeContract {
-		graph.Edges = append(graph.Edges, GraphEdge{
-			EdgeID:      fmt.Sprintf("E%02d", index+1),
-			FromClaimID: claimIDs[edge.from],
-			ToClaimID:   claimIDs[edge.to],
-			Kind:        edge.kind,
-		})
+		graph.Edges = append(graph.Edges, GraphEdge{EdgeID: fmt.Sprintf("E%02d", index+1), FromClaimID: claimIDs[edge.from], ToClaimID: claimIDs[edge.to], Kind: edge.kind})
 	}
 	digest, err := graphDigest(graph)
 	if err != nil {

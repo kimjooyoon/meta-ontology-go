@@ -10,7 +10,7 @@ func validateInputReport(report inputReport) (string, error) {
 		return "", fmt.Errorf("transition total: got %d want %d", len(report.OperationClaimTransitions), TransitionTotal)
 	}
 	seen := make(map[string]struct{}, ClaimTotal)
-	for index := 0; index < ClaimTotal; index++ {
+	for index := range ClaimTotal {
 		registered := report.OperationClaimTransitions[index]
 		resolved := report.OperationClaimTransitions[index+ClaimTotal]
 		if registered.Sequence != index+1 || resolved.Sequence != index+ClaimTotal+1 {

@@ -63,18 +63,7 @@ func main() {
 	if err := os.WriteFile(*outputPath, data, 0o644); err != nil {
 		fail(err.Error())
 	}
-	fmt.Printf("claim causality source=%s claims=%d/%d graph=%d/%d direct=%d blocked=%d blocking_edges=%d depth=%d decision=%s semantic_authority=0\n",
-		source,
-		receipt.Metrics.ClassifiedClaimTotal,
-		receipt.Metrics.ContractClaimTotal,
-		receipt.Graph.NodeTotal,
-		receipt.Graph.EdgeTotal,
-		receipt.Metrics.DirectMissingClaimTotal,
-		receipt.Metrics.DependencyBlockedClaimTotal,
-		receipt.Metrics.ObservedBlockingEdgeTotal,
-		receipt.Metrics.MaximumCausePathDepth,
-		receipt.Decision.Value,
-	)
+	fmt.Printf("claim causality source=%s claims=%d/%d graph=%d/%d direct=%d blocked=%d blocking_edges=%d depth=%d decision=%s semantic_authority=0\n", source, receipt.Metrics.ClassifiedClaimTotal, receipt.Metrics.ContractClaimTotal, receipt.Graph.NodeTotal, receipt.Graph.EdgeTotal, receipt.Metrics.DirectMissingClaimTotal, receipt.Metrics.DependencyBlockedClaimTotal, receipt.Metrics.ObservedBlockingEdgeTotal, receipt.Metrics.MaximumCausePathDepth, receipt.Decision.Value)
 }
 
 func fail(message string) {
