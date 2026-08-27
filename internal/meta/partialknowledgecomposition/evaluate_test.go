@@ -14,7 +14,7 @@ const testHeadSHA = "0123456789abcdef0123456789abcdef01234567"
 
 func testInput(t *testing.T) Input {
 	t.Helper()
-	root := filepath.Join("..", "..", "..", "..")
+	root := filepath.Join("..", "..", "..")
 	source, err := os.ReadFile(filepath.Join(root, SourcePath))
 	if err != nil {
 		t.Fatal(err)
