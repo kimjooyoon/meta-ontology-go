@@ -49,8 +49,10 @@ knowledge causes:
 | no unknown/block and any invariant | `INVARIANT_ONLY` |
 | both direct unknown and dependency block | `MIXED_UNRESOLVED` |
 
-Only `EXACT` is a top-success case. `INVARIANT_ONLY` is retained as useful
-knowledge but is `HOLD`; every unresolved state is `FAIL_CLOSED`. The mixed
+Only `EXACT` is a top-success case. The receipt-level decision is named
+`CALCULUS_PROVEN` to mean that the rule replay succeeded, not that every case
+was promoted. `INVARIANT_ONLY` is retained as useful knowledge but is `HOLD`;
+every unresolved state is `FAIL_CLOSED`. The mixed
 case carries both cause sets instead of choosing one and hiding the other.
 
 The fixed corpus has five pairwise compositions: one exact result, one direct

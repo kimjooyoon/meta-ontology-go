@@ -1,12 +1,13 @@
 package partialknowledgecomposition
 
 const (
-	Schema        = "gooo/meta/partial-knowledge-composition-receipt/v1"
-	FixtureSchema = "gooo/meta/partial-knowledge-composition-fixture/v1"
-	Producer      = "partial-knowledge-producer"
-	Consumer      = "partial-knowledge-composition-consumer"
-	MetaOperation = "compose-partial-knowledge"
-	SourcePath    = "examples/partial-knowledge-composition/main.gooo"
+	Schema                 = "gooo/meta/partial-knowledge-composition-receipt/v1"
+	FixtureSchema          = "gooo/meta/partial-knowledge-composition-fixture/v1"
+	Producer               = "partial-knowledge-producer"
+	Consumer               = "partial-knowledge-composition-consumer"
+	MetaOperation          = "compose-partial-knowledge"
+	SourcePath             = "examples/partial-knowledge-composition/main.gooo"
+	DecisionCalculusProven = "CALCULUS_PROVEN"
 
 	FixedDenominator = 5
 )

@@ -34,7 +34,7 @@ func Evaluate(input Input) (Receipt, error) {
 		SourcePath: input.SourcePath, SourceDigest: digestBytes(input.Source),
 		Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation,
 		ProofChoice: ProofCoherence, Resolution: "COMPOSITION_CALCULUS",
-		Decision: "PROVEN", Reason: "COMPOSITION_RULES_REPLAYED",
+		Decision: DecisionCalculusProven, Reason: "COMPOSITION_RULES_REPLAYED",
 		FixedDenominator: FixedDenominator,
 		DenominatorDigest: digestValue(struct {
 			Count int      `json:"count"`
@@ -156,7 +156,7 @@ func boolCount(value bool) int {
 }
 
 func ValidateReceipt(receipt Receipt) error {
-	if receipt.Schema != Schema || receipt.Decision != "PROVEN" ||
+	if receipt.Schema != Schema || receipt.Decision != DecisionCalculusProven ||
 		receipt.Reason != "COMPOSITION_RULES_REPLAYED" || receipt.Resolution != "COMPOSITION_CALCULUS" ||
 		receipt.Producer != Producer || receipt.Consumer != Consumer || receipt.MetaOperation != MetaOperation ||
 		receipt.FixedDenominator != FixedDenominator || len(receipt.Cases) != FixedDenominator ||

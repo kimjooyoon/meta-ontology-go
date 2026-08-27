@@ -136,7 +136,7 @@ func reconstruct(input Input, value fixture) (receipt, error) {
 		HeadSHA: input.HeadSHA, SourcePath: input.SourcePath, SourceDigest: digestBytes(input.Source),
 		Producer: "partial-knowledge-producer", Consumer: "partial-knowledge-composition-consumer",
 		MetaOperation: "compose-partial-knowledge", ProofChoice: "COHERENCE",
-		Resolution: "COMPOSITION_CALCULUS", Decision: "PROVEN", Reason: "COMPOSITION_RULES_REPLAYED",
+		Resolution: "COMPOSITION_CALCULUS", Decision: "CALCULUS_PROVEN", Reason: "COMPOSITION_RULES_REPLAYED",
 		FixedDenominator: 5,
 		DenominatorDigest: digestValue(struct {
 			Count int      `json:"count"`
@@ -230,7 +230,7 @@ func compareReceipt(actual, expected receipt) error {
 func newReport(value receipt) Report {
 	result := Report{
 		Schema: "gooo/meta/partial-knowledge-composition-verification/v1", Repository: value.Repository,
-		HeadSHA: value.HeadSHA, ReceiptDigest: value.Digest, Status: "VERIFIED", Decision: "PROVEN",
+		HeadSHA: value.HeadSHA, ReceiptDigest: value.Digest, Status: "VERIFIED", Decision: "CALCULUS_PROVEN",
 		FixedDenominator: value.Summary.FixedDenominator, ExactCases: value.Summary.ExactCases,
 		DirectUnknownCases: value.Summary.DirectUnknownCases, DependencyBlockedCases: value.Summary.DependencyBlockedCases,
 		InvariantOnlyCases: value.Summary.InvariantOnlyCases, MixedUnresolvedCases: value.Summary.MixedUnresolvedCases,
