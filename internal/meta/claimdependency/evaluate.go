@@ -46,6 +46,8 @@ func Evaluate(source []byte, sourcePath string, observation Observation, prior *
 		if err := validatePrior(parsed, *prior); err != nil {
 			return Receipt{}, err
 		}
+	} else if observation.Predicate == ObservationEvidence {
+		return Receipt{}, fmt.Errorf("EVIDENCE_ACCEPTED requires an UNKNOWN prior ledger")
 	}
 
 	sourceDigest := digestBytes(source)

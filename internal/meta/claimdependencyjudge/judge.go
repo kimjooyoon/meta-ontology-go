@@ -254,6 +254,8 @@ func Judge(source []byte, sourcePath string, priorBytes, observationBytes, recei
 		if len(got.Transitions) <= len(value.Transitions) || !reflect.DeepEqual(got.Transitions[:len(value.Transitions)], value.Transitions) {
 			return Judgment{}, fmt.Errorf("recovery transition prefix is not append-only")
 		}
+	} else if observed.Predicate == evidence {
+		return Judgment{}, fmt.Errorf("consumer requires an UNKNOWN prior ledger for evidence recovery")
 	}
 
 	states, outcomeTemplates := classify(current.Graph, observed.Predicate, observed.EvidenceDigest)
