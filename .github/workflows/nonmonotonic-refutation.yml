@@ -358,3 +358,11 @@ jobs:
           path: ${{ runner.temp }}/nonmonotonic-refutation/consumer
           if-no-files-found: error
           retention-days: 30
+      - name: Upload adjudication diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: nonmonotonic-refutation-diagnostics-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/nonmonotonic-refutation/consumer
+          if-no-files-found: warn
+          retention-days: 3
