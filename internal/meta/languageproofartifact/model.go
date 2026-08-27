@@ -117,28 +117,29 @@ type ClaimLedger struct {
 }
 
 type Artifact struct {
-	Schema         string              `json:"schema"`
-	HeadSHA        string              `json:"head_sha"`
-	Producer       string              `json:"producer"`
-	Consumer       string              `json:"consumer"`
-	MetaOperation  string              `json:"meta_operation"`
-	Decision       string              `json:"decision"`
-	Resolution     string              `json:"resolution"`
-	Reason         string              `json:"reason"`
-	SourcePath     string              `json:"source_path"`
-	SourceDigest   string              `json:"source_digest"`
-	SemanticDigest string              `json:"semantic_digest"`
-	Evidence       []Evidence          `json:"evidence"`
-	Recipe         Recipe              `json:"recipe"`
-	RecipeDigest   string              `json:"recipe_digest"`
-	PriorLedger    ClaimLedger         `json:"prior_ledger"`
-	WriteSet       WriteSetObservation `json:"write_set"`
-	Authority      Authority           `json:"authority"`
-	Effects        Effects             `json:"effects"`
-	NotClaimed     []string            `json:"not_claimed"`
-	Claims         []ClaimStatement    `json:"claims"`
-	BundleDigest   string              `json:"bundle_digest"`
-	Digest         string              `json:"digest"`
+	Schema          string              `json:"schema"`
+	HeadSHA         string              `json:"head_sha"`
+	Producer        string              `json:"producer"`
+	Consumer        string              `json:"consumer"`
+	MetaOperation   string              `json:"meta_operation"`
+	Decision        string              `json:"decision"`
+	Resolution      string              `json:"resolution"`
+	Reason          string              `json:"reason"`
+	SourcePath      string              `json:"source_path"`
+	SourceDigest    string              `json:"source_digest"`
+	SemanticDigest  string              `json:"semantic_digest"`
+	OperationDigest string              `json:"operation_digest"`
+	Evidence        []Evidence          `json:"evidence"`
+	Recipe          Recipe              `json:"recipe"`
+	RecipeDigest    string              `json:"recipe_digest"`
+	PriorLedger     ClaimLedger         `json:"prior_ledger"`
+	WriteSet        WriteSetObservation `json:"write_set"`
+	Authority       Authority           `json:"authority"`
+	Effects         Effects             `json:"effects"`
+	NotClaimed      []string            `json:"not_claimed"`
+	Claims          []ClaimStatement    `json:"claims"`
+	BundleDigest    string              `json:"bundle_digest"`
+	Digest          string              `json:"digest"`
 }
 
 type Input struct {
