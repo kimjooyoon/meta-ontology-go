@@ -127,3 +127,6 @@ jobs:
         if: success()
         id: attest-observation
         uses: actions/attest@v4
+        with:
+          subject-name: self-improvement-language-observation
+          subject-digest: ${{ steps.upload-observation.outputs.artifact-digest }}
