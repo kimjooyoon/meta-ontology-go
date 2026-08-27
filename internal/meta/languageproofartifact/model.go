@@ -116,21 +116,6 @@ type ClaimLedger struct {
 	Digest  string        `json:"digest"`
 }
 
-type RecipeStep struct {
-	ID            string `json:"id"`
-	Input         string `json:"input"`
-	MetaOperation string `json:"meta_operation"`
-	ProofChoice   string `json:"proof_choice"`
-}
-
-type Recipe struct {
-	Schema   string       `json:"schema"`
-	Version  int          `json:"version"`
-	ID       string       `json:"id"`
-	Consumer string       `json:"consumer"`
-	Steps    []RecipeStep `json:"steps"`
-}
-
 type Artifact struct {
 	Schema         string              `json:"schema"`
 	HeadSHA        string              `json:"head_sha"`
