@@ -200,16 +200,25 @@ these predicates.
 The diagnostic rekey is graph-closed: the producer package and independent
 consumer package each record a canonical old-to-new StableID bijection, rewrite
 `PreservationOf` and every other internal identity reference through that
-bijection, and emit an opaque receipt. The witness only compares the two
-receipts; it does not perform graph adjudication. Each receipt records both
-inventories, mapping digest, reference denominator, rewritten-reference count,
-dangling count, raw evidence count, and alpha-equivalent semantic-graph
-digests. A stale reference is `FAIL_CLOSED / LOWER_RESOLUTION /
-IDENTITY_REFERENCE_CLOSURE_BROKEN`; swapped mapping edges are
-`IDENTITY_FAULT_MAPPING_RULE_MISMATCH`; duplicate edges are
-`IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE`. Raw-only recreation is admissible
-only after both independent graph proofs pass. CI records the forbidden
-producer-import contract as `0/0`.
+bijection, and emit an opaque receipt. The producer declares
+`forward-map-reverse-normalize/v1`; the consumer declares
+`canonical-ordinal-edge-join/v1`. Each binds its algorithm source path, byte
+count, and source digest in the receipt. The witness compares only the
+implementation-produced common evidence wire; it does not perform graph
+adjudication or feed either receipt into the other implementation. The
+consumer constructs a semantic-ordinal inventory, checks injectivity by sorted
+adjacent IDs, joins reference edges by ordinal, and hashes an ordinal graph
+encoding. Each receipt records both inventories, mapping digest, reference
+denominator, rewritten-reference count, dangling count, raw evidence count, and
+alpha-equivalent semantic-graph digests. A stale reference is
+`FAIL_CLOSED / LOWER_RESOLUTION / IDENTITY_REFERENCE_CLOSURE_BROKEN`; swapped
+mapping edges are `IDENTITY_FAULT_MAPPING_RULE_MISMATCH`; duplicate edges are
+`IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE`; an invalid consumer ordinal edge is
+`IDENTITY_FAULT_ORDINAL_EDGE_MISMATCH`. Raw-only recreation is admissible only
+after both independent graph proofs pass. CI records forbidden imports as
+`forbidden_imports_observed=0`, `forbidden_imports_allowed_max=0`, and
+`forbidden_import_conformance=1/1`; an observed import is
+`FAIL_CLOSED / LOWER_RESOLUTION / PRODUCER_IMPORT_FORBIDDEN`.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical

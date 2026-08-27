@@ -5,16 +5,18 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 )
 
 const (
-	identityFaultSchema   = "gooo/semantic-delta-claim-identity-fault/v2"
-	identityFaultID       = "raw-only-stable-id-recreation"
-	identityFaultTarget   = "alternate-observation"
-	identityFaultMutation = "stable_identity_rekey_with_reference_closure"
-	identityFaultRule     = "rekey each alternate stable_id bijectively to gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)> and rewrite every internal identity reference through the same mapping"
+	identityFaultSchema    = "gooo/semantic-delta-claim-identity-fault/v2"
+	identityFaultID        = "raw-only-stable-id-recreation"
+	identityFaultTarget    = "alternate-observation"
+	identityFaultMutation  = "stable_identity_rekey_with_reference_closure"
+	identityFaultRule      = "rekey each alternate stable_id bijectively to gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)> and rewrite every internal identity reference through the same mapping"
+	identityFaultAlgorithm = "forward-map-reverse-normalize/v1"
 )
 
 // IdentityFaultInput names the real source pairs used by the diagnostic fault.
@@ -91,30 +93,43 @@ type identityFaultObservation struct {
 	Records    []ClaimIdentityRecord   `json:"records"`
 }
 
-// IdentityFaultReceipt is the producer's opaque diagnostic receipt. The
-// witness compares this JSON with the consumer receipt; it does not rekey,
-// normalize, digest, or adjudicate the graph itself.
+// IdentityFaultReceipt is the producer's implementation-specific diagnostic
+// receipt. Its algorithm binding is intentionally different from the
+// consumer's; the witness compares the bundle's opaque common evidence wire.
 type IdentityFaultReceipt struct {
-	Schema               string                        `json:"schema"`
-	Artifact             IdentityFaultArtifactEvidence `json:"artifact"`
-	Baseline             identityFaultObservation      `json:"baseline"`
-	Alternate            identityFaultObservation      `json:"alternate"`
-	FaultedAlternate     identityFaultObservation      `json:"faulted_alternate"`
-	Graph                IdentityFaultGraphEvidence    `json:"graph"`
-	Persistence          ClaimIdentityPairComparison   `json:"persistence"`
-	RawSemanticPreserved bool                          `json:"raw_semantic_preserved"`
-	ReconstructionExact  bool                          `json:"reconstruction_exact"`
-	FaultGraphClosed     bool                          `json:"fault_graph_closed"`
-	Decision             string                        `json:"decision"`
-	Resolution           string                        `json:"resolution"`
-	Stage                string                        `json:"stage"`
-	Step                 string                        `json:"step"`
-	Reason               string                        `json:"reason"`
+	Schema                string                        `json:"schema"`
+	AlgorithmID           string                        `json:"algorithm_id"`
+	AlgorithmSourcePath   string                        `json:"algorithm_source_path"`
+	AlgorithmSourceBytes  int                           `json:"algorithm_source_bytes"`
+	AlgorithmSourceDigest string                        `json:"algorithm_source_digest"`
+	Artifact              IdentityFaultArtifactEvidence `json:"artifact"`
+	Baseline              identityFaultObservation      `json:"baseline"`
+	Alternate             identityFaultObservation      `json:"alternate"`
+	FaultedAlternate      identityFaultObservation      `json:"faulted_alternate"`
+	Graph                 IdentityFaultGraphEvidence    `json:"graph"`
+	Persistence           ClaimIdentityPairComparison   `json:"persistence"`
+	RawSemanticPreserved  bool                          `json:"raw_semantic_preserved"`
+	ReconstructionExact   bool                          `json:"reconstruction_exact"`
+	FaultGraphClosed      bool                          `json:"fault_graph_closed"`
+	Decision              string                        `json:"decision"`
+	Resolution            string                        `json:"resolution"`
+	Stage                 string                        `json:"stage"`
+	Step                  string                        `json:"step"`
+	Reason                string                        `json:"reason"`
 }
 
-func IdentityFaultReceiptFromFiles(input IdentityFaultInput) IdentityFaultReceipt {
+// IdentityFaultReceiptBundle keeps the implementation-specific receipt and a
+// canonical opaque evidence wire. The witness compares only ComparisonBytes;
+// it never parses either receipt or recomputes the graph.
+type IdentityFaultReceiptBundle struct {
+	Receipt         IdentityFaultReceipt
+	ComparisonBytes []byte
+}
+
+func IdentityFaultReceiptFromFiles(input IdentityFaultInput) IdentityFaultReceiptBundle {
+	algorithmID, algorithmPath, algorithmBytes, algorithmDigest := identityFaultAlgorithmBinding()
 	receipt := IdentityFaultReceipt{
-		Schema:           identityFaultSchema,
+		Schema: identityFaultSchema, AlgorithmID: algorithmID, AlgorithmSourcePath: algorithmPath, AlgorithmSourceBytes: algorithmBytes, AlgorithmSourceDigest: algorithmDigest,
 		Baseline:         identityFaultObservation{SourcePair: IdentityFaultSourcePair{BeforePath: input.Baseline.BeforePath, AfterPath: input.Baseline.AfterPath}},
 		Alternate:        identityFaultObservation{SourcePair: IdentityFaultSourcePair{BeforePath: input.Alternate.BeforePath, AfterPath: input.Alternate.AfterPath}},
 		FaultedAlternate: identityFaultObservation{SourcePair: IdentityFaultSourcePair{BeforePath: input.Alternate.BeforePath, AfterPath: input.Alternate.AfterPath}},
@@ -123,18 +138,18 @@ func IdentityFaultReceiptFromFiles(input IdentityFaultInput) IdentityFaultReceip
 	artifact, evidence, ok := readIdentityFaultArtifact(input.ArtifactPath)
 	if !ok {
 		receipt.Artifact = evidence
-		return receipt
+		return identityFaultReceiptBundle(receipt)
 	}
 	receipt.Artifact = evidence
 	baseline, baselineOK := identityFaultObservationFromFiles(input.Baseline)
 	if !baselineOK {
 		receipt.Stage, receipt.Step, receipt.Reason = "identity-fault", "read-baseline-source-pair", "SOURCE_PAIR_UNAVAILABLE"
-		return receipt
+		return identityFaultReceiptBundle(receipt)
 	}
 	alternate, alternateOK := identityFaultObservationFromFiles(input.Alternate)
 	if !alternateOK {
 		receipt.Stage, receipt.Step, receipt.Reason = "identity-fault", "read-alternate-source-pair", "SOURCE_PAIR_UNAVAILABLE"
-		return receipt
+		return identityFaultReceiptBundle(receipt)
 	}
 	faultedRecords, graph, faultReason := rekeyIdentityFault(alternate.Records, alternate.SourcePair, artifact)
 	receipt.Baseline, receipt.Alternate = baseline, alternate
@@ -148,10 +163,36 @@ func IdentityFaultReceiptFromFiles(input IdentityFaultInput) IdentityFaultReceip
 	receipt.Graph.RawEvidenceTotal = receipt.Persistence.RawEvidenceTotal
 	if faultReason != "" {
 		receipt.Decision, receipt.Resolution, receipt.Stage, receipt.Step, receipt.Reason = DecisionFailClosed, ResolutionLower, "identity-fault", "rekey-graph", faultReason
-		return receipt
+		return identityFaultReceiptBundle(receipt)
 	}
 	receipt.Decision, receipt.Resolution, receipt.Stage, receipt.Step, receipt.Reason = DecisionFailClosed, ResolutionLower, receipt.Persistence.Stage, receipt.Persistence.Step, receipt.Persistence.Reason
-	return receipt
+	return identityFaultReceiptBundle(receipt)
+}
+
+func identityFaultReceiptBundle(receipt IdentityFaultReceipt) IdentityFaultReceiptBundle {
+	comparison := receipt
+	comparison.AlgorithmID = ""
+	comparison.AlgorithmSourcePath = ""
+	comparison.AlgorithmSourceBytes = 0
+	comparison.AlgorithmSourceDigest = ""
+	return IdentityFaultReceiptBundle{Receipt: receipt, ComparisonBytes: identityFaultJSON(comparison)}
+}
+
+func identityFaultAlgorithmBinding() (string, string, int, string) {
+	path, ok := identityFaultSourcePath()
+	if !ok {
+		return identityFaultAlgorithm, "", 0, ""
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return identityFaultAlgorithm, path, 0, ""
+	}
+	return identityFaultAlgorithm, path, len(raw), digestBytes(raw)
+}
+
+func identityFaultSourcePath() (string, bool) {
+	path, _, _, ok := runtime.Caller(0)
+	return path, ok
 }
 
 func identityFaultObservationFromFiles(input Input) (identityFaultObservation, bool) {
@@ -417,29 +458,52 @@ func graphMappingReverse(rows []IdentityFaultMappingRow) map[string]string {
 	return result
 }
 
+// identitySemanticGraphDigest is the producer's forward-map/reverse-normalize
+// implementation of the common alpha graph encoding. IDs are represented by
+// canonical semantic ordinals, so a closed rekey cannot change the digest.
 type identitySemanticRow struct {
+	Ordinal                      int    `json:"ordinal"`
 	Kind                         string `json:"kind"`
 	RelationRole                 string `json:"relation_role"`
 	NormalizedProposition        string `json:"normalized_proposition"`
 	PropositionDigest            string `json:"proposition_digest"`
 	TargetAddress                string `json:"target_address"`
 	TargetAddressDigest          string `json:"target_address_digest"`
-	PreservationOf               string `json:"preservation_of,omitempty"`
+	PreservationOrdinal          int    `json:"preservation_ordinal"`
 	EvidenceBeforeSemanticDigest string `json:"evidence_before_semantic_digest,omitempty"`
 	EvidenceAfterSemanticDigest  string `json:"evidence_after_semantic_digest,omitempty"`
 }
 
 func identitySemanticGraphDigest(records []ClaimIdentityRecord) string {
-	rows := make([]identitySemanticRow, 0, len(records))
-	for _, record := range records {
-		rows = append(rows, identitySemanticRow{Kind: record.Kind, RelationRole: record.RelationRole, NormalizedProposition: record.NormalizedProposition, PropositionDigest: record.PropositionDigest, TargetAddress: record.TargetAddress, TargetAddressDigest: record.TargetAddressDigest, PreservationOf: record.PreservationOf, EvidenceBeforeSemanticDigest: record.EvidenceBeforeSemanticDigest, EvidenceAfterSemanticDigest: record.EvidenceAfterSemanticDigest})
+	ordered := append([]ClaimIdentityRecord(nil), records...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		left, right := identitySemanticInventoryKey(ordered[i]), identitySemanticInventoryKey(ordered[j])
+		if left != right {
+			return left < right
+		}
+		return ordered[i].StableID < ordered[j].StableID
+	})
+	ordinalByID := make(map[string]int, len(ordered))
+	for ordinal, record := range ordered {
+		ordinalByID[record.StableID] = ordinal
 	}
-	sort.Slice(rows, func(i, j int) bool { return identitySemanticRowKey(rows[i]) < identitySemanticRowKey(rows[j]) })
+	rows := make([]identitySemanticRow, 0, len(ordered))
+	for ordinal, record := range ordered {
+		preservationOrdinal := -1
+		if record.PreservationOf != "" {
+			if found, ok := ordinalByID[record.PreservationOf]; ok {
+				preservationOrdinal = found
+			} else {
+				preservationOrdinal = -2
+			}
+		}
+		rows = append(rows, identitySemanticRow{Ordinal: ordinal, Kind: record.Kind, RelationRole: record.RelationRole, NormalizedProposition: record.NormalizedProposition, PropositionDigest: record.PropositionDigest, TargetAddress: record.TargetAddress, TargetAddressDigest: record.TargetAddressDigest, PreservationOrdinal: preservationOrdinal, EvidenceBeforeSemanticDigest: record.EvidenceBeforeSemanticDigest, EvidenceAfterSemanticDigest: record.EvidenceAfterSemanticDigest})
+	}
 	return digestBytes(identityFaultJSON(rows))
 }
 
-func identitySemanticRowKey(row identitySemanticRow) string {
-	return strings.Join([]string{row.Kind, row.RelationRole, row.NormalizedProposition, row.PropositionDigest, row.TargetAddress, row.TargetAddressDigest, row.PreservationOf, row.EvidenceBeforeSemanticDigest, row.EvidenceAfterSemanticDigest}, "\x00")
+func identitySemanticInventoryKey(record ClaimIdentityRecord) string {
+	return strings.Join([]string{record.Kind, record.RelationRole, record.NormalizedProposition, record.PropositionDigest, record.TargetAddress, record.TargetAddressDigest}, "\x00")
 }
 
 func faultStableID(rule string, observation IdentityFaultSourcePair, original string) string {

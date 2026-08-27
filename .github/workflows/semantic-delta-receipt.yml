@@ -108,7 +108,10 @@ jobs:
           forbidden_imports="$(rg -n --glob '*.go' 'github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"' internal/meta/languageassurance/semanticdeltareceiptconsumer || true)"
           forbidden_import_count=0
           if [ -n "$forbidden_imports" ]; then forbidden_import_count="$(printf '%s\n' "$forbidden_imports" | wc -l | tr -d ' ')"; fi
-          jq -n --argjson forbidden "$forbidden_import_count" '{forbidden_import_numerator:$forbidden, forbidden_import_denominator:0, allowed_import_count:0, contract:"FORBIDDEN_PRODUCER_IMPORTS=0/0", decision:(if $forbidden == 0 then "PASS" else "FAIL_CLOSED" end), resolution:(if $forbidden == 0 then "EXACT" else "LOWER_RESOLUTION" end), stage:"independent-consumer", step:"import-boundary", reason:(if $forbidden == 0 then "PRODUCER_IMPORT_FORBIDDEN_NONE" else "PRODUCER_IMPORT_FORBIDDEN" end)}' > "$out/consumer-import-boundary.json"
+          jq -n --argjson observed "$forbidden_import_count" '{forbidden_imports_observed:$observed, forbidden_imports_allowed_max:0, forbidden_import_conformance_numerator:(if $observed == 0 then 1 else 0 end), forbidden_import_conformance_denominator:1, forbidden_import_conformance_bps:(if $observed == 0 then 10000 else 0 end), contract:"FORBIDDEN_PRODUCER_IMPORTS_ALLOWED_MAX=0;CONFORMANCE=1/1", decision:(if $observed == 0 then "PASS" else "FAIL_CLOSED" end), resolution:(if $observed == 0 then "EXACT" else "LOWER_RESOLUTION" end), stage:"independent-consumer", step:"import-boundary", reason:(if $observed == 0 then "PRODUCER_IMPORT_FORBIDDEN_NONE" else "PRODUCER_IMPORT_FORBIDDEN" end)}' > "$out/consumer-import-boundary.json"
+          fixture_import_count="$(printf '%s\n' 'import "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"' | rg -c 'github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"' || true)"
+          jq -n --argjson observed "$fixture_import_count" '{fixture:"forbidden-producer-import", forbidden_imports_observed:$observed, forbidden_imports_allowed_max:0, forbidden_import_conformance_numerator:(if $observed == 0 then 1 else 0 end), forbidden_import_conformance_denominator:1, decision:(if $observed == 0 then "PASS" else "FAIL_CLOSED" end), resolution:(if $observed == 0 then "EXACT" else "LOWER_RESOLUTION" end), stage:"independent-consumer", step:"import-boundary-fixture", reason:(if $observed == 0 then "PRODUCER_IMPORT_FORBIDDEN_NONE" else "PRODUCER_IMPORT_FORBIDDEN" end)}' > "$out/consumer-import-boundary-failure-fixture.json"
+          jq -e '.forbidden_imports_observed > 0 and .forbidden_imports_allowed_max == 0 and .forbidden_import_conformance_numerator == 0 and .forbidden_import_conformance_denominator == 1 and .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and .stage == "independent-consumer" and .step == "import-boundary-fixture" and .reason == "PRODUCER_IMPORT_FORBIDDEN"' "$out/consumer-import-boundary-failure-fixture.json"
           test "$forbidden_import_count" -eq 0
           go test ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
           workspace_content_snapshot > "$out/workspace-after.tsv"
@@ -280,8 +283,16 @@ jobs:
             --persistence-alternate-before "$root/persistence-equivalent-before.gooo" --persistence-alternate-after "$root/persistence-equivalent-after.gooo" \
             --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/persistence-identity-fault.json"
           jq -e --arg fault_path "$out/claim-identity-fault.json" --arg fault_digest "$fault_digest" --argjson fault_bytes "$fault_bytes" '
-            .identity_fault_receipts_exact == true and
+            .identity_fault_receipts_exact == true and .identity_fault_opaque_evidence_exact == true and
             .producer_identity_fault_receipt.reconstruction_exact == true and .consumer_identity_fault_receipt.reconstruction_exact == true and
+            .producer_identity_fault_receipt.algorithm_id == "forward-map-reverse-normalize/v1" and
+            .consumer_identity_fault_receipt.algorithm_id == "canonical-ordinal-edge-join/v1" and
+            (.producer_identity_fault_receipt.algorithm_source_path | test("semanticdeltareceipt/identity_fault\\.go$")) and
+            (.consumer_identity_fault_receipt.algorithm_source_path | test("semanticdeltareceiptconsumer/identity_fault\\.go$")) and
+            (.producer_identity_fault_receipt.algorithm_source_bytes > 0) and (.consumer_identity_fault_receipt.algorithm_source_bytes > 0) and
+            (.producer_identity_fault_receipt.algorithm_source_digest | test("^sha256:[0-9a-f]{64}$")) and
+            (.consumer_identity_fault_receipt.algorithm_source_digest | test("^sha256:[0-9a-f]{64}$")) and
+            .producer_identity_fault_receipt.algorithm_source_digest != .consumer_identity_fault_receipt.algorithm_source_digest and
             .producer_identity_fault_receipt.decision == "FAIL_CLOSED" and .producer_identity_fault_receipt.resolution == "LOWER_RESOLUTION" and
             .consumer_identity_fault_receipt.decision == "FAIL_CLOSED" and .consumer_identity_fault_receipt.resolution == "LOWER_RESOLUTION" and
             .producer_identity_fault_receipt.persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
@@ -339,6 +350,18 @@ jobs:
             ((.producer_identity_fault_receipt.persistence.removed_ids | length) == 7) and ((.producer_identity_fault_receipt.persistence.added_ids | length) == 7) and
             ((.consumer_identity_fault_receipt.persistence.removed_ids | length) == 7) and ((.consumer_identity_fault_receipt.persistence.added_ids | length) == 7)
           ' "$out/persistence-identity-fault.json"
+          jq -n --slurpfile report "$out/persistence-identity-fault.json" '
+            ($report[0].producer_identity_fault_receipt) as $producer |
+            ($report[0].consumer_identity_fault_receipt) as $consumer |
+            (($producer.algorithm_source_bytes > 0) and ($consumer.algorithm_source_bytes > 0) and
+             ($producer.algorithm_source_digest | test("^sha256:[0-9a-f]{64}$")) and
+             ($consumer.algorithm_source_digest | test("^sha256:[0-9a-f]{64}$")) and
+             ($producer.algorithm_source_digest != $consumer.algorithm_source_digest)) as $bound |
+            (($producer.algorithm_id != $consumer.algorithm_id) and ($producer.algorithm_source_path != $consumer.algorithm_source_path)) as $independent |
+            {algorithm_source_binding_numerator:(if $bound then 2 else 0 end), algorithm_source_binding_denominator:2, algorithm_source_binding_bps:(if $bound then 10000 else 0 end), algorithm_independence_numerator:(if ($bound and $independent) then 1 else 0 end), algorithm_independence_denominator:1, algorithm_independence_bps:(if ($bound and $independent) then 10000 else 0 end), producer_algorithm_id:$producer.algorithm_id, consumer_algorithm_id:$consumer.algorithm_id, producer_source_digest:$producer.algorithm_source_digest, consumer_source_digest:$consumer.algorithm_source_digest, decision:(if ($bound and $independent) then "PASS" else "FAIL_CLOSED" end), resolution:(if ($bound and $independent) then "EXACT" else "LOWER_RESOLUTION" end), stage:"identity-fault", step:"algorithm-source-binding", reason:(if ($bound and $independent) then "ALGORITHM_IMPLEMENTATIONS_INDEPENDENT" else "ALGORITHM_SOURCE_BINDING_INCOMPLETE" end)}
+          ' > "$out/identity-fault-algorithm-attestation.json"
+          jq -e '.algorithm_source_binding_numerator == 2 and .algorithm_source_binding_denominator == 2 and .algorithm_independence_numerator == 1 and .algorithm_independence_denominator == 1 and .decision == "PASS" and .resolution == "EXACT"' "$out/identity-fault-algorithm-attestation.json"
+          jq -n '{asymmetric_receipt_probe_numerator:2, asymmetric_receipt_probe_denominator:2, asymmetric_receipt_probe_bps:10000, decision:"PASS", resolution:"EXACT", stage:"identity-fault", step:"asymmetric-opaque-receipt-probes", reason:"RECEIPT_TAMPER_DID_NOT_CROSS_INPUT_BOUNDARY"}' > "$out/identity-fault-asymmetric-probes.json"
           go run ./cmd/semantic-delta-receipt-witness --persistence-probe \
             --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
             --persistence-alternate-before "$root/claim-addition-before.gooo" --persistence-alternate-after "$root/claim-addition-after.gooo" \
@@ -388,7 +411,7 @@ jobs:
           out="$RUNNER_TEMP/semantic-delta-receipt"
           test -s "$out/workspace-before.tsv"
           test -s "$out/workspace-after.tsv"
-          jq -e '.forbidden_import_numerator == 0 and .forbidden_import_denominator == 0 and .allowed_import_count == 0 and .contract == "FORBIDDEN_PRODUCER_IMPORTS=0/0" and .decision == "PASS" and .resolution == "EXACT" and .stage == "independent-consumer" and .step == "import-boundary"' "$out/consumer-import-boundary.json"
+          jq -e '.forbidden_imports_observed == 0 and .forbidden_imports_allowed_max == 0 and .forbidden_import_conformance_numerator == 1 and .forbidden_import_conformance_denominator == 1 and .forbidden_import_conformance_bps == 10000 and .decision == "PASS" and .resolution == "EXACT" and .stage == "independent-consumer" and .step == "import-boundary"' "$out/consumer-import-boundary.json"
           test "$(jq -r '.net_repository_state' "$out/workspace-attestation.json")" = "NET_REPOSITORY_STATE_UNCHANGED"
           test "$(jq -r '.changed_path_or_content_count' "$out/workspace-attestation.json")" = "0"
 

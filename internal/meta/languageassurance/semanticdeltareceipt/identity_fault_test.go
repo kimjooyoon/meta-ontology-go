@@ -8,7 +8,7 @@ import (
 
 func TestProducerIdentityFaultUsesRawFixtureAndRejectsClosedGraphTampering(t *testing.T) {
 	receipt := producerIdentityFaultFixtureReceipt(t)
-	if !receipt.FaultGraphClosed || !receipt.Graph.Bijection || receipt.Graph.MappingTotal != 7 || receipt.Graph.DanglingReferenceCount != 0 || !receipt.Graph.AlphaEquivalentSemanticGraph || receipt.Graph.RawEvidenceChanged != 7 {
+	if !receipt.FaultGraphClosed || !receipt.Graph.Bijection || receipt.Graph.MappingTotal != 7 || receipt.Graph.DanglingReferenceCount != 0 || !receipt.Graph.AlphaEquivalentSemanticGraph || receipt.Graph.RawEvidenceChanged != 7 || receipt.AlgorithmID != identityFaultAlgorithm || receipt.AlgorithmSourceBytes == 0 || receipt.AlgorithmSourceDigest == "" {
 		t.Fatalf("raw fixture identity fault was not exact: %+v", receipt.Graph)
 	}
 
@@ -39,7 +39,7 @@ func producerIdentityFaultFixtureReceipt(t *testing.T) IdentityFaultReceipt {
 		Baseline:     Input{CaseID: "persistence-probe", SubjectSHA: identityFaultTestSHA, ObservedCheckoutSHA: identityFaultTestSHA, BeforePath: identityFaultFixture("before.gooo"), AfterPath: identityFaultFixture("equivalent-after.gooo")},
 		Alternate:    Input{CaseID: "persistence-probe", SubjectSHA: identityFaultTestSHA, ObservedCheckoutSHA: identityFaultTestSHA, BeforePath: identityFaultFixture("persistence-equivalent-before.gooo"), AfterPath: identityFaultFixture("persistence-equivalent-after.gooo")},
 		ArtifactPath: identityFaultFixture("claim-identity-fault.json"),
-	})
+	}).Receipt
 }
 
 func producerIdentityFaultMaps(rows []IdentityFaultMappingRow) (map[string]string, map[string]string) {

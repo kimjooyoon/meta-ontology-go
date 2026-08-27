@@ -61,28 +61,29 @@ type semanticClaimDeltaManifestResult struct {
 }
 
 type persistenceProbeReport struct {
-	Schema                       string                 `json:"schema"`
-	ProducerBaseline             persistenceObservation `json:"producer_baseline"`
-	ProducerAlternate            persistenceObservation `json:"producer_alternate"`
-	ConsumerBaseline             persistenceObservation `json:"consumer_baseline"`
-	ConsumerAlternate            persistenceObservation `json:"consumer_alternate"`
-	ProducerIdentityFaultReceipt json.RawMessage        `json:"producer_identity_fault_receipt,omitempty"`
-	ConsumerIdentityFaultReceipt json.RawMessage        `json:"consumer_identity_fault_receipt,omitempty"`
-	IdentityFaultReceiptsExact   bool                   `json:"identity_fault_receipts_exact,omitempty"`
-	ProducerRawSemanticPreserved bool                   `json:"producer_raw_semantic_preserved"`
-	ConsumerRawSemanticPreserved bool                   `json:"consumer_raw_semantic_preserved"`
-	ProducerFaultGraphClosed     bool                   `json:"producer_fault_graph_closed"`
-	ConsumerFaultGraphClosed     bool                   `json:"consumer_fault_graph_closed"`
-	ProducerPersistence          persistenceMapping     `json:"producer_persistence"`
-	ConsumerPersistence          persistenceMapping     `json:"consumer_persistence"`
-	ExpectedClaimTotal           int                    `json:"expected_claim_total"`
-	ReconstructionExact          bool                   `json:"reconstruction_exact"`
-	PersistenceSatisfied         bool                   `json:"persistence_satisfied"`
-	Decision                     string                 `json:"decision"`
-	Resolution                   string                 `json:"resolution"`
-	Stage                        string                 `json:"stage"`
-	Step                         string                 `json:"step"`
-	Reason                       string                 `json:"reason"`
+	Schema                           string                 `json:"schema"`
+	ProducerBaseline                 persistenceObservation `json:"producer_baseline"`
+	ProducerAlternate                persistenceObservation `json:"producer_alternate"`
+	ConsumerBaseline                 persistenceObservation `json:"consumer_baseline"`
+	ConsumerAlternate                persistenceObservation `json:"consumer_alternate"`
+	ProducerIdentityFaultReceipt     json.RawMessage        `json:"producer_identity_fault_receipt,omitempty"`
+	ConsumerIdentityFaultReceipt     json.RawMessage        `json:"consumer_identity_fault_receipt,omitempty"`
+	IdentityFaultReceiptsExact       bool                   `json:"identity_fault_receipts_exact,omitempty"`
+	IdentityFaultOpaqueEvidenceExact bool                   `json:"identity_fault_opaque_evidence_exact,omitempty"`
+	ProducerRawSemanticPreserved     bool                   `json:"producer_raw_semantic_preserved"`
+	ConsumerRawSemanticPreserved     bool                   `json:"consumer_raw_semantic_preserved"`
+	ProducerFaultGraphClosed         bool                   `json:"producer_fault_graph_closed"`
+	ConsumerFaultGraphClosed         bool                   `json:"consumer_fault_graph_closed"`
+	ProducerPersistence              persistenceMapping     `json:"producer_persistence"`
+	ConsumerPersistence              persistenceMapping     `json:"consumer_persistence"`
+	ExpectedClaimTotal               int                    `json:"expected_claim_total"`
+	ReconstructionExact              bool                   `json:"reconstruction_exact"`
+	PersistenceSatisfied             bool                   `json:"persistence_satisfied"`
+	Decision                         string                 `json:"decision"`
+	Resolution                       string                 `json:"resolution"`
+	Stage                            string                 `json:"stage"`
+	Step                             string                 `json:"step"`
+	Reason                           string                 `json:"reason"`
 }
 
 func decodeSemanticClaimDeltaManifest(raw []byte) (semanticClaimDeltaManifest, error) {
@@ -225,19 +226,19 @@ func runPersistenceProbe(options options) persistenceProbeReport {
 }
 
 func runOpaqueIdentityFaultProbe(options options) persistenceProbeReport {
-	producerReceipt := producer.IdentityFaultReceiptFromFiles(producer.IdentityFaultInput{
+	producerBundle := producer.IdentityFaultReceiptFromFiles(producer.IdentityFaultInput{
 		Baseline:     producer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceBefore, AfterPath: options.persistenceAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
 		Alternate:    producer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceAlternateBefore, AfterPath: options.persistenceAlternateAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
 		ArtifactPath: options.identityFault,
 	})
-	consumerReceipt := consumer.IdentityFaultReceiptFromFiles(consumer.IdentityFaultInput{
+	consumerBundle := consumer.IdentityFaultReceiptFromFiles(consumer.IdentityFaultInput{
 		Baseline:     consumer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceBefore, AfterPath: options.persistenceAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
 		Alternate:    consumer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceAlternateBefore, AfterPath: options.persistenceAlternateAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
 		ArtifactPath: options.identityFault,
 	})
-	producerRaw, _ := json.Marshal(producerReceipt)
-	consumerRaw, _ := json.Marshal(consumerReceipt)
-	exact := bytes.Equal(producerRaw, consumerRaw)
+	producerRaw, _ := json.Marshal(producerBundle.Receipt)
+	consumerRaw, _ := json.Marshal(consumerBundle.Receipt)
+	exact := bytes.Equal(producerBundle.ComparisonBytes, consumerBundle.ComparisonBytes)
 	reason := "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH"
 	if exact {
 		reason = "INDEPENDENT_IDENTITY_FAULT_RECEIPTS_EXACT"
@@ -245,7 +246,7 @@ func runOpaqueIdentityFaultProbe(options options) persistenceProbeReport {
 	return persistenceProbeReport{
 		Schema:                       "gooo/semantic-delta-claim-identity-persistence-probe/v1",
 		ProducerIdentityFaultReceipt: producerRaw, ConsumerIdentityFaultReceipt: consumerRaw,
-		IdentityFaultReceiptsExact: exact, Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower,
+		IdentityFaultReceiptsExact: exact, IdentityFaultOpaqueEvidenceExact: exact, Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower,
 		Stage: "identity-fault", Step: "compare-opaque-receipts", Reason: reason,
 	}
 }
