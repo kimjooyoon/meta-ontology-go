@@ -1,0 +1,8 @@
+package evidencequorum
+namespace evidencequorum
+
+entity SourceProgram id "evidence://source-program"
+entity Claim id "evidence://claim"
+entity EvidenceReceipt id "evidence://receipt"
+
+activity ProduceEvidence(SourceProgram, Claim) -> EvidenceReceipt

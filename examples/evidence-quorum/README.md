@@ -1,10 +1,12 @@
 # Deterministic evidence quorum
 
 This experiment justifies one bounded claim about the real
-`examples/billing/main.gooo` source. It is a provenance decision, not a general
-vote and not a confidence score.
+`examples/evidence-quorum/main.gooo` source. The Gooo `ProduceEvidence`
+activity is executed by the producer path, and its generated source-execution
+receipt is independently consumed by the quorum evaluator. It is a provenance
+decision, not a general vote and not a confidence score.
 
-The contract fixes four cases and a minimum of three independent origin groups.
+The contract fixes five cases and a minimum of three independent origin groups.
 The required roles are `producer`, `consumer`, and `meta-operation`. A receipt
 records all four semantic coordinates: producer, consumer, meta-operation, and
 proof choice. The evaluator binds every observation to the source path and
@@ -13,16 +15,20 @@ digest, groups observations by `origin_group`, and counts each group once.
 The fixed cases are:
 
 1. Three supporting groups discharge the claim.
-2. Two replicas from one producer plus one consumer contain three raw
-   observations, but only two independent groups; the claim remains `OPEN`.
+2. The generated producer receipt plus two replicas from one producer and one
+   consumer contain three quorum observations, but only two independent
+   groups; the claim remains `OPEN`.
 3. Three supporting groups and one independently contradictory group refute the
    claim, even when the supporting confidence values are higher.
 4. Two supporting groups are insufficient and lower the resolution.
+5. An unknown producer receipt remains `UNKNOWN` with explicit unknown
+   coordinates.
 
 Confidence is preserved as descriptive receipt data and is never averaged,
 weighted, or used as a tie-breaker. A same-origin replica cannot increase the
 quorum. Conflicts fail closed; missing quorum lowers resolution. Each decision
-records an `OPEN` to `DISCHARGED`, `OPEN` to `OPEN`, or `OPEN` to `REFUTED`
+records an `OPEN` to `DISCHARGED`, `OPEN` to `OPEN`, `OPEN` to `REFUTED`, or
+`OPEN` to `UNKNOWN`
 claim transition with `stage`, `step`, and `reason`.
 
 ## Research basis

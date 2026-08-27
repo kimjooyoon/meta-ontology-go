@@ -10,5 +10,6 @@ func MetricIDs() []string {
 		"gooo.metric.meta.evidence-quorum.confidence-aggregation.guardrail.v1",
 		"gooo.metric.meta.evidence-quorum.claim-transitions.v1",
 		"gooo.metric.meta.evidence-quorum.observer-writes.guardrail.v1",
+		"gooo.metric.meta.evidence-quorum.unknown-state.v1",
 	}
 }

@@ -4,13 +4,14 @@ func CanonicalContract() Contract {
 	return Contract{
 		Schema:                   ContractSchema,
 		Scope:                    Scope,
-		SourcePath:               "examples/billing/main.gooo",
-		FixedCaseDenominator:     4,
+		SourcePath:               "examples/evidence-quorum/main.gooo",
+		SourceEntry:              "ProduceEvidence",
+		FixedCaseDenominator:     5,
 		MinimumIndependentGroups: 3,
 		RequiredRoles:            []string{"producer", "consumer", "meta-operation"},
 		Claim: ClaimDefinition{
-			ID:            "billing-source-claim",
-			Statement:     "the bounded billing activity is justified by independent evidence",
+			ID:            "evidence-source-claim",
+			Statement:     "the bounded evidence activity is justified by independent evidence",
 			Producer:      "gooo-source-producer",
 			Consumer:      "evidence-quorum-consumer",
 			MetaOperation: "justify-claim-with-independent-evidence",
@@ -25,6 +26,8 @@ func CanonicalContract() Contract {
 				ExpectedReason: "QUORUM_CONFLICT", ExpectedStatus: StatusRefuted},
 			{ID: "insufficient-independent", ExpectedDecision: DecisionClosed, ExpectedResolution: ResolutionLower,
 				ExpectedReason: "QUORUM_INSUFFICIENT_INDEPENDENT_GROUPS", ExpectedStatus: StatusOpen},
+			{ID: "unknown-producer-receipt", ExpectedDecision: DecisionUnknown, ExpectedResolution: ResolutionLower,
+				ExpectedReason: "QUORUM_EVIDENCE_UNKNOWN", ExpectedStatus: StatusUnknown, ProducerDecision: DecisionUnknown},
 		},
 	}
 }

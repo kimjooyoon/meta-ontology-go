@@ -8,13 +8,18 @@ import (
 const supportedValue = "SUPPORTS"
 
 func Evaluate(input Input) Report {
+	producerDigest := receiptDigest(input.ProducerReceipt)
+	unknownProducerDigest := receiptDigest(input.UnknownProducerReceipt)
 	report := Report{
-		Schema:         ReportSchema,
-		Scope:          Scope,
-		HeadSHA:        input.HeadSHA,
-		SourcePath:     input.SourcePath,
-		SourceDigest:   digestBytes(input.Source),
-		ContractDigest: digestJSON(input.Contract),
+		Schema:                       ReportSchema,
+		Scope:                        Scope,
+		HeadSHA:                      input.HeadSHA,
+		SourcePath:                   input.SourcePath,
+		SourceEntry:                  input.Contract.SourceEntry,
+		SourceDigest:                 digestBytes(input.Source),
+		ContractDigest:               digestJSON(input.Contract),
+		ProducerReceiptDigest:        producerDigest,
+		UnknownProducerReceiptDigest: unknownProducerDigest,
 		NotClaimed: []string{
 			"confidence-weighted voting",
 			"full Byzantine consensus",
@@ -28,13 +33,22 @@ func Evaluate(input Input) Report {
 			report.ReceiptDigests = append(report.ReceiptDigests, receipt.Digest)
 		}
 	}
+	for _, raw := range [][]byte{input.ProducerReceipt, input.UnknownProducerReceipt} {
+		if receipt, err := decodeProducerReceipt(raw); err == nil && verifyProducerReceipt(receipt) {
+			report.ReceiptDigests = append(report.ReceiptDigests, receipt.Digest)
+		}
+	}
 	sort.Strings(report.ReceiptDigests)
 	for index, definition := range input.Contract.Cases {
 		receipts := input.Receipts
 		if len(input.CaseReceipts) == len(input.Contract.Cases) {
 			receipts = input.CaseReceipts[index]
 		}
-		report.Cases = append(report.Cases, evaluateCase(input.Contract, definition, input, receipts))
+		producerRaw := input.ProducerReceipt
+		if definition.ProducerDecision == DecisionUnknown {
+			producerRaw = input.UnknownProducerReceipt
+		}
+		report.Cases = append(report.Cases, evaluateCase(input.Contract, definition, input, producerRaw, receipts))
 	}
 	report.Summary = summarize(report.Cases, input.Contract)
 	report.Decision = DecisionClosed
@@ -53,18 +67,39 @@ func Evaluate(input Input) Report {
 	return report
 }
 
+func receiptDigest(raw []byte) string {
+	receipt, err := decodeProducerReceipt(raw)
+	if err != nil || !verifyProducerReceipt(receipt) {
+		return ""
+	}
+	return receipt.Digest
+}
+
 type evidenceGroup struct {
 	ids    []string
 	roles  []string
 	values map[string]bool
 }
 
-func evaluateCase(contract Contract, definition CaseDefinition, input Input, receipts [][]byte) CaseResult {
+func evaluateCase(contract Contract, definition CaseDefinition, input Input, producerRaw []byte, receipts [][]byte) CaseResult {
 	result := CaseResult{ID: definition.ID, Status: "NOT_SATISFIED",
 		ExpectedDecision: definition.ExpectedDecision}
 	claim := contract.Claim
 	allEvidence := make([]Evidence, 0)
 	receiptDigests := make([]string, 0)
+	producer, producerDigest, producerStatus, producerReason := producerObservation(producerRaw, contract, input)
+	if producerDigest != "" {
+		receiptDigests = append(receiptDigests, producerDigest)
+	}
+	if producerStatus == StatusUnknown {
+		return finishCase(result, definition, claim, StatusUnknown, ResolutionLower, producerReason,
+			nil, receiptDigests, "UNKNOWN")
+	}
+	if producerStatus == StatusRefuted {
+		return finishCase(result, definition, claim, StatusRefuted, ResolutionInvariant, producerReason,
+			nil, receiptDigests, "producer-receipt")
+	}
+	allEvidence = append(allEvidence, producer)
 	for _, raw := range receipts {
 		receipt, err := DecodeReceipt(raw)
 		if err != nil || !verifyReceipt(receipt) {
@@ -158,6 +193,11 @@ func finishCase(result CaseResult, definition CaseDefinition, claim ClaimDefinit
 	result.Coordinate = Coordinate{Stage: "QUORUM_DECISION", Step: step, Reason: reason}
 	if status == StatusDischarged {
 		result.ObservedDecision = DecisionPass
+	}
+	if status == StatusUnknown {
+		result.ObservedDecision = DecisionUnknown
+		result.ObservedResolution = ResolutionLower
+		result.Coordinate = Coordinate{Stage: "UNKNOWN", Step: "UNKNOWN", Reason: reason}
 	}
 	result.Claims = []ClaimResult{{ID: claim.ID, Producer: claim.Producer, Consumer: claim.Consumer,
 		MetaOperation: claim.MetaOperation, ProofChoice: claim.ProofChoice, Status: status,

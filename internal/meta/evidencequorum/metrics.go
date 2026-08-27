@@ -10,6 +10,7 @@ func indicators(report Report) []Indicator {
 		indicator("gooo.metric.meta.evidence-quorum.confidence-aggregation.guardrail.v1", "guardrail", "REGRESSION", "ignore-confidence-average", boolInt(!report.Summary.ConfidenceAggregated), 1),
 		indicator("gooo.metric.meta.evidence-quorum.claim-transitions.v1", "trace", "COHERENCE", "record-claim-transitions", report.Summary.ClaimsTotal, report.Summary.CasesTotal),
 		indicator("gooo.metric.meta.evidence-quorum.observer-writes.guardrail.v1", "guardrail", "REGRESSION", "preserve-read-only-evaluation", boolInt(report.Summary.RepositoryWrites == 0 && !report.Summary.MutationAuthority), 1),
+		indicator("gooo.metric.meta.evidence-quorum.unknown-state.v1", "guardrail", "REGRESSION", "preserve-unknown-resolution", report.Summary.UnknownClaims, 1),
 	}
 }
 
@@ -19,7 +20,7 @@ func indicator(metricID, class, choice, operation string, value, target int) Ind
 }
 
 func proofs(report Report) []Proof {
-	if len(report.Cases) != 4 {
+	if len(report.Cases) != 5 {
 		return nil
 	}
 	return []Proof{
@@ -27,6 +28,7 @@ func proofs(report Report) []Proof {
 		{Choice: "REGRESSION", MetaOperation: "reject-same-origin-replica", EvidenceDigest: digestJSON(report.Cases[1]), Passed: report.Cases[1].Status == "SATISFIED"},
 		{Choice: "REGRESSION", MetaOperation: "refute-conflicting-evidence", EvidenceDigest: digestJSON(report.Cases[2]), Passed: report.Cases[2].Status == "SATISFIED"},
 		{Choice: "COHERENCE", MetaOperation: "lower-insufficient-evidence", EvidenceDigest: digestJSON(report.Cases[3]), Passed: report.Cases[3].Status == "SATISFIED"},
+		{Choice: "REGRESSION", MetaOperation: "preserve-unknown-evidence", EvidenceDigest: digestJSON(report.Cases[4]), Passed: report.Cases[4].Status == "SATISFIED"},
 	}
 }
 
@@ -58,6 +60,8 @@ func summarize(cases []CaseResult, contract Contract) Summary {
 				summary.OpenClaims++
 			case StatusRefuted:
 				summary.RefutedClaims++
+			case StatusUnknown:
+				summary.UnknownClaims++
 			}
 		}
 	}

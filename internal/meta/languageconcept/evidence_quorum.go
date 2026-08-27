@@ -22,5 +22,6 @@ var evidenceQuorumConcept = Concept{
 		{ID: "same-origin-replica", Trigger: "a producer repeats the same observation under one origin group", ExpectedOutcome: "FAIL_CLOSED_2_OF_3_INDEPENDENT_GROUPS"},
 		{ID: "conflicting-independent", Trigger: "an independent origin group contradicts the claim", ExpectedOutcome: "FAIL_CLOSED_CONFLICT_INVARIANT_ONLY"},
 		{ID: "insufficient-independent", Trigger: "fewer than three independent groups are available", ExpectedOutcome: "FAIL_CLOSED_LOWER_RESOLUTION"},
+		{ID: "unknown-producer-receipt", Trigger: "the producer execution receipt cannot establish a decision", ExpectedOutcome: "UNKNOWN_WITH_UNKNOWN_COORDINATES"},
 	},
 }

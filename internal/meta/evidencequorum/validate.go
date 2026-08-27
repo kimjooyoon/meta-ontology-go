@@ -4,17 +4,19 @@ import "fmt"
 
 func Validate(report Report) error {
 	if report.Schema != ReportSchema || report.Scope != Scope || !validHead(report.HeadSHA) ||
-		report.SourcePath != CanonicalContract().SourcePath || !validDigest(report.SourceDigest) ||
+		report.SourcePath != CanonicalContract().SourcePath || report.SourceEntry != CanonicalContract().SourceEntry ||
+		!validDigest(report.SourceDigest) || !validDigest(report.ProducerReceiptDigest) ||
+		!validDigest(report.UnknownProducerReceiptDigest) ||
 		report.ContractDigest != digestJSON(CanonicalContract()) {
 		return fmt.Errorf("evidence quorum identity mismatch")
 	}
-	want := Summary{CasesSatisfied: 4, CasesTotal: 4, ClaimsTotal: 4, DischargedClaims: 1,
-		OpenClaims: 2, RefutedClaims: 1, RawEvidenceTotal: 12, IndependentGroupsTotal: 11,
+	want := Summary{CasesSatisfied: 5, CasesTotal: 5, ClaimsTotal: 5, DischargedClaims: 1,
+		OpenClaims: 2, RefutedClaims: 1, UnknownClaims: 1, RawEvidenceTotal: 12, IndependentGroupsTotal: 11,
 		DuplicateEvidenceTotal: 1, ConflictCases: 1, QuorumSatisfiedCases: 1,
-		LowerResolutionCases: 2, MinimumIndependentGroups: 3}
+		LowerResolutionCases: 3, MinimumIndependentGroups: 3}
 	if report.Decision != DecisionPass || report.Resolution != ResolutionExact ||
 		report.Reason != "EVIDENCE_QUORUM_CONTRACT_SATISFIED" || report.Summary != want ||
-		len(report.Cases) != 4 || len(report.Indicators) != 8 || len(report.Proofs) != 4 ||
+		len(report.Cases) != 5 || len(report.Indicators) != 9 || len(report.Proofs) != 5 ||
 		report.RepositoryWrites != 0 || report.MutationAuthority || report.Summary.ConfidenceAggregated {
 		return fmt.Errorf("evidence quorum report shape mismatch")
 	}
@@ -32,6 +34,10 @@ func Validate(report Report) error {
 			claim.Coordinate.Stage == "" || claim.Coordinate.Step == "" || claim.Coordinate.Reason == "" ||
 			claim.Transitions[0].From != "OPEN" || claim.Transitions[0].To != claim.Status {
 			return fmt.Errorf("evidence quorum claim transition mismatch")
+		}
+		if definition.ProducerDecision == DecisionUnknown &&
+			(claim.Coordinate.Stage != "UNKNOWN" || claim.Coordinate.Step != "UNKNOWN" || claim.Coordinate.Reason != "QUORUM_EVIDENCE_UNKNOWN") {
+			return fmt.Errorf("evidence quorum unknown coordinate mismatch")
 		}
 	}
 	for _, item := range report.Indicators {

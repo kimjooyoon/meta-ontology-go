@@ -3,10 +3,10 @@ package main
 import "flag"
 
 type options struct {
-	mode, contract, source, head, sourcePath string
-	role, originGroup, evidenceID, value     string
-	confidenceBPS                            int
-	out, receipts, check                     string
+	mode, contract, source, head, sourcePath                      string
+	role, originGroup, evidenceID, value                          string
+	confidenceBPS                                                 int
+	out, receipts, producerReceipt, unknownProducerReceipt, check string
 }
 
 func parseOptions(args []string) (options, error) {
@@ -24,6 +24,8 @@ func parseOptions(args []string) (options, error) {
 	flags.IntVar(&value.confidenceBPS, "confidence-bps", 0, "descriptive confidence, never aggregated")
 	flags.StringVar(&value.out, "out", "", "receipt or report output")
 	flags.StringVar(&value.receipts, "receipts", "", "comma-separated receipt paths")
+	flags.StringVar(&value.producerReceipt, "producer-receipt", "", "Gooo producer execution receipt")
+	flags.StringVar(&value.unknownProducerReceipt, "unknown-producer-receipt", "", "unknown producer execution receipt")
 	flags.StringVar(&value.check, "check", "", "report to validate")
 	return value, flags.Parse(args)
 }

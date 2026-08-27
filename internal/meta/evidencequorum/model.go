@@ -6,8 +6,9 @@ const (
 	ReportSchema   = "gooo/meta-evidence-quorum-report/v1"
 	Scope          = "GOOO_CLAIM_JUSTIFICATION_ONLY"
 
-	DecisionPass   = "PASS"
-	DecisionClosed = "FAIL_CLOSED"
+	DecisionPass    = "PASS"
+	DecisionClosed  = "FAIL_CLOSED"
+	DecisionUnknown = "UNKNOWN"
 
 	ResolutionExact     = "EXACT"
 	ResolutionLower     = "LOWER_RESOLUTION"
@@ -16,12 +17,14 @@ const (
 	StatusDischarged = "DISCHARGED"
 	StatusOpen       = "OPEN"
 	StatusRefuted    = "REFUTED"
+	StatusUnknown    = "UNKNOWN"
 )
 
 type Contract struct {
 	Schema                   string           `json:"schema"`
 	Scope                    string           `json:"scope"`
 	SourcePath               string           `json:"source_path"`
+	SourceEntry              string           `json:"source_entry"`
 	FixedCaseDenominator     int              `json:"fixed_case_denominator"`
 	MinimumIndependentGroups int              `json:"minimum_independent_groups"`
 	RequiredRoles            []string         `json:"required_roles"`
@@ -44,6 +47,7 @@ type CaseDefinition struct {
 	ExpectedResolution string `json:"expected_resolution"`
 	ExpectedReason     string `json:"expected_reason"`
 	ExpectedStatus     string `json:"expected_status"`
+	ProducerDecision   string `json:"producer_decision"`
 }
 
 type Evidence struct {
@@ -79,12 +83,14 @@ type Receipt struct {
 }
 
 type Input struct {
-	Contract     Contract
-	HeadSHA      string
-	SourcePath   string
-	Source       []byte
-	Receipts     [][]byte
-	CaseReceipts [][][]byte
+	Contract               Contract
+	HeadSHA                string
+	SourcePath             string
+	Source                 []byte
+	Receipts               [][]byte
+	CaseReceipts           [][][]byte
+	ProducerReceipt        []byte
+	UnknownProducerReceipt []byte
 }
 
 type Coordinate struct {
@@ -144,6 +150,7 @@ type Summary struct {
 	DischargedClaims         int  `json:"discharged_claims"`
 	OpenClaims               int  `json:"open_claims"`
 	RefutedClaims            int  `json:"refuted_claims"`
+	UnknownClaims            int  `json:"unknown_claims"`
 	RawEvidenceTotal         int  `json:"raw_evidence_total"`
 	IndependentGroupsTotal   int  `json:"independent_groups_total"`
 	DuplicateEvidenceTotal   int  `json:"duplicate_evidence_total"`
@@ -174,22 +181,25 @@ type Proof struct {
 }
 
 type Report struct {
-	Schema            string       `json:"schema"`
-	Scope             string       `json:"scope"`
-	HeadSHA           string       `json:"head_sha"`
-	SourcePath        string       `json:"source_path"`
-	SourceDigest      string       `json:"source_digest"`
-	Decision          string       `json:"decision"`
-	Resolution        string       `json:"resolution"`
-	Reason            string       `json:"reason"`
-	ContractDigest    string       `json:"contract_digest"`
-	ReceiptDigests    []string     `json:"receipt_digests"`
-	Cases             []CaseResult `json:"cases"`
-	Summary           Summary      `json:"summary"`
-	Indicators        []Indicator  `json:"indicators"`
-	Proofs            []Proof      `json:"proofs"`
-	NotClaimed        []string     `json:"not_claimed"`
-	RepositoryWrites  int          `json:"repository_writes"`
-	MutationAuthority bool         `json:"mutation_authority"`
-	Digest            string       `json:"digest"`
+	Schema                       string       `json:"schema"`
+	Scope                        string       `json:"scope"`
+	HeadSHA                      string       `json:"head_sha"`
+	SourcePath                   string       `json:"source_path"`
+	SourceEntry                  string       `json:"source_entry"`
+	SourceDigest                 string       `json:"source_digest"`
+	Decision                     string       `json:"decision"`
+	Resolution                   string       `json:"resolution"`
+	Reason                       string       `json:"reason"`
+	ContractDigest               string       `json:"contract_digest"`
+	ProducerReceiptDigest        string       `json:"producer_receipt_digest"`
+	UnknownProducerReceiptDigest string       `json:"unknown_producer_receipt_digest"`
+	ReceiptDigests               []string     `json:"receipt_digests"`
+	Cases                        []CaseResult `json:"cases"`
+	Summary                      Summary      `json:"summary"`
+	Indicators                   []Indicator  `json:"indicators"`
+	Proofs                       []Proof      `json:"proofs"`
+	NotClaimed                   []string     `json:"not_claimed"`
+	RepositoryWrites             int          `json:"repository_writes"`
+	MutationAuthority            bool         `json:"mutation_authority"`
+	Digest                       string       `json:"digest"`
 }

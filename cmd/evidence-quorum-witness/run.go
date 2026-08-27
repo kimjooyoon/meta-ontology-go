@@ -42,8 +42,17 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
+	producerReceipt, err := os.ReadFile(options.producerReceipt)
+	if err != nil {
+		return err
+	}
+	unknownProducerReceipt, err := os.ReadFile(options.unknownProducerReceipt)
+	if err != nil {
+		return err
+	}
 	report := quorum.Evaluate(quorum.Input{Contract: contract, HeadSHA: options.head,
-		SourcePath: options.sourcePath, Source: source, CaseReceipts: receiptGroups})
+		SourcePath: options.sourcePath, Source: source, CaseReceipts: receiptGroups,
+		ProducerReceipt: producerReceipt, UnknownProducerReceipt: unknownProducerReceipt})
 	if err := quorum.WriteReport(options.out, report); err != nil {
 		return err
 	}

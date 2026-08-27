@@ -22,6 +22,10 @@ func TestEvidenceQuorumUsesIndependentGroupsAndTransitions(t *testing.T) {
 	if report.Cases[2].ObservedReason != "QUORUM_CONFLICT" || report.Cases[2].ObservedResolution != ResolutionInvariant {
 		t.Fatalf("conflict case = %#v", report.Cases[2])
 	}
+	if report.Cases[4].ObservedDecision != DecisionUnknown || report.Cases[4].Coordinate.Stage != "UNKNOWN" ||
+		report.Cases[4].Coordinate.Step != "UNKNOWN" || report.Cases[4].Coordinate.Reason != "QUORUM_EVIDENCE_UNKNOWN" {
+		t.Fatalf("unknown case = %#v", report.Cases[4])
+	}
 	for _, item := range report.Cases {
 		if len(item.Claims) != 1 || len(item.Claims[0].Transitions) != 1 || item.Claims[0].Transitions[0].From != "OPEN" {
 			t.Fatalf("claim transition = %#v", item.Claims)
@@ -59,10 +63,25 @@ func TestConfidenceDoesNotChangeQuorumDecision(t *testing.T) {
 
 func fixtureInput() Input {
 	contract := CanonicalContract()
-	source := []byte("package billing\nnamespace billing\nactivity PayOrder(Order, PaymentMethod) -> Payment\n")
+	source := []byte("package evidencequorum\nnamespace evidencequorum\nactivity ProduceEvidence(SourceProgram, Claim) -> EvidenceReceipt\n")
+	digest := SourceDigest(source)
+	producer := producerReceipt{Schema: "gooo/source-execution-receipt/v1", Decision: DecisionPass,
+		Reason: "SOURCE_ACTIVITY_EXECUTED", Resolution: ResolutionExact, Filename: contract.SourcePath,
+		SourceDigest: digest, SemanticDigest: "sha256:" + strings.Repeat("c", 64),
+		Entry: producerEntry{Package: "evidencequorum", Namespace: "evidencequorum", Activity: contract.SourceEntry,
+			Inputs: []producerBinding{{Name: "SourceProgram", ID: "evidence://source-program"},
+				{Name: "Claim", ID: "evidence://claim"}}, Output: producerBinding{Name: "EvidenceReceipt", ID: "evidence://receipt"}},
+		Events: []producerEvent{{Sequence: 1, Kind: "SOURCE_PARSED", Subject: digest},
+			{Sequence: 2, Kind: "SEMANTIC_LOWERED", Subject: "sha256:" + strings.Repeat("c", 64)},
+			{Sequence: 3, Kind: "ACTIVITY_INVOKED", Subject: contract.SourceEntry},
+			{Sequence: 4, Kind: "ENTITY_PRODUCED", Subject: "evidence://receipt"}},
+		Diagnostics: []producerDiagnostic{}, Effects: producerEffects{}}
+	producer.Digest = digestJSON(producer)
+	unknownProducer := producer
+	unknownProducer.Decision = DecisionUnknown
+	unknownProducer.Digest = digestJSON(unknownProducer)
 	newReceipt := func(id, role, group, value string, confidence int) []byte {
 		claim := contract.Claim
-		digest := SourceDigest(source)
 		receipt := Receipt{Schema: ReceiptSchema, HeadSHA: strings.Repeat("a", 40),
 			SourcePath: contract.SourcePath, SourceDigest: digest, Producer: claim.Producer,
 			Consumer: claim.Consumer, MetaOperation: claim.MetaOperation, ProofChoice: claim.ProofChoice,
@@ -87,7 +106,8 @@ func fixtureInput() Input {
 				newReceipt("contradictory-1", "consumer", "contradictory-check", "CONTRADICTS", 100)},
 			{newReceipt("producer-1", "producer", "producer-run", "SUPPORTS", 10000),
 				newReceipt("consumer-1", "consumer", "consumer-check", "SUPPORTS", 10000)},
-		}}
+			{}}, ProducerReceipt: marshalProducerReceipt(producer),
+		UnknownProducerReceipt: marshalProducerReceipt(unknownProducer)}
 }
 
 func marshalReceipt(value Receipt) []byte {
