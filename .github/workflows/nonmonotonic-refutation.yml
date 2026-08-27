@@ -294,27 +294,44 @@ jobs:
           source_observations="$(jq '.report.metrics.fixed_observation_total' "$output/baseline.json")"
           persistent_ledger_rows="$(jq '.report.metrics.fixed_ledger_row_total' "$output/baseline.json")"
           repository_writes="$(jq '.repository_writes' "$output/baseline.json")"
-          semantic_causality=1
-          nonsemantic_preservation=1
-          coherent_tamper_rejected=1
+          producer_imports="$(go list -deps ./internal/meta/nonmonotonicrefutationoracle | awk '$0 == "github.com/kimjooyoon/meta-ontology-go/internal/meta/nonmonotonicrefutation" { count++ } END { print count + 0 }')"
+          test "$producer_imports" -eq 0
+          semantic_causality="$(jq -n --slurpfile baseline "$output/baseline.json" --slurpfile semantic "$output/semantic.json" '
+            if ($semantic[0].report.source_semantic_digest != $baseline[0].report.source_semantic_digest and $semantic[0].report.transitions[5].relation == "CONTRADICTS" and $semantic[0].report.subject_resolution.decision == "DISCHARGED=1;REFUTED=2;OPEN=0" and [$semantic[0].report.transitions[].transition_digest] != [$baseline[0].report.transitions[].transition_digest]) then 1 else 0 end
+          ')
+          nonsemantic_preservation="$(jq -n --slurpfile baseline "$output/baseline.json" --slurpfile comment "$output/comment.json" '
+            if ($comment[0].report.source_digest != $baseline[0].report.source_digest and $comment[0].report.source_semantic_digest == $baseline[0].report.source_semantic_digest and [$comment[0].report.transitions[].transition_digest] == [$baseline[0].report.transitions[].transition_digest] and [$comment[0].report.cases[].status_history] == [$baseline[0].report.cases[].status_history]) then 1 else 0 end
+          ')
+          coherent_tamper_rejected="$(jq -n --slurpfile tampered "$output/tampered.json" '
+            if ($tampered[0].report.decision == "FAIL_CLOSED" and $tampered[0].report.reason == "PRODUCER_SOURCE_MODEL_MISMATCH") then 1 else 0 end
+          ')
+          mutation_promotions="$(jq -n --slurpfile baseline "$output/baseline.json" '
+            if ($baseline[0].mutation_authority == false and $baseline[0].promotion_count == 0) then 0 else 1 end
+          ')
+          test "$semantic_causality" -eq 1
+          test "$nonsemantic_preservation" -eq 1
+          test "$coherent_tamper_rejected" -eq 1
+          test "$mutation_promotions" -eq 0
           jq -n \
             --argjson source_claims "$source_claims" \
             --argjson source_observations "$source_observations" \
             --argjson persistent_ledger_rows "$persistent_ledger_rows" \
             --argjson repository_writes "$repository_writes" \
+            --argjson producer_imports "$producer_imports" \
             --argjson semantic_causality "$semantic_causality" \
             --argjson nonsemantic_preservation "$nonsemantic_preservation" \
-            --argjson coherent_tamper_rejected "$coherent_tamper_rejected" '
+            --argjson coherent_tamper_rejected "$coherent_tamper_rejected" \
+            --argjson mutation_promotions "$mutation_promotions" '
             {
               source_claims: {observed: $source_claims, required: 3},
               source_observations: {observed: $source_observations, required: 6},
-              producer_imports: {observed: 0, required: 0},
+              producer_imports: {observed: $producer_imports, required: 0},
               semantic_causality: {observed: $semantic_causality, required: 1},
               nonsemantic_preservation: {observed: $nonsemantic_preservation, required: 1},
               persistent_ledger_rows: {observed: $persistent_ledger_rows, required: 6},
               persistent_transitions: {observed: $persistent_ledger_rows, required: 6},
               repository_writes: {observed: $repository_writes, required: 0},
-              mutation_promotions: {observed: 0, required: 0},
+              mutation_promotions: {observed: $mutation_promotions, required: 0},
               coherent_tamper_rejected: {observed: $coherent_tamper_rejected, required: 1}
             }
           ' > "$output/denominators.json"

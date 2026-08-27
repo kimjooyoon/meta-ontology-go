@@ -250,7 +250,7 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 			return cases, transitions, metrics, "SOURCE_OBSERVATION_ORDER_MISMATCH"
 		}
 		before := status[observation.ClaimID]
-		relation := classify(observation)
+		relation := classify(model.Contract.Claims[caseNumber], observation)
 		after, accepted, reason := revise(before, relation)
 		transition := Transition{Sequence: index + 1, CaseID: cases[caseNumber].ID, ClaimID: observation.ClaimID, Before: before, After: after, Accepted: accepted, EvidenceID: observation.ID, Relation: relation, EvidenceBasis: evidenceBasis(observation), EvidenceDigest: observation.EvidenceDigest, EvidenceProvenance: observation.Provenance, ProofChoice: observation.ProofChoice, Coordinate: coordinate{Stage: observation.Coordinate.Stage, Step: observation.Coordinate.Step, Reason: reason}, PreviousDigest: previousDigest}
 		transition.TransitionDigest = transitionDigest(transition)
@@ -303,14 +303,25 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 	return cases, transitions, metrics, ""
 }
 
-func classify(observation sourceObservation) string {
+func classify(claim sourceClaim, observation sourceObservation) string {
+	if claim.ID != observation.ClaimID || claim.Proposition != observation.Proposition || claim.Subject != observation.Subject || claim.Input != observation.Input || claim.Predicate != observation.Predicate || claim.ExpectedValue != observation.ExpectedValue {
+		return "UNKNOWN"
+	}
 	if observation.Predicate != "equality" || observation.Subject == "" || observation.Input == "" {
+		return "UNKNOWN"
+	}
+	propositionPrefix := "equals:" + observation.Subject + ":" + observation.Input + ":"
+	if !strings.HasPrefix(observation.Proposition, propositionPrefix) {
+		return "UNKNOWN"
+	}
+	propositionValue := strings.TrimPrefix(observation.Proposition, propositionPrefix)
+	if propositionValue == "" || strings.Contains(propositionValue, ":") {
 		return "UNKNOWN"
 	}
 	if observation.ObservedValue == "" {
 		return "INSUFFICIENT"
 	}
-	if observation.ObservedValue == observation.ExpectedValue {
+	if observation.ObservedValue == propositionValue {
 		return "SUPPORTS"
 	}
 	return "CONTRADICTS"
