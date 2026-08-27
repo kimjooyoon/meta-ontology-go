@@ -1,0 +1,13 @@
+package metacircularboundary
+namespace meta.circular.boundary
+
+entity MetaOperation id "gooo://meta-circular-boundary/entity/meta-operation"
+entity SelfDescription id "gooo://meta-circular-boundary/entity/self-description"
+entity ReadOnlyCapability id "gooo://meta-circular-boundary/entity/read-only-capability"
+entity ExecutionReceipt id "gooo://meta-circular-boundary/entity/execution-receipt"
+entity ForgedCapability id "gooo://meta-circular-boundary/entity/forged-capability"
+
+activity DescribeMetaOperation(MetaOperation) -> SelfDescription
+activity GrantReadOnlyMetaCapability(SelfDescription) -> ReadOnlyCapability
+activity ExecuteMetaOperation(ReadOnlyCapability) -> ExecutionReceipt
+activity InspectForgedCapability(SelfDescription) -> ForgedCapability

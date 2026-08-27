@@ -192,6 +192,13 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-meta-circular-boundary",
+      "kind": "SOURCE",
+      "path": "examples/meta-circular-boundary/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",

@@ -1,0 +1,93 @@
+name: Meta-circular boundary
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/meta-circular-boundary.yml
+      - cmd/meta-circular-boundary-witness/**
+      - examples/meta-circular-boundary/**
+      - internal/meta/metacircularboundary/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/meta-circular-boundary.yml
+      - cmd/meta-circular-boundary-witness/**
+      - examples/meta-circular-boundary/**
+      - internal/meta/metacircularboundary/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  boundary:
+    name: meta-circular boundary
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Bind Go 1.27
+        run: |
+          test "$(go env GOVERSION)" = "go1.27.0"
+          go version
+      - name: Require formatting
+        run: |
+          test -z "$(gofmt -l cmd/meta-circular-boundary-witness internal/meta/metacircularboundary)"
+      - name: Run package tests and vet
+        run: |
+          go test ./internal/meta/metacircularboundary
+          go vet ./cmd/meta-circular-boundary-witness ./internal/meta/metacircularboundary
+      - name: Produce and independently judge two receipts
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/meta-circular-boundary"
+          mkdir -p "$output"
+          for attempt in first replay; do
+            go run ./cmd/meta-circular-boundary-witness \
+              --source examples/meta-circular-boundary/main.gooo \
+              --head-sha "$HEAD_SHA" \
+              --output "$output/$attempt.json" \
+              --check
+          done
+          cmp -s "$output/first.json" "$output/replay.json"
+          jq -e '
+            .schema == "gooo/meta-circular-boundary-report/v1" and
+            .scope == "READ_ONLY_META_CIRCULAR_BOUNDARY" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .reason == "META_CIRCULAR_BOUNDARY_PROVEN" and
+            (.cases | length) == 4 and
+            (.receipts | length) == 4 and
+            (.indicators | length) == 10 and
+            .summary.cases_passed == 4 and
+            .summary.cases_total == 4 and
+            .summary.case_coverage_bps == 10000 and
+            .summary.description_bound == 4 and
+            .summary.explicit_authorizations == 1 and
+            .summary.allowed_executions == 1 and
+            .summary.description_only_blocked == 1 and
+            .summary.forged_authorizations_blocked == 1 and
+            .summary.out_of_scope_authorizations_blocked == 1 and
+            .summary.description_escalation_paths == 0 and
+            .summary.replay_matches == 4 and
+            .summary.repository_writes == 0 and
+            .summary.mutation_authority == 0 and
+            .repository_writes == 0 and .mutation_authority == false and
+            ([.indicators[] | select(.satisfied == false)] | length) == 0
+          ' "$output/first.json"
+      - name: Upload exact-head receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-circular-boundary-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-circular-boundary/first.json
+          if-no-files-found: error
+          retention-days: 14
