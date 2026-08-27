@@ -23,6 +23,7 @@ type independentReceipt struct {
 	OutputArtifact             consumerOutputArtifact      `json:"output_artifact"`
 	BindingOutputReceipts      []BindingOutputReceipt      `json:"binding_output_receipts"`
 	outputRaw                  []byte
+	rawReceipt                 []byte
 }
 
 type consumerOutputArtifact struct {
@@ -88,10 +89,15 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 		baseIDs = append(baseIDs, item.Manifest.StableID)
 	}
 	sort.Strings(baseIDs)
+	metrics := integrationMetrics(len(loaded), baseline.Observed, len(fixture.Changed), conformance, countUnequalSourceDigests(fixture.SourceDigests))
+	metrics.ProducerPackageImports = producerPackageImportMetric(root)
+	metrics.RawSourceReconstruction = contextualRatioMetric(conformance, 1, "COHERENCE", "RAW_SOURCE_RECONSTRUCTION", "CONSUMER_REBUILT_FROM_RAW_MANIFESTS")
+	metrics.SeparateExecutable = contextualRatioMetric(conformance, 1, "COHERENCE", "SEPARATE_EXECUTABLE", "INDEPENDENT_CONSUMER_PROCESS_EXECUTED")
+	metrics.AlgorithmicIndependence = unknownRatioMetric("COHERENCE", "ALGORITHMIC_INDEPENDENCE", "ALGORITHM_DIFFERENCE_NOT_OBSERVED")
 	evidence := Evidence{
 		Schema: evidenceSchema, Decision: "PASS", Reason: "MANUAL_SOURCE_REGISTRATION_EDIT_FREE_PROJECTION_PROVEN",
 		BoundedSlice: baseIDs, BaselineTouchpoints: baseline.Observed, BaselineObservation: baseline.Touchpoints,
-		Metrics:                    integrationMetrics(len(loaded), baseline.Observed, len(fixture.Changed), conformance, countUnequalSourceDigests(fixture.SourceDigests)),
+		Metrics:                    metrics,
 		MetricDeltas:               metricDeltas(baseline.Observed, len(fixture.Changed), countUnequalSourceDigests(fixture.SourceDigests)),
 		DenominatorReconciliations: reconciliations, SourceDigestPreservation: fixture.SourceDigests,
 		GeneratedOutputChanges: fixture.Changed, GeneratedOutputChangeCount: len(fixture.Changed), GeneratedOutputDenominator: len(baseOutputs),
@@ -128,9 +134,9 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	evidence.RepositoryNetStatePredicates = predicateMetric(boolInt(evidence.RepositoryNetState.NetStateEqual), 1, decisionForBool(evidence.RepositoryNetState.NetStateEqual), "REGRESSION", "REPOSITORY_NET_STATE", evidence.RepositoryNetState.NetState)
 	evidence.BindingPredicates = bindingPredicateMetric(evidence.PredicateObservations, bindingReceipts)
 	evidence.ASTResolvedBindings = predicateMetric(len(bindingReceipts), expectedBindingReceiptCount, decisionForRatio(len(bindingReceipts), expectedBindingReceiptCount), "FOUNDATION", "AST_BINDING_RESOLUTION", "GO_AST_SYMBOL_AND_OUTPUT_RECEIPT_RECONSTRUCTED")
-	evidence.MetricOccurrences = metricOccurrenceMetric(bindingReceipts)
+	evidence.MetricOccurrences = metricOccurrenceMetric(root, bindingReceipts)
 	evidence.UniqueSemanticRelationDigests = uniqueSemanticRelationMetric(bindingReceipts)
-	evidence.OutputRowAddresses = uniqueOutputRowMetric(bindingReceipts)
+	evidence.OutputRowAddresses = uniqueOutputRowMetric(bindingReceipts, []byte(consumerOutput.RawBytes))
 	evidence.ProvenancePredicates = provenancePredicateMetric(negativePredicates)
 	return evidence, nil
 }
@@ -385,76 +391,167 @@ func runIndependentConsumerAt(root string) (independentReceipt, error) {
 	if err != nil {
 		return independentReceipt{}, err
 	}
-	receipt := independentReceipt{}
-	if err := json.Unmarshal(raw, &receipt); err != nil {
+	receipt, err := decodeIndependentReceipt(raw)
+	if err != nil {
 		return independentReceipt{}, err
 	}
-	if receipt.Decision != "PASS" || len(receipt.Predicates) == 0 {
-		return independentReceipt{}, fmt.Errorf("independent consumer receipt did not discharge predicates")
-	}
-	if receipt.OutputArtifact.Path != embeddedOutputAddress || receipt.OutputArtifact.Bytes != len(outputRaw) || receipt.OutputArtifact.Digest != digestBytes(outputRaw) {
-		return independentReceipt{}, fmt.Errorf("independent consumer output artifact was not observed")
-	}
-	if len(receipt.BindingOutputReceipts) != expectedBindingReceiptCount {
-		return independentReceipt{}, fmt.Errorf("independent consumer binding output receipts were not observed")
-	}
-	for _, binding := range receipt.BindingOutputReceipts {
-		if binding.OutputAddress != embeddedOutputAddress || binding.OutputDigest != digestBytes(outputRaw) || binding.OutputBytes != len(outputRaw) || binding.SemanticDigest == "" || binding.MetricOccurrenceAddress == "" || binding.MetricOccurrenceDigest == "" || binding.RawSourceAddress == "" || binding.RegistrationUseAddress == "" || binding.OutputRowAddress == "" || binding.OutputRowDigest == "" {
-			return independentReceipt{}, fmt.Errorf("independent consumer binding output receipt was not observed")
-		}
-	}
-	if err := validateObservedBindingReceipts(root, receipt.BindingOutputReceipts, outputRaw); err != nil {
+	if err := validateIndependentReceipt(root, receipt, outputRaw); err != nil {
 		return independentReceipt{}, err
 	}
 	receipt.outputRaw = outputRaw
+	receipt.rawReceipt = raw
 	return receipt, nil
+}
+
+const consumerReceiptSchema = "gooo/manual-source-registration-edit-free-registry-consumer-receipt/v1"
+
+type receiptValidationError struct{ diagnostic Diagnostic }
+
+func (e receiptValidationError) Error() string { return e.diagnostic.Reason }
+
+func receiptBoundaryError(reason string) error {
+	return receiptValidationError{diagnostic: Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "RECEIPT_BOUNDARY", Reason: reason}}
+}
+
+func receiptBoundaryDiagnostic(err error) *Diagnostic {
+	if typed, ok := err.(receiptValidationError); ok {
+		diagnostic := typed.diagnostic
+		return &diagnostic
+	}
+	return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "RECEIPT_BOUNDARY", Reason: "RECEIPT_VALIDATION_FAILED"}
+}
+
+func decodeIndependentReceipt(raw []byte) (independentReceipt, error) {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	receipt := independentReceipt{}
+	if err := decoder.Decode(&receipt); err != nil {
+		if strings.Contains(err.Error(), "unknown field") {
+			return independentReceipt{}, receiptBoundaryError("RECEIPT_UNKNOWN_FIELD")
+		}
+		return independentReceipt{}, receiptBoundaryError("RECEIPT_MALFORMED_JSON")
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return independentReceipt{}, receiptBoundaryError("RECEIPT_TRAILING_JSON")
+	}
+	return receipt, nil
+}
+
+func validateIndependentReceipt(root string, receipt independentReceipt, outputRaw []byte) error {
+	if receipt.Schema != consumerReceiptSchema {
+		return receiptBoundaryError("RECEIPT_SCHEMA_MISMATCH")
+	}
+	if receipt.Decision != "PASS" {
+		return receiptBoundaryError("RECEIPT_DECISION_MISMATCH")
+	}
+	if receipt.ProjectionDigest != digestBytes(outputRaw) {
+		return receiptBoundaryError("RECEIPT_PROJECTION_DIGEST_MISMATCH")
+	}
+	if len(receipt.Predicates) != expectedConformancePredicateCount || !sameStringSet(predicateIDs(receipt.Predicates), expectedConformancePredicateIDs) || hasDuplicateStrings(predicateIDs(receipt.Predicates)) {
+		return receiptBoundaryError("RECEIPT_PREDICATE_INVENTORY_MISMATCH")
+	}
+	for _, predicate := range receipt.Predicates {
+		if !predicate.Observed || predicate.PredicateTruth != "TRUE" || predicate.Decision != "PASS" || predicate.TargetAddress == "" || predicate.TargetDigest == "" {
+			return receiptBoundaryError("RECEIPT_PREDICATE_INVENTORY_MISMATCH")
+		}
+	}
+	if receipt.OutputArtifact.Path != embeddedOutputAddress || receipt.OutputArtifact.Bytes != len(outputRaw) || receipt.OutputArtifact.Digest != digestBytes(outputRaw) {
+		return receiptBoundaryError("RECEIPT_OUTPUT_ARTIFACT_MISMATCH")
+	}
+	return validateObservedBindingReceipts(root, receipt.BindingOutputReceipts, outputRaw)
 }
 
 func validateObservedBindingReceipts(root string, receipts []BindingOutputReceipt, outputRaw []byte) error {
 	if len(receipts) != expectedBindingReceiptCount {
-		return fmt.Errorf("independent consumer AST binding receipt count=%d want=%d", len(receipts), expectedBindingReceiptCount)
+		return receiptBoundaryError("RECEIPT_BINDING_INVENTORY_MISMATCH")
 	}
 	var projection Projection
 	decoder := json.NewDecoder(bytes.NewReader(outputRaw))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&projection); err != nil {
-		return fmt.Errorf("independent consumer output projection could not be decoded: %w", err)
+		return receiptBoundaryError("RECEIPT_OUTPUT_PROJECTION_MALFORMED")
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return fmt.Errorf("independent consumer output projection has trailing bytes")
+		return receiptBoundaryError("RECEIPT_OUTPUT_PROJECTION_TRAILING_JSON")
 	}
 	expected := map[string]BindingRegistryEntry{}
+	expectedMetricIDs := map[string]struct{}{}
 	for _, entry := range projection.Catalog {
 		for _, binding := range entry.BindingRegistry {
 			address := bindingOutputRowAddress(entry.StableID, binding.MetricID)
 			if _, exists := expected[address]; exists {
-				return fmt.Errorf("duplicate independent consumer output row %s", address)
+				return receiptBoundaryError("DUPLICATE_OUTPUT_ROW_ADDRESS")
 			}
+			if _, exists := expectedMetricIDs[binding.MetricID]; exists {
+				return receiptBoundaryError("DUPLICATE_OUTPUT_ROW_METRIC_ID")
+			}
+			expectedMetricIDs[binding.MetricID] = struct{}{}
 			expected[address] = binding
 		}
 	}
 	if len(expected) != expectedBindingReceiptCount {
-		return fmt.Errorf("independent consumer output row count=%d want=%d", len(expected), expectedBindingReceiptCount)
+		return receiptBoundaryError("RECEIPT_OUTPUT_ROW_INVENTORY_MISMATCH")
 	}
 	seen := map[string]struct{}{}
+	seenMetricIDs := map[string]struct{}{}
+	expectedRelations := map[string]bindingResolution{}
+	expectedPairOwners := map[string]string{}
+	for address, row := range expected {
+		relation, err := resolveBindingRelation(root, row.RawSourceAddress, row.RegistrationUseAddress, row.MetricID)
+		if err != nil {
+			return receiptBoundaryError("BINDING_RELATION_RECONSTRUCTION_FAILED")
+		}
+		expectedRelations[address] = relation
+		pair := metricOccurrencePairKey(relation.MetricOccurrenceAddress, relation.MetricOccurrenceDigest)
+		if owner, exists := expectedPairOwners[pair]; exists && owner != address {
+			return receiptBoundaryError("DUPLICATE_METRIC_OCCURRENCE_PAIR")
+		}
+		expectedPairOwners[pair] = address
+	}
 	for _, receipt := range receipts {
+		if _, ok := seenMetricIDs[receipt.MetricID]; ok {
+			return receiptBoundaryError("DUPLICATE_RECEIPT_METRIC_ID")
+		}
+		seenMetricIDs[receipt.MetricID] = struct{}{}
 		if _, ok := seen[receipt.OutputRowAddress]; ok {
-			return fmt.Errorf("duplicate independent consumer binding receipt row %s", receipt.OutputRowAddress)
+			return receiptBoundaryError("DUPLICATE_RECEIPT_OUTPUT_ROW_ADDRESS")
 		}
 		seen[receipt.OutputRowAddress] = struct{}{}
 		row, ok := expected[receipt.OutputRowAddress]
-		if !ok || row.MetricID != receipt.MetricID || row.RawSourceAddress != receipt.RawSourceAddress || row.RegistrationUseAddress != receipt.RegistrationUseAddress || row.SemanticDigest != receipt.SemanticDigest || row.ConsumerEntryPoint != receipt.ConsumerEntryPoint || receipt.OutputAddress != embeddedOutputAddress || receipt.OutputDigest != digestBytes(outputRaw) || receipt.OutputBytes != len(outputRaw) || receipt.OutputRowDigest != digestJSONValue(row) {
-			return fmt.Errorf("independent consumer binding receipt failed output row reconstruction for %s", receipt.MetricID)
+		if !ok {
+			return receiptBoundaryError("BINDING_OUTPUT_ROW_ADDRESS_MISMATCH")
 		}
-		relation, err := resolveBindingRelation(root, receipt.RawSourceAddress, receipt.RegistrationUseAddress, receipt.MetricID)
-		if err != nil || relation.SemanticDigest != receipt.SemanticDigest || relation.MetricOccurrenceAddress != receipt.MetricOccurrenceAddress || relation.MetricOccurrenceDigest != receipt.MetricOccurrenceDigest {
-			return fmt.Errorf("independent consumer binding receipt failed AST reconstruction for %s", receipt.MetricID)
+		if row.MetricID != receipt.MetricID || row.RawSourceAddress != receipt.RawSourceAddress || row.RegistrationUseAddress != receipt.RegistrationUseAddress || row.SemanticDigest != receipt.SemanticDigest || row.ConsumerEntryPoint != receipt.ConsumerEntryPoint || receipt.OutputAddress != embeddedOutputAddress || receipt.OutputDigest != digestBytes(outputRaw) || receipt.OutputBytes != len(outputRaw) || receipt.OutputRowDigest != digestJSONValue(row) {
+			return receiptBoundaryError("BINDING_OUTPUT_ROW_TRIPLE_MISMATCH")
+		}
+		relation := expectedRelations[receipt.OutputRowAddress]
+		if relation.SemanticDigest != receipt.SemanticDigest {
+			return receiptBoundaryError("BINDING_SEMANTIC_DIGEST_MISMATCH")
+		}
+		addressMismatch := relation.MetricOccurrenceAddress != receipt.MetricOccurrenceAddress
+		digestMismatch := relation.MetricOccurrenceDigest != receipt.MetricOccurrenceDigest
+		if addressMismatch || digestMismatch {
+			switch {
+			case addressMismatch && !digestMismatch:
+				return receiptBoundaryError("BINDING_OCCURRENCE_ADDRESS_MISMATCH")
+			case !addressMismatch && digestMismatch:
+				return receiptBoundaryError("BINDING_OCCURRENCE_DIGEST_MISMATCH")
+			case occurrencePairBelongsToAnotherMetric(receipt, expectedPairOwners):
+				return receiptBoundaryError("BINDING_OCCURRENCE_PAIR_MISMATCH")
+			default:
+				return receiptBoundaryError("BINDING_OCCURRENCE_RELATION_MISMATCH")
+			}
 		}
 	}
 	if len(seen) != len(expected) {
-		return fmt.Errorf("independent consumer output rows were not all receipted")
+		return receiptBoundaryError("RECEIPT_OUTPUT_ROW_INVENTORY_MISMATCH")
 	}
 	return nil
+}
+
+func occurrencePairBelongsToAnotherMetric(current BindingOutputReceipt, expectedPairOwners map[string]string) bool {
+	owner, ok := expectedPairOwners[metricOccurrencePairKey(current.MetricOccurrenceAddress, current.MetricOccurrenceDigest)]
+	return ok && owner != current.OutputRowAddress
 }
 
 func bindingOutputRowAddress(stableID, metricID string) string {
@@ -684,7 +781,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 			})
 		}},
 	}
-	observations := make([]PredicateObservation, 0, len(cases)+1)
+	observations := make([]PredicateObservation, 0, len(cases)+7)
 	for _, item := range cases {
 		temp, err := os.MkdirTemp("", "gooo-consumer-failure-")
 		if err != nil {
@@ -706,8 +803,121 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 		observations = append(observations, failurePredicateObservation(item, result, rawInput, rawArtifacts))
 		_ = os.RemoveAll(temp)
 	}
+	receiptObservations, err := receiptBoundaryFailurePredicates(root)
+	if err != nil {
+		return nil, err
+	}
+	observations = append(observations, receiptObservations...)
 	observations = append(observations, successExitCounterexample())
 	return observations, nil
+}
+
+func receiptBoundaryFailurePredicates(root string) ([]PredicateObservation, error) {
+	base, err := runIndependentConsumerAt(root)
+	if err != nil {
+		return nil, err
+	}
+	mutations := []struct {
+		id, reason string
+		mutate     func(independentReceipt) (independentReceipt, error)
+	}{
+		{id: "consumer-receipt-occurrence-address-swap", reason: "BINDING_OCCURRENCE_ADDRESS_MISMATCH", mutate: func(receipt independentReceipt) (independentReceipt, error) {
+			if len(receipt.BindingOutputReceipts) < 2 {
+				return independentReceipt{}, receiptBoundaryError("RECEIPT_BINDING_INVENTORY_MISMATCH")
+			}
+			receipt.BindingOutputReceipts[0].MetricOccurrenceAddress, receipt.BindingOutputReceipts[1].MetricOccurrenceAddress = receipt.BindingOutputReceipts[1].MetricOccurrenceAddress, receipt.BindingOutputReceipts[0].MetricOccurrenceAddress
+			return receipt, nil
+		}},
+		{id: "consumer-receipt-occurrence-digest-swap", reason: "BINDING_OCCURRENCE_DIGEST_MISMATCH", mutate: func(receipt independentReceipt) (independentReceipt, error) {
+			if len(receipt.BindingOutputReceipts) < 2 {
+				return independentReceipt{}, receiptBoundaryError("RECEIPT_BINDING_INVENTORY_MISMATCH")
+			}
+			receipt.BindingOutputReceipts[0].MetricOccurrenceDigest, receipt.BindingOutputReceipts[1].MetricOccurrenceDigest = receipt.BindingOutputReceipts[1].MetricOccurrenceDigest, receipt.BindingOutputReceipts[0].MetricOccurrenceDigest
+			return receipt, nil
+		}},
+		{id: "consumer-receipt-occurrence-pair-swap", reason: "BINDING_OCCURRENCE_PAIR_MISMATCH", mutate: func(receipt independentReceipt) (independentReceipt, error) {
+			if len(receipt.BindingOutputReceipts) < 2 {
+				return independentReceipt{}, receiptBoundaryError("RECEIPT_BINDING_INVENTORY_MISMATCH")
+			}
+			receipt.BindingOutputReceipts[0].MetricOccurrenceAddress, receipt.BindingOutputReceipts[1].MetricOccurrenceAddress = receipt.BindingOutputReceipts[1].MetricOccurrenceAddress, receipt.BindingOutputReceipts[0].MetricOccurrenceAddress
+			receipt.BindingOutputReceipts[0].MetricOccurrenceDigest, receipt.BindingOutputReceipts[1].MetricOccurrenceDigest = receipt.BindingOutputReceipts[1].MetricOccurrenceDigest, receipt.BindingOutputReceipts[0].MetricOccurrenceDigest
+			return receipt, nil
+		}},
+		{id: "consumer-receipt-output-row-cross-swap", reason: "BINDING_OUTPUT_ROW_TRIPLE_MISMATCH", mutate: func(receipt independentReceipt) (independentReceipt, error) {
+			if len(receipt.BindingOutputReceipts) < 2 {
+				return independentReceipt{}, receiptBoundaryError("RECEIPT_BINDING_INVENTORY_MISMATCH")
+			}
+			receipt.BindingOutputReceipts[0].OutputRowAddress, receipt.BindingOutputReceipts[1].OutputRowAddress = receipt.BindingOutputReceipts[1].OutputRowAddress, receipt.BindingOutputReceipts[0].OutputRowAddress
+			receipt.BindingOutputReceipts[0].OutputRowDigest, receipt.BindingOutputReceipts[1].OutputRowDigest = receipt.BindingOutputReceipts[1].OutputRowDigest, receipt.BindingOutputReceipts[0].OutputRowDigest
+			return receipt, nil
+		}},
+		{id: "consumer-receipt-unknown-field", reason: "RECEIPT_UNKNOWN_FIELD", mutate: func(receipt independentReceipt) (independentReceipt, error) {
+			return receipt, nil
+		}},
+		{id: "consumer-receipt-duplicate-metric-id", reason: "DUPLICATE_RECEIPT_METRIC_ID", mutate: func(receipt independentReceipt) (independentReceipt, error) {
+			if len(receipt.BindingOutputReceipts) < 2 {
+				return independentReceipt{}, receiptBoundaryError("RECEIPT_BINDING_INVENTORY_MISMATCH")
+			}
+			receipt.BindingOutputReceipts[1].MetricID = receipt.BindingOutputReceipts[0].MetricID
+			return receipt, nil
+		}},
+	}
+	observations := make([]PredicateObservation, 0, len(mutations))
+	for _, mutation := range mutations {
+		var raw []byte
+		if mutation.id == "consumer-receipt-unknown-field" {
+			var object map[string]json.RawMessage
+			if err := json.Unmarshal(base.rawReceipt, &object); err != nil {
+				return nil, err
+			}
+			object["unknown_receipt_field"] = json.RawMessage(`"untrusted"`)
+			raw, err = json.Marshal(object)
+		} else {
+			clone, cloneErr := cloneIndependentReceipt(base)
+			if cloneErr != nil {
+				return nil, cloneErr
+			}
+			mutated, mutateErr := mutation.mutate(clone)
+			if mutateErr != nil {
+				return nil, mutateErr
+			}
+			raw, err = json.Marshal(mutated)
+		}
+		if err != nil {
+			return nil, err
+		}
+		receipt, decodeErr := decodeIndependentReceipt(raw)
+		var diagnostic *Diagnostic
+		if decodeErr != nil {
+			diagnostic = receiptBoundaryDiagnostic(decodeErr)
+		} else if validateErr := validateIndependentReceipt(root, receipt, base.outputRaw); validateErr != nil {
+			diagnostic = receiptBoundaryDiagnostic(validateErr)
+		}
+		if diagnostic == nil {
+			return nil, fmt.Errorf("receipt corruption was accepted: %s", mutation.id)
+		}
+		diagnosticJSON, marshalErr := json.Marshal(diagnostic)
+		if marshalErr != nil {
+			return nil, marshalErr
+		}
+		item := consumerFailureCase{id: mutation.id, stage: diagnostic.Stage, step: diagnostic.Step, reason: mutation.reason}
+		artifact := RawInputArtifact{Path: "embedded://receipt-boundary/" + mutation.id + ".json", Bytes: raw, Digest: digestBytes(raw)}
+		rawInput, marshalErr := json.Marshal([]RawInputArtifact{artifact})
+		if marshalErr != nil {
+			return nil, marshalErr
+		}
+		result := consumerCommandResult{ExitCode: 1, DiagnosticJSON: diagnosticJSON, Diagnostic: diagnostic}
+		observations = append(observations, failurePredicateObservation(item, result, rawInput, []RawInputArtifact{artifact}))
+	}
+	return observations, nil
+}
+
+func cloneIndependentReceipt(receipt independentReceipt) (independentReceipt, error) {
+	raw, err := json.Marshal(receipt)
+	if err != nil {
+		return independentReceipt{}, err
+	}
+	return decodeIndependentReceipt(raw)
 }
 
 func runConsumerFailureCommand(repoRoot, tempRoot string) consumerCommandResult {
@@ -927,6 +1137,9 @@ func allProofsPass(evidence Evidence) bool {
 		return false
 	}
 	if len(evidence.BindingOutputReceipts) != expectedBindingReceiptCount || evidence.MetricOccurrences.Numerator != expectedBindingReceiptCount || evidence.MetricOccurrences.Denominator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Numerator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Denominator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Numerator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Denominator != expectedBindingReceiptCount || evidence.ConsumerOutputArtifact.ObservedPath != embeddedOutputAddress || evidence.ConsumerOutputArtifact.Bytes <= 0 || len(evidence.ConsumerOutputArtifact.RawBytes) != evidence.ConsumerOutputArtifact.Bytes || evidence.ConsumerOutputArtifact.Digest != digestBytes([]byte(evidence.ConsumerOutputArtifact.RawBytes)) {
+		return false
+	}
+	if evidence.Metrics.ProducerPackageImports.Numerator != 0 || evidence.Metrics.ProducerPackageImports.Denominator != 1 || evidence.Metrics.ProducerPackageImports.Decision != "PASS" || evidence.Metrics.RawSourceReconstruction.Numerator != 1 || evidence.Metrics.RawSourceReconstruction.Denominator != 1 || evidence.Metrics.RawSourceReconstruction.Decision != "PASS" || evidence.Metrics.SeparateExecutable.Numerator != 1 || evidence.Metrics.SeparateExecutable.Denominator != 1 || evidence.Metrics.SeparateExecutable.Decision != "PASS" || evidence.Metrics.AlgorithmicIndependence.Numerator != 0 || evidence.Metrics.AlgorithmicIndependence.Denominator != 1 || evidence.Metrics.AlgorithmicIndependence.Decision != "UNKNOWN" {
 		return false
 	}
 	for _, scenario := range evidence.FailureContracts {
@@ -1278,20 +1491,35 @@ func bindingPredicateMetric(predicates []PredicateObservation, receipts []Bindin
 	return predicateMetric(0, 1, "FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "MISSING_BINDING_PREDICATE")
 }
 
-func metricOccurrenceMetric(receipts []BindingOutputReceipt) PredicateMetric {
-	addresses := map[string]struct{}{}
-	digests := map[string]struct{}{}
+func metricOccurrenceMetric(root string, receipts []BindingOutputReceipt) PredicateMetric {
+	pairs := map[string]struct{}{}
+	addresses := map[string]string{}
+	digests := map[string]string{}
+	metricIDs := map[string]struct{}{}
 	for _, receipt := range receipts {
-		if receipt.MetricOccurrenceAddress != "" && receipt.MetricOccurrenceDigest != "" {
-			addresses[receipt.MetricOccurrenceAddress] = struct{}{}
-			digests[receipt.MetricOccurrenceDigest] = struct{}{}
+		if receipt.MetricID == "" || receipt.MetricOccurrenceAddress == "" || receipt.MetricOccurrenceDigest == "" {
+			continue
 		}
+		if _, duplicate := metricIDs[receipt.MetricID]; duplicate {
+			continue
+		}
+		metricIDs[receipt.MetricID] = struct{}{}
+		relation, err := resolveBindingRelation(root, receipt.RawSourceAddress, receipt.RegistrationUseAddress, receipt.MetricID)
+		if err != nil || relation.MetricOccurrenceAddress != receipt.MetricOccurrenceAddress || relation.MetricOccurrenceDigest != receipt.MetricOccurrenceDigest {
+			continue
+		}
+		if prior, exists := addresses[receipt.MetricOccurrenceAddress]; exists && prior != receipt.MetricOccurrenceDigest {
+			continue
+		}
+		if prior, exists := digests[receipt.MetricOccurrenceDigest]; exists && prior != receipt.MetricOccurrenceAddress {
+			continue
+		}
+		addresses[receipt.MetricOccurrenceAddress] = receipt.MetricOccurrenceDigest
+		digests[receipt.MetricOccurrenceDigest] = receipt.MetricOccurrenceAddress
+		pairs[metricOccurrencePairKey(receipt.MetricOccurrenceAddress, receipt.MetricOccurrenceDigest)] = struct{}{}
 	}
-	numerator := len(addresses)
-	if len(digests) < numerator {
-		numerator = len(digests)
-	}
-	return predicateMetric(numerator, expectedBindingReceiptCount, decisionForRatio(numerator, expectedBindingReceiptCount), "FOUNDATION", "METRIC_OCCURRENCE", "METRIC_LITERAL_OCCURRENCE_RECONSTRUCTED")
+	numerator := len(pairs)
+	return predicateMetric(numerator, expectedBindingReceiptCount, decisionForRatio(numerator, expectedBindingReceiptCount), "FOUNDATION", "METRIC_OCCURRENCE", "EXACT_METRIC_OCCURRENCE_PAIRS_RECONSTRUCTED_AND_BIJECTIVE")
 }
 
 func uniqueSemanticRelationMetric(receipts []BindingOutputReceipt) PredicateMetric {
@@ -1304,22 +1532,78 @@ func uniqueSemanticRelationMetric(receipts []BindingOutputReceipt) PredicateMetr
 	return predicateMetric(len(seen), expectedBindingReceiptCount, decisionForRatio(len(seen), expectedBindingReceiptCount), "FOUNDATION", "SEMANTIC_RELATION_UNIQUENESS", "METRIC_SPECIFIC_RELATION_DIGESTS_UNIQUE")
 }
 
-func uniqueOutputRowMetric(receipts []BindingOutputReceipt) PredicateMetric {
-	addresses := map[string]struct{}{}
-	digests := map[string]struct{}{}
+func uniqueOutputRowMetric(receipts []BindingOutputReceipt, outputRaw []byte) PredicateMetric {
+	projection := Projection{}
+	decoder := json.NewDecoder(bytes.NewReader(outputRaw))
+	decoder.DisallowUnknownFields()
+	if decoder.Decode(&projection) != nil {
+		return predicateMetric(0, expectedBindingReceiptCount, "FAIL_CLOSED", "COHERENCE", "OUTPUT_ROW_UNIQUENESS", "OUTPUT_PROJECTION_RECONSTRUCTION_FAILED")
+	}
+	if decoder.Decode(&struct{}{}) != io.EOF {
+		return predicateMetric(0, expectedBindingReceiptCount, "FAIL_CLOSED", "COHERENCE", "OUTPUT_ROW_UNIQUENESS", "OUTPUT_PROJECTION_TRAILING_JSON")
+	}
+	expected := map[string]BindingRegistryEntry{}
+	expectedMetricIDs := map[string]struct{}{}
+	for _, entry := range projection.Catalog {
+		for _, binding := range entry.BindingRegistry {
+			address := bindingOutputRowAddress(entry.StableID, binding.MetricID)
+			if _, duplicate := expected[address]; duplicate {
+				return predicateMetric(0, expectedBindingReceiptCount, "FAIL_CLOSED", "COHERENCE", "OUTPUT_ROW_UNIQUENESS", "DUPLICATE_OUTPUT_ROW_ADDRESS")
+			}
+			if _, duplicate := expectedMetricIDs[binding.MetricID]; duplicate {
+				return predicateMetric(0, expectedBindingReceiptCount, "FAIL_CLOSED", "COHERENCE", "OUTPUT_ROW_UNIQUENESS", "DUPLICATE_OUTPUT_ROW_METRIC_ID")
+			}
+			expectedMetricIDs[binding.MetricID] = struct{}{}
+			expected[address] = binding
+		}
+	}
+	if len(expected) != expectedBindingReceiptCount {
+		return predicateMetric(0, expectedBindingReceiptCount, "FAIL_CLOSED", "COHERENCE", "OUTPUT_ROW_UNIQUENESS", "OUTPUT_ROW_INVENTORY_MISMATCH")
+	}
+	triples := map[string]struct{}{}
+	addressToTriple := map[string]string{}
+	tripleToAddress := map[string]string{}
+	digestMetricToAddress := map[string]string{}
+	seenMetricIDs := map[string]struct{}{}
 	for _, receipt := range receipts {
-		if receipt.OutputRowAddress != "" {
-			addresses[receipt.OutputRowAddress] = struct{}{}
+		if _, duplicate := seenMetricIDs[receipt.MetricID]; duplicate {
+			continue
 		}
-		if receipt.OutputRowDigest != "" {
-			digests[receipt.OutputRowDigest] = struct{}{}
+		seenMetricIDs[receipt.MetricID] = struct{}{}
+		row, ok := expected[receipt.OutputRowAddress]
+		if !ok || row.MetricID != receipt.MetricID {
+			continue
 		}
+		rowDigest := digestJSONValue(row)
+		if receipt.OutputRowDigest != rowDigest {
+			continue
+		}
+		triple := outputRowTripleKey(receipt.OutputRowAddress, rowDigest, receipt.MetricID)
+		if prior, exists := addressToTriple[receipt.OutputRowAddress]; exists && prior != triple {
+			continue
+		}
+		if prior, exists := tripleToAddress[triple]; exists && prior != receipt.OutputRowAddress {
+			continue
+		}
+		digestMetric := rowDigest + "\x00" + receipt.MetricID
+		if prior, exists := digestMetricToAddress[digestMetric]; exists && prior != receipt.OutputRowAddress {
+			continue
+		}
+		addressToTriple[receipt.OutputRowAddress] = triple
+		tripleToAddress[triple] = receipt.OutputRowAddress
+		digestMetricToAddress[digestMetric] = receipt.OutputRowAddress
+		triples[triple] = struct{}{}
 	}
-	numerator := len(addresses)
-	if len(digests) < numerator {
-		numerator = len(digests)
-	}
-	return predicateMetric(numerator, expectedBindingReceiptCount, decisionForRatio(numerator, expectedBindingReceiptCount), "COHERENCE", "OUTPUT_ROW_UNIQUENESS", "CANONICAL_OUTPUT_ROW_ADDRESSES_AND_DIGESTS_UNIQUE")
+	numerator := len(triples)
+	return predicateMetric(numerator, expectedBindingReceiptCount, decisionForRatio(numerator, expectedBindingReceiptCount), "COHERENCE", "OUTPUT_ROW_UNIQUENESS", "EXACT_OUTPUT_ROW_ADDRESS_DIGEST_METRIC_TRIPLES_RECONSTRUCTED")
+}
+
+func metricOccurrencePairKey(address, digest string) string {
+	return address + "\x00" + digest
+}
+
+func outputRowTripleKey(address, digest, metricID string) string {
+	return address + "\x00" + digest + "\x00" + metricID
 }
 
 func provenancePredicateMetric(predicates []PredicateObservation) PredicateMetric {

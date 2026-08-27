@@ -37,13 +37,19 @@ var expectedFailurePredicateIDs = []string{
 	"consumer-binding-metric-row-swap",
 	"consumer-binding-different-metric-literal",
 	"consumer-binding-unrelated-call",
+	"consumer-receipt-occurrence-address-swap",
+	"consumer-receipt-occurrence-digest-swap",
+	"consumer-receipt-occurrence-pair-swap",
+	"consumer-receipt-output-row-cross-swap",
+	"consumer-receipt-unknown-field",
+	"consumer-receipt-duplicate-metric-id",
 	"classifier-success-exit-counterexample",
 }
 
 const (
 	expectedConformancePredicateCount = 5
-	expectedFailurePredicateCount     = 21
-	expectedClaimCount                = 26
+	expectedFailurePredicateCount     = 27
+	expectedClaimCount                = 32
 	expectedFailureContractCount      = 8
 	expectedBindingReceiptCount       = 9
 	embeddedOutputAddress             = "embedded://consumer_output_artifact/raw_bytes"
@@ -155,9 +161,13 @@ type Projection struct {
 }
 
 type RatioMetric struct {
-	Numerator   int `json:"numerator"`
-	Denominator int `json:"denominator"`
-	BasisPoints int `json:"basis_points"`
+	Numerator   int    `json:"numerator"`
+	Denominator int    `json:"denominator"`
+	BasisPoints int    `json:"basis_points"`
+	Decision    string `json:"decision,omitempty"`
+	Stage       string `json:"stage,omitempty"`
+	Step        string `json:"step,omitempty"`
+	Reason      string `json:"reason,omitempty"`
 }
 
 type MetricDelta struct {
@@ -169,6 +179,10 @@ type IntegrationMetrics struct {
 	ExistingSharedSourceTouchpoints RatioMetric `json:"existing_shared_source_touchpoints"`
 	GeneratorChangedSharedOutputs   RatioMetric `json:"generator_changed_shared_outputs"`
 	IndependentConformanceConsumer  RatioMetric `json:"independent_conformance_consumer"`
+	ProducerPackageImports          RatioMetric `json:"producer_package_imports"`
+	RawSourceReconstruction         RatioMetric `json:"raw_source_reconstruction"`
+	SeparateExecutable              RatioMetric `json:"separate_executable"`
+	AlgorithmicIndependence         RatioMetric `json:"algorithmic_independence"`
 	ConceptLocalTouchpoints         RatioMetric `json:"concept_local_touchpoints"`
 	ManualSourceRegistrationEdits   RatioMetric `json:"manual_source_registration_edits_required"`
 }

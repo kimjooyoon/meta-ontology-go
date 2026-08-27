@@ -54,7 +54,7 @@ numerator `0/1`; no number is extracted from prose. A regression clone with
 the prior declared `160` cases must produce `FAIL_CLOSED / DENOMINATOR_SOURCE_MISMATCH`,
 with declared and calculated values side by side in the receipt.
 
-The fixed predicate inventory is 26 IDs: five conformance IDs
+The fixed predicate inventory is 32 IDs: five conformance IDs
 (`independent-manifest-order`, `independent-resource-digests`,
 `independent-denominator-reconciliation`, `independent-binding-registry`, and
 `independent-conformance-consumer`) plus 21 failure IDs
@@ -68,12 +68,18 @@ The fixed predicate inventory is 26 IDs: five conformance IDs
 `consumer-binding-unused-declaration`, `consumer-binding-unrelated-use`,
 `consumer-binding-unresolved-import`, `consumer-binding-unrelated-type-error`,
 `consumer-binding-metric-row-swap`, `consumer-binding-different-metric-literal`,
-`consumer-binding-unrelated-call`, and `classifier-success-exit-counterexample`).
-Claims are exactly 26; failure and provenance predicates are exactly 21;
+`consumer-binding-unrelated-call`, six strict receipt-boundary corruption
+cases, and `classifier-success-exit-counterexample`). Claims are exactly 32;
+failure and provenance predicates are exactly 27;
 static failure contracts are exactly 8; typed declaration/use object tuples,
 metric occurrences, semantic relation digests, and output row addresses are
 each exactly 9. Each output receipt includes an exact row digest from the
 consumer's embedded raw output artifact.
+
+The conformance-consumer metric is decomposed into producer-package imports
+(0/1 PASS), raw-source reconstruction (1/1 PASS), separate executable
+(1/1 PASS), and algorithmic independence (0/1 UNKNOWN). Separate processes do
+not by themselves prove algorithmic diversity.
 
 ## Meaning gates
 

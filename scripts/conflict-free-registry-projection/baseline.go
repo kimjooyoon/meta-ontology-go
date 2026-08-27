@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"go/parser"
+	"go/token"
 	"os"
+	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -70,7 +74,7 @@ func ratioMetric(numerator, denominator int) RatioMetric {
 	if denominator > 0 {
 		basisPoints = numerator * 10000 / denominator
 	}
-	return RatioMetric{Numerator: numerator, Denominator: denominator, BasisPoints: basisPoints}
+	return RatioMetric{Numerator: numerator, Denominator: denominator, BasisPoints: basisPoints, Decision: decisionForRatio(numerator, denominator)}
 }
 
 func integrationMetrics(localCount, sharedCount, generatedChanged, adopted, manualEdits int) IntegrationMetrics {
@@ -81,6 +85,64 @@ func integrationMetrics(localCount, sharedCount, generatedChanged, adopted, manu
 		ConceptLocalTouchpoints:         ratioMetric(localCount, localCount),
 		ManualSourceRegistrationEdits:   ratioMetric(manualEdits, sharedCount),
 	}
+}
+
+func contextualRatioMetric(numerator, denominator int, stage, step, reason string) RatioMetric {
+	metric := ratioMetric(numerator, denominator)
+	metric.Stage, metric.Step, metric.Reason = stage, step, reason
+	return metric
+}
+
+func unknownRatioMetric(stage, step, reason string) RatioMetric {
+	return RatioMetric{Numerator: 0, Denominator: 1, BasisPoints: 0, Decision: "UNKNOWN", Stage: stage, Step: step, Reason: reason}
+}
+
+func producerPackageImportMetric(root string) RatioMetric {
+	metric := contextualRatioMetric(0, 1, "COHERENCE", "PRODUCER_PACKAGE_IMPORT", "INDEPENDENT_CONSUMER_IMPORTS_PRODUCER_PACKAGE")
+	moduleBytes, err := os.ReadFile(joinRoot(root, "go.mod"))
+	if err != nil {
+		metric.Decision, metric.Reason = "UNKNOWN", "MODULE_PATH_UNAVAILABLE"
+		return metric
+	}
+	module := ""
+	for _, line := range strings.Split(string(moduleBytes), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 && fields[0] == "module" {
+			module = fields[1]
+			break
+		}
+	}
+	if module == "" {
+		metric.Decision, metric.Reason = "UNKNOWN", "MODULE_PATH_UNAVAILABLE"
+		return metric
+	}
+	producerPath := module + "/scripts/conflict-free-registry-projection"
+	files, err := filepath.Glob(joinRoot(root, "scripts/conflict-free-registry-projection-consumer/*.go"))
+	if err != nil {
+		metric.Decision, metric.Reason = "UNKNOWN", "CONSUMER_SOURCE_UNAVAILABLE"
+		return metric
+	}
+	fileSet := token.NewFileSet()
+	for _, path := range files {
+		file, parseErr := parser.ParseFile(fileSet, path, nil, 0)
+		if parseErr != nil {
+			metric.Decision, metric.Reason = "FAIL_CLOSED", "CONSUMER_SOURCE_PARSE_FAILED"
+			return metric
+		}
+		for _, spec := range file.Imports {
+			importPath, unquoteErr := strconv.Unquote(spec.Path.Value)
+			if unquoteErr == nil && importPath == producerPath {
+				metric.Numerator = 1
+				metric.BasisPoints = 10000
+				metric.Decision = "FAIL_CLOSED"
+				metric.Reason = "PRODUCER_PACKAGE_IMPORT_OBSERVED"
+				return metric
+			}
+		}
+	}
+	metric.Decision = "PASS"
+	metric.Reason = "PRODUCER_PACKAGE_IMPORT_NOT_OBSERVED"
+	return metric
 }
 
 func metricDeltas(sharedCount, generatedChanged, manualEdits int) map[string]MetricDelta {

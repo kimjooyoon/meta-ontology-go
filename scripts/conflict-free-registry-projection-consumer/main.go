@@ -186,16 +186,18 @@ type OutputArtifact struct {
 	Bytes  int    `json:"bytes"`
 }
 type BindingOutputReceipt struct {
-	MetricID               string `json:"metric_id"`
-	RawSourceAddress       string `json:"raw_source_address"`
-	RegistrationUseAddress string `json:"registration_use_address"`
-	SemanticDigest         string `json:"semantic_digest"`
-	ConsumerEntryPoint     string `json:"consumer_entry_point"`
-	OutputAddress          string `json:"output_address"`
-	OutputDigest           string `json:"output_digest"`
-	OutputBytes            int    `json:"output_bytes"`
-	OutputRowAddress       string `json:"output_row_address"`
-	OutputRowDigest        string `json:"output_row_digest"`
+	MetricID                string `json:"metric_id"`
+	RawSourceAddress        string `json:"raw_source_address"`
+	RegistrationUseAddress  string `json:"registration_use_address"`
+	SemanticDigest          string `json:"semantic_digest"`
+	MetricOccurrenceAddress string `json:"metric_occurrence_address"`
+	MetricOccurrenceDigest  string `json:"metric_occurrence_digest"`
+	ConsumerEntryPoint      string `json:"consumer_entry_point"`
+	OutputAddress           string `json:"output_address"`
+	OutputDigest            string `json:"output_digest"`
+	OutputBytes             int    `json:"output_bytes"`
+	OutputRowAddress        string `json:"output_row_address"`
+	OutputRowDigest         string `json:"output_row_digest"`
 }
 type diagnostic struct {
 	Decision string `json:"decision"`
