@@ -1,6 +1,7 @@
 package languageproofartifactverifier
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 )
@@ -38,14 +39,9 @@ func Validate(report Report) error {
 	if err := validateWriteSet(report.WriteSet); err != nil {
 		return err
 	}
-	bundleMetricValue := report.Summary.BundleOnlyVerification
-	consumerMetricValue := report.Summary.ConsumerRechecks
-	if bundleMetricValue != 1 || consumerMetricValue != 1 {
-		return fmt.Errorf("proof-carrying bundle metric scope mismatch")
-	}
-	want := expectedSummary(report.Summary.ProducerImportDenominator, bundleMetricValue, consumerMetricValue)
+	want := expectedSummary(report.Summary.ProducerImportDenominator, 1, 1)
 	if report.Summary != want || report.Summary.ProducerImportDenominator <= 0 || report.Summary.ProducerImportNumerator != 0 || report.Summary.CoreParserDependencies != CoreParserDependencyInventoryTotal {
-		return fmt.Errorf("proof-carrying summary mismatch")
+		return &ValidationError{Coordinate: Coordinate{"EVALUATE", "final-summary", "FINAL_SUMMARY_MISMATCH"}, Detail: summaryMismatchError("FINAL", report.Summary, want).Error()}
 	}
 	if err := validateIndicatorInventory(report, 1, 1); err != nil {
 		return err
@@ -150,10 +146,11 @@ func ValidatePreliminary(report Report) error {
 		report.WriteSet.ActualWritesObservation != "UNKNOWN" || report.WriteSet.GlobalMutationAuthority != "UNKNOWN" {
 		return fmt.Errorf("proof-carrying preliminary write observation mismatch")
 	}
-	if report.Summary != expectedSummary(report.Summary.ProducerImportDenominator, wantBundleMetric, wantConsumerMetric) ||
+	wantSummary := expectedSummary(report.Summary.ProducerImportDenominator, wantBundleMetric, wantConsumerMetric)
+	if report.Summary != wantSummary ||
 		report.Summary.ProducerImportDenominator <= 0 || report.Summary.ProducerImportNumerator != 0 || report.Summary.CoreParserDependencies != CoreParserDependencyInventoryTotal ||
 		report.IndependenceDigest != digestValue(IndependenceEvidence{Schema: "gooo/language-proof-carrying-artifact-independence/v1", ProducerDependencies: report.Summary.ProducerDependencies, ProducerImportNumerator: report.Summary.ProducerImportNumerator, ProducerImportDenominator: report.Summary.ProducerImportDenominator, CoreParserDependencies: report.Summary.CoreParserDependencies}) {
-		return fmt.Errorf("proof-carrying preliminary summary mismatch")
+		return preliminaryValidationError(Coordinate{"EVALUATE", "preliminary-summary", "PRELIMINARY_SUMMARY_MISMATCH"}, summaryMismatchError("PRELIMINARY", report.Summary, wantSummary))
 	}
 	if err := validateIndicatorInventory(report, wantBundleMetric, wantConsumerMetric); err != nil {
 		return preliminaryValidationError(Coordinate{"EVALUATE", "preliminary-inventory", "PRELIMINARY_INDICATOR_INVENTORY_MISMATCH"}, err)
@@ -252,6 +249,20 @@ func (e *ValidationError) Error() string {
 
 func preliminaryValidationError(coordinate Coordinate, detail error) error {
 	return &ValidationError{Coordinate: coordinate, Detail: detail.Error()}
+}
+
+type summaryMismatchDetail struct {
+	Phase    string  `json:"phase"`
+	Actual   Summary `json:"actual"`
+	Expected Summary `json:"expected"`
+}
+
+func summaryMismatchError(phase string, actual, expected Summary) error {
+	detail, err := json.Marshal(summaryMismatchDetail{Phase: phase, Actual: actual, Expected: expected})
+	if err != nil {
+		return fmt.Errorf("proof-carrying summary mismatch")
+	}
+	return fmt.Errorf("proof-carrying summary mismatch: %s", detail)
 }
 
 func expectedSummary(denominator, bundleMetric, consumerMetric int) Summary {

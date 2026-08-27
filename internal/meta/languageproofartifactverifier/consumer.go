@@ -158,7 +158,7 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 		// A preliminary report is accepted only when it can be lifted to the
 		// exact final report by this kernel, including all cases, indicators,
 		// proofs, bindings, and the receipt for the reconstructed target.
-		attested.Summary.ConsumerRechecks = 1
+		attested.Summary.BundleOnlyVerification, attested.Summary.ConsumerRechecks = verificationMode(bundle.Digest, true)
 		// ValidatePreliminary above proves that report.Digest is the exact
 		// producer/consumer-independent preliminary subject. Do not inherit a
 		// digest from a receipt field while creating the first receipt.

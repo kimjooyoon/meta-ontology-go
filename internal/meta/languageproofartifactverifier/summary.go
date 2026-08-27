@@ -1,11 +1,11 @@
 package languageproofartifactverifier
 
-func summarize(cases []CaseResult, independence IndependenceEvidence, writeSet WriteSetObservation, interventions []InterventionResult, finalLedger ClaimLedger) Summary {
+func summarize(cases []CaseResult, independence IndependenceEvidence, writeSet WriteSetObservation, interventions []InterventionResult, finalLedger ClaimLedger, bundleOnlyVerification, consumerRechecks int) Summary {
 	summary := Summary{CasesTotal: len(cases), TransitionTotal: TransitionTotal, ClaimTemplates: ClaimTemplateTotal,
 		ProducerDependencies: independence.ProducerDependencies, ProducerImportNumerator: independence.ProducerImportNumerator,
 		ProducerImportDenominator: independence.ProducerImportDenominator, CoreParserDependencies: independence.CoreParserDependencies,
 		NetChangedPaths: writeSet.NetChangedPaths, MutationAuthorities: boolToInt(writeSet.CapabilityMutationGranted),
-		NetRepositoryStateUnchanged: boolToInt(writeSet.NetUnchanged)}
+		NetRepositoryStateUnchanged: boolToInt(writeSet.NetUnchanged), BundleOnlyVerification: bundleOnlyVerification, ConsumerRechecks: consumerRechecks}
 	summary.UnknownAuthorityObservations = boolToInt(writeSet.GlobalMutationAuthority == "UNKNOWN")
 	for _, item := range cases {
 		if item.Status == "SATISFIED" {
@@ -89,6 +89,10 @@ func boolToInt(value bool) int {
 		return 1
 	}
 	return 0
+}
+
+func verificationMode(bundleDigest string, consumerReceiptProvided bool) (int, int) {
+	return boolToInt(bundleDigest != ""), boolToInt(bundleDigest != "" && consumerReceiptProvided)
 }
 
 func transitions(cases []CaseResult) []ClaimTransition {

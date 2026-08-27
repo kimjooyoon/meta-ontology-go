@@ -67,9 +67,8 @@ func Evaluate(input Input) Report {
 	if validCase := validCase(results); validCase != nil {
 		report.Ledger = dischargeLedger(report.PriorLedger, results)
 	}
-	report.Summary = summarize(results, input.Independence, input.WriteSet, interventions, report.Ledger)
-	report.Summary.BundleOnlyVerification = boolToInt(input.BundleDigest != "")
-	report.Summary.ConsumerRechecks = boolToInt(input.BundleDigest != "" && input.ConsumerReceiptProvided)
+	bundleOnlyVerification, consumerRechecks := verificationMode(input.BundleDigest, input.ConsumerReceiptProvided)
+	report.Summary = summarize(results, input.Independence, input.WriteSet, interventions, report.Ledger, bundleOnlyVerification, consumerRechecks)
 	report.Transitions = transitions(results)
 	for _, item := range results {
 		if item.ID == "unauthorized-consumer" {
