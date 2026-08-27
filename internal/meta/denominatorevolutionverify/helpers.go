@@ -88,7 +88,7 @@ func receiptText(value *Receipt) string {
 	if value.Decision == "" {
 		return "material-only"
 	}
-	return value.Decision + " / " + value.Reason
+	return value.Decision + "/" + value.Reason
 }
 
 func guardrailText(value *Guardrail) string {
