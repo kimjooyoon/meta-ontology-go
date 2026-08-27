@@ -39,9 +39,14 @@ func observeSource(path string, raw []byte) (SourceObservation, error) {
 			if parseErr != nil {
 				return observation, fmt.Errorf("activity %q computes: %w", node.Name, parseErr)
 			}
+			if program.Kind == "CASE" {
+				program.Class = derivedClass(program, expectedBudget())
+				program.InputState = inputState(program)
+			}
 			observation.Programs = append(observation.Programs, ProgramObservation{
 				Activity: program.Activity, Program: program.Text, ProgramKind: program.Kind, ID: program.ID,
-				Class: program.Class, InputState: program.InputState, Counts: program.Counts, Digest: digestBytes([]byte(program.Text)),
+				Class: program.Class, InputState: program.InputState, Counts: program.Counts,
+				UnobservedDimensions: append([]string(nil), program.UnobservedDimensions...), Digest: digestBytes([]byte(program.Text)),
 			})
 		}
 	}

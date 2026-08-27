@@ -130,14 +130,58 @@ func expectedBudget() integerSet {
 	return integerSet{InterpretationCandidates: 2, UnresolvedBranches: 1, EvidencePaths: 2}
 }
 
+func validUnobserved(unobserved []string) bool {
+	seen := make(map[string]bool, len(unobserved))
+	for _, dimension := range unobserved {
+		if !contains(integerDimensions[:], dimension) || seen[dimension] {
+			return false
+		}
+		seen[dimension] = true
+	}
+	return true
+}
+
+func derivedClass(program computesProgram, budget integerSet) string {
+	if len(program.UnobservedDimensions) > 0 {
+		return "UNKNOWN"
+	}
+	if program.Counts == (integerSet{InterpretationCandidates: 1, UnresolvedBranches: 0, EvidencePaths: 1}) {
+		return "ZERO"
+	}
+	if program.Counts == budget {
+		return "BOUNDARY"
+	}
+	if exceeds(program.Counts, budget) {
+		return "OVER"
+	}
+	return "WITHIN"
+}
+
+func inputState(program computesProgram) string {
+	if len(program.UnobservedDimensions) > 0 {
+		return "UNKNOWN"
+	}
+	return "KNOWN"
+}
+
+func claimTarget(decision string) string {
+	switch decision {
+	case "PASS":
+		return "DISCHARGED"
+	case "FAIL_CLOSED":
+		return "REFUTED"
+	default:
+		return "OPEN"
+	}
+}
+
 type computesProgram struct {
-	Activity   string
-	Text       string
-	Kind       string
-	ID         string
-	Class      string
-	InputState string
-	Counts     integerSet
+	Activity             string
+	Text                 string
+	Kind                 string
+	ID                   string
+	Counts               integerSet
+	UnobservedDimensions []string
 }
 
 func parseComputesProgram(activity, text string) (computesProgram, error) {
@@ -146,43 +190,50 @@ func parseComputesProgram(activity, text string) (computesProgram, error) {
 	}
 	parts := strings.Split(text, ":")
 	if len(parts) == 3 && parts[0] == "ambiguity-budget" && parts[1] == "budget" {
-		counts, err := parseIntegerSet(parts[2])
+		counts, unobserved, err := parseIntegerSet(parts[2])
 		if err != nil {
 			return computesProgram{}, err
 		}
+		if len(unobserved) != 0 {
+			return computesProgram{}, fmt.Errorf("budget coordinates must be observed")
+		}
 		return computesProgram{Activity: activity, Text: text, Kind: "BUDGET", ID: "budget", Counts: counts}, nil
 	}
-	if len(parts) != 6 || parts[0] != "ambiguity-budget" || parts[1] != "case" || parts[2] == "" {
+	if len(parts) != 4 || parts[0] != "ambiguity-budget" || parts[1] != "case" || parts[2] == "" {
 		return computesProgram{}, fmt.Errorf("unsupported computes program")
 	}
-	counts, err := parseIntegerSet(parts[5])
+	counts, unobserved, err := parseIntegerSet(parts[3])
 	if err != nil {
 		return computesProgram{}, err
 	}
-	if !contains([]string{"ZERO", "BOUNDARY", "OVER", "UNKNOWN"}, parts[3]) || !contains([]string{"KNOWN", "UNKNOWN"}, parts[4]) {
-		return computesProgram{}, fmt.Errorf("invalid case metadata")
-	}
-	return computesProgram{Activity: activity, Text: text, Kind: "CASE", ID: parts[2], Class: parts[3], InputState: parts[4], Counts: counts}, nil
+	return computesProgram{Activity: activity, Text: text, Kind: "CASE", ID: parts[2], Counts: counts, UnobservedDimensions: unobserved}, nil
 }
 
-func parseIntegerSet(text string) (integerSet, error) {
+func parseIntegerSet(text string) (integerSet, []string, error) {
 	parts := strings.Split(text, ",")
 	if len(parts) != IntegerDimensionTotal {
-		return integerSet{}, fmt.Errorf("integer set coordinate count mismatch")
+		return integerSet{}, nil, fmt.Errorf("integer set coordinate count mismatch")
 	}
 	values := [IntegerDimensionTotal]int{}
+	unobserved := make([]string, 0, IntegerDimensionTotal)
 	for index, part := range parts {
 		if part == "" || part != strings.TrimSpace(part) {
-			return integerSet{}, fmt.Errorf("non-canonical integer coordinate")
+			return integerSet{}, nil, fmt.Errorf("non-canonical integer coordinate")
+		}
+		if part == "?" {
+			unobserved = append(unobserved, integerDimensions[index])
+			continue
 		}
 		value, err := strconv.Atoi(part)
 		if err != nil || value < 0 {
-			return integerSet{}, fmt.Errorf("invalid integer coordinate")
+			return integerSet{}, nil, fmt.Errorf("invalid integer coordinate")
 		}
 		values[index] = value
 	}
-	return integerSet{InterpretationCandidates: values[0], UnresolvedBranches: values[1], EvidencePaths: values[2]}, nil
+	return integerSet{InterpretationCandidates: values[0], UnresolvedBranches: values[1], EvidencePaths: values[2]}, unobserved, nil
 }
+
+var integerDimensions = [...]string{"interpretation_candidates", "unresolved_branches", "evidence_paths"}
 
 func observeSource(path string, raw []byte) (sourceObservation, error) {
 	file, diagnostics := syntax.ParseFile(path, string(raw))
@@ -208,9 +259,14 @@ func observeSource(path string, raw []byte) (sourceObservation, error) {
 			if err != nil {
 				return observation, err
 			}
+			if program.Kind == "CASE" {
+				program.Class = derivedClass(program, expectedBudget())
+				program.InputState = inputState(program)
+			}
 			observation.Programs = append(observation.Programs, programObservation{Activity: program.Activity, Program: program.Text,
 				ProgramKind: program.Kind, ID: program.ID, Class: program.Class, InputState: program.InputState, Counts: program.Counts,
-				Digest: digestBytes([]byte(program.Text))})
+				UnobservedDimensions: append([]string(nil), program.UnobservedDimensions...),
+				Digest:               digestBytes([]byte(program.Text))})
 		}
 	}
 	sort.Slice(observation.Programs, func(i, j int) bool { return observation.Programs[i].Activity < observation.Programs[j].Activity })
@@ -242,7 +298,7 @@ func validCasePrograms(source sourceObservation, policy contract) bool {
 	classes := map[string]bool{}
 	for _, spec := range policy.Cases {
 		program, ok := findCase(source, spec.Activity)
-		if !ok || program.ID != spec.ID || classes[program.Class] {
+		if !ok || program.ID != spec.ID || !validUnobserved(program.UnobservedDimensions) || classes[program.Class] {
 			return false
 		}
 		classes[program.Class] = true
@@ -251,41 +307,51 @@ func validCasePrograms(source sourceObservation, policy contract) bool {
 }
 
 func makeCaseReceipt(sourceDigest string, program programObservation, budget integerSet) caseReceipt {
-	decision, resolution, reason, claimTo := subjectDecision(program, budget)
+	parsed := computesProgram{Activity: program.Activity, Text: program.Program, Kind: program.ProgramKind,
+		ID: program.ID, Counts: program.Counts, UnobservedDimensions: append([]string(nil), program.UnobservedDimensions...)}
+	decision, resolution, reason := subjectDecision(parsed, budget)
 	evidence := digestValue(struct {
-		SourceDigest string
-		Activity     string
-		Program      string
-		Counts       integerSet
-	}{sourceDigest, program.Activity, program.Program, program.Counts})
-	coord := coordinate{Stage: "ambiguity-budget", Step: "case:" + program.ID, Reason: reason}
-	claim := transition{CaseID: program.ID, From: "AMBIGUITY_OBSERVED", To: claimTo, Stage: coord.Stage, Step: coord.Step,
+		SourceDigest         string
+		Activity             string
+		Program              string
+		Counts               integerSet
+		UnobservedDimensions []string
+	}{sourceDigest, program.Activity, program.Program, program.Counts, program.UnobservedDimensions})
+	coord := caseCoordinate(parsed, reason)
+	claim := transition{CaseID: program.ID, From: "OPEN", To: claimTarget(decision), Stage: coord.Stage, Step: coord.Step,
 		Reason: reason, EvidenceDigest: evidence}
 	return caseReceipt{ID: program.ID, Activity: program.Activity, Class: program.Class, InputState: program.InputState,
-		Program: program.Program, ProgramDigest: program.Digest, Counts: program.Counts, Decision: decision, Resolution: resolution,
+		Program: program.Program, ProgramDigest: program.Digest, Counts: program.Counts,
+		UnobservedDimensions: append([]string(nil), program.UnobservedDimensions...), Decision: decision, Resolution: resolution,
 		Reason: reason, Coordinate: coord, Claim: claim, EvidenceDigest: evidence, Conformance: "MATCH"}
 }
 
-func subjectDecision(program programObservation, budget integerSet) (string, string, string, string) {
-	if program.InputState == "UNKNOWN" {
-		return "UNKNOWN", "LOWER_RESOLUTION", "AMBIGUITY_INPUT_UNKNOWN", "OPEN"
+func caseCoordinate(program computesProgram, reason string) coordinate {
+	if len(program.UnobservedDimensions) > 0 {
+		return coordinate{Stage: "AMBIGUITY_OBSERVATION", Step: program.UnobservedDimensions[0], Reason: "AMBIGUITY_COORDINATE_UNOBSERVED"}
+	}
+	return coordinate{Stage: "AMBIGUITY_BUDGET", Step: "case:" + program.ID, Reason: reason}
+}
+
+func exceeds(value integerSet, budget integerSet) bool {
+	return value.InterpretationCandidates > budget.InterpretationCandidates ||
+		value.UnresolvedBranches > budget.UnresolvedBranches || value.EvidencePaths > budget.EvidencePaths
+}
+
+func subjectDecision(program computesProgram, budget integerSet) (string, string, string) {
+	if len(program.UnobservedDimensions) > 0 {
+		return "UNKNOWN", "LOWER_RESOLUTION", "AMBIGUITY_COORDINATE_UNOBSERVED"
 	}
 	if program.Counts.InterpretationCandidates < 1 || program.Counts.EvidencePaths < 1 {
-		return "UNKNOWN", "LOWER_RESOLUTION", "AMBIGUITY_COUNT_UNKNOWN", "OPEN"
+		return "UNKNOWN", "LOWER_RESOLUTION", "AMBIGUITY_COUNT_UNKNOWN"
 	}
-	if program.Counts.InterpretationCandidates > budget.InterpretationCandidates || program.Counts.UnresolvedBranches > budget.UnresolvedBranches || program.Counts.EvidencePaths > budget.EvidencePaths {
-		return "FAIL_CLOSED", "LOWER_RESOLUTION", "AMBIGUITY_BUDGET_EXCEEDED", "LOWER_RESOLUTION"
+	if exceeds(program.Counts, budget) {
+		return "FAIL_CLOSED", "LOWER_RESOLUTION", "AMBIGUITY_BUDGET_EXCEEDED"
 	}
-	return "PASS", "EXACT", "AMBIGUITY_BUDGET_WITHIN_LIMIT", "EXACT"
+	return "PASS", "EXACT", "AMBIGUITY_BUDGET_WITHIN_LIMIT"
 }
 
 func indicatorsFor(sourceDigest string, program programObservation, budget integerSet) []indicator {
-	evaluation := "WITHIN_LIMIT"
-	if program.InputState == "UNKNOWN" {
-		evaluation = "UNKNOWN_INPUT"
-	} else if program.Counts.InterpretationCandidates > budget.InterpretationCandidates || program.Counts.UnresolvedBranches > budget.UnresolvedBranches || program.Counts.EvidencePaths > budget.EvidencePaths {
-		evaluation = "EXCEEDS_LIMIT"
-	}
 	values := []struct {
 		metric, dimension, proof string
 		observed, limit          int
@@ -296,16 +362,25 @@ func indicatorsFor(sourceDigest string, program programObservation, budget integ
 	}
 	result := make([]indicator, 0, len(values))
 	for _, value := range values {
+		coordinateObserved := !contains(program.UnobservedDimensions, value.dimension)
+		evaluation := "UNOBSERVED"
+		if coordinateObserved {
+			evaluation = "WITHIN_LIMIT"
+			if value.observed > value.limit {
+				evaluation = "EXCEEDS_LIMIT"
+			}
+		}
 		evidence := digestValue(struct {
-			SourceDigest string
-			Activity     string
-			Dimension    string
-			Observed     int
-			Budget       int
-		}{sourceDigest, program.Activity, value.dimension, value.observed, value.limit})
+			SourceDigest       string
+			Activity           string
+			Dimension          string
+			Observed           int
+			CoordinateObserved bool
+			Budget             int
+		}{sourceDigest, program.Activity, value.dimension, value.observed, coordinateObserved, value.limit})
 		result = append(result, indicator{MetricID: value.metric, CaseID: program.ID, Dimension: value.dimension, ProofChoice: value.proof,
 			Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation, Observed: value.observed, Budget: value.limit,
-			Relation: "<=", Evaluation: evaluation, EvidenceDigest: evidence})
+			CoordinateObserved: coordinateObserved, Relation: "<=", Evaluation: evaluation, EvidenceDigest: evidence})
 	}
 	return result
 }
@@ -347,6 +422,9 @@ func buildInterventions(specs []interventionContract, raw []byte, base sourceObs
 		result = append(result, interventionReceipt{ID: spec.ID, Kind: spec.Kind, TargetActivity: spec.TargetActivity,
 			SourceDigestBefore: base.Digest, SourceDigestAfter: next.Digest, SemanticDigestBefore: base.SemanticDigest,
 			SemanticDigestAfter: next.SemanticDigest, CountsBefore: before.Counts, CountsAfter: after.Counts,
+			UnobservedBefore: append([]string(nil), before.UnobservedDimensions...), UnobservedAfter: append([]string(nil), after.UnobservedDimensions...),
+			ClassBefore: before.Class, ClassAfter: after.Class, InputStateBefore: before.InputState, InputStateAfter: after.InputState,
+			ClaimBefore: before.Claim, ClaimAfter: after.Claim,
 			DecisionBefore: before.Decision, ResolutionBefore: before.Resolution, ReasonBefore: before.Reason,
 			DecisionAfter: after.Decision, ResolutionAfter: after.Resolution, ReasonAfter: after.Reason,
 			Satisfied: satisfied, EvidenceDigest: evidence})
@@ -368,7 +446,7 @@ func interventionSource(raw []byte, spec interventionContract) ([]byte, error) {
 			return "", fmt.Errorf("target is not a case")
 		}
 		program.Counts.InterpretationCandidates++
-		return "ambiguity-budget:case:" + program.ID + ":" + program.Class + ":" + program.InputState + ":" + formatIntegerSet(program.Counts), nil
+		return "ambiguity-budget:case:" + program.ID + ":" + formatIntegerSet(program.Counts, program.UnobservedDimensions), nil
 	})
 }
 
@@ -408,17 +486,26 @@ func mutateActivityProgram(raw []byte, target string, transform func(computesPro
 	return nil, fmt.Errorf("target activity not found")
 }
 
-func formatIntegerSet(value integerSet) string {
-	return strconv.Itoa(value.InterpretationCandidates) + "," + strconv.Itoa(value.UnresolvedBranches) + "," + strconv.Itoa(value.EvidencePaths)
+func formatIntegerSet(value integerSet, unobserved []string) string {
+	values := []string{strconv.Itoa(value.InterpretationCandidates), strconv.Itoa(value.UnresolvedBranches), strconv.Itoa(value.EvidencePaths)}
+	for index, dimension := range integerDimensions {
+		if contains(unobserved, dimension) {
+			values[index] = "?"
+		}
+	}
+	return strings.Join(values, ",")
 }
 
 func interventionSatisfied(kind string, before, after caseReceipt, base, next sourceObservation) bool {
 	if kind == "SEMANTIC" {
 		return base.Digest != next.Digest && base.SemanticDigest != next.SemanticDigest && before.Counts != after.Counts && before.Decision == "PASS" &&
-			before.Resolution == "EXACT" && after.Decision == "FAIL_CLOSED" && after.Resolution == "LOWER_RESOLUTION" && after.Reason == "AMBIGUITY_BUDGET_EXCEEDED"
+			before.Resolution == "EXACT" && before.Claim.From == "OPEN" && before.Claim.To == "DISCHARGED" &&
+			after.Decision == "FAIL_CLOSED" && after.Resolution == "LOWER_RESOLUTION" && after.Reason == "AMBIGUITY_BUDGET_EXCEEDED" &&
+			after.Claim.From == "OPEN" && after.Claim.To == "REFUTED"
 	}
 	return base.Digest != next.Digest && base.SemanticDigest == next.SemanticDigest && before.Counts == after.Counts && before.Decision == after.Decision &&
-		before.Resolution == after.Resolution && before.Reason == after.Reason
+		before.Class == after.Class && before.InputState == after.InputState && before.Resolution == after.Resolution && before.Reason == after.Reason &&
+		reflect.DeepEqual(before.UnobservedDimensions, after.UnobservedDimensions) && before.Claim == after.Claim
 }
 
 func allInterventionsSatisfied(values []interventionReceipt) bool {

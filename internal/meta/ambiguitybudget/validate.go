@@ -59,20 +59,24 @@ func Validate(receipt Receipt) error {
 	ids := make([]string, 0, len(receipt.Cases))
 	for index, result := range receipt.Cases {
 		if result.ID == "" || result.Activity == "" || result.Class == "" || result.Program == "" ||
-			!validCounts(result.Counts) || !validDigest(result.ProgramDigest) || !validDigest(result.EvidenceDigest) ||
-			result.Conformance != "MATCH" || result.Coordinate.Stage != "ambiguity-budget" ||
-			result.Coordinate.Step != "case:"+result.ID || result.Coordinate.Reason != result.Reason ||
-			result.Claim.CaseID != result.ID || result.Claim.From != "AMBIGUITY_OBSERVED" ||
+			!validCounts(result.Counts, result.UnobservedDimensions) || !validDigest(result.ProgramDigest) || !validDigest(result.EvidenceDigest) ||
+			result.Conformance != "MATCH" || result.Coordinate.Stage == "" || result.Coordinate.Step == "" ||
+			result.Claim.CaseID != result.ID || result.Claim.From != "OPEN" ||
 			result.Claim.Stage != result.Coordinate.Stage || result.Claim.Step != result.Coordinate.Step ||
 			result.Claim.Reason != result.Reason || result.Claim.EvidenceDigest != result.EvidenceDigest ||
 			result.Claim.EvidenceDigest == "" || receipt.Claims[index] != result.Claim {
 			return fmt.Errorf("AMBIGUITY_RECEIPT_CASE_INVALID")
 		}
-		if result.InputState == "UNKNOWN" {
-			if result.Decision != "UNKNOWN" || result.Resolution != "LOWER_RESOLUTION" || result.Reason != "AMBIGUITY_INPUT_UNKNOWN" || result.Claim.To != "OPEN" {
+		if len(result.UnobservedDimensions) > 0 {
+			if result.Class != "UNKNOWN" || result.InputState != "UNKNOWN" || result.Decision != "UNKNOWN" ||
+				result.Resolution != "LOWER_RESOLUTION" || result.Reason != "AMBIGUITY_COORDINATE_UNOBSERVED" ||
+				result.Coordinate.Stage != "AMBIGUITY_OBSERVATION" || len(result.UnobservedDimensions) != 1 ||
+				result.Coordinate.Step != result.UnobservedDimensions[0] || result.Coordinate.Reason != result.Reason || result.Claim.To != "OPEN" {
 				return fmt.Errorf("AMBIGUITY_RECEIPT_UNKNOWN_TRANSITION_INVALID")
 			}
-		} else if result.Claim.To != result.Resolution {
+		} else if result.InputState != "KNOWN" || result.Class != derivedClass(computesProgram{Counts: result.Counts}, receipt.Budget) ||
+			result.Coordinate.Stage != "AMBIGUITY_BUDGET" || result.Coordinate.Step != "case:"+result.ID ||
+			result.Coordinate.Reason != result.Reason || result.Claim.To != claimTarget(result.Decision) {
 			return fmt.Errorf("AMBIGUITY_RECEIPT_CLAIM_TRANSITION_INVALID")
 		}
 		ids = append(ids, result.ID)
@@ -83,7 +87,9 @@ func Validate(receipt Receipt) error {
 	for _, indicator := range receipt.Indicators {
 		if indicator.CaseID == "" || indicator.Dimension == "" || indicator.ProofChoice == "" ||
 			indicator.Producer != Producer || indicator.Consumer != Consumer || indicator.MetaOperation != MetaOperation ||
-			indicator.Relation != "<=" || indicator.Evaluation == "" || !validDigest(indicator.EvidenceDigest) {
+			indicator.Relation != "<=" || indicator.Evaluation == "" || !validDigest(indicator.EvidenceDigest) ||
+			(!indicator.CoordinateObserved && indicator.Evaluation != "UNOBSERVED") ||
+			(indicator.CoordinateObserved && indicator.Evaluation == "UNOBSERVED") {
 			return fmt.Errorf("AMBIGUITY_RECEIPT_INDICATOR_INVALID")
 		}
 	}
@@ -91,7 +97,8 @@ func Validate(receipt Receipt) error {
 		if intervention.ID == "" || intervention.Kind == "" || intervention.TargetActivity == "" || !intervention.Satisfied ||
 			!validDigest(intervention.SourceDigestBefore) || !validDigest(intervention.SourceDigestAfter) ||
 			!validDigest(intervention.SemanticDigestBefore) || !validDigest(intervention.SemanticDigestAfter) ||
-			!validDigest(intervention.EvidenceDigest) {
+			!validDigest(intervention.EvidenceDigest) || intervention.ClaimBefore.From != "OPEN" || intervention.ClaimAfter.From != "OPEN" ||
+			!validDigest(intervention.ClaimBefore.EvidenceDigest) || !validDigest(intervention.ClaimAfter.EvidenceDigest) {
 			return fmt.Errorf("AMBIGUITY_RECEIPT_INTERVENTION_INVALID")
 		}
 	}

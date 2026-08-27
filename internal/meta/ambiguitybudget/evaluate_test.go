@@ -12,15 +12,18 @@ func TestEvaluateObservesExecutableIntegerSets(t *testing.T) {
 		t.Fatalf("receipt decisions = %s/%s subject=%s/%s", receipt.ConformanceDecision, receipt.ConformanceResolution, receipt.SubjectDecision, receipt.SubjectResolution)
 	}
 	want := map[string][4]string{
-		"zero-ambiguity":        {"PASS", "EXACT", "AMBIGUITY_BUDGET_WITHIN_LIMIT", "EXACT"},
-		"boundary-ambiguity":    {"PASS", "EXACT", "AMBIGUITY_BUDGET_WITHIN_LIMIT", "EXACT"},
-		"over-budget-ambiguity": {"FAIL_CLOSED", "LOWER_RESOLUTION", "AMBIGUITY_BUDGET_EXCEEDED", "LOWER_RESOLUTION"},
-		"unknown-ambiguity":     {"UNKNOWN", "LOWER_RESOLUTION", "AMBIGUITY_INPUT_UNKNOWN", "OPEN"},
+		"zero-ambiguity":        {"PASS", "EXACT", "AMBIGUITY_BUDGET_WITHIN_LIMIT", "DISCHARGED"},
+		"boundary-ambiguity":    {"PASS", "EXACT", "AMBIGUITY_BUDGET_WITHIN_LIMIT", "DISCHARGED"},
+		"over-budget-ambiguity": {"FAIL_CLOSED", "LOWER_RESOLUTION", "AMBIGUITY_BUDGET_EXCEEDED", "REFUTED"},
+		"unknown-ambiguity":     {"UNKNOWN", "LOWER_RESOLUTION", "AMBIGUITY_COORDINATE_UNOBSERVED", "OPEN"},
 	}
 	for _, result := range receipt.Cases {
 		wantCase, ok := want[result.ID]
 		if !ok || [4]string{result.Decision, result.Resolution, result.Reason, result.Claim.To} != wantCase {
 			t.Fatalf("case %q = %#v, want %v", result.ID, result, wantCase)
+		}
+		if result.Claim.From != "OPEN" {
+			t.Fatalf("case %q claim started at %q", result.ID, result.Claim.From)
 		}
 	}
 	if receipt.Budget != expectedBudget() || receipt.Summary.FixedDenominator != 2 ||
@@ -29,6 +32,12 @@ func TestEvaluateObservesExecutableIntegerSets(t *testing.T) {
 	}
 	if err := Validate(receipt); err != nil {
 		t.Fatal(err)
+	}
+	unknown := receipt.Cases[3]
+	if unknown.ID != "unknown-ambiguity" || len(unknown.UnobservedDimensions) != 1 ||
+		unknown.UnobservedDimensions[0] != "unresolved_branches" || unknown.Coordinate.Stage != "AMBIGUITY_OBSERVATION" ||
+		unknown.Coordinate.Step != "unresolved_branches" || unknown.Coordinate.Reason != "AMBIGUITY_COORDINATE_UNOBSERVED" {
+		t.Fatalf("unknown coordinate = %#v", unknown)
 	}
 }
 
@@ -52,12 +61,17 @@ func TestEvaluateInterventionsSeparateSemanticAndNonsemanticChanges(t *testing.T
 	}
 	semantic, nonsemantic := receipt.Interventions[0], receipt.Interventions[1]
 	if !semantic.Satisfied || semantic.CountsBefore == semantic.CountsAfter ||
-		semantic.SemanticDigestBefore == semantic.SemanticDigestAfter || semantic.ResolutionAfter != "LOWER_RESOLUTION" {
+		semantic.SemanticDigestBefore == semantic.SemanticDigestAfter || semantic.ResolutionAfter != "LOWER_RESOLUTION" ||
+		semantic.ClaimBefore.From != "OPEN" || semantic.ClaimBefore.To != "DISCHARGED" ||
+		semantic.ClaimAfter.From != "OPEN" || semantic.ClaimAfter.To != "REFUTED" {
 		t.Fatalf("semantic intervention = %#v", semantic)
 	}
 	if !nonsemantic.Satisfied || nonsemantic.SourceDigestBefore == nonsemantic.SourceDigestAfter ||
 		nonsemantic.SemanticDigestBefore != nonsemantic.SemanticDigestAfter || nonsemantic.CountsBefore != nonsemantic.CountsAfter {
 		t.Fatalf("nonsemantic intervention = %#v", nonsemantic)
+	}
+	if nonsemantic.ClaimBefore != nonsemantic.ClaimAfter {
+		t.Fatalf("nonsemantic claim transition changed = %#v", nonsemantic)
 	}
 }
 
@@ -98,7 +112,7 @@ entity Branch id "gooo://ambiguity-budget/entity/branch"
 entity Evidence id "gooo://ambiguity-budget/entity/evidence"
 entity Receipt id "gooo://ambiguity-budget/entity/receipt"
 activity FixedBudget() -> Receipt computes "ambiguity-budget:budget:2,1,2"
-activity ZeroAmbiguity() -> Receipt computes "ambiguity-budget:case:zero-ambiguity:ZERO:KNOWN:1,0,1"
-activity BoundaryAmbiguity() -> Receipt computes "ambiguity-budget:case:boundary-ambiguity:BOUNDARY:KNOWN:2,1,2"
-activity OverBudgetAmbiguity() -> Receipt computes "ambiguity-budget:case:over-budget-ambiguity:OVER:KNOWN:3,2,3"
-activity UnknownAmbiguity() -> Receipt computes "ambiguity-budget:case:unknown-ambiguity:UNKNOWN:UNKNOWN:2,1,2"`
+activity ZeroAmbiguity() -> Receipt computes "ambiguity-budget:case:zero-ambiguity:1,0,1"
+activity BoundaryAmbiguity() -> Receipt computes "ambiguity-budget:case:boundary-ambiguity:2,1,2"
+activity OverBudgetAmbiguity() -> Receipt computes "ambiguity-budget:case:over-budget-ambiguity:3,2,3"
+activity UnknownAmbiguity() -> Receipt computes "ambiguity-budget:case:unknown-ambiguity:2,?,2"`

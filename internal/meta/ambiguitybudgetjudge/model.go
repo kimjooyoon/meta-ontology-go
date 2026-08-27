@@ -60,14 +60,15 @@ type contract struct {
 }
 
 type programObservation struct {
-	Activity    string     `json:"activity"`
-	Program     string     `json:"program"`
-	ProgramKind string     `json:"program_kind"`
-	ID          string     `json:"id"`
-	Class       string     `json:"class,omitempty"`
-	InputState  string     `json:"input_state,omitempty"`
-	Counts      integerSet `json:"counts"`
-	Digest      string     `json:"digest"`
+	Activity             string     `json:"activity"`
+	Program              string     `json:"program"`
+	ProgramKind          string     `json:"program_kind"`
+	ID                   string     `json:"id"`
+	Class                string     `json:"class,omitempty"`
+	InputState           string     `json:"input_state,omitempty"`
+	Counts               integerSet `json:"counts"`
+	UnobservedDimensions []string   `json:"unobserved_dimensions,omitempty"`
+	Digest               string     `json:"digest"`
 }
 
 type sourceObservation struct {
@@ -83,35 +84,37 @@ type sourceObservation struct {
 }
 
 type caseReceipt struct {
-	ID             string     `json:"id"`
-	Activity       string     `json:"activity"`
-	Class          string     `json:"class"`
-	InputState     string     `json:"input_state"`
-	Program        string     `json:"program"`
-	ProgramDigest  string     `json:"program_digest"`
-	Counts         integerSet `json:"counts"`
-	Decision       string     `json:"decision"`
-	Resolution     string     `json:"resolution"`
-	Reason         string     `json:"reason"`
-	Coordinate     coordinate `json:"coordinate"`
-	Claim          transition `json:"claim"`
-	EvidenceDigest string     `json:"evidence_digest"`
-	Conformance    string     `json:"conformance"`
+	ID                   string     `json:"id"`
+	Activity             string     `json:"activity"`
+	Class                string     `json:"class"`
+	InputState           string     `json:"input_state"`
+	Program              string     `json:"program"`
+	ProgramDigest        string     `json:"program_digest"`
+	Counts               integerSet `json:"counts"`
+	UnobservedDimensions []string   `json:"unobserved_dimensions,omitempty"`
+	Decision             string     `json:"decision"`
+	Resolution           string     `json:"resolution"`
+	Reason               string     `json:"reason"`
+	Coordinate           coordinate `json:"coordinate"`
+	Claim                transition `json:"claim"`
+	EvidenceDigest       string     `json:"evidence_digest"`
+	Conformance          string     `json:"conformance"`
 }
 
 type indicator struct {
-	MetricID       string `json:"metric_id"`
-	CaseID         string `json:"case_id"`
-	Dimension      string `json:"dimension"`
-	ProofChoice    string `json:"proof_choice"`
-	Producer       string `json:"producer"`
-	Consumer       string `json:"consumer"`
-	MetaOperation  string `json:"meta_operation"`
-	Observed       int    `json:"observed"`
-	Budget         int    `json:"budget"`
-	Relation       string `json:"relation"`
-	Evaluation     string `json:"evaluation"`
-	EvidenceDigest string `json:"evidence_digest"`
+	MetricID           string `json:"metric_id"`
+	CaseID             string `json:"case_id"`
+	Dimension          string `json:"dimension"`
+	ProofChoice        string `json:"proof_choice"`
+	Producer           string `json:"producer"`
+	Consumer           string `json:"consumer"`
+	MetaOperation      string `json:"meta_operation"`
+	Observed           int    `json:"observed"`
+	CoordinateObserved bool   `json:"coordinate_observed"`
+	Budget             int    `json:"budget"`
+	Relation           string `json:"relation"`
+	Evaluation         string `json:"evaluation"`
+	EvidenceDigest     string `json:"evidence_digest"`
 }
 
 type interventionReceipt struct {
@@ -124,6 +127,14 @@ type interventionReceipt struct {
 	SemanticDigestAfter  string     `json:"semantic_digest_after"`
 	CountsBefore         integerSet `json:"counts_before"`
 	CountsAfter          integerSet `json:"counts_after"`
+	UnobservedBefore     []string   `json:"unobserved_before,omitempty"`
+	UnobservedAfter      []string   `json:"unobserved_after,omitempty"`
+	ClassBefore          string     `json:"class_before"`
+	ClassAfter           string     `json:"class_after"`
+	InputStateBefore     string     `json:"input_state_before"`
+	InputStateAfter      string     `json:"input_state_after"`
+	ClaimBefore          transition `json:"claim_before"`
+	ClaimAfter           transition `json:"claim_after"`
 	DecisionBefore       string     `json:"decision_before"`
 	ResolutionBefore     string     `json:"resolution_before"`
 	ReasonBefore         string     `json:"reason_before"`

@@ -2,6 +2,7 @@ package ambiguitybudget
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -37,6 +38,9 @@ func buildInterventions(contract Contract, raw []byte, base SourceObservation, b
 		results = append(results, InterventionReceipt{ID: spec.ID, Kind: spec.Kind, TargetActivity: spec.TargetActivity,
 			SourceDigestBefore: base.Digest, SourceDigestAfter: after.Digest, SemanticDigestBefore: base.SemanticDigest,
 			SemanticDigestAfter: after.SemanticDigest, CountsBefore: before.Counts, CountsAfter: afterResult.Counts,
+			UnobservedBefore: append([]string(nil), before.UnobservedDimensions...), UnobservedAfter: append([]string(nil), afterResult.UnobservedDimensions...),
+			ClassBefore: before.Class, ClassAfter: afterResult.Class, InputStateBefore: before.InputState, InputStateAfter: afterResult.InputState,
+			ClaimBefore: before.Claim, ClaimAfter: afterResult.Claim,
 			DecisionBefore: before.Decision, ResolutionBefore: before.Resolution, ReasonBefore: before.Reason,
 			DecisionAfter: afterResult.Decision, ResolutionAfter: afterResult.Resolution, ReasonAfter: afterResult.Reason,
 			Satisfied: satisfied, EvidenceDigest: evidence})
@@ -101,11 +105,14 @@ func mutateActivityProgram(raw []byte, target string, transform func(computesPro
 func interventionSatisfied(kind string, before, after CaseReceipt, base, next SourceObservation) bool {
 	if kind == "SEMANTIC" {
 		return base.Digest != next.Digest && base.SemanticDigest != next.SemanticDigest && before.Counts != after.Counts &&
-			before.Decision == "PASS" && before.Resolution == "EXACT" && after.Decision == "FAIL_CLOSED" &&
-			after.Resolution == "LOWER_RESOLUTION" && after.Reason == "AMBIGUITY_BUDGET_EXCEEDED"
+			before.Decision == "PASS" && before.Resolution == "EXACT" && before.Claim.From == "OPEN" && before.Claim.To == "DISCHARGED" &&
+			after.Decision == "FAIL_CLOSED" && after.Resolution == "LOWER_RESOLUTION" && after.Reason == "AMBIGUITY_BUDGET_EXCEEDED" &&
+			after.Claim.From == "OPEN" && after.Claim.To == "REFUTED"
 	}
 	return base.Digest != next.Digest && base.SemanticDigest == next.SemanticDigest && before.Counts == after.Counts &&
-		before.Decision == after.Decision && before.Resolution == after.Resolution && before.Reason == after.Reason
+		before.Class == after.Class && before.InputState == after.InputState && before.Decision == after.Decision &&
+		before.Resolution == after.Resolution && before.Reason == after.Reason && reflect.DeepEqual(before.UnobservedDimensions, after.UnobservedDimensions) &&
+		before.Claim == after.Claim
 }
 
 func failedIntervention(spec InterventionContract, reason string) InterventionReceipt {

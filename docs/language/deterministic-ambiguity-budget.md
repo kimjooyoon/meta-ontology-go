@@ -10,17 +10,21 @@ The real [`.gooo` source](../../examples/ambiguity-budget/main.gooo) is the
 observation authority. Its canonical `computes` declarations contain the
 fixed budget `(2,1,2)` and all four observed case sets:
 
-| case | observed set | subject result |
+| case | observed set | derived class / subject result / claim |
 | --- | --- | --- |
-| zero | `(1,0,1)` | `PASS / EXACT` |
-| boundary | `(2,1,2)` | `PASS / EXACT` |
-| over | `(3,2,3)` | `FAIL_CLOSED / LOWER_RESOLUTION` |
-| unknown | `(2,1,2)` with unknown input | `UNKNOWN / LOWER_RESOLUTION` |
+| zero | `(1,0,1)` | `ZERO / PASS / EXACT / OPEN→DISCHARGED` |
+| boundary | `(2,1,2)` | `BOUNDARY / PASS / EXACT / OPEN→DISCHARGED` |
+| over | `(3,2,3)` | `OVER / FAIL_CLOSED / LOWER_RESOLUTION / OPEN→REFUTED` |
+| unknown | `(2,?,2)` | `UNKNOWN / UNKNOWN / LOWER_RESOLUTION / OPEN→OPEN` |
 
 The coordinates count interpretation candidates, unresolved branches, and
 evidence paths. A known set is within the budget only when every coordinate is
-within its corresponding limit. Any excess descends to lower resolution.
-Unknown input remains unknown and keeps its claim transition `OPEN`.
+within its corresponding limit. Any excess descends to lower resolution. Every
+claim ledger row starts at `OPEN`; a sufficient observation discharges it, a
+real excess refutes it, and an observation defect preserves `OPEN`. `EXACT`
+and `LOWER_RESOLUTION` are resolution values only. The `?` coordinate is not a
+value or a label: it is an unobserved `unresolved_branches` coordinate
+discovered by the evaluator.
 
 The JSON [contract](../../examples/ambiguity-budget/contract.json) contains
 only stable source identity, case IDs, intervention IDs, and the fixed
@@ -37,9 +41,10 @@ expected `UNKNOWN` is not converted into an aggregate `PASS / EXACT`.
 
 Every persistent claim transition records `stage`, `step`, `reason`, and an
 evidence digest. The receipt carries the producer, consumer, meta-operation,
-proof choice, source/semantic digests, and zero-effect guard. There is no
-aggregate score: the fixed denominator is `2`, counting the two declared
-interventions, not the twelve integer coordinates.
+proof choice, source/semantic digests, and zero-effect guard. Interventions
+carry their before/after claim transitions explicitly. There is no aggregate
+score: the fixed denominator is `2`, counting the two declared interventions,
+not the twelve integer coordinates.
 
 ## Adopted and rejected principles
 

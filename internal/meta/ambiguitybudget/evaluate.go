@@ -40,29 +40,32 @@ func Evaluate(input Input) Receipt {
 
 func caseReceipt(sourceDigest string, program ProgramObservation, budget IntegerSet) CaseReceipt {
 	parsed := computesProgram{Activity: program.Activity, Text: program.Program, Kind: program.ProgramKind,
-		ID: program.ID, Class: program.Class, InputState: program.InputState, Counts: program.Counts}
-	decision, resolution, reason, claimTo := subjectDecision(parsed, budget)
+		ID: program.ID, Counts: program.Counts, UnobservedDimensions: append([]string(nil), program.UnobservedDimensions...)}
+	decision, resolution, reason := subjectDecision(parsed, budget)
 	evidence := digestValue(struct {
-		SourceDigest string
-		Activity     string
-		Program      string
-		Counts       IntegerSet
-	}{sourceDigest, program.Activity, program.Program, program.Counts})
-	coordinate := Coordinate{Stage: "ambiguity-budget", Step: "case:" + program.ID, Reason: reason}
-	claim := ClaimTransition{CaseID: program.ID, From: "AMBIGUITY_OBSERVED", To: claimTo,
+		SourceDigest         string
+		Activity             string
+		Program              string
+		Counts               IntegerSet
+		UnobservedDimensions []string
+	}{sourceDigest, program.Activity, program.Program, program.Counts, program.UnobservedDimensions})
+	coordinate := caseCoordinate(program, reason)
+	claim := ClaimTransition{CaseID: program.ID, From: "OPEN", To: claimTarget(decision),
 		Stage: coordinate.Stage, Step: coordinate.Step, Reason: reason, EvidenceDigest: evidence}
 	return CaseReceipt{ID: program.ID, Activity: program.Activity, Class: program.Class, InputState: program.InputState,
-		Program: program.Program, ProgramDigest: program.Digest, Counts: program.Counts, Decision: decision,
-		Resolution: resolution, Reason: reason, Coordinate: coordinate, Claim: claim, EvidenceDigest: evidence, Conformance: "MATCH"}
+		Program: program.Program, ProgramDigest: program.Digest, Counts: program.Counts,
+		UnobservedDimensions: append([]string(nil), program.UnobservedDimensions...), Decision: decision, Resolution: resolution,
+		Reason: reason, Coordinate: coordinate, Claim: claim, EvidenceDigest: evidence, Conformance: "MATCH"}
+}
+
+func caseCoordinate(program computesProgram, reason string) Coordinate {
+	if len(program.UnobservedDimensions) > 0 {
+		return Coordinate{Stage: "AMBIGUITY_OBSERVATION", Step: program.UnobservedDimensions[0], Reason: "AMBIGUITY_COORDINATE_UNOBSERVED"}
+	}
+	return Coordinate{Stage: "AMBIGUITY_BUDGET", Step: "case:" + program.ID, Reason: reason}
 }
 
 func indicatorsFor(sourceDigest string, program ProgramObservation, budget IntegerSet) []Indicator {
-	evaluation := "WITHIN_LIMIT"
-	if program.InputState == "UNKNOWN" {
-		evaluation = "UNKNOWN_INPUT"
-	} else if exceeds(program.Counts, budget) {
-		evaluation = "EXCEEDS_LIMIT"
-	}
 	values := []struct {
 		metric, dimension, proof string
 		observed, limit          int
@@ -73,16 +76,26 @@ func indicatorsFor(sourceDigest string, program ProgramObservation, budget Integ
 	}
 	indicators := make([]Indicator, 0, len(values))
 	for _, value := range values {
+		coordinateObserved := !contains(program.UnobservedDimensions, value.dimension)
+		evaluation := "UNOBSERVED"
+		if coordinateObserved {
+			evaluation = "WITHIN_LIMIT"
+			if value.observed > value.limit {
+				evaluation = "EXCEEDS_LIMIT"
+			}
+		}
 		evidence := digestValue(struct {
-			SourceDigest string
-			Activity     string
-			Dimension    string
-			Observed     int
-			Budget       int
-		}{sourceDigest, program.Activity, value.dimension, value.observed, value.limit})
+			SourceDigest       string
+			Activity           string
+			Dimension          string
+			Observed           int
+			CoordinateObserved bool
+			Budget             int
+		}{sourceDigest, program.Activity, value.dimension, value.observed, coordinateObserved, value.limit})
 		indicators = append(indicators, Indicator{MetricID: value.metric, CaseID: program.ID, Dimension: value.dimension,
 			ProofChoice: value.proof, Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation,
-			Observed: value.observed, Budget: value.limit, Relation: "<=", Evaluation: evaluation, EvidenceDigest: evidence})
+			Observed: value.observed, CoordinateObserved: coordinateObserved, Budget: value.limit, Relation: "<=",
+			Evaluation: evaluation, EvidenceDigest: evidence})
 	}
 	return indicators
 }
@@ -126,7 +139,8 @@ func subjectVector(cases []CaseReceipt) (string, string, string) {
 func buildProofs(receipt Receipt) []Proof {
 	claimsPreserved := len(receipt.Claims) == len(receipt.Cases)
 	for index, result := range receipt.Cases {
-		claimsPreserved = claimsPreserved && receipt.Claims[index] == result.Claim && result.Claim.EvidenceDigest != ""
+		claimsPreserved = claimsPreserved && receipt.Claims[index] == result.Claim && result.Claim.From == "OPEN" &&
+			result.Claim.To == claimTarget(result.Decision) && result.Claim.EvidenceDigest != ""
 	}
 	interventionsPassed := len(receipt.Interventions) == ExpectedInterventions
 	for _, intervention := range receipt.Interventions {
