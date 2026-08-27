@@ -6,15 +6,23 @@ on:
     paths:
       - .github/workflows/meta-circular-boundary.yml
       - cmd/meta-circular-boundary-witness/**
+      - cmd/meta-circular-boundary-consumer-witness/**
+      - cmd/meta-circular-boundary-intervention-witness/**
       - examples/meta-circular-boundary/**
       - internal/meta/metacircularboundary/**
+      - internal/meta/metacircularboundarycontract/**
+      - internal/meta/metacircularboundaryconsumer/**
   push:
     branches: [dev]
     paths:
       - .github/workflows/meta-circular-boundary.yml
       - cmd/meta-circular-boundary-witness/**
+      - cmd/meta-circular-boundary-consumer-witness/**
+      - cmd/meta-circular-boundary-intervention-witness/**
       - examples/meta-circular-boundary/**
       - internal/meta/metacircularboundary/**
+      - internal/meta/metacircularboundarycontract/**
+      - internal/meta/metacircularboundaryconsumer/**
   workflow_dispatch:
 
 permissions:
@@ -42,11 +50,14 @@ jobs:
           go version
       - name: Require formatting
         run: |
-          test -z "$(gofmt -l cmd/meta-circular-boundary-witness internal/meta/metacircularboundary)"
+          test -z "$(gofmt -l cmd/meta-circular-boundary-witness cmd/meta-circular-boundary-consumer-witness cmd/meta-circular-boundary-intervention-witness internal/meta/metacircularboundary internal/meta/metacircularboundarycontract internal/meta/metacircularboundaryconsumer)"
       - name: Run package tests and vet
         run: |
           go test ./internal/meta/metacircularboundary
-          go vet ./cmd/meta-circular-boundary-witness ./internal/meta/metacircularboundary
+          go test ./internal/meta/metacircularboundaryconsumer
+          go vet ./cmd/meta-circular-boundary-witness ./cmd/meta-circular-boundary-consumer-witness ./cmd/meta-circular-boundary-intervention-witness ./internal/meta/metacircularboundary ./internal/meta/metacircularboundaryconsumer
+      - name: Run shared CaseInput regression
+        run: go test ./internal/meta/metacircularboundary -run TestConsumerRejectsSharedWrongCaseInputCounterexample -count=1
       - name: Produce and independently judge two receipts
         run: |
           set -euo pipefail
@@ -56,10 +67,17 @@ jobs:
             go run ./cmd/meta-circular-boundary-witness \
               --source examples/meta-circular-boundary/main.gooo \
               --head-sha "$HEAD_SHA" \
-              --output "$output/$attempt.json" \
-              --check
+              --output "$output/$attempt.json"
           done
           cmp -s "$output/first.json" "$output/replay.json"
+          go run ./cmd/meta-circular-boundary-consumer-witness \
+            --source examples/meta-circular-boundary/main.gooo \
+            --head-sha "$HEAD_SHA" \
+            --report "$output/first.json"
+          go run ./cmd/meta-circular-boundary-intervention-witness \
+            --source examples/meta-circular-boundary/main.gooo \
+            --head-sha "$HEAD_SHA" \
+            --output "$output/causality.json"
           jq -e '
             .schema == "gooo/meta-circular-boundary-report/v1" and
             .scope == "READ_ONLY_META_CIRCULAR_BOUNDARY" and
@@ -82,12 +100,36 @@ jobs:
             .summary.repository_writes == 0 and
             .summary.mutation_authority == 0 and
             .repository_writes == 0 and .mutation_authority == false and
-            ([.indicators[] | select(.satisfied == false)] | length) == 0
+            ([.indicators[] | select(.satisfied == false)] | length) == 0 and
+            .independent_judge.consumer == "metacircularboundaryconsumer.Judge"
           ' "$output/first.json"
-      - name: Upload exact-head receipt
+      - name: Measure consumer dependency boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/meta-circular-boundary"
+          deps="$output/consumer-deps.txt"
+          go list -deps ./cmd/meta-circular-boundary-consumer-witness > "$deps"
+          forbidden="$(grep -Fx 'github.com/kimjooyoon/meta-ontology-go/internal/meta/metacircularboundary' "$deps" | wc -l | tr -d ' ')"
+          test "$forbidden" -eq 0
+          jq -n \
+            --arg consumer "cmd/meta-circular-boundary-consumer-witness" \
+            --argjson observed "$forbidden" \
+            '{schema:"gooo/meta-circular-boundary-independence/v1", consumer:$consumer, forbidden_producer_dependencies_observed:$observed, forbidden_producer_dependencies_allowed_max:0, independence_contract:"1/1", independence_contract_passed:1, independence_contract_total:1}' \
+            > "$output/independence.json"
+          jq -e '.forbidden_producer_dependencies_observed == 0 and .forbidden_producer_dependencies_allowed_max == 0 and .independence_contract == "1/1" and .independence_contract_passed == 1 and .independence_contract_total == 1' "$output/independence.json"
+      - name: Check semantic causality interventions
+        run: |
+          jq -e '
+            .schema == "gooo/meta-circular-boundary-causality/v1" and
+            .summary.total == 2 and .summary.passed == 2 and .summary.coverage_bps == 10000 and
+            ([.cases[] | select(.kind == "SEMANTIC" and .semantic_changed == true and .expected_semantic_change == true and .consumer_accepted == true and .passed == true)] | length) == 1 and
+            ([.cases[] | select(.kind == "NON_SEMANTIC" and .semantic_changed == false and .expected_semantic_change == false and .source_changed == true and .consumer_accepted == true and .passed == true)] | length) == 1
+          ' "$RUNNER_TEMP/meta-circular-boundary/causality.json"
+      - name: Upload exact-head evidence
         uses: actions/upload-artifact@v6
         with:
           name: meta-circular-boundary-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/meta-circular-boundary/first.json
+          path: ${{ runner.temp }}/meta-circular-boundary
           if-no-files-found: error
           retention-days: 14

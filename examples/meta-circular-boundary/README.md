@@ -11,8 +11,11 @@ keeps three claims separate:
 
 The fixed denominator has four cases: description only, explicit read-only
 capability, forged capability, and a write capability outside the read-only
-scope. The consumer-side `IndependentJudge` re-reads the source and derives
-the expected result; it does not trust the producer's top-level decision.
+scope. `metacircularboundaryconsumer.Judge` is a separate consumer package
+and command. It shares only the versioned schema/model package and the
+language parser/lowerer; it independently derives case inputs, expected
+outcomes, receipts, summaries, and indicators. It does not import
+`metacircularboundary` or trust the producer's top-level decision.
 
 ## Evidence contract
 
@@ -31,6 +34,18 @@ notes. It does not claim to be a self-hosting evaluator or a cryptographically
 unforgeable capability implementation: the handle is deterministic fixture
 evidence, and the read-only boundary is a semantic contract exercised by CI.
 
+The Actions dependency contract measures the consumer command with
+`go list -deps`: forbidden producer dependencies observed `0`, allowed maximum
+`0`, independence contract `1/1`. A regression test mutates the
+description-only case to reuse the explicit-capability `CaseInput`; the
+consumer must reject that report. The producer and consumer no longer share
+that derivation seam.
+
+The semantic-causality witness runs two in-memory interventions: changing an
+entity ID must change the semantic digest, while adding a trailing newline
+must change only the source digest. Both are consumer-accepted and are
+reported as `2/2` (`10000` BPS).
+
 ## Meta value and falsifiers
 
 The meta value is an observable non-equivalence:
@@ -38,4 +53,6 @@ The meta value is an observable non-equivalence:
 receipt where description-only input becomes authorized, a forged or write
 grant reaches execution, or the source/receipt consumer can be changed without
 the independent judge rejecting the digest-bound report. The experiment is
-therefore falsifiable, not a self-hosting claim.
+therefore falsifiable, not a self-hosting claim. Before this revision the
+judge lived in the producer package and the independence contract was `0/1`;
+afterward it is `0` forbidden producer dependencies and `1/1`.

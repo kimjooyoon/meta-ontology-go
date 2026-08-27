@@ -6,6 +6,8 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/meta-circular-boundary.yml",
 		".github/workflows/self-improvement-contract.yml",
+		"cmd/meta-circular-boundary-consumer-witness",
+		"cmd/meta-circular-boundary-intervention-witness",
 		"cmd/meta-circular-boundary-witness",
 		"examples/language-semantic-model/corpus.json",
 		"examples/language-syntax-roundtrip/corpus.json",
@@ -21,6 +23,8 @@ func init() {
 		"internal/meta/languagereadiness/toolchainconformance/contract.go",
 		"internal/meta/languagereadiness/toolchainconformance/corpus.go",
 		"internal/meta/metacircularboundary",
+		"internal/meta/metacircularboundarycontract",
+		"internal/meta/metacircularboundaryconsumer",
 		"internal/verify/scope_meta_circular_boundary.go",
 	}
 }

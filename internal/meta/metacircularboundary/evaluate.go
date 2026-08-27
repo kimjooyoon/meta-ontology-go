@@ -41,14 +41,8 @@ func Evaluate(input Input) Report {
 	} else {
 		report.Decision, report.Resolution, report.Reason = DecisionPass, ResolutionExact, ReasonContractSatisfied
 	}
-	report.IndependentJudge = JudgeEvidence{Producer: "metacircularboundary.Evaluate", Consumer: "metacircularboundary.IndependentJudge", ComparedCases: len(report.Cases), Decision: report.Decision, Reason: report.Reason}
+	report.IndependentJudge = JudgeEvidence{Producer: "metacircularboundary.Evaluate", Consumer: "metacircularboundaryconsumer.Judge", ComparedCases: len(report.Cases), Decision: report.Decision, Reason: report.Reason}
 	return sealReport(report)
-}
-
-type Input struct {
-	Path    string
-	HeadSHA string
-	Source  []byte
 }
 
 func classify(source SourceObservation, attempt Attempt) CaseObservation {
@@ -86,7 +80,7 @@ func buildReceipt(source SourceObservation, definition CaseDefinition, attempt A
 	}
 	receipt := Receipt{
 		Schema: "gooo/meta-circular-boundary-receipt/v1", CaseID: definition.ID,
-		Producer: "metacircularboundary.Evaluate", Consumer: "metacircularboundary.IndependentJudge",
+		Producer: "metacircularboundary.Evaluate", Consumer: "metacircularboundaryconsumer.Judge",
 		MetaOperation: definition.MetaOperation, ProofChoice: definition.ProofChoice,
 		Coordinate:   Coordinate{Stage: "REPLAY_AUTHORIZATION", Step: definition.ID, Reason: observation.Reason},
 		SourceDigest: source.SourceDigest, DescriptionDigest: attempt.DescriptionDigest, CapabilityDigest: capabilityDigest,

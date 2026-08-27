@@ -14,7 +14,6 @@ func main() {
 	sourcePath := flag.String("source", metacircularboundary.ExpectedSourcePath, "Gooo source to observe")
 	headSHA := flag.String("head-sha", "", "exact 40-character commit SHA")
 	output := flag.String("output", "", "receipt output path")
-	check := flag.Bool("check", false, "run the independent consumer-side judge")
 	flag.Parse()
 
 	source, err := os.ReadFile(*sourcePath)
@@ -23,11 +22,6 @@ func main() {
 	}
 	input := metacircularboundary.Input{Path: *sourcePath, HeadSHA: *headSHA, Source: source}
 	report := metacircularboundary.Evaluate(input)
-	if *check {
-		if err := metacircularboundary.Judge(report, input); err != nil {
-			fatal(err)
-		}
-	}
 	encoded, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		fatal(err)
