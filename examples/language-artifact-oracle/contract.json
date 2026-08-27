@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/language-artifact-oracle-contract/v1",
+  "version": 1,
+  "cases": [
+    {"id":"genuine-source-bound","input_kind":"GENUINE","expected_decision":"PASS","expected_reason":"ARTIFACT_SOURCE_PROJECTION_EXACT","proof_choice":"FOUNDATION","meta_operation":"independently-project-source"},
+    {"id":"resealed-output-forgery","input_kind":"FORGED","expected_decision":"FAIL_CLOSED","expected_reason":"ARTIFACT_SOURCE_PROJECTION_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-resealed-artifact-forgery"},
+    {"id":"unknown-artifact-decision","input_kind":"UNKNOWN_DECISION","expected_decision":"FAIL_CLOSED","expected_reason":"ARTIFACT_DECISION_UNKNOWN","proof_choice":"REGRESSION","meta_operation":"reject-unknown-artifact-decision"},
+    {"id":"unsupported-source-projection","input_kind":"UNSUPPORTED_SOURCE","expected_decision":"FAIL_CLOSED","expected_reason":"ORACLE_SOURCE_PROJECTION_UNKNOWN","proof_choice":"FOUNDATION","meta_operation":"lower-unsupported-source-resolution"}
+  ]
+}
