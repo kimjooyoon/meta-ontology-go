@@ -10,9 +10,6 @@ type ledgerFacts struct {
 	Schema          string           `json:"schema"`
 	ID              string           `json:"id"`
 	Subject         string           `json:"subject"`
-	Decision        string           `json:"decision"`
-	Resolution      string           `json:"resolution"`
-	Reason          string           `json:"reason"`
 	Source          SourceBinding    `json:"source"`
 	Records         []EvidenceRecord `json:"records"`
 	Counterexamples []Counterexample `json:"counterexamples"`
@@ -20,7 +17,12 @@ type ledgerFacts struct {
 
 func digestJSON(value any) string {
 	raw, _ := json.Marshal(value)
-	return digestBytes(raw)
+	var normalized any
+	if json.Unmarshal(raw, &normalized) != nil {
+		return digestBytes(raw)
+	}
+	canonical, _ := json.Marshal(normalized)
+	return digestBytes(canonical)
 }
 
 func digestBytes(value []byte) string {
@@ -30,12 +32,22 @@ func digestBytes(value []byte) string {
 
 func factsDigest(ledger Ledger) string {
 	return digestJSON(ledgerFacts{Schema: ledger.Schema, ID: ledger.ID, Subject: ledger.Subject,
-		Decision: ledger.Decision, Resolution: ledger.Resolution, Reason: ledger.Reason,
 		Source: ledger.Source, Records: ledger.Records, Counterexamples: ledger.Counterexamples})
 }
 
 func seal(receipt Receipt) Receipt {
 	receipt.Digest = ""
-	receipt.Digest = digestJSON(receipt)
+	receipt.Digest = receiptDigest(receipt)
 	return receipt
+}
+
+func receiptDigest(receipt Receipt) string {
+	// The seal covers the canonical receipt payload, excluding the field that
+	// carries the seal itself. The independent consumer applies the same rule
+	// to the raw receipt bytes.
+	var value map[string]any
+	raw, _ := json.Marshal(receipt)
+	_ = json.Unmarshal(raw, &value)
+	delete(value, "digest")
+	return digestJSON(value)
 }

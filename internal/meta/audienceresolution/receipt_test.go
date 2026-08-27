@@ -4,7 +4,7 @@ import "testing"
 
 func TestIndependentCheckerRejectsForgedDecision(t *testing.T) {
 	receipt := Evaluate(fixtureInput(t))
-	receipt.Views[0].Decision = "FAIL_CLOSED"
+	receipt.Views[0].LocalDecision = "PASS"
 	if err := ValidateReceipt(receipt); err == nil {
 		t.Fatal("checker accepted a contradictory audience decision")
 	}

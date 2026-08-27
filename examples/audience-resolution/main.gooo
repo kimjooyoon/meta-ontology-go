@@ -25,3 +25,41 @@ activity SelectClaimTransition(EvidenceRecord) -> ClaimTransition
 activity SealProjectionReceipt(AudienceView, Counterexample, ClaimTransition) -> ProjectionReceipt
 activity ValidateProjectionReceipt(ProjectionReceipt) -> ProjectionReceipt
 activity ReplayAudienceProjection(ProjectionReceipt) -> ProjectionReceipt
+
+// These declarations are the semantic values of the experiment. Their
+// stable identities, rather than a copied JSON policy, define the audience
+// coordinate sets, claim-state domain, and evidence-to-claim relation.
+entity PolicyUserLedgerCoverage id "gooo://audience-resolution/policy/USER/01/ledger.coverage"
+entity PolicyUserCoordinates id "gooo://audience-resolution/policy/USER/02/user.coordinates"
+entity PolicyUserSharedDecision id "gooo://audience-resolution/policy/USER/03/projection.shared-decision"
+entity PolicyUserResolution id "gooo://audience-resolution/policy/USER/04/projection.resolution"
+entity PolicyAuthorLedgerCoverage id "gooo://audience-resolution/policy/TOOL_AUTHOR/01/ledger.coverage"
+entity PolicyAuthorUserCoordinates id "gooo://audience-resolution/policy/TOOL_AUTHOR/02/user.coordinates"
+entity PolicyAuthorSharedDecision id "gooo://audience-resolution/policy/TOOL_AUTHOR/03/projection.shared-decision"
+entity PolicyAuthorResolution id "gooo://audience-resolution/policy/TOOL_AUTHOR/04/projection.resolution"
+entity PolicyAuthorSourceBinding id "gooo://audience-resolution/policy/TOOL_AUTHOR/05/source.binding"
+entity PolicyAuthorLedgerReplay id "gooo://audience-resolution/policy/TOOL_AUTHOR/06/ledger.replay"
+entity PolicyAuthorCoordinates id "gooo://audience-resolution/policy/TOOL_AUTHOR/07/author.coordinates"
+entity PolicyAuthorGovernorCoordinates id "gooo://audience-resolution/policy/TOOL_AUTHOR/08/governor.coordinates"
+entity PolicyGovernorLedgerCoverage id "gooo://audience-resolution/policy/GOVERNOR/01/ledger.coverage"
+entity PolicyGovernorUserCoordinates id "gooo://audience-resolution/policy/GOVERNOR/02/user.coordinates"
+entity PolicyGovernorSharedDecision id "gooo://audience-resolution/policy/GOVERNOR/03/projection.shared-decision"
+entity PolicyGovernorResolution id "gooo://audience-resolution/policy/GOVERNOR/04/projection.resolution"
+entity PolicyGovernorSourceBinding id "gooo://audience-resolution/policy/GOVERNOR/05/source.binding"
+entity PolicyGovernorLedgerReplay id "gooo://audience-resolution/policy/GOVERNOR/06/ledger.replay"
+entity PolicyGovernorAuthorCoordinates id "gooo://audience-resolution/policy/GOVERNOR/07/author.coordinates"
+entity PolicyGovernorGovernorCoordinates id "gooo://audience-resolution/policy/GOVERNOR/08/governor.coordinates"
+entity PolicyGovernorNesting id "gooo://audience-resolution/policy/GOVERNOR/09/projection.nesting"
+entity PolicyGovernorOmission id "gooo://audience-resolution/policy/GOVERNOR/10/counterexample.omission"
+entity PolicyGovernorContradiction id "gooo://audience-resolution/policy/GOVERNOR/11/counterexample.contradiction"
+entity PolicyGovernorSeal id "gooo://audience-resolution/policy/GOVERNOR/12/receipt.seal"
+entity UserResolutionPolicy id "gooo://audience-resolution/resolution/USER/USER_VISIBLE_COORDINATES"
+entity AuthorResolutionPolicy id "gooo://audience-resolution/resolution/TOOL_AUTHOR/TOOL_CONTRACT_COORDINATES"
+entity GovernorResolutionPolicy id "gooo://audience-resolution/resolution/GOVERNOR/GOVERNOR_FULL_LEDGER"
+entity PriorClaimOpen id "gooo://audience-resolution/claim-state/OPEN"
+entity ClaimDischarged id "gooo://audience-resolution/claim-state/DISCHARGED"
+entity ClaimRefuted id "gooo://audience-resolution/claim-state/REFUTED"
+entity EvidenceToClaimRelation id "gooo://audience-resolution/relation/evidence-to-claim"
+
+activity RelateEvidenceToClaim(EvidenceRecord) -> EvidenceToClaimRelation
+activity DeclarePriorClaim(EvidenceRecord) -> PriorClaimOpen

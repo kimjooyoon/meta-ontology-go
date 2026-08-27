@@ -2,7 +2,6 @@
   "schema": "gooo/audience-resolution-contract/v1",
   "id": "audience-resolution-v1",
   "source_path": "examples/audience-resolution/main.gooo",
-  "source_declaration_count": 22,
   "fixed": {
     "indicators": 12,
     "records": 12,

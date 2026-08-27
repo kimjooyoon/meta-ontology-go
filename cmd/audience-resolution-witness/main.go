@@ -37,9 +37,6 @@ func run(args []string) int {
 	}
 	input.Replay, input.SourcePath, input.Source = input.Ledger, options.source, source
 	receipt := audienceresolution.Evaluate(input)
-	if err := audienceresolution.ValidateReceipt(receipt); err != nil {
-		return reportError(fmt.Errorf("independent receipt check: %w", err))
-	}
 	payload, err := json.MarshalIndent(receipt, "", "  ")
 	if err != nil {
 		return reportError(err)
@@ -47,12 +44,11 @@ func run(args []string) int {
 	if err := os.WriteFile(options.out, append(payload, '\n'), 0o640); err != nil {
 		return reportError(fmt.Errorf("write receipt: %w", err))
 	}
-	fmt.Printf("audience resolution: %s %d/%d USER=%d/4 TOOL_AUTHOR=%d/8 GOVERNOR=%d/12\n",
+	fmt.Printf("audience resolution: global=%s coords=%d/%d USER=%s %d/%d TOOL_AUTHOR=%s %d/%d GOVERNOR=%s %d/%d\n",
 		receipt.Decision, receipt.Summary.Coordinates.Satisfied, receipt.Summary.Coordinates.Total,
-		receipt.Views[0].Satisfied, receipt.Views[1].Satisfied, receipt.Views[2].Satisfied)
-	if receipt.Decision != "PASS" {
-		return 1
-	}
+		receipt.Views[0].LocalDecision, receipt.Views[0].Visible, receipt.Views[0].Required,
+		receipt.Views[1].LocalDecision, receipt.Views[1].Visible, receipt.Views[1].Required,
+		receipt.Views[2].LocalDecision, receipt.Views[2].Visible, receipt.Views[2].Required)
 	return 0
 }
 

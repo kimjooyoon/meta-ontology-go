@@ -1,0 +1,151 @@
+name: Audience resolution projection
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/audience-resolution.yml
+      - cmd/audience-resolution-witness/**
+      - cmd/audience-resolution-consumer/**
+      - examples/audience-resolution/**
+      - internal/meta/audienceresolution/**
+      - internal/meta/audienceresolutionconsumer/**
+      - internal/bidir/**
+      - internal/semantic/**
+      - internal/syntax/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/audience-resolution.yml
+      - cmd/audience-resolution-witness/**
+      - cmd/audience-resolution-consumer/**
+      - examples/audience-resolution/**
+      - internal/meta/audienceresolution/**
+      - internal/meta/audienceresolutionconsumer/**
+      - internal/bidir/**
+      - internal/semantic/**
+      - internal/syntax/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  projection:
+    name: Raw ledger projection and independent reconstruction
+    runs-on: ubuntu-24.04
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Execute base projection and independent consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/audience-resolution"
+          mkdir -p "$out"
+          source="examples/audience-resolution/main.gooo"
+          ledger="examples/audience-resolution/ledger.json"
+          contract="examples/audience-resolution/contract.json"
+          go run ./cmd/audience-resolution-witness --contract "$contract" --ledger "$ledger" --source "$source" --out "$out/base-receipt.json"
+          go run ./cmd/audience-resolution-consumer --ledger "$ledger" --source "$source" --receipt "$out/base-receipt.json" --out "$out/base-consumer.json" --root "$GITHUB_WORKSPACE"
+          jq -e '(.decision == "PASS") and (.summary.source_denominator == 56) and (.source.declaration_count == 56) and (.summary.coordinates.satisfied == 12) and (.summary.coordinates.total == 12) and (.views[0].visible == 4) and (.views[0].required == 12) and (.views[0].local_decision == "UNKNOWN") and (.views[1].visible == 8) and (.views[1].required == 12) and (.views[1].local_decision == "UNKNOWN") and (.views[2].visible == 12) and (.views[2].required == 12) and (.views[2].local_decision == "PASS") and ((.claim_transitions | length) == 36) and ((.counterexamples | map(.global_decision) | sort) == ["REFUTED", "UNKNOWN"])' "$out/base-receipt.json"
+          jq -e '(.decision == "PASS") and (.raw_ledger_final_fields_absent == true) and (.receipt_digest_match == true) and (.source_reconstruction.parsed_and_lowered == true) and (.source_reconstruction.declaration_count == 56) and (.source_reconstruction.receipt_matches == true) and (.producer_imports.producer_import_numerator == 0) and (.producer_imports.producer_import_denominator > 0) and (.claim_transitions_checked == 36)' "$out/base-consumer.json"
+      - name: Execute omission counterexample from a mutated raw ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/audience-resolution"
+          source="examples/audience-resolution/main.gooo"
+          jq 'del(.records[] | select(.coordinate == "receipt.seal"))' examples/audience-resolution/ledger.json > "$out/omission-ledger.json"
+          go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/omission-ledger.json" --source "$source" --out "$out/omission-receipt.json"
+          go run ./cmd/audience-resolution-consumer --ledger "$out/omission-ledger.json" --source "$source" --receipt "$out/omission-receipt.json" --out "$out/omission-consumer.json" --root "$GITHUB_WORKSPACE"
+          jq -e '(.decision == "UNKNOWN") and (.resolution == "LOWER_RESOLUTION") and (.views[0].local_decision == "UNKNOWN") and (.views[1].local_decision == "UNKNOWN") and (.views[2].local_decision == "UNKNOWN") and (.views[2].visible == 11) and (.views[2].required == 12) and (.views[2].omitted_evidence[-1].coordinate == "receipt.seal") and ((.claim_transitions | map(select(.audience == "GOVERNOR" and .indicator_id == "receipt.seal"))[0].after) == "OPEN")' "$out/omission-receipt.json"
+          jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true)' "$out/omission-consumer.json"
+      - name: Execute contradiction counterexample from a mutated raw ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/audience-resolution"
+          source="examples/audience-resolution/main.gooo"
+          jq '(.records[] | select(.coordinate == "ledger.coverage") | .observation) = "CONTRADICTORY"' examples/audience-resolution/ledger.json > "$out/contradiction-ledger.json"
+          go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/contradiction-ledger.json" --source "$source" --out "$out/contradiction-receipt.json"
+          go run ./cmd/audience-resolution-consumer --ledger "$out/contradiction-ledger.json" --source "$source" --receipt "$out/contradiction-receipt.json" --out "$out/contradiction-consumer.json" --root "$GITHUB_WORKSPACE"
+          jq -e '(.decision == "REFUTED") and (.resolution == "INVARIANT_ONLY") and (.views[0].local_decision == "REFUTED") and (.views[1].local_decision == "REFUTED") and (.views[2].local_decision == "REFUTED") and ((.claim_transitions | map(select(.indicator_id == "ledger.coverage" and .after == "REFUTED")) | length) == 3)' "$out/contradiction-receipt.json"
+          jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true)' "$out/contradiction-consumer.json"
+      - name: Execute semantic-policy and comment-only interventions
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/audience-resolution"
+          source="examples/audience-resolution/main.gooo"
+          cp "$source" "$out/comment-only.gooo"
+          sed -i '1i# presentation-only intervention' "$out/comment-only.gooo"
+          cat "$source" > "$out/semantic-policy.gooo"
+          sed -i \
+            -e 's|/TOOL_AUTHOR/08/governor.coordinates|/TOOL_AUTHOR/09/governor.coordinates|' \
+            -e 's|/TOOL_AUTHOR/07/author.coordinates|/TOOL_AUTHOR/08/author.coordinates|' \
+            -e 's|/TOOL_AUTHOR/06/ledger.replay|/TOOL_AUTHOR/07/ledger.replay|' \
+            -e 's|/TOOL_AUTHOR/05/source.binding|/TOOL_AUTHOR/06/source.binding|' \
+            -e 's|/GOVERNOR/12/receipt.seal|/GOVERNOR/13/receipt.seal|' \
+            -e 's|/GOVERNOR/11/counterexample.contradiction|/GOVERNOR/12/counterexample.contradiction|' \
+            -e 's|/GOVERNOR/10/counterexample.omission|/GOVERNOR/11/counterexample.omission|' \
+            -e 's|/GOVERNOR/09/projection.nesting|/GOVERNOR/10/projection.nesting|' \
+            -e 's|/GOVERNOR/08/governor.coordinates|/GOVERNOR/09/governor.coordinates|' \
+            -e 's|/GOVERNOR/07/author.coordinates|/GOVERNOR/08/author.coordinates|' \
+            -e 's|/GOVERNOR/06/ledger.replay|/GOVERNOR/07/ledger.replay|' \
+            -e 's|/GOVERNOR/05/source.binding|/GOVERNOR/06/source.binding|' \
+            "$out/semantic-policy.gooo"
+          printf '%s\n' \
+            'entity PolicyUserSemanticIntervention id "gooo://audience-resolution/policy/USER/05/semantic.intervention"' \
+            'entity PolicyAuthorSemanticIntervention id "gooo://audience-resolution/policy/TOOL_AUTHOR/05/semantic.intervention"' \
+            'entity PolicyGovernorSemanticIntervention id "gooo://audience-resolution/policy/GOVERNOR/05/semantic.intervention"' >> "$out/semantic-policy.gooo"
+          for kind in comment-only semantic-policy; do
+            variant="$out/$kind.gooo"
+            digest="sha256:$(sha256sum "$variant" | awk '{print $1}')"
+            jq --arg digest "$digest" '.source.digest = $digest' examples/audience-resolution/ledger.json > "$out/$kind-ledger.json"
+            go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/$kind-ledger.json" --source "$variant" --out "$out/$kind-receipt.json"
+            go run ./cmd/audience-resolution-consumer --ledger "$out/$kind-ledger.json" --source "$variant" --receipt "$out/$kind-receipt.json" --out "$out/$kind-consumer.json" --root "$GITHUB_WORKSPACE"
+            jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true)' "$out/$kind-consumer.json"
+          done
+          jq -n \
+            --arg base_digest "$(jq -r '.source.semantic_digest' "$out/base-receipt.json")" \
+            --arg comment_digest "$(jq -r '.source.semantic_digest' "$out/comment-only-receipt.json")" \
+            --arg semantic_digest "$(jq -r '.source.semantic_digest' "$out/semantic-policy-receipt.json")" \
+            --argjson base_views "$(jq '.views' "$out/base-receipt.json")" \
+            --argjson comment_views "$(jq '.views' "$out/comment-only-receipt.json")" \
+            --argjson semantic_views "$(jq '.views' "$out/semantic-policy-receipt.json")" \
+            '{semantic_policy:{semantic_digest_changed:($base_digest != $semantic_digest),projection_changed:($base_views != $semantic_views),base_required:($base_views[2].required),variant_required:($semantic_views[2].required)},comment_only:{semantic_digest_preserved:($base_digest == $comment_digest),projection_preserved:($base_views == $comment_views)}}' > "$out/interventions.json"
+          jq -e '(.semantic_policy.semantic_digest_changed == true) and (.semantic_policy.projection_changed == true) and (.comment_only.semantic_digest_preserved == true) and (.comment_only.projection_preserved == true)' "$out/interventions.json"
+      - name: Publish audience resolution summary
+        if: always()
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/audience-resolution"
+          if [ -f "$out/base-receipt.json" ]; then
+            {
+              echo '### Audience resolution projection'
+              jq -r '"- global subject: `\(.decision)` / `\(.resolution)`; canonical-IR denominator: `\(.summary.source_denominator)`"' "$out/base-receipt.json"
+              jq -r '"- USER: visible/required `\(.views[0].visible)/\(.views[0].required)`, local `\(.views[0].local_decision)` (`\(.views[0].local_resolution)`); TOOL_AUTHOR: `\(.views[1].visible)/\(.views[1].required)`, `\(.views[1].local_decision)`; GOVERNOR: `\(.views[2].visible)/\(.views[2].required)`, `\(.views[2].local_decision)`"' "$out/base-receipt.json"
+              jq -r '"- claims: `\(.claim_transitions | length)` audience-local transitions; counterexamples: `\(.counterexamples | map(.global_decision) | sort | join(", "))`"' "$out/base-receipt.json"
+              jq -r '"- independent consumer: `\(.decision)`; producer imports: `\(.producer_imports.producer_import_numerator)/\(.producer_imports.producer_import_denominator)`; source reconstruction: `\(.source_reconstruction.declaration_count)`"' "$out/base-consumer.json"
+              jq -r '"- interventions: semantic policy `\(.semantic_policy.semantic_digest_changed)/\(.semantic_policy.projection_changed)`, comment-only `\(.comment_only.semantic_digest_preserved)/\(.comment_only.projection_preserved)`"' "$out/interventions.json"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload receipts, mutations, and independent artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: audience-resolution-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/audience-resolution
+          if-no-files-found: error
+          retention-days: 30

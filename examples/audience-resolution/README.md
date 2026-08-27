@@ -1,80 +1,89 @@
-# Audience resolution projection
+# Audience-resolution projection
 
-This is a read-only philosophical experiment over one evidence ledger. It is
-not a dashboard copy: `USER`, `TOOL_AUTHOR`, and `GOVERNOR` receive different
-fixed coordinate sets and fixed resolution labels from the same ledger. The
-projection carries one global `decision` and `reason` into every view, so a
-lower view cannot turn a governor-level contradiction into `PASS`.
+This is a small meta-ontology experiment, not a dashboard clone. One raw
+evidence ledger is projected into three nested knowledge surfaces:
 
-## Fixed contract
+| audience | visible coordinates | required coordinates | base local decision |
+| --- | ---: | ---: | --- |
+| USER | 4 | 12 | UNKNOWN |
+| TOOL_AUTHOR | 8 | 12 | UNKNOWN |
+| GOVERNOR | 12 | 12 | PASS |
 
-The contract has 12 indicators and 12 ledger records. The audience projections
-are nested and deliberately omit information:
+The global subject decision is `PASS` for the complete ledger. A view carries
+that global value only as `global_decision`, with
+`inherited_status=INHERITED_NOT_LOCALLY_VERIFIED` when its visible evidence is
+insufficient. It never copies the global decision into `local_decision`.
+Every omitted coordinate reports its exact stage, step, and reason.
 
-| Audience | Resolution | Coordinates | Omitted |
-| --- | --- | ---: | ---: |
-| `USER` | `USER_VISIBLE_COORDINATES` | 4/4 | 8 |
-| `TOOL_AUTHOR` | `TOOL_CONTRACT_COORDINATES` | 8/8 | 4 |
-| `GOVERNOR` | `GOVERNOR_FULL_LEDGER` | 12/12 | 0 |
+## Semantic authority
 
-The fixed class denominator is `OUTCOME 4`, `DRIVER 5`, `GUARDRAIL 3`.
-The proof-choice denominator is `FOUNDATION 6`, `COHERENCE 3`, `REGRESSION 3`.
-Each indicator records its producer, consumer, meta-operation, proof choice,
-stage, step, reason, and `UNPROVEN -> OBSERVED` claim transition. Failed
-coordinates transition to `BLOCKED`.
+The policy is represented as stable Gooo identities in
+[`main.gooo`](./main.gooo): `policy/{audience}/{ordinal}/{coordinate}` and
+`resolution/{audience}/{resolution}`. The same source declares `OPEN`,
+`DISCHARGED`, and `REFUTED` claim-state values plus the
+`evidence-to-claim` relation. The producer and consumer both derive these
+values through `syntax.ParseFile` → `bidir.Lower` → canonical semantic IR.
+The source denominator is the number of canonical IR nodes, currently 56; it
+is never a line-count constant.
 
-The authoritative source is
-[`main.gooo`](main.gooo). It contains 22 declarations. `ledger.json` binds its
-SHA-256 digest and the witness command checks the source bytes before producing
-the receipt.
+The raw [`ledger.json`](./ledger.json) contains observations only: source
+binding, evidence provenance, prior claim state, observed value, and
+counterexample mutation descriptions. It does not contain a decision,
+satisfaction bit, claim-after state, expected/observed decision, or
+`blocked:true`. Final decisions and claim transitions are derived into the
+receipt.
 
-## Counterexamples
+Claim transitions are append-only. Each audience retains the `OPEN` claim
+when the evidence is omitted, moves it to `DISCHARGED` only when its visible
+evidence is sufficient, and moves it to `REFUTED` for visible contradiction.
+The transition records the audience visibility, evidence digest, producer,
+consumer, stage, step, and reason; the claim is never deleted.
 
-Two cases are part of the ledger as explicit blocked witnesses:
+## Independent consumer
 
-1. `counterexample.missing-information` removes the required `consumer` field
-   from the `author.coordinates` record (or removes any required record). The
-   result must be `FAIL_CLOSED / LOWER_RESOLUTION`, even if the four USER
-   coordinates remain locally satisfied.
-2. `counterexample.decision-contradiction` changes a record decision so that
-   the same source has conflicting decisions. The result must be
-   `FAIL_CLOSED / INVARIANT_ONLY` for all three audiences.
+[`cmd/audience-resolution-consumer`](../../cmd/audience-resolution-consumer)
+is a separate package and binary. It does not import the producer,
+`Evaluate`, `ValidateReceipt`, or `CanonicalContract`. It starts from raw
+`.gooo` and raw ledger bytes, reconstructs the canonical IR, recomputes the
+audience projections, checks the receipt digest, and audits its own producer
+imports. The CI artifact reports the exact producer-import numerator and
+denominator, raw-final-field absence, source reconstruction, and all local
+views.
 
-The independent `ValidateReceipt` checker recomputes the receipt digest and
-checks fixed cardinality, canonical coordinate sets, claim transitions,
-counterexamples, and shared decision/reason. It is intentionally separate from
-the evaluator and cannot make a local view authoritative.
+## Counterexamples and interventions
 
-Run the executable witness with:
+The Action job creates real mutated raw ledgers and records their receipts:
 
-```sh
-go run ./cmd/audience-resolution-witness \
-  --contract examples/audience-resolution/contract.json \
-  --ledger examples/audience-resolution/ledger.json \
-  --source examples/audience-resolution/main.gooo \
-  --out /tmp/audience-resolution-receipt.json
-```
+- omission removes `receipt.seal`; the global and GOVERNOR local decisions
+  become `UNKNOWN`, and the affected `OPEN` claim remains open;
+- contradiction changes `ledger.coverage` to `CONTRADICTORY`; the global,
+  TOOL_AUTHOR, and GOVERNOR decisions become `REFUTED`, while USER can only
+  report what its visible surface supports;
+- a semantic audience-policy extension changes the canonical IR digest and
+  projection sizes; a comment-only source change preserves both;
+- all three mutations are re-run by the independent consumer.
 
-## Information-flow/view research decisions
+The falsifiable claim is: for every raw ledger variant, no audience may emit
+`local_decision=PASS` unless all 12 required raw coordinates are visible and
+locally sufficient; a visible contradiction must produce `REFUTED`; and a
+semantic policy edit must change the semantic digest/projection while a
+comment-only edit must not. These are executable assertions in
+`.github/workflows/audience-resolution.yml` and its uploaded artifact.
 
-This experiment adopts two principles from official material:
+## Information-flow/view principles
 
-- [NIST SP 800-53 Rev. 4, AC-4 Information Flow Enforcement](https://csrc.nist.gov/pubs/sp/800/53/r4/upd2/final)
-  treats information flow as an explicit policy between sources and
-  destinations, with enforcement at policy points. Adopted here: every
-  coordinate names its producer and consumer, the allowed audience sets are
-  explicit, and malformed or unauthorized flow fails closed. Rejected here:
-  treating access-control success as proof of semantic correctness; this
-  experiment does not authorize producers or enforce external permissions.
-- [Sabelfeld and Myers, *Language-Based Information-Flow Security*](https://www.cs.cornell.edu/andru/papers/jsac/sm-jsac03.pdf)
-  frames confidentiality as a property of what an observer can infer from
-  outputs and uses noninterference as the formal lens. Adopted here: a view is
-  a deterministic observation function of one ledger and one audience, and
-  view decisions are compared for non-contradiction. Rejected here: claiming
-  full noninterference or covert-channel freedom; this small experiment only
-  proves explicit coordinate omission and decision consistency.
+Two official references informed the design:
 
-These choices make the claim falsifiable. A missing record, duplicate or
-conflicting record, forged receipt digest, non-nested coordinate set, or
-audience-specific decision is a concrete failing input rather than an
-interpretive disagreement.
+1. [NIST SP 800-53 Rev. 4 AC-4, Information Flow Enforcement](https://csrc.nist.gov/pubs/sp/800/53/r4/upd2/final).
+   Adopted: flows are explicit, policy-bound transfers between subjects and
+   objects. Rejected: a single presentation/dashboard is not a sufficient
+   flow policy, and this experiment does not claim confidentiality or covert
+   channel resistance.
+2. [Sabelfeld and Myers, *Language-Based Information-Flow Security*](https://www.cs.cornell.edu/andru/papers/jsac/sm-jsac03.pdf).
+   Adopted: a view is a security/knowledge projection whose observations must
+   be checked against the information available at that view. Rejected: this
+   fixture does not claim a complete noninterference proof; it tests only
+   explicit coordinate omission and contradiction witnesses.
+
+Run the witness and independent consumer in Actions; local tests are
+intentionally not part of this experiment.

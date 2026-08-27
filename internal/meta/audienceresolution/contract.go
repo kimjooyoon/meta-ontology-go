@@ -12,13 +12,12 @@ const (
 )
 
 type Contract struct {
-	Schema                 string             `json:"schema"`
-	ID                     string             `json:"id"`
-	SourcePath             string             `json:"source_path"`
-	SourceDeclarationCount int                `json:"source_declaration_count"`
-	Fixed                  FixedDenominator   `json:"fixed"`
-	Audiences              []AudienceContract `json:"audiences"`
-	NotClaimed             []string           `json:"not_claimed"`
+	Schema     string             `json:"schema"`
+	ID         string             `json:"id"`
+	SourcePath string             `json:"source_path"`
+	Fixed      FixedDenominator   `json:"fixed"`
+	Audiences  []AudienceContract `json:"audiences"`
+	NotClaimed []string           `json:"not_claimed"`
 }
 
 type FixedDenominator struct {
@@ -35,16 +34,17 @@ type AudienceContract struct {
 	Coordinates []string `json:"coordinates"`
 }
 
-// CanonicalContract is the only denominator accepted by this experiment.
-// The coordinate sets are deliberately nested: each higher audience sees more
-// of the same ledger, never a different decision.
+// CanonicalContract describes the fixture's fixed report shape. The semantic
+// policy itself is not authoritative here: it is derived from the .gooo
+// source after syntax.ParseFile -> bidir.Lower. Keeping this JSON contract
+// separate makes a source policy intervention observable in the projections.
 func CanonicalContract() Contract {
 	user := []string{"ledger.coverage", "user.coordinates", "projection.shared-decision", "projection.resolution"}
 	author := append(append([]string{}, user...), "source.binding", "ledger.replay", "author.coordinates", "governor.coordinates")
 	governor := append(append([]string{}, author...), "projection.nesting", "counterexample.omission", "counterexample.contradiction", "receipt.seal")
 	return Contract{
 		Schema: ContractSchema, ID: "audience-resolution-v1",
-		SourcePath: "examples/audience-resolution/main.gooo", SourceDeclarationCount: 22,
+		SourcePath: "examples/audience-resolution/main.gooo",
 		Fixed: FixedDenominator{Indicators: IndicatorTotal, Records: IndicatorTotal, Counterexamples: 2,
 			Classes:      map[string]int{"OUTCOME": 4, "DRIVER": 5, "GUARDRAIL": 3},
 			ProofChoices: map[string]int{"FOUNDATION": 6, "COHERENCE": 3, "REGRESSION": 3}},
@@ -63,4 +63,9 @@ func CanonicalContract() Contract {
 	}
 }
 
-func ContractValid(value Contract) bool { return reflect.DeepEqual(value, CanonicalContract()) }
+func ContractValid(value Contract) bool {
+	want := CanonicalContract()
+	return value.Schema == want.Schema && value.ID == want.ID &&
+		value.SourcePath == want.SourcePath && reflect.DeepEqual(value.Fixed, want.Fixed) &&
+		reflect.DeepEqual(value.NotClaimed, want.NotClaimed)
+}
