@@ -56,7 +56,7 @@ for fixture in examples/ci-plan/fixtures/*.json; do
   fi
   cmp "$out/reports/$case_id.json" "$out/replays/$case_id.json"
 
-  read -r seconds peak_rss < "$out/time.txt"
+  read -r seconds peak_rss < <(tail -n 1 "$out/time.txt")
   wall_ms="$(awk -v seconds="$seconds" 'BEGIN { printf "%.0f", seconds * 1000 }')"
   receipt_bytes="$(wc -c < "$out/reports/$case_id.json" | tr -d ' ')"
   jq -n \
