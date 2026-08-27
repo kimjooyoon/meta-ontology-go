@@ -14,5 +14,6 @@ func init() {
 		"scripts/language-claim-dependency-evidence",
 		"scripts/language-claim-dependency-judge",
 		"scripts/language-claim-dependency-intervention",
+		"scripts/language-claim-dependency-observation",
 	}
 }

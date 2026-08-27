@@ -80,24 +80,25 @@ func main() {
 	commentPath := flag.String("comment", "", "comment-only intervention source")
 	repoRoot := flag.String("repo-root", "", "repository root")
 	capability := flag.String("capability", "", "current capability evidence")
+	observationDir := flag.String("observation-dir", "", "raw target observation directory")
 	outputPath := flag.String("output", "", "intervention artifact")
 	flag.Parse()
-	if *baselinePath == "" || *semanticPath == "" || *edgePath == "" || *commentPath == "" || *repoRoot == "" || *capability == "" || *outputPath == "" {
-		fail("-baseline, -semantic, -edge, -comment, -repo-root, -capability, and -output are required")
+	if *baselinePath == "" || *semanticPath == "" || *edgePath == "" || *commentPath == "" || *repoRoot == "" || *capability == "" || *observationDir == "" || *outputPath == "" {
+		fail("-baseline, -semantic, -edge, -comment, -repo-root, -capability, -observation-dir, and -output are required")
 	}
 	baseline, semanticSource, edgeSource, commentSource := read(*baselinePath), read(*semanticPath), read(*edgePath), read(*commentPath)
 	mainPath := filepath.Join(filepath.Dir(*baselinePath), "main.gooo")
 	refutedPath := filepath.Join(filepath.Dir(*baselinePath), "refuted.gooo")
 	items := []intervention{
-		compare("source-only", "VALUE_PROGRAM", read(mainPath), mainPath, semanticSource, *semanticPath, "acceptance", "same", *repoRoot, *capability),
-		compare("observation-only", "OBSERVATION", read(mainPath), mainPath, read(mainPath), mainPath, "acceptance", "availability", *repoRoot, *capability),
-		compare("edge-only", "EDGE_KIND", read(refutedPath), refutedPath, edgeSource, *edgePath, "contradiction", "same", *repoRoot, *capability),
-		compare("comment-only", "COMMENT_ONLY", baseline, *baselinePath, commentSource, *commentPath, "availability", "same", *repoRoot, *capability),
+		compare("source-only", "VALUE_PROGRAM", read(mainPath), mainPath, semanticSource, *semanticPath, "acceptance", "same", *repoRoot, *capability, *observationDir),
+		compare("observation-only", "OBSERVATION", read(mainPath), mainPath, read(mainPath), mainPath, "acceptance", "availability", *repoRoot, *capability, *observationDir),
+		compare("edge-only", "EDGE_KIND", read(refutedPath), refutedPath, edgeSource, *edgePath, "contradiction", "same", *repoRoot, *capability, *observationDir),
+		compare("comment-only", "COMMENT_ONLY", baseline, *baselinePath, commentSource, *commentPath, "availability", "same", *repoRoot, *capability, *observationDir),
 	}
 	provenance := []evidenceProvenanceCase{
-		provenanceCompare("caller-flag-only", "acceptance", "availability", read(mainPath), mainPath, read(mainPath), mainPath, *repoRoot, *capability, true),
-		provenanceCompare("observation-artifact-changed", "acceptance", "acceptance", read(mainPath), mainPath, semanticSource, *semanticPath, *repoRoot, *capability, false),
-		provenanceCompare("observation-absent", "acceptance", "availability", read(mainPath), mainPath, read(mainPath), mainPath, *repoRoot, *capability, false),
+		provenanceCompare("caller-flag-only", "acceptance", "availability", read(mainPath), mainPath, read(mainPath), mainPath, *repoRoot, *capability, *observationDir, true),
+		provenanceCompare("observation-artifact-changed", "acceptance", "acceptance", read(mainPath), mainPath, semanticSource, *semanticPath, *repoRoot, *capability, *observationDir, false),
+		provenanceCompare("observation-absent", "acceptance", "availability", read(mainPath), mainPath, read(mainPath), mainPath, *repoRoot, *capability, *observationDir, false),
 	}
 	writeJSON(*outputPath, report{Schema: "gooo.meta.claim-dependency-intervention/v2", Interventions: items, EvidenceProvenanceCases: provenance})
 	for _, item := range items {
@@ -105,11 +106,11 @@ func main() {
 	}
 }
 
-func provenanceCompare(name, baselineRequest, interventionRequest string, baselineSource []byte, baselinePath string, interventionSource []byte, interventionPath, repoRoot, capability string, reuseEvidence bool) evidenceProvenanceCase {
-	baselineEvidence := evidence(baselinePath, baselineRequest, repoRoot, capability)
+func provenanceCompare(name, baselineRequest, interventionRequest string, baselineSource []byte, baselinePath string, interventionSource []byte, interventionPath, repoRoot, capability, observationDir string, reuseEvidence bool) evidenceProvenanceCase {
+	baselineEvidence := evidence(baselinePath, baselineRequest, repoRoot, capability, observationDir)
 	interventionEvidence := baselineEvidence
 	if !reuseEvidence {
-		interventionEvidence = evidence(interventionPath, interventionRequest, repoRoot, capability)
+		interventionEvidence = evidence(interventionPath, interventionRequest, repoRoot, capability, observationDir)
 	}
 	baselineReceipt, err := claimdependency.Evaluate(baselineSource, baselinePath, baselineEvidence, nil)
 	if err != nil {
@@ -124,11 +125,11 @@ func provenanceCompare(name, baselineRequest, interventionRequest string, baseli
 	return evidenceProvenanceCase{Name: name, BaselineRequest: baselineRequest, InterventionRequest: interventionRequest, BaselineArtifactPath: baselineEvidence.ArtifactPath, InterventionArtifactPath: interventionEvidence.ArtifactPath, BaselineArtifactBytesDigest: baselineEvidence.ArtifactBytesDigest, InterventionArtifactBytesDigest: interventionEvidence.ArtifactBytesDigest, BaselineEvidenceDigest: baselineEvidence.Digest, InterventionEvidenceDigest: interventionEvidence.Digest, BaselineDecision: baselineReceipt.Decision.Value + ":" + baselineReceipt.Decision.Resolution, InterventionDecision: interventionReceipt.Decision.Value + ":" + interventionReceipt.Decision.Resolution, BaselineStates: baseStates, InterventionStates: interventionStates, BaselineTransitionDigests: baseTransitions, InterventionTransitionDigests: interventionTransitions, EvidenceDigestChanged: baselineEvidence.Digest != interventionEvidence.Digest, StateTransitionChanged: !reflect.DeepEqual(baseStates, interventionStates) || !reflect.DeepEqual(baseTransitions, interventionTransitions), DecisionChanged: baselineReceipt.Decision != interventionReceipt.Decision}
 }
 
-func compare(name, kind string, baseline []byte, baselinePath string, changed []byte, changedPath, baseOperation, changedOperation, repoRoot, capability string) intervention {
-	baseEvidence := evidence(baselinePath, baseOperation, repoRoot, capability)
+func compare(name, kind string, baseline []byte, baselinePath string, changed []byte, changedPath, baseOperation, changedOperation, repoRoot, capability, observationDir string) intervention {
+	baseEvidence := evidence(baselinePath, baseOperation, repoRoot, capability, observationDir)
 	changedEvidence := baseEvidence
 	if changedOperation != "same" {
-		changedEvidence = evidence(changedPath, changedOperation, repoRoot, capability)
+		changedEvidence = evidence(changedPath, changedOperation, repoRoot, capability, observationDir)
 	}
 	baseReceipt, err := claimdependency.Evaluate(baseline, baselinePath, baseEvidence, nil)
 	if err != nil {
@@ -144,12 +145,22 @@ func compare(name, kind string, baseline []byte, baselinePath string, changed []
 	return intervention{Name: name, Kind: kind, BaselineSourceDigest: baseReceipt.Subject.SourceDigest, InterventionSourceDigest: changedReceipt.Subject.SourceDigest, BaselineSemanticDigest: baseReceipt.Subject.SemanticDigest, InterventionSemanticDigest: changedReceipt.Subject.SemanticDigest, BaselineGraphDigest: baseReceipt.Graph.Digest, InterventionGraphDigest: changedReceipt.Graph.Digest, BaselineEvidenceDigest: baseReceipt.EvidenceDigest, InterventionEvidenceDigest: changedReceipt.EvidenceDigest, BaselineDecision: baseReceipt.Decision.Value + ":" + baseReceipt.Decision.Resolution, InterventionDecision: changedReceipt.Decision.Value + ":" + changedReceipt.Decision.Resolution, BaselineStates: baseStates, InterventionStates: changedStates, BaselineTransitionDigests: baseTransitions, InterventionTransitionDigests: changedTransitions, BaselineCausePath: baseCause, InterventionCausePath: changedCause, SemanticDigestChanged: baseReceipt.Subject.SemanticDigest != changedReceipt.Subject.SemanticDigest, GraphDigestChanged: baseReceipt.Graph.Digest != changedReceipt.Graph.Digest, EvidenceDigestChanged: baseReceipt.EvidenceDigest != changedReceipt.EvidenceDigest, StateTransitionChanged: !reflect.DeepEqual(baseStates, changedStates) || !reflect.DeepEqual(baseTransitions, changedTransitions), CausePathChanged: !reflect.DeepEqual(baseCause, changedCause), DecisionChanged: baseReceipt.Decision != changedReceipt.Decision, EdgeTypeChanged: !reflect.DeepEqual(baseReceipt.Graph.Edges, changedReceipt.Graph.Edges), BaselineReadOnly: baseReceipt.Subject.ReadOnly, InterventionReadOnly: changedReceipt.Subject.ReadOnly, BaselineRepositoryWrites: baseReceipt.Subject.RepositoryWrites, InterventionRepositoryWrites: changedReceipt.Subject.RepositoryWrites, BaselineAuthorityResolution: baseReceipt.Subject.AuthorityResolution, InterventionAuthorityResolution: changedReceipt.Subject.AuthorityResolution}
 }
 
-func evidence(artifact, operation, repoRoot, capability string) claimdependency.EvidenceReceipt {
+func evidence(artifact, operation, repoRoot, capability, observationDir string) claimdependency.EvidenceReceipt {
 	if operation == "same" {
 		fail("internal intervention operation cannot be same")
 	}
 	output := filepath.Join(os.TempDir(), "gooo-claim-dependency-evidence-"+strings.ReplaceAll(filepath.Base(artifact), ".", "-")+"-"+operation+".json")
-	receipt, err := claimdependency.BuildCurrentEvidence(artifact, operation, capability, repoRoot, output)
+	observationPath := ""
+	if operation != "availability" {
+		observationPath = filepath.Join(observationDir, "refuted.json")
+		if operation == "acceptance" {
+			observationPath = filepath.Join(observationDir, "accepted.json")
+			if filepath.Base(artifact) == "value-intervention.gooo" {
+				observationPath = filepath.Join(observationDir, "semantic-accepted.json")
+			}
+		}
+	}
+	receipt, err := claimdependency.BuildCurrentEvidenceWithObservation(artifact, operation, capability, repoRoot, output, observationPath)
 	if err != nil {
 		fail(err.Error())
 	}

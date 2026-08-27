@@ -16,11 +16,12 @@ func main() {
 	capability := flag.String("capability", "", "current CI capability evidence")
 	repository := flag.String("repo-root", "", "repository root for tracked/untracked snapshot")
 	output := flag.String("output", "", "actual output path recorded in the receipt")
+	observation := flag.String("observation", "", "raw target observation receipt; omit when no external observation exists")
 	flag.Parse()
 	if *artifact == "" || *operation == "" || *capability == "" || *repository == "" || *output == "" {
 		fail("-artifact, -operation, -capability, -repo-root, and -output are required")
 	}
-	receipt, err := claimdependency.BuildCurrentEvidence(*artifact, *operation, *capability, *repository, *output)
+	receipt, err := claimdependency.BuildCurrentEvidenceWithObservation(*artifact, *operation, *capability, *repository, *output, *observation)
 	if err != nil {
 		fail(err.Error())
 	}

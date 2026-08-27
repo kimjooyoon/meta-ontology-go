@@ -14,9 +14,8 @@ import (
 )
 
 type sourceGraph struct {
-	IR          semantic.IR
-	Graph       Graph
-	RootProgram string
+	IR    semantic.IR
+	Graph Graph
 }
 
 // GraphFromSource reconstructs executable propositions and typed dependency
@@ -131,14 +130,27 @@ func graphFromSource(source []byte, sourcePath string) (sourceGraph, error) {
 	}
 	edges := make([]Edge, len(candidates))
 	for i, c := range candidates {
-		edges[i] = Edge{EdgeID: fmt.Sprintf("E%02d", i+1), FromClaimID: claims[c.from].ClaimID, ToClaimID: claims[c.to].ClaimID, Kind: c.kind, SemanticBasis: "prov:wasGeneratedBy + prov:used + source-derived value-program edge predicate"}
+		edges[i] = Edge{EdgeID: fmt.Sprintf("E%02d", i+1), FromClaimID: claims[c.from].ClaimID, ToClaimID: claims[c.to].ClaimID, Kind: c.kind, ActivationPredicate: activationPredicate(c.kind), SemanticBasis: "prov:wasGeneratedBy + prov:used + source-derived value-program edge predicate"}
 	}
 	graph := Graph{Schema: GraphSchema, Authority: "CANONICAL_IR_FROM_SYNTAX_PARSE_AND_BIDIR_LOWER", Completeness: "CLOSED_WORLD_SOURCE_RECONSTRUCTED", CanonicalIRDigest: prefixedDigest(ir.StableHash()), NodeTotal: len(claims), EdgeTotal: len(edges), Nodes: claims, Edges: edges}
 	graph.Digest, err = graphDigest(graph)
 	if err != nil {
 		return sourceGraph{}, err
 	}
-	return sourceGraph{IR: ir, Graph: graph, RootProgram: claims[0].ValueProgram}, nil
+	return sourceGraph{IR: ir, Graph: graph}, nil
+}
+
+func activationPredicate(kind EdgeKind) string {
+	switch kind {
+	case Requires:
+		return "UPSTREAM_DISCHARGED_AND_LOCAL_EVIDENCE"
+	case Contradicts:
+		return "UPSTREAM_DISCHARGED_PROPOSITION"
+	case FailureEntailment:
+		return "OBSERVED_FAILURE_ANTECEDENT_AND_UPSTREAM_REFUTED"
+	default:
+		return "UPSTREAM_UNKNOWN_BLOCKS_ONLY"
+	}
 }
 
 func normalizedProposition(activityID string, inputs []string, output, artifact, value string) string {
@@ -169,14 +181,14 @@ func edgeKind(program string) (EdgeKind, bool) {
 
 func TruthTableCases() []TruthTableCase {
 	return []TruthTableCase{
-		{TruthTableSchema, "SUPPORTS-POSITIVE", Supports, "established supports target", "DISCHARGED", "EVIDENCE_ACCEPTED", "OPEN", true, "support never discharges by itself"},
-		{TruthTableSchema, "SUPPORTS-NEGATIVE", Supports, "refuted supports target", "REFUTED", "UNKNOWN", "OPEN", false, "support does not refute"},
-		{TruthTableSchema, "REQUIRES-POSITIVE", Requires, "required proposition established", "DISCHARGED", "EVIDENCE_ACCEPTED", "DISCHARGED", true, "upstream and local requirement hold"},
-		{TruthTableSchema, "REQUIRES-NEGATIVE", Requires, "required proposition established", "DISCHARGED", "UNKNOWN", "OPEN", false, "local requirement missing"},
-		{TruthTableSchema, "CONTRADICTS-POSITIVE", Contradicts, "established contradiction of target", "REFUTED", "UNKNOWN", "REFUTED", true, "upstream refutation is sufficient on a typed contradiction edge"},
-		{TruthTableSchema, "CONTRADICTS-NEGATIVE", Contradicts, "ordinary support direction", "REFUTED", "UNKNOWN", "OPEN", false, "name alone cannot refute"},
-		{TruthTableSchema, "FAILURE_ENTAILMENT-POSITIVE", FailureEntailment, "failure entails target failure", "REFUTED", "UNKNOWN", "REFUTED", true, "upstream refutation is sufficient on a typed failure-entailment edge"},
-		{TruthTableSchema, "FAILURE_ENTAILMENT-NEGATIVE", FailureEntailment, "success or ordinary dependency", "REFUTED", "UNKNOWN", "OPEN", false, "failure evidence is absent"},
+		{Schema: TruthTableSchema, CaseID: "SUPPORTS-POSITIVE", Kind: Supports, Direction: "direction-matching", UpstreamState: "DISCHARGED", LocalPredicate: "EVIDENCE_ACCEPTED", ExpectedState: "OPEN", Positive: true, SemanticBasis: "support never discharges or refutes by itself"},
+		{Schema: TruthTableSchema, CaseID: "SUPPORTS-REVERSED", Kind: Supports, Direction: "reversed-direction", UpstreamState: "REFUTED", LocalPredicate: "UNKNOWN", ExpectedState: "OPEN", Positive: false, SemanticBasis: "support does not refute"},
+		{Schema: TruthTableSchema, CaseID: "REQUIRES-POSITIVE", Kind: Requires, Direction: "direction-matching", UpstreamState: "DISCHARGED", LocalPredicate: "EVIDENCE_ACCEPTED", ExpectedState: "DISCHARGED", Positive: true, SemanticBasis: "upstream and local requirement hold"},
+		{Schema: TruthTableSchema, CaseID: "REQUIRES-UNKNOWN", Kind: Requires, Direction: "direction-matching", UpstreamState: "DISCHARGED", LocalPredicate: "UNKNOWN", ExpectedState: "OPEN", Positive: true, SemanticBasis: "local requirement evidence is unknown"},
+		{Schema: TruthTableSchema, CaseID: "CONTRADICTS-POSITIVE", Kind: Contradicts, Direction: "direction-matching", UpstreamState: "DISCHARGED", LocalPredicate: "UNKNOWN", ExpectedState: "REFUTED", Positive: true, ContradictionObserved: true, SemanticBasis: "established proposition and observed contradiction agree in the declared direction"},
+		{Schema: TruthTableSchema, CaseID: "CONTRADICTS-REVERSED", Kind: Contradicts, Direction: "reversed-direction", UpstreamState: "DISCHARGED", LocalPredicate: "UNKNOWN", ExpectedState: "OPEN", Positive: false, ContradictionObserved: true, SemanticBasis: "reversed contradiction direction cannot refute"},
+		{Schema: TruthTableSchema, CaseID: "FAILURE_ENTAILMENT-POSITIVE", Kind: FailureEntailment, Direction: "direction-matching", UpstreamState: "REFUTED", LocalPredicate: "UNKNOWN", ExpectedState: "REFUTED", Positive: true, FailureAntecedentObserved: true, SemanticBasis: "declared failure antecedent is observed and entails target failure"},
+		{Schema: TruthTableSchema, CaseID: "FAILURE_ENTAILMENT-UNKNOWN", Kind: FailureEntailment, Direction: "direction-matching", UpstreamState: "REFUTED", LocalPredicate: "UNKNOWN", ExpectedState: "OPEN", Positive: true, FailureAntecedentObserved: false, SemanticBasis: "upstream refutation alone does not activate failure entailment"},
 	}
 }
 
@@ -191,7 +203,7 @@ const (
 // edgeRelation is the single state relation used by both the executable
 // truth-table cases and the graph classifier. directionMatches is explicit so
 // the negative cases exercise the same relation with a reversed edge.
-func edgeRelation(kind EdgeKind, upstreamState string, local ObservationPredicate, directionMatches bool) relationOutcome {
+func edgeRelation(kind EdgeKind, upstreamState string, local ObservationPredicate, directionMatches, contradictionObserved, failureAntecedentObserved bool) relationOutcome {
 	if !directionMatches {
 		return relationOpen
 	}
@@ -200,8 +212,12 @@ func edgeRelation(kind EdgeKind, upstreamState string, local ObservationPredicat
 		if upstreamState == "DISCHARGED" && local == ObservationEvidence {
 			return relationDischarged
 		}
-	case Contradicts, FailureEntailment:
-		if upstreamState == "REFUTED" {
+	case Contradicts:
+		if upstreamState == "DISCHARGED" && contradictionObserved {
+			return relationRefuted
+		}
+	case FailureEntailment:
+		if upstreamState == "REFUTED" && failureAntecedentObserved {
 			return relationRefuted
 		}
 	case Supports:
@@ -220,7 +236,7 @@ func validateTruthTable(cases []TruthTableCase) error {
 	}
 	seen := map[EdgeKind]int{}
 	for _, test := range cases {
-		actual := edgeRelation(test.Kind, test.UpstreamState, ObservationPredicate(test.LocalPredicate), test.Positive)
+		actual := edgeRelation(test.Kind, test.UpstreamState, ObservationPredicate(test.LocalPredicate), test.Positive, test.ContradictionObserved, test.FailureAntecedentObserved)
 		if string(actual) != test.ExpectedState {
 			return fmt.Errorf("truth table case %q computed %s, expected %s", test.CaseID, actual, test.ExpectedState)
 		}
@@ -237,6 +253,10 @@ func validateTruthTable(cases []TruthTableCase) error {
 func graphDigest(graph Graph) (string, error)       { graph.Digest = ""; return digestJSON(graph) }
 func receiptDigest(receipt Receipt) (string, error) { receipt.Digest = ""; return digestJSON(receipt) }
 func evidenceReceiptDigest(receipt EvidenceReceipt) (string, error) {
+	receipt.Digest = ""
+	return digestJSON(receipt)
+}
+func observationReceiptDigest(receipt ObservationReceipt) (string, error) {
 	receipt.Digest = ""
 	return digestJSON(receipt)
 }
@@ -264,6 +284,11 @@ func digestBytes(data []byte) string {
 	sum := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
+
+// DigestBytesForObservation is the provider boundary's byte digest primitive.
+// The observer uses it without parsing source or importing the evidence
+// classifier's implementation details.
+func DigestBytesForObservation(data []byte) string { return digestBytes(data) }
 func prefixedDigest(raw string) string {
 	if strings.HasPrefix(raw, "sha256:") {
 		return raw

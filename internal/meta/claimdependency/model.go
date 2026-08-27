@@ -51,6 +51,23 @@ type AuthorityCase struct {
 	ObservedResolution string         `json:"observed_resolution"`
 }
 
+type ObservationReceipt struct {
+	Schema                    string        `json:"schema"`
+	Provider                  string        `json:"provider"`
+	TargetPath                string        `json:"target_path"`
+	Target                    TargetAddress `json:"target"`
+	TargetBytesDigest         string        `json:"target_bytes_digest"`
+	Procedure                 string        `json:"procedure"`
+	ProcedureDigest           string        `json:"procedure_digest"`
+	Output                    string        `json:"output"`
+	OutputDigest              string        `json:"output_digest"`
+	ExitCode                  int           `json:"exit_code"`
+	Result                    string        `json:"result"`
+	FailureAntecedentObserved bool          `json:"failure_antecedent_observed"`
+	Coordinate                Coordinate    `json:"coordinate"`
+	Digest                    string        `json:"digest"`
+}
+
 type Coordinate struct {
 	Stage  string `json:"stage"`
 	Step   string `json:"step"`
@@ -81,11 +98,12 @@ type Claim struct {
 }
 
 type Edge struct {
-	EdgeID        string   `json:"edge_id"`
-	FromClaimID   string   `json:"from_claim_id"`
-	ToClaimID     string   `json:"to_claim_id"`
-	Kind          EdgeKind `json:"kind"`
-	SemanticBasis string   `json:"semantic_basis"`
+	EdgeID              string   `json:"edge_id"`
+	FromClaimID         string   `json:"from_claim_id"`
+	ToClaimID           string   `json:"to_claim_id"`
+	Kind                EdgeKind `json:"kind"`
+	ActivationPredicate string   `json:"activation_predicate"`
+	SemanticBasis       string   `json:"semantic_basis"`
 }
 
 type Graph struct {
@@ -138,6 +156,8 @@ type EvidenceReceipt struct {
 	Operation           string               `json:"operation"`
 	RequestStatus       string               `json:"request_status"`
 	Procedure           string               `json:"procedure"`
+	ObservationPath     string               `json:"observation_path,omitempty"`
+	Observation         ObservationReceipt   `json:"observation"`
 	ObservedPredicate   ObservationPredicate `json:"observed_predicate"`
 	ObservedValue       string               `json:"observed_value"`
 	Status              EvidenceStatus       `json:"status"`
@@ -200,15 +220,17 @@ type Resolution struct {
 }
 
 type TruthTableCase struct {
-	Schema         string   `json:"schema"`
-	CaseID         string   `json:"case_id"`
-	Kind           EdgeKind `json:"kind"`
-	Direction      string   `json:"direction"`
-	UpstreamState  string   `json:"upstream_state"`
-	LocalPredicate string   `json:"local_predicate"`
-	ExpectedState  string   `json:"expected_state"`
-	Positive       bool     `json:"positive"`
-	SemanticBasis  string   `json:"semantic_basis"`
+	Schema                    string   `json:"schema"`
+	CaseID                    string   `json:"case_id"`
+	Kind                      EdgeKind `json:"kind"`
+	Direction                 string   `json:"direction"`
+	UpstreamState             string   `json:"upstream_state"`
+	LocalPredicate            string   `json:"local_predicate"`
+	ExpectedState             string   `json:"expected_state"`
+	Positive                  bool     `json:"positive"`
+	ContradictionObserved     bool     `json:"contradiction_observed"`
+	FailureAntecedentObserved bool     `json:"failure_antecedent_observed"`
+	SemanticBasis             string   `json:"semantic_basis"`
 }
 
 type EdgeMetric struct {

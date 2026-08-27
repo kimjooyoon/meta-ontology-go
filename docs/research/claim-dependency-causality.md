@@ -14,28 +14,27 @@
 `execute(activity, inputs, output, artifact, value-program)` proposition,
 그 proposition의 SHA-256 digest, IR에서 복원한 `wasGeneratedBy` output과
 `used` input, producer/consumer/meta-operation/proof choice, 그리고
-stage/step/reason provenance이다. fixture에는 여섯 개의 서로 다른 observed
-predicate가 있으므로 claim 분모는 정직하게 `6/6`이다. IR에서 digest가
+stage/step/reason provenance이다. fixture에는 여섯 개의 서로 다른 실행
+proposition이 있으므로 distinct proposition 분모는 정직하게 `6/6`이다. IR에서 digest가
 중복되면 고정 분모를 유지하지 않고 검사를 실패시킨다.
 
 현재 graph는 `SUPPORTS 2`, `REQUIRES 3`, `CONTRADICTS 2`,
 `FAILURE_ENTAILMENT 1`, 총 `8/8` eligible edge다. `CONTRADICTS`는
-“from proposition established/refuted, explicitly contradicts to proposition”
-방향이고, `FAILURE_ENTAILMENT`는 “from established failure, entails target
-failure” 방향이다. edge 이름만으로 `REFUTED`를 만들지 않는다.
+“established proposition + observed contradiction contradicts target proposition”
+방향이고, `FAILURE_ENTAILMENT`는 “observed failure antecedent + upstream
+refuted state entails target failure” 방향이다. edge 이름만으로 `REFUTED`를
+만들지 않는다.
 
 ## Current evidence and algebra
 
-`.gooo`에는 observation recipe/capability와 topology만 선언된다. CI provider가
-실제 artifact path/bytes/digest와 관측 절차를 실행해 `CURRENT_EVIDENCE` receipt를
-만든다. `-operation`은 `CLAIMED_INPUT/REQUEST`일 뿐이며, 그 문자열 자체는
-predicate가 아니다. 외부 target 관측이 없는 `availability` 요청은 predicate를
-`UNKNOWN`으로 낮춘다.
-receipt는 provider, artifact path, bytes digest, observed predicate/value,
-status, stage/step/reason, per-claim proposition digest, tracked/untracked
-repository snapshot, output path, capability evidence를 가진다. provider와
-judge는 artifact bytes를 각각 다시 읽고 parse/lower한다. `HISTORICAL_FIXTURE`나
-임의 문자열은 PASS 근거가 아니다.
+`.gooo`에는 observation recipe/capability와 topology만 선언된다. CI의 독립
+observer가 실제 target artifact를 읽거나 실행해 target path, bytes digest,
+procedure/procedure digest, output/output digest, exit code와 result를 raw
+observation receipt로 남긴다. 그 receipt가 없으면 parse/lower 결과는
+`DECLARED_RECIPE`/`UNKNOWN`일 뿐 `CURRENT_EVIDENCE`가 아니다. `-operation`은
+`CLAIMED_INPUT/REQUEST`일 뿐이며 source marker와 함께 predicate를 고르지
+않는다. provider와 judge는 artifact bytes와 raw observation을 각각 다시
+관측한다. `HISTORICAL_FIXTURE`나 임의 문자열은 PASS 근거가 아니다.
 
 state 대수는 다음과 같다.
 
@@ -44,8 +43,8 @@ state 대수는 다음과 같다.
 | 직접 observation `UNKNOWN` | root `OPEN/DIRECT_UNKNOWN` |
 | upstream `UNKNOWN` | dependent `OPEN/DEPENDENCY_BLOCKED` |
 | upstream `REFUTED` on `SUPPORTS` or `REQUIRES` | dependent `OPEN/BLOCKED` |
-| upstream `REFUTED` on direction-matching `CONTRADICTS` | target `REFUTED` (local child may be `UNKNOWN`) |
-| upstream `REFUTED` on direction-matching `FAILURE_ENTAILMENT` | target failure `REFUTED` (local child may be `UNKNOWN`) |
+| upstream `DISCHARGED` + observed contradiction on direction-matching `CONTRADICTS` | target `REFUTED` (local child may be `UNKNOWN`) |
+| upstream `REFUTED` + observed failure antecedent on direction-matching `FAILURE_ENTAILMENT` | target failure `REFUTED` (local child may be `UNKNOWN`) |
 | matching local `EVIDENCE_ACCEPTED` and all incoming `REQUIRES` discharged | `DISCHARGED` |
 | `SUPPORTS` only | standalone discharge 금지 |
 
@@ -56,7 +55,7 @@ provenance, upstream edge IDs와 upstream transition digest 목록, 이전 head�
 digest 목록이다.
 
 UNKNOWN fixture의 관측 인과 edge는 `5/8`(claim별 허용 shortest-path edge union
-`3/8`), REFUTED fixture는 `7/8`(union `5/8`), recovery는 실제 discharge에
+`3/8`), REFUTED fixture는 `6/8`(union `4/8`), recovery는 실제 discharge에
 사용된 `3/8`(union `2/8`)이다. 이 union은 결정론적 경로들의 합집합이지 전역
 cardinality-minimum 증명이 아니다. local evidence만으로 discharge된 downstream은 direct local
 evidence로 분류하고, `REQUIRES` upstream이 실제 사용된 경우에만 dependency
@@ -64,10 +63,13 @@ discharge로 분류한다. recovery edge를 destination이 DISCHARGED라는 이�
 않는다. 최대 cause path는 node 수가 아니라 edge depth이며 이 fixture에서는
 `2`다.
 
-edge algebra의 고정 truth-table 분모는 edge kind마다 positive/negative 두 건,
-총 `8/8`이다. SUPPORTS positive/negative는 모두 target을 discharge/refute하지
-않고, REQUIRES positive만 upstream+local 충족 시 discharge한다. CONTRADICTS와
-FAILURE_ENTAILMENT는 명시된 방향의 positive case만 refute한다.
+edge algebra의 고정 truth-table 분모는 edge kind마다 두 건, 총 `8/8`이다.
+SUPPORTS는 target을 discharge/refute하지 않고, REQUIRES positive만
+upstream+local 충족 시 discharge한다. CONTRADICTS는 direction-matching,
+upstream `DISCHARGED`, 실제 contradiction observation을 모두 요구한다.
+FAILURE_ENTAILMENT는 별도의 direction-matching failure antecedent 관측과
+upstream `REFUTED`를 요구한다. 각 producer/judge가 같은 표를 raw `.gooo`와
+각자의 observation 입력에서 독립 실행한다.
 
 ## Append-only recovery
 
@@ -92,7 +94,8 @@ reconstruction은 `1/1`, producer import은 `0/1`이다.
 * source-only: 같은 accepted raw evidence를 고정하고 `VALUE_PROGRAM`만 바꾼다.
   semantic digest, claim transitions, decision이 바뀐다.
 * observation-only: source semantic digest를 고정하고 provider operation만
-  바꾼다. evidence digest, states, transitions, decision이 바뀐다.
+  바꾼다. raw observation이 없으면 `UNKNOWN`으로 낮아져 evidence digest,
+  states, transitions, decision이 바뀐다.
 * edge-only: source value가 선언한 typed edge만 바꿔 refuting path를 제거한다.
 * comment-only: raw source bytes만 바꾸고 semantic/graph/evidence digest,
   states, transitions, decision을 보존한다.
@@ -109,8 +112,9 @@ fail closed한다. 현재 관측 범위는 `NET_REPOSITORY_STATE_UNCHANGED`이�
 semantic promotion authorization은 항상 false다.
 
 증거 provenance 회귀는 `3/3`(caller flag only, observation artifact changed,
-observation absent), authority 회귀는 `3/3`(net same, net changed, transient
-unknown), prior tamper 거부는 `3/3`, path metric은 `2/2`(UNKNOWN/REFUTED), owner
+observation absent)이고 별도 marker-only/no-observation 회귀도 `UNKNOWN`을
+확인한다. authority 회귀는 `3/3`(net same, net changed, transient unknown),
+prior tamper 거부는 `3/3`, path metric은 `2/2`(UNKNOWN/REFUTED), owner
 applicability는 `3/3`(direct, dependency, discharged N/A)로 고정한다. DISCHARGED
 resolution의 failure responsibility/owner는 `N/A`/empty이고, direct unknown은
 자기 claim, dependency blocked/refuted는 실제 shortest path의 첫 claim을 owner로
