@@ -49,7 +49,7 @@ jobs:
           source="$GITHUB_WORKSPACE/examples/observer-effect-ledger/main.gooo"
           mkdir -p "$work/first" "$work/replay" "$work/unknown" "$work/violation" "$work/violation-root"
 
-          if rg -n 'github\.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect|internal/meta/observereffect' scripts/observer-effect-judge; then
+          if grep -R -n -E 'github\.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect|internal/meta/observereffect' scripts/observer-effect-judge; then
             echo "consumer judge must not import the producer observereffect package" >&2
             exit 1
           fi
@@ -135,7 +135,7 @@ jobs:
             ([.coordinates[] | select(.coordinate == "OUTPUT") | .step] | .[0]) == "artifact-write" and
             ([.coordinates[] | select(.coordinate == "OUTPUT") | .reason] | .[0]) == "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED"
           ' "$work/first/ledger.json"
-          producer_import_count="$( (rg -n 'github\.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect|internal/meta/observereffect' scripts/observer-effect-judge || true) | wc -l | tr -d '[:space:]')"
+          producer_import_count="$( (grep -R -n -E 'github\.com/kimjooyoon/meta-ontology-go/internal/meta/observereffect|internal/meta/observereffect' scripts/observer-effect-judge || true) | wc -l | tr -d '[:space:]')"
           semantic_causal_pass="$(jq '[.source.interventions[] | select(.kind == "SEMANTIC_CAUSAL" and .semantic_invariant == false and .causal_change == true)] | length' "$work/first/ledger.json")"
           semantic_causal_total="$(jq '[.source.interventions[] | select(.kind == "SEMANTIC_CAUSAL")] | length' "$work/first/ledger.json")"
           nonsemantic_preservation_pass="$(jq '[.source.interventions[] | select(.kind == "NONSEMANTIC_PRESERVATION" and .semantic_invariant == true and .causal_change == false)] | length' "$work/first/ledger.json")"

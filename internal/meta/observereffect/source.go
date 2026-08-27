@@ -43,13 +43,13 @@ func canonicalSource(displayPath, filename string, payload []byte) Source {
 	source := Source{Path: displayPath, Digest: DigestBytes(payload)}
 	file, diagnostics := syntax.ParseFile(filename, string(payload))
 	if file == nil || diagnostics.HasErrors() {
-		source.Interventions = buildSemanticInterventions(filename, payload, source.Digest, "")
+		source.Interventions = buildSemanticInterventions(filename, payload, source.Digest, "", "")
 		return source
 	}
 	source.CanonicalParse = true
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		source.Interventions = buildSemanticInterventions(filename, payload, source.Digest, "")
+		source.Interventions = buildSemanticInterventions(filename, payload, source.Digest, "", "")
 		return source
 	}
 	source.CanonicalLowering = true
@@ -57,7 +57,7 @@ func canonicalSource(displayPath, filename string, payload []byte) Source {
 	source.Policy = observerPolicyFromIR(ir)
 	source.PolicyDigest = observerPolicyDigest(source.Policy)
 	source.GoooSource = true
-	source.Interventions = buildSemanticInterventions(filename, payload, source.Digest, source.Policy)
+	source.Interventions = buildSemanticInterventions(filename, payload, source.Digest, source.SemanticDigest, source.Policy)
 	return source
 }
 
@@ -96,9 +96,9 @@ func projectSemanticOutcome(sourceDigest, policy string) projectedSemanticOutcom
 	}
 }
 
-func buildSemanticInterventions(filename string, payload []byte, baselineDigest, baselinePolicy string) []SemanticIntervention {
+func buildSemanticInterventions(filename string, payload []byte, sourceDigest, baselineDigest, baselinePolicy string) []SemanticIntervention {
 	interventions := make([]SemanticIntervention, 0, len(semanticInterventionCases))
-	baseline := projectSemanticOutcome(baselineDigest, baselinePolicy)
+	baseline := projectSemanticOutcome(sourceDigest, baselinePolicy)
 	for _, intervention := range semanticInterventionCases {
 		mutated := append([]byte(nil), payload...)
 		if intervention.Needle != "" {
