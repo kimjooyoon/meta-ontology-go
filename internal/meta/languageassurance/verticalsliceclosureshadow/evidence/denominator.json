@@ -7,14 +7,14 @@
       "id": "syntax",
       "schema": "gooo/language-syntax-roundtrip/v1",
       "meta_operation": "prove-language-syntax-roundtrip",
-      "target": 29,
+      "target": 30,
       "link_target": 1
     },
     {
       "id": "semantics",
       "schema": "gooo/language-semantic-model/v1",
       "meta_operation": "prove-staged-semantic-model",
-      "target": 31,
+      "target": 32,
       "link_target": 2
     },
     {
@@ -35,7 +35,7 @@
       "id": "toolchain",
       "schema": "gooo/toolchain-conformance-report/v1",
       "meta_operation": "close-toolchain-conformance-ledger",
-      "target": 179,
+      "target": 181,
       "link_target": 3
     },
     {

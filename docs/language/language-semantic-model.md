@@ -4,7 +4,7 @@
 
 The semantic model is not credited because a Go type named `IR` exists. It is credited only when executable meta-code binds a fixed source set, lowers each source twice, normalizes both results, compares authoritative meaning, provenance, and exact evidence, then seals an effect receipt.
 
-The versioned denominator is 22 cases. The exact target is 22/22 and 10000 basis points. The source component contains 17 `.gooo` files and 262 physical lines proven by the upstream syntax receipt. The 31-line source-splitter decision-algebra program, 20-line rollback-integrity activation program, 20-line vertical-slice closure activation program, and 17-line external-conformance activation program are credited only for lowering, normalization, and replay here; they do not establish runtime behavior or merge authority.
+The versioned denominator is 32 cases. The exact target is 32/32 and 10000 basis points. The source component contains 27 `.gooo` files and 428 physical lines proven by the upstream syntax receipt. The 31-line source-splitter decision-algebra program, 20-line rollback-integrity activation program, 20-line vertical-slice closure activation program, 17-line external-conformance activation program, and 16-line reproducibility-semantics experiment are credited only for lowering, normalization, and replay here; they do not establish runtime behavior or merge authority.
 
 ## Stages
 
