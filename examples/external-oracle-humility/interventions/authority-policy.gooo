@@ -13,7 +13,7 @@ entity AuthorityBoundary id "gooo://external-oracle-humility/entity/authority-bo
 entity ClaimTransition id "gooo://external-oracle-humility/entity/claim-transition"
 entity HumilityReceipt id "gooo://external-oracle-humility/entity/humility-receipt"
 
-activity ComputeSourceAuthorityPolicy(PolicyInput) -> PolicyReceipt computes "source_authority=GOOO_SOURCE_INTENT;external_evidence_relation=COMPARATIVE_EVIDENCE;external_evidence_authority=NOT_AUTHORITY"
+activity ComputeSourceAuthorityPolicy(PolicyInput) -> PolicyReceipt computes "source_authority=EXTERNAL_REFERENCE_AUTHORITY;external_evidence_relation=COMPARATIVE_EVIDENCE;external_evidence_authority=NOT_AUTHORITY"
 activity DeclareSourceIntentAuthority(PolicyReceipt) -> SourceClaim computes "claim_id=source-intent-authority;state=SOURCE_ONLY"
 activity DeclareReferenceComparisonOnly(PolicyReceipt) -> ComparisonClaim computes "claim_id=reference-comparison-only;state=EVIDENCE_ONLY"
 activity DeclareReceiptReplayability(PolicyReceipt) -> ReplayClaim computes "claim_id=receipt-replayability;state=REPLAYABLE_EVIDENCE"

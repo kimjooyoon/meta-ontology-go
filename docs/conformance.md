@@ -56,6 +56,11 @@ points and evidence.
 The [external oracle humility example](../examples/external-oracle-humility/README.md)
 is verified by the `External oracle humility` Actions workflow. It keeps the
 12-indicator denominator and 3-case agreement/mismatch/absence suite fixed,
-replays the source receipt through an independent judge, and records no local
-or official mutation. External agreement is reported as
-`REFERENCE_AGREEMENT_OBSERVED`, never as `PASS` or semantic authority.
+re-lowers the source in both producer and consumer packages, derives capsule
+agreement from structured propositions, and performs Actions-only current URL
+retrieval. The report exposes `source_policy=1/1`, `producer_imports=0/0`,
+`current_reference_observations=x/3`, `historical_fixtures=3/3`,
+`semantic_causality=1/1`, and `nonsemantic_preservation=1/1`. External
+agreement is reported as `REFERENCE_AGREEMENT_OBSERVED`, never as `PASS` or
+semantic authority; missing or changed current content is `OPEN` with lower
+resolution, and repository writes/promotions are read from an effects snapshot.

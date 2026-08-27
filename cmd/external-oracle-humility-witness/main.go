@@ -1,84 +1,186 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
-	oracle "github.com/kimjooyoon/meta-ontology-go/internal/meta/externaloraclehumility"
+	consumer "github.com/kimjooyoon/meta-ontology-go/internal/meta/externaloraclehumilityconsumer"
+	producer "github.com/kimjooyoon/meta-ontology-go/internal/meta/externaloraclehumilityproducer"
 )
 
 type options struct {
-	head, source, contract, references, output string
+	head, source, contract, references, current, mismatchCapsule, absenceCapsule string
+	interventionSource, commentSource, effects, independence, output             string
 }
 
-func main() {
-	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
-}
+func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }
 
 func run(args []string, stdout, stderr io.Writer) int {
-	options, err := parseOptions(args, stderr)
+	opts, err := parseOptions(args, stderr)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 2
 	}
-	var contract oracle.Contract
-	var evidence oracle.ReferenceEvidenceSet
-	contractRaw, err := os.ReadFile(options.contract)
-	if err == nil {
-		err = json.Unmarshal(contractRaw, &contract)
-	}
-	if err == nil {
-		evidenceRaw, readErr := os.ReadFile(options.references)
-		err = readErr
-		if err == nil {
-			err = json.Unmarshal(evidenceRaw, &evidence)
-		}
-	}
-	source, sourceErr := os.ReadFile(options.source)
-	if err == nil {
-		err = sourceErr
-	}
+	contractRaw, err := read(opts.contract)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 2
 	}
-	receipt := oracle.ProduceSourceReceipt(options.head, "examples/external-oracle-humility/main.gooo", source, contract)
-	input := oracle.Input{Contract: contract, Evidence: evidence, Receipt: receipt, Source: source, Subject: options.head}
-	reports := map[string]oracle.Report{}
-	for _, caseID := range []string{"reference-agreement", "reference-mismatch", "reference-absence"} {
-		reports[caseID] = oracle.RunCase(caseID, input)
+	referencesRaw, err := read(opts.references)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
 	}
-	suite := oracle.RunSuite(contract, input)
-	values := map[string]any{"source-receipt.json": receipt, "agreement-report.json": reports["reference-agreement"],
-		"mismatch-report.json": reports["reference-mismatch"], "absence-report.json": reports["reference-absence"], "suite.json": suite}
-	if err := os.MkdirAll(options.output, 0o755); err != nil {
+	currentRaw, err := read(opts.current)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	effectsRaw, err := read(opts.effects)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	independenceRaw, err := read(opts.independence)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	source, err := read(opts.source)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	receipt, err := producer.ProduceSourceReceipt(opts.head, opts.source, source)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	receiptRaw, err := consumer.Encode(receipt)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+
+	baseInput := consumer.Input{Subject: opts.head, SourcePath: opts.source, Source: source, Contract: contractRaw, Receipt: receiptRaw, Capsule: referencesRaw, Current: currentRaw, Effects: effectsRaw, Independence: independenceRaw}
+	agreement, err := consumer.Judge(baseInput)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+
+	mismatchCapsule, err := read(opts.mismatchCapsule)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	absenceCapsule, err := read(opts.absenceCapsule)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	mismatchInput := baseInput
+	mismatchInput.Capsule, mismatchInput.Current, mismatchInput.Conformance = mismatchCapsule, nil, true
+	mismatch, err := consumer.Judge(mismatchInput)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	absenceInput := baseInput
+	absenceInput.Capsule, absenceInput.Current, absenceInput.Conformance = absenceCapsule, nil, true
+	absence, err := consumer.Judge(absenceInput)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+
+	interventionSource, err := read(opts.interventionSource)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	interventionReceipt, err := producer.ProduceSourceReceipt(opts.head, opts.interventionSource, interventionSource)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	interventionReceiptRaw, err := consumer.Encode(interventionReceipt)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	interventionInput := baseInput
+	interventionInput.SourcePath, interventionInput.Source, interventionInput.Receipt = opts.interventionSource, interventionSource, interventionReceiptRaw
+	intervention, err := consumer.Judge(interventionInput)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+
+	commentSource, err := read(opts.commentSource)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	commentReceipt, err := producer.ProduceSourceReceipt(opts.head, opts.commentSource, commentSource)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	commentReceiptRaw, err := consumer.Encode(commentReceipt)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	commentInput := baseInput
+	commentInput.SourcePath, commentInput.Source, commentInput.Receipt = opts.commentSource, commentSource, commentReceiptRaw
+	comment, err := consumer.Judge(commentInput)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+
+	agreement = consumer.FinalizeCausality(agreement, intervention, comment)
+	suite, err := consumer.BuildSuite(contractRaw, opts.head, agreement, mismatch, absence, intervention, comment)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	values := map[string]any{
+		"source-receipt.json":      receipt,
+		"agreement-report.json":    agreement,
+		"mismatch-report.json":     mismatch,
+		"absence-report.json":      absence,
+		"intervention-report.json": intervention,
+		"comment-report.json":      comment,
+		"suite.json":               suite,
+	}
+	if err := os.MkdirAll(opts.output, 0o755); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 2
 	}
 	for name, value := range values {
-		raw, encodeErr := oracle.Encode(value)
+		raw, encodeErr := consumer.Encode(value)
 		if encodeErr != nil {
 			fmt.Fprintln(stderr, encodeErr)
 			return 2
 		}
-		if writeErr := os.WriteFile(filepath.Join(options.output, name), raw, 0o644); writeErr != nil {
+		if writeErr := os.WriteFile(filepath.Join(opts.output, name), raw, 0o644); writeErr != nil {
 			fmt.Fprintln(stderr, writeErr)
 			return 2
 		}
 	}
-	fmt.Fprintf(stdout, "external oracle humility: %s %d/%d cases=%d/%d agreement=%s authority=%s\n",
-		suite.Decision, reports["reference-agreement"].Completed, reports["reference-agreement"].Total,
-		suite.CasesSatisfied, suite.CasesTotal, reports["reference-agreement"].ReferenceAgreement,
-		reports["reference-agreement"].SemanticAuthority)
+	fmt.Fprintf(stdout, "external oracle humility: %s %d/%d cases=%d/%d agreement=%s authority=%s current=%d/%d\n", suite.Decision, agreement.Completed, agreement.Total, suite.CasesSatisfied, suite.CasesTotal, agreement.ReferenceAgreement, agreement.SemanticAuthority, agreement.CurrentReferenceObservations, agreement.CurrentReferenceTotal)
 	if suite.Decision != "HUMILITY_MODEL_BOUND" || suite.Resolution != "EXACT" {
 		return 1
 	}
 	return 0
 }
+
+func read(path string) ([]byte, error) { return os.ReadFile(path) }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
 	var result options
@@ -87,13 +189,20 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	flags.StringVar(&result.head, "head", "", "exact subject SHA")
 	flags.StringVar(&result.source, "source", "", "Gooo source path")
 	flags.StringVar(&result.contract, "contract", "", "humility contract path")
-	flags.StringVar(&result.references, "references", "", "reference evidence path")
+	flags.StringVar(&result.references, "references", "", "historical reference capsule path")
+	flags.StringVar(&result.current, "current", "", "Actions current observation path")
+	flags.StringVar(&result.mismatchCapsule, "mismatch-capsule", "", "historical mismatch capsule path")
+	flags.StringVar(&result.absenceCapsule, "absence-capsule", "", "historical absence capsule path")
+	flags.StringVar(&result.interventionSource, "intervention-source", "", "semantic intervention source path")
+	flags.StringVar(&result.commentSource, "comment-source", "", "comment-only source path")
+	flags.StringVar(&result.effects, "effects", "", "repository effects snapshot path")
+	flags.StringVar(&result.independence, "independence", "", "producer/consumer dependency snapshot path")
 	flags.StringVar(&result.output, "output", "", "output directory")
 	if err := flags.Parse(args); err != nil {
 		return options{}, err
 	}
-	if result.head == "" || result.source == "" || result.contract == "" || result.references == "" || result.output == "" {
-		return options{}, fmt.Errorf("head, source, contract, references, and output are required")
+	if result.head == "" || result.source == "" || result.contract == "" || result.references == "" || result.current == "" || result.mismatchCapsule == "" || result.absenceCapsule == "" || result.interventionSource == "" || result.commentSource == "" || result.effects == "" || result.independence == "" || result.output == "" {
+		return options{}, fmt.Errorf("all source, capsule, observation, snapshot, and output flags are required")
 	}
 	return result, nil
 }
