@@ -203,7 +203,7 @@ jobs:
             .source.effect.output_outside_repository == true and .source.effect.repository_writes == 0 and .source.effect.mutation_authority == "DENIED" and
             (.source.effect.evidence_digest | startswith("sha256:")) and
             (.source.grant_artifact_digest | startswith("sha256:")) and
-            (any(.cases[]; .definition.id == "explicit-read-only-capability" and .observation.execution_artifact_present == true and .observation.execution_artifact_valid == true and .observation.output_digest != "" and .receipt.execution_artifact.operation_id == "meta-circular-boundary.evaluate" and .receipt.execution_artifact.input_digest == .source.semantic_digest and .receipt.execution_artifact.output_digest == .observation.output_digest and .receipt.claim_transitions[2].evidence_digest == .observation.output_digest)) and
+            (. as $report | any($report.cases[]; .definition.id == "explicit-read-only-capability" and .observation.execution_artifact_present == true and .observation.execution_artifact_valid == true and .observation.output_digest != "" and .receipt.execution_artifact.operation_id == "meta-circular-boundary.evaluate" and .receipt.execution_artifact.input_digest == $report.source.semantic_digest and .receipt.execution_artifact.output_digest == .observation.output_digest and .receipt.claim_transitions[2].evidence_digest == .observation.output_digest)) and
             ([.cases[] | select(.definition.id != "explicit-read-only-capability") | .observation.execution_artifact_present] | all(. == false)) and
             ([.indicators[] | select(.satisfied == false)] | length) == 0
           ' "$output/final-a.json"
