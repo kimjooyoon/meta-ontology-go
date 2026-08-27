@@ -91,14 +91,13 @@ func Evaluate(input Input) Report {
 		report.SubjectDecision = report.Cases[0].SubjectDecision
 		report.Resolution = report.Cases[0].Resolution
 	}
+	var reconstruction int
 	report.ReceiptDigests, report.Summary.RawReceiptsTotal, report.Summary.CurrentEvidenceTotal,
 		report.Summary.SyntheticEvidenceTotal, report.Summary.DistinctProvenanceGroups,
-		report.Summary.CollapsedReplicas = inventory(input.Cases)
+		report.Summary.CollapsedReplicas, reconstruction = inventory(input.Cases)
 	report.Summary.SourceReconstructionTotal = 1
 	report.Summary.ProducerPackageImportTotal = 1
-	if sourceErr == nil {
-		report.Summary.SourceReconstructionCount = 1
-	}
+	report.Summary.SourceReconstructionCount = reconstruction
 	report.Digest = reportDigest(report)
 	return report
 }
@@ -421,7 +420,7 @@ func summarize(cases []CaseResult, policy evidencequorumpolicy.Policy) Summary {
 	return summary
 }
 
-func inventory(cases []CaseInput) (digests []string, raw, current, synthetic, groups, collapsed int) {
+func inventory(cases []CaseInput) (digests []string, raw, current, synthetic, groups, collapsed, reconstruction int) {
 	seenReceipts := map[string]evidencequorumwire.Receipt{}
 	seenGroups := map[string]bool{}
 	for _, item := range cases {
@@ -440,6 +439,9 @@ func inventory(cases []CaseInput) (digests []string, raw, current, synthetic, gr
 		digests = append(digests, digest)
 		if receipt.EvidenceClass == evidencequorumwire.CurrentEvidence {
 			current++
+			if receipt.Channel == "raw-source-semantic-reconstructor" {
+				reconstruction++
+			}
 		}
 		if receipt.EvidenceClass == evidencequorumwire.SyntheticCounterexample {
 			synthetic++
