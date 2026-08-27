@@ -6,7 +6,7 @@ func indicators(report Report) []Indicator {
 		indicator("gooo.metric.meta.evidence-quorum.independent-quorum.v1", "quorum", "FOUNDATION", "count-origin-groups", report.Summary.QuorumSatisfiedCases, 1),
 		indicator("gooo.metric.meta.evidence-quorum.duplicate-not-independent.guardrail.v1", "guardrail", "REGRESSION", "collapse-origin-replicas", report.Summary.DuplicateEvidenceTotal, 1),
 		indicator("gooo.metric.meta.evidence-quorum.conflict-fail-closed.guardrail.v1", "guardrail", "REGRESSION", "refute-conflicting-claim", report.Summary.ConflictCases, 1),
-		indicator("gooo.metric.meta.evidence-quorum.insufficient-lower-resolution.guardrail.v1", "guardrail", "REGRESSION", "lower-insufficient-claim", report.Summary.LowerResolutionCases, 2),
+		indicator("gooo.metric.meta.evidence-quorum.insufficient-lower-resolution.guardrail.v1", "guardrail", "REGRESSION", "lower-insufficient-claim", report.Summary.LowerResolutionCases, 3),
 		indicator("gooo.metric.meta.evidence-quorum.confidence-aggregation.guardrail.v1", "guardrail", "REGRESSION", "ignore-confidence-average", boolInt(!report.Summary.ConfidenceAggregated), 1),
 		indicator("gooo.metric.meta.evidence-quorum.claim-transitions.v1", "trace", "COHERENCE", "record-claim-transitions", report.Summary.ClaimsTotal, report.Summary.CasesTotal),
 		indicator("gooo.metric.meta.evidence-quorum.observer-writes.guardrail.v1", "guardrail", "REGRESSION", "preserve-read-only-evaluation", boolInt(report.Summary.RepositoryWrites == 0 && !report.Summary.MutationAuthority), 1),
