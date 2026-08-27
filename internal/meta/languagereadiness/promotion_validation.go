@@ -7,8 +7,12 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
 )
 
-func validatePromotionEvidence(bundle PromotionEvidence, expectedHeadSHA string) (evidenceDigests, error) {
-	promotionDigest, err := validateProposalPromotion(bundle.Promotion, expectedHeadSHA)
+func validatePromotionEvidence(bundle PromotionEvidence,
+	expectedRepository, expectedHeadSHA, expectedPredecessorSHA string,
+) (evidenceDigests, error) {
+	promotionDigest, err := validateProposalPromotion(
+		bundle.Promotion, expectedRepository, expectedHeadSHA, expectedPredecessorSHA,
+	)
 	if err != nil {
 		return evidenceDigests{}, err
 	}

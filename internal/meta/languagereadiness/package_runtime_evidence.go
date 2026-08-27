@@ -8,9 +8,9 @@ import (
 )
 
 func validateProposalPromotion(
-	promotion proposalpromotion.Receipt, expectedHeadSHA string,
+	promotion proposalpromotion.Receipt, expectedRepository, expectedHeadSHA, expectedPredecessorSHA string,
 ) (string, error) {
-	if err := proposalpromotion.Validate(promotion, promotion.Repository, expectedHeadSHA, promotion.EvidenceHeadSHA); err != nil {
+	if err := proposalpromotion.Validate(promotion, expectedRepository, expectedHeadSHA, expectedPredecessorSHA); err != nil {
 		return "", fmt.Errorf("verify autonomous proposal promotion: %w", err)
 	}
 	if promotion.Decision != proposalpromotion.DecisionPass {

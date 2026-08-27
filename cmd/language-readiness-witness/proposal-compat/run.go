@@ -8,9 +8,10 @@ import (
 )
 
 func run(cfg config) error {
-	if cfg.root == "" || cfg.input == "" || cfg.expectedSHA == "" ||
+	if cfg.root == "" || cfg.input == "" || cfg.expectedRepository == "" || cfg.expectedSHA == "" ||
+		cfg.expectedPredecessorSHA == "" ||
 		cfg.legacy == "" || cfg.receipt == "" {
-		return fmt.Errorf("root, input, expected-sha, legacy, and receipt are required")
+		return fmt.Errorf("root, input, expected-repository, expected-sha, expected-predecessor-sha, legacy, and receipt are required")
 	}
 	if err := requireExternal(cfg.root, cfg.legacy, cfg.receipt); err != nil {
 		return err
@@ -19,7 +20,7 @@ func run(cfg config) error {
 	if err != nil {
 		return err
 	}
-	bundle, err := proposalcompat.Build(raw, cfg.expectedSHA)
+	bundle, err := proposalcompat.Build(raw, cfg.expectedRepository, cfg.expectedSHA, cfg.expectedPredecessorSHA)
 	if err != nil {
 		return err
 	}

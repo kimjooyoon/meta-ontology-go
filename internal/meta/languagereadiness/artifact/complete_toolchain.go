@@ -13,7 +13,8 @@ func buildToolchainSnapshot(input CompleteEvidenceInput, bundle readiness.Promot
 	cliReport metacli.Report, formatFixReport metaff.Report) (readiness.Snapshot, error) {
 	if len(input.ToolchainConformance) == 0 {
 		return readiness.EvaluateWithToolchainFormatFix(input.ConceptArtifact, bundle,
-			cliReport, formatFixReport, input.HeadSHA)
+			cliReport, formatFixReport, input.ExpectedRepository, input.HeadSHA,
+			input.ExpectedPredecessorSHA)
 	}
 	conformance, err := decodeCompleteEvidence[metaconformance.Report](input.ToolchainConformance)
 	if err != nil {
@@ -21,7 +22,8 @@ func buildToolchainSnapshot(input CompleteEvidenceInput, bundle readiness.Promot
 	}
 	if len(input.ToolchainLSP) == 0 {
 		return readiness.EvaluateWithToolchainConformance(input.ConceptArtifact, bundle,
-			cliReport, formatFixReport, conformance, input.HeadSHA)
+			cliReport, formatFixReport, conformance,
+			input.ExpectedRepository, input.HeadSHA, input.ExpectedPredecessorSHA)
 	}
 	lspReport, err := decodeCompleteEvidence[metalsp.Report](input.ToolchainLSP)
 	if err != nil {
@@ -29,12 +31,14 @@ func buildToolchainSnapshot(input CompleteEvidenceInput, bundle readiness.Promot
 	}
 	if len(input.ToolchainRelease) == 0 {
 		return readiness.EvaluateWithToolchainLSP(input.ConceptArtifact, bundle, cliReport,
-			formatFixReport, conformance, lspReport, input.HeadSHA)
+			formatFixReport, conformance, lspReport,
+			input.ExpectedRepository, input.HeadSHA, input.ExpectedPredecessorSHA)
 	}
 	releaseReport, err := decodeCompleteEvidence[release.Report](input.ToolchainRelease)
 	if err != nil {
 		return readiness.Snapshot{}, err
 	}
 	return readiness.EvaluateWithToolchainCrossPlatformRelease(input.ConceptArtifact, bundle,
-		cliReport, formatFixReport, conformance, lspReport, releaseReport, input.HeadSHA)
+		cliReport, formatFixReport, conformance, lspReport, releaseReport,
+		input.ExpectedRepository, input.HeadSHA, input.ExpectedPredecessorSHA)
 }

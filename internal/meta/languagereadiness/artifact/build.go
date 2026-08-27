@@ -17,14 +17,15 @@ func Build(conceptArtifact []byte, headSHA string) (Receipt, error) {
 }
 
 func BuildWithProposalPromotion(
-	conceptArtifact, promotionRaw []byte, headSHA string,
+	conceptArtifact, promotionRaw []byte,
+	expectedRepository, headSHA, expectedPredecessorSHA string,
 ) (Receipt, error) {
 	promotion := proposalpromotion.Receipt{}
 	if err := json.Unmarshal(promotionRaw, &promotion); err != nil {
 		return Receipt{}, err
 	}
 	snapshot, err := readiness.EvaluateWithProposalPromotion(
-		conceptArtifact, promotion, headSHA,
+		conceptArtifact, promotion, expectedRepository, headSHA, expectedPredecessorSHA,
 	)
 	if err != nil {
 		return Receipt{}, err

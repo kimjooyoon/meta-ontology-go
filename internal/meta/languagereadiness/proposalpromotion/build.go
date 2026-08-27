@@ -9,10 +9,13 @@ import (
 )
 
 func Build(
-	currentHead, evidenceHead string,
+	expectedRepository, currentHead, evidenceHead string,
 	selection proposalpredecessor.Report, contractRaw []byte,
 	observationEvidence proposalpredecessor.ObservationEvidence,
 ) (Receipt, error) {
+	if expectedRepository == "" {
+		return Receipt{}, fmt.Errorf("FAIL_CLOSED: proposal promotion expected repository is empty")
+	}
 	if err := proposalpredecessor.ValidateObservationEvidence(observationEvidence); err != nil {
 		return Receipt{}, err
 	}
@@ -38,21 +41,21 @@ func Build(
 	if err := json.Unmarshal(contractRaw, &contractData); err != nil {
 		return Receipt{}, err
 	}
-	if err := validateLinkage(currentHead, evidenceHead, selectionData, contractData, contractRaw); err != nil {
+	if err := validateLinkage(expectedRepository, currentHead, evidenceHead, selectionData, contractData, contractRaw); err != nil {
 		return Receipt{}, err
 	}
 	receipt := evaluate(currentHead, evidenceHead, sourceFrom(selectionData, contractData, contractRaw), observationEvidence)
-	if err := Validate(receipt, receipt.Repository, currentHead, evidenceHead); err != nil {
+	if err := Validate(receipt, expectedRepository, currentHead, evidenceHead); err != nil {
 		return Receipt{}, err
 	}
 	return receipt, nil
 }
 
 func validateLinkage(
-	currentHead, evidenceHead string, selection selectionView,
+	expectedRepository, currentHead, evidenceHead string, selection selectionView,
 	contract contractView, contractRaw []byte,
 ) error {
-	if selection.CurrentSubjectSHA != currentHead || selection.PredecessorSHA != evidenceHead ||
+	if selection.Repository != expectedRepository || selection.CurrentSubjectSHA != currentHead || selection.PredecessorSHA != evidenceHead ||
 		selection.Selected.HeadSHA != evidenceHead || contract.SubjectSHA != evidenceHead {
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion subject linkage mismatch")
 	}

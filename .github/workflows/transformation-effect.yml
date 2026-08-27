@@ -50,9 +50,9 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Build, execute, and replay native release candidate
         shell: bash
@@ -99,7 +99,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: true
@@ -187,9 +187,9 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
 
       - name: Select expected boundary decision
@@ -268,9 +268,9 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - uses: actions/download-artifact@v7
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
@@ -321,9 +321,9 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Download exact meta artifacts
         uses: actions/download-artifact@v7
         with:
@@ -396,7 +396,16 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
+      - name: Assert causal workflows use setup-go v7
+        shell: bash
+        run: |
+          set -euo pipefail
+          if rg -n 'actions/setup-go@v[0-6]' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml; then
+            echo 'FAIL_CLOSED: unsupported setup-go action version' >&2
+            exit 1
+          fi
+          test -n "$(rg -n 'actions/setup-go@v7' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml || true)"
       - name: Download exact platform release receipts
         uses: actions/download-artifact@v7
         with:
@@ -592,11 +601,17 @@ jobs:
       - name: Project v2 proposal evidence to the unchanged v1 guard contract
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         run: |
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/proposal-compat \
               --root "$GITHUB_WORKSPACE" \
               --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              --expected-repository "$GITHUB_REPOSITORY" \
               --expected-sha "$HEAD_SHA" \
+              --expected-predecessor-sha "$predecessor_sha" \
               --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-$suffix.json" \
               --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-$suffix.json"
           done
@@ -607,7 +622,9 @@ jobs:
           go run ./cmd/language-readiness-witness/proposal-compat \
             --root "$GITHUB_WORKSPACE" \
             --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            --expected-repository "$GITHUB_REPOSITORY" \
             --expected-sha "$HEAD_SHA" \
+            --expected-predecessor-sha "$predecessor_sha" \
             --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
             --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
             --check
@@ -952,6 +969,10 @@ jobs:
           first="$RUNNER_TEMP/language-concept-artifact/first"
           replay="$RUNNER_TEMP/language-concept-artifact/replay"
           mkdir -p "$first" "$replay"
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
           for target in "$first" "$replay"; do
             go run ./cmd/language-concept-artifact-witness \
               -root "$GITHUB_WORKSPACE" \
@@ -1200,7 +1221,9 @@ jobs:
               -language-package-runtime "$runtime_first/artifact.json" \
               -toolchain-cli "$cli_first/artifact.json" \
               -toolchain-format-fix "$format_fix_first/artifact.json" \
+              -expected-repository "$GITHUB_REPOSITORY" \
               -expected-sha "$HEAD_SHA" \
+              -expected-predecessor-sha "$predecessor_sha" \
               -output "$target/artifact.json"
           done
           cmp -s "$readiness_first/artifact.json" "$readiness_replay/artifact.json"
@@ -1215,7 +1238,9 @@ jobs:
             -language-package-runtime "$runtime_first/artifact.json" \
             -toolchain-cli "$cli_first/artifact.json" \
             -toolchain-format-fix "$format_fix_first/artifact.json" \
+            -expected-repository "$GITHUB_REPOSITORY" \
             -expected-sha "$HEAD_SHA" \
+            -expected-predecessor-sha "$predecessor_sha" \
             -check "$readiness_first/artifact.json"
           (
             cd "$readiness_first"
@@ -1458,7 +1483,9 @@ jobs:
               -toolchain-lsp "$lsp_first/artifact.json" \
               -toolchain-conformance "$conformance_first/artifact.json" \
               -toolchain-cross-platform-release "$release_first/artifact.json" \
+              -expected-repository "$GITHUB_REPOSITORY" \
               -expected-sha "$HEAD_SHA" \
+              -expected-predecessor-sha "$predecessor_sha" \
               -output "$target/artifact.json"
           done
           cmp -s "$readiness_first/artifact.json" "$readiness_replay/artifact.json"
@@ -1476,7 +1503,9 @@ jobs:
             -toolchain-lsp "$lsp_first/artifact.json" \
             -toolchain-conformance "$conformance_first/artifact.json" \
             -toolchain-cross-platform-release "$release_first/artifact.json" \
+            -expected-repository "$GITHUB_REPOSITORY" \
             -expected-sha "$HEAD_SHA" \
+            -expected-predecessor-sha "$predecessor_sha" \
             -check "$readiness_first/artifact.json"
           (
             cd "$readiness_first"
@@ -1747,9 +1776,9 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Download exact functional CLI receipt
         uses: actions/download-artifact@v7
@@ -1841,9 +1870,9 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Download exact guarded promotion receipt
         uses: actions/download-artifact@v7
         with:
@@ -1894,9 +1923,9 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: false
       - name: Generate fixed eligibility receipts
         shell: bash
@@ -1959,9 +1988,9 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: false
       - name: Fetch immutable external reference documents
         shell: bash
@@ -2039,9 +2068,9 @@ jobs:
           fetch-depth: 1
           path: gomacro
       - name: Set up exact Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: false
       - name: Allocate isolated caches
         run: |
@@ -2360,9 +2389,9 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Reduce fixed language delivery contract
         shell: bash
@@ -2403,9 +2432,9 @@ jobs:
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Execute Gooo source and reduce fixed receipts
         shell: bash
@@ -2432,9 +2461,9 @@ jobs:
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Download exact source execution artifact
         uses: actions/download-artifact@v7
@@ -2471,7 +2500,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
       - name: Bind the declared Go 1.27 toolchain
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true

@@ -9,8 +9,9 @@ import (
 
 func EvaluateWithToolchainLSP(raw []byte, bundle PromotionEvidence, cliReport metacli.Report,
 	formatFixReport metaff.Report, conformanceReport metaconformance.Report,
-	lspReport metalsp.Report, expectedHeadSHA string) (Snapshot, error) {
-	evidence, err := validatePromotionEvidence(bundle, expectedHeadSHA)
+	lspReport metalsp.Report,
+	expectedRepository, expectedHeadSHA, expectedPredecessorSHA string) (Snapshot, error) {
+	evidence, err := validatePromotionEvidence(bundle, expectedRepository, expectedHeadSHA, expectedPredecessorSHA)
 	if err != nil {
 		return Snapshot{}, err
 	}

@@ -125,7 +125,7 @@ func build(cfg config, client *http.Client, store *proposalObservationStore) (bu
 	if err != nil {
 		return buildResult{}, err
 	}
-	receipt, err := proposalpromotion.Build(cfg.currentHead, cfg.predecessorSHA, selection, contract, observationEvidence)
+	receipt, err := proposalpromotion.Build(cfg.repository, cfg.currentHead, cfg.predecessorSHA, selection, contract, observationEvidence)
 	if err != nil {
 		return buildResult{}, err
 	}

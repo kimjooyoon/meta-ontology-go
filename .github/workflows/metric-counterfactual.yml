@@ -59,9 +59,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Generate, replay, and independently constrain the counterfactual
         shell: bash
         run: |
@@ -126,7 +126,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
       - name: Bind the declared Go 1.27 toolchain
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: false
@@ -203,9 +203,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Compile the plan into dimensions and constrain every residual
         env:
           METRICS_COMMIT_SHA: ${{ env.SUBJECT_SHA }}
@@ -273,9 +273,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Download exact intervention evidence
         uses: actions/download-artifact@v7
         with:
@@ -380,9 +380,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Verify predecessor continuity independently
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -448,6 +448,15 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
+      - name: Assert causal workflows use setup-go v7
+        shell: bash
+        run: |
+          set -euo pipefail
+          if rg -n 'actions/setup-go@v[0-6]' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml; then
+            echo 'FAIL_CLOSED: unsupported setup-go action version' >&2
+            exit 1
+          fi
+          test -n "$(rg -n 'actions/setup-go@v7' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml || true)"
       - name: Produce and replay proposal promotion evidence
         id: proposal-predecessor
         env:
@@ -609,11 +618,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/proposal-compat \
               --root "$GITHUB_WORKSPACE" \
               --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              --expected-repository "$GITHUB_REPOSITORY" \
               --expected-sha "$HEAD_SHA" \
+              --expected-predecessor-sha "$predecessor_sha" \
               --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-$suffix.json" \
               --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-$suffix.json"
           done
@@ -624,7 +639,9 @@ jobs:
           go run ./cmd/language-readiness-witness/proposal-compat \
             --root "$GITHUB_WORKSPACE" \
             --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            --expected-repository "$GITHUB_REPOSITORY" \
             --expected-sha "$HEAD_SHA" \
+            --expected-predecessor-sha "$predecessor_sha" \
             --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
             --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
             --check
@@ -691,9 +708,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Download exact metric strategy evidence
         uses: actions/download-artifact@v7
         with:
@@ -785,7 +802,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
       - name: Bind the declared Go 1.27 toolchain
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: false

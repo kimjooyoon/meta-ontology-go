@@ -11,8 +11,9 @@ import (
 func EvaluateWithToolchainCrossPlatformRelease(raw []byte, bundle PromotionEvidence,
 	cliReport metacli.Report, formatFixReport metaff.Report,
 	conformanceReport metaconformance.Report, lspReport metalsp.Report,
-	releaseReport release.Report, expectedHeadSHA string) (Snapshot, error) {
-	evidence, err := validatePromotionEvidence(bundle, expectedHeadSHA)
+	releaseReport release.Report,
+	expectedRepository, expectedHeadSHA, expectedPredecessorSHA string) (Snapshot, error) {
+	evidence, err := validatePromotionEvidence(bundle, expectedRepository, expectedHeadSHA, expectedPredecessorSHA)
 	if err != nil {
 		return Snapshot{}, err
 	}

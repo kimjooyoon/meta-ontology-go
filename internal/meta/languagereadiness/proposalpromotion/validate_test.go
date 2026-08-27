@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	testCurrent  = "2222222222222222222222222222222222222222"
-	testEvidence = "1111111111111111111111111111111111111111"
+	testRepository = "kimjooyoon/meta-ontology-go"
+	testCurrent    = "2222222222222222222222222222222222222222"
+	testEvidence   = "1111111111111111111111111111111111111111"
 )
 
 func testObservationEvidence() proposalpredecessor.ObservationEvidence {
@@ -28,7 +29,7 @@ func testObservationEvidence() proposalpredecessor.ObservationEvidence {
 func validSource() Source {
 	return Source{
 		Selection: SelectionSource{
-			Repository:        "kimjooyoon/meta-ontology-go",
+			Repository:        testRepository,
 			CurrentSubjectSHA: testCurrent, PredecessorSHA: testEvidence,
 			Decision: "SELECTED", Reason: "PROPOSAL_PREDECESSOR_SELECTED",
 			ReportDigest: "sha256:selection", RunID: 1, RunAttempt: 1,
@@ -56,14 +57,14 @@ func TestFailedWorkflowAcceptsSuccessfulSynthesisJob(t *testing.T) {
 	source := validSource()
 	source.Selection.Conclusion = "failure"
 	receipt := evaluate(testCurrent, testEvidence, source, testObservationEvidence())
-	if err := Validate(receipt, receipt.Repository, testCurrent, testEvidence); err != nil {
+	if err := Validate(receipt, testRepository, testCurrent, testEvidence); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestEvaluateProducesExactEightCoordinatePromotion(t *testing.T) {
 	receipt := evaluate(testCurrent, testEvidence, validSource(), testObservationEvidence())
-	if err := Validate(receipt, receipt.Repository, testCurrent, testEvidence); err != nil {
+	if err := Validate(receipt, testRepository, testCurrent, testEvidence); err != nil {
 		t.Fatal(err)
 	}
 	if receipt.Summary.Satisfied != 8 || receipt.Summary.Total != 8 ||
@@ -87,7 +88,7 @@ func TestResealedPromotionContextMismatchFailsClosed(t *testing.T) {
 			receipt := evaluate(testCurrent, testEvidence, validSource(), testObservationEvidence())
 			test.mutate(&receipt)
 			receipt = seal(receipt)
-			if err := Validate(receipt, validSource().Selection.Repository, testCurrent, testEvidence); err == nil ||
+			if err := Validate(receipt, testRepository, testCurrent, testEvidence); err == nil ||
 				err.Error() != "FAIL_CLOSED: proposal promotion context mismatch" {
 				t.Fatalf("context mutation accepted or misclassified: %v", err)
 			}
