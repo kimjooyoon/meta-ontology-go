@@ -476,7 +476,7 @@ jobs:
                 "PROPOSAL_API_PERMISSION_DENIED",
                 "PROPOSAL_RESPONSE_MALFORMED",
                 "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE",
-                "PROPOSAL_REDIRECT_ORIGIN_MISMATCH"] | index($reason)) != null)
+                "PROPOSAL_REDIRECT_ORIGIN_MISMATCH"] | index($reason)) != null
             ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
             echo "mode=BLOCKED" >> "$GITHUB_OUTPUT"
             echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
