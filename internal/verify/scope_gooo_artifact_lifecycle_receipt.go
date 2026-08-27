@@ -8,6 +8,8 @@ func init() {
 		"bootstrap/function-extractor/recipes.json",
 		"examples/self-improvement/transport.gooo",
 		"internal/meta/languagereadiness/languagesemantic/registry_definition.go",
+		"internal/meta/languagereadiness/languagesemanticbinding/denominator.go",
+		"internal/meta/languagereadiness/languagesemanticbinding/validate_semantic_summary_test.go",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/meta/selfimprovementtransport",
 		"internal/verify/scope_gooo_artifact_lifecycle_receipt.go",
