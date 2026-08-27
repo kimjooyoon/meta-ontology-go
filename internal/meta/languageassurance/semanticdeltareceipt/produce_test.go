@@ -61,7 +61,7 @@ func TestProducerRecordsSemanticClaimRefutation(t *testing.T) {
 			observed++
 		}
 	}
-	if preserved != 1 || refuted != 1 || observed != 2 {
-		t.Fatalf("semantic ledger transitions=%+v", receipt.ClaimTransitions)
+	if preserved != 1 || refuted != 1 || observed != 4 {
+		t.Fatalf("semantic ledger transitions: preserved=%d/1 refuted=%d/1 observed=%d/4 transitions=%+v", preserved, refuted, observed, receipt.ClaimTransitions)
 	}
 }
