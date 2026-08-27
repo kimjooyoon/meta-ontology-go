@@ -1,6 +1,20 @@
 name: Language proof-carrying artifact
 
 on:
+  push:
+    paths:
+      - ".github/workflows/language-proof-carrying-artifact.yml"
+      - "cmd/language-proof-carrying-artifact/**"
+      - "cmd/language-proof-carrying-artifact-verifier/**"
+      - "cmd/language-proof-carrying-artifact-consumer/**"
+      - "examples/language-proof-carrying-artifact/**"
+      - "internal/meta/languageconcept/language_proof_carrying_artifact*"
+      - "internal/meta/languageproofartifact/**"
+      - "internal/meta/languageproofartifactverifier/**"
+      - "internal/verify/scope_language_proof_carrying_artifact.go"
+      - "scripts/language-proof-carrying-artifact/**"
+      - "go.mod"
+      - "go.sum"
   pull_request:
     branches: [dev, main]
     paths:
