@@ -11,12 +11,14 @@ import (
 )
 
 const (
-	identityFaultSchema    = "gooo/semantic-delta-claim-identity-fault/v2"
-	identityFaultID        = "raw-only-stable-id-recreation"
-	identityFaultTarget    = "alternate-observation"
-	identityFaultMutation  = "stable_identity_rekey_with_reference_closure"
-	identityFaultRule      = "rekey each alternate stable_id bijectively to gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)> and rewrite every internal identity reference through the same mapping"
-	identityFaultAlgorithm = "forward-map-reverse-normalize/v1"
+	identityFaultSchema                  = "gooo/semantic-delta-claim-identity-fault/v2"
+	identityFaultID                      = "raw-only-stable-id-recreation"
+	identityFaultTarget                  = "alternate-observation"
+	identityFaultMutation                = "stable_identity_rekey_with_reference_closure"
+	identityFaultRule                    = "rekey each alternate stable_id bijectively to gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)> and rewrite every internal identity reference through the same mapping"
+	identityFaultAlgorithm               = "forward-map-reverse-normalize/v1"
+	identityFaultSource                  = "internal/meta/languageassurance/semanticdeltareceipt/identity_fault.go"
+	identityFaultSemanticSlotDenominator = 7
 )
 
 // IdentityFaultInput names the real source pairs used by the diagnostic fault.
@@ -62,6 +64,7 @@ type IdentityFaultArtifactEvidence struct {
 type IdentityFaultMappingRow struct {
 	OldStableID string `json:"old_stable_id"`
 	NewStableID string `json:"new_stable_id"`
+	Ordinal     int    `json:"ordinal"`
 }
 
 // IdentityFaultGraphEvidence is calculated entirely by the producer. The
@@ -81,6 +84,9 @@ type IdentityFaultGraphEvidence struct {
 	AlphaEquivalentSemanticGraph  bool                      `json:"alpha_equivalent_semantic_graph"`
 	RawEvidenceChanged            int                       `json:"raw_evidence_changed"`
 	RawEvidenceTotal              int                       `json:"raw_evidence_total"`
+	SemanticSlotDenominator       int                       `json:"semantic_slot_denominator"`
+	SemanticSlotUnique            int                       `json:"semantic_slot_unique"`
+	SemanticSlotTotal             int                       `json:"semantic_slot_total"`
 	Decision                      string                    `json:"decision"`
 	Resolution                    string                    `json:"resolution"`
 	Stage                         string                    `json:"stage"`
@@ -135,6 +141,10 @@ func IdentityFaultReceiptFromFiles(input IdentityFaultInput) IdentityFaultReceip
 		FaultedAlternate: identityFaultObservation{SourcePair: IdentityFaultSourcePair{BeforePath: input.Alternate.BeforePath, AfterPath: input.Alternate.AfterPath}},
 		Decision:         DecisionFailClosed, Resolution: ResolutionLower, Stage: "identity-fault", Step: "read-artifact", Reason: "IDENTITY_FAULT_ARTIFACT_UNAVAILABLE",
 	}
+	if !validIdentityFaultAlgorithmBinding(algorithmPath, algorithmBytes, algorithmDigest) {
+		receipt.Stage, receipt.Step, receipt.Reason = "identity-fault", "bind-algorithm-source", "ALGORITHM_SOURCE_UNAVAILABLE"
+		return identityFaultReceiptBundle(receipt)
+	}
 	artifact, evidence, ok := readIdentityFaultArtifact(input.ArtifactPath)
 	if !ok {
 		receipt.Artifact = evidence
@@ -170,24 +180,36 @@ func IdentityFaultReceiptFromFiles(input IdentityFaultInput) IdentityFaultReceip
 }
 
 func identityFaultReceiptBundle(receipt IdentityFaultReceipt) IdentityFaultReceiptBundle {
+	return IdentityFaultReceiptBundle{Receipt: receipt, ComparisonBytes: MarshalIdentityFaultReceiptEvidence(receipt)}
+}
+
+// MarshalIdentityFaultReceiptEvidence serializes the receipt's common evidence
+// wire. Implementation-specific algorithm provenance is intentionally omitted
+// so an opaque witness can compare producer and consumer evidence without
+// importing either implementation's logic.
+func MarshalIdentityFaultReceiptEvidence(receipt IdentityFaultReceipt) []byte {
 	comparison := receipt
 	comparison.AlgorithmID = ""
 	comparison.AlgorithmSourcePath = ""
 	comparison.AlgorithmSourceBytes = 0
 	comparison.AlgorithmSourceDigest = ""
-	return IdentityFaultReceiptBundle{Receipt: receipt, ComparisonBytes: identityFaultJSON(comparison)}
+	return identityFaultJSON(comparison)
 }
 
 func identityFaultAlgorithmBinding() (string, string, int, string) {
 	path, ok := identityFaultSourcePath()
 	if !ok {
-		return identityFaultAlgorithm, "", 0, ""
+		return identityFaultAlgorithm, identityFaultSource, 0, ""
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return identityFaultAlgorithm, path, 0, ""
+		return identityFaultAlgorithm, identityFaultSource, 0, ""
 	}
-	return identityFaultAlgorithm, path, len(raw), digestBytes(raw)
+	return identityFaultAlgorithm, identityFaultSource, len(raw), digestBytes(raw)
+}
+
+func validIdentityFaultAlgorithmBinding(path string, bytes int, digest string) bool {
+	return path == identityFaultSource && bytes > 0 && strings.HasPrefix(digest, "sha256:") && len(digest) == len("sha256:")+64
 }
 
 func identityFaultSourcePath() (string, bool) {
@@ -226,8 +248,9 @@ func readIdentityFaultArtifact(path string) (identityFaultArtifact, IdentityFaul
 
 func rekeyIdentityFault(records []ClaimIdentityRecord, observation IdentityFaultSourcePair, artifact identityFaultArtifact) ([]ClaimIdentityRecord, IdentityFaultGraphEvidence, string) {
 	rows := make([]IdentityFaultMappingRow, 0, len(records))
+	ordinals := identitySemanticOrdinals(records)
 	for _, record := range records {
-		rows = append(rows, IdentityFaultMappingRow{OldStableID: record.StableID, NewStableID: faultStableID(artifact.Rule, observation, record.StableID)})
+		rows = append(rows, IdentityFaultMappingRow{OldStableID: record.StableID, NewStableID: faultStableID(artifact.Rule, observation, record.StableID), Ordinal: ordinals[record.StableID]})
 	}
 	graph, oldToNew, newToOld, reason := validateIdentityFaultMapping(rows, identityFaultIDs(records), identityFaultNewIDs(rows), nil)
 	if reason != "" {
@@ -291,7 +314,13 @@ func validateIdentityFaultMapping(rows []IdentityFaultMappingRow, oldIDs, newIDs
 
 func validateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observation IdentityFaultSourcePair, artifact identityFaultArtifact, rows []IdentityFaultMappingRow, oldToNew, newToOld map[string]string) (IdentityFaultGraphEvidence, string) {
 	graph, mappedOldToNew, mappedNewToOld, reason := validateIdentityFaultMapping(rows, identityIDs(original), identityIDs(faulted), oldToNew)
+	graph.SemanticSlotDenominator = identityFaultSemanticSlotDenominator
+	graph.SemanticSlotUnique, graph.SemanticSlotTotal = identitySemanticSlotCoverage(original)
 	if reason != "" {
+		return identityFaultGraphFailure(graph, reason), reason
+	}
+	if graph.SemanticSlotUnique != graph.SemanticSlotTotal {
+		reason = "IDENTITY_SEMANTIC_SLOT_AMBIGUOUS"
 		return identityFaultGraphFailure(graph, reason), reason
 	}
 	if !identityFaultRecordsMatch(original, faulted, observation, artifact, mappedOldToNew, mappedNewToOld) {
@@ -315,8 +344,40 @@ func validateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observa
 }
 
 func identityFaultGraphFailure(graph IdentityFaultGraphEvidence, reason string) IdentityFaultGraphEvidence {
+	graph.SemanticSlotDenominator = identityFaultSemanticSlotDenominator
 	graph.Decision, graph.Resolution, graph.Stage, graph.Step, graph.Reason = DecisionFailClosed, ResolutionLower, "identity-fault", "rekey-graph", reason
 	return graph
+}
+
+func identitySemanticSlotCoverage(records []ClaimIdentityRecord) (int, int) {
+	keys := make([]string, 0, len(records))
+	for _, record := range records {
+		keys = append(keys, identitySemanticInventoryKey(record))
+	}
+	sort.Strings(keys)
+	unique := 0
+	for index, key := range keys {
+		if index == 0 || key != keys[index-1] {
+			unique++
+		}
+	}
+	return unique, len(keys)
+}
+
+func identitySemanticOrdinals(records []ClaimIdentityRecord) map[string]int {
+	ordered := append([]ClaimIdentityRecord(nil), records...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		left, right := identitySemanticInventoryKey(ordered[i]), identitySemanticInventoryKey(ordered[j])
+		if left != right {
+			return left < right
+		}
+		return ordered[i].StableID < ordered[j].StableID
+	})
+	result := make(map[string]int, len(ordered))
+	for ordinal, record := range ordered {
+		result[record.StableID] = ordinal
+	}
+	return result
 }
 
 func identityFaultIDs(records []ClaimIdentityRecord) []string {

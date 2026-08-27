@@ -203,12 +203,20 @@ consumer package each record a canonical old-to-new StableID bijection, rewrite
 bijection, and emit an opaque receipt. The producer declares
 `forward-map-reverse-normalize/v1`; the consumer declares
 `canonical-ordinal-edge-join/v1`. Each binds its algorithm source path, byte
-count, and source digest in the receipt. The witness compares only the
+count, and source digest in the receipt; the path is repository-relative and
+CI re-reads the two checked-in files to independently recalculate both byte
+counts and digests. The witness compares only the
 implementation-produced common evidence wire; it does not perform graph
 adjudication or feed either receipt into the other implementation. The
+missing or invalid binding is immediately
+`FAIL_CLOSED / LOWER_RESOLUTION / identity-fault / bind-algorithm-source /
+ALGORITHM_SOURCE_UNAVAILABLE`.
 consumer constructs a semantic-ordinal inventory, checks injectivity by sorted
 adjacent IDs, joins reference edges by ordinal, and hashes an ordinal graph
-encoding. Each receipt records both inventories, mapping digest, reference
+encoding. Semantic-slot uniqueness uses the fixed `semantic_slot_denominator=7`
+for this fixture and is explicit as `semantic_slot_unique / semantic_slot_total`
+(`7/7` on the valid input); a duplicate slot is
+`IDENTITY_SEMANTIC_SLOT_AMBIGUOUS`. Each receipt records both inventories, mapping digest, reference
 denominator, rewritten-reference count, dangling count, raw evidence count, and
 alpha-equivalent semantic-graph digests. A stale reference is
 `FAIL_CLOSED / LOWER_RESOLUTION / IDENTITY_REFERENCE_CLOSURE_BROKEN`; swapped
@@ -219,6 +227,10 @@ after both independent graph proofs pass. CI records forbidden imports as
 `forbidden_imports_observed=0`, `forbidden_imports_allowed_max=0`, and
 `forbidden_import_conformance=1/1`; an observed import is
 `FAIL_CLOSED / LOWER_RESOLUTION / PRODUCER_IMPORT_FORBIDDEN`.
+The asymmetric probes tamper the producer evidence bytes while comparing them
+with a fresh consumer raw reconstruction, then reverse the direction; both
+must be mismatches (`2/2`) without passing either receipt into the other
+algorithm.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical

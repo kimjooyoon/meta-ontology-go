@@ -11,12 +11,14 @@ import (
 )
 
 const (
-	identityFaultSchema    = "gooo/semantic-delta-claim-identity-fault/v2"
-	identityFaultID        = "raw-only-stable-id-recreation"
-	identityFaultTarget    = "alternate-observation"
-	identityFaultMutation  = "stable_identity_rekey_with_reference_closure"
-	identityFaultRule      = "rekey each alternate stable_id bijectively to gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)> and rewrite every internal identity reference through the same mapping"
-	identityFaultAlgorithm = "canonical-ordinal-edge-join/v1"
+	identityFaultSchema                  = "gooo/semantic-delta-claim-identity-fault/v2"
+	identityFaultID                      = "raw-only-stable-id-recreation"
+	identityFaultTarget                  = "alternate-observation"
+	identityFaultMutation                = "stable_identity_rekey_with_reference_closure"
+	identityFaultRule                    = "rekey each alternate stable_id bijectively to gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)> and rewrite every internal identity reference through the same mapping"
+	identityFaultAlgorithm               = "canonical-ordinal-edge-join/v1"
+	identityFaultSource                  = "internal/meta/languageassurance/semanticdeltareceiptconsumer/identity_fault.go"
+	identityFaultSemanticSlotDenominator = 7
 )
 
 // IdentityFaultInput is the consumer's copied input boundary. It reads the
@@ -58,6 +60,7 @@ type IdentityFaultArtifactEvidence struct {
 type IdentityFaultMappingRow struct {
 	OldStableID string `json:"old_stable_id"`
 	NewStableID string `json:"new_stable_id"`
+	Ordinal     int    `json:"ordinal"`
 }
 
 type IdentityFaultGraphEvidence struct {
@@ -75,6 +78,9 @@ type IdentityFaultGraphEvidence struct {
 	AlphaEquivalentSemanticGraph  bool                      `json:"alpha_equivalent_semantic_graph"`
 	RawEvidenceChanged            int                       `json:"raw_evidence_changed"`
 	RawEvidenceTotal              int                       `json:"raw_evidence_total"`
+	SemanticSlotDenominator       int                       `json:"semantic_slot_denominator"`
+	SemanticSlotUnique            int                       `json:"semantic_slot_unique"`
+	SemanticSlotTotal             int                       `json:"semantic_slot_total"`
 	Decision                      string                    `json:"decision"`
 	Resolution                    string                    `json:"resolution"`
 	Stage                         string                    `json:"stage"`
@@ -128,6 +134,10 @@ func IdentityFaultReceiptFromFiles(input IdentityFaultInput) IdentityFaultReceip
 		FaultedAlternate: identityFaultObservation{SourcePair: IdentityFaultSourcePair{BeforePath: input.Alternate.BeforePath, AfterPath: input.Alternate.AfterPath}},
 		Decision:         decisionFailClosed, Resolution: resolutionLower, Stage: "identity-fault", Step: "read-artifact", Reason: "IDENTITY_FAULT_ARTIFACT_UNAVAILABLE",
 	}
+	if !validIdentityFaultAlgorithmBinding(algorithmPath, algorithmBytes, algorithmDigest) {
+		receipt.Stage, receipt.Step, receipt.Reason = "identity-fault", "bind-algorithm-source", "ALGORITHM_SOURCE_UNAVAILABLE"
+		return identityFaultReceiptBundle(receipt)
+	}
 	artifact, evidence, ok := readIdentityFaultArtifact(input.ArtifactPath)
 	if !ok {
 		receipt.Artifact = evidence
@@ -163,24 +173,36 @@ func IdentityFaultReceiptFromFiles(input IdentityFaultInput) IdentityFaultReceip
 }
 
 func identityFaultReceiptBundle(receipt IdentityFaultReceipt) IdentityFaultReceiptBundle {
+	return IdentityFaultReceiptBundle{Receipt: receipt, ComparisonBytes: MarshalIdentityFaultReceiptEvidence(receipt)}
+}
+
+// MarshalIdentityFaultReceiptEvidence serializes the receipt's common evidence
+// wire. Implementation-specific algorithm provenance is intentionally omitted
+// so an opaque witness can compare producer and consumer evidence without
+// importing either implementation's logic.
+func MarshalIdentityFaultReceiptEvidence(receipt IdentityFaultReceipt) []byte {
 	comparison := receipt
 	comparison.AlgorithmID = ""
 	comparison.AlgorithmSourcePath = ""
 	comparison.AlgorithmSourceBytes = 0
 	comparison.AlgorithmSourceDigest = ""
-	return IdentityFaultReceiptBundle{Receipt: receipt, ComparisonBytes: identityFaultJSON(comparison)}
+	return identityFaultJSON(comparison)
 }
 
 func identityFaultAlgorithmBinding() (string, string, int, string) {
 	path, _, _, ok := runtime.Caller(0)
 	if !ok {
-		return identityFaultAlgorithm, "", 0, ""
+		return identityFaultAlgorithm, identityFaultSource, 0, ""
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return identityFaultAlgorithm, path, 0, ""
+		return identityFaultAlgorithm, identityFaultSource, 0, ""
 	}
-	return identityFaultAlgorithm, path, len(raw), digestBytes(raw)
+	return identityFaultAlgorithm, identityFaultSource, len(raw), digestBytes(raw)
+}
+
+func validIdentityFaultAlgorithmBinding(path string, bytes int, digest string) bool {
+	return path == identityFaultSource && bytes > 0 && strings.HasPrefix(digest, "sha256:") && len(digest) == len("sha256:")+64
 }
 
 func identityFaultObservationFromFiles(input Input) (identityFaultObservation, bool) {
@@ -226,8 +248,8 @@ type consumerOrdinalEdge struct {
 // the target's old ordinal to the target's new ordinal.
 func rekeyIdentityFault(records []ClaimIdentityRecord, observation IdentityFaultSourcePair, artifact identityFaultArtifact) ([]ClaimIdentityRecord, IdentityFaultGraphEvidence, string) {
 	ordered := consumerOrdinalInventory(records)
-	if !consumerOrdinalInventoryValid(ordered) {
-		return nil, identityFaultGraphFailure(consumerGraphForRecords(records, nil), "IDENTITY_FAULT_MAPPING_INVENTORY_MISMATCH"), "IDENTITY_FAULT_MAPPING_INVENTORY_MISMATCH"
+	if reason := consumerOrdinalInventoryReason(ordered); reason != "" {
+		return nil, identityFaultGraphFailure(consumerGraphForRecords(records, nil), reason), reason
 	}
 	faulted := make([]ClaimIdentityRecord, len(ordered))
 	rows := make([]IdentityFaultMappingRow, 0, len(ordered))
@@ -242,7 +264,7 @@ func rekeyIdentityFault(records []ClaimIdentityRecord, observation IdentityFault
 			value.PreservationOf = faultStableID(artifact.Rule, observation, ordered[targetOrdinal].record.StableID)
 		}
 		faulted[ordinal] = value
-		rows = append(rows, IdentityFaultMappingRow{OldStableID: entry.record.StableID, NewStableID: value.StableID})
+		rows = append(rows, IdentityFaultMappingRow{OldStableID: entry.record.StableID, NewStableID: value.StableID, Ordinal: ordinal})
 	}
 	sort.Slice(faulted, func(i, j int) bool { return faulted[i].StableID < faulted[j].StableID })
 	graph, reason := validateIdentityFaultGraph(records, faulted, observation, artifact, rows)
@@ -256,19 +278,25 @@ func validateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observa
 	oldIDs := consumerSortedIDs(original)
 	newIDs := consumerSortedIDs(faulted)
 	graph := consumerGraphForRecords(original, newIDs)
-	expectedEdges, reason := consumerExpectedOrdinalEdges(original, faulted, observation, artifact)
+	expectedEdges, reason := consumerExpectedOrdinalEdges(original, observation, artifact)
 	if reason != "" {
 		return identityFaultGraphFailure(graph, reason), reason
 	}
-	if reason = validateConsumerOrdinalEdges(expectedEdges, expectedEdges); reason != "" {
+	observedEdges, reason := consumerObservedOrdinalEdges(original, faulted, rows)
+	if reason != "" {
+		return identityFaultGraphFailure(graph, reason), reason
+	}
+	if reason = validateConsumerOrdinalEdges(observedEdges, expectedEdges); reason != "" {
 		return identityFaultGraphFailure(graph, reason), reason
 	}
 	expectedRows := consumerRowsFromEdges(expectedEdges)
 	graph, reason = consumerValidateMappingRows(rows, expectedRows, oldIDs, newIDs)
+	graph.SemanticSlotDenominator = identityFaultSemanticSlotDenominator
+	graph.SemanticSlotUnique, graph.SemanticSlotTotal = consumerSemanticSlotCoverage(original)
 	if reason != "" {
 		return identityFaultGraphFailure(graph, reason), reason
 	}
-	if !consumerRecordsMatchByOrdinal(original, faulted, expectedEdges) {
+	if !consumerRecordsMatchByOrdinal(original, faulted, observedEdges) {
 		reason = "IDENTITY_FAULT_MAPPING_RULE_MISMATCH"
 		return identityFaultGraphFailure(graph, reason), reason
 	}
@@ -288,7 +316,16 @@ func validateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observa
 	return graph, ""
 }
 
+// ValidateIdentityFaultGraph is the consumer's production validation entry
+// point for raw observations and wire mapping rows. It is intentionally
+// public so fixtures can exercise the same observed-edge reconstruction used
+// by receipt production.
+func ValidateIdentityFaultGraph(original, faulted []ClaimIdentityRecord, observation IdentityFaultSourcePair, rule string, rows []IdentityFaultMappingRow) (IdentityFaultGraphEvidence, string) {
+	return validateIdentityFaultGraph(original, faulted, observation, identityFaultArtifact{Rule: rule}, rows)
+}
+
 func identityFaultGraphFailure(graph IdentityFaultGraphEvidence, reason string) IdentityFaultGraphEvidence {
+	graph.SemanticSlotDenominator = identityFaultSemanticSlotDenominator
 	graph.Decision, graph.Resolution, graph.Stage, graph.Step, graph.Reason = decisionFailClosed, resolutionLower, "identity-fault", "rekey-graph", reason
 	return graph
 }
@@ -299,7 +336,23 @@ func consumerGraphForRecords(original []ClaimIdentityRecord, newIDs []string) Id
 		newIDs = []string{}
 	}
 	rows := make([]IdentityFaultMappingRow, 0, len(oldIDs))
-	return IdentityFaultGraphEvidence{OldStableIDs: oldIDs, NewStableIDs: append([]string(nil), newIDs...), Mapping: rows, MappingTotal: 0, MappingDigest: digestBytes(identityFaultJSON(rows))}
+	unique, total := consumerSemanticSlotCoverage(original)
+	return IdentityFaultGraphEvidence{OldStableIDs: oldIDs, NewStableIDs: append([]string(nil), newIDs...), Mapping: rows, MappingTotal: 0, MappingDigest: digestBytes(identityFaultJSON(rows)), SemanticSlotDenominator: identityFaultSemanticSlotDenominator, SemanticSlotUnique: unique, SemanticSlotTotal: total}
+}
+
+func consumerSemanticSlotCoverage(records []ClaimIdentityRecord) (int, int) {
+	keys := make([]string, 0, len(records))
+	for _, record := range records {
+		keys = append(keys, consumerSemanticSlotKey(record))
+	}
+	sort.Strings(keys)
+	unique := 0
+	for index, key := range keys {
+		if index == 0 || key != keys[index-1] {
+			unique++
+		}
+	}
+	return unique, len(keys)
 }
 
 func consumerOrdinalInventory(records []ClaimIdentityRecord) []consumerOrdinalRecord {
@@ -324,24 +377,29 @@ func consumerSemanticSlotKey(record ClaimIdentityRecord) string {
 	return strings.Join([]string{record.Kind, record.RelationRole, record.NormalizedProposition, record.PropositionDigest, record.TargetAddress, record.TargetAddressDigest}, "\x00")
 }
 
-func consumerOrdinalInventoryValid(ordered []consumerOrdinalRecord) bool {
+func consumerOrdinalInventoryReason(ordered []consumerOrdinalRecord) string {
 	if len(ordered) == 0 {
-		return false
+		return "IDENTITY_FAULT_MAPPING_INVENTORY_MISMATCH"
 	}
 	ids := make([]string, len(ordered))
 	for index, entry := range ordered {
 		if entry.record.StableID == "" || entry.ordinal != index {
-			return false
+			return "IDENTITY_FAULT_MAPPING_INVENTORY_MISMATCH"
 		}
 		ids[index] = entry.record.StableID
 	}
 	sort.Strings(ids)
 	for index := 1; index < len(ids); index++ {
 		if ids[index] == ids[index-1] {
-			return false
+			return "IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE"
 		}
 	}
-	return true
+	for index := 1; index < len(ordered); index++ {
+		if consumerSemanticSlotKey(ordered[index-1].record) == consumerSemanticSlotKey(ordered[index].record) {
+			return "IDENTITY_SEMANTIC_SLOT_AMBIGUOUS"
+		}
+	}
+	return ""
 }
 
 func consumerSortedIDs(records []ClaimIdentityRecord) []string {
@@ -362,18 +420,57 @@ func consumerFindOrdinal(ordered []consumerOrdinalRecord, stableID string) int {
 	return -1
 }
 
-func consumerExpectedOrdinalEdges(original, faulted []ClaimIdentityRecord, observation IdentityFaultSourcePair, artifact identityFaultArtifact) ([]consumerOrdinalEdge, string) {
-	oldInventory, newInventory := consumerOrdinalInventory(original), consumerOrdinalInventory(faulted)
-	if !consumerOrdinalInventoryValid(oldInventory) || !consumerOrdinalInventoryValid(newInventory) || len(oldInventory) != len(newInventory) {
-		return nil, "IDENTITY_FAULT_MAPPING_INVENTORY_MISMATCH"
+func consumerExpectedOrdinalEdges(original []ClaimIdentityRecord, observation IdentityFaultSourcePair, artifact identityFaultArtifact) ([]consumerOrdinalEdge, string) {
+	oldInventory := consumerOrdinalInventory(original)
+	if reason := consumerOrdinalInventoryReason(oldInventory); reason != "" {
+		return nil, reason
 	}
 	edges := make([]consumerOrdinalEdge, len(oldInventory))
 	for ordinal := range oldInventory {
 		want := faultStableID(artifact.Rule, observation, oldInventory[ordinal].record.StableID)
-		if newInventory[ordinal].record.StableID != want {
-			return edges, "IDENTITY_FAULT_ORDINAL_EDGE_MISMATCH"
+		edges[ordinal] = consumerOrdinalEdge{ordinal: ordinal, oldID: oldInventory[ordinal].record.StableID, newID: want}
+	}
+	return edges, ""
+}
+
+func consumerObservedOrdinalEdges(original, faulted []ClaimIdentityRecord, rows []IdentityFaultMappingRow) ([]consumerOrdinalEdge, string) {
+	oldInventory, newInventory := consumerOrdinalInventory(original), consumerOrdinalInventory(faulted)
+	if reason := consumerOrdinalInventoryReason(oldInventory); reason != "" {
+		return nil, reason
+	}
+	if reason := consumerOrdinalInventoryReason(newInventory); reason != "" {
+		return nil, reason
+	}
+	if len(oldInventory) != len(newInventory) {
+		return nil, "IDENTITY_FAULT_MAPPING_INVENTORY_MISMATCH"
+	}
+	canonical := append([]IdentityFaultMappingRow(nil), rows...)
+	sort.Slice(canonical, func(i, j int) bool {
+		if canonical[i].OldStableID != canonical[j].OldStableID {
+			return canonical[i].OldStableID < canonical[j].OldStableID
 		}
-		edges[ordinal] = consumerOrdinalEdge{ordinal: ordinal, oldID: oldInventory[ordinal].record.StableID, newID: newInventory[ordinal].record.StableID}
+		return canonical[i].NewStableID < canonical[j].NewStableID
+	})
+	if len(canonical) != len(oldInventory) || !consumerUniqueMappingRows(canonical) {
+		return nil, "IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE"
+	}
+	edges := make([]consumerOrdinalEdge, len(oldInventory))
+	for ordinal, entry := range oldInventory {
+		rowIndex := -1
+		for index, row := range canonical {
+			if row.OldStableID == entry.record.StableID {
+				rowIndex = index
+				break
+			}
+		}
+		if rowIndex < 0 || canonical[rowIndex].NewStableID == "" {
+			return nil, "IDENTITY_FAULT_MAPPING_INVENTORY_MISMATCH"
+		}
+		newID := canonical[rowIndex].NewStableID
+		if consumerFindOrdinal(newInventory, newID) < 0 {
+			return nil, "IDENTITY_FAULT_MAPPING_INVENTORY_MISMATCH"
+		}
+		edges[ordinal] = consumerOrdinalEdge{ordinal: canonical[rowIndex].Ordinal, oldID: entry.record.StableID, newID: newID}
 	}
 	return edges, ""
 }
@@ -393,7 +490,7 @@ func validateConsumerOrdinalEdges(observed, expected []consumerOrdinalEdge) stri
 		return ordered[i].newID < ordered[j].newID
 	})
 	for ordinal, edge := range ordered {
-		if edge.ordinal != ordinal || edge.oldID != expected[ordinal].oldID || edge.newID != expected[ordinal].newID {
+		if edge.ordinal != ordinal || edge.oldID != expected[ordinal].oldID {
 			return "IDENTITY_FAULT_ORDINAL_EDGE_MISMATCH"
 		}
 	}
@@ -403,7 +500,7 @@ func validateConsumerOrdinalEdges(observed, expected []consumerOrdinalEdge) stri
 func consumerRowsFromEdges(edges []consumerOrdinalEdge) []IdentityFaultMappingRow {
 	rows := make([]IdentityFaultMappingRow, 0, len(edges))
 	for _, edge := range edges {
-		rows = append(rows, IdentityFaultMappingRow{OldStableID: edge.oldID, NewStableID: edge.newID})
+		rows = append(rows, IdentityFaultMappingRow{OldStableID: edge.oldID, NewStableID: edge.newID, Ordinal: edge.ordinal})
 	}
 	sort.Slice(rows, func(i, j int) bool { return rows[i].OldStableID < rows[j].OldStableID })
 	return rows

@@ -8,7 +8,7 @@ import (
 
 func TestProducerIdentityFaultUsesRawFixtureAndRejectsClosedGraphTampering(t *testing.T) {
 	receipt := producerIdentityFaultFixtureReceipt(t)
-	if !receipt.FaultGraphClosed || !receipt.Graph.Bijection || receipt.Graph.MappingTotal != 7 || receipt.Graph.DanglingReferenceCount != 0 || !receipt.Graph.AlphaEquivalentSemanticGraph || receipt.Graph.RawEvidenceChanged != 7 || receipt.AlgorithmID != identityFaultAlgorithm || receipt.AlgorithmSourceBytes == 0 || receipt.AlgorithmSourceDigest == "" {
+	if !receipt.FaultGraphClosed || !receipt.Graph.Bijection || receipt.Graph.MappingTotal != 7 || receipt.Graph.DanglingReferenceCount != 0 || !receipt.Graph.AlphaEquivalentSemanticGraph || receipt.Graph.RawEvidenceChanged != 7 || receipt.Graph.SemanticSlotDenominator != 7 || receipt.Graph.SemanticSlotUnique != 7 || receipt.Graph.SemanticSlotTotal != 7 || receipt.AlgorithmID != identityFaultAlgorithm || receipt.AlgorithmSourceBytes == 0 || receipt.AlgorithmSourceDigest == "" {
 		t.Fatalf("raw fixture identity fault was not exact: %+v", receipt.Graph)
 	}
 
@@ -31,6 +31,21 @@ func TestProducerIdentityFaultUsesRawFixtureAndRejectsClosedGraphTampering(t *te
 	duplicate[1].OldStableID = duplicate[0].OldStableID
 	graph, reason = validateIdentityFaultGraph(receipt.Alternate.Records, receipt.FaultedAlternate.Records, receipt.Alternate.SourcePair, identityFaultArtifact{Rule: identityFaultRule}, duplicate, oldToNew, newToOld)
 	assertProducerIdentityFaultFailure(t, graph, reason, "IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE")
+}
+
+func TestProducerRejectsDuplicateSemanticOrdinalSlot(t *testing.T) {
+	receipt := producerIdentityFaultFixtureReceipt(t)
+	duplicate := append([]ClaimIdentityRecord(nil), receipt.Alternate.Records...)
+	duplicate[1].Kind = duplicate[0].Kind
+	duplicate[1].RelationRole = duplicate[0].RelationRole
+	duplicate[1].NormalizedProposition = duplicate[0].NormalizedProposition
+	duplicate[1].PropositionDigest = duplicate[0].PropositionDigest
+	duplicate[1].TargetAddress = duplicate[0].TargetAddress
+	duplicate[1].TargetAddressDigest = duplicate[0].TargetAddressDigest
+	_, graph, reason := rekeyIdentityFault(duplicate, receipt.Alternate.SourcePair, identityFaultArtifact{Rule: identityFaultRule})
+	if reason != "IDENTITY_SEMANTIC_SLOT_AMBIGUOUS" || graph.Decision != DecisionFailClosed || graph.Resolution != ResolutionLower || graph.Stage != "identity-fault" || graph.Step != "rekey-graph" || graph.Reason != reason || graph.SemanticSlotUnique != 6 || graph.SemanticSlotTotal != 7 {
+		t.Fatalf("duplicate semantic slot reason=%s graph=%+v", reason, graph)
+	}
 }
 
 func producerIdentityFaultFixtureReceipt(t *testing.T) IdentityFaultReceipt {

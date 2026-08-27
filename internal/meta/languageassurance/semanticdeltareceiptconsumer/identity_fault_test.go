@@ -8,7 +8,7 @@ import (
 
 func TestConsumerIdentityFaultUsesRawFixtureAndRejectsClosedGraphTampering(t *testing.T) {
 	receipt := consumerIdentityFaultFixtureReceipt(t)
-	if !receipt.FaultGraphClosed || !receipt.Graph.Bijection || receipt.Graph.MappingTotal != 7 || receipt.Graph.DanglingReferenceCount != 0 || !receipt.Graph.AlphaEquivalentSemanticGraph || receipt.Graph.RawEvidenceChanged != 7 || receipt.AlgorithmID != identityFaultAlgorithm {
+	if !receipt.FaultGraphClosed || !receipt.Graph.Bijection || receipt.Graph.MappingTotal != 7 || receipt.Graph.DanglingReferenceCount != 0 || !receipt.Graph.AlphaEquivalentSemanticGraph || receipt.Graph.RawEvidenceChanged != 7 || receipt.Graph.SemanticSlotDenominator != 7 || receipt.Graph.SemanticSlotUnique != 7 || receipt.Graph.SemanticSlotTotal != 7 || receipt.AlgorithmID != identityFaultAlgorithm {
 		t.Fatalf("raw fixture identity fault was not exact: %+v", receipt.Graph)
 	}
 
@@ -31,16 +31,35 @@ func TestConsumerIdentityFaultUsesRawFixtureAndRejectsClosedGraphTampering(t *te
 	graph, reason = validateIdentityFaultGraph(receipt.Alternate.Records, receipt.FaultedAlternate.Records, receipt.Alternate.SourcePair, identityFaultArtifact{Rule: identityFaultRule}, duplicate)
 	assertConsumerIdentityFaultFailure(t, graph, reason, "IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE")
 
-	edges, reason := consumerExpectedOrdinalEdges(receipt.Alternate.Records, receipt.FaultedAlternate.Records, receipt.Alternate.SourcePair, identityFaultArtifact{Rule: identityFaultRule})
+	edges, reason := consumerObservedOrdinalEdges(receipt.Alternate.Records, receipt.FaultedAlternate.Records, receipt.Graph.Mapping)
 	if reason != "" {
 		t.Fatalf("valid ordinal edges rejected: %s", reason)
 	}
-	edges[0].ordinal = 1
-	if reason = validateConsumerOrdinalEdges(edges, func() []consumerOrdinalEdge {
-		valid, _ := consumerExpectedOrdinalEdges(receipt.Alternate.Records, receipt.FaultedAlternate.Records, receipt.Alternate.SourcePair, identityFaultArtifact{Rule: identityFaultRule})
-		return valid
-	}()); reason != "IDENTITY_FAULT_ORDINAL_EDGE_MISMATCH" {
-		t.Fatalf("wrong ordinal edge reason=%s", reason)
+	expected, reason := consumerExpectedOrdinalEdges(receipt.Alternate.Records, receipt.Alternate.SourcePair, identityFaultArtifact{Rule: identityFaultRule})
+	if reason != "" {
+		t.Fatalf("expected ordinal edges rejected: %s", reason)
+	}
+	wrongOrdinal := append([]IdentityFaultMappingRow(nil), receipt.Graph.Mapping...)
+	wrongOrdinal[0].Ordinal = 1
+	graph, reason = ValidateIdentityFaultGraph(receipt.Alternate.Records, receipt.FaultedAlternate.Records, receipt.Alternate.SourcePair, identityFaultRule, wrongOrdinal)
+	assertConsumerIdentityFaultFailure(t, graph, reason, "IDENTITY_FAULT_ORDINAL_EDGE_MISMATCH")
+	if validateConsumerOrdinalEdges(edges, expected) != "" {
+		t.Fatalf("valid ordinal edge reconstruction rejected")
+	}
+}
+
+func TestConsumerRejectsDuplicateSemanticOrdinalSlot(t *testing.T) {
+	receipt := consumerIdentityFaultFixtureReceipt(t)
+	duplicate := append([]ClaimIdentityRecord(nil), receipt.Alternate.Records...)
+	duplicate[1].Kind = duplicate[0].Kind
+	duplicate[1].RelationRole = duplicate[0].RelationRole
+	duplicate[1].NormalizedProposition = duplicate[0].NormalizedProposition
+	duplicate[1].PropositionDigest = duplicate[0].PropositionDigest
+	duplicate[1].TargetAddress = duplicate[0].TargetAddress
+	duplicate[1].TargetAddressDigest = duplicate[0].TargetAddressDigest
+	_, graph, reason := rekeyIdentityFault(duplicate, receipt.Alternate.SourcePair, identityFaultArtifact{Rule: identityFaultRule})
+	if reason != "IDENTITY_SEMANTIC_SLOT_AMBIGUOUS" || graph.Decision != decisionFailClosed || graph.Resolution != resolutionLower || graph.Stage != "identity-fault" || graph.Step != "rekey-graph" || graph.Reason != reason || graph.SemanticSlotUnique != 6 || graph.SemanticSlotTotal != 7 {
+		t.Fatalf("duplicate semantic slot reason=%s graph=%+v", reason, graph)
 	}
 }
 

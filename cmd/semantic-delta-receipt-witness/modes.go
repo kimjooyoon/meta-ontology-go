@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -61,29 +63,43 @@ type semanticClaimDeltaManifestResult struct {
 }
 
 type persistenceProbeReport struct {
-	Schema                           string                 `json:"schema"`
-	ProducerBaseline                 persistenceObservation `json:"producer_baseline"`
-	ProducerAlternate                persistenceObservation `json:"producer_alternate"`
-	ConsumerBaseline                 persistenceObservation `json:"consumer_baseline"`
-	ConsumerAlternate                persistenceObservation `json:"consumer_alternate"`
-	ProducerIdentityFaultReceipt     json.RawMessage        `json:"producer_identity_fault_receipt,omitempty"`
-	ConsumerIdentityFaultReceipt     json.RawMessage        `json:"consumer_identity_fault_receipt,omitempty"`
-	IdentityFaultReceiptsExact       bool                   `json:"identity_fault_receipts_exact,omitempty"`
-	IdentityFaultOpaqueEvidenceExact bool                   `json:"identity_fault_opaque_evidence_exact,omitempty"`
-	ProducerRawSemanticPreserved     bool                   `json:"producer_raw_semantic_preserved"`
-	ConsumerRawSemanticPreserved     bool                   `json:"consumer_raw_semantic_preserved"`
-	ProducerFaultGraphClosed         bool                   `json:"producer_fault_graph_closed"`
-	ConsumerFaultGraphClosed         bool                   `json:"consumer_fault_graph_closed"`
-	ProducerPersistence              persistenceMapping     `json:"producer_persistence"`
-	ConsumerPersistence              persistenceMapping     `json:"consumer_persistence"`
-	ExpectedClaimTotal               int                    `json:"expected_claim_total"`
-	ReconstructionExact              bool                   `json:"reconstruction_exact"`
-	PersistenceSatisfied             bool                   `json:"persistence_satisfied"`
-	Decision                         string                 `json:"decision"`
-	Resolution                       string                 `json:"resolution"`
-	Stage                            string                 `json:"stage"`
-	Step                             string                 `json:"step"`
-	Reason                           string                 `json:"reason"`
+	Schema                                  string                       `json:"schema"`
+	ProducerBaseline                        persistenceObservation       `json:"producer_baseline"`
+	ProducerAlternate                       persistenceObservation       `json:"producer_alternate"`
+	ConsumerBaseline                        persistenceObservation       `json:"consumer_baseline"`
+	ConsumerAlternate                       persistenceObservation       `json:"consumer_alternate"`
+	ProducerIdentityFaultReceipt            json.RawMessage              `json:"producer_identity_fault_receipt,omitempty"`
+	ConsumerIdentityFaultReceipt            json.RawMessage              `json:"consumer_identity_fault_receipt,omitempty"`
+	IdentityFaultReceiptsExact              bool                         `json:"identity_fault_receipts_exact,omitempty"`
+	IdentityFaultOpaqueEvidenceExact        bool                         `json:"identity_fault_opaque_evidence_exact,omitempty"`
+	IdentityFaultAsymmetricProbeNumerator   int                          `json:"identity_fault_asymmetric_probe_numerator,omitempty"`
+	IdentityFaultAsymmetricProbeDenominator int                          `json:"identity_fault_asymmetric_probe_denominator,omitempty"`
+	ProducerTamperedConsumerMismatch        bool                         `json:"producer_tampered_consumer_raw_mismatch,omitempty"`
+	ConsumerTamperedProducerMismatch        bool                         `json:"consumer_tampered_producer_raw_mismatch,omitempty"`
+	ProducerTamperedConsumerProbe           identityFaultAsymmetricProbe `json:"producer_tampered_consumer_probe,omitempty"`
+	ConsumerTamperedProducerProbe           identityFaultAsymmetricProbe `json:"consumer_tampered_producer_probe,omitempty"`
+	ProducerRawSemanticPreserved            bool                         `json:"producer_raw_semantic_preserved"`
+	ConsumerRawSemanticPreserved            bool                         `json:"consumer_raw_semantic_preserved"`
+	ProducerFaultGraphClosed                bool                         `json:"producer_fault_graph_closed"`
+	ConsumerFaultGraphClosed                bool                         `json:"consumer_fault_graph_closed"`
+	ProducerPersistence                     persistenceMapping           `json:"producer_persistence"`
+	ConsumerPersistence                     persistenceMapping           `json:"consumer_persistence"`
+	ExpectedClaimTotal                      int                          `json:"expected_claim_total"`
+	ReconstructionExact                     bool                         `json:"reconstruction_exact"`
+	PersistenceSatisfied                    bool                         `json:"persistence_satisfied"`
+	Decision                                string                       `json:"decision"`
+	Resolution                              string                       `json:"resolution"`
+	Stage                                   string                       `json:"stage"`
+	Step                                    string                       `json:"step"`
+	Reason                                  string                       `json:"reason"`
+}
+
+type identityFaultAsymmetricProbe struct {
+	Decision   string `json:"decision"`
+	Resolution string `json:"resolution"`
+	Stage      string `json:"stage"`
+	Step       string `json:"step"`
+	Reason     string `json:"reason"`
 }
 
 func decodeSemanticClaimDeltaManifest(raw []byte) (semanticClaimDeltaManifest, error) {
@@ -238,17 +254,97 @@ func runOpaqueIdentityFaultProbe(options options) persistenceProbeReport {
 	})
 	producerRaw, _ := json.Marshal(producerBundle.Receipt)
 	consumerRaw, _ := json.Marshal(consumerBundle.Receipt)
-	exact := bytes.Equal(producerBundle.ComparisonBytes, consumerBundle.ComparisonBytes)
+	exact := compareOpaqueIdentityFaultEvidence(producerBundle.ComparisonBytes, consumerBundle.ComparisonBytes)
+	producerTamperedReceipt := producerBundle.Receipt
+	tamperProducerIdentityFaultReceipt(&producerTamperedReceipt)
+	producerTampered := producer.MarshalIdentityFaultReceiptEvidence(producerTamperedReceipt)
+	consumerAfterProducerTamper := consumer.IdentityFaultReceiptFromFiles(consumer.IdentityFaultInput{
+		Baseline:     consumer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceBefore, AfterPath: options.persistenceAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
+		Alternate:    consumer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceAlternateBefore, AfterPath: options.persistenceAlternateAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
+		ArtifactPath: options.identityFault,
+	})
+	consumerTamperedReceipt := consumerBundle.Receipt
+	tamperConsumerIdentityFaultReceipt(&consumerTamperedReceipt)
+	consumerTampered := consumer.MarshalIdentityFaultReceiptEvidence(consumerTamperedReceipt)
+	producerAfterConsumerTamper := producer.IdentityFaultReceiptFromFiles(producer.IdentityFaultInput{
+		Baseline:     producer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceBefore, AfterPath: options.persistenceAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
+		Alternate:    producer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceAlternateBefore, AfterPath: options.persistenceAlternateAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
+		ArtifactPath: options.identityFault,
+	})
+	producerTamperedConsumerMismatch := !compareOpaqueIdentityFaultEvidence(producerTampered, consumerAfterProducerTamper.ComparisonBytes)
+	consumerTamperedProducerMismatch := !compareOpaqueIdentityFaultEvidence(consumerTampered, producerAfterConsumerTamper.ComparisonBytes)
+	asymmetricNumerator := 0
+	if producerTamperedConsumerMismatch {
+		asymmetricNumerator++
+	}
+	if consumerTamperedProducerMismatch {
+		asymmetricNumerator++
+	}
+	producerProbe := identityFaultAsymmetricProbe{Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower, Stage: "identity-fault", Step: "compare-tampered-producer-receipt", Reason: "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH"}
+	if !producerTamperedConsumerMismatch {
+		producerProbe.Decision, producerProbe.Resolution, producerProbe.Reason = producer.DecisionFailClosed, producer.ResolutionLower, "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MATCH_UNEXPECTED"
+	}
+	consumerProbe := identityFaultAsymmetricProbe{Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower, Stage: "identity-fault", Step: "compare-tampered-consumer-receipt", Reason: "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH"}
+	if !consumerTamperedProducerMismatch {
+		consumerProbe.Decision, consumerProbe.Resolution, consumerProbe.Reason = producer.DecisionFailClosed, producer.ResolutionLower, "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MATCH_UNEXPECTED"
+	}
+	if producerTamperedConsumerMismatch {
+		producerProbe.Decision, producerProbe.Resolution = producer.DecisionFixedPoint, producer.ResolutionExact
+	}
+	if consumerTamperedProducerMismatch {
+		consumerProbe.Decision, consumerProbe.Resolution = producer.DecisionFixedPoint, producer.ResolutionExact
+	}
 	reason := "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH"
-	if exact {
+	if !exact || asymmetricNumerator != 2 {
+		if exact && asymmetricNumerator != 2 {
+			reason = "INDEPENDENT_IDENTITY_FAULT_ASYMMETRIC_PROBE_MISMATCH"
+		}
+	} else {
 		reason = "INDEPENDENT_IDENTITY_FAULT_RECEIPTS_EXACT"
 	}
 	return persistenceProbeReport{
 		Schema:                       "gooo/semantic-delta-claim-identity-persistence-probe/v1",
 		ProducerIdentityFaultReceipt: producerRaw, ConsumerIdentityFaultReceipt: consumerRaw,
 		IdentityFaultReceiptsExact: exact, IdentityFaultOpaqueEvidenceExact: exact, Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower,
+		IdentityFaultAsymmetricProbeNumerator: asymmetricNumerator, IdentityFaultAsymmetricProbeDenominator: 2,
+		ProducerTamperedConsumerMismatch: producerTamperedConsumerMismatch, ConsumerTamperedProducerMismatch: consumerTamperedProducerMismatch,
+		ProducerTamperedConsumerProbe: producerProbe, ConsumerTamperedProducerProbe: consumerProbe,
 		Stage: "identity-fault", Step: "compare-opaque-receipts", Reason: reason,
 	}
+}
+
+func compareOpaqueIdentityFaultEvidence(left, right []byte) bool {
+	return bytes.Equal(left, right)
+}
+
+func tamperProducerIdentityFaultReceipt(receipt *producer.IdentityFaultReceipt) {
+	receipt.Graph.Mapping = append([]producer.IdentityFaultMappingRow(nil), receipt.Graph.Mapping...)
+	if len(receipt.Graph.Mapping) > 1 {
+		receipt.Graph.Mapping[0].NewStableID, receipt.Graph.Mapping[1].NewStableID = receipt.Graph.Mapping[1].NewStableID, receipt.Graph.Mapping[0].NewStableID
+	}
+	receipt.Graph.MappingDigest = identityFaultWitnessDigest(receipt.Graph.Mapping)
+	receipt.Graph.RewrittenReferenceCount = 0
+	receipt.Graph.DanglingReferenceCount = 1
+	receipt.FaultGraphClosed = false
+	receipt.Reason = "COHERENT_PRODUCER_RECEIPT_TAMPER"
+}
+
+func tamperConsumerIdentityFaultReceipt(receipt *consumer.IdentityFaultReceipt) {
+	receipt.Graph.Mapping = append([]consumer.IdentityFaultMappingRow(nil), receipt.Graph.Mapping...)
+	if len(receipt.Graph.Mapping) > 1 {
+		receipt.Graph.Mapping[0].NewStableID, receipt.Graph.Mapping[1].NewStableID = receipt.Graph.Mapping[1].NewStableID, receipt.Graph.Mapping[0].NewStableID
+	}
+	receipt.Graph.MappingDigest = identityFaultWitnessDigest(receipt.Graph.Mapping)
+	receipt.Graph.RewrittenReferenceCount = 0
+	receipt.Graph.DanglingReferenceCount = 1
+	receipt.FaultGraphClosed = false
+	receipt.Reason = "COHERENT_CONSUMER_RECEIPT_TAMPER"
+}
+
+func identityFaultWitnessDigest(value any) string {
+	raw, _ := json.Marshal(value)
+	sum := sha256.Sum256(raw)
+	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
 func consumerSourcePair(observation consumer.SourcePairObservation) evolutionSourcePair {
