@@ -21,33 +21,34 @@ type observation struct {
 	Claims                    []ClaimResult
 }
 
+// ClaimAdjudication is the independent, claim-local result of checking one
+// proposition. Case-level coordinates are only an aggregate failure view;
+// they must never replace this evidence and causal coordinate.
+type ClaimAdjudication struct {
+	ClaimID         string
+	Status          string
+	Resolution      string
+	Reason          string
+	Coordinate      Coordinate
+	EvidenceDigests []string
+	Provenance      string
+}
+
 func failure(resolution, reason, stage, step string) observation {
-	return failureWithStates(resolution, reason, stage, step, map[string]string{})
+	return failureWithAdjudications(nil, defaultClaimAdjudications(resolution, reason, Coordinate{Stage: stage, Step: step, Reason: reason}), resolution, reason, stage, step)
 }
 
-func failureWithStates(resolution, reason, stage, step string, states map[string]string) observation {
+func failureWithAdjudications(statements []ClaimStatement, adjudications []ClaimAdjudication, resolution, reason, stage, step string) observation {
 	return observation{Decision: "FAIL_CLOSED", Resolution: resolution, Reason: reason,
-		Coordinate: Coordinate{Stage: stage, Step: step, Reason: reason}, Claims: failureClaims(states, resolution, reason, stage, step)}
+		Coordinate: Coordinate{Stage: stage, Step: step, Reason: reason}, Claims: claimsFromAdjudications(statements, adjudications)}
 }
 
-func failureClaims(states map[string]string, resolution, reason, stage, step string) []ClaimResult {
-	claims := make([]ClaimResult, 0, ClaimTemplateTotal)
+func defaultClaimAdjudications(resolution, reason string, coordinate Coordinate) []ClaimAdjudication {
+	adjudications := make([]ClaimAdjudication, 0, ClaimTemplateTotal)
 	for _, spec := range claimSpecs() {
-		status := states[spec.ID]
-		if status == "" {
-			status = "OPEN"
-		}
-		claimResolution := resolution
-		if status == "DISCHARGED" {
-			claimResolution = "EXACT"
-		}
-		claimReason := reason
-		if status == "DISCHARGED" {
-			claimReason = "CLAIM_DISCHARGED"
-		}
-		claims = append(claims, makeClaimResult(spec, status, claimResolution, claimReason, Coordinate{stage, step, claimReason}, nil, "consumer-observation"))
+		adjudications = append(adjudications, ClaimAdjudication{ClaimID: spec.ID, Status: "OPEN", Resolution: "LOWER_RESOLUTION", Reason: "CLAIM_PENDING", Coordinate: coordinate, Provenance: "consumer-observation"})
 	}
-	return claims
+	return adjudications
 }
 
 type claimSpec struct {
@@ -78,6 +79,79 @@ func makeClaimResult(spec claimSpec, status, resolution, reason string, coordina
 	}
 	result.StateDigest = claimStateDigest(result)
 	return result
+}
+
+func claimsFromAdjudications(statements []ClaimStatement, adjudications []ClaimAdjudication) []ClaimResult {
+	claims := make([]ClaimResult, 0, ClaimTemplateTotal)
+	for index, spec := range claimSpecs() {
+		if index < len(statements) && statements[index].ID == spec.ID {
+			statement := statements[index]
+			spec = claimSpec{ID: statement.ID, Proposition: statement.Proposition, TargetDigest: statement.TargetDigest, Dependencies: statement.Dependencies, ProofChoice: statement.ProofChoice, MetaOperation: statement.MetaOperation, Coordinate: statement.Coordinate}
+		}
+		adjudication, ok := findClaimAdjudication(adjudications, spec.ID)
+		if !ok {
+			adjudication = ClaimAdjudication{ClaimID: spec.ID, Status: "OPEN", Resolution: "LOWER_RESOLUTION", Reason: "CLAIM_PENDING", Coordinate: Coordinate{"CONSUME", "claim-adjudication", "CLAIM_ADJUDICATION_NOT_OBSERVED"}, Provenance: "consumer-observation"}
+		}
+		claims = append(claims, makeClaimResult(spec, adjudication.Status, adjudication.Resolution, adjudication.Reason, adjudication.Coordinate, adjudication.EvidenceDigests, adjudication.Provenance))
+	}
+	return claims
+}
+
+func findClaimAdjudication(adjudications []ClaimAdjudication, claimID string) (ClaimAdjudication, bool) {
+	for _, adjudication := range adjudications {
+		if adjudication.ClaimID == claimID {
+			return adjudication, true
+		}
+	}
+	return ClaimAdjudication{}, false
+}
+
+func claimAdjudication(statements []ClaimStatement, claimID, status, resolution, reason string, coordinate Coordinate, provenance string) ClaimAdjudication {
+	result := ClaimAdjudication{ClaimID: claimID, Status: status, Resolution: resolution, Reason: reason, Coordinate: coordinate, Provenance: provenance}
+	for _, statement := range statements {
+		if statement.ID == claimID {
+			result.EvidenceDigests = append([]string(nil), statement.EvidenceDigest...)
+			break
+		}
+	}
+	return result
+}
+
+func claimStatus(adjudications []ClaimAdjudication, claimID string) string {
+	if adjudication, ok := findClaimAdjudication(adjudications, claimID); ok {
+		return adjudication.Status
+	}
+	return "OPEN"
+}
+
+func claimCoordinate(claimID string) Coordinate {
+	for _, spec := range claimSpecs() {
+		if spec.ID == claimID {
+			return spec.Coordinate
+		}
+	}
+	return Coordinate{"CONSUME", "claim-adjudication", "CLAIM_ADJUDICATION_NOT_OBSERVED"}
+}
+
+func claimStatementCoordinate(statements []ClaimStatement, claimID string) Coordinate {
+	for _, statement := range statements {
+		if statement.ID == claimID && statement.Coordinate.Stage != "" && statement.Coordinate.Step != "" && statement.Coordinate.Reason != "" {
+			return statement.Coordinate
+		}
+	}
+	return claimCoordinate(claimID)
+}
+
+func authorityFailureAdjudications(statements []ClaimStatement, status, resolution, reason string, coordinate Coordinate) []ClaimAdjudication {
+	adjudications := make([]ClaimAdjudication, 0, ClaimTemplateTotal)
+	for _, spec := range claimSpecs() {
+		if spec.ID == "consumer-authority" {
+			adjudications = append(adjudications, claimAdjudication(statements, spec.ID, status, resolution, reason, coordinate, "consumer-observation"))
+			continue
+		}
+		adjudications = append(adjudications, claimAdjudication(statements, spec.ID, "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(statements, spec.ID), "consumer-canonical-recipe-v2"))
+	}
+	return adjudications
 }
 
 func exactClaims(statements []ClaimStatement) []ClaimResult {

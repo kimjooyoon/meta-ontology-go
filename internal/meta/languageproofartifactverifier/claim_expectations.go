@@ -43,11 +43,12 @@ type ClaimStatePhaseTransition struct {
 // for CI. It contains both phase tables and the exact cross-phase transition;
 // it is not an input to Evaluate.
 type ClaimStateExpectationDocument struct {
-	Schema           string                                `json:"schema"`
-	Version          int                                   `json:"version"`
-	FixedDenominator int                                   `json:"fixed_denominator"`
-	Phases           map[string]ClaimStateExpectationPhase `json:"phases"`
-	PhaseTransitions []ClaimStatePhaseTransition           `json:"phase_transitions"`
+	Schema             string                                `json:"schema"`
+	Version            int                                   `json:"version"`
+	FixedDenominator   int                                   `json:"fixed_denominator"`
+	Phases             map[string]ClaimStateExpectationPhase `json:"phases"`
+	PhaseTransitions   []ClaimStatePhaseTransition           `json:"phase_transitions"`
+	ClaimAdjudications []ClaimAdjudicationExpectation        `json:"claim_adjudications"`
 }
 
 type claimStateTotals struct {
@@ -61,6 +62,49 @@ type claimStateMismatch struct {
 	ClaimID  string `json:"claim_id"`
 	Actual   string `json:"actual"`
 	Expected string `json:"expected"`
+}
+
+// ClaimAdjudicationExpectation fixes the causal coordinates for the two
+// evidence-local cases where the same report contains multiple non-discharged
+// claims. EvidenceDigestCount checks that the claim keeps its declared
+// evidence links while the kernel decides whether those attachments are
+// actually present and valid.
+type ClaimAdjudicationExpectation struct {
+	Phase               string     `json:"phase"`
+	CaseID              string     `json:"case_id"`
+	ClaimID             string     `json:"claim_id"`
+	Status              string     `json:"status"`
+	Resolution          string     `json:"resolution"`
+	Reason              string     `json:"reason"`
+	Coordinate          Coordinate `json:"coordinate"`
+	EvidenceDigestCount int        `json:"evidence_digest_count"`
+}
+
+type claimAdjudicationMismatch struct {
+	CaseID                string     `json:"case_id"`
+	ClaimID               string     `json:"claim_id"`
+	ActualStatus          string     `json:"actual_status"`
+	ExpectedStatus        string     `json:"expected_status"`
+	ActualResolution      string     `json:"actual_resolution"`
+	ExpectedResolution    string     `json:"expected_resolution"`
+	ActualReason          string     `json:"actual_reason"`
+	ExpectedReason        string     `json:"expected_reason"`
+	ActualCoordinate      Coordinate `json:"actual_coordinate"`
+	ExpectedCoordinate    Coordinate `json:"expected_coordinate"`
+	ActualEvidenceDigests []string   `json:"actual_evidence_digests"`
+	ExpectedEvidenceCount int        `json:"expected_evidence_count"`
+}
+
+func fixedClaimAdjudicationTable(phase string) []ClaimAdjudicationExpectation {
+	if phase != ProofPhasePreliminary && phase != ProofPhaseFinal {
+		return nil
+	}
+	return []ClaimAdjudicationExpectation{
+		{Phase: phase, CaseID: "missing-operation-evidence", ClaimID: "operation-receipt-bound", Status: "REFUTED", Resolution: "INVARIANT_ONLY", Reason: "CLAIM_REFUTED", Coordinate: Coordinate{"CONSUME_EVIDENCE", "operation-evidence", "PROOF_EVIDENCE_MISSING"}, EvidenceDigestCount: 1},
+		{Phase: phase, CaseID: "missing-operation-evidence", ClaimID: "recipe-match", Status: "REFUTED", Resolution: "INVARIANT_ONLY", Reason: "CLAIM_REFUTED", Coordinate: Coordinate{"CONSUME_RECIPE", "recipe-evidence", "RECIPE_OPERATION_EVIDENCE_MISSING"}, EvidenceDigestCount: 3},
+		{Phase: phase, CaseID: "unrelated-evidence-tamper", ClaimID: "no-byte-authority", Status: "REFUTED", Resolution: "INVARIANT_ONLY", Reason: "CLAIM_REFUTED", Coordinate: Coordinate{"CONSUME_INVARIANT", "invariant-evidence", "INVARIANT_EVIDENCE_NOT_PRESERVED"}, EvidenceDigestCount: 1},
+		{Phase: phase, CaseID: "unrelated-evidence-tamper", ClaimID: "recipe-match", Status: "OPEN", Resolution: "LOWER_RESOLUTION", Reason: "CLAIM_PENDING", Coordinate: Coordinate{"CONSUME_RECIPE", "recipe-evidence", "RECIPE_INVARIANT_EVIDENCE_NOT_RESOLVED"}, EvidenceDigestCount: 3},
+	}
 }
 
 type claimStateExpectationDetail struct {
@@ -149,12 +193,14 @@ func phaseClaimStateTransitions() []ClaimStatePhaseTransition {
 // declared phase transition for CI evidence. Evaluate never calls it.
 func ClaimStateExpectations() ClaimStateExpectationDocument {
 	phases := map[string]ClaimStateExpectationPhase{}
+	claimAdjudications := make([]ClaimAdjudicationExpectation, 0, 8)
 	for _, phase := range []string{ProofPhasePreliminary, ProofPhaseFinal} {
 		table := fixedClaimStateTable(phase)
 		totals := fixedClaimStateTotals(phase)
 		phases[phase] = ClaimStateExpectationPhase{FixedDenominator: CaseTotal * ClaimTemplateTotal, Cases: table, Totals: claimStateTotalsJSON{Discharged: totals.Discharged, Open: totals.Open, Refuted: totals.Refuted}}
+		claimAdjudications = append(claimAdjudications, fixedClaimAdjudicationTable(phase)...)
 	}
-	return ClaimStateExpectationDocument{Schema: "gooo/language-proof-carrying-artifact-claim-state-expectations/v1", Version: 1, FixedDenominator: CaseTotal * ClaimTemplateTotal, Phases: phases, PhaseTransitions: phaseClaimStateTransitions()}
+	return ClaimStateExpectationDocument{Schema: "gooo/language-proof-carrying-artifact-claim-state-expectations/v1", Version: 1, FixedDenominator: CaseTotal * ClaimTemplateTotal, Phases: phases, PhaseTransitions: phaseClaimStateTransitions(), ClaimAdjudications: claimAdjudications}
 }
 
 func fixedClaimStateTotals(phase string) claimStateTotals {
@@ -234,6 +280,53 @@ func validateClaimStateExpectations(phase string, cases []CaseResult) error {
 	return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "case-claim-state", "CLAIM_STATE_EXPECTATION_MISMATCH"}, Detail: string(detail)}
 }
 
+func validateClaimAdjudicationExpectations(phase string, cases []CaseResult) error {
+	mismatches := make([]claimAdjudicationMismatch, 0)
+	for _, expected := range fixedClaimAdjudicationTable(phase) {
+		var actual *ClaimResult
+		for caseIndex := range cases {
+			if cases[caseIndex].ID != expected.CaseID {
+				continue
+			}
+			for claimIndex := range cases[caseIndex].Claims {
+				if cases[caseIndex].Claims[claimIndex].ID == expected.ClaimID {
+					actual = &cases[caseIndex].Claims[claimIndex]
+					break
+				}
+			}
+		}
+		if actual == nil {
+			mismatches = append(mismatches, claimAdjudicationMismatch{CaseID: expected.CaseID, ClaimID: expected.ClaimID, ExpectedStatus: expected.Status, ExpectedResolution: expected.Resolution, ExpectedReason: expected.Reason, ExpectedCoordinate: expected.Coordinate, ExpectedEvidenceCount: expected.EvidenceDigestCount})
+			continue
+		}
+		validEvidence := len(actual.EvidenceDigests) == expected.EvidenceDigestCount
+		for _, digest := range actual.EvidenceDigests {
+			validEvidence = validEvidence && validDigest(digest)
+		}
+		if actual.Status != expected.Status || actual.Resolution != expected.Resolution || actual.Reason != expected.Reason || actual.Coordinate != expected.Coordinate || !validEvidence {
+			mismatches = append(mismatches, claimAdjudicationMismatch{
+				CaseID: expected.CaseID, ClaimID: expected.ClaimID,
+				ActualStatus: actual.Status, ExpectedStatus: expected.Status,
+				ActualResolution: actual.Resolution, ExpectedResolution: expected.Resolution,
+				ActualReason: actual.Reason, ExpectedReason: expected.Reason,
+				ActualCoordinate: actual.Coordinate, ExpectedCoordinate: expected.Coordinate,
+				ActualEvidenceDigests: actual.EvidenceDigests, ExpectedEvidenceCount: expected.EvidenceDigestCount,
+			})
+		}
+	}
+	if len(mismatches) == 0 {
+		return nil
+	}
+	detail, err := json.Marshal(struct {
+		Phase      string                      `json:"phase"`
+		Mismatches []claimAdjudicationMismatch `json:"mismatches"`
+	}{Phase: phase, Mismatches: mismatches})
+	if err != nil {
+		return fmt.Errorf("claim adjudication expectation mismatch")
+	}
+	return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "claim-adjudication", "CLAIM_ADJUDICATION_EXPECTATION_MISMATCH"}, Detail: string(detail)}
+}
+
 func validatePhaseState(cases []CaseResult, phase string) error {
 	for _, transition := range phaseClaimStateTransitions() {
 		want := transition.To
@@ -277,12 +370,13 @@ func projectCasesForPhase(cases []CaseResult, phase string) []CaseResult {
 				claim.Status = want
 				switch want {
 				case "OPEN":
-					claim.Resolution = "LOWER_RESOLUTION"
+					claim.Resolution, claim.Reason, claim.Provenance = "LOWER_RESOLUTION", "CLAIM_PENDING", "consumer-observation"
 				case "REFUTED":
-					claim.Resolution = "INVARIANT_ONLY"
+					claim.Resolution, claim.Reason, claim.Provenance = "INVARIANT_ONLY", "CLAIM_REFUTED", "consumer-observation"
 				case "DISCHARGED":
-					claim.Resolution = "EXACT"
+					claim.Resolution, claim.Reason, claim.Provenance = "EXACT", "CLAIM_DISCHARGED", "consumer-canonical-recipe-v2"
 				}
+				claim.Coordinate = transition.Coordinate
 				claim.StateDigest = claimStateDigest(*claim)
 			}
 		}

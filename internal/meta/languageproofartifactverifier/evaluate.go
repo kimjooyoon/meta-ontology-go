@@ -210,7 +210,7 @@ func unauthorizedConsumerObservation(input Input, phase string) observation {
 	consumedReceipt, consumeErr := ConsumeBundle(input.UnauthorizedBundle, unauthorized, "artifact.json")
 	if consumeErr == nil {
 		result := observedFailure(artifact, "INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_ACCEPTED", "CONSUME_BUNDLE", "consumer",
-			map[string]string{"source-bytes-bound": "DISCHARGED", "operation-receipt-bound": "DISCHARGED", "no-byte-authority": "DISCHARGED", "recipe-match": "DISCHARGED", "consumer-authority": "REFUTED"},
+			authorityFailureAdjudications(artifact.Claims, "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_BUNDLE", "consumer", "UNAUTHORIZED_CONSUMER_ACCEPTED"}),
 			base.ArtifactDigest, base.SourceDigest, base.SemanticDigest, base.OperationDigest)
 		result.ConsumerTargetDigest, result.ConsumerOutputDigest, result.ConsumerOutputExists = consumedReceipt.TargetDigest, consumedReceipt.OutputDigest, consumedReceipt.OutputExists
 		return result
@@ -221,13 +221,13 @@ func unauthorizedConsumerObservation(input Input, phase string) observation {
 		consumerFailure = typed
 	}
 	resultReason, resultResolution, resultStage, resultStep := "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", "INVARIANT_ONLY", "CONSUME_BUNDLE", "attestation"
-	states := map[string]string{"source-bytes-bound": "DISCHARGED", "operation-receipt-bound": "DISCHARGED", "no-byte-authority": "DISCHARGED", "recipe-match": "DISCHARGED", "consumer-authority": "REFUTED"}
+	claimStatus, claimResolution, claimReason := "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED"
 	if consumerFailure.Class != ConsumerErrorAttestationMismatch {
 		resultReason, resultResolution, resultStage, resultStep = "BUNDLE_CONSUMPTION_NOT_OBSERVED", "LOWER_RESOLUTION", "CONSUME_BUNDLE", "consumer-recheck"
-		states["consumer-authority"] = "OPEN"
+		claimStatus, claimResolution, claimReason = "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING"
 	}
 	result := observedFailure(artifact, resultResolution, resultReason, resultStage, resultStep,
-		states,
+		authorityFailureAdjudications(artifact.Claims, claimStatus, claimResolution, claimReason, Coordinate{resultStage, resultStep, resultReason}),
 		base.ArtifactDigest, base.SourceDigest, base.SemanticDigest, base.OperationDigest)
 	result.ConsumerTargetDigest, result.ConsumerOutputDigest, result.ConsumerOutputExists = targetDigest, outputDigest, outputExists
 	result.ConsumerErrorClass, result.ConsumerErrorDigest = string(consumerFailure.Class), consumerFailure.Digest()

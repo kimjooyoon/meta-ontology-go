@@ -279,6 +279,39 @@ func ResealClaimState(report Report, caseID, claimID, state string) Report {
 	return report
 }
 
+// ResealClaimAdjudication swaps only claim-local causal metadata between two
+// cases and reseals both state and report digests. The fixed causal table must
+// reject this coherent envelope because evidence causes cannot move between
+// claim IDs.
+func ResealClaimAdjudication(report Report, firstCase, firstClaim, secondCase, secondClaim string) Report {
+	var first, second *ClaimResult
+	for caseIndex := range report.Cases {
+		for claimIndex := range report.Cases[caseIndex].Claims {
+			claim := &report.Cases[caseIndex].Claims[claimIndex]
+			if report.Cases[caseIndex].ID == firstCase && claim.ID == firstClaim {
+				first = claim
+			}
+			if report.Cases[caseIndex].ID == secondCase && claim.ID == secondClaim {
+				second = claim
+			}
+		}
+	}
+	if first == nil || second == nil {
+		return ResealReportDigest(report)
+	}
+	first.Status, second.Status = second.Status, first.Status
+	first.Resolution, second.Resolution = second.Resolution, first.Resolution
+	first.Reason, second.Reason = second.Reason, first.Reason
+	first.Coordinate, second.Coordinate = second.Coordinate, first.Coordinate
+	first.EvidenceDigest, second.EvidenceDigest = second.EvidenceDigest, first.EvidenceDigest
+	first.EvidenceDigests, second.EvidenceDigests = append([]string(nil), second.EvidenceDigests...), append([]string(nil), first.EvidenceDigests...)
+	first.Provenance, second.Provenance = second.Provenance, first.Provenance
+	first.StateDigest = claimStateDigest(*first)
+	second.StateDigest = claimStateDigest(*second)
+	report.Digest = reportDigest(report)
+	return report
+}
+
 type ValidationError struct {
 	Coordinate Coordinate
 	Detail     string
@@ -376,7 +409,8 @@ func validateCaseResults(report Report, phase string) error {
 			if claim.ID != claimIDs[claimIndex] || seen[claim.ID] || claim.Provenance == "" || claim.StateDigest != claimStateDigest(claim) ||
 				(claim.Status == "DISCHARGED" && claim.Resolution != "EXACT") || (claim.Status == "OPEN" && claim.Resolution != "LOWER_RESOLUTION") ||
 				(claim.Status == "REFUTED" && claim.Resolution != "INVARIANT_ONLY") || (claim.Status != "DISCHARGED" && claim.Status != "OPEN" && claim.Status != "REFUTED") ||
-				(len(claim.EvidenceDigests) == 0 && claim.EvidenceDigest != "") || (len(claim.EvidenceDigests) > 0 && claim.EvidenceDigest != claim.EvidenceDigests[0]) {
+				(len(claim.EvidenceDigests) == 0 && claim.EvidenceDigest != "") || (len(claim.EvidenceDigests) > 0 && claim.EvidenceDigest != claim.EvidenceDigests[0]) ||
+				!claimAdjudicationShapeOK(claim) {
 				return fmt.Errorf("proof-carrying claim evaluation mismatch: %s", item.ID)
 			}
 			seen[claim.ID] = true
@@ -385,10 +419,36 @@ func validateCaseResults(report Report, phase string) error {
 	if err := validateClaimStateExpectations(phase, report.Cases); err != nil {
 		return err
 	}
+	if err := validateClaimAdjudicationExpectations(phase, report.Cases); err != nil {
+		return err
+	}
 	if valid := validCase(report.Cases); valid == nil || !validCaseClaims(*valid, report) {
 		return fmt.Errorf("proof-carrying valid claim binding mismatch")
 	}
 	return nil
+}
+
+func claimAdjudicationShapeOK(claim ClaimResult) bool {
+	if len(claim.EvidenceDigests) > 0 {
+		for _, digest := range claim.EvidenceDigests {
+			if !validDigest(digest) {
+				return false
+			}
+		}
+	}
+	if claim.Coordinate.Stage == "" || claim.Coordinate.Step == "" || claim.Coordinate.Reason == "" {
+		return false
+	}
+	switch claim.Status {
+	case "DISCHARGED":
+		return claim.Reason == "CLAIM_DISCHARGED" && claim.Provenance == "consumer-canonical-recipe-v2"
+	case "OPEN":
+		return claim.Reason == "CLAIM_PENDING" && claim.Provenance == "consumer-observation"
+	case "REFUTED":
+		return claim.Reason == "CLAIM_REFUTED" && claim.Provenance == "consumer-observation"
+	default:
+		return false
+	}
 }
 
 func caseCoordinates() map[string]Coordinate {

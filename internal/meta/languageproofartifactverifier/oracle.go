@@ -20,14 +20,15 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 		return result
 	}
 	if artifact.HeadSHA != head {
-		return observedFailure(artifact, "INVARIANT_ONLY", "HEAD_BINDING_MISMATCH", "CONSUME_IDENTITY", "head",
-			map[string]string{
-				"source-bytes-bound":      "DISCHARGED",
-				"operation-receipt-bound": "DISCHARGED",
-				"no-byte-authority":       "DISCHARGED",
-				"recipe-match":            "DISCHARGED",
-				"consumer-authority":      "REFUTED",
-			}, artifactEvidenceDigest, "", "", "")
+		adjudications := make([]ClaimAdjudication, 0, ClaimTemplateTotal)
+		for _, spec := range claimSpecs() {
+			if spec.ID == "consumer-authority" {
+				adjudications = append(adjudications, claimAdjudication(artifact.Claims, spec.ID, "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_IDENTITY", "head", "HEAD_BINDING_MISMATCH"}, "consumer-observation"))
+				continue
+			}
+			adjudications = append(adjudications, claimAdjudication(artifact.Claims, spec.ID, "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", spec.Coordinate, "consumer-canonical-recipe-v2"))
+		}
+		return observedFailure(artifact, "INVARIANT_ONLY", "HEAD_BINDING_MISMATCH", "CONSUME_IDENTITY", "head", adjudications, artifactEvidenceDigest, "", "", "")
 	}
 
 	identityOK := artifact.Schema == ArtifactSchema && artifact.HeadSHA == head && artifact.Producer == ProducerID && artifact.Consumer == ConsumerID && artifact.MetaOperation == "emit-proof-carrying-artifact" &&
@@ -36,7 +37,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 		artifact.Authority.Basis == "INDEPENDENT_CONSUMER_VERIFICATION_REQUIRED" && artifact.SourcePath != "" && validDigest(artifact.SourceDigest) && validDigest(artifact.SemanticDigest) && validDigest(artifact.OperationDigest) &&
 		artifact.Recipe.Version == 2 && artifact.RecipeDigest == digestValue(artifact.Recipe) && validateWriteSet(artifact.WriteSet) == nil
 	if !identityOK {
-		return observedFailure(artifact, "INVARIANT_ONLY", "PROOF_CARRYING_ARTIFACT_INVALID", "CONSUME_IDENTITY", "artifact", map[string]string{}, artifactEvidenceDigest, "", "", "")
+		return observedFailure(artifact, "INVARIANT_ONLY", "PROOF_CARRYING_ARTIFACT_INVALID", "CONSUME_IDENTITY", "artifact", defaultClaimAdjudications("INVARIANT_ONLY", "PROOF_CARRYING_ARTIFACT_INVALID", Coordinate{"CONSUME_IDENTITY", "artifact", "PROOF_CARRYING_ARTIFACT_INVALID"}), artifactEvidenceDigest, "", "", "")
 	}
 
 	byKind := map[string]Evidence{}
@@ -59,66 +60,115 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 	claimsStructureOK := validateClaimStatements(artifact.Claims, artifact.Evidence, artifact)
 	priorLedgerOK := validatePriorLedger(artifact.PriorLedger, artifact.Claims) == nil
 
-	statuses := map[string]string{}
 	sourceDigest := digestBytes(source)
 	projection, projectionErr := projectSource(source, activityFrom(artifact))
-	sourceGood := len(source) > 0 && projectionErr == nil && artifact.SourceDigest == sourceDigest && artifact.SemanticDigest == projection.SemanticDigest &&
-		evidenceOK["SOURCE"] && claimOK(artifact.Claims, artifact.Evidence, artifact, "source-bytes-bound")
+	sourceClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "source-bytes-bound")
+	sourceStatementOK := claimStatementOK(artifact.Claims, artifact, "source-bytes-bound")
+	sourceBindingOK := len(source) > 0 && projectionErr == nil && artifact.SourceDigest == sourceDigest && artifact.SemanticDigest == projection.SemanticDigest
+	sourceGood := sourceBindingOK && evidenceOK["SOURCE"] && sourceClaimOK
+	adjudications := make([]ClaimAdjudication, 0, ClaimTemplateTotal)
 	if sourceGood {
-		statuses["source-bytes-bound"] = "DISCHARGED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "source-bytes-bound", "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(artifact.Claims, "source-bytes-bound"), "consumer-canonical-recipe-v2"))
 	} else if len(source) == 0 || projectionErr != nil {
-		statuses["source-bytes-bound"] = "OPEN"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "source-bytes-bound", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", Coordinate{"CONSUME_SOURCE", "reconstruct", "SOURCE_RECONSTRUCTION_NOT_OBSERVED"}, "consumer-observation"))
+	} else if !sourceStatementOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "source-bytes-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}, "consumer-observation"))
+	} else if !evidenceOK["SOURCE"] || !sourceClaimOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "source-bytes-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_EVIDENCE", "source-evidence", "PROOF_EVIDENCE_DIGEST_MISMATCH"}, "consumer-observation"))
 	} else {
-		statuses["source-bytes-bound"] = "REFUTED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "source-bytes-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_SOURCE", "reconstruct", "SOURCE_RECONSTRUCTION_MISMATCH"}, "consumer-observation"))
 	}
 
 	var receipt operationReceipt
 	operationMissing := len(operation) == 0
 	operationDecoded := !operationMissing && decodeInto(operation, &receipt) == nil
 	operationDigestOK := operationDecoded && receipt.Digest == receiptDigest(receipt)
+	operationClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "operation-receipt-bound")
+	operationStatementOK := claimStatementOK(artifact.Claims, artifact, "operation-receipt-bound")
+	operationEvidenceMissing := len(byKind["OPERATION"].Kind) == 0
 	operationGood := operationDecoded && operationDigestOK && sourceGood && verifyOperation(receipt, sourceDigest, artifact.SourcePath, projection) && artifact.OperationDigest == receipt.Digest &&
-		evidenceOK["OPERATION"] && claimOK(artifact.Claims, artifact.Evidence, artifact, "operation-receipt-bound")
+		evidenceOK["OPERATION"] && operationClaimOK
 	if operationGood {
-		statuses["operation-receipt-bound"] = "DISCHARGED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "operation-receipt-bound", "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(artifact.Claims, "operation-receipt-bound"), "consumer-canonical-recipe-v2"))
 	} else if operationMissing || !sourceGood {
-		statuses["operation-receipt-bound"] = "OPEN"
+		coordinate := Coordinate{"CONSUME_OPERATION", "receipt", "OPERATION_RECONSTRUCTION_NOT_OBSERVED"}
+		if operationMissing {
+			coordinate = Coordinate{"CONSUME_INPUT", "operation-attachment", "ARTIFACT_ATTACHMENT_MISSING"}
+		}
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "operation-receipt-bound", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", coordinate, "consumer-observation"))
+	} else if operationEvidenceMissing {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "operation-receipt-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_EVIDENCE", "operation-evidence", "PROOF_EVIDENCE_MISSING"}, "consumer-observation"))
+	} else if !operationStatementOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "operation-receipt-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}, "consumer-observation"))
+	} else if !evidenceOK["OPERATION"] || !operationClaimOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "operation-receipt-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_EVIDENCE", "operation-evidence", "PROOF_EVIDENCE_DIGEST_MISMATCH"}, "consumer-observation"))
+	} else if operationDecoded && !operationDigestOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "operation-receipt-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_OPERATION", "attachment-digest", "OPERATION_ATTACHMENT_DIGEST_MISMATCH"}, "consumer-observation"))
 	} else {
-		statuses["operation-receipt-bound"] = "REFUTED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "operation-receipt-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_OPERATION", "receipt", "OPERATION_RECONSTRUCTION_MISMATCH"}, "consumer-observation"))
 	}
 
-	invariantGood := evidenceOK["INVARIANT"] && claimOK(artifact.Claims, artifact.Evidence, artifact, "no-byte-authority") && artifact.WriteSet.NetChangedPaths == 0 &&
+	invariantClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "no-byte-authority")
+	invariantStatementOK := claimStatementOK(artifact.Claims, artifact, "no-byte-authority")
+	invariantGood := evidenceOK["INVARIANT"] && invariantClaimOK && artifact.WriteSet.NetChangedPaths == 0 &&
 		!artifact.WriteSet.CapabilityMutationGranted && artifact.Effects.NetChangedPaths == 0 && !artifact.Effects.CapabilityMutationGranted && artifact.Authority.ArtifactUseAuthority == "NONE"
 	if invariantGood {
-		statuses["no-byte-authority"] = "DISCHARGED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "no-byte-authority", "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(artifact.Claims, "no-byte-authority"), "consumer-canonical-recipe-v2"))
+	} else if !invariantStatementOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "no-byte-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}, "consumer-observation"))
+	} else if !evidenceOK["INVARIANT"] || !invariantClaimOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "no-byte-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_INVARIANT", "invariant-evidence", "INVARIANT_EVIDENCE_NOT_PRESERVED"}, "consumer-observation"))
 	} else {
-		statuses["no-byte-authority"] = "REFUTED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "no-byte-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_INVARIANT", "invariant-evidence", "INVARIANT_POLICY_NOT_PRESERVED"}, "consumer-observation"))
 	}
 
 	externalRecipe, recipeErr := decodeRecipe(recipe)
 	derivedRecipe, derivedErr := recipeFromSource(source)
 	recipeEvidenceGood := claimOK(artifact.Claims, artifact.Evidence, artifact, "recipe-match")
+	recipeStatementOK := claimStatementOK(artifact.Claims, artifact, "recipe-match")
 	recipeGood := recipeErr == nil && derivedErr == nil && reflect.DeepEqual(externalRecipe, CanonicalRecipe()) && reflect.DeepEqual(derivedRecipe, CanonicalRecipe()) &&
 		reflect.DeepEqual(artifact.Recipe, externalRecipe) && artifact.RecipeDigest == digestValue(externalRecipe) && recipeEvidenceGood
+	noExternalEvidence := len(source) == 0 && len(operation) == 0 && len(recipe) == 0
+	invariantEvidenceOnly := mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"]
 	if recipeGood {
-		statuses["recipe-match"] = "DISCHARGED"
-	} else if phase == ProofPhasePreliminary && (operationMissing || (mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"])) {
-		// A missing operation attachment or an invariant-only evidence change
-		// leaves the recipe claim unresolved. The recipe itself has not been
-		// contradicted, so this declared dependency remains OPEN rather than
-		// being blanket-promoted to REFUTED.
-		statuses["recipe-match"] = "OPEN"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(artifact.Claims, "recipe-match"), "consumer-canonical-recipe-v2"))
+	} else if !recipeStatementOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}, "consumer-observation"))
+	} else if noExternalEvidence {
+		coordinate := Coordinate{"CONSUME_INPUT", "external-evidence", "ARTIFACT_BYTES_NOT_AUTHORITY"}
+		if phase == ProofPhasePreliminary {
+			adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", coordinate, "consumer-observation"))
+		} else {
+			adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", coordinate, "consumer-observation"))
+		}
+	} else if operationMissing {
+		// An absent external operation attachment leaves the dependent recipe
+		// proposition unresolved in either phase. The only declared phase
+		// reclassification is the byte-only case below.
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", Coordinate{"CONSUME_RECIPE", "recipe-evidence", "RECIPE_OPERATION_ATTACHMENT_NOT_OBSERVED"}, "consumer-observation"))
+	} else if invariantEvidenceOnly {
+		// An unrelated invariant evidence failure does not contradict the
+		// independently reconstructed recipe; its dependency remains OPEN.
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", Coordinate{"CONSUME_RECIPE", "recipe-evidence", "RECIPE_INVARIANT_EVIDENCE_NOT_RESOLVED"}, "consumer-observation"))
+	} else if operationEvidenceMissing {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_RECIPE", "recipe-evidence", "RECIPE_OPERATION_EVIDENCE_MISSING"}, "consumer-observation"))
+	} else if !recipeEvidenceGood {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_RECIPE", "recipe-evidence", "RECIPE_EVIDENCE_NOT_PRESERVED"}, "consumer-observation"))
 	} else {
-		statuses["recipe-match"] = "REFUTED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_RECIPE", "recipe", "INDEPENDENT_RECIPE_MISMATCH"}, "consumer-observation"))
 	}
 
-	allPrerequisites := claimsStructureOK && priorLedgerOK && statuses["source-bytes-bound"] == "DISCHARGED" && statuses["operation-receipt-bound"] == "DISCHARGED" && statuses["no-byte-authority"] == "DISCHARGED" && statuses["recipe-match"] == "DISCHARGED"
-	authorityGood := allPrerequisites && claimOK(artifact.Claims, artifact.Evidence, artifact, "consumer-authority") && len(raw) > 0
+	allPrerequisites := claimsStructureOK && priorLedgerOK && claimStatus(adjudications, "source-bytes-bound") == "DISCHARGED" && claimStatus(adjudications, "operation-receipt-bound") == "DISCHARGED" && claimStatus(adjudications, "no-byte-authority") == "DISCHARGED" && claimStatus(adjudications, "recipe-match") == "DISCHARGED"
+	authorityClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "consumer-authority")
+	authorityGood := allPrerequisites && authorityClaimOK && len(raw) > 0
 	if authorityGood {
-		statuses["consumer-authority"] = "DISCHARGED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(artifact.Claims, "consumer-authority"), "consumer-canonical-recipe-v2"))
 	} else if !allPrerequisites {
-		statuses["consumer-authority"] = "OPEN"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", Coordinate{"CONSUME_AUTHORITY", "authority-evidence", "AUTHORITY_DEPENDENCY_OPEN"}, "consumer-observation"))
+	} else if !authorityClaimOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}, "consumer-observation"))
 	} else {
-		statuses["consumer-authority"] = "REFUTED"
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_AUTHORITY", "authority-evidence", "AUTHORITY_ATTESTATION_NOT_PRESERVED"}, "consumer-observation"))
 	}
 
 	resolution, reason, stage, step := "INVARIANT_ONLY", "PROOF_CARRYING_ARTIFACT_INVALID", "CONSUME_IDENTITY", "artifact"
@@ -158,42 +208,14 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 		result.RecipeAttachmentDigest = digestBytes(recipe)
 		return result
 	}
-	return observedFailure(artifact, resolution, reason, stage, step, statuses, artifactEvidenceDigest, sourceDigest, projection.SemanticDigest, receiptDigestIfValid(receipt))
+	return observedFailure(artifact, resolution, reason, stage, step, adjudications, artifactEvidenceDigest, sourceDigest, projection.SemanticDigest, receiptDigestIfValid(receipt))
 }
 
-func observedFailure(artifact Artifact, resolution, reason, stage, step string, statuses map[string]string, artifactDigestValue, sourceDigest, semanticDigest, operationDigest string) observation {
-	result := failureWithStates(resolution, reason, stage, step, statuses)
+func observedFailure(artifact Artifact, resolution, reason, stage, step string, adjudications []ClaimAdjudication, artifactDigestValue, sourceDigest, semanticDigest, operationDigest string) observation {
+	result := failureWithAdjudications(artifact.Claims, adjudications, resolution, reason, stage, step)
 	result.ArtifactDigest, result.SourceDigest, result.SemanticDigest, result.OperationDigest = artifactDigestValue, sourceDigest, semanticDigest, operationDigest
-	result.Claims = claimsFromStatements(artifact.Claims, statuses, resolution, reason, Coordinate{stage, step, reason})
 	result.EvidenceLinkDigest = digestValue(statementEvidence(artifact.Claims))
 	result.ClaimTransitionDigest = digestValue(claimTransitions(result.Claims))
-	return result
-}
-
-func claimsFromStatements(statements []ClaimStatement, statuses map[string]string, resolution, reason string, coordinate Coordinate) []ClaimResult {
-	if len(statements) != ClaimTemplateTotal {
-		return failureClaims(statuses, resolution, reason, coordinate.Stage, coordinate.Step)
-	}
-	result := make([]ClaimResult, 0, len(statements))
-	for _, statement := range statements {
-		status := statuses[statement.ID]
-		if status == "" {
-			status = "OPEN"
-		}
-		claimResolution, claimReason, provenance := resolution, reason, "consumer-observation"
-		if status == "DISCHARGED" {
-			claimResolution, claimReason, provenance = "EXACT", "CLAIM_DISCHARGED", "consumer-canonical-recipe-v2"
-		} else if status == "OPEN" {
-			claimResolution = "LOWER_RESOLUTION"
-		} else if status == "REFUTED" {
-			// A case may be lower-resolution because another attachment is
-			// missing, while this claim is independently contradicted by its
-			// absent or invalid evidence. Keep the claim-level resolution
-			// invariant-only instead of inheriting the case-level resolution.
-			claimResolution, claimReason = "INVARIANT_ONLY", "CLAIM_REFUTED"
-		}
-		result = append(result, makeClaimResult(claimSpec{ID: statement.ID, Proposition: statement.Proposition, TargetDigest: statement.TargetDigest, Dependencies: statement.Dependencies, ProofChoice: statement.ProofChoice, MetaOperation: statement.MetaOperation, Coordinate: statement.Coordinate}, status, claimResolution, claimReason, coordinate, statement.EvidenceDigest, provenance))
-	}
 	return result
 }
 
@@ -270,6 +292,17 @@ func claimOK(claims []ClaimStatement, evidence []Evidence, artifact Artifact, id
 			}
 		}
 		return true
+	}
+	return false
+}
+
+func claimStatementOK(claims []ClaimStatement, artifact Artifact, id string) bool {
+	for _, claim := range claims {
+		for _, spec := range claimSpecs() {
+			if spec.ID == id && claim.ID == id {
+				return claimStatementMatches(claim, artifact, spec)
+			}
+		}
 	}
 	return false
 }

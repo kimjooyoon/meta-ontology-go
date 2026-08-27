@@ -25,15 +25,16 @@ func readBundle(path string) (verifier.Bundle, string) {
 }
 
 type options struct {
-	head, contract, valid, tampered, coherentTampered, missing, byteOnly, wrongRecipe                        string
-	source, operation, recipe, independence, writeSet, coherentOperation, output, check                      string
-	semanticArtifact, semanticSource, semanticOperation, commentArtifact, commentSource, commentOperation    string
-	recipeOnly, missingAttachment, wrongAttachmentDigest, unrelatedTampered, staleHead, unauthorizedConsumer string
-	claimProposition, claimDependency, claimProofChoice, claimTarget, unauthorizedBundle                     string
-	bundle, packBundle, bundleInputs, checkout, consumerReceipt                                              string
-	resealReport, coherentPreliminaryTamper, preliminaryDigest                                               string
-	claimStateTamper, claimStateCase, claimStateID, claimState                                               string
-	claimStateExpectations                                                                                   string
+	head, contract, valid, tampered, coherentTampered, missing, byteOnly, wrongRecipe                                         string
+	source, operation, recipe, independence, writeSet, coherentOperation, output, check                                       string
+	semanticArtifact, semanticSource, semanticOperation, commentArtifact, commentSource, commentOperation                     string
+	recipeOnly, missingAttachment, wrongAttachmentDigest, unrelatedTampered, staleHead, unauthorizedConsumer                  string
+	claimProposition, claimDependency, claimProofChoice, claimTarget, unauthorizedBundle                                      string
+	bundle, packBundle, bundleInputs, checkout, consumerReceipt                                                               string
+	resealReport, coherentPreliminaryTamper, preliminaryDigest                                                                string
+	claimStateTamper, claimStateCase, claimStateID, claimState                                                                string
+	claimAdjudicationTamper, claimAdjudicationCase, claimAdjudicationID, claimAdjudicationOtherCase, claimAdjudicationOtherID string
+	claimStateExpectations                                                                                                    string
 }
 
 func run(args []string) int {
@@ -84,6 +85,11 @@ func run(args []string) int {
 	flags.StringVar(&value.claimStateCase, "claim-state-case", "valid-proof-carrying-artifact", "case ID for claim-state fixture")
 	flags.StringVar(&value.claimStateID, "claim-state-id", "source-bytes-bound", "claim ID for claim-state fixture")
 	flags.StringVar(&value.claimState, "claim-state", "OPEN", "new claim state for claim-state fixture")
+	flags.StringVar(&value.claimAdjudicationTamper, "claim-adjudication-tamper", "", "coherently resealed claim-adjudication swap fixture")
+	flags.StringVar(&value.claimAdjudicationCase, "claim-adjudication-case", "", "first case ID for claim-adjudication fixture")
+	flags.StringVar(&value.claimAdjudicationID, "claim-adjudication-id", "", "first claim ID for claim-adjudication fixture")
+	flags.StringVar(&value.claimAdjudicationOtherCase, "claim-adjudication-other-case", "", "second case ID for claim-adjudication fixture")
+	flags.StringVar(&value.claimAdjudicationOtherID, "claim-adjudication-other-id", "", "second claim ID for claim-adjudication fixture")
 	flags.StringVar(&value.claimStateExpectations, "claim-state-expectations", "", "write validator-owned fixed claim-state expectations")
 	if flags.Parse(args) != nil {
 		return 2
@@ -138,6 +144,16 @@ func run(args []string) int {
 			return 1
 		}
 		return writeRawReport(value.output, verifier.ResealClaimState(report, value.claimStateCase, value.claimStateID, value.claimState))
+	}
+	if value.claimAdjudicationTamper != "" {
+		if value.output == "" || value.claimAdjudicationCase == "" || value.claimAdjudicationID == "" || value.claimAdjudicationOtherCase == "" || value.claimAdjudicationOtherID == "" {
+			return 2
+		}
+		report, err := verifier.LoadReport(value.claimAdjudicationTamper)
+		if err != nil {
+			return 1
+		}
+		return writeRawReport(value.output, verifier.ResealClaimAdjudication(report, value.claimAdjudicationCase, value.claimAdjudicationID, value.claimAdjudicationOtherCase, value.claimAdjudicationOtherID))
 	}
 	if value.check != "" {
 		report, err := verifier.LoadReport(value.check)
