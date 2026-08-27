@@ -19,6 +19,7 @@ type proposalObservedResponse struct {
 	StatusCode int    `json:"status_code"`
 	Body       []byte `json:"body"`
 	Link       string `json:"link,omitempty"`
+	Location   string `json:"location,omitempty"`
 	Failure    string `json:"failure,omitempty"`
 }
 

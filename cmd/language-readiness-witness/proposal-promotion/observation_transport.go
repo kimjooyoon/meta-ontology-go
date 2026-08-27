@@ -35,6 +35,9 @@ func (transport *proposalObservationTransport) RoundTrip(request *http.Request) 
 		if observed.Link != "" {
 			response.Header.Set("Link", observed.Link)
 		}
+		if observed.Location != "" {
+			response.Header.Set("Location", observed.Location)
+		}
 		return response, nil
 	}
 	base := transport.base
@@ -57,7 +60,7 @@ func (transport *proposalObservationTransport) RoundTrip(request *http.Request) 
 	}
 	transport.store.record(proposalObservedResponse{
 		Kind: request.Method, URL: request.URL.String(), StatusCode: response.StatusCode,
-		Body: body, Link: response.Header.Get("Link"),
+		Body: body, Link: response.Header.Get("Link"), Location: response.Header.Get("Location"),
 	})
 	response.Body = io.NopCloser(bytes.NewReader(body))
 	return response, nil
