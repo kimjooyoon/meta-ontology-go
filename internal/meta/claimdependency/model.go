@@ -83,6 +83,7 @@ type Resolution struct {
 	ObservedEvent         string      `json:"observed_event"`
 	Coordinate            Coordinate  `json:"coordinate"`
 	FailureResponsibility string      `json:"failure_responsibility"`
+	FailureOwnerClaimID   string      `json:"failure_owner_claim_id"`
 	MissingEvidenceIDs    []string    `json:"missing_evidence_ids,omitempty"`
 	BlockedByClaimIDs     []string    `json:"blocked_by_claim_ids,omitempty"`
 	BlockedByEdgeIDs      []string    `json:"blocked_by_edge_ids,omitempty"`

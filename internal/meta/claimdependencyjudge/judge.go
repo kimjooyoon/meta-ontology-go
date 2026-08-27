@@ -189,6 +189,12 @@ func validateCaseShape(caseName string, states []string, outcomes []claimdepende
 			}
 		}
 	}
+	if outcomes[0].EvidenceDigest == "" && (caseName == claimdependency.CaseRefuted || caseName == claimdependency.CaseRecovered) {
+		return fmt.Errorf("direct outcome evidence is missing")
+	}
+	if outcomes[0].EvidenceDigest != "" && caseName == claimdependency.CaseDirectUnknown {
+		return fmt.Errorf("unknown direct outcome carried evidence")
+	}
 	if caseName == claimdependency.CaseRecovered && outcomes[0].After != "DISCHARGED" {
 		return fmt.Errorf("recovery did not discharge the root claim")
 	}
@@ -198,7 +204,7 @@ func validateCaseShape(caseName string, states []string, outcomes []claimdepende
 func validateResolutions(receipt claimdependency.Receipt, states []string, outcomes []claimdependency.Transition) error {
 	root := expectedClaims[0].ClaimID
 	for index, resolution := range receipt.Resolutions {
-		if resolution.ClaimID != expectedClaims[index].ClaimID || resolution.Axis != expectedClaims[index].Axis || resolution.State != states[index] || resolution.ObservedEvent != outcomes[index].Event || !reflect.DeepEqual(resolution.Coordinate, outcomes[index].Coordinate) || resolution.CauseTransitionDigest != outcomes[0].TransitionDigest || resolution.CauseCoordinate == nil || !reflect.DeepEqual(*resolution.CauseCoordinate, outcomes[0].Coordinate) {
+		if resolution.ClaimID != expectedClaims[index].ClaimID || resolution.Axis != expectedClaims[index].Axis || resolution.State != states[index] || resolution.ObservedEvent != outcomes[index].Event || !reflect.DeepEqual(resolution.Coordinate, outcomes[index].Coordinate) || resolution.FailureOwnerClaimID != root || resolution.CauseTransitionDigest != outcomes[0].TransitionDigest || resolution.CauseCoordinate == nil || !reflect.DeepEqual(*resolution.CauseCoordinate, outcomes[0].Coordinate) {
 			return fmt.Errorf("resolution %d is not bound to the root transition", index+1)
 		}
 		wantPath := shortestPath(root, resolution.ClaimID)

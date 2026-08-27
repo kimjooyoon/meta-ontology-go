@@ -102,6 +102,7 @@ func outcomeTransition(source []byte, caseName string, index int, claim Claim, p
 	case caseName == CaseRefuted && index == 0:
 		transition.Event = "EVIDENCE_REFUTED"
 		transition.After = "REFUTED"
+		transition.EvidenceDigest = digestBytes(append(append([]byte(nil), source...), []byte(claim.ClaimID)...))
 		transition.Coordinate = Coordinate{Stage: "VERIFY", Step: "compare-gooo-source", Reason: "SOURCE_CONTRADICTS_EXPECTATION"}
 	case caseName == CaseRefuted:
 		transition.Event = "DEPENDENCY_REFUTED"
@@ -138,7 +139,7 @@ func buildResolutions(caseName string, graph Graph, transitions []Transition) []
 			CausePath: claimIDs(path, graph), CauseEdgeIDs: pathEdgeIDs(path, graph),
 			CauseTransitionDigest: rootTransition.TransitionDigest,
 			CauseCoordinate:       &rootCoordinate,
-			FailureResponsibility: "LOCAL_PRODUCER",
+			FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: graph.Nodes[0].ClaimID,
 		}
 		switch {
 		case caseName == CaseDirectUnknown && index == 0:
