@@ -79,27 +79,54 @@ jobs:
         with:
           go-version: 1.27.0
           cache: false
-      - name: Replay and independently judge the lineage receipt
+      - name: Reconstruct, intervene, and independently judge the lineage receipt
         shell: bash
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/meta-operation-provenance"
-          mkdir -p "$work/first" "$work/replay"
+          mkdir -p "$work/first" "$work/replay" "$work/interventions" "$work/missing-source"
           source=examples/meta-operation-provenance/main.gooo
           for out in "$work/first/receipt.json" "$work/replay/receipt.json"; do
-            go run ./scripts/meta-operation-provenance -mode build -source "$source" -out "$out"
+            go run ./scripts/meta-operation-provenance -mode build -source "$source" \
+              -workspace-root "$GITHUB_WORKSPACE" -out "$out"
           done
           cmp -s "$work/first/receipt.json" "$work/replay/receipt.json"
           go run ./scripts/meta-operation-provenance -mode verify -source "$source" \
-            -receipt "$work/first/receipt.json" -out "$work/first/verification.json"
+            -receipt "$work/first/receipt.json" \
+            -consumer-source internal/meta/operationprovenance/verify/verify.go \
+            -out "$work/first/verification.json"
+          go run ./scripts/meta-operation-provenance -mode verify \
+            -receipt "$work/first/receipt.json" \
+            -consumer-source internal/meta/operationprovenance/verify/verify.go \
+            -out "$work/missing-source/verification.json"
+          go run ./scripts/meta-operation-provenance -mode interventions -source "$source" \
+            -workspace-root "$GITHUB_WORKSPACE" -out "$work/interventions/interventions.json"
           cmp -s "$work/first/receipt.json" examples/meta-operation-provenance/receipt.json
-          jq -e '.status == "VERIFIED" and .fail_closed_count == 1 and .direct_unknowns == 2 and .dependency_blocks == 1' "$work/first/verification.json"
+          jq -e '.status == "VERIFIED" and .subject_resolution == "EXACT" and
+            .source_reconstruction.numerator == 7 and
+            .source_reconstruction.denominator == 7 and
+            .producer_import.numerator == 1 and .producer_import.denominator == 1 and
+            .fail_closed_count == 1 and .direct_unknowns == 2 and .dependency_blocks == 1 and
+            .transition_counts.DISCHARGED == 8 and
+            .transition_counts.PRESERVED_OPEN == 3 and
+            .transition_counts.REFUTED == 1' "$work/first/verification.json"
+          jq -e '.status == "UNKNOWN" and .conformance_decision == "UNKNOWN" and
+            .subject_resolution == "LOWER_RESOLUTION" and
+            .issue.stage == "CONSUMER" and .issue.step == "parse-source" and
+            .issue.reason == "REQUIRED_RAW_SOURCE_MISSING"' \
+            "$work/missing-source/verification.json"
+          jq -e '.semantic.status == "PASS" and .semantic.semantic_digest_changed and
+            .semantic.decision_changed and .semantic.transition_changed and
+            .nonsemantic.status == "PASS" and
+            (.nonsemantic.semantic_digest_changed | not) and
+            (.nonsemantic.decision_changed | not) and
+            (.nonsemantic.transition_changed | not)' "$work/interventions/interventions.json"
           test -z "$(git status --porcelain)"
       - name: Upload meta-operation provenance evidence
         uses: actions/upload-artifact@v6
         with:
           name: meta-operation-provenance-${{ env.SUBJECT_SHA }}
-          path: ${{ runner.temp }}/meta-operation-provenance/first
+          path: ${{ runner.temp }}/meta-operation-provenance
           if-no-files-found: error
           retention-days: 30
 

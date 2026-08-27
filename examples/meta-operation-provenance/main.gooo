@@ -1,27 +1,21 @@
 package operationprovenance
 namespace operationprovenance
 
-entity Metric id "gooo://meta-operation-provenance/entity/metric"
+entity MetricDefinition id "gooo://meta-operation-provenance/entity/metric-definition"
 entity Producer id "gooo://meta-operation-provenance/entity/producer"
 entity Consumer id "gooo://meta-operation-provenance/entity/consumer"
 entity MetaOperation id "gooo://meta-operation-provenance/entity/meta-operation"
 entity EvidencePath id "gooo://meta-operation-provenance/entity/evidence-path"
-entity ProducerBoundMetric id "gooo://meta-operation-provenance/entity/producer-bound-metric"
-entity ConsumerBoundMetric id "gooo://meta-operation-provenance/entity/consumer-bound-metric"
-entity OperationBoundMetric id "gooo://meta-operation-provenance/entity/operation-bound-metric"
-entity LineageBoundMetric id "gooo://meta-operation-provenance/entity/lineage-bound-metric"
-entity FoundationMetricDecision id "gooo://meta-operation-provenance/entity/foundation-decision"
-entity CoherenceMetricDecision id "gooo://meta-operation-provenance/entity/coherence-decision"
-entity RegressionMetricDecision id "gooo://meta-operation-provenance/entity/regression-decision"
-entity ClaimState id "gooo://meta-operation-provenance/entity/claim-state"
-entity ProvenanceReceipt id "gooo://meta-operation-provenance/entity/receipt"
+entity ScenarioMutation id "gooo://meta-operation-provenance/entity/scenario-mutation"
 
-activity BindProducer(Metric) -> ProducerBoundMetric
-activity BindConsumer(ProducerBoundMetric) -> ConsumerBoundMetric
-activity BindMetaOperation(ConsumerBoundMetric) -> OperationBoundMetric
-activity BindEvidencePath(OperationBoundMetric) -> LineageBoundMetric
-activity DecideFoundation(LineageBoundMetric) -> FoundationMetricDecision
-activity DecideCoherence(LineageBoundMetric) -> CoherenceMetricDecision
-activity DecideRegression(LineageBoundMetric) -> RegressionMetricDecision
-activity PreserveClaimState(FoundationMetricDecision) -> ClaimState
-activity EmitProvenanceReceipt(ClaimState) -> ProvenanceReceipt
+// The computes payloads are the experiment's semantic evidence. The producer
+// and the independent consumer recover these records from lowered ValueProgram
+// values; declaration names are deliberately not the data contract.
+activity MetricFoundation(MetricDefinition, Producer, Consumer, MetaOperation, EvidencePath) -> MetricDefinition computes "metric|id=MOP-FOUNDATION-001|family=FOUNDATION|prior_claim=OPEN|producer=producer:MOP-FOUNDATION-001|consumer=consumer:MOP-FOUNDATION-001|meta_operation=operation:MOP-FOUNDATION-001|evidence_path=evidence:MOP-FOUNDATION-001|depends_on="
+activity MetricCoherence(MetricDefinition, Producer, Consumer, MetaOperation, EvidencePath) -> MetricDefinition computes "metric|id=MOP-COHERENCE-001|family=COHERENCE|prior_claim=OPEN|producer=producer:MOP-COHERENCE-001|consumer=consumer:MOP-COHERENCE-001|meta_operation=operation:MOP-COHERENCE-001|evidence_path=evidence:MOP-COHERENCE-001|depends_on="
+activity MetricRegression(MetricDefinition, Producer, Consumer, MetaOperation, EvidencePath) -> MetricDefinition computes "metric|id=MOP-REGRESSION-001|family=REGRESSION|prior_claim=OPEN|producer=producer:MOP-REGRESSION-001|consumer=consumer:MOP-REGRESSION-001|meta_operation=operation:MOP-REGRESSION-001|evidence_path=evidence:MOP-REGRESSION-001|depends_on="
+
+activity ScenarioComplete(ScenarioMutation) -> ScenarioMutation computes "scenario|id=complete|remove_relation=|dependency=|reason=baseline semantic graph"
+activity ScenarioDisconnected(ScenarioMutation) -> ScenarioMutation computes "scenario|id=disconnected|remove_relation=CONSUMES:MOP-COHERENCE-001|dependency=|reason=consumer relation is absent"
+activity ScenarioDirectUnknown(ScenarioMutation) -> ScenarioMutation computes "scenario|id=direct-unknown|remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001|dependency=|reason=evidence relation is absent"
+activity ScenarioDependencyBlocked(ScenarioMutation) -> ScenarioMutation computes "scenario|id=dependency-blocked|remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001|dependency=MOP-FOUNDATION-001>MOP-REGRESSION-001|reason=unknown upstream blocks dependent metric"
