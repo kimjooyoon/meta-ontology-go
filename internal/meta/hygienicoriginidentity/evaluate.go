@@ -159,7 +159,7 @@ func parseUnknownAnnotation(value string) (Unknown, error) {
 
 func keyValues(value string, required []string) (map[string]string, error) {
 	fields := map[string]string{}
-	for _, token := range strings.Fields(value) {
+	for token := range strings.FieldsSeq(value) {
 		pair := strings.SplitN(token, "=", 2)
 		if len(pair) != 2 || pair[0] == "" || pair[1] == "" {
 			return nil, fmt.Errorf("malformed key/value %q", token)
