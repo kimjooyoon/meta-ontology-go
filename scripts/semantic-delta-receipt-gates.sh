@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+out=${1:?output directory is required}
+expected_sha=${2:?expected checkout SHA is required}
+observed_checkout_sha=${3:?observed checkout SHA is required}
+expectation_digest=${4:?expectation artifact digest is required}
+first="$out/first.json"
+expectation="$out/claim-transition-expectations.json"
+gates="$out/contract-gates.json"
+
+printf '%s\n' '{"gates":[]}' > "$gates"
+failed=0
+
+record_gate() {
+  local gate_id="$1"
+  local stage="$2"
+  local step="$3"
+  local expected="$4"
+  local observed="$5"
+  local reason="$6"
+  local passed="$7"
+  local next="$gates.next"
+  jq --arg id "$gate_id" --arg stage "$stage" --arg step "$step" \
+    --arg expected "$expected" --arg observed "$observed" --arg reason "$reason" \
+    --argjson passed "$passed" \
+    '.gates += [{gate_id:$id,stage:$stage,step:$step,expected:$expected,observed:$observed,reason:(if $passed then "GATE_SATISFIED" else $reason end),decision:(if $passed then "PASS" else "FAIL_CLOSED" end),resolution:(if $passed then "EXACT" else "LOWER_RESOLUTION" end),passed:$passed}]' \
+    "$gates" > "$next"
+  mv "$next" "$gates"
+  if [[ "$passed" != true ]]; then
+    failed=$((failed + 1))
+  fi
+}
+
+run_gate() {
+  local gate_id="$1"
+  local stage="$2"
+  local step="$3"
+  local expected="$4"
+  local observed="$5"
+  local reason="$6"
+  local filter="$7"
+  local passed=true
+  if ! jq -e --arg output_path "$first" --arg expected_sha "$expected_sha" \
+    --arg observed_checkout_sha "$observed_checkout_sha" --arg expectation_digest "$expectation_digest" \
+    --slurpfile expectation "$expectation" "$filter" "$first" >/dev/null; then
+    passed=false
+  fi
+  record_gate "$gate_id" "$stage" "$step" "$expected" "$observed" "$reason" "$passed"
+}
+
+expected_case_ids='["equivalent","semantic-change","value-program-change","indeterminate","ambiguous-match"]'
+expected_claim_counts='[{"case_id":"equivalent","total":7},{"case_id":"semantic-change","total":7},{"case_id":"value-program-change","total":7},{"case_id":"indeterminate","total":3},{"case_id":"ambiguous-match","total":7}]'
+expected_status='{"open":10,"discharged":18,"refuted":3}'
+
+observed_suite=$(jq -c '{schema,decision,resolution,contract_reproduction,subject_semantic_equivalence,semantic_equivalence_claim}' "$first")
+observed_subject=$(jq -c '{subject_sha,observed_checkout_sha}' "$first")
+observed_case_ids=$(jq -c '{expected:.case_contract_expected_ids,observed:.case_contract_observed_ids,observed_recipe_ids:.case_contract_observed_recipe_ids}' "$first")
+observed_claim_counts=$(jq -c '[.cases[] | {case_id:.report.case_id,total:.report.receipt.total_claims}]' "$first")
+observed_status=$(jq -c '{open:.summary.open_claims,discharged:.summary.discharged_claims,refuted:.summary.refuted_claims}' "$first")
+observed_identity=$(jq -c '[.cases[].report.claim_identity | {case_id,decision,resolution,reason,expected_count:(.expected_claim_ids|length),observed_count:(.observed_claim_ids|length),inventory_match:(.expected_claim_ids == .observed_claim_ids),transition_digest_match:(.expected_transition_identity_digest == .observed_transition_identity_digest)}]' "$first")
+observed_identity_pass=$(jq -r '[.cases[].report.claim_identity | select(.decision == "PASS" and .resolution == "EXACT" and .reason == "FIXED_CLAIM_IDENTITY_EXACT" and .expectation_artifact_digest == $digest and .expected_claim_ids == .observed_claim_ids and .expected_transition_identity_digest == .observed_transition_identity_digest and .coverage_bps == 10000)] | length' --arg digest "$expectation_digest" "$first")
+observed_inventory_pass=$(jq -r '[.cases[].report.claim_identity | select(.expected_claim_ids == .observed_claim_ids)] | length' "$first")
+observed_transition_pass=$(jq -r '[.cases[].report.claim_identity | select(.expected_transition_identity_digest == .observed_transition_identity_digest)] | length' "$first")
+observed_artifact_pass=$(jq -r '[.cases[].report.claim_identity | select(.expectation_artifact_digest == $digest)] | length' --arg digest "$expectation_digest" "$first")
+observed_case_row_pass=$(jq -r --slurpfile expected "$expectation" '($expected[0].cases | map({id,case_row_digest}) | sort_by(.id)) as $fixed | ([.cases[] | {id:.report.case_id,case_row_digest:.report.claim_identity.expectation_case_row_digest}] | sort_by(.id)) as $observed | if $fixed == $observed then 5 else 0 end' "$first")
+observed_claim_identity_record_pass=$(jq -r '[.cases[].report | select(.claim_identity.case_id == .case_id and .claim_identity.denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and (.claim_identity.expected_claim_ids | length) > 0 and (.claim_identity.observed_claim_ids | length) == (.claim_identity.expected_claim_ids | length))] | length' "$first")
+observed_consumer=$(jq -r '[.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length' "$first")
+observed_effects=$(jq -r --arg expected "$expected_sha" --arg observed "$observed_checkout_sha" '[.cases[].report.receipt | select(.expected_subject_sha == $expected and .observed_checkout_sha == $observed and .effects.status == "NET_REPOSITORY_STATE_UNCHANGED" and .effects.changed_path_or_content_count == 0 and .effects.output_location == "OUTSIDE_REPOSITORY")] | length' "$first")
+
+run_gate "suite-contract-decision" "suite-contract" "reconstruct-fixed-contract" \
+  'schema=conformance/v2, decision=FIXED_POINT, resolution=EXACT' "$observed_suite" "SUITE_CONTRACT_NOT_REPRODUCED" \
+  '.schema == "gooo/semantic-delta-receipt-conformance/v2" and .decision == "FIXED_POINT" and .resolution == "EXACT" and .contract_reproduction == "FIXED_FIVE_CASE_CONTRACT_REPRODUCED" and .subject_semantic_equivalence == "NOT_ASSERTED" and .semantic_equivalence_claim == "NOT_ASSERTED" and .output_path == $output_path'
+
+run_gate "subject-binding" "bind-subject" "observe-checkout-sha" \
+  "expected=$expected_sha, observed=$observed_checkout_sha" "$observed_subject" "SUBJECT_CHECKOUT_BINDING_MISMATCH" \
+  '.subject_sha == $expected_sha and .observed_checkout_sha == $observed_checkout_sha'
+
+run_gate "source-and-meta-contract" "suite-contract" "validate-source-addresses" \
+  'source_paths=11, denominator=v2, meta=main.gooo' \
+  "paths=$(jq -r '.source_paths | length' "$first"), denominator=$(jq -r '.denominator_version' "$first"), meta=$(jq -r '.meta_source_path' "$first")" "SOURCE_META_CONTRACT_MISMATCH" \
+  '(.source_paths | length) == 11 and .denominator_version == "v2" and .meta_source_path == "examples/semantic-delta-receipt/main.gooo"'
+
+run_gate "projection-coverage" "semantic-projection" "validate-modeled-components" \
+  'modeled=5, total=5, coverage_bps=10000' \
+  "modeled=$(jq -r '.modeled_semantic_components' "$first"), total=$(jq -r '.total_semantic_components' "$first"), coverage_bps=$(jq -r '.declared_projection_component_kind_coverage_bps' "$first")" "DECLARED_PROJECTION_COMPONENT_COVERAGE_MISMATCH" \
+  '.modeled_semantic_components == 5 and .total_semantic_components == 5 and .declared_projection_component_kind_coverage_bps == 10000'
+
+run_gate "case-inventory" "suite-contract" "validate-case-inventory" \
+  "expected=$expected_case_ids" "$observed_case_ids" "FIXED_CASE_ID_INVENTORY_MISMATCH" \
+  '.case_contract_denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and .case_contract_fixed_total == 5 and .case_contract_expected_ids == ["equivalent","semantic-change","value-program-change","indeterminate","ambiguous-match"] and ((.case_contract_expected_ids | sort) == (.case_contract_observed_ids | sort)) and ((.case_contract_expected_ids | sort) == (.case_contract_observed_recipe_ids | sort)) and .stage == "suite-contract" and .step == "validate-case-inventory" and .case_contract_stage == "suite-contract" and .case_contract_step == "validate-case-inventory" and .case_contract_reason == "FIXED_CASE_ID_INVENTORY_EXACT"'
+
+run_gate "claim-count-contract" "claim-ledger" "validate-fixed-counts" \
+  "version=v1, total=31, cases=$expected_claim_counts" \
+  "version=$(jq -r '.claim_count_contract_version' "$first"), total=$(jq -r '.claim_count_expected_total' "$first"), cases=$observed_claim_counts" "FIXED_CLAIM_COUNT_CONTRACT_MISMATCH" \
+  '.claim_count_contract_version == "v1" and .claim_count_expected_total == 31 and .claim_count_expected_by_case == [{"case_id":"equivalent","total":7},{"case_id":"semantic-change","total":7},{"case_id":"value-program-change","total":7},{"case_id":"indeterminate","total":3},{"case_id":"ambiguous-match","total":7}]'
+
+run_gate "structural-observations" "semantic-classification" "count-structural-observations" \
+  'structural_observations=4' "structural_observations=$(jq -r '.summary.structural_observations' "$first")" "STRUCTURAL_OBSERVATION_COUNT_MISMATCH" \
+  '.summary.structural_observations == 4'
+
+run_gate "claim-total" "claim-ledger" "count-fixed-claims" \
+  'total_claims=31, explained=31' \
+  "total_claims=$(jq -r '.summary.total_claims' "$first"), explained=$(jq -r '.summary.claims_with_explained_status' "$first")" "FIXED_CLAIM_TOTAL_MISMATCH" \
+  '.summary.total_claims == 31 and .summary.claims_with_explained_status == 31'
+
+run_gate "claim-status-distribution" "claim-ledger" "count-persistent-statuses" \
+  "$expected_status" "$observed_status" "CLAIM_STATUS_DISTRIBUTION_MISMATCH" \
+  '.summary.open_claims == 10 and .summary.discharged_claims == 18 and .summary.refuted_claims == 3'
+
+run_gate "claim-status-coverage" "claim-ledger" "validate-transition-explanations" \
+  'coverage_bps=10000, transition_chains=31' \
+  "coverage_bps=$(jq -r '.summary.claim_status_coverage_bps' "$first"), transition_chains=$(jq -r '.summary.transition_chains' "$first")" "CLAIM_STATUS_COVERAGE_MISMATCH" \
+  '.summary.claim_status_coverage_bps == 10000 and .summary.transition_chains == 31'
+
+run_gate "delta-evidence-counts" "semantic-classification" "count-delta-evidence" \
+  'textual_changes=5, claim_transition_cases=5, adjudicated_cases=5, distinct_propositions=24, added=0, removed=0, changed=1, ambiguous=1' \
+  "textual_changes=$(jq -r '.summary.textual_changes' "$first"), claim_transition_cases=$(jq -r '.summary.claim_transition_cases' "$first"), adjudicated_cases=$(jq -r '.summary.adjudicated_cases' "$first"), distinct_propositions=$(jq -r '.summary.distinct_propositions' "$first"), added=$(jq -r '.summary.added_claims' "$first"), removed=$(jq -r '.summary.removed_claims' "$first"), changed=$(jq -r '.summary.changed_claims' "$first"), ambiguous=$(jq -r '.summary.ambiguous_cases' "$first")" "DELTA_EVIDENCE_COUNT_MISMATCH" \
+  '.summary.textual_changes == 5 and .summary.claim_transition_cases == 5 and .summary.adjudicated_cases == 5 and .summary.distinct_propositions == 24 and .summary.added_claims == 0 and .summary.removed_claims == 0 and .summary.changed_claims == 1 and .summary.ambiguous_cases == 1'
+
+run_gate "semantic-case-classification" "semantic-classification" "count-fixed-case-outcomes" \
+  'preserved=1, changed=2, indeterminate=2, unknown_paths=2' \
+  "preserved=$(jq -r '.summary.semantic_preserved' "$first"), changed=$(jq -r '.summary.semantic_changed' "$first"), indeterminate=$(jq -r '.summary.indeterminate' "$first"), unknown_paths=$(jq -r '.summary.unknown_paths' "$first")" "SEMANTIC_CASE_CLASSIFICATION_MISMATCH" \
+  '.summary.semantic_preserved == 1 and .summary.semantic_changed == 2 and .summary.indeterminate == 2 and .summary.unknown_paths == 2'
+
+run_gate "claim-identity-artifact" "claim-identity" "bind-expectation-artifact" \
+  'expectation_artifact_digest matches copied raw artifact for 5/5 cases' "matched_cases=$observed_artifact_pass/5" "CLAIM_EXPECTATION_ARTIFACT_DIGEST_MISMATCH" \
+  '[.cases[].report.claim_identity | select(.expectation_artifact_digest == $expectation_digest)] | length == 5'
+
+run_gate "claim-identity-case-row" "claim-identity" "bind-expectation-case-rows" \
+  'case_row_digest matches fixed artifact for 5/5 cases' "matched_cases=$observed_case_row_pass/5" "CLAIM_EXPECTATION_CASE_ROW_DIGEST_MISMATCH" \
+  '($expectation[0].cases | map({id,case_row_digest}) | sort_by(.id)) as $fixed | ([.cases[] | {id:.report.case_id,case_row_digest:.report.claim_identity.expectation_case_row_digest}] | sort_by(.id)) as $observed | $fixed == $observed'
+
+run_gate "claim-identity-expectation-binding" "claim-identity" "bind-fixed-expectation-values" \
+  'artifact expected IDs, transition digests, counts, and row digests match report for 5/5 cases' \
+  'report expectation rows compared with copied artifact rows' "CLAIM_EXPECTATION_REPORT_BINDING_MISMATCH" \
+  '($expectation[0].cases | map({id,expected_claim_ids,expected_transition_identity_digest,expected_claim_total,case_row_digest}) | sort_by(.id)) as $fixed | ([.cases[] | {id:.report.case_id,expected_claim_ids:.report.claim_identity.expected_claim_ids,expected_transition_identity_digest:.report.claim_identity.expected_transition_identity_digest,expected_claim_total:.report.claim_identity.expected_claim_total,case_row_digest:.report.claim_identity.expectation_case_row_digest}] | sort_by(.id)) as $observed | $fixed == $observed'
+
+run_gate "claim-identity-inventory" "claim-identity" "compare-fixed-claim-inventory" \
+  'expected claim ID inventory equals observed raw-pair inventory for 5/5 cases' "matched_cases=$observed_inventory_pass/5" "CLAIM_ID_INVENTORY_MISMATCH" \
+  '[.cases[].report.claim_identity | select(.expected_claim_ids == .observed_claim_ids)] | length == 5'
+
+run_gate "claim-identity-transition-digest" "claim-identity" "compare-transition-identity-digest" \
+  'expected transition identity digest equals observed raw-pair digest for 5/5 cases' "matched_cases=$observed_transition_pass/5" "CLAIM_TRANSITION_IDENTITY_DIGEST_MISMATCH" \
+  '[.cases[].report.claim_identity | select(.expected_transition_identity_digest == .observed_transition_identity_digest)] | length == 5'
+
+run_gate "claim-identity-records" "claim-identity" "validate-case-records" \
+  'case ID, denominator, and nonempty equal-sized inventories for 5/5 cases' \
+  "valid_records=$observed_claim_identity_record_pass/5" "CLAIM_IDENTITY_RECORD_BINDING_MISMATCH" \
+  '[.cases[].report | select(.claim_identity.case_id == .case_id and .claim_identity.denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and (.claim_identity.expected_claim_ids | length) > 0 and (.claim_identity.observed_claim_ids | length) == (.claim_identity.expected_claim_ids | length))] | length == 5'
+
+run_gate "claim-identity-decision" "claim-identity" "adjudicate-fixed-expectation" \
+  'decision=PASS, resolution=EXACT, exact reason for 5/5 cases' "matched_cases=$observed_identity_pass/5; records=$observed_identity" "CLAIM_IDENTITY_DECISION_NOT_EXACT" \
+  '[.cases[].report.claim_identity | select(.decision == "PASS" and .resolution == "EXACT" and .stage == "claim-identity" and .step == "compare-fixed-expectation" and .reason == "FIXED_CLAIM_IDENTITY_EXACT" and .coverage_bps == 10000)] | length == 5'
+
+run_gate "claim-identity" "claim-identity" "compare-fixed-expectation" \
+  '5/5 PASS/EXACT identities with artifact, row, inventory, digest, and coverage bindings' "matched_cases=$observed_identity_pass/5; records=$observed_identity" "FIXED_CLAIM_IDENTITY_EXPECTATION_MISMATCH" \
+  '[.cases[].report.claim_identity | select(.decision == "PASS" and .resolution == "EXACT" and .stage == "claim-identity" and .step == "compare-fixed-expectation" and .reason == "FIXED_CLAIM_IDENTITY_EXACT" and .expectation_artifact_digest == $expectation_digest and (.expected_claim_ids | length) == .fixed_total and .expected_claim_ids == .observed_claim_ids and .expected_transition_identity_digest == .observed_transition_identity_digest and .coverage_bps == 10000)] | length == 5'
+
+run_gate "source-pair-binding" "claim-identity" "bind-observed-source-pair" \
+  'raw/semantic source-pair addresses and digests match receipt for 5/5 cases' \
+  "matched_cases=$(jq -r '[.cases[].report | select(.claim_identity.observed_source_pair.before_path == .source_paths[0] and .claim_identity.observed_source_pair.after_path == .source_paths[1] and .claim_identity.observed_source_pair.before_raw_digest == .receipt.before.source_digest and .claim_identity.observed_source_pair.after_raw_digest == .receipt.after.source_digest and .claim_identity.observed_source_pair.before_semantic_digest == .receipt.before.semantic_digest and .claim_identity.observed_source_pair.after_semantic_digest == .receipt.after.semantic_digest)] | length' "$first")/5" "SOURCE_PAIR_BINDING_MISMATCH" \
+  '[.cases[].report | select(.claim_identity.observed_source_pair.before_path == .source_paths[0] and .claim_identity.observed_source_pair.after_path == .source_paths[1] and .claim_identity.observed_source_pair.before_raw_digest == .receipt.before.source_digest and .claim_identity.observed_source_pair.after_raw_digest == .receipt.after.source_digest and .claim_identity.observed_source_pair.before_semantic_digest == .receipt.before.semantic_digest and .claim_identity.observed_source_pair.after_semantic_digest == .receipt.after.semantic_digest)] | length == 5'
+
+run_gate "independent-consumer" "independent-adjudication" "reconstruct-raw-pair" \
+  'semanticdeltareceiptconsumer.AdjudicateFiles for 5/5 cases' "matched_cases=$observed_consumer/5" "INDEPENDENT_CONSUMER_MISSING" \
+  '[.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length == 5'
+
+run_gate "subject-effects-binding" "observe-effects" "bind-checkout-and-workspace" \
+  "subject/effects binding exact for 5/5 cases; expected=$expected_sha observed=$observed_checkout_sha" "matched_cases=$observed_effects/5" "SUBJECT_OR_EFFECTS_BINDING_MISMATCH" \
+  '[.cases[].report.receipt | select(.expected_subject_sha == $expected_sha and .observed_checkout_sha == $observed_checkout_sha and .effects.status == "NET_REPOSITORY_STATE_UNCHANGED" and .effects.changed_path_or_content_count == 0 and .effects.output_location == "OUTSIDE_REPOSITORY")] | length == 5'
+
+run_gate "case-results" "suite-contract" "count-passed-cases" \
+  'cases_total=5, cases_passed=5, coverage_bps=10000' \
+  "cases_total=$(jq -r '.summary.cases_total' "$first"), cases_passed=$(jq -r '.summary.cases_passed' "$first"), coverage_bps=$(jq -r '.case_contract_coverage_bps' "$first")" "FIXED_CASE_RESULT_CONTRACT_INCOMPLETE" \
+  '.summary.cases_total == 5 and .summary.cases_passed == 5 and .case_contract_coverage_bps == 10000 and ([.cases[] | select(.passed == true)] | length) == 5'
+
+run_gate "proof-choice-distribution" "proof-selection" "count-proof-choices" \
+  'FOUNDATION=3, COHERENCE=2, REGRESSION=1' \
+  "$(jq -c '[.cases[0].report.indicators[] | .proof_choice] | group_by(.) | map({proof_choice:.[0],count:length})' "$first")" "PROOF_CHOICE_DISTRIBUTION_MISMATCH" \
+  '([.cases[0].report.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.cases[0].report.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.cases[0].report.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1'
+
+artifact_observed=$(jq -c '{schema,denominator_id,claim_count_contract_version,fixed_claim_total,denominator_evolution_receipt,fixed_case_total,cases:(.cases | map({id,expected_claim_total,claim_id_count:(.expected_claim_ids|length),case_row_digest}))}' "$expectation")
+run_gate "expectation-contract" "claim-identity" "validate-expectation-artifact" \
+  'strict fixed artifact v1, 5 cases, counts 7/7/7/3/7, total 31' "$artifact_observed" "CLAIM_EXPECTATION_CONTRACT_MISMATCH" \
+  '$expectation[0].schema == "gooo/semantic-delta-claim-transition-expectations/v1" and $expectation[0].denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and $expectation[0].fixed_case_total == 5 and $expectation[0].claim_count_contract_version == "v1" and $expectation[0].fixed_claim_total == 31 and $expectation[0].denominator_evolution_receipt == "REQUIRED_FOR_FIXED_CLAIM_COUNT_CHANGE" and ([$expectation[0].cases[].id] | sort) == ["ambiguous-match","equivalent","indeterminate","semantic-change","value-program-change"] and ([$expectation[0].cases[].id] | unique | length) == 5 and ([$expectation[0].cases | sort_by(.id)[] | .expected_claim_total]) == [7,7,3,7,7] and ([$expectation[0].cases[].expected_claim_total] | add) == $expectation[0].fixed_claim_total and ([$expectation[0].cases[] | select((.expected_claim_ids | length) == .expected_claim_total and (.case_row_digest | test("^sha256:[0-9a-f]{64}$")))] | length) == 5'
+
+jq --argjson failed "$failed" '. + {schema:"gooo/semantic-delta-receipt-contract-gates/v1",decision:(if $failed == 0 then "PASS" else "FAIL_CLOSED" end),resolution:(if $failed == 0 then "EXACT" else "LOWER_RESOLUTION" end),failed_count:$failed,gate_count:(.gates | length)}' "$gates" > "$gates.next"
+mv "$gates.next" "$gates"
+jq . "$gates"
+if (( failed != 0 )); then
+  printf 'contract gates failed: %d; decision=FAIL_CLOSED resolution=LOWER_RESOLUTION\n' "$failed" >&2
+  exit 1
+fi

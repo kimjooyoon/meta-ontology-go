@@ -20,6 +20,7 @@ on:
       - 'examples/toolchain-conformance/corpus.json'
       - 'internal/verify/scope_semantic_delta_receipt.go'
       - 'docs/language/semantic-delta-receipt.md'
+      - 'scripts/semantic-delta-receipt-gates.sh'
       - 'go.mod'
       - 'go.sum'
   push:
@@ -41,6 +42,7 @@ on:
       - 'examples/toolchain-conformance/corpus.json'
       - 'internal/verify/scope_semantic_delta_receipt.go'
       - 'docs/language/semantic-delta-receipt.md'
+      - 'scripts/semantic-delta-receipt-gates.sh'
       - 'go.mod'
       - 'go.sum'
   workflow_dispatch:
@@ -132,40 +134,7 @@ jobs:
           jq -S 'del(.output_path, .suite_digest)' "$out/first.json" > "$out/first-deterministic.json"
           jq -S 'del(.output_path, .suite_digest)' "$out/second.json" > "$out/second-deterministic.json"
           cmp "$out/first-deterministic.json" "$out/second-deterministic.json"
-          jq -e --arg output "$out/first.json" --arg expected "$HEAD_SHA" --arg observed "$observed_checkout_sha" --arg expectation_digest "$expectation_digest" '
-            .schema == "gooo/semantic-delta-receipt-conformance/v2" and
-            .decision == "FIXED_POINT" and .resolution == "EXACT" and
-            .contract_reproduction == "FIXED_FIVE_CASE_CONTRACT_REPRODUCED" and
-            .subject_semantic_equivalence == "NOT_ASSERTED" and .semantic_equivalence_claim == "NOT_ASSERTED" and .output_path == $output and
-            .subject_sha == $expected and .observed_checkout_sha == $observed and
-            ([.source_paths[]] | length) == 11 and
-            .denominator_version == "v2" and .meta_source_path == "examples/semantic-delta-receipt/main.gooo" and
-            .modeled_semantic_components == 5 and .total_semantic_components == 5 and .declared_projection_component_kind_coverage_bps == 10000 and
-            .summary.cases_total == 5 and .summary.cases_passed == 5 and .case_contract_coverage_bps == 10000 and
-            .summary.textual_changes == 5 and .summary.structural_observations == 4 and
-            .summary.claim_transition_cases == 5 and .summary.adjudicated_cases == 5 and .summary.unknown_paths == 2 and
-            .summary.semantic_preserved == 1 and .summary.semantic_changed == 2 and .summary.indeterminate == 2 and
-            .summary.distinct_propositions == 24 and .summary.added_claims == 0 and .summary.removed_claims == 0 and .summary.changed_claims == 1 and
-            .summary.open_claims == 10 and .summary.discharged_claims == 18 and .summary.refuted_claims == 3 and .summary.ambiguous_cases == 1 and
-            .summary.claims_with_explained_status == .summary.total_claims and .summary.claim_status_coverage_bps == 10000 and .summary.total_claims == 31 and
-            .case_contract_denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and .case_contract_fixed_total == 5 and
-            .case_contract_expected_ids == ["equivalent","semantic-change","value-program-change","indeterminate","ambiguous-match"] and
-            ((.case_contract_expected_ids | sort) == (.case_contract_observed_ids | sort)) and
-            ((.case_contract_expected_ids | sort) == (.case_contract_observed_recipe_ids | sort)) and
-            .claim_count_contract_version == "v1" and .claim_count_expected_total == 31 and
-            .claim_count_expected_by_case == [{"case_id":"equivalent","total":7},{"case_id":"semantic-change","total":7},{"case_id":"value-program-change","total":7},{"case_id":"indeterminate","total":3},{"case_id":"ambiguous-match","total":7}] and
-            .stage == "suite-contract" and .step == "validate-case-inventory" and
-            .case_contract_stage == "suite-contract" and .case_contract_step == "validate-case-inventory" and .case_contract_reason == "FIXED_CASE_ID_INVENTORY_EXACT" and
-            ([.cases[].report.claim_identity | select(.decision == "PASS" and .resolution == "EXACT" and .stage == "claim-identity" and .step == "compare-fixed-expectation" and .reason == "FIXED_CLAIM_IDENTITY_EXACT" and .expectation_artifact_digest == $expectation_digest and (.expected_claim_ids | length) == .fixed_total and .expected_claim_ids == .observed_claim_ids and .expected_transition_identity_digest == .observed_transition_identity_digest and .coverage_bps == 10000)] | length) == 5 and
-            ([.cases[].report | select(.claim_identity.case_id == .case_id and .claim_identity.denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and (.claim_identity.expected_claim_ids | length) > 0 and (.claim_identity.observed_claim_ids | length) == (.claim_identity.expected_claim_ids | length))] | length) == 5 and
-            ([.cases[].report | select(.claim_identity.observed_source_pair.before_path == .source_paths[0] and .claim_identity.observed_source_pair.after_path == .source_paths[1] and .claim_identity.observed_source_pair.before_raw_digest == .receipt.before.source_digest and .claim_identity.observed_source_pair.after_raw_digest == .receipt.after.source_digest and .claim_identity.observed_source_pair.before_semantic_digest == .receipt.before.semantic_digest and .claim_identity.observed_source_pair.after_semantic_digest == .receipt.after.semantic_digest)] | length) == 5 and
-            ([.cases[] | select(.passed == true)] | length) == 5 and
-            ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length) == 5 and
-            ([.cases[].report.receipt | select(.expected_subject_sha == $expected and .observed_checkout_sha == $observed and .effects.status == "NET_REPOSITORY_STATE_UNCHANGED" and .effects.changed_path_or_content_count == 0 and .effects.output_location == "OUTSIDE_REPOSITORY")] | length) == 5 and
-            ([.cases[0].report.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and
-            ([.cases[0].report.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and
-            ([.cases[0].report.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1
-          ' "$out/first.json"
+          bash scripts/semantic-delta-receipt-gates.sh "$out" "$HEAD_SHA" "$observed_checkout_sha" "$expectation_digest"
           jq -e '
             .schema == "gooo/semantic-delta-claim-transition-expectations/v1" and
             .denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and .fixed_case_total == 5 and
