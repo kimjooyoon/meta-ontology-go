@@ -3,6 +3,7 @@ package consumer
 import (
 	"fmt"
 	"io/fs"
+	"slices"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
@@ -255,7 +256,7 @@ func extractConsumerValues(ir semantic.IR) (map[string]consumerValue, error) {
 
 func valueFields(program, operation string, required []string) (map[string]string, error) {
 	fields := map[string]string{}
-	tokens := strings.FieldsSeq(program)
+	tokens := slices.Collect(strings.FieldsSeq(program))
 	if len(tokens) == 0 {
 		return nil, fmt.Errorf("value program is empty; want operation %q", operation)
 	}
