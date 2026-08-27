@@ -50,14 +50,6 @@
       "meta_operation": "replay-language-syntax"
     },
     {
-      "id": "meta-circular-boundary",
-      "path": "examples/meta-circular-boundary/main.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
       "id": "meta-actionability",
       "path": "examples/meta-actionability/main.gooo",
       "kind": "VALID",
@@ -247,6 +239,14 @@
     {
       "id": "reproducibility-semantics",
       "path": "examples/reproducibility-semantics/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "meta-circular-boundary",
+      "path": "examples/meta-circular-boundary/main.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
