@@ -146,6 +146,13 @@ jobs:
             .summary.distinct_propositions == 24 and .summary.added_claims == 0 and .summary.removed_claims == 0 and .summary.changed_claims == 1 and
             .summary.open_claims == 10 and .summary.discharged_claims == 18 and .summary.refuted_claims == 3 and .summary.ambiguous_cases == 1 and
             .summary.claims_with_explained_status == .summary.total_claims and .summary.claim_status_coverage_bps == 10000 and .summary.total_claims == 31 and
+            .case_contract_denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and .case_contract_fixed_total == 5 and
+            .case_contract_expected_ids == ["equivalent","semantic-change","value-program-change","indeterminate","ambiguous-match"] and
+            ((.case_contract_expected_ids | sort) == (.case_contract_observed_ids | sort)) and
+            ((.case_contract_expected_ids | sort) == (.case_contract_observed_recipe_ids | sort)) and
+            .stage == "suite-contract" and .step == "validate-case-inventory" and
+            .case_contract_stage == "suite-contract" and .case_contract_step == "validate-case-inventory" and .case_contract_reason == "FIXED_CASE_ID_INVENTORY_EXACT" and
+            ([.cases[].report.receipt | select((.claim_id_inventory | length) == .total_claims and (.claim_transition_identity_digest | test("^sha256:[0-9a-f]{64}$")))] | length) == 5 and
             ([.cases[] | select(.passed == true)] | length) == 5 and
             ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length) == 5 and
             ([.cases[].report.receipt | select(.expected_subject_sha == $expected and .observed_checkout_sha == $observed and .effects.status == "NET_REPOSITORY_STATE_UNCHANGED" and .effects.changed_path_or_content_count == 0 and .effects.output_location == "OUTSIDE_REPOSITORY")] | length) == 5 and
@@ -164,6 +171,18 @@ jobs:
           go run ./cmd/semantic-delta-receipt-witness --before "$root/value-program-before.gooo" --after "$root/value-program-after.gooo" --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --effects-before "$out/workspace-before.tsv" --effects-after "$out/workspace-after.tsv" --output "$out/value-program-change.json"
           go run ./cmd/semantic-delta-receipt-witness --before "$root/ambiguous-before.gooo" --after "$root/ambiguous-after.gooo" --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --effects-before "$out/workspace-before.tsv" --effects-after "$out/workspace-after.tsv" --output "$out/ambiguous-match.json"
           jq -e --arg before "$root/before.gooo" --arg after "$root/equivalent-after.gooo" --arg output "$out/equivalent.json" --arg expected "$HEAD_SHA" --arg observed "$observed_checkout_sha" '.source_paths == [$before, $after] and .output_path == $output and .receipt.expected_subject_sha == $expected and .receipt.observed_checkout_sha == $observed and .receipt.subject_binding == "EXACT" and .receipt.effects.status == "NET_REPOSITORY_STATE_UNCHANGED" and .receipt.effects.changed_path_or_content_count == 0 and .receipt.effects.output_location == "OUTSIDE_REPOSITORY" and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_PRESERVED" and .receipt.before.semantic_digest == .receipt.after.semantic_digest and .receipt.declared_projection_component_kind_coverage_bps == 10000 and .receipt.claim_status_coverage_bps == 10000 and .independent_verdict.passed == true' "$out/equivalent.json"
+          go run ./cmd/semantic-delta-receipt-witness --tamper-matrix --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/tamper-matrix.json"
+          jq -e '
+            .status == "EXACT" and .denominator_id == "gooo://semantic-delta/tamper-inventory/v1" and
+            (.expected_ids | length) == 12 and (.observed_ids | length) == 12 and
+            .expected_ids == ["proof-choice","stage","step","reason","decision","resolution","classification","expected-subject","observed-checkout","meta-contract","transition-head","effects-status"] and
+            ((.expected_ids | sort) == (.observed_ids | sort)) and .fixed_total == 12 and .rejected_count == 12 and .coverage_bps == 10000 and
+            .context_denominator_id == "gooo://semantic-delta/replay-context-inventory/v1" and
+            (.expected_context_ids | length) == 4 and (.observed_context_ids | length) == 4 and
+            .expected_context_ids == ["exact","parse-unknown","subject-unknown","ambiguous"] and
+            ((.expected_context_ids | sort) == (.observed_context_ids | sort)) and .context_fixed_total == 4 and .context_coverage_bps == 10000 and
+            (.contexts | length) == 4 and ([.contexts[] | select(.fixed_total == 12 and .rejected_count == 12 and .coverage_bps == 10000)] | length) == 4
+          ' "$out/tamper-matrix.json"
           jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .receipt.before.semantic_digest != .receipt.after.semantic_digest and .receipt.classification == "SEMANTIC_CHANGED" and (.receipt.semantic_claim_delta.changed | length) == 1 and .receipt.claim_status_coverage_bps == 10000 and .receipt.effects.status == "NET_REPOSITORY_STATE_UNCHANGED" and .independent_verdict.passed == true' "$out/semantic-change.json"
           jq -e '.receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.classification == "INDETERMINATE" and .receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "project-source" and .receipt.step == "parse-lower" and .receipt.reason == "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE" and .independent_verdict.passed == true' "$out/indeterminate.json"
           jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.before.semantic_digest != .receipt.after.semantic_digest and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .receipt.classification == "SEMANTIC_CHANGED" and (.receipt.structural_delta.added_nodes | length) == 0 and (.receipt.semantic_claim_delta.changed | length) == 0 and (.receipt.semantic_component_delta.changed | length) > 0 and .receipt.reason == "SEMANTIC_COMPONENT_DELTA_OBSERVED" and .receipt.claim_status_coverage_bps == 10000 and .independent_verdict.passed == true' "$out/value-program-change.json"

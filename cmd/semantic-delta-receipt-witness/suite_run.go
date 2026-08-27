@@ -11,14 +11,15 @@ const (
 func runSuite(subjectSHA, observedCheckoutSHA, effectsBefore, effectsAfter, outputPath string) Suite {
 	definitions := producer.Denominator()
 	meta, metaErr := producer.ReadMetaContract()
-	results := make([]CaseResult, 0, len(definitions))
-	summary := Summary{CasesTotal: len(definitions), ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
+	caseContractOK := caseContractValid(definitions, meta, metaErr)
+	results := make([]CaseResult, 0, fixedCaseContractTotal)
+	summary := Summary{CasesTotal: fixedCaseContractTotal, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
 	passed := 0
 	for _, definition := range definitions {
 		input := producer.Input{CaseID: definition.ID, SubjectSHA: subjectSHA, ObservedCheckoutSHA: observedCheckoutSHA, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath, EffectsBeforePath: effectsBefore, EffectsAfterPath: effectsAfter, OutputPath: outputPath}
 		report := evaluate(input, "")
 		semanticCoverageAccepted := report.Receipt.DeclaredProjectionComponentKindCoverageBPS == 10000 || definition.ExpectedResolution == producer.ResolutionLower
-		casePassed := metaErr == nil && report.IndependentVerdict.Passed && report.IndependentVerdict.Decision == definition.ExpectedDecision && report.IndependentVerdict.Resolution == definition.ExpectedResolution && report.IndependentVerdict.Classification == definition.ExpectedClass && report.IndependentVerdict.Reason == definition.ExpectedReason && report.Receipt.Stage == definition.ExpectedStage && report.Receipt.Step == definition.ExpectedStep && report.Receipt.DenominatorVersion == producer.DenominatorVersion && report.Receipt.DenominatorCases == len(definitions) && semanticCoverageAccepted
+		casePassed := caseContractOK && report.IndependentVerdict.Passed && report.IndependentVerdict.Decision == definition.ExpectedDecision && report.IndependentVerdict.Resolution == definition.ExpectedResolution && report.IndependentVerdict.Classification == definition.ExpectedClass && report.IndependentVerdict.Reason == definition.ExpectedReason && report.Receipt.Stage == definition.ExpectedStage && report.Receipt.Step == definition.ExpectedStep && report.Receipt.DenominatorVersion == producer.DenominatorVersion && report.Receipt.DenominatorCases == fixedCaseContractTotal && semanticCoverageAccepted
 		if casePassed {
 			passed++
 		}
@@ -29,12 +30,14 @@ func runSuite(subjectSHA, observedCheckoutSHA, effectsBefore, effectsAfter, outp
 	contract := contractIncomplete
 	decision, resolution := producer.DecisionFailClosed, producer.ResolutionInvariant
 	reason := ""
-	if len(definitions) == 0 {
-		reason = producer.ReasonDenominatorZero
-	} else if metaErr != nil {
-		reason = producer.ReasonMeta
+	if !caseContractOK {
+		if metaErr != nil {
+			reason = caseContractMetaErrorReason
+		} else {
+			reason = caseContractMismatchReason
+		}
 	}
-	if metaErr == nil && meta.Version == producer.DenominatorVersion && meta.DenominatorCases == len(definitions) && passed == len(definitions) && len(definitions) == 5 {
+	if caseContractOK && meta.Version == producer.DenominatorVersion && meta.DenominatorCases == fixedCaseContractTotal && passed == fixedCaseContractTotal {
 		decision, resolution, contract = producer.DecisionFixedPoint, producer.ResolutionExact, contractReproduced
 		reason = ""
 	}
@@ -42,12 +45,16 @@ func runSuite(subjectSHA, observedCheckoutSHA, effectsBefore, effectsAfter, outp
 	for _, definition := range definitions {
 		sources = append(sources, definition.BeforePath, definition.AfterPath)
 	}
-	denominatorDigest := digestValue(definitions)
+	denominatorDigest := digestValue(fixedCaseRecipes)
 	metaDigest := meta.Digest
 	if metaErr != nil {
 		metaDigest = ""
 	}
-	suite := Suite{Schema: producer.SuiteSchema, SubjectSHA: subjectSHA, ObservedCheckoutSHA: observedCheckoutSHA, DenominatorID: producer.DenominatorID, DenominatorDigest: denominatorDigest, Decision: decision, Resolution: resolution, Reason: reason, ContractReproduction: contract, SubjectSemanticEquivalence: subjectEquivalenceNotAsserted, SourcePaths: sources, OutputPath: outputPath, Cases: results, Summary: summary, CaseContractCoverageBPS: ratio(passed, len(definitions)), DeclaredProjectionComponentKindCoverageBPS: ratio(producer.ModeledComponentCount, producer.TotalComponentCount), SemanticEquivalenceClaim: subjectEquivalenceNotAsserted, MetaSourcePath: producer.MetaSourcePath, MetaContractDigest: metaDigest, DenominatorVersion: producer.DenominatorVersion, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
+	caseContractReason := caseContractExactReason
+	if !caseContractOK {
+		caseContractReason = reason
+	}
+	suite := Suite{Schema: producer.SuiteSchema, SubjectSHA: subjectSHA, ObservedCheckoutSHA: observedCheckoutSHA, DenominatorID: fixedCaseContractDenominatorID, DenominatorDigest: denominatorDigest, CaseContractDenominatorID: fixedCaseContractDenominatorID, CaseContractExpectedIDs: fixedCaseIDs(), CaseContractObservedIDs: observedCaseIDs(definitions), CaseContractObservedRecipeIDs: observedRecipeIDs(meta), CaseContractFixedTotal: fixedCaseContractTotal, CaseContractStage: caseContractStage, CaseContractStep: caseContractStep, CaseContractReason: caseContractReason, Stage: caseContractStage, Step: caseContractStep, Decision: decision, Resolution: resolution, Reason: reason, ContractReproduction: contract, SubjectSemanticEquivalence: subjectEquivalenceNotAsserted, SourcePaths: sources, OutputPath: outputPath, Cases: results, Summary: summary, CaseContractCoverageBPS: ratio(passed, fixedCaseContractTotal), DeclaredProjectionComponentKindCoverageBPS: ratio(producer.ModeledComponentCount, producer.TotalComponentCount), SemanticEquivalenceClaim: subjectEquivalenceNotAsserted, MetaSourcePath: producer.MetaSourcePath, MetaContractDigest: metaDigest, DenominatorVersion: producer.DenominatorVersion, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
 	sealSuite(&suite)
 	return suite
 }

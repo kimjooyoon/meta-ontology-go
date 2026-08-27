@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 )
 
@@ -25,49 +24,40 @@ func TestConsumerRejectsUnsealedWireReceipt(t *testing.T) {
 }
 
 func TestConsumerRejectsResealedTamperMatrix(t *testing.T) {
-	cases := []struct {
-		name  string
-		input Input
-	}{
-		{name: "exact", input: Input{CaseID: "equivalent", SubjectSHA: candidateSHA, ObservedCheckoutSHA: candidateSHA, BeforePath: fixture("before.gooo"), AfterPath: fixture("equivalent-after.gooo")}},
-		{name: "parse-unknown", input: Input{CaseID: "indeterminate", SubjectSHA: candidateSHA, ObservedCheckoutSHA: candidateSHA, BeforePath: fixture("before.gooo"), AfterPath: fixture("indeterminate-after.gooo")}},
-		{name: "subject-unknown", input: Input{CaseID: "subject-unknown", SubjectSHA: candidateSHA, BeforePath: fixture("before.gooo"), AfterPath: fixture("equivalent-after.gooo")}},
-		{name: "ambiguous", input: Input{CaseID: "ambiguous-match", SubjectSHA: candidateSHA, ObservedCheckoutSHA: candidateSHA, BeforePath: fixture("ambiguous-before.gooo"), AfterPath: fixture("ambiguous-after.gooo")}},
+	contexts := FixedReplayContexts()
+	observedContextIDs := make([]string, 0, len(contexts))
+	for _, context := range contexts {
+		observedContextIDs = append(observedContextIDs, context.ID)
 	}
-	type tamper struct {
-		name string
-		edit func(*Receipt)
+	if err := exactIDInventory(FixedReplayContextIDs(), observedContextIDs); err != nil {
+		t.Fatalf("replay context inventory drift: %v", err)
 	}
-	tampers := []tamper{
-		{name: "proof-choice", edit: func(r *Receipt) { r.ProofChoice = "TAMPERED" }},
-		{name: "stage", edit: func(r *Receipt) { r.Stage = "TAMPERED" }},
-		{name: "step", edit: func(r *Receipt) { r.Step = "TAMPERED" }},
-		{name: "reason", edit: func(r *Receipt) { r.Reason = "TAMPERED" }},
-		{name: "decision", edit: func(r *Receipt) { r.Decision = "TAMPERED" }},
-		{name: "resolution", edit: func(r *Receipt) { r.Resolution = "TAMPERED" }},
-		{name: "classification", edit: func(r *Receipt) { r.Classification = "TAMPERED" }},
-		{name: "expected-subject", edit: func(r *Receipt) { r.ExpectedSubjectSHA = strings.Repeat("b", 40) }},
-		{name: "observed-checkout", edit: func(r *Receipt) { r.ObservedCheckoutSHA = strings.Repeat("b", 40) }},
-		{name: "meta-contract", edit: func(r *Receipt) { r.MetaContractDigest = "sha256:" + strings.Repeat("b", 64) }},
-		{name: "transition-head", edit: func(r *Receipt) { r.TransitionHeadDigest = "sha256:" + strings.Repeat("b", 64) }},
-		{name: "effects-status", edit: func(r *Receipt) { r.Effects.Status = "NET_REPOSITORY_STATE_CHANGED" }},
+	mutations := fixedTamperMutations()
+	observedTamperIDs := make([]string, 0, len(mutations))
+	for _, mutation := range mutations {
+		observedTamperIDs = append(observedTamperIDs, mutation.id)
 	}
-	if len(tampers) != 12 {
-		t.Fatalf("tamper matrix size=%d", len(tampers))
+	if err := exactIDInventory(FixedTamperIDs(), observedTamperIDs); err != nil {
+		t.Fatalf("tamper inventory drift: %v", err)
 	}
-	for _, testCase := range cases {
-		t.Run(testCase.name, func(t *testing.T) {
-			beforeRaw, err := os.ReadFile(testCase.input.BeforePath)
+	for _, context := range contexts {
+		t.Run(context.ID, func(t *testing.T) {
+			observedCheckoutSHA := candidateSHA
+			if !context.RequiresCheckoutSHA {
+				observedCheckoutSHA = ""
+			}
+			input := Input{CaseID: context.ID, SubjectSHA: candidateSHA, ObservedCheckoutSHA: observedCheckoutSHA, BeforePath: fixture(filepath.Base(context.BeforePath)), AfterPath: fixture(filepath.Base(context.AfterPath))}
+			beforeRaw, err := os.ReadFile(input.BeforePath)
 			if err != nil {
 				t.Fatal(err)
 			}
-			afterRaw, err := os.ReadFile(testCase.input.AfterPath)
+			afterRaw, err := os.ReadFile(input.AfterPath)
 			if err != nil {
 				t.Fatal(err)
 			}
 			expected := reconstructReceipt(testCase.input, beforeRaw, afterRaw)
 			rejected := 0
-			for _, mutation := range tampers {
+			for _, mutation := range mutations {
 				tampered := expected
 				mutation.edit(&tampered)
 				tampered.ReceiptDigest = ""
@@ -77,8 +67,33 @@ func TestConsumerRejectsResealedTamperMatrix(t *testing.T) {
 					rejected++
 				}
 			}
-			if rejected != 12 {
-				t.Fatalf("resealed tamper matrix rejected=%d/12", rejected)
+			if rejected != TamperFixedTotal {
+				t.Fatalf("resealed tamper matrix rejected=%d/%d", rejected, TamperFixedTotal)
+			}
+		})
+	}
+}
+
+func TestFixedInventoriesRejectDrift(t *testing.T) {
+	expectedTamper := FixedTamperIDs()
+	expectedContexts := FixedReplayContextIDs()
+	for _, testCase := range []struct {
+		name     string
+		expected []string
+		observed []string
+	}{
+		{name: "tamper-missing", expected: expectedTamper, observed: expectedTamper[:len(expectedTamper)-1]},
+		{name: "tamper-duplicate", expected: expectedTamper, observed: append(append([]string(nil), expectedTamper[:len(expectedTamper)-1]...), expectedTamper[0])},
+		{name: "tamper-extra", expected: expectedTamper, observed: append(append([]string(nil), expectedTamper...), "unrelated")},
+		{name: "tamper-replaced", expected: expectedTamper, observed: append(append([]string(nil), expectedTamper[:len(expectedTamper)-1]...), "unrelated")},
+		{name: "context-missing", expected: expectedContexts, observed: expectedContexts[:len(expectedContexts)-1]},
+		{name: "context-duplicate", expected: expectedContexts, observed: append(append([]string(nil), expectedContexts[:len(expectedContexts)-1]...), expectedContexts[0])},
+		{name: "context-extra", expected: expectedContexts, observed: append(append([]string(nil), expectedContexts...), "unrelated")},
+		{name: "context-replaced", expected: expectedContexts, observed: append(append([]string(nil), expectedContexts[:len(expectedContexts)-1]...), "unrelated")},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			if exactIDInventory(testCase.expected, testCase.observed) == nil {
+				t.Fatal("inventory drift was accepted")
 			}
 		})
 	}

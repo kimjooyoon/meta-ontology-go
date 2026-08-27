@@ -15,11 +15,7 @@ func unknownReceipt(receipt Receipt, before, after projectedSource, beforeErr, a
 	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, reason
 	receipt.Stage, receipt.Step = stage, step
 	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(before, after, stage, step, reason)
-	receipt.TransitionCount = len(receipt.ClaimTransitions)
-	if receipt.TransitionCount > 0 {
-		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
-	}
-	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
+	finishReceiptClaims(&receipt)
 	if beforeErr == nil && afterErr != nil {
 		receipt.After.ParseReason = "UNSUPPORTED_GOOO_SOURCE"
 	}
@@ -42,11 +38,7 @@ func subjectUnknown(receipt Receipt, before, after projectedSource, binding stri
 	receipt.SubjectBinding = binding
 	receipt.Step, receipt.Reason = step, reason
 	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(before, after, receipt.Stage, receipt.Step, receipt.Reason)
-	receipt.TransitionCount = len(receipt.ClaimTransitions)
-	if receipt.TransitionCount > 0 {
-		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
-	}
-	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
+	finishReceiptClaims(&receipt)
 	sealReceipt(&receipt)
 	return receipt
 }
@@ -59,11 +51,7 @@ func ambiguousReceipt(receipt Receipt, before, after projectedSource) Receipt {
 	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, ReasonAmbiguous
 	receipt.Stage, receipt.Step = "claim-delta", "match-claims"
 	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(before, after, receipt.Stage, receipt.Step, receipt.Reason)
-	receipt.TransitionCount = len(receipt.ClaimTransitions)
-	if receipt.TransitionCount > 0 {
-		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
-	}
-	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
+	finishReceiptClaims(&receipt)
 	sealReceipt(&receipt)
 	return receipt
 }
@@ -77,11 +65,7 @@ func unmodeledReceipt(receipt Receipt, before, after projectedSource) Receipt {
 	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, ReasonUnmodeled
 	receipt.Stage, receipt.Step = "semantic-projection", "compare-stable-hash"
 	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(before, after, receipt.Stage, receipt.Step, receipt.Reason)
-	receipt.TransitionCount = len(receipt.ClaimTransitions)
-	if receipt.TransitionCount > 0 {
-		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
-	}
-	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
+	finishReceiptClaims(&receipt)
 	sealReceipt(&receipt)
 	return receipt
 }

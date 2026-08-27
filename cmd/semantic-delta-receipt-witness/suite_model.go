@@ -42,6 +42,16 @@ type Suite struct {
 	ObservedCheckoutSHA                        string       `json:"observed_checkout_sha"`
 	DenominatorID                              string       `json:"denominator_id"`
 	DenominatorDigest                          string       `json:"denominator_digest"`
+	CaseContractDenominatorID                  string       `json:"case_contract_denominator_id"`
+	CaseContractExpectedIDs                    []string     `json:"case_contract_expected_ids"`
+	CaseContractObservedIDs                    []string     `json:"case_contract_observed_ids"`
+	CaseContractObservedRecipeIDs              []string     `json:"case_contract_observed_recipe_ids"`
+	CaseContractFixedTotal                     int          `json:"case_contract_fixed_total"`
+	CaseContractStage                          string       `json:"case_contract_stage"`
+	CaseContractStep                           string       `json:"case_contract_step"`
+	CaseContractReason                         string       `json:"case_contract_reason"`
+	Stage                                      string       `json:"stage"`
+	Step                                       string       `json:"step"`
 	Decision                                   string       `json:"decision"`
 	Resolution                                 string       `json:"resolution"`
 	Reason                                     string       `json:"reason,omitempty"`

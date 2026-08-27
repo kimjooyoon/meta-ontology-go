@@ -21,27 +21,29 @@ type Report struct {
 }
 
 type Evidence struct {
-	RawBeforeDigest      string `json:"raw_before_digest"`
-	RawAfterDigest       string `json:"raw_after_digest"`
-	SemanticBeforeDigest string `json:"semantic_before_digest"`
-	SemanticAfterDigest  string `json:"semantic_after_digest"`
-	DistinctPropositions int    `json:"distinct_propositions"`
-	Added                int    `json:"added"`
-	Removed              int    `json:"removed"`
-	Changed              int    `json:"changed"`
-	Open                 int    `json:"open"`
-	Discharged           int    `json:"discharged"`
-	Refuted              int    `json:"refuted"`
-	TransitionChain      int    `json:"transition_chain"`
-	ClaimsExplained      int    `json:"claims_with_explained_status"`
-	TotalClaims          int    `json:"total_claims"`
-	ClaimStatusCoverage  int    `json:"claim_status_coverage_bps"`
-	Decision             string `json:"decision"`
-	Resolution           string `json:"resolution"`
-	Classification       string `json:"classification"`
-	Stage                string `json:"stage"`
-	Step                 string `json:"step"`
-	Reason               string `json:"reason"`
+	RawBeforeDigest               string   `json:"raw_before_digest"`
+	RawAfterDigest                string   `json:"raw_after_digest"`
+	SemanticBeforeDigest          string   `json:"semantic_before_digest"`
+	SemanticAfterDigest           string   `json:"semantic_after_digest"`
+	DistinctPropositions          int      `json:"distinct_propositions"`
+	Added                         int      `json:"added"`
+	Removed                       int      `json:"removed"`
+	Changed                       int      `json:"changed"`
+	Open                          int      `json:"open"`
+	Discharged                    int      `json:"discharged"`
+	Refuted                       int      `json:"refuted"`
+	TransitionChain               int      `json:"transition_chain"`
+	ClaimsExplained               int      `json:"claims_with_explained_status"`
+	TotalClaims                   int      `json:"total_claims"`
+	ClaimStatusCoverage           int      `json:"claim_status_coverage_bps"`
+	ClaimIDInventory              []string `json:"claim_id_inventory"`
+	ClaimTransitionIdentityDigest string   `json:"claim_transition_identity_digest"`
+	Decision                      string   `json:"decision"`
+	Resolution                    string   `json:"resolution"`
+	Classification                string   `json:"classification"`
+	Stage                         string   `json:"stage"`
+	Step                          string   `json:"step"`
+	Reason                        string   `json:"reason"`
 }
 
 func evaluate(input producer.Input, outputPath string) Report {
@@ -103,7 +105,7 @@ func summaryFor(receipt producer.Receipt, verdict consumer.Verdict) Summary {
 }
 
 func evidenceFor(receipt producer.Receipt, verdict consumer.Verdict, summary Summary) Evidence {
-	return Evidence{RawBeforeDigest: receipt.Before.SourceDigest, RawAfterDigest: receipt.After.SourceDigest, SemanticBeforeDigest: receipt.Before.SemanticDigest, SemanticAfterDigest: receipt.After.SemanticDigest, DistinctPropositions: summary.DistinctPropositions, Added: summary.AddedClaims, Removed: summary.RemovedClaims, Changed: summary.ChangedClaims, Open: summary.OpenClaims, Discharged: summary.DischargedClaims, Refuted: summary.RefutedClaims, TransitionChain: summary.TransitionChains, ClaimsExplained: summary.ClaimsWithExplainedStatus, TotalClaims: summary.TotalClaims, ClaimStatusCoverage: summary.ClaimStatusCoverageBPS, Decision: verdict.Decision, Resolution: verdict.Resolution, Classification: verdict.Classification, Stage: verdict.Stage, Step: verdict.Step, Reason: verdict.Reason}
+	return Evidence{RawBeforeDigest: receipt.Before.SourceDigest, RawAfterDigest: receipt.After.SourceDigest, SemanticBeforeDigest: receipt.Before.SemanticDigest, SemanticAfterDigest: receipt.After.SemanticDigest, DistinctPropositions: summary.DistinctPropositions, Added: summary.AddedClaims, Removed: summary.RemovedClaims, Changed: summary.ChangedClaims, Open: summary.OpenClaims, Discharged: summary.DischargedClaims, Refuted: summary.RefutedClaims, TransitionChain: summary.TransitionChains, ClaimsExplained: summary.ClaimsWithExplainedStatus, TotalClaims: summary.TotalClaims, ClaimStatusCoverage: receipt.ClaimStatusCoverageBPS, ClaimIDInventory: append([]string(nil), receipt.ClaimIDInventory...), ClaimTransitionIdentityDigest: receipt.ClaimTransitionIdentityDigest, Decision: verdict.Decision, Resolution: verdict.Resolution, Classification: verdict.Classification, Stage: verdict.Stage, Step: verdict.Step, Reason: verdict.Reason}
 }
 
 func boolInt(value bool) int {

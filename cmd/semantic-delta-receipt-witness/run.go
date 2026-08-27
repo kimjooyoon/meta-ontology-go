@@ -7,6 +7,7 @@ import (
 	"os"
 
 	producer "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"
+	consumer "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceiptconsumer"
 )
 
 func run(args []string, stdout, stderr io.Writer) int {
@@ -17,6 +18,17 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 	if options.caseID == "suite" {
 		return writeJSON(options.output, runSuite(options.subjectSHA, options.observedCheckoutSHA, options.effectsBefore, options.effectsAfter, options.output), stdout, stderr)
+	}
+	if options.tamperMatrix {
+		evidence, err := consumer.BuildTamperMatrix(options.subjectSHA, options.observedCheckoutSHA)
+		if writeErr := writeJSON(options.output, evidence, stdout, stderr); writeErr != nil {
+			return writeErr
+		}
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		return 0
 	}
 	input, err := inputFor(options)
 	if err != nil {

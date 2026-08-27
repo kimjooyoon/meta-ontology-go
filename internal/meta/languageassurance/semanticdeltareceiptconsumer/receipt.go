@@ -78,6 +78,8 @@ type Receipt struct {
 	ClaimTransitions                           []ClaimTransition      `json:"claim_transitions"`
 	TransitionCount                            int                    `json:"transition_count"`
 	TransitionHeadDigest                       string                 `json:"transition_head_digest"`
+	ClaimIDInventory                           []string               `json:"claim_id_inventory"`
+	ClaimTransitionIdentityDigest              string                 `json:"claim_transition_identity_digest"`
 	ClaimsWithExplainedStatus                  int                    `json:"claims_with_explained_status"`
 	TotalClaims                                int                    `json:"total_claims"`
 	ClaimStatusCoverageBPS                     int                    `json:"claim_status_coverage_bps"`

@@ -163,6 +163,8 @@ func finishReceiptClaims(receipt *Receipt) {
 	if receipt.TransitionCount > 0 {
 		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
 	}
+	receipt.ClaimIDInventory = claimIDInventory(receipt.ClaimLedger)
+	receipt.ClaimTransitionIdentityDigest = claimTransitionIdentityDigest(receipt.ClaimLedger, receipt.ClaimTransitions)
 	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
 }
 

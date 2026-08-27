@@ -8,6 +8,7 @@ import (
 
 type options struct {
 	caseID, subjectSHA, observedCheckoutSHA, before, after, effectsBefore, effectsAfter, output string
+	tamperMatrix                                                                                bool
 }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
@@ -22,13 +23,17 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	set.StringVar(&result.effectsBefore, "effects-before", "", "pre-execution workspace content snapshot")
 	set.StringVar(&result.effectsAfter, "effects-after", "", "post-execution workspace content snapshot")
 	set.StringVar(&result.output, "output", "", "JSON output path")
+	set.BoolVar(&result.tamperMatrix, "tamper-matrix", false, "write the fixed consumer tamper matrix evidence")
 	if err := set.Parse(args); err != nil {
 		return options{}, err
 	}
 	if result.subjectSHA == "" || result.output == "" {
 		return options{}, fmt.Errorf("--subject-sha and --output are required")
 	}
-	if result.caseID == "" && (result.before == "" || result.after == "") {
+	if result.tamperMatrix && (result.caseID != "" || result.before != "" || result.after != "") {
+		return options{}, fmt.Errorf("--tamper-matrix cannot be combined with --case, --before, or --after")
+	}
+	if result.caseID == "" && !result.tamperMatrix && (result.before == "" || result.after == "") {
 		return options{}, fmt.Errorf("--case or both --before and --after are required")
 	}
 	if result.caseID != "" && result.caseID != "suite" && result.before != "" {

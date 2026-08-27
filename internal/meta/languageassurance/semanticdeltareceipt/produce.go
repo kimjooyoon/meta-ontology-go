@@ -62,11 +62,7 @@ func produceBytes(input Input, beforeRaw, afterRaw []byte, meta MetaContract, me
 	}
 	receipt.Stage, receipt.Step = "produce", "classify"
 	receipt.ClaimLedger, receipt.ClaimTransitions = claimLedger(beforeSource, afterSource, receipt.Classification, receipt.Reason)
-	receipt.TransitionCount = len(receipt.ClaimTransitions)
-	if receipt.TransitionCount > 0 {
-		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest
-	}
-	receipt.ClaimsWithExplainedStatus, receipt.TotalClaims, receipt.ClaimStatusCoverageBPS = claimStatusCoverage(receipt.ClaimLedger, receipt.ClaimTransitions)
+	finishReceiptClaims(&receipt)
 	sealReceipt(&receipt)
 	return receipt
 }
