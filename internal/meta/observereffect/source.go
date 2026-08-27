@@ -27,9 +27,9 @@ var semanticInterventionCases = []semanticInterventionCase{
 	{
 		Name:        "semantic-output-policy-intervention",
 		Kind:        "SEMANTIC_CAUSAL",
-		Mutation:    "replace the semantic output policy URI with a reseal-required policy URI",
-		Needle:      "gooo://observer-effect/policy/output/open",
-		Replacement: "gooo://observer-effect/policy/output/reseal-required",
+		Mutation:    "replace the computed semantic output policy with a reseal-required policy",
+		Needle:      "computes \"observer.output.policy:open\"",
+		Replacement: "computes \"observer.output.policy:reseal-required\"",
 	},
 	{
 		Name:     "comment-and-quoted-text-intervention",
@@ -62,7 +62,7 @@ func canonicalSource(displayPath, filename string, payload []byte) Source {
 }
 
 func observerPolicyFromIR(ir semantic.IR) string {
-	if strings.Contains(ir.SemanticCanonical(), "gooo://observer-effect/policy/output/open") {
+	if strings.Contains(ir.SemanticCanonical(), "value-program\t\"observer.output.policy:open\"") {
 		return observerOutputPolicyOpen
 	}
 	return observerOutputPolicyClose

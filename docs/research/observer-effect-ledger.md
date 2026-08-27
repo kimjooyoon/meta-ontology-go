@@ -60,11 +60,12 @@ success claim.
 The source coordinate is bound to the repository's canonical `.gooo` parser and
 bidirectional lowering path. A suffix or a raw `entity`/`activity` substring is
 not sufficient. The source computes an `OUTPUT_OPEN` observation policy from
-the lowered IR and records its policy digest. The ledger retains two
-independent in-memory interventions: one semantic URI replacement that changes
-the policy, output coordinate, subject decision, and claim transition; and one
-comment-plus-quoted-text intervention that preserves the semantic IR and all
-of those projections. The independent judge owns a separate wire model and
+the lowered IR's `computes "observer.output.policy:open"` value and records its
+policy digest. The ledger retains two independent in-memory interventions: one
+semantic `computes` replacement that changes the policy, output coordinate,
+subject decision, and claim transition; and one comment-plus-quoted-text
+intervention that preserves the semantic IR and all of those projections. The
+independent judge owns a separate wire model and
 reconstructs both cases from source bytes, canonical parse/lowering, and its
 own digest/adjudication. CI exposes `producer_dependency_imports=0/0`,
 `semantic_causal_cases=1/1`, and `nonsemantic_preservation_cases=1/1` in the

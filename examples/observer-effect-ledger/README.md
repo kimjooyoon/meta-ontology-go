@@ -41,10 +41,11 @@ objects per PR completion `4 -> 0`. The Actions API snapshot of skipped `59`
 and queued `41` is labeled `RUNNER_SCOPED`, `HISTORICAL_FIXTURE`, and `OPEN`,
 with unknown observation time/query and `current_evidence=false`; it is
 time-dependent and excluded from the fixed denominator. The source is bound to
-canonical parse/lowering and a computed `OUTPUT_OPEN` policy. Its semantic
-policy intervention is causal, while the comment/quoted-text intervention
-preserves the canonical IR; raw declaration-looking text cannot establish Gooo
-semantics. Because this PR changes protected workflow policy, the
+canonical parse/lowering and the activity's computed
+`observer.output.policy:open` value. Its semantic policy intervention is
+causal, while the comment/quoted-text intervention preserves the canonical IR;
+raw declaration-looking text cannot establish Gooo semantics. Because this PR
+changes protected workflow policy, the
 ledger also reports `CI-ROOT-OF-TRUST-001` as the expected
 `FAIL_CLOSED`/`BOOTSTRAP_EXPECTED_NEGATIVE` guardian result; it is not hidden or
 turned into a required context by this PR.

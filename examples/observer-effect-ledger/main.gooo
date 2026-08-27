@@ -31,4 +31,4 @@ activity AuditTriggerTopology(TriggerTopologyEvidence) -> CausalTopologyEdge
 activity RecordRunnerScopedEvidence(RunnerScopedEvidence) -> IndependentJudgment
 activity RecordGuardianExpectedNegative(GuardianExpectation) -> IndependentJudgment
 activity AdjudicateSemanticIntervention(SemanticInterventionEvidence) -> IndependentJudgment
-activity ComputeOutputObservationPolicy(OutputOpenObservationPolicy) -> ObserverEffect
+activity ComputeOutputObservationPolicy(OutputOpenObservationPolicy) -> ObserverEffect computes "observer.output.policy:open"
