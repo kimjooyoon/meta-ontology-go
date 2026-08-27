@@ -29,7 +29,8 @@ func run(args []string) int {
 	}
 	receipt := ambiguitybudget.Evaluate(ambiguitybudget.Input{SubjectSHA: options.head, Contract: contract, Source: source})
 	if err := ambiguitybudget.WriteReceipt(options.output, receipt); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%v (source lowering=%q entities=%d activities=%d programs=%d)\n",
+			err, receipt.Source.Lowering, receipt.Source.Entities, receipt.Source.Activities, len(receipt.Source.Programs))
 		return 2
 	}
 	if err := printReceipt(receipt); err != nil {
