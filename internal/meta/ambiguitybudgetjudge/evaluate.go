@@ -417,8 +417,8 @@ func activitySemanticDigest(index graphIndex, node semantic.Node) string {
 }
 
 func observationGaps(caseID, anchor, activityDigest string, elements ambiguityElements) ([]string, []observationGap) {
-	missing := make([]string, 0, IntegerDimensionTotal)
-	gaps := make([]observationGap, 0, IntegerDimensionTotal)
+	var missing []string
+	var gaps []observationGap
 	if len(elements.CandidateIDs) == 0 {
 		missing = append(missing, "interpretation_candidates")
 	}
