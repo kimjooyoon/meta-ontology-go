@@ -22,8 +22,14 @@ func buildIndicators(report Report) []Indicator {
 	indicators := make([]Indicator, 0, len(definitions))
 	for _, definition := range definitions {
 		indicators = append(indicators, Indicator{
-			ID: definition.id, Class: definition.class, ProofChoice: definition.proof,
+			ID: definition.id, MetricID: CatalogMetricID, Class: definition.class, ProofChoice: definition.proof,
 			MetaOperation: definition.operation, Value: boolInt(definition.value), Target: 1, Satisfied: definition.value,
+		})
+	}
+	for _, check := range operationSpecChecks(report) {
+		indicators = append(indicators, Indicator{
+			ID: check.id, MetricID: OperationSpecMetricID, Class: check.class, ProofChoice: check.proof,
+			MetaOperation: check.operation, Value: boolInt(check.satisfied), Target: 1, Satisfied: check.satisfied,
 		})
 	}
 	return indicators

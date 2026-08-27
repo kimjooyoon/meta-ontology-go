@@ -14,15 +14,12 @@ func catalogSources(source []byte) ([]byte, []byte, error) {
 	lines := strings.Split(string(source), "\n")
 	found := -1
 	for index, line := range lines {
-		if line == extensionDeclaration || line == extensionProgramLine {
+		if line == extensionDeclaration || strings.HasPrefix(line, extensionDeclaration+" computes ") {
 			if found >= 0 {
 				return nil, nil, fmt.Errorf("duplicate extension declaration")
 			}
 			found = index
 			continue
-		}
-		if strings.HasPrefix(line, extensionDeclaration+" computes ") {
-			return nil, nil, fmt.Errorf("non-canonical extension program")
 		}
 	}
 	if found < 0 {

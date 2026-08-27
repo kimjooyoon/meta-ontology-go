@@ -26,6 +26,9 @@ func Validate(report Report, headSHA string) error {
 	if len(report.Indicators) != CatalogIndicatorCount || len(report.Views) != 3 || len(report.Proofs) != 3 {
 		return fmt.Errorf("catalog denominator changed")
 	}
+	if err := validateOperationSpecEvidence(report); err != nil {
+		return err
+	}
 	if err := validateCatalogState(report); err != nil {
 		return err
 	}

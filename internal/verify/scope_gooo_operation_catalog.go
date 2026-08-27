@@ -17,4 +17,14 @@ func init() {
 	branchScopeAllowlist["agent/gooo-operation-catalog-extension"] = []string{
 		"examples/language-operation-catalog/main.gooo",
 	}
+	branchScopeAllowlist["agent/gooo-operation-spec-ir"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/language-operation-catalog.yml",
+		"examples/language-operation-catalog",
+		"internal/valuecatalog",
+		"internal/valueexecution",
+		"internal/verify/scope_gooo_operation_catalog.go",
+		"scripts/language-operation-catalog",
+	}
 }

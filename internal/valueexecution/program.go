@@ -9,20 +9,23 @@ import (
 type Program struct {
 	Activity            string
 	Text                string
-	OperationID         string
-	Operand             int64
+	Operation           OperationIR
 	SourceDigest        string
 	SemanticFingerprint string
 	ModelProgram        string
-	operation           operationSpec
+	implementation      registeredOperation
 	document            bidir.Document
 }
 
 func (program Program) Execute(inputs []int64) (int64, error) {
-	if len(inputs) != program.operation.Arity {
-		return 0, fail(ReasonInputArityMismatch, fmt.Sprintf("got=%d want=%d", len(inputs), program.operation.Arity))
+	if err := ValidateOperationIR(program.Operation); err != nil {
+		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "validate-operation-ir", err.Error())
 	}
-	return program.operation.Apply(inputs[0], program.Operand)
+	if len(inputs) != program.Operation.Spec.Arity {
+		detail := fmt.Sprintf("got=%d want=%d", len(inputs), program.Operation.Spec.Arity)
+		return 0, failAt(ReasonInputArityMismatch, "EXECUTE", "validate-input-arity", detail)
+	}
+	return program.implementation.Apply(inputs[0], program.Operation.Operand.Int64)
 }
 
 func activityDeclaration(document bidir.Document, name string) (bidir.Declaration, bool) {

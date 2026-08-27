@@ -18,12 +18,37 @@ type Authority struct {
 
 type Indicator struct {
 	ID            string `json:"id"`
+	MetricID      string `json:"metric_id"`
 	Class         string `json:"class"`
 	ProofChoice   string `json:"proof_choice"`
 	MetaOperation string `json:"meta_operation"`
 	Value         int    `json:"value"`
 	Target        int    `json:"target"`
 	Satisfied     bool   `json:"satisfied"`
+}
+
+type OperationSpecMetrics struct {
+	MetricID            string `json:"metric_id"`
+	FixedAxisTotal      int    `json:"fixed_axis_total"`
+	VerifiedTotal       int    `json:"verified_total"`
+	CoverageBasisPoints int    `json:"coverage_basis_points"`
+	UnknownPathCount    int    `json:"unknown_path_count"`
+	OpenClaims          int    `json:"open_claims"`
+	DischargedClaims    int    `json:"discharged_claims"`
+}
+
+type Claim struct {
+	ClaimID        string `json:"claim_id"`
+	Stage          string `json:"stage"`
+	Statement      string `json:"statement"`
+	Status         string `json:"status"`
+	EvidenceDigest string `json:"evidence_digest"`
+}
+
+type ProcessCoordinate struct {
+	Stage  string `json:"stage"`
+	Step   string `json:"step"`
+	Reason string `json:"reason"`
 }
 
 type View struct {

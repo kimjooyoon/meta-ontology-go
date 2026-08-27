@@ -45,8 +45,8 @@ func (measured measurement) evidence(program Program, counters []CounterexampleR
 	return evidence{
 		sourceParsed: true, activityResolved: true, programPresent: program.Text != "",
 		semanticBound: program.ModelProgram == program.Text, fingerprintSensitive: measured.fingerprintSensitive,
-		registryKnown: program.OperationID == "int.add" && len(operationRegistry) == 1,
-		operandParsed: program.Operand == 1, signatureSupported: program.operation.Arity == 1,
+		registryKnown: program.Operation.Spec.ID == "int.add" && len(operationRegistry) == 1,
+		operandParsed: program.Operation.Operand.Int64 == 1, signatureSupported: program.Operation.Spec.Arity == 1,
 		valueCasesExact: measured.passedCases == 5, outputsObserved: measured.passedCases == 5,
 		deterministicReplay: measured.replayedCases == 5, counterexamplesExact: measured.passedCounterexamples == 8,
 		unknownFailClosed:                counterexamplePassed(counters, "unknown-operation"),

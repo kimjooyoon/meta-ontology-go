@@ -23,4 +23,23 @@ func TestCompileRejectsUnknownProgramWithoutFallback(t *testing.T) {
 	if got := Reason(err); got != ReasonProgramUnknown {
 		t.Fatalf("reason = %s, want %s", got, ReasonProgramUnknown)
 	}
+	failure, ok := FailureOf(err)
+	if !ok || failure.Stage != "RESOLVE" || failure.Step != "resolve-operation-spec" {
+		t.Fatalf("unknown coordinate = %#v", failure)
+	}
+}
+
+func TestCompileLowersAndDefendsTypedOperationIR(t *testing.T) {
+	program, err := Compile("typed.gooo", valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`), "Increment")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateOperationIR(program.Operation); err != nil || program.Operation.Spec.Effect != EffectPureValue {
+		t.Fatalf("operation IR is not exact: %#v / %v", program.Operation, err)
+	}
+	program.Operation.Spec.Effect = "NETWORK"
+	_, err = program.Execute([]int64{1})
+	if got := Reason(err); got != ReasonOperationIRInvalid {
+		t.Fatalf("tampered IR reason = %s, want %s", got, ReasonOperationIRInvalid)
+	}
 }

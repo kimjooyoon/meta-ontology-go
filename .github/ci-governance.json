@@ -2234,6 +2234,19 @@
       ]
     },
     {
+      "branch": "agent/gooo-operation-spec-ir",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/language-operation-catalog.yml",
+        "examples/language-operation-catalog",
+        "internal/valuecatalog",
+        "internal/valueexecution",
+        "internal/verify/scope_gooo_operation_catalog.go",
+        "scripts/language-operation-catalog"
+      ]
+    },
+    {
       "branch": "agent/language-readiness-foundation-seed",
       "paths": [
         ".github/agent-scope-table.md",

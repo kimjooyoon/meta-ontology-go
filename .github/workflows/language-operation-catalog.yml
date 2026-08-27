@@ -7,6 +7,7 @@ on:
       - .github/workflows/language-operation-catalog.yml
       - examples/language-operation-catalog/**
       - internal/valuecatalog/**
+      - internal/valueexecution/**
       - scripts/language-operation-catalog/**
   push:
     branches: [dev]
@@ -14,6 +15,7 @@ on:
       - .github/workflows/language-operation-catalog.yml
       - examples/language-operation-catalog/**
       - internal/valuecatalog/**
+      - internal/valueexecution/**
       - scripts/language-operation-catalog/**
   workflow_dispatch:
 
@@ -37,11 +39,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          go fix ./internal/valuecatalog ./scripts/language-operation-catalog
+          go fix ./internal/valuecatalog ./internal/valueexecution ./scripts/language-operation-catalog
           gofmt -w \
+            internal/valueexecution/registry.go \
+            internal/valueexecution/compile.go \
+            internal/valueexecution/compile_operation.go \
+            internal/valueexecution/operation_spec_model.go \
+            internal/valueexecution/operation_spec_validate.go \
+            internal/valueexecution/program.go \
+            internal/valueexecution/failure.go \
+            internal/valueexecution/measurement.go \
+            internal/valueexecution/evaluate_test.go \
             internal/valuecatalog/model.go \
             internal/valuecatalog/model_program.go \
             internal/valuecatalog/model_evidence.go \
+            internal/valuecatalog/operation_spec_checks.go \
+            internal/valuecatalog/operation_spec_claims.go \
             internal/valuecatalog/digest.go \
             internal/valuecatalog/source_rewrite.go \
             internal/valuecatalog/core.go \
@@ -52,12 +65,13 @@ jobs:
             internal/valuecatalog/views.go \
             internal/valuecatalog/proofs.go \
             internal/valuecatalog/validate.go \
+            internal/valuecatalog/validate_operation_spec.go \
             internal/valuecatalog/validate_state.go \
             internal/valuecatalog/evaluate_test.go \
             scripts/language-operation-catalog/main.go
-          git diff --exit-code -- internal/valuecatalog scripts/language-operation-catalog
+          git diff --exit-code -- internal/valuecatalog internal/valueexecution scripts/language-operation-catalog
       - name: Compile baseline and future extension states
-        run: go test ./internal/valuecatalog
+        run: go test ./internal/valuecatalog ./internal/valueexecution
       - name: Emit two byte-identical catalog receipts
         shell: bash
         run: |
@@ -76,6 +90,8 @@ jobs:
             jq -r '"- extension coordinate: `\(.improvement.before.satisfied)/\(.improvement.before.total) -> \(.improvement.after.satisfied)/\(.improvement.after.total)`"' "$output/first.json"
             jq -r '"- cases: baseline `\(.summary.baseline_cases_passed)/\(.summary.baseline_cases_total)`; extension `\(.summary.extension_cases_passed)/\(.summary.extension_cases_total)`"' "$output/first.json"
             jq -r '"- reader views: `\(.views[0].satisfied)/\(.views[0].total)`, `\(.views[1].satisfied)/\(.views[1].total)`, `\(.views[2].satisfied)/\(.views[2].total)`"' "$output/first.json"
+            jq -r '"- OS9: `\(.operation_spec_metrics.verified_total)/\(.operation_spec_metrics.fixed_axis_total)`; open claims `\(.operation_spec_metrics.open_claims)`; unknown paths `\(.operation_spec_metrics.unknown_path_count)`"' "$output/first.json"
+            jq -r '"- process coordinate: `\(.coordinate.stage)/\(.coordinate.step)/\(.coordinate.reason)`"' "$output/first.json"
             jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.repository_mutation_authorized)`"' "$output/first.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head catalog receipt

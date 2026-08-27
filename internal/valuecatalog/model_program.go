@@ -1,12 +1,15 @@
 package valuecatalog
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
+
 type ProgramResult struct {
-	Activity            string       `json:"activity"`
-	Program             string       `json:"program"`
-	CompileReason       string       `json:"compile_reason"`
-	SemanticFingerprint string       `json:"semantic_fingerprint"`
-	Cases               []CaseResult `json:"cases"`
-	Passed              int          `json:"passed"`
+	Activity            string                     `json:"activity"`
+	Program             string                     `json:"program"`
+	Operation           valueexecution.OperationIR `json:"operation"`
+	CompileReason       string                     `json:"compile_reason"`
+	SemanticFingerprint string                     `json:"semantic_fingerprint"`
+	Cases               []CaseResult               `json:"cases"`
+	Passed              int                        `json:"passed"`
 }
 
 type CaseResult struct {

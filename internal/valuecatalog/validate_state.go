@@ -11,7 +11,7 @@ func validateCatalogState(report Report) error {
 		if report.Extension.Program != "int.add:2" || report.Extension.Passed != 3 || report.ExtensionCoreProgram != "int.add:2" {
 			return fmt.Errorf("extension evidence is not exact")
 		}
-		return validateCounts(report, 13, []int{3, 10, 13}, []bool{true, true, true})
+		return validateCounts(report, 22, []int{5, 19, 22}, []bool{true, true, true})
 	}
 	if report.Decision != DecisionBaselineObserved || report.Reason != ReasonBaselineObserved || report.Improvement.After != coordinate(0, 1) {
 		return fmt.Errorf("baseline observation decision is invalid")
@@ -19,7 +19,7 @@ func validateCatalogState(report Report) error {
 	if report.Extension.CompileReason != "VALUE_PROGRAM_MISSING" || report.Extension.Passed != 0 || report.ExtensionCoreProgram != "" {
 		return fmt.Errorf("extension slot is not an explicit baseline")
 	}
-	return validateCounts(report, 9, []int{1, 7, 9}, []bool{true, false, true})
+	return validateCounts(report, 18, []int{3, 16, 18}, []bool{true, false, true})
 }
 
 func validateCounts(report Report, indicatorSatisfied int, viewSatisfied []int, proofPassed []bool) error {
