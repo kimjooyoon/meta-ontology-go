@@ -1,0 +1,22 @@
+{
+  "schema": "gooo/meta-evidence-quorum-contract/v1",
+  "scope": "GOOO_CLAIM_JUSTIFICATION_ONLY",
+  "source_path": "examples/billing/main.gooo",
+  "fixed_case_denominator": 4,
+  "minimum_independent_groups": 3,
+  "required_roles": ["producer", "consumer", "meta-operation"],
+  "claim": {
+    "id": "billing-source-claim",
+    "statement": "the bounded billing activity is justified by independent evidence",
+    "producer": "gooo-source-producer",
+    "consumer": "evidence-quorum-consumer",
+    "meta_operation": "justify-claim-with-independent-evidence",
+    "proof_choice": "INDEPENDENT_PROVENANCE_QUORUM"
+  },
+  "cases": [
+    {"id": "sufficient-independent", "expected_decision": "PASS", "expected_resolution": "EXACT", "expected_reason": "QUORUM_CLAIM_DISCHARGED", "expected_status": "DISCHARGED"},
+    {"id": "same-origin-replica", "expected_decision": "FAIL_CLOSED", "expected_resolution": "LOWER_RESOLUTION", "expected_reason": "QUORUM_INSUFFICIENT_INDEPENDENT_GROUPS", "expected_status": "OPEN"},
+    {"id": "conflicting-independent", "expected_decision": "FAIL_CLOSED", "expected_resolution": "INVARIANT_ONLY", "expected_reason": "QUORUM_CONFLICT", "expected_status": "REFUTED"},
+    {"id": "insufficient-independent", "expected_decision": "FAIL_CLOSED", "expected_resolution": "LOWER_RESOLUTION", "expected_reason": "QUORUM_INSUFFICIENT_INDEPENDENT_GROUPS", "expected_status": "OPEN"}
+  ]
+}
