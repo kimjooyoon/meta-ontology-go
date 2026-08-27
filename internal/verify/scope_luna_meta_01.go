@@ -4,6 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/luna-meta-01-claim-lifecycle-calculus"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		".github/workflows/ci.yml",
 		".github/workflows/claim-lifecycle-calculus.yml",
 		"docs/research/claim-lifecycle-calculus.md",
 		"examples/claim-lifecycle-calculus",
