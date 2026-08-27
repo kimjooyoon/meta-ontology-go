@@ -1848,6 +1848,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        ".github/workflows/semantic-resolution-lattice.yml",
         "cmd/semantic-resolution-lattice-judge/**",
         "cmd/semantic-resolution-lattice-witness/**",
         "examples/semantic-resolution-lattice/**",

@@ -20,7 +20,10 @@ func main() {
 		fatal(err)
 	}
 	digest := sha256.Sum256(data)
-	receipt := semanticresolution.BuildLatticeReceipt(*source, "sha256:"+hex.EncodeToString(digest[:]))
+	receipt, err := semanticresolution.BuildLatticeReceipt(*source, "sha256:"+hex.EncodeToString(digest[:]), string(data))
+	if err != nil {
+		fatal(err)
+	}
 	if err := semanticresolution.ValidateLatticeReceipt(receipt); err != nil {
 		fatal(err)
 	}

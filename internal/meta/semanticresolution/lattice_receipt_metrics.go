@@ -6,13 +6,13 @@ import (
 )
 
 func validateMetrics(metrics []LatticeMetric) error {
-	if len(metrics) != 5 {
+	if len(metrics) != 8 {
 		return fmt.Errorf("lattice metric cardinality is invalid")
 	}
 	proofs := map[ProofLevel]bool{}
 	seen := map[string]bool{}
 	for _, item := range metrics {
-		if item.ID == "" || seen[item.ID] || item.Denominator != LatticeCaseDenominator || item.Numerator < 0 || item.Numerator > item.Denominator || item.Producer == "" || item.Consumer == "" || item.MetaOperation == "" {
+		if item.ID == "" || seen[item.ID] || (item.Denominator != LatticeCaseDenominator && item.Denominator != LatticeCounterfactualDenominator) || item.Numerator < 0 || item.Numerator > item.Denominator || item.Producer == "" || item.Consumer == "" || item.MetaOperation == "" {
 			return fmt.Errorf("lattice metric binding is invalid")
 		}
 		if item.Proof != ProofLevelFoundation && item.Proof != ProofLevelCoherence && item.Proof != ProofLevelRegression {

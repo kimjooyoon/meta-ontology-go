@@ -1,12 +1,13 @@
 package semanticresolution
 
 const (
-	LatticeSchema           = "gooo/meta-semantic-resolution-lattice/v1"
-	LatticeCaseDenominator  = 4
-	DecisionPass            = "PASS"
-	DecisionFailClosed      = "FAIL_CLOSED"
-	DecisionUnknown         = "UNKNOWN"
-	DecisionLowerResolution = "LOWER_RESOLUTION"
+	LatticeSchema                    = "gooo/meta-semantic-resolution-lattice/v1"
+	LatticeCaseDenominator           = 4
+	LatticeCounterfactualDenominator = 2
+	DecisionPass                     = "PASS"
+	DecisionFailClosed               = "FAIL_CLOSED"
+	DecisionUnknown                  = "UNKNOWN"
+	DecisionLowerResolution          = "LOWER_RESOLUTION"
 )
 
 func ResolvePartialObservation(observation PartialObservation) LatticeTransition {
@@ -33,39 +34,4 @@ func ResolvePartialObservation(observation PartialObservation) LatticeTransition
 
 func ReplayPartialObservation(observation PartialObservation) LatticeTransition {
 	return ResolvePartialObservation(observation)
-}
-
-func CanonicalLatticeCases() []LatticeCase {
-	observations := []struct {
-		id, claim   string
-		observation PartialObservation
-	}{
-		{"exact-observation", "claim-exact-observation", PartialObservation{Required: 3, Observed: 3}},
-		{"partial-invariant-descent", "claim-invariant-fallback", PartialObservation{Required: 3, Observed: 2, Reason: "REQUIRED_INPUT_UNOBSERVED"}},
-		{"malformed-observation", "claim-exact-under-missing-evidence", PartialObservation{Required: 3, Observed: 4, Reason: "OBSERVATION_CARDINALITY_INVALID"}},
-		{"mutation-authority", "claim-write-free-descent", PartialObservation{Required: 3, Observed: 2, Reason: "REQUIRED_INPUT_UNOBSERVED", MutationAuthority: true}},
-	}
-	cases := make([]LatticeCase, 0, len(observations))
-	for _, item := range observations {
-		transition := ResolvePartialObservation(item.observation)
-		decision := transition.Decision
-		if transition.Decision == DecisionLowerResolution {
-			decision = DecisionUnknown
-		}
-		cases = append(cases, LatticeCase{ID: item.id, Decision: decision, Observation: item.observation, Transition: transition, ClaimID: item.claim})
-	}
-	return cases
-}
-
-func CanonicalClaims() []ClaimRecord {
-	return []ClaimRecord{
-		claim("claim-exact-observation", ClaimDischarged),
-		claim("claim-invariant-fallback", ClaimOpen),
-		claim("claim-exact-under-missing-evidence", ClaimRefuted),
-		claim("claim-write-free-descent", ClaimDischarged),
-	}
-}
-
-func claim(id string, state ClaimState) ClaimRecord {
-	return ClaimRecord{ID: id, State: state, BeforeState: state, AfterState: state, Preserved: true}
 }

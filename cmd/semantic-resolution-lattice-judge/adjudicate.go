@@ -28,6 +28,29 @@ func adjudicate(input observation) transition {
 	return result
 }
 
+func reconstructCase(item declaredCase) latticeCase {
+	result := adjudicate(item.Observation)
+	return latticeCase{
+		ID: item.ID, Decision: caseDecision(result), Observation: item.Observation,
+		Transition: result, ClaimID: item.ClaimID,
+	}
+}
+
+func reconstructClaim(item declaredCase, result transition) claim {
+	before, after := item.ExpectedClaimState, item.ExpectedClaimState
+	if result.Decision == "PASS" && before == "OPEN" {
+		after = "DISCHARGED"
+	}
+	return claim{ID: item.ClaimID, State: after, BeforeState: before, AfterState: after, Preserved: before == after}
+}
+
+func caseDecision(result transition) string {
+	if result.Decision == "LOWER_RESOLUTION" {
+		return "UNKNOWN"
+	}
+	return result.Decision
+}
+
 func validateCase(item latticeCase) error {
 	if item.ID == "" || item.ClaimID == "" || item.Transition.FromResolution != exact {
 		return errors.New("invalid case identity")

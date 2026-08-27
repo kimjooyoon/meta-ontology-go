@@ -15,6 +15,9 @@ func ValidateLatticeReceipt(receipt LatticeReceipt) error {
 	if err := validateClaims(receipt.Claims); err != nil {
 		return err
 	}
+	if err := validateCounterfactuals(receipt.Counterfactuals); err != nil {
+		return err
+	}
 	return validateMetrics(receipt.Metrics)
 }
 

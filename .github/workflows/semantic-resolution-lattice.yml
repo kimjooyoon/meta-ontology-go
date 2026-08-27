@@ -1,0 +1,89 @@
+name: Semantic resolution lattice
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/semantic-resolution-lattice.yml'
+      - 'cmd/semantic-resolution-lattice-judge/**'
+      - 'cmd/semantic-resolution-lattice-witness/**'
+      - 'examples/semantic-resolution-lattice/**'
+      - 'internal/meta/semanticresolution/**'
+      - 'internal/verify/scope_part01.go'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  semantic-causality:
+    name: semantic Gooo influence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact pull request head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Bind Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Produce source-derived receipt and run independent judge
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/semantic-resolution-lattice"
+          mkdir -p "$work"
+          go run ./cmd/semantic-resolution-lattice-witness \
+            -source examples/semantic-resolution-lattice/main.gooo \
+            -output "$work/receipt.json"
+          go run ./cmd/semantic-resolution-lattice-judge \
+            -source examples/semantic-resolution-lattice/main.gooo \
+            -receipt "$work/receipt.json" \
+            -check \
+            -counterexamples
+          jq -e '
+            .schema == "gooo/meta-semantic-resolution-lattice/v1" and
+            (.source_sha256 | startswith("sha256:")) and
+            (.semantic_digest | startswith("sha256:")) and
+            .case_denominator == 4 and
+            .counts == {PASS: 1, FAIL_CLOSED: 2, UNKNOWN: 1} and
+            (.metrics | length) == 8 and
+            ([.metrics[] | select(.id == "gooo.metric.meta-resolution-lattice.semantic-influence.v1")]
+              | length == 1 and .[0].numerator == 1 and .[0].denominator == 2) and
+            ([.counterfactuals[] | select(.id == "observed-2-to-3")]
+              | length == 1 and
+                .[0].kind == "SEMANTIC" and
+                .[0].baseline_decision == "UNKNOWN" and
+                .[0].variant_decision == "PASS" and
+                .[0].source_digest_changed and
+                .[0].semantic_digest_changed and
+                .[0].decision_changed and
+                .[0].claim_transition_changed) and
+            ([.counterfactuals[] | select(.id == "comment-only")]
+              | length == 1 and
+                .[0].kind == "NON_SEMANTIC" and
+                .[0].source_digest_changed and
+                (.[0].semantic_digest_changed | not) and
+                (.[0].decision_changed | not) and
+                (.[0].claim_transition_changed | not))
+          ' "$work/receipt.json"
+          test -z "$(git status --porcelain)"
+      - name: Upload exact-head lattice evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: semantic-resolution-lattice-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/semantic-resolution-lattice
+          if-no-files-found: error
+          retention-days: 30

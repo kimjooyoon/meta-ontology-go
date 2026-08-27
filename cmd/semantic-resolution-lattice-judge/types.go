@@ -40,6 +40,21 @@ type claim struct {
 	Preserved   bool   `json:"preserved"`
 }
 
+type counterfactual struct {
+	ID                     string     `json:"id"`
+	Kind                   string     `json:"kind"`
+	BaselineDecision       string     `json:"baseline_decision"`
+	VariantDecision        string     `json:"variant_decision"`
+	BaselineTransition     transition `json:"baseline_transition"`
+	VariantTransition      transition `json:"variant_transition"`
+	BaselineClaim          claim      `json:"baseline_claim"`
+	VariantClaim           claim      `json:"variant_claim"`
+	SourceDigestChanged    bool       `json:"source_digest_changed"`
+	SemanticDigestChanged  bool       `json:"semantic_digest_changed"`
+	DecisionChanged        bool       `json:"decision_changed"`
+	ClaimTransitionChanged bool       `json:"claim_transition_changed"`
+}
+
 type metric struct {
 	ID            string `json:"id"`
 	Class         string `json:"class"`
@@ -57,6 +72,7 @@ type receipt struct {
 	Schema            string `json:"schema"`
 	Source            string `json:"source"`
 	SourceSHA256      string `json:"source_sha256"`
+	SemanticDigest    string `json:"semantic_digest"`
 	RepositoryWrites  int    `json:"repository_writes"`
 	MutationAuthority bool   `json:"mutation_authority"`
 	CaseDenominator   int    `json:"case_denominator"`
@@ -66,7 +82,8 @@ type receipt struct {
 		FailClosed int `json:"fail_closed"`
 		Unknown    int `json:"unknown"`
 	} `json:"counts"`
-	Cases   []latticeCase `json:"cases"`
-	Claims  []claim       `json:"claims"`
-	Metrics []metric      `json:"metrics"`
+	Cases           []latticeCase    `json:"cases"`
+	Claims          []claim          `json:"claims"`
+	Counterfactuals []counterfactual `json:"counterfactuals"`
+	Metrics         []metric         `json:"metrics"`
 }

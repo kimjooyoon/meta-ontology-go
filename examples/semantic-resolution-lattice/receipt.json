@@ -1,7 +1,8 @@
 {
   "schema": "gooo/meta-semantic-resolution-lattice/v1",
   "source": "examples/semantic-resolution-lattice/main.gooo",
-  "source_sha256": "sha256:cb3c235b3b2a7e6d0f315ff76abb7593b4e7ec5cc66f4e39b158ce274e861b3a",
+  "source_sha256": "sha256:289c9e069745332ca1cf93a2ee33888dea4c38237a0dc9e5a37f74293d6c160e",
+  "semantic_digest": "sha256:0689223ecc8d93985d9e467af206970ddeeda7d56886ec8810cefbb81e4b4afa",
   "repository_writes": 0,
   "mutation_authority": false,
   "case_denominator": 4,
@@ -18,7 +19,7 @@
       "observation": {
         "required": 3,
         "observed": 3,
-        "reason": "",
+        "reason": "OBSERVATION_COMPLETE",
         "repository_writes": 0,
         "mutation_authority": false
       },
@@ -126,6 +127,103 @@
       "preserved": true
     }
   ],
+  "counterfactuals": [
+    {
+      "id": "observed-2-to-3",
+      "kind": "SEMANTIC",
+      "baseline_decision": "UNKNOWN",
+      "variant_decision": "PASS",
+      "baseline_transition": {
+        "from_resolution": "exact_operation",
+        "to_resolution": "invariant_only",
+        "decision": "LOWER_RESOLUTION",
+        "reason": "PARTIAL_OBSERVATION",
+        "unknown": {
+          "stage": "PARTIAL_OBSERVATION",
+          "step": 1,
+          "reason": "REQUIRED_INPUT_UNOBSERVED"
+        },
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "variant_transition": {
+        "from_resolution": "exact_operation",
+        "to_resolution": "exact_operation",
+        "decision": "PASS",
+        "reason": "OBSERVATION_COMPLETE",
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "baseline_claim": {
+        "id": "claim-invariant-fallback",
+        "state": "OPEN",
+        "before_state": "OPEN",
+        "after_state": "OPEN",
+        "preserved": true
+      },
+      "variant_claim": {
+        "id": "claim-invariant-fallback",
+        "state": "DISCHARGED",
+        "before_state": "OPEN",
+        "after_state": "DISCHARGED",
+        "preserved": false
+      },
+      "source_digest_changed": true,
+      "semantic_digest_changed": true,
+      "decision_changed": true,
+      "claim_transition_changed": true
+    },
+    {
+      "id": "comment-only",
+      "kind": "NON_SEMANTIC",
+      "baseline_decision": "UNKNOWN",
+      "variant_decision": "UNKNOWN",
+      "baseline_transition": {
+        "from_resolution": "exact_operation",
+        "to_resolution": "invariant_only",
+        "decision": "LOWER_RESOLUTION",
+        "reason": "PARTIAL_OBSERVATION",
+        "unknown": {
+          "stage": "PARTIAL_OBSERVATION",
+          "step": 1,
+          "reason": "REQUIRED_INPUT_UNOBSERVED"
+        },
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "variant_transition": {
+        "from_resolution": "exact_operation",
+        "to_resolution": "invariant_only",
+        "decision": "LOWER_RESOLUTION",
+        "reason": "PARTIAL_OBSERVATION",
+        "unknown": {
+          "stage": "PARTIAL_OBSERVATION",
+          "step": 1,
+          "reason": "REQUIRED_INPUT_UNOBSERVED"
+        },
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "baseline_claim": {
+        "id": "claim-invariant-fallback",
+        "state": "OPEN",
+        "before_state": "OPEN",
+        "after_state": "OPEN",
+        "preserved": true
+      },
+      "variant_claim": {
+        "id": "claim-invariant-fallback",
+        "state": "OPEN",
+        "before_state": "OPEN",
+        "after_state": "OPEN",
+        "preserved": true
+      },
+      "source_digest_changed": true,
+      "semantic_digest_changed": false,
+      "decision_changed": false,
+      "claim_transition_changed": false
+    }
+  ],
   "metrics": [
     {
       "id": "gooo.metric.meta-resolution-lattice.exact-observation.count.v1",
@@ -186,6 +284,42 @@
       "consumer": "semantic-resolution-lattice-judge",
       "meta_operation": "preserve-read-only-resolution",
       "proof": "FOUNDATION"
+    },
+    {
+      "id": "gooo.metric.meta-resolution-lattice.semantic-decision-influence.v1",
+      "class": "outcome",
+      "numerator": 1,
+      "denominator": 2,
+      "unit": "counterfactuals",
+      "relation": "greater_or_equal",
+      "producer": "semanticresolution.CasesFromGoooSource",
+      "consumer": "semantic-resolution-lattice-judge",
+      "meta_operation": "reconstruct-decision-from-gooo-value",
+      "proof": "COHERENCE"
+    },
+    {
+      "id": "gooo.metric.meta-resolution-lattice.semantic-claim-transition-influence.v1",
+      "class": "driver",
+      "numerator": 1,
+      "denominator": 2,
+      "unit": "counterfactuals",
+      "relation": "greater_or_equal",
+      "producer": "semanticresolution.ClaimsFromGoooSource",
+      "consumer": "semantic-resolution-lattice-judge",
+      "meta_operation": "reconstruct-claim-transition-from-gooo-value",
+      "proof": "REGRESSION"
+    },
+    {
+      "id": "gooo.metric.meta-resolution-lattice.semantic-influence.v1",
+      "class": "outcome",
+      "numerator": 1,
+      "denominator": 2,
+      "unit": "counterfactuals",
+      "relation": "greater_or_equal",
+      "producer": "semanticresolution.CasesFromGoooSource",
+      "consumer": "semantic-resolution-lattice-judge",
+      "meta_operation": "reconstruct-decision-and-claim-transition",
+      "proof": "COHERENCE"
     }
   ]
 }

@@ -2,8 +2,15 @@ package semanticresolution
 
 import "fmt"
 
-func BuildLatticeReceipt(source, sourceSHA256 string) LatticeReceipt {
-	cases := CanonicalLatticeCases()
+func BuildLatticeReceipt(source, sourceSHA256, sourceContents string) (LatticeReceipt, error) {
+	cases, claims, semanticHash, err := casesFromGoooSource(source, sourceContents)
+	if err != nil {
+		return LatticeReceipt{}, err
+	}
+	counterfactuals, err := buildLatticeCounterfactuals(source, sourceContents, cases, claims)
+	if err != nil {
+		return LatticeReceipt{}, err
+	}
 	counts := LatticeCounts{CasesTotal: len(cases)}
 	for _, item := range cases {
 		switch item.Decision {
@@ -15,19 +22,26 @@ func BuildLatticeReceipt(source, sourceSHA256 string) LatticeReceipt {
 			counts.Unknown++
 		}
 	}
-	return LatticeReceipt{
+	receipt := LatticeReceipt{
 		Schema: LatticeSchema, Source: source, SourceSHA256: sourceSHA256,
+		SemanticDigest:   semanticHash,
 		RepositoryWrites: 0, MutationAuthority: false, CaseDenominator: LatticeCaseDenominator,
-		Counts: counts, Cases: cases, Claims: CanonicalClaims(), Metrics: canonicalLatticeMetrics(),
+		Counts: counts, Cases: cases, Claims: claims, Counterfactuals: counterfactuals,
+		Metrics: canonicalLatticeMetrics(counterfactuals),
 	}
+	return receipt, nil
 }
 
 func metric(id, class string, numerator int, unit, relation, producer, consumer, operation string, proof ProofLevel) LatticeMetric {
-	return LatticeMetric{ID: id, Class: class, Numerator: numerator, Denominator: LatticeCaseDenominator, Unit: unit, Relation: relation, Producer: producer, Consumer: consumer, MetaOperation: operation, Proof: proof}
+	return metricWithDenominator(id, class, numerator, LatticeCaseDenominator, unit, relation, producer, consumer, operation, proof)
+}
+
+func metricWithDenominator(id, class string, numerator, denominator int, unit, relation, producer, consumer, operation string, proof ProofLevel) LatticeMetric {
+	return LatticeMetric{ID: id, Class: class, Numerator: numerator, Denominator: denominator, Unit: unit, Relation: relation, Producer: producer, Consumer: consumer, MetaOperation: operation, Proof: proof}
 }
 
 func validateReceiptIdentity(receipt LatticeReceipt) error {
-	if receipt.Schema != LatticeSchema || receipt.CaseDenominator != LatticeCaseDenominator || receipt.RepositoryWrites != 0 || receipt.MutationAuthority {
+	if receipt.Schema != LatticeSchema || receipt.CaseDenominator != LatticeCaseDenominator || receipt.RepositoryWrites != 0 || receipt.MutationAuthority || receipt.SemanticDigest == "" {
 		return fmt.Errorf("lattice receipt identity or effect guardrail is invalid")
 	}
 	if len(receipt.Cases) != LatticeCaseDenominator || receipt.Counts.CasesTotal != LatticeCaseDenominator {
@@ -35,6 +49,9 @@ func validateReceiptIdentity(receipt LatticeReceipt) error {
 	}
 	if receipt.Counts.Pass != 1 || receipt.Counts.FailClosed != 2 || receipt.Counts.Unknown != 1 {
 		return fmt.Errorf("lattice receipt decision counts are invalid")
+	}
+	if len(receipt.Counterfactuals) != LatticeCounterfactualDenominator {
+		return fmt.Errorf("lattice counterfactual denominator is not fixed")
 	}
 	return nil
 }

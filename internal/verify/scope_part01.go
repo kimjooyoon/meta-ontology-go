@@ -7,6 +7,7 @@ var branchScopeAllowlist = map[string][]string{"agent/feedback-payload-envelope-
 func init() {
 	branchScopeAllowlist["agent/luna-meta-02-resolution-descent-lattice"] = []string{
 		".github/agent-scope-table.md", ".github/ci-governance.json",
+		".github/workflows/semantic-resolution-lattice.yml",
 		"cmd/semantic-resolution-lattice-judge", "cmd/semantic-resolution-lattice-witness",
 		"examples/semantic-resolution-lattice", "internal/meta/semanticresolution",
 		"internal/verify/scope_part01.go",
