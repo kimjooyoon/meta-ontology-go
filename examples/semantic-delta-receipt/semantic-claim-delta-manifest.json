@@ -1,0 +1,25 @@
+{
+  "schema": "gooo/semantic-delta-claim-delta-fixtures/v1",
+  "cases": [
+    {
+      "id": "claim-removal",
+      "before_path": "examples/semantic-delta-receipt/claim-removal-before.gooo",
+      "after_path": "examples/semantic-delta-receipt/claim-removal-after.gooo",
+      "expected_added_ids": [],
+      "expected_removed_ids": [
+        "gooo://semantic-delta/claim/object/57aab30b8a6509ba8db7ed23b4107ee88486257b910a793e1097eed35093259b",
+        "gooo://semantic-delta/claim/object/a79236cb388958e6897d00466df2c30c7f6bafee7287cd40312d0298064420b5"
+      ]
+    },
+    {
+      "id": "claim-addition",
+      "before_path": "examples/semantic-delta-receipt/claim-addition-before.gooo",
+      "after_path": "examples/semantic-delta-receipt/claim-addition-after.gooo",
+      "expected_added_ids": [
+        "gooo://semantic-delta/claim/object/49e846f56d044c2a3ce25104568ee5cfd8fbe82ad0103fb8ade576be11ba5994",
+        "gooo://semantic-delta/claim/object/741e1d684e67aac4c1f9c5a5ad74db5b89a72f190b22f71114d05a85a9b1101f"
+      ],
+      "expected_removed_ids": []
+    }
+  ]
+}

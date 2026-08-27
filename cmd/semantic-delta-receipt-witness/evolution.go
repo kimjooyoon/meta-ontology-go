@@ -79,6 +79,15 @@ type evolutionCase struct {
 	ObservedSourcePair               evolutionSourcePair       `json:"observed_source_pair"`
 	ProducerConsumerExact            bool                      `json:"producer_consumer_exact"`
 	ConsumerPropositionTargetChanges []propositionTargetChange `json:"consumer_proposition_target_changes"`
+	BaselineObservation              persistenceObservation    `json:"baseline_observation"`
+	AlternateObservation             persistenceObservation    `json:"alternate_observation"`
+	ProducerBaselineObservation      persistenceObservation    `json:"producer_baseline_observation"`
+	ProducerAlternateObservation     persistenceObservation    `json:"producer_alternate_observation"`
+	ConsumerBaselineObservation      persistenceObservation    `json:"consumer_baseline_observation"`
+	ConsumerAlternateObservation     persistenceObservation    `json:"consumer_alternate_observation"`
+	ProducerPersistence              persistenceMapping        `json:"producer_persistence"`
+	ConsumerPersistence              persistenceMapping        `json:"consumer_persistence"`
+	PersistenceExact                 bool                      `json:"persistence_exact"`
 	Decision                         string                    `json:"decision"`
 	Resolution                       string                    `json:"resolution"`
 	Stage                            string                    `json:"stage"`
@@ -105,45 +114,125 @@ type evolutionSourcePair struct {
 	AfterSemanticDigest  string `json:"after_semantic_digest"`
 }
 
-type evolutionReport struct {
-	Schema                          string          `json:"schema"`
-	Authority                       string          `json:"authority"`
-	OldArtifactPath                 string          `json:"old_artifact_path"`
-	OldArtifactBytes                int             `json:"old_artifact_bytes"`
-	OldArtifactDigest               string          `json:"old_artifact_digest"`
-	NewArtifactPath                 string          `json:"new_artifact_path"`
-	NewArtifactBytes                int             `json:"new_artifact_bytes"`
-	NewArtifactDigest               string          `json:"new_artifact_digest"`
-	DenominatorID                   string          `json:"denominator_id"`
-	DenominatorUnchanged            bool            `json:"denominator_unchanged"`
-	FixedClaimTotalBefore           int             `json:"fixed_claim_total_before"`
-	FixedClaimTotalAfter            int             `json:"fixed_claim_total_after"`
-	StableIdentityPreserved         int             `json:"stable_identity_preserved"`
-	StableIdentityTotal             int             `json:"stable_identity_total"`
-	PersistentClaimIdentity         int             `json:"persistent_claim_identity"`
-	PersistentClaimIdentityTotal    int             `json:"persistent_claim_identity_total"`
-	PropositionChanges              int             `json:"proposition_changes"`
-	EvidenceOnlyChanges             int             `json:"evidence_only_changes"`
-	EvolutionRowsReconstructed      int             `json:"evolution_rows_independently_reconstructed"`
-	EvolutionRowsTotal              int             `json:"evolution_rows_total"`
-	EvolutionClaimRowsReconstructed int             `json:"evolution_claim_rows_independently_reconstructed"`
-	EvolutionClaimRowsTotal         int             `json:"evolution_claim_rows_total"`
-	RawEvidenceChangedNonsemantic   int             `json:"raw_evidence_changed_on_nonsemantic"`
-	RawEvidenceNonsemanticTotal     int             `json:"raw_evidence_nonsemantic_total"`
-	SemanticTargetPreserved         int             `json:"semantic_target_preserved_on_nonsemantic"`
-	SemanticTargetNonsemanticTotal  int             `json:"semantic_target_nonsemantic_total"`
-	ClaimRecreatedDueOnlyToRaw      int             `json:"claim_recreated_due_only_to_raw_digest"`
-	ClaimRecreatedDueOnlyToRawTotal int             `json:"claim_recreated_due_only_to_raw_digest_total"`
-	ChangeKind                      string          `json:"change_kind"`
-	Cases                           []evolutionCase `json:"cases"`
-	Decision                        string          `json:"decision"`
-	Resolution                      string          `json:"resolution"`
-	Stage                           string          `json:"stage"`
-	Step                            string          `json:"step"`
-	Reason                          string          `json:"reason"`
+type persistenceManifest struct {
+	Schema          string                    `json:"schema"`
+	DenominatorID   string                    `json:"denominator_id"`
+	FixedCaseTotal  int                       `json:"fixed_case_total"`
+	FixedClaimTotal int                       `json:"fixed_claim_total"`
+	Cases           []persistenceManifestCase `json:"cases"`
 }
 
-func reconstructEvolution(oldPath, newPath string) (evolutionReport, error) {
+type persistenceManifestCase struct {
+	ID                  string `json:"id"`
+	ExpectedClaimTotal  int    `json:"expected_claim_total"`
+	BaselineBeforePath  string `json:"baseline_before_path"`
+	BaselineAfterPath   string `json:"baseline_after_path"`
+	AlternateBeforePath string `json:"alternate_before_path"`
+	AlternateAfterPath  string `json:"alternate_after_path"`
+}
+
+type claimIdentityRecordSnapshot struct {
+	StableID                     string `json:"stable_id"`
+	Kind                         string `json:"kind"`
+	RelationRole                 string `json:"relation_role"`
+	NormalizedProposition        string `json:"normalized_proposition"`
+	PropositionDigest            string `json:"proposition_digest"`
+	TargetAddress                string `json:"target_address"`
+	TargetAddressDigest          string `json:"target_address_digest"`
+	PreservationOf               string `json:"preservation_of,omitempty"`
+	BeforeSourcePath             string `json:"before_source_path,omitempty"`
+	AfterSourcePath              string `json:"after_source_path,omitempty"`
+	EvidenceBeforeRawDigest      string `json:"evidence_before_raw_digest,omitempty"`
+	EvidenceAfterRawDigest       string `json:"evidence_after_raw_digest,omitempty"`
+	EvidenceBeforeSemanticDigest string `json:"evidence_before_semantic_digest,omitempty"`
+	EvidenceAfterSemanticDigest  string `json:"evidence_after_semantic_digest,omitempty"`
+}
+
+type persistenceObservation struct {
+	SourcePair evolutionSourcePair           `json:"source_pair"`
+	Records    []claimIdentityRecordSnapshot `json:"records"`
+}
+
+type persistenceMapping struct {
+	BaselineIDs                     []string `json:"baseline_ids"`
+	AlternateIDs                    []string `json:"alternate_ids"`
+	RemovedIDs                      []string `json:"removed_ids,omitempty"`
+	AddedIDs                        []string `json:"added_ids,omitempty"`
+	StableIdentityPreserved         int      `json:"stable_identity_preserved"`
+	StableIdentityTotal             int      `json:"stable_identity_total"`
+	EvidenceOnlyChanges             int      `json:"evidence_only_changes"`
+	EvidenceOnlyTotal               int      `json:"evidence_only_total"`
+	RawEvidenceChanged              int      `json:"raw_evidence_changed"`
+	RawEvidenceTotal                int      `json:"raw_evidence_total"`
+	SemanticTargetPreserved         int      `json:"semantic_target_preserved"`
+	SemanticTargetTotal             int      `json:"semantic_target_total"`
+	ClaimRecreatedDueOnlyToRaw      int      `json:"claim_recreated_due_only_to_raw_digest"`
+	ClaimRecreatedDueOnlyToRawTotal int      `json:"claim_recreated_due_only_to_raw_digest_total"`
+	Decision                        string   `json:"decision"`
+	Resolution                      string   `json:"resolution"`
+	Stage                           string   `json:"stage"`
+	Step                            string   `json:"step"`
+	Reason                          string   `json:"reason"`
+}
+
+type evolutionReport struct {
+	Schema                            string          `json:"schema"`
+	Authority                         string          `json:"authority"`
+	OldArtifactPath                   string          `json:"old_artifact_path"`
+	OldArtifactBytes                  int             `json:"old_artifact_bytes"`
+	OldArtifactDigest                 string          `json:"old_artifact_digest"`
+	NewArtifactPath                   string          `json:"new_artifact_path"`
+	NewArtifactBytes                  int             `json:"new_artifact_bytes"`
+	NewArtifactDigest                 string          `json:"new_artifact_digest"`
+	PersistenceManifestPath           string          `json:"persistence_manifest_path"`
+	PersistenceManifestBytes          int             `json:"persistence_manifest_bytes"`
+	PersistenceManifestDigest         string          `json:"persistence_manifest_digest"`
+	DenominatorID                     string          `json:"denominator_id"`
+	DenominatorUnchanged              bool            `json:"denominator_unchanged"`
+	FixedClaimTotalBefore             int             `json:"fixed_claim_total_before"`
+	FixedClaimTotalAfter              int             `json:"fixed_claim_total_after"`
+	StableIdentityPreserved           int             `json:"stable_identity_preserved"`
+	StableIdentityTotal               int             `json:"stable_identity_total"`
+	PersistentClaimIdentity           int             `json:"persistent_claim_identity"`
+	PersistentClaimIdentityTotal      int             `json:"persistent_claim_identity_total"`
+	PropositionChanges                int             `json:"proposition_changes"`
+	EvidenceOnlyChanges               int             `json:"evidence_only_changes"`
+	EvidenceOnlyTotal                 int             `json:"evidence_only_total"`
+	EvolutionRowsReconstructed        int             `json:"evolution_rows_independently_reconstructed"`
+	EvolutionRowsTotal                int             `json:"evolution_rows_total"`
+	EvolutionClaimRowsReconstructed   int             `json:"evolution_claim_rows_independently_reconstructed"`
+	EvolutionClaimRowsTotal           int             `json:"evolution_claim_rows_total"`
+	RawEvidenceChangedNonsemantic     int             `json:"raw_evidence_changed_on_nonsemantic"`
+	RawEvidenceNonsemanticTotal       int             `json:"raw_evidence_nonsemantic_total"`
+	SemanticTargetPreserved           int             `json:"semantic_target_preserved_on_nonsemantic"`
+	SemanticTargetNonsemanticTotal    int             `json:"semantic_target_nonsemantic_total"`
+	ClaimRecreatedDueOnlyToRaw        int             `json:"claim_recreated_due_only_to_raw_digest"`
+	ClaimRecreatedDueOnlyToRawTotal   int             `json:"claim_recreated_due_only_to_raw_digest_total"`
+	ExpectationConformanceRows        int             `json:"expectation_conformance_rows"`
+	ExpectationConformanceRowsTotal   int             `json:"expectation_conformance_rows_total"`
+	ExpectationConformanceClaims      int             `json:"expectation_conformance_claim_rows"`
+	ExpectationConformanceClaimsTotal int             `json:"expectation_conformance_claim_rows_total"`
+	V3ObservationPairsReconstructed   int             `json:"v3_observation_pairs_reconstructed"`
+	V3ObservationPairsTotal           int             `json:"v3_observation_pairs_total"`
+	V3ProducerConsumerExact           int             `json:"v3_producer_consumer_exact"`
+	V3ProducerConsumerExactTotal      int             `json:"v3_producer_consumer_exact_total"`
+	MigrationRemoved                  int             `json:"historical_migration_removed"`
+	MigrationAdded                    int             `json:"historical_migration_added"`
+	MigrationMappingRows              int             `json:"historical_migration_mapping_rows"`
+	MigrationDecision                 string          `json:"historical_migration_decision"`
+	MigrationResolution               string          `json:"historical_migration_resolution"`
+	PersistenceDecision               string          `json:"persistence_decision"`
+	PersistenceResolution             string          `json:"persistence_resolution"`
+	ChangeKind                        string          `json:"change_kind"`
+	Cases                             []evolutionCase `json:"cases"`
+	Decision                          string          `json:"decision"`
+	Resolution                        string          `json:"resolution"`
+	Stage                             string          `json:"stage"`
+	Step                              string          `json:"step"`
+	Reason                            string          `json:"reason"`
+}
+
+func reconstructEvolution(oldPath, newPath, persistencePath string) (evolutionReport, error) {
 	oldRaw, err := os.ReadFile(oldPath)
 	if err != nil {
 		return evolutionReport{}, fmt.Errorf("read old expectation artifact: %w", err)
@@ -160,7 +249,34 @@ func reconstructEvolution(oldPath, newPath string) (evolutionReport, error) {
 	if err != nil {
 		return evolutionReport{}, fmt.Errorf("decode old expectation artifact: %w", err)
 	}
-	report := evolutionReport{Schema: evolutionSchema, Authority: "SOURCE_DERIVED_SEMANTIC_CLAIM_CONTRACT", OldArtifactPath: oldPath, OldArtifactBytes: len(oldRaw), OldArtifactDigest: bytesDigest(oldRaw), NewArtifactPath: newPath, NewArtifactBytes: len(newRaw), NewArtifactDigest: bytesDigest(newRaw), DenominatorID: newArtifact.DenominatorID, DenominatorUnchanged: oldArtifact.DenominatorID == newArtifact.DenominatorID && oldArtifact.FixedClaimTotal == newArtifact.FixedClaimTotal, FixedClaimTotalBefore: oldArtifact.FixedClaimTotal, FixedClaimTotalAfter: newArtifact.FixedClaimTotal, EvolutionRowsTotal: len(newArtifact.Cases), Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower, Stage: "claim-identity-evolution", Step: "reconstruct-old-new-artifacts", Reason: "CLAIM_IDENTITY_EVOLUTION_UNKNOWN"}
+	persistenceRaw, err := os.ReadFile(persistencePath)
+	if err != nil {
+		return evolutionReport{}, fmt.Errorf("read persistence manifest: %w", err)
+	}
+	persistence, err := decodePersistenceManifest(persistenceRaw)
+	if err != nil {
+		return evolutionReport{}, fmt.Errorf("decode persistence manifest: %w", err)
+	}
+	meta, err := producer.ReadMetaContract()
+	if err != nil {
+		return evolutionReport{}, fmt.Errorf("read source-derived meta contract: %w", err)
+	}
+	if !persistenceRecipesMatch(meta.PersistenceRecipes, persistence.Cases) {
+		return evolutionReport{}, fmt.Errorf("meta persistence recipes do not match fixed manifest")
+	}
+	report := evolutionReport{
+		Schema: evolutionSchema, Authority: "SOURCE_DERIVED_SEMANTIC_CLAIM_CONTRACT",
+		OldArtifactPath: oldPath, OldArtifactBytes: len(oldRaw), OldArtifactDigest: bytesDigest(oldRaw),
+		NewArtifactPath: newPath, NewArtifactBytes: len(newRaw), NewArtifactDigest: bytesDigest(newRaw),
+		PersistenceManifestPath: persistencePath, PersistenceManifestBytes: len(persistenceRaw), PersistenceManifestDigest: bytesDigest(persistenceRaw),
+		DenominatorID:         newArtifact.DenominatorID,
+		DenominatorUnchanged:  oldArtifact.DenominatorID == newArtifact.DenominatorID && oldArtifact.FixedClaimTotal == newArtifact.FixedClaimTotal,
+		FixedClaimTotalBefore: oldArtifact.FixedClaimTotal, FixedClaimTotalAfter: newArtifact.FixedClaimTotal,
+		EvolutionRowsTotal: len(newArtifact.Cases), ExpectationConformanceRowsTotal: 5, ExpectationConformanceClaimsTotal: 31,
+		V3ObservationPairsTotal: 5, V3ProducerConsumerExactTotal: 5,
+		Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower,
+		Stage: "claim-identity-evolution", Step: "reconstruct-source-observations", Reason: "CLAIM_IDENTITY_EVOLUTION_UNKNOWN",
+	}
 	oldByID := make(map[string]legacyExpectationRow, len(oldArtifact.Cases))
 	for _, row := range oldArtifact.Cases {
 		oldByID[row.ID] = row
@@ -169,15 +285,21 @@ func reconstructEvolution(oldPath, newPath string) (evolutionReport, error) {
 	for _, row := range newArtifact.Cases {
 		newByID[row.ID] = row
 	}
+	manifestByID := make(map[string]persistenceManifestCase, len(persistence.Cases))
+	for _, row := range persistence.Cases {
+		manifestByID[row.ID] = row
+	}
 	for _, definition := range producer.Denominator() {
 		oldRow, oldOK := oldByID[definition.ID]
 		newRow, newOK := newByID[definition.ID]
 		input := producer.Input{CaseID: definition.ID, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath, SubjectSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ObservedCheckoutSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
 		producerReceipt, producerErr := producer.ProduceFiles(input)
-		producerRecords := producer.ClaimIdentityRecords(producerReceipt)
-		consumerRecords, sourcePair, consumerErr := consumer.ClaimIdentityRecordsFromFiles(consumer.Input{CaseID: input.CaseID, BeforePath: input.BeforePath, AfterPath: input.AfterPath, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA})
+		producerObservation, producerObservationErr := producer.ClaimIdentityObservationFromFiles(input)
+		producerRecords := producerObservation.Records
+		consumerInput := consumer.Input{CaseID: input.CaseID, BeforePath: input.BeforePath, AfterPath: input.AfterPath, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA}
+		consumerRecords, sourcePair, consumerErr := consumer.ClaimIdentityRecordsFromFiles(consumerInput)
 		oldObservedIDs, oldRecords := legacyClaimIdentity(producerReceipt, input)
-		consumerOldRecords, _, consumerOldErr := consumer.LegacyClaimIdentityRecordsFromFiles(consumer.Input{CaseID: input.CaseID, BeforePath: input.BeforePath, AfterPath: input.AfterPath, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA})
+		consumerOldRecords, _, consumerOldErr := consumer.LegacyClaimIdentityRecordsFromFiles(consumerInput)
 		row := evolutionCase{CaseID: definition.ID, Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower, Stage: "claim-identity-evolution", Step: "reconstruct-old-new-artifacts", Reason: "CLAIM_IDENTITY_EVOLUTION_UNKNOWN"}
 		if oldOK {
 			row.OldExpectedIDs = sortedIDs(oldRow.ExpectedClaimIDs)
@@ -196,48 +318,79 @@ func reconstructEvolution(oldPath, newPath string) (evolutionReport, error) {
 		row.ProducerObservedIDs = producerRecordIDs(producerRecords)
 		row.ConsumerObservedIDs = consumerRecordIDs(consumerRecords)
 		row.RemovedIDs, row.AddedIDs = setDiff(row.OldExpectedIDs, row.NewExpectedIDs)
-		row.ProducerConsumerExact = producerRecordsEqual(producerRecords, consumerRecords)
+		row.ProducerConsumerExact = producerObservationErr == nil && producerErr == nil && consumerErr == nil && producerRecordsEqual(producerRecords, consumerRecords)
 		row.NewExpectationProducerExact = expectedProducerRecordsEqual(newRow.ExpectedClaims, producerRecords)
 		row.NewExpectationConsumerExact = expectedConsumerRecordsEqual(newRow.ExpectedClaims, consumerRecords)
 		row.ObservedSourcePair = evolutionSourcePair{BeforePath: sourcePair.BeforePath, AfterPath: sourcePair.AfterPath, BeforeRawDigest: sourcePair.BeforeRawDigest, AfterRawDigest: sourcePair.AfterRawDigest, BeforeSemanticDigest: sourcePair.BeforeSemanticDigest, AfterSemanticDigest: sourcePair.AfterSemanticDigest}
-		if consumerErr == nil {
-			row.ClaimRecreatedDueOnlyToRaw, row.ClaimRecreatedDueOnlyToRawTotal = rawEvidenceIdentityProbe(consumerRecords)
-			report.ClaimRecreatedDueOnlyToRaw += row.ClaimRecreatedDueOnlyToRaw
-			report.ClaimRecreatedDueOnlyToRawTotal += row.ClaimRecreatedDueOnlyToRawTotal
-		}
-		if producerErr == nil && consumerErr == nil && consumerOldErr == nil && oldOK && newOK && row.OldArtifactExact && recordIDsEqual(row.NewExpectedIDs, row.ProducerObservedIDs) && recordIDsEqual(row.NewExpectedIDs, row.ConsumerObservedIDs) && row.ProducerConsumerExact && row.NewExpectationProducerExact && row.NewExpectationConsumerExact {
-			row.StableIdentityPreserved, row.StableIdentityTotal = stableRecordIntersection(newRow.ExpectedClaims, producerRecords)
-			row.EvidenceOnlyChanges, row.EvidenceOnlyTotal = evidenceOnlyChanges(newRow.ExpectedClaims, producerRecords)
-			row.PropositionTargetChanges = legacyPropositionTargetChanges(oldRecords, newRow.ExpectedClaims)
-			row.ConsumerPropositionTargetChanges = consumerPropositionTargetChanges(consumerOldRecords, consumerRecords)
-			if !propositionChangesEqual(row.PropositionTargetChanges, row.ConsumerPropositionTargetChanges) {
-				row.Decision, row.Resolution, row.Stage, row.Step, row.Reason = producer.DecisionFailClosed, producer.ResolutionLower, "claim-identity-evolution", "compare-source-derived-records", "CLAIM_IDENTITY_EVOLUTION_PROPOSITION_MAPPING_MISMATCH"
-				row.PropositionTargetChanges = nil
-				row.ConsumerPropositionTargetChanges = nil
-				report.Cases = append(report.Cases, row)
-				continue
-			}
-			row.Decision, row.Resolution, row.Stage, row.Step, row.Reason = producer.DecisionFixedPoint, producer.ResolutionExact, "claim-identity-evolution", "compare-source-derived-records", "CLAIM_IDENTITY_EVOLUTION_EXACT"
+		row.RemovedIDs, row.AddedIDs = setDiff(row.OldExpectedIDs, row.NewExpectedIDs)
+		row.PropositionTargetChanges = legacyPropositionTargetChanges(oldRecords, newRow.ExpectedClaims)
+		row.ConsumerPropositionTargetChanges = consumerPropositionTargetChanges(consumerOldRecords, consumerRecords)
+		if oldOK && newOK && row.OldArtifactExact && row.NewExpectationProducerExact && row.NewExpectationConsumerExact && row.ProducerConsumerExact && propositionChangesEqual(row.PropositionTargetChanges, row.ConsumerPropositionTargetChanges) {
 			report.EvolutionRowsReconstructed++
+			report.ExpectationConformanceRows++
+			report.ExpectationConformanceClaims += newRow.ExpectedClaimTotal
+			report.MigrationRemoved += len(row.RemovedIDs)
+			report.MigrationAdded += len(row.AddedIDs)
+			report.MigrationMappingRows += len(row.PropositionTargetChanges)
+			report.PropositionChanges += len(row.PropositionTargetChanges)
+		}
+		if alternate, ok := manifestByID[definition.ID]; ok {
+			alternateInput := producer.Input{CaseID: definition.ID, BeforePath: alternate.AlternateBeforePath, AfterPath: alternate.AlternateAfterPath, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA}
+			producerAlternate, producerAlternateErr := producer.ClaimIdentityObservationFromFiles(alternateInput)
+			consumerAlternate, consumerAlternatePair, consumerAlternateErr := consumer.ClaimIdentityRecordsFromFiles(consumer.Input{CaseID: definition.ID, BeforePath: alternate.AlternateBeforePath, AfterPath: alternate.AlternateAfterPath, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA})
+			producerBaselinePair := producerSourcePair(producerObservation)
+			producerAlternatePair := producerSourcePair(producerAlternate)
+			consumerBaselinePair := evolutionSourcePair{BeforePath: sourcePair.BeforePath, AfterPath: sourcePair.AfterPath, BeforeRawDigest: sourcePair.BeforeRawDigest, AfterRawDigest: sourcePair.AfterRawDigest, BeforeSemanticDigest: sourcePair.BeforeSemanticDigest, AfterSemanticDigest: sourcePair.AfterSemanticDigest}
+			consumerAlternateSourcePair := evolutionSourcePair{BeforePath: consumerAlternatePair.BeforePath, AfterPath: consumerAlternatePair.AfterPath, BeforeRawDigest: consumerAlternatePair.BeforeRawDigest, AfterRawDigest: consumerAlternatePair.AfterRawDigest, BeforeSemanticDigest: consumerAlternatePair.BeforeSemanticDigest, AfterSemanticDigest: consumerAlternatePair.AfterSemanticDigest}
+			row.BaselineObservation = persistenceObservation{SourcePair: producerBaselinePair, Records: producerRecordSnapshots(producerRecords)}
+			row.AlternateObservation = persistenceObservation{SourcePair: producerAlternatePair, Records: producerRecordSnapshots(producerAlternate.Records)}
+			row.ProducerBaselineObservation = row.BaselineObservation
+			row.ProducerAlternateObservation = row.AlternateObservation
+			row.ConsumerBaselineObservation = persistenceObservation{SourcePair: consumerBaselinePair, Records: consumerRecordSnapshots(consumerRecords)}
+			row.ConsumerAlternateObservation = persistenceObservation{SourcePair: consumerAlternateSourcePair, Records: consumerRecordSnapshots(consumerAlternate)}
+			producerPersistence := producer.CompareClaimIdentityRecords(producerRecords, producerAlternate.Records)
+			consumerPersistence := consumer.CompareClaimIdentityRecords(consumerRecords, consumerAlternate)
+			row.ProducerPersistence = producerMapping(producerPersistence)
+			row.ConsumerPersistence = consumerMapping(consumerPersistence)
+			row.PersistenceExact = producerObservationErr == nil && producerAlternateErr == nil && consumerErr == nil && consumerAlternateErr == nil && producerRecordsEqual(producerRecords, consumerRecords) && producerRecordsEqual(producerAlternate.Records, consumerAlternate) && persistenceMappingsEqual(row.ProducerPersistence, row.ConsumerPersistence) && alternate.ExpectedClaimTotal == len(producerRecords) && alternate.ExpectedClaimTotal == len(producerAlternate.Records)
+			if row.PersistenceExact {
+				report.V3ObservationPairsReconstructed++
+				report.V3ProducerConsumerExact++
+			}
+			row.StableIdentityPreserved, row.StableIdentityTotal = producerPersistence.StableIdentityPreserved, producerPersistence.StableIdentityTotal
+			row.EvidenceOnlyChanges, row.EvidenceOnlyTotal = producerPersistence.EvidenceOnlyChanges, producerPersistence.EvidenceOnlyTotal
+			row.ClaimRecreatedDueOnlyToRaw, row.ClaimRecreatedDueOnlyToRawTotal = producerPersistence.ClaimRecreatedDueOnlyToRaw, producerPersistence.ClaimRecreatedDueOnlyToRawTotal
 			report.StableIdentityPreserved += row.StableIdentityPreserved
 			report.StableIdentityTotal += row.StableIdentityTotal
 			report.PersistentClaimIdentity += row.StableIdentityPreserved
 			report.PersistentClaimIdentityTotal += row.StableIdentityTotal
-			report.EvolutionClaimRowsReconstructed += row.StableIdentityPreserved
-			report.EvolutionClaimRowsTotal += row.StableIdentityTotal
 			report.EvidenceOnlyChanges += row.EvidenceOnlyChanges
-			report.PropositionChanges += len(row.PropositionTargetChanges)
-			if definition.ID == "equivalent" {
-				report.RawEvidenceChangedNonsemantic, report.RawEvidenceNonsemanticTotal, report.SemanticTargetPreserved, report.SemanticTargetNonsemanticTotal = nonsemanticEvidenceMetrics(producerRecords)
-			}
+			report.EvidenceOnlyTotal += row.EvidenceOnlyTotal
+			report.ClaimRecreatedDueOnlyToRaw += row.ClaimRecreatedDueOnlyToRaw
+			report.ClaimRecreatedDueOnlyToRawTotal += row.ClaimRecreatedDueOnlyToRawTotal
+			report.RawEvidenceChangedNonsemantic += producerPersistence.RawEvidenceChanged
+			report.RawEvidenceNonsemanticTotal += producerPersistence.RawEvidenceTotal
+			report.SemanticTargetPreserved += producerPersistence.SemanticTargetPreserved
+			report.SemanticTargetNonsemanticTotal += producerPersistence.SemanticTargetTotal
+		}
+		if row.PersistenceExact && row.OldArtifactExact && row.NewExpectationProducerExact && row.NewExpectationConsumerExact && row.ProducerConsumerExact {
+			row.Decision, row.Resolution, row.Stage, row.Step, row.Reason = producer.DecisionFixedPoint, producer.ResolutionExact, "claim-identity-evolution", "compare-source-derived-observations", "CLAIM_IDENTITY_EVOLUTION_EXACT"
 		}
 		report.Cases = append(report.Cases, row)
 	}
-	if report.EvolutionRowsReconstructed == report.EvolutionRowsTotal && report.EvolutionClaimRowsReconstructed == 31 && report.EvolutionClaimRowsTotal == 31 && report.PersistentClaimIdentity == 31 && report.PersistentClaimIdentityTotal == 31 && report.ClaimRecreatedDueOnlyToRaw == 0 && report.ClaimRecreatedDueOnlyToRawTotal == 31 && report.DenominatorUnchanged && report.NewArtifactDigest == bytesDigest(newRaw) {
-		report.Decision, report.Resolution, report.Reason = producer.DecisionFixedPoint, producer.ResolutionExact, "CLAIM_IDENTITY_EVOLUTION_EXACT"
-		report.ChangeKind = "STABLE_IDENTITY_V3_EVIDENCE_SEPARATED"
+	report.EvolutionClaimRowsReconstructed = report.ExpectationConformanceClaims
+	report.EvolutionClaimRowsTotal = report.ExpectationConformanceClaimsTotal
+	if report.EvolutionRowsReconstructed == report.EvolutionRowsTotal {
+		report.MigrationDecision, report.MigrationResolution = producer.DecisionFixedPoint, producer.ResolutionExact
+	}
+	if report.V3ObservationPairsReconstructed == report.V3ObservationPairsTotal {
+		report.PersistenceDecision, report.PersistenceResolution = producer.DecisionFixedPoint, producer.ResolutionExact
+	}
+	if report.EvolutionRowsReconstructed == 5 && report.ExpectationConformanceRows == 5 && report.ExpectationConformanceClaims == 31 && report.V3ObservationPairsReconstructed == 5 && report.V3ProducerConsumerExact == 5 && report.PersistentClaimIdentity == 31 && report.PersistentClaimIdentityTotal == 31 && report.EvidenceOnlyChanges == 31 && report.RawEvidenceChangedNonsemantic == 31 && report.RawEvidenceNonsemanticTotal == 31 && report.SemanticTargetPreserved == 31 && report.SemanticTargetNonsemanticTotal == 31 && report.ClaimRecreatedDueOnlyToRaw == 0 && report.ClaimRecreatedDueOnlyToRawTotal == 31 && report.DenominatorUnchanged && report.NewArtifactDigest == bytesDigest(newRaw) {
+		report.Decision, report.Resolution, report.Reason = producer.DecisionFixedPoint, producer.ResolutionExact, "CLAIM_IDENTITY_V3_PERSISTENCE_EXACT"
+		report.ChangeKind = "HISTORICAL_SCHEMA_MIGRATION"
 	} else {
-		report.ChangeKind = "STABLE_IDENTITY_V3_EVOLUTION_FAIL_CLOSED"
+		report.ChangeKind = "HISTORICAL_SCHEMA_MIGRATION_WITH_PERSISTENCE_FAIL_CLOSED"
 	}
 	return report, nil
 }
@@ -274,6 +427,105 @@ func decodeLegacyExpectation(raw []byte) (legacyExpectation, error) {
 		return value, fmt.Errorf("old fixed expectation contract mismatch")
 	}
 	return value, nil
+}
+
+func decodePersistenceManifest(raw []byte) (persistenceManifest, error) {
+	var value persistenceManifest
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&value); err != nil {
+		return value, err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return value, fmt.Errorf("trailing persistence manifest data")
+	}
+	if value.Schema != "gooo/semantic-delta-claim-identity-persistence/v1" || value.DenominatorID != producer.DenominatorID || value.FixedCaseTotal != 5 || value.FixedClaimTotal != 31 || !fixedPersistenceInventory(value.Cases) {
+		return value, fmt.Errorf("persistence manifest contract mismatch")
+	}
+	return value, nil
+}
+
+func fixedPersistenceInventory(cases []persistenceManifestCase) bool {
+	if len(cases) != 5 {
+		return false
+	}
+	want := map[string]bool{"equivalent": true, "semantic-change": true, "value-program-change": true, "indeterminate": true, "ambiguous-match": true}
+	seen := map[string]bool{}
+	for _, definition := range producer.Denominator() {
+		var row persistenceManifestCase
+		for _, candidate := range cases {
+			if candidate.ID == definition.ID {
+				if seen[candidate.ID] {
+					return false
+				}
+				row, seen[candidate.ID] = candidate, true
+				break
+			}
+		}
+		if !want[row.ID] || row.ExpectedClaimTotal <= 0 || row.ExpectedClaimTotal != expectedClaimTotalForCase(row.ID) || row.BaselineBeforePath != definition.BeforePath || row.BaselineAfterPath != definition.AfterPath || row.AlternateBeforePath == "" || row.AlternateAfterPath == "" {
+			return false
+		}
+	}
+	return len(seen) == len(want)
+}
+
+func persistenceRecipesMatch(recipes []producer.PersistenceRecipe, manifest []persistenceManifestCase) bool {
+	if len(recipes) != len(manifest) {
+		return false
+	}
+	byID := make(map[string]persistenceManifestCase, len(manifest))
+	for _, row := range manifest {
+		byID[row.ID] = row
+	}
+	for _, recipe := range recipes {
+		row, ok := byID[recipe.ID]
+		if !ok || recipe.BaselineBeforePath != row.BaselineBeforePath || recipe.BaselineAfterPath != row.BaselineAfterPath || recipe.AlternateBeforePath != row.AlternateBeforePath || recipe.AlternateAfterPath != row.AlternateAfterPath {
+			return false
+		}
+	}
+	return true
+}
+
+func expectedClaimTotalForCase(id string) int {
+	switch id {
+	case "indeterminate":
+		return 3
+	default:
+		return 7
+	}
+}
+
+func producerRecordSnapshots(records []producer.ClaimIdentityRecord) []claimIdentityRecordSnapshot {
+	result := make([]claimIdentityRecordSnapshot, 0, len(records))
+	for _, record := range records {
+		result = append(result, claimIdentityRecordSnapshot{StableID: record.StableID, Kind: record.Kind, RelationRole: record.RelationRole, NormalizedProposition: record.NormalizedProposition, PropositionDigest: record.PropositionDigest, TargetAddress: record.TargetAddress, TargetAddressDigest: record.TargetAddressDigest, PreservationOf: record.PreservationOf, BeforeSourcePath: record.BeforeSourcePath, AfterSourcePath: record.AfterSourcePath, EvidenceBeforeRawDigest: record.EvidenceBeforeRawDigest, EvidenceAfterRawDigest: record.EvidenceAfterRawDigest, EvidenceBeforeSemanticDigest: record.EvidenceBeforeSemanticDigest, EvidenceAfterSemanticDigest: record.EvidenceAfterSemanticDigest})
+	}
+	return result
+}
+
+func producerSourcePair(observation producer.ClaimIdentitySourceObservation) evolutionSourcePair {
+	return evolutionSourcePair{BeforePath: observation.BeforePath, AfterPath: observation.AfterPath, BeforeRawDigest: observation.BeforeRawDigest, AfterRawDigest: observation.AfterRawDigest, BeforeSemanticDigest: observation.BeforeSemanticDigest, AfterSemanticDigest: observation.AfterSemanticDigest}
+}
+
+func consumerRecordSnapshots(records []consumer.ClaimIdentityRecord) []claimIdentityRecordSnapshot {
+	result := make([]claimIdentityRecordSnapshot, 0, len(records))
+	for _, record := range records {
+		result = append(result, claimIdentityRecordSnapshot{StableID: record.StableID, Kind: record.Kind, RelationRole: record.RelationRole, NormalizedProposition: record.NormalizedProposition, PropositionDigest: record.PropositionDigest, TargetAddress: record.TargetAddress, TargetAddressDigest: record.TargetAddressDigest, PreservationOf: record.PreservationOf, BeforeSourcePath: record.BeforeSourcePath, AfterSourcePath: record.AfterSourcePath, EvidenceBeforeRawDigest: record.EvidenceBeforeRawDigest, EvidenceAfterRawDigest: record.EvidenceAfterRawDigest, EvidenceBeforeSemanticDigest: record.EvidenceBeforeSemanticDigest, EvidenceAfterSemanticDigest: record.EvidenceAfterSemanticDigest})
+	}
+	return result
+}
+
+func producerMapping(mapping producer.ClaimIdentityPairComparison) persistenceMapping {
+	return persistenceMapping{BaselineIDs: mapping.BaselineIDs, AlternateIDs: mapping.AlternateIDs, RemovedIDs: mapping.RemovedIDs, AddedIDs: mapping.AddedIDs, StableIdentityPreserved: mapping.StableIdentityPreserved, StableIdentityTotal: mapping.StableIdentityTotal, EvidenceOnlyChanges: mapping.EvidenceOnlyChanges, EvidenceOnlyTotal: mapping.EvidenceOnlyTotal, RawEvidenceChanged: mapping.RawEvidenceChanged, RawEvidenceTotal: mapping.RawEvidenceTotal, SemanticTargetPreserved: mapping.SemanticTargetPreserved, SemanticTargetTotal: mapping.SemanticTargetTotal, ClaimRecreatedDueOnlyToRaw: mapping.ClaimRecreatedDueOnlyToRaw, ClaimRecreatedDueOnlyToRawTotal: mapping.ClaimRecreatedDueOnlyToRawTotal, Decision: mapping.Decision, Resolution: mapping.Resolution, Stage: mapping.Stage, Step: mapping.Step, Reason: mapping.Reason}
+}
+
+func consumerMapping(mapping consumer.ClaimIdentityPairComparison) persistenceMapping {
+	return persistenceMapping{BaselineIDs: mapping.BaselineIDs, AlternateIDs: mapping.AlternateIDs, RemovedIDs: mapping.RemovedIDs, AddedIDs: mapping.AddedIDs, StableIdentityPreserved: mapping.StableIdentityPreserved, StableIdentityTotal: mapping.StableIdentityTotal, EvidenceOnlyChanges: mapping.EvidenceOnlyChanges, EvidenceOnlyTotal: mapping.EvidenceOnlyTotal, RawEvidenceChanged: mapping.RawEvidenceChanged, RawEvidenceTotal: mapping.RawEvidenceTotal, SemanticTargetPreserved: mapping.SemanticTargetPreserved, SemanticTargetTotal: mapping.SemanticTargetTotal, ClaimRecreatedDueOnlyToRaw: mapping.ClaimRecreatedDueOnlyToRaw, ClaimRecreatedDueOnlyToRawTotal: mapping.ClaimRecreatedDueOnlyToRawTotal, Decision: mapping.Decision, Resolution: mapping.Resolution, Stage: mapping.Stage, Step: mapping.Step, Reason: mapping.Reason}
+}
+
+func persistenceMappingsEqual(left, right persistenceMapping) bool {
+	return bytes.Equal(mustJSON(left), mustJSON(right))
 }
 
 func bytesDigest(raw []byte) string {
@@ -429,54 +681,6 @@ func consumerConsumerRecordEqual(left, right consumer.ClaimIdentityRecord) bool 
 	return left.StableID == right.StableID && left.Kind == right.Kind && left.RelationRole == right.RelationRole && left.NormalizedProposition == right.NormalizedProposition && left.PropositionDigest == right.PropositionDigest && left.TargetAddress == right.TargetAddress && left.TargetAddressDigest == right.TargetAddressDigest && left.PreservationOf == right.PreservationOf && left.BeforeSourcePath == right.BeforeSourcePath && left.AfterSourcePath == right.AfterSourcePath && left.EvidenceBeforeRawDigest == right.EvidenceBeforeRawDigest && left.EvidenceAfterRawDigest == right.EvidenceAfterRawDigest && left.EvidenceBeforeSemanticDigest == right.EvidenceBeforeSemanticDigest && left.EvidenceAfterSemanticDigest == right.EvidenceAfterSemanticDigest
 }
 
-func stableRecordIntersection(expected []consumer.ClaimIdentityRecord, observed []producer.ClaimIdentityRecord) (int, int) {
-	byID := map[string]producer.ClaimIdentityRecord{}
-	for _, record := range observed {
-		byID[record.StableID] = record
-	}
-	preserved := 0
-	for _, record := range expected {
-		if other, ok := byID[record.StableID]; ok && record.PropositionDigest == other.PropositionDigest && record.TargetAddress == other.TargetAddress {
-			preserved++
-		}
-	}
-	return preserved, len(expected)
-}
-
-func evidenceOnlyChanges(expected []consumer.ClaimIdentityRecord, observed []producer.ClaimIdentityRecord) (int, int) {
-	byID := map[string]producer.ClaimIdentityRecord{}
-	for _, record := range observed {
-		byID[record.StableID] = record
-	}
-	changed := 0
-	for _, record := range expected {
-		if other, ok := byID[record.StableID]; ok && record.PropositionDigest == other.PropositionDigest && record.TargetAddress == other.TargetAddress && (record.EvidenceBeforeRawDigest != other.EvidenceBeforeRawDigest || record.EvidenceAfterRawDigest != other.EvidenceAfterRawDigest || record.EvidenceBeforeSemanticDigest != other.EvidenceBeforeSemanticDigest || record.EvidenceAfterSemanticDigest != other.EvidenceAfterSemanticDigest) {
-			changed++
-		}
-	}
-	return changed, len(expected)
-}
-
-// rawEvidenceIdentityProbe changes only observation/provenance fields. A
-// record that then fails the consumer's stable-identity validator would have
-// recreated its identity from raw evidence, which v3 forbids.
-func rawEvidenceIdentityProbe(records []consumer.ClaimIdentityRecord) (int, int) {
-	recreated := 0
-	for _, record := range records {
-		probe := record
-		probe.BeforeSourcePath += "#evidence-only-probe"
-		probe.AfterSourcePath += "#evidence-only-probe"
-		probe.EvidenceBeforeRawDigest = "sha256:" + strings.Repeat("0", 64)
-		probe.EvidenceAfterRawDigest = "sha256:" + strings.Repeat("1", 64)
-		probe.EvidenceBeforeSemanticDigest = "sha256:" + strings.Repeat("2", 64)
-		probe.EvidenceAfterSemanticDigest = "sha256:" + strings.Repeat("3", 64)
-		if !consumer.ValidateClaimIdentityRecords([]consumer.ClaimIdentityRecord{probe}) {
-			recreated++
-		}
-	}
-	return recreated, len(records)
-}
-
 func propositionTargetChanges(expected []consumer.ClaimIdentityRecord, observed []producer.ClaimIdentityRecord) []propositionTargetChange {
 	byID := map[string]producer.ClaimIdentityRecord{}
 	for _, record := range observed {
@@ -612,50 +816,3 @@ func propositionChangesEqual(left, right []propositionTargetChange) bool {
 }
 
 func jsonDigest(value any) string { return bytesDigest(mustJSON(value)) }
-
-func nonsemanticEvidenceMetrics(records []producer.ClaimIdentityRecord) (changed, total, preserved int, semanticTotal int) {
-	type evidencePair struct {
-		before, after       producer.ClaimIdentityRecord
-		hasBefore, hasAfter bool
-	}
-	pairs := map[string]*evidencePair{}
-	for _, record := range records {
-		key := record.Kind + "\x00" + record.NormalizedProposition + "\x00" + record.TargetAddress
-		role := record.RelationRole
-		side := ""
-		if strings.HasSuffix(role, "|before") {
-			side, role = "before", strings.TrimSuffix(role, "|before")
-		} else if strings.HasSuffix(role, "|after") {
-			side, role = "after", strings.TrimSuffix(role, "|after")
-		}
-		key += "\x00" + role
-		pair := pairs[key]
-		if pair == nil {
-			pair = &evidencePair{}
-			pairs[key] = pair
-		}
-		switch side {
-		case "before":
-			pair.before, pair.hasBefore = record, true
-		case "after":
-			pair.after, pair.hasAfter = record, true
-		default:
-			pair.before, pair.after, pair.hasBefore, pair.hasAfter = record, record, true, true
-		}
-	}
-	for _, pair := range pairs {
-		if !pair.hasBefore || !pair.hasAfter {
-			continue
-		}
-		total++
-		rawChanged := pair.before.EvidenceBeforeRawDigest != pair.after.EvidenceAfterRawDigest
-		semanticSame := pair.before.EvidenceBeforeSemanticDigest == pair.after.EvidenceAfterSemanticDigest
-		if rawChanged {
-			changed++
-		}
-		if semanticSame {
-			preserved++
-		}
-	}
-	return changed, total, preserved, total
-}

@@ -48,6 +48,16 @@ declared projection component-kind coverage is `5/5 = 10000` basis points, not
 whole-language semantic coverage; an uncovered StableHash field is
 `UNMODELED_SEMANTIC_COMPONENT_CHANGED`, never preservation.
 
+The v1 expectation artifact is a `HISTORICAL_SCHEMA_MIGRATION` and its
+removed/added IDs are not persistence evidence. Actual v3 persistence is
+computed from the five baseline/alternate source pairs declared in
+`claim-identity-persistence-manifest.json`. Producer and consumer each read
+both raw pairs and emit per-claim stable identity, proposition, target, and raw
+evidence fields. The fixed result is same-slot persistence: stable identity
+31/31, evidence-only changes 31/31, semantic targets preserved 31/31, and
+raw-only claim recreation 0/31. Expectation conformance remains a separate
+5/5, 31-row check.
+
 ## Research decisions
 
 The experiment adopts the following principles from primary sources:

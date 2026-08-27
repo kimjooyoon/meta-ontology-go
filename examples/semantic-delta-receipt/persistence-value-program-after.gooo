@@ -1,0 +1,8 @@
+package semanticdeltareceipt
+namespace semanticdeltareceipt
+
+entity Integer id "gooo://semantic-delta/entity/integer"
+// Formatting changes only; int.add:2 is still the semantic intervention.
+entity Counter id "gooo://semantic-delta/entity/counter"
+
+activity Increment(Counter) -> Integer computes "int.add:2"

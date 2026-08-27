@@ -1,0 +1,8 @@
+package fixture
+namespace semanticdeltafixture
+
+// Alternate observation: presentation-only source intervention.
+entity Order id "gooo://semantic-delta/entity/order"
+entity Payment id "gooo://semantic-delta/entity/payment"
+
+activity PayOrder( Order ) -> Payment

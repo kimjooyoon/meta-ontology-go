@@ -8,7 +8,7 @@ import (
 
 type options struct {
 	caseID, subjectSHA, observedCheckoutSHA, before, after, effectsBefore, effectsAfter, output string
-	oldExpectation, newExpectation                                                              string
+	oldExpectation, newExpectation, persistenceManifest                                         string
 	tamperMatrix, evolution                                                                     bool
 }
 
@@ -28,6 +28,7 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	set.BoolVar(&result.evolution, "evolution", false, "reconstruct claim identity expectation evolution")
 	set.StringVar(&result.oldExpectation, "old-expectation", "examples/semantic-delta-receipt/claim-transition-expectations-v2.json", "old claim identity artifact")
 	set.StringVar(&result.newExpectation, "new-expectation", "examples/semantic-delta-receipt/claim-transition-expectations.json", "new claim identity artifact")
+	set.StringVar(&result.persistenceManifest, "persistence-manifest", "examples/semantic-delta-receipt/claim-identity-persistence-manifest.json", "baseline/alternate source-pair manifest")
 	if err := set.Parse(args); err != nil {
 		return options{}, err
 	}

@@ -160,10 +160,19 @@ digest while preserving semantic digests, the semantic decision, and the exact
 logical transition sequence (`kind`, status endpoints, preservation target,
 stage, step, and reason). Evidence digests may still change because they
 deliberately bind the observed raw source, while persistent IDs remain unchanged.
-The evolution receipt also reports `persistent_claim_identity=31/31` and
-`claim_recreated_due_only_to_raw_digest=0/31`. The latter is computed by an
-independent evidence-only probe: changing source paths and all evidence
-digests must still validate the same v3 ID.
+The evolution receipt reports historical v1-to-v3 migration separately from
+actual persistence. `historical_migration_removed` and
+`historical_migration_added` describe the old evidence-bound inventory being
+replaced; they are never persistence numerators. Persistence is computed from
+two real v3 observations for each of the five fixed source pairs, using the
+checked-in `claim-identity-persistence-manifest.json`. Producer and consumer
+each read both files and independently rebuild the mapping. The resulting
+`stable_identity_preserved=31/31`, `evidence_only_changes=31/31`,
+`semantic_target_preserved_on_nonsemantic=31/31`, and
+`claim_recreated_due_only_to_raw_digest=0/31` mean the same observation slot
+across two raw interventions, not before-to-after preservation within one
+pair. Each report row includes both implementations' source-pair
+observations and all per-claim stable/evidence fields.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical
@@ -190,9 +199,10 @@ replay-context inventory is 4 IDs; duplicate, missing, extra, or substituted
 IDs fail closed. When the fixed expectation is reconciled to a source-derived
 runtime inventory, the CI-generated
 `claim-transition-expectation-evolution.json` records old/new artifact paths,
-bytes, digests, every case's added/removed IDs, independently reconstructed
-stable identity/evidence rows, and the unchanged denominator; the checked-in
-expectation is never silently overwritten.
+bytes, digests, every case's migration added/removed IDs, independently
+reconstructed expectation-conformance rows, and the unchanged denominator.
+The same receipt separately records the two-observation v3 persistence rows;
+the checked-in expectation is never silently overwritten.
 
 The conformance suite's `FIXED_POINT` decision means only that the fixed
 five-case contract was reproduced. `subject_semantic_equivalence` is recorded

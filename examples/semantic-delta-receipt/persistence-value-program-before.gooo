@@ -1,0 +1,8 @@
+package semanticdeltareceipt
+namespace semanticdeltareceipt
+
+// Alternate observation keeps the value program unchanged.
+entity Counter id "gooo://semantic-delta/entity/counter"
+entity Integer id "gooo://semantic-delta/entity/integer"
+
+activity Increment( Counter ) -> Integer computes "int.add:1"

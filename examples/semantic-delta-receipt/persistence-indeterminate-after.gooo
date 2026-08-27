@@ -1,0 +1,9 @@
+package fixture
+namespace semanticdeltafixture
+
+entity Payment id "gooo://semantic-delta/entity/payment"
+entity Order id "gooo://semantic-delta/entity/order"
+
+// Unsupported grammar remains fixture-scoped and intentionally unknown.
+assert PayOrder preserves Payment
+activity PayOrder( Order ) -> Payment

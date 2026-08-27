@@ -27,6 +27,7 @@ type MetaContract struct {
 	ClaimIdentity      string
 	TransitionIdentity string
 	CaseRecipes        []CaseRecipe
+	PersistenceRecipes []PersistenceRecipe
 	DenominatorVersion string
 	DenominatorCases   int
 }
@@ -85,6 +86,10 @@ func ReadMetaContract() (MetaContract, error) {
 				if recipe, ok := parseCaseRecipe(strings.TrimPrefix(value, "case:")); ok {
 					contract.CaseRecipes = append(contract.CaseRecipes, recipe)
 				}
+			case strings.HasPrefix(value, "persistence:"):
+				if recipe, ok := parsePersistenceRecipe(strings.TrimPrefix(value, "persistence:")); ok {
+					contract.PersistenceRecipes = append(contract.PersistenceRecipes, recipe)
+				}
 			}
 		}
 	}
@@ -103,10 +108,41 @@ func validateMetaContract(contract MetaContract) error {
 	if strings.Join(contract.Layers, ",") != "semantic,structural,textual" {
 		return fmt.Errorf("meta delta layers are incomplete")
 	}
-	if len(contract.ComponentKinds) != TotalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || contract.ClaimIdentity != "v3:object=proposition-kind|canonical-semantic-fact-target-address|stable-relation-role;evidence=source-path|raw-digest|semantic-digest;preservation=before-proposition-id|canonical-pair-target-address|stable-relation-role;inventory=set-canonical" || contract.TransitionIdentity != "v2:claim-id|from|to|stage|step|reason|target-semantic-digest;sort-by-claim-id" || !sameCaseRecipes(contract.CaseRecipes, Denominator()) {
+	if len(contract.ComponentKinds) != TotalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || contract.ClaimIdentity != "v3:object=proposition-kind|canonical-semantic-fact-target-address|stable-relation-role;evidence=source-path|raw-digest|semantic-digest;preservation=before-proposition-id|canonical-pair-target-address|stable-relation-role;inventory=set-canonical" || contract.TransitionIdentity != "v2:claim-id|from|to|stage|step|reason|target-semantic-digest;sort-by-claim-id" || !sameCaseRecipes(contract.CaseRecipes, Denominator()) || !validPersistenceRecipeIDs(contract.PersistenceRecipes) {
 		return fmt.Errorf("meta semantic contract coverage is incomplete")
 	}
 	return nil
+}
+
+type PersistenceRecipe struct {
+	ID                  string
+	BaselineBeforePath  string
+	BaselineAfterPath   string
+	AlternateBeforePath string
+	AlternateAfterPath  string
+}
+
+func parsePersistenceRecipe(value string) (PersistenceRecipe, bool) {
+	parts := strings.Split(value, "|")
+	if len(parts) != 5 || parts[0] == "" || !strings.HasPrefix(parts[1], "baseline-before:") || !strings.HasPrefix(parts[2], "baseline-after:") || !strings.HasPrefix(parts[3], "alternate-before:") || !strings.HasPrefix(parts[4], "alternate-after:") {
+		return PersistenceRecipe{}, false
+	}
+	return PersistenceRecipe{ID: parts[0], BaselineBeforePath: strings.TrimPrefix(parts[1], "baseline-before:"), BaselineAfterPath: strings.TrimPrefix(parts[2], "baseline-after:"), AlternateBeforePath: strings.TrimPrefix(parts[3], "alternate-before:"), AlternateAfterPath: strings.TrimPrefix(parts[4], "alternate-after:")}, true
+}
+
+func validPersistenceRecipeIDs(recipes []PersistenceRecipe) bool {
+	want := map[string]bool{"equivalent": true, "semantic-change": true, "value-program-change": true, "indeterminate": true, "ambiguous-match": true}
+	seen := map[string]bool{}
+	if len(recipes) != len(want) {
+		return false
+	}
+	for _, recipe := range recipes {
+		if !want[recipe.ID] || seen[recipe.ID] || recipe.BaselineBeforePath == "" || recipe.BaselineAfterPath == "" || recipe.AlternateBeforePath == "" || recipe.AlternateAfterPath == "" {
+			return false
+		}
+		seen[recipe.ID] = true
+	}
+	return len(seen) == len(want)
 }
 
 func parseCaseRecipe(value string) (CaseRecipe, bool) {

@@ -1,0 +1,9 @@
+package semanticdeltareceipt
+namespace semanticdeltareceipt
+
+entity Reversal id "gooo://semantic-delta/entity/reversal"
+// Alternate presentation of the same ambiguous matching input.
+entity Payment id "gooo://semantic-delta/entity/payment"
+entity Order id "gooo://semantic-delta/entity/order"
+
+activity Review(Order, Reversal) -> Reversal

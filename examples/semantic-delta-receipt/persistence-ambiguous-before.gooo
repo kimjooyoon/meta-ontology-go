@@ -1,0 +1,9 @@
+package semanticdeltareceipt
+namespace semanticdeltareceipt
+
+// Alternate observation retains the deliberately ambiguous source shape.
+entity Order id "gooo://semantic-delta/entity/order"
+entity Payment id "gooo://semantic-delta/entity/payment"
+entity Reversal id "gooo://semantic-delta/entity/reversal"
+
+activity Review( Order, Payment ) -> Reversal

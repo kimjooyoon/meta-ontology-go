@@ -1,0 +1,48 @@
+{
+  "schema": "gooo/semantic-delta-claim-identity-persistence/v1",
+  "denominator_id": "gooo://semantic-delta-receipt-denominator/v2",
+  "fixed_case_total": 5,
+  "fixed_claim_total": 31,
+  "cases": [
+    {
+      "id": "equivalent",
+      "expected_claim_total": 7,
+      "baseline_before_path": "examples/semantic-delta-receipt/before.gooo",
+      "baseline_after_path": "examples/semantic-delta-receipt/equivalent-after.gooo",
+      "alternate_before_path": "examples/semantic-delta-receipt/persistence-equivalent-before.gooo",
+      "alternate_after_path": "examples/semantic-delta-receipt/persistence-equivalent-after.gooo"
+    },
+    {
+      "id": "semantic-change",
+      "expected_claim_total": 7,
+      "baseline_before_path": "examples/semantic-delta-receipt/before.gooo",
+      "baseline_after_path": "examples/semantic-delta-receipt/semantic-after.gooo",
+      "alternate_before_path": "examples/semantic-delta-receipt/persistence-semantic-change-before.gooo",
+      "alternate_after_path": "examples/semantic-delta-receipt/persistence-semantic-change-after.gooo"
+    },
+    {
+      "id": "value-program-change",
+      "expected_claim_total": 7,
+      "baseline_before_path": "examples/semantic-delta-receipt/value-program-before.gooo",
+      "baseline_after_path": "examples/semantic-delta-receipt/value-program-after.gooo",
+      "alternate_before_path": "examples/semantic-delta-receipt/persistence-value-program-before.gooo",
+      "alternate_after_path": "examples/semantic-delta-receipt/persistence-value-program-after.gooo"
+    },
+    {
+      "id": "indeterminate",
+      "expected_claim_total": 3,
+      "baseline_before_path": "examples/semantic-delta-receipt/before.gooo",
+      "baseline_after_path": "examples/semantic-delta-receipt/indeterminate-after.gooo",
+      "alternate_before_path": "examples/semantic-delta-receipt/persistence-indeterminate-before.gooo",
+      "alternate_after_path": "examples/semantic-delta-receipt/persistence-indeterminate-after.gooo"
+    },
+    {
+      "id": "ambiguous-match",
+      "expected_claim_total": 7,
+      "baseline_before_path": "examples/semantic-delta-receipt/ambiguous-before.gooo",
+      "baseline_after_path": "examples/semantic-delta-receipt/ambiguous-after.gooo",
+      "alternate_before_path": "examples/semantic-delta-receipt/persistence-ambiguous-before.gooo",
+      "alternate_after_path": "examples/semantic-delta-receipt/persistence-ambiguous-after.gooo"
+    }
+  ]
+}

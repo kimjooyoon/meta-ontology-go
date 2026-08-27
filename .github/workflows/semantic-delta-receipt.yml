@@ -126,9 +126,23 @@ jobs:
           observed_checkout_sha="$(cat "$out/observed-checkout-sha.txt")"
           cp "$root/claim-transition-expectations.json" "$out/claim-transition-expectations.json"
           cp "$root/claim-transition-expectations-v2.json" "$out/claim-transition-expectations-v2.json"
+          cp "$root/claim-identity-persistence-manifest.json" "$out/claim-identity-persistence-manifest.json"
+          cp "$root/semantic-claim-delta-manifest.json" "$out/semantic-claim-delta-manifest.json"
           expectation_digest="sha256:$(sha256sum "$out/claim-transition-expectations.json" | awk '{print $1}')"
           go run ./cmd/semantic-delta-receipt-witness \
-            --evolution --subject-sha "$HEAD_SHA" --old-expectation "$out/claim-transition-expectations-v2.json" --new-expectation "$out/claim-transition-expectations.json" --output "$out/claim-transition-expectation-evolution.json"
+            --evolution --subject-sha "$HEAD_SHA" --old-expectation "$out/claim-transition-expectations-v2.json" --new-expectation "$out/claim-transition-expectations.json" --persistence-manifest "$root/claim-identity-persistence-manifest.json" --output "$out/claim-transition-expectation-evolution.json"
+          persistence_digest="sha256:$(sha256sum "$root/claim-identity-persistence-manifest.json" | awk '{print $1}')"
+          jq -e --slurpfile manifest "$root/claim-identity-persistence-manifest.json" --arg digest "$persistence_digest" '
+            .persistence_manifest_digest == $digest and
+            ($manifest[0].schema == "gooo/semantic-delta-claim-identity-persistence/v1") and
+            ($manifest[0].fixed_case_total == 5 and $manifest[0].fixed_claim_total == 31) and
+            ([$manifest[0].cases[].id] | sort) == ["ambiguous-match","equivalent","indeterminate","semantic-change","value-program-change"] and
+            ([$manifest[0].cases[].id] | unique | length) == 5 and
+            ([$manifest[0].cases | map(.expected_claim_total) | add] == 31) and
+            ([.cases[] | select((.baseline_observation.records | length) == (if .case_id == "indeterminate" then 3 else 7 end))] | length) == 5 and
+            ([.cases[] | select((.producer_baseline_observation.records | length) == (.consumer_baseline_observation.records | length) and (.producer_alternate_observation.records | length) == (.consumer_alternate_observation.records | length) and (.producer_persistence.baseline_ids | sort) == (.consumer_persistence.baseline_ids | sort) and (.producer_persistence.alternate_ids | sort) == (.consumer_persistence.alternate_ids | sort))] | length) == 5 and
+            (($manifest[0].cases | map({id, baseline_before_path, baseline_after_path, alternate_before_path, alternate_after_path}) | sort_by(.id)) == ([.cases[] | {id:.case_id, baseline_before_path:.producer_baseline_observation.source_pair.before_path, baseline_after_path:.producer_baseline_observation.source_pair.after_path, alternate_before_path:.producer_alternate_observation.source_pair.before_path, alternate_after_path:.producer_alternate_observation.source_pair.after_path}] | sort_by(.id)))
+          ' "$out/claim-transition-expectation-evolution.json"
           for pass in first second; do
             go run ./cmd/semantic-delta-receipt-witness \
               --case suite --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" \
@@ -210,6 +224,20 @@ jobs:
           jq -e '.receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.before.semantic_digest == .receipt.after.semantic_digest and .receipt.semantic_decision == "SEMANTIC_PRESERVED" and .receipt.classification == "SEMANTIC_PRESERVED" and .independent_verdict.passed == true' "$out/formatting-only.json"
           jq -e '.receipt.classification == "SEMANTIC_CHANGED" and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .independent_verdict.passed == true' "$out/claim-removal.json"
           jq -e '.receipt.classification == "SEMANTIC_CHANGED" and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .independent_verdict.passed == true' "$out/claim-addition.json"
+          jq -e --slurpfile manifest "$root/semantic-claim-delta-manifest.json" '
+            ($manifest[0].cases[] | select(.id == "claim-removal")) as $fixed |
+            ((.receipt.semantic_claim_delta.added | map(.id) | sort) == ($fixed.expected_added_ids | sort)) and
+            ((.receipt.semantic_claim_delta.removed | map(.id) | sort) == ($fixed.expected_removed_ids | sort)) and
+            ((.receipt.semantic_claim_delta.added | map(.id) | unique | length) == (.receipt.semantic_claim_delta.added | length)) and
+            ((.receipt.semantic_claim_delta.removed | map(.id) | unique | length) == (.receipt.semantic_claim_delta.removed | length))
+          ' "$out/claim-removal.json"
+          jq -e --slurpfile manifest "$root/semantic-claim-delta-manifest.json" '
+            ($manifest[0].cases[] | select(.id == "claim-addition")) as $fixed |
+            ((.receipt.semantic_claim_delta.added | map(.id) | sort) == ($fixed.expected_added_ids | sort)) and
+            ((.receipt.semantic_claim_delta.removed | map(.id) | sort) == ($fixed.expected_removed_ids | sort)) and
+            ((.receipt.semantic_claim_delta.added | map(.id) | unique | length) == (.receipt.semantic_claim_delta.added | length)) and
+            ((.receipt.semantic_claim_delta.removed | map(.id) | unique | length) == (.receipt.semantic_claim_delta.removed | length))
+          ' "$out/claim-addition.json"
           jq -e '.receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "project-source" and .receipt.step == "parse-lower" and .receipt.reason == "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE" and .independent_verdict.passed == true' "$out/duplicate-stable-id.json"
           sha256sum "$out"/*.json > "$out/manifest.sha256"
 
@@ -233,6 +261,15 @@ jobs:
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-removal-after.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-addition-before.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-addition-after.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-equivalent-before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-equivalent-after.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-semantic-change-before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-semantic-change-after.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-value-program-before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-value-program-after.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-indeterminate-before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-ambiguous-before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-ambiguous-after.gooo
           out="$RUNNER_TEMP/semantic-delta-receipt"
           test -s "$out/workspace-before.tsv"
           test -s "$out/workspace-after.tsv"

@@ -1,0 +1,9 @@
+package fixture
+namespace semanticdeltafixture
+
+entity Reversal id "gooo://semantic-delta/entity/reversal"
+// Reordered presentation; the changed target remains Reversal.
+entity Payment id "gooo://semantic-delta/entity/payment"
+entity Order id "gooo://semantic-delta/entity/order"
+
+activity PayOrder(Order) -> Reversal

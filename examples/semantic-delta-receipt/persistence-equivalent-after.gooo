@@ -1,0 +1,8 @@
+package fixture
+namespace semanticdeltafixture
+
+entity Payment id "gooo://semantic-delta/entity/payment"
+// Declaration order and spacing differ; the semantic pair is unchanged.
+entity Order id "gooo://semantic-delta/entity/order"
+
+activity PayOrder(Order) -> Payment
