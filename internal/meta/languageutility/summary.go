@@ -4,7 +4,7 @@ func summarize(contract Contract, observation Observation, cells []CellResult, i
 	summary := Summary{CellsTotal: len(cells), UseCasesTotal: len(contract.UseCases),
 		ObservationIssues: issues, ClosedFloor: contract.Floors.ClosedCells,
 		CompleteUseCaseFloor: contract.Floors.CompleteUseCases,
-		RepositoryWrites: observation.RepositoryWrites}
+		RepositoryWrites:     observation.RepositoryWrites}
 	evidence := map[string]bool{}
 	for _, cell := range cells {
 		switch cell.State {
