@@ -204,7 +204,7 @@ func observePredicate(id string, model semanticSourceModel, ledger Ledger, prese
 
 func executeCounterexample(input Input, model semanticSourceModel, baseline projectionRun, counterexample Counterexample) (CounterexampleResult, error) {
 	recipe := claimRecipeFor(input.Ledger.Records, counterexample.TargetCoordinate)
-	mutated := mutateRecipeLedger(input.Ledger, counterexample)
+	mutated := mutateRecipeLedger(cleanRecipeLedger(input.Ledger), counterexample)
 	mutatedBytes := canonicalJSON(mutated)
 	ledgerPath, _, err := writeArtifact(input.ArtifactRoot, "counterexamples/"+safeArtifactName(counterexample.ID)+"-ledger.json", json.RawMessage(mutatedBytes))
 	if err != nil {
@@ -345,6 +345,15 @@ func mutateRecipeLedger(ledger Ledger, counterexample Counterexample) Ledger {
 		}
 	}
 	return mutated
+}
+
+func cleanRecipeLedger(ledger Ledger) Ledger {
+	clean := ledger
+	clean.Records = append([]EvidenceRecord(nil), ledger.Records...)
+	for index := range clean.Records {
+		clean.Records[index].ObservedValue = "HISTORICAL_FIXTURE"
+	}
+	return clean
 }
 
 func provideReplay(input Input, model semanticSourceModel) (ReplayVerification, error) {

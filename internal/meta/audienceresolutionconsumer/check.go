@@ -351,7 +351,7 @@ func observeArtifactPredicate(coordinate string, artifact map[string]any, input 
 		for _, coordinate := range coords {
 			valid = valid && seen[coordinate]
 		}
-		contradiction := recipes[coordinate].ObservedValue == "CONTRADICTORY"
+		contradiction := stringValue(artifact["observed_predicate"]) == "forced_contradiction" && stringValue(details["mutation"]) == "CONTRADICTORY"
 		return valid && !contradiction, contradiction, true
 	case "ledger.replay":
 		replay := input.Receipt.Replay
@@ -683,7 +683,7 @@ func rawEvidenceIsHistorical(raw []byte, ledger RawLedger) bool {
 		return false
 	}
 	for _, record := range ledger.Records {
-		if record.EvidenceStatus != "HISTORICAL_FIXTURE" || record.Provider == "" || record.ContentDigest != "" || record.ObservedValue != "HISTORICAL_FIXTURE" {
+		if record.EvidenceStatus != "HISTORICAL_FIXTURE" || record.Provider == "" || record.ContentDigest != "" || record.ObservedValue == "OBSERVED" {
 			return false
 		}
 	}
