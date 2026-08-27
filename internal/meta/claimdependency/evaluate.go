@@ -298,7 +298,7 @@ func classify(graph Graph, evidence EvidenceReceipt) ([]string, []Transition, []
 			}
 		}
 		// Explicit root contradiction is the observation itself; downstream
-		// refutation additionally requires a matching local predicate receipt.
+		// refutation requires a typed, directional upstream edge.
 		if i == 0 && local[i].Available && local[i].Predicate == ObservationContradiction {
 			state, event, reason = "REFUTED", "EXPLICIT_CONTRADICTION", "CURRENT_EVIDENCE_EXPLICIT_CONTRADICTION"
 		} else if len(refuting) > 0 {
