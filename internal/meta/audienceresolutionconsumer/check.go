@@ -493,9 +493,12 @@ func verifyTransitions(input Input, model sourceModel, values, contradictions ma
 				after = "DISCHARGED"
 			}
 			status, evidenceDigest := "UNKNOWN", digestBytes([]byte("unobserved:"+coordinate))
-			if visible {
-				current := findCurrent(input.Receipt.CurrentEvidence, coordinate)
-				status, evidenceDigest = current.EvidenceStatus, current.ContentDigest
+			current := findCurrent(input.Receipt.CurrentEvidence, coordinate)
+			if current.Coordinate != "" {
+				evidenceDigest = current.ContentDigest
+				if visible {
+					status = current.EvidenceStatus
+				}
 				if evidenceDigest == "" {
 					evidenceDigest = digestBytes([]byte("unobserved:" + coordinate))
 				}
