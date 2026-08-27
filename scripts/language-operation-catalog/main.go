@@ -15,10 +15,17 @@ func main() {
 	head := flag.String("head-sha", "", "exact 40-character commit SHA")
 	output := flag.String("output", "", "receipt output path")
 	check := flag.Bool("check", false, "validate the exact baseline or extension state")
+	expectUnknown := flag.Bool("expect-unknown", false, "validate the exact unknown-operation state")
 	flag.Parse()
 	report := valuecatalog.Evaluate(os.DirFS("."), *source, *head)
 	if *check {
-		if err := valuecatalog.Validate(report, *head); err != nil {
+		var err error
+		if *expectUnknown {
+			err = valuecatalog.ValidateUnknown(report, *head)
+		} else {
+			err = valuecatalog.Validate(report, *head)
+		}
+		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(2)
 		}

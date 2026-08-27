@@ -53,8 +53,10 @@ jobs:
             internal/valuecatalog/model.go \
             internal/valuecatalog/model_program.go \
             internal/valuecatalog/model_evidence.go \
+            internal/valuecatalog/model_claim_transition.go \
             internal/valuecatalog/operation_spec_checks.go \
             internal/valuecatalog/operation_spec_claims.go \
+            internal/valuecatalog/operation_claim_transitions.go \
             internal/valuecatalog/digest.go \
             internal/valuecatalog/source_rewrite.go \
             internal/valuecatalog/core.go \
@@ -66,8 +68,11 @@ jobs:
             internal/valuecatalog/proofs.go \
             internal/valuecatalog/validate.go \
             internal/valuecatalog/validate_operation_spec.go \
+            internal/valuecatalog/validate_claim_transitions.go \
+            internal/valuecatalog/validate_unknown.go \
             internal/valuecatalog/validate_state.go \
             internal/valuecatalog/evaluate_test.go \
+            internal/valuecatalog/claim_transition_test.go \
             scripts/language-operation-catalog/main.go
           git diff --exit-code -- internal/valuecatalog internal/valueexecution scripts/language-operation-catalog
       - name: Compile baseline and future extension states
@@ -82,8 +87,13 @@ jobs:
             go run ./scripts/language-operation-catalog \
               -source examples/language-operation-catalog/main.gooo \
               -head-sha "$HEAD_SHA" -output "$output/$pass.json" -check
+            go run ./scripts/language-operation-catalog \
+              -source examples/language-operation-catalog/unknown.gooo \
+              -head-sha "$HEAD_SHA" -output "$output/unknown-$pass.json" \
+              -check -expect-unknown
           done
           cmp "$output/first.json" "$output/second.json"
+          cmp "$output/unknown-first.json" "$output/unknown-second.json"
           {
             echo '### Gooo operation catalog'
             jq -r '"- decision: `\(.decision)` at `\(.resolution)`"' "$output/first.json"
@@ -91,6 +101,8 @@ jobs:
             jq -r '"- cases: baseline `\(.summary.baseline_cases_passed)/\(.summary.baseline_cases_total)`; extension `\(.summary.extension_cases_passed)/\(.summary.extension_cases_total)`"' "$output/first.json"
             jq -r '"- reader views: `\(.views[0].satisfied)/\(.views[0].total)`, `\(.views[1].satisfied)/\(.views[1].total)`, `\(.views[2].satisfied)/\(.views[2].total)`"' "$output/first.json"
             jq -r '"- OS9: `\(.operation_spec_metrics.verified_total)/\(.operation_spec_metrics.fixed_axis_total)`; open claims `\(.operation_spec_metrics.open_claims)`; unknown paths `\(.operation_spec_metrics.unknown_path_count)`"' "$output/first.json"
+            jq -r '"- claim ledger: `\(.operation_spec_metrics.transition_event_total)` events; registered `\(.operation_spec_metrics.registration_event_total)`; discharged `\(.operation_spec_metrics.evidence_accepted_event_total)`"' "$output/first.json"
+            jq -r '"- unknown ledger: `\(.operation_spec_metrics.evidence_unavailable_event_total)` unavailable at `\(.coordinate.stage)/\(.coordinate.step)/\(.coordinate.reason)`"' "$output/unknown-first.json"
             jq -r '"- process coordinate: `\(.coordinate.stage)/\(.coordinate.step)/\(.coordinate.reason)`"' "$output/first.json"
             jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.repository_mutation_authorized)`"' "$output/first.json"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -98,6 +110,8 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: language-operation-catalog-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-operation-catalog/first.json
+          path: |
+            ${{ runner.temp }}/language-operation-catalog/first.json
+            ${{ runner.temp }}/language-operation-catalog/unknown-first.json
           if-no-files-found: error
           retention-days: 14

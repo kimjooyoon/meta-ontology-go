@@ -37,7 +37,11 @@ func TestSourceOnlyProgramClosesTheFixedExtensionCoordinate(t *testing.T) {
 	if report.Improvement.After != coordinate(1, 1) || report.Extension.Cases[2].Actual != 43 {
 		t.Fatalf("extension evidence is not exact: %#v", report)
 	}
-	if report.OperationSpecMetrics != (OperationSpecMetrics{MetricID: OperationSpecMetricID, FixedAxisTotal: 9, VerifiedTotal: 9, CoverageBasisPoints: 10_000, DischargedClaims: 9}) {
+	if report.OperationSpecMetrics != (OperationSpecMetrics{
+		MetricID: OperationSpecMetricID, FixedAxisTotal: 9, VerifiedTotal: 9,
+		CoverageBasisPoints: 10_000, DischargedClaims: 9, TransitionEventTotal: 18,
+		RegistrationEventTotal: 9, EvidenceAcceptedTotal: 9,
+	}) {
 		t.Fatalf("OS9 evidence is not exact: %#v", report.OperationSpecMetrics)
 	}
 }
@@ -53,5 +57,8 @@ func TestUnknownSourceOnlyProgramFailsClosedAtSyntaxResolution(t *testing.T) {
 	}
 	if report.OperationSpecMetrics.UnknownPathCount != 1 || report.OperationSpecMetrics.OpenClaims != 9 || report.OperationSpecMetrics.DischargedClaims != 0 {
 		t.Fatalf("unknown claims were hidden: %#v", report.OperationSpecMetrics)
+	}
+	if err := ValidateUnknown(report, strings.Repeat("c", 40)); err != nil {
+		t.Fatal(err)
 	}
 }
