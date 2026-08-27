@@ -32,6 +32,13 @@ Object propositions are not preservation propositions. A changed or removed
 before object claim refutes its separate preservation row; an after-only object
 claim is a canonical source observation and is discharged. Proposition and
 preservation digests stabilize claim IDs, and old rows remain in the receipt.
+Object and preservation claim inventories are sets: both sides must be unique
+and are compared after canonical sorting; array order is not semantic. The
+transition identity digest is version `v2` and is independently rebuilt from
+canonical rows `(claim_id, from_status, to_status, stage, step, reason,
+target_semantic_digest)`, sorted by claim ID. The target semantic digest is the
+claim's after-source semantic digest, falling back to its before-source
+semantic digest when no after target exists.
 The semantic projection explicitly models node identity, entity fields,
 activity value programs, relation facts, and the IR semantic fingerprint. Its
 declared projection component-kind coverage is `5/5 = 10000` basis points, not
@@ -64,8 +71,9 @@ decide, not evidence that the source is equivalent.
 
 The checked-in `main.gooo` is executable contract input: it declares the layer
 identities, five semantic component kinds, three claim kinds, decision policy,
-ledger recipe, five case input recipes with before/after addresses, and the
-`v2:5` denominator. Producer and consumer parse/lower that source independently;
+claim identity and transition identity recipes, ledger recipe, five case input
+recipes with before/after addresses, and the `v2:5` denominator. Producer and
+consumer parse/lower that source independently;
 the Go denominator and JSON expected conclusions are validator expectations.
 The suite reports the fixed `5/5 = 10000` contract reproduction. Its subject
 semantic equivalence remains separately `NOT_ASSERTED`.

@@ -24,6 +24,8 @@ type MetaContract struct {
 	ClaimKinds         []string
 	Policies           []string
 	Recipes            []string
+	ClaimIdentity      string
+	TransitionIdentity string
 	CaseRecipes        []CaseRecipe
 	DenominatorVersion string
 	DenominatorCases   int
@@ -69,6 +71,10 @@ func ReadMetaContract() (MetaContract, error) {
 				contract.Policies = splitSemi(strings.TrimPrefix(value, "policy:"))
 			case strings.HasPrefix(value, "ledger:"):
 				contract.Recipes = splitCSV(strings.TrimPrefix(value, "ledger:"))
+			case strings.HasPrefix(value, "claim-identity:"):
+				contract.ClaimIdentity = strings.TrimPrefix(value, "claim-identity:")
+			case strings.HasPrefix(value, "transition-identity:"):
+				contract.TransitionIdentity = strings.TrimPrefix(value, "transition-identity:")
 			case strings.HasPrefix(value, "denominator:"):
 				parts := strings.Split(strings.TrimPrefix(value, "denominator:"), ":")
 				if len(parts) == 2 {
@@ -97,7 +103,7 @@ func validateMetaContract(contract MetaContract) error {
 	if strings.Join(contract.Layers, ",") != "semantic,structural,textual" {
 		return fmt.Errorf("meta delta layers are incomplete")
 	}
-	if len(contract.ComponentKinds) != TotalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || !sameCaseRecipes(contract.CaseRecipes, Denominator()) {
+	if len(contract.ComponentKinds) != TotalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || contract.ClaimIdentity != "object=normalized|target|raw-digest|semantic-digest;preservation=before-id|after-id|target|before-proposition|after-raw|after-semantic;inventory=set-canonical" || contract.TransitionIdentity != "v2:claim-id|from|to|stage|step|reason|target-semantic-digest;sort-by-claim-id" || !sameCaseRecipes(contract.CaseRecipes, Denominator()) {
 		return fmt.Errorf("meta semantic contract coverage is incomplete")
 	}
 	return nil

@@ -267,6 +267,8 @@ func fixedClaimCountForCase(caseID string) (int, bool) {
 
 func caseRowDigest(expectation claimIdentityExpectation) string {
 	expectation.CaseRowDigest = ""
+	expectation.ExpectedClaimIDs = append([]string(nil), expectation.ExpectedClaimIDs...)
+	sort.Strings(expectation.ExpectedClaimIDs)
 	return digestValue(expectation)
 }
 

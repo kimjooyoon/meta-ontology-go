@@ -152,10 +152,14 @@ logical transition sequence (`kind`, status endpoints, preservation target,
 stage, step, and reason). Instance/evidence digests may still change because
 they deliberately bind the observed raw source.
 
-The receipt also exposes the sorted `claim_id_inventory` and a
-`claim_transition_identity_digest` over every ledger row and transition. The
-independent consumer reconstructs both fields from the raw pair, so a replaced
-claim with the same transition count cannot pass. The fixed five-case suite also
+The receipt also exposes the sorted `claim_id_inventory` and a versioned
+`claim_transition_identity_digest`. Version `v2` is the digest of canonical
+rows `(claim_id, from_status, to_status, stage, step, reason,
+target_semantic_digest)` sorted by claim ID; the target digest is taken from the
+after-source claim, falling back to the before-source claim. The independent
+consumer reconstructs both fields from the raw pair, so a replaced claim with
+the same transition count cannot pass. Inventory order is not semantic: both
+sides must be unique before canonical sorting. The fixed five-case suite also
 compares the independent reconstruction with the checked-in validator
 expectation artifact at
 `examples/semantic-delta-receipt/claim-transition-expectations.json`; the
@@ -170,7 +174,10 @@ reconstruction each retain their own `stage`, `step`, and `reason` at
 observed tamper IDs, four exact replay context IDs, fixed totals, rejection
 counts, and basis-point coverage. The fixed tamper inventory is 12 IDs and the
 replay-context inventory is 4 IDs; duplicate, missing, extra, or substituted
-IDs fail closed.
+IDs fail closed. When the fixed expectation is reconciled to a source-derived
+runtime inventory, `claim-transition-expectation-evolution.json` records both
+artifact digests, every case's added/removed IDs, the unchanged proposition and
+target binding, and the unchanged denominator; it is not an implicit overwrite.
 
 The conformance suite's `FIXED_POINT` decision means only that the fixed
 five-case contract was reproduced. `subject_semantic_equivalence` is recorded

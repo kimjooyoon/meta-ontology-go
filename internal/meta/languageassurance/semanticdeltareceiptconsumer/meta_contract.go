@@ -22,6 +22,8 @@ type metaContract struct {
 	ClaimKinds         []string
 	Policies           []string
 	Recipes            []string
+	ClaimIdentity      string
+	TransitionIdentity string
 	CaseRecipes        []caseRecipe
 	DenominatorVersion string
 	DenominatorCases   int
@@ -84,6 +86,10 @@ func readMetaContract() (metaContract, error) {
 				contract.Policies = splitSemiConsumer(strings.TrimPrefix(value, "policy:"))
 			case strings.HasPrefix(value, "ledger:"):
 				contract.Recipes = splitCSVConsumer(strings.TrimPrefix(value, "ledger:"))
+			case strings.HasPrefix(value, "claim-identity:"):
+				contract.ClaimIdentity = strings.TrimPrefix(value, "claim-identity:")
+			case strings.HasPrefix(value, "transition-identity:"):
+				contract.TransitionIdentity = strings.TrimPrefix(value, "transition-identity:")
 			case strings.HasPrefix(value, "denominator:"):
 				parts := strings.Split(strings.TrimPrefix(value, "denominator:"), ":")
 				if len(parts) == 2 {
@@ -99,7 +105,7 @@ func readMetaContract() (metaContract, error) {
 	}
 	sort.Strings(contract.ComponentKinds)
 	sort.Strings(contract.ClaimKinds)
-	if contract.Version != denominatorVersion || contract.DenominatorCases != 5 || len(contract.ComponentKinds) != totalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || !sameCaseRecipesConsumer(contract.CaseRecipes) {
+	if contract.Version != denominatorVersion || contract.DenominatorCases != 5 || len(contract.ComponentKinds) != totalComponentCount || len(contract.Policies) != 3 || len(contract.Recipes) != 4 || contract.ClaimIdentity != "object=normalized|target|raw-digest|semantic-digest;preservation=before-id|after-id|target|before-proposition|after-raw|after-semantic;inventory=set-canonical" || contract.TransitionIdentity != "v2:claim-id|from|to|stage|step|reason|target-semantic-digest;sort-by-claim-id" || !sameCaseRecipesConsumer(contract.CaseRecipes) {
 		return metaContract{}, fmt.Errorf("consumer meta contract incomplete")
 	}
 	return contract, nil

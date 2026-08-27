@@ -125,6 +125,7 @@ jobs:
           root=examples/semantic-delta-receipt
           observed_checkout_sha="$(cat "$out/observed-checkout-sha.txt")"
           cp "$root/claim-transition-expectations.json" "$out/claim-transition-expectations.json"
+          cp "$root/claim-transition-expectation-evolution.json" "$out/claim-transition-expectation-evolution.json"
           expectation_digest="sha256:$(sha256sum "$out/claim-transition-expectations.json" | awk '{print $1}')"
           for pass in first second; do
             go run ./cmd/semantic-delta-receipt-witness \
@@ -145,9 +146,9 @@ jobs:
             ([.cases[] | select((.expected_claim_ids | length) > 0 and ((.expected_claim_ids | unique | length) == (.expected_claim_ids | length)) and (.expected_claim_total > 0) and ((.expected_claim_ids | length) == .expected_claim_total) and (.expected_transition_identity_digest | test("^sha256:[0-9a-f]{64}$")) and (.case_row_digest | test("^sha256:[0-9a-f]{64}$")))] | length) == 5
           ' "$out/claim-transition-expectations.json"
           jq -e --slurpfile expected "$out/claim-transition-expectations.json" '
-            ($expected[0].cases | map({id, expected_claim_ids, expected_transition_identity_digest, expected_claim_total, case_row_digest}) | sort_by(.id)) as $fixed |
-            ([.cases[] | {id:.report.case_id, expected_claim_ids:.report.claim_identity.expected_claim_ids, expected_transition_identity_digest:.report.claim_identity.expected_transition_identity_digest, expected_claim_total:.report.claim_identity.expected_claim_total, case_row_digest:.report.claim_identity.expectation_case_row_digest, observed_claim_ids:.report.claim_identity.observed_claim_ids, observed_transition_identity_digest:.report.claim_identity.observed_transition_identity_digest}] | sort_by(.id)) as $observed |
-            ($fixed | map({id, expected_claim_ids, expected_transition_identity_digest, expected_claim_total, case_row_digest, observed_claim_ids:.expected_claim_ids, observed_transition_identity_digest:.expected_transition_identity_digest})) == $observed
+            ($expected[0].cases | map({id, expected_claim_ids:(.expected_claim_ids|sort), expected_transition_identity_digest, expected_claim_total, case_row_digest}) | sort_by(.id)) as $fixed |
+            ([.cases[] | {id:.report.case_id, expected_claim_ids:(.report.claim_identity.expected_claim_ids|sort), expected_transition_identity_digest:.report.claim_identity.expected_transition_identity_digest, expected_claim_total:.report.claim_identity.expected_claim_total, case_row_digest:.report.claim_identity.expectation_case_row_digest, observed_claim_ids:(.report.claim_identity.observed_claim_ids|sort), observed_transition_identity_digest:.report.claim_identity.observed_transition_identity_digest}] | sort_by(.id)) as $observed |
+            ($fixed | map({id, expected_claim_ids, expected_transition_identity_digest, expected_claim_total, case_row_digest, observed_claim_ids:expected_claim_ids, observed_transition_identity_digest:expected_transition_identity_digest})) == $observed
           ' "$out/first.json"
           test "$(jq -c '.recipes' "$root/denominator.json")" = "$(jq -c '.cases | map({id,before_path,after_path})' "$root/denominator.json")"
           go run ./cmd/semantic-delta-receipt-witness --before "$root/before.gooo" --after "$root/equivalent-after.gooo" --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --effects-before "$out/workspace-before.tsv" --effects-after "$out/workspace-after.tsv" --output "$out/equivalent.json"

@@ -25,6 +25,8 @@ activity SeparateDeltaLayers(SourcePair) -> DeltaReceipt computes "meta.semantic
 activity ProjectSemanticComponents(SourcePair) -> SemanticComponentSet computes "meta.semantic-delta.components:node-semantic,entity-field,activity-value-program,relation-fact,ir-semantic-fingerprint"
 activity AdjudicateDelta(DeltaReceipt) -> IndependentVerdict computes "meta.semantic-delta.policy:raw-separate;semantic-separate;fail-closed-lower-resolution"
 activity RecordTransitionLedger(DeltaReceipt) -> TransitionLedger computes "meta.semantic-delta.ledger:open,discharged,refuted,append-only"
+activity DeclareClaimIdentityContract(SourcePair) -> SemanticClaimDelta computes "meta.semantic-delta.claim-identity:object=normalized|target|raw-digest|semantic-digest;preservation=before-id|after-id|target|before-proposition|after-raw|after-semantic;inventory=set-canonical"
+activity DeclareTransitionIdentityContract(DeltaReceipt) -> TransitionLedger computes "meta.semantic-delta.transition-identity:v2:claim-id|from|to|stage|step|reason|target-semantic-digest;sort-by-claim-id"
 activity ValidateFixedDenominator(SourcePair) -> DenominatorContract computes "meta.semantic-delta.denominator:v2:5"
 activity DeclareEquivalentCase(SourcePair) -> DenominatorContract computes "meta.semantic-delta.case:equivalent|before:examples/semantic-delta-receipt/before.gooo|after:examples/semantic-delta-receipt/equivalent-after.gooo"
 activity DeclareSemanticChangeCase(SourcePair) -> DenominatorContract computes "meta.semantic-delta.case:semantic-change|before:examples/semantic-delta-receipt/before.gooo|after:examples/semantic-delta-receipt/semantic-after.gooo"

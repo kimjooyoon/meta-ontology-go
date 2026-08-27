@@ -32,14 +32,23 @@ func coverageBPS(numerator, denominator int) int {
 }
 
 func claimTransitionIdentityDigest(ledger []Claim, transitions []ClaimTransition) string {
-	parts := []string{"gooo://semantic-delta/claim-transition-identity/v1"}
+	byID := make(map[string]Claim, len(ledger))
 	for _, claim := range ledger {
-		parts = append(parts, claim.ID, claim.ClaimTypeID, claim.Kind, claim.PropositionDigest, claim.Status, claim.PreservationOf)
+		byID[claim.ID] = claim
 	}
+	rows := []string{"gooo://semantic-delta/claim-transition-identity/v2"}
 	for _, transition := range transitions {
-		parts = append(parts, transition.ClaimID, transition.Kind, transition.FromStatus, transition.ToStatus, transition.PropositionDigest, transition.EventID, transition.TransitionDigest, transition.PreviousEventDigest)
+		targetSemanticDigest := ""
+		if claim, ok := byID[transition.ClaimID]; ok {
+			targetSemanticDigest = claim.AfterSemanticDigest
+			if targetSemanticDigest == "" {
+				targetSemanticDigest = claim.BeforeSemanticDigest
+			}
+		}
+		rows = append(rows, strings.Join([]string{transition.ClaimID, transition.FromStatus, transition.ToStatus, transition.Stage, transition.Step, transition.Reason, targetSemanticDigest}, "\x00"))
 	}
-	return digestValue(strings.Join(parts, "\x00"))
+	sort.Strings(rows[1:])
+	return digestValue(strings.Join(rows, "\x01"))
 }
 
 func claimIDInventory(ledger []Claim) []string {
