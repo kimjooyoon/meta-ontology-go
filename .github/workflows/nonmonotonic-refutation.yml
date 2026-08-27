@@ -302,7 +302,7 @@ jobs:
           semantic_causality="$(jq -n --slurpfile baseline "$output/baseline.json" --slurpfile semantic "$output/semantic.json" '
             if ($semantic[0].report.source_semantic_digest != $baseline[0].report.source_semantic_digest and $semantic[0].report.transitions[5].relation == "CONTRADICTS" and $semantic[0].report.subject_resolution.decision == "DISCHARGED=1;REFUTED=2;OPEN=0" and [$semantic[0].report.transitions[].transition_digest] != [$baseline[0].report.transitions[].transition_digest]) then 1 else 0 end
           ')
-          nonsemantic_preservation="$(jq -n --slurpfile baseline "$output/baseline.json" --slurpfile comment "$output/comment.json" '
+          nonsemantic_preservation_result="$(jq -n --slurpfile baseline "$output/baseline.json" --slurpfile comment "$output/comment.json" '
             if ($comment[0].report.source_digest != $baseline[0].report.source_digest and $comment[0].report.source_semantic_digest == $baseline[0].report.source_semantic_digest and [$comment[0].report.transitions[].transition_digest] == [$baseline[0].report.transitions[].transition_digest] and [$comment[0].report.cases[].status_history] == [$baseline[0].report.cases[].status_history]) then 1 else 0 end
           ')
           coherent_tamper_rejected="$(jq -n --slurpfile tampered "$output/tampered.json" '
@@ -311,9 +311,9 @@ jobs:
           mutation_promotions="$(jq -n --slurpfile baseline "$output/baseline.json" '
             if ($baseline[0].mutation_authority == false and $baseline[0].promotion_count == 0) then 0 else 1 end
           ')
-          echo "::notice title=nonmonotonic denominator values::producer_imports=$producer_imports semantic_causality=$semantic_causality nonsemantic_preservation=$nonsemantic_preservation coherent_tamper_rejected=$coherent_tamper_rejected mutation_promotions=$mutation_promotions"
+          echo "::notice title=nonmonotonic denominator values::producer_imports=$producer_imports semantic_causality=$semantic_causality nonsemantic_preservation=$nonsemantic_preservation_result coherent_tamper_rejected=$coherent_tamper_rejected mutation_promotions=$mutation_promotions"
           test "$semantic_causality" -eq 1
-          test "$nonsemantic_preservation" -eq 1
+          test "$nonsemantic_preservation_result" -eq 1
           test "$coherent_tamper_rejected" -eq 1
           test "$mutation_promotions" -eq 0
           jq -n \
@@ -323,7 +323,7 @@ jobs:
             --argjson repository_writes "$repository_writes" \
             --argjson producer_imports "$producer_imports" \
             --argjson semantic_causality "$semantic_causality" \
-            --argjson nonsemantic_preservation "$nonsemantic_preservation" \
+            --argjson nonsemantic_preservation "$nonsemantic_preservation_result" \
             --argjson coherent_tamper_rejected "$coherent_tamper_rejected" \
             --argjson mutation_promotions "$mutation_promotions" '
             {
