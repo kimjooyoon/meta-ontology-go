@@ -2149,20 +2149,36 @@ jobs:
             go run ./cmd/gooo check --semantic "examples/phase-separation-witness/$source.gooo" > "$output/gooo-check-$source.txt" 2>&1
           done
           test "$(find "$output" -name 'gooo-check-*.txt' | wc -l | tr -d ' ')" = "3"
+          if rg -n '(^|;)(claim_state_from|claim_state_to|stage|step|reason)=' examples/phase-separation-witness/*.gooo; then
+            echo 'source contract must not declare evaluator lifecycle or adjudication results' >&2
+            exit 1
+          fi
       - name: Check producer isolation and prepare CI observation
         shell: bash
         run: |
           set -euo pipefail
           output="$RUNNER_TEMP/phase-separation-witness"
-          before_status="$(git status --porcelain)"
+          before_status="$(git status --porcelain --untracked-files=all)"
           before_count="$(printf '%s\n' "$before_status" | awk 'NF {count++} END {print count + 0}')"
           before_digest="$(printf '%s\n' "$before_status" | sha256sum | cut -d' ' -f1)"
           producer_imports="$(go list -deps ./scripts/phase-separation-adjudicator | grep -F -c 'github.com/kimjooyoon/meta-ontology-go/internal/meta/phaseseparation' || true)"
           test "$producer_imports" = "0"
+          set +e
+          git push --dry-run --no-verify origin "HEAD:refs/heads/phase-separation-witness-probe-$GITHUB_RUN_ID" > "$output/mutation-authority-probe.txt" 2>&1
+          mutation_status="$?"
+          git push --dry-run --no-verify origin "HEAD:refs/heads/dev" > "$output/promotion-authority-probe.txt" 2>&1
+          promotion_status="$?"
+          set -e
+          mutation_authority=false
+          promotion_authority=false
+          if test "$mutation_status" = "0"; then mutation_authority=true; fi
+          if test "$promotion_status" = "0"; then promotion_authority=true; fi
           jq -n \
             --arg before "sha256:$before_digest" \
             --argjson writes "$before_count" \
-            '{repository_writes:$writes, mutation_authority:false, promotion_authority:false, execution_authority:false, permissions:"contents:read", before_status_digest:$before, after_status_digest:"pending"}' \
+            --argjson mutation "$mutation_authority" \
+            --argjson promotion "$promotion_authority" \
+            '{repository_writes:$writes, mutation_authority:$mutation, promotion_authority:$promotion, execution_authority:false, permissions:"contents:read", before_status_digest:$before, after_status_digest:"pending"}' \
             > "$output/ci-snapshot.json"
           printf '%s\n' "$producer_imports" > "$output/producer-imports.txt"
       - name: Emit and replay source-derived producer receipts
@@ -2185,7 +2201,7 @@ jobs:
           set -euo pipefail
           output="$RUNNER_TEMP/phase-separation-witness"
           before_digest="$(jq -r '.before_status_digest' "$output/ci-snapshot.json")"
-          after_status="$(git status --porcelain)"
+          after_status="$(git status --porcelain --untracked-files=all)"
           after_count="$(printf '%s\n' "$after_status" | awk 'NF {count++} END {print count + 0}')"
           after_digest="sha256:$(printf '%s\n' "$after_status" | sha256sum | cut -d' ' -f1)"
           test "$after_count" = "0"
@@ -2201,7 +2217,7 @@ jobs:
               -head-sha "$HEAD_SHA" -output "$output/$pass.json"
           done
           cmp -s "$output/first.json" "$output/second.json"
-          jq -e '.decision == "PASS" and .summary.source_cases_processed == 6 and .summary.source_cases_total == 6 and .summary.clean_cases_passed == 1 and .summary.clean_cases_total == 1 and .summary.leakage_rejections == 5 and .summary.leakage_rejections_total == 5 and .summary.claim_transitions_preserved == 2 and .summary.claim_transitions_total == 2 and .summary.explicit_claim_transfers == 2 and .summary.explicit_claim_transfers_total == 2 and .summary.semantic_causality == 1 and .summary.semantic_causality_total == 1 and .summary.nonsemantic_preservation == 1 and .summary.nonsemantic_preservation_total == 1 and .summary.indicators_satisfied == 12 and .summary.indicators_total == 12 and .summary.repository_writes == 0 and .authority.mutation == false and .authority.promotion == false and .unknown.decision == "UNKNOWN" and .unknown.claim_state == "OPEN" and .unknown.coordinate.stage == "SOURCE" and .unknown.coordinate.step == "PARSE" and .unknown.coordinate.reason == "UNKNOWN_SOURCE_CONTRACT"' "$output/first.json"
+          jq -e '.decision == "PASS" and .summary.source_cases_processed == 6 and .summary.source_cases_total == 6 and .summary.clean_cases_passed == 1 and .summary.clean_cases_total == 1 and .summary.leakage_rejections == 5 and .summary.leakage_rejections_total == 5 and .summary.claim_transitions_preserved == 2 and .summary.claim_transitions_total == 2 and .summary.explicit_claim_transfers == 2 and .summary.explicit_claim_transfers_total == 2 and .summary.semantic_causality == 1 and .summary.semantic_causality_total == 1 and .summary.nonsemantic_preservation == 1 and .summary.nonsemantic_preservation_total == 1 and .summary.indicators_satisfied == 12 and .summary.indicators_total == 12 and .summary.repository_writes == 0 and .authority.mutation == false and .authority.promotion == false and .unknown.decision == "UNKNOWN" and .unknown.resolution == "LOWER_RESOLUTION" and .unknown.claim_state == "OPEN" and .unknown.coordinate.stage == "SOURCE" and .unknown.coordinate.step == "PARSE" and .unknown.coordinate.reason == "UNKNOWN_SOURCE_PROVENANCE"' "$output/first.json"
       - name: Publish fixed CI metrics
         shell: bash
         run: |
@@ -2217,7 +2233,7 @@ jobs:
             jq -r '"- explicit claim transfers: `\(.summary.explicit_claim_transfers)/\(.summary.explicit_claim_transfers_total)`; preserved transitions: `\(.summary.claim_transitions_preserved)/\(.summary.claim_transitions_total)`"' "$output/first.json"
             jq -r '"- semantic causality: `\(.summary.semantic_causality)/\(.summary.semantic_causality_total)`; nonsemantic preservation: `\(.summary.nonsemantic_preservation)/\(.summary.nonsemantic_preservation_total)`"' "$output/first.json"
             jq -r '"- indicators: `\(.summary.indicators_satisfied)/\(.summary.indicators_total)`; writes: `\(.summary.repository_writes)`; mutation: `\(.authority.mutation)`"' "$output/first.json"
-            jq -r '"- UNKNOWN: `\(.unknown.decision)` at `\(.unknown.coordinate.stage)/\(.unknown.coordinate.step)/\(.unknown.coordinate.reason)`; lifecycle: `\(.unknown.claim_state)`"' "$output/first.json"
+            jq -r '"- UNKNOWN: `\(.unknown.decision)` at `\(.unknown.coordinate.stage)/\(.unknown.coordinate.step)/\(.unknown.coordinate.reason)`; resolution: `\(.unknown.resolution)`; lifecycle: `\(.unknown.claim_state)`"' "$output/first.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source-derived producer evidence
         if: always()
@@ -2275,5 +2291,5 @@ jobs:
             jq -r '"- explicit claim transfers: `\(.summary.explicit_claim_transfers)/\(.summary.explicit_claim_transfers_total)`; preserved transitions: `\(.summary.claim_transitions_preserved)/\(.summary.claim_transitions_total)`"' phase-separation-input/first.json
             jq -r '"- semantic causality: `\(.summary.semantic_causality)/\(.summary.semantic_causality_total)`; nonsemantic preservation: `\(.summary.nonsemantic_preservation)/\(.summary.nonsemantic_preservation_total)`"' phase-separation-input/first.json
             jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.mutation)`"' phase-separation-input/first.json
-            jq -r '"- UNKNOWN: `\(.unknown.decision)` at `\(.unknown.coordinate.stage)/\(.unknown.coordinate.step)/\(.unknown.coordinate.reason)`; lifecycle: `\(.unknown.claim_state)`"' phase-separation-input/first.json
+            jq -r '"- UNKNOWN: `\(.unknown.decision)` at `\(.unknown.coordinate.stage)/\(.unknown.coordinate.step)/\(.unknown.coordinate.reason)`; resolution: `\(.unknown.resolution)`; lifecycle: `\(.unknown.claim_state)`"' phase-separation-input/first.json
           } >> "$GITHUB_STEP_SUMMARY"

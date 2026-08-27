@@ -9,16 +9,22 @@ and the transfer payload class.
 `main.gooo` contains one clean claim with two explicit adjacent transfers.
 `leaks.gooo` contains five source-derived counterexamples: value, authority,
 evidence, a source-to-execution phase skip, and an execution-to-expansion phase
-reverse. `unknown.gooo` is syntactically valid Gooo but has an unsupported
-case coordinate, so the claim remains `OPEN` at `SOURCE/PARSE/UNKNOWN_SOURCE_CONTRACT`.
+reverse. `unknown.gooo` is syntactically valid Gooo but omits provenance
+material. The evaluator derives `UNKNOWN` at
+`SOURCE/PARSE/UNKNOWN_SOURCE_PROVENANCE`, keeps the claim `OPEN`, and reports
+`LOWER_RESOLUTION`.
 
 The producer and consumer each call `syntax.ParseFile` followed by
 `bidir.Lower`. The consumer has its own wire model and evaluator and imports no
 producer package. It reconstructs outcomes from endpoint adjacency, phase-local
 IDs, payload class, claim digest, target declaration digest, and evidence
-provenance. Receipt expected/actual labels and counts are not adjudication
-authority.
+provenance. The source does not declare claim lifecycle or adjudication
+coordinates. If claim/target digests are present, they are source material
+that the evaluator independently recomputes; mismatches fail closed. Receipt
+expected/actual labels and counts are not adjudication authority.
 
-The receipt carries append-only previous evidence digests, claim lifecycle
-states, three audience views, twelve derived indicators, semantic and comment-only
-interventions, and an independently observed CI read-only snapshot.
+The receipt carries evaluator-derived append-only previous evidence digests,
+claim lifecycle states, three audience views, twelve derived indicators,
+semantic and comment-only interventions, and an independently observed CI
+read-only snapshot. A semantic intervention changes a real payload class;
+comment-only input changes no semantic fact.

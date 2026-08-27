@@ -49,7 +49,7 @@ func Build(sourcePath string, sourceBytes []byte, leaksPath string, leaksBytes [
 	}
 	unknownFile, err := ParseAndLower(unknownPath, unknownBytes)
 	if err != nil {
-		report.Unknown = UnknownResult{Decision: DecisionUnknown, Coordinate: Coordinate{Stage: "SOURCE", Step: "PARSE", Reason: ReasonUnknownSyntax}, ClaimState: StateOpen, PreviousDigest: zeroDigest}
+		report.Unknown = UnknownResult{Decision: DecisionUnknown, Resolution: ResolutionLower, Coordinate: Coordinate{Stage: "SOURCE", Step: "PARSE", Reason: ReasonUnknownSyntax}, ClaimState: StateOpen, PreviousDigest: zeroDigest}
 		return finalize(report)
 	}
 	if mainFile.IR.Package != leakFile.IR.Package || mainFile.IR.Namespace != leakFile.IR.Namespace || mainFile.IR.Package != unknownFile.IR.Package || mainFile.IR.Namespace != unknownFile.IR.Namespace {
@@ -133,16 +133,18 @@ func evaluateCleanCase(records []derivedRecord) (CaseResult, []ClaimTransition) 
 	result := caseResultFromRecords("clean", "CLEAN", records)
 	transitions := make([]ClaimTransition, 0, len(records))
 	valid := len(records) == ExpectedClaimTransitions
+	state := StateOpen
 	for index, record := range records {
 		transition, reason := deriveClaimTransition(record)
-		if index == 0 && record.ClaimStateTo != StateOpen {
-			valid = false
-		}
-		if index == len(records)-1 && record.ClaimStateTo != StateDischarged {
-			valid = false
-		}
+		transition.FromState = state
 		if reason != "" {
+			transition.ToState = StateRefuted
 			valid = false
+		} else if index == len(records)-1 {
+			transition.ToState = StateDischarged
+			state = StateDischarged
+		} else {
+			transition.ToState = StateOpen
 		}
 		transitions = append(transitions, transition)
 	}
@@ -191,10 +193,16 @@ func deriveClaimTransition(record derivedRecord) (ClaimTransition, string) {
 	transition := ClaimTransition{
 		ID: record.TransferID, FromPhase: record.FromPhase, ToPhase: record.ToPhase,
 		FromClaim: record.FromValueID, ToClaim: record.ToValueID,
-		FromState: record.ClaimStateFrom, ToState: record.ClaimStateTo,
+		FromState: StateOpen, ToState: StateOpen,
 		ClaimDigest: claimDigest(record.SourceRecord), TargetDigest: targetDigest(record.SourceRecord),
 		EvidenceDigest: record.EvidenceDigest, Provenance: record.Provenance, PreviousDigest: record.PreviousDigest,
 		MetaOperation: MetaOperationID, ProofChoice: ProofChoiceID,
+	}
+	if !completeRecord(record.SourceRecord) {
+		return transition, ReasonUnknownContract
+	}
+	if !declaredDigestsMatch(record.SourceRecord) {
+		return transition, "CLAIM_DIGEST_MISMATCH"
 	}
 	if record.PayloadClass != PayloadClaim {
 		return transition, leakReason(record.PayloadClass)
@@ -202,17 +210,17 @@ func deriveClaimTransition(record derivedRecord) (ClaimTransition, string) {
 	if !allowedClaimEdge(record.FromPhase, record.ToPhase) {
 		return transition, edgeReason(record.FromPhase, record.ToPhase)
 	}
-	if record.ClaimDigest != transition.ClaimDigest || record.TargetDigest != transition.TargetDigest {
-		return transition, "CLAIM_DIGEST_MISMATCH"
-	}
-	if record.Provenance == "" || record.ClaimStateFrom != StateOpen {
-		return transition, "CLAIM_PROVENANCE_MISMATCH"
-	}
 	transition.Preserved = true
 	return transition, ""
 }
 
 func deriveLeakReason(record derivedRecord) string {
+	if !completeRecord(record.SourceRecord) {
+		return unknownReason(record.SourceRecord)
+	}
+	if !declaredDigestsMatch(record.SourceRecord) {
+		return "CLAIM_DIGEST_MISMATCH"
+	}
 	if record.PayloadClass != PayloadClaim {
 		return leakReason(record.PayloadClass)
 	}
@@ -244,6 +252,36 @@ func isKnownLeakReason(reason string) bool {
 		}
 	}
 	return false
+}
+
+func completeRecord(record SourceRecord) bool {
+	return record.CaseKey != "" && record.TransferID != "" && record.ValueID != "" && record.FromValueID != "" && record.ToValueID != "" && record.LiteralClass != "" && record.FromLiteralClass != "" && record.ToLiteralClass != "" && record.FromPhase != "" && record.ToPhase != "" && record.PayloadClass != "" && record.Provenance != ""
+}
+
+func declaredDigestsMatch(record SourceRecord) bool {
+	if record.ClaimDigest != "" && record.ClaimDigest != "none" && record.ClaimDigest != claimDigest(record) {
+		return false
+	}
+	if record.TargetDigest != "" && record.TargetDigest != "none" && record.TargetDigest != targetDigest(record) {
+		return false
+	}
+	if record.PayloadClass == PayloadClaim {
+		return isDigest(record.ClaimDigest) && isDigest(record.TargetDigest) && record.ClaimDigest == claimDigest(record) && record.TargetDigest == targetDigest(record)
+	}
+	return true
+}
+
+func unknownReason(record SourceRecord) string {
+	if record.ValueID == "" || record.FromValueID == "" || record.ToValueID == "" || record.FromPhase == "" || record.ToPhase == "" {
+		return ReasonUnknownEndpoint
+	}
+	if record.PayloadClass == "" {
+		return ReasonUnknownPayload
+	}
+	if record.Provenance == "" {
+		return ReasonUnknownProvenance
+	}
+	return ReasonUnknownContract
 }
 
 func buildEvidence(base evaluation, report Report) ([]Indicator, []View, []Proof) {
@@ -291,17 +329,15 @@ func buildEvidence(base evaluation, report Report) ([]Indicator, []View, []Proof
 
 func deriveUnknown(parsed []SourceRecord) UnknownResult {
 	if len(parsed) != 1 {
-		return UnknownResult{Decision: DecisionUnknown, Coordinate: Coordinate{Stage: "SOURCE", Step: "DECODE", Reason: ReasonUnknownContract}, ClaimState: StateOpen, PreviousDigest: zeroDigest}
+		return UnknownResult{Decision: DecisionUnknown, Resolution: ResolutionLower, Coordinate: Coordinate{Stage: "SOURCE", Step: "PARSE", Reason: ReasonUnknownContract}, ClaimState: StateOpen, PreviousDigest: zeroDigest}
 	}
 	record := parsed[0]
-	return UnknownResult{Decision: DecisionUnknown, Coordinate: Coordinate{Stage: record.Stage, Step: record.Step, Reason: record.DeclaredReason}, ClaimState: StateOpen, EvidenceDigest: evidenceDigest(record), Provenance: record.Provenance, PreviousDigest: zeroDigest}
+	return UnknownResult{Decision: DecisionUnknown, Resolution: ResolutionLower, Coordinate: Coordinate{Stage: "SOURCE", Step: "PARSE", Reason: unknownReason(record)}, ClaimState: StateOpen, EvidenceDigest: evidenceDigest(record), Provenance: record.Provenance, PreviousDigest: zeroDigest}
 }
 
 func semanticIntervention(mainFile, leakFile ParsedFile, base evaluation) Intervention {
 	result := Intervention{Kind: "SEMANTIC", Denominator: 1}
 	variantSource := bytes.Replace(mainFile.Source, []byte("payload_class=claim"), []byte("payload_class=value"), 1)
-	variantSource = bytes.Replace(variantSource, []byte("claim_digest=sha256:ee3e8ebaa490d076fa230325fe30ef061c629c7cd2e5d5ef41df5e52a06548c3"), []byte("claim_digest=none"), 1)
-	variantSource = bytes.Replace(variantSource, []byte("target_digest=sha256:f71af2266668baa89342e7740fe22b77b58f5aa612fe716b7fe9257380fb34fa"), []byte("target_digest=none"), 1)
 	variant, err := ParseAndLower(mainFile.Filename, variantSource)
 	if err != nil {
 		return result
@@ -350,7 +386,7 @@ func exactReport(report Report) bool {
 		report.Summary.SemanticCausality == 1 && report.Summary.SemanticCausalityTotal == 1 &&
 		report.Summary.NonsemanticPreservation == 1 && report.Summary.NonsemanticPreservationTotal == 1 &&
 		report.Summary.UnknownCases == 1 && report.Summary.RepositoryWrites == 0 &&
-		report.Authority == (Authority{}) && report.Unknown.Decision == DecisionUnknown && report.Unknown.ClaimState == StateOpen &&
+		report.Authority == (Authority{}) && report.Unknown.Decision == DecisionUnknown && report.Unknown.Resolution == ResolutionLower && report.Unknown.ClaimState == StateOpen &&
 		len(report.Cases) == ExpectedCleanCases+ExpectedLeakageCases && len(report.Transitions) == ExpectedClaimTransitions && len(report.Indicators) == ExpectedIndicators && len(report.Views) == ExpectedViews && len(report.Proofs) == ExpectedProofs &&
 		allPassed(report.Indicators) && allPassed(report.Proofs)
 }

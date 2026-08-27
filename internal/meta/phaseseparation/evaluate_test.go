@@ -29,7 +29,7 @@ func TestBuildKeepsUnknownProbeOpen(t *testing.T) {
 	leakBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "leaks.gooo"))
 	unknownBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "unknown.gooo"))
 	report := Build("main.gooo", mainBytes, "leaks.gooo", leakBytes, "unknown.gooo", unknownBytes, "0123456789012345678901234567890123456789", CISnapshot{})
-	if report.Unknown.Decision != DecisionUnknown || report.Unknown.Coordinate != (Coordinate{"SOURCE", "PARSE", ReasonUnknownContract}) || report.Unknown.ClaimState != StateOpen {
+	if report.Unknown.Decision != DecisionUnknown || report.Unknown.Resolution != ResolutionLower || report.Unknown.Coordinate != (Coordinate{"SOURCE", "PARSE", ReasonUnknownProvenance}) || report.Unknown.ClaimState != StateOpen {
 		t.Fatalf("unknown report = %#v", report.Unknown)
 	}
 }

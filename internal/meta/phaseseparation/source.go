@@ -87,14 +87,16 @@ func decodeActivity(filename string, activity *syntax.ActivityDecl, fromID, toID
 		LiteralClass: fields["literal_class"], FromLiteralClass: fields["from_literal_class"],
 		ToLiteralClass: fields["to_literal_class"], FromPhase: fields["from_phase"], ToPhase: fields["to_phase"],
 		PayloadClass: fields["payload_class"], ClaimDigest: fields["claim_digest"], TargetDigest: fields["target_digest"],
-		Provenance: fields["provenance"], ClaimStateFrom: fields["claim_state_from"], ClaimStateTo: fields["claim_state_to"],
-		Stage: fields["stage"], Step: fields["step"], DeclaredReason: fields["reason"],
+		Provenance: fields["provenance"],
 	}
-	if record.CaseKey == "" || record.TransferID == "" || record.ValueID == "" || record.FromValueID == "" || record.ToValueID == "" {
-		return SourceRecord{}, fmt.Errorf("%s: activity %q: incomplete phase value identity", filename, activity.Name)
+	if record.ValueID != "" && record.FromValueID != "" && record.ValueID != record.FromValueID {
+		return SourceRecord{}, fmt.Errorf("%s: activity %q: value_id and from_value_id disagree", filename, activity.Name)
 	}
-	if record.ValueID != record.FromValueID || record.FromValueID != fromID || record.ToValueID != toID {
+	if record.FromValueID != "" && record.FromValueID != fromID {
 		return SourceRecord{}, fmt.Errorf("%s: activity %q: computes value IDs disagree with entity endpoints", filename, activity.Name)
+	}
+	if record.ToValueID != "" && record.ToValueID != toID {
+		return SourceRecord{}, fmt.Errorf("%s: activity %q: computes target ID disagrees with entity endpoint", filename, activity.Name)
 	}
 	fromPhase, err := phaseOfID(fromID)
 	if err != nil {
@@ -104,48 +106,44 @@ func decodeActivity(filename string, activity *syntax.ActivityDecl, fromID, toID
 	if err != nil {
 		return SourceRecord{}, fmt.Errorf("%s: activity %q: %w", filename, activity.Name, err)
 	}
-	if record.FromPhase != fromPhase || record.ToPhase != toPhase || record.LiteralClass != record.FromLiteralClass {
+	if (record.FromPhase != "" && record.FromPhase != fromPhase) || (record.ToPhase != "" && record.ToPhase != toPhase) || (record.LiteralClass != "" && record.FromLiteralClass != "" && record.LiteralClass != record.FromLiteralClass) {
 		return SourceRecord{}, fmt.Errorf("%s: activity %q: computes phase or literal class disagrees with declaration", filename, activity.Name)
 	}
-	if expectedLiteralClass[fromPhase] != record.FromLiteralClass || expectedLiteralClass[toPhase] != record.ToLiteralClass {
+	if (record.FromLiteralClass != "" && expectedLiteralClass[fromPhase] != record.FromLiteralClass) || (record.ToLiteralClass != "" && expectedLiteralClass[toPhase] != record.ToLiteralClass) {
 		return SourceRecord{}, fmt.Errorf("%s: activity %q: literal class is not phase-local", filename, activity.Name)
 	}
-	if record.PayloadClass != PayloadClaim && record.PayloadClass != PayloadValue && record.PayloadClass != PayloadAuthority && record.PayloadClass != PayloadEvidence {
+	if record.PayloadClass != "" && record.PayloadClass != PayloadClaim && record.PayloadClass != PayloadValue && record.PayloadClass != PayloadAuthority && record.PayloadClass != PayloadEvidence {
 		return SourceRecord{}, fmt.Errorf("%s: activity %q: unknown transfer payload class %q", filename, activity.Name, record.PayloadClass)
 	}
-	if record.Provenance == "" || record.Stage == "" || record.Step == "" || record.DeclaredReason == "" {
-		return SourceRecord{}, fmt.Errorf("%s: activity %q: evidence coordinate or provenance is missing", filename, activity.Name)
+	if record.ClaimDigest != "" && record.ClaimDigest != "none" && !isDigest(record.ClaimDigest) {
+		return SourceRecord{}, fmt.Errorf("%s: activity %q: malformed claim digest material", filename, activity.Name)
 	}
-	if record.ClaimStateFrom != StateOpen || (record.ClaimStateTo != StateOpen && record.ClaimStateTo != StateDischarged && record.ClaimStateTo != StateRefuted) {
-		return SourceRecord{}, fmt.Errorf("%s: activity %q: invalid claim lifecycle", filename, activity.Name)
+	if record.TargetDigest != "" && record.TargetDigest != "none" && !isDigest(record.TargetDigest) {
+		return SourceRecord{}, fmt.Errorf("%s: activity %q: malformed target digest material", filename, activity.Name)
 	}
-	if record.PayloadClass == PayloadClaim {
-		if !isDigest(record.ClaimDigest) || !isDigest(record.TargetDigest) {
-			return SourceRecord{}, fmt.Errorf("%s: activity %q: explicit claim lacks digests", filename, activity.Name)
-		}
-	} else if record.ClaimDigest != "none" || record.TargetDigest != "none" {
-		return SourceRecord{}, fmt.Errorf("%s: activity %q: non-claim payload carries claim authority", filename, activity.Name)
-	}
+	record.FromPhase, record.ToPhase = fromPhase, toPhase
+	record.LiteralClass = expectedLiteralClass[fromPhase]
+	record.FromLiteralClass, record.ToLiteralClass = expectedLiteralClass[fromPhase], expectedLiteralClass[toPhase]
 	return record, nil
 }
 
 func parseComputes(program string) (map[string]string, error) {
-	if strings.TrimSpace(program) == "" {
-		return nil, fmt.Errorf("computes value is required")
-	}
 	fields := make(map[string]string)
+	if strings.TrimSpace(program) == "" {
+		return fields, nil
+	}
 	for _, part := range strings.Split(program, ";") {
 		key, value, ok := strings.Cut(part, "=")
 		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
 		if !ok || key == "" || value == "" || fields[key] != "" {
 			return nil, fmt.Errorf("invalid computes field %q", part)
 		}
-		fields[key] = value
-	}
-	for _, key := range []string{"case", "transfer_id", "value_id", "from_value_id", "to_value_id", "literal_class", "from_literal_class", "to_literal_class", "from_phase", "to_phase", "payload_class", "claim_digest", "target_digest", "provenance", "claim_state_from", "claim_state_to", "stage", "step", "reason"} {
-		if fields[key] == "" {
-			return nil, fmt.Errorf("missing computes field %q", key)
+		switch key {
+		case "case", "transfer_id", "value_id", "from_value_id", "to_value_id", "literal_class", "from_literal_class", "to_literal_class", "from_phase", "to_phase", "payload_class", "claim_digest", "target_digest", "provenance":
+		default:
+			return nil, fmt.Errorf("computes field %q is not source material", key)
 		}
+		fields[key] = value
 	}
 	return fields, nil
 }

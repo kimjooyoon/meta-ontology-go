@@ -32,11 +32,6 @@ type SourceRecord struct {
 	ClaimDigest      string
 	TargetDigest     string
 	Provenance       string
-	ClaimStateFrom   string
-	ClaimStateTo     string
-	Stage            string
-	Step             string
-	DeclaredReason   string
 	Program          string
 }
 
@@ -165,6 +160,7 @@ type CISnapshot struct {
 
 type UnknownResult struct {
 	Decision       string     `json:"decision"`
+	Resolution     string     `json:"resolution"`
 	Coordinate     Coordinate `json:"coordinate"`
 	ClaimState     string     `json:"claim_state"`
 	EvidenceDigest string     `json:"evidence_digest"`

@@ -80,11 +80,6 @@ type sourceRecord struct {
 	ClaimDigest      string
 	TargetDigest     string
 	Provenance       string
-	ClaimStateFrom   string
-	ClaimStateTo     string
-	Stage            string
-	Step             string
-	DeclaredReason   string
 	Program          string
 }
 
@@ -223,6 +218,7 @@ type ciSnapshot struct {
 
 type unknownResult struct {
 	Decision       string     `json:"decision"`
+	Resolution     string     `json:"resolution"`
 	Coordinate     coordinate `json:"coordinate"`
 	ClaimState     string     `json:"claim_state"`
 	EvidenceDigest string     `json:"evidence_digest"`
@@ -410,9 +406,15 @@ func decodeActivity(filename string, activity *syntax.ActivityDecl, fromID, toID
 	if err != nil {
 		return sourceRecord{}, fmt.Errorf("%s: activity %q: %w", filename, activity.Name, err)
 	}
-	record := sourceRecord{ActivityName: activity.Name, ActivityID: activityID, Program: activity.ValueProgram, CaseKey: fields["case"], TransferID: fields["transfer_id"], ValueID: fields["value_id"], FromValueID: fields["from_value_id"], ToValueID: fields["to_value_id"], LiteralClass: fields["literal_class"], FromLiteralClass: fields["from_literal_class"], ToLiteralClass: fields["to_literal_class"], FromPhase: fields["from_phase"], ToPhase: fields["to_phase"], PayloadClass: fields["payload_class"], ClaimDigest: fields["claim_digest"], TargetDigest: fields["target_digest"], Provenance: fields["provenance"], ClaimStateFrom: fields["claim_state_from"], ClaimStateTo: fields["claim_state_to"], Stage: fields["stage"], Step: fields["step"], DeclaredReason: fields["reason"]}
-	if record.CaseKey == "" || record.TransferID == "" || record.ValueID != record.FromValueID || record.FromValueID != fromID || record.ToValueID != toID {
-		return sourceRecord{}, fmt.Errorf("%s: activity %q: value IDs do not bind to endpoints", filename, activity.Name)
+	record := sourceRecord{ActivityName: activity.Name, ActivityID: activityID, Program: activity.ValueProgram, CaseKey: fields["case"], TransferID: fields["transfer_id"], ValueID: fields["value_id"], FromValueID: fields["from_value_id"], ToValueID: fields["to_value_id"], LiteralClass: fields["literal_class"], FromLiteralClass: fields["from_literal_class"], ToLiteralClass: fields["to_literal_class"], FromPhase: fields["from_phase"], ToPhase: fields["to_phase"], PayloadClass: fields["payload_class"], ClaimDigest: fields["claim_digest"], TargetDigest: fields["target_digest"], Provenance: fields["provenance"]}
+	if record.ValueID != "" && record.FromValueID != "" && record.ValueID != record.FromValueID {
+		return sourceRecord{}, fmt.Errorf("%s: activity %q: value_id and from_value_id disagree", filename, activity.Name)
+	}
+	if record.FromValueID != "" && record.FromValueID != fromID {
+		return sourceRecord{}, fmt.Errorf("%s: activity %q: computes value IDs disagree with entity endpoints", filename, activity.Name)
+	}
+	if record.ToValueID != "" && record.ToValueID != toID {
+		return sourceRecord{}, fmt.Errorf("%s: activity %q: computes target ID disagrees with entity endpoint", filename, activity.Name)
 	}
 	fromPhase, err := phaseOfID(fromID)
 	if err != nil {
@@ -422,39 +424,44 @@ func decodeActivity(filename string, activity *syntax.ActivityDecl, fromID, toID
 	if err != nil {
 		return sourceRecord{}, fmt.Errorf("%s: activity %q: %w", filename, activity.Name, err)
 	}
-	if record.FromPhase != fromPhase || record.ToPhase != toPhase || record.LiteralClass != record.FromLiteralClass || expectedLiteralClass[fromPhase] != record.FromLiteralClass || expectedLiteralClass[toPhase] != record.ToLiteralClass {
+	if (record.FromPhase != "" && record.FromPhase != fromPhase) || (record.ToPhase != "" && record.ToPhase != toPhase) || (record.LiteralClass != "" && record.FromLiteralClass != "" && record.LiteralClass != record.FromLiteralClass) {
 		return sourceRecord{}, fmt.Errorf("%s: activity %q: phase-local payload disagrees with endpoints", filename, activity.Name)
 	}
-	if record.PayloadClass != payloadClaim && record.PayloadClass != payloadValue && record.PayloadClass != payloadAuthority && record.PayloadClass != payloadEvidence {
+	if (record.FromLiteralClass != "" && expectedLiteralClass[fromPhase] != record.FromLiteralClass) || (record.ToLiteralClass != "" && expectedLiteralClass[toPhase] != record.ToLiteralClass) {
+		return sourceRecord{}, fmt.Errorf("%s: activity %q: literal class is not phase-local", filename, activity.Name)
+	}
+	if record.PayloadClass != "" && record.PayloadClass != payloadClaim && record.PayloadClass != payloadValue && record.PayloadClass != payloadAuthority && record.PayloadClass != payloadEvidence {
 		return sourceRecord{}, fmt.Errorf("%s: activity %q: unknown payload class", filename, activity.Name)
 	}
-	if record.Provenance == "" || record.Stage == "" || record.Step == "" || record.DeclaredReason == "" || record.ClaimStateFrom != stateOpen || (record.ClaimStateTo != stateOpen && record.ClaimStateTo != stateDischarged && record.ClaimStateTo != stateRefuted) {
-		return sourceRecord{}, fmt.Errorf("%s: activity %q: incomplete evidence or lifecycle", filename, activity.Name)
+	if record.ClaimDigest != "" && record.ClaimDigest != "none" && !isDigest(record.ClaimDigest) {
+		return sourceRecord{}, fmt.Errorf("%s: activity %q: malformed claim digest material", filename, activity.Name)
 	}
-	if record.PayloadClass == payloadClaim {
-		if !isDigest(record.ClaimDigest) || !isDigest(record.TargetDigest) {
-			return sourceRecord{}, fmt.Errorf("%s: activity %q: claim digest is missing", filename, activity.Name)
-		}
-	} else if record.ClaimDigest != "none" || record.TargetDigest != "none" {
-		return sourceRecord{}, fmt.Errorf("%s: activity %q: non-claim carries claim digest", filename, activity.Name)
+	if record.TargetDigest != "" && record.TargetDigest != "none" && !isDigest(record.TargetDigest) {
+		return sourceRecord{}, fmt.Errorf("%s: activity %q: malformed target digest material", filename, activity.Name)
 	}
+	record.FromPhase, record.ToPhase = fromPhase, toPhase
+	record.LiteralClass = expectedLiteralClass[fromPhase]
+	record.FromLiteralClass, record.ToLiteralClass = expectedLiteralClass[fromPhase], expectedLiteralClass[toPhase]
 	return record, nil
 }
 
 func parseComputes(program string) (map[string]string, error) {
 	fields := make(map[string]string)
+	if strings.TrimSpace(program) == "" {
+		return fields, nil
+	}
 	for _, part := range strings.Split(program, ";") {
 		key, value, ok := strings.Cut(part, "=")
 		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
 		if !ok || key == "" || value == "" || fields[key] != "" {
 			return nil, fmt.Errorf("invalid computes field")
 		}
-		fields[key] = value
-	}
-	for _, key := range []string{"case", "transfer_id", "value_id", "from_value_id", "to_value_id", "literal_class", "from_literal_class", "to_literal_class", "from_phase", "to_phase", "payload_class", "claim_digest", "target_digest", "provenance", "claim_state_from", "claim_state_to", "stage", "step", "reason"} {
-		if fields[key] == "" {
-			return nil, fmt.Errorf("missing computes field %q", key)
+		switch key {
+		case "case", "transfer_id", "value_id", "from_value_id", "to_value_id", "literal_class", "from_literal_class", "to_literal_class", "from_phase", "to_phase", "payload_class", "claim_digest", "target_digest", "provenance":
+		default:
+			return nil, fmt.Errorf("computes field %q is not source material", key)
 		}
+		fields[key] = value
 	}
 	return fields, nil
 }
@@ -517,16 +524,18 @@ func evaluateClean(records []derivedRecord) (caseResult, []claimTransition) {
 	result := caseFromRecords("clean", "CLEAN", records)
 	transitions := make([]claimTransition, 0, len(records))
 	valid := len(records) == expectedClaimTransfers
+	state := stateOpen
 	for index, record := range records {
 		transition, reason := deriveTransition(record)
-		if index == 0 && record.ClaimStateTo != stateOpen {
-			valid = false
-		}
-		if index == len(records)-1 && record.ClaimStateTo != stateDischarged {
-			valid = false
-		}
+		transition.FromState = state
 		if reason != "" {
+			transition.ToState = stateRefuted
 			valid = false
+		} else if index == len(records)-1 {
+			transition.ToState = stateDischarged
+			state = stateDischarged
+		} else {
+			transition.ToState = stateOpen
 		}
 		transitions = append(transitions, transition)
 	}
@@ -565,24 +574,30 @@ func caseFromRecords(name, class string, records []derivedRecord) caseResult {
 }
 
 func deriveTransition(record derivedRecord) (claimTransition, string) {
-	transition := claimTransition{ID: record.TransferID, FromPhase: record.FromPhase, ToPhase: record.ToPhase, FromClaim: record.FromValueID, ToClaim: record.ToValueID, FromState: record.ClaimStateFrom, ToState: record.ClaimStateTo, ClaimDigest: claimDigest(record.sourceRecord), TargetDigest: targetDigest(record.sourceRecord), EvidenceDigest: record.EvidenceDigest, Provenance: record.Provenance, PreviousDigest: record.PreviousDigest, MetaOperation: metaOperationID, ProofChoice: proofChoiceID}
+	transition := claimTransition{ID: record.TransferID, FromPhase: record.FromPhase, ToPhase: record.ToPhase, FromClaim: record.FromValueID, ToClaim: record.ToValueID, FromState: stateOpen, ToState: stateOpen, ClaimDigest: claimDigest(record.sourceRecord), TargetDigest: targetDigest(record.sourceRecord), EvidenceDigest: record.EvidenceDigest, Provenance: record.Provenance, PreviousDigest: record.PreviousDigest, MetaOperation: metaOperationID, ProofChoice: proofChoiceID}
+	if !completeRecord(record.sourceRecord) {
+		return transition, reasonUnknownContract
+	}
+	if !declaredDigestsMatch(record.sourceRecord) {
+		return transition, "CLAIM_DIGEST_MISMATCH"
+	}
 	if record.PayloadClass != payloadClaim {
 		return transition, leakReason(record.PayloadClass)
 	}
 	if !allowedClaimEdge(record.FromPhase, record.ToPhase) {
 		return transition, edgeReason(record.FromPhase, record.ToPhase)
 	}
-	if record.ClaimDigest != transition.ClaimDigest || record.TargetDigest != transition.TargetDigest {
-		return transition, "CLAIM_DIGEST_MISMATCH"
-	}
-	if record.Provenance == "" || record.ClaimStateFrom != stateOpen {
-		return transition, "CLAIM_PROVENANCE_MISMATCH"
-	}
 	transition.Preserved = true
 	return transition, ""
 }
 
 func deriveLeakReason(record derivedRecord) string {
+	if !completeRecord(record.sourceRecord) {
+		return unknownReason(record.sourceRecord)
+	}
+	if !declaredDigestsMatch(record.sourceRecord) {
+		return "CLAIM_DIGEST_MISMATCH"
+	}
 	if record.PayloadClass != payloadClaim {
 		return leakReason(record.PayloadClass)
 	}
@@ -612,6 +627,36 @@ func isKnownLeakReason(reason string) bool {
 		}
 	}
 	return false
+}
+
+func completeRecord(record sourceRecord) bool {
+	return record.CaseKey != "" && record.TransferID != "" && record.ValueID != "" && record.FromValueID != "" && record.ToValueID != "" && record.LiteralClass != "" && record.FromLiteralClass != "" && record.ToLiteralClass != "" && record.FromPhase != "" && record.ToPhase != "" && record.PayloadClass != "" && record.Provenance != ""
+}
+
+func declaredDigestsMatch(record sourceRecord) bool {
+	if record.ClaimDigest != "" && record.ClaimDigest != "none" && record.ClaimDigest != claimDigest(record) {
+		return false
+	}
+	if record.TargetDigest != "" && record.TargetDigest != "none" && record.TargetDigest != targetDigest(record) {
+		return false
+	}
+	if record.PayloadClass == payloadClaim {
+		return isDigest(record.ClaimDigest) && isDigest(record.TargetDigest) && record.ClaimDigest == claimDigest(record) && record.TargetDigest == targetDigest(record)
+	}
+	return true
+}
+
+func unknownReason(record sourceRecord) string {
+	if record.ValueID == "" || record.FromValueID == "" || record.ToValueID == "" || record.FromPhase == "" || record.ToPhase == "" {
+		return "UNKNOWN_SOURCE_ENDPOINT"
+	}
+	if record.PayloadClass == "" {
+		return "UNKNOWN_SOURCE_PAYLOAD"
+	}
+	if record.Provenance == "" {
+		return "UNKNOWN_SOURCE_PROVENANCE"
+	}
+	return reasonUnknownContract
 }
 
 func reconstructReceipt(sourcePath string, mainFile parsedFile, leaksPath string, leakFile parsedFile, unknownPath string, unknownFile parsedFile, head string, snapshot ciSnapshot, base evaluation) receipt {
@@ -656,17 +701,15 @@ func buildEvidence(base evaluation, report receipt) ([]indicator, []view, []proo
 
 func deriveUnknown(records []sourceRecord) unknownResult {
 	if len(records) != 1 {
-		return unknownResult{Decision: decisionUnknown, Coordinate: coordinate{Stage: "SOURCE", Step: "DECODE", Reason: reasonUnknownContract}, ClaimState: stateOpen, PreviousDigest: zeroDigest}
+		return unknownResult{Decision: decisionUnknown, Resolution: resolutionLower, Coordinate: coordinate{Stage: "SOURCE", Step: "PARSE", Reason: reasonUnknownContract}, ClaimState: stateOpen, PreviousDigest: zeroDigest}
 	}
 	record := records[0]
-	return unknownResult{Decision: decisionUnknown, Coordinate: coordinate{Stage: record.Stage, Step: record.Step, Reason: record.DeclaredReason}, ClaimState: stateOpen, EvidenceDigest: evidenceDigest(record), Provenance: record.Provenance, PreviousDigest: zeroDigest}
+	return unknownResult{Decision: decisionUnknown, Resolution: resolutionLower, Coordinate: coordinate{Stage: "SOURCE", Step: "PARSE", Reason: unknownReason(record)}, ClaimState: stateOpen, EvidenceDigest: evidenceDigest(record), Provenance: record.Provenance, PreviousDigest: zeroDigest}
 }
 
 func semanticIntervention(mainFile, leakFile parsedFile, base evaluation) intervention {
 	result := intervention{Kind: "SEMANTIC", Denominator: 1}
 	variantSource := bytes.Replace(mainFile.Source, []byte("payload_class=claim"), []byte("payload_class=value"), 1)
-	variantSource = bytes.Replace(variantSource, []byte("claim_digest=sha256:ee3e8ebaa490d076fa230325fe30ef061c629c7cd2e5d5ef41df5e52a06548c3"), []byte("claim_digest=none"), 1)
-	variantSource = bytes.Replace(variantSource, []byte("target_digest=sha256:f71af2266668baa89342e7740fe22b77b58f5aa612fe716b7fe9257380fb34fa"), []byte("target_digest=none"), 1)
 	variant, err := readSourceBytes(mainFile.Filename, variantSource)
 	if err != nil {
 		return result
@@ -730,7 +773,7 @@ func readSourceBytes(filename string, source []byte) (parsedFile, error) {
 }
 
 func exact(report receipt) bool {
-	return report.Summary.SourceCasesProcessed == expectedSourceCases && report.Summary.SourceCasesTotal == expectedSourceCases && report.Summary.CleanCasesPassed == expectedCleanCases && report.Summary.CleanCasesTotal == expectedCleanCases && report.Summary.LeakageRejections == expectedLeakageCases && report.Summary.LeakageRejectionsTotal == expectedLeakageCases && report.Summary.ClaimTransitionsPreserved == expectedClaimTransfers && report.Summary.ClaimTransitionsTotal == expectedClaimTransfers && report.Summary.ExplicitClaimTransfers == expectedClaimTransfers && report.Summary.ExplicitClaimTransfersTotal == expectedClaimTransfers && report.Summary.IndicatorsSatisfied == expectedIndicators && report.Summary.IndicatorsTotal == expectedIndicators && report.Summary.SemanticCausality == 1 && report.Summary.SemanticCausalityTotal == 1 && report.Summary.NonsemanticPreservation == 1 && report.Summary.NonsemanticPreservationTotal == 1 && report.Summary.UnknownCases == 1 && report.Summary.RepositoryWrites == 0 && report.Authority == (authority{}) && report.Unknown.Decision == decisionUnknown && report.Unknown.ClaimState == stateOpen && len(report.Cases) == expectedCleanCases+expectedLeakageCases && len(report.Transitions) == expectedClaimTransfers && len(report.Indicators) == expectedIndicators && len(report.Views) == expectedViews && len(report.Proofs) == expectedProofs && allIndicatorsPassed(report.Indicators) && allProofsPassed(report.Proofs)
+	return report.Summary.SourceCasesProcessed == expectedSourceCases && report.Summary.SourceCasesTotal == expectedSourceCases && report.Summary.CleanCasesPassed == expectedCleanCases && report.Summary.CleanCasesTotal == expectedCleanCases && report.Summary.LeakageRejections == expectedLeakageCases && report.Summary.LeakageRejectionsTotal == expectedLeakageCases && report.Summary.ClaimTransitionsPreserved == expectedClaimTransfers && report.Summary.ClaimTransitionsTotal == expectedClaimTransfers && report.Summary.ExplicitClaimTransfers == expectedClaimTransfers && report.Summary.ExplicitClaimTransfersTotal == expectedClaimTransfers && report.Summary.IndicatorsSatisfied == expectedIndicators && report.Summary.IndicatorsTotal == expectedIndicators && report.Summary.SemanticCausality == 1 && report.Summary.SemanticCausalityTotal == 1 && report.Summary.NonsemanticPreservation == 1 && report.Summary.NonsemanticPreservationTotal == 1 && report.Summary.UnknownCases == 1 && report.Summary.RepositoryWrites == 0 && report.Authority == (authority{}) && report.Unknown.Decision == decisionUnknown && report.Unknown.Resolution == resolutionLower && report.Unknown.ClaimState == stateOpen && len(report.Cases) == expectedCleanCases+expectedLeakageCases && len(report.Transitions) == expectedClaimTransfers && len(report.Indicators) == expectedIndicators && len(report.Views) == expectedViews && len(report.Proofs) == expectedProofs && allIndicatorsPassed(report.Indicators) && allProofsPassed(report.Proofs)
 }
 
 func allIndicatorsPassed(values []indicator) bool {

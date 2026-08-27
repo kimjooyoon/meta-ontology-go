@@ -10,6 +10,9 @@ const (
 	ReasonUnknownSource      = "UNKNOWN_SOURCE_CONTRACT"
 	ReasonUnknownContract    = ReasonUnknownSource
 	ReasonUnknownSyntax      = "UNKNOWN_SOURCE_SYNTAX"
+	ReasonUnknownEndpoint    = "UNKNOWN_SOURCE_ENDPOINT"
+	ReasonUnknownPayload     = "UNKNOWN_SOURCE_PAYLOAD"
+	ReasonUnknownProvenance  = "UNKNOWN_SOURCE_PROVENANCE"
 	ReasonUnknownCI          = "UNKNOWN_CI_SNAPSHOT"
 	Toolchain                = "go1.27.0"
 	ProducerID               = "source-authority"
