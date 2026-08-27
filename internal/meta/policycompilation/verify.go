@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"sort"
 )
 
@@ -15,11 +16,27 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 	if receipt.Policy.SourceDigest != policy.SourceDigest || receipt.Policy.SemanticDigest != policy.SemanticDigest || receipt.Policy.Denominator != FixedDenominator {
 		return errors.New("receipt policy is not bound to the compiled source")
 	}
+	policyBytes, err := canonicalJSON(policy)
+	if err != nil {
+		return err
+	}
+	receiptPolicyBytes, err := canonicalJSON(receipt.Policy)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(policyBytes, receiptPolicyBytes) {
+		return errors.New("receipt policy meaning differs from the compiled policy")
+	}
 	if receipt.MetaOperation != MetaOperation || receipt.ProofChoice != ProofChoice {
 		return errors.New("receipt lost meta-operation or proof choice")
 	}
 	if err := VerifyCompiledArtifact(artifact, policy, judgeHash); err != nil {
 		return err
+	}
+	wantProducer := ProducerEvidence{Role: "PRODUCER", Stage: "PRODUCE", Step: 1, Reason: "SOURCE_BOUND", SourceDigest: policy.SourceDigest, SemanticDigest: policy.SemanticDigest, Denominator: policy.Denominator}
+	wantConsumer := ConsumerEvidence{Role: "CONSUMER", Stage: "CONSUME", Step: 2, Reason: "ARTIFACT_BOUND", ArtifactSourceDigest: artifact.Policy.SourceDigest, ArtifactDigest: artifactDigest(artifact), SourceMatches: true, RulesMatch: true}
+	if receipt.Producer != wantProducer || receipt.Consumer != wantConsumer {
+		return errors.New("receipt producer/consumer evidence is not bound to the artifact")
 	}
 	if receipt.GeneratedDigest != judgeHash || len(receipt.Cases) != len(cases) || receipt.Claims.EventCount != len(receipt.Claims.Events) || len(receipt.Claims.Events) != len(cases)*FixedDenominator*2 {
 		return errors.New("receipt denominator or generated artifact binding is incomplete")
@@ -39,6 +56,7 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 		order[index] = index
 	}
 	sort.SliceStable(order, func(i, j int) bool { return cases[order[i]].ID < cases[order[j]].ID })
+	passCount, failClosedCount, unknownCount := 0, 0, 0
 	for outputIndex, inputIndex := range order {
 		input := cases[inputIndex]
 		stored := receipt.Cases[outputIndex]
@@ -49,8 +67,18 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 		if !sameDecision(stored.Independent, independent) || !sameDecision(stored.Generated, stored.Independent) || stored.Expected != stored.Independent.Decision || !stored.DecisionsEquivalent || !stored.ExpectedDecisionConfirmed {
 			return fmt.Errorf("case %q is not independently equivalent", input.ID)
 		}
+		switch stored.Generated.Decision {
+		case DecisionPass:
+			passCount++
+		case DecisionFailClosed:
+			failClosedCount++
+		case DecisionUnknown:
+			unknownCount++
+		default:
+			return fmt.Errorf("case %q has unsupported decision %q", input.ID, stored.Generated.Decision)
+		}
 	}
-	if receipt.Summary.CaseCount != len(cases) || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.ExpectedDecisionsConfirmed != len(cases) {
+	if receipt.Summary.CaseCount != len(cases) || receipt.Summary.PassCount != passCount || receipt.Summary.FailClosedCount != failClosedCount || receipt.Summary.UnknownCount != unknownCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.ExpectedDecisionsConfirmed != len(cases) {
 		return errors.New("case summary does not cover the fixed case denominator")
 	}
 	if receipt.Verification.Decision != VerificationPass || !receipt.Verification.IndependentReplayed || !receipt.Verification.GeneratedReplayed || !receipt.Verification.LedgerVerified || receipt.Verification.FixedDenominator != FixedDenominator || receipt.Verification.CaseDenominator != len(cases) {
@@ -64,9 +92,10 @@ func verifyClaimLedger(ledger ClaimLedger) error {
 		return errors.New("claim ledger header is incomplete")
 	}
 	prior := ""
-	claims := make(map[string]bool, len(ledger.Events))
+	counts := make(map[string]int, len(ledger.Events)/2)
+	states := make(map[string]string, len(ledger.Events)/2)
 	for index, event := range ledger.Events {
-		if event.Event != index+1 || event.PriorDigest != prior || event.ClaimID == "" || claims[event.ClaimID+fmt.Sprintf("/%d", event.Event)] {
+		if event.Event != index+1 || event.PriorDigest != prior || event.ClaimID == "" || counts[event.ClaimID] >= 2 {
 			return fmt.Errorf("claim ledger chain is broken at event %d", event.Event)
 		}
 		canonical := event
@@ -78,8 +107,21 @@ func verifyClaimLedger(ledger ClaimLedger) error {
 		if !validClaimTransition(event.From, event.To) {
 			return fmt.Errorf("claim ledger transition %q -> %q is invalid", event.From, event.To)
 		}
-		claims[event.ClaimID+fmt.Sprintf("/%d", event.Event)] = true
+		current, exists := states[event.ClaimID]
+		if exists && current != event.From {
+			return fmt.Errorf("claim %q does not continue from its previous state", event.ClaimID)
+		}
+		if !exists && event.From != ClaimUnrecorded {
+			return fmt.Errorf("claim %q did not begin at UNRECORDED", event.ClaimID)
+		}
+		counts[event.ClaimID]++
+		states[event.ClaimID] = event.To
 		prior = event.Digest
+	}
+	for claimID, count := range counts {
+		if count != 2 || states[claimID] == ClaimUnrecorded {
+			return fmt.Errorf("claim %q does not have its persistent two-event lifecycle", claimID)
+		}
 	}
 	if prior != ledger.HeadDigest {
 		return errors.New("claim ledger head does not match its event chain")
@@ -98,6 +140,10 @@ func DecodeReceipt(data []byte) (Receipt, error) {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&receipt); err != nil {
 		return Receipt{}, err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return Receipt{}, errors.New("receipt contains trailing JSON")
 	}
 	return receipt, nil
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -227,6 +228,10 @@ func readJSON[T any](path string) (T, error) {
 	var value T
 	if err := decoder.Decode(&value); err != nil {
 		return value, fmt.Errorf("decode %s: %w", path, err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return value, fmt.Errorf("decode %s: trailing JSON", path)
 	}
 	return value, nil
 }
