@@ -3,6 +3,7 @@ namespace semanticdeltafixture
 
 entity Payment id "gooo://semantic-delta/entity/payment"
 // Declaration order and spacing differ; the semantic pair is unchanged.
+// identity-fault marker text is inert source commentary and must not affect IDs.
 entity Order id "gooo://semantic-delta/entity/order"
 
 activity PayOrder(Order) -> Payment

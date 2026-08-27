@@ -1,0 +1,7 @@
+{
+  "schema": "gooo/semantic-delta-claim-identity-fault/v1",
+  "fault_id": "raw-only-stable-id-recreation",
+  "target": "alternate-observation",
+  "mutation": "stable_id_only",
+  "rule": "replace each alternate stable_id with gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)>"
+}

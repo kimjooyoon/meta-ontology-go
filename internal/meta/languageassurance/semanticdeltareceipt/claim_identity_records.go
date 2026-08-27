@@ -124,13 +124,16 @@ func CompareClaimIdentityRecords(baseline, alternate []ClaimIdentityRecord) Clai
 		byStableTarget[key] = append(byStableTarget[key], record)
 	}
 	matchedAlternate := make(map[string]bool, len(alternate))
+	ambiguousStableTargetMatch := false
 	for _, before := range baseline {
 		after, ok := byID[before.StableID]
 		comparisonAfter := after
 		stableTargetMatch := false
 		if !ok {
 			candidates := byStableTarget[stableTargetKey(before)]
-			if len(candidates) == 1 && !matchedAlternate[candidates[0].StableID] {
+			if len(candidates) > 1 {
+				ambiguousStableTargetMatch = true
+			} else if len(candidates) == 1 && !matchedAlternate[candidates[0].StableID] {
 				comparisonAfter = candidates[0]
 				stableTargetMatch = true
 				matchedAlternate[comparisonAfter.StableID] = true
@@ -157,7 +160,9 @@ func CompareClaimIdentityRecords(baseline, alternate []ClaimIdentityRecord) Clai
 		}
 	}
 	rawOnlySet := result.ClaimRecreatedDueOnlyToRaw > 0 && len(result.RemovedIDs) == result.ClaimRecreatedDueOnlyToRaw && len(result.AddedIDs) == result.ClaimRecreatedDueOnlyToRaw
-	if rawOnlySet {
+	if ambiguousStableTargetMatch {
+		result.Reason = "AMBIGUOUS_CLAIM_IDENTITY_MATCH"
+	} else if rawOnlySet {
 		result.Reason = "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST"
 	} else if len(baseline) == 0 || len(alternate) != len(baseline) || len(result.RemovedIDs) != 0 || len(result.AddedIDs) != 0 || result.StableIdentityPreserved != len(baseline) {
 		result.Reason = "CLAIM_SET_CHANGED"
@@ -202,7 +207,9 @@ func stableRecordKey(record ClaimIdentityRecord) string {
 }
 
 func stableTargetKey(record ClaimIdentityRecord) string {
-	return record.Kind + "\x00" + record.RelationRole + "\x00" + record.NormalizedProposition + "\x00" + record.PropositionDigest + "\x00" + record.TargetAddress + "\x00" + record.TargetAddressDigest
+	// A rematch may ignore only StableID. In particular PreservationOf is part
+	// of the complete semantic identity and must not be discarded.
+	return stableRecordKey(record)
 }
 
 func stableRecordEqual(left, right ClaimIdentityRecord) bool {

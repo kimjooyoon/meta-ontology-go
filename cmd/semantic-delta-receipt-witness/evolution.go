@@ -587,6 +587,9 @@ func persistenceFailureReason(producerMapping, consumerMapping persistenceMappin
 		if !uniqueNonemptyIDs(mapping.BaselineIDs) || !uniqueNonemptyIDs(mapping.AlternateIDs) {
 			return "DUPLICATE_STABLE_CLAIM_ID"
 		}
+		if mapping.Reason == "AMBIGUOUS_CLAIM_IDENTITY_MATCH" {
+			return mapping.Reason
+		}
 		rawOnlySet := mapping.ClaimRecreatedDueOnlyToRaw > 0 && len(mapping.RemovedIDs) == mapping.ClaimRecreatedDueOnlyToRaw && len(mapping.AddedIDs) == mapping.ClaimRecreatedDueOnlyToRaw
 		if rawOnlySet {
 			return "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST"

@@ -127,6 +127,7 @@ jobs:
           cp "$root/claim-transition-expectations.json" "$out/claim-transition-expectations.json"
           cp "$root/claim-transition-expectations-v2.json" "$out/claim-transition-expectations-v2.json"
           cp "$root/claim-identity-persistence-manifest.json" "$out/claim-identity-persistence-manifest.json"
+          cp "$root/claim-identity-fault.json" "$out/claim-identity-fault.json"
           cp "$root/semantic-claim-delta-manifest.json" "$out/semantic-claim-delta-manifest.json"
           expectation_digest="sha256:$(sha256sum "$out/claim-transition-expectations.json" | awk '{print $1}')"
           go run ./cmd/semantic-delta-receipt-witness \
@@ -267,11 +268,14 @@ jobs:
             .producer_persistence.reason == "SEMANTIC_TARGET_CHANGED" and .consumer_persistence.reason == "SEMANTIC_TARGET_CHANGED" and
             .reason == "SEMANTIC_TARGET_CHANGED" and .producer_persistence.semantic_target_preserved < .producer_persistence.semantic_target_total
           ' "$out/persistence-semantic-target-drift.json"
+          fault_digest="sha256:$(sha256sum "$out/claim-identity-fault.json" | awk '{print $1}')"
+          fault_bytes="$(wc -c < "$out/claim-identity-fault.json" | tr -d ' ')"
           go run ./cmd/semantic-delta-receipt-witness --persistence-probe \
+            --identity-fault "$out/claim-identity-fault.json" \
             --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
-            --persistence-alternate-before "$root/persistence-raw-recreation-before.gooo" --persistence-alternate-after "$root/persistence-raw-recreation-after.gooo" \
-            --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/persistence-raw-recreation.json"
-          jq -e '
+            --persistence-alternate-before "$root/persistence-equivalent-before.gooo" --persistence-alternate-after "$root/persistence-equivalent-after.gooo" \
+            --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/persistence-identity-fault.json"
+          jq -e --arg fault_path "$out/claim-identity-fault.json" --arg fault_digest "$fault_digest" --argjson fault_bytes "$fault_bytes" '
             .reconstruction_exact == true and .persistence_satisfied == false and
             .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
             .producer_persistence.decision == "FAIL_CLOSED" and .producer_persistence.resolution == "LOWER_RESOLUTION" and
@@ -279,9 +283,15 @@ jobs:
             .producer_persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
             .consumer_persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
             .reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
+            .identity_fault.artifact_path == $fault_path and .identity_fault.artifact_bytes == $fault_bytes and
+            .identity_fault.artifact_digest == $fault_digest and
+            .identity_fault.fault_id == "raw-only-stable-id-recreation" and
+            .identity_fault.target == "alternate-observation" and .identity_fault.mutation == "stable_id_only" and
+            .producer_raw_semantic_preserved == true and .consumer_raw_semantic_preserved == true and
+            .producer_fault_only_stable_id_changed == true and .consumer_fault_only_stable_id_changed == true and
             .expected_claim_total == 7 and
-            .producer_persistence.claim_recreated_due_only_to_raw_digest == 4 and
-            .consumer_persistence.claim_recreated_due_only_to_raw_digest == 4 and
+            .producer_persistence.claim_recreated_due_only_to_raw_digest == 7 and
+            .consumer_persistence.claim_recreated_due_only_to_raw_digest == 7 and
             .producer_persistence.claim_recreated_due_only_to_raw_digest_total == 7 and
             .consumer_persistence.claim_recreated_due_only_to_raw_digest_total == 7 and
             .producer_persistence.semantic_target_preserved == 7 and
@@ -292,9 +302,25 @@ jobs:
             .consumer_persistence.raw_evidence_changed == 7 and
             .producer_persistence.evidence_only_changes == 7 and
             .consumer_persistence.evidence_only_changes == 7 and
-            ((.producer_persistence.removed_ids | length) == 4) and ((.producer_persistence.added_ids | length) == 4) and
-            ((.consumer_persistence.removed_ids | length) == 4) and ((.consumer_persistence.added_ids | length) == 4)
-          ' "$out/persistence-raw-recreation.json"
+            ((.producer_baseline.records | map(.stable_id) | sort) == (.producer_alternate.records | map(.stable_id) | sort)) and
+            ((.consumer_baseline.records | map(.stable_id) | sort) == (.consumer_alternate.records | map(.stable_id) | sort)) and
+            ((.producer_faulted_alternate.records | length) == 7) and ((.consumer_faulted_alternate.records | length) == 7) and
+            ((.producer_persistence.removed_ids | length) == 7) and ((.producer_persistence.added_ids | length) == 7) and
+            ((.consumer_persistence.removed_ids | length) == 7) and ((.consumer_persistence.added_ids | length) == 7)
+          ' "$out/persistence-identity-fault.json"
+          go run ./cmd/semantic-delta-receipt-witness --persistence-probe \
+            --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
+            --persistence-alternate-before "$root/claim-addition-before.gooo" --persistence-alternate-after "$root/claim-addition-after.gooo" \
+            --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/persistence-claim-set-change.json"
+          jq -e '
+            .reconstruction_exact == true and .persistence_satisfied == false and
+            .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+            .producer_persistence.reason == "CLAIM_SET_CHANGED" and
+            .consumer_persistence.reason == "CLAIM_SET_CHANGED" and
+            .reason == "CLAIM_SET_CHANGED" and
+            ((.producer_persistence.removed_ids | length) > 0 or (.producer_persistence.added_ids | length) > 0) and
+            ((.consumer_persistence.removed_ids | length) > 0 or (.consumer_persistence.added_ids | length) > 0)
+          ' "$out/persistence-claim-set-change.json"
           jq -e '.receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "project-source" and .receipt.step == "parse-lower" and .receipt.reason == "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE" and .independent_verdict.passed == true' "$out/duplicate-stable-id.json"
           sha256sum "$out"/*.json > "$out/manifest.sha256"
 
@@ -316,8 +342,7 @@ jobs:
           go run ./cmd/gooo check examples/semantic-delta-receipt/formatting-after.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-removal-before.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-removal-after.gooo
-          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-raw-recreation-before.gooo
-          go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-raw-recreation-after.gooo
+          jq -e '.schema == "gooo/semantic-delta-claim-identity-fault/v1" and .fault_id == "raw-only-stable-id-recreation" and .target == "alternate-observation" and .mutation == "stable_id_only" and (.rule | test("alternate-before-raw-digest"))' examples/semantic-delta-receipt/claim-identity-fault.json
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-addition-before.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/claim-addition-after.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/persistence-equivalent-before.gooo

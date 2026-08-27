@@ -65,16 +65,18 @@ only after unique inventories, changed raw evidence, preserved semantic
 evidence and targets, complete evidence-only changes, zero raw-only
 recreation, and explicit producer/consumer fixed-point decisions all hold.
 Identical raw observations fail closed as `RAW_EVIDENCE_UNCHANGED`; semantic
-target drift fails closed as `SEMANTIC_TARGET_CHANGED`. The
-`persistence-raw-recreation-*.gooo` pair is a fixture-scoped diagnostic
-counterexample: its explicit comment marker is consumed only by the source
-projection's fixture identity intervention, so canonical semantic evidence and
-targets stay equal while four object/dependent-preservation IDs are recreated.
-The producer, independent consumer, and aggregate witness must all retain
-`FAIL_CLOSED / LOWER_RESOLUTION / CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST`;
-this pair is not a persistence success or a production identity recipe. The
-semantic claim delta manifest is consumed by both raw-source implementations in
-CI, while the v1-to-v3 migration remains separate accounting.
+target drift fails closed as `SEMANTIC_TARGET_CHANGED`; ordinary added/removed
+claims fail closed as `CLAIM_SET_CHANGED`. The checked-in
+`claim-identity-fault.json` is a separate diagnostic artifact, not a Gooo
+source contract: CI reconstructs normal `.gooo` pairs first, then an explicit
+mutator changes only alternate `StableID` values using the artifact's raw
+digest-bound rule. The receipt binds the artifact path, byte count, digest, and
+rule, and both independent classifiers must report
+`FAIL_CLOSED / LOWER_RESOLUTION / CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST`.
+Normal producer/consumer source projection never reads a marker to alter
+identity. The semantic claim delta manifest is consumed by both raw-source
+implementations in CI, while the v1-to-v3 migration remains separate
+accounting.
 
 ## Research decisions
 

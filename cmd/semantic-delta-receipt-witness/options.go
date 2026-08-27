@@ -7,10 +7,10 @@ import (
 )
 
 type options struct {
-	caseID, subjectSHA, observedCheckoutSHA, before, after, effectsBefore, effectsAfter, output                       string
-	oldExpectation, newExpectation, persistenceManifest                                                               string
-	semanticClaimManifest, persistenceBefore, persistenceAfter, persistenceAlternateBefore, persistenceAlternateAfter string
-	tamperMatrix, evolution, persistenceProbe                                                                         bool
+	caseID, subjectSHA, observedCheckoutSHA, before, after, effectsBefore, effectsAfter, output                                      string
+	oldExpectation, newExpectation, persistenceManifest                                                                              string
+	semanticClaimManifest, identityFault, persistenceBefore, persistenceAfter, persistenceAlternateBefore, persistenceAlternateAfter string
+	tamperMatrix, evolution, persistenceProbe                                                                                        bool
 }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
@@ -29,6 +29,7 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	set.BoolVar(&result.evolution, "evolution", false, "reconstruct claim identity expectation evolution")
 	set.StringVar(&result.semanticClaimManifest, "semantic-claim-manifest", "", "reconstruct semantic claim delta fixtures from raw source")
 	set.BoolVar(&result.persistenceProbe, "persistence-probe", false, "compare two raw-source persistence observations")
+	set.StringVar(&result.identityFault, "identity-fault", "", "apply a separately declared identity fault to the alternate observation")
 	set.StringVar(&result.persistenceBefore, "persistence-before", "", "persistence baseline before source")
 	set.StringVar(&result.persistenceAfter, "persistence-after", "", "persistence baseline after source")
 	set.StringVar(&result.persistenceAlternateBefore, "persistence-alternate-before", "", "persistence alternate before source")
@@ -42,17 +43,20 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	if result.subjectSHA == "" || result.output == "" {
 		return options{}, fmt.Errorf("--subject-sha and --output are required")
 	}
-	if result.tamperMatrix && (result.caseID != "" || result.before != "" || result.after != "" || result.evolution || result.semanticClaimManifest != "" || result.persistenceProbe) {
+	if result.tamperMatrix && (result.caseID != "" || result.before != "" || result.after != "" || result.evolution || result.semanticClaimManifest != "" || result.persistenceProbe || result.identityFault != "") {
 		return options{}, fmt.Errorf("--tamper-matrix cannot be combined with another witness mode")
 	}
-	if result.evolution && (result.caseID != "" || result.before != "" || result.after != "" || result.tamperMatrix || result.semanticClaimManifest != "" || result.persistenceProbe) {
+	if result.evolution && (result.caseID != "" || result.before != "" || result.after != "" || result.tamperMatrix || result.semanticClaimManifest != "" || result.persistenceProbe || result.identityFault != "") {
 		return options{}, fmt.Errorf("--evolution cannot be combined with another witness mode")
 	}
-	if result.semanticClaimManifest != "" && (result.caseID != "" || result.before != "" || result.after != "" || result.persistenceProbe) {
+	if result.semanticClaimManifest != "" && (result.caseID != "" || result.before != "" || result.after != "" || result.persistenceProbe || result.identityFault != "") {
 		return options{}, fmt.Errorf("--semantic-claim-manifest cannot be combined with another witness mode")
 	}
 	if result.persistenceProbe && (result.caseID != "" || result.before != "" || result.after != "" || result.semanticClaimManifest != "") {
 		return options{}, fmt.Errorf("--persistence-probe cannot be combined with another witness mode")
+	}
+	if result.identityFault != "" && !result.persistenceProbe {
+		return options{}, fmt.Errorf("--identity-fault requires --persistence-probe")
 	}
 	if result.evolution {
 		return result, nil
