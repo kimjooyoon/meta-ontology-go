@@ -35,10 +35,11 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 		return Report{}, Receipt{}, Receipt{}, fmt.Errorf("read .gooo source: %w", err)
 	}
 	source := Source{
-		Path:       sourceDisplayPath(opts.Root, opts.SourcePath),
-		Digest:     DigestBytes(sourcePayload),
-		GoooSource: validGoooSource(opts.SourcePath, sourcePayload),
+		Path: sourceDisplayPath(opts.Root, opts.SourcePath),
 	}
+	source = canonicalSource(source.Path, opts.SourcePath, sourcePayload)
+	environmentBefore := readEnvironmentSample()
+	logicalTimeBefore := readLogicalTimeSample()
 	before, err := scanRoot(opts.Root)
 	if err != nil {
 		return Report{}, Receipt{}, Receipt{}, err
@@ -56,17 +57,24 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 	if err != nil {
 		return Report{}, Receipt{}, Receipt{}, err
 	}
-	environment := environmentDelta()
-	logicalTime := logicalTimeDelta()
+	environmentAfter := readEnvironmentSample()
+	logicalTimeAfter := readLogicalTimeSample()
+	environment := environmentDelta(environmentBefore, environmentAfter)
+	logicalTime := logicalTimeDelta(logicalTimeBefore, logicalTimeAfter)
 	repositoryChanged := before.Digest != after.Digest
 	repositoryWrites := changedPathCount(before, after)
-	unknown := Unknown{Stage: "NONE", Step: "NONE", Reason: "NONE"}
+	unknown := primaryUnknown(environment, logicalTime)
 	if opts.Mode == "unknown" {
 		unknown = Unknown{
 			Stage:  "OBSERVE",
 			Step:   "capture-environment",
 			Reason: "DECLARED_ENVIRONMENT_NOT_AVAILABLE",
 		}
+		environment.Status = "UNKNOWN"
+		environment.Resolution = "LOWER_RESOLUTION"
+		environment.Stage = unknown.Stage
+		environment.Step = unknown.Step
+		environment.Reason = unknown.Reason
 	}
 	topologyRoot := opts.TopologyRoot
 	if topologyRoot == "" {
@@ -74,37 +82,43 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 	}
 	topology := buildTopology(topologyRoot)
 	decision, resolution := "OBSERVED", "EXACT"
-	if opts.Mode == "unknown" {
-		decision, resolution = "UNKNOWN", "LOWER_RESOLUTION"
-	}
-	if !topology.Exact || repositoryChanged {
+	if !isCanonicalSource(source) || !topology.Exact || repositoryChanged || environment.Changed || logicalTime.Changed {
 		decision = "FAIL_CLOSED"
 		resolution = "EXACT"
+	} else if unknown.Reason != "NONE" || hasOpenOrUnknownCoordinate(environment, logicalTime) {
+		decision = "UNKNOWN"
+		resolution = "LOWER_RESOLUTION"
 	}
 	observation := Observation{
-		RepositoryStorage: SnapshotDelta{BeforeDigest: before.Digest, AfterDigest: after.Digest, Changed: repositoryChanged},
-		Environment:       environment,
-		LogicalTime:       logicalTime,
+		RepositoryStorage: SnapshotDelta{
+			BeforeDigest: before.Digest, AfterDigest: after.Digest, Changed: repositoryChanged,
+			BeforeObserved: true, AfterObserved: true, Status: snapshotStatus(repositoryChanged, true),
+			Resolution: resolutionForStatus(snapshotStatus(repositoryChanged, true)), Stage: "OBSERVE",
+			Step: "scan-repository-boundaries", Reason: snapshotReason(repositoryChanged, true),
+		},
+		Environment: environment,
+		LogicalTime: logicalTime,
 	}
-	effects := buildEffects(observation, repositoryWrites, decision)
+	effects := buildEffects(observation, repositoryWrites)
+	coordinates := buildCoordinateAdjudications(observation)
 	claim := buildClaimTransition(source.Digest, decision, unknown)
-	indicators := buildIndicators(source, observation, effects, unknown, claim, decision)
+	indicators := buildIndicators(source, observation, effects, claim)
 	metrics := buildMetrics(indicators)
 	authority := Authority{
-		RepositoryWrites: repositoryWrites, OutputWrites: 3,
+		RepositoryWrites: repositoryWrites, OutputWrites: 0,
 		MutationAuthority: false, PromotionAuthorized: false,
 	}
 	report := Report{
 		Schema: LedgerSchema, Experiment: ExperimentName, Source: source,
 		Observation: observation, Effects: effects, Unknown: unknown,
 		Coordinate: unknown, Reason: unknown.Reason,
-		ClaimTransition: claim, Topology: topology,
+		ClaimTransition: claim, Coordinates: coordinates, Topology: topology,
 		RunnerScoped: runnerScopedEvidence(), Guardian: guardianExpectation(), Metrics: metrics, Authority: authority,
 		RepositoryWrites: repositoryWrites, MutationAuthority: false,
 		PromotionAuthorized: false, Decision: decision, Resolution: resolution,
 		Indicators: indicators,
 	}
-	report.EvidenceDigest = DigestValue([]any{report.Source, report.Observation, report.Effects, report.Unknown, report.ClaimTransition, report.Topology, report.RunnerScoped, report.Guardian})
+	report.EvidenceDigest = DigestValue([]any{report.Source, report.Observation, report.Effects, report.Unknown, report.ClaimTransition, report.Coordinates, report.Topology, report.RunnerScoped, report.Guardian})
 	observationReceipt := makeReceipt("OBSERVATION_RESULT", source, decision, resolution, repositoryWrites, unknown, claim, report.EvidenceDigest)
 	effectReceipt := makeReceipt("OBSERVER_EFFECT", source, decision, resolution, repositoryWrites, unknown, claim, DigestValue(effects))
 	observationReceipt.Digest = ReceiptDigest(observationReceipt)
@@ -123,12 +137,6 @@ func sourceDisplayPath(root, source string) string {
 		}
 	}
 	return filepath.ToSlash(source)
-}
-
-func validGoooSource(path string, payload []byte) bool {
-	return strings.HasSuffix(path, ".gooo") &&
-		strings.Contains(string(payload), "entity ") &&
-		strings.Contains(string(payload), "activity ")
 }
 
 func scanRoot(root string) (fileSnapshot, error) {
@@ -196,16 +204,95 @@ func changedPathCount(before, after fileSnapshot) int {
 	return count
 }
 
-func environmentDelta() SnapshotDelta {
-	values := []string{runtime.GOOS, runtime.GOARCH, envOrUnset("GOTOOLCHAIN"), envOrDefault("SOURCE_DATE_EPOCH", "0")}
-	digest := DigestValue(values)
-	return SnapshotDelta{BeforeDigest: digest, AfterDigest: digest, Changed: false}
+type environmentSample struct {
+	Values []string
 }
 
-func logicalTimeDelta() SnapshotDelta {
-	value := envOrDefault("SOURCE_DATE_EPOCH", "0")
-	digest := DigestValue([]string{"injected-logical-clock", value})
-	return SnapshotDelta{BeforeDigest: digest, AfterDigest: digest, Changed: false}
+type logicalTimeSample struct {
+	Value    string
+	Observed bool
+}
+
+func readEnvironmentSample() environmentSample {
+	return environmentSample{Values: []string{
+		runtime.GOOS, runtime.GOARCH, envOrUnset("GOTOOLCHAIN"), envOrUnset("SOURCE_DATE_EPOCH"),
+	}}
+}
+
+func readLogicalTimeSample() logicalTimeSample {
+	value, observed := os.LookupEnv("SOURCE_DATE_EPOCH")
+	if !observed {
+		return logicalTimeSample{Value: "UNAVAILABLE", Observed: false}
+	}
+	return logicalTimeSample{Value: value, Observed: true}
+}
+
+func environmentDelta(before, after environmentSample) SnapshotDelta {
+	beforeDigest := DigestValue(before.Values)
+	afterDigest := DigestValue(after.Values)
+	changed := beforeDigest != afterDigest
+	return SnapshotDelta{
+		BeforeDigest: beforeDigest, AfterDigest: afterDigest, Changed: changed,
+		BeforeObserved: len(before.Values) == 4, AfterObserved: len(after.Values) == 4,
+		Status: snapshotStatus(changed, true), Resolution: "EXACT",
+		Stage: "OBSERVE", Step: "capture-environment-boundaries", Reason: snapshotReason(changed, true),
+	}
+}
+
+func logicalTimeDelta(before, after logicalTimeSample) SnapshotDelta {
+	beforeDigest := DigestValue([]string{"injected-logical-clock", before.Value})
+	afterDigest := DigestValue([]string{"injected-logical-clock", after.Value})
+	changed := beforeDigest != afterDigest
+	status := snapshotStatus(changed, before.Observed && after.Observed)
+	reason := snapshotReason(changed, before.Observed && after.Observed)
+	if !before.Observed || !after.Observed {
+		status = "UNKNOWN"
+		reason = "SOURCE_DATE_EPOCH_NOT_DECLARED"
+	}
+	return SnapshotDelta{
+		BeforeDigest: beforeDigest, AfterDigest: afterDigest, Changed: changed,
+		BeforeObserved: before.Observed, AfterObserved: after.Observed,
+		Status: status, Resolution: resolutionForStatus(status),
+		Stage: "OBSERVE", Step: "capture-logical-time-boundaries", Reason: reason,
+	}
+}
+
+func snapshotStatus(changed, observed bool) string {
+	if !observed {
+		return "UNKNOWN"
+	}
+	if changed {
+		return "FAIL"
+	}
+	return "PASS"
+}
+
+func snapshotReason(changed, observed bool) string {
+	if !observed {
+		return "DECLARED_COORDINATE_NOT_OBSERVED"
+	}
+	if changed {
+		return "DECLARED_COORDINATE_CHANGED"
+	}
+	return "INDEPENDENT_BOUNDARY_READS_MATCHED"
+}
+
+func resolutionForStatus(status string) string {
+	if status == "PASS" || status == "FAIL" {
+		return "EXACT"
+	}
+	return "LOWER_RESOLUTION"
+}
+
+func primaryUnknown(environment, logicalTime SnapshotDelta) Unknown {
+	if logicalTime.Status == "UNKNOWN" {
+		return Unknown{Stage: logicalTime.Stage, Step: logicalTime.Step, Reason: logicalTime.Reason}
+	}
+	return Unknown{Stage: "EMIT_OUTPUT", Step: "artifact-write", Reason: "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED"}
+}
+
+func hasOpenOrUnknownCoordinate(environment, logicalTime SnapshotDelta) bool {
+	return environment.Status == "UNKNOWN" || logicalTime.Status == "UNKNOWN"
 }
 
 func envOrUnset(name string) string {
@@ -222,7 +309,7 @@ func envOrDefault(name, fallback string) string {
 	return fallback
 }
 
-func buildEffects(observation Observation, repositoryWrites int, decision string) []Effect {
+func buildEffects(observation Observation, repositoryWrites int) []Effect {
 	return []Effect{
 		{
 			Domain: "REPOSITORY_STORAGE", ObservedChanged: observation.RepositoryStorage.Changed,
@@ -230,7 +317,9 @@ func buildEffects(observation Observation, repositoryWrites int, decision string
 			AfterDigest: observation.RepositoryStorage.AfterDigest, WriteCount: repositoryWrites,
 			Producer: "observer-effect-ledger", Consumer: "observer-effect-judge",
 			MetaOperation: "assert-zero-repository-writes", ProofChoice: "REGRESSION",
-			Status: effectStatus(repositoryWrites == 0, decision), Reason: effectReason(repositoryWrites == 0),
+			Status: statusFromSnapshot(observation.RepositoryStorage.Status),
+			Stage:  observation.RepositoryStorage.Stage, Step: observation.RepositoryStorage.Step,
+			Reason: observation.RepositoryStorage.Reason,
 		},
 		{
 			Domain: "ENVIRONMENT", ObservedChanged: observation.Environment.Changed,
@@ -238,7 +327,9 @@ func buildEffects(observation Observation, repositoryWrites int, decision string
 			AfterDigest: observation.Environment.AfterDigest, WriteCount: 0,
 			Producer: "observer-effect-ledger", Consumer: "observer-effect-judge",
 			MetaOperation: "assert-environment-stability", ProofChoice: "COHERENCE",
-			Status: effectStatus(!observation.Environment.Changed, decision), Reason: effectReason(!observation.Environment.Changed),
+			Status: statusFromSnapshot(observation.Environment.Status),
+			Stage:  observation.Environment.Stage, Step: observation.Environment.Step,
+			Reason: observation.Environment.Reason,
 		},
 		{
 			Domain: "LOGICAL_TIME", ObservedChanged: observation.LogicalTime.Changed,
@@ -246,33 +337,50 @@ func buildEffects(observation Observation, repositoryWrites int, decision string
 			AfterDigest: observation.LogicalTime.AfterDigest, WriteCount: 0,
 			Producer: "observer-effect-ledger", Consumer: "observer-effect-judge",
 			MetaOperation: "assert-logical-time-stability", ProofChoice: "COHERENCE",
-			Status: effectStatus(!observation.LogicalTime.Changed, decision), Reason: effectReason(!observation.LogicalTime.Changed),
+			Status: statusFromSnapshot(observation.LogicalTime.Status),
+			Stage:  observation.LogicalTime.Stage, Step: observation.LogicalTime.Step,
+			Reason: observation.LogicalTime.Reason,
 		},
 		{
-			Domain: "OUTPUT", ObservedChanged: true, MutationAttempted: true,
-			BeforeDigest: DigestValue("ABSENT"), AfterDigest: DigestValue("OBSERVER_ARTIFACTS"), WriteCount: 3,
+			Domain: "OUTPUT", ObservedChanged: false, MutationAttempted: false, Planned: true,
+			BeforeDigest: "UNOBSERVED", AfterDigest: "UNOBSERVED", WriteCount: 0,
 			Producer: "observer-effect-ledger", Consumer: "observer-effect-judge",
-			MetaOperation: "record-observer-output-effect", ProofChoice: "FOUNDATION",
-			Status: effectStatus(true, decision), Reason: "DECLARED_OUTPUT_EFFECT",
+			MetaOperation: "plan-observer-output-effect", ProofChoice: "FOUNDATION",
+			Status: "OPEN", Stage: "EMIT_OUTPUT", Step: "artifact-write",
+			Reason: "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED",
 		},
 	}
 }
 
-func effectStatus(satisfied bool, decision string) string {
-	if decision == "UNKNOWN" {
-		return "UNKNOWN"
+func statusFromSnapshot(status string) string {
+	if status == "PASS" || status == "FAIL" || status == "UNKNOWN" {
+		return status
 	}
-	if satisfied {
-		return "PASS"
-	}
-	return "FAIL"
+	return "UNKNOWN"
 }
 
-func effectReason(satisfied bool) string {
-	if satisfied {
-		return "NO_CHANGE_IN_DECLARED_SCOPE"
+func buildCoordinateAdjudications(observation Observation) []CoordinateAdjudication {
+	return []CoordinateAdjudication{
+		coordinateFromSnapshot("REPOSITORY_STORAGE", observation.RepositoryStorage, "assert-zero-repository-writes", "REGRESSION"),
+		coordinateFromSnapshot("ENVIRONMENT", observation.Environment, "assert-environment-stability", "COHERENCE"),
+		coordinateFromSnapshot("LOGICAL_TIME", observation.LogicalTime, "assert-logical-time-stability", "COHERENCE"),
+		{
+			Coordinate: "OUTPUT", Status: "OPEN", Resolution: "LOWER_RESOLUTION",
+			BeforeObserved: false, AfterObserved: false, Stage: "EMIT_OUTPUT", Step: "artifact-write",
+			Reason: "ACTUAL_OUTPUT_WRITES_NOT_INSTRUMENTED", Producer: "observer-effect-ledger",
+			Consumer: "observer-effect-judge", MetaOperation: "plan-observer-output-effect", ProofChoice: "FOUNDATION",
+		},
 	}
-	return "OBSERVER_MUTATED_DECLARED_SCOPE"
+}
+
+func coordinateFromSnapshot(coordinate string, snapshot SnapshotDelta, operation, proof string) CoordinateAdjudication {
+	return CoordinateAdjudication{
+		Coordinate: coordinate, Status: snapshot.Status, Resolution: snapshot.Resolution,
+		BeforeObserved: snapshot.BeforeObserved, AfterObserved: snapshot.AfterObserved,
+		Stage: snapshot.Stage, Step: snapshot.Step, Reason: snapshot.Reason,
+		Producer: "observer-effect-ledger", Consumer: "observer-effect-judge",
+		MetaOperation: operation, ProofChoice: proof,
+	}
 }
 
 func buildClaimTransition(sourceDigest, decision string, unknown Unknown) ClaimTransition {
@@ -293,31 +401,52 @@ func buildClaimTransition(sourceDigest, decision string, unknown Unknown) ClaimT
 	}
 }
 
-func buildIndicators(source Source, observation Observation, effects []Effect, unknown Unknown, claim ClaimTransition, decision string) []Indicator {
-	status := func(ok bool, unknownSensitive bool) string {
-		if decision == "UNKNOWN" && unknownSensitive {
-			return "UNKNOWN"
-		}
-		if ok {
-			return "PASS"
-		}
+func buildIndicators(source Source, observation Observation, effects []Effect, claim ClaimTransition) []Indicator {
+	repository := effectByDomain(effects, "REPOSITORY_STORAGE")
+	output := effectByDomain(effects, "OUTPUT")
+	sourceEvidence := Unknown{Stage: "BIND", Step: "parse-and-lower-source", Reason: "CANONICAL_GOOO_PARSE_LOWERING_BOUND"}
+	separationEvidence := Unknown{Stage: "ADJUDICATE", Step: "separate-observation-effect", Reason: "OBSERVATION_AND_EFFECT_SECTIONS_SEPARATE"}
+	mutationEvidence := Unknown{Stage: "GUARD", Step: "deny-mutation-authority", Reason: "MUTATION_AND_PROMOTION_AUTHORITY_FALSE"}
+	claimEvidence := Unknown{Stage: "CLAIM", Step: "persist-claim-transition", Reason: "CLAIM_TRANSITION_PERSISTED"}
+	return []Indicator{
+		indicator("OEL-OBS-01", "OBSERVATION", "bind-gooo-source", "observer-effect-judge", "bind-gooo-source", "FOUNDATION", "canonical .gooo parse and lowering", fmt.Sprint(isCanonicalSource(source)), indicatorStatus(isCanonicalSource(source)), sourceEvidence),
+		indicator("OEL-OBS-02", "OBSERVATION", "observe-repository", "observer-effect-judge", "observe-repository", "FOUNDATION", "before snapshot exists", fmt.Sprint(observation.RepositoryStorage.BeforeObserved), indicatorStatus(boolStatus(observation.RepositoryStorage.BeforeObserved)), snapshotUnknown(observation.RepositoryStorage)),
+		indicator("OEL-OBS-03", "OBSERVATION", "observe-repository", "observer-effect-judge", "observe-repository", "COHERENCE", "after snapshot exists", fmt.Sprint(observation.RepositoryStorage.AfterObserved), indicatorStatus(boolStatus(observation.RepositoryStorage.AfterObserved)), snapshotUnknown(observation.RepositoryStorage)),
+		indicator("OEL-OBS-04", "OBSERVATION", "observe-environment", "observer-effect-judge", "observe-environment", "FOUNDATION", "environment delta recorded", observation.Environment.Status, indicatorStatus(observation.Environment.Status), snapshotUnknown(observation.Environment)),
+		indicator("OEL-OBS-05", "OBSERVATION", "observe-logical-time", "observer-effect-judge", "observe-logical-time", "FOUNDATION", "logical time delta recorded", observation.LogicalTime.Status, indicatorStatus(observation.LogicalTime.Status), snapshotUnknown(observation.LogicalTime)),
+		indicator("OEL-OBS-06", "OBSERVATION", "separate-observation", "observer-effect-judge", "separate-observation-from-effect", "COHERENCE", "observation and effects are distinct", fmt.Sprint(len(effects) == 4), indicatorStatus(boolStatus(len(effects) == 4)), separationEvidence),
+		indicator("OEL-EFF-01", "EFFECT", "observe-repository", "observer-effect-judge", "assert-zero-repository-writes", "REGRESSION", "repository writes = 0", repository.Status, indicatorStatus(repository.Status), snapshotUnknown(observation.RepositoryStorage)),
+		indicator("OEL-EFF-02", "EFFECT", "observe-environment", "observer-effect-judge", "assert-environment-stability", "COHERENCE", "environment changed = false", observation.Environment.Status, indicatorStatus(observation.Environment.Status), snapshotUnknown(observation.Environment)),
+		indicator("OEL-EFF-03", "EFFECT", "observe-logical-time", "observer-effect-judge", "assert-logical-time-stability", "COHERENCE", "logical time changed = false", observation.LogicalTime.Status, indicatorStatus(observation.LogicalTime.Status), snapshotUnknown(observation.LogicalTime)),
+		indicator("OEL-EFF-04", "EFFECT", "emit-output", "observer-effect-judge", "plan-observer-output-effect", "FOUNDATION", "actual output effect observed", output.Status, indicatorStatus(output.Status), effectUnknown(output)),
+		indicator("OEL-GOV-01", "GUARDRAIL", "deny-mutation-authority", "observer-effect-judge", "deny-mutation-authority", "REGRESSION", "mutation authority = false", "false", indicatorStatus("PASS"), mutationEvidence),
+		indicator("OEL-GOV-02", "GUARDRAIL", "persist-claim-transition", "observer-effect-judge", "persist-claim-transition", "REGRESSION", "persistent claim transition", claim.Transition, indicatorStatus(boolStatus(claim.Persistent && claim.Sequence == 2)), claimEvidence),
+	}
+}
+
+func indicatorStatus(status string) string {
+	if status == "PASS" {
+		return "PASS"
+	}
+	if status == "FAIL" {
 		return "FAIL"
 	}
-	repositoryStable := !observation.RepositoryStorage.Changed
-	return []Indicator{
-		indicator("OEL-OBS-01", "OBSERVATION", "bind-gooo-source", "observer-effect-judge", "bind-gooo-source", "FOUNDATION", "valid .gooo source", fmt.Sprint(source.GoooSource), status(source.GoooSource, false), unknown),
-		indicator("OEL-OBS-02", "OBSERVATION", "observe-repository", "observer-effect-judge", "observe-repository", "FOUNDATION", "before snapshot exists", fmt.Sprint(observation.RepositoryStorage.BeforeDigest != ""), status(observation.RepositoryStorage.BeforeDigest != "", false), unknown),
-		indicator("OEL-OBS-03", "OBSERVATION", "observe-repository", "observer-effect-judge", "observe-repository", "COHERENCE", "after snapshot exists", fmt.Sprint(observation.RepositoryStorage.AfterDigest != ""), status(observation.RepositoryStorage.AfterDigest != "", false), unknown),
-		indicator("OEL-OBS-04", "OBSERVATION", "observe-environment", "observer-effect-judge", "observe-environment", "FOUNDATION", "environment delta recorded", fmt.Sprint(observation.Environment.BeforeDigest == observation.Environment.AfterDigest), status(observation.Environment.BeforeDigest == observation.Environment.AfterDigest, true), unknown),
-		indicator("OEL-OBS-05", "OBSERVATION", "observe-logical-time", "observer-effect-judge", "observe-logical-time", "FOUNDATION", "logical time delta recorded", fmt.Sprint(observation.LogicalTime.BeforeDigest == observation.LogicalTime.AfterDigest), status(observation.LogicalTime.BeforeDigest == observation.LogicalTime.AfterDigest, true), unknown),
-		indicator("OEL-OBS-06", "OBSERVATION", "separate-observation", "observer-effect-judge", "separate-observation-from-effect", "COHERENCE", "observation and effects are distinct", fmt.Sprint(len(effects) == 4), status(len(effects) == 4, false), unknown),
-		indicator("OEL-EFF-01", "EFFECT", "observe-repository", "observer-effect-judge", "assert-zero-repository-writes", "REGRESSION", "repository writes = 0", fmt.Sprint(len(effectsForDomain(effects, "REPOSITORY_STORAGE")) == 1 && repositoryStable), status(repositoryStable, false), unknown),
-		indicator("OEL-EFF-02", "EFFECT", "observe-environment", "observer-effect-judge", "assert-environment-stability", "COHERENCE", "environment changed = false", fmt.Sprint(!observation.Environment.Changed), status(!observation.Environment.Changed, true), unknown),
-		indicator("OEL-EFF-03", "EFFECT", "observe-logical-time", "observer-effect-judge", "assert-logical-time-stability", "COHERENCE", "logical time changed = false", fmt.Sprint(!observation.LogicalTime.Changed), status(!observation.LogicalTime.Changed, true), unknown),
-		indicator("OEL-EFF-04", "EFFECT", "emit-output", "observer-effect-judge", "record-observer-output-effect", "FOUNDATION", "output effect declared", fmt.Sprint(effectWriteCount(effects, "OUTPUT") == 3), status(effectWriteCount(effects, "OUTPUT") == 3, false), unknown),
-		indicator("OEL-GOV-01", "GUARDRAIL", "deny-mutation-authority", "observer-effect-judge", "deny-mutation-authority", "REGRESSION", "mutation authority = false", "false", status(true, false), unknown),
-		indicator("OEL-GOV-02", "GUARDRAIL", "persist-claim-transition", "observer-effect-judge", "persist-claim-transition", "REGRESSION", "persistent claim transition", claim.Transition, status(claim.Persistent && claim.Sequence == 2, false), unknown),
+	return "UNKNOWN"
+}
+
+func boolStatus(value bool) string {
+	if value {
+		return "PASS"
 	}
+	return "FAIL"
+}
+
+func snapshotUnknown(snapshot SnapshotDelta) Unknown {
+	return Unknown{Stage: snapshot.Stage, Step: snapshot.Step, Reason: snapshot.Reason}
+}
+
+func effectUnknown(effect Effect) Unknown {
+	return Unknown{Stage: effect.Stage, Step: effect.Step, Reason: effect.Reason}
 }
 
 func indicator(id, class, producer, consumer, operation, proof, expected, actual, status string, unknown Unknown) Indicator {

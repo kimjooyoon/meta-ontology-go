@@ -145,16 +145,24 @@ func topologyReason(exact bool) string {
 }
 
 func runnerScopedEvidence() RunnerScopedEvidence {
-	return RunnerScopedEvidence{
-		Scope: "RUNNER_SCOPED", Source: "GitHub Actions API",
-		ObservationRef:      "dev SHA #540 latest 100 workflow_run objects",
+	evidence := RunnerScopedEvidence{
+		Scope: "RUNNER_SCOPED", Classification: "HISTORICAL_FIXTURE", Status: "OPEN",
+		Source:         "review-supplied historical Actions API snapshot",
+		ObservationRef: "dev SHA #540 latest 100 workflow_run objects",
+		ObservedAt:     "UNKNOWN", Query: "NOT_CAPTURED", SubjectSHA: "dev SHA #540",
 		SkippedWorkflowRuns: 59, QueuedWorkflowRuns: 41,
-		TimeDependent: true, IncludedInFixedDenominator: false,
-		Producer: "actions-api-observer", Consumer: "observer-effect-judge",
-		MetaOperation: "record-runner-scoped-queue-observation", ProofChoice: "FOUNDATION",
-		Stage: "OBSERVE", Step: "actions-api-snapshot",
-		Reason: "TIME_DEPENDENT_RUNNER_SCOPED_NOT_IN_FIXED_DENOMINATOR",
+		TimeDependent: true, CurrentEvidence: false, IncludedInFixedDenominator: false,
+		Producer: "review-fixture", Consumer: "observer-effect-judge",
+		MetaOperation: "classify-historical-runner-snapshot", ProofChoice: "FOUNDATION",
+		Stage: "OBSERVE", Step: "historical-actions-api-snapshot",
+		Reason: "HISTORICAL_FIXTURE_OPEN_NOT_CURRENT_EVIDENCE",
 	}
+	evidence.EvidenceDigest = DigestValue([]any{
+		evidence.Classification, evidence.Status, evidence.ObservationRef,
+		evidence.SkippedWorkflowRuns, evidence.QueuedWorkflowRuns,
+		evidence.ObservedAt, evidence.Query, evidence.SubjectSHA,
+	})
+	return evidence
 }
 
 func guardianExpectation() GuardianExpectation {

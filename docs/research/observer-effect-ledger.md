@@ -46,11 +46,25 @@ event kinds exist. Thus stale commits on one PR or branch are canceled without
 merging different PR identities. A causal edge ledger records which filter or
 concurrency relation causes each before/after count.
 
-The observed Actions API snapshot of `59` skipped and `41` queued objects for
-the latest 100 `workflow_run` objects at dev SHA #540 is a separate
-`RUNNER_SCOPED` evidence record. It is time-dependent, producer-bound, and
-explicitly excluded from the fixed denominator. It is not a claim about the
-static trigger topology or a reproducible CI success rate.
+The review supplied a historical Actions API snapshot of `59` skipped and `41`
+queued objects for the latest 100 `workflow_run` objects at dev SHA #540. The
+ledger keeps those exact values as `RUNNER_SCOPED`, `HISTORICAL_FIXTURE`,
+`OPEN` evidence with `observed_at=UNKNOWN`, `query=NOT_CAPTURED`, and
+`current_evidence=false`. It is time-dependent and excluded from the fixed
+denominator. The producer is therefore a fixture classifier, not a live
+Actions API observer; the values cannot support a current CI or topology
+success claim.
+
+## Canonical source binding and interventions
+
+The source coordinate is bound to the repository's canonical `.gooo` parser and
+bidirectional lowering path. A suffix or a raw `entity`/`activity` substring is
+not sufficient. The ledger retains two in-memory interventions: comment-only
+declaration-looking lines and quoted declaration-looking text inside a
+comment. Both must parse and lower successfully while preserving the baseline
+semantic IR digest. The independent judge repeats the parse/lowering and
+intervention checks, so comments and quoted text cannot establish language
+semantics.
 
 ## Relation to effect systems
 
@@ -80,28 +94,35 @@ guidance warns that timestamps and other nondeterminism can still leak:
 [NixOS reproducible builds](https://reproducible.nixos.org/).
 
 The experiment adopts the useful boundary, not the strongest possible claim:
-the clean run measures the checked-out root, a declared environment tuple, and
-an injected logical clock; artifacts are written outside the repository. A
-replay and an independent judge then verify the same evidence. This is a
+the clean run measures the checked-out root, independently reads a declared
+environment tuple at both boundaries, and independently reads an injected
+logical clock at both boundaries. A replay and an independent judge then verify
+the same evidence. The output channel is intentionally an explicit open
+coordinate: the CLI does not claim an observed artifact-write count until
+actual writes are instrumented and the result is resealed. This is a
 hermetic-style observation boundary, not proof that the host kernel, filesystem
 metadata, network, wall clock, or CI service had no influence.
 
 ## Falsification and limits
 
 The claim is falsified if a clean run reports a changed repository digest, a
-non-zero repository-write count, an undeclared output effect, a receipt or
-ledger replay mismatch, or a mutation/promotion authority bit set to true. The
-intentional `violate` mode is a concrete counterexample: it writes a marker in
-the supplied root, and the independent judge must accept only the
-`FAIL_CLOSED` subject decision with 11/12 satisfied indicators.
+non-zero repository-write count, an uninstrumented output effect promoted to
+observed, a receipt or ledger replay mismatch, or a mutation/promotion
+authority bit set to true. The intentional `violate` mode is a concrete
+counterexample: it writes a marker in the supplied root, and the independent
+judge must accept only the `FAIL_CLOSED` subject decision with `10/12`
+satisfied indicators (`8333` basis points). The clean run remains
+`UNKNOWN/LOWER_RESOLUTION` at `11/12` (`9166` basis points) because OUTPUT is
+open, while the forced-environment run is `9/12` (`7500` basis points).
 
 The experiment cannot observe effects outside its declared scope. In
 particular, it does not prove that the operating system clock was untouched; it
 uses `SOURCE_DATE_EPOCH` or the fixed value `0` as an injected logical clock.
 It does not prove that a malicious process could not mutate the root between
-the two scans. It also counts its own three external artifact writes by
-declaration, so the ledger is evidence about a bounded protocol, not a claim
-of metaphysical zero effect.
+the two scans. It does not count the three external artifacts by declaration:
+the OUTPUT effect is `planned=true`, `write_count=0`, and `OPEN` until the
+actual write boundary is instrumented. The ledger is therefore evidence about
+a bounded protocol, not a claim of metaphysical zero effect.
 
 Changing one of the audited trigger blocks, branch filters, or concurrency
 keys makes the topology evidence inexact. The observer then reports

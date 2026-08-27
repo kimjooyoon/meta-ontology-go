@@ -9,15 +9,26 @@ const (
 )
 
 type Source struct {
-	Path       string `json:"path"`
-	Digest     string `json:"digest"`
-	GoooSource bool   `json:"gooo_source"`
+	Path              string                 `json:"path"`
+	Digest            string                 `json:"digest"`
+	GoooSource        bool                   `json:"gooo_source"`
+	CanonicalParse    bool                   `json:"canonical_parse"`
+	CanonicalLowering bool                   `json:"canonical_lowering"`
+	SemanticDigest    string                 `json:"semantic_digest"`
+	Interventions     []SemanticIntervention `json:"interventions"`
 }
 
 type SnapshotDelta struct {
-	BeforeDigest string `json:"before_digest"`
-	AfterDigest  string `json:"after_digest"`
-	Changed      bool   `json:"changed"`
+	BeforeDigest   string `json:"before_digest"`
+	AfterDigest    string `json:"after_digest"`
+	Changed        bool   `json:"changed"`
+	BeforeObserved bool   `json:"before_observed"`
+	AfterObserved  bool   `json:"after_observed"`
+	Status         string `json:"status"`
+	Resolution     string `json:"resolution"`
+	Stage          string `json:"stage"`
+	Step           string `json:"step"`
+	Reason         string `json:"reason"`
 }
 
 type Observation struct {
@@ -30,6 +41,7 @@ type Effect struct {
 	Domain            string `json:"domain"`
 	ObservedChanged   bool   `json:"observed_changed"`
 	MutationAttempted bool   `json:"mutation_attempted"`
+	Planned           bool   `json:"planned"`
 	BeforeDigest      string `json:"before_digest"`
 	AfterDigest       string `json:"after_digest"`
 	WriteCount        int    `json:"write_count"`
@@ -38,7 +50,41 @@ type Effect struct {
 	MetaOperation     string `json:"meta_operation"`
 	ProofChoice       string `json:"proof_choice"`
 	Status            string `json:"status"`
+	Stage             string `json:"stage"`
+	Step              string `json:"step"`
 	Reason            string `json:"reason"`
+}
+
+type SemanticIntervention struct {
+	Name              string `json:"name"`
+	Mutation          string `json:"mutation"`
+	ParseValid        bool   `json:"parse_valid"`
+	LoweringValid     bool   `json:"lowering_valid"`
+	BaselineDigest    string `json:"baseline_digest"`
+	MutatedDigest     string `json:"mutated_digest"`
+	SemanticInvariant bool   `json:"semantic_invariant"`
+	Producer          string `json:"producer"`
+	Consumer          string `json:"consumer"`
+	MetaOperation     string `json:"meta_operation"`
+	ProofChoice       string `json:"proof_choice"`
+	Stage             string `json:"stage"`
+	Step              string `json:"step"`
+	Reason            string `json:"reason"`
+}
+
+type CoordinateAdjudication struct {
+	Coordinate     string `json:"coordinate"`
+	Status         string `json:"status"`
+	Resolution     string `json:"resolution"`
+	BeforeObserved bool   `json:"before_observed"`
+	AfterObserved  bool   `json:"after_observed"`
+	Stage          string `json:"stage"`
+	Step           string `json:"step"`
+	Reason         string `json:"reason"`
+	Producer       string `json:"producer"`
+	Consumer       string `json:"consumer"`
+	MetaOperation  string `json:"meta_operation"`
+	ProofChoice    string `json:"proof_choice"`
 }
 
 type Unknown struct {
@@ -115,11 +161,18 @@ type TopologyEvidence struct {
 
 type RunnerScopedEvidence struct {
 	Scope                      string `json:"scope"`
+	Classification             string `json:"classification"`
+	Status                     string `json:"status"`
 	Source                     string `json:"source"`
 	ObservationRef             string `json:"observation_ref"`
+	ObservedAt                 string `json:"observed_at"`
+	Query                      string `json:"query"`
+	SubjectSHA                 string `json:"subject_sha"`
+	EvidenceDigest             string `json:"evidence_digest"`
 	SkippedWorkflowRuns        int    `json:"skipped_workflow_runs"`
 	QueuedWorkflowRuns         int    `json:"queued_workflow_runs"`
 	TimeDependent              bool   `json:"time_dependent"`
+	CurrentEvidence            bool   `json:"current_evidence"`
 	IncludedInFixedDenominator bool   `json:"included_in_fixed_denominator"`
 	Producer                   string `json:"producer"`
 	Consumer                   string `json:"consumer"`
@@ -202,27 +255,28 @@ type Receipt struct {
 }
 
 type Report struct {
-	Schema              string               `json:"schema"`
-	Experiment          string               `json:"experiment"`
-	Source              Source               `json:"source"`
-	Observation         Observation          `json:"observation"`
-	Effects             []Effect             `json:"effects"`
-	ReceiptDigests      []string             `json:"receipt_digests"`
-	Unknown             Unknown              `json:"unknown"`
-	Coordinate          Unknown              `json:"coordinate"`
-	Reason              string               `json:"reason"`
-	ClaimTransition     ClaimTransition      `json:"claim_transition"`
-	Topology            TopologyEvidence     `json:"topology"`
-	RunnerScoped        RunnerScopedEvidence `json:"runner_scoped"`
-	Guardian            GuardianExpectation  `json:"guardian_expectation"`
-	Metrics             Metrics              `json:"metrics"`
-	Authority           Authority            `json:"authority"`
-	RepositoryWrites    int                  `json:"repository_writes"`
-	MutationAuthority   bool                 `json:"mutation_authority"`
-	PromotionAuthorized bool                 `json:"promotion_authorized"`
-	Decision            string               `json:"decision"`
-	Resolution          string               `json:"resolution"`
-	EvidenceDigest      string               `json:"evidence_digest"`
-	Digest              string               `json:"digest"`
-	Indicators          []Indicator          `json:"indicators"`
+	Schema              string                   `json:"schema"`
+	Experiment          string                   `json:"experiment"`
+	Source              Source                   `json:"source"`
+	Observation         Observation              `json:"observation"`
+	Effects             []Effect                 `json:"effects"`
+	ReceiptDigests      []string                 `json:"receipt_digests"`
+	Unknown             Unknown                  `json:"unknown"`
+	Coordinate          Unknown                  `json:"coordinate"`
+	Reason              string                   `json:"reason"`
+	ClaimTransition     ClaimTransition          `json:"claim_transition"`
+	Coordinates         []CoordinateAdjudication `json:"coordinates"`
+	Topology            TopologyEvidence         `json:"topology"`
+	RunnerScoped        RunnerScopedEvidence     `json:"runner_scoped"`
+	Guardian            GuardianExpectation      `json:"guardian_expectation"`
+	Metrics             Metrics                  `json:"metrics"`
+	Authority           Authority                `json:"authority"`
+	RepositoryWrites    int                      `json:"repository_writes"`
+	MutationAuthority   bool                     `json:"mutation_authority"`
+	PromotionAuthorized bool                     `json:"promotion_authorized"`
+	Decision            string                   `json:"decision"`
+	Resolution          string                   `json:"resolution"`
+	EvidenceDigest      string                   `json:"evidence_digest"`
+	Digest              string                   `json:"digest"`
+	Indicators          []Indicator              `json:"indicators"`
 }
