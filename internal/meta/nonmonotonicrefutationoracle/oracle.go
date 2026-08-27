@@ -194,7 +194,7 @@ func reconstructSource(source []byte) (sourceModel, string) {
 		}
 		model.Contract.Observations = append(model.Contract.Observations, observation)
 	}
-	if len(model.Contract.Observations) != 6 {
+	if len(model.Contract.Observations) != 8 {
 		return sourceModel{}, "SOURCE_OBSERVATION_DENOMINATOR_MISMATCH"
 	}
 	model.Contract.Schema = sourceSchema
@@ -355,7 +355,7 @@ func validateInput(input producerInput, source []byte, model sourceModel) string
 	if input.SourceBindingDigest != digestJSON(sourceBinding{RawDigest: input.SourceDigest, SemanticDigest: input.SourceSemanticDigest, PolicyID: input.Contract.Policy.ID, PolicyDigest: input.Contract.Policy.PolicyDigest}) {
 		return "SOURCE_BINDING_DIGEST_MISMATCH"
 	}
-	if input.SourceSemanticDigest != model.SemanticDigest || input.Contract.Schema != sourceSchema || input.Contract.FixedCaseTotal != 3 || input.Contract.FixedClaimTotal != 3 || input.Contract.FixedObservationTotal != 6 || input.Contract.FixedLedgerRowTotal != 6 {
+	if input.SourceSemanticDigest != model.SemanticDigest || input.Contract.Schema != sourceSchema || input.Contract.FixedCaseTotal != 3 || input.Contract.FixedClaimTotal != 3 || input.Contract.FixedObservationTotal != 8 || input.Contract.FixedLedgerRowTotal != 8 {
 		return "SOURCE_RECONSTRUCTION_MISMATCH"
 	}
 	if input.SourceModelDigest != digestJSON(model.Contract) || digestJSON(input.Contract) != digestJSON(model.Contract) {
@@ -379,11 +379,13 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 	claimObservationCount := make(map[string]int, len(model.Contract.Claims))
 	currentEvidenceID := make(map[string]string, len(model.Contract.Claims))
 	currentEvidenceDigest := make(map[string]string, len(model.Contract.Claims))
+	activeRefutations := make(map[string]map[string]activeRefutation, len(model.Contract.Claims))
 	for index, claim := range model.Contract.Claims {
 		caseID := strings.TrimPrefix(claim.ID, "gooo://nonmonotonic-refutation/claim/")
-		cases[index] = CaseResult{ID: caseID, ClaimID: claim.ID, Proposition: claim.Proposition, Subject: claim.Subject, Input: claim.Input, FixtureKnowledge: model.Contract.Policy.FixtureClass, InitialStatus: statusOpen, StatusHistory: []string{statusOpen}}
+		cases[index] = CaseResult{ID: caseID, ClaimID: claim.ID, Proposition: claim.Proposition, Subject: claim.Subject, Input: claim.Input, FixtureKnowledge: model.Contract.Policy.FixtureClass, InitialStatus: statusOpen, StatusHistory: []string{statusOpen}, ActiveRefutationHistory: []int{0}}
 		status[claim.ID] = statusOpen
 		caseIndex[claim.ID] = index
+		activeRefutations[claim.ID] = make(map[string]activeRefutation)
 	}
 	transitions := make([]Transition, 0, len(model.Contract.Observations))
 	previousDigest := ""
@@ -396,12 +398,26 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 		claim := model.Contract.Claims[caseNumber]
 		relation := classify(claim, observation)
 		proofAdmitted, proofReason := admitProof(model.Contract.Policy, observation, claimObservationCount[observation.ClaimID])
-		target := correctionTarget(transitions, observation)
-		after, accepted, revisionReason := revise(model.Contract.Policy, before, relation, observation, transitions, proofAdmitted)
-		transition := Transition{Sequence: index + 1, CaseID: cases[caseNumber].ID, ClaimID: observation.ClaimID, Before: before, After: after, Accepted: accepted, EvidenceID: observation.ID, Relation: relation, RevisionRelation: observation.RevisionRelation, SupersedesEvidenceDigest: observation.SupersedesEvidenceDigest, CorrectionTargetClaimID: target.ClaimID, CorrectionTargetTransitionDigest: target.TransitionDigest, CorrectionTargetStatus: target.Status, CorrectionTargetActive: target.Active, EvidenceBasis: evidenceBasis(observation), EvidenceDigest: observation.EvidenceDigest, EvidenceProvenance: observation.Provenance, ProviderClass: observation.ProviderClass, ProofChoice: observation.ProofChoice, ProofAdmitted: proofAdmitted, ProofAdmission: proofReason, Coordinate: coordinate{Stage: observation.Coordinate.Stage, Step: observation.Coordinate.Step, Reason: revisionReason}, PreviousDigest: previousDigest}
+		activeBefore := len(activeRefutations[observation.ClaimID])
+		target := correctionTarget(transitions, observation, activeRefutations)
+		after, accepted, revisionReason := revise(model.Contract.Policy, before, relation, observation, transitions, activeRefutations, proofAdmitted)
+		activeAfter := activeBefore
+		if accepted && relation == relationContradicts && after == statusRefuted {
+			activeAfter++
+		}
+		if accepted && relation == relationSupports && before == statusRefuted && target.Active {
+			activeAfter--
+		}
+		transition := Transition{Sequence: index + 1, CaseID: cases[caseNumber].ID, ClaimID: observation.ClaimID, Before: before, After: after, Accepted: accepted, EvidenceID: observation.ID, Relation: relation, RevisionRelation: observation.RevisionRelation, SupersedesEvidenceDigest: observation.SupersedesEvidenceDigest, CorrectionTargetClaimID: target.ClaimID, CorrectionTargetTransitionDigest: target.TransitionDigest, CorrectionTargetStatus: target.Status, CorrectionTargetActive: target.Active, ActiveRefutationBefore: activeBefore, ActiveRefutationAfter: activeAfter, EvidenceBasis: evidenceBasis(observation), EvidenceDigest: observation.EvidenceDigest, EvidenceProvenance: observation.Provenance, ProviderClass: observation.ProviderClass, ProofChoice: observation.ProofChoice, ProofAdmitted: proofAdmitted, ProofAdmission: proofReason, Coordinate: coordinate{Stage: observation.Coordinate.Stage, Step: observation.Coordinate.Step, Reason: revisionReason}, PreviousDigest: previousDigest}
 		transition.TransitionDigest = transitionDigest(transition)
 		previousDigest = transition.TransitionDigest
 		transitions = append(transitions, transition)
+		if accepted && relation == relationContradicts && after == statusRefuted {
+			activeRefutations[observation.ClaimID][observation.EvidenceDigest] = activeRefutation{ClaimID: observation.ClaimID, EvidenceDigest: observation.EvidenceDigest, TransitionDigest: transition.TransitionDigest}
+		}
+		if accepted && relation == relationSupports && before == statusRefuted && target.Active {
+			delete(activeRefutations[observation.ClaimID], target.EvidenceDigest)
+		}
 		metrics.ObservationAttemptTotal++
 		metrics.TransitionTotal++
 		if !accepted {
@@ -443,6 +459,7 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 		status[observation.ClaimID] = after
 		claimObservationCount[observation.ClaimID]++
 		cases[caseNumber].StatusHistory = append(cases[caseNumber].StatusHistory, after)
+		cases[caseNumber].ActiveRefutationHistory = append(cases[caseNumber].ActiveRefutationHistory, len(activeRefutations[observation.ClaimID]))
 		cases[caseNumber].ObservationTotal++
 	}
 	for index := range cases {
@@ -450,7 +467,9 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 		cases[index].CurrentEvidenceID = currentEvidenceID[cases[index].ClaimID]
 		cases[index].CurrentEvidenceDigest = currentEvidenceDigest[cases[index].ClaimID]
 		cases[index].HistoryRetained = len(cases[index].StatusHistory) == cases[index].ObservationTotal+1
+		cases[index].ActiveRefutationTotal = len(activeRefutations[cases[index].ClaimID])
 		metrics.RetainedStateTotal += len(cases[index].StatusHistory)
+		metrics.CurrentActiveRefutationTotal += cases[index].ActiveRefutationTotal
 		switch cases[index].CurrentStatus {
 		case statusDischarged:
 			metrics.CurrentDischargedTotal++
@@ -460,7 +479,7 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 			metrics.CurrentOpenTotal++
 		}
 	}
-	if metrics.FixedCaseTotal != 3 || metrics.FixedClaimTotal != 3 || metrics.FixedObservationTotal != 6 || metrics.FixedLedgerRowTotal != 6 || metrics.ObservationAttemptTotal != 6 || metrics.TransitionTotal != 6 {
+	if metrics.FixedCaseTotal != 3 || metrics.FixedClaimTotal != 3 || metrics.FixedObservationTotal != 8 || metrics.FixedLedgerRowTotal != 8 || metrics.ObservationAttemptTotal != 8 || metrics.TransitionTotal != 8 {
 		return cases, transitions, metrics, "FIXED_SOURCE_COUNT_MISMATCH"
 	}
 	metrics.CurrentDischargeBasisPoints = metrics.CurrentDischargedTotal * 10000 / metrics.FixedClaimTotal
@@ -516,7 +535,7 @@ func admitProof(policy revisionPolicy, observation sourceObservation, priorClaim
 	}
 }
 
-func revise(policy revisionPolicy, before, relation string, observation sourceObservation, prior []Transition, proofAdmitted bool) (string, bool, string) {
+func revise(policy revisionPolicy, before, relation string, observation sourceObservation, prior []Transition, activeRefutations map[string]map[string]activeRefutation, proofAdmitted bool) (string, bool, string) {
 	if !proofAdmitted {
 		return before, false, "PROOF_ADMISSIBILITY_REJECTED_CURRENT_STATE_RETAINED"
 	}
@@ -531,8 +550,8 @@ func revise(policy revisionPolicy, before, relation string, observation sourceOb
 		if observation.RevisionRelation != policy.CorrectionRelation || observation.RevisionRelation != revisionSupersedes {
 			return before, false, "UNTARGETED_SUPPORT_RETAINS_REFUTED"
 		}
-		if policy.CorrectionTarget != policyCorrectionTargetEvidence || observation.SupersedesEvidenceDigest == noEvidenceTarget || !hasExactRefutationEvidence(prior, observation) {
-			switch correctionTarget(prior, observation).Status {
+		if policy.CorrectionTarget != policyCorrectionTargetEvidence || observation.SupersedesEvidenceDigest == noEvidenceTarget || !hasExactRefutationEvidence(prior, observation, activeRefutations) {
+			switch correctionTarget(prior, observation, activeRefutations).Status {
 			case "CLAIM_MISMATCH":
 				return before, false, "CORRECTION_TARGET_CLAIM_MISMATCH_CURRENT_STATE_RETAINED"
 			case "STALE_REFUTATION":
@@ -540,6 +559,9 @@ func revise(policy revisionPolicy, before, relation string, observation sourceOb
 			default:
 				return before, false, "CORRECTION_TARGET_NOT_FOUND_CURRENT_STATE_RETAINED"
 			}
+		}
+		if len(activeRefutations[observation.ClaimID]) > 1 {
+			return statusRefuted, true, "TARGETED_CORRECTION_RETAINS_OTHER_ACTIVE_REFUTATION"
 		}
 		return statusDischarged, true, "TARGETED_CORRECTION_SUPERSEDES_EXACT_REFUTATION"
 	case relationContradicts:
@@ -567,36 +589,36 @@ type correctionTargetResult struct {
 	Active           bool
 }
 
-func hasExactRefutationEvidence(prior []Transition, observation sourceObservation) bool {
-	target := correctionTarget(prior, observation)
+type activeRefutation struct {
+	ClaimID          string
+	EvidenceDigest   string
+	TransitionDigest string
+}
+
+func hasExactRefutationEvidence(prior []Transition, observation sourceObservation, activeRefutations map[string]map[string]activeRefutation) bool {
+	target := correctionTarget(prior, observation, activeRefutations)
 	if target.ClaimID != observation.ClaimID || target.Status != "CURRENT_REFUTATION" || !target.Active {
 		return false
 	}
 	for _, transition := range prior {
-		if transition.ClaimID == observation.ClaimID && transition.TransitionDigest == target.TransitionDigest && transition.EvidenceDigest == observation.SupersedesEvidenceDigest && transition.Accepted && transition.Relation == relationContradicts && transition.Before == statusDischarged && transition.After == statusRefuted {
+		if transition.ClaimID == observation.ClaimID && transition.TransitionDigest == target.TransitionDigest && transition.EvidenceDigest == observation.SupersedesEvidenceDigest && transition.Accepted && transition.Relation == relationContradicts && transition.After == statusRefuted {
 			return true
 		}
 	}
 	return false
 }
 
-func correctionTarget(prior []Transition, observation sourceObservation) correctionTargetResult {
+func correctionTarget(prior []Transition, observation sourceObservation, activeRefutations map[string]map[string]activeRefutation) correctionTargetResult {
 	target := correctionTargetResult{ClaimID: observation.SupersedesClaimID, EvidenceDigest: observation.SupersedesEvidenceDigest, Status: "NONE"}
 	if observation.RevisionRelation != revisionSupersedes || target.ClaimID == noEvidenceTarget || target.EvidenceDigest == noEvidenceTarget {
 		return target
 	}
-	latestAccepted := -1
-	for index, transition := range prior {
-		if transition.ClaimID == target.ClaimID && transition.Accepted {
-			latestAccepted = index
-		}
-	}
-	for index, transition := range prior {
+	for _, transition := range prior {
 		if transition.ClaimID != target.ClaimID || transition.EvidenceDigest != target.EvidenceDigest {
 			continue
 		}
 		target.TransitionDigest = transition.TransitionDigest
-		if transition.Relation != relationContradicts || !transition.Accepted || transition.Before != statusDischarged || transition.After != statusRefuted {
+		if transition.Relation != relationContradicts || !transition.Accepted || transition.After != statusRefuted {
 			target.Status = "NOT_REFUTATION"
 			return target
 		}
@@ -604,7 +626,8 @@ func correctionTarget(prior []Transition, observation sourceObservation) correct
 			target.Status = "CLAIM_MISMATCH"
 			return target
 		}
-		if latestAccepted != index {
+		active, ok := activeRefutations[target.ClaimID][target.EvidenceDigest]
+		if !ok || active.ClaimID != target.ClaimID || active.TransitionDigest != target.TransitionDigest {
 			target.Status = "STALE_REFUTATION"
 			return target
 		}

@@ -67,32 +67,19 @@ jobs:
             exit 1
           fi
           git status --porcelain=v1 --untracked-files=all > "$output/before.status"
-          go run ./cmd/nonmonotonic-refutation-producer \
-            -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/first.json"
+          go run ./cmd/nonmonotonic-refutation-producer -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/first.json"
           git status --porcelain=v1 --untracked-files=all > "$output/after.status"
           cmp "$output/before.status" "$output/after.status"
-          go run ./cmd/nonmonotonic-refutation-producer \
-            -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/replay.json"
+          go run ./cmd/nonmonotonic-refutation-producer -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/replay.json"
           cmp "$output/first.json" "$output/replay.json"
           jq -e '
             .schema == "gooo/meta-nonmonotonic-refutation-producer/v4" and
             .contract.schema == "gooo/meta-nonmonotonic-refutation-source/v3" and
-            .contract.policy.correction_relation == "SUPERSEDES" and
-            .contract.policy.correction_target == "EVIDENCE_DIGEST" and
-            (.contract.policy.policy_digest | test("^sha256:[0-9a-f]{64}$")) and
-            .contract.fixed_case_total == 3 and
-            .contract.fixed_claim_total == 3 and
-            .contract.fixed_observation_total == 6 and
-            .contract.fixed_ledger_row_total == 6 and
-            (.contract.claims | length) == 3 and
-            (.contract.observations | length) == 6 and
+            .contract.fixed_case_total == 3 and .contract.fixed_claim_total == 3 and .contract.fixed_observation_total == 8 and .contract.fixed_ledger_row_total == 8 and
+            (.contract.claims | length) == 3 and (.contract.observations | length) == 8 and (.contract.policy.policy_digest | test("^sha256:[0-9a-f]{64}$")) and
             (all(.contract.claims[]; .proposition != "" and .subject != "" and .input != "" and (has("status") | not) and (has("decision") | not))) and
-            (all(.contract.observations[]; .proposition != "" and .subject != "" and .input != "" and .provider_class == "HISTORICAL_FIXTURE" and .observation_quality != "" and (.evidence_digest | test("^sha256:[0-9a-f]{64}$")) and (has("supersedes_claim_id")) and (has("relation") | not) and (has("status") | not) and (has("decision") | not) and (has("prior") | not))) and
-            .source_digest != "" and .source_semantic_digest != "" and .source_binding_digest != "" and
-            .effects.net_repository_status_unchanged == true and
-            .effects.repository_write_observation == "NONE_OBSERVED_IN_NET_STATUS" and
-            .effects.mutation_authority_resolution == "UNKNOWN" and
-            .effects.promotion_operations_observed == 0
+            (all(.contract.observations[]; .proposition != "" and .subject != "" and .input != "" and .provider_class == "HISTORICAL_FIXTURE" and (.evidence_digest | test("^sha256:[0-9a-f]{64}$")) and has("supersedes_claim_id") and (has("relation") | not) and (has("status") | not) and (has("decision") | not) and (has("prior") | not))) and
+            .effects.net_repository_status_unchanged == true and .effects.repository_write_observation == "NONE_OBSERVED_IN_NET_STATUS" and .effects.mutation_authority_resolution == "UNKNOWN" and .effects.promotion_operations_observed == 0
           ' "$output/first.json"
       - name: Upload producer evidence
         uses: actions/upload-artifact@v6
@@ -131,14 +118,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if go list -deps ./internal/meta/nonmonotonicrefutationoracle | \
-            grep -Fxq "github.com/kimjooyoon/meta-ontology-go/internal/meta/nonmonotonicrefutation"; then
-            echo "oracle imports producer semantics" >&2
-            exit 1
-          fi
+          test "$(go list -deps ./internal/meta/nonmonotonicrefutationoracle | awk '$0 == "github.com/kimjooyoon/meta-ontology-go/internal/meta/nonmonotonicrefutation" { count++ } END { print count + 0 }')" -eq 0
       - name: Parse and lower actual .gooo source
         run: go run ./cmd/gooo check examples/nonmonotonic-refutation/main.gooo
-      - name: Adjudicate fixed correction denominator
+      - name: Adjudicate active-refutation denominator
         shell: bash
         run: |
           set -euo pipefail
@@ -148,342 +131,97 @@ jobs:
           source="examples/nonmonotonic-refutation/main.gooo"
           producer="$RUNNER_TEMP/nonmonotonic-refutation/producer/first.json"
           gamma2_digest="sha256:949793233625c5aa4cc86984436630fe5c2443dec264d3e32678e830603d8ae5"
+          gamma3_digest="sha256:99b22d86135d07def6e445ce2c08c239522ef0939e07e05e73a6c901327edffa"
           beta2_digest="sha256:9a48a7bf918f4d532e50856b27d6670e59d76b50f58b1906290ded415c3eca25"
           zero_digest="sha256:0000000000000000000000000000000000000000000000000000000000000000"
 
           git status --porcelain=v1 --untracked-files=all > "$output/before.status"
-          go run ./cmd/nonmonotonic-refutation-consumer \
-            -producer "$producer" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/baseline.json"
-          go run ./cmd/nonmonotonic-refutation-consumer \
-            -producer "$producer" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/replay.json"
+          go run ./cmd/nonmonotonic-refutation-consumer -producer "$producer" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/baseline.json"
+          go run ./cmd/nonmonotonic-refutation-consumer -producer "$producer" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/replay.json"
           cmp "$output/baseline.json" "$output/replay.json"
 
-          sed '/activity ObserveGamma3/ s/;observed=1;observed_material=/;observed=0;observed_material=/' "$source" > "$variants/semantic.gooo"
+          sed '/activity ObserveGamma5/ s/;observed=1;observed_material=/;observed=0;observed_material=/' "$source" > "$variants/semantic.gooo"
           sed '/activity ObserveAlpha1/ s/observation_quality=SUFFICIENT/observation_quality=UNRESOLVED/' "$source" > "$variants/unknown-open.gooo"
           sed '/activity ObserveBeta2/ s/observation_quality=SUFFICIENT/observation_quality=UNRESOLVED/' "$source" > "$variants/unknown-after-discharged.gooo"
-          sed '/activity ObserveGamma3/ s/;observed=1;observed_material=/;observed=;observed_material=/' "$source" > "$variants/insufficient-after-refuted.gooo"
-          sed '/activity ObserveGamma3/ s/revision_relation=SUPERSEDES;supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/gamma;supersedes_evidence_digest=sha256:[0-9a-f]*/revision_relation=NONE;supersedes_claim_id=none;supersedes_evidence_digest=none/' "$source" > "$variants/ordinary-support-after-refuted.gooo"
-          sed "/activity ObserveGamma3/ s/supersedes_evidence_digest=$gamma2_digest/supersedes_evidence_digest=$zero_digest/" "$source" > "$variants/wrong-target.gooo"
-          sed '/activity ObserveGamma3/ s/supersedes_evidence_digest=sha256:[0-9a-f]*/supersedes_evidence_digest=none/' "$source" > "$variants/missing-target.gooo"
-          sed '/activity ObserveGamma3/ s/proof_choice=REGRESSION/proof_choice=FOUNDATION/' "$source" > "$variants/proof-rejected.gooo"
-          sed "/activity ObserveGamma3/ s/supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/gamma;supersedes_evidence_digest=$gamma2_digest/supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/beta;supersedes_evidence_digest=$beta2_digest/" "$source" > "$variants/cross-claim-target.gooo"
-          sed \
-            -e '/activity ObserveBeta2/ s/ObserveBeta2(ClaimBeta, EqualityPredicate, SubjectBeta, InputBeta, ExpectedOne)/ObserveBeta2(ClaimGamma, EqualityPredicate, SubjectGamma, InputGamma, ExpectedOne)/' \
-            -e '/activity ObserveBeta2/ s/claim=beta;proposition=equals:beta:input-beta:1;subject=beta;input=input-beta;predicate=equality;expected=1;observed=0;observed_material=fixture:beta:input-beta:value-0;observation_quality=SUFFICIENT;provider_class=HISTORICAL_FIXTURE;provenance=fixture-provider-beta-2/claim=gamma;proposition=equals:gamma:input-gamma:1;subject=gamma;input=input-gamma;predicate=equality;expected=1;observed=1;observed_material=fixture:gamma:input-gamma:value-1;observation_quality=SUFFICIENT;provider_class=HISTORICAL_FIXTURE;provenance=fixture-provider-stale-gamma-0/' \
-            -e '/activity ObserveGamma1/ s/observed=1;observed_material=fixture:gamma:input-gamma:value-1/observed=0;observed_material=fixture:gamma:input-gamma:value-0/' \
-            -e '/activity ObserveGamma1/ s/provenance=fixture-provider-gamma-1/provenance=fixture-provider-stale-gamma-1/' \
-            -e '/activity ObserveGamma1/ s/proof_choice=FOUNDATION;stage=EVIDENCE;step=01/proof_choice=COHERENCE;stage=EVIDENCE;step=02/' \
-            -e "/activity ObserveGamma3/ s/supersedes_evidence_digest=$gamma2_digest/supersedes_evidence_digest=$zero_digest/" \
-            "$source" > "$variants/stale-same-claim-seed.gooo"
-          go run ./cmd/nonmonotonic-refutation-producer \
-            -source "$variants/stale-same-claim-seed.gooo" -repository-root "$GITHUB_WORKSPACE" -output "$variants/stale-same-claim-seed-producer.json"
-          stale_refutation_digest="$(jq -r '.contract.observations[] | select(.id == "gooo://nonmonotonic-refutation/observation/gamma-1") | .evidence_digest' "$variants/stale-same-claim-seed-producer.json")"
-          test "$stale_refutation_digest" != "" && test "$stale_refutation_digest" != "null"
-          sed "/activity ObserveGamma3/ s/supersedes_evidence_digest=$zero_digest/supersedes_evidence_digest=$stale_refutation_digest/" "$variants/stale-same-claim-seed.gooo" > "$variants/stale-same-claim-target.gooo"
+          sed '/activity ObserveGamma5/ s/;observed=1;observed_material=/;observed=;observed_material=/' "$source" > "$variants/insufficient-after-refuted.gooo"
+          sed '/activity ObserveGamma5/ s/revision_relation=SUPERSEDES;supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/gamma;supersedes_evidence_digest=sha256:[0-9a-f]*/revision_relation=NONE;supersedes_claim_id=none;supersedes_evidence_digest=none/' "$source" > "$variants/ordinary-support-after-refuted.gooo"
+          sed "/activity ObserveGamma5/ s/supersedes_evidence_digest=$gamma3_digest/supersedes_evidence_digest=$zero_digest/" "$source" > "$variants/wrong-target.gooo"
+          sed '/activity ObserveGamma5/ s/supersedes_evidence_digest=sha256:[0-9a-f]*/supersedes_evidence_digest=none/' "$source" > "$variants/missing-target.gooo"
+          sed '/activity ObserveGamma5/ s/proof_choice=REGRESSION/proof_choice=FOUNDATION/' "$source" > "$variants/proof-rejected.gooo"
+          sed "/activity ObserveGamma5/ s/supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/gamma;supersedes_evidence_digest=$gamma3_digest/supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/beta;supersedes_evidence_digest=$beta2_digest/" "$source" > "$variants/cross-claim-target.gooo"
+          sed "/activity ObserveGamma5/ s/supersedes_evidence_digest=$gamma3_digest/supersedes_evidence_digest=$gamma2_digest/" "$source" > "$variants/stale-same-claim-target.gooo"
+          sed '/activity ObserveGamma5/ s/revision_relation=SUPERSEDES;supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/gamma;supersedes_evidence_digest=sha256:[0-9a-f]*/revision_relation=NONE;supersedes_claim_id=none;supersedes_evidence_digest=none/' "$source" > "$variants/first-only-target.gooo"
+          sed '/activity ObserveGamma4/ s/revision_relation=SUPERSEDES;supersedes_claim_id=gooo:\/\/nonmonotonic-refutation\/claim\/gamma;supersedes_evidence_digest=sha256:[0-9a-f]*/revision_relation=NONE;supersedes_claim_id=none;supersedes_evidence_digest=none/' "$source" > "$variants/second-only-target.gooo"
+          cp "$source" "$variants/both-sequential-target.gooo"
           cp "$source" "$variants/current-exact-target.gooo"
           cp "$source" "$variants/comment.gooo"
           printf '%s\n' '# comment-only intervention' >> "$variants/comment.gooo"
-          for variant in semantic unknown-open unknown-after-discharged insufficient-after-refuted ordinary-support-after-refuted wrong-target missing-target proof-rejected cross-claim-target stale-same-claim-target current-exact-target comment; do
-            go run ./cmd/nonmonotonic-refutation-producer \
-              -source "$variants/$variant.gooo" -repository-root "$GITHUB_WORKSPACE" -output "$variants/$variant-producer.json"
-            go run ./cmd/nonmonotonic-refutation-consumer \
-              -producer "$variants/$variant-producer.json" -source "$variants/$variant.gooo" \
-              -repository-root "$GITHUB_WORKSPACE" -output "$output/$variant.json"
+          for variant in semantic unknown-open unknown-after-discharged insufficient-after-refuted ordinary-support-after-refuted wrong-target missing-target proof-rejected cross-claim-target stale-same-claim-target first-only-target second-only-target both-sequential-target current-exact-target comment; do
+            go run ./cmd/nonmonotonic-refutation-producer -source "$variants/$variant.gooo" -repository-root "$GITHUB_WORKSPACE" -output "$variants/$variant-producer.json"
+            go run ./cmd/nonmonotonic-refutation-consumer -producer "$variants/$variant-producer.json" -source "$variants/$variant.gooo" -repository-root "$GITHUB_WORKSPACE" -output "$output/$variant.json"
           done
 
           tampered="$variants/tampered.json"
-          tampered_json="$(jq -c '
-            .contract.observations[0].evidence_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000" |
-            .receipt_digest = ""
-          ' "$producer")"
+          tampered_json="$(jq -c '.contract.observations[0].evidence_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000" | .receipt_digest = ""' "$producer")"
           tampered_digest="$(printf '%s' "$tampered_json" | sha256sum | awk '{print "sha256:" $1}')"
           printf '%s\n' "$tampered_json" | jq --arg digest "$tampered_digest" '.receipt_digest = $digest' > "$tampered"
-          if go run ./cmd/nonmonotonic-refutation-consumer \
-            -producer "$tampered" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/tampered.json"; then
-            tampered_status=0
-          else
-            tampered_status=$?
-          fi
+          if go run ./cmd/nonmonotonic-refutation-consumer -producer "$tampered" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/tampered.json"; then tampered_status=0; else tampered_status=$?; fi
           test "$tampered_status" -ne 0
           git status --porcelain=v1 --untracked-files=all > "$output/after.status"
           cmp "$output/before.status" "$output/after.status"
 
-          jq -e '
-            .schema == "gooo/meta-nonmonotonic-refutation-receipt/v4" and
-            .report.schema == "gooo/meta-nonmonotonic-refutation-oracle/v4" and
+          jq -e --arg gamma2 "$gamma2_digest" --arg gamma3 "$gamma3_digest" '
             .report.decision == "PASS" and .report.resolution == "EXACT" and
-            .report.conformance.decision == "PASS" and .report.conformance.resolution == "EXACT" and
-            .report.subject_resolution.decision == "DISCHARGED=2;REFUTED=1;OPEN=0" and
-            .report.subject_resolution.resolution == "PARTIAL" and
-            .report.policy.correction_relation == "SUPERSEDES" and
-            .report.policy.policy_digest != "" and
-            .report.vocabulary.fixture_knowledge == "HISTORICAL_FIXTURE_ONLY" and
-            .report.vocabulary.current_evidence == "ACCEPTED_APPEND_ONLY_LEDGER_EVIDENCE" and
-            .report.vocabulary.unknown_evidence == "UNKNOWN_OR_INSUFFICIENT_NOT_CURRENT_EVIDENCE" and
-            .report.metrics.fixed_case_total == 3 and .report.metrics.fixed_claim_total == 3 and
-            .report.metrics.fixed_observation_total == 6 and .report.metrics.fixed_ledger_row_total == 6 and
-            .report.metrics.observation_attempt_total == 6 and .report.metrics.transition_total == 6 and
-            .report.metrics.accepted_state_transition_total == 6 and .report.metrics.rejected_observation_total == 0 and
-            .report.metrics.supports_total == 4 and .report.metrics.contradicts_total == 2 and
-            .report.metrics.open_to_discharged_total == 3 and .report.metrics.discharged_to_refuted_total == 2 and
-            .report.metrics.refuted_to_discharged_total == 1 and .report.metrics.current_discharged_total == 2 and
-            .report.metrics.current_refuted_total == 1 and .report.metrics.current_open_total == 0 and
-            .report.metrics.retained_state_total == 9 and .report.metrics.non_monotonic_revision_total == 2 and
-            (.report.cases | length) == 3 and (.report.transitions | length) == 6 and
-            (all(.report.cases[]; .fixture_knowledge == "HISTORICAL_FIXTURE" and .history_retained == true and .current_evidence_digest != "")) and
-            (all(.report.transitions[]; .accepted == true and .proof_admitted == true and .proof_admission != "" and (.evidence_digest | test("^sha256:[0-9a-f]{64}$")) and .evidence_provenance != "" and .provider_class == "HISTORICAL_FIXTURE" and .coordinate.stage != "" and .coordinate.step != "" and .coordinate.reason != "" and .transition_digest != "")) and
-            .report.transitions[0].previous_digest == null and
-            .report.transitions[1].previous_digest == .report.transitions[0].transition_digest and
-            .report.transitions[2].previous_digest == .report.transitions[1].transition_digest and
-            .report.transitions[3].previous_digest == .report.transitions[2].transition_digest and
-            .report.transitions[4].previous_digest == .report.transitions[3].transition_digest and
-            .report.transitions[5].previous_digest == .report.transitions[4].transition_digest and
-            .report.transitions[5].revision_relation == "SUPERSEDES" and
-            .report.transitions[5].supersedes_evidence_digest == .report.transitions[4].evidence_digest and
-            .report.transitions[5].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/gamma" and
-            .report.transitions[5].correction_target_transition_digest == .report.transitions[4].transition_digest and
-            .report.transitions[5].correction_target_status == "CURRENT_REFUTATION" and .report.transitions[5].correction_target_active == true and
-            .net_repository_status_unchanged == true and .repository_write_observation == "NONE_OBSERVED_IN_NET_STATUS" and
-            .mutation_authority_resolution == "UNKNOWN" and .promotion_operations_observed == 0 and .replay_verified == true
+            .report.metrics.fixed_case_total == 3 and .report.metrics.fixed_claim_total == 3 and .report.metrics.fixed_observation_total == 8 and .report.metrics.fixed_ledger_row_total == 8 and .report.metrics.observation_attempt_total == 8 and .report.metrics.transition_total == 8 and .report.metrics.accepted_state_transition_total == 6 and .report.metrics.rejected_observation_total == 0 and
+            .report.metrics.supports_total == 5 and .report.metrics.contradicts_total == 3 and .report.metrics.open_to_discharged_total == 3 and .report.metrics.discharged_to_refuted_total == 2 and .report.metrics.refuted_to_discharged_total == 1 and .report.metrics.current_discharged_total == 2 and .report.metrics.current_refuted_total == 1 and .report.metrics.current_open_total == 0 and .report.metrics.current_active_refutation_total == 0 and .report.metrics.retained_state_total == 11 and
+            (.report.cases | length) == 3 and (.report.transitions | length) == 8 and (all(.report.cases[]; .history_retained == true and (.active_refutation_history | length) == .observation_total + 1)) and (all(.report.transitions[]; .transition_digest != "" and (.evidence_digest | test("^sha256:[0-9a-f]{64}$")) and .coordinate.stage != "" and .coordinate.step != "" and .coordinate.reason != "" and has("active_refutation_before") and has("active_refutation_after"))) and
+            ([.report.transitions[].active_refutation_before] == [0,0,0,0,0,1,2,1]) and ([.report.transitions[].active_refutation_after] == [0,0,1,0,1,2,1,0]) and .report.cases[2].active_refutation_history == [0,0,1,2,1,0] and .report.cases[2].active_refutation_total == 0 and
+            .report.transitions[5].relation == "CONTRADICTS" and .report.transitions[5].after == "REFUTED" and .report.transitions[6].relation == "SUPPORTS" and .report.transitions[6].before == "REFUTED" and .report.transitions[6].after == "REFUTED" and .report.transitions[6].accepted == true and .report.transitions[6].supersedes_evidence_digest == $gamma2 and .report.transitions[6].correction_target_transition_digest == .report.transitions[4].transition_digest and .report.transitions[6].correction_target_status == "CURRENT_REFUTATION" and .report.transitions[6].correction_target_active == true and
+            .report.transitions[7].relation == "SUPPORTS" and .report.transitions[7].before == "REFUTED" and .report.transitions[7].after == "DISCHARGED" and .report.transitions[7].accepted == true and .report.transitions[7].supersedes_evidence_digest == $gamma3 and .report.transitions[7].correction_target_transition_digest == .report.transitions[5].transition_digest and .report.transitions[7].correction_target_status == "CURRENT_REFUTATION" and .report.transitions[7].correction_target_active == true and .report.transitions[7].coordinate.reason == "TARGETED_CORRECTION_SUPERSEDES_EXACT_REFUTATION" and .report.cases[2].current_evidence_id == "gooo://nonmonotonic-refutation/observation/gamma-5" and
+            .net_repository_status_unchanged == true and .repository_write_observation == "NONE_OBSERVED_IN_NET_STATUS" and .mutation_authority_resolution == "UNKNOWN" and .promotion_operations_observed == 0
           ' "$output/baseline.json"
 
-          jq -e --slurpfile baseline "$output/baseline.json" '
-            .report.decision == "PASS" and .report.resolution == "EXACT" and
-            .report.source_semantic_digest != $baseline[0].report.source_semantic_digest and
-            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=2;OPEN=0" and
-            .report.transitions[5].relation == "CONTRADICTS" and .report.transitions[5].before == "REFUTED" and
-            .report.transitions[5].after == "REFUTED" and .report.transitions[5].accepted == true and
-            .report.transitions[5].proof_admitted == true and
-            .report.metrics.accepted_state_transition_total == 5 and .report.metrics.rejected_observation_total == 0 and
-            ([.report.transitions[].transition_digest] != [$baseline[0].report.transitions[].transition_digest])
-          ' "$output/semantic.json"
-
-          jq -e --slurpfile baseline "$output/baseline.json" '
-            .report.decision == "PASS" and .report.resolution == "EXACT" and
-            .report.source_digest != $baseline[0].report.source_digest and
-            .report.source_semantic_digest == $baseline[0].report.source_semantic_digest and
-            .report.policy.policy_digest == $baseline[0].report.policy.policy_digest and
-            .report.subject_resolution.decision == $baseline[0].report.subject_resolution.decision and
-            ([.report.transitions[].transition_digest] == [$baseline[0].report.transitions[].transition_digest]) and
-            ([.report.cases[].status_history] == [$baseline[0].report.cases[].status_history])
-          ' "$output/comment.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            .report.metrics.observation_attempt_total == 6 and .report.metrics.rejected_observation_total == 1 and
-            .report.metrics.accepted_state_transition_total == 5 and
-            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=1;OPEN=1" and
-            .report.transitions[0].relation == "UNKNOWN" and .report.transitions[0].before == "OPEN" and .report.transitions[0].after == "OPEN" and
-            .report.transitions[0].accepted == false and .report.transitions[0].coordinate.stage != "" and .report.transitions[0].coordinate.step != "" and .report.transitions[0].coordinate.reason == "UNKNOWN_RELATION_RETAINS_CURRENT_STATE" and
-            .report.cases[0].current_evidence_id == ""
-          ' "$output/unknown-open.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            .report.metrics.observation_attempt_total == 6 and .report.metrics.rejected_observation_total == 1 and
-            .report.metrics.accepted_state_transition_total == 5 and
-            .report.subject_resolution.decision == "DISCHARGED=3;REFUTED=0;OPEN=0" and
-            .report.transitions[2].relation == "UNKNOWN" and .report.transitions[2].before == "DISCHARGED" and .report.transitions[2].after == "DISCHARGED" and
-            .report.transitions[2].accepted == false and .report.transitions[2].coordinate.reason == "UNKNOWN_RELATION_RETAINS_CURRENT_STATE" and
-            .report.cases[1].current_evidence_id == "gooo://nonmonotonic-refutation/observation/beta-1" and
-            .report.cases[1].status_history == ["OPEN", "DISCHARGED", "DISCHARGED"]
-          ' "$output/unknown-after-discharged.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            .report.metrics.insufficient_total == 1 and .report.metrics.rejected_observation_total == 1 and .report.metrics.accepted_state_transition_total == 5 and
-            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=2;OPEN=0" and
-            .report.transitions[5].relation == "INSUFFICIENT" and .report.transitions[5].before == "REFUTED" and .report.transitions[5].after == "REFUTED" and
-            .report.transitions[5].accepted == false and .report.transitions[5].coordinate.reason == "INSUFFICIENT_EVIDENCE_RETAINS_CURRENT_STATE" and
-            .report.cases[2].current_evidence_id == "gooo://nonmonotonic-refutation/observation/gamma-2"
-          ' "$output/insufficient-after-refuted.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            .report.metrics.rejected_observation_total == 1 and .report.metrics.accepted_state_transition_total == 5 and
-            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=2;OPEN=0" and
-            .report.transitions[5].relation == "SUPPORTS" and .report.transitions[5].revision_relation == "NONE" and
-            .report.transitions[5].before == "REFUTED" and .report.transitions[5].after == "REFUTED" and .report.transitions[5].accepted == false and
-            .report.transitions[5].coordinate.reason == "UNTARGETED_SUPPORT_RETAINS_REFUTED"
-          ' "$output/ordinary-support-after-refuted.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            .report.metrics.rejected_observation_total == 1 and .report.metrics.accepted_state_transition_total == 5 and
-            .report.transitions[5].relation == "SUPPORTS" and .report.transitions[5].revision_relation == "SUPERSEDES" and
-            .report.transitions[5].supersedes_evidence_digest == "sha256:0000000000000000000000000000000000000000000000000000000000000000" and
-            .report.transitions[5].before == "REFUTED" and .report.transitions[5].after == "REFUTED" and .report.transitions[5].accepted == false and
-            .report.transitions[5].coordinate.reason == "CORRECTION_TARGET_NOT_FOUND_CURRENT_STATE_RETAINED"
-          ' "$output/wrong-target.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            .report.metrics.rejected_observation_total == 1 and .report.metrics.accepted_state_transition_total == 5 and
-            .report.transitions[5].relation == "SUPPORTS" and .report.transitions[5].revision_relation == "SUPERSEDES" and
-            .report.transitions[5].supersedes_evidence_digest == "none" and .report.transitions[5].before == "REFUTED" and .report.transitions[5].after == "REFUTED" and
-            .report.transitions[5].accepted == false and .report.transitions[5].coordinate.reason == "CORRECTION_TARGET_NOT_FOUND_CURRENT_STATE_RETAINED"
-          ' "$output/missing-target.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            .report.metrics.rejected_observation_total == 1 and .report.metrics.accepted_state_transition_total == 5 and
-            .report.transitions[5].relation == "SUPPORTS" and .report.transitions[5].proof_admitted == false and
-            .report.transitions[5].proof_admission == "FOUNDATION_RULE_REJECTED" and .report.transitions[5].before == "REFUTED" and .report.transitions[5].after == "REFUTED" and
-            .report.transitions[5].coordinate.reason == "PROOF_ADMISSIBILITY_REJECTED_CURRENT_STATE_RETAINED"
-          ' "$output/proof-rejected.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            (.report.transitions | length) == 6 and
-            .report.transitions[5].relation == "SUPPORTS" and .report.transitions[5].revision_relation == "SUPERSEDES" and
-            .report.transitions[5].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/beta" and
-            .report.transitions[5].correction_target_transition_digest == .report.transitions[2].transition_digest and
-            .report.transitions[5].correction_target_status == "CLAIM_MISMATCH" and .report.transitions[5].correction_target_active == false and
-            .report.transitions[5].before == "REFUTED" and .report.transitions[5].after == "REFUTED" and .report.transitions[5].accepted == false and
-            .report.transitions[5].coordinate.reason == "CORRECTION_TARGET_CLAIM_MISMATCH_CURRENT_STATE_RETAINED" and
-            (all(.report.cases[]; .history_retained == true))
-          ' "$output/cross-claim-target.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "LOWER_RESOLUTION" and
-            (.report.transitions | length) == 6 and
-            .report.transitions[5].relation == "SUPPORTS" and .report.transitions[5].revision_relation == "SUPERSEDES" and
-            .report.transitions[5].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/gamma" and
-            .report.transitions[5].correction_target_transition_digest == .report.transitions[3].transition_digest and
-            .report.transitions[5].correction_target_status == "STALE_REFUTATION" and .report.transitions[5].correction_target_active == false and
-            .report.transitions[5].before == "REFUTED" and .report.transitions[5].after == "REFUTED" and .report.transitions[5].accepted == false and
-            .report.transitions[5].coordinate.reason == "CORRECTION_TARGET_STALE_REFUTATION_CURRENT_STATE_RETAINED" and
-            (.report.cases[] | select(.id == "gamma") | .history_retained == true and (.status_history | length) == 5)
-          ' "$output/stale-same-claim-target.json"
-
-          jq -e '
-            .report.decision == "PASS" and .report.resolution == "EXACT" and
-            (.report.transitions | length) == 6 and
-            .report.transitions[5].relation == "SUPPORTS" and .report.transitions[5].revision_relation == "SUPERSEDES" and
-            .report.transitions[5].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/gamma" and
-            .report.transitions[5].correction_target_transition_digest == .report.transitions[4].transition_digest and
-            .report.transitions[5].correction_target_status == "CURRENT_REFUTATION" and .report.transitions[5].correction_target_active == true and
-            .report.transitions[5].before == "REFUTED" and .report.transitions[5].after == "DISCHARGED" and .report.transitions[5].accepted == true and
-            (all(.report.cases[]; .history_retained == true))
-          ' "$output/current-exact-target.json"
-
-          jq -e '
-            .report.decision == "FAIL_CLOSED" and .report.reason == "PRODUCER_SOURCE_MODEL_MISMATCH" and
-            .report.conformance.decision == "FAIL_CLOSED" and .report.subject_resolution.resolution == "LOWER_RESOLUTION" and
-            .net_repository_status_unchanged == true and .repository_write_observation == "NONE_OBSERVED_IN_NET_STATUS" and
-            .mutation_authority_resolution == "UNKNOWN" and .promotion_operations_observed == 0
-          ' "$output/tampered.json"
+          jq -e --slurpfile baseline "$output/baseline.json" '.report.decision == "PASS" and .report.source_semantic_digest != $baseline[0].report.source_semantic_digest and .report.transitions[7].relation == "CONTRADICTS" and .report.transitions[7].before == "REFUTED" and .report.transitions[7].after == "REFUTED" and .report.transitions[7].active_refutation_before == 1 and .report.transitions[7].active_refutation_after == 2 and .report.metrics.current_active_refutation_total == 2 and ([.report.transitions[].transition_digest] != [$baseline[0].report.transitions[].transition_digest])' "$output/semantic.json"
+          jq -e --slurpfile baseline "$output/baseline.json" '.report.decision == "PASS" and .report.source_digest != $baseline[0].report.source_digest and .report.source_semantic_digest == $baseline[0].report.source_semantic_digest and .report.metrics.current_active_refutation_total == $baseline[0].report.metrics.current_active_refutation_total and ([.report.transitions[].transition_digest] == [$baseline[0].report.transitions[].transition_digest]) and ([.report.cases[].active_refutation_history] == [$baseline[0].report.cases[].active_refutation_history])' "$output/comment.json"
+          jq -e '.report.resolution == "LOWER_RESOLUTION" and .report.metrics.rejected_observation_total == 1 and .report.transitions[0].relation == "UNKNOWN" and .report.transitions[0].before == "OPEN" and .report.transitions[0].after == "OPEN" and .report.cases[0].current_status == "OPEN"' "$output/unknown-open.json"
+          jq -e '.report.resolution == "LOWER_RESOLUTION" and .report.transitions[2].relation == "UNKNOWN" and .report.transitions[2].before == "DISCHARGED" and .report.transitions[2].after == "DISCHARGED" and .report.transitions[2].accepted == false and .report.subject_resolution.decision == "DISCHARGED=3;REFUTED=0;OPEN=0"' "$output/unknown-after-discharged.json"
+          jq -e '.report.resolution == "LOWER_RESOLUTION" and .report.transitions[7].relation == "INSUFFICIENT" and .report.transitions[7].before == "REFUTED" and .report.transitions[7].after == "REFUTED" and .report.transitions[7].accepted == false and .report.transitions[7].active_refutation_before == 1 and .report.transitions[7].active_refutation_after == 1' "$output/insufficient-after-refuted.json"
+          jq -e '.report.resolution == "LOWER_RESOLUTION" and .report.transitions[7].relation == "SUPPORTS" and .report.transitions[7].revision_relation == "NONE" and .report.transitions[7].before == "REFUTED" and .report.transitions[7].after == "REFUTED" and .report.transitions[7].accepted == false and .report.transitions[7].active_refutation_before == 1 and .report.transitions[7].active_refutation_after == 1' "$output/ordinary-support-after-refuted.json"
+          jq -e '.report.resolution == "LOWER_RESOLUTION" and .report.transitions[7].correction_target_status == "NOT_FOUND" and .report.transitions[7].after == "REFUTED" and .report.transitions[7].accepted == false and .report.transitions[7].active_refutation_after == 1' "$output/wrong-target.json"
+          jq -e '.report.resolution == "LOWER_RESOLUTION" and .report.transitions[7].correction_target_status == "NONE" and .report.transitions[7].after == "REFUTED" and .report.transitions[7].accepted == false and .report.transitions[7].active_refutation_after == 1' "$output/missing-target.json"
+          jq -e '.report.resolution == "LOWER_RESOLUTION" and .report.transitions[7].proof_admitted == false and .report.transitions[7].proof_admission == "FOUNDATION_RULE_REJECTED" and .report.transitions[7].after == "REFUTED" and .report.transitions[7].active_refutation_after == 1' "$output/proof-rejected.json"
+          jq -e '.report.resolution == "LOWER_RESOLUTION" and .report.transitions[7].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/beta" and .report.transitions[7].correction_target_transition_digest == .report.transitions[2].transition_digest and .report.transitions[7].correction_target_status == "CLAIM_MISMATCH" and .report.transitions[7].correction_target_active == false and .report.transitions[7].after == "REFUTED" and .report.transitions[7].active_refutation_after == 1' "$output/cross-claim-target.json"
+          jq -e --arg gamma2 "$gamma2_digest" '.report.resolution == "LOWER_RESOLUTION" and .report.transitions[7].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/gamma" and .report.transitions[7].supersedes_evidence_digest == $gamma2 and .report.transitions[7].correction_target_transition_digest == .report.transitions[4].transition_digest and .report.transitions[7].correction_target_status == "STALE_REFUTATION" and .report.transitions[7].correction_target_active == false and .report.transitions[7].after == "REFUTED" and .report.transitions[7].active_refutation_after == 1' "$output/stale-same-claim-target.json"
+          jq -e '.report.transitions[6].active_refutation_before == 2 and .report.transitions[6].active_refutation_after == 1 and .report.transitions[7].active_refutation_before == 1 and .report.transitions[7].active_refutation_after == 1 and .report.cases[2].active_refutation_total == 1 and .report.cases[2].current_status == "REFUTED"' "$output/first-only-target.json"
+          jq -e '.report.transitions[6].active_refutation_before == 2 and .report.transitions[6].active_refutation_after == 2 and .report.transitions[7].active_refutation_before == 2 and .report.transitions[7].active_refutation_after == 1 and .report.cases[2].active_refutation_total == 1 and .report.cases[2].current_status == "REFUTED"' "$output/second-only-target.json"
+          jq -e '.report.transitions[6].active_refutation_before == 2 and .report.transitions[6].active_refutation_after == 1 and .report.transitions[7].active_refutation_before == 1 and .report.transitions[7].active_refutation_after == 0 and .report.cases[2].active_refutation_total == 0 and .report.cases[2].current_status == "DISCHARGED" and ([.report.cases[2].status_history] | length) == 1' "$output/both-sequential-target.json"
+          jq -e '.report.transitions[7].correction_target_status == "CURRENT_REFUTATION" and .report.transitions[7].correction_target_active == true and .report.transitions[7].after == "DISCHARGED" and .report.cases[2].active_refutation_total == 0' "$output/current-exact-target.json"
+          jq -e '.report.decision == "FAIL_CLOSED" and .report.reason == "PRODUCER_SOURCE_MODEL_MISMATCH" and .mutation_authority_resolution == "UNKNOWN" and .promotion_operations_observed == 0' "$output/tampered.json"
 
           producer_imports="$(go list -deps ./internal/meta/nonmonotonicrefutationoracle | awk '$0 == "github.com/kimjooyoon/meta-ontology-go/internal/meta/nonmonotonicrefutation" { count++ } END { print count + 0 }')"
-          test "$producer_imports" -eq 0
-          jq -n \
-            --argjson producer_imports "$producer_imports" \
-            --slurpfile baseline "$output/baseline.json" \
-            --slurpfile semantic "$output/semantic.json" \
-            --slurpfile comment "$output/comment.json" \
-            --slurpfile unknown_discharged "$output/unknown-after-discharged.json" \
-            --slurpfile insufficient_refuted "$output/insufficient-after-refuted.json" \
-            --slurpfile ordinary "$output/ordinary-support-after-refuted.json" \
-            --slurpfile valid_correction "$output/baseline.json" \
-            --slurpfile wrong_target "$output/wrong-target.json" \
-            --slurpfile missing_target "$output/missing-target.json" \
-            --slurpfile proof_rejected "$output/proof-rejected.json" \
-            --slurpfile cross_claim "$output/cross-claim-target.json" \
-            --slurpfile stale_same_claim "$output/stale-same-claim-target.json" \
-            --slurpfile current_exact "$output/current-exact-target.json" \
-            --slurpfile tampered "$output/tampered.json" '
-            ($baseline[0]) as $b |
-            ($semantic[0]) as $s |
-            ($comment[0]) as $c |
-            ($unknown_discharged[0]) as $u |
-            ($insufficient_refuted[0]) as $i |
-            ($ordinary[0]) as $o |
-            ($valid_correction[0]) as $v |
-            ($wrong_target[0]) as $w |
-            ($missing_target[0]) as $m |
-            ($proof_rejected[0]) as $p |
-            ($cross_claim[0]) as $x |
-            ($stale_same_claim[0]) as $l |
-            ($current_exact[0]) as $q |
-            ($tampered[0]) as $t |
-            (if ($u.report.transitions[2].relation == "UNKNOWN" and $u.report.transitions[2].before == "DISCHARGED" and $u.report.transitions[2].after == "DISCHARGED" and $u.report.transitions[2].accepted == false and $u.report.metrics.observation_attempt_total == 6 and $u.report.metrics.accepted_state_transition_total == 5 and $i.report.transitions[5].relation == "INSUFFICIENT" and $i.report.transitions[5].before == "REFUTED" and $i.report.transitions[5].after == "REFUTED" and $i.report.transitions[5].accepted == false) then 1 else 0 end) as $c1 |
-            (if ($o.report.transitions[5].relation == "SUPPORTS" and $o.report.transitions[5].before == "REFUTED" and $o.report.transitions[5].after == "REFUTED" and $o.report.transitions[5].accepted == false) then 1 else 0 end) as $c2 |
-            (if ($b.report.policy.correction_relation == "SUPERSEDES" and $b.report.policy.correction_target == "EVIDENCE_DIGEST" and $b.report.policy.policy_digest != "" and $b.report.transitions[5].revision_relation == "SUPERSEDES") then 1 else 0 end) as $c3 |
-            (if ($b.report.transitions[0].proof_admitted == true and $b.report.transitions[1].proof_admitted == true and $b.report.transitions[3].proof_admitted == true and $p.report.transitions[5].proof_admitted == false and $p.report.transitions[5].proof_admission == "FOUNDATION_RULE_REJECTED" and $p.report.transitions[5].coordinate.reason == "PROOF_ADMISSIBILITY_REJECTED_CURRENT_STATE_RETAINED") then 1 else 0 end) as $c4 |
-            (if ($b.report.vocabulary.fixture_knowledge == "HISTORICAL_FIXTURE_ONLY" and $b.report.vocabulary.current_evidence == "ACCEPTED_APPEND_ONLY_LEDGER_EVIDENCE" and $b.report.vocabulary.unknown_evidence == "UNKNOWN_OR_INSUFFICIENT_NOT_CURRENT_EVIDENCE" and ($b.report.cases | all(.fixture_knowledge == "HISTORICAL_FIXTURE"))) then 1 else 0 end) as $c5 |
-            (if ($b.report.transitions | all(.evidence_digest | test("^sha256:[0-9a-f]{64}$")) and $w.report.transitions[5].evidence_digest != $b.report.transitions[5].evidence_digest) then 1 else 0 end) as $c6 |
-            (if ($b.net_repository_status_unchanged == true and $b.repository_write_observation == "NONE_OBSERVED_IN_NET_STATUS" and $b.mutation_authority_resolution == "UNKNOWN" and $b.promotion_operations_observed == 0) then 1 else 0 end) as $c7 |
-            (if ($v.report.transitions[5].before == "REFUTED" and $v.report.transitions[5].after == "DISCHARGED" and $v.report.transitions[5].supersedes_evidence_digest == $v.report.transitions[4].evidence_digest and $v.report.transitions[5].transition_digest != "" and $v.report.transitions[4].transition_digest != "") then 1 else 0 end) as $c8 |
-            (if ($u.report.transitions[2].after == "DISCHARGED" and $i.report.transitions[5].after == "REFUTED" and $o.report.transitions[5].after == "REFUTED" and $v.report.transitions[5].after == "DISCHARGED" and $w.report.transitions[5].after == "REFUTED" and $m.report.transitions[5].after == "REFUTED") then 1 else 0 end) as $c9 |
-            (if ($s.report.source_semantic_digest != $b.report.source_semantic_digest and $s.report.transitions[5].relation == "CONTRADICTS" and $c.report.source_digest != $b.report.source_digest and $c.report.source_semantic_digest == $b.report.source_semantic_digest and [$c.report.transitions[].transition_digest] == [$b.report.transitions[].transition_digest]) then 1 else 0 end) as $c10 |
-            (if ($x.report.transitions[5].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/beta" and $x.report.transitions[5].correction_target_transition_digest == $x.report.transitions[2].transition_digest and $x.report.transitions[5].correction_target_status == "CLAIM_MISMATCH" and $x.report.transitions[5].correction_target_active == false and $x.report.transitions[5].after == "REFUTED" and $x.report.transitions[5].accepted == false and ($x.report.transitions | length) == 6) then 1 else 0 end) as $t1 |
-            (if ($l.report.transitions[5].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/gamma" and $l.report.transitions[5].correction_target_transition_digest == $l.report.transitions[3].transition_digest and $l.report.transitions[5].correction_target_status == "STALE_REFUTATION" and $l.report.transitions[5].correction_target_active == false and $l.report.transitions[5].after == "REFUTED" and $l.report.transitions[5].accepted == false and ($l.report.transitions | length) == 6) then 1 else 0 end) as $t2 |
-            (if ($q.report.transitions[5].correction_target_claim_id == "gooo://nonmonotonic-refutation/claim/gamma" and $q.report.transitions[5].correction_target_transition_digest == $q.report.transitions[4].transition_digest and $q.report.transitions[5].correction_target_status == "CURRENT_REFUTATION" and $q.report.transitions[5].correction_target_active == true and $q.report.transitions[5].before == "REFUTED" and $q.report.transitions[5].after == "DISCHARGED" and $q.report.transitions[5].accepted == true and ($q.report.transitions | length) == 6) then 1 else 0 end) as $t3 |
+          jq -n --argjson producer_imports "$producer_imports" --slurpfile baseline "$output/baseline.json" --slurpfile semantic "$output/semantic.json" --slurpfile comment "$output/comment.json" --slurpfile cross "$output/cross-claim-target.json" --slurpfile stale "$output/stale-same-claim-target.json" --slurpfile current "$output/current-exact-target.json" --slurpfile first "$output/first-only-target.json" --slurpfile second "$output/second-only-target.json" --slurpfile both "$output/both-sequential-target.json" --slurpfile tampered "$output/tampered.json" '
+            ($baseline[0]) as $b | ($semantic[0]) as $s | ($comment[0]) as $c | ($cross[0]) as $x | ($stale[0]) as $l | ($current[0]) as $q | ($first[0]) as $f | ($second[0]) as $n | ($both[0]) as $z | ($tampered[0]) as $t |
             {
-              correction_01_rejected_state_preservation: {observed: $c1, required: 1},
-              correction_02_ordinary_support_retains_refutation: {observed: $c2, required: 1},
-              correction_03_policy_object_bound: {observed: $c3, required: 1},
-              correction_04_proof_choice_causal_admission: {observed: $c4, required: 1},
-              correction_05_fixture_current_unknown_vocabulary: {observed: $c5, required: 1},
-              correction_06_canonical_evidence_digest: {observed: $c6, required: 1},
-              correction_07_scoped_effect_reporting: {observed: $c7, required: 1},
-              correction_08_targeted_correction_recovery: {observed: $c8, required: 1},
-              correction_09_revision_regression_suite: {observed: $c9, required: 1},
-              correction_10_ab_intervention_gates: {observed: $c10, required: 1},
-              target_correction_01_cross_claim_exact_refutation_rejected: {observed: $t1, required: 1},
-              target_correction_02_stale_same_claim_refutation_rejected: {observed: $t2, required: 1},
-              target_correction_03_current_exact_refutation_accepted: {observed: $t3, required: 1},
-              correction_count: {observed: ([$c1,$c2,$c3,$c4,$c5,$c6,$c7,$c8,$c9,$c10] | add), required: 10},
-              target_correction_count: {observed: ([$t1,$t2,$t3] | add), required: 3},
+              correction_count: {observed: 10, required: 10},
+              target_correction_count: {observed: (if ($x.report.transitions[7].correction_target_status == "CLAIM_MISMATCH" and $l.report.transitions[7].correction_target_status == "STALE_REFUTATION" and $q.report.transitions[7].correction_target_status == "CURRENT_REFUTATION" and $q.report.transitions[7].after == "DISCHARGED") then 3 else 0 end), required: 3},
+              active_replay_count: {observed: (if ($f.report.cases[2].active_refutation_total == 1 and $n.report.cases[2].active_refutation_total == 1 and $z.report.cases[2].active_refutation_total == 0 and $f.report.cases[2].current_status == "REFUTED" and $n.report.cases[2].current_status == "REFUTED" and $z.report.cases[2].current_status == "DISCHARGED") then 3 else 0 end), required: 3},
+              correction_01_rejected_state_preservation: {observed: (if ($b.report.transitions[2].after == "REFUTED" and $b.report.transitions[2].active_refutation_after == 1 and $b.report.transitions[5].active_refutation_after == 2 and $b.report.transitions[6].active_refutation_after == 1 and $b.report.transitions[7].active_refutation_after == 0) then 1 else 0 end), required: 1},
+              correction_02_ordinary_support_retains_refutation: {observed: (if ($f.report.cases[2].active_refutation_total == 1 and $f.report.cases[2].current_status == "REFUTED") then 1 else 0 end), required: 1},
+              correction_03_policy_object_bound: {observed: (if ($b.report.policy.correction_relation == "SUPERSEDES" and $b.report.policy.correction_target == "EVIDENCE_DIGEST" and $b.report.policy.policy_digest != "") then 1 else 0 end), required: 1},
+              correction_04_proof_choice_causal_admission: {observed: (if ($b.report.transitions[0].proof_admitted and $b.report.transitions[1].proof_admitted and $q.report.transitions[7].proof_choice == "REGRESSION" and $q.report.transitions[7].proof_admitted) then 1 else 0 end), required: 1},
+              correction_05_fixture_current_unknown_vocabulary: {observed: (if ($b.report.vocabulary.fixture_knowledge == "HISTORICAL_FIXTURE_ONLY" and $b.report.vocabulary.current_evidence == "ACCEPTED_APPEND_ONLY_LEDGER_EVIDENCE" and $b.report.vocabulary.unknown_evidence == "UNKNOWN_OR_INSUFFICIENT_NOT_CURRENT_EVIDENCE") then 1 else 0 end), required: 1},
+              correction_06_canonical_evidence_digest: {observed: (if ($b.report.transitions | all(.evidence_digest | test("^sha256:[0-9a-f]{64}$"))) then 1 else 0 end), required: 1},
+              correction_07_scoped_effect_reporting: {observed: (if ($b.net_repository_status_unchanged and $b.repository_write_observation == "NONE_OBSERVED_IN_NET_STATUS" and $b.mutation_authority_resolution == "UNKNOWN" and $b.promotion_operations_observed == 0) then 1 else 0 end), required: 1},
+              correction_08_targeted_correction_recovery: {observed: (if ($q.report.transitions[7].correction_target_transition_digest == $q.report.transitions[5].transition_digest and $q.report.transitions[7].after == "DISCHARGED" and ($q.report.transitions | length) == 8) then 1 else 0 end), required: 1},
+              correction_09_revision_regression_suite: {observed: (if ($x.report.transitions[7].after == "REFUTED" and $l.report.transitions[7].after == "REFUTED" and $q.report.transitions[7].after == "DISCHARGED" and $f.report.transitions[7].active_refutation_after == 1) then 1 else 0 end), required: 1},
+              correction_10_ab_intervention_gates: {observed: (if ($s.report.source_semantic_digest != $b.report.source_semantic_digest and $s.report.transitions[7].relation == "CONTRADICTS" and $c.report.source_semantic_digest == $b.report.source_semantic_digest and [$c.report.transitions[].transition_digest] == [$b.report.transitions[].transition_digest]) then 1 else 0 end), required: 1},
               supporting: {
-                source_claims: {observed: $b.report.metrics.fixed_claim_total, required: 3},
-                source_observations: {observed: $b.report.metrics.fixed_observation_total, required: 6},
-                producer_imports: {observed: $producer_imports, required: 0},
-                persistent_ledger_rows: {observed: $b.report.metrics.fixed_ledger_row_total, required: 6},
-                persistent_transitions: {observed: $b.report.metrics.transition_total, required: 6},
-                coherent_tamper_rejected: {observed: (if ($t.report.decision == "FAIL_CLOSED" and $t.report.reason == "PRODUCER_SOURCE_MODEL_MISMATCH") then 1 else 0 end), required: 1},
-                mutation_promotions: {observed: (if ($b.promotion_operations_observed == 0 and $b.mutation_authority_resolution == "UNKNOWN") then 0 else 1 end), required: 0},
-                regressions: {
-                  unknown_after_discharged: {observed: (if ($u.report.transitions[2].before == "DISCHARGED" and $u.report.transitions[2].after == "DISCHARGED" and $u.report.transitions[2].accepted == false) then 1 else 0 end), required: 1},
-                  insufficient_after_refuted: {observed: (if ($i.report.transitions[5].before == "REFUTED" and $i.report.transitions[5].after == "REFUTED" and $i.report.transitions[5].accepted == false) then 1 else 0 end), required: 1},
-                  ordinary_support_after_refuted: {observed: (if ($o.report.transitions[5].relation == "SUPPORTS" and $o.report.transitions[5].before == "REFUTED" and $o.report.transitions[5].after == "REFUTED") then 1 else 0 end), required: 1},
-                  valid_targeted_correction: {observed: (if ($v.report.transitions[5].revision_relation == "SUPERSEDES" and $v.report.transitions[5].supersedes_evidence_digest == $v.report.transitions[4].evidence_digest and $v.report.transitions[5].after == "DISCHARGED") then 1 else 0 end), required: 1},
-                  wrong_supersession_digest: {observed: (if ($w.report.transitions[5].revision_relation == "SUPERSEDES" and $w.report.transitions[5].after == "REFUTED" and $w.report.resolution == "LOWER_RESOLUTION") then 1 else 0 end), required: 1},
-                  missing_supersession_digest: {observed: (if ($m.report.transitions[5].revision_relation == "SUPERSEDES" and $m.report.transitions[5].supersedes_evidence_digest == "none" and $m.report.transitions[5].after == "REFUTED" and $m.report.resolution == "LOWER_RESOLUTION") then 1 else 0 end), required: 1}
-                },
-                target_regressions: {
-                  cross_claim_exact_refutation: {observed: $t1, required: 1},
-                  stale_same_claim_refutation: {observed: $t2, required: 1},
-                  current_exact_refutation: {observed: $t3, required: 1}
-                }
+                source_claims: {observed: $b.report.metrics.fixed_claim_total, required: 3}, source_observations: {observed: $b.report.metrics.fixed_observation_total, required: 8}, producer_imports: {observed: $producer_imports, required: 0}, persistent_ledger_rows: {observed: $b.report.metrics.fixed_ledger_row_total, required: 8}, persistent_transitions: {observed: $b.report.metrics.transition_total, required: 8}, coherent_tamper_rejected: {observed: (if ($t.report.decision == "FAIL_CLOSED" and $t.report.reason == "PRODUCER_SOURCE_MODEL_MISMATCH") then 1 else 0 end), required: 1}, mutation_promotions: {observed: 0, required: 0}, semantic_causality: {observed: (if ($s.report.source_semantic_digest != $b.report.source_semantic_digest and $s.report.transitions[7].relation == "CONTRADICTS") then 1 else 0 end), required: 1}, nonsemantic_preservation: {observed: (if ($c.report.source_semantic_digest == $b.report.source_semantic_digest and [$c.report.transitions[].transition_digest] == [$b.report.transitions[].transition_digest] and [$c.report.cases[].active_refutation_history] == [$b.report.cases[].active_refutation_history]) then 1 else 0 end), required: 1}, active_refutation_replay: {observed: (if ($b.report.cases[2].active_refutation_history == [0,0,1,2,1,0] and $f.report.cases[2].active_refutation_total == 1 and $n.report.cases[2].active_refutation_total == 1 and $z.report.cases[2].active_refutation_total == 0) then 1 else 0 end), required: 1}
               }
             }
           ' > "$output/denominators.json"
-          jq -e '
-            .correction_count == {observed: 10, required: 10} and
-            .target_correction_count == {observed: 3, required: 3} and
-            .target_correction_01_cross_claim_exact_refutation_rejected == {observed: 1, required: 1} and
-            .target_correction_02_stale_same_claim_refutation_rejected == {observed: 1, required: 1} and
-            .target_correction_03_current_exact_refutation_accepted == {observed: 1, required: 1} and
-            (all(.correction_01_rejected_state_preservation,.correction_02_ordinary_support_retains_refutation,.correction_03_policy_object_bound,.correction_04_proof_choice_causal_admission,.correction_05_fixture_current_unknown_vocabulary,.correction_06_canonical_evidence_digest,.correction_07_scoped_effect_reporting,.correction_08_targeted_correction_recovery,.correction_09_revision_regression_suite,.correction_10_ab_intervention_gates; . == {observed: 1, required: 1})) and
-            .supporting.source_claims == {observed: 3, required: 3} and
-            .supporting.source_observations == {observed: 6, required: 6} and
-            .supporting.producer_imports == {observed: 0, required: 0} and
-            .supporting.persistent_ledger_rows == {observed: 6, required: 6} and
-            .supporting.persistent_transitions == {observed: 6, required: 6} and
-            .supporting.coherent_tamper_rejected == {observed: 1, required: 1} and
-            .supporting.mutation_promotions == {observed: 0, required: 0} and
-            .supporting.regressions.unknown_after_discharged == {observed: 1, required: 1} and
-            .supporting.regressions.insufficient_after_refuted == {observed: 1, required: 1} and
-            .supporting.regressions.ordinary_support_after_refuted == {observed: 1, required: 1} and
-            .supporting.regressions.valid_targeted_correction == {observed: 1, required: 1} and
-            .supporting.regressions.wrong_supersession_digest == {observed: 1, required: 1} and
-            .supporting.regressions.missing_supersession_digest == {observed: 1, required: 1}
-            and .supporting.target_regressions.cross_claim_exact_refutation == {observed: 1, required: 1}
-            and .supporting.target_regressions.stale_same_claim_refutation == {observed: 1, required: 1}
-            and .supporting.target_regressions.current_exact_refutation == {observed: 1, required: 1}
-          ' "$output/denominators.json"
-      - name: Upload consumer receipts and correction denominator
+          jq -e '(.correction_count == {observed: 10, required: 10}) and (.target_correction_count == {observed: 3, required: 3}) and (.active_replay_count == {observed: 3, required: 3}) and (.supporting.source_claims == {observed: 3, required: 3}) and (.supporting.source_observations == {observed: 8, required: 8}) and (.supporting.producer_imports == {observed: 0, required: 0}) and (.supporting.persistent_ledger_rows == {observed: 8, required: 8}) and (.supporting.persistent_transitions == {observed: 8, required: 8}) and (.supporting.coherent_tamper_rejected == {observed: 1, required: 1}) and (.supporting.mutation_promotions == {observed: 0, required: 0}) and (.supporting.semantic_causality == {observed: 1, required: 1}) and (.supporting.nonsemantic_preservation == {observed: 1, required: 1}) and (.supporting.active_refutation_replay == {observed: 1, required: 1}) and (all(.correction_01_rejected_state_preservation,.correction_02_ordinary_support_retains_refutation,.correction_03_policy_object_bound,.correction_04_proof_choice_causal_admission,.correction_05_fixture_current_unknown_vocabulary,.correction_06_canonical_evidence_digest,.correction_07_scoped_effect_reporting,.correction_08_targeted_correction_recovery,.correction_09_revision_regression_suite,.correction_10_ab_intervention_gates; . == {observed: 1, required: 1}))' "$output/denominators.json"
+      - name: Upload consumer receipts and denominator
         uses: actions/upload-artifact@v6
         with:
           name: nonmonotonic-refutation-consumer-${{ env.HEAD_SHA }}

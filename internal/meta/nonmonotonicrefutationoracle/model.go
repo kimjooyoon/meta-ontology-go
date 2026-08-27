@@ -133,6 +133,8 @@ type Transition struct {
 	CorrectionTargetTransitionDigest string     `json:"correction_target_transition_digest"`
 	CorrectionTargetStatus           string     `json:"correction_target_status"`
 	CorrectionTargetActive           bool       `json:"correction_target_active"`
+	ActiveRefutationBefore           int        `json:"active_refutation_before"`
+	ActiveRefutationAfter            int        `json:"active_refutation_after"`
 	EvidenceBasis                    string     `json:"evidence_basis"`
 	EvidenceDigest                   string     `json:"evidence_digest"`
 	EvidenceProvenance               string     `json:"evidence_provenance"`
@@ -157,6 +159,8 @@ type CaseResult struct {
 	InitialStatus            string   `json:"initial_status"`
 	CurrentStatus            string   `json:"current_status"`
 	StatusHistory            []string `json:"status_history"`
+	ActiveRefutationHistory  []int    `json:"active_refutation_history"`
+	ActiveRefutationTotal    int      `json:"active_refutation_total"`
 	HistoryRetained          bool     `json:"history_retained"`
 	ObservationTotal         int      `json:"observation_total"`
 	RejectedObservationTotal int      `json:"rejected_observation_total"`
@@ -183,6 +187,7 @@ type Metrics struct {
 	CurrentDischargedTotal       int `json:"current_discharged_total"`
 	CurrentRefutedTotal          int `json:"current_refuted_total"`
 	CurrentOpenTotal             int `json:"current_open_total"`
+	CurrentActiveRefutationTotal int `json:"current_active_refutation_total"`
 	RetainedStateTotal           int `json:"retained_state_total"`
 	NonMonotonicRevisionTotal    int `json:"non_monotonic_revision_total"`
 	CurrentDischargeBasisPoints  int `json:"current_discharge_basis_points"`

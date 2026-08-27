@@ -7,7 +7,8 @@ reconstruct a policy and fixture model, classify evidence, and retain every
 ledger attempt without deleting prior claim state.
 
 The source declares three propositions, observable subjects and inputs, a
-revision-policy object, and six ordered `HISTORICAL_FIXTURE` evidence recipes.
+revision-policy object, and eight ordered `HISTORICAL_FIXTURE` evidence
+recipes.
 The fixture's `observed` values exercise the semantics but do not establish
 external domain truth. The source supplies no computed evidence digest;
 producer and consumer independently hash canonical evidence material binding
@@ -20,8 +21,11 @@ The policy is itself source-bound metadata, not an implicit Go switch:
   resolution;
 - ordinary `SUPPORTS` cannot erase `REFUTED`;
 - `SUPERSEDES` may correct `REFUTED` only when its target claim ID and evidence
-  digest identify the currently active accepted refutation; the receipt also
+  digest identify one currently active accepted refutation; the receipt also
   records the resolved target transition digest and current/stale status;
+- accepted `CONTRADICTS` observations whose result is `REFUTED` accumulate in
+  an active refutation set. A correction removes exactly its named member;
+  `REFUTED` is discharged only when that set becomes empty;
 - `FOUNDATION`, `COHERENCE`, and `REGRESSION` each have bounded deterministic
   admission rules recorded on every ledger attempt.
 
@@ -32,13 +36,16 @@ explicit targeted correction, not last-observation-wins:
 | --- | ---: | --- | --- |
 | `alpha` | 1 | `OPEN -> DISCHARGED` | `DISCHARGED` |
 | `beta` | 2 | `OPEN -> DISCHARGED -> REFUTED` | `REFUTED` |
-| `gamma` | 3 | `OPEN -> DISCHARGED -> REFUTED -> DISCHARGED` | `DISCHARGED` |
+| `gamma` | 5 | `OPEN -> DISCHARGED -> REFUTED -> REFUTED -> REFUTED -> DISCHARGED` | `DISCHARGED` |
 
-The baseline has six observation attempts and six accepted state transitions:
-`OPEN->DISCHARGED=3`, `DISCHARGED->REFUTED=2`, and the one targeted
-`REFUTED->DISCHARGED` correction. Rejected attempts are counted separately and
-never overwrite `current_evidence` or the prior accepted state. Every attempt
-is still an append-only ledger row with a complete previous-digest chain.
+The baseline has eight observation attempts and six accepted state transitions:
+`OPEN->DISCHARGED=3`, `DISCHARGED->REFUTED=2`, and one targeted
+`REFUTED->DISCHARGED` correction. Gamma's active set is
+`0 -> 1 -> 2 -> 1 -> 0`; the first correction leaves gamma `REFUTED` because
+the second contradiction remains active. Rejected attempts are counted
+separately and never overwrite `current_evidence` or the prior accepted state.
+Every attempt is still an append-only ledger row with a complete
+previous-digest chain.
 
 ## Formal choices
 
@@ -84,6 +91,9 @@ regressions without local Go execution:
 - a same-claim refutation that is stale because later accepted evidence exists
   is rejected;
 - only the same-claim current exact refutation is accepted for correction;
+- two independent gamma contradictions remain active until each exact target
+  is corrected; first-only and second-only correction variants remain
+  `REFUTED`, while sequential correction of both reaches `DISCHARGED`;
 - a proof-rule rejection remains at the prior state;
 - changing gamma's fixture value changes semantic digest, relation, and state;
 - comment-only changes raw digest only and preserve semantic digest, relation,

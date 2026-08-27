@@ -191,8 +191,8 @@ func reconstructSource(sourcePath string, source []byte) (sourceModel, error) {
 		}
 		model.Contract.Observations = append(model.Contract.Observations, observation)
 	}
-	if len(model.Contract.Observations) != 6 {
-		return sourceModel{}, fmt.Errorf("source observations = %d, want 6", len(model.Contract.Observations))
+	if len(model.Contract.Observations) != 8 {
+		return sourceModel{}, fmt.Errorf("source observations = %d, want 8", len(model.Contract.Observations))
 	}
 	model.Contract.Schema = sourceContractSchema
 	model.Contract.FixedCaseTotal = len(model.Contract.Claims)
