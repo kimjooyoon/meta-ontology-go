@@ -1,5 +1,13 @@
 package main
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
-func main() { os.Exit(run(os.Args[1:])) }
+func main() {
+	if err := run(os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
