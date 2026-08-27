@@ -1,0 +1,21 @@
+package capabilityscopedexpansion
+namespace capabilityscopedexpansion
+
+// A capability is a Gooo value with a narrow target, not ambient compiler authority.
+entity ExpansionRequest id "gooo://capability-scoped-expansion/request"
+entity CapabilityValue id "gooo://capability-scoped-expansion/capability-value"
+entity FileCapabilityValue id "gooo://capability-scoped-expansion/capability/file"
+entity TimeCapabilityValue id "gooo://capability-scoped-expansion/capability/time"
+entity EnvironmentCapabilityValue id "gooo://capability-scoped-expansion/capability/environment"
+entity NetworkCapabilityValue id "gooo://capability-scoped-expansion/capability/network"
+entity CapabilityEvidence id "gooo://capability-scoped-expansion/evidence"
+entity ExpansionReceipt id "gooo://capability-scoped-expansion/receipt"
+entity ExpandedSyntax id "gooo://capability-scoped-expansion/expanded-syntax"
+
+activity DeclareFileReadCapability(ExpansionRequest) -> FileCapabilityValue
+activity DeclareLogicalTimeCapability(ExpansionRequest) -> TimeCapabilityValue
+activity DeclareEnvironmentReadCapability(ExpansionRequest) -> EnvironmentCapabilityValue
+activity DeclarePinnedNetworkCapability(ExpansionRequest) -> NetworkCapabilityValue
+activity BindCapabilityEvidence(CapabilityValue) -> CapabilityEvidence
+activity ExpandWithCapabilityEvidence(CapabilityEvidence) -> ExpandedSyntax
+activity DenyByDefault(ExpansionRequest) -> ExpansionReceipt

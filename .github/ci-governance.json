@@ -2358,6 +2358,19 @@
         "examples/self-improvement/main.gooo",
         "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go"
       ]
+    },
+    {
+      "branch": "agent/luna-meta-04-capability-scoped-expansion",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/capability-scoped-expansion.yml",
+        "cmd/capability-scoped-expansion-witness",
+        "docs/language/capability-scoped-expansion.md",
+        "examples/capability-scoped-expansion",
+        "internal/meta/capabilityscopedexpansion",
+        "internal/verify/scope_capability_scoped_expansion.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
