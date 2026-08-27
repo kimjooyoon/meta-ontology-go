@@ -411,5 +411,6 @@ type AdjudicationReceipt struct {
 	SelectedCheckExecutionNumer  int                         `json:"selected_check_execution_numerator"`
 	SelectedCheckExecutionDenom  int                         `json:"selected_check_execution_denominator"`
 	GoRuntime                    GoRuntimeEvidence           `json:"go_runtime"`
+	CIEvidence                   CIEvidenceAdjudication      `json:"ci_evidence"`
 	Digest                       string                      `json:"digest"`
 }

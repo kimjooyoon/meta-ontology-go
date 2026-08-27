@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	mode := flag.String("mode", "produce", "snapshot, observe, produce, interventions, or adjudicate")
+	mode := flag.String("mode", "produce", "snapshot, observe, produce, interventions, ci-evidence, or adjudicate")
 	baseSHA := flag.String("base-sha", "", "base commit for changed-file observation")
 	headSHA := flag.String("head-sha", "", "head commit for changed-file observation")
 	sourcePath := flag.String("source", "", "logical Gooo policy source path")
@@ -51,6 +51,9 @@ func main() {
 	activeFixStdoutPath := flag.String("active-fix-stdout", "", "captured active fixer fixture stdout")
 	activeFixStderrPath := flag.String("active-fix-stderr", "", "captured active fixer fixture stderr")
 	activeFixExitPath := flag.String("active-fix-exit", "", "captured active fixer fixture exit code")
+	ciEvidenceDir := flag.String("ci-evidence-dir", "", "directory of raw CI API/process observations")
+	ciEvidenceActualCase := flag.String("ci-evidence-actual-case", "", "actual CI observation case ID")
+	ciEvidencePath := flag.String("ci-evidence", "", "adjudicated CI API/process observation")
 	flag.Parse()
 
 	var err error
@@ -63,8 +66,10 @@ func main() {
 		err = produce(*inputPath, *sourcePath, *outputPath)
 	case "interventions":
 		err = interventions(*inputPath, *sourcePath, *semanticSource, *nonsemanticSource, *contradictionSource, *outputPath, *plansDir)
+	case "ci-evidence":
+		err = ciEvidence(*ciEvidenceDir, *ciEvidenceActualCase, *outputPath)
 	case "adjudicate":
-		err = adjudicate(*scope, *inputPath, *plansDir, *adjudicationDir, *processDir, *sourceFiles, *goVersionPath, *goEnvPath, *fixHelpPath, *fixHelpStderrPath, *fixStdoutPath, *fixStderrPath, *fixExitPath, *subjectHeadPath, *subjectTreePath, *objectFormatPath, *goModDigestPath, *goSumDigestPath, *goListPath, *goCWDPath, *activeFixStdoutPath, *activeFixStderrPath, *activeFixExitPath, *outputPath)
+		err = adjudicate(*scope, *inputPath, *plansDir, *adjudicationDir, *processDir, *sourceFiles, *goVersionPath, *goEnvPath, *fixHelpPath, *fixHelpStderrPath, *fixStdoutPath, *fixStderrPath, *fixExitPath, *subjectHeadPath, *subjectTreePath, *objectFormatPath, *goModDigestPath, *goSumDigestPath, *goListPath, *goCWDPath, *activeFixStdoutPath, *activeFixStderrPath, *activeFixExitPath, *ciEvidencePath, *outputPath)
 	default:
 		err = fmt.Errorf("unknown mode %q", *mode)
 	}
@@ -348,7 +353,51 @@ func interventions(inputPath, sourcePath, semanticPath, nonsemanticPath, contrad
 	return nil
 }
 
-func adjudicate(scope, inputPath, plansDir, adjudicationDir, processDir, sourceFilesRaw, goVersionPath, goEnvPath, fixHelpPath, fixHelpStderrPath, fixStdoutPath, fixStderrPath, fixExitPath, subjectHeadPath, subjectTreePath, objectFormatPath, goModDigestPath, goSumDigestPath, goListPath, goCWDPath, activeFixStdoutPath, activeFixStderrPath, activeFixExitPath, outputPath string) error {
+func ciEvidence(directory, actualCaseID, outputPath string) error {
+	if directory == "" || actualCaseID == "" || outputPath == "" {
+		return fmt.Errorf("ci-evidence requires directory, actual-case, and output")
+	}
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return err
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Name() < entries[j].Name() })
+	observations := make([]causalci.CIEvidenceObservation, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+		raw, readErr := os.ReadFile(filepath.Join(directory, entry.Name()))
+		if readErr != nil {
+			return readErr
+		}
+		var observation causalci.CIEvidenceObservation
+		decoder := json.NewDecoder(strings.NewReader(string(raw)))
+		decoder.DisallowUnknownFields()
+		if decodeErr := decoder.Decode(&observation); decodeErr != nil {
+			return fmt.Errorf("decode CI evidence fixture %s: %w", entry.Name(), decodeErr)
+		}
+		observations = append(observations, observation)
+	}
+	result, err := causalci.AdjudicateCIEvidence(observations, actualCaseID)
+	if err != nil {
+		return err
+	}
+	if err := writeJSON(outputPath, result); err != nil {
+		return err
+	}
+	actualOutcome := "UNKNOWN"
+	for _, row := range result.Rows {
+		if row.CaseID == result.ActualCaseID {
+			actualOutcome = row.Outcome
+			break
+		}
+	}
+	fmt.Printf("CI causal evidence: cases=%d/%d actual=%s outcome=%s resolution=%s root_cause=%d/%d downstream_missing=%d/%d\n", len(result.ObservedCaseIDs), len(result.ExpectedCaseIDs), result.ActualCaseID, actualOutcome, result.ActualResolution, result.ActualRootCauseNumerator, result.ActualRootCauseDenominator, result.DownstreamMissingNumerator, result.DownstreamMissingDenominator)
+	return nil
+}
+
+func adjudicate(scope, inputPath, plansDir, adjudicationDir, processDir, sourceFilesRaw, goVersionPath, goEnvPath, fixHelpPath, fixHelpStderrPath, fixStdoutPath, fixStderrPath, fixExitPath, subjectHeadPath, subjectTreePath, objectFormatPath, goModDigestPath, goSumDigestPath, goListPath, goCWDPath, activeFixStdoutPath, activeFixStderrPath, activeFixExitPath, ciEvidencePath, outputPath string) error {
 	if inputPath == "" || plansDir == "" || adjudicationDir == "" || outputPath == "" {
 		return fmt.Errorf("adjudicate requires input, plans-dir, adjudication-dir, and output")
 	}
@@ -435,13 +484,29 @@ func adjudicate(scope, inputPath, plansDir, adjudicationDir, processDir, sourceF
 		return err
 	}
 	goEvidence.Conformant = goEvidence.Conformant && goEvidence.SubjectHeadSHA == observation.HeadSHA && goEvidence.ObjectFormat == observation.ObjectFormat
+	if ciEvidencePath == "" {
+		return fmt.Errorf("ci-evidence is required")
+	}
+	ciEvidenceRaw, err := os.ReadFile(ciEvidencePath)
+	if err != nil {
+		return err
+	}
+	var ciEvidence causalci.CIEvidenceAdjudication
+	ciDecoder := json.NewDecoder(strings.NewReader(string(ciEvidenceRaw)))
+	ciDecoder.DisallowUnknownFields()
+	if err := ciDecoder.Decode(&ciEvidence); err != nil {
+		return fmt.Errorf("decode CI evidence adjudication: %w", err)
+	}
+	if ciEvidence.Schema != causalci.CIEvidenceAdjudicationSchema || ciEvidence.Scope != causalci.CIEvidenceAdjudicationScope || ciEvidence.Digest == "" || ciEvidence.ActualRootCauseNumerator != 1 || ciEvidence.ActualRootCauseDenominator != 1 || ciEvidence.ActualResolution != causalci.CIEvidenceResolutionLowered || ciEvidence.ActualCoordinate.Stage != "proposal-promotion" || ciEvidence.ActualCoordinate.Step != "fetch-github-evidence" || ciEvidence.ActualCoordinate.Reason != causalci.CIEvidenceReasonPermission {
+		return fmt.Errorf("invalid CI causal evidence adjudication")
+	}
 	decision := causalci.ConformanceFailClosed
 	coordinate := causalci.Coordinate{Stage: "ADJUDICATION", Step: "compare-process-observations", Reason: "PROCESS_OBSERVATION_NOT_CONFORMANT"}
 	if sourceReconstructionNumerator == len(ids) && sourceBindingNumerator == len(ids) && sameIDs(ids, observed) && goEvidence.Conformant {
 		decision = causalci.ConformancePass
 		coordinate = causalci.Coordinate{Stage: "ADJUDICATION", Step: "compare-process-observations", Reason: "PROCESS_OBSERVATION_AND_PLAN_RECONSTRUCTION_OBSERVED"}
 	}
-	receipt := causalci.AdjudicationReceipt{Schema: causalci.PlanAdjudicationSchema, Scope: causalci.PlanAdjudicationScope, ObservationDigest: bytesDigest(input), ExpectedVariantIDs: ids, ObservedVariantIDs: observed, Adjudications: adjudications, ProcessEvidence: processEvidence, SourcePlanBinding: sourcePlanBinding, SourcePlanBindingNumer: sourceBindingNumerator, SourcePlanBindingDenom: len(ids), SourceReconstructionNumer: sourceReconstructionNumerator, SourceReconstructionDenom: len(ids), Decision: decision, Coordinate: coordinate, SelectedCheckExecutionSchema: causalci.SelectedCheckExecutionSchema, SelectedCheckExecution: causalci.ExecutionUnknown, SelectedCheckExecutionNumer: 0, SelectedCheckExecutionDenom: 1, GoRuntime: goEvidence}
+	receipt := causalci.AdjudicationReceipt{Schema: causalci.PlanAdjudicationSchema, Scope: causalci.PlanAdjudicationScope, ObservationDigest: bytesDigest(input), ExpectedVariantIDs: ids, ObservedVariantIDs: observed, Adjudications: adjudications, ProcessEvidence: processEvidence, SourcePlanBinding: sourcePlanBinding, SourcePlanBindingNumer: sourceBindingNumerator, SourcePlanBindingDenom: len(ids), SourceReconstructionNumer: sourceReconstructionNumerator, SourceReconstructionDenom: len(ids), Decision: decision, Coordinate: coordinate, SelectedCheckExecutionSchema: causalci.SelectedCheckExecutionSchema, SelectedCheckExecution: causalci.ExecutionUnknown, SelectedCheckExecutionNumer: 0, SelectedCheckExecutionDenom: 1, GoRuntime: goEvidence, CIEvidence: ciEvidence}
 	receipt.Digest, err = jsonDigestWithoutAdjudicationDigest(receipt)
 	if err != nil {
 		return err

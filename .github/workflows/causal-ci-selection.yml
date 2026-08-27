@@ -127,6 +127,14 @@ jobs:
           consumer_exit=$?
           set -e
           printf '%s\n' "$consumer_exit" > "$RUNNER_TEMP/causal-ci-selection/process/base-os-exit.txt"
+      - name: Adjudicate observed GitHub API evidence and causal children
+        run: |
+          set -euo pipefail
+          go run ./scripts/causal-ci-selection \
+            -mode ci-evidence \
+            -ci-evidence-dir examples/causal-ci-selection/ci-observations \
+            -ci-evidence-actual-case permission-denied-403 \
+            -output "$RUNNER_TEMP/causal-ci-selection/ci-evidence.json"
       - name: Adjudicate base consumer execution and Go evidence
         run: |
           set -euo pipefail
@@ -142,6 +150,7 @@ jobs:
             -object-format "$RUNNER_TEMP/causal-ci-selection/go-object-format.txt" -go-mod-digest "$RUNNER_TEMP/causal-ci-selection/go-mod-digest.txt" \
             -go-sum-digest "$RUNNER_TEMP/causal-ci-selection/go-sum-digest.txt" -go-list "$RUNNER_TEMP/causal-ci-selection/go-list.txt" -go-cwd "$RUNNER_TEMP/causal-ci-selection/go-command-cwd.txt" \
             -active-fix-stdout "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stdout.txt" -active-fix-stderr "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stderr.txt" -active-fix-exit "$RUNNER_TEMP/causal-ci-selection/go-active-fix-exit.txt" \
+            -ci-evidence "$RUNNER_TEMP/causal-ci-selection/ci-evidence.json" \
             -output "$RUNNER_TEMP/causal-ci-selection/adjudication.json"
       - name: Produce semantic, nonsemantic, and contradiction plans
         run: |
@@ -187,6 +196,7 @@ jobs:
             -object-format "$RUNNER_TEMP/causal-ci-selection/go-object-format.txt" -go-mod-digest "$RUNNER_TEMP/causal-ci-selection/go-mod-digest.txt" \
             -go-sum-digest "$RUNNER_TEMP/causal-ci-selection/go-sum-digest.txt" -go-list "$RUNNER_TEMP/causal-ci-selection/go-list.txt" -go-cwd "$RUNNER_TEMP/causal-ci-selection/go-command-cwd.txt" \
             -active-fix-stdout "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stdout.txt" -active-fix-stderr "$RUNNER_TEMP/causal-ci-selection/go-active-fix-stderr.txt" -active-fix-exit "$RUNNER_TEMP/causal-ci-selection/go-active-fix-exit.txt" \
+            -ci-evidence "$RUNNER_TEMP/causal-ci-selection/ci-evidence.json" \
             -output "$RUNNER_TEMP/causal-ci-selection/intervention-adjudication.json"
       - name: Assert exact inventories, unknown execution model, and causal evidence
         shell: bash
@@ -227,6 +237,24 @@ jobs:
             ([.claim_transitions[] | select(.subject_path == $source and .proposition == "selected check is sufficient/passed")][0].after == "OPEN") and
             ([.subjects[] | select(.resolution == "UNKNOWN") | .selected_checks | length] | all(. == 6))
           ' "$receipt"
+          jq -e '
+            .schema == "gooo/causal-ci-selection-ci-evidence-adjudication/v1" and
+            .scope == "CI_CAUSAL_EVIDENCE" and
+            .expected_case_ids == ["malformed-http-200","missing-artifact","normal-http-200","permission-denied-403"] and
+            .observed_case_ids == .expected_case_ids and
+            .actual_case_id == "permission-denied-403" and
+            .actual_root_cause_numerator == 1 and .actual_root_cause_denominator == 1 and
+            .downstream_missing_artifact_numerator == 3 and .downstream_missing_artifact_denominator == 3 and
+            .actual_resolution == "LOWER_RESOLUTION" and
+            .actual_coordinate == {stage:"proposal-promotion",step:"fetch-github-evidence",reason:"CI_PERMISSION_DENIED"} and
+            ([.rows[] | select(.case_id == "permission-denied-403")][0] | .run_id == 33088310894 and .job_id == 98574425650 and .job_name == "language-concept-artifact" and .endpoint == "/repos/kimjooyoon/meta-ontology-go/actions/workflows/metric-counterfactual.yml/runs?head_sha=1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc&event=push&status=completed&per_page=100" and .observed_http_status == 403 and .required_permission == "actions: read" and .observed_process_exit_code == 1 and .observed_process_status == "EXITED" and .outcome == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .coordinate == {stage:"proposal-promotion",step:"fetch-github-evidence",reason:"CI_PERMISSION_DENIED"} and .response_digest != "" and .observed_stderr_digest != "") and
+            ([.rows[] | select(.case_id == "normal-http-200")][0] | .observed_http_status == 200 and .outcome == "OBSERVED_HTTP_RESPONSE" and .resolution == "EXACT" and .observed_process_exit_code == 0) and
+            ([.rows[] | select(.case_id == "malformed-http-200")][0] | .observed_http_status == 200 and .outcome == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .coordinate.reason == "MALFORMED_GITHUB_RESPONSE" and .observed_process_exit_code == 0) and
+            ([.rows[] | select(.case_id == "missing-artifact")][0] | .observed_http_status == 200 and .outcome == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .coordinate.reason == "MISSING_DOWNSTREAM_ARTIFACT" and .observed_process_exit_code == 0) and
+            ([.rows[] | select(.outcome == "FIXED_POINT")] | length == 0) and
+            ([.artifact_observations[] | select(.causal_relation == "CAUSAL_CHILD_OF_API_FAILURE" and .parent_case_id == "permission-denied-403" and .present == false)] | length == 3) and
+            ([.artifact_observations[] | select(.causal_relation == "FIXTURE_SCENARIO" and .parent_case_id == "missing-artifact")] | length == 1)
+          ' "$root/ci-evidence.json"
           jq -e --arg head "$HEAD_SHA" --arg source "$SOURCE_PATH" '.schema == "gooo/causal-ci-selection-plan-adjudication/v1" and .scope == "PLAN_RECONSTRUCTION_CONFORMANCE" and .decision == "PLAN_RECONSTRUCTION_CONFORMANCE_PASS" and .source_plan_binding_numerator == 1 and .source_plan_binding_denominator == 1 and .source_reconstruction_numerator == 1 and .source_reconstruction_denominator == 1 and (.source_plan_binding | length == 1) and ([.source_plan_binding[].exact] | all) and ([.source_plan_binding[] | (.expected_source_raw_digest == .expected_source_bytes_digest and .expected_source_raw_digest == .actual_consumer_source_bytes_digest and .expected_source_object_id == .actual_consumer_source_object_id and .expected_object_format != "" and .logical_source_path == $source and .binding_mode == .expected_binding_mode and .binding_mode == "HEAD")] | all) and .selected_check_execution_schema == "gooo/causal-ci-selection-selected-check-execution/v1" and .selected_check_execution == "UNKNOWN" and .selected_check_execution_numerator == 0 and .selected_check_execution_denominator == 1 and .process_evidence[0].observed_os_exit_code == .adjudications[0].exit_code and .process_evidence[0].observed_stderr_bytes == 0 and .go_runtime.expected_version == "go1.27.0" and (.go_runtime.go_version | startswith("go version go1.27.0 ")) and .go_runtime.go_env_goversion == "go1.27.0" and .go_runtime.fix_help_command_argv == ["go","tool","fix","help"] and .go_runtime.fix_diff_command_argv == ["go","fix","-diff","./..."] and .go_runtime.package_list_command_argv == ["go","list","./..."] and .go_runtime.command_cwd != "" and .go_runtime.subject_head_sha == $head and .go_runtime.subject_tree_id != "" and .go_runtime.object_format != "" and .go_runtime.fix_diff_exit_code == 0 and .go_runtime.fix_diff_stdout_bytes == 0 and .go_runtime.fix_diff_stderr_allowed and .go_runtime.fix_help_stderr_bytes == 0 and .go_runtime.package_universe_count > 0 and .go_runtime.package_universe_numerator == .go_runtime.package_universe_denominator and .go_runtime.package_universe_numerator == .go_runtime.package_universe_count and .go_runtime.package_universe_digest != "" and ([.go_runtime.fixer_inventory[] | select(. == "atomictypes" or . == "embedlit" or . == "slicesbackward" or . == "unsafefuncs" or . == "waitgroupgo")] | length) == 5 and .go_runtime.required_fixers_satisfied == 5 and .go_runtime.required_fixers_denominator == 5 and .go_runtime.removed_fixer_id == "fmtappendf" and .go_runtime.removed_fixer_present == false and .go_runtime.removed_fixer_numerator == 0 and .go_runtime.removed_fixer_denominator == 1 and .go_runtime.active_fix_fixture.expected_diff and .go_runtime.active_fix_fixture.observed_diff and .go_runtime.active_fix_fixture.numerator == 1 and .go_runtime.active_fix_fixture.denominator == 1 and .go_runtime.active_fix_fixture.conformant == true and .go_runtime.conformant == true and .adjudications[0].consumer_identity == "gooo://consumer/causal-ci-selection/process"' "$root/adjudication.json"
           jq -e --arg source "$SOURCE_PATH" '
             .schema == "gooo/causal-ci-selection-intervention/v1" and
@@ -270,6 +298,9 @@ jobs:
             echo '- active outdated fixer fixture: `1/1` expected diff observed'
             echo '- Go fixer gate: required modernizers `5/5`; removed `fmtappendf` observed `0/1`'
             echo '- independent consumer producer-import audit: `0/1`'
+            echo '- observed GitHub evidence: permission-denied row `UNKNOWN/LOWER_RESOLUTION` at `proposal-promotion/fetch-github-evidence/CI_PERMISSION_DENIED`; endpoint requires `actions: read`, observed HTTP `403`, process exit `1`'
+            echo '- CI causal accounting: root cause `1/1`; downstream missing predecessor evidence artifacts `3/3` as causal children, not additional roots'
+            echo '- CI evidence fixtures: normal HTTP `200`, permission `403`, malformed `200`, and missing artifact are separate raw cases with observed process exit/status'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload causal selection evidence
         uses: actions/upload-artifact@v4
@@ -282,6 +313,8 @@ jobs:
             ${{ runner.temp }}/causal-ci-selection/interventions.json
             ${{ runner.temp }}/causal-ci-selection/adjudication.json
             ${{ runner.temp }}/causal-ci-selection/intervention-adjudication.json
+            ${{ runner.temp }}/causal-ci-selection/ci-evidence.json
+            examples/causal-ci-selection/ci-observations/*.json
             ${{ runner.temp }}/causal-ci-selection/adjudications/*.json
             ${{ runner.temp }}/causal-ci-selection/process/*
             ${{ runner.temp }}/causal-ci-selection/go-version.txt

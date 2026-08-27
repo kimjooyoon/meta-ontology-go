@@ -102,6 +102,36 @@ HEAD/tree and module digests, package-universe count/digest, and a live old
 syntax fixture. Full-suite conformance requires exit `0` and an empty diff;
 the fixture separately requires a nonzero exit and nonempty diff (`1/1`).
 
+## Actual CI API observation
+
+The predecessor SHA itself is deterministic from the pull-request event
+payload (`pull_request.base.sha`) or checked-out Git history (`HEAD^` for a
+push), so this experiment does not use an API to invent that coordinate. The
+promotion artifact, however, is external CI evidence and cannot be recovered
+from Git history. The existing promotion workflow therefore retains the
+minimum declared permission `actions: read` for its GitHub Actions API calls.
+
+The raw observations in
+[`ci-observations/`](../examples/causal-ci-selection/ci-observations/) keep
+transport facts and process facts only. They include separate cases for a
+normal HTTP 200, the observed PR #551 run `33088310894` / job `98574425650`
+HTTP 403, a malformed 200 response, and a successful response with a missing
+artifact. The derived evidence row records endpoint, required permission,
+HTTP status, process exit/status, response/stdout/stderr byte counts and
+digests. The 403 is classified as
+`UNKNOWN / LOWER_RESOLUTION` at
+`proposal-promotion / fetch-github-evidence / CI_PERMISSION_DENIED`; it is
+not a semantic contradiction or a fixed point. The three missing predecessor
+selection files are linked to that one row as causal children, yielding root
+cause `1/1` and downstream missing artifacts `3/3`.
+
+The four cases are replay fixtures, not claims that a new API request ran in
+this plan workflow. Their provenance distinguishes the historical GitHub
+Actions observation from the three fixed counterexamples. Process exit and
+HTTP status are both preserved, so an arbitrary exit code alone cannot be
+treated as a counterexample. A failed API fetch remains fail-closed at the
+lower resolution and must not be promoted to plan or semantic failure.
+
 ## Build-graph research boundary
 
 The experiment adopts explicit path reasoning from Bazel's first-party query

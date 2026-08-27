@@ -34,3 +34,14 @@ surface. CI emits intervention plans with execution `UNKNOWN`, then separately
 adjudicates all four consumer processes. All outputs declare a bounded plan
 capability; repository state is observed from path/content snapshots while
 transient writes and global mutation authority remain `UNKNOWN`.
+
+`ci-observations/` is a separate raw API/process evidence surface. It keeps
+four exact cases apart: normal HTTP 200, the observed PR #551
+`proposal-promotion` HTTP 403, malformed HTTP 200, and missing artifact. The
+consumer derives the rows from endpoint, required permission, HTTP status,
+process exit/status, and output bytes. The 403 row is
+`UNKNOWN / LOWER_RESOLUTION` with coordinate
+`proposal-promotion/fetch-github-evidence/CI_PERMISSION_DENIED`; its three
+missing predecessor evidence files are causal children, not three more root
+causes. This surface is separate from plan reconstruction and leaves
+selected-check execution `UNKNOWN`.

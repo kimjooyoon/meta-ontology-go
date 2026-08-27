@@ -1,0 +1,29 @@
+{
+  "schema": "gooo/causal-ci-selection-ci-evidence-observation/v1",
+  "repository": "kimjooyoon/meta-ontology-go",
+  "run_id": 33088310894,
+  "job_id": 98574425650,
+  "job_name": "language-concept-artifact",
+  "cases": [
+    {
+      "run_id": 33088310894,
+      "job_id": 98574425650,
+      "job_name": "language-concept-artifact",
+      "id": "permission-denied-403",
+      "endpoint": "/repos/kimjooyoon/meta-ontology-go/actions/workflows/metric-counterfactual.yml/runs?head_sha=1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc&event=push&status=completed&per_page=100",
+      "required_permission": "actions: read",
+      "http_status": 403,
+      "process_exit_code": 1,
+      "process_status": "EXITED",
+      "response_body": "{\"message\":\"Resource not accessible by integration\"}",
+      "stdout": "",
+      "stderr": "GitHub response status 403\n",
+      "artifacts": [
+        {"id": "language-readiness-predecessor-selection-a", "path": "language-readiness-predecessor-selection-a.json", "expected": true, "present": false},
+        {"id": "language-readiness-baseline-reference-a", "path": "language-readiness-baseline-reference-a.json", "expected": true, "present": false},
+        {"id": "language-readiness-foundation-seed-a", "path": "language-readiness-foundation-seed-a.json", "expected": true, "present": false}
+      ],
+      "provenance": "HISTORICAL_GITHUB_ACTIONS_OBSERVATION run=33088310894 job=98574425650 step=Prove merged autonomous change proposal"
+    }
+  ]
+}

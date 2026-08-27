@@ -1,0 +1,24 @@
+{
+  "schema": "gooo/causal-ci-selection-ci-evidence-observation/v1",
+  "repository": "kimjooyoon/meta-ontology-go",
+  "run_id": 33088310894,
+  "job_id": 98574425650,
+  "job_name": "language-concept-artifact",
+  "cases": [
+    {
+      "run_id": 33088310894,
+      "job_id": 98574425650,
+      "job_name": "language-concept-artifact",
+      "id": "malformed-http-200",
+      "endpoint": "/repos/kimjooyoon/meta-ontology-go/actions/workflows/metric-counterfactual.yml/runs?head_sha=1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc&event=push&status=completed&per_page=100",
+      "required_permission": "actions: read",
+      "http_status": 200,
+      "process_exit_code": 0,
+      "process_status": "EXITED",
+      "response_body": "{\"total_count\":",
+      "stdout": "",
+      "stderr": "",
+      "provenance": "FIXED_MALFORMED_RESPONSE_CASE"
+    }
+  ]
+}
