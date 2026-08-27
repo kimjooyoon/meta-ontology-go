@@ -16,10 +16,12 @@ test "$producer_imports" = 0
 
 go run ./scripts/reflective-query-sandbox/consumer \
 	-input "$input/observation.json" -source "$source_path" \
-	-subject-sha "$HEAD_SHA" -output "$output/receipt.json"
+	-subject-sha "$HEAD_SHA" -producer-imports-satisfied "$producer_imports" \
+	-producer-imports-total "$producer_imports" -output "$output/receipt.json"
 go run ./scripts/reflective-query-sandbox/consumer \
 	-input "$input/observation.json" -source "$source_path" \
-	-subject-sha "$HEAD_SHA" -output "$output/replay.json"
+	-subject-sha "$HEAD_SHA" -producer-imports-satisfied "$producer_imports" \
+	-producer-imports-total "$producer_imports" -output "$output/replay.json"
 cmp -s "$output/receipt.json" "$output/replay.json"
 
 jq -e --arg sha "$HEAD_SHA" '

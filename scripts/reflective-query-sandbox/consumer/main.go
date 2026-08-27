@@ -197,9 +197,11 @@ func main() {
 	source := flag.String("source", "", "Gooo source")
 	subject := flag.String("subject-sha", "", "exact subject commit")
 	output := flag.String("output", "", "independent receipt")
+	producerImportsSatisfied := flag.Int("producer-imports-satisfied", -1, "observed forbidden producer imports")
+	producerImportsTotal := flag.Int("producer-imports-total", -1, "observed producer import denominator")
 	flag.Parse()
-	if *input == "" || *source == "" || *subject == "" || *output == "" {
-		fail("usage: consumer -input FILE -source FILE -subject-sha SHA -output FILE")
+	if *input == "" || *source == "" || *subject == "" || *output == "" || *producerImportsSatisfied < 0 || *producerImportsTotal < 0 {
+		fail("usage: consumer -input FILE -source FILE -subject-sha SHA -producer-imports-satisfied N -producer-imports-total N -output FILE")
 	}
 	data, err := os.ReadFile(*input)
 	if err != nil {
@@ -211,11 +213,12 @@ func main() {
 	if err := decoder.Decode(&value); err != nil {
 		fail("decode observation: %v", err)
 	}
-	satisfied, total, err := validateObservation(value, *source, *subject)
+	satisfied, total, sourceReconstruction, err := validateObservation(value, *source, *subject)
 	if err != nil {
 		fail("independent reconstruction: %v", err)
 	}
-	result := buildReceipt(value, satisfied, total)
+	producerImports := coordinates{Satisfied: *producerImportsSatisfied, Total: *producerImportsTotal, BasisPoints: basisPoints(*producerImportsSatisfied, *producerImportsTotal)}
+	result := buildReceipt(value, satisfied, total, sourceReconstruction, producerImports)
 	result.Digest = receiptDigest(result)
 	encoded, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -227,63 +230,69 @@ func main() {
 	fmt.Printf("consumer verdict: %s %d/%d queries=%d/%d source=%d/%d imports=%d/%d writes=%d mutation_authority=%t\n", result.Decision, result.Coordinates.Satisfied, result.Coordinates.Total, value.Contract.SafeQueries, value.Contract.ReflectiveQueries, result.SourceReconstruction.Satisfied, result.SourceReconstruction.Total, result.ProducerImports.Satisfied, result.ProducerImports.Total, result.Effects.RepositoryWrites, result.Effects.MutationAuthority)
 }
 
-func validateObservation(value observation, sourcePath, subject string) (int, int, error) {
+func validateObservation(value observation, sourcePath, subject string) (int, int, coordinates, error) {
 	if value.Schema != schema || value.SubjectSHA != subject || value.Producer != producerName {
-		return 0, 0, errors.New("observation identity is not exact")
+		return 0, 0, coordinates{}, errors.New("observation identity is not exact")
 	}
 	if value.Digest != observationDigest(value) {
-		return 0, 0, errors.New("observation digest mismatch")
+		return 0, 0, coordinates{}, errors.New("observation digest mismatch")
 	}
 	data, err := os.ReadFile(sourcePath)
 	if err != nil {
-		return 0, 0, fmt.Errorf("read source: %w", err)
+		return 0, 0, coordinates{}, fmt.Errorf("read source: %w", err)
 	}
 	file, diagnostics := syntax.ParseFile(sourcePath, string(data))
 	if diagnostics.HasErrors() {
-		return 0, 0, diagnostics.Error()
+		return 0, 0, coordinates{}, diagnostics.Error()
 	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		return 0, 0, fmt.Errorf("lower source: %w", err)
+		return 0, 0, coordinates{}, fmt.Errorf("lower source: %w", err)
 	}
 	graph, err := query.FromSemanticIR(ir)
 	if err != nil {
-		return 0, 0, fmt.Errorf("project query view: %w", err)
+		return 0, 0, coordinates{}, fmt.Errorf("project query view: %w", err)
 	}
 	model, err := deriveSourceModel(ir)
 	if err != nil {
-		return 0, 0, fmt.Errorf("derive source model: %w", err)
+		return 0, 0, coordinates{}, fmt.Errorf("derive source model: %w", err)
 	}
 	semanticDigest := ir.StableHash()
 	wantSource := snapshot{Path: sourcePath, SourceDigest: semantic.StableHash(data), SemanticDigest: semanticDigest, GraphDigest: graph.StableHash(), NodeCount: len(graph.Nodes()), FactCount: len(graph.AllFacts()), GoooLines: countLines(data)}
 	if !reflect.DeepEqual(value.Source, wantSource) {
-		return 0, 0, fmt.Errorf("source reconstruction differs: got=%+v want=%+v", value.Source, wantSource)
+		return 0, 0, coordinates{}, fmt.Errorf("source reconstruction differs: got=%+v want=%+v", value.Source, wantSource)
 	}
 	if !strings.HasPrefix(runtime.Version(), "go1.27") || value.Contract.GoVersion != runtime.Version() {
-		return 0, 0, fmt.Errorf("runtime=%s contract=%s", runtime.Version(), value.Contract.GoVersion)
+		return 0, 0, coordinates{}, fmt.Errorf("runtime=%s contract=%s", runtime.Version(), value.Contract.GoVersion)
 	}
 	if value.Effects.RepositoryBefore == nil || value.Effects.RepositoryAfter == nil || !reflect.DeepEqual(value.Effects.RepositoryBefore, value.Effects.RepositoryAfter) || value.Effects.RepositoryWrites != len(value.Effects.RepositoryWriteSet) || len(value.Effects.RepositoryWriteSet) != 0 || value.Effects.MutationAuthority || value.Effects.MutationOutcome != "REJECTED" || value.Effects.MutationAPI == "" {
-		return 0, 0, errors.New("observed effects do not prove no repository write and no mutation authority")
+		return 0, 0, coordinates{}, errors.New("observed effects do not prove no repository write and no mutation authority")
 	}
 	wantAttempts, authority, api, outcome, apiError, err := reconstructAttempts(ir, graph, model, semanticDigest)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, coordinates{}, err
 	}
 	if authority || api != value.Effects.MutationAPI || outcome != value.Effects.MutationOutcome || apiError != value.Effects.MutationError {
-		return 0, 0, errors.New("mutation boundary was not independently reconstructed")
+		return 0, 0, coordinates{}, errors.New("mutation boundary was not independently reconstructed")
 	}
 	if !reflect.DeepEqual(value.Attempts, wantAttempts) {
-		return 0, 0, errors.New("attempt evidence differs from independent raw-source reconstruction")
+		return 0, 0, coordinates{}, errors.New("attempt evidence differs from independent raw-source reconstruction")
 	}
 	wantClaims := buildClaimTransitions(model.Claims, wantAttempts)
 	if !reflect.DeepEqual(value.Claims, wantClaims) {
-		return 0, 0, errors.New("claim transitions are not derived from attempt evidence")
+		return 0, 0, coordinates{}, errors.New("claim transitions are not derived from attempt evidence")
 	}
 	wantContract := buildContract(model, value.Source, wantAttempts, wantClaims)
 	if !reflect.DeepEqual(value.Contract, wantContract) {
-		return 0, 0, errors.New("contract is not derived from the canonical IR")
+		return 0, 0, coordinates{}, errors.New("contract is not derived from the canonical IR")
 	}
-	return countTransitions(wantClaims, "DISCHARGED"), len(model.Claims), nil
+	checks := []bool{
+		reflect.DeepEqual(value.Source, wantSource),
+		reflect.DeepEqual(value.Attempts, wantAttempts),
+		reflect.DeepEqual(value.Claims, wantClaims),
+		reflect.DeepEqual(value.Contract, wantContract),
+	}
+	return countTransitions(wantClaims, "DISCHARGED"), len(model.Claims), reconstructionCoordinates(checks), nil
 }
 
 func deriveSourceModel(ir semantic.IR) (sourceModel, error) {
@@ -386,7 +395,7 @@ func reconstructAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, 
 		}
 		id := attemptIDForProgram(operation.Program)
 		if strings.HasPrefix(operation.Program, "reflect.attempt:") {
-			value, allowed, mutationAPI, mutationOutcome, mutationError, err := reconstructMutation(ir, operation, id, target, semanticDigest)
+			value, allowed, mutationAPI, mutationOutcome, mutationError, err := reconstructMutation(ir, operation, id, target, semanticDigest, model.Claims)
 			if err != nil {
 				return nil, false, "", "", "", err
 			}
@@ -394,7 +403,7 @@ func reconstructAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, 
 			authority, api, outcome, apiError = allowed, mutationAPI, mutationOutcome, mutationError
 			continue
 		}
-		attempts = append(attempts, reconstructExact(graph, operation, id, target, semanticDigest, strings.HasPrefix(operation.Program, "reflect.observation:")))
+		attempts = append(attempts, reconstructExact(graph, operation, id, target, semanticDigest, strings.HasPrefix(operation.Program, "reflect.observation:"), model.Claims))
 	}
 	metric, ok := findOperation(model.Operations, "reflect.query:metrics")
 	if !ok {
@@ -412,9 +421,9 @@ func reconstructAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, 
 	return attempts, authority, api, outcome, apiError, nil
 }
 
-func reconstructExact(graph *query.Graph, operation operationSpec, id string, target semantic.ID, semanticDigest string, receipt bool) attempt {
+func reconstructExact(graph *query.Graph, operation operationSpec, id string, target semantic.ID, semanticDigest string, receipt bool, claims []claimSpec) attempt {
 	before := graph.StableHash()
-	value := attempt{ID: id, Class: "SOURCE_DERIVED", Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(), MetaOperation: operation.Program, Producer: producerName, Consumer: consumerName, ProofChoice: "SOURCE_CLAIM_EVIDENCE", Stage: "QUERY", Step: "match-source-relation", SemanticDigestBefore: semanticDigest, GraphDigestBefore: before}
+	value := attempt{ID: id, Class: classForAttempt(id, claims), Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt(id, claims), Stage: "QUERY", Step: "match-source-relation", SemanticDigestBefore: semanticDigest, GraphDigestBefore: before}
 	if receipt {
 		value.Stage = "RECEIPT"
 	}
@@ -433,7 +442,7 @@ func reconstructExact(graph *query.Graph, operation operationSpec, id string, ta
 	return value
 }
 
-func reconstructMutation(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest string) (attempt, bool, string, string, string, error) {
+func reconstructMutation(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest string, claims []claimSpec) (attempt, bool, string, string, string, error) {
 	node, ok := ir.Graph.Node(target)
 	if !ok {
 		return attempt{}, false, "", "", "", fmt.Errorf("mutation target %q disappeared", target)
@@ -441,7 +450,7 @@ func reconstructMutation(ir semantic.IR, operation operationSpec, id string, tar
 	request := semantic.GraphPatchRequest{SchemaVersion: semantic.GraphPatchSchemaVersion, Operation: semantic.GraphPatchSetNodeField, ExpectedGraphHash: ir.Graph.StableHash(), NodeID: node.ID, ExpectedNodeHash: node.StableHash(), Field: "id", ExpectedSourceDigest: semanticDigest, ExpectedIRDigest: semanticDigest, AllowedIntent: "reflective-query-sandbox", Locality: "detached-observation-copy"}
 	base := semantic.GraphPatchBase{SourceDigest: semanticDigest, IRDigest: semanticDigest}
 	patched, err := ir.Graph.ApplyGraphPatch(base, request, semantic.GraphPatchMutation{})
-	value := attempt{ID: id, Class: "SOURCE_DERIVED", Operation: "mutate", Root: operation.ID.String(), Relation: "set", Target: target.String(), MetaOperation: operation.Program, Producer: producerName, Consumer: consumerName, ProofChoice: "SOURCE_CLAIM_EVIDENCE", Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request", API: "semantic.Graph.ApplyGraphPatch", SemanticDigestBefore: semanticDigest, SemanticDigestAfter: semanticDigest, GraphDigestBefore: ir.Graph.StableHash(), GraphDigestAfter: ir.Graph.StableHash()}
+	value := attempt{ID: id, Class: classForAttempt(id, claims), Operation: "mutate", Root: operation.ID.String(), Relation: "set", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt(id, claims), Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request", API: "semantic.Graph.ApplyGraphPatch", SemanticDigestBefore: semanticDigest, SemanticDigestAfter: semanticDigest, GraphDigestBefore: ir.Graph.StableHash(), GraphDigestAfter: ir.Graph.StableHash()}
 	if err != nil {
 		value.Decision, value.Resolution, value.Reason = "DENIED", "EXACT_REJECTION", "MUTATION_REQUEST_REJECTED"
 		value.APIOutcome, value.APIError = "REJECTED", err.Error()
@@ -456,7 +465,7 @@ func reconstructMutation(ir semantic.IR, operation operationSpec, id string, tar
 }
 
 func reconstructUnknown(graph *query.Graph, operation operationSpec, target query.ID, semanticDigest string, claims []claimSpec) attempt {
-	value := attempt{ID: "unknown.target", Class: classForAttempt("unknown.target", claims), Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(), MetaOperation: metaForAttempt("unknown.target", operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: "SOURCE_CLAIM_EVIDENCE", Stage: "UNKNOWN", Step: "resolve-unknown-subject", SemanticDigestBefore: semanticDigest, GraphDigestBefore: graph.StableHash()}
+	value := attempt{ID: "unknown.target", Class: classForAttempt("unknown.target", claims), Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(), MetaOperation: metaForAttempt("unknown.target", operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt("unknown.target", claims), Stage: "UNKNOWN", Step: "resolve-unknown-subject", SemanticDigestBefore: semanticDigest, GraphDigestBefore: graph.StableHash()}
 	_, err := graph.ExactMatch(query.NewExactQuery(query.ID(operation.ID.String()), query.Used, target))
 	value.SemanticDigestAfter, value.GraphDigestAfter = semanticDigest, graph.StableHash()
 	if err != nil && errors.Is(err, query.ErrUnknownEndpoint) {
@@ -473,6 +482,15 @@ func classForAttempt(id string, claims []claimSpec) string {
 	for _, claim := range claims {
 		if claim.EvidenceAttempt == id {
 			return claim.Class
+		}
+	}
+	return "SOURCE_DERIVED"
+}
+
+func proofForAttempt(id string, claims []claimSpec) string {
+	for _, claim := range claims {
+		if claim.EvidenceAttempt == id {
+			return claim.ProofChoice
 		}
 	}
 	return "SOURCE_DERIVED"
@@ -503,7 +521,7 @@ func attemptIDForProgram(program string) string {
 	case strings.HasPrefix(program, "reflect.attempt:"):
 		return "mutation.attempt"
 	case strings.HasPrefix(program, "reflect.observation:"):
-		return "receipt." + strings.TrimPrefix(program, "reflect.observation:")
+		return "receipt.seal"
 	default:
 		return program
 	}
@@ -601,7 +619,7 @@ func countTransitions(values []claimTransition, state string) int {
 	return count
 }
 
-func buildReceipt(value observation, satisfied, total int) receipt {
+func buildReceipt(value observation, satisfied, total int, sourceReconstruction, producerImports coordinates) receipt {
 	classes := make([]score, 0)
 	proofs := make([]score, 0)
 	classTotals, classSatisfied := map[string]int{}, map[string]int{}
@@ -626,7 +644,7 @@ func buildReceipt(value observation, satisfied, total int) receipt {
 	if value.Contract.UnknownTargets > 0 {
 		subjectResolution = "MIXED_EXACT_AND_LOWER_RESOLUTION"
 	}
-	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: decision, Resolution: "OBSERVATION_ONLY", SubjectResolution: subjectResolution, Reason: reason, Producer: value.Producer, Consumer: consumerName, Contract: value.Contract, Source: value.Source, Attempts: value.Attempts, Claims: value.Claims, Coordinates: coordinates{Satisfied: satisfied, Total: total, BasisPoints: basisPoints(satisfied, total)}, Classes: classes, Proofs: proofs, Effects: value.Effects, SourceReconstruction: coordinates{Satisfied: 4, Total: 4, BasisPoints: 10000}, ProducerImports: coordinates{Satisfied: 0, Total: 0, BasisPoints: 0}, PromotionCreditBPS: 0, RepositoryWrites: value.Effects.RepositoryWrites, MutationAuthority: value.Effects.MutationAuthority, NotClaimed: []string{"generic Go reflection API equivalence", "runtime capability isolation beyond this process", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
+	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: decision, Resolution: "OBSERVATION_ONLY", SubjectResolution: subjectResolution, Reason: reason, Producer: value.Producer, Consumer: consumerName, Contract: value.Contract, Source: value.Source, Attempts: value.Attempts, Claims: value.Claims, Coordinates: coordinates{Satisfied: satisfied, Total: total, BasisPoints: basisPoints(satisfied, total)}, Classes: classes, Proofs: proofs, Effects: value.Effects, SourceReconstruction: sourceReconstruction, ProducerImports: producerImports, PromotionCreditBPS: 0, RepositoryWrites: value.Effects.RepositoryWrites, MutationAuthority: value.Effects.MutationAuthority, NotClaimed: []string{"generic Go reflection API equivalence", "runtime capability isolation beyond this process", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
 }
 
 func scoresFromTotals(totals, satisfied map[string]int) []score {
@@ -647,6 +665,16 @@ func basisPoints(satisfied, total int) int {
 		return 0
 	}
 	return satisfied * 10000 / total
+}
+
+func reconstructionCoordinates(checks []bool) coordinates {
+	satisfied := 0
+	for _, check := range checks {
+		if check {
+			satisfied++
+		}
+	}
+	return coordinates{Satisfied: satisfied, Total: len(checks), BasisPoints: basisPoints(satisfied, len(checks))}
 }
 
 func observationDigest(value observation) string {

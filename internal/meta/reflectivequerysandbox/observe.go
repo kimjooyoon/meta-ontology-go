@@ -71,11 +71,11 @@ func buildAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, semant
 		attemptID := attemptIDForProgram(operation.Program)
 		switch {
 		case strings.HasPrefix(operation.Program, "reflect.query:"):
-			attempts = append(attempts, exactAttempt(graph, operation, attemptID, target, semanticDigest, graphDigest, "QUERY"))
+			attempts = append(attempts, exactAttempt(graph, operation, attemptID, target, semanticDigest, graphDigest, "QUERY", model.Claims))
 		case strings.HasPrefix(operation.Program, "reflect.observation:"):
-			attempts = append(attempts, exactAttempt(graph, operation, attemptID, target, semanticDigest, graphDigest, "RECEIPT"))
+			attempts = append(attempts, exactAttempt(graph, operation, attemptID, target, semanticDigest, graphDigest, "RECEIPT", model.Claims))
 		case strings.HasPrefix(operation.Program, "reflect.attempt:"):
-			attempt, authority, api, outcome, apiError, err := mutationAttempt(ir, operation, attemptID, target, semanticDigest, graphDigest)
+			attempt, authority, api, outcome, apiError, err := mutationAttempt(ir, operation, attemptID, target, semanticDigest, graphDigest, model.Claims)
 			if err != nil {
 				return nil, false, "", "", "", err
 			}
@@ -100,12 +100,12 @@ func buildAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, semant
 	return attempts, mutationAuthority, mutationAPI, mutationOutcome, mutationError, nil
 }
 
-func exactAttempt(graph *query.Graph, operation operationSpec, id string, target semantic.ID, semanticDigest, graphDigest, stage string) Attempt {
+func exactAttempt(graph *query.Graph, operation operationSpec, id string, target semantic.ID, semanticDigest, graphDigest, stage string, claims []claimSpec) Attempt {
 	before := graph.StableHash()
 	attempt := Attempt{
-		ID: id, Class: "SOURCE_DERIVED", Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(),
-		MetaOperation: operation.Program, Producer: ProducerName, Consumer: ConsumerName,
-		ProofChoice: proofForAttempt(id), Stage: stage, Step: "match-source-relation",
+		ID: id, Class: classForAttempt(id, claims), Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(),
+		MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: ProducerName, Consumer: ConsumerName,
+		ProofChoice: proofForAttempt(id, claims), Stage: stage, Step: "match-source-relation",
 		SemanticDigestBefore: semanticDigest, GraphDigestBefore: before,
 	}
 	result, err := graph.ExactMatch(query.NewExactQuery(query.ID(operation.ID.String()), query.Used, query.ID(target.String())))
@@ -113,7 +113,7 @@ func exactAttempt(graph *query.Graph, operation operationSpec, id string, target
 	attempt.SemanticDigestAfter, attempt.GraphDigestAfter = semanticDigest, after
 	if err != nil {
 		attempt.Decision, attempt.Resolution, attempt.Reason = "REFUTED", "LOWER_RESOLUTION", "QUERY_API_REJECTED"
-		return attachEvidence(attempt)
+		return attempt
 	}
 	attempt.MatchedFacts = len(result.All())
 	if attempt.MatchedFacts == 1 {
@@ -121,10 +121,10 @@ func exactAttempt(graph *query.Graph, operation operationSpec, id string, target
 	} else {
 		attempt.Decision, attempt.Resolution, attempt.Reason = "UNKNOWN", "LOWER_RESOLUTION", "RELATION_NOT_OBSERVED"
 	}
-	return attachEvidence(attempt)
+	return attempt
 }
 
-func mutationAttempt(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest, graphDigest string) (Attempt, bool, string, string, string, error) {
+func mutationAttempt(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest, graphDigest string, claims []claimSpec) (Attempt, bool, string, string, string, error) {
 	node, ok := ir.Graph.Node(target)
 	if !ok {
 		return Attempt{}, false, "", "", "", fmt.Errorf("mutation target %q disappeared from semantic IR", target)
@@ -140,23 +140,23 @@ func mutationAttempt(ir semantic.IR, operation operationSpec, id string, target 
 	before := ir.Graph.StableHash()
 	api := "semantic.Graph.ApplyGraphPatch"
 	attempt := Attempt{
-		ID: id, Class: "SOURCE_DERIVED", Operation: "mutate", Root: operation.ID.String(), Relation: "set", Target: target.String(),
-		MetaOperation: operation.Program, Producer: ProducerName, Consumer: ConsumerName,
-		ProofChoice: proofForAttempt(id), Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request",
+		ID: id, Class: classForAttempt(id, claims), Operation: "mutate", Root: operation.ID.String(), Relation: "set", Target: target.String(),
+		MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: ProducerName, Consumer: ConsumerName,
+		ProofChoice: proofForAttempt(id, claims), Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request",
 		API: api, SemanticDigestBefore: semanticDigest, SemanticDigestAfter: semanticDigest,
 		GraphDigestBefore: before, GraphDigestAfter: before,
 	}
 	if err != nil {
 		attempt.Decision, attempt.Resolution, attempt.Reason = "DENIED", "EXACT_REJECTION", "MUTATION_REQUEST_REJECTED"
 		attempt.APIOutcome, attempt.APIError = "REJECTED", err.Error()
-		return attachEvidence(attempt), false, api, "REJECTED", err.Error(), nil
+		return attempt, false, api, "REJECTED", err.Error(), nil
 	}
 	patchedIR := ir
 	patchedIR.Graph = patched
 	attempt.SemanticDigestAfter, attempt.GraphDigestAfter = patchedIR.StableHash(), patched.StableHash()
 	attempt.Decision, attempt.Resolution, attempt.Reason = "REFUTED", "EXACT", "MUTATION_CAPABILITY_ACCEPTED"
 	attempt.APIOutcome = "ACCEPTED"
-	return attachEvidence(attempt), true, api, "ACCEPTED", "", nil
+	return attempt, true, api, "ACCEPTED", "", nil
 }
 
 func unknownAttempt(graph *query.Graph, operation operationSpec, target query.ID, semanticDigest, graphDigest string, claims []claimSpec) Attempt {
@@ -164,7 +164,7 @@ func unknownAttempt(graph *query.Graph, operation operationSpec, target query.ID
 	attempt := Attempt{
 		ID: "unknown.target", Class: classForAttempt("unknown.target", claims), Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(),
 		MetaOperation: metaForAttempt("unknown.target", operation.Program, claims), Producer: ProducerName, Consumer: ConsumerName,
-		ProofChoice: proofForAttempt("unknown.target"), Stage: "UNKNOWN", Step: "resolve-unknown-subject", SemanticDigestBefore: semanticDigest, GraphDigestBefore: before,
+		ProofChoice: proofForAttempt("unknown.target", claims), Stage: "UNKNOWN", Step: "resolve-unknown-subject", SemanticDigestBefore: semanticDigest, GraphDigestBefore: before,
 	}
 	_, err := graph.ExactMatch(query.NewExactQuery(query.ID(operation.ID.String()), query.Used, target))
 	attempt.SemanticDigestAfter, attempt.GraphDigestAfter = semanticDigest, graph.StableHash()
@@ -175,15 +175,16 @@ func unknownAttempt(graph *query.Graph, operation operationSpec, target query.ID
 	} else {
 		attempt.Decision, attempt.Resolution, attempt.Reason = "REFUTED", "EXACT", "UNKNOWN_TARGET_BECAME_KNOWN"
 	}
-	return attachEvidence(attempt)
-}
-
-func attachEvidence(attempt Attempt) Attempt {
 	return attempt
 }
 
-func proofForAttempt(id string) string {
-	return "SOURCE_CLAIM_EVIDENCE"
+func proofForAttempt(id string, claims []claimSpec) string {
+	for _, claim := range claims {
+		if claim.EvidenceAttempt == id {
+			return claim.ProofChoice
+		}
+	}
+	return "SOURCE_DERIVED"
 }
 
 func classForAttempt(id string, claims []claimSpec) string {
@@ -220,7 +221,7 @@ func attemptIDForProgram(program string) string {
 	case strings.HasPrefix(program, "reflect.attempt:"):
 		return "mutation.attempt"
 	case strings.HasPrefix(program, "reflect.observation:"):
-		return "receipt." + strings.TrimPrefix(program, "reflect.observation:")
+		return "receipt.seal"
 	default:
 		return program
 	}
