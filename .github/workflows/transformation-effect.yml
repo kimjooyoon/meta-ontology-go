@@ -2713,7 +2713,7 @@ jobs:
           artifact_path="$(jq -r '.path' "$root/first/artifact-semantic-projection.json")"
           sed -e "s/^authorization=.*/authorization=$auth_digest/" -e "s/^source=.*/source=$source_digest/" "$artifact_path" > "$multi_auth"
           multi_output="$tamper/artifact-output-multi-field.bin"
-          sed -e 's/^output=6$/output=7/' -e 's/^input=2$/input=3/' "$artifact_path" > "$multi_output"
+          sed -e 's/^output=6$/output=7/' -e 's/^input=5$/input=3/' "$artifact_path" > "$multi_output"
           go run ./cmd/invariant-transformation-closure-consumer \
             -source examples/invariant-transformation/main.gooo \
             -head-sha "$HEAD_SHA" \
