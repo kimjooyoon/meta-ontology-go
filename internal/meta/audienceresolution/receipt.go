@@ -20,6 +20,15 @@ func blockedCounterexamples(values []Counterexample) int {
 }
 
 func counterexamplesValid(values []Counterexample) bool {
-	return len(values) == 2 && counterexampleValid(values, "counterexample.missing-information") &&
-		counterexampleValid(values, "counterexample.decision-contradiction")
+	if len(values) != 2 {
+		return false
+	}
+	seen := map[string]bool{}
+	for _, value := range values {
+		if seen[value.ID] || !counterexampleValid(values, value.ID) {
+			return false
+		}
+		seen[value.ID] = true
+	}
+	return seen["counterexample.missing-information"] && seen["counterexample.decision-contradiction"]
 }

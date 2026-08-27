@@ -32,9 +32,10 @@ the receipt.
 
 Two cases are part of the ledger as explicit blocked witnesses:
 
-1. `counterexample.missing-information` removes the `author.consumer`
-   coordinate. The result must be `FAIL_CLOSED / LOWER_RESOLUTION`, even if
-   the four USER coordinates remain locally satisfied.
+1. `counterexample.missing-information` removes the required `consumer` field
+   from the `author.coordinates` record (or removes any required record). The
+   result must be `FAIL_CLOSED / LOWER_RESOLUTION`, even if the four USER
+   coordinates remain locally satisfied.
 2. `counterexample.decision-contradiction` changes a record decision so that
    the same source has conflicting decisions. The result must be
    `FAIL_CLOSED / INVARIANT_ONLY` for all three audiences.
