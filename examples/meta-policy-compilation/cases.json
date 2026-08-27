@@ -1,7 +1,9 @@
 [
   {
     "id": "pass-semantic-equivalence",
-    "expected": "PASS",
+    "validator_expectation": "PASS",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "provenance": "checked-in conformance fixture; digest placeholders are not producer authority",
     "producer_available": true,
     "consumer_available": true,
     "observed_source_digest": "SOURCE_DIGEST_FROM_POLICY",
@@ -10,7 +12,9 @@
   },
   {
     "id": "fail-closed-source-drift",
-    "expected": "FAIL_CLOSED",
+    "validator_expectation": "FAIL_CLOSED",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "provenance": "checked-in conformance fixture; source drift is intentionally synthetic",
     "producer_available": true,
     "consumer_available": true,
     "observed_source_digest": "sha256:source-drift-is-not-equivalent",
@@ -19,7 +23,9 @@
   },
   {
     "id": "unknown-missing-consumer",
-    "expected": "UNKNOWN",
+    "validator_expectation": "UNKNOWN",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "provenance": "checked-in conformance fixture; missing consumer is intentionally synthetic",
     "producer_available": true,
     "consumer_available": false,
     "observed_source_digest": "SOURCE_DIGEST_FROM_POLICY",

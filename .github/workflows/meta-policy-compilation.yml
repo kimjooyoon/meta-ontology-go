@@ -8,6 +8,7 @@ on:
       - '.github/ci-governance.json'
       - '.github/workflows/meta-policy-compilation.yml'
       - 'cmd/meta-policy-compilation-witness/**'
+      - 'cmd/meta-policy-compilation-consumer/**'
       - 'docs/language/meta-policy-compilation.md'
       - 'examples/meta-policy-compilation/**'
       - 'internal/meta/policycompilation/**'
@@ -19,6 +20,7 @@ on:
       - '.github/ci-governance.json'
       - '.github/workflows/meta-policy-compilation.yml'
       - 'cmd/meta-policy-compilation-witness/**'
+      - 'cmd/meta-policy-compilation-consumer/**'
       - 'docs/language/meta-policy-compilation.md'
       - 'examples/meta-policy-compilation/**'
       - 'internal/meta/policycompilation/**'
@@ -66,10 +68,6 @@ jobs:
               -policy examples/meta-policy-compilation/policy.gooo \
               -cases examples/meta-policy-compilation/cases.json \
               -output "$output"
-            go run ./cmd/meta-policy-compilation-witness \
-              -policy examples/meta-policy-compilation/policy.gooo \
-              -cases examples/meta-policy-compilation/cases.json \
-              -output "$output" -check
           done
           cmp "$root/first/policy.json" "$root/replay/policy.json"
           cmp "$root/first/artifact.json" "$root/replay/artifact.json"
@@ -79,6 +77,8 @@ jobs:
           cmp "$root/first/receipt.json" "$root/replay/receipt.json"
           jq -e '
             .verification.decision == "PASS" and
+            .verification.conformance_decision == "PASS" and
+            .verification.subject_resolution == "UNRESOLVED" and
             .verification.fixed_denominator == 8 and
             .verification.case_denominator == 3 and
             .summary.pass_count == 1 and
@@ -86,13 +86,65 @@ jobs:
             .summary.unknown_count == 1 and
             .summary.generated_independent_equivalent == 3 and
             .summary.source_all_equivalent == 3 and
-            .claims.event_count == 48
+            .summary.validator_expectations_confirmed == 3 and
+            .claims.event_count == 48 and
+            all(.evidence[]; .class == "SYNTHETIC_FIXTURE" and .observation_digest != "" and .provenance != "") and
+            all(.claims.events[]; .observation_digest != "" and .provenance != "") and
+            .write_set.generated_root_class == "RUNNER_TEMP_ONLY" and
+            .write_set.repository_write_changed == false and
+            .write_set.mutation_authority == 0 and
+            .write_set.promotion_authority == 0
           ' "$root/first/receipt.json"
+          intervention="$root/intervention"
+          mkdir -p "$intervention"
+          cp examples/meta-policy-compilation/policy.gooo "$intervention/comment.gooo"
+          printf '\n// nonsemantic intervention: comments do not alter the lowered policy\n' >> "$intervention/comment.gooo"
+          sed 's/SOURCE_DIGEST_MISMATCH/SOURCE_DIGEST_INTERVENED/' \
+            examples/meta-policy-compilation/policy.gooo > "$intervention/semantic.gooo"
+          go run ./cmd/meta-policy-compilation-witness \
+            -policy "$intervention/comment.gooo" \
+            -cases examples/meta-policy-compilation/cases.json \
+            -output "$intervention/comment"
+          go run ./cmd/meta-policy-compilation-witness \
+            -policy "$intervention/semantic.gooo" \
+            -cases examples/meta-policy-compilation/cases.json \
+            -output "$intervention/semantic"
+          jq '[.[] | {case_id, decision, stage, step, reason}]' "$root/first/generated-results.json" > "$intervention/base-behavior.json"
+          jq '[.[] | {case_id, decision, stage, step, reason}]' "$intervention/comment/generated-results.json" > "$intervention/comment-behavior.json"
+          cmp "$intervention/base-behavior.json" "$intervention/comment-behavior.json"
+          jq '[.[] | {case_id, decision, stage, step, reason}]' "$intervention/semantic/generated-results.json" > "$intervention/semantic-behavior.json"
+          if cmp "$intervention/base-behavior.json" "$intervention/semantic-behavior.json"; then
+            echo 'semantic intervention did not change generated behavior' >&2
+            exit 1
+          fi
+          jq '.claims.events | map({claim_id, from, to, decision, stage, step, reason})' "$root/first/receipt.json" > "$intervention/base-claims.json"
+          jq '.claims.events | map({claim_id, from, to, decision, stage, step, reason})' "$intervention/semantic/receipt.json" > "$intervention/semantic-claims.json"
+          if cmp "$intervention/base-claims.json" "$intervention/semantic-claims.json"; then
+            echo 'semantic intervention did not change claim transitions' >&2
+            exit 1
+          fi
+          jq -n \
+            --argjson raw_digest_changed "$(test "$(jq -r .policy.source_digest "$root/first/policy.json")" != "$(jq -r .policy.source_digest "$intervention/comment/policy.json")" && echo true || echo false)" \
+            --argjson semantic_digest_preserved "$(test "$(jq -r .policy.semantic_digest "$root/first/policy.json")" = "$(jq -r .policy.semantic_digest "$intervention/comment/policy.json")" && echo true || echo false)" \
+            --argjson generated_behavior_preserved true \
+            --argjson semantic_digest_changed "$(test "$(jq -r .policy.semantic_digest "$root/first/policy.json")" != "$(jq -r .policy.semantic_digest "$intervention/semantic/policy.json")" && echo true || echo false)" \
+            --argjson generated_behavior_changed true \
+            --argjson claim_transitions_changed true \
+            '{raw_digest_changed:$raw_digest_changed, semantic_digest_preserved:$semantic_digest_preserved, generated_behavior_preserved:$generated_behavior_preserved, semantic_digest_changed:$semantic_digest_changed, generated_behavior_changed:$generated_behavior_changed, claim_transitions_changed:$claim_transitions_changed}' \
+            > "$intervention/intervention-summary.json"
+          jq -e '(.raw_digest_changed and .semantic_digest_preserved and .generated_behavior_preserved and .semantic_digest_changed and .generated_behavior_changed and .claim_transitions_changed)' "$intervention/intervention-summary.json"
       - name: Upload producer boundary
         uses: actions/upload-artifact@v6
         with:
           name: meta-policy-compilation-producer-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/meta-policy-compilation/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload semantic intervention artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-interventions-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/intervention
           if-no-files-found: error
           retention-days: 30
 
@@ -118,12 +170,43 @@ jobs:
         with:
           name: meta-policy-compilation-producer-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/meta-policy-compilation/producer
-      - name: Replay generated and independent decisions
+      - name: Independently reconstruct raw policy and observations
         run: |
-          go run ./cmd/meta-policy-compilation-witness \
+          if rg -n 'internal/meta/policycompilation|GenerateJudge|IndependentEvaluate' cmd/meta-policy-compilation-consumer; then
+            echo 'consumer imports or names producer-only implementation' >&2
+            exit 1
+          fi
+          go run ./cmd/meta-policy-compilation-consumer \
             -policy examples/meta-policy-compilation/policy.gooo \
             -cases examples/meta-policy-compilation/cases.json \
-            -output "$RUNNER_TEMP/meta-policy-compilation/producer" -check
+            -artifact "$RUNNER_TEMP/meta-policy-compilation/producer" \
+            -output "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"
+          jq -e '
+            .schema == "gooo/meta-policy-compilation-consumer/v1" and
+            .raw_policy_parsed and
+            .raw_cases_parsed and
+            .gooo_derived_rule_numerator == 8 and
+            .gooo_derived_rule_denominator == 8 and
+            .generated_executions_numerator == 3 and
+            .generated_executions_denominator == 3 and
+            .independent_reconstructions_numerator == 3 and
+            .independent_reconstructions_denominator == 3 and
+            .import_boundary.producer_compiler_imports == "0/1" and
+            .import_boundary.generated_template_imports == "0/1" and
+            .import_boundary.independent_evaluator_imports == "0/1" and
+            all(.synthetic_evidence[]; .class == "SYNTHETIC_FIXTURE") and
+            .current_evidence.class == "CURRENT_EVIDENCE" and
+            .subject_resolution == "RESOLVED" and
+            .subject_decision.decision == "PASS"
+          ' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"
+          cp "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json" "$RUNNER_TEMP/meta-policy-compilation/producer/consumer-report.json"
+      - name: Upload independent consumer artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-consumer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/consumer-report.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Publish consumer summary
         run: |
           jq -r '
@@ -133,5 +216,13 @@ jobs:
             "- case decisions: PASS=" + (.summary.pass_count|tostring) + ", FAIL_CLOSED=" + (.summary.fail_closed_count|tostring) + ", UNKNOWN=" + (.summary.unknown_count|tostring) + "\n" +
             "- generated/independent equivalent: " + (.summary.generated_independent_equivalent|tostring) + "/" + (.summary.case_count|tostring) + "\n" +
             "- source/generated/independent equivalent: " + (.summary.source_all_equivalent|tostring) + "/" + (.summary.case_count|tostring) + "\n" +
-            "- claim ledger events: " + (.claims.event_count|tostring)
+            "- claim ledger events: " + (.claims.event_count|tostring) + "\n" +
+            "- conformance decision: " + .verification.conformance_decision + "\n" +
+            "- subject resolution: " + .verification.subject_resolution
           ' "$RUNNER_TEMP/meta-policy-compilation/producer/receipt.json" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '
+            "- current evidence: " + .current_evidence.class + " (" + .current_evidence.provenance + ")\n" +
+            "- subject decision: " + .subject_decision.decision + "\n" +
+            "- consumer reconstruction: generated=" + (.generated_executions_numerator|tostring) + "/" + (.generated_executions_denominator|tostring) + ", independent=" + (.independent_reconstructions_numerator|tostring) + "/" + (.independent_reconstructions_denominator|tostring) + "\n" +
+            "- prohibited producer imports: " + .import_boundary.producer_compiler_imports
+          ' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json" >> "$GITHUB_STEP_SUMMARY"

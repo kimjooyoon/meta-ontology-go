@@ -30,6 +30,12 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 	if receipt.MetaOperation != MetaOperation || receipt.ProofChoice != ProofChoice {
 		return errors.New("receipt lost meta-operation or proof choice")
 	}
+	if receipt.Verification.Decision != VerificationPass || receipt.Verification.ConformanceDecision != VerificationPass || receipt.Verification.SubjectResolution != SubjectUnresolved {
+		return errors.New("conformance and subject resolution are not separated")
+	}
+	if err := verifyWriteSet(receipt.WriteSet); err != nil {
+		return err
+	}
 	if err := VerifyCompiledArtifact(artifact, policy, judgeHash); err != nil {
 		return err
 	}
@@ -38,7 +44,7 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 	if receipt.Producer != wantProducer || receipt.Consumer != wantConsumer {
 		return errors.New("receipt producer/consumer evidence is not bound to the artifact")
 	}
-	if receipt.GeneratedDigest != judgeHash || len(receipt.Cases) != len(cases) || receipt.Claims.EventCount != len(receipt.Claims.Events) || len(receipt.Claims.Events) != len(cases)*FixedDenominator*2 {
+	if receipt.GeneratedDigest != judgeHash || len(receipt.Cases) != len(cases) || len(receipt.Evidence) != len(cases) || receipt.Claims.EventCount != len(receipt.Claims.Events) || len(receipt.Claims.Events) != len(cases)*FixedDenominator*2 {
 		return errors.New("receipt denominator or generated artifact binding is incomplete")
 	}
 	calculatedDigest, err := receiptDigest(receipt)
@@ -57,15 +63,39 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 	}
 	sort.SliceStable(order, func(i, j int) bool { return cases[order[i]].ID < cases[order[j]].ID })
 	passCount, failClosedCount, unknownCount := 0, 0, 0
+	allowedObservations := make(map[string]string, len(cases))
+	for _, input := range cases {
+		allowedObservations[observationDigest(input)] = input.Provenance
+	}
+	for _, event := range receipt.Claims.Events {
+		if allowedObservations[event.ObservationDigest] != event.Provenance {
+			return errors.New("claim transition is not bound to a known case observation")
+		}
+	}
 	for outputIndex, inputIndex := range order {
 		input := cases[inputIndex]
 		stored := receipt.Cases[outputIndex]
-		if stored.ID != input.ID || stored.Expected != input.Expected {
-			return fmt.Errorf("case %q moved or changed its expected decision", input.ID)
+		if stored.ID != input.ID || stored.ValidatorExpectation != input.ValidatorExpectation || stored.EvidenceClass != input.EvidenceClass || stored.Provenance != input.Provenance || stored.ObservationDigest != observationDigest(input) {
+			return fmt.Errorf("case %q moved or changed its validator expectation", input.ID)
+		}
+		if outputIndex == 0 && stored.ClaimStartDigest != "" {
+			return fmt.Errorf("case %q has an unexpected claim start", input.ID)
+		}
+		if outputIndex > 0 && stored.ClaimStartDigest != receipt.Cases[outputIndex-1].ClaimEndDigest {
+			return fmt.Errorf("case %q is disconnected from the previous claim segment", input.ID)
+		}
+		claimEnd := (outputIndex+1)*FixedDenominator*2 - 1
+		if claimEnd >= len(receipt.Claims.Events) || stored.ClaimEndDigest != receipt.Claims.Events[claimEnd].Digest {
+			return fmt.Errorf("case %q claim segment end is not bound to the ledger", input.ID)
+		}
+		observed := receipt.Evidence[outputIndex]
+		wantObserved := EvidenceObservation{Class: input.EvidenceClass, CaseID: input.ID, ProducerAvailable: input.ProducerAvailable, ConsumerAvailable: input.ConsumerAvailable, SourceDigest: input.ObservedSourceDigest, ArtifactDigest: artifactDigest(artifact), ObservationDigest: observationDigest(input), Provenance: input.Provenance}
+		if observed != wantObserved {
+			return fmt.Errorf("case %q observation provenance is not bound", input.ID)
 		}
 		source := EvaluateSourcePolicy(policy, input)
 		independent := IndependentEvaluate(policy, input)
-		if !sameDecision(stored.Source, source) || !sameDecision(stored.Independent, independent) || !sameDecision(stored.Source, stored.Generated) || !sameDecision(stored.Generated, stored.Independent) || stored.Expected != stored.Source.Decision || !stored.AllDecisionsEquivalent || !stored.DecisionsEquivalent || !stored.ExpectedDecisionConfirmed {
+		if !sameDecision(stored.Source, source) || !sameDecision(stored.Independent, independent) || !sameDecision(stored.Source, stored.Generated) || !sameDecision(stored.Generated, stored.Independent) || stored.ValidatorExpectation != stored.Source.Decision || !stored.AllDecisionsEquivalent || !stored.DecisionsEquivalent || !stored.ValidatorExpectationConfirmed {
 			return fmt.Errorf("case %q is not independently equivalent", input.ID)
 		}
 		switch stored.Generated.Decision {
@@ -79,7 +109,7 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 			return fmt.Errorf("case %q has unsupported decision %q", input.ID, stored.Generated.Decision)
 		}
 	}
-	if receipt.Summary.CaseCount != len(cases) || receipt.Summary.PassCount != passCount || receipt.Summary.FailClosedCount != failClosedCount || receipt.Summary.UnknownCount != unknownCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.SourceAllEquivalent != len(cases) || receipt.Summary.ExpectedDecisionsConfirmed != len(cases) {
+	if receipt.Summary.CaseCount != len(cases) || receipt.Summary.PassCount != passCount || receipt.Summary.FailClosedCount != failClosedCount || receipt.Summary.UnknownCount != unknownCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.SourceAllEquivalent != len(cases) || receipt.Summary.ValidatorExpectationsConfirmed != len(cases) {
 		return errors.New("case summary does not cover the fixed case denominator")
 	}
 	if receipt.Verification.Decision != VerificationPass || !receipt.Verification.IndependentReplayed || !receipt.Verification.GeneratedReplayed || !receipt.Verification.LedgerVerified || receipt.Verification.FixedDenominator != FixedDenominator || receipt.Verification.CaseDenominator != len(cases) {
@@ -96,7 +126,7 @@ func verifyClaimLedger(ledger ClaimLedger) error {
 	counts := make(map[string]int, len(ledger.Events)/2)
 	states := make(map[string]string, len(ledger.Events)/2)
 	for index, event := range ledger.Events {
-		if event.Event != index+1 || event.PriorDigest != prior || event.ClaimID == "" || counts[event.ClaimID] >= 2 {
+		if event.Event != index+1 || event.PriorDigest != prior || event.ClaimID == "" || event.ObservationDigest == "" || event.Provenance == "" || counts[event.ClaimID] >= 2 {
 			return fmt.Errorf("claim ledger chain is broken at event %d", event.Event)
 		}
 		canonical := event
@@ -126,6 +156,19 @@ func verifyClaimLedger(ledger ClaimLedger) error {
 	}
 	if prior != ledger.HeadDigest {
 		return errors.New("claim ledger head does not match its event chain")
+	}
+	return nil
+}
+
+func verifyWriteSet(observation WriteSetObservation) error {
+	if observation.RepositoryBeforeDigest == "" || observation.RepositoryAfterDigest == "" || observation.RepositoryBeforeDigest != observation.RepositoryAfterDigest || observation.RepositoryWriteChanged || observation.RepositoryBeforeCount != observation.RepositoryAfterCount || observation.GeneratedRootClass != "RUNNER_TEMP_ONLY" || len(observation.GeneratedFiles) != 6 || observation.MutationAuthority != 0 || observation.PromotionAuthority != 0 {
+		return errors.New("generated output is not proven runner-temp-only with zero mutation/promotion authority")
+	}
+	wantFiles := []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"}
+	for index, name := range wantFiles {
+		if observation.GeneratedFiles[index] != name {
+			return errors.New("generated output file set is not canonical")
+		}
 	}
 	return nil
 }

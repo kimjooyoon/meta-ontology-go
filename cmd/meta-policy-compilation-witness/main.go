@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation"
@@ -19,19 +21,12 @@ func main() {
 	policyPath := flag.String("policy", "", "Gooo policy source")
 	casesPath := flag.String("cases", "", "fixed conformance cases")
 	outputDir := flag.String("output", "", "producer or consumer artifact directory")
-	check := flag.Bool("check", false, "verify an existing artifact directory without rewriting it")
 	flag.Parse()
 	if *policyPath == "" || *casesPath == "" || *outputDir == "" {
-		fmt.Fprintln(os.Stderr, "usage: meta-policy-compilation-witness -policy policy.gooo -cases cases.json -output DIR [-check]")
+		fmt.Fprintln(os.Stderr, "usage: meta-policy-compilation-witness -policy policy.gooo -cases cases.json -output DIR")
 		os.Exit(2)
 	}
-	var err error
-	if *check {
-		err = verify(*policyPath, *casesPath, *outputDir)
-	} else {
-		err = produce(*policyPath, *casesPath, *outputDir)
-	}
-	if err != nil {
+	if err := produce(*policyPath, *casesPath, *outputDir); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -41,6 +36,17 @@ func produce(policyPath, casesPath, outputDir string) error {
 	source, err := os.ReadFile(policyPath)
 	if err != nil {
 		return fmt.Errorf("read policy: %w", err)
+	}
+	if err := requireRunnerTempOutput(outputDir); err != nil {
+		return err
+	}
+	repoRoot, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("resolve repository root: %w", err)
+	}
+	beforeDigest, beforeCount, err := observeRepositoryWriteSet(repoRoot)
+	if err != nil {
+		return err
 	}
 	cases, err := readCases(casesPath)
 	if err != nil {
@@ -58,12 +64,9 @@ func produce(policyPath, casesPath, outputDir string) error {
 	if err != nil {
 		return err
 	}
-	receipt, err := policycompilation.BuildReceipt(policy, artifact, judgeHash, cases, generated, independent)
+	receipt, err := policycompilation.BuildReceipt(policy, artifact, judgeHash, cases, generated, independent, policycompilation.WriteSetObservation{RepositoryBeforeDigest: beforeDigest, RepositoryBeforeCount: beforeCount, GeneratedRootClass: "RUNNER_TEMP_ONLY", GeneratedFiles: []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"}})
 	if err != nil {
 		return err
-	}
-	if err := policycompilation.VerifyReceipt(receipt, policy, artifact, judgeHash, cases); err != nil {
-		return fmt.Errorf("pre-write receipt verification: %w", err)
 	}
 	if err := os.MkdirAll(outputDir, 0o750); err != nil {
 		return fmt.Errorf("create output: %w", err)
@@ -83,69 +86,25 @@ func produce(policyPath, casesPath, outputDir string) error {
 	if err := writeJSON(filepath.Join(outputDir, "independent-results.json"), independent); err != nil {
 		return err
 	}
-	return writeJSON(filepath.Join(outputDir, "receipt.json"), receipt)
-}
-
-func verify(policyPath, casesPath, outputDir string) error {
-	source, err := os.ReadFile(policyPath)
-	if err != nil {
-		return fmt.Errorf("read policy: %w", err)
-	}
-	cases, err := readCases(casesPath)
+	afterDigest, afterCount, err := observeRepositoryWriteSet(repoRoot)
 	if err != nil {
 		return err
 	}
-	policy, err := policycompilation.Compile(source)
-	if err != nil {
+	receipt.WriteSet = WriteSetObservation{
+		RepositoryBeforeDigest: beforeDigest, RepositoryAfterDigest: afterDigest,
+		RepositoryBeforeCount: beforeCount, RepositoryAfterCount: afterCount,
+		RepositoryWriteChanged: beforeDigest != afterDigest,
+		GeneratedRootClass:     "RUNNER_TEMP_ONLY",
+		GeneratedFiles:         []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"},
+		MutationAuthority:      0, PromotionAuthority: 0,
+	}
+	if err := policycompilation.FinalizeReceipt(&receipt); err != nil {
 		return err
-	}
-	cases = bindCaseDigests(cases, policy.SourceDigest)
-	artifact, err := readJSON[policycompilation.PolicyArtifact](filepath.Join(outputDir, "artifact.json"))
-	if err != nil {
-		return err
-	}
-	judge, err := os.ReadFile(filepath.Join(outputDir, "judge.go"))
-	if err != nil {
-		return fmt.Errorf("read generated judge: %w", err)
-	}
-	judgeHash := policycompilation.DigestBytes(judge)
-	if err := policycompilation.VerifyCompiledArtifact(artifact, policy, judgeHash); err != nil {
-		return fmt.Errorf("consumer artifact verification: %w", err)
-	}
-	receipt, err := readJSON[policycompilation.Receipt](filepath.Join(outputDir, "receipt.json"))
-	if err != nil {
-		return err
-	}
-	generated, err := readJSON[[]policycompilation.DecisionResult](filepath.Join(outputDir, "generated-results.json"))
-	if err != nil {
-		return err
-	}
-	independent, err := readJSON[[]policycompilation.DecisionResult](filepath.Join(outputDir, "independent-results.json"))
-	if err != nil {
-		return err
-	}
-	if len(generated) != len(cases) || len(independent) != len(cases) {
-		return errors.New("stored execution results do not cover the case denominator")
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-	for index, input := range cases {
-		replayed, err := policycompilation.ExecuteGenerated(ctx, judge, input)
-		if err != nil {
-			return err
-		}
-		if !sameResult(replayed, generated[index]) {
-			return fmt.Errorf("generated judge replay differs for case %q", input.ID)
-		}
-		expected := policycompilation.IndependentEvaluate(policy, input)
-		if !sameResult(expected, independent[index]) {
-			return fmt.Errorf("independent replay differs for case %q", input.ID)
-		}
 	}
 	if err := policycompilation.VerifyReceipt(receipt, policy, artifact, judgeHash, cases); err != nil {
-		return fmt.Errorf("consumer receipt verification: %w", err)
+		return fmt.Errorf("pre-write receipt verification: %w", err)
 	}
-	return nil
+	return writeJSON(filepath.Join(outputDir, "receipt.json"), receipt)
 }
 
 func executeAll(judge []byte, policy policycompilation.CompiledPolicy, cases []policycompilation.Case) ([]policycompilation.DecisionResult, []policycompilation.DecisionResult, error) {
@@ -164,10 +123,6 @@ func executeAll(judge []byte, policy policycompilation.CompiledPolicy, cases []p
 	return generated, independent, nil
 }
 
-func sameResult(left, right policycompilation.DecisionResult) bool {
-	return left.CaseID == right.CaseID && left.Decision == right.Decision && left.Stage == right.Stage && left.Step == right.Step && left.Reason == right.Reason && left.PolicyDigest == right.PolicyDigest && left.SemanticDigest == right.SemanticDigest && left.Denominator == right.Denominator
-}
-
 func readCases(path string) ([]policycompilation.Case, error) {
 	values, err := readJSON[[]policycompilation.Case](path)
 	if err != nil {
@@ -182,8 +137,11 @@ func readCases(path string) ([]policycompilation.Case, error) {
 			return nil, errors.New("case IDs must be non-empty and unique")
 		}
 		seen[value.ID] = true
-		if value.Expected != policycompilation.DecisionPass && value.Expected != policycompilation.DecisionFailClosed && value.Expected != policycompilation.DecisionUnknown {
-			return nil, fmt.Errorf("case %q has unsupported expected decision %q", value.ID, value.Expected)
+		if value.ValidatorExpectation != policycompilation.DecisionPass && value.ValidatorExpectation != policycompilation.DecisionFailClosed && value.ValidatorExpectation != policycompilation.DecisionUnknown {
+			return nil, fmt.Errorf("case %q has unsupported validator expectation %q", value.ID, value.ValidatorExpectation)
+		}
+		if value.EvidenceClass != policycompilation.EvidenceSyntheticFixture || value.Provenance == "" {
+			return nil, fmt.Errorf("case %q must declare synthetic-fixture evidence and provenance", value.ID)
 		}
 	}
 	return values, nil
@@ -203,6 +161,39 @@ func bindCaseDigests(cases []policycompilation.Case, sourceDigest string) []poli
 		}
 	}
 	return bound
+}
+
+func requireRunnerTempOutput(path string) error {
+	runnerTemp := os.Getenv("RUNNER_TEMP")
+	if runnerTemp == "" {
+		return errors.New("RUNNER_TEMP is required: generated files must stay outside the repository")
+	}
+	output, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("resolve output path: %w", err)
+	}
+	temp, err := filepath.Abs(runnerTemp)
+	if err != nil {
+		return fmt.Errorf("resolve runner temp: %w", err)
+	}
+	relative, err := filepath.Rel(temp, output)
+	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(os.PathSeparator)) {
+		return fmt.Errorf("output %q is not inside RUNNER_TEMP", output)
+	}
+	return nil
+}
+
+func observeRepositoryWriteSet(repoRoot string) (string, int, error) {
+	command := exec.Command("git", "-C", repoRoot, "status", "--porcelain=v1", "--untracked-files=all")
+	output, err := command.Output()
+	if err != nil {
+		return "", 0, fmt.Errorf("observe repository write set: %w", err)
+	}
+	trimmed := strings.TrimSpace(string(output))
+	if trimmed == "" {
+		return policycompilation.DigestBytes(output), 0, nil
+	}
+	return policycompilation.DigestBytes(output), len(strings.Split(trimmed, "\n")), nil
 }
 
 func writeJSON(path string, value any) error {

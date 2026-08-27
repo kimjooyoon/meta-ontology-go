@@ -6,7 +6,7 @@ import (
 	"sort"
 )
 
-func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash string, cases []Case, generated, independent []DecisionResult) (Receipt, error) {
+func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash string, cases []Case, generated, independent []DecisionResult, writeSet WriteSetObservation) (Receipt, error) {
 	if len(cases) != len(generated) || len(cases) != len(independent) {
 		return Receipt{}, errors.New("case and execution result counts differ")
 	}
@@ -36,34 +36,38 @@ func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash stri
 		Cases:        make([]CaseReceipt, 0, len(cases)),
 		Summary:      CaseSummary{CaseCount: len(cases)},
 		Claims:       ClaimLedger{Schema: ClaimLedgerSchema, Events: make([]ClaimTransition, 0, len(cases)*FixedDenominator*2)},
-		Verification: Verification{Decision: VerificationPass, IndependentReplayed: true, GeneratedReplayed: true, LedgerVerified: true, FixedDenominator: policy.Denominator, CaseDenominator: len(cases)},
+		Verification: Verification{Decision: VerificationPass, ConformanceDecision: VerificationPass, SubjectResolution: SubjectUnresolved, IndependentReplayed: true, GeneratedReplayed: true, LedgerVerified: true, FixedDenominator: policy.Denominator, CaseDenominator: len(cases)},
+		Evidence:     make([]EvidenceObservation, 0, len(cases)), WriteSet: writeSet,
 	}
 	prior := ""
 	for _, index := range order {
 		input, generatedResult, independentResult := cases[index], generated[index], independent[index]
 		sourceResult := EvaluateSourcePolicy(policy, input)
-		caseReceipt := CaseReceipt{ID: input.ID, Expected: input.Expected, Source: sourceResult, Generated: generatedResult, Independent: independentResult}
+		observationDigest := observationDigest(input)
+		caseReceipt := CaseReceipt{ID: input.ID, ValidatorExpectation: input.ValidatorExpectation, EvidenceClass: input.EvidenceClass, ObservationDigest: observationDigest, Provenance: input.Provenance, Source: sourceResult, Generated: generatedResult, Independent: independentResult}
+		receipt.Evidence = append(receipt.Evidence, EvidenceObservation{Class: input.EvidenceClass, CaseID: input.ID, ProducerAvailable: input.ProducerAvailable, ConsumerAvailable: input.ConsumerAvailable, SourceDigest: input.ObservedSourceDigest, ArtifactDigest: artifactDigest(artifact), ObservationDigest: observationDigest, Provenance: input.Provenance})
 		caseReceipt.ClaimStartDigest = prior
 		for _, rule := range policy.Rules {
 			claimID := claimID(input.ID, rule)
 			prior = appendClaimEvent(&receipt.Claims, ClaimTransition{
 				ClaimID: claimID, From: ClaimUnrecorded, To: ClaimOpen,
-				Decision: generatedResult.Decision, Stage: rule.Stage, Step: rule.Step, Reason: "CLAIM_OPENED", PriorDigest: prior,
+				Decision: generatedResult.Decision, Stage: rule.Stage, Step: rule.Step, Reason: "CLAIM_OPENED", ObservationDigest: observationDigest, Provenance: input.Provenance, PriorDigest: prior,
 			}, prior)
 		}
 		for _, rule := range policy.Rules {
 			to, reason := claimOutcome(rule, generatedResult)
 			prior = appendClaimEvent(&receipt.Claims, ClaimTransition{
 				ClaimID: claimID(input.ID, rule), From: ClaimOpen, To: to,
-				Decision: generatedResult.Decision, Stage: rule.Stage, Step: rule.Step, Reason: reason, PriorDigest: prior,
+				Decision: generatedResult.Decision, Stage: rule.Stage, Step: rule.Step, Reason: reason, ObservationDigest: observationDigest, Provenance: input.Provenance, PriorDigest: prior,
 			}, prior)
 		}
 		caseReceipt.ClaimEndDigest = prior
 		caseReceipt.AllDecisionsEquivalent = sameDecision(sourceResult, generatedResult) && sameDecision(sourceResult, independentResult)
 		caseReceipt.DecisionsEquivalent = sameDecision(generatedResult, independentResult)
-		caseReceipt.ExpectedDecisionConfirmed = sourceResult.Decision == input.Expected && generatedResult.Decision == input.Expected && independentResult.Decision == input.Expected
-		if !caseReceipt.AllDecisionsEquivalent || !caseReceipt.DecisionsEquivalent || !caseReceipt.ExpectedDecisionConfirmed {
+		caseReceipt.ValidatorExpectationConfirmed = sourceResult.Decision == input.ValidatorExpectation && generatedResult.Decision == input.ValidatorExpectation && independentResult.Decision == input.ValidatorExpectation
+		if !caseReceipt.AllDecisionsEquivalent || !caseReceipt.DecisionsEquivalent || !caseReceipt.ValidatorExpectationConfirmed {
 			receipt.Verification.Decision = VerificationFail
+			receipt.Verification.ConformanceDecision = VerificationFail
 		}
 		if generatedResult.Decision == DecisionPass {
 			receipt.Summary.PassCount++
@@ -75,8 +79,8 @@ func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash stri
 		if caseReceipt.DecisionsEquivalent {
 			receipt.Summary.GeneratedIndependentEqual++
 		}
-		if caseReceipt.ExpectedDecisionConfirmed {
-			receipt.Summary.ExpectedDecisionsConfirmed++
+		if caseReceipt.ValidatorExpectationConfirmed {
+			receipt.Summary.ValidatorExpectationsConfirmed++
 		}
 		if caseReceipt.AllDecisionsEquivalent {
 			receipt.Summary.SourceAllEquivalent++
@@ -85,7 +89,7 @@ func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash stri
 	}
 	receipt.Claims.EventCount = len(receipt.Claims.Events)
 	receipt.Claims.HeadDigest = prior
-	if receipt.Summary.CaseCount != ExpectedCaseCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.SourceAllEquivalent != len(cases) || receipt.Summary.ExpectedDecisionsConfirmed != len(cases) {
+	if receipt.Summary.CaseCount != ExpectedCaseCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.SourceAllEquivalent != len(cases) || receipt.Summary.ValidatorExpectationsConfirmed != len(cases) {
 		return Receipt{}, fmt.Errorf("case conformance is incomplete: %#v", receipt.Summary)
 	}
 	var err error
@@ -96,8 +100,22 @@ func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash stri
 	return receipt, nil
 }
 
+func FinalizeReceipt(receipt *Receipt) error {
+	digest, err := receiptDigest(*receipt)
+	if err != nil {
+		return err
+	}
+	receipt.ReceiptDigest = digest
+	return nil
+}
+
 func artifactDigest(artifact PolicyArtifact) string {
 	digest, _ := digestJSON(artifact)
+	return digest
+}
+
+func observationDigest(input Case) string {
+	digest, _ := digestJSON(input)
 	return digest
 }
 

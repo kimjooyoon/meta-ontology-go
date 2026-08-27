@@ -1,38 +1,54 @@
 package policycompilation
 
-// EvaluateSourcePolicy interprets the source-bound semantic contract directly.
-// It is a third observation: the generated judge is executable code, while
-// this path reads the compiled policy contract and applies its fail-closed
-// decision table without consulting either execution result.
+// EvaluateSourcePolicy interprets the reduction rows emitted by the Gooo
+// source. The source supplies every output value; this function only provides
+// the typed evidence predicates that the schema permits.
 func EvaluateSourcePolicy(policy CompiledPolicy, input Case) DecisionResult {
-	result := DecisionResult{
-		CaseID: input.ID, PolicyDigest: policy.SourceDigest,
-		SemanticDigest: policy.SemanticDigest, Denominator: policy.Denominator,
+	result := baseResult(policy, input)
+	if !safePolicyShape(policy) {
+		return safetyFailure(result, "FIXED_DENOMINATOR_CHANGED")
 	}
-	if policy.Denominator != FixedDenominator || len(policy.Rules) != FixedDenominator {
-		result.Decision, result.Stage, result.Step, result.Reason = DecisionFailClosed, "COMPILE", 3, "FIXED_DENOMINATOR_CHANGED"
-		return result
+	for _, rule := range policy.Reduction.Rules {
+		if sourceConditionMatches(rule.Condition, policy.SourceDigest, input) {
+			return applyDecisionRule(result, rule)
+		}
 	}
-	if input.ProducerAvailable && input.ConsumerAvailable {
-		if input.ObservedSourceDigest == "" || input.ObservedArtifactSourceDigest == "" || input.ObservedIndependentDigest == "" {
-			result.Decision, result.Stage, result.Step, result.Reason = DecisionUnknown, "VERIFY", 4, "DIGEST_UNAVAILABLE"
-			return result
-		}
-		if input.ObservedSourceDigest != policy.SourceDigest {
-			result.Decision, result.Stage, result.Step, result.Reason = DecisionFailClosed, "REDUCE", 7, "SOURCE_DIGEST_MISMATCH"
-			return result
-		}
-		if input.ObservedArtifactSourceDigest != policy.SourceDigest {
-			result.Decision, result.Stage, result.Step, result.Reason = DecisionFailClosed, "CONSUME", 2, "ARTIFACT_SOURCE_MISMATCH"
-			return result
-		}
-		if input.ObservedIndependentDigest != policy.SourceDigest {
-			result.Decision, result.Stage, result.Step, result.Reason = DecisionFailClosed, "VERIFY", 4, "INDEPENDENT_SOURCE_MISMATCH"
-			return result
-		}
-		result.Decision, result.Stage, result.Step, result.Reason = DecisionPass, "REDUCE", 7, "SEMANTIC_EQUIVALENCE_PROVED"
-		return result
+	return safetyFailure(result, "NO_REDUCTION_RULE_MATCHED")
+}
+
+func baseResult(policy CompiledPolicy, input Case) DecisionResult {
+	return DecisionResult{CaseID: input.ID, PolicyDigest: policy.SourceDigest, SemanticDigest: policy.SemanticDigest, Denominator: policy.Denominator}
+}
+
+func safePolicyShape(policy CompiledPolicy) bool {
+	return policy.Denominator == FixedDenominator && len(policy.Rules) == FixedDenominator && policy.Reduction.Schema == ReductionSchema && len(policy.Reduction.Rules) == ReductionRuleCount
+}
+
+func sourceConditionMatches(condition, sourceDigest string, input Case) bool {
+	switch condition {
+	case ConditionEvidenceUnavailable:
+		return !input.ProducerAvailable || !input.ConsumerAvailable
+	case ConditionDigestUnavailable:
+		return input.ProducerAvailable && input.ConsumerAvailable && (input.ObservedSourceDigest == "" || input.ObservedArtifactSourceDigest == "" || input.ObservedIndependentDigest == "")
+	case ConditionSourceMismatch:
+		return input.ProducerAvailable && input.ConsumerAvailable && input.ObservedSourceDigest != "" && input.ObservedArtifactSourceDigest != "" && input.ObservedIndependentDigest != "" && input.ObservedSourceDigest != sourceDigest
+	case ConditionArtifactMismatch:
+		return input.ProducerAvailable && input.ConsumerAvailable && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest != "" && input.ObservedArtifactSourceDigest != sourceDigest
+	case ConditionIndependentMismatch:
+		return input.ProducerAvailable && input.ConsumerAvailable && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest != "" && input.ObservedIndependentDigest != sourceDigest
+	case ConditionSemanticEquivalence:
+		return input.ProducerAvailable && input.ConsumerAvailable && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest == sourceDigest
+	default:
+		return false
 	}
-	result.Decision, result.Stage, result.Step, result.Reason = DecisionUnknown, "VERIFY", 4, "EVIDENCE_UNAVAILABLE"
+}
+
+func applyDecisionRule(result DecisionResult, rule DecisionRule) DecisionResult {
+	result.Decision, result.Stage, result.Step, result.Reason = rule.Decision, rule.Stage, rule.Step, rule.Reason
+	return result
+}
+
+func safetyFailure(result DecisionResult, reason string) DecisionResult {
+	result.Decision, result.Stage, result.Step, result.Reason = DecisionFailClosed, "COMPILE", 3, reason
 	return result
 }

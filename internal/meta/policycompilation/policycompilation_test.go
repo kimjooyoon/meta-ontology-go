@@ -24,10 +24,18 @@ func TestCompilePolicyBindsEightMeaningfulObligations(t *testing.T) {
 	}
 }
 
-func TestCompileRejectsSemanticMetadataDrift(t *testing.T) {
+func TestCompileAcceptsSemanticMetadataIntervention(t *testing.T) {
 	source := strings.Replace(policyFixture(t), "reason=SOURCE_BOUND", "reason=SOURCE_LIED", 1)
-	if _, err := Compile([]byte(source)); err == nil {
-		t.Fatal("semantic metadata drift was accepted")
+	changed, err := Compile([]byte(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	original, err := Compile(policyFixture(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if changed.SemanticDigest == original.SemanticDigest || changed.Rules[0].Reason != "SOURCE_LIED" {
+		t.Fatalf("semantic intervention did not change source-derived policy: %#v", changed)
 	}
 }
 
@@ -36,11 +44,11 @@ func TestIndependentEvaluatorHasPassFailClosedAndUnknownCases(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pass := Case{ID: "pass", Expected: DecisionPass, ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest}
+	pass := Case{ID: "pass", ValidatorExpectation: DecisionPass, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest}
 	fail := pass
-	fail.ID, fail.Expected, fail.ObservedSourceDigest = "fail", DecisionFailClosed, "sha256:drift"
+	fail.ID, fail.ValidatorExpectation, fail.ObservedSourceDigest = "fail", DecisionFailClosed, "sha256:drift"
 	unknown := pass
-	unknown.ID, unknown.Expected, unknown.ConsumerAvailable = "unknown", DecisionUnknown, false
+	unknown.ID, unknown.ValidatorExpectation, unknown.ConsumerAvailable = "unknown", DecisionUnknown, false
 	for _, test := range []struct {
 		input Case
 		want  string
@@ -57,9 +65,9 @@ func TestReceiptCarriesFixedDenominatorAndAppendOnlyLedger(t *testing.T) {
 		t.Fatal(err)
 	}
 	cases := []Case{
-		{ID: "pass", Expected: DecisionPass, ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
-		{ID: "fail", Expected: DecisionFailClosed, ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: "sha256:drift", ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
-		{ID: "unknown", Expected: DecisionUnknown, ProducerAvailable: true, ConsumerAvailable: false, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
+		{ID: "pass", ValidatorExpectation: DecisionPass, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
+		{ID: "fail", ValidatorExpectation: DecisionFailClosed, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: "sha256:drift", ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
+		{ID: "unknown", ValidatorExpectation: DecisionUnknown, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: false, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
 	}
 	judge := GenerateJudge(policy)
 	judgeHash := DigestBytes(judge)
@@ -71,14 +79,14 @@ func TestReceiptCarriesFixedDenominatorAndAppendOnlyLedger(t *testing.T) {
 		generated = append(generated, result)
 		independent = append(independent, result)
 	}
-	receipt, err := BuildReceipt(policy, artifact, judgeHash, cases, generated, independent)
+	receipt, err := BuildReceipt(policy, artifact, judgeHash, cases, generated, independent, WriteSetObservation{RepositoryBeforeDigest: "sha256:unchanged", RepositoryAfterDigest: "sha256:unchanged", GeneratedRootClass: "RUNNER_TEMP_ONLY", GeneratedFiles: []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if receipt.Claims.EventCount != ExpectedCaseCount*FixedDenominator*2 || receipt.Summary.PassCount != 1 || receipt.Summary.FailClosedCount != 1 || receipt.Summary.UnknownCount != 1 {
 		t.Fatalf("unexpected receipt summary: %#v", receipt)
 	}
-	if receipt.Summary.SourceAllEquivalent != ExpectedCaseCount || len(receipt.Cases) != ExpectedCaseCount || !receipt.Cases[0].AllDecisionsEquivalent {
+	if receipt.Summary.SourceAllEquivalent != ExpectedCaseCount || receipt.Summary.ValidatorExpectationsConfirmed != ExpectedCaseCount || len(receipt.Cases) != ExpectedCaseCount || !receipt.Cases[0].AllDecisionsEquivalent {
 		t.Fatalf("source lineage is incomplete: %#v", receipt.Summary)
 	}
 	if err := VerifyReceipt(receipt, policy, artifact, judgeHash, cases); err != nil {

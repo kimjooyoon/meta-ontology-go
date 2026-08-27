@@ -9,28 +9,38 @@ another policy DSL”.
 ## Source, compiler, and proof boundary
 
 `examples/meta-policy-compilation/policy.gooo` is the authority for the policy
-steps. Each of its eight activities has a `computes` value carrying the
-semantic fields `role`, `meta-operation`, `proof-choice`, `stage`, `step`,
-`reason`, and `claim`. The compiler lowers this file through the semantic IR,
-checks those fields against the fixed experiment ontology, and sorts by `step`.
-Changing declaration order therefore cannot change the compiled meaning;
-changing an activity, metadata value, or stable source identity is rejected.
+steps and its reduction. Each of its eight activities has a `computes` value
+carrying source-supplied semantic fields `role`, `meta-operation`,
+`proof-choice`, `stage`, `step`, `reason`, and `claim`. The reduction activity
+also carries six typed source rules that supply the output decision, stage,
+step, and reason. The compiler lowers this file through the semantic IR and
+checks only schema, token, cardinality, uniqueness, and safety invariants;
+there is no Go-side list of the eight correct rule values. Changing declaration
+order does not change the compiled meaning, while changing a source value is a
+semantic intervention.
 
-The source interpreter reads the compiled semantic contract and applies the
-decision table directly. The generated judge is a standalone Go program. It
-receives only structured evidence and returns `PASS`, `FAIL_CLOSED`, or
-`UNKNOWN` plus a stage/step/reason coordinate. The independent verifier is a
-separate implementation in the repository package. A consumer replays all
-three observations and compares the full decision coordinate, not only the
-decision label.
+The source interpreter reads the source-compiled reduction. The generated
+judge is a standalone Go program containing those reduction rows and the
+schema's typed evidence predicates; it receives only structured evidence and
+returns the source-supplied decision coordinate. The producer's independent
+check also interprets the compiled rows, while the separate consumer binary
+parses/lowers raw `.gooo` and raw cases itself and reconstructs the results
+without importing the producer compiler, generated template, or
+`IndependentEvaluate`.
 
 The fixed denominator is eight policy obligations. The case denominator is
-three: one pass, one fail-closed source drift, and one unknown missing-consumer
-case. Every case gets eight `UNRECORDED -> OPEN` claim registrations followed
-by eight persistent outcome transitions. The receipt therefore contains exactly
-48 chained events, each carrying the previous event digest; no later event can
-silently rewrite an earlier assertion. The source, generated, and independent
-decisions must all agree for all three cases.
+three synthetic fixtures: one pass, one fail-closed source drift, and one
+unknown missing-consumer case. `validator_expectation` is a validator oracle,
+not producer authority. Every case gets eight `UNRECORDED -> OPEN` claim
+registrations followed by eight persistent outcome transitions. Each transition
+carries the case observation digest and provenance. The receipt therefore
+contains exactly 48 chained events. Separately, the consumer observes the
+runner-temp artifact as `CURRENT_EVIDENCE` and emits subject resolution; this
+is not conflated with synthetic conformance.
+
+The producer also records a before/after repository write-set observation. The
+generated six-file bundle is classified `RUNNER_TEMP_ONLY`, with mutation and
+promotion authority both explicitly `0`.
 
 ## Research basis and limits
 
@@ -57,10 +67,11 @@ of this experiment:
    executions are evidence of this modeled contract, not a universal
    compiler-correctness theorem.
 
-The experiment is falsifiable. It fails closed if the fixed denominator changes,
-an activity's semantic metadata changes, the producer and artifact source
-digests differ, the independent verifier disagrees with the generated judge,
-the expected case result changes, or any claim event is edited, removed, or
-reordered. It remains `UNKNOWN` when required evidence is unavailable. A future
-extension would need to add a new semantic rule and proof obligation rather
-than silently widening this ontology.
+The experiment is falsifiable. It fails closed if the schema safety shape,
+source-derived reduction, producer/artifact source digests, generated result,
+independent reconstruction, or claim chain diverge. It remains `UNKNOWN` when
+required evidence is unavailable. CI performs a semantic intervention that
+changes a reduction reason and claim transition, plus a comment-only
+intervention that changes only the raw digest while preserving semantic digest
+and normalized generated behavior. This remains evidence for the modeled
+contract, not a machine-checked universal compiler theorem.

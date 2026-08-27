@@ -9,11 +9,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // GenerateJudge emits a standalone Go program. It has no import path into the
 // repository, so the execution evidence is independent of this package.
 func GenerateJudge(policy CompiledPolicy) []byte {
+	reduction := makeReductionLiteral(policy.Reduction)
 	return []byte(fmt.Sprintf(`package main
 
 import (
@@ -41,9 +43,40 @@ type result struct {
 	Denominator int %q
 }
 
+type decisionRule struct {
+	Condition string
+	Decision string
+	Stage string
+	Step int
+	Reason string
+}
+
 const policyDigest = %q
 const semanticDigest = %q
 const policyDenominator = %d
+const fixedDenominator = %d
+
+var reduction = []decisionRule{%s}
+
+func matches(condition string, value input) bool {
+	available := value.ProducerAvailable && value.ConsumerAvailable
+	switch condition {
+	case "EVIDENCE_UNAVAILABLE":
+		return !available
+	case "DIGEST_UNAVAILABLE":
+		return available && (value.ObservedSourceDigest == "" || value.ObservedArtifactSourceDigest == "" || value.ObservedIndependentDigest == "")
+	case "SOURCE_DIGEST_MISMATCH":
+		return available && value.ObservedSourceDigest != "" && value.ObservedArtifactSourceDigest != "" && value.ObservedIndependentDigest != "" && value.ObservedSourceDigest != policyDigest
+	case "ARTIFACT_SOURCE_MISMATCH":
+		return available && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest != "" && value.ObservedArtifactSourceDigest != policyDigest
+	case "INDEPENDENT_SOURCE_MISMATCH":
+		return available && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest == policyDigest && value.ObservedIndependentDigest != "" && value.ObservedIndependentDigest != policyDigest
+	case "SEMANTIC_EQUIVALENCE":
+		return available && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest == policyDigest && value.ObservedIndependentDigest == policyDigest
+	default:
+		return false
+	}
+}
 
 func main() {
 	var value input
@@ -51,24 +84,32 @@ func main() {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&value); err != nil { os.Exit(2) }
 	output := result{CaseID: value.ID, PolicyDigest: policyDigest, SemanticDigest: semanticDigest, Denominator: policyDenominator}
-	if policyDenominator != %d {
+	if policyDenominator != fixedDenominator {
 		output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "COMPILE", 3, "FIXED_DENOMINATOR_CHANGED"
-	} else if !value.ProducerAvailable || !value.ConsumerAvailable {
-		output.Decision, output.Stage, output.Step, output.Reason = "UNKNOWN", "VERIFY", 4, "EVIDENCE_UNAVAILABLE"
-	} else if value.ObservedSourceDigest == "" || value.ObservedArtifactSourceDigest == "" || value.ObservedIndependentDigest == "" {
-		output.Decision, output.Stage, output.Step, output.Reason = "UNKNOWN", "VERIFY", 4, "DIGEST_UNAVAILABLE"
-	} else if value.ObservedSourceDigest != policyDigest {
-		output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "REDUCE", 7, "SOURCE_DIGEST_MISMATCH"
-	} else if value.ObservedArtifactSourceDigest != policyDigest {
-		output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "CONSUME", 2, "ARTIFACT_SOURCE_MISMATCH"
-	} else if value.ObservedIndependentDigest != policyDigest {
-		output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "VERIFY", 4, "INDEPENDENT_SOURCE_MISMATCH"
 	} else {
-		output.Decision, output.Stage, output.Step, output.Reason = "PASS", "REDUCE", 7, "SEMANTIC_EQUIVALENCE_PROVED"
+		matched := false
+		for _, rule := range reduction {
+			if matches(rule.Condition, value) {
+				output.Decision, output.Stage, output.Step, output.Reason = rule.Decision, rule.Stage, rule.Step, rule.Reason
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "COMPILE", 3, "NO_REDUCTION_RULE_MATCHED"
+		}
 	}
 	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil { os.Exit(3) }
 }
-`, `json:"id"`, `json:"producer_available"`, `json:"consumer_available"`, `json:"observed_source_digest"`, `json:"observed_artifact_source_digest"`, `json:"observed_independent_digest"`, `json:"case_id"`, `json:"decision"`, `json:"stage"`, `json:"step"`, `json:"reason"`, `json:"policy_digest"`, `json:"semantic_digest"`, `json:"fixed_denominator"`, policy.SourceDigest, policy.SemanticDigest, policy.Denominator, FixedDenominator))
+`, `json:"id"`, `json:"producer_available"`, `json:"consumer_available"`, `json:"observed_source_digest"`, `json:"observed_artifact_source_digest"`, `json:"observed_independent_digest"`, `json:"case_id"`, `json:"decision"`, `json:"stage"`, `json:"step"`, `json:"reason"`, `json:"policy_digest"`, `json:"semantic_digest"`, `json:"fixed_denominator"`, policy.SourceDigest, policy.SemanticDigest, policy.Denominator, FixedDenominator, reduction))
+}
+
+func makeReductionLiteral(reduction DecisionReduction) string {
+	var builder strings.Builder
+	for _, rule := range reduction.Rules {
+		fmt.Fprintf(&builder, "{Condition:%q, Decision:%q, Stage:%q, Step:%d, Reason:%q},", rule.Condition, rule.Decision, rule.Stage, rule.Step, rule.Reason)
+	}
+	return builder.String()
 }
 
 func ExecuteGenerated(ctx context.Context, judgeSource []byte, input Case) (DecisionResult, error) {
