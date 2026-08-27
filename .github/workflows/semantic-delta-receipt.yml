@@ -79,19 +79,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          out="$RUNNER_TEMP/semantic-delta-receipt"
+          mkdir -p "$out"
+          workspace_snapshot() {
+            { git ls-files; git ls-files --others --exclude-standard; } | sort -u
+          }
+          case "$out" in "$RUNNER_TEMP"/*) ;; *) exit 1 ;; esac
+          workspace_snapshot > "$out/workspace-before.txt"
           go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
           test -z "$(rg -n 'internal/meta/languageassurance/semanticdeltareceipt\"' internal/meta/languageassurance/semanticdeltareceiptconsumer --glob '*.go' || true)"
           go test ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
-          out="$RUNNER_TEMP/semantic-delta-receipt"
-          mkdir -p "$out"
           for pass in first second; do
             go run ./cmd/semantic-delta-receipt-witness \
               --case suite --subject-sha "$HEAD_SHA" --output "$out/$pass.json"
           done
           cmp "$out/first.json" "$out/second.json"
-          jq -e '
+          jq -e --arg output "$out/first.json" '
             .schema == "gooo/semantic-delta-receipt-conformance/v1" and
             .decision == "FIXED_POINT" and .resolution == "EXACT" and
+            .contract_reproduction == "FIXED_THREE_CASE_CONTRACT_REPRODUCED" and
+            .subject_semantic_equivalence == "NOT_ASSERTED" and .output_path == $output and
+            ([.source_paths[]] | length) == 6 and
             .summary.cases_total == 3 and .summary.cases_passed == 3 and
             .coverage_bps == 10000 and .summary.textual_changes == 3 and
             .summary.structural_observations == 3 and
@@ -100,6 +108,7 @@ jobs:
             .summary.semantic_preserved == 1 and
             .summary.semantic_changed == 1 and .summary.indeterminate == 1 and
             .summary.repository_writes == 0 and
+            ([.cases[] | select((.report.source_paths | length) == 2 and .report.output_path == "")] | length) == 3 and
             ([.cases[] | select(.passed == true)] | length) == 3 and
             ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length) == 3 and
             ([.cases[0].report.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and
@@ -123,13 +132,13 @@ jobs:
           go run ./cmd/semantic-delta-receipt-witness \
             --before "$root/before.gooo" --after "$root/indeterminate-after.gooo" \
             --subject-sha "$HEAD_SHA" --output "$out/indeterminate.json"
-          jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_PRESERVED" and .receipt.before.semantic_digest == .receipt.after.semantic_digest and .receipt.claim_transitions[0].to_status == "DISCHARGED" and .receipt.classification == "SEMANTIC_PRESERVED" and .receipt.textual_delta.changed == true and (.receipt.structural_delta.added_nodes | length) == 0 and .independent_verdict.passed == true' "$out/equivalent.json"
-          jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .receipt.before.semantic_digest != .receipt.after.semantic_digest and .receipt.classification == "SEMANTIC_CHANGED" and (.receipt.semantic_claim_delta.changed | length) == 1 and ([.receipt.claim_transitions[] | select(.to_status == "REFUTED")] | length) == 2 and .independent_verdict.passed == true' "$out/semantic-change.json"
-          jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.classification == "INDETERMINATE" and .receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "UNKNOWN" and .independent_verdict.passed == true and .repository_writes == 0' "$out/indeterminate.json"
+          jq -e --arg before "$root/before.gooo" --arg after "$root/equivalent-after.gooo" --arg output "$out/equivalent.json" '.source_paths == [$before, $after] and .output_path == $output and .repository_writes == 0 and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_PRESERVED" and .receipt.before.semantic_digest == .receipt.after.semantic_digest and .receipt.claim_transitions[0].kind == "BOUNDED_SEMANTIC_EQUIVALENCE" and .receipt.claim_transitions[0].to_status == "DISCHARGED" and ([.receipt.claim_transitions[] | select(.kind == "BEFORE_CLAIM_PRESERVATION" and .to_status == "DISCHARGED")] | length) == 2 and ([.receipt.claim_transitions[] | select(.to_status == "REFUTED")] | length) == 0 and .receipt.classification == "SEMANTIC_PRESERVED" and .receipt.textual_delta.changed == true and (.receipt.structural_delta.added_nodes | length) == 0 and .independent_verdict.passed == true' "$out/equivalent.json"
+          jq -e --arg before "$root/before.gooo" --arg after "$root/semantic-after.gooo" --arg output "$out/semantic-change.json" '.source_paths == [$before, $after] and .output_path == $output and .repository_writes == 0 and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .receipt.before.semantic_digest != .receipt.after.semantic_digest and .receipt.classification == "SEMANTIC_CHANGED" and (.receipt.semantic_claim_delta.changed | length) == 1 and ([.receipt.claim_transitions[] | select(.kind == "BOUNDED_SEMANTIC_EQUIVALENCE" and .to_status == "REFUTED")] | length) == 1 and ([.receipt.claim_transitions[] | select(.kind == "BEFORE_CLAIM_PRESERVATION" and .to_status == "REFUTED")] | length) == 1 and ([.receipt.claim_transitions[] | select(.kind == "OBJECT_PROPOSITION" and .to_status == "DISCHARGED")] | length) == 1 and ([.receipt.claim_transitions[] | select(.to_status == "REFUTED")] | length) == 2 and .independent_verdict.passed == true' "$out/semantic-change.json"
+          jq -e --arg before "$root/before.gooo" --arg after "$root/indeterminate-after.gooo" --arg output "$out/indeterminate.json" '.source_paths == [$before, $after] and .output_path == $output and .repository_writes == 0 and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.classification == "INDETERMINATE" and .receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "project-source" and .receipt.step == "parse-lower" and .receipt.reason == "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE" and .independent_verdict.passed == true' "$out/indeterminate.json"
           go run ./cmd/semantic-delta-receipt-witness \
             --before "$root/before.gooo" --after "$root/equivalent-after.gooo" \
             --subject-sha UNKNOWN --output "$out/unknown-subject.json"
-          jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "bind-subject" and .receipt.step == "resolve-subject" and .receipt.reason == "SEMANTIC_DELTA_SUBJECT_UNKNOWN" and .independent_verdict.passed == true' "$out/unknown-subject.json"
+          jq -e --arg before "$root/before.gooo" --arg after "$root/equivalent-after.gooo" --arg output "$out/unknown-subject.json" '.source_paths == [$before, $after] and .output_path == $output and .repository_writes == 0 and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "bind-subject" and .receipt.step == "resolve-subject" and .receipt.reason == "SEMANTIC_DELTA_SUBJECT_UNKNOWN" and .independent_verdict.passed == true' "$out/unknown-subject.json"
           sha256sum "$out"/*.json > "$out/manifest.sha256"
 
       - name: Check executable Gooo contract sources
@@ -139,6 +148,14 @@ jobs:
           go run ./cmd/gooo check examples/semantic-delta-receipt/before.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/equivalent-after.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/semantic-after.gooo
+          out="$RUNNER_TEMP/semantic-delta-receipt"
+          workspace_snapshot() {
+            { git ls-files; git ls-files --others --exclude-standard; } | sort -u
+          }
+          case "$out" in "$RUNNER_TEMP"/*) ;; *) exit 1 ;; esac
+          workspace_snapshot > "$out/workspace-after.txt"
+          comm -13 "$out/workspace-before.txt" "$out/workspace-after.txt" > "$out/workspace-write-set.txt"
+          test ! -s "$out/workspace-write-set.txt"
 
       - name: Upload semantic delta receipts
         if: always()

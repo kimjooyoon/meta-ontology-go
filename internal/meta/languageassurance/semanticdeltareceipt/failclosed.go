@@ -6,9 +6,9 @@ func unknownReceipt(receipt Receipt, before, after projectedSource, beforeErr, a
 	receipt.StructuralDelta = StructuralDelta{Status: "UNKNOWN"}
 	receipt.SemanticClaimDelta = ClaimDelta{Status: "UNKNOWN"}
 	receipt.RawDecision, receipt.SemanticDecision = receipt.TextualDelta.Decision, SemanticUnknown
-	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionUnknown, ClassIndeterminate, ReasonUnavailable
-	receipt.Stage, receipt.Step = "produce", "fail-closed"
-	receipt.ClaimTransitions = transitions(before, after, ClassIndeterminate, ReasonUnavailable)
+	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, ReasonUnavailable
+	receipt.Stage, receipt.Step = UnavailableStage, UnavailableStep
+	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(UnavailableStage, UnavailableStep, ReasonUnavailable)
 	if beforeErr == nil && afterErr != nil {
 		receipt.After.ParseReason = "UNSUPPORTED_GOOO_SOURCE"
 	}
@@ -25,7 +25,7 @@ func subjectUnknown(receipt Receipt) Receipt {
 	receipt.RawDecision, receipt.SemanticDecision = receipt.TextualDelta.Decision, SemanticUnknown
 	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, ReasonSubject
 	receipt.Stage, receipt.Step = SubjectStage, SubjectStep
-	receipt.ClaimTransitions = []ClaimTransition{{ClaimID: boundedEquivalenceClaim, FromStatus: StatusOpen, ToStatus: StatusOpen, Stage: SubjectStage, Step: SubjectStep, Reason: ReasonSubject}}
+	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(SubjectStage, SubjectStep, ReasonSubject)
 	sealReceipt(&receipt)
 	return receipt
 }

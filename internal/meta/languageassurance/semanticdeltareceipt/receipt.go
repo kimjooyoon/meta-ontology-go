@@ -22,14 +22,16 @@ type ClaimDelta struct {
 }
 
 type ClaimTransition struct {
-	ClaimID    string `json:"claim_id"`
-	FromStatus string `json:"from_status"`
-	ToStatus   string `json:"to_status"`
-	FromObject string `json:"from_object"`
-	ToObject   string `json:"to_object"`
-	Stage      string `json:"stage"`
-	Step       string `json:"step"`
-	Reason     string `json:"reason"`
+	ClaimID        string `json:"claim_id"`
+	Kind           string `json:"kind"`
+	FromStatus     string `json:"from_status"`
+	ToStatus       string `json:"to_status"`
+	FromObject     string `json:"from_object"`
+	ToObject       string `json:"to_object"`
+	PreservationOf string `json:"preservation_of,omitempty"`
+	Stage          string `json:"stage"`
+	Step           string `json:"step"`
+	Reason         string `json:"reason"`
 }
 
 type Receipt struct {
@@ -53,6 +55,7 @@ type Receipt struct {
 	TextualDelta       TextualDelta      `json:"textual_delta"`
 	StructuralDelta    StructuralDelta   `json:"structural_delta"`
 	SemanticClaimDelta ClaimDelta        `json:"semantic_claim_delta"`
+	ClaimLedger        []Claim           `json:"claim_ledger"`
 	ClaimTransitions   []ClaimTransition `json:"claim_transitions"`
 	RepositoryWrites   int               `json:"repository_writes"`
 	ReceiptDigest      string            `json:"receipt_digest"`

@@ -21,14 +21,17 @@ type Fact struct {
 }
 
 type Claim struct {
-	ID        string `json:"id"`
-	Subject   string `json:"subject"`
-	Predicate string `json:"predicate"`
-	Object    string `json:"object"`
-	Status    string `json:"status"`
-	Stage     string `json:"stage"`
-	Step      string `json:"step"`
-	Reason    string `json:"reason"`
+	ID                string `json:"id"`
+	Kind              string `json:"kind"`
+	Subject           string `json:"subject"`
+	Predicate         string `json:"predicate"`
+	Object            string `json:"object"`
+	Status            string `json:"status"`
+	Stage             string `json:"stage"`
+	Step              string `json:"step"`
+	Reason            string `json:"reason"`
+	PropositionDigest string `json:"proposition_digest"`
+	PreservationOf    string `json:"preservation_of,omitempty"`
 }
 
 type Snapshot struct {

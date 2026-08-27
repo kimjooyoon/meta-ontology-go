@@ -25,8 +25,13 @@ func TestProducerReadsCanonicalFixturePair(t *testing.T) {
 	if receipt.StructuralDelta.AddedNodes != nil || receipt.SemanticClaimDelta.Changed != nil {
 		t.Fatalf("presentation change was treated as semantic: %+v", receipt)
 	}
-	if len(receipt.ClaimTransitions) != 1 || receipt.ClaimTransitions[0].ToStatus != StatusDischarged {
+	if len(receipt.ClaimTransitions) != 3 || receipt.ClaimTransitions[0].Kind != ClaimKindBounded || receipt.ClaimTransitions[0].ToStatus != StatusDischarged {
 		t.Fatalf("transitions=%+v", receipt.ClaimTransitions)
+	}
+	for _, transition := range receipt.ClaimTransitions[1:] {
+		if transition.Kind != ClaimKindPreserve || transition.ToStatus != StatusDischarged {
+			t.Fatalf("presentation preservation=%+v", receipt.ClaimTransitions)
+		}
 	}
 }
 
@@ -38,7 +43,22 @@ func TestProducerRecordsSemanticClaimRefutation(t *testing.T) {
 	if receipt.Classification != ClassChanged || receipt.SemanticDecision != SemanticChanged || len(receipt.SemanticClaimDelta.Changed) != 1 {
 		t.Fatalf("receipt=%+v", receipt)
 	}
-	if receipt.ClaimTransitions[0].ToStatus != StatusRefuted {
+	if len(receipt.ClaimTransitions) != 4 || receipt.ClaimTransitions[0].ToStatus != StatusRefuted {
 		t.Fatalf("transitions=%+v", receipt.ClaimTransitions)
+	}
+	preserved, refuted, observed := 0, 0, 0
+	for _, transition := range receipt.ClaimTransitions[1:] {
+		if transition.Kind == ClaimKindPreserve && transition.ToStatus == StatusDischarged {
+			preserved++
+		}
+		if transition.Kind == ClaimKindPreserve && transition.ToStatus == StatusRefuted {
+			refuted++
+		}
+		if transition.Kind == ClaimKindObject && transition.ToStatus == StatusDischarged {
+			observed++
+		}
+	}
+	if preserved != 1 || refuted != 1 || observed != 1 {
+		t.Fatalf("semantic ledger transitions=%+v", receipt.ClaimTransitions)
 	}
 }

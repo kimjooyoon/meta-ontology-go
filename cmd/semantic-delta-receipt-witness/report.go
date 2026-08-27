@@ -11,6 +11,8 @@ type Report struct {
 	Schema             string                      `json:"schema"`
 	CaseID             string                      `json:"case_id"`
 	SubjectSHA         string                      `json:"subject_sha"`
+	SourcePaths        []string                    `json:"source_paths"`
+	OutputPath         string                      `json:"output_path"`
 	Receipt            producer.Receipt            `json:"receipt"`
 	IndependentVerdict consumer.Verdict            `json:"independent_verdict"`
 	Indicators         []producer.OperationBinding `json:"indicators"`
@@ -18,17 +20,17 @@ type Report struct {
 	ReportDigest       string                      `json:"report_digest"`
 }
 
-func evaluate(input producer.Input) Report {
+func evaluate(input producer.Input, outputPath string) Report {
 	receipt, err := producer.ProduceFiles(input)
 	if err != nil {
-		return Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, RepositoryWrites: 0, ReportDigest: "read-error"}
+		return Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, RepositoryWrites: 0, ReportDigest: "read-error"}
 	}
 	raw, _ := json.Marshal(receipt)
 	wire := consumer.Receipt{}
 	_ = json.Unmarshal(raw, &wire)
 	verdict := consumer.AdjudicateFiles(consumer.Input{CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, BeforePath: input.BeforePath, AfterPath: input.AfterPath}, wire)
 	summary := summaryFor(receipt, verdict)
-	report := Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, Receipt: receipt, IndependentVerdict: verdict, Indicators: bindings(summary), RepositoryWrites: 0}
+	report := Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, Receipt: receipt, IndependentVerdict: verdict, Indicators: bindings(summary), RepositoryWrites: 0}
 	sealReport(&report)
 	return report
 }
@@ -50,7 +52,7 @@ func summaryFor(receipt producer.Receipt, verdict consumer.Verdict) Summary {
 	case producer.ClassChanged:
 		result.SemanticChanged = 1
 	case producer.ClassIndeterminate:
-		result.Indeterminate, result.UnknownPaths = 1, boolInt(receipt.Resolution == producer.ResolutionUnknown)
+		result.Indeterminate, result.UnknownPaths = 1, boolInt(receipt.Resolution == producer.ResolutionLower)
 	}
 	return result
 }

@@ -37,14 +37,18 @@ The experiment adopts these rules:
 | Syntax and semantics are different observations | byte digests never decide semantic class |
 | Validation is per change pair | each receipt is rebuilt and adjudicated from its two raw sources |
 | Meaning is anchored to stable identities | nodes and claims use immutable IDs, not display order |
-| Approximation is not exact proof | unsupported syntax becomes `INDETERMINATE / FAIL_CLOSED` |
-| Evidence is read-only | `repository_writes` is fixed at `0`, and no activation is performed |
+| Approximation is not exact proof | unsupported syntax becomes `INDETERMINATE / FAIL_CLOSED / LOWER_RESOLUTION` |
+| Evidence is read-only | CI derives tracked-plus-untracked workspace writes and combines that empty set with reported source/output paths |
 
 The raw decision is recorded independently as `RAW_CHANGED` or
 `RAW_FIXED_POINT`; the semantic decision is separately recorded as
 `SEMANTIC_PRESERVED`, `SEMANTIC_CHANGED`, or `SEMANTIC_UNKNOWN`. An unknown
-subject is `LOWER_RESOLUTION` at stage `bind-subject`, step
-`resolve-subject`, with reason `SEMANTIC_DELTA_SUBJECT_UNKNOWN`.
+subject is `FAIL_CLOSED / LOWER_RESOLUTION` at stage `bind-subject`, step
+`resolve-subject`, with reason `SEMANTIC_DELTA_SUBJECT_UNKNOWN`. A parse or
+lowering failure is likewise `FAIL_CLOSED / LOWER_RESOLUTION` at stage
+`project-source`, step `parse-lower`, with reason
+`SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE`; there is no separate
+`resolution=UNKNOWN` state.
 
 The experiment rejects line-count equality as a semantic proof, raw text equality
 as equivalence, and a semantic-diff approximation promoted to `EXACT`. It also
@@ -58,7 +62,7 @@ The denominator is fixed at three cases and is never widened by the evaluator:
 | --- | --- | --- | --- | --- |
 | `equivalent` | changed | empty | empty | `SEMANTIC_PRESERVED / FIXED_POINT / EXACT` |
 | `semantic-change` | changed | one node plus one relation replacement | one changed claim | `SEMANTIC_CHANGED / DELTA_OBSERVED / EXACT` |
-| `indeterminate` | changed | unavailable | unavailable | `INDETERMINATE / FAIL_CLOSED / UNKNOWN` |
+| `indeterminate` | changed | unavailable | unavailable | `INDETERMINATE / FAIL_CLOSED / LOWER_RESOLUTION` |
 
 The suite reports `3/3 = 10000` basis points. Its fixed counts are textual
 changes `3`, structural observations `3`, semantic preservation `1`, semantic
@@ -77,7 +81,7 @@ textual_delta.changed && (structural_delta != empty || semantic_claim_delta != e
 ```
 
 If either projection cannot parse, the result is `INDETERMINATE` and
-`FAIL_CLOSED / UNKNOWN`. A receipt is accepted only if the independent
+`FAIL_CLOSED / LOWER_RESOLUTION` at the exact unavailable coordinates above. A receipt is accepted only if the independent
 adjudicator recomputes the text, structure, claims, transitions, digests, and
 classification from raw bytes. A digest or field mismatch is
 `INVARIANT_ONLY / FAIL_CLOSED`.
@@ -92,13 +96,29 @@ Every indicator carries its `producer`, `consumer`, `meta_operation`, `stage`,
   verdict agree; and
 - `REGRESSION` checks the no-write boundary.
 
-A transition records the claim ID, status before and after, object before and
-after, stage, step, and reason. Persistent statuses are `OPEN`, `DISCHARGED`,
-and `REFUTED`: presentation preservation discharges bounded equivalence,
-semantic change refutes it and records the changed claim, and indeterminate
-input leaves it open. Thus the semantic-change case can say exactly which
-claim moved from the payment output to the reversal output even though the
-textual edit is small.
+A transition records the claim ID, claim kind, status before and after, object
+before and after, stage, step, reason, and (for preservation rows) the
+preserved object claim ID. Object propositions and cross-version preservation
+propositions are separate persistent rows. Persistent statuses are `OPEN`,
+`DISCHARGED`, and `REFUTED`:
+
+- bounded semantic equivalence is `OPEN -> DISCHARGED` when preserved,
+  `OPEN -> REFUTED` when changed, and `OPEN -> OPEN` when indeterminate;
+- every before-object preservation row is discharged when the same proposition
+  remains and refuted when it changes or disappears;
+- after-only object propositions are source observations and are discharged by
+  the canonical observation; they are never refuted merely because they are
+  new.
+
+Object claim IDs are digests of their propositions, preservation IDs are
+digests of the preservation proposition, and the receipt retains both old rows
+and their transitions. The semantic-change case therefore refutes the old
+payment preservation proposition and discharges the new reversal observation;
+it does not claim that the reversal proposition is false.
+
+The conformance suite's `FIXED_POINT` decision means only that the fixed
+three-case contract was reproduced. `subject_semantic_equivalence` is recorded
+separately as `NOT_ASSERTED`.
 
 ## Falsifiability
 

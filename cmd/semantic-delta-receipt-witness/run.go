@@ -16,14 +16,14 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	if options.caseID == "suite" {
-		return writeJSON(options.output, runSuite(options.subjectSHA), stdout, stderr)
+		return writeJSON(options.output, runSuite(options.subjectSHA, options.output), stdout, stderr)
 	}
 	input, err := inputFor(options)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	return writeJSON(options.output, evaluate(input), stdout, stderr)
+	return writeJSON(options.output, evaluate(input, options.output), stdout, stderr)
 }
 
 func inputFor(options options) (producer.Input, error) {

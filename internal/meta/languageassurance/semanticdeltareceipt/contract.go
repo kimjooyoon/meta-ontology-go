@@ -14,7 +14,6 @@ const (
 	DecisionDelta       = "DELTA_OBSERVED"
 	DecisionFailClosed  = "FAIL_CLOSED"
 	ResolutionExact     = "EXACT"
-	ResolutionUnknown   = "UNKNOWN"
 	ResolutionLower     = "LOWER_RESOLUTION"
 	ResolutionInvariant = "INVARIANT_ONLY"
 	ClassPreserved      = "SEMANTIC_PRESERVED"
@@ -35,6 +34,11 @@ const (
 	ReasonSubject       = "SEMANTIC_DELTA_SUBJECT_UNKNOWN"
 	SubjectStage        = "bind-subject"
 	SubjectStep         = "resolve-subject"
+	UnavailableStage    = "project-source"
+	UnavailableStep     = "parse-lower"
+	ClaimKindBounded    = "BOUNDED_SEMANTIC_EQUIVALENCE"
+	ClaimKindObject     = "OBJECT_PROPOSITION"
+	ClaimKindPreserve   = "BEFORE_CLAIM_PRESERVATION"
 )
 
 type CaseDefinition struct {
@@ -51,6 +55,6 @@ func Denominator() []CaseDefinition {
 	return []CaseDefinition{
 		{"equivalent", "examples/semantic-delta-receipt/before.gooo", "examples/semantic-delta-receipt/equivalent-after.gooo", DecisionFixedPoint, ResolutionExact, ClassPreserved, ReasonTextualOnly},
 		{"semantic-change", "examples/semantic-delta-receipt/before.gooo", "examples/semantic-delta-receipt/semantic-after.gooo", DecisionDelta, ResolutionExact, ClassChanged, ReasonMeaning},
-		{"indeterminate", "examples/semantic-delta-receipt/before.gooo", "examples/semantic-delta-receipt/indeterminate-after.gooo", DecisionFailClosed, ResolutionUnknown, ClassIndeterminate, ReasonUnavailable},
+		{"indeterminate", "examples/semantic-delta-receipt/before.gooo", "examples/semantic-delta-receipt/indeterminate-after.gooo", DecisionFailClosed, ResolutionLower, ClassIndeterminate, ReasonUnavailable},
 	}
 }

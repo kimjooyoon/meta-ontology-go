@@ -6,7 +6,7 @@
   "cases": [
     {"id":"equivalent","decision":"FIXED_POINT","resolution":"EXACT","classification":"SEMANTIC_PRESERVED"},
     {"id":"semantic-change","decision":"DELTA_OBSERVED","resolution":"EXACT","classification":"SEMANTIC_CHANGED"},
-    {"id":"indeterminate","decision":"FAIL_CLOSED","resolution":"UNKNOWN","classification":"INDETERMINATE"}
+    {"id":"indeterminate","decision":"FAIL_CLOSED","resolution":"LOWER_RESOLUTION","classification":"INDETERMINATE"}
   ],
   "repository_writes": 0
 }

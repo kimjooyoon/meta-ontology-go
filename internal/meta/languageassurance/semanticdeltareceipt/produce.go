@@ -23,11 +23,11 @@ func produceBytes(input Input, beforeRaw, afterRaw []byte) Receipt {
 	beforeSource, beforeErr := projectSource(input.BeforePath, beforeRaw)
 	afterSource, afterErr := projectSource(input.AfterPath, afterRaw)
 	receipt := Receipt{Schema: ReceiptSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, Producer: Producer, Consumer: Consumer, MetaOperation: MetaOperation, ProofChoice: "FOUNDATION", Stage: "produce", Step: "separate-delta-layers", Before: snapshot(beforeRaw, beforeSource, beforeErr), After: snapshot(afterRaw, afterSource, afterErr), TextualDelta: textualDelta(beforeRaw, afterRaw), RepositoryWrites: 0}
-	if !validSubject(input.SubjectSHA) {
-		return subjectUnknown(receipt)
-	}
 	if beforeErr != nil || afterErr != nil {
 		return unknownReceipt(receipt, beforeSource, afterSource, beforeErr, afterErr)
+	}
+	if !validSubject(input.SubjectSHA) {
+		return subjectUnknown(receipt)
 	}
 	receipt.StructuralDelta = structuralDelta(beforeSource, afterSource)
 	receipt.SemanticClaimDelta = claimDelta(beforeSource, afterSource)
@@ -39,7 +39,7 @@ func produceBytes(input Input, beforeRaw, afterRaw []byte) Receipt {
 		receipt.Decision, receipt.Classification, receipt.Reason = DecisionDelta, ClassChanged, ReasonMeaning
 	}
 	receipt.Stage, receipt.Step = "produce", "classify"
-	receipt.ClaimTransitions = transitions(beforeSource, afterSource, receipt.Classification, receipt.Reason)
+	receipt.ClaimLedger, receipt.ClaimTransitions = claimLedger(beforeSource, afterSource, receipt.Classification, receipt.Reason)
 	sealReceipt(&receipt)
 	return receipt
 }

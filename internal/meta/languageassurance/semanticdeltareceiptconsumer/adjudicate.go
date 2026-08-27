@@ -20,18 +20,18 @@ func AdjudicateFiles(input Input, receipt Receipt) Verdict {
 	if !receiptIdentityMatches(input, receipt, beforeRaw, afterRaw, text) {
 		return mismatchVerdict()
 	}
-	if !validSubject(input.SubjectSHA) {
-		return adjudicateSubjectUnknown(base, receipt, before, after, beforeRaw, afterRaw)
-	}
 	if beforeErr != nil || afterErr != nil {
 		return adjudicateUnavailable(base, receipt, before, after, beforeRaw, afterRaw, beforeErr, afterErr)
+	}
+	if !validSubject(input.SubjectSHA) {
+		return adjudicateSubjectUnknown(base, receipt, before, after, beforeRaw, afterRaw)
 	}
 	structural := structuralDelta(before, after)
 	claims := claimDelta(before, after)
 	class, decision, reason := classDecision(structural, claims)
-	expected := transitions(before, after, class, reason)
+	expectedLedger, expected := claimLedger(before, after, class)
 	base.Decision, base.Resolution, base.Classification, base.Reason = decision, resolutionExact, class, reason
-	base.Passed = receipt.Decision == decision && receipt.Resolution == resolutionExact && receipt.Classification == class && receipt.Reason == reason && receipt.RawDecision == text.Decision && receipt.SemanticDecision == semanticDecision(class) && reflect.DeepEqual(receipt.Before, snapshot(beforeRaw, before, nil)) && reflect.DeepEqual(receipt.After, snapshot(afterRaw, after, nil)) && reflect.DeepEqual(receipt.StructuralDelta, structural) && reflect.DeepEqual(receipt.SemanticClaimDelta, claims) && reflect.DeepEqual(receipt.ClaimTransitions, expected)
+	base.Passed = receipt.Decision == decision && receipt.Resolution == resolutionExact && receipt.Classification == class && receipt.Reason == reason && receipt.RawDecision == text.Decision && receipt.SemanticDecision == semanticDecision(class) && reflect.DeepEqual(receipt.Before, snapshot(beforeRaw, before, nil)) && reflect.DeepEqual(receipt.After, snapshot(afterRaw, after, nil)) && reflect.DeepEqual(receipt.StructuralDelta, structural) && reflect.DeepEqual(receipt.SemanticClaimDelta, claims) && reflect.DeepEqual(receipt.ClaimLedger, expectedLedger) && reflect.DeepEqual(receipt.ClaimTransitions, expected)
 	return base
 }
 

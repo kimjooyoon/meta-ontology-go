@@ -13,7 +13,8 @@ The fixed denominator is three cases: `equivalent`, `semantic-change`, and
 `indeterminate`. The first changes text while preserving the graph and claims;
 the second changes one small output signature and therefore changes a semantic
 claim; the third contains a source construct outside this experiment's grammar
-and must remain `FAIL_CLOSED / UNKNOWN`.
+and must remain `FAIL_CLOSED / LOWER_RESOLUTION` at
+`project-source/parse-lower/SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE`.
 
 The producer records the three layers. The consumer is an independent
 adjudicator in a separate package: it rereads both raw sources and recomputes the expected layers
@@ -23,8 +24,13 @@ repository writes. The meta-operation is
 
 The raw decision and semantic decision are separate receipt fields. Claim
 transitions persist `OPEN`, `DISCHARGED`, or `REFUTED`; an unknown subject is
-reported at `LOWER_RESOLUTION` with the exact stage `bind-subject`, step
+reported as `FAIL_CLOSED / LOWER_RESOLUTION` with the exact stage `bind-subject`, step
 `resolve-subject`, and reason `SEMANTIC_DELTA_SUBJECT_UNKNOWN`.
+
+Object propositions are not preservation propositions. A changed or removed
+before object claim refutes its separate preservation row; an after-only object
+claim is a canonical source observation and is discharged. Proposition and
+preservation digests stabilize claim IDs, and old rows remain in the receipt.
 
 ## Research decisions
 
@@ -68,7 +74,10 @@ textual_changed && (structural_delta != empty || semantic_claim_delta != empty)
 ```
 
 Any failed source projection or receipt replay is `INDETERMINATE` and
-`FAIL_CLOSED`; no activation or promotion is implied.
+`FAIL_CLOSED`; projection failure uses `LOWER_RESOLUTION` at
+`project-source/parse-lower`. No activation or promotion is implied. The
+suite's `FIXED_POINT` is only fixed three-case contract reproduction; subject
+semantic equivalence is separately `NOT_ASSERTED`.
 
 ## Falsification
 

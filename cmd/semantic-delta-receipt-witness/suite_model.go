@@ -23,14 +23,18 @@ type CaseResult struct {
 }
 
 type Suite struct {
-	Schema            string       `json:"schema"`
-	SubjectSHA        string       `json:"subject_sha"`
-	DenominatorID     string       `json:"denominator_id"`
-	DenominatorDigest string       `json:"denominator_digest"`
-	Decision          string       `json:"decision"`
-	Resolution        string       `json:"resolution"`
-	Cases             []CaseResult `json:"cases"`
-	Summary           Summary      `json:"summary"`
-	CoverageBPS       int          `json:"coverage_bps"`
-	SuiteDigest       string       `json:"suite_digest"`
+	Schema                     string       `json:"schema"`
+	SubjectSHA                 string       `json:"subject_sha"`
+	DenominatorID              string       `json:"denominator_id"`
+	DenominatorDigest          string       `json:"denominator_digest"`
+	Decision                   string       `json:"decision"`
+	Resolution                 string       `json:"resolution"`
+	ContractReproduction       string       `json:"contract_reproduction"`
+	SubjectSemanticEquivalence string       `json:"subject_semantic_equivalence"`
+	SourcePaths                []string     `json:"source_paths"`
+	OutputPath                 string       `json:"output_path"`
+	Cases                      []CaseResult `json:"cases"`
+	Summary                    Summary      `json:"summary"`
+	CoverageBPS                int          `json:"coverage_bps"`
+	SuiteDigest                string       `json:"suite_digest"`
 }

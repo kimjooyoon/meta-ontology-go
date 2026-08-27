@@ -3,19 +3,27 @@ package semanticdeltareceiptconsumer
 import "sort"
 
 func claimDelta(before, after projectedSource) ClaimDelta {
-	left, right := claimMap(before.claims), claimMap(after.claims)
 	result := ClaimDelta{Status: "KNOWN"}
-	for id, claim := range left {
-		other, ok := right[id]
-		if !ok {
-			result.Removed = append(result.Removed, claim)
-		} else if claimMeaningEqual(claim, other) == false {
-			result.Changed = append(result.Changed, ClaimChange{ID: id, Before: claim, After: other})
+	left, right := claimsBySlot(before.claims), claimsBySlot(after.claims)
+	for slot, beforeClaims := range left {
+		afterClaims := append([]Claim(nil), right[slot]...)
+		sort.Slice(beforeClaims, func(i, j int) bool { return beforeClaims[i].ID < beforeClaims[j].ID })
+		sort.Slice(afterClaims, func(i, j int) bool { return afterClaims[i].ID < afterClaims[j].ID })
+		pairs := len(beforeClaims)
+		if len(afterClaims) < pairs {
+			pairs = len(afterClaims)
 		}
+		for index := 0; index < pairs; index++ {
+			if !claimMeaningEqual(beforeClaims[index], afterClaims[index]) {
+				result.Changed = append(result.Changed, ClaimChange{ID: preservationClaimID(beforeClaims[index]), Before: beforeClaims[index], After: afterClaims[index]})
+			}
+		}
+		result.Removed = append(result.Removed, beforeClaims[pairs:]...)
+		result.Added = append(result.Added, afterClaims[pairs:]...)
 	}
-	for id, claim := range right {
-		if _, ok := left[id]; !ok {
-			result.Added = append(result.Added, claim)
+	for slot, afterClaims := range right {
+		if _, ok := left[slot]; !ok {
+			result.Added = append(result.Added, afterClaims...)
 		}
 	}
 	sort.Slice(result.Added, func(i, j int) bool { return result.Added[i].ID < result.Added[j].ID })
@@ -33,7 +41,15 @@ func claimMap(values []Claim) map[string]Claim {
 }
 
 func claimMeaningEqual(left, right Claim) bool {
-	return left.ID == right.ID && left.Subject == right.Subject && left.Predicate == right.Predicate && left.Object == right.Object && left.Status == right.Status
+	return left.ID == right.ID && left.Kind == right.Kind && left.Subject == right.Subject && left.Predicate == right.Predicate && left.Object == right.Object && left.Status == right.Status && left.PropositionDigest == right.PropositionDigest
+}
+
+func claimsBySlot(values []Claim) map[string][]Claim {
+	result := make(map[string][]Claim)
+	for _, value := range values {
+		result[value.Subject+"\x00"+value.Predicate] = append(result[value.Subject+"\x00"+value.Predicate], value)
+	}
+	return result
 }
 
 func hasSemanticDelta(structural StructuralDelta, claims ClaimDelta) bool {

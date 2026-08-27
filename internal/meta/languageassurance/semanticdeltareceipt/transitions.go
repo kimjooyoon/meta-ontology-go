@@ -1,59 +1,43 @@
 package semanticdeltareceipt
 
-import "sort"
-
 const boundedEquivalenceClaim = "gooo://semantic-delta/claim/bounded-equivalence"
 
-func transitions(before, after projectedSource, class, reason string) []ClaimTransition {
-	from, to, transitionReason := StatusOpen, StatusOpen, "BOUNDED_EQUIVALENCE_OPEN"
+func claimLedger(before, after projectedSource, class, reason string) ([]Claim, []ClaimTransition) {
+	from, to, why := StatusOpen, StatusOpen, "BOUNDED_EQUIVALENCE_OPEN"
 	if class == ClassPreserved {
-		to, transitionReason = StatusDischarged, "BOUNDED_EQUIVALENCE_DISCHARGED"
+		to, why = StatusDischarged, "BOUNDED_EQUIVALENCE_DISCHARGED"
 	}
 	if class == ClassChanged {
-		to, transitionReason = StatusRefuted, "BOUNDED_EQUIVALENCE_REFUTED"
+		to, why = StatusRefuted, "BOUNDED_EQUIVALENCE_REFUTED"
 	}
-	result := []ClaimTransition{{ClaimID: boundedEquivalenceClaim, FromStatus: from, ToStatus: to, FromObject: before.semanticDigest, ToObject: after.semanticDigest, Stage: "adjudicate", Step: "bounded-equivalence", Reason: transitionReason}}
-	if class != ClassChanged {
-		return result
+	bounded := boundedClaim(after.semanticDigest, to)
+	ledger := []Claim{bounded}
+	result := []ClaimTransition{{ClaimID: boundedEquivalenceClaim, Kind: ClaimKindBounded, FromStatus: from, ToStatus: to, FromObject: before.semanticDigest, ToObject: after.semanticDigest, Stage: "adjudicate", Step: "bounded-equivalence", Reason: why}}
+	if class != ClassPreserved && class != ClassChanged {
+		return ledger, result
 	}
+
 	left, right := claimMap(before.claims), claimMap(after.claims)
-	ids := make([]string, 0, len(left)+len(right))
-	seen := make(map[string]bool, len(left)+len(right))
-	for id := range left {
-		ids = append(ids, id)
-		seen[id] = true
+	for _, claim := range before.claims {
+		ledger = append(ledger, objectObservation(claim))
 	}
-	for id := range right {
-		if !seen[id] {
-			ids = append(ids, id)
+	for _, claim := range before.claims {
+		other, found := right[claim.ID]
+		status, preservationReason := StatusRefuted, "BEFORE_CLAIM_NOT_PRESERVED"
+		toObject := ""
+		if found && claimMeaningEqual(claim, other) {
+			status, preservationReason, toObject = StatusDischarged, "BEFORE_CLAIM_PRESERVED", other.Object
+		}
+		ledger = append(ledger, preservationClaim(claim, toObject, status, preservationReason))
+		result = append(result, preservationTransition(claim, toObject, status, preservationReason))
+	}
+	for _, claim := range after.claims {
+		observed := objectObservation(claim)
+		ledger = append(ledger, observed)
+		if _, found := left[claim.ID]; !found {
+			result = append(result, objectObservationTransition(claim))
 		}
 	}
-	sort.Strings(ids)
-	for _, id := range ids {
-		claim, leftOK := left[id]
-		other, rightOK := right[id]
-		if leftOK && rightOK && claimMeaningEqual(claim, other) {
-			continue
-		}
-		fromObject, toObject := "", ""
-		if leftOK {
-			fromObject = claim.Object
-		}
-		if rightOK {
-			toObject = other.Object
-		}
-		result = append(result, changedClaimTransition(id, fromObject, toObject, reason))
-	}
-	return result
-}
-
-func objectOf(values map[string]Claim, id string) string {
-	if value, ok := values[id]; ok {
-		return value.Object
-	}
-	return ""
-}
-
-func changedClaimTransition(id, fromObject, toObject, reason string) ClaimTransition {
-	return ClaimTransition{ClaimID: id, FromStatus: StatusOpen, ToStatus: StatusRefuted, FromObject: fromObject, ToObject: toObject, Stage: "adjudicate", Step: "claim-transition", Reason: reason}
+	ledger = uniqueClaims(ledger)
+	return ledger, result
 }

@@ -9,7 +9,6 @@ const (
 	decisionDelta       = "DELTA_OBSERVED"
 	decisionFailClosed  = "FAIL_CLOSED"
 	resolutionExact     = "EXACT"
-	resolutionUnknown   = "UNKNOWN"
 	resolutionLower     = "LOWER_RESOLUTION"
 	resolutionInvariant = "INVARIANT_ONLY"
 	classPreserved      = "SEMANTIC_PRESERVED"
@@ -28,4 +27,9 @@ const (
 	reasonUnavailable   = "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE"
 	reasonReceipt       = "SEMANTIC_DELTA_RECEIPT_MISMATCH"
 	reasonSubject       = "SEMANTIC_DELTA_SUBJECT_UNKNOWN"
+	claimKindBounded    = "BOUNDED_SEMANTIC_EQUIVALENCE"
+	claimKindObject     = "OBJECT_PROPOSITION"
+	claimKindPreserve   = "BEFORE_CLAIM_PRESERVATION"
+	unavailableStage    = "project-source"
+	unavailableStep     = "parse-lower"
 )
