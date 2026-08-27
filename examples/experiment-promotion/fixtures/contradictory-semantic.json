@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/experiment-observation-receipt/v1",
+  "bundle_id": "fixture-contradictory-semantic-v1",
+  "receipts": [
+    {
+      "schema": "gooo/experiment-observation-receipt/v1",
+      "observation_id": "contradictory-semantic-causality",
+      "experiment_id": "experiment-01",
+      "gate_id": "semantic-causality",
+      "pr_number": 570,
+      "head_sha": "5700000000000000000000000000000000000001",
+      "source_raw_digest": "sha256:eab1df3b444ed3dba86ee2b62f6ded70e1d2ec48075ce4b8ef428500a82f40af",
+      "source_semantic_digest": "sha256:8b1322dfcb007bcc810527021f9c9bf2416e3491ef3367ff204bc56809e5685c",
+      "producer_id": "gooo-experiment-promotion-producer/v1",
+      "consumer_package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentpromotionverify",
+      "consumer_imports": ["github.com/kimjooyoon/meta-ontology-go/internal/bidir", "github.com/kimjooyoon/meta-ontology-go/internal/syntax"],
+      "claim_transition_digest": "sha256:efc3e327648bc4e3e51570960b82a6cf9aeb97f284b786033390b5c8904a1ea0",
+      "actions": {"run_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/57000031", "job_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/57000031/jobs/57000031", "conclusion": "success"},
+      "artifact": {"bytes": 256, "path": "artifacts/experiment-promotion/fixture.json", "digest": "sha256:59838b233edb3961d24d67e4c52fcaa66ee589e090b52d83391e7c3fd0131d1c"},
+      "semantic_intervention": {"baseline_raw_digest": "sha256:eab1df3b444ed3dba86ee2b62f6ded70e1d2ec48075ce4b8ef428500a82f40af", "baseline_semantic_digest": "sha256:8b1322dfcb007bcc810527021f9c9bf2416e3491ef3367ff204bc56809e5685c", "intervention_raw_digest": "sha256:139dbeb7d5799fb2581019ad637d3a30e6ffc2f5177caf8abe160be58c07b6c7", "intervention_semantic_digest": "sha256:8b1322dfcb007bcc810527021f9c9bf2416e3491ef3367ff204bc56809e5685c"}
+    }
+  ]
+}

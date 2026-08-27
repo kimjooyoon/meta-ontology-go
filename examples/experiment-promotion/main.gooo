@@ -1,0 +1,11 @@
+package experimentpromotion
+namespace experimentpromotion
+
+entity ExperimentPortfolio id "gooo://experiment-promotion/entity/portfolio"
+entity PromotionGate id "gooo://experiment-promotion/entity/gate"
+entity ObservationReceipt id "gooo://experiment-promotion/entity/receipt"
+
+// This source declares only the fixed portfolio and gate vocabulary. States,
+// decisions, receipts, and claim transitions are derived from observations.
+activity DeclareExperimentPortfolio(ExperimentPortfolio) -> ExperimentPortfolio computes "experiments|id=experiment-01|id=experiment-02|id=experiment-03|id=experiment-04|id=experiment-05|id=experiment-06|id=experiment-07|id=experiment-08|id=experiment-09|id=experiment-10|id=experiment-11|id=experiment-12|id=experiment-13|id=experiment-14|id=experiment-15|id=experiment-16|id=experiment-17|id=experiment-18|id=experiment-19|id=experiment-20|id=experiment-21|id=experiment-22|id=experiment-23|id=experiment-24|id=experiment-25|id=experiment-26|id=experiment-27|id=experiment-28|id=experiment-29|id=experiment-30"
+activity DeclarePromotionGates(PromotionGate) -> PromotionGate computes "gates|id=source-bound|id=semantic-causality|id=independent-consumer|id=persistent-claim-transition|id=exact-actions"

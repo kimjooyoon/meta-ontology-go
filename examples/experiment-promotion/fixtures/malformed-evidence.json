@@ -1,0 +1,22 @@
+{
+  "schema": "gooo/experiment-observation-receipt/v1",
+  "bundle_id": "fixture-malformed-evidence-v1",
+  "receipts": [
+    {
+      "schema": "gooo/experiment-observation-receipt/v1",
+      "observation_id": "malformed-artifact-digest",
+      "experiment_id": "experiment-01",
+      "gate_id": "source-bound",
+      "pr_number": 570,
+      "head_sha": "5700000000000000000000000000000000000001",
+      "source_raw_digest": "sha256:eab1df3b444ed3dba86ee2b62f6ded70e1d2ec48075ce4b8ef428500a82f40af",
+      "source_semantic_digest": "sha256:8b1322dfcb007bcc810527021f9c9bf2416e3491ef3367ff204bc56809e5685c",
+      "producer_id": "gooo-experiment-promotion-producer/v1",
+      "consumer_package": "github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentpromotionverify",
+      "consumer_imports": ["github.com/kimjooyoon/meta-ontology-go/internal/bidir", "github.com/kimjooyoon/meta-ontology-go/internal/syntax"],
+      "claim_transition_digest": "sha256:cdae75ed10bd9cf4783ac18ead3f603edfd0ff1322cb8e36820ee48ec4d5a728",
+      "actions": {"run_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/57000021", "job_url": "https://github.com/kimjooyoon/meta-ontology-go/actions/runs/57000021/jobs/57000021", "conclusion": "success"},
+      "artifact": {"bytes": 256, "path": "artifacts/experiment-promotion/fixture.json", "digest": "sha256:malformed"}
+    }
+  ]
+}
