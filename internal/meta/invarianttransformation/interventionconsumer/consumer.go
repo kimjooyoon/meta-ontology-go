@@ -877,7 +877,9 @@ func reconstructReceiptForExecution(fixture sourceFixture, source []byte, headSH
 	}
 	if evidence.ReplayCount != 2 {
 		statuses["regression-witness"], reasons["regression-witness"] = model.StatusOpen, evidence.ReplayFailureReason
-	} else if !evidence.RegressionWitnessPresent || fixture.CandidateResult != fixture.Expected {
+	} else if !evidence.RegressionWitnessPresent {
+		statuses["regression-witness"], reasons["regression-witness"] = model.StatusRefuted, "REGRESSION_REPLAY_MISMATCH"
+	} else if fixture.CandidateResult != fixture.Expected {
 		statuses["regression-witness"], reasons["regression-witness"] = model.StatusRefuted, "REGRESSION_REPLAY_REFUTED"
 	}
 	claims := []model.Claim{}
