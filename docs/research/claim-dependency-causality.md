@@ -1,79 +1,93 @@
 # Claim dependency causality
 
-## Experiment question
+## Question and boundary
 
-When a meta claim is unresolved, can a receipt distinguish the local failure
-that made the claim `UNKNOWN` from a downstream claim that is only blocked by
-that open predecessor? The experiment answers this with a fixed, six-claim
-Gooo contract. It does not treat every graph edge as a failure: the producer
-records the local observation, propagates the state, and assigns responsibility
-to the root or to the upstream claim.
+This is a read-only Gooo meta experiment about failure responsibility. It asks
+whether a direct `UNKNOWN` observation can be separated from a dependent claim
+that is blocked by an unresolved predecessor, while preserving the minimum
+causal path. It is not a general dependency engine and it makes no claim about
+truth in the external world.
 
-## External principles used
+## Source-grounded construction
 
-The design takes three narrow ideas from published, authoritative material:
+Both producer and independent consumer begin with raw `.gooo` source and run
+`syntax.ParseFile` followed by `bidir.Lower`. They validate the resulting
+canonical semantic IR and derive the six claim nodes from its six activity
+declarations. The graph edges are not a receipt-only contract: each edge comes
+from an IR `wasGeneratedBy` output entity joined to a downstream IR `used`
+input entity. The downstream activity's semantic `computes` value is parsed as
+one of four closed edge predicates: `SUPPORTS`, `REQUIRES`, `CONTRADICTS`, or
+`FAILURE_ENTAILMENT`.
 
-1. W3C PROV-O models provenance with entities, activities, and agents. Its
-   `used`, `wasGeneratedBy`, `wasInformedBy`, and `wasDerivedFrom` relations
-   construct chains, while qualified relations can add detail to an influence.
-   This experiment therefore names a producer, consumer, operation, coordinate,
-   and root transition digest rather than treating a bare edge as evidence.
-   See [PROV-O](https://www.w3.org/TR/prov-o/).
-2. OpenLineage makes the metadata producer explicit, defines event transitions
-   for a run, and distinguishes design lineage from run-observed lineage. This
-   experiment follows that separation: the fixed graph is declared contract
-   metadata, while the twelve transition events are the observed run record.
-   See [OpenLineage object model](https://openlineage.io/docs/spec/object-model/),
-   [run cycle](https://openlineage.io/docs/spec/run-cycle/), and
-   [producer field](https://openlineage.io/docs/spec/producers/).
-3. Causal graphical models use directed paths to represent ancestry and direct
-   causes relative to a chosen variable set. This experiment borrows only the
-   directional path discipline: `CausePath` is the shortest path in the fixed
-   claim contract, with a declared shortcut for the decision claim. It does not
-   borrow statistical, intervention, or counterfactual semantics. See the
-   [Stanford Encyclopedia of Philosophy entry on causal models](https://plato.stanford.edu/entries/causal-models/).
+The root activity's semantic value is either `claim.observe:recoverable` or
+`claim.observe:contradiction`. A separately digested observation must agree
+with that source predicate: `UNKNOWN` has no evidence, `EVIDENCE_ACCEPTED`
+requires evidence, and `EXPLICIT_CONTRADICTION` requires both the contradiction
+source predicate and evidence. Thus an integer operation or source substring
+does not itself mean refutation.
 
-## Contract and state rule
+The fixed denominator is six claims, eight typed edges, and twelve initial
+transitions. The example graph has two `SUPPORTS`, three `REQUIRES`, two
+`CONTRADICTS`, and one `FAILURE_ENTAILMENT` edge. Root-to-derived is a real
+semantic relation through the generated/used `RootState` entity.
 
-The fixed nodes are `source-observed`, `producer-bound`, `proof-choice-bound`,
-`consumer-bound`, `read-only-bound`, and `decision-replay-bound`. The fixed edge
-contract is eight edges, including `C1 -> C2 -> C6` as the shortest route to the
-decision claim and three longer proof/consumer/authority routes into that claim.
+## State algebra and responsibility
 
-The rule is deliberately local:
+The propagation rule is intentionally asymmetric:
 
-- A claim with unavailable local evidence is `DIRECT_UNKNOWN`, remains `OPEN`,
-  and owns the failure.
-- A claim whose local evidence is not the root cause but has an open incoming
-  predecessor is `DEPENDENCY_BLOCKED`, remains `OPEN`, and points to the root
-  evidence plus its immediate blocking frontier.
-- A contradictory local observation is `DIRECT_REFUTED`; the same state on a
-  dependent claim is `DEPENDENCY_REFUTED`.
-- When the root observation is repaired, it becomes `DISCHARGED`; dependent
-  claims become `DEPENDENCY_RECOVERED` along their minimum paths.
+* A direct `UNKNOWN` observation is `OPEN` and `DIRECT_UNKNOWN`.
+* An upstream `UNKNOWN` makes a dependent `OPEN` and `DEPENDENCY_BLOCKED`.
+* An upstream `REFUTED` on `SUPPORTS` or `REQUIRES` also leaves the dependent
+  `OPEN` and blocked; those relations do not entail falsity.
+* A dependent becomes `REFUTED` only when an upstream `REFUTED` state reaches it
+  through a `CONTRADICTS` or `FAILURE_ENTAILMENT` edge.
+* `OPEN -> DISCHARGED` is legal only for a matching `EVIDENCE_ACCEPTED`
+  predicate. Every transition retains stage, step, reason, evidence digest,
+  provenance, and its predecessor digest.
 
-The transition ledger is fixed at twelve events per receipt: six registrations
-(`UNRECORDED -> OPEN`) and six outcome transitions. The three receipts exercise
-the final states `OPEN`, `REFUTED`, and `DISCHARGED`. The receipt digest and
-transition chain make omission, reordering, or resealing observable.
+For `refuted.gooo`, the exact result is one direct refutation, three open
+claims, two dependency refutations, five blocking edges, and two effective
+refuting edges. The `CONTRADICTS` edge from Root to `ContradictionCheck` and the
+`FAILURE_ENTAILMENT` edge from `ContradictionCheck` to
+`FailureEntailmentCheck` are the only refuting path in that fixture.
 
-## Falsifiable predictions and limitations
+## Append-only recovery
 
-The experiment is falsified if an independent judge accepts a changed producer,
-consumer, proof choice, coordinate, graph edge, transition, cause path, or
-decision; if the unknown receipt does not report exactly `1` direct unknown,
-`5` blocked claims, `8` blocking edges, and maximum depth `2`; or if the
-recovered receipt does not report `6/6` discharged claims and `5` unique
-recovery edges. CI runs the producer twice and the independent judge twice and
-requires byte-identical receipts.
+Recovery consumes the prior UNKNOWN receipt, not merely a label. It verifies
+the prior receipt digest, its transition head, its twelve-transition chain,
+its six `OPEN` claim states, and the current graph digest. The recovered receipt
+copies the prior transition prefix byte-for-byte and appends six transitions
+from the prior states to `DISCHARGED`; it records the prior receipt digest,
+previous transition digest, prior claim states, and the new observation digest.
+The resulting exact chain is twelve preserved transitions plus six appended
+transitions, with eight recovery edges.
 
-The result is intentionally weaker than provenance or causal inference. It
-does not establish that the graph is complete for arbitrary Gooo programs, that
-an arrow is a real-world cause, that evidence is true, or that a downstream
-claim could never have independent evidence. It assumes an acyclic, closed,
-hand-declared six-claim contract and uses source markers to select cases. A
-future experiment must add explicit competing roots, cycles, independent
-downstream evidence, and a changed contract before generalizing the rule.
+## External principles and limits
 
-The only authority demonstrated is a read-only meta decision: repository writes
-and semantic promotion remain zero.
+The provenance boundary follows [W3C PROV-O](https://www.w3.org/TR/prov-o/):
+entities, activities, agents, and typed influence relations provide a useful
+vocabulary for source, producer, consumer, and lineage. [OpenLineage's object
+model](https://openlineage.io/docs/spec/object-model/) and [run
+cycle](https://openlineage.io/docs/spec/run-cycle/) motivate separating a
+declared graph from observed transition events; its [producer
+field](https://openlineage.io/docs/spec/producers/) motivates explicit
+producer identity. The directional minimum-path discipline is informed by
+[Stanford's causal-models overview](https://plato.stanford.edu/entries/causal-models/),
+but this artifact does not claim statistical causation or counterfactual
+identification.
+
+The design is falsified if the consumer accepts a changed graph, edge kind,
+observation digest, predecessor digest, transition, stage/step/reason,
+provenance, cause path, or decision; if ordinary support/requirement edges
+turn an upstream refutation into a dependent refutation; if an unknown state
+is silently discharged; or if the exact CI counts change. Semantic value and
+edge-type interventions must change the relevant digest and state/propagation
+outcome. A comment-only intervention must preserve semantic digest, graph
+digest, state vector, and decision.
+
+The experiment assumes an acyclic, closed six-activity fixture and a small
+observation vocabulary. It does not establish graph completeness, external
+truth, runtime correctness, independent evidence for every downstream claim,
+or the adequacy of the four edge types outside this fixture. Read-only effects
+are part of the observation contract; repository writes and semantic promotion
+authority remain zero.

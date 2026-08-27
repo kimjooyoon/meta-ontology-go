@@ -13,5 +13,6 @@ activity Root(Seed) -> RootState computes "claim.observe:contradiction"
 activity Derived(RootState) -> DerivedState computes "claim.edge:requires"
 activity SupportCheck(RootState, DerivedState) -> SupportState computes "claim.edge:supports"
 activity RequirementCheck(DerivedState, SupportState) -> RequirementState computes "claim.edge:requires"
-activity ContradictionCheck(RootState, RequirementState) -> ContradictionState computes "claim.edge:contradicts"
+// Semantic intervention: this edge is SUPPORTS, not CONTRADICTS.
+activity ContradictionCheck(RootState, RequirementState) -> ContradictionState computes "claim.edge:supports"
 activity FailureEntailmentCheck(ContradictionState) -> FinalState computes "claim.edge:failure-entailment"

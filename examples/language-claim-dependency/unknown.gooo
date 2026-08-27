@@ -1,5 +1,17 @@
 package claimdependency
 namespace claimdependency
-entity Integer id "gooo://claim-dependency/entity/integer"
-activity Root(Integer) -> Integer computes "int.unknown:1"
-activity Derived(Integer) -> Integer computes "int.add:2"
+
+entity Seed id "gooo://claim-dependency/entity/seed"
+entity RootState id "gooo://claim-dependency/entity/root-state"
+entity DerivedState id "gooo://claim-dependency/entity/derived-state"
+entity SupportState id "gooo://claim-dependency/entity/support-state"
+entity RequirementState id "gooo://claim-dependency/entity/requirement-state"
+entity ContradictionState id "gooo://claim-dependency/entity/contradiction-state"
+entity FinalState id "gooo://claim-dependency/entity/final-state"
+
+activity Root(Seed) -> RootState computes "claim.observe:recoverable"
+activity Derived(RootState) -> DerivedState computes "claim.edge:requires"
+activity SupportCheck(RootState, DerivedState) -> SupportState computes "claim.edge:supports"
+activity RequirementCheck(DerivedState, SupportState) -> RequirementState computes "claim.edge:requires"
+activity ContradictionCheck(RootState, RequirementState) -> ContradictionState computes "claim.edge:contradicts"
+activity FailureEntailmentCheck(ContradictionState) -> FinalState computes "claim.edge:failure-entailment"

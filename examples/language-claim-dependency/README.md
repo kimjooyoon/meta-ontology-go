@@ -1,32 +1,30 @@
 # Claim dependency causality experiment
 
-This is a bounded Gooo meta experiment about responsibility for an unresolved
-claim. It is intentionally separate from the operation-catalog dependency
-classifier. The producer reads one `.gooo` source and emits a deterministic
-receipt; the independent judge re-derives the graph, transition states, frontier
-edges, and decision from that receipt.
+This bounded experiment distinguishes a direct `UNKNOWN` observation from a
+dependent claim that is only `DEPENDENCY_BLOCKED`. It also demonstrates that a
+refuted upstream claim does not refute ordinary `SUPPORTS` or `REQUIRES`
+dependents. Only an explicitly satisfied `CONTRADICTS` or
+`FAILURE_ENTAILMENT` edge can propagate `REFUTED`.
 
-The contract has a fixed denominator of six claims and eight directed edges.
-The last claim has a direct shortcut from `producer-bound`, so the judge must
-preserve the minimum cause path rather than return every reachable ancestor.
-All claims carry `producer`, `consumer`, `meta_operation`, `proof_choice`, and a
-`stage/step/reason` coordinate.
+The producer and consumer both start with raw `.gooo` bytes, run
+`syntax.ParseFile -> bidir.Lower`, and reconstruct the graph from canonical IR.
+The six activity claims are joined by eight semantic relations formed from
+`prov:wasGeneratedBy + prov:used`; the downstream activity's semantic value
+program declares the typed edge. `Root` and `Derived` therefore have a real
+semantic relation through `RootState`, rather than a case-name-only graph.
 
-The three source cases are:
+| source | observation predicate | direct / dependent state | edge result |
+| --- | --- | --- | --- |
+| `unknown.gooo` | `UNKNOWN` | 1 `OPEN` / 5 `DEPENDENCY_BLOCKED` | 8 blocking |
+| `refuted.gooo` | `EXPLICIT_CONTRADICTION` | 1 `REFUTED` / 3 open / 2 dependency-refuted | 5 blocking, 2 refuting |
+| `main.gooo` after `unknown.gooo` | `EVIDENCE_ACCEPTED` | 1 direct / 5 dependency `DISCHARGED` | 8 recovery edges |
 
-| source | case | exact result |
-| --- | --- | --- |
-| `unknown.gooo` | `direct-unknown` | 1 direct `OPEN`, 5 `DEPENDENCY_BLOCKED`, 8 blocking edges, depth 2 |
-| `refuted.gooo` | `refuted` | 1 direct `REFUTED`, 5 `DEPENDENCY_REFUTED`, 8 refuting edges |
-| `main.gooo` | `recovered` | 1 direct `DISCHARGED`, 5 `DEPENDENCY_RECOVERED`, 5 minimum recovery edges |
+The fixed denominator is six claims, eight typed edges, and twelve initial
+transitions. Recovery is not a new ledger: it preserves the twelve unknown
+transitions and appends six recovery transitions, verifies the prior receipt
+digest, prior transition head, prior claim states, and observation digest.
 
-Every receipt has twelve transitions: six `CLAIM_REGISTERED` events followed by
-six outcome events. Across the three receipts the outcome vocabulary exercises
-`OPEN`, `DISCHARGED`, and `REFUTED`. The experiment is read-only and reports zero
-repository writes and zero semantic-promotion authority.
-
-The producer does not claim that the `.gooo` operation is semantically correct.
-The source marker only selects a controlled observation case. The judge proves
-receipt consistency and state propagation, not compiler correctness, causal
-inference about the world, runtime behavior, or a general-purpose dependency
-engine.
+`edge-intervention.gooo` changes a semantic edge value from `CONTRADICTS` to
+`SUPPORTS`; the CI intervention artifact compares its state propagation with
+`refuted.gooo`. The comment-only difference between `unknown.gooo` and
+`main.gooo` must preserve the canonical IR/graph digest and decision.

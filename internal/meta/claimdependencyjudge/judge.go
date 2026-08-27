@@ -6,394 +6,760 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
+	"strings"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/claimdependency"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const JudgmentSchema = "gooo.meta.claim-dependency-judgment/v1"
+const JudgmentSchema = "gooo.meta.claim-dependency-judgment/v2"
+
+const (
+	claimTotal = 6
+	edgeTotal  = 8
+	producerID = "gooo://meta/claim-dependency/producer/v2"
+	consumerID = "gooo://meta/claim-dependency/independent-judge/v2"
+	operation  = "classify-claim-state-causality"
+	proof      = "COHERENCE"
+	unknown    = "UNKNOWN"
+	evidence   = "EVIDENCE_ACCEPTED"
+	contradict = "EXPLICIT_CONTRADICTION"
+)
+
+type edgeKind string
+
+const (
+	supports          edgeKind = "SUPPORTS"
+	requires          edgeKind = "REQUIRES"
+	contradicts       edgeKind = "CONTRADICTS"
+	failureEntailment edgeKind = "FAILURE_ENTAILMENT"
+)
+
+type coordinate struct {
+	Stage  string `json:"stage"`
+	Step   string `json:"step"`
+	Reason string `json:"reason"`
+}
+type claim struct {
+	Ordinal       int        `json:"ordinal"`
+	Axis          string     `json:"axis"`
+	ClaimID       string     `json:"claim_id"`
+	ActivityID    string     `json:"activity_id"`
+	ActivityName  string     `json:"activity_name"`
+	Statement     string     `json:"statement"`
+	ValueProgram  string     `json:"value_program"`
+	Producer      string     `json:"producer"`
+	Consumer      string     `json:"consumer"`
+	MetaOperation string     `json:"meta_operation"`
+	ProofChoice   string     `json:"proof_choice"`
+	Coordinate    coordinate `json:"coordinate"`
+}
+type edge struct {
+	EdgeID        string   `json:"edge_id"`
+	FromClaimID   string   `json:"from_claim_id"`
+	ToClaimID     string   `json:"to_claim_id"`
+	Kind          edgeKind `json:"kind"`
+	SemanticBasis string   `json:"semantic_basis"`
+}
+type graph struct {
+	Schema            string  `json:"schema"`
+	Authority         string  `json:"authority"`
+	Completeness      string  `json:"completeness"`
+	CanonicalIRDigest string  `json:"canonical_ir_digest"`
+	NodeTotal         int     `json:"node_total"`
+	EdgeTotal         int     `json:"edge_total"`
+	Nodes             []claim `json:"nodes"`
+	Edges             []edge  `json:"edges"`
+	Digest            string  `json:"digest"`
+}
+type observation struct {
+	Schema            string `json:"schema"`
+	Predicate         string `json:"predicate"`
+	SubjectClaimID    string `json:"subject_claim_id"`
+	EvidenceDigest    string `json:"evidence_digest,omitempty"`
+	ReadOnly          bool   `json:"read_only"`
+	RepositoryWrites  int    `json:"repository_writes"`
+	MutationAuthority bool   `json:"mutation_authority"`
+	Digest            string `json:"digest"`
+}
+type subject struct {
+	SourcePath       string `json:"source_path"`
+	SourceDigest     string `json:"source_digest"`
+	SemanticDigest   string `json:"semantic_digest"`
+	Producer         string `json:"producer"`
+	Consumer         string `json:"consumer"`
+	MetaOperation    string `json:"meta_operation"`
+	ProofChoice      string `json:"proof_choice"`
+	ReadOnly         bool   `json:"read_only"`
+	RepositoryWrites int    `json:"repository_writes"`
+}
+type transition struct {
+	Sequence                 int        `json:"sequence"`
+	ClaimID                  string     `json:"claim_id"`
+	Event                    string     `json:"event"`
+	Before                   string     `json:"before"`
+	After                    string     `json:"after"`
+	Coordinate               coordinate `json:"coordinate"`
+	EvidenceDigest           string     `json:"evidence_digest,omitempty"`
+	Provenance               string     `json:"provenance"`
+	PreviousTransitionDigest string     `json:"previous_transition_digest,omitempty"`
+	TransitionDigest         string     `json:"transition_digest"`
+}
+type resolution struct {
+	ClaimID               string      `json:"claim_id"`
+	Axis                  string      `json:"axis"`
+	State                 string      `json:"state"`
+	Kind                  string      `json:"kind"`
+	ObservedEvent         string      `json:"observed_event"`
+	Coordinate            coordinate  `json:"coordinate"`
+	EvidenceDigest        string      `json:"evidence_digest,omitempty"`
+	Provenance            string      `json:"provenance"`
+	FailureResponsibility string      `json:"failure_responsibility"`
+	FailureOwnerClaimID   string      `json:"failure_owner_claim_id"`
+	MissingEvidenceIDs    []string    `json:"missing_evidence_ids,omitempty"`
+	BlockedByClaimIDs     []string    `json:"blocked_by_claim_ids,omitempty"`
+	BlockedByEdgeIDs      []string    `json:"blocked_by_edge_ids,omitempty"`
+	CausePath             []string    `json:"cause_path"`
+	CauseEdgeIDs          []string    `json:"cause_edge_ids"`
+	CauseEdgeKinds        []edgeKind  `json:"cause_edge_kinds"`
+	CauseTransitionDigest string      `json:"cause_transition_digest"`
+	CauseCoordinate       *coordinate `json:"cause_coordinate"`
+}
+type edgeMetric struct {
+	Kind     edgeKind `json:"kind"`
+	Total    int      `json:"total"`
+	Blocking int      `json:"blocking"`
+	Refuting int      `json:"refuting"`
+	Recovery int      `json:"recovery"`
+}
+type metrics struct {
+	FixedClaimTotal             int          `json:"fixed_claim_total"`
+	FixedEdgeTotal              int          `json:"fixed_edge_total"`
+	ClassifiedClaimTotal        int          `json:"classified_claim_total"`
+	OpenClaimTotal              int          `json:"open_claim_total"`
+	DischargedClaimTotal        int          `json:"discharged_claim_total"`
+	RefutedClaimTotal           int          `json:"refuted_claim_total"`
+	UnknownClaimTotal           int          `json:"unknown_claim_total"`
+	DirectUnknownClaimTotal     int          `json:"direct_unknown_claim_total"`
+	DependencyBlockedClaimTotal int          `json:"dependency_blocked_claim_total"`
+	DirectRefutedClaimTotal     int          `json:"direct_refuted_claim_total"`
+	DependencyRefutedClaimTotal int          `json:"dependency_refuted_claim_total"`
+	DirectDischargedClaimTotal  int          `json:"direct_discharged_claim_total"`
+	DependencyDischargedTotal   int          `json:"dependency_discharged_claim_total"`
+	ObservedBlockingEdgeTotal   int          `json:"observed_blocking_edge_total"`
+	ObservedRefutingEdgeTotal   int          `json:"observed_refuting_edge_total"`
+	ObservedRecoveryEdgeTotal   int          `json:"observed_recovery_edge_total"`
+	MaximumCausePathDepth       int          `json:"maximum_cause_path_depth"`
+	TransitionTotal             int          `json:"transition_total"`
+	AppendOnlyTransitionTotal   int          `json:"append_only_transition_total"`
+	ClassificationBasisPoints   int          `json:"classification_basis_points"`
+	EdgeMetrics                 []edgeMetric `json:"edge_metrics"`
+}
+type decision struct {
+	Value                       string `json:"value"`
+	Resolution                  string `json:"resolution"`
+	Reason                      string `json:"reason"`
+	SemanticPromotionAuthorized bool   `json:"semantic_promotion_authorized"`
+}
+type receipt struct {
+	Schema                   string       `json:"schema"`
+	Scope                    string       `json:"scope"`
+	Subject                  subject      `json:"subject"`
+	Observation              observation  `json:"observation"`
+	Graph                    graph        `json:"graph"`
+	PriorReceiptDigest       string       `json:"prior_receipt_digest,omitempty"`
+	PreviousTransitionDigest string       `json:"previous_transition_digest,omitempty"`
+	PriorClaimStates         []string     `json:"prior_claim_states,omitempty"`
+	ObservationDigest        string       `json:"observation_digest"`
+	Transitions              []transition `json:"transitions"`
+	TransitionHeadDigest     string       `json:"transition_head_digest"`
+	Resolutions              []resolution `json:"resolutions"`
+	Metrics                  metrics      `json:"metrics"`
+	Decision                 decision     `json:"decision"`
+	Digest                   string       `json:"digest"`
+}
 
 type Judgment struct {
-	Schema                      string                  `json:"schema"`
-	ReceiptDigest               string                  `json:"receipt_digest"`
-	Case                        string                  `json:"case"`
-	Decision                    string                  `json:"decision"`
-	Resolution                  string                  `json:"resolution"`
-	Reason                      string                  `json:"reason"`
-	Accepted                    bool                    `json:"accepted"`
-	IndependentReplay           string                  `json:"independent_replay"`
-	Metrics                     claimdependency.Metrics `json:"metrics"`
-	ReadOnly                    bool                    `json:"read_only"`
-	SemanticPromotionAuthorized bool                    `json:"semantic_promotion_authorized"`
-	Digest                      string                  `json:"digest"`
+	Schema                           string  `json:"schema"`
+	ReceiptDigest                    string  `json:"receipt_digest"`
+	Predicate                        string  `json:"predicate"`
+	Decision                         string  `json:"decision"`
+	Resolution                       string  `json:"resolution"`
+	Reason                           string  `json:"reason"`
+	Accepted                         bool    `json:"accepted"`
+	IndependentReplay                string  `json:"independent_replay"`
+	Metrics                          metrics `json:"metrics"`
+	ReadOnly                         bool    `json:"read_only"`
+	SemanticPromotionAuthorized      bool    `json:"semantic_promotion_authorized"`
+	SourceReconstruction             string  `json:"source_reconstruction"`
+	ProducerPackageImportNumerator   int     `json:"producer_package_import_numerator"`
+	ProducerPackageImportDenominator int     `json:"producer_package_import_denominator"`
+	AppendOnlyRecoveryChainTotal     int     `json:"append_only_recovery_chain_total"`
+	Digest                           string  `json:"digest"`
 }
 
-var expectedClaims = [...]claimdependency.Claim{
-	{Ordinal: 1, Axis: "source-observed", ClaimID: "gooo.claim.dependency.source-observed.v1", Statement: "the Gooo source is the observed subject", Producer: claimdependency.ProducerID, Consumer: claimdependency.ConsumerID, MetaOperation: "observe-gooo-source", ProofChoice: "FOUNDATION", Coordinate: claimdependency.Coordinate{Stage: "READ", Step: "gooo-source", Reason: "SOURCE_READ"}},
-	{Ordinal: 2, Axis: "producer-bound", ClaimID: "gooo.claim.dependency.producer-bound.v1", Statement: "the receipt identifies its deterministic producer", Producer: claimdependency.ProducerID, Consumer: claimdependency.ConsumerID, MetaOperation: "bind-producer", ProofChoice: "FOUNDATION", Coordinate: claimdependency.Coordinate{Stage: "BIND", Step: "producer", Reason: "PRODUCER_IDENTIFIED"}},
-	{Ordinal: 3, Axis: "proof-choice-bound", ClaimID: "gooo.claim.dependency.proof-choice-bound.v1", Statement: "the state claim names a proof choice", Producer: claimdependency.ProducerID, Consumer: claimdependency.ConsumerID, MetaOperation: "choose-proof-route", ProofChoice: "COHERENCE", Coordinate: claimdependency.Coordinate{Stage: "BIND", Step: "proof-choice", Reason: "PROOF_CHOICE_DECLARED"}},
-	{Ordinal: 4, Axis: "consumer-bound", ClaimID: "gooo.claim.dependency.consumer-bound.v1", Statement: "the receipt names an independent decision consumer", Producer: claimdependency.ProducerID, Consumer: claimdependency.ConsumerID, MetaOperation: "bind-consumer", ProofChoice: "COHERENCE", Coordinate: claimdependency.Coordinate{Stage: "BIND", Step: "consumer", Reason: "CONSUMER_IDENTIFIED"}},
-	{Ordinal: 5, Axis: "read-only-bound", ClaimID: "gooo.claim.dependency.read-only-bound.v1", Statement: "the experiment cannot mutate the repository", Producer: claimdependency.ProducerID, Consumer: claimdependency.ConsumerID, MetaOperation: "deny-repository-mutation", ProofChoice: "REGRESSION", Coordinate: claimdependency.Coordinate{Stage: "GUARD", Step: "authority", Reason: "READ_ONLY"}},
-	{Ordinal: 6, Axis: "decision-replay-bound", ClaimID: "gooo.claim.dependency.decision-replay-bound.v1", Statement: "an independent judge can replay the state decision", Producer: claimdependency.ProducerID, Consumer: claimdependency.ConsumerID, MetaOperation: claimdependency.MetaOperationID, ProofChoice: "REGRESSION", Coordinate: claimdependency.Coordinate{Stage: "JUDGE", Step: "replay-decision", Reason: "INDEPENDENT_REPLAY"}},
+type reconstructed struct {
+	Graph       graph
+	RootProgram string
 }
 
-var expectedEdges = [...]claimdependency.Edge{
-	{EdgeID: "E01", FromClaimID: expectedClaims[0].ClaimID, ToClaimID: expectedClaims[1].ClaimID, Kind: "SOURCE_INFORMS_PRODUCER"},
-	{EdgeID: "E02", FromClaimID: expectedClaims[1].ClaimID, ToClaimID: expectedClaims[2].ClaimID, Kind: "PRODUCER_SELECTS_PROOF"},
-	{EdgeID: "E03", FromClaimID: expectedClaims[1].ClaimID, ToClaimID: expectedClaims[3].ClaimID, Kind: "PRODUCER_BINDS_CONSUMER"},
-	{EdgeID: "E04", FromClaimID: expectedClaims[1].ClaimID, ToClaimID: expectedClaims[4].ClaimID, Kind: "PRODUCER_DENIES_MUTATION"},
-	{EdgeID: "E05", FromClaimID: expectedClaims[2].ClaimID, ToClaimID: expectedClaims[5].ClaimID, Kind: "PROOF_SUPPORTS_DECISION"},
-	{EdgeID: "E06", FromClaimID: expectedClaims[3].ClaimID, ToClaimID: expectedClaims[5].ClaimID, Kind: "CONSUMER_ACCEPTS_RECEIPT"},
-	{EdgeID: "E07", FromClaimID: expectedClaims[4].ClaimID, ToClaimID: expectedClaims[5].ClaimID, Kind: "AUTHORITY_GUARDRAIL"},
-	{EdgeID: "E08", FromClaimID: expectedClaims[1].ClaimID, ToClaimID: expectedClaims[5].ClaimID, Kind: "PRODUCER_TRACEABLE_DECISION"},
-}
+// Judge is intentionally a raw-input consumer. It does not import the
+// producer package or consume producer expectations; all claims, edges,
+// states, and transitions are rebuilt from .gooo, observation, and ledger.
+func Judge(source []byte, sourcePath string, priorBytes, observationBytes, receiptBytes []byte) (Judgment, error) {
+	current, err := reconstruct(source, sourcePath)
+	if err != nil {
+		return Judgment{}, err
+	}
+	var got receipt
+	if err := json.Unmarshal(receiptBytes, &got); err != nil {
+		return Judgment{}, fmt.Errorf("decode receipt: %w", err)
+	}
+	var observed observation
+	if err := json.Unmarshal(observationBytes, &observed); err != nil {
+		return Judgment{}, fmt.Errorf("decode observation: %w", err)
+	}
+	if err := validateObservation(current, observed); err != nil {
+		return Judgment{}, err
+	}
+	if !reflect.DeepEqual(got.Observation, observed) || got.ObservationDigest != observed.Digest {
+		return Judgment{}, fmt.Errorf("receipt is not bound to the raw observation")
+	}
+	if got.Graph.Digest != current.Graph.Digest || !reflect.DeepEqual(got.Graph, current.Graph) {
+		return Judgment{}, fmt.Errorf("receipt graph is not reconstructed from raw source")
+	}
+	sourceDigest := digestBytes(source)
+	if got.Subject.SourceDigest != sourceDigest || got.Subject.SourcePath != sourcePath || got.Subject.SemanticDigest != current.Graph.CanonicalIRDigest || got.Subject.Producer != producerID || got.Subject.Consumer != consumerID || got.Subject.MetaOperation != operation || got.Subject.ProofChoice != proof || !got.Subject.ReadOnly || got.Subject.RepositoryWrites != 0 {
+		return Judgment{}, fmt.Errorf("receipt subject provenance is invalid")
+	}
 
-func Judge(receipt claimdependency.Receipt) (Judgment, error) {
-	if err := validateReceipt(receipt); err != nil {
+	var prior *receipt
+	if len(priorBytes) > 0 {
+		var value receipt
+		if err := json.Unmarshal(priorBytes, &value); err != nil {
+			return Judgment{}, fmt.Errorf("decode prior receipt: %w", err)
+		}
+		prior = &value
+		if err := validatePrior(current, value); err != nil {
+			return Judgment{}, err
+		}
+		priorDigest := receiptDigest(value)
+		if got.PriorReceiptDigest != priorDigest || got.PreviousTransitionDigest != value.TransitionHeadDigest || !sameStrings(got.PriorClaimStates, statesOf(value.Resolutions)) {
+			return Judgment{}, fmt.Errorf("recovery does not append the prior receipt head and claim states")
+		}
+		if len(got.Transitions) <= len(value.Transitions) || !reflect.DeepEqual(got.Transitions[:len(value.Transitions)], value.Transitions) {
+			return Judgment{}, fmt.Errorf("recovery transition prefix is not append-only")
+		}
+	}
+
+	states, outcomeTemplates := classify(current.Graph, observed.Predicate, observed.EvidenceDigest)
+	provenance := fmt.Sprintf("source:%s|ir:%s|producer:%s|consumer:%s", sourceDigest, current.Graph.CanonicalIRDigest, producerID, consumerID)
+	expectedTransitions, err := expectedTransitionsFor(current.Graph, outcomeTemplates, provenance, prior)
+	if err != nil {
 		return Judgment{}, err
 	}
-	states, outcomes := statesAndOutcomes(receipt)
-	if err := validateCaseShape(receipt.Subject.Case, states, outcomes); err != nil {
-		return Judgment{}, err
+	if !reflect.DeepEqual(got.Transitions, expectedTransitions) {
+		return Judgment{}, fmt.Errorf("receipt transition chain is not independently reproducible")
 	}
-	if err := validateResolutions(receipt, states, outcomes); err != nil {
-		return Judgment{}, err
+	currentOutcomes := expectedTransitions[claimTotal:]
+	if prior != nil {
+		currentOutcomes = expectedTransitions[len(expectedTransitions)-claimTotal:]
 	}
-	metrics := deriveMetrics(receipt.Resolutions)
-	if !reflect.DeepEqual(metrics, receipt.Metrics) {
-		return Judgment{}, fmt.Errorf("receipt metrics are not independently reproducible")
+	expectedResolutions := buildResolutions(current.Graph, states, currentOutcomes, sourceDigest, current.Graph.CanonicalIRDigest, prior != nil)
+	if !reflect.DeepEqual(got.Resolutions, expectedResolutions) {
+		return Judgment{}, fmt.Errorf("receipt resolutions are not independently reproducible")
 	}
-	decision, resolution, reason := expectedDecision(states)
-	if receipt.Decision.Value != decision || receipt.Decision.Resolution != resolution || receipt.Decision.Reason != reason || receipt.Decision.SemanticPromotionAuthorized {
+	expectedMetrics := deriveMetrics(current.Graph, states, expectedResolutions, prior != nil)
+	if !reflect.DeepEqual(got.Metrics, expectedMetrics) {
+		return Judgment{}, fmt.Errorf("receipt edge algebra metrics are not independently reproducible")
+	}
+	expectedDecision := decisionFor(observed.Predicate, prior != nil)
+	if !reflect.DeepEqual(got.Decision, expectedDecision) {
 		return Judgment{}, fmt.Errorf("receipt decision is not independently reproducible")
 	}
-	judgment := Judgment{
-		Schema: JudgmentSchema, ReceiptDigest: receipt.Digest, Case: receipt.Subject.Case,
-		Decision: decision, Resolution: resolution, Reason: reason, Accepted: true,
-		IndependentReplay: "GRAPH_AND_TRANSITION_REDERIVED", Metrics: metrics,
-		ReadOnly:                    receipt.Subject.ReadOnly && receipt.Subject.RepositoryWrites == 0,
-		SemanticPromotionAuthorized: false,
+	if got.TransitionHeadDigest != got.Transitions[len(got.Transitions)-1].TransitionDigest || receiptDigest(got) != got.Digest {
+		return Judgment{}, fmt.Errorf("receipt digest or transition head is invalid")
 	}
-	judgment.Digest = digestJudgment(judgment)
+	judgment := Judgment{
+		Schema: JudgmentSchema, ReceiptDigest: got.Digest, Predicate: observed.Predicate,
+		Decision: expectedDecision.Value, Resolution: expectedDecision.Resolution, Reason: expectedDecision.Reason,
+		Accepted: true, IndependentReplay: "RAW_GOOO_PARSE_LOWER_GRAPH_AND_TRANSITION_REDERIVED",
+		Metrics: expectedMetrics, ReadOnly: got.Subject.ReadOnly && got.Subject.RepositoryWrites == 0,
+		SemanticPromotionAuthorized: false, SourceReconstruction: "syntax.ParseFile->bidir.Lower->semantic.IR",
+		ProducerPackageImportNumerator: 0, ProducerPackageImportDenominator: 1,
+		AppendOnlyRecoveryChainTotal: boolInt(prior != nil),
+	}
+	judgment.Digest = digestJSON(judgment)
 	return judgment, nil
 }
 
-func validateReceipt(receipt claimdependency.Receipt) error {
-	if receipt.Schema != claimdependency.ReceiptSchema || receipt.Scope != claimdependency.Scope {
-		return fmt.Errorf("receipt identity is invalid")
+func reconstruct(source []byte, sourcePath string) (reconstructed, error) {
+	file, diagnostics := syntax.ParseFile(sourcePath, string(source))
+	if file == nil || diagnostics.HasErrors() {
+		return reconstructed{}, fmt.Errorf("consumer parse failed: %s", diagnostics.Error())
 	}
-	if receipt.Subject.Producer != claimdependency.ProducerID || receipt.Subject.Consumer != claimdependency.ConsumerID || receipt.Subject.MetaOperation != claimdependency.MetaOperationID || receipt.Subject.ProofChoice != claimdependency.ProofChoice || !receipt.Subject.ReadOnly || receipt.Subject.RepositoryWrites != 0 {
-		return fmt.Errorf("receipt provenance boundary is invalid")
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return reconstructed{}, fmt.Errorf("consumer lower failed: %w", err)
 	}
-	if receipt.Subject.SourcePath == "" || len(receipt.Subject.SourceDigest) != 64 {
-		return fmt.Errorf("receipt source provenance is invalid")
+	if err := ir.Validate(); err != nil {
+		return reconstructed{}, err
 	}
-	if receipt.Graph.Schema != claimdependency.GraphSchema || receipt.Graph.NodeTotal != claimdependency.ClaimTotal || receipt.Graph.EdgeTotal != claimdependency.EdgeTotal || len(receipt.Graph.Nodes) != claimdependency.ClaimTotal || len(receipt.Graph.Edges) != claimdependency.EdgeTotal {
-		return fmt.Errorf("graph denominator is invalid")
-	}
-	for index, claim := range expectedClaims {
-		if !reflect.DeepEqual(receipt.Graph.Nodes[index], claim) {
-			return fmt.Errorf("claim node %d is not the fixed contract", index+1)
+	activities := map[string]semantic.Node{}
+	for _, node := range ir.Graph.Nodes() {
+		if node.Kind == semantic.Activity {
+			activities[node.Name] = node
 		}
 	}
-	for index, edge := range expectedEdges {
-		if !reflect.DeepEqual(receipt.Graph.Edges[index], edge) {
-			return fmt.Errorf("graph edge %d is not the fixed contract", index+1)
+	claims := []claim{}
+	activityIndex := map[string]int{}
+	for _, declaration := range file.Declarations {
+		activity, ok := declaration.(*syntax.ActivityDecl)
+		if !ok {
+			continue
+		}
+		node, ok := activities[activity.Name]
+		if !ok || node.ValueProgram == "" {
+			return reconstructed{}, fmt.Errorf("consumer cannot bind activity %q", activity.Name)
+		}
+		activityIndex[node.ID.String()] = len(claims)
+		claims = append(claims, claim{
+			Ordinal: len(claims) + 1, Axis: strings.ToLower(activity.Name), ClaimID: node.ID.String(), ActivityID: node.ID.String(),
+			ActivityName: activity.Name, Statement: fmt.Sprintf("activity %s declares value claim %q", activity.Name, node.ValueProgram), ValueProgram: node.ValueProgram,
+			Producer: producerID, Consumer: consumerID, MetaOperation: operation, ProofChoice: proof,
+			Coordinate: coordinate{Stage: "CLAIM", Step: activity.Name, Reason: "SEMANTIC_ACTIVITY_VALUE"},
+		})
+	}
+	if len(claims) != claimTotal {
+		return reconstructed{}, fmt.Errorf("consumer reconstructed %d claims, want %d", len(claims), claimTotal)
+	}
+	generatedBy := map[string]string{}
+	usedBy := map[string][]string{}
+	for _, fact := range ir.Graph.AllFacts() {
+		switch fact.Predicate {
+		case semantic.WasGeneratedBy:
+			generatedBy[fact.Subject.String()] = fact.Object.String()
+		case semantic.Used:
+			usedBy[fact.Subject.String()] = append(usedBy[fact.Subject.String()], fact.Object.String())
 		}
 	}
-	graph := receipt.Graph
-	graph.Digest = ""
-	if digestValue(graph) != receipt.Graph.Digest {
-		return fmt.Errorf("graph digest is invalid")
+	type candidate struct {
+		from, to int
+		kind     edgeKind
 	}
-	if len(receipt.Transitions) != claimdependency.TransitionTotal || len(receipt.Resolutions) != claimdependency.ClaimTotal {
-		return fmt.Errorf("transition or resolution denominator is invalid")
-	}
-	previous := ""
-	for index, transition := range receipt.Transitions {
-		if transition.Sequence != index+1 || transition.PreviousTransitionDigest != previous || transition.TransitionDigest != digestTransition(transition) {
-			return fmt.Errorf("transition %d chain is invalid", index+1)
+	candidates := []candidate{}
+	for downstreamID, entities := range usedBy {
+		to, ok := activityIndex[downstreamID]
+		if !ok {
+			continue
 		}
-		if index < claimdependency.ClaimTotal {
-			claim := expectedClaims[index]
-			if transition.ClaimID != claim.ClaimID || transition.Event != "CLAIM_REGISTERED" || transition.Before != "UNRECORDED" || transition.After != "OPEN" || !reflect.DeepEqual(transition.Coordinate, claimdependency.Coordinate{Stage: "DECLARE", Step: claim.Axis, Reason: "CLAIM_REGISTERED"}) || transition.EvidenceDigest != "" {
-				return fmt.Errorf("registration transition %d is invalid", index+1)
+		for _, entityID := range entities {
+			upstreamID, ok := generatedBy[entityID]
+			if !ok {
+				continue
 			}
-		} else {
-			claimIndex := index - claimdependency.ClaimTotal
-			if transition.ClaimID != expectedClaims[claimIndex].ClaimID || transition.Before != "OPEN" || !validOutcomeCoordinate(receipt.Subject.Case, claimIndex, transition) {
-				return fmt.Errorf("outcome transition %d is invalid", index+1)
+			from, ok := activityIndex[upstreamID]
+			if !ok || from == to {
+				continue
 			}
+			kind, ok := edgeKind(claims[to].ValueProgram)
+			if !ok {
+				return reconstructed{}, fmt.Errorf("consumer found untyped dependency")
+			}
+			candidates = append(candidates, candidate{from: from, to: to, kind: kind})
 		}
-		previous = transition.TransitionDigest
 	}
-	if receipt.Digest == "" || receipt.Digest != digestReceipt(receipt) {
-		return fmt.Errorf("receipt digest is invalid")
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].from != candidates[j].from {
+			return candidates[i].from < candidates[j].from
+		}
+		if candidates[i].to != candidates[j].to {
+			return candidates[i].to < candidates[j].to
+		}
+		return candidates[i].kind < candidates[j].kind
+	})
+	if len(candidates) != edgeTotal {
+		return reconstructed{}, fmt.Errorf("consumer reconstructed %d edges, want %d", len(candidates), edgeTotal)
+	}
+	edges := make([]edge, len(candidates))
+	for index, candidate := range candidates {
+		edges[index] = edge{EdgeID: fmt.Sprintf("E%02d", index+1), FromClaimID: claims[candidate.from].ClaimID, ToClaimID: claims[candidate.to].ClaimID, Kind: candidate.kind, SemanticBasis: "prov:wasGeneratedBy + prov:used + activity.value-program"}
+	}
+	result := graph{Schema: "gooo.meta.claim-dependency-graph/v2", Authority: "CANONICAL_IR_FROM_SYNTAX_PARSE_AND_BIDIR_LOWER", Completeness: "CLOSED_WORLD_SOURCE_RECONSTRUCTED", CanonicalIRDigest: prefixedDigest(ir.StableHash()), NodeTotal: claimTotal, EdgeTotal: edgeTotal, Nodes: claims, Edges: edges}
+	result.Digest = graphDigest(result)
+	return reconstructed{Graph: result, RootProgram: claims[0].ValueProgram}, nil
+}
+
+func edgeKind(program string) (edgeKind, bool) {
+	const prefix = "claim.edge:"
+	if !strings.HasPrefix(program, prefix) {
+		return "", false
+	}
+	switch strings.TrimPrefix(program, prefix) {
+	case "supports":
+		return supports, true
+	case "requires":
+		return requires, true
+	case "contradicts":
+		return contradicts, true
+	case "failure-entailment":
+		return failureEntailment, true
+	default:
+		return "", false
+	}
+}
+func validateObservation(current reconstructed, observed observation) error {
+	if observed.Schema != "gooo.meta.claim-dependency-observation/v1" || observed.SubjectClaimID != current.Graph.Nodes[0].ClaimID || !observed.ReadOnly || observed.RepositoryWrites != 0 || observed.MutationAuthority || observationDigest(observed) != observed.Digest {
+		return fmt.Errorf("consumer observation is invalid")
+	}
+	switch observed.Predicate {
+	case unknown, evidence:
+		if current.RootProgram != "claim.observe:recoverable" {
+			return fmt.Errorf("observation does not match source recoverable predicate")
+		}
+	case contradict:
+		if current.RootProgram != "claim.observe:contradiction" {
+			return fmt.Errorf("observation does not match source contradiction predicate")
+		}
+	default:
+		return fmt.Errorf("consumer predicate is unknown")
+	}
+	if (observed.Predicate == unknown) != (observed.EvidenceDigest == "") {
+		return fmt.Errorf("observation evidence presence is inconsistent with predicate")
 	}
 	return nil
 }
 
-func validOutcomeCoordinate(caseName string, index int, transition claimdependency.Transition) bool {
-	want := claimdependency.Coordinate{Stage: "PROPAGATE", Step: expectedClaims[index].Axis}
-	switch {
-	case caseName == claimdependency.CaseDirectUnknown && index == 0:
-		want = claimdependency.Coordinate{Stage: "RESOLVE", Step: "observe-gooo-source", Reason: "SOURCE_EVIDENCE_UNKNOWN"}
-	case caseName == claimdependency.CaseDirectUnknown:
-		want.Reason = "UPSTREAM_CLAIM_OPEN"
-	case caseName == claimdependency.CaseRefuted && index == 0:
-		want = claimdependency.Coordinate{Stage: "VERIFY", Step: "compare-gooo-source", Reason: "SOURCE_CONTRADICTS_EXPECTATION"}
-	case caseName == claimdependency.CaseRefuted:
-		want.Reason = "UPSTREAM_CLAIM_REFUTED"
-	case caseName == claimdependency.CaseRecovered && index == 0:
-		want = claimdependency.Coordinate{Stage: "VERIFY", Step: "compare-gooo-source", Reason: "SOURCE_MATCHES_EXPECTATION"}
-	case caseName == claimdependency.CaseRecovered:
-		want.Reason = "UPSTREAM_CLAIM_DISCHARGED"
-	default:
-		return false
-	}
-	return reflect.DeepEqual(transition.Coordinate, want)
-}
-
-func statesAndOutcomes(receipt claimdependency.Receipt) ([]string, []claimdependency.Transition) {
-	states := make([]string, claimdependency.ClaimTotal)
-	outcomes := make([]claimdependency.Transition, claimdependency.ClaimTotal)
-	for index := range claimdependency.ClaimTotal {
-		registration := receipt.Transitions[index]
-		outcome := receipt.Transitions[claimdependency.ClaimTotal+index]
-		if registration.ClaimID != expectedClaims[index].ClaimID || registration.Event != "CLAIM_REGISTERED" || registration.Before != "UNRECORDED" || registration.After != "OPEN" || outcome.ClaimID != expectedClaims[index].ClaimID || outcome.Before != "OPEN" {
-			states[index] = "INVALID"
-			continue
+func classify(g graph, predicate, evidenceDigest string) ([]string, []transition) {
+	states := make([]string, len(g.Nodes))
+	outcomes := make([]transition, len(g.Nodes))
+	for index := range g.Nodes {
+		state, event, reason := "OPEN", "DEPENDENCY_BLOCKED", "UPSTREAM_UNKNOWN_OR_NON_REFUTING"
+		if index == 0 {
+			switch predicate {
+			case contradict:
+				state, event, reason = "REFUTED", "EXPLICIT_CONTRADICTION", "OBSERVATION_PREDICATE_EXPLICITLY_CONTRADICTS"
+			case evidence:
+				state, event, reason = "DISCHARGED", "EVIDENCE_ACCEPTED", "OBSERVATION_EVIDENCE_PREDICATE_SATISFIED"
+			default:
+				state, event, reason = "OPEN", "OBSERVATION_UNKNOWN", "OBSERVATION_PREDICATE_UNKNOWN"
+			}
+		} else if predicate == evidence {
+			state, event, reason = "DISCHARGED", "DEPENDENCY_DISCHARGED", "EVIDENCE_PREDICATE_SATISFIED"
+		} else if predicate == contradict && hasExplicitRefutation(index, g, states) {
+			state, event, reason = "REFUTED", "DEPENDENCY_REFUTED", "EXPLICIT_REFUTING_EDGE"
 		}
-		states[index] = outcome.After
-		outcomes[index] = outcome
+		states[index] = state
+		outcomes[index] = transition{ClaimID: g.Nodes[index].ClaimID, Event: event, Before: "OPEN", After: state, Coordinate: coordinate{Stage: stage(index), Step: g.Nodes[index].ActivityName, Reason: reason}, EvidenceDigest: evidenceDigest}
 	}
 	return states, outcomes
 }
-
-func validateCaseShape(caseName string, states []string, outcomes []claimdependency.Transition) error {
-	if caseName != claimdependency.CaseDirectUnknown && caseName != claimdependency.CaseRefuted && caseName != claimdependency.CaseRecovered {
-		return fmt.Errorf("unknown case %q", caseName)
-	}
-	for index, state := range states {
-		switch caseName {
-		case claimdependency.CaseDirectUnknown:
-			if state != "OPEN" || (index == 0 && outcomes[index].Event != "EVIDENCE_UNAVAILABLE") || (index > 0 && outcomes[index].Event != "DEPENDENCY_BLOCKED") {
-				return fmt.Errorf("direct unknown case state %d is invalid", index+1)
-			}
-		case claimdependency.CaseRefuted:
-			if state != "REFUTED" || (index == 0 && outcomes[index].Event != "EVIDENCE_REFUTED") || (index > 0 && outcomes[index].Event != "DEPENDENCY_REFUTED") {
-				return fmt.Errorf("refuted case state %d is invalid", index+1)
-			}
-		case claimdependency.CaseRecovered:
-			if state != "DISCHARGED" || (index == 0 && outcomes[index].Event != "EVIDENCE_ACCEPTED") || (index > 0 && outcomes[index].Event != "DEPENDENCY_RECOVERED") {
-				return fmt.Errorf("recovered case state %d is invalid", index+1)
-			}
+func hasExplicitRefutation(index int, g graph, states []string) bool {
+	for _, e := range g.Edges {
+		from := indexOf(e.FromClaimID, g)
+		if e.ToClaimID == g.Nodes[index].ClaimID && from >= 0 && states[from] == "REFUTED" && (e.Kind == contradicts || e.Kind == failureEntailment) {
+			return true
 		}
 	}
-	if outcomes[0].EvidenceDigest == "" && (caseName == claimdependency.CaseRefuted || caseName == claimdependency.CaseRecovered) {
-		return fmt.Errorf("direct outcome evidence is missing")
+	return false
+}
+func stage(index int) string {
+	if index == 0 {
+		return "OBSERVE"
 	}
-	if outcomes[0].EvidenceDigest != "" && caseName == claimdependency.CaseDirectUnknown {
-		return fmt.Errorf("unknown direct outcome carried evidence")
-	}
-	if caseName == claimdependency.CaseRecovered && outcomes[0].After != "DISCHARGED" {
-		return fmt.Errorf("recovery did not discharge the root claim")
-	}
-	return nil
+	return "PROPAGATE"
 }
 
-func validateResolutions(receipt claimdependency.Receipt, states []string, outcomes []claimdependency.Transition) error {
-	root := expectedClaims[0].ClaimID
-	for index, resolution := range receipt.Resolutions {
-		if resolution.ClaimID != expectedClaims[index].ClaimID || resolution.Axis != expectedClaims[index].Axis || resolution.State != states[index] || resolution.ObservedEvent != outcomes[index].Event || !reflect.DeepEqual(resolution.Coordinate, outcomes[index].Coordinate) || resolution.FailureOwnerClaimID != root || resolution.CauseTransitionDigest != outcomes[0].TransitionDigest || resolution.CauseCoordinate == nil || !reflect.DeepEqual(*resolution.CauseCoordinate, outcomes[0].Coordinate) {
-			return fmt.Errorf("resolution %d is not bound to the root transition", index+1)
+func expectedTransitionsFor(g graph, outcomes []transition, provenance string, prior *receipt) ([]transition, error) {
+	result := []transition{}
+	if prior != nil {
+		result = append(result, prior.Transitions...)
+		previous := result[len(result)-1].TransitionDigest
+		for index, claim := range g.Nodes {
+			reason := "EVIDENCE_PREDICATE_SATISFIED"
+			event := "DEPENDENCY_DISCHARGED"
+			if index == 0 {
+				reason, event = "RECOVERY_EVIDENCE_PREDICATE_SATISFIED", "EVIDENCE_ACCEPTED"
+			}
+			value := transition{Sequence: len(result) + 1, ClaimID: claim.ClaimID, Event: event, Before: prior.Resolutions[index].State, After: "DISCHARGED", Coordinate: coordinate{Stage: "RECOVER", Step: claim.ActivityName, Reason: reason}, EvidenceDigest: outcomes[0].EvidenceDigest, Provenance: provenance, PreviousTransitionDigest: previous}
+			value.TransitionDigest = transitionDigest(value)
+			result = append(result, value)
+			previous = value.TransitionDigest
 		}
-		wantPath := shortestPath(root, resolution.ClaimID)
-		if !reflect.DeepEqual(resolution.CausePath, wantPath) || !reflect.DeepEqual(resolution.CauseEdgeIDs, edgesForPath(wantPath)) {
-			return fmt.Errorf("resolution %d does not preserve the minimum cause path", index+1)
-		}
-		switch resolution.Kind {
-		case "DIRECT_UNKNOWN":
-			if index != 0 || states[index] != "OPEN" || resolution.FailureResponsibility != "LOCAL_PRODUCER" || !reflect.DeepEqual(resolution.MissingEvidenceIDs, []string{"evidence:" + root}) || len(resolution.BlockedByEdgeIDs) != 0 {
-				return fmt.Errorf("direct unknown responsibility is invalid")
-			}
-		case "DEPENDENCY_BLOCKED":
-			if index == 0 || states[index] != "OPEN" || resolution.FailureResponsibility != "UPSTREAM_CLAIM" || !reflect.DeepEqual(resolution.MissingEvidenceIDs, []string{"evidence:" + root}) || !frontierMatches(index, "OPEN", resolution) {
-				return fmt.Errorf("dependency block responsibility is invalid")
-			}
-		case "DIRECT_REFUTED":
-			if index != 0 || states[index] != "REFUTED" || resolution.FailureResponsibility != "LOCAL_PRODUCER" || len(resolution.MissingEvidenceIDs) != 0 || len(resolution.BlockedByEdgeIDs) != 0 {
-				return fmt.Errorf("direct refutation responsibility is invalid")
-			}
-		case "DEPENDENCY_REFUTED":
-			if index == 0 || states[index] != "REFUTED" || resolution.FailureResponsibility != "UPSTREAM_CLAIM" || len(resolution.MissingEvidenceIDs) != 0 || !frontierMatches(index, "REFUTED", resolution) {
-				return fmt.Errorf("dependency refutation responsibility is invalid")
-			}
-		case "DIRECT_DISCHARGED":
-			if index != 0 || states[index] != "DISCHARGED" || resolution.FailureResponsibility != "LOCAL_PRODUCER" || len(resolution.MissingEvidenceIDs) != 0 || len(resolution.BlockedByEdgeIDs) != 0 {
-				return fmt.Errorf("direct discharge is invalid")
-			}
-		case "DEPENDENCY_RECOVERED":
-			if index == 0 || states[index] != "DISCHARGED" || resolution.FailureResponsibility != "UPSTREAM_CLAIM" || len(resolution.MissingEvidenceIDs) != 0 || len(resolution.BlockedByEdgeIDs) != 0 {
-				return fmt.Errorf("dependency recovery is invalid")
-			}
-		default:
-			return fmt.Errorf("unknown resolution kind %q", resolution.Kind)
-		}
+		return result, nil
 	}
-	return nil
+	previous := ""
+	for _, claim := range g.Nodes {
+		value := transition{Sequence: len(result) + 1, ClaimID: claim.ClaimID, Event: "CLAIM_REGISTERED", Before: "UNRECORDED", After: "OPEN", Coordinate: coordinate{Stage: "DECLARE", Step: claim.ActivityName, Reason: "CLAIM_REGISTERED"}, Provenance: provenance, PreviousTransitionDigest: previous}
+		value.TransitionDigest = transitionDigest(value)
+		result = append(result, value)
+		previous = value.TransitionDigest
+	}
+	for _, outcome := range outcomes {
+		outcome.Sequence = len(result) + 1
+		outcome.PreviousTransitionDigest = previous
+		outcome.Provenance = provenance
+		outcome.TransitionDigest = transitionDigest(outcome)
+		result = append(result, outcome)
+		previous = outcome.TransitionDigest
+	}
+	return result, nil
 }
 
-func frontierMatches(index int, state string, resolution claimdependency.Resolution) bool {
-	wantClaims, wantEdges := []string{}, []string{}
-	for _, edge := range expectedEdges {
-		if edge.ToClaimID != expectedClaims[index].ClaimID {
+func buildResolutions(g graph, states []string, outcomes []transition, sourceDigest, semanticDigest string, recovered bool) []resolution {
+	root := g.Nodes[0].ClaimID
+	rootCoordinate := outcomes[0].Coordinate
+	provenance := fmt.Sprintf("source:%s|ir:%s|producer:%s|consumer:%s", sourceDigest, semanticDigest, producerID, consumerID)
+	result := make([]resolution, len(g.Nodes))
+	for index, claim := range g.Nodes {
+		path, ids, kinds := shortestPath(index, g)
+		coord := outcomes[index].Coordinate
+		result[index] = resolution{ClaimID: claim.ClaimID, Axis: claim.Axis, State: states[index], Kind: resolutionKind(index, states[index], recovered), ObservedEvent: outcomes[index].Event, Coordinate: coord, EvidenceDigest: outcomes[index].EvidenceDigest, Provenance: provenance, FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: root, CausePath: idsForPath(path, g), CauseEdgeIDs: ids, CauseEdgeKinds: kinds, CauseTransitionDigest: outcomes[0].TransitionDigest, CauseCoordinate: &rootCoordinate}
+		if index != 0 {
+			result[index].FailureResponsibility = "UPSTREAM_CLAIM"
+		}
+		if states[index] == "OPEN" {
+			result[index].MissingEvidenceIDs = []string{"evidence:" + root}
+			result[index].BlockedByClaimIDs, result[index].BlockedByEdgeIDs = blockedFrontier(index, g, states)
+		}
+	}
+	return result
+}
+func resolutionKind(index int, state string, recovered bool) string {
+	if index == 0 {
+		if state == "REFUTED" {
+			return "DIRECT_REFUTED"
+		}
+		if state == "DISCHARGED" {
+			return "DIRECT_DISCHARGED"
+		}
+		return "DIRECT_UNKNOWN"
+	}
+	if state == "REFUTED" {
+		return "DEPENDENCY_REFUTED"
+	}
+	if state == "DISCHARGED" {
+		if recovered {
+			return "DEPENDENCY_RECOVERED"
+		}
+		return "DEPENDENCY_DISCHARGED"
+	}
+	return "DEPENDENCY_BLOCKED"
+}
+func shortestPath(index int, g graph) ([]int, []string, []edgeKind) {
+	if index == 0 {
+		return []int{0}, nil, nil
+	}
+	best := []int(nil)
+	for _, e := range g.Edges {
+		if e.ToClaimID != g.Nodes[index].ClaimID {
 			continue
 		}
-		from := claimIndex(edge.FromClaimID)
-		if from >= 0 && indexStateForFrontier(from, index, state) {
-			wantClaims = append(wantClaims, edge.FromClaimID)
-			wantEdges = append(wantEdges, edge.EdgeID)
+		from := indexOf(e.FromClaimID, g)
+		candidate, _, _ := shortestPath(from, g)
+		candidate = append(candidate, index)
+		if best == nil || len(candidate) < len(best) || (len(candidate) == len(best) && pathKey(candidate, g) < pathKey(best, g)) {
+			best = candidate
 		}
 	}
-	return reflect.DeepEqual(resolution.BlockedByClaimIDs, wantClaims) && reflect.DeepEqual(resolution.BlockedByEdgeIDs, wantEdges)
-}
-
-func indexStateForFrontier(from, target int, state string) bool {
-	if from == 0 {
-		return true
+	if best == nil {
+		return []int{index}, nil, nil
 	}
-	return target > from && (state == "OPEN" || state == "REFUTED")
-}
-
-func shortestPath(root, target string) []string {
-	if root == target {
-		return []string{root}
-	}
-	best := []string(nil)
-	var visit func(string, []string, map[string]bool)
-	visit = func(current string, path []string, seen map[string]bool) {
-		for _, edge := range expectedEdges {
-			if edge.FromClaimID != current || seen[edge.ToClaimID] {
-				continue
-			}
-			next := append(append([]string(nil), path...), edge.ToClaimID)
-			if edge.ToClaimID == target {
-				if best == nil || len(next) < len(best) || (len(next) == len(best) && joinPath(next) < joinPath(best)) {
-					best = next
-				}
-				continue
-			}
-			seen[edge.ToClaimID] = true
-			visit(edge.ToClaimID, next, seen)
-			delete(seen, edge.ToClaimID)
-		}
-	}
-	visit(root, []string{root}, map[string]bool{root: true})
-	return best
-}
-
-func edgesForPath(path []string) []string {
-	result := make([]string, 0, len(path)-1)
-	for index := 1; index < len(path); index++ {
-		for _, edge := range expectedEdges {
-			if edge.FromClaimID == path[index-1] && edge.ToClaimID == path[index] {
-				result = append(result, edge.EdgeID)
+	ids, kinds := []string{}, []edgeKind{}
+	for position := 1; position < len(best); position++ {
+		for _, e := range g.Edges {
+			if e.FromClaimID == g.Nodes[best[position-1]].ClaimID && e.ToClaimID == g.Nodes[best[position]].ClaimID {
+				ids = append(ids, e.EdgeID)
+				kinds = append(kinds, e.Kind)
 				break
 			}
 		}
 	}
+	return best, ids, kinds
+}
+func pathKey(path []int, g graph) string {
+	parts := make([]string, len(path))
+	for i, value := range path {
+		parts[i] = g.Nodes[value].ClaimID
+	}
+	return strings.Join(parts, "\x00")
+}
+func idsForPath(path []int, g graph) []string {
+	result := make([]string, len(path))
+	for i, value := range path {
+		result[i] = g.Nodes[value].ClaimID
+	}
 	return result
 }
-
-func claimIndex(claimID string) int {
-	for index, claim := range expectedClaims {
-		if claim.ClaimID == claimID {
-			return index
+func indexOf(id string, g graph) int {
+	for i, c := range g.Nodes {
+		if c.ClaimID == id {
+			return i
 		}
 	}
 	return -1
 }
+func blockedFrontier(index int, g graph, states []string) ([]string, []string) {
+	claims, edges := []string{}, []string{}
+	for _, e := range g.Edges {
+		if e.ToClaimID != g.Nodes[index].ClaimID {
+			continue
+		}
+		from := indexOf(e.FromClaimID, g)
+		if from >= 0 && (states[from] == "OPEN" || (states[from] == "REFUTED" && (e.Kind == supports || e.Kind == requires))) {
+			claims = append(claims, e.FromClaimID)
+			edges = append(edges, e.EdgeID)
+		}
+	}
+	return claims, edges
+}
 
-func joinPath(path []string) string {
-	result := ""
-	for _, claimID := range path {
-		result += claimID + "\x00"
+func deriveMetrics(g graph, states []string, resolutions []resolution, recovered bool) metrics {
+	result := metrics{FixedClaimTotal: claimTotal, FixedEdgeTotal: edgeTotal, ClassifiedClaimTotal: len(resolutions), TransitionTotal: claimTotal * 2, ClassificationBasisPoints: 10000}
+	for _, state := range states {
+		switch state {
+		case "OPEN":
+			result.OpenClaimTotal++
+		case "DISCHARGED":
+			result.DischargedClaimTotal++
+		case "REFUTED":
+			result.RefutedClaimTotal++
+		}
+	}
+	for _, r := range resolutions {
+		switch r.Kind {
+		case "DIRECT_UNKNOWN":
+			result.UnknownClaimTotal++
+			result.DirectUnknownClaimTotal++
+		case "DEPENDENCY_BLOCKED":
+			result.DependencyBlockedClaimTotal++
+		case "DIRECT_REFUTED":
+			result.DirectRefutedClaimTotal++
+		case "DEPENDENCY_REFUTED":
+			result.DependencyRefutedClaimTotal++
+		case "DIRECT_DISCHARGED":
+			result.DirectDischargedClaimTotal++
+		case "DEPENDENCY_DISCHARGED", "DEPENDENCY_RECOVERED":
+			result.DependencyDischargedTotal++
+		}
+		if len(r.CausePath) > result.MaximumCausePathDepth {
+			result.MaximumCausePathDepth = len(r.CausePath)
+		}
+	}
+	if recovered {
+		result.TransitionTotal += claimTotal
+		result.AppendOnlyTransitionTotal = claimTotal
+	}
+	for _, kind := range []edgeKind{supports, requires, contradicts, failureEntailment} {
+		value := edgeMetric{Kind: kind}
+		for _, e := range g.Edges {
+			if e.Kind != kind {
+				continue
+			}
+			value.Total++
+			from, to := indexOf(e.FromClaimID, g), indexOf(e.ToClaimID, g)
+			if recovered && states[to] == "DISCHARGED" {
+				value.Recovery++
+			}
+			if states[to] == "OPEN" && (states[from] == "OPEN" || (states[from] == "REFUTED" && (e.Kind == supports || e.Kind == requires))) {
+				value.Blocking++
+			}
+			if states[to] == "REFUTED" && states[from] == "REFUTED" && (e.Kind == contradicts || e.Kind == failureEntailment) {
+				value.Refuting++
+			}
+		}
+		result.ObservedBlockingEdgeTotal += value.Blocking
+		result.ObservedRefutingEdgeTotal += value.Refuting
+		result.ObservedRecoveryEdgeTotal += value.Recovery
+		result.EdgeMetrics = append(result.EdgeMetrics, value)
 	}
 	return result
 }
-
-func deriveMetrics(resolutions []claimdependency.Resolution) claimdependency.Metrics {
-	metrics := claimdependency.Metrics{FixedClaimTotal: claimdependency.ClaimTotal, FixedEdgeTotal: claimdependency.EdgeTotal, ClassifiedClaimTotal: len(resolutions), TransitionTotal: claimdependency.TransitionTotal}
-	recoveryEdges := map[string]bool{}
-	for _, resolution := range resolutions {
-		switch resolution.State {
-		case "OPEN":
-			metrics.OpenClaimTotal++
-		case "DISCHARGED":
-			metrics.DischargedClaimTotal++
-		case "REFUTED":
-			metrics.RefutedClaimTotal++
-		}
-		switch resolution.Kind {
-		case "DIRECT_UNKNOWN":
-			metrics.UnknownClaimTotal++
-			metrics.DirectUnknownClaimTotal++
-		case "DEPENDENCY_BLOCKED":
-			metrics.UnknownClaimTotal++
-			metrics.DependencyBlockedClaimTotal++
-			metrics.ObservedBlockingEdgeTotal += len(resolution.BlockedByEdgeIDs)
-		case "DIRECT_REFUTED":
-			metrics.DirectRefutedClaimTotal++
-		case "DEPENDENCY_REFUTED":
-			metrics.DependencyRefutedClaimTotal++
-			metrics.ObservedRefutingEdgeTotal += len(resolution.BlockedByEdgeIDs)
-		case "DEPENDENCY_RECOVERED":
-			metrics.DependencyRecoveredTotal++
-			for _, edgeID := range resolution.CauseEdgeIDs {
-				recoveryEdges[edgeID] = true
-			}
-		}
-		if depth := len(resolution.CausePath) - 1; depth > metrics.MaximumCausePathDepth {
-			metrics.MaximumCausePathDepth = depth
+func decisionFor(predicate string, recovered bool) decision {
+	if recovered {
+		return decision{Value: "PASS", Resolution: "CAUSAL_RECOVERY_DISCHARGED", Reason: "APPEND_ONLY_EVIDENCE_RECOVERY"}
+	}
+	if predicate == contradict {
+		return decision{Value: "FAIL_CLOSED", Resolution: "CAUSAL_REFUTATION", Reason: "EXPLICIT_CONTRADICTION_EDGE_ALGEBRA"}
+	}
+	return decision{Value: "FAIL_CLOSED", Resolution: "UNRESOLVED_CLAIM", Reason: "UNKNOWN_REMAINS_OPEN"}
+}
+func validatePrior(current reconstructed, prior receipt) error {
+	if prior.Schema != "gooo.meta.claim-dependency-receipt/v2" || prior.Scope != "CLAIM_STATE_PROPAGATION_ONLY" || prior.Observation.Predicate != unknown || prior.Graph.Digest != current.Graph.Digest || len(prior.Resolutions) != claimTotal || receiptDigest(prior) != prior.Digest || !sameStrings(prior.PriorClaimStates, nil) && len(prior.PriorClaimStates) != 0 {
+		return fmt.Errorf("prior ledger is not a valid UNKNOWN graph receipt")
+	}
+	if err := validateChain(prior.Transitions, prior.TransitionHeadDigest); err != nil {
+		return err
+	}
+	for i, r := range prior.Resolutions {
+		if r.State != "OPEN" || r.ClaimID != current.Graph.Nodes[i].ClaimID {
+			return fmt.Errorf("prior claim state %d is not OPEN", i+1)
 		}
 	}
-	metrics.ObservedRecoveryEdgeTotal = len(recoveryEdges)
-	if metrics.FixedClaimTotal > 0 {
-		metrics.ClassificationBasisPoints = metrics.ClassifiedClaimTotal * 10000 / metrics.FixedClaimTotal
+	return nil
+}
+func validateChain(transitions []transition, head string) error {
+	if len(transitions) == 0 || transitions[len(transitions)-1].TransitionDigest != head {
+		return fmt.Errorf("transition head mismatch")
 	}
-	return metrics
+	previous := ""
+	for i, value := range transitions {
+		if value.Sequence != i+1 || value.PreviousTransitionDigest != previous || transitionDigest(value) != value.TransitionDigest {
+			return fmt.Errorf("transition %d chain mismatch", i+1)
+		}
+		previous = value.TransitionDigest
+	}
+	return nil
+}
+func statesOf(values []resolution) []string {
+	result := make([]string, len(values))
+	for i, value := range values {
+		result[i] = value.State
+	}
+	return result
+}
+func sameStrings(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
+	return true
+}
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
-func expectedDecision(states []string) (string, string, string) {
-	for _, state := range states {
-		if state == "REFUTED" {
-			return "FAIL_CLOSED", "CAUSAL_REFUTATION", "DIRECT_REFUTATION_PROPAGATED"
-		}
-	}
-	for _, state := range states {
-		if state == "OPEN" {
-			return "FAIL_CLOSED", "CAUSAL_DEPENDENCY_BLOCK", "DIRECT_UNKNOWN_BLOCKED_DESCENDANTS"
-		}
-	}
-	return "PASS", "CAUSAL_RECOVERY_DISCHARGED", "UPSTREAM_RECOVERY_PROPAGATED"
-}
-
-func digestValue(value any) string {
+func digestJSON(value any) string {
 	data, _ := json.Marshal(value)
 	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:])
+	return "sha256:" + hex.EncodeToString(sum[:])
 }
-
-func digestTransition(transition claimdependency.Transition) string {
-	return digestValue(transition)
+func receiptDigest(value receipt) string {
+	value.Digest = ""
+	return digestJSON(value)
 }
-
-func digestReceipt(receipt claimdependency.Receipt) string {
-	receipt.Digest = ""
-	return digestValue(receipt)
+func observationDigest(value observation) string {
+	value.Digest = ""
+	return digestJSON(value)
 }
-
-func digestJudgment(judgment Judgment) string {
-	judgment.Digest = ""
-	return digestValue(judgment)
+func digestBytes(value []byte) string {
+	sum := sha256.Sum256(value)
+	return "sha256:" + hex.EncodeToString(sum[:])
+}
+func graphDigest(value graph) string           { value.Digest = ""; return digestJSON(value) }
+func transitionDigest(value transition) string { value.TransitionDigest = ""; return digestJSON(value) }
+func prefixedDigest(value string) string {
+	if strings.HasPrefix(value, "sha256:") {
+		return value
+	}
+	return "sha256:" + value
 }

@@ -5,82 +5,184 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const (
-	ProducerID      = "gooo://meta/claim-dependency/producer/v1"
-	ConsumerID      = "gooo://meta/claim-dependency/independent-judge/v1"
-	MetaOperationID = "classify-claim-state-causality"
-	ProofChoice     = "COHERENCE"
-)
-
-var claimContract = [...]Claim{
-	{Ordinal: 1, Axis: "source-observed", ClaimID: "gooo.claim.dependency.source-observed.v1", Statement: "the Gooo source is the observed subject", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "observe-gooo-source", ProofChoice: "FOUNDATION", Coordinate: Coordinate{Stage: "READ", Step: "gooo-source", Reason: "SOURCE_READ"}},
-	{Ordinal: 2, Axis: "producer-bound", ClaimID: "gooo.claim.dependency.producer-bound.v1", Statement: "the receipt identifies its deterministic producer", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "bind-producer", ProofChoice: "FOUNDATION", Coordinate: Coordinate{Stage: "BIND", Step: "producer", Reason: "PRODUCER_IDENTIFIED"}},
-	{Ordinal: 3, Axis: "proof-choice-bound", ClaimID: "gooo.claim.dependency.proof-choice-bound.v1", Statement: "the state claim names a proof choice", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "choose-proof-route", ProofChoice: ProofChoice, Coordinate: Coordinate{Stage: "BIND", Step: "proof-choice", Reason: "PROOF_CHOICE_DECLARED"}},
-	{Ordinal: 4, Axis: "consumer-bound", ClaimID: "gooo.claim.dependency.consumer-bound.v1", Statement: "the receipt names an independent decision consumer", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "bind-consumer", ProofChoice: "COHERENCE", Coordinate: Coordinate{Stage: "BIND", Step: "consumer", Reason: "CONSUMER_IDENTIFIED"}},
-	{Ordinal: 5, Axis: "read-only-bound", ClaimID: "gooo.claim.dependency.read-only-bound.v1", Statement: "the experiment cannot mutate the repository", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "deny-repository-mutation", ProofChoice: "REGRESSION", Coordinate: Coordinate{Stage: "GUARD", Step: "authority", Reason: "READ_ONLY"}},
-	{Ordinal: 6, Axis: "decision-replay-bound", ClaimID: "gooo.claim.dependency.decision-replay-bound.v1", Statement: "an independent judge can replay the state decision", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: MetaOperationID, ProofChoice: "REGRESSION", Coordinate: Coordinate{Stage: "JUDGE", Step: "replay-decision", Reason: "INDEPENDENT_REPLAY"}},
+type sourceGraph struct {
+	IR          semantic.IR
+	Graph       Graph
+	RootProgram string
 }
 
-type edgeSpec struct {
-	from int
-	to   int
-	kind string
-}
-
-var edgeContract = [...]edgeSpec{
-	{from: 0, to: 1, kind: "SOURCE_INFORMS_PRODUCER"},
-	{from: 1, to: 2, kind: "PRODUCER_SELECTS_PROOF"},
-	{from: 1, to: 3, kind: "PRODUCER_BINDS_CONSUMER"},
-	{from: 1, to: 4, kind: "PRODUCER_DENIES_MUTATION"},
-	{from: 2, to: 5, kind: "PROOF_SUPPORTS_DECISION"},
-	{from: 3, to: 5, kind: "CONSUMER_ACCEPTS_RECEIPT"},
-	{from: 4, to: 5, kind: "AUTHORITY_GUARDRAIL"},
-	{from: 1, to: 5, kind: "PRODUCER_TRACEABLE_DECISION"},
-}
-
-func buildGraph() (Graph, error) {
-	graph := Graph{
-		Schema: GraphSchema, Authority: "DECLARED_EXPERIMENTAL_CONTRACT",
-		Completeness: "CLOSED_WORLD_FIXED_SIX_CLAIMS", NodeTotal: ClaimTotal,
-		EdgeTotal: EdgeTotal, Nodes: append([]Claim(nil), claimContract...),
-		Edges: make([]Edge, 0, EdgeTotal),
+func graphFromSource(source []byte, sourcePath string) (sourceGraph, error) {
+	file, diagnostics := syntax.ParseFile(sourcePath, string(source))
+	if file == nil || diagnostics.HasErrors() {
+		return sourceGraph{}, fmt.Errorf("source parse failed: %s", diagnostics.Error())
 	}
-	for index, edge := range edgeContract {
-		graph.Edges = append(graph.Edges, Edge{
-			EdgeID: fmt.Sprintf("E%02d", index+1), FromClaimID: claimContract[edge.from].ClaimID,
-			ToClaimID: claimContract[edge.to].ClaimID, Kind: edge.kind,
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return sourceGraph{}, fmt.Errorf("source lower failed: %w", err)
+	}
+	if err := ir.Validate(); err != nil {
+		return sourceGraph{}, fmt.Errorf("canonical IR invalid: %w", err)
+	}
+
+	activities := make(map[string]semantic.Node)
+	for _, node := range ir.Graph.Nodes() {
+		if node.Kind == semantic.Activity {
+			activities[node.Name] = node
+		}
+	}
+	claims := make([]Claim, 0, ClaimTotal)
+	activityIndex := make(map[string]int)
+	for _, declaration := range file.Declarations {
+		activity, ok := declaration.(*syntax.ActivityDecl)
+		if !ok {
+			continue
+		}
+		node, ok := activities[activity.Name]
+		if !ok || node.ValueProgram == "" {
+			return sourceGraph{}, fmt.Errorf("activity %q is not a semantic value claim", activity.Name)
+		}
+		ordinal := len(claims) + 1
+		activityIndex[node.ID.String()] = ordinal - 1
+		claims = append(claims, Claim{
+			Ordinal: ordinal, Axis: strings.ToLower(activity.Name), ClaimID: node.ID.String(),
+			ActivityID: node.ID.String(), ActivityName: activity.Name,
+			Statement:    fmt.Sprintf("activity %s declares value claim %q", activity.Name, node.ValueProgram),
+			ValueProgram: node.ValueProgram, Producer: ProducerID, Consumer: ConsumerID,
+			MetaOperation: MetaOperationID, ProofChoice: ProofChoice,
+			Coordinate: Coordinate{Stage: "CLAIM", Step: activity.Name, Reason: "SEMANTIC_ACTIVITY_VALUE"},
 		})
 	}
-	digest, err := graphDigest(graph)
-	if err != nil {
-		return Graph{}, err
+	if len(claims) != ClaimTotal {
+		return sourceGraph{}, fmt.Errorf("source must contain exactly %d activity claims, got %d", ClaimTotal, len(claims))
 	}
-	graph.Digest = digest
-	return graph, nil
+
+	generatedBy := make(map[string]string)
+	usedBy := make(map[string][]string)
+	for _, fact := range ir.Graph.AllFacts() {
+		switch fact.Predicate {
+		case semantic.WasGeneratedBy:
+			generatedBy[fact.Subject.String()] = fact.Object.String()
+		case semantic.Used:
+			usedBy[fact.Subject.String()] = append(usedBy[fact.Subject.String()], fact.Object.String())
+		}
+	}
+	type edgeCandidate struct {
+		from int
+		to   int
+		kind EdgeKind
+	}
+	candidates := make([]edgeCandidate, 0, EdgeTotal)
+	for downstreamID, entities := range usedBy {
+		to, ok := activityIndex[downstreamID]
+		if !ok {
+			continue
+		}
+		for _, entityID := range entities {
+			upstreamID, ok := generatedBy[entityID]
+			if !ok {
+				continue
+			}
+			from, ok := activityIndex[upstreamID]
+			if !ok || from == to {
+				continue
+			}
+			kind, ok := edgeKind(claims[to].ValueProgram)
+			if !ok {
+				return sourceGraph{}, fmt.Errorf("activity %q does not declare a typed dependency edge", claims[to].ActivityName)
+			}
+			candidates = append(candidates, edgeCandidate{from: from, to: to, kind: kind})
+		}
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		if candidates[i].from != candidates[j].from {
+			return candidates[i].from < candidates[j].from
+		}
+		if candidates[i].to != candidates[j].to {
+			return candidates[i].to < candidates[j].to
+		}
+		return candidates[i].kind < candidates[j].kind
+	})
+	if len(candidates) != EdgeTotal {
+		return sourceGraph{}, fmt.Errorf("semantic activity relations must reconstruct exactly %d edges, got %d", EdgeTotal, len(candidates))
+	}
+	edges := make([]Edge, 0, len(candidates))
+	for index, candidate := range candidates {
+		edges = append(edges, Edge{
+			EdgeID: fmt.Sprintf("E%02d", index+1), FromClaimID: claims[candidate.from].ClaimID,
+			ToClaimID: claims[candidate.to].ClaimID, Kind: candidate.kind,
+			SemanticBasis: "prov:wasGeneratedBy + prov:used + activity.value-program",
+		})
+	}
+	graph := Graph{
+		Schema: GraphSchema, Authority: "CANONICAL_IR_FROM_SYNTAX_PARSE_AND_BIDIR_LOWER",
+		Completeness: "CLOSED_WORLD_SOURCE_RECONSTRUCTED", CanonicalIRDigest: prefixedDigest(ir.StableHash()),
+		NodeTotal: ClaimTotal, EdgeTotal: EdgeTotal, Nodes: claims, Edges: edges,
+	}
+	graph.Digest, err = graphDigest(graph)
+	if err != nil {
+		return sourceGraph{}, err
+	}
+	return sourceGraph{IR: ir, Graph: graph, RootProgram: claims[0].ValueProgram}, nil
+}
+
+func edgeKind(program string) (EdgeKind, bool) {
+	const prefix = "claim.edge:"
+	if !strings.HasPrefix(program, prefix) {
+		return "", false
+	}
+	switch strings.TrimPrefix(program, prefix) {
+	case "supports":
+		return Supports, true
+	case "requires":
+		return Requires, true
+	case "contradicts":
+		return Contradicts, true
+	case "failure-entailment":
+		return FailureEntailment, true
+	default:
+		return "", false
+	}
 }
 
 func graphDigest(graph Graph) (string, error) {
 	graph.Digest = ""
 	return digestJSON(graph)
 }
-
 func receiptDigest(receipt Receipt) (string, error) {
 	receipt.Digest = ""
 	return digestJSON(receipt)
 }
-
+func observationDigest(observation Observation) (string, error) {
+	observation.Digest = ""
+	return digestJSON(observation)
+}
+func transitionDigest(transition Transition) (string, error) {
+	transition.TransitionDigest = ""
+	return digestJSON(transition)
+}
 func digestJSON(value any) (string, error) {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return "", err
 	}
 	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:]), nil
+	return "sha256:" + hex.EncodeToString(sum[:]), nil
 }
-
 func digestBytes(data []byte) string {
 	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:])
+	return "sha256:" + hex.EncodeToString(sum[:])
+}
+func prefixedDigest(raw string) string {
+	if strings.HasPrefix(raw, "sha256:") {
+		return raw
+	}
+	return "sha256:" + raw
 }
