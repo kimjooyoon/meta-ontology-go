@@ -77,14 +77,14 @@ type Scenario struct {
 }
 
 type Candidate struct {
-	ID     string `json:"id"`
-	Claim  string `json:"claim"`
-	Source string `json:"source"`
+	ID     string  `json:"id"`
+	Claim  string  `json:"claim"`
+	Source *string `json:"source"`
 }
 
 type ResolutionInput struct {
-	ID     string `json:"id"`
-	Source string `json:"source"`
+	ID     string  `json:"id"`
+	Source *string `json:"source"`
 }
 
 type DiagnosticObservation struct {
