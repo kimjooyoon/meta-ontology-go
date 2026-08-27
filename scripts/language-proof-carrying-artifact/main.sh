@@ -41,6 +41,12 @@ snapshot_repo "$output/repository-before.json"
 # This workflow intentionally has no local test invocation. The only Go
 # execution below is the GitHub Actions execution of the producer and kernel.
 printf '%s\n' 'local_tests=0' > "$output/local-test-policy.txt"
+toolchain_version="$(go version)"
+case "$toolchain_version" in
+  "go version go1.27.0 "*) ;;
+  *) echo "unexpected Go toolchain: $toolchain_version" >&2; exit 1 ;;
+esac
+printf '%s\n' "$toolchain_version" > "$output/go-version.txt"
 actual_head="$(git rev-parse HEAD)"
 test "$actual_head" = "$HEAD_SHA"
 
