@@ -61,6 +61,9 @@ func Validate(report Report) error {
 	if err := validateCaseResults(report, ProofPhaseFinal); err != nil {
 		return err
 	}
+	if err := validateCaseEnvelopePolicy(report); err != nil {
+		return err
+	}
 	if err := validateLedgerAgainstValidCase(report); err != nil {
 		return err
 	}
@@ -97,6 +100,9 @@ func Validate(report Report) error {
 			!report.ConsumerReceipt.OutputExists || !validDigest(report.ConsumerReceipt.TargetDigest) || !validDigest(report.ConsumerReceipt.OutputDigest) || !validDigest(report.ConsumerReceipt.AttestationDigest) ||
 			report.ConsumerReceipt.AttestationDigest != attestationDigest(report) || report.ConsumerReceipt.Digest != consumerReceiptDigest(report.ConsumerReceipt) {
 			return fmt.Errorf("proof-carrying consumer receipt mismatch")
+		}
+		if err := validateConsumerReceiptPolicy(report); err != nil {
+			return err
 		}
 	}
 	if report.Digest != reportDigest(report) {
@@ -159,6 +165,9 @@ func ValidatePreliminary(report Report) error {
 		return preliminaryValidationError(Coordinate{"EVALUATE", "preliminary-inventory", "PRELIMINARY_INDICATOR_INVENTORY_MISMATCH"}, err)
 	}
 	if err := validateCaseResults(report, ProofPhasePreliminary); err != nil {
+		return err
+	}
+	if err := validateCaseEnvelopePolicy(report); err != nil {
 		return err
 	}
 	if err := validateOpenLedger(report.PriorLedger); err != nil {
@@ -459,6 +468,74 @@ func validateCaseResults(report Report, phase string) error {
 	return validateCaseClaims(report, phase)
 }
 
+func validatorPolicyRows() []PolicyIssueRow {
+	rows := make([]PolicyIssueRow, 0, len(validatorCaseEnvelopeReductionContract))
+	for rank, kind := range validatorCaseEnvelopeReductionContract {
+		rows = append(rows, PolicyIssueRow{Kind: kind, Rank: rank + 1})
+	}
+	return rows
+}
+
+// validateCaseEnvelopePolicy compares the consumer's source-derived policy
+// with the fixed validator expectation. This is a separate conformance gate;
+// the producer and the runtime reduction never read validatorPolicyRows.
+func validateCaseEnvelopePolicy(report Report) error {
+	valid := validCase(report.Cases)
+	if valid == nil {
+		return &ValidationError{Coordinate: Coordinate{"CONSUME_POLICY", "validate-policy", "CASE_ENVELOPE_POLICY_SUBJECT_MISSING"}, Detail: "valid case has no source-derived policy"}
+	}
+	for _, item := range report.Cases {
+		if item.SourceDigest == report.Checkout.SourceDigest && item.SourceDigest != "" && !policyRowsShapeOK(item.Policy, report.Checkout.SourceDigest) {
+			return &ValidationError{Coordinate: Coordinate{"CONSUME_POLICY", "validate-policy", "CASE_ENVELOPE_POLICY_OBSERVATION_MISMATCH"}, Detail: item.ID}
+		}
+	}
+	policy := valid.Policy
+	wantRows := validatorPolicyRows()
+	for _, item := range report.Cases {
+		if item.SourceDigest != report.Checkout.SourceDigest || item.SourceDigest == "" {
+			continue
+		}
+		if item.Policy.RawSourceDigest != policy.RawSourceDigest || item.Policy.SemanticDigest != policy.SemanticDigest ||
+			item.Policy.UniqueIssueRows != policy.UniqueIssueRows || item.Policy.UniqueRankRows != policy.UniqueRankRows ||
+			item.Policy.SelectionOperation != policy.SelectionOperation || !reflect.DeepEqual(item.Policy.IssueRows, policy.IssueRows) {
+			return &ValidationError{Coordinate: Coordinate{"CONSUME_POLICY", "validate-policy", "CASE_ENVELOPE_POLICY_OBSERVATION_MISMATCH"}, Detail: item.ID}
+		}
+	}
+	if policy.RawSourceDigest != report.Checkout.SourceDigest || !validDigest(policy.RawSourceDigest) || !validDigest(policy.SemanticDigest) ||
+		policy.UniqueIssueRows != CaseEnvelopePolicyRowTotal || policy.UniqueRankRows != CaseEnvelopePolicyRowTotal || policy.SelectionOperation != caseEnvelopePolicyOperation ||
+		!reflect.DeepEqual(policy.IssueRows, wantRows) || policy.SelectedIssue != "NONE" || policy.SelectedRank != 0 || len(policy.ObservedIssueSet) != 0 {
+		return &ValidationError{Coordinate: Coordinate{"CONSUME_POLICY", "validate-policy", "CASE_ENVELOPE_POLICY_CONFORMANCE_MISMATCH"}, Detail: policyMismatchDetail(policy, wantRows)}
+	}
+	return nil
+}
+
+func policyMismatchDetail(actual CaseEnvelopePolicyObservation, expected []PolicyIssueRow) string {
+	detail, err := json.Marshal(struct {
+		Actual            CaseEnvelopePolicyObservation `json:"actual"`
+		ExpectedRows      []PolicyIssueRow              `json:"expected_rows"`
+		ExpectedOperation string                        `json:"expected_operation"`
+	}{actual, expected, caseEnvelopePolicyOperation})
+	if err != nil {
+		return "policy actual/expected comparison failed"
+	}
+	return string(detail)
+}
+
+func validateConsumerReceiptPolicy(report Report) error {
+	valid := validCase(report.Cases)
+	if valid == nil {
+		return &ValidationError{Coordinate: Coordinate{"CONSUME_POLICY", "consumer-receipt", "CASE_ENVELOPE_POLICY_RECEIPT_SUBJECT_MISSING"}, Detail: "valid case has no policy binding"}
+	}
+	policy := valid.Policy
+	receipt := report.ConsumerReceipt
+	if receipt.PolicyRawSourceDigest != policy.RawSourceDigest || receipt.PolicySemanticDigest != policy.SemanticDigest ||
+		receipt.PolicyUniqueIssueRows != policy.UniqueIssueRows || receipt.PolicyUniqueRankRows != policy.UniqueRankRows || receipt.PolicyRowTotal != CaseEnvelopePolicyRowTotal || receipt.PolicySelectionOperation != policy.SelectionOperation ||
+		!reflect.DeepEqual(receipt.PolicyObservedIssueSet, policy.ObservedIssueSet) || receipt.PolicySelectedIssue != policy.SelectedIssue || receipt.PolicySelectedRank != policy.SelectedRank || receipt.CaseEnvelopeDigest != valid.EnvelopeDigest {
+		return &ValidationError{Coordinate: Coordinate{"CONSUME_POLICY", "consumer-receipt", "CASE_ENVELOPE_POLICY_RECEIPT_MISMATCH"}, Detail: "consumer receipt is not bound to the source-derived policy and case envelope"}
+	}
+	return nil
+}
+
 func validateCaseClaims(report Report, phase string) error {
 	if !caseInventoryOK(report.Cases) || len(report.Cases) != CaseTotal {
 		return fmt.Errorf("proof-carrying case claim inventory mismatch")
@@ -592,10 +669,11 @@ func validateInterventions(interventions []InterventionResult) error {
 			return fmt.Errorf("proof-carrying intervention mismatch: %s", item.ID)
 		}
 		if index == 0 {
-			if !item.SemanticDigestChanged || !item.OperationReceiptChanged || !item.EvidenceLinksChanged || !item.ClaimTransitionsChanged || item.SemanticDigestPreserved {
+			if !item.SemanticDigestChanged || !item.OperationReceiptChanged || !item.EvidenceLinksChanged || !item.ClaimTransitionsChanged || item.SemanticDigestPreserved ||
+				!validDigest(item.PolicySemanticDigestBefore) || !validDigest(item.PolicySemanticDigestAfter) || !item.PolicySelectionChanged || item.PolicySelectionPreserved {
 				return fmt.Errorf("proof-carrying semantic intervention mismatch")
 			}
-		} else if !item.SemanticDigestPreserved || item.SemanticDigestChanged {
+		} else if !item.SemanticDigestPreserved || item.SemanticDigestChanged || !validDigest(item.PolicySemanticDigestBefore) || !validDigest(item.PolicySemanticDigestAfter) || !item.PolicySelectionPreserved || item.PolicySelectionChanged {
 			return fmt.Errorf("proof-carrying nonsemantic intervention mismatch")
 		}
 	}

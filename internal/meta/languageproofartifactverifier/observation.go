@@ -19,6 +19,7 @@ type observation struct {
 	ConsumerErrorClass        string
 	ConsumerErrorDigest       string
 	Claims                    []ClaimResult
+	Policy                    CaseEnvelopePolicyObservation
 }
 
 // ClaimAdjudication is the independent, claim-local result of checking one

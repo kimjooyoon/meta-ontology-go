@@ -18,30 +18,31 @@ type ClaimResult struct {
 }
 
 type CaseResult struct {
-	ID                        string        `json:"id"`
-	Status                    string        `json:"status"`
-	ExpectedDecision          string        `json:"expected_decision"`
-	ExpectedResolution        string        `json:"expected_resolution"`
-	ExpectedReason            string        `json:"expected_reason"`
-	ObservedDecision          string        `json:"observed_decision"`
-	ObservedResolution        string        `json:"observed_resolution"`
-	ObservedReason            string        `json:"observed_reason"`
-	ProofChoice               string        `json:"proof_choice"`
-	MetaOperation             string        `json:"meta_operation"`
-	Coordinate                Coordinate    `json:"coordinate"`
-	Claims                    []ClaimResult `json:"claims"`
-	ArtifactDigest            string        `json:"artifact_digest"`
-	SourceDigest              string        `json:"source_digest"`
-	SemanticDigest            string        `json:"semantic_digest"`
-	OperationDigest           string        `json:"operation_digest"`
-	OperationAttachmentDigest string        `json:"operation_attachment_digest,omitempty"`
-	RecipeAttachmentDigest    string        `json:"recipe_attachment_digest,omitempty"`
-	ConsumerTargetDigest      string        `json:"consumer_target_digest,omitempty"`
-	ConsumerOutputDigest      string        `json:"consumer_output_digest,omitempty"`
-	ConsumerOutputExists      bool          `json:"consumer_output_exists"`
-	ConsumerErrorClass        string        `json:"consumer_error_class,omitempty"`
-	ConsumerErrorDigest       string        `json:"consumer_error_digest,omitempty"`
-	EnvelopeDigest            string        `json:"envelope_digest"`
+	ID                        string                        `json:"id"`
+	Status                    string                        `json:"status"`
+	ExpectedDecision          string                        `json:"expected_decision"`
+	ExpectedResolution        string                        `json:"expected_resolution"`
+	ExpectedReason            string                        `json:"expected_reason"`
+	ObservedDecision          string                        `json:"observed_decision"`
+	ObservedResolution        string                        `json:"observed_resolution"`
+	ObservedReason            string                        `json:"observed_reason"`
+	ProofChoice               string                        `json:"proof_choice"`
+	MetaOperation             string                        `json:"meta_operation"`
+	Coordinate                Coordinate                    `json:"coordinate"`
+	Claims                    []ClaimResult                 `json:"claims"`
+	ArtifactDigest            string                        `json:"artifact_digest"`
+	SourceDigest              string                        `json:"source_digest"`
+	SemanticDigest            string                        `json:"semantic_digest"`
+	OperationDigest           string                        `json:"operation_digest"`
+	OperationAttachmentDigest string                        `json:"operation_attachment_digest,omitempty"`
+	RecipeAttachmentDigest    string                        `json:"recipe_attachment_digest,omitempty"`
+	ConsumerTargetDigest      string                        `json:"consumer_target_digest,omitempty"`
+	ConsumerOutputDigest      string                        `json:"consumer_output_digest,omitempty"`
+	ConsumerOutputExists      bool                          `json:"consumer_output_exists"`
+	ConsumerErrorClass        string                        `json:"consumer_error_class,omitempty"`
+	ConsumerErrorDigest       string                        `json:"consumer_error_digest,omitempty"`
+	EnvelopeDigest            string                        `json:"envelope_digest"`
+	Policy                    CaseEnvelopePolicyObservation `json:"policy"`
 }
 
 type Summary struct {

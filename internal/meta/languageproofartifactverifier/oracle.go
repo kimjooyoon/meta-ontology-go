@@ -3,6 +3,7 @@ package languageproofartifactverifier
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"reflect"
 )
 
@@ -16,10 +17,9 @@ type caseEnvelopeIssue struct {
 	Coordinate Coordinate
 }
 
-// caseEnvelopeReductionContract is the fixed aggregate precedence. The
-// order is semantic, not case-specific: a higher-priority observed boundary
-// wins the envelope while every claim keeps its own adjudication and cause.
-var caseEnvelopeReductionContract = []string{
+// validatorCaseEnvelopeReductionContract is the fixed validator expectation.
+// Runtime consumer selection is derived from the raw .gooo policy instead.
+var validatorCaseEnvelopeReductionContract = []string{
 	"EXTERNAL_EVIDENCE_ABSENT",
 	"OPERATION_EVIDENCE_MISSING",
 	"OPERATION_ATTACHMENT_MISSING",
@@ -33,15 +33,42 @@ var caseEnvelopeReductionContract = []string{
 	"RECIPE_MISMATCH",
 }
 
-func reduceCaseEnvelope(issues []caseEnvelopeIssue) caseEnvelopeIssue {
-	for _, kind := range caseEnvelopeReductionContract {
-		for _, issue := range issues {
-			if issue.Kind == kind {
-				return issue
-			}
+func reduceCaseEnvelopeWithoutPolicy(issues []caseEnvelopeIssue) caseEnvelopeIssue {
+	// The only source-less supported observation is the byte-only boundary.
+	// Do not use the validator's canonical table as a runtime policy.
+	for _, issue := range issues {
+		if issue.Kind == "EXTERNAL_EVIDENCE_ABSENT" {
+			return issue
 		}
 	}
 	return caseEnvelopeIssue{Kind: "ARTIFACT_INVALID", Resolution: "INVARIANT_ONLY", Reason: "PROOF_CARRYING_ARTIFACT_INVALID", Coordinate: Coordinate{"CONSUME_IDENTITY", "artifact", "PROOF_CARRYING_ARTIFACT_INVALID"}}
+}
+
+func reduceCaseEnvelope(issues []caseEnvelopeIssue, policy caseEnvelopePolicy) caseEnvelopeIssue {
+	var selected caseEnvelopeIssue
+	selectedRank := 0
+	for _, issue := range issues {
+		rank, ok := policyRank(policy, issue.Kind)
+		if !ok {
+			return caseEnvelopeIssue{Kind: "CASE_ENVELOPE_POLICY_UNKNOWN_ISSUE", Resolution: "LOWER_RESOLUTION", Reason: "CASE_ENVELOPE_POLICY_UNKNOWN_ISSUE", Coordinate: Coordinate{"CONSUME_POLICY", "select-issue", "CASE_ENVELOPE_POLICY_UNKNOWN_ISSUE"}}
+		}
+		if selected.Kind == "" || rank < selectedRank {
+			selected, selectedRank = issue, rank
+		}
+	}
+	if selected.Kind != "" {
+		return selected
+	}
+	return caseEnvelopeIssue{Kind: "NO_CASE_ENVELOPE_ISSUE", Resolution: "EXACT", Reason: "CASE_ENVELOPE_POLICY_NO_ISSUE", Coordinate: Coordinate{"CONSUME_POLICY", "select-issue", "CASE_ENVELOPE_POLICY_NO_ISSUE"}}
+}
+
+func caseEnvelopePolicyIssue(err error) caseEnvelopeIssue {
+	reason, step := "CASE_ENVELOPE_POLICY_INVALID", "parse-policy"
+	var policyErr *caseEnvelopePolicyError
+	if errors.As(err, &policyErr) {
+		reason, step = policyErr.Reason, policyErr.Step
+	}
+	return caseEnvelopeIssue{Kind: "CASE_ENVELOPE_POLICY_INVALID", Resolution: "LOWER_RESOLUTION", Reason: reason, Coordinate: Coordinate{"CONSUME_POLICY", step, reason}}
 }
 
 // verifyArtifact is the independent consumer kernel. It evaluates each
@@ -100,6 +127,11 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 
 	sourceDigest := digestBytes(source)
 	projection, projectionErr := projectSource(source, activityFrom(artifact))
+	var policy caseEnvelopePolicy
+	var policyErr error
+	if len(source) > 0 {
+		policy, policyErr = parseCaseEnvelopePolicy(source)
+	}
 	sourceClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "source-bytes-bound")
 	sourceStatementOK := claimStatementOK(artifact.Claims, artifact, "source-bytes-bound")
 	sourceBindingOK := len(source) > 0 && projectionErr == nil && artifact.SourceDigest == sourceDigest && artifact.SemanticDigest == projection.SemanticDigest
@@ -209,7 +241,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_AUTHORITY", "authority-evidence", "AUTHORITY_ATTESTATION_NOT_PRESERVED"}, "consumer-observation"))
 	}
 
-	issues := make([]caseEnvelopeIssue, 0, len(caseEnvelopeReductionContract))
+	issues := make([]caseEnvelopeIssue, 0, CaseEnvelopePolicyRowTotal)
 	if len(source) == 0 && len(operation) == 0 && len(recipe) == 0 {
 		issues = append(issues, caseEnvelopeIssue{"EXTERNAL_EVIDENCE_ABSENT", "LOWER_RESOLUTION", "ARTIFACT_BYTES_NOT_AUTHORITY", Coordinate{"CONSUME_INPUT", "external-evidence", "ARTIFACT_BYTES_NOT_AUTHORITY"}})
 	}
@@ -247,17 +279,29 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 	if !recipeGood {
 		issues = append(issues, caseEnvelopeIssue{"RECIPE_MISMATCH", "INVARIANT_ONLY", "INDEPENDENT_RECIPE_MISMATCH", Coordinate{"CONSUME_RECIPE", "recipe", "INDEPENDENT_RECIPE_MISMATCH"}})
 	}
-	envelope := reduceCaseEnvelope(issues)
+	var envelope caseEnvelopeIssue
+	policyObservationValue := CaseEnvelopePolicyObservation{}
+	if len(source) == 0 {
+		envelope = reduceCaseEnvelopeWithoutPolicy(issues)
+	} else if policyErr != nil {
+		envelope = caseEnvelopePolicyIssue(policyErr)
+		policyObservationValue = policyFailureObservation(source)
+	} else {
+		envelope = reduceCaseEnvelope(issues, policy)
+		policyObservationValue = policyObservation(policy, issues, envelope)
+	}
 	if authorityGood {
 		claims := exactClaims(artifact.Claims)
-		result := observation{Decision: "PASS", Resolution: "EXACT", Reason: "PROOF_CARRYING_ARTIFACT_AUTHORIZED", Coordinate: Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", "CONSUMER_ONLY_READ_ONLY_AUTHORITY"}, ArtifactDigest: artifactEvidenceDigest, SourceDigest: sourceDigest, SemanticDigest: projection.SemanticDigest, OperationDigest: receipt.Digest, Claims: claims}
+		result := observation{Decision: "PASS", Resolution: "EXACT", Reason: "PROOF_CARRYING_ARTIFACT_AUTHORIZED", Coordinate: Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", "CONSUMER_ONLY_READ_ONLY_AUTHORITY"}, ArtifactDigest: artifactEvidenceDigest, SourceDigest: sourceDigest, SemanticDigest: projection.SemanticDigest, OperationDigest: receipt.Digest, Claims: claims, Policy: policyObservationValue}
 		result.EvidenceLinkDigest = digestValue(statementEvidence(artifact.Claims))
 		result.ClaimTransitionDigest = digestValue(claimTransitions(claims))
 		result.OperationAttachmentDigest = digestBytes(operation)
 		result.RecipeAttachmentDigest = digestBytes(recipe)
 		return result
 	}
-	return observedFailure(artifact, envelope.Resolution, envelope.Reason, envelope.Coordinate.Stage, envelope.Coordinate.Step, adjudications, artifactEvidenceDigest, sourceDigest, projection.SemanticDigest, receiptDigestIfValid(receipt))
+	result := observedFailure(artifact, envelope.Resolution, envelope.Reason, envelope.Coordinate.Stage, envelope.Coordinate.Step, adjudications, artifactEvidenceDigest, sourceDigest, projection.SemanticDigest, receiptDigestIfValid(receipt))
+	result.Policy = policyObservationValue
+	return result
 }
 
 func observedFailure(artifact Artifact, resolution, reason, stage, step string, adjudications []ClaimAdjudication, artifactDigestValue, sourceDigest, semanticDigest, operationDigest string) observation {

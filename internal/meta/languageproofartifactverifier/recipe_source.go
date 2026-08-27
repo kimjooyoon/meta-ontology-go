@@ -9,7 +9,8 @@ import (
 
 // recipeFromSource is an independent consumer projection of the recipe
 // meta-code. It deliberately shares only the core syntax boundary with the
-// producer; the consumer policy remains its own trusted copy.
+// producer; the case-envelope reduction policy is reconstructed separately
+// from the same raw source by policy.go.
 func recipeFromSource(raw []byte) (Recipe, error) {
 	file, diagnostics := syntax.ParseFile("proof-carrying-recipe-consumer.gooo", string(raw))
 	if file == nil || diagnostics.HasErrors() || file.Package == nil || file.Namespace == nil {

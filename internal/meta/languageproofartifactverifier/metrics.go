@@ -132,10 +132,11 @@ func proofs(report Report, cases []CaseResult, phase string) []Proof {
 		allClaimsDischarged = allClaimsDischarged && claim.Status == "DISCHARGED" && claim.Resolution == "EXACT" && claim.StateDigest == claimStateDigest(claim)
 	}
 	exactBinding := valid.SourceDigest == report.Checkout.SourceDigest && valid.OperationAttachmentDigest == report.Checkout.OperationDigest &&
-		valid.RecipeAttachmentDigest == report.Checkout.RecipeDigest && report.ContractDigest == report.Checkout.ContractDigest
+		valid.RecipeAttachmentDigest == report.Checkout.RecipeDigest && report.ContractDigest == report.Checkout.ContractDigest && policyObservationShapeOK(valid.Policy, report.Checkout.SourceDigest)
 	receiptFieldsOK := report.BundleDigest != "" && (report.ConsumerReceipt.TargetPath == "artifact.json" && report.ConsumerReceipt.Authority == "READ_ONLY_CONSUMPTION" && report.ConsumerReceipt.OutputExists &&
 		validDigest(report.ConsumerReceipt.TargetDigest) && validDigest(report.ConsumerReceipt.OutputDigest) && validDigest(report.ConsumerReceipt.AttestationDigest) &&
-		report.ConsumerReceipt.AttestationDigest == attestationDigest(report) && report.ConsumerReceipt.Digest == consumerReceiptDigest(report.ConsumerReceipt))
+		report.ConsumerReceipt.AttestationDigest == attestationDigest(report) && report.ConsumerReceipt.Digest == consumerReceiptDigest(report.ConsumerReceipt) &&
+		validateConsumerReceiptPolicy(report) == nil)
 	coherenceObserved := valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && len(report.Transitions) == TransitionTotal
 	regressionObserved := negativeCaseInventoryOK(cases) && report.Summary.CasesSatisfied == CaseTotal && report.Summary.CoherentClaimStructureRejections == 4 && report.Summary.SemanticInterventions == 1 && report.Summary.NonsemanticInterventions == 1 && report.Summary.UnauthorizedConsumerDenials == 1
 	coherenceEvidenceValidated := coherenceObserved && (phase == ProofPhasePreliminary || receiptFieldsOK)

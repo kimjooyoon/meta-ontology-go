@@ -1,17 +1,18 @@
 package languageproofartifactverifier
 
 const (
-	ReportSchema        = "gooo/language-proof-carrying-artifact-verifier/v1"
-	ContractSchema      = "gooo/language-proof-carrying-artifact-contract/v2"
-	RecipeSchema        = "gooo/language-proof-carrying-recipe/v1"
-	ArtifactSchema      = "gooo/language-proof-carrying-artifact/v1"
-	ProducerID          = "gooo://producer/language-proof-carrying-artifact"
-	ConsumerID          = "gooo://consumer/language-proof-carrying-artifact-verifier"
-	CaseTotal           = 16
-	EvidenceTotal       = 3
-	ClaimTemplateTotal  = 5
-	TransitionTotal     = 5
-	CounterexampleTotal = 7
+	ReportSchema               = "gooo/language-proof-carrying-artifact-verifier/v1"
+	ContractSchema             = "gooo/language-proof-carrying-artifact-contract/v2"
+	RecipeSchema               = "gooo/language-proof-carrying-recipe/v1"
+	ArtifactSchema             = "gooo/language-proof-carrying-artifact/v1"
+	ProducerID                 = "gooo://producer/language-proof-carrying-artifact"
+	ConsumerID                 = "gooo://consumer/language-proof-carrying-artifact-verifier"
+	CaseTotal                  = 16
+	EvidenceTotal              = 3
+	ClaimTemplateTotal         = 5
+	TransitionTotal            = 5
+	CounterexampleTotal        = 7
+	CaseEnvelopePolicyRowTotal = 11
 )
 
 type Coordinate struct {
@@ -187,6 +188,26 @@ type CaseSpec struct {
 	MetaOperation      string `json:"meta_operation"`
 }
 
+// CaseEnvelopePolicyObservation is reconstructed from the raw .gooo source by
+// the independent consumer. The validator's fixed rows are only an external
+// conformance expectation and never select the observed envelope issue.
+type PolicyIssueRow struct {
+	Kind string `json:"kind"`
+	Rank int    `json:"rank"`
+}
+
+type CaseEnvelopePolicyObservation struct {
+	RawSourceDigest    string           `json:"raw_source_digest"`
+	SemanticDigest     string           `json:"semantic_digest"`
+	IssueRows          []PolicyIssueRow `json:"issue_rows"`
+	UniqueIssueRows    int              `json:"unique_issue_rows"`
+	UniqueRankRows     int              `json:"unique_rank_rows"`
+	SelectionOperation string           `json:"selection_operation"`
+	ObservedIssueSet   []string         `json:"observed_issue_set"`
+	SelectedIssue      string           `json:"selected_issue"`
+	SelectedRank       int              `json:"selected_rank"`
+}
+
 type Contract struct {
 	Schema  string     `json:"schema"`
 	Version int        `json:"version"`
@@ -261,10 +282,12 @@ type SubjectInput struct {
 }
 
 type InterventionInput struct {
-	ID     string
-	Kind   string
-	Before SubjectInput
-	After  SubjectInput
+	ID           string
+	Kind         string
+	Before       SubjectInput
+	After        SubjectInput
+	PolicyBefore SubjectInput
+	PolicyAfter  SubjectInput
 }
 
 type InterventionResult struct {
@@ -291,6 +314,14 @@ type InterventionResult struct {
 	ClaimTransitionsChanged      bool   `json:"claim_transitions_changed"`
 	SemanticDigestPreserved      bool   `json:"semantic_digest_preserved"`
 	ConsumerDecisionPreserved    bool   `json:"consumer_decision_preserved"`
+	PolicySemanticDigestBefore   string `json:"policy_semantic_digest_before"`
+	PolicySemanticDigestAfter    string `json:"policy_semantic_digest_after"`
+	PolicySelectionBefore        string `json:"policy_selection_before"`
+	PolicySelectionAfter         string `json:"policy_selection_after"`
+	PolicySelectionRankBefore    int    `json:"policy_selection_rank_before"`
+	PolicySelectionRankAfter     int    `json:"policy_selection_rank_after"`
+	PolicySelectionChanged       bool   `json:"policy_selection_changed"`
+	PolicySelectionPreserved     bool   `json:"policy_selection_preserved"`
 }
 
 type ClaimTransition struct {
@@ -325,18 +356,28 @@ type CheckoutEvidence struct {
 }
 
 type ConsumerReceipt struct {
-	Schema            string `json:"schema"`
-	Version           int    `json:"version"`
-	PreliminaryDigest string `json:"preliminary_digest"`
-	Producer          string `json:"producer"`
-	Consumer          string `json:"consumer"`
-	TargetPath        string `json:"target_path"`
-	TargetDigest      string `json:"target_digest"`
-	OutputDigest      string `json:"output_digest"`
-	OutputExists      bool   `json:"output_exists"`
-	Authority         string `json:"authority"`
-	AttestationDigest string `json:"attestation_digest"`
-	Digest            string `json:"digest"`
+	Schema                   string   `json:"schema"`
+	Version                  int      `json:"version"`
+	PreliminaryDigest        string   `json:"preliminary_digest"`
+	Producer                 string   `json:"producer"`
+	Consumer                 string   `json:"consumer"`
+	TargetPath               string   `json:"target_path"`
+	TargetDigest             string   `json:"target_digest"`
+	OutputDigest             string   `json:"output_digest"`
+	OutputExists             bool     `json:"output_exists"`
+	Authority                string   `json:"authority"`
+	PolicyRawSourceDigest    string   `json:"policy_raw_source_digest"`
+	PolicySemanticDigest     string   `json:"policy_semantic_digest"`
+	PolicyUniqueIssueRows    int      `json:"policy_unique_issue_rows"`
+	PolicyUniqueRankRows     int      `json:"policy_unique_rank_rows"`
+	PolicyRowTotal           int      `json:"policy_row_total"`
+	PolicySelectionOperation string   `json:"policy_selection_operation"`
+	PolicyObservedIssueSet   []string `json:"policy_observed_issue_set"`
+	PolicySelectedIssue      string   `json:"policy_selected_issue"`
+	PolicySelectedRank       int      `json:"policy_selected_rank"`
+	CaseEnvelopeDigest       string   `json:"case_envelope_digest"`
+	AttestationDigest        string   `json:"attestation_digest"`
+	Digest                   string   `json:"digest"`
 }
 
 // Counterexample is a fixed semantic guard. It is not part of the conformance

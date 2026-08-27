@@ -44,17 +44,27 @@ func consumerError(class ConsumerErrorClass, detail string) *ConsumerError {
 }
 
 type consumerAttestation struct {
-	Decision          string `json:"decision"`
-	Resolution        string `json:"resolution"`
-	Reason            string `json:"reason"`
-	Authority         string `json:"authority"`
-	SubjectDecision   string `json:"subject_decision"`
-	BundleDigest      string `json:"bundle_digest"`
-	PreliminaryDigest string `json:"preliminary_digest"`
-	Producer          string `json:"producer"`
-	Consumer          string `json:"consumer"`
-	TargetPath        string `json:"target_path"`
-	TargetDigest      string `json:"target_digest"`
+	Decision                 string   `json:"decision"`
+	Resolution               string   `json:"resolution"`
+	Reason                   string   `json:"reason"`
+	Authority                string   `json:"authority"`
+	SubjectDecision          string   `json:"subject_decision"`
+	BundleDigest             string   `json:"bundle_digest"`
+	PreliminaryDigest        string   `json:"preliminary_digest"`
+	Producer                 string   `json:"producer"`
+	Consumer                 string   `json:"consumer"`
+	TargetPath               string   `json:"target_path"`
+	TargetDigest             string   `json:"target_digest"`
+	PolicyRawSourceDigest    string   `json:"policy_raw_source_digest"`
+	PolicySemanticDigest     string   `json:"policy_semantic_digest"`
+	PolicyUniqueIssueRows    int      `json:"policy_unique_issue_rows"`
+	PolicyUniqueRankRows     int      `json:"policy_unique_rank_rows"`
+	PolicyRowTotal           int      `json:"policy_row_total"`
+	PolicySelectionOperation string   `json:"policy_selection_operation"`
+	PolicyObservedIssueSet   []string `json:"policy_observed_issue_set"`
+	PolicySelectedIssue      string   `json:"policy_selected_issue"`
+	PolicySelectedRank       int      `json:"policy_selected_rank"`
+	CaseEnvelopeDigest       string   `json:"case_envelope_digest"`
 }
 
 func attestationDigest(report Report) string {
@@ -64,7 +74,10 @@ func attestationDigest(report Report) string {
 func attestationDigestFor(report Report, receipt ConsumerReceipt) string {
 	return digestValue(consumerAttestation{Decision: report.ConformanceDecision, Resolution: report.ConformanceResolution, Reason: report.ConformanceReason,
 		Authority: report.ArtifactUseAuthority, SubjectDecision: report.SubjectArtifactDecision, BundleDigest: report.BundleDigest,
-		PreliminaryDigest: receipt.PreliminaryDigest, Producer: report.Producer, Consumer: report.Consumer, TargetPath: receipt.TargetPath, TargetDigest: receipt.TargetDigest})
+		PreliminaryDigest: receipt.PreliminaryDigest, Producer: report.Producer, Consumer: report.Consumer, TargetPath: receipt.TargetPath, TargetDigest: receipt.TargetDigest,
+		PolicyRawSourceDigest: receipt.PolicyRawSourceDigest, PolicySemanticDigest: receipt.PolicySemanticDigest, PolicyUniqueIssueRows: receipt.PolicyUniqueIssueRows,
+		PolicyUniqueRankRows: receipt.PolicyUniqueRankRows, PolicyRowTotal: receipt.PolicyRowTotal, PolicySelectionOperation: receipt.PolicySelectionOperation, PolicyObservedIssueSet: receipt.PolicyObservedIssueSet,
+		PolicySelectedIssue: receipt.PolicySelectedIssue, PolicySelectedRank: receipt.PolicySelectedRank, CaseEnvelopeDigest: receipt.CaseEnvelopeDigest})
 }
 
 func consumerAttestedReport(report Report) Report {
@@ -83,8 +96,17 @@ func expectedConsumerReceipt(report Report, preliminaryDigest, targetPath string
 		TargetDigest string `json:"target_digest"`
 		Authority    string `json:"authority"`
 	}{targetPath, targetDigest, "READ_ONLY_CONSUMPTION"})
+	policy := CaseEnvelopePolicyObservation{}
+	caseDigest := ""
+	if valid := validCase(report.Cases); valid != nil {
+		policy = valid.Policy
+		caseDigest = valid.EnvelopeDigest
+	}
 	receipt := ConsumerReceipt{Schema: ConsumerReceiptSchema, Version: 1, PreliminaryDigest: preliminaryDigest, Producer: report.Producer, Consumer: report.Consumer,
-		TargetPath: targetPath, TargetDigest: targetDigest, OutputDigest: outputDigest, OutputExists: true, Authority: "READ_ONLY_CONSUMPTION"}
+		TargetPath: targetPath, TargetDigest: targetDigest, OutputDigest: outputDigest, OutputExists: true, Authority: "READ_ONLY_CONSUMPTION",
+		PolicyRawSourceDigest: policy.RawSourceDigest, PolicySemanticDigest: policy.SemanticDigest, PolicyUniqueIssueRows: policy.UniqueIssueRows, PolicyUniqueRankRows: policy.UniqueRankRows, PolicyRowTotal: CaseEnvelopePolicyRowTotal,
+		PolicySelectionOperation: policy.SelectionOperation, PolicyObservedIssueSet: append([]string(nil), policy.ObservedIssueSet...), PolicySelectedIssue: policy.SelectedIssue,
+		PolicySelectedRank: policy.SelectedRank, CaseEnvelopeDigest: caseDigest}
 	receipt.AttestationDigest = attestationDigestFor(report, receipt)
 	receipt.Digest = consumerReceiptDigest(receipt)
 	return receipt

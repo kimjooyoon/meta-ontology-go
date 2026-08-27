@@ -52,7 +52,7 @@ func Evaluate(input Input) Report {
 			ObservedDecision: observed.Decision, ObservedResolution: observed.Resolution, ObservedReason: observed.Reason,
 			ProofChoice: definition.ProofChoice, MetaOperation: definition.MetaOperation, Coordinate: observed.Coordinate,
 			Claims: observed.Claims, ArtifactDigest: observed.ArtifactDigest, SourceDigest: observed.SourceDigest,
-			SemanticDigest: observed.SemanticDigest, OperationDigest: observed.OperationDigest, OperationAttachmentDigest: observed.OperationAttachmentDigest, RecipeAttachmentDigest: observed.RecipeAttachmentDigest, ConsumerTargetDigest: observed.ConsumerTargetDigest, ConsumerOutputDigest: observed.ConsumerOutputDigest, ConsumerOutputExists: observed.ConsumerOutputExists, ConsumerErrorClass: observed.ConsumerErrorClass, ConsumerErrorDigest: observed.ConsumerErrorDigest}
+			SemanticDigest: observed.SemanticDigest, OperationDigest: observed.OperationDigest, OperationAttachmentDigest: observed.OperationAttachmentDigest, RecipeAttachmentDigest: observed.RecipeAttachmentDigest, ConsumerTargetDigest: observed.ConsumerTargetDigest, ConsumerOutputDigest: observed.ConsumerOutputDigest, ConsumerOutputExists: observed.ConsumerOutputExists, ConsumerErrorClass: observed.ConsumerErrorClass, ConsumerErrorDigest: observed.ConsumerErrorDigest, Policy: observed.Policy}
 		caseResult.EnvelopeDigest = caseEnvelopeDigest(caseResult)
 		results = append(results, caseResult)
 	}
@@ -214,6 +214,7 @@ func unauthorizedConsumerObservation(input Input, phase string) observation {
 		result := observedFailure(artifact, "INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_ACCEPTED", "CONSUME_BUNDLE", "consumer",
 			authorityFailureAdjudications(artifact.Claims, "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_BUNDLE", "consumer", "UNAUTHORIZED_CONSUMER_ACCEPTED"}),
 			base.ArtifactDigest, base.SourceDigest, base.SemanticDigest, base.OperationDigest)
+		result.Policy = base.Policy
 		result.ConsumerTargetDigest, result.ConsumerOutputDigest, result.ConsumerOutputExists = consumedReceipt.TargetDigest, consumedReceipt.OutputDigest, consumedReceipt.OutputExists
 		return result
 	}
@@ -231,6 +232,7 @@ func unauthorizedConsumerObservation(input Input, phase string) observation {
 	result := observedFailure(artifact, resultResolution, resultReason, resultStage, resultStep,
 		authorityFailureAdjudications(artifact.Claims, claimStatus, claimResolution, claimReason, Coordinate{resultStage, resultStep, resultReason}),
 		base.ArtifactDigest, base.SourceDigest, base.SemanticDigest, base.OperationDigest)
+	result.Policy = base.Policy
 	result.ConsumerTargetDigest, result.ConsumerOutputDigest, result.ConsumerOutputExists = targetDigest, outputDigest, outputExists
 	result.ConsumerErrorClass, result.ConsumerErrorDigest = string(consumerFailure.Class), consumerFailure.Digest()
 	return result

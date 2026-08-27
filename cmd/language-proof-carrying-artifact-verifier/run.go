@@ -35,7 +35,7 @@ type options struct {
 	claimStateTamper, claimStateCase, claimStateID, claimState                                                                string
 	claimAdjudicationTamper, claimAdjudicationCase, claimAdjudicationID, claimAdjudicationOtherCase, claimAdjudicationOtherID string
 	caseEnvelopeTamper, caseEnvelopeCase                                                                                      string
-	claimStateExpectations                                                                                                    string
+	claimStateExpectations, policyCheck, policyObservedIssue, policyOutput                                                    string
 }
 
 func run(args []string) int {
@@ -94,6 +94,9 @@ func run(args []string) int {
 	flags.StringVar(&value.caseEnvelopeTamper, "case-envelope-tamper", "", "coherently resealed case-envelope fixture")
 	flags.StringVar(&value.caseEnvelopeCase, "case-envelope-case", "", "case ID for case-envelope fixture")
 	flags.StringVar(&value.claimStateExpectations, "claim-state-expectations", "", "write validator-owned fixed claim-state expectations")
+	flags.StringVar(&value.policyCheck, "policy-check", "", "check a source-derived case-envelope policy")
+	flags.StringVar(&value.policyObservedIssue, "policy-observed-issue", "", "observed issue for case-envelope policy selection")
+	flags.StringVar(&value.policyOutput, "policy-output", "", "policy check result output")
 	if flags.Parse(args) != nil {
 		return 2
 	}
@@ -114,6 +117,33 @@ func run(args []string) int {
 	writePreliminaryReport := func(path string, report verifier.Report) int {
 		if err := verifier.WritePreliminaryReport(path, report); err != nil {
 			fmt.Fprintf(os.Stderr, "preliminary proof report rejected: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if value.policyCheck != "" {
+		raw, err := os.ReadFile(value.policyCheck)
+		if err != nil {
+			raw = nil
+		}
+		policy, coordinate, policyErr := verifier.CheckCaseEnvelopePolicy(raw, value.policyObservedIssue)
+		result := struct {
+			Decision   string                                 `json:"decision"`
+			Resolution string                                 `json:"resolution"`
+			Coordinate verifier.Coordinate                    `json:"coordinate"`
+			Policy     verifier.CaseEnvelopePolicyObservation `json:"policy"`
+		}{Decision: "PASS", Resolution: "EXACT", Policy: policy}
+		if policyErr != nil {
+			result.Decision, result.Resolution, result.Coordinate = "FAIL_CLOSED", "LOWER_RESOLUTION", coordinate
+			fmt.Fprintf(os.Stderr, "policy rejected: stage=%s step=%s reason=%s: %v\n", coordinate.Stage, coordinate.Step, coordinate.Reason, policyErr)
+		}
+		if value.policyOutput != "" {
+			encoded, encodeErr := json.MarshalIndent(result, "", "  ")
+			if encodeErr != nil || os.WriteFile(value.policyOutput, append(encoded, '\n'), 0o644) != nil {
+				return 1
+			}
+		}
+		if policyErr != nil {
 			return 1
 		}
 		return 0
@@ -337,8 +367,8 @@ func run(args []string) int {
 		return 2
 	}
 	interventions := []verifier.InterventionInput{
-		{ID: "semantic-source-intervention", Kind: "SEMANTIC", Before: verifier.SubjectInput{Artifact: valid, Source: source, Operation: operation, Recipe: recipe}, After: verifier.SubjectInput{Artifact: semanticArtifact, Source: semanticSource, Operation: semanticOperation, Recipe: recipe}},
-		{ID: "comment-only-intervention", Kind: "NONSEMANTIC", Before: verifier.SubjectInput{Artifact: valid, Source: source, Operation: operation, Recipe: recipe}, After: verifier.SubjectInput{Artifact: commentArtifact, Source: commentSource, Operation: commentOperation, Recipe: recipe}},
+		{ID: "semantic-source-intervention", Kind: "SEMANTIC", Before: verifier.SubjectInput{Artifact: valid, Source: source, Operation: operation, Recipe: recipe}, After: verifier.SubjectInput{Artifact: semanticArtifact, Source: semanticSource, Operation: semanticOperation, Recipe: recipe}, PolicyBefore: verifier.SubjectInput{Artifact: tampered, Source: source, Operation: operation, Recipe: recipe}, PolicyAfter: verifier.SubjectInput{Artifact: tampered, Source: semanticSource, Operation: operation, Recipe: recipe}},
+		{ID: "comment-only-intervention", Kind: "NONSEMANTIC", Before: verifier.SubjectInput{Artifact: valid, Source: source, Operation: operation, Recipe: recipe}, After: verifier.SubjectInput{Artifact: commentArtifact, Source: commentSource, Operation: commentOperation, Recipe: recipe}, PolicyBefore: verifier.SubjectInput{Artifact: tampered, Source: source, Operation: operation, Recipe: recipe}, PolicyAfter: verifier.SubjectInput{Artifact: tampered, Source: commentSource, Operation: operation, Recipe: recipe}},
 	}
 	unauthorizedBundle, unauthorizedBundleError := readBundle(value.unauthorizedBundle)
 	report := verifier.Evaluate(verifier.Input{Contract: contract, ContractBytes: contractRaw, HeadSHA: value.head, ValidArtifact: valid,
