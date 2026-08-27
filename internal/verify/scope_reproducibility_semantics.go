@@ -18,6 +18,7 @@ func init() {
 		"internal/meta/reproducibilitysemantics",
 		"internal/meta/reproducibilitysemanticsconsumer",
 		"internal/meta/reproducibilitysemanticsschema",
+		"internal/meta/languageassurance/verticalsliceclosureshadow",
 		"internal/verify/scope_reproducibility_semantics.go",
 		"scripts/reproducibility-semantics",
 		"scripts/semantic-conformance.sh",

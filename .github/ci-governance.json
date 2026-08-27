@@ -2408,6 +2408,7 @@
         "examples/language-syntax-roundtrip",
         "examples/reproducibility-semantics",
         "examples/toolchain-conformance/corpus.json",
+        "internal/meta/languageassurance/verticalsliceclosureshadow",
         "internal/meta/languagereadiness/languagesemantic",
         "internal/meta/languagereadiness/languagesemanticbinding",
         "internal/meta/languagereadiness/languagesyntax",
