@@ -114,6 +114,15 @@ func run(args []string) int {
 			fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", err)
 			return 1
 		}
+		preliminaryCandidate := report.ConsumerReceipt == (verifier.ConsumerReceipt{}) && report.PreliminaryDecision == "FAIL_CLOSED"
+		if preliminaryCandidate {
+			if preliminaryErr := verifier.ValidatePreliminary(report); preliminaryErr == nil {
+				return 0
+			} else {
+				fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", preliminaryErr)
+				return 1
+			}
+		}
 		finalErr := verifier.Validate(report)
 		if finalErr == nil {
 			return 0
@@ -190,6 +199,12 @@ func run(args []string) int {
 		}
 		report := verifier.Evaluate(input)
 		if err := verifier.WriteReport(value.output, report); err != nil {
+			diagnostic := verifier.WithValidationFailure(report, err)
+			if writeErr := writeRawReport(value.output, diagnostic); writeErr != nil {
+				fmt.Fprintf(os.Stderr, "proof report rejected: %v (diagnostic artifact write failed: %v)\n", err, writeErr)
+				return 1
+			}
+			fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", err)
 			return 1
 		}
 		if report.ConformanceDecision != "PASS" && verifier.ValidatePreliminary(report) != nil {

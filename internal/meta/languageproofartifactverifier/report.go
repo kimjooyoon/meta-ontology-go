@@ -102,6 +102,8 @@ type Indicator struct {
 }
 
 type Proof struct {
+	Phase            string   `json:"phase"`
+	State            string   `json:"state"`
 	Choice           string   `json:"choice"`
 	MetaOperation    string   `json:"meta_operation"`
 	TargetDigest     string   `json:"target_digest"`
@@ -159,4 +161,10 @@ type Report struct {
 	SemanticAuthority                bool                 `json:"semantic_authority"`
 	NotClaimed                       []string             `json:"not_claimed"`
 	Digest                           string               `json:"digest"`
+	ValidationFailure                *ValidationFailure   `json:"validation_failure,omitempty"`
+}
+
+type ValidationFailure struct {
+	Coordinate Coordinate `json:"coordinate"`
+	Detail     string     `json:"detail"`
 }

@@ -164,7 +164,7 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 		// digest from a receipt field while creating the first receipt.
 		attested.ConsumerReceipt = expectedConsumerReceipt(attested, report.Digest, targetPath, raw)
 		attested.Indicators = indicators(attested.Summary)
-		attested.Proofs = proofs(attested, attested.Cases)
+		attested.Proofs = proofs(attested, attested.Cases, ProofPhaseFinal)
 		attested.ConformanceDecision, attested.ConformanceResolution, attested.ConformanceReason = "PASS", "EXACT", "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED"
 		attested.ConformanceCoordinate = Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", attested.ConformanceReason}
 		attested.ArtifactUseAuthority = "READ_ONLY_CONSUMPTION"

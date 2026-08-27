@@ -2,6 +2,14 @@ package languageproofartifactverifier
 
 const CoreParserDependencyInventoryTotal = 2
 
+const (
+	ProofPhasePreliminary = "PRELIMINARY"
+	ProofPhaseFinal       = "FINAL"
+	ProofStateObserved    = "OBSERVED"
+	ProofStateOpen        = "OPEN"
+	ProofStateDischarged  = "DISCHARGED"
+)
+
 func MetricIDs() []string {
 	return []string{
 		"gooo.metric.language.proof-carrying-artifact-cases.v3",
@@ -102,10 +110,10 @@ func indicators(summary Summary) []Indicator {
 	return result
 }
 
-func proofs(report Report, cases []CaseResult) []Proof {
+func proofs(report Report, cases []CaseResult, phase string) []Proof {
 	valid := validCase(cases)
 	if valid == nil {
-		return []Proof{{Choice: "FOUNDATION", MetaOperation: "bind-source-bytes-and-projection", Passed: false}, {Choice: "COHERENCE", MetaOperation: "bind-operation-and-claim-relations", Passed: false}, {Choice: "REGRESSION", MetaOperation: "execute-negative-and-intervention-suite", Passed: false}}
+		return []Proof{{Phase: phase, State: ProofStateOpen, Choice: "FOUNDATION", MetaOperation: "bind-source-bytes-and-projection", Passed: false}, {Phase: phase, State: ProofStateOpen, Choice: "COHERENCE", MetaOperation: "bind-operation-and-claim-relations", Passed: false}, {Phase: phase, State: ProofStateOpen, Choice: "REGRESSION", MetaOperation: "execute-negative-and-intervention-suite", Passed: false}}
 	}
 	allClaimsDischarged := len(valid.Claims) == ClaimTemplateTotal
 	for _, claim := range valid.Claims {
@@ -116,14 +124,29 @@ func proofs(report Report, cases []CaseResult) []Proof {
 	receiptFieldsOK := report.BundleDigest != "" && (report.ConsumerReceipt.TargetPath == "artifact.json" && report.ConsumerReceipt.Authority == "READ_ONLY_CONSUMPTION" && report.ConsumerReceipt.OutputExists &&
 		validDigest(report.ConsumerReceipt.TargetDigest) && validDigest(report.ConsumerReceipt.OutputDigest) && validDigest(report.ConsumerReceipt.AttestationDigest) &&
 		report.ConsumerReceipt.AttestationDigest == attestationDigest(report) && report.ConsumerReceipt.Digest == consumerReceiptDigest(report.ConsumerReceipt))
+	coherenceObserved := valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && len(report.Transitions) == TransitionTotal
+	regressionObserved := negativeCaseInventoryOK(cases) && report.Summary.CasesSatisfied == CaseTotal && report.Summary.CoherentClaimStructureRejections == 4 && report.Summary.SemanticInterventions == 1 && report.Summary.NonsemanticInterventions == 1 && report.Summary.UnauthorizedConsumerDenials == 1
+	coherencePassed := coherenceObserved && (phase == ProofPhasePreliminary || receiptFieldsOK)
+	regressionPassed := regressionObserved && (phase == ProofPhasePreliminary || receiptFieldsOK)
+	consumerGateOpen := phase == ProofPhasePreliminary || !receiptFieldsOK
+	foundationPassed := valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && valid.SourceDigest != "" && valid.SemanticDigest != ""
+	proofState := func(passed, gateOpen bool) string {
+		if gateOpen || !passed {
+			return ProofStateOpen
+		}
+		if phase == ProofPhasePreliminary {
+			return ProofStateObserved
+		}
+		return ProofStateDischarged
+	}
 	evidence := []string{}
 	for _, claim := range valid.Claims {
 		evidence = append(evidence, claim.EvidenceDigests...)
 	}
 	return []Proof{
-		{Choice: "FOUNDATION", MetaOperation: "bind-source-bytes-and-projection", TargetDigest: valid.SourceDigest, Dependency: "checkout.source.gooo->source-bytes-bound", EvidenceDigests: append([]string(nil), valid.Claims[0].EvidenceDigests...), ReceiptDigest: valid.OperationDigest, Passed: valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && valid.SourceDigest != "" && valid.SemanticDigest != ""},
-		{Choice: "COHERENCE", MetaOperation: "bind-operation-and-claim-relations", TargetDigest: valid.OperationDigest, Dependency: "source-bytes-bound->operation-receipt-bound->recipe-match->consumer-authority", EvidenceDigests: evidence, ReceiptDigest: valid.OperationDigest, Passed: valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && len(report.Transitions) == TransitionTotal && receiptFieldsOK, ConsumerGateOpen: !receiptFieldsOK},
-		{Choice: "REGRESSION", MetaOperation: "execute-negative-and-intervention-suite", TargetDigest: report.WriteSet.Digest, Dependency: "negative-case-inventory->claim-local-effects->authority-boundary", EvidenceDigests: regressionEvidence(cases, report.Interventions), ReceiptDigest: valid.OperationDigest, Passed: negativeCaseInventoryOK(cases) && report.Summary.CasesSatisfied == CaseTotal && report.Summary.CoherentClaimStructureRejections == 4 && report.Summary.SemanticInterventions == 1 && report.Summary.NonsemanticInterventions == 1 && report.Summary.UnauthorizedConsumerDenials == 1 && receiptFieldsOK, ConsumerGateOpen: !receiptFieldsOK},
+		{Phase: phase, State: proofState(foundationPassed, false), Choice: "FOUNDATION", MetaOperation: "bind-source-bytes-and-projection", TargetDigest: valid.SourceDigest, Dependency: "checkout.source.gooo->source-bytes-bound", EvidenceDigests: append([]string(nil), valid.Claims[0].EvidenceDigests...), ReceiptDigest: valid.OperationDigest, Passed: foundationPassed},
+		{Phase: phase, State: proofState(coherencePassed, consumerGateOpen), Choice: "COHERENCE", MetaOperation: "bind-operation-and-claim-relations", TargetDigest: valid.OperationDigest, Dependency: "source-bytes-bound->operation-receipt-bound->recipe-match->consumer-authority", EvidenceDigests: evidence, ReceiptDigest: valid.OperationDigest, Passed: coherencePassed, ConsumerGateOpen: consumerGateOpen},
+		{Phase: phase, State: proofState(regressionPassed, consumerGateOpen), Choice: "REGRESSION", MetaOperation: "execute-negative-and-intervention-suite", TargetDigest: report.WriteSet.Digest, Dependency: "negative-case-inventory->claim-local-effects->authority-boundary", EvidenceDigests: regressionEvidence(cases, report.Interventions), ReceiptDigest: valid.OperationDigest, Passed: regressionPassed, ConsumerGateOpen: consumerGateOpen},
 	}
 }
 

@@ -110,14 +110,19 @@ func Evaluate(input Input) Report {
 	}
 	report.Indicators = indicators(report.Summary)
 	proofReport := report
-	if structuralGate && input.BundleDigest != "" {
+	proofPhase := ProofPhasePreliminary
+	if structuralGate && input.BundleDigest != "" && input.ConsumerReceiptProvided {
 		proofReport = consumerAttestedReport(proofReport)
+		proofPhase = ProofPhaseFinal
 	}
-	report.Proofs = proofs(proofReport, results)
+	report.Proofs = proofs(proofReport, results, proofPhase)
 	report.Counterexamples = fixedCounterexamples(input, report)
 	indicatorsOK := allIndicatorsSatisfied(report.Indicators)
 	proofsOK := allProofsPassed(report.Proofs)
-	consumerGate := input.BundleDigest != "" && consumerReceiptOK(proofReport, input.UnauthorizedBundle)
+	consumerGate := false
+	if input.ConsumerReceiptProvided {
+		consumerGate = input.BundleDigest != "" && consumerReceiptOK(proofReport, input.UnauthorizedBundle)
+	}
 	// Final conformance is deliberately calculated last. A PASS therefore
 	// cannot survive an unsatisfied indicator, proof, binding, or consumer gate.
 	report.ConformanceDecision, report.ConformanceResolution, report.ConformanceReason = "FAIL_CLOSED", "LOWER_RESOLUTION", "BUNDLE_CONSUMPTION_NOT_OBSERVED"
@@ -156,7 +161,7 @@ func allProofsPassed(proofs []Proof) bool {
 		return false
 	}
 	for _, proof := range proofs {
-		if !proof.Passed {
+		if proof.Phase != ProofPhaseFinal || proof.State != ProofStateDischarged || !proof.Passed || proof.ConsumerGateOpen {
 			return false
 		}
 	}

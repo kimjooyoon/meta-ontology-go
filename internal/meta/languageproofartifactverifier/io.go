@@ -2,10 +2,21 @@ package languageproofartifactverifier
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 )
+
+func WithValidationFailure(report Report, err error) Report {
+	failure := &ValidationFailure{Coordinate: Coordinate{"VALIDATE", "report", "VALIDATION_FAILED"}, Detail: err.Error()}
+	var typed *ValidationError
+	if errors.As(err, &typed) {
+		failure.Coordinate = typed.Coordinate
+	}
+	report.ValidationFailure = failure
+	return report
+}
 
 func WriteReport(path string, report Report) error {
 	if err := Validate(report); err != nil {

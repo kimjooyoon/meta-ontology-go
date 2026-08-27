@@ -8,7 +8,7 @@ import (
 func Validate(report Report) error {
 	canonicalContract := CanonicalContract()
 	canonicalRecipe := CanonicalRecipe()
-	if report.Schema != ReportSchema || report.Producer != ProducerID || report.Consumer != ConsumerID || !validHead(report.HeadSHA) ||
+	if report.Schema != ReportSchema || report.Producer != ProducerID || report.Consumer != ConsumerID || report.ValidationFailure != nil || !validHead(report.HeadSHA) ||
 		report.ContractDigest != digestValue(canonicalContract) || report.RecipeDigest != digestValue(canonicalRecipe) || report.RecipeVersion != canonicalRecipe.Version ||
 		!validDigest(report.IndependenceDigest) || report.AuthorityObservation != "UNKNOWN_GLOBAL_TRANSIENT_SCOPE" {
 		return fmt.Errorf("proof-carrying report identity mismatch")
@@ -26,6 +26,9 @@ func Validate(report Report) error {
 		report.ArtifactUseAuthority != "READ_ONLY_CONSUMPTION" || !caseInventoryOK(report.Cases) || len(report.Indicators) != len(MetricIDs()) || len(report.Proofs) != 3 ||
 		len(report.Transitions) != TransitionTotal || len(report.Interventions) != 2 || report.NetChangedPaths != report.WriteSet.NetChangedPaths || report.CapabilityMutationGranted || report.PromotionAuthority || report.SemanticAuthority {
 		return fmt.Errorf("proof-carrying report shape mismatch")
+	}
+	if report.ConsumerReceipt == (ConsumerReceipt{}) {
+		return &ValidationError{Coordinate: Coordinate{"CONSUME_BUNDLE", "consumer-receipt", "CONSUMER_RECEIPT_MISSING"}, Detail: "final report has no consumer receipt"}
 	}
 	if report.Checkout.HeadSHA != report.HeadSHA || report.Checkout.ActualHeadSHA != report.HeadSHA || !validHead(report.Checkout.HeadSHA) || !validDigest(report.Checkout.TreeDigest) ||
 		!validDigest(report.Checkout.SourceDigest) || !validDigest(report.Checkout.OperationDigest) || !validDigest(report.Checkout.RecipeDigest) || !validDigest(report.Checkout.ContractDigest) ||
@@ -114,7 +117,10 @@ func ValidatePreliminary(report Report) error {
 		wantBundleMetric = 1
 		wantReason = "CONSUMER_RECHECK_NOT_OBSERVED"
 	}
-	if report.Schema != ReportSchema || report.Producer != ProducerID || report.Consumer != ConsumerID || !validHead(report.HeadSHA) ||
+	if report.ConformanceDecision == "PASS" || report.ConformanceResolution == "EXACT" || report.ArtifactUseAuthority != "" || report.ConsumerReceipt != (ConsumerReceipt{}) {
+		return preliminaryValidationError(Coordinate{"CONSUME_AUTHORITY", "preliminary-report", "PRELIMINARY_FINAL_AUTHORITY_PRESENT"}, fmt.Errorf("preliminary report contains final consumer authority or receipt"))
+	}
+	if report.Schema != ReportSchema || report.Producer != ProducerID || report.Consumer != ConsumerID || report.ValidationFailure != nil || !validHead(report.HeadSHA) ||
 		report.ContractDigest != digestValue(CanonicalContract()) || report.RecipeDigest != digestValue(CanonicalRecipe()) || report.RecipeVersion != CanonicalRecipe().Version ||
 		!validDigest(report.IndependenceDigest) || report.AuthorityObservation != "UNKNOWN_GLOBAL_TRANSIENT_SCOPE" || report.ArtifactUseAuthority != "" || report.ConsumerReceipt != (ConsumerReceipt{}) ||
 		(bundleMode && !validDigest(report.BundleDigest)) || report.CheckoutBindingScope != wantScope ||
@@ -201,7 +207,7 @@ func canonicalPreliminaryProjection(report Report) Report {
 	preliminary.PreliminaryReason = preliminary.ConformanceReason
 	preliminary.PreliminaryCoordinate = preliminary.ConformanceCoordinate
 	preliminary.Indicators = indicators(preliminary.Summary)
-	preliminary.Proofs = proofs(preliminary, preliminary.Cases)
+	preliminary.Proofs = proofs(preliminary, preliminary.Cases, ProofPhasePreliminary)
 	preliminary.Digest = reportDigest(preliminary)
 	return preliminary
 }
@@ -410,7 +416,11 @@ func validateProofInventory(report Report, preliminary bool) error {
 	if len(report.Proofs) != 3 {
 		return fmt.Errorf("proof-carrying proof inventory mismatch")
 	}
-	want := proofs(report, report.Cases)
+	phase := ProofPhaseFinal
+	if preliminary {
+		phase = ProofPhasePreliminary
+	}
+	want := proofs(report, report.Cases, phase)
 	if !reflect.DeepEqual(report.Proofs, want) {
 		return fmt.Errorf("proof-carrying proof projection mismatch")
 	}
@@ -423,14 +433,14 @@ func validateProofInventory(report Report, preliminary bool) error {
 				return fmt.Errorf("proof-carrying proof evidence mismatch")
 			}
 		}
-		if index == 0 && (!proof.Passed || proof.ConsumerGateOpen) {
+		if index == 0 && (!proof.Passed || proof.ConsumerGateOpen || proof.Phase != phase || (preliminary && proof.State != ProofStateObserved) || (!preliminary && proof.State != ProofStateDischarged)) {
 			return fmt.Errorf("proof-carrying foundation proof mismatch")
 		}
 		if preliminary {
-			if index > 0 && (proof.Passed || !proof.ConsumerGateOpen) {
+			if index > 0 && (!proof.Passed || !proof.ConsumerGateOpen || proof.Phase != ProofPhasePreliminary || proof.State != ProofStateOpen) {
 				return fmt.Errorf("proof-carrying preliminary consumer proof gate mismatch")
 			}
-		} else if !proof.Passed || proof.ConsumerGateOpen {
+		} else if !proof.Passed || proof.ConsumerGateOpen || proof.Phase != ProofPhaseFinal || proof.State != ProofStateDischarged {
 			return fmt.Errorf("proof-carrying final proof mismatch")
 		}
 	}
