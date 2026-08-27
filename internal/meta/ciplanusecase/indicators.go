@@ -1,7 +1,7 @@
 package ciplanusecase
 
 func buildIndicators(summary Summary, limits Limits) []Indicator {
-	indicators := []Indicator{
+	return []Indicator{
 		equal("gooo.metric.ci-plan.cases-satisfied.v1", "USER", int64(summary.CasesSatisfied), 12, "ciplanusecase.Evaluate", "human-scorecard", "close-fixed-usecase"),
 		equal("gooo.metric.ci-plan.pass-decisions.v1", "USER", int64(summary.PassDecisions), 4, "metainvocation.Invoke", "ciplanusecase.Evaluate", "classify-ci-plan-decision"),
 		equal("gooo.metric.ci-plan.fail-closed-decisions.v1", "USER", int64(summary.FailClosedDecisions), 4, "metainvocation.Invoke", "ciplanusecase.Evaluate", "reject-invalid-change-set"),
@@ -25,7 +25,6 @@ func buildIndicators(summary Summary, limits Limits) []Indicator {
 		equal("gooo.metric.ci-plan.repository-writes.guardrail.v1", "GOVERNOR", int64(summary.RepositoryWrites), 0, "metainvocation.Invoke", "governance", "preserve-zero-effect-boundary"),
 		equal("gooo.metric.ci-plan.mutation-authority.guardrail.v1", "GOVERNOR", int64(summary.MutationAuthority), 0, "metainvocation.Invoke", "governance", "deny-mutation-authority"),
 	}
-	return indicators
 }
 
 func equal(id, reader string, observed, target int64, producer, consumer, operation string) Indicator {
