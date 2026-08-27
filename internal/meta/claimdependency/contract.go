@@ -5,12 +5,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+)
+
+const (
+	ValidatorContractSchema = "gooo.meta.claim-dependency-validator-contract/v1"
+	FailureReceiptSchema    = "gooo.meta.claim-dependency-failure-receipt/v1"
+	failureProcedure        = "CI_NONZERO_EXIT_FAILURE_ANTECEDENT_V1"
 )
 
 type sourceGraph struct {
@@ -262,7 +269,59 @@ func observationReceiptDigest(receipt ObservationReceipt) (string, error) {
 }
 func observationBundleDigest(bundle ObservationBundle) (string, error) {
 	bundle.Digest = ""
+	// Profile is a fixture label only.  It is deliberately excluded from the
+	// semantic digest so relabelling the same raw observations cannot alter a
+	// decision.
+	bundle.Profile = ""
 	return digestJSON(bundle)
+}
+func failureReceiptDigest(receipt FailureReceipt) (string, error) {
+	receipt.Digest = ""
+	return digestJSON(receipt)
+}
+func readValidatorContract(path string) (ValidatorContract, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ValidatorContract{}, fmt.Errorf("validator contract: %w", err)
+	}
+	var contract ValidatorContract
+	if err := json.Unmarshal(data, &contract); err != nil {
+		return ValidatorContract{}, fmt.Errorf("validator contract decode: %w", err)
+	}
+	if err := validateValidatorContract(contract); err != nil {
+		return ValidatorContract{}, err
+	}
+	return contract, nil
+}
+func validateValidatorContract(contract ValidatorContract) error {
+	if contract.Schema != ValidatorContractSchema || contract.ContractID == "" || contract.ExpectedArtifactPath == "" || contract.ExpectedArtifactDigest == "" || len(contract.Claims) != ClaimTotal {
+		return fmt.Errorf("validator contract identity or denominator is invalid")
+	}
+	seen := map[string]bool{}
+	targets := map[string]bool{}
+	for _, claim := range contract.Claims {
+		if claim.ActivityName == "" || claim.ExpectedValueProgram == "" || claim.ExpectedTarget.Artifact == "" || claim.ExpectedTarget.Output == "" || seen[claim.ActivityName] {
+			return fmt.Errorf("validator contract claim material is invalid")
+		}
+		seen[claim.ActivityName] = true
+		targetKey := strings.Join(claim.ExpectedTarget.Inputs, ",") + "|" + claim.ExpectedTarget.Output + "|" + claim.ExpectedTarget.Artifact
+		if targets[targetKey] {
+			return fmt.Errorf("validator contract targets are not distinct")
+		}
+		targets[targetKey] = true
+	}
+	if len(seen) != ClaimTotal {
+		return fmt.Errorf("validator contract claims are not distinct")
+	}
+	return nil
+}
+func contractClaim(contract ValidatorContract, activityName string) (ValidatorClaim, bool) {
+	for _, claim := range contract.Claims {
+		if claim.ActivityName == activityName {
+			return claim, true
+		}
+	}
+	return ValidatorClaim{}, false
 }
 func claimEvidenceDigest(value EvidenceClaim) (string, error) {
 	value.Digest = ""

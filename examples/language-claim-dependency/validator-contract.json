@@ -1,0 +1,64 @@
+{
+  "schema": "gooo.meta.claim-dependency-validator-contract/v1",
+  "contract_id": "gooo://claim-dependency/validator-contract/main-v1",
+  "expected_artifact_path": "examples/language-claim-dependency/main.gooo",
+  "expected_artifact_digest": "sha256:bbb7c2cfba5298699a9f9dee627e9831207039cba125ebead4e2c2c87ff71656",
+  "claims": [
+    {
+      "activity_name": "Root",
+      "expected_target": {
+        "inputs": ["gooo://claim-dependency/entity/seed"],
+        "output": "gooo://claim-dependency/entity/root-state",
+        "artifact": "gooo://claim-dependency/artifact/root"
+      },
+      "expected_value_program": "claim.observe:recoverable|root-observation"
+    },
+    {
+      "activity_name": "Derived",
+      "expected_target": {
+        "inputs": ["gooo://claim-dependency/entity/root-state"],
+        "output": "gooo://claim-dependency/entity/derived-state",
+        "artifact": "gooo://claim-dependency/artifact/derived"
+      },
+      "expected_value_program": "claim.edge:requires|derived-integrity"
+    },
+    {
+      "activity_name": "SupportCheck",
+      "expected_target": {
+        "inputs": ["gooo://claim-dependency/entity/derived-state", "gooo://claim-dependency/entity/root-state"],
+        "output": "gooo://claim-dependency/entity/support-state",
+        "artifact": "gooo://claim-dependency/artifact/supportcheck"
+      },
+      "expected_value_program": "claim.edge:supports|support-observation"
+    },
+    {
+      "activity_name": "RequirementCheck",
+      "expected_target": {
+        "inputs": ["gooo://claim-dependency/entity/derived-state", "gooo://claim-dependency/entity/support-state"],
+        "output": "gooo://claim-dependency/entity/requirement-state",
+        "artifact": "gooo://claim-dependency/artifact/requirementcheck"
+      },
+      "expected_value_program": "claim.edge:requires|requirement-integrity"
+    },
+    {
+      "activity_name": "ContradictionCheck",
+      "expected_target": {
+        "inputs": ["gooo://claim-dependency/entity/requirement-state", "gooo://claim-dependency/entity/root-state"],
+        "output": "gooo://claim-dependency/entity/contradiction-state",
+        "artifact": "gooo://claim-dependency/artifact/contradictioncheck"
+      },
+      "expected_value_program": "claim.edge:contradicts|contradiction-observation",
+      "alternate_value_program": "claim.edge:contradicts|contradiction-observation-bad"
+    },
+    {
+      "activity_name": "FailureEntailmentCheck",
+      "expected_target": {
+        "inputs": ["gooo://claim-dependency/entity/contradiction-state"],
+        "output": "gooo://claim-dependency/entity/final-state",
+        "artifact": "gooo://claim-dependency/artifact/failureentailmentcheck"
+      },
+      "expected_value_program": "claim.edge:failure-entailment|failure-observation",
+      "alternate_value_program": "claim.edge:failure-entailment|failure-observation-bad"
+    }
+  ]
+}

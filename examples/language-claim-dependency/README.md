@@ -3,32 +3,28 @@
 이 fixture는 실행 proposition 6개와 canonical IR에서 복원한 typed edge 8개를
 사용해 직접 `UNKNOWN`과 dependency-blocked `OPEN`을 분리한다.
 
-| 입력 | current evidence | 상태 결과 | 실제 causal / eligible |
+| 입력 | 관측 | 상태 결과 | observed causal / eligible |
 | --- | --- | --- | ---: |
-| `unknown.gooo` | availability, no raw observation → 6 UNKNOWN | direct 1 OPEN, blocked 5 OPEN | 5 / 8 |
-| `refuted.gooo` | target observation → 4 accepted + 2 unknown | 4 DISCHARGED, dependency 2 REFUTED | 6 / 8 |
-| `main.gooo` + unknown receipt | acceptance → 6 current | direct local 4 + dependency 2 `DISCHARGED` | 3 / 8 recovery |
+| `unknown.gooo` | raw observation 없음 | direct 1 + blocked 5 OPEN | 5 / 8 |
+| `refuted.gooo` + `main.gooo` target | 외부 contract, claim 4개, `CONTRADICTS` 2개, 실제 non-zero failure 1개 | 4 DISCHARGED, 2 dependency REFUTED | 6 / 8 |
+| `refuted.gooo` + failure receipt 없음 | 같은 source/target, failure edge 비활성 | 4 DISCHARGED, 1 REFUTED, 1 OPEN | 5 / 8 |
+| `main.gooo` + unknown receipt | append-only recovery | 6 DISCHARGED | 3 / 8 recovery |
 
-단일 claim-scoped contradiction bundle은 정확히 하나의 `CONTRADICTS` edge만
-활성화하며 그 target claim만 REFUTED가 된다. failure antecedent observation이
-없는 bundle은 `FAILURE_ENTAILMENT`를 전파하지 않는다. 관련 없는 artifact
-mismatch는 모든 claim을 UNKNOWN/OPEN으로 남긴다.
+`validator-contract.json`은 fixed expected target/value material이며 source를
+관찰 직전에 해시해 만든 순환 expected 값이 아니다. `.gooo` source는 graph와
+recipe만 선언한다. observer가 source graph와 분리된 target artifact bytes를
+실제로 읽고 claim별 target-specific material을 비교한다. profile은 fixture label
+일 뿐 상태나 predicate를 고르지 않는다.
 
-claim별 허용 shortest-path edge union은 각각 3, 5, 2이며 이는 cardinality-minimum
-증명이 아니다. 최대 edge depth는 2다. `SUPPORTS 2`,
-`REQUIRES 3`, `CONTRADICTS 2`, `FAILURE_ENTAILMENT 1`은 모두 artifact의 edge
-metric에 표시된다. truth table은 edge kind마다 2건(positive/reversed/unknown
-activation 사례), 총 8건이다.
+`CONTRADICTS`는 established upstream과 edge-specific structured opposite value가
+함께 있을 때만 target을 `REFUTED`로 만든다. `FAILURE_ENTAILMENT`는 정확한 edge에
+결합된 실제 non-zero process receipt와 upstream `REFUTED`가 함께 있을 때만
+전파된다. 관련 없는 artifact mismatch, missing observation, reversed edge,
+claim/proposition/target/edge-kind tamper는 fail closed한다.
 
-CI observer가 실제 target bytes/output/comparison result를 claim/edge-scoped raw
-observation bundle로 만들고, provider가 이를 target path/procedure digest와
-결합해 `CURRENT_EVIDENCE`를 생성한다. process exit를 관측하지 않은 bytes
-비교는 종료 상태 증거가 아니다. observation이 없거나 관련 없는 artifact
-mismatch이면 `UNKNOWN`이다. HISTORICAL_FIXTURE와 임의 문자열은 PASS 근거가
-아니다. 별도 judge는 raw `.gooo`, evidence artifact와 raw bundle을 직접
-re-observe하여 producer receipt를 검증한다.
-
-`value-intervention.gooo`는 같은 evidence에서 source value만 바꾸고,
-observation-only는 같은 source에서 provider operation만 바꾸며,
-`edge-intervention.gooo`는 refuting edge kind만 바꾼다. `main.gooo`의 주석은
-semantic/graph digest와 decision을 보존해야 한다.
+각 claim에는 proposition digest, input/output/artifact target tuple, procedure와
+output digest, stage/step/reason이 있다. transition은 append-only이며 root와
+upstream transition digest chain을 보존한다. `MaximumCausePathDepth`는 edge 수다.
+shortest-path union은 cardinality-minimum 증명이 아니다. 별도 judge는 producer
+package와 expected graph를 import하지 않고 raw `.gooo`, target bytes, contract,
+bundle, prior ledger에서 독립 재구성한다.

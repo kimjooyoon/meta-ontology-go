@@ -12,6 +12,7 @@ func init() {
 		"internal/verify/scope_gooo_claim_dependency.go",
 		"scripts/language-claim-dependency",
 		"scripts/language-claim-dependency-evidence",
+		"scripts/language-claim-dependency-failure",
 		"scripts/language-claim-dependency-judge",
 		"scripts/language-claim-dependency-intervention",
 		"scripts/language-claim-dependency-observation",

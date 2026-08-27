@@ -109,7 +109,9 @@ func main() {
 func provenanceCompare(name, baselineRequest, interventionRequest string, baselineSource []byte, baselinePath string, interventionSource []byte, interventionPath, repoRoot, capability, observationDir string, reuseEvidence bool) evidenceProvenanceCase {
 	baselineEvidence := evidence(baselinePath, baselineRequest, repoRoot, capability, observationDir)
 	interventionEvidence := baselineEvidence
-	if !reuseEvidence {
+	if reuseEvidence {
+		interventionEvidence = evidenceWithObservation(baselinePath, interventionRequest, repoRoot, capability, filepath.Join(observationDir, "accepted.json"))
+	} else {
 		interventionEvidence = evidence(interventionPath, interventionRequest, repoRoot, capability, observationDir)
 	}
 	baselineReceipt, err := claimdependency.Evaluate(baselineSource, baselinePath, baselineEvidence, nil)
@@ -149,7 +151,6 @@ func evidence(artifact, operation, repoRoot, capability, observationDir string) 
 	if operation == "same" {
 		fail("internal intervention operation cannot be same")
 	}
-	output := filepath.Join(os.TempDir(), "gooo-claim-dependency-evidence-"+strings.ReplaceAll(filepath.Base(artifact), ".", "-")+"-"+operation+".json")
 	observationPath := ""
 	if operation != "availability" {
 		observationPath = filepath.Join(observationDir, "refuted.json")
@@ -160,7 +161,16 @@ func evidence(artifact, operation, repoRoot, capability, observationDir string) 
 			}
 		}
 	}
-	receipt, err := claimdependency.BuildCurrentEvidenceWithObservation(artifact, operation, capability, repoRoot, output, observationPath)
+	return evidenceWithObservation(artifact, operation, repoRoot, capability, observationPath)
+}
+
+func evidenceWithObservation(artifact, operation, repoRoot, capability, observationPath string) claimdependency.EvidenceReceipt {
+	output := filepath.Join(os.TempDir(), "gooo-claim-dependency-evidence-"+strings.ReplaceAll(filepath.Base(artifact), ".", "-")+"-"+operation+".json")
+	sourcePath, targetPath := artifact, artifact
+	if filepath.Base(artifact) == "refuted.gooo" {
+		targetPath = filepath.Join(filepath.Dir(artifact), "main.gooo")
+	}
+	receipt, err := claimdependency.BuildCurrentEvidenceForSource(sourcePath, targetPath, operation, capability, repoRoot, output, observationPath)
 	if err != nil {
 		fail(err.Error())
 	}

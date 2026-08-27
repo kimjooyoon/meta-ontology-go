@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	source := flag.String("source", "", "raw .gooo source that supplies the claim graph")
 	artifact := flag.String("artifact", "", "raw .gooo artifact to observe")
 	operation := flag.String("operation", "", "availability, acceptance, or contradiction")
 	capability := flag.String("capability", "", "current CI capability evidence")
@@ -18,10 +19,10 @@ func main() {
 	output := flag.String("output", "", "actual output path recorded in the receipt")
 	observation := flag.String("observation", "", "raw target observation receipt; omit when no external observation exists")
 	flag.Parse()
-	if *artifact == "" || *operation == "" || *capability == "" || *repository == "" || *output == "" {
-		fail("-artifact, -operation, -capability, -repo-root, and -output are required")
+	if *source == "" || *artifact == "" || *operation == "" || *capability == "" || *repository == "" || *output == "" {
+		fail("-source, -artifact, -operation, -capability, -repo-root, and -output are required")
 	}
-	receipt, err := claimdependency.BuildCurrentEvidenceWithObservation(*artifact, *operation, *capability, *repository, *output, *observation)
+	receipt, err := claimdependency.BuildCurrentEvidenceForSource(*source, *artifact, *operation, *capability, *repository, *output, *observation)
 	if err != nil {
 		fail(err.Error())
 	}

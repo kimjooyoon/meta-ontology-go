@@ -79,15 +79,61 @@ type ObservationReceipt struct {
 }
 
 type ObservationBundle struct {
-	Schema              string               `json:"schema"`
-	Provider            string               `json:"provider"`
-	SourcePath          string               `json:"source_path"`
-	SourceDigest        string               `json:"source_digest"`
-	ArtifactPath        string               `json:"artifact_path"`
-	ArtifactBytesDigest string               `json:"artifact_bytes_digest"`
-	Profile             string               `json:"profile"`
-	Observations        []ObservationReceipt `json:"observations"`
-	Digest              string               `json:"digest"`
+	Schema               string               `json:"schema"`
+	Provider             string               `json:"provider"`
+	SourcePath           string               `json:"source_path"`
+	SourceDigest         string               `json:"source_digest"`
+	ArtifactPath         string               `json:"artifact_path"`
+	ArtifactBytesDigest  string               `json:"artifact_bytes_digest"`
+	ContractPath         string               `json:"contract_path"`
+	ContractDigest       string               `json:"contract_digest"`
+	FailureReceiptPath   string               `json:"failure_receipt_path,omitempty"`
+	FailureReceiptDigest string               `json:"failure_receipt_digest,omitempty"`
+	Profile              string               `json:"profile"`
+	Observations         []ObservationReceipt `json:"observations"`
+	Digest               string               `json:"digest"`
+}
+
+// ValidatorContract is external expected material. It contains no outcome,
+// status, or edge activation decision; those are calculated from raw target
+// bytes and, for failure entailment, an independently captured process exit.
+type ValidatorContract struct {
+	Schema                 string           `json:"schema"`
+	ContractID             string           `json:"contract_id"`
+	ExpectedArtifactPath   string           `json:"expected_artifact_path"`
+	ExpectedArtifactDigest string           `json:"expected_artifact_digest"`
+	Claims                 []ValidatorClaim `json:"claims"`
+}
+
+type ValidatorClaim struct {
+	ActivityName          string        `json:"activity_name"`
+	ExpectedTarget        TargetAddress `json:"expected_target"`
+	ExpectedValueProgram  string        `json:"expected_value_program"`
+	AlternateValueProgram string        `json:"alternate_value_program,omitempty"`
+}
+
+// FailureReceipt is made only after a CI process has actually returned a
+// non-zero exit. A caller-supplied label is never sufficient to construct it.
+type FailureReceipt struct {
+	Schema              string        `json:"schema"`
+	Provider            string        `json:"provider"`
+	SourcePath          string        `json:"source_path"`
+	SourceDigest        string        `json:"source_digest"`
+	ArtifactPath        string        `json:"artifact_path"`
+	ArtifactBytesDigest string        `json:"artifact_bytes_digest"`
+	EdgeID              string        `json:"edge_id"`
+	FromClaimID         string        `json:"from_claim_id"`
+	ToClaimID           string        `json:"to_claim_id"`
+	EdgeKind            EdgeKind      `json:"edge_kind"`
+	Target              TargetAddress `json:"target"`
+	Procedure           string        `json:"procedure"`
+	ProcedureDigest     string        `json:"procedure_digest"`
+	Output              string        `json:"output"`
+	OutputDigest        string        `json:"output_digest"`
+	ExitCode            int           `json:"exit_code"`
+	Result              string        `json:"result"`
+	Coordinate          Coordinate    `json:"coordinate"`
+	Digest              string        `json:"digest"`
 }
 
 type Coordinate struct {
@@ -173,6 +219,9 @@ type RepositorySnapshot struct {
 type EvidenceReceipt struct {
 	Schema                  string               `json:"schema"`
 	Provider                string               `json:"provider"`
+	SourcePath              string               `json:"source_path"`
+	SourceBytesDigest       string               `json:"source_bytes_digest"`
+	SourceGraphDigest       string               `json:"source_graph_digest"`
 	ArtifactPath            string               `json:"artifact_path"`
 	ArtifactBytesDigest     string               `json:"artifact_bytes_digest"`
 	Operation               string               `json:"operation"`
