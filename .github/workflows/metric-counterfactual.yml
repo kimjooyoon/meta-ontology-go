@@ -458,13 +458,36 @@ jobs:
           if [[ -z "$predecessor_sha" ]]; then
             predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
           fi
+          produce_proposal_promotion() {
+            local suffix="$1"
+            local output="$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
+            local error="$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.error"
+            local status
+            for attempt in $(seq 1 30); do
+              rm -f "$output" "$error"
+              if go run ./cmd/language-readiness-witness/proposal-promotion \
+                --root "$GITHUB_WORKSPACE" \
+                --repository "$GITHUB_REPOSITORY" \
+                --current-head "$HEAD_SHA" \
+                --predecessor-sha "$predecessor_sha" \
+                --output "$output" 2>"$error"; then
+                return 0
+              else
+                status=$?
+              fi
+              if ! grep -Eq 'PROPOSAL_PREDECESSOR_(NOT_FOUND|EVIDENCE_UNKNOWN)' "$error"; then
+                cat "$error" >&2
+                return "$status"
+              fi
+              if [[ "$attempt" -eq 30 ]]; then
+                cat "$error" >&2
+                return "$status"
+              fi
+              sleep 30
+            done
+          }
           for suffix in a b; do
-            go run ./cmd/language-readiness-witness/proposal-promotion \
-              --root "$GITHUB_WORKSPACE" \
-              --repository "$GITHUB_REPOSITORY" \
-              --current-head "$HEAD_SHA" \
-              --predecessor-sha "$predecessor_sha" \
-              --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
+            produce_proposal_promotion "$suffix"
           done
           cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
             "$RUNNER_TEMP/language-readiness-proposal-promotion-b.json"
