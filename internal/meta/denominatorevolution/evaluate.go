@@ -5,6 +5,10 @@ import (
 	"sort"
 )
 
+func cloneObligations(value []Obligation) []Obligation {
+	return append([]Obligation(nil), value...)
+}
+
 // Evaluate is the producer-side witness. Source parsing and lowering happen
 // before any case is built; the JSON contract is used only as an expectation
 // against the source-derived wire model.
