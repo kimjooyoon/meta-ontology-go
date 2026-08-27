@@ -38,6 +38,9 @@ type CaseResult struct {
 	RecipeAttachmentDigest    string        `json:"recipe_attachment_digest,omitempty"`
 	ConsumerTargetDigest      string        `json:"consumer_target_digest,omitempty"`
 	ConsumerOutputDigest      string        `json:"consumer_output_digest,omitempty"`
+	ConsumerOutputExists      bool          `json:"consumer_output_exists"`
+	ConsumerErrorClass        string        `json:"consumer_error_class,omitempty"`
+	ConsumerErrorDigest       string        `json:"consumer_error_digest,omitempty"`
 }
 
 type Summary struct {
@@ -116,6 +119,11 @@ type Report struct {
 	ConformanceDecision              string               `json:"conformance_decision"`
 	ConformanceResolution            string               `json:"conformance_resolution"`
 	ConformanceReason                string               `json:"conformance_reason"`
+	ConformanceCoordinate            Coordinate           `json:"conformance_coordinate"`
+	PreliminaryDecision              string               `json:"preliminary_decision,omitempty"`
+	PreliminaryResolution            string               `json:"preliminary_resolution,omitempty"`
+	PreliminaryReason                string               `json:"preliminary_reason,omitempty"`
+	PreliminaryCoordinate            Coordinate           `json:"preliminary_coordinate,omitempty"`
 	SubjectArtifactDecision          string               `json:"subject_artifact_decision"`
 	SubjectArtifactResolution        string               `json:"subject_artifact_resolution"`
 	SubjectArtifactReason            string               `json:"subject_artifact_reason"`
@@ -131,6 +139,10 @@ type Report struct {
 	CheckoutBindingScope             string               `json:"checkout_binding_scope"`
 	UnauthorizedConsumerTargetDigest string               `json:"unauthorized_consumer_target_digest"`
 	UnauthorizedConsumerOutputDigest string               `json:"unauthorized_consumer_output_digest"`
+	UnauthorizedConsumerOutputExists bool                 `json:"unauthorized_consumer_output_exists"`
+	UnauthorizedConsumerErrorClass   string               `json:"unauthorized_consumer_error_class"`
+	UnauthorizedConsumerErrorDigest  string               `json:"unauthorized_consumer_error_digest"`
+	Counterexamples                  []Counterexample     `json:"counterexamples"`
 	Cases                            []CaseResult         `json:"cases"`
 	Summary                          Summary              `json:"summary"`
 	Indicators                       []Indicator          `json:"indicators"`

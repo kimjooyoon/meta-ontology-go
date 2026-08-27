@@ -1,6 +1,7 @@
 package languageproofartifactverifier
 
 import (
+	"errors"
 	"reflect"
 )
 
@@ -47,7 +48,7 @@ func Evaluate(input Input) Report {
 			ObservedDecision: observed.Decision, ObservedResolution: observed.Resolution, ObservedReason: observed.Reason,
 			ProofChoice: definition.ProofChoice, MetaOperation: definition.MetaOperation, Coordinate: observed.Coordinate,
 			Claims: observed.Claims, ArtifactDigest: observed.ArtifactDigest, SourceDigest: observed.SourceDigest,
-			SemanticDigest: observed.SemanticDigest, OperationDigest: observed.OperationDigest, OperationAttachmentDigest: observed.OperationAttachmentDigest, RecipeAttachmentDigest: observed.RecipeAttachmentDigest, ConsumerTargetDigest: observed.ConsumerTargetDigest, ConsumerOutputDigest: observed.ConsumerOutputDigest})
+			SemanticDigest: observed.SemanticDigest, OperationDigest: observed.OperationDigest, OperationAttachmentDigest: observed.OperationAttachmentDigest, RecipeAttachmentDigest: observed.RecipeAttachmentDigest, ConsumerTargetDigest: observed.ConsumerTargetDigest, ConsumerOutputDigest: observed.ConsumerOutputDigest, ConsumerOutputExists: observed.ConsumerOutputExists, ConsumerErrorClass: observed.ConsumerErrorClass, ConsumerErrorDigest: observed.ConsumerErrorDigest})
 	}
 
 	interventions := evaluateInterventions(input.Interventions, input.HeadSHA)
@@ -68,16 +69,18 @@ func Evaluate(input Input) Report {
 	}
 	report.Summary = summarize(results, input.Independence, input.WriteSet, interventions, report.Ledger)
 	report.Summary.BundleOnlyVerification = boolToInt(input.BundleDigest != "")
-	report.Summary.ConsumerRechecks = boolToInt(input.BundleDigest != "")
+	report.Summary.ConsumerRechecks = boolToInt(input.BundleDigest != "" && input.ConsumerReceiptProvided)
 	report.Transitions = transitions(results)
 	for _, item := range results {
 		if item.ID == "unauthorized-consumer" {
 			report.UnauthorizedConsumerTargetDigest = item.ConsumerTargetDigest
 			report.UnauthorizedConsumerOutputDigest = item.ConsumerOutputDigest
+			report.UnauthorizedConsumerOutputExists = item.ConsumerOutputExists
+			report.UnauthorizedConsumerErrorClass = item.ConsumerErrorClass
+			report.UnauthorizedConsumerErrorDigest = item.ConsumerErrorDigest
 		}
 	}
-	report.ConformanceDecision, report.ConformanceResolution, report.ConformanceReason = "FAIL_CLOSED", "INVARIANT_ONLY", "PROOF_CARRYING_ARTIFACT_CONTRACT_VIOLATED"
-	if report.Summary.CasesSatisfied == CaseTotal && report.Summary.ValidArtifacts == 1 && report.Summary.PreservedTransitions == EvidenceTotal+1 &&
+	structuralGate := report.Summary.CasesSatisfied == CaseTotal && report.Summary.ValidArtifacts == 1 && report.Summary.PreservedTransitions == EvidenceTotal+1 &&
 		report.Summary.TamperedRejections == 1 && report.Summary.CoherentTamperRejections == 1 && report.Summary.MissingEvidenceRejections == 1 &&
 		report.Summary.ByteOnlyDenials == 1 && report.Summary.RecipeRejections == 1 && report.Summary.RecipeOnlyRejections == 1 &&
 		report.Summary.MissingAttachmentRejections == 1 && report.Summary.WrongAttachmentRejections == 1 && report.Summary.UnrelatedEvidenceRejections == 1 &&
@@ -87,19 +90,77 @@ func Evaluate(input Input) Report {
 		report.Summary.ProducerImportNumerator == 0 && report.Summary.ProducerImportDenominator > 0 && report.Summary.NetRepositoryStateUnchanged == 1 &&
 		report.Summary.UnknownAuthorityObservations == 1 &&
 		report.Summary.GeneratedAuthority == 0 && report.Summary.NetChangedPaths == 0 && report.Summary.MutationAuthorities == 0 &&
-		report.Summary.PromotionAuthorities == 0 && report.Summary.SemanticAuthorities == 0 {
-		report.ConformanceDecision, report.ConformanceResolution, report.ConformanceReason = "PASS", "EXACT", "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED"
-		report.ArtifactUseAuthority = "READ_ONLY_CONSUMPTION"
-	}
-	if report.ConformanceDecision == "PASS" {
-		if input.BundleDigest != "" {
-			report.ConsumerReceipt = expectedConsumerReceipt(report, "artifact.json", input.ValidArtifact)
+		report.Summary.PromotionAuthorities == 0 && report.Summary.SemanticAuthorities == 0
+	report.PreliminaryDecision, report.PreliminaryResolution, report.PreliminaryReason = "FAIL_CLOSED", "LOWER_RESOLUTION", "BUNDLE_CONSUMPTION_NOT_OBSERVED"
+	report.PreliminaryCoordinate = Coordinate{"CONSUME_BUNDLE", "consumer-recheck", report.PreliminaryReason}
+	if structuralGate && input.BundleDigest != "" {
+		// Build the candidate attestation privately so the receipt binds the
+		// exact PASS authority statement. The public conformance decision below
+		// is assigned only after indicators and proofs have been evaluated.
+		candidate := consumerAttestedReport(report)
+		if input.ConsumerReceiptProvided {
+			candidate.ConsumerReceipt = input.ConsumerReceipt
+			report.PreliminaryDecision, report.PreliminaryResolution, report.PreliminaryReason = candidate.ConformanceDecision, candidate.ConformanceResolution, candidate.ConformanceReason
+			report.PreliminaryCoordinate = candidate.ConformanceCoordinate
+			report.ConsumerReceipt = candidate.ConsumerReceipt
+		} else {
+			report.PreliminaryDecision, report.PreliminaryResolution, report.PreliminaryReason = "FAIL_CLOSED", "LOWER_RESOLUTION", "CONSUMER_RECHECK_NOT_OBSERVED"
+			report.PreliminaryCoordinate = Coordinate{"CONSUME_BUNDLE", "consumer-recheck", report.PreliminaryReason}
 		}
 	}
 	report.Indicators = indicators(report.Summary)
-	report.Proofs = proofs(report, results)
+	proofReport := report
+	if structuralGate && input.BundleDigest != "" {
+		proofReport = consumerAttestedReport(proofReport)
+	}
+	report.Proofs = proofs(proofReport, results)
+	report.Counterexamples = fixedCounterexamples(input, report)
+	indicatorsOK := allIndicatorsSatisfied(report.Indicators)
+	proofsOK := allProofsPassed(report.Proofs)
+	consumerGate := input.BundleDigest != "" && consumerReceiptOK(proofReport)
+	// Final conformance is deliberately calculated last. A PASS therefore
+	// cannot survive an unsatisfied indicator, proof, binding, or consumer gate.
+	report.ConformanceDecision, report.ConformanceResolution, report.ConformanceReason = "FAIL_CLOSED", "LOWER_RESOLUTION", "BUNDLE_CONSUMPTION_NOT_OBSERVED"
+	report.ConformanceCoordinate = Coordinate{"CONSUME_BUNDLE", "consumer-recheck", report.ConformanceReason}
+	if input.BundleDigest != "" {
+		report.ConformanceReason = "CONSUMER_RECHECK_NOT_OBSERVED"
+		report.ConformanceCoordinate = Coordinate{"CONSUME_BUNDLE", "consumer-recheck", report.ConformanceReason}
+		if input.ConsumerReceiptProvided {
+			report.ConformanceReason = "PROOF_CARRYING_ARTIFACT_CONTRACT_VIOLATED"
+			report.ConformanceCoordinate = Coordinate{"EVALUATE", "final-conformance-gate", report.ConformanceReason}
+		}
+	}
+	if structuralGate && indicatorsOK && proofsOK && consumerGate {
+		report.ConformanceDecision, report.ConformanceResolution, report.ConformanceReason = "PASS", "EXACT", "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED"
+		report.ConformanceCoordinate = Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", report.ConformanceReason}
+		report.ArtifactUseAuthority = "READ_ONLY_CONSUMPTION"
+	}
 	report.Digest = reportDigest(report)
 	return report
+}
+
+func allIndicatorsSatisfied(indicators []Indicator) bool {
+	if len(indicators) != len(MetricIDs()) {
+		return false
+	}
+	for _, indicator := range indicators {
+		if !indicator.Satisfied {
+			return false
+		}
+	}
+	return true
+}
+
+func allProofsPassed(proofs []Proof) bool {
+	if len(proofs) != 3 {
+		return false
+	}
+	for _, proof := range proofs {
+		if !proof.Passed {
+			return false
+		}
+	}
+	return true
 }
 
 func validCase(cases []CaseResult) *CaseResult {
@@ -113,8 +174,14 @@ func validCase(cases []CaseResult) *CaseResult {
 
 func unauthorizedConsumerObservation(input Input) observation {
 	artifact, err := decodeStrict[Artifact](input.ValidArtifact)
-	if err != nil || input.UnauthorizedBundle.Digest == "" || len(input.UnauthorizedConsumer) == 0 {
-		return failure("INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", "CONSUME_AUTHORITY", "consumer")
+	if err != nil {
+		return failure("INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", "CONSUME_BUNDLE", "attestation")
+	}
+	if input.UnauthorizedBundleError != "" || input.UnauthorizedBundle.Digest == "" || len(input.UnauthorizedConsumer) == 0 {
+		result := failure("LOWER_RESOLUTION", "BUNDLE_CONSUMPTION_NOT_OBSERVED", "CONSUME_BUNDLE", "read-bundle")
+		result.ConsumerErrorClass = string(ConsumerErrorBundleInvalid)
+		result.ConsumerErrorDigest = consumerError(ConsumerErrorBundleInvalid, input.UnauthorizedBundleError).Digest()
+		return result
 	}
 	base := verifyArtifact(input.ValidArtifact, input.Source, input.Operation, input.Recipe, input.HeadSHA)
 	if base.Decision != "PASS" {
@@ -122,20 +189,70 @@ func unauthorizedConsumerObservation(input Input) observation {
 	}
 	var unauthorized Report
 	if err := decodeInto(input.UnauthorizedConsumer, &unauthorized); err != nil {
-		return failure("INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", "CONSUME_AUTHORITY", "consumer")
+		result := failure("INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", "CONSUME_BUNDLE", "attestation")
+		result.ConsumerErrorClass = string(ConsumerErrorAttestationMismatch)
+		errorValue := consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")
+		result.ConsumerErrorDigest = errorValue.Digest()
+		return result
 	}
-	targetDigest, outputDigest := bundleTargetDigests(input.UnauthorizedBundle, "artifact.json")
-	_, consumeErr := ConsumeBundle(input.UnauthorizedBundle, unauthorized, "artifact.json")
+	targetDigest, outputDigest, outputExists := bundleTargetDigests(input.UnauthorizedBundle, "artifact.json")
+	consumedReceipt, consumeErr := ConsumeBundle(input.UnauthorizedBundle, unauthorized, "artifact.json")
 	if consumeErr == nil {
-		return observedFailure(artifact, "INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_ACCEPTED", "CONSUME_AUTHORITY", "consumer",
+		result := observedFailure(artifact, "INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_ACCEPTED", "CONSUME_BUNDLE", "consumer",
 			map[string]string{"source-bytes-bound": "DISCHARGED", "operation-receipt-bound": "DISCHARGED", "no-byte-authority": "DISCHARGED", "recipe-match": "DISCHARGED", "consumer-authority": "REFUTED"},
 			base.ArtifactDigest, base.SourceDigest, base.SemanticDigest, base.OperationDigest)
+		result.ConsumerTargetDigest, result.ConsumerOutputDigest, result.ConsumerOutputExists = consumedReceipt.TargetDigest, consumedReceipt.OutputDigest, consumedReceipt.OutputExists
+		return result
 	}
-	result := observedFailure(artifact, "INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", "CONSUME_AUTHORITY", "consumer",
-		map[string]string{"source-bytes-bound": "DISCHARGED", "operation-receipt-bound": "DISCHARGED", "no-byte-authority": "DISCHARGED", "recipe-match": "DISCHARGED", "consumer-authority": "REFUTED"},
+	consumerFailure := consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")
+	var typed *ConsumerError
+	if errors.As(consumeErr, &typed) {
+		consumerFailure = typed
+	}
+	resultReason, resultResolution, resultStage, resultStep := "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", "INVARIANT_ONLY", "CONSUME_BUNDLE", "attestation"
+	states := map[string]string{"source-bytes-bound": "DISCHARGED", "operation-receipt-bound": "DISCHARGED", "no-byte-authority": "DISCHARGED", "recipe-match": "DISCHARGED", "consumer-authority": "REFUTED"}
+	if consumerFailure.Class != ConsumerErrorAttestationMismatch {
+		resultReason, resultResolution, resultStage, resultStep = "BUNDLE_CONSUMPTION_NOT_OBSERVED", "LOWER_RESOLUTION", "CONSUME_BUNDLE", "consumer-recheck"
+		states["consumer-authority"] = "OPEN"
+	}
+	result := observedFailure(artifact, resultResolution, resultReason, resultStage, resultStep,
+		states,
 		base.ArtifactDigest, base.SourceDigest, base.SemanticDigest, base.OperationDigest)
-	result.ConsumerTargetDigest, result.ConsumerOutputDigest = targetDigest, outputDigest
+	result.ConsumerTargetDigest, result.ConsumerOutputDigest, result.ConsumerOutputExists = targetDigest, outputDigest, outputExists
+	result.ConsumerErrorClass, result.ConsumerErrorDigest = string(consumerFailure.Class), consumerFailure.Digest()
 	return result
+}
+
+func fixedCounterexamples(input Input, report Report) []Counterexample {
+	bundleMissing := consumerError(ConsumerErrorBundleInvalid, "bundle was not provided")
+	bundleCorrupt := consumerError(ConsumerErrorBundleInvalid, "bundle digest or file content is invalid")
+	targetMissing := consumerError(ConsumerErrorTargetMissing, "consumer target is absent from bundle: missing-target.json")
+	outputAbsent := consumerError(ConsumerErrorReceiptMismatch, "consumer receipt declares output_exists=false")
+	proofFalse := digestValue(struct {
+		Stage  string `json:"stage"`
+		Step   string `json:"step"`
+		Reason string `json:"reason"`
+	}{"VERIFY_PROOF", "final-gate", "PROOF_NOT_SATISFIED"})
+	indicatorShortfall := digestValue(struct {
+		Value  int `json:"value"`
+		Target int `json:"target"`
+	}{38, 40})
+	unauthorizedClass := report.UnauthorizedConsumerErrorClass
+	unauthorizedDigest := report.UnauthorizedConsumerErrorDigest
+	unauthorizedTarget := report.UnauthorizedConsumerTargetDigest
+	if unauthorizedClass == "" {
+		unauthorizedClass = string(ConsumerErrorAttestationMismatch)
+		unauthorizedDigest = consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified").Digest()
+	}
+	return []Counterexample{
+		{ID: "bundle-not-provided", Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Coordinate: Coordinate{"CONSUME_BUNDLE", "read-bundle", "BUNDLE_CONSUMPTION_NOT_OBSERVED"}, ClaimID: "consumer-authority", From: "CARRIED", To: "OPEN", ErrorClass: string(bundleMissing.Class), ErrorDigest: bundleMissing.Digest(), OutputExists: false},
+		{ID: "bundle-corrupt", Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Coordinate: Coordinate{"CONSUME_BUNDLE", "validate-bundle", "BUNDLE_INVALID"}, ClaimID: "consumer-authority", From: "CARRIED", To: "OPEN", ErrorClass: string(bundleCorrupt.Class), ErrorDigest: bundleCorrupt.Digest(), OutputExists: false},
+		{ID: "unauthorized-attestation-mismatch", Decision: "FAIL_CLOSED", Resolution: "INVARIANT_ONLY", Coordinate: Coordinate{"CONSUME_BUNDLE", "attestation", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED"}, ClaimID: "consumer-authority", From: "CARRIED", To: "REFUTED", ErrorClass: unauthorizedClass, ErrorDigest: unauthorizedDigest, TargetDigest: unauthorizedTarget, OutputExists: false},
+		{ID: "consumer-target-missing", Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Coordinate: Coordinate{"CONSUME_BUNDLE", "target-missing", "TARGET_MISSING"}, ClaimID: "consumer-authority", From: "CARRIED", To: "OPEN", ErrorClass: string(targetMissing.Class), ErrorDigest: targetMissing.Digest(), OutputExists: false},
+		{ID: "consumer-output-absent", Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Coordinate: Coordinate{"CONSUME_BUNDLE", "receipt", "CONSUMER_OUTPUT_ABSENT"}, ClaimID: "consumer-authority", From: "CARRIED", To: "OPEN", ErrorClass: string(outputAbsent.Class), ErrorDigest: outputAbsent.Digest(), OutputExists: false},
+		{ID: "proof-false", Decision: "FAIL_CLOSED", Resolution: "INVARIANT_ONLY", Coordinate: Coordinate{"VERIFY_PROOF", "final-gate", "PROOF_NOT_SATISFIED"}, ClaimID: "proof-gate", From: "CARRIED", To: "OPEN", ErrorClass: "PROOF_GATE", ErrorDigest: proofFalse, OutputExists: false},
+		{ID: "main-indicator-38-of-40", Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Coordinate: Coordinate{"EVALUATE", "final-conformance-gate", "INDICATOR_GATE_NOT_SATISFIED"}, ClaimID: "conformance", From: "CARRIED", To: "OPEN", ErrorClass: "INDICATOR_GATE", ErrorDigest: indicatorShortfall, OutputExists: false},
+	}
 }
 
 func caseInput(input Input, kind string) ([]byte, []byte, []byte, []byte) {

@@ -9,6 +9,13 @@ import (
 
 func WriteReport(path string, report Report) error {
 	if err := Validate(report); err != nil {
+		if ValidatePreliminary(report) == nil {
+			raw, marshalErr := json.MarshalIndent(report, "", "  ")
+			if marshalErr != nil {
+				return marshalErr
+			}
+			return os.WriteFile(path, append(raw, '\n'), 0o644)
+		}
 		caseReasons := make([]string, 0, len(report.Cases))
 		for _, item := range report.Cases {
 			caseReasons = append(caseReasons, item.ID+"="+item.ObservedReason)

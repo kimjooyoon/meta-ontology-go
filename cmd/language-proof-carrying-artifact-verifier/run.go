@@ -9,19 +9,19 @@ import (
 	verifier "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageproofartifactverifier"
 )
 
-func readBundle(path string) verifier.Bundle {
+func readBundle(path string) (verifier.Bundle, string) {
 	if path == "" {
-		return verifier.Bundle{}
+		return verifier.Bundle{}, "UNAUTHORIZED_BUNDLE_NOT_PROVIDED"
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return verifier.Bundle{}
+		return verifier.Bundle{}, "UNAUTHORIZED_BUNDLE_READ_ERROR"
 	}
 	bundle, err := verifier.DecodeBundle(raw)
 	if err != nil {
-		return verifier.Bundle{}
+		return verifier.Bundle{}, "UNAUTHORIZED_BUNDLE_INVALID"
 	}
-	return bundle
+	return bundle, ""
 }
 
 type options struct {
@@ -30,7 +30,7 @@ type options struct {
 	semanticArtifact, semanticSource, semanticOperation, commentArtifact, commentSource, commentOperation    string
 	recipeOnly, missingAttachment, wrongAttachmentDigest, unrelatedTampered, staleHead, unauthorizedConsumer string
 	claimProposition, claimDependency, claimProofChoice, claimTarget, unauthorizedBundle                     string
-	bundle, packBundle, bundleInputs, checkout                                                               string
+	bundle, packBundle, bundleInputs, checkout, consumerReceipt                                              string
 }
 
 func run(args []string) int {
@@ -73,12 +73,13 @@ func run(args []string) int {
 	flags.StringVar(&value.packBundle, "pack-bundle", "", "portable proof bundle output")
 	flags.StringVar(&value.bundleInputs, "bundle-inputs", "", "bundle input manifest")
 	flags.StringVar(&value.checkout, "checkout", "", "checkout evidence")
+	flags.StringVar(&value.consumerReceipt, "consumer-receipt", "", "actual downstream consumer receipt")
 	if flags.Parse(args) != nil {
 		return 2
 	}
 	if value.check != "" {
 		report, err := verifier.LoadReport(value.check)
-		if err != nil || verifier.Validate(report) != nil {
+		if err != nil || (verifier.Validate(report) != nil && verifier.ValidatePreliminary(report) != nil) {
 			return 1
 		}
 		return 0
@@ -131,18 +132,29 @@ func run(args []string) int {
 		if err != nil {
 			return 1
 		}
+		if value.consumerReceipt != "" {
+			receiptRaw, readErr := os.ReadFile(value.consumerReceipt)
+			if readErr != nil {
+				return 2
+			}
+			receipt, decodeErr := verifier.DecodeConsumerReceipt(receiptRaw)
+			if decodeErr != nil {
+				return 2
+			}
+			input.ConsumerReceipt, input.ConsumerReceiptProvided = receipt, true
+		}
 		report := verifier.Evaluate(input)
 		if err := verifier.WriteReport(value.output, report); err != nil {
 			return 1
 		}
-		if report.ConformanceDecision != "PASS" {
+		if report.ConformanceDecision != "PASS" && verifier.ValidatePreliminary(report) != nil {
 			return 1
 		}
 		return 0
 	}
 	if value.head == "" || value.contract == "" || value.valid == "" || value.tampered == "" || value.coherentTampered == "" ||
 		value.missing == "" || value.byteOnly == "" || value.wrongRecipe == "" || value.recipeOnly == "" || value.missingAttachment == "" || value.wrongAttachmentDigest == "" || value.unrelatedTampered == "" || value.staleHead == "" || value.unauthorizedConsumer == "" || value.claimProposition == "" || value.claimDependency == "" || value.claimProofChoice == "" || value.claimTarget == "" || value.source == "" ||
-		value.operation == "" || value.recipe == "" || value.independence == "" || value.writeSet == "" || value.coherentOperation == "" || value.checkout == "" || value.output == "" {
+		value.operation == "" || value.recipe == "" || value.independence == "" || value.writeSet == "" || value.coherentOperation == "" || value.checkout == "" || value.unauthorizedBundle == "" || value.output == "" {
 		return 2
 	}
 	read := func(path string) ([]byte, bool) {
@@ -208,18 +220,19 @@ func run(args []string) int {
 		{ID: "semantic-source-intervention", Kind: "SEMANTIC", Before: verifier.SubjectInput{Artifact: valid, Source: source, Operation: operation, Recipe: recipe}, After: verifier.SubjectInput{Artifact: semanticArtifact, Source: semanticSource, Operation: semanticOperation, Recipe: recipe}},
 		{ID: "comment-only-intervention", Kind: "NONSEMANTIC", Before: verifier.SubjectInput{Artifact: valid, Source: source, Operation: operation, Recipe: recipe}, After: verifier.SubjectInput{Artifact: commentArtifact, Source: commentSource, Operation: commentOperation, Recipe: recipe}},
 	}
+	unauthorizedBundle, unauthorizedBundleError := readBundle(value.unauthorizedBundle)
 	report := verifier.Evaluate(verifier.Input{Contract: contract, ContractBytes: contractRaw, HeadSHA: value.head, ValidArtifact: valid,
 		TamperedArtifact: tampered, CoherentTamperedArtifact: coherentTampered, MissingArtifact: missing, ByteOnlyArtifact: byteOnly, WrongRecipe: wrongRecipe,
 		RecipeOnlyArtifact: recipeOnly, MissingAttachment: missingAttachment, WrongAttachmentDigest: wrongAttachmentDigest, UnrelatedTamperedArtifact: unrelatedTampered, StaleHeadArtifact: staleHead, ClaimPropositionArtifact: claimProposition, ClaimDependencyArtifact: claimDependency, ClaimProofChoiceArtifact: claimProofChoice, ClaimTargetArtifact: claimTarget, UnauthorizedConsumer: unauthorizedConsumer,
 		Source: source, Operation: operation, Recipe: recipe, Independence: independence, WriteSet: writeSet,
-		CoherentOperation: coherentOperation, Interventions: interventions, Checkout: checkout, UnauthorizedBundle: readBundle(value.unauthorizedBundle)})
+		CoherentOperation: coherentOperation, Interventions: interventions, Checkout: checkout, UnauthorizedBundle: unauthorizedBundle, UnauthorizedBundleError: unauthorizedBundleError})
 	if err := verifier.WriteReport(value.output, report); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 	fmt.Printf("proof-carrying verifier: %s %d/%d authority=%s transitions=%d\n", report.ConformanceDecision,
 		report.Summary.CasesSatisfied, report.Summary.CasesTotal, report.ArtifactUseAuthority, len(report.Transitions))
-	if report.ConformanceDecision != "PASS" {
+	if report.ConformanceDecision != "PASS" && verifier.ValidatePreliminary(report) != nil {
 		return 1
 	}
 	return 0

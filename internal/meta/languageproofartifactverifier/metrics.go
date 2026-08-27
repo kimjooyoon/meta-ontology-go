@@ -113,7 +113,7 @@ func proofs(report Report, cases []CaseResult) []Proof {
 	}
 	exactBinding := valid.SourceDigest == report.Checkout.SourceDigest && valid.OperationAttachmentDigest == report.Checkout.OperationDigest &&
 		valid.RecipeAttachmentDigest == report.Checkout.RecipeDigest && report.ContractDigest == report.Checkout.ContractDigest
-	consumerReceiptOK := report.BundleDigest == "" || (report.ConsumerReceipt.TargetPath == "artifact.json" && report.ConsumerReceipt.Authority == "READ_ONLY_CONSUMPTION" &&
+	consumerReceiptOK := report.BundleDigest != "" && (report.ConsumerReceipt.TargetPath == "artifact.json" && report.ConsumerReceipt.Authority == "READ_ONLY_CONSUMPTION" && report.ConsumerReceipt.OutputExists &&
 		validDigest(report.ConsumerReceipt.TargetDigest) && validDigest(report.ConsumerReceipt.OutputDigest) && validDigest(report.ConsumerReceipt.AttestationDigest) &&
 		report.ConsumerReceipt.AttestationDigest == attestationDigest(report) && report.ConsumerReceipt.Digest == consumerReceiptDigest(report.ConsumerReceipt))
 	evidence := []string{}

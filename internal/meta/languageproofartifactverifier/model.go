@@ -1,16 +1,17 @@
 package languageproofartifactverifier
 
 const (
-	ReportSchema       = "gooo/language-proof-carrying-artifact-verifier/v1"
-	ContractSchema     = "gooo/language-proof-carrying-artifact-contract/v2"
-	RecipeSchema       = "gooo/language-proof-carrying-recipe/v1"
-	ArtifactSchema     = "gooo/language-proof-carrying-artifact/v1"
-	ProducerID         = "gooo://producer/language-proof-carrying-artifact"
-	ConsumerID         = "gooo://consumer/language-proof-carrying-artifact-verifier"
-	CaseTotal          = 16
-	EvidenceTotal      = 3
-	ClaimTemplateTotal = 5
-	TransitionTotal    = 5
+	ReportSchema        = "gooo/language-proof-carrying-artifact-verifier/v1"
+	ContractSchema      = "gooo/language-proof-carrying-artifact-contract/v2"
+	RecipeSchema        = "gooo/language-proof-carrying-recipe/v1"
+	ArtifactSchema      = "gooo/language-proof-carrying-artifact/v1"
+	ProducerID          = "gooo://producer/language-proof-carrying-artifact"
+	ConsumerID          = "gooo://consumer/language-proof-carrying-artifact-verifier"
+	CaseTotal           = 16
+	EvidenceTotal       = 3
+	ClaimTemplateTotal  = 5
+	TransitionTotal     = 5
+	CounterexampleTotal = 7
 )
 
 type Coordinate struct {
@@ -48,6 +49,7 @@ type Input struct {
 	ClaimTargetArtifact       []byte
 	UnauthorizedConsumer      []byte
 	UnauthorizedBundle        Bundle
+	UnauthorizedBundleError   string
 	Source                    []byte
 	Operation                 []byte
 	Recipe                    []byte
@@ -57,6 +59,8 @@ type Input struct {
 	Interventions             []InterventionInput
 	Checkout                  CheckoutEvidence
 	BundleDigest              string
+	ConsumerReceipt           ConsumerReceipt
+	ConsumerReceiptProvided   bool
 }
 
 type RecipeStep struct {
@@ -326,9 +330,28 @@ type ConsumerReceipt struct {
 	TargetPath        string `json:"target_path"`
 	TargetDigest      string `json:"target_digest"`
 	OutputDigest      string `json:"output_digest"`
+	OutputExists      bool   `json:"output_exists"`
 	Authority         string `json:"authority"`
 	AttestationDigest string `json:"attestation_digest"`
 	Digest            string `json:"digest"`
+}
+
+// Counterexample is a fixed semantic guard. It is not part of the conformance
+// case denominator; it records the exact fail-closed coordinate and the claim
+// transition that must result when the named boundary is violated.
+type Counterexample struct {
+	ID           string     `json:"id"`
+	Decision     string     `json:"decision"`
+	Resolution   string     `json:"resolution"`
+	Coordinate   Coordinate `json:"coordinate"`
+	ClaimID      string     `json:"claim_id"`
+	From         string     `json:"from"`
+	To           string     `json:"to"`
+	ErrorClass   string     `json:"error_class,omitempty"`
+	ErrorDigest  string     `json:"error_digest,omitempty"`
+	TargetDigest string     `json:"target_digest,omitempty"`
+	OutputDigest string     `json:"output_digest,omitempty"`
+	OutputExists bool       `json:"output_exists"`
 }
 
 type BundleManifestEntry struct {

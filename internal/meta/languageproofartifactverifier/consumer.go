@@ -8,6 +8,40 @@ import (
 
 const ConsumerReceiptSchema = "gooo/read-only-consumption-receipt/v1"
 
+func DecodeConsumerReceipt(raw []byte) (ConsumerReceipt, error) {
+	return decodeStrict[ConsumerReceipt](raw)
+}
+
+type ConsumerErrorClass string
+
+const (
+	ConsumerErrorBundleInvalid       ConsumerErrorClass = "BUNDLE_INVALID"
+	ConsumerErrorAttestationMismatch ConsumerErrorClass = "ATTESTATION_MISMATCH"
+	ConsumerErrorTargetMissing       ConsumerErrorClass = "TARGET_MISSING"
+	ConsumerErrorTargetPolicy        ConsumerErrorClass = "TARGET_POLICY"
+	ConsumerErrorReceiptMismatch     ConsumerErrorClass = "RECEIPT_MISMATCH"
+)
+
+// ConsumerError preserves the failed consumer boundary. In particular, a
+// malformed bundle or absent target is not an authorization failure.
+type ConsumerError struct {
+	Class  ConsumerErrorClass
+	Detail string
+}
+
+func (e *ConsumerError) Error() string { return string(e.Class) + ": " + e.Detail }
+
+func (e *ConsumerError) Digest() string {
+	return digestValue(struct {
+		Class  ConsumerErrorClass `json:"class"`
+		Detail string             `json:"detail"`
+	}{e.Class, e.Detail})
+}
+
+func consumerError(class ConsumerErrorClass, detail string) *ConsumerError {
+	return &ConsumerError{Class: class, Detail: detail}
+}
+
 type consumerAttestation struct {
 	Decision        string
 	Resolution      string
@@ -22,6 +56,15 @@ func attestationDigest(report Report) string {
 		Authority: report.ArtifactUseAuthority, SubjectDecision: report.SubjectArtifactDecision, BundleDigest: report.BundleDigest})
 }
 
+func consumerAttestedReport(report Report) Report {
+	report.ConformanceDecision = "PASS"
+	report.ConformanceResolution = "EXACT"
+	report.ConformanceReason = "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED"
+	report.ConformanceCoordinate = Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", report.ConformanceReason}
+	report.ArtifactUseAuthority = "READ_ONLY_CONSUMPTION"
+	return report
+}
+
 func expectedConsumerReceipt(report Report, targetPath string, target []byte) ConsumerReceipt {
 	targetDigest := digestBytes(target)
 	outputDigest := digestValue(struct {
@@ -30,7 +73,7 @@ func expectedConsumerReceipt(report Report, targetPath string, target []byte) Co
 		Authority    string `json:"authority"`
 	}{targetPath, targetDigest, "READ_ONLY_CONSUMPTION"})
 	receipt := ConsumerReceipt{Schema: ConsumerReceiptSchema, Version: 1, TargetPath: targetPath, TargetDigest: targetDigest,
-		OutputDigest: outputDigest, Authority: "READ_ONLY_CONSUMPTION", AttestationDigest: attestationDigest(report)}
+		OutputDigest: outputDigest, OutputExists: true, Authority: "READ_ONLY_CONSUMPTION", AttestationDigest: attestationDigest(report)}
 	receipt.Digest = consumerReceiptDigest(receipt)
 	return receipt
 }
@@ -46,25 +89,52 @@ func consumerReceiptDigest(receipt ConsumerReceipt) string {
 // content-addressed entry and the actual consumed digest is recorded.
 func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerReceipt, error) {
 	if err := ValidateBundle(bundle); err != nil {
-		return ConsumerReceipt{}, err
+		return ConsumerReceipt{}, consumerError(ConsumerErrorBundleInvalid, err.Error())
 	}
-	if err := Validate(report); err != nil || report.ConformanceDecision != "PASS" || report.ArtifactUseAuthority != "READ_ONLY_CONSUMPTION" || report.BundleDigest != bundle.Digest {
-		return ConsumerReceipt{}, fmt.Errorf("consumer attestation is not independently verified")
+	if report.ConformanceDecision == "PASS" && report.ArtifactUseAuthority == "READ_ONLY_CONSUMPTION" && !report.ConsumerReceipt.OutputExists {
+		return ConsumerReceipt{}, consumerError(ConsumerErrorReceiptMismatch, "consumer receipt declares output_exists=false")
 	}
 	if targetPath == "" || targetPath == "artifact.json" {
 		targetPath = "artifact.json"
 	} else {
-		return ConsumerReceipt{}, fmt.Errorf("consumer target is outside read-only policy: %s", targetPath)
+		if _, err := bundleTargetBytes(bundle, targetPath); err != nil {
+			return ConsumerReceipt{}, consumerError(ConsumerErrorTargetMissing, err.Error())
+		}
+		return ConsumerReceipt{}, consumerError(ConsumerErrorTargetPolicy, fmt.Sprintf("consumer target is outside read-only policy: %s", targetPath))
 	}
 	raw, err := bundleTargetBytes(bundle, targetPath)
-	if err == nil {
-		receipt := expectedConsumerReceipt(report, targetPath, raw)
-		if !reflect.DeepEqual(receipt, report.ConsumerReceipt) {
-			return ConsumerReceipt{}, fmt.Errorf("consumer receipt does not match report")
-		}
-		return receipt, nil
+	if err != nil {
+		return ConsumerReceipt{}, consumerError(ConsumerErrorTargetMissing, err.Error())
 	}
-	return ConsumerReceipt{}, err
+	finalReport := Validate(report) == nil
+	if !finalReport && ValidatePreliminary(report) != nil {
+		return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")
+	}
+	if report.BundleDigest != bundle.Digest {
+		return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")
+	}
+	attested := consumerAttestedReport(report)
+	if !finalReport {
+		// A preliminary report is accepted only when it can be lifted to the
+		// exact final report by this kernel, including all cases, indicators,
+		// proofs, bindings, and the receipt for the reconstructed target.
+		attested.Summary.ConsumerRechecks = 1
+		attested.ConsumerReceipt = expectedConsumerReceipt(attested, targetPath, raw)
+		attested.Indicators = indicators(attested.Summary)
+		attested.Proofs = proofs(attested, attested.Cases)
+		attested.ConformanceDecision, attested.ConformanceResolution, attested.ConformanceReason = "PASS", "EXACT", "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED"
+		attested.ConformanceCoordinate = Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", attested.ConformanceReason}
+		attested.ArtifactUseAuthority = "READ_ONLY_CONSUMPTION"
+		attested.Digest = reportDigest(attested)
+		if Validate(attested) != nil {
+			return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")
+		}
+	}
+	receipt := expectedConsumerReceipt(attested, targetPath, raw)
+	if finalReport && !reflect.DeepEqual(receipt, report.ConsumerReceipt) {
+		return ConsumerReceipt{}, consumerError(ConsumerErrorReceiptMismatch, "consumer receipt does not match report")
+	}
+	return receipt, nil
 }
 
 func bundleTargetBytes(bundle Bundle, targetPath string) ([]byte, error) {
@@ -76,14 +146,10 @@ func bundleTargetBytes(bundle Bundle, targetPath string) ([]byte, error) {
 	return nil, fmt.Errorf("consumer target is absent from bundle: %s", targetPath)
 }
 
-func bundleTargetDigests(bundle Bundle, targetPath string) (string, string) {
+func bundleTargetDigests(bundle Bundle, targetPath string) (string, string, bool) {
 	raw, err := bundleTargetBytes(bundle, targetPath)
 	if err != nil {
-		return "", ""
+		return "", "", false
 	}
-	return digestBytes(raw), digestValue(struct {
-		TargetPath   string `json:"target_path"`
-		TargetDigest string `json:"target_digest"`
-		Authority    string `json:"authority"`
-	}{targetPath, digestBytes(raw), "READ_ONLY_CONSUMPTION"})
+	return digestBytes(raw), "", false
 }

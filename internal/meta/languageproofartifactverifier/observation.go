@@ -15,6 +15,9 @@ type observation struct {
 	ClaimTransitionDigest     string
 	ConsumerTargetDigest      string
 	ConsumerOutputDigest      string
+	ConsumerOutputExists      bool
+	ConsumerErrorClass        string
+	ConsumerErrorDigest       string
 	Claims                    []ClaimResult
 }
 

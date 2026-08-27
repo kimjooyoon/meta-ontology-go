@@ -17,7 +17,8 @@ func Validate(report Report) error {
 	if report.CheckoutBindingScope != wantScope {
 		return fmt.Errorf("proof-carrying checkout binding scope mismatch")
 	}
-	if report.ConformanceDecision != "PASS" || report.ConformanceResolution != "EXACT" || report.ConformanceReason != "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED" ||
+	if report.BundleDigest == "" || report.ConformanceDecision != "PASS" || report.ConformanceResolution != "EXACT" || report.ConformanceReason != "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED" ||
+		report.ConformanceCoordinate != (Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", report.ConformanceReason}) ||
 		report.SubjectArtifactDecision != "CARRIED" || report.SubjectArtifactResolution != "EVIDENCE_ATTACHED" || report.SubjectArtifactReason != "PROOF_CARRYING_ARTIFACT_EMITTED" ||
 		report.ArtifactUseAuthority != "READ_ONLY_CONSUMPTION" || !caseInventoryOK(report.Cases) || len(report.Indicators) != len(MetricIDs()) || len(report.Proofs) != 3 ||
 		len(report.Transitions) != TransitionTotal || len(report.Interventions) != 2 || report.NetChangedPaths != report.WriteSet.NetChangedPaths || report.CapabilityMutationGranted || report.PromotionAuthority || report.SemanticAuthority {
@@ -33,7 +34,7 @@ func Validate(report Report) error {
 	}
 	bundleMetricValue := report.Summary.BundleOnlyVerification
 	consumerMetricValue := report.Summary.ConsumerRechecks
-	if bundleMetricValue != 0 && bundleMetricValue != 1 || consumerMetricValue != 0 && consumerMetricValue != 1 || report.BundleDigest != "" && (bundleMetricValue != 1 || consumerMetricValue != 1) {
+	if bundleMetricValue != 1 || consumerMetricValue != 1 {
 		return fmt.Errorf("proof-carrying bundle metric scope mismatch")
 	}
 	want := Summary{CasesSatisfied: CaseTotal, CasesTotal: CaseTotal, ValidArtifacts: 1, EvidenceKindsCarried: EvidenceTotal, ExactEvidenceLinks: EvidenceTotal,
@@ -48,8 +49,11 @@ func Validate(report Report) error {
 	if report.Summary != want || report.Summary.ProducerImportDenominator <= 0 || report.Summary.ProducerImportNumerator != 0 || report.Summary.CoreParserDependencies != CoreParserDependencyInventoryTotal {
 		return fmt.Errorf("proof-carrying summary mismatch")
 	}
-	if !validDigest(report.UnauthorizedConsumerTargetDigest) || !validDigest(report.UnauthorizedConsumerOutputDigest) {
+	if !validDigest(report.UnauthorizedConsumerTargetDigest) || report.UnauthorizedConsumerOutputExists || report.UnauthorizedConsumerOutputDigest != "" || report.UnauthorizedConsumerErrorClass != string(ConsumerErrorAttestationMismatch) || !validDigest(report.UnauthorizedConsumerErrorDigest) {
 		return fmt.Errorf("proof-carrying unauthorized consumer observation mismatch")
+	}
+	if len(report.Counterexamples) != CounterexampleTotal || !counterexampleInventoryOK(report.Counterexamples) {
+		return fmt.Errorf("proof-carrying counterexample inventory mismatch")
 	}
 	if err := validateOpenLedger(report.PriorLedger); err != nil {
 		return fmt.Errorf("proof-carrying prior ledger mismatch: %w", err)
@@ -88,10 +92,7 @@ func Validate(report Report) error {
 	}
 	for _, indicator := range report.Indicators {
 		if !indicator.Satisfied {
-			allowedOpen := report.BundleDigest == "" && (indicator.MetricID == "gooo.metric.language.proof-carrying-artifact-bundle-only.v3" || indicator.MetricID == "gooo.metric.language.proof-carrying-artifact-consumer-recheck.v3") && indicator.Value == 0 && indicator.Target == 1
-			if !allowedOpen {
-				return fmt.Errorf("proof-carrying indicator mismatch")
-			}
+			return fmt.Errorf("proof-carrying indicator mismatch")
 		}
 	}
 	for _, proof := range report.Proofs {
@@ -106,7 +107,7 @@ func Validate(report Report) error {
 	}
 	if report.BundleDigest != "" {
 		if report.ConsumerReceipt.Schema != ConsumerReceiptSchema || report.ConsumerReceipt.Version != 1 || report.ConsumerReceipt.Authority != "READ_ONLY_CONSUMPTION" ||
-			!validDigest(report.ConsumerReceipt.TargetDigest) || !validDigest(report.ConsumerReceipt.OutputDigest) || !validDigest(report.ConsumerReceipt.AttestationDigest) ||
+			!report.ConsumerReceipt.OutputExists || !validDigest(report.ConsumerReceipt.TargetDigest) || !validDigest(report.ConsumerReceipt.OutputDigest) || !validDigest(report.ConsumerReceipt.AttestationDigest) ||
 			report.ConsumerReceipt.AttestationDigest != attestationDigest(report) || report.ConsumerReceipt.Digest != consumerReceiptDigest(report.ConsumerReceipt) {
 			return fmt.Errorf("proof-carrying consumer receipt mismatch")
 		}
@@ -115,6 +116,81 @@ func Validate(report Report) error {
 		return fmt.Errorf("proof-carrying report digest mismatch")
 	}
 	return nil
+}
+
+// ValidatePreliminary accepts only the intentionally incomplete checkout
+// observation. It is separate from final conformance validation so a 38/40
+// report cannot be mistaken for a PASS report.
+func ValidatePreliminary(report Report) error {
+	bundleMode := report.BundleDigest != ""
+	wantScope := "CURRENT_CHECKOUT_OBSERVATION"
+	wantBundleMetric, wantConsumerMetric := 0, 0
+	wantReason := "BUNDLE_CONSUMPTION_NOT_OBSERVED"
+	if bundleMode {
+		wantScope = "BUNDLE_HISTORICAL_SUBJECT_BINDING"
+		wantBundleMetric = 1
+		wantReason = "CONSUMER_RECHECK_NOT_OBSERVED"
+	}
+	if report.Schema != ReportSchema || report.Producer != ProducerID || report.Consumer != ConsumerID || !validHead(report.HeadSHA) ||
+		(bundleMode && !validDigest(report.BundleDigest)) || report.CheckoutBindingScope != wantScope ||
+		report.ConformanceDecision != "FAIL_CLOSED" || report.ConformanceResolution != "LOWER_RESOLUTION" || report.ConformanceReason != wantReason ||
+		report.ConformanceCoordinate != (Coordinate{"CONSUME_BUNDLE", "consumer-recheck", report.ConformanceReason}) ||
+		report.Summary.BundleOnlyVerification != wantBundleMetric || report.Summary.ConsumerRechecks != wantConsumerMetric || len(report.Indicators) != len(MetricIDs()) ||
+		report.Digest != reportDigest(report) {
+		return fmt.Errorf("proof-carrying preliminary report mismatch")
+	}
+	unsatisfied := 0
+	for _, indicator := range report.Indicators {
+		if indicator.MetricID == "gooo.metric.language.proof-carrying-artifact-bundle-only.v3" {
+			if indicator.Value != wantBundleMetric || indicator.Target != 1 || indicator.Satisfied != (wantBundleMetric == 1) {
+				return fmt.Errorf("proof-carrying preliminary bundle gate mismatch")
+			}
+			if !indicator.Satisfied {
+				unsatisfied++
+			}
+		}
+		if indicator.MetricID == "gooo.metric.language.proof-carrying-artifact-consumer-recheck.v3" {
+			if indicator.Value != wantConsumerMetric || indicator.Target != 1 || indicator.Satisfied {
+				return fmt.Errorf("proof-carrying preliminary consumer gate mismatch")
+			}
+			unsatisfied++
+		}
+	}
+	wantUnsatisfied := 2
+	if bundleMode {
+		wantUnsatisfied = 1
+	}
+	if unsatisfied != wantUnsatisfied {
+		return fmt.Errorf("proof-carrying preliminary indicator inventory mismatch")
+	}
+	return nil
+}
+
+func counterexampleInventoryOK(items []Counterexample) bool {
+	want := []string{"bundle-not-provided", "bundle-corrupt", "unauthorized-attestation-mismatch", "consumer-target-missing", "consumer-output-absent", "proof-false", "main-indicator-38-of-40"}
+	wantCoordinates := []Coordinate{
+		{"CONSUME_BUNDLE", "read-bundle", "BUNDLE_CONSUMPTION_NOT_OBSERVED"},
+		{"CONSUME_BUNDLE", "validate-bundle", "BUNDLE_INVALID"},
+		{"CONSUME_BUNDLE", "attestation", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED"},
+		{"CONSUME_BUNDLE", "target-missing", "TARGET_MISSING"},
+		{"CONSUME_BUNDLE", "receipt", "CONSUMER_OUTPUT_ABSENT"},
+		{"VERIFY_PROOF", "final-gate", "PROOF_NOT_SATISFIED"},
+		{"EVALUATE", "final-conformance-gate", "INDICATOR_GATE_NOT_SATISFIED"},
+	}
+	wantResolution := []string{"LOWER_RESOLUTION", "LOWER_RESOLUTION", "INVARIANT_ONLY", "LOWER_RESOLUTION", "LOWER_RESOLUTION", "INVARIANT_ONLY", "LOWER_RESOLUTION"}
+	wantClaim := []string{"consumer-authority", "consumer-authority", "consumer-authority", "consumer-authority", "consumer-authority", "proof-gate", "conformance"}
+	wantTo := []string{"OPEN", "OPEN", "REFUTED", "OPEN", "OPEN", "OPEN", "OPEN"}
+	wantErrorClass := []string{"BUNDLE_INVALID", "BUNDLE_INVALID", "ATTESTATION_MISMATCH", "TARGET_MISSING", "RECEIPT_MISMATCH", "PROOF_GATE", "INDICATOR_GATE"}
+	if len(items) != len(want) {
+		return false
+	}
+	for index, item := range items {
+		if item.ID != want[index] || item.Decision != "FAIL_CLOSED" || item.Resolution != wantResolution[index] || item.Coordinate != wantCoordinates[index] ||
+			item.ClaimID != wantClaim[index] || item.From != "CARRIED" || item.To != wantTo[index] || item.ErrorClass != wantErrorClass[index] || !validDigest(item.ErrorDigest) || item.OutputExists {
+			return false
+		}
+	}
+	return true
 }
 
 func validCaseClaims(item CaseResult, report Report) bool {
