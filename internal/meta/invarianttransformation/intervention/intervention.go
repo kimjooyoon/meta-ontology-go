@@ -18,34 +18,35 @@ import (
 )
 
 const (
-	Schema                         = "gooo/invariant-transformation-intervention-report/v2"
-	DenominatorID                  = "gooo/invariant-transformation-intervention-denominator/v2"
-	SemanticExpectedDenominatorID  = "gooo/invariant-transformation-intervention-semantic-expected-denominator/v2"
-	SemanticOperationDenominatorID = "gooo/invariant-transformation-intervention-semantic-operation-denominator/v2"
-	NonSemanticDenominatorID       = "gooo/invariant-transformation-intervention-nonsemantic-denominator/v2"
-	SemanticExpectedCaseID         = "semantic-expected-intervention"
-	SemanticOperationCaseID        = "semantic-operation-intervention"
-	NonSemanticCaseID              = "nonsemantic-source-intervention"
-	SemanticExpectedClaimID        = SemanticExpectedCaseID + "::claim"
-	SemanticOperationClaimID       = SemanticOperationCaseID + "::claim"
-	NonSemanticClaimID             = NonSemanticCaseID + "::claim"
-	InterventionStage              = "INTERVENTION"
-	SemanticExpectedStep           = "compare-semantic-expected-projection-and-decision"
-	SemanticExpectedReason         = "SEMANTIC_EXPECTED_VALUE_AND_DECISION_CHANGED"
-	SemanticOperationStep          = "compare-semantic-operation-projection-and-decision"
-	SemanticOperationReason        = "SEMANTIC_OPERATION_AND_DECISION_CHANGED"
-	NonSemanticStep                = "compare-nonsemantic-projection-and-decision"
-	NonSemanticReason              = "NONSEMANTIC_PROJECTION_AND_DECISION_PRESERVED"
-	SemanticContradictionReason    = "SEMANTIC_INTERVENTION_CONTRADICTED"
-	NonSemanticContradictionReason = "NONSEMANTIC_INTERVENTION_CONTRADICTED"
-	EvidenceUnobservableReason     = "INTERVENTION_EVIDENCE_UNOBSERVABLE"
-	FailClosedDecision             = model.DecisionFailClosed
-	PreservedCaseID                = "preserved-translation"
-	ExpectedSemanticMutation       = "expected=4"
-	OriginalSemanticMutation       = "expected=3"
-	ExpectedOperationMutation      = "add:2"
-	OriginalOperationMutation      = "add:1"
-	NonSemanticInterventionLabel   = "comment-and-whitespace-only"
+	Schema                            = "gooo/invariant-transformation-intervention-report/v2"
+	DenominatorID                     = "gooo/invariant-transformation-intervention-denominator/v2"
+	SemanticExpectedDenominatorID     = "gooo/invariant-transformation-intervention-semantic-expected-denominator/v2"
+	SemanticOperationDenominatorID    = "gooo/invariant-transformation-intervention-semantic-operation-denominator/v2"
+	NonSemanticDenominatorID          = "gooo/invariant-transformation-intervention-nonsemantic-denominator/v2"
+	SemanticExpectedCaseID            = "semantic-expected-intervention"
+	SemanticOperationCaseID           = "semantic-operation-intervention"
+	NonSemanticCaseID                 = "nonsemantic-source-intervention"
+	SemanticExpectedClaimID           = SemanticExpectedCaseID + "::claim"
+	SemanticOperationClaimID          = SemanticOperationCaseID + "::claim"
+	NonSemanticClaimID                = NonSemanticCaseID + "::claim"
+	InterventionStage                 = "INTERVENTION"
+	SemanticExpectedStep              = "compare-semantic-expected-projection-and-decision"
+	SemanticExpectedReason            = "SEMANTIC_EXPECTED_VALUE_AND_DECISION_CHANGED"
+	SemanticOperationStep             = "compare-semantic-operation-projection-and-decision"
+	SemanticOperationReason           = "SEMANTIC_OPERATION_AND_DECISION_CHANGED"
+	NonSemanticStep                   = "compare-nonsemantic-projection-and-decision"
+	NonSemanticReason                 = "NONSEMANTIC_PROJECTION_AND_DECISION_PRESERVED"
+	SemanticContradictionReason       = "SEMANTIC_INTERVENTION_CONTRADICTED"
+	NonSemanticContradictionReason    = "NONSEMANTIC_INTERVENTION_CONTRADICTED"
+	EvidenceUnobservableReason        = "INTERVENTION_EVIDENCE_UNOBSERVABLE"
+	FailClosedDecision                = model.DecisionFailClosed
+	PreservedCaseID                   = "preserved-translation"
+	ExpectedSemanticMutation          = "expected=4"
+	OriginalSemanticMutation          = "expected=3"
+	SemanticExpectedInterventionLabel = "comment-like-semantic-value-change"
+	ExpectedOperationMutation         = "add:2"
+	OriginalOperationMutation         = "add:1"
+	NonSemanticInterventionLabel      = "comment-and-whitespace-only"
 )
 
 type FixtureProjection struct {
@@ -152,6 +153,9 @@ type Case struct {
 	MutatedClaimTransitions                   []model.Transition           `json:"mutated_claim_transitions"`
 	BaselineTransitionDigest                  string                       `json:"baseline_transition_digest"`
 	MutatedTransitionDigest                   string                       `json:"mutated_transition_digest"`
+	BaselineTransitionStatePathDigest         string                       `json:"baseline_transition_state_path_digest"`
+	MutatedTransitionStatePathDigest          string                       `json:"mutated_transition_state_path_digest"`
+	TransitionDigestEqual                     bool                         `json:"transition_digest_equal"`
 	TransitionDigestChanged                   bool                         `json:"transition_digest_changed"`
 	RawSourceDigestChanged                    bool                         `json:"raw_source_digest_changed"`
 	ReceiptChanged                            bool                         `json:"receipt_changed"`
@@ -217,7 +221,7 @@ func Build(source []byte, headSHA string) (Report, error) {
 	if _, err := project(source); err != nil {
 		return Report{}, err
 	}
-	semanticExpectedCase, err := buildCase(source, headSHA, SemanticExpectedCaseID, "SEMANTIC_EXPECTED", "semantic-expected-value-change", mutateSemantic, SemanticExpectedClaimID, SemanticExpectedStep, SemanticExpectedReason)
+	semanticExpectedCase, err := buildCase(source, headSHA, SemanticExpectedCaseID, "SEMANTIC_EXPECTED", SemanticExpectedInterventionLabel, mutateSemantic, SemanticExpectedClaimID, SemanticExpectedStep, SemanticExpectedReason)
 	if err != nil {
 		return Report{}, err
 	}
@@ -332,14 +336,14 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 	baselineJudgment := judge.Judge(baselineReceipt, source)
 	mutatedJudgment := judge.Judge(mutatedReceipt, mutated)
 	baselineTransitions, mutatedTransitions := transitions(baselineReceipt), transitions(mutatedReceipt)
-	baselineTransitionDigest, mutatedTransitionDigest := model.Digest(baselineTransitions), model.Digest(mutatedTransitions)
+	baselineTransitionDigest, mutatedTransitionDigest := model.FullTransitionDigest(baselineTransitions), model.FullTransitionDigest(mutatedTransitions)
 	item := Case{ID: id, Kind: kind, SourceEdit: edit, BaselineProjection: baselineProjection, MutatedProjection: mutatedProjection,
 		BaselineProjectionDigest: model.Digest(baselineProjection), MutatedProjectionDigest: model.Digest(mutatedProjection), BaselineSourceDigest: baselineReceipt.SourceDigest, MutatedSourceDigest: mutatedReceipt.SourceDigest,
 		BaselineProvenanceDigest: provenanceDigest(baselineReceipt.SourceDigest, headSHA, id), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, id), ProvenanceDigestChanged: baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest,
 		BaselineSemanticDigest: baselineProjection.SemanticSourceDigest, MutatedSemanticDigest: mutatedProjection.SemanticSourceDigest, SemanticDigestEqual: baselineProjection.SemanticSourceDigest == mutatedProjection.SemanticSourceDigest,
 		BaselineReceiptDigest: baselineReceipt.Digest, MutatedReceiptDigest: mutatedReceipt.Digest, BaselineReceiptDecision: baselineReceipt.Decision, MutatedReceiptDecision: mutatedReceipt.Decision,
 		BaselineJudgment: baselineJudgment, MutatedJudgment: mutatedJudgment, BaselineClaimTransitions: baselineTransitions, MutatedClaimTransitions: mutatedTransitions,
-		BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, TransitionDigestChanged: baselineTransitionDigest != mutatedTransitionDigest,
+		BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, BaselineTransitionStatePathDigest: model.TransitionStatePathDigest(baselineTransitions), MutatedTransitionStatePathDigest: model.TransitionStatePathDigest(mutatedTransitions), TransitionDigestEqual: baselineTransitionDigest == mutatedTransitionDigest, TransitionDigestChanged: baselineTransitionDigest != mutatedTransitionDigest,
 		RawSourceDigestChanged: baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest, ReceiptChanged: baselineReceipt.Digest != mutatedReceipt.Digest,
 		SemanticProjectionEqual: reflect.DeepEqual(baselineProjection, mutatedProjection), DecisionEqual: baselineJudgment.Decision == mutatedJudgment.Decision && baselineReceipt.Decision == mutatedReceipt.Decision,
 		ResolutionEqual: baselineJudgment.Resolution == mutatedJudgment.Resolution && baselineReceipt.Resolution == mutatedReceipt.Resolution, ReasonEqual: baselineJudgment.Reason == mutatedJudgment.Reason && baselineReceipt.Reason == mutatedReceipt.Reason,
@@ -379,9 +383,9 @@ func adjudicate(kind string, item Case, observable bool, satisfiedReason string)
 func observationSatisfied(kind string, item Case) bool {
 	switch kind {
 	case "SEMANTIC_EXPECTED", "SEMANTIC_OPERATION":
-		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticDigestEqual && !item.SemanticProjectionEqual && !item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.TransitionStatePathEqual && item.TransitionDigestChanged && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
+		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticDigestEqual && !item.SemanticProjectionEqual && !item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.TransitionStatePathEqual && !item.TransitionDigestEqual && item.TransitionDigestChanged && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
 	case "NON_SEMANTIC":
-		return item.RawSourceDigestChanged && item.ProvenanceDigestChanged && item.ReceiptChanged && item.SemanticDigestEqual && item.SemanticProjectionEqual && item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.TransitionStatePathEqual && item.TransitionDigestChanged && item.EffectsEqual && item.ReplayObservationEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionAllowed
+		return item.RawSourceDigestChanged && item.ProvenanceDigestChanged && item.ReceiptChanged && item.SemanticDigestEqual && item.SemanticProjectionEqual && item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.TransitionStatePathEqual && !item.TransitionDigestEqual && item.TransitionDigestChanged && item.EffectsEqual && item.ReplayObservationEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionAllowed
 	default:
 		return false
 	}
@@ -513,8 +517,8 @@ func evaluateAdd(operation string, input int64) (int64, error) {
 }
 
 func mutateSemantic(source []byte) ([]byte, error) {
-	old := []byte("case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;" + OriginalSemanticMutation)
-	replacement := []byte("case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;" + ExpectedSemanticMutation)
+	old := []byte(`activity PreservedTranslation() -> Transformation computes "case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=add:1;effect=none"`)
+	replacement := []byte(`activity PreservedTranslation() -> Transformation computes "case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=4;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=add:1;effect=none" // comment-like semantic intervention`)
 	if bytes.Count(source, old) != 1 {
 		return nil, fmt.Errorf("semantic intervention target count is not 1")
 	}

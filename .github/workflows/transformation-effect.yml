@@ -2587,12 +2587,15 @@ jobs:
             .denominator.nonsemantic_change.cases_satisfied == 1 and
             .denominator.nonsemantic_change.coverage_bps == 10000 and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .raw_source_digest_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .source_edit == "comment-like-semantic-value-change"] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .receipt_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .semantic_projection_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .decision_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .resolution_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .reason_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .transition_state_path_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .baseline_transition_state_path_digest != .mutated_transition_state_path_digest and (.baseline_transition_state_path_digest | startswith("sha256:")) and (.mutated_transition_state_path_digest | startswith("sha256:"))] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .transition_digest_equal == false] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .transition_digest_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .decision_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .raw_source_digest_changed] | all) and
@@ -2602,6 +2605,8 @@ jobs:
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .resolution_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .reason_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .transition_state_path_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .baseline_transition_state_path_digest != .mutated_transition_state_path_digest and (.baseline_transition_state_path_digest | startswith("sha256:")) and (.mutated_transition_state_path_digest | startswith("sha256:"))] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .transition_digest_equal == false] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .transition_digest_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .decision_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .raw_source_digest_changed] | all) and
@@ -2613,6 +2618,8 @@ jobs:
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .resolution_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .reason_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .transition_state_path_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .baseline_transition_state_path_digest == .mutated_transition_state_path_digest and (.baseline_transition_state_path_digest | startswith("sha256:")) and (.mutated_transition_state_path_digest | startswith("sha256:"))] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .transition_digest_equal == false] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .transition_digest_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .effects_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .replay_observation_equal] | all) and
@@ -2670,6 +2677,10 @@ jobs:
             .comment_only.baseline_provenance_digest != .comment_only.mutated_provenance_digest and
             .comment_only.semantic_digest_equal == true and .comment_only.decision_equal == true and
             .comment_only.transition_state_path_equal == true and
+            (.comment_only.baseline_transition_state_path_digest | startswith("sha256:")) and
+            (.comment_only.mutated_transition_state_path_digest | startswith("sha256:")) and
+            .comment_only.baseline_transition_state_path_digest == .comment_only.mutated_transition_state_path_digest and
+            .comment_only.transition_digest_equal == false and
             .comment_only.transition_digest_changed == true and
             .comment_only.stage == "INTERVENTION" and
             .comment_only.step == "compare-nonsemantic-projection-and-decision" and
@@ -2729,6 +2740,7 @@ jobs:
             ([.metric_evidence[].decision] | all(. == "PASS")) and
             ([.metric_evidence[].resolution] | all(. == "EXACT")) and
             ([.metric_evidence[].observed_evidence_digest] | all(startswith("sha256:"))) and
+            ([.metric_evidence[] | select(.metric_id == "comment-only/semantic-preservation") | .target_address == "intervention:nonsemantic-source-intervention/human-metric" and (.target_digest | startswith("sha256:"))] | all) and
             .artifact_bytes_observed == 2 and .expected_artifact_bytes == 2 and
             .raw_provenance_bindings == 2 and .expected_raw_provenance_bindings == 2 and
             .authorization_bindings == 2 and .expected_authorization_bindings == 2 and
@@ -2848,6 +2860,30 @@ jobs:
               -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
               -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
               -intervention-report "$tamper/comment-gate-false-report.json" -intervention-consumer-receipt "$tamper/comment-gate-false-consumer.json"
+          for kind in state path digest; do
+            go run ./cmd/invariant-transformation-closure-negative \
+              -mode "comment-transition-$kind" \
+              -intervention-report "$root/intervention/first/report.json" \
+              -output-intervention-report "$tamper/comment-transition-$kind-report.json"
+            case "$kind" in
+              state)
+                jq -e '.cases[] | select(.id == "nonsemantic-source-intervention") | .baseline_claim_transitions[0].to == "REFUTED"' "$tamper/comment-transition-$kind-report.json"
+                ;;
+              path)
+                jq -e '.cases[] | select(.id == "nonsemantic-source-intervention") | .baseline_claim_transitions[0].coordinate.step == "tampered-transition-path"' "$tamper/comment-transition-$kind-report.json"
+                ;;
+              digest)
+                jq -e '.cases[] | select(.id == "nonsemantic-source-intervention") | (.baseline_transition_digest | startswith("sha256:"))' "$tamper/comment-transition-$kind-report.json"
+                ;;
+            esac
+            expect_reject 'ARTIFACT_CLOSURE/comment-only/source-reconstruction/COMMENT_INTERVENTION_RESEALED_WITHOUT_SOURCE_MATCH' "$tamper/comment-transition-$kind.log" \
+              go run ./cmd/invariant-transformation-closure-verifier \
+                -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+                -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+                -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+                -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+                -intervention-report "$tamper/comment-transition-$kind-report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
+          done
           go run ./cmd/invariant-transformation-closure-negative \
             -mode semantic-case-reseal -intervention-report "$root/intervention/first/report.json" \
             -output-intervention-report "$tamper/semantic-case-resealed-report.json"
@@ -2859,7 +2895,7 @@ jobs:
             -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
             -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
             -intervention-report "$tamper/semantic-case-resealed-report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
-          echo 'comment-only negative fixtures: semantic-digest-gate=1/1; calculated-gate-false=1/1; semantic-case-reseal-out-of-scope=1/1' >> "$GITHUB_STEP_SUMMARY"
+          echo 'comment-only negative fixtures: semantic-digest-gate=1/1; calculated-gate-false=1/1; transition-state=1/1; transition-path=1/1; transition-digest=1/1; semantic-case-reseal-out-of-scope=1/1' >> "$GITHUB_STEP_SUMMARY"
           expect_reject 'ARTIFACT_CLOSURE/authorization-tamper/compare/AUTHORIZATION_TAMPER_NOT_AUTHORIZATION_ONLY' "$tamper/multi-auth.log" \
             go run ./cmd/invariant-transformation-closure-verifier \
               -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
@@ -2874,7 +2910,7 @@ jobs:
               -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
               -output-tamper "$multi_output" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
               -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
-          echo 'closure metric inventory: 11/11; artifact bytes: 2/2; semantic equality: 1/1; raw provenance: 2/2; authorization: 2/2; output tamper: 1/1; authorization tamper: 1/1; comment-only preservation: 1/1; final closure: 1/1' >> "$GITHUB_STEP_SUMMARY"
+          echo 'closure metric inventory: 11/11; artifact bytes: 2/2; semantic equality: 1/1; raw provenance: 2/2; authorization: 2/2; output tamper: 1/1; authorization tamper: 1/1; comment-only preservation: 1/1; transition state-path/full-digest evidence: 1/1; final closure: 1/1' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact metrics and authority boundary
         shell: bash

@@ -707,6 +707,9 @@ type interventionCase struct {
 	MutatedClaimTransitions                   []model.Transition           `json:"mutated_claim_transitions"`
 	BaselineTransitionDigest                  string                       `json:"baseline_transition_digest"`
 	MutatedTransitionDigest                   string                       `json:"mutated_transition_digest"`
+	BaselineTransitionStatePathDigest         string                       `json:"baseline_transition_state_path_digest"`
+	MutatedTransitionStatePathDigest          string                       `json:"mutated_transition_state_path_digest"`
+	TransitionDigestEqual                     bool                         `json:"transition_digest_equal"`
 	TransitionDigestChanged                   bool                         `json:"transition_digest_changed"`
 	RawSourceDigestChanged                    bool                         `json:"raw_source_digest_changed"`
 	ReceiptChanged                            bool                         `json:"receipt_changed"`
@@ -807,27 +810,30 @@ type interventionReport struct {
 	Digest                            string             `json:"digest"`
 }
 type commentReceipt struct {
-	Schema                   string `json:"schema"`
-	CaseID                   string `json:"case_id"`
-	BaselineRawDigest        string `json:"baseline_raw_digest"`
-	MutatedRawDigest         string `json:"mutated_raw_digest"`
-	BaselineProvenanceDigest string `json:"baseline_provenance_digest"`
-	MutatedProvenanceDigest  string `json:"mutated_provenance_digest"`
-	BaselineSemanticDigest   string `json:"baseline_semantic_digest"`
-	MutatedSemanticDigest    string `json:"mutated_semantic_digest"`
-	SemanticDigestEqual      bool   `json:"semantic_digest_equal"`
-	BaselineDecision         string `json:"baseline_decision"`
-	MutatedDecision          string `json:"mutated_decision"`
-	DecisionEqual            bool   `json:"decision_equal"`
-	BaselineTransitionDigest string `json:"baseline_transition_digest"`
-	MutatedTransitionDigest  string `json:"mutated_transition_digest"`
-	TransitionDigestChanged  bool   `json:"transition_digest_changed"`
-	TransitionStatePathEqual bool   `json:"transition_state_path_equal"`
-	Stage                    string `json:"stage"`
-	Step                     string `json:"step"`
-	Reason                   string `json:"reason"`
-	EvidenceDigest           string `json:"evidence_digest"`
-	Digest                   string `json:"digest"`
+	Schema                            string `json:"schema"`
+	CaseID                            string `json:"case_id"`
+	BaselineRawDigest                 string `json:"baseline_raw_digest"`
+	MutatedRawDigest                  string `json:"mutated_raw_digest"`
+	BaselineProvenanceDigest          string `json:"baseline_provenance_digest"`
+	MutatedProvenanceDigest           string `json:"mutated_provenance_digest"`
+	BaselineSemanticDigest            string `json:"baseline_semantic_digest"`
+	MutatedSemanticDigest             string `json:"mutated_semantic_digest"`
+	SemanticDigestEqual               bool   `json:"semantic_digest_equal"`
+	BaselineDecision                  string `json:"baseline_decision"`
+	MutatedDecision                   string `json:"mutated_decision"`
+	DecisionEqual                     bool   `json:"decision_equal"`
+	BaselineTransitionDigest          string `json:"baseline_transition_digest"`
+	MutatedTransitionDigest           string `json:"mutated_transition_digest"`
+	BaselineTransitionStatePathDigest string `json:"baseline_transition_state_path_digest"`
+	MutatedTransitionStatePathDigest  string `json:"mutated_transition_state_path_digest"`
+	TransitionDigestEqual             bool   `json:"transition_digest_equal"`
+	TransitionDigestChanged           bool   `json:"transition_digest_changed"`
+	TransitionStatePathEqual          bool   `json:"transition_state_path_equal"`
+	Stage                             string `json:"stage"`
+	Step                              string `json:"step"`
+	Reason                            string `json:"reason"`
+	EvidenceDigest                    string `json:"evidence_digest"`
+	Digest                            string `json:"digest"`
 }
 type interventionConsumer struct {
 	Schema                                             string                 `json:"schema"`
@@ -859,37 +865,78 @@ type interventionConsumer struct {
 }
 
 type commentSubartifactPayload struct {
-	ID                         string `json:"id"`
-	Kind                       string `json:"kind"`
-	SourceEdit                 string `json:"source_edit"`
-	BaselineProjectionDigest   string `json:"baseline_projection_digest"`
-	MutatedProjectionDigest    string `json:"mutated_projection_digest"`
-	BaselineSourceDigest       string `json:"baseline_source_digest"`
-	MutatedSourceDigest        string `json:"mutated_source_digest"`
-	BaselineProvenanceDigest   string `json:"baseline_provenance_digest"`
-	MutatedProvenanceDigest    string `json:"mutated_provenance_digest"`
-	BaselineSemanticDigest     string `json:"baseline_semantic_digest"`
-	MutatedSemanticDigest      string `json:"mutated_semantic_digest"`
-	BaselineReceiptDigest      string `json:"baseline_receipt_digest"`
-	MutatedReceiptDigest       string `json:"mutated_receipt_digest"`
-	BaselineReceiptDecision    string `json:"baseline_receipt_decision"`
-	MutatedReceiptDecision     string `json:"mutated_receipt_decision"`
-	BaselineTransitionDigest   string `json:"baseline_transition_digest"`
-	MutatedTransitionDigest    string `json:"mutated_transition_digest"`
-	TransitionDigestChanged    bool   `json:"transition_digest_changed"`
-	RawSourceDigestChanged     bool   `json:"raw_source_digest_changed"`
-	ReceiptChanged             bool   `json:"receipt_changed"`
-	SemanticProjectionEqual    bool   `json:"semantic_projection_equal"`
-	DecisionEqual              bool   `json:"decision_equal"`
-	ResolutionEqual            bool   `json:"resolution_equal"`
-	ReasonEqual                bool   `json:"reason_equal"`
-	DecisionChanged            bool   `json:"decision_changed"`
-	TransitionStatePathEqual   bool   `json:"transition_state_path_equal"`
-	EffectsEqual               bool   `json:"effects_equal"`
-	ReplayObservationEqual     bool   `json:"replay_observation_equal"`
-	EvidenceObservable         bool   `json:"evidence_observable"`
-	RepositoryWritesNotClaimed bool   `json:"repository_writes_not_claimed"`
-	Satisfied                  bool   `json:"satisfied"`
+	ID                                string `json:"id"`
+	Kind                              string `json:"kind"`
+	SourceEdit                        string `json:"source_edit"`
+	BaselineProjectionDigest          string `json:"baseline_projection_digest"`
+	MutatedProjectionDigest           string `json:"mutated_projection_digest"`
+	BaselineSourceDigest              string `json:"baseline_source_digest"`
+	MutatedSourceDigest               string `json:"mutated_source_digest"`
+	BaselineProvenanceDigest          string `json:"baseline_provenance_digest"`
+	MutatedProvenanceDigest           string `json:"mutated_provenance_digest"`
+	BaselineSemanticDigest            string `json:"baseline_semantic_digest"`
+	MutatedSemanticDigest             string `json:"mutated_semantic_digest"`
+	BaselineReceiptDigest             string `json:"baseline_receipt_digest"`
+	MutatedReceiptDigest              string `json:"mutated_receipt_digest"`
+	BaselineReceiptDecision           string `json:"baseline_receipt_decision"`
+	MutatedReceiptDecision            string `json:"mutated_receipt_decision"`
+	BaselineTransitionDigest          string `json:"baseline_transition_digest"`
+	MutatedTransitionDigest           string `json:"mutated_transition_digest"`
+	BaselineTransitionStatePathDigest string `json:"baseline_transition_state_path_digest"`
+	MutatedTransitionStatePathDigest  string `json:"mutated_transition_state_path_digest"`
+	TransitionDigestEqual             bool   `json:"transition_digest_equal"`
+	TransitionDigestChanged           bool   `json:"transition_digest_changed"`
+	RawSourceDigestChanged            bool   `json:"raw_source_digest_changed"`
+	ReceiptChanged                    bool   `json:"receipt_changed"`
+	SemanticProjectionEqual           bool   `json:"semantic_projection_equal"`
+	DecisionEqual                     bool   `json:"decision_equal"`
+	ResolutionEqual                   bool   `json:"resolution_equal"`
+	ReasonEqual                       bool   `json:"reason_equal"`
+	DecisionChanged                   bool   `json:"decision_changed"`
+	TransitionStatePathEqual          bool   `json:"transition_state_path_equal"`
+	EffectsEqual                      bool   `json:"effects_equal"`
+	ReplayObservationEqual            bool   `json:"replay_observation_equal"`
+	EvidenceObservable                bool   `json:"evidence_observable"`
+	RepositoryWritesNotClaimed        bool   `json:"repository_writes_not_claimed"`
+	ClaimTransitionDigest             string `json:"claim_transition_digest"`
+	Satisfied                         bool   `json:"satisfied"`
+}
+
+type commentTransitionEvidence struct {
+	Scope                        string `json:"scope"`
+	SourceAddress                string `json:"source_address"`
+	ParserLowererAddress         string `json:"parser_lowerer_address"`
+	SemanticDigestAddress        string `json:"semantic_digest_address"`
+	DecisionAddress              string `json:"decision_address"`
+	ClaimTransitionAddress       string `json:"claim_transition_address"`
+	HumanMetricAddress           string `json:"human_metric_address"`
+	NonSemanticCaseDigest        string `json:"nonsemantic_case_digest"`
+	ConsumerCommentDigest        string `json:"consumer_comment_digest"`
+	BaselineRawDigest            string `json:"baseline_raw_digest"`
+	MutatedRawDigest             string `json:"mutated_raw_digest"`
+	BaselineProjectionDigest     string `json:"baseline_projection_digest"`
+	MutatedProjectionDigest      string `json:"mutated_projection_digest"`
+	BaselineProvenanceDigest     string `json:"baseline_provenance_digest"`
+	MutatedProvenanceDigest      string `json:"mutated_provenance_digest"`
+	BaselineSemanticDigest       string `json:"baseline_semantic_digest"`
+	MutatedSemanticDigest        string `json:"mutated_semantic_digest"`
+	BaselineDecision             string `json:"baseline_decision"`
+	MutatedDecision              string `json:"mutated_decision"`
+	BaselineDecisionDigest       string `json:"baseline_decision_digest"`
+	MutatedDecisionDigest        string `json:"mutated_decision_digest"`
+	ClaimTransitionDigest        string `json:"claim_transition_digest"`
+	StatePathAddress             string `json:"state_path_address"`
+	BaselineStatePathDigest      string `json:"baseline_state_path_digest"`
+	MutatedStatePathDigest       string `json:"mutated_state_path_digest"`
+	StatePathEqual               bool   `json:"state_path_equal"`
+	FullTransitionDigestAddress  string `json:"full_transition_digest_address"`
+	BaselineFullTransitionDigest string `json:"baseline_full_transition_digest"`
+	MutatedFullTransitionDigest  string `json:"mutated_full_transition_digest"`
+	FullTransitionDigestEqual    bool   `json:"full_transition_digest_equal"`
+	HumanMetricTargetDigest      string `json:"human_metric_target_digest"`
+	SemanticDigestEqual          bool   `json:"semantic_digest_equal"`
+	DecisionEqual                bool   `json:"decision_equal"`
+	TransitionDigestChanged      bool   `json:"transition_digest_changed"`
 }
 
 func commentSubartifactDigest(value *interventionCase) string {
@@ -901,13 +948,13 @@ func commentSubartifactDigest(value *interventionCase) string {
 		BaselineSemanticDigest: value.BaselineSemanticDigest, MutatedSemanticDigest: value.MutatedSemanticDigest,
 		BaselineReceiptDigest: value.BaselineReceiptDigest, MutatedReceiptDigest: value.MutatedReceiptDigest,
 		BaselineReceiptDecision: value.BaselineReceiptDecision, MutatedReceiptDecision: value.MutatedReceiptDecision,
-		BaselineTransitionDigest: value.BaselineTransitionDigest, MutatedTransitionDigest: value.MutatedTransitionDigest,
-		TransitionDigestChanged: value.TransitionDigestChanged, RawSourceDigestChanged: value.RawSourceDigestChanged,
+		BaselineTransitionDigest: value.BaselineTransitionDigest, MutatedTransitionDigest: value.MutatedTransitionDigest, BaselineTransitionStatePathDigest: value.BaselineTransitionStatePathDigest, MutatedTransitionStatePathDigest: value.MutatedTransitionStatePathDigest,
+		TransitionDigestEqual: value.TransitionDigestEqual, TransitionDigestChanged: value.TransitionDigestChanged, RawSourceDigestChanged: value.RawSourceDigestChanged,
 		ReceiptChanged: value.ReceiptChanged, SemanticProjectionEqual: value.SemanticProjectionEqual, DecisionEqual: value.DecisionEqual,
 		ResolutionEqual: value.ResolutionEqual, ReasonEqual: value.ReasonEqual, DecisionChanged: value.DecisionChanged,
 		TransitionStatePathEqual: value.TransitionStatePathEqual, EffectsEqual: value.EffectsEqual,
 		ReplayObservationEqual: value.ReplayObservationEqual, EvidenceObservable: value.EvidenceObservable,
-		RepositoryWritesNotClaimed: value.RepositoryWritesNotClaimed, Satisfied: value.Satisfied,
+		RepositoryWritesNotClaimed: value.RepositoryWritesNotClaimed, ClaimTransitionDigest: model.FullTransitionDigest(value.Claim.Transitions), Satisfied: value.Satisfied,
 	})
 }
 
@@ -952,18 +999,20 @@ func observeCommentMetric(interventionRaw, consumerRaw, source []byte, headSHA s
 	if !reflect.DeepEqual(consumer.CommentOnly, expectedComment) {
 		return metricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/source-reconstruction/COMMENT_CONSUMER_RESEALED_WITHOUT_SOURCE_MATCH")
 	}
-	baselineTransitionDigest := model.Digest(observed.BaselineClaimTransitions)
-	mutatedTransitionDigest := model.Digest(observed.MutatedClaimTransitions)
-	if observed.BaselineTransitionDigest != baselineTransitionDigest || observed.MutatedTransitionDigest != mutatedTransitionDigest || observed.TransitionDigestChanged != (baselineTransitionDigest != mutatedTransitionDigest) {
+	baselineTransitionDigest := model.FullTransitionDigest(observed.BaselineClaimTransitions)
+	mutatedTransitionDigest := model.FullTransitionDigest(observed.MutatedClaimTransitions)
+	baselineTransitionStatePathDigest := model.TransitionStatePathDigest(observed.BaselineClaimTransitions)
+	mutatedTransitionStatePathDigest := model.TransitionStatePathDigest(observed.MutatedClaimTransitions)
+	if observed.BaselineTransitionDigest != baselineTransitionDigest || observed.MutatedTransitionDigest != mutatedTransitionDigest || observed.BaselineTransitionStatePathDigest != baselineTransitionStatePathDigest || observed.MutatedTransitionStatePathDigest != mutatedTransitionStatePathDigest || observed.TransitionDigestEqual != (baselineTransitionDigest == mutatedTransitionDigest) || observed.TransitionDigestChanged != (baselineTransitionDigest != mutatedTransitionDigest) {
 		return metricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/compare-transitions/TRANSITION_DIGEST_PROVENANCE_INVALID")
 	}
 	caseDigest := commentSubartifactDigest(observed)
 	commentDigest := commentReceiptDigest(consumer.CommentOnly)
-	return newMetric(metricCommentOnly, "baseline<->mutated", "intervention:"+observed.ID, "invarianttransformation.intervention", "invarianttransformation.intervention-consumer", "compare-comment-only-source-provenance", model.ProofCoherence, "intervention:"+observed.ID, model.Digest([]string{caseDigest, commentDigest}), struct {
-		Scope                                                                                                                                                                                                                                                                     string `json:"scope"`
-		NonSemanticCaseDigest, ConsumerCommentDigest, BaselineRawDigest, MutatedRawDigest, BaselineProvenanceDigest, MutatedProvenanceDigest, BaselineSemanticDigest, MutatedSemanticDigest, BaselineDecision, MutatedDecision, BaselineTransitionDigest, MutatedTransitionDigest string
-		SemanticDigestEqual, DecisionEqual, TransitionStatePathEqual, TransitionDigestChanged                                                                                                                                                                                     bool
-	}{"NON_SEMANTIC_SUBARTIFACT_ONLY;SEMANTIC_CASES_OUT_OF_SCOPE", caseDigest, commentDigest, observed.BaselineSourceDigest, observed.MutatedSourceDigest, observed.BaselineProvenanceDigest, observed.MutatedProvenanceDigest, observed.BaselineSemanticDigest, observed.MutatedSemanticDigest, observed.BaselineReceiptDecision, observed.MutatedReceiptDecision, baselineTransitionDigest, mutatedTransitionDigest, observed.SemanticDigestEqual, observed.DecisionEqual, observed.TransitionStatePathEqual, observed.TransitionDigestChanged}, "INTERVENTION", nonSemanticStep, nonSemanticReason), nil
+	claimTransitionDigest := model.FullTransitionDigest(observed.Claim.Transitions)
+	humanMetricTargetDigest := model.Digest([]string{caseDigest, commentDigest})
+	return newMetric(metricCommentOnly, "baseline<->mutated", "intervention:"+observed.ID, "invarianttransformation.intervention", "invarianttransformation.intervention-consumer", "compare-comment-only-source-provenance", model.ProofCoherence, "intervention:"+observed.ID+"/human-metric", model.Digest([]string{caseDigest, commentDigest}), commentTransitionEvidence{
+		Scope: "NON_SEMANTIC_SUBARTIFACT_ONLY;SEMANTIC_CASES_OUT_OF_SCOPE", SourceAddress: model.SourcePath, ParserLowererAddress: "source:" + model.SourcePath + "/parser-lowerer", SemanticDigestAddress: "intervention:" + observed.ID + "/semantic-digest", DecisionAddress: "intervention:" + observed.ID + "/decision", ClaimTransitionAddress: "intervention:" + observed.ID + "/claim-transition", HumanMetricAddress: "intervention:" + observed.ID + "/human-metric", NonSemanticCaseDigest: caseDigest, ConsumerCommentDigest: commentDigest, BaselineRawDigest: observed.BaselineSourceDigest, MutatedRawDigest: observed.MutatedSourceDigest, BaselineProjectionDigest: observed.BaselineProjectionDigest, MutatedProjectionDigest: observed.MutatedProjectionDigest, BaselineProvenanceDigest: observed.BaselineProvenanceDigest, MutatedProvenanceDigest: observed.MutatedProvenanceDigest, BaselineSemanticDigest: observed.BaselineSemanticDigest, MutatedSemanticDigest: observed.MutatedSemanticDigest, BaselineDecision: observed.BaselineReceiptDecision, MutatedDecision: observed.MutatedReceiptDecision, BaselineDecisionDigest: model.Digest(observed.BaselineReceiptDecision), MutatedDecisionDigest: model.Digest(observed.MutatedReceiptDecision), ClaimTransitionDigest: claimTransitionDigest, StatePathAddress: "intervention:" + observed.ID + "/transition-state-path", BaselineStatePathDigest: baselineTransitionStatePathDigest, MutatedStatePathDigest: mutatedTransitionStatePathDigest, StatePathEqual: observed.TransitionStatePathEqual, FullTransitionDigestAddress: "intervention:" + observed.ID + "/full-transition-digest", BaselineFullTransitionDigest: baselineTransitionDigest, MutatedFullTransitionDigest: mutatedTransitionDigest, FullTransitionDigestEqual: observed.TransitionDigestEqual, HumanMetricTargetDigest: humanMetricTargetDigest, SemanticDigestEqual: observed.SemanticDigestEqual, DecisionEqual: observed.DecisionEqual, TransitionDigestChanged: observed.TransitionDigestChanged,
+	}, "INTERVENTION", nonSemanticStep, nonSemanticReason), nil
 }
 
 func expectedCommentEvidence(source []byte, headSHA string) (interventionCase, commentReceipt, error) {
@@ -987,36 +1036,38 @@ func expectedCommentEvidence(source []byte, headSHA string) (interventionCase, c
 	resolutionEqual := baseJudgment.Resolution == mutatedJudgment.Resolution && baseReceipt.Resolution == mutatedReceipt.Resolution
 	reasonEqual := baseJudgment.Reason == mutatedJudgment.Reason && baseReceipt.Reason == mutatedReceipt.Reason
 	statePathEqual := transitionStatePathEqual(baseTransitions, mutatedTransitions)
-	baselineTransitionDigest := model.Digest(baseTransitions)
-	mutatedTransitionDigest := model.Digest(mutatedTransitions)
+	baselineTransitionDigest := model.FullTransitionDigest(baseTransitions)
+	mutatedTransitionDigest := model.FullTransitionDigest(mutatedTransitions)
+	baselineTransitionStatePathDigest := model.TransitionStatePathDigest(baseTransitions)
+	mutatedTransitionStatePathDigest := model.TransitionStatePathDigest(mutatedTransitions)
 	transitionDigestChanged := baselineTransitionDigest != mutatedTransitionDigest
 	replayEqual := baseReceipt.Evidence.ReplayCount == mutatedReceipt.Evidence.ReplayCount && baseReceipt.Evidence.ReplayOperation == mutatedReceipt.Evidence.ReplayOperation && baseReceipt.Evidence.ReplayOutput == mutatedReceipt.Evidence.ReplayOutput && baseReceipt.Evidence.ReplayDigest == mutatedReceipt.Evidence.ReplayDigest && baseReceipt.Evidence.ReplaySemanticDigest == mutatedReceipt.Evidence.ReplaySemanticDigest && baseReceipt.Evidence.ReplayEvidenceDigest == mutatedReceipt.Evidence.ReplayEvidenceDigest
 	provenanceChanged := baseReceipt.SourceDigest != mutatedReceipt.SourceDigest
 	repositoryWritesNotClaimed := !baseReceipt.RepositoryWritesObserved && !mutatedReceipt.RepositoryWritesObserved && baseReceipt.RepositoryWrites == -1 && mutatedReceipt.RepositoryWrites == -1 && baseReceipt.RepositoryActualOrTransientWrites == model.UnknownEffectScope && mutatedReceipt.RepositoryActualOrTransientWrites == model.UnknownEffectScope && !baseReceipt.RepositoryMutationAuthorized && !mutatedReceipt.RepositoryMutationAuthorized
 	evidenceObservable := baseJudgment.Independent && mutatedJudgment.Independent
-	status, resolution, reason, satisfied := commentAdjudication(evidenceObservable, []commentGate{
-		{provenanceChanged, "COMMENT_ONLY_RAW_PROVENANCE_NOT_CHANGED"},
-		{baseReceipt.SourceDigest != mutatedReceipt.SourceDigest, "COMMENT_ONLY_RAW_SOURCE_DIGEST_NOT_CHANGED"},
-		{baseReceipt.Digest != mutatedReceipt.Digest, "COMMENT_ONLY_RECEIPT_NOT_CHANGED"},
-		{semanticEqual, "COMMENT_ONLY_SEMANTIC_DIGEST_CHANGED"},
-		{reflect.DeepEqual(baseProjection, mutatedProjection), "COMMENT_ONLY_SEMANTIC_PROJECTION_CHANGED"},
-		{decisionEqual, "COMMENT_ONLY_DECISION_CHANGED"},
-		{resolutionEqual, "COMMENT_ONLY_RESOLUTION_CHANGED"},
-		{reasonEqual, "COMMENT_ONLY_REASON_CHANGED"},
-		{statePathEqual, "COMMENT_ONLY_TRANSITION_STATE_PATH_CHANGED"},
-		{transitionDigestChanged, "COMMENT_ONLY_TRANSITION_DIGEST_NOT_CHANGED"},
-		{reflect.DeepEqual(baseReceipt.Effects, mutatedReceipt.Effects), "COMMENT_ONLY_EFFECTS_CHANGED"},
-		{replayEqual, "COMMENT_ONLY_REPLAY_OBSERVATION_CHANGED"},
-		{repositoryWritesNotClaimed, "COMMENT_ONLY_REPOSITORY_WRITES_OBSERVATION_INVALID"},
-		{baseJudgment.Decision == model.DecisionAllowed && mutatedJudgment.Decision == model.DecisionAllowed, "COMMENT_ONLY_JUDGMENT_NOT_ALLOWED"},
+	status, resolution, reason, satisfied := commentAdjudication([]commentGate{
+		{known: true, satisfied: provenanceChanged, reason: "COMMENT_ONLY_RAW_PROVENANCE_NOT_CHANGED"},
+		{known: true, satisfied: baseReceipt.SourceDigest != mutatedReceipt.SourceDigest, reason: "COMMENT_ONLY_RAW_SOURCE_DIGEST_NOT_CHANGED"},
+		{known: true, satisfied: baseReceipt.Digest != mutatedReceipt.Digest, reason: "COMMENT_ONLY_RECEIPT_NOT_CHANGED"},
+		{known: true, satisfied: semanticEqual, reason: "COMMENT_ONLY_SEMANTIC_DIGEST_CHANGED"},
+		{known: true, satisfied: reflect.DeepEqual(baseProjection, mutatedProjection), reason: "COMMENT_ONLY_SEMANTIC_PROJECTION_CHANGED"},
+		{known: evidenceObservable, satisfied: decisionEqual, reason: "COMMENT_ONLY_DECISION_CHANGED"},
+		{known: evidenceObservable, satisfied: resolutionEqual, reason: "COMMENT_ONLY_RESOLUTION_CHANGED"},
+		{known: evidenceObservable, satisfied: reasonEqual, reason: "COMMENT_ONLY_REASON_CHANGED"},
+		{known: evidenceObservable, satisfied: statePathEqual, reason: "COMMENT_ONLY_TRANSITION_STATE_PATH_CHANGED"},
+		{known: evidenceObservable, satisfied: transitionDigestChanged, reason: "COMMENT_ONLY_TRANSITION_DIGEST_NOT_CHANGED"},
+		{known: evidenceObservable, satisfied: reflect.DeepEqual(baseReceipt.Effects, mutatedReceipt.Effects), reason: "COMMENT_ONLY_EFFECTS_CHANGED"},
+		{known: evidenceObservable, satisfied: replayEqual, reason: "COMMENT_ONLY_REPLAY_OBSERVATION_CHANGED"},
+		{known: evidenceObservable, satisfied: repositoryWritesNotClaimed, reason: "COMMENT_ONLY_REPOSITORY_WRITES_OBSERVATION_INVALID"},
+		{known: evidenceObservable, satisfied: baseJudgment.Decision == model.DecisionAllowed && mutatedJudgment.Decision == model.DecisionAllowed, reason: "COMMENT_ONLY_JUDGMENT_NOT_ALLOWED"},
 	})
 	claimCoordinate := model.Coordinate{Stage: "INTERVENTION", Step: nonSemanticStep, Reason: nonSemanticReason}
 	claimCoordinate.Reason = reason
 	transitionEvidence := model.Digest([]any{baseProjectionDigest, mutatedProjectionDigest, baseJudgment.Decision, mutatedJudgment.Decision, baseJudgment.Resolution, mutatedJudgment.Resolution, baseJudgment.Reason, mutatedJudgment.Reason, baseReceipt.SourceDigest, mutatedReceipt.SourceDigest, provenanceDigest(baseReceipt.SourceDigest, headSHA, nonSemanticID), provenanceDigest(mutatedReceipt.SourceDigest, headSHA, nonSemanticID)})
 	transition := model.NewTransition(nonSemanticID+"::claim", model.StatusOpen, status, claimCoordinate, transitionEvidence)
 	claim := interventionClaim{ID: nonSemanticID + "::claim", Status: status, Resolution: resolution, Reason: reason, VerificationCheck: "intervention-observation-derived-from-two-independent-receipts", Coordinate: claimCoordinate, TargetDigest: transition.PropositionDigest, PriorStateDigest: transition.PriorStateDigest, EvidenceDigest: transition.EvidenceDigest, Transitions: []model.Transition{transition}}
-	item := interventionCase{ID: nonSemanticID, Kind: nonSemanticKind, SourceEdit: "comment-and-whitespace-only", BaselineProjection: baseProjection, MutatedProjection: mutatedProjection, BaselineProjectionDigest: baseProjectionDigest, MutatedProjectionDigest: mutatedProjectionDigest, BaselineSourceDigest: baseReceipt.SourceDigest, MutatedSourceDigest: mutatedReceipt.SourceDigest, BaselineProvenanceDigest: provenanceDigest(baseReceipt.SourceDigest, headSHA, nonSemanticID), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, nonSemanticID), ProvenanceDigestChanged: provenanceChanged, BaselineSemanticDigest: baseProjection.SemanticSourceDigest, MutatedSemanticDigest: mutatedProjection.SemanticSourceDigest, SemanticDigestEqual: semanticEqual, BaselineReceiptDigest: baseReceipt.Digest, MutatedReceiptDigest: mutatedReceipt.Digest, BaselineReceiptDecision: baseReceipt.Decision, MutatedReceiptDecision: mutatedReceipt.Decision, BaselineJudgment: baseJudgment, MutatedJudgment: mutatedJudgment, BaselineEvidence: baseReceipt.Evidence, MutatedEvidence: mutatedReceipt.Evidence, BaselineClaimTransitions: baseTransitions, MutatedClaimTransitions: mutatedTransitions, BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, TransitionDigestChanged: transitionDigestChanged, RawSourceDigestChanged: provenanceChanged, ReceiptChanged: baseReceipt.Digest != mutatedReceipt.Digest, SemanticProjectionEqual: reflect.DeepEqual(baseProjection, mutatedProjection), DecisionEqual: decisionEqual, ResolutionEqual: resolutionEqual, ReasonEqual: reasonEqual, DecisionChanged: !decisionEqual, TransitionStatePathEqual: statePathEqual, EffectsEqual: reflect.DeepEqual(baseReceipt.Effects, mutatedReceipt.Effects), ReplayObservationEqual: replayEqual, EvidenceObservable: evidenceObservable, RepositoryWritesNotClaimed: repositoryWritesNotClaimed, BaselineRepositoryWrites: baseReceipt.RepositoryWrites, MutatedRepositoryWrites: mutatedReceipt.RepositoryWrites, BaselineRepositoryWritesObserved: baseReceipt.RepositoryWritesObserved, MutatedRepositoryWritesObserved: mutatedReceipt.RepositoryWritesObserved, BaselineRepositoryNetStatusUnchanged: baseReceipt.RepositoryNetStatusUnchanged, MutatedRepositoryNetStatusUnchanged: mutatedReceipt.RepositoryNetStatusUnchanged, BaselineRepositoryActualOrTransientWrites: baseReceipt.RepositoryActualOrTransientWrites, MutatedRepositoryActualOrTransientWrites: mutatedReceipt.RepositoryActualOrTransientWrites, BaselineRepositoryMutationAuthorized: baseReceipt.RepositoryMutationAuthorized, MutatedRepositoryMutationAuthorized: mutatedReceipt.RepositoryMutationAuthorized, Claim: claim, Satisfied: satisfied}
-	comment := commentReceipt{Schema: "gooo/invariant-transformation-comment-only-receipt/v1", CaseID: nonSemanticID, BaselineRawDigest: baseReceipt.SourceDigest, MutatedRawDigest: mutatedReceipt.SourceDigest, BaselineProvenanceDigest: provenanceDigest(baseReceipt.SourceDigest, headSHA, nonSemanticID), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, nonSemanticID), BaselineSemanticDigest: baseProjection.SemanticSourceDigest, MutatedSemanticDigest: mutatedProjection.SemanticSourceDigest, SemanticDigestEqual: semanticEqual, BaselineDecision: baseJudgment.Decision, MutatedDecision: mutatedJudgment.Decision, DecisionEqual: decisionEqual, BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, TransitionDigestChanged: transitionDigestChanged, TransitionStatePathEqual: statePathEqual, Stage: "INTERVENTION", Step: nonSemanticStep, Reason: reason}
+	comment := commentReceipt{Schema: "gooo/invariant-transformation-comment-only-receipt/v1", CaseID: nonSemanticID, BaselineRawDigest: baseReceipt.SourceDigest, MutatedRawDigest: mutatedReceipt.SourceDigest, BaselineProvenanceDigest: provenanceDigest(baseReceipt.SourceDigest, headSHA, nonSemanticID), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, nonSemanticID), BaselineSemanticDigest: baseProjection.SemanticSourceDigest, MutatedSemanticDigest: mutatedProjection.SemanticSourceDigest, SemanticDigestEqual: semanticEqual, BaselineDecision: baseJudgment.Decision, MutatedDecision: mutatedJudgment.Decision, DecisionEqual: decisionEqual, BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, BaselineTransitionStatePathDigest: baselineTransitionStatePathDigest, MutatedTransitionStatePathDigest: mutatedTransitionStatePathDigest, TransitionDigestEqual: baselineTransitionDigest == mutatedTransitionDigest, TransitionDigestChanged: transitionDigestChanged, TransitionStatePathEqual: statePathEqual, Stage: "INTERVENTION", Step: nonSemanticStep, Reason: reason}
+	item := interventionCase{ID: nonSemanticID, Kind: nonSemanticKind, SourceEdit: "comment-and-whitespace-only", BaselineProjection: baseProjection, MutatedProjection: mutatedProjection, BaselineProjectionDigest: baseProjectionDigest, MutatedProjectionDigest: mutatedProjectionDigest, BaselineSourceDigest: baseReceipt.SourceDigest, MutatedSourceDigest: mutatedReceipt.SourceDigest, BaselineProvenanceDigest: provenanceDigest(baseReceipt.SourceDigest, headSHA, nonSemanticID), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, nonSemanticID), ProvenanceDigestChanged: provenanceChanged, BaselineSemanticDigest: baseProjection.SemanticSourceDigest, MutatedSemanticDigest: mutatedProjection.SemanticSourceDigest, SemanticDigestEqual: semanticEqual, BaselineReceiptDigest: baseReceipt.Digest, MutatedReceiptDigest: mutatedReceipt.Digest, BaselineReceiptDecision: baseReceipt.Decision, MutatedReceiptDecision: mutatedReceipt.Decision, BaselineJudgment: baseJudgment, MutatedJudgment: mutatedJudgment, BaselineEvidence: baseReceipt.Evidence, MutatedEvidence: mutatedReceipt.Evidence, BaselineClaimTransitions: baseTransitions, MutatedClaimTransitions: mutatedTransitions, BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, BaselineTransitionStatePathDigest: baselineTransitionStatePathDigest, MutatedTransitionStatePathDigest: mutatedTransitionStatePathDigest, TransitionDigestEqual: baselineTransitionDigest == mutatedTransitionDigest, TransitionDigestChanged: transitionDigestChanged, RawSourceDigestChanged: provenanceChanged, ReceiptChanged: baseReceipt.Digest != mutatedReceipt.Digest, SemanticProjectionEqual: reflect.DeepEqual(baseProjection, mutatedProjection), DecisionEqual: decisionEqual, ResolutionEqual: resolutionEqual, ReasonEqual: reasonEqual, DecisionChanged: !decisionEqual, TransitionStatePathEqual: statePathEqual, EffectsEqual: reflect.DeepEqual(baseReceipt.Effects, mutatedReceipt.Effects), ReplayObservationEqual: replayEqual, EvidenceObservable: evidenceObservable, RepositoryWritesNotClaimed: repositoryWritesNotClaimed, BaselineRepositoryWrites: baseReceipt.RepositoryWrites, MutatedRepositoryWrites: mutatedReceipt.RepositoryWrites, BaselineRepositoryWritesObserved: baseReceipt.RepositoryWritesObserved, MutatedRepositoryWritesObserved: mutatedReceipt.RepositoryWritesObserved, BaselineRepositoryNetStatusUnchanged: baseReceipt.RepositoryNetStatusUnchanged, MutatedRepositoryNetStatusUnchanged: mutatedReceipt.RepositoryNetStatusUnchanged, BaselineRepositoryActualOrTransientWrites: baseReceipt.RepositoryActualOrTransientWrites, MutatedRepositoryActualOrTransientWrites: mutatedReceipt.RepositoryActualOrTransientWrites, BaselineRepositoryMutationAuthorized: baseReceipt.RepositoryMutationAuthorized, MutatedRepositoryMutationAuthorized: mutatedReceipt.RepositoryMutationAuthorized, Claim: claim, Satisfied: satisfied}
 	evidence := comment
 	evidence.EvidenceDigest = ""
 	evidence.Digest = ""
@@ -1026,17 +1077,20 @@ func expectedCommentEvidence(source []byte, headSHA string) (interventionCase, c
 }
 
 type commentGate struct {
+	known     bool
 	satisfied bool
 	reason    string
 }
 
-func commentAdjudication(observable bool, gates []commentGate) (string, string, string, bool) {
-	if !observable {
-		return model.StatusOpen, model.ResolutionLower, "INTERVENTION_EVIDENCE_UNOBSERVABLE", false
+func commentAdjudication(gates []commentGate) (string, string, string, bool) {
+	for _, gate := range gates {
+		if gate.known && !gate.satisfied {
+			return model.StatusRefuted, model.ResolutionInvariant, gate.reason, false
+		}
 	}
 	for _, gate := range gates {
-		if !gate.satisfied {
-			return model.StatusRefuted, model.ResolutionInvariant, gate.reason, false
+		if !gate.known {
+			return model.StatusOpen, model.ResolutionLower, "INTERVENTION_EVIDENCE_UNOBSERVABLE", false
 		}
 	}
 	return model.StatusDischarged, model.ResolutionExact, nonSemanticReason, true
@@ -1365,6 +1419,44 @@ func ResealCommentGateFixture(interventionRaw, consumerRaw []byte) ([]byte, []by
 	return resealCommentPair(report, consumer)
 }
 
+// ResealCommentTransitionFixture changes one transition representation in the
+// producer report and reseals only that report. The source-bound closure check
+// must reject state, path, and full-digest substitutions independently.
+func ResealCommentTransitionFixture(interventionRaw []byte, kind string) ([]byte, error) {
+	var report interventionReport
+	if err := decodeStrict(interventionRaw, &report); err != nil {
+		return nil, err
+	}
+	found := false
+	for index := range report.Cases {
+		item := &report.Cases[index]
+		if item.ID != nonSemanticID {
+			continue
+		}
+		found = true
+		if len(item.BaselineClaimTransitions) != 1 {
+			return nil, fmt.Errorf("comment-only transition fixture requires one baseline transition")
+		}
+		switch kind {
+		case "state":
+			item.BaselineClaimTransitions[0].To = model.StatusRefuted
+		case "path":
+			item.BaselineClaimTransitions[0].Coordinate.Step = "tampered-transition-path"
+		case "digest":
+			item.BaselineTransitionDigest = model.Digest([]string{"forged-full-transition-digest"})
+		default:
+			return nil, fmt.Errorf("unknown comment transition fixture %q", kind)
+		}
+		break
+	}
+	if !found {
+		return nil, fmt.Errorf("comment-only transition fixture case is missing")
+	}
+	report.Digest = ""
+	report.Digest = model.Digest(report)
+	return json.MarshalIndent(report, "", "  ")
+}
+
 // ResealSemanticCaseFixture changes only a semantic intervention case and
 // reseals the producer report. The comment-only metric intentionally excludes
 // that case; CI records this as an explicit out-of-scope invariant, not as
@@ -1406,7 +1498,7 @@ func ResealSemanticCaseFixture(interventionRaw []byte) ([]byte, error) {
 func resealCommentPair(report interventionReport, consumer interventionConsumer) ([]byte, []byte, error) {
 	consumer.CommentOnly.EvidenceDigest = ""
 	consumer.CommentOnly.Digest = ""
-	consumer.CommentOnly.EvidenceDigest = model.Digest(commentReceipt{Schema: consumer.CommentOnly.Schema, CaseID: consumer.CommentOnly.CaseID, BaselineRawDigest: consumer.CommentOnly.BaselineRawDigest, MutatedRawDigest: consumer.CommentOnly.MutatedRawDigest, BaselineProvenanceDigest: consumer.CommentOnly.BaselineProvenanceDigest, MutatedProvenanceDigest: consumer.CommentOnly.MutatedProvenanceDigest, BaselineSemanticDigest: consumer.CommentOnly.BaselineSemanticDigest, MutatedSemanticDigest: consumer.CommentOnly.MutatedSemanticDigest, SemanticDigestEqual: consumer.CommentOnly.SemanticDigestEqual, BaselineDecision: consumer.CommentOnly.BaselineDecision, MutatedDecision: consumer.CommentOnly.MutatedDecision, DecisionEqual: consumer.CommentOnly.DecisionEqual, BaselineTransitionDigest: consumer.CommentOnly.BaselineTransitionDigest, MutatedTransitionDigest: consumer.CommentOnly.MutatedTransitionDigest, TransitionDigestChanged: consumer.CommentOnly.TransitionDigestChanged, TransitionStatePathEqual: consumer.CommentOnly.TransitionStatePathEqual, Stage: consumer.CommentOnly.Stage, Step: consumer.CommentOnly.Step, Reason: consumer.CommentOnly.Reason})
+	consumer.CommentOnly.EvidenceDigest = model.Digest(commentReceipt{Schema: consumer.CommentOnly.Schema, CaseID: consumer.CommentOnly.CaseID, BaselineRawDigest: consumer.CommentOnly.BaselineRawDigest, MutatedRawDigest: consumer.CommentOnly.MutatedRawDigest, BaselineProvenanceDigest: consumer.CommentOnly.BaselineProvenanceDigest, MutatedProvenanceDigest: consumer.CommentOnly.MutatedProvenanceDigest, BaselineSemanticDigest: consumer.CommentOnly.BaselineSemanticDigest, MutatedSemanticDigest: consumer.CommentOnly.MutatedSemanticDigest, SemanticDigestEqual: consumer.CommentOnly.SemanticDigestEqual, BaselineDecision: consumer.CommentOnly.BaselineDecision, MutatedDecision: consumer.CommentOnly.MutatedDecision, DecisionEqual: consumer.CommentOnly.DecisionEqual, BaselineTransitionDigest: consumer.CommentOnly.BaselineTransitionDigest, MutatedTransitionDigest: consumer.CommentOnly.MutatedTransitionDigest, BaselineTransitionStatePathDigest: consumer.CommentOnly.BaselineTransitionStatePathDigest, MutatedTransitionStatePathDigest: consumer.CommentOnly.MutatedTransitionStatePathDigest, TransitionDigestEqual: consumer.CommentOnly.TransitionDigestEqual, TransitionDigestChanged: consumer.CommentOnly.TransitionDigestChanged, TransitionStatePathEqual: consumer.CommentOnly.TransitionStatePathEqual, Stage: consumer.CommentOnly.Stage, Step: consumer.CommentOnly.Step, Reason: consumer.CommentOnly.Reason})
 	consumer.CommentOnly.Digest = model.Digest(consumer.CommentOnly)
 	consumer.Digest = ""
 	consumer.Digest = model.Digest(consumer)

@@ -103,6 +103,17 @@ type Transition struct {
 	CurrentTransitionDigest  string     `json:"current_transition_digest"`
 }
 
+// TransitionStatePathEntry is the state/path projection of a transition. It
+// intentionally excludes proposition, evidence, and chain digests so callers
+// can distinguish path equality from equality of the complete transition
+// records.
+type TransitionStatePathEntry struct {
+	ClaimID    string     `json:"claim_id"`
+	From       string     `json:"from"`
+	To         string     `json:"to"`
+	Coordinate Coordinate `json:"coordinate"`
+}
+
 type MetaValue struct {
 	ID                string     `json:"id"`
 	Kind              string     `json:"kind"`
@@ -449,6 +460,18 @@ func PostconditionDigest(before, after, expected string) string {
 func ReplayDigest(before, after string) string {
 	return Digest([]string{before, after, "replay-1"})
 }
+
+// TransitionStatePathDigest binds only the ordered state/path projection of a
+// transition sequence. FullTransitionDigest binds every transition field.
+func TransitionStatePathDigest(transitions []Transition) string {
+	path := make([]TransitionStatePathEntry, 0, len(transitions))
+	for _, transition := range transitions {
+		path = append(path, TransitionStatePathEntry{ClaimID: transition.ClaimID, From: transition.From, To: transition.To, Coordinate: transition.Coordinate})
+	}
+	return Digest(path)
+}
+
+func FullTransitionDigest(transitions []Transition) string { return Digest(transitions) }
 
 func NewTransition(claimID, from, to string, coordinate Coordinate, evidenceDigest string) Transition {
 	prior := Digest([]string{"claim-state", claimID, from})

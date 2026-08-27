@@ -70,27 +70,30 @@ type Audit struct {
 }
 
 type CommentOnlyReceipt struct {
-	Schema                   string `json:"schema"`
-	CaseID                   string `json:"case_id"`
-	BaselineRawDigest        string `json:"baseline_raw_digest"`
-	MutatedRawDigest         string `json:"mutated_raw_digest"`
-	BaselineProvenanceDigest string `json:"baseline_provenance_digest"`
-	MutatedProvenanceDigest  string `json:"mutated_provenance_digest"`
-	BaselineSemanticDigest   string `json:"baseline_semantic_digest"`
-	MutatedSemanticDigest    string `json:"mutated_semantic_digest"`
-	SemanticDigestEqual      bool   `json:"semantic_digest_equal"`
-	BaselineDecision         string `json:"baseline_decision"`
-	MutatedDecision          string `json:"mutated_decision"`
-	DecisionEqual            bool   `json:"decision_equal"`
-	BaselineTransitionDigest string `json:"baseline_transition_digest"`
-	MutatedTransitionDigest  string `json:"mutated_transition_digest"`
-	TransitionDigestChanged  bool   `json:"transition_digest_changed"`
-	TransitionStatePathEqual bool   `json:"transition_state_path_equal"`
-	Stage                    string `json:"stage"`
-	Step                     string `json:"step"`
-	Reason                   string `json:"reason"`
-	EvidenceDigest           string `json:"evidence_digest"`
-	Digest                   string `json:"digest"`
+	Schema                            string `json:"schema"`
+	CaseID                            string `json:"case_id"`
+	BaselineRawDigest                 string `json:"baseline_raw_digest"`
+	MutatedRawDigest                  string `json:"mutated_raw_digest"`
+	BaselineProvenanceDigest          string `json:"baseline_provenance_digest"`
+	MutatedProvenanceDigest           string `json:"mutated_provenance_digest"`
+	BaselineSemanticDigest            string `json:"baseline_semantic_digest"`
+	MutatedSemanticDigest             string `json:"mutated_semantic_digest"`
+	SemanticDigestEqual               bool   `json:"semantic_digest_equal"`
+	BaselineDecision                  string `json:"baseline_decision"`
+	MutatedDecision                   string `json:"mutated_decision"`
+	DecisionEqual                     bool   `json:"decision_equal"`
+	BaselineTransitionDigest          string `json:"baseline_transition_digest"`
+	MutatedTransitionDigest           string `json:"mutated_transition_digest"`
+	BaselineTransitionStatePathDigest string `json:"baseline_transition_state_path_digest"`
+	MutatedTransitionStatePathDigest  string `json:"mutated_transition_state_path_digest"`
+	TransitionDigestEqual             bool   `json:"transition_digest_equal"`
+	TransitionDigestChanged           bool   `json:"transition_digest_changed"`
+	TransitionStatePathEqual          bool   `json:"transition_state_path_equal"`
+	Stage                             string `json:"stage"`
+	Step                              string `json:"step"`
+	Reason                            string `json:"reason"`
+	EvidenceDigest                    string `json:"evidence_digest"`
+	Digest                            string `json:"digest"`
 }
 
 type coordinateWire struct {
@@ -165,6 +168,9 @@ type caseWire struct {
 	MutatedClaimTransitions                   []transitionWire             `json:"mutated_claim_transitions"`
 	BaselineTransitionDigest                  string                       `json:"baseline_transition_digest"`
 	MutatedTransitionDigest                   string                       `json:"mutated_transition_digest"`
+	BaselineTransitionStatePathDigest         string                       `json:"baseline_transition_state_path_digest"`
+	MutatedTransitionStatePathDigest          string                       `json:"mutated_transition_state_path_digest"`
+	TransitionDigestEqual                     bool                         `json:"transition_digest_equal"`
 	TransitionDigestChanged                   bool                         `json:"transition_digest_changed"`
 	RawSourceDigestChanged                    bool                         `json:"raw_source_digest_changed"`
 	ReceiptChanged                            bool                         `json:"receipt_changed"`
@@ -316,15 +322,15 @@ func buildCommentOnlyReceipt(source []byte, headSHA string) (CommentOnlyReceipt,
 	mutatedReceipt := reconstructReceipt(mutatedFixture, mutated, headSHA)
 	baselineJudgment := reconstructJudgment(baselineReceipt)
 	mutatedJudgment := reconstructJudgment(mutatedReceipt)
-	baselineTransitionDigest := model.Digest(transitionWires(baselineReceipt.Claims))
-	mutatedTransitionDigest := model.Digest(transitionWires(mutatedReceipt.Claims))
+	baselineTransitionDigest := model.FullTransitionDigest(flattenTransitions(baselineReceipt.Claims))
+	mutatedTransitionDigest := model.FullTransitionDigest(flattenTransitions(mutatedReceipt.Claims))
 	receipt := CommentOnlyReceipt{
 		Schema: "gooo/invariant-transformation-comment-only-receipt/v1", CaseID: nonSemanticCaseID,
 		BaselineRawDigest: baselineReceipt.SourceDigest, MutatedRawDigest: mutatedReceipt.SourceDigest,
 		BaselineProvenanceDigest: provenanceDigest(baselineReceipt.SourceDigest, headSHA, nonSemanticCaseID), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, nonSemanticCaseID),
 		BaselineSemanticDigest: baselineFixture.SemanticSourceDigest, MutatedSemanticDigest: mutatedFixture.SemanticSourceDigest, SemanticDigestEqual: baselineFixture.SemanticSourceDigest == mutatedFixture.SemanticSourceDigest,
 		BaselineDecision: baselineJudgment.Decision, MutatedDecision: mutatedJudgment.Decision, DecisionEqual: baselineJudgment.Decision == mutatedJudgment.Decision,
-		BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, TransitionDigestChanged: baselineTransitionDigest != mutatedTransitionDigest, TransitionStatePathEqual: transitionStatePathEqual(baselineReceipt.Claims, mutatedReceipt.Claims),
+		BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, BaselineTransitionStatePathDigest: model.TransitionStatePathDigest(flattenTransitions(baselineReceipt.Claims)), MutatedTransitionStatePathDigest: model.TransitionStatePathDigest(flattenTransitions(mutatedReceipt.Claims)), TransitionDigestEqual: baselineTransitionDigest == mutatedTransitionDigest, TransitionDigestChanged: baselineTransitionDigest != mutatedTransitionDigest, TransitionStatePathEqual: transitionStatePathEqual(baselineReceipt.Claims, mutatedReceipt.Claims),
 		Stage: "INTERVENTION", Step: nonSemanticStep, Reason: nonSemanticReason,
 	}
 	evidence := receipt
@@ -395,6 +401,10 @@ func independentlyVerify(report reportWire, source []byte, headSHA string, depen
 }
 
 func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt, mutatedReceipt model.Receipt, baselineJudgment, mutatedJudgment model.Judgment, step [2]string, headSHA string) error {
+	expectedSourceEdit := map[string]string{semanticExpectedCaseID: "comment-like-semantic-value-change", semanticOperationCaseID: "semantic-candidate-operation-change", nonSemanticCaseID: "comment-and-whitespace-only"}[item.ID]
+	if item.SourceEdit != expectedSourceEdit {
+		return fmt.Errorf("case %q source edit is not independently reconstructed", item.ID)
+	}
 	if !reflect.DeepEqual(item.BaselineProjection, projection(baseline)) || !reflect.DeepEqual(item.MutatedProjection, projection(mutated)) || item.BaselineProjectionDigest != model.Digest(projection(baseline)) || item.MutatedProjectionDigest != model.Digest(projection(mutated)) || item.BaselineSourceDigest != baselineReceipt.SourceDigest || item.MutatedSourceDigest != mutatedReceipt.SourceDigest || item.BaselineProvenanceDigest != provenanceDigest(baselineReceipt.SourceDigest, headSHA, item.ID) || item.MutatedProvenanceDigest != provenanceDigest(mutatedReceipt.SourceDigest, headSHA, item.ID) || item.ProvenanceDigestChanged != (baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest) || item.BaselineSemanticDigest != baseline.SemanticSourceDigest || item.MutatedSemanticDigest != mutated.SemanticSourceDigest || item.SemanticDigestEqual != (baseline.SemanticSourceDigest == mutated.SemanticSourceDigest) || item.BaselineReceiptDigest != baselineReceipt.Digest || item.MutatedReceiptDigest != mutatedReceipt.Digest || item.BaselineReceiptDecision != baselineReceipt.Decision || item.MutatedReceiptDecision != mutatedReceipt.Decision || !reflect.DeepEqual(item.BaselineEvidence, baselineReceipt.Evidence) || !reflect.DeepEqual(item.MutatedEvidence, mutatedReceipt.Evidence) || !reflect.DeepEqual(item.BaselineJudgment, baselineJudgment) || !reflect.DeepEqual(item.MutatedJudgment, mutatedJudgment) || !reflect.DeepEqual(item.BaselineClaimTransitions, transitionWires(baselineReceipt.Claims)) || !reflect.DeepEqual(item.MutatedClaimTransitions, transitionWires(mutatedReceipt.Claims)) {
 		return fmt.Errorf("case %q is not independently reconstructed", item.ID)
 	}
@@ -408,8 +418,10 @@ func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt
 	resolutionEqual := baselineJudgment.Resolution == mutatedJudgment.Resolution
 	reasonEqual := baselineJudgment.Reason == mutatedJudgment.Reason
 	statePathEqual := transitionStatePathEqual(baselineReceipt.Claims, mutatedReceipt.Claims)
-	baselineTransitionDigest := model.Digest(transitionWires(baselineReceipt.Claims))
-	mutatedTransitionDigest := model.Digest(transitionWires(mutatedReceipt.Claims))
+	baselineTransitionDigest := model.FullTransitionDigest(flattenTransitions(baselineReceipt.Claims))
+	mutatedTransitionDigest := model.FullTransitionDigest(flattenTransitions(mutatedReceipt.Claims))
+	baselineTransitionStatePathDigest := model.TransitionStatePathDigest(flattenTransitions(baselineReceipt.Claims))
+	mutatedTransitionStatePathDigest := model.TransitionStatePathDigest(flattenTransitions(mutatedReceipt.Claims))
 	transitionDigestChanged := baselineTransitionDigest != mutatedTransitionDigest
 	replayEqual := replayObservationEqual(baselineReceipt.Evidence, mutatedReceipt.Evidence)
 	transitionEvidence := model.Digest([]any{model.Digest(projection(baseline)), model.Digest(projection(mutated)), baselineJudgment.Decision, mutatedJudgment.Decision, baselineJudgment.Resolution, mutatedJudgment.Resolution, baselineJudgment.Reason, mutatedJudgment.Reason, baselineReceipt.SourceDigest, mutatedReceipt.SourceDigest, provenanceDigest(baselineReceipt.SourceDigest, headSHA, item.ID), provenanceDigest(mutatedReceipt.SourceDigest, headSHA, item.ID)})
@@ -418,7 +430,7 @@ func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt
 	if item.Claim.VerificationCheck != "intervention-observation-derived-from-two-independent-receipts" || item.Claim.Resolution != model.ResolutionExact || item.Claim.Reason != step[1] || item.Claim.TargetDigest != expectedTransition.PropositionDigest || item.Claim.PriorStateDigest != expectedTransition.PriorStateDigest || item.Claim.EvidenceDigest != expectedTransition.EvidenceDigest || !reflect.DeepEqual(item.Claim.Transitions[0], transitionFromModel(expectedTransition)) {
 		return fmt.Errorf("case %q claim ledger provenance is invalid", item.ID)
 	}
-	if item.BaselineTransitionDigest != baselineTransitionDigest || item.MutatedTransitionDigest != mutatedTransitionDigest || item.TransitionDigestChanged != transitionDigestChanged || item.RawSourceDigestChanged != rawChanged || item.ProvenanceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.TransitionStatePathEqual != statePathEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryNetStatusUnchanged || item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
+	if item.BaselineTransitionDigest != baselineTransitionDigest || item.MutatedTransitionDigest != mutatedTransitionDigest || item.BaselineTransitionStatePathDigest != baselineTransitionStatePathDigest || item.MutatedTransitionStatePathDigest != mutatedTransitionStatePathDigest || item.TransitionDigestEqual != (baselineTransitionDigest == mutatedTransitionDigest) || item.TransitionDigestChanged != transitionDigestChanged || item.RawSourceDigestChanged != rawChanged || item.ProvenanceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.TransitionStatePathEqual != statePathEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryNetStatusUnchanged || item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
 		return fmt.Errorf("case %q observation fields are not derived", item.ID)
 	}
 	return nil
@@ -907,6 +919,15 @@ func transitionStatePathEqual(left, right []model.Claim) bool {
 	}
 	return true
 }
+
+func flattenTransitions(claims []model.Claim) []model.Transition {
+	result := []model.Transition{}
+	for _, claim := range claims {
+		result = append(result, claim.Transitions...)
+	}
+	return result
+}
+
 func replayObservationEqual(left, right model.TransformationEvidence) bool {
 	return left.ReplayCount == right.ReplayCount && left.ReplayOperation == right.ReplayOperation && left.ReplayOutput == right.ReplayOutput && left.ReplayDigest == right.ReplayDigest && left.ReplaySemanticDigest == right.ReplaySemanticDigest && left.ReplayEvidenceDigest == right.ReplayEvidenceDigest
 }
@@ -929,8 +950,8 @@ func transitionFromModel(transition model.Transition) transitionWire {
 	return transitionWire{ClaimID: transition.ClaimID, From: transition.From, To: transition.To, Coordinate: coordinateWire{Stage: transition.Coordinate.Stage, Step: transition.Coordinate.Step, Reason: transition.Coordinate.Reason}, PropositionDigest: transition.PropositionDigest, PriorStateDigest: transition.PriorStateDigest, EvidenceDigest: transition.EvidenceDigest, PreviousTransitionDigest: transition.PreviousTransitionDigest, CurrentTransitionDigest: transition.CurrentTransitionDigest}
 }
 func mutateSemantic(source []byte) ([]byte, error) {
-	old := []byte("case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=3")
-	newValue := []byte("case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=4")
+	old := []byte(`activity PreservedTranslation() -> Transformation computes "case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=add:1;effect=none"`)
+	newValue := []byte(`activity PreservedTranslation() -> Transformation computes "case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=4;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=add:1;effect=none" // comment-like semantic intervention`)
 	if bytes.Count(source, old) != 1 {
 		return nil, fmt.Errorf("semantic intervention target count is not 1")
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	mode := flag.String("mode", "", "negative fixture mode: evidence-reseal, comment-reseal, comment-semantic-digest, comment-gate-false, or semantic-case-reseal")
+	mode := flag.String("mode", "", "negative fixture mode: evidence-reseal, comment-reseal, comment-semantic-digest, comment-gate-false, comment-transition-state, comment-transition-path, comment-transition-digest, or semantic-case-reseal")
 	input := flag.String("input", "", "input closure receipt for evidence-reseal")
 	intervention := flag.String("intervention-report", "", "producer intervention report for comment-reseal")
 	consumer := flag.String("intervention-consumer-receipt", "", "independent intervention consumer receipt for comment-reseal")
@@ -65,6 +65,17 @@ func main() {
 		}
 		write(*outputIntervention, mutatedIntervention)
 		write(*outputConsumer, mutatedConsumer)
+	case "comment-transition-state", "comment-transition-path", "comment-transition-digest":
+		interventionRaw, err := os.ReadFile(*intervention)
+		if err != nil {
+			fail(err.Error())
+		}
+		kind := (*mode)[len("comment-transition-"):]
+		mutated, err := closureverifier.ResealCommentTransitionFixture(interventionRaw, kind)
+		if err != nil {
+			fail(err.Error())
+		}
+		write(*outputIntervention, mutated)
 	case "semantic-case-reseal":
 		interventionRaw, err := os.ReadFile(*intervention)
 		if err != nil {
@@ -76,7 +87,7 @@ func main() {
 		}
 		write(*outputIntervention, mutated)
 	default:
-		fail("-mode must be evidence-reseal, comment-reseal, comment-semantic-digest, comment-gate-false, or semantic-case-reseal")
+		fail("-mode must be evidence-reseal, comment-reseal, comment-semantic-digest, comment-gate-false, comment-transition-state, comment-transition-path, comment-transition-digest, or semantic-case-reseal")
 	}
 }
 
