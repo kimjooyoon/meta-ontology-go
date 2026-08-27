@@ -2260,6 +2260,17 @@
       ]
     },
     {
+      "branch": "agent/gooo-operation-claim-causality",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/language-operation-catalog.yml",
+        "internal/valuecatalog",
+        "internal/verify/scope_gooo_operation_catalog.go",
+        "scripts/language-operation-claim-causality"
+      ]
+    },
+    {
       "branch": "agent/gooo-operation-spec-ir",
       "paths": [
         ".github/agent-scope-table.md",

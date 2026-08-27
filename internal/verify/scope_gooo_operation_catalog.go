@@ -50,4 +50,12 @@ func init() {
 		"internal/verify/scope_gooo_operation_catalog.go",
 		"scripts/language-operation-catalog",
 	}
+	branchScopeAllowlist["agent/gooo-operation-claim-causality"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/language-operation-catalog.yml",
+		"internal/valuecatalog",
+		"internal/verify/scope_gooo_operation_catalog.go",
+		"scripts/language-operation-claim-causality",
+	}
 }
