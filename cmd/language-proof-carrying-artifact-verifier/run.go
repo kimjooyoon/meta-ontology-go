@@ -88,6 +88,13 @@ func run(args []string) int {
 		}
 		return 0
 	}
+	writePreliminaryReport := func(path string, report verifier.Report) int {
+		if err := verifier.WritePreliminaryReport(path, report); err != nil {
+			fmt.Fprintf(os.Stderr, "preliminary proof report rejected: %v\n", err)
+			return 1
+		}
+		return 0
+	}
 	if value.resealReport != "" {
 		if value.output == "" {
 			return 2
@@ -198,19 +205,19 @@ func run(args []string) int {
 			input.ConsumerReceipt, input.ConsumerReceiptProvided = receipt, true
 		}
 		report := verifier.Evaluate(input)
-		if err := verifier.WriteReport(value.output, report); err != nil {
-			diagnostic := verifier.WithValidationFailure(report, err)
-			if writeErr := writeRawReport(value.output, diagnostic); writeErr != 0 {
-				fmt.Fprintf(os.Stderr, "proof report rejected: %v (diagnostic artifact write failed: %v)\n", err, writeErr)
+		if input.ConsumerReceiptProvided {
+			if err := verifier.WriteReport(value.output, report); err != nil {
+				diagnostic := verifier.WithValidationFailure(report, err)
+				if writeErr := writeRawReport(value.output, diagnostic); writeErr != 0 {
+					fmt.Fprintf(os.Stderr, "proof report rejected: %v (diagnostic artifact write failed: %v)\n", err, writeErr)
+					return 1
+				}
+				fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", err)
 				return 1
 			}
-			fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", err)
-			return 1
+			return 0
 		}
-		if report.ConformanceDecision != "PASS" && verifier.ValidatePreliminary(report) != nil {
-			return 1
-		}
-		return 0
+		return writePreliminaryReport(value.output, report)
 	}
 	if value.head == "" || value.contract == "" || value.valid == "" || value.tampered == "" || value.coherentTampered == "" ||
 		value.missing == "" || value.byteOnly == "" || value.wrongRecipe == "" || value.recipeOnly == "" || value.missingAttachment == "" || value.wrongAttachmentDigest == "" || value.unrelatedTampered == "" || value.staleHead == "" || value.unauthorizedConsumer == "" || value.claimProposition == "" || value.claimDependency == "" || value.claimProofChoice == "" || value.claimTarget == "" || value.source == "" ||
@@ -286,14 +293,10 @@ func run(args []string) int {
 		RecipeOnlyArtifact: recipeOnly, MissingAttachment: missingAttachment, WrongAttachmentDigest: wrongAttachmentDigest, UnrelatedTamperedArtifact: unrelatedTampered, StaleHeadArtifact: staleHead, ClaimPropositionArtifact: claimProposition, ClaimDependencyArtifact: claimDependency, ClaimProofChoiceArtifact: claimProofChoice, ClaimTargetArtifact: claimTarget, UnauthorizedConsumer: unauthorizedConsumer,
 		Source: source, Operation: operation, Recipe: recipe, Independence: independence, WriteSet: writeSet,
 		CoherentOperation: coherentOperation, Interventions: interventions, Checkout: checkout, UnauthorizedBundle: unauthorizedBundle, UnauthorizedBundleError: unauthorizedBundleError})
-	if err := verifier.WriteReport(value.output, report); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+	if writeErr := writePreliminaryReport(value.output, report); writeErr != 0 {
+		return writeErr
 	}
 	fmt.Printf("proof-carrying verifier: %s %d/%d authority=%s transitions=%d\n", report.ConformanceDecision,
 		report.Summary.CasesSatisfied, report.Summary.CasesTotal, report.ArtifactUseAuthority, len(report.Transitions))
-	if report.ConformanceDecision != "PASS" && verifier.ValidatePreliminary(report) != nil {
-		return 1
-	}
 	return 0
 }
