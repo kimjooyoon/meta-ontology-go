@@ -14,6 +14,7 @@ on:
       - 'cmd/repository-topology-witness/**'
       - 'docs/language/repository-topology-use-case.md'
       - 'examples/meta-binding-coverage/main.gooo'
+      - 'examples/minimal-causal-explanation/**'
       - 'internal/detection/linecaps/**'
       - 'internal/meta/languageconcept/**'
       - 'internal/meta/languagereadiness/**'
@@ -22,6 +23,7 @@ on:
       - 'internal/meta/metriccounterfactualverify/**'
       - 'internal/meta/metricprogram/**'
       - 'internal/meta/metricstrategy/**'
+      - 'internal/meta/minimalcausalexplanation/**'
       - 'internal/meta/metrictransition/**'
       - 'internal/meta/sourcepolicy/**'
       - 'internal/verify/scope_part01.go'
@@ -30,6 +32,7 @@ on:
       - 'scripts/metric-intervention/**'
       - 'scripts/metric-meta-program/**'
       - 'scripts/metric-strategy/**'
+      - 'scripts/minimal-causal-explanation/**'
       - 'examples/metric-meta-program/**'
       - 'examples/repository-topology-use-case/**'
       - 'examples/root-readme-indicator/main.gooo'
@@ -685,5 +688,89 @@ jobs:
         with:
           name: metric-meta-program-closure-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-meta-program-closure/first
+          if-no-files-found: error
+          retention-days: 30
+
+  minimal-causal-explanation:
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Check source, replay receipt, and independently judge paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          go run ./cmd/gooo check examples/minimal-causal-explanation/main.gooo
+          go test ./internal/meta/minimalcausalexplanation/...
+          work="$RUNNER_TEMP/minimal-causal-explanation"
+          mkdir -p "$work/first" "$work/replay"
+          common=(
+            -mode generate
+            -source examples/minimal-causal-explanation/main.gooo
+            -repository "$GITHUB_REPOSITORY"
+            -subject-sha "$SUBJECT_SHA"
+            -check
+          )
+          go run ./scripts/minimal-causal-explanation "${common[@]}" -output "$work/first/receipt.json"
+          go run ./scripts/minimal-causal-explanation "${common[@]}" -output "$work/replay/receipt.json"
+          cmp -s "$work/first/receipt.json" "$work/replay/receipt.json"
+          go run ./scripts/minimal-causal-explanation \
+            -mode verify \
+            -receipt "$work/first/receipt.json" \
+            -output "$work/judgment.json"
+          source_digest="sha256:$(sha256sum examples/minimal-causal-explanation/main.gooo | cut -d' ' -f1)"
+          jq -e --arg source_digest "$source_digest" '
+            .schema == "gooo/meta-minimal-causal-explanation/v1" and
+            .source.digest == $source_digest and
+            (.graph.nodes | length) == 4 and
+            (.graph.edges | length) == 2 and
+            (.program.meta_operations | length) == 6 and
+            .program.indicator_denominator == 12 and
+            .summary.cases_total == 3 and
+            .summary.paths_observed == 3 and
+            .summary.minimal_sufficient_paths == 1 and
+            .summary.sufficient_nonminimal_paths == 1 and
+            .summary.insufficient_paths == 1 and
+            .summary.counterfactual_total == 7 and
+            .summary.changed_counterfactual_total == 6 and
+            .summary.candidate_evidence_total == 11 and
+            .summary.path_set_authoritative == true and
+            .summary.explanation_text_role == "INCIDENTAL" and
+            .preservation.claim_total == 6 and
+            .preservation.preserved_total == 6 and
+            .preservation.transition_total == 12 and
+            (.claim_transitions | length) == 12 and
+            ([.cases[] | .paths[] | select(.minimal == true)] | length) == 1 and
+            ([.cases[] | .paths[] | select(.sufficient == false)] | length) == 1 and
+            all(.indicators[]; .satisfied == true) and
+            .authority.repository_workspace_writes == false and
+            .authority.promotion_authorized == false and
+            .decision == "PASS"
+          ' "$work/first/receipt.json"
+          jq -e '
+            .schema == "gooo/meta-minimal-causal-explanation-judgment/v1" and
+            .status == "VERIFIED" and
+            .decision == "PASS" and
+            .path_set_verified == true and
+            .counterfactuals_verified == true and
+            .claims_preserved == true and
+            .promotion_authorized == false
+          ' "$work/judgment.json"
+          test -z "$(git status --porcelain)"
+          jq -r '"### Minimal causal explanation\n- decision: \(.decision) / \(.resolution)\n- authoritative paths: \(.summary.minimal_sufficient_paths)/\(.summary.paths_observed) minimal; \(.summary.sufficient_nonminimal_paths) overlong; \(.summary.insufficient_paths) insufficient\n- counterfactuals: \(.summary.changed_counterfactual_total)/\(.summary.counterfactual_total) changed\n- preserved claims: \(.preservation.preserved_total)/\(.preservation.claim_total); transitions: \(.preservation.transition_total)\n- path authority: \(.summary.path_set_authoritative); text role: \(.summary.explanation_text_role)\n- repository writes: \(.summary.repository_writes); promotion: \(.summary.promotion_authorized)\n- receipt: \(.receipt_digest)"' "$work/first/receipt.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload minimal causal explanation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: minimal-causal-explanation-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/minimal-causal-explanation
           if-no-files-found: error
           retention-days: 30
