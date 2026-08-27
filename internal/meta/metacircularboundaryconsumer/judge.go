@@ -194,7 +194,9 @@ func reportDecision(source contract.SourceObservation, factsErr, grantErr, effec
 	}
 	if factsErr != nil || grantErr != nil || effectErr != nil || replayErr != nil || hasDecision(cases, decisionOpen) {
 		reason, stage, step := reasonCaseData, "PARSE_COMPUTES", "read-case-facts"
-		if grantErr != nil {
+		if factsErr != nil || hasReason(cases, reasonCaseData) {
+			reason, stage, step = reasonCaseData, "PARSE_COMPUTES", "read-case-facts"
+		} else if grantErr != nil {
 			reason, stage, step = reasonGrantUnknown, "READ_EXTERNAL_GRANT", "parse-grant-evidence"
 		} else if effectErr != nil {
 			reason, stage, step = reasonEffectUnknown, "OBSERVE_EFFECT", "compare-workspace-state"

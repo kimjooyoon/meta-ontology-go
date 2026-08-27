@@ -164,7 +164,9 @@ func reportDecision(source SourceObservation, factsErr, grantErr, effectErr, rep
 	if factsErr != nil || grantErr != nil || effectErr != nil || replayErr != nil || hasDecision(cases, DecisionOpen) {
 		reason := ReasonCaseDataUnknown
 		stage, step := "PARSE_COMPUTES", "read-case-facts"
-		if grantErr != nil {
+		if factsErr != nil || hasReason(cases, ReasonCaseDataUnknown) {
+			reason, stage, step = ReasonCaseDataUnknown, "PARSE_COMPUTES", "read-case-facts"
+		} else if grantErr != nil {
 			reason, stage, step = ReasonGrantUnknown, "READ_EXTERNAL_GRANT", "parse-grant-evidence"
 		} else if effectErr != nil {
 			reason, stage, step = ReasonEffectUnknown, "OBSERVE_EFFECT", "compare-workspace-state"
