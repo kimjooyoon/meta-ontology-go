@@ -12,7 +12,7 @@ import (
 )
 
 type options struct {
-	repository, headSHA, sourceFile, sourcePath, receipt, output, intervention string
+	repository, headSHA, sourceFile, sourcePath, evidence, receipt, output, intervention string
 }
 
 func main() {
@@ -28,6 +28,7 @@ func parseOptions() options {
 	flag.StringVar(&value.headSHA, "head-sha", "", "exact checked-out head")
 	flag.StringVar(&value.sourceFile, "source-file", "examples/partial-knowledge-composition/main.gooo", "physical Gooo source file")
 	flag.StringVar(&value.sourcePath, "source-path", "examples/partial-knowledge-composition/main.gooo", "logical Gooo source path")
+	flag.StringVar(&value.evidence, "evidence", "", "CI raw evidence receipt")
 	flag.StringVar(&value.receipt, "receipt", "", "producer receipt")
 	flag.StringVar(&value.output, "output", "", "verification output")
 	flag.StringVar(&value.intervention, "intervention", "none", "none, semantic, or comment-only")
@@ -36,8 +37,8 @@ func parseOptions() options {
 }
 
 func run(value options) error {
-	if value.headSHA == "" || value.receipt == "" || value.output == "" {
-		return errors.New("-head-sha, -receipt, and -output are required")
+	if value.headSHA == "" || value.evidence == "" || value.receipt == "" || value.output == "" {
+		return errors.New("-head-sha, -evidence, -receipt, and -output are required")
 	}
 	source, err := os.ReadFile(value.sourceFile)
 	if err != nil {
@@ -47,7 +48,11 @@ func run(value options) error {
 	if err != nil {
 		return fmt.Errorf("read receipt: %w", err)
 	}
-	report, err := independent.Verify(independent.Input{Repository: value.repository, HeadSHA: value.headSHA, SourcePath: value.sourcePath, Source: source, InterventionMode: value.intervention, Receipt: receipt})
+	rawEvidence, err := os.ReadFile(value.evidence)
+	if err != nil {
+		return fmt.Errorf("read raw evidence: %w", err)
+	}
+	report, err := independent.Verify(independent.Input{Repository: value.repository, HeadSHA: value.headSHA, SourcePath: value.sourcePath, Source: source, RawEvidence: rawEvidence, InterventionMode: value.intervention, Receipt: receipt})
 	if err != nil {
 		return fmt.Errorf("independent verification: %w", err)
 	}

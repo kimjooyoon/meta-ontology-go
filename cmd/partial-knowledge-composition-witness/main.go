@@ -12,7 +12,7 @@ import (
 )
 
 type options struct {
-	repository, headSHA, sourceFile, sourcePath, output, intervention string
+	repository, headSHA, sourceFile, sourcePath, evidence, output, intervention string
 }
 
 func main() {
@@ -28,6 +28,7 @@ func parseOptions() options {
 	flag.StringVar(&value.headSHA, "head-sha", "", "exact checked-out head")
 	flag.StringVar(&value.sourceFile, "source-file", meta.SourcePath, "physical Gooo source file")
 	flag.StringVar(&value.sourcePath, "source-path", meta.SourcePath, "logical Gooo source path")
+	flag.StringVar(&value.evidence, "evidence", "", "CI raw evidence receipt")
 	flag.StringVar(&value.output, "output", "", "receipt output path")
 	flag.StringVar(&value.intervention, "intervention", string(meta.InterventionNone), "none, semantic, or comment-only")
 	flag.Parse()
@@ -35,14 +36,18 @@ func parseOptions() options {
 }
 
 func run(value options) error {
-	if value.headSHA == "" || value.output == "" {
-		return errors.New("-head-sha and -output are required")
+	if value.headSHA == "" || value.evidence == "" || value.output == "" {
+		return errors.New("-head-sha, -evidence, and -output are required")
 	}
 	source, err := os.ReadFile(value.sourceFile)
 	if err != nil {
 		return fmt.Errorf("read source: %w", err)
 	}
-	receipt, err := meta.Evaluate(meta.Input{Repository: value.repository, HeadSHA: value.headSHA, SourcePath: value.sourcePath, Source: source, Intervention: meta.InterventionMode(value.intervention)})
+	rawEvidence, err := os.ReadFile(value.evidence)
+	if err != nil {
+		return fmt.Errorf("read raw evidence: %w", err)
+	}
+	receipt, err := meta.Evaluate(meta.Input{Repository: value.repository, HeadSHA: value.headSHA, SourcePath: value.sourcePath, Source: source, RawEvidence: rawEvidence, Intervention: meta.InterventionMode(value.intervention)})
 	if err != nil {
 		return fmt.Errorf("produce partial-knowledge receipt: %w", err)
 	}

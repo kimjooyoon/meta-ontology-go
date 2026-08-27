@@ -12,7 +12,9 @@ func Compose(left, right Evidence) Value {
 		case StateDirectUnknown:
 			value.DirectUnknowns = appendUnique(value.DirectUnknowns, evidence.Operation)
 		case StateDependencyBlocked:
-			value.BlockedDependencies = appendUnique(value.BlockedDependencies, evidence.DependencyClaimID)
+			if evidence.Dependency != nil {
+				value.BlockedDependencies = appendUnique(value.BlockedDependencies, evidence.Dependency.ClaimID)
+			}
 		case StateInvariantOnly:
 			value.PreservedInvariants = appendUnique(value.PreservedInvariants, evidence.InvariantEvidence)
 		}
@@ -73,4 +75,17 @@ func transitionState(state State) string {
 		return "DISCHARGED"
 	}
 	return "OPEN"
+}
+
+func deriveState(value Evidence) State {
+	if !value.ObservedAvailable {
+		if value.Dependency != nil && (value.Dependency.State == "OPEN" || value.Dependency.State == "UNKNOWN") {
+			return StateDependencyBlocked
+		}
+		return StateDirectUnknown
+	}
+	if value.InvariantEvidence != "" {
+		return StateInvariantOnly
+	}
+	return StateExact
 }

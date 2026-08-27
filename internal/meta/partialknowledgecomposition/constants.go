@@ -3,7 +3,8 @@ package partialknowledgecomposition
 const (
 	Schema                 = "gooo/meta/partial-knowledge-composition-receipt/v2"
 	SourcePath             = "examples/partial-knowledge-composition/main.gooo"
-	ObservationSchema      = "gooo.partial-knowledge.observation/v2"
+	ObservationSchema      = "gooo.partial-knowledge.recipe/v3"
+	RawEvidenceSchema      = "gooo/partial-knowledge/raw-evidence/v3"
 	Producer               = "partial-knowledge-producer"
 	Consumer               = "partial-knowledge-composition-consumer"
 	MetaOperation          = "compose-partial-knowledge"

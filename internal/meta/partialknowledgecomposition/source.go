@@ -2,7 +2,6 @@ package partialknowledgecomposition
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
@@ -15,10 +14,16 @@ type sourceModel struct {
 	Cases            []Case
 }
 
+var allowedRecipeFields = map[string]struct{}{
+	"case": {}, "producer": {}, "consumer": {}, "meta_operation": {}, "proof_choice": {},
+	"left.operation": {}, "left.required": {}, "left.observation_recipe": {}, "left.dependency_recipe": {}, "left.invariant_capability": {},
+	"right.operation": {}, "right.required": {}, "right.observation_recipe": {}, "right.dependency_recipe": {}, "right.invariant_capability": {},
+}
+
 func parseSource(sourcePath string, source []byte) (sourceModel, error) {
 	file, diagnostics := syntax.ParseFile(sourcePath, string(source))
 	if file == nil || diagnostics.HasErrors() {
-		return sourceModel{}, fmt.Errorf("source syntax diagnostics prevent observation reconstruction: %d", len(diagnostics))
+		return sourceModel{}, fmt.Errorf("source syntax diagnostics prevent recipe reconstruction: %d", len(diagnostics))
 	}
 	if file.Package == nil || file.Package.Name != "partialknowledgecomposition" ||
 		file.Namespace == nil || file.Namespace.Name != "partialknowledgecomposition" {
@@ -26,7 +31,7 @@ func parseSource(sourcePath string, source []byte) (sourceModel, error) {
 	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		return sourceModel{}, fmt.Errorf("lower partial-knowledge source: %w", err)
+		return sourceModel{}, fmt.Errorf("lower partial-knowledge recipe source: %w", err)
 	}
 	if err := ir.Validate(); err != nil {
 		return sourceModel{}, fmt.Errorf("validate partial-knowledge semantic IR: %w", err)
@@ -53,25 +58,25 @@ func parseSource(sourcePath string, source []byte) (sourceModel, error) {
 		activities = append(activities, activity)
 	}
 	if len(activities) != FixedDenominator {
-		return sourceModel{}, fmt.Errorf("source observation count = %d, want %d", len(activities), FixedDenominator)
+		return sourceModel{}, fmt.Errorf("source observation recipe count = %d, want %d", len(activities), FixedDenominator)
 	}
 
 	model := sourceModel{SemanticIRDigest: ir.StableHash(), Cases: make([]Case, 0, FixedDenominator)}
 	for index, expectedName := range fixedActivityNames {
 		activity := activities[index]
 		if activity.Name != expectedName || !activity.ValueProgramPresent || activity.ValueProgram == "" {
-			return sourceModel{}, fmt.Errorf("source observation %d is not the expected computed receipt", index+1)
+			return sourceModel{}, fmt.Errorf("source observation %d is not the expected computed recipe", index+1)
 		}
 		node, ok := ir.Graph.NodeByName(ir.Namespace, activity.Name)
 		if !ok || node.Kind != semantic.Activity || node.ValueProgram != activity.ValueProgram {
-			return sourceModel{}, fmt.Errorf("semantic lowering lost computed receipt %q", activity.Name)
+			return sourceModel{}, fmt.Errorf("semantic lowering lost computed recipe %q", activity.Name)
 		}
 		parsed, err := parseObservation(activity.Name, node.ID.String(), activity.ValueProgram)
 		if err != nil {
-			return sourceModel{}, fmt.Errorf("observation %q: %w", activity.Name, err)
+			return sourceModel{}, fmt.Errorf("observation recipe %q: %w", activity.Name, err)
 		}
 		if parsed.ID != fixedCaseIDs[index] || parsed.Producer != Producer || parsed.Consumer != Consumer || parsed.MetaOperation != fixedMetaOperations[index] || parsed.ProofChoice != fixedProofChoices[index] {
-			return sourceModel{}, fmt.Errorf("observation %q metadata is not the fixed corpus binding", activity.Name)
+			return sourceModel{}, fmt.Errorf("observation recipe %q metadata is not the fixed corpus binding", activity.Name)
 		}
 		model.Cases = append(model.Cases, parsed)
 	}
@@ -81,26 +86,32 @@ func parseSource(sourcePath string, source []byte) (sourceModel, error) {
 func parseObservation(activityName, activityID, program string) (Case, error) {
 	parts := strings.Split(program, "|")
 	if len(parts) < 2 || parts[0] != ObservationSchema {
-		return Case{}, fmt.Errorf("computed receipt schema is not %q", ObservationSchema)
+		return Case{}, fmt.Errorf("computed recipe schema is not %q", ObservationSchema)
 	}
 	values := make(map[string]string, len(parts)-1)
 	for _, part := range parts[1:] {
 		key, value, ok := strings.Cut(part, "=")
 		if !ok || key == "" {
-			return Case{}, fmt.Errorf("computed receipt field %q is malformed", part)
+			return Case{}, fmt.Errorf("computed recipe field %q is malformed", part)
 		}
-		if key == "state" || key == "decision" || key == "resolution" {
-			return Case{}, fmt.Errorf("computed receipt contains a conclusion label")
+		if strings.TrimSpace(key) != key {
+			return Case{}, fmt.Errorf("computed recipe field %q has surrounding whitespace", part)
+		}
+		if key == "observed" || key == "observed_available" || key == "invariant_evidence" || key == "state" || key == "decision" || key == "resolution" {
+			return Case{}, fmt.Errorf("computed recipe contains an observation result or conclusion label")
+		}
+		if _, ok := allowedRecipeFields[key]; !ok {
+			return Case{}, fmt.Errorf("computed recipe field %q is not a permitted recipe declaration", key)
 		}
 		if _, exists := values[key]; exists {
-			return Case{}, fmt.Errorf("computed receipt field %q is duplicated", key)
+			return Case{}, fmt.Errorf("computed recipe field %q is duplicated", key)
 		}
 		values[key] = value
 	}
 	get := func(key string) (string, error) {
 		value, ok := values[key]
 		if !ok {
-			return "", fmt.Errorf("computed receipt field %q is missing", key)
+			return "", fmt.Errorf("computed recipe field %q is missing", key)
 		}
 		return value, nil
 	}
@@ -128,123 +139,64 @@ func parseObservation(activityName, activityID, program string) (Case, error) {
 	if !validProofChoice(proof) {
 		return Case{}, fmt.Errorf("proof choice %q is invalid", proofRaw)
 	}
-	left, err := parseEvidence(values, "left")
+	left, err := parseRecipeOperand(values, "left")
 	if err != nil {
 		return Case{}, err
 	}
-	right, err := parseEvidence(values, "right")
+	right, err := parseRecipeOperand(values, "right")
 	if err != nil {
 		return Case{}, err
 	}
-	return Case{
-		ID: caseID, SourceActivity: activityName, SourceActivityID: activityID,
-		Producer: producer, Consumer: consumer, MetaOperation: metaOperation,
-		ProofChoice: proof, Left: left, Right: right,
-	}, nil
+	return Case{ID: caseID, SourceActivity: activityName, SourceActivityID: activityID, Producer: producer, Consumer: consumer, MetaOperation: metaOperation, ProofChoice: proof, Left: left, Right: right}, nil
 }
 
-func parseEvidence(values map[string]string, prefix string) (Evidence, error) {
+func parseRecipeOperand(values map[string]string, prefix string) (RecipeOperand, error) {
 	get := func(suffix string) (string, error) {
 		value, ok := values[prefix+"."+suffix]
 		if !ok {
-			return "", fmt.Errorf("computed receipt field %q is missing", prefix+"."+suffix)
+			return "", fmt.Errorf("computed recipe field %q is missing", prefix+"."+suffix)
 		}
 		return value, nil
 	}
 	operation, err := get("operation")
 	if err != nil {
-		return Evidence{}, err
+		return RecipeOperand{}, err
 	}
 	required, err := get("required")
 	if err != nil {
-		return Evidence{}, err
+		return RecipeOperand{}, err
 	}
-	observed, err := get("observed")
+	recipe, err := get("observation_recipe")
 	if err != nil {
-		return Evidence{}, err
+		return RecipeOperand{}, err
 	}
-	availableRaw, err := get("observed_available")
+	dependency, err := get("dependency_recipe")
 	if err != nil {
-		return Evidence{}, err
+		return RecipeOperand{}, err
 	}
-	available, err := strconv.ParseBool(availableRaw)
+	invariant, err := get("invariant_capability")
 	if err != nil {
-		return Evidence{}, fmt.Errorf("%s.observed_available is not boolean", prefix)
+		return RecipeOperand{}, err
 	}
-	dependency, err := get("dependency_claim_id")
-	if err != nil {
-		return Evidence{}, err
+	if operation == "" || required == "" || dependency == "" || invariant == "" {
+		return RecipeOperand{}, fmt.Errorf("%s recipe identity is malformed", prefix)
 	}
-	prior, err := get("prior_state")
-	if err != nil {
-		return Evidence{}, err
+	if recipe != "exact" && recipe != "missing" && recipe != "dependency" && recipe != "invariant" {
+		return RecipeOperand{}, fmt.Errorf("%s observation recipe %q is invalid", prefix, recipe)
 	}
-	invariant, err := get("invariant_evidence")
-	if err != nil {
-		return Evidence{}, err
-	}
-	value := Evidence{
-		Operation: operation, Required: required, Observed: observed,
-		ObservedAvailable: available, DependencyClaimID: dependency,
-		PriorState: prior, InvariantEvidence: invariant,
-	}
-	if value.Operation == "" || value.Required == "" || value.PriorState != "OPEN" {
-		return Evidence{}, fmt.Errorf("%s evidence identity is malformed", prefix)
-	}
-	if value.ObservedAvailable {
-		if value.Observed != value.Required || value.DependencyClaimID != "" {
-			return Evidence{}, fmt.Errorf("%s available evidence is not exact", prefix)
+	if recipe == "dependency" {
+		if dependency == "none" || invariant != "none" {
+			return RecipeOperand{}, fmt.Errorf("%s dependency recipe is not connected", prefix)
 		}
-	} else if value.Observed != "" || value.InvariantEvidence != "" {
-		return Evidence{}, fmt.Errorf("%s unavailable evidence carries an observation or invariant", prefix)
+	} else if dependency != "none" {
+		return RecipeOperand{}, fmt.Errorf("%s non-dependent recipe carries a dependency", prefix)
 	}
-	if value.InvariantEvidence != "" && !value.ObservedAvailable {
-		return Evidence{}, fmt.Errorf("%s invariant evidence is unavailable", prefix)
-	}
-	return value, nil
-}
-
-func applyIntervention(model *sourceModel, mode InterventionMode) (Intervention, error) {
-	if mode == "" {
-		mode = InterventionNone
-	}
-	if !validIntervention(mode) {
-		return Intervention{}, fmt.Errorf("intervention %q is invalid", mode)
-	}
-	intervention := Intervention{Mode: mode}
-	switch mode {
-	case InterventionNone:
-		intervention.Comment = "no counterfactual mutation"
-	case InterventionCommentOnly:
-		intervention.Comment = "source comment only; semantic observations are unchanged"
-	case InterventionSemantic:
-		for index := range model.Cases {
-			if model.Cases[index].ID != "direct-unknown" {
-				continue
-			}
-			before := model.Cases[index].Left.ObservedAvailable
-			model.Cases[index].Left.ObservedAvailable = true
-			model.Cases[index].Left.Observed = model.Cases[index].Left.Required
-			intervention.Semantic = true
-			intervention.Target = "direct-unknown.left.observed_available"
-			intervention.From = strconv.FormatBool(before)
-			intervention.To = "true"
-			return intervention, nil
+	if recipe == "invariant" {
+		if invariant == "none" {
+			return RecipeOperand{}, fmt.Errorf("%s invariant recipe lacks a capability", prefix)
 		}
-		return Intervention{}, fmt.Errorf("semantic intervention target is missing")
+	} else if invariant != "none" {
+		return RecipeOperand{}, fmt.Errorf("%s non-invariant recipe carries a capability", prefix)
 	}
-	return intervention, nil
-}
-
-func deriveState(value Evidence) State {
-	if !value.ObservedAvailable {
-		if value.DependencyClaimID != "" {
-			return StateDependencyBlocked
-		}
-		return StateDirectUnknown
-	}
-	if value.InvariantEvidence != "" {
-		return StateInvariantOnly
-	}
-	return StateExact
+	return RecipeOperand{Operation: operation, Required: required, ObservationRecipe: recipe, DependencyRecipe: dependency, InvariantCapability: invariant}, nil
 }

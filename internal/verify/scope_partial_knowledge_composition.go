@@ -5,6 +5,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/partial-knowledge-composition.yml",
+		"cmd/partial-knowledge-composition-observer",
 		"cmd/partial-knowledge-composition-verifier",
 		"cmd/partial-knowledge-composition-witness",
 		"docs/research/partial-knowledge-composition.md",

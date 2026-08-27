@@ -4,48 +4,50 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	meta "github.com/kimjooyoon/meta-ontology-go/internal/meta/partialknowledgecomposition"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/partialknowledgecomposition/provider"
+	independent "github.com/kimjooyoon/meta-ontology-go/internal/meta/partialknowledgecomposition/verify"
 )
+
+const testHeadSHA = "0123456789abcdef0123456789abcdef01234567"
 
 func TestVerifierRejectsReceiptWhenSourceObservationIsTampered(t *testing.T) {
 	root := filepath.Join("..", "..", "..", "..")
 	logicalSourcePath := "examples/partial-knowledge-composition/main.gooo"
-	sourcePath := filepath.Join(root, logicalSourcePath)
-	source, err := os.ReadFile(sourcePath)
+	source, err := os.ReadFile(filepath.Join(root, logicalSourcePath))
 	if err != nil {
 		t.Fatal(err)
 	}
-	input := Input{Repository: "kimjooyoon/meta-ontology-go", HeadSHA: "0123456789abcdef0123456789abcdef01234567", SourcePath: logicalSourcePath, Source: source, InterventionMode: "none"}
-	model, err := parseSource(logicalSourcePath, source)
+	raw, err := provider.Observe(provider.Input{
+		Repository: "kimjooyoon/meta-ontology-go", HeadSHA: testHeadSHA,
+		SourcePath: logicalSourcePath, Source: source,
+		BeforeTracked: []byte("examples/partial-knowledge-composition/main.gooo\n"),
+		AfterTracked:  []byte("examples/partial-knowledge-composition/main.gooo\n"),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	intervention, err := applyIntervention(&model, input.InterventionMode)
+	rawJSON, err := json.Marshal(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
-	receipt := reconstruct(input, model, intervention)
-	receiptRaw, err := json.Marshal(receipt)
+	produced, err := meta.Evaluate(meta.Input{Repository: "kimjooyoon/meta-ontology-go", HeadSHA: testHeadSHA, SourcePath: logicalSourcePath, Source: source, RawEvidence: rawJSON})
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt, err := json.Marshal(produced)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tampered := append([]byte(nil), source...)
-	needle := []byte("left.observed_available=false")
-	for index := 0; index+len(needle) <= len(tampered); index++ {
-		match := true
-		for offset := range needle {
-			if tampered[index+offset] != needle[offset] {
-				match = false
-				break
-			}
-		}
-		if match {
-			tampered[index] = 't'
-			break
-		}
-	}
-	if _, err := Verify(Input{Repository: input.Repository, HeadSHA: input.HeadSHA, SourcePath: input.SourcePath, Source: tampered, InterventionMode: input.InterventionMode, Receipt: receiptRaw}); err == nil {
+	tampered := []byte(strings.Replace(string(source), "left.observation_recipe=missing", "left.observation_recipe=exact", 1))
+	if _, err := independent.Verify(independent.Input{
+		Repository: "kimjooyoon/meta-ontology-go", HeadSHA: testHeadSHA, SourcePath: logicalSourcePath,
+		Source: tampered, RawEvidence: rawJSON, Receipt: receipt,
+	}); err == nil {
 		t.Fatal("source observation tampering was accepted")
 	}
 }

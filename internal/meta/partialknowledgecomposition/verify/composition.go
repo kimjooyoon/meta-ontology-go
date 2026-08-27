@@ -9,7 +9,7 @@ func compose(left, right Evidence) Value {
 		case directUnknown:
 			value.DirectUnknowns = unique(value.DirectUnknowns, evidence.Operation)
 		case dependencyBlocked:
-			value.BlockedDependencies = unique(value.BlockedDependencies, evidence.DependencyClaimID)
+			value.BlockedDependencies = unique(value.BlockedDependencies, evidence.Dependency.ClaimID)
 		case invariantOnly:
 			value.PreservedInvariants = unique(value.PreservedInvariants, evidence.InvariantEvidence)
 		}
