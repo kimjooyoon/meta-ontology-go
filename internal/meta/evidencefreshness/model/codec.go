@@ -53,6 +53,18 @@ func VerifyVerdictDigest(verdict Verdict) bool {
 	return ValidDigest(digest) && digest == DigestJSON(verdict)
 }
 
+func SealLedgerEntry(entry ClaimLedgerEntry) ClaimLedgerEntry {
+	entry.Digest = ""
+	entry.Digest = DigestJSON(entry)
+	return entry
+}
+
+func VerifyLedgerEntryDigest(entry ClaimLedgerEntry) bool {
+	digest := entry.Digest
+	entry.Digest = ""
+	return ValidDigest(digest) && digest == DigestJSON(entry)
+}
+
 func DecodeStrict[T any](raw []byte) (T, error) {
 	var value T
 	decoder := json.NewDecoder(bytes.NewReader(raw))

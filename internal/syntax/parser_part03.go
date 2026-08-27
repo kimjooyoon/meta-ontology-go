@@ -64,6 +64,28 @@ func (p *Parser) parseEntity() *EntityDecl {
 		FieldsPresent: fieldsPresent,
 	}
 }
+
+func (p *Parser) parseFreshness() *FreshnessDecl {
+	keyword := p.advance()
+	kind := p.expectIdentifier("freshness policy kind", DiagExpectedIdentifier)
+	valueCount := 1
+	if kind.Name == "axes" {
+		valueCount = 6
+	}
+	values := make([]NameRef, 0, valueCount)
+	end := keyword.Span.End
+	if !kind.Span.IsEmpty() {
+		end = kind.Span.End
+	}
+	for index := 0; index < valueCount; index++ {
+		value := p.expectIdentifier("freshness policy value", DiagExpectedIdentifier)
+		if !value.Span.IsEmpty() {
+			end = value.Span.End
+		}
+		values = append(values, value)
+	}
+	return &FreshnessDecl{Span: startSpan(p.filename, keyword.Span.Start, end), Kind: kind.Name, Values: values}
+}
 func (p *Parser) expect(kind TokenKind, expected string, code DiagnosticCode) Token {
 	p.skipIllegal()
 	if p.at(kind) {

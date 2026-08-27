@@ -20,8 +20,8 @@ func run(args []string) error {
 		}
 		return freshness.Validate(report)
 	}
-	if options.contract == "" || options.source == "" || options.head == "" || options.independence == "" || options.output == "" {
-		return fmt.Errorf("contract, source, head, independence, and output are required")
+	if options.contract == "" || options.source == "" || options.head == "" || options.independence == "" || options.writeSet == "" || options.output == "" {
+		return fmt.Errorf("contract, source, head, independence, write-set, and output are required")
 	}
 	contract, err := freshness.LoadContract(options.contract)
 	if err != nil {
@@ -35,7 +35,11 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	report := freshness.Evaluate(freshness.Input{Contract: contract, HeadSHA: options.head, Source: source, Independence: independence})
+	writeSet, err := freshness.LoadWriteSet(options.writeSet)
+	if err != nil {
+		return err
+	}
+	report := freshness.Evaluate(freshness.Input{Contract: contract, HeadSHA: options.head, Source: source, Independence: independence, WriteSet: writeSet})
 	if err := freshness.WriteJSON(options.output, report); err != nil {
 		return err
 	}
@@ -52,12 +56,20 @@ func run(args []string) error {
 		if err := freshness.WriteJSON(filepath.Join(options.emitDir, "fresh-context.json"), report.Cases[0].Context); err != nil {
 			return err
 		}
+		for _, item := range report.Cases[1:] {
+			if item.ID == "synthetic-comment-only" || item.ID == "synthetic-semantic-change" || item.ID == "synthetic-source-unavailable" {
+				if err := freshness.WriteJSON(filepath.Join(options.emitDir, item.ID+"-context.json"), item.Context); err != nil {
+					return err
+				}
+			}
+		}
 	}
 	if err := freshness.Validate(report); err != nil {
 		return err
 	}
-	fmt.Printf("evidence freshness: %s %d/%d (fresh=%d stale=%d unknown=%d)\n",
-		report.Decision, report.Summary.CasesSatisfied, report.Summary.CasesTotal,
-		report.Summary.FreshCases, report.Summary.StaleCases, report.Summary.UnknownCases)
+	fmt.Printf("evidence freshness: %s cases=%d current=%d synthetic=%d raw=%d/%d/%d semantic=%d/%d/%d\n",
+		report.Decision, report.Summary.CasesObserved, report.Summary.CurrentEvidenceCases, report.Summary.SyntheticCounterexamples,
+		report.Summary.RawFreshCases, report.Summary.RawStaleCases, report.Summary.RawUnknownCases,
+		report.Summary.SemanticFreshCases, report.Summary.SemanticStaleCases, report.Summary.SemanticUnknownCases)
 	return nil
 }

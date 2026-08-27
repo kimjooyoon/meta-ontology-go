@@ -63,6 +63,7 @@ const (
 	TokenEntity
 	TokenID
 	TokenActivity
+	TokenFreshness
 
 	TokenLParen
 	TokenRParen

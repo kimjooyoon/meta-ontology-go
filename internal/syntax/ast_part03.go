@@ -47,3 +47,12 @@ type ActivityDecl struct {
 
 func (*ActivityDecl) declarationNode()   {}
 func (d *ActivityDecl) SourceSpan() Span { return d.Span }
+
+// FreshnessDecl declares one formal evidence-freshness policy value.
+type FreshnessDecl struct {
+	Span   Span
+	Kind   string
+	Values []NameRef
+}
+
+func (d *FreshnessDecl) SourceSpan() Span { return d.Span }

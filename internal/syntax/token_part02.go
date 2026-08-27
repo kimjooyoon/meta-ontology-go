@@ -20,6 +20,7 @@ const (
 	TokenKeywordEntity    = TokenEntity
 	TokenKeywordID        = TokenID
 	TokenKeywordActivity  = TokenActivity
+	TokenKeywordFreshness = TokenFreshness
 	TokenLeftParen        = TokenLParen
 	TokenRightParen       = TokenRParen
 	TokenLeftBrace        = TokenLBrace
@@ -36,6 +37,7 @@ var tokenKindNames = [...]string{
 	TokenEntity:     "entity",
 	TokenID:         "id",
 	TokenActivity:   "activity",
+	TokenFreshness:  "freshness",
 	TokenLParen:     "(",
 	TokenRParen:     ")",
 	TokenComma:      ",",

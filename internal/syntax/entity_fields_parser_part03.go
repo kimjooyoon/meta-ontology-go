@@ -9,15 +9,15 @@ func isEntityFieldsReservedWord(value string) bool {
 	}
 }
 func (p *Parser) atEntityFieldsBoundary() bool {
-	return p.at(TokenEOF) || p.at(TokenEntity) || p.at(TokenActivity)
+	return p.at(TokenEOF) || p.at(TokenEntity) || p.at(TokenActivity) || p.at(TokenFreshness)
 }
 func (p *Parser) recoverEntityFields(depth int) {
 	for !p.at(TokenEOF) {
 		token := p.peek()
-		if depth == 0 && (p.at(TokenEntity) || p.at(TokenActivity)) {
+		if depth == 0 && (p.at(TokenEntity) || p.at(TokenActivity) || p.at(TokenFreshness)) {
 			return
 		}
-		if depth == 1 && (p.at(TokenEntity) || p.at(TokenActivity)) {
+		if depth == 1 && (p.at(TokenEntity) || p.at(TokenActivity) || p.at(TokenFreshness)) {
 			return
 		}
 		switch token.Kind {

@@ -1,44 +1,36 @@
 {
-  "schema": "gooo/evidence-freshness-contract/v1",
+  "schema": "gooo/evidence-freshness-contract/v2",
   "scope": "CLAIM_JUSTIFICATION_BOUNDARY_ONLY",
   "source_path": "examples/evidence-freshness/main.gooo",
   "base_context": {
-    "schema": "gooo/evidence-freshness-context/v1",
+    "schema": "gooo/evidence-freshness-context/v2",
+    "policy_digest": "",
     "tuple": {
       "subject": "",
-      "material": "",
-      "recipe": "recipe:gooo-evidence-freshness/v1",
+      "material": {"raw_digest": "", "semantic_digest": ""},
+      "recipe": "recipe:gooo-evidence-freshness/v2",
       "environment": "environment:go1.27/linux-amd64/hermetic",
       "runner": "runner:github-actions/ubuntu-24.04",
-      "verifier": "verifier:evidence-freshness-decider/v1"
+      "verifier": "verifier:evidence-freshness-decider/v2"
     },
     "current_epoch": 20260827,
     "environment_boundary": "environment:go1.27/linux-amd64/hermetic",
-    "consumer": "evidence-freshness-decider/v1"
+    "consumer": "evidence-freshness-decider/v2"
   },
-  "cases": [
-    {"id":"fresh-exact","mutation":"","expected_state":"FRESH","expected_decision":"PASS","expected_resolution":"EXACT","expected_stage":"VERIFIER_JUDGMENT","expected_step":"accept-current-evidence","expected_reason":"TUPLE_EXACT_AND_BOUNDARY_CURRENT","proof_choice":"FOUNDATION","meta_operation":"preserve-exact-claim"},
-    {"id":"subject-changed","mutation":"subject","expected_state":"STALE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_stage":"SUBJECT_BINDING","expected_step":"compare-subject","expected_reason":"SUBJECT_CHANGED","proof_choice":"COHERENCE","meta_operation":"locate-subject-staleness"},
-    {"id":"material-changed","mutation":"material","expected_state":"STALE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_stage":"MATERIAL_CLOSURE","expected_step":"compare-material","expected_reason":"MATERIAL_CHANGED","proof_choice":"COHERENCE","meta_operation":"locate-material-staleness"},
-    {"id":"recipe-changed","mutation":"recipe","expected_state":"STALE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_stage":"RECIPE_RESOLUTION","expected_step":"compare-recipe","expected_reason":"RECIPE_CHANGED","proof_choice":"COHERENCE","meta_operation":"locate-recipe-staleness"},
-    {"id":"environment-changed","mutation":"environment","expected_state":"STALE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_stage":"ENVIRONMENT_CAPTURE","expected_step":"compare-environment","expected_reason":"ENVIRONMENT_CHANGED","proof_choice":"COHERENCE","meta_operation":"locate-environment-staleness"},
-    {"id":"runner-changed","mutation":"runner","expected_state":"STALE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_stage":"RUNNER_EXECUTION","expected_step":"compare-runner","expected_reason":"RUNNER_CHANGED","proof_choice":"COHERENCE","meta_operation":"locate-runner-staleness"},
-    {"id":"verifier-changed","mutation":"verifier","expected_state":"STALE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_stage":"VERIFIER_JUDGMENT","expected_step":"compare-verifier","expected_reason":"VERIFIER_CHANGED","proof_choice":"REGRESSION","meta_operation":"locate-verifier-staleness"},
-    {"id":"temporal-boundary-expired","mutation":"temporal-expired","expected_state":"STALE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_stage":"VERIFIER_JUDGMENT","expected_step":"check-validity-boundary","expected_reason":"TEMPORAL_BOUNDARY_EXPIRED","proof_choice":"FOUNDATION","meta_operation":"enforce-temporal-boundary"},
-    {"id":"unknown-subject","mutation":"unknown-subject","expected_state":"UNKNOWN","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_stage":"SUBJECT_BINDING","expected_step":"read-subject","expected_reason":"SUBJECT_UNKNOWN","proof_choice":"REGRESSION","meta_operation":"preserve-unknown-subject"},
-    {"id":"unknown-verifier","mutation":"unknown-verifier","expected_state":"UNKNOWN","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_stage":"VERIFIER_JUDGMENT","expected_step":"read-verifier","expected_reason":"VERIFIER_UNKNOWN","proof_choice":"REGRESSION","meta_operation":"preserve-unknown-verifier"}
-  ],
   "metrics": [
-    {"metric_id":"gooo.metric.evidence-freshness.cases.v1","class":"OUTCOME","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"evaluate-freshness-contract","expected_numerator":10,"denominator":10},
-    {"metric_id":"gooo.metric.evidence-freshness.fresh.v1","class":"OUTCOME","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"preserve-fresh-claim","expected_numerator":1,"denominator":1},
-    {"metric_id":"gooo.metric.evidence-freshness.stale.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"REGRESSION","meta_operation":"reject-stale-claim","expected_numerator":7,"denominator":7},
-    {"metric_id":"gooo.metric.evidence-freshness.unknown.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"REGRESSION","meta_operation":"preserve-unknown-resolution","expected_numerator":2,"denominator":2},
-    {"metric_id":"gooo.metric.evidence-freshness.coupling-axes.v1","class":"DRIVER","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"COHERENCE","meta_operation":"enumerate-six-coupling-axes","expected_numerator":6,"denominator":6},
-    {"metric_id":"gooo.metric.evidence-freshness.stage-attribution.v1","class":"OUTCOME","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"COHERENCE","meta_operation":"attribute-stale-stage","expected_numerator":6,"denominator":6},
-    {"metric_id":"gooo.metric.evidence-freshness.transitions.v1","class":"OUTCOME","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"preserve-claim-transition","expected_numerator":10,"denominator":10},
-    {"metric_id":"gooo.metric.evidence-freshness.temporal-boundary.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"enforce-temporal-boundary","expected_numerator":1,"denominator":1},
-    {"metric_id":"gooo.metric.evidence-freshness.read-only.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"REGRESSION","meta_operation":"deny-repository-writes","expected_numerator":1,"denominator":1},
-    {"metric_id":"gooo.metric.evidence-freshness.independence-contract.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"verify-independence-contract","expected_numerator":1,"denominator":1}
+    {"metric_id":"gooo.metric.evidence-freshness.cases.v2","class":"OUTCOME","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"FOUNDATION","meta_operation":"observe-freshness-cases","expected_numerator":10,"denominator":10},
+    {"metric_id":"gooo.metric.evidence-freshness.current-evidence.v2","class":"OUTCOME","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"FOUNDATION","meta_operation":"observe-current-evidence","expected_numerator":1,"denominator":1},
+    {"metric_id":"gooo.metric.evidence-freshness.synthetic-counterexamples.v2","class":"DRIVER","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"COHERENCE","meta_operation":"observe-synthetic-counterexamples","expected_numerator":9,"denominator":9},
+    {"metric_id":"gooo.metric.evidence-freshness.coupling-axes.v2","class":"DRIVER","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"COHERENCE","meta_operation":"enumerate-six-coupling-axes","expected_numerator":6,"denominator":6},
+    {"metric_id":"gooo.metric.evidence-freshness.raw-source-reconstruction.v2","class":"OUTCOME","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"FOUNDATION","meta_operation":"reconstruct-raw-source","expected_numerator":9,"denominator":9},
+    {"metric_id":"gooo.metric.evidence-freshness.semantic-source-reconstruction.v2","class":"OUTCOME","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"FOUNDATION","meta_operation":"reconstruct-canonical-semantic-source","expected_numerator":9,"denominator":9},
+    {"metric_id":"gooo.metric.evidence-freshness.comment-intervention.v2","class":"GUARDRAIL","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"COHERENCE","meta_operation":"preserve-comment-insensitive-semantic-claim","expected_numerator":1,"denominator":1},
+    {"metric_id":"gooo.metric.evidence-freshness.semantic-intervention.v2","class":"GUARDRAIL","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"REGRESSION","meta_operation":"detect-semantic-value-change","expected_numerator":1,"denominator":1},
+    {"metric_id":"gooo.metric.evidence-freshness.freshness-transitions.v2","class":"OUTCOME","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"FOUNDATION","meta_operation":"record-freshness-observation-transitions","expected_numerator":10,"denominator":10},
+    {"metric_id":"gooo.metric.evidence-freshness.claim-ledger.v2","class":"OUTCOME","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"FOUNDATION","meta_operation":"append-claim-ledger-chain","expected_numerator":10,"denominator":10},
+    {"metric_id":"gooo.metric.evidence-freshness.source-unavailable.v2","class":"GUARDRAIL","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"REGRESSION","meta_operation":"lower-source-unavailable-evidence","expected_numerator":1,"denominator":1},
+    {"metric_id":"gooo.metric.evidence-freshness.read-only-before-after.v2","class":"GUARDRAIL","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"REGRESSION","meta_operation":"bind-ci-before-after-write-set","expected_numerator":1,"denominator":1},
+    {"metric_id":"gooo.metric.evidence-freshness.independence-contract.v2","class":"GUARDRAIL","producer":"evidence-freshness-producer/v2","consumer":"evidence-freshness-decider/v2","proof_choice":"FOUNDATION","meta_operation":"verify-producer-import-boundary","expected_numerator":1,"denominator":1}
   ],
   "not_claimed": [
     "cryptographic signature authenticity",

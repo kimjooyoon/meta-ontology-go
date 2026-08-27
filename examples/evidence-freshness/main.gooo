@@ -1,6 +1,15 @@
 package evidencefreshness
 namespace evidencefreshness
 
+freshness axes subject material recipe environment runner verifier
+freshness comparison_policy earliest_changed
+freshness prior_claim_state OPEN
+freshness boundary_policy logical_epoch_environment
+freshness raw_material_policy raw_material_digest
+freshness semantic_policy comments_ignored
+freshness claim_ledger_policy open_discharge_or_preserve
+freshness effect_policy read_only_ci_before_after
+
 entity ClaimSubject id "gooo://evidence-freshness/entity/claim-subject"
 entity ClaimMaterial id "gooo://evidence-freshness/entity/claim-material"
 entity ClaimRecipe id "gooo://evidence-freshness/entity/claim-recipe"

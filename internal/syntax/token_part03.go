@@ -6,4 +6,5 @@ var keywordKinds = map[string]TokenKind{
 	"entity":    TokenEntity,
 	"id":        TokenID,
 	"activity":  TokenActivity,
+	"freshness": TokenFreshness,
 }

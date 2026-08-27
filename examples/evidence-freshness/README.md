@@ -1,17 +1,38 @@
 # Evidence freshness experiment
 
-This example uses the real `main.gooo` source as a subject and records a
-six-part justification tuple: `subject`, `material`, `recipe`, `environment`,
-`runner`, and `verifier`. The independent decider compares that tuple with a
-current context and selects the earliest changed stage in a fixed order.
+`main.gooo` is a real source subject and also declares the freshness policy in
+the language: six axes, earliest-change comparison, `OPEN` prior claim state,
+logical epoch/environment boundaries, raw-material handling, comment-insensitive
+semantic comparison, claim-ledger behavior, and CI before/after write-set
+observation.
 
-The contract has ten deterministic cases: one fresh claim, one stale case for
-each coupling axis, one expired temporal boundary, and two unknown cases. A
-fresh claim transitions to `CLAIM_PRESERVED`; stale or unknown evidence is never
-preserved as current.
+The canonical compiler parses and lowers this source before producing a policy
+and semantic digest. The independent decider receives the raw source, receipt,
+and current context and repeats that reconstruction without importing the
+producer package.
 
-Independence is reported with two different semantics: the receipt and report
-carry `forbidden_dependency_count` as a guardrail count (`0`, never a ratio),
-while the performed and passed independence check is the positive fixed-
-denominator contract `independence_contract = 1/1`. The CI summary and
-validator recompute these same fields.
+The fixed observation separates one `CURRENT_EVIDENCE` case from nine
+`SYNTHETIC_COUNTEREXAMPLE` cases:
+
+- presentation-only comment
+- semantic value change
+- subject, recipe, environment, runner, and verifier changes
+- expired boundary
+- unavailable source
+
+The material component of the six-axis tuple contains two distinct values:
+`raw_digest` and `semantic_digest`. A comment-only intervention makes raw
+freshness `STALE` while semantic freshness and the claim decision remain
+preserved under `comments_ignored`. A semantic value change makes both stale.
+
+The claim ledger starts at `OPEN`. Current evidence becomes `DISCHARGED`;
+stale evidence preserves `OPEN` unless an explicit refutation is present;
+unknown evidence preserves `OPEN`. Each entry is linked by a previous digest
+and records source, semantic, receipt, stage, step, and reason provenance.
+
+Independence is reported as two different facts. The receipt's
+`forbidden_dependency_count` is a non-ratio guardrail and must be `0`; it does
+not mean that an independence test was performed. The performed-and-passed
+contract is the positive fixed-denominator value
+`independence_contract = { numerator: 1, denominator: 1 }`. The validator
+recomputes both facts from the receipt/report, and CI emits the same pair.

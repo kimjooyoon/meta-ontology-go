@@ -31,6 +31,14 @@ func LoadIndependence(path string) (model.IndependenceEvidence, error) {
 	return model.DecodeStrict[model.IndependenceEvidence](raw)
 }
 
+func LoadWriteSet(path string) (model.WriteSetObservation, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return model.WriteSetObservation{}, err
+	}
+	return model.DecodeStrict[model.WriteSetObservation](raw)
+}
+
 func LoadReport(path string) (model.Report, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {

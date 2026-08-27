@@ -16,6 +16,14 @@ func run(args []string) error {
 	if options.receipt == "" || options.context == "" || options.output == "" {
 		return fmt.Errorf("receipt, context, and output are required")
 	}
+	var source []byte
+	if options.source != "" {
+		var err error
+		source, err = os.ReadFile(options.source)
+		if err != nil {
+			return err
+		}
+	}
 	receipt, err := os.ReadFile(options.receipt)
 	if err != nil {
 		return err
@@ -24,7 +32,7 @@ func run(args []string) error {
 	if err != nil {
 		return err
 	}
-	verdict := decider.Decide(receipt, context)
+	verdict := decider.Decide(source, receipt, context)
 	if err := writeVerdict(options.output, verdict); err != nil {
 		return err
 	}

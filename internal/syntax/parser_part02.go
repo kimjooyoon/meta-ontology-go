@@ -56,6 +56,8 @@ func (p *Parser) parseFile() *File {
 		case p.at(TokenActivity):
 			file.Decls = append(file.Decls, p.parseActivity())
 			file.Declarations = file.Decls
+		case p.at(TokenFreshness):
+			file.Freshness = append(file.Freshness, p.parseFreshness())
 		default:
 			p.error(DiagUnexpectedDeclaration, p.peek().Span, "expected entity or activity declaration")
 			p.advance()

@@ -24,6 +24,11 @@ type File struct {
 	// the same ordered values for callers that prefer the longer name.
 	Decls        []Declaration
 	Declarations []Declaration
+
+	// Freshness carries formal meta-language declarations. They are parsed and
+	// compiled by the feature that owns them, while ordinary entity/activity
+	// lowering remains unaware of this extension.
+	Freshness []*FreshnessDecl
 }
 
 // SourceFile and AST are descriptive aliases for callers that prefer those
