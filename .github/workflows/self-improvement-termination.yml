@@ -53,6 +53,10 @@ jobs:
           expected_statuses=(BOUND BOUND BOUND BOUND FAIL_CLOSED)
           expected_claims=(DISCHARGED REFUTED OPEN OPEN OPEN)
           expected_reasons=(NO_CHANGE_FIXED_POINT_OBSERVED REPEATED_STATE_CYCLE_OBSERVED TRACE_ENDED_BEFORE_TERMINATION STRICTLY_GROWING_BOUNDARY_NO_FIXED_POINT FEEDBACK_COVERAGE_DECISION_UNKNOWN)
+          expected_steps=(1 2 2 2 1)
+          expected_state_counts=(1 3 3 3 1)
+          expected_repeated_states=(0 1 0 0 0)
+          expected_periods=(0 2 0 0 0)
           for index in "${!cases[@]}"; do
             name="${cases[$index]}"
             receipt="$OUTPUT_DIR/$name-receipt.json"
@@ -67,8 +71,12 @@ jobs:
               --arg status "${expected_statuses[$index]}" \
               --arg claim "${expected_claims[$index]}" \
               --arg reason "${expected_reasons[$index]}" \
+              --argjson steps "${expected_steps[$index]}" \
+              --argjson state_count "${expected_state_counts[$index]}" \
+              --argjson repeated_states "${expected_repeated_states[$index]}" \
+              --argjson period "${expected_periods[$index]}" \
               --arg source "$SOURCE_PATH" \
-              '(.source.path == $source) and (.resolution == $resolution) and (.decision == $decision) and (.status == $status) and (.reason == $reason) and (.outcome.claim_state == $claim) and (.conformance.satisfied == 2) and (.conformance.total == 2) and (.conformance.basis_points == 10000) and (.conformance.aggregation == "NONE") and ((.outcome.termination_proven == true) == ($decision == "FIXED_POINT")) and (.interventions | length == 2) and (.interventions[0].semantic_changed == true) and (.interventions[1].semantic_changed == false) and (.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"}) and (.claim_transitions[1].step == (.observations | length)) and (.claim_transitions[1].from == "OPEN") and (.claim_transitions[1].to == $claim) and (.claim_transitions[1].reason == $reason)' \
+              '(.source.path == $source) and (.resolution == $resolution) and (.decision == $decision) and (.status == $status) and (.reason == $reason) and (.outcome.claim_state == $claim) and (.outcome.observed_steps == $steps) and (.outcome.state_count == $state_count) and (.outcome.repeated_states == $repeated_states) and (.outcome.detected_period == $period) and (.conformance.satisfied == 2) and (.conformance.total == 2) and (.conformance.basis_points == 10000) and (.conformance.aggregation == "NONE") and ((.outcome.termination_proven == true) == ($decision == "FIXED_POINT")) and (.interventions | length == 2) and (.interventions[0].semantic_changed == true) and (.interventions[1].semantic_changed == false) and (.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"}) and (.claim_transitions[1].step == (.observations | length)) and (.claim_transitions[1].from == "OPEN") and (.claim_transitions[1].to == $claim) and (.claim_transitions[1].reason == $reason)' \
               "$receipt"
             jq -e --arg decision "${expected_decisions[$index]}" \
               --arg resolution "${expected_resolutions[$index]}" \
