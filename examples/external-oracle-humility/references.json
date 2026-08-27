@@ -1,0 +1,30 @@
+{
+  "schema": "gooo/external-oracle-reference-set/v1",
+  "captured_on": "2026-08-27",
+  "references": [
+    {
+      "id": "gomacro-readme",
+      "available": true,
+      "document_sha256": "sha256:8b453f2cfb1808b0de96a530525889f4bcdcc6b5aa866d8fc93b10d1473e2bc7",
+      "proposition": "gomacro describes macros as Go functions executed before compilation and notes that they can perform arbitrary computations and I/O.",
+      "evidence_role": "comparison-of-effect-surface",
+      "agreement": true
+    },
+    {
+      "id": "racket-syntax-model",
+      "available": true,
+      "document_sha256": "sha256:official-page-captured-2026-08-27",
+      "proposition": "Racket describes expansion as recursively processing syntax objects with binding information driving expansion.",
+      "evidence_role": "comparison-of-binding-and-expansion-boundary",
+      "agreement": true
+    },
+    {
+      "id": "reproducible-builds-definition",
+      "available": true,
+      "document_sha256": "sha256:official-page-captured-2026-08-27",
+      "proposition": "Reproducible Builds defines reproducibility in terms of recreating bit-by-bit identical specified artifacts from the same source, environment, and instructions.",
+      "evidence_role": "comparison-of-replay-evidence",
+      "agreement": true
+    }
+  ]
+}

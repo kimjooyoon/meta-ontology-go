@@ -1,0 +1,92 @@
+{
+  "schema": "gooo/external-oracle-humility-contract/v1",
+  "version": 1,
+  "source": {
+    "path": "examples/external-oracle-humility/main.gooo",
+    "sha256": "sha256:e71ed54b50af0c421a06ede475e54afe35e3edb9266cda13d4567636a5b36816",
+    "authority": "GOOO_SOURCE_INTENT",
+    "claims": [
+      {
+        "id": "source-intent-authority",
+        "text": "The Gooo source remains the authority for semantic intent.",
+        "state": "SOURCE_ONLY"
+      },
+      {
+        "id": "reference-comparison-only",
+        "text": "External implementations, documents, and papers are comparative evidence.",
+        "state": "EVIDENCE_ONLY"
+      },
+      {
+        "id": "receipt-replayability",
+        "text": "A receipt is useful when an independent consumer can replay its bounded claims.",
+        "state": "REPLAYABLE_EVIDENCE"
+      }
+    ]
+  },
+  "fixed_denominator": {
+    "version": "gooo/external-oracle-humility-denominator/v1",
+    "total": 12,
+    "basis_points_required": 10000
+  },
+  "references": [
+    {
+      "id": "gomacro-readme",
+      "kind": "EXTERNAL_IMPLEMENTATION_DOCUMENT",
+      "url": "https://github.com/cosmos72/gomacro/blob/cf0d4bf32da393dbda97e3572f216731013ffa55/README.md",
+      "revision": "cf0d4bf32da393dbda97e3572f216731013ffa55",
+      "locator": "README.md:244-245",
+      "claim_id": "reference-comparison-only",
+      "relation": "COMPARATIVE_EVIDENCE",
+      "authority": "NOT_AUTHORITY",
+      "primary": true
+    },
+    {
+      "id": "racket-syntax-model",
+      "kind": "EXTERNAL_LANGUAGE_REFERENCE",
+      "url": "https://docs.racket-lang.org/reference/syntax-model.html",
+      "revision": "official-reference-page",
+      "locator": "§1.2.3 Expansion (Parsing)",
+      "claim_id": "source-intent-authority",
+      "relation": "COMPARATIVE_EVIDENCE",
+      "authority": "NOT_AUTHORITY",
+      "primary": true
+    },
+    {
+      "id": "reproducible-builds-definition",
+      "kind": "EXTERNAL_REPRODUCIBILITY_DEFINITION",
+      "url": "https://reproducible-builds.org/docs/definition/",
+      "revision": "official-definition-page",
+      "locator": "When is a build reproducible?",
+      "claim_id": "receipt-replayability",
+      "relation": "COMPARATIVE_EVIDENCE",
+      "authority": "NOT_AUTHORITY",
+      "primary": true
+    }
+  ],
+  "cases": [
+    {
+      "id": "reference-agreement",
+      "input": "three available primary references with comparative-only relations",
+      "expected_decision": "REFERENCE_AGREEMENT_OBSERVED",
+      "expected_resolution": "EXACT",
+      "expected_authority": "GOOO_SOURCE_INTENT",
+      "expected_effect": "NO_EFFECT"
+    },
+    {
+      "id": "reference-mismatch",
+      "input": "one available reference claims semantic authority or the wrong claim",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "EXACT",
+      "expected_authority": "GOOO_SOURCE_INTENT",
+      "expected_effect": "BLOCK"
+    },
+    {
+      "id": "reference-absence",
+      "input": "a primary reference is unavailable",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "UNKNOWN",
+      "expected_authority": "GOOO_SOURCE_INTENT",
+      "expected_effect": "BLOCK"
+    }
+  ]
+}

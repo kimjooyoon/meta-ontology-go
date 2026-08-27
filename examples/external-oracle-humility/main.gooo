@@ -1,0 +1,15 @@
+package externaloraclehumility
+namespace externaloraclehumility
+
+entity SemanticSubject id "gooo://external-oracle-humility/entity/semantic-subject"
+entity SourceReceipt id "gooo://external-oracle-humility/entity/source-receipt"
+entity ReferenceAgreement id "gooo://external-oracle-humility/entity/reference-agreement"
+entity AuthorityBoundary id "gooo://external-oracle-humility/entity/authority-boundary"
+entity ClaimTransition id "gooo://external-oracle-humility/entity/claim-transition"
+entity HumilityReceipt id "gooo://external-oracle-humility/entity/humility-receipt"
+
+activity ObserveGoooSource(SemanticSubject) -> SourceReceipt
+activity CompareExternalReference(SourceReceipt) -> ReferenceAgreement
+activity RefuseExternalSemanticAuthority(ReferenceAgreement) -> AuthorityBoundary
+activity PersistClaimTransition(AuthorityBoundary) -> ClaimTransition
+activity EmitReadOnlyHumilityReceipt(ClaimTransition) -> HumilityReceipt
