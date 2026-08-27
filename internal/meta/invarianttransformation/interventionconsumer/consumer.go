@@ -455,7 +455,7 @@ func verifyArtifact(artifact model.ArtifactEvidence, headSHA string, source []by
 }
 
 func allowedTempPath(path string) bool {
-	path, err = filepath.Abs(path)
+	path, err := filepath.Abs(path)
 	if err != nil {
 		return false
 	}
