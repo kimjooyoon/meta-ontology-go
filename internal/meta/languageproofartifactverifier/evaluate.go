@@ -140,7 +140,7 @@ func Evaluate(input Input) Report {
 		report.ConformanceCoordinate = Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", report.ConformanceReason}
 		report.ArtifactUseAuthority = "READ_ONLY_CONSUMPTION"
 	}
-	report.ProofSummary = humanProofSummary(report.Proofs, report.ArtifactUseAuthority)
+	report.ProofSummary = proofSummary(report.Proofs, proofPhase, report.ArtifactUseAuthority)
 	report.Digest = reportDigest(report)
 	return report
 }

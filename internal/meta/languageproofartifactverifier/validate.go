@@ -85,7 +85,7 @@ func Validate(report Report) error {
 	if err := validateProofInventory(report, false); err != nil {
 		return err
 	}
-	if report.ProofSummary != humanProofSummary(report.Proofs, report.ArtifactUseAuthority) {
+	if report.ProofSummary != proofSummary(report.Proofs, ProofPhaseFinal, report.ArtifactUseAuthority) {
 		return fmt.Errorf("proof-carrying proof summary mismatch")
 	}
 	if report.BundleDigest != "" {
@@ -182,7 +182,7 @@ func ValidatePreliminary(report Report) error {
 	if err := validateProofInventory(report, true); err != nil {
 		return preliminaryValidationError(Coordinate{"VERIFY_PROOF", "preliminary-proof-gate", "PRELIMINARY_PROOF_NOT_SATISFIED"}, err)
 	}
-	if report.ProofSummary != humanProofSummary(report.Proofs, report.ArtifactUseAuthority) {
+	if report.ProofSummary != proofSummary(report.Proofs, ProofPhasePreliminary, report.ArtifactUseAuthority) {
 		return preliminaryValidationError(Coordinate{"VERIFY_PROOF", "preliminary-proof-summary", "PRELIMINARY_PROOF_SUMMARY_MISMATCH"}, fmt.Errorf("proof-carrying proof summary mismatch"))
 	}
 	if len(report.Counterexamples) != CounterexampleTotal || !counterexampleInventoryOK(report.Counterexamples) {
@@ -214,7 +214,7 @@ func canonicalPreliminaryProjection(report Report) Report {
 	preliminary.PreliminaryCoordinate = preliminary.ConformanceCoordinate
 	preliminary.Indicators = indicators(preliminary.Summary)
 	preliminary.Proofs = proofs(preliminary, preliminary.Cases, ProofPhasePreliminary)
-	preliminary.ProofSummary = humanProofSummary(preliminary.Proofs, preliminary.ArtifactUseAuthority)
+	preliminary.ProofSummary = proofSummary(preliminary.Proofs, ProofPhasePreliminary, preliminary.ArtifactUseAuthority)
 	preliminary.Digest = reportDigest(preliminary)
 	return preliminary
 }
@@ -440,7 +440,10 @@ func validateProofInventory(report Report, preliminary bool) error {
 				return fmt.Errorf("proof-carrying proof evidence mismatch")
 			}
 		}
-		if index == 0 && (!proof.Passed || proof.ConsumerGateOpen || proof.Phase != phase || (preliminary && proof.State != ProofStateObserved) || (!preliminary && proof.State != ProofStateDischarged)) {
+		if proof.Passed != (proof.State == ProofStateDischarged) {
+			return fmt.Errorf("proof-carrying proof discharge state mismatch")
+		}
+		if index == 0 && (!proof.EvidenceValidated || proof.ConsumerGateOpen || proof.Phase != phase || (preliminary && proof.State != ProofStateObserved) || (!preliminary && proof.State != ProofStateDischarged)) {
 			return fmt.Errorf("proof-carrying foundation proof mismatch")
 		}
 		if preliminary {

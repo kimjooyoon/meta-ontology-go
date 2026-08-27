@@ -151,7 +151,7 @@ type Report struct {
 	Summary                          Summary              `json:"summary"`
 	Indicators                       []Indicator          `json:"indicators"`
 	Proofs                           []Proof              `json:"proofs"`
-	ProofSummary                     string               `json:"proof_summary"`
+	ProofSummary                     ProofSummary         `json:"proof_summary"`
 	Transitions                      []ClaimTransition    `json:"claim_transitions"`
 	PriorLedger                      ClaimLedger          `json:"prior_ledger"`
 	Ledger                           ClaimLedger          `json:"ledger"`
@@ -169,4 +169,19 @@ type Report struct {
 type ValidationFailure struct {
 	Coordinate Coordinate `json:"coordinate"`
 	Detail     string     `json:"detail"`
+}
+
+type ProofSummary struct {
+	Phase                  string `json:"phase"`
+	Proofs                 int    `json:"proofs"`
+	EvidenceValidated      int    `json:"evidence_validated"`
+	EvidenceValidatedTotal int    `json:"evidence_validated_total"`
+	ObservedState          int    `json:"observed_state"`
+	ObservedStateTotal     int    `json:"observed_state_total"`
+	Open                   int    `json:"open"`
+	OpenTotal              int    `json:"open_total"`
+	Discharged             int    `json:"discharged"`
+	DischargedTotal        int    `json:"discharged_total"`
+	Authority              int    `json:"authority"`
+	AuthorityTotal         int    `json:"authority_total"`
 }
