@@ -28,6 +28,11 @@ func Build(sourcePath string, sourceBytes []byte, leaksPath string, leaksBytes [
 		report.Reason = ReasonUnknownContract
 		return finalize(report)
 	}
+	if !exactCaseNames(source.Cases, []string{"clean"}) || !exactCaseNames(leaks.Cases, []string{"value-leak", "authority-leak", "evidence-leak", "phase-skip", "phase-reverse"}) {
+		report.Coordinate = Coordinate{Stage: "SOURCE", Step: "BIND", Reason: ReasonUnknownContract}
+		report.Reason = ReasonUnknownContract
+		return finalize(report)
+	}
 	report.Producer, report.Consumer = source.Producer, source.Consumer
 	report.MetaOperation, report.ProofChoice = source.MetaOperation, source.ProofChoice
 	clean, cleanResult, transitions := evaluateClean(source.Cases)
@@ -81,6 +86,18 @@ func evaluateClean(cases []Case) (bool, CaseResult, []ClaimTransition) {
 		actual = "REJECT"
 	}
 	return clean, CaseResult{Name: "clean", Class: "CLEAN", Expected: "ACCEPT", Actual: actual, Reason: reason, Passed: clean, TransitionCount: len(transitions)}, transitions
+}
+
+func exactCaseNames(cases []Case, expected []string) bool {
+	if len(cases) != len(expected) {
+		return false
+	}
+	for index, name := range expected {
+		if cases[index].Name != name {
+			return false
+		}
+	}
+	return true
 }
 
 func evaluateLeak(cases []Case, name string) CaseResult {
