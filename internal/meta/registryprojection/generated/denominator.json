@@ -1,11 +1,11 @@
 {
   "schema": "gooo/manual-source-registration-edit-free-registry-denominator/v1",
-  "section_digest": "sha256:f5c071963f03ad9b9e471ea17d3f0b5706a3d655ae28cb0a130febadab92b861",
+  "section_digest": "sha256:d3c78097f7d03a65fc08f6c81078c6ad6d878664c17df9f41f64e22bd11d3424",
   "entries": [
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-binding/v1",
-      "semantic_digest": "sha256:0f30639a98b91c0dbf00e76ac2199afd9fdef35818802515814f6494e5065bfa",
+      "semantic_digest": "sha256:222d63ca508d3eb6e638c89705c48ea45aa953ba1e2eb29635abb24e3fdf80a2",
       "values": {
         "syntax_cases": 30,
         "syntax_lines": 428,
@@ -15,7 +15,7 @@
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-model/v1",
-      "semantic_digest": "sha256:0f30639a98b91c0dbf00e76ac2199afd9fdef35818802515814f6494e5065bfa",
+      "semantic_digest": "sha256:222d63ca508d3eb6e638c89705c48ea45aa953ba1e2eb29635abb24e3fdf80a2",
       "values": {
         "authority_laws": 3,
         "cases": 32,

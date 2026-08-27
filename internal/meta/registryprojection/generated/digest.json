@@ -1,9 +1,9 @@
 {
   "schema": "gooo/manual-source-registration-edit-free-registry-projection-digest/v1",
-  "raw_manifest_digest": "sha256:c8ae2bb20c650ce987c651b56428b1082030b89dd34bbc5bce5c0cddaf6ee542",
-  "semantic_manifest_digest": "sha256:72f10b1e0eca18e4415aaa45d66fa1334911c02326796d70b411f0580897c213",
-  "projection_digest": "sha256:9dc7066c69f0faf8742d2c20a6ffb75c4ca792fec59d9c82c5bea21c12c6348c",
-  "combined_digest": "sha256:06d5468a50f9b9e537805f313d3afcd0dd588f0b382c666d96cc3184759569b8",
+  "raw_manifest_digest": "sha256:04490de6a2794b2ce3f28406a0072dab2d92906b3b6de4254c24cb0dbe3810f0",
+  "semantic_manifest_digest": "sha256:fd5083b5f65fc093f907f8c8a34de6ba6aa279c9ee18bac0e9e2f2df5c06dff5",
+  "projection_digest": "sha256:5a7421ccc1747cbd09fdd20fdff315223b76dcddafdcb412b95c7dd906776583",
+  "combined_digest": "sha256:c15627731747e60034f2507004da36e034846429e10da5a289b13f6625a27a7b",
   "outputs": [
     {
       "path": "internal/meta/registryprojection/generated/README.md",
@@ -12,7 +12,7 @@
     },
     {
       "path": "internal/meta/registryprojection/generated/catalog.json",
-      "digest": "sha256:2082f4e6b06caf17c115ae926427b21814aa8ba90a5c914466947a0b5074910d",
+      "digest": "sha256:5fe1a585097d49511a4d3c2476a6cf2c7fd5c58d26c639c5afd0ce03e01e35c4",
       "bytes": 4677
     },
     {
@@ -22,17 +22,17 @@
     },
     {
       "path": "internal/meta/registryprojection/generated/denominator.json",
-      "digest": "sha256:572a682a2007eed340b80aaae7ed6cd98aca9a9d8014a04f69ba5e03b9337748",
+      "digest": "sha256:76eeb8b1adf4570b6c8c8a4783f490153d4f1eff451dc62f66e298b421617a05",
       "bytes": 1787
     },
     {
       "path": "internal/meta/registryprojection/generated/manifest-digests.json",
-      "digest": "sha256:6c84c8bbfd9ddb69dbad930291dc8b117c916f4ebd7ebde21589ea8e22e0915d",
+      "digest": "sha256:e23c1578da2da05581f186222abe189653617b50d3acfe4d949b58755ec670b3",
       "bytes": 1111
     },
     {
       "path": "internal/meta/registryprojection/generated/projection.json",
-      "digest": "sha256:9dc7066c69f0faf8742d2c20a6ffb75c4ca792fec59d9c82c5bea21c12c6348c",
+      "digest": "sha256:5a7421ccc1747cbd09fdd20fdff315223b76dcddafdcb412b95c7dd906776583",
       "bytes": 9255
     },
     {

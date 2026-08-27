@@ -87,7 +87,7 @@ func metricIDExists(root, metricID string) bool {
 			}
 			return nil
 		}
-		if entry.Name() == "concept.manifest.json" || entry.Name() == "generated" {
+		if entry.Name() == "concept.manifest.json" || filepath.Ext(entry.Name()) != ".go" {
 			return nil
 		}
 		data, err := os.ReadFile(path)

@@ -1,6 +1,6 @@
 {
   "schema": "gooo/manual-source-registration-edit-free-registry-catalog/v1",
-  "section_digest": "sha256:52c5d56c3bebb664f9ae8adbdc5deac23e0f33231eef65fc2906b7f3dd95c85d",
+  "section_digest": "sha256:b3213f89a30379501fbf56b1565a6d02ccddce58ac0850e318ae5f92992ce701",
   "entries": [
     {
       "stable_id": "language-semantic-model",
@@ -20,9 +20,9 @@
         "internal/syntax"
       ],
       "metric_bindings": [
+        "gooo.metric.language.semantic-model-normalized-irs.v1",
         "gooo.metric.language.semantic-model-readiness-bps.v1",
-        "gooo.metric.language.semantic-model-source-models.v1",
-        "gooo.metric.language.semantic-model-source-replays.v1"
+        "gooo.metric.language.semantic-model-source-models.v1"
       ],
       "use_cases": [
         {

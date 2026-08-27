@@ -19,7 +19,7 @@
   ],
   "metric_bindings": [
     "gooo.metric.language.semantic-model-readiness-bps.v1",
-    "gooo.metric.language.semantic-model-source-replays.v1",
+    "gooo.metric.language.semantic-model-normalized-irs.v1",
     "gooo.metric.language.semantic-model-source-models.v1"
   ],
   "use_cases": [

@@ -4,8 +4,8 @@
     {
       "stable_id": "language-semantic-model",
       "source_manifest": "examples/language-semantic-model/concept.manifest.json",
-      "raw_digest": "sha256:79479df093a363a06ad6cbfa04c685b35619f58f1089476ca04b5c8f00733f3d",
-      "semantic_digest": "sha256:0f30639a98b91c0dbf00e76ac2199afd9fdef35818802515814f6494e5065bfa"
+      "raw_digest": "sha256:530c01e2851856f73c81006037f43d3191f44a82e35bd5712fe9eb59216a3a4c",
+      "semantic_digest": "sha256:222d63ca508d3eb6e638c89705c48ea45aa953ba1e2eb29635abb24e3fdf80a2"
     },
     {
       "stable_id": "language-syntax-roundtrip",
