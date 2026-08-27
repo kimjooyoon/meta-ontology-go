@@ -8,10 +8,34 @@ out="${RUNNER_TEMP:-/tmp}/language-utility-evidence"
 mkdir -p "$out/evidence" "$out/package"
 cd "$root"
 
+phase="INITIALIZE"
+preflight="$out/preflight.json"
+write_preflight() {
+  jq -n --arg decision "$1" --arg resolution "$2" --arg reason "$3" \
+    --arg phase "$phase" --arg subject "$HEAD_SHA" \
+    '{schema:"gooo/language-utility-preflight/v1",decision:$decision,resolution:$resolution,
+      reason:$reason,phase:$phase,subject_sha:$subject}' > "$preflight"
+}
+finish_preflight() {
+  code=$?; trap - EXIT
+  if test "$code" -ne 0; then
+    write_preflight "FAIL_CLOSED" "LOWER_RESOLUTION" "${phase}_FAILED"
+  fi
+  exit "$code"
+}
+trap finish_preflight EXIT
+write_preflight "UNKNOWN" "LOWER_RESOLUTION" "PREFLIGHT_RUNNING"
+
+phase="GO_FIX"
 go fix ./cmd/language-utility-witness ./internal/meta/languageutility
 git diff --exit-code -- cmd/language-utility-witness internal/meta/languageutility
-test -z "$(gofmt -l cmd/language-utility-witness internal/meta/languageutility)"
+phase="GOFMT"
+mapfile -t go_files < <(find cmd/language-utility-witness internal/meta/languageutility -type f -name '*.go' -print | sort)
+gofmt -w "${go_files[@]}"
+git diff --exit-code -- cmd/language-utility-witness internal/meta/languageutility
+phase="GO_TEST"
 go test ./cmd/language-utility-witness ./internal/meta/languageutility
+phase="USE_CASES"
 bash scripts/ci-plan-usecase/main.sh
 bash scripts/language-source-execution/main.sh
 bash scripts/language-example-experiment/main.sh
@@ -67,3 +91,6 @@ jq -e '.decision=="PROGRESS_OBSERVED" and .resolution=="EXACT" and .summary.clos
   echo; echo '### Open claim coordinates'
   jq -r '.cells[] | select(.state!="CLOSED") | "- `\(.use_case_id)/\(.stage_id)`: `\(.step)/\(.reason)`"' "$out/report.json"
 } >> "$GITHUB_STEP_SUMMARY"
+phase="CLOSED"
+write_preflight "PASS" "EXACT" "UTILITY_OBSERVATION_CLOSED"
+trap - EXIT
