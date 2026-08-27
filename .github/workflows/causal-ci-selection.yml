@@ -175,17 +175,18 @@ jobs:
         run: |
           set -euo pipefail
           for variant in base semantic nonsemantic contradiction; do
+            consumer_mode=()
             case "$variant" in
               base) variant_source="$SOURCE_PATH" ;;
-              semantic) variant_source=examples/causal-ci-selection/semantic-intervention.gooo ;;
-              nonsemantic) variant_source=examples/causal-ci-selection/nonsemantic-intervention.gooo ;;
-              contradiction) variant_source=examples/causal-ci-selection/contradiction-intervention.gooo ;;
+              semantic) variant_source=examples/causal-ci-selection/semantic-intervention.gooo; consumer_mode=(-intervention) ;;
+              nonsemantic) variant_source=examples/causal-ci-selection/nonsemantic-intervention.gooo; consumer_mode=(-intervention) ;;
+              contradiction) variant_source=examples/causal-ci-selection/contradiction-intervention.gooo; consumer_mode=(-intervention) ;;
             esac
             set +e
             go run ./cmd/causal-ci-selection-consumer \
               -input "$RUNNER_TEMP/causal-ci-selection/observation.json" -source-file "$variant_source" \
               -logical-source "$SOURCE_PATH" -receipt "$RUNNER_TEMP/causal-ci-selection/intervention-plans/$variant-receipt.json" \
-              -variant-id "$variant" -intervention -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/$variant.json" \
+              -variant-id "$variant" "${consumer_mode[@]}" -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/$variant.json" \
               > "$RUNNER_TEMP/causal-ci-selection/process/$variant.stdout" 2> "$RUNNER_TEMP/causal-ci-selection/process/$variant.stderr"
             variant_exit=$?
             set -e
