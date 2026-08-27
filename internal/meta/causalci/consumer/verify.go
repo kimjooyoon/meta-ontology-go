@@ -20,7 +20,7 @@ import (
 const (
 	observationSchema  = "gooo/causal-ci-selection-observation/v2"
 	receiptSchema      = "gooo/causal-ci-selection-receipt/v2"
-	receiptScope       = "READ_ONLY_CAUSAL_SELECTION"
+	receiptScope       = "CAUSAL_SELECTION_PLAN"
 	adjudicationSchema = "gooo/causal-ci-selection-adjudication/v1"
 
 	conformancePass              = "PASS"

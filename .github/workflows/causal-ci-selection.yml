@@ -177,7 +177,7 @@ jobs:
           test "$(jq -r '.source_bytes_digest' "$observation")" != ""
           test "$(jq -r 'has("decision") or has("known") or has("selected_checks") or has("reason")' "$observation")" = "false"
           jq -e --arg source "$SOURCE_PATH" --argjson changed "$changed_count" '
-            .schema == "gooo/causal-ci-selection-receipt/v2" and .execution_mode == "PLAN_ONLY" and
+            .schema == "gooo/causal-ci-selection-receipt/v2" and .scope == "CAUSAL_SELECTION_PLAN" and .execution_mode == "PLAN_ONLY" and
             .execution.result == "UNKNOWN" and .execution.capability == "PLAN_ONLY" and
             .metrics.subject_universe_count == $changed and .metrics.subject_coverage_numerator == $changed and
             .metrics.subject_coverage_denominator == $changed and .metrics.full_suite_check_denominator == 6 and

@@ -5,7 +5,7 @@ const (
 	ReceiptSchema      = "gooo/causal-ci-selection-receipt/v2"
 	ReportSchema       = "gooo/causal-ci-selection-intervention/v1"
 	AdjudicationSchema = "gooo/causal-ci-selection-adjudication/v1"
-	ReceiptScope       = "READ_ONLY_CAUSAL_SELECTION"
+	ReceiptScope       = "CAUSAL_SELECTION_PLAN"
 
 	ConformancePass       = "PASS"
 	ConformanceFailClosed = "FAIL_CLOSED"
