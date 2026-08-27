@@ -69,7 +69,7 @@ func statusFor(ok bool, _ string) string {
 }
 
 func decisionFor(state inspected) (string, string, string, string) {
-	if state.sourceReceipt != statusSatisfied || state.sourceDeclarations != statusSatisfied {
+	if state.sourceReceipt != statusSatisfied || state.sourceDeclarations != statusSatisfied || state.receiptRoles != statusSatisfied {
 		return "FAIL_CLOSED", "EXACT", "BLOCK", "SOURCE_RECEIPT_OR_DECLARATIONS_NOT_BOUND"
 	}
 	switch state.agreementState {

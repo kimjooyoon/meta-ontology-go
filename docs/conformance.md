@@ -50,3 +50,12 @@ belongs in a slot or in the owning example package, not in generated text.
 They do not prove a production LSP, automatic Go-to-DSL synchronization, cache
 durability, or provenance publishing. Those require separate supported entry
 points and evidence.
+
+## External oracle humility
+
+The [external oracle humility example](../examples/external-oracle-humility/README.md)
+is verified by the `External oracle humility` Actions workflow. It keeps the
+12-indicator denominator and 3-case agreement/mismatch/absence suite fixed,
+replays the source receipt through an independent judge, and records no local
+or official mutation. External agreement is reported as
+`REFERENCE_AGREEMENT_OBSERVED`, never as `PASS` or semantic authority.
