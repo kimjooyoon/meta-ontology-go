@@ -1,0 +1,16 @@
+package claimlifecycle
+namespace claimlifecycle
+
+entity Claim id "gooo://claim-lifecycle/claim"
+entity Evidence id "gooo://claim-lifecycle/evidence"
+entity OpenClaim id "gooo://claim-lifecycle/open-claim"
+entity DischargedClaim id "gooo://claim-lifecycle/discharged-claim"
+entity RefutedClaim id "gooo://claim-lifecycle/refuted-claim"
+entity LifecycleReceipt id "gooo://claim-lifecycle/lifecycle-receipt"
+
+activity DeclareClaim(Claim) -> OpenClaim computes "meta.claim.lifecycle.open:v1"
+activity AcceptSupportingEvidence(OpenClaim, Evidence) -> DischargedClaim computes "meta.claim.lifecycle.discharge:v1"
+activity ApplyContradictingEvidence(OpenClaim, Evidence) -> RefutedClaim computes "meta.claim.lifecycle.refute:v1"
+activity PreserveOpenOnMissingEvidence(OpenClaim) -> OpenClaim computes "meta.claim.lifecycle.unknown:v1"
+activity EmitLifecycleReceipt(OpenClaim) -> LifecycleReceipt computes "meta.claim.lifecycle.receipt:v1"
+activity RejectAmbiguousEvidence(OpenClaim, Evidence) -> OpenClaim computes "meta.claim.lifecycle.ambiguous:v1"

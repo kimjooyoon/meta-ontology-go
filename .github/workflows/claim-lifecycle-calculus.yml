@@ -1,0 +1,136 @@
+name: Claim lifecycle calculus
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/claim-lifecycle-calculus.yml
+      - docs/research/claim-lifecycle-calculus.md
+      - examples/claim-lifecycle-calculus/**
+      - scripts/claim-lifecycle-calculus/**
+      - scripts/claim-lifecycle-calculus-judge/**
+      - internal/verify/scope_luna_meta_01.go
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/claim-lifecycle-calculus.yml
+      - docs/research/claim-lifecycle-calculus.md
+      - examples/claim-lifecycle-calculus/**
+      - scripts/claim-lifecycle-calculus/**
+      - scripts/claim-lifecycle-calculus-judge/**
+      - internal/verify/scope_luna_meta_01.go
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  producer:
+    name: Producer receipt
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          check-latest: true
+      - name: Go 1.27 format and compile conformance
+        shell: bash
+        run: |
+          set -euo pipefail
+          format_diff="$(gofmt -d scripts/claim-lifecycle-calculus/main.go scripts/claim-lifecycle-calculus-judge/main.go)"
+          if [[ -n "${format_diff}" ]]; then
+            printf '%s\n' "${format_diff}"
+            exit 1
+          fi
+          go test ./scripts/claim-lifecycle-calculus ./scripts/claim-lifecycle-calculus-judge
+      - name: Emit deterministic lifecycle receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/claim-lifecycle-calculus"
+          mkdir -p "${output}"
+          before="$(git status --porcelain=v1 --untracked-files=all)"
+          go run ./scripts/claim-lifecycle-calculus \
+            --source examples/claim-lifecycle-calculus/main.gooo \
+            --head-sha "${HEAD_SHA}" \
+            --output "${output}/receipt.json"
+          after="$(git status --porcelain=v1 --untracked-files=all)"
+          if [[ "${before}" != "${after}" ]]; then
+            echo 'producer changed the repository' >&2
+            exit 1
+          fi
+          cp examples/claim-lifecycle-calculus/main.gooo "${output}/source.gooo"
+      - name: Upload lifecycle receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: claim-lifecycle-calculus-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/claim-lifecycle-calculus/receipt.json
+            ${{ runner.temp }}/claim-lifecycle-calculus/source.gooo
+          if-no-files-found: error
+          retention-days: 14
+
+  consumer:
+    name: Independent judge
+    needs: producer
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          check-latest: true
+      - name: Download producer receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: claim-lifecycle-calculus-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/claim-lifecycle-calculus
+      - name: Independently judge source and receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          go run ./scripts/claim-lifecycle-calculus-judge \
+            --receipt "${RUNNER_TEMP}/claim-lifecycle-calculus/receipt.json" \
+            --source examples/claim-lifecycle-calculus/main.gooo
+          jq -e '
+            .schema == "gooo/claim-lifecycle-calculus/v1" and
+            .go_version == "go1.27.0" and
+            (.source_relation.activities | length) == 6 and
+            (.claims | length) == 6 and
+            (.transitions | length) == 12 and
+            (.cause_receipts | length) == 12 and
+            .summary.claims_total == 6 and
+            .summary.transitions_total == 12 and
+            .summary.cases_total == 6 and
+            .summary.open_claims == 4 and
+            .summary.discharged_claims == 1 and
+            .summary.refuted_claims == 1 and
+            .summary.case_decision_counts.pass == 2 and
+            .summary.case_decision_counts.fail_closed == 1 and
+            .summary.case_decision_counts.unknown == 3 and
+            .summary.direct_unknown_cases == 2 and
+            .summary.dependency_blocked_cases == 1 and
+            ([.transitions[] | select(.event == "EVIDENCE_CONTRADICTED" and .before == "OPEN" and .after == "REFUTED")] | length) == 1 and
+            ([.cause_receipts[] | select(.kind == "CONTRADICTING_EVIDENCE")] | length) == 1 and
+            ([.metrics[].proof_choice] | unique | sort) == ["COHERENCE", "FOUNDATION", "REGRESSION"] and
+            .effects.repository_writes == 0 and
+            .effects.mutation_authority == false and
+            .decision.value == "PASS"
+          ' "${RUNNER_TEMP}/claim-lifecycle-calculus/receipt.json"
+          {
+            echo '### Claim lifecycle calculus'
+            jq -r '"- fixed claims: \(.summary.claims_total)/\(.summary.claims_total); transitions: \(.summary.transitions_total)/\(.summary.transitions_total)"' "${RUNNER_TEMP}/claim-lifecycle-calculus/receipt.json"
+            jq -r '"- case decisions: PASS \(.summary.case_decision_counts.pass), FAIL_CLOSED \(.summary.case_decision_counts.fail_closed), UNKNOWN \(.summary.case_decision_counts.unknown)"' "${RUNNER_TEMP}/claim-lifecycle-calculus/receipt.json"
+            jq -r '"- lifecycle states: OPEN \(.summary.open_claims), DISCHARGED \(.summary.discharged_claims), REFUTED \(.summary.refuted_claims)"' "${RUNNER_TEMP}/claim-lifecycle-calculus/receipt.json"
+            jq -r '"- UNKNOWN causes: direct \(.summary.direct_unknown_cases), dependency-blocked \(.summary.dependency_blocked_cases)"' "${RUNNER_TEMP}/claim-lifecycle-calculus/receipt.json"
+            jq -r '"- effects: repository writes \(.effects.repository_writes), mutation authority \(.effects.mutation_authority)"' "${RUNNER_TEMP}/claim-lifecycle-calculus/receipt.json"
+          } >> "${GITHUB_STEP_SUMMARY}"
