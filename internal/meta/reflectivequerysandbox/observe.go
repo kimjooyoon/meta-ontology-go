@@ -15,6 +15,10 @@ import (
 )
 
 func Observe(path string, subjectSHA, repositoryBeforePath, repositoryAfterPath string) (Observation, error) {
+	return ObserveWithCheckoutEvidence(path, subjectSHA, "", repositoryBeforePath, repositoryAfterPath)
+}
+
+func ObserveWithCheckoutEvidence(path, subjectSHA, checkoutEvidence, repositoryBeforePath, repositoryAfterPath string) (Observation, error) {
 	if path != SourcePath {
 		return Observation{}, fmt.Errorf("source path is not canonical: got %q want %q", path, SourcePath)
 	}
@@ -70,24 +74,69 @@ func Observe(path string, subjectSHA, repositoryBeforePath, repositoryAfterPath 
 	}
 	value := Observation{
 		Schema: Schema, SubjectSHA: subjectSHA, Contract: buildContract(model, source, attempts, claims),
-		Source: source, Attempts: attempts, Claims: claims, Effects: effects, SubjectBinding: bindSubjectSHA(subjectSHA),
+		Source: source, Attempts: attempts, Claims: claims, Effects: effects, SubjectBinding: bindSubjectSHA(subjectSHA, checkoutEvidence),
 		Provisional: true, TransitionChainDigest: chainDigest, Producer: ProducerName,
 	}
 	value.ProvisionalDigest = observationDigest(value)
 	return value, nil
 }
 
-func bindSubjectSHA(value string) SubjectBinding {
-	binding := SubjectBinding{Value: value, Stage: "SUBJECT", Step: "validate-subject-sha"}
+func bindSubjectSHA(value, checkoutEvidence string) SubjectBinding {
+	binding := SubjectBinding{Value: value}
+	binding.Format = SubjectEvidence{Stage: "SUBJECT", Step: "validate-sha-format"}
 	if len(value) == 40 {
 		if _, err := hex.DecodeString(value); err == nil {
-			binding.Decision, binding.Resolution, binding.Reason = "PASS", "EXACT", "SUBJECT_SHA_BOUND_TO_CHECKOUT"
-			binding.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_BOUND_TO_CHECKOUT")
-			return binding
+			binding.Format.Decision, binding.Format.Resolution, binding.Format.Reason = "PASS", "EXACT", "FORMAT_VALID"
+			binding.Format.Digest = semantic.StableHashString(value + "|FORMAT_VALID")
+		} else {
+			binding.Format.Decision, binding.Format.Resolution, binding.Format.Reason = "UNKNOWN", "LOWER_RESOLUTION", "FORMAT_INVALID"
+			binding.Format.Digest = semantic.StableHashString(value + "|FORMAT_INVALID")
 		}
+	} else {
+		binding.Format.Decision, binding.Format.Resolution, binding.Format.Reason = "UNKNOWN", "LOWER_RESOLUTION", "FORMAT_INVALID"
+		binding.Format.Digest = semantic.StableHashString(value + "|FORMAT_INVALID")
 	}
-	binding.Decision, binding.Resolution, binding.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_UNBOUND"
-	binding.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_UNBOUND")
+
+	binding.Checkout = SubjectEvidence{Stage: "SUBJECT", Step: "verify-checkout-evidence"}
+	if checkoutEvidence == "" {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_UNOBSERVED"
+		binding.Checkout.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_CHECKOUT_UNOBSERVED")
+		return binding
+	}
+	binding.Checkout.EvidenceDigest = semantic.StableHash([]byte(checkoutEvidence))
+	lines := strings.Split(strings.TrimSuffix(checkoutEvidence, "\n"), "\n")
+	if len(lines) != 3 || !strings.HasPrefix(lines[0], "subject_sha=") || !strings.HasPrefix(lines[1], "checkout_head=") || !strings.HasPrefix(lines[2], "subject_matches_checkout=") {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID")
+		return binding
+	}
+	evidenceSubject := strings.TrimPrefix(lines[0], "subject_sha=")
+	observedSHA := strings.TrimPrefix(lines[1], "checkout_head=")
+	matchValue := strings.TrimPrefix(lines[2], "subject_matches_checkout=")
+	binding.Checkout.ObservedSHA = observedSHA
+	match := matchValue == "true"
+	if evidenceSubject != value || len(observedSHA) != 40 {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID")
+		return binding
+	}
+	if _, err := hex.DecodeString(observedSHA); err != nil || (match != (value == observedSHA)) {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID")
+		return binding
+	}
+	if binding.Format.Decision == "PASS" && value == observedSHA && match {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "PASS", "EXACT", "CHECKOUT_BOUND"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|CHECKOUT_BOUND")
+		return binding
+	}
+	if binding.Format.Decision == "PASS" {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "REFUTED", "EXACT", "SUBJECT_SHA_CHECKOUT_MISMATCH"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_MISMATCH")
+		return binding
+	}
+	binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_UNRESOLVED"
+	binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_UNRESOLVED")
 	return binding
 }
 
@@ -311,7 +360,7 @@ func attemptIDForProgram(program string) string {
 }
 
 func observeEffects(beforePath, afterPath string) Effects {
-	base := Effects{RepositoryObservation: "net_repository_status_unchanged", OverallAuthority: "UNKNOWN", DetachedGraphPatchCapability: "UNKNOWN"}
+	base := Effects{RepositoryObservation: "UNOBSERVED", OverallAuthority: "UNKNOWN", DetachedGraphPatchCapability: "UNKNOWN"}
 	if beforePath == "" || afterPath == "" {
 		base.RepositoryObservationStage, base.RepositoryObservationStep, base.RepositoryObservationReason = "REPOSITORY", "read-status", "REPOSITORY_EVIDENCE_MISSING"
 		return base
@@ -329,7 +378,12 @@ func observeEffects(beforePath, afterPath string) Effects {
 	base.RepositoryStatusBefore, base.RepositoryStatusAfter = before, after
 	base.NetRepositoryChanges = changedLines(before, after)
 	base.RepositoryEvidenceAvailable = true
-	base.RepositoryObservationStage, base.RepositoryObservationStep, base.RepositoryObservationReason = "REPOSITORY", "compare-normalized-status", "NET_REPOSITORY_STATUS_CAPTURED"
+	base.RepositoryObservationStage, base.RepositoryObservationStep = "REPOSITORY", "compare-normalized-status"
+	if len(base.NetRepositoryChanges) == 0 {
+		base.RepositoryObservation, base.RepositoryObservationReason = "net_repository_status_unchanged", "NET_REPOSITORY_STATUS_UNCHANGED"
+	} else {
+		base.RepositoryObservation, base.RepositoryObservationReason = "net_repository_status_changed", "NET_REPOSITORY_STATUS_CHANGED"
+	}
 	return base
 }
 

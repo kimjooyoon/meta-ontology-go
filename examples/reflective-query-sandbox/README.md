@@ -46,6 +46,12 @@ endpoint is `UNKNOWN / LOWER_RESOLUTION / UNKNOWN_TARGET`, with stage
 an observation failure (`UNKNOWN / LOWER_RESOLUTION`) and does not become a
 semantic contradiction. A boundary violation is `REFUTED`.
 
+Subject identity is also split: `format` reports `FORMAT_VALID` independently
+from `checkout`, which reports `CHECKOUT_BOUND` only when producer-shell
+evidence records the actual checkout HEAD and the independent consumer matches
+that evidence to its own checkout. A valid but stale SHA is therefore
+`FORMAT_VALID` plus `SUBJECT_SHA_CHECKOUT_MISMATCH`, not a bound subject.
+
 Each claim gets two append-only events: its source-declared prior state, then
 an evidence-dependent event. Every claim has an explicit predicate evaluator
 and observed material digest. Only its named attempt and predicate may move it
@@ -54,9 +60,11 @@ contradictions move it to `REFUTED`.
 
 The shell captures tracked and untracked `git status --porcelain` lines before
 and after the producer. Those raw snapshots and only their net difference are
-embedded in the observation and copied into the receipt. The precise baseline
-observation is `net_repository_status_unchanged`; equal porcelain snapshots do
-not prove zero transient writes.
+embedded in the observation and copied into the receipt. The repository
+observation is `UNOBSERVED` without both evidence files,
+`net_repository_status_unchanged` for equal normalized snapshots, and
+`net_repository_status_changed` for an observed difference. Equal porcelain
+snapshots do not prove zero transient writes.
 
 ## Independent consumer
 
@@ -81,11 +89,13 @@ unknown is a lower-resolution subject result, not a successful discharge.
 CI also publishes a JSON intervention artifact. A semantic intervention
 changes the source-declared mutation field from `id` to `name` and its payload
 to `intervened-name`. The actual API outcome changes from typed `REJECTED` to
-`ACCEPTED`; detached graph-patch capability changes from false to true while
-overall authority remains `UNKNOWN`, and the scoped mutation claim changes
+`ACCEPTED`; detached graph-patch capability changes from `NOT_OBSERVED` to
+`OBSERVED` while overall authority remains `UNKNOWN`, and the scoped mutation claim changes
 from `DISCHARGED` to `REFUTED`. A nonsemantic intervention changes only a
 comment; the raw source digest changes while the semantic/graph digests,
 mutation outcome, scoped capability, and claim state are preserved.
+CI also fixes a three-case regression matrix: stale-but-well-formed subject
+SHA, changed repository before/after evidence, and missing repository evidence.
 
 ## Research decisions
 
@@ -111,7 +121,8 @@ if an error is mislabeled as an exact rejection, if the original graph changes
 or the returned graph is omitted from mutation evidence, if unknown becomes
 exact/pass, if a claim discharges without its named predicate/attempt, if
 transition order or digests change, if repository before/after differs, if a
-missing subject SHA or repository evidence becomes PASS, or if the independent
+missing or stale subject binding becomes `CHECKOUT_BOUND`, if repository
+evidence is missing or changed but is labeled unchanged, or if the independent
 consumer cannot reconstruct the raw source.
 
 This does not claim general Go reflection equivalence, hostile-process safety,

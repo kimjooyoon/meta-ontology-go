@@ -138,13 +138,20 @@ type Observation struct {
 }
 
 type SubjectBinding struct {
-	Value      string `json:"value"`
-	Decision   string `json:"decision"`
-	Resolution string `json:"resolution"`
-	Stage      string `json:"stage"`
-	Step       string `json:"step"`
-	Reason     string `json:"reason"`
-	Digest     string `json:"digest"`
+	Value    string          `json:"value"`
+	Format   SubjectEvidence `json:"format"`
+	Checkout SubjectEvidence `json:"checkout"`
+}
+
+type SubjectEvidence struct {
+	Decision       string `json:"decision"`
+	Resolution     string `json:"resolution"`
+	Stage          string `json:"stage"`
+	Step           string `json:"step"`
+	Reason         string `json:"reason"`
+	ObservedSHA    string `json:"observed_sha,omitempty"`
+	EvidenceDigest string `json:"evidence_digest,omitempty"`
+	Digest         string `json:"digest"`
 }
 
 type Score struct {

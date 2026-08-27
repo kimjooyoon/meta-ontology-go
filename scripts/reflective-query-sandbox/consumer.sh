@@ -22,11 +22,11 @@ test "$producer_imports" -le "$maximum_allowed"
 
 go run ./scripts/reflective-query-sandbox/consumer \
 	-input "$input/observation.json" -source "$source_path" \
-	-subject-sha "$HEAD_SHA" -producer-imports-evidence "$import_evidence" \
+	-subject-sha "$HEAD_SHA" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
 	-producer-imports-maximum "$maximum_allowed" -output "$output/receipt.json"
 go run ./scripts/reflective-query-sandbox/consumer \
 	-input "$input/observation.json" -source "$source_path" \
-	-subject-sha "$HEAD_SHA" -producer-imports-evidence "$import_evidence" \
+	-subject-sha "$HEAD_SHA" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
 	-producer-imports-maximum "$maximum_allowed" -output "$output/replay.json"
 cmp -s "$output/receipt.json" "$output/replay.json"
 
@@ -39,7 +39,11 @@ jq -e --arg sha "$HEAD_SHA" '
   .coordinates.satisfied == .contract.satisfied_indicators and
   .coordinates.satisfied == 11 and .coordinates.total == 12 and
   .subject_resolution == "MIXED_EXACT_AND_LOWER_RESOLUTION" and
-  .subject_binding.decision == "PASS" and .subject_binding.resolution == "EXACT" and
+  .subject_binding.format.decision == "PASS" and .subject_binding.format.resolution == "EXACT" and
+  .subject_binding.format.reason == "FORMAT_VALID" and
+  .subject_binding.checkout.decision == "PASS" and .subject_binding.checkout.resolution == "EXACT" and
+  .subject_binding.checkout.reason == "CHECKOUT_BOUND" and .subject_binding.checkout.observed_sha == $sha and
+  (.subject_binding.checkout.evidence_digest | length) > 0 and
   .source_reconstruction.satisfied == .source_reconstruction.total and
   .producer_imports.satisfied == 1 and .producer_imports.total == 1 and
   .import_boundary.forbidden_imports_observed == 0 and .import_boundary.maximum_allowed == 0 and
@@ -67,12 +71,49 @@ jq -e --arg sha "$HEAD_SHA" '
   (.not_claimed | length) == 5
 ' "$output/receipt.json" >/dev/null
 
+wrong_sha=$(printf '0%.0s' {1..40})
+if [ "$wrong_sha" = "$HEAD_SHA" ]; then
+	wrong_sha=$(printf 'f%.0s' {1..40})
+fi
+go run ./scripts/reflective-query-sandbox/consumer \
+	-input "$input/regressions/wrong-sha.json" -source "$source_path" \
+	-subject-sha "$wrong_sha" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
+	-producer-imports-maximum "$maximum_allowed" -output "$output/wrong-sha-receipt.json"
+go run ./scripts/reflective-query-sandbox/consumer \
+	-input "$input/regressions/changed-repository.json" -source "$source_path" \
+	-subject-sha "$HEAD_SHA" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
+	-producer-imports-maximum "$maximum_allowed" -output "$output/changed-repository-receipt.json"
+go run ./scripts/reflective-query-sandbox/consumer \
+	-input "$input/regressions/missing-repository.json" -source "$source_path" \
+	-subject-sha "$HEAD_SHA" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
+	-producer-imports-maximum "$maximum_allowed" -output "$output/missing-repository-receipt.json"
+jq -e '
+  .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
+  .subject_binding.format.decision == "PASS" and
+  .subject_binding.checkout.decision == "REFUTED" and
+  .subject_binding.checkout.reason == "SUBJECT_SHA_CHECKOUT_MISMATCH"
+' "$output/wrong-sha-receipt.json" >/dev/null
+jq -e '
+  .decision == "REFUTED" and
+  .effects.repository_observation == "net_repository_status_changed" and
+  ([.claims[] | select(.predicate_id == "net-repository-status-unchanged" and .to == "REFUTED" and .reason == "NET_REPOSITORY_STATUS_CHANGED")] | length) == 1
+' "$output/changed-repository-receipt.json" >/dev/null
+jq -e '
+  .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
+  .effects.repository_evidence_available == false and
+  .effects.repository_observation == "UNOBSERVED" and
+  .effects.repository_observation_stage == "REPOSITORY" and
+  .effects.repository_observation_step == "read-status" and
+  (.effects.repository_observation_reason | startswith("REPOSITORY_EVIDENCE_"))
+' "$output/missing-repository-receipt.json" >/dev/null
+
 {
 	echo '## Reflective query sandbox consumer'
 	echo
 	echo '| Observation | Exact value |'
 	echo '|---|---:|'
     jq -r '"| Safe exact queries | \(.contract.safe_queries) / \(.contract.reflective_queries) |", "| Denied immutable-id patches | \(.contract.denied_mutations) |", "| Unknown targets preserved | \(.contract.unknown_targets) |", "| Indicators | \(.coordinates.satisfied) / \(.coordinates.total) |", "| Claim transitions | \(.contract.transition_count) |", "| Source reconstruction | \(.source_reconstruction.satisfied) / \(.source_reconstruction.total) |", "| Producer import boundary | \(.import_boundary.forbidden_imports_observed) <= \(.import_boundary.maximum_allowed); coordinate \(.producer_imports.satisfied)/\(.producer_imports.total) |", "| Net repository status | \(.effects.net_repository_changes | length) changes; observation=\(.effects.repository_observation) |", "| Detached graph patch capability | \(.detached_graph_patch_capability) |", "| Overall mutation authority | \(.overall_authority) |", "| Receipt attestation | \(.attestor); material=\(.receipt_material_digest); chain=\(.transition_chain_digest) |", "| Promotion credit | \(.promotion_credit_bps) bps |"' "$output/receipt.json"
+	jq -r '"| Subject binding | format=\(.subject_binding.format.reason); checkout=\(.subject_binding.checkout.reason); evidence=\(.subject_binding.checkout.evidence_digest) |"' "$output/receipt.json"
 	echo
 	echo '### Mutation boundary evidence'
 	echo
@@ -89,6 +130,7 @@ jq -e --arg sha "$HEAD_SHA" '
 	echo '| Audit correction gates | Result |'
 	echo '|---|---:|'
 	echo '| Scoped correction gates | 11 / 11 |'
+	echo '| Fixed regression matrix | 3 / 3 |'
 	echo '| Local tests | 0 |'
 } >> "${GITHUB_STEP_SUMMARY:-$output/summary.md}"
 

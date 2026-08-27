@@ -140,13 +140,20 @@ type claimTransition struct {
 }
 
 type subjectBinding struct {
-	Value      string `json:"value"`
-	Decision   string `json:"decision"`
-	Resolution string `json:"resolution"`
-	Stage      string `json:"stage"`
-	Step       string `json:"step"`
-	Reason     string `json:"reason"`
-	Digest     string `json:"digest"`
+	Value    string          `json:"value"`
+	Format   subjectEvidence `json:"format"`
+	Checkout subjectEvidence `json:"checkout"`
+}
+
+type subjectEvidence struct {
+	Decision       string `json:"decision"`
+	Resolution     string `json:"resolution"`
+	Stage          string `json:"stage"`
+	Step           string `json:"step"`
+	Reason         string `json:"reason"`
+	ObservedSHA    string `json:"observed_sha,omitempty"`
+	EvidenceDigest string `json:"evidence_digest,omitempty"`
+	Digest         string `json:"digest"`
 }
 
 type observation struct {
@@ -257,12 +264,13 @@ func main() {
 	input := flag.String("input", "", "producer observation")
 	source := flag.String("source", "", "Gooo source")
 	subject := flag.String("subject-sha", "", "exact subject commit")
+	checkout := flag.String("checkout-sha", "", "actual CI checkout commit")
 	importsFile := flag.String("producer-imports-evidence", "", "raw go list evidence")
 	maximum := flag.Int("producer-imports-maximum", -1, "maximum forbidden imports")
 	output := flag.String("output", "", "independent receipt")
 	flag.Parse()
 	if *input == "" || *source == "" || *importsFile == "" || *maximum < 0 || *output == "" {
-		fail("usage: consumer -input FILE -source FILE -subject-sha SHA -producer-imports-evidence FILE -producer-imports-maximum N -output FILE")
+		fail("usage: consumer -input FILE -source FILE -subject-sha SHA -checkout-sha SHA -producer-imports-evidence FILE -producer-imports-maximum N -output FILE")
 	}
 	data, err := os.ReadFile(*input)
 	if err != nil {
@@ -287,7 +295,7 @@ func main() {
 	if forbidden > *maximum {
 		fail("producer import boundary exceeded: observed=%d maximum=%d", forbidden, *maximum)
 	}
-	verified, reconstruction, err := validateObservation(value, *source, *subject)
+	verified, reconstruction, err := validateObservation(value, *source, *subject, *checkout)
 	if err != nil {
 		fail("independent reconstruction: %v", err)
 	}
@@ -302,10 +310,10 @@ func main() {
 	if err := os.WriteFile(*output, append(encoded, '\n'), 0o644); err != nil {
 		fail("write receipt: %v", err)
 	}
-	fmt.Printf("consumer verdict: %s claims=%d/%d queries=%d/%d source=%d/%d imports=%d/%d net_repository_status_unchanged=%t overall_authority=%s\n", result.Decision, result.Coordinates.Satisfied, result.Coordinates.Total, value.Contract.SafeQueries, value.Contract.ReflectiveQueries, result.SourceReconstruction.Satisfied, result.SourceReconstruction.Total, result.ProducerImports.Satisfied, result.ProducerImports.Total, reflectRepositoryNet(result.Effects), result.OverallAuthority)
+	fmt.Printf("consumer verdict: %s claims=%d/%d queries=%d/%d source=%d/%d imports=%d/%d subject_format=%s subject_checkout=%s repository_observation=%s overall_authority=%s\n", result.Decision, result.Coordinates.Satisfied, result.Coordinates.Total, value.Contract.SafeQueries, value.Contract.ReflectiveQueries, result.SourceReconstruction.Satisfied, result.SourceReconstruction.Total, result.ProducerImports.Satisfied, result.ProducerImports.Total, value.SubjectBinding.Format.Reason, value.SubjectBinding.Checkout.Reason, result.Effects.RepositoryObservation, result.OverallAuthority)
 }
 
-func validateObservation(value observation, sourcePath, subject string) (verifiedObservation, coordinates, error) {
+func validateObservation(value observation, sourcePath, subject, checkout string) (verifiedObservation, coordinates, error) {
 	if sourcePath != canonicalSourcePath {
 		return verifiedObservation{}, coordinates{}, fmt.Errorf("source path is not canonical: got %q want %q", sourcePath, canonicalSourcePath)
 	}
@@ -315,7 +323,7 @@ func validateObservation(value observation, sourcePath, subject string) (verifie
 	if !value.Provisional || value.Digest != "" || value.ReceiptMaterialDigest != "" || value.ProvisionalDigest != observationDigest(value) {
 		return verifiedObservation{}, coordinates{}, errors.New("producer observation is not an unsealed provisional observation")
 	}
-	wantBinding := bindSubjectSHA(subject)
+	wantBinding := bindSubjectSHA(subject, checkout)
 	if !reflect.DeepEqual(value.SubjectBinding, wantBinding) {
 		return verifiedObservation{}, coordinates{}, errors.New("subject_sha binding is not bound to the checkout value")
 	}
@@ -348,10 +356,10 @@ func validateObservation(value observation, sourcePath, subject string) (verifie
 		return verifiedObservation{}, coordinates{}, fmt.Errorf("runtime=%s contract=%s", runtime.Version(), value.Contract.GoVersion)
 	}
 	if value.Effects.RepositoryEvidenceAvailable {
-		if value.Effects.RepositoryStatusBefore == nil || value.Effects.RepositoryStatusAfter == nil || !reflect.DeepEqual(changedLines(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter), value.Effects.NetRepositoryChanges) || value.Effects.RepositoryObservation != "net_repository_status_unchanged" {
+		if value.Effects.RepositoryStatusBefore == nil || value.Effects.RepositoryStatusAfter == nil || !reflect.DeepEqual(changedLines(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter), value.Effects.NetRepositoryChanges) || (len(value.Effects.NetRepositoryChanges) == 0 && value.Effects.RepositoryObservation != "net_repository_status_unchanged") || (len(value.Effects.NetRepositoryChanges) > 0 && value.Effects.RepositoryObservation != "net_repository_status_changed") {
 			return verifiedObservation{}, coordinates{}, errors.New("repository evidence is not an exact normalized status observation")
 		}
-	} else if value.Effects.RepositoryStatusBefore != nil || value.Effects.RepositoryStatusAfter != nil || value.Effects.RepositoryObservationReason == "" {
+	} else if value.Effects.RepositoryStatusBefore != nil || value.Effects.RepositoryStatusAfter != nil || value.Effects.NetRepositoryChanges != nil || value.Effects.RepositoryObservation != "UNOBSERVED" || value.Effects.RepositoryObservationReason == "" {
 		return verifiedObservation{}, coordinates{}, errors.New("missing repository evidence was not represented as UNKNOWN")
 	}
 	wantAttempts, immutableAccepted, capability, api, outcome, apiError, err := reconstructAttempts(ir, graph, model, semanticDigest, value.Effects)
@@ -409,18 +417,57 @@ func validateObservation(value observation, sourcePath, subject string) (verifie
 	return verifiedObservation{Model: model, Source: wantSource, Attempts: attestedAttempts, Claims: attestedClaims, Contract: attestedContract, Material: material, TransitionChainDigest: attestedChain}, reconstructionCoordinates(checks), nil
 }
 
-func bindSubjectSHA(value string) subjectBinding {
-	binding := subjectBinding{Value: value, Stage: "SUBJECT", Step: "validate-subject-sha"}
+func bindSubjectSHA(value, checkout string) subjectBinding {
+	binding := subjectBinding{Value: value}
+	binding.Format = subjectEvidence{Stage: "SUBJECT", Step: "validate-sha-format"}
 	if len(value) == 40 {
 		if _, err := hex.DecodeString(value); err == nil {
-			binding.Decision, binding.Resolution, binding.Reason = "PASS", "EXACT", "SUBJECT_SHA_BOUND_TO_CHECKOUT"
-			binding.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_BOUND_TO_CHECKOUT")
-			return binding
+			binding.Format.Decision, binding.Format.Resolution, binding.Format.Reason = "PASS", "EXACT", "FORMAT_VALID"
+			binding.Format.Digest = semantic.StableHashString(value + "|FORMAT_VALID")
+		} else {
+			binding.Format.Decision, binding.Format.Resolution, binding.Format.Reason = "UNKNOWN", "LOWER_RESOLUTION", "FORMAT_INVALID"
+			binding.Format.Digest = semantic.StableHashString(value + "|FORMAT_INVALID")
 		}
+	} else {
+		binding.Format.Decision, binding.Format.Resolution, binding.Format.Reason = "UNKNOWN", "LOWER_RESOLUTION", "FORMAT_INVALID"
+		binding.Format.Digest = semantic.StableHashString(value + "|FORMAT_INVALID")
 	}
-	binding.Decision, binding.Resolution, binding.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_UNBOUND"
-	binding.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_UNBOUND")
+
+	binding.Checkout = subjectEvidence{Stage: "SUBJECT", Step: "verify-checkout-evidence"}
+	if checkout == "" {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_UNOBSERVED"
+		binding.Checkout.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_CHECKOUT_UNOBSERVED")
+		return binding
+	}
+	binding.Checkout.ObservedSHA = checkout
+	binding.Checkout.EvidenceDigest = semantic.StableHash([]byte(checkoutEvidence(value, checkout)))
+	if len(checkout) != 40 {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID")
+		return binding
+	}
+	if _, err := hex.DecodeString(checkout); err != nil {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_EVIDENCE_INVALID")
+		return binding
+	}
+	if binding.Format.Decision == "PASS" && value == checkout {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "PASS", "EXACT", "CHECKOUT_BOUND"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|CHECKOUT_BOUND")
+		return binding
+	}
+	if binding.Format.Decision == "PASS" {
+		binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "REFUTED", "EXACT", "SUBJECT_SHA_CHECKOUT_MISMATCH"
+		binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_MISMATCH")
+		return binding
+	}
+	binding.Checkout.Decision, binding.Checkout.Resolution, binding.Checkout.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_CHECKOUT_UNRESOLVED"
+	binding.Checkout.Digest = semantic.StableHashString(binding.Checkout.EvidenceDigest + "|SUBJECT_SHA_CHECKOUT_UNRESOLVED")
 	return binding
+}
+
+func checkoutEvidence(subject, checkout string) string {
+	return fmt.Sprintf("subject_sha=%s\ncheckout_head=%s\nsubject_matches_checkout=%t\n", subject, checkout, subject == checkout)
 }
 
 func deriveSourceModel(ir semantic.IR) (sourceModel, error) {
@@ -872,7 +919,7 @@ func immutableRejection(value attempt) bool {
 }
 
 func reflectRepositoryNet(fx effects) bool {
-	return fx.RepositoryEvidenceAvailable && fx.RepositoryStatusBefore != nil && fx.RepositoryStatusAfter != nil && len(fx.NetRepositoryChanges) == 0 && stringSliceEqual(fx.RepositoryStatusBefore, fx.RepositoryStatusAfter)
+	return fx.RepositoryEvidenceAvailable && fx.RepositoryObservation == "net_repository_status_unchanged" && fx.RepositoryStatusBefore != nil && fx.RepositoryStatusAfter != nil && len(fx.NetRepositoryChanges) == 0 && stringSliceEqual(fx.RepositoryStatusBefore, fx.RepositoryStatusAfter)
 }
 
 func changedLines(before, after []string) []string {
@@ -997,17 +1044,27 @@ func buildReceipt(value observation, verified verifiedObservation, sourceReconst
 			break
 		}
 	}
-	if value.SubjectBinding.Decision != "PASS" {
-		decision, resolution, reason = "UNKNOWN", "LOWER_RESOLUTION", value.SubjectBinding.Reason
+	if value.SubjectBinding.Format.Decision != "PASS" || value.SubjectBinding.Checkout.Decision != "PASS" {
+		decision, resolution, reason = "UNKNOWN", "LOWER_RESOLUTION", subjectBindingReason(value.SubjectBinding)
+	}
+	if !value.Effects.RepositoryEvidenceAvailable && decision == "PASS" {
+		decision, resolution, reason = "UNKNOWN", "LOWER_RESOLUTION", value.Effects.RepositoryObservationReason
 	}
 	subjectResolution := "EXACT_ONLY"
 	if verified.Contract.UnknownTargets > 0 {
 		subjectResolution = "MIXED_EXACT_AND_LOWER_RESOLUTION"
 	}
-	if value.SubjectBinding.Decision != "PASS" {
+	if value.SubjectBinding.Format.Decision != "PASS" || value.SubjectBinding.Checkout.Decision != "PASS" {
 		subjectResolution = "UNKNOWN_SUBJECT_SHA"
 	}
 	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: decision, Resolution: resolution, SubjectResolution: subjectResolution, Reason: reason, Producer: value.Producer, Consumer: consumerName, Contract: verified.Contract, Source: verified.Source, Attempts: verified.Attempts, Claims: verified.Claims, Coordinates: coordinates{Satisfied: countTransitions(verified.Claims, "DISCHARGED"), Total: len(verified.Model.Claims), BasisPoints: basisPoints(countTransitions(verified.Claims, "DISCHARGED"), len(verified.Model.Claims))}, Classes: scores(classTotals, classSatisfied), Proofs: scores(proofTotals, proofSatisfied), Effects: value.Effects, SubjectBinding: value.SubjectBinding, SourceReconstruction: sourceReconstruction, ProducerImports: producerImports, ImportBoundary: imports, PromotionCreditBPS: 0, ImmutableIDPatchAccepted: value.Effects.ImmutableIDPatchAccepted, DetachedGraphPatchCapability: value.Effects.DetachedGraphPatchCapability, OverallAuthority: value.Effects.OverallAuthority, ReceiptMaterialDigest: verified.Material, TransitionChainDigest: verified.TransitionChainDigest, Attestor: consumerName, NotClaimed: []string{"generic Go reflection API equivalence", "global mutation authority or repository event-level transient writes", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
+}
+
+func subjectBindingReason(binding subjectBinding) string {
+	if binding.Format.Decision != "PASS" {
+		return binding.Format.Reason
+	}
+	return binding.Checkout.Reason
 }
 
 func scores(totals, satisfied map[string]int) []score {

@@ -157,7 +157,7 @@ func immutableRejection(attempt Attempt) bool {
 }
 
 func reflectRepositoryNet(effects Effects) bool {
-	return effects.RepositoryEvidenceAvailable && effects.RepositoryStatusBefore != nil && effects.RepositoryStatusAfter != nil && len(effects.NetRepositoryChanges) == 0 && stringSliceEqual(effects.RepositoryStatusBefore, effects.RepositoryStatusAfter)
+	return effects.RepositoryEvidenceAvailable && effects.RepositoryObservation == "net_repository_status_unchanged" && effects.RepositoryStatusBefore != nil && effects.RepositoryStatusAfter != nil && len(effects.NetRepositoryChanges) == 0 && stringSliceEqual(effects.RepositoryStatusBefore, effects.RepositoryStatusAfter)
 }
 
 func stringSliceEqual(left, right []string) bool {

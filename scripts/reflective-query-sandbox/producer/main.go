@@ -12,14 +12,23 @@ import (
 func main() {
 	source := flag.String("source", "", "Gooo source")
 	subject := flag.String("subject-sha", "", "exact subject commit")
+	checkoutEvidencePath := flag.String("subject-checkout-evidence", "", "producer shell evidence binding subject SHA to checkout HEAD")
 	output := flag.String("output", "", "observation receipt")
 	repositoryBefore := flag.String("repository-before", "", "repository status before observation")
 	repositoryAfter := flag.String("repository-after", "", "repository status after observation")
 	flag.Parse()
 	if *source == "" || *output == "" {
-		fail("usage: producer -source FILE -subject-sha SHA -repository-before FILE -repository-after FILE -output FILE")
+		fail("usage: producer -source FILE -subject-sha SHA -subject-checkout-evidence FILE -repository-before FILE -repository-after FILE -output FILE")
 	}
-	observation, err := sandbox.Observe(*source, *subject, *repositoryBefore, *repositoryAfter)
+	checkoutEvidence := ""
+	if *checkoutEvidencePath != "" {
+		data, readErr := os.ReadFile(*checkoutEvidencePath)
+		if readErr != nil {
+			fail("read subject checkout evidence: %v", readErr)
+		}
+		checkoutEvidence = string(data)
+	}
+	observation, err := sandbox.ObserveWithCheckoutEvidence(*source, *subject, checkoutEvidence, *repositoryBefore, *repositoryAfter)
 	if err != nil {
 		fail("observe source: %v", err)
 	}
