@@ -2113,3 +2113,77 @@ jobs:
           path: source-binding-promotion-output
           if-no-files-found: error
           retention-days: 30
+
+  capability-scoped-expansion:
+    name: capability-scoped-expansion
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27.0
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Generate and independently judge the same-source comparison twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          for pass in first second; do
+            output="$RUNNER_TEMP/capability-scoped-expansion/$pass"
+            mkdir -p "$output"
+            go run ./cmd/capability-scoped-expansion-witness \
+              --source examples/capability-scoped-expansion/main.gooo \
+              --output-dir "$output" --subject-sha "$HEAD_SHA"
+          done
+          base="$RUNNER_TEMP/capability-scoped-expansion"
+          cmp "$base/first/allow-receipt.json" "$base/second/allow-receipt.json"
+          cmp "$base/first/deny-receipt.json" "$base/second/deny-receipt.json"
+          cmp "$base/first/unknown-receipt.json" "$base/second/unknown-receipt.json"
+          cmp "$base/first/suite.json" "$base/second/suite.json"
+          cmp "$base/first/independent-judge.json" "$base/second/independent-judge.json"
+          jq -e '
+            .schema == "gooo/capability-scoped-expansion-suite/v1" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .summary.cases_total == 8 and .summary.cases_passed == 8 and
+            .summary.allow_cases == 1 and .summary.deny_cases == 6 and
+            .summary.unknown_cases == 1 and
+            .summary.capability_requests == 32 and
+            .summary.capability_authorized == 4 and
+            .summary.capability_denied == 24 and
+            .summary.capability_unknown == 4 and
+            .summary.repository_writes == 0 and
+            .summary.mutation_authority == false and
+            .summary.promotion_authority == false and
+            .independent_judge == "PASS"
+          ' "$base/first/suite.json"
+          jq -e --slurpfile deny "$base/first/deny-receipt.json" \
+            '.decision == "ALLOW" and .resolution == "EXACT" and .source_digest == $deny[0].source_digest and .authority.capabilities_authorized == 4 and .repository_writes == 0 and .mutation_authority == false' \
+            "$base/first/allow-receipt.json" >/dev/null
+          jq -e '.decision == "DENY" and .resolution == "INVARIANT_ONLY" and .reason == "CAPABILITY_NOT_DECLARED" and .unknown == null and .authority.capabilities_authorized == 0' "$base/first/deny-receipt.json"
+          jq -e '.decision == "UNKNOWN" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason != ""' "$base/first/unknown-receipt.json"
+          {
+            echo "### Capability-scoped expansion"
+            jq -r '"- cases: `\(.summary.cases_passed)/\(.summary.cases_total)`; allow `\(.summary.allow_cases)`, deny `\(.summary.deny_cases)`, UNKNOWN `\(.summary.unknown_cases)`"' "$base/first/suite.json"
+            jq -r '"- capability permissions: requested `\(.summary.capability_requests)`, authorized `\(.summary.capability_authorized)`, denied `\(.summary.capability_denied)`, UNKNOWN `\(.summary.capability_unknown)`"' "$base/first/suite.json"
+            jq -r '"- effects: repository writes `\(.summary.repository_writes)`, mutation authority `\(.summary.mutation_authority)`, promotion authority `\(.summary.promotion_authority)`"' "$base/first/suite.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload capability and evidence receipts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: capability-scoped-expansion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/capability-scoped-expansion/first
+          if-no-files-found: error
+          retention-days: 14
