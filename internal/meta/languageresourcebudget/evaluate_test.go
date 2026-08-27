@@ -47,7 +47,7 @@ func TestEffectsBoundaryRequiresPerOperationSnapshots(t *testing.T) {
 
 func TestEvaluateLocalizesMissingResourceCoordinate(t *testing.T) {
 	input := fixtureInput()
-	input.Observations = append([]Observation(nil), input.Observations[:6]...)
+	input.Observations = append([]Observation(nil), input.Observations[:8]...)
 	report := Evaluate(input, "missing-sample")
 	if report.Transitions[1].To != "OPEN" || report.Transitions[1].Reason != "RESOURCE_SAMPLE_MISSING" || report.Summary.Resources[0].MissingSamples != 0 || report.Summary.Resources[1].MissingSamples != 0 || report.Summary.Resources[2].MissingSamples != 1 {
 		t.Fatalf("missing=%#v", report)
