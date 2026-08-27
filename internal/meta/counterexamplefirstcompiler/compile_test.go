@@ -24,11 +24,11 @@ func TestCompileUsesRawObservationInsteadOfCorpusConclusions(t *testing.T) {
 	contract := cf.CanonicalContract()
 	source := sourceFixture
 	corpus := cf.ScenarioCorpus{Schema: cf.CorpusSchema, Version: 1, Scenarios: []cf.Scenario{
-		{ID: "resolved-minimal-counterexample", Candidate: cf.Candidate{ID: "candidate", Source: &source}},
-		{ID: "canonical-control", Candidate: cf.Candidate{ID: "control", Source: &source}},
-		{ID: "unresolved-counterexample", Candidate: cf.Candidate{ID: "unresolved", Source: &source}},
-		{ID: "comment-only-control", Candidate: cf.Candidate{ID: "comment", Source: &source}},
-		{ID: "unobserved-input", Candidate: cf.Candidate{ID: "missing", Source: nil}},
+		{ID: "resolved-minimal-counterexample", Candidate: cf.Candidate{ID: "candidate", ClaimID: "claim-resolved-repair", PredicateID: "identity-drift-detected", Claim: "the candidate identity drift can be repaired by canonicalizing the same minimal source", Source: &source}},
+		{ID: "canonical-control", Candidate: cf.Candidate{ID: "control", ClaimID: "claim-canonical-control", PredicateID: "canonical-source-admissible", Claim: "a canonical candidate has no observed identity violation but is insufficient evidence for promotion", Source: &source}},
+		{ID: "unresolved-counterexample", Candidate: cf.Candidate{ID: "unresolved", ClaimID: "claim-unresolved-boundary", PredicateID: "resolution-required", Claim: "an identity violation without repair evidence remains refuted", Source: &source}},
+		{ID: "comment-only-control", Candidate: cf.Candidate{ID: "comment", ClaimID: "claim-comment-invariance", PredicateID: "semantic-digest-invariant", Claim: "comment-only source changes preserve semantic lowering and predicate evidence", Source: &source}},
+		{ID: "unobserved-input", Candidate: cf.Candidate{ID: "missing", ClaimID: "claim-source-acquisition", PredicateID: "source-acquisition-present", Claim: "absent source acquisition retains UNKNOWN rather than inferring a decision", Source: nil}},
 	}}
 	receipts, err := Compile(contract, "head", contract.SourcePath, []byte(source), corpus)
 	if err != nil {
@@ -40,7 +40,7 @@ func TestCompileUsesRawObservationInsteadOfCorpusConclusions(t *testing.T) {
 	if receipts[1].Decision != "FAIL_CLOSED" || receipts[1].Reason != "COUNTEREXAMPLE_REQUIRED" {
 		t.Fatalf("canonical control=%#v", receipts[1])
 	}
-	if receipts[4].Decision != "UNKNOWN" || receipts[4].Coordinate.Stage != "UNKNOWN" {
+	if receipts[4].Decision != "UNKNOWN" || receipts[4].Coordinate.Stage != "INPUT_OBSERVATION" {
 		t.Fatalf("unknown input=%#v", receipts[4])
 	}
 }
@@ -61,11 +61,11 @@ activity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence
 activity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision
 `
 	corpus := cf.ScenarioCorpus{Schema: cf.CorpusSchema, Version: 1, Scenarios: []cf.Scenario{
-		{ID: "resolved-minimal-counterexample", Candidate: cf.Candidate{ID: "candidate", Source: &bad}},
-		{ID: "canonical-control", Candidate: cf.Candidate{ID: "control", Source: &good}},
-		{ID: "unresolved-counterexample", Candidate: cf.Candidate{ID: "unresolved", Source: &bad}},
-		{ID: "comment-only-control", Candidate: cf.Candidate{ID: "comment", Source: &good}},
-		{ID: "unobserved-input", Candidate: cf.Candidate{ID: "missing", Source: nil}},
+		{ID: "resolved-minimal-counterexample", Candidate: cf.Candidate{ID: "candidate", ClaimID: "claim-resolved-repair", PredicateID: "identity-drift-detected", Claim: "the candidate identity drift can be repaired by canonicalizing the same minimal source", Source: &bad}},
+		{ID: "canonical-control", Candidate: cf.Candidate{ID: "control", ClaimID: "claim-canonical-control", PredicateID: "canonical-source-admissible", Claim: "a canonical candidate has no observed identity violation but is insufficient evidence for promotion", Source: &good}},
+		{ID: "unresolved-counterexample", Candidate: cf.Candidate{ID: "unresolved", ClaimID: "claim-unresolved-boundary", PredicateID: "resolution-required", Claim: "an identity violation without repair evidence remains refuted", Source: &bad}},
+		{ID: "comment-only-control", Candidate: cf.Candidate{ID: "comment", ClaimID: "claim-comment-invariance", PredicateID: "semantic-digest-invariant", Claim: "comment-only source changes preserve semantic lowering and predicate evidence", Source: &good}},
+		{ID: "unobserved-input", Candidate: cf.Candidate{ID: "missing", ClaimID: "claim-source-acquisition", PredicateID: "source-acquisition-present", Claim: "absent source acquisition retains UNKNOWN rather than inferring a decision", Source: nil}},
 	}}
 	receipts, err := Compile(contract, "head", contract.SourcePath, []byte(sourceFixture), corpus)
 	if err != nil {
