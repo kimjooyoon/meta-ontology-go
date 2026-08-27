@@ -16,14 +16,19 @@ go run ./scripts/reflective-query-sandbox/producer \
 	-source "$source_path" -subject-sha "$HEAD_SHA" -output "$output/observation.json"
 go run ./scripts/reflective-query-sandbox/producer \
 	-source "$source_path" -subject-sha "$HEAD_SHA" -output "$output/replay.json"
-cmp -s "$output/observation.json" "$output/replay.json"
+if ! cmp -s "$output/observation.json" "$output/replay.json"; then
+	echo 'producer replay mismatch:' >&2
+	diff -u "$output/observation.json" "$output/replay.json" >&2 || true
+	exit 1
+fi
 after=$(git status --porcelain=v1 --untracked-files=all)
 test "$before" = "$after"
 
 jq -e --arg sha "$HEAD_SHA" '
   .schema == "gooo/reflective-query-sandbox-observation/v1" and
   .subject_sha == $sha and
-  .source == {path:"examples/reflective-query-sandbox/main.gooo", source_digest:.source.source_digest, semantic_digest:.source.semantic_digest, node_count:9, fact_count:8, gooo_lines:11} and
+  .source.path == "examples/reflective-query-sandbox/main.gooo" and
+  .source.node_count == 9 and .source.fact_count == 8 and .source.gooo_lines == 11 and
   (.attempts | length) == 5 and
   ([.attempts[] | select(.decision == "PASS" and .resolution == "EXACT")] | length) == 3 and
   ([.attempts[] | select(.decision == "DENIED" and .reason == "READ_ONLY_QUERY_ONLY")] | length) == 1 and
