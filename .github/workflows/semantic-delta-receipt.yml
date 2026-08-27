@@ -93,7 +93,7 @@ jobs:
           case "$out" in "$RUNNER_TEMP"/*) ;; *) exit 1 ;; esac
           workspace_content_snapshot > "$out/workspace-before.tsv"
           set +e
-          go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness > "$out/go-fix.stdout" 2>&1
+	          go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness > "$out/go-fix.stdout" 2> "$out/go-fix.stderr"
           fix_status=$?
           set -e
           fix_empty=0
