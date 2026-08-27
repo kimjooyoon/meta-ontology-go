@@ -18,8 +18,8 @@ func evaluateCase(definition CaseDefinition, producer, receipt, oracle []byte, h
 		ObservedDecision: decision, ObservedResolution: resolution, ObservedReason: reason,
 		Coordinate: coordinate, Claims: []ClaimResult{
 			claim("structural-source-execution", structural), claim("independent-source-binding", independent),
-			claim("source-binding-promotion", promotion)}}
-	result.Status = "NOT_SATISFIED"
+			claim("source-binding-promotion", promotion)},
+		Status: "NOT_SATISFIED"}
 	if decision == definition.ExpectedDecision && resolution == definition.ExpectedResolution &&
 		reason == definition.ExpectedReason && promotion.Status == definition.ExpectedPromotionStatus {
 		result.Status = "SATISFIED"
