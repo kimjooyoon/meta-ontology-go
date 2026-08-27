@@ -1,0 +1,81 @@
+name: Self-improvement termination witness
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: termination-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  witness:
+    name: termination witness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Bind the declared Go 1.27 toolchain
+        run: |
+          test "$(go env GOVERSION)" = "go1.27.0"
+          go version
+      - name: Check the Gooo termination contract
+        run: go run ./cmd/gooo check examples/self-improvement-termination/main.gooo
+      - name: Produce, replay, and independently judge every case
+        env:
+          CASE_DIR: examples/self-improvement-termination
+          OUTPUT_DIR: ${{ runner.temp }}/self-improvement-termination
+        run: |
+          set -euo pipefail
+          mkdir -p "$OUTPUT_DIR"
+          cases=(fixed-point cycle-2 in-progress divergence-possible)
+          expected=(FIXED_POINT CYCLE IN_PROGRESS DIVERGENCE_POSSIBLE)
+          for index in "${!cases[@]}"; do
+            name="${cases[$index]}"
+            input="$CASE_DIR/$name.json"
+            receipt="$OUTPUT_DIR/$name-receipt.json"
+            replay="$OUTPUT_DIR/$name-replay.json"
+            judge="$OUTPUT_DIR/$name-judge.json"
+            go run ./cmd/self-improvement-termination-witness --input "$input" --output "$receipt" --check
+            go run ./cmd/self-improvement-termination-witness --input "$input" --output "$replay" --check
+            cmp -s "$receipt" "$replay"
+            go run ./cmd/self-improvement-termination-judge --input "$input" --receipt "$receipt" --output "$judge"
+            jq -e --arg want "${expected[$index]}" \
+              '.independent == true and .decision == $want and .satisfied == 10 and .total == 10 and .basis_points == 10000' \
+              "$judge"
+            jq -r '"- " + input_filename + ": " + .decision + " (" + .reason + "), " + (.satisfied|tostring) + "/" + (.total|tostring)' "$judge" >> "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Reject a forged fixed-point promotion
+        env:
+          CASE_DIR: examples/self-improvement-termination
+          OUTPUT_DIR: ${{ runner.temp }}/self-improvement-termination
+        run: |
+          set -euo pipefail
+          jq '.decision = "FIXED_POINT"' "$OUTPUT_DIR/cycle-2-receipt.json" > "$OUTPUT_DIR/forged-cycle.json"
+          if go run ./cmd/self-improvement-termination-judge \
+            --input "$CASE_DIR/cycle-2.json" \
+            --receipt "$OUTPUT_DIR/forged-cycle.json"; then
+            echo "independent judge accepted a forged fixed point"
+            exit 1
+          fi
+      - name: Upload termination receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-improvement-termination-receipts
+          path: ${{ runner.temp }}/self-improvement-termination
+          if-no-files-found: error
