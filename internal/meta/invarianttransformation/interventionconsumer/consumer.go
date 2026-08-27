@@ -84,7 +84,8 @@ type CommentOnlyReceipt struct {
 	DecisionEqual            bool   `json:"decision_equal"`
 	BaselineTransitionDigest string `json:"baseline_transition_digest"`
 	MutatedTransitionDigest  string `json:"mutated_transition_digest"`
-	ClaimTransitionsEqual    bool   `json:"claim_transitions_equal"`
+	TransitionDigestChanged  bool   `json:"transition_digest_changed"`
+	TransitionStatePathEqual bool   `json:"transition_state_path_equal"`
 	Stage                    string `json:"stage"`
 	Step                     string `json:"step"`
 	Reason                   string `json:"reason"`
@@ -162,6 +163,9 @@ type caseWire struct {
 	MutatedEvidence                           model.TransformationEvidence `json:"mutated_evidence"`
 	BaselineClaimTransitions                  []transitionWire             `json:"baseline_claim_transitions"`
 	MutatedClaimTransitions                   []transitionWire             `json:"mutated_claim_transitions"`
+	BaselineTransitionDigest                  string                       `json:"baseline_transition_digest"`
+	MutatedTransitionDigest                   string                       `json:"mutated_transition_digest"`
+	TransitionDigestChanged                   bool                         `json:"transition_digest_changed"`
 	RawSourceDigestChanged                    bool                         `json:"raw_source_digest_changed"`
 	ReceiptChanged                            bool                         `json:"receipt_changed"`
 	SemanticProjectionEqual                   bool                         `json:"semantic_projection_equal"`
@@ -169,7 +173,7 @@ type caseWire struct {
 	ResolutionEqual                           bool                         `json:"resolution_equal"`
 	ReasonEqual                               bool                         `json:"reason_equal"`
 	DecisionChanged                           bool                         `json:"decision_changed"`
-	ClaimTransitionsEqual                     bool                         `json:"claim_transitions_equal"`
+	TransitionStatePathEqual                  bool                         `json:"transition_state_path_equal"`
 	EffectsEqual                              bool                         `json:"effects_equal"`
 	ReplayObservationEqual                    bool                         `json:"replay_observation_equal"`
 	EvidenceObservable                        bool                         `json:"evidence_observable"`
@@ -312,13 +316,15 @@ func buildCommentOnlyReceipt(source []byte, headSHA string) (CommentOnlyReceipt,
 	mutatedReceipt := reconstructReceipt(mutatedFixture, mutated, headSHA)
 	baselineJudgment := reconstructJudgment(baselineReceipt)
 	mutatedJudgment := reconstructJudgment(mutatedReceipt)
+	baselineTransitionDigest := model.Digest(transitionWires(baselineReceipt.Claims))
+	mutatedTransitionDigest := model.Digest(transitionWires(mutatedReceipt.Claims))
 	receipt := CommentOnlyReceipt{
 		Schema: "gooo/invariant-transformation-comment-only-receipt/v1", CaseID: nonSemanticCaseID,
 		BaselineRawDigest: baselineReceipt.SourceDigest, MutatedRawDigest: mutatedReceipt.SourceDigest,
 		BaselineProvenanceDigest: provenanceDigest(baselineReceipt.SourceDigest, headSHA, nonSemanticCaseID), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, nonSemanticCaseID),
 		BaselineSemanticDigest: baselineFixture.SemanticSourceDigest, MutatedSemanticDigest: mutatedFixture.SemanticSourceDigest, SemanticDigestEqual: baselineFixture.SemanticSourceDigest == mutatedFixture.SemanticSourceDigest,
 		BaselineDecision: baselineJudgment.Decision, MutatedDecision: mutatedJudgment.Decision, DecisionEqual: baselineJudgment.Decision == mutatedJudgment.Decision,
-		BaselineTransitionDigest: model.Digest(transitionWires(baselineReceipt.Claims)), MutatedTransitionDigest: model.Digest(transitionWires(mutatedReceipt.Claims)), ClaimTransitionsEqual: transitionOutcomes(baselineReceipt.Claims, mutatedReceipt.Claims),
+		BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, TransitionDigestChanged: baselineTransitionDigest != mutatedTransitionDigest, TransitionStatePathEqual: transitionStatePathEqual(baselineReceipt.Claims, mutatedReceipt.Claims),
 		Stage: "INTERVENTION", Step: nonSemanticStep, Reason: nonSemanticReason,
 	}
 	evidence := receipt
@@ -401,15 +407,18 @@ func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt
 	decisionEqual := baselineJudgment.Decision == mutatedJudgment.Decision
 	resolutionEqual := baselineJudgment.Resolution == mutatedJudgment.Resolution
 	reasonEqual := baselineJudgment.Reason == mutatedJudgment.Reason
-	transitionEqual := transitionOutcomes(baselineReceipt.Claims, mutatedReceipt.Claims)
+	statePathEqual := transitionStatePathEqual(baselineReceipt.Claims, mutatedReceipt.Claims)
+	baselineTransitionDigest := model.Digest(transitionWires(baselineReceipt.Claims))
+	mutatedTransitionDigest := model.Digest(transitionWires(mutatedReceipt.Claims))
+	transitionDigestChanged := baselineTransitionDigest != mutatedTransitionDigest
 	replayEqual := replayObservationEqual(baselineReceipt.Evidence, mutatedReceipt.Evidence)
-	transitionEvidence := model.Digest([]any{model.Digest(projection(baseline)), model.Digest(projection(mutated)), baselineJudgment.Decision, mutatedJudgment.Decision, baselineJudgment.Resolution, mutatedJudgment.Resolution, baselineJudgment.Reason, mutatedJudgment.Reason})
+	transitionEvidence := model.Digest([]any{model.Digest(projection(baseline)), model.Digest(projection(mutated)), baselineJudgment.Decision, mutatedJudgment.Decision, baselineJudgment.Resolution, mutatedJudgment.Resolution, baselineJudgment.Reason, mutatedJudgment.Reason, baselineReceipt.SourceDigest, mutatedReceipt.SourceDigest, provenanceDigest(baselineReceipt.SourceDigest, headSHA, item.ID), provenanceDigest(mutatedReceipt.SourceDigest, headSHA, item.ID)})
 	claimCoordinate := model.Coordinate{Stage: "INTERVENTION", Step: step[0], Reason: step[1]}
 	expectedTransition := model.NewTransition(item.ID+"::claim", model.StatusOpen, model.StatusDischarged, claimCoordinate, transitionEvidence)
 	if item.Claim.VerificationCheck != "intervention-observation-derived-from-two-independent-receipts" || item.Claim.Resolution != model.ResolutionExact || item.Claim.Reason != step[1] || item.Claim.TargetDigest != expectedTransition.PropositionDigest || item.Claim.PriorStateDigest != expectedTransition.PriorStateDigest || item.Claim.EvidenceDigest != expectedTransition.EvidenceDigest || !reflect.DeepEqual(item.Claim.Transitions[0], transitionFromModel(expectedTransition)) {
 		return fmt.Errorf("case %q claim ledger provenance is invalid", item.ID)
 	}
-	if item.RawSourceDigestChanged != rawChanged || item.ProvenanceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.ClaimTransitionsEqual != transitionEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryNetStatusUnchanged || item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
+	if item.BaselineTransitionDigest != baselineTransitionDigest || item.MutatedTransitionDigest != mutatedTransitionDigest || item.TransitionDigestChanged != transitionDigestChanged || item.RawSourceDigestChanged != rawChanged || item.ProvenanceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.TransitionStatePathEqual != statePathEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryNetStatusUnchanged || item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
 		return fmt.Errorf("case %q observation fields are not derived", item.ID)
 	}
 	return nil
@@ -882,7 +891,7 @@ func evidenceDigests(value string) []string {
 func projection(fixture sourceFixture) projectionWire {
 	return projectionWire{Activity: fixture.Activity, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, Input: fixture.Input, CandidateOperation: fixture.CandidateOperation, CandidateResult: fixture.CandidateResult, Expected: fixture.Expected, Invariant: fixture.Invariant, InvariantID: fixture.InvariantID, DomainID: fixture.DomainID, OperationID: fixture.OperationID, ReplayRecipe: fixture.ReplayRecipe, SemanticSourceDigest: fixture.SemanticSourceDigest, EffectIntent: fixture.EffectIntent}
 }
-func transitionOutcomes(left, right []model.Claim) bool {
+func transitionStatePathEqual(left, right []model.Claim) bool {
 	if len(left) != len(right) {
 		return false
 	}

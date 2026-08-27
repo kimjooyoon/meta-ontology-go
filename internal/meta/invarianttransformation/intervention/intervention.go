@@ -150,6 +150,9 @@ type Case struct {
 	MutatedEvidence                           model.TransformationEvidence `json:"mutated_evidence"`
 	BaselineClaimTransitions                  []model.Transition           `json:"baseline_claim_transitions"`
 	MutatedClaimTransitions                   []model.Transition           `json:"mutated_claim_transitions"`
+	BaselineTransitionDigest                  string                       `json:"baseline_transition_digest"`
+	MutatedTransitionDigest                   string                       `json:"mutated_transition_digest"`
+	TransitionDigestChanged                   bool                         `json:"transition_digest_changed"`
 	RawSourceDigestChanged                    bool                         `json:"raw_source_digest_changed"`
 	ReceiptChanged                            bool                         `json:"receipt_changed"`
 	SemanticProjectionEqual                   bool                         `json:"semantic_projection_equal"`
@@ -157,7 +160,7 @@ type Case struct {
 	ResolutionEqual                           bool                         `json:"resolution_equal"`
 	ReasonEqual                               bool                         `json:"reason_equal"`
 	DecisionChanged                           bool                         `json:"decision_changed"`
-	ClaimTransitionsEqual                     bool                         `json:"claim_transitions_equal"`
+	TransitionStatePathEqual                  bool                         `json:"transition_state_path_equal"`
 	EffectsEqual                              bool                         `json:"effects_equal"`
 	ReplayObservationEqual                    bool                         `json:"replay_observation_equal"`
 	EvidenceObservable                        bool                         `json:"evidence_observable"`
@@ -329,12 +332,14 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 	baselineJudgment := judge.Judge(baselineReceipt, source)
 	mutatedJudgment := judge.Judge(mutatedReceipt, mutated)
 	baselineTransitions, mutatedTransitions := transitions(baselineReceipt), transitions(mutatedReceipt)
+	baselineTransitionDigest, mutatedTransitionDigest := model.Digest(baselineTransitions), model.Digest(mutatedTransitions)
 	item := Case{ID: id, Kind: kind, SourceEdit: edit, BaselineProjection: baselineProjection, MutatedProjection: mutatedProjection,
 		BaselineProjectionDigest: model.Digest(baselineProjection), MutatedProjectionDigest: model.Digest(mutatedProjection), BaselineSourceDigest: baselineReceipt.SourceDigest, MutatedSourceDigest: mutatedReceipt.SourceDigest,
 		BaselineProvenanceDigest: provenanceDigest(baselineReceipt.SourceDigest, headSHA, id), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, id), ProvenanceDigestChanged: baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest,
 		BaselineSemanticDigest: baselineProjection.SemanticSourceDigest, MutatedSemanticDigest: mutatedProjection.SemanticSourceDigest, SemanticDigestEqual: baselineProjection.SemanticSourceDigest == mutatedProjection.SemanticSourceDigest,
 		BaselineReceiptDigest: baselineReceipt.Digest, MutatedReceiptDigest: mutatedReceipt.Digest, BaselineReceiptDecision: baselineReceipt.Decision, MutatedReceiptDecision: mutatedReceipt.Decision,
 		BaselineJudgment: baselineJudgment, MutatedJudgment: mutatedJudgment, BaselineClaimTransitions: baselineTransitions, MutatedClaimTransitions: mutatedTransitions,
+		BaselineTransitionDigest: baselineTransitionDigest, MutatedTransitionDigest: mutatedTransitionDigest, TransitionDigestChanged: baselineTransitionDigest != mutatedTransitionDigest,
 		RawSourceDigestChanged: baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest, ReceiptChanged: baselineReceipt.Digest != mutatedReceipt.Digest,
 		SemanticProjectionEqual: reflect.DeepEqual(baselineProjection, mutatedProjection), DecisionEqual: baselineJudgment.Decision == mutatedJudgment.Decision && baselineReceipt.Decision == mutatedReceipt.Decision,
 		ResolutionEqual: baselineJudgment.Resolution == mutatedJudgment.Resolution && baselineReceipt.Resolution == mutatedReceipt.Resolution, ReasonEqual: baselineJudgment.Reason == mutatedJudgment.Reason && baselineReceipt.Reason == mutatedReceipt.Reason,
@@ -345,12 +350,12 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 		BaselineRepositoryActualOrTransientWrites: baselineReceipt.RepositoryActualOrTransientWrites, MutatedRepositoryActualOrTransientWrites: mutatedReceipt.RepositoryActualOrTransientWrites,
 		BaselineRepositoryMutationAuthorized: baselineReceipt.RepositoryMutationAuthorized, MutatedRepositoryMutationAuthorized: mutatedReceipt.RepositoryMutationAuthorized}
 	item.DecisionChanged = !item.DecisionEqual
-	item.ClaimTransitionsEqual = transitionOutcomeEqual(baselineTransitions, mutatedTransitions)
+	item.TransitionStatePathEqual = transitionStatePathEqual(baselineTransitions, mutatedTransitions)
 	item.RepositoryWritesNotClaimed = !item.BaselineRepositoryWritesObserved && !item.MutatedRepositoryWritesObserved && item.BaselineRepositoryWrites == -1 && item.MutatedRepositoryWrites == -1 && item.BaselineRepositoryActualOrTransientWrites == model.UnknownEffectScope && item.MutatedRepositoryActualOrTransientWrites == model.UnknownEffectScope && !item.BaselineRepositoryMutationAuthorized && !item.MutatedRepositoryMutationAuthorized
 	item.Satisfied, item.Claim.Resolution, item.Claim.Reason = adjudicate(kind, item, item.EvidenceObservable, satisfiedReason)
 	status := statusForAdjudication(item.Satisfied, item.EvidenceObservable)
 	coordinate := model.Coordinate{Stage: InterventionStage, Step: step, Reason: item.Claim.Reason}
-	transitionEvidence := model.Digest([]any{item.BaselineProjectionDigest, item.MutatedProjectionDigest, item.BaselineJudgment.Decision, item.MutatedJudgment.Decision, item.BaselineJudgment.Resolution, item.MutatedJudgment.Resolution, item.BaselineJudgment.Reason, item.MutatedJudgment.Reason})
+	transitionEvidence := model.Digest([]any{item.BaselineProjectionDigest, item.MutatedProjectionDigest, item.BaselineJudgment.Decision, item.MutatedJudgment.Decision, item.BaselineJudgment.Resolution, item.MutatedJudgment.Resolution, item.BaselineJudgment.Reason, item.MutatedJudgment.Reason, item.BaselineSourceDigest, item.MutatedSourceDigest, item.BaselineProvenanceDigest, item.MutatedProvenanceDigest})
 	transition := model.NewTransition(claimID, model.StatusOpen, status, coordinate, transitionEvidence)
 	item.Claim.ID, item.Claim.Status, item.Claim.Coordinate, item.Claim.VerificationCheck = claimID, status, coordinate, "intervention-observation-derived-from-two-independent-receipts"
 	item.Claim.TargetDigest, item.Claim.PriorStateDigest, item.Claim.EvidenceDigest = transition.PropositionDigest, transition.PriorStateDigest, transition.EvidenceDigest
@@ -374,9 +379,9 @@ func adjudicate(kind string, item Case, observable bool, satisfiedReason string)
 func observationSatisfied(kind string, item Case) bool {
 	switch kind {
 	case "SEMANTIC_EXPECTED", "SEMANTIC_OPERATION":
-		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticDigestEqual && !item.SemanticProjectionEqual && !item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.ClaimTransitionsEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
+		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticDigestEqual && !item.SemanticProjectionEqual && !item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.TransitionStatePathEqual && item.TransitionDigestChanged && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
 	case "NON_SEMANTIC":
-		return item.RawSourceDigestChanged && item.ProvenanceDigestChanged && item.ReceiptChanged && item.SemanticDigestEqual && item.SemanticProjectionEqual && item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.ClaimTransitionsEqual && item.EffectsEqual && item.ReplayObservationEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionAllowed
+		return item.RawSourceDigestChanged && item.ProvenanceDigestChanged && item.ReceiptChanged && item.SemanticDigestEqual && item.SemanticProjectionEqual && item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.TransitionStatePathEqual && item.TransitionDigestChanged && item.EffectsEqual && item.ReplayObservationEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionAllowed
 	default:
 		return false
 	}
@@ -390,7 +395,7 @@ func replayEqual(left, right model.TransformationEvidence) bool {
 	return left.ReplayCount == right.ReplayCount && left.ReplayOperation == right.ReplayOperation && left.ReplayOutput == right.ReplayOutput && left.ReplayDigest == right.ReplayDigest && left.ReplaySemanticDigest == right.ReplaySemanticDigest && left.ReplayEvidenceDigest == right.ReplayEvidenceDigest
 }
 
-func transitionOutcomeEqual(left, right []model.Transition) bool {
+func transitionStatePathEqual(left, right []model.Transition) bool {
 	if len(left) != len(right) {
 		return false
 	}

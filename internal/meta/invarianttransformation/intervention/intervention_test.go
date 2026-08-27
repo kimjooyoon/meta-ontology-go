@@ -40,7 +40,7 @@ func TestBuildKeepsInterventionDenominatorsSeparate(t *testing.T) {
 	if report.Cases[1].BaselineEvidence.ReplayCount != 2 || report.Cases[1].MutatedEvidence.ReplayCount != 2 || report.Cases[1].Claim.Coordinate.Stage != InterventionStage || report.Cases[1].Claim.Coordinate.Step != SemanticOperationStep || report.Cases[1].Claim.Coordinate.Reason != SemanticOperationReason {
 		t.Fatalf("semantic operation evidence or claim=%+v", report.Cases[1])
 	}
-	if report.Cases[2].RawSourceDigestChanged != true || !report.Cases[2].SemanticProjectionEqual || !report.Cases[2].DecisionEqual || !report.Cases[2].ResolutionEqual || !report.Cases[2].ReasonEqual || !report.Cases[2].ClaimTransitionsEqual || !report.Cases[2].EffectsEqual || !report.Cases[2].ReplayObservationEqual || report.Cases[2].Satisfied != true {
+	if report.Cases[2].RawSourceDigestChanged != true || !report.Cases[2].SemanticProjectionEqual || !report.Cases[2].DecisionEqual || !report.Cases[2].ResolutionEqual || !report.Cases[2].ReasonEqual || !report.Cases[2].TransitionStatePathEqual || !report.Cases[2].TransitionDigestChanged || !report.Cases[2].EffectsEqual || !report.Cases[2].ReplayObservationEqual || report.Cases[2].Satisfied != true {
 		t.Fatalf("nonsemantic case=%+v", report.Cases[2])
 	}
 	if report.Cases[2].BaselineEvidence.ReplayCount != 2 || report.Cases[2].MutatedEvidence.ReplayCount != 2 || report.Cases[2].Claim.Coordinate.Stage != InterventionStage || report.Cases[2].Claim.Coordinate.Step != NonSemanticStep || report.Cases[2].Claim.Coordinate.Reason != NonSemanticReason {

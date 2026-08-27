@@ -2592,7 +2592,8 @@ jobs:
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .decision_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .resolution_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .reason_equal] | all | not) and
-            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .claim_transitions_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .transition_state_path_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .transition_digest_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .decision_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .raw_source_digest_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .receipt_changed] | all) and
@@ -2600,7 +2601,8 @@ jobs:
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .decision_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .resolution_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .reason_equal] | all | not) and
-            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .claim_transitions_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .transition_state_path_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .transition_digest_changed] | all) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .decision_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .raw_source_digest_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .baseline_provenance_digest != .mutated_provenance_digest and .provenance_digest_changed] | all) and
@@ -2610,7 +2612,8 @@ jobs:
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .decision_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .resolution_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .reason_equal] | all) and
-            ([.cases[] | select(.kind == "NON_SEMANTIC") | .claim_transitions_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .transition_state_path_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .transition_digest_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .effects_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .replay_observation_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .baseline_evidence.replay_count == 2 and .mutated_evidence.replay_count == 2 and
@@ -2666,7 +2669,8 @@ jobs:
             .comment_only.baseline_raw_digest != .comment_only.mutated_raw_digest and
             .comment_only.baseline_provenance_digest != .comment_only.mutated_provenance_digest and
             .comment_only.semantic_digest_equal == true and .comment_only.decision_equal == true and
-            .comment_only.claim_transitions_equal == true and
+            .comment_only.transition_state_path_equal == true and
+            .comment_only.transition_digest_changed == true and
             .comment_only.stage == "INTERVENTION" and
             .comment_only.step == "compare-nonsemantic-projection-and-decision" and
             .comment_only.reason == "NONSEMANTIC_PROJECTION_AND_DECISION_PRESERVED" and
@@ -2817,6 +2821,45 @@ jobs:
               -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
               -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
               -intervention-report "$tamper/comment-resealed-report.json" -intervention-consumer-receipt "$tamper/comment-resealed-consumer.json"
+          go run ./cmd/invariant-transformation-closure-negative \
+            -mode comment-semantic-digest -intervention-report "$root/intervention/first/report.json" \
+            -intervention-consumer-receipt "$root/intervention/consumer-verification.json" \
+            -output-intervention-report "$tamper/comment-semantic-digest-report.json" \
+            -output-consumer-receipt "$tamper/comment-semantic-digest-consumer.json"
+          jq -e '.cases[] | select(.id == "nonsemantic-source-intervention") | .semantic_digest_equal == false' "$tamper/comment-semantic-digest-report.json"
+          jq -e '.comment_only.semantic_digest_equal == false' "$tamper/comment-semantic-digest-consumer.json"
+          expect_reject 'ARTIFACT_CLOSURE/comment-only/source-reconstruction/COMMENT_INTERVENTION_RESEALED_WITHOUT_SOURCE_MATCH' "$tamper/comment-semantic-digest.log" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+              -intervention-report "$tamper/comment-semantic-digest-report.json" -intervention-consumer-receipt "$tamper/comment-semantic-digest-consumer.json"
+          go run ./cmd/invariant-transformation-closure-negative \
+            -mode comment-gate-false -intervention-report "$root/intervention/first/report.json" \
+            -intervention-consumer-receipt "$root/intervention/consumer-verification.json" \
+            -output-intervention-report "$tamper/comment-gate-false-report.json" \
+            -output-consumer-receipt "$tamper/comment-gate-false-consumer.json"
+          jq -e '.cases[] | select(.id == "nonsemantic-source-intervention") | .semantic_projection_equal == false' "$tamper/comment-gate-false-report.json"
+          expect_reject 'ARTIFACT_CLOSURE/comment-only/source-reconstruction/COMMENT_INTERVENTION_RESEALED_WITHOUT_SOURCE_MATCH' "$tamper/comment-gate-false.log" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+              -intervention-report "$tamper/comment-gate-false-report.json" -intervention-consumer-receipt "$tamper/comment-gate-false-consumer.json"
+          go run ./cmd/invariant-transformation-closure-negative \
+            -mode semantic-case-reseal -intervention-report "$root/intervention/first/report.json" \
+            -output-intervention-report "$tamper/semantic-case-resealed-report.json"
+          test "$(jq -r '.cases[] | select(.id == "semantic-expected-intervention") | .mutated_projection.expected' "$tamper/semantic-case-resealed-report.json")" != \
+            "$(jq -r '.cases[] | select(.id == "semantic-expected-intervention") | .mutated_projection.expected' "$root/intervention/first/report.json")"
+          go run ./cmd/invariant-transformation-closure-verifier \
+            -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+            -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+            -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+            -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+            -intervention-report "$tamper/semantic-case-resealed-report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
+          echo 'comment-only negative fixtures: semantic-digest-gate=1/1; calculated-gate-false=1/1; semantic-case-reseal-out-of-scope=1/1' >> "$GITHUB_STEP_SUMMARY"
           expect_reject 'ARTIFACT_CLOSURE/authorization-tamper/compare/AUTHORIZATION_TAMPER_NOT_AUTHORIZATION_ONLY' "$tamper/multi-auth.log" \
             go run ./cmd/invariant-transformation-closure-verifier \
               -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
