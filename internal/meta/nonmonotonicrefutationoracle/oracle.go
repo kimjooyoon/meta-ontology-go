@@ -2,6 +2,7 @@ package nonmonotonicrefutationoracle
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
