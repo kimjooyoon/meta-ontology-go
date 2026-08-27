@@ -42,6 +42,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 	byKind := map[string]Evidence{}
 	evidenceOK := map[string]bool{}
 	evidenceDigestMismatch := false
+	mismatchedEvidenceKinds := map[string]bool{}
 	duplicateEvidence := false
 	for _, item := range artifact.Evidence {
 		if item.Kind == "" || byKind[item.Kind].Kind != "" {
@@ -52,6 +53,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 		evidenceOK[item.Kind] = item.EvidenceDigest == evidenceDigest(item)
 		if !evidenceOK[item.Kind] {
 			evidenceDigestMismatch = true
+			mismatchedEvidenceKinds[item.Kind] = true
 		}
 	}
 	claimsStructureOK := validateClaimStatements(artifact.Claims, artifact.Evidence, artifact)
@@ -124,6 +126,9 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 		resolution, reason, stage, step = "LOWER_RESOLUTION", "ARTIFACT_ATTACHMENT_MISSING", "CONSUME_INPUT", "operation-attachment"
 	case evidenceDigestMismatch || duplicateEvidence:
 		resolution, reason, stage, step = "INVARIANT_ONLY", "PROOF_EVIDENCE_DIGEST_MISMATCH", "CONSUME_EVIDENCE", "evidence-digest"
+		if mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"] {
+			reason, step = "INVARIANT_EVIDENCE_NOT_PRESERVED", "invariant-evidence"
+		}
 	case !sourceGood:
 		resolution, reason, stage, step = "INVARIANT_ONLY", "SOURCE_RECONSTRUCTION_MISMATCH", "CONSUME_SOURCE", "reconstruct"
 	case !operationGood && operationDecoded && !operationDigestOK:
