@@ -200,7 +200,7 @@ func run(args []string) int {
 		report := verifier.Evaluate(input)
 		if err := verifier.WriteReport(value.output, report); err != nil {
 			diagnostic := verifier.WithValidationFailure(report, err)
-			if writeErr := writeRawReport(value.output, diagnostic); writeErr != nil {
+			if writeErr := writeRawReport(value.output, diagnostic); writeErr != 0 {
 				fmt.Fprintf(os.Stderr, "proof report rejected: %v (diagnostic artifact write failed: %v)\n", err, writeErr)
 				return 1
 			}
