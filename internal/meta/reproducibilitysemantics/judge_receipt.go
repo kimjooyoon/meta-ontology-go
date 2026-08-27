@@ -2,7 +2,7 @@ package reproducibilitysemantics
 
 import "strings"
 
-func receiptShape(sourcePath, headSHA string, source []byte, receipt Receipt) string {
+func receiptShape(sourcePath, headSHA string, source []byte, semanticDigest string, receipt Receipt) string {
 	if receipt.Schema != ReceiptSchema || receipt.Version != 1 || receipt.ContractID != ContractID {
 		return "RECEIPT_SCHEMA_INVALID"
 	}
@@ -26,7 +26,13 @@ func receiptShape(sourcePath, headSHA string, source []byte, receipt Receipt) st
 		receipt.Stage != "receipt" || receipt.Step != "produce" || receipt.Reason != "CLAIM_CHANNELS_SEPARATED" {
 		return "RECEIPT_PROVENANCE_INVALID"
 	}
-	if len(receipt.Cases) != CaseCount || len(receipt.Proofs) != 3 || receipt.Authority != (Authority{}) {
+	if receipt.SemanticDigest == "" {
+		return "DIGEST_ONLY_REFUTED"
+	}
+	if receipt.SemanticDigest != semanticDigest {
+		return "SEMANTIC_DIGEST_BINDING_INVALID"
+	}
+	if len(receipt.Cases) != CaseCount || len(receipt.Proofs) != 4 || receipt.Authority != (Authority{}) {
 		return "RECEIPT_DENOMINATOR_OR_AUTHORITY_INVALID"
 	}
 	want := receipt.ReceiptDigest

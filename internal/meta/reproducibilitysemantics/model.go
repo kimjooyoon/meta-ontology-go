@@ -10,6 +10,7 @@ const (
 	ProofByte        = "BYTE_COMPARISON"
 	ProofMeaning     = "MEANING_ORACLE"
 	ProofComposition = "CLAIM_COMPOSITION"
+	ProofSemantic    = "SEMANTIC_CAUSALITY"
 	StatusOpen       = "OPEN"
 	StatusDischarged = "DISCHARGED"
 	StatusRefuted    = "REFUTED"

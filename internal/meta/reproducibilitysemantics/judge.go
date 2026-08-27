@@ -15,15 +15,24 @@ func Judge(sourcePath, headSHA string, source []byte, receipt Receipt) Judgment 
 		ProofChoice: ProofComposition, Stage: "judge", Step: "independent-replay",
 		Reason: "JUDGMENT_NOT_STARTED", Decision: StatusRefuted, Authority: Authority{},
 	}
-	if reason := receiptShape(sourcePath, headSHA, source, receipt); reason != "" {
+	declared, semanticDigest, err := deriveJudgeCases(sourcePath, source)
+	if err != nil {
+		judgment.Reason = "GOOO_SOURCE_SEMANTICS_INVALID"
+		return sealJudgment(judgment)
+	}
+	judgment.SemanticDigest = semanticDigest
+	if reason := receiptShape(sourcePath, headSHA, source, semanticDigest, receipt); reason != "" {
 		judgment.Reason = reason
 		return sealJudgment(judgment)
 	}
 	judgment.Cases = make([]JudgmentCase, len(receipt.Cases))
-	caseIDs := []string{"both-discharged", "reproducible-but-wrong", "meaningful-but-unreproduced", "claims-open"}
 	for index, item := range receipt.Cases {
-		if item.ID != caseIDs[index] {
+		if item.ID != declared[index].ID {
 			judgment.Reason = "CASE_MATRIX_ORDER_INVALID"
+			return sealJudgment(judgment)
+		}
+		if !judgeCaseBindsSource(item, declared[index]) {
+			judgment.Reason = "SEMANTIC_CAUSALITY_INVALID"
 			return sealJudgment(judgment)
 		}
 		if reason := validateCaseProvenance(item); reason != "" {
@@ -47,7 +56,7 @@ func Judge(sourcePath, headSHA string, source []byte, receipt Receipt) Judgment 
 			return sealJudgment(judgment)
 		}
 	}
-	judgment.Summary = summarizeJudgment(judgment.Cases)
+	judgment.Summary = summarizeJudgment(judgment.Cases, true, true)
 	if judgment.Summary != receipt.Summary {
 		judgment.Reason = "RECEIPT_SUMMARY_DRIFT"
 		return sealJudgment(judgment)

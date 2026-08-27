@@ -1,6 +1,6 @@
 package reproducibilitysemantics
 
-func summarizeJudgment(cases []JudgmentCase) Summary {
+func summarizeJudgment(cases []JudgmentCase, sourceBound, semanticCausal bool) Summary {
 	byteDischarged, meaningDischarged, jointDischarged, counterexamples, openCases := 0, 0, 0, 0, 0
 	for _, item := range cases {
 		if item.ByteStatus == StatusDischarged {
@@ -22,7 +22,9 @@ func summarizeJudgment(cases []JudgmentCase) Summary {
 	total := len(cases)
 	return Summary{CaseMatrix: coordinate(total, total), ByteClaim: coordinate(byteDischarged, total),
 		MeaningClaim: coordinate(meaningDischarged, total), JointClaim: coordinate(jointDischarged, total),
-		Counterexamples: coordinate(counterexamples, total), OpenCases: coordinate(openCases, total)}
+		Counterexamples: coordinate(counterexamples, total), OpenCases: coordinate(openCases, total),
+		SourceDigestBinding: coordinate(statusInt(sourceBound)*total, total),
+		SemanticCausality:   coordinate(statusInt(semanticCausal)*total, total)}
 }
 
 func judgeCompose(byteStatus, meaningStatus string) (string, string) {

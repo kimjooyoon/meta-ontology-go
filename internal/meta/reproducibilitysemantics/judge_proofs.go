@@ -16,6 +16,12 @@ func validateReceiptProofs(receipt Receipt) string {
 		receipt.Proofs[2].EvidenceDigest != digestValue(receipt.Cases) {
 		return "COMPOSITION_PROOF_INVALID"
 	}
+	if receipt.Proofs[3].Choice != ProofSemantic || receipt.Proofs[3].Claim != "case values are derived from parsed and lowered Gooo source" ||
+		receipt.Proofs[3].MetaOperation != "parse-and-lower-gooo-source" || receipt.Proofs[3].Stage != "proof" ||
+		receipt.Proofs[3].Step != "source" || receipt.Proofs[3].Reason != "SOURCE_SEMANTIC_CAUSALITY" ||
+		receipt.Proofs[3].Status != StatusDischarged || receipt.Proofs[3].EvidenceDigest != receipt.SemanticDigest {
+		return "SEMANTIC_PROOF_INVALID"
+	}
 	return ""
 }
 
@@ -43,5 +49,7 @@ func judgeProofs(receipt Receipt, judgment Judgment) []Proof {
 			Stage: "judge", Step: "meaning", Reason: "MEANING_REPLAY_INDEPENDENT", EvidenceDigest: digestValue(judgment.Cases), Status: StatusDischarged},
 		{Choice: ProofComposition, Claim: "consumer preserved the two failure paths and four-case matrix", MetaOperation: MetaOperation,
 			Stage: "judge", Step: "compose", Reason: "MATRIX_REPLAY_INDEPENDENT", EvidenceDigest: receipt.ReceiptDigest, Status: StatusDischarged},
+		{Choice: ProofSemantic, Claim: "consumer replayed parsed and lowered Gooo source", MetaOperation: "parse-and-lower-gooo-source",
+			Stage: "judge", Step: "source", Reason: "SOURCE_REPLAY_INDEPENDENT", EvidenceDigest: judgment.SemanticDigest, Status: StatusDischarged},
 	}
 }

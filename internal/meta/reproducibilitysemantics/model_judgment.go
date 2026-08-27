@@ -14,6 +14,7 @@ type Judgment struct {
 	ContractID     string         `json:"contract_id"`
 	SourcePath     string         `json:"source_path"`
 	SourceDigest   string         `json:"source_digest"`
+	SemanticDigest string         `json:"semantic_digest"`
 	HeadSHA        string         `json:"head_sha"`
 	ReceiptDigest  string         `json:"receipt_digest"`
 	Producer       string         `json:"producer"`

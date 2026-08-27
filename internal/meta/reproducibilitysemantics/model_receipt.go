@@ -11,12 +11,14 @@ type Case struct {
 }
 
 type Summary struct {
-	CaseMatrix      Coordinate `json:"case_matrix"`
-	ByteClaim       Coordinate `json:"byte_claim"`
-	MeaningClaim    Coordinate `json:"meaning_claim"`
-	JointClaim      Coordinate `json:"joint_claim"`
-	Counterexamples Coordinate `json:"counterexamples"`
-	OpenCases       Coordinate `json:"open_cases"`
+	CaseMatrix          Coordinate `json:"case_matrix"`
+	ByteClaim           Coordinate `json:"byte_claim"`
+	MeaningClaim        Coordinate `json:"meaning_claim"`
+	JointClaim          Coordinate `json:"joint_claim"`
+	Counterexamples     Coordinate `json:"counterexamples"`
+	OpenCases           Coordinate `json:"open_cases"`
+	SourceDigestBinding Coordinate `json:"source_digest_binding"`
+	SemanticCausality   Coordinate `json:"semantic_causality"`
 }
 
 type Proof struct {
@@ -37,22 +39,23 @@ type Authority struct {
 }
 
 type Receipt struct {
-	Schema        string    `json:"schema"`
-	Version       int       `json:"version"`
-	ContractID    string    `json:"contract_id"`
-	SourcePath    string    `json:"source_path"`
-	SourceDigest  string    `json:"source_digest"`
-	HeadSHA       string    `json:"head_sha"`
-	Producer      string    `json:"producer"`
-	Consumer      string    `json:"consumer"`
-	MetaOperation string    `json:"meta_operation"`
-	ProofChoice   string    `json:"proof_choice"`
-	Stage         string    `json:"stage"`
-	Step          string    `json:"step"`
-	Reason        string    `json:"reason"`
-	Cases         []Case    `json:"cases"`
-	Summary       Summary   `json:"summary"`
-	Proofs        []Proof   `json:"proofs"`
-	Authority     Authority `json:"authority"`
-	ReceiptDigest string    `json:"receipt_digest"`
+	Schema         string    `json:"schema"`
+	Version        int       `json:"version"`
+	ContractID     string    `json:"contract_id"`
+	SourcePath     string    `json:"source_path"`
+	SourceDigest   string    `json:"source_digest"`
+	SemanticDigest string    `json:"semantic_digest"`
+	HeadSHA        string    `json:"head_sha"`
+	Producer       string    `json:"producer"`
+	Consumer       string    `json:"consumer"`
+	MetaOperation  string    `json:"meta_operation"`
+	ProofChoice    string    `json:"proof_choice"`
+	Stage          string    `json:"stage"`
+	Step           string    `json:"step"`
+	Reason         string    `json:"reason"`
+	Cases          []Case    `json:"cases"`
+	Summary        Summary   `json:"summary"`
+	Proofs         []Proof   `json:"proofs"`
+	Authority      Authority `json:"authority"`
+	ReceiptDigest  string    `json:"receipt_digest"`
 }

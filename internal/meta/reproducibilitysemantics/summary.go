@@ -14,6 +14,7 @@ func summarize(cases []Case) Summary {
 		CaseMatrix: coordinate(total, total), ByteClaim: coordinate(byteDischarged, total),
 		MeaningClaim: coordinate(meaningDischarged, total), JointClaim: coordinate(jointDischarged, total),
 		Counterexamples: coordinate(counterexamples, total), OpenCases: coordinate(openCases, total),
+		SourceDigestBinding: coordinate(total, total), SemanticCausality: coordinate(total, total),
 	}
 }
 
@@ -24,7 +25,7 @@ func statusInt(value bool) int {
 	return 0
 }
 
-func receiptProofs(cases []Case) []Proof {
+func receiptProofs(cases []Case, semanticDigest string) []Proof {
 	return []Proof{
 		{Choice: ProofByte, Claim: "byte equality is evidence only for byte reproducibility",
 			MetaOperation: "compare-byte-digests", Stage: "proof", Step: "byte",
@@ -35,6 +36,9 @@ func receiptProofs(cases []Case) []Proof {
 		{Choice: ProofComposition, Claim: "the two claims have distinct evidence and failure paths",
 			MetaOperation: MetaOperation, Stage: "proof", Step: "compose",
 			Reason: "NON_IDENTITY_EXHIBITED", EvidenceDigest: digestValue(cases), Status: StatusDischarged},
+		{Choice: ProofSemantic, Claim: "case values are derived from parsed and lowered Gooo source",
+			MetaOperation: "parse-and-lower-gooo-source", Stage: "proof", Step: "source",
+			Reason: "SOURCE_SEMANTIC_CAUSALITY", EvidenceDigest: semanticDigest, Status: StatusDischarged},
 	}
 }
 

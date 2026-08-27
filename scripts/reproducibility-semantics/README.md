@@ -18,6 +18,8 @@ go run ./scripts/reproducibility-semantics \
   -check
 ```
 
-The producer is deterministic, while the judge recomputes the four statuses
-without calling the producer. Outputs belong in a temporary CI directory; no
-repository file is written.
+The producer derives the four statuses from the source-declared `computes`
+programs after `syntax.ParseFile` and `bidir.Lower`. The judge performs the
+same source interpretation independently, recomputes the byte and meaning
+channels, and rejects a digest-only receipt. Outputs belong in a temporary CI
+directory; no repository file is written.
