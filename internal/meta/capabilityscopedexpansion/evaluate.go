@@ -279,7 +279,7 @@ func indicatorsFor(model SourceModel, provider ProviderObservation, receipt Rece
 		{"CSE-prior-claim-open", "DRIVER", "FOUNDATION", boolInt(allPriorClaimsOpen(model)), 1, statusFor(allPriorClaimsOpen(model), receipt.Decision)},
 		{"CSE-current-file-evidence", "OUTCOME", "OBSERVATION", currentFile, 1, statusFor(currentFile == 1, receipt.Decision)},
 		{"CSE-current-logical-evidence", "OUTCOME", "OBSERVATION", currentTime, 1, statusFor(currentTime == 1, receipt.Decision)},
-		{"CSE-environment-network-lower-resolution", "OUTCOME", "EPISTEMIC", boolInt(len(provider.EnvironmentReads) == 0 && len(provider.NetworkReads) == 0), 1, "OPEN"},
+		{"CSE-environment-network-lower-resolution", "OUTCOME", "EPISTEMIC", boolInt(lowerResolutionMarkers(provider)), 1, "OPEN"},
 		{"CSE-provider-enforcement-boundary", "GUARDRAIL", "ENFORCEMENT", boolInt(effectBoundaryObserved(provider)), 1, statusFor(effectBoundaryObserved(provider), receipt.Decision)},
 		{"CSE-sandbox-before-after", "GUARDRAIL", "OBSERVATION", boolInt(provider.SandboxBefore.Digest == provider.SandboxAfter.Digest && provider.ActualRepositoryWrites == 0), 1, statusFor(provider.SandboxBefore.Digest == provider.SandboxAfter.Digest && provider.ActualRepositoryWrites == 0, receipt.Decision)},
 		{"CSE-receipt-seal", "DRIVER", "COHERENCE", 1, 1, "SATISFIED"},
@@ -290,6 +290,10 @@ func indicatorsFor(model SourceModel, provider ProviderObservation, receipt Rece
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
 	return result
+}
+
+func lowerResolutionMarkers(provider ProviderObservation) bool {
+	return len(provider.EnvironmentReads) == 1 && !provider.EnvironmentReads[0].Observed && provider.EnvironmentReads[0].EvidenceClass == "UNKNOWN" && len(provider.NetworkReads) == 1 && !provider.NetworkReads[0].Observed && provider.NetworkReads[0].EvidenceClass == HistoricalFixture
 }
 
 func allDeclarationsHave(model SourceModel, field string) bool {

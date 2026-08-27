@@ -37,10 +37,11 @@ The provider performs only two live observations:
 2. reads a deterministic logical input `logical-clock:0` as
    `CURRENT_EVIDENCE`.
 
-Environment and network are deliberately not contacted. Environment is
-`UNKNOWN`; the network declaration is `HISTORICAL_FIXTURE`. Thus the fixed
-capability denominator is four declarations, but only `2/4` are
-`CURRENT_EVIDENCE`.
+Environment and network are deliberately not contacted. The raw provider wire
+records explicit non-observation markers: environment is `UNKNOWN`; the
+network declaration is `HISTORICAL_FIXTURE`. Neither marker enters current
+evidence. Thus the fixed capability denominator is four declarations, but only
+`2/4` are `CURRENT_EVIDENCE`.
 
 The sandbox provider exposes real request methods for repository write,
 mutation, and promotion. Each request returns `DENIED`, records the before and

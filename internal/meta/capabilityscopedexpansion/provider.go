@@ -55,8 +55,8 @@ func CaptureProvider(request ProviderRequest) ([]byte, error) {
 		SubjectSHA:               request.SubjectSHA,
 		FileReads:                []FileReadObservation{{Target: "pinned-file", Path: request.PinnedFile, ContentDigest: digestBytes(contents), Observed: true, EvidenceClass: CurrentEvidence}},
 		LogicalInputs:            []LogicalObservation{{Target: "logical-clock", Value: "logical-clock:0", Observed: true, EvidenceClass: CurrentEvidence}},
-		EnvironmentReads:         []EnvironmentObservation{},
-		NetworkReads:             []NetworkObservation{},
+		EnvironmentReads:         []EnvironmentObservation{{Target: "GOOO_EXPANSION_PROFILE", Observed: false, EvidenceClass: "UNKNOWN"}},
+		NetworkReads:             []NetworkObservation{{Target: "https://example.invalid/gooo/pinned-schema", Observed: false, EvidenceClass: HistoricalFixture}},
 		EffectAttempts:           effects,
 		SandboxBefore:            before,
 		SandboxAfter:             after,
@@ -141,14 +141,14 @@ func validateProviderObservation(observation ProviderObservation) error {
 	if observation.Schema != ProviderSchema || observation.Provider == "" || observation.SubjectSHA == "" {
 		return fmt.Errorf("provider observation identity is incomplete")
 	}
-	if len(observation.FileReads) != 1 || !observation.FileReads[0].Observed || observation.FileReads[0].EvidenceClass != CurrentEvidence {
+	if len(observation.FileReads) != 1 || observation.FileReads[0].Target != "pinned-file" || observation.FileReads[0].Path == "" || observation.FileReads[0].ContentDigest == "" || !observation.FileReads[0].Observed || observation.FileReads[0].EvidenceClass != CurrentEvidence {
 		return fmt.Errorf("pinned file observation is incomplete")
 	}
-	if len(observation.LogicalInputs) != 1 || !observation.LogicalInputs[0].Observed || observation.LogicalInputs[0].EvidenceClass != CurrentEvidence {
+	if len(observation.LogicalInputs) != 1 || observation.LogicalInputs[0].Target != "logical-clock" || observation.LogicalInputs[0].Value != "logical-clock:0" || !observation.LogicalInputs[0].Observed || observation.LogicalInputs[0].EvidenceClass != CurrentEvidence {
 		return fmt.Errorf("logical input observation is incomplete")
 	}
-	if len(observation.EnvironmentReads) != 0 || len(observation.NetworkReads) != 0 {
-		return fmt.Errorf("unobserved environment or network must not enter current provider evidence")
+	if len(observation.EnvironmentReads) != 1 || observation.EnvironmentReads[0].Target != "GOOO_EXPANSION_PROFILE" || observation.EnvironmentReads[0].Observed || observation.EnvironmentReads[0].EvidenceClass != "UNKNOWN" || len(observation.NetworkReads) != 1 || observation.NetworkReads[0].Target != "https://example.invalid/gooo/pinned-schema" || observation.NetworkReads[0].Observed || observation.NetworkReads[0].EvidenceClass != HistoricalFixture {
+		return fmt.Errorf("unobserved environment or network must remain lower-resolution provider evidence")
 	}
 	if observation.SandboxBefore.Digest != observation.SandboxAfter.Digest || observation.ActualRepositoryWrites != 0 || observation.ActualMutationAuthority || observation.ActualPromotionAuthority {
 		return fmt.Errorf("sandbox before/after observation shows an unexpected effect")

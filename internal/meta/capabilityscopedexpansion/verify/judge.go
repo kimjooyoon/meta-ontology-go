@@ -322,12 +322,14 @@ func (l *logicalInput) UnmarshalJSON(raw []byte) error {
 }
 
 type environmentRead struct {
-	Target, EvidenceClass string
-	Observed              bool
+	Target        string `json:"target"`
+	EvidenceClass string `json:"evidence_class"`
+	Observed      bool   `json:"observed"`
 }
 type networkRead struct {
-	Target, EvidenceClass string
-	Observed              bool
+	Target        string `json:"target"`
+	EvidenceClass string `json:"evidence_class"`
+	Observed      bool   `json:"observed"`
 }
 type snapshot struct {
 	Root, Digest string
@@ -572,10 +574,10 @@ func decodeProvider(raw []byte) (providerObservation, error) {
 	if err := json.Unmarshal(raw, &provider); err != nil {
 		return providerObservation{}, err
 	}
-	if provider.Schema != validProviderSchema || provider.Provider == "" || provider.SubjectSHA == "" || len(provider.FileReads) != 1 || len(provider.LogicalInputs) != 1 || len(provider.EnvironmentReads) != 0 || len(provider.NetworkReads) != 0 {
+	if provider.Schema != validProviderSchema || provider.Provider == "" || provider.SubjectSHA == "" || len(provider.FileReads) != 1 || len(provider.LogicalInputs) != 1 || len(provider.EnvironmentReads) != 1 || len(provider.NetworkReads) != 1 {
 		return providerObservation{}, fmt.Errorf("provider observation shape is incomplete")
 	}
-	if !provider.FileReads[0].Observed || provider.FileReads[0].EvidenceClass != currentEvidence || !provider.LogicalInputs[0].Observed || provider.LogicalInputs[0].EvidenceClass != currentEvidence {
+	if provider.FileReads[0].Target != "pinned-file" || provider.FileReads[0].Path == "" || provider.FileReads[0].ContentDigest == "" || !provider.FileReads[0].Observed || provider.FileReads[0].EvidenceClass != currentEvidence || provider.LogicalInputs[0].Target != "logical-clock" || provider.LogicalInputs[0].Value != "logical-clock:0" || !provider.LogicalInputs[0].Observed || provider.LogicalInputs[0].EvidenceClass != currentEvidence || provider.EnvironmentReads[0].Target != "GOOO_EXPANSION_PROFILE" || provider.EnvironmentReads[0].Observed || provider.EnvironmentReads[0].EvidenceClass != "UNKNOWN" || provider.NetworkReads[0].Target != "https://example.invalid/gooo/pinned-schema" || provider.NetworkReads[0].Observed || provider.NetworkReads[0].EvidenceClass != historicalFixture {
 		return providerObservation{}, fmt.Errorf("provider current evidence is incomplete")
 	}
 	if provider.SandboxBefore.Digest != provider.SandboxAfter.Digest || provider.ActualRepositoryWrites != 0 || provider.ActualMutationAuthority || provider.ActualPromotionAuthority {
