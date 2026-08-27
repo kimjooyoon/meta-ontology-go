@@ -9,7 +9,9 @@ on:
 
 permissions:
   actions: read
+  attestations: write
   contents: read
+  id-token: write
 
 jobs:
   observation:
@@ -120,3 +122,8 @@ jobs:
           path: ${{ runner.temp }}/observation/artifact
           if-no-files-found: error
           retention-days: 14
+
+      - name: Attest exact-head observation artifact
+        if: success()
+        id: attest-observation
+        uses: actions/attest@v4
