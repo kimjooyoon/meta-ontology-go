@@ -123,11 +123,11 @@ jobs:
             echo 'semantic intervention did not change claim transitions' >&2
             exit 1
           fi
-          base_raw_digest=$(jq -r .policy.source_digest "$root/first/policy.json")
-          comment_raw_digest=$(jq -r .policy.source_digest "$intervention/comment/policy.json")
-          base_semantic_digest=$(jq -r .policy.semantic_digest "$root/first/policy.json")
-          comment_semantic_digest=$(jq -r .policy.semantic_digest "$intervention/comment/policy.json")
-          semantic_semantic_digest=$(jq -r .policy.semantic_digest "$intervention/semantic/policy.json")
+          base_raw_digest=$(jq -r .source_digest "$root/first/policy.json")
+          comment_raw_digest=$(jq -r .source_digest "$intervention/comment/policy.json")
+          base_semantic_digest=$(jq -r .semantic_digest "$root/first/policy.json")
+          comment_semantic_digest=$(jq -r .semantic_digest "$intervention/comment/policy.json")
+          semantic_semantic_digest=$(jq -r .semantic_digest "$intervention/semantic/policy.json")
           raw_digest_changed=false
           semantic_digest_preserved=false
           semantic_digest_changed=false
