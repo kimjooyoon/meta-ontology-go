@@ -179,6 +179,7 @@ type intervention struct {
 	VariantTransitionDigest string `json:"variant_transition_digest"`
 	Changed                 bool   `json:"changed"`
 	Preserved               bool   `json:"preserved"`
+	Passed                  bool   `json:"passed"`
 	Numerator               int    `json:"numerator"`
 	Denominator             int    `json:"denominator"`
 }

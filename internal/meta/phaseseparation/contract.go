@@ -8,6 +8,7 @@ const (
 	ResolutionLower          = "LOWER_RESOLUTION"
 	ReasonExact              = "PHASE_SEPARATION_WITNESS_EXACT"
 	ReasonUnknownSource      = "UNKNOWN_SOURCE_CONTRACT"
+	ReasonUnknownContract    = ReasonUnknownSource
 	ReasonUnknownSyntax      = "UNKNOWN_SOURCE_SYNTAX"
 	ReasonUnknownCI          = "UNKNOWN_CI_SNAPSHOT"
 	Toolchain                = "go1.27.0"
