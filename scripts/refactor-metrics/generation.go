@@ -21,6 +21,7 @@ func emitGenerationPlan(opts options, report sourcepolicy.Report) error {
 	}
 	fmt.Printf("self-improvement: decision=%s reason=%s selected=%d replay=%s\n", plan.Decision, plan.Reason, len(plan.Selected), plan.ReplayDigest)
 	if plan.Decision != generation.DecisionPlan && plan.Decision != generation.DecisionFixedPoint {
+		fmt.Printf("self-improvement-diagnostic: stage=selection step=independent-pressure shortfall=%v unknown=%v unselected=%v\n", plan.Shortfall, plan.UnknownIndicatorIDs, plan.UnselectedIndicatorIDs)
 		return fmt.Errorf("self-improvement generation failed closed: %s/%s", plan.Decision, plan.Reason)
 	}
 	return nil
