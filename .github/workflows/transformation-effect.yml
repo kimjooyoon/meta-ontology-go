@@ -795,7 +795,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload readiness predecessor failure receipt
-        if: always() && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
+        if: always() && steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-receipt-${{ env.HEAD_SHA }}
@@ -803,7 +803,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload optional readiness predecessor diagnostics
-        if: always() && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
+        if: always() && steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-diagnostic-${{ env.HEAD_SHA }}
