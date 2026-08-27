@@ -478,6 +478,18 @@
       ]
     },
     {
+      "branch": "agent/gooo-capability-boundary",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/external-capability-execution-witness/**",
+        "examples/external-capability-execution/**",
+        "internal/meta/externalcapabilityexecution/**",
+        "internal/verify/scope_external_capability_execution.go"
+      ]
+    },
+    {
       "branch": "agent/external-assurance-eligibility",
       "paths": [
         ".github/agent-scope-table.md",

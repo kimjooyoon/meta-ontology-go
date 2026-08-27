@@ -43,3 +43,9 @@ novelty claim. CI is the execution authority; local test executions remain zero.
 
 The project root remains exceptional: root README and root topology are
 `NOT_APPLICABLE` and are not included in this capability denominator.
+
+The `authorization` subdirectory adds a second boundary. Executability remains
+evidence, while a Gooo policy and a default-deny checker decide whether the
+requested operation is authorized. The bootstrap receipt intentionally remains
+`9/10 / UNKNOWN` until a merged CI artifact supplies an external policy
+foundation; a green workflow does not rewrite that semantic result.

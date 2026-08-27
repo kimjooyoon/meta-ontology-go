@@ -10,7 +10,9 @@ func init() {
 		"internal/meta/externalcapabilityexecution",
 		"internal/verify/scope_external_capability_execution.go",
 	}
-	for _, branch := range []string{"agent/external-capability-execution", "agent/external-assurance-eligibility"} {
+	branches := []string{"agent/external-capability-execution", "agent/external-assurance-eligibility",
+		"agent/gooo-capability-boundary"}
+	for _, branch := range branches {
 		branchScopeAllowlist[branch] = paths
 	}
 }
