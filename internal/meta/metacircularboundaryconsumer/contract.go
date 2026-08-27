@@ -6,11 +6,17 @@ import contract "github.com/kimjooyoon/meta-ontology-go/internal/meta/metacircul
 // Observed attempt values are read from the Gooo computes programs.
 func expectedCases() []contract.CaseDefinition {
 	return []contract.CaseDefinition{
-		{ID: "description-only", ProofChoice: proofRegression, MetaOperation: "deny-description-authority-escalation"},
-		{ID: "explicit-read-only-capability", ProofChoice: proofCoherence, MetaOperation: "accept-explicit-read-only-capability"},
-		{ID: "forged-capability", ProofChoice: proofRegression, MetaOperation: "reject-forged-capability"},
-		{ID: "write-capability-out-of-scope", ProofChoice: proofRegression, MetaOperation: "reject-out-of-scope-capability"},
+		{ID: "description-only", Predicate: predicateDescriptionOnly, ExpectedDecision: decisionFailClosed, ExpectedAuthorization: authorizationDeny, ExpectedExecution: executionBlocked, ExpectedReason: reasonDescription, ProofChoice: proofRegression, MetaOperation: "deny-description-authority-escalation"},
+		{ID: "explicit-read-only-capability", Predicate: predicateExplicitGrant, ExpectedDecision: decisionPass, ExpectedAuthorization: authorizationGrant, ExpectedExecution: executionAllowed, ExpectedReason: reasonExplicit, ProofChoice: proofCoherence, MetaOperation: "accept-explicit-read-only-capability"},
+		{ID: "forged-capability", Predicate: predicateForgedGrant, ExpectedDecision: decisionFailClosed, ExpectedAuthorization: authorizationDeny, ExpectedExecution: executionBlocked, ExpectedReason: reasonForged, ProofChoice: proofRegression, MetaOperation: "reject-forged-capability"},
+		{ID: "write-capability-out-of-scope", Predicate: predicateOutOfScopeGrant, ExpectedDecision: decisionFailClosed, ExpectedAuthorization: authorizationDeny, ExpectedExecution: executionBlocked, ExpectedReason: reasonOutOfScope, ProofChoice: proofRegression, MetaOperation: "reject-out-of-scope-capability"},
 	}
+}
+
+func expectedDenominator() contract.Denominator {
+	denominator := contract.Denominator{ID: "gooo/meta-circular-boundary-denominator/v1", Cases: expectedCases()}
+	denominator.Digest = digestValue(denominator)
+	return denominator
 }
 
 func expectedMetaOperations() []contract.MetaOperation {

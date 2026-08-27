@@ -11,7 +11,7 @@ activity DescribeMetaOperation(MetaOperation) -> SelfDescription
 activity GrantReadOnlyMetaCapability(SelfDescription) -> ReadOnlyCapability
 activity ExecuteMetaOperation(ReadOnlyCapability) -> ExecutionReceipt
 activity InspectForgedCapability(SelfDescription) -> ForgedCapability
-activity DescriptionOnlyAttempt(SelfDescription) -> ExecutionReceipt computes "meta-circular-boundary.case|id=description-only|description=source|capability=none|request_execution=true"
-activity ExplicitReadOnlyCapabilityAttempt(SelfDescription) -> ExecutionReceipt computes "meta-circular-boundary.case|id=explicit-read-only-capability|description=source|capability=present|issuer=external-authority|subject=source|operation=meta-circular-boundary.evaluate|scope=READ_ONLY|handle=fixture|request_execution=true"
-activity ForgedCapabilityAttempt(SelfDescription) -> ForgedCapability computes "meta-circular-boundary.case|id=forged-capability|description=source|capability=present|issuer=external-authority|subject=source|operation=meta-circular-boundary.evaluate|scope=READ_ONLY|handle=forged|request_execution=true"
-activity WriteCapabilityAttempt(SelfDescription) -> ExecutionReceipt computes "meta-circular-boundary.case|id=write-capability-out-of-scope|description=source|capability=present|issuer=external-authority|subject=source|operation=meta-circular-boundary.evaluate|scope=WRITE|handle=fixture|request_execution=true"
+activity DescriptionOnlyAttempt(SelfDescription) -> ExecutionReceipt computes "meta-circular-boundary.case|id=description-only|description=source|request=NONE|request_execution=true"
+activity ExplicitReadOnlyCapabilityAttempt(SelfDescription) -> ExecutionReceipt computes "meta-circular-boundary.case|id=explicit-read-only-capability|description=source|request=READ_ONLY|request_execution=true"
+activity ForgedCapabilityAttempt(SelfDescription) -> ForgedCapability computes "meta-circular-boundary.case|id=forged-capability|description=source|request=READ_ONLY|request_execution=true"
+activity WriteCapabilityAttempt(SelfDescription) -> ExecutionReceipt computes "meta-circular-boundary.case|id=write-capability-out-of-scope|description=source|request=READ_ONLY|request_execution=true"

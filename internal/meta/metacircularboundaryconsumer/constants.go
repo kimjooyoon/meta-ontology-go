@@ -24,12 +24,44 @@ const (
 	authorizationDeny         = "DENIED"
 	executionAllowed          = "ALLOWED"
 	executionBlocked          = "BLOCKED"
+	executionUnknown          = "UNKNOWN"
+	authorizationUnknown      = "UNKNOWN"
 	scopeReadOnly             = "READ_ONLY"
 	scopeWrite                = "WRITE"
 	reasonDescription         = "DESCRIPTION_IS_NOT_AUTHORITY"
 	reasonExplicit            = "EXPLICIT_READ_ONLY_CAPABILITY_ACCEPTED"
 	reasonForged              = "FORGED_AUTHORIZATION_REJECTED"
 	reasonOutOfScope          = "CAPABILITY_SCOPE_EXCEEDS_READ_ONLY"
+	reasonGrantUnknown        = "EXTERNAL_GRANT_UNKNOWN"
+	reasonGrantDenied         = "EXTERNAL_GRANT_DENIED_BY_POLICY"
+	reasonExecutionUnknown    = "EXECUTION_EVIDENCE_UNKNOWN"
+	reasonExecutionInvalid    = "EXECUTION_EVIDENCE_INVALID"
+	reasonGraphUnknown        = "TYPED_META_OPERATION_GRAPH_UNKNOWN"
+	reasonDescriptionForgery  = "DESCRIPTION_AUTHORITY_CLAIM_BLOCKED"
+	reasonCasePredicate       = "CASE_PREDICATE_MISMATCH"
+	reasonEffectUnknown       = "WORKSPACE_EFFECT_EVIDENCE_UNKNOWN"
+	reasonReplayUnknown       = "REPLAY_EVIDENCE_UNKNOWN"
+	grantDecision             = "GRANT"
+	grantDeny                 = "DENY"
+	requestNone               = "NONE"
+	requestReadOnly           = "READ_ONLY"
+	authorityDenied           = "DENIED"
+	authorityGranted          = "GRANTED"
+	authorityUnknown          = "UNKNOWN"
+	graphSchema               = "gooo/meta-circular-boundary-graph/v1"
+	grantSchema               = "gooo/meta-circular-boundary-external-grant/v1"
+	effectSchema              = "gooo/meta-circular-boundary-effect/v1"
+	replaySchema              = "gooo/meta-circular-boundary-replay/v1"
+	executionSchema           = "gooo/meta-circular-boundary-execution/v1"
+	judgeReceiptSchema        = "gooo/meta-circular-boundary-judge-receipt/v1"
+	grantProducer             = "external-authority-fixture"
+	effectProducer            = "ci-workspace-observer"
+	replayProducer            = "ci-replay-observer"
+	executionProducer         = "metacircularboundary.ExecuteReadOnlyMetaOperation"
+	predicateDescriptionOnly  = "DESCRIPTION_REQUEST_WITHOUT_EXTERNAL_GRANT"
+	predicateExplicitGrant    = "EXPLICIT_EXTERNAL_READ_ONLY_GRANT"
+	predicateForgedGrant      = "EXTERNAL_GRANT_HANDLE_OR_ISSUER_FORGED"
+	predicateOutOfScopeGrant  = "EXTERNAL_GRANT_SCOPE_OUT_OF_BOUNDS"
 	proofFoundation           = "FOUNDATION"
 	proofCoherence            = "COHERENCE"
 	proofRegression           = "REGRESSION"
@@ -45,17 +77,6 @@ var requiredEntities = []string{
 	"ReadOnlyCapability",
 	"ExecutionReceipt",
 	"ForgedCapability",
-}
-
-var requiredActivities = []string{
-	"DescribeMetaOperation",
-	"GrantReadOnlyMetaCapability",
-	"ExecuteMetaOperation",
-	"InspectForgedCapability",
-	"DescriptionOnlyAttempt",
-	"ExplicitReadOnlyCapabilityAttempt",
-	"ForgedCapabilityAttempt",
-	"WriteCapabilityAttempt",
 }
 
 func notClaimed() []string {

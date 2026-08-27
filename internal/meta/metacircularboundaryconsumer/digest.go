@@ -46,7 +46,3 @@ func validDigest(value string) bool {
 	_, err := hex.DecodeString(strings.TrimPrefix(value, "sha256:"))
 	return err == nil
 }
-
-func capabilityHandle(sourceDigest string) string {
-	return digestBytes([]byte("fixture-authority|" + sourceDigest + "|" + metaOperationID + "|" + scopeReadOnly))
-}

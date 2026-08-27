@@ -44,7 +44,3 @@ func validSHA(value string) bool {
 	_, err := hex.DecodeString(value)
 	return err == nil
 }
-
-func capabilityHandle(sourceDigest string) string {
-	return digestBytes([]byte("fixture-authority|" + sourceDigest + "|" + MetaOperationID + "|" + ScopeReadOnly))
-}

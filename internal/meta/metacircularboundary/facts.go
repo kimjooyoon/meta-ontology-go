@@ -10,9 +10,9 @@ import (
 // The Go contract supplies only the fixed case IDs; all attempt facts come from
 // the parsed/lowered source computation values.
 func parseAttempts(source SourceObservation) (map[string]Attempt, error) {
-	attempts := make(map[string]Attempt, CaseTotal)
+	attempts := make(map[string]Attempt, len(contractCases()))
 	for _, computation := range source.Computations {
-		id, attempt, err := parseComputation(computation, source.SourceDigest)
+		id, attempt, err := parseComputation(computation, source.SemanticDigest)
 		if err != nil {
 			return nil, err
 		}
@@ -29,7 +29,7 @@ func parseAttempts(source SourceObservation) (map[string]Attempt, error) {
 	return attempts, nil
 }
 
-func parseComputation(computation Computation, sourceDigest string) (string, Attempt, error) {
+func parseComputation(computation Computation, semanticDigest string) (string, Attempt, error) {
 	parts := strings.Split(computation.Program, "|")
 	if len(parts) == 0 || parts[0] != "meta-circular-boundary.case" {
 		return "", Attempt{FactActivity: computation.Activity, Unknown: true}, fmt.Errorf("unknown computation prefix in %q", computation.Activity)
@@ -61,7 +61,7 @@ func parseComputation(computation Computation, sourceDigest string) (string, Att
 	}
 	for key := range fields {
 		switch key {
-		case "id", "description", "capability", "issuer", "subject", "operation", "scope", "handle", "request_execution":
+		case "id", "description", "request", "request_execution", "description_authority":
 		default:
 			return id, Attempt{FactActivity: computation.Activity, Unknown: true}, fmt.Errorf("unknown computation field %q", key)
 		}
@@ -70,7 +70,7 @@ func parseComputation(computation Computation, sourceDigest string) (string, Att
 	if !ok {
 		return id, Attempt{FactActivity: computation.Activity, Unknown: true}, nil
 	}
-	descriptionDigest := sourceDigest
+	descriptionDigest := semanticDigest
 	if description != "source" {
 		descriptionDigest = digestBytes([]byte(description))
 	}
@@ -78,47 +78,30 @@ func parseComputation(computation Computation, sourceDigest string) (string, Att
 	if err != nil {
 		return id, Attempt{FactActivity: computation.Activity, Unknown: true}, nil
 	}
-	attempt := Attempt{FactActivity: computation.Activity, DescriptionDigest: descriptionDigest, RequestExecution: requestExecution, Contradictory: contradictory}
-	capabilityKind, ok := fields["capability"]
-	if !ok {
-		attempt.Unknown = true
+	requestKind, requestOK := fields["request"]
+	if !requestOK || (requestKind != RequestNone && requestKind != RequestReadOnly) {
+		attempt := Attempt{FactActivity: computation.Activity, DescriptionDigest: descriptionDigest, RequestExecution: requestExecution, Contradictory: contradictory, Unknown: true}
 		return id, attempt, nil
 	}
-	if capabilityKind == "none" {
-		for _, key := range []string{"issuer", "subject", "operation", "scope", "handle"} {
-			if _, exists := fields[key]; exists {
-				attempt.Unknown = true
-				return id, attempt, nil
-			}
+	attempt := Attempt{FactActivity: computation.Activity, DescriptionDigest: descriptionDigest, RequestKind: requestKind, RequestExecution: requestExecution, Contradictory: contradictory}
+	if authority, ok := fields["description_authority"]; ok {
+		attempt.DescriptionAuthorityClaim = authority == "GRANTED"
+		if authority != "GRANTED" && authority != "NONE" {
+			attempt.Unknown = true
 		}
-		return id, attempt, nil
 	}
-	if capabilityKind != "present" {
-		attempt.Unknown = true
-		return id, attempt, nil
-	}
-	issuer, issuerOK := fields["issuer"]
-	subject, subjectOK := fields["subject"]
-	operation, operationOK := fields["operation"]
-	scope, scopeOK := fields["scope"]
-	handle, handleOK := fields["handle"]
-	if !issuerOK || !subjectOK || !operationOK || !scopeOK || !handleOK {
-		attempt.Unknown = true
-		return id, attempt, nil
-	}
-	subjectDigest := subject
-	if subject == "source" {
-		subjectDigest = sourceDigest
-	}
-	handleValue := handle
-	switch handle {
-	case "fixture":
-		handleValue = capabilityHandle(sourceDigest)
-	case "forged":
-		handleValue = digestBytes([]byte("forged|" + sourceDigest))
-	}
-	attempt.Capability = &Capability{Issuer: issuer, SubjectDigest: subjectDigest, Operation: operation, Scope: scope, Handle: handleValue}
+	attempt.Predicate = predicateForRequest(requestKind, attempt.DescriptionAuthorityClaim)
 	return id, attempt, nil
+}
+
+func predicateForRequest(requestKind string, descriptionAuthorityClaim bool) string {
+	if descriptionAuthorityClaim {
+		return PredicateDescriptionOnly
+	}
+	if requestKind == RequestNone {
+		return PredicateDescriptionOnly
+	}
+	return PredicateExplicitGrant
 }
 
 func activityForCase(id string) string {
@@ -138,9 +121,9 @@ func activityForCase(id string) string {
 
 func contractCases() []CaseDefinition {
 	return []CaseDefinition{
-		{ID: "description-only", ProofChoice: ProofRegression, MetaOperation: "deny-description-authority-escalation"},
-		{ID: "explicit-read-only-capability", ProofChoice: ProofCoherence, MetaOperation: "accept-explicit-read-only-capability"},
-		{ID: "forged-capability", ProofChoice: ProofRegression, MetaOperation: "reject-forged-capability"},
-		{ID: "write-capability-out-of-scope", ProofChoice: ProofRegression, MetaOperation: "reject-out-of-scope-capability"},
+		{ID: "description-only", Predicate: PredicateDescriptionOnly, ExpectedDecision: DecisionFailClosed, ExpectedAuthorization: AuthorizationDenied, ExpectedExecution: ExecutionBlocked, ExpectedReason: ReasonDescriptionOnly, ProofChoice: ProofRegression, MetaOperation: "deny-description-authority-escalation"},
+		{ID: "explicit-read-only-capability", Predicate: PredicateExplicitGrant, ExpectedDecision: DecisionPass, ExpectedAuthorization: AuthorizationGranted, ExpectedExecution: ExecutionAllowed, ExpectedReason: ReasonExplicitCapability, ProofChoice: ProofCoherence, MetaOperation: "accept-explicit-read-only-capability"},
+		{ID: "forged-capability", Predicate: PredicateForgedGrant, ExpectedDecision: DecisionFailClosed, ExpectedAuthorization: AuthorizationDenied, ExpectedExecution: ExecutionBlocked, ExpectedReason: ReasonForgedCapability, ProofChoice: ProofRegression, MetaOperation: "reject-forged-capability"},
+		{ID: "write-capability-out-of-scope", Predicate: PredicateOutOfScopeGrant, ExpectedDecision: DecisionFailClosed, ExpectedAuthorization: AuthorizationDenied, ExpectedExecution: ExecutionBlocked, ExpectedReason: ReasonOutOfScopeCapability, ProofChoice: ProofRegression, MetaOperation: "reject-out-of-scope-capability"},
 	}
 }

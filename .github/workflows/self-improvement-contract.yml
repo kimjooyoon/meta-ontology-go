@@ -1280,42 +1280,100 @@ jobs:
         run: |
           go test ./internal/meta/metacircularboundary
           go test ./internal/meta/metacircularboundaryconsumer
-          go vet ./cmd/meta-circular-boundary-witness ./cmd/meta-circular-boundary-consumer-witness ./cmd/meta-circular-boundary-intervention-witness ./internal/meta/metacircularboundary ./internal/meta/metacircularboundaryconsumer
+          go vet ./cmd/meta-circular-boundary-witness ./cmd/meta-circular-boundary-consumer-witness ./cmd/meta-circular-boundary-replay-witness ./cmd/meta-circular-boundary-intervention-witness ./internal/meta/metacircularboundary ./internal/meta/metacircularboundaryconsumer
 
       - name: Run shared case-fact regression
         run: go test ./internal/meta/metacircularboundary -run TestConsumerRejectsSharedWrongCaseFactCounterexample -count=1
 
       - name: Run authority and evidence regressions
         run: |
-          go test ./internal/meta/metacircularboundary -run 'TestExpectedDecisionCannotMintAuthorization|TestUnknownComputationDataRemainsOpen|TestContradictoryCapabilityEvidenceIsRefuted' -count=1
+          go test ./internal/meta/metacircularboundary -run 'TestExpectedDecisionCannotMintAuthorization|TestUnknownComputationDataRemainsOpen|TestUnknownPermissionEvidenceRemainsLowerResolution|TestContradictoryCapabilityEvidenceIsRefuted' -count=1
 
-      - name: Replay the exact-head witness twice
+      - name: Produce, replay, and consume exact-head concepts
         shell: bash
         run: |
           set -euo pipefail
           output="$RUNNER_TEMP/meta-circular-boundary"
-          mkdir -p "$output"
-          for pass in first second; do
+          mkdir -p "$output/exec-a" "$output/exec-b"
+          tracked_before="$(git ls-files -z | sha256sum | awk '{print "sha256:"$1}')"
+          untracked_before="$(git status --porcelain=v1 --untracked-files=all -z | sha256sum | awk '{print "sha256:"$1}')"
+          printf '%s\n' "$tracked_before" > "$output/tracked-before.txt"
+          printf '%s\n' "$untracked_before" > "$output/untracked-before.txt"
+          go run ./cmd/meta-circular-boundary-witness --source examples/meta-circular-boundary/main.gooo --head-sha "$HEAD_SHA" --output "$output/preflight.json"
+          subject="$(jq -r '.source.semantic_digest' "$output/preflight.json")"
+          jq -n --arg subject "$subject" \
+            '{schema:"gooo/meta-circular-boundary-external-grant/v1", producer:"external-authority-fixture", policy:"READ_ONLY_EXTERNAL_GRANT_POLICY_V1", grants:[
+              {case_id:"description-only", decision:"DENY", reason:"DESCRIPTION_IS_NOT_AUTHORITY", issuer:"", subject_digest:"", operation:"", scope:"", handle:""},
+              {case_id:"explicit-read-only-capability", decision:"GRANT", reason:"EXPLICIT_READ_ONLY_CAPABILITY_ACCEPTED", issuer:"external-authority", subject_digest:$subject, operation:"meta-circular-boundary.evaluate", scope:"READ_ONLY", handle:"grant://external-authority/read-only/explicit"},
+              {case_id:"forged-capability", decision:"GRANT", reason:"FORGED_AUTHORIZATION_REJECTED", issuer:"forged-authority", subject_digest:$subject, operation:"meta-circular-boundary.evaluate", scope:"READ_ONLY", handle:"grant://forged/handle"},
+              {case_id:"write-capability-out-of-scope", decision:"GRANT", reason:"CAPABILITY_SCOPE_EXCEEDS_READ_ONLY", issuer:"external-authority", subject_digest:$subject, operation:"meta-circular-boundary.evaluate", scope:"WRITE", handle:"grant://external-authority/write"}
+            ], artifact_digest:""}' > "$output/external-grant.json"
+          for pass in a b; do
             go run ./cmd/meta-circular-boundary-witness \
               --source examples/meta-circular-boundary/main.gooo \
               --head-sha "$HEAD_SHA" \
-              --output "$output/$pass.json"
+              --grant "$output/external-grant.json" \
+              --execution-dir "$output/exec-$pass" \
+              --output "$output/pre-$pass.json"
           done
-          cmp "$output/first.json" "$output/second.json"
+          cmp "$output/pre-a.json" "$output/pre-b.json"
+          go run ./cmd/meta-circular-boundary-replay-witness --a "$output/pre-a.json" --b "$output/pre-b.json" --output "$output/replay-evidence.json"
+          jq -n --arg output_path "$output" --arg tracked "$(<"$output/tracked-before.txt")" --arg untracked "$(<"$output/untracked-before.txt")" \
+            '{schema:"gooo/meta-circular-boundary-effect/v1", producer:"ci-workspace-observer", output_path:$output_path, tracked_before_digest:$tracked, tracked_after_digest:$tracked, untracked_before_digest:$untracked, untracked_after_digest:$untracked, output_outside_repository:true, permission_evidence:"workflow-contents-read-only", mutation_authority:"DENIED"}' > "$output/effect-evidence.json"
+          for pass in a b; do
+            go run ./cmd/meta-circular-boundary-witness \
+              --source examples/meta-circular-boundary/main.gooo \
+              --head-sha "$HEAD_SHA" \
+              --grant "$output/external-grant.json" \
+              --effect-evidence "$output/effect-evidence.json" \
+              --replay-evidence "$output/replay-evidence.json" \
+              --execution-dir "$output/exec-$pass" \
+              --output "$output/final-$pass.json"
+          done
+          cmp "$output/final-a.json" "$output/final-b.json"
+          tracked_after="$(git ls-files -z | sha256sum | awk '{print "sha256:"$1}')"
+          untracked_after="$(git status --porcelain=v1 --untracked-files=all -z | sha256sum | awk '{print "sha256:"$1}')"
+          jq -n --arg output_path "$output" --arg tracked_before "$(<"$output/tracked-before.txt")" --arg tracked_after "$tracked_after" --arg untracked_before "$(<"$output/untracked-before.txt")" --arg untracked_after "$untracked_after" \
+            '{schema:"gooo/meta-circular-boundary-effect/v1", producer:"ci-workspace-observer", output_path:$output_path, tracked_before_digest:$tracked_before, tracked_after_digest:$tracked_after, untracked_before_digest:$untracked_before, untracked_after_digest:$untracked_after, output_outside_repository:true, permission_evidence:"workflow-contents-read-only", mutation_authority:"DENIED"}' > "$output/effect-evidence.actual.json"
+          mv "$output/effect-evidence.actual.json" "$output/effect-evidence.json"
+          for pass in a b; do
+            go run ./cmd/meta-circular-boundary-witness \
+              --source examples/meta-circular-boundary/main.gooo \
+              --head-sha "$HEAD_SHA" \
+              --grant "$output/external-grant.json" \
+              --effect-evidence "$output/effect-evidence.json" \
+              --replay-evidence "$output/replay-evidence.json" \
+              --execution-dir "$output/exec-$pass" \
+              --output "$output/final-$pass.json"
+          done
+          cmp "$output/final-a.json" "$output/final-b.json"
           go run ./cmd/meta-circular-boundary-consumer-witness \
             --source examples/meta-circular-boundary/main.gooo \
             --head-sha "$HEAD_SHA" \
-            --report "$output/first.json"
+            --report "$output/final-a.json" \
+            --grant "$output/external-grant.json" \
+            --effect-evidence "$output/effect-evidence.json" \
+            --replay-evidence "$output/replay-evidence.json" \
+            --execution-dir "$output/exec-a" \
+            --judge-output "$output/judge-receipt.json"
+          jq -n --slurpfile report "$output/final-a.json" --slurpfile judge "$output/judge-receipt.json" \
+            '{schema:"gooo/meta-circular-boundary-combined-judgment/v1", producer_report_digest:$report[0].report_digest, consumer_judge_digest:$judge[0].digest, consumer_input_report_digest:$judge[0].input_report_digest, producer_decision:$report[0].decision, consumer_decision:$judge[0].decision, mismatches:$judge[0].mismatches}' > "$output/combined-judgment.json"
           go run ./cmd/meta-circular-boundary-intervention-witness \
             --source examples/meta-circular-boundary/main.gooo \
             --head-sha "$HEAD_SHA" \
+            --grant "$output/external-grant.json" \
+            --effect-evidence "$output/effect-evidence.json" \
             --output "$output/causality.json"
+          tracked_after_final="$(git ls-files -z | sha256sum | awk '{print "sha256:"$1}')"
+          untracked_after_final="$(git status --porcelain=v1 --untracked-files=all -z | sha256sum | awk '{print "sha256:"$1}')"
+          test "$tracked_after" = "$tracked_after_final"
+          test "$untracked_after" = "$untracked_after_final"
 
       - name: Check the fixed denominator and independent decision
         shell: bash
         run: |
           set -euo pipefail
-          receipt="$RUNNER_TEMP/meta-circular-boundary/first.json"
+          receipt="$RUNNER_TEMP/meta-circular-boundary/final-a.json"
           jq -e '
             .schema == "gooo/meta-circular-boundary-report/v1" and
             .scope == "READ_ONLY_META_CIRCULAR_BOUNDARY" and
@@ -1323,6 +1381,7 @@ jobs:
             .resolution == "EXACT" and
             .reason == "META_CIRCULAR_BOUNDARY_PROVEN" and
             (.cases | length) == 4 and
+            .denominator.id == "gooo/meta-circular-boundary-denominator/v1" and (.denominator.cases | length) == 4 and (.denominator.digest | startswith("sha256:")) and
             (.receipts | length) == 4 and
             (.indicators | length) == 10 and
             .summary.cases_total == 4 and
@@ -1336,14 +1395,23 @@ jobs:
             .summary.out_of_scope_authorizations_blocked == 1 and
             .summary.description_escalation_paths == 0 and
             .summary.replay_matches == 4 and
+            .summary.receipt_self_seal_valid == 4 and
+            .summary.execution_artifacts_observed == 1 and
             .summary.repository_writes == 0 and
             .summary.mutation_authority == 0 and
             .repository_writes == 0 and
             .mutation_authority == false and
             ([.indicators[] | select(.satisfied == false)] | length) == 0 and
-            .independent_judge.decision == "PASS" and
-            .independent_judge.consumer == "metacircularboundaryconsumer.Judge"
+            .source.graph.valid == true and
+            (.source.graph.path | join("->")) == "DescribeMetaOperation->GrantReadOnlyMetaCapability->ExecuteMetaOperation" and
+            .source.effect.known == true and .source.effect.permission_evidence == "workflow-contents-read-only" and
+            .source.effect.output_outside_repository == true and .source.effect.repository_writes == 0 and .source.effect.mutation_authority == "DENIED" and
+            (.source.grant_artifact_digest | startswith("sha256:")) and
+            (any(.cases[]; .definition.id == "explicit-read-only-capability" and .observation.execution_artifact_present == true and .observation.execution_artifact_valid == true and .receipt.execution_artifact.output_digest == .observation.output_digest and .receipt.claim_transitions[2].evidence_digest == .observation.output_digest)) and
+            ([.cases[] | select(.definition.id != "explicit-read-only-capability") | .observation.execution_artifact_present] | all(. == false))
           ' "$receipt"
+          jq -e '.schema == "gooo/meta-circular-boundary-judge-receipt/v1" and .producer == "metacircularboundaryconsumer.Judge" and .consumer == "meta-circular-boundary-ci" and .compared_cases == 4 and .mismatches == 0 and .decision == "PASS" and (.digest | startswith("sha256:"))' "$RUNNER_TEMP/meta-circular-boundary/judge-receipt.json"
+          jq -e '.schema == "gooo/meta-circular-boundary-combined-judgment/v1" and .producer_decision == "PASS" and .consumer_decision == "PASS" and .mismatches == 0 and .producer_report_digest == .consumer_input_report_digest' "$RUNNER_TEMP/meta-circular-boundary/combined-judgment.json"
 
       - name: Measure consumer dependency boundary
         shell: bash
@@ -1365,32 +1433,12 @@ jobs:
         run: |
           jq -e '
             .schema == "gooo/meta-circular-boundary-causality/v1" and
-            .summary.total == 2 and .summary.passed == 2 and .summary.coverage_bps == 10000 and
-            ([.cases[] | select(
-              .kind == "SEMANTIC" and
-              .source_changed == true and .semantic_changed == true and .expected_semantic_change == true and
-              .consumer_accepted == true and .passed == true and
-              .baseline_case_decision != .intervened_case_decision and
-              .baseline_authorization != .intervened_authorization and
-              .baseline_execution != .intervened_execution and
-              .baseline_receipt_decision != .intervened_receipt_decision and
-              .baseline_capability_digest != .intervened_capability_digest and
-              .baseline_authorization_claim != .intervened_authorization_claim and
-              .baseline_execution_claim != .intervened_execution_claim and
-              .semantic_outputs_preserved == false
-            )] | length) == 1 and
-            ([.cases[] | select(
-              .kind == "NON_SEMANTIC" and
-              .source_changed == true and .semantic_changed == false and .expected_semantic_change == false and
-              .consumer_accepted == true and .passed == true and
-              .baseline_case_decision == .intervened_case_decision and
-              .baseline_authorization == .intervened_authorization and
-              .baseline_execution == .intervened_execution and
-              .baseline_receipt_decision == .intervened_receipt_decision and
-              .baseline_authorization_claim == .intervened_authorization_claim and
-              .baseline_execution_claim == .intervened_execution_claim and
-              .semantic_outputs_preserved == true
-            )] | length) == 1
+            .summary.total == 5 and .summary.passed == 5 and .summary.coverage_bps == 10000 and
+            ([.cases[] | select(.id == "request-only" and .kind == "SEMANTIC_REQUEST" and .source_changed and .semantic_changed and (.grant_changed | not) and .raw_input_changed and .consumer_accepted and .passed and (.baseline_output_digest != .intervened_output_digest) and (.baseline_authorization_claim != .intervened_authorization_claim) and (.baseline_execution_claim != .intervened_execution_claim))] | length) == 1 and
+            ([.cases[] | select(.id == "grant-change" and .kind == "SEMANTIC_GRANT" and (.semantic_changed | not) and .grant_changed and .raw_input_changed and .consumer_accepted and .passed and (.baseline_grant_digest != .intervened_grant_digest) and (.baseline_authorization_evidence_digest != .intervened_authorization_evidence_digest) and (.baseline_authorization != .intervened_authorization))] | length) == 1 and
+            ([.cases[] | select(.id == "description-only-forgery" and .kind == "SEMANTIC_DESCRIPTION_FORGERY" and .semantic_changed and .raw_input_changed and .consumer_accepted and .passed and (.baseline_description_escalated == false) and (.intervened_description_escalated == true) and (.baseline_description_claim != .intervened_description_claim) and (.baseline_description_proposition_digest != .intervened_description_proposition_digest))] | length) == 1 and
+            ([.cases[] | select(.id == "comment-only" and .kind == "NON_SEMANTIC_COMMENT" and .source_changed and (.semantic_changed | not) and (.grant_changed | not) and (.graph_changed | not) and .raw_input_changed and .consumer_accepted and .passed and .semantic_outputs_preserved and (.baseline_output_digest == .intervened_output_digest) and (.baseline_authorization_claim == .intervened_authorization_claim) and (.baseline_execution_claim == .intervened_execution_claim))] | length) == 1 and
+            ([.cases[] | select(.id == "graph-connection" and .kind == "SEMANTIC_GRAPH" and .source_changed and .semantic_changed and .graph_changed and .raw_input_changed and .consumer_accepted and .passed and (.baseline_case_decision != .intervened_case_decision) and (.baseline_execution != .intervened_execution))] | length) == 1
           ' "$RUNNER_TEMP/meta-circular-boundary/causality.json"
 
       - name: Upload meta-circular boundary evidence

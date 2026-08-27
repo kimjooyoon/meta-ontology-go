@@ -11,9 +11,9 @@ import (
 // parseAttempts independently reads case facts from the source computations.
 // Only the wire model and the general parser/lowerer are shared with producer.
 func parseAttempts(source contract.SourceObservation) (map[string]contract.Attempt, error) {
-	attempts := make(map[string]contract.Attempt, caseTotal)
+	attempts := make(map[string]contract.Attempt, len(expectedCases()))
 	for _, computation := range source.Computations {
-		id, attempt, err := parseComputation(computation, source.SourceDigest)
+		id, attempt, err := parseComputation(computation, source.SemanticDigest)
 		if err != nil {
 			return nil, err
 		}
@@ -30,7 +30,7 @@ func parseAttempts(source contract.SourceObservation) (map[string]contract.Attem
 	return attempts, nil
 }
 
-func parseComputation(computation contract.Computation, sourceDigest string) (string, contract.Attempt, error) {
+func parseComputation(computation contract.Computation, semanticDigest string) (string, contract.Attempt, error) {
 	parts := strings.Split(computation.Program, "|")
 	if len(parts) == 0 || parts[0] != "meta-circular-boundary.case" {
 		return "", contract.Attempt{FactActivity: computation.Activity, Unknown: true}, fmt.Errorf("unknown computation prefix in %q", computation.Activity)
@@ -62,7 +62,7 @@ func parseComputation(computation contract.Computation, sourceDigest string) (st
 	}
 	for key := range fields {
 		switch key {
-		case "id", "description", "capability", "issuer", "subject", "operation", "scope", "handle", "request_execution":
+		case "id", "description", "request", "request_execution", "description_authority":
 		default:
 			return id, contract.Attempt{FactActivity: computation.Activity, Unknown: true}, fmt.Errorf("unknown computation field %q", key)
 		}
@@ -71,7 +71,7 @@ func parseComputation(computation contract.Computation, sourceDigest string) (st
 	if !ok {
 		return id, contract.Attempt{FactActivity: computation.Activity, Unknown: true}, nil
 	}
-	descriptionDigest := sourceDigest
+	descriptionDigest := semanticDigest
 	if description != "source" {
 		descriptionDigest = digestBytes([]byte(description))
 	}
@@ -79,46 +79,22 @@ func parseComputation(computation contract.Computation, sourceDigest string) (st
 	if err != nil {
 		return id, contract.Attempt{FactActivity: computation.Activity, Unknown: true}, nil
 	}
-	attempt := contract.Attempt{FactActivity: computation.Activity, DescriptionDigest: descriptionDigest, RequestExecution: requestExecution, Contradictory: contradictory}
-	capabilityKind, ok := fields["capability"]
-	if !ok {
-		attempt.Unknown = true
-		return id, attempt, nil
+	requestKind, requestOK := fields["request"]
+	if !requestOK || (requestKind != requestNone && requestKind != requestReadOnly) {
+		return id, contract.Attempt{FactActivity: computation.Activity, DescriptionDigest: descriptionDigest, RequestExecution: requestExecution, Contradictory: contradictory, Unknown: true}, nil
 	}
-	if capabilityKind == "none" {
-		for _, key := range []string{"issuer", "subject", "operation", "scope", "handle"} {
-			if _, exists := fields[key]; exists {
-				attempt.Unknown = true
-				return id, attempt, nil
-			}
+	attempt := contract.Attempt{FactActivity: computation.Activity, DescriptionDigest: descriptionDigest, RequestKind: requestKind, RequestExecution: requestExecution, Contradictory: contradictory}
+	if authority, ok := fields["description_authority"]; ok {
+		attempt.DescriptionAuthorityClaim = authority == "GRANTED"
+		if authority != "GRANTED" && authority != "NONE" {
+			attempt.Unknown = true
 		}
-		return id, attempt, nil
 	}
-	if capabilityKind != "present" {
-		attempt.Unknown = true
-		return id, attempt, nil
+	if attempt.DescriptionAuthorityClaim || requestKind == requestNone {
+		attempt.Predicate = predicateDescriptionOnly
+	} else {
+		attempt.Predicate = predicateExplicitGrant
 	}
-	issuer, issuerOK := fields["issuer"]
-	subject, subjectOK := fields["subject"]
-	operation, operationOK := fields["operation"]
-	scope, scopeOK := fields["scope"]
-	handle, handleOK := fields["handle"]
-	if !issuerOK || !subjectOK || !operationOK || !scopeOK || !handleOK {
-		attempt.Unknown = true
-		return id, attempt, nil
-	}
-	subjectDigest := subject
-	if subject == "source" {
-		subjectDigest = sourceDigest
-	}
-	handleValue := handle
-	switch handle {
-	case "fixture":
-		handleValue = capabilityHandle(sourceDigest)
-	case "forged":
-		handleValue = digestBytes([]byte("forged|" + sourceDigest))
-	}
-	attempt.Capability = &contract.Capability{Issuer: issuer, SubjectDigest: subjectDigest, Operation: operation, Scope: scope, Handle: handleValue}
 	return id, attempt, nil
 }
 

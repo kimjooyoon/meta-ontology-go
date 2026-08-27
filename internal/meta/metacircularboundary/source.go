@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -44,15 +45,70 @@ func observeSource(path string, source []byte) (SourceObservation, error) {
 			}
 		}
 	}
-	if !containsAll(entities, requiredEntities) || !containsAll(activities, requiredActivities) {
-		return SourceObservation{}, fmt.Errorf("meta-circular source does not declare the boundary vocabulary")
-	}
+	semanticDigest := digestBytes([]byte(normalized.SemanticCanonical()))
 	return SourceObservation{
-		Path: path, SourceDigest: digestBytes(source), SemanticDigest: digestBytes([]byte(normalized.SemanticCanonical())),
+		Path: path, SourceDigest: digestBytes(source), SemanticDigest: semanticDigest,
 		Package: file.Package.Name, Namespace: file.Namespace.Name, Entities: entities, Activities: activities,
 		Computations:     computations,
-		DescriptionBound: true, ReadOnly: true, RepositoryWrites: 0, MutationAuthority: false,
+		Graph:            loweredGraph(normalized),
+		DescriptionBound: containsAll(entities, requiredEntities),
 	}, nil
+}
+
+func loweredGraph(ir semantic.IR) GraphObservation {
+	graph := GraphObservation{Schema: GraphSchema}
+	nodes := make(map[semantic.ID]semantic.Node)
+	for _, node := range ir.Graph.Nodes() {
+		nodes[node.ID] = node
+	}
+	inputs := make(map[string]string)
+	outputs := make(map[string]string)
+	for _, fact := range ir.Graph.Facts() {
+		subject, subjectOK := nodes[fact.Subject]
+		object, objectOK := nodes[fact.Object]
+		if !subjectOK || !objectOK {
+			continue
+		}
+		if fact.Predicate == semantic.Used && subject.Kind == semantic.Activity && object.Kind == semantic.Entity {
+			inputs[subject.Name] = object.Name
+		}
+		if fact.Predicate == semantic.WasGeneratedBy && subject.Kind == semantic.Entity && object.Kind == semantic.Activity {
+			outputs[object.Name] = subject.Name
+		}
+	}
+	type pathStep struct {
+		from, through, to, relation string
+	}
+	steps := []pathStep{
+		{from: "DescribeMetaOperation", through: "SelfDescription", to: "GrantReadOnlyMetaCapability", relation: "DESCRIBES_TO_GRANTS"},
+		{from: "GrantReadOnlyMetaCapability", through: "ReadOnlyCapability", to: "ExecuteMetaOperation", relation: "GRANTS_TO_EXECUTES"},
+	}
+	expectedFrom := []string{"MetaOperation", "SelfDescription"}
+	expectedThrough := []string{"SelfDescription", "ReadOnlyCapability"}
+	graph.Valid = true
+	for ordinal, step := range steps {
+		fromType := inputs[step.from]
+		throughType := outputs[step.from]
+		toType := inputs[step.to]
+		graph.Relations = append(graph.Relations, TypedRelation{Ordinal: ordinal + 1, FromActivity: step.from, FromType: fromType, Relation: step.relation, ThroughType: throughType, ToType: toType, ToActivity: step.to})
+		if fromType != expectedFrom[ordinal] || throughType != expectedThrough[ordinal] || toType != expectedThrough[ordinal] {
+			graph.Valid = false
+		}
+	}
+	graph.Path = []string{"DescribeMetaOperation", "GrantReadOnlyMetaCapability", "ExecuteMetaOperation"}
+	if len(graph.Relations) != len(steps) {
+		graph.Valid = false
+	}
+	if !graph.Valid {
+		graph.Reason = ReasonGraphUnknown
+	}
+	graph.Digest = digestValue(struct {
+		Relations []TypedRelation `json:"relations"`
+		Path      []string        `json:"path"`
+		Valid     bool            `json:"valid"`
+		Reason    string          `json:"reason"`
+	}{Relations: graph.Relations, Path: graph.Path, Valid: graph.Valid, Reason: graph.Reason})
+	return graph
 }
 
 func containsAll(observed, required []string) bool {
