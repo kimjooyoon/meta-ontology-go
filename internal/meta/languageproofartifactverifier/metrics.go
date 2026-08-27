@@ -57,6 +57,7 @@ func MetricIDs() []string {
 }
 
 func indicators(summary Summary) []Indicator {
+	claimStateTotals := fixedClaimStateTotals()
 	values := []struct {
 		class, proof, operation string
 		value, target           int
@@ -70,9 +71,9 @@ func indicators(summary Summary) []Indicator {
 		{"OUTCOME", "FOUNDATION", "match-independent-recipe", summary.RecipeMatches, 1},
 		{"DRIVER", "COHERENCE", "accept-digested-claim-transitions", summary.AcceptedTransitions, TransitionTotal},
 		{"DRIVER", "COHERENCE", "preserve-transport-transitions", summary.PreservedTransitions, EvidenceTotal + 1},
-		{"DRIVER", "COHERENCE", "count-case-discharged-claims", summary.CaseDischargedClaims, 43},
-		{"GUARDRAIL", "FOUNDATION", "count-case-open-claims", summary.CaseOpenClaims, 20},
-		{"GUARDRAIL", "REGRESSION", "count-case-refuted-claims", summary.CaseRefutedClaims, 17},
+		{"DRIVER", "COHERENCE", "count-case-discharged-claims", summary.CaseDischargedClaims, claimStateTotals.Discharged},
+		{"GUARDRAIL", "FOUNDATION", "count-case-open-claims", summary.CaseOpenClaims, claimStateTotals.Open},
+		{"GUARDRAIL", "REGRESSION", "count-case-refuted-claims", summary.CaseRefutedClaims, claimStateTotals.Refuted},
 		{"DRIVER", "FOUNDATION", "persist-final-ledger-open-claims", summary.FinalLedgerOpenClaims, ClaimTemplateTotal},
 		{"DRIVER", "COHERENCE", "persist-final-ledger-discharged-claims", summary.FinalLedgerDischargedClaims, ClaimTemplateTotal},
 		{"GUARDRAIL", "REGRESSION", "reject-tampered-evidence", summary.TamperedRejections, 1},

@@ -96,10 +96,17 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 
 	externalRecipe, recipeErr := decodeRecipe(recipe)
 	derivedRecipe, derivedErr := recipeFromSource(source)
+	recipeEvidenceGood := claimOK(artifact.Claims, artifact.Evidence, artifact, "recipe-match")
 	recipeGood := recipeErr == nil && derivedErr == nil && reflect.DeepEqual(externalRecipe, CanonicalRecipe()) && reflect.DeepEqual(derivedRecipe, CanonicalRecipe()) &&
-		reflect.DeepEqual(artifact.Recipe, externalRecipe) && artifact.RecipeDigest == digestValue(externalRecipe) && claimOK(artifact.Claims, artifact.Evidence, artifact, "recipe-match")
+		reflect.DeepEqual(artifact.Recipe, externalRecipe) && artifact.RecipeDigest == digestValue(externalRecipe) && recipeEvidenceGood
 	if recipeGood {
 		statuses["recipe-match"] = "DISCHARGED"
+	} else if operationMissing || (mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"]) {
+		// A missing operation attachment or an invariant-only evidence change
+		// leaves the recipe claim unresolved. The recipe itself has not been
+		// contradicted, so this declared dependency remains OPEN rather than
+		// being blanket-promoted to REFUTED.
+		statuses["recipe-match"] = "OPEN"
 	} else {
 		statuses["recipe-match"] = "REFUTED"
 	}

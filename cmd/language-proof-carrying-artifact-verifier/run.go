@@ -32,6 +32,8 @@ type options struct {
 	claimProposition, claimDependency, claimProofChoice, claimTarget, unauthorizedBundle                     string
 	bundle, packBundle, bundleInputs, checkout, consumerReceipt                                              string
 	resealReport, coherentPreliminaryTamper, preliminaryDigest                                               string
+	claimStateTamper, claimStateCase, claimStateID, claimState                                               string
+	claimStateExpectations                                                                                   string
 }
 
 func run(args []string) int {
@@ -78,8 +80,20 @@ func run(args []string) int {
 	flags.StringVar(&value.resealReport, "reseal-report", "", "fixture report to reseal after mutation")
 	flags.StringVar(&value.coherentPreliminaryTamper, "coherent-preliminary-tamper", "", "final report fixture to reseal with a chosen preliminary digest")
 	flags.StringVar(&value.preliminaryDigest, "preliminary-digest", "", "chosen preliminary digest for a coherent fixture")
+	flags.StringVar(&value.claimStateTamper, "claim-state-tamper", "", "coherently resealed claim-state fixture")
+	flags.StringVar(&value.claimStateCase, "claim-state-case", "valid-proof-carrying-artifact", "case ID for claim-state fixture")
+	flags.StringVar(&value.claimStateID, "claim-state-id", "source-bytes-bound", "claim ID for claim-state fixture")
+	flags.StringVar(&value.claimState, "claim-state", "OPEN", "new claim state for claim-state fixture")
+	flags.StringVar(&value.claimStateExpectations, "claim-state-expectations", "", "write validator-owned fixed claim-state expectations")
 	if flags.Parse(args) != nil {
 		return 2
+	}
+	if value.claimStateExpectations != "" {
+		raw, err := json.MarshalIndent(verifier.ClaimStateExpectations(), "", "  ")
+		if err != nil || os.WriteFile(value.claimStateExpectations, append(raw, '\n'), 0o644) != nil {
+			return 1
+		}
+		return 0
 	}
 	writeRawReport := func(path string, report verifier.Report) int {
 		raw, err := json.MarshalIndent(report, "", "  ")
@@ -114,6 +128,16 @@ func run(args []string) int {
 			return 1
 		}
 		return writeRawReport(value.output, verifier.ResealFinalPreliminaryDigest(report, value.preliminaryDigest))
+	}
+	if value.claimStateTamper != "" {
+		if value.output == "" {
+			return 2
+		}
+		report, err := verifier.LoadReport(value.claimStateTamper)
+		if err != nil {
+			return 1
+		}
+		return writeRawReport(value.output, verifier.ResealClaimState(report, value.claimStateCase, value.claimStateID, value.claimState))
 	}
 	if value.check != "" {
 		report, err := verifier.LoadReport(value.check)

@@ -238,6 +238,35 @@ func ResealFinalPreliminaryDigest(report Report, preliminaryDigest string) Repor
 	return report
 }
 
+// ResealClaimState creates a fixture with a valid claim-state digest and
+// report digest. The fixed expectation validator, rather than stale-envelope
+// detection, must reject the semantic state mutation.
+func ResealClaimState(report Report, caseID, claimID, state string) Report {
+	for caseIndex := range report.Cases {
+		if report.Cases[caseIndex].ID != caseID {
+			continue
+		}
+		for claimIndex := range report.Cases[caseIndex].Claims {
+			claim := &report.Cases[caseIndex].Claims[claimIndex]
+			if claim.ID != claimID {
+				continue
+			}
+			claim.Status = state
+			switch state {
+			case "DISCHARGED":
+				claim.Resolution, claim.Reason, claim.Provenance = "EXACT", "CLAIM_DISCHARGED", "consumer-canonical-recipe-v2"
+			case "OPEN":
+				claim.Resolution, claim.Reason, claim.Provenance = "LOWER_RESOLUTION", "CLAIM_PENDING", "consumer-observation"
+			case "REFUTED":
+				claim.Resolution, claim.Reason, claim.Provenance = "INVARIANT_ONLY", "CLAIM_REFUTED", "consumer-observation"
+			}
+			claim.StateDigest = claimStateDigest(*claim)
+		}
+	}
+	report.Digest = reportDigest(report)
+	return report
+}
+
 type ValidationError struct {
 	Coordinate Coordinate
 	Detail     string
@@ -266,13 +295,14 @@ func summaryMismatchError(phase string, actual, expected Summary) error {
 }
 
 func expectedSummary(denominator, bundleMetric, consumerMetric int) Summary {
+	claimStateTotals := fixedClaimStateTotals()
 	return Summary{
 		CasesSatisfied: CaseTotal, CasesTotal: CaseTotal, ValidArtifacts: 1,
 		EvidenceKindsCarried: EvidenceTotal, ExactEvidenceLinks: EvidenceTotal,
 		RecipeMatches: 1, PreservedTransitions: EvidenceTotal + 1,
 		TransitionTotal: TransitionTotal, ClaimTemplates: ClaimTemplateTotal,
 		ClaimInstances: CaseTotal * ClaimTemplateTotal, AcceptedTransitions: TransitionTotal,
-		CaseDischargedClaims: 43, CaseOpenClaims: 20, CaseRefutedClaims: 17,
+		CaseDischargedClaims: claimStateTotals.Discharged, CaseOpenClaims: claimStateTotals.Open, CaseRefutedClaims: claimStateTotals.Refuted,
 		FinalLedgerOpenClaims: ClaimTemplateTotal, FinalLedgerDischargedClaims: ClaimTemplateTotal,
 		TamperedRejections: 1, CoherentTamperRejections: 1, CoherentClaimStructureRejections: 4,
 		MissingEvidenceRejections: 1, ByteOnlyDenials: 1, RecipeRejections: 1,
@@ -339,6 +369,9 @@ func validateCaseResults(report Report) error {
 			}
 			seen[claim.ID] = true
 		}
+	}
+	if err := validateClaimStateExpectations(report.Cases); err != nil {
+		return err
 	}
 	if valid := validCase(report.Cases); valid == nil || !validCaseClaims(*valid, report) {
 		return fmt.Errorf("proof-carrying valid claim binding mismatch")

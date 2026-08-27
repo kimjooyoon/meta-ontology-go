@@ -2,6 +2,7 @@ package languageproofartifactverifier
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -147,8 +148,16 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 		return ConsumerReceipt{}, consumerError(ConsumerErrorTargetMissing, err.Error())
 	}
 	finalReport := Validate(report) == nil
-	if !finalReport && ValidatePreliminary(report) != nil {
-		return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")
+	preliminaryErr := error(nil)
+	if !finalReport {
+		preliminaryErr = ValidatePreliminary(report)
+	}
+	if !finalReport && preliminaryErr != nil {
+		var typed *ValidationError
+		if errors.As(preliminaryErr, &typed) {
+			return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, typed.Error())
+		}
+		return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified: "+preliminaryErr.Error())
 	}
 	if report.BundleDigest != bundle.Digest {
 		return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")
