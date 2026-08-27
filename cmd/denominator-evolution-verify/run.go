@@ -45,6 +45,11 @@ func run(args []string) int {
 		return 2
 	}
 	fmt.Printf("denominator evolution consumer: %s %s checks=%d\n", verification.Decision, verification.Reason, len(verification.Checks))
+	for _, check := range verification.Checks {
+		if check.Status != "PASS" {
+			fmt.Printf("denominator evolution consumer check: %s status=%s expected=%s observed=%s\n", check.ID, check.Status, check.Expected, check.Observed)
+		}
+	}
 	if verification.Decision != "PASS" {
 		return 1
 	}
