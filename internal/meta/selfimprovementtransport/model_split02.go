@@ -36,7 +36,7 @@ type TransportMetadata struct {
 	ArtifactName         string      `json:"artifact_name"`
 	ArtifactDigest       string      `json:"artifact_digest"`
 	ArtifactSizeBytes    int64       `json:"artifact_size_bytes"`
-	Attestation          Attestation `json:"attestation,omitempty"`
+	Attestation          Attestation `json:"attestation"`
 }
 
 type Obligation struct {
