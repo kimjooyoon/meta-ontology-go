@@ -121,6 +121,7 @@ func intervention(baseInput contract.Input, baseline contract.Report, id, kind, 
 	if err != nil {
 		fatal(fmt.Errorf("%s: %w", id, err))
 	}
+	input.ExecutionArtifacts = append([]contract.ExecutionArtifact(nil), intervened.ExecutionArtifacts...)
 	consumerAccepted := consumer.Judge(intervened, input) == nil
 	baselineCase := caseByID(baseline, target)
 	intervenedCase := caseByID(intervened, target)
