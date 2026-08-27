@@ -64,6 +64,11 @@ func main() {
 		report.Summary.ExecutedEffects, report.Summary.IndependentlyObservedEffects, report.Summary.UnknownEffectScopes)
 }
 
+func fail(message string) {
+	fmt.Fprintln(os.Stderr, message)
+	os.Exit(1)
+}
+
 func buildReport(source []byte, headSHA, executionID string) (model.Report, error) {
 	if !model.ValidHead(headSHA) {
 		return model.Report{}, fmt.Errorf("invalid head sha %q", headSHA)
