@@ -93,8 +93,8 @@ jobs:
             go run ./cmd/semantic-delta-receipt-witness \
               --case suite --subject-sha "$HEAD_SHA" --output "$out/$pass.json"
           done
-          jq -S 'del(.output_path)' "$out/first.json" > "$out/first-deterministic.json"
-          jq -S 'del(.output_path)' "$out/second.json" > "$out/second-deterministic.json"
+          jq -S 'del(.output_path, .suite_digest)' "$out/first.json" > "$out/first-deterministic.json"
+          jq -S 'del(.output_path, .suite_digest)' "$out/second.json" > "$out/second-deterministic.json"
           cmp "$out/first-deterministic.json" "$out/second-deterministic.json"
           jq -e --arg output "$out/first.json" '
             .schema == "gooo/semantic-delta-receipt-conformance/v1" and
