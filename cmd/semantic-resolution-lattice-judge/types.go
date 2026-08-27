@@ -33,11 +33,24 @@ type latticeCase struct {
 }
 
 type claim struct {
-	ID          string `json:"id"`
-	State       string `json:"state"`
-	BeforeState string `json:"before_state"`
-	AfterState  string `json:"after_state"`
-	Preserved   bool   `json:"preserved"`
+	ID             string `json:"id"`
+	State          string `json:"state"`
+	BeforeState    string `json:"before_state"`
+	AfterState     string `json:"after_state"`
+	Preserved      bool   `json:"preserved"`
+	Stage          string `json:"stage"`
+	Step           int    `json:"step"`
+	Reason         string `json:"reason"`
+	EvidenceDigest string `json:"evidence_digest"`
+	Provenance     string `json:"provenance"`
+}
+
+type tamperRegression struct {
+	ID               string `json:"id"`
+	ClaimID          string `json:"claim_id"`
+	Mutation         string `json:"mutation"`
+	Rejected         bool   `json:"rejected"`
+	MintedDischarged bool   `json:"minted_discharged"`
 }
 
 type counterfactual struct {
@@ -82,8 +95,9 @@ type receipt struct {
 		FailClosed int `json:"fail_closed"`
 		Unknown    int `json:"unknown"`
 	} `json:"counts"`
-	Cases           []latticeCase    `json:"cases"`
-	Claims          []claim          `json:"claims"`
-	Counterfactuals []counterfactual `json:"counterfactuals"`
-	Metrics         []metric         `json:"metrics"`
+	Cases            []latticeCase    `json:"cases"`
+	Claims           []claim          `json:"claims"`
+	Counterfactuals  []counterfactual `json:"counterfactuals"`
+	TamperRegression tamperRegression `json:"tamper_regression"`
+	Metrics          []metric         `json:"metrics"`
 }

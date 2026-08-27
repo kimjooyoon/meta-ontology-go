@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+const (
+	claimTamperRegressionID = "legacy-final-state-tamper"
+	claimTamperTargetID     = "claim-write-free-descent"
+	claimTamperMutation     = "add claim_state=DISCHARGED to mutation-authority value"
+)
+
 func validateCounterfactuals(source string, baselineCases []latticeCase, baselineClaims []claim, got []counterfactual) error {
 	if len(got) != 2 {
 		return errors.New("counterfactual denominator is not fixed")
@@ -116,4 +122,42 @@ func claimByID(claims []claim, id string) (claim, error) {
 		}
 	}
 	return claim{}, errors.New("counterfactual claim lookup failed")
+}
+
+func buildClaimTamperRegression(source string) (tamperRegression, error) {
+	tampered, err := appendCaseField(source, "mutation-authority", "claim_state=DISCHARGED")
+	if err != nil {
+		return tamperRegression{}, err
+	}
+	declared, parseErr := parseGoooCases(tampered)
+	minted := false
+	if parseErr == nil {
+		for _, item := range declared {
+			reconstructed := reconstructCase(item)
+			claim := reconstructClaim(item, reconstructed.Transition)
+			if claim.ID == claimTamperTargetID && claim.AfterState == "DISCHARGED" {
+				minted = true
+				break
+			}
+		}
+	}
+	return tamperRegression{ID: claimTamperRegressionID, ClaimID: claimTamperTargetID,
+		Mutation: claimTamperMutation, Rejected: parseErr != nil, MintedDischarged: minted}, nil
+}
+
+func appendCaseField(source, caseID, field string) (string, error) {
+	marker := sourceCasePrefix + "id=" + caseID + ";"
+	start := strings.Index(source, marker)
+	if start < 0 {
+		return "", errors.New("tamper case is missing")
+	}
+	lineEnd := strings.IndexByte(source[start:], '\n')
+	if lineEnd < 0 {
+		lineEnd = len(source) - start
+	}
+	quote := strings.LastIndex(source[start:start+lineEnd], `"`)
+	if quote < 0 {
+		return "", errors.New("tamper case has no value terminator")
+	}
+	return source[:start+quote] + ";" + field + source[start+quote:], nil
 }

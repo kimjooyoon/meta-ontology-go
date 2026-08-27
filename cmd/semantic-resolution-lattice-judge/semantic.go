@@ -13,7 +13,7 @@ func sourceSemanticDigest(cases []declaredCase) string {
 		fmt.Fprintf(&canonical, "%s|%d|%d|%s|%d|%t|%s|%s\n", item.ID,
 			item.Observation.Required, item.Observation.Observed, item.Observation.Reason,
 			item.Observation.RepositoryWrites, item.Observation.MutationAuthority,
-			item.ClaimID, item.ExpectedClaimState)
+			item.ClaimID, item.ClaimPriorState)
 	}
 	return digestText(canonical.String())
 }

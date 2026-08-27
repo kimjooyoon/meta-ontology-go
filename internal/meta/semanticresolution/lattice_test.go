@@ -4,10 +4,10 @@ import "testing"
 
 const latticeTestSource = `package resolutionlattice
 namespace meta
-activity CaseExactObservation(PartialObservation) -> Claim computes "resolution-lattice.case;id=exact-observation;required=3;observed=3;reason=OBSERVATION_COMPLETE;repository_writes=0;mutation_authority=false;claim_id=claim-exact-observation;claim_state=DISCHARGED"
-activity CasePartialInvariantDescent(PartialObservation) -> Claim computes "resolution-lattice.case;id=partial-invariant-descent;required=3;observed=2;reason=REQUIRED_INPUT_UNOBSERVED;repository_writes=0;mutation_authority=false;claim_id=claim-invariant-fallback;claim_state=OPEN"
-activity CaseMalformedObservation(PartialObservation) -> Claim computes "resolution-lattice.case;id=malformed-observation;required=3;observed=4;reason=OBSERVATION_CARDINALITY_INVALID;repository_writes=0;mutation_authority=false;claim_id=claim-exact-under-missing-evidence;claim_state=REFUTED"
-activity CaseMutationAuthority(PartialObservation) -> Claim computes "resolution-lattice.case;id=mutation-authority;required=3;observed=2;reason=REQUIRED_INPUT_UNOBSERVED;repository_writes=0;mutation_authority=true;claim_id=claim-write-free-descent;claim_state=DISCHARGED"
+activity CaseExactObservation(PartialObservation) -> Claim computes "resolution-lattice.case;id=exact-observation;required=3;observed=3;reason=OBSERVATION_COMPLETE;repository_writes=0;mutation_authority=false;claim_id=claim-exact-observation;claim_prior_state=DISCHARGED"
+activity CasePartialInvariantDescent(PartialObservation) -> Claim computes "resolution-lattice.case;id=partial-invariant-descent;required=3;observed=2;reason=REQUIRED_INPUT_UNOBSERVED;repository_writes=0;mutation_authority=false;claim_id=claim-invariant-fallback;claim_prior_state=OPEN"
+activity CaseMalformedObservation(PartialObservation) -> Claim computes "resolution-lattice.case;id=malformed-observation;required=3;observed=4;reason=OBSERVATION_CARDINALITY_INVALID;repository_writes=0;mutation_authority=false;claim_id=claim-exact-under-missing-evidence;claim_prior_state=OPEN"
+activity CaseMutationAuthority(PartialObservation) -> Claim computes "resolution-lattice.case;id=mutation-authority;required=3;observed=2;reason=REQUIRED_INPUT_UNOBSERVED;repository_writes=0;mutation_authority=true;claim_id=claim-write-free-descent;claim_prior_state=DISCHARGED"
 `
 
 func TestPartialObservationDescendsDirectlyToInvariantOnly(t *testing.T) {
@@ -31,6 +31,17 @@ func TestCanonicalLatticeReceiptIsClosedAndReplayable(t *testing.T) {
 	}
 	if err := ValidateLatticeReceipt(receipt); err != nil {
 		t.Fatal(err)
+	}
+	mutation, err := findClaim(receipt.Claims, "claim-write-free-descent")
+	if err != nil || mutation.BeforeState != ClaimDischarged || mutation.AfterState != ClaimRefuted || mutation.State != ClaimRefuted || mutation.Stage != StageFailClosed || mutation.Reason != "MUTATION_AUTHORITY_PRESENT" {
+		t.Fatalf("mutation claim = %+v, err = %v", mutation, err)
+	}
+	malformed, err := findClaim(receipt.Claims, "claim-exact-under-missing-evidence")
+	if err != nil || malformed.BeforeState != ClaimOpen || malformed.AfterState != ClaimRefuted || malformed.State != ClaimRefuted || malformed.Reason != "OBSERVATION_CARDINALITY_INVALID" {
+		t.Fatalf("malformed claim = %+v, err = %v", malformed, err)
+	}
+	if !receipt.TamperRegression.Rejected || receipt.TamperRegression.MintedDischarged {
+		t.Fatalf("tamper regression = %+v", receipt.TamperRegression)
 	}
 }
 

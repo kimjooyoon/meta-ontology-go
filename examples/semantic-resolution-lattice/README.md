@@ -8,7 +8,7 @@ records the exact `EXACT -> INVARIANT_ONLY` descent and its
 The checked-in source is [main.gooo](main.gooo). Its four
 `resolution-lattice.case;...` value programs carry `required`, `observed`,
 `reason`, `repository_writes`, `mutation_authority`, `claim_id`, and
-`claim_state`. The producer parses those activity value programs from the
+`claim_prior_state` (the before-state only; no desired final state). The producer parses those activity value programs from the
 Gooo AST; no case fixture is hard-coded in Go. The checked-in result receipt
 is [receipt.json](receipt.json). The independent adjudicator parses the
 activity declarations and value programs independently, reconstructs the
@@ -37,7 +37,10 @@ The non-semantic counterexample adds a comment: the source digest changes but
 the semantic digest, decision, and claim transition remain unchanged.
 
 The four-case denominator is fixed. The receipt records one `PASS`, two
-`FAIL_CLOSED`, and one structured `UNKNOWN`. Repository writes are `0` and
+`FAIL_CLOSED`, and one structured `UNKNOWN`. Claims are evidence-derived: a
+`PASS` may discharge an `OPEN` prior claim, lower-resolution `UNKNOWN`
+preserves its prior, and contradictory `FAIL_CLOSED` evidence refutes any
+non-refuted prior. Repository writes are `0` and
 mutation authority is `false`; emitting the receipt is an evidence artifact,
 not authority to mutate the source tree.
 
@@ -45,6 +48,13 @@ The fixed case denominator is `4`; the fixed counterfactual denominator is
 `2`. Metrics expose decision influence `1/2`, claim-transition influence
 `1/2`, and combined semantic influence `1/2`, each with a producer, consumer,
 meta-operation, and FOUNDATION/COHERENCE/REGRESSION proof level.
+
+Every claim transition carries its derived stage, step, reason, evidence
+digest, and Gooo case provenance. The malformed case demonstrates
+`OPEN -> REFUTED`, and the mutation-authority case demonstrates
+`DISCHARGED -> REFUTED`. A tamper regression injects the legacy
+`claim_state=DISCHARGED` final-state field and requires the parser to reject
+it, so a source-declared final state cannot mint a discharge.
 
 ## Research boundary
 

@@ -11,6 +11,10 @@ func BuildLatticeReceipt(source, sourceSHA256, sourceContents string) (LatticeRe
 	if err != nil {
 		return LatticeReceipt{}, err
 	}
+	tamperRegression, err := buildClaimTamperRegression(source, sourceContents)
+	if err != nil {
+		return LatticeReceipt{}, err
+	}
 	counts := LatticeCounts{CasesTotal: len(cases)}
 	for _, item := range cases {
 		switch item.Decision {
@@ -27,7 +31,8 @@ func BuildLatticeReceipt(source, sourceSHA256, sourceContents string) (LatticeRe
 		SemanticDigest:   semanticHash,
 		RepositoryWrites: 0, MutationAuthority: false, CaseDenominator: LatticeCaseDenominator,
 		Counts: counts, Cases: cases, Claims: claims, Counterfactuals: counterfactuals,
-		Metrics: canonicalLatticeMetrics(counterfactuals),
+		TamperRegression: tamperRegression,
+		Metrics:          canonicalLatticeMetrics(counterfactuals, claims),
 	}
 	return receipt, nil
 }

@@ -63,8 +63,15 @@ func validate(sourcePath, receiptPath string) error {
 	if err := validateClaims(got.Claims, got.Cases); err != nil {
 		return err
 	}
+	expectedTamper, err := buildClaimTamperRegression(string(source))
+	if err != nil {
+		return fmt.Errorf("build tamper regression: %w", err)
+	}
+	if !reflect.DeepEqual(got.TamperRegression, expectedTamper) {
+		return errors.New("claim final-state tamper regression is not independently reconstructed")
+	}
 	if err := validateCounterfactuals(string(source), expectedCases, expectedClaims, got.Counterfactuals); err != nil {
 		return err
 	}
-	return validateMetrics(got.Metrics, got.Counterfactuals)
+	return validateMetrics(got.Metrics, got.Counterfactuals, got.Claims)
 }

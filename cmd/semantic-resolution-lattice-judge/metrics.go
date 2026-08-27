@@ -2,11 +2,16 @@ package main
 
 import "errors"
 
-func validateMetrics(metrics []metric, counterfactuals []counterfactual) error {
+func validateMetrics(metrics []metric, counterfactuals []counterfactual, claims []claim) error {
 	if len(metrics) != 8 {
 		return errors.New("metric cardinality is invalid")
 	}
-	decisionChanges, claimChanges, semanticInfluence := 0, 0, 0
+	decisionChanges, claimChanges, semanticInfluence, preservedClaims := 0, 0, 0, 0
+	for _, item := range claims {
+		if item.Preserved {
+			preservedClaims++
+		}
+	}
 	for _, item := range counterfactuals {
 		if item.DecisionChanged {
 			decisionChanges++
@@ -25,7 +30,7 @@ func validateMetrics(metrics []metric, counterfactuals []counterfactual) error {
 	}{
 		"gooo.metric.meta-resolution-lattice.exact-observation.count.v1":             {1, 4, "outcome", "cases", "greater_or_equal", "FOUNDATION", "semanticresolution.ResolvePartialObservation", "semantic-resolution-lattice-judge", "observe-exact-or-partial"},
 		"gooo.metric.meta-resolution-lattice.invariant-descent.count.v1":             {1, 4, "driver", "cases", "greater_or_equal", "COHERENCE", "semanticresolution.ResolvePartialObservation", "semantic-resolution-lattice-judge", "lower-to-invariant-only"},
-		"gooo.metric.meta-resolution-lattice.claim-preservation.count.v1":            {4, 4, "driver", "cases", "greater_or_equal", "REGRESSION", "semanticresolution.ReplayPartialObservation", "semantic-resolution-lattice-judge", "preserve-claim-state"},
+		"gooo.metric.meta-resolution-lattice.claim-preservation.count.v1":            {preservedClaims, 4, "driver", "cases", "greater_or_equal", "REGRESSION", "semanticresolution.ReplayPartialObservation", "semantic-resolution-lattice-judge", "preserve-claim-state"},
 		"gooo.metric.meta-resolution-lattice.replay.count.v1":                        {4, 4, "driver", "cases", "greater_or_equal", "REGRESSION", "semanticresolution.ReplayPartialObservation", "semantic-resolution-lattice-judge", "replay-resolution-descent"},
 		"gooo.metric.meta-resolution-lattice.write-guardrail.v1":                     {0, 4, "guardrail", "repository_writes", "less_or_equal", "FOUNDATION", "semanticresolution.ResolvePartialObservation", "semantic-resolution-lattice-judge", "preserve-read-only-resolution"},
 		"gooo.metric.meta-resolution-lattice.semantic-decision-influence.v1":         {decisionChanges, 2, "outcome", "counterfactuals", "greater_or_equal", "COHERENCE", "semanticresolution.CasesFromGoooSource", "semantic-resolution-lattice-judge", "reconstruct-decision-from-gooo-value"},

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -37,11 +38,51 @@ func reconstructCase(item declaredCase) latticeCase {
 }
 
 func reconstructClaim(item declaredCase, result transition) claim {
-	before, after := item.ExpectedClaimState, item.ExpectedClaimState
-	if result.Decision == "PASS" && before == "OPEN" {
-		after = "DISCHARGED"
+	before := item.ClaimPriorState
+	after := deriveClaimAfterState(before, result.Decision)
+	stage, step, reason := claimEvidenceFields(result)
+	return claim{ID: item.ClaimID, State: after, BeforeState: before, AfterState: after,
+		Preserved: before == after, Stage: stage, Step: step, Reason: reason,
+		EvidenceDigest: claimEvidenceDigest(item.ClaimID, before, after, item.Observation, result),
+		Provenance:     "gooo://semantic-resolution-lattice/case/" + item.ID}
+}
+
+func deriveClaimAfterState(before, decision string) string {
+	switch decision {
+	case "PASS":
+		if before == "OPEN" {
+			return "DISCHARGED"
+		}
+	case "LOWER_RESOLUTION", "UNKNOWN":
+		return before
+	case "FAIL_CLOSED":
+		if before != "REFUTED" {
+			return "REFUTED"
+		}
 	}
-	return claim{ID: item.ClaimID, State: after, BeforeState: before, AfterState: after, Preserved: before == after}
+	return before
+}
+
+func claimEvidenceFields(result transition) (string, int, string) {
+	if result.Unknown != nil {
+		return result.Unknown.Stage, result.Unknown.Step, result.Unknown.Reason
+	}
+	if result.Decision == "PASS" {
+		return "EXACT", 0, result.Reason
+	}
+	return "FAIL_CLOSED", 1, result.Reason
+}
+
+func claimEvidenceDigest(claimID, before, after string, input observation, result transition) string {
+	unknownStage, unknownStep, unknownReason := "", 0, ""
+	if result.Unknown != nil {
+		unknownStage, unknownStep, unknownReason = result.Unknown.Stage, result.Unknown.Step, result.Unknown.Reason
+	}
+	canonical := fmt.Sprintf("%s|%s|%s|%d|%d|%s|%d|%t|%s|%s|%s|%s|%s|%d|%s\n",
+		claimID, before, after, input.Required, input.Observed, input.Reason,
+		input.RepositoryWrites, input.MutationAuthority, result.FromResolution,
+		result.ToResolution, result.Decision, result.Reason, unknownStage, unknownStep, unknownReason)
+	return digestText(canonical)
 }
 
 func caseDecision(result transition) string {

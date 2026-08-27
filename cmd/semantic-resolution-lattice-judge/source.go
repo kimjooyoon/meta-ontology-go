@@ -10,10 +10,10 @@ import (
 const sourceCasePrefix = "resolution-lattice.case;"
 
 type declaredCase struct {
-	ID                 string
-	Observation        observation
-	ClaimID            string
-	ExpectedClaimState string
+	ID              string
+	Observation     observation
+	ClaimID         string
+	ClaimPriorState string
 }
 
 func parseGoooCases(source string) ([]declaredCase, error) {
@@ -125,10 +125,26 @@ func parseDeclaredCase(program string) (declaredCase, error) {
 		}
 		fields[key] = value
 	}
-	for _, key := range []string{"id", "required", "observed", "reason", "repository_writes", "mutation_authority", "claim_id", "claim_state"} {
+	keys := []string{"id", "required", "observed", "reason", "repository_writes", "mutation_authority", "claim_id", "claim_prior_state"}
+	for _, key := range keys {
 		if fields[key] == "" {
 			return declaredCase{}, fmt.Errorf("missing case field %q", key)
 		}
+	}
+	if len(fields) != len(keys) {
+		for key := range fields {
+			found := false
+			for _, expected := range keys {
+				if key == expected {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return declaredCase{}, fmt.Errorf("unexpected case field %q", key)
+			}
+		}
+		return declaredCase{}, fmt.Errorf("case field set is invalid")
 	}
 	required, err := strconv.Atoi(fields["required"])
 	if err != nil {
@@ -146,9 +162,9 @@ func parseDeclaredCase(program string) (declaredCase, error) {
 	if err != nil {
 		return declaredCase{}, fmt.Errorf("mutation_authority: %w", err)
 	}
-	state := fields["claim_state"]
+	state := fields["claim_prior_state"]
 	if state != "OPEN" && state != "DISCHARGED" && state != "REFUTED" {
-		return declaredCase{}, fmt.Errorf("invalid claim_state %q", state)
+		return declaredCase{}, fmt.Errorf("invalid claim_prior_state %q", state)
 	}
 	return declaredCase{
 		ID: fields["id"],
@@ -156,6 +172,6 @@ func parseDeclaredCase(program string) (declaredCase, error) {
 			Required: required, Observed: observed, Reason: fields["reason"],
 			RepositoryWrites: writes, MutationAuthority: authority,
 		},
-		ClaimID: fields["claim_id"], ExpectedClaimState: state,
+		ClaimID: fields["claim_id"], ClaimPriorState: state,
 	}, nil
 }

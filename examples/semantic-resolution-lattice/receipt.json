@@ -1,8 +1,8 @@
 {
   "schema": "gooo/meta-semantic-resolution-lattice/v1",
   "source": "examples/semantic-resolution-lattice/main.gooo",
-  "source_sha256": "sha256:289c9e069745332ca1cf93a2ee33888dea4c38237a0dc9e5a37f74293d6c160e",
-  "semantic_digest": "sha256:0689223ecc8d93985d9e467af206970ddeeda7d56886ec8810cefbb81e4b4afa",
+  "source_sha256": "sha256:a77f9ab870f65911f761d740634fe098bc6fbe53d1c289f37f30e93c5c48aa26",
+  "semantic_digest": "sha256:9c760f7912c7ce0b2bc9c0760468f47f649d867e3dbed867da07ebc84df93b24",
   "repository_writes": 0,
   "mutation_authority": false,
   "case_denominator": 4,
@@ -103,28 +103,48 @@
       "state": "DISCHARGED",
       "before_state": "DISCHARGED",
       "after_state": "DISCHARGED",
-      "preserved": true
+      "preserved": true,
+      "stage": "EXACT",
+      "step": 0,
+      "reason": "OBSERVATION_COMPLETE",
+      "evidence_digest": "sha256:a45b9ca7fbc0845e8c4eadbce413d6578a4c48cb9344ff2b52d0d3c149d9f9cd",
+      "provenance": "gooo://semantic-resolution-lattice/case/exact-observation"
     },
     {
       "id": "claim-invariant-fallback",
       "state": "OPEN",
       "before_state": "OPEN",
       "after_state": "OPEN",
-      "preserved": true
+      "preserved": true,
+      "stage": "PARTIAL_OBSERVATION",
+      "step": 1,
+      "reason": "REQUIRED_INPUT_UNOBSERVED",
+      "evidence_digest": "sha256:08a427b4bad484e8db3494dc22c460284be7156d7e59b4936d9e684985a6be89",
+      "provenance": "gooo://semantic-resolution-lattice/case/partial-invariant-descent"
     },
     {
       "id": "claim-exact-under-missing-evidence",
       "state": "REFUTED",
-      "before_state": "REFUTED",
+      "before_state": "OPEN",
       "after_state": "REFUTED",
-      "preserved": true
+      "preserved": false,
+      "stage": "FAIL_CLOSED",
+      "step": 1,
+      "reason": "OBSERVATION_CARDINALITY_INVALID",
+      "evidence_digest": "sha256:d7ebbd123482d1cb9231fed667ec2ceb171c3dc4287ddf219cec3a447635ba22",
+      "provenance": "gooo://semantic-resolution-lattice/case/malformed-observation"
     },
     {
       "id": "claim-write-free-descent",
-      "state": "DISCHARGED",
+      "state": "REFUTED",
       "before_state": "DISCHARGED",
-      "after_state": "DISCHARGED",
-      "preserved": true
+      "after_state": "REFUTED",
+      "preserved": false,
+      "stage": "FAIL_CLOSED",
+      "step": 1,
+      "reason": "MUTATION_AUTHORITY_PRESENT",
+      "evidence_digest": "sha256:7167462eab411c7eb8da6a4d53a40e292558e3ca3abc8ec3f6324bbf136ec741",
+      "provenance": "gooo://semantic-resolution-lattice/case/mutation-authority"
     }
   ],
   "counterfactuals": [
@@ -159,14 +179,24 @@
         "state": "OPEN",
         "before_state": "OPEN",
         "after_state": "OPEN",
-        "preserved": true
+        "preserved": true,
+        "stage": "PARTIAL_OBSERVATION",
+        "step": 1,
+        "reason": "REQUIRED_INPUT_UNOBSERVED",
+        "evidence_digest": "sha256:08a427b4bad484e8db3494dc22c460284be7156d7e59b4936d9e684985a6be89",
+        "provenance": "gooo://semantic-resolution-lattice/case/partial-invariant-descent"
       },
       "variant_claim": {
         "id": "claim-invariant-fallback",
         "state": "DISCHARGED",
         "before_state": "OPEN",
         "after_state": "DISCHARGED",
-        "preserved": false
+        "preserved": false,
+        "stage": "EXACT",
+        "step": 0,
+        "reason": "OBSERVATION_COMPLETE",
+        "evidence_digest": "sha256:c0b9bc806640cd2210126c0111441089104e1ebae8a31c64457578f7be8b4b22",
+        "provenance": "gooo://semantic-resolution-lattice/case/partial-invariant-descent"
       },
       "source_digest_changed": true,
       "semantic_digest_changed": true,
@@ -209,14 +239,24 @@
         "state": "OPEN",
         "before_state": "OPEN",
         "after_state": "OPEN",
-        "preserved": true
+        "preserved": true,
+        "stage": "PARTIAL_OBSERVATION",
+        "step": 1,
+        "reason": "REQUIRED_INPUT_UNOBSERVED",
+        "evidence_digest": "sha256:08a427b4bad484e8db3494dc22c460284be7156d7e59b4936d9e684985a6be89",
+        "provenance": "gooo://semantic-resolution-lattice/case/partial-invariant-descent"
       },
       "variant_claim": {
         "id": "claim-invariant-fallback",
         "state": "OPEN",
         "before_state": "OPEN",
         "after_state": "OPEN",
-        "preserved": true
+        "preserved": true,
+        "stage": "PARTIAL_OBSERVATION",
+        "step": 1,
+        "reason": "REQUIRED_INPUT_UNOBSERVED",
+        "evidence_digest": "sha256:08a427b4bad484e8db3494dc22c460284be7156d7e59b4936d9e684985a6be89",
+        "provenance": "gooo://semantic-resolution-lattice/case/partial-invariant-descent"
       },
       "source_digest_changed": true,
       "semantic_digest_changed": false,
@@ -224,6 +264,13 @@
       "claim_transition_changed": false
     }
   ],
+  "tamper_regression": {
+    "id": "legacy-final-state-tamper",
+    "claim_id": "claim-write-free-descent",
+    "mutation": "add claim_state=DISCHARGED to mutation-authority value",
+    "rejected": true,
+    "minted_discharged": false
+  },
   "metrics": [
     {
       "id": "gooo.metric.meta-resolution-lattice.exact-observation.count.v1",
@@ -252,7 +299,7 @@
     {
       "id": "gooo.metric.meta-resolution-lattice.claim-preservation.count.v1",
       "class": "driver",
-      "numerator": 4,
+      "numerator": 2,
       "denominator": 4,
       "unit": "cases",
       "relation": "greater_or_equal",

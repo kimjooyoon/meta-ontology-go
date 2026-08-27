@@ -12,7 +12,10 @@ func ValidateLatticeReceipt(receipt LatticeReceipt) error {
 	if err := validateLatticeCases(receipt.Cases); err != nil {
 		return err
 	}
-	if err := validateClaims(receipt.Claims); err != nil {
+	if err := validateClaims(receipt.Claims, receipt.Cases); err != nil {
+		return err
+	}
+	if err := validateClaimTamperRegression(receipt.TamperRegression); err != nil {
 		return err
 	}
 	if err := validateCounterfactuals(receipt.Counterfactuals); err != nil {

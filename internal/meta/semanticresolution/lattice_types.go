@@ -6,6 +6,7 @@ const (
 	StageExact              LatticeStage = "EXACT"
 	StagePartialObservation LatticeStage = "PARTIAL_OBSERVATION"
 	StageInvariantOnly      LatticeStage = "INVARIANT_ONLY"
+	StageFailClosed         LatticeStage = "FAIL_CLOSED"
 )
 
 type ProofLevel string
@@ -57,11 +58,24 @@ type LatticeCase struct {
 }
 
 type ClaimRecord struct {
-	ID          string     `json:"id"`
-	State       ClaimState `json:"state"`
-	BeforeState ClaimState `json:"before_state"`
-	AfterState  ClaimState `json:"after_state"`
-	Preserved   bool       `json:"preserved"`
+	ID             string       `json:"id"`
+	State          ClaimState   `json:"state"`
+	BeforeState    ClaimState   `json:"before_state"`
+	AfterState     ClaimState   `json:"after_state"`
+	Preserved      bool         `json:"preserved"`
+	Stage          LatticeStage `json:"stage"`
+	Step           int          `json:"step"`
+	Reason         string       `json:"reason"`
+	EvidenceDigest string       `json:"evidence_digest"`
+	Provenance     string       `json:"provenance"`
+}
+
+type LatticeTamperRegression struct {
+	ID               string `json:"id"`
+	ClaimID          string `json:"claim_id"`
+	Mutation         string `json:"mutation"`
+	Rejected         bool   `json:"rejected"`
+	MintedDischarged bool   `json:"minted_discharged"`
 }
 
 type LatticeMetric struct {
@@ -111,5 +125,6 @@ type LatticeReceipt struct {
 	Cases             []LatticeCase           `json:"cases"`
 	Claims            []ClaimRecord           `json:"claims"`
 	Counterfactuals   []LatticeCounterfactual `json:"counterfactuals"`
+	TamperRegression  LatticeTamperRegression `json:"tamper_regression"`
 	Metrics           []LatticeMetric         `json:"metrics"`
 }

@@ -57,7 +57,22 @@ jobs:
             (.source_sha256 | startswith("sha256:")) and
             (.semantic_digest | startswith("sha256:")) and
             .case_denominator == 4 and
-            .counts == {PASS: 1, FAIL_CLOSED: 2, UNKNOWN: 1} and
+            .counts == {cases_total: 4, pass: 1, fail_closed: 2, unknown: 1} and
+            ([.cases[] | select(.id == "malformed-observation")]
+              | length == 1 and .[0].decision == "FAIL_CLOSED") and
+            ([.claims[] | select(.id == "claim-exact-under-missing-evidence")]
+              | length == 1 and .[0].before_state == "OPEN" and
+                .[0].after_state == "REFUTED" and .[0].state == "REFUTED") and
+            ([.cases[] | select(.id == "mutation-authority")]
+              | length == 1 and .[0].decision == "FAIL_CLOSED") and
+            ([.claims[] | select(.id == "claim-write-free-descent")]
+              | length == 1 and .[0].before_state == "DISCHARGED" and
+                .[0].after_state == "REFUTED" and .[0].state == "REFUTED") and
+            .tamper_regression.id == "legacy-final-state-tamper" and
+            .tamper_regression.rejected and
+            (.tamper_regression.minted_discharged | not) and
+            ([.claims[] | select(.stage == "EXACT" or .stage == "PARTIAL_OBSERVATION" or .stage == "FAIL_CLOSED")]
+              | length == 4 and all(.[]; (.step >= 0 and (.reason | length > 0) and (.evidence_digest | startswith("sha256:")) and (.provenance | startswith("gooo://")))) ) and
             (.metrics | length) == 8 and
             ([.metrics[] | select(.id == "gooo.metric.meta-resolution-lattice.semantic-influence.v1")]
               | length == 1 and .[0].numerator == 1 and .[0].denominator == 2) and

@@ -1,6 +1,9 @@
 package main
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 func validateClaims(claims []claim, cases []latticeCase) error {
 	if len(claims) != 4 {
@@ -8,8 +11,16 @@ func validateClaims(claims []claim, cases []latticeCase) error {
 	}
 	seen := map[string]bool{}
 	for _, item := range claims {
-		if seen[item.ID] || item.ID == "" || !validClaimState(item.State) || item.State != item.AfterState || item.Preserved != (item.BeforeState == item.AfterState) {
-			return errors.New("claim state was not preserved")
+		caseItem, ok := caseByClaimID(cases, item.ID)
+		if seen[item.ID] || !ok || item.ID == "" || !validClaimState(item.State) || !validClaimState(item.BeforeState) || !validClaimState(item.AfterState) || item.State != item.AfterState || item.Preserved != (item.BeforeState == item.AfterState) {
+			return errors.New("claim identity or state is invalid")
+		}
+		if want := deriveClaimAfterState(item.BeforeState, caseItem.Transition.Decision); want != item.AfterState {
+			return errors.New("claim after state was not evidence-derived")
+		}
+		wantStage, wantStep, wantReason := claimEvidenceFields(caseItem.Transition)
+		if item.Stage != wantStage || item.Step != wantStep || item.Reason != wantReason || item.EvidenceDigest != claimEvidenceDigest(item.ID, item.BeforeState, item.AfterState, caseItem.Observation, caseItem.Transition) || item.Provenance != "gooo://semantic-resolution-lattice/case/"+caseItem.ID {
+			return errors.New("claim transition evidence is incomplete")
 		}
 		seen[item.ID] = true
 	}
@@ -22,6 +33,15 @@ func validateClaims(claims []claim, cases []latticeCase) error {
 		return errors.New("claim identities are not unique")
 	}
 	return nil
+}
+
+func caseByClaimID(cases []latticeCase, claimID string) (latticeCase, bool) {
+	for _, item := range cases {
+		if item.ClaimID == claimID {
+			return item, true
+		}
+	}
+	return latticeCase{}, false
 }
 
 func validClaimState(state string) bool {

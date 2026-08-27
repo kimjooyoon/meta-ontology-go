@@ -13,10 +13,10 @@ import (
 const latticeCaseProgramPrefix = "resolution-lattice.case;"
 
 type sourceCase struct {
-	ID                 string
-	Observation        PartialObservation
-	ClaimID            string
-	ExpectedClaimState ClaimState
+	ID              string
+	Observation     PartialObservation
+	ClaimID         string
+	ClaimPriorState ClaimState
 }
 
 // CasesFromGoooSource exposes the source-derived case producer used by the
@@ -93,10 +93,26 @@ func parseCaseProgram(program string) (sourceCase, error) {
 		}
 		fields[key] = value
 	}
-	for _, key := range []string{"id", "required", "observed", "reason", "repository_writes", "mutation_authority", "claim_id", "claim_state"} {
+	keys := []string{"id", "required", "observed", "reason", "repository_writes", "mutation_authority", "claim_id", "claim_prior_state"}
+	for _, key := range keys {
 		if fields[key] == "" {
 			return sourceCase{}, fmt.Errorf("missing case field %q", key)
 		}
+	}
+	if len(fields) != len(keys) {
+		for key := range fields {
+			found := false
+			for _, expected := range keys {
+				if key == expected {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sourceCase{}, fmt.Errorf("unexpected case field %q", key)
+			}
+		}
+		return sourceCase{}, fmt.Errorf("case field set is invalid")
 	}
 	required, err := strconv.Atoi(fields["required"])
 	if err != nil {
@@ -114,9 +130,9 @@ func parseCaseProgram(program string) (sourceCase, error) {
 	if err != nil {
 		return sourceCase{}, fmt.Errorf("mutation_authority: %w", err)
 	}
-	state := ClaimState(fields["claim_state"])
+	state := ClaimState(fields["claim_prior_state"])
 	if !validClaimState(state) {
-		return sourceCase{}, fmt.Errorf("invalid claim_state %q", state)
+		return sourceCase{}, fmt.Errorf("invalid claim_prior_state %q", state)
 	}
 	return sourceCase{
 		ID: fields["id"],
@@ -124,17 +140,57 @@ func parseCaseProgram(program string) (sourceCase, error) {
 			Required: required, Observed: observed, Reason: fields["reason"],
 			RepositoryWrites: writes, MutationAuthority: authority,
 		},
-		ClaimID: fields["claim_id"], ExpectedClaimState: state,
+		ClaimID: fields["claim_id"], ClaimPriorState: state,
 	}, nil
 }
 
 func claimFromSource(item sourceCase, transition LatticeTransition) ClaimRecord {
-	before := item.ExpectedClaimState
-	after := before
-	if transition.Decision == DecisionPass && before == ClaimOpen {
-		after = ClaimDischarged
+	before := item.ClaimPriorState
+	after := deriveClaimAfterState(before, transition.Decision)
+	stage, step, reason := claimEvidenceFields(transition)
+	return ClaimRecord{ID: item.ClaimID, State: after, BeforeState: before, AfterState: after,
+		Preserved: before == after, Stage: stage, Step: step, Reason: reason,
+		EvidenceDigest: claimEvidenceDigest(item.ClaimID, before, after, item.Observation, transition),
+		Provenance:     "gooo://semantic-resolution-lattice/case/" + item.ID}
+}
+
+func deriveClaimAfterState(before ClaimState, decision string) ClaimState {
+	switch decision {
+	case DecisionPass:
+		if before == ClaimOpen {
+			return ClaimDischarged
+		}
+	case DecisionLowerResolution, DecisionUnknown:
+		return before
+	case DecisionFailClosed:
+		if before != ClaimRefuted {
+			return ClaimRefuted
+		}
 	}
-	return ClaimRecord{ID: item.ClaimID, State: after, BeforeState: before, AfterState: after, Preserved: before == after}
+	return before
+}
+
+func claimEvidenceFields(transition LatticeTransition) (LatticeStage, int, string) {
+	if transition.Unknown != nil {
+		return transition.Unknown.Stage, transition.Unknown.Step, transition.Unknown.Reason
+	}
+	if transition.Decision == DecisionPass {
+		return StageExact, 0, transition.Reason
+	}
+	return StageFailClosed, 1, transition.Reason
+}
+
+func claimEvidenceDigest(claimID string, before, after ClaimState, observation PartialObservation, transition LatticeTransition) string {
+	unknownStage, unknownStep, unknownReason := "", 0, ""
+	if transition.Unknown != nil {
+		unknownStage, unknownStep, unknownReason = string(transition.Unknown.Stage), transition.Unknown.Step, transition.Unknown.Reason
+	}
+	canonical := fmt.Sprintf("%s|%s|%s|%d|%d|%s|%d|%t|%s|%s|%s|%s|%s|%d|%s\n",
+		claimID, before, after, observation.Required, observation.Observed, observation.Reason,
+		observation.RepositoryWrites, observation.MutationAuthority, transition.FromResolution,
+		transition.ToResolution, transition.Decision, transition.Reason, unknownStage, unknownStep, unknownReason)
+	digest := sha256.Sum256([]byte(canonical))
+	return "sha256:" + hex.EncodeToString(digest[:])
 }
 
 func decisionForTransition(transition LatticeTransition) string {
@@ -150,7 +206,7 @@ func semanticDigest(sourceCases []sourceCase) string {
 		fmt.Fprintf(&canonical, "%s|%d|%d|%s|%d|%t|%s|%s\n", item.ID,
 			item.Observation.Required, item.Observation.Observed, item.Observation.Reason,
 			item.Observation.RepositoryWrites, item.Observation.MutationAuthority,
-			item.ClaimID, item.ExpectedClaimState)
+			item.ClaimID, item.ClaimPriorState)
 	}
 	digest := sha256.Sum256([]byte(canonical.String()))
 	return "sha256:" + hex.EncodeToString(digest[:])
