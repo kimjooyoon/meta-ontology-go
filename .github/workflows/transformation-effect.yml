@@ -2159,6 +2159,7 @@ jobs:
             cmd/invariant-transformation-artifact-semantic-consumer/main.go \
             cmd/invariant-transformation-closure-consumer/main.go \
             cmd/invariant-transformation-closure-verifier/main.go \
+            cmd/invariant-transformation-closure-negative/main.go \
             cmd/invariant-transformation-intervention-witness/main.go \
             cmd/invariant-transformation-intervention-consumer-witness/main.go \
             internal/meta/invarianttransformation/model/model.go \
@@ -2174,6 +2175,7 @@ jobs:
             internal/meta/invarianttransformation/judge/source.go \
             internal/meta/invarianttransformation/judge/report.go \
             internal/meta/invarianttransformation/reportconsumer/consumer.go \
+            internal/meta/invarianttransformation/closureverifier/verifier.go \
             internal/meta/invarianttransformation/judge/judge_test.go)"
           test -z "$diff"
 
@@ -2439,6 +2441,7 @@ jobs:
           forbidden_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/producer'
           consumer_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/interventionconsumer'
           report_consumer_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/reportconsumer'
+          closure_verifier_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/closureverifier'
           producer_intervention_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/intervention'
           test "$(cat "$RUNNER_TEMP/invariant-transformation-observed-head.txt")" = "$HEAD_SHA"
           for pass in first second; do
@@ -2457,6 +2460,12 @@ jobs:
           producer_dependency_imports="$(printf '%s\n' "$consumer_dependencies" | awk -v forbidden="$producer_intervention_package" '$0 == forbidden { count++ } END { print count + 0 }')"
           report_consumer_dependencies="$(go list -deps ./internal/meta/invarianttransformation/reportconsumer)"
           report_consumer_producer_imports="$(printf '%s\n' "$report_consumer_dependencies" | awk -v forbidden="$forbidden_package" '$0 == forbidden { count++ } END { print count + 0 }')"
+          closure_verifier_dependencies="$(go list -deps ./internal/meta/invarianttransformation/closureverifier)"
+          closure_verifier_report_consumer_imports="$(printf '%s\n' "$closure_verifier_dependencies" | awk -v forbidden="$report_consumer_package" '$0 == forbidden { count++ } END { print count + 0 }')"
+          closure_verifier_producer_imports="$(printf '%s\n' "$closure_verifier_dependencies" | awk -v forbidden="$forbidden_package" '$0 == forbidden { count++ } END { print count + 0 }')"
+          closure_verifier_cli_dependencies="$(go list -deps ./cmd/invariant-transformation-closure-verifier)"
+          closure_verifier_cli_report_consumer_imports="$(printf '%s\n' "$closure_verifier_cli_dependencies" | awk -v forbidden="$report_consumer_package" '$0 == forbidden { count++ } END { print count + 0 }')"
+          closure_verifier_cli_producer_imports="$(printf '%s\n' "$closure_verifier_cli_dependencies" | awk -v forbidden="$forbidden_package" '$0 == forbidden { count++ } END { print count + 0 }')"
           artifact_evidence="$(jq -c '[.cases[].receipt.effects[]? | select(.kind == "APPROVED_ARTIFACT_RECORDED") | .artifact] | if length == 1 then .[0] else error("expected one artifact evidence object") end' "$RUNNER_TEMP/invariant-transformation/first/report.json")"
           artifact_path="$(jq -r '.path' <<<"$artifact_evidence")"
           test -f "$artifact_path"
@@ -2468,6 +2477,10 @@ jobs:
           allowed_forbidden_imports=0
           allowed_producer_dependency_imports=0
           allowed_report_consumer_producer_imports=0
+          allowed_closure_verifier_report_consumer_imports=0
+          allowed_closure_verifier_producer_imports=0
+          allowed_closure_verifier_cli_report_consumer_imports=0
+          allowed_closure_verifier_cli_producer_imports=0
           dependency_output="$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
           mkdir -p "$(dirname "$dependency_output")"
           jq -n \
@@ -2482,6 +2495,14 @@ jobs:
             --argjson allowed_producer_dependency_imports "$allowed_producer_dependency_imports" \
             --argjson report_consumer_producer_imports "$report_consumer_producer_imports" \
             --argjson allowed_report_consumer_producer_imports "$allowed_report_consumer_producer_imports" \
+            --argjson closure_verifier_report_consumer_imports "$closure_verifier_report_consumer_imports" \
+            --argjson allowed_closure_verifier_report_consumer_imports "$allowed_closure_verifier_report_consumer_imports" \
+            --argjson closure_verifier_producer_imports "$closure_verifier_producer_imports" \
+            --argjson allowed_closure_verifier_producer_imports "$allowed_closure_verifier_producer_imports" \
+            --argjson closure_verifier_cli_report_consumer_imports "$closure_verifier_cli_report_consumer_imports" \
+            --argjson allowed_closure_verifier_cli_report_consumer_imports "$allowed_closure_verifier_cli_report_consumer_imports" \
+            --argjson closure_verifier_cli_producer_imports "$closure_verifier_cli_producer_imports" \
+            --argjson allowed_closure_verifier_cli_producer_imports "$allowed_closure_verifier_cli_producer_imports" \
             --argjson artifact_evidence "$artifact_evidence" \
             --argjson unknown_effect_scopes "$unknown_effect_scopes" \
             '{schema: $schema, production_judge_package: $package, forbidden_package: $forbidden_package,
@@ -2492,19 +2513,36 @@ jobs:
               allowed_producer_dependency_imports: $allowed_producer_dependency_imports,
               report_consumer_producer_imports: $report_consumer_producer_imports,
               allowed_report_consumer_producer_imports: $allowed_report_consumer_producer_imports,
+              closure_verifier_package: "github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/closureverifier",
+              closure_verifier_report_consumer_imports: $closure_verifier_report_consumer_imports,
+              allowed_closure_verifier_report_consumer_imports: $allowed_closure_verifier_report_consumer_imports,
+              closure_verifier_producer_imports: $closure_verifier_producer_imports,
+              allowed_closure_verifier_producer_imports: $allowed_closure_verifier_producer_imports,
+              closure_verifier_cli_report_consumer_imports: $closure_verifier_cli_report_consumer_imports,
+              allowed_closure_verifier_cli_report_consumer_imports: $allowed_closure_verifier_cli_report_consumer_imports,
+              closure_verifier_cli_producer_imports: $closure_verifier_cli_producer_imports,
+              allowed_closure_verifier_cli_producer_imports: $allowed_closure_verifier_cli_producer_imports,
               artifact_evidence: $artifact_evidence,
               artifact_observed: true,
               unknown_effect_scopes: $unknown_effect_scopes,
               production_only: true, test_imports_excluded: true,
               decision: (if $forbidden_imports == $allowed_forbidden_imports and
                   $producer_dependency_imports == $allowed_producer_dependency_imports and
-                  $report_consumer_producer_imports == $allowed_report_consumer_producer_imports then "PASS" else "FAIL" end),
+                  $report_consumer_producer_imports == $allowed_report_consumer_producer_imports and
+                  $closure_verifier_report_consumer_imports == $allowed_closure_verifier_report_consumer_imports and
+                  $closure_verifier_producer_imports == $allowed_closure_verifier_producer_imports and
+                  $closure_verifier_cli_report_consumer_imports == $allowed_closure_verifier_cli_report_consumer_imports and
+                  $closure_verifier_cli_producer_imports == $allowed_closure_verifier_cli_producer_imports then "PASS" else "FAIL" end),
               repository_net_content_observed: false, repository_net_content_unchanged: false,
               repository_net_status_observed: false, repository_net_status_unchanged: false, repository_net_content_state: "UNKNOWN",
               repository_actual_or_transient_writes: "UNKNOWN"}' > "$dependency_output"
           test "$forbidden_imports" -eq "$allowed_forbidden_imports"
           test "$producer_dependency_imports" -eq "$allowed_producer_dependency_imports"
           test "$report_consumer_producer_imports" -eq "$allowed_report_consumer_producer_imports"
+          test "$closure_verifier_report_consumer_imports" -eq "$allowed_closure_verifier_report_consumer_imports"
+          test "$closure_verifier_producer_imports" -eq "$allowed_closure_verifier_producer_imports"
+          test "$closure_verifier_cli_report_consumer_imports" -eq "$allowed_closure_verifier_cli_report_consumer_imports"
+          test "$closure_verifier_cli_producer_imports" -eq "$allowed_closure_verifier_cli_producer_imports"
           test "$(jq -r '.decision' "$dependency_output")" = "PASS"
           test "$(jq -r '.artifact_observed' "$dependency_output")" = true
           test "$(jq -r '.artifact_evidence.content_digest' "$dependency_output")" = "$observed_artifact_digest"
@@ -2603,6 +2641,11 @@ jobs:
             .forbidden_imports == 0 and .allowed_forbidden_imports == 0 and
             .producer_dependency_imports == 0 and .allowed_producer_dependency_imports == 0 and
             .report_consumer_producer_imports == 0 and .allowed_report_consumer_producer_imports == 0 and
+            .closure_verifier_report_consumer_imports == 0 and .allowed_closure_verifier_report_consumer_imports == 0 and
+            .closure_verifier_producer_imports == 0 and .allowed_closure_verifier_producer_imports == 0 and
+            .closure_verifier_cli_report_consumer_imports == 0 and .allowed_closure_verifier_cli_report_consumer_imports == 0 and
+            .closure_verifier_cli_producer_imports == 0 and .allowed_closure_verifier_cli_producer_imports == 0 and
+            .decision == "PASS" and
             .artifact_observed == true and (.artifact_evidence.path | length) > 0 and
             (.artifact_evidence.content_digest | startswith("sha256:")) and .artifact_evidence.size > 0 and
             .unknown_effect_scopes == 1 and .repository_net_content_observed == false and .repository_net_content_unchanged == false and
@@ -2691,9 +2734,13 @@ jobs:
             .comment_only_preservation_observed == 1 and .expected_comment_only_preservation == 1 and
             .final_closure_gate_observed == 1 and .expected_final_closure_gate == 1 and
             .output_tamper_receipt.rejected == true and .output_tamper_receipt.changed_field == "output" and
+            .output_tamper_receipt.baseline_path == .first_artifact.path and
+            .output_tamper_receipt.tampered_path != .output_tamper_receipt.baseline_path and
             .output_tamper_receipt.semantic_digest_equal == false and
             .output_tamper_receipt.baseline_raw_digest != .output_tamper_receipt.tampered_raw_digest and
             .authorization_tamper_receipt.rejected == true and .authorization_tamper_receipt.changed_field == "authorization" and
+            .authorization_tamper_receipt.baseline_path == .first_artifact.path and
+            .authorization_tamper_receipt.tampered_path != .authorization_tamper_receipt.baseline_path and
             .authorization_tamper_receipt.semantic_digest_equal == true and
             .authorization_tamper_receipt.baseline_raw_digest != .authorization_tamper_receipt.tampered_raw_digest and
             .first_artifact.raw_digest != "" and .second_artifact.raw_digest != "" and
@@ -2749,22 +2796,41 @@ jobs:
               -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
               -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
               -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
+          go run ./cmd/invariant-transformation-closure-negative \
+            -mode evidence-reseal -input "$root/final-closure.json" -output "$tamper/evidence-reseal.json"
+          expect_reject 'ARTIFACT_CLOSURE/verify/metrics/reseal/EVIDENCE_DIGEST_RESEALED_WITHOUT_CANONICAL_PAYLOAD' "$tamper/evidence-reseal.log" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$tamper/evidence-reseal.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
+          go run ./cmd/invariant-transformation-closure-negative \
+            -mode comment-reseal -intervention-report "$root/intervention/first/report.json" \
+            -intervention-consumer-receipt "$root/intervention/consumer-verification.json" \
+            -output-intervention-report "$tamper/comment-resealed-report.json" \
+            -output-consumer-receipt "$tamper/comment-resealed-consumer.json"
+          expect_reject 'ARTIFACT_CLOSURE/comment-only/source-reconstruction/COMMENT_INTERVENTION_RESEALED_WITHOUT_SOURCE_MATCH' "$tamper/comment-reseal.log" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+              -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
+              -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
+              -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+              -intervention-report "$tamper/comment-resealed-report.json" -intervention-consumer-receipt "$tamper/comment-resealed-consumer.json"
           expect_reject 'ARTIFACT_CLOSURE/authorization-tamper/compare/AUTHORIZATION_TAMPER_NOT_AUTHORIZATION_ONLY' "$tamper/multi-auth.log" \
-            go run ./cmd/invariant-transformation-closure-consumer \
-              -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
               -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
               -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
               -output-tamper "$tamper/artifact-semantic-output-tamper.bin" -authorization-tamper "$multi_auth" \
-              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json" \
-              -output "$tamper/multi-auth-closure.json"
+              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
           expect_reject 'ARTIFACT_CLOSURE/output-tamper/compare/OUTPUT_TAMPER_NOT_OUTPUT_ONLY' "$tamper/multi-output.log" \
-            go run ./cmd/invariant-transformation-closure-consumer \
-              -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
+            go run ./cmd/invariant-transformation-closure-verifier \
+              -closure "$root/final-closure.json" -source examples/invariant-transformation/main.gooo -head-sha "$HEAD_SHA" \
               -first-report "$root/first/report.json" -second-report "$root/second/report.json" \
               -first-projection "$root/first/artifact-semantic-projection.json" -second-projection "$root/second/artifact-semantic-projection.json" \
               -output-tamper "$multi_output" -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
-              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json" \
-              -output "$tamper/multi-output-closure.json"
+              -intervention-report "$root/intervention/first/report.json" -intervention-consumer-receipt "$root/intervention/consumer-verification.json"
           echo 'closure metric inventory: 11/11; artifact bytes: 2/2; semantic equality: 1/1; raw provenance: 2/2; authorization: 2/2; output tamper: 1/1; authorization tamper: 1/1; comment-only preservation: 1/1; final closure: 1/1' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact metrics and authority boundary
@@ -2791,7 +2857,11 @@ jobs:
             .comment_only_preservation_observed == 1 and .expected_comment_only_preservation == 1 and
             .final_closure_gate_observed == 1 and .expected_final_closure_gate == 1 and
             .output_tamper_receipt.changed_field == "output" and .output_tamper_receipt.rejected == true and
-            .authorization_tamper_receipt.changed_field == "authorization" and .authorization_tamper_receipt.rejected == true
+            .output_tamper_receipt.baseline_path == .first_artifact.path and
+            .output_tamper_receipt.tampered_path != .output_tamper_receipt.baseline_path and
+            .authorization_tamper_receipt.changed_field == "authorization" and .authorization_tamper_receipt.rejected == true and
+            .authorization_tamper_receipt.baseline_path == .first_artifact.path and
+            .authorization_tamper_receipt.tampered_path != .authorization_tamper_receipt.baseline_path
           ' "$RUNNER_TEMP/invariant-transformation/final-closure.json"
           jq -e --arg execution "$HEAD_SHA::first" --arg head_sha "$HEAD_SHA" '
             .schema == "gooo/invariant-transformation-report/v2" and

@@ -1,15 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/model"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/reportconsumer"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/closureverifier"
 )
 
 func main() {
@@ -36,23 +32,19 @@ func main() {
 	if err != nil {
 		fail(err.Error())
 	}
-	closure, err := reportconsumer.DecodeClosureReceipt(closureRaw)
+	firstReportRaw, err := os.ReadFile(*firstReportPath)
 	if err != nil {
 		fail(err.Error())
 	}
-	firstReport, err := decodeReport(*firstReportPath)
+	secondReportRaw, err := os.ReadFile(*secondReportPath)
 	if err != nil {
 		fail(err.Error())
 	}
-	secondReport, err := decodeReport(*secondReportPath)
+	firstProjectionRaw, err := os.ReadFile(*firstProjectionPath)
 	if err != nil {
 		fail(err.Error())
 	}
-	firstProjection, err := decodeProjection(*firstProjectionPath)
-	if err != nil {
-		fail(err.Error())
-	}
-	secondProjection, err := decodeProjection(*secondProjectionPath)
+	secondProjectionRaw, err := os.ReadFile(*secondProjectionPath)
 	if err != nil {
 		fail(err.Error())
 	}
@@ -64,46 +56,10 @@ func main() {
 	if err != nil {
 		fail(err.Error())
 	}
-	if err := reportconsumer.VerifyClosure(closure, firstReport, secondReport, firstProjection, secondProjection, source, *headSHA, *outputTamperPath, *authorizationTamperPath, interventionReport, interventionConsumer); err != nil {
+	if err := closureverifier.Verify(closureRaw, firstReportRaw, secondReportRaw, firstProjectionRaw, secondProjectionRaw, source, *headSHA, *outputTamperPath, *authorizationTamperPath, interventionReport, interventionConsumer); err != nil {
 		fail(err.Error())
 	}
-	fmt.Printf("closure verified: decision=%s metrics=%d/%d\n", closure.Decision, closure.ObservedMetricEvidence, closure.ExpectedMetricEvidence)
-}
-
-func decodeReport(path string) (model.Report, error) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return model.Report{}, err
-	}
-	var report model.Report
-	if err := decodeStrict(raw, &report); err != nil {
-		return model.Report{}, fmt.Errorf("strict report decode %s: %w", path, err)
-	}
-	return report, nil
-}
-
-func decodeProjection(path string) (reportconsumer.ArtifactSemanticProjection, error) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return reportconsumer.ArtifactSemanticProjection{}, err
-	}
-	return reportconsumer.DecodeArtifactSemanticProjection(raw)
-}
-
-func decodeStrict(raw []byte, target any) error {
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(target); err != nil {
-		return err
-	}
-	var extra any
-	if err := decoder.Decode(&extra); err != io.EOF {
-		if err == nil {
-			return fmt.Errorf("trailing JSON")
-		}
-		return err
-	}
-	return nil
+	fmt.Println("closure verified: independent package decision=PASS metrics=11/11")
 }
 
 func fail(message string) {

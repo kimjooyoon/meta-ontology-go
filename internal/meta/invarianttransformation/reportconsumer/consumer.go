@@ -324,6 +324,8 @@ type TypedTamperReceipt struct {
 	Kind                string `json:"kind"`
 	CaseID              string `json:"case_id"`
 	ExecutionID         string `json:"execution_id"`
+	BaselinePath        string `json:"baseline_path"`
+	TamperedPath        string `json:"tampered_path"`
 	BaselineRawDigest   string `json:"baseline_raw_digest"`
 	TamperedRawDigest   string `json:"tampered_raw_digest"`
 	ChangedField        string `json:"changed_field"`
@@ -407,7 +409,7 @@ type closureMetricCounts struct {
 // source boundary, then verifies the intervention consumer receipt and typed
 // negative artifact cases. The final PASS is produced only after the exact
 // eleven addressed evidence rows have been derived and validated.
-func Close(firstReport, secondReport model.Report, firstExpected, secondExpected ArtifactSemanticProjection, source []byte, headSHA, outputTamperPath, authorizationTamperPath, interventionReportRaw, interventionConsumerRaw []byte) (ClosureReceipt, error) {
+func Close(firstReport, secondReport model.Report, firstExpected, secondExpected ArtifactSemanticProjection, source []byte, headSHA, outputTamperPath, authorizationTamperPath string, interventionReportRaw, interventionConsumerRaw []byte) (ClosureReceipt, error) {
 	if !model.ValidHead(headSHA) || firstReport.DecisionScope != model.PreliminaryDecisionScope || secondReport.DecisionScope != model.PreliminaryDecisionScope {
 		return ClosureReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/bind-reports/PRELIMINARY_SCOPE_INVALID")
 	}
@@ -627,13 +629,20 @@ func observeOutputTamper(expected ArtifactSemanticProjection, path, headSHA stri
 	if err != nil {
 		return TypedTamperReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/output-tamper/observe/OUTPUT_TAMPER_NOT_OBSERVABLE: %w", err)
 	}
+	tamperedPath := tampered.Path
+	if !allowedSnapshotPath(expected.Path) || !allowedSnapshotPath(tamperedPath) {
+		return TypedTamperReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/output-tamper/compare/OUTPUT_TAMPER_PATH_NOT_SAFE")
+	}
+	tampered.Path = expected.Path
+	tampered.ExpectedAuthorizationDigest = expected.ExpectedAuthorizationDigest
+	tampered.EffectDigest = expected.EffectDigest
 	if !sameArtifactFieldsExcept(expected, tampered, "output") || tampered.Semantic.Output == expected.Semantic.Output || tampered.RawDigest == expected.RawDigest {
 		return TypedTamperReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/output-tamper/compare/OUTPUT_TAMPER_NOT_OUTPUT_ONLY")
 	}
 	if CompareArtifactSemanticProjection(expected, tampered) == nil {
 		return TypedTamperReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/output-tamper/adjudicate/OUTPUT_SEMANTIC_TAMPER_ACCEPTED")
 	}
-	receipt := newTamperReceipt("OUTPUT_ONLY", expected, tampered, "output", strconv.FormatInt(expected.Semantic.Output, 10), strconv.FormatInt(tampered.Semantic.Output, 10), false, "ARTIFACT_TAMPER", "compare-output-only", "OUTPUT_ONLY_TAMPER_REJECTED")
+	receipt := newTamperReceipt("OUTPUT_ONLY", expected, tampered, tamperedPath, "output", strconv.FormatInt(expected.Semantic.Output, 10), strconv.FormatInt(tampered.Semantic.Output, 10), false, "ARTIFACT_TAMPER", "compare-output-only", "OUTPUT_ONLY_TAMPER_REJECTED")
 	return receipt, nil
 }
 
@@ -642,6 +651,13 @@ func observeAuthorizationTamper(expected ArtifactSemanticProjection, path, headS
 	if err != nil {
 		return TypedTamperReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/authorization-tamper/observe/AUTHORIZATION_TAMPER_NOT_OBSERVABLE: %w", err)
 	}
+	tamperedPath := tampered.Path
+	if !allowedSnapshotPath(expected.Path) || !allowedSnapshotPath(tamperedPath) {
+		return TypedTamperReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/authorization-tamper/compare/AUTHORIZATION_TAMPER_PATH_NOT_SAFE")
+	}
+	tampered.Path = expected.Path
+	tampered.ExpectedAuthorizationDigest = expected.ExpectedAuthorizationDigest
+	tampered.EffectDigest = expected.EffectDigest
 	if !sameArtifactFieldsExcept(expected, tampered, "authorization") || tampered.ObservedAuthorizationDigest == expected.ObservedAuthorizationDigest || tampered.RawDigest == expected.RawDigest {
 		return TypedTamperReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/authorization-tamper/compare/AUTHORIZATION_TAMPER_NOT_AUTHORIZATION_ONLY")
 	}
@@ -651,12 +667,12 @@ func observeAuthorizationTamper(expected ArtifactSemanticProjection, path, headS
 	if CompareArtifactProvenance(expected, tampered) == nil {
 		return TypedTamperReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/authorization-tamper/adjudicate/AUTHORIZATION_TAMPER_ACCEPTED")
 	}
-	receipt := newTamperReceipt("AUTHORIZATION_ONLY", expected, tampered, "authorization", expected.ObservedAuthorizationDigest, tampered.ObservedAuthorizationDigest, true, "ARTIFACT_TAMPER", "compare-authorization-only", "AUTHORIZATION_ONLY_TAMPER_REJECTED")
+	receipt := newTamperReceipt("AUTHORIZATION_ONLY", expected, tampered, tamperedPath, "authorization", expected.ObservedAuthorizationDigest, tampered.ObservedAuthorizationDigest, true, "ARTIFACT_TAMPER", "compare-authorization-only", "AUTHORIZATION_ONLY_TAMPER_REJECTED")
 	return receipt, nil
 }
 
 func sameArtifactFieldsExcept(expected, actual ArtifactSemanticProjection, except string) bool {
-	if expected.CaseID != actual.CaseID || expected.Semantic.CaseID != actual.Semantic.CaseID || expected.Semantic.CaseID != expected.CaseID || expected.ExecutionID != actual.ExecutionID || expected.RawSize != actual.RawSize || expected.Semantic.Input != actual.Semantic.Input || expected.Semantic.Operation != actual.Semantic.Operation || expected.SourceDigest != actual.SourceDigest || expected.Semantic.SemanticSourceDigest != actual.Semantic.SemanticSourceDigest || expected.SubjectSHA != actual.SubjectSHA {
+	if expected.Schema != actual.Schema || expected.HeadSHA != actual.HeadSHA || expected.CaseID != actual.CaseID || expected.Semantic.CaseID != actual.Semantic.CaseID || expected.Semantic.CaseID != expected.CaseID || expected.ExecutionID != actual.ExecutionID || expected.RawSize != actual.RawSize || expected.Semantic.Input != actual.Semantic.Input || expected.Semantic.Operation != actual.Semantic.Operation || expected.SourceDigest != actual.SourceDigest || expected.Semantic.SemanticSourceDigest != actual.Semantic.SemanticSourceDigest || expected.SubjectSHA != actual.SubjectSHA || expected.ExpectedAuthorizationDigest != actual.ExpectedAuthorizationDigest || expected.EffectDigest != actual.EffectDigest || !allowedSnapshotPath(expected.Path) || !allowedSnapshotPath(actual.Path) {
 		return false
 	}
 	if except != "output" && expected.Semantic.Output != actual.Semantic.Output {
@@ -668,8 +684,8 @@ func sameArtifactFieldsExcept(expected, actual ArtifactSemanticProjection, excep
 	return true
 }
 
-func newTamperReceipt(kind string, expected, tampered ArtifactSemanticProjection, field, baselineValue, tamperedValue string, semanticEqual bool, stage, step, reason string) TypedTamperReceipt {
-	receipt := TypedTamperReceipt{Schema: "gooo/invariant-transformation-typed-tamper-receipt/v1", Kind: kind, CaseID: expected.CaseID, ExecutionID: expected.ExecutionID, BaselineRawDigest: expected.RawDigest, TamperedRawDigest: tampered.RawDigest, ChangedField: field, BaselineValue: baselineValue, TamperedValue: tamperedValue, SemanticDigestEqual: semanticEqual, Rejected: true, Decision: model.DecisionFailClosed, Resolution: model.ResolutionExact, Stage: stage, Step: step, Reason: reason}
+func newTamperReceipt(kind string, expected, tampered ArtifactSemanticProjection, tamperedPath, field, baselineValue, tamperedValue string, semanticEqual bool, stage, step, reason string) TypedTamperReceipt {
+	receipt := TypedTamperReceipt{Schema: "gooo/invariant-transformation-typed-tamper-receipt/v1", Kind: kind, CaseID: expected.CaseID, ExecutionID: expected.ExecutionID, BaselinePath: expected.Path, TamperedPath: tamperedPath, BaselineRawDigest: expected.RawDigest, TamperedRawDigest: tampered.RawDigest, ChangedField: field, BaselineValue: baselineValue, TamperedValue: tamperedValue, SemanticDigestEqual: semanticEqual, Rejected: true, Decision: model.DecisionFailClosed, Resolution: model.ResolutionExact, Stage: stage, Step: step, Reason: reason}
 	evidence := receipt
 	evidence.EvidenceDigest = ""
 	evidence.Digest = ""
@@ -842,11 +858,22 @@ func observeCommentOnlyMetric(interventionRaw, consumerRaw, source []byte, headS
 	}
 	consumerForDigest := consumer
 	consumerForDigest.Digest = ""
-	if intervention.Schema != "gooo/invariant-transformation-intervention-report/v2" || intervention.HeadSHA != headSHA || intervention.SourcePath != model.SourcePath || intervention.SourceDigest != model.DigestBytes(source) || intervention.CaseCount != 3 || !model.ValidDigest(intervention.Digest) || consumer.Schema != "gooo/invariant-transformation-intervention-consumer/v2" || consumer.HeadSHA != headSHA || !model.ValidDigest(consumer.Digest) || consumer.Digest != model.Digest(consumerForDigest) || consumer.CommentOnly.CaseID != "nonsemantic-source-intervention" {
+	interventionForDigest := intervention
+	interventionForDigest.Digest = ""
+	if intervention.Schema != "gooo/invariant-transformation-intervention-report/v2" || intervention.HeadSHA != headSHA || intervention.SourcePath != model.SourcePath || intervention.SourceDigest != model.DigestBytes(source) || intervention.CaseCount != 3 || len(intervention.Cases) != 3 || intervention.Decision != model.DecisionPass || intervention.Resolution != model.ResolutionExact || intervention.Reason != "ALL_INTERVENTION_OBSERVATIONS_SATISFIED" || intervention.EffectGateDenominator != 8 || intervention.EffectGateSatisfied != 8 || intervention.CorrectionCount != 12 || intervention.CorrectionDenominator != 12 || !model.ValidDigest(intervention.Digest) || intervention.Digest != model.Digest(interventionForDigest) || consumer.Schema != "gooo/invariant-transformation-intervention-consumer/v2" || consumer.HeadSHA != headSHA || !model.ValidDigest(consumer.Digest) || consumer.Digest != model.Digest(consumerForDigest) || consumer.CommentOnly.CaseID != "nonsemantic-source-intervention" {
 		return ClosureMetricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/bind-receipts/COMMENT_ONLY_RECEIPT_IDENTITY_INVALID")
+	}
+	expectedCaseIDs := map[string]bool{
+		"semantic-expected-intervention":  false,
+		"semantic-operation-intervention": false,
+		"nonsemantic-source-intervention": false,
 	}
 	var observed *closureInterventionCase
 	for index := range intervention.Cases {
+		if _, ok := expectedCaseIDs[intervention.Cases[index].ID]; !ok || expectedCaseIDs[intervention.Cases[index].ID] {
+			return ClosureMetricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/inventory/COMMENT_ONLY_CASE_INVENTORY_INVALID")
+		}
+		expectedCaseIDs[intervention.Cases[index].ID] = true
 		if intervention.Cases[index].ID == "nonsemantic-source-intervention" {
 			if observed != nil {
 				return ClosureMetricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/select-case/DUPLICATE_COMMENT_ONLY_CASE")
@@ -854,7 +881,7 @@ func observeCommentOnlyMetric(interventionRaw, consumerRaw, source []byte, headS
 			observed = &intervention.Cases[index]
 		}
 	}
-	if observed == nil || observed.Kind != "NON_SEMANTIC" {
+	if observed == nil || observed.Kind != "NON_SEMANTIC" || !expectedCaseIDs["semantic-expected-intervention"] || !expectedCaseIDs["semantic-operation-intervention"] || !expectedCaseIDs["nonsemantic-source-intervention"] {
 		return ClosureMetricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/select-case/COMMENT_ONLY_CASE_MISSING")
 	}
 	consumerComment := consumer.CommentOnly
@@ -911,7 +938,7 @@ func DecodeClosureReceipt(raw []byte) (ClosureReceipt, error) {
 
 // VerifyClosure independently rebuilds the expected closure and rejects any
 // duplicate, missing, replaced, or resealed metric row before comparing it.
-func VerifyClosure(receipt ClosureReceipt, firstReport, secondReport model.Report, firstExpected, secondExpected ArtifactSemanticProjection, source []byte, headSHA, outputTamperPath, authorizationTamperPath, interventionReportRaw, interventionConsumerRaw []byte) error {
+func VerifyClosure(receipt ClosureReceipt, firstReport, secondReport model.Report, firstExpected, secondExpected ArtifactSemanticProjection, source []byte, headSHA, outputTamperPath, authorizationTamperPath string, interventionReportRaw, interventionConsumerRaw []byte) error {
 	if receipt.Schema != closureReceiptSchema {
 		return fmt.Errorf("ARTIFACT_CLOSURE/verify/FINAL_CLOSURE_SCHEMA_INVALID")
 	}
