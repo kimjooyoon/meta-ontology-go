@@ -145,6 +145,9 @@ func validateManifests(loaded []LoadedManifest, requiredIDs []string) *Diagnosti
 		if len(manifest.MetricBindings) == 0 {
 			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "METRIC_BINDINGS", Reason: "MISSING_METRIC_BINDING"}
 		}
+		if len(manifest.BindingRegistry) == 0 {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "MISSING_STRUCTURED_BINDING"}
+		}
 		if len(manifest.UseCases) == 0 {
 			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "USE_CASE_BINDINGS", Reason: "MISSING_USE_CASE_BINDING"}
 		}
@@ -207,6 +210,17 @@ func sortedUseCases(input []UseCase) []UseCase {
 	return output
 }
 
+func sortedBindingRegistry(input []BindingRegistryEntry) []BindingRegistryEntry {
+	output := append([]BindingRegistryEntry(nil), input...)
+	sort.Slice(output, func(i, j int) bool {
+		if output[i].MetricID == output[j].MetricID {
+			return output[i].RawSourceAddress < output[j].RawSourceAddress
+		}
+		return output[i].MetricID < output[j].MetricID
+	})
+	return output
+}
+
 func sortedRefs(input []ResourceRef) []ResourceRef {
 	output := append([]ResourceRef(nil), input...)
 	sort.Slice(output, func(i, j int) bool {
@@ -256,24 +270,26 @@ func resourceSnapshots(root string, stableID string, refs []ResourceRef) ([]Reso
 }
 
 type semanticManifest struct {
-	Schema                 string        `json:"schema"`
-	StableID               string        `json:"stable_id"`
-	Concept                Concept       `json:"concept"`
-	CodeBindings           []string      `json:"code_bindings"`
-	MetricBindings         []string      `json:"metric_bindings"`
-	UseCases               []UseCase     `json:"use_cases"`
-	VerificationStrategies []string      `json:"verification_strategies"`
-	Corpus                 []ResourceRef `json:"corpus"`
-	Registry               []ResourceRef `json:"registry"`
-	Denominators           []Denominator `json:"denominators"`
-	Documentation          []ResourceRef `json:"documentation"`
+	Schema                 string                 `json:"schema"`
+	StableID               string                 `json:"stable_id"`
+	Concept                Concept                `json:"concept"`
+	CodeBindings           []string               `json:"code_bindings"`
+	MetricBindings         []string               `json:"metric_bindings"`
+	BindingRegistry        []BindingRegistryEntry `json:"binding_registry"`
+	UseCases               []UseCase              `json:"use_cases"`
+	VerificationStrategies []string               `json:"verification_strategies"`
+	Corpus                 []ResourceRef          `json:"corpus"`
+	Registry               []ResourceRef          `json:"registry"`
+	Denominators           []Denominator          `json:"denominators"`
+	Documentation          []ResourceRef          `json:"documentation"`
 }
 
 func semanticView(manifest Manifest) semanticManifest {
 	return semanticManifest{
 		Schema: manifest.Schema, StableID: manifest.StableID, Concept: manifest.Concept,
 		CodeBindings: sortedStrings(manifest.CodeBindings), MetricBindings: sortedStrings(manifest.MetricBindings),
-		UseCases: sortedUseCases(manifest.UseCases), VerificationStrategies: sortedStrings(manifest.VerificationStrategies),
+		BindingRegistry: sortedBindingRegistry(manifest.BindingRegistry),
+		UseCases:        sortedUseCases(manifest.UseCases), VerificationStrategies: sortedStrings(manifest.VerificationStrategies),
 		Corpus: sortedRefs(manifest.Corpus), Registry: sortedRefs(manifest.Registry),
 		Denominators: sortedDenominators(manifest.Denominators), Documentation: sortedRefs(manifest.Documentation),
 	}

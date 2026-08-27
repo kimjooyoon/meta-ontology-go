@@ -23,6 +23,32 @@
         "gooo.metric.language.semantic-model-readiness-bps.v1",
         "gooo.metric.language.semantic-model-source-models.v1"
       ],
+      "binding_registry": [
+        {
+          "metric_id": "gooo.metric.language.semantic-model-normalized-irs.v1",
+          "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#language-semantic-model",
+          "semantic_digest": "sha256:101594103f5a751cdd6d54764e8f3e0eda16084850fbf320e7b26f5f50d00449",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/language-semantic-model/corpus.json",
+          "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"
+        },
+        {
+          "metric_id": "gooo.metric.language.semantic-model-readiness-bps.v1",
+          "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#language-semantic-model",
+          "semantic_digest": "sha256:1ce8457eee6bf426fbd4513b3b0e1ef0c96421da135b814af5894fc79686ecc5",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/language-semantic-model/corpus.json",
+          "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"
+        },
+        {
+          "metric_id": "gooo.metric.language.semantic-model-source-models.v1",
+          "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#language-semantic-model",
+          "semantic_digest": "sha256:e175b3b7decdd3bcf66b90ac22c8f4c37f60ef7cd62ab14279564113b8f1a3ea",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/language-semantic-model/corpus.json",
+          "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"
+        }
+      ],
       "use_cases": [
         {
           "id": "staged-semantic-authority-replay",
@@ -58,6 +84,32 @@
         "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
         "gooo.metric.language.syntax-roundtrip-valid-corpus-files.v1"
       ],
+      "binding_registry": [
+        {
+          "metric_id": "gooo.metric.language.syntax-roundtrip-executed-cases.v1",
+          "raw_source_address": "internal/meta/languageconcept/catalog.go#language-syntax-roundtrip",
+          "semantic_digest": "sha256:f41be7c8db55497ae3af69ce3d2b39fd946d748797426281a2f68bdd214d263b",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/language-syntax-roundtrip/corpus.json",
+          "observed_output_digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"
+        },
+        {
+          "metric_id": "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
+          "raw_source_address": "internal/meta/languageconcept/catalog.go#language-syntax-roundtrip",
+          "semantic_digest": "sha256:42a6129bd66c4364150fd93618f9ac8f5de74c49f9d5c4b7448ab34fe9923f7a",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/language-syntax-roundtrip/corpus.json",
+          "observed_output_digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"
+        },
+        {
+          "metric_id": "gooo.metric.language.syntax-roundtrip-valid-corpus-files.v1",
+          "raw_source_address": "internal/meta/languageconcept/catalog.go#language-syntax-roundtrip",
+          "semantic_digest": "sha256:28ee32640b29aad339811435bfc941ac8ca16cbdc949fc172d10a050ad5dfbe5",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/language-syntax-roundtrip/corpus.json",
+          "observed_output_digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"
+        }
+      ],
       "use_cases": [
         {
           "id": "complete-syntax-corpus-replay",
@@ -89,6 +141,32 @@
         "gooo.metric.toolchain.conformance-case-readiness-bps.v1",
         "gooo.metric.toolchain.conformance-proof-readiness-bps.v1",
         "gooo.metric.toolchain.conformance-readiness-bps.v1"
+      ],
+      "binding_registry": [
+        {
+          "metric_id": "gooo.metric.toolchain.conformance-case-readiness-bps.v1",
+          "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchain-conformance",
+          "semantic_digest": "sha256:3d529e45389f24ec9509ca7babdff3bda2fef2c8c1b87173574dbc59262412af",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/toolchain-conformance/corpus.json",
+          "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"
+        },
+        {
+          "metric_id": "gooo.metric.toolchain.conformance-proof-readiness-bps.v1",
+          "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchain-conformance",
+          "semantic_digest": "sha256:77e29c7c72d83c6acdfa1b389e910811128ca187f61063a0018929b85fadf5f4",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/toolchain-conformance/corpus.json",
+          "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"
+        },
+        {
+          "metric_id": "gooo.metric.toolchain.conformance-readiness-bps.v1",
+          "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchain-conformance",
+          "semantic_digest": "sha256:18ab53bc22ed207ba0cd65c1d737c9996d2e2815b108368eb8238f5e42b8927b",
+          "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go",
+          "observed_output_address": "examples/toolchain-conformance/corpus.json",
+          "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"
+        }
       ],
       "use_cases": [
         {
@@ -164,7 +242,7 @@
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-binding/v1",
-      "semantic_digest": "sha256:222d63ca508d3eb6e638c89705c48ea45aa953ba1e2eb29635abb24e3fdf80a2",
+      "semantic_digest": "sha256:08f13a807f3750f23b2c419195b13f97b4352bf2c2bb3dd312f2f87e1bc60641",
       "values": {
         "syntax_cases": 30,
         "syntax_lines": 428,
@@ -174,7 +252,7 @@
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-model/v1",
-      "semantic_digest": "sha256:222d63ca508d3eb6e638c89705c48ea45aa953ba1e2eb29635abb24e3fdf80a2",
+      "semantic_digest": "sha256:08f13a807f3750f23b2c419195b13f97b4352bf2c2bb3dd312f2f87e1bc60641",
       "values": {
         "authority_laws": 3,
         "cases": 32,
@@ -188,7 +266,7 @@
     {
       "stable_id": "language-syntax-roundtrip",
       "id": "gooo/language-syntax-roundtrip/v2",
-      "semantic_digest": "sha256:ee619ac385edd30f5acbc1615506f6ec23811460d07908861ef5c04cfb85b662",
+      "semantic_digest": "sha256:1afb110ba832488766a59fa1794977f80bd96dfab2c5f9ded40005a190724fb4",
       "values": {
         "cases": 30,
         "gooo_lines": 428,
@@ -202,14 +280,13 @@
     {
       "stable_id": "toolchain-conformance",
       "id": "gooo/toolchain-conformance-corpus/v1",
-      "semantic_digest": "sha256:de137d84549a745e0ebe990bb6b9ed65fe81b2cf7675e8886184d1ffc7e3d51b",
+      "semantic_digest": "sha256:f584e5a8278df39a499809249ef3ba29edd5144d5337bd0faa6a1a8ba4a8b391",
       "values": {
         "cases": 181,
         "indicators": 151,
         "proofs": 27,
         "surfaces": 9,
-        "tamper_cases": 13,
-        "use_case_cases": 152
+        "tamper_cases": 13
       }
     }
   ],

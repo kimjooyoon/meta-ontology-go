@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -28,10 +29,11 @@ type fixtureMeasurement struct {
 }
 
 func runProof(root, outputDir string) (Evidence, error) {
-	before, beforeErr := gitStatus(root)
+	before, beforeErr := gitRepositorySnapshot(root)
 	evidence, bodyErr := runProofBody(root, outputDir)
-	after, afterErr := gitStatus(root)
+	after, afterErr := gitRepositorySnapshot(root)
 	evidence.RepositoryNetState = repositoryObservation(before, after, beforeErr, afterErr)
+	evidence.RepositoryNetStatePredicates = predicateMetric(boolInt(evidence.RepositoryNetState.NetStateEqual), 1, decisionForBool(evidence.RepositoryNetState.NetStateEqual), "REGRESSION", "REPOSITORY_NET_STATE", evidence.RepositoryNetState.NetState)
 	if beforeErr != nil || afterErr != nil {
 		evidence.Decision = "FAIL_CLOSED"
 		evidence.Reason = "REPOSITORY_OBSERVATION_UNKNOWN"
@@ -63,7 +65,7 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	if diagnostic != nil {
 		return Evidence{}, diagnosticError(diagnostic)
 	}
-	adoption, positivePredicates, err := runIndependentConsumer(root)
+	conformance, positivePredicates, err := runIndependentConsumer(root)
 	if err != nil {
 		return Evidence{}, err
 	}
@@ -79,11 +81,14 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	evidence := Evidence{
 		Schema: evidenceSchema, Decision: "PASS", Reason: "MANUAL_SOURCE_REGISTRATION_EDIT_FREE_PROJECTION_PROVEN",
 		BoundedSlice: baseIDs, BaselineTouchpoints: baseline.Observed, BaselineObservation: baseline.Touchpoints,
-		Metrics:                    integrationMetrics(len(loaded), baseline.Observed, len(fixture.Changed), adoption, countUnequalSourceDigests(fixture.SourceDigests)),
+		Metrics:                    integrationMetrics(len(loaded), baseline.Observed, len(fixture.Changed), conformance, countUnequalSourceDigests(fixture.SourceDigests)),
 		MetricDeltas:               metricDeltas(baseline.Observed, len(fixture.Changed), countUnequalSourceDigests(fixture.SourceDigests)),
 		DenominatorReconciliations: reconciliations, SourceDigestPreservation: fixture.SourceDigests,
 		GeneratedOutputChanges: fixture.Changed, GeneratedOutputChangeCount: len(fixture.Changed), GeneratedOutputDenominator: len(baseOutputs),
-		ProductionAdoption: ratioMetric(adoption, 1), GeneratedOutputs: observedOutputs(outputDir), FixtureGeneratedOutputs: fixture.Outputs,
+		ConformanceConsumer: predicateMetric(conformance, 1, decisionForRatio(conformance, 1), "COHERENCE", "INDEPENDENT_CONFORMANCE_CONSUMER", "INDEPENDENT_CONSUMER_RECOMPUTED_PROJECTION"),
+		ProductionAdoption:  predicateMetric(0, 1, "UNKNOWN", "COHERENCE", "PRODUCTION_CONSUMER_ADOPTION", "NO_PRODUCTION_CONSUMER_EVIDENCE"),
+		UseCaseReceipt:      observeUseCaseReceipt(root),
+		GeneratedOutputs:    observedOutputs(outputDir), FixtureGeneratedOutputs: fixture.Outputs,
 	}
 	evidence.ProjectionReplay = projectionReplay(root, outputDir, loaded, baseOutputs)
 	evidence.ManifestOrderInvariant = manifestOrderInvariant(root, outputDir, loaded, baseOutputs)
@@ -99,6 +104,12 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	evidence.PredicateObservations = append(positivePredicates, negativePredicates...)
 	evidence.Strategies = strategyResults(root, outputDir, loaded, evidence)
 	evidence.Claims = buildClaims(evidence.PredicateObservations)
+	claimCount := countDischargedClaims(evidence.Claims)
+	evidence.ClaimTransitions = predicateMetric(claimCount, len(evidence.Claims), decisionForRatio(claimCount, len(evidence.Claims)), "COHERENCE", "CLAIM_TRANSITIONS", "OBSERVED_PREDICATE_TRUTH_RECONSTRUCTED")
+	evidence.FailurePredicates = failurePredicateMetric(evidence.PredicateObservations)
+	evidence.RepositoryNetStatePredicates = predicateMetric(boolInt(evidence.RepositoryNetState.NetStateEqual), 1, decisionForBool(evidence.RepositoryNetState.NetStateEqual), "REGRESSION", "REPOSITORY_NET_STATE", evidence.RepositoryNetState.NetState)
+	evidence.BindingPredicates = bindingPredicateMetric(evidence.PredicateObservations)
+	evidence.ProvenancePredicates = provenancePredicateMetric(negativePredicates)
 	return evidence, nil
 }
 
@@ -228,7 +239,7 @@ func runIndependentConsumer(root string) (int, []PredicateObservation, error) {
 		return 0, nil, err
 	}
 	for _, predicate := range receipt.Predicates {
-		if predicate.ID == "independent-production-adoption" && predicate.Observed {
+		if predicate.ID == "independent-conformance-consumer" && predicate.Observed {
 			return 1, receipt.Predicates, nil
 		}
 	}
@@ -286,6 +297,10 @@ func failureContracts(root string, loaded []LoadedManifest, base map[string][]by
 	missingBinding[0].Manifest.MetricBindings = nil
 	malformed := cloneLoaded(loaded[:1])
 	malformed[0].Manifest.Schema = "gooo/malformed/v1"
+	bindingSelfSearch := cloneLoaded(loaded[:1])
+	bindingSelfSearch[0].Manifest.BindingRegistry[0].RawSourceAddress = "docs/language/conflict-free-registry-projection.md#self-search"
+	bindingOutputMismatch := cloneLoaded(loaded[:1])
+	bindingOutputMismatch[0].Manifest.BindingRegistry[0].ObservedOutputDigest = "sha256:stale"
 	return []ScenarioResult{
 		failureScenario("duplicate-stable-id", validateManifests(duplicate, nil), "DUPLICATE_STABLE_ID"),
 		failureScenario("missing-manifest", validateManifests(missing, required), "MISSING_MANIFEST"),
@@ -293,6 +308,8 @@ func failureContracts(root string, loaded []LoadedManifest, base map[string][]by
 		failureScenario("cross-directory-manifest", validateManifestInputs(root, cross, nil), "CROSS_DIRECTORY_MANIFEST"),
 		failureScenario("missing-binding", validateManifests(missingBinding, nil), "MISSING_METRIC_BINDING"),
 		failureScenario("malformed-manifest", validateManifests(malformed, nil), "INVALID_MANIFEST_IDENTITY"),
+		failureScenario("binding-self-search", validateManifestInputs(root, bindingSelfSearch, nil), "UNTRUSTED_BINDING_SOURCE"),
+		failureScenario("binding-output-digest-mismatch", validateManifestInputs(root, bindingOutputMismatch, nil), "BINDING_OUTPUT_DIGEST_MISMATCH"),
 	}
 }
 
@@ -324,20 +341,28 @@ func failureScenario(id string, diagnostic *Diagnostic, expectedReason string) S
 	return ScenarioResult{ID: id, Decision: "PASS", Expected: "FAIL_CLOSED", Diagnostic: diagnostic, Detail: "stage, step, and reason were preserved"}
 }
 
+type consumerCommandResult struct {
+	ExitCode       int
+	Stdout         []byte
+	Stderr         []byte
+	DiagnosticJSON []byte
+	Diagnostic     *Diagnostic
+}
+
+type consumerFailureCase struct {
+	id, stage, step, reason, rawPath string
+	mutate                           func(string) error
+}
+
 func independentFailurePredicates(root string) ([]PredicateObservation, error) {
-	type caseDef struct {
-		id, reason string
-		mutate     func(string) error
-	}
-	cases := []caseDef{
-		{"consumer-malformed-manifest", "MALFORMED_MANIFEST", func(temp string) error {
-			path := filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json")
-			return os.WriteFile(path, []byte("{"), 0o644)
+	cases := []consumerFailureCase{
+		{id: "consumer-malformed-manifest", stage: "FOUNDATION", step: "DECODE_MANIFEST", reason: "MALFORMED_MANIFEST", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			return os.WriteFile(filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json"), []byte("{"), 0o644)
 		}},
-		{"consumer-missing-manifest", "MISSING_MANIFEST", func(temp string) error {
+		{id: "consumer-missing-manifest", stage: "FOUNDATION", step: "REQUIRED_MANIFEST", reason: "MISSING_MANIFEST", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json.missing", mutate: func(temp string) error {
 			return os.Rename(filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json"), filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json.missing"))
 		}},
-		{"consumer-cross-directory-manifest", "CROSS_DIRECTORY_MANIFEST", func(temp string) error {
+		{id: "consumer-cross-directory-manifest", stage: "FOUNDATION", step: "MANIFEST_OWNERSHIP", reason: "CROSS_DIRECTORY_MANIFEST", rawPath: "examples/wrong-owner/concept.manifest.json", mutate: func(temp string) error {
 			from := filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json")
 			to := filepath.Join(temp, "examples/wrong-owner/concept.manifest.json")
 			if err := os.MkdirAll(filepath.Dir(to), 0o755); err != nil {
@@ -345,13 +370,13 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 			}
 			return os.Rename(from, to)
 		}},
-		{"consumer-missing-binding", "MISSING_METRIC_BINDING", func(temp string) error {
-			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) { manifest.MetricBindings = nil })
+		{id: "consumer-missing-binding", stage: "FOUNDATION", step: "METRIC_BINDINGS", reason: "MISSING_METRIC_BINDING", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) { manifest.MetricBindings = nil; manifest.BindingRegistry = nil })
 		}},
-		{"consumer-stale-denominator", "DENOMINATOR_SOURCE_MISMATCH", func(temp string) error {
+		{id: "consumer-stale-denominator", stage: "FOUNDATION", step: "DENOMINATOR_RECONCILIATION", reason: "DENOMINATOR_SOURCE_MISMATCH", rawPath: "examples/toolchain-conformance/concept.manifest.json", mutate: func(temp string) error {
 			return rewriteManifest(temp, "toolchain-conformance", func(manifest *Manifest) { manifest.Denominators[0].Values["cases"] = 160 })
 		}},
-		{"consumer-stale-generated-projection", "STALE_GENERATED_PROJECTION", func(temp string) error {
+		{id: "consumer-stale-generated-projection", stage: "REGRESSION", step: "GENERATED_OUTPUT", reason: "STALE_GENERATED_PROJECTION", rawPath: defaultOutput + "/projection.json", mutate: func(temp string) error {
 			path := filepath.Join(temp, defaultOutput, "projection.json")
 			data, err := os.ReadFile(path)
 			if err != nil {
@@ -360,7 +385,7 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 			data[0] ^= 1
 			return os.WriteFile(path, data, 0o644)
 		}},
-		{"consumer-duplicate-stable-id", "DUPLICATE_STABLE_ID", func(temp string) error {
+		{id: "consumer-duplicate-stable-id", stage: "FOUNDATION", step: "UNIQUE_STABLE_ID", reason: "DUPLICATE_STABLE_ID", rawPath: "examples/duplicate-concept/concept.manifest.json", mutate: func(temp string) error {
 			source := filepath.Join(temp, "examples/language-syntax-roundtrip/concept.manifest.json")
 			data, err := os.ReadFile(source)
 			if err != nil {
@@ -372,8 +397,16 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 			}
 			return os.WriteFile(target, data, 0o644)
 		}},
+		{id: "consumer-binding-self-search", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "UNTRUSTED_BINDING_SOURCE", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) {
+				manifest.BindingRegistry[0].RawSourceAddress = "docs/language/conflict-free-registry-projection.md#self-search"
+			})
+		}},
+		{id: "consumer-binding-output-digest-mismatch", stage: "FOUNDATION", step: "BINDING_REGISTRY", reason: "BINDING_OUTPUT_DIGEST_MISMATCH", rawPath: "examples/language-syntax-roundtrip/concept.manifest.json", mutate: func(temp string) error {
+			return rewriteManifest(temp, "language-syntax-roundtrip", func(manifest *Manifest) { manifest.BindingRegistry[0].ObservedOutputDigest = "sha256:stale" })
+		}},
 	}
-	observations := make([]PredicateObservation, 0, len(cases))
+	observations := make([]PredicateObservation, 0, len(cases)+1)
 	for _, item := range cases {
 		temp, err := os.MkdirTemp("", "gooo-consumer-failure-")
 		if err != nil {
@@ -383,24 +416,101 @@ func independentFailurePredicates(root string) ([]PredicateObservation, error) {
 		if copyErr == nil {
 			copyErr = item.mutate(temp)
 		}
-		var commandOutput string
+		result := consumerCommandResult{ExitCode: -1}
+		var rawInput []byte
 		if copyErr == nil {
-			commandOutput = runConsumerFailureCommand(root, temp)
+			rawInput, _ = os.ReadFile(filepath.Join(temp, filepath.FromSlash(item.rawPath)))
+			result = runConsumerFailureCommand(root, temp)
 		}
-		observed := copyErr == nil && strings.Contains(commandOutput, item.reason)
-		address := filepath.ToSlash(filepath.Join(temp, "examples", item.id))
-		targetDigest := digestBytes([]byte(address + "|" + commandOutput))
-		observations = append(observations, PredicateObservation{ID: item.id, ObservedPredicate: "independent consumer rejects " + item.reason, TargetAddress: address, TargetDigest: targetDigest, Observed: observed, Decision: "FAIL_CLOSED", Stage: "REGRESSION", Step: "INDEPENDENT_CONSUMER_FAILURE_CONTRACT", Reason: item.reason})
+		observations = append(observations, failurePredicateObservation(item, result, rawInput))
 		_ = os.RemoveAll(temp)
 	}
+	observations = append(observations, successExitCounterexample())
 	return observations, nil
 }
 
-func runConsumerFailureCommand(repoRoot, tempRoot string) string {
+func runConsumerFailureCommand(repoRoot, tempRoot string) consumerCommandResult {
 	command := exec.Command("go", "run", "./scripts/conflict-free-registry-projection-consumer", "-root", tempRoot, "-check-generated")
 	command.Dir = repoRoot
-	data, _ := command.CombinedOutput()
-	return string(data)
+	return runCommand(command)
+}
+
+func runCommand(command *exec.Cmd) consumerCommandResult {
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	err := command.Run()
+	exitCode := -1
+	if command.ProcessState != nil {
+		exitCode = command.ProcessState.ExitCode()
+	}
+	diagnosticJSON, diagnostic := parseExactDiagnostic(stdout.Bytes(), stderr.Bytes())
+	if err == nil && exitCode < 0 {
+		exitCode = 0
+	}
+	return consumerCommandResult{ExitCode: exitCode, Stdout: stdout.Bytes(), Stderr: stderr.Bytes(), DiagnosticJSON: diagnosticJSON, Diagnostic: diagnostic}
+}
+
+func parseExactDiagnostic(streams ...[]byte) ([]byte, *Diagnostic) {
+	for _, stream := range streams {
+		trimmed := bytes.TrimSpace(stream)
+		if len(trimmed) == 0 {
+			continue
+		}
+		decoder := json.NewDecoder(bytes.NewReader(trimmed))
+		decoder.DisallowUnknownFields()
+		diagnostic := Diagnostic{}
+		if decoder.Decode(&diagnostic) != nil {
+			continue
+		}
+		if decoder.Decode(&struct{}{}) != io.EOF || diagnostic.Decision == "" || diagnostic.Stage == "" || diagnostic.Step == "" || diagnostic.Reason == "" {
+			continue
+		}
+		return append([]byte(nil), stream...), &diagnostic
+	}
+	return nil, nil
+}
+
+func failurePredicateObservation(item consumerFailureCase, result consumerCommandResult, rawInput []byte) PredicateObservation {
+	stage, step, reason, decision := "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN"
+	if result.Diagnostic != nil {
+		stage, step, reason, decision = result.Diagnostic.Stage, result.Diagnostic.Step, result.Diagnostic.Reason, result.Diagnostic.Decision
+	}
+	exact := result.Diagnostic != nil && result.Diagnostic.Decision == "FAIL_CLOSED" && result.Diagnostic.Stage == item.stage && result.Diagnostic.Step == item.step && result.Diagnostic.Reason == item.reason
+	truth := "UNKNOWN"
+	if result.Diagnostic != nil {
+		truth = "FALSE"
+		if result.ExitCode != 0 && exact {
+			truth = "TRUE"
+		}
+	}
+	diagnosticDigest := ""
+	if len(result.DiagnosticJSON) > 0 {
+		diagnosticDigest = digestBytes(result.DiagnosticJSON)
+	}
+	rawDigest := digestBytes(rawInput)
+	address := "evidence://consumer-failure/" + item.id
+	targetDigest := digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest + fmt.Sprint(result.ExitCode)))
+	return PredicateObservation{ID: item.id, ObservedPredicate: "independent consumer rejects " + item.reason + " with nonzero exit and exact diagnostic fields", TargetAddress: address, TargetDigest: targetDigest, Observed: truth == "TRUE", Decision: decision, PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: rawDigest, ContentDigest: diagnosticDigest, ProvenanceArtifact: address + "/diagnostic.json", Stage: stage, Step: step, Reason: reason}
+}
+
+func successExitCounterexample() PredicateObservation {
+	raw := []byte("{\"decision\":\"FAIL_CLOSED\",\"stage\":\"REGRESSION\",\"step\":\"GENERATED_OUTPUT\",\"reason\":\"STALE_GENERATED_PROJECTION\"}\n")
+	result := runCommand(exec.Command("printf", "%s", string(raw)))
+	rawDigest := digestBytes(raw)
+	diagnosticDigest := digestBytes(result.DiagnosticJSON)
+	address := "evidence://consumer-failure/consumer-success-with-diagnostic-counterexample"
+	stage, step, reason := "UNKNOWN", "UNKNOWN", "UNKNOWN"
+	if result.Diagnostic != nil {
+		stage, step, reason = result.Diagnostic.Stage, result.Diagnostic.Step, result.Diagnostic.Reason
+	}
+	acceptedAsFailure := result.ExitCode != 0 && result.Diagnostic != nil
+	observed := result.ExitCode == 0 && result.Diagnostic != nil && !acceptedAsFailure
+	truth := "UNKNOWN"
+	if observed {
+		truth = "TRUE"
+	}
+	return PredicateObservation{ID: "consumer-success-with-diagnostic-counterexample", ObservedPredicate: "a diagnostic JSON with a success exit is rejected as a failure observation", TargetAddress: address, TargetDigest: digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest)), Observed: observed, Decision: "PASS", PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: rawDigest, ContentDigest: diagnosticDigest, ProvenanceArtifact: address + "/diagnostic.json", Stage: stage, Step: step, Reason: reason}
 }
 
 func rewriteManifest(root, stableID string, mutate func(*Manifest)) error {
@@ -438,8 +548,8 @@ func strategyResults(root, outputDir string, loaded []LoadedManifest, evidence E
 				result.Decision, result.Reason = "FAIL_CLOSED", "FOUNDATION_SOURCE_RECONCILIATION_NOT_DISCHARGED"
 			}
 		case "COHERENCE":
-			result.Scenarios = []string{"projection-twice-byte-equality", "manifest-order-invariance", "production-consumer-adoption"}
-			if !selected || evidence.ProjectionReplay.Decision != "PASS" || evidence.ManifestOrderInvariant.Decision != "PASS" || evidence.ProductionAdoption.Numerator != 1 {
+			result.Scenarios = []string{"projection-twice-byte-equality", "manifest-order-invariance", "independent-conformance-consumer"}
+			if !selected || evidence.ProjectionReplay.Decision != "PASS" || evidence.ManifestOrderInvariant.Decision != "PASS" || evidence.ConformanceConsumer.Numerator != 1 {
 				result.Decision, result.Reason = "FAIL_CLOSED", "COHERENCE_REPLAY_NOT_DISCHARGED"
 			}
 		case "REGRESSION":
@@ -466,15 +576,15 @@ func buildClaims(observations []PredicateObservation) []Claim {
 		terminalReason := observation.Reason
 		terminalStage := observation.Stage
 		terminalStep := observation.Step
-		if observation.Observed && observation.Decision == "PASS" {
+		if observation.PredicateTruth == "TRUE" {
 			terminalState = "DISCHARGED"
 			terminalReason = "independent_consumer_recomputed_predicate"
 			terminalStage = observation.Stage
 			terminalStep = "INDEPENDENT_CONSUMER_PREDICATE"
-		} else if observation.Decision == "FAIL_CLOSED" {
+		} else if observation.PredicateTruth == "FALSE" {
 			terminalState = "REFUTED"
 		}
-		claims = append(claims, Claim{ID: observation.ID, Proposition: observation.ObservedPredicate, ObservedPredicate: observation.ObservedPredicate, TargetAddress: observation.TargetAddress, TargetDigest: observation.TargetDigest, Transitions: []ClaimTransition{{State: "OPEN", ObservedPredicate: observation.ObservedPredicate, PredicateDigest: predicateDigest, TargetAddress: observation.TargetAddress, TargetDigest: observation.TargetDigest, Stage: "FOUNDATION", Step: "CLAIM_OPEN", Reason: "proposition_under_review"}, {State: terminalState, ObservedPredicate: observation.ObservedPredicate, PredicateDigest: predicateDigest, TargetAddress: observation.TargetAddress, TargetDigest: observation.TargetDigest, Stage: terminalStage, Step: terminalStep, Reason: terminalReason}}})
+		claims = append(claims, Claim{ID: observation.ID, Proposition: observation.ObservedPredicate, ObservedPredicate: observation.ObservedPredicate, TargetAddress: observation.TargetAddress, TargetDigest: observation.TargetDigest, Transitions: []ClaimTransition{{State: "OPEN", ObservedPredicate: observation.ObservedPredicate, PredicateTruth: "UNKNOWN", PredicateDigest: predicateDigest, TargetAddress: observation.TargetAddress, TargetDigest: observation.TargetDigest, Stage: "FOUNDATION", Step: "CLAIM_OPEN", Reason: "proposition_under_review"}, {State: terminalState, ObservedPredicate: observation.ObservedPredicate, PredicateTruth: observation.PredicateTruth, PredicateDigest: predicateDigest, TargetAddress: observation.TargetAddress, TargetDigest: observation.TargetDigest, Stage: terminalStage, Step: terminalStep, Reason: terminalReason}}})
 	}
 	return claims
 }
@@ -485,7 +595,7 @@ func allProofsPass(evidence Evidence) bool {
 			return false
 		}
 	}
-	if len(evidence.DenominatorReconciliations) < 3 || uniqueStableIDs(evidence.DenominatorReconciliations) != 3 || evidence.StaleDenominatorReceipt == nil || evidence.StaleDenominatorReceipt.Decision != "FAIL_CLOSED" || evidence.StaleDenominatorReceipt.Reason != "DENOMINATOR_SOURCE_MISMATCH" || evidence.GeneratedOutputChangeCount != 6 || evidence.GeneratedOutputDenominator != 8 || evidence.ProductionAdoption.Numerator != 1 || evidence.ProductionAdoption.Denominator != 1 {
+	if len(evidence.DenominatorReconciliations) < 3 || uniqueStableIDs(evidence.DenominatorReconciliations) != 3 || evidence.StaleDenominatorReceipt == nil || evidence.StaleDenominatorReceipt.Decision != "FAIL_CLOSED" || evidence.StaleDenominatorReceipt.Reason != "DENOMINATOR_SOURCE_MISMATCH" || evidence.GeneratedOutputChangeCount != 6 || evidence.GeneratedOutputDenominator != 8 || evidence.ConformanceConsumer.Numerator != 1 || evidence.ConformanceConsumer.Denominator != 1 || evidence.ProductionAdoption.Numerator != 0 || evidence.ProductionAdoption.Denominator != 1 || evidence.ProductionAdoption.Decision != "UNKNOWN" {
 		return false
 	}
 	for _, comparison := range evidence.SourceDigestPreservation {
@@ -505,7 +615,7 @@ func allProofsPass(evidence Evidence) bool {
 		}
 	}
 	for _, predicate := range evidence.PredicateObservations {
-		if !predicate.Observed || predicate.TargetAddress == "" || predicate.TargetDigest == "" {
+		if !predicate.Observed || predicate.PredicateTruth != "TRUE" || predicate.TargetAddress == "" || predicate.TargetDigest == "" {
 			return false
 		}
 	}
@@ -514,7 +624,7 @@ func allProofsPass(evidence Evidence) bool {
 			return false
 		}
 	}
-	return validateClaims(evidence.Claims) == nil && evidence.RepositoryNetState.NetStateEqual && evidence.RepositoryNetState.NetState == "NET_STATE_EQUAL"
+	return validateClaims(evidence.Claims) == nil && evidence.RepositoryNetState.NetStateEqual && evidence.RepositoryNetState.NetState == "NET_STATE_EQUAL" && evidence.RepositoryNetState.NetStatePredicate == "NET_STATE_EQUAL" && evidence.FailurePredicates.Numerator == evidence.FailurePredicates.Denominator && evidence.BindingPredicates.Numerator == evidence.BindingPredicates.Denominator && evidence.ProvenancePredicates.Numerator == evidence.ProvenancePredicates.Denominator
 }
 
 func validateClaims(claims []Claim) error {
@@ -543,12 +653,21 @@ func validateClaims(claims []Claim) error {
 			return fmt.Errorf("claim does not terminate in a known state")
 		}
 		for _, transition := range item.Transitions {
-			if transition.ObservedPredicate != item.ObservedPredicate || transition.TargetAddress != item.TargetAddress || transition.TargetDigest != item.TargetDigest || transition.PredicateDigest == "" {
+			if transition.ObservedPredicate != item.ObservedPredicate || transition.TargetAddress != item.TargetAddress || transition.TargetDigest != item.TargetDigest || transition.PredicateDigest == "" || transition.PredicateTruth == "" {
 				return fmt.Errorf("claim transition is not target-bound")
 			}
 		}
 		if last.State == "DISCHARGED" && last.Reason != "independent_consumer_recomputed_predicate" {
 			return fmt.Errorf("claim discharged without independent predicate")
+		}
+		if last.State == "DISCHARGED" && last.PredicateTruth != "TRUE" {
+			return fmt.Errorf("claim discharged without true observed predicate")
+		}
+		if last.State == "REFUTED" && last.PredicateTruth != "FALSE" {
+			return fmt.Errorf("claim refuted without false observed predicate")
+		}
+		if last.State == "OPEN" && last.PredicateTruth != "UNKNOWN" {
+			return fmt.Errorf("open claim without unknown observed predicate")
 		}
 	}
 	return nil
@@ -702,27 +821,164 @@ func copyTree(source, target string) error {
 	})
 }
 
-func repositoryObservation(before, after []string, beforeErr, afterErr error) RepositoryObservation {
-	observation := RepositoryObservation{BeforePaths: before, AfterPaths: after, NetStateEqual: beforeErr == nil && afterErr == nil && sameStringSet(before, after), NetState: "UNKNOWN", TransientMutation: "UNKNOWN", MutationAuthority: "UNKNOWN"}
-	if observation.NetStateEqual {
-		observation.NetState = "NET_STATE_EQUAL"
+func repositoryObservation(before, after []RepositoryFileSnapshot, beforeErr, afterErr error) RepositoryObservation {
+	beforePaths := snapshotPaths(before)
+	afterPaths := snapshotPaths(after)
+	equal := beforeErr == nil && afterErr == nil && sameRepositorySnapshots(before, after)
+	netState := "UNKNOWN"
+	if equal {
+		netState = "NET_STATE_EQUAL"
 	} else if beforeErr == nil && afterErr == nil {
-		observation.NetState = "NET_STATE_CHANGED"
+		netState = "NET_STATE_CHANGED"
 	}
-	return observation
+	return RepositoryObservation{BeforePaths: beforePaths, AfterPaths: afterPaths, BeforeFiles: before, AfterFiles: after, NetStateEqual: equal, NetState: netState, NetStatePredicate: netState, TransientMutation: "UNKNOWN", MutationAuthority: "UNKNOWN"}
 }
-func gitStatus(root string) ([]string, error) {
-	command := exec.Command("git", "-C", root, "status", "--porcelain", "--untracked-files=all")
+
+func gitRepositorySnapshot(root string) ([]RepositoryFileSnapshot, error) {
+	tracked, err := gitFileList(root, "ls-files", "-z")
+	if err != nil {
+		return nil, err
+	}
+	untracked, err := gitFileList(root, "ls-files", "--others", "--exclude-standard", "-z")
+	if err != nil {
+		return nil, err
+	}
+	paths := map[string]bool{}
+	for _, path := range tracked {
+		paths[path] = true
+	}
+	for _, path := range untracked {
+		if _, ok := paths[path]; !ok {
+			paths[path] = false
+		}
+	}
+	snapshots := make([]RepositoryFileSnapshot, 0, len(paths))
+	for path, isTracked := range paths {
+		data, readErr := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		digest := "MISSING"
+		if readErr == nil {
+			digest = digestBytes(data)
+		}
+		snapshots = append(snapshots, RepositoryFileSnapshot{Path: filepath.ToSlash(path), Digest: digest, Tracked: isTracked})
+	}
+	sort.Slice(snapshots, func(i, j int) bool {
+		if snapshots[i].Path == snapshots[j].Path {
+			return !snapshots[i].Tracked && snapshots[j].Tracked
+		}
+		return snapshots[i].Path < snapshots[j].Path
+	})
+	return snapshots, nil
+}
+
+func gitFileList(root string, args ...string) ([]string, error) {
+	command := exec.Command("git", append([]string{"-C", root}, args...)...)
 	data, err := command.Output()
 	if err != nil {
 		return nil, err
 	}
-	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-	if len(lines) == 1 && lines[0] == "" {
-		return nil, nil
+	parts := bytes.Split(data, []byte{0})
+	paths := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if len(part) > 0 {
+			paths = append(paths, filepath.ToSlash(string(part)))
+		}
 	}
-	return lines, nil
+	return paths, nil
 }
+
+func sameRepositorySnapshots(left, right []RepositoryFileSnapshot) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func snapshotPaths(values []RepositoryFileSnapshot) []string {
+	paths := make([]string, 0, len(values))
+	for _, value := range values {
+		paths = append(paths, value.Path)
+	}
+	return paths
+}
+
+func predicateMetric(numerator, denominator int, decision, stage, step, reason string) PredicateMetric {
+	return PredicateMetric{Numerator: numerator, Denominator: denominator, Decision: decision, Stage: stage, Step: step, Reason: reason}
+}
+
+func decisionForBool(value bool) string {
+	if value {
+		return "PASS"
+	}
+	return "FAIL_CLOSED"
+}
+
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}
+
+func countDischargedClaims(claims []Claim) int {
+	count := 0
+	for _, claim := range claims {
+		if len(claim.Transitions) > 0 && claim.Transitions[len(claim.Transitions)-1].State == "DISCHARGED" {
+			count++
+		}
+	}
+	return count
+}
+
+func failurePredicateMetric(predicates []PredicateObservation) PredicateMetric {
+	numerator := 0
+	denominator := 0
+	for _, predicate := range predicates {
+		if strings.HasPrefix(predicate.ID, "consumer-") {
+			denominator++
+			if predicate.PredicateTruth == "TRUE" {
+				numerator++
+			}
+		}
+	}
+	return predicateMetric(numerator, denominator, decisionForRatio(numerator, denominator), "REGRESSION", "FAILURE_PREDICATES", "EXACT_DIAGNOSTIC_AND_EXIT_CONTRACTS")
+}
+
+func bindingPredicateMetric(predicates []PredicateObservation) PredicateMetric {
+	for _, predicate := range predicates {
+		if predicate.ID == "independent-binding-registry" {
+			return predicateMetric(boolInt(predicate.PredicateTruth == "TRUE"), 1, decisionForBool(predicate.PredicateTruth == "TRUE"), "FOUNDATION", "BINDING_REGISTRY", "INDEPENDENT_BINDING_RECONSTRUCTION")
+		}
+	}
+	return predicateMetric(0, 1, "FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "MISSING_BINDING_PREDICATE")
+}
+
+func provenancePredicateMetric(predicates []PredicateObservation) PredicateMetric {
+	numerator := 0
+	denominator := 0
+	for _, predicate := range predicates {
+		if !strings.HasPrefix(predicate.ID, "consumer-") {
+			continue
+		}
+		denominator++
+		if predicate.ExitCode != -1 && predicate.DiagnosticJSON != "" && predicate.DiagnosticDigest != "" && predicate.RawInputDigest != "" && predicate.ContentDigest != "" && predicate.ProvenanceArtifact != "" {
+			numerator++
+		}
+	}
+	return predicateMetric(numerator, denominator, decisionForRatio(numerator, denominator), "REGRESSION", "PROVENANCE_PREDICATES", "EXIT_DIAGNOSTIC_RAW_INPUT_AND_ARTIFACT_PRESERVED")
+}
+
+func decisionForRatio(numerator, denominator int) string {
+	if denominator > 0 && numerator == denominator {
+		return "PASS"
+	}
+	return "FAIL_CLOSED"
+}
+
 func observedOutputs(outputDir string) []OutputMetadata {
 	outputs, err := readGenerated(outputDir)
 	if err != nil {

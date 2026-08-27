@@ -19,6 +19,11 @@
     "gooo.metric.toolchain.conformance-case-readiness-bps.v1",
     "gooo.metric.toolchain.conformance-proof-readiness-bps.v1"
   ],
+  "binding_registry": [
+    {"metric_id": "gooo.metric.toolchain.conformance-readiness-bps.v1", "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchain-conformance", "semantic_digest": "sha256:18ab53bc22ed207ba0cd65c1d737c9996d2e2815b108368eb8238f5e42b8927b", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "examples/toolchain-conformance/corpus.json", "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"},
+    {"metric_id": "gooo.metric.toolchain.conformance-case-readiness-bps.v1", "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchain-conformance", "semantic_digest": "sha256:3d529e45389f24ec9509ca7babdff3bda2fef2c8c1b87173574dbc59262412af", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "examples/toolchain-conformance/corpus.json", "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"},
+    {"metric_id": "gooo.metric.toolchain.conformance-proof-readiness-bps.v1", "raw_source_address": "internal/meta/languageconcept/toolchain_conformance_metrics.go#toolchain-conformance", "semantic_digest": "sha256:77e29c7c72d83c6acdfa1b389e910811128ca187f61063a0018929b85fadf5f4", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "examples/toolchain-conformance/corpus.json", "observed_output_digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"}
+  ],
   "use_cases": [
     {
       "id": "same-head-surface-closure",
@@ -46,7 +51,7 @@
   "denominators": [
     {
       "id": "gooo/toolchain-conformance-corpus/v1",
-      "values": {"surfaces": 9, "cases": 181, "use_case_cases": 152, "indicators": 151, "proofs": 27, "tamper_cases": 13}
+      "values": {"surfaces": 9, "cases": 181, "indicators": 151, "proofs": 27, "tamper_cases": 13}
     }
   ],
   "documentation": [

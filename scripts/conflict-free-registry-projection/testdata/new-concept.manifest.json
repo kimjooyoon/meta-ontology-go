@@ -11,6 +11,9 @@
   },
   "code_bindings": ["scripts/conflict-free-registry-projection"],
   "metric_bindings": ["gooo.metric.meta.unbound-indicators.v1"],
+  "binding_registry": [
+    {"metric_id": "gooo.metric.meta.unbound-indicators.v1", "raw_source_address": "internal/meta/metabinding/types.go#unbound-indicators", "semantic_digest": "sha256:0446a8f1c99245dc7ca70921a3210d6f515a6cb31275f6c6b3e668d625b26d97", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "scripts/conflict-free-registry-projection/README.md", "observed_output_digest": "sha256:ff87504a08f479935d94ee3f1405a07ff478177a1ff10a2231f220a9bcc8715b"}
+  ],
   "use_cases": [
     {
       "id": "add-local-concept",
@@ -22,6 +25,6 @@
   "corpus": [],
   "registry": [],
   "denominators": [{"id": "gooo/registry-projection-fixture/v1", "values": {"cases": 1}}],
-  "documentation": [],
+  "documentation": [{"path": "scripts/conflict-free-registry-projection/README.md", "role": "PROJECTION_GENERATOR_DOCUMENTATION", "digest": "sha256:ff87504a08f479935d94ee3f1405a07ff478177a1ff10a2231f220a9bcc8715b"}],
   "comments": ["Proof-only fixture; not part of the bounded production slice."]
 }

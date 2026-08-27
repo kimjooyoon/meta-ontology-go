@@ -22,6 +22,11 @@
     "gooo.metric.language.semantic-model-normalized-irs.v1",
     "gooo.metric.language.semantic-model-source-models.v1"
   ],
+  "binding_registry": [
+    {"metric_id": "gooo.metric.language.semantic-model-readiness-bps.v1", "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#language-semantic-model", "semantic_digest": "sha256:1ce8457eee6bf426fbd4513b3b0e1ef0c96421da135b814af5894fc79686ecc5", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "examples/language-semantic-model/corpus.json", "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"},
+    {"metric_id": "gooo.metric.language.semantic-model-normalized-irs.v1", "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#language-semantic-model", "semantic_digest": "sha256:101594103f5a751cdd6d54764e8f3e0eda16084850fbf320e7b26f5f50d00449", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "examples/language-semantic-model/corpus.json", "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"},
+    {"metric_id": "gooo.metric.language.semantic-model-source-models.v1", "raw_source_address": "internal/meta/languageconcept/language_semantic_model_metrics.go#language-semantic-model", "semantic_digest": "sha256:e175b3b7decdd3bcf66b90ac22c8f4c37f60ef7cd62ab14279564113b8f1a3ea", "consumer_entry_point": "scripts/conflict-free-registry-projection-consumer/main.go", "observed_output_address": "examples/language-semantic-model/corpus.json", "observed_output_digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"}
+  ],
   "use_cases": [
     {
       "id": "staged-semantic-authority-replay",

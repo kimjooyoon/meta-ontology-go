@@ -29,24 +29,34 @@ type ResourceRef struct {
 	Digest string `json:"digest"`
 }
 
+type BindingRegistryEntry struct {
+	MetricID              string `json:"metric_id"`
+	RawSourceAddress      string `json:"raw_source_address"`
+	SemanticDigest        string `json:"semantic_digest"`
+	ConsumerEntryPoint    string `json:"consumer_entry_point"`
+	ObservedOutputAddress string `json:"observed_output_address"`
+	ObservedOutputDigest  string `json:"observed_output_digest"`
+}
+
 type Denominator struct {
 	ID     string         `json:"id"`
 	Values map[string]int `json:"values"`
 }
 
 type Manifest struct {
-	Schema                 string        `json:"schema"`
-	StableID               string        `json:"stable_id"`
-	Concept                Concept       `json:"concept"`
-	CodeBindings           []string      `json:"code_bindings"`
-	MetricBindings         []string      `json:"metric_bindings"`
-	UseCases               []UseCase     `json:"use_cases"`
-	VerificationStrategies []string      `json:"verification_strategies"`
-	Corpus                 []ResourceRef `json:"corpus"`
-	Registry               []ResourceRef `json:"registry"`
-	Denominators           []Denominator `json:"denominators"`
-	Documentation          []ResourceRef `json:"documentation"`
-	Comments               []string      `json:"comments"`
+	Schema                 string                 `json:"schema"`
+	StableID               string                 `json:"stable_id"`
+	Concept                Concept                `json:"concept"`
+	CodeBindings           []string               `json:"code_bindings"`
+	MetricBindings         []string               `json:"metric_bindings"`
+	BindingRegistry        []BindingRegistryEntry `json:"binding_registry"`
+	UseCases               []UseCase              `json:"use_cases"`
+	VerificationStrategies []string               `json:"verification_strategies"`
+	Corpus                 []ResourceRef          `json:"corpus"`
+	Registry               []ResourceRef          `json:"registry"`
+	Denominators           []Denominator          `json:"denominators"`
+	Documentation          []ResourceRef          `json:"documentation"`
+	Comments               []string               `json:"comments"`
 }
 
 type LoadedManifest struct {
@@ -63,18 +73,19 @@ type ManifestDigest struct {
 }
 
 type CatalogEntry struct {
-	StableID               string    `json:"stable_id"`
-	SourceManifest         string    `json:"source_manifest"`
-	Problem                string    `json:"problem"`
-	PositiveEffect         string    `json:"positive_effect"`
-	MetaOperation          string    `json:"meta_operation"`
-	Rarity                 string    `json:"rarity"`
-	Stage                  string    `json:"stage"`
-	NoveltyClaim           bool      `json:"novelty_claim"`
-	CodeBindings           []string  `json:"code_bindings"`
-	MetricBindings         []string  `json:"metric_bindings"`
-	UseCases               []UseCase `json:"use_cases"`
-	VerificationStrategies []string  `json:"verification_strategies"`
+	StableID               string                 `json:"stable_id"`
+	SourceManifest         string                 `json:"source_manifest"`
+	Problem                string                 `json:"problem"`
+	PositiveEffect         string                 `json:"positive_effect"`
+	MetaOperation          string                 `json:"meta_operation"`
+	Rarity                 string                 `json:"rarity"`
+	Stage                  string                 `json:"stage"`
+	NoveltyClaim           bool                   `json:"novelty_claim"`
+	CodeBindings           []string               `json:"code_bindings"`
+	MetricBindings         []string               `json:"metric_bindings"`
+	BindingRegistry        []BindingRegistryEntry `json:"binding_registry"`
+	UseCases               []UseCase              `json:"use_cases"`
+	VerificationStrategies []string               `json:"verification_strategies"`
 }
 
 type ResourceSnapshot struct {
@@ -115,7 +126,7 @@ type MetricDelta struct {
 type IntegrationMetrics struct {
 	ExistingSharedSourceTouchpoints RatioMetric `json:"existing_shared_source_touchpoints"`
 	GeneratorChangedSharedOutputs   RatioMetric `json:"generator_changed_shared_outputs"`
-	ProductionConsumerAdoption      RatioMetric `json:"production_consumer_adoption"`
+	IndependentConformanceConsumer  RatioMetric `json:"independent_conformance_consumer"`
 	ConceptLocalTouchpoints         RatioMetric `json:"concept_local_touchpoints"`
 	ManualSourceRegistrationEdits   RatioMetric `json:"manual_source_registration_edits_required"`
 }
@@ -160,15 +171,22 @@ type DenominatorReconciliation struct {
 }
 
 type PredicateObservation struct {
-	ID                string `json:"id"`
-	ObservedPredicate string `json:"observed_predicate"`
-	TargetAddress     string `json:"target_address"`
-	TargetDigest      string `json:"target_digest"`
-	Observed          bool   `json:"observed"`
-	Decision          string `json:"decision"`
-	Stage             string `json:"stage"`
-	Step              string `json:"step"`
-	Reason            string `json:"reason"`
+	ID                 string `json:"id"`
+	ObservedPredicate  string `json:"observed_predicate"`
+	TargetAddress      string `json:"target_address"`
+	TargetDigest       string `json:"target_digest"`
+	Observed           bool   `json:"observed"`
+	Decision           string `json:"decision"`
+	PredicateTruth     string `json:"predicate_truth"`
+	ExitCode           int    `json:"exit_code"`
+	DiagnosticJSON     string `json:"diagnostic_json,omitempty"`
+	DiagnosticDigest   string `json:"diagnostic_json_digest,omitempty"`
+	RawInputDigest     string `json:"raw_input_digest,omitempty"`
+	ContentDigest      string `json:"content_digest,omitempty"`
+	ProvenanceArtifact string `json:"provenance_artifact,omitempty"`
+	Stage              string `json:"stage"`
+	Step               string `json:"step"`
+	Reason             string `json:"reason"`
 }
 
 type SourceDigestComparison struct {
@@ -189,6 +207,7 @@ type StrategyResult struct {
 type ClaimTransition struct {
 	State             string `json:"state"`
 	ObservedPredicate string `json:"observed_predicate"`
+	PredicateTruth    string `json:"predicate_truth"`
 	PredicateDigest   string `json:"predicate_digest"`
 	TargetAddress     string `json:"target_address"`
 	TargetDigest      string `json:"target_digest"`
@@ -207,41 +226,76 @@ type Claim struct {
 }
 
 type RepositoryObservation struct {
-	BeforePaths       []string `json:"before_paths"`
-	AfterPaths        []string `json:"after_paths"`
-	NetStateEqual     bool     `json:"net_state_equal"`
-	NetState          string   `json:"net_state"`
-	TransientMutation string   `json:"transient_mutation"`
-	MutationAuthority string   `json:"mutation_authority"`
+	BeforePaths       []string                 `json:"before_paths"`
+	AfterPaths        []string                 `json:"after_paths"`
+	BeforeFiles       []RepositoryFileSnapshot `json:"before_files"`
+	AfterFiles        []RepositoryFileSnapshot `json:"after_files"`
+	NetStateEqual     bool                     `json:"net_state_equal"`
+	NetState          string                   `json:"net_state"`
+	NetStatePredicate string                   `json:"net_state_predicate"`
+	TransientMutation string                   `json:"transient_mutation"`
+	MutationAuthority string                   `json:"mutation_authority"`
+}
+
+type RepositoryFileSnapshot struct {
+	Path    string `json:"path"`
+	Digest  string `json:"digest"`
+	Tracked bool   `json:"tracked"`
+}
+
+type PredicateMetric struct {
+	Numerator   int    `json:"numerator"`
+	Denominator int    `json:"denominator"`
+	Decision    string `json:"decision"`
+	Stage       string `json:"stage"`
+	Step        string `json:"step"`
+	Reason      string `json:"reason"`
+}
+
+type UseCaseReceiptObservation struct {
+	SourceArtifact string `json:"source_artifact"`
+	Status         string `json:"status"`
+	Numerator      int    `json:"completed_numerator"`
+	Denominator    int    `json:"denominator"`
+	Stage          string `json:"stage"`
+	Step           string `json:"step"`
+	Reason         string `json:"reason"`
 }
 
 type Evidence struct {
-	Schema                     string                      `json:"schema"`
-	Decision                   string                      `json:"decision"`
-	Reason                     string                      `json:"reason"`
-	BoundedSlice               []string                    `json:"bounded_slice"`
-	BaselineTouchpoints        int                         `json:"baseline_touchpoints"`
-	BaselineObservation        []baselineObservation       `json:"baseline_observation"`
-	Metrics                    IntegrationMetrics          `json:"integration_metrics"`
-	MetricDeltas               map[string]MetricDelta      `json:"metric_deltas"`
-	ProjectionReplay           ScenarioResult              `json:"projection_replay"`
-	ManifestOrderInvariant     ScenarioResult              `json:"manifest_order_invariant"`
-	SemanticCausality          ScenarioResult              `json:"semantic_manifest_causality"`
-	CommentInvariant           ScenarioResult              `json:"comment_only_invariant"`
-	NewConceptFixture          ScenarioResult              `json:"new_concept_fixture"`
-	FailureContracts           []ScenarioResult            `json:"failure_contracts"`
-	DenominatorReconciliations []DenominatorReconciliation `json:"denominator_reconciliations"`
-	DenominatorMismatch        ScenarioResult              `json:"denominator_mismatch_contract"`
-	StaleDenominatorReceipt    *DenominatorReconciliation  `json:"stale_denominator_receipt"`
-	PredicateObservations      []PredicateObservation      `json:"predicate_observations"`
-	SourceDigestPreservation   []SourceDigestComparison    `json:"source_digest_preservation"`
-	GeneratedOutputChanges     []string                    `json:"generated_output_changes"`
-	GeneratedOutputChangeCount int                         `json:"generated_output_change_count"`
-	GeneratedOutputDenominator int                         `json:"generated_output_denominator"`
-	ProductionAdoption         RatioMetric                 `json:"production_adoption"`
-	Strategies                 []StrategyResult            `json:"strategies"`
-	Claims                     []Claim                     `json:"claims"`
-	RepositoryNetState         RepositoryObservation       `json:"repository_net_state"`
-	GeneratedOutputs           []OutputMetadata            `json:"generated_outputs"`
-	FixtureGeneratedOutputs    []OutputMetadata            `json:"fixture_generated_outputs"`
+	Schema                       string                      `json:"schema"`
+	Decision                     string                      `json:"decision"`
+	Reason                       string                      `json:"reason"`
+	BoundedSlice                 []string                    `json:"bounded_slice"`
+	BaselineTouchpoints          int                         `json:"baseline_touchpoints"`
+	BaselineObservation          []baselineObservation       `json:"baseline_observation"`
+	Metrics                      IntegrationMetrics          `json:"integration_metrics"`
+	MetricDeltas                 map[string]MetricDelta      `json:"metric_deltas"`
+	ProjectionReplay             ScenarioResult              `json:"projection_replay"`
+	ManifestOrderInvariant       ScenarioResult              `json:"manifest_order_invariant"`
+	SemanticCausality            ScenarioResult              `json:"semantic_manifest_causality"`
+	CommentInvariant             ScenarioResult              `json:"comment_only_invariant"`
+	NewConceptFixture            ScenarioResult              `json:"new_concept_fixture"`
+	FailureContracts             []ScenarioResult            `json:"failure_contracts"`
+	DenominatorReconciliations   []DenominatorReconciliation `json:"denominator_reconciliations"`
+	DenominatorMismatch          ScenarioResult              `json:"denominator_mismatch_contract"`
+	StaleDenominatorReceipt      *DenominatorReconciliation  `json:"stale_denominator_receipt"`
+	PredicateObservations        []PredicateObservation      `json:"predicate_observations"`
+	SourceDigestPreservation     []SourceDigestComparison    `json:"source_digest_preservation"`
+	GeneratedOutputChanges       []string                    `json:"generated_output_changes"`
+	GeneratedOutputChangeCount   int                         `json:"generated_output_change_count"`
+	GeneratedOutputDenominator   int                         `json:"generated_output_denominator"`
+	ConformanceConsumer          PredicateMetric             `json:"conformance_consumer"`
+	ProductionAdoption           PredicateMetric             `json:"production_adoption"`
+	ClaimTransitions             PredicateMetric             `json:"claim_transitions"`
+	FailurePredicates            PredicateMetric             `json:"failure_predicates"`
+	RepositoryNetStatePredicates PredicateMetric             `json:"repository_net_state_predicates"`
+	BindingPredicates            PredicateMetric             `json:"binding_predicates"`
+	ProvenancePredicates         PredicateMetric             `json:"provenance_predicates"`
+	UseCaseReceipt               UseCaseReceiptObservation   `json:"use_case_receipt"`
+	Strategies                   []StrategyResult            `json:"strategies"`
+	Claims                       []Claim                     `json:"claims"`
+	RepositoryNetState           RepositoryObservation       `json:"repository_net_state"`
+	GeneratedOutputs             []OutputMetadata            `json:"generated_outputs"`
+	FixtureGeneratedOutputs      []OutputMetadata            `json:"fixture_generated_outputs"`
 }

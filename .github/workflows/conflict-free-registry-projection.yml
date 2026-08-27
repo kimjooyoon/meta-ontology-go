@@ -40,16 +40,13 @@ jobs:
       - name: Compile focused producer and independent consumer
         run: go vet ./scripts/conflict-free-registry-projection ./scripts/conflict-free-registry-projection-consumer
 
-      - name: Generate into a temporary directory and preserve repository net-state
+      - name: Generate into a temporary directory without mutating repository outputs
         run: |
           work="$RUNNER_TEMP/manual-source-registration-edit-free-registry-projection"
           mkdir -p "$work"
-          git status --porcelain --untracked-files=all > "$work/repository-before.txt"
           go run ./scripts/conflict-free-registry-projection generate \
             -root "$GITHUB_WORKSPACE" \
             -output "$work/generated"
-          git status --porcelain --untracked-files=all > "$work/repository-after.txt"
-          cmp "$work/repository-before.txt" "$work/repository-after.txt"
           go run ./scripts/conflict-free-registry-projection check \
             -root "$GITHUB_WORKSPACE" \
             -output "$work/generated"
@@ -80,8 +77,8 @@ jobs:
             .integration_metrics.existing_shared_source_touchpoints.denominator == 12 and
             .integration_metrics.generator_changed_shared_outputs.numerator == 6 and
             .integration_metrics.generator_changed_shared_outputs.denominator == 8 and
-            .integration_metrics.production_consumer_adoption.numerator == 1 and
-            .integration_metrics.production_consumer_adoption.denominator == 1 and
+            .integration_metrics.independent_conformance_consumer.numerator == 1 and
+            .integration_metrics.independent_conformance_consumer.denominator == 1 and
             .metric_deltas.manual_source_registration_edits.before.numerator == 12 and
             .metric_deltas.manual_source_registration_edits.after.numerator == 0 and
             .metric_deltas.generator_changed_shared_outputs.after.numerator == 6 and
@@ -95,7 +92,12 @@ jobs:
             .stale_denominator_receipt.reason == "DENOMINATOR_SOURCE_MISMATCH" and
             .stale_denominator_receipt.declared.cases == 160 and
             .stale_denominator_receipt.calculated.cases == 181 and
-            .stale_denominator_receipt.calculated.use_case_cases == 152 and
+            .use_case_receipt.status == "UNKNOWN" and
+            .use_case_receipt.completed_numerator == 0 and
+            .use_case_receipt.denominator == 1 and
+            .production_adoption.numerator == 0 and
+            .production_adoption.denominator == 1 and
+            .production_adoption.decision == "UNKNOWN" and
             .projection_replay.decision == "PASS" and
             .manifest_order_invariant.decision == "PASS" and
             .semantic_manifest_causality.decision == "PASS" and
@@ -105,13 +107,19 @@ jobs:
             ([.failure_contracts[].diagnostic.stage] | all(length > 0)) and
             ([.failure_contracts[].diagnostic.step] | all(length > 0)) and
             ([.failure_contracts[].diagnostic.reason] | all(length > 0)) and
-            ([.failure_contracts[]] | length) >= 6 and
+            ([.failure_contracts[]] | length) >= 8 and
             ([.predicate_observations[] | select(.observed == true)] | length) == ([.predicate_observations] | length) and
+            ([.predicate_observations[] | select(.predicate_truth == "TRUE" and .target_address != "" and .target_digest != "")] | length) == ([.predicate_observations] | length) and
+            .failure_predicates.numerator == .failure_predicates.denominator and
+            .binding_predicates.numerator == .binding_predicates.denominator and
+            .provenance_predicates.numerator == .provenance_predicates.denominator and
+            .repository_net_state_predicates.numerator == 1 and
+            .claim_transitions.numerator == .claim_transitions.denominator and
             ([.strategies[] | select(.selected and .decision == "PASS")] | length) == 3 and
             ([.claims[].proposition] | length) == ([.claims[].proposition] | unique | length) and
             ([.claims[].target_address] | length) == ([.claims[].target_address] | unique | length) and
             ([.claims[].target_digest] | length) == ([.claims[].target_digest] | unique | length) and
-            ([.claims[] | select(.id | startswith("consumer-")) | .transitions[-1].state] | all(. == "REFUTED")) and
+            ([.claims[] | select(.id | startswith("consumer-")) | .transitions[-1].state] | all(. == "DISCHARGED")) and
             ([.claims[] | select(.transitions[-1].state == "DISCHARGED") | .transitions[-1].reason] | all(. == "independent_consumer_recomputed_predicate")) and
             .repository_net_state.net_state_equal == true and
             .repository_net_state.net_state == "NET_STATE_EQUAL" and

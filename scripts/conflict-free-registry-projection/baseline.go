@@ -77,7 +77,7 @@ func integrationMetrics(localCount, sharedCount, generatedChanged, adopted, manu
 	return IntegrationMetrics{
 		ExistingSharedSourceTouchpoints: ratioMetric(sharedCount, sharedCount),
 		GeneratorChangedSharedOutputs:   ratioMetric(generatedChanged, 8),
-		ProductionConsumerAdoption:      ratioMetric(adopted, 1),
+		IndependentConformanceConsumer:  ratioMetric(adopted, 1),
 		ConceptLocalTouchpoints:         ratioMetric(localCount, localCount),
 		ManualSourceRegistrationEdits:   ratioMetric(manualEdits, sharedCount),
 	}

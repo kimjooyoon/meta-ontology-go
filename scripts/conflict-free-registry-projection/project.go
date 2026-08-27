@@ -21,7 +21,8 @@ func buildProjection(root string, loaded []LoadedManifest) (Projection, error) {
 			MetaOperation: manifest.Concept.MetaOperation, Rarity: manifest.Concept.Rarity,
 			Stage: manifest.Concept.Stage, NoveltyClaim: manifest.Concept.NoveltyClaim,
 			CodeBindings: sortedStrings(manifest.CodeBindings), MetricBindings: sortedStrings(manifest.MetricBindings),
-			UseCases: sortedUseCases(manifest.UseCases), VerificationStrategies: sortedStrings(manifest.VerificationStrategies),
+			BindingRegistry: sortedBindingRegistry(manifest.BindingRegistry),
+			UseCases:        sortedUseCases(manifest.UseCases), VerificationStrategies: sortedStrings(manifest.VerificationStrategies),
 		})
 		corpus, err := resourceSnapshots(root, manifest.StableID, manifest.Corpus)
 		if err != nil {

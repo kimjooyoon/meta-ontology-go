@@ -40,41 +40,51 @@ type ResourceRef struct {
 	Role   string `json:"role"`
 	Digest string `json:"digest"`
 }
+type BindingRegistryEntry struct {
+	MetricID              string `json:"metric_id"`
+	RawSourceAddress      string `json:"raw_source_address"`
+	SemanticDigest        string `json:"semantic_digest"`
+	ConsumerEntryPoint    string `json:"consumer_entry_point"`
+	ObservedOutputAddress string `json:"observed_output_address"`
+	ObservedOutputDigest  string `json:"observed_output_digest"`
+}
 type Denominator struct {
 	ID     string         `json:"id"`
 	Values map[string]int `json:"values"`
 }
 type Manifest struct {
-	Schema                 string        `json:"schema"`
-	StableID               string        `json:"stable_id"`
-	Concept                Concept       `json:"concept"`
-	CodeBindings           []string      `json:"code_bindings"`
-	MetricBindings         []string      `json:"metric_bindings"`
-	UseCases               []UseCase     `json:"use_cases"`
-	VerificationStrategies []string      `json:"verification_strategies"`
-	Corpus                 []ResourceRef `json:"corpus"`
-	Registry               []ResourceRef `json:"registry"`
-	Denominators           []Denominator `json:"denominators"`
-	Documentation          []ResourceRef `json:"documentation"`
-	Comments               []string      `json:"comments"`
+	Schema                 string                 `json:"schema"`
+	StableID               string                 `json:"stable_id"`
+	Concept                Concept                `json:"concept"`
+	CodeBindings           []string               `json:"code_bindings"`
+	MetricBindings         []string               `json:"metric_bindings"`
+	BindingRegistry        []BindingRegistryEntry `json:"binding_registry"`
+	UseCases               []UseCase              `json:"use_cases"`
+	VerificationStrategies []string               `json:"verification_strategies"`
+	Corpus                 []ResourceRef          `json:"corpus"`
+	Registry               []ResourceRef          `json:"registry"`
+	Denominators           []Denominator          `json:"denominators"`
+	Documentation          []ResourceRef          `json:"documentation"`
+	Comments               []string               `json:"comments"`
 }
 type LoadedManifest struct {
 	Manifest   Manifest
 	SourcePath string
 }
 type CatalogEntry struct {
-	StableID               string    `json:"stable_id"`
-	SourceManifest         string    `json:"source_manifest"`
-	Problem                string    `json:"problem"`
-	PositiveEffect         string    `json:"positive_effect"`
-	MetaOperation          string    `json:"meta_operation"`
-	Rarity                 string    `json:"rarity"`
-	Stage                  string    `json:"stage"`
-	NoveltyClaim           bool      `json:"novelty_claim"`
-	CodeBindings           []string  `json:"code_bindings"`
-	MetricBindings         []string  `json:"metric_bindings"`
-	UseCases               []UseCase `json:"use_cases"`
-	VerificationStrategies []string  `json:"verification_strategies"`
+	StableID               string                 `json:"stable_id"`
+	SourceManifest         string                 `json:"source_manifest"`
+	Problem                string                 `json:"problem"`
+	PositiveEffect         string                 `json:"positive_effect"`
+	MetaOperation          string                 `json:"meta_operation"`
+	Rarity                 string                 `json:"rarity"`
+	Stage                  string                 `json:"stage"`
+	NoveltyClaim           bool                   `json:"novelty_claim"`
+	CodeBindings           []string               `json:"code_bindings"`
+	MetricBindings         []string               `json:"metric_bindings"`
+	BindingRegistry        []BindingRegistryEntry `json:"binding_registry"`
+	UseCases               []UseCase              `json:"use_cases"`
+	VerificationStrategies []string               `json:"verification_strategies"`
 }
 type ResourceSnapshot struct {
 	StableID string `json:"stable_id"`
@@ -98,17 +108,18 @@ type Projection struct {
 	Documentation []ResourceSnapshot `json:"documentation"`
 }
 type semanticManifest struct {
-	Schema                 string        `json:"schema"`
-	StableID               string        `json:"stable_id"`
-	Concept                Concept       `json:"concept"`
-	CodeBindings           []string      `json:"code_bindings"`
-	MetricBindings         []string      `json:"metric_bindings"`
-	UseCases               []UseCase     `json:"use_cases"`
-	VerificationStrategies []string      `json:"verification_strategies"`
-	Corpus                 []ResourceRef `json:"corpus"`
-	Registry               []ResourceRef `json:"registry"`
-	Denominators           []Denominator `json:"denominators"`
-	Documentation          []ResourceRef `json:"documentation"`
+	Schema                 string                 `json:"schema"`
+	StableID               string                 `json:"stable_id"`
+	Concept                Concept                `json:"concept"`
+	CodeBindings           []string               `json:"code_bindings"`
+	MetricBindings         []string               `json:"metric_bindings"`
+	BindingRegistry        []BindingRegistryEntry `json:"binding_registry"`
+	UseCases               []UseCase              `json:"use_cases"`
+	VerificationStrategies []string               `json:"verification_strategies"`
+	Corpus                 []ResourceRef          `json:"corpus"`
+	Registry               []ResourceRef          `json:"registry"`
+	Denominators           []Denominator          `json:"denominators"`
+	Documentation          []ResourceRef          `json:"documentation"`
 }
 type PredicateObservation struct {
 	ID                string `json:"id"`
@@ -117,6 +128,7 @@ type PredicateObservation struct {
 	TargetDigest      string `json:"target_digest"`
 	Observed          bool   `json:"observed"`
 	Decision          string `json:"decision"`
+	PredicateTruth    string `json:"predicate_truth"`
 	Stage             string `json:"stage"`
 	Step              string `json:"step"`
 	Reason            string `json:"reason"`
@@ -135,6 +147,25 @@ type Receipt struct {
 	ProjectionDigest           string                      `json:"projection_digest"`
 	DenominatorReconciliations []DenominatorReconciliation `json:"denominator_reconciliations"`
 	Predicates                 []PredicateObservation      `json:"predicates"`
+	ProductionAdoption         PredicateMetric             `json:"production_adoption"`
+	UseCaseReceipt             UseCaseReceiptObservation   `json:"use_case_receipt"`
+}
+type PredicateMetric struct {
+	Numerator   int    `json:"numerator"`
+	Denominator int    `json:"denominator"`
+	Decision    string `json:"decision"`
+	Stage       string `json:"stage"`
+	Step        string `json:"step"`
+	Reason      string `json:"reason"`
+}
+type UseCaseReceiptObservation struct {
+	SourceArtifact string `json:"source_artifact"`
+	Status         string `json:"status"`
+	Numerator      int    `json:"completed_numerator"`
+	Denominator    int    `json:"denominator"`
+	Stage          string `json:"stage"`
+	Step           string `json:"step"`
+	Reason         string `json:"reason"`
 }
 type diagnostic struct {
 	Decision string `json:"decision"`
@@ -289,6 +320,9 @@ func validateInputs(root string, loaded []LoadedManifest) error {
 		if len(manifest.MetricBindings) == 0 {
 			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "METRIC_BINDINGS", "MISSING_METRIC_BINDING"}}
 		}
+		if len(manifest.BindingRegistry) == 0 {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "MISSING_STRUCTURED_BINDING"}}
+		}
 		if len(manifest.UseCases) == 0 {
 			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "USE_CASE_BINDINGS", "MISSING_USE_CASE_BINDING"}}
 		}
@@ -300,10 +334,8 @@ func validateInputs(root string, loaded []LoadedManifest) error {
 				return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "CODE_BINDING", "MISSING_CODE_BINDING"}}
 			}
 		}
-		for _, binding := range manifest.MetricBindings {
-			if !metricIDExists(root, binding) {
-				return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "METRIC_BINDING", "UNKNOWN_METRIC_BINDING"}}
-			}
+		if err := validateBindingRegistry(root, manifest); err != nil {
+			return err
 		}
 		for _, ref := range allRefs(manifest) {
 			if !safePath(ref.Path) {
@@ -356,6 +388,63 @@ func expectedManifestIDs(root string) ([]string, error) {
 	return ids, nil
 }
 
+func validateBindingRegistry(root string, manifest Manifest) error {
+	if len(manifest.BindingRegistry) == 0 {
+		return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "MISSING_STRUCTURED_BINDING"}}
+	}
+	metricIDs := make(map[string]struct{}, len(manifest.MetricBindings))
+	for _, metricID := range manifest.MetricBindings {
+		metricIDs[metricID] = struct{}{}
+	}
+	seen := map[string]struct{}{}
+	for _, binding := range manifest.BindingRegistry {
+		if binding.MetricID == "" || binding.RawSourceAddress == "" || binding.SemanticDigest == "" || binding.ConsumerEntryPoint == "" || binding.ObservedOutputAddress == "" || binding.ObservedOutputDigest == "" {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "INCOMPLETE_STRUCTURED_BINDING"}}
+		}
+		if _, ok := metricIDs[binding.MetricID]; !ok {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "UNREGISTERED_STRUCTURED_BINDING"}}
+		}
+		if _, ok := seen[binding.MetricID]; ok {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "DUPLICATE_STRUCTURED_BINDING"}}
+		}
+		seen[binding.MetricID] = struct{}{}
+		parts := strings.SplitN(binding.RawSourceAddress, "#", 2)
+		if len(parts) != 2 || !pathExists(root, parts[0]) || filepath.Ext(parts[0]) != ".go" {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "UNTRUSTED_BINDING_SOURCE"}}
+		}
+		rawSource, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(parts[0])))
+		if err != nil || !strings.Contains(string(rawSource), binding.MetricID) {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "UNTRUSTED_BINDING_SOURCE"}}
+		}
+		if binding.SemanticDigest != bindingSemanticDigest(binding.MetricID, binding.RawSourceAddress) {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "BINDING_SEMANTIC_DIGEST_MISMATCH"}}
+		}
+		if binding.ConsumerEntryPoint != "scripts/conflict-free-registry-projection-consumer/main.go" || !pathExists(root, binding.ConsumerEntryPoint) {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "MISSING_CONSUMER_ENTRY_POINT"}}
+		}
+		matched := false
+		for _, ref := range allRefs(manifest) {
+			if ref.Path == binding.ObservedOutputAddress {
+				matched = true
+				if ref.Digest != binding.ObservedOutputDigest {
+					return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "BINDING_OUTPUT_DIGEST_MISMATCH"}}
+				}
+			}
+		}
+		if !matched {
+			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "UNBOUND_OBSERVED_OUTPUT"}}
+		}
+	}
+	if len(seen) != len(metricIDs) {
+		return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "MISSING_STRUCTURED_BINDING"}}
+	}
+	return nil
+}
+
+func bindingSemanticDigest(metricID, rawSourceAddress string) string {
+	return digest([]byte(metricID + "|" + rawSourceAddress))
+}
+
 func buildProjection(root string, loaded []LoadedManifest) (Projection, []DenominatorReconciliation, error) {
 	reconciliations, err := reconcileDenominators(root, loaded)
 	if err != nil {
@@ -364,7 +453,7 @@ func buildProjection(root string, loaded []LoadedManifest) (Projection, []Denomi
 	projection := Projection{Schema: projectionSchema}
 	for _, item := range loaded {
 		manifest := item.Manifest
-		projection.Catalog = append(projection.Catalog, CatalogEntry{StableID: manifest.StableID, SourceManifest: item.SourcePath, Problem: manifest.Concept.Problem, PositiveEffect: manifest.Concept.PositiveEffect, MetaOperation: manifest.Concept.MetaOperation, Rarity: manifest.Concept.Rarity, Stage: manifest.Concept.Stage, NoveltyClaim: manifest.Concept.NoveltyClaim, CodeBindings: sortedStrings(manifest.CodeBindings), MetricBindings: sortedStrings(manifest.MetricBindings), UseCases: sortedUseCases(manifest.UseCases), VerificationStrategies: sortedStrings(manifest.VerificationStrategies)})
+		projection.Catalog = append(projection.Catalog, CatalogEntry{StableID: manifest.StableID, SourceManifest: item.SourcePath, Problem: manifest.Concept.Problem, PositiveEffect: manifest.Concept.PositiveEffect, MetaOperation: manifest.Concept.MetaOperation, Rarity: manifest.Concept.Rarity, Stage: manifest.Concept.Stage, NoveltyClaim: manifest.Concept.NoveltyClaim, CodeBindings: sortedStrings(manifest.CodeBindings), MetricBindings: sortedStrings(manifest.MetricBindings), BindingRegistry: sortedBindingRegistry(manifest.BindingRegistry), UseCases: sortedUseCases(manifest.UseCases), VerificationStrategies: sortedStrings(manifest.VerificationStrategies)})
 		for _, ref := range sortedRefs(manifest.Corpus) {
 			snapshot, err := snapshot(root, manifest.StableID, ref)
 			if err != nil {
@@ -525,7 +614,7 @@ func calculateDenominator(root string, item LoadedManifest, denominator Denomina
 		}
 		return calculated, nil
 	case "toolchain-conformance":
-		calculated := map[string]int{"surfaces": len(source.Surfaces), "cases": 0, "use_case_cases": useCaseCaseCount(item.Manifest.UseCases), "indicators": 0, "proofs": 0, "tamper_cases": len(source.TamperCases)}
+		calculated := map[string]int{"surfaces": len(source.Surfaces), "cases": 0, "indicators": 0, "proofs": 0, "tamper_cases": len(source.TamperCases)}
 		for _, surface := range source.Surfaces {
 			calculated["cases"] += surface.Cases
 			calculated["indicators"] += surface.Indicators
@@ -545,11 +634,26 @@ func buildReceipt(projection Projection, reconciliations []DenominatorReconcilia
 	sort.Strings(ids)
 	resourceData, _ := json.Marshal(append(append(append([]ResourceSnapshot{}, projection.Corpus...), projection.Registry...), projection.Documentation...))
 	denominatorData, _ := json.Marshal(projection.Denominator)
-	return Receipt{Schema: receiptSchema, Decision: "PASS", ProjectionDigest: digest(data), DenominatorReconciliations: reconciliations, Predicates: []PredicateObservation{{ID: "independent-manifest-order", ObservedPredicate: "raw manifests are sorted by stable_id", TargetAddress: "raw://manifest-stable-ids", TargetDigest: digest(mustJSON(ids)), Observed: true, Decision: "PASS", Stage: "COHERENCE", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"}, {ID: "independent-resource-digests", ObservedPredicate: "raw resource refs resolve to their declared digests", TargetAddress: "raw://resource-ref-digests", TargetDigest: digest(resourceData), Observed: true, Decision: "PASS", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"}, {ID: "independent-denominator-reconciliation", ObservedPredicate: "raw corpus and registry sources reconcile to declared denominators", TargetAddress: "raw://denominator-reconciliation", TargetDigest: digest(denominatorData), Observed: true, Decision: "PASS", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"}, {ID: "independent-production-adoption", ObservedPredicate: "production consumer projection bytes equal generated projection bytes", TargetAddress: defaultOutput + "/projection.json", TargetDigest: digest(data), Observed: true, Decision: "PASS", Stage: "COHERENCE", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"}}}
+	bindingData := make([]BindingRegistryEntry, 0)
+	for _, entry := range projection.Catalog {
+		bindingData = append(bindingData, entry.BindingRegistry...)
+	}
+	return Receipt{
+		Schema: receiptSchema, Decision: "PASS", ProjectionDigest: digest(data), DenominatorReconciliations: reconciliations,
+		Predicates: []PredicateObservation{
+			{ID: "independent-manifest-order", ObservedPredicate: "raw manifests are sorted by stable_id", TargetAddress: "raw://manifest-stable-ids", TargetDigest: digest(mustJSON(ids)), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "COHERENCE", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
+			{ID: "independent-resource-digests", ObservedPredicate: "raw resource refs resolve to their declared digests", TargetAddress: "raw://resource-ref-digests", TargetDigest: digest(resourceData), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
+			{ID: "independent-denominator-reconciliation", ObservedPredicate: "raw corpus and registry sources reconcile to declared denominators", TargetAddress: "raw://denominator-reconciliation", TargetDigest: digest(denominatorData), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
+			{ID: "independent-binding-registry", ObservedPredicate: "structured metric bindings reconnect raw source, semantic digest, consumer entry point, and observed output digest", TargetAddress: "raw://structured-binding-registry", TargetDigest: digest(mustJSON(bindingData)), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
+			{ID: "independent-conformance-consumer", ObservedPredicate: "independent conformance consumer projection bytes equal its raw-manifest reconstruction", TargetAddress: defaultOutput + "/projection.json", TargetDigest: digest(data), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "COHERENCE", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
+		},
+		ProductionAdoption: PredicateMetric{Numerator: 0, Denominator: 1, Decision: "UNKNOWN", Stage: "COHERENCE", Step: "PRODUCTION_CONSUMER_ADOPTION", Reason: "NO_PRODUCTION_CONSUMER_EVIDENCE"},
+		UseCaseReceipt:     UseCaseReceiptObservation{SourceArtifact: "examples/toolchain-conformance/corpus.json", Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "CURRENT_EVIDENCE_UNAVAILABLE"},
+	}
 }
 func mustJSON(value any) []byte { data, _ := json.Marshal(value); return data }
 func semanticDigest(manifest Manifest) string {
-	data, _ := json.Marshal(semanticManifest{Schema: manifest.Schema, StableID: manifest.StableID, Concept: manifest.Concept, CodeBindings: sortedStrings(manifest.CodeBindings), MetricBindings: sortedStrings(manifest.MetricBindings), UseCases: sortedUseCases(manifest.UseCases), VerificationStrategies: sortedStrings(manifest.VerificationStrategies), Corpus: sortedRefs(manifest.Corpus), Registry: sortedRefs(manifest.Registry), Denominators: sortedDenominators(manifest.Denominators), Documentation: sortedRefs(manifest.Documentation)})
+	data, _ := json.Marshal(semanticManifest{Schema: manifest.Schema, StableID: manifest.StableID, Concept: manifest.Concept, CodeBindings: sortedStrings(manifest.CodeBindings), MetricBindings: sortedStrings(manifest.MetricBindings), BindingRegistry: sortedBindingRegistry(manifest.BindingRegistry), UseCases: sortedUseCases(manifest.UseCases), VerificationStrategies: sortedStrings(manifest.VerificationStrategies), Corpus: sortedRefs(manifest.Corpus), Registry: sortedRefs(manifest.Registry), Denominators: sortedDenominators(manifest.Denominators), Documentation: sortedRefs(manifest.Documentation)})
 	return digest(data)
 }
 func sortedStrings(values []string) []string {
@@ -560,6 +664,16 @@ func sortedStrings(values []string) []string {
 func sortedUseCases(values []UseCase) []UseCase {
 	result := append([]UseCase(nil), values...)
 	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
+	return result
+}
+func sortedBindingRegistry(values []BindingRegistryEntry) []BindingRegistryEntry {
+	result := append([]BindingRegistryEntry(nil), values...)
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].MetricID == result[j].MetricID {
+			return result[i].RawSourceAddress < result[j].RawSourceAddress
+		}
+		return result[i].MetricID < result[j].MetricID
+	})
 	return result
 }
 func sortedRefs(values []ResourceRef) []ResourceRef {
@@ -646,19 +760,6 @@ func constValue(source, name string) (int, bool) {
 	value, err := strconv.Atoi(match[1])
 	return value, err == nil
 }
-func useCaseCaseCount(useCases []UseCase) int {
-	pattern := regexp.MustCompile(`_(\d+)_OF_\d+_CASES`)
-	for _, item := range useCases {
-		match := pattern.FindStringSubmatch(item.ExpectedOutcome)
-		if len(match) == 2 {
-			value, err := strconv.Atoi(match[1])
-			if err == nil {
-				return value
-			}
-		}
-	}
-	return 0
-}
 func countGoooLines(root string) int {
 	total := 0
 	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
@@ -684,29 +785,6 @@ func countGoooLines(root string) int {
 		return nil
 	})
 	return total
-}
-func metricIDExists(root, metricID string) bool {
-	found := false
-	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil || found {
-			return walkErr
-		}
-		if entry.IsDir() {
-			if entry.Name() == ".git" || entry.Name() == ".parallel" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if entry.Name() == "concept.manifest.json" || filepath.Ext(entry.Name()) != ".go" {
-			return nil
-		}
-		data, err := os.ReadFile(path)
-		if err == nil && strings.Contains(string(data), metricID) {
-			found = true
-		}
-		return nil
-	})
-	return found
 }
 func failFailure(err error, stage, step, reason string) {
 	if item, ok := err.(failure); ok {

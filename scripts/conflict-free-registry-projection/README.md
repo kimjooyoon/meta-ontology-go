@@ -11,7 +11,8 @@ go run ./scripts/conflict-free-registry-projection prove
 `generate` writes only the generated projection directory. `check` is read-only
 and rejects stale output. `prove` reports three separate integration surfaces:
 human-edited existing shared source, generator-changed shared output, and
-production consumer adoption. Its proof also records the measured 12 source
+independent conformance consumer adoption; production/compiler adoption stays
+`0/1 UNKNOWN` without separate evidence. Its proof also records the measured 12 source
 digests, all 8 generated output paths/digests/bytes, raw-vs-semantic digest
 interventions, source denominator reconciliation, fail-closed diagnostics, and
 claim transitions. The independent consumer reconstructs the projection from

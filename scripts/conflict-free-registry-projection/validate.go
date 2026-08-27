@@ -36,10 +36,8 @@ func validateManifestInputs(root string, loaded []LoadedManifest, requiredIDs []
 				return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "CODE_BINDING", Reason: "MISSING_CODE_BINDING"}
 			}
 		}
-		for _, binding := range item.Manifest.MetricBindings {
-			if !metricIDExists(root, binding) {
-				return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "METRIC_BINDING", Reason: "UNKNOWN_METRIC_BINDING"}
-			}
+		if diagnostic := validateBindingRegistry(root, item.Manifest); diagnostic != nil {
+			return diagnostic
 		}
 		for _, ref := range allRefs(item.Manifest) {
 			data, err := readSource(root, ref.Path)
@@ -75,28 +73,61 @@ func pathExists(root, path string) bool {
 	return err == nil
 }
 
-func metricIDExists(root, metricID string) bool {
-	found := false
-	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil || found {
-			return walkErr
+func validateBindingRegistry(root string, manifest Manifest) *Diagnostic {
+	if len(manifest.BindingRegistry) == 0 {
+		return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "MISSING_STRUCTURED_BINDING"}
+	}
+	metricIDs := make(map[string]struct{}, len(manifest.MetricBindings))
+	for _, metricID := range manifest.MetricBindings {
+		metricIDs[metricID] = struct{}{}
+	}
+	seen := map[string]struct{}{}
+	for _, binding := range manifest.BindingRegistry {
+		if binding.MetricID == "" || binding.RawSourceAddress == "" || binding.SemanticDigest == "" || binding.ConsumerEntryPoint == "" || binding.ObservedOutputAddress == "" || binding.ObservedOutputDigest == "" {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "INCOMPLETE_STRUCTURED_BINDING"}
 		}
-		if entry.IsDir() {
-			if entry.Name() == ".git" || entry.Name() == ".parallel" {
-				return filepath.SkipDir
+		if _, ok := metricIDs[binding.MetricID]; !ok {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "UNREGISTERED_STRUCTURED_BINDING"}
+		}
+		if _, ok := seen[binding.MetricID]; ok {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "DUPLICATE_STRUCTURED_BINDING"}
+		}
+		seen[binding.MetricID] = struct{}{}
+		parts := strings.SplitN(binding.RawSourceAddress, "#", 2)
+		if len(parts) != 2 || !pathExists(root, parts[0]) || filepath.Ext(parts[0]) != ".go" {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "UNTRUSTED_BINDING_SOURCE"}
+		}
+		rawSource, err := readSource(root, parts[0])
+		if err != nil || !strings.Contains(string(rawSource), binding.MetricID) {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "UNTRUSTED_BINDING_SOURCE"}
+		}
+		if binding.SemanticDigest != bindingSemanticDigest(binding.MetricID, binding.RawSourceAddress) {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "BINDING_SEMANTIC_DIGEST_MISMATCH"}
+		}
+		if binding.ConsumerEntryPoint != "scripts/conflict-free-registry-projection-consumer/main.go" || !pathExists(root, binding.ConsumerEntryPoint) {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "MISSING_CONSUMER_ENTRY_POINT"}
+		}
+		matched := false
+		for _, ref := range allRefs(manifest) {
+			if ref.Path == binding.ObservedOutputAddress {
+				matched = true
+				if ref.Digest != binding.ObservedOutputDigest {
+					return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "BINDING_OUTPUT_DIGEST_MISMATCH"}
+				}
 			}
-			return nil
 		}
-		if entry.Name() == "concept.manifest.json" || filepath.Ext(entry.Name()) != ".go" {
-			return nil
+		if !matched {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "UNBOUND_OBSERVED_OUTPUT"}
 		}
-		data, err := os.ReadFile(path)
-		if err == nil && strings.Contains(string(data), metricID) {
-			found = true
-		}
-		return nil
-	})
-	return found
+	}
+	if len(seen) != len(metricIDs) {
+		return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "MISSING_STRUCTURED_BINDING"}
+	}
+	return nil
+}
+
+func bindingSemanticDigest(metricID, rawSourceAddress string) string {
+	return digestBytes([]byte(metricID + "|" + rawSourceAddress))
 }
 
 func reconcileDenominators(root string, loaded []LoadedManifest) ([]DenominatorReconciliation, *Diagnostic) {
@@ -207,11 +238,25 @@ func calculateDenominator(root string, item LoadedManifest, denominator Denomina
 			calculated["proofs"] += surface.Proofs
 		}
 		calculated["tamper_cases"] = len(source.TamperCases)
-		calculated["use_case_cases"] = useCaseCaseCount(item.Manifest.UseCases)
 	default:
 		return values, nil
 	}
 	return calculated, nil
+}
+
+func observeUseCaseReceipt(root string) UseCaseReceiptObservation {
+	artifact := "examples/toolchain-conformance/corpus.json"
+	raw, err := readSource(root, artifact)
+	if err != nil {
+		return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "CURRENT_EVIDENCE_UNAVAILABLE"}
+	}
+	var machineArtifact struct {
+		Cases []json.RawMessage `json:"cases"`
+	}
+	if json.Unmarshal(raw, &machineArtifact) != nil {
+		return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "CURRENT_EVIDENCE_UNAVAILABLE"}
+	}
+	return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "CURRENT_EVIDENCE_UNAVAILABLE"}
 }
 
 func constValue(source, name string) (int, bool) {
@@ -221,20 +266,6 @@ func constValue(source, name string) (int, bool) {
 	}
 	value, err := strconv.Atoi(match[1])
 	return value, err == nil
-}
-
-func useCaseCaseCount(useCases []UseCase) int {
-	pattern := regexp.MustCompile(`_(\d+)_OF_\d+_CASES`)
-	for _, useCase := range useCases {
-		match := pattern.FindStringSubmatch(useCase.ExpectedOutcome)
-		if len(match) == 2 {
-			value, err := strconv.Atoi(match[1])
-			if err == nil {
-				return value
-			}
-		}
-	}
-	return 0
 }
 
 func countGoooLines(root string) int {
