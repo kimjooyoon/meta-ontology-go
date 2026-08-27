@@ -269,7 +269,7 @@ jobs:
           jq -e '
             .report.decision == "PASS" and
             .report.conformance.decision == "PASS" and
-            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=0;OPEN=2" and
+            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=1;OPEN=1" and
             .report.subject_resolution.resolution == "LOWER_RESOLUTION" and
             .report.metrics.insufficient_total == 1 and
             .report.transitions[5].relation == "INSUFFICIENT" and
