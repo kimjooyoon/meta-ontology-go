@@ -1,8 +1,11 @@
-package reproducibilitysemantics
+package reproducibilitysemantics_test
 
 import (
 	"strings"
 	"testing"
+
+	producer "github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemantics"
+	consumer "github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemanticsconsumer"
 )
 
 func TestSemanticAndPresentationInterventionsAreSeparate(t *testing.T) {
@@ -23,13 +26,24 @@ func TestSemanticAndPresentationInterventionsAreSeparate(t *testing.T) {
 		formatted.Summary != base.Summary {
 		t.Fatalf("presentation intervention changed semantic result unexpectedly: base=%#v formatted=%#v", base.Summary, formatted.Summary)
 	}
+	artifact, err := consumer.BuildInterventionArtifact(base, semantic, formatted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := consumer.ValidateIntervention(artifact); err != nil {
+		t.Fatal(err)
+	}
+	if artifact.Denominator != 2 || len(artifact.Cases) != 2 || artifact.Cases[0].TransitionsBefore[1].MeaningTransition == artifact.Cases[0].TransitionsAfter[1].MeaningTransition || artifact.Cases[1].TransitionsBefore[1].MeaningTransition != artifact.Cases[1].TransitionsAfter[1].MeaningTransition {
+		t.Fatalf("intervention artifact = %#v", artifact)
+	}
 }
 
-func judgedFixture(t *testing.T, head string, source []byte) (Receipt, Judgment) {
+func judgedFixture(t *testing.T, head string, source []byte) (producer.Receipt, consumer.Judgment) {
 	t.Helper()
-	receipt := Produce("fixture.gooo", head, source)
-	judgment := Judge("fixture.gooo", head, source, receipt)
-	if err := ValidateJudgment("fixture.gooo", head, source, receipt, judgment); err != nil {
+	receipt := producer.Produce("fixture.gooo", head, source)
+	raw := receiptJSON(t, receipt)
+	judgment := consumer.Judge("fixture.gooo", head, source, raw)
+	if err := consumer.ValidateJudgment("fixture.gooo", head, source, raw, judgment); err != nil {
 		t.Fatal(err)
 	}
 	return receipt, judgment
@@ -38,10 +52,10 @@ func judgedFixture(t *testing.T, head string, source []byte) (Receipt, Judgment)
 func TestDigestOnlyReceiptIsRefuted(t *testing.T) {
 	head := strings.Repeat("e", 40)
 	source := []byte(fixtureSource)
-	receipt := Produce("fixture.gooo", head, source)
+	receipt := producer.Produce("fixture.gooo", head, source)
 	receipt.SemanticDigest = ""
-	judgment := Judge("fixture.gooo", head, source, receipt)
-	if judgment.Decision != StatusRefuted || judgment.Reason != "DIGEST_ONLY_REFUTED" {
+	judgment := consumer.Judge("fixture.gooo", head, source, receiptJSON(t, receipt))
+	if judgment.Decision != consumer.StatusRefuted || judgment.Reason != "DIGEST_ONLY_REFUTED" {
 		t.Fatalf("judgment = %#v", judgment)
 	}
 }

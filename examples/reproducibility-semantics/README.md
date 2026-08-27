@@ -10,7 +10,11 @@ independent:
 
 The four case values are declared by `computes` programs on the four case
 activities in `main.gooo`. The producer parses and lowers that source before
-writing a receipt; the consumer independently parses and lowers it again.
+writing a receipt; the production consumer in
+`internal/meta/reproducibilitysemanticsconsumer` independently parses and
+lowers it again. The wire types live in the schema-only
+`internal/meta/reproducibilitysemanticsschema` package, so the consumer has
+zero producer-package imports.
 The receipt is read-only evidence: repository writes, mutation authority, and
 promotion authority are all zero or false.
 
@@ -26,15 +30,30 @@ joint `1/4`, counterexamples `2/4`, open cases `1/4`, source-digest binding
 `4/4`, and semantic causality `4/4`. The denominators are part of the
 independent judge contract, not inferred from the numerator.
 
+Conformance and subject resolution are separate. The baseline matrix is
+`conformance_decision=DISCHARGED` with `conformance_resolution=EXACT`, while
+the unresolved `claims-open` evidence keeps the subject at
+`subject_decision=OPEN`, `subject_resolution=LOWER_RESOLUTION`, and
+`subject_reason=OPEN_EVIDENCE_REMAINS`. A conforming matrix is therefore not
+reported as a complete subject result.
+
+Every case persists three transitions: byte, meaning, and joint. Each records
+`OPEN -> DISCHARGED`, `OPEN -> REFUTED`, or remaining `OPEN`, with a fixed
+`1/1` claim coordinate, stage, step, reason, and evidence digest. The
+consumer recomputes all three transitions from the receipt evidence and
+rejects transition drift.
+
 Source-digest binding and semantic causality are separate indicators. A
 receipt that supplies only the raw source digest is `REFUTED` as
 `DIGEST_ONLY_REFUTED`; equal bytes never substitute for the lowered source
 meaning.
 
-The CI contract has two interventions (`2/2`): changing a declared meaning
-value changes meaning and joint coordinates, while adding a comment changes
-the raw source digest but leaves the semantic digest and all coordinates
-unchanged.
+The CI contract persists exactly two independent intervention cases (fixed
+denominator `2`, with no aggregate score): changing a declared meaning value
+changes meaning and joint coordinates and their transitions, while adding a
+comment changes the raw source digest but leaves the semantic digest, all
+coordinates, and all transitions unchanged. The artifact itself has zero
+repository writes and zero mutation/promotion authority.
 
 ## What the references justify
 
@@ -48,9 +67,9 @@ From Necula's Berkeley-hosted [proof-carrying code paper](https://people.eecs.be
 
 The judge must fail closed if a byte digest, meaning digest, source declaration,
 case order, stage/step/reason, producer/consumer identity, proof choice, raw
-source binding, semantic digest, or fixed denominator is changed. A CI
-dependency guard also rejects any producer call or producer-package import in
-the judge files. Thus the experiment can be disproved by changing either
+source binding, semantic digest, transition evidence digest, or fixed
+denominator is changed. A CI dependency guard also rejects any producer call
+or producer-package import in the production consumer package. Thus the experiment can be disproved by changing either
 evidence channel without changing the other; that is the point of the two
 failure paths.
 

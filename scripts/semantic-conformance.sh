@@ -67,47 +67,24 @@ go run ./scripts/reproducibility-semantics \
   -output "$repro_work/judgment-replay.json" \
   -check
 cmp -s "$repro_work/judgment.json" "$repro_work/judgment-replay.json"
-jq -e '.decision == "DISCHARGED" and .summary.case_matrix.numerator == 4 and .summary.case_matrix.denominator == 4 and .summary.byte_claim.numerator == 2 and .summary.meaning_claim.numerator == 2 and .summary.joint_claim.numerator == 1 and .summary.counterexamples.numerator == 2 and .summary.open_cases.numerator == 1 and .summary.source_digest_binding.numerator == 4 and .summary.semantic_causality.numerator == 4' "$repro_work/judgment.json"
+jq -e '.decision == "DISCHARGED" and .conformance_decision == "DISCHARGED" and .conformance_resolution == "EXACT" and .subject_decision == "OPEN" and .subject_resolution == "LOWER_RESOLUTION" and .summary.case_matrix.numerator == 4 and .summary.case_matrix.denominator == 4 and .summary.byte_claim.numerator == 2 and .summary.meaning_claim.numerator == 2 and .summary.joint_claim.numerator == 1 and .summary.counterexamples.numerator == 2 and .summary.open_cases.numerator == 1 and .summary.source_digest_binding.numerator == 4 and .summary.semantic_causality.numerator == 4' "$repro_work/judgment.json"
 
-judge_sources=(internal/meta/reproducibilitysemantics/judge.go
-  internal/meta/reproducibilitysemantics/judge_source.go
-  internal/meta/reproducibilitysemantics/judge_proofs.go
-  internal/meta/reproducibilitysemantics/judge_provenance.go
-  internal/meta/reproducibilitysemantics/judge_receipt.go
-  internal/meta/reproducibilitysemantics/judge_summary.go
-  internal/meta/reproducibilitysemantics/judge_validate.go)
-if rg -n 'Produce\(|internal/meta/reproducibilitysemantics' "${judge_sources[@]}" >/dev/null; then
-  echo "independent judge dependency guardrail failed" >&2
+consumer_sources=(internal/meta/reproducibilitysemanticsconsumer/*.go)
+if rg -n 'Produce\(|internal/meta/reproducibilitysemantics("|/)' "${consumer_sources[@]}" >/dev/null; then
+  echo "production consumer producer-dependency guardrail failed" >&2
   exit 1
 fi
-echo "independent judge dependency guardrail: 1/1"
+echo "production consumer producer imports: 0/0"
 
 sed 's/meaning.observed=meaning\/render-approved\/v1/meaning.observed=meaning\/charge-and-ledger\/v1/' \
   examples/reproducibility-semantics/main.gooo > "$repro_work/semantic-intervention.gooo"
 sed '1i // presentation-only comment' examples/reproducibility-semantics/main.gooo > "$repro_work/presentation-intervention.gooo"
-for variant in semantic-intervention presentation-intervention; do
-  go run ./scripts/reproducibility-semantics \
-    -mode produce \
-    -source "$repro_work/$variant.gooo" \
-    -head-sha "$head_sha" \
-    -output "$repro_work/$variant-receipt.json"
-  go run ./scripts/reproducibility-semantics \
-    -mode judge \
-    -source "$repro_work/$variant.gooo" \
-    -head-sha "$head_sha" \
-    -receipt "$repro_work/$variant-receipt.json" \
-    -output "$repro_work/$variant-judgment.json" \
-    -check
-done
-base_meaning="$(jq -c '.summary.meaning_claim' "$repro_work/judgment.json")"
-semantic_meaning="$(jq -c '.summary.meaning_claim' "$repro_work/semantic-intervention-judgment.json")"
-base_joint="$(jq -c '.summary.joint_claim' "$repro_work/judgment.json")"
-semantic_joint="$(jq -c '.summary.joint_claim' "$repro_work/semantic-intervention-judgment.json")"
-[[ "$base_meaning" != "$semantic_meaning" && "$base_joint" != "$semantic_joint" ]]
-jq -e '.summary.meaning_claim.numerator == 3 and .summary.meaning_claim.denominator == 4 and .summary.joint_claim.numerator == 2 and .summary.joint_claim.denominator == 4' "$repro_work/semantic-intervention-judgment.json"
-[[ "$(jq -r .source_digest "$repro_work/judgment.json")" != "$(jq -r .source_digest "$repro_work/semantic-intervention-judgment.json")" ]]
-[[ "$(jq -r .semantic_digest "$repro_work/judgment.json")" != "$(jq -r .semantic_digest "$repro_work/semantic-intervention-judgment.json")" ]]
-[[ "$(jq -r .source_digest "$repro_work/judgment.json")" != "$(jq -r .source_digest "$repro_work/presentation-intervention-judgment.json")" ]]
-[[ "$(jq -r .semantic_digest "$repro_work/judgment.json")" == "$(jq -r .semantic_digest "$repro_work/presentation-intervention-judgment.json")" ]]
-[[ "$(jq -c .summary "$repro_work/judgment.json")" == "$(jq -c .summary "$repro_work/presentation-intervention-judgment.json")" ]]
-echo "semantic causality intervention contract: 2/2"
+go run ./scripts/reproducibility-semantics \
+  -mode intervention \
+  -source examples/reproducibility-semantics/main.gooo \
+  -semantic-source "$repro_work/semantic-intervention.gooo" \
+  -presentation-source "$repro_work/presentation-intervention.gooo" \
+  -head-sha "$head_sha" \
+  -output "$repro_work/intervention.json"
+jq -e '(.schema == "gooo/reproducibility-semantics-intervention/v1") and (.denominator == 2) and ((.cases | length) == 2) and (.decision == "DISCHARGED") and (.resolution == "EXACT") and (.authority.repository_writes == 0) and (.authority.mutation_authorized == false) and (.authority.promotion_authorized == false) and (.cases[0].id == "semantic-source-change") and (.cases[0].kind == "SEMANTIC_SOURCE_CHANGE") and (.cases[0].source_digest_before != .cases[0].source_digest_after) and (.cases[0].semantic_digest_before != .cases[0].semantic_digest_after) and (.cases[0].meaning_before != .cases[0].meaning_after) and (.cases[0].joint_before != .cases[0].joint_after) and (.cases[0].transitions_before != .cases[0].transitions_after) and (.cases[1].id == "presentation-only-source-change") and (.cases[1].kind == "PRESENTATION_ONLY_SOURCE_CHANGE") and (.cases[1].source_digest_before != .cases[1].source_digest_after) and (.cases[1].semantic_digest_before == .cases[1].semantic_digest_after) and (.cases[1].meaning_before == .cases[1].meaning_after) and (.cases[1].joint_before == .cases[1].joint_after) and (.cases[1].transitions_before == .cases[1].transitions_after) and (has("score") | not) and (has("aggregate_score") | not)' "$repro_work/intervention.json"
+echo "semantic causality intervention artifact: fixed-denominator=2/2; semantic and presentation cases separate"

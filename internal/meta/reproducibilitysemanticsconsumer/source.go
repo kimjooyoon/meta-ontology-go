@@ -1,4 +1,4 @@
-package reproducibilitysemantics
+package reproducibilitysemanticsconsumer
 
 import (
 	"fmt"
@@ -8,7 +8,15 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func deriveJudgeCases(path string, source []byte) ([]declaredCase, string, error) {
+type declaredCase struct {
+	ID              string
+	ByteReference   string
+	ByteCandidate   string
+	MeaningExpected string
+	MeaningObserved string
+}
+
+func deriveCases(path string, source []byte) ([]declaredCase, string, error) {
 	file, diagnostics := syntax.ParseFile(path, string(source))
 	if file == nil || diagnostics.HasErrors() {
 		return nil, "", fmt.Errorf("judge parse diagnostics: %d", len(diagnostics))
@@ -30,7 +38,7 @@ func deriveJudgeCases(path string, source []byte) ([]declaredCase, string, error
 		if !ok || node.ValueProgram != activity.ValueProgram {
 			return nil, "", fmt.Errorf("judge lowered value mismatch for %q", activity.Name)
 		}
-		item, err := parseJudgeProgram(node.ValueProgram)
+		item, err := parseProgram(node.ValueProgram)
 		if err != nil {
 			return nil, "", fmt.Errorf("judge activity %q: %w", activity.Name, err)
 		}
@@ -42,7 +50,7 @@ func deriveJudgeCases(path string, source []byte) ([]declaredCase, string, error
 	return cases, "sha256:" + ir.StableHash(), nil
 }
 
-func parseJudgeProgram(program string) (declaredCase, error) {
+func parseProgram(program string) (declaredCase, error) {
 	values := map[string]string{}
 	for _, field := range strings.Split(program, ";") {
 		pair := strings.SplitN(field, "=", 2)
@@ -62,14 +70,19 @@ func parseJudgeProgram(program string) (declaredCase, error) {
 	if len(values) != 5 || values["case"] == "" {
 		return declaredCase{}, fmt.Errorf("source value fields incomplete")
 	}
-	return declaredCase{ID: values["case"], ByteReference: values["byte.reference"],
-		ByteCandidate: values["byte.candidate"], MeaningExpected: values["meaning.expected"],
-		MeaningObserved: values["meaning.observed"]}, nil
+	return declaredCase{ID: values["case"], ByteReference: values["byte.reference"], ByteCandidate: values["byte.candidate"],
+		MeaningExpected: values["meaning.expected"], MeaningObserved: values["meaning.observed"]}, nil
 }
 
-func judgeCaseBindsSource(item Case, declared declaredCase) bool {
+func digestText(value string) string {
+	if value == "" {
+		return ""
+	}
+	return digestBytes([]byte(value))
+}
+
+func bindsSource(item Case, declared declaredCase) bool {
 	return item.ID == declared.ID && item.Byte.Reference == digestText(declared.ByteReference) &&
-		item.Byte.Candidate == digestText(declared.ByteCandidate) &&
-		item.Meaning.Expected == digestText(declared.MeaningExpected) &&
+		item.Byte.Candidate == digestText(declared.ByteCandidate) && item.Meaning.Expected == digestText(declared.MeaningExpected) &&
 		item.Meaning.Observed == digestText(declared.MeaningObserved)
 }

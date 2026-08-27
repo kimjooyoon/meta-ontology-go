@@ -16,6 +16,8 @@ func init() {
 		"internal/meta/languagereadiness/languagesyntax",
 		"internal/meta/languagereadiness/toolchainconformance",
 		"internal/meta/reproducibilitysemantics",
+		"internal/meta/reproducibilitysemanticsconsumer",
+		"internal/meta/reproducibilitysemanticsschema",
 		"internal/verify/scope_reproducibility_semantics.go",
 		"scripts/reproducibility-semantics",
 		"scripts/semantic-conformance.sh",

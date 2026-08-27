@@ -1,50 +1,30 @@
 package reproducibilitysemantics
 
+import schema "github.com/kimjooyoon/meta-ontology-go/internal/meta/reproducibilitysemanticsschema"
+
 const (
-	ReceiptSchema    = "gooo/reproducibility-semantics-receipt/v1"
-	JudgmentSchema   = "gooo/reproducibility-semantics-judgment/v1"
-	ContractID       = "gooo/reproducibility-semantics/v1"
-	ProducerID       = "gooo://meta/reproducibility-semantics/producer"
-	ConsumerID       = "gooo://meta/reproducibility-semantics/judge"
-	MetaOperation    = "separate-byte-and-meaning-claims"
-	ProofByte        = "BYTE_COMPARISON"
-	ProofMeaning     = "MEANING_ORACLE"
-	ProofComposition = "CLAIM_COMPOSITION"
-	ProofSemantic    = "SEMANTIC_CAUSALITY"
-	StatusOpen       = "OPEN"
-	StatusDischarged = "DISCHARGED"
-	StatusRefuted    = "REFUTED"
-	CaseCount        = 4
+	ReceiptSchema    = schema.ReceiptSchema
+	JudgmentSchema   = schema.JudgmentSchema
+	ContractID       = schema.ContractID
+	ProducerID       = schema.ProducerID
+	ConsumerID       = schema.ConsumerID
+	MetaOperation    = schema.MetaOperation
+	ProofByte        = schema.ProofByte
+	ProofMeaning     = schema.ProofMeaning
+	ProofComposition = schema.ProofComposition
+	ProofSemantic    = schema.ProofSemantic
+	StatusOpen       = schema.StatusOpen
+	StatusDischarged = schema.StatusDischarged
+	StatusRefuted    = schema.StatusRefuted
+	CaseCount        = schema.CaseCount
 )
 
-type Coordinate struct {
-	Numerator   int `json:"numerator"`
-	Denominator int `json:"denominator"`
-	BasisPoints int `json:"basis_points"`
-}
-
-type Evidence struct {
-	Producer      string `json:"producer"`
-	Consumer      string `json:"consumer"`
-	MetaOperation string `json:"meta_operation"`
-	ProofChoice   string `json:"proof_choice"`
-	Stage         string `json:"stage"`
-	Step          string `json:"step"`
-	Reason        string `json:"reason"`
-	Reference     string `json:"reference"`
-	Candidate     string `json:"candidate"`
-	Status        string `json:"status"`
-}
-
-type MeaningEvidence struct {
-	Producer      string `json:"producer"`
-	Consumer      string `json:"consumer"`
-	MetaOperation string `json:"meta_operation"`
-	ProofChoice   string `json:"proof_choice"`
-	Stage         string `json:"stage"`
-	Step          string `json:"step"`
-	Reason        string `json:"reason"`
-	Expected      string `json:"expected"`
-	Observed      string `json:"observed"`
-	Status        string `json:"status"`
-}
+type Coordinate = schema.Coordinate
+type Evidence = schema.Evidence
+type MeaningEvidence = schema.MeaningEvidence
+type Transition = schema.Transition
+type Case = schema.Case
+type Summary = schema.Summary
+type Proof = schema.Proof
+type Authority = schema.Authority
+type Receipt = schema.Receipt

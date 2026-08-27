@@ -19,6 +19,7 @@ func Produce(sourcePath, headSHA string, source []byte) Receipt {
 		cases[index].Meaning.Producer = ProducerID
 		cases[index].Meaning.Consumer = ConsumerID
 		cases[index].Status, cases[index].Reason = compose(cases[index].Byte.Status, cases[index].Meaning.Status)
+		cases[index].ByteTransition, cases[index].MeaningTransition, cases[index].JointTransition = claimTransitions(cases[index])
 	}
 	return sealReceipt(Receipt{
 		Schema: ReceiptSchema, Version: 1, ContractID: ContractID,

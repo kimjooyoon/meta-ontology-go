@@ -1,4 +1,4 @@
-package reproducibilitysemantics
+package reproducibilitysemanticsconsumer
 
 import (
 	"crypto/sha256"
@@ -25,8 +25,10 @@ func sealReceipt(receipt Receipt) Receipt {
 	return receipt
 }
 
-func SealReceipt(receipt Receipt) Receipt {
-	return sealReceipt(receipt)
+func sealJudgment(judgment Judgment) Judgment {
+	judgment.JudgmentDigest = ""
+	judgment.JudgmentDigest = digestValue(judgment)
+	return judgment
 }
 
 func coordinate(numerator, denominator int) Coordinate {

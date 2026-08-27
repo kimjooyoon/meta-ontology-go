@@ -1,13 +1,16 @@
-package reproducibilitysemantics
+package reproducibilitysemanticsschema
 
 type Case struct {
-	ID      string          `json:"id"`
-	Byte    Evidence        `json:"byte"`
-	Meaning MeaningEvidence `json:"meaning"`
-	Status  string          `json:"status"`
-	Stage   string          `json:"stage"`
-	Step    string          `json:"step"`
-	Reason  string          `json:"reason"`
+	ID                string          `json:"id"`
+	Byte              Evidence        `json:"byte"`
+	Meaning           MeaningEvidence `json:"meaning"`
+	ByteTransition    Transition      `json:"byte_transition"`
+	MeaningTransition Transition      `json:"meaning_transition"`
+	JointTransition   Transition      `json:"joint_transition"`
+	Status            string          `json:"status"`
+	Stage             string          `json:"stage"`
+	Step              string          `json:"step"`
+	Reason            string          `json:"reason"`
 }
 
 type Summary struct {
