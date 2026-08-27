@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ci_failure() {
+	local status=$?
+	echo "::error file=scripts/denominator-evolution/main.sh,line=${BASH_LINENO[0]}::denominator evolution CI failed at: ${BASH_COMMAND}"
+	exit "$status"
+}
+trap ci_failure ERR
+
 : "$HEAD_SHA"
 work="${RUNNER_TEMP:-/tmp}/denominator-evolution-$HEAD_SHA"
 mkdir -p "$work"
