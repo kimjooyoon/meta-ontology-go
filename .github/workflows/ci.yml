@@ -1376,7 +1376,7 @@ jobs:
           go run ./scripts/claim-lifecycle-calculus-judge \
             --receipt "${receipt}" \
             --source examples/claim-lifecycle-calculus/main.gooo
-          jq -e '
+          jq -e --arg head "${HEAD_SHA}" '
             .schema == "gooo/claim-lifecycle-calculus/v1" and
             .head_sha == $head and
             .go_version == "go1.27.0" and
@@ -1401,7 +1401,7 @@ jobs:
             .effects.repository_writes == 0 and
             .effects.mutation_authority == false and
             .decision.value == "PASS"
-          ' --arg head "${HEAD_SHA}" "${receipt}"
+          ' "${receipt}"
           {
             echo '### Claim lifecycle calculus'
             jq -r '"- fixed claims: \(.summary.claims_total)/\(.summary.claims_total); transitions: \(.summary.transitions_total)/\(.summary.transitions_total)"' "${receipt}"
