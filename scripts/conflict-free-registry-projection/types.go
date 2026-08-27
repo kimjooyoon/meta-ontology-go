@@ -161,13 +161,15 @@ type Projection struct {
 }
 
 type RatioMetric struct {
-	Numerator   int    `json:"numerator"`
-	Denominator int    `json:"denominator"`
-	BasisPoints int    `json:"basis_points"`
-	Decision    string `json:"decision,omitempty"`
-	Stage       string `json:"stage,omitempty"`
-	Step        string `json:"step,omitempty"`
-	Reason      string `json:"reason,omitempty"`
+	Numerator       int    `json:"numerator"`
+	Denominator     int    `json:"denominator"`
+	BasisPoints     int    `json:"basis_points"`
+	Decision        string `json:"decision,omitempty"`
+	Stage           string `json:"stage,omitempty"`
+	Step            string `json:"step,omitempty"`
+	Reason          string `json:"reason,omitempty"`
+	EvidenceAddress string `json:"evidence_address,omitempty"`
+	EvidenceDigest  string `json:"evidence_digest,omitempty"`
 }
 
 type MetricDelta struct {
@@ -179,7 +181,8 @@ type IntegrationMetrics struct {
 	ExistingSharedSourceTouchpoints RatioMetric `json:"existing_shared_source_touchpoints"`
 	GeneratorChangedSharedOutputs   RatioMetric `json:"generator_changed_shared_outputs"`
 	IndependentConformanceConsumer  RatioMetric `json:"independent_conformance_consumer"`
-	ProducerPackageImports          RatioMetric `json:"producer_package_imports"`
+	ProducerDependencyAbsence       RatioMetric `json:"producer_dependency_absence"`
+	ObservedProducerImportCount     RatioMetric `json:"observed_producer_import_count"`
 	RawSourceReconstruction         RatioMetric `json:"raw_source_reconstruction"`
 	SeparateExecutable              RatioMetric `json:"separate_executable"`
 	AlgorithmicIndependence         RatioMetric `json:"algorithmic_independence"`
@@ -237,6 +240,10 @@ type PredicateObservation struct {
 	ExitCode          int                `json:"exit_code"`
 	DiagnosticJSON    string             `json:"diagnostic_json,omitempty"`
 	DiagnosticDigest  string             `json:"diagnostic_json_digest,omitempty"`
+	StdoutBytes       int                `json:"stdout_bytes,omitempty"`
+	StdoutDigest      string             `json:"stdout_digest,omitempty"`
+	StderrBytes       int                `json:"stderr_bytes,omitempty"`
+	StderrDigest      string             `json:"stderr_digest,omitempty"`
 	RawInputDigest    string             `json:"raw_input_digest,omitempty"`
 	RawInputBytes     string             `json:"raw_input_bytes,omitempty"`
 	RawInputArtifacts []RawInputArtifact `json:"raw_input_artifacts,omitempty"`
@@ -335,10 +342,38 @@ type InventoryReceipt struct {
 }
 
 type ObservedOutputArtifact struct {
-	ObservedPath string `json:"observed_path"`
-	Digest       string `json:"digest"`
-	Bytes        int    `json:"bytes"`
-	RawBytes     string `json:"raw_bytes"`
+	ObservedPath      string                 `json:"observed_path"`
+	Digest            string                 `json:"digest"`
+	Bytes             int                    `json:"bytes"`
+	RawBytes          string                 `json:"raw_bytes"`
+	ManifestInventory consumerOutputArtifact `json:"manifest_inventory"`
+}
+
+type ProcessObservation struct {
+	Address       string `json:"address"`
+	ExitCode      int    `json:"exit_code"`
+	StdoutBytes   int    `json:"stdout_bytes"`
+	StdoutDigest  string `json:"stdout_digest"`
+	StderrBytes   int    `json:"stderr_bytes"`
+	StderrDigest  string `json:"stderr_digest"`
+	CommandDigest string `json:"command_digest"`
+}
+
+type DependencyGraphReceipt struct {
+	InventoryAddress      string   `json:"inventory_address"`
+	InventoryBytes        int      `json:"inventory_bytes"`
+	InventoryDigest       string   `json:"inventory_digest"`
+	InventoryRaw          string   `json:"inventory_raw"`
+	Packages              []string `json:"packages"`
+	ProducerTargetAddress string   `json:"producer_target_address"`
+	ProducerTargetDigest  string   `json:"producer_target_digest"`
+	ExitCode              int      `json:"exit_code"`
+	StdoutDigest          string   `json:"stdout_digest"`
+	StderrDigest          string   `json:"stderr_digest"`
+	Decision              string   `json:"decision"`
+	Stage                 string   `json:"stage"`
+	Step                  string   `json:"step"`
+	Reason                string   `json:"reason"`
 }
 
 type BindingOutputReceipt struct {
@@ -357,51 +392,54 @@ type BindingOutputReceipt struct {
 }
 
 type Evidence struct {
-	Schema                        string                      `json:"schema"`
-	Decision                      string                      `json:"decision"`
-	Reason                        string                      `json:"reason"`
-	BoundedSlice                  []string                    `json:"bounded_slice"`
-	BaselineTouchpoints           int                         `json:"baseline_touchpoints"`
-	BaselineObservation           []baselineObservation       `json:"baseline_observation"`
-	Metrics                       IntegrationMetrics          `json:"integration_metrics"`
-	MetricDeltas                  map[string]MetricDelta      `json:"metric_deltas"`
-	ProjectionReplay              ScenarioResult              `json:"projection_replay"`
-	ManifestOrderInvariant        ScenarioResult              `json:"manifest_order_invariant"`
-	SemanticCausality             ScenarioResult              `json:"semantic_manifest_causality"`
-	SemanticMetricChange          ScenarioResult              `json:"semantic_metric_change"`
-	CommentInvariant              ScenarioResult              `json:"comment_only_invariant"`
-	CommentPositionInvariant      ScenarioResult              `json:"comment_position_invariant"`
-	NewConceptFixture             ScenarioResult              `json:"new_concept_fixture"`
-	FailureContracts              []ScenarioResult            `json:"failure_contracts"`
-	DenominatorReconciliations    []DenominatorReconciliation `json:"denominator_reconciliations"`
-	DenominatorMismatch           ScenarioResult              `json:"denominator_mismatch_contract"`
-	StaleDenominatorReceipt       *DenominatorReconciliation  `json:"stale_denominator_receipt"`
-	PredicateObservations         []PredicateObservation      `json:"predicate_observations"`
-	SourceDigestPreservation      []SourceDigestComparison    `json:"source_digest_preservation"`
-	GeneratedOutputChanges        []string                    `json:"generated_output_changes"`
-	GeneratedOutputChangeCount    int                         `json:"generated_output_change_count"`
-	GeneratedOutputDenominator    int                         `json:"generated_output_denominator"`
-	ConformanceConsumer           PredicateMetric             `json:"conformance_consumer"`
-	ProductionAdoption            PredicateMetric             `json:"production_adoption"`
-	ClaimTransitions              PredicateMetric             `json:"claim_transitions"`
-	FailurePredicates             PredicateMetric             `json:"failure_predicates"`
-	RepositoryNetStatePredicates  PredicateMetric             `json:"repository_net_state_predicates"`
-	BindingPredicates             PredicateMetric             `json:"binding_predicates"`
-	ProvenancePredicates          PredicateMetric             `json:"provenance_predicates"`
-	UseCaseReceipt                UseCaseReceiptObservation   `json:"use_case_receipt"`
-	Strategies                    []StrategyResult            `json:"strategies"`
-	Claims                        []Claim                     `json:"claims"`
-	RepositoryNetState            RepositoryObservation       `json:"repository_net_state"`
-	GeneratedOutputs              []OutputMetadata            `json:"generated_outputs"`
-	FixtureGeneratedOutputs       []OutputMetadata            `json:"fixture_generated_outputs"`
-	PredicateInventory            InventoryReceipt            `json:"predicate_inventory"`
-	FailureInventory              InventoryReceipt            `json:"failure_inventory"`
-	ClaimInventory                InventoryReceipt            `json:"claim_inventory"`
-	ProvenanceInventory           InventoryReceipt            `json:"provenance_inventory"`
-	ASTResolvedBindings           PredicateMetric             `json:"ast_resolved_bindings"`
-	MetricOccurrences             PredicateMetric             `json:"metric_occurrences"`
-	UniqueSemanticRelationDigests PredicateMetric             `json:"unique_semantic_relation_digests"`
-	OutputRowAddresses            PredicateMetric             `json:"output_row_addresses"`
-	ConsumerOutputArtifact        ObservedOutputArtifact      `json:"consumer_output_artifact"`
-	BindingOutputReceipts         []BindingOutputReceipt      `json:"binding_output_receipts"`
+	Schema                         string                      `json:"schema"`
+	Decision                       string                      `json:"decision"`
+	Reason                         string                      `json:"reason"`
+	BoundedSlice                   []string                    `json:"bounded_slice"`
+	BaselineTouchpoints            int                         `json:"baseline_touchpoints"`
+	BaselineObservation            []baselineObservation       `json:"baseline_observation"`
+	Metrics                        IntegrationMetrics          `json:"integration_metrics"`
+	MetricDeltas                   map[string]MetricDelta      `json:"metric_deltas"`
+	ProjectionReplay               ScenarioResult              `json:"projection_replay"`
+	ManifestOrderInvariant         ScenarioResult              `json:"manifest_order_invariant"`
+	SemanticCausality              ScenarioResult              `json:"semantic_manifest_causality"`
+	SemanticMetricChange           ScenarioResult              `json:"semantic_metric_change"`
+	CommentInvariant               ScenarioResult              `json:"comment_only_invariant"`
+	CommentPositionInvariant       ScenarioResult              `json:"comment_position_invariant"`
+	NewConceptFixture              ScenarioResult              `json:"new_concept_fixture"`
+	DependencyGraphNegativeFixture ScenarioResult              `json:"dependency_graph_negative_fixture"`
+	FailureContracts               []ScenarioResult            `json:"failure_contracts"`
+	DenominatorReconciliations     []DenominatorReconciliation `json:"denominator_reconciliations"`
+	DenominatorMismatch            ScenarioResult              `json:"denominator_mismatch_contract"`
+	StaleDenominatorReceipt        *DenominatorReconciliation  `json:"stale_denominator_receipt"`
+	PredicateObservations          []PredicateObservation      `json:"predicate_observations"`
+	SourceDigestPreservation       []SourceDigestComparison    `json:"source_digest_preservation"`
+	GeneratedOutputChanges         []string                    `json:"generated_output_changes"`
+	GeneratedOutputChangeCount     int                         `json:"generated_output_change_count"`
+	GeneratedOutputDenominator     int                         `json:"generated_output_denominator"`
+	ConformanceConsumer            PredicateMetric             `json:"conformance_consumer"`
+	ProductionAdoption             PredicateMetric             `json:"production_adoption"`
+	ClaimTransitions               PredicateMetric             `json:"claim_transitions"`
+	FailurePredicates              PredicateMetric             `json:"failure_predicates"`
+	RepositoryNetStatePredicates   PredicateMetric             `json:"repository_net_state_predicates"`
+	BindingPredicates              PredicateMetric             `json:"binding_predicates"`
+	ProvenancePredicates           PredicateMetric             `json:"provenance_predicates"`
+	UseCaseReceipt                 UseCaseReceiptObservation   `json:"use_case_receipt"`
+	Strategies                     []StrategyResult            `json:"strategies"`
+	Claims                         []Claim                     `json:"claims"`
+	RepositoryNetState             RepositoryObservation       `json:"repository_net_state"`
+	IndependentConsumerProcess     ProcessObservation          `json:"independent_consumer_process"`
+	DependencyGraph                DependencyGraphReceipt      `json:"dependency_graph"`
+	GeneratedOutputs               []OutputMetadata            `json:"generated_outputs"`
+	FixtureGeneratedOutputs        []OutputMetadata            `json:"fixture_generated_outputs"`
+	PredicateInventory             InventoryReceipt            `json:"predicate_inventory"`
+	FailureInventory               InventoryReceipt            `json:"failure_inventory"`
+	ClaimInventory                 InventoryReceipt            `json:"claim_inventory"`
+	ProvenanceInventory            InventoryReceipt            `json:"provenance_inventory"`
+	ASTResolvedBindings            PredicateMetric             `json:"ast_resolved_bindings"`
+	MetricOccurrences              PredicateMetric             `json:"metric_occurrences"`
+	UniqueSemanticRelationDigests  PredicateMetric             `json:"unique_semantic_relation_digests"`
+	OutputRowAddresses             PredicateMetric             `json:"output_row_addresses"`
+	ConsumerOutputArtifact         ObservedOutputArtifact      `json:"consumer_output_artifact"`
+	BindingOutputReceipts          []BindingOutputReceipt      `json:"binding_output_receipts"`
 }

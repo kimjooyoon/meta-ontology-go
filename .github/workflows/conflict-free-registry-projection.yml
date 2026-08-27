@@ -78,6 +78,9 @@ jobs:
             .output_artifact.path == "embedded://consumer_output_artifact/raw_bytes" and
             .output_artifact.bytes > 0 and
             .output_artifact.digest != "" and
+            .manifest_inventory.path == "raw://manifest-inventory" and
+            .manifest_inventory.bytes > 0 and
+            .manifest_inventory.digest != "" and
             ([.binding_output_receipts[]] | length) == 9 and
             ([.binding_output_receipts[] | select(.output_address == "embedded://consumer_output_artifact/raw_bytes" and .output_digest != "" and .output_bytes > 0 and .semantic_digest != "" and .metric_occurrence_address != "" and .metric_occurrence_digest != "" and .output_row_address != "" and .output_row_digest != "")] | length) == 9 and
             ([.binding_output_receipts[] | [.metric_occurrence_address, .metric_occurrence_digest] ] | unique | length) == 9 and
@@ -98,18 +101,42 @@ jobs:
             .integration_metrics.generator_changed_shared_outputs.denominator == 8 and
             .integration_metrics.independent_conformance_consumer.numerator == 1 and
             .integration_metrics.independent_conformance_consumer.denominator == 1 and
-            .integration_metrics.producer_package_imports.numerator == 0 and
-            .integration_metrics.producer_package_imports.denominator == 1 and
-            .integration_metrics.producer_package_imports.decision == "PASS" and
+            .integration_metrics.producer_dependency_absence.numerator == 1 and
+            .integration_metrics.producer_dependency_absence.denominator == 1 and
+            .integration_metrics.producer_dependency_absence.decision == "PASS" and
+            .integration_metrics.producer_dependency_absence.evidence_address != "" and
+            .integration_metrics.producer_dependency_absence.evidence_digest != "" and
+            .integration_metrics.observed_producer_import_count.numerator == 0 and
+            .integration_metrics.observed_producer_import_count.denominator == 0 and
+            .integration_metrics.observed_producer_import_count.decision == "PASS" and
+            .integration_metrics.observed_producer_import_count.evidence_address != "" and
+            .integration_metrics.observed_producer_import_count.evidence_digest != "" and
             .integration_metrics.raw_source_reconstruction.numerator == 1 and
             .integration_metrics.raw_source_reconstruction.denominator == 1 and
             .integration_metrics.raw_source_reconstruction.decision == "PASS" and
+            .integration_metrics.raw_source_reconstruction.evidence_address != "" and
+            .integration_metrics.raw_source_reconstruction.evidence_digest != "" and
             .integration_metrics.separate_executable.numerator == 1 and
             .integration_metrics.separate_executable.denominator == 1 and
             .integration_metrics.separate_executable.decision == "PASS" and
+            .integration_metrics.separate_executable.evidence_address != "" and
+            .integration_metrics.separate_executable.evidence_digest != "" and
             .integration_metrics.algorithmic_independence.numerator == 0 and
             .integration_metrics.algorithmic_independence.denominator == 1 and
             .integration_metrics.algorithmic_independence.decision == "UNKNOWN" and
+            .dependency_graph.decision == "PASS" and
+            .dependency_graph.exit_code == 0 and
+            .dependency_graph.inventory_bytes > 0 and
+            .dependency_graph.inventory_digest != "" and
+            (.dependency_graph.inventory_raw | length) > 0 and
+            .dependency_graph.producer_target_address != "" and
+            .dependency_graph.producer_target_digest != "" and
+            ([.dependency_graph.packages[] | select(. | endswith("/scripts/conflict-free-registry-projection"))] | length) == 0 and
+            .independent_consumer_process.exit_code == 0 and
+            .independent_consumer_process.address != "" and
+            .independent_consumer_process.command_digest != "" and
+            .independent_consumer_process.stdout_digest != "" and
+            .independent_consumer_process.stderr_digest != "" and
             .metric_deltas.manual_source_registration_edits.before.numerator == 12 and
             .metric_deltas.manual_source_registration_edits.after.numerator == 0 and
             .metric_deltas.generator_changed_shared_outputs.after.numerator == 6 and
@@ -139,6 +166,7 @@ jobs:
             .comment_only_invariant.decision == "PASS" and
             .comment_position_invariant.decision == "PASS" and
             .new_concept_fixture.decision == "PASS" and
+            .dependency_graph_negative_fixture.decision == "PASS" and
             ([.failure_contracts[].diagnostic.decision] | all(. == "FAIL_CLOSED")) and
             ([.failure_contracts[].diagnostic.stage] | all(length > 0)) and
             ([.failure_contracts[].diagnostic.step] | all(length > 0)) and
@@ -169,6 +197,9 @@ jobs:
             .consumer_output_artifact.digest != "" and
             .consumer_output_artifact.bytes > 0 and
             (.consumer_output_artifact.raw_bytes | length) > 0 and
+            .consumer_output_artifact.manifest_inventory.path == "raw://manifest-inventory" and
+            .consumer_output_artifact.manifest_inventory.bytes > 0 and
+            .consumer_output_artifact.manifest_inventory.digest != "" and
             .predicate_inventory.decision == "PASS" and
             .failure_inventory.decision == "PASS" and
             .claim_inventory.decision == "PASS" and

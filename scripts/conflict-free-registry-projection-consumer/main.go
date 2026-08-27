@@ -156,6 +156,7 @@ type Receipt struct {
 	Schema                     string                      `json:"schema"`
 	Decision                   string                      `json:"decision"`
 	ProjectionDigest           string                      `json:"projection_digest"`
+	ManifestInventory          OutputArtifact              `json:"manifest_inventory"`
 	DenominatorReconciliations []DenominatorReconciliation `json:"denominator_reconciliations"`
 	Predicates                 []PredicateObservation      `json:"predicates"`
 	ProductionAdoption         PredicateMetric             `json:"production_adoption"`
@@ -212,6 +213,7 @@ func (e failure) Error() string { return e.Decision + "/" + e.Stage + "/" + e.St
 func main() {
 	root, output, receiptPath := ".", "", ""
 	checkGenerated := false
+	verifyReceipt := false
 	for index := 1; index < len(os.Args); index++ {
 		switch os.Args[index] {
 		case "-root":
@@ -234,6 +236,8 @@ func main() {
 			receiptPath = os.Args[index]
 		case "-check-generated":
 			checkGenerated = true
+		case "-verify-receipt":
+			verifyReceipt = true
 		default:
 			fail("FAIL_CLOSED", "FOUNDATION", "COMMAND", "INVALID_COMMAND_FLAGS")
 		}
@@ -241,6 +245,27 @@ func main() {
 	absoluteRoot, err := filepath.Abs(root)
 	if err != nil {
 		fail("FAIL_CLOSED", "FOUNDATION", "ROOT", "INVALID_REPOSITORY_ROOT")
+	}
+	if verifyReceipt {
+		if output == "" || receiptPath == "" {
+			fail("FAIL_CLOSED", "FOUNDATION", "COMMAND", "INVALID_COMMAND_FLAGS")
+		}
+		outputRaw, readErr := os.ReadFile(output)
+		if readErr != nil {
+			fail("FAIL_CLOSED", "FOUNDATION", "RECEIPT_BOUNDARY", "RECEIPT_OUTPUT_ARTIFACT_UNAVAILABLE")
+		}
+		receiptRaw, readErr := os.ReadFile(receiptPath)
+		if readErr != nil {
+			fail("FAIL_CLOSED", "FOUNDATION", "RECEIPT_BOUNDARY", "RECEIPT_ARTIFACT_UNAVAILABLE")
+		}
+		receipt, decodeErr := decodeReceiptStrict(receiptRaw)
+		if decodeErr != nil {
+			failFailure(decodeErr, "FOUNDATION", "RECEIPT_BOUNDARY", "RECEIPT_VALIDATION_FAILED")
+		}
+		if validateErr := validateReceiptBoundary(absoluteRoot, receipt, outputRaw); validateErr != nil {
+			failFailure(validateErr, "FOUNDATION", "RECEIPT_BOUNDARY", "RECEIPT_VALIDATION_FAILED")
+		}
+		return
 	}
 	loaded, err := loadManifests(absoluteRoot)
 	if err != nil {
@@ -1243,6 +1268,10 @@ func buildReceipt(root string, projection Projection, reconciliations []Denomina
 	sort.Strings(ids)
 	resourceData, _ := json.Marshal(append(append(append([]ResourceSnapshot{}, projection.Corpus...), projection.Registry...), projection.Documentation...))
 	denominatorData, _ := json.Marshal(projection.Denominator)
+	manifestInventory, err := rawManifestInventory(root)
+	if err != nil {
+		return Receipt{}, err
+	}
 	bindingReceipts := make([]BindingOutputReceipt, 0)
 	for _, entry := range projection.Catalog {
 		for _, binding := range entry.BindingRegistry {
@@ -1259,6 +1288,7 @@ func buildReceipt(root string, projection Projection, reconciliations []Denomina
 	}
 	return Receipt{
 		Schema: receiptSchema, Decision: "PASS", ProjectionDigest: digest(observedOutput), DenominatorReconciliations: reconciliations,
+		ManifestInventory: OutputArtifact{Path: "raw://manifest-inventory", Digest: digest(manifestInventory), Bytes: len(manifestInventory)},
 		Predicates: []PredicateObservation{
 			{ID: "independent-manifest-order", ObservedPredicate: "raw manifests are sorted by stable_id", TargetAddress: "raw://manifest-stable-ids", TargetDigest: digest(mustJSON(ids)), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "COHERENCE", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
 			{ID: "independent-resource-digests", ObservedPredicate: "raw resource refs resolve to their declared digests", TargetAddress: "raw://resource-ref-digests", TargetDigest: digest(resourceData), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
@@ -1271,6 +1301,237 @@ func buildReceipt(root string, projection Projection, reconciliations []Denomina
 		OutputArtifact:        OutputArtifact{Path: embeddedOutputAddress, Digest: digest(observedOutput), Bytes: len(observedOutput)},
 		BindingOutputReceipts: bindingReceipts,
 	}, nil
+}
+
+func rawManifestInventory(root string) ([]byte, error) {
+	paths := []string{}
+	if err := filepath.WalkDir(filepath.Join(root, "examples"), func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if !entry.IsDir() && entry.Name() == "concept.manifest.json" {
+			paths = append(paths, path)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	sort.Strings(paths)
+	inventory := make([]ResourceSnapshot, 0, len(paths))
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		inventory = append(inventory, ResourceSnapshot{Path: relativePath(root, path), Role: "MANIFEST", Bytes: len(data), Digest: digest(data)})
+	}
+	return json.Marshal(inventory)
+}
+
+var expectedReceiptPredicateIDs = []string{
+	"independent-manifest-order",
+	"independent-resource-digests",
+	"independent-denominator-reconciliation",
+	"independent-binding-registry",
+	"independent-conformance-consumer",
+}
+
+const expectedReceiptBindingCount = 9
+
+func receiptBoundaryFailure(reason string) error {
+	return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "RECEIPT_BOUNDARY", reason}}
+}
+
+func decodeReceiptStrict(data []byte) (Receipt, error) {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	receipt := Receipt{}
+	if err := decoder.Decode(&receipt); err != nil {
+		if strings.Contains(err.Error(), "unknown field") {
+			return Receipt{}, receiptBoundaryFailure("RECEIPT_UNKNOWN_FIELD")
+		}
+		return Receipt{}, receiptBoundaryFailure("RECEIPT_MALFORMED_JSON")
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return Receipt{}, receiptBoundaryFailure("RECEIPT_TRAILING_JSON")
+	}
+	return receipt, nil
+}
+
+type receiptRowExpectation struct {
+	StableID string
+	Binding  BindingRegistryEntry
+}
+
+func validateReceiptBoundary(root string, receipt Receipt, outputRaw []byte) error {
+	if receipt.Schema != receiptSchema {
+		return receiptBoundaryFailure("RECEIPT_SCHEMA_MISMATCH")
+	}
+	if receipt.Decision != "PASS" {
+		return receiptBoundaryFailure("RECEIPT_DECISION_MISMATCH")
+	}
+	if receipt.ProjectionDigest != digest(outputRaw) {
+		return receiptBoundaryFailure("RECEIPT_PROJECTION_DIGEST_MISMATCH")
+	}
+	if len(receipt.Predicates) != len(expectedReceiptPredicateIDs) || !sameStringSet(receiptPredicateIDs(receipt.Predicates), expectedReceiptPredicateIDs) || hasDuplicateStrings(receiptPredicateIDs(receipt.Predicates)) {
+		return receiptBoundaryFailure("RECEIPT_PREDICATE_INVENTORY_MISMATCH")
+	}
+	for _, predicate := range receipt.Predicates {
+		if !predicate.Observed || predicate.PredicateTruth != "TRUE" || predicate.Decision != "PASS" || predicate.TargetAddress == "" || predicate.TargetDigest == "" {
+			return receiptBoundaryFailure("RECEIPT_PREDICATE_INVENTORY_MISMATCH")
+		}
+	}
+	manifestInventory, err := rawManifestInventory(root)
+	if err != nil {
+		return receiptBoundaryFailure("RECEIPT_MANIFEST_INVENTORY_UNAVAILABLE")
+	}
+	if receipt.ManifestInventory.Path != "raw://manifest-inventory" || receipt.ManifestInventory.Bytes != len(manifestInventory) || receipt.ManifestInventory.Digest != digest(manifestInventory) {
+		return receiptBoundaryFailure("RECEIPT_MANIFEST_INVENTORY_MISMATCH")
+	}
+	if receipt.OutputArtifact.Path != embeddedOutputAddress || receipt.OutputArtifact.Bytes != len(outputRaw) || receipt.OutputArtifact.Digest != digest(outputRaw) {
+		return receiptBoundaryFailure("RECEIPT_OUTPUT_ARTIFACT_MISMATCH")
+	}
+	if len(receipt.BindingOutputReceipts) != expectedReceiptBindingCount {
+		return receiptBoundaryFailure("RECEIPT_BINDING_INVENTORY_MISMATCH")
+	}
+	projection, err := observedProjection(outputRaw)
+	if err != nil {
+		return receiptBoundaryFailure("RECEIPT_OUTPUT_PROJECTION_MALFORMED")
+	}
+	expected := map[string]receiptRowExpectation{}
+	metricIDs := map[string]struct{}{}
+	for _, entry := range projection.Catalog {
+		for _, binding := range entry.BindingRegistry {
+			address := bindingOutputRowAddress(entry.StableID, binding.MetricID)
+			if _, exists := expected[address]; exists {
+				return receiptBoundaryFailure("DUPLICATE_OUTPUT_ROW_ADDRESS")
+			}
+			if _, exists := metricIDs[binding.MetricID]; exists {
+				return receiptBoundaryFailure("DUPLICATE_OUTPUT_ROW_METRIC_ID")
+			}
+			metricIDs[binding.MetricID] = struct{}{}
+			expected[address] = receiptRowExpectation{StableID: entry.StableID, Binding: binding}
+		}
+	}
+	if len(expected) != expectedReceiptBindingCount {
+		return receiptBoundaryFailure("RECEIPT_OUTPUT_ROW_INVENTORY_MISMATCH")
+	}
+	expectedRelations := map[string]bindingResolution{}
+	expectedPairOwners := map[string]string{}
+	for address, row := range expected {
+		relation, resolveErr := resolveBindingRelation(root, row.Binding.RawSourceAddress, row.Binding.RegistrationUseAddress, row.Binding.MetricID)
+		if resolveErr != nil {
+			return receiptBoundaryFailure("BINDING_RELATION_RECONSTRUCTION_FAILED")
+		}
+		expectedRelations[address] = relation
+		pair := metricOccurrencePairKey(relation.MetricOccurrenceAddress, relation.MetricOccurrenceDigest)
+		if owner, exists := expectedPairOwners[pair]; exists && owner != address {
+			return receiptBoundaryFailure("DUPLICATE_METRIC_OCCURRENCE_PAIR")
+		}
+		expectedPairOwners[pair] = address
+	}
+	seenAddresses := map[string]struct{}{}
+	seenMetricIDs := map[string]struct{}{}
+	seenPairs := map[string]struct{}{}
+	seenTriples := map[string]struct{}{}
+	for _, binding := range receipt.BindingOutputReceipts {
+		if _, exists := seenMetricIDs[binding.MetricID]; exists {
+			return receiptBoundaryFailure("DUPLICATE_RECEIPT_METRIC_ID")
+		}
+		seenMetricIDs[binding.MetricID] = struct{}{}
+		if _, exists := seenAddresses[binding.OutputRowAddress]; exists {
+			return receiptBoundaryFailure("DUPLICATE_RECEIPT_OUTPUT_ROW_ADDRESS")
+		}
+		seenAddresses[binding.OutputRowAddress] = struct{}{}
+		row, exists := expected[binding.OutputRowAddress]
+		if !exists {
+			return receiptBoundaryFailure("BINDING_OUTPUT_ROW_ADDRESS_MISMATCH")
+		}
+		rowDigest := digest(mustJSON(row.Binding))
+		if row.StableID == "" || row.Binding.MetricID != binding.MetricID || row.Binding.RawSourceAddress != binding.RawSourceAddress || row.Binding.RegistrationUseAddress != binding.RegistrationUseAddress || row.Binding.SemanticDigest != binding.SemanticDigest || row.Binding.ConsumerEntryPoint != binding.ConsumerEntryPoint || binding.OutputAddress != embeddedOutputAddress || binding.OutputDigest != digest(outputRaw) || binding.OutputBytes != len(outputRaw) || binding.OutputRowDigest != rowDigest {
+			return receiptBoundaryFailure("BINDING_OUTPUT_ROW_TRIPLE_MISMATCH")
+		}
+		relation := expectedRelations[binding.OutputRowAddress]
+		if relation.SemanticDigest != binding.SemanticDigest {
+			return receiptBoundaryFailure("BINDING_SEMANTIC_DIGEST_MISMATCH")
+		}
+		addressMismatch := relation.MetricOccurrenceAddress != binding.MetricOccurrenceAddress
+		digestMismatch := relation.MetricOccurrenceDigest != binding.MetricOccurrenceDigest
+		if addressMismatch || digestMismatch {
+			switch {
+			case addressMismatch && !digestMismatch:
+				return receiptBoundaryFailure("BINDING_OCCURRENCE_ADDRESS_MISMATCH")
+			case !addressMismatch && digestMismatch:
+				return receiptBoundaryFailure("BINDING_OCCURRENCE_DIGEST_MISMATCH")
+			case occurrencePairBelongsToAnotherMetric(binding, expectedPairOwners):
+				return receiptBoundaryFailure("BINDING_OCCURRENCE_PAIR_MISMATCH")
+			default:
+				return receiptBoundaryFailure("BINDING_OCCURRENCE_RELATION_MISMATCH")
+			}
+		}
+		pair := metricOccurrencePairKey(binding.MetricOccurrenceAddress, binding.MetricOccurrenceDigest)
+		if _, exists := seenPairs[pair]; exists {
+			return receiptBoundaryFailure("DUPLICATE_RECEIPT_METRIC_OCCURRENCE_PAIR")
+		}
+		seenPairs[pair] = struct{}{}
+		triple := outputRowTripleKey(binding.OutputRowAddress, binding.OutputRowDigest, binding.MetricID)
+		if _, exists := seenTriples[triple]; exists {
+			return receiptBoundaryFailure("DUPLICATE_RECEIPT_OUTPUT_ROW_TRIPLE")
+		}
+		seenTriples[triple] = struct{}{}
+	}
+	if len(seenAddresses) != len(expected) || len(seenMetricIDs) != len(metricIDs) || len(seenPairs) != expectedReceiptBindingCount || len(seenTriples) != expectedReceiptBindingCount {
+		return receiptBoundaryFailure("RECEIPT_BINDING_INVENTORY_MISMATCH")
+	}
+	return nil
+}
+
+func receiptPredicateIDs(values []PredicateObservation) []string {
+	ids := make([]string, 0, len(values))
+	for _, value := range values {
+		ids = append(ids, value.ID)
+	}
+	return ids
+}
+
+func sameStringSet(left, right []string) bool {
+	leftCopy := append([]string(nil), left...)
+	rightCopy := append([]string(nil), right...)
+	sort.Strings(leftCopy)
+	sort.Strings(rightCopy)
+	if len(leftCopy) != len(rightCopy) {
+		return false
+	}
+	for index := range leftCopy {
+		if leftCopy[index] != rightCopy[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func hasDuplicateStrings(values []string) bool {
+	seen := map[string]struct{}{}
+	for _, value := range values {
+		if _, exists := seen[value]; exists {
+			return true
+		}
+		seen[value] = struct{}{}
+	}
+	return false
+}
+
+func metricOccurrencePairKey(address, digest string) string {
+	return address + "\x00" + digest
+}
+
+func outputRowTripleKey(address, digest, metricID string) string {
+	return address + "\x00" + digest + "\x00" + metricID
+}
+
+func occurrencePairBelongsToAnotherMetric(current BindingOutputReceipt, expectedPairOwners map[string]string) bool {
+	owner, ok := expectedPairOwners[metricOccurrencePairKey(current.MetricOccurrenceAddress, current.MetricOccurrenceDigest)]
+	return ok && owner != current.OutputRowAddress
 }
 
 func observedProjection(data []byte) (Projection, error) {

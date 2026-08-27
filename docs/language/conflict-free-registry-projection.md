@@ -76,10 +76,13 @@ metric occurrences, semantic relation digests, and output row addresses are
 each exactly 9. Each output receipt includes an exact row digest from the
 consumer's embedded raw output artifact.
 
-The conformance-consumer metric is decomposed into producer-package imports
-(0/1 PASS), raw-source reconstruction (1/1 PASS), separate executable
-(1/1 PASS), and algorithmic independence (0/1 UNKNOWN). Separate processes do
-not by themselves prove algorithmic diversity.
+The conformance-consumer metric is decomposed into producer dependency
+absence (1/1 PASS), observed producer import count (0/0 PASS), raw-source
+reconstruction (1/1 PASS), separate executable (1/1 PASS), and algorithmic
+independence (0/1 UNKNOWN). Dependency absence is computed from the complete
+module-aware `go list -deps` closure, whose package inventory bytes and digest
+are retained with the producer target address and digest. Separate processes
+do not by themselves prove algorithmic diversity.
 
 ## Meaning gates
 
@@ -101,6 +104,11 @@ the uploaded evidence artifact. Repository tracked/untracked path-plus-content s
 before and after the complete proof. Net equality is reported as
 `NET_STATE_EQUAL`; transient mutation and mutation authority remain `UNKNOWN`
 unless separately observed.
+
+Receipt corruption negatives are sent to the separate consumer
+`-verify-receipt` executable; their observed exit status and stdout/stderr
+digests are recorded. No receipt-boundary failure uses a synthesized exit
+code.
 
 `FOUNDATION`, `COHERENCE`, and `REGRESSION` are selected from every local
 manifest and each strategy gates its own evidence. CI uses Go 1.27.0 and owns

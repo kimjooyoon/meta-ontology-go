@@ -18,12 +18,14 @@ type independentReceipt struct {
 	Schema                     string                      `json:"schema"`
 	Decision                   string                      `json:"decision"`
 	ProjectionDigest           string                      `json:"projection_digest"`
+	ManifestInventory          consumerOutputArtifact      `json:"manifest_inventory"`
 	DenominatorReconciliations []DenominatorReconciliation `json:"denominator_reconciliations"`
 	Predicates                 []PredicateObservation      `json:"predicates"`
 	OutputArtifact             consumerOutputArtifact      `json:"output_artifact"`
 	BindingOutputReceipts      []BindingOutputReceipt      `json:"binding_output_receipts"`
 	outputRaw                  []byte
 	rawReceipt                 []byte
+	process                    ProcessObservation
 }
 
 type consumerOutputArtifact struct {
@@ -76,10 +78,11 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	if diagnostic != nil {
 		return Evidence{}, diagnosticError(diagnostic)
 	}
-	conformance, positivePredicates, consumerOutput, bindingReceipts, err := runIndependentConsumer(root)
+	conformance, positivePredicates, consumerOutput, bindingReceipts, process, err := runIndependentConsumer(root)
 	if err != nil {
 		return Evidence{}, err
 	}
+	dependencyAbsence, importCount, dependencyGraph := producerDependencyMetrics(root)
 	fixture, err := measureFixture(root)
 	if err != nil {
 		return Evidence{}, err
@@ -90,9 +93,10 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	}
 	sort.Strings(baseIDs)
 	metrics := integrationMetrics(len(loaded), baseline.Observed, len(fixture.Changed), conformance, countUnequalSourceDigests(fixture.SourceDigests))
-	metrics.ProducerPackageImports = producerPackageImportMetric(root)
-	metrics.RawSourceReconstruction = contextualRatioMetric(conformance, 1, "COHERENCE", "RAW_SOURCE_RECONSTRUCTION", "CONSUMER_REBUILT_FROM_RAW_MANIFESTS")
-	metrics.SeparateExecutable = contextualRatioMetric(conformance, 1, "COHERENCE", "SEPARATE_EXECUTABLE", "INDEPENDENT_CONSUMER_PROCESS_EXECUTED")
+	metrics.ProducerDependencyAbsence = dependencyAbsence
+	metrics.ObservedProducerImportCount = importCount
+	metrics.RawSourceReconstruction = rawSourceReconstructionMetric(consumerOutput)
+	metrics.SeparateExecutable = separateExecutableMetric(process)
 	metrics.AlgorithmicIndependence = unknownRatioMetric("COHERENCE", "ALGORITHMIC_INDEPENDENCE", "ALGORITHM_DIFFERENCE_NOT_OBSERVED")
 	evidence := Evidence{
 		Schema: evidenceSchema, Decision: "PASS", Reason: "MANUAL_SOURCE_REGISTRATION_EDIT_FREE_PROJECTION_PROVEN",
@@ -106,6 +110,7 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 		UseCaseReceipt:      observeUseCaseReceipt(root),
 		GeneratedOutputs:    observedOutputs(outputDir), FixtureGeneratedOutputs: fixture.Outputs,
 		ConsumerOutputArtifact: consumerOutput, BindingOutputReceipts: bindingReceipts,
+		IndependentConsumerProcess: process, DependencyGraph: dependencyGraph,
 	}
 	evidence.ProjectionReplay = projectionReplay(root, outputDir, loaded, baseOutputs)
 	evidence.ManifestOrderInvariant = manifestOrderInvariant(root, outputDir, loaded, baseOutputs)
@@ -114,6 +119,7 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	evidence.CommentInvariant = commentInvariant(root, outputDir, loaded, baseOutputs)
 	evidence.CommentPositionInvariant = commentPositionInvariant(root, loaded)
 	evidence.NewConceptFixture = passedScenario("new-local-concept-fixture", fmt.Sprintf("temporary local manifest changed %d/%d generated outputs and no existing source bytes", len(fixture.Changed), len(baseOutputs)))
+	evidence.DependencyGraphNegativeFixture = dependencyGraphNegativeFixture(root)
 	evidence.FailureContracts = failureContracts(root, loaded, baseOutputs)
 	evidence.DenominatorMismatch, evidence.StaleDenominatorReceipt = denominatorMismatchContract(root, loaded)
 	negativePredicates, err := independentFailurePredicates(root)
@@ -350,17 +356,18 @@ func measureFixture(root string) (fixtureMeasurement, error) {
 	return fixtureMeasurement{SourceDigests: comparisons, Changed: changedOutputNames(baseOutputs, afterOutputs), Outputs: outputMetadata(tempRoot, afterOutputDir, afterOutputs), Consumer: consumer}, nil
 }
 
-func runIndependentConsumer(root string) (int, []PredicateObservation, ObservedOutputArtifact, []BindingOutputReceipt, error) {
+func runIndependentConsumer(root string) (int, []PredicateObservation, ObservedOutputArtifact, []BindingOutputReceipt, ProcessObservation, error) {
 	receipt, err := runIndependentConsumerAt(root)
 	if err != nil {
-		return 0, nil, ObservedOutputArtifact{}, nil, err
+		return 0, nil, ObservedOutputArtifact{}, nil, ProcessObservation{}, err
 	}
+	output := ObservedOutputArtifact{ObservedPath: embeddedOutputAddress, Digest: receipt.OutputArtifact.Digest, Bytes: receipt.OutputArtifact.Bytes, RawBytes: string(receipt.outputRaw), ManifestInventory: consumerOutputArtifact{Path: receipt.ManifestInventory.Path, Digest: receipt.ManifestInventory.Digest, Bytes: receipt.ManifestInventory.Bytes}}
 	for _, predicate := range receipt.Predicates {
 		if predicate.ID == "independent-conformance-consumer" && predicate.Observed {
-			return 1, receipt.Predicates, ObservedOutputArtifact{ObservedPath: embeddedOutputAddress, Digest: receipt.OutputArtifact.Digest, Bytes: receipt.OutputArtifact.Bytes, RawBytes: string(receipt.outputRaw)}, receipt.BindingOutputReceipts, nil
+			return 1, receipt.Predicates, output, receipt.BindingOutputReceipts, receipt.process, nil
 		}
 	}
-	return 0, receipt.Predicates, ObservedOutputArtifact{ObservedPath: embeddedOutputAddress, Digest: receipt.OutputArtifact.Digest, Bytes: receipt.OutputArtifact.Bytes, RawBytes: string(receipt.outputRaw)}, receipt.BindingOutputReceipts, nil
+	return 0, receipt.Predicates, output, receipt.BindingOutputReceipts, receipt.process, nil
 }
 
 func runIndependentConsumerAt(root string) (independentReceipt, error) {
@@ -380,8 +387,10 @@ func runIndependentConsumerAt(root string) (independentReceipt, error) {
 	defer os.Remove(receiptPath)
 	command := exec.Command("go", "run", "./scripts/conflict-free-registry-projection-consumer", "-root", root, "-output", outputPath, "-receipt", receiptPath, "-check-generated")
 	command.Dir = root
-	if data, err := command.CombinedOutput(); err != nil {
-		return independentReceipt{}, fmt.Errorf("independent consumer failed: %s", strings.TrimSpace(string(data)))
+	commandResult := runCommand(command)
+	process := processObservation(command, commandResult)
+	if commandResult.ExitCode != 0 {
+		return independentReceipt{}, fmt.Errorf("independent consumer failed: %s", strings.TrimSpace(string(append(commandResult.Stdout, commandResult.Stderr...))))
 	}
 	outputRaw, err := os.ReadFile(outputPath)
 	if err != nil {
@@ -400,7 +409,133 @@ func runIndependentConsumerAt(root string) (independentReceipt, error) {
 	}
 	receipt.outputRaw = outputRaw
 	receipt.rawReceipt = raw
+	receipt.process = process
 	return receipt, nil
+}
+
+func processObservation(command *exec.Cmd, result consumerCommandResult) ProcessObservation {
+	commandAddress := "process://independent-consumer/" + strings.Join(command.Args, " ")
+	return ProcessObservation{Address: commandAddress, ExitCode: result.ExitCode, StdoutBytes: len(result.Stdout), StdoutDigest: digestBytes(result.Stdout), StderrBytes: len(result.Stderr), StderrDigest: digestBytes(result.Stderr), CommandDigest: digestBytes([]byte(strings.Join(command.Args, "\x00")))}
+}
+
+func rawSourceReconstructionMetric(output ObservedOutputArtifact) RatioMetric {
+	valid := output.ManifestInventory.Path == "raw://manifest-inventory" && output.ManifestInventory.Bytes > 0 && output.ManifestInventory.Digest != "" && output.ObservedPath == embeddedOutputAddress && output.Digest != ""
+	metric := contextualRatioMetric(boolInt(valid), 1, "COHERENCE", "RAW_SOURCE_RECONSTRUCTION", "RAW_MANIFEST_INVENTORY_BOUND_TO_RECONSTRUCTED_PROJECTION")
+	metric.EvidenceAddress = "receipt://independent-consumer/raw-manifest-inventory-to-projection"
+	metric.EvidenceDigest = digestBytes([]byte(output.ManifestInventory.Path + "|" + output.ManifestInventory.Digest + "|" + fmt.Sprint(output.ManifestInventory.Bytes) + "|" + output.ObservedPath + "|" + output.Digest + "|" + fmt.Sprint(output.Bytes)))
+	return metric
+}
+
+func separateExecutableMetric(process ProcessObservation) RatioMetric {
+	valid := process.Address != "" && process.ExitCode == 0 && process.CommandDigest != "" && process.StdoutDigest != "" && process.StderrDigest != ""
+	metric := contextualRatioMetric(boolInt(valid), 1, "COHERENCE", "SEPARATE_EXECUTABLE", "ACTUAL_PROCESS_INVOCATION_EXIT_STDOUT_STDERR_OBSERVED")
+	metric.EvidenceAddress = process.Address
+	metric.EvidenceDigest = digestBytes([]byte(process.CommandDigest + "|" + process.StdoutDigest + "|" + process.StderrDigest + "|" + fmt.Sprint(process.ExitCode)))
+	return metric
+}
+
+type goListPackage struct {
+	ImportPath string `json:"ImportPath"`
+	Error      any    `json:"Error"`
+}
+
+func producerDependencyMetrics(root string) (RatioMetric, RatioMetric, DependencyGraphReceipt) {
+	module := modulePath(root)
+	producerTarget := module + "/scripts/conflict-free-registry-projection"
+	command := exec.Command("go", "list", "-deps", "-json", "./scripts/conflict-free-registry-projection-consumer")
+	command.Dir = root
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	err := command.Run()
+	exitCode := -1
+	if command.ProcessState != nil {
+		exitCode = command.ProcessState.ExitCode()
+	}
+	packages := []string{}
+	parseErr := error(nil)
+	decoder := json.NewDecoder(bytes.NewReader(stdout.Bytes()))
+	for {
+		var item goListPackage
+		decodeErr := decoder.Decode(&item)
+		if decodeErr == io.EOF {
+			break
+		}
+		if decodeErr != nil || item.Error != nil || item.ImportPath == "" {
+			parseErr = fmt.Errorf("invalid go list dependency inventory")
+			break
+		}
+		packages = append(packages, item.ImportPath)
+	}
+	sort.Strings(packages)
+	address := "process://go-list-deps/consumer/stdout"
+	receipt := DependencyGraphReceipt{InventoryAddress: address, InventoryBytes: len(stdout.Bytes()), InventoryDigest: digestBytes(stdout.Bytes()), InventoryRaw: stdout.String(), Packages: packages, ProducerTargetAddress: producerTarget, ProducerTargetDigest: digestBytes([]byte(producerTarget)), ExitCode: exitCode, StdoutDigest: digestBytes(stdout.Bytes()), StderrDigest: digestBytes(stderr.Bytes()), Stage: "COHERENCE", Step: "TRANSITIVE_IMPORT_GRAPH"}
+	if err != nil || parseErr != nil {
+		receipt.Decision, receipt.Reason = "UNKNOWN", "TRANSITIVE_IMPORT_GRAPH_UNAVAILABLE"
+		return unknownRatioMetric("COHERENCE", "PRODUCER_DEPENDENCY_ABSENCE", receipt.Reason), unknownRatioMetric("COHERENCE", "OBSERVED_PRODUCER_IMPORT_COUNT", receipt.Reason), receipt
+	}
+	observed := 0
+	for _, packagePath := range packages {
+		if packagePath == producerTarget {
+			observed++
+		}
+	}
+	receipt.Decision = "PASS"
+	receipt.Reason = "TRANSITIVE_PRODUCER_PACKAGE_ABSENCE_OBSERVED"
+	if observed > 0 {
+		receipt.Reason = "TRANSITIVE_PRODUCER_DEPENDENCY_OBSERVED"
+	}
+	receipt.ProducerTargetAddress = producerTarget
+	absence := contextualRatioMetric(boolInt(observed == 0), 1, "COHERENCE", "PRODUCER_DEPENDENCY_ABSENCE", "TRANSITIVE_IMPORT_GRAPH_RECONSTRUCTED")
+	absence.EvidenceAddress, absence.EvidenceDigest = address, receipt.InventoryDigest
+	importCount := RatioMetric{Numerator: observed, Denominator: 0, BasisPoints: 0, Decision: "PASS", Stage: "COHERENCE", Step: "OBSERVED_PRODUCER_IMPORT_COUNT", Reason: "TRANSITIVE_IMPORT_GRAPH_COUNT_OBSERVED", EvidenceAddress: address, EvidenceDigest: receipt.InventoryDigest}
+	if observed > 0 {
+		importCount.Decision = "FAIL_CLOSED"
+	}
+	return absence, importCount, receipt
+}
+
+func modulePath(root string) string {
+	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
+	if err != nil {
+		return "UNKNOWN_MODULE"
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 && fields[0] == "module" {
+			return fields[1]
+		}
+	}
+	return "UNKNOWN_MODULE"
+}
+
+func dependencyGraphNegativeFixture(_ string) ScenarioResult {
+	temp, err := os.MkdirTemp("", "gooo-transitive-dependency-negative-")
+	if err != nil {
+		return failedScenario("transitive-helper-import", "PASS", err.Error())
+	}
+	defer os.RemoveAll(temp)
+	files := map[string]string{
+		"go.mod": "module example.test\n\ngo 1.27.0\n",
+		"scripts/conflict-free-registry-projection-consumer/main.go": "package main\n\nimport _ \"example.test/helper\"\n\nfunc main() {}\n",
+		"helper/helper.go": "package helper\n\nimport _ \"example.test/scripts/conflict-free-registry-projection\"\n",
+		"scripts/conflict-free-registry-projection/producer.go": "package producer\n\nconst Value = 1\n",
+	}
+	for relative, data := range files {
+		path := filepath.Join(temp, filepath.FromSlash(relative))
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return failedScenario("transitive-helper-import", "PASS", err.Error())
+		}
+		if err := os.WriteFile(path, []byte(data), 0o644); err != nil {
+			return failedScenario("transitive-helper-import", "PASS", err.Error())
+		}
+	}
+	absence, _, receipt := producerDependencyMetrics(temp)
+	target := receipt.ProducerTargetAddress
+	if absence.Decision != "FAIL_CLOSED" || absence.Numerator != 0 || receipt.Decision != "PASS" || !contains(receipt.Packages, target) {
+		return failedScenario("transitive-helper-import", "PASS", "transitive helper import was not observed in the dependency closure")
+	}
+	return passedScenario("transitive-helper-import", "go list -deps observed the producer package only through an imported helper and failed the absence predicate")
 }
 
 const consumerReceiptSchema = "gooo/manual-source-registration-edit-free-registry-consumer-receipt/v1"
@@ -447,6 +582,10 @@ func validateIndependentReceipt(root string, receipt independentReceipt, outputR
 	if receipt.ProjectionDigest != digestBytes(outputRaw) {
 		return receiptBoundaryError("RECEIPT_PROJECTION_DIGEST_MISMATCH")
 	}
+	manifestInventory, err := rawManifestInventory(root)
+	if err != nil || receipt.ManifestInventory.Path != "raw://manifest-inventory" || receipt.ManifestInventory.Bytes != len(manifestInventory) || receipt.ManifestInventory.Digest != digestBytes(manifestInventory) {
+		return receiptBoundaryError("RECEIPT_MANIFEST_INVENTORY_MISMATCH")
+	}
 	if len(receipt.Predicates) != expectedConformancePredicateCount || !sameStringSet(predicateIDs(receipt.Predicates), expectedConformancePredicateIDs) || hasDuplicateStrings(predicateIDs(receipt.Predicates)) {
 		return receiptBoundaryError("RECEIPT_PREDICATE_INVENTORY_MISMATCH")
 	}
@@ -459,6 +598,35 @@ func validateIndependentReceipt(root string, receipt independentReceipt, outputR
 		return receiptBoundaryError("RECEIPT_OUTPUT_ARTIFACT_MISMATCH")
 	}
 	return validateObservedBindingReceipts(root, receipt.BindingOutputReceipts, outputRaw)
+}
+
+func rawManifestInventory(root string) ([]byte, error) {
+	paths := []string{}
+	if err := filepath.WalkDir(filepath.Join(root, "examples"), func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if !entry.IsDir() && entry.Name() == "concept.manifest.json" {
+			paths = append(paths, path)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	sort.Strings(paths)
+	inventory := make([]ResourceSnapshot, 0, len(paths))
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		relative, err := filepath.Rel(root, path)
+		if err != nil {
+			return nil, err
+		}
+		inventory = append(inventory, ResourceSnapshot{Path: filepath.ToSlash(relative), Role: "MANIFEST", Bytes: len(data), Digest: digestBytes(data)})
+	}
+	return json.Marshal(inventory)
 }
 
 func validateObservedBindingReceipts(root string, receipts []BindingOutputReceipt, outputRaw []byte) error {
@@ -887,26 +1055,25 @@ func receiptBoundaryFailurePredicates(root string) ([]PredicateObservation, erro
 			return nil, err
 		}
 		receipt, decodeErr := decodeIndependentReceipt(raw)
-		var diagnostic *Diagnostic
+		var producerDiagnostic *Diagnostic
 		if decodeErr != nil {
-			diagnostic = receiptBoundaryDiagnostic(decodeErr)
+			producerDiagnostic = receiptBoundaryDiagnostic(decodeErr)
 		} else if validateErr := validateIndependentReceipt(root, receipt, base.outputRaw); validateErr != nil {
-			diagnostic = receiptBoundaryDiagnostic(validateErr)
+			producerDiagnostic = receiptBoundaryDiagnostic(validateErr)
 		}
-		if diagnostic == nil {
-			return nil, fmt.Errorf("receipt corruption was accepted: %s", mutation.id)
+		if producerDiagnostic == nil || producerDiagnostic.Reason != mutation.reason {
+			return nil, fmt.Errorf("producer receipt reviewer did not reject %s with %s", mutation.id, mutation.reason)
 		}
-		diagnosticJSON, marshalErr := json.Marshal(diagnostic)
-		if marshalErr != nil {
-			return nil, marshalErr
+		item := consumerFailureCase{id: mutation.id, stage: "FOUNDATION", step: "RECEIPT_BOUNDARY", reason: mutation.reason}
+		result := runReceiptVerifier(root, base.outputRaw, raw)
+		if !consumerFailureAccepted(result, item) {
+			return nil, fmt.Errorf("receipt verifier did not reject %s with %s", mutation.id, mutation.reason)
 		}
-		item := consumerFailureCase{id: mutation.id, stage: diagnostic.Stage, step: diagnostic.Step, reason: mutation.reason}
 		artifact := RawInputArtifact{Path: "embedded://receipt-boundary/" + mutation.id + ".json", Bytes: raw, Digest: digestBytes(raw)}
 		rawInput, marshalErr := json.Marshal([]RawInputArtifact{artifact})
 		if marshalErr != nil {
 			return nil, marshalErr
 		}
-		result := consumerCommandResult{ExitCode: 1, DiagnosticJSON: diagnosticJSON, Diagnostic: diagnostic}
 		observations = append(observations, failurePredicateObservation(item, result, rawInput, []RawInputArtifact{artifact}))
 	}
 	return observations, nil
@@ -918,6 +1085,25 @@ func cloneIndependentReceipt(receipt independentReceipt) (independentReceipt, er
 		return independentReceipt{}, err
 	}
 	return decodeIndependentReceipt(raw)
+}
+
+func runReceiptVerifier(root string, outputRaw, receiptRaw []byte) consumerCommandResult {
+	temp, err := os.MkdirTemp("", "gooo-receipt-verifier-")
+	if err != nil {
+		return consumerCommandResult{ExitCode: -1}
+	}
+	defer os.RemoveAll(temp)
+	outputPath := filepath.Join(temp, "consumer-output.json")
+	receiptPath := filepath.Join(temp, "consumer-receipt.json")
+	if err := os.WriteFile(outputPath, outputRaw, 0o644); err != nil {
+		return consumerCommandResult{ExitCode: -1}
+	}
+	if err := os.WriteFile(receiptPath, receiptRaw, 0o644); err != nil {
+		return consumerCommandResult{ExitCode: -1}
+	}
+	command := exec.Command("go", "run", "./scripts/conflict-free-registry-projection-consumer", "-root", root, "-output", outputPath, "-receipt", receiptPath, "-verify-receipt")
+	command.Dir = root
+	return runCommand(command)
 }
 
 func runConsumerFailureCommand(repoRoot, tempRoot string) consumerCommandResult {
@@ -1003,7 +1189,7 @@ func failurePredicateObservation(item consumerFailureCase, result consumerComman
 	rawDigest := digestBytes(rawInput)
 	address := "evidence://consumer-failure/" + item.id
 	targetDigest := digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest + fmt.Sprint(result.ExitCode)))
-	return PredicateObservation{ID: item.id, ObservedPredicate: "independent consumer rejects " + item.reason + " with nonzero exit and exact diagnostic fields", TargetAddress: address, TargetDigest: targetDigest, Observed: truth == "TRUE", Decision: decision, PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: rawDigest, RawInputBytes: string(rawInput), RawInputArtifacts: rawArtifacts, ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
+	return PredicateObservation{ID: item.id, ObservedPredicate: "independent consumer rejects " + item.reason + " with nonzero exit and exact diagnostic fields", TargetAddress: address, TargetDigest: targetDigest, Observed: truth == "TRUE", Decision: decision, PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, StdoutBytes: len(result.Stdout), StdoutDigest: digestBytes(result.Stdout), StderrBytes: len(result.Stderr), StderrDigest: digestBytes(result.Stderr), RawInputDigest: rawDigest, RawInputBytes: string(rawInput), RawInputArtifacts: rawArtifacts, ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
 }
 
 func successExitCounterexample() PredicateObservation {
@@ -1024,7 +1210,7 @@ func successExitCounterexample() PredicateObservation {
 	if observed {
 		truth = "TRUE"
 	}
-	return PredicateObservation{ID: "classifier-success-exit-counterexample", ObservedPredicate: "the failure classifier rejects diagnostic JSON with a success exit as a failure observation", TargetAddress: address, TargetDigest: digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest)), Observed: observed, Decision: "PASS", PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, RawInputDigest: digestBytes(rawInput), RawInputBytes: string(rawInput), RawInputArtifacts: rawArtifacts, ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
+	return PredicateObservation{ID: "classifier-success-exit-counterexample", ObservedPredicate: "the failure classifier rejects diagnostic JSON with a success exit as a failure observation", TargetAddress: address, TargetDigest: digestBytes([]byte(address + "|" + rawDigest + "|" + diagnosticDigest)), Observed: observed, Decision: "PASS", PredicateTruth: truth, ExitCode: result.ExitCode, DiagnosticJSON: string(result.DiagnosticJSON), DiagnosticDigest: diagnosticDigest, StdoutBytes: len(result.Stdout), StdoutDigest: digestBytes(result.Stdout), StderrBytes: len(result.Stderr), StderrDigest: digestBytes(result.Stderr), RawInputDigest: digestBytes(rawInput), RawInputBytes: string(rawInput), RawInputArtifacts: rawArtifacts, ContentDigest: diagnosticDigest, Stage: stage, Step: step, Reason: reason}
 }
 
 func consumerFailureAccepted(result consumerCommandResult, expected consumerFailureCase) bool {
@@ -1111,7 +1297,7 @@ func allProofsPass(evidence Evidence) bool {
 	if len(expectedConformancePredicateIDs) != expectedConformancePredicateCount || hasDuplicateStrings(expectedConformancePredicateIDs) || len(expectedFailurePredicateIDs) != expectedFailurePredicateCount || hasDuplicateStrings(expectedFailurePredicateIDs) {
 		return false
 	}
-	for _, scenario := range []ScenarioResult{evidence.ProjectionReplay, evidence.ManifestOrderInvariant, evidence.SemanticCausality, evidence.SemanticMetricChange, evidence.CommentInvariant, evidence.CommentPositionInvariant, evidence.NewConceptFixture, evidence.DenominatorMismatch} {
+	for _, scenario := range []ScenarioResult{evidence.ProjectionReplay, evidence.ManifestOrderInvariant, evidence.SemanticCausality, evidence.SemanticMetricChange, evidence.CommentInvariant, evidence.CommentPositionInvariant, evidence.NewConceptFixture, evidence.DependencyGraphNegativeFixture, evidence.DenominatorMismatch} {
 		if scenario.Decision != "PASS" {
 			return false
 		}
@@ -1136,11 +1322,19 @@ func allProofsPass(evidence Evidence) bool {
 	if evidence.ClaimTransitions.Denominator != expectedClaimCount || evidence.FailurePredicates.Denominator != expectedFailurePredicateCount || evidence.ProvenancePredicates.Denominator != expectedFailurePredicateCount {
 		return false
 	}
-	if len(evidence.BindingOutputReceipts) != expectedBindingReceiptCount || evidence.MetricOccurrences.Numerator != expectedBindingReceiptCount || evidence.MetricOccurrences.Denominator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Numerator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Denominator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Numerator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Denominator != expectedBindingReceiptCount || evidence.ConsumerOutputArtifact.ObservedPath != embeddedOutputAddress || evidence.ConsumerOutputArtifact.Bytes <= 0 || len(evidence.ConsumerOutputArtifact.RawBytes) != evidence.ConsumerOutputArtifact.Bytes || evidence.ConsumerOutputArtifact.Digest != digestBytes([]byte(evidence.ConsumerOutputArtifact.RawBytes)) {
+	if len(evidence.BindingOutputReceipts) != expectedBindingReceiptCount || evidence.MetricOccurrences.Numerator != expectedBindingReceiptCount || evidence.MetricOccurrences.Denominator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Numerator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Denominator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Numerator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Denominator != expectedBindingReceiptCount || evidence.ConsumerOutputArtifact.ObservedPath != embeddedOutputAddress || evidence.ConsumerOutputArtifact.Bytes <= 0 || len(evidence.ConsumerOutputArtifact.RawBytes) != evidence.ConsumerOutputArtifact.Bytes || evidence.ConsumerOutputArtifact.Digest != digestBytes([]byte(evidence.ConsumerOutputArtifact.RawBytes)) || evidence.ConsumerOutputArtifact.ManifestInventory.Path != "raw://manifest-inventory" || evidence.ConsumerOutputArtifact.ManifestInventory.Bytes <= 0 || evidence.ConsumerOutputArtifact.ManifestInventory.Digest == "" {
 		return false
 	}
-	if evidence.Metrics.ProducerPackageImports.Numerator != 0 || evidence.Metrics.ProducerPackageImports.Denominator != 1 || evidence.Metrics.ProducerPackageImports.Decision != "PASS" || evidence.Metrics.RawSourceReconstruction.Numerator != 1 || evidence.Metrics.RawSourceReconstruction.Denominator != 1 || evidence.Metrics.RawSourceReconstruction.Decision != "PASS" || evidence.Metrics.SeparateExecutable.Numerator != 1 || evidence.Metrics.SeparateExecutable.Denominator != 1 || evidence.Metrics.SeparateExecutable.Decision != "PASS" || evidence.Metrics.AlgorithmicIndependence.Numerator != 0 || evidence.Metrics.AlgorithmicIndependence.Denominator != 1 || evidence.Metrics.AlgorithmicIndependence.Decision != "UNKNOWN" {
+	if evidence.Metrics.ProducerDependencyAbsence.Numerator != 1 || evidence.Metrics.ProducerDependencyAbsence.Denominator != 1 || evidence.Metrics.ProducerDependencyAbsence.Decision != "PASS" || evidence.Metrics.ProducerDependencyAbsence.EvidenceAddress == "" || evidence.Metrics.ProducerDependencyAbsence.EvidenceDigest == "" || evidence.Metrics.ObservedProducerImportCount.Numerator != 0 || evidence.Metrics.ObservedProducerImportCount.Denominator != 0 || evidence.Metrics.ObservedProducerImportCount.Decision != "PASS" || evidence.Metrics.ObservedProducerImportCount.EvidenceAddress == "" || evidence.Metrics.ObservedProducerImportCount.EvidenceDigest == "" || evidence.Metrics.RawSourceReconstruction.Numerator != 1 || evidence.Metrics.RawSourceReconstruction.Denominator != 1 || evidence.Metrics.RawSourceReconstruction.Decision != "PASS" || evidence.Metrics.RawSourceReconstruction.EvidenceAddress == "" || evidence.Metrics.RawSourceReconstruction.EvidenceDigest == "" || evidence.Metrics.SeparateExecutable.Numerator != 1 || evidence.Metrics.SeparateExecutable.Denominator != 1 || evidence.Metrics.SeparateExecutable.Decision != "PASS" || evidence.Metrics.SeparateExecutable.EvidenceAddress == "" || evidence.Metrics.SeparateExecutable.EvidenceDigest == "" || evidence.Metrics.AlgorithmicIndependence.Numerator != 0 || evidence.Metrics.AlgorithmicIndependence.Denominator != 1 || evidence.Metrics.AlgorithmicIndependence.Decision != "UNKNOWN" {
 		return false
+	}
+	if evidence.IndependentConsumerProcess.ExitCode != 0 || evidence.IndependentConsumerProcess.Address == "" || evidence.IndependentConsumerProcess.CommandDigest == "" || evidence.IndependentConsumerProcess.StdoutDigest == "" || evidence.IndependentConsumerProcess.StderrDigest == "" || evidence.DependencyGraph.Decision != "PASS" || evidence.DependencyGraph.ExitCode != 0 || evidence.DependencyGraph.InventoryBytes <= 0 || evidence.DependencyGraph.InventoryDigest == "" || evidence.DependencyGraph.ProducerTargetAddress == "" || evidence.DependencyGraph.ProducerTargetDigest == "" {
+		return false
+	}
+	for _, packagePath := range evidence.DependencyGraph.Packages {
+		if packagePath == evidence.DependencyGraph.ProducerTargetAddress {
+			return false
+		}
 	}
 	for _, scenario := range evidence.FailureContracts {
 		if scenario.Decision != "PASS" || scenario.Diagnostic == nil {
