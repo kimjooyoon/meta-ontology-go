@@ -23,8 +23,9 @@ const claimTotal, edgeTotal, initialTransitions = 6, 8, 12
 const producerID = "gooo://meta/claim-dependency/producer/v3"
 const consumerID = "gooo://meta/claim-dependency/independent-judge/v3"
 const operation, proof = "classify-claim-state-causality", "COHERENCE"
-const evidenceProcedure = "RAW_ARTIFACT_OBSERVATION_BINDING_V2"
-const observationSchema = "gooo.meta.claim-dependency-observation/v1"
+const evidenceProcedure = "RAW_ARTIFACT_OBSERVATION_BINDING_V3"
+const observationSchema = "gooo.meta.claim-dependency-observation/v2"
+const observationBundleSchema = "gooo.meta.claim-dependency-observation-bundle/v1"
 
 type edgeKind string
 
@@ -41,6 +42,7 @@ const (
 	unknown               predicate = "UNKNOWN"
 	accepted              predicate = "EVIDENCE_ACCEPTED"
 	explicitContradiction predicate = "EXPLICIT_CONTRADICTION"
+	failureAntecedent     predicate = "FAILURE_ANTECEDENT_OBSERVED"
 )
 
 type coordinate struct {
@@ -54,20 +56,40 @@ type target struct {
 	Artifact string   `json:"artifact"`
 }
 type observationReceipt struct {
-	Schema                    string     `json:"schema"`
-	Provider                  string     `json:"provider"`
-	TargetPath                string     `json:"target_path"`
-	Target                    target     `json:"target"`
-	TargetBytesDigest         string     `json:"target_bytes_digest"`
-	Procedure                 string     `json:"procedure"`
-	ProcedureDigest           string     `json:"procedure_digest"`
-	Output                    string     `json:"output"`
-	OutputDigest              string     `json:"output_digest"`
-	ExitCode                  int        `json:"exit_code"`
-	Result                    string     `json:"result"`
-	FailureAntecedentObserved bool       `json:"failure_antecedent_observed"`
-	Coordinate                coordinate `json:"coordinate"`
-	Digest                    string     `json:"digest"`
+	Schema            string     `json:"schema"`
+	Provider          string     `json:"provider"`
+	Binding           string     `json:"binding"`
+	ClaimID           string     `json:"claim_id,omitempty"`
+	PropositionDigest string     `json:"proposition_digest,omitempty"`
+	EdgeID            string     `json:"edge_id,omitempty"`
+	FromClaimID       string     `json:"from_claim_id,omitempty"`
+	ToClaimID         string     `json:"to_claim_id,omitempty"`
+	EdgeKind          edgeKind   `json:"edge_kind,omitempty"`
+	Target            target     `json:"target"`
+	TargetPath        string     `json:"target_path"`
+	TargetBytesDigest string     `json:"target_bytes_digest"`
+	ExpectedPredicate predicate  `json:"expected_predicate"`
+	ExpectedValue     string     `json:"expected_value"`
+	ObservedPredicate predicate  `json:"observed_predicate"`
+	ObservedValue     string     `json:"observed_value"`
+	ComparisonResult  string     `json:"comparison_result"`
+	Procedure         string     `json:"procedure"`
+	ProcedureDigest   string     `json:"procedure_digest"`
+	Output            string     `json:"output"`
+	OutputDigest      string     `json:"output_digest"`
+	Coordinate        coordinate `json:"coordinate"`
+	Digest            string     `json:"digest"`
+}
+type observationBundle struct {
+	Schema              string               `json:"schema"`
+	Provider            string               `json:"provider"`
+	SourcePath          string               `json:"source_path"`
+	SourceDigest        string               `json:"source_digest"`
+	ArtifactPath        string               `json:"artifact_path"`
+	ArtifactBytesDigest string               `json:"artifact_bytes_digest"`
+	Profile             string               `json:"profile"`
+	Observations        []observationReceipt `json:"observations"`
+	Digest              string               `json:"digest"`
 }
 type claim struct {
 	Ordinal           int        `json:"ordinal"`
@@ -139,23 +161,24 @@ type snapshot struct {
 	Coordinate       coordinate `json:"coordinate"`
 }
 type evidenceReceipt struct {
-	Schema              string             `json:"schema"`
-	Provider            string             `json:"provider"`
-	ArtifactPath        string             `json:"artifact_path"`
-	ArtifactBytesDigest string             `json:"artifact_bytes_digest"`
-	Operation           string             `json:"operation"`
-	RequestStatus       string             `json:"request_status"`
-	Procedure           string             `json:"procedure"`
-	ObservationPath     string             `json:"observation_path,omitempty"`
-	Observation         observationReceipt `json:"observation"`
-	ObservedPredicate   predicate          `json:"observed_predicate"`
-	ObservedValue       string             `json:"observed_value"`
-	Status              string             `json:"status"`
-	Coordinate          coordinate         `json:"coordinate"`
-	Claims              []evidenceClaim    `json:"claims"`
-	Capability          capability         `json:"capability"`
-	Snapshot            snapshot           `json:"snapshot"`
-	Digest              string             `json:"digest"`
+	Schema                  string               `json:"schema"`
+	Provider                string               `json:"provider"`
+	ArtifactPath            string               `json:"artifact_path"`
+	ArtifactBytesDigest     string               `json:"artifact_bytes_digest"`
+	Operation               string               `json:"operation"`
+	RequestStatus           string               `json:"request_status"`
+	Procedure               string               `json:"procedure"`
+	ObservationPath         string               `json:"observation_path,omitempty"`
+	ObservationBundleDigest string               `json:"observation_bundle_digest,omitempty"`
+	Observations            []observationReceipt `json:"observations"`
+	ObservedPredicate       predicate            `json:"observed_predicate"`
+	ObservedValue           string               `json:"observed_value"`
+	Status                  string               `json:"status"`
+	Coordinate              coordinate           `json:"coordinate"`
+	Claims                  []evidenceClaim      `json:"claims"`
+	Capability              capability           `json:"capability"`
+	Snapshot                snapshot             `json:"snapshot"`
+	Digest                  string               `json:"digest"`
 }
 type subject struct {
 	SourcePath          string     `json:"source_path"`
@@ -327,22 +350,6 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 	if digestBytes(artifact) != evidence.ArtifactBytesDigest {
 		return Judgment{}, fmt.Errorf("judge observed artifact bytes digest mismatch")
 	}
-	if evidence.Status == "CURRENT_EVIDENCE" {
-		if err := validateObservation(evidence.Observation, evidence.ArtifactPath, artifact); err != nil {
-			return Judgment{}, err
-		}
-		observationBytes, err := os.ReadFile(evidence.ObservationPath)
-		if err != nil {
-			return Judgment{}, fmt.Errorf("judge cannot re-observe target observation: %w", err)
-		}
-		var rawObservation observationReceipt
-		if err := json.Unmarshal(observationBytes, &rawObservation); err != nil {
-			return Judgment{}, fmt.Errorf("target observation re-observation decode: %w", err)
-		}
-		if !reflect.DeepEqual(rawObservation, evidence.Observation) {
-			return Judgment{}, fmt.Errorf("embedded target observation differs from raw observation")
-		}
-	}
 	artifactGraph, err := reconstruct(artifact, evidence.ArtifactPath)
 	if err != nil {
 		return Judgment{}, err
@@ -361,6 +368,19 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 		return Judgment{}, fmt.Errorf("receipt is not bound to raw evidence receipt")
 	}
 	sourceDigest := digestBytes(source)
+	if evidence.ObservationPath != "" {
+		data, err := os.ReadFile(evidence.ObservationPath)
+		if err != nil {
+			return Judgment{}, fmt.Errorf("judge cannot re-observe source-bound target bundle: %w", err)
+		}
+		var bundle observationBundle
+		if err := json.Unmarshal(data, &bundle); err != nil {
+			return Judgment{}, fmt.Errorf("source-bound target bundle decode: %w", err)
+		}
+		if bundle.SourcePath != sourcePath || bundle.SourceDigest != sourceDigest {
+			return Judgment{}, fmt.Errorf("target observation bundle is not bound to judge raw source")
+		}
+	}
 	if got.Subject.SourceDigest != sourceDigest || got.Subject.SourcePath != sourcePath || got.Subject.SemanticDigest != current.Graph.CanonicalIRDigest || got.Subject.Producer != producerID || got.Subject.Consumer != consumerID || got.Subject.MetaOperation != operation || got.Subject.ProofChoice != proof {
 		return Judgment{}, fmt.Errorf("receipt subject provenance is invalid")
 	}
@@ -648,12 +668,55 @@ func validateEvidence(value evidenceReceipt) error {
 	if capabilityDigest(value.Capability) != value.Capability.Digest {
 		return fmt.Errorf("capability digest invalid")
 	}
-	if value.Status == "UNKNOWN" {
-		if value.ObservedPredicate != unknown || value.ObservationPath != "" || !reflect.DeepEqual(value.Observation, observationReceipt{}) {
-			return fmt.Errorf("unknown evidence contains a current observation")
+	artifactBytes, err := os.ReadFile(value.ArtifactPath)
+	if err != nil {
+		return fmt.Errorf("judge cannot re-observe artifact: %w", err)
+	}
+	if digestBytes(artifactBytes) != value.ArtifactBytesDigest {
+		return fmt.Errorf("raw evidence artifact bytes digest changed")
+	}
+	artifact, err := reconstruct(artifactBytes, value.ArtifactPath)
+	if err != nil {
+		return fmt.Errorf("judge artifact reconstruction failed: %w", err)
+	}
+	observations := []observationReceipt(nil)
+	if value.ObservationPath != "" {
+		data, err := os.ReadFile(value.ObservationPath)
+		if err != nil {
+			return fmt.Errorf("judge cannot re-observe target bundle: %w", err)
 		}
-	} else if value.ObservationPath == "" {
-		return fmt.Errorf("current evidence has no raw target observation path")
+		var bundle observationBundle
+		if err := json.Unmarshal(data, &bundle); err != nil {
+			return fmt.Errorf("target observation bundle decode: %w", err)
+		}
+		if err := validateObservationBundle(bundle, value.ArtifactPath, artifactBytes, artifact.Graph); err != nil {
+			return err
+		}
+		if bundle.Digest != value.ObservationBundleDigest || !reflect.DeepEqual(bundle.Observations, value.Observations) {
+			return fmt.Errorf("embedded target observation bundle differs from raw bundle")
+		}
+		observations = bundle.Observations
+	} else if len(value.Observations) != 0 || value.ObservationBundleDigest != "" {
+		return fmt.Errorf("raw evidence has observations without a raw bundle")
+	}
+	expectedStatus := "UNKNOWN"
+	if hasClaimOrEdgeObservation(observations) {
+		expectedStatus = "CURRENT_EVIDENCE"
+	}
+	if value.Status != expectedStatus || value.ObservedPredicate != summaryPredicate(observations) {
+		return fmt.Errorf("raw evidence status or predicate is not derived from claim-scoped observations")
+	}
+	expectedValue := fmt.Sprintf("observation:ABSENT|stage:OBSERVE|step:current-evidence-provider|reason:EXTERNAL_TARGET_OBSERVATION_MISSING|artifact_path_digest:%s|artifact_bytes_digest:%s", digestBytes([]byte(value.ArtifactPath)), digestBytes(artifactBytes))
+	if value.ObservationPath != "" {
+		var bundle observationBundle
+		data, _ := os.ReadFile(value.ObservationPath)
+		if err := json.Unmarshal(data, &bundle); err != nil {
+			return fmt.Errorf("target observation bundle decode: %w", err)
+		}
+		expectedValue = observationBundleValue(bundle)
+	}
+	if value.ObservedValue != expectedValue {
+		return fmt.Errorf("raw evidence value is not derived from target observations")
 	}
 	return nil
 }
@@ -661,40 +724,82 @@ func validateEvidenceClaims(value evidenceReceipt, g graph, artifact reconstruct
 	if len(value.Claims) != g.NodeTotal {
 		return fmt.Errorf("raw evidence claim denominator mismatch")
 	}
-	expected := unknown
-	observedValue := fmt.Sprintf("observation:ABSENT|stage:OBSERVE|step:current-evidence-provider|reason:EXTERNAL_TARGET_OBSERVATION_MISSING|artifact_path_digest:%s|artifact_bytes_digest:%s", digestBytes([]byte(value.ArtifactPath)), digestBytes(artifactBytes))
-	if value.Status == "CURRENT_EVIDENCE" {
-		expected = observationPredicate(value.Observation.Result)
-		observedValue = observationValue(value.Observation)
-	}
-	if value.ObservedPredicate != expected || value.ObservedValue != observedValue {
-		return fmt.Errorf("raw evidence predicate is not procedure-derived")
-	}
 	for i, c := range value.Claims {
-		if c.Status != value.Status || c.ClaimID != g.Nodes[i].ClaimID || c.PropositionDigest != g.Nodes[i].PropositionDigest || c.Digest == "" || evidenceClaimDigest(c) != c.Digest {
+		if c.ClaimID != g.Nodes[i].ClaimID || c.PropositionDigest != g.Nodes[i].PropositionDigest || c.Digest == "" || evidenceClaimDigest(c) != c.Digest {
 			return fmt.Errorf("raw evidence claim %d is invalid", i+1)
 		}
-		claimPredicate := claimPredicateForObservation(i, expected)
-		claimValue := observedValue + "|claim:" + c.ClaimID + "|proposition_digest:" + c.PropositionDigest + "|predicate:" + string(claimPredicate)
-		if c.ObservedPredicate != claimPredicate || c.ObservedValue != claimValue {
-			return fmt.Errorf("raw evidence claim %d predicate is not observation-derived", i+1)
+		expected := evidenceClaim{ClaimID: g.Nodes[i].ClaimID, PropositionDigest: g.Nodes[i].PropositionDigest, ObservedPredicate: unknown, ObservedValue: absentClaimValue(g.Nodes[i]), Status: "UNKNOWN", Coordinate: coordinate{"OBSERVE", g.Nodes[i].ActivityName, "CLAIM_OBSERVATION_MISSING"}}
+		if observed, ok := claimObservationFor(g.Nodes[i], value.Observations); ok {
+			expected.ObservedPredicate = observed.ObservedPredicate
+			expected.ObservedValue = observed.ObservedValue
+			expected.Status = "CURRENT_EVIDENCE"
+			expected.Coordinate = observed.Coordinate
 		}
+		expected.Digest = evidenceClaimDigest(expected)
+		if !reflect.DeepEqual(c, expected) {
+			return fmt.Errorf("raw evidence claim %d is not derived from its exact observation binding", i+1)
+		}
+	}
+	_ = artifact
+	_ = artifactBytes
+	return nil
+}
+
+func validateObservationBundle(bundle observationBundle, artifactPath string, artifact []byte, g graph) error {
+	if bundle.Schema != observationBundleSchema || bundle.Provider == "" || bundle.SourcePath != artifactPath || bundle.SourceDigest != digestBytes(artifact) || bundle.ArtifactPath != artifactPath || bundle.ArtifactBytesDigest != digestBytes(artifact) || bundle.Profile == "" || bundle.Digest == "" || len(bundle.Observations) == 0 {
+		return fmt.Errorf("target observation bundle identity or target binding is invalid")
+	}
+	if observationBundleDigest(bundle) != bundle.Digest {
+		return fmt.Errorf("target observation bundle digest is invalid")
+	}
+	seen := map[string]bool{}
+	for _, observation := range bundle.Observations {
+		if err := validateObservation(observation, artifactPath, artifact, g); err != nil {
+			return err
+		}
+		key := observation.Binding + "|" + observation.ClaimID + "|" + observation.EdgeID
+		if seen[key] {
+			return fmt.Errorf("target observation bundle has duplicate binding %q", key)
+		}
+		seen[key] = true
 	}
 	return nil
 }
 
-func validateObservation(value observationReceipt, artifactPath string, artifact []byte) error {
-	if value.Schema != observationSchema || value.Provider == "" || value.TargetPath != artifactPath || value.Target.Artifact != artifactPath || value.TargetBytesDigest != digestBytes(artifact) || value.Procedure == "" || value.ProcedureDigest != digestBytes([]byte(value.Procedure)) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
+func validateObservation(value observationReceipt, artifactPath string, artifact []byte, g graph) error {
+	if value.Schema != observationSchema || value.Provider == "" || value.TargetPath != artifactPath || value.TargetBytesDigest != digestBytes(artifact) || value.Procedure == "" || value.ProcedureDigest != digestBytes([]byte(value.Procedure)) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
 		return fmt.Errorf("target observation identity or target binding is invalid")
 	}
-	if value.Result != "ACCEPTED" && value.Result != "TARGET_CONTRADICTED" {
-		return fmt.Errorf("target observation result is invalid")
+	if value.ComparisonResult != "MATCH" && value.ComparisonResult != "MISMATCH" || value.ObservedValue != value.TargetBytesDigest {
+		return fmt.Errorf("target observation comparison is invalid")
 	}
-	if value.FailureAntecedentObserved != (value.Result == "TARGET_CONTRADICTED") {
-		return fmt.Errorf("failure antecedent does not match target observation result")
+	if value.ComparisonResult == "MATCH" && value.ExpectedValue != value.ObservedValue || value.ComparisonResult == "MISMATCH" && value.ExpectedValue == value.ObservedValue {
+		return fmt.Errorf("target observation comparison result does not match values")
 	}
-	if value.Result == "ACCEPTED" && value.ExitCode != 0 || value.Result == "TARGET_CONTRADICTED" && value.ExitCode == 0 {
-		return fmt.Errorf("target observation exit code does not match result")
+	switch value.Binding {
+	case "CLAIM":
+		i := indexOf(value.ClaimID, g)
+		validEvidence := value.ExpectedPredicate == accepted && value.ObservedPredicate == accepted && value.ComparisonResult == "MATCH"
+		validContradiction := value.ExpectedPredicate == explicitContradiction && value.ObservedPredicate == explicitContradiction && value.ComparisonResult == "MISMATCH"
+		if i < 0 || value.PropositionDigest != g.Nodes[i].PropositionDigest || !reflect.DeepEqual(value.Target, g.Nodes[i].Target) || (!validEvidence && !validContradiction) {
+			return fmt.Errorf("claim-scoped target observation is not bound to its claim")
+		}
+	case "EDGE":
+		i := indexOfEdge(value.EdgeID, g)
+		if i < 0 {
+			return fmt.Errorf("edge-scoped target observation references an unknown edge")
+		}
+		ed := g.Edges[i]
+		to := indexOf(ed.ToClaimID, g)
+		if to < 0 || value.FromClaimID != ed.FromClaimID || value.ToClaimID != ed.ToClaimID || value.EdgeKind != ed.Kind || value.ClaimID != ed.ToClaimID || value.PropositionDigest != g.Nodes[to].PropositionDigest || !reflect.DeepEqual(value.Target, g.Nodes[to].Target) || value.ExpectedPredicate != value.ObservedPredicate || value.ComparisonResult != "MISMATCH" || (ed.Kind == contradicts && value.ObservedPredicate != explicitContradiction) || (ed.Kind == failureEntailment && value.ObservedPredicate != failureAntecedent) {
+			return fmt.Errorf("edge-scoped target observation is not bound to its edge")
+		}
+	case "UNRELATED_ARTIFACT":
+		if value.ClaimID != "" || value.EdgeID != "" || value.PropositionDigest != "" || value.ObservedPredicate != unknown || value.ExpectedPredicate != unknown {
+			return fmt.Errorf("unrelated observation carries a claim or edge binding")
+		}
+	default:
+		return fmt.Errorf("unknown target observation binding %q", value.Binding)
 	}
 	if observationDigest(value) != value.Digest {
 		return fmt.Errorf("target observation digest is invalid")
@@ -702,28 +807,54 @@ func validateObservation(value observationReceipt, artifactPath string, artifact
 	return nil
 }
 
-func observationPredicate(result string) predicate {
-	if result == "ACCEPTED" {
-		return accepted
+func claimObservationFor(c claim, observations []observationReceipt) (observationReceipt, bool) {
+	for _, observation := range observations {
+		if observation.Binding == "CLAIM" && observation.ClaimID == c.ClaimID && observation.PropositionDigest == c.PropositionDigest && reflect.DeepEqual(observation.Target, c.Target) {
+			return observation, true
+		}
 	}
-	if result == "TARGET_CONTRADICTED" {
-		return explicitContradiction
+	return observationReceipt{}, false
+}
+
+func hasClaimOrEdgeObservation(observations []observationReceipt) bool {
+	for _, observation := range observations {
+		if observation.Binding == "CLAIM" || observation.Binding == "EDGE" {
+			return true
+		}
+	}
+	return false
+}
+
+func summaryPredicate(observations []observationReceipt) predicate {
+	for _, observation := range observations {
+		if observation.Binding == "EDGE" && observation.ObservedPredicate == explicitContradiction {
+			return explicitContradiction
+		}
+	}
+	for _, observation := range observations {
+		if observation.Binding == "EDGE" && observation.ObservedPredicate == failureAntecedent {
+			return failureAntecedent
+		}
+	}
+	for _, observation := range observations {
+		if observation.Binding == "CLAIM" && observation.ObservedPredicate == explicitContradiction {
+			return explicitContradiction
+		}
+	}
+	for _, observation := range observations {
+		if observation.Binding == "CLAIM" && observation.ObservedPredicate == accepted {
+			return accepted
+		}
 	}
 	return unknown
 }
 
-func claimPredicateForObservation(index int, value predicate) predicate {
-	if value == explicitContradiction {
-		if index < 4 {
-			return accepted
-		}
-		return unknown
-	}
-	return value
+func observationBundleValue(bundle observationBundle) string {
+	return fmt.Sprintf("bundle:%s|profile:%s|source_digest:%s|artifact_path:%s|artifact_bytes_digest:%s|observation_total:%d", bundle.Digest, bundle.Profile, bundle.SourceDigest, bundle.ArtifactPath, bundle.ArtifactBytesDigest, len(bundle.Observations))
 }
 
-func observationValue(value observationReceipt) string {
-	return fmt.Sprintf("observation_result:%s|target_path:%s|target_path_digest:%s|target_bytes_digest:%s|procedure:%s|procedure_digest:%s|output_digest:%s|exit_code:%d|failure_antecedent:%t", value.Result, value.TargetPath, digestBytes([]byte(value.TargetPath)), value.TargetBytesDigest, value.Procedure, value.ProcedureDigest, value.OutputDigest, value.ExitCode, value.FailureAntecedentObserved)
+func absentClaimValue(c claim) string {
+	return fmt.Sprintf("observation:ABSENT|claim_id:%s|proposition_digest:%s|target_artifact:%s|stage:OBSERVE|step:claim-observation|reason:CLAIM_OBSERVATION_MISSING", c.ClaimID, c.PropositionDigest, c.Target.Artifact)
 }
 func validatePrior(current reconstructed, value receipt) error {
 	if value.Schema != "gooo.meta.claim-dependency-receipt/v3" || value.Scope != "CLAIM_STATE_PROPAGATION_ONLY" || value.Evidence.ObservedPredicate != unknown || value.Graph.Digest != current.Graph.Digest || len(value.Resolutions) != claimTotal || len(value.PriorClaimStates) != 0 || receiptDigest(value) != value.Digest {
@@ -770,22 +901,6 @@ func replayReceipt(value receipt) (receipt, error) {
 	if digestBytes(artifact) != value.Evidence.ArtifactBytesDigest {
 		return receipt{}, fmt.Errorf("prior artifact bytes digest mismatch")
 	}
-	if value.Evidence.Status == "CURRENT_EVIDENCE" {
-		if err := validateObservation(value.Evidence.Observation, value.Evidence.ArtifactPath, artifact); err != nil {
-			return receipt{}, err
-		}
-		observationBytes, err := os.ReadFile(value.Evidence.ObservationPath)
-		if err != nil {
-			return receipt{}, fmt.Errorf("prior target observation cannot be re-observed: %w", err)
-		}
-		var rawObservation observationReceipt
-		if err := json.Unmarshal(observationBytes, &rawObservation); err != nil {
-			return receipt{}, fmt.Errorf("prior target observation decode: %w", err)
-		}
-		if !reflect.DeepEqual(rawObservation, value.Evidence.Observation) {
-			return receipt{}, fmt.Errorf("prior embedded target observation differs from raw observation")
-		}
-	}
 	if err := validateEvidenceClaims(value.Evidence, artifactGraph.Graph, artifactGraph, artifact); err != nil {
 		return receipt{}, err
 	}
@@ -828,7 +943,7 @@ func classify(g graph, e evidenceReceipt) ([]string, []transition) {
 			if from < 0 {
 				continue
 			}
-			relation := edgeRelation(ed.Kind, states[from], locals[i].predicate, true, e.ObservedPredicate == explicitContradiction, e.Observation.FailureAntecedentObserved)
+			relation := edgeRelation(ed.Kind, states[from], locals[i].predicate, true, edgeObservationActive(ed, e.Observations, explicitContradiction), edgeObservationActive(ed, e.Observations, failureAntecedent))
 			if relation == relationRefuted {
 				refuting = append(refuting, ed.EdgeID)
 			}
@@ -839,7 +954,7 @@ func classify(g graph, e evidenceReceipt) ([]string, []transition) {
 				}
 			}
 		}
-		if i == 0 && locals[i].available && locals[i].predicate == explicitContradiction {
+		if locals[i].available && locals[i].predicate == explicitContradiction {
 			state, event, reason = "REFUTED", "EXPLICIT_CONTRADICTION", "CURRENT_EVIDENCE_EXPLICIT_CONTRADICTION"
 		} else if len(refuting) > 0 {
 			state, event, reason = "REFUTED", "DEPENDENCY_REFUTED", "EXPLICIT_TYPED_REFUTING_EDGE"
@@ -852,9 +967,17 @@ func classify(g graph, e evidenceReceipt) ([]string, []transition) {
 			}
 		}
 		states[i] = state
-		outcomes[i] = transition{0, g.Nodes[i].ClaimID, event, "OPEN", state, coordinate{stage(i), g.Nodes[i].ActivityName, reason}, locals[i].digest, transitionEdges(i, g, states, state, refuting, locals[i].predicate, e.ObservedPredicate == explicitContradiction, e.Observation.FailureAntecedentObserved), nil, "pending", "", ""}
+		outcomes[i] = transition{0, g.Nodes[i].ClaimID, event, "OPEN", state, coordinate{stage(i), g.Nodes[i].ActivityName, reason}, locals[i].digest, transitionEdges(i, g, states, state, refuting, locals[i].predicate, e.Observations), nil, "pending", "", ""}
 	}
 	return states, outcomes
+}
+func edgeObservationActive(ed edge, observations []observationReceipt, wanted predicate) bool {
+	for _, observation := range observations {
+		if observation.Binding == "EDGE" && observation.EdgeID == ed.EdgeID && observation.FromClaimID == ed.FromClaimID && observation.ToClaimID == ed.ToClaimID && observation.EdgeKind == ed.Kind && observation.ClaimID == ed.ToClaimID && observation.ObservedPredicate == wanted {
+			return true
+		}
+	}
+	return false
 }
 func stage(i int) string {
 	if i == 0 {
@@ -871,7 +994,7 @@ func incomingEdges(i int, g graph) []edge {
 	}
 	return result
 }
-func transitionEdges(i int, g graph, states []string, state string, refuting []string, local predicate, contradictionObserved, failureAntecedentObserved bool) []string {
+func transitionEdges(i int, g graph, states []string, state string, refuting []string, local predicate, observations []observationReceipt) []string {
 	if len(refuting) > 0 {
 		return refuting
 	}
@@ -879,7 +1002,7 @@ func transitionEdges(i int, g graph, states []string, state string, refuting []s
 		var result []string
 		for _, e := range incomingEdges(i, g) {
 			from := indexOf(e.FromClaimID, g)
-			if e.Kind == requires && from >= 0 && edgeRelation(e.Kind, states[from], local, true, contradictionObserved, failureAntecedentObserved) == relationDischarged {
+			if e.Kind == requires && from >= 0 && edgeRelation(e.Kind, states[from], local, true, edgeObservationActive(e, observations, explicitContradiction), edgeObservationActive(e, observations, failureAntecedent)) == relationDischarged {
 				result = append(result, e.EdgeID)
 			}
 		}
@@ -891,7 +1014,7 @@ func transitionEdges(i int, g graph, states []string, state string, refuting []s
 	var result []string
 	for _, e := range incomingEdges(i, g) {
 		from := indexOf(e.FromClaimID, g)
-		if from >= 0 && (e.Kind == supports || e.Kind == requires) && edgeRelation(e.Kind, states[from], local, true, contradictionObserved, failureAntecedentObserved) == relationOpen && (states[from] == "OPEN" || states[from] == "REFUTED") {
+		if from >= 0 && (e.Kind == supports || e.Kind == requires) && edgeRelation(e.Kind, states[from], local, true, edgeObservationActive(e, observations, explicitContradiction), edgeObservationActive(e, observations, failureAntecedent)) == relationOpen && (states[from] == "OPEN" || states[from] == "REFUTED") {
 			result = append(result, e.EdgeID)
 		}
 	}
@@ -1055,6 +1178,14 @@ func idsForPath(path []int, g graph) []string {
 func indexOf(id string, g graph) int {
 	for i, c := range g.Nodes {
 		if c.ClaimID == id {
+			return i
+		}
+	}
+	return -1
+}
+func indexOfEdge(id string, g graph) int {
+	for i, e := range g.Edges {
+		if e.EdgeID == id {
 			return i
 		}
 	}
@@ -1305,6 +1436,10 @@ func graphDigest(v graph) string                    { v.Digest = ""; return dige
 func receiptDigest(v receipt) string                { v.Digest = ""; return digestJSON(v) }
 func evidenceDigest(v evidenceReceipt) string       { v.Digest = ""; return digestJSON(v) }
 func observationDigest(v observationReceipt) string { v.Digest = ""; return digestJSON(v) }
-func evidenceClaimDigest(v evidenceClaim) string    { v.Digest = ""; return digestJSON(v) }
-func capabilityDigest(v capability) string          { v.Digest = ""; return digestJSON(v) }
-func transitionDigest(v transition) string          { v.TransitionDigest = ""; return digestJSON(v) }
+func observationBundleDigest(v observationBundle) string {
+	v.Digest = ""
+	return digestJSON(v)
+}
+func evidenceClaimDigest(v evidenceClaim) string { v.Digest = ""; return digestJSON(v) }
+func capabilityDigest(v capability) string       { v.Digest = ""; return digestJSON(v) }
+func transitionDigest(v transition) string       { v.TransitionDigest = ""; return digestJSON(v) }

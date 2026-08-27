@@ -8,14 +8,14 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 )
 
 const (
-	evidenceProcedure    = "RAW_ARTIFACT_OBSERVATION_BINDING_V2"
-	observationSchema    = "gooo.meta.claim-dependency-observation/v1"
-	observationProcedure = "CI_TARGET_BYTES_COMPARISON_V1"
+	evidenceProcedure       = "RAW_ARTIFACT_OBSERVATION_BINDING_V3"
+	observationSchema       = "gooo.meta.claim-dependency-observation/v2"
+	observationBundleSchema = "gooo.meta.claim-dependency-observation-bundle/v1"
+	observationProcedure    = "CI_TARGET_BYTES_COMPARISON_V2"
 )
 
 // BuildCurrentEvidence keeps the original provider API for callers that do
@@ -55,7 +55,8 @@ func BuildCurrentEvidenceWithObservation(artifactPath, operation, capabilityPath
 	if operation != "availability" && operation != "acceptance" && operation != "contradiction" {
 		return EvidenceReceipt{}, fmt.Errorf("unknown provider operation %q", operation)
 	}
-	observation := ObservationReceipt{}
+	observations := []ObservationReceipt{}
+	observationBundleDigest := ""
 	status := UnknownEvidence
 	predicate := ObservationUnknown
 	observedValue := fmt.Sprintf("observation:ABSENT|stage:OBSERVE|step:current-evidence-provider|reason:EXTERNAL_TARGET_OBSERVATION_MISSING|artifact_path_digest:%s|artifact_bytes_digest:%s", digestBytes([]byte(artifactPath)), digestBytes(artifact))
@@ -64,27 +65,35 @@ func BuildCurrentEvidenceWithObservation(artifactPath, operation, capabilityPath
 		if readErr != nil {
 			return EvidenceReceipt{}, fmt.Errorf("target observation: %w", readErr)
 		}
-		if err := json.Unmarshal(data, &observation); err != nil {
+		var bundle ObservationBundle
+		if err := json.Unmarshal(data, &bundle); err != nil {
 			return EvidenceReceipt{}, fmt.Errorf("target observation decode: %w", err)
 		}
-		if err := validateObservation(observation, artifactPath, artifact); err != nil {
+		if err := validateObservationBundle(bundle, artifactPath, artifact, artifactGraph.Graph); err != nil {
 			return EvidenceReceipt{}, err
 		}
-		status = CurrentEvidence
-		predicate = observationPredicate(observation.Result)
-		observedValue = fmt.Sprintf("observation_result:%s|target_path:%s|target_path_digest:%s|target_bytes_digest:%s|procedure:%s|procedure_digest:%s|output_digest:%s|exit_code:%s|failure_antecedent:%t", observation.Result, observation.TargetPath, digestBytes([]byte(observation.TargetPath)), observation.TargetBytesDigest, observation.Procedure, observation.ProcedureDigest, observation.OutputDigest, strconv.Itoa(observation.ExitCode), observation.FailureAntecedentObserved)
+		observations = append([]ObservationReceipt(nil), bundle.Observations...)
+		observationBundleDigest = bundle.Digest
+		if hasClaimOrEdgeObservation(observations) {
+			status = CurrentEvidence
+		}
+		predicate = summaryPredicate(observations)
+		observedValue = observationBundleValue(bundle)
 	}
 	claims := make([]EvidenceClaim, len(artifactGraph.Graph.Nodes))
 	for i, claim := range artifactGraph.Graph.Nodes {
-		claimPredicate := claimPredicateForObservation(i, predicate)
-		value := observationValue + "|claim:" + claim.ClaimID + "|proposition_digest:" + claim.PropositionDigest + "|predicate:" + string(claimPredicate)
-		claims[i] = EvidenceClaim{ClaimID: claim.ClaimID, PropositionDigest: claim.PropositionDigest, ObservedPredicate: claimPredicate, ObservedValue: value, Status: status, Coordinate: Coordinate{Stage: "OBSERVE", Step: claim.ActivityName, Reason: observationReason(status, predicate)}}
+		claimObservation, found := claimObservationFor(claim, observations)
+		claimStatus, claimPredicate, value, coordinate := UnknownEvidence, ObservationUnknown, absentClaimValue(claim), Coordinate{Stage: "OBSERVE", Step: claim.ActivityName, Reason: "CLAIM_OBSERVATION_MISSING"}
+		if found {
+			claimStatus, claimPredicate, value, coordinate = CurrentEvidence, claimObservation.ObservedPredicate, claimObservation.ObservedValue, claimObservation.Coordinate
+		}
+		claims[i] = EvidenceClaim{ClaimID: claim.ClaimID, PropositionDigest: claim.PropositionDigest, ObservedPredicate: claimPredicate, ObservedValue: value, Status: claimStatus, Coordinate: coordinate}
 		claims[i].Digest, err = claimEvidenceDigest(claims[i])
 		if err != nil {
 			return EvidenceReceipt{}, err
 		}
 	}
-	receipt := EvidenceReceipt{Schema: EvidenceSchema, Provider: "github-actions-current-evidence-provider/v2", ArtifactPath: artifactPath, ArtifactBytesDigest: digestBytes(artifact), Operation: operation, RequestStatus: "CLAIMED_INPUT", Procedure: evidenceProcedure, ObservationPath: observationPath, Observation: observation, ObservedPredicate: predicate, ObservedValue: observedValue, Status: status, Coordinate: Coordinate{Stage: "OBSERVE", Step: "current-evidence-provider", Reason: observationReason(status, predicate)}, Claims: claims, Capability: capability, Snapshot: snapshot}
+	receipt := EvidenceReceipt{Schema: EvidenceSchema, Provider: "github-actions-current-evidence-provider/v3", ArtifactPath: artifactPath, ArtifactBytesDigest: digestBytes(artifact), Operation: operation, RequestStatus: "CLAIMED_INPUT", Procedure: evidenceProcedure, ObservationPath: observationPath, ObservationBundleDigest: observationBundleDigest, Observations: observations, ObservedPredicate: predicate, ObservedValue: observedValue, Status: status, Coordinate: Coordinate{Stage: "OBSERVE", Step: "current-evidence-provider", Reason: observationReason(status, predicate)}, Claims: claims, Capability: capability, Snapshot: snapshot}
 	receipt.Digest, err = evidenceReceiptDigest(receipt)
 	if err != nil {
 		return EvidenceReceipt{}, err
@@ -92,69 +101,210 @@ func BuildCurrentEvidenceWithObservation(artifactPath, operation, capabilityPath
 	return receipt, nil
 }
 
-func BuildObservationReceipt(artifactPath, expectedBytesDigest, output string, exitCode int) (ObservationReceipt, error) {
+func BuildObservationBundle(sourcePath string, source []byte, artifactPath, expectedBytesDigest, output, profile string) (ObservationBundle, error) {
 	artifact, err := os.ReadFile(artifactPath)
 	if err != nil {
-		return ObservationReceipt{}, err
+		return ObservationBundle{}, err
+	}
+	parsed, err := graphFromSource(source, sourcePath)
+	if err != nil {
+		return ObservationBundle{}, fmt.Errorf("observer source reconstruction: %w", err)
 	}
 	actualDigest := digestBytes(artifact)
-	result := "TARGET_CONTRADICTED"
-	if expectedBytesDigest == actualDigest {
-		result = "ACCEPTED"
+	if profile == "accepted" && expectedBytesDigest != actualDigest {
+		return ObservationBundle{}, fmt.Errorf("accepted profile requires matching target bytes")
 	}
-	if result == "ACCEPTED" && exitCode != 0 {
-		return ObservationReceipt{}, fmt.Errorf("accepted target observation must have exit code 0")
+	if (profile == "contradiction" || profile == "contradiction-no-failure" || profile == "contradiction-single") && expectedBytesDigest == actualDigest {
+		return ObservationBundle{}, fmt.Errorf("contradiction profile requires mismatching target bytes")
 	}
-	if result == "TARGET_CONTRADICTED" && exitCode == 0 {
-		return ObservationReceipt{}, fmt.Errorf("contradicted target observation must have non-zero exit code")
+	observations := []ObservationReceipt{}
+	switch profile {
+	case "accepted":
+		for _, claim := range parsed.Graph.Nodes {
+			observations = append(observations, makeObservation("CLAIM", claim.ClaimID, claim.PropositionDigest, "", "", "", "", claim.Target, artifactPath, actualDigest, actualDigest, ObservationEvidence, ObservationEvidence, "CLAIM_TARGET_BYTES_MATCH", output))
+		}
+	case "contradiction", "contradiction-no-failure", "contradiction-single":
+		targeted := map[string]bool{}
+		singleEdgeID := ""
+		if profile == "contradiction-single" {
+			for _, edge := range parsed.Graph.Edges {
+				if edge.Kind == Contradicts {
+					singleEdgeID = edge.EdgeID
+					break
+				}
+			}
+			if singleEdgeID == "" {
+				return ObservationBundle{}, fmt.Errorf("single contradiction profile requires a CONTRADICTS edge")
+			}
+		}
+		for _, edge := range parsed.Graph.Edges {
+			if edge.Kind != Contradicts && edge.Kind != FailureEntailment {
+				continue
+			}
+			if profile == "contradiction-single" && edge.EdgeID != singleEdgeID {
+				continue
+			}
+			targeted[edge.ToClaimID] = true
+		}
+		for _, claim := range parsed.Graph.Nodes {
+			if !targeted[claim.ClaimID] {
+				observations = append(observations, makeObservation("CLAIM", claim.ClaimID, claim.PropositionDigest, "", "", "", "", claim.Target, artifactPath, actualDigest, actualDigest, ObservationEvidence, ObservationEvidence, "CLAIM_TARGET_BYTES_MATCH", output))
+			}
+		}
+		for _, edge := range parsed.Graph.Edges {
+			if edge.Kind != Contradicts && edge.Kind != FailureEntailment {
+				continue
+			}
+			if profile == "contradiction-single" && edge.EdgeID != singleEdgeID {
+				continue
+			}
+			if profile == "contradiction-no-failure" && edge.Kind == FailureEntailment {
+				continue
+			}
+			to := parsed.Graph.Nodes[indexOfClaim(edge.ToClaimID, parsed.Graph)]
+			predicate := ObservationContradiction
+			if edge.Kind == FailureEntailment {
+				predicate = ObservationFailure
+			}
+			observations = append(observations, makeObservation("EDGE", to.ClaimID, to.PropositionDigest, edge.EdgeID, edge.FromClaimID, edge.ToClaimID, edge.Kind, to.Target, artifactPath, expectedBytesDigest, actualDigest, predicate, predicate, "EDGE_ACTIVATION_BYTES_MISMATCH", output))
+		}
+	case "unrelated":
+		observations = append(observations, makeObservation("UNRELATED_ARTIFACT", "", "", "", "", "", "", TargetAddress{Artifact: artifactPath}, artifactPath, expectedBytesDigest, actualDigest, ObservationUnknown, ObservationUnknown, "UNRELATED_ARTIFACT_BYTES_COMPARISON", output))
+	default:
+		return ObservationBundle{}, fmt.Errorf("unknown observation profile %q", profile)
 	}
-	value := ObservationReceipt{Schema: observationSchema, Provider: "github-actions-target-observer/v1", TargetPath: artifactPath, Target: TargetAddress{Artifact: artifactPath}, TargetBytesDigest: actualDigest, Procedure: observationProcedure, ProcedureDigest: digestBytes([]byte(observationProcedure)), Output: output, OutputDigest: digestBytes([]byte(output)), ExitCode: exitCode, Result: result, FailureAntecedentObserved: result == "TARGET_CONTRADICTED", Coordinate: Coordinate{Stage: "OBSERVE", Step: "target-observer", Reason: "TARGET_ARTIFACT_BYTES_AND_RESULT"}}
-	value.Digest, err = observationReceiptDigest(value)
+	for i := range observations {
+		observations[i].Digest, err = observationReceiptDigest(observations[i])
+		if err != nil {
+			return ObservationBundle{}, err
+		}
+	}
+	bundle := ObservationBundle{Schema: observationBundleSchema, Provider: "github-actions-target-observer/v2", SourcePath: sourcePath, SourceDigest: digestBytes(source), ArtifactPath: artifactPath, ArtifactBytesDigest: actualDigest, Profile: profile, Observations: observations}
+	bundle.Digest, err = observationBundleDigest(bundle)
 	if err != nil {
-		return ObservationReceipt{}, err
+		return ObservationBundle{}, err
 	}
-	return value, nil
+	return bundle, nil
 }
 
-func validateObservation(value ObservationReceipt, artifactPath string, artifact []byte) error {
-	if value.Schema != observationSchema || value.Provider == "" || value.TargetPath != artifactPath || value.Target.Artifact != artifactPath || value.TargetBytesDigest != digestBytes(artifact) || value.Procedure == "" || value.ProcedureDigest != digestBytes([]byte(value.Procedure)) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
+func makeObservation(binding, claimID, propositionDigest, edgeID, fromClaimID, toClaimID string, edgeKind EdgeKind, target TargetAddress, artifactPath, expectedValue, observedValue string, expectedPredicate, observedPredicate ObservationPredicate, reason, output string) ObservationReceipt {
+	comparison := "MISMATCH"
+	if expectedValue == observedValue {
+		comparison = "MATCH"
+	}
+	return ObservationReceipt{Schema: observationSchema, Provider: "github-actions-target-observer/v2", Binding: binding, ClaimID: claimID, PropositionDigest: propositionDigest, EdgeID: edgeID, FromClaimID: fromClaimID, ToClaimID: toClaimID, EdgeKind: edgeKind, Target: target, TargetPath: artifactPath, TargetBytesDigest: observedValue, ExpectedPredicate: expectedPredicate, ExpectedValue: expectedValue, ObservedPredicate: observedPredicate, ObservedValue: observedValue, ComparisonResult: comparison, Procedure: observationProcedure, ProcedureDigest: digestBytes([]byte(observationProcedure)), Output: output, OutputDigest: digestBytes([]byte(output)), Coordinate: Coordinate{Stage: "OBSERVE", Step: "target-observer", Reason: reason}}
+}
+
+func validateObservationBundle(bundle ObservationBundle, artifactPath string, artifact []byte, graph Graph) error {
+	if bundle.Schema != observationBundleSchema || bundle.Provider == "" || bundle.SourcePath != artifactPath || bundle.SourceDigest != digestBytes(artifact) || bundle.ArtifactPath != artifactPath || bundle.ArtifactBytesDigest != digestBytes(artifact) || bundle.Profile == "" || bundle.Digest == "" || len(bundle.Observations) == 0 {
+		return fmt.Errorf("target observation bundle identity or target binding is invalid")
+	}
+	if digest, err := observationBundleDigest(bundle); err != nil || digest != bundle.Digest {
+		return fmt.Errorf("target observation bundle digest is invalid")
+	}
+	seen := map[string]bool{}
+	for _, observation := range bundle.Observations {
+		if err := validateObservation(observation, artifactPath, artifact, graph); err != nil {
+			return err
+		}
+		key := observation.Binding + "|" + observation.ClaimID + "|" + observation.EdgeID
+		if seen[key] {
+			return fmt.Errorf("target observation bundle has duplicate binding %q", key)
+		}
+		seen[key] = true
+	}
+	return nil
+}
+
+func validateObservation(value ObservationReceipt, artifactPath string, artifact []byte, graph Graph) error {
+	if value.Schema != observationSchema || value.Provider == "" || value.TargetPath != artifactPath || value.TargetBytesDigest != digestBytes(artifact) || value.Procedure == "" || value.ProcedureDigest != digestBytes([]byte(value.Procedure)) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
 		return fmt.Errorf("target observation identity or target binding is invalid")
 	}
-	if value.Result != "ACCEPTED" && value.Result != "TARGET_CONTRADICTED" {
-		return fmt.Errorf("target observation result is invalid")
+	if value.ComparisonResult != "MATCH" && value.ComparisonResult != "MISMATCH" || value.ObservedValue != value.TargetBytesDigest {
+		return fmt.Errorf("target observation comparison is invalid")
 	}
-	if value.FailureAntecedentObserved != (value.Result == "TARGET_CONTRADICTED") {
-		return fmt.Errorf("failure antecedent does not match target observation result")
+	if value.ComparisonResult == "MATCH" && value.ExpectedValue != value.ObservedValue || value.ComparisonResult == "MISMATCH" && value.ExpectedValue == value.ObservedValue {
+		return fmt.Errorf("target observation comparison result does not match values")
 	}
-	if value.Result == "ACCEPTED" && value.ExitCode != 0 || value.Result == "TARGET_CONTRADICTED" && value.ExitCode == 0 {
-		return fmt.Errorf("target observation exit code does not match result")
+	switch value.Binding {
+	case "CLAIM":
+		claimIndex := indexOfClaim(value.ClaimID, graph)
+		validEvidence := value.ExpectedPredicate == ObservationEvidence && value.ObservedPredicate == ObservationEvidence && value.ComparisonResult == "MATCH"
+		validContradiction := value.ExpectedPredicate == ObservationContradiction && value.ObservedPredicate == ObservationContradiction && value.ComparisonResult == "MISMATCH"
+		if claimIndex < 0 || value.PropositionDigest != graph.Nodes[claimIndex].PropositionDigest || !reflect.DeepEqual(value.Target, graph.Nodes[claimIndex].Target) || (!validEvidence && !validContradiction) {
+			return fmt.Errorf("claim-scoped target observation is not bound to its claim")
+		}
+	case "EDGE":
+		edgeIndex := indexOfEdge(value.EdgeID, graph)
+		if edgeIndex < 0 {
+			return fmt.Errorf("edge-scoped target observation references an unknown edge")
+		}
+		edge := graph.Edges[edgeIndex]
+		to := indexOfClaim(edge.ToClaimID, graph)
+		if value.FromClaimID != edge.FromClaimID || value.ToClaimID != edge.ToClaimID || value.EdgeKind != edge.Kind || value.ClaimID != edge.ToClaimID || value.PropositionDigest != graph.Nodes[to].PropositionDigest || !reflect.DeepEqual(value.Target, graph.Nodes[to].Target) || value.ExpectedPredicate != value.ObservedPredicate || value.ComparisonResult != "MISMATCH" || (edge.Kind == Contradicts && value.ObservedPredicate != ObservationContradiction) || (edge.Kind == FailureEntailment && value.ObservedPredicate != ObservationFailure) {
+			return fmt.Errorf("edge-scoped target observation is not bound to its edge")
+		}
+	case "UNRELATED_ARTIFACT":
+		if value.ClaimID != "" || value.EdgeID != "" || value.PropositionDigest != "" || value.ObservedPredicate != ObservationUnknown || value.ExpectedPredicate != ObservationUnknown {
+			return fmt.Errorf("unrelated observation carries a claim or edge binding")
+		}
+	default:
+		return fmt.Errorf("unknown target observation binding %q", value.Binding)
 	}
-	digest, err := observationReceiptDigest(value)
-	if err != nil || digest != value.Digest {
+	if digest, err := observationReceiptDigest(value); err != nil || digest != value.Digest {
 		return fmt.Errorf("target observation digest is invalid")
 	}
 	return nil
 }
 
-func observationPredicate(result string) ObservationPredicate {
-	switch result {
-	case "ACCEPTED":
-		return ObservationEvidence
-	case "TARGET_CONTRADICTED":
-		return ObservationContradiction
-	default:
-		return ObservationUnknown
+func claimObservationFor(claim Claim, observations []ObservationReceipt) (ObservationReceipt, bool) {
+	for _, observation := range observations {
+		if observation.Binding == "CLAIM" && observation.ClaimID == claim.ClaimID && observation.PropositionDigest == claim.PropositionDigest && reflect.DeepEqual(observation.Target, claim.Target) {
+			return observation, true
+		}
 	}
+	return ObservationReceipt{}, false
 }
 
-func claimPredicateForObservation(index int, predicate ObservationPredicate) ObservationPredicate {
-	if predicate == ObservationContradiction {
-		if index < 4 {
+func hasClaimOrEdgeObservation(observations []ObservationReceipt) bool {
+	for _, observation := range observations {
+		if observation.Binding == "CLAIM" || observation.Binding == "EDGE" {
+			return true
+		}
+	}
+	return false
+}
+
+func summaryPredicate(observations []ObservationReceipt) ObservationPredicate {
+	for _, observation := range observations {
+		if observation.Binding == "EDGE" && observation.ObservedPredicate == ObservationContradiction {
+			return ObservationContradiction
+		}
+	}
+	for _, observation := range observations {
+		if observation.Binding == "EDGE" && observation.ObservedPredicate == ObservationFailure {
+			return ObservationFailure
+		}
+	}
+	for _, observation := range observations {
+		if observation.Binding == "CLAIM" && observation.ObservedPredicate == ObservationContradiction {
+			return ObservationContradiction
+		}
+	}
+	for _, observation := range observations {
+		if observation.Binding == "CLAIM" && observation.ObservedPredicate == ObservationEvidence {
 			return ObservationEvidence
 		}
-		return ObservationUnknown
 	}
-	return predicate
+	return ObservationUnknown
+}
+
+func observationBundleValue(bundle ObservationBundle) string {
+	return fmt.Sprintf("bundle:%s|profile:%s|source_digest:%s|artifact_path:%s|artifact_bytes_digest:%s|observation_total:%d", bundle.Digest, bundle.Profile, bundle.SourceDigest, bundle.ArtifactPath, bundle.ArtifactBytesDigest, len(bundle.Observations))
+}
+
+func absentClaimValue(claim Claim) string {
+	return fmt.Sprintf("observation:ABSENT|claim_id:%s|proposition_digest:%s|target_artifact:%s|stage:OBSERVE|step:claim-observation|reason:CLAIM_OBSERVATION_MISSING", claim.ClaimID, claim.PropositionDigest, claim.Target.Artifact)
 }
 
 func observationReason(status EvidenceStatus, predicate ObservationPredicate) string {
@@ -297,33 +447,6 @@ func validateEvidence(parsed sourceGraph, evidence EvidenceReceipt) error {
 	if evidence.Snapshot.RepositoryWrites != 0 || evidence.Snapshot.BeforeDigest != evidence.Snapshot.AfterDigest {
 		return fmt.Errorf("evidence crossed repository write boundary")
 	}
-	if evidence.Status == UnknownEvidence {
-		if evidence.ObservedPredicate != ObservationUnknown || evidence.ObservationPath != "" || !reflect.DeepEqual(evidence.Observation, ObservationReceipt{}) {
-			return fmt.Errorf("unknown evidence contains a current observation")
-		}
-	} else {
-		if evidence.ObservationPath == "" {
-			return fmt.Errorf("current evidence has no raw target observation path")
-		}
-		artifact, err := os.ReadFile(evidence.ArtifactPath)
-		if err != nil {
-			return fmt.Errorf("producer cannot re-observe artifact: %w", err)
-		}
-		if err := validateObservation(evidence.Observation, evidence.ArtifactPath, artifact); err != nil {
-			return err
-		}
-		observationBytes, err := os.ReadFile(evidence.ObservationPath)
-		if err != nil {
-			return fmt.Errorf("producer cannot re-observe target observation: %w", err)
-		}
-		var rawObservation ObservationReceipt
-		if err := json.Unmarshal(observationBytes, &rawObservation); err != nil {
-			return fmt.Errorf("target observation re-observation decode: %w", err)
-		}
-		if !reflect.DeepEqual(rawObservation, evidence.Observation) {
-			return fmt.Errorf("embedded target observation differs from raw observation")
-		}
-	}
 	capDigest, err := capabilityDigest(evidence.Capability)
 	if err != nil || capDigest != evidence.Capability.Digest || evidence.Capability.Status != CurrentEvidence {
 		return fmt.Errorf("capability evidence is invalid")
@@ -339,38 +462,70 @@ func validateEvidence(parsed sourceGraph, evidence EvidenceReceipt) error {
 	if err != nil {
 		return fmt.Errorf("producer artifact re-observation: %w", err)
 	}
+
+	observations := []ObservationReceipt(nil)
+	if evidence.ObservationPath != "" {
+		observationBytes, err := os.ReadFile(evidence.ObservationPath)
+		if err != nil {
+			return fmt.Errorf("producer cannot re-observe target observation: %w", err)
+		}
+		var bundle ObservationBundle
+		if err := json.Unmarshal(observationBytes, &bundle); err != nil {
+			return fmt.Errorf("target observation bundle decode: %w", err)
+		}
+		if err := validateObservationBundle(bundle, evidence.ArtifactPath, artifact, artifactGraph.Graph); err != nil {
+			return err
+		}
+		if bundle.Digest != evidence.ObservationBundleDigest || !reflect.DeepEqual(bundle.Observations, evidence.Observations) {
+			return fmt.Errorf("embedded target observation bundle differs from raw bundle")
+		}
+		observations = bundle.Observations
+	} else if len(evidence.Observations) != 0 || evidence.ObservationBundleDigest != "" {
+		return fmt.Errorf("evidence has observations without a raw observation bundle")
+	}
+
 	if len(evidence.Claims) != artifactGraph.Graph.NodeTotal {
 		return fmt.Errorf("evidence claim count does not match artifact graph")
 	}
-	expectedPredicate := ObservationUnknown
+	expectedStatus := UnknownEvidence
+	if hasClaimOrEdgeObservation(observations) {
+		expectedStatus = CurrentEvidence
+	}
+	if evidence.Status != expectedStatus {
+		return fmt.Errorf("evidence status is not derived from claim-scoped observations")
+	}
+	expectedPredicate := summaryPredicate(observations)
 	expectedValue := fmt.Sprintf("observation:ABSENT|stage:OBSERVE|step:current-evidence-provider|reason:EXTERNAL_TARGET_OBSERVATION_MISSING|artifact_path_digest:%s|artifact_bytes_digest:%s", digestBytes([]byte(evidence.ArtifactPath)), digestBytes(artifact))
-	if evidence.Status == CurrentEvidence {
-		expectedPredicate = observationPredicate(evidence.Observation.Result)
-		expectedValue = fmt.Sprintf("observation_result:%s|target_path:%s|target_path_digest:%s|target_bytes_digest:%s|procedure:%s|procedure_digest:%s|output_digest:%s|exit_code:%s|failure_antecedent:%t", evidence.Observation.Result, evidence.Observation.TargetPath, digestBytes([]byte(evidence.Observation.TargetPath)), evidence.Observation.TargetBytesDigest, evidence.Observation.Procedure, evidence.Observation.ProcedureDigest, evidence.Observation.OutputDigest, strconv.Itoa(evidence.Observation.ExitCode), evidence.Observation.FailureAntecedentObserved)
+	if evidence.ObservationPath != "" {
+		var bundle ObservationBundle
+		observationBytes, _ := os.ReadFile(evidence.ObservationPath)
+		if err := json.Unmarshal(observationBytes, &bundle); err != nil {
+			return fmt.Errorf("target observation bundle decode: %w", err)
+		}
+		expectedValue = observationBundleValue(bundle)
 	}
 	if evidence.ObservedPredicate != expectedPredicate || evidence.ObservedValue != expectedValue {
-		return fmt.Errorf("evidence predicate is not computed by the observation procedure")
+		return fmt.Errorf("evidence predicate is not computed by claim-scoped observation procedure")
 	}
-	for i, ec := range evidence.Claims {
-		if ec.Status != evidence.Status {
-			return fmt.Errorf("evidence claim status does not match receipt status")
-		}
-		if ec.Digest == "" {
-			return fmt.Errorf("evidence claim %d has no digest", i+1)
-		}
-		d, _ := claimEvidenceDigest(ec)
-		if d != ec.Digest {
-			return fmt.Errorf("evidence claim %d digest is invalid", i+1)
-		}
-		if ec.ClaimID != artifactGraph.Graph.Nodes[i].ClaimID || ec.PropositionDigest != artifactGraph.Graph.Nodes[i].PropositionDigest {
+	for i, claim := range artifactGraph.Graph.Nodes {
+		ec := evidence.Claims[i]
+		if ec.ClaimID != claim.ClaimID || ec.PropositionDigest != claim.PropositionDigest || ec.Digest == "" {
 			return fmt.Errorf("evidence claim %d is not source-derived", i+1)
 		}
-		claimPredicate := claimPredicateForObservation(i, expectedPredicate)
-		claimValue := expectedValue + "|claim:" + ec.ClaimID + "|proposition_digest:" + ec.PropositionDigest + "|predicate:" + string(claimPredicate)
-		if ec.ObservedPredicate != claimPredicate || ec.ObservedValue != claimValue {
-			return fmt.Errorf("evidence claim %d predicate is not source-derived", i+1)
+		claimObservation, found := claimObservationFor(claim, observations)
+		expectedClaim := EvidenceClaim{ClaimID: claim.ClaimID, PropositionDigest: claim.PropositionDigest, ObservedPredicate: ObservationUnknown, ObservedValue: absentClaimValue(claim), Status: UnknownEvidence, Coordinate: Coordinate{Stage: "OBSERVE", Step: claim.ActivityName, Reason: "CLAIM_OBSERVATION_MISSING"}}
+		if found {
+			expectedClaim.ObservedPredicate = claimObservation.ObservedPredicate
+			expectedClaim.ObservedValue = claimObservation.ObservedValue
+			expectedClaim.Status = CurrentEvidence
+			expectedClaim.Coordinate = claimObservation.Coordinate
+		}
+		expectedClaim.Digest, err = claimEvidenceDigest(expectedClaim)
+		if err != nil || !reflect.DeepEqual(ec, expectedClaim) {
+			return fmt.Errorf("evidence claim %d is not derived from its exact observation binding", i+1)
 		}
 	}
+	_ = parsed
 	return nil
 }
 
@@ -429,7 +584,7 @@ func classify(graph Graph, evidence EvidenceReceipt) ([]string, []Transition, []
 			if from < 0 {
 				continue
 			}
-			relation := edgeRelation(edge.Kind, states[from], local[i].Predicate, true, evidence.ObservedPredicate == ObservationContradiction, evidence.Observation.FailureAntecedentObserved)
+			relation := edgeRelation(edge.Kind, states[from], local[i].Predicate, true, edgeObservationActive(edge, evidence.Observations, ObservationContradiction), edgeObservationActive(edge, evidence.Observations, ObservationFailure))
 			if relation == relationRefuted {
 				refuting = append(refuting, edge.EdgeID)
 			}
@@ -442,7 +597,7 @@ func classify(graph Graph, evidence EvidenceReceipt) ([]string, []Transition, []
 		}
 		// Explicit root contradiction is the observation itself; downstream
 		// refutation requires a typed, directional upstream edge.
-		if i == 0 && local[i].Available && local[i].Predicate == ObservationContradiction {
+		if local[i].Available && local[i].Predicate == ObservationContradiction {
 			state, event, reason = "REFUTED", "EXPLICIT_CONTRADICTION", "CURRENT_EVIDENCE_EXPLICIT_CONTRADICTION"
 		} else if len(refuting) > 0 {
 			state, event, reason = "REFUTED", "DEPENDENCY_REFUTED", "EXPLICIT_TYPED_REFUTING_EDGE"
@@ -455,9 +610,21 @@ func classify(graph Graph, evidence EvidenceReceipt) ([]string, []Transition, []
 			}
 		}
 		states[i] = state
-		outcomes[i] = Transition{ClaimID: claim.ClaimID, Event: event, Before: "OPEN", After: state, Coordinate: Coordinate{Stage: outcomeStage(i), Step: claim.ActivityName, Reason: reason}, EvidenceDigest: local[i].Digest, UpstreamEdgeIDs: transitionEdges(i, graph, states, state, refuting, local[i].Predicate, evidence.ObservedPredicate == ObservationContradiction, evidence.Observation.FailureAntecedentObserved), Provenance: "pending"}
+		outcomes[i] = Transition{ClaimID: claim.ClaimID, Event: event, Before: "OPEN", After: state, Coordinate: Coordinate{Stage: outcomeStage(i), Step: claim.ActivityName, Reason: reason}, EvidenceDigest: local[i].Digest, UpstreamEdgeIDs: transitionEdges(i, graph, states, state, refuting, local[i].Predicate, evidence.Observations), Provenance: "pending"}
 	}
 	return states, outcomes, local
+}
+
+// edgeObservationActive is intentionally claim/edge scoped.  A mismatch on
+// another artifact, or an observation attached to another proposition, cannot
+// activate this edge even when its predicate has the same string value.
+func edgeObservationActive(edge Edge, observations []ObservationReceipt, predicate ObservationPredicate) bool {
+	for _, observation := range observations {
+		if observation.Binding == "EDGE" && observation.EdgeID == edge.EdgeID && observation.FromClaimID == edge.FromClaimID && observation.ToClaimID == edge.ToClaimID && observation.EdgeKind == edge.Kind && observation.ClaimID == edge.ToClaimID && observation.ObservedPredicate == predicate {
+			return true
+		}
+	}
+	return false
 }
 
 func outcomeStage(index int) string {
@@ -475,7 +642,7 @@ func incomingEdges(index int, graph Graph) []Edge {
 	}
 	return result
 }
-func transitionEdges(index int, graph Graph, states []string, state string, refuting []string, local ObservationPredicate, contradictionObserved, failureAntecedentObserved bool) []string {
+func transitionEdges(index int, graph Graph, states []string, state string, refuting []string, local ObservationPredicate, observations []ObservationReceipt) []string {
 	if len(refuting) > 0 {
 		return refuting
 	}
@@ -483,7 +650,7 @@ func transitionEdges(index int, graph Graph, states []string, state string, refu
 		var result []string
 		for _, edge := range incomingEdges(index, graph) {
 			from := indexOfClaim(edge.FromClaimID, graph)
-			if edge.Kind == Requires && from >= 0 && edgeRelation(edge.Kind, states[from], local, true, contradictionObserved, failureAntecedentObserved) == relationDischarged {
+			if edge.Kind == Requires && from >= 0 && edgeRelation(edge.Kind, states[from], local, true, edgeObservationActive(edge, observations, ObservationContradiction), edgeObservationActive(edge, observations, ObservationFailure)) == relationDischarged {
 				result = append(result, edge.EdgeID)
 			}
 		}
@@ -495,7 +662,7 @@ func transitionEdges(index int, graph Graph, states []string, state string, refu
 	var result []string
 	for _, edge := range incomingEdges(index, graph) {
 		from := indexOfClaim(edge.FromClaimID, graph)
-		if from >= 0 && (edge.Kind == Supports || edge.Kind == Requires) && edgeRelation(edge.Kind, states[from], local, true, contradictionObserved, failureAntecedentObserved) == relationOpen && (states[from] == "OPEN" || states[from] == "REFUTED") {
+		if from >= 0 && (edge.Kind == Supports || edge.Kind == Requires) && edgeRelation(edge.Kind, states[from], local, true, edgeObservationActive(edge, observations, ObservationContradiction), edgeObservationActive(edge, observations, ObservationFailure)) == relationOpen && (states[from] == "OPEN" || states[from] == "REFUTED") {
 			result = append(result, edge.EdgeID)
 		}
 	}
@@ -686,6 +853,14 @@ func claimIDs(path []int, graph Graph) []string {
 func indexOfClaim(id string, graph Graph) int {
 	for i, claim := range graph.Nodes {
 		if claim.ClaimID == id {
+			return i
+		}
+	}
+	return -1
+}
+func indexOfEdge(id string, graph Graph) int {
+	for i, edge := range graph.Edges {
+		if edge.EdgeID == id {
 			return i
 		}
 	}

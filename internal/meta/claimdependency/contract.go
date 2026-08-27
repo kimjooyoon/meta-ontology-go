@@ -260,6 +260,10 @@ func observationReceiptDigest(receipt ObservationReceipt) (string, error) {
 	receipt.Digest = ""
 	return digestJSON(receipt)
 }
+func observationBundleDigest(bundle ObservationBundle) (string, error) {
+	bundle.Digest = ""
+	return digestJSON(bundle)
+}
 func claimEvidenceDigest(value EvidenceClaim) (string, error) {
 	value.Digest = ""
 	return digestJSON(value)

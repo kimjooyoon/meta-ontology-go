@@ -28,12 +28,13 @@ refuted state entails target failure” 방향이다. edge 이름만으로 `REFU
 ## Current evidence and algebra
 
 `.gooo`에는 observation recipe/capability와 topology만 선언된다. CI의 독립
-observer가 실제 target artifact를 읽거나 실행해 target path, bytes digest,
-procedure/procedure digest, output/output digest, exit code와 result를 raw
-observation receipt로 남긴다. 그 receipt가 없으면 parse/lower 결과는
-`DECLARED_RECIPE`/`UNKNOWN`일 뿐 `CURRENT_EVIDENCE`가 아니다. `-operation`은
-`CLAIMED_INPUT/REQUEST`일 뿐이며 source marker와 함께 predicate를 고르지
-않는다. provider와 judge는 artifact bytes와 raw observation을 각각 다시
+observer가 실제 target artifact를 읽어 target path, bytes digest,
+procedure/procedure digest, output/output digest, comparison result를 raw
+claim/edge-scoped observation bundle로 남긴다. process exit 증거가 없는
+bytes 비교는 종료 상태를 주장하지 않는다. 그 bundle이 없으면 parse/lower
+결과는 `DECLARED_RECIPE`/`UNKNOWN`일 뿐 `CURRENT_EVIDENCE`가 아니다.
+`-operation`은 `CLAIMED_INPUT/REQUEST`일 뿐이며 source marker와 함께 predicate를
+고르지 않는다. provider와 judge는 artifact bytes와 raw bundle을 각각 다시
 관측한다. `HISTORICAL_FIXTURE`나 임의 문자열은 PASS 근거가 아니다.
 
 state 대수는 다음과 같다.

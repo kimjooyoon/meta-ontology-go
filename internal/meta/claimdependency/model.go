@@ -33,6 +33,7 @@ const (
 	ObservationUnknown       ObservationPredicate = "UNKNOWN"
 	ObservationEvidence      ObservationPredicate = "EVIDENCE_ACCEPTED"
 	ObservationContradiction ObservationPredicate = "EXPLICIT_CONTRADICTION"
+	ObservationFailure       ObservationPredicate = "FAILURE_ANTECEDENT_OBSERVED"
 )
 
 type EvidenceStatus string
@@ -52,20 +53,41 @@ type AuthorityCase struct {
 }
 
 type ObservationReceipt struct {
-	Schema                    string        `json:"schema"`
-	Provider                  string        `json:"provider"`
-	TargetPath                string        `json:"target_path"`
-	Target                    TargetAddress `json:"target"`
-	TargetBytesDigest         string        `json:"target_bytes_digest"`
-	Procedure                 string        `json:"procedure"`
-	ProcedureDigest           string        `json:"procedure_digest"`
-	Output                    string        `json:"output"`
-	OutputDigest              string        `json:"output_digest"`
-	ExitCode                  int           `json:"exit_code"`
-	Result                    string        `json:"result"`
-	FailureAntecedentObserved bool          `json:"failure_antecedent_observed"`
-	Coordinate                Coordinate    `json:"coordinate"`
-	Digest                    string        `json:"digest"`
+	Schema            string               `json:"schema"`
+	Provider          string               `json:"provider"`
+	Binding           string               `json:"binding"`
+	ClaimID           string               `json:"claim_id,omitempty"`
+	PropositionDigest string               `json:"proposition_digest,omitempty"`
+	EdgeID            string               `json:"edge_id,omitempty"`
+	FromClaimID       string               `json:"from_claim_id,omitempty"`
+	ToClaimID         string               `json:"to_claim_id,omitempty"`
+	EdgeKind          EdgeKind             `json:"edge_kind,omitempty"`
+	Target            TargetAddress        `json:"target"`
+	TargetPath        string               `json:"target_path"`
+	TargetBytesDigest string               `json:"target_bytes_digest"`
+	ExpectedPredicate ObservationPredicate `json:"expected_predicate"`
+	ExpectedValue     string               `json:"expected_value"`
+	ObservedPredicate ObservationPredicate `json:"observed_predicate"`
+	ObservedValue     string               `json:"observed_value"`
+	ComparisonResult  string               `json:"comparison_result"`
+	Procedure         string               `json:"procedure"`
+	ProcedureDigest   string               `json:"procedure_digest"`
+	Output            string               `json:"output"`
+	OutputDigest      string               `json:"output_digest"`
+	Coordinate        Coordinate           `json:"coordinate"`
+	Digest            string               `json:"digest"`
+}
+
+type ObservationBundle struct {
+	Schema              string               `json:"schema"`
+	Provider            string               `json:"provider"`
+	SourcePath          string               `json:"source_path"`
+	SourceDigest        string               `json:"source_digest"`
+	ArtifactPath        string               `json:"artifact_path"`
+	ArtifactBytesDigest string               `json:"artifact_bytes_digest"`
+	Profile             string               `json:"profile"`
+	Observations        []ObservationReceipt `json:"observations"`
+	Digest              string               `json:"digest"`
 }
 
 type Coordinate struct {
@@ -149,23 +171,24 @@ type RepositorySnapshot struct {
 }
 
 type EvidenceReceipt struct {
-	Schema              string               `json:"schema"`
-	Provider            string               `json:"provider"`
-	ArtifactPath        string               `json:"artifact_path"`
-	ArtifactBytesDigest string               `json:"artifact_bytes_digest"`
-	Operation           string               `json:"operation"`
-	RequestStatus       string               `json:"request_status"`
-	Procedure           string               `json:"procedure"`
-	ObservationPath     string               `json:"observation_path,omitempty"`
-	Observation         ObservationReceipt   `json:"observation"`
-	ObservedPredicate   ObservationPredicate `json:"observed_predicate"`
-	ObservedValue       string               `json:"observed_value"`
-	Status              EvidenceStatus       `json:"status"`
-	Coordinate          Coordinate           `json:"coordinate"`
-	Claims              []EvidenceClaim      `json:"claims"`
-	Capability          CapabilityEvidence   `json:"capability"`
-	Snapshot            RepositorySnapshot   `json:"snapshot"`
-	Digest              string               `json:"digest"`
+	Schema                  string               `json:"schema"`
+	Provider                string               `json:"provider"`
+	ArtifactPath            string               `json:"artifact_path"`
+	ArtifactBytesDigest     string               `json:"artifact_bytes_digest"`
+	Operation               string               `json:"operation"`
+	RequestStatus           string               `json:"request_status"`
+	Procedure               string               `json:"procedure"`
+	ObservationPath         string               `json:"observation_path,omitempty"`
+	ObservationBundleDigest string               `json:"observation_bundle_digest,omitempty"`
+	Observations            []ObservationReceipt `json:"observations"`
+	ObservedPredicate       ObservationPredicate `json:"observed_predicate"`
+	ObservedValue           string               `json:"observed_value"`
+	Status                  EvidenceStatus       `json:"status"`
+	Coordinate              Coordinate           `json:"coordinate"`
+	Claims                  []EvidenceClaim      `json:"claims"`
+	Capability              CapabilityEvidence   `json:"capability"`
+	Snapshot                RepositorySnapshot   `json:"snapshot"`
+	Digest                  string               `json:"digest"`
 }
 
 type Subject struct {

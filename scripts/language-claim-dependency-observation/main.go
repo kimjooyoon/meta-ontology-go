@@ -11,29 +11,35 @@ import (
 )
 
 func main() {
+	source := flag.String("source", "", "raw .gooo source whose graph supplies claim and edge bindings")
 	artifact := flag.String("artifact", "", "target artifact to observe")
 	expected := flag.String("expected-bytes-digest", "", "digest expected by the target operation")
+	profile := flag.String("profile", "", "accepted, contradiction, contradiction-single, contradiction-no-failure, or unrelated")
 	output := flag.String("output", "", "observation receipt output")
 	flag.Parse()
-	if *artifact == "" || *expected == "" || *output == "" {
-		fail("-artifact, -expected-bytes-digest, and -output are required")
+	if *source == "" || *artifact == "" || *expected == "" || *profile == "" || *output == "" {
+		fail("-source, -artifact, -expected-bytes-digest, -profile, and -output are required")
 	}
-	data, err := os.ReadFile(*artifact)
+	sourceBytes, err := os.ReadFile(*source)
 	if err != nil {
 		fail(err.Error())
 	}
-	actual := digestBytes(data)
-	result, exitCode := "TARGET_CONTRADICTED", 1
+	artifactBytes, err := os.ReadFile(*artifact)
+	if err != nil {
+		fail(err.Error())
+	}
+	actual := digestBytes(artifactBytes)
+	comparison := "MISMATCH"
 	if actual == *expected {
-		result, exitCode = "ACCEPTED", 0
+		comparison = "MATCH"
 	}
-	procedureOutput := fmt.Sprintf("read target path=%s bytes=%d sha256=%s expected=%s result=%s", *artifact, len(data), actual, *expected, result)
-	receipt, err := claimdependency.BuildObservationReceipt(*artifact, *expected, procedureOutput, exitCode)
+	procedureOutput := fmt.Sprintf("read target path=%s bytes=%d sha256=%s expected=%s comparison_result=%s", *artifact, len(artifactBytes), actual, *expected, comparison)
+	bundle, err := claimdependency.BuildObservationBundle(*source, sourceBytes, *artifact, *expected, procedureOutput, *profile)
 	if err != nil {
 		fail(err.Error())
 	}
-	writeJSON(*output, receipt)
-	fmt.Printf("target_observation result=%s exit_code=%d target_bytes_digest=%s output_digest=%s\n", receipt.Result, receipt.ExitCode, receipt.TargetBytesDigest, receipt.OutputDigest)
+	writeJSON(*output, bundle)
+	fmt.Printf("target_observation profile=%s observations=%d comparison_result=%s target_bytes_digest=%s bundle_digest=%s\n", bundle.Profile, len(bundle.Observations), comparison, bundle.ArtifactBytesDigest, bundle.Digest)
 }
 
 func digestBytes(data []byte) string {
