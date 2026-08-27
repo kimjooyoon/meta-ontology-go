@@ -73,6 +73,6 @@ fail verification.
 The denominator is exactly 5 cases. The expected result is 1/1 exact,
 1/1 direct-unknown classification, 1/1 dependency-block classification,
 1/1 invariant-preservation classification, 1/1 mixed-cause classification,
-and 5/5 non-exact cases not promoted. The repository write count is 0 and
+and 4/4 non-exact cases not promoted. The repository write count is 0 and
 promotion authority is false. This is a read-only proof of the calculus, not a
 grant of semantic or repository authority.
