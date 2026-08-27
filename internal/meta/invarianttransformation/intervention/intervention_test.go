@@ -41,7 +41,7 @@ func TestBuildKeepsSemanticAndNonSemanticDenominatorsSeparate(t *testing.T) {
 	}
 }
 
-func TestReportConsumerAndDeterministicReplayReproduceBothInterventions(t *testing.T) {
+func TestDeterministicReplayReproducesBothInterventions(t *testing.T) {
 	report, err := Build([]byte(testSource), testHead)
 	if err != nil {
 		t.Fatal(err)
