@@ -86,7 +86,7 @@ jq -e '
   ([.summary.guardrails[] | select(.id == "gooo.guardrail.denominator.forbidden-estimate.v1" and .proposition_present == true and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
   ([.summary.guardrails[] | select(.id == "gooo.guardrail.denominator.repository-writes.v1" and .proposition_present == false and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
   ([.indicators[] | select(.guardrail != null and .guardrail.conforms == true and .guardrail.observed == 0 and .guardrail.allowed_max == 0 and .guardrail.conformance_numerator == 1 and .guardrail.conformance_denominator == 1)] | length) == 2 and
-  ([.cases[] | select(.id == "legal-advance") | .receipt.guardrails[] | select(.direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 2 and
+  ([.cases[] | select(.id == "proposal-1") | .receipt.guardrails[] | select(.direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 2 and
   ([.claim_ledger[] | select(.prior_state == "OPEN")] | length) == 3 and
   ([.emitted_claims[] | select(.class == "FORBIDDEN_ESTIMATE" and .state == "ASSERTED")] | length) == 0 and
   .cases[0].kind == "REGISTERED_WITH_RECEIPT" and .cases[0].observed_decision == "ADVANCE" and .cases[0].observed_resolution == "EXACT" and .cases[0].from_claim == "OPEN" and .cases[0].to_claim == "DISCHARGED" and
