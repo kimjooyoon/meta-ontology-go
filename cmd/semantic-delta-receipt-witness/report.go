@@ -8,16 +8,17 @@ import (
 )
 
 type Report struct {
-	Schema             string                      `json:"schema"`
-	CaseID             string                      `json:"case_id"`
-	SubjectSHA         string                      `json:"subject_sha"`
-	SourcePaths        []string                    `json:"source_paths"`
-	OutputPath         string                      `json:"output_path"`
-	Receipt            producer.Receipt            `json:"receipt"`
-	IndependentVerdict consumer.Verdict            `json:"independent_verdict"`
-	Indicators         []producer.OperationBinding `json:"indicators"`
-	Evidence           Evidence                    `json:"evidence"`
-	ReportDigest       string                      `json:"report_digest"`
+	Schema             string                           `json:"schema"`
+	CaseID             string                           `json:"case_id"`
+	SubjectSHA         string                           `json:"subject_sha"`
+	SourcePaths        []string                         `json:"source_paths"`
+	OutputPath         string                           `json:"output_path"`
+	Receipt            producer.Receipt                 `json:"receipt"`
+	IndependentVerdict consumer.Verdict                 `json:"independent_verdict"`
+	ClaimIdentity      consumer.ClaimIdentityComparison `json:"claim_identity"`
+	Indicators         []producer.OperationBinding      `json:"indicators"`
+	Evidence           Evidence                         `json:"evidence"`
+	ReportDigest       string                           `json:"report_digest"`
 }
 
 type Evidence struct {
@@ -55,8 +56,10 @@ func evaluate(input producer.Input, outputPath string) Report {
 	wire := consumer.Receipt{}
 	_ = json.Unmarshal(raw, &wire)
 	verdict := consumer.AdjudicateFiles(consumer.Input{CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA, BeforePath: input.BeforePath, AfterPath: input.AfterPath, EffectsBeforePath: input.EffectsBeforePath, EffectsAfterPath: input.EffectsAfterPath, OutputPath: input.OutputPath}, wire)
+	consumerInput := consumer.Input{CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA, BeforePath: input.BeforePath, AfterPath: input.AfterPath, EffectsBeforePath: input.EffectsBeforePath, EffectsAfterPath: input.EffectsAfterPath, OutputPath: input.OutputPath}
+	claimIdentity := consumer.ValidateFixedClaimIdentity(consumerInput)
 	summary := summaryFor(receipt, verdict)
-	report := Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, Receipt: receipt, IndependentVerdict: verdict, Indicators: bindings(summary), Evidence: evidenceFor(receipt, verdict, summary)}
+	report := Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, Receipt: receipt, IndependentVerdict: verdict, ClaimIdentity: claimIdentity, Indicators: bindings(summary), Evidence: evidenceFor(receipt, verdict, summary)}
 	sealReport(&report)
 	return report
 }

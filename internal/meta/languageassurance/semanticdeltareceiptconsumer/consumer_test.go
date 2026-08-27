@@ -55,14 +55,14 @@ func TestConsumerRejectsResealedTamperMatrix(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			expected := reconstructReceipt(testCase.input, beforeRaw, afterRaw)
+			expected := reconstructReceipt(input, beforeRaw, afterRaw)
 			rejected := 0
 			for _, mutation := range mutations {
 				tampered := expected
 				mutation.edit(&tampered)
 				tampered.ReceiptDigest = ""
 				tampered.ReceiptDigest = digestValue(tampered)
-				verdict := AdjudicateFiles(testCase.input, tampered)
+				verdict := AdjudicateFiles(input, tampered)
 				if !verdict.Passed {
 					rejected++
 				}
