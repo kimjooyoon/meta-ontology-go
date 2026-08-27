@@ -12,7 +12,9 @@ func Validate(report model.Report) error {
 	if report.Schema != model.ReportSchema || report.Scope != model.Scope || !model.ValidHead(report.HeadSHA) ||
 		report.ContractDigest != model.DigestJSON(contract) || !model.ValidDigest(report.SourceDigest) ||
 		report.Receipt.Schema != model.ReceiptSchema || !model.VerifyReceiptDigest(report.Receipt) ||
-		report.ReceiptDigest != report.Receipt.Digest || report.Independence.Schema != model.IndependenceSchema ||
+		report.ReceiptDigest != report.Receipt.Digest || report.Receipt.HeadSHA != report.HeadSHA ||
+		report.Independence.Schema != model.IndependenceSchema || report.Independence.ProducerDependencies != 0 ||
+		report.Independence.DeciderDependencies != 0 ||
 		report.IndependenceDigest != model.DigestJSON(report.Independence) {
 		return fmt.Errorf("EVIDENCE_FRESHNESS_IDENTITY_MISMATCH")
 	}
@@ -32,15 +34,34 @@ func Validate(report model.Report) error {
 		return fmt.Errorf("EVIDENCE_FRESHNESS_SUMMARY_MISMATCH")
 	}
 	for index, item := range report.Cases {
-		if item.Status != "SATISFIED" || len(item.Checks) != model.CheckTotal || item.Transition.From != "CLAIM_JUSTIFIED" || item.Transition.Coordinate.Stage == "" {
+		definition := contract.Cases[index]
+		if item.Status != "SATISFIED" || item.ID != definition.ID || item.Mutation != definition.Mutation ||
+			item.ExpectedState != definition.ExpectedState || item.ExpectedDecision != definition.ExpectedDecision ||
+			item.ExpectedResolution != definition.ExpectedResolution || item.ExpectedStage != definition.ExpectedStage ||
+			item.ExpectedStep != definition.ExpectedStep || item.ExpectedReason != definition.ExpectedReason ||
+			item.ObservedState != definition.ExpectedState || item.ObservedDecision != definition.ExpectedDecision ||
+			item.ObservedResolution != definition.ExpectedResolution || item.ObservedReason != definition.ExpectedReason ||
+			len(item.Checks) != model.CheckTotal || item.Transition.From != "CLAIM_JUSTIFIED" || item.Transition.Coordinate.Stage == "" {
 			return fmt.Errorf("EVIDENCE_FRESHNESS_CASE_MISMATCH_%d", index)
+		}
+		if item.Transition.Coordinate != item.Coordinate || item.Transition.EvidenceDigest != report.ReceiptDigest {
+			return fmt.Errorf("EVIDENCE_FRESHNESS_TRANSITION_MISMATCH_%d", index)
+		}
+		if item.ObservedState == model.StateFresh && (item.Transition.To != "CLAIM_PRESERVED" || item.Transition.Preservation != "PRESERVE_EXACT") {
+			return fmt.Errorf("EVIDENCE_FRESHNESS_FRESH_TRANSITION_MISMATCH_%d", index)
+		}
+		if item.ObservedState == model.StateStale && (item.Transition.To != "CLAIM_STALE" || item.Transition.Preservation != "DO_NOT_PRESERVE") {
+			return fmt.Errorf("EVIDENCE_FRESHNESS_STALE_TRANSITION_MISMATCH_%d", index)
+		}
+		if item.ObservedState == model.StateUnknown && (item.Transition.To != "CLAIM_UNKNOWN" || item.Transition.Preservation != "DO_NOT_PRESERVE") {
+			return fmt.Errorf("EVIDENCE_FRESHNESS_UNKNOWN_TRANSITION_MISMATCH_%d", index)
 		}
 	}
 	for index, definition := range contract.Metrics {
 		item := report.Indicators[index]
 		if item.MetricID != definition.MetricID || item.Class != definition.Class || item.Producer != definition.Producer ||
 			item.Consumer != definition.Consumer || item.ProofChoice != definition.ProofChoice || item.MetaOperation != definition.MetaOperation ||
-			item.Denominator != definition.Denominator || item.ExpectedNumerator != definition.ExpectedNumerator || !item.Satisfied ||
+			item.Numerator != definition.ExpectedNumerator || item.Denominator != definition.Denominator || item.ExpectedNumerator != definition.ExpectedNumerator || !item.Satisfied ||
 			item.BasisPoints != 10000 {
 			return fmt.Errorf("EVIDENCE_FRESHNESS_INDICATOR_MISMATCH_%d", index)
 		}

@@ -7,11 +7,13 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/evidencefreshness/model"
 )
 
-var axes = []struct {
+type axisSpec struct {
 	name  string
 	stage string
 	get   func(model.EvidenceTuple) string
-}{
+}
+
+var axes = []axisSpec{
 	{name: "subject", stage: model.StageSubject, get: func(tuple model.EvidenceTuple) string { return tuple.Subject }},
 	{name: "material", stage: model.StageMaterial, get: func(tuple model.EvidenceTuple) string { return tuple.Material }},
 	{name: "recipe", stage: model.StageRecipe, get: func(tuple model.EvidenceTuple) string { return tuple.Recipe }},
@@ -41,20 +43,32 @@ func Decide(receiptRaw, contextRaw []byte) model.Verdict {
 		return finish(refuted("READ_ONLY_EFFECT_INVALID", model.StageVerifier, "verify-effects", "read-only-effects"), receipt, context)
 	}
 
-	for _, axis := range axes {
+	var changed []string
+	var firstChanged *axisSpec
+	for index := range axes {
+		axis := axes[index]
 		receiptValue, currentValue := axis.get(receipt.Tuple), axis.get(context.Tuple)
 		if receiptValue == "" || currentValue == "" {
+			if firstChanged != nil {
+				return finish(stale(axisReason(*firstChanged), firstChanged.stage, axisStep(*firstChanged), changed), receipt, context)
+			}
 			return finish(unknown(strings.ToUpper(axis.name)+"_UNKNOWN", axis.stage, "read-"+axis.name, axis.name+"-identity"), receipt, context)
 		}
 		if receiptValue != currentValue {
-			return finish(stale(strings.ToUpper(axis.name)+"_CHANGED", axis.stage, "compare-"+axis.name, axis.name), receipt, context)
+			changed = append(changed, axis.name)
+			if firstChanged == nil {
+				firstChanged = &axis
+			}
 		}
+	}
+	if firstChanged != nil {
+		return finish(stale(axisReason(*firstChanged), firstChanged.stage, axisStep(*firstChanged), changed), receipt, context)
 	}
 	if receipt.Boundary.EnvironmentBoundary == "" || context.EnvironmentBoundary == "" {
 		return finish(unknown("ENVIRONMENT_BOUNDARY_UNKNOWN", model.StageEnvironment, "read-environment-boundary", "environment-boundary"), receipt, context)
 	}
 	if receipt.Boundary.EnvironmentBoundary != context.EnvironmentBoundary {
-		return finish(stale("ENVIRONMENT_BOUNDARY_CHANGED", model.StageEnvironment, "compare-environment-boundary", "environment-boundary"), receipt, context)
+		return finish(stale("ENVIRONMENT_BOUNDARY_CHANGED", model.StageEnvironment, "compare-environment-boundary", []string{"environment-boundary"}), receipt, context)
 	}
 	if receipt.Boundary.ObservationEpoch <= 0 || receipt.Boundary.ValidThroughEpoch < receipt.Boundary.ObservationEpoch || context.CurrentEpoch <= 0 {
 		return finish(unknown("TEMPORAL_BOUNDARY_UNKNOWN", model.StageVerifier, "read-validity-boundary", "temporal-boundary"), receipt, context)
@@ -63,7 +77,7 @@ func Decide(receiptRaw, contextRaw []byte) model.Verdict {
 		return finish(unknown("TEMPORAL_BOUNDARY_PRECEDES_OBSERVATION", model.StageVerifier, "compare-validity-boundary", "temporal-boundary"), receipt, context)
 	}
 	if context.CurrentEpoch > receipt.Boundary.ValidThroughEpoch {
-		return finish(stale("TEMPORAL_BOUNDARY_EXPIRED", model.StageVerifier, "check-validity-boundary", "temporal-boundary"), receipt, context)
+		return finish(stale("TEMPORAL_BOUNDARY_EXPIRED", model.StageVerifier, "check-validity-boundary", []string{"temporal-boundary"}), receipt, context)
 	}
 	return finish(model.Verdict{Schema: model.VerdictSchema, State: model.StateFresh,
 		Decision: model.DecisionPass, Resolution: model.ResolutionExact,
@@ -71,10 +85,18 @@ func Decide(receiptRaw, contextRaw []byte) model.Verdict {
 		Coordinate: model.Coordinate{Stage: model.StageVerifier, Step: "accept-current-evidence", Reason: "TUPLE_EXACT_AND_BOUNDARY_CURRENT"}}, receipt, context)
 }
 
-func stale(reason, stage, step, dimension string) model.Verdict {
+func axisReason(axis axisSpec) string {
+	return strings.ToUpper(axis.name) + "_CHANGED"
+}
+
+func axisStep(axis axisSpec) string {
+	return "compare-" + axis.name
+}
+
+func stale(reason, stage, step string, dimensions []string) model.Verdict {
 	return model.Verdict{Schema: model.VerdictSchema, State: model.StateStale,
 		Decision: model.DecisionFailClosed, Resolution: model.ResolutionInvariant, Reason: reason,
-		Coordinate: model.Coordinate{Stage: stage, Step: step, Reason: reason}, ChangedDimensions: []string{dimension}}
+		Coordinate: model.Coordinate{Stage: stage, Step: step, Reason: reason}, ChangedDimensions: dimensions}
 }
 
 func unknown(reason, stage, step, dimension string) model.Verdict {
