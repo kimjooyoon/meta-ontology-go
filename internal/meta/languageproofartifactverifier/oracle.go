@@ -185,6 +185,12 @@ func claimsFromStatements(statements []ClaimStatement, statuses map[string]strin
 			claimResolution, claimReason, provenance = "EXACT", "CLAIM_DISCHARGED", "consumer-canonical-recipe-v2"
 		} else if status == "OPEN" {
 			claimResolution = "LOWER_RESOLUTION"
+		} else if status == "REFUTED" {
+			// A case may be lower-resolution because another attachment is
+			// missing, while this claim is independently contradicted by its
+			// absent or invalid evidence. Keep the claim-level resolution
+			// invariant-only instead of inheriting the case-level resolution.
+			claimResolution, claimReason = "INVARIANT_ONLY", "CLAIM_REFUTED"
 		}
 		result = append(result, makeClaimResult(claimSpec{ID: statement.ID, Proposition: statement.Proposition, TargetDigest: statement.TargetDigest, Dependencies: statement.Dependencies, ProofChoice: statement.ProofChoice, MetaOperation: statement.MetaOperation, Coordinate: statement.Coordinate}, status, claimResolution, claimReason, coordinate, statement.EvidenceDigest, provenance))
 	}
