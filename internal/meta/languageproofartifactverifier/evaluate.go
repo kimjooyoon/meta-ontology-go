@@ -140,6 +140,7 @@ func Evaluate(input Input) Report {
 		report.ConformanceCoordinate = Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", report.ConformanceReason}
 		report.ArtifactUseAuthority = "READ_ONLY_CONSUMPTION"
 	}
+	report.ProofSummary = humanProofSummary(report.Proofs, report.ArtifactUseAuthority)
 	report.Digest = reportDigest(report)
 	return report
 }
@@ -161,7 +162,7 @@ func allProofsPassed(proofs []Proof) bool {
 		return false
 	}
 	for _, proof := range proofs {
-		if proof.Phase != ProofPhaseFinal || proof.State != ProofStateDischarged || !proof.Passed || proof.ConsumerGateOpen {
+		if proof.Phase != ProofPhaseFinal || proof.State != ProofStateDischarged || !proof.EvidenceValidated || !proof.Passed || proof.ConsumerGateOpen {
 			return false
 		}
 	}

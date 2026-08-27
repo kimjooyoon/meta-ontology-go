@@ -168,6 +168,7 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 		attested.ConformanceDecision, attested.ConformanceResolution, attested.ConformanceReason = "PASS", "EXACT", "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED"
 		attested.ConformanceCoordinate = Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", attested.ConformanceReason}
 		attested.ArtifactUseAuthority = "READ_ONLY_CONSUMPTION"
+		attested.ProofSummary = humanProofSummary(attested.Proofs, attested.ArtifactUseAuthority)
 		attested.Digest = reportDigest(attested)
 		if Validate(attested) != nil {
 			return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, "consumer attestation is not independently verified")

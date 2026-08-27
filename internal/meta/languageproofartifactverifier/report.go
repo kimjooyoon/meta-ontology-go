@@ -102,16 +102,17 @@ type Indicator struct {
 }
 
 type Proof struct {
-	Phase            string   `json:"phase"`
-	State            string   `json:"state"`
-	Choice           string   `json:"choice"`
-	MetaOperation    string   `json:"meta_operation"`
-	TargetDigest     string   `json:"target_digest"`
-	Dependency       string   `json:"dependency"`
-	EvidenceDigests  []string `json:"evidence_digests"`
-	ReceiptDigest    string   `json:"receipt_digest"`
-	Passed           bool     `json:"passed"`
-	ConsumerGateOpen bool     `json:"consumer_gate_open"`
+	Phase             string   `json:"phase"`
+	State             string   `json:"state"`
+	EvidenceValidated bool     `json:"evidence_validated"`
+	Choice            string   `json:"choice"`
+	MetaOperation     string   `json:"meta_operation"`
+	TargetDigest      string   `json:"target_digest"`
+	Dependency        string   `json:"dependency"`
+	EvidenceDigests   []string `json:"evidence_digests"`
+	ReceiptDigest     string   `json:"receipt_digest"`
+	Passed            bool     `json:"passed"`
+	ConsumerGateOpen  bool     `json:"consumer_gate_open"`
 }
 
 type Report struct {
@@ -150,6 +151,7 @@ type Report struct {
 	Summary                          Summary              `json:"summary"`
 	Indicators                       []Indicator          `json:"indicators"`
 	Proofs                           []Proof              `json:"proofs"`
+	ProofSummary                     string               `json:"proof_summary"`
 	Transitions                      []ClaimTransition    `json:"claim_transitions"`
 	PriorLedger                      ClaimLedger          `json:"prior_ledger"`
 	Ledger                           ClaimLedger          `json:"ledger"`

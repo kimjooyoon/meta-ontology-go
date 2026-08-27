@@ -1,5 +1,7 @@
 package languageproofartifactverifier
 
+import "fmt"
+
 const CoreParserDependencyInventoryTotal = 2
 
 const (
@@ -126,8 +128,10 @@ func proofs(report Report, cases []CaseResult, phase string) []Proof {
 		report.ConsumerReceipt.AttestationDigest == attestationDigest(report) && report.ConsumerReceipt.Digest == consumerReceiptDigest(report.ConsumerReceipt))
 	coherenceObserved := valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && len(report.Transitions) == TransitionTotal
 	regressionObserved := negativeCaseInventoryOK(cases) && report.Summary.CasesSatisfied == CaseTotal && report.Summary.CoherentClaimStructureRejections == 4 && report.Summary.SemanticInterventions == 1 && report.Summary.NonsemanticInterventions == 1 && report.Summary.UnauthorizedConsumerDenials == 1
-	coherencePassed := coherenceObserved && (phase == ProofPhasePreliminary || receiptFieldsOK)
-	regressionPassed := regressionObserved && (phase == ProofPhasePreliminary || receiptFieldsOK)
+	coherenceEvidenceValidated := coherenceObserved && (phase == ProofPhasePreliminary || receiptFieldsOK)
+	regressionEvidenceValidated := regressionObserved && (phase == ProofPhasePreliminary || receiptFieldsOK)
+	coherencePassed := coherenceEvidenceValidated && phase == ProofPhaseFinal
+	regressionPassed := regressionEvidenceValidated && phase == ProofPhaseFinal
 	consumerGateOpen := phase == ProofPhasePreliminary || !receiptFieldsOK
 	foundationPassed := valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && valid.SourceDigest != "" && valid.SemanticDigest != ""
 	proofState := func(passed, gateOpen bool) string {
@@ -144,10 +148,31 @@ func proofs(report Report, cases []CaseResult, phase string) []Proof {
 		evidence = append(evidence, claim.EvidenceDigests...)
 	}
 	return []Proof{
-		{Phase: phase, State: proofState(foundationPassed, false), Choice: "FOUNDATION", MetaOperation: "bind-source-bytes-and-projection", TargetDigest: valid.SourceDigest, Dependency: "checkout.source.gooo->source-bytes-bound", EvidenceDigests: append([]string(nil), valid.Claims[0].EvidenceDigests...), ReceiptDigest: valid.OperationDigest, Passed: foundationPassed},
-		{Phase: phase, State: proofState(coherencePassed, consumerGateOpen), Choice: "COHERENCE", MetaOperation: "bind-operation-and-claim-relations", TargetDigest: valid.OperationDigest, Dependency: "source-bytes-bound->operation-receipt-bound->recipe-match->consumer-authority", EvidenceDigests: evidence, ReceiptDigest: valid.OperationDigest, Passed: coherencePassed, ConsumerGateOpen: consumerGateOpen},
-		{Phase: phase, State: proofState(regressionPassed, consumerGateOpen), Choice: "REGRESSION", MetaOperation: "execute-negative-and-intervention-suite", TargetDigest: report.WriteSet.Digest, Dependency: "negative-case-inventory->claim-local-effects->authority-boundary", EvidenceDigests: regressionEvidence(cases, report.Interventions), ReceiptDigest: valid.OperationDigest, Passed: regressionPassed, ConsumerGateOpen: consumerGateOpen},
+		{Phase: phase, State: proofState(foundationPassed, false), EvidenceValidated: foundationPassed, Choice: "FOUNDATION", MetaOperation: "bind-source-bytes-and-projection", TargetDigest: valid.SourceDigest, Dependency: "checkout.source.gooo->source-bytes-bound", EvidenceDigests: append([]string(nil), valid.Claims[0].EvidenceDigests...), ReceiptDigest: valid.OperationDigest, Passed: foundationPassed},
+		{Phase: phase, State: proofState(coherencePassed, consumerGateOpen), EvidenceValidated: coherenceEvidenceValidated, Choice: "COHERENCE", MetaOperation: "bind-operation-and-claim-relations", TargetDigest: valid.OperationDigest, Dependency: "source-bytes-bound->operation-receipt-bound->recipe-match->consumer-authority", EvidenceDigests: evidence, ReceiptDigest: valid.OperationDigest, Passed: coherencePassed, ConsumerGateOpen: consumerGateOpen},
+		{Phase: phase, State: proofState(regressionPassed, consumerGateOpen), EvidenceValidated: regressionEvidenceValidated, Choice: "REGRESSION", MetaOperation: "execute-negative-and-intervention-suite", TargetDigest: report.WriteSet.Digest, Dependency: "negative-case-inventory->claim-local-effects->authority-boundary", EvidenceDigests: regressionEvidence(cases, report.Interventions), ReceiptDigest: valid.OperationDigest, Passed: regressionPassed, ConsumerGateOpen: consumerGateOpen},
 	}
+}
+
+func humanProofSummary(proofs []Proof, authority string) string {
+	observedEvidence := 0
+	openProofs := 0
+	dischargedProofs := 0
+	for _, proof := range proofs {
+		if proof.EvidenceValidated {
+			observedEvidence++
+		}
+		if proof.State == ProofStateOpen {
+			openProofs++
+		}
+		if proof.State == ProofStateDischarged {
+			dischargedProofs++
+		}
+	}
+	if authority == "READ_ONLY_CONSUMPTION" {
+		return fmt.Sprintf("observed evidence %d/%d; open proofs %d/0; discharged proofs %d/%d; authority READ_ONLY", observedEvidence, len(proofs), openProofs, dischargedProofs, len(proofs))
+	}
+	return fmt.Sprintf("observed evidence %d/%d; open proofs %d/%d; discharged proofs %d/%d; authority 0", observedEvidence, len(proofs), openProofs, openProofs, dischargedProofs, len(proofs))
 }
 
 func regressionEvidence(cases []CaseResult, interventions []InterventionResult) []string {
