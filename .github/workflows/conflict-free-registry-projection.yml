@@ -173,9 +173,15 @@ jobs:
             .new_concept_fixture.decision == "PASS" and
             .dependency_graph_negative_fixture.decision == "PASS" and
             .dependency_graph_missing_module_fixture.decision == "PASS" and
-            ([.module_path_observations[] | select(.status == "VALID" and .available == true and .bytes > 0 and .raw_digest != "")] | length) == 1 and
-            ([.module_path_observations[] | select(.status == "MISSING" and .available == false and (.raw_digest // "") == "")] | length) == 1 and
-            ([.module_path_observations[] | select(.status == "INVALID" and .available == true and .bytes > 0 and .raw_digest != "")] | length) == 1 and
+            ([.module_path_observations[].address] | sort) == ["fixture://module-path/invalid/go.mod", "fixture://module-path/missing/go.mod", "source://repository/go.mod"] and
+            ([.module_path_observations[].scenario_id] | sort) == ["main-valid", "module-path-invalid", "module-path-missing"] and
+            ([.module_path_observations[] | select(.scenario_id == "main-valid" and .address == "source://repository/go.mod" and .status == "VALID" and .available == true and .bytes > 0 and .raw_digest != "" and .parsed_module_path != "" and .semantic_digest != "")] | length) == 1 and
+            ([.module_path_observations[] | select(.scenario_id == "module-path-missing" and .address == "fixture://module-path/missing/go.mod" and .status == "MISSING" and .available == false and (.raw_digest // "") == "" and (.parsed_module_path // "") == "" and (.semantic_digest // "") == "")] | length) == 1 and
+            ([.module_path_observations[] | select(.scenario_id == "module-path-invalid" and .address == "fixture://module-path/invalid/go.mod" and .status == "INVALID" and .available == true and .bytes > 0 and .raw_digest != "" and (.parsed_module_path // "") == "" and (.semantic_digest // "") == "")] | length) == 1 and
+            .dependency_graph.module_path_scenario_id == "main-valid" and
+            .dependency_graph.module_path_semantic_digest == ([.module_path_observations[] | select(.scenario_id == "main-valid")][0].semantic_digest) and
+            .dependency_graph.producer_target_address == (([.module_path_observations[] | select(.scenario_id == "main-valid")][0].parsed_module_path) + "/scripts/conflict-free-registry-projection") and
+            .dependency_graph.producer_target_relation_digest != "" and
             ([.module_path_failure_contracts[] | select(.kind == "missing" and .observed_import_count.observation_status == "OBSERVATION_UNKNOWN" and .observed_import_count.value_present == false and ((.observed_import_count | has("value")) | not) and .graph_inventory_present == false)] | length) == 1 and
             ([.module_path_failure_contracts[] | select(.kind == "invalid" and .observed_import_count.observation_status == "OBSERVATION_UNKNOWN" and .observed_import_count.value_present == false and ((.observed_import_count | has("value")) | not) and .graph_inventory_present == false)] | length) == 1 and
             ([.failure_contracts[].diagnostic.decision] | all(. == "FAIL_CLOSED")) and

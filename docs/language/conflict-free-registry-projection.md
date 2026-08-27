@@ -90,8 +90,14 @@ receipt separately reports `reconstruction_status` and `absence_decision`.
 Missing or invalid `go.mod` produces UNKNOWN at FOUNDATION/MODULE_PATH with
 reason `MODULE_PATH_UNAVAILABLE`, including an observation-unknown count with
 no graph inventory artifact; its JSON omits `value`, so UNKNOWN is never
-encoded as zero. A separate `ModulePathObservation` records
-`source://go.mod` availability; invalid module bytes retain their raw digest.
+encoded as zero. A separate `ModulePathObservation` records module-file
+availability; invalid module bytes retain their raw digest.
+The three observations use distinct stable addresses:
+`source://repository/go.mod`, `fixture://module-path/missing/go.mod`, and
+`fixture://module-path/invalid/go.mod`. The valid observation also records the
+parsed module path and semantic digest; the dependency receipt binds its
+producer-target relation digest to that semantic evidence. Missing inputs have
+neither raw nor semantic digest, while invalid inputs have only the raw digest.
 Separate processes do not by themselves prove algorithmic diversity.
 
 ## Meaning gates

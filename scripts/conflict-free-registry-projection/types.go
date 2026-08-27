@@ -380,6 +380,9 @@ type DependencyGraphReceipt struct {
 	Packages              []string `json:"packages,omitempty"`
 	ProducerTargetAddress string   `json:"producer_target_address,omitempty"`
 	ProducerTargetDigest  string   `json:"producer_target_digest,omitempty"`
+	ProducerTargetRelationDigest string `json:"producer_target_relation_digest,omitempty"`
+	ModulePathScenarioID  string   `json:"module_path_scenario_id,omitempty"`
+	ModulePathSemanticDigest string `json:"module_path_semantic_digest,omitempty"`
 	ExitCode              *int     `json:"exit_code,omitempty"`
 	StdoutDigest          string   `json:"stdout_digest,omitempty"`
 	StderrDigest          string   `json:"stderr_digest,omitempty"`
@@ -391,12 +394,15 @@ type DependencyGraphReceipt struct {
 }
 
 type ModulePathObservation struct {
-	Address   string `json:"address"`
-	Available bool   `json:"available"`
-	Bytes     int    `json:"bytes,omitempty"`
-	RawDigest string `json:"raw_digest,omitempty"`
-	Status    string `json:"status"`
-	Reason    string `json:"reason"`
+	ScenarioID        string `json:"scenario_id"`
+	Address           string `json:"address"`
+	Available         bool   `json:"available"`
+	Bytes             int    `json:"bytes,omitempty"`
+	RawDigest         string `json:"raw_digest,omitempty"`
+	ParsedModulePath  string `json:"parsed_module_path,omitempty"`
+	SemanticDigest    string `json:"semantic_digest,omitempty"`
+	Status            string `json:"status"`
+	Reason            string `json:"reason"`
 }
 
 type ModulePathFailureContract struct {

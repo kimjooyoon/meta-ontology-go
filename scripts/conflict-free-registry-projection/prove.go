@@ -82,7 +82,7 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	if err != nil {
 		return Evidence{}, err
 	}
-	dependencyAbsence, importCount, dependencyGraph, modulePathObservation := producerDependencyMetrics(root)
+	dependencyAbsence, importCount, dependencyGraph, modulePathObservation := producerDependencyMetricsAt(root, "main-valid", "source://repository/go.mod")
 	fixture, err := measureFixture(root)
 	if err != nil {
 		return Evidence{}, err
@@ -445,8 +445,8 @@ type goListPackage struct {
 	Error      any    `json:"Error"`
 }
 
-func producerDependencyMetrics(root string) (RatioMetric, CountMetric, DependencyGraphReceipt, ModulePathObservation) {
-	module, moduleObservation, moduleErr := modulePath(root)
+func producerDependencyMetricsAt(root, scenarioID, moduleAddress string) (RatioMetric, CountMetric, DependencyGraphReceipt, ModulePathObservation) {
+	module, moduleObservation, moduleErr := modulePath(root, scenarioID, moduleAddress)
 	if moduleErr != nil {
 		receipt := DependencyGraphReceipt{
 			InventoryPresent: false, ReconstructionStatus: "UNKNOWN", AbsenceDecision: "UNKNOWN",
@@ -484,7 +484,7 @@ func producerDependencyMetrics(root string) (RatioMetric, CountMetric, Dependenc
 		packages = append(packages, item.ImportPath)
 	}
 	sort.Strings(packages)
-	receipt := DependencyGraphReceipt{InventoryPresent: true, InventoryAddress: address, InventoryBytes: len(stdout.Bytes()), InventoryDigest: digestBytes(stdout.Bytes()), InventoryRaw: stdout.String(), Packages: packages, ProducerTargetAddress: producerTarget, ProducerTargetDigest: digestBytes([]byte(producerTarget)), ExitCode: &exitCode, StdoutDigest: digestBytes(stdout.Bytes()), StderrDigest: digestBytes(stderr.Bytes()), ReconstructionStatus: "OBSERVED", AbsenceDecision: "UNKNOWN", Stage: "COHERENCE", Step: "TRANSITIVE_IMPORT_GRAPH"}
+	receipt := DependencyGraphReceipt{InventoryPresent: true, InventoryAddress: address, InventoryBytes: len(stdout.Bytes()), InventoryDigest: digestBytes(stdout.Bytes()), InventoryRaw: stdout.String(), Packages: packages, ProducerTargetAddress: producerTarget, ProducerTargetDigest: digestBytes([]byte(producerTarget)), ProducerTargetRelationDigest: producerTargetRelationDigest(moduleObservation.SemanticDigest, producerTarget), ModulePathScenarioID: moduleObservation.ScenarioID, ModulePathSemanticDigest: moduleObservation.SemanticDigest, ExitCode: &exitCode, StdoutDigest: digestBytes(stdout.Bytes()), StderrDigest: digestBytes(stderr.Bytes()), ReconstructionStatus: "OBSERVED", AbsenceDecision: "UNKNOWN", Stage: "COHERENCE", Step: "TRANSITIVE_IMPORT_GRAPH"}
 	if err != nil || parseErr != nil {
 		receipt.ReconstructionStatus, receipt.AbsenceDecision, receipt.Reason = "UNKNOWN", "UNKNOWN", "TRANSITIVE_IMPORT_GRAPH_UNAVAILABLE"
 		absence := unknownRatioMetric("COHERENCE", "TRANSITIVE_IMPORT_GRAPH", receipt.Reason)
@@ -518,8 +518,8 @@ func unknownCountMetric(stage, step, reason, address, digest string) CountMetric
 	return CountMetric{ValuePresent: false, Unit: "packages", ObservationStatus: "OBSERVATION_UNKNOWN", Stage: stage, Step: step, Reason: reason, EvidenceAddress: address, EvidenceDigest: digest}
 }
 
-func modulePath(root string) (string, ModulePathObservation, error) {
-	observation := ModulePathObservation{Address: "source://go.mod", Status: "MISSING", Reason: "MODULE_PATH_UNAVAILABLE"}
+func modulePath(root, scenarioID, address string) (string, ModulePathObservation, error) {
+	observation := ModulePathObservation{ScenarioID: scenarioID, Address: address, Status: "MISSING", Reason: "MODULE_PATH_UNAVAILABLE"}
 	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
 		return "", observation, fmt.Errorf("MODULE_PATH_UNAVAILABLE: %w", err)
@@ -543,7 +543,17 @@ func modulePath(root string) (string, ModulePathObservation, error) {
 	}
 	observation.Status = "VALID"
 	observation.Reason = "MODULE_PATH_OBSERVED"
+	observation.ParsedModulePath = found
+	observation.SemanticDigest = modulePathSemanticDigest(found)
 	return found, observation, nil
+}
+
+func modulePathSemanticDigest(module string) string {
+	return digestBytes([]byte("module-path/v1|" + module))
+}
+
+func producerTargetRelationDigest(moduleSemanticDigest, targetAddress string) string {
+	return digestBytes([]byte("module-path-target/v1|" + moduleSemanticDigest + "|" + targetAddress))
 }
 
 func dependencyGraphNegativeFixture(_ string) ScenarioResult {
@@ -567,7 +577,7 @@ func dependencyGraphNegativeFixture(_ string) ScenarioResult {
 			return failedScenario("transitive-helper-import", "PASS", err.Error())
 		}
 	}
-	absence, count, receipt, _ := producerDependencyMetrics(temp)
+	absence, count, receipt, _ := producerDependencyMetricsAt(temp, "transitive-helper-import", "fixture://module-path/transitive-helper-import/go.mod")
 	target := receipt.ProducerTargetAddress
 	if absence.Decision != "FAIL_CLOSED" || absence.Numerator != 0 || receipt.ReconstructionStatus != "OBSERVED" || receipt.AbsenceDecision != "FAIL_CLOSED" || count.Value == nil || !count.ValuePresent || *count.Value != 1 || count.ObservationStatus != "OBSERVED" || !contains(receipt.Packages, target) {
 		return failedScenario("transitive-helper-import", "PASS", "transitive helper import was not observed in the dependency closure")
@@ -584,7 +594,9 @@ func dependencyGraphMissingModuleFixture(_ string) (ScenarioResult, []ModulePath
 	observations := make([]ModulePathObservation, 0, 2)
 	contracts := make([]ModulePathFailureContract, 0, 2)
 	check := func(label string) error {
-		absence, count, receipt, moduleObservation := producerDependencyMetrics(temp)
+		scenarioID := "module-path-" + label
+		address := "fixture://module-path/" + label + "/go.mod"
+		absence, count, receipt, moduleObservation := producerDependencyMetricsAt(temp, scenarioID, address)
 		observations = append(observations, moduleObservation)
 		valueAbsent := count.Value == nil && !count.ValuePresent
 		graphInventoryAbsent := !receipt.InventoryPresent && receipt.InventoryAddress == "" && receipt.InventoryBytes == 0 && receipt.InventoryDigest == "" && receipt.InventoryRaw == "" && receipt.ProducerTargetAddress == "" && receipt.ProducerTargetDigest == "" && receipt.StdoutDigest == "" && receipt.StderrDigest == "" && receipt.ExitCode == nil
@@ -1388,17 +1400,21 @@ func allProofsPass(evidence Evidence) bool {
 		return false
 	}
 	validModule, missingModule, invalidModule := false, false, false
+	seenModuleScenarios := map[string]struct{}{}
+	var validModuleObservation ModulePathObservation
 	for _, observation := range evidence.ModulePathObservations {
-		if observation.Address != "source://go.mod" {
+		if _, exists := seenModuleScenarios[observation.ScenarioID]; exists {
 			return false
 		}
-		switch observation.Status {
-		case "VALID":
-			validModule = observation.Available && observation.Bytes > 0 && observation.RawDigest != ""
-		case "MISSING":
-			missingModule = !observation.Available && observation.Bytes == 0 && observation.RawDigest == ""
-		case "INVALID":
-			invalidModule = observation.Available && observation.Bytes > 0 && observation.RawDigest != ""
+		seenModuleScenarios[observation.ScenarioID] = struct{}{}
+		switch observation.ScenarioID {
+		case "main-valid":
+			validModule = observation.Address == "source://repository/go.mod" && observation.Status == "VALID" && observation.Available && observation.Bytes > 0 && observation.RawDigest != "" && observation.ParsedModulePath != "" && observation.SemanticDigest != ""
+			validModuleObservation = observation
+		case "module-path-missing":
+			missingModule = observation.Address == "fixture://module-path/missing/go.mod" && observation.Status == "MISSING" && !observation.Available && observation.Bytes == 0 && observation.RawDigest == "" && observation.ParsedModulePath == "" && observation.SemanticDigest == ""
+		case "module-path-invalid":
+			invalidModule = observation.Address == "fixture://module-path/invalid/go.mod" && observation.Status == "INVALID" && observation.Available && observation.Bytes > 0 && observation.RawDigest != "" && observation.ParsedModulePath == "" && observation.SemanticDigest == ""
 		default:
 			return false
 		}
@@ -1437,7 +1453,7 @@ func allProofsPass(evidence Evidence) bool {
 	if evidence.Metrics.ProducerDependencyAbsence.Numerator != 1 || evidence.Metrics.ProducerDependencyAbsence.Denominator != 1 || evidence.Metrics.ProducerDependencyAbsence.Decision != "PASS" || evidence.Metrics.ProducerDependencyAbsence.EvidenceAddress == "" || evidence.Metrics.ProducerDependencyAbsence.EvidenceDigest == "" || evidence.Metrics.ObservedProducerImportCount.Value == nil || !evidence.Metrics.ObservedProducerImportCount.ValuePresent || *evidence.Metrics.ObservedProducerImportCount.Value != 0 || evidence.Metrics.ObservedProducerImportCount.Unit != "packages" || evidence.Metrics.ObservedProducerImportCount.ObservationStatus != "OBSERVED" || evidence.Metrics.ObservedProducerImportCount.Stage != "COHERENCE" || evidence.Metrics.ObservedProducerImportCount.Step != "OBSERVED_PRODUCER_IMPORT_COUNT" || evidence.Metrics.ObservedProducerImportCount.EvidenceAddress == "" || evidence.Metrics.ObservedProducerImportCount.EvidenceDigest == "" || evidence.Metrics.RawSourceReconstruction.Numerator != 1 || evidence.Metrics.RawSourceReconstruction.Denominator != 1 || evidence.Metrics.RawSourceReconstruction.Decision != "PASS" || evidence.Metrics.RawSourceReconstruction.EvidenceAddress == "" || evidence.Metrics.RawSourceReconstruction.EvidenceDigest == "" || evidence.Metrics.SeparateExecutable.Numerator != 1 || evidence.Metrics.SeparateExecutable.Denominator != 1 || evidence.Metrics.SeparateExecutable.Decision != "PASS" || evidence.Metrics.SeparateExecutable.EvidenceAddress == "" || evidence.Metrics.SeparateExecutable.EvidenceDigest == "" || evidence.Metrics.AlgorithmicIndependence.Numerator != 0 || evidence.Metrics.AlgorithmicIndependence.Denominator != 1 || evidence.Metrics.AlgorithmicIndependence.Decision != "UNKNOWN" {
 		return false
 	}
-	if evidence.IndependentConsumerProcess.ExitCode != 0 || evidence.IndependentConsumerProcess.Address == "" || evidence.IndependentConsumerProcess.CommandDigest == "" || evidence.IndependentConsumerProcess.StdoutDigest == "" || evidence.IndependentConsumerProcess.StderrDigest == "" || evidence.DependencyGraph.ReconstructionStatus != "OBSERVED" || evidence.DependencyGraph.AbsenceDecision != "PASS" || evidence.DependencyGraph.ExitCode == nil || *evidence.DependencyGraph.ExitCode != 0 || !evidence.DependencyGraph.InventoryPresent || evidence.DependencyGraph.InventoryBytes <= 0 || evidence.DependencyGraph.InventoryDigest == "" || evidence.DependencyGraph.ProducerTargetAddress == "" || evidence.DependencyGraph.ProducerTargetDigest == "" {
+	if evidence.IndependentConsumerProcess.ExitCode != 0 || evidence.IndependentConsumerProcess.Address == "" || evidence.IndependentConsumerProcess.CommandDigest == "" || evidence.IndependentConsumerProcess.StdoutDigest == "" || evidence.IndependentConsumerProcess.StderrDigest == "" || evidence.DependencyGraph.ReconstructionStatus != "OBSERVED" || evidence.DependencyGraph.AbsenceDecision != "PASS" || evidence.DependencyGraph.ExitCode == nil || *evidence.DependencyGraph.ExitCode != 0 || !evidence.DependencyGraph.InventoryPresent || evidence.DependencyGraph.InventoryBytes <= 0 || evidence.DependencyGraph.InventoryDigest == "" || evidence.DependencyGraph.ProducerTargetAddress == "" || evidence.DependencyGraph.ProducerTargetDigest == "" || evidence.DependencyGraph.ModulePathScenarioID != "main-valid" || evidence.DependencyGraph.ModulePathSemanticDigest != validModuleObservation.SemanticDigest || evidence.DependencyGraph.ProducerTargetAddress != validModuleObservation.ParsedModulePath+"/scripts/conflict-free-registry-projection" || evidence.DependencyGraph.ProducerTargetRelationDigest != producerTargetRelationDigest(validModuleObservation.SemanticDigest, evidence.DependencyGraph.ProducerTargetAddress) {
 		return false
 	}
 	for _, packagePath := range evidence.DependencyGraph.Packages {
