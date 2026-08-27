@@ -2415,9 +2415,11 @@ jobs:
               -before "$raw_tamper_snapshot" -after "$base/repository-after/snapshot.json" \
               -output "$tamper/raw-tamper-report.json" -artifact-projection "$tamper/raw-tamper-projection.json"
 
+          content_tamper_entries="$tamper/content-tamper-entries.json"
+          jq -c --arg digest "$fake_digest" '.[0].digest = $digest' "$base/repository-before/entries.json" > "$content_tamper_entries"
           content_tamper_snapshot="$tamper/content-tamper-snapshot.json"
-          content_tamper_digest="$(sha256sum "$raw_tamper" | awk '{print "sha256:"$1}')"
-          jq --arg path "$raw_tamper" --arg digest "$content_tamper_digest" '.entries_path = $path | .entries_digest = $digest' "$base/repository-before/snapshot.json" > "$content_tamper_snapshot"
+          content_tamper_digest="$(sha256sum "$content_tamper_entries" | awk '{print "sha256:"$1}')"
+          jq --arg path "$content_tamper_entries" --arg digest "$content_tamper_digest" '.entries_path = $path | .entries_digest = $digest' "$base/repository-before/snapshot.json" > "$content_tamper_snapshot"
           expect_reject 'REPOSITORY_SNAPSHOT/before/reconstruct-entries/PATH_CONTENT_DIGEST_MISMATCH' "$tamper/content-tamper.log" \
             go run ./cmd/invariant-transformation-report-consumer \
               -source "$source" -head-sha "$HEAD_SHA" -report "$report" \
