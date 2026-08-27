@@ -170,6 +170,7 @@ jobs:
           git status --porcelain=v1 --untracked-files=all > "$output/after.status"
           cmp "$output/before.status" "$output/after.status"
 
+          jq '{metrics: .report.metrics, cases: [.report.cases[] | {id, status_history, active_refutation_history, active_refutation_total, current_status}], transitions: [.report.transitions[] | {sequence, before, after, relation, accepted, active_refutation_before, active_refutation_after, correction_target_status, correction_target_active, supersedes_evidence_digest}]}' "$output/baseline.json"
           jq -e --arg gamma2 "$gamma2_digest" --arg gamma3 "$gamma3_digest" '
             .report.decision == "PASS" and .report.resolution == "EXACT" and
             .report.metrics.fixed_case_total == 3 and .report.metrics.fixed_claim_total == 3 and .report.metrics.fixed_observation_total == 8 and .report.metrics.fixed_ledger_row_total == 8 and .report.metrics.observation_attempt_total == 8 and .report.metrics.transition_total == 8 and .report.metrics.accepted_state_transition_total == 6 and .report.metrics.rejected_observation_total == 0 and
