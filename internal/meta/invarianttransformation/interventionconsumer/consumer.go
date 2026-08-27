@@ -678,7 +678,7 @@ func allowedRepositoryPath(path string) bool {
 	for parent := filepath.Dir(path); ; parent = filepath.Dir(parent) {
 		if resolved, resolveErr := filepath.EvalSymlinks(parent); resolveErr == nil {
 			resolved, err = filepath.Abs(resolved)
-			return err == nil && withinPath(repository, resolved)
+			return err == nil && (resolved == repository || withinPath(repository, resolved))
 		}
 		next := filepath.Dir(parent)
 		if next == parent {
