@@ -53,6 +53,8 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return runProvenance(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "selective-ci":
 		return runSelectiveCI(args[1:], OSFileReader{}, stdout, stderr)
+	case "invoke":
+		return runInvoke(args[1:], OSFileReader{}, stdout, stderr)
 	case "lsp":
 		return runLSP(args[1:], input, stdout, stderr)
 	case "version":
