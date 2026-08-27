@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -549,10 +550,8 @@ func contradictionTargetsClaim(policy PolicyGraph, claim PriorClaimObservation) 
 		if !contradictionHasActualEdges(policy, contradiction) || contradiction.SubjectPath != claim.SubjectPath {
 			continue
 		}
-		for _, claimID := range contradiction.ClaimInstanceIDs {
-			if claimID == claim.InstanceID {
-				return contradiction, true
-			}
+		if slices.Contains(contradiction.ClaimInstanceIDs, claim.InstanceID) {
+			return contradiction, true
 		}
 	}
 	return PolicyContradiction{}, false

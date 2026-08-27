@@ -45,7 +45,7 @@ func deriveProducerCases(path string, source []byte) ([]declaredCase, string, er
 func parseProducerProgram(program string) (declaredCase, error) {
 	item := declaredCase{}
 	seen := make(map[string]bool)
-	for _, field := range strings.Split(program, ";") {
+	for field := range strings.SplitSeq(program, ";") {
 		pair := strings.SplitN(field, "=", 2)
 		if len(pair) != 2 || seen[pair[0]] {
 			return declaredCase{}, fmt.Errorf("invalid value field %q", field)

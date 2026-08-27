@@ -52,7 +52,7 @@ func deriveCases(path string, source []byte) ([]declaredCase, string, error) {
 
 func parseProgram(program string) (declaredCase, error) {
 	values := map[string]string{}
-	for _, field := range strings.Split(program, ";") {
+	for field := range strings.SplitSeq(program, ";") {
 		pair := strings.SplitN(field, "=", 2)
 		if len(pair) != 2 || pair[0] == "" {
 			return declaredCase{}, fmt.Errorf("malformed source value %q", field)

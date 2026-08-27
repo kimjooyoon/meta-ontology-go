@@ -38,7 +38,7 @@ func parseNextLink(raw string) (string, error) {
 		return "", nil
 	}
 	var next string
-	for _, item := range strings.Split(raw, ",") {
+	for item := range strings.SplitSeq(raw, ",") {
 		item = strings.TrimSpace(item)
 		if !strings.HasPrefix(item, "<") {
 			return "", fmt.Errorf("Link entry has no opening URL delimiter")

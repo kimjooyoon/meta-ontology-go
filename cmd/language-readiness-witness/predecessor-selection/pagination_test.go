@@ -91,7 +91,6 @@ func TestPaginationFixturesExecuteParserAndHTTPClient(t *testing.T) {
 	}
 
 	for _, fixture := range fixtures.Cases {
-		fixture := fixture
 		t.Run(fixture.ID, func(t *testing.T) {
 			var requestCount atomic.Int32
 			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -217,7 +216,6 @@ func TestPaginationRejectsOtherOriginCoordinates(t *testing.T) {
 		"fragment": func(base string) string { return base + "/runs?page=2#fragment" },
 	}
 	for name, link := range cases {
-		name, link := name, link
 		t.Run(name, func(t *testing.T) {
 			var base *httptest.Server
 			base = httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

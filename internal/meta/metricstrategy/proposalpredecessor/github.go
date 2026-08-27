@@ -47,8 +47,7 @@ func getBytes(ctx context.Context, client *http.Client, targetURL, token string)
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	response, err := client.Do(request)
 	if err != nil {
-		var redirectFailure interface{ RedirectOriginMismatch() }
-		if errors.As(err, &redirectFailure) {
+		if _, ok := errors.AsType[interface{ RedirectOriginMismatch() }](err); ok {
 			return nil, &Failure{Reason: ReasonRedirectOriginMismatch, Err: err}
 		}
 		return nil, &Failure{Reason: ReasonAPIUnavailable, Err: err}

@@ -20,8 +20,7 @@ func (failure *Failure) Error() string {
 func (failure *Failure) Unwrap() error { return failure.Err }
 
 func FailureReason(err error) string {
-	var failure *Failure
-	if errors.As(err, &failure) {
+	if failure, ok := errors.AsType[*Failure](err); ok {
 		return failure.Reason
 	}
 	return ""

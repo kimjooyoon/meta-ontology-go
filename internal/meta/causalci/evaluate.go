@@ -2,6 +2,7 @@ package causalci
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -50,8 +51,8 @@ func evaluateWithBinding(observationRaw []byte, sourcePath string, source []byte
 		CheckInventory:      ExactInventory{ExpectedIDs: fixedCheckIDSlice()},
 		IndicatorInventory:  ExactInventory{ExpectedIDs: indicatorIDSlice()},
 		IndependentVerifier: IndependentVerifier{ID: "gooo://consumer/causal-ci-selection", Mode: "INDEPENDENT_RECONSTRUCTION", Required: true, Capability: "SEPARATE_PROCESS"},
-	}
-	receipt.Subjects = evaluateSubjects(observation, policy)
+
+		Subjects: evaluateSubjects(observation, policy)}
 	receipt.ClaimTransitions = appendClaimTransitions(observation, policy, receipt.Subjects, receipt.ObservationDigest)
 	receipt.Metrics = deriveMetrics(observation, policy, receipt)
 	receipt.Indicators = deriveIndicators(observation, policy, receipt)
@@ -225,10 +226,8 @@ func contradictionTargetsClaim(policy PolicyGraph, claim PriorClaimObservation) 
 		if !contradictionHasActualEdges(policy, contradiction) || contradiction.SubjectPath != claim.SubjectPath {
 			continue
 		}
-		for _, claimID := range contradiction.ClaimInstanceIDs {
-			if claimID == claim.InstanceID {
-				return contradiction, true
-			}
+		if slices.Contains(contradiction.ClaimInstanceIDs, claim.InstanceID) {
+			return contradiction, true
 		}
 	}
 	return PolicyContradiction{}, false

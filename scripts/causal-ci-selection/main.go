@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -546,7 +547,7 @@ func parseSourceFiles(raw string) (map[string]string, error) {
 	if raw == "" {
 		return result, fmt.Errorf("source-files is required")
 	}
-	for _, item := range strings.Split(raw, ",") {
+	for item := range strings.SplitSeq(raw, ",") {
 		parts := strings.SplitN(item, "=", 2)
 		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 			return nil, fmt.Errorf("malformed source mapping %q", item)
@@ -584,10 +585,8 @@ func readProcessEvidence(processDir, id string) (int, []byte, []byte, error) {
 
 func readGoEvidence(versionPath, envPath, helpPath, helpStderrPath, stdoutPath, stderrPath, exitPath, subjectHeadPath, subjectTreePath, objectFormatPath, goModDigestPath, goSumDigestPath, goListPath, goCWDPath, activeFixStdoutPath, activeFixStderrPath, activeFixExitPath string) (causalci.GoRuntimeEvidence, error) {
 	paths := []string{versionPath, envPath, helpPath, helpStderrPath, stdoutPath, stderrPath, exitPath, subjectHeadPath, subjectTreePath, objectFormatPath, goModDigestPath, goSumDigestPath, goListPath, goCWDPath, activeFixStdoutPath, activeFixStderrPath, activeFixExitPath}
-	for _, path := range paths {
-		if path == "" {
-			return causalci.GoRuntimeEvidence{}, fmt.Errorf("complete Go 1.27 evidence is required")
-		}
+	if slices.Contains(paths, "") {
+		return causalci.GoRuntimeEvidence{}, fmt.Errorf("complete Go 1.27 evidence is required")
 	}
 	version, err := os.ReadFile(versionPath)
 	if err != nil {
@@ -673,7 +672,7 @@ func readGoEvidence(versionPath, envPath, helpPath, helpStderrPath, stdoutPath, 
 		return causalci.GoRuntimeEvidence{}, err
 	}
 	packages := make([]string, 0)
-	for _, line := range strings.Split(string(goListRaw), "\n") {
+	for line := range strings.SplitSeq(string(goListRaw), "\n") {
 		if value := strings.TrimSpace(line); value != "" {
 			packages = append(packages, value)
 		}
@@ -708,7 +707,7 @@ func exactGoVersion(raw string) bool {
 
 func parseFixerInventory(help string, required []string) []string {
 	seen := map[string]struct{}{}
-	for _, line := range strings.Split(help, "\n") {
+	for line := range strings.SplitSeq(help, "\n") {
 		if !strings.HasPrefix(line, "    ") {
 			continue
 		}

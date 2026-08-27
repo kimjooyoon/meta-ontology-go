@@ -302,7 +302,7 @@ func AdjudicateCIEvidence(observations []CIEvidenceObservation, actualCaseID str
 			}
 		}
 		currentMissingNumerator = &currentMissing
-		currentMissingDenominator = intPointer(len(expectedDownstreamArtifacts))
+		currentMissingDenominator = new(len(expectedDownstreamArtifacts))
 	}
 	result := CIEvidenceAdjudication{
 		Schema: CIEvidenceAdjudicationSchema, Scope: CIEvidenceAdjudicationScope,
@@ -403,7 +403,8 @@ func expectedDownstreamArtifactIDs() []string {
 	}
 }
 
-func intPointer(value int) *int { return &value }
+//go:fix inline
+func intPointer(value int) *int { return new(value) }
 
 func observedDownstreamArtifactIDs(artifacts []CIEvidenceArtifact) []string {
 	observed := make(map[string]bool, len(artifacts))

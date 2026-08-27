@@ -105,8 +105,7 @@ func (client *githubClient) resolvePageURL(reference, endpoint string) (string, 
 }
 
 func pageURLFailureReason(err error, endpointClass string) string {
-	var redirectFailure pageRedirectFailure
-	if errors.As(err, &redirectFailure) {
+	if _, ok := errors.AsType[pageRedirectFailure](err); ok {
 		return predecessorReason(endpointClass, "REDIRECT_ORIGIN_MISMATCH")
 	}
 	var failure pageURLFailure
@@ -215,8 +214,7 @@ func (client *githubClient) recordHTTPObservation(kind, target string, status in
 	}
 	failure := ""
 	if err != nil {
-		var redirectFailure pageRedirectFailure
-		if errors.As(err, &redirectFailure) {
+		if _, ok := errors.AsType[pageRedirectFailure](err); ok {
 			failure = "REDIRECT_ORIGIN_MISMATCH"
 		} else if status != http.StatusOK {
 			failure = "HTTP_STATUS"

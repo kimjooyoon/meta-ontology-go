@@ -53,8 +53,7 @@ func run(cfg config) error {
 	}
 	result, err := build(cfg, client, store)
 	if err != nil {
-		var replayErr *proposalObservationReplayError
-		if errors.As(err, &replayErr) {
+		if _, ok := errors.AsType[*proposalObservationReplayError](err); ok {
 			return fmt.Errorf("FAIL_CLOSED: proposal predecessor observation replay: %w", err)
 		}
 		return err
@@ -209,8 +208,7 @@ func replayReceipt(cfg config, expected []byte) error {
 	}
 	result, err := build(cfg, client, store)
 	if err != nil {
-		var replayErr *proposalObservationReplayError
-		if errors.As(err, &replayErr) {
+		if _, ok := errors.AsType[*proposalObservationReplayError](err); ok {
 			return fmt.Errorf("FAIL_CLOSED: proposal predecessor observation replay: %w", err)
 		}
 		return err
