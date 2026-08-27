@@ -16,7 +16,7 @@ type entry struct {
 }
 
 func collectValues(ir semantic.IR) (lowered, error) {
-	result := lowered{}
+	result := lowered{Bindings: map[string]string{}}
 	entries := []entry{}
 	for _, node := range ir.Graph.Nodes() {
 		if node.ValueProgram == "" {
@@ -29,35 +29,31 @@ func collectValues(ir semantic.IR) (lowered, error) {
 		}
 		result.Reconstructed++
 		result.Values = append(result.Values, parsed)
+		result.Bindings[parsed.ID] = node.ID.String()
 		entries = append(entries, entry{node.ID.String(), node.Kind.String(), parsed})
 	}
 	if len(entries) == 0 {
 		return result, fmt.Errorf("SEMANTIC_VALUE_MISSING")
 	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].NodeID < entries[j].NodeID })
-	var b strings.Builder
+	sort.Slice(result.Values, func(i, j int) bool { return result.Values[i].ID < result.Values[j].ID })
+	var canonical strings.Builder
 	for _, item := range entries {
 		data, err := json.Marshal(canonicalEntry(item))
 		if err != nil {
 			return result, fmt.Errorf("SEMANTIC_CANONICAL_UNKNOWN")
 		}
-		b.Write(data)
-		b.WriteByte('\n')
+		canonical.Write(data)
+		canonical.WriteByte('\n')
 	}
-	result.Canonical = b.String()
+	result.Canonical = canonical.String()
 	result.SemanticDigest = digestBytes([]byte(result.Canonical))
 	return result, nil
 }
 
 func canonicalEntry(item entry) entry {
-	item.Value.Dependencies = sorted(item.Value.Dependencies)
-	item.Value.Observations = sorted(item.Value.Observations)
-	item.Value.AdmissibleRoutes = sorted(item.Value.AdmissibleRoutes)
-	item.Value.Provenance = sorted(item.Value.Provenance)
-	for index := range item.Value.Slots {
-		item.Value.Slots[index].Provenance = sorted(item.Value.Slots[index].Provenance)
-	}
-	sort.Slice(item.Value.Slots, func(i, j int) bool { return item.Value.Slots[i].ID < item.Value.Slots[j].ID })
+	item.Value.EvidenceCapabilities = sorted(item.Value.EvidenceCapabilities)
+	item.Value.Members = sorted(item.Value.Members)
 	return item
 }
 

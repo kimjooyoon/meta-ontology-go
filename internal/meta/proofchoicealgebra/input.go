@@ -1,32 +1,21 @@
 package proofchoicealgebra
 
-type Slot struct {
-	ID         string   `json:"id"`
-	Observed   bool     `json:"observed"`
-	Provenance []string `json:"provenance"`
-}
-
-// Value is the only semantic carrier accepted from a computes value program.
-// Choice, numerator, and denominator are deliberately absent from the input.
+// Value is the source-side proposition and evidence capability contract. It
+// contains no observed result, route choice, or metric slot.
 type Value struct {
-	Schema           string   `json:"schema"`
-	Kind             string   `json:"kind"`
-	ID               string   `json:"id"`
-	Statement        string   `json:"statement,omitempty"`
-	PriorState       string   `json:"prior_state,omitempty"`
-	Dependencies     []string `json:"dependencies,omitempty"`
-	Observations     []string `json:"observations,omitempty"`
-	AdmissibleRoutes []Route  `json:"admissible_routes,omitempty"`
-	EvidenceKind     string   `json:"evidence_kind,omitempty"`
-	Predicate        string   `json:"predicate,omitempty"`
-	Value            string   `json:"value,omitempty"`
-	Observed         bool     `json:"observed"`
-	Provenance       []string `json:"provenance,omitempty"`
-	Slots            []Slot   `json:"slots,omitempty"`
+	Schema               string   `json:"schema"`
+	Kind                 string   `json:"kind"`
+	ID                   string   `json:"id"`
+	Statement            string   `json:"statement,omitempty"`
+	PriorState           string   `json:"prior_state,omitempty"`
+	Subject              string   `json:"subject,omitempty"`
+	EvidenceCapabilities []Route  `json:"evidence_capabilities,omitempty"`
+	Members              []string `json:"members,omitempty"`
 }
 
 type lowered struct {
 	Values              []Value
+	Bindings            map[string]string
 	Canonical           string
 	SemanticDigest      string
 	Reconstructed       int
@@ -34,8 +23,12 @@ type lowered struct {
 }
 
 type routeResult struct {
-	Route        Route
-	Resolution   string
-	Reason       string
-	Observations []string
+	Route            Route
+	Resolution       string
+	ObservationState string
+	Reason           string
+	Observations     []string
+	EvidenceDigest   string
+	Provenance       []string
+	FailClosed       bool
 }

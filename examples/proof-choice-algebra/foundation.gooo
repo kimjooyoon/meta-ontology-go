@@ -1,9 +1,7 @@
 package proofchoice
 namespace proofchoice
 // nonsemantic-marker: foundation
-entity Observation id "gooo://proof-choice/foundation/observation"
 entity ClaimValue id "gooo://proof-choice/foundation/claim-value"
 entity MetricValue id "gooo://proof-choice/foundation/metric-value"
-activity ObserveAnchor() -> Observation computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"observation\",\"id\":\"obs.foundation.anchor\",\"evidence_kind\":\"FOUNDATION\",\"predicate\":\"identity\",\"value\":\"stable\",\"observed\":true,\"provenance\":[\"source://foundation/anchor\"]}"
-activity FoundationClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"claim\",\"id\":\"claim.foundation\",\"statement\":\"stable identity anchors the claim\",\"prior_state\":\"OPEN\",\"dependencies\":[\"obs.foundation.anchor\"],\"observations\":[\"obs.foundation.anchor\"],\"admissible_routes\":[\"FOUNDATION\"]}"
-activity FoundationMetric() -> MetricValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"metric\",\"id\":\"metric.foundation.coverage\",\"observations\":[\"obs.foundation.anchor\"],\"admissible_routes\":[\"FOUNDATION\"],\"slots\":[{\"id\":\"foundation-slot-1\",\"observed\":true,\"provenance\":[\"slot://foundation/1\"]},{\"id\":\"foundation-slot-2\",\"observed\":true,\"provenance\":[\"slot://foundation/2\"]},{\"id\":\"foundation-slot-3\",\"observed\":true,\"provenance\":[\"slot://foundation/3\"]}]}"
+activity FoundationClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"claim\",\"id\":\"claim.foundation\",\"statement\":\"stable identity anchors the claim\",\"prior_state\":\"OPEN\",\"subject\":\"gooo://proof-choice/foundation/subject\",\"evidence_capabilities\":[\"FOUNDATION\"]}"
+activity FoundationMetric() -> MetricValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"metric\",\"id\":\"metric.foundation.coverage\",\"statement\":\"stable identity anchors the claim\",\"subject\":\"gooo://proof-choice/foundation/subject\",\"evidence_capabilities\":[\"FOUNDATION\"]}"

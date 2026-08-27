@@ -1,34 +1,47 @@
 package proofchoicealgebra
 
-import (
-	"encoding/json"
-	"sort"
-)
-
-func evidenceDigest(ids []string, observations map[string]Value) string {
-	ordered := append([]string(nil), ids...)
-	sort.Strings(ordered)
-	values := make([]Value, 0, len(ordered))
-	for _, id := range ordered {
-		if value, exists := observations[id]; exists {
-			values = append(values, canonicalEntry(semanticEntry{Value: value}).Value)
-		}
-	}
-	data, _ := json.Marshal(values)
-	return digestBytes(data)
+type evidenceBundle struct {
+	ByValue map[string][]Evidence
+	All     []Evidence
 }
 
-func evidenceProvenance(ids []string, observations map[string]Value) []string {
-	seen := map[string]bool{}
-	result := []string{}
-	for _, id := range ids {
-		for _, provenance := range observations[id].Provenance {
-			if provenance != "" && !seen[provenance] {
-				seen[provenance] = true
-				result = append(result, provenance)
+func buildEvidence(values []Value, lowered lowered, baseline []byte) evidenceBundle {
+	bundle := evidenceBundle{ByValue: map[string][]Evidence{}}
+	for _, value := range values {
+		for _, route := range value.EvidenceCapabilities {
+			var result Evidence
+			switch route {
+			case Foundation:
+				result = foundationEvidence(value, lowered)
+			case Coherence:
+				result = coherenceEvidence(value, values, lowered)
+			case Regression:
+				result = regressionEvidence(value, lowered, baseline)
 			}
+			bundle.ByValue[value.ID] = append(bundle.ByValue[value.ID], result)
+			bundle.All = append(bundle.All, result)
 		}
 	}
-	sort.Strings(result)
-	return result
+	return bundle
+}
+
+func foundationEvidence(value Value, lowered lowered) Evidence {
+	nodeID := lowered.Bindings[value.ID]
+	result := Evidence{ClaimID: value.ID, Subject: value.Subject, Route: Foundation}
+	if !stableSubject(value.Subject) || nodeID == "" {
+		result.State = InsufficientState
+		result.Reason = "FOUNDATION_IDENTITY_UNSTABLE"
+		return finishEvidence(result)
+	}
+	result.State = "OBSERVED"
+	result.StableIdentity = digestBytes([]byte(nodeID))
+	result.OriginDigest = lowered.SemanticDigest
+	result.SubjectBinding = digestBytes([]byte(value.Subject + "|" + nodeID))
+	result.ObservationSlots = []ObservationSlot{
+		{ID: value.ID + ":stable-identity", Observed: true, Provenance: []string{"ir://node/" + nodeID}},
+		{ID: value.ID + ":origin-digest", Observed: true, Provenance: []string{"ir://semantic/" + lowered.SemanticDigest}},
+		{ID: value.ID + ":subject-binding", Observed: true, Provenance: []string{"subject://" + value.Subject}},
+	}
+	result.Provenance = provenanceOf(result.ObservationSlots)
+	return finishEvidence(result)
 }

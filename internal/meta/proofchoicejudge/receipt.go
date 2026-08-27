@@ -1,15 +1,27 @@
 package proofchoicejudge
 
 type item struct {
-	Kind           string   `json:"kind"`
+	Kind             string   `json:"kind"`
+	ID               string   `json:"id"`
+	Statement        string   `json:"statement,omitempty"`
+	PriorState       string   `json:"prior_state,omitempty"`
+	Choice           string   `json:"choice,omitempty"`
+	Resolution       string   `json:"resolution"`
+	ObservationState string   `json:"observation_state"`
+	Observations     []string `json:"observations"`
+	Numerator        int      `json:"numerator,omitempty"`
+	Denominator      int      `json:"denominator,omitempty"`
+	EvidenceDigest   string   `json:"evidence_digest"`
+	Provenance       []string `json:"provenance"`
+}
+
+type composition struct {
 	ID             string   `json:"id"`
-	Statement      string   `json:"statement,omitempty"`
-	PriorState     string   `json:"prior_state,omitempty"`
-	Choice         string   `json:"choice,omitempty"`
-	Resolution     string   `json:"resolution"`
-	Observations   []string `json:"observations"`
-	Numerator      int      `json:"numerator,omitempty"`
-	Denominator    int      `json:"denominator,omitempty"`
+	Statement      string   `json:"statement"`
+	Members        []string `json:"members"`
+	Routes         []string `json:"routes"`
+	Operator       string   `json:"operator"`
+	Result         string   `json:"result"`
 	EvidenceDigest string   `json:"evidence_digest"`
 	Provenance     []string `json:"provenance"`
 }

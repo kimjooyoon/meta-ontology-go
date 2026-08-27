@@ -9,16 +9,31 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/proofchoicejudge"
 )
 
-func run(mode, source, receipt, output, root, beforePath, afterPath, expect string) error {
+func run(mode, source, receipt, output, root, beforePath, afterPath, expect, baselinePath string) error {
 	if output == "" {
 		return fmt.Errorf("output is required")
+	}
+	if mode == "artifact" {
+		data, err := os.ReadFile(source)
+		if err != nil {
+			return err
+		}
+		artifact, err := proofchoicealgebra.CanonicalArtifact(source, data)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(output, artifact, 0o644)
+	}
+	baseline, err := readOptional(baselinePath)
+	if err != nil {
+		return err
 	}
 	var result any
 	switch mode {
 	case "produce":
-		result = produce(source, root, beforePath, afterPath)
+		result = produce(source, root, beforePath, afterPath, baseline)
 	case "judge":
-		result = judge(source, receipt, beforePath, afterPath)
+		result = judge(source, receipt, beforePath, afterPath, baseline)
 	case "receipt-only":
 		data, err := os.ReadFile(receipt)
 		if err != nil {
@@ -41,22 +56,4 @@ func run(mode, source, receipt, output, root, beforePath, afterPath, expect stri
 	}
 	fmt.Printf("proof-choice algebra: mode=%s decision=%s\n", mode, decision)
 	return nil
-}
-
-func produce(source, root, beforePath, afterPath string) any {
-	before := snapshot(root)
-	data, err := os.ReadFile(source)
-	if err != nil {
-		return proofchoicealgebra.Evaluate(source, nil, before, nil)
-	}
-	receipt := proofchoicealgebra.Evaluate(source, data, nil, nil)
-	after := snapshot(root)
-	writeSnapshot(beforePath, before)
-	writeSnapshot(afterPath, after)
-	receipt.Effects = proofchoicealgebra.ObserveEffects(before, after)
-	sealed, err := proofchoicealgebra.Seal(receipt)
-	if err != nil {
-		return receipt
-	}
-	return sealed
 }

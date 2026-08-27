@@ -10,6 +10,8 @@ type Receipt struct {
 	SemanticDigest       string         `json:"semantic_digest"`
 	SourceReconstruction Reconstruction `json:"source_reconstruction"`
 	Items                []Item         `json:"items"`
+	Evidence             []Evidence     `json:"evidence"`
+	Compositions         []Composition  `json:"compositions"`
 	Transitions          []Transition   `json:"transitions"`
 	Summary              Summary        `json:"summary"`
 	Effects              Effects        `json:"effects"`

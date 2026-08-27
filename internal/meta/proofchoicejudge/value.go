@@ -2,31 +2,20 @@
 // .gooo itself and never imports the producer package.
 package proofchoicejudge
 
-type slot struct {
-	ID         string   `json:"id"`
-	Observed   bool     `json:"observed"`
-	Provenance []string `json:"provenance"`
-}
-
 type value struct {
-	Schema           string   `json:"schema"`
-	Kind             string   `json:"kind"`
-	ID               string   `json:"id"`
-	Statement        string   `json:"statement,omitempty"`
-	PriorState       string   `json:"prior_state,omitempty"`
-	Dependencies     []string `json:"dependencies,omitempty"`
-	Observations     []string `json:"observations,omitempty"`
-	AdmissibleRoutes []string `json:"admissible_routes,omitempty"`
-	EvidenceKind     string   `json:"evidence_kind,omitempty"`
-	Predicate        string   `json:"predicate,omitempty"`
-	Value            string   `json:"value,omitempty"`
-	Observed         bool     `json:"observed"`
-	Provenance       []string `json:"provenance,omitempty"`
-	Slots            []slot   `json:"slots,omitempty"`
+	Schema               string   `json:"schema"`
+	Kind                 string   `json:"kind"`
+	ID                   string   `json:"id"`
+	Statement            string   `json:"statement,omitempty"`
+	PriorState           string   `json:"prior_state,omitempty"`
+	Subject              string   `json:"subject,omitempty"`
+	EvidenceCapabilities []string `json:"evidence_capabilities,omitempty"`
+	Members              []string `json:"members,omitempty"`
 }
 
 type lowered struct {
 	Values              []value
+	Bindings            map[string]string
 	Canonical           string
 	SemanticDigest      string
 	Reconstructed       int

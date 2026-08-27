@@ -1,0 +1,10 @@
+package proofchoice
+namespace proofchoice
+entity ClaimValue id "gooo://proof-choice/composition-failure/claim-value"
+entity MetricValue id "gooo://proof-choice/composition-failure/metric-value"
+entity CompositionValue id "gooo://proof-choice/composition-failure/composition-value"
+activity FoundationClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"claim\",\"id\":\"claim.composition.failure.foundation\",\"statement\":\"the failed composition has a stable anchor\",\"prior_state\":\"OPEN\",\"subject\":\"gooo://proof-choice/composition-failure/foundation\",\"evidence_capabilities\":[\"FOUNDATION\"]}"
+activity CoherenceClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"claim\",\"id\":\"claim.composition.failure.coherence\",\"statement\":\"the failed composition has a relation\",\"prior_state\":\"OPEN\",\"subject\":\"gooo://proof-choice/composition-failure/coherence\",\"evidence_capabilities\":[\"COHERENCE\"]}"
+activity RegressionClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"claim\",\"id\":\"claim.composition.failure.regression\",\"statement\":\"the failed composition replays\",\"prior_state\":\"OPEN\",\"subject\":\"gooo://proof-choice/composition-failure/regression\",\"evidence_capabilities\":[\"REGRESSION\"]}"
+activity FailedComposition() -> CompositionValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"composition\",\"id\":\"z.composition.failure\",\"statement\":\"an incomplete route bundle composes\",\"prior_state\":\"OPEN\",\"subject\":\"gooo://proof-choice/composition-failure/result\",\"members\":[\"claim.composition.failure.foundation\",\"claim.composition.failure.coherence\",\"claim.composition.failure.regression\"]}"
+activity FailedCompositionMetric() -> MetricValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"metric\",\"id\":\"metric.composition.failure.coverage\",\"statement\":\"the failed composition has a relation\",\"subject\":\"gooo://proof-choice/composition-failure/coherence\",\"evidence_capabilities\":[\"COHERENCE\"]}"

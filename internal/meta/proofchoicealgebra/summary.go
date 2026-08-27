@@ -15,6 +15,10 @@ type Summary struct {
 	Discharged            int           `json:"discharged"`
 	OpenPreserved         int           `json:"open_preserved"`
 	Refuted               int           `json:"refuted"`
+	CaseDenominator       int           `json:"case_denominator"`
+	RouteDenominator      int           `json:"route_denominator"`
+	ClaimDenominator      int           `json:"claim_denominator"`
+	InterventionDenom     int           `json:"intervention_denominator"`
 }
 
 type Reconstruction struct {

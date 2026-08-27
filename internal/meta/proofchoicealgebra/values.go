@@ -12,7 +12,11 @@ func decodeValue(raw string) (Value, error) {
 	if err := json.Unmarshal([]byte(raw), &fields); err != nil {
 		return Value{}, fmt.Errorf("SEMANTIC_VALUE_UNKNOWN")
 	}
-	for _, forbidden := range []string{"choice", "numerator", "denominator"} {
+	for _, forbidden := range []string{
+		"choice", "numerator", "denominator", "evidence_kind", "admissible_routes",
+		"observed", "predicate", "value", "slots", "observations", "dependencies",
+		"provenance",
+	} {
 		if _, exists := fields[forbidden]; exists {
 			return Value{}, fmt.Errorf("SELF_DECLARED_PROOF_VALUE")
 		}
@@ -29,6 +33,14 @@ func decodeValue(raw string) (Value, error) {
 	}
 	if value.Schema != InputSchema || value.ID == "" || value.Kind == "" {
 		return Value{}, fmt.Errorf("SEMANTIC_VALUE_METADATA_MISSING")
+	}
+	if value.Kind != ClaimKind && value.Kind != MetricKind && value.Kind != CompositionKind {
+		return Value{}, fmt.Errorf("SEMANTIC_VALUE_KIND_UNKNOWN")
+	}
+	for _, route := range value.EvidenceCapabilities {
+		if !route.Valid() {
+			return Value{}, fmt.Errorf("EVIDENCE_CAPABILITY_UNKNOWN")
+		}
 	}
 	return value, nil
 }

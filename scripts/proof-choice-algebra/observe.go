@@ -8,7 +8,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/proofchoicejudge"
 )
 
-func judge(source, receipt, beforePath, afterPath string) any {
+func judge(source, receipt, beforePath, afterPath string, baseline []byte) any {
 	sourceData, err := os.ReadFile(source)
 	if err != nil {
 		return proofchoicejudge.Judge(nil)
@@ -19,7 +19,7 @@ func judge(source, receipt, beforePath, afterPath string) any {
 	}
 	before, _ := os.ReadFile(beforePath)
 	after, _ := os.ReadFile(afterPath)
-	return proofchoicejudge.JudgeSource(source, sourceData, receiptData, before, after)
+	return proofchoicejudge.JudgeSource(source, sourceData, receiptData, before, after, baseline)
 }
 
 func snapshot(root string) []byte {

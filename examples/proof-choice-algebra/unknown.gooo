@@ -1,7 +1,6 @@
 package proofchoice
 namespace proofchoice
-entity Observation id "gooo://proof-choice/unknown/observation"
 entity ClaimValue id "gooo://proof-choice/unknown/claim-value"
 entity MetricValue id "gooo://proof-choice/unknown/metric-value"
-activity UnknownClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"claim\",\"id\":\"claim.unknown\",\"statement\":\"the missing observation cannot resolve this claim\",\"prior_state\":\"OPEN\",\"dependencies\":[\"obs.unknown.missing\"],\"observations\":[\"obs.unknown.missing\"],\"admissible_routes\":[\"FOUNDATION\"]}"
-activity UnknownMetric() -> MetricValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"metric\",\"id\":\"metric.unknown.coverage\",\"observations\":[\"obs.unknown.missing\"],\"admissible_routes\":[\"FOUNDATION\"],\"slots\":[{\"id\":\"unknown-slot-1\",\"observed\":true,\"provenance\":[\"slot://unknown/1\"]},{\"id\":\"unknown-slot-2\",\"observed\":true,\"provenance\":[\"slot://unknown/2\"]},{\"id\":\"unknown-slot-3\",\"observed\":true,\"provenance\":[\"slot://unknown/3\"]}]}"
+activity UnknownClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"claim\",\"id\":\"claim.unknown\",\"statement\":\"the missing capability cannot resolve this claim\",\"prior_state\":\"OPEN\",\"subject\":\"gooo://proof-choice/unknown/subject\"}"
+activity UnknownMetric() -> MetricValue computes "{\"schema\":\"gooo/proof-choice-input/v3\",\"kind\":\"metric\",\"id\":\"metric.unknown.coverage\",\"statement\":\"the missing capability cannot resolve this claim\",\"subject\":\"gooo://proof-choice/unknown/subject\"}"
