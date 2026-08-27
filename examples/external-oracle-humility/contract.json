@@ -33,12 +33,15 @@
     {
       "id": "gomacro-readme",
       "kind": "EXTERNAL_IMPLEMENTATION_DOCUMENT",
-      "url": "https://github.com/cosmos72/gomacro/blob/cf0d4bf32da393dbda97e3572f216731013ffa55/README.md",
+      "url": "https://raw.githubusercontent.com/cosmos72/gomacro/cf0d4bf32da393dbda97e3572f216731013ffa55/README.md",
       "revision": "cf0d4bf32da393dbda97e3572f216731013ffa55",
       "locator": "README.md:244-245",
       "content_sha256": "sha256:8b453f2cfb1808b0de96a530525889f4bcdcc6b5aa866d8fc93b10d1473e2bc7",
       "claim_id": "reference-comparison-only",
-      "signal": "EXTERNAL_IMPLEMENTATION_MAY_HAVE_ARBITRARY_EFFECTS"
+      "signal": "EXTERNAL_IMPLEMENTATION_MAY_HAVE_ARBITRARY_EFFECTS",
+      "evidence_class": "IMMUTABLE_RAW",
+      "retrieval_mode": "PINNED_RAW",
+      "extraction_recipe": {"id": "external-proposition/v1", "version": "1", "digest": "", "status": "UNAVAILABLE"}
     },
     {
       "id": "racket-syntax-model",
@@ -48,7 +51,10 @@
       "locator": "§1.2.3 Expansion (Parsing)",
       "content_sha256": "sha256:446b9da4c946a9425ccb5066ae7712d681817d90be4f40aa4afa5b631493be85",
       "claim_id": "source-intent-authority",
-      "signal": "BINDING_INFORMATION_DRIVES_EXPANSION"
+      "signal": "BINDING_INFORMATION_DRIVES_EXPANSION",
+      "evidence_class": "MUTABLE_DOCUMENTATION",
+      "retrieval_mode": "DOCUMENTATION_BYTES",
+      "extraction_recipe": {"id": "external-proposition/v1", "version": "1", "digest": "", "status": "UNAVAILABLE"}
     },
     {
       "id": "reproducible-builds-definition",
@@ -58,33 +64,39 @@
       "locator": "When is a build reproducible?",
       "content_sha256": "sha256:830d4a30142364509cdf174ecce96c2af6476689948467748bfd6c3e2b87dc5c",
       "claim_id": "receipt-replayability",
-      "signal": "BIT_EXACT_ARTIFACT_REPLAY"
+      "signal": "BIT_EXACT_ARTIFACT_REPLAY",
+      "evidence_class": "MUTABLE_DOCUMENTATION",
+      "retrieval_mode": "DOCUMENTATION_BYTES",
+      "extraction_recipe": {"id": "external-proposition/v1", "version": "1", "digest": "", "status": "UNAVAILABLE"}
     }
   ],
   "cases": [
     {
       "id": "reference-agreement",
       "input": "three complete primary references with comparative-only propositions",
-      "expected_decision": "REFERENCE_AGREEMENT_OBSERVED",
-      "expected_resolution": "EXACT",
+      "expected_decision": "REFERENCE_AGREEMENT_OPEN",
+      "expected_resolution": "LOWER_RESOLUTION",
       "expected_authority": "GOOO_SOURCE_INTENT",
-      "expected_effect": "NO_EFFECT"
+      "expected_effect": "NO_EFFECT",
+      "expected_conformance": "SUBJECT_SEMANTIC_AGREEMENT_OPEN"
     },
     {
       "id": "reference-mismatch",
       "input": "one primary proposition claims semantic authority or the wrong claim",
       "expected_decision": "FAIL_CLOSED",
-      "expected_resolution": "EXACT",
+      "expected_resolution": "LOWER_RESOLUTION",
       "expected_authority": "GOOO_SOURCE_INTENT",
-      "expected_effect": "BLOCK"
+      "expected_effect": "BLOCK",
+      "expected_conformance": "MISMATCH_BRANCH_REPRODUCED"
     },
     {
       "id": "reference-absence",
       "input": "a primary reference is absent from the capsule",
       "expected_decision": "FAIL_CLOSED",
-      "expected_resolution": "UNKNOWN",
+      "expected_resolution": "LOWER_RESOLUTION",
       "expected_authority": "GOOO_SOURCE_INTENT",
-      "expected_effect": "BLOCK"
+      "expected_effect": "BLOCK",
+      "expected_conformance": "ABSENCE_BRANCH_REPRODUCED"
     }
   ]
 }

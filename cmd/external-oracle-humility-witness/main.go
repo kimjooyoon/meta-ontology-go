@@ -173,7 +173,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return 2
 		}
 	}
-	fmt.Fprintf(stdout, "external oracle humility: %s %d/%d cases=%d/%d agreement=%s authority=%s current=%d/%d\n", suite.Decision, agreement.Completed, agreement.Total, suite.CasesSatisfied, suite.CasesTotal, agreement.ReferenceAgreement, agreement.SemanticAuthority, agreement.CurrentReferenceObservations, agreement.CurrentReferenceTotal)
+	fmt.Fprintf(stdout, "external oracle humility: %s %d/%d cases=%d/%d agreement=%s/%s authority=%s current-bytes=%d/%d semantic-extraction=%d/3 semantic-agreement=%d/3\n", suite.Decision, agreement.Completed, agreement.Total, suite.CasesSatisfied, suite.CasesTotal, agreement.ReferenceAgreement, agreement.SemanticAgreement, agreement.SemanticAuthority, agreement.CurrentByteObservations, agreement.CurrentReferenceTotal, agreement.FixedDenominator.SemanticExtraction.Completed, agreement.FixedDenominator.SemanticAgreement.Completed)
 	if suite.Decision != "HUMILITY_MODEL_BOUND" || suite.Resolution != "EXACT" {
 		return 1
 	}

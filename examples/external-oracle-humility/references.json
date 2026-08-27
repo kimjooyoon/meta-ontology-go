@@ -5,10 +5,12 @@
   "references": [
     {
       "id": "gomacro-readme",
-      "url": "https://github.com/cosmos72/gomacro/blob/cf0d4bf32da393dbda97e3572f216731013ffa55/README.md",
+      "url": "https://raw.githubusercontent.com/cosmos72/gomacro/cf0d4bf32da393dbda97e3572f216731013ffa55/README.md",
       "revision": "cf0d4bf32da393dbda97e3572f216731013ffa55",
       "locator": "README.md:244-245",
       "content_sha256": "sha256:8b453f2cfb1808b0de96a530525889f4bcdcc6b5aa866d8fc93b10d1473e2bc7",
+      "evidence_class": "IMMUTABLE_RAW",
+      "retrieval_mode": "PINNED_RAW",
       "proposition": {
         "claim_id": "reference-comparison-only",
         "signal": "EXTERNAL_IMPLEMENTATION_MAY_HAVE_ARBITRARY_EFFECTS"
@@ -17,7 +19,8 @@
         "kind": "PRIMARY_SOURCE",
         "role": "COMPARATIVE_EVIDENCE",
         "authority": "NOT_AUTHORITY"
-      }
+      },
+      "extraction_recipe": {"id": "external-proposition/v1", "version": "1", "digest": "", "status": "UNAVAILABLE"}
     },
     {
       "id": "racket-syntax-model",
@@ -25,6 +28,8 @@
       "revision": "official-reference-page",
       "locator": "§1.2.3 Expansion (Parsing)",
       "content_sha256": "sha256:446b9da4c946a9425ccb5066ae7712d681817d90be4f40aa4afa5b631493be85",
+      "evidence_class": "MUTABLE_DOCUMENTATION",
+      "retrieval_mode": "DOCUMENTATION_BYTES",
       "proposition": {
         "claim_id": "source-intent-authority",
         "signal": "BINDING_INFORMATION_DRIVES_EXPANSION"
@@ -33,7 +38,8 @@
         "kind": "PRIMARY_SOURCE",
         "role": "COMPARATIVE_EVIDENCE",
         "authority": "NOT_AUTHORITY"
-      }
+      },
+      "extraction_recipe": {"id": "external-proposition/v1", "version": "1", "digest": "", "status": "UNAVAILABLE"}
     },
     {
       "id": "reproducible-builds-definition",
@@ -41,6 +47,8 @@
       "revision": "official-definition-page",
       "locator": "When is a build reproducible?",
       "content_sha256": "sha256:830d4a30142364509cdf174ecce96c2af6476689948467748bfd6c3e2b87dc5c",
+      "evidence_class": "MUTABLE_DOCUMENTATION",
+      "retrieval_mode": "DOCUMENTATION_BYTES",
       "proposition": {
         "claim_id": "receipt-replayability",
         "signal": "BIT_EXACT_ARTIFACT_REPLAY"
@@ -49,7 +57,8 @@
         "kind": "PRIMARY_SOURCE",
         "role": "COMPARATIVE_EVIDENCE",
         "authority": "NOT_AUTHORITY"
-      }
+      },
+      "extraction_recipe": {"id": "external-proposition/v1", "version": "1", "digest": "", "status": "UNAVAILABLE"}
     }
   ]
 }

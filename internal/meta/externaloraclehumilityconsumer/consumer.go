@@ -88,22 +88,26 @@ type sourceContract struct {
 }
 
 type referenceContract struct {
-	ID            string `json:"id"`
-	Kind          string `json:"kind"`
-	URL           string `json:"url"`
-	Revision      string `json:"revision"`
-	Locator       string `json:"locator"`
-	ContentSHA256 string `json:"content_sha256"`
-	ClaimID       string `json:"claim_id"`
-	Signal        string `json:"signal"`
+	ID               string           `json:"id"`
+	Kind             string           `json:"kind"`
+	URL              string           `json:"url"`
+	Revision         string           `json:"revision"`
+	Locator          string           `json:"locator"`
+	ContentSHA256    string           `json:"content_sha256"`
+	ClaimID          string           `json:"claim_id"`
+	Signal           string           `json:"signal"`
+	EvidenceClass    string           `json:"evidence_class"`
+	RetrievalMode    string           `json:"retrieval_mode"`
+	ExtractionRecipe extractionRecipe `json:"extraction_recipe"`
 }
 
 type caseContract struct {
-	ID                 string `json:"id"`
-	ExpectedDecision   string `json:"expected_decision"`
-	ExpectedResolution string `json:"expected_resolution"`
-	ExpectedAuthority  string `json:"expected_authority"`
-	ExpectedEffect     string `json:"expected_effect"`
+	ID                  string `json:"id"`
+	ExpectedDecision    string `json:"expected_decision"`
+	ExpectedResolution  string `json:"expected_resolution"`
+	ExpectedAuthority   string `json:"expected_authority"`
+	ExpectedEffect      string `json:"expected_effect"`
+	ExpectedConformance string `json:"expected_conformance"`
 }
 
 type contract struct {
@@ -130,14 +134,25 @@ type capsuleProvenance struct {
 	Authority string `json:"authority"`
 }
 
+type extractionRecipe struct {
+	ID      string `json:"id"`
+	Version string `json:"version"`
+	Digest  string `json:"digest"`
+	Status  string `json:"status"`
+}
+
 type capsuleReference struct {
-	ID            string             `json:"id"`
-	URL           string             `json:"url"`
-	Revision      string             `json:"revision"`
-	Locator       string             `json:"locator"`
-	ContentSHA256 string             `json:"content_sha256"`
-	Proposition   capsuleProposition `json:"proposition"`
-	Provenance    capsuleProvenance  `json:"provenance"`
+	ID               string             `json:"id"`
+	URL              string             `json:"url"`
+	Revision         string             `json:"revision"`
+	Locator          string             `json:"locator"`
+	ContentSHA256    string             `json:"content_sha256"`
+	EvidenceClass    string             `json:"evidence_class"`
+	RetrievalMode    string             `json:"retrieval_mode"`
+	Proposition      capsuleProposition `json:"proposition"`
+	Provenance       capsuleProvenance  `json:"provenance"`
+	ExtractionRecipe extractionRecipe   `json:"extraction_recipe"`
+	RawContent       string             `json:"raw_content,omitempty"`
 }
 
 type capsule struct {
@@ -148,13 +163,17 @@ type capsule struct {
 }
 
 type currentObservation struct {
-	ID            string `json:"id"`
-	URL           string `json:"url"`
-	HTTPStatus    int    `json:"http_status"`
-	Bytes         int    `json:"bytes"`
-	ContentSHA256 string `json:"content_sha256"`
-	Origin        string `json:"origin"`
-	CapturedAt    string `json:"captured_at"`
+	ID               string           `json:"id"`
+	URL              string           `json:"url"`
+	HTTPStatus       int              `json:"http_status"`
+	Bytes            int              `json:"bytes"`
+	ContentSHA256    string           `json:"content_sha256"`
+	Origin           string           `json:"origin"`
+	CapturedAt       string           `json:"captured_at"`
+	EvidenceClass    string           `json:"evidence_class"`
+	RetrievalMode    string           `json:"retrieval_mode"`
+	RawBytesAttached bool             `json:"raw_bytes_attached"`
+	ExtractionRecipe extractionRecipe `json:"extraction_recipe"`
 }
 
 type currentSet struct {
@@ -187,33 +206,52 @@ type Metric struct {
 }
 
 type FixedDenominator struct {
-	SourcePolicy                 Metric `json:"source_policy"`
-	ProducerImports              Metric `json:"producer_imports"`
-	CurrentReferenceObservations Metric `json:"current_reference_observations"`
-	HistoricalFixtures           Metric `json:"historical_fixtures"`
-	SemanticCausality            Metric `json:"semantic_causality"`
-	NonsemanticPreservation      Metric `json:"nonsemantic_preservation"`
+	SourcePolicy            Metric `json:"source_policy"`
+	ProducerImports         Metric `json:"producer_imports"`
+	HistoricalFixtures      Metric `json:"historical_fixtures"`
+	CurrentByteObservations Metric `json:"current_byte_observations"`
+	SemanticExtraction      Metric `json:"semantic_extraction"`
+	SemanticAgreement       Metric `json:"semantic_agreement"`
+	SemanticCausality       Metric `json:"semantic_causality"`
+	NonsemanticPreservation Metric `json:"nonsemantic_preservation"`
 }
 
 type ReferenceResult struct {
-	ID             string `json:"id"`
-	State          string `json:"state"`
-	Agreement      string `json:"agreement"`
-	EvidenceDigest string `json:"evidence_digest"`
-	Provenance     string `json:"provenance"`
-	Stage          string `json:"stage"`
-	Step           string `json:"step"`
-	Reason         string `json:"reason"`
+	ID               string `json:"id"`
+	State            string `json:"state"`
+	MetadataStatus   string `json:"metadata_status"`
+	SemanticStatus   string `json:"semantic_status"`
+	Agreement        string `json:"agreement"`
+	EvidenceClass    string `json:"evidence_class"`
+	Relation         string `json:"relation"`
+	Resolution       string `json:"resolution"`
+	EvidenceDigest   string `json:"evidence_digest"`
+	RawBytesAttached bool   `json:"raw_bytes_attached"`
+	RecipeID         string `json:"recipe_id"`
+	RecipeVersion    string `json:"recipe_version"`
+	RecipeDigest     string `json:"recipe_digest"`
+	Provenance       string `json:"provenance"`
+	Stage            string `json:"stage"`
+	Step             string `json:"step"`
+	Reason           string `json:"reason"`
 }
 
 type CurrentResult struct {
-	ID             string `json:"id"`
-	State          string `json:"state"`
-	Resolution     string `json:"resolution"`
-	EvidenceDigest string `json:"evidence_digest"`
-	Stage          string `json:"stage"`
-	Step           string `json:"step"`
-	Reason         string `json:"reason"`
+	ID               string `json:"id"`
+	State            string `json:"state"`
+	SemanticStatus   string `json:"semantic_status"`
+	EvidenceClass    string `json:"evidence_class"`
+	Relation         string `json:"relation"`
+	Resolution       string `json:"resolution"`
+	EvidenceDigest   string `json:"evidence_digest"`
+	RawBytesAttached bool   `json:"raw_bytes_attached"`
+	RecipeID         string `json:"recipe_id"`
+	RecipeVersion    string `json:"recipe_version"`
+	RecipeDigest     string `json:"recipe_digest"`
+	Provenance       string `json:"provenance"`
+	Stage            string `json:"stage"`
+	Step             string `json:"step"`
+	Reason           string `json:"reason"`
 }
 
 type PersistentClaim struct {
@@ -254,56 +292,60 @@ type Indicator struct {
 }
 
 type Report struct {
-	Schema                       string            `json:"schema"`
-	SubjectSHA                   string            `json:"subject_sha"`
-	Mode                         string            `json:"mode"`
-	SourceContractBinding        bool              `json:"source_contract_binding"`
-	Decision                     string            `json:"decision"`
-	Resolution                   string            `json:"resolution"`
-	Reason                       string            `json:"reason"`
-	ReferenceAgreement           string            `json:"reference_agreement"`
-	SemanticAuthority            string            `json:"semantic_authority"`
-	AuthorityGrant               string            `json:"authority_grant"`
-	EnforcementEffect            string            `json:"enforcement_effect"`
-	SourcePolicy                 SourcePolicy      `json:"source_policy"`
-	HistoricalReferences         []ReferenceResult `json:"historical_references"`
-	CurrentReferences            []CurrentResult   `json:"current_references"`
-	CurrentReferenceObservations int               `json:"current_reference_observations"`
-	CurrentReferenceTotal        int               `json:"current_reference_total"`
-	CurrentResolution            string            `json:"current_resolution"`
-	Completed                    int               `json:"completed"`
-	Total                        int               `json:"total"`
-	BasisPoints                  int               `json:"basis_points"`
-	UnknownIndicators            int               `json:"unknown_indicators"`
-	OfficialMutations            int               `json:"official_mutations"`
-	RepositoryWrites             int               `json:"repository_writes"`
-	PromotionCount               int               `json:"promotion_count"`
-	ProducerToConsumerImports    int               `json:"producer_to_consumer_imports"`
-	ConsumerToProducerImports    int               `json:"consumer_to_producer_imports"`
-	ReadOnly                     bool              `json:"read_only"`
-	FixedDenominator             FixedDenominator  `json:"fixed_denominator"`
-	Producer                     string            `json:"producer"`
-	Consumer                     string            `json:"consumer"`
-	MetaOperation                string            `json:"meta_operation"`
-	ProofChoice                  string            `json:"proof_choice"`
-	Stage                        string            `json:"stage"`
-	Step                         string            `json:"step"`
-	PersistentClaims             []PersistentClaim `json:"persistent_claims"`
-	ClaimTransitions             []ClaimTransition `json:"claim_transitions"`
-	Indicators                   []Indicator       `json:"indicators"`
-	Receipt                      SourceReceipt     `json:"source_receipt"`
-	ReportDigest                 string            `json:"report_digest"`
+	Schema                    string            `json:"schema"`
+	SubjectSHA                string            `json:"subject_sha"`
+	Mode                      string            `json:"mode"`
+	SourceContractBinding     bool              `json:"source_contract_binding"`
+	ConformanceResult         string            `json:"conformance_result"`
+	Decision                  string            `json:"decision"`
+	Resolution                string            `json:"resolution"`
+	Reason                    string            `json:"reason"`
+	ReferenceAgreement        string            `json:"reference_agreement"`
+	SemanticAgreement         string            `json:"semantic_agreement"`
+	SemanticAuthority         string            `json:"semantic_authority"`
+	AuthorityGrant            string            `json:"authority_grant"`
+	EnforcementEffect         string            `json:"enforcement_effect"`
+	SourcePolicy              SourcePolicy      `json:"source_policy"`
+	HistoricalReferences      []ReferenceResult `json:"historical_references"`
+	CurrentReferences         []CurrentResult   `json:"current_references"`
+	CurrentByteObservations   int               `json:"current_byte_observations"`
+	CurrentReferenceTotal     int               `json:"current_reference_total"`
+	CurrentResolution         string            `json:"current_resolution"`
+	Completed                 int               `json:"completed"`
+	Total                     int               `json:"total"`
+	BasisPoints               int               `json:"basis_points"`
+	UnknownIndicators         int               `json:"unknown_indicators"`
+	OfficialMutations         int               `json:"official_mutations"`
+	RepositoryWrites          int               `json:"repository_writes"`
+	PromotionCount            int               `json:"promotion_count"`
+	ProducerToConsumerImports int               `json:"producer_to_consumer_imports"`
+	ConsumerToProducerImports int               `json:"consumer_to_producer_imports"`
+	ReadOnly                  bool              `json:"read_only"`
+	FixedDenominator          FixedDenominator  `json:"fixed_denominator"`
+	Producer                  string            `json:"producer"`
+	Consumer                  string            `json:"consumer"`
+	MetaOperation             string            `json:"meta_operation"`
+	ProofChoice               string            `json:"proof_choice"`
+	Stage                     string            `json:"stage"`
+	Step                      string            `json:"step"`
+	PersistentClaims          []PersistentClaim `json:"persistent_claims"`
+	ClaimTransitions          []ClaimTransition `json:"claim_transitions"`
+	Indicators                []Indicator       `json:"indicators"`
+	Receipt                   SourceReceipt     `json:"source_receipt"`
+	ReportDigest              string            `json:"report_digest"`
 }
 
 type SuiteCase struct {
-	ID                 string `json:"id"`
-	ExpectedDecision   string `json:"expected_decision"`
-	ExpectedResolution string `json:"expected_resolution"`
-	ActualDecision     string `json:"actual_decision"`
-	ActualResolution   string `json:"actual_resolution"`
-	Authority          string `json:"authority"`
-	Effect             string `json:"effect"`
-	Passed             bool   `json:"passed"`
+	ID                  string `json:"id"`
+	ExpectedDecision    string `json:"expected_decision"`
+	ExpectedResolution  string `json:"expected_resolution"`
+	ExpectedConformance string `json:"expected_conformance"`
+	ActualDecision      string `json:"actual_decision"`
+	ActualResolution    string `json:"actual_resolution"`
+	ActualConformance   string `json:"actual_conformance"`
+	Authority           string `json:"authority"`
+	Effect              string `json:"effect"`
+	Passed              bool   `json:"passed"`
 }
 
 type Suite struct {
@@ -329,10 +371,14 @@ type loweredSource struct {
 }
 
 type historicalState struct {
-	Results   []ReferenceResult
-	Agreement string
-	Reason    string
-	Complete  int
+	Results           []ReferenceResult
+	Agreement         string
+	SemanticAgreement string
+	Reason            string
+	Branch            string
+	Complete          int
+	SemanticExtracted int
+	SemanticAgreed    int
 }
 
 func Judge(input Input) (Report, error) {
@@ -379,26 +425,28 @@ func Judge(input Input) (Report, error) {
 	historical := inspectHistorical(c, cap, lowered.Policy)
 	currentResults, currentObserved, currentResolution := inspectCurrent(c, current)
 	if input.Conformance {
-		currentResults, currentObserved, currentResolution = nil, 0, "EXACT"
+		currentResults, currentObserved, currentResolution = nil, 0, "LOWER_RESOLUTION"
 	}
 
-	decision, resolution, reason, effect := decide(policyExact, receiptBinding && rolesExact, historical, currentResolution, input.Conformance)
+	decision, resolution, reason, effect := decide(policyExact, receiptBinding && rolesExact, historical, input.Conformance)
 	semanticAuthority := lowered.Policy.SourceAuthority
 	if semanticAuthority == "" {
 		semanticAuthority = "UNKNOWN"
 	}
 	claims, transitions := makeClaims(lowered, receipt, cap, policyExact, receiptBinding && rolesExact, historical, currentObserved, DigestBytes(input.Current))
 	readOnly := fx.RepositoryWrites == 0 && fx.PromotionCount == 0 && fx.BeforeStatus == fx.AfterStatus && fx.HeadBefore == fx.HeadAfter
-	fixed := makeFixedDenominator(policyExact, indep, currentObserved, historical.Complete, false, false, readOnly)
+	fixed := makeFixedDenominator(policyExact, indep, currentObserved, historical.Complete, historical.SemanticExtracted, historical.SemanticAgreed, false, false, readOnly)
 	indicators := makeIndicators(policyExact, receipt, indep, currentObserved, historical.Complete, historical.Agreement, claims, false, false, readOnly)
 	report := Report{
 		Schema: ReportSchema, SubjectSHA: input.Subject, Mode: modeFor(input.Conformance),
 		SourceContractBinding: sourceBinding,
+		ConformanceResult:     conformanceResult(input.Conformance, historical.Branch),
 		Decision:              decision, Resolution: resolution, Reason: reason,
 		ReferenceAgreement: historical.Agreement, SemanticAuthority: semanticAuthority,
-		AuthorityGrant: "NONE", EnforcementEffect: effect, SourcePolicy: lowered.Policy,
+		SemanticAgreement: historical.SemanticAgreement,
+		AuthorityGrant:    "NONE", EnforcementEffect: effect, SourcePolicy: lowered.Policy,
 		HistoricalReferences: historical.Results, CurrentReferences: currentResults,
-		CurrentReferenceObservations: currentObserved, CurrentReferenceTotal: len(c.References),
+		CurrentByteObservations: currentObserved, CurrentReferenceTotal: len(c.References),
 		CurrentResolution: currentResolution, OfficialMutations: fx.OfficialMutations,
 		RepositoryWrites: fx.RepositoryWrites, PromotionCount: fx.PromotionCount,
 		ProducerToConsumerImports: indep.ProducerToConsumer, ConsumerToProducerImports: indep.ConsumerToProducer,
@@ -434,7 +482,8 @@ func FinalizeCausality(base, intervention, comment Report) Report {
 	presentation := Metric{Total: 1}
 	if base.Receipt.SemanticSHA256 == comment.Receipt.SemanticSHA256 &&
 		base.Decision == comment.Decision && base.ReferenceAgreement == comment.ReferenceAgreement &&
-		base.AuthorityGrant == comment.AuthorityGrant {
+		base.SemanticAgreement == comment.SemanticAgreement && base.AuthorityGrant == comment.AuthorityGrant &&
+		reflect.DeepEqual(base.ClaimTransitions, comment.ClaimTransitions) {
 		presentation.Completed, presentation.Satisfied = 1, true
 	}
 	presentation.BasisPoints = metricBPS(presentation)
@@ -477,13 +526,15 @@ func BuildSuite(contractRaw []byte, subject string, agreement, mismatch, absence
 	for _, expected := range c.Cases {
 		actual, ok := lookup[expected.ID]
 		passed := ok && actual.Decision == expected.ExpectedDecision && actual.Resolution == expected.ExpectedResolution &&
-			actual.SemanticAuthority == expected.ExpectedAuthority && actual.EnforcementEffect == expected.ExpectedEffect && actual.Decision != "PASS"
+			actual.SemanticAuthority == expected.ExpectedAuthority && actual.EnforcementEffect == expected.ExpectedEffect &&
+			actual.ConformanceResult == expected.ExpectedConformance && actual.SemanticAgreement == "OPEN" && actual.Decision != "PASS"
 		if passed {
 			suite.CasesSatisfied++
 		}
 		suite.Cases = append(suite.Cases, SuiteCase{ID: expected.ID, ExpectedDecision: expected.ExpectedDecision,
-			ExpectedResolution: expected.ExpectedResolution, ActualDecision: actual.Decision,
-			ActualResolution: actual.Resolution, Authority: actual.SemanticAuthority,
+			ExpectedResolution: expected.ExpectedResolution, ExpectedConformance: expected.ExpectedConformance,
+			ActualDecision: actual.Decision, ActualResolution: actual.Resolution,
+			ActualConformance: actual.ConformanceResult, Authority: actual.SemanticAuthority,
 			Effect: actual.EnforcementEffect, Passed: passed})
 	}
 	if suite.CasesTotal > 0 {
@@ -512,7 +563,9 @@ func causalMetric(base, intervention Report) Metric {
 func preservationMetric(base, comment Report) Metric {
 	metric := Metric{Total: 1}
 	if base.Receipt.SemanticSHA256 == comment.Receipt.SemanticSHA256 && base.Decision == comment.Decision && base.ReferenceAgreement == comment.ReferenceAgreement && base.AuthorityGrant == comment.AuthorityGrant {
-		metric.Completed, metric.Satisfied = 1, true
+		if reflect.DeepEqual(base.ClaimTransitions, comment.ClaimTransitions) {
+			metric.Completed, metric.Satisfied = 1, true
+		}
 	}
 	metric.BasisPoints = metricBPS(metric)
 	return metric
@@ -594,50 +647,86 @@ func parseProgram(program string) (map[string]string, error) {
 	return values, nil
 }
 
-func inspectHistorical(c contract, cap capsule, policy SourcePolicy) historicalState {
-	state := historicalState{Agreement: "UNKNOWN", Reason: "HISTORICAL_CAPSULE_UNAVAILABLE"}
+func inspectHistorical(c contract, cap capsule, _ SourcePolicy) historicalState {
+	state := historicalState{Agreement: "UNVERIFIED", SemanticAgreement: "OPEN", Branch: "ABSENT", Reason: "HISTORICAL_CAPSULE_UNAVAILABLE"}
 	if cap.Schema != CapsuleSchema || cap.CapsuleState != "HISTORICAL_FIXTURE" || cap.CapturedAt == "" {
 		return state
 	}
+	state.Branch = "UNVERIFIED"
 	byID := make(map[string]capsuleReference, len(cap.References))
 	for _, ref := range cap.References {
 		byID[ref.ID] = ref
 	}
-	anyOpen, anyRefuted := false, false
+	anyMismatch, anyAbsent := false, false
 	for _, expected := range c.References {
 		actual, ok := byID[expected.ID]
 		if !ok {
-			anyOpen = true
-			state.Results = append(state.Results, ReferenceResult{ID: expected.ID, State: "OPEN", Agreement: "UNKNOWN", Provenance: "HISTORICAL_FIXTURE", Stage: "compare", Step: "capsule-proposition", Reason: "REFERENCE_ABSENT_FROM_CAPSULE"})
+			anyAbsent = true
+			state.Results = append(state.Results, ReferenceResult{
+				ID: expected.ID, State: "OPEN", MetadataStatus: "OPEN", SemanticStatus: "OPEN", Agreement: "UNVERIFIED",
+				EvidenceClass: expected.EvidenceClass, Relation: "UNVERIFIED", Resolution: "LOWER_RESOLUTION",
+				Provenance: "HISTORICAL_FIXTURE", Stage: "compare", Step: expected.ID, Reason: "REFERENCE_ABSENT_FROM_CAPSULE",
+			})
 			continue
 		}
-		complete := actual.URL == expected.URL && actual.Revision == expected.Revision && actual.Locator == expected.Locator && actual.ContentSHA256 == expected.ContentSHA256 && actual.Proposition.ClaimID != "" && actual.Proposition.Signal != "" && actual.Provenance.Kind == "PRIMARY_SOURCE" && actual.Provenance.Role == "COMPARATIVE_EVIDENCE" && actual.Provenance.Authority == "NOT_AUTHORITY"
+		complete := historicalMetadataComplete(actual)
 		if complete {
 			state.Complete++
 		}
-		claimOK := policyHasClaim(policy, actual.Proposition.ClaimID)
-		agreement := complete && claimOK && actual.Proposition.ClaimID == expected.ClaimID && actual.Proposition.Signal == expected.Signal && policy.ExternalEvidenceRelation == actual.Provenance.Role && policy.ExternalEvidenceAuthority == actual.Provenance.Authority
-		result := ReferenceResult{ID: expected.ID, EvidenceDigest: actual.ContentSHA256, Provenance: actual.Provenance.Kind + "/" + actual.Provenance.Role, Stage: "compare", Step: "capsule-proposition"}
-		if agreement {
-			result.State, result.Agreement, result.Reason = "SATISFIED", "AGREES", "CAPSULE_PROPOSITION_MATCHES_GOOO_POLICY_PREDICATE"
-		} else if complete || actual.Proposition.ClaimID != "" {
-			anyRefuted = true
-			result.State, result.Agreement, result.Reason = "REFUTED", "DISAGREES", "CAPSULE_PROPOSITION_DOES_NOT_MATCH_GOOO_POLICY_PREDICATE"
-		} else {
-			anyOpen = true
-			result.State, result.Agreement, result.Reason = "OPEN", "UNKNOWN", "CAPSULE_PROPOSITION_UNRESOLVED"
+		metadataMatchesContract := actual.URL == expected.URL && actual.Revision == expected.Revision && actual.Locator == expected.Locator && actual.ContentSHA256 == expected.ContentSHA256 && actual.EvidenceClass == expected.EvidenceClass && actual.RetrievalMode == expected.RetrievalMode && actual.Proposition.ClaimID == expected.ClaimID && actual.Proposition.Signal == expected.Signal && actual.Provenance.Kind == "PRIMARY_SOURCE" && actual.Provenance.Role == "COMPARATIVE_EVIDENCE" && actual.Provenance.Authority == "NOT_AUTHORITY"
+		if !metadataMatchesContract {
+			anyMismatch = true
+		}
+		result := ReferenceResult{
+			ID: expected.ID, State: "HISTORICAL_FIXTURE", MetadataStatus: statusFor(complete, "OPEN", "DISCHARGED"), SemanticStatus: "OPEN", Agreement: "UNVERIFIED",
+			EvidenceClass: firstNonEmpty(actual.EvidenceClass, expected.EvidenceClass), Relation: "UNVERIFIED", Resolution: "LOWER_RESOLUTION",
+			EvidenceDigest: actual.ContentSHA256, Provenance: historicalProvenance(actual), Stage: "extract", Step: extractionStep(actual.ExtractionRecipe, expected.ID),
+			Reason: "RAW_BYTES_NOT_ATTACHED_TO_HISTORICAL_FIXTURE",
+		}
+		result.RecipeID, result.RecipeVersion, result.RecipeDigest = actual.ExtractionRecipe.ID, actual.ExtractionRecipe.Version, actual.ExtractionRecipe.Digest
+		if !complete {
+			result.Stage, result.Step, result.Reason = "compare", expected.ID, "HISTORICAL_CAPSULE_METADATA_INCOMPLETE"
+		} else if !metadataMatchesContract {
+			result.Stage, result.Step, result.Reason = "compare", expected.ID, "CONFORMANCE_REFERENCE_PROPOSITION_OR_PROVENANCE_MISMATCH"
+		}
+		if actual.RawContent != "" {
+			result.Step, result.Reason = extractionStep(actual.ExtractionRecipe, expected.ID), "EXTRACTION_RECIPE_UNAVAILABLE"
 		}
 		state.Results = append(state.Results, result)
 	}
-	switch {
-	case anyRefuted:
-		state.Agreement, state.Reason = "DISAGREES", "EXTERNAL_REFERENCE_DISAGREEMENT_DERIVED"
-	case anyOpen || len(state.Results) != len(c.References):
-		state.Agreement, state.Reason = "UNKNOWN", "EXTERNAL_REFERENCE_CAPSULE_OPEN"
-	case state.Complete == len(c.References):
-		state.Agreement, state.Reason = "AGREES", "EXTERNAL_REFERENCE_AGREEMENT_DERIVED_FROM_CAPSULE"
+	if anyAbsent {
+		state.Branch, state.Reason = "ABSENT", "CONFORMANCE_CAPSULE_REFERENCE_ABSENT"
+	} else if anyMismatch {
+		state.Branch, state.Reason = "MISMATCH", "CONFORMANCE_CAPSULE_METADATA_OR_PROPOSITION_MISMATCH"
+	} else {
+		state.Reason = "RAW_BYTES_AND_VERSIONED_EXTRACTION_RECIPE_REQUIRED_FOR_SEMANTIC_AGREEMENT"
 	}
 	return state
+}
+
+func historicalMetadataComplete(ref capsuleReference) bool {
+	return ref.ID != "" && ref.URL != "" && ref.Revision != "" && ref.Locator != "" && ref.ContentSHA256 != "" && ref.EvidenceClass != "" && ref.RetrievalMode != "" && ref.Proposition.ClaimID != "" && ref.Proposition.Signal != "" && ref.Provenance.Kind != "" && ref.Provenance.Role != "" && ref.Provenance.Authority != "" && ref.ExtractionRecipe.Status != ""
+}
+
+func historicalProvenance(ref capsuleReference) string {
+	if ref.Provenance.Kind == "" && ref.Provenance.Role == "" {
+		return "HISTORICAL_FIXTURE"
+	}
+	return ref.Provenance.Kind + "/" + ref.Provenance.Role
+}
+
+func extractionStep(recipe extractionRecipe, fallback string) string {
+	if recipe.ID != "" {
+		return recipe.ID
+	}
+	return fallback
+}
+
+func firstNonEmpty(value, fallback string) string {
+	if value != "" {
+		return value
+	}
+	return fallback
 }
 
 func inspectCurrent(c contract, current currentSet) ([]CurrentResult, int, string) {
@@ -652,61 +741,83 @@ func inspectCurrent(c contract, current currentSet) ([]CurrentResult, int, strin
 	observed := 0
 	for _, expected := range c.References {
 		observation, ok := byID[expected.ID]
-		result := CurrentResult{ID: expected.ID, State: "OPEN", Resolution: "LOWER_RESOLUTION", Stage: "retrieve", Step: "current-reference"}
+		result := CurrentResult{ID: expected.ID, State: "OPEN", SemanticStatus: "OPEN", EvidenceClass: expected.EvidenceClass, Relation: "UNVERIFIED", Resolution: "LOWER_RESOLUTION", Provenance: "ACTIONS_RETRIEVAL", Stage: "retrieve", Step: expected.ID}
 		if !ok {
-			result.Reason = "CURRENT_REFERENCE_NOT_OBSERVED"
+			result.Reason = "CURRENT_REFERENCE_RETRIEVAL_FAILED"
 		} else if observation.Origin != "ACTIONS_RETRIEVAL" || !strings.HasPrefix(observation.CapturedAt, "actions-head:") || observation.HTTPStatus != 200 || observation.Bytes <= 0 {
 			result.EvidenceDigest = observation.ContentSHA256
-			result.Reason = "CURRENT_REFERENCE_RETRIEVAL_UNAVAILABLE"
-		} else if observation.URL != expected.URL || observation.ContentSHA256 != expected.ContentSHA256 {
+			result.Reason = "CURRENT_REFERENCE_RETRIEVAL_FAILED"
+		} else if observation.URL != expected.URL {
 			result.EvidenceDigest = observation.ContentSHA256
-			result.Reason = "CURRENT_REFERENCE_CONTENT_DIGEST_CHANGED"
+			result.Reason = "CURRENT_REFERENCE_URL_MISMATCH"
+		} else if observation.EvidenceClass != expected.EvidenceClass || observation.RetrievalMode != expected.RetrievalMode {
+			result.EvidenceDigest = observation.ContentSHA256
+			result.Reason = "CURRENT_REFERENCE_EVIDENCE_CLASS_MISMATCH"
+		} else if observation.ContentSHA256 != expected.ContentSHA256 {
+			result.EvidenceDigest = observation.ContentSHA256
+			result.Reason = "CURRENT_REFERENCE_DIGEST_MISMATCH"
 		} else {
 			observed++
-			result.State, result.Resolution, result.EvidenceDigest, result.Reason = "CURRENT_EVIDENCE", "EXACT", observation.ContentSHA256, "ACTIONS_RETRIEVAL_MATCHES_HISTORICAL_CAPSULE"
+			result.State, result.Relation, result.EvidenceDigest = "CURRENT_EVIDENCE", "BYTE_OBSERVATION", observation.ContentSHA256
+			result.RawBytesAttached = observation.RawBytesAttached
+			result.RecipeID, result.RecipeVersion, result.RecipeDigest = observation.ExtractionRecipe.ID, observation.ExtractionRecipe.Version, observation.ExtractionRecipe.Digest
+			result.Stage, result.Step = "extract", extractionStep(observation.ExtractionRecipe, expected.ID)
+			if observation.ExtractionRecipe.Status != "READY" {
+				result.Reason = "EXTRACTION_RECIPE_UNAVAILABLE"
+			} else if !observation.RawBytesAttached {
+				result.Reason = "RAW_BYTES_NOT_ATTACHED_TO_RECEIPT"
+			} else {
+				result.Reason = "INDEPENDENT_SEMANTIC_EXTRACTION_NOT_IMPLEMENTED"
+			}
 		}
 		results = append(results, result)
 	}
-	resolution := "LOWER_RESOLUTION"
-	if observed == len(c.References) {
-		resolution = "EXACT"
-	}
-	return results, observed, resolution
+	return results, observed, "LOWER_RESOLUTION"
 }
 
-func decide(policyExact, receiptExact bool, historical historicalState, currentResolution string, conformance bool) (string, string, string, string) {
+func decide(policyExact, receiptExact bool, historical historicalState, conformance bool) (string, string, string, string) {
 	if !policyExact {
 		return "FAIL_CLOSED", "EXACT", "SOURCE_AUTHORITY_POLICY_CHANGED", "BLOCK"
 	}
 	if !receiptExact {
 		return "FAIL_CLOSED", "EXACT", "SOURCE_RECEIPT_REPLAY_MISMATCH", "BLOCK"
 	}
-	if historical.Agreement == "DISAGREES" {
-		return "FAIL_CLOSED", "EXACT", historical.Reason, "BLOCK"
-	}
-	if historical.Agreement == "UNKNOWN" {
-		return "FAIL_CLOSED", "UNKNOWN", historical.Reason, "BLOCK"
-	}
 	if conformance {
-		return "REFERENCE_AGREEMENT_OBSERVED", "EXACT", "EXTERNAL_AGREEMENT_IS_COMPARATIVE_ONLY", "NO_EFFECT"
+		if historical.Branch == "MISMATCH" || historical.Branch == "ABSENT" {
+			return "FAIL_CLOSED", "LOWER_RESOLUTION", historical.Reason, "BLOCK"
+		}
 	}
-	if currentResolution != "EXACT" {
-		return "REFERENCE_AGREEMENT_OBSERVED", "LOWER_RESOLUTION", "HISTORICAL_AGREEMENT_CURRENT_OBSERVATION_OPEN", "NO_EFFECT"
+	return "REFERENCE_AGREEMENT_OPEN", "LOWER_RESOLUTION", "RAW_BYTES_AND_VERSIONED_EXTRACTION_RECIPE_REQUIRED_FOR_SEMANTIC_AGREEMENT", "NO_EFFECT"
+}
+
+func conformanceResult(conformance bool, branch string) string {
+	if !conformance {
+		return "SUBJECT_SEMANTIC_AGREEMENT_OPEN"
 	}
-	return "REFERENCE_AGREEMENT_OBSERVED", "EXACT", "EXTERNAL_AGREEMENT_IS_COMPARATIVE_ONLY", "NO_EFFECT"
+	switch branch {
+	case "MISMATCH":
+		return "MISMATCH_BRANCH_REPRODUCED"
+	case "ABSENT":
+		return "ABSENCE_BRANCH_REPRODUCED"
+	default:
+		return "CONFORMANCE_BRANCH_UNRESOLVED"
+	}
 }
 
 func makeClaims(source loweredSource, receipt SourceReceipt, cap capsule, policyExact, receiptExact bool, historical historicalState, currentObserved int, currentDigest string) ([]PersistentClaim, []ClaimTransition) {
 	claims := []PersistentClaim{
 		{ID: "source-intent-authority", Status: statusFor(policyExact, "REFUTED", "DISCHARGED"), EvidenceDigest: source.SemanticDigest, Provenance: "GOOO_SOURCE/independent-consumer", Stage: "govern", Step: "source-policy", Reason: reasonFor(policyExact, "SOURCE_POLICY_PREDICATE_SATISFIED", "SOURCE_AUTHORITY_POLICY_CHANGED")},
-		{ID: "reference-comparison-only", Status: historicalStatus(historical.Agreement), EvidenceDigest: DigestCapsule(cap), Provenance: "HISTORICAL_FIXTURE/PRIMARY_SOURCE", Stage: "compare", Step: "capsule-proposition", Reason: historical.Reason},
-		{ID: "receipt-replayability", Status: statusFor(receiptExact, "REFUTED", "DISCHARGED"), EvidenceDigest: Digest(receipt), Provenance: "producer-receipt/independent-consumer", Stage: "replay", Step: "receipt-binding", Reason: reasonFor(receiptExact, "RECEIPT_REPLAY_BOUND", "RECEIPT_REPLAY_MISMATCH")},
+		{ID: "historical-capsule-conformance", Status: statusFor(historical.Complete == 3, "OPEN", "DISCHARGED"), EvidenceDigest: DigestCapsule(cap), Provenance: "HISTORICAL_FIXTURE/metadata", Stage: "compare", Step: "capsule-metadata", Reason: reasonFor(historical.Complete == 3, "HISTORICAL_CAPSULE_METADATA_COMPLETE", "HISTORICAL_CAPSULE_METADATA_INCOMPLETE")},
+		{ID: "reference-comparison-only", Status: "OPEN", EvidenceDigest: DigestCapsule(cap), Provenance: "HISTORICAL_FIXTURE/COMPARATIVE_EVIDENCE", Stage: "extract", Step: "external-proposition/v1", Reason: "RAW_BYTES_AND_VERSIONED_EXTRACTION_RECIPE_REQUIRED_FOR_SEMANTIC_AGREEMENT"},
+		{ID: "semantic-reference-extraction", Status: "OPEN", EvidenceDigest: currentDigest, Provenance: "ACTIONS_RETRIEVAL/HISTORICAL_FIXTURE", Stage: "extract", Step: "external-proposition/v1", Reason: "EXTRACTION_RECIPE_UNAVAILABLE"},
+		{ID: "receipt-replayability", Status: statusFor(receiptExact, "REFUTED", "DISCHARGED"), EvidenceDigest: receipt.SemanticSHA256, Provenance: "producer-receipt/independent-consumer", Stage: "replay", Step: "receipt-binding", Reason: reasonFor(receiptExact, "RECEIPT_REPLAY_BOUND", "RECEIPT_REPLAY_MISMATCH")},
 		{ID: "external-semantic-authority", Status: "REFUTED", EvidenceDigest: DigestCapsule(cap), Provenance: "GOOO_POLICY_GOVERNOR", Stage: "govern", Step: "refuse-external-authority", Reason: "COMPARISON_CANNOT_PROMOTE_SEMANTIC_AUTHORITY"},
+		{ID: "semantic-agreement", Status: "OPEN", EvidenceDigest: DigestCapsule(cap), Provenance: "GOOO_POLICY_GOVERNOR/HISTORICAL_FIXTURE", Stage: "compare", Step: "reference-agreement", Reason: "SEMANTIC_AGREEMENT_OPEN_WITHOUT_RAW_BYTES_AND_RECIPE"},
 	}
 	if currentObserved < 3 {
-		claims = append(claims, PersistentClaim{ID: "current-reference-observation", Status: "OPEN", EvidenceDigest: currentDigest, Provenance: "ACTIONS_RETRIEVAL", Stage: "retrieve", Step: "current-reference", Reason: "CURRENT_REFERENCE_OBSERVATION_INCOMPLETE"})
+		claims = append(claims, PersistentClaim{ID: "current-reference-byte-observation", Status: "OPEN", EvidenceDigest: currentDigest, Provenance: "ACTIONS_RETRIEVAL", Stage: "retrieve", Step: "reference-observation", Reason: "CURRENT_BYTE_OBSERVATION_INCOMPLETE"})
 	} else {
-		claims = append(claims, PersistentClaim{ID: "current-reference-observation", Status: "DISCHARGED", EvidenceDigest: "CURRENT_EVIDENCE", Provenance: "ACTIONS_RETRIEVAL", Stage: "retrieve", Step: "current-reference", Reason: "CURRENT_REFERENCES_OBSERVED"})
+		claims = append(claims, PersistentClaim{ID: "current-reference-byte-observation", Status: "DISCHARGED", EvidenceDigest: currentDigest, Provenance: "ACTIONS_RETRIEVAL", Stage: "retrieve", Step: "reference-observation", Reason: "CURRENT_RAW_BYTES_OBSERVED_AND_DIGESTED"})
 	}
 	transitions := make([]ClaimTransition, 0, len(claims))
 	for _, claim := range claims {
@@ -715,21 +826,23 @@ func makeClaims(source loweredSource, receipt SourceReceipt, cap capsule, policy
 	return claims, transitions
 }
 
-func makeFixedDenominator(policy bool, indep independence, currentObserved, historicalComplete int, causal, preservation, readOnly bool) FixedDenominator {
+func makeFixedDenominator(policy bool, indep independence, currentObserved, historicalComplete, semanticExtracted, semanticAgreed int, causal, preservation, readOnly bool) FixedDenominator {
 	return FixedDenominator{
-		SourcePolicy:                 metricFromBool(policy, 1),
-		ProducerImports:              metricZero(indep.ProducerToConsumer, indep.ConsumerToProducer, indep.Snapshot),
-		CurrentReferenceObservations: metric(currentObserved, 3),
-		HistoricalFixtures:           metric(historicalComplete, 3),
-		SemanticCausality:            metricFromBool(causal, 1),
-		NonsemanticPreservation:      metricFromBool(preservation, 1),
+		SourcePolicy:            metricFromBool(policy, 1),
+		ProducerImports:         metricZero(indep.ProducerToConsumer, indep.ConsumerToProducer, indep.Snapshot),
+		HistoricalFixtures:      metric(historicalComplete, 3),
+		CurrentByteObservations: metric(currentObserved, 3),
+		SemanticExtraction:      metric(semanticExtracted, 3),
+		SemanticAgreement:       metric(semanticAgreed, 3),
+		SemanticCausality:       metricFromBool(causal, 1),
+		NonsemanticPreservation: metricFromBool(preservation, 1),
 	}
 }
 
 func makeIndicators(policy bool, receipt SourceReceipt, indep independence, currentObserved, historicalComplete int, agreement string, claims []PersistentClaim, causal, preservation, readOnly bool) []Indicator {
 	independenceOK := len(receipt.LowerPipeline) == 2 && receipt.LowerPipeline[0] == "syntax.ParseFile" && receipt.LowerPipeline[1] == "bidir.Lower" && indep.Snapshot && indep.ProducerToConsumer == 0 && indep.ConsumerToProducer == 0
 	receiptOK := receipt.Schema == ReceiptSchema && receipt.Producer == "source-receipt-producer" && receipt.Consumer == "external-oracle-humility-consumer"
-	claimOK := len(claims) >= 4 && allTransitionsBound(claims)
+	claimOK := len(claims) >= 8 && allTransitionsBound(claims)
 	statuses := []string{
 		statusBool(policy), statusBool(independenceOK), statusBool(indep.Snapshot && indep.ProducerToConsumer == 0 && indep.ConsumerToProducer == 0), statusBool(receiptOK),
 		statusCount(historicalComplete, 3), statusCount(currentObserved, 3), statusAgreement(agreement), statusBool(claimStatusByID(claims, "external-semantic-authority") == "REFUTED"),
@@ -745,7 +858,7 @@ func makeIndicators(policy bool, receipt SourceReceipt, indep independence, curr
 		{"source-receipt-replay", "DRIVER", "FOUNDATION", "source-receipt-producer", "independent-consumer", "replay-source-receipt", "replay", "receipt-binding", "RECEIPT_BOUND_TO_RELOWERED_SOURCE", 1},
 		{"historical-fixtures", "DRIVER", "COHERENCE", "reference-capsule", "independent-consumer", "validate-historical-capsule", "compare", "capsule-metadata", "THREE_HISTORICAL_FIXTURES", 3},
 		{"current-reference-observations", "OUTCOME", "COHERENCE", "actions-retrieval", "independent-consumer", "derive-current-status", "retrieve", "current-reference", "CURRENT_EVIDENCE_ONLY_AFTER_RETRIEVAL", 3},
-		{"reference-agreement-derived", "OUTCOME", "COHERENCE", "historical-capsule", "independent-consumer", "compare-proposition-to-policy", "compare", "agreement", "AGREEMENT_DERIVED_NOT_READ_FROM_BOOL", 1},
+		{"reference-agreement-open", "OUTCOME", "COHERENCE", "historical-capsule", "independent-consumer", "withhold-semantic-agreement", "compare", "reference-agreement", "SEMANTIC_AGREEMENT_REMAINS_OPEN_WITHOUT_RAW_BYTES_AND_RECIPE", 1},
 		{"external-authority-refused", "GUARDRAIL", "REGRESSION", "gooo-policy", "semantic-authority-governor", "refuse-external-authority", "govern", "authority-boundary", "EXTERNAL_REFERENCE_IS_NOT_AUTHORITY", 1},
 		{"claim-lifecycle-persisted", "OUTCOME", "COHERENCE", "evidence-ledger", "independent-consumer", "persist-claim-status", "persist", "claim-ledger", "STATUS_DIGEST_PROVENANCE_STAGE_STEP_REASON", 1},
 		{"semantic-causality", "OUTCOME", "REGRESSION", "semantic-intervention", "independent-consumer", "compare-policy-intervention", "intervene", "semantic-policy", "POLICY_VALUE_CHANGES_DECISION", 1},
@@ -779,15 +892,6 @@ func claimStatusByID(claims []PersistentClaim, id string) string {
 	}
 	return ""
 }
-func historicalStatus(agreement string) string {
-	if agreement == "AGREES" {
-		return "DISCHARGED"
-	}
-	if agreement == "DISAGREES" {
-		return "REFUTED"
-	}
-	return "OPEN"
-}
 func statusFor(ok bool, fail, success string) string {
 	if ok {
 		return success
@@ -815,14 +919,10 @@ func statusCount(value, target int) string {
 	}
 	return "UNSATISFIED"
 }
-func statusAgreement(value string) string {
-	if value == "AGREES" {
-		return "SATISFIED"
-	}
-	if value == "UNKNOWN" {
-		return "OPEN"
-	}
-	return "REFUTED"
+func statusAgreement(_ string) string {
+	// No capsule or byte observation can close semantic agreement without an
+	// independent extraction and verification recipe.
+	return "OPEN"
 }
 func indicatorValue(status string, target int) int {
 	if status == "SATISFIED" {
@@ -832,14 +932,6 @@ func indicatorValue(status string, target int) int {
 }
 func samePolicy(a SourcePolicy, b PolicyPredicate) bool {
 	return a.SourceAuthority == b.SourceAuthority && a.ExternalEvidenceRelation == b.ExternalEvidenceRelation && a.ExternalEvidenceAuthority == b.ExternalEvidenceAuthority && reflect.DeepEqual(a.Claims, b.Claims)
-}
-func policyHasClaim(policy SourcePolicy, id string) bool {
-	for _, claim := range policy.Claims {
-		if claim.ID == id {
-			return true
-		}
-	}
-	return false
 }
 func receiptExact(receipt SourceReceipt, subject, sourcePath string, source loweredSource) bool {
 	return receipt.Schema == ReceiptSchema && receipt.SubjectSHA == subject && receipt.SourcePath == sourcePath && receipt.SourceSHA256 == source.SourceDigest && receipt.SemanticSHA256 == source.SemanticDigest && reflect.DeepEqual(receipt.Declarations, source.Declarations) && samePolicy(receipt.SourcePolicy, PolicyPredicate{SourceAuthority: source.Policy.SourceAuthority, ExternalEvidenceRelation: source.Policy.ExternalEvidenceRelation, ExternalEvidenceAuthority: source.Policy.ExternalEvidenceAuthority, Claims: source.Policy.Claims})

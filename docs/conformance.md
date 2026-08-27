@@ -55,12 +55,17 @@ points and evidence.
 
 The [external oracle humility example](../examples/external-oracle-humility/README.md)
 is verified by the `External oracle humility` Actions workflow. It keeps the
-12-indicator denominator and 3-case agreement/mismatch/absence suite fixed,
-re-lowers the source in both producer and consumer packages, derives capsule
-agreement from structured propositions, and performs Actions-only current URL
-retrieval. The report exposes `source_policy=1/1`, `producer_imports=0/0`,
-`current_reference_observations=x/3`, `historical_fixtures=3/3`,
-`semantic_causality=1/1`, and `nonsemantic_preservation=1/1`. External
-agreement is reported as `REFERENCE_AGREEMENT_OBSERVED`, never as `PASS` or
-semantic authority; missing or changed current content is `OPEN` with lower
-resolution, and repository writes/promotions are read from an effects snapshot.
+12-indicator denominator and three conformance branches fixed, re-lowers the
+source in both producer and consumer packages, and performs Actions-only
+current URL retrieval. The report exposes `source_policy=1/1`,
+`producer_imports=0/0`, `historical_fixtures=3/3`,
+`current_byte_observations=x/3`, `semantic_extraction=0/3`,
+`semantic_agreement=0/3`, `semantic_causality=1/1`, and
+`nonsemantic_preservation=1/1`. A historical capsule proves metadata
+conformance only: every reference remains `HISTORICAL_FIXTURE / UNVERIFIED /
+LOWER_RESOLUTION`, and the semantic agreement claim remains `OPEN` without raw
+bytes plus a versioned extraction recipe and recipe digest. A successful
+Actions retrieval can discharge only the current byte observation; retrieval
+failure, digest mismatch, or recipe unavailability remains `OPEN` at the
+appropriate `retrieve` or `extract` stage. Repository writes/promotions are
+read from an effects snapshot.

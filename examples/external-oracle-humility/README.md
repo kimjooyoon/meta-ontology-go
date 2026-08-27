@@ -13,12 +13,20 @@ the consumer independently run `syntax.ParseFile -> bidir.Lower`; the consumer
 has its own wire model and does not import the producer package.
 
 `references.json` is a checked-in `HISTORICAL_FIXTURE` capsule. Each entry has a
-URL, revision, locator, content digest, capture time, and a structured
-proposition. It has no `available` or `agreement` authority inputs. The judge
-derives agreement by comparing those propositions with the policy predicate.
-Actions separately retrieves all three URLs and emits `CURRENT_EVIDENCE` only
-for a 200 response whose digest matches the capsule. Missing or changed content
-stays `OPEN` with `LOWER_RESOLUTION`; current observations never grant semantic
+URL, revision, locator, content digest, capture time, evidence class, and a
+structured proposition. It has no `available` or `agreement` authority inputs.
+The capsule's 3/3 result is only a metadata-conformance claim. Because the raw
+bytes and a versioned extraction recipe with a recipe digest are not attached,
+each reference remains `HISTORICAL_FIXTURE / UNVERIFIED / LOWER_RESOLUTION` and
+the semantic agreement claim remains `OPEN`.
+
+The pinned gomacro raw URL is classified as `IMMUTABLE_RAW`; the Racket and
+Reproducible Builds documentation URLs are `MUTABLE_DOCUMENTATION`. Actions
+separately retrieves all three URLs and emits `CURRENT_EVIDENCE` only for a
+real 200 response whose digest matches the capsule. That closes only the
+current byte observation. Retrieval failure or digest mismatch is
+`OPEN/LOWER_RESOLUTION` at `retrieve`; a missing recipe is
+`OPEN/LOWER_RESOLUTION` at `extract`. Current observations never grant semantic
 authority.
 
 The fixed denominator exposes these values without hiding the denominator:
@@ -27,17 +35,21 @@ The fixed denominator exposes these values without hiding the denominator:
 | --- | ---: |
 | source_policy | 1/1 |
 | producer_imports | 0/0 |
-| current_reference_observations | x/3, derived by Actions |
 | historical_fixtures | 3/3 |
+| current_byte_observations | x/3, derived by Actions |
+| semantic_extraction | 0/3 (no raw bytes + recipe receipt) |
+| semantic_agreement | 0/3 |
 | semantic_causality | 1/1 |
 | nonsemantic_preservation | 1/1 |
 
 The 12-indicator report also binds receipt replay, claim lifecycle evidence,
-authority refusal, and the read-only effects snapshot. The positive decision is
-`REFERENCE_AGREEMENT_OBSERVED`, never `PASS`, and always has
-`authority_grant=NONE` and `enforcement_effect=NO_EFFECT`. The three conformance
-cases are checked-in inputs: agreement, a proposition mismatch, and a missing
-reference. Subject resolution and conformance are reported separately.
+authority refusal, and the read-only effects snapshot. The subject decision is
+`REFERENCE_AGREEMENT_OPEN`, never `PASS`, and always has
+`authority_grant=NONE`, `enforcement_effect=NO_EFFECT`, and
+`resolution=LOWER_RESOLUTION`. The three conformance cases are checked-in
+inputs: an unverified capsule, a proposition/provenance mismatch branch, and a
+missing reference branch. Their branch outcomes do not discharge or refute a
+subject external claim.
 
 ## Adopted and rejected rules
 
@@ -49,7 +61,10 @@ reference. Subject resolution and conformance are reported separately.
 
 The experiment is falsifiable. A changed source policy value must change the
 receipt, decision, and claim transition. A comment-only source change must keep
-the semantic digest and decision. A changed or absent capsule proposition must
-become `DISAGREES` or `UNKNOWN`; a changed or unavailable Actions retrieval must
-become `OPEN/LOWER_RESOLUTION`. Any official write or promotion fails the
-read-only guard.
+the semantic digest, decision, and claim transitions. A historical proposition
+or provenance change must reproduce a conformance mismatch branch without
+turning the subject comparison claim into `REFUTED`; an absent reference must
+reproduce the absence branch with `LOWER_RESOLUTION`. A changed or unavailable
+Actions retrieval must become `OPEN/LOWER_RESOLUTION`, while a successful
+retrieval without an extraction recipe must remain semantically `OPEN`. Any
+official write or promotion fails the read-only guard.
