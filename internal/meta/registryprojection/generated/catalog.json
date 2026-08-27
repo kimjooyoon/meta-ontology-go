@@ -1,6 +1,6 @@
 {
-  "schema": "gooo/conflict-free-registry-catalog/v1",
-  "section_digest": "sha256:6f15eccf4f4225f35bbad079c17f21802cdeb83f0bb9980d62073b370ffe8518",
+  "schema": "gooo/manual-source-registration-edit-free-registry-catalog/v1",
+  "section_digest": "sha256:52c5d56c3bebb664f9ae8adbdc5deac23e0f33231eef65fc2906b7f3dd95c85d",
   "entries": [
     {
       "stable_id": "language-semantic-model",
@@ -21,7 +21,7 @@
       ],
       "metric_bindings": [
         "gooo.metric.language.semantic-model-readiness-bps.v1",
-        "gooo.metric.language.semantic-model-registry-drift.guardrail.v1",
+        "gooo.metric.language.semantic-model-source-models.v1",
         "gooo.metric.language.semantic-model-source-replays.v1"
       ],
       "use_cases": [
@@ -57,7 +57,7 @@
       "metric_bindings": [
         "gooo.metric.language.syntax-roundtrip-executed-cases.v1",
         "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
-        "gooo.metric.language.syntax-roundtrip-registry-drift.guardrail.v1"
+        "gooo.metric.language.syntax-roundtrip-valid-corpus-files.v1"
       ],
       "use_cases": [
         {
@@ -87,9 +87,9 @@
         "internal/meta/languagereadiness/toolchainconformance"
       ],
       "metric_bindings": [
-        "gooo.metric.language.toolchain-conformance-mutation-rejections.v1",
-        "gooo.metric.language.toolchain-conformance-readiness-bps.v1",
-        "gooo.metric.language.toolchain-conformance-registry-drift.guardrail.v1"
+        "gooo.metric.toolchain.conformance-case-readiness-bps.v1",
+        "gooo.metric.toolchain.conformance-proof-readiness-bps.v1",
+        "gooo.metric.toolchain.conformance-readiness-bps.v1"
       ],
       "use_cases": [
         {

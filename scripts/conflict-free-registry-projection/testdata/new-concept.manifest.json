@@ -10,7 +10,7 @@
     "novelty_claim": false
   },
   "code_bindings": ["scripts/conflict-free-registry-projection"],
-  "metric_bindings": ["gooo.metric.language.registry-projection-fixture.v1"],
+  "metric_bindings": ["gooo.metric.meta.unbound-indicators.v1"],
   "use_cases": [
     {
       "id": "add-local-concept",

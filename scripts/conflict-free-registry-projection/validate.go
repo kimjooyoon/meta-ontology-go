@@ -1,0 +1,289 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
+)
+
+type denominatorSource struct {
+	Cases []struct {
+		Kind string `json:"kind"`
+	} `json:"cases"`
+	Surfaces []struct {
+		Cases      int `json:"cases"`
+		Indicators int `json:"indicators"`
+		Proofs     int `json:"proofs"`
+	} `json:"surfaces"`
+	TamperCases []json.RawMessage `json:"tamper_cases"`
+}
+
+func validateManifestInputs(root string, loaded []LoadedManifest, requiredIDs []string) *Diagnostic {
+	if diagnostic := validateManifests(loaded, requiredIDs); diagnostic != nil {
+		return diagnostic
+	}
+	for _, item := range loaded {
+		if item.SourcePath != expectedManifestPath(item.Manifest.StableID) {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "MANIFEST_OWNERSHIP", Reason: "CROSS_DIRECTORY_MANIFEST"}
+		}
+		for _, binding := range item.Manifest.CodeBindings {
+			if !pathExists(root, binding) {
+				return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "CODE_BINDING", Reason: "MISSING_CODE_BINDING"}
+			}
+		}
+		for _, binding := range item.Manifest.MetricBindings {
+			if !metricIDExists(root, binding) {
+				return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "METRIC_BINDING", Reason: "UNKNOWN_METRIC_BINDING"}
+			}
+		}
+		for _, ref := range allRefs(item.Manifest) {
+			data, err := readSource(root, ref.Path)
+			if err != nil {
+				return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "RESOURCE_AVAILABILITY", Reason: "MISSING_RESOURCE"}
+			}
+			if digestBytes(data) != ref.Digest {
+				return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "RESOURCE_DIGEST", Reason: "RESOURCE_DIGEST_MISMATCH"}
+			}
+		}
+	}
+	_, diagnostic := reconcileDenominators(root, loaded)
+	return diagnostic
+}
+
+func expectedManifestPath(stableID string) string {
+	return filepath.ToSlash(filepath.Join("examples", stableID, "concept.manifest.json"))
+}
+
+func allRefs(manifest Manifest) []ResourceRef {
+	refs := make([]ResourceRef, 0, len(manifest.Corpus)+len(manifest.Registry)+len(manifest.Documentation))
+	refs = append(refs, manifest.Corpus...)
+	refs = append(refs, manifest.Registry...)
+	refs = append(refs, manifest.Documentation...)
+	return refs
+}
+
+func pathExists(root, path string) bool {
+	if path == "" || filepath.IsAbs(path) || strings.HasPrefix(filepath.ToSlash(filepath.Clean(path)), "../") {
+		return false
+	}
+	_, err := os.Stat(filepath.Join(root, filepath.FromSlash(path)))
+	return err == nil
+}
+
+func metricIDExists(root, metricID string) bool {
+	found := false
+	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil || found {
+			return walkErr
+		}
+		if entry.IsDir() {
+			if entry.Name() == ".git" || entry.Name() == ".parallel" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if entry.Name() == "concept.manifest.json" || entry.Name() == "generated" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err == nil && strings.Contains(string(data), metricID) {
+			found = true
+		}
+		return nil
+	})
+	return found
+}
+
+func reconcileDenominators(root string, loaded []LoadedManifest) ([]DenominatorReconciliation, *Diagnostic) {
+	receipts := make([]DenominatorReconciliation, 0)
+	for _, item := range sortedLoaded(loaded) {
+		for _, denominator := range sortedDenominators(item.Manifest.Denominators) {
+			calculated, err := calculateDenominator(root, item, denominator)
+			if err != nil {
+				return receipts, &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "DENOMINATOR_SOURCE", Reason: "DENOMINATOR_SOURCE_UNAVAILABLE"}
+			}
+			declared := copyInts(denominator.Values)
+			receipt := DenominatorReconciliation{StableID: item.Manifest.StableID, DenominatorID: denominator.ID, Declared: declared, Calculated: copyInts(calculated), Decision: "PASS", Reason: "DENOMINATOR_SOURCE_RECONCILED"}
+			if !sameInts(declared, calculated) {
+				receipt.Decision = "FAIL_CLOSED"
+				receipt.Reason = "DENOMINATOR_SOURCE_MISMATCH"
+				receipts = append(receipts, receipt)
+				return receipts, &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "DENOMINATOR_RECONCILIATION", Reason: "DENOMINATOR_SOURCE_MISMATCH"}
+			}
+			receipts = append(receipts, receipt)
+		}
+	}
+	return receipts, nil
+}
+
+func calculateDenominator(root string, item LoadedManifest, denominator Denominator) (map[string]int, error) {
+	values := copyInts(denominator.Values)
+	if len(item.Manifest.Corpus) == 0 {
+		return values, nil
+	}
+	corpusRaw, err := readSource(root, item.Manifest.Corpus[0].Path)
+	if err != nil {
+		return nil, err
+	}
+	source := denominatorSource{}
+	if err := json.Unmarshal(corpusRaw, &source); err != nil {
+		return nil, err
+	}
+	calculated := make(map[string]int)
+	switch item.Manifest.StableID {
+	case "language-syntax-roundtrip":
+		calculated["cases"] = len(source.Cases)
+		for _, item := range source.Cases {
+			switch item.Kind {
+			case "VALID":
+				calculated["valid_sources"]++
+			case "INVALID":
+				calculated["invalid_cases"]++
+			}
+		}
+		calculated["gooo_lines"] = countGoooLines(root)
+		if len(item.Manifest.Registry) > 0 {
+			registry, err := readSource(root, item.Manifest.Registry[0].Path)
+			if err != nil {
+				return nil, err
+			}
+			valid := strings.Count(string(registry), `valid("`) - strings.Count(string(registry), `invalid("`)
+			invalid := strings.Count(string(registry), `invalid("`)
+			calculated["registry_cases"] = valid + invalid
+			calculated["registry_valid_sources"] = valid
+			calculated["registry_invalid_cases"] = invalid
+		}
+	case "language-semantic-model":
+		if denominator.ID == "gooo/language-semantic-binding/v1" {
+			raw, err := os.ReadFile(filepath.Join(root, "examples/language-syntax-roundtrip/corpus.json"))
+			if err != nil {
+				return nil, err
+			}
+			syntax := denominatorSource{}
+			if err := json.Unmarshal(raw, &syntax); err != nil {
+				return nil, err
+			}
+			calculated := map[string]int{"syntax_cases": len(syntax.Cases), "syntax_sources": 0, "syntax_lines": countGoooLines(root)}
+			for _, item := range syntax.Cases {
+				if item.Kind == "VALID" {
+					calculated["syntax_sources"]++
+				}
+			}
+			return calculated, nil
+		}
+		calculated["cases"] = len(source.Cases)
+		for _, item := range source.Cases {
+			switch item.Kind {
+			case "SOURCE":
+				calculated["source_units"]++
+			case "LAW":
+				calculated["authority_laws"]++
+			case "UPSTREAM_REJECTION":
+				calculated["upstream_rejections"]++
+			}
+		}
+		if len(item.Manifest.Registry) > 0 {
+			registry, err := readSource(root, item.Manifest.Registry[0].Path)
+			if err != nil {
+				return nil, err
+			}
+			for _, key := range []string{"expectedSources", "expectedLaws", "expectedRejections"} {
+				value, ok := constValue(string(registry), key)
+				if ok {
+					calculated["registry_"+strings.TrimPrefix(strings.ToLower(key), "expected")] = value
+				}
+			}
+		}
+	case "toolchain-conformance":
+		calculated["surfaces"] = len(source.Surfaces)
+		for _, surface := range source.Surfaces {
+			calculated["cases"] += surface.Cases
+			calculated["indicators"] += surface.Indicators
+			calculated["proofs"] += surface.Proofs
+		}
+		calculated["tamper_cases"] = len(source.TamperCases)
+		calculated["use_case_cases"] = useCaseCaseCount(item.Manifest.UseCases)
+	default:
+		return values, nil
+	}
+	return calculated, nil
+}
+
+func constValue(source, name string) (int, bool) {
+	match := regexp.MustCompile(`(?m)` + regexp.QuoteMeta(name) + `\s*=\s*(\d+)`).FindStringSubmatch(source)
+	if len(match) != 2 {
+		return 0, false
+	}
+	value, err := strconv.Atoi(match[1])
+	return value, err == nil
+}
+
+func useCaseCaseCount(useCases []UseCase) int {
+	pattern := regexp.MustCompile(`_(\d+)_OF_\d+_CASES`)
+	for _, useCase := range useCases {
+		match := pattern.FindStringSubmatch(useCase.ExpectedOutcome)
+		if len(match) == 2 {
+			value, err := strconv.Atoi(match[1])
+			if err == nil {
+				return value
+			}
+		}
+	}
+	return 0
+}
+
+func countGoooLines(root string) int {
+	lines := 0
+	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() {
+			if entry.Name() == ".git" || entry.Name() == ".parallel" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if filepath.Ext(entry.Name()) != ".gooo" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err == nil {
+			lines += strings.Count(string(data), "\n")
+			if len(data) > 0 && data[len(data)-1] != '\n' {
+				lines++
+			}
+		}
+		return nil
+	})
+	return lines
+}
+
+func copyInts(values map[string]int) map[string]int {
+	copyOf := make(map[string]int, len(values))
+	for key, value := range values {
+		copyOf[key] = value
+	}
+	return copyOf
+}
+
+func sameInts(left, right map[string]int) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for key, value := range left {
+		if right[key] != value {
+			return false
+		}
+	}
+	return true
+}
+
+func formatDenominatorMismatch(item DenominatorReconciliation) string {
+	return fmt.Sprintf("%s declared=%v calculated=%v", item.StableID, item.Declared, item.Calculated)
+}

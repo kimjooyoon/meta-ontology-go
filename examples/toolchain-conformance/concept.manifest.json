@@ -15,9 +15,9 @@
     "examples/toolchain-conformance"
   ],
   "metric_bindings": [
-    "gooo.metric.language.toolchain-conformance-readiness-bps.v1",
-    "gooo.metric.language.toolchain-conformance-registry-drift.guardrail.v1",
-    "gooo.metric.language.toolchain-conformance-mutation-rejections.v1"
+    "gooo.metric.toolchain.conformance-readiness-bps.v1",
+    "gooo.metric.toolchain.conformance-case-readiness-bps.v1",
+    "gooo.metric.toolchain.conformance-proof-readiness-bps.v1"
   ],
   "use_cases": [
     {
@@ -38,19 +38,19 @@
   ],
   "verification_strategies": ["FOUNDATION", "COHERENCE", "REGRESSION"],
   "corpus": [
-    {"path": "examples/toolchain-conformance/corpus.json", "role": "VERSIONED_CORPUS"}
+    {"path": "examples/toolchain-conformance/corpus.json", "role": "VERSIONED_CORPUS", "digest": "sha256:8eb53731df875a53d2d98c0e4a00335c2c74b7382c4cf29368eb2ed48e998316"}
   ],
   "registry": [
-    {"path": "internal/meta/languagereadiness/toolchainconformance/corpus.go", "role": "HANDWRITTEN_REGISTRY"}
+    {"path": "internal/meta/languagereadiness/toolchainconformance/corpus.go", "role": "HANDWRITTEN_REGISTRY", "digest": "sha256:4c6b402091c5c0bc514ea4d5a1d90606dc0a93d01f5457e37c94f89c7b2231aa"}
   ],
   "denominators": [
     {
       "id": "gooo/toolchain-conformance-corpus/v1",
-      "values": {"surfaces": 9, "cases": 160, "indicators": 151, "proofs": 27, "tamper_cases": 13}
+      "values": {"surfaces": 9, "cases": 181, "use_case_cases": 152, "indicators": 151, "proofs": 27, "tamper_cases": 13}
     }
   ],
   "documentation": [
-    {"path": "docs/language/toolchain-conformance.md", "role": "LANGUAGE_DOCUMENTATION"}
+    {"path": "docs/language/toolchain-conformance.md", "role": "LANGUAGE_DOCUMENTATION", "digest": "sha256:2cc309db2333dc35dae67782890fabb89f22f66d17ee1543d57dfc8fde5a8b8c"}
   ],
   "comments": ["The local manifest owns this concept's semantic registration input."]
 }

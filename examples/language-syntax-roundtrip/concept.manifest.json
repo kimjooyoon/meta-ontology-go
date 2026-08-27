@@ -20,7 +20,7 @@
   "metric_bindings": [
     "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
     "gooo.metric.language.syntax-roundtrip-executed-cases.v1",
-    "gooo.metric.language.syntax-roundtrip-registry-drift.guardrail.v1"
+    "gooo.metric.language.syntax-roundtrip-valid-corpus-files.v1"
   ],
   "use_cases": [
     {
@@ -31,20 +31,20 @@
   ],
   "verification_strategies": ["FOUNDATION", "COHERENCE", "REGRESSION"],
   "corpus": [
-    {"path": "examples/language-syntax-roundtrip/corpus.json", "role": "VERSIONED_CORPUS"}
+    {"path": "examples/language-syntax-roundtrip/corpus.json", "role": "VERSIONED_CORPUS", "digest": "sha256:b5f4d3c2b25a1b020097db8ceca2830e648ca0ee8f022c1482467339fe033b08"}
   ],
   "registry": [
-    {"path": "internal/meta/languagereadiness/languagesyntax/registry.go", "role": "HANDWRITTEN_REGISTRY"}
+    {"path": "internal/meta/languagereadiness/languagesyntax/registry.go", "role": "HANDWRITTEN_REGISTRY", "digest": "sha256:6150c3ad30ac750c462d10756d72e2aef9a9325f99a93fb3edfaeecdf1eaae66"}
   ],
   "denominators": [
     {
       "id": "gooo/language-syntax-roundtrip/v2",
-      "values": {"cases": 30, "valid_sources": 27, "invalid_cases": 3, "gooo_lines": 428}
+      "values": {"cases": 30, "valid_sources": 27, "invalid_cases": 3, "gooo_lines": 428, "registry_cases": 30, "registry_valid_sources": 27, "registry_invalid_cases": 3}
     }
   ],
   "documentation": [
-    {"path": "examples/language-syntax-roundtrip/README.md", "role": "LOCAL_README"},
-    {"path": "docs/language/language-syntax-roundtrip.md", "role": "LANGUAGE_DOCUMENTATION"}
+    {"path": "examples/language-syntax-roundtrip/README.md", "role": "LOCAL_README", "digest": "sha256:b8ec3009cb82233ca1903eda1bb70ad7adea4a127ab76b349561e13f53e50dc5"},
+    {"path": "docs/language/language-syntax-roundtrip.md", "role": "LANGUAGE_DOCUMENTATION", "digest": "sha256:6e227f4b6447542d7540adbf7c6f0ae636da87b4dd6e1f2ca6e5be583fe7ba8b"}
   ],
   "comments": ["The local manifest owns this concept's semantic registration input."]
 }

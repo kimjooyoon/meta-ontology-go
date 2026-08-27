@@ -65,7 +65,7 @@ func runCheck(root, outputDir string) {
 	if diagnostic != nil {
 		fail(diagnostic)
 	}
-	if diagnostic := validateManifests(loaded, expectedIDs); diagnostic != nil {
+	if diagnostic := validateManifestInputs(root, loaded, expectedIDs); diagnostic != nil {
 		fail(diagnostic)
 	}
 	expected, _, err := renderOutputs(root, outputDir, loaded)

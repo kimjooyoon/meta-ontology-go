@@ -2,9 +2,9 @@ package main
 
 const (
 	manifestSchema   = "gooo/language-concept-manifest/v1"
-	projectionSchema = "gooo/conflict-free-registry-projection/v1"
-	digestSchema     = "gooo/conflict-free-registry-projection-digest/v1"
-	evidenceSchema   = "gooo/conflict-free-registry-projection-evidence/v1"
+	projectionSchema = "gooo/manual-source-registration-edit-free-registry-projection/v1"
+	digestSchema     = "gooo/manual-source-registration-edit-free-registry-projection-digest/v1"
+	evidenceSchema   = "gooo/manual-source-registration-edit-free-registry-projection-evidence/v1"
 	defaultOutput    = "internal/meta/registryprojection/generated"
 )
 
@@ -24,8 +24,9 @@ type Concept struct {
 }
 
 type ResourceRef struct {
-	Path string `json:"path"`
-	Role string `json:"role"`
+	Path   string `json:"path"`
+	Role   string `json:"role"`
+	Digest string `json:"digest"`
 }
 
 type Denominator struct {
@@ -112,10 +113,11 @@ type MetricDelta struct {
 }
 
 type IntegrationMetrics struct {
-	SharedRegistrationTouchpoints RatioMetric `json:"shared_registration_touchpoints"`
-	ConceptLocalTouchpoints       RatioMetric `json:"concept_local_touchpoints"`
-	ManualGlobalEditsRequired     RatioMetric `json:"manual_global_edits_required"`
-	ProjectionConflictSurfaceBPS  RatioMetric `json:"projection_conflict_surface_bps"`
+	ExistingSharedSourceTouchpoints RatioMetric `json:"existing_shared_source_touchpoints"`
+	GeneratorChangedSharedOutputs   RatioMetric `json:"generator_changed_shared_outputs"`
+	ProductionConsumerAdoption      RatioMetric `json:"production_consumer_adoption"`
+	ConceptLocalTouchpoints         RatioMetric `json:"concept_local_touchpoints"`
+	ManualSourceRegistrationEdits   RatioMetric `json:"manual_source_registration_edits_required"`
 }
 
 type DigestFile struct {
@@ -148,6 +150,34 @@ type ScenarioResult struct {
 	Detail     string      `json:"detail"`
 }
 
+type DenominatorReconciliation struct {
+	StableID      string         `json:"stable_id"`
+	DenominatorID string         `json:"denominator_id"`
+	Declared      map[string]int `json:"declared"`
+	Calculated    map[string]int `json:"calculated"`
+	Decision      string         `json:"decision"`
+	Reason        string         `json:"reason"`
+}
+
+type PredicateObservation struct {
+	ID                string `json:"id"`
+	ObservedPredicate string `json:"observed_predicate"`
+	TargetAddress     string `json:"target_address"`
+	TargetDigest      string `json:"target_digest"`
+	Observed          bool   `json:"observed"`
+	Decision          string `json:"decision"`
+	Stage             string `json:"stage"`
+	Step              string `json:"step"`
+	Reason            string `json:"reason"`
+}
+
+type SourceDigestComparison struct {
+	Path   string `json:"path"`
+	Before string `json:"before"`
+	After  string `json:"after"`
+	Equal  bool   `json:"equal"`
+}
+
 type StrategyResult struct {
 	Name      string   `json:"name"`
 	Selected  bool     `json:"selected"`
@@ -157,46 +187,61 @@ type StrategyResult struct {
 }
 
 type ClaimTransition struct {
-	State        string `json:"state"`
-	TargetDigest string `json:"target_digest"`
-	Stage        string `json:"stage"`
-	Step         string `json:"step"`
-	Reason       string `json:"reason"`
+	State             string `json:"state"`
+	ObservedPredicate string `json:"observed_predicate"`
+	PredicateDigest   string `json:"predicate_digest"`
+	TargetAddress     string `json:"target_address"`
+	TargetDigest      string `json:"target_digest"`
+	Stage             string `json:"stage"`
+	Step              string `json:"step"`
+	Reason            string `json:"reason"`
 }
 
 type Claim struct {
-	ID           string            `json:"id"`
-	Proposition  string            `json:"proposition"`
-	TargetDigest string            `json:"target_digest"`
-	Transitions  []ClaimTransition `json:"transitions"`
+	ID                string            `json:"id"`
+	Proposition       string            `json:"proposition"`
+	ObservedPredicate string            `json:"observed_predicate"`
+	TargetAddress     string            `json:"target_address"`
+	TargetDigest      string            `json:"target_digest"`
+	Transitions       []ClaimTransition `json:"transitions"`
 }
 
 type RepositoryObservation struct {
 	BeforePaths       []string `json:"before_paths"`
 	AfterPaths        []string `json:"after_paths"`
 	NetStateEqual     bool     `json:"net_state_equal"`
-	MutationObserved  bool     `json:"mutation_observed"`
-	ObservedAuthority string   `json:"observed_authority"`
+	NetState          string   `json:"net_state"`
+	TransientMutation string   `json:"transient_mutation"`
+	MutationAuthority string   `json:"mutation_authority"`
 }
 
 type Evidence struct {
-	Schema                 string                 `json:"schema"`
-	Decision               string                 `json:"decision"`
-	Reason                 string                 `json:"reason"`
-	BoundedSlice           []string               `json:"bounded_slice"`
-	BaselineTouchpoints    int                    `json:"baseline_touchpoints"`
-	BaselineObservation    []baselineObservation  `json:"baseline_observation"`
-	Metrics                IntegrationMetrics     `json:"integration_metrics"`
-	MetricDeltas           map[string]MetricDelta `json:"metric_deltas"`
-	ProjectionReplay       ScenarioResult         `json:"projection_replay"`
-	ManifestOrderInvariant ScenarioResult         `json:"manifest_order_invariant"`
-	SemanticCausality      ScenarioResult         `json:"semantic_manifest_causality"`
-	CommentInvariant       ScenarioResult         `json:"comment_only_invariant"`
-	NewConceptFixture      ScenarioResult         `json:"new_concept_fixture"`
-	FailureContracts       []ScenarioResult       `json:"failure_contracts"`
-	Strategies             []StrategyResult       `json:"strategies"`
-	Claims                 []Claim                `json:"claims"`
-	RepositoryNetState     RepositoryObservation  `json:"repository_net_state"`
-	GeneratedOutputs       []OutputMetadata       `json:"generated_outputs"`
-	MutationAuthority      string                 `json:"mutation_authority"`
+	Schema                     string                      `json:"schema"`
+	Decision                   string                      `json:"decision"`
+	Reason                     string                      `json:"reason"`
+	BoundedSlice               []string                    `json:"bounded_slice"`
+	BaselineTouchpoints        int                         `json:"baseline_touchpoints"`
+	BaselineObservation        []baselineObservation       `json:"baseline_observation"`
+	Metrics                    IntegrationMetrics          `json:"integration_metrics"`
+	MetricDeltas               map[string]MetricDelta      `json:"metric_deltas"`
+	ProjectionReplay           ScenarioResult              `json:"projection_replay"`
+	ManifestOrderInvariant     ScenarioResult              `json:"manifest_order_invariant"`
+	SemanticCausality          ScenarioResult              `json:"semantic_manifest_causality"`
+	CommentInvariant           ScenarioResult              `json:"comment_only_invariant"`
+	NewConceptFixture          ScenarioResult              `json:"new_concept_fixture"`
+	FailureContracts           []ScenarioResult            `json:"failure_contracts"`
+	DenominatorReconciliations []DenominatorReconciliation `json:"denominator_reconciliations"`
+	DenominatorMismatch        ScenarioResult              `json:"denominator_mismatch_contract"`
+	StaleDenominatorReceipt    *DenominatorReconciliation  `json:"stale_denominator_receipt"`
+	PredicateObservations      []PredicateObservation      `json:"predicate_observations"`
+	SourceDigestPreservation   []SourceDigestComparison    `json:"source_digest_preservation"`
+	GeneratedOutputChanges     []string                    `json:"generated_output_changes"`
+	GeneratedOutputChangeCount int                         `json:"generated_output_change_count"`
+	GeneratedOutputDenominator int                         `json:"generated_output_denominator"`
+	ProductionAdoption         RatioMetric                 `json:"production_adoption"`
+	Strategies                 []StrategyResult            `json:"strategies"`
+	Claims                     []Claim                     `json:"claims"`
+	RepositoryNetState         RepositoryObservation       `json:"repository_net_state"`
+	GeneratedOutputs           []OutputMetadata            `json:"generated_outputs"`
+	FixtureGeneratedOutputs    []OutputMetadata            `json:"fixture_generated_outputs"`
 }

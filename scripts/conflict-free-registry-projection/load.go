@@ -64,7 +64,7 @@ func loadManifests(root string) ([]LoadedManifest, error) {
 		}
 		loaded = append(loaded, item)
 	}
-	if diagnostic := validateManifests(loaded, nil); diagnostic != nil {
+	if diagnostic := validateManifestInputs(root, loaded, nil); diagnostic != nil {
 		return nil, diagnosticError(diagnostic)
 	}
 	return sortedLoaded(loaded), nil
@@ -76,7 +76,7 @@ func expectedManifestIDs(outputDir string) ([]string, *Diagnostic) {
 		return nil, &Diagnostic{Decision: "FAIL_CLOSED", Stage: "REGRESSION", Step: "GENERATED_OUTPUT", Reason: "MISSING_GENERATED_PROJECTION"}
 	}
 	file := manifestDigestFile{}
-	if err := json.Unmarshal(raw, &file); err != nil || file.Schema != "gooo/conflict-free-registry-manifests/v1" || len(file.Manifests) == 0 {
+	if err := json.Unmarshal(raw, &file); err != nil || file.Schema != "gooo/manual-source-registration-edit-free-registry-manifests/v1" || len(file.Manifests) == 0 {
 		return nil, &Diagnostic{Decision: "FAIL_CLOSED", Stage: "REGRESSION", Step: "GENERATED_OUTPUT", Reason: "MALFORMED_GENERATED_MANIFEST_INDEX"}
 	}
 	ids := make([]string, 0, len(file.Manifests))
@@ -91,6 +91,10 @@ func loadManifest(root, path string) (LoadedManifest, error) {
 	if err != nil {
 		return LoadedManifest{}, fmt.Errorf("read local manifest %s: %w", relativePath(root, path), err)
 	}
+	return decodeManifest(relativePath(root, path), raw)
+}
+
+func decodeManifest(sourcePath string, raw []byte) (LoadedManifest, error) {
 	manifest := Manifest{}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
@@ -100,7 +104,7 @@ func loadManifest(root, path string) (LoadedManifest, error) {
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		return LoadedManifest{}, diagnosticError(&Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "DECODE_MANIFEST", Reason: "TRAILING_MANIFEST_CONTENT"})
 	}
-	return LoadedManifest{Manifest: manifest, SourcePath: relativePath(root, path), RawDigest: digestBytes(raw)}, nil
+	return LoadedManifest{Manifest: manifest, SourcePath: sourcePath, RawDigest: digestBytes(raw)}, nil
 }
 
 func diagnosticError(diagnostic *Diagnostic) error {
@@ -135,6 +139,18 @@ func validateManifests(loaded []LoadedManifest, requiredIDs []string) *Diagnosti
 		if diagnostic := validateRefs(manifest); diagnostic != nil {
 			return diagnostic
 		}
+		if len(manifest.CodeBindings) == 0 {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "CODE_BINDINGS", Reason: "MISSING_CODE_BINDING"}
+		}
+		if len(manifest.MetricBindings) == 0 {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "METRIC_BINDINGS", Reason: "MISSING_METRIC_BINDING"}
+		}
+		if len(manifest.UseCases) == 0 {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "USE_CASE_BINDINGS", Reason: "MISSING_USE_CASE_BINDING"}
+		}
+		if len(manifest.Denominators) == 0 {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "DENOMINATOR_BINDINGS", Reason: "MISSING_DENOMINATOR_BINDING"}
+		}
 	}
 	if len(requiredIDs) == 0 {
 		return nil
@@ -158,6 +174,9 @@ func validateRefs(manifest Manifest) *Diagnostic {
 		}
 		if ref.Role == "" {
 			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "RESOURCE_ROLE", Reason: "MISSING_RESOURCE_ROLE"}
+		}
+		if ref.Digest == "" {
+			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "RESOURCE_DIGEST", Reason: "MISSING_RESOURCE_DIGEST"}
 		}
 	}
 	for _, denominator := range manifest.Denominators {
@@ -227,6 +246,9 @@ func resourceSnapshots(root string, stableID string, refs []ResourceRef) ([]Reso
 		data, err := readSource(root, ref.Path)
 		if err != nil {
 			return nil, fmt.Errorf("%s resource %s: %w", stableID, ref.Path, err)
+		}
+		if ref.Digest != "" && digestBytes(data) != ref.Digest {
+			return nil, diagnosticError(&Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "RESOURCE_DIGEST", Reason: "RESOURCE_DIGEST_MISMATCH"})
 		}
 		output = append(output, ResourceSnapshot{StableID: stableID, Path: ref.Path, Role: ref.Role, Bytes: len(data), Digest: digestBytes(data)})
 	}

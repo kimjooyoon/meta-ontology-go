@@ -1,60 +1,63 @@
-# Conflict-free registry projection
+# Manual-source-registration-edit-free registry projection
 
 This experiment keeps concept registration local and makes the shared view a
-deterministic projection. The bounded slice has three real local inputs:
+deterministic projection. The bounded slice has exactly three production
+inputs:
 
 - `examples/language-syntax-roundtrip/concept.manifest.json`
 - `examples/language-semantic-model/concept.manifest.json`
 - `examples/toolchain-conformance/concept.manifest.json`
 
-The producer is `scripts/conflict-free-registry-projection`. It discovers local
-manifests, sorts them by stable ID, validates the manifest boundary, reads the
-referenced corpus, registry, and documentation files, and emits the generated
-catalog, corpus, registry, denominator, README, manifest digests, and full
-projection. `generate` is the only write mode; `check` is read-only and fails
-closed for a missing, unexpected, or stale generated projection.
+Each manifest owns its concept-local code and metric bindings, use cases, raw
+resource references, and declared denominators. The producer discovers and
+sorts those inputs, verifies ownership paths, non-empty bindings, real code and
+metric registrations, resource digests, and source-derived denominators, then
+generates catalog, corpus, registry, denominator, documentation, manifest index,
+projection, and digest outputs. The root topology and root README remain
+explicit exceptions; this is a bounded vertical slice rather than a migration
+of every existing global file.
 
-The independent consumer in
-`scripts/conflict-free-registry-projection-consumer` parses raw manifests and
-reconstructs `projection.json` without importing the producer package. CI
-compares its bytes with the generated projection.
+## Fixed regression denominator
 
-## Fixed baseline
+The baseline has exactly 12 observed manual shared-source touchpoints. A real
+temporary filesystem intervention adds one fourth local manifest and runs
+discovery plus generation. The existing 12 source paths are compared by bytes
+digest before and after. The same intervention measures changed generated
+outputs among exactly 8 outputs, and runs the independent production consumer
+against the generated projection.
 
-For this slice, one touchpoint is one unique shared path whose current content
-contains a selected concept, corpus, registry, README, documentation, or fixed
-denominator token. The current `origin/dev` baseline is exactly 12/12 observed
-manual shared registration touchpoints. The three local manifests provide
-3/3 concept-local touchpoints. The projected path removes the need for manual
-global edits: 12/12 becomes 0/12, and the conflict surface becomes 10000 to 0
-basis points. The baseline list is executable in the producer, so a missing or
-drifted baseline path fails closed.
+The three surfaces are intentionally distinct:
 
-The existing global catalog and readiness registries remain unchanged. This is
-intentional: full migration is outside the slice, and root topology and the
-root README remain exceptions.
+| Surface | Measured result | Meaning |
+| --- | ---: | --- |
+| existing shared source touchpoints | 12/12 baseline | current human-edited registration surface |
+| generator-changed shared outputs | 6/8 for the new fixture | generated projection change surface, not zero conflict |
+| production consumer adoption | 1/1 | independent raw-manifest reconstruction equals projection |
+| manual source registration edits required | 0/12 after fixture | no existing source file was edited |
+
+The corrected toolchain denominator reconciles `181` corpus cases and the
+`152` use-case string count. A regression clone with the prior declared `160`
+cases must produce `FAIL_CLOSED / DENOMINATOR_SOURCE_MISMATCH`, with declared
+and calculated values side by side in the receipt.
 
 ## Meaning gates
 
-`prove` executes the following evidence contract without writing the source
-repository:
+The proof keeps raw manifest bytes separate from the semantic manifest view.
+Semantic and comment-only interventions render actual changed JSON bytes,
+compute the digest from those bytes, decode them again, and only then project.
+Replay twice and reversed manifest order must be byte-identical. The independent
+consumer independently checks malformed, missing, stale, cross-directory,
+missing-binding, duplicate-ID, and stale-denominator inputs fail closed while
+preserving stage, step, and reason.
 
-- two projections are byte-for-byte equal;
-- reversing manifest discovery order preserves every output byte;
-- a semantic manifest change changes catalog, denominator, documentation, and
-  digest surfaces while corpus and registry projections stay unchanged;
-- a comment-only manifest change changes raw manifest digests while the
-  semantic projection stays byte-identical;
-- a new concept fixture changes only generated outputs and leaves existing
-  concept inputs untouched;
-- duplicate stable IDs, missing manifests, and stale generated output fail
-  closed while preserving `stage`, `step`, and `reason`;
-- `FOUNDATION`, `COHERENCE`, and `REGRESSION` are selected from the local
-  manifests and each strategy must discharge its own checks;
-- every claim has a distinct proposition and target digest with an explicit
-  `OPEN` to `DISCHARGED` or `REFUTED` transition chain.
+Claims carry distinct observed predicates, target addresses, target digests, and
+an `OPEN` transition. Only the independent consumer's recomputation may move a
+positive predicate to `DISCHARGED`; rejection claims remain `REFUTED` with the
+failure diagnostic. Repository status is read before and after the complete
+proof. Net equality is reported as `NET_STATE_EQUAL`; transient mutation and
+mutation authority remain `UNKNOWN` unless separately observed.
 
-Repository net-state observations are reported separately from generated output
-path, digest, and byte metadata. Mutation authority is reported as `UNKNOWN`
-unless an authorized observer establishes it; a clean net-state observation is
-not treated as proof of mutation authority.
+`FOUNDATION`, `COHERENCE`, and `REGRESSION` are selected from every local
+manifest and each strategy gates its own evidence. CI uses Go 1.27.0 and owns
+format, compile, generation, freshness, and semantic verification. Local test
+execution is intentionally zero.

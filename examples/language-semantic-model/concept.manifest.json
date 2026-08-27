@@ -20,7 +20,7 @@
   "metric_bindings": [
     "gooo.metric.language.semantic-model-readiness-bps.v1",
     "gooo.metric.language.semantic-model-source-replays.v1",
-    "gooo.metric.language.semantic-model-registry-drift.guardrail.v1"
+    "gooo.metric.language.semantic-model-source-models.v1"
   ],
   "use_cases": [
     {
@@ -31,15 +31,15 @@
   ],
   "verification_strategies": ["FOUNDATION", "COHERENCE", "REGRESSION"],
   "corpus": [
-    {"path": "examples/language-semantic-model/corpus.json", "role": "VERSIONED_CORPUS"}
+    {"path": "examples/language-semantic-model/corpus.json", "role": "VERSIONED_CORPUS", "digest": "sha256:e2752cf477a96c46eb90d099b1dfdc8d31cbf2e173f6ed8af4bbb9d1c2f70fb0"}
   ],
   "registry": [
-    {"path": "internal/meta/languagereadiness/languagesemantic/registry_definition.go", "role": "HANDWRITTEN_REGISTRY"}
+    {"path": "internal/meta/languagereadiness/languagesemantic/registry_definition.go", "role": "HANDWRITTEN_REGISTRY", "digest": "sha256:69bbdc16548e5c4fe7128526503327b6b519a9b15f8f9bf6f63d8b8f99574c0d"}
   ],
   "denominators": [
     {
       "id": "gooo/language-semantic-model/v1",
-      "values": {"cases": 32, "source_units": 27, "authority_laws": 3, "upstream_rejections": 2}
+      "values": {"cases": 32, "source_units": 27, "authority_laws": 3, "upstream_rejections": 2, "registry_sources": 27, "registry_laws": 3, "registry_rejections": 2}
     },
     {
       "id": "gooo/language-semantic-binding/v1",
@@ -47,8 +47,8 @@
     }
   ],
   "documentation": [
-    {"path": "examples/language-semantic-model/README.md", "role": "LOCAL_README"},
-    {"path": "docs/language/language-semantic-model.md", "role": "LANGUAGE_DOCUMENTATION"}
+    {"path": "examples/language-semantic-model/README.md", "role": "LOCAL_README", "digest": "sha256:98339ca6d6062beb3c2536804c8432c9f8c696c7b56d0e317129d2f1774283ac"},
+    {"path": "docs/language/language-semantic-model.md", "role": "LANGUAGE_DOCUMENTATION", "digest": "sha256:17dadd546e4a0f80fb91580b06ce2d9f108a440e8f14b322ac490b7f277df786"}
   ],
   "comments": ["The local manifest owns this concept's semantic registration input."]
 }

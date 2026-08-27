@@ -1,4 +1,4 @@
-name: Conflict-free registry projection
+name: Manual-source-registration-edit-free registry projection
 
 on:
   pull_request:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Generate into a temporary directory and preserve repository net-state
         run: |
-          work="$RUNNER_TEMP/conflict-free-registry-projection"
+          work="$RUNNER_TEMP/manual-source-registration-edit-free-registry-projection"
           mkdir -p "$work"
           git status --porcelain --untracked-files=all > "$work/repository-before.txt"
           go run ./scripts/conflict-free-registry-projection generate \
@@ -59,26 +59,43 @@ jobs:
 
       - name: Reconstruct the projection with the independent consumer
         run: |
-          work="$RUNNER_TEMP/conflict-free-registry-projection"
+          work="$RUNNER_TEMP/manual-source-registration-edit-free-registry-projection"
           go run ./scripts/conflict-free-registry-projection-consumer \
             -root "$GITHUB_WORKSPACE" \
-            -output "$work/consumer-projection.json"
+            -output "$work/consumer-projection.json" \
+            -receipt "$work/consumer-receipt.json" \
+            -check-generated
           cmp "$work/consumer-projection.json" \
             internal/meta/registryprojection/generated/projection.json
 
       - name: Run the semantic evidence gate
         run: |
-          work="$RUNNER_TEMP/conflict-free-registry-projection"
+          work="$RUNNER_TEMP/manual-source-registration-edit-free-registry-projection"
           go run ./scripts/conflict-free-registry-projection prove \
             -root "$GITHUB_WORKSPACE" \
             -evidence "$work/evidence.json" > "$work/evidence.stdout.json"
           jq -e '
             .decision == "PASS" and
             .baseline_touchpoints == 12 and
-            .metric_deltas.manual_global_edits_required.before.numerator == 12 and
-            .metric_deltas.manual_global_edits_required.after.numerator == 0 and
-            .metric_deltas.projection_conflict_surface_bps.before.basis_points == 10000 and
-            .metric_deltas.projection_conflict_surface_bps.after.basis_points == 0 and
+            .integration_metrics.existing_shared_source_touchpoints.denominator == 12 and
+            .integration_metrics.generator_changed_shared_outputs.numerator == 6 and
+            .integration_metrics.generator_changed_shared_outputs.denominator == 8 and
+            .integration_metrics.production_consumer_adoption.numerator == 1 and
+            .integration_metrics.production_consumer_adoption.denominator == 1 and
+            .metric_deltas.manual_source_registration_edits.before.numerator == 12 and
+            .metric_deltas.manual_source_registration_edits.after.numerator == 0 and
+            .metric_deltas.generator_changed_shared_outputs.after.numerator == 6 and
+            .metric_deltas.generator_changed_shared_outputs.after.denominator == 8 and
+            .generated_output_change_count == 6 and
+            .generated_output_denominator == 8 and
+            ([.source_digest_preservation[] | select(.equal == true)] | length) == 12 and
+            ([.denominator_reconciliations[].stable_id] | unique | length) == 3 and
+            ([.denominator_reconciliations[].decision] | all(. == "PASS")) and
+            .stale_denominator_receipt.decision == "FAIL_CLOSED" and
+            .stale_denominator_receipt.reason == "DENOMINATOR_SOURCE_MISMATCH" and
+            .stale_denominator_receipt.declared.cases == 160 and
+            .stale_denominator_receipt.calculated.cases == 181 and
+            .stale_denominator_receipt.calculated.use_case_cases == 152 and
             .projection_replay.decision == "PASS" and
             .manifest_order_invariant.decision == "PASS" and
             .semantic_manifest_causality.decision == "PASS" and
@@ -88,18 +105,25 @@ jobs:
             ([.failure_contracts[].diagnostic.stage] | all(length > 0)) and
             ([.failure_contracts[].diagnostic.step] | all(length > 0)) and
             ([.failure_contracts[].diagnostic.reason] | all(length > 0)) and
+            ([.failure_contracts[]] | length) >= 6 and
+            ([.predicate_observations[] | select(.observed == true)] | length) == ([.predicate_observations] | length) and
             ([.strategies[] | select(.selected and .decision == "PASS")] | length) == 3 and
             ([.claims[].proposition] | length) == ([.claims[].proposition] | unique | length) and
+            ([.claims[].target_address] | length) == ([.claims[].target_address] | unique | length) and
             ([.claims[].target_digest] | length) == ([.claims[].target_digest] | unique | length) and
+            ([.claims[] | select(.id | startswith("consumer-")) | .transitions[-1].state] | all(. == "REFUTED")) and
+            ([.claims[] | select(.transitions[-1].state == "DISCHARGED") | .transitions[-1].reason] | all(. == "independent_consumer_recomputed_predicate")) and
             .repository_net_state.net_state_equal == true and
-            .mutation_authority == "UNKNOWN"
+            .repository_net_state.net_state == "NET_STATE_EQUAL" and
+            .repository_net_state.transient_mutation == "UNKNOWN" and
+            .repository_net_state.mutation_authority == "UNKNOWN"
           ' "$work/evidence.json"
 
       - name: Publish projection evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: conflict-free-registry-projection-${{ env.EXACT_SHA }}
-          path: ${{ runner.temp }}/conflict-free-registry-projection
+          name: manual-source-registration-edit-free-registry-projection-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/manual-source-registration-edit-free-registry-projection
           if-no-files-found: error
           retention-days: 14

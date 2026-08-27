@@ -1,44 +1,44 @@
 {
-  "schema": "gooo/conflict-free-registry-projection-digest/v1",
-  "raw_manifest_digest": "sha256:1761d052383eb9de6b078cdfdf3e2a81dcbc6798ab8b03d3a4cf217c671918b6",
-  "semantic_manifest_digest": "sha256:74559772b4ce1f6f3f36356601785f96d9a0815e464cb31794fd80b375d5d801",
-  "projection_digest": "sha256:13c96e5c93201d0993fa02755f75b310ad14f9bbacc9f8899a962700e47005bf",
-  "combined_digest": "sha256:913432c511ee86d5d8362efab65f2c5a9713e5479db2cf4726970b949c85ffd3",
+  "schema": "gooo/manual-source-registration-edit-free-registry-projection-digest/v1",
+  "raw_manifest_digest": "sha256:c8ae2bb20c650ce987c651b56428b1082030b89dd34bbc5bce5c0cddaf6ee542",
+  "semantic_manifest_digest": "sha256:72f10b1e0eca18e4415aaa45d66fa1334911c02326796d70b411f0580897c213",
+  "projection_digest": "sha256:9dc7066c69f0faf8742d2c20a6ffb75c4ca792fec59d9c82c5bea21c12c6348c",
+  "combined_digest": "sha256:06d5468a50f9b9e537805f313d3afcd0dd588f0b382c666d96cc3184759569b8",
   "outputs": [
     {
       "path": "internal/meta/registryprojection/generated/README.md",
-      "digest": "sha256:44811c2bf9d04da904117be6f3e995f2249693268bdfd9fac3e30407221c2184",
-      "bytes": 1714
+      "digest": "sha256:a80642101522fa444e37be686921363641d287a4b00f374a995aa1982a15fbaf",
+      "bytes": 1757
     },
     {
       "path": "internal/meta/registryprojection/generated/catalog.json",
-      "digest": "sha256:71789700690bb036ef3c102449fb6156d9d11fd369c4c958ff6d1f5ab02ee666",
-      "bytes": 4704
+      "digest": "sha256:2082f4e6b06caf17c115ae926427b21814aa8ba90a5c914466947a0b5074910d",
+      "bytes": 4677
     },
     {
       "path": "internal/meta/registryprojection/generated/corpus.json",
-      "digest": "sha256:e17a8b81fc6ddbba9d68ab0013a264583870abdb0bc8e5dda7c4eb6eb66721c9",
-      "bytes": 968
+      "digest": "sha256:83a6471f7d867db5482c672511ba0d63f6d976a257170b1f55d33e87a3d33752",
+      "bytes": 991
     },
     {
       "path": "internal/meta/registryprojection/generated/denominator.json",
-      "digest": "sha256:d9ba39da875e76c9c8e9eb3b9dd534d7f4f956ca7008158088a7f0fcb83b683a",
-      "bytes": 1534
+      "digest": "sha256:572a682a2007eed340b80aaae7ed6cd98aca9a9d8014a04f69ba5e03b9337748",
+      "bytes": 1787
     },
     {
       "path": "internal/meta/registryprojection/generated/manifest-digests.json",
-      "digest": "sha256:615f15f5e19c61e88b597af6803b99fdd856252e85191065e54f79c4e400aaeb",
-      "bytes": 1088
+      "digest": "sha256:6c84c8bbfd9ddb69dbad930291dc8b117c916f4ebd7ebde21589ea8e22e0915d",
+      "bytes": 1111
     },
     {
       "path": "internal/meta/registryprojection/generated/projection.json",
-      "digest": "sha256:13c96e5c93201d0993fa02755f75b310ad14f9bbacc9f8899a962700e47005bf",
-      "bytes": 9052
+      "digest": "sha256:9dc7066c69f0faf8742d2c20a6ffb75c4ca792fec59d9c82c5bea21c12c6348c",
+      "bytes": 9255
     },
     {
       "path": "internal/meta/registryprojection/generated/registry.json",
-      "digest": "sha256:bf638f9194855909ea0c3d7b2e1c70c0644967e66ff82de37c87f01ed2d849fd",
-      "bytes": 1041
+      "digest": "sha256:acfc6584eddaeacd986f4db85b6adb4afc40ea169fc2cfc6641e15e83a398ece",
+      "bytes": 1064
     }
   ]
 }

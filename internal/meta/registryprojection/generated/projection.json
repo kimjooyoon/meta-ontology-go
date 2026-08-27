@@ -1,5 +1,5 @@
 {
-  "schema": "gooo/conflict-free-registry-projection/v1",
+  "schema": "gooo/manual-source-registration-edit-free-registry-projection/v1",
   "catalog": [
     {
       "stable_id": "language-semantic-model",
@@ -20,7 +20,7 @@
       ],
       "metric_bindings": [
         "gooo.metric.language.semantic-model-readiness-bps.v1",
-        "gooo.metric.language.semantic-model-registry-drift.guardrail.v1",
+        "gooo.metric.language.semantic-model-source-models.v1",
         "gooo.metric.language.semantic-model-source-replays.v1"
       ],
       "use_cases": [
@@ -56,7 +56,7 @@
       "metric_bindings": [
         "gooo.metric.language.syntax-roundtrip-executed-cases.v1",
         "gooo.metric.language.syntax-roundtrip-readiness-bps.v1",
-        "gooo.metric.language.syntax-roundtrip-registry-drift.guardrail.v1"
+        "gooo.metric.language.syntax-roundtrip-valid-corpus-files.v1"
       ],
       "use_cases": [
         {
@@ -86,9 +86,9 @@
         "internal/meta/languagereadiness/toolchainconformance"
       ],
       "metric_bindings": [
-        "gooo.metric.language.toolchain-conformance-mutation-rejections.v1",
-        "gooo.metric.language.toolchain-conformance-readiness-bps.v1",
-        "gooo.metric.language.toolchain-conformance-registry-drift.guardrail.v1"
+        "gooo.metric.toolchain.conformance-case-readiness-bps.v1",
+        "gooo.metric.toolchain.conformance-proof-readiness-bps.v1",
+        "gooo.metric.toolchain.conformance-readiness-bps.v1"
       ],
       "use_cases": [
         {
@@ -164,7 +164,7 @@
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-binding/v1",
-      "semantic_digest": "sha256:e98074ed83915e815016458cb46a4f9f9dd84bd3bd37be127d14b44b75c2435f",
+      "semantic_digest": "sha256:0f30639a98b91c0dbf00e76ac2199afd9fdef35818802515814f6494e5065bfa",
       "values": {
         "syntax_cases": 30,
         "syntax_lines": 428,
@@ -174,10 +174,13 @@
     {
       "stable_id": "language-semantic-model",
       "id": "gooo/language-semantic-model/v1",
-      "semantic_digest": "sha256:e98074ed83915e815016458cb46a4f9f9dd84bd3bd37be127d14b44b75c2435f",
+      "semantic_digest": "sha256:0f30639a98b91c0dbf00e76ac2199afd9fdef35818802515814f6494e5065bfa",
       "values": {
         "authority_laws": 3,
         "cases": 32,
+        "registry_laws": 3,
+        "registry_rejections": 2,
+        "registry_sources": 27,
         "source_units": 27,
         "upstream_rejections": 2
       }
@@ -185,24 +188,28 @@
     {
       "stable_id": "language-syntax-roundtrip",
       "id": "gooo/language-syntax-roundtrip/v2",
-      "semantic_digest": "sha256:d6707eb78614772171d8c6b5a619d6cc3ee29961ef4e28409e06e537d5e9f02e",
+      "semantic_digest": "sha256:ee619ac385edd30f5acbc1615506f6ec23811460d07908861ef5c04cfb85b662",
       "values": {
         "cases": 30,
         "gooo_lines": 428,
         "invalid_cases": 3,
+        "registry_cases": 30,
+        "registry_invalid_cases": 3,
+        "registry_valid_sources": 27,
         "valid_sources": 27
       }
     },
     {
       "stable_id": "toolchain-conformance",
       "id": "gooo/toolchain-conformance-corpus/v1",
-      "semantic_digest": "sha256:c744c307c20b8c4705820e4042aa823c177ab707a70bbb4c128c75b108032489",
+      "semantic_digest": "sha256:de137d84549a745e0ebe990bb6b9ed65fe81b2cf7675e8886184d1ffc7e3d51b",
       "values": {
-        "cases": 160,
+        "cases": 181,
         "indicators": 151,
         "proofs": 27,
         "surfaces": 9,
-        "tamper_cases": 13
+        "tamper_cases": 13,
+        "use_case_cases": 152
       }
     }
   ],

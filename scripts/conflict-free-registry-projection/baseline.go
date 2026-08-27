@@ -65,24 +65,32 @@ func observeBaseline(root string) (baselineReport, *Diagnostic) {
 	return report, nil
 }
 
-func integrationMetrics(localCount, sharedCount int) IntegrationMetrics {
+func ratioMetric(numerator, denominator int) RatioMetric {
+	basisPoints := 0
+	if denominator > 0 {
+		basisPoints = numerator * 10000 / denominator
+	}
+	return RatioMetric{Numerator: numerator, Denominator: denominator, BasisPoints: basisPoints}
+}
+
+func integrationMetrics(localCount, sharedCount, generatedChanged, adopted, manualEdits int) IntegrationMetrics {
 	return IntegrationMetrics{
-		SharedRegistrationTouchpoints: RatioMetric{Numerator: 0, Denominator: sharedCount, BasisPoints: 0},
-		ConceptLocalTouchpoints:       RatioMetric{Numerator: localCount, Denominator: localCount, BasisPoints: 10000},
-		ManualGlobalEditsRequired:     RatioMetric{Numerator: 0, Denominator: sharedCount, BasisPoints: 0},
-		ProjectionConflictSurfaceBPS:  RatioMetric{Numerator: 0, Denominator: sharedCount, BasisPoints: 0},
+		ExistingSharedSourceTouchpoints: ratioMetric(sharedCount, sharedCount),
+		GeneratorChangedSharedOutputs:   ratioMetric(generatedChanged, 8),
+		ProductionConsumerAdoption:      ratioMetric(adopted, 1),
+		ConceptLocalTouchpoints:         ratioMetric(localCount, localCount),
+		ManualSourceRegistrationEdits:   ratioMetric(manualEdits, sharedCount),
 	}
 }
 
-func metricDeltas(localCount, sharedCount int) map[string]MetricDelta {
-	full := RatioMetric{Numerator: sharedCount, Denominator: sharedCount, BasisPoints: 10000}
-	local := RatioMetric{Numerator: localCount, Denominator: localCount, BasisPoints: 10000}
-	zero := RatioMetric{Numerator: 0, Denominator: sharedCount, BasisPoints: 0}
+func metricDeltas(sharedCount, generatedChanged, manualEdits int) map[string]MetricDelta {
+	full := ratioMetric(sharedCount, sharedCount)
+	generated := ratioMetric(generatedChanged, 8)
+	manual := ratioMetric(manualEdits, sharedCount)
 	return map[string]MetricDelta{
-		"shared_registration_touchpoints": {Before: full, After: zero},
-		"concept_local_touchpoints":       {Before: local, After: local},
-		"manual_global_edits_required":    {Before: full, After: zero},
-		"projection_conflict_surface_bps": {Before: full, After: zero},
+		"existing_shared_source_touchpoints": {Before: full, After: manual},
+		"generator_changed_shared_outputs":   {Before: ratioMetric(0, 8), After: generated},
+		"manual_source_registration_edits":   {Before: full, After: manual},
 	}
 }
 

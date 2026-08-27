@@ -1,23 +1,23 @@
 {
-  "schema": "gooo/conflict-free-registry-manifests/v1",
+  "schema": "gooo/manual-source-registration-edit-free-registry-manifests/v1",
   "manifests": [
     {
       "stable_id": "language-semantic-model",
       "source_manifest": "examples/language-semantic-model/concept.manifest.json",
-      "raw_digest": "sha256:d1b40872550ff483653cf766a45f7ba55fe20ade6ff845fb2bc06e89936902fd",
-      "semantic_digest": "sha256:e98074ed83915e815016458cb46a4f9f9dd84bd3bd37be127d14b44b75c2435f"
+      "raw_digest": "sha256:79479df093a363a06ad6cbfa04c685b35619f58f1089476ca04b5c8f00733f3d",
+      "semantic_digest": "sha256:0f30639a98b91c0dbf00e76ac2199afd9fdef35818802515814f6494e5065bfa"
     },
     {
       "stable_id": "language-syntax-roundtrip",
       "source_manifest": "examples/language-syntax-roundtrip/concept.manifest.json",
-      "raw_digest": "sha256:cfe67261506656e0d88f37a708be10fc5e168440854683b90d3b57d3cbd2ae1e",
-      "semantic_digest": "sha256:d6707eb78614772171d8c6b5a619d6cc3ee29961ef4e28409e06e537d5e9f02e"
+      "raw_digest": "sha256:e9a2a2ea525d52bf55548b462bb033d3c075c01223ca9bda998015c17af48f7d",
+      "semantic_digest": "sha256:ee619ac385edd30f5acbc1615506f6ec23811460d07908861ef5c04cfb85b662"
     },
     {
       "stable_id": "toolchain-conformance",
       "source_manifest": "examples/toolchain-conformance/concept.manifest.json",
-      "raw_digest": "sha256:d76758fcd907b1ee538bf95541de85904af5807a5ceef2f02bc8b43457f719b9",
-      "semantic_digest": "sha256:c744c307c20b8c4705820e4042aa823c177ab707a70bbb4c128c75b108032489"
+      "raw_digest": "sha256:ae432421573c92b78c3f1262c6cc40a2be2fab764afb7de02d18bbf6580e483a",
+      "semantic_digest": "sha256:de137d84549a745e0ebe990bb6b9ed65fe81b2cf7675e8886184d1ffc7e3d51b"
     }
   ]
 }

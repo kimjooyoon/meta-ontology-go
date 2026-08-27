@@ -1,5 +1,5 @@
 {
-  "schema": "gooo/conflict-free-registry-registry/v1",
+  "schema": "gooo/manual-source-registration-edit-free-registry-registry/v1",
   "section_digest": "sha256:fd20fbe9d7a3add6c0326aa4daca68c5712e988c199d16992adbb3a949bed10f",
   "entries": [
     {
