@@ -1,0 +1,21 @@
+package resolutionlattice
+namespace meta
+
+entity PartialObservation id "gooo://resolution-lattice/partial-observation"
+entity UnknownValue id "gooo://resolution-lattice/unknown-value"
+entity ResolutionStage id "gooo://resolution-lattice/resolution-stage"
+entity ResolutionStep id "gooo://resolution-lattice/resolution-step"
+entity Reason id "gooo://resolution-lattice/reason"
+entity Claim id "gooo://resolution-lattice/claim"
+entity LatticeTransition id "gooo://resolution-lattice/lattice-transition"
+entity LatticeReceipt id "gooo://resolution-lattice/lattice-receipt"
+entity IndependentJudge id "gooo://resolution-lattice/independent-judge"
+entity Foundation id "proof://foundation"
+entity Coherence id "proof://coherence"
+entity Regression id "proof://regression"
+
+activity ObservePartialObservation(PartialObservation) -> UnknownValue
+activity DescendToInvariantOnly(UnknownValue, ResolutionStage) -> ResolutionStep
+activity PreserveClaimState(Claim, ResolutionStep) -> Claim
+activity EmitResolutionReceipt(ResolutionStep, Claim) -> LatticeReceipt
+activity AdjudicateReceipt(LatticeReceipt, IndependentJudge) -> LatticeReceipt

@@ -1844,6 +1844,18 @@
       ]
     },
     {
+      "branch": "agent/luna-meta-02-resolution-descent-lattice",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/semantic-resolution-lattice-judge/**",
+        "cmd/semantic-resolution-lattice-witness/**",
+        "examples/semantic-resolution-lattice/**",
+        "internal/meta/semanticresolution/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/semanticdelta",
       "paths": [
         "internal/detection/semanticdelta/**"

@@ -1,0 +1,191 @@
+{
+  "schema": "gooo/meta-semantic-resolution-lattice/v1",
+  "source": "examples/semantic-resolution-lattice/main.gooo",
+  "source_sha256": "sha256:cb3c235b3b2a7e6d0f315ff76abb7593b4e7ec5cc66f4e39b158ce274e861b3a",
+  "repository_writes": 0,
+  "mutation_authority": false,
+  "case_denominator": 4,
+  "counts": {
+    "cases_total": 4,
+    "pass": 1,
+    "fail_closed": 2,
+    "unknown": 1
+  },
+  "cases": [
+    {
+      "id": "exact-observation",
+      "decision": "PASS",
+      "observation": {
+        "required": 3,
+        "observed": 3,
+        "reason": "",
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "transition": {
+        "from_resolution": "exact_operation",
+        "to_resolution": "exact_operation",
+        "decision": "PASS",
+        "reason": "OBSERVATION_COMPLETE",
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "claim_id": "claim-exact-observation"
+    },
+    {
+      "id": "partial-invariant-descent",
+      "decision": "UNKNOWN",
+      "observation": {
+        "required": 3,
+        "observed": 2,
+        "reason": "REQUIRED_INPUT_UNOBSERVED",
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "transition": {
+        "from_resolution": "exact_operation",
+        "to_resolution": "invariant_only",
+        "decision": "LOWER_RESOLUTION",
+        "reason": "PARTIAL_OBSERVATION",
+        "unknown": {
+          "stage": "PARTIAL_OBSERVATION",
+          "step": 1,
+          "reason": "REQUIRED_INPUT_UNOBSERVED"
+        },
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "claim_id": "claim-invariant-fallback"
+    },
+    {
+      "id": "malformed-observation",
+      "decision": "FAIL_CLOSED",
+      "observation": {
+        "required": 3,
+        "observed": 4,
+        "reason": "OBSERVATION_CARDINALITY_INVALID",
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "transition": {
+        "from_resolution": "exact_operation",
+        "decision": "FAIL_CLOSED",
+        "reason": "OBSERVATION_CARDINALITY_INVALID",
+        "repository_writes": 0,
+        "mutation_authority": false
+      },
+      "claim_id": "claim-exact-under-missing-evidence"
+    },
+    {
+      "id": "mutation-authority",
+      "decision": "FAIL_CLOSED",
+      "observation": {
+        "required": 3,
+        "observed": 2,
+        "reason": "REQUIRED_INPUT_UNOBSERVED",
+        "repository_writes": 0,
+        "mutation_authority": true
+      },
+      "transition": {
+        "from_resolution": "exact_operation",
+        "decision": "FAIL_CLOSED",
+        "reason": "MUTATION_AUTHORITY_PRESENT",
+        "repository_writes": 0,
+        "mutation_authority": true
+      },
+      "claim_id": "claim-write-free-descent"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-exact-observation",
+      "state": "DISCHARGED",
+      "before_state": "DISCHARGED",
+      "after_state": "DISCHARGED",
+      "preserved": true
+    },
+    {
+      "id": "claim-invariant-fallback",
+      "state": "OPEN",
+      "before_state": "OPEN",
+      "after_state": "OPEN",
+      "preserved": true
+    },
+    {
+      "id": "claim-exact-under-missing-evidence",
+      "state": "REFUTED",
+      "before_state": "REFUTED",
+      "after_state": "REFUTED",
+      "preserved": true
+    },
+    {
+      "id": "claim-write-free-descent",
+      "state": "DISCHARGED",
+      "before_state": "DISCHARGED",
+      "after_state": "DISCHARGED",
+      "preserved": true
+    }
+  ],
+  "metrics": [
+    {
+      "id": "gooo.metric.meta-resolution-lattice.exact-observation.count.v1",
+      "class": "outcome",
+      "numerator": 1,
+      "denominator": 4,
+      "unit": "cases",
+      "relation": "greater_or_equal",
+      "producer": "semanticresolution.ResolvePartialObservation",
+      "consumer": "semantic-resolution-lattice-judge",
+      "meta_operation": "observe-exact-or-partial",
+      "proof": "FOUNDATION"
+    },
+    {
+      "id": "gooo.metric.meta-resolution-lattice.invariant-descent.count.v1",
+      "class": "driver",
+      "numerator": 1,
+      "denominator": 4,
+      "unit": "cases",
+      "relation": "greater_or_equal",
+      "producer": "semanticresolution.ResolvePartialObservation",
+      "consumer": "semantic-resolution-lattice-judge",
+      "meta_operation": "lower-to-invariant-only",
+      "proof": "COHERENCE"
+    },
+    {
+      "id": "gooo.metric.meta-resolution-lattice.claim-preservation.count.v1",
+      "class": "driver",
+      "numerator": 4,
+      "denominator": 4,
+      "unit": "cases",
+      "relation": "greater_or_equal",
+      "producer": "semanticresolution.ReplayPartialObservation",
+      "consumer": "semantic-resolution-lattice-judge",
+      "meta_operation": "preserve-claim-state",
+      "proof": "REGRESSION"
+    },
+    {
+      "id": "gooo.metric.meta-resolution-lattice.replay.count.v1",
+      "class": "driver",
+      "numerator": 4,
+      "denominator": 4,
+      "unit": "cases",
+      "relation": "greater_or_equal",
+      "producer": "semanticresolution.ReplayPartialObservation",
+      "consumer": "semantic-resolution-lattice-judge",
+      "meta_operation": "replay-resolution-descent",
+      "proof": "REGRESSION"
+    },
+    {
+      "id": "gooo.metric.meta-resolution-lattice.write-guardrail.v1",
+      "class": "guardrail",
+      "numerator": 0,
+      "denominator": 4,
+      "unit": "repository_writes",
+      "relation": "less_or_equal",
+      "producer": "semanticresolution.ResolvePartialObservation",
+      "consumer": "semantic-resolution-lattice-judge",
+      "meta_operation": "preserve-read-only-resolution",
+      "proof": "FOUNDATION"
+    }
+  ]
+}
