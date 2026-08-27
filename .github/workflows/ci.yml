@@ -261,6 +261,7 @@ jobs:
           cmp -s "$METRICS_DIR/ci-summary.json" "$METRICS_DIR/ci-summary-replay.json"
           cat "$METRICS_DIR/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -268,6 +269,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload meta-binding coverage artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: meta-binding-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -275,6 +277,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload meta-actionability artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: meta-actionability-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -282,6 +285,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload directory partition plan artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: directory-partition-${{ github.event.pull_request.head.sha || github.sha }}
@@ -289,6 +293,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload directory kind separation plan artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: directory-kind-separation-${{ github.event.pull_request.head.sha || github.sha }}
@@ -296,6 +301,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement generation artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
