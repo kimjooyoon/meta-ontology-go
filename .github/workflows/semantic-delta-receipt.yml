@@ -43,6 +43,7 @@ on:
       - 'docs/language/semantic-delta-receipt.md'
       - 'go.mod'
       - 'go.sum'
+  workflow_dispatch:
 
 permissions:
   contents: read
