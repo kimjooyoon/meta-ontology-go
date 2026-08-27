@@ -10,8 +10,10 @@ The experiment is deliberately smaller than a language feature. It observes
 the existing Gooo source relation `activity(inputs) -> output computes
 value-program`, puts six structured `claim-case/v1` observations inside those
 value programs, turns that source relation into a fixed claim denominator, and
-emits an append-only transition and cause-receipt ledger. Both producer and
-judge reconstruct the cases from `syntax.ParseFile -> bidir.Lower`; neither
+emits an append-only transition and cause-receipt ledger. Each case declares a
+proposition tuple and zero or more independently sourced observation tuples;
+the source does not declare a result label or expected status. Both producer
+and judge reconstruct the cases from `syntax.ParseFile -> bidir.Lower`; neither
 uses a duplicated activity specification or index-assigned terminal state.
 
 ## Adopted and rejected principles
@@ -32,27 +34,35 @@ preserving contradictory information without allowing inconsistency to erase
 the knowledge base or cause arbitrary conclusions. We adopt the narrow idea
 that contradictory evidence is first-class and must remain inspectable. We
 reject copying FDE's four values: this calculus has three lifecycle states
-(`OPEN`, `DISCHARGED`, `REFUTED`), while `UNKNOWN` is a resolution of missing
-or blocked evidence and `FAIL_CLOSED` is a case decision, not a claim state.
+(`OPEN`, `DISCHARGED`, `REFUTED`), while `UNKNOWN` is a resolution of missing,
+insufficient, or blocked evidence and `FAIL_CLOSED` is a case decision, not a
+claim state.
 
 ## Calculus and falsifiers
 
 The transition form is:
 
 ```text
-claim + evidence + cause receipt -> (before, after, event, digest)
+proposition + observation tuples + dependency + cause receipt
+    -> relation -> (before, after, event, digest)
 ```
 
-The intended closure is `OPEN -> DISCHARGED` for supporting evidence and
-`OPEN -> REFUTED` for contradicting evidence. A falsifying input would accept
-a missing claim, change a claim without an event, lose a prior event digest,
+The evaluator compares each observation tuple to the proposition: equality
+produces `SUPPORTS`, same subject/predicate with a different object produces
+`CONTRADICTS`, no tuple produces `UNAVAILABLE`, and mixed or conflicting tuple
+comparisons produce `AMBIGUOUS`; subject/predicate mismatch produces
+`INSUFFICIENT`. Only `SUPPORTS` and direct `CONTRADICTS` close a claim. All
+other relations preserve `OPEN`; dependency blocking records the upstream
+claim without propagating a terminal state. A falsifying input would accept a
+missing claim, change a claim without an event, lose a prior event digest,
 classify a dependency block as a direct absence, or treat ambiguous evidence
 as a closure. The independent judge rejects each of those forms. The top-level
-receipt keeps conformance (`PASS`/`FAIL_CLOSED`) separate from subject outcome
-(`UNKNOWN` and subject `FAIL_CLOSED` counts).
+receipt keeps conformance (`PASS`/`FAIL_CLOSED`) separate from subject decision
+(`MIXED`/`FAIL_CLOSED`), lower-resolution reason, and subject counts.
 
 The CI falsifiers are fixed at one semantic and one nonsemantic intervention.
-Changing the source evidence kind changes the evidence digest, decision, and
+Changing the source `observed_object` from `down` to `healthy` changes the
+observation comparison, relation, semantic digest, subject outcome, and
 transition. Adding only a source comment changes the raw digest while the
 lowered semantic digest, transition ledger, and decisions remain equal. A
 coherently resealed ledger edit is still rejected because its event no longer

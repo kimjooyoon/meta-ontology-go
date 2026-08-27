@@ -13,11 +13,15 @@ import (
 // reseals its cause and append-only chain, proving that source reconstruction,
 // rather than a broken digest alone, is the rejection boundary.
 type Evidence struct {
-	ID           string `json:"id"`
-	Kind         string `json:"kind"`
-	ClaimID      string `json:"claim_id"`
-	SourceCaseID string `json:"source_case_id"`
-	Digest       string `json:"digest"`
+	ID                    string `json:"id"`
+	ClaimID               string `json:"claim_id"`
+	SourceCaseID          string `json:"source_case_id"`
+	Subject               string `json:"subject"`
+	Predicate             string `json:"predicate"`
+	ObservedObject        string `json:"observed_object"`
+	Provenance            string `json:"provenance"`
+	ObservationComparison string `json:"observation_comparison"`
+	Digest                string `json:"digest"`
 }
 
 type Coordinate struct {
@@ -96,7 +100,7 @@ func main() {
 	}
 	var supporting Evidence
 	for _, evidence := range envelope.Evidence {
-		if evidence.Kind == "SUPPORTING" {
+		if evidence.ObservationComparison == "EQUALITY" {
 			supporting = evidence
 			break
 		}
@@ -106,10 +110,10 @@ func main() {
 	}
 	const contradictionIndex = 8
 	cause := &envelope.CauseReceipts[contradictionIndex]
-	cause.Kind = "SUPPORTING_EVIDENCE"
+	cause.Kind = "SUPPORTS_OBSERVATION"
 	cause.EvidenceIDs = []string{supporting.ID}
-	cause.Coordinate.Reason = "SUPPORTING_EVIDENCE"
-	cause.Reason = "SUPPORTING_EVIDENCE"
+	cause.Coordinate.Reason = "OBSERVATION_MATCHES_PROPOSITION"
+	cause.Reason = "OBSERVATION_MATCHES_PROPOSITION"
 	cause.Digest = digestWithoutCause(*cause)
 	transition := &envelope.Transitions[contradictionIndex]
 	transition.Event = "EVIDENCE_ACCEPTED"

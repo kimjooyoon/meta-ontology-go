@@ -48,8 +48,8 @@ jobs:
           set -euo pipefail
           test "$(go env GOVERSION)" = "go1.27.0"
           test -z "$(gofmt -l scripts/claim-lifecycle-calculus/main.go scripts/claim-lifecycle-calculus-judge/main.go scripts/claim-lifecycle-calculus-tamper/main.go)"
-          if rg -n 'claim-lifecycle-calculus-judge' scripts/claim-lifecycle-calculus/main.go; then
-            echo 'producer must not import or copy the independent judge' >&2
+          if go list -deps ./scripts/claim-lifecycle-calculus | rg -Fq '/scripts/claim-lifecycle-calculus-judge'; then
+            echo 'producer must not depend on the independent judge package' >&2
             exit 1
           fi
           go test ./scripts/claim-lifecycle-calculus ./scripts/claim-lifecycle-calculus-judge ./scripts/claim-lifecycle-calculus-tamper
@@ -69,7 +69,7 @@ jobs:
           go run ./scripts/claim-lifecycle-calculus --source "${source}" --source-label "${source}" --head-sha "${HEAD_SHA}" --output "${output}/baseline-replay.json"
           cmp "${output}/baseline.json" "${output}/baseline-replay.json"
           cp "${source}" "${output}/semantic.gooo"
-          sed -i 's/evidence_kind=CONTRADICTING/evidence_kind=SUPPORTING/' "${output}/semantic.gooo"
+          sed -i 's/observation_tuples=server,status,down/observation_tuples=server,status,healthy/' "${output}/semantic.gooo"
           go run ./scripts/claim-lifecycle-calculus --source "${output}/semantic.gooo" --source-label "semantic-intervention.gooo" --head-sha "${HEAD_SHA}" --output "${output}/semantic.json"
           cp "${source}" "${output}/comment.gooo"
           printf '\n// comment-only intervention\n' >> "${output}/comment.gooo"
@@ -116,25 +116,25 @@ jobs:
             exit 1
           fi
           jq -e --arg head "${HEAD_SHA}" '
-            .schema == "gooo/claim-lifecycle-calculus/v2" and .head_sha == $head and .go_version == "go1.27.0" and
-            (.source_relation.activities | length) == 6 and (.claims | length) == 6 and (.evidence | length) == 2 and
+            .schema == "gooo/claim-lifecycle-calculus/v3" and .head_sha == $head and .go_version == "go1.27.0" and
+            (.source_relation.activities | length) == 6 and (.claims | length) == 6 and (.evidence | length) == 5 and
             (.transitions | length) == 12 and (.cause_receipts | length) == 12 and
             .summary.claims_total == 6 and .summary.transitions_total == 12 and .summary.cases_total == 6 and
             .summary.open_claims == 4 and .summary.discharged_claims == 1 and .summary.refuted_claims == 1 and
             .summary.case_decision_counts.pass == 2 and .summary.case_decision_counts.fail_closed == 1 and .summary.case_decision_counts.unknown == 3 and
             .summary.direct_unknown_cases == 2 and .summary.dependency_blocked_cases == 1 and
             ([.transitions[] | select(.event == "EVIDENCE_CONTRADICTED" and .before == "OPEN" and .after == "REFUTED")] | length) == 1 and
-            ([.cause_receipts[] | select(.kind == "CONTRADICTING_EVIDENCE")] | length) == 1 and
+            ([.cause_receipts[] | select(.kind == "CONTRADICTS_OBSERVATION")] | length) == 1 and
             ([.metrics[].proof_choice] | unique | sort) == ["COHERENCE", "FOUNDATION", "REGRESSION"] and
             ([.metrics[] | select(.id == "producer-import-boundary.v1") | {numerator, denominator}] | first) == {numerator: 0, denominator: 0} and
             ([.metrics[] | select(.id == "persistent-claim-ledger.v1") | {numerator, denominator}] | first) == {numerator: 6, denominator: 6} and
             .effects.repository_writes == 0 and .effects.mutation_authority == false and
-            .conformance_decision.value == "PASS" and .subject_resolution.value == "UNKNOWN_AND_FAIL_CLOSED_PRESENT"
+            .conformance_decision.value == "PASS" and .subject_resolution.value == "MIXED" and .subject_resolution.resolution == "LOWER_RESOLUTION"
           ' "${output}/baseline.json"
           jq -n --slurpfile b "${output}/baseline.json" --slurpfile s "${output}/semantic.json" --slurpfile c "${output}/comment.json" '
             ($b[0]) as $b | ($s[0]) as $s | ($c[0]) as $c |
-            ($s.raw_source_digest != $b.raw_source_digest and $s.semantic_receipt_digest != $b.semantic_receipt_digest and $s.source_relation.semantic_ir_digest != $b.source_relation.semantic_ir_digest and $s.transitions != $b.transitions and $s.conformance_decision != $b.conformance_decision) as $semantic |
-            ($c.raw_source_digest != $b.raw_source_digest and $c.semantic_receipt_digest == $b.semantic_receipt_digest and $c.source_relation.semantic_ir_digest == $b.source_relation.semantic_ir_digest and $c.transitions == $b.transitions and $c.conformance_decision == $b.conformance_decision and $c.subject_counts == $b.subject_counts) as $comment |
+            ($s.raw_source_digest != $b.raw_source_digest and $s.semantic_receipt_digest != $b.semantic_receipt_digest and $s.source_relation.semantic_ir_digest != $b.source_relation.semantic_ir_digest and $s.transitions != $b.transitions and $s.subject_resolution != $b.subject_resolution and $s.subject_counts != $b.subject_counts and ([ $s.cases[] | select(.relation == "SUPPORTS" and .observed_status == "DISCHARGED") ] | length) > ([ $b.cases[] | select(.relation == "SUPPORTS" and .observed_status == "DISCHARGED") ] | length)) as $semantic |
+            ($c.raw_source_digest != $b.raw_source_digest and $c.semantic_receipt_digest == $b.semantic_receipt_digest and $c.source_relation.semantic_ir_digest == $b.source_relation.semantic_ir_digest and $c.transitions == $b.transitions and $c.conformance_decision == $b.conformance_decision and $c.subject_counts == $b.subject_counts and $c.subject_resolution == $b.subject_resolution) as $comment |
             def metric($n; $d; $proof): {numerator: $n, denominator: $d, producer: "claimlifecyclecalculus.Evaluate", consumer: "claim-lifecycle-calculus-judge", meta_operation: "preserve-claim-lifecycle", proof_choice: $proof, satisfied: ($d == 0 or $n == $d)};
             {source_cases: metric(6;6;"FOUNDATION"), producer_imports: metric(0;0;"FOUNDATION"), semantic_causality: metric((if $semantic then 1 else 0 end);1;"COHERENCE"), nonsemantic_preservation: metric((if $comment then 1 else 0 end);1;"REGRESSION"), persistent_claims: metric(6;6;"COHERENCE"), coherent_tamper_rejected: metric(1;1;"REGRESSION")} |
             if .semantic_causality.numerator == 1 and .nonsemantic_preservation.numerator == 1 then . else error("intervention metric failed") end
@@ -143,5 +143,5 @@ jobs:
             echo '### Claim lifecycle calculus'
             jq -r '"- source_cases=\(.source_cases.numerator)/\(.source_cases.denominator), producer_imports=\(.producer_imports.numerator)/\(.producer_imports.denominator), persistent_claims=\(.persistent_claims.numerator)/\(.persistent_claims.denominator)"' "${output}/intervention-metrics.json"
             jq -r '"- semantic_causality=\(.semantic_causality.numerator)/\(.semantic_causality.denominator), nonsemantic_preservation=\(.nonsemantic_preservation.numerator)/\(.nonsemantic_preservation.denominator), coherent_tamper_rejected=\(.coherent_tamper_rejected.numerator)/\(.coherent_tamper_rejected.denominator)"' "${output}/intervention-metrics.json"
-            jq -r '"- conformance=\(.conformance_decision.value), subject=\(.subject_resolution.value), cases PASS=\(.summary.case_decision_counts.pass) FAIL_CLOSED=\(.summary.case_decision_counts.fail_closed) UNKNOWN=\(.summary.case_decision_counts.unknown)"' "${output}/baseline.json"
+            jq -r '"- conformance=\(.conformance_decision.value), subject_decision=\(.subject_resolution.value), resolution=\(.subject_resolution.resolution), cases PASS=\(.summary.case_decision_counts.pass) FAIL_CLOSED=\(.summary.case_decision_counts.fail_closed) UNKNOWN=\(.summary.case_decision_counts.unknown)"' "${output}/baseline.json"
           } >> "${GITHUB_STEP_SUMMARY}"

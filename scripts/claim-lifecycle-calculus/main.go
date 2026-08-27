@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	receiptSchema = "gooo/claim-lifecycle-calculus/v2"
+	receiptSchema = "gooo/claim-lifecycle-calculus/v3"
 	metaOperation = "preserve-claim-lifecycle"
 	producerID    = "claimlifecyclecalculus.Evaluate"
 	consumerID    = "claim-lifecycle-calculus-judge"
@@ -25,18 +25,28 @@ const (
 )
 
 type SourceCase struct {
-	CaseID            string `json:"case_id"`
-	ClaimID           string `json:"claim_id"`
-	PriorState        string `json:"prior_state"`
-	EvidenceKind      string `json:"evidence_kind"`
-	EvidenceID        string `json:"evidence_id"`
-	DependencyClaimID string `json:"dependency_claim_id"`
-	ObservedStage     string `json:"observed_stage"`
-	ObservedStep      string `json:"observed_step"`
-	ObservedReason    string `json:"observed_reason"`
-	ExpectedStatus    string `json:"expected_status"`
-	ExpectedDecision  string `json:"expected_decision"`
-	Provenance        string `json:"provenance"`
+	CaseID            string             `json:"case_id"`
+	ClaimID           string             `json:"claim_id"`
+	Proposition       Proposition        `json:"proposition"`
+	Observations      []ObservationTuple `json:"observations"`
+	DependencyClaimID string             `json:"dependency_claim_id"`
+	ObservedStage     string             `json:"observed_stage"`
+	ObservedStep      string             `json:"observed_step"`
+	Provenance        string             `json:"provenance"`
+}
+
+type Proposition struct {
+	Subject   string `json:"subject"`
+	Predicate string `json:"predicate"`
+	Object    string `json:"object"`
+}
+
+type ObservationTuple struct {
+	ID         string `json:"id"`
+	Subject    string `json:"subject"`
+	Predicate  string `json:"predicate"`
+	Object     string `json:"observed_object"`
+	Provenance string `json:"provenance"`
 }
 
 type EntityBinding struct {
@@ -63,23 +73,27 @@ type SourceRelation struct {
 }
 
 type Claim struct {
-	ID                string     `json:"id"`
-	CaseID            string     `json:"case_id"`
-	Statement         string     `json:"statement"`
-	DeclarationDigest string     `json:"declaration_digest"`
-	Status            string     `json:"status"`
-	Coordinate        Coordinate `json:"coordinate"`
-	Reason            string     `json:"reason"`
-	EvidenceDigest    string     `json:"evidence_digest"`
-	Provenance        string     `json:"provenance"`
+	ID                string      `json:"id"`
+	CaseID            string      `json:"case_id"`
+	Proposition       Proposition `json:"proposition"`
+	DeclarationDigest string      `json:"declaration_digest"`
+	Status            string      `json:"status"`
+	Coordinate        Coordinate  `json:"coordinate"`
+	Reason            string      `json:"reason"`
+	EvidenceDigest    string      `json:"evidence_digest"`
+	Provenance        string      `json:"provenance"`
 }
 
 type Evidence struct {
-	ID           string `json:"id"`
-	Kind         string `json:"kind"`
-	ClaimID      string `json:"claim_id"`
-	SourceCaseID string `json:"source_case_id"`
-	Digest       string `json:"digest"`
+	ID                    string `json:"id"`
+	ClaimID               string `json:"claim_id"`
+	SourceCaseID          string `json:"source_case_id"`
+	Subject               string `json:"subject"`
+	Predicate             string `json:"predicate"`
+	ObservedObject        string `json:"observed_object"`
+	Provenance            string `json:"provenance"`
+	ObservationComparison string `json:"observation_comparison"`
+	Digest                string `json:"digest"`
 }
 
 type Coordinate struct {
@@ -114,18 +128,16 @@ type Transition struct {
 }
 
 type CaseResult struct {
-	ID               string     `json:"id"`
-	ClaimID          string     `json:"claim_id"`
-	ExpectedStatus   string     `json:"expected_status"`
-	ObservedStatus   string     `json:"observed_status"`
-	ExpectedDecision string     `json:"expected_decision"`
-	Decision         string     `json:"decision"`
-	Conformance      string     `json:"conformance"`
-	ObservedEvent    string     `json:"observed_event"`
-	CauseKind        string     `json:"cause_kind"`
-	Coordinate       Coordinate `json:"coordinate"`
-	Reason           string     `json:"reason"`
-	Provenance       string     `json:"provenance"`
+	ID             string     `json:"id"`
+	ClaimID        string     `json:"claim_id"`
+	Relation       string     `json:"relation"`
+	ObservedStatus string     `json:"observed_status"`
+	Decision       string     `json:"decision"`
+	ObservedEvent  string     `json:"observed_event"`
+	CauseKind      string     `json:"cause_kind"`
+	Coordinate     Coordinate `json:"coordinate"`
+	Reason         string     `json:"reason"`
+	Provenance     string     `json:"provenance"`
 }
 
 type Metric struct {
@@ -212,7 +224,9 @@ type observation struct {
 	Event          string
 	After          string
 	Decision       string
+	Relation       string
 	CauseKind      string
+	Reason         string
 	EvidenceDigest string
 }
 
@@ -294,12 +308,19 @@ func inspectSource(path string, raw []byte) (SourceRelation, error) {
 	}
 	seenCases := make(map[string]bool, caseTotal)
 	seenClaims := make(map[string]bool, caseTotal)
+	seenObservations := make(map[string]bool)
 	for _, activity := range relation.Activities {
 		if seenCases[activity.Case.CaseID] || seenClaims[activity.Case.ClaimID] {
 			return SourceRelation{}, fmt.Errorf("source case or claim identity is duplicated")
 		}
 		seenCases[activity.Case.CaseID] = true
 		seenClaims[activity.Case.ClaimID] = true
+		for _, observation := range activity.Case.Observations {
+			if seenObservations[observation.ID] {
+				return SourceRelation{}, fmt.Errorf("observation identity %q is duplicated", observation.ID)
+			}
+			seenObservations[observation.ID] = true
+		}
 	}
 	for _, activity := range relation.Activities {
 		if dependency := activity.Case.DependencyClaimID; dependency != "" && !seenClaims[dependency] {
@@ -357,10 +378,9 @@ func parseSourceCase(program string) (SourceCase, error) {
 		key string
 		dst *string
 	}{
-		{"case_id", &caseInfo.CaseID}, {"claim_id", &caseInfo.ClaimID}, {"prior_state", &caseInfo.PriorState},
-		{"evidence_kind", &caseInfo.EvidenceKind}, {"evidence_id", &caseInfo.EvidenceID}, {"dependency_claim_id", &caseInfo.DependencyClaimID},
-		{"observed_stage", &caseInfo.ObservedStage}, {"observed_step", &caseInfo.ObservedStep}, {"observed_reason", &caseInfo.ObservedReason},
-		{"expected_status", &caseInfo.ExpectedStatus}, {"expected_decision", &caseInfo.ExpectedDecision}, {"provenance", &caseInfo.Provenance},
+		{"case_id", &caseInfo.CaseID}, {"claim_id", &caseInfo.ClaimID},
+		{"claim_subject", &caseInfo.Proposition.Subject}, {"claim_predicate", &caseInfo.Proposition.Predicate}, {"claim_object", &caseInfo.Proposition.Object},
+		{"dependency_claim_id", &caseInfo.DependencyClaimID}, {"observed_stage", &caseInfo.ObservedStage}, {"observed_step", &caseInfo.ObservedStep}, {"provenance", &caseInfo.Provenance},
 	}
 	for _, field := range fields {
 		value, err := read(field.key)
@@ -369,19 +389,53 @@ func parseSourceCase(program string) (SourceCase, error) {
 		}
 		*field.dst = value
 	}
-	if caseInfo.CaseID == "" || caseInfo.ClaimID == "" || caseInfo.PriorState == "" || caseInfo.EvidenceKind == "" || caseInfo.ObservedStage == "" || caseInfo.ObservedStep == "" || caseInfo.ObservedReason == "" || caseInfo.ExpectedStatus == "" || caseInfo.ExpectedDecision == "" || caseInfo.Provenance == "" {
-		return SourceCase{}, fmt.Errorf("source case has an empty required observation")
+	observations, err := parseObservationTuples(values["observation_ids"], values["observation_tuples"])
+	if err != nil {
+		return SourceCase{}, err
+	}
+	caseInfo.Observations = observations
+	if caseInfo.CaseID == "" || caseInfo.ClaimID == "" || caseInfo.Proposition.Subject == "" || caseInfo.Proposition.Predicate == "" || caseInfo.Proposition.Object == "" || caseInfo.ObservedStage == "" || caseInfo.ObservedStep == "" || caseInfo.Provenance == "" {
+		return SourceCase{}, fmt.Errorf("source case has an empty claim or observation field")
 	}
 	return caseInfo, nil
+}
+
+func parseObservationTuples(idsValue, tuplesValue string) ([]ObservationTuple, error) {
+	if idsValue == "" && tuplesValue == "" {
+		return nil, nil
+	}
+	if idsValue == "" || tuplesValue == "" {
+		return nil, fmt.Errorf("observation ids and tuples must be supplied together")
+	}
+	ids := strings.Split(idsValue, ",")
+	tuples := strings.Split(tuplesValue, "|")
+	if len(ids) != len(tuples) {
+		return nil, fmt.Errorf("observation ids and tuples have different cardinality")
+	}
+	result := make([]ObservationTuple, 0, len(ids))
+	for index, packed := range tuples {
+		parts := strings.Split(packed, ",")
+		if len(parts) != 4 || ids[index] == "" {
+			return nil, fmt.Errorf("observation tuple %q is not subject,predicate,object,provenance", packed)
+		}
+		for _, part := range parts {
+			if part == "" {
+				return nil, fmt.Errorf("observation tuple %q contains an empty field", packed)
+			}
+		}
+		result = append(result, ObservationTuple{ID: ids[index], Subject: parts[0], Predicate: parts[1], Object: parts[2], Provenance: parts[3]})
+	}
+	return result, nil
 }
 
 func buildReceipt(sourcePath, headSHA string, raw []byte, relation SourceRelation, before, after string) Receipt {
 	claims := make([]Claim, 0, len(relation.Activities))
 	for _, activity := range relation.Activities {
-		statement := statementOf(activity)
-		claims = append(claims, Claim{ID: activity.Case.ClaimID, CaseID: activity.Case.CaseID, Statement: statement, DeclarationDigest: digestJSON(struct {
-			ID, Statement string
-		}{activity.Case.ClaimID, statement}), Status: "OPEN", Provenance: provenanceOf(activity, relation)})
+		proposition := activity.Case.Proposition
+		claims = append(claims, Claim{ID: activity.Case.ClaimID, CaseID: activity.Case.CaseID, Proposition: proposition, DeclarationDigest: digestJSON(struct {
+			ID          string
+			Proposition Proposition
+		}{activity.Case.ClaimID, proposition}), Status: "OPEN", Provenance: provenanceOf(activity, relation)})
 	}
 	evidence := buildEvidence(relation)
 	evidenceByID := make(map[string]Evidence, len(evidence))
@@ -414,7 +468,7 @@ func buildReceipt(sourcePath, headSHA string, raw []byte, relation SourceRelatio
 		Transitions: transitions, CauseReceipts: causes, Cases: cases, Summary: summary,
 		Effects: Effects{RepositoryWrites: boolInt(before != after), MutationAuthority: false, BeforeSnapshotDigest: before, AfterSnapshotDigest: after, RuntimeVersion: runtime.Version()},
 	}
-	receipt.ConformanceDecision = conformanceDecision(cases)
+	receipt.ConformanceDecision = conformanceDecision(cases, claims, transitions)
 	receipt.SubjectCounts = subjectCounts(claims, cases)
 	receipt.SubjectResolution = subjectResolution(receipt.SubjectCounts)
 	receipt.Metrics = buildMetrics(receipt)
@@ -428,13 +482,16 @@ func buildEvidence(relation SourceRelation) []Evidence {
 	seen := make(map[string]bool)
 	for _, activity := range relation.Activities {
 		caseInfo := activity.Case
-		if caseInfo.EvidenceID == "" || (caseInfo.EvidenceKind != "SUPPORTING" && caseInfo.EvidenceKind != "CONTRADICTING") || seen[caseInfo.EvidenceID] {
-			continue
+		for _, observation := range caseInfo.Observations {
+			if seen[observation.ID] {
+				continue
+			}
+			seen[observation.ID] = true
+			comparison := compareObservation(caseInfo.Proposition, observation)
+			result = append(result, Evidence{ID: observation.ID, ClaimID: caseInfo.ClaimID, SourceCaseID: caseInfo.CaseID, Subject: observation.Subject, Predicate: observation.Predicate, ObservedObject: observation.Object, Provenance: observation.Provenance, ObservationComparison: comparison, Digest: digestJSON(struct {
+				ID, Subject, Predicate, Object, Provenance, Comparison, ClaimID, SourceCaseID, RelationDigest string
+			}{observation.ID, observation.Subject, observation.Predicate, observation.Object, observation.Provenance, comparison, caseInfo.ClaimID, caseInfo.CaseID, relation.Digest})})
 		}
-		seen[caseInfo.EvidenceID] = true
-		result = append(result, Evidence{ID: caseInfo.EvidenceID, Kind: caseInfo.EvidenceKind, ClaimID: caseInfo.ClaimID, SourceCaseID: caseInfo.CaseID, Digest: digestJSON(struct {
-			ID, Kind, ClaimID, SourceCaseID, RelationDigest string
-		}{caseInfo.EvidenceID, caseInfo.EvidenceKind, caseInfo.ClaimID, caseInfo.CaseID, relation.Digest})})
 	}
 	return result
 }
@@ -455,69 +512,120 @@ func buildLedger(relation SourceRelation, claims []Claim, evidence map[string]Ev
 		transition.Digest = digestWithoutTransition(transition)
 		transitions = append(transitions, transition)
 	}
-	for index, claim := range claims {
-		activity := relation.Activities[index]
+	for _, claim := range claims {
+		activity := activityForClaim(relation, claim.ID)
 		appendEvent(claim, "CLAIM_OPENED", "UNRECORDED", "OPEN", "", CauseReceipt{Kind: "DECLARATION", Coordinate: Coordinate{Stage: "CLAIM", Step: "declare", Reason: "CLAIM_OPENED"}, Reason: "source activity " + activity.Name + " declared claim " + claim.ID, Provenance: provenanceOf(activity, relation)})
 	}
-	for index, activity := range relation.Activities {
-		claim := claims[index]
-		observed := observeCase(activity.Case, evidence)
-		cause := CauseReceipt{Kind: observed.CauseKind, Coordinate: Coordinate{Stage: activity.Case.ObservedStage, Step: activity.Case.ObservedStep, Reason: activity.Case.ObservedReason}, Reason: activity.Case.ObservedReason, Provenance: provenanceOf(activity, relation)}
-		if activity.Case.EvidenceID != "" {
-			if item, ok := evidence[activity.Case.EvidenceID]; ok {
-				cause.EvidenceIDs = []string{item.ID}
+	claimStatuses := make(map[string]string, len(claims))
+	for _, claim := range claims {
+		claimStatuses[claim.ID] = "OPEN"
+	}
+	for _, activity := range relation.Activities {
+		claim := claimForID(claims, activity.Case.ClaimID)
+		observed := observeCase(activity.Case, evidence, claimStatuses)
+		cause := CauseReceipt{Kind: observed.CauseKind, Coordinate: Coordinate{Stage: activity.Case.ObservedStage, Step: activity.Case.ObservedStep, Reason: observed.Reason}, Reason: observed.Reason, Provenance: provenanceOf(activity, relation)}
+		for _, observation := range activity.Case.Observations {
+			if item, ok := evidence[observation.ID]; ok {
+				cause.EvidenceIDs = append(cause.EvidenceIDs, item.ID)
 			}
 		}
 		if activity.Case.DependencyClaimID != "" {
 			cause.DependencyClaimIDs = []string{activity.Case.DependencyClaimID}
 		}
-		appendEvent(claim, observed.Event, activity.Case.PriorState, observed.After, observed.EvidenceDigest, cause)
-		cases = append(cases, CaseResult{ID: activity.Case.CaseID, ClaimID: claim.ID, ExpectedStatus: activity.Case.ExpectedStatus, ObservedStatus: observed.After, ExpectedDecision: activity.Case.ExpectedDecision, Decision: observed.Decision, Conformance: caseConformance(activity.Case, observed), ObservedEvent: observed.Event, CauseKind: observed.CauseKind, Coordinate: cause.Coordinate, Reason: activity.Case.ObservedReason, Provenance: provenanceOf(activity, relation)})
+		appendEvent(claim, observed.Event, "OPEN", observed.After, observed.EvidenceDigest, cause)
+		claimStatuses[claim.ID] = observed.After
+		cases = append(cases, CaseResult{ID: activity.Case.CaseID, ClaimID: claim.ID, Relation: observed.Relation, ObservedStatus: observed.After, Decision: observed.Decision, ObservedEvent: observed.Event, CauseKind: observed.CauseKind, Coordinate: cause.Coordinate, Reason: observed.Reason, Provenance: provenanceOf(activity, relation)})
 	}
 	return transitions, causes, cases
 }
 
-func observeCase(caseInfo SourceCase, evidence map[string]Evidence) observation {
-	result := observation{After: caseInfo.PriorState, Decision: "FAIL_CLOSED", CauseKind: "INVALID_OBSERVATION"}
-	if caseInfo.PriorState != "OPEN" {
-		result.Event = "EVIDENCE_INVALID"
+func observeCase(caseInfo SourceCase, evidence map[string]Evidence, claimStatuses map[string]string) observation {
+	result := observation{After: "OPEN", Decision: "FAIL_CLOSED", Relation: "INVALID", CauseKind: "INVALID_OBSERVATION", Reason: "INVALID_SOURCE_CASE"}
+	if caseInfo.DependencyClaimID != "" && len(caseInfo.Observations) == 0 {
+		upstream, ok := claimStatuses[caseInfo.DependencyClaimID]
+		if !ok {
+			result.Event = "EVIDENCE_INVALID"
+			return result
+		}
+		if upstream == "OPEN" {
+			result.Event, result.Decision, result.Relation, result.CauseKind, result.Reason = "EVIDENCE_DEPENDENCY_BLOCKED", "UNKNOWN", "UNAVAILABLE", "DEPENDENCY_BLOCKED", "UPSTREAM_CLAIM_OPEN"
+			return result
+		}
+	}
+	if len(caseInfo.Observations) == 0 {
+		result.Event, result.Decision, result.Relation, result.CauseKind, result.Reason = "EVIDENCE_UNAVAILABLE", "UNKNOWN", "UNAVAILABLE", "DIRECT_UNKNOWN", "NO_OBSERVATION"
 		return result
 	}
-	switch caseInfo.EvidenceKind {
-	case "SUPPORTING":
-		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_ACCEPTED", "DISCHARGED", "PASS", "SUPPORTING_EVIDENCE"
-	case "CONTRADICTING":
-		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_CONTRADICTED", "REFUTED", "PASS", "CONTRADICTING_EVIDENCE"
-	case "UNAVAILABLE":
-		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_UNAVAILABLE", "OPEN", "UNKNOWN", "DIRECT_UNKNOWN"
-	case "DEPENDENCY_BLOCKED":
-		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_DEPENDENCY_BLOCKED", "OPEN", "UNKNOWN", "DEPENDENCY_BLOCKED"
+	comparisons := make([]string, 0, len(caseInfo.Observations))
+	for _, item := range caseInfo.Observations {
+		if evidenceItem, ok := evidence[item.ID]; !ok {
+			result.Event = "EVIDENCE_INVALID"
+			return result
+		} else {
+			comparisons = append(comparisons, evidenceItem.ObservationComparison)
+			result.EvidenceDigest = joinDigest(result.EvidenceDigest, evidenceItem.Digest)
+		}
+	}
+	relation := relationFromComparisons(comparisons)
+	switch relation {
+	case "SUPPORTS":
+		result.Event, result.After, result.Decision, result.CauseKind, result.Reason = "EVIDENCE_ACCEPTED", "DISCHARGED", "PASS", "SUPPORTS_OBSERVATION", "OBSERVATION_MATCHES_PROPOSITION"
+	case "CONTRADICTS":
+		result.Event, result.After, result.Decision, result.CauseKind, result.Reason = "EVIDENCE_CONTRADICTED", "REFUTED", "PASS", "CONTRADICTS_OBSERVATION", "OBSERVED_OBJECT_CONFLICTS_WITH_PROPOSITION"
+	case "INSUFFICIENT":
+		result.Event, result.Decision, result.CauseKind, result.Reason = "EVIDENCE_INSUFFICIENT", "UNKNOWN", "INSUFFICIENT_OBSERVATION", "OBSERVATION_TUPLE_DOES_NOT_MATCH_PROPOSITION"
 	case "AMBIGUOUS":
-		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_AMBIGUOUS", "OPEN", "FAIL_CLOSED", "AMBIGUOUS_EVIDENCE"
+		result.Event, result.Decision, result.CauseKind, result.Reason = "EVIDENCE_CONFLICT", "FAIL_CLOSED", "AMBIGUOUS_OBSERVATION", "OBSERVATIONS_CONFLICT"
 	default:
 		result.Event = "EVIDENCE_INVALID"
 		return result
 	}
-	if (caseInfo.EvidenceKind == "SUPPORTING" || caseInfo.EvidenceKind == "CONTRADICTING") && caseInfo.EvidenceID != "" {
-		if item, ok := evidence[caseInfo.EvidenceID]; ok && item.Kind == caseInfo.EvidenceKind {
-			result.EvidenceDigest = item.Digest
-			return result
-		}
-	}
-	if caseInfo.EvidenceKind == "SUPPORTING" || caseInfo.EvidenceKind == "CONTRADICTING" {
-		result.Event, result.After, result.Decision, result.CauseKind = "EVIDENCE_INVALID", "OPEN", "FAIL_CLOSED", "INVALID_OBSERVATION"
-	}
-	if caseInfo.EvidenceKind == "DEPENDENCY_BLOCKED" && caseInfo.DependencyClaimID == "" {
-		result.Event, result.Decision, result.CauseKind = "EVIDENCE_INVALID", "FAIL_CLOSED", "INVALID_OBSERVATION"
-	}
+	result.Relation = relation
 	return result
 }
 
-func caseConformance(source SourceCase, observed observation) string {
-	if source.ExpectedStatus == observed.After && source.ExpectedDecision == observed.Decision {
-		return "PASS"
+func compareObservation(proposition Proposition, observation ObservationTuple) string {
+	if proposition == (Proposition{Subject: observation.Subject, Predicate: observation.Predicate, Object: observation.Object}) {
+		return "EQUALITY"
 	}
-	return "FAIL_CLOSED"
+	if proposition.Subject == observation.Subject && proposition.Predicate == observation.Predicate {
+		return "CONTRADICTION"
+	}
+	return "INSUFFICIENT"
+}
+
+func relationFromComparisons(comparisons []string) string {
+	if len(comparisons) == 0 {
+		return "UNAVAILABLE"
+	}
+	equality, contradiction, insufficient := 0, 0, 0
+	for _, comparison := range comparisons {
+		switch comparison {
+		case "EQUALITY":
+			equality++
+		case "CONTRADICTION":
+			contradiction++
+		case "INSUFFICIENT":
+			insufficient++
+		}
+	}
+	if equality == len(comparisons) {
+		return "SUPPORTS"
+	}
+	if contradiction == len(comparisons) {
+		return "CONTRADICTS"
+	}
+	if equality+contradiction+insufficient != len(comparisons) || (equality > 0 && contradiction > 0) || (len(comparisons) > 1 && (equality > 0 || contradiction > 0) && insufficient > 0) {
+		return "AMBIGUOUS"
+	}
+	return "INSUFFICIENT"
+}
+
+func joinDigest(current, next string) string {
+	if current == "" {
+		return next
+	}
+	return digestString(current + "|" + next)
 }
 
 func summarize(claims []Claim, transitions []Transition, cases []CaseResult) Summary {
@@ -547,20 +655,23 @@ func summarize(claims []Claim, transitions []Transition, cases []CaseResult) Sum
 		case "DEPENDENCY_BLOCKED":
 			summary.DependencyBlockedCases++
 		}
-		if item.CauseKind == "CONTRADICTING_EVIDENCE" && item.ObservedStatus == "REFUTED" {
+		if item.Relation == "CONTRADICTS" && item.ObservedStatus == "REFUTED" {
 			summary.ContradictingClosures++
 		}
 	}
 	return summary
 }
 
-func conformanceDecision(cases []CaseResult) Decision {
+func conformanceDecision(cases []CaseResult, claims []Claim, transitions []Transition) Decision {
+	if len(cases) != caseTotal || len(claims) != caseTotal || len(transitions) != caseTotal*2 {
+		return Decision{Value: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Reason: "source case, claim, or transition cardinality is incomplete"}
+	}
 	for _, item := range cases {
-		if item.Conformance != "PASS" {
-			return Decision{Value: "FAIL_CLOSED", Resolution: "SOURCE_CASE_MISMATCH", Reason: "observed lifecycle did not match source case " + item.ID}
+		if item.Relation == "INVALID" || item.ObservedStatus == "" || item.Decision == "" || item.Reason == "" {
+			return Decision{Value: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Reason: "case " + item.ID + " has no derived relation or resolution"}
 		}
 	}
-	return Decision{Value: "PASS", Resolution: "SOURCE_CASES_RECONSTRUCTED", Reason: "receipt decisions and transitions were derived from lowered Gooo cases"}
+	return Decision{Value: "PASS", Resolution: "SOURCE_RECONSTRUCTION", Reason: "parser, lowered relation, and append-only ledger are structurally coherent"}
 }
 
 func subjectCounts(claims []Claim, cases []CaseResult) SubjectCounts {
@@ -590,16 +701,23 @@ func subjectCounts(claims []Claim, cases []CaseResult) SubjectCounts {
 }
 
 func subjectResolution(counts SubjectCounts) Decision {
-	if counts.UnknownTotal() > 0 && counts.FailClosed > 0 {
-		return Decision{Value: "UNKNOWN_AND_FAIL_CLOSED_PRESENT", Resolution: "SUBJECT_OUTCOME", Reason: "open claims include direct or dependency-blocked uncertainty and an ambiguous case"}
+	decision := "MIXED"
+	if counts.FailClosed > 0 && counts.Refuted == 0 {
+		decision = "FAIL_CLOSED"
 	}
-	if counts.UnknownTotal() > 0 {
-		return Decision{Value: "UNKNOWN_PRESENT", Resolution: "SUBJECT_OUTCOME", Reason: "open claims retain direct or dependency-blocked uncertainty"}
+	reason := "subject retains lower-resolution outcomes"
+	if counts.Refuted > 0 && counts.Discharged > 0 {
+		reason = "subject contains both discharged and refuted claims"
+	} else if counts.UnknownTotal() > 0 && counts.FailClosed > 0 {
+		reason = "subject contains UNKNOWN and FAIL_CLOSED cases"
+	} else if counts.UnknownTotal() > 0 {
+		reason = "subject contains direct, insufficient, or dependency-blocked uncertainty"
+	} else if counts.FailClosed > 0 {
+		reason = "subject contains an ambiguous observation"
+	} else {
+		reason = "subject case resolutions are explicit even when claims close"
 	}
-	if counts.FailClosed > 0 {
-		return Decision{Value: "FAIL_CLOSED_PRESENT", Resolution: "SUBJECT_OUTCOME", Reason: "at least one subject case refuses closure"}
-	}
-	return Decision{Value: "CLOSED", Resolution: "SUBJECT_OUTCOME", Reason: "all subject cases closed"}
+	return Decision{Value: decision, Resolution: "LOWER_RESOLUTION", Reason: reason}
 }
 
 func (counts SubjectCounts) UnknownTotal() int {
@@ -611,23 +729,11 @@ func buildMetrics(receipt Receipt) []Metric {
 		return Metric{ID: id, Class: class, ProofChoice: proof, Numerator: numerator, Denominator: denominator, Producer: producerID, Consumer: consumerID, MetaOperation: metaOperation, Satisfied: denominator == 0 || numerator == denominator}
 	}
 	closures := receipt.Summary.DischargedClaims + receipt.Summary.RefutedClaims
-	closureDenominator := 0
-	contradictionDenominator := 0
-	unknownDenominator := 0
-	ambiguousDenominator := 0
-	for _, activity := range receipt.SourceRelation.Activities {
-		switch activity.Case.EvidenceKind {
-		case "SUPPORTING", "CONTRADICTING":
-			closureDenominator++
-		case "UNAVAILABLE", "DEPENDENCY_BLOCKED":
-			unknownDenominator++
-		case "AMBIGUOUS":
-			ambiguousDenominator++
-		}
-		if activity.Case.EvidenceKind == "CONTRADICTING" {
-			contradictionDenominator++
-		}
-	}
+	closureDenominator := 2
+	contradictionDenominator := 1
+	unknownDenominator := 3
+	ambiguousDenominator := 1
+	observationDenominator := 5
 	return []Metric{
 		metric("source-cases-reconstructed.v1", "DRIVER", "FOUNDATION", len(receipt.SourceRelation.Activities), caseTotal),
 		metric("producer-import-boundary.v1", "GUARDRAIL", "FOUNDATION", 0, 0),
@@ -638,8 +744,20 @@ func buildMetrics(receipt Receipt) []Metric {
 		metric("contradiction-to-refutation.v1", "OUTCOME", "COHERENCE", receipt.Summary.ContradictingClosures, contradictionDenominator),
 		metric("unknown-cause-partition.v1", "GUARDRAIL", "REGRESSION", receipt.Summary.DirectUnknownCases+receipt.Summary.DependencyBlockedCases, unknownDenominator),
 		metric("ambiguous-evidence-fail-closed.v1", "GUARDRAIL", "REGRESSION", receipt.Summary.CaseDecisionCounts.FailClosed, ambiguousDenominator),
+		metric("observation-tuples-reconstructed.v1", "DRIVER", "FOUNDATION", len(receipt.Evidence), observationDenominator),
+		metric("relation-calculus.v1", "DRIVER", "COHERENCE", relationCount(receipt), caseTotal),
 		metric("read-only-effect-boundary.v1", "GUARDRAIL", "REGRESSION", boolInt(receipt.Effects.RepositoryWrites == 0 && !receipt.Effects.MutationAuthority && receipt.Effects.BeforeSnapshotDigest == receipt.Effects.AfterSnapshotDigest), 1),
 	}
+}
+
+func relationCount(receipt Receipt) int {
+	count := 0
+	for _, item := range receipt.Cases {
+		if item.Relation == "SUPPORTS" || item.Relation == "CONTRADICTS" || item.Relation == "UNAVAILABLE" || item.Relation == "AMBIGUOUS" || item.Relation == "INSUFFICIENT" {
+			count++
+		}
+	}
+	return count
 }
 
 func persistentClaimCount(receipt Receipt) int {
@@ -669,8 +787,22 @@ func names(refs []syntax.NameRef) []string {
 	return result
 }
 
-func statementOf(activity ActivityBinding) string {
-	return activity.Name + "(" + strings.Join(activity.Inputs, ",") + ")->" + activity.Output + " computes " + activity.ValueProgram
+func activityForClaim(relation SourceRelation, claimID string) ActivityBinding {
+	for _, activity := range relation.Activities {
+		if activity.Case.ClaimID == claimID {
+			return activity
+		}
+	}
+	return ActivityBinding{}
+}
+
+func claimForID(claims []Claim, claimID string) Claim {
+	for _, claim := range claims {
+		if claim.ID == claimID {
+			return claim
+		}
+	}
+	return Claim{}
 }
 
 func provenanceOf(activity ActivityBinding, relation SourceRelation) string {
