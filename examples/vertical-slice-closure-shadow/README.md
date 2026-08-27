@@ -30,7 +30,7 @@ this metric closes one vertical capability, not every language obligation.
 | toolchain | 9/9 surfaces and 173/173 cases |
 | release | 3/3 Go 1.27.0 platforms and 20/20 cases |
 
-The current observer uses boundary denominator `v9`. The archived evidence and
+The current observer uses boundary denominator `v10`. The archived evidence and
 the eligibility and activation capsules retain the exact `v1` denominator
 digest that authorized the original transition.
 

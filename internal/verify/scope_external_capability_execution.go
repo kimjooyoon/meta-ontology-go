@@ -17,6 +17,9 @@ func init() {
 		if branch == "agent/gooo-capability-boundary" {
 			branchPaths = append(branchPaths, "examples/language-syntax-roundtrip/corpus.json",
 				"examples/vertical-slice-closure-shadow/README.md",
+				"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+				"internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+				"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
 				"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 				"internal/meta/languagereadiness/languagesyntax/model.go",
 				"internal/meta/languagereadiness/languagesyntax/registry.go")
