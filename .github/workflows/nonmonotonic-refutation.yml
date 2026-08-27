@@ -311,6 +311,7 @@ jobs:
           mutation_promotions="$(jq -n --slurpfile baseline "$output/baseline.json" '
             if ($baseline[0].mutation_authority == false and $baseline[0].promotion_count == 0) then 0 else 1 end
           ')
+          echo "::notice title=nonmonotonic denominator values::producer_imports=$producer_imports semantic_causality=$semantic_causality nonsemantic_preservation=$nonsemantic_preservation coherent_tamper_rejected=$coherent_tamper_rejected mutation_promotions=$mutation_promotions"
           test "$semantic_causality" -eq 1
           test "$nonsemantic_preservation" -eq 1
           test "$coherent_tamper_rejected" -eq 1
