@@ -1,0 +1,300 @@
+{
+  "schema": "gooo/meta-operation-provenance-receipt/v1",
+  "toolchain": "go1.27.0",
+  "repository_workspace_writes": false,
+  "mutation_authority": false,
+  "source_digest": "sha256:de0f3a29f0b760d4724160798d8e91e3d1703374bd5cc089decfecced36666d1",
+  "scenarios": [
+    {
+      "id": "complete",
+      "graph": {
+        "nodes": 15,
+        "edges": 12,
+        "edge_kinds": {
+          "CONSUMES": 3,
+          "EVIDENCED_BY": 3,
+          "OPERATES": 3,
+          "PRODUCES": 3
+        }
+      },
+      "numerator": 12,
+      "denominator": 12,
+      "decisions": {
+        "PASS": 3
+      },
+      "metrics": [
+        {
+          "id": "MOP-FOUNDATION-001",
+          "family": "FOUNDATION",
+          "claim": "OPEN",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-FOUNDATION-001",
+            "consumer": "consumer:MOP-FOUNDATION-001",
+            "meta_operation": "operation:MOP-FOUNDATION-001",
+            "evidence_path": "evidence:MOP-FOUNDATION-001"
+          }
+        },
+        {
+          "id": "MOP-COHERENCE-001",
+          "family": "COHERENCE",
+          "claim": "DISCHARGED",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-COHERENCE-001",
+            "consumer": "consumer:MOP-COHERENCE-001",
+            "meta_operation": "operation:MOP-COHERENCE-001",
+            "evidence_path": "evidence:MOP-COHERENCE-001"
+          }
+        },
+        {
+          "id": "MOP-REGRESSION-001",
+          "family": "REGRESSION",
+          "claim": "REFUTED",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-REGRESSION-001",
+            "consumer": "consumer:MOP-REGRESSION-001",
+            "meta_operation": "operation:MOP-REGRESSION-001",
+            "evidence_path": "evidence:MOP-REGRESSION-001"
+          }
+        }
+      ]
+    },
+    {
+      "id": "disconnected",
+      "graph": {
+        "nodes": 15,
+        "edges": 11,
+        "edge_kinds": {
+          "CONSUMES": 2,
+          "EVIDENCED_BY": 3,
+          "OPERATES": 3,
+          "PRODUCES": 3
+        }
+      },
+      "numerator": 11,
+      "denominator": 12,
+      "decisions": {
+        "FAIL_CLOSED": 1,
+        "PASS": 2
+      },
+      "metrics": [
+        {
+          "id": "MOP-FOUNDATION-001",
+          "family": "FOUNDATION",
+          "claim": "OPEN",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-FOUNDATION-001",
+            "consumer": "consumer:MOP-FOUNDATION-001",
+            "meta_operation": "operation:MOP-FOUNDATION-001",
+            "evidence_path": "evidence:MOP-FOUNDATION-001"
+          }
+        },
+        {
+          "id": "MOP-COHERENCE-001",
+          "family": "COHERENCE",
+          "claim": "DISCHARGED",
+          "numerator": 3,
+          "denominator": 4,
+          "decision": "FAIL_CLOSED",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-COHERENCE-001",
+            "consumer": "",
+            "meta_operation": "operation:MOP-COHERENCE-001",
+            "evidence_path": "evidence:MOP-COHERENCE-001"
+          },
+          "issue": {
+            "stage": "LINEAGE",
+            "step": "connect-consumer",
+            "reason": "DISCONNECTED_METRIC",
+            "cause": "DIRECT_CAUSE"
+          }
+        },
+        {
+          "id": "MOP-REGRESSION-001",
+          "family": "REGRESSION",
+          "claim": "REFUTED",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-REGRESSION-001",
+            "consumer": "consumer:MOP-REGRESSION-001",
+            "meta_operation": "operation:MOP-REGRESSION-001",
+            "evidence_path": "evidence:MOP-REGRESSION-001"
+          }
+        }
+      ]
+    },
+    {
+      "id": "direct-unknown",
+      "graph": {
+        "nodes": 15,
+        "edges": 11,
+        "edge_kinds": {
+          "CONSUMES": 3,
+          "EVIDENCED_BY": 2,
+          "OPERATES": 3,
+          "PRODUCES": 3
+        }
+      },
+      "numerator": 11,
+      "denominator": 12,
+      "decisions": {
+        "PASS": 2,
+        "UNKNOWN": 1
+      },
+      "metrics": [
+        {
+          "id": "MOP-FOUNDATION-001",
+          "family": "FOUNDATION",
+          "claim": "OPEN",
+          "numerator": 3,
+          "denominator": 4,
+          "decision": "UNKNOWN",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-FOUNDATION-001",
+            "consumer": "consumer:MOP-FOUNDATION-001",
+            "meta_operation": "operation:MOP-FOUNDATION-001",
+            "evidence_path": ""
+          },
+          "issue": {
+            "stage": "BINDING",
+            "step": "evidence-path",
+            "reason": "REQUIRED_EVIDENCE_MISSING",
+            "cause": "DIRECT_CAUSE"
+          }
+        },
+        {
+          "id": "MOP-COHERENCE-001",
+          "family": "COHERENCE",
+          "claim": "DISCHARGED",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-COHERENCE-001",
+            "consumer": "consumer:MOP-COHERENCE-001",
+            "meta_operation": "operation:MOP-COHERENCE-001",
+            "evidence_path": "evidence:MOP-COHERENCE-001"
+          }
+        },
+        {
+          "id": "MOP-REGRESSION-001",
+          "family": "REGRESSION",
+          "claim": "REFUTED",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-REGRESSION-001",
+            "consumer": "consumer:MOP-REGRESSION-001",
+            "meta_operation": "operation:MOP-REGRESSION-001",
+            "evidence_path": "evidence:MOP-REGRESSION-001"
+          }
+        }
+      ]
+    },
+    {
+      "id": "dependency-blocked",
+      "graph": {
+        "nodes": 15,
+        "edges": 11,
+        "edge_kinds": {
+          "CONSUMES": 3,
+          "EVIDENCED_BY": 2,
+          "OPERATES": 3,
+          "PRODUCES": 3
+        }
+      },
+      "numerator": 11,
+      "denominator": 12,
+      "decisions": {
+        "PASS": 1,
+        "UNKNOWN": 2
+      },
+      "metrics": [
+        {
+          "id": "MOP-FOUNDATION-001",
+          "family": "FOUNDATION",
+          "claim": "OPEN",
+          "numerator": 3,
+          "denominator": 4,
+          "decision": "UNKNOWN",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-FOUNDATION-001",
+            "consumer": "consumer:MOP-FOUNDATION-001",
+            "meta_operation": "operation:MOP-FOUNDATION-001",
+            "evidence_path": ""
+          },
+          "issue": {
+            "stage": "BINDING",
+            "step": "evidence-path",
+            "reason": "REQUIRED_EVIDENCE_MISSING",
+            "cause": "DIRECT_CAUSE"
+          }
+        },
+        {
+          "id": "MOP-COHERENCE-001",
+          "family": "COHERENCE",
+          "claim": "DISCHARGED",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "PASS",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-COHERENCE-001",
+            "consumer": "consumer:MOP-COHERENCE-001",
+            "meta_operation": "operation:MOP-COHERENCE-001",
+            "evidence_path": "evidence:MOP-COHERENCE-001"
+          }
+        },
+        {
+          "id": "MOP-REGRESSION-001",
+          "family": "REGRESSION",
+          "claim": "REFUTED",
+          "numerator": 4,
+          "denominator": 4,
+          "decision": "UNKNOWN",
+          "evaluation_state": "EVALUATED",
+          "lineage": {
+            "producer": "producer:MOP-REGRESSION-001",
+            "consumer": "consumer:MOP-REGRESSION-001",
+            "meta_operation": "operation:MOP-REGRESSION-001",
+            "evidence_path": "evidence:MOP-REGRESSION-001"
+          },
+          "issue": {
+            "stage": "DEPENDENCY",
+            "step": "propagate-unknown",
+            "reason": "UPSTREAM_UNKNOWN",
+            "cause": "DEPENDENCY_BLOCK",
+            "blocked_by": [
+              "MOP-FOUNDATION-001"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "digest": "sha256:bf855f9d0c551512c2c1557778ed5b88606f219f11691dc70b66f485195ebfcf"
+}

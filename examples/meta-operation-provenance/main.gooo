@@ -1,0 +1,27 @@
+package operationprovenance
+namespace operationprovenance
+
+entity Metric id "gooo://meta-operation-provenance/entity/metric"
+entity Producer id "gooo://meta-operation-provenance/entity/producer"
+entity Consumer id "gooo://meta-operation-provenance/entity/consumer"
+entity MetaOperation id "gooo://meta-operation-provenance/entity/meta-operation"
+entity EvidencePath id "gooo://meta-operation-provenance/entity/evidence-path"
+entity ProducerBoundMetric id "gooo://meta-operation-provenance/entity/producer-bound-metric"
+entity ConsumerBoundMetric id "gooo://meta-operation-provenance/entity/consumer-bound-metric"
+entity OperationBoundMetric id "gooo://meta-operation-provenance/entity/operation-bound-metric"
+entity LineageBoundMetric id "gooo://meta-operation-provenance/entity/lineage-bound-metric"
+entity FoundationMetricDecision id "gooo://meta-operation-provenance/entity/foundation-decision"
+entity CoherenceMetricDecision id "gooo://meta-operation-provenance/entity/coherence-decision"
+entity RegressionMetricDecision id "gooo://meta-operation-provenance/entity/regression-decision"
+entity ClaimState id "gooo://meta-operation-provenance/entity/claim-state"
+entity ProvenanceReceipt id "gooo://meta-operation-provenance/entity/receipt"
+
+activity BindProducer(Metric) -> ProducerBoundMetric
+activity BindConsumer(ProducerBoundMetric) -> ConsumerBoundMetric
+activity BindMetaOperation(ConsumerBoundMetric) -> OperationBoundMetric
+activity BindEvidencePath(OperationBoundMetric) -> LineageBoundMetric
+activity DecideFoundation(LineageBoundMetric) -> FoundationMetricDecision
+activity DecideCoherence(LineageBoundMetric) -> CoherenceMetricDecision
+activity DecideRegression(LineageBoundMetric) -> RegressionMetricDecision
+activity PreserveClaimState(FoundationMetricDecision) -> ClaimState
+activity EmitProvenanceReceipt(ClaimState) -> ProvenanceReceipt

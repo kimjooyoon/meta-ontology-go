@@ -2395,6 +2395,18 @@
         "scripts/ci-plan-usecase",
         "scripts/refactor-metrics/generation.go"
       ]
+    },
+    {
+      "branch": "agent/luna-meta-03-meta-operation-provenance",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/meta-operation-provenance.yml",
+        "examples/meta-operation-provenance",
+        "internal/meta/operationprovenance",
+        "internal/verify/scope_meta_operation_provenance.go",
+        "scripts/meta-operation-provenance"
+      ]
     }
   ],
   "protected_kernel_paths": [
