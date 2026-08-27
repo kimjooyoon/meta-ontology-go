@@ -25,47 +25,99 @@ jobs:
           cache: false
       - name: Require exact Go toolchain
         run: test "$(go env GOVERSION)" = "go1.27.0"
-      - name: Produce, replay, and independently judge all cases
+      - name: Reject self-declared proof outputs
         shell: bash
         run: |
           set -euo pipefail
-          output="$RUNNER_TEMP/proof-choice-algebra"
-          mkdir -p "$output/first" "$output/replay" "$output/judged"
-          for case in foundation coherence regression combined; do
-            source="examples/proof-choice-algebra/$case.gooo"
-            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -output "$output/first/$case.json" -expect PASS
-            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -output "$output/replay/$case.json" -expect PASS
-            cmp "$output/first/$case.json" "$output/replay/$case.json"
-            go run ./scripts/proof-choice-algebra -mode judge -receipt "$output/first/$case.json" -output "$output/judged/$case.json" -expect PASS
-            jq -e '.decision == "PASS" and .summary.fixed_denominator == 3 and .effects.repository_writes == 0 and .effects.mutation_authority == false and .summary.choice_coverage_bps == 10000 and .summary.persistent_transitions == .summary.claims' "$output/first/$case.json"
-            jq -e '.decision == "PASS" and .independent == true and .digest_match == true' "$output/judged/$case.json"
-          done
-      - name: Require fail-closed omission, contradiction, and unknown context
-        shell: bash
-        run: |
-          set -euo pipefail
-          output="$RUNNER_TEMP/proof-choice-algebra"
-          declare -A reasons=(
-            [missing-choice]=PROOF_CHOICE_MISSING
-            [contradiction]=PROOF_CHOICE_CONTRADICTION
-            [unknown-context]=UNKNOWN_CONTEXT
-          )
-          for case in "${!reasons[@]}"; do
-            source="examples/proof-choice-algebra/$case.gooo"
-            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -output "$output/first/$case.json" -expect FAIL_CLOSED
-            go run ./scripts/proof-choice-algebra -mode judge -receipt "$output/first/$case.json" -output "$output/judged/$case.json" -expect FAIL_CLOSED
-            jq -e --arg reason "${reasons[$case]}" '.decision == "FAIL_CLOSED" and .reason == $reason and .summary.fixed_denominator == 3 and .effects.repository_writes == 0 and .effects.mutation_authority == false' "$output/first/$case.json"
-            jq -e --arg reason "${reasons[$case]}" '.decision == "FAIL_CLOSED" and .reason == $reason and .independent == true and .digest_match == true' "$output/judged/$case.json"
-          done
-      - name: Keep the judge independent
-        shell: bash
-        run: |
-          set -euo pipefail
-          if go list -deps ./internal/meta/proofchoicejudge | grep -Fxq 'github.com/kimjooyoon/meta-ontology-go/internal/meta/proofchoicealgebra'; then
-            echo 'independent judge imports producer evaluator' >&2
+          if rg -n '"(choice|numerator|denominator)"' examples/proof-choice-algebra/*.gooo; then
+            echo 'semantic input contains a self-declared proof output' >&2
             exit 1
           fi
-      - name: Upload receipts
+      - name: Produce and independently reconstruct semantic cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/proof-choice-algebra"
+          mkdir -p "$output/first" "$output/replay" "$output/judged" "$output/state"
+          for case in foundation coherence regression combined; do
+            source="examples/proof-choice-algebra/$case.gooo"
+            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -repo-root "$GITHUB_WORKSPACE" \
+              -before-state "$output/state/$case.before" -after-state "$output/state/$case.after" \
+              -output "$output/first/$case.json" -expect PASS
+            go run ./scripts/proof-choice-algebra -mode judge -source "$source" -receipt "$output/first/$case.json" \
+              -before-state "$output/state/$case.before" -after-state "$output/state/$case.after" \
+              -output "$output/judged/$case.json" -expect PASS
+            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -repo-root "$GITHUB_WORKSPACE" \
+              -before-state "$output/state/$case.replay.before" -after-state "$output/state/$case.replay.after" \
+              -output "$output/replay/$case.json" -expect PASS
+            cmp "$output/first/$case.json" "$output/replay/$case.json"
+            jq -e '.decision == "PASS" and .subject_resolution == "EXACT" and .summary.fixed_denominator == 3 and .summary.choice_coverage_bps == 10000 and .summary.metric_slot_numerator == 3 and .summary.metric_slot_denominator == 3 and .effects.observed == true and .effects.repository_writes == 0 and .effects.mutation_authority == false' "$output/first/$case.json"
+            jq -e '.decision == "PASS" and .independent_evidence == 1 and .receipt_digest_match == true and .source_digest_match == true and .semantic_digest_match == true and .effects_match == true and .source_reconstruction.numerator == .source_reconstruction.denominator' "$output/judged/$case.json"
+          done
+      - name: Require lower, unknown, and contradiction outcomes
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/proof-choice-algebra"
+          declare -A decisions=([lower-resolution]=PASS [unknown]=PASS [contradiction]=FAIL_CLOSED)
+          declare -A resolutions=([lower-resolution]=LOWER_RESOLUTION [unknown]=UNKNOWN [contradiction]=FAIL_CLOSED)
+          for case in lower-resolution unknown contradiction; do
+            source="examples/proof-choice-algebra/$case.gooo"
+            go run ./scripts/proof-choice-algebra -mode produce -source "$source" -repo-root "$GITHUB_WORKSPACE" \
+              -before-state "$output/state/$case.before" -after-state "$output/state/$case.after" \
+              -output "$output/first/$case.json" -expect "${decisions[$case]}"
+            go run ./scripts/proof-choice-algebra -mode judge -source "$source" -receipt "$output/first/$case.json" \
+              -before-state "$output/state/$case.before" -after-state "$output/state/$case.after" \
+              -output "$output/judged/$case.json" -expect "${decisions[$case]}"
+            jq -e --arg resolution "${resolutions[$case]}" '.subject_resolution == $resolution and .summary.fixed_denominator == 3 and .effects.observed == true and .effects.repository_writes == 0 and .effects.mutation_authority == false' "$output/first/$case.json"
+            jq -e --arg resolution "${resolutions[$case]}" '.decision == (if $resolution == "FAIL_CLOSED" then "FAIL_CLOSED" else "PASS" end) and .independent_evidence == 1 and .receipt_digest_match == true and .source_digest_match == true and .semantic_digest_match == true and .effects_match == true' "$output/judged/$case.json"
+          done
+          jq -e '.transitions[0].to == "OPEN" and .transitions[0].resolution == "LOWER_RESOLUTION"' "$output/first/lower-resolution.json"
+          jq -e '.transitions[0].to == "OPEN" and .transitions[0].resolution == "UNKNOWN"' "$output/first/unknown.json"
+          jq -e '.transitions[0].to == "REFUTED" and .transitions[0].resolution == "FAIL_CLOSED"' "$output/first/contradiction.json"
+      - name: Prove semantic and nonsemantic interventions
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/proof-choice-algebra"
+          cp examples/proof-choice-algebra/foundation.gooo "$output/foundation-semantic.gooo"
+          sed -i 's/stable/unstable/g' "$output/foundation-semantic.gooo"
+          go run ./scripts/proof-choice-algebra -mode produce -source "$output/foundation-semantic.gooo" -repo-root "$GITHUB_WORKSPACE" \
+            -before-state "$output/state/semantic.before" -after-state "$output/state/semantic.after" -output "$output/first/semantic.json" -expect PASS
+          go run ./scripts/proof-choice-algebra -mode judge -source "$output/foundation-semantic.gooo" -receipt "$output/first/semantic.json" \
+            -before-state "$output/state/semantic.before" -after-state "$output/state/semantic.after" -output "$output/judged/semantic.json" -expect PASS
+          cp examples/proof-choice-algebra/foundation.gooo "$output/foundation-comment.gooo"
+          sed -i 's/nonsemantic-marker: foundation/nonsemantic-marker: changed/' "$output/foundation-comment.gooo"
+          go run ./scripts/proof-choice-algebra -mode produce -source "$output/foundation-comment.gooo" -repo-root "$GITHUB_WORKSPACE" \
+            -before-state "$output/state/comment.before" -after-state "$output/state/comment.after" -output "$output/first/comment.json" -expect PASS
+          go run ./scripts/proof-choice-algebra -mode judge -source "$output/foundation-comment.gooo" -receipt "$output/first/comment.json" \
+            -before-state "$output/state/comment.before" -after-state "$output/state/comment.after" -output "$output/judged/comment.json" -expect PASS
+          jq -e --slurpfile base "$output/first/foundation.json" '.source_digest != $base[0].source_digest and .semantic_digest != $base[0].semantic_digest and .subject_resolution == "LOWER_RESOLUTION" and .transitions[0].to == "OPEN"' "$output/first/semantic.json"
+          jq -e --slurpfile base "$output/first/foundation.json" '.source_digest != $base[0].source_digest and .semantic_digest == $base[0].semantic_digest and .decision == $base[0].decision and .subject_resolution == $base[0].subject_resolution and .transitions == $base[0].transitions' "$output/first/comment.json"
+          jq -e '.semantic_digest_match == true and .source_digest_match == true and .independent_evidence == 1 and .effects_match == true' "$output/judged/semantic.json" "$output/judged/comment.json"
+      - name: Count receipt-only evidence and producer imports
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/proof-choice-algebra"
+          go run ./scripts/proof-choice-algebra -mode receipt-only -receipt "$output/first/foundation.json" -output "$output/receipt-only.json" -expect FAIL_CLOSED
+          jq -e '.decision == "FAIL_CLOSED" and .independent_evidence == 0 and .receipt_only == true' "$output/receipt-only.json"
+          if go list -deps ./internal/meta/proofchoicejudge | grep -Fxq 'github.com/kimjooyoon/meta-ontology-go/internal/meta/proofchoicealgebra'; then
+            producer_imports=1
+          else
+            producer_imports=0
+          fi
+          jq -n --argjson imports "$producer_imports" '{producer_imports:$imports, producer_import_denominator:1}' > "$output/producer-imports.json"
+          test "$producer_imports" -eq 0
+      - name: Write exact aggregate evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/proof-choice-algebra"
+          jq -s '{base_cases:length, choice_observations:{FOUNDATION:(map(.summary.choice_counts.FOUNDATION)|add),COHERENCE:(map(.summary.choice_counts.COHERENCE)|add),REGRESSION:(map(.summary.choice_counts.REGRESSION)|add)}, claim_transitions:(map(.summary.transitions)|add), source_reconstruction:{numerator:(map(.source_reconstruction.numerator)|add),denominator:(map(.source_reconstruction.denominator)|add)}}' \
+            "$output"/first/{foundation,coherence,regression,combined,lower-resolution,unknown,contradiction}.json > "$output/aggregate.json"
+      - name: Upload semantic proof artifacts
         if: always()
         uses: actions/upload-artifact@v6
         with:

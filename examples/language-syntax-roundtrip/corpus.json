@@ -229,56 +229,8 @@
       "meta_operation": "replay-language-syntax"
     },
     {
-      "id": "proof-choice-foundation",
-      "path": "examples/proof-choice-algebra/foundation.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
-      "id": "proof-choice-coherence",
-      "path": "examples/proof-choice-algebra/coherence.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
-      "id": "proof-choice-regression",
-      "path": "examples/proof-choice-algebra/regression.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
-      "id": "proof-choice-combined",
-      "path": "examples/proof-choice-algebra/combined.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
-      "id": "proof-choice-missing-choice",
-      "path": "examples/proof-choice-algebra/missing-choice.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
-      "id": "proof-choice-contradiction",
-      "path": "examples/proof-choice-algebra/contradiction.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
-    },
-    {
-      "id": "proof-choice-unknown-context",
-      "path": "examples/proof-choice-algebra/unknown-context.gooo",
+      "id": "ci-plan",
+      "path": "examples/ci-plan/main.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",

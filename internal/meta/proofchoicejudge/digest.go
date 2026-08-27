@@ -6,12 +6,16 @@ import (
 	"encoding/json"
 )
 
-func digest(input receipt) (string, error) {
+func digestBytes(data []byte) string {
+	sum := sha256.Sum256(data)
+	return "sha256:" + hex.EncodeToString(sum[:])
+}
+
+func digestReceipt(input receipt) (string, error) {
 	input.Digest = ""
 	data, err := json.Marshal(input)
 	if err != nil {
 		return "", err
 	}
-	sum := sha256.Sum256(data)
-	return "sha256:" + hex.EncodeToString(sum[:]), nil
+	return digestBytes(data), nil
 }

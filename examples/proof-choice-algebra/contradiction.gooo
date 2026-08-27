@@ -1,14 +1,9 @@
 package proofchoice
 namespace proofchoice
-
-// proof-choice {"kind":"claim","id":"claim.contradictory-route","choice":"FOUNDATION","statement":"the claim is anchored","producer":"source-author","consumer":"proof-ledger","meta_operation":"bind-foundation","stage":"measure","step":"anchor","reason":"stable-identifier"}
-// proof-choice {"kind":"claim","id":"claim.contradictory-route","choice":"REGRESSION","statement":"the same claim is instead a replay","producer":"replay-runner","consumer":"proof-ledger","meta_operation":"compare-regression","stage":"replay","step":"compare","reason":"prior-receipt"}
-// proof-choice {"kind":"metric","id":"metric.contradictory-route","choice":"FOUNDATION","statement":"the contradiction cannot be averaged away","producer":"metric-producer","consumer":"proof-ledger","meta_operation":"measure-foundation","stage":"measure","step":"coverage","reason":"fixed-denominator","numerator":3,"denominator":3}
-// proof-choice {"kind":"transition","claim_id":"claim.contradictory-route","from":"ASSERTED","to":"PERSISTED","choice":"FOUNDATION","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"identity-preserved","persistent":true}
-
-entity ContradictorySource id "gooo://proof-choice/contradiction/source"
-entity ContradictoryClaim id "gooo://proof-choice/contradiction/claim"
-entity ContradictoryMetric id "gooo://proof-choice/contradiction/metric"
-
-activity BindContradictory(ContradictorySource) -> ContradictoryClaim
-activity MeasureContradictory(ContradictoryClaim) -> ContradictoryMetric
+entity Observation id "gooo://proof-choice/contradiction/observation"
+entity ClaimValue id "gooo://proof-choice/contradiction/claim-value"
+entity MetricValue id "gooo://proof-choice/contradiction/metric-value"
+activity ObserveAnchor() -> Observation computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"observation\",\"id\":\"obs.contradiction.anchor\",\"evidence_kind\":\"FOUNDATION\",\"predicate\":\"identity\",\"value\":\"stable\",\"observed\":true,\"provenance\":[\"source://contradiction/anchor\"]}"
+activity ObserveRelations() -> Observation computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"observation\",\"id\":\"obs.contradiction.relations\",\"evidence_kind\":\"COHERENCE\",\"predicate\":\"relations\",\"value\":\"agree\",\"observed\":true,\"provenance\":[\"relation://contradiction/neighbors\"]}"
+activity ContradictoryClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"claim\",\"id\":\"claim.contradiction\",\"statement\":\"two routes are simultaneously evidenced\",\"prior_state\":\"OPEN\",\"dependencies\":[\"obs.contradiction.anchor\",\"obs.contradiction.relations\"],\"observations\":[\"obs.contradiction.anchor\",\"obs.contradiction.relations\"],\"admissible_routes\":[\"FOUNDATION\",\"COHERENCE\"]}"
+activity ContradictoryMetric() -> MetricValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"metric\",\"id\":\"metric.contradiction.coverage\",\"observations\":[\"obs.contradiction.anchor\",\"obs.contradiction.relations\"],\"admissible_routes\":[\"FOUNDATION\",\"COHERENCE\"],\"slots\":[{\"id\":\"contradiction-slot-1\",\"observed\":true,\"provenance\":[\"slot://contradiction/1\"]},{\"id\":\"contradiction-slot-2\",\"observed\":true,\"provenance\":[\"slot://contradiction/2\"]},{\"id\":\"contradiction-slot-3\",\"observed\":true,\"provenance\":[\"slot://contradiction/3\"]}]}"

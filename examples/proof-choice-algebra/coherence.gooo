@@ -1,15 +1,8 @@
 package proofchoice
 namespace proofchoice
-
-// proof-choice {"kind":"claim","id":"claim.coherence-closure","choice":"COHERENCE","statement":"the claim agrees with its neighboring claims","producer":"coherence-builder","consumer":"proof-ledger","meta_operation":"check-coherence","stage":"relate","step":"closure","reason":"neighbor-agreement"}
-// proof-choice {"kind":"metric","id":"metric.coherence-coverage","choice":"COHERENCE","statement":"all declared relations are observed","producer":"metric-producer","consumer":"proof-ledger","meta_operation":"measure-coherence","stage":"relate","step":"coverage","reason":"fixed-denominator","numerator":3,"denominator":3}
-// proof-choice {"kind":"transition","claim_id":"claim.coherence-closure","from":"ASSERTED","to":"PERSISTED","choice":"COHERENCE","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"relation-preserved","persistent":true}
-
-entity NeighborClaims id "gooo://proof-choice/coherence/neighbor-claims"
-entity CoherenceClaim id "gooo://proof-choice/coherence/claim"
-entity CoherenceMetric id "gooo://proof-choice/coherence/metric"
-entity CoherenceReceipt id "gooo://proof-choice/coherence/receipt"
-
-activity CheckClosure(NeighborClaims) -> CoherenceClaim
-activity MeasureClosure(CoherenceClaim) -> CoherenceMetric
-activity PersistClosure(CoherenceClaim) -> CoherenceReceipt
+entity Observation id "gooo://proof-choice/coherence/observation"
+entity ClaimValue id "gooo://proof-choice/coherence/claim-value"
+entity MetricValue id "gooo://proof-choice/coherence/metric-value"
+activity ObserveRelations() -> Observation computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"observation\",\"id\":\"obs.coherence.neighbors\",\"evidence_kind\":\"COHERENCE\",\"predicate\":\"relations\",\"value\":\"agree\",\"observed\":true,\"provenance\":[\"relation://coherence/neighbors\"]}"
+activity CoherenceClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"claim\",\"id\":\"claim.coherence\",\"statement\":\"neighboring claims agree\",\"prior_state\":\"OPEN\",\"dependencies\":[\"obs.coherence.neighbors\"],\"observations\":[\"obs.coherence.neighbors\"],\"admissible_routes\":[\"COHERENCE\"]}"
+activity CoherenceMetric() -> MetricValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"metric\",\"id\":\"metric.coherence.coverage\",\"observations\":[\"obs.coherence.neighbors\"],\"admissible_routes\":[\"COHERENCE\"],\"slots\":[{\"id\":\"coherence-slot-1\",\"observed\":true,\"provenance\":[\"slot://coherence/1\"]},{\"id\":\"coherence-slot-2\",\"observed\":true,\"provenance\":[\"slot://coherence/2\"]},{\"id\":\"coherence-slot-3\",\"observed\":true,\"provenance\":[\"slot://coherence/3\"]}]}"

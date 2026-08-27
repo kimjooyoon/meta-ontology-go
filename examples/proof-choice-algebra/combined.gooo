@@ -1,17 +1,12 @@
 package proofchoice
 namespace proofchoice
-
-// proof-choice {"kind":"claim","id":"claim.combined-anchor","choice":"FOUNDATION","statement":"the combined bundle has a stable anchor","producer":"source-author","consumer":"proof-ledger","meta_operation":"bind-foundation","stage":"measure","step":"anchor","reason":"stable-identifier"}
-// proof-choice {"kind":"claim","id":"claim.combined-closure","choice":"COHERENCE","statement":"the combined bundle closes its relation","producer":"coherence-builder","consumer":"proof-ledger","meta_operation":"check-coherence","stage":"relate","step":"closure","reason":"neighbor-agreement"}
-// proof-choice {"kind":"metric","id":"metric.combined-replay","choice":"REGRESSION","statement":"the combined bundle replays exactly","producer":"replay-runner","consumer":"proof-ledger","meta_operation":"measure-regression","stage":"replay","step":"compare","reason":"prior-receipt","numerator":3,"denominator":3}
-// proof-choice {"kind":"transition","claim_id":"claim.combined-anchor","from":"ASSERTED","to":"PERSISTED","choice":"FOUNDATION","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"identity-preserved","persistent":true}
-// proof-choice {"kind":"transition","claim_id":"claim.combined-closure","from":"ASSERTED","to":"PERSISTED","choice":"COHERENCE","producer":"claim-ledger","consumer":"proof-ledger","meta_operation":"persist-claim","stage":"persist","step":"carry-forward","reason":"relation-preserved","persistent":true}
-
-entity StableAnchor id "gooo://proof-choice/combined/stable-anchor"
-entity ClosedRelation id "gooo://proof-choice/combined/closed-relation"
-entity ReplayMetric id "gooo://proof-choice/combined/replay-metric"
-entity CombinedReceipt id "gooo://proof-choice/combined/receipt"
-
-activity BindAnchor(StableAnchor) -> ClosedRelation
-activity MeasureReplay(ClosedRelation) -> ReplayMetric
-activity PersistCombined(ClosedRelation) -> CombinedReceipt
+entity Observation id "gooo://proof-choice/combined/observation"
+entity ClaimValue id "gooo://proof-choice/combined/claim-value"
+entity MetricValue id "gooo://proof-choice/combined/metric-value"
+activity ObserveAnchor() -> Observation computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"observation\",\"id\":\"obs.combined.anchor\",\"evidence_kind\":\"FOUNDATION\",\"predicate\":\"identity\",\"value\":\"stable\",\"observed\":true,\"provenance\":[\"source://combined/anchor\"]}"
+activity ObserveRelations() -> Observation computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"observation\",\"id\":\"obs.combined.relations\",\"evidence_kind\":\"COHERENCE\",\"predicate\":\"relations\",\"value\":\"agree\",\"observed\":true,\"provenance\":[\"relation://combined/neighbors\"]}"
+activity ObserveReplay() -> Observation computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"observation\",\"id\":\"obs.combined.replay\",\"evidence_kind\":\"REGRESSION\",\"predicate\":\"replay\",\"value\":\"equal\",\"observed\":true,\"provenance\":[\"replay://combined/prior-receipt\"]}"
+activity AnchorClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"claim\",\"id\":\"claim.combined.anchor\",\"statement\":\"the bundle has a stable anchor\",\"prior_state\":\"OPEN\",\"dependencies\":[\"obs.combined.anchor\"],\"observations\":[\"obs.combined.anchor\"],\"admissible_routes\":[\"FOUNDATION\"]}"
+activity RelationClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"claim\",\"id\":\"claim.combined.relations\",\"statement\":\"the bundle closes its relation\",\"prior_state\":\"OPEN\",\"dependencies\":[\"obs.combined.relations\"],\"observations\":[\"obs.combined.relations\"],\"admissible_routes\":[\"COHERENCE\"]}"
+activity ReplayClaim() -> ClaimValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"claim\",\"id\":\"claim.combined.replay\",\"statement\":\"the bundle replays exactly\",\"prior_state\":\"OPEN\",\"dependencies\":[\"obs.combined.replay\"],\"observations\":[\"obs.combined.replay\"],\"admissible_routes\":[\"REGRESSION\"]}"
+activity CombinedMetric() -> MetricValue computes "{\"schema\":\"gooo/proof-choice-input/v2\",\"kind\":\"metric\",\"id\":\"metric.combined.coverage\",\"observations\":[\"obs.combined.replay\"],\"admissible_routes\":[\"REGRESSION\"],\"slots\":[{\"id\":\"combined-slot-1\",\"observed\":true,\"provenance\":[\"slot://combined/1\"]},{\"id\":\"combined-slot-2\",\"observed\":true,\"provenance\":[\"slot://combined/2\"]},{\"id\":\"combined-slot-3\",\"observed\":true,\"provenance\":[\"slot://combined/3\"]}]}"

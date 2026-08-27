@@ -1,62 +1,37 @@
 package proofchoicealgebra
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
-// Combine is the proof-choice algebra's disjoint-union operator (⊕). Exact
-// duplicate witnesses are idempotent; conflicting values for one ID are not.
+type Bundle struct{ Values []Value }
+
+// Combine is the disjoint semantic-value union. It composes evidence before
+// route selection; no route is accepted merely because a producer declared it.
 func Combine(left, right Bundle) (Bundle, error) {
-	if err := validateBundleShape(left); err != nil {
-		return Bundle{}, err
-	}
-	if err := validateBundleShape(right); err != nil {
-		return Bundle{}, err
-	}
-	result := Bundle{Items: append([]Item(nil), left.Items...), Transitions: append([]Transition(nil), left.Transitions...)}
-	for _, item := range right.Items {
-		found := false
-		for _, existing := range result.Items {
-			if existing.ID != item.ID {
-				continue
-			}
-			found = true
-			if !sameItem(existing, item) {
-				return Bundle{}, fmt.Errorf("PROOF_CHOICE_CONTRADICTION: %s", item.ID)
+	result := Bundle{Values: append([]Value(nil), left.Values...)}
+	for _, incoming := range right.Values {
+		found := -1
+		for index, existing := range result.Values {
+			if existing.ID == incoming.ID {
+				found = index
+				break
 			}
 		}
-		if !found {
-			result.Items = append(result.Items, item)
+		if found < 0 {
+			result.Values = append(result.Values, incoming)
+			continue
 		}
-	}
-	for _, transition := range right.Transitions {
-		found := false
-		for _, existing := range result.Transitions {
-			if existing.ClaimID == transition.ClaimID && existing.From == transition.From && existing.To == transition.To {
-				found = true
-				if existing.Choice != transition.Choice || !sameTransition(existing, transition) {
-					return Bundle{}, fmt.Errorf("PROOF_CHOICE_CONTRADICTION: transition:%s", transition.ClaimID)
-				}
-			}
+		if !sameValue(result.Values[found], incoming) {
+			return Bundle{}, fmt.Errorf("PROOF_ROUTE_CONTRADICTION: %s", incoming.ID)
 		}
-		if !found {
-			result.Transitions = append(result.Transitions, transition)
-		}
-	}
-	if failure := validateBundle(result); failure != "" {
-		return Bundle{}, fmt.Errorf("%s", failure)
 	}
 	return result, nil
 }
 
-func validateBundleShape(bundle Bundle) error {
-	for _, item := range bundle.Items {
-		if !item.Choice.Valid() {
-			return fmt.Errorf("PROOF_CHOICE_MISSING")
-		}
-	}
-	return nil
-}
-
-func sameTransition(left, right Transition) bool {
-	left.Line, right.Line = 0, 0
-	return left == right
+func sameValue(left, right Value) bool {
+	a, _ := json.Marshal(canonicalEntry(semanticEntry{Value: left}).Value)
+	b, _ := json.Marshal(canonicalEntry(semanticEntry{Value: right}).Value)
+	return string(a) == string(b)
 }

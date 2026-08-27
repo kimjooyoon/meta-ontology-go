@@ -1,23 +1,24 @@
 package proofchoicealgebra
 
 const (
-	Schema                  = "gooo/proof-choice-algebra-receipt/v1"
-	FixedDenominator        = 3
-	Claim            Kind   = "CLAIM"
-	Metric           Kind   = "METRIC"
-	Pass                    = "PASS"
-	FailClosed              = "FAIL_CLOSED"
-	Exact                   = "EXACT"
-	Foundation       Choice = "FOUNDATION"
-	Coherence        Choice = "COHERENCE"
-	Regression       Choice = "REGRESSION"
+	InputSchema           = "gooo/proof-choice-input/v2"
+	ReceiptSchema         = "gooo/proof-choice-algebra-receipt/v2"
+	FixedDenom            = 3
+	ClaimKind             = "claim"
+	MetricKind            = "metric"
+	ObservationKind       = "observation"
+	Pass                  = "PASS"
+	FailClosed            = "FAIL_CLOSED"
+	Exact                 = "EXACT"
+	Lower                 = "LOWER_RESOLUTION"
+	Unknown               = "UNKNOWN"
+	Foundation      Route = "FOUNDATION"
+	Coherence       Route = "COHERENCE"
+	Regression      Route = "REGRESSION"
 )
 
-type Kind string
-type Choice string
+type Route string
 
-func (c Choice) Valid() bool {
-	return c == Foundation || c == Coherence || c == Regression
+func (r Route) Valid() bool {
+	return r == Foundation || r == Coherence || r == Regression
 }
-
-func (c Choice) String() string { return string(c) }

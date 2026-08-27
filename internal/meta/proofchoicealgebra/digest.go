@@ -4,20 +4,19 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 )
 
-func digestSource(source []byte) string {
-	sum := sha256.Sum256(source)
+func digestBytes(data []byte) string {
+	sum := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
-func digestReceipt(receipt Receipt) (string, error) {
+func Seal(receipt Receipt) (Receipt, error) {
 	receipt.Digest = ""
 	data, err := json.Marshal(receipt)
 	if err != nil {
-		return "", fmt.Errorf("marshal receipt for digest: %w", err)
+		return Receipt{}, err
 	}
-	sum := sha256.Sum256(data)
-	return "sha256:" + hex.EncodeToString(sum[:]), nil
+	receipt.Digest = digestBytes(data)
+	return receipt, nil
 }
