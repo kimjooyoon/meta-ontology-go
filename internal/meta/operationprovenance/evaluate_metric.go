@@ -1,24 +1,29 @@
 package operationprovenance
 
-func metricResult(metric metricSpec, edgeCounts map[string]int, forcedDecision string, forcedIssue *Issue, sourceDigest, semanticDigest string, f fixture) MetricResult {
-	result := MetricResult{ID: metric.ID, Family: metric.Family, Claim: metric.PriorClaim, Denominator: relationDenominator, SubjectResolution: "EXACT", EvaluationState: "EVALUATED"}
-	for _, link := range relations(metric) {
-		if edgeCounts[link.From+"\x00"+link.To+"\x00"+link.Kind] != 1 {
+func metricResult(metric metricSpec, observations []RelationObservation, forced string, issue *Issue, sourceDigest, semanticDigest string, f fixture) MetricResult {
+	result := MetricResult{ID: metric.ID, Family: metric.Family, Claim: metric.PriorClaim, Denominator: relationDenominator, Proposition: proposition(metric.ID, semanticDigest), SourceResolution: "EXACT", Relations: append([]RelationObservation(nil), observations...)}
+	for _, observation := range result.Relations {
+		if observation.RelationStatus != "PASS" {
 			continue
 		}
 		result.Numerator++
-		switch link.Kind {
+		switch observation.Relation {
 		case "PRODUCES":
-			result.Lineage.Producer = link.From
+			result.Lineage.Producer = observation.ObservedEndpoint
 		case "CONSUMES":
-			result.Lineage.Consumer = link.To
+			result.Lineage.Consumer = observation.ObservedEndpoint
 		case "OPERATES":
-			result.Lineage.MetaOperation = link.From
+			result.Lineage.MetaOperation = observation.ObservedEndpoint
 		case "EVIDENCED_BY":
-			result.Lineage.EvidencePath = link.To
+			result.Lineage.EvidencePath = observation.ObservedEndpoint
 		}
 	}
-	result.Decision, result.Issue = decideMetric(result, forcedDecision, forcedIssue)
+	result.LineageResolution = "EXACT"
+	if result.Numerator != result.Denominator {
+		result.LineageResolution = "LOWER_RESOLUTION"
+	}
+	result.Decision, result.Issue = decideMetric(result, forced, issue)
+	result.EvaluationState = "EVALUATED"
 	result.Transition = makeTransition(result, sourceDigest, semanticDigest, f)
 	return result
 }
@@ -30,14 +35,14 @@ func decideMetric(result MetricResult, forced string, issue *Issue) (string, *Is
 	if result.Numerator == result.Denominator {
 		return "PASS", nil
 	}
-	if result.Lineage.Consumer == "" {
-		return "FAIL_CLOSED", &Issue{Stage: "LINEAGE", Step: "connect-consumer", Reason: "REQUIRED_CONSUMER_RELATION_MISSING", Cause: "DIRECT_CAUSE"}
+	for _, observation := range result.Relations {
+		if observation.RelationStatus != "PASS" {
+			return "UNKNOWN", &Issue{Stage: observation.Stage, Step: observation.Step, Reason: observation.Reason, Cause: observation.Cause}
+		}
 	}
-	if result.Lineage.Producer == "" {
-		return "UNKNOWN", &Issue{Stage: "LINEAGE", Step: "connect-producer", Reason: "REQUIRED_PRODUCER_RELATION_MISSING", Cause: "DIRECT_CAUSE"}
-	}
-	if result.Lineage.MetaOperation == "" {
-		return "UNKNOWN", &Issue{Stage: "LINEAGE", Step: "connect-meta-operation", Reason: "REQUIRED_META_OPERATION_RELATION_MISSING", Cause: "DIRECT_CAUSE"}
-	}
-	return "UNKNOWN", &Issue{Stage: "LINEAGE", Step: "connect-evidence-path", Reason: "REQUIRED_EVIDENCE_RELATION_MISSING", Cause: "DIRECT_CAUSE"}
+	return "UNKNOWN", &Issue{Stage: "LINEAGE", Step: "evaluate-relations", Reason: "RELATION_OBSERVATION_INCOMPLETE", Cause: "DIRECT_CAUSE"}
+}
+
+func proposition(metricID, semanticDigest string) string {
+	return "metric " + metricID + " has complete executable lineage for this subject digest " + semanticDigest
 }

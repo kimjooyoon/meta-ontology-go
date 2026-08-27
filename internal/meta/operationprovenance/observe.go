@@ -1,6 +1,7 @@
 package operationprovenance
 
 import (
+	"os"
 	"os/exec"
 	"sort"
 	"strings"
@@ -47,9 +48,21 @@ func deriveObservation(before, after repositorySnapshot) WorkspaceObservation {
 	}
 	sort.Strings(paths)
 	writes := len(paths) > 0
+	authority, reason := mutationAuthority()
 	return WorkspaceObservation{
 		BeforeDigest: before.digest, AfterDigest: after.digest,
 		ChangedPaths: paths, RepositoryWorkspaceWrites: writes,
-		MutationAuthority: writes,
+		MutationAuthority: authority, MutationAuthorityReason: reason,
 	}
+}
+
+func mutationAuthority() (string, string) {
+	value, ok := os.LookupEnv("GOOO_MUTATION_AUTHORITY")
+	if !ok || value == "" {
+		return "UNKNOWN", "capability envelope was not supplied to the observer"
+	}
+	if value != "GRANTED" && value != "DENIED" && value != "UNKNOWN" {
+		return "UNKNOWN", "capability envelope has an invalid value"
+	}
+	return value, "reported by the capability envelope"
 }

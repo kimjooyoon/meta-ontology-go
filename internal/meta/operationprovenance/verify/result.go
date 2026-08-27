@@ -1,24 +1,29 @@
 package verify
 
-func resultFor(metric cMetric, edges map[string]int, forced string, forcedIssue *issue, sourceDigest, semanticDigest string, f cFixture) metricResult {
-	result := metricResult{ID: metric.id, Family: metric.family, Claim: metric.claim, Denominator: 4, Resolution: "EXACT", EvaluationState: "EVALUATED"}
-	for _, link := range links(metric) {
-		if edges[link.from+"\x00"+link.to+"\x00"+link.kind] != 1 {
+func resultFor(metric cMetric, observations []relationObservation, forced string, forcedIssue *issue, sourceDigest, semanticDigest string, f cFixture) metricResult {
+	result := metricResult{ID: metric.id, Family: metric.family, Claim: metric.claim, Denominator: 4, Proposition: proposition(metric.id, semanticDigest), SourceResolution: "EXACT", Relations: append([]relationObservation(nil), observations...)}
+	for _, observation := range result.Relations {
+		if observation.RelationStatus != "PASS" {
 			continue
 		}
 		result.Numerator++
-		switch link.kind {
+		switch observation.Relation {
 		case "PRODUCES":
-			result.Lineage.Producer = link.from
+			result.Lineage.Producer = observation.ObservedEndpoint
 		case "CONSUMES":
-			result.Lineage.Consumer = link.to
+			result.Lineage.Consumer = observation.ObservedEndpoint
 		case "OPERATES":
-			result.Lineage.Operation = link.from
+			result.Lineage.Operation = observation.ObservedEndpoint
 		case "EVIDENCED_BY":
-			result.Lineage.Evidence = link.to
+			result.Lineage.Evidence = observation.ObservedEndpoint
 		}
 	}
+	result.LineageResolution = "EXACT"
+	if result.Numerator != result.Denominator {
+		result.LineageResolution = "LOWER_RESOLUTION"
+	}
 	result.Decision, result.Issue = decide(result, forced, forcedIssue)
+	result.EvaluationState = "EVALUATED"
 	result.Transition = transitionFor(result, sourceDigest, semanticDigest, f)
 	return result
 }
@@ -30,14 +35,14 @@ func decide(result metricResult, forced string, forcedIssue *issue) (string, *is
 	if result.Numerator == result.Denominator {
 		return "PASS", nil
 	}
-	if result.Lineage.Consumer == "" {
-		return "FAIL_CLOSED", &issue{Stage: "LINEAGE", Step: "connect-consumer", Reason: "REQUIRED_CONSUMER_RELATION_MISSING", Cause: "DIRECT_CAUSE"}
+	for _, observation := range result.Relations {
+		if observation.RelationStatus != "PASS" {
+			return "UNKNOWN", &issue{Stage: observation.Stage, Step: observation.Step, Reason: observation.Reason, Cause: observation.Cause}
+		}
 	}
-	if result.Lineage.Producer == "" {
-		return "UNKNOWN", &issue{Stage: "LINEAGE", Step: "connect-producer", Reason: "REQUIRED_PRODUCER_RELATION_MISSING", Cause: "DIRECT_CAUSE"}
-	}
-	if result.Lineage.Operation == "" {
-		return "UNKNOWN", &issue{Stage: "LINEAGE", Step: "connect-meta-operation", Reason: "REQUIRED_META_OPERATION_RELATION_MISSING", Cause: "DIRECT_CAUSE"}
-	}
-	return "UNKNOWN", &issue{Stage: "LINEAGE", Step: "connect-evidence-path", Reason: "REQUIRED_EVIDENCE_RELATION_MISSING", Cause: "DIRECT_CAUSE"}
+	return "UNKNOWN", &issue{Stage: "LINEAGE", Step: "evaluate-relations", Reason: "RELATION_OBSERVATION_INCOMPLETE", Cause: "DIRECT_CAUSE"}
+}
+
+func proposition(metricID, semanticDigest string) string {
+	return "metric " + metricID + " has complete executable lineage for this subject digest " + semanticDigest
 }

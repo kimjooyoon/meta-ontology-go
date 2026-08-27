@@ -1,14 +1,5 @@
 package operationprovenance
 
-import (
-	"fmt"
-	"strings"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
-)
-
 const relationDenominator = 4
 
 type metricSpec struct {
@@ -29,36 +20,20 @@ type fixture struct {
 	Nodes        map[string]string
 	Edges        []edge
 	Metrics      []metricSpec
+	Artifacts    map[string][]RelationObservation
 }
 type relation struct{ Kind, From, To string }
 
-func lowerSource(source []byte) (semantic.IR, error) {
-	file, diagnostics := syntax.ParseFile("main.gooo", string(source))
-	if diagnostics.HasErrors() || file == nil {
-		return semantic.IR{}, fmt.Errorf("Gooo source has syntax errors")
-	}
-	ir, err := bidir.Lower(file)
-	if err != nil {
-		return semantic.IR{}, fmt.Errorf("lower Gooo source: %w", err)
-	}
-	return ir, nil
-}
-
-func computedFields(value string) (map[string]string, error) {
-	parts := strings.Split(value, "|")
-	if len(parts) < 2 || (parts[0] != "metric" && parts[0] != "scenario") {
-		return nil, fmt.Errorf("unsupported computes value %q", value)
-	}
-	fields := make(map[string]string, len(parts)-1)
-	for _, part := range parts[1:] {
-		key, raw, ok := strings.Cut(part, "=")
-		if !ok || key == "" {
-			return nil, fmt.Errorf("malformed field %q", part)
-		}
-		if _, exists := fields[key]; exists {
-			return nil, fmt.Errorf("duplicate field %q", key)
-		}
-		fields[key] = raw
-	}
-	return fields, nil
+type artifactEnvelope struct {
+	Kind     string `json:"kind"`
+	MetricID string `json:"metric_id"`
+	Endpoint string `json:"endpoint"`
+	Output   string `json:"output"`
+	Reads    string `json:"reads"`
+	Source   string `json:"source"`
+	Status   string `json:"status"`
+	Input    string `json:"input"`
+	Executed bool   `json:"executed"`
+	Path     string `json:"path"`
+	Payload  string `json:"payload"`
 }

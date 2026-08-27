@@ -12,6 +12,10 @@ type InterventionResult struct {
 	SemanticDigestChanged   bool   `json:"semantic_digest_changed"`
 	DecisionChanged         bool   `json:"decision_changed"`
 	TransitionChanged       bool   `json:"transition_changed"`
+	ObservedFailure         bool   `json:"observed_failure"`
+	FailureStage            string `json:"failure_stage,omitempty"`
+	FailureStep             string `json:"failure_step,omitempty"`
+	FailureReason           string `json:"failure_reason,omitempty"`
 	Status                  string `json:"status"`
 }
 
@@ -20,5 +24,6 @@ type InterventionReport struct {
 	Base        InterventionResult `json:"base"`
 	Semantic    InterventionResult `json:"semantic"`
 	Nonsemantic InterventionResult `json:"nonsemantic"`
+	Noop        InterventionResult `json:"noop"`
 	Digest      string             `json:"digest"`
 }

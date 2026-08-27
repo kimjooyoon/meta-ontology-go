@@ -15,4 +15,19 @@ type cFixture struct {
 	nodes        map[string]string
 	edges        []cEdge
 	metrics      []cMetric
+	artifacts    map[string][]relationObservation
+}
+
+type artifactEnvelope struct {
+	Kind     string `json:"kind"`
+	MetricID string `json:"metric_id"`
+	Endpoint string `json:"endpoint"`
+	Output   string `json:"output"`
+	Reads    string `json:"reads"`
+	Source   string `json:"source"`
+	Status   string `json:"status"`
+	Input    string `json:"input"`
+	Executed bool   `json:"executed"`
+	Path     string `json:"path"`
+	Payload  string `json:"payload"`
 }

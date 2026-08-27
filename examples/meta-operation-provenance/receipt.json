@@ -1,8 +1,14 @@
 {
-  "schema": "gooo/meta-operation-provenance-receipt/v2",
+  "schema": "gooo/meta-operation-provenance-receipt/v3",
   "toolchain": "go1.27.0",
-  "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-  "canonical_semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+  "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+  "canonical_semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+  "source_resolution": "EXACT",
+  "family_cardinality": {
+    "COHERENCE": 1,
+    "FOUNDATION": 1,
+    "REGRESSION": 1
+  },
   "source_reconstruction": {
     "numerator": 7,
     "denominator": 7,
@@ -15,7 +21,8 @@
     "before_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "after_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "repository_workspace_writes": false,
-    "mutation_authority": false
+    "mutation_authority": "UNKNOWN",
+    "mutation_authority_reason": "capability envelope was not supplied to the observer"
   },
   "scenarios": [
     {
@@ -34,7 +41,8 @@
       "numerator": 12,
       "denominator": 12,
       "conformance_decision": "PASS",
-      "subject_resolution": "EXACT",
+      "source_resolution": "EXACT",
+      "lineage_resolution": "EXACT",
       "decisions": {
         "PASS": 3
       },
@@ -49,32 +57,96 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-COHERENCE-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-COHERENCE-001",
             "consumer": "consumer:MOP-COHERENCE-001",
             "meta_operation": "operation:MOP-COHERENCE-001",
-            "evidence_path": "evidence:MOP-COHERENCE-001"
+            "evidence_path": "evidence/MOP-COHERENCE-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-COHERENCE-001",
+              "observed_endpoint": "producer:MOP-COHERENCE-001",
+              "observed_artifact": "producer/MOP-COHERENCE-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:c85fd7d0455bf52d442a5799441ee2ec5ce7027d45b5eab8e48dbd47b05915d4",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-COHERENCE-001",
+              "observed_endpoint": "consumer:MOP-COHERENCE-001",
+              "observed_artifact": "consumer/MOP-COHERENCE-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:0c5b75a6b9b463296134414432b00c59d24e3698693beb1b54c53de11a3e1a4c",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-COHERENCE-001",
+              "observed_endpoint": "operation:MOP-COHERENCE-001",
+              "observed_artifact": "meta-operation/MOP-COHERENCE-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:15bb1a42f73d1c7115e4879f3a3931d689bf92641da3c6c75569abea5d17d8c0",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-COHERENCE-001.json",
+              "observed_endpoint": "evidence/MOP-COHERENCE-001.json",
+              "observed_artifact": "evidence/MOP-COHERENCE-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:3960449536bbd1b4348a2bf368ce9c03f9e39183adf1fb12704e0038cddb6a71",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "claim_transition": {
+            "proposition": "metric MOP-COHERENCE-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "DISCHARGED",
             "conformance_decision": "PASS",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "DISCHARGED",
             "stage": "CLAIM",
             "step": "discharge-open-claim",
             "reason": "PASS_DISCHARGES_OPEN_CLAIM",
-            "evidence_digest": "sha256:c6a7cb4b754d57267dc09bec2cc059786a0d76b7165b937819d0e8eec644d83e",
+            "evidence_digest": "sha256:50beb3ebf33e7c288652f588ef30c085ea176844b23bf2fd7a2017ef5ee46d71",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-COHERENCE-001",
               "consumer": "consumer:MOP-COHERENCE-001",
               "meta_operation": "operation:MOP-COHERENCE-001",
-              "evidence_path": "evidence:MOP-COHERENCE-001",
-              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph"
+              "evidence_path": "evidence/MOP-COHERENCE-001.json",
+              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph",
+              "artifact_digests": {
+                "CONSUMES": "sha256:0c5b75a6b9b463296134414432b00c59d24e3698693beb1b54c53de11a3e1a4c",
+                "EVIDENCED_BY": "sha256:3960449536bbd1b4348a2bf368ce9c03f9e39183adf1fb12704e0038cddb6a71",
+                "OPERATES": "sha256:15bb1a42f73d1c7115e4879f3a3931d689bf92641da3c6c75569abea5d17d8c0",
+                "PRODUCES": "sha256:c85fd7d0455bf52d442a5799441ee2ec5ce7027d45b5eab8e48dbd47b05915d4"
+              }
             }
           }
         },
@@ -85,32 +157,96 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-FOUNDATION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-FOUNDATION-001",
             "consumer": "consumer:MOP-FOUNDATION-001",
             "meta_operation": "operation:MOP-FOUNDATION-001",
-            "evidence_path": "evidence:MOP-FOUNDATION-001"
+            "evidence_path": "evidence/MOP-FOUNDATION-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-FOUNDATION-001",
+              "observed_endpoint": "producer:MOP-FOUNDATION-001",
+              "observed_artifact": "producer/MOP-FOUNDATION-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:25deba2da70f94e41479b3f2c50cc96753f8ccfff3d9dee69a70578b1fbfe1c2",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-FOUNDATION-001",
+              "observed_endpoint": "consumer:MOP-FOUNDATION-001",
+              "observed_artifact": "consumer/MOP-FOUNDATION-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:3021345a518a80b1d1ebe2a591d8e87ebb8e8c2d07be5ab64535fe11e960409a",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-FOUNDATION-001",
+              "observed_endpoint": "operation:MOP-FOUNDATION-001",
+              "observed_artifact": "meta-operation/MOP-FOUNDATION-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:196934da7e2294b27e4d5052c77010c01d0ef009806a351b49af05462f472228",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-FOUNDATION-001.json",
+              "observed_endpoint": "evidence/MOP-FOUNDATION-001.json",
+              "observed_artifact": "evidence/MOP-FOUNDATION-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:0cbe8d04a139fd994aecc1d79f4595400a472fc6eb2da76cb66b946e776c7048",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "claim_transition": {
+            "proposition": "metric MOP-FOUNDATION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "DISCHARGED",
             "conformance_decision": "PASS",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "DISCHARGED",
             "stage": "CLAIM",
             "step": "discharge-open-claim",
             "reason": "PASS_DISCHARGES_OPEN_CLAIM",
-            "evidence_digest": "sha256:8b5e29637c7e6c56e31a2a6562c3be4a39c7ae476af71144d34bb27a2eb76642",
+            "evidence_digest": "sha256:da7012ce61015e6d61117ca5e506ffa27d75c8755c0f382ac84589bbbb7c150c",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-FOUNDATION-001",
               "consumer": "consumer:MOP-FOUNDATION-001",
               "meta_operation": "operation:MOP-FOUNDATION-001",
-              "evidence_path": "evidence:MOP-FOUNDATION-001",
-              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph"
+              "evidence_path": "evidence/MOP-FOUNDATION-001.json",
+              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph",
+              "artifact_digests": {
+                "CONSUMES": "sha256:3021345a518a80b1d1ebe2a591d8e87ebb8e8c2d07be5ab64535fe11e960409a",
+                "EVIDENCED_BY": "sha256:0cbe8d04a139fd994aecc1d79f4595400a472fc6eb2da76cb66b946e776c7048",
+                "OPERATES": "sha256:196934da7e2294b27e4d5052c77010c01d0ef009806a351b49af05462f472228",
+                "PRODUCES": "sha256:25deba2da70f94e41479b3f2c50cc96753f8ccfff3d9dee69a70578b1fbfe1c2"
+              }
             }
           }
         },
@@ -121,32 +257,96 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-REGRESSION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-REGRESSION-001",
             "consumer": "consumer:MOP-REGRESSION-001",
             "meta_operation": "operation:MOP-REGRESSION-001",
-            "evidence_path": "evidence:MOP-REGRESSION-001"
+            "evidence_path": "evidence/MOP-REGRESSION-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-REGRESSION-001",
+              "observed_endpoint": "producer:MOP-REGRESSION-001",
+              "observed_artifact": "producer/MOP-REGRESSION-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:1d2316cb7a1147df4cd934214237ba9c85911057bfb8fd4d278f3dcdcafc8157",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-REGRESSION-001",
+              "observed_endpoint": "consumer:MOP-REGRESSION-001",
+              "observed_artifact": "consumer/MOP-REGRESSION-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:107e945c530d40b7cd3b8dcf98f24f62ae33a33f9ab60c369388e9811cf4ea4d",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-REGRESSION-001",
+              "observed_endpoint": "operation:MOP-REGRESSION-001",
+              "observed_artifact": "meta-operation/MOP-REGRESSION-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:3f2620c570632a39ee645f14b1af1da1c7c5c651caebc7a7548685b763b31f85",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-REGRESSION-001.json",
+              "observed_endpoint": "evidence/MOP-REGRESSION-001.json",
+              "observed_artifact": "evidence/MOP-REGRESSION-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:c05268363b4aafa3feef27b0f0043710760db652bdf498666ce995e4ab4e338f",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "claim_transition": {
+            "proposition": "metric MOP-REGRESSION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "DISCHARGED",
             "conformance_decision": "PASS",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "DISCHARGED",
             "stage": "CLAIM",
             "step": "discharge-open-claim",
             "reason": "PASS_DISCHARGES_OPEN_CLAIM",
-            "evidence_digest": "sha256:fb649ec7fc97e7f36695231b65af9ca43616f2e4b6a6b33a486ba6c17ddcd6b3",
+            "evidence_digest": "sha256:2a568a7eb6143e5f8f831582caa6ea510b192980c0cdee0f735d72bcf0048a97",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-REGRESSION-001",
               "consumer": "consumer:MOP-REGRESSION-001",
               "meta_operation": "operation:MOP-REGRESSION-001",
-              "evidence_path": "evidence:MOP-REGRESSION-001",
-              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph"
+              "evidence_path": "evidence/MOP-REGRESSION-001.json",
+              "scenario_mutation": "remove_relation=;dependency=;reason=baseline semantic graph",
+              "artifact_digests": {
+                "CONSUMES": "sha256:107e945c530d40b7cd3b8dcf98f24f62ae33a33f9ab60c369388e9811cf4ea4d",
+                "EVIDENCED_BY": "sha256:c05268363b4aafa3feef27b0f0043710760db652bdf498666ce995e4ab4e338f",
+                "OPERATES": "sha256:3f2620c570632a39ee645f14b1af1da1c7c5c651caebc7a7548685b763b31f85",
+                "PRODUCES": "sha256:1d2316cb7a1147df4cd934214237ba9c85911057bfb8fd4d278f3dcdcafc8157"
+              }
             }
           }
         }
@@ -168,7 +368,8 @@
       "numerator": 11,
       "denominator": 12,
       "conformance_decision": "UNKNOWN",
-      "subject_resolution": "EXACT",
+      "source_resolution": "EXACT",
+      "lineage_resolution": "LOWER_RESOLUTION",
       "decisions": {
         "PASS": 1,
         "UNKNOWN": 2
@@ -185,32 +386,96 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-COHERENCE-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-COHERENCE-001",
             "consumer": "consumer:MOP-COHERENCE-001",
             "meta_operation": "operation:MOP-COHERENCE-001",
-            "evidence_path": "evidence:MOP-COHERENCE-001"
+            "evidence_path": "evidence/MOP-COHERENCE-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-COHERENCE-001",
+              "observed_endpoint": "producer:MOP-COHERENCE-001",
+              "observed_artifact": "producer/MOP-COHERENCE-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:c85fd7d0455bf52d442a5799441ee2ec5ce7027d45b5eab8e48dbd47b05915d4",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-COHERENCE-001",
+              "observed_endpoint": "consumer:MOP-COHERENCE-001",
+              "observed_artifact": "consumer/MOP-COHERENCE-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:0c5b75a6b9b463296134414432b00c59d24e3698693beb1b54c53de11a3e1a4c",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-COHERENCE-001",
+              "observed_endpoint": "operation:MOP-COHERENCE-001",
+              "observed_artifact": "meta-operation/MOP-COHERENCE-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:15bb1a42f73d1c7115e4879f3a3931d689bf92641da3c6c75569abea5d17d8c0",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-COHERENCE-001.json",
+              "observed_endpoint": "evidence/MOP-COHERENCE-001.json",
+              "observed_artifact": "evidence/MOP-COHERENCE-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:3960449536bbd1b4348a2bf368ce9c03f9e39183adf1fb12704e0038cddb6a71",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "claim_transition": {
+            "proposition": "metric MOP-COHERENCE-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "DISCHARGED",
             "conformance_decision": "PASS",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "DISCHARGED",
             "stage": "CLAIM",
             "step": "discharge-open-claim",
             "reason": "PASS_DISCHARGES_OPEN_CLAIM",
-            "evidence_digest": "sha256:eb7efed3117a61a0fb5d361d3ef2e1d428078dbf5a8a4710f2f30fa51700fc4a",
+            "evidence_digest": "sha256:50beb3ebf33e7c288652f588ef30c085ea176844b23bf2fd7a2017ef5ee46d71",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-COHERENCE-001",
               "consumer": "consumer:MOP-COHERENCE-001",
               "meta_operation": "operation:MOP-COHERENCE-001",
-              "evidence_path": "evidence:MOP-COHERENCE-001",
-              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric"
+              "evidence_path": "evidence/MOP-COHERENCE-001.json",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric",
+              "artifact_digests": {
+                "CONSUMES": "sha256:0c5b75a6b9b463296134414432b00c59d24e3698693beb1b54c53de11a3e1a4c",
+                "EVIDENCED_BY": "sha256:3960449536bbd1b4348a2bf368ce9c03f9e39183adf1fb12704e0038cddb6a71",
+                "OPERATES": "sha256:15bb1a42f73d1c7115e4879f3a3931d689bf92641da3c6c75569abea5d17d8c0",
+                "PRODUCES": "sha256:c85fd7d0455bf52d442a5799441ee2ec5ce7027d45b5eab8e48dbd47b05915d4"
+              }
             }
           }
         },
@@ -221,7 +486,9 @@
           "numerator": 3,
           "denominator": 4,
           "decision": "UNKNOWN",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-FOUNDATION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "LOWER_RESOLUTION",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-FOUNDATION-001",
@@ -229,30 +496,92 @@
             "meta_operation": "operation:MOP-FOUNDATION-001",
             "evidence_path": ""
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-FOUNDATION-001",
+              "observed_endpoint": "producer:MOP-FOUNDATION-001",
+              "observed_artifact": "producer/MOP-FOUNDATION-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:25deba2da70f94e41479b3f2c50cc96753f8ccfff3d9dee69a70578b1fbfe1c2",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-FOUNDATION-001",
+              "observed_endpoint": "consumer:MOP-FOUNDATION-001",
+              "observed_artifact": "consumer/MOP-FOUNDATION-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:3021345a518a80b1d1ebe2a591d8e87ebb8e8c2d07be5ab64535fe11e960409a",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-FOUNDATION-001",
+              "observed_endpoint": "operation:MOP-FOUNDATION-001",
+              "observed_artifact": "meta-operation/MOP-FOUNDATION-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:196934da7e2294b27e4d5052c77010c01d0ef009806a351b49af05462f472228",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-FOUNDATION-001.json",
+              "observed_endpoint": "evidence/MOP-FOUNDATION-001.json",
+              "observed_artifact": "evidence/MOP-FOUNDATION-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:0cbe8d04a139fd994aecc1d79f4595400a472fc6eb2da76cb66b946e776c7048",
+              "relation_status": "REMOVED",
+              "stage": "SCENARIO",
+              "step": "remove-relation",
+              "reason": "unknown upstream blocks dependent metric",
+              "cause": "SCENARIO_MUTATION"
+            }
+          ],
           "issue": {
-            "stage": "LINEAGE",
-            "step": "connect-evidence-path",
-            "reason": "REQUIRED_EVIDENCE_RELATION_MISSING",
-            "cause": "DIRECT_CAUSE"
+            "stage": "SCENARIO",
+            "step": "remove-relation",
+            "reason": "unknown upstream blocks dependent metric",
+            "cause": "SCENARIO_MUTATION"
           },
           "claim_transition": {
+            "proposition": "metric MOP-FOUNDATION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "OPEN",
             "conformance_decision": "UNKNOWN",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "LOWER_RESOLUTION",
             "transition": "PRESERVED_OPEN",
             "stage": "CLAIM",
             "step": "preserve-open-claim",
             "reason": "UNKNOWN_PRESERVES_OPEN_CLAIM",
-            "evidence_digest": "sha256:6a5b60fcdc0ef3bb6b038f3cddd0b482cda7fb6946945ce0c01338092943b609",
+            "evidence_digest": "sha256:46222a533fb4f7dc1ce75c0851aa1bba853b54a9f038a0e9577fbe31b7232719",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-FOUNDATION-001",
               "consumer": "consumer:MOP-FOUNDATION-001",
               "meta_operation": "operation:MOP-FOUNDATION-001",
               "evidence_path": "",
-              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric"
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric",
+              "artifact_digests": {
+                "CONSUMES": "sha256:3021345a518a80b1d1ebe2a591d8e87ebb8e8c2d07be5ab64535fe11e960409a",
+                "EVIDENCED_BY": "sha256:0cbe8d04a139fd994aecc1d79f4595400a472fc6eb2da76cb66b946e776c7048",
+                "OPERATES": "sha256:196934da7e2294b27e4d5052c77010c01d0ef009806a351b49af05462f472228",
+                "PRODUCES": "sha256:25deba2da70f94e41479b3f2c50cc96753f8ccfff3d9dee69a70578b1fbfe1c2"
+              }
             }
           }
         },
@@ -263,14 +592,70 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "UNKNOWN",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-REGRESSION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "LOWER_RESOLUTION",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-REGRESSION-001",
             "consumer": "consumer:MOP-REGRESSION-001",
             "meta_operation": "operation:MOP-REGRESSION-001",
-            "evidence_path": "evidence:MOP-REGRESSION-001"
+            "evidence_path": "evidence/MOP-REGRESSION-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-REGRESSION-001",
+              "observed_endpoint": "producer:MOP-REGRESSION-001",
+              "observed_artifact": "producer/MOP-REGRESSION-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:1d2316cb7a1147df4cd934214237ba9c85911057bfb8fd4d278f3dcdcafc8157",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-REGRESSION-001",
+              "observed_endpoint": "consumer:MOP-REGRESSION-001",
+              "observed_artifact": "consumer/MOP-REGRESSION-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:107e945c530d40b7cd3b8dcf98f24f62ae33a33f9ab60c369388e9811cf4ea4d",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-REGRESSION-001",
+              "observed_endpoint": "operation:MOP-REGRESSION-001",
+              "observed_artifact": "meta-operation/MOP-REGRESSION-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:3f2620c570632a39ee645f14b1af1da1c7c5c651caebc7a7548685b763b31f85",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-REGRESSION-001.json",
+              "observed_endpoint": "evidence/MOP-REGRESSION-001.json",
+              "observed_artifact": "evidence/MOP-REGRESSION-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:c05268363b4aafa3feef27b0f0043710760db652bdf498666ce995e4ab4e338f",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "issue": {
             "stage": "DEPENDENCY",
             "step": "propagate-unknown",
@@ -281,23 +666,31 @@
             ]
           },
           "claim_transition": {
+            "proposition": "metric MOP-REGRESSION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "OPEN",
             "conformance_decision": "UNKNOWN",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "PRESERVED_OPEN",
             "stage": "CLAIM",
             "step": "preserve-open-claim",
             "reason": "UNKNOWN_PRESERVES_OPEN_CLAIM",
-            "evidence_digest": "sha256:ca4c49b099f3f9d7e9dee433117a8ab54b634692d64b6bcd2c85db0a04c792c8",
+            "evidence_digest": "sha256:bd83fd5fa837894a63d6e9a3ea91f5c5a42e5a0ad054e114620c55f93fe7cd81",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-REGRESSION-001",
               "consumer": "consumer:MOP-REGRESSION-001",
               "meta_operation": "operation:MOP-REGRESSION-001",
-              "evidence_path": "evidence:MOP-REGRESSION-001",
-              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric"
+              "evidence_path": "evidence/MOP-REGRESSION-001.json",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=MOP-FOUNDATION-001\u003eMOP-REGRESSION-001;reason=unknown upstream blocks dependent metric",
+              "artifact_digests": {
+                "CONSUMES": "sha256:107e945c530d40b7cd3b8dcf98f24f62ae33a33f9ab60c369388e9811cf4ea4d",
+                "EVIDENCED_BY": "sha256:c05268363b4aafa3feef27b0f0043710760db652bdf498666ce995e4ab4e338f",
+                "OPERATES": "sha256:3f2620c570632a39ee645f14b1af1da1c7c5c651caebc7a7548685b763b31f85",
+                "PRODUCES": "sha256:1d2316cb7a1147df4cd934214237ba9c85911057bfb8fd4d278f3dcdcafc8157"
+              }
             }
           }
         }
@@ -319,7 +712,8 @@
       "numerator": 11,
       "denominator": 12,
       "conformance_decision": "UNKNOWN",
-      "subject_resolution": "EXACT",
+      "source_resolution": "EXACT",
+      "lineage_resolution": "LOWER_RESOLUTION",
       "decisions": {
         "PASS": 2,
         "UNKNOWN": 1
@@ -336,32 +730,96 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-COHERENCE-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-COHERENCE-001",
             "consumer": "consumer:MOP-COHERENCE-001",
             "meta_operation": "operation:MOP-COHERENCE-001",
-            "evidence_path": "evidence:MOP-COHERENCE-001"
+            "evidence_path": "evidence/MOP-COHERENCE-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-COHERENCE-001",
+              "observed_endpoint": "producer:MOP-COHERENCE-001",
+              "observed_artifact": "producer/MOP-COHERENCE-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:c85fd7d0455bf52d442a5799441ee2ec5ce7027d45b5eab8e48dbd47b05915d4",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-COHERENCE-001",
+              "observed_endpoint": "consumer:MOP-COHERENCE-001",
+              "observed_artifact": "consumer/MOP-COHERENCE-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:0c5b75a6b9b463296134414432b00c59d24e3698693beb1b54c53de11a3e1a4c",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-COHERENCE-001",
+              "observed_endpoint": "operation:MOP-COHERENCE-001",
+              "observed_artifact": "meta-operation/MOP-COHERENCE-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:15bb1a42f73d1c7115e4879f3a3931d689bf92641da3c6c75569abea5d17d8c0",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-COHERENCE-001.json",
+              "observed_endpoint": "evidence/MOP-COHERENCE-001.json",
+              "observed_artifact": "evidence/MOP-COHERENCE-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:3960449536bbd1b4348a2bf368ce9c03f9e39183adf1fb12704e0038cddb6a71",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "claim_transition": {
+            "proposition": "metric MOP-COHERENCE-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "DISCHARGED",
             "conformance_decision": "PASS",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "DISCHARGED",
             "stage": "CLAIM",
             "step": "discharge-open-claim",
             "reason": "PASS_DISCHARGES_OPEN_CLAIM",
-            "evidence_digest": "sha256:d0fde90ae75b3003e8104e8b0eef5343bf3066640e323f4cdd9cd4284e227a78",
+            "evidence_digest": "sha256:50beb3ebf33e7c288652f588ef30c085ea176844b23bf2fd7a2017ef5ee46d71",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-COHERENCE-001",
               "consumer": "consumer:MOP-COHERENCE-001",
               "meta_operation": "operation:MOP-COHERENCE-001",
-              "evidence_path": "evidence:MOP-COHERENCE-001",
-              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent"
+              "evidence_path": "evidence/MOP-COHERENCE-001.json",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent",
+              "artifact_digests": {
+                "CONSUMES": "sha256:0c5b75a6b9b463296134414432b00c59d24e3698693beb1b54c53de11a3e1a4c",
+                "EVIDENCED_BY": "sha256:3960449536bbd1b4348a2bf368ce9c03f9e39183adf1fb12704e0038cddb6a71",
+                "OPERATES": "sha256:15bb1a42f73d1c7115e4879f3a3931d689bf92641da3c6c75569abea5d17d8c0",
+                "PRODUCES": "sha256:c85fd7d0455bf52d442a5799441ee2ec5ce7027d45b5eab8e48dbd47b05915d4"
+              }
             }
           }
         },
@@ -372,7 +830,9 @@
           "numerator": 3,
           "denominator": 4,
           "decision": "UNKNOWN",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-FOUNDATION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "LOWER_RESOLUTION",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-FOUNDATION-001",
@@ -380,30 +840,92 @@
             "meta_operation": "operation:MOP-FOUNDATION-001",
             "evidence_path": ""
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-FOUNDATION-001",
+              "observed_endpoint": "producer:MOP-FOUNDATION-001",
+              "observed_artifact": "producer/MOP-FOUNDATION-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:25deba2da70f94e41479b3f2c50cc96753f8ccfff3d9dee69a70578b1fbfe1c2",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-FOUNDATION-001",
+              "observed_endpoint": "consumer:MOP-FOUNDATION-001",
+              "observed_artifact": "consumer/MOP-FOUNDATION-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:3021345a518a80b1d1ebe2a591d8e87ebb8e8c2d07be5ab64535fe11e960409a",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-FOUNDATION-001",
+              "observed_endpoint": "operation:MOP-FOUNDATION-001",
+              "observed_artifact": "meta-operation/MOP-FOUNDATION-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:196934da7e2294b27e4d5052c77010c01d0ef009806a351b49af05462f472228",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-FOUNDATION-001.json",
+              "observed_endpoint": "evidence/MOP-FOUNDATION-001.json",
+              "observed_artifact": "evidence/MOP-FOUNDATION-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:0cbe8d04a139fd994aecc1d79f4595400a472fc6eb2da76cb66b946e776c7048",
+              "relation_status": "REMOVED",
+              "stage": "SCENARIO",
+              "step": "remove-relation",
+              "reason": "evidence relation is absent",
+              "cause": "SCENARIO_MUTATION"
+            }
+          ],
           "issue": {
-            "stage": "LINEAGE",
-            "step": "connect-evidence-path",
-            "reason": "REQUIRED_EVIDENCE_RELATION_MISSING",
-            "cause": "DIRECT_CAUSE"
+            "stage": "SCENARIO",
+            "step": "remove-relation",
+            "reason": "evidence relation is absent",
+            "cause": "SCENARIO_MUTATION"
           },
           "claim_transition": {
+            "proposition": "metric MOP-FOUNDATION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "OPEN",
             "conformance_decision": "UNKNOWN",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "LOWER_RESOLUTION",
             "transition": "PRESERVED_OPEN",
             "stage": "CLAIM",
             "step": "preserve-open-claim",
             "reason": "UNKNOWN_PRESERVES_OPEN_CLAIM",
-            "evidence_digest": "sha256:ca83dfa53fc9fbc87d601fe2349d18bac47ed3e1b3730497811f7806742d49fb",
+            "evidence_digest": "sha256:1dd5a5859dfac0b85ffe97cb7d4a07fdbce6b23e5ed7206d4742e61f5962acfc",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-FOUNDATION-001",
               "consumer": "consumer:MOP-FOUNDATION-001",
               "meta_operation": "operation:MOP-FOUNDATION-001",
               "evidence_path": "",
-              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent"
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent",
+              "artifact_digests": {
+                "CONSUMES": "sha256:3021345a518a80b1d1ebe2a591d8e87ebb8e8c2d07be5ab64535fe11e960409a",
+                "EVIDENCED_BY": "sha256:0cbe8d04a139fd994aecc1d79f4595400a472fc6eb2da76cb66b946e776c7048",
+                "OPERATES": "sha256:196934da7e2294b27e4d5052c77010c01d0ef009806a351b49af05462f472228",
+                "PRODUCES": "sha256:25deba2da70f94e41479b3f2c50cc96753f8ccfff3d9dee69a70578b1fbfe1c2"
+              }
             }
           }
         },
@@ -414,32 +936,96 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-REGRESSION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-REGRESSION-001",
             "consumer": "consumer:MOP-REGRESSION-001",
             "meta_operation": "operation:MOP-REGRESSION-001",
-            "evidence_path": "evidence:MOP-REGRESSION-001"
+            "evidence_path": "evidence/MOP-REGRESSION-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-REGRESSION-001",
+              "observed_endpoint": "producer:MOP-REGRESSION-001",
+              "observed_artifact": "producer/MOP-REGRESSION-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:1d2316cb7a1147df4cd934214237ba9c85911057bfb8fd4d278f3dcdcafc8157",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-REGRESSION-001",
+              "observed_endpoint": "consumer:MOP-REGRESSION-001",
+              "observed_artifact": "consumer/MOP-REGRESSION-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:107e945c530d40b7cd3b8dcf98f24f62ae33a33f9ab60c369388e9811cf4ea4d",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-REGRESSION-001",
+              "observed_endpoint": "operation:MOP-REGRESSION-001",
+              "observed_artifact": "meta-operation/MOP-REGRESSION-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:3f2620c570632a39ee645f14b1af1da1c7c5c651caebc7a7548685b763b31f85",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-REGRESSION-001.json",
+              "observed_endpoint": "evidence/MOP-REGRESSION-001.json",
+              "observed_artifact": "evidence/MOP-REGRESSION-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:c05268363b4aafa3feef27b0f0043710760db652bdf498666ce995e4ab4e338f",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "claim_transition": {
+            "proposition": "metric MOP-REGRESSION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "DISCHARGED",
             "conformance_decision": "PASS",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "DISCHARGED",
             "stage": "CLAIM",
             "step": "discharge-open-claim",
             "reason": "PASS_DISCHARGES_OPEN_CLAIM",
-            "evidence_digest": "sha256:f36fab285d8f99ff9f75d89a34675a35c6da05eac114789af012fbffbfe146d6",
+            "evidence_digest": "sha256:2a568a7eb6143e5f8f831582caa6ea510b192980c0cdee0f735d72bcf0048a97",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-REGRESSION-001",
               "consumer": "consumer:MOP-REGRESSION-001",
               "meta_operation": "operation:MOP-REGRESSION-001",
-              "evidence_path": "evidence:MOP-REGRESSION-001",
-              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent"
+              "evidence_path": "evidence/MOP-REGRESSION-001.json",
+              "scenario_mutation": "remove_relation=EVIDENCED_BY:MOP-FOUNDATION-001;dependency=;reason=evidence relation is absent",
+              "artifact_digests": {
+                "CONSUMES": "sha256:107e945c530d40b7cd3b8dcf98f24f62ae33a33f9ab60c369388e9811cf4ea4d",
+                "EVIDENCED_BY": "sha256:c05268363b4aafa3feef27b0f0043710760db652bdf498666ce995e4ab4e338f",
+                "OPERATES": "sha256:3f2620c570632a39ee645f14b1af1da1c7c5c651caebc7a7548685b763b31f85",
+                "PRODUCES": "sha256:1d2316cb7a1147df4cd934214237ba9c85911057bfb8fd4d278f3dcdcafc8157"
+              }
             }
           }
         }
@@ -461,7 +1047,8 @@
       "numerator": 11,
       "denominator": 12,
       "conformance_decision": "FAIL_CLOSED",
-      "subject_resolution": "EXACT",
+      "source_resolution": "EXACT",
+      "lineage_resolution": "LOWER_RESOLUTION",
       "decisions": {
         "FAIL_CLOSED": 1,
         "PASS": 2
@@ -478,38 +1065,102 @@
           "numerator": 3,
           "denominator": 4,
           "decision": "FAIL_CLOSED",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-COHERENCE-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "LOWER_RESOLUTION",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-COHERENCE-001",
             "consumer": "",
             "meta_operation": "operation:MOP-COHERENCE-001",
-            "evidence_path": "evidence:MOP-COHERENCE-001"
+            "evidence_path": "evidence/MOP-COHERENCE-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-COHERENCE-001",
+              "observed_endpoint": "producer:MOP-COHERENCE-001",
+              "observed_artifact": "producer/MOP-COHERENCE-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:c85fd7d0455bf52d442a5799441ee2ec5ce7027d45b5eab8e48dbd47b05915d4",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-COHERENCE-001",
+              "observed_endpoint": "consumer:MOP-COHERENCE-001",
+              "observed_artifact": "consumer/MOP-COHERENCE-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:0c5b75a6b9b463296134414432b00c59d24e3698693beb1b54c53de11a3e1a4c",
+              "relation_status": "REMOVED",
+              "stage": "SCENARIO",
+              "step": "remove-relation",
+              "reason": "consumer relation is absent",
+              "cause": "SCENARIO_MUTATION"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-COHERENCE-001",
+              "observed_endpoint": "operation:MOP-COHERENCE-001",
+              "observed_artifact": "meta-operation/MOP-COHERENCE-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:15bb1a42f73d1c7115e4879f3a3931d689bf92641da3c6c75569abea5d17d8c0",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-COHERENCE-001.json",
+              "observed_endpoint": "evidence/MOP-COHERENCE-001.json",
+              "observed_artifact": "evidence/MOP-COHERENCE-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:3960449536bbd1b4348a2bf368ce9c03f9e39183adf1fb12704e0038cddb6a71",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "issue": {
-            "stage": "LINEAGE",
-            "step": "connect-consumer",
-            "reason": "REQUIRED_CONSUMER_RELATION_MISSING",
-            "cause": "DIRECT_CAUSE"
+            "stage": "SCENARIO",
+            "step": "verify-counterexample",
+            "reason": "EXPLICIT_CONSUMER_LINEAGE_COUNTEREXAMPLE",
+            "cause": "VERIFIED_CONTRADICTION"
           },
           "claim_transition": {
+            "proposition": "metric MOP-COHERENCE-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "REFUTED",
             "conformance_decision": "FAIL_CLOSED",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "LOWER_RESOLUTION",
             "transition": "REFUTED",
             "stage": "CLAIM",
-            "step": "refute-claim",
-            "reason": "FAIL_CLOSED_IS_EXPLICIT_REFUTATION",
-            "evidence_digest": "sha256:cc8e37f0b467e1cd2da1db08ef5ed93166d0b5c79ddff1d54b0ec20b909bbb1d",
+            "step": "refute-lineage-completeness-claim",
+            "reason": "VERIFIED_CONTRADICTION_REFUTES_LINEAGE_CLAIM",
+            "evidence_digest": "sha256:b7bab0dcdc58a5c7ea36b66fec574369e098359240c2cb1d3c9d8a542fedace8",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-COHERENCE-001",
               "consumer": "",
               "meta_operation": "operation:MOP-COHERENCE-001",
-              "evidence_path": "evidence:MOP-COHERENCE-001",
-              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent"
+              "evidence_path": "evidence/MOP-COHERENCE-001.json",
+              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent",
+              "artifact_digests": {
+                "CONSUMES": "sha256:0c5b75a6b9b463296134414432b00c59d24e3698693beb1b54c53de11a3e1a4c",
+                "EVIDENCED_BY": "sha256:3960449536bbd1b4348a2bf368ce9c03f9e39183adf1fb12704e0038cddb6a71",
+                "OPERATES": "sha256:15bb1a42f73d1c7115e4879f3a3931d689bf92641da3c6c75569abea5d17d8c0",
+                "PRODUCES": "sha256:c85fd7d0455bf52d442a5799441ee2ec5ce7027d45b5eab8e48dbd47b05915d4"
+              }
             }
           }
         },
@@ -520,32 +1171,96 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-FOUNDATION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-FOUNDATION-001",
             "consumer": "consumer:MOP-FOUNDATION-001",
             "meta_operation": "operation:MOP-FOUNDATION-001",
-            "evidence_path": "evidence:MOP-FOUNDATION-001"
+            "evidence_path": "evidence/MOP-FOUNDATION-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-FOUNDATION-001",
+              "observed_endpoint": "producer:MOP-FOUNDATION-001",
+              "observed_artifact": "producer/MOP-FOUNDATION-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:25deba2da70f94e41479b3f2c50cc96753f8ccfff3d9dee69a70578b1fbfe1c2",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-FOUNDATION-001",
+              "observed_endpoint": "consumer:MOP-FOUNDATION-001",
+              "observed_artifact": "consumer/MOP-FOUNDATION-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:3021345a518a80b1d1ebe2a591d8e87ebb8e8c2d07be5ab64535fe11e960409a",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-FOUNDATION-001",
+              "observed_endpoint": "operation:MOP-FOUNDATION-001",
+              "observed_artifact": "meta-operation/MOP-FOUNDATION-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:196934da7e2294b27e4d5052c77010c01d0ef009806a351b49af05462f472228",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-FOUNDATION-001.json",
+              "observed_endpoint": "evidence/MOP-FOUNDATION-001.json",
+              "observed_artifact": "evidence/MOP-FOUNDATION-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:0cbe8d04a139fd994aecc1d79f4595400a472fc6eb2da76cb66b946e776c7048",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "claim_transition": {
+            "proposition": "metric MOP-FOUNDATION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "DISCHARGED",
             "conformance_decision": "PASS",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "DISCHARGED",
             "stage": "CLAIM",
             "step": "discharge-open-claim",
             "reason": "PASS_DISCHARGES_OPEN_CLAIM",
-            "evidence_digest": "sha256:df44e94e32d94d86cbc823a05c4120320d3428c71c2747ff353670f0d31f45ff",
+            "evidence_digest": "sha256:da7012ce61015e6d61117ca5e506ffa27d75c8755c0f382ac84589bbbb7c150c",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-FOUNDATION-001",
               "consumer": "consumer:MOP-FOUNDATION-001",
               "meta_operation": "operation:MOP-FOUNDATION-001",
-              "evidence_path": "evidence:MOP-FOUNDATION-001",
-              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent"
+              "evidence_path": "evidence/MOP-FOUNDATION-001.json",
+              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent",
+              "artifact_digests": {
+                "CONSUMES": "sha256:3021345a518a80b1d1ebe2a591d8e87ebb8e8c2d07be5ab64535fe11e960409a",
+                "EVIDENCED_BY": "sha256:0cbe8d04a139fd994aecc1d79f4595400a472fc6eb2da76cb66b946e776c7048",
+                "OPERATES": "sha256:196934da7e2294b27e4d5052c77010c01d0ef009806a351b49af05462f472228",
+                "PRODUCES": "sha256:25deba2da70f94e41479b3f2c50cc96753f8ccfff3d9dee69a70578b1fbfe1c2"
+              }
             }
           }
         },
@@ -556,37 +1271,101 @@
           "numerator": 4,
           "denominator": 4,
           "decision": "PASS",
-          "subject_resolution": "EXACT",
+          "proposition": "metric MOP-REGRESSION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
+          "source_resolution": "EXACT",
+          "lineage_resolution": "EXACT",
           "evaluation_state": "EVALUATED",
           "lineage": {
             "producer": "producer:MOP-REGRESSION-001",
             "consumer": "consumer:MOP-REGRESSION-001",
             "meta_operation": "operation:MOP-REGRESSION-001",
-            "evidence_path": "evidence:MOP-REGRESSION-001"
+            "evidence_path": "evidence/MOP-REGRESSION-001.json"
           },
+          "relations": [
+            {
+              "relation": "PRODUCES",
+              "declared_endpoint": "producer:MOP-REGRESSION-001",
+              "observed_endpoint": "producer:MOP-REGRESSION-001",
+              "observed_artifact": "producer/MOP-REGRESSION-001.json",
+              "evidence_kind": "producer_receipt",
+              "observed_digest": "sha256:1d2316cb7a1147df4cd934214237ba9c85911057bfb8fd4d278f3dcdcafc8157",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "CONSUMES",
+              "declared_endpoint": "consumer:MOP-REGRESSION-001",
+              "observed_endpoint": "consumer:MOP-REGRESSION-001",
+              "observed_artifact": "consumer/MOP-REGRESSION-001.json",
+              "evidence_kind": "consumer_reconstruction_receipt",
+              "observed_digest": "sha256:107e945c530d40b7cd3b8dcf98f24f62ae33a33f9ab60c369388e9811cf4ea4d",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "OPERATES",
+              "declared_endpoint": "operation:MOP-REGRESSION-001",
+              "observed_endpoint": "operation:MOP-REGRESSION-001",
+              "observed_artifact": "meta-operation/MOP-REGRESSION-001.json",
+              "evidence_kind": "executed_meta_operation_receipt",
+              "observed_digest": "sha256:3f2620c570632a39ee645f14b1af1da1c7c5c651caebc7a7548685b763b31f85",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            },
+            {
+              "relation": "EVIDENCED_BY",
+              "declared_endpoint": "evidence/MOP-REGRESSION-001.json",
+              "observed_endpoint": "evidence/MOP-REGRESSION-001.json",
+              "observed_artifact": "evidence/MOP-REGRESSION-001.json",
+              "evidence_kind": "evidence_artifact",
+              "observed_digest": "sha256:c05268363b4aafa3feef27b0f0043710760db652bdf498666ce995e4ab4e338f",
+              "relation_status": "PASS",
+              "stage": "ARTIFACT",
+              "step": "reconstruct-edge",
+              "reason": "OBSERVED_ARTIFACT_MATCHES_DECLARATION",
+              "cause": "OBSERVED_EVIDENCE"
+            }
+          ],
           "claim_transition": {
+            "proposition": "metric MOP-REGRESSION-001 has complete executable lineage for this subject digest sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
             "prior_claim": "OPEN",
             "next_claim": "DISCHARGED",
             "conformance_decision": "PASS",
-            "subject_resolution": "EXACT",
+            "source_resolution": "EXACT",
+            "lineage_resolution": "EXACT",
             "transition": "DISCHARGED",
             "stage": "CLAIM",
             "step": "discharge-open-claim",
             "reason": "PASS_DISCHARGES_OPEN_CLAIM",
-            "evidence_digest": "sha256:eac76d8635aeb1ca5ebee0d4d7aa43af7579eb64e8cea2ef31271ad6f11e4044",
+            "evidence_digest": "sha256:2a568a7eb6143e5f8f831582caa6ea510b192980c0cdee0f735d72bcf0048a97",
             "provenance": {
-              "source_digest": "sha256:14ec12a59b2eeaf11d9907365cbbc3398e9ea38fbf8b2b8eddc73aec6fc8145f",
-              "semantic_digest": "sha256:293f81cdfba8b6e17afd43b43a657112e34e5cba820b129801b72ab98aae328d",
+              "source_digest": "sha256:6f7faeaa36fa6b5189ad0d0d755f548678acd15a9c9c1dc41a13f2cb2d109dfb",
+              "semantic_digest": "sha256:f2ccc593d4fd163cc6098c0c60af6985bea2a7e270a5932655affe4c4a316609",
               "producer": "producer:MOP-REGRESSION-001",
               "consumer": "consumer:MOP-REGRESSION-001",
               "meta_operation": "operation:MOP-REGRESSION-001",
-              "evidence_path": "evidence:MOP-REGRESSION-001",
-              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent"
+              "evidence_path": "evidence/MOP-REGRESSION-001.json",
+              "scenario_mutation": "remove_relation=CONSUMES:MOP-COHERENCE-001;dependency=;reason=consumer relation is absent",
+              "artifact_digests": {
+                "CONSUMES": "sha256:107e945c530d40b7cd3b8dcf98f24f62ae33a33f9ab60c369388e9811cf4ea4d",
+                "EVIDENCED_BY": "sha256:c05268363b4aafa3feef27b0f0043710760db652bdf498666ce995e4ab4e338f",
+                "OPERATES": "sha256:3f2620c570632a39ee645f14b1af1da1c7c5c651caebc7a7548685b763b31f85",
+                "PRODUCES": "sha256:1d2316cb7a1147df4cd934214237ba9c85911057bfb8fd4d278f3dcdcafc8157"
+              }
             }
           }
         }
       ]
     }
   ],
-  "digest": "sha256:9430730a178879d907602cf98a304219475010b0a22596cfd3637f9238150429"
+  "digest": "sha256:ee784c174fa280829252f0eb257c63f56bc5ad66eabb499ed10ad2b700211d0e"
 }

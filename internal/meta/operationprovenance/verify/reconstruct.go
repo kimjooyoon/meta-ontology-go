@@ -1,26 +1,27 @@
 package verify
 
 import (
-	"fmt"
-
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
-func reconstruct(ir semantic.IR) ([]cMetric, []cScenario, sourceReconstruction, error) {
+func reconstruct(ir semantic.IR) ([]cMetric, []cScenario, sourceReconstruction, []issue, error) {
 	metrics, scenarios := []cMetric{}, []cScenario{}
 	recovery := sourceReconstruction{}
+	issues := []issue{}
 	for _, node := range ir.Graph.Nodes() {
 		if node.Kind != semantic.Activity || node.ValueProgram == "" {
 			continue
 		}
 		fields, kind, err := parseComputed(node.ValueProgram)
 		if err != nil {
-			return nil, nil, sourceReconstruction{}, fmt.Errorf("consumer activity %s: %w", node.Name, err)
+			issues = append(issues, sourceIssue(node.Name, "SHORT_OR_UNKNOWN_COMPUTES", err.Error()))
+			continue
 		}
 		if kind == "metric" {
 			metric, err := metricFrom(fields)
 			if err != nil {
-				return nil, nil, sourceReconstruction{}, err
+				issues = append(issues, sourceIssue(node.Name, "INVALID_METRIC_RECORD", err.Error()))
+				continue
 			}
 			metrics = append(metrics, metric)
 			recovery.Numerator++
@@ -29,11 +30,16 @@ func reconstruct(ir semantic.IR) ([]cMetric, []cScenario, sourceReconstruction, 
 		}
 		scenario, err := scenarioFrom(fields)
 		if err != nil {
-			return nil, nil, sourceReconstruction{}, err
+			issues = append(issues, sourceIssue(node.Name, "INVALID_SCENARIO_RECORD", err.Error()))
+			continue
 		}
 		scenarios = append(scenarios, scenario)
 		recovery.Numerator++
 		recovery.ScenarioNumerator += len(fields)
 	}
-	return finishReconstruction(metrics, scenarios, recovery)
+	return finishReconstruction(metrics, scenarios, recovery, issues)
+}
+
+func sourceIssue(activity, reason, detail string) issue {
+	return issue{Stage: "SOURCE", Step: "reconstruct-computes", Reason: reason, Detail: activity + ":" + detail, Cause: "DIRECT_CAUSE"}
 }

@@ -1,47 +1,32 @@
 package verify
 
-import "strings"
-
-func evaluate(scenario cScenario, metrics []cMetric, sourceDigest, semanticDigest string) scenarioResult {
-	f := makeFixture(scenario, metrics)
-	if scenario.removeRelation != "" {
-		parts := strings.SplitN(scenario.removeRelation, ":", 2)
-		if len(parts) != 2 {
-			return scenarioResult{ID: scenario.id, Mutation: mutationDescription(scenario), Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION"}
-		}
-		f.edges = removeEdge(f.edges, metrics, parts[0], parts[1])
+func evaluate(scenario cScenario, metrics []cMetric, artifacts map[string][]relationObservation, sourceDigest, semanticDigest string) (scenarioResult, error) {
+	f, err := makeFixture(scenario, metrics, artifacts)
+	if err != nil {
+		return scenarioResult{}, err
 	}
-	if scenario.dependency != "" {
-		if !strings.Contains(scenario.dependency, ">") {
-			return scenarioResult{ID: scenario.id, Mutation: mutationDescription(scenario), Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION"}
-		}
-		applyDependency(f.metrics, scenario.dependency)
-	}
-	edgeCounts, edgeKinds := countEdges(f)
-	evaluator := newEvaluator(f, edgeCounts, sourceDigest, semanticDigest)
+	evaluator := newEvaluator(f, sourceDigest, semanticDigest)
 	results := make([]metricResult, 0, len(f.metrics))
 	decisions, transitions := map[string]int{}, map[string]int{}
 	numerator := 0
+	lineageExact := true
 	for _, metric := range f.metrics {
 		result := evaluator.run(metric.id)
 		results = append(results, result)
 		decisions[result.Decision]++
 		transitions[result.Transition.Transition]++
 		numerator += result.Numerator
+		lineageExact = lineageExact && result.LineageResolution == "EXACT"
 	}
-	return scenarioResult{ID: f.id, Mutation: f.mutation, Graph: graphSummary{Nodes: len(f.nodes), Edges: len(f.edges), EdgeKinds: edgeKinds}, Numerator: numerator, Denominator: len(results) * 4, Decision: scenarioDecision(decisions), Resolution: "EXACT", Decisions: decisions, Transitions: transitions, Metrics: results}
+	return scenarioResult{ID: f.id, Mutation: f.mutation, Graph: buildGraphSummary(f), Numerator: numerator, Denominator: len(results) * 4, Decision: scenarioDecision(decisions), SourceResolution: "EXACT", LineageResolution: resolution(lineageExact), Decisions: decisions, Transitions: transitions, Metrics: results}, nil
 }
 
-func countEdges(f cFixture) (map[string]int, map[string]int) {
-	counts, kinds := map[string]int{}, map[string]int{}
+func buildGraphSummary(f cFixture) graphSummary {
+	kinds := map[string]int{}
 	for _, edge := range f.edges {
-		if f.nodes[edge.from] == "" || f.nodes[edge.to] == "" {
-			continue
-		}
-		counts[edge.from+"\x00"+edge.to+"\x00"+edge.kind]++
 		kinds[edge.kind]++
 	}
-	return counts, kinds
+	return graphSummary{Nodes: len(f.nodes), Edges: len(f.edges), EdgeKinds: kinds}
 }
 
 func scenarioDecision(decisions map[string]int) string {
@@ -52,4 +37,11 @@ func scenarioDecision(decisions map[string]int) string {
 		return "UNKNOWN"
 	}
 	return "PASS"
+}
+
+func resolution(exact bool) string {
+	if exact {
+		return "EXACT"
+	}
+	return "LOWER_RESOLUTION"
 }

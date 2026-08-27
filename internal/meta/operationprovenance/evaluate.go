@@ -1,75 +1,68 @@
 package operationprovenance
 
 func evaluateFixture(f fixture, sourceDigest, semanticDigest string) ScenarioResult {
-	edgeCounts, edgeKinds := countEdges(f)
 	byID := make(map[string]metricSpec, len(f.Metrics))
 	for _, metric := range f.Metrics {
 		byID[metric.ID] = metric
 	}
-	memo := make(map[string]MetricResult)
-	visiting := make(map[string]bool)
-	var evaluate func(string) MetricResult
-	evaluate = func(id string) MetricResult {
-		if result, ok := memo[id]; ok {
-			return result
-		}
-		metric := byID[id]
-		if visiting[id] {
-			return metricResult(metric, edgeCounts, "UNKNOWN", dependencyIssue("DEPENDENCY_CYCLE", id), sourceDigest, semanticDigest, f)
-		}
-		visiting[id] = true
-		result := metricResult(metric, edgeCounts, "", nil, sourceDigest, semanticDigest, f)
-		for _, dependency := range metric.DependsOn {
-			upstream, ok := byID[dependency]
-			if !ok {
-				result = metricResult(metric, edgeCounts, "UNKNOWN", dependencyIssue("UPSTREAM_METRIC_MISSING", dependency), sourceDigest, semanticDigest, f)
-				break
-			}
-			if upstreamResult := evaluate(upstream.ID); upstreamResult.Decision != "PASS" {
-				result = metricResult(metric, edgeCounts, "UNKNOWN", dependencyIssue("UPSTREAM_"+upstreamResult.Decision, dependency), sourceDigest, semanticDigest, f)
-				break
-			}
-		}
-		visiting[id] = false
-		memo[id] = result
-		return result
-	}
+	evaluator := evaluator{fixture: f, byID: byID, memo: map[string]MetricResult{}, visiting: map[string]bool{}, sourceDigest: sourceDigest, semanticDigest: semanticDigest}
 	results := make([]MetricResult, 0, len(f.Metrics))
 	decisions, transitions := map[string]int{}, map[string]int{}
 	numerator := 0
+	lineageExact := true
 	for _, metric := range f.Metrics {
-		result := evaluate(metric.ID)
+		result := evaluator.run(metric.ID)
 		results = append(results, result)
 		decisions[result.Decision]++
 		transitions[result.Transition.Transition]++
 		numerator += result.Numerator
+		lineageExact = lineageExact && result.LineageResolution == "EXACT"
 	}
-	decision := scenarioDecision(decisions)
-	return ScenarioResult{ID: f.ID, Mutation: f.Mutation, Graph: GraphSummary{Nodes: len(f.Nodes), Edges: len(f.Edges), EdgeKinds: edgeKinds}, Numerator: numerator, Denominator: len(results) * relationDenominator, ConformanceDecision: decision, SubjectResolution: "EXACT", Decisions: decisions, Transitions: transitions, Metrics: results}
+	return ScenarioResult{ID: f.ID, Mutation: f.Mutation, Graph: graphSummary(f), Numerator: numerator, Denominator: len(results) * relationDenominator, ConformanceDecision: scenarioDecision(decisions), SourceResolution: "EXACT", LineageResolution: resolution(lineageExact), Decisions: decisions, Transitions: transitions, Metrics: results}
 }
 
-func countEdges(f fixture) (map[string]int, map[string]int) {
-	counts, kinds := map[string]int{}, map[string]int{}
-	for _, edge := range f.Edges {
-		if f.Nodes[edge.From] == "" || f.Nodes[edge.To] == "" {
-			continue
+type evaluator struct {
+	fixture                      fixture
+	byID                         map[string]metricSpec
+	memo                         map[string]MetricResult
+	visiting                     map[string]bool
+	sourceDigest, semanticDigest string
+}
+
+func (e *evaluator) run(id string) MetricResult {
+	if result, ok := e.memo[id]; ok {
+		return result
+	}
+	metric := e.byID[id]
+	if e.visiting[id] {
+		return metricResult(metric, e.fixture.Artifacts[id], "UNKNOWN", dependencyIssue("DEPENDENCY_CYCLE", id), e.sourceDigest, e.semanticDigest, e.fixture)
+	}
+	e.visiting[id] = true
+	result := e.directResult(metric)
+	for _, dependency := range metric.DependsOn {
+		upstream, ok := e.byID[dependency]
+		if !ok {
+			result = metricResult(metric, e.fixture.Artifacts[id], "UNKNOWN", dependencyIssue("UPSTREAM_METRIC_MISSING", dependency), e.sourceDigest, e.semanticDigest, e.fixture)
+			break
 		}
-		counts[edge.From+"\x00"+edge.To+"\x00"+edge.Kind]++
-		kinds[edge.Kind]++
+		if upstreamResult := e.run(upstream.ID); upstreamResult.Decision != "PASS" {
+			result = metricResult(metric, e.fixture.Artifacts[id], "UNKNOWN", dependencyIssue("UPSTREAM_"+upstreamResult.Decision, dependency), e.sourceDigest, e.semanticDigest, e.fixture)
+			result.LineageResolution = "LOWER_RESOLUTION"
+			break
+		}
 	}
-	return counts, kinds
+	e.visiting[id] = false
+	e.memo[id] = result
+	return result
 }
 
-func scenarioDecision(decisions map[string]int) string {
-	if decisions["FAIL_CLOSED"] > 0 {
-		return "FAIL_CLOSED"
+func (e *evaluator) directResult(metric metricSpec) MetricResult {
+	observations := e.fixture.Artifacts[metric.ID]
+	for _, observation := range observations {
+		if observation.Relation == "CONSUMES" && observation.RelationStatus == "REMOVED" {
+			issue := &Issue{Stage: "SCENARIO", Step: "verify-counterexample", Reason: "EXPLICIT_CONSUMER_LINEAGE_COUNTEREXAMPLE", Cause: "VERIFIED_CONTRADICTION"}
+			return metricResult(metric, observations, "FAIL_CLOSED", issue, e.sourceDigest, e.semanticDigest, e.fixture)
+		}
 	}
-	if decisions["UNKNOWN"] > 0 {
-		return "UNKNOWN"
-	}
-	return "PASS"
-}
-
-func dependencyIssue(reason, blocked string) *Issue {
-	return &Issue{Stage: "DEPENDENCY", Step: "propagate-unknown", Reason: reason, Cause: "DEPENDENCY_BLOCK", BlockedBy: []string{blocked}}
+	return metricResult(metric, observations, "", nil, e.sourceDigest, e.semanticDigest, e.fixture)
 }

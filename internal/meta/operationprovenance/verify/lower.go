@@ -8,6 +8,9 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
+const receiptSchema = "gooo/meta-operation-provenance-receipt/v3"
+const toolchain = "go1.27.0"
+
 func lower(source []byte) (semantic.IR, error) {
 	file, diagnostics := syntax.ParseFile("main.gooo", string(source))
 	if diagnostics.HasErrors() || file == nil {

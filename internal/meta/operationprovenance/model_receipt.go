@@ -14,7 +14,8 @@ type WorkspaceObservation struct {
 	AfterDigest               string   `json:"after_digest"`
 	ChangedPaths              []string `json:"changed_paths,omitempty"`
 	RepositoryWorkspaceWrites bool     `json:"repository_workspace_writes"`
-	MutationAuthority         bool     `json:"mutation_authority"`
+	MutationAuthority         string   `json:"mutation_authority"`
+	MutationAuthorityReason   string   `json:"mutation_authority_reason"`
 }
 
 type Receipt struct {
@@ -22,6 +23,9 @@ type Receipt struct {
 	Toolchain               string               `json:"toolchain"`
 	SourceDigest            string               `json:"source_digest"`
 	CanonicalSemanticDigest string               `json:"canonical_semantic_digest"`
+	SourceResolution        string               `json:"source_resolution"`
+	SourceIssues            []Issue              `json:"source_issues,omitempty"`
+	FamilyCardinality       map[string]int       `json:"family_cardinality"`
 	SourceReconstruction    SourceReconstruction `json:"source_reconstruction"`
 	WorkspaceObservation    WorkspaceObservation `json:"workspace_observation"`
 	Scenarios               []ScenarioResult     `json:"scenarios"`

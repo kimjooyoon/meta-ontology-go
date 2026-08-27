@@ -86,38 +86,53 @@ jobs:
           work="$RUNNER_TEMP/meta-operation-provenance"
           mkdir -p "$work/first" "$work/replay" "$work/interventions" "$work/missing-source"
           source=examples/meta-operation-provenance/main.gooo
+          artifacts=examples/meta-operation-provenance/artifacts
           for out in "$work/first/receipt.json" "$work/replay/receipt.json"; do
             go run ./scripts/meta-operation-provenance -mode build -source "$source" \
-              -workspace-root "$GITHUB_WORKSPACE" -out "$out"
+              -artifact-root "$artifacts" -workspace-root "$GITHUB_WORKSPACE" -out "$out"
           done
           cmp -s "$work/first/receipt.json" "$work/replay/receipt.json"
           go run ./scripts/meta-operation-provenance -mode verify -source "$source" \
             -receipt "$work/first/receipt.json" \
-            -consumer-source internal/meta/operationprovenance/verify/core.go \
+            -consumer-source internal/meta/operationprovenance/verify \
+            -artifact-root "$artifacts" \
             -out "$work/first/verification.json"
           go run ./scripts/meta-operation-provenance -mode verify \
             -receipt "$work/first/receipt.json" \
-            -consumer-source internal/meta/operationprovenance/verify/core.go \
+            -consumer-source internal/meta/operationprovenance/verify \
+            -artifact-root "$artifacts" \
             -out "$work/missing-source/verification.json"
           go run ./scripts/meta-operation-provenance -mode interventions -source "$source" \
-            -workspace-root "$GITHUB_WORKSPACE" -out "$work/interventions/interventions.json"
+            -artifact-root "$artifacts" -workspace-root "$GITHUB_WORKSPACE" -out "$work/interventions/interventions.json"
           cmp -s "$work/first/receipt.json" examples/meta-operation-provenance/receipt.json
-          jq -e '.status == "VERIFIED" and .subject_resolution == "EXACT" and
+          jq -e '.workspace_observation.repository_workspace_writes == false and
+            .workspace_observation.mutation_authority == "UNKNOWN" and
+            .workspace_observation.mutation_authority_reason != ""' "$work/first/receipt.json"
+          jq -e '.status == "VERIFIED" and .source_resolution == "EXACT" and .lineage_resolution == "EXACT" and
             .source_reconstruction.numerator == 7 and
             .source_reconstruction.denominator == 7 and
             .producer_import.numerator == 1 and .producer_import.denominator == 1 and
+            .producer_import.files > 1 and .producer_import.source_digest != "" and
+            .family_cardinality.FOUNDATION == 1 and .family_cardinality.COHERENCE == 1 and .family_cardinality.REGRESSION == 1 and
+            (.edge_evidence.PRODUCES | length) == 3 and
+            (.edge_evidence.CONSUMES | length) == 3 and
+            (.edge_evidence.OPERATES | length) == 3 and
+            (.edge_evidence.EVIDENCED_BY | length) == 3 and
             .fail_closed_count == 1 and .direct_unknowns == 2 and .dependency_blocks == 1 and
             .transition_counts.DISCHARGED == 8 and
             .transition_counts.PRESERVED_OPEN == 3 and
-            .transition_counts.REFUTED == 1' "$work/first/verification.json"
+            .transition_counts.REFUTED == 1 and
+            all(.edge_evidence[][]; (.observed_artifact != "" and .evidence_kind != "" and .observed_digest != "" and .relation_status == "PASS"))' "$work/first/verification.json"
           jq -e '.status == "UNKNOWN" and .conformance_decision == "UNKNOWN" and
-            .subject_resolution == "LOWER_RESOLUTION" and
+            .source_resolution == "LOWER_RESOLUTION" and .lineage_resolution == "LOWER_RESOLUTION" and
             .issue.stage == "CONSUMER" and .issue.step == "parse-source" and
             .issue.reason == "REQUIRED_RAW_SOURCE_MISSING"' \
             "$work/missing-source/verification.json"
           jq -e '.semantic.status == "PASS" and .semantic.raw_source_digest_changed and
             .semantic.semantic_digest_changed and
             .semantic.decision_changed and .semantic.transition_changed and
+            .noop.status == "PASS" and .noop.observed_failure and
+            .noop.failure_stage == "SCENARIO" and .noop.failure_step == "apply-mutation" and
             .nonsemantic.status == "PASS" and .nonsemantic.raw_source_digest_changed and
             (.nonsemantic.semantic_digest_changed | not) and
             (.nonsemantic.decision_changed | not) and

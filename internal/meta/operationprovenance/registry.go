@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	ReceiptSchema = "gooo/meta-operation-provenance-receipt/v2"
-	ReportSchema  = "gooo/meta-operation-provenance-verification/v2"
+	ReceiptSchema = "gooo/meta-operation-provenance-receipt/v3"
+	ReportSchema  = "gooo/meta-operation-provenance-verification/v3"
 	Toolchain     = "go1.27.0"
 )
 

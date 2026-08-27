@@ -5,9 +5,9 @@ import (
 	"sort"
 )
 
-func finishReconstruction(metrics []cMetric, scenarios []cScenario, recovery sourceReconstruction) ([]cMetric, []cScenario, sourceReconstruction, error) {
+func finishReconstruction(metrics []cMetric, scenarios []cScenario, recovery sourceReconstruction, issues []issue) ([]cMetric, []cScenario, sourceReconstruction, []issue, error) {
 	if len(metrics) == 0 || len(scenarios) == 0 {
-		return nil, nil, sourceReconstruction{}, fmt.Errorf("consumer recovered no metric/scenario records")
+		return nil, nil, sourceReconstruction{}, issues, fmt.Errorf("consumer recovered no metric/scenario records")
 	}
 	sort.Slice(metrics, func(i, j int) bool { return metrics[i].id < metrics[j].id })
 	sort.Slice(scenarios, func(i, j int) bool { return scenarios[i].id < scenarios[j].id })
@@ -15,7 +15,10 @@ func finishReconstruction(metrics []cMetric, scenarios []cScenario, recovery sou
 	recovery.MetricFieldsDenominator = len(metrics) * 8
 	recovery.ScenarioDenominator = len(scenarios) * 4
 	if recovery.MetricFieldsNumerator != recovery.MetricFieldsDenominator || recovery.ScenarioNumerator != recovery.ScenarioDenominator {
-		return nil, nil, sourceReconstruction{}, fmt.Errorf("consumer semantic reconstruction is incomplete")
+		return nil, nil, sourceReconstruction{}, issues, fmt.Errorf("consumer semantic reconstruction is incomplete")
 	}
-	return metrics, scenarios, recovery, nil
+	if len(issues) == 0 {
+		issues = nil
+	}
+	return metrics, scenarios, recovery, issues, nil
 }

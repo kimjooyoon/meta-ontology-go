@@ -7,6 +7,9 @@ import (
 
 func metricFromFields(fields map[string]string) (metricSpec, error) {
 	keys := []string{"id", "family", "prior_claim", "producer", "consumer", "meta_operation", "evidence_path", "depends_on"}
+	if len(fields) != len(keys) {
+		return metricSpec{}, fmt.Errorf("metric record has unexpected field cardinality %d", len(fields))
+	}
 	for _, key := range keys {
 		if _, ok := fields[key]; !ok {
 			return metricSpec{}, fmt.Errorf("metric record is missing %s", key)
@@ -23,6 +26,9 @@ func metricFromFields(fields map[string]string) (metricSpec, error) {
 }
 
 func scenarioFromFields(fields map[string]string) (scenarioSpec, error) {
+	if len(fields) != 4 {
+		return scenarioSpec{}, fmt.Errorf("scenario record has unexpected field cardinality %d", len(fields))
+	}
 	for _, key := range []string{"id", "remove_relation", "dependency", "reason"} {
 		if _, ok := fields[key]; !ok {
 			return scenarioSpec{}, fmt.Errorf("scenario record is missing %s", key)
