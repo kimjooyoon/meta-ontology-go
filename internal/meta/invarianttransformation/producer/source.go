@@ -5,80 +5,130 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/model"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 type sourceFixture struct {
-	CaseID             string
-	Input              int64
-	CandidateOperation string
-	CandidateResult    int64
-	Expected           int64
-	Invariant          string
-	ReplayRecipe       string
-	ApprovedArtifact   bool
+	ActivityID           string
+	CaseID               string
+	CaseKind             string
+	Input                int64
+	CandidateOperation   string
+	CandidateResult      int64
+	Expected             int64
+	Invariant            string
+	InvariantID          string
+	DomainID             string
+	OperationID          string
+	ReplayRecipe         string
+	EffectIntent         string
+	SemanticSourceDigest string
 }
 
-func parseSourceFixture(source []byte, spec model.CaseSpec) (sourceFixture, error) {
+type SourceCase struct {
+	CaseID     string `json:"case_id"`
+	ActivityID string `json:"activity_id"`
+	CaseKind   string `json:"case_kind"`
+}
+
+// Discover derives the case inventory from executable Transformation values in
+// the Gooo source. Validator expectations do not participate in discovery.
+func Discover(source []byte) ([]SourceCase, error) {
+	file, diagnostics := syntax.ParseFile(model.SourcePath, string(source))
+	if diagnostics.HasErrors() {
+		return nil, fmt.Errorf("parse invariant transformation source: %s", diagnostics.Error())
+	}
+	seen := map[string]bool{}
+	result := make([]SourceCase, 0, 4)
+	for _, declaration := range file.Declarations {
+		activity, ok := declaration.(*syntax.ActivityDecl)
+		if !ok || len(activity.Parameters) != 0 || activity.Result.Name != "Transformation" || !activity.ValueProgramPresent {
+			continue
+		}
+		fields, err := parseFixtureProgram(activity.ValueProgram)
+		if err != nil {
+			return nil, fmt.Errorf("activity %s: %w", activity.Name, err)
+		}
+		caseID := fields["case"]
+		if seen[caseID] {
+			return nil, fmt.Errorf("duplicate fixture case %q", caseID)
+		}
+		seen[caseID] = true
+		result = append(result, SourceCase{CaseID: caseID, ActivityID: activity.Name, CaseKind: fields["kind"]})
+	}
+	if len(result) == 0 {
+		return nil, fmt.Errorf("source has no executable Transformation fixtures")
+	}
+	return result, nil
+}
+
+func parseSourceFixture(source []byte, caseID string) (sourceFixture, error) {
 	file, diagnostics := syntax.ParseFile(model.SourcePath, string(source))
 	if diagnostics.HasErrors() {
 		return sourceFixture{}, fmt.Errorf("parse invariant transformation source: %s", diagnostics.Error())
 	}
-	var found *syntax.ActivityDecl
-	for _, declaration := range file.Decls {
+	semanticSourceDigest, err := semanticDigest(file)
+	if err != nil {
+		return sourceFixture{}, err
+	}
+	for _, declaration := range file.Declarations {
 		activity, ok := declaration.(*syntax.ActivityDecl)
-		if !ok || activity.Name != spec.Activity {
+		if !ok || len(activity.Parameters) != 0 || activity.Result.Name != "Transformation" || !activity.ValueProgramPresent {
 			continue
 		}
-		if found != nil {
-			return sourceFixture{}, fmt.Errorf("duplicate fixture activity %q", spec.Activity)
+		fields, err := parseFixtureProgram(activity.ValueProgram)
+		if err != nil {
+			return sourceFixture{}, fmt.Errorf("activity %s: %w", activity.Name, err)
 		}
-		found = activity
+		if fields["case"] != caseID {
+			continue
+		}
+		input, err := parseIntField(fields, "input")
+		if err != nil {
+			return sourceFixture{}, err
+		}
+		expected, err := parseIntField(fields, "expected")
+		if err != nil {
+			return sourceFixture{}, err
+		}
+		candidateResult, err := executeCandidate(fields["candidate"], input)
+		if err != nil {
+			return sourceFixture{}, err
+		}
+		if fields["invariant"] != "candidate-output-equals-expected" || fields["invariant-id"] != model.InvariantID || fields["domain"] != model.InputDomainID {
+			return sourceFixture{}, fmt.Errorf("case %q is outside the bounded source contract", caseID)
+		}
+		if fields["effect"] != "none" && fields["effect"] != "approved-artifact" {
+			return sourceFixture{}, fmt.Errorf("unsupported effect value %q", fields["effect"])
+		}
+		if fields["replay"] == "" {
+			return sourceFixture{}, fmt.Errorf("case %q has an empty replay recipe", caseID)
+		}
+		return sourceFixture{
+			ActivityID: activity.Name, CaseID: caseID, CaseKind: fields["kind"], Input: input,
+			CandidateOperation: fields["candidate"], CandidateResult: candidateResult, Expected: expected,
+			Invariant: fields["invariant"], InvariantID: fields["invariant-id"], DomainID: fields["domain"],
+			OperationID: model.Digest([]string{"operation", fields["candidate"]}), ReplayRecipe: fields["replay"],
+			EffectIntent: fields["effect"], SemanticSourceDigest: semanticSourceDigest,
+		}, nil
 	}
-	if found == nil {
-		return sourceFixture{}, fmt.Errorf("fixture activity %q is missing", spec.Activity)
-	}
-	if len(found.Inputs) != 0 || found.Output != "Transformation" || !found.ValueProgramPresent {
-		return sourceFixture{}, fmt.Errorf("fixture activity %q has an unsupported signature or missing computes value", spec.Activity)
-	}
-	fields, err := parseFixtureProgram(found.ValueProgram)
+	return sourceFixture{}, fmt.Errorf("fixture case %q is missing from source", caseID)
+}
+
+func semanticDigest(file *syntax.File) (string, error) {
+	ir, err := bidir.Lower(file)
 	if err != nil {
-		return sourceFixture{}, fmt.Errorf("fixture activity %q: %w", spec.Activity, err)
+		return "", fmt.Errorf("canonical semantic lowering: %w", err)
 	}
-	if fields["case"] != spec.ID {
-		return sourceFixture{}, fmt.Errorf("fixture activity %q is bound to case %q, want %q", spec.Activity, fields["case"], spec.ID)
-	}
-	input, err := parseIntField(fields, "input")
-	if err != nil {
-		return sourceFixture{}, err
-	}
-	expected, err := parseIntField(fields, "expected")
-	if err != nil {
-		return sourceFixture{}, err
-	}
-	candidateResult, err := executeCandidate(fields["candidate"], input)
-	if err != nil {
-		return sourceFixture{}, err
-	}
-	if fields["invariant"] != "candidate-output-equals-expected" {
-		return sourceFixture{}, fmt.Errorf("unsupported invariant %q", fields["invariant"])
-	}
-	fixture := sourceFixture{CaseID: fields["case"], Input: input, CandidateOperation: fields["candidate"], CandidateResult: candidateResult,
-		Expected: expected, Invariant: fields["invariant"], ReplayRecipe: fields["replay"], ApprovedArtifact: fields["effect"] == "approved-artifact"}
-	if fields["replay"] == "" {
-		return sourceFixture{}, fmt.Errorf("replay recipe is empty")
-	}
-	if fields["effect"] != "none" && fields["effect"] != "approved-artifact" {
-		return sourceFixture{}, fmt.Errorf("unsupported effect value %q", fields["effect"])
-	}
-	return fixture, nil
+	return "sha256:" + ir.StableHash(), nil
 }
 
 func parseFixtureProgram(program string) (map[string]string, error) {
 	parts := strings.Split(program, ";")
-	if len(parts) != 7 {
-		return nil, fmt.Errorf("computes value has %d fields, want 7", len(parts))
+	if len(parts) != 10 {
+		return nil, fmt.Errorf("computes value has %d fields, want 10", len(parts))
 	}
 	fields := make(map[string]string, len(parts))
 	for _, part := range parts {
@@ -89,7 +139,7 @@ func parseFixtureProgram(program string) (map[string]string, error) {
 		}
 		fields[key] = value
 	}
-	for _, key := range []string{"case", "input", "candidate", "expected", "invariant", "replay", "effect"} {
+	for _, key := range []string{"case", "kind", "input", "candidate", "expected", "invariant", "invariant-id", "domain", "replay", "effect"} {
 		if fields[key] == "" {
 			return nil, fmt.Errorf("missing field %q", key)
 		}
@@ -119,4 +169,11 @@ func executeCandidate(operation string, input int64) (int64, error) {
 		return 0, fmt.Errorf("candidate operation %q overflows int64", operation)
 	}
 	return input + operand, nil
+}
+
+func executeReplay(recipe string, input int64) (int64, error) {
+	if recipe == "unavailable" {
+		return 0, fmt.Errorf("REGRESSION_REPLAY_RECIPE_UNAVAILABLE")
+	}
+	return executeCandidate(recipe, input)
 }

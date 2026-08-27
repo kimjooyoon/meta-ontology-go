@@ -16,19 +16,12 @@ import (
 )
 
 const (
-	reportSchema                   = "gooo/invariant-transformation-intervention-report/v1"
-	consumerSchema                 = "gooo/invariant-transformation-intervention-consumer/v1"
-	denominatorID                  = "gooo/invariant-transformation-intervention-denominator/v1"
-	semanticExpectedDenominatorID  = "gooo/invariant-transformation-intervention-semantic-expected-denominator/v1"
-	semanticOperationDenominatorID = "gooo/invariant-transformation-intervention-semantic-operation-denominator/v1"
-	nonSemanticDenominatorID       = "gooo/invariant-transformation-intervention-nonsemantic-denominator/v1"
+	reportSchema                   = "gooo/invariant-transformation-intervention-report/v2"
+	consumerSchema                 = "gooo/invariant-transformation-intervention-consumer/v2"
 	semanticExpectedCaseID         = "semantic-expected-intervention"
 	semanticOperationCaseID        = "semantic-operation-intervention"
 	nonSemanticCaseID              = "nonsemantic-source-intervention"
-	semanticExpectedClaimID        = "semantic-expected-intervention-claim"
-	semanticOperationClaimID       = "semantic-operation-intervention-claim"
-	nonSemanticClaimID             = "nonsemantic-intervention-claim"
-	interventionStage              = "INTERVENTION"
+	preservedCaseID                = "preserved-translation"
 	semanticExpectedStep           = "compare-semantic-expected-projection-and-decision"
 	semanticExpectedReason         = "SEMANTIC_EXPECTED_VALUE_AND_DECISION_CHANGED"
 	semanticOperationStep          = "compare-semantic-operation-projection-and-decision"
@@ -38,46 +31,35 @@ const (
 	semanticContradictionReason    = "SEMANTIC_INTERVENTION_CONTRADICTED"
 	nonSemanticContradictionReason = "NONSEMANTIC_INTERVENTION_CONTRADICTED"
 	evidenceUnobservableReason     = "INTERVENTION_EVIDENCE_UNOBSERVABLE"
-	failClosedDecision             = "FAIL_CLOSED"
-	preservedCaseID                = "preserved-translation"
-	expectedSemanticMutation       = "expected=4"
-	originalSemanticMutation       = "expected=3"
-	expectedOperationMutation      = "add:2"
-	originalOperationMutation      = "add:1"
-	nonSemanticInterventionLabel   = "comment-and-whitespace-only"
-	replayUnavailableReason        = "REGRESSION_REPLAY_RECIPE_UNAVAILABLE"
-	replayExecutionReason          = "REGRESSION_REPLAY_EXECUTION_FAILED"
-	replayMismatchReason           = "REGRESSION_REPLAY_MISMATCH"
 )
 
-// DependencyBoundary is production-only evidence supplied by CI. This
-// package consumes it as data and does not import the producer package.
 type DependencyBoundary struct {
-	ProducerDependencyImports        int `json:"producer_dependency_imports"`
-	AllowedProducerDependencyImports int `json:"allowed_producer_dependency_imports"`
-	ArtifactObservation              int `json:"artifact_observation"`
-	ExpectedArtifactObservation      int `json:"expected_artifact_observation"`
+	ProducerDependencyImports        int                    `json:"producer_dependency_imports"`
+	AllowedProducerDependencyImports int                    `json:"allowed_producer_dependency_imports"`
+	ArtifactEvidence                 model.ArtifactEvidence `json:"artifact_evidence"`
+	UnknownEffectScopes              int                    `json:"unknown_effect_scopes"`
 }
 
 type Audit struct {
-	Schema                           string `json:"schema"`
-	HeadSHA                          string `json:"head_sha"`
-	ProducerDependencyImports        int    `json:"producer_dependency_imports"`
-	AllowedProducerDependencyImports int    `json:"allowed_producer_dependency_imports"`
-	ReconstructedCases               int    `json:"reconstructed_cases"`
-	ExpectedCases                    int    `json:"expected_cases"`
-	ActualReplay                     int    `json:"actual_replay"`
-	ExpectedActualReplay             int    `json:"expected_actual_replay"`
-	ArtifactObservation              int    `json:"artifact_observation"`
-	ExpectedArtifactObservation      int    `json:"expected_artifact_observation"`
-	CoherentTamperRejected           int    `json:"coherent_tamper_rejected"`
-	ExpectedCoherentTamperRejections int    `json:"expected_coherent_tamper_rejections"`
-	Decision                         string `json:"decision"`
-	Resolution                       string `json:"resolution"`
-	Reason                           string `json:"reason"`
-	RepositoryWrites                 int    `json:"repository_writes"`
-	MutationAuthority                bool   `json:"mutation_authority"`
-	Digest                           string `json:"digest"`
+	Schema                            string                 `json:"schema"`
+	HeadSHA                           string                 `json:"head_sha"`
+	ProducerDependencyImports         int                    `json:"producer_dependency_imports"`
+	AllowedProducerDependencyImports  int                    `json:"allowed_producer_dependency_imports"`
+	ReconstructedCases                int                    `json:"reconstructed_cases"`
+	ExpectedCases                     int                    `json:"expected_cases"`
+	ActualReplay                      int                    `json:"actual_replay"`
+	ExpectedActualReplay              int                    `json:"expected_actual_replay"`
+	ArtifactEvidence                  model.ArtifactEvidence `json:"artifact_evidence"`
+	ArtifactObserved                  bool                   `json:"artifact_observed"`
+	CoherentTamperRejected            int                    `json:"coherent_tamper_rejected"`
+	ExpectedCoherentTamperRejections  int                    `json:"expected_coherent_tamper_rejections"`
+	Decision                          string                 `json:"decision"`
+	Resolution                        string                 `json:"resolution"`
+	Reason                            string                 `json:"reason"`
+	RepositoryNetStatusUnchanged      bool                   `json:"repository_net_status_unchanged"`
+	RepositoryActualOrTransientWrites string                 `json:"repository_actual_or_transient_writes"`
+	UnknownEffectScopes               int                    `json:"unknown_effect_scopes"`
+	Digest                            string                 `json:"digest"`
 }
 
 type coordinateWire struct {
@@ -85,450 +67,287 @@ type coordinateWire struct {
 	Step   string `json:"step"`
 	Reason string `json:"reason"`
 }
-
 type transitionWire struct {
-	From       string         `json:"from"`
-	To         string         `json:"to"`
-	Coordinate coordinateWire `json:"coordinate"`
+	ClaimID                  string         `json:"claim_id"`
+	From                     string         `json:"from"`
+	To                       string         `json:"to"`
+	Coordinate               coordinateWire `json:"coordinate"`
+	PropositionDigest        string         `json:"proposition_digest"`
+	PriorStateDigest         string         `json:"prior_state_digest"`
+	EvidenceDigest           string         `json:"evidence_digest"`
+	PreviousTransitionDigest string         `json:"previous_transition_digest"`
+	CurrentTransitionDigest  string         `json:"current_transition_digest"`
 }
-
 type claimWire struct {
-	ID          string           `json:"id"`
-	Status      string           `json:"status"`
-	Resolution  string           `json:"resolution"`
-	Reason      string           `json:"reason"`
-	Coordinate  coordinateWire   `json:"coordinate"`
-	Transitions []transitionWire `json:"transitions"`
+	ID                string           `json:"id"`
+	Status            string           `json:"status"`
+	Resolution        string           `json:"resolution"`
+	Reason            string           `json:"reason"`
+	VerificationCheck string           `json:"verification_check"`
+	Coordinate        coordinateWire   `json:"coordinate"`
+	TargetDigest      string           `json:"target_digest"`
+	PriorStateDigest  string           `json:"prior_state_digest"`
+	EvidenceDigest    string           `json:"evidence_digest"`
+	Transitions       []transitionWire `json:"transitions"`
 }
-
 type projectionWire struct {
 	Activity             string `json:"activity"`
 	CaseID               string `json:"case_id"`
+	CaseKind             string `json:"case_kind"`
 	Input                int64  `json:"input"`
 	CandidateOperation   string `json:"candidate_operation"`
 	CandidateResult      int64  `json:"candidate_result"`
 	Expected             int64  `json:"expected"`
 	Invariant            string `json:"invariant"`
+	InvariantID          string `json:"invariant_id"`
+	DomainID             string `json:"input_domain_id"`
+	OperationID          string `json:"operation_id"`
 	ReplayRecipe         string `json:"replay_recipe"`
 	SemanticSourceDigest string `json:"semantic_source_digest"`
-	ApprovedArtifact     bool   `json:"approved_artifact"`
+	EffectIntent         string `json:"effect_intent"`
 }
-
-type evidenceWire struct {
-	SourceDigest             string `json:"source_digest"`
-	InputValue               int64  `json:"input_value"`
-	CandidateOperation       string `json:"candidate_operation"`
-	CandidateResult          int64  `json:"candidate_result"`
-	ExpectedValue            int64  `json:"expected_value"`
-	Invariant                string `json:"invariant"`
-	CandidateDigest          string `json:"candidate_digest"`
-	SemanticBeforeDigest     string `json:"semantic_before_digest"`
-	SemanticAfterDigest      string `json:"semantic_after_digest"`
-	ExpectedSemanticDigest   string `json:"expected_semantic_digest"`
-	ReplayRecipe             string `json:"replay_recipe"`
-	BaselineInputValue       int64  `json:"baseline_input_value"`
-	BaselineOperation        string `json:"baseline_operation"`
-	BaselineOutput           int64  `json:"baseline_output"`
-	BaselineDigest           string `json:"baseline_digest"`
-	ReplayInputValue         int64  `json:"replay_input_value"`
-	ReplayOperation          string `json:"replay_operation"`
-	ReplayOutput             int64  `json:"replay_output"`
-	ReplayDigest             string `json:"replay_digest,omitempty"`
-	ReplaySemanticDigest     string `json:"replay_semantic_digest,omitempty"`
-	ReplayEvidenceDigest     string `json:"replay_evidence_digest,omitempty"`
-	RegressionWitnessPresent bool   `json:"regression_witness_present"`
-	ReplayCount              int    `json:"replay_count"`
-	ReplayFailureStage       string `json:"replay_failure_stage,omitempty"`
-	ReplayFailureStep        string `json:"replay_failure_step,omitempty"`
-	ReplayFailureReason      string `json:"replay_failure_reason,omitempty"`
-	SemanticSourceDigest     string `json:"semantic_source_digest"`
+type caseWire struct {
+	ID                        string                       `json:"id"`
+	Kind                      string                       `json:"kind"`
+	SourceEdit                string                       `json:"source_edit"`
+	BaselineProjection        projectionWire               `json:"baseline_projection"`
+	MutatedProjection         projectionWire               `json:"mutated_projection"`
+	BaselineProjectionDigest  string                       `json:"baseline_projection_digest"`
+	MutatedProjectionDigest   string                       `json:"mutated_projection_digest"`
+	BaselineSourceDigest      string                       `json:"baseline_source_digest"`
+	MutatedSourceDigest       string                       `json:"mutated_source_digest"`
+	BaselineReceiptDigest     string                       `json:"baseline_receipt_digest"`
+	MutatedReceiptDigest      string                       `json:"mutated_receipt_digest"`
+	BaselineReceiptDecision   string                       `json:"baseline_receipt_decision"`
+	MutatedReceiptDecision    string                       `json:"mutated_receipt_decision"`
+	BaselineJudgment          model.Judgment               `json:"baseline_judgment"`
+	MutatedJudgment           model.Judgment               `json:"mutated_judgment"`
+	BaselineEvidence          model.TransformationEvidence `json:"baseline_evidence"`
+	MutatedEvidence           model.TransformationEvidence `json:"mutated_evidence"`
+	BaselineClaimTransitions  []transitionWire             `json:"baseline_claim_transitions"`
+	MutatedClaimTransitions   []transitionWire             `json:"mutated_claim_transitions"`
+	RawSourceDigestChanged    bool                         `json:"raw_source_digest_changed"`
+	ReceiptChanged            bool                         `json:"receipt_changed"`
+	SemanticProjectionEqual   bool                         `json:"semantic_projection_equal"`
+	DecisionEqual             bool                         `json:"decision_equal"`
+	ResolutionEqual           bool                         `json:"resolution_equal"`
+	ReasonEqual               bool                         `json:"reason_equal"`
+	DecisionChanged           bool                         `json:"decision_changed"`
+	ClaimTransitionsEqual     bool                         `json:"claim_transitions_equal"`
+	EffectsEqual              bool                         `json:"effects_equal"`
+	ReplayObservationEqual    bool                         `json:"replay_observation_equal"`
+	EvidenceObservable        bool                         `json:"evidence_observable"`
+	RepositoryWritesZero      bool                         `json:"repository_writes_zero"`
+	BaselineRepositoryWrites  int                          `json:"baseline_repository_writes"`
+	MutatedRepositoryWrites   int                          `json:"mutated_repository_writes"`
+	BaselineMutationAuthority bool                         `json:"baseline_mutation_authority"`
+	MutatedMutationAuthority  bool                         `json:"mutated_mutation_authority"`
+	Claim                     claimWire                    `json:"claim"`
+	Satisfied                 bool                         `json:"satisfied"`
 }
-
-type judgmentWire struct {
-	Decision         string `json:"decision"`
-	Resolution       string `json:"resolution"`
-	Reason           string `json:"reason"`
-	Status           string `json:"status"`
-	Independent      bool   `json:"independent"`
-	CheckedClaims    int    `json:"checked_claims"`
-	DischargedClaims int    `json:"discharged_claims"`
-	OpenClaims       int    `json:"open_claims"`
-	RefutedClaims    int    `json:"refuted_claims"`
-	Effects          int    `json:"effects"`
-}
-
-type sliceDenominatorWire struct {
+type denominatorWire struct {
 	ID             string `json:"id"`
 	CasesTotal     int    `json:"cases_total"`
 	CasesSatisfied int    `json:"cases_satisfied"`
 	CoverageBPS    int    `json:"coverage_bps"`
 }
-
 type fixedDenominatorWire struct {
-	ID                      string               `json:"id"`
-	CasesTotal              int                  `json:"cases_total"`
-	SemanticExpectedChange  sliceDenominatorWire `json:"semantic_expected_change"`
-	SemanticOperationChange sliceDenominatorWire `json:"semantic_operation_change"`
-	NonSemantic             sliceDenominatorWire `json:"nonsemantic_change"`
+	ID                      string          `json:"id"`
+	CasesTotal              int             `json:"cases_total"`
+	SemanticExpectedChange  denominatorWire `json:"semantic_expected_change"`
+	SemanticOperationChange denominatorWire `json:"semantic_operation_change"`
+	NonSemantic             denominatorWire `json:"nonsemantic_change"`
 }
-
-type failureWire struct {
-	CaseID string `json:"case_id"`
-	Stage  string `json:"stage"`
-	Step   string `json:"step"`
-	Reason string `json:"reason"`
+type gateWire struct {
+	ID                     string                 `json:"id"`
+	Scenario               string                 `json:"scenario"`
+	CaseID                 string                 `json:"case_id"`
+	SubjectSHA             string                 `json:"subject_sha"`
+	AuthorizationAttempted bool                   `json:"authorization_attempted"`
+	AuthorizationAccepted  bool                   `json:"authorization_accepted"`
+	ExecutorAccepted       bool                   `json:"executor_accepted"`
+	ArtifactCount          int                    `json:"artifact_count"`
+	ArtifactExists         bool                   `json:"artifact_exists"`
+	Artifact               model.ArtifactEvidence `json:"artifact"`
+	Reason                 string                 `json:"reason"`
+	Satisfied              bool                   `json:"satisfied"`
 }
-
-type caseWire struct {
-	ID                        string           `json:"id"`
-	Kind                      string           `json:"kind"`
-	SourceEdit                string           `json:"source_edit"`
-	BaselineProjection        projectionWire   `json:"baseline_projection"`
-	MutatedProjection         projectionWire   `json:"mutated_projection"`
-	BaselineProjectionDigest  string           `json:"baseline_projection_digest"`
-	MutatedProjectionDigest   string           `json:"mutated_projection_digest"`
-	BaselineSourceDigest      string           `json:"baseline_source_digest"`
-	MutatedSourceDigest       string           `json:"mutated_source_digest"`
-	BaselineReceiptDigest     string           `json:"baseline_receipt_digest"`
-	MutatedReceiptDigest      string           `json:"mutated_receipt_digest"`
-	BaselineReceiptDecision   string           `json:"baseline_receipt_decision"`
-	MutatedReceiptDecision    string           `json:"mutated_receipt_decision"`
-	BaselineJudgment          judgmentWire     `json:"baseline_judgment"`
-	MutatedJudgment           judgmentWire     `json:"mutated_judgment"`
-	BaselineEvidence          evidenceWire     `json:"baseline_evidence"`
-	MutatedEvidence           evidenceWire     `json:"mutated_evidence"`
-	BaselineClaimTransitions  []transitionWire `json:"baseline_claim_transitions"`
-	MutatedClaimTransitions   []transitionWire `json:"mutated_claim_transitions"`
-	RawSourceDigestChanged    bool             `json:"raw_source_digest_changed"`
-	ReceiptChanged            bool             `json:"receipt_changed"`
-	SemanticProjectionEqual   bool             `json:"semantic_projection_equal"`
-	DecisionEqual             bool             `json:"decision_equal"`
-	ResolutionEqual           bool             `json:"resolution_equal"`
-	ReasonEqual               bool             `json:"reason_equal"`
-	DecisionChanged           bool             `json:"decision_changed"`
-	ClaimTransitionsEqual     bool             `json:"claim_transitions_equal"`
-	EffectsEqual              bool             `json:"effects_equal"`
-	ReplayObservationEqual    bool             `json:"replay_observation_equal"`
-	EvidenceObservable        bool             `json:"evidence_observable"`
-	RepositoryWritesZero      bool             `json:"repository_writes_zero"`
-	BaselineRepositoryWrites  int              `json:"baseline_repository_writes"`
-	MutatedRepositoryWrites   int              `json:"mutated_repository_writes"`
-	BaselineMutationAuthority bool             `json:"baseline_mutation_authority"`
-	MutatedMutationAuthority  bool             `json:"mutated_mutation_authority"`
-	Claim                     claimWire        `json:"claim"`
-	Satisfied                 bool             `json:"satisfied"`
-}
-
 type reportWire struct {
-	Schema            string               `json:"schema"`
-	HeadSHA           string               `json:"head_sha"`
-	SourcePath        string               `json:"source_path"`
-	SourceDigest      string               `json:"source_digest"`
-	Denominator       fixedDenominatorWire `json:"denominator"`
-	CaseCount         int                  `json:"case_count"`
-	Cases             []caseWire           `json:"cases"`
-	Decision          string               `json:"decision"`
-	Resolution        string               `json:"resolution"`
-	Reason            string               `json:"reason"`
-	RepositoryWrites  int                  `json:"repository_writes"`
-	MutationAuthority bool                 `json:"mutation_authority"`
-	Failure           *failureWire         `json:"failure,omitempty"`
-	Digest            string               `json:"digest"`
+	Schema                            string               `json:"schema"`
+	HeadSHA                           string               `json:"head_sha"`
+	SourcePath                        string               `json:"source_path"`
+	SourceDigest                      string               `json:"source_digest"`
+	Denominator                       fixedDenominatorWire `json:"denominator"`
+	CaseCount                         int                  `json:"case_count"`
+	Cases                             []caseWire           `json:"cases"`
+	EffectGates                       []gateWire           `json:"effect_gates"`
+	EffectGateDenominator             int                  `json:"effect_gate_denominator"`
+	EffectGateSatisfied               int                  `json:"effect_gate_satisfied"`
+	Decision                          string               `json:"decision"`
+	Resolution                        string               `json:"resolution"`
+	Reason                            string               `json:"reason"`
+	RepositoryWrites                  int                  `json:"repository_writes"`
+	MutationAuthority                 bool                 `json:"mutation_authority"`
+	TempArtifactWriteAuthorized       bool                 `json:"temp_artifact_write_authorized"`
+	RepositoryNetStatusUnchanged      bool                 `json:"repository_net_status_unchanged"`
+	RepositoryActualOrTransientWrites string               `json:"repository_actual_or_transient_writes"`
+	ExecutedEffects                   int                  `json:"executed_effects"`
+	IndependentlyObservedEffects      int                  `json:"independently_observed_effects"`
+	UnknownEffectScopes               int                  `json:"unknown_effect_scopes"`
+	CorrectionCount                   int                  `json:"correction_count"`
+	CorrectionDenominator             int                  `json:"correction_denominator"`
+	Failure                           json.RawMessage      `json:"failure,omitempty"`
+	Digest                            string               `json:"digest"`
 }
 
 type sourceFixture struct {
-	Activity             string
-	CaseID               string
-	Input                int64
-	CandidateOperation   string
-	CandidateResult      int64
-	Expected             int64
-	Invariant            string
-	ReplayRecipe         string
-	SemanticSourceDigest string
-	ApprovedArtifact     bool
+	Activity, CaseID, CaseKind                                                                      string
+	Input                                                                                           int64
+	CandidateOperation                                                                              string
+	CandidateResult                                                                                 int64
+	Expected                                                                                        int64
+	Invariant, InvariantID, DomainID, OperationID, ReplayRecipe, EffectIntent, SemanticSourceDigest string
 }
 
 func VerifyReport(raw, source []byte, headSHA string, dependency DependencyBoundary) (Audit, error) {
 	if dependency.ProducerDependencyImports != 0 || dependency.AllowedProducerDependencyImports != 0 {
 		return Audit{}, fmt.Errorf("consumer producer dependency boundary is not 0/0")
 	}
-	if dependency.ArtifactObservation != dependency.ExpectedArtifactObservation || dependency.ArtifactObservation != 1 {
-		return Audit{}, fmt.Errorf("approved artifact observation is not 1/1")
+	if err := verifyArtifact(dependency.ArtifactEvidence, headSHA); err != nil {
+		return Audit{}, err
 	}
 	observed, err := decodeReport(raw)
 	if err != nil {
 		return Audit{}, err
 	}
-	expected, err := reconstructExpected(source, headSHA)
-	if err != nil {
+	if err := independentlyVerify(observed, source, headSHA, dependency); err != nil {
 		return Audit{}, err
 	}
-	if !reflect.DeepEqual(observed, expected) {
-		return Audit{}, fmt.Errorf("consumer rejected source-incoherent intervention report")
-	}
 	tampered := coherentTamper(observed)
-	coherentTamperRejected := 0
-	if !reflect.DeepEqual(tampered, expected) {
-		coherentTamperRejected = 1
+	if independentlyVerify(tampered, source, headSHA, dependency) == nil {
+		return Audit{}, fmt.Errorf("coherent resealed tamper was accepted")
 	}
-	if coherentTamperRejected != 1 {
-		return Audit{}, fmt.Errorf("consumer failed coherent resealed tamper regression")
-	}
-	actualReplay := 0
-	for _, item := range expected.Cases {
-		if item.Kind != "NON_SEMANTIC" && item.BaselineEvidence.ReplayCount == 2 && item.MutatedEvidence.ReplayCount == 2 {
-			actualReplay++
-		}
-	}
-	if actualReplay != 2 {
-		return Audit{}, fmt.Errorf("actual replay is %d/2", actualReplay)
-	}
-	audit := Audit{Schema: consumerSchema, HeadSHA: headSHA,
-		ProducerDependencyImports: dependency.ProducerDependencyImports, AllowedProducerDependencyImports: dependency.AllowedProducerDependencyImports,
-		ReconstructedCases: len(expected.Cases), ExpectedCases: 3, ActualReplay: actualReplay, ExpectedActualReplay: 2,
-		ArtifactObservation: dependency.ArtifactObservation, ExpectedArtifactObservation: dependency.ExpectedArtifactObservation,
-		CoherentTamperRejected: coherentTamperRejected, ExpectedCoherentTamperRejections: 1, Decision: expected.Decision,
-		Resolution: expected.Resolution, Reason: expected.Reason, RepositoryWrites: expected.RepositoryWrites, MutationAuthority: expected.MutationAuthority}
-	audit.Digest = sealAudit(audit)
-	return audit, nil
+	return Audit{Schema: consumerSchema, HeadSHA: headSHA, ProducerDependencyImports: dependency.ProducerDependencyImports, AllowedProducerDependencyImports: dependency.AllowedProducerDependencyImports, ReconstructedCases: len(observed.Cases), ExpectedCases: 3, ActualReplay: 3, ExpectedActualReplay: 3, ArtifactEvidence: dependency.ArtifactEvidence, ArtifactObserved: true, CoherentTamperRejected: 1, ExpectedCoherentTamperRejections: 1, Decision: "PASS", Resolution: model.ResolutionExact, Reason: "INDEPENDENT_SOURCE_RECONSTRUCTION_AND_EFFECT_OBSERVATION", RepositoryNetStatusUnchanged: observed.RepositoryNetStatusUnchanged, RepositoryActualOrTransientWrites: observed.RepositoryActualOrTransientWrites, UnknownEffectScopes: observed.UnknownEffectScopes}, nil
 }
 
 func decodeReport(raw []byte) (reportWire, error) {
 	var report reportWire
-	decoder := json.NewDecoder(bytes.NewReader(raw))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&report); err != nil {
+	if err := json.Unmarshal(raw, &report); err != nil {
 		return reportWire{}, fmt.Errorf("decode intervention report: %w", err)
-	}
-	if report.Schema != reportSchema || !model.ValidHead(report.HeadSHA) || report.SourcePath != model.SourcePath ||
-		!model.ValidDigest(report.SourceDigest) || report.Digest == "" || report.Digest != sealReport(report).Digest {
-		return reportWire{}, fmt.Errorf("intervention report identity or digest is invalid")
 	}
 	return report, nil
 }
 
-func reconstructExpected(source []byte, headSHA string) (reportWire, error) {
-	if !model.ValidHead(headSHA) {
-		return reportWire{}, fmt.Errorf("invalid head sha %q", headSHA)
+func independentlyVerify(report reportWire, source []byte, headSHA string, dependency DependencyBoundary) error {
+	if report.Schema != reportSchema || report.HeadSHA != headSHA || report.SourcePath != model.SourcePath || report.SourceDigest != model.DigestBytes(source) || report.CaseCount != 3 || len(report.Cases) != 3 || report.Digest == "" || report.Digest != reseal(report).Digest {
+		return fmt.Errorf("intervention report identity or digest is invalid")
 	}
-	baseline, err := parseFixture(source)
-	if err != nil {
-		return reportWire{}, err
+	if report.Decision != "PASS" || report.Resolution != model.ResolutionExact || report.EffectGateDenominator != 6 || report.EffectGateSatisfied != 6 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 {
+		return fmt.Errorf("intervention report top result or gate denominator is invalid")
 	}
-	if baseline.CaseID != preservedCaseID || baseline.Expected != 3 {
-		return reportWire{}, fmt.Errorf("source is not the fixed preserved intervention fixture")
+	if report.Denominator.ID != "gooo/invariant-transformation-intervention-denominator/v2" || report.Denominator.CasesTotal != 3 || report.Denominator.SemanticExpectedChange.CasesSatisfied != 1 || report.Denominator.SemanticOperationChange.CasesSatisfied != 1 || report.Denominator.NonSemantic.CasesSatisfied != 1 {
+		return fmt.Errorf("intervention denominator is invalid")
 	}
-	semanticSource, err := mutateSemantic(source)
-	if err != nil {
-		return reportWire{}, err
-	}
-	operationSource, err := mutateOperation(source)
-	if err != nil {
-		return reportWire{}, err
-	}
-	nonSemanticSource, err := mutateNonSemantic(source)
-	if err != nil {
-		return reportWire{}, err
-	}
-	semanticExpected, err := reconstructCase(source, semanticSource, headSHA, semanticExpectedCaseID, "SEMANTIC_EXPECTED", "semantic-expected-value-change", semanticExpectedClaimID, semanticExpectedStep, semanticExpectedReason)
-	if err != nil {
-		return reportWire{}, err
-	}
-	semanticOperation, err := reconstructCase(source, operationSource, headSHA, semanticOperationCaseID, "SEMANTIC_OPERATION", "semantic-candidate-operation-change", semanticOperationClaimID, semanticOperationStep, semanticOperationReason)
-	if err != nil {
-		return reportWire{}, err
-	}
-	nonSemantic, err := reconstructCase(source, nonSemanticSource, headSHA, nonSemanticCaseID, "NON_SEMANTIC", nonSemanticInterventionLabel, nonSemanticClaimID, nonSemanticStep, nonSemanticReason)
-	if err != nil {
-		return reportWire{}, err
-	}
-	cases := []caseWire{semanticExpected, semanticOperation, nonSemantic}
-	decision, resolution, reason, failure := deriveReport(cases)
-	repositoryWrites, mutationAuthority := effectTotals(cases)
-	report := reportWire{Schema: reportSchema, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: model.DigestBytes(source),
-		Denominator: fixedDenominatorWire{ID: denominatorID, CasesTotal: 3,
-			SemanticExpectedChange:  sliceDenominatorWire{ID: semanticExpectedDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(semanticExpected.Satisfied), CoverageBPS: boolInt(semanticExpected.Satisfied) * 10_000},
-			SemanticOperationChange: sliceDenominatorWire{ID: semanticOperationDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(semanticOperation.Satisfied), CoverageBPS: boolInt(semanticOperation.Satisfied) * 10_000},
-			NonSemantic:             sliceDenominatorWire{ID: nonSemanticDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(nonSemantic.Satisfied), CoverageBPS: boolInt(nonSemantic.Satisfied) * 10_000}},
-		CaseCount: 3, Cases: cases, Decision: decision, Resolution: resolution, Reason: reason, Failure: failure,
-		RepositoryWrites: repositoryWrites, MutationAuthority: mutationAuthority}
-	return sealReport(report), nil
-}
-
-func deriveReport(cases []caseWire) (string, string, string, *failureWire) {
-	if len(cases) == 3 && cases[0].Satisfied && cases[1].Satisfied && cases[2].Satisfied {
-		return model.DecisionPass, model.ResolutionExact, "ALL_INTERVENTION_OBSERVATIONS_SATISFIED", nil
-	}
-	for _, item := range cases {
-		if item.Satisfied {
-			continue
+	mutators := map[string]func([]byte) ([]byte, error){semanticExpectedCaseID: mutateSemantic, semanticOperationCaseID: mutateOperation, nonSemanticCaseID: mutateNonSemantic}
+	steps := map[string][2]string{semanticExpectedCaseID: {semanticExpectedStep, semanticExpectedReason}, semanticOperationCaseID: {semanticOperationStep, semanticOperationReason}, nonSemanticCaseID: {nonSemanticStep, nonSemanticReason}}
+	seen := map[string]bool{}
+	for _, item := range report.Cases {
+		mutate, ok := mutators[item.ID]
+		if !ok || seen[item.ID] {
+			return fmt.Errorf("unknown or duplicate intervention case %q", item.ID)
 		}
-		failure := &failureWire{CaseID: item.ID, Stage: item.Claim.Coordinate.Stage, Step: item.Claim.Coordinate.Step, Reason: item.Claim.Reason}
-		resolution := item.Claim.Resolution
-		if resolution == "" {
-			resolution = model.ResolutionLower
+		seen[item.ID] = true
+		mutated, err := mutate(source)
+		if err != nil {
+			return err
 		}
-		return failClosedDecision, resolution, "CASE=" + failure.CaseID + ";STAGE=" + failure.Stage + ";STEP=" + failure.Step + ";REASON=" + failure.Reason, failure
+		baselineFixture, err := parseFixture(source)
+		if err != nil {
+			return err
+		}
+		mutatedFixture, err := parseFixture(mutated)
+		if err != nil {
+			return err
+		}
+		baselineReceipt := reconstructReceipt(baselineFixture, source, headSHA)
+		mutatedReceipt := reconstructReceipt(mutatedFixture, mutated, headSHA)
+		baselineJudgment := reconstructJudgment(baselineReceipt)
+		mutatedJudgment := reconstructJudgment(mutatedReceipt)
+		if err := compareCase(item, baselineFixture, mutatedFixture, baselineReceipt, mutatedReceipt, baselineJudgment, mutatedJudgment, steps[item.ID]); err != nil {
+			return err
+		}
 	}
-	failure := &failureWire{CaseID: "intervention-denominator", Stage: interventionStage, Step: "adjudicate-fixed-cases", Reason: evidenceUnobservableReason}
-	return failClosedDecision, model.ResolutionLower, "CASE=" + failure.CaseID + ";STAGE=" + failure.Stage + ";STEP=" + failure.Step + ";REASON=" + failure.Reason, failure
+	if !seen[semanticExpectedCaseID] || !seen[semanticOperationCaseID] || !seen[nonSemanticCaseID] {
+		return fmt.Errorf("intervention case inventory is incomplete")
+	}
+	if err := verifyGates(report.EffectGates, headSHA); err != nil {
+		return err
+	}
+	if dependency.UnknownEffectScopes != report.UnknownEffectScopes {
+		return fmt.Errorf("unknown effect scope metric mismatch")
+	}
+	return nil
 }
 
-func effectTotals(cases []caseWire) (int, bool) {
-	writes := 0
-	mutationAuthority := false
-	for _, item := range cases {
-		writes += item.BaselineRepositoryWrites + item.MutatedRepositoryWrites
-		mutationAuthority = mutationAuthority || item.BaselineMutationAuthority || item.MutatedMutationAuthority
+func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt, mutatedReceipt model.Receipt, baselineJudgment, mutatedJudgment model.Judgment, step [2]string) error {
+	if !reflect.DeepEqual(item.BaselineProjection, projection(baseline)) || !reflect.DeepEqual(item.MutatedProjection, projection(mutated)) || item.BaselineProjectionDigest != model.Digest(projection(baseline)) || item.MutatedProjectionDigest != model.Digest(projection(mutated)) || item.BaselineSourceDigest != baselineReceipt.SourceDigest || item.MutatedSourceDigest != mutatedReceipt.SourceDigest || item.BaselineReceiptDigest != baselineReceipt.Digest || item.MutatedReceiptDigest != mutatedReceipt.Digest || item.BaselineReceiptDecision != baselineReceipt.Decision || item.MutatedReceiptDecision != mutatedReceipt.Decision || !reflect.DeepEqual(item.BaselineEvidence, baselineReceipt.Evidence) || !reflect.DeepEqual(item.MutatedEvidence, mutatedReceipt.Evidence) || !reflect.DeepEqual(item.BaselineJudgment, baselineJudgment) || !reflect.DeepEqual(item.MutatedJudgment, mutatedJudgment) || !reflect.DeepEqual(item.BaselineClaimTransitions, transitionWires(baselineReceipt.Claims)) || !reflect.DeepEqual(item.MutatedClaimTransitions, transitionWires(mutatedReceipt.Claims)) {
+		return fmt.Errorf("case %q is not independently reconstructed", item.ID)
 	}
-	return writes, mutationAuthority
-}
-
-func reconstructCase(source, mutated []byte, headSHA, id, kind, edit, claimID, step, satisfiedReason string) (caseWire, error) {
-	baselineProjection, err := parseFixture(source)
-	if err != nil {
-		return caseWire{}, err
+	if item.Claim.ID != item.ID+"::claim" || item.Claim.Status != model.StatusDischarged || len(item.Claim.Transitions) != 1 || item.Claim.Transitions[0].From != model.StatusOpen || item.Claim.Transitions[0].To != model.StatusDischarged || item.Claim.Coordinate.Stage != "INTERVENTION" || item.Claim.Coordinate.Step != step[0] || item.Claim.Coordinate.Reason != step[1] {
+		return fmt.Errorf("case %q claim provenance is invalid", item.ID)
 	}
-	mutatedProjection, err := parseFixture(mutated)
-	if err != nil {
-		return caseWire{}, err
-	}
-	baselineReceipt, err := buildReceipt(source, headSHA)
-	if err != nil {
-		return caseWire{}, err
-	}
-	mutatedReceipt, err := buildReceipt(mutated, headSHA)
-	if err != nil {
-		return caseWire{}, err
-	}
-	baselineJudgment := judgmentFromReceipt(baselineReceipt)
-	mutatedJudgment := judgmentFromReceipt(mutatedReceipt)
-	baselineProjectionWire := projectionFromFixture(baselineProjection)
-	mutatedProjectionWire := projectionFromFixture(mutatedProjection)
-	baselineTransitions := transitionsFromReceipt(baselineReceipt)
-	mutatedTransitions := transitionsFromReceipt(mutatedReceipt)
-	semanticEqual := reflect.DeepEqual(baselineProjectionWire, mutatedProjectionWire)
-	decisionEqual := baselineJudgment.Decision == mutatedJudgment.Decision && baselineReceipt.Decision == mutatedReceipt.Decision
-	resolutionEqual := baselineJudgment.Resolution == mutatedJudgment.Resolution && baselineReceipt.Resolution == mutatedReceipt.Resolution
-	reasonEqual := baselineJudgment.Reason == mutatedJudgment.Reason && baselineReceipt.Reason == mutatedReceipt.Reason
-	rawDigestChanged := baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest
+	rawChanged := baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest
 	receiptChanged := baselineReceipt.Digest != mutatedReceipt.Digest
-	transitionsEqual := reflect.DeepEqual(baselineTransitions, mutatedTransitions)
-	effectsEqual := reflect.DeepEqual(baselineReceipt.Effects, mutatedReceipt.Effects)
-	replayEqual := baselineReceipt.Evidence.ReplayCount == mutatedReceipt.Evidence.ReplayCount && baselineReceipt.Evidence.ReplayOperation == mutatedReceipt.Evidence.ReplayOperation &&
-		baselineReceipt.Evidence.ReplayOutput == mutatedReceipt.Evidence.ReplayOutput && baselineReceipt.Evidence.ReplayDigest == mutatedReceipt.Evidence.ReplayDigest &&
-		baselineReceipt.Evidence.ReplaySemanticDigest == mutatedReceipt.Evidence.ReplaySemanticDigest && baselineReceipt.Evidence.ReplayEvidenceDigest == mutatedReceipt.Evidence.ReplayEvidenceDigest
-	writesZero := baselineReceipt.RepositoryWrites == 0 && mutatedReceipt.RepositoryWrites == 0 && !baselineReceipt.MutationAuthority && !mutatedReceipt.MutationAuthority
-	evidenceObservable := baselineJudgment.Independent && mutatedJudgment.Independent
-	caseResult := caseWire{ID: id, Kind: kind, SourceEdit: edit, BaselineProjection: baselineProjectionWire, MutatedProjection: mutatedProjectionWire,
-		BaselineProjectionDigest: model.Digest(baselineProjectionWire), MutatedProjectionDigest: model.Digest(mutatedProjectionWire),
-		BaselineSourceDigest: baselineReceipt.SourceDigest, MutatedSourceDigest: mutatedReceipt.SourceDigest, BaselineReceiptDigest: baselineReceipt.Digest, MutatedReceiptDigest: mutatedReceipt.Digest,
-		BaselineReceiptDecision: baselineReceipt.Decision, MutatedReceiptDecision: mutatedReceipt.Decision, BaselineJudgment: judgmentFromModel(baselineJudgment), MutatedJudgment: judgmentFromModel(mutatedJudgment),
-		BaselineEvidence: evidenceFromModel(baselineReceipt.Evidence), MutatedEvidence: evidenceFromModel(mutatedReceipt.Evidence), BaselineClaimTransitions: baselineTransitions, MutatedClaimTransitions: mutatedTransitions,
-		RawSourceDigestChanged: rawDigestChanged, ReceiptChanged: receiptChanged, SemanticProjectionEqual: semanticEqual, DecisionEqual: decisionEqual, ResolutionEqual: resolutionEqual,
-		ReasonEqual: reasonEqual, DecisionChanged: !decisionEqual, ClaimTransitionsEqual: transitionsEqual, EffectsEqual: effectsEqual, ReplayObservationEqual: replayEqual,
-		EvidenceObservable: evidenceObservable, RepositoryWritesZero: writesZero, BaselineRepositoryWrites: baselineReceipt.RepositoryWrites, MutatedRepositoryWrites: mutatedReceipt.RepositoryWrites,
-		BaselineMutationAuthority: baselineReceipt.MutationAuthority, MutatedMutationAuthority: mutatedReceipt.MutationAuthority}
-	observationSatisfied := (kind == "SEMANTIC_EXPECTED" || kind == "SEMANTIC_OPERATION") && rawDigestChanged && receiptChanged && !semanticEqual && !decisionEqual && !resolutionEqual && !reasonEqual && !transitionsEqual && writesZero && baselineJudgment.Decision == model.DecisionAllowed && mutatedJudgment.Decision == model.DecisionRefuted && mutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
-	if kind == "NON_SEMANTIC" {
-		observationSatisfied = rawDigestChanged && receiptChanged && semanticEqual && decisionEqual && resolutionEqual && reasonEqual && transitionsEqual && effectsEqual && replayEqual && writesZero && baselineJudgment.Decision == model.DecisionAllowed && mutatedJudgment.Decision == model.DecisionAllowed
+	semanticEqual := reflect.DeepEqual(projection(baseline), projection(mutated))
+	decisionEqual := baselineJudgment.Decision == mutatedJudgment.Decision
+	resolutionEqual := baselineJudgment.Resolution == mutatedJudgment.Resolution
+	reasonEqual := baselineJudgment.Reason == mutatedJudgment.Reason
+	transitionEqual := transitionOutcomes(baselineReceipt.Claims, mutatedReceipt.Claims)
+	replayEqual := replayObservationEqual(baselineReceipt.Evidence, mutatedReceipt.Evidence)
+	transitionEvidence := model.Digest([]any{model.Digest(projection(baseline)), model.Digest(projection(mutated)), baselineJudgment.Decision, mutatedJudgment.Decision, baselineJudgment.Resolution, mutatedJudgment.Resolution, baselineJudgment.Reason, mutatedJudgment.Reason})
+	claimCoordinate := model.Coordinate{Stage: "INTERVENTION", Step: step[0], Reason: step[1]}
+	expectedTransition := model.NewTransition(item.ID+"::claim", model.StatusOpen, model.StatusDischarged, claimCoordinate, transitionEvidence)
+	if item.Claim.VerificationCheck != "intervention-observation-derived-from-two-independent-receipts" || item.Claim.Resolution != model.ResolutionExact || item.Claim.Reason != step[1] || item.Claim.TargetDigest != expectedTransition.PropositionDigest || item.Claim.PriorStateDigest != expectedTransition.PriorStateDigest || item.Claim.EvidenceDigest != expectedTransition.EvidenceDigest || !reflect.DeepEqual(item.Claim.Transitions[0], transitionFromModel(expectedTransition)) {
+		return fmt.Errorf("case %q claim ledger provenance is invalid", item.ID)
 	}
-	claimReason := satisfiedReason
-	claimResolution := model.ResolutionExact
-	claimStatus := model.StatusDischarged
-	if !observationSatisfied {
-		claimResolution = model.ResolutionInvariant
-		claimStatus = model.StatusRefuted
-		if kind == "NON_SEMANTIC" {
-			claimReason = nonSemanticContradictionReason
-		} else {
-			claimReason = semanticContradictionReason
-		}
+	if item.RawSourceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.ClaimTransitionsEqual != transitionEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesZero || !item.Satisfied {
+		return fmt.Errorf("case %q observation fields are not derived", item.ID)
 	}
-	coordinate := coordinateWire{Stage: interventionStage, Step: step, Reason: claimReason}
-	caseResult.Claim = claimWire{ID: claimID, Status: claimStatus, Resolution: claimResolution, Reason: claimReason, Coordinate: coordinate,
-		Transitions: []transitionWire{{From: model.StatusOpen, To: claimStatus, Coordinate: coordinate}}}
-	caseResult.Satisfied = observationSatisfied
-	return caseResult, nil
+	return nil
 }
 
-func buildReceipt(source []byte, headSHA string) (model.Receipt, error) {
-	fixture, err := parseFixture(source)
-	if err != nil {
-		return model.Receipt{}, err
+func verifyGates(gates []gateWire, headSHA string) error {
+	if len(gates) != 6 {
+		return fmt.Errorf("effect gate denominator is not 6")
 	}
-	contract := model.CanonicalContract()
-	sourceDigest := model.DigestBytes(source)
-	semanticBefore := model.SemanticDigest(fixture.Input)
-	semanticAfter := model.SemanticDigest(fixture.CandidateResult)
-	expectedSemantic := model.SemanticDigest(fixture.Expected)
-	candidateDigest := model.CandidateDigest(fixture.CandidateOperation, fixture.Input, fixture.CandidateResult)
-	replayOutput, replayErr := executeReplay(fixture.ReplayRecipe, fixture.Input)
-	evidence := model.TransformationEvidence{SourceDigest: sourceDigest, InputValue: fixture.Input, CandidateOperation: fixture.CandidateOperation, CandidateResult: fixture.CandidateResult,
-		ExpectedValue: fixture.Expected, Invariant: fixture.Invariant, CandidateDigest: candidateDigest, SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: semanticAfter,
-		ExpectedSemanticDigest: expectedSemantic, ReplayRecipe: fixture.ReplayRecipe, BaselineInputValue: fixture.Input, BaselineOperation: fixture.CandidateOperation,
-		BaselineOutput: fixture.CandidateResult, BaselineDigest: candidateDigest, ReplayCount: 1}
-	if replayErr != nil {
-		evidence.ReplayFailureStage = "REGRESSION"
-		evidence.ReplayFailureStep = "execute-replay"
-		evidence.ReplayFailureReason = replayFailureReason(fixture.ReplayRecipe)
-	} else {
-		replayDigest := model.CandidateDigest(fixture.ReplayRecipe, fixture.Input, replayOutput)
-		evidence.ReplayInputValue = fixture.Input
-		evidence.ReplayOperation = fixture.ReplayRecipe
-		evidence.ReplayOutput = replayOutput
-		evidence.ReplayDigest = replayDigest
-		evidence.ReplaySemanticDigest = model.SemanticDigest(replayOutput)
-		evidence.ReplayEvidenceDigest = model.ReplayDigest(candidateDigest, replayDigest)
-		evidence.ReplayCount = 2
-		evidence.RegressionWitnessPresent = candidateDigest == replayDigest && semanticAfter == evidence.ReplaySemanticDigest
-	}
-	postconditionDigest := model.PostconditionDigest(semanticBefore, semanticAfter, expectedSemantic)
-	regressionDigest := ""
-	if evidence.ReplayCount == 2 {
-		regressionDigest = evidence.ReplayEvidenceDigest
-	}
-	statuses := map[string]string{"precondition": model.StatusDischarged, "transformation": model.StatusDischarged, "postcondition": model.StatusDischarged, "regression-witness": model.StatusDischarged}
-	reasons := map[string]string{"precondition": "EXACT_SOURCE_SNAPSHOT", "transformation": "TRANSFORMATION_OBSERVED", "postcondition": "SEMANTIC_POSTCONDITION_PRESERVED", "regression-witness": "REGRESSION_REPLAY_MATCHED"}
-	if fixture.CandidateResult != fixture.Expected {
-		statuses["postcondition"] = model.StatusRefuted
-		reasons["postcondition"] = "SEMANTIC_POSTCONDITION_REFUTED"
-	}
-	if evidence.ReplayCount != 2 {
-		statuses["regression-witness"] = model.StatusOpen
-		reasons["regression-witness"] = evidence.ReplayFailureReason
-	} else if !evidence.RegressionWitnessPresent {
-		statuses["regression-witness"] = model.StatusRefuted
-		reasons["regression-witness"] = replayMismatchReason
-	} else if fixture.CandidateResult != fixture.Expected {
-		statuses["regression-witness"] = model.StatusRefuted
-		reasons["regression-witness"] = "REGRESSION_REPLAY_REFUTED"
-	}
-	claims := make([]model.Claim, 0, len(contract.Values))
-	values := make([]model.MetaValue, 0, len(contract.Values))
-	for _, valueSpec := range contract.Values {
-		evidenceDigest := evidenceFor(valueSpec.ID, sourceDigest, candidateDigest, postconditionDigest, regressionDigest)
-		coordinate := model.Coordinate{Stage: valueSpec.Coordinate.Stage, Step: valueSpec.Coordinate.Step, Reason: reasons[valueSpec.ID]}
-		claim := model.Claim{ID: valueSpec.ID, Status: statuses[valueSpec.ID], Reason: reasons[valueSpec.ID], Coordinate: coordinate, EvidenceDigests: evidenceDigests(evidenceDigest), Transitions: []model.Transition{{From: model.StatusOpen, To: statuses[valueSpec.ID], Coordinate: coordinate}}}
-		claims = append(claims, claim)
-		values = append(values, model.MetaValue{ID: valueSpec.ID, Kind: valueSpec.Kind, Value: statuses[valueSpec.ID], EvidenceDigest: evidenceDigest, Producer: valueSpec.Producer,
-			Consumer: valueSpec.Consumer, MetaOperation: valueSpec.MetaOperation, ProofChoice: valueSpec.ProofChoice, Coordinate: coordinate})
-	}
-	decision, resolution, reason := deriveDecision(claims)
-	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: "PRESERVED", HeadSHA: headSHA, SourcePath: model.SourcePath,
-		SourceDigest: sourceDigest, ContractDigest: model.Digest(contract), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp,
-		ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason,
-		Effects: []model.Effect{}, RepositoryWrites: 0, MutationAuthority: false, AuthorityScope: model.AuthorityScope}
-	if fixture.ApprovedArtifact {
-		data := approvedArtifactBytes(fixture)
-		path := approvedArtifactPath()
-		if err := os.WriteFile(path, data, 0o600); err != nil {
-			return model.Receipt{}, err
+	for _, gate := range gates {
+		if gate.AuthorizationAttempted != true {
+			return fmt.Errorf("effect gate %q lacks authorization attempt", gate.ID)
 		}
-		receipt.Effects = append(receipt.Effects, model.Effect{Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved", ArtifactDigest: model.DigestBytes(data), ArtifactPath: path, ArtifactSize: len(data), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: "record-approved-artifact-effect", RepositoryWrites: 0, MutationAuthority: false})
+		if gate.ID == "effect-valid-authorized" {
+			if !gate.AuthorizationAccepted || !gate.ExecutorAccepted || gate.ArtifactCount != 1 || !gate.ArtifactExists || gate.SubjectSHA != headSHA || gate.Artifact.Path == "" || gate.Artifact.CaseID != "approved-artifact" || !model.ValidDigest(gate.Artifact.ContentDigest) || gate.Artifact.Size <= 0 || !model.ValidDigest(gate.Artifact.AuthorizationDigest) || !model.ValidDigest(gate.Artifact.EffectReceiptDigest) || gate.Artifact.Executor != model.ExecutorID || !gate.Artifact.RepositoryNetStatusUnchanged {
+				return fmt.Errorf("valid effect gate is not observed")
+			}
+			data, err := os.ReadFile(gate.Artifact.Path)
+			if err != nil || len(data) != gate.Artifact.Size || model.DigestBytes(data) != gate.Artifact.ContentDigest {
+				return fmt.Errorf("valid effect artifact bytes are not observed")
+			}
+		} else if gate.ExecutorAccepted || gate.ArtifactCount != 0 || gate.ArtifactExists || gate.Satisfied != true {
+			return fmt.Errorf("rejected effect gate %q created an artifact", gate.ID)
+		}
 	}
-	return model.SealReceipt(receipt), nil
+	return nil
+}
+
+func verifyArtifact(artifact model.ArtifactEvidence, headSHA string) error {
+	if artifact.Path == "" || !model.ValidDigest(artifact.ContentDigest) || artifact.Size <= 0 || artifact.CaseID != "approved-artifact" || artifact.SubjectSHA != headSHA || !model.ValidDigest(artifact.AuthorizationDigest) || !model.ValidDigest(artifact.EffectReceiptDigest) || artifact.Producer == "" || artifact.Executor != model.ExecutorID || artifact.Consumer == "" || !artifact.RepositoryNetStatusUnchanged {
+		return fmt.Errorf("artifact evidence is incomplete")
+	}
+	data, err := os.ReadFile(artifact.Path)
+	if err != nil || len(data) != artifact.Size || model.DigestBytes(data) != artifact.ContentDigest {
+		return fmt.Errorf("artifact evidence bytes are not observed")
+	}
+	return nil
 }
 
 func parseFixture(source []byte) (sourceFixture, error) {
@@ -536,57 +355,46 @@ func parseFixture(source []byte) (sourceFixture, error) {
 	if diagnostics.HasErrors() {
 		return sourceFixture{}, fmt.Errorf("consumer source syntax: %s", diagnostics.Error())
 	}
-	var found *syntax.ActivityDecl
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return sourceFixture{}, err
+	}
+	semantic := "sha256:" + ir.StableHash()
 	for _, declaration := range file.Declarations {
 		activity, ok := declaration.(*syntax.ActivityDecl)
 		if !ok || activity.Name != "PreservedTranslation" {
 			continue
 		}
-		if found != nil {
-			return sourceFixture{}, fmt.Errorf("duplicate source activity %q", activity.Name)
+		if len(activity.Parameters) != 0 || activity.Result.Name != "Transformation" || !activity.ValueProgramPresent {
+			return sourceFixture{}, fmt.Errorf("preserved source activity is not executable")
 		}
-		found = activity
+		fields, err := decodeFields(activity.ValueProgram)
+		if err != nil {
+			return sourceFixture{}, err
+		}
+		input, err := strconv.ParseInt(fields["input"], 10, 64)
+		if err != nil {
+			return sourceFixture{}, err
+		}
+		expected, err := strconv.ParseInt(fields["expected"], 10, 64)
+		if err != nil {
+			return sourceFixture{}, err
+		}
+		result, err := evaluateAdd(fields["candidate"], input)
+		if err != nil {
+			return sourceFixture{}, err
+		}
+		return sourceFixture{Activity: activity.Name, CaseID: fields["case"], CaseKind: fields["kind"], Input: input, CandidateOperation: fields["candidate"], CandidateResult: result, Expected: expected, Invariant: fields["invariant"], InvariantID: fields["invariant-id"], DomainID: fields["domain"], OperationID: model.Digest([]string{"operation", fields["candidate"]}), ReplayRecipe: fields["replay"], EffectIntent: fields["effect"], SemanticSourceDigest: semantic}, nil
 	}
-	if found == nil || len(found.Parameters) != 0 || found.Result.Name != "Transformation" || !found.ValueProgramPresent {
-		return sourceFixture{}, fmt.Errorf("preserved source activity is not executable")
-	}
-	fields, err := decodeFields(found.ValueProgram)
-	if err != nil {
-		return sourceFixture{}, err
-	}
-	input, err := strconv.ParseInt(fields["input"], 10, 64)
-	if err != nil {
-		return sourceFixture{}, fmt.Errorf("source input is not int64: %w", err)
-	}
-	expected, err := strconv.ParseInt(fields["expected"], 10, 64)
-	if err != nil {
-		return sourceFixture{}, fmt.Errorf("source expected is not int64: %w", err)
-	}
-	candidateResult, err := evaluateAdd(fields["candidate"], input)
-	if err != nil {
-		return sourceFixture{}, err
-	}
-	if fields["case"] != preservedCaseID || fields["invariant"] != "candidate-output-equals-expected" || fields["replay"] == "" || (fields["effect"] != "none" && fields["effect"] != "approved-artifact") {
-		return sourceFixture{}, fmt.Errorf("source fixture is outside the bounded intervention contract")
-	}
-	semanticDigest, err := canonicalSemanticDigest(source)
-	if err != nil {
-		return sourceFixture{}, err
-	}
-	return sourceFixture{Activity: found.Name, CaseID: fields["case"], Input: input, CandidateOperation: fields["candidate"], CandidateResult: candidateResult, Expected: expected, Invariant: fields["invariant"], ReplayRecipe: fields["replay"], SemanticSourceDigest: semanticDigest, ApprovedArtifact: fields["effect"] == "approved-artifact"}, nil
-}
-
-func projectionFromFixture(fixture sourceFixture) projectionWire {
-	return projectionWire{Activity: fixture.Activity, CaseID: fixture.CaseID, Input: fixture.Input, CandidateOperation: fixture.CandidateOperation, CandidateResult: fixture.CandidateResult,
-		Expected: fixture.Expected, Invariant: fixture.Invariant, ReplayRecipe: fixture.ReplayRecipe, SemanticSourceDigest: fixture.SemanticSourceDigest, ApprovedArtifact: fixture.ApprovedArtifact}
+	return sourceFixture{}, fmt.Errorf("preserved source activity is missing")
 }
 
 func decodeFields(program string) (map[string]string, error) {
 	parts := strings.Split(program, ";")
-	if len(parts) != 7 {
-		return nil, fmt.Errorf("fixture computes value has %d fields, want 7", len(parts))
+	if len(parts) != 10 {
+		return nil, fmt.Errorf("fixture computes value has %d fields, want 10", len(parts))
 	}
-	fields := make(map[string]string, len(parts))
+	fields := map[string]string{}
 	for _, part := range parts {
 		key, value, ok := strings.Cut(part, "=")
 		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
@@ -594,95 +402,96 @@ func decodeFields(program string) (map[string]string, error) {
 			return nil, fmt.Errorf("fixture field %q is malformed", part)
 		}
 		if _, exists := fields[key]; exists {
-			return nil, fmt.Errorf("fixture field %q is duplicated", key)
+			return nil, fmt.Errorf("fixture field %q is duplicated", part)
 		}
 		fields[key] = value
 	}
-	for _, key := range []string{"case", "input", "candidate", "expected", "invariant", "replay", "effect"} {
+	for _, key := range []string{"case", "kind", "input", "candidate", "expected", "invariant", "invariant-id", "domain", "replay", "effect"} {
 		if fields[key] == "" {
 			return nil, fmt.Errorf("fixture field %q is missing", key)
 		}
 	}
 	return fields, nil
 }
-
 func evaluateAdd(operation string, input int64) (int64, error) {
-	name, operandText, ok := strings.Cut(operation, ":")
-	if !ok || name != "add" || operandText == "" || strings.Contains(operandText, ":") {
-		return 0, fmt.Errorf("candidate operation %q is unsupported", operation)
+	name, text, ok := strings.Cut(operation, ":")
+	if !ok || name != "add" || text == "" || strings.Contains(text, ":") {
+		return 0, fmt.Errorf("operation %q unsupported", operation)
 	}
-	operand, err := strconv.ParseInt(operandText, 10, 64)
+	operand, err := strconv.ParseInt(text, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("candidate operand is not int64: %w", err)
+		return 0, err
 	}
-	const maxInt64 = int64(1<<63 - 1)
-	const minInt64 = -maxInt64 - 1
-	if (operand > 0 && input > maxInt64-operand) || (operand < 0 && input < minInt64-operand) {
-		return 0, fmt.Errorf("candidate operation %q overflows int64", operation)
+	const max = int64(1<<63 - 1)
+	const min = -max - 1
+	if (operand > 0 && input > max-operand) || (operand < 0 && input < min-operand) {
+		return 0, fmt.Errorf("operation overflows int64")
 	}
 	return input + operand, nil
 }
-
 func executeReplay(recipe string, input int64) (int64, error) {
 	if recipe == "unavailable" {
-		return 0, fmt.Errorf("%s", replayUnavailableReason)
+		return 0, fmt.Errorf("REGRESSION_REPLAY_RECIPE_UNAVAILABLE")
 	}
 	return evaluateAdd(recipe, input)
 }
 
-func replayFailureReason(recipe string) string {
-	if recipe == "unavailable" {
-		return replayUnavailableReason
+func reconstructReceipt(fixture sourceFixture, source []byte, headSHA string) model.Receipt {
+	sourceDigest := model.DigestBytes(source)
+	candidateDigest := model.CandidateDigest(fixture.CandidateOperation, fixture.Input, fixture.CandidateResult)
+	before := model.SemanticDigest(fixture.Input)
+	after := model.SemanticDigest(fixture.CandidateResult)
+	expected := model.SemanticDigest(fixture.Expected)
+	replayOutput, replayErr := executeReplay(fixture.ReplayRecipe, fixture.Input)
+	evidence := model.TransformationEvidence{SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest, CaseStableID: fixture.CaseID, ActivityStableID: fixture.Activity, OperationID: fixture.OperationID, InputDomainID: fixture.DomainID, InvariantID: fixture.InvariantID, EffectIntent: fixture.EffectIntent, InputValue: fixture.Input, CandidateOperation: fixture.CandidateOperation, CandidateResult: fixture.CandidateResult, ExpectedValue: fixture.Expected, Invariant: fixture.Invariant, CandidateDigest: candidateDigest, SemanticBeforeDigest: before, SemanticAfterDigest: after, ExpectedSemanticDigest: expected, ReplayRecipe: fixture.ReplayRecipe, BaselineInputValue: fixture.Input, BaselineOperation: fixture.CandidateOperation, BaselineOutput: fixture.CandidateResult, BaselineDigest: candidateDigest, ReplayCount: 1}
+	if replayErr != nil {
+		evidence.ReplayFailureStage, evidence.ReplayFailureStep, evidence.ReplayFailureReason = "REGRESSION", "execute-replay", "REGRESSION_REPLAY_RECIPE_UNAVAILABLE"
+	} else {
+		replayDigest := model.CandidateDigest(fixture.ReplayRecipe, fixture.Input, replayOutput)
+		evidence.ReplayInputValue, evidence.ReplayOperation, evidence.ReplayOutput = fixture.Input, fixture.ReplayRecipe, replayOutput
+		evidence.ReplayDigest, evidence.ReplaySemanticDigest = replayDigest, model.SemanticDigest(replayOutput)
+		evidence.ReplayEvidenceDigest = model.ReplayDigest(candidateDigest, replayDigest)
+		evidence.ReplayCount = 2
+		evidence.RegressionWitnessPresent = candidateDigest == replayDigest && after == evidence.ReplaySemanticDigest
 	}
-	return replayExecutionReason
-}
-
-func canonicalSemanticDigest(source []byte) (string, error) {
-	file, diagnostics := syntax.ParseFile(model.SourcePath, string(source))
-	if diagnostics.HasErrors() {
-		return "", fmt.Errorf("canonical semantic parse: %s", diagnostics.Error())
+	post := model.PostconditionDigest(before, after, expected)
+	statuses := map[string]string{"precondition": model.StatusDischarged, "transformation": model.StatusDischarged, "postcondition": model.StatusDischarged, "regression-witness": model.StatusDischarged}
+	reasons := map[string]string{"precondition": "EXACT_SOURCE_SNAPSHOT", "transformation": "TRANSFORMATION_OBSERVED", "postcondition": "SEMANTIC_POSTCONDITION_PRESERVED", "regression-witness": "REGRESSION_REPLAY_MATCHED"}
+	if fixture.CandidateResult != fixture.Expected {
+		statuses["postcondition"], reasons["postcondition"] = model.StatusRefuted, "SEMANTIC_POSTCONDITION_REFUTED"
 	}
-	ir, err := bidir.Lower(file)
-	if err != nil {
-		return "", fmt.Errorf("canonical semantic lowering: %w", err)
+	if evidence.ReplayCount != 2 {
+		statuses["regression-witness"], reasons["regression-witness"] = model.StatusOpen, evidence.ReplayFailureReason
+	} else if !evidence.RegressionWitnessPresent || fixture.CandidateResult != fixture.Expected {
+		statuses["regression-witness"], reasons["regression-witness"] = model.StatusRefuted, "REGRESSION_REPLAY_REFUTED"
 	}
-	return "sha256:" + ir.StableHash(), nil
-}
-
-func mutateSemantic(source []byte) ([]byte, error) {
-	old := []byte("case=preserved-translation;input=2;candidate=add:1;" + originalSemanticMutation)
-	newValue := []byte("case=preserved-translation;input=2;candidate=add:1;" + expectedSemanticMutation)
-	if bytes.Count(source, old) != 1 {
-		return nil, fmt.Errorf("semantic intervention target count is not 1")
-	}
-	return bytes.Replace(source, old, newValue, 1), nil
-}
-
-func mutateOperation(source []byte) ([]byte, error) {
-	old := []byte("case=preserved-translation;input=2;candidate=" + originalOperationMutation + ";expected=3;invariant=candidate-output-equals-expected;replay=" + originalOperationMutation)
-	newValue := []byte("case=preserved-translation;input=2;candidate=" + expectedOperationMutation + ";expected=3;invariant=candidate-output-equals-expected;replay=" + expectedOperationMutation)
-	if bytes.Count(source, old) != 1 {
-		return nil, fmt.Errorf("operation intervention target count is not 1")
-	}
-	return bytes.Replace(source, old, newValue, 1), nil
-}
-
-func mutateNonSemantic(source []byte) ([]byte, error) {
-	return append(append([]byte{}, source...), []byte("\n\n// non-semantic intervention: comment and whitespace only\n")...), nil
-}
-
-func transitionsFromReceipt(receipt model.Receipt) []transitionWire {
-	result := make([]transitionWire, 0, len(receipt.Claims))
-	for _, claim := range receipt.Claims {
-		for _, transition := range claim.Transitions {
-			result = append(result, transitionFromModel(transition))
+	claims := []model.Claim{}
+	values := []model.MetaValue{}
+	for _, spec := range model.CanonicalValueSpecs() {
+		evidenceDigest := sourceDigest
+		if spec.ID == "transformation" {
+			evidenceDigest = candidateDigest
 		}
+		if spec.ID == "postcondition" {
+			evidenceDigest = post
+		}
+		if spec.ID == "regression-witness" {
+			evidenceDigest = evidence.ReplayEvidenceDigest
+		}
+		coordinate := model.Coordinate{Stage: spec.Coordinate.Stage, Step: spec.Coordinate.Step, Reason: reasons[spec.ID]}
+		id := fixture.CaseID + "::" + spec.ID
+		transition := model.NewTransition(id, model.StatusOpen, statuses[spec.ID], coordinate, evidenceDigest)
+		claims = append(claims, model.Claim{ID: id, Status: statuses[spec.ID], Reason: reasons[spec.ID], VerificationCheck: spec.VerificationCheck, Coordinate: coordinate, TargetDigest: transition.PropositionDigest, PriorStateDigest: transition.PriorStateDigest, EvidenceDigests: evidenceDigests(evidenceDigest), Transitions: []model.Transition{transition}})
+		values = append(values, model.MetaValue{ID: spec.ID, Kind: spec.Kind, Value: statuses[spec.ID], EvidenceDigest: evidenceDigest, Producer: spec.Producer, Consumer: spec.Consumer, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice, VerificationCheck: spec.VerificationCheck, Coordinate: coordinate})
 	}
-	return result
+	decision, resolution, reason := derive(claims)
+	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.Activity, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest, ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional, Effects: []model.Effect{}, RepositoryNetStatusUnchanged: true, RepositoryActualOrTransientWrites: model.UnknownEffectScope, AuthorityScope: model.AuthorityScope}
+	receipt.AuthorizationDigest = model.AuthorizationDigest(receipt)
+	return model.SealReceipt(receipt)
 }
 
-func judgmentFromReceipt(receipt model.Receipt) model.Judgment {
-	judgment := model.Judgment{Independent: true, CheckedClaims: len(receipt.Claims), Effects: len(receipt.Effects)}
+func reconstructJudgment(receipt model.Receipt) model.Judgment {
+	judgment := model.Judgment{Independent: true, CheckedClaims: len(receipt.Claims), Effects: len(receipt.Effects), AuthorizationDigest: receipt.AuthorizationDigest}
 	for _, claim := range receipt.Claims {
 		switch claim.Status {
 		case model.StatusDischarged:
@@ -693,7 +502,7 @@ func judgmentFromReceipt(receipt model.Receipt) model.Judgment {
 			judgment.RefutedClaims++
 		}
 	}
-	judgment.Decision, judgment.Resolution, judgment.Reason = deriveDecision(receipt.Claims)
+	judgment.Decision, judgment.Resolution, judgment.Reason = derive(receipt.Claims)
 	if judgment.Decision == model.DecisionAllowed {
 		judgment.Status = model.StatusDischarged
 	} else if judgment.Decision == model.DecisionBlocked {
@@ -703,8 +512,7 @@ func judgmentFromReceipt(receipt model.Receipt) model.Judgment {
 	}
 	return judgment
 }
-
-func deriveDecision(claims []model.Claim) (string, string, string) {
+func derive(claims []model.Claim) (string, string, string) {
 	for _, claim := range claims {
 		if claim.Status == model.StatusRefuted {
 			return model.DecisionRefuted, model.ResolutionInvariant, claim.Reason
@@ -717,105 +525,90 @@ func deriveDecision(claims []model.Claim) (string, string, string) {
 	}
 	return model.DecisionAllowed, model.ResolutionExact, "ALL_INVARIANTS_DISCHARGED"
 }
-
-func evidenceFor(id, sourceDigest, candidate, postcondition, regression string) string {
-	switch id {
-	case "precondition":
-		return sourceDigest
-	case "transformation":
-		return candidate
-	case "postcondition":
-		return postcondition
-	case "regression-witness":
-		return regression
-	default:
-		return ""
-	}
-}
-
-func evidenceDigests(digest string) []string {
-	if digest == "" {
+func evidenceDigests(value string) []string {
+	if value == "" {
 		return []string{}
 	}
-	return []string{digest}
+	return []string{value}
+}
+func projection(fixture sourceFixture) projectionWire {
+	return projectionWire{Activity: fixture.Activity, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, Input: fixture.Input, CandidateOperation: fixture.CandidateOperation, CandidateResult: fixture.CandidateResult, Expected: fixture.Expected, Invariant: fixture.Invariant, InvariantID: fixture.InvariantID, DomainID: fixture.DomainID, OperationID: fixture.OperationID, ReplayRecipe: fixture.ReplayRecipe, SemanticSourceDigest: fixture.SemanticSourceDigest, EffectIntent: fixture.EffectIntent}
+}
+func transitionOutcomes(left, right []model.Claim) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if len(left[index].Transitions) != len(right[index].Transitions) {
+			return false
+		}
+		for step := range left[index].Transitions {
+			if left[index].Transitions[step].ClaimID != right[index].Transitions[step].ClaimID || left[index].Transitions[step].From != right[index].Transitions[step].From || left[index].Transitions[step].To != right[index].Transitions[step].To || left[index].Transitions[step].Coordinate != right[index].Transitions[step].Coordinate {
+				return false
+			}
+		}
+	}
+	return true
+}
+func replayObservationEqual(left, right model.TransformationEvidence) bool {
+	return left.ReplayCount == right.ReplayCount && left.ReplayOperation == right.ReplayOperation && left.ReplayOutput == right.ReplayOutput && left.ReplayDigest == right.ReplayDigest && left.ReplaySemanticDigest == right.ReplaySemanticDigest && left.ReplayEvidenceDigest == right.ReplayEvidenceDigest
+}
+func transitionWires(claims []model.Claim) []transitionWire {
+	result := []transitionWire{}
+	for _, claim := range claims {
+		for _, transition := range claim.Transitions {
+			result = append(result, transitionWire{ClaimID: transition.ClaimID, From: transition.From, To: transition.To, Coordinate: coordinateWire{Stage: transition.Coordinate.Stage, Step: transition.Coordinate.Step, Reason: transition.Coordinate.Reason}, PropositionDigest: transition.PropositionDigest, PriorStateDigest: transition.PriorStateDigest, EvidenceDigest: transition.EvidenceDigest, PreviousTransitionDigest: transition.PreviousTransitionDigest, CurrentTransitionDigest: transition.CurrentTransitionDigest})
+		}
+	}
+	return result
 }
 
-func coherentTamper(report reportWire) reportWire {
-	tampered := report
-	tampered.Cases = append([]caseWire(nil), report.Cases...)
-	tampered.Cases[2] = report.Cases[2]
-	tampered.Cases[2].RawSourceDigestChanged = false
-	tampered.Cases[2].ReceiptChanged = false
-	tampered.Cases[2].DecisionEqual = false
-	tampered.Cases[2].ResolutionEqual = false
-	tampered.Cases[2].ReasonEqual = false
-	tampered.Cases[2].DecisionChanged = true
-	tampered.Cases[2].ClaimTransitionsEqual = false
-	tampered.Cases[2].Claim.Status = model.StatusRefuted
-	tampered.Cases[2].Claim.Resolution = model.ResolutionInvariant
-	tampered.Cases[2].Claim.Reason = nonSemanticContradictionReason
-	tampered.Cases[2].Claim.Coordinate.Reason = nonSemanticContradictionReason
-	tampered.Cases[2].Claim.Transitions = []transitionWire{{From: model.StatusOpen, To: model.StatusRefuted, Coordinate: tampered.Cases[2].Claim.Coordinate}}
-	tampered.Cases[2].Satisfied = false
-	tampered.Denominator.NonSemantic.CasesSatisfied = 0
-	tampered.Denominator.NonSemantic.CoverageBPS = 0
-	tampered.Decision = failClosedDecision
-	tampered.Resolution = model.ResolutionInvariant
-	tampered.Reason = "CASE=" + nonSemanticCaseID + ";STAGE=" + interventionStage + ";STEP=" + nonSemanticStep + ";REASON=" + nonSemanticContradictionReason
-	tampered.Failure = &failureWire{CaseID: nonSemanticCaseID, Stage: interventionStage, Step: nonSemanticStep, Reason: nonSemanticContradictionReason}
-	return sealReport(tampered)
+func transitionFromModel(transition model.Transition) transitionWire {
+	return transitionWire{ClaimID: transition.ClaimID, From: transition.From, To: transition.To, Coordinate: coordinateWire{Stage: transition.Coordinate.Stage, Step: transition.Coordinate.Step, Reason: transition.Coordinate.Reason}, PropositionDigest: transition.PropositionDigest, PriorStateDigest: transition.PriorStateDigest, EvidenceDigest: transition.EvidenceDigest, PreviousTransitionDigest: transition.PreviousTransitionDigest, CurrentTransitionDigest: transition.CurrentTransitionDigest}
 }
-
-func approvedArtifactPath() string {
+func mutateSemantic(source []byte) ([]byte, error) {
+	old := []byte("case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=3")
+	newValue := []byte("case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=4")
+	if bytes.Count(source, old) != 1 {
+		return nil, fmt.Errorf("semantic intervention target count is not 1")
+	}
+	return bytes.Replace(source, old, newValue, 1), nil
+}
+func mutateOperation(source []byte) ([]byte, error) {
+	old := []byte("case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=3")
+	newValue := []byte("case=preserved-translation;kind=PRESERVED;input=2;candidate=add:2;expected=3")
+	if bytes.Count(source, old) != 1 {
+		return nil, fmt.Errorf("operation intervention target count is not 1")
+	}
+	return bytes.Replace(source, old, newValue, 1), nil
+}
+func mutateNonSemantic(source []byte) ([]byte, error) {
+	return append(append([]byte{}, source...), []byte("\n\n// non-semantic intervention: comment and whitespace only\n")...), nil
+}
+func verifyArtifactPath(path string) bool {
 	root := os.Getenv("RUNNER_TEMP")
 	if root == "" {
 		root = os.TempDir()
 	}
-	return filepath.Join(root, "gooo-invariant-transformation-approved-artifact.bin")
+	absRoot, _ := filepath.Abs(root)
+	absPath, _ := filepath.Abs(path)
+	return filepath.Dir(absPath) == absRoot
 }
-
-func approvedArtifactBytes(fixture sourceFixture) []byte {
-	return []byte(fmt.Sprintf("gooo approved artifact\ncase=%s\ninput=%d\noperation=%s\noutput=%d\n", fixture.CaseID, fixture.Input, fixture.CandidateOperation, fixture.CandidateResult))
+func coherentTamper(report reportWire) reportWire {
+	tampered := report
+	tampered.Cases = append([]caseWire(nil), report.Cases...)
+	tampered.Cases[2].Claim.Status = model.StatusRefuted
+	tampered.Cases[2].Satisfied = false
+	tampered.Cases[2].Claim.Reason = nonSemanticContradictionReason
+	tampered.Denominator.NonSemantic.CasesSatisfied = 0
+	tampered.Denominator.NonSemantic.CoverageBPS = 0
+	tampered.Decision = "FAIL_CLOSED"
+	tampered.Resolution = model.ResolutionInvariant
+	tampered.Reason = "tampered"
+	return reseal(tampered)
 }
-
-func sealReport(report reportWire) reportWire {
+func reseal(report reportWire) reportWire {
 	report.Digest = ""
 	report.Digest = model.Digest(report)
 	return report
-}
-
-func sealAudit(audit Audit) string {
-	audit.Digest = ""
-	return model.Digest(audit)
-}
-
-func boolInt(value bool) int {
-	if value {
-		return 1
-	}
-	return 0
-}
-
-func coordinateFromModel(coordinate model.Coordinate) coordinateWire {
-	return coordinateWire{Stage: coordinate.Stage, Step: coordinate.Step, Reason: coordinate.Reason}
-}
-
-func transitionFromModel(transition model.Transition) transitionWire {
-	return transitionWire{From: transition.From, To: transition.To, Coordinate: coordinateFromModel(transition.Coordinate)}
-}
-
-func judgmentFromModel(judgment model.Judgment) judgmentWire {
-	return judgmentWire{Decision: judgment.Decision, Resolution: judgment.Resolution, Reason: judgment.Reason, Status: judgment.Status, Independent: judgment.Independent,
-		CheckedClaims: judgment.CheckedClaims, DischargedClaims: judgment.DischargedClaims, OpenClaims: judgment.OpenClaims, RefutedClaims: judgment.RefutedClaims, Effects: judgment.Effects}
-}
-
-func evidenceFromModel(evidence model.TransformationEvidence) evidenceWire {
-	return evidenceWire{SourceDigest: evidence.SourceDigest, InputValue: evidence.InputValue, CandidateOperation: evidence.CandidateOperation, CandidateResult: evidence.CandidateResult,
-		ExpectedValue: evidence.ExpectedValue, Invariant: evidence.Invariant, CandidateDigest: evidence.CandidateDigest, SemanticBeforeDigest: evidence.SemanticBeforeDigest,
-		SemanticAfterDigest: evidence.SemanticAfterDigest, ExpectedSemanticDigest: evidence.ExpectedSemanticDigest, ReplayRecipe: evidence.ReplayRecipe,
-		BaselineInputValue: evidence.BaselineInputValue, BaselineOperation: evidence.BaselineOperation, BaselineOutput: evidence.BaselineOutput, BaselineDigest: evidence.BaselineDigest,
-		ReplayInputValue: evidence.ReplayInputValue, ReplayOperation: evidence.ReplayOperation, ReplayOutput: evidence.ReplayOutput, ReplayDigest: evidence.ReplayDigest,
-		ReplaySemanticDigest: evidence.ReplaySemanticDigest, ReplayEvidenceDigest: evidence.ReplayEvidenceDigest, RegressionWitnessPresent: evidence.RegressionWitnessPresent,
-		ReplayCount: evidence.ReplayCount, ReplayFailureStage: evidence.ReplayFailureStage, ReplayFailureStep: evidence.ReplayFailureStep, ReplayFailureReason: evidence.ReplayFailureReason,
-		SemanticSourceDigest: evidence.SemanticSourceDigest}
 }

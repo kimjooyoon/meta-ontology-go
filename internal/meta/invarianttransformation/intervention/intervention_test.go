@@ -11,7 +11,10 @@ const testHead = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 const testSource = `package invarianttransformation
 namespace meta
 entity Transformation id "gooo://invariant-transformation/value/transformation"
-activity PreservedTranslation() -> Transformation computes "case=preserved-translation;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=add:1;effect=none"
+activity PreservedTranslation() -> Transformation computes "case=preserved-translation;kind=PRESERVED;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=add:1;effect=none"
+activity SemanticViolation() -> Transformation computes "case=semantic-violation;kind=VIOLATION;input=2;candidate=add:2;expected=3;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=add:2;effect=none"
+activity MissingRegressionWitness() -> Transformation computes "case=missing-regression-witness;kind=EVIDENCE_MISSING;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=unavailable;effect=none"
+activity ApprovedArtifact() -> Transformation computes "case=approved-artifact;kind=APPROVED_ARTIFACT;input=5;candidate=add:1;expected=6;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=add:1;effect=approved-artifact"
 `
 
 func TestBuildKeepsInterventionDenominatorsSeparate(t *testing.T) {
@@ -50,6 +53,9 @@ func TestBuildKeepsInterventionDenominatorsSeparate(t *testing.T) {
 		if item.Claim.Status != model.StatusDischarged || len(item.Claim.Transitions) != 1 || item.Claim.Transitions[0].From != model.StatusOpen || item.Claim.Transitions[0].To != model.StatusDischarged || item.Claim.Transitions[0].Coordinate != item.Claim.Coordinate || item.Claim.Coordinate.Stage != InterventionStage || item.Claim.Coordinate.Reason == "" {
 			t.Fatalf("claim=%+v", item.Claim)
 		}
+	}
+	if report.EffectGateDenominator != 6 || report.EffectGateSatisfied != 6 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 {
+		t.Fatalf("effect gates or corrections=%+v", report)
 	}
 }
 

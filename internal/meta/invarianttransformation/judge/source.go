@@ -5,112 +5,126 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/model"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 type sourceSemantics struct {
-	CaseID             string
-	Input              int64
-	CandidateOperation string
-	CandidateResult    int64
-	Expected           int64
-	Invariant          string
-	ReplayRecipe       string
-	ApprovedArtifact   bool
+	ActivityID           string
+	CaseID               string
+	CaseKind             string
+	Input                int64
+	CandidateOperation   string
+	CandidateResult      int64
+	Expected             int64
+	Invariant            string
+	InvariantID          string
+	DomainID             string
+	OperationID          string
+	ReplayRecipe         string
+	EffectIntent         string
+	SemanticSourceDigest string
 }
 
-func parseSourceSemantics(source []byte, spec model.CaseSpec) (sourceSemantics, error) {
+func parseSourceSemantics(source []byte, caseID string) (sourceSemantics, error) {
 	file, diagnostics := syntax.ParseFile(model.SourcePath, string(source))
 	if diagnostics.HasErrors() {
-		return sourceSemantics{}, fmt.Errorf("source syntax: %s", diagnostics.Error())
+		return sourceSemantics{}, fmt.Errorf("judge source syntax: %s", diagnostics.Error())
 	}
-	var fixture *syntax.ActivityDecl
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return sourceSemantics{}, fmt.Errorf("judge source lowering: %w", err)
+	}
+	semanticSourceDigest := "sha256:" + ir.StableHash()
 	for _, declaration := range file.Declarations {
 		activity, ok := declaration.(*syntax.ActivityDecl)
-		if !ok || activity.Name != spec.Activity {
+		if !ok || len(activity.Parameters) != 0 || activity.Result.Name != "Transformation" || !activity.ValueProgramPresent {
 			continue
 		}
-		if fixture != nil {
-			return sourceSemantics{}, fmt.Errorf("duplicate source activity %q", spec.Activity)
+		fields, err := decodeFixtureProgram(activity.ValueProgram)
+		if err != nil {
+			return sourceSemantics{}, fmt.Errorf("activity %s: %w", activity.Name, err)
 		}
-		fixture = activity
+		if fields["case"] != caseID {
+			continue
+		}
+		input, err := parseInt(fields, "input")
+		if err != nil {
+			return sourceSemantics{}, err
+		}
+		expected, err := parseInt(fields, "expected")
+		if err != nil {
+			return sourceSemantics{}, err
+		}
+		candidateResult, err := evaluateAdd(fields["candidate"], input)
+		if err != nil {
+			return sourceSemantics{}, err
+		}
+		if fields["invariant"] != "candidate-output-equals-expected" || fields["invariant-id"] != model.InvariantID || fields["domain"] != model.InputDomainID {
+			return sourceSemantics{}, fmt.Errorf("case %q is outside the bounded source contract", caseID)
+		}
+		return sourceSemantics{ActivityID: activity.Name, CaseID: caseID, CaseKind: fields["kind"], Input: input,
+			CandidateOperation: fields["candidate"], CandidateResult: candidateResult, Expected: expected, Invariant: fields["invariant"],
+			InvariantID: fields["invariant-id"], DomainID: fields["domain"], OperationID: model.Digest([]string{"operation", fields["candidate"]}),
+			ReplayRecipe: fields["replay"], EffectIntent: fields["effect"], SemanticSourceDigest: semanticSourceDigest}, nil
 	}
-	if fixture == nil || len(fixture.Parameters) != 0 || fixture.Result.Name != "Transformation" || !fixture.ValueProgramPresent {
-		return sourceSemantics{}, fmt.Errorf("source activity %q is not an executable fixture", spec.Activity)
-	}
-	fields, err := decodeFixtureValue(fixture.ValueProgram)
-	if err != nil {
-		return sourceSemantics{}, err
-	}
-	if fields["case"] != spec.ID {
-		return sourceSemantics{}, fmt.Errorf("source activity %q case binding is %q", spec.Activity, fields["case"])
-	}
-	input, err := strconv.ParseInt(fields["input"], 10, 64)
-	if err != nil {
-		return sourceSemantics{}, fmt.Errorf("source input is not int64: %w", err)
-	}
-	expected, err := strconv.ParseInt(fields["expected"], 10, 64)
-	if err != nil {
-		return sourceSemantics{}, fmt.Errorf("source expected value is not int64: %w", err)
-	}
-	result, err := evaluateAdd(fields["candidate"], input)
-	if err != nil {
-		return sourceSemantics{}, err
-	}
-	if fields["invariant"] != "candidate-output-equals-expected" {
-		return sourceSemantics{}, fmt.Errorf("source invariant %q is not supported", fields["invariant"])
-	}
-	semantics := sourceSemantics{CaseID: fields["case"], Input: input, CandidateOperation: fields["candidate"], CandidateResult: result,
-		Expected: expected, Invariant: fields["invariant"], ReplayRecipe: fields["replay"], ApprovedArtifact: fields["effect"] == "approved-artifact"}
-	if fields["replay"] == "" {
-		return sourceSemantics{}, fmt.Errorf("source replay recipe is empty")
-	}
-	if fields["effect"] != "none" && fields["effect"] != "approved-artifact" {
-		return sourceSemantics{}, fmt.Errorf("source effect value %q is not supported", fields["effect"])
-	}
-	return semantics, nil
+	return sourceSemantics{}, fmt.Errorf("judge source case %q is missing", caseID)
 }
 
-func decodeFixtureValue(program string) (map[string]string, error) {
+func decodeFixtureProgram(program string) (map[string]string, error) {
 	parts := strings.Split(program, ";")
-	want := []string{"case", "input", "candidate", "expected", "invariant", "replay", "effect"}
-	if len(parts) != len(want) {
-		return nil, fmt.Errorf("source fixture has %d fields, want %d", len(parts), len(want))
+	if len(parts) != 10 {
+		return nil, fmt.Errorf("fixture computes value has %d fields, want 10", len(parts))
 	}
 	fields := make(map[string]string, len(parts))
 	for _, part := range parts {
 		key, value, ok := strings.Cut(part, "=")
 		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
 		if !ok || key == "" || value == "" {
-			return nil, fmt.Errorf("source fixture field %q is malformed", part)
+			return nil, fmt.Errorf("fixture field %q is malformed", part)
 		}
 		if _, exists := fields[key]; exists {
-			return nil, fmt.Errorf("source fixture field %q is duplicated", key)
+			return nil, fmt.Errorf("fixture field %q is duplicated", key)
 		}
 		fields[key] = value
 	}
-	for _, key := range want {
+	for _, key := range []string{"case", "kind", "input", "candidate", "expected", "invariant", "invariant-id", "domain", "replay", "effect"} {
 		if fields[key] == "" {
-			return nil, fmt.Errorf("source fixture field %q is missing", key)
+			return nil, fmt.Errorf("fixture field %q is missing", key)
 		}
 	}
 	return fields, nil
 }
 
+func parseInt(fields map[string]string, key string) (int64, error) {
+	value, err := strconv.ParseInt(fields[key], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("source field %q is not int64: %w", key, err)
+	}
+	return value, nil
+}
+
 func evaluateAdd(operation string, input int64) (int64, error) {
 	name, operandText, ok := strings.Cut(operation, ":")
 	if !ok || name != "add" || operandText == "" || strings.Contains(operandText, ":") {
-		return 0, fmt.Errorf("source candidate operation %q is unsupported", operation)
+		return 0, fmt.Errorf("operation %q is unsupported", operation)
 	}
 	operand, err := strconv.ParseInt(operandText, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("source candidate operand is not int64: %w", err)
+		return 0, fmt.Errorf("operation %q operand is not int64: %w", operation, err)
 	}
 	const maxInt64 = int64(1<<63 - 1)
 	const minInt64 = -maxInt64 - 1
 	if (operand > 0 && input > maxInt64-operand) || (operand < 0 && input < minInt64-operand) {
-		return 0, fmt.Errorf("source candidate operation %q overflows int64", operation)
+		return 0, fmt.Errorf("operation %q overflows int64", operation)
 	}
 	return input + operand, nil
+}
+
+func executeReplay(recipe string, input int64) (int64, error) {
+	if recipe == "unavailable" {
+		return 0, fmt.Errorf("REGRESSION_REPLAY_RECIPE_UNAVAILABLE")
+	}
+	return evaluateAdd(recipe, input)
 }

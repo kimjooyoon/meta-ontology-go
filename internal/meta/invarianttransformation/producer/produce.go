@@ -2,8 +2,6 @@ package producer
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/model"
 )
@@ -14,19 +12,14 @@ const (
 	replayMismatchReason    = "REGRESSION_REPLAY_MISMATCH"
 )
 
-// Build emits a source-bound receipt. The bounded fixture executes the
-// candidate once, then executes the source-declared replay recipe a second
-// time when that recipe is executable. It never writes the repository.
+// Build emits only a source-bound provisional receipt. It executes the
+// source-declared candidate and replay recipe, but never creates an artifact.
+// Artifact execution is a separate post-judgment operation.
 func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
-	contract := model.CanonicalContract()
-	spec, ok := caseSpec(contract, caseID)
-	if !ok {
-		return model.Receipt{}, fmt.Errorf("unknown invariant transformation case %q", caseID)
-	}
 	if !model.ValidHead(headSHA) {
 		return model.Receipt{}, fmt.Errorf("invalid head sha %q", headSHA)
 	}
-	fixture, err := parseSourceFixture(source, spec)
+	fixture, err := parseSourceFixture(source, caseID)
 	if err != nil {
 		return model.Receipt{}, err
 	}
@@ -38,13 +31,14 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 	candidateDigest := model.CandidateDigest(fixture.CandidateOperation, fixture.Input, fixture.CandidateResult)
 	replayOutput, replayErr := executeReplay(fixture.ReplayRecipe, fixture.Input)
 	evidence := model.TransformationEvidence{
-		SourceDigest: sourceDigest, InputValue: fixture.Input, CandidateOperation: fixture.CandidateOperation,
-		CandidateResult: fixture.CandidateResult, ExpectedValue: fixture.Expected, Invariant: fixture.Invariant,
-		CandidateDigest: candidateDigest, SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: semanticAfter,
-		ExpectedSemanticDigest: expectedSemantic, ReplayRecipe: fixture.ReplayRecipe,
-		BaselineInputValue: fixture.Input, BaselineOperation: fixture.CandidateOperation,
-		BaselineOutput: fixture.CandidateResult, BaselineDigest: candidateDigest,
-		ReplayCount: 1, RegressionWitnessPresent: false,
+		SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest,
+		CaseStableID: fixture.CaseID, ActivityStableID: fixture.ActivityID, OperationID: fixture.OperationID,
+		InputDomainID: fixture.DomainID, InvariantID: fixture.InvariantID, EffectIntent: fixture.EffectIntent,
+		InputValue: fixture.Input, CandidateOperation: fixture.CandidateOperation, CandidateResult: fixture.CandidateResult,
+		ExpectedValue: fixture.Expected, Invariant: fixture.Invariant, CandidateDigest: candidateDigest,
+		SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: semanticAfter, ExpectedSemanticDigest: expectedSemantic,
+		ReplayRecipe: fixture.ReplayRecipe, BaselineInputValue: fixture.Input, BaselineOperation: fixture.CandidateOperation,
+		BaselineOutput: fixture.CandidateResult, BaselineDigest: candidateDigest, ReplayCount: 1,
 	}
 	if replayErr != nil {
 		evidence.ReplayFailureStage = "REGRESSION"
@@ -64,10 +58,7 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 	}
 
 	postconditionDigest := model.PostconditionDigest(semanticBefore, semanticAfter, expectedSemantic)
-	regressionDigest := ""
-	if evidence.ReplayCount == 2 {
-		regressionDigest = evidence.ReplayEvidenceDigest
-	}
+	regressionDigest := evidence.ReplayEvidenceDigest
 	statuses := map[string]string{
 		"precondition": model.StatusDischarged, "transformation": model.StatusDischarged,
 		"postcondition": model.StatusDischarged, "regression-witness": model.StatusDischarged,
@@ -91,78 +82,42 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 		reasons["regression-witness"] = "REGRESSION_REPLAY_REFUTED"
 	}
 
-	claims := make([]model.Claim, 0, len(contract.Values))
-	values := make([]model.MetaValue, 0, len(contract.Values))
-	for _, valueSpec := range contract.Values {
+	valueSpecs := model.CanonicalValueSpecs()
+	claims := make([]model.Claim, 0, len(valueSpecs))
+	values := make([]model.MetaValue, 0, len(valueSpecs))
+	for _, valueSpec := range valueSpecs {
 		evidenceDigest := evidenceFor(valueSpec.ID, sourceDigest, candidateDigest, postconditionDigest, regressionDigest)
 		coordinate := model.Coordinate{Stage: valueSpec.Coordinate.Stage, Step: valueSpec.Coordinate.Step, Reason: reasons[valueSpec.ID]}
-		claim := model.Claim{ID: valueSpec.ID, Status: statuses[valueSpec.ID], Reason: reasons[valueSpec.ID], Coordinate: coordinate,
-			EvidenceDigests: evidenceDigests(evidenceDigest), Transitions: []model.Transition{{From: model.StatusOpen, To: statuses[valueSpec.ID], Coordinate: coordinate}}}
+		claimID := caseID + "::" + valueSpec.ID
+		transition := model.NewTransition(claimID, model.StatusOpen, statuses[valueSpec.ID], coordinate, evidenceDigest)
+		claim := model.Claim{ID: claimID, Status: statuses[valueSpec.ID], Reason: reasons[valueSpec.ID], VerificationCheck: valueSpec.VerificationCheck,
+			Coordinate: coordinate, TargetDigest: transition.PropositionDigest, PriorStateDigest: transition.PriorStateDigest,
+			EvidenceDigests: evidenceDigests(evidenceDigest), Transitions: []model.Transition{transition}}
 		claims = append(claims, claim)
 		values = append(values, model.MetaValue{ID: valueSpec.ID, Kind: valueSpec.Kind, Value: statuses[valueSpec.ID], EvidenceDigest: evidenceDigest,
-			Producer: valueSpec.Producer, Consumer: valueSpec.Consumer, MetaOperation: valueSpec.MetaOperation, ProofChoice: valueSpec.ProofChoice, Coordinate: coordinate})
+			Producer: valueSpec.Producer, Consumer: valueSpec.Consumer, MetaOperation: valueSpec.MetaOperation, ProofChoice: valueSpec.ProofChoice,
+			VerificationCheck: valueSpec.VerificationCheck, Coordinate: coordinate})
 	}
 	decision, resolution, reason := deriveDecision(claims)
-	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: spec.ID, CaseKind: spec.Kind, HeadSHA: headSHA, SourcePath: model.SourcePath,
-		SourceDigest: sourceDigest, ContractDigest: model.Digest(contract), Producer: model.ProducerID, Consumer: model.ConsumerID,
-		MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence,
-		Decision: decision, Resolution: resolution, Reason: reason, Effects: []model.Effect{}, RepositoryWrites: 0,
-		MutationAuthority: false, AuthorityScope: model.AuthorityScope}
-	if fixture.ApprovedArtifact {
-		effect, err := recordApprovedArtifact(fixture)
-		if err != nil {
-			return model.Receipt{}, err
-		}
-		receipt.Effects = append(receipt.Effects, effect)
+	receipt := model.Receipt{
+		Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.ActivityID, HeadSHA: headSHA,
+		SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest,
+		ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID,
+		Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims,
+		Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional,
+		Effects: []model.Effect{}, TempArtifactWriteAuthorized: false, RepositoryNetStatusUnchanged: true,
+		RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: 0, MutationAuthority: false,
+		AuthorityScope: model.AuthorityScope,
 	}
+	receipt.AuthorizationDigest = model.AuthorizationDigest(receipt)
 	return model.SealReceipt(receipt), nil
 }
 
-func caseSpec(contract model.Contract, id string) (model.CaseSpec, bool) {
-	for _, spec := range contract.Cases {
-		if spec.ID == id {
-			return spec, true
-		}
-	}
-	return model.CaseSpec{}, false
-}
-
-func executeReplay(recipe string, input int64) (int64, error) {
-	if recipe == "unavailable" {
-		return 0, fmt.Errorf("%s", replayUnavailableReason)
-	}
-	return executeCandidate(recipe, input)
-}
-
-func replayFailureReason(recipe string, err error) string {
+func replayFailureReason(recipe string, _ error) string {
 	if recipe == "unavailable" {
 		return replayUnavailableReason
 	}
 	return replayExecutionReason
-}
-
-func approvedArtifactPath() string {
-	root := os.Getenv("RUNNER_TEMP")
-	if root == "" {
-		root = os.TempDir()
-	}
-	return filepath.Join(root, "gooo-invariant-transformation-approved-artifact.bin")
-}
-
-func approvedArtifactBytes(fixture sourceFixture) []byte {
-	return []byte(fmt.Sprintf("gooo approved artifact\ncase=%s\ninput=%d\noperation=%s\noutput=%d\n",
-		fixture.CaseID, fixture.Input, fixture.CandidateOperation, fixture.CandidateResult))
-}
-
-func recordApprovedArtifact(fixture sourceFixture) (model.Effect, error) {
-	path := approvedArtifactPath()
-	data := approvedArtifactBytes(fixture)
-	if err := os.WriteFile(path, data, 0o600); err != nil {
-		return model.Effect{}, fmt.Errorf("write approved artifact: %w", err)
-	}
-	return model.Effect{Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved",
-		ArtifactDigest: model.DigestBytes(data), ArtifactPath: path, ArtifactSize: len(data), Producer: model.ProducerID,
-		Consumer: model.ConsumerID, MetaOperation: "record-approved-artifact-effect", RepositoryWrites: 0, MutationAuthority: false}, nil
 }
 
 func evidenceFor(id, sourceDigest, candidate, postcondition, regression string) string {

@@ -1,102 +1,18 @@
 {
-  "schema": "gooo/invariant-transformation-contract/v1",
-  "version": 1,
-  "denominator_id": "gooo/invariant-transformation-denominator/v1",
+  "schema": "gooo/invariant-transformation-contract/v2",
+  "version": 2,
+  "denominator_id": "gooo/invariant-transformation-denominator/v2",
   "source": "examples/invariant-transformation/main.gooo",
   "values": [
-    {
-      "id": "precondition",
-      "kind": "PRECONDITION",
-      "producer": "invarianttransformation.producer",
-      "consumer": "invarianttransformation.independent-judge",
-      "meta_operation": "bind-transformation-precondition",
-      "proof_choice": "FOUNDATION",
-      "coordinate": {
-        "stage": "PRECONDITION",
-        "step": "bind-source-snapshot",
-        "reason": "EXACT_SOURCE_SNAPSHOT"
-      }
-    },
-    {
-      "id": "transformation",
-      "kind": "TRANSFORMATION",
-      "producer": "invarianttransformation.producer",
-      "consumer": "invarianttransformation.independent-judge",
-      "meta_operation": "observe-transformation-result",
-      "proof_choice": "COHERENCE",
-      "coordinate": {
-        "stage": "TRANSFORMATION",
-        "step": "observe-candidate",
-        "reason": "TRANSFORMATION_OBSERVED"
-      }
-    },
-    {
-      "id": "postcondition",
-      "kind": "POSTCONDITION",
-      "producer": "invarianttransformation.producer",
-      "consumer": "invarianttransformation.independent-judge",
-      "meta_operation": "compare-postcondition",
-      "proof_choice": "COHERENCE",
-      "coordinate": {
-        "stage": "POSTCONDITION",
-        "step": "compare-semantic-value",
-        "reason": "SEMANTIC_POSTCONDITION"
-      }
-    },
-    {
-      "id": "regression-witness",
-      "kind": "REGRESSION_WITNESS",
-      "producer": "invarianttransformation.producer",
-      "consumer": "invarianttransformation.independent-judge",
-      "meta_operation": "replay-regression-witness",
-      "proof_choice": "REGRESSION",
-      "coordinate": {
-        "stage": "REGRESSION",
-        "step": "execute-replay",
-        "reason": "REGRESSION_REPLAY_OBSERVED"
-      }
-    }
+    {"id": "precondition", "kind": "PRECONDITION", "producer": "invarianttransformation.producer", "consumer": "invarianttransformation.independent-judge", "meta_operation": "bind-transformation-precondition", "proof_choice": "FOUNDATION", "verification_check": "source-digest-and-semantic-source-digest", "coordinate": {"stage": "PRECONDITION", "step": "bind-source-snapshot", "reason": "EXACT_SOURCE_SNAPSHOT"}},
+    {"id": "transformation", "kind": "TRANSFORMATION", "producer": "invarianttransformation.producer", "consumer": "invarianttransformation.independent-judge", "meta_operation": "observe-transformation-result", "proof_choice": "COHERENCE", "verification_check": "execute-candidate-and-bind-output", "coordinate": {"stage": "TRANSFORMATION", "step": "observe-candidate", "reason": "TRANSFORMATION_OBSERVED"}},
+    {"id": "postcondition", "kind": "POSTCONDITION", "producer": "invarianttransformation.producer", "consumer": "invarianttransformation.independent-judge", "meta_operation": "compare-postcondition", "proof_choice": "COHERENCE", "verification_check": "compare-lowered-semantic-output-to-invariant", "coordinate": {"stage": "POSTCONDITION", "step": "compare-semantic-value", "reason": "SEMANTIC_POSTCONDITION"}},
+    {"id": "regression-witness", "kind": "REGRESSION_WITNESS", "producer": "invarianttransformation.producer", "consumer": "invarianttransformation.independent-judge", "meta_operation": "replay-regression-witness", "proof_choice": "REGRESSION", "verification_check": "execute-baseline-and-replay-and-compare", "coordinate": {"stage": "REGRESSION", "step": "execute-replay", "reason": "REGRESSION_REPLAY_OBSERVED"}}
   ],
-  "cases": [
-    {
-      "id": "preserved-translation",
-      "activity": "PreservedTranslation",
-      "kind": "PRESERVED",
-      "expected_decision": "AUTHORIZED",
-      "expected_resolution": "EXACT",
-      "expected_reason": "ALL_INVARIANTS_DISCHARGED",
-      "expected_status": "DISCHARGED",
-      "expected_effects": 0
-    },
-    {
-      "id": "semantic-violation",
-      "activity": "SemanticViolation",
-      "kind": "VIOLATION",
-      "expected_decision": "REFUTED",
-      "expected_resolution": "INVARIANT_ONLY",
-      "expected_reason": "SEMANTIC_POSTCONDITION_REFUTED",
-      "expected_status": "REFUTED",
-      "expected_effects": 0
-    },
-    {
-      "id": "missing-regression-witness",
-      "activity": "MissingRegressionWitness",
-      "kind": "EVIDENCE_MISSING",
-      "expected_decision": "BLOCKED",
-      "expected_resolution": "LOWER_RESOLUTION",
-      "expected_reason": "REGRESSION_REPLAY_RECIPE_UNAVAILABLE",
-      "expected_status": "OPEN",
-      "expected_effects": 0
-    },
-    {
-      "id": "approved-artifact",
-      "activity": "ApprovedArtifact",
-      "kind": "APPROVED_ARTIFACT",
-      "expected_decision": "AUTHORIZED",
-      "expected_resolution": "EXACT",
-      "expected_reason": "ALL_INVARIANTS_DISCHARGED",
-      "expected_status": "DISCHARGED",
-      "expected_effects": 1
-    }
+  "validator_expectations": [
+    {"case_id": "preserved-translation", "expected_decision": "AUTHORIZED", "expected_resolution": "EXACT", "expected_reason": "ALL_INVARIANTS_DISCHARGED", "expected_status": "DISCHARGED", "expected_effect_count": 0},
+    {"case_id": "semantic-violation", "expected_decision": "REFUTED", "expected_resolution": "INVARIANT_ONLY", "expected_reason": "SEMANTIC_POSTCONDITION_REFUTED", "expected_status": "REFUTED", "expected_effect_count": 0},
+    {"case_id": "missing-regression-witness", "expected_decision": "BLOCKED", "expected_resolution": "LOWER_RESOLUTION", "expected_reason": "REGRESSION_REPLAY_RECIPE_UNAVAILABLE", "expected_status": "OPEN", "expected_effect_count": 0},
+    {"case_id": "approved-artifact", "expected_decision": "AUTHORIZED", "expected_resolution": "EXACT", "expected_reason": "ALL_INVARIANTS_DISCHARGED", "expected_status": "DISCHARGED", "expected_effect_count": 1}
   ]
 }
