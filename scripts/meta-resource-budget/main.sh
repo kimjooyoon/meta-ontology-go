@@ -80,8 +80,9 @@ changed_paths_json="$(sed -E 's/^.. //' "$status_file" | jq -R -s 'split("\n") |
 untracked_file_count="$(cd "$root" && git ls-files --others --exclude-standard | wc -l | tr -d '[:space:]')"
 diff_exit_code=0
 (cd "$root" && git diff --no-ext-diff --quiet --exit-code) || diff_exit_code=$?
+after_tree_digest="$(cd "$root" && git rev-parse HEAD^{tree})"
 write_set_digest="sha256:$(sha256sum "$status_file" | awk '{print $1}')"
-write_set_json="$(jq -nc --arg schema "gooo/meta-resource-budget-write-set/v1" --arg producer "scripts/meta-resource-budget" --arg consumer "cmd/meta-resource-budget-consumer" --arg before "$before_tree_digest" --arg after "$before_tree_digest" --arg write_set "$write_set_digest" --argjson changed "$changed_paths_json" --argjson diff_exit "$diff_exit_code" --argjson untracked "$untracked_file_count" --arg reason "GIT_DIFF_EXIT_0_AND_WRITE_SET_EMPTY" '{schema:$schema,producer:$producer,consumer:$consumer,before_tree_digest:$before,after_tree_digest:$after,write_set_digest:$write_set,changed_paths:$changed,diff_exit_code:$diff_exit,untracked_file_count:$untracked,repository_writes:($changed|length),mutation_authority:false,reason:$reason}')"
+write_set_json="$(jq -nc --arg schema "gooo/meta-resource-budget-write-set/v1" --arg producer "scripts/meta-resource-budget" --arg consumer "cmd/meta-resource-budget-consumer" --arg before "$before_tree_digest" --arg after "$after_tree_digest" --arg write_set "$write_set_digest" --argjson changed "$changed_paths_json" --argjson diff_exit "$diff_exit_code" --argjson untracked "$untracked_file_count" --arg reason "GIT_DIFF_EXIT_0_AND_WRITE_SET_EMPTY" '{schema:$schema,producer:$producer,consumer:$consumer,before_tree_digest:$before,after_tree_digest:$after,write_set_digest:$write_set,changed_paths:$changed,diff_exit_code:$diff_exit,untracked_file_count:$untracked,repository_writes:($changed|length),mutation_authority:false,reason:$reason}')"
 
 observed="$(jq -s . "$observations")"
 source_receipt="$work/source-check-1.json"
