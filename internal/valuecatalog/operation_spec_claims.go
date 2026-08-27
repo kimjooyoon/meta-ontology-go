@@ -1,12 +1,11 @@
 package valuecatalog
 
-func buildOperationClaims(report Report) []Claim {
-	checks := operationSpecChecks(report)
+func buildOperationClaims(checks []operationSpecCheck) []Claim {
 	claims := make([]Claim, 0, len(checks))
 	for _, check := range checks {
-		status, evidence := "OPEN", ""
+		status, evidence := ClaimStatusOpen, ""
 		if check.satisfied {
-			status, evidence = "DISCHARGED", check.evidence
+			status, evidence = ClaimStatusDischarged, check.evidence
 		}
 		claims = append(claims, Claim{
 			ClaimID: "gooo.claim.operation-spec." + check.id + ".v1",
@@ -17,21 +16,27 @@ func buildOperationClaims(report Report) []Claim {
 }
 
 func closeOperationSpec(report Report) Report {
-	report.Claims = buildOperationClaims(report)
+	checks := operationSpecChecks(report)
+	report.Claims = buildOperationClaims(checks)
+	report.ClaimTransitions = buildOperationClaimTransitions(report, checks)
+	report.ClaimTransitionHead = report.ClaimTransitions[len(report.ClaimTransitions)-1].TransitionDigest
 	verified, discharged := 0, 0
 	for index, claim := range report.Claims {
-		if operationSpecChecks(report)[index].satisfied {
+		if checks[index].satisfied {
 			verified++
 		}
-		if claim.Status == "DISCHARGED" {
+		if claim.Status == ClaimStatusDischarged {
 			discharged++
 		}
 	}
+	registered, accepted, unavailable := countClaimTransitionEvents(report.ClaimTransitions)
 	report.OperationSpecMetrics = OperationSpecMetrics{
 		MetricID: OperationSpecMetricID, FixedAxisTotal: OperationSpecAxisTotal,
 		VerifiedTotal: verified, CoverageBasisPoints: verified * 10_000 / OperationSpecAxisTotal,
 		UnknownPathCount: boolInt(report.Decision == DecisionFailClosed),
-		OpenClaims:       len(report.Claims) - discharged, DischargedClaims: discharged,
+		OpenClaims: len(report.Claims) - discharged, DischargedClaims: discharged,
+		TransitionEventTotal: len(report.ClaimTransitions), RegistrationEventTotal: registered,
+		EvidenceAcceptedTotal: accepted, EvidenceUnavailableTotal: unavailable,
 	}
 	return report
 }

@@ -13,16 +13,21 @@ func validateOperationSpecEvidence(report Report) error {
 	metrics := report.OperationSpecMetrics
 	if metrics.MetricID != OperationSpecMetricID || metrics.FixedAxisTotal != OperationSpecAxisTotal ||
 		metrics.VerifiedTotal != OperationSpecAxisTotal || metrics.CoverageBasisPoints != 10_000 ||
-		metrics.UnknownPathCount != 0 || metrics.OpenClaims != 0 || metrics.DischargedClaims != OperationSpecAxisTotal {
+		metrics.UnknownPathCount != 0 || metrics.OpenClaims != 0 || metrics.DischargedClaims != OperationSpecAxisTotal ||
+		metrics.TransitionEventTotal != OperationClaimEventTotal || metrics.RegistrationEventTotal != OperationSpecAxisTotal ||
+		metrics.EvidenceAcceptedTotal != OperationSpecAxisTotal || metrics.EvidenceUnavailableTotal != 0 {
 		return fmt.Errorf("operation spec OS9 metric is not exact")
 	}
 	if len(report.Claims) != OperationSpecAxisTotal {
 		return fmt.Errorf("operation spec claim denominator changed")
 	}
 	for _, claim := range report.Claims {
-		if claim.Status != "DISCHARGED" || !validDigest(claim.EvidenceDigest) {
+		if claim.Status != ClaimStatusDischarged || !validDigest(claim.EvidenceDigest) {
 			return fmt.Errorf("operation spec claim %s is not discharged", claim.ClaimID)
 		}
+	}
+	if err := validateClaimTransitionLedger(report); err != nil {
+		return err
 	}
 	if report.ProcessCoordinate.Stage != "REDUCE" || report.ProcessCoordinate.Step != "close-os9" || report.ProcessCoordinate.Reason != report.Reason {
 		return fmt.Errorf("operation spec process coordinate is not closed")

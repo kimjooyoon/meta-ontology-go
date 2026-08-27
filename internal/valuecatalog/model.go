@@ -3,7 +3,7 @@ package valuecatalog
 import "github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 
 const (
-	ReportSchema             = "gooo.language.operation-catalog/v2"
+	ReportSchema             = "gooo.language.operation-catalog/v3"
 	DecisionBaselineObserved = "CATALOG_BASELINE_OBSERVED"
 	DecisionExtensionProven  = "SOURCE_ONLY_EXTENSION_PROVEN"
 	DecisionFailClosed       = "FAIL_CLOSED"
@@ -17,6 +17,7 @@ const (
 	ExtensionActivity        = "IncrementTwo"
 	CatalogIndicatorCount    = 22
 	OperationSpecAxisTotal   = 9
+	OperationClaimEventTotal = OperationSpecAxisTotal * 2
 	CatalogMetricID          = "gooo.metric.language-operation-catalog.extension.v1"
 	OperationSpecMetricID    = "gooo.metric.language-operation-spec.os9.v1"
 )
@@ -39,6 +40,8 @@ type Report struct {
 	OperationSpecs       []valueexecution.OperationSpec `json:"operation_specs"`
 	OperationSpecMetrics OperationSpecMetrics           `json:"operation_spec_metrics"`
 	Claims               []Claim                        `json:"claims"`
+	ClaimTransitions     []ClaimTransition              `json:"claim_transitions"`
+	ClaimTransitionHead  string                         `json:"claim_transition_head_digest"`
 	ProcessCoordinate    ProcessCoordinate              `json:"coordinate"`
 	Baseline             ProgramResult                  `json:"baseline"`
 	Extension            ProgramResult                  `json:"extension"`

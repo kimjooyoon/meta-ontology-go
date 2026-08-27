@@ -28,13 +28,17 @@ type Indicator struct {
 }
 
 type OperationSpecMetrics struct {
-	MetricID            string `json:"metric_id"`
-	FixedAxisTotal      int    `json:"fixed_axis_total"`
-	VerifiedTotal       int    `json:"verified_total"`
-	CoverageBasisPoints int    `json:"coverage_basis_points"`
-	UnknownPathCount    int    `json:"unknown_path_count"`
-	OpenClaims          int    `json:"open_claims"`
-	DischargedClaims    int    `json:"discharged_claims"`
+	MetricID                 string `json:"metric_id"`
+	FixedAxisTotal           int    `json:"fixed_axis_total"`
+	VerifiedTotal            int    `json:"verified_total"`
+	CoverageBasisPoints      int    `json:"coverage_basis_points"`
+	UnknownPathCount         int    `json:"unknown_path_count"`
+	OpenClaims               int    `json:"open_claims"`
+	DischargedClaims         int    `json:"discharged_claims"`
+	TransitionEventTotal     int    `json:"transition_event_total"`
+	RegistrationEventTotal   int    `json:"registration_event_total"`
+	EvidenceAcceptedTotal    int    `json:"evidence_accepted_event_total"`
+	EvidenceUnavailableTotal int    `json:"evidence_unavailable_event_total"`
 }
 
 type Claim struct {
