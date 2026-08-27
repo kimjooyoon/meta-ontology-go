@@ -801,6 +801,7 @@ type closureInterventionReport struct {
 	RepositoryMutationAuthorized      bool                      `json:"repository_mutation_authorized"`
 	TempArtifactWriteAuthorized       bool                      `json:"temp_artifact_write_authorized"`
 	RepositoryNetStatusUnchanged      bool                      `json:"repository_net_status_unchanged"`
+	RepositoryNetState                string                    `json:"repository_net_state"`
 	RepositoryActualOrTransientWrites string                    `json:"repository_actual_or_transient_writes"`
 	RepositoryNetStatusObserved       bool                      `json:"repository_net_status_observed"`
 	ExecutedEffects                   int                       `json:"executed_effects"`
@@ -999,7 +1000,7 @@ func observeCommentOnlyMetric(interventionRaw, consumerRaw, source []byte, headS
 	if err := decodeStrict(consumerRaw, &consumer); err != nil {
 		return ClosureMetricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/parse-consumer/INTERVENTION_CONSUMER_RECEIPT_NOT_STRICT: %w", err)
 	}
-	if intervention.Schema != "gooo/invariant-transformation-intervention-report/v2" || intervention.HeadSHA != headSHA || intervention.SourcePath != model.SourcePath || intervention.SourceDigest != model.DigestBytes(source) || consumer.Schema != "gooo/invariant-transformation-intervention-consumer/v2" || consumer.HeadSHA != headSHA || consumer.CommentOnly.CaseID != "nonsemantic-source-intervention" {
+	if intervention.Schema != "gooo/invariant-transformation-intervention-report/v2" || intervention.HeadSHA != headSHA || intervention.SourcePath != model.SourcePath || intervention.SourceDigest != model.DigestBytes(source) || intervention.RepositoryNetState != model.RepositoryNetStateUnknown || consumer.Schema != "gooo/invariant-transformation-intervention-consumer/v2" || consumer.HeadSHA != headSHA || consumer.CommentOnly.CaseID != "nonsemantic-source-intervention" {
 		return ClosureMetricEvidence{}, fmt.Errorf("ARTIFACT_CLOSURE/comment-only/bind-receipts/COMMENT_ONLY_RECEIPT_IDENTITY_INVALID")
 	}
 	var observed *closureInterventionCase
