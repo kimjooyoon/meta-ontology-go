@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/model"
 )
@@ -178,7 +179,8 @@ func allowedTempPath(path string) bool {
 	if err != nil {
 		return false
 	}
-	return path != root && filepath.Dir(path) == root
+	relative, err := filepath.Rel(root, path)
+	return err == nil && relative != "." && relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator)) && !filepath.IsAbs(relative)
 }
 
 func expectedEvidence(receipt model.Receipt, valueID string) string {
