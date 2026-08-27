@@ -1,5 +1,7 @@
 package proposalpromotion
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
+
 const (
 	Schema             = "gooo/autonomous-change-proposal-promotion/v2"
 	DecisionPass       = "PASS"
@@ -10,21 +12,22 @@ const (
 )
 
 type Receipt struct {
-	Schema                       string       `json:"schema"`
-	Repository                   string       `json:"repository"`
-	CurrentHeadSHA               string       `json:"current_head_sha"`
-	EvidenceHeadSHA              string       `json:"evidence_head_sha"`
-	Decision                     string       `json:"decision"`
-	Reason                       string       `json:"reason"`
-	MetaOperation                string       `json:"meta_operation"`
-	Source                       Source       `json:"source"`
-	Summary                      Summary      `json:"summary"`
-	Coordinates                  []Coordinate `json:"coordinates"`
-	Indicators                   []Indicator  `json:"indicators"`
-	Proofs                       []Proof      `json:"proofs"`
-	RepositoryWrites             int          `json:"repository_writes"`
-	RepositoryMutationAuthorized bool         `json:"repository_mutation_authorized"`
-	ReportDigest                 string       `json:"report_digest"`
+	Schema                       string                                  `json:"schema"`
+	Repository                   string                                  `json:"repository"`
+	CurrentHeadSHA               string                                  `json:"current_head_sha"`
+	EvidenceHeadSHA              string                                  `json:"evidence_head_sha"`
+	Decision                     string                                  `json:"decision"`
+	Reason                       string                                  `json:"reason"`
+	MetaOperation                string                                  `json:"meta_operation"`
+	Source                       Source                                  `json:"source"`
+	Summary                      Summary                                 `json:"summary"`
+	Coordinates                  []Coordinate                            `json:"coordinates"`
+	Indicators                   []Indicator                             `json:"indicators"`
+	Proofs                       []Proof                                 `json:"proofs"`
+	RepositoryWrites             int                                     `json:"repository_writes"`
+	RepositoryMutationAuthorized bool                                    `json:"repository_mutation_authorized"`
+	ObservationEvidence          proposalpredecessor.ObservationEvidence `json:"observation_evidence"`
+	ReportDigest                 string                                  `json:"report_digest"`
 }
 
 type Summary struct {

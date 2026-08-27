@@ -42,6 +42,38 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "causal-ci-selection",
+      "path": "examples/causal-ci-selection/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "causal-ci-selection-semantic-intervention",
+      "path": "examples/causal-ci-selection/semantic-intervention.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "causal-ci-selection-nonsemantic-intervention",
+      "path": "examples/causal-ci-selection/nonsemantic-intervention.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "causal-ci-selection-contradiction-intervention",
+      "path": "examples/causal-ci-selection/contradiction-intervention.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "external-capability-authorization-policy",
       "path": "examples/external-capability-execution/authorization/policy.gooo",
       "kind": "VALID",

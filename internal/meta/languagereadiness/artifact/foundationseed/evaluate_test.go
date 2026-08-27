@@ -17,7 +17,8 @@ func TestExactExhaustionAuthorizesOnlyFoundationSeed(t *testing.T) {
 	}
 	if !authorityDenied(report.Authority) ||
 		report.Source.RepositoryWrites != 0 ||
-		report.Source.ReadinessDeltaClaims != 0 {
+		report.Source.ReadinessDeltaClaims == nil ||
+		*report.Source.ReadinessDeltaClaims != 0 {
 		t.Fatalf("foundation authority = %#v", report)
 	}
 }

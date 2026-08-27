@@ -9,6 +9,9 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.root == "" || cfg.input == "" || cfg.expectedSHA == "" {
 		return fmt.Errorf("root, input, and expected-sha are required")
 	}
+	if cfg.promotion != "" && (cfg.expectedRepository == "" || cfg.expectedPredecessorSHA == "") {
+		return fmt.Errorf("expected-repository and expected-predecessor-sha are required with proposal promotion")
+	}
 	if (cfg.output == "") == (cfg.check == "") {
 		return fmt.Errorf("exactly one of output or check is required")
 	}

@@ -1,6 +1,10 @@
 package foundationseed
 
 func indicators(source Source) []Indicator {
+	deltaValue, deltaKnown := 0, false
+	if source.ReadinessDeltaClaims != nil {
+		deltaValue, deltaKnown = *source.ReadinessDeltaClaims, true
+	}
 	return []Indicator{
 		indicator("resolution-contract-valid", "DRIVER", "FOUNDATION",
 			boolInt(source.ResolutionValid), 1, source.ResolutionValid),
@@ -21,7 +25,7 @@ func indicators(source Source) []Indicator {
 		indicator("repository-writes-zero", "GUARDRAIL", "REGRESSION",
 			source.RepositoryWrites, 0, source.RepositoryWrites == 0),
 		indicator("readiness-delta-claims-zero", "OUTCOME", "REGRESSION",
-			source.ReadinessDeltaClaims, 0, source.ReadinessDeltaClaims == 0),
+			deltaValue, 0, deltaKnown && deltaValue == 0),
 		indicator("seed-scope-exact", "OUTCOME", "FOUNDATION",
 			boolInt(source.ExactExhaustion), 1, source.ExactExhaustion),
 		indicator("authority-denied", "GUARDRAIL", "REGRESSION",

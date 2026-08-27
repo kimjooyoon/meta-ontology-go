@@ -7,21 +7,26 @@ import (
 	"strings"
 )
 
-func requireExternal(root, target string) error {
+func requireExternal(root string, targets ...string) error {
 	rootPath, err := filepath.Abs(filepath.Clean(root))
 	if err != nil {
 		return err
 	}
-	targetPath, err := filepath.Abs(filepath.Clean(target))
-	if err != nil {
-		return err
-	}
-	relative, err := filepath.Rel(rootPath, targetPath)
-	if err != nil {
-		return err
-	}
-	if relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator)) {
-		return fmt.Errorf("proposal promotion output must be outside the repository root")
+	for _, target := range targets {
+		if target == "" {
+			continue
+		}
+		targetPath, err := filepath.Abs(filepath.Clean(target))
+		if err != nil {
+			return err
+		}
+		relative, err := filepath.Rel(rootPath, targetPath)
+		if err != nil {
+			return err
+		}
+		if relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator)) {
+			return fmt.Errorf("proposal promotion output must be outside the repository root")
+		}
 	}
 	return nil
 }

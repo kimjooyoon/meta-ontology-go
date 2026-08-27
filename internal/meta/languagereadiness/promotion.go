@@ -10,9 +10,10 @@ import (
 )
 
 func EvaluateWithProposalPromotion(
-	raw []byte, promotion proposalpromotion.Receipt, expectedHeadSHA string,
+	raw []byte, promotion proposalpromotion.Receipt,
+	expectedRepository, expectedHeadSHA, expectedPredecessorSHA string,
 ) (Snapshot, error) {
-	digest, err := validateProposalPromotion(promotion, expectedHeadSHA)
+	digest, err := validateProposalPromotion(promotion, expectedRepository, expectedHeadSHA, expectedPredecessorSHA)
 	if err != nil {
 		return Snapshot{}, err
 	}
@@ -22,10 +23,11 @@ func EvaluateWithProposalPromotion(
 func EvaluateWithPromotionEvidence(raw []byte, promotion proposalpromotion.Receipt,
 	capability guardedcapability.Receipt, useCases toolchainusecases.Report, syntaxReport languagesyntax.Report,
 	diagnosticReport languagediagnosticprovenance.Report,
-	expectedHeadSHA string, packageRuntime ...languagepackageruntime.Report) (Snapshot, error) {
+	expectedRepository, expectedHeadSHA, expectedPredecessorSHA string,
+	packageRuntime ...languagepackageruntime.Report) (Snapshot, error) {
 	bundle := PromotionEvidence{Promotion: promotion, Capability: capability, UseCases: useCases,
 		Syntax: syntaxReport, Diagnostic: diagnosticReport, PackageRuntime: packageRuntime}
-	evidence, err := validatePromotionEvidence(bundle, expectedHeadSHA)
+	evidence, err := validatePromotionEvidence(bundle, expectedRepository, expectedHeadSHA, expectedPredecessorSHA)
 	if err != nil {
 		return Snapshot{}, err
 	}

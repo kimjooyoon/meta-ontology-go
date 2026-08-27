@@ -1,6 +1,8 @@
 package proposalpromotion
 
-func evaluate(currentHead, evidenceHead string, source Source) Receipt {
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
+
+func evaluate(currentHead, evidenceHead string, source Source, observationEvidence proposalpredecessor.ObservationEvidence) Receipt {
 	coordinates := buildCoordinates(currentHead, evidenceHead, source)
 	satisfied := 0
 	for _, coordinate := range coordinates {
@@ -32,6 +34,7 @@ func evaluate(currentHead, evidenceHead string, source Source) Receipt {
 		Coordinates:                  coordinates,
 		RepositoryWrites:             summary.RepositoryWrites,
 		RepositoryMutationAuthorized: false,
+		ObservationEvidence:          observationEvidence,
 		Indicators:                   buildIndicators(summary, source),
 		Proofs:                       buildProofs(coordinates)}
 	return seal(receipt)

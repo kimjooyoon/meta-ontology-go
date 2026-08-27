@@ -261,6 +261,7 @@ jobs:
           cmp -s "$METRICS_DIR/ci-summary.json" "$METRICS_DIR/ci-summary-replay.json"
           cat "$METRICS_DIR/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -268,6 +269,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload meta-binding coverage artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: meta-binding-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -275,6 +277,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload meta-actionability artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: meta-actionability-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -282,6 +285,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload directory partition plan artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: directory-partition-${{ github.event.pull_request.head.sha || github.sha }}
@@ -289,6 +293,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload directory kind separation plan artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: directory-kind-separation-${{ github.event.pull_request.head.sha || github.sha }}
@@ -296,6 +301,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement generation artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -1238,18 +1244,27 @@ jobs:
             go run ./cmd/feedback-predecessor-witness \
               --root "$GITHUB_WORKSPACE" \
               --input "$RUNNER_TEMP/predecessor-input-a.json" \
-              --report "$RUNNER_TEMP/predecessor-receipt-$suffix.json" \
-              --check
+              --report "$RUNNER_TEMP/predecessor-receipt-$suffix.json"
           done
           cmp "$RUNNER_TEMP/predecessor-receipt-a.json" "$RUNNER_TEMP/predecessor-receipt-b.json"
+          jq -e '
+            (.report.decision == "SELECTED" and .report.resolution == "exact_operation" and
+              .report.next_operation == "consume-predecessor-semantic-state" and
+              .report.promotion_authorized == true and .report.selected != null) or
+            ((.report.decision == "FAIL_CLOSED" or .report.decision == "LOWER_RESOLUTION") and
+              .report.resolution == "operation_class" and
+              .report.next_operation == "re-evaluate-predecessor-at-exact-operation" and
+              .report.promotion_authorized == false and .report.selected == null)
+          ' "$RUNNER_TEMP/predecessor-receipt-a.json"
           jq -r '"### Predecessor selection\n- decision: \(.report.decision) (\(.report.reason))\n- resolution: \(.report.resolution)\n- promotion authorized: \(.report.promotion_authorized)\n- next: \(.report.next_operation)\n- exact readiness: \(.report.indicators[0].value)/10000\n- continuity: \(.report.indicators[1].value)/10000"' "$RUNNER_TEMP/predecessor-receipt-a.json" >> "$GITHUB_STEP_SUMMARY"
       - id: semantic
         name: Consume deterministic predecessor semantic state
         run: |
-          if jq -e '.report.decision == "LOWER_RESOLUTION"' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
+          if jq -e '.report.resolution == "operation_class" and .report.next_operation == "re-evaluate-predecessor-at-exact-operation" and .report.promotion_authorized == false' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
             echo "emitted=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          jq -e '.report.decision == "SELECTED" and .report.resolution == "exact_operation" and .report.promotion_authorized == true' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null
           for suffix in a b; do
             go run ./cmd/feedback-semantic-state-witness \
               --root "$GITHUB_WORKSPACE" \

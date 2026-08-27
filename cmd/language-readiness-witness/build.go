@@ -23,7 +23,8 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 	if cfg.guarded != "" {
 		return buildComplete(cfg, raw, promotion)
 	}
-	return readinessartifact.BuildWithProposalPromotion(raw, promotion, cfg.expectedSHA)
+	return readinessartifact.BuildWithProposalPromotion(raw, promotion,
+		cfg.expectedRepository, cfg.expectedSHA, cfg.expectedPredecessorSHA)
 }
 
 func printSummary(stdout io.Writer, receipt readinessartifact.Receipt) {

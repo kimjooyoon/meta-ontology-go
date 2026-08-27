@@ -25,7 +25,7 @@ func Collect(ctx context.Context, client *http.Client, apiURL, token, repository
 	}
 	collection.ObservedRuns = len(runs.WorkflowRuns)
 	if runs.TotalCount != len(runs.WorkflowRuns) {
-		return collection, fmt.Errorf("proposal predecessor run pagination is unresolved")
+		return collection, &Failure{Reason: ReasonRunPaginationIncomplete}
 	}
 	for _, run := range runs.WorkflowRuns {
 		if run.HeadSHA != predecessorSHA {
@@ -48,8 +48,16 @@ func getJSON(ctx context.Context, client *http.Client, targetURL, token string, 
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(payload, target); err != nil {
-		return fmt.Errorf("decode GitHub response: %w", err)
+	decoder := json.NewDecoder(strings.NewReader(string(payload)))
+	if err := decoder.Decode(target); err != nil {
+		return &Failure{Reason: ReasonResponseMalformed, Err: err}
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return &Failure{Reason: ReasonResponseMalformed, Err: fmt.Errorf("trailing JSON")}
+		}
+		return &Failure{Reason: ReasonResponseMalformed, Err: err}
 	}
 	return nil
 }
