@@ -21,7 +21,7 @@ func Judge(receipt model.Receipt, source []byte) model.Judgment {
 		!model.ValidDigest(receipt.SourceDigest) || receipt.SourceDigest != model.DigestBytes(source) ||
 		receipt.ContractDigest != model.ValueContractDigest() || receipt.ValidatorContractDigest != model.ValidatorContractDigest() ||
 		receipt.AuthorityScope != model.AuthorityScope || receipt.RepositoryNetStatusUnchanged != true ||
-		receipt.RepositoryActualOrTransientWrites != model.UnknownEffectScope || receipt.RepositoryWritesObserved || receipt.RepositoryWrites != 0 || receipt.MutationAuthority {
+		receipt.RepositoryActualOrTransientWrites != model.UnknownEffectScope || receipt.RepositoryWritesObserved || receipt.RepositoryWrites != -1 || receipt.MutationAuthority {
 		return invalid("RECEIPT_IDENTITY_INVALID")
 	}
 	if receipt.Digest == "" || receipt.Digest != model.SealReceipt(receipt).Digest {

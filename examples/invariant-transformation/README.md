@@ -17,7 +17,8 @@ regression evidence, and an approved artifact.
 
 The approved artifact case creates actual bytes under `RUNNER_TEMP` and records
 one separate `APPROVED_ARTIFACT_RECORDED` effect with path, size, and digest. It
-still has `repository_writes=0` and `mutation_authority=false`: recording an
+still has `repository_writes=-1` with `repository_writes_observed=false` and
+`mutation_authority=false`: recording an
 approved product is not permission to mutate the repository.
 
 ## Intervention witnesses
@@ -35,7 +36,8 @@ has three cases with separate fixed denominators of `1`:
 * `nonsemantic-change` appends only blank lines and a comment. Its raw
   `SourceDigest` and receipt digest change, while the parsed/lowered fixture
   projection, decision, resolution, reason, and claim transitions remain
-  equal. Both source variants keep zero repository writes.
+  equal. Both source variants leave repository write count unobserved
+  (`repository_writes=-1`, `repository_writes_observed=false`).
 
 Each intervention is a persistent `OPEN -> DISCHARGED` claim with an exact
 `INTERVENTION` stage, comparison step, and reason. CI publishes two separate
@@ -46,7 +48,7 @@ unobservable obligation becomes `FAIL_CLOSED` with `OPEN` and lower
 resolution. A report consumer checks these derived relationships without
 calling the producer's `Build` function. A separately named deterministic
 replay may call `Build` only to check repeatability. CI additionally asserts
-actual replay `2/2`, artifact observation `1/1`, and producer imports `0/0`.
+actual replay `3/3`, artifact observation `1/1`, and producer imports `0/0`.
 
 ## Research basis and limits
 

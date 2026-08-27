@@ -32,11 +32,10 @@ func parseSourceSemantics(source []byte, caseID string) (sourceSemantics, error)
 	if diagnostics.HasErrors() {
 		return sourceSemantics{}, fmt.Errorf("judge source syntax: %s", diagnostics.Error())
 	}
-	ir, err := bidir.Lower(file)
+	semanticSourceDigest, err := semanticSourceDigest(file)
 	if err != nil {
-		return sourceSemantics{}, fmt.Errorf("judge source lowering: %w", err)
+		return sourceSemantics{}, err
 	}
-	semanticSourceDigest := "sha256:" + ir.StableHash()
 	for _, declaration := range file.Declarations {
 		activity, ok := declaration.(*syntax.ActivityDecl)
 		if !ok || len(activity.Parameters) != 0 || activity.Result.Name != "Transformation" || !activity.ValueProgramPresent {
@@ -70,6 +69,14 @@ func parseSourceSemantics(source []byte, caseID string) (sourceSemantics, error)
 			ReplayRecipe: fields["replay"], EffectIntent: fields["effect"], SemanticSourceDigest: semanticSourceDigest}, nil
 	}
 	return sourceSemantics{}, fmt.Errorf("judge source case %q is missing", caseID)
+}
+
+func semanticSourceDigest(file *syntax.File) (string, error) {
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return "", fmt.Errorf("judge source lowering: %w", err)
+	}
+	return "sha256:" + ir.StableHash(), nil
 }
 
 func decodeFixtureProgram(program string) (map[string]string, error) {

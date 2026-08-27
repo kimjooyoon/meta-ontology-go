@@ -183,6 +183,14 @@ func summarize(cases []model.CaseResult) model.Summary {
 				summary.UnknownEffectScopes++
 			}
 		}
+		summary.RepositoryNetStatusUnchanged = summary.RepositoryNetStatusUnchanged && item.Receipt.RepositoryNetStatusUnchanged
+		summary.MutationAuthority |= boolInt(item.Receipt.MutationAuthority)
+		if item.Receipt.RepositoryWritesObserved {
+			if summary.RepositoryWrites < 0 {
+				summary.RepositoryWrites = 0
+			}
+			summary.RepositoryWrites += item.Receipt.RepositoryWrites
+		}
 	}
 	if summary.CasesTotal > 0 {
 		summary.CoverageBPS = summary.CasesSatisfied * 10_000 / summary.CasesTotal

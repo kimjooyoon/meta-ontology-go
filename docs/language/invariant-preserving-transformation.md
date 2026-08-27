@@ -83,7 +83,9 @@ publishes three non-aggregated fixed denominators, each `1/1`:
 * The non-semantic slice appends only whitespace and a comment. Its raw
   `SourceDigest` and receipt digest change, while the parsed/lowered fixture
   projection, replay output and semantic digest, decision, resolution, reason,
-  claim transition outcome, and effect remain equal.
+  claim transition outcome, and effect remain equal. Repository write count
+  remains unobserved (`-1`, `repository_writes_observed=false`) in both
+  receipts.
 
 The intervention claims use exact stage/step/reason coordinates and persistent
 digests. The effect gate adds six independently adjudicated observations:

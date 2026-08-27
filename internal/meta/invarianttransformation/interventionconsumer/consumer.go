@@ -107,43 +107,49 @@ type projectionWire struct {
 	EffectIntent         string `json:"effect_intent"`
 }
 type caseWire struct {
-	ID                        string                       `json:"id"`
-	Kind                      string                       `json:"kind"`
-	SourceEdit                string                       `json:"source_edit"`
-	BaselineProjection        projectionWire               `json:"baseline_projection"`
-	MutatedProjection         projectionWire               `json:"mutated_projection"`
-	BaselineProjectionDigest  string                       `json:"baseline_projection_digest"`
-	MutatedProjectionDigest   string                       `json:"mutated_projection_digest"`
-	BaselineSourceDigest      string                       `json:"baseline_source_digest"`
-	MutatedSourceDigest       string                       `json:"mutated_source_digest"`
-	BaselineReceiptDigest     string                       `json:"baseline_receipt_digest"`
-	MutatedReceiptDigest      string                       `json:"mutated_receipt_digest"`
-	BaselineReceiptDecision   string                       `json:"baseline_receipt_decision"`
-	MutatedReceiptDecision    string                       `json:"mutated_receipt_decision"`
-	BaselineJudgment          model.Judgment               `json:"baseline_judgment"`
-	MutatedJudgment           model.Judgment               `json:"mutated_judgment"`
-	BaselineEvidence          model.TransformationEvidence `json:"baseline_evidence"`
-	MutatedEvidence           model.TransformationEvidence `json:"mutated_evidence"`
-	BaselineClaimTransitions  []transitionWire             `json:"baseline_claim_transitions"`
-	MutatedClaimTransitions   []transitionWire             `json:"mutated_claim_transitions"`
-	RawSourceDigestChanged    bool                         `json:"raw_source_digest_changed"`
-	ReceiptChanged            bool                         `json:"receipt_changed"`
-	SemanticProjectionEqual   bool                         `json:"semantic_projection_equal"`
-	DecisionEqual             bool                         `json:"decision_equal"`
-	ResolutionEqual           bool                         `json:"resolution_equal"`
-	ReasonEqual               bool                         `json:"reason_equal"`
-	DecisionChanged           bool                         `json:"decision_changed"`
-	ClaimTransitionsEqual     bool                         `json:"claim_transitions_equal"`
-	EffectsEqual              bool                         `json:"effects_equal"`
-	ReplayObservationEqual    bool                         `json:"replay_observation_equal"`
-	EvidenceObservable        bool                         `json:"evidence_observable"`
-	RepositoryWritesZero      bool                         `json:"repository_writes_zero"`
-	BaselineRepositoryWrites  int                          `json:"baseline_repository_writes"`
-	MutatedRepositoryWrites   int                          `json:"mutated_repository_writes"`
-	BaselineMutationAuthority bool                         `json:"baseline_mutation_authority"`
-	MutatedMutationAuthority  bool                         `json:"mutated_mutation_authority"`
-	Claim                     claimWire                    `json:"claim"`
-	Satisfied                 bool                         `json:"satisfied"`
+	ID                                        string                       `json:"id"`
+	Kind                                      string                       `json:"kind"`
+	SourceEdit                                string                       `json:"source_edit"`
+	BaselineProjection                        projectionWire               `json:"baseline_projection"`
+	MutatedProjection                         projectionWire               `json:"mutated_projection"`
+	BaselineProjectionDigest                  string                       `json:"baseline_projection_digest"`
+	MutatedProjectionDigest                   string                       `json:"mutated_projection_digest"`
+	BaselineSourceDigest                      string                       `json:"baseline_source_digest"`
+	MutatedSourceDigest                       string                       `json:"mutated_source_digest"`
+	BaselineReceiptDigest                     string                       `json:"baseline_receipt_digest"`
+	MutatedReceiptDigest                      string                       `json:"mutated_receipt_digest"`
+	BaselineReceiptDecision                   string                       `json:"baseline_receipt_decision"`
+	MutatedReceiptDecision                    string                       `json:"mutated_receipt_decision"`
+	BaselineJudgment                          model.Judgment               `json:"baseline_judgment"`
+	MutatedJudgment                           model.Judgment               `json:"mutated_judgment"`
+	BaselineEvidence                          model.TransformationEvidence `json:"baseline_evidence"`
+	MutatedEvidence                           model.TransformationEvidence `json:"mutated_evidence"`
+	BaselineClaimTransitions                  []transitionWire             `json:"baseline_claim_transitions"`
+	MutatedClaimTransitions                   []transitionWire             `json:"mutated_claim_transitions"`
+	RawSourceDigestChanged                    bool                         `json:"raw_source_digest_changed"`
+	ReceiptChanged                            bool                         `json:"receipt_changed"`
+	SemanticProjectionEqual                   bool                         `json:"semantic_projection_equal"`
+	DecisionEqual                             bool                         `json:"decision_equal"`
+	ResolutionEqual                           bool                         `json:"resolution_equal"`
+	ReasonEqual                               bool                         `json:"reason_equal"`
+	DecisionChanged                           bool                         `json:"decision_changed"`
+	ClaimTransitionsEqual                     bool                         `json:"claim_transitions_equal"`
+	EffectsEqual                              bool                         `json:"effects_equal"`
+	ReplayObservationEqual                    bool                         `json:"replay_observation_equal"`
+	EvidenceObservable                        bool                         `json:"evidence_observable"`
+	RepositoryWritesNotClaimed                bool                         `json:"repository_writes_not_claimed"`
+	BaselineRepositoryWrites                  int                          `json:"baseline_repository_writes"`
+	MutatedRepositoryWrites                   int                          `json:"mutated_repository_writes"`
+	BaselineRepositoryWritesObserved          bool                         `json:"baseline_repository_writes_observed"`
+	MutatedRepositoryWritesObserved           bool                         `json:"mutated_repository_writes_observed"`
+	BaselineRepositoryNetStatusUnchanged      bool                         `json:"baseline_repository_net_status_unchanged"`
+	MutatedRepositoryNetStatusUnchanged       bool                         `json:"mutated_repository_net_status_unchanged"`
+	BaselineRepositoryActualOrTransientWrites string                       `json:"baseline_repository_actual_or_transient_writes"`
+	MutatedRepositoryActualOrTransientWrites  string                       `json:"mutated_repository_actual_or_transient_writes"`
+	BaselineMutationAuthority                 bool                         `json:"baseline_mutation_authority"`
+	MutatedMutationAuthority                  bool                         `json:"mutated_mutation_authority"`
+	Claim                                     claimWire                    `json:"claim"`
+	Satisfied                                 bool                         `json:"satisfied"`
 }
 type denominatorWire struct {
 	ID             string `json:"id"`
@@ -242,7 +248,7 @@ func independentlyVerify(report reportWire, source []byte, headSHA string, depen
 	if report.Schema != reportSchema || report.HeadSHA != headSHA || report.SourcePath != model.SourcePath || report.SourceDigest != model.DigestBytes(source) || report.CaseCount != 3 || len(report.Cases) != 3 || report.Digest == "" || report.Digest != reseal(report).Digest {
 		return fmt.Errorf("intervention report identity or digest is invalid")
 	}
-	if report.Decision != "PASS" || report.Resolution != model.ResolutionExact || report.EffectGateDenominator != 6 || report.EffectGateSatisfied != 6 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 {
+	if report.Decision != "PASS" || report.Resolution != model.ResolutionExact || report.Reason != "ALL_INTERVENTION_OBSERVATIONS_SATISFIED" || report.EffectGateDenominator != 6 || report.EffectGateSatisfied != 6 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 || report.RepositoryWrites != -1 || report.MutationAuthority || !report.RepositoryNetStatusUnchanged || report.RepositoryActualOrTransientWrites != model.UnknownEffectScope || report.ExecutedEffects != 1 || report.IndependentlyObservedEffects != 1 || report.UnknownEffectScopes != 1 {
 		return fmt.Errorf("intervention report top result or gate denominator is invalid")
 	}
 	if report.Denominator.ID != "gooo/invariant-transformation-intervention-denominator/v2" || report.Denominator.CasesTotal != 3 || report.Denominator.SemanticExpectedChange.CasesSatisfied != 1 || report.Denominator.SemanticOperationChange.CasesSatisfied != 1 || report.Denominator.NonSemantic.CasesSatisfied != 1 {
@@ -280,7 +286,7 @@ func independentlyVerify(report reportWire, source []byte, headSHA string, depen
 	if !seen[semanticExpectedCaseID] || !seen[semanticOperationCaseID] || !seen[nonSemanticCaseID] {
 		return fmt.Errorf("intervention case inventory is incomplete")
 	}
-	if err := verifyGates(report.EffectGates, headSHA); err != nil {
+	if err := verifyGates(report.EffectGates, source, headSHA); err != nil {
 		return err
 	}
 	if dependency.UnknownEffectScopes != report.UnknownEffectScopes {
@@ -310,37 +316,73 @@ func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt
 	if item.Claim.VerificationCheck != "intervention-observation-derived-from-two-independent-receipts" || item.Claim.Resolution != model.ResolutionExact || item.Claim.Reason != step[1] || item.Claim.TargetDigest != expectedTransition.PropositionDigest || item.Claim.PriorStateDigest != expectedTransition.PriorStateDigest || item.Claim.EvidenceDigest != expectedTransition.EvidenceDigest || !reflect.DeepEqual(item.Claim.Transitions[0], transitionFromModel(expectedTransition)) {
 		return fmt.Errorf("case %q claim ledger provenance is invalid", item.ID)
 	}
-	if item.RawSourceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.ClaimTransitionsEqual != transitionEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesZero || !item.Satisfied {
+	if item.RawSourceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.ClaimTransitionsEqual != transitionEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || !item.BaselineRepositoryNetStatusUnchanged || !item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
 		return fmt.Errorf("case %q observation fields are not derived", item.ID)
 	}
 	return nil
 }
 
-func verifyGates(gates []gateWire, headSHA string) error {
+func verifyGates(gates []gateWire, source []byte, headSHA string) error {
 	if len(gates) != 6 {
 		return fmt.Errorf("effect gate denominator is not 6")
 	}
+	expectedIDs := map[string]bool{
+		"effect-unauthorized":     false,
+		"effect-refuted":          false,
+		"effect-open":             false,
+		"effect-stale-sha":        false,
+		"effect-tampered-auth":    false,
+		"effect-valid-authorized": false,
+	}
+	expectedReasons := map[string]string{
+		"effect-unauthorized":     "UNAUTHORIZED_DECISION_REJECTED",
+		"effect-refuted":          "REFUTED_RECEIPT_REJECTED",
+		"effect-open":             "OPEN_RECEIPT_REJECTED",
+		"effect-stale-sha":        "STALE_SUBJECT_SHA_REJECTED",
+		"effect-tampered-auth":    "TAMPERED_AUTHORIZATION_REJECTED",
+		"effect-valid-authorized": "AUTHORIZED_TEMP_ARTIFACT_OBSERVED",
+	}
+	approvedFixture, err := parseFixtureCase(source, "approved-artifact")
+	if err != nil {
+		return err
+	}
+	approvedReceipt := reconstructReceipt(approvedFixture, source, headSHA)
+	approvedAuth := approvedReceipt.AuthorizationDigest
 	for _, gate := range gates {
+		seen, ok := expectedIDs[gate.ID]
+		if !ok || seen {
+			return fmt.Errorf("effect gate inventory contains duplicate or unknown case %q", gate.ID)
+		}
+		expectedIDs[gate.ID] = true
 		if gate.AuthorizationAttempted != true {
 			return fmt.Errorf("effect gate %q lacks authorization attempt", gate.ID)
 		}
 		if gate.ID == "effect-valid-authorized" {
-			if !gate.AuthorizationAccepted || !gate.ExecutorAccepted || gate.ArtifactCount != 1 || !gate.ArtifactExists || gate.SubjectSHA != headSHA || gate.Artifact.Path == "" || gate.Artifact.CaseID != "approved-artifact" || !model.ValidDigest(gate.Artifact.ContentDigest) || gate.Artifact.Size <= 0 || !model.ValidDigest(gate.Artifact.AuthorizationDigest) || !model.ValidDigest(gate.Artifact.EffectReceiptDigest) || gate.Artifact.Executor != model.ExecutorID || !gate.Artifact.RepositoryNetStatusUnchanged {
+			if !gate.AuthorizationAccepted || !gate.ExecutorAccepted || gate.ArtifactCount != 1 || !gate.ArtifactExists || gate.SubjectSHA != headSHA || gate.CaseID != "approved-artifact" || gate.Reason != "AUTHORIZED_TEMP_ARTIFACT_OBSERVED" || gate.Artifact.Path == "" || !allowedTempPath(gate.Artifact.Path) || gate.Artifact.CaseID != "approved-artifact" || gate.Artifact.SubjectSHA != headSHA || !model.ValidDigest(gate.Artifact.ContentDigest) || gate.Artifact.Size <= 0 || gate.Artifact.AuthorizationDigest != approvedAuth || gate.Artifact.Producer != model.ProducerID || gate.Artifact.Consumer != model.ConsumerID || gate.Artifact.Executor != model.ExecutorID || !gate.Artifact.RepositoryNetStatusUnchanged {
 				return fmt.Errorf("valid effect gate is not observed")
 			}
 			data, err := os.ReadFile(gate.Artifact.Path)
-			if err != nil || len(data) != gate.Artifact.Size || model.DigestBytes(data) != gate.Artifact.ContentDigest {
+			if err != nil || len(data) != gate.Artifact.Size || model.DigestBytes(data) != gate.Artifact.ContentDigest || !bytes.Equal(data, artifactBytes(approvedReceipt)) {
 				return fmt.Errorf("valid effect artifact bytes are not observed")
 			}
-		} else if gate.ExecutorAccepted || gate.ArtifactCount != 0 || gate.ArtifactExists || gate.Satisfied != true {
+			expectedEffect := model.Effect{Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved", ArtifactDigest: gate.Artifact.ContentDigest, ArtifactPath: gate.Artifact.Path, ArtifactSize: gate.Artifact.Size, Artifact: gate.Artifact, CaseID: approvedReceipt.CaseID, SubjectSHA: headSHA, Intent: approvedFixture.EffectIntent, AuthorizationDigest: approvedAuth, Producer: model.ProducerID, Executor: model.ExecutorID, Consumer: model.ConsumerID, MetaOperation: "execute-authorized-temp-artifact", TempArtifactWriteAuthorized: true, RepositoryNetStatusUnchanged: true, RepositoryActualOrTransientWrites: model.UnknownEffectScope}
+			if gate.Artifact.EffectReceiptDigest != model.EffectExecutionDigest(expectedEffect) {
+				return fmt.Errorf("valid effect gate execution digest is not bound")
+			}
+		} else if gate.CaseID == "" || gate.SubjectSHA == "" || gate.AuthorizationAccepted || gate.ExecutorAccepted || gate.ArtifactCount != 0 || gate.ArtifactExists || !reflect.DeepEqual(gate.Artifact, model.ArtifactEvidence{}) || gate.Reason != expectedReasons[gate.ID] || gate.Satisfied != true {
 			return fmt.Errorf("rejected effect gate %q created an artifact", gate.ID)
+		}
+	}
+	for id, seen := range expectedIDs {
+		if !seen {
+			return fmt.Errorf("effect gate %q is missing", id)
 		}
 	}
 	return nil
 }
 
 func verifyArtifact(artifact model.ArtifactEvidence, headSHA string) error {
-	if artifact.Path == "" || !model.ValidDigest(artifact.ContentDigest) || artifact.Size <= 0 || artifact.CaseID != "approved-artifact" || artifact.SubjectSHA != headSHA || !model.ValidDigest(artifact.AuthorizationDigest) || !model.ValidDigest(artifact.EffectReceiptDigest) || artifact.Producer == "" || artifact.Executor != model.ExecutorID || artifact.Consumer == "" || !artifact.RepositoryNetStatusUnchanged {
+	if artifact.Path == "" || !allowedTempPath(artifact.Path) || !model.ValidDigest(artifact.ContentDigest) || artifact.Size <= 0 || artifact.CaseID != "approved-artifact" || artifact.SubjectSHA != headSHA || !model.ValidDigest(artifact.AuthorizationDigest) || !model.ValidDigest(artifact.EffectReceiptDigest) || artifact.Producer != model.ProducerID || artifact.Executor != model.ExecutorID || artifact.Consumer != model.ConsumerID || !artifact.RepositoryNetStatusUnchanged {
 		return fmt.Errorf("artifact evidence is incomplete")
 	}
 	data, err := os.ReadFile(artifact.Path)
@@ -350,7 +392,33 @@ func verifyArtifact(artifact model.ArtifactEvidence, headSHA string) error {
 	return nil
 }
 
+func allowedTempPath(path string) bool {
+	root := os.Getenv("RUNNER_TEMP")
+	if root == "" {
+		root = os.TempDir()
+	}
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return false
+	}
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	return path != root && filepath.Dir(path) == root
+}
+
+func artifactBytes(receipt model.Receipt) []byte {
+	return []byte(fmt.Sprintf("gooo bounded transformation artifact\ncase=%s\ninput=%d\noperation=%s\noutput=%d\nsource=%s\nsemantic-source=%s\nauthorization=%s\nsubject=%s\n",
+		receipt.CaseID, receipt.Evidence.InputValue, receipt.Evidence.CandidateOperation, receipt.Evidence.CandidateResult,
+		receipt.SourceDigest, receipt.SemanticSourceDigest, receipt.AuthorizationDigest, receipt.HeadSHA))
+}
+
 func parseFixture(source []byte) (sourceFixture, error) {
+	return parseFixtureCase(source, preservedCaseID)
+}
+
+func parseFixtureCase(source []byte, caseID string) (sourceFixture, error) {
 	file, diagnostics := syntax.ParseFile(model.SourcePath, string(source))
 	if diagnostics.HasErrors() {
 		return sourceFixture{}, fmt.Errorf("consumer source syntax: %s", diagnostics.Error())
@@ -362,7 +430,7 @@ func parseFixture(source []byte) (sourceFixture, error) {
 	semantic := "sha256:" + ir.StableHash()
 	for _, declaration := range file.Declarations {
 		activity, ok := declaration.(*syntax.ActivityDecl)
-		if !ok || activity.Name != "PreservedTranslation" {
+		if !ok {
 			continue
 		}
 		if len(activity.Parameters) != 0 || activity.Result.Name != "Transformation" || !activity.ValueProgramPresent {
@@ -371,6 +439,9 @@ func parseFixture(source []byte) (sourceFixture, error) {
 		fields, err := decodeFields(activity.ValueProgram)
 		if err != nil {
 			return sourceFixture{}, err
+		}
+		if fields["case"] != caseID {
+			continue
 		}
 		input, err := strconv.ParseInt(fields["input"], 10, 64)
 		if err != nil {
@@ -485,7 +556,7 @@ func reconstructReceipt(fixture sourceFixture, source []byte, headSHA string) mo
 		values = append(values, model.MetaValue{ID: spec.ID, Kind: spec.Kind, Value: statuses[spec.ID], EvidenceDigest: evidenceDigest, Producer: spec.Producer, Consumer: spec.Consumer, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice, VerificationCheck: spec.VerificationCheck, Coordinate: coordinate})
 	}
 	decision, resolution, reason := derive(claims)
-	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.Activity, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest, ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional, Effects: []model.Effect{}, RepositoryNetStatusUnchanged: true, RepositoryActualOrTransientWrites: model.UnknownEffectScope, AuthorityScope: model.AuthorityScope}
+	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.Activity, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest, ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional, Effects: []model.Effect{}, RepositoryNetStatusUnchanged: true, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWritesObserved: false, RepositoryWrites: -1, AuthorityScope: model.AuthorityScope}
 	receipt.AuthorizationDigest = model.AuthorizationDigest(receipt)
 	return model.SealReceipt(receipt)
 }

@@ -32,8 +32,16 @@ func indicator(id, proof, operation string, value, target int, relation string) 
 // receipt and compares only against labeled validator expectations; it does
 // not call producer.Build or treat deterministic replay as evidence.
 func ValidateReport(report model.Report, source []byte) error {
+	file, diagnostics := syntax.ParseFile(model.SourcePath, string(source))
+	if diagnostics.HasErrors() {
+		return fmt.Errorf("report source syntax is invalid: %s", diagnostics.Error())
+	}
+	semanticDigest, err := semanticSourceDigest(file)
+	if err != nil {
+		return err
+	}
 	if report.Schema != model.ReportSchema || !model.ValidHead(report.HeadSHA) || report.SourcePath != model.SourcePath ||
-		report.SourceDigest != model.DigestBytes(source) || report.ContractDigest != model.ValueContractDigest() ||
+		report.SourceDigest != model.DigestBytes(source) || report.SemanticSourceDigest != semanticDigest || report.ContractDigest != model.ValueContractDigest() ||
 		report.ValidatorContractDigest != model.ValidatorContractDigest() || report.DenominatorID != model.DenominatorID || report.DenominatorTotal != len(report.Cases) ||
 		report.Digest == "" || report.Digest != model.SealReport(report).Digest {
 		return fmt.Errorf("report identity or digest is invalid")
@@ -55,10 +63,22 @@ func ValidateReport(report model.Report, source []byte) error {
 		if !judgment.Independent || !reflect.DeepEqual(judgment, result.Judgment) {
 			return fmt.Errorf("case %q independent judgment mismatch", result.Receipt.CaseID)
 		}
-		if !model.ValidDigest(result.ProvisionalReceiptDigest) || (result.Receipt.Phase == model.ReceiptExecuted && result.ProvisionalReceiptDigest == result.Receipt.Digest) ||
-			(result.Judgment.Decision == model.DecisionAllowed && !model.ValidDigest(result.AuthorizationReceiptDigest)) ||
+		provisionalDigest := result.Receipt.Digest
+		if result.Receipt.Phase == model.ReceiptExecuted {
+			provisional := result.Receipt
+			provisional.Phase = model.ReceiptProvisional
+			provisional.Effects = []model.Effect{}
+			provisional.TempArtifactWriteAuthorized = false
+			provisional.Digest = ""
+			provisionalDigest = model.SealReceipt(provisional).Digest
+		}
+		if result.ProvisionalReceiptDigest != provisionalDigest ||
+			(result.Judgment.Decision == model.DecisionAllowed && result.AuthorizationReceiptDigest != result.Receipt.AuthorizationDigest) ||
 			(result.Judgment.Decision != model.DecisionAllowed && result.AuthorizationReceiptDigest != "") || result.ExecutedEffects != len(result.Receipt.Effects) {
 			return fmt.Errorf("case %q receipt phase metrics are not bound", result.Receipt.CaseID)
+		}
+		if result.IndependentlyObservedEffects != len(result.Receipt.Effects) {
+			return fmt.Errorf("case %q independently observed effect count is not bound", result.Receipt.CaseID)
 		}
 		expectation, ok := model.ValidatorExpectationFor(model.CanonicalContract(), result.Receipt.CaseID)
 		if !ok || result.Expectation != expectation || result.Judgment.Decision != expectation.ExpectedDecision || result.Judgment.Resolution != expectation.ExpectedResolution ||
@@ -73,7 +93,76 @@ func ValidateReport(report model.Report, source []byte) error {
 		!reflect.DeepEqual(report.Indicators, Indicators(report.Summary)) {
 		return fmt.Errorf("report metrics or correction denominator are invalid")
 	}
+	expectedSummary := summarizeReport(report.Cases)
+	if !reflect.DeepEqual(report.Summary, expectedSummary) {
+		return fmt.Errorf("report summary is not derived from independently judged cases")
+	}
 	return nil
+}
+
+func summarizeReport(cases []model.CaseResult) model.Summary {
+	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainObservations: len(cases), BoundedInputDomainDenominator: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()), CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusUnchanged: true, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1}
+	claimIDs := map[string]bool{}
+	for _, item := range cases {
+		if item.Satisfied {
+			summary.CasesSatisfied++
+		}
+		switch item.Judgment.Decision {
+		case model.DecisionAllowed:
+			summary.AuthorizedCases++
+		case model.DecisionRefuted:
+			summary.RefutedCases++
+		case model.DecisionBlocked:
+			summary.OpenCases++
+		}
+		summary.ClaimsTotal += len(item.Receipt.Claims)
+		summary.ProvisionalReceipts++
+		if item.Judgment.Decision == model.DecisionAllowed {
+			summary.AuthorizationReceipts++
+		}
+		if item.Receipt.Phase == model.ReceiptExecuted {
+			summary.TempArtifactWriteAuthorized = true
+		}
+		summary.ExecutedEffects += len(item.Receipt.Effects)
+		summary.IndependentlyObservedEffects += item.IndependentlyObservedEffects
+		for _, claim := range item.Receipt.Claims {
+			claimIDs[claim.ID] = true
+			summary.DischargedClaims += boolInt(claim.Status == model.StatusDischarged)
+			summary.RefutedClaims += boolInt(claim.Status == model.StatusRefuted)
+			summary.OpenClaims += boolInt(claim.Status == model.StatusOpen)
+			summary.TransitionEvents += len(claim.Transitions)
+			summary.AcceptedTransitions += len(claim.Transitions)
+		}
+		for _, effect := range item.Receipt.Effects {
+			if effect.Kind == model.EffectApproved {
+				summary.ApprovedArtifactEffects++
+			}
+			if effect.RepositoryActualOrTransientWrites == model.UnknownEffectScope {
+				summary.UnknownEffectScopes++
+			}
+		}
+		if item.Receipt.RepositoryWritesObserved {
+			if summary.RepositoryWrites < 0 {
+				summary.RepositoryWrites = 0
+			}
+			summary.RepositoryWrites += item.Receipt.RepositoryWrites
+		}
+		summary.MutationAuthority |= boolInt(item.Receipt.MutationAuthority)
+		summary.RepositoryNetStatusUnchanged = summary.RepositoryNetStatusUnchanged && item.Receipt.RepositoryNetStatusUnchanged
+	}
+	summary.UniqueClaimInstances = len(claimIDs)
+	if summary.CasesTotal > 0 {
+		summary.CoverageBPS = summary.CasesSatisfied * 10000 / summary.CasesTotal
+		summary.InputDomainCoverageBPS = summary.BoundedInputDomainObservations * 10000 / summary.BoundedInputDomainDenominator
+	}
+	return summary
+}
+
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func sourceCaseIDs(source []byte) ([]string, error) {

@@ -115,43 +115,49 @@ type EffectGateCase struct {
 }
 
 type Case struct {
-	ID                        string                       `json:"id"`
-	Kind                      string                       `json:"kind"`
-	SourceEdit                string                       `json:"source_edit"`
-	BaselineProjection        FixtureProjection            `json:"baseline_projection"`
-	MutatedProjection         FixtureProjection            `json:"mutated_projection"`
-	BaselineProjectionDigest  string                       `json:"baseline_projection_digest"`
-	MutatedProjectionDigest   string                       `json:"mutated_projection_digest"`
-	BaselineSourceDigest      string                       `json:"baseline_source_digest"`
-	MutatedSourceDigest       string                       `json:"mutated_source_digest"`
-	BaselineReceiptDigest     string                       `json:"baseline_receipt_digest"`
-	MutatedReceiptDigest      string                       `json:"mutated_receipt_digest"`
-	BaselineReceiptDecision   string                       `json:"baseline_receipt_decision"`
-	MutatedReceiptDecision    string                       `json:"mutated_receipt_decision"`
-	BaselineJudgment          model.Judgment               `json:"baseline_judgment"`
-	MutatedJudgment           model.Judgment               `json:"mutated_judgment"`
-	BaselineEvidence          model.TransformationEvidence `json:"baseline_evidence"`
-	MutatedEvidence           model.TransformationEvidence `json:"mutated_evidence"`
-	BaselineClaimTransitions  []model.Transition           `json:"baseline_claim_transitions"`
-	MutatedClaimTransitions   []model.Transition           `json:"mutated_claim_transitions"`
-	RawSourceDigestChanged    bool                         `json:"raw_source_digest_changed"`
-	ReceiptChanged            bool                         `json:"receipt_changed"`
-	SemanticProjectionEqual   bool                         `json:"semantic_projection_equal"`
-	DecisionEqual             bool                         `json:"decision_equal"`
-	ResolutionEqual           bool                         `json:"resolution_equal"`
-	ReasonEqual               bool                         `json:"reason_equal"`
-	DecisionChanged           bool                         `json:"decision_changed"`
-	ClaimTransitionsEqual     bool                         `json:"claim_transitions_equal"`
-	EffectsEqual              bool                         `json:"effects_equal"`
-	ReplayObservationEqual    bool                         `json:"replay_observation_equal"`
-	EvidenceObservable        bool                         `json:"evidence_observable"`
-	RepositoryWritesZero      bool                         `json:"repository_writes_zero"`
-	BaselineRepositoryWrites  int                          `json:"baseline_repository_writes"`
-	MutatedRepositoryWrites   int                          `json:"mutated_repository_writes"`
-	BaselineMutationAuthority bool                         `json:"baseline_mutation_authority"`
-	MutatedMutationAuthority  bool                         `json:"mutated_mutation_authority"`
-	Claim                     Claim                        `json:"claim"`
-	Satisfied                 bool                         `json:"satisfied"`
+	ID                                        string                       `json:"id"`
+	Kind                                      string                       `json:"kind"`
+	SourceEdit                                string                       `json:"source_edit"`
+	BaselineProjection                        FixtureProjection            `json:"baseline_projection"`
+	MutatedProjection                         FixtureProjection            `json:"mutated_projection"`
+	BaselineProjectionDigest                  string                       `json:"baseline_projection_digest"`
+	MutatedProjectionDigest                   string                       `json:"mutated_projection_digest"`
+	BaselineSourceDigest                      string                       `json:"baseline_source_digest"`
+	MutatedSourceDigest                       string                       `json:"mutated_source_digest"`
+	BaselineReceiptDigest                     string                       `json:"baseline_receipt_digest"`
+	MutatedReceiptDigest                      string                       `json:"mutated_receipt_digest"`
+	BaselineReceiptDecision                   string                       `json:"baseline_receipt_decision"`
+	MutatedReceiptDecision                    string                       `json:"mutated_receipt_decision"`
+	BaselineJudgment                          model.Judgment               `json:"baseline_judgment"`
+	MutatedJudgment                           model.Judgment               `json:"mutated_judgment"`
+	BaselineEvidence                          model.TransformationEvidence `json:"baseline_evidence"`
+	MutatedEvidence                           model.TransformationEvidence `json:"mutated_evidence"`
+	BaselineClaimTransitions                  []model.Transition           `json:"baseline_claim_transitions"`
+	MutatedClaimTransitions                   []model.Transition           `json:"mutated_claim_transitions"`
+	RawSourceDigestChanged                    bool                         `json:"raw_source_digest_changed"`
+	ReceiptChanged                            bool                         `json:"receipt_changed"`
+	SemanticProjectionEqual                   bool                         `json:"semantic_projection_equal"`
+	DecisionEqual                             bool                         `json:"decision_equal"`
+	ResolutionEqual                           bool                         `json:"resolution_equal"`
+	ReasonEqual                               bool                         `json:"reason_equal"`
+	DecisionChanged                           bool                         `json:"decision_changed"`
+	ClaimTransitionsEqual                     bool                         `json:"claim_transitions_equal"`
+	EffectsEqual                              bool                         `json:"effects_equal"`
+	ReplayObservationEqual                    bool                         `json:"replay_observation_equal"`
+	EvidenceObservable                        bool                         `json:"evidence_observable"`
+	RepositoryWritesNotClaimed                bool                         `json:"repository_writes_not_claimed"`
+	BaselineRepositoryWrites                  int                          `json:"baseline_repository_writes"`
+	MutatedRepositoryWrites                   int                          `json:"mutated_repository_writes"`
+	BaselineRepositoryWritesObserved          bool                         `json:"baseline_repository_writes_observed"`
+	MutatedRepositoryWritesObserved           bool                         `json:"mutated_repository_writes_observed"`
+	BaselineRepositoryNetStatusUnchanged      bool                         `json:"baseline_repository_net_status_unchanged"`
+	MutatedRepositoryNetStatusUnchanged       bool                         `json:"mutated_repository_net_status_unchanged"`
+	BaselineRepositoryActualOrTransientWrites string                       `json:"baseline_repository_actual_or_transient_writes"`
+	MutatedRepositoryActualOrTransientWrites  string                       `json:"mutated_repository_actual_or_transient_writes"`
+	BaselineMutationAuthority                 bool                         `json:"baseline_mutation_authority"`
+	MutatedMutationAuthority                  bool                         `json:"mutated_mutation_authority"`
+	Claim                                     Claim                        `json:"claim"`
+	Satisfied                                 bool                         `json:"satisfied"`
 }
 
 type Report struct {
@@ -214,7 +220,7 @@ func Build(source []byte, headSHA string) (Report, error) {
 			SemanticOperationChange: SliceDenominator{ID: SemanticOperationDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(semanticOperationCase.Satisfied), CoverageBPS: boolInt(semanticOperationCase.Satisfied) * 10000},
 			NonSemantic:             SliceDenominator{ID: NonSemanticDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(nonSemanticCase.Satisfied), CoverageBPS: boolInt(nonSemanticCase.Satisfied) * 10000}},
 		CaseCount: 3, Cases: cases, EffectGates: gates, EffectGateDenominator: len(gates), Decision: decision, Resolution: resolution, Reason: reason,
-		RepositoryWrites: writes, MutationAuthority: mutationAuthority, TempArtifactWriteAuthorized: effectGateObserved(gates), RepositoryNetStatusUnchanged: writes == 0,
+		RepositoryWrites: writes, MutationAuthority: mutationAuthority, TempArtifactWriteAuthorized: effectGateObserved(gates), RepositoryNetStatusUnchanged: repositoryNetStatusUnchanged(cases),
 		RepositoryActualOrTransientWrites: model.UnknownEffectScope, ExecutedEffects: boolInt(effectGateObserved(gates)), IndependentlyObservedEffects: boolInt(effectGateObserved(gates)),
 		UnknownEffectScopes: boolInt(effectGateObserved(gates)), CorrectionCount: 12, CorrectionDenominator: 12, Failure: failure}
 	for _, gate := range gates {
@@ -265,13 +271,27 @@ func failFor(id string, claim Claim) (string, string, string, *Failure) {
 }
 
 func effectTotals(cases []Case) (int, bool) {
-	writes := 0
+	writes := -1
 	authority := false
 	for _, item := range cases {
-		writes += item.BaselineRepositoryWrites + item.MutatedRepositoryWrites
+		if item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved {
+			if writes < 0 {
+				writes = 0
+			}
+			writes += item.BaselineRepositoryWrites + item.MutatedRepositoryWrites
+		}
 		authority = authority || item.BaselineMutationAuthority || item.MutatedMutationAuthority
 	}
 	return writes, authority
+}
+
+func repositoryNetStatusUnchanged(cases []Case) bool {
+	for _, item := range cases {
+		if !item.BaselineRepositoryNetStatusUnchanged || !item.MutatedRepositoryNetStatusUnchanged {
+			return false
+		}
+	}
+	return true
 }
 
 func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte) ([]byte, error), claimID, step, satisfiedReason string) (Case, error) {
@@ -307,10 +327,13 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 		ResolutionEqual: baselineJudgment.Resolution == mutatedJudgment.Resolution && baselineReceipt.Resolution == mutatedReceipt.Resolution, ReasonEqual: baselineJudgment.Reason == mutatedJudgment.Reason && baselineReceipt.Reason == mutatedReceipt.Reason,
 		EffectsEqual: reflect.DeepEqual(baselineReceipt.Effects, mutatedReceipt.Effects), ReplayObservationEqual: replayEqual(baselineReceipt.Evidence, mutatedReceipt.Evidence), EvidenceObservable: baselineJudgment.Independent && mutatedJudgment.Independent,
 		BaselineEvidence: baselineReceipt.Evidence, MutatedEvidence: mutatedReceipt.Evidence, BaselineRepositoryWrites: baselineReceipt.RepositoryWrites, MutatedRepositoryWrites: mutatedReceipt.RepositoryWrites,
+		BaselineRepositoryWritesObserved: baselineReceipt.RepositoryWritesObserved, MutatedRepositoryWritesObserved: mutatedReceipt.RepositoryWritesObserved,
+		BaselineRepositoryNetStatusUnchanged: baselineReceipt.RepositoryNetStatusUnchanged, MutatedRepositoryNetStatusUnchanged: mutatedReceipt.RepositoryNetStatusUnchanged,
+		BaselineRepositoryActualOrTransientWrites: baselineReceipt.RepositoryActualOrTransientWrites, MutatedRepositoryActualOrTransientWrites: mutatedReceipt.RepositoryActualOrTransientWrites,
 		BaselineMutationAuthority: baselineReceipt.MutationAuthority, MutatedMutationAuthority: mutatedReceipt.MutationAuthority}
 	item.DecisionChanged = !item.DecisionEqual
 	item.ClaimTransitionsEqual = transitionOutcomeEqual(baselineTransitions, mutatedTransitions)
-	item.RepositoryWritesZero = item.BaselineRepositoryWrites == 0 && item.MutatedRepositoryWrites == 0 && !item.BaselineMutationAuthority && !item.MutatedMutationAuthority
+	item.RepositoryWritesNotClaimed = !item.BaselineRepositoryWritesObserved && !item.MutatedRepositoryWritesObserved && item.BaselineRepositoryWrites == -1 && item.MutatedRepositoryWrites == -1 && item.BaselineRepositoryActualOrTransientWrites == model.UnknownEffectScope && item.MutatedRepositoryActualOrTransientWrites == model.UnknownEffectScope && !item.BaselineMutationAuthority && !item.MutatedMutationAuthority
 	item.Satisfied, item.Claim.Resolution, item.Claim.Reason = adjudicate(kind, item, item.EvidenceObservable, satisfiedReason)
 	status := statusForAdjudication(item.Satisfied, item.EvidenceObservable)
 	coordinate := model.Coordinate{Stage: InterventionStage, Step: step, Reason: item.Claim.Reason}
@@ -338,9 +361,9 @@ func adjudicate(kind string, item Case, observable bool, satisfiedReason string)
 func observationSatisfied(kind string, item Case) bool {
 	switch kind {
 	case "SEMANTIC_EXPECTED", "SEMANTIC_OPERATION":
-		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticProjectionEqual && !item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.ClaimTransitionsEqual && item.RepositoryWritesZero && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
+		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticProjectionEqual && !item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.ClaimTransitionsEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
 	case "NON_SEMANTIC":
-		return item.RawSourceDigestChanged && item.ReceiptChanged && item.SemanticProjectionEqual && item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.ClaimTransitionsEqual && item.EffectsEqual && item.ReplayObservationEqual && item.RepositoryWritesZero && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionAllowed
+		return item.RawSourceDigestChanged && item.ReceiptChanged && item.SemanticProjectionEqual && item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.ClaimTransitionsEqual && item.EffectsEqual && item.ReplayObservationEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionAllowed
 	default:
 		return false
 	}

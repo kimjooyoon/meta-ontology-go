@@ -2225,7 +2225,7 @@ jobs:
           dependency_output="$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
           mkdir -p "$(dirname "$dependency_output")"
           jq -n \
-            --arg schema 'gooo/invariant-transformation-dependency-boundary/v1' \
+            --arg schema 'gooo/invariant-transformation-dependency-boundary/v2' \
             --arg package "$judge_package" \
             --arg forbidden_package "$forbidden_package" \
             --arg consumer_package "$consumer_package" \
@@ -2236,7 +2236,7 @@ jobs:
             --argjson allowed_producer_dependency_imports "$allowed_producer_dependency_imports" \
             --argjson artifact_evidence "$artifact_evidence" \
             --argjson unknown_effect_scopes "$unknown_effect_scopes" \
-            '{schema: "gooo/invariant-transformation-dependency-boundary/v2", production_judge_package: $package, forbidden_package: $forbidden_package,
+            '{schema: $schema, production_judge_package: $package, forbidden_package: $forbidden_package,
               forbidden_imports: $forbidden_imports, allowed_forbidden_imports: $allowed_forbidden_imports,
               production_consumer_package: $consumer_package, producer_intervention_package: $producer_intervention_package,
               judge_forbidden_imports: $forbidden_imports, judge_allowed_forbidden_imports: $allowed_forbidden_imports,
@@ -2322,7 +2322,11 @@ jobs:
               .baseline_evidence.replay_digest == .mutated_evidence.replay_digest and
               .baseline_evidence.replay_semantic_digest == .mutated_evidence.replay_semantic_digest and
               .baseline_evidence.replay_evidence_digest == .mutated_evidence.replay_evidence_digest] | all) and
-            ([.cases[].repository_writes_zero] | all) and
+            ([.cases[].repository_writes_not_claimed] | all) and
+            ([.cases[] | .baseline_repository_writes == -1 and .mutated_repository_writes == -1 and
+              .baseline_repository_writes_observed == false and .mutated_repository_writes_observed == false and
+              .baseline_repository_net_status_unchanged == true and .mutated_repository_net_status_unchanged == true and
+              .baseline_repository_actual_or_transient_writes == "UNKNOWN" and .mutated_repository_actual_or_transient_writes == "UNKNOWN"] | all) and
             ([.cases[].claim | .status == "DISCHARGED" and (.transitions | length) == 1 and
               .transitions[0].from == "OPEN" and .transitions[0].to == "DISCHARGED" and
               .transitions[0].coordinate == .coordinate] | all) and
@@ -2331,7 +2335,8 @@ jobs:
             ([.effect_gates[] | .satisfied] | all) and
             .correction_count == 12 and .correction_denominator == 12 and
             .repository_net_status_unchanged == true and .repository_actual_or_transient_writes == "UNKNOWN" and
-            .executed_effects == 1 and .independently_observed_effects == 1 and .unknown_effect_scopes == 1
+            .executed_effects == 1 and .independently_observed_effects == 1 and .unknown_effect_scopes == 1 and
+            .repository_writes == -1 and .mutation_authority == false
           ' "$output/first/report.json"
           jq -e '
             .schema == "gooo/invariant-transformation-dependency-boundary/v2" and
