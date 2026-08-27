@@ -12,6 +12,9 @@ entity ClaimTransition id "gooo://partial-knowledge-composition/entity/claim-tra
 entity Producer id "gooo://partial-knowledge-composition/entity/producer"
 entity Consumer id "gooo://partial-knowledge-composition/entity/consumer"
 entity ProofChoice id "gooo://partial-knowledge-composition/entity/proof-choice"
+entity Foundation id "gooo://partial-knowledge-composition/proof/foundation"
+entity Coherence id "gooo://partial-knowledge-composition/proof/coherence"
+entity Regression id "gooo://partial-knowledge-composition/proof/regression"
 
 activity Observe(MetaValue) -> MetaValue
 activity Compose(MetaValue, MetaValue) -> MetaValue

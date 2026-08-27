@@ -37,8 +37,8 @@ func TestGoooSourceUsesTheDeclaredKnowledgeValues(t *testing.T) {
 	if len(diagnostics) != 0 || file == nil {
 		t.Fatalf("Gooo source diagnostics=%v file=%#v", diagnostics, file)
 	}
-	if len(file.Declarations) != 15 {
-		t.Fatalf("declaration count = %d, want 15", len(file.Declarations))
+	if len(file.Declarations) != 18 {
+		t.Fatalf("declaration count = %d, want 18", len(file.Declarations))
 	}
 }
 

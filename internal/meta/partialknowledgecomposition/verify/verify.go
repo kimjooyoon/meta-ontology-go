@@ -72,6 +72,7 @@ func validateSource(source []byte) error {
 	for _, marker := range []string{
 		"package partialknowledgecomposition", "namespace partialknowledgecomposition",
 		"entity DirectUnknown", "entity DependencyBlocked", "entity InvariantOnly",
+		"entity Foundation", "entity Coherence", "entity Regression",
 		"activity Compose(MetaValue, MetaValue) -> MetaValue",
 	} {
 		if !containsText(text, marker) {
