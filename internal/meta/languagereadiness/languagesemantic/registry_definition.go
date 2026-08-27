@@ -1,14 +1,14 @@
 package languagesemantic
 
 const (
-	expectedSources       = 33
+	expectedSources       = 35
 	expectedLaws          = 3
 	expectedRejections    = 2
-	expectedSyntaxCases   = 37
-	expectedSyntaxValid   = 33
+	expectedSyntaxCases   = 39
+	expectedSyntaxValid   = 35
 	expectedSyntaxInvalid = 4
-	expectedSyntaxFiles   = 40
-	expectedSyntaxLines   = 474
+	expectedSyntaxFiles   = 42
+	expectedSyntaxLines   = 523
 )
 
 func expectedSyntaxPackageUnits() []syntaxPackageUnit {

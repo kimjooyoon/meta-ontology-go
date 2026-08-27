@@ -29,9 +29,9 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
-		report.Summary.Satisfied != 33 || report.Summary.ValidCases != 29 ||
-		report.Summary.InvalidCases != 4 || report.Summary.Unresolved != 0 || report.Summary.GoooLines != 444 ||
-		len(report.Source.GoooFiles) != 36 || len(report.Source.PackageUnits) != 2 ||
+		report.Summary.Satisfied != 39 || report.Summary.ValidCases != 35 ||
+		report.Summary.InvalidCases != 4 || report.Summary.Unresolved != 0 || report.Summary.GoooLines != 523 ||
+		len(report.Source.GoooFiles) != 42 || len(report.Source.PackageUnits) != 2 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 {
 		t.Fatalf("report = %#v", report)
 	}
@@ -46,7 +46,7 @@ func TestUnknownRegistryLowersResolution(t *testing.T) {
 			t.Fatal(err)
 		}
 		if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-			report.Summary.Executed != 0 || report.Summary.Unresolved != 33 {
+			report.Summary.Executed != 0 || report.Summary.Unresolved != 39 {
 			t.Fatalf("unknown registry was not lowered: %#v", report)
 		}
 	}

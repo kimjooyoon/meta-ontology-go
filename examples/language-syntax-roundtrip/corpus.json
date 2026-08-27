@@ -229,6 +229,22 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "ci-plan",
+      "path": "examples/ci-plan/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "reproducibility-semantics",
+      "path": "examples/reproducibility-semantics/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "semantic-delta-receipt",
       "path": "examples/semantic-delta-receipt/main.gooo",
       "kind": "VALID",

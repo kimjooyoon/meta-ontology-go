@@ -1,20 +1,20 @@
 {
   "schema": "gooo/vertical-slice-boundary-denominator/v1",
-  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v13",
-  "version": 13,
+  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v15",
+  "version": 15,
   "boundaries": [
     {
       "id": "syntax",
       "schema": "gooo/language-syntax-roundtrip/v1",
       "meta_operation": "prove-language-syntax-roundtrip",
-      "target": 33,
+      "target": 39,
       "link_target": 1
     },
     {
       "id": "semantics",
       "schema": "gooo/language-semantic-model/v1",
       "meta_operation": "prove-staged-semantic-model",
-      "target": 34,
+      "target": 40,
       "link_target": 2
     },
     {
@@ -35,7 +35,7 @@
       "id": "toolchain",
       "schema": "gooo/toolchain-conformance-report/v1",
       "meta_operation": "close-toolchain-conformance-ledger",
-      "target": 186,
+      "target": 198,
       "link_target": 3
     },
     {
