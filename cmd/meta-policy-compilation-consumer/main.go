@@ -818,6 +818,7 @@ func assessPredicate(rule rule, policy policy, artifact artifact, input input, s
 		return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: "DECISION_REDUCTION_MISMATCH"}
 	case claimLineage:
 		if !input.ProducerAvailable || !input.ConsumerAvailable {
+			open.stage = "LOWER_RESOLUTION"
 			return open
 		}
 		if input.ObservedSourceDigest == "" || input.ObservedArtifactSourceDigest == "" || input.ObservedGeneratedJudgeDigest == "" || input.ObservedIndependentDigest == "" {
