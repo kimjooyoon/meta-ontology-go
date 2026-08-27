@@ -99,7 +99,7 @@ jobs:
           mkdir -p "$intervention"
           cp examples/meta-policy-compilation/policy.gooo "$intervention/comment.gooo"
           printf '\n// nonsemantic intervention: comments do not alter the lowered policy\n' >> "$intervention/comment.gooo"
-          sed 's/SOURCE_DIGEST_MISMATCH:FAIL_CLOSED/SOURCE_DIGEST_MISMATCH:UNKNOWN/' \
+          sed 's/SEMANTIC_EQUIVALENCE_PROVED/SEMANTIC_EQUIVALENCE_INTERVENED/' \
             examples/meta-policy-compilation/policy.gooo > "$intervention/semantic.gooo"
           go run ./cmd/meta-policy-compilation-witness \
             -policy "$intervention/comment.gooo" \

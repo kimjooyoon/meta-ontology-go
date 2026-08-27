@@ -71,7 +71,7 @@ The experiment is falsifiable. It fails closed if the schema safety shape,
 source-derived reduction, producer/artifact source digests, generated result,
 independent reconstruction, or claim chain diverge. It remains `UNKNOWN` when
 required evidence is unavailable. CI performs a semantic intervention that
-changes a reduction decision and claim transition, plus a comment-only
+changes a source reduction reason and claim transition, plus a comment-only
 intervention that changes only the raw digest while preserving semantic digest
 and normalized generated behavior. This remains evidence for the modeled
 contract, not a machine-checked universal compiler theorem.
