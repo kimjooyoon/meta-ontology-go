@@ -4,7 +4,7 @@ func buildProofs(summary Summary, replayVerified bool) []Proof {
 	coherence := "SATISFIED"
 	if summary.RefutedCells > 0 || summary.DenominatorConflicts > 0 {
 		coherence = StateRefuted
-	} else if summary.UnknownCells > 0 {
+	} else if summary.UnknownCells > 0 || summary.QueueObservationUnknown > 0 {
 		coherence = StateUnknown
 	}
 	replay := StateRefuted

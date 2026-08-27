@@ -48,23 +48,41 @@ jobs:
               observer_head_sha: process.env.OBSERVER_HEAD_SHA,
               observed_at: new Date().toISOString(),
               cohort_id: 'gooo.portfolio.pr-541-570.v1',
+              queue_snapshot: {observation_status: 'UNAVAILABLE', queued_runs: 0, in_progress_runs: 0},
               pull_requests: [],
             };
+            try {
+              const [queued, inProgress] = await Promise.all([
+                github.rest.actions.listWorkflowRunsForRepo({...context.repo, status: 'queued', per_page: 1}),
+                github.rest.actions.listWorkflowRunsForRepo({...context.repo, status: 'in_progress', per_page: 1}),
+              ]);
+              Object.assign(observation.queue_snapshot, {observation_status: 'OBSERVED',
+                queued_runs: queued.data.total_count, in_progress_runs: inProgress.data.total_count});
+            } catch (error) {
+              observation.queue_snapshot.failure_reason = classify(error);
+            }
             for (let number = 541; number <= 570; number++) {
-              const item = {number, observation_status: 'UNAVAILABLE', draft: false, runs_total: 0, runs_consumed: 0};
+              const item = {number, observation_status: 'UNAVAILABLE', draft: false, runs_total: 0,
+                runs_consumed: 0, eligible_runs: 0};
               try {
                 const {data: pull} = await github.rest.pulls.get({...context.repo, pull_number: number});
                 Object.assign(item, {observation_status: 'OBSERVED', state: pull.state, draft: Boolean(pull.draft),
                   head_sha: pull.head.sha, created_at: pull.created_at, closed_at: pull.closed_at || '', merged_at: pull.merged_at || ''});
+                item.run_selection = pull.merged_at ? 'LATEST_TERMINAL_BEFORE_MERGE' : 'LATEST_OBSERVED';
                 try {
                   const {data: runs} = await github.rest.actions.listWorkflowRunsForRepo({...context.repo,
                     head_sha: pull.head.sha, event: 'pull_request', per_page: 100});
                   item.runs_total = runs.total_count;
                   item.runs_consumed = runs.workflow_runs.length;
-                  const candidates = runs.workflow_runs.filter(run => run.name === 'CI [PR authoritative]' && run.head_sha === pull.head.sha)
-                    .sort((left, right) => right.created_at.localeCompare(left.created_at) || right.id - left.id);
-                  if (candidates.length > 0) {
-                    const selected = candidates[0];
+                  const candidates = runs.workflow_runs.filter(run => run.name === 'CI [PR authoritative]' && run.head_sha === pull.head.sha);
+                  const eligible = pull.merged_at
+                    ? candidates.filter(run => run.status === 'completed' && run.updated_at <= pull.merged_at)
+                    : candidates;
+                  const orderField = pull.merged_at ? 'updated_at' : 'created_at';
+                  eligible.sort((left, right) => right[orderField].localeCompare(left[orderField]) || right.id - left.id);
+                  item.eligible_runs = eligible.length;
+                  if (eligible.length > 0) {
+                    const selected = eligible[0];
                     item.authoritative_run = {id: selected.id, name: selected.name, head_sha: selected.head_sha,
                       status: selected.status, conclusion: selected.conclusion || '', created_at: selected.created_at,
                       run_started_at: selected.run_started_at || '', updated_at: selected.updated_at,
@@ -110,7 +128,7 @@ jobs:
             -program "$OUTPUT_DIR/program.gooo" -check
           go run ./cmd/gooo check "$OUTPUT_DIR/program.gooo"
           jq -e '.decision == "COMPLETE" or .decision == "PROGRESS_OBSERVED"' "$OUTPUT_DIR/report.json"
-          jq -r '"### Integration progress\n- decision: \(.decision) (\(.reason))\n- cells: \(.summary.closed_cells)/\(.summary.cells_total)\n- merges: \(.summary.merged_pull_requests)/\(.summary.pull_requests_total)\n- evidence reachable: \(.summary.evidence_reachable)/\(.summary.pull_requests_total)\n- evidenced merges: \(.summary.evidenced_merges)/\(.summary.pull_requests_total)\n- queue share: \(.summary.queue_share_basis_points) bps\n- unknown/refuted: \(.summary.unknown_cells)/\(.summary.refuted_cells)"' "$OUTPUT_DIR/report.json" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"### Integration progress\n- decision: \(.decision) (\(.reason))\n- cells: \(.summary.closed_cells)/\(.summary.cells_total)\n- merges: \(.summary.merged_pull_requests)/\(.summary.pull_requests_total)\n- evidence reachable: \(.summary.evidence_reachable)/\(.summary.pull_requests_total)\n- evidenced merges: \(.summary.evidenced_merges)/\(.summary.pull_requests_total)\n- queue snapshot: \(.summary.queued_runs_snapshot) queued / \(.summary.in_progress_runs_snapshot) in progress (\(.summary.queue_pressure_basis_points) bps)\n- unknown/refuted: \(.summary.unknown_cells)/\(.summary.refuted_cells)"' "$OUTPUT_DIR/report.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload progress evidence
         if: always()
         uses: actions/upload-artifact@v6

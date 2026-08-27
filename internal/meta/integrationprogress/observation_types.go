@@ -6,7 +6,15 @@ type Observation struct {
 	ObserverHeadSHA string            `json:"observer_head_sha"`
 	ObservedAt      string            `json:"observed_at"`
 	CohortID        string            `json:"cohort_id"`
+	QueueSnapshot   QueueSnapshot     `json:"queue_snapshot"`
 	PullRequests    []PullObservation `json:"pull_requests"`
+}
+
+type QueueSnapshot struct {
+	ObservationStatus string `json:"observation_status"`
+	FailureReason     string `json:"failure_reason,omitempty"`
+	QueuedRuns        int    `json:"queued_runs"`
+	InProgressRuns    int    `json:"in_progress_runs"`
 }
 
 type PullObservation struct {
@@ -22,6 +30,8 @@ type PullObservation struct {
 	RunsTotal         int             `json:"runs_total"`
 	RunsConsumed      int             `json:"runs_consumed"`
 	RunQueryFailure   string          `json:"run_query_failure,omitempty"`
+	RunSelection      string          `json:"run_selection,omitempty"`
+	EligibleRuns      int             `json:"eligible_runs"`
 	AuthoritativeRun  *RunObservation `json:"authoritative_run,omitempty"`
 }
 

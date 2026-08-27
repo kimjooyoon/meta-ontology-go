@@ -14,7 +14,7 @@ func Evaluate(observation Observation, replayVerified bool) Report {
 		}
 		results = append(results, evaluatePull(pull))
 	}
-	summary, cells := summarize(results)
+	summary, cells := summarize(results, observation.QueueSnapshot)
 	summary.DenominatorConflicts = conflicts
 	decision, reason, resolution := decide(summary)
 	report := Report{
@@ -22,9 +22,8 @@ func Evaluate(observation Observation, replayVerified bool) Report {
 		CohortID: CohortID, Decision: decision, Reason: reason, Resolution: resolution,
 		ObservationDigest: digestJSON(observation), MetaProgramDigest: digestBytes(RenderProgram()),
 		Summary: summary, Cells: cells, RepositoryWrites: 0, PromotionAuthorized: false,
+		Indicators: buildIndicators(summary), Proofs: buildProofs(summary, replayVerified),
 	}
-	report.Indicators = buildIndicators(summary)
-	report.Proofs = buildProofs(summary, replayVerified)
 	return seal(report)
 }
 
@@ -32,7 +31,7 @@ func decide(summary Summary) (string, string, string) {
 	if summary.DenominatorConflicts > 0 || summary.RefutedCells > 0 {
 		return "FAIL_CLOSED", "INTEGRATION_PROGRESS_CONTRADICTION", "INVARIANT_ONLY"
 	}
-	if summary.UnknownCells > 0 {
+	if summary.UnknownCells > 0 || summary.QueueObservationUnknown > 0 {
 		return "LOWER_RESOLUTION", "INTEGRATION_PROGRESS_EVIDENCE_UNKNOWN", "CELL"
 	}
 	if summary.ClosedCells == summary.CellsTotal {

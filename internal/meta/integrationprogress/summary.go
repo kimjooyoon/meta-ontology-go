@@ -1,6 +1,6 @@
 package integrationprogress
 
-func summarize(results []pullEvaluation) (Summary, []Cell) {
+func summarize(results []pullEvaluation, queue QueueSnapshot) (Summary, []Cell) {
 	summary := Summary{PullRequestsTotal: len(PullNumbers()), CellsTotal: CellDenominator()}
 	cells := make([]Cell, 0, summary.CellsTotal)
 	for _, result := range results {
@@ -11,9 +11,18 @@ func summarize(results []pullEvaluation) (Summary, []Cell) {
 	summary.ProgressBasisPoints = basisPoints(summary.ClosedCells, summary.CellsTotal)
 	summary.MergeBasisPoints = basisPoints(summary.MergedPullRequests, summary.PullRequestsTotal)
 	summary.EvidenceBasisPoints = basisPoints(summary.EvidenceReachable, summary.PullRequestsTotal)
-	summary.QueueShareBasisPoints = basisPoints64(summary.QueueSecondsTotal,
-		summary.QueueSecondsTotal+summary.ExecutionSecondsTotal)
+	applyQueueSnapshot(&summary, queue)
 	return summary, cells
+}
+
+func applyQueueSnapshot(summary *Summary, queue QueueSnapshot) {
+	if queue.ObservationStatus != "OBSERVED" || queue.QueuedRuns < 0 || queue.InProgressRuns < 0 {
+		summary.QueueObservationUnknown = 1
+		return
+	}
+	summary.QueuedRunsSnapshot = queue.QueuedRuns
+	summary.InProgressRunsSnapshot = queue.InProgressRuns
+	summary.QueuePressureBasisPoints = basisPoints(queue.QueuedRuns, queue.QueuedRuns+queue.InProgressRuns)
 }
 
 func accumulateStates(summary *Summary, cells []Cell) {
@@ -49,7 +58,7 @@ func accumulateStates(summary *Summary, cells []Cell) {
 func accumulateTimings(summary *Summary, result pullEvaluation) {
 	if result.TimingSample {
 		summary.TimingSamples++
-		summary.QueueSecondsTotal += result.QueueSeconds
+		summary.RunStartDelaySecondsTotal += result.QueueSeconds
 		summary.ExecutionSecondsTotal += result.ExecutionSeconds
 	}
 	if result.EvidenceLatencySample {

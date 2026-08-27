@@ -9,7 +9,8 @@ func TestCompletePortfolioClosesExactDenominator(t *testing.T) {
 	}
 	if report.Decision != "COMPLETE" || report.Summary.ClosedCells != 150 ||
 		report.Summary.MergedPullRequests != 30 || report.Summary.EvidencedMerges != 30 ||
-		report.Summary.QueueSecondsTotal != 1800 || report.Summary.ExecutionSecondsTotal != 3600 {
+		report.Summary.RunStartDelaySecondsTotal != 1800 || report.Summary.ExecutionSecondsTotal != 3600 ||
+		report.Summary.QueuePressureBasisPoints != 7500 {
 		t.Fatalf("complete report = %#v", report.Summary)
 	}
 }
@@ -18,6 +19,7 @@ func TestKnownUnmergedPullIsOpenNotUnknown(t *testing.T) {
 	input := completeObservation()
 	pull := fixturePull(&input, 550)
 	pull.State, pull.MergedAt = "open", ""
+	pull.RunSelection = "LATEST_OBSERVED"
 	report := Evaluate(input, true)
 	if err := Validate(report); err != nil {
 		t.Fatal(err)

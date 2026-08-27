@@ -8,7 +8,7 @@ func Validate(report Report) error {
 		report.CohortID != CohortID || report.Decision != decision || report.Reason != reason ||
 		report.Resolution != resolution || report.ObservationDigest == "" ||
 		report.MetaProgramDigest != digestBytes(RenderProgram()) || report.RepositoryWrites != 0 ||
-		report.PromotionAuthorized || len(report.Cells) != CellDenominator() || len(report.Indicators) != 12 ||
+		report.PromotionAuthorized || len(report.Cells) != CellDenominator() || len(report.Indicators) != 15 ||
 		len(report.Proofs) != 3 || report.Summary.PullRequestsTotal != len(PullNumbers()) ||
 		report.Summary.CellsTotal != CellDenominator() {
 		return fmt.Errorf("integration progress report contract mismatch")

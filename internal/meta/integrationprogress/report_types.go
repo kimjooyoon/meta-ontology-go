@@ -29,8 +29,11 @@ type Summary struct {
 	ProgressBasisPoints            int   `json:"progress_basis_points"`
 	MergeBasisPoints               int   `json:"merge_basis_points"`
 	EvidenceBasisPoints            int   `json:"evidence_basis_points"`
-	QueueShareBasisPoints          int   `json:"queue_share_basis_points"`
-	QueueSecondsTotal              int64 `json:"queue_seconds_total"`
+	QueueObservationUnknown        int   `json:"queue_observation_unknown"`
+	QueuedRunsSnapshot             int   `json:"queued_runs_snapshot"`
+	InProgressRunsSnapshot         int   `json:"in_progress_runs_snapshot"`
+	QueuePressureBasisPoints       int   `json:"queue_pressure_basis_points"`
+	RunStartDelaySecondsTotal      int64 `json:"run_start_delay_seconds_total"`
 	ExecutionSecondsTotal          int64 `json:"execution_seconds_total"`
 	EvidenceLatencySecondsTotal    int64 `json:"evidence_latency_seconds_total"`
 	MergeAfterEvidenceSecondsTotal int64 `json:"merge_after_evidence_seconds_total"`
