@@ -4,7 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/luna-meta-15-proof-carrying-artifact"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
-		".github/workflows/transformation-effect.yml",
+		".github/workflows/language-proof-carrying-artifact.yml",
 		"cmd/language-proof-carrying-artifact",
 		"cmd/language-proof-carrying-artifact-verifier",
 		"examples/language-proof-carrying-artifact",

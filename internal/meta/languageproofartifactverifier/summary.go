@@ -1,8 +1,12 @@
 package languageproofartifactverifier
 
-func summarize(cases []CaseResult, independence IndependenceEvidence) Summary {
+func summarize(cases []CaseResult, independence IndependenceEvidence, writeSet WriteSetObservation, interventions []InterventionResult) Summary {
 	summary := Summary{CasesTotal: len(cases), TransitionTotal: TransitionTotal,
-		ProducerDependencies: independence.ProducerDependencies}
+		ProducerDependencies:    independence.ProducerDependencies,
+		ProducerImportNumerator: independence.ProducerImportNumerator, ProducerImportDenominator: independence.ProducerImportDenominator,
+		CoreParserDependencies: independence.CoreParserDependencies,
+		RepositoryWrites:       writeSet.RepositoryWrites, MutationAuthorities: boolToInt(writeSet.MutationAuthority),
+		PromotionAuthorities: 0, SemanticAuthorities: 0}
 	for _, item := range cases {
 		if item.Status == "SATISFIED" {
 			summary.CasesSatisfied++
@@ -14,12 +18,17 @@ func summarize(cases []CaseResult, independence IndependenceEvidence) Summary {
 				summary.EvidenceKindsCarried = len(item.Claims)
 				summary.ExactEvidenceLinks = len(item.Claims)
 				summary.RecipeMatches = 1
-				summary.PreservedTransitions = TransitionTotal
+				summary.PreservedTransitions = EvidenceTotal
 				summary.GeneratedAuthority = 0
+				summary.ReadOnlyAuthorities = 1
 			}
 		case "tampered-evidence":
 			if item.ObservedReason == "PROOF_EVIDENCE_DIGEST_MISMATCH" {
 				summary.TamperedRejections = 1
+			}
+		case "coherent-tamper-reconstruction":
+			if item.ObservedReason == "OPERATION_RECONSTRUCTION_MISMATCH" {
+				summary.CoherentTamperRejections = 1
 			}
 		case "missing-operation-evidence":
 			if item.ObservedReason == "PROOF_EVIDENCE_MISSING" {
@@ -34,8 +43,36 @@ func summarize(cases []CaseResult, independence IndependenceEvidence) Summary {
 				summary.RecipeRejections = 1
 			}
 		}
+		for _, claim := range item.Claims {
+			switch claim.Status {
+			case "DISCHARGED":
+				summary.LedgerDischargedClaims++
+			case "OPEN":
+				summary.LedgerOpenClaims++
+			case "REFUTED":
+				summary.LedgerRefutedClaims++
+			}
+		}
+	}
+	for _, item := range interventions {
+		if item.Status != "SATISFIED" {
+			continue
+		}
+		switch item.Kind {
+		case "SEMANTIC":
+			summary.SemanticInterventions++
+		case "NONSEMANTIC":
+			summary.NonsemanticInterventions++
+		}
 	}
 	return summary
+}
+
+func boolToInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func transitions(cases []CaseResult) []ClaimTransition {
@@ -50,14 +87,14 @@ func transitions(cases []CaseResult) []ClaimTransition {
 func claimTransitions(claims []ClaimResult) []ClaimTransition {
 	result := make([]ClaimTransition, 0, TransitionTotal)
 	for _, claim := range claims {
-		result = append(result, ClaimTransition{ClaimID: claim.ID, From: "CARRIED", To: "PRESERVED",
+		result = append(result, ClaimTransition{ClaimID: claim.ID, Capability: "ARTIFACT_TRANSPORT", From: "CARRIED", To: "PRESERVED",
 			Producer: ProducerID, Consumer: ConsumerID, ProofChoice: claim.ProofChoice, MetaOperation: claim.MetaOperation,
 			Coordinate: Coordinate{"CONSUME", "recheck-claim", "CLAIM_PRESERVED"}, Reason: "INDEPENDENT_RECHECK_PASSED",
 			EvidenceDigest: []string{claim.EvidenceDigest}})
 	}
-	result = append(result, ClaimTransition{ClaimID: "consumer-authority", From: "NOT_GRANTED", To: "GRANTED",
-		Producer: ProducerID, Consumer: ConsumerID, ProofChoice: "COHERENCE", MetaOperation: "grant-only-after-proof",
-		Coordinate: Coordinate{"CONSUME", "grant-authority", "ALL_PROOFS_DISCHARGED"}, Reason: "CONSUMER_ONLY_AUTHORITY",
+	result = append(result, ClaimTransition{ClaimID: "consumer-authority", Capability: "ARTIFACT_USE", From: "NONE", To: "READ_ONLY_CONSUMPTION",
+		Producer: ProducerID, Consumer: ConsumerID, ProofChoice: "COHERENCE", MetaOperation: "grant-read-only-consumption",
+		Coordinate: Coordinate{"CONSUME", "grant-read-only-consumption", "ALL_PROOFS_DISCHARGED"}, Reason: "CONSUMER_ONLY_READ_ONLY_AUTHORITY",
 		EvidenceDigest: []string{claims[0].EvidenceDigest, claims[1].EvidenceDigest, claims[2].EvidenceDigest}})
 	return result
 }

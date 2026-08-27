@@ -7,7 +7,7 @@ func CanonicalRecipe() Recipe {
 			{ID: "verify-source", Input: "source-bytes", MetaOperation: "recheck-source-digest", ProofChoice: "FOUNDATION"},
 			{ID: "verify-operation", Input: "operation-receipt", MetaOperation: "recheck-operation-receipt", ProofChoice: "COHERENCE"},
 			{ID: "verify-invariant", Input: "invariant-evidence", MetaOperation: "recheck-no-byte-authority", ProofChoice: "REGRESSION"},
-			{ID: "grant-authority", Input: "consumer-verdict", MetaOperation: "grant-only-after-proof", ProofChoice: "COHERENCE"},
+			{ID: "grant-read-only-consumption", Input: "consumer-read-only-verdict", MetaOperation: "grant-read-only-consumption", ProofChoice: "COHERENCE"},
 		},
 	}
 }

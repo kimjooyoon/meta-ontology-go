@@ -1,0 +1,53 @@
+name: Language proof-carrying artifact
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - ".github/workflows/language-proof-carrying-artifact.yml"
+      - "cmd/language-proof-carrying-artifact/**"
+      - "cmd/language-proof-carrying-artifact-verifier/**"
+      - "examples/language-proof-carrying-artifact/**"
+      - "internal/meta/languageconcept/language_proof_carrying_artifact*"
+      - "internal/meta/languageproofartifact/**"
+      - "internal/meta/languageproofartifactverifier/**"
+      - "internal/verify/scope_language_proof_carrying_artifact.go"
+      - "scripts/language-proof-carrying-artifact/**"
+      - "go.mod"
+      - "go.sum"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  language-proof-carrying-artifact:
+    name: language-proof-carrying-artifact
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      PROOF_CARRYING_OUTPUT: ${{ runner.temp }}/proof-carrying-artifact-output
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+      - name: Bind the exact Go 1.27.0 toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Run proof-carrying artifact conformance
+        shell: bash
+        run: bash scripts/language-proof-carrying-artifact/main.sh
+      - name: Upload proof-carrying artifact evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-proof-carrying-artifact-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/proof-carrying-artifact-output
+          if-no-files-found: error
+          retention-days: 30

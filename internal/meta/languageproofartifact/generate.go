@@ -27,20 +27,24 @@ func Generate(input Input) (Artifact, error) {
 	}
 	sourceDigest := digestBytes(input.Source)
 	if receipt.Decision != "PASS" || receipt.Resolution != "EXACT" ||
-		receipt.SourceDigest != sourceDigest || receipt.Filename != input.SourcePath {
+		receipt.SourceDigest != sourceDigest || receipt.SemanticDigest == "" || receipt.Filename != input.SourcePath {
 		return Artifact{}, fmt.Errorf("operation receipt is not bound to source")
+	}
+	writeSet, err := normalizeWriteSet(input.WriteSet)
+	if err != nil {
+		return Artifact{}, err
 	}
 
 	evidence := []Evidence{
 		{Kind: "SOURCE", ClaimID: "source-bytes-bound", ProofChoice: "FOUNDATION",
-			MetaOperation: "bind-source-bytes", Coordinate: Coordinate{"GENERATE", "source-evidence", "SOURCE_BYTES_HASHED"}, SourceDigest: sourceDigest},
+			MetaOperation: "bind-source-bytes", Coordinate: Coordinate{"GENERATE", "source-evidence", "SOURCE_BYTES_HASHED"}, SourceDigest: sourceDigest, SemanticDigest: receipt.SemanticDigest},
 		{Kind: "OPERATION", ClaimID: "operation-receipt-bound", ProofChoice: "COHERENCE",
 			MetaOperation: "bind-operation-receipt", Coordinate: Coordinate{"GENERATE", "operation-evidence", "OPERATION_RECEIPT_LINKED"}, SourceDigest: sourceDigest,
-			ReceiptDigest: receipt.Digest, Activity: receipt.Entry.Activity},
+			SemanticDigest: receipt.SemanticDigest, ReceiptDigest: receipt.Digest, Activity: receipt.Entry.Activity},
 		{Kind: "INVARIANT", ClaimID: "no-byte-authority", ProofChoice: "REGRESSION",
 			MetaOperation: "preserve-no-byte-authority", Coordinate: Coordinate{"GENERATE", "invariant-evidence", "BYTES_DO_NOT_GRANT_AUTHORITY"}, SourceDigest: sourceDigest,
-			Predicate: "generated-bytes-do-not-grant-authority", RepositoryWrites: 0, MutationAuthority: false,
-			AuthorityGranted: false, IndependentVerificationRequired: true},
+			SemanticDigest: receipt.SemanticDigest, Predicate: "generated-bytes-do-not-grant-authority", RepositoryWrites: writeSet.RepositoryWrites, MutationAuthority: writeSet.MutationAuthority,
+			ArtifactUseAuthority: "NONE", IndependentVerificationRequired: true},
 	}
 	for index := range evidence {
 		evidence[index].EvidenceDigest = evidenceDigest(evidence[index])
@@ -48,8 +52,9 @@ func Generate(input Input) (Artifact, error) {
 	artifact := Artifact{Schema: ArtifactSchema, HeadSHA: input.HeadSHA, Producer: ProducerID,
 		Consumer: ConsumerID, MetaOperation: "emit-proof-carrying-artifact", Decision: ArtifactDecision,
 		Resolution: ArtifactResolution, Reason: "PROOF_CARRYING_ARTIFACT_EMITTED", SourcePath: input.SourcePath,
-		Evidence: evidence, Recipe: input.Recipe,
-		Authority: Authority{Granted: false, Basis: "INDEPENDENT_CONSUMER_VERIFICATION_REQUIRED"}, Effects: Effects{},
+		SourceDigest: sourceDigest, SemanticDigest: receipt.SemanticDigest, Evidence: evidence, Recipe: input.Recipe,
+		RecipeDigest: digestValue(input.Recipe), PriorLedger: openLedger(evidence), WriteSet: writeSet,
+		Authority: Authority{ArtifactUseAuthority: "NONE", Basis: "INDEPENDENT_CONSUMER_VERIFICATION_REQUIRED"}, Effects: Effects{RepositoryWrites: writeSet.RepositoryWrites, MutationAuthority: writeSet.MutationAuthority},
 		NotClaimed: []string{"consumer authorization", "full compiler semantic correctness", "external side effects"}}
 	artifact.Digest = artifactDigest(artifact)
 	return artifact, nil

@@ -50,7 +50,7 @@ type operationReceipt struct {
 func verifyOperation(receipt operationReceipt, sourceDigest, sourcePath string, want projection) bool {
 	if receipt.Digest != receiptDigest(receipt) || receipt.Schema != "gooo/source-execution-receipt/v1" ||
 		receipt.Decision != "PASS" || receipt.Reason != "SOURCE_ACTIVITY_EXECUTED" || receipt.Resolution != "EXACT" ||
-		receipt.Filename != sourcePath || receipt.SourceDigest != sourceDigest || len(receipt.Diagnostics) != 0 ||
+		receipt.Filename != sourcePath || receipt.SourceDigest != sourceDigest || receipt.SemanticDigest != want.SemanticDigest || len(receipt.Diagnostics) != 0 ||
 		receipt.Effects.RepositoryWrites != 0 || receipt.Effects.MutationAuthority {
 		return false
 	}
