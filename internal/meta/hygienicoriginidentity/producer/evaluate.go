@@ -36,8 +36,8 @@ func Evaluate(files fs.FS, sourcePath string) (Report, error) {
 		if node.Kind != semantic.Activity || node.ValueProgram == "" {
 			continue
 		}
-		switch {
-		case strings.HasPrefix(node.Name, "Produce"):
+		switch node.Name {
+		case "ProduceCapturedName", "ProduceHygienicName":
 			fields, err := valueFields(node.ValueProgram, "hoi.produce", []string{"case", "spelling", "origin", "definition-scope", "use-scope"})
 			if err != nil {
 				return Report{}, fmt.Errorf("producer activity %q: %w", node.Name, err)
@@ -46,7 +46,7 @@ func Evaluate(files fs.FS, sourcePath string) (Report, error) {
 				CaseID: fields["case"], Spelling: fields["spelling"],
 				Origin: resolveOrigin(fields["origin"]), DefinitionScope: resolveScope(fields["definition-scope"]), UseScope: resolveScope(fields["use-scope"]),
 			}
-		case strings.HasPrefix(node.Name, "Consume"):
+		case "ConsumeCapturedName", "ConsumeHygienicName":
 			fields, err := valueFields(node.ValueProgram, "hoi.resolve", []string{"case"})
 			if err != nil {
 				return Report{}, fmt.Errorf("consumer activity %q: %w", node.Name, err)

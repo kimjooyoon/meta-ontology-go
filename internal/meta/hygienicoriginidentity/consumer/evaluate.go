@@ -192,7 +192,12 @@ func validateSemanticContract(ir semantic.IR) error {
 func extractProducerValues(ir semantic.IR) (map[string]producerValue, error) {
 	values := map[string]producerValue{}
 	for _, node := range ir.Graph.Nodes() {
-		if node.Kind != semantic.Activity || !strings.HasPrefix(node.Name, "Produce") || node.ValueProgram == "" {
+		if node.Kind != semantic.Activity || node.ValueProgram == "" {
+			continue
+		}
+		switch node.Name {
+		case "ProduceCapturedName", "ProduceHygienicName":
+		default:
 			continue
 		}
 		fields, err := valueFields(node.ValueProgram, "hoi.produce", []string{"case", "spelling", "origin", "definition-scope", "use-scope"})
@@ -225,7 +230,12 @@ func extractProducerValues(ir semantic.IR) (map[string]producerValue, error) {
 func extractConsumerValues(ir semantic.IR) (map[string]consumerValue, error) {
 	values := map[string]consumerValue{}
 	for _, node := range ir.Graph.Nodes() {
-		if node.Kind != semantic.Activity || !strings.HasPrefix(node.Name, "Consume") || node.ValueProgram == "" {
+		if node.Kind != semantic.Activity || node.ValueProgram == "" {
+			continue
+		}
+		switch node.Name {
+		case "ConsumeCapturedName", "ConsumeHygienicName":
+		default:
 			continue
 		}
 		fields, err := valueFields(node.ValueProgram, "hoi.resolve", []string{"case"})
