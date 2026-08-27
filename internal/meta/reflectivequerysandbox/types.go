@@ -1,9 +1,9 @@
 package reflectivequerysandbox
 
 const (
-	Schema             = "gooo/reflective-query-sandbox-observation/v3"
-	ReceiptSchema      = "gooo/reflective-query-sandbox-receipt/v3"
-	MetricID           = "gooo.metric.language.reflective-query-sandbox.v3"
+	Schema             = "gooo/reflective-query-sandbox-observation/v4"
+	ReceiptSchema      = "gooo/reflective-query-sandbox-receipt/v4"
+	MetricID           = "gooo.metric.language.reflective-query-sandbox.v4"
 	SourcePath         = "examples/reflective-query-sandbox/main.gooo"
 	ProducerName       = "reflective-query-sandbox.producer"
 	ConsumerName       = "reflective-query-sandbox.independent-verifier"
@@ -36,13 +36,20 @@ type Contract struct {
 }
 
 type Effects struct {
-	RepositoryStatusBefore []string `json:"repository_status_before"`
-	RepositoryStatusAfter  []string `json:"repository_status_after"`
-	NetRepositoryChanges   []string `json:"net_repository_changes"`
-	MutationAuthority      bool     `json:"mutation_authority"`
-	MutationAPI            string   `json:"mutation_api"`
-	MutationOutcome        string   `json:"mutation_outcome"`
-	MutationError          string   `json:"mutation_error,omitempty"`
+	RepositoryStatusBefore       []string `json:"repository_status_before"`
+	RepositoryStatusAfter        []string `json:"repository_status_after"`
+	NetRepositoryChanges         []string `json:"net_repository_changes"`
+	RepositoryEvidenceAvailable  bool     `json:"repository_evidence_available"`
+	RepositoryObservation        string   `json:"repository_observation"`
+	RepositoryObservationStage   string   `json:"repository_observation_stage,omitempty"`
+	RepositoryObservationStep    string   `json:"repository_observation_step,omitempty"`
+	RepositoryObservationReason  string   `json:"repository_observation_reason,omitempty"`
+	ImmutableIDPatchAccepted     bool     `json:"immutable_id_patch_accepted"`
+	DetachedGraphPatchCapability string   `json:"detached_graph_patch_capability"`
+	OverallAuthority             string   `json:"overall_authority"`
+	MutationAPI                  string   `json:"mutation_api"`
+	MutationOutcome              string   `json:"mutation_outcome"`
+	MutationError                string   `json:"mutation_error,omitempty"`
 }
 
 type Snapshot struct {
@@ -77,6 +84,10 @@ type Attempt struct {
 	APIOutcome                  string   `json:"api_outcome,omitempty"`
 	APIError                    string   `json:"api_error,omitempty"`
 	APIErrorCode                string   `json:"api_error_code,omitempty"`
+	MutationField               string   `json:"mutation_field,omitempty"`
+	MutationPayload             string   `json:"mutation_payload,omitempty"`
+	MutationIntent              string   `json:"mutation_intent,omitempty"`
+	MutationLocality            string   `json:"mutation_locality,omitempty"`
 	ObservedMaterialDigest      string   `json:"observed_material_digest,omitempty"`
 	SemanticDigestBefore        string   `json:"semantic_digest_before"`
 	SemanticDigestAfter         string   `json:"semantic_digest_after"`
@@ -117,9 +128,23 @@ type Observation struct {
 	Attempts              []Attempt         `json:"attempts"`
 	Claims                []ClaimTransition `json:"claims"`
 	Effects               Effects           `json:"effects"`
+	SubjectBinding        SubjectBinding    `json:"subject_binding"`
+	Provisional           bool              `json:"provisional"`
+	ProvisionalDigest     string            `json:"provisional_digest"`
+	TransitionChainDigest string            `json:"transition_chain_digest"`
 	ReceiptMaterialDigest string            `json:"receipt_material_digest"`
 	Producer              string            `json:"producer"`
 	Digest                string            `json:"digest"`
+}
+
+type SubjectBinding struct {
+	Value      string `json:"value"`
+	Decision   string `json:"decision"`
+	Resolution string `json:"resolution"`
+	Stage      string `json:"stage"`
+	Step       string `json:"step"`
+	Reason     string `json:"reason"`
+	Digest     string `json:"digest"`
 }
 
 type Score struct {
@@ -135,27 +160,34 @@ type Coordinates struct {
 }
 
 type Receipt struct {
-	Schema               string            `json:"schema"`
-	SubjectSHA           string            `json:"subject_sha"`
-	MetricID             string            `json:"metric_id"`
-	Decision             string            `json:"decision"`
-	Resolution           string            `json:"resolution"`
-	SubjectResolution    string            `json:"subject_resolution"`
-	Reason               string            `json:"reason"`
-	Producer             string            `json:"producer"`
-	Consumer             string            `json:"consumer"`
-	Contract             Contract          `json:"contract"`
-	Source               Snapshot          `json:"source"`
-	Attempts             []Attempt         `json:"attempts"`
-	Claims               []ClaimTransition `json:"claims"`
-	Coordinates          Coordinates       `json:"coordinates"`
-	Classes              []Score           `json:"classes"`
-	Proofs               []Score           `json:"proofs"`
-	Effects              Effects           `json:"effects"`
-	SourceReconstruction Coordinates       `json:"source_reconstruction"`
-	ProducerImports      Coordinates       `json:"producer_imports"`
-	PromotionCreditBPS   int               `json:"promotion_credit_bps"`
-	MutationAuthority    bool              `json:"mutation_authority"`
-	NotClaimed           []string          `json:"not_claimed"`
-	Digest               string            `json:"digest"`
+	Schema                       string            `json:"schema"`
+	SubjectSHA                   string            `json:"subject_sha"`
+	MetricID                     string            `json:"metric_id"`
+	Decision                     string            `json:"decision"`
+	Resolution                   string            `json:"resolution"`
+	SubjectResolution            string            `json:"subject_resolution"`
+	Reason                       string            `json:"reason"`
+	Producer                     string            `json:"producer"`
+	Consumer                     string            `json:"consumer"`
+	Contract                     Contract          `json:"contract"`
+	Source                       Snapshot          `json:"source"`
+	Attempts                     []Attempt         `json:"attempts"`
+	Claims                       []ClaimTransition `json:"claims"`
+	Coordinates                  Coordinates       `json:"coordinates"`
+	Classes                      []Score           `json:"classes"`
+	Proofs                       []Score           `json:"proofs"`
+	Effects                      Effects           `json:"effects"`
+	SubjectBinding               SubjectBinding    `json:"subject_binding"`
+	SourceReconstruction         Coordinates       `json:"source_reconstruction"`
+	ProducerImports              Coordinates       `json:"producer_imports"`
+	PromotionCreditBPS           int               `json:"promotion_credit_bps"`
+	ImmutableIDPatchAccepted     bool              `json:"immutable_id_patch_accepted"`
+	DetachedGraphPatchCapability string            `json:"detached_graph_patch_capability"`
+	OverallAuthority             string            `json:"overall_authority"`
+	ReceiptMaterialDigest        string            `json:"receipt_material_digest"`
+	TransitionChainDigest        string            `json:"transition_chain_digest"`
+	AttestationDigest            string            `json:"attestation_digest"`
+	Attestor                     string            `json:"attestor"`
+	NotClaimed                   []string          `json:"not_claimed"`
+	Digest                       string            `json:"digest"`
 }

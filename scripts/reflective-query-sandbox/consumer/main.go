@@ -21,17 +21,19 @@ import (
 )
 
 const (
-	schema        = "gooo/reflective-query-sandbox-observation/v3"
-	receiptSchema = "gooo/reflective-query-sandbox-receipt/v3"
-	metricID      = "gooo.metric.language.reflective-query-sandbox.v3"
-	producerName  = "reflective-query-sandbox.producer"
-	consumerName  = "reflective-query-sandbox.independent-verifier"
+	canonicalSourcePath = "examples/reflective-query-sandbox/main.gooo"
+	schema              = "gooo/reflective-query-sandbox-observation/v4"
+	receiptSchema       = "gooo/reflective-query-sandbox-receipt/v4"
+	metricID            = "gooo.metric.language.reflective-query-sandbox.v4"
+	producerName        = "reflective-query-sandbox.producer"
+	consumerName        = "reflective-query-sandbox.independent-verifier"
 )
 
 type bucket struct {
 	Name  string `json:"name"`
 	Total int    `json:"total"`
 }
+
 type contract struct {
 	Schema              string   `json:"schema"`
 	MetricID            string   `json:"metric_id"`
@@ -51,15 +53,24 @@ type contract struct {
 	TransitionCount     int      `json:"transition_count"`
 	SatisfiedIndicators int      `json:"satisfied_indicators"`
 }
+
 type effects struct {
-	RepositoryStatusBefore []string `json:"repository_status_before"`
-	RepositoryStatusAfter  []string `json:"repository_status_after"`
-	NetRepositoryChanges   []string `json:"net_repository_changes"`
-	MutationAuthority      bool     `json:"mutation_authority"`
-	MutationAPI            string   `json:"mutation_api"`
-	MutationOutcome        string   `json:"mutation_outcome"`
-	MutationError          string   `json:"mutation_error,omitempty"`
+	RepositoryStatusBefore       []string `json:"repository_status_before"`
+	RepositoryStatusAfter        []string `json:"repository_status_after"`
+	NetRepositoryChanges         []string `json:"net_repository_changes"`
+	RepositoryEvidenceAvailable  bool     `json:"repository_evidence_available"`
+	RepositoryObservation        string   `json:"repository_observation"`
+	RepositoryObservationStage   string   `json:"repository_observation_stage,omitempty"`
+	RepositoryObservationStep    string   `json:"repository_observation_step,omitempty"`
+	RepositoryObservationReason  string   `json:"repository_observation_reason,omitempty"`
+	ImmutableIDPatchAccepted     bool     `json:"immutable_id_patch_accepted"`
+	DetachedGraphPatchCapability string   `json:"detached_graph_patch_capability"`
+	OverallAuthority             string   `json:"overall_authority"`
+	MutationAPI                  string   `json:"mutation_api"`
+	MutationOutcome              string   `json:"mutation_outcome"`
+	MutationError                string   `json:"mutation_error,omitempty"`
 }
+
 type snapshot struct {
 	Path           string `json:"path"`
 	SourceDigest   string `json:"source_digest"`
@@ -69,6 +80,7 @@ type snapshot struct {
 	FactCount      int    `json:"fact_count"`
 	GoooLines      int    `json:"gooo_lines"`
 }
+
 type attempt struct {
 	ID                          string   `json:"id"`
 	Class                       string   `json:"class"`
@@ -91,6 +103,10 @@ type attempt struct {
 	APIOutcome                  string   `json:"api_outcome,omitempty"`
 	APIError                    string   `json:"api_error,omitempty"`
 	APIErrorCode                string   `json:"api_error_code,omitempty"`
+	MutationField               string   `json:"mutation_field,omitempty"`
+	MutationPayload             string   `json:"mutation_payload,omitempty"`
+	MutationIntent              string   `json:"mutation_intent,omitempty"`
+	MutationLocality            string   `json:"mutation_locality,omitempty"`
 	ObservedMaterialDigest      string   `json:"observed_material_digest,omitempty"`
 	SemanticDigestBefore        string   `json:"semantic_digest_before"`
 	SemanticDigestAfter         string   `json:"semantic_digest_after"`
@@ -101,6 +117,7 @@ type attempt struct {
 	ReturnedSemanticDigest      string   `json:"returned_semantic_digest,omitempty"`
 	ReturnedGraphDigest         string   `json:"returned_graph_digest,omitempty"`
 }
+
 type claimTransition struct {
 	Sequence               int    `json:"sequence"`
 	ClaimID                string `json:"claim_id"`
@@ -121,6 +138,17 @@ type claimTransition struct {
 	Digest                 string `json:"digest"`
 	ObservedMaterialDigest string `json:"observed_material_digest,omitempty"`
 }
+
+type subjectBinding struct {
+	Value      string `json:"value"`
+	Decision   string `json:"decision"`
+	Resolution string `json:"resolution"`
+	Stage      string `json:"stage"`
+	Step       string `json:"step"`
+	Reason     string `json:"reason"`
+	Digest     string `json:"digest"`
+}
+
 type observation struct {
 	Schema                string            `json:"schema"`
 	SubjectSHA            string            `json:"subject_sha"`
@@ -129,59 +157,77 @@ type observation struct {
 	Attempts              []attempt         `json:"attempts"`
 	Claims                []claimTransition `json:"claims"`
 	Effects               effects           `json:"effects"`
+	SubjectBinding        subjectBinding    `json:"subject_binding"`
+	Provisional           bool              `json:"provisional"`
+	ProvisionalDigest     string            `json:"provisional_digest"`
+	TransitionChainDigest string            `json:"transition_chain_digest"`
 	ReceiptMaterialDigest string            `json:"receipt_material_digest"`
 	Producer              string            `json:"producer"`
 	Digest                string            `json:"digest"`
 }
+
 type score struct {
 	Name      string `json:"name"`
 	Satisfied int    `json:"satisfied"`
 	Total     int    `json:"total"`
 }
+
 type coordinates struct {
 	Satisfied   int `json:"satisfied"`
 	Total       int `json:"total"`
 	BasisPoints int `json:"basis_points"`
 }
+
 type importBoundary struct {
 	ForbiddenImportsObserved int    `json:"forbidden_imports_observed"`
 	MaximumAllowed           int    `json:"maximum_allowed"`
 	EvidenceDigest           string `json:"evidence_digest"`
 }
+
 type receipt struct {
-	Schema               string            `json:"schema"`
-	SubjectSHA           string            `json:"subject_sha"`
-	MetricID             string            `json:"metric_id"`
-	Decision             string            `json:"decision"`
-	Resolution           string            `json:"resolution"`
-	SubjectResolution    string            `json:"subject_resolution"`
-	Reason               string            `json:"reason"`
-	Producer             string            `json:"producer"`
-	Consumer             string            `json:"consumer"`
-	Contract             contract          `json:"contract"`
-	Source               snapshot          `json:"source"`
-	Attempts             []attempt         `json:"attempts"`
-	Claims               []claimTransition `json:"claims"`
-	Coordinates          coordinates       `json:"coordinates"`
-	Classes              []score           `json:"classes"`
-	Proofs               []score           `json:"proofs"`
-	Effects              effects           `json:"effects"`
-	SourceReconstruction coordinates       `json:"source_reconstruction"`
-	ProducerImports      coordinates       `json:"producer_imports"`
-	ImportBoundary       importBoundary    `json:"import_boundary"`
-	PromotionCreditBPS   int               `json:"promotion_credit_bps"`
-	MutationAuthority    bool              `json:"mutation_authority"`
-	NotClaimed           []string          `json:"not_claimed"`
-	Digest               string            `json:"digest"`
+	Schema                       string            `json:"schema"`
+	SubjectSHA                   string            `json:"subject_sha"`
+	MetricID                     string            `json:"metric_id"`
+	Decision                     string            `json:"decision"`
+	Resolution                   string            `json:"resolution"`
+	SubjectResolution            string            `json:"subject_resolution"`
+	Reason                       string            `json:"reason"`
+	Producer                     string            `json:"producer"`
+	Consumer                     string            `json:"consumer"`
+	Contract                     contract          `json:"contract"`
+	Source                       snapshot          `json:"source"`
+	Attempts                     []attempt         `json:"attempts"`
+	Claims                       []claimTransition `json:"claims"`
+	Coordinates                  coordinates       `json:"coordinates"`
+	Classes                      []score           `json:"classes"`
+	Proofs                       []score           `json:"proofs"`
+	Effects                      effects           `json:"effects"`
+	SubjectBinding               subjectBinding    `json:"subject_binding"`
+	SourceReconstruction         coordinates       `json:"source_reconstruction"`
+	ProducerImports              coordinates       `json:"producer_imports"`
+	ImportBoundary               importBoundary    `json:"import_boundary"`
+	PromotionCreditBPS           int               `json:"promotion_credit_bps"`
+	ImmutableIDPatchAccepted     bool              `json:"immutable_id_patch_accepted"`
+	DetachedGraphPatchCapability string            `json:"detached_graph_patch_capability"`
+	OverallAuthority             string            `json:"overall_authority"`
+	ReceiptMaterialDigest        string            `json:"receipt_material_digest"`
+	TransitionChainDigest        string            `json:"transition_chain_digest"`
+	AttestationDigest            string            `json:"attestation_digest"`
+	Attestor                     string            `json:"attestor"`
+	NotClaimed                   []string          `json:"not_claimed"`
+	Digest                       string            `json:"digest"`
 }
+
 type claimSpec struct {
 	ID, Class, PredicateID, ProofChoice, MetaOperation, EvidenceAttempt, PriorState string
 	NodeID                                                                          semantic.ID
 }
+
 type operationSpec struct {
 	ID      semantic.ID
 	Program string
 }
+
 type sourceModel struct {
 	Claims           []claimSpec
 	Operations       []operationSpec
@@ -197,6 +243,16 @@ type sourceModel struct {
 	UnknownTarget    query.ID
 }
 
+type verifiedObservation struct {
+	Model                 sourceModel
+	Source                snapshot
+	Attempts              []attempt
+	Claims                []claimTransition
+	Contract              contract
+	Material              string
+	TransitionChainDigest string
+}
+
 func main() {
 	input := flag.String("input", "", "producer observation")
 	source := flag.String("source", "", "Gooo source")
@@ -205,7 +261,7 @@ func main() {
 	maximum := flag.Int("producer-imports-maximum", -1, "maximum forbidden imports")
 	output := flag.String("output", "", "independent receipt")
 	flag.Parse()
-	if *input == "" || *source == "" || *subject == "" || *importsFile == "" || *maximum < 0 || *output == "" {
+	if *input == "" || *source == "" || *importsFile == "" || *maximum < 0 || *output == "" {
 		fail("usage: consumer -input FILE -source FILE -subject-sha SHA -producer-imports-evidence FILE -producer-imports-maximum N -output FILE")
 	}
 	data, err := os.ReadFile(*input)
@@ -231,12 +287,13 @@ func main() {
 	if forbidden > *maximum {
 		fail("producer import boundary exceeded: observed=%d maximum=%d", forbidden, *maximum)
 	}
-	satisfied, total, reconstruction, err := validateObservation(value, *source, *subject)
+	verified, reconstruction, err := validateObservation(value, *source, *subject)
 	if err != nil {
 		fail("independent reconstruction: %v", err)
 	}
 	imports := importBoundary{ForbiddenImportsObserved: forbidden, MaximumAllowed: *maximum, EvidenceDigest: bytesDigest(importData)}
-	result := buildReceipt(value, satisfied, total, reconstruction, coordinates{Satisfied: 1, Total: 1, BasisPoints: 10000}, imports)
+	result := buildReceipt(value, verified, reconstruction, coordinates{Satisfied: 1, Total: 1, BasisPoints: 10000}, imports)
+	result.AttestationDigest = attestationDigest(result)
 	result.Digest = receiptDigest(result)
 	encoded, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -245,76 +302,125 @@ func main() {
 	if err := os.WriteFile(*output, append(encoded, '\n'), 0o644); err != nil {
 		fail("write receipt: %v", err)
 	}
-	fmt.Printf("consumer verdict: %s %d/%d queries=%d/%d source=%d/%d imports=%d/%d net_repository_changes=%d mutation_authority=%t\n", result.Decision, result.Coordinates.Satisfied, result.Coordinates.Total, value.Contract.SafeQueries, value.Contract.ReflectiveQueries, result.SourceReconstruction.Satisfied, result.SourceReconstruction.Total, result.ProducerImports.Satisfied, result.ProducerImports.Total, len(result.Effects.NetRepositoryChanges), result.Effects.MutationAuthority)
+	fmt.Printf("consumer verdict: %s claims=%d/%d queries=%d/%d source=%d/%d imports=%d/%d net_repository_status_unchanged=%t overall_authority=%s\n", result.Decision, result.Coordinates.Satisfied, result.Coordinates.Total, value.Contract.SafeQueries, value.Contract.ReflectiveQueries, result.SourceReconstruction.Satisfied, result.SourceReconstruction.Total, result.ProducerImports.Satisfied, result.ProducerImports.Total, reflectRepositoryNet(result.Effects), result.OverallAuthority)
 }
 
-func validateObservation(value observation, sourcePath, subject string) (int, int, coordinates, error) {
-	if value.Schema != schema || value.SubjectSHA != subject || value.Producer != producerName {
-		return 0, 0, coordinates{}, errors.New("observation identity is not exact")
+func validateObservation(value observation, sourcePath, subject string) (verifiedObservation, coordinates, error) {
+	if sourcePath != canonicalSourcePath {
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("source path is not canonical: got %q want %q", sourcePath, canonicalSourcePath)
 	}
-	if value.Digest != observationDigest(value) {
-		return 0, 0, coordinates{}, errors.New("observation digest mismatch")
+	if value.Schema != schema || value.SubjectSHA != subject || value.Producer != producerName {
+		return verifiedObservation{}, coordinates{}, errors.New("observation identity is not exact")
+	}
+	if !value.Provisional || value.Digest != "" || value.ReceiptMaterialDigest != "" || value.ProvisionalDigest != observationDigest(value) {
+		return verifiedObservation{}, coordinates{}, errors.New("producer observation is not an unsealed provisional observation")
+	}
+	wantBinding := bindSubjectSHA(subject)
+	if !reflect.DeepEqual(value.SubjectBinding, wantBinding) {
+		return verifiedObservation{}, coordinates{}, errors.New("subject_sha binding is not bound to the checkout value")
 	}
 	data, err := os.ReadFile(sourcePath)
 	if err != nil {
-		return 0, 0, coordinates{}, fmt.Errorf("read source: %w", err)
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("read source: %w", err)
 	}
 	file, diagnostics := syntax.ParseFile(sourcePath, string(data))
 	if diagnostics.HasErrors() {
-		return 0, 0, coordinates{}, diagnostics.Error()
+		return verifiedObservation{}, coordinates{}, diagnostics.Error()
 	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		return 0, 0, coordinates{}, fmt.Errorf("lower source: %w", err)
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("lower source: %w", err)
 	}
 	graph, err := query.FromSemanticIR(ir)
 	if err != nil {
-		return 0, 0, coordinates{}, fmt.Errorf("project query view: %w", err)
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("project query view: %w", err)
 	}
 	model, err := deriveSourceModel(ir)
 	if err != nil {
-		return 0, 0, coordinates{}, fmt.Errorf("derive source model: %w", err)
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("derive source model: %w", err)
 	}
 	semanticDigest := ir.StableHash()
 	wantSource := snapshot{Path: sourcePath, SourceDigest: semantic.StableHash(data), SemanticDigest: semanticDigest, GraphDigest: graph.StableHash(), NodeCount: len(graph.Nodes()), FactCount: len(graph.AllFacts()), GoooLines: countLines(data)}
 	if !reflect.DeepEqual(value.Source, wantSource) {
-		return 0, 0, coordinates{}, fmt.Errorf("source reconstruction differs: got=%+v want=%+v", value.Source, wantSource)
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("source reconstruction differs: got=%+v want=%+v", value.Source, wantSource)
 	}
 	if !strings.HasPrefix(runtime.Version(), "go1.27") || value.Contract.GoVersion != runtime.Version() {
-		return 0, 0, coordinates{}, fmt.Errorf("runtime=%s contract=%s", runtime.Version(), value.Contract.GoVersion)
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("runtime=%s contract=%s", runtime.Version(), value.Contract.GoVersion)
 	}
-	if value.Effects.RepositoryStatusBefore == nil || value.Effects.RepositoryStatusAfter == nil || !reflect.DeepEqual(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter) || !reflect.DeepEqual(changedLines(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter), value.Effects.NetRepositoryChanges) || len(value.Effects.NetRepositoryChanges) != 0 || value.Effects.MutationAuthority || value.Effects.MutationOutcome != "REJECTED" || value.Effects.MutationAPI == "" {
-		return 0, 0, coordinates{}, errors.New("observed effects do not prove the reported net repository relation and mutation boundary")
+	if value.Effects.RepositoryEvidenceAvailable {
+		if value.Effects.RepositoryStatusBefore == nil || value.Effects.RepositoryStatusAfter == nil || !reflect.DeepEqual(changedLines(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter), value.Effects.NetRepositoryChanges) || value.Effects.RepositoryObservation != "net_repository_status_unchanged" {
+			return verifiedObservation{}, coordinates{}, errors.New("repository evidence is not an exact normalized status observation")
+		}
+	} else if value.Effects.RepositoryStatusBefore != nil || value.Effects.RepositoryStatusAfter != nil || value.Effects.RepositoryObservationReason == "" {
+		return verifiedObservation{}, coordinates{}, errors.New("missing repository evidence was not represented as UNKNOWN")
 	}
-	wantAttempts, authority, api, outcome, apiError, err := reconstructAttempts(ir, graph, model, semanticDigest, value.Effects)
+	wantAttempts, immutableAccepted, capability, api, outcome, apiError, err := reconstructAttempts(ir, graph, model, semanticDigest, value.Effects)
 	if err != nil {
-		return 0, 0, coordinates{}, err
+		return verifiedObservation{}, coordinates{}, err
 	}
-	if authority || api != value.Effects.MutationAPI || outcome != value.Effects.MutationOutcome || apiError != value.Effects.MutationError {
-		return 0, 0, coordinates{}, errors.New("mutation boundary was not independently reconstructed")
+	if immutableAccepted != value.Effects.ImmutableIDPatchAccepted || capability != value.Effects.DetachedGraphPatchCapability || api != value.Effects.MutationAPI || outcome != value.Effects.MutationOutcome || apiError != value.Effects.MutationError || value.Effects.OverallAuthority != "UNKNOWN" {
+		return verifiedObservation{}, coordinates{}, errors.New("scoped mutation facts were not independently reconstructed")
 	}
-	material := receiptMaterialDigest(wantSource, wantAttempts, value.Effects)
 	for index := range wantAttempts {
 		if wantAttempts[index].ID == "receipt.seal" {
-			wantAttempts[index].ObservedMaterialDigest = material
+			wantAttempts[index].ObservedMaterialDigest = ""
 		}
 	}
-	if value.ReceiptMaterialDigest != material {
-		return 0, 0, coordinates{}, errors.New("receipt material digest mismatch")
-	}
 	if !reflect.DeepEqual(value.Attempts, wantAttempts) {
-		return 0, 0, coordinates{}, errors.New("attempt evidence differs from independent raw-source reconstruction")
+		return verifiedObservation{}, coordinates{}, errors.New("attempt evidence differs from independent raw-source reconstruction")
 	}
-	wantClaims := buildClaimTransitions(model.Claims, wantAttempts, value.Effects, material)
-	if !reflect.DeepEqual(value.Claims, wantClaims) {
-		return 0, 0, coordinates{}, errors.New("claim transitions are not independently predicate-evaluated")
+	provisionalClaims := buildClaimTransitions(model.Claims, wantAttempts, value.Effects, "")
+	provisionalChain, err := validateTransitionChain(provisionalClaims)
+	if err != nil || value.TransitionChainDigest != provisionalChain {
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("provisional transition chain mismatch: got=%s want=%s err=%v", value.TransitionChainDigest, provisionalChain, err)
 	}
-	wantContract := buildContract(model, wantSource, wantAttempts, wantClaims)
-	if !reflect.DeepEqual(value.Contract, wantContract) {
-		return 0, 0, coordinates{}, errors.New("contract is not derived from canonical IR")
+	if !reflect.DeepEqual(value.Claims, provisionalClaims) {
+		return verifiedObservation{}, coordinates{}, errors.New("producer claims are not independently predicate-evaluated")
 	}
-	checks := []bool{reflect.DeepEqual(value.Source, wantSource), reflect.DeepEqual(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter) && len(value.Effects.NetRepositoryChanges) == 0, reflect.DeepEqual(value.Attempts, wantAttempts), reflect.DeepEqual(value.Claims, wantClaims), reflect.DeepEqual(value.Contract, wantContract), value.ReceiptMaterialDigest == material}
-	return countTransitions(wantClaims, "DISCHARGED"), len(model.Claims), reconstructionCoordinates(checks), nil
+	provisionalContract := buildContract(model, wantSource, wantAttempts, provisionalClaims)
+	if !reflect.DeepEqual(value.Contract, provisionalContract) {
+		return verifiedObservation{}, coordinates{}, errors.New("producer contract is not derived from canonical IR")
+	}
+
+	material := receiptMaterialDigest(wantSource, wantAttempts, value.Effects)
+	attestedAttempts := append([]attempt(nil), wantAttempts...)
+	for index := range attestedAttempts {
+		if attestedAttempts[index].ID == "receipt.seal" {
+			attestedAttempts[index].ObservedMaterialDigest = material
+		}
+	}
+	attestedClaims := buildClaimTransitions(model.Claims, attestedAttempts, value.Effects, material)
+	attestedChain, err := validateTransitionChain(attestedClaims)
+	if err != nil {
+		return verifiedObservation{}, coordinates{}, fmt.Errorf("attested transition chain: %w", err)
+	}
+	attestedContract := buildContract(model, wantSource, attestedAttempts, attestedClaims)
+	checks := []bool{
+		value.Source.Path == canonicalSourcePath,
+		reflect.DeepEqual(value.SubjectBinding, wantBinding),
+		reflect.DeepEqual(value.Source, wantSource),
+		value.Effects.RepositoryEvidenceAvailable && reflect.DeepEqual(changedLines(value.Effects.RepositoryStatusBefore, value.Effects.RepositoryStatusAfter), value.Effects.NetRepositoryChanges),
+		reflect.DeepEqual(value.Attempts, wantAttempts),
+		reflect.DeepEqual(value.Claims, provisionalClaims),
+		reflect.DeepEqual(value.Contract, provisionalContract),
+		value.ProvisionalDigest == observationDigest(value),
+		value.TransitionChainDigest == provisionalChain,
+	}
+	return verifiedObservation{Model: model, Source: wantSource, Attempts: attestedAttempts, Claims: attestedClaims, Contract: attestedContract, Material: material, TransitionChainDigest: attestedChain}, reconstructionCoordinates(checks), nil
+}
+
+func bindSubjectSHA(value string) subjectBinding {
+	binding := subjectBinding{Value: value, Stage: "SUBJECT", Step: "validate-subject-sha"}
+	if len(value) == 40 {
+		if _, err := hex.DecodeString(value); err == nil {
+			binding.Decision, binding.Resolution, binding.Reason = "PASS", "EXACT", "SUBJECT_SHA_BOUND_TO_CHECKOUT"
+			binding.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_BOUND_TO_CHECKOUT")
+			return binding
+		}
+	}
+	binding.Decision, binding.Resolution, binding.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_UNBOUND"
+	binding.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_UNBOUND")
+	return binding
 }
 
 func deriveSourceModel(ir semantic.IR) (sourceModel, error) {
@@ -340,7 +446,7 @@ func deriveSourceModel(ir semantic.IR) (sourceModel, error) {
 			model.MutationIntent = node.ID
 		case node.Kind == semantic.Entity && strings.Contains(id, "/mutation/locality/"):
 			model.MutationLocality = node.ID
-		case node.Kind == semantic.Entity && strings.Contains(id, "/repository/status/net"):
+		case node.Kind == semantic.Entity && strings.Contains(id, "/repository/status/net_repository_status_unchanged"):
 			model.RepositoryTarget = node.ID
 		case node.Kind == semantic.Entity && strings.Contains(id, "/metric/relation"):
 			model.MetricTarget = node.ID
@@ -365,6 +471,7 @@ func deriveSourceModel(ir semantic.IR) (sourceModel, error) {
 	}
 	return model, nil
 }
+
 func parseClaim(node semantic.Node) (claimSpec, error) {
 	marker := "/claim/"
 	index := strings.Index(node.ID.String(), marker)
@@ -387,16 +494,19 @@ func parseClaim(node semantic.Node) (claimSpec, error) {
 	}
 	return claimSpec{ID: strings.ToLower(parts[0]) + "." + parts[1], Class: class, PredicateID: predicate, ProofChoice: proof, MetaOperation: parts[4], EvidenceAttempt: parts[5], PriorState: prior, NodeID: node.ID}, nil
 }
+
 func allowedPredicate(predicate string) bool {
 	switch predicate {
-	case "query-relation-exact", "semantic-digest-equal", "graph-digest-equal", "query-projection-stable", "receipt-observation-digest-verified", "claim-ledger-chained", "unknown-subject-preserved", "immutable-mutation-rejected", "mutation-boundary-rejected", "net-repository-changes-empty":
+	case "query-relation-exact", "semantic-digest-equal", "graph-digest-equal", "query-projection-stable", "receipt-observation-digest-verified", "claim-ledger-chained", "unknown-subject-preserved", "immutable-id-patch-rejected", "immutable-id-patch-accepted-false", "net-repository-status-unchanged":
 		return true
 	}
 	return false
 }
+
 func isSandboxOperation(program string) bool {
 	return strings.HasPrefix(program, "reflect.query:") || strings.HasPrefix(program, "reflect.attempt:") || strings.HasPrefix(program, "reflect.observation:")
 }
+
 func sourceTargets(ir semantic.IR, activity semantic.ID) []semantic.ID {
 	result := []semantic.ID{}
 	for _, fact := range ir.Graph.DeterministicFacts() {
@@ -407,6 +517,7 @@ func sourceTargets(ir semantic.IR, activity semantic.ID) []semantic.ID {
 	sort.Slice(result, func(i, j int) bool { return result[i] < result[j] })
 	return result
 }
+
 func targetForOperation(ir semantic.IR, operation operationSpec) (semantic.ID, error) {
 	marker := ""
 	switch operation.Program {
@@ -420,8 +531,8 @@ func targetForOperation(ir semantic.IR, operation operationSpec) (semantic.ID, e
 		marker = "/mutation/request"
 	case "reflect.observation:receipt-seal":
 		marker = "/receipt/query"
-	case "reflect.observation:repository-net":
-		marker = "/repository/status/net"
+	case "reflect.observation:net-repository-status-unchanged":
+		marker = "/repository/status/net_repository_status_unchanged"
 	}
 	for _, target := range sourceTargets(ir, operation.ID) {
 		if marker == "" || strings.Contains(target.String(), marker) {
@@ -431,24 +542,24 @@ func targetForOperation(ir semantic.IR, operation operationSpec) (semantic.ID, e
 	return "", fmt.Errorf("operation %q has no source-backed target", operation.Program)
 }
 
-func reconstructAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, semanticDigest string, fx effects) ([]attempt, bool, string, string, string, error) {
+func reconstructAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, semanticDigest string, fx effects) ([]attempt, bool, string, string, string, string, error) {
 	values := make([]attempt, 0, len(model.Operations)+1)
-	authority, api, outcome, apiError := false, "", "", ""
+	immutableAccepted, capability, api, outcome, apiError := false, "UNKNOWN", "", "", ""
 	for _, operation := range model.Operations {
 		target, err := targetForOperation(ir, operation)
 		if err != nil {
-			return nil, false, "", "", "", err
+			return nil, false, "UNKNOWN", "", "", "", err
 		}
 		id := attemptIDForProgram(operation.Program)
 		switch {
 		case strings.HasPrefix(operation.Program, "reflect.attempt:"):
-			value, allowed, mutationAPI, mutationOutcome, mutationError, err := reconstructMutation(ir, operation, id, target, semanticDigest, model, model.Claims)
+			value, accepted, detached, mutationAPI, mutationOutcome, mutationError, err := reconstructMutation(ir, operation, id, target, semanticDigest, model, model.Claims)
 			if err != nil {
-				return nil, false, "", "", "", err
+				return nil, false, "UNKNOWN", "", "", "", err
 			}
 			values = append(values, value)
-			authority, api, outcome, apiError = allowed, mutationAPI, mutationOutcome, mutationError
-		case operation.Program == "reflect.observation:repository-net":
+			immutableAccepted, capability, api, outcome, apiError = accepted, detached, mutationAPI, mutationOutcome, mutationError
+		case operation.Program == "reflect.observation:net-repository-status-unchanged":
 			values = append(values, repositoryAttempt(operation, id, target, semanticDigest, fx, model.Claims))
 		default:
 			values = append(values, reconstructExact(graph, operation, id, target, semanticDigest, strings.HasPrefix(operation.Program, "reflect.observation:"), model.Claims))
@@ -456,7 +567,7 @@ func reconstructAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, 
 	}
 	metric, ok := findOperation(model.Operations, "reflect.query:metrics")
 	if !ok {
-		return nil, false, "", "", "", errors.New("metrics query operation is absent")
+		return nil, false, "UNKNOWN", "", "", "", errors.New("metrics query operation is absent")
 	}
 	values = append(values, reconstructUnknown(graph, metric, model.UnknownTarget, semanticDigest, model.Claims))
 	for index := range values {
@@ -467,8 +578,9 @@ func reconstructAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, 
 		}
 	}
 	sort.SliceStable(values, func(i, j int) bool { return values[i].ID < values[j].ID })
-	return values, authority, api, outcome, apiError, nil
+	return values, immutableAccepted, capability, api, outcome, apiError, nil
 }
+
 func reconstructExact(graph *query.Graph, operation operationSpec, id string, target semantic.ID, semanticDigest string, receipt bool, claims []claimSpec) attempt {
 	before := graph.StableHash()
 	value := attempt{ID: id, Class: classForAttempt(id, claims), Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt(id, claims), Stage: "QUERY", Step: "match-source-relation", SemanticDigestBefore: semanticDigest, GraphDigestBefore: before}
@@ -490,10 +602,11 @@ func reconstructExact(graph *query.Graph, operation operationSpec, id string, ta
 	}
 	return value
 }
-func reconstructMutation(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest string, model sourceModel, claims []claimSpec) (attempt, bool, string, string, string, error) {
+
+func reconstructMutation(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest string, model sourceModel, claims []claimSpec) (attempt, bool, string, string, string, string, error) {
 	node, ok := ir.Graph.Node(target)
 	if !ok {
-		return attempt{}, false, "", "", "", fmt.Errorf("mutation target %q disappeared", target)
+		return attempt{}, false, "UNKNOWN", "", "", "", fmt.Errorf("mutation target %q disappeared", target)
 	}
 	field, payload, intent, locality := tail(model.MutationField), tail(model.MutationPayload), tail(model.MutationIntent), tail(model.MutationLocality)
 	fieldHash := ""
@@ -501,41 +614,41 @@ func reconstructMutation(ir semantic.IR, operation operationSpec, id string, tar
 	if field != "id" {
 		fieldHash, err = semantic.NodeFieldHash(node, field)
 		if err != nil {
-			return attempt{}, false, "", "", "", err
+			return attempt{}, false, "UNKNOWN", "", "", "", err
 		}
 	}
 	beforeSemantic, beforeGraph := ir.StableHash(), ir.Graph.StableHash()
 	request := semantic.GraphPatchRequest{SchemaVersion: semantic.GraphPatchSchemaVersion, Operation: semantic.GraphPatchSetNodeField, ExpectedGraphHash: beforeGraph, NodeID: node.ID, ExpectedNodeHash: node.StableHash(), Field: field, ExpectedFieldHash: fieldHash, ExpectedSourceDigest: semanticDigest, ExpectedIRDigest: semanticDigest, AllowedIntent: intent, Locality: locality}
 	base := semantic.GraphPatchBase{SourceDigest: semanticDigest, IRDigest: semanticDigest}
 	patched, callErr := ir.Graph.ApplyGraphPatch(base, request, semantic.GraphPatchMutation{Name: payload})
-	afterSemantic, afterGraph := ir.StableHash(), ir.Graph.StableHash()
-	value := attempt{ID: id, Class: classForAttempt(id, claims), Operation: "mutate", Root: operation.ID.String(), Relation: "set", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt(id, claims), Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request", API: "semantic.Graph.ApplyGraphPatch", SemanticDigestBefore: beforeSemantic, SemanticDigestAfter: afterSemantic, GraphDigestBefore: beforeGraph, GraphDigestAfter: afterGraph, OriginalSemanticDigestAfter: afterSemantic, OriginalGraphDigestAfter: afterGraph}
+	originalSemanticAfter, originalGraphAfter := ir.StableHash(), ir.Graph.StableHash()
+	value := attempt{ID: id, Class: classForAttempt(id, claims), Operation: "mutate", Root: operation.ID.String(), Relation: "set", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt(id, claims), Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request", API: "semantic.Graph.ApplyGraphPatch", MutationField: field, MutationPayload: payload, MutationIntent: intent, MutationLocality: locality, SemanticDigestBefore: beforeSemantic, SemanticDigestAfter: originalSemanticAfter, GraphDigestBefore: beforeGraph, GraphDigestAfter: originalGraphAfter, OriginalSemanticDigestAfter: originalSemanticAfter, OriginalGraphDigestAfter: originalGraphAfter}
 	if callErr != nil {
-		value.APIErrorCode = mutationErrorCode(callErr)
-		value.APIOutcome, value.APIError = "REJECTED", callErr.Error()
-		if afterSemantic != beforeSemantic || afterGraph != beforeGraph {
-			value.Decision, value.Resolution, value.Reason = "REFUTED", "EXACT", "MUTATION_API_CHANGED_OR_PARTIALLY_MUTATED"
-			return value, true, value.API, value.APIOutcome, value.APIError, nil
+		value.APIErrorCode, value.APIError = mutationErrorCode(callErr), callErr.Error()
+		if originalSemanticAfter != beforeSemantic || originalGraphAfter != beforeGraph {
+			value.APIOutcome, value.Decision, value.Resolution, value.Reason = "ERROR", "REFUTED", "EXACT", "MUTATION_API_CHANGED_OR_PARTIALLY_MUTATED"
+			return value, false, "UNKNOWN", value.API, value.APIOutcome, value.APIError, nil
 		}
 		var conflict semantic.GraphPatchConflict
 		if errors.As(callErr, &conflict) && conflict.Code == semantic.PatchImmutableField && conflict.Detail == field {
-			value.Decision, value.Resolution, value.Reason = "DENIED", "EXACT_REJECTION", "IMMUTABLE_FIELD_REJECTED"
-			return value, false, value.API, value.APIOutcome, value.APIError, nil
+			value.APIOutcome, value.Decision, value.Resolution, value.Reason = "REJECTED", "DENIED", "EXACT_REJECTION", "IMMUTABLE_ID_PATCH_REJECTED"
+			return value, false, "UNKNOWN", value.API, value.APIOutcome, value.APIError, nil
 		}
-		value.Decision, value.Resolution, value.Reason = "UNKNOWN", "LOWER_RESOLUTION", "MUTATION_API_ERROR_"+strings.ToUpper(value.APIErrorCode)
-		return value, false, value.API, "ERROR", value.APIError, nil
+		value.APIOutcome, value.Decision, value.Resolution, value.Reason = "ERROR", "UNKNOWN", "LOWER_RESOLUTION", "MUTATION_API_ERROR_"+strings.ToUpper(value.APIErrorCode)
+		return value, false, "UNKNOWN", value.API, value.APIOutcome, value.APIError, nil
 	}
 	patchedIR := ir
 	patchedIR.Graph = patched
 	value.ReturnedSemanticDigest, value.ReturnedGraphDigest = patchedIR.StableHash(), patched.StableHash()
-	value.SemanticDigestAfter, value.GraphDigestAfter = value.ReturnedSemanticDigest, value.ReturnedGraphDigest
-	value.Decision, value.Resolution, value.Reason, value.APIOutcome = "REFUTED", "EXACT", "MUTATION_CAPABILITY_ACCEPTED", "ACCEPTED"
-	return value, true, value.API, value.APIOutcome, "", nil
+	value.Decision, value.Resolution, value.Reason, value.APIOutcome = "REFUTED", "EXACT", "DETACHED_GRAPH_PATCH_ACCEPTED", "ACCEPTED"
+	return value, field == "id", "OBSERVED", value.API, value.APIOutcome, "", nil
 }
+
 func tail(id semantic.ID) string {
 	parts := strings.Split(strings.TrimSuffix(id.String(), "/"), "/")
 	return parts[len(parts)-1]
 }
+
 func mutationErrorCode(err error) string {
 	var conflict semantic.GraphPatchConflict
 	if errors.As(err, &conflict) {
@@ -543,16 +656,23 @@ func mutationErrorCode(err error) string {
 	}
 	return "unknown"
 }
+
 func repositoryAttempt(operation operationSpec, id string, target semantic.ID, semanticDigest string, fx effects, claims []claimSpec) attempt {
+	value := attempt{ID: id, Class: classForAttempt(id, claims), Operation: "repository", Root: operation.ID.String(), Relation: "net", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt(id, claims), Stage: "REPOSITORY", Step: "compare-normalized-status", SemanticDigestBefore: semanticDigest, SemanticDigestAfter: semanticDigest}
+	if !fx.RepositoryEvidenceAvailable {
+		value.Step, value.Reason, value.Decision, value.Resolution = "read-status", fx.RepositoryObservationReason, "UNKNOWN", "LOWER_RESOLUTION"
+		return value
+	}
 	material := semantic.StableHashString(strings.Join(fx.RepositoryStatusBefore, "\n") + "\x00" + strings.Join(fx.RepositoryStatusAfter, "\n"))
-	value := attempt{ID: id, Class: classForAttempt(id, claims), Operation: "repository", Root: operation.ID.String(), Relation: "net", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt(id, claims), Stage: "REPOSITORY", Step: "compare-status-snapshots", SemanticDigestBefore: semanticDigest, SemanticDigestAfter: semanticDigest, GraphDigestBefore: material, GraphDigestAfter: material, ObservedMaterialDigest: material}
-	if len(fx.NetRepositoryChanges) == 0 && stringSliceEqual(fx.RepositoryStatusBefore, fx.RepositoryStatusAfter) {
-		value.Decision, value.Resolution, value.Reason = "PASS", "EXACT", "NET_REPOSITORY_CHANGES_EMPTY"
+	value.GraphDigestBefore, value.GraphDigestAfter, value.ObservedMaterialDigest = material, material, material
+	if reflectRepositoryNet(fx) {
+		value.Decision, value.Resolution, value.Reason = "PASS", "EXACT", "NET_REPOSITORY_STATUS_UNCHANGED"
 	} else {
-		value.Decision, value.Resolution, value.Reason = "REFUTED", "EXACT", "NET_REPOSITORY_CHANGES_OBSERVED"
+		value.Decision, value.Resolution, value.Reason = "REFUTED", "EXACT", "NET_REPOSITORY_STATUS_CHANGED"
 	}
 	return value
 }
+
 func reconstructUnknown(graph *query.Graph, operation operationSpec, target query.ID, semanticDigest string, claims []claimSpec) attempt {
 	value := attempt{ID: "unknown.target", Class: classForAttempt("unknown.target", claims), Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(), MetaOperation: metaForAttempt("unknown.target", operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: proofForAttempt("unknown.target", claims), Stage: "UNKNOWN", Step: "resolve-unknown-subject", SemanticDigestBefore: semanticDigest, GraphDigestBefore: graph.StableHash()}
 	_, err := graph.ExactMatch(query.NewExactQuery(query.ID(operation.ID.String()), query.Used, target))
@@ -567,6 +687,7 @@ func reconstructUnknown(graph *query.Graph, operation operationSpec, target quer
 	}
 	return value
 }
+
 func classForAttempt(id string, claims []claimSpec) string {
 	for _, claim := range claims {
 		if claim.EvidenceAttempt == id {
@@ -575,6 +696,7 @@ func classForAttempt(id string, claims []claimSpec) string {
 	}
 	return "SOURCE_DERIVED"
 }
+
 func proofForAttempt(id string, claims []claimSpec) string {
 	for _, claim := range claims {
 		if claim.EvidenceAttempt == id {
@@ -583,6 +705,7 @@ func proofForAttempt(id string, claims []claimSpec) string {
 	}
 	return "SOURCE_DERIVED"
 }
+
 func metaForAttempt(id, fallback string, claims []claimSpec) string {
 	for _, claim := range claims {
 		if claim.EvidenceAttempt == id {
@@ -591,6 +714,7 @@ func metaForAttempt(id, fallback string, claims []claimSpec) string {
 	}
 	return fallback
 }
+
 func findOperation(values []operationSpec, program string) (operationSpec, bool) {
 	for _, value := range values {
 		if value.Program == program {
@@ -599,6 +723,7 @@ func findOperation(values []operationSpec, program string) (operationSpec, bool)
 	}
 	return operationSpec{}, false
 }
+
 func attemptIDForProgram(program string) string {
 	switch {
 	case strings.HasPrefix(program, "reflect.query:"):
@@ -606,8 +731,8 @@ func attemptIDForProgram(program string) string {
 	case strings.HasPrefix(program, "reflect.attempt:"):
 		return "mutation.attempt"
 	case strings.HasPrefix(program, "reflect.observation:"):
-		if strings.HasSuffix(program, ":repository-net") {
-			return "repository.net"
+		if strings.HasSuffix(program, ":net-repository-status-unchanged") {
+			return "repository.net-status-unchanged"
 		}
 		return "receipt.seal"
 	default:
@@ -627,20 +752,31 @@ func buildClaimTransitions(claims []claimSpec, attempts []attempt, fx effects, m
 		values = append(values, registration)
 		previous = registration.Digest
 		result := evaluateClaim(claim, attempts, fx, material)
+		if claim.PredicateID == "claim-ledger-chained" {
+			result = predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "verify-complete-transition-chain", Reason: "CHAIN_PENDING"}
+		}
 		final := registration
 		final.Sequence = sequence + 1
 		final.Stage, final.Step, final.Reason, final.From, final.To, final.PreviousDigest, final.ObservedMaterialDigest = result.Stage, result.Step, result.Reason, claim.PriorState, result.To, previous, result.Material
-		if claim.PredicateID == "claim-ledger-chained" && final.PreviousDigest != registration.Digest {
-			final.Stage, final.Step, final.Reason, final.To, final.ObservedMaterialDigest = "RESOLVE", "verify-claim-ledger-chain", "CLAIM_LEDGER_CHAIN_BROKEN", claim.PriorState, registration.Digest
-		}
 		final.Digest = transitionDigest(final)
 		values = append(values, final)
 		previous = final.Digest
 		sequence += 2
 	}
+	chainDigest := transitionChainDigest(values)
+	for index := range values {
+		if index%2 == 1 && values[index].PredicateID == "claim-ledger-chained" {
+			values[index].To, values[index].Stage, values[index].Step, values[index].Reason, values[index].ObservedMaterialDigest = "DISCHARGED", "OBSERVE", "verify-complete-transition-chain", "COMPLETE_TRANSITION_CHAIN_VERIFIED", chainDigest
+		}
+	}
+	resignTransitions(values)
 	return values
 }
+
 func evaluateClaim(claim claimSpec, attempts []attempt, fx effects, material string) predicateResult {
+	if claim.PredicateID == "claim-ledger-chained" {
+		return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "verify-complete-transition-chain", Reason: "CHAIN_PENDING"}
+	}
 	value, ok := findAttempt(attempts, claim.EvidenceAttempt)
 	if !ok {
 		return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "resolve-missing-evidence", Reason: "EVIDENCE_MISSING"}
@@ -649,7 +785,7 @@ func evaluateClaim(claim claimSpec, attempts []attempt, fx effects, material str
 		return predicateResult{To: "REFUTED", Stage: "REFUTE", Step: "predicate-contradiction", Reason: reason, Material: value.ObservedMaterialDigest}
 	}
 	observationError := func() predicateResult {
-		return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "predicate-observation-error", Reason: value.Reason, Material: value.ObservedMaterialDigest}
+		return predicateResult{To: claim.PriorState, Stage: value.Stage, Step: value.Step, Reason: value.Reason, Material: value.ObservedMaterialDigest}
 	}
 	exact := value.Decision == "PASS" && value.Resolution == "EXACT" && value.MatchedFacts == 1
 	sameSemantic := value.SemanticDigestBefore != "" && value.SemanticDigestBefore == value.SemanticDigestAfter
@@ -695,14 +831,6 @@ func evaluateClaim(claim claimSpec, attempts []attempt, fx effects, material str
 			return contradiction("RECEIPT_MATERIAL_DIGEST_MISMATCH")
 		}
 		return observationError()
-	case "claim-ledger-chained":
-		if value.ObservedMaterialDigest != "" && value.Decision == "PASS" {
-			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-claim-ledger-evidence", Reason: "CLAIM_LEDGER_EVIDENCE_PRESENT", Material: value.ObservedMaterialDigest}
-		}
-		if value.Decision == "REFUTED" {
-			return contradiction("CLAIM_LEDGER_EVIDENCE_CONTRADICTION")
-		}
-		return observationError()
 	case "unknown-subject-preserved":
 		if value.Decision == "UNKNOWN" && value.Resolution == "LOWER_RESOLUTION" && value.Stage == "UNKNOWN" && value.Step == "resolve-unknown-subject" && value.Reason == "UNKNOWN_TARGET" {
 			return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "retain-open-on-unknown", Reason: "UNKNOWN_PRESERVED", Material: value.GraphDigestAfter}
@@ -711,38 +839,40 @@ func evaluateClaim(claim claimSpec, attempts []attempt, fx effects, material str
 			return contradiction("UNKNOWN_SUBJECT_BOUNDARY_CONTRADICTION")
 		}
 		return observationError()
-	case "immutable-mutation-rejected":
+	case "immutable-id-patch-rejected":
 		if immutableRejection(value) {
-			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-immutable-rejection", Reason: "IMMUTABLE_FIELD_REJECTED", Material: value.OriginalGraphDigestAfter}
+			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-immutable-id-patch-rejection", Reason: "IMMUTABLE_ID_PATCH_REJECTED", Material: value.OriginalGraphDigestAfter}
 		}
 		if value.Decision == "REFUTED" || value.APIOutcome == "ACCEPTED" {
-			return contradiction("IMMUTABLE_MUTATION_BOUNDARY_VIOLATED")
+			return contradiction("IMMUTABLE_ID_PATCH_ACCEPTED")
 		}
 		return observationError()
-	case "mutation-boundary-rejected":
-		if immutableRejection(value) && !fx.MutationAuthority && fx.MutationOutcome == "REJECTED" {
-			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-mutation-boundary", Reason: "TYPED_REJECTION_AND_GRAPH_UNCHANGED", Material: value.OriginalGraphDigestAfter}
+	case "immutable-id-patch-accepted-false":
+		if immutableRejection(value) && !fx.ImmutableIDPatchAccepted && fx.MutationOutcome == "REJECTED" {
+			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-scoped-immutable-id-fact", Reason: "IMMUTABLE_ID_PATCH_ACCEPTED_FALSE", Material: semantic.StableHashString(value.OriginalGraphDigestAfter + "|immutable_id_patch_accepted=false")}
 		}
-		if fx.MutationAuthority || value.APIOutcome == "ACCEPTED" || value.Decision == "REFUTED" {
-			return contradiction("MUTATION_AUTHORITY_OBSERVED")
+		if fx.ImmutableIDPatchAccepted || value.APIOutcome == "ACCEPTED" || value.Decision == "REFUTED" {
+			return contradiction("IMMUTABLE_ID_PATCH_ACCEPTED")
 		}
 		return observationError()
-	case "net-repository-changes-empty":
+	case "net-repository-status-unchanged":
 		if reflectRepositoryNet(fx) && value.Decision == "PASS" && value.Resolution == "EXACT" {
-			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-net-repository-status", Reason: "NET_REPOSITORY_CHANGES_EMPTY", Material: value.ObservedMaterialDigest}
+			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-net-repository-status", Reason: "NET_REPOSITORY_STATUS_UNCHANGED", Material: value.ObservedMaterialDigest}
 		}
-		if len(fx.NetRepositoryChanges) > 0 {
-			return contradiction("NET_REPOSITORY_CHANGES_OBSERVED")
+		if fx.RepositoryEvidenceAvailable && len(fx.NetRepositoryChanges) > 0 {
+			return contradiction("NET_REPOSITORY_STATUS_CHANGED")
 		}
 		return observationError()
 	}
 	return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "reject-unknown-predicate", Reason: "PREDICATE_NOT_ALLOWED"}
 }
+
 func immutableRejection(value attempt) bool {
-	return value.Decision == "DENIED" && value.Resolution == "EXACT_REJECTION" && value.APIOutcome == "REJECTED" && value.APIErrorCode == string(semantic.PatchImmutableField) && value.GraphDigestBefore != "" && value.GraphDigestBefore == value.OriginalGraphDigestAfter && value.SemanticDigestBefore == value.OriginalSemanticDigestAfter && value.ReturnedGraphDigest == ""
+	return value.Decision == "DENIED" && value.Resolution == "EXACT_REJECTION" && value.APIOutcome == "REJECTED" && value.APIErrorCode == string(semantic.PatchImmutableField) && value.MutationField == "id" && value.GraphDigestBefore != "" && value.GraphDigestBefore == value.OriginalGraphDigestAfter && value.SemanticDigestBefore == value.OriginalSemanticDigestAfter && value.ReturnedGraphDigest == ""
 }
+
 func reflectRepositoryNet(fx effects) bool {
-	return fx.RepositoryStatusBefore != nil && fx.RepositoryStatusAfter != nil && len(fx.NetRepositoryChanges) == 0 && stringSliceEqual(fx.RepositoryStatusBefore, fx.RepositoryStatusAfter)
+	return fx.RepositoryEvidenceAvailable && fx.RepositoryStatusBefore != nil && fx.RepositoryStatusAfter != nil && len(fx.NetRepositoryChanges) == 0 && stringSliceEqual(fx.RepositoryStatusBefore, fx.RepositoryStatusAfter)
 }
 
 func changedLines(before, after []string) []string {
@@ -767,6 +897,7 @@ func changedLines(before, after []string) []string {
 	sort.Strings(changed)
 	return changed
 }
+
 func stringSliceEqual(left, right []string) bool {
 	if len(left) != len(right) {
 		return false
@@ -778,6 +909,7 @@ func stringSliceEqual(left, right []string) bool {
 	}
 	return true
 }
+
 func findAttempt(values []attempt, id string) (attempt, bool) {
 	for _, value := range values {
 		if value.ID == id {
@@ -813,6 +945,7 @@ func buildContract(model sourceModel, source snapshot, attempts []attempt, claim
 		return value.Operation == "query" && value.Decision == "PASS" && value.Resolution == "EXACT"
 	}), DeniedMutations: countAttempts(attempts, func(value attempt) bool { return value.Operation == "mutate" && value.Decision == "DENIED" }), UnknownTargets: countAttempts(attempts, func(value attempt) bool { return value.Decision == "UNKNOWN" }), RefutedAttempts: countAttempts(attempts, func(value attempt) bool { return value.Decision == "REFUTED" }), TransitionCount: len(claims), SatisfiedIndicators: countTransitions(claims, "DISCHARGED")}
 }
+
 func buckets(totals map[string]int) []bucket {
 	names := make([]string, 0, len(totals))
 	for name := range totals {
@@ -825,6 +958,7 @@ func buckets(totals map[string]int) []bucket {
 	}
 	return result
 }
+
 func countAttempts(values []attempt, predicate func(attempt) bool) int {
 	count := 0
 	for _, value := range values {
@@ -834,6 +968,7 @@ func countAttempts(values []attempt, predicate func(attempt) bool) int {
 	}
 	return count
 }
+
 func countTransitions(values []claimTransition, state string) int {
 	count := 0
 	for _, value := range values {
@@ -843,10 +978,11 @@ func countTransitions(values []claimTransition, state string) int {
 	}
 	return count
 }
-func buildReceipt(value observation, satisfied, total int, sourceReconstruction, producerImports coordinates, imports importBoundary) receipt {
+
+func buildReceipt(value observation, verified verifiedObservation, sourceReconstruction, producerImports coordinates, imports importBoundary) receipt {
 	classTotals, classSatisfied, proofTotals, proofSatisfied := map[string]int{}, map[string]int{}, map[string]int{}, map[string]int{}
-	for index := 0; index < len(value.Claims); index += 2 {
-		registration, final := value.Claims[index], value.Claims[index+1]
+	for index := 0; index < len(verified.Claims); index += 2 {
+		registration, final := verified.Claims[index], verified.Claims[index+1]
 		classTotals[registration.Class]++
 		proofTotals[registration.ProofChoice]++
 		if final.To == "DISCHARGED" {
@@ -854,19 +990,26 @@ func buildReceipt(value observation, satisfied, total int, sourceReconstruction,
 			proofSatisfied[registration.ProofChoice]++
 		}
 	}
-	decision, reason := "PASS", "OBSERVATION_BOUNDARY_CONFORMANT"
-	for _, claim := range value.Claims {
+	decision, reason, resolution := "PASS", "OBSERVATION_BOUNDARY_CONFORMANT", "OBSERVATION_ONLY"
+	for _, claim := range verified.Claims {
 		if claim.To == "REFUTED" {
 			decision, reason = "REFUTED", "BOUNDARY_VIOLATION_OBSERVED"
 			break
 		}
 	}
+	if value.SubjectBinding.Decision != "PASS" {
+		decision, resolution, reason = "UNKNOWN", "LOWER_RESOLUTION", value.SubjectBinding.Reason
+	}
 	subjectResolution := "EXACT_ONLY"
-	if value.Contract.UnknownTargets > 0 {
+	if verified.Contract.UnknownTargets > 0 {
 		subjectResolution = "MIXED_EXACT_AND_LOWER_RESOLUTION"
 	}
-	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: decision, Resolution: "OBSERVATION_ONLY", SubjectResolution: subjectResolution, Reason: reason, Producer: value.Producer, Consumer: consumerName, Contract: value.Contract, Source: value.Source, Attempts: value.Attempts, Claims: value.Claims, Coordinates: coordinates{Satisfied: satisfied, Total: total, BasisPoints: basisPoints(satisfied, total)}, Classes: scores(classTotals, classSatisfied), Proofs: scores(proofTotals, proofSatisfied), Effects: value.Effects, SourceReconstruction: sourceReconstruction, ProducerImports: producerImports, ImportBoundary: imports, PromotionCreditBPS: 0, MutationAuthority: value.Effects.MutationAuthority, NotClaimed: []string{"generic Go reflection API equivalence", "runtime capability isolation beyond this process", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
+	if value.SubjectBinding.Decision != "PASS" {
+		subjectResolution = "UNKNOWN_SUBJECT_SHA"
+	}
+	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: decision, Resolution: resolution, SubjectResolution: subjectResolution, Reason: reason, Producer: value.Producer, Consumer: consumerName, Contract: verified.Contract, Source: verified.Source, Attempts: verified.Attempts, Claims: verified.Claims, Coordinates: coordinates{Satisfied: countTransitions(verified.Claims, "DISCHARGED"), Total: len(verified.Model.Claims), BasisPoints: basisPoints(countTransitions(verified.Claims, "DISCHARGED"), len(verified.Model.Claims))}, Classes: scores(classTotals, classSatisfied), Proofs: scores(proofTotals, proofSatisfied), Effects: value.Effects, SubjectBinding: value.SubjectBinding, SourceReconstruction: sourceReconstruction, ProducerImports: producerImports, ImportBoundary: imports, PromotionCreditBPS: 0, ImmutableIDPatchAccepted: value.Effects.ImmutableIDPatchAccepted, DetachedGraphPatchCapability: value.Effects.DetachedGraphPatchCapability, OverallAuthority: value.Effects.OverallAuthority, ReceiptMaterialDigest: verified.Material, TransitionChainDigest: verified.TransitionChainDigest, Attestor: consumerName, NotClaimed: []string{"generic Go reflection API equivalence", "global mutation authority or repository event-level transient writes", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
 }
+
 func scores(totals, satisfied map[string]int) []score {
 	names := make([]string, 0, len(totals))
 	for name := range totals {
@@ -879,12 +1022,14 @@ func scores(totals, satisfied map[string]int) []score {
 	}
 	return result
 }
+
 func basisPoints(satisfied, total int) int {
 	if total == 0 {
 		return 0
 	}
 	return satisfied * 10000 / total
 }
+
 func reconstructionCoordinates(checks []bool) coordinates {
 	satisfied := 0
 	for _, check := range checks {
@@ -894,22 +1039,97 @@ func reconstructionCoordinates(checks []bool) coordinates {
 	}
 	return coordinates{Satisfied: satisfied, Total: len(checks), BasisPoints: basisPoints(satisfied, len(checks))}
 }
-func observationDigest(value observation) string    { value.Digest = ""; return hashJSON(value) }
-func transitionDigest(value claimTransition) string { value.Digest = ""; return hashJSON(value) }
-func receiptDigest(value receipt) string            { value.Digest = ""; return hashJSON(value) }
+
+func validateTransitionChain(values []claimTransition) (string, error) {
+	if len(values) == 0 || len(values)%2 != 0 {
+		return "", fmt.Errorf("transition chain has invalid length %d", len(values))
+	}
+	previous := ""
+	for index, value := range values {
+		if value.Sequence != index+1 || value.PreviousDigest != previous || value.Digest != transitionDigest(value) {
+			return "", fmt.Errorf("transition chain link %d is invalid", index+1)
+		}
+		if value.ClaimID == "" || value.Class == "" || value.ProofChoice == "" || value.PredicateID == "" || value.PriorState != "OPEN" || value.Producer != producerName || value.Consumer != consumerName {
+			return "", fmt.Errorf("transition %d lacks complete claim identity", index+1)
+		}
+		if index%2 == 0 {
+			if value.From != "UNRECORDED" || value.To != value.PriorState || value.Stage != "DECLARE" {
+				return "", fmt.Errorf("claim registration %d is invalid", index+1)
+			}
+		} else {
+			registration := values[index-1]
+			if value.ClaimID != registration.ClaimID || value.Class != registration.Class || value.ProofChoice != registration.ProofChoice || value.MetaOperation != registration.MetaOperation || value.PriorState != registration.PriorState || value.EvidenceAttempt != registration.EvidenceAttempt || value.PredicateID != registration.PredicateID || value.From != value.PriorState {
+				return "", fmt.Errorf("claim transition %d is not bound to its registration", index+1)
+			}
+		}
+		previous = value.Digest
+	}
+	return transitionChainDigest(values), nil
+}
+
+func transitionChainDigest(values []claimTransition) string {
+	canonical := append([]claimTransition(nil), values...)
+	for index := range canonical {
+		canonical[index].Digest = ""
+		canonical[index].PreviousDigest = ""
+		canonical[index].ObservedMaterialDigest = ""
+		if index%2 == 1 && canonical[index].PredicateID == "claim-ledger-chained" {
+			canonical[index].To, canonical[index].Stage, canonical[index].Step, canonical[index].Reason = "DISCHARGED", "OBSERVE", "verify-complete-transition-chain", "COMPLETE_TRANSITION_CHAIN_VERIFIED"
+		}
+	}
+	return hashJSON(canonical)
+}
+
+func resignTransitions(values []claimTransition) {
+	previous := ""
+	for index := range values {
+		values[index].Sequence, values[index].PreviousDigest = index+1, previous
+		values[index].Digest = transitionDigest(values[index])
+		previous = values[index].Digest
+	}
+}
+
+func observationDigest(value observation) string {
+	value.Digest, value.ProvisionalDigest = "", ""
+	return hashJSON(value)
+}
+
+func attestationDigest(value receipt) string {
+	value.Digest, value.AttestationDigest = "", ""
+	return hashJSON(value)
+}
+
+func transitionDigest(value claimTransition) string {
+	value.Digest = ""
+	return hashJSON(value)
+}
+
+func receiptDigest(value receipt) string {
+	value.Digest = ""
+	return hashJSON(value)
+}
+
 func hashJSON(value any) string {
 	payload, _ := json.Marshal(value)
 	sum := sha256.Sum256(payload)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
+
 func bytesDigest(value []byte) string {
 	sum := sha256.Sum256(value)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
+
 func countLines(data []byte) int {
 	if len(data) == 0 {
 		return 0
 	}
-	return strings.Count(string(data), "\n")
+	text := string(data)
+	count := strings.Count(text, "\n")
+	if !strings.HasSuffix(text, "\n") {
+		count++
+	}
+	return count
 }
+
 func fail(format string, args ...any) { fmt.Fprintf(os.Stderr, format+"\n", args...); os.Exit(1) }

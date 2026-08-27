@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
@@ -15,31 +16,51 @@ func buildClaimTransitions(claims []claimSpec, attempts []Attempt, effects Effec
 	previous := ""
 	sequence := 1
 	for _, claim := range claims {
-		registration := ClaimTransition{Sequence: sequence, ClaimID: claim.ID, Class: claim.Class, ProofChoice: claim.ProofChoice, MetaOperation: claim.MetaOperation, PriorState: claim.PriorState, EvidenceAttempt: claim.EvidenceAttempt, PredicateID: claim.PredicateID, Producer: ProducerName, Consumer: ConsumerName, Stage: "DECLARE", Step: "register-source-claim", Reason: "CLAIM_PRIOR_STATE_OBSERVED", From: "UNRECORDED", To: claim.PriorState, PreviousDigest: previous}
-		registration.ObservedMaterialDigest = semantic.StableHashString(claim.ID + "|" + claim.PredicateID + "|" + claim.PriorState)
+		registration := ClaimTransition{
+			Sequence: sequence, ClaimID: claim.ID, Class: claim.Class, ProofChoice: claim.ProofChoice, MetaOperation: claim.MetaOperation,
+			PriorState: claim.PriorState, EvidenceAttempt: claim.EvidenceAttempt, PredicateID: claim.PredicateID, Producer: ProducerName, Consumer: ConsumerName,
+			Stage: "DECLARE", Step: "register-source-claim", Reason: "CLAIM_PRIOR_STATE_OBSERVED", From: "UNRECORDED", To: claim.PriorState, PreviousDigest: previous,
+			ObservedMaterialDigest: semantic.StableHashString(claim.ID + "|" + claim.PredicateID + "|" + claim.PriorState),
+		}
 		registration.Digest = digestTransition(registration)
 		transitions = append(transitions, registration)
 		previous = registration.Digest
+
 		result := evaluateClaim(claim, attempts, effects, receiptMaterial)
+		if claim.PredicateID == "claim-ledger-chained" {
+			// This predicate is discharged only after the complete persistent chain is
+			// built and independently validated, never by a normal query attempt.
+			result = predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "verify-complete-transition-chain", Reason: "CHAIN_PENDING"}
+		}
 		observation := registration
 		observation.Sequence = sequence + 1
 		observation.Stage, observation.Step, observation.Reason = result.Stage, result.Step, result.Reason
 		observation.From, observation.To, observation.PreviousDigest = claim.PriorState, result.To, previous
-		if claim.PredicateID == "claim-ledger-chained" && observation.PreviousDigest != registration.Digest {
-			result = predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "verify-claim-ledger-chain", Reason: "CLAIM_LEDGER_CHAIN_BROKEN", Material: registration.Digest}
-			observation.Stage, observation.Step, observation.Reason = result.Stage, result.Step, result.Reason
-			observation.To, observation.ObservedMaterialDigest = result.To, result.Material
-		}
 		observation.ObservedMaterialDigest = result.Material
 		observation.Digest = digestTransition(observation)
 		transitions = append(transitions, observation)
 		previous = observation.Digest
 		sequence += 2
 	}
+
+	chainDigest := transitionChainDigest(transitions)
+	for index := range transitions {
+		if transitions[index].PredicateID == "claim-ledger-chained" && index%2 == 1 {
+			transitions[index].To = "DISCHARGED"
+			transitions[index].Stage = "OBSERVE"
+			transitions[index].Step = "verify-complete-transition-chain"
+			transitions[index].Reason = "COMPLETE_TRANSITION_CHAIN_VERIFIED"
+			transitions[index].ObservedMaterialDigest = chainDigest
+		}
+	}
+	resignTransitions(transitions)
 	return transitions
 }
 
 func evaluateClaim(claim claimSpec, attempts []Attempt, effects Effects, receiptMaterial string) predicateResult {
+	if claim.PredicateID == "claim-ledger-chained" {
+		return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "verify-complete-transition-chain", Reason: "CHAIN_PENDING"}
+	}
 	attempt, ok := findAttempt(attempts, claim.EvidenceAttempt)
 	if !ok {
 		return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "resolve-missing-evidence", Reason: "EVIDENCE_MISSING"}
@@ -48,7 +69,7 @@ func evaluateClaim(claim claimSpec, attempts []Attempt, effects Effects, receipt
 		return predicateResult{To: "REFUTED", Stage: "REFUTE", Step: "predicate-contradiction", Reason: reason, Material: attempt.ObservedMaterialDigest}
 	}
 	observationError := func() predicateResult {
-		return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "predicate-observation-error", Reason: attempt.Reason, Material: attempt.ObservedMaterialDigest}
+		return predicateResult{To: claim.PriorState, Stage: attempt.Stage, Step: attempt.Step, Reason: attempt.Reason, Material: attempt.ObservedMaterialDigest}
 	}
 	exact := attempt.Decision == "PASS" && attempt.Resolution == "EXACT" && attempt.MatchedFacts == 1
 	sameSemantic := attempt.SemanticDigestBefore != "" && attempt.SemanticDigestBefore == attempt.SemanticDigestAfter
@@ -94,14 +115,6 @@ func evaluateClaim(claim claimSpec, attempts []Attempt, effects Effects, receipt
 			return contradiction("RECEIPT_MATERIAL_DIGEST_MISMATCH")
 		}
 		return observationError()
-	case "claim-ledger-chained":
-		if attempt.ObservedMaterialDigest != "" && attempt.Decision == "PASS" {
-			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-claim-ledger-evidence", Reason: "CLAIM_LEDGER_EVIDENCE_PRESENT", Material: attempt.ObservedMaterialDigest}
-		}
-		if attempt.Decision == "REFUTED" {
-			return contradiction("CLAIM_LEDGER_EVIDENCE_CONTRADICTION")
-		}
-		return observationError()
 	case "unknown-subject-preserved":
 		if attempt.Decision == "UNKNOWN" && attempt.Resolution == "LOWER_RESOLUTION" && attempt.Stage == "UNKNOWN" && attempt.Step == "resolve-unknown-subject" && attempt.Reason == "UNKNOWN_TARGET" {
 			return predicateResult{To: claim.PriorState, Stage: "RESOLVE", Step: "retain-open-on-unknown", Reason: "UNKNOWN_PRESERVED", Material: attempt.GraphDigestAfter}
@@ -110,28 +123,28 @@ func evaluateClaim(claim claimSpec, attempts []Attempt, effects Effects, receipt
 			return contradiction("UNKNOWN_SUBJECT_BOUNDARY_CONTRADICTION")
 		}
 		return observationError()
-	case "immutable-mutation-rejected":
+	case "immutable-id-patch-rejected":
 		if immutableRejection(attempt) {
-			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-immutable-rejection", Reason: "IMMUTABLE_FIELD_REJECTED", Material: attempt.OriginalGraphDigestAfter}
+			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-immutable-id-patch-rejection", Reason: "IMMUTABLE_ID_PATCH_REJECTED", Material: attempt.OriginalGraphDigestAfter}
 		}
 		if attempt.Decision == "REFUTED" || attempt.APIOutcome == "ACCEPTED" {
-			return contradiction("IMMUTABLE_MUTATION_BOUNDARY_VIOLATED")
+			return contradiction("IMMUTABLE_ID_PATCH_ACCEPTED")
 		}
 		return observationError()
-	case "mutation-boundary-rejected":
-		if immutableRejection(attempt) && !effects.MutationAuthority && effects.MutationOutcome == "REJECTED" {
-			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-mutation-boundary", Reason: "TYPED_REJECTION_AND_GRAPH_UNCHANGED", Material: attempt.OriginalGraphDigestAfter}
+	case "immutable-id-patch-accepted-false":
+		if immutableRejection(attempt) && !effects.ImmutableIDPatchAccepted && effects.MutationOutcome == "REJECTED" {
+			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-scoped-immutable-id-fact", Reason: "IMMUTABLE_ID_PATCH_ACCEPTED_FALSE", Material: semantic.StableHashString(attempt.OriginalGraphDigestAfter + "|immutable_id_patch_accepted=false")}
 		}
-		if effects.MutationAuthority || attempt.APIOutcome == "ACCEPTED" || attempt.Decision == "REFUTED" {
-			return contradiction("MUTATION_AUTHORITY_OBSERVED")
+		if effects.ImmutableIDPatchAccepted || attempt.APIOutcome == "ACCEPTED" || attempt.Decision == "REFUTED" {
+			return contradiction("IMMUTABLE_ID_PATCH_ACCEPTED")
 		}
 		return observationError()
-	case "net-repository-changes-empty":
+	case "net-repository-status-unchanged":
 		if reflectRepositoryNet(effects) && attempt.Decision == "PASS" && attempt.Resolution == "EXACT" {
-			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-net-repository-status", Reason: "NET_REPOSITORY_CHANGES_EMPTY", Material: attempt.ObservedMaterialDigest}
+			return predicateResult{To: "DISCHARGED", Stage: "OBSERVE", Step: "verify-net-repository-status", Reason: "NET_REPOSITORY_STATUS_UNCHANGED", Material: attempt.ObservedMaterialDigest}
 		}
-		if len(effects.NetRepositoryChanges) > 0 {
-			return contradiction("NET_REPOSITORY_CHANGES_OBSERVED")
+		if effects.RepositoryEvidenceAvailable && len(effects.NetRepositoryChanges) > 0 {
+			return contradiction("NET_REPOSITORY_STATUS_CHANGED")
 		}
 		return observationError()
 	default:
@@ -140,11 +153,11 @@ func evaluateClaim(claim claimSpec, attempts []Attempt, effects Effects, receipt
 }
 
 func immutableRejection(attempt Attempt) bool {
-	return attempt.Decision == "DENIED" && attempt.Resolution == "EXACT_REJECTION" && attempt.APIOutcome == "REJECTED" && attempt.APIErrorCode == string(semantic.PatchImmutableField) && attempt.GraphDigestBefore != "" && attempt.GraphDigestBefore == attempt.OriginalGraphDigestAfter && attempt.SemanticDigestBefore == attempt.OriginalSemanticDigestAfter && attempt.ReturnedGraphDigest == ""
+	return attempt.Decision == "DENIED" && attempt.Resolution == "EXACT_REJECTION" && attempt.APIOutcome == "REJECTED" && attempt.APIErrorCode == string(semantic.PatchImmutableField) && attempt.MutationField == "id" && attempt.GraphDigestBefore != "" && attempt.GraphDigestBefore == attempt.OriginalGraphDigestAfter && attempt.SemanticDigestBefore == attempt.OriginalSemanticDigestAfter && attempt.ReturnedGraphDigest == ""
 }
 
 func reflectRepositoryNet(effects Effects) bool {
-	return effects.RepositoryStatusBefore != nil && effects.RepositoryStatusAfter != nil && len(effects.NetRepositoryChanges) == 0 && stringSliceEqual(effects.RepositoryStatusBefore, effects.RepositoryStatusAfter)
+	return effects.RepositoryEvidenceAvailable && effects.RepositoryStatusBefore != nil && effects.RepositoryStatusAfter != nil && len(effects.NetRepositoryChanges) == 0 && stringSliceEqual(effects.RepositoryStatusBefore, effects.RepositoryStatusAfter)
 }
 
 func stringSliceEqual(left, right []string) bool {
@@ -182,19 +195,70 @@ func receiptMaterialDigest(source Snapshot, attempts []Attempt, effects Effects)
 	return hashJSON(receiptMaterial{Source: source, Attempts: copyAttempts, Effects: effects})
 }
 
+func validateTransitionChain(transitions []ClaimTransition) (string, error) {
+	if len(transitions) == 0 || len(transitions)%2 != 0 {
+		return "", fmt.Errorf("transition chain has invalid length %d", len(transitions))
+	}
+	previous := ""
+	for index, transition := range transitions {
+		if transition.Sequence != index+1 || transition.PreviousDigest != previous || transition.Digest != digestTransition(transition) {
+			return "", fmt.Errorf("transition chain link %d is invalid", index+1)
+		}
+		if transition.ClaimID == "" || transition.Class == "" || transition.ProofChoice == "" || transition.PredicateID == "" || transition.PriorState != "OPEN" || transition.Producer != ProducerName || transition.Consumer != ConsumerName {
+			return "", fmt.Errorf("transition %d lacks complete claim identity", index+1)
+		}
+		if index%2 == 0 {
+			if transition.From != "UNRECORDED" || transition.To != transition.PriorState || transition.Stage != "DECLARE" {
+				return "", fmt.Errorf("claim registration %d is invalid", index+1)
+			}
+		} else {
+			registration := transitions[index-1]
+			if transition.ClaimID != registration.ClaimID || transition.Class != registration.Class || transition.ProofChoice != registration.ProofChoice || transition.MetaOperation != registration.MetaOperation || transition.PriorState != registration.PriorState || transition.EvidenceAttempt != registration.EvidenceAttempt || transition.PredicateID != registration.PredicateID || transition.From != transition.PriorState {
+				return "", fmt.Errorf("claim transition %d is not bound to its registration", index+1)
+			}
+		}
+		previous = transition.Digest
+	}
+	return transitionChainDigest(transitions), nil
+}
+
+func transitionChainDigest(transitions []ClaimTransition) string {
+	canonical := append([]ClaimTransition(nil), transitions...)
+	for index := range canonical {
+		canonical[index].Digest = ""
+		canonical[index].PreviousDigest = ""
+		canonical[index].ObservedMaterialDigest = ""
+		if index%2 == 1 && canonical[index].PredicateID == "claim-ledger-chained" {
+			canonical[index].To = "DISCHARGED"
+			canonical[index].Stage = "OBSERVE"
+			canonical[index].Step = "verify-complete-transition-chain"
+			canonical[index].Reason = "COMPLETE_TRANSITION_CHAIN_VERIFIED"
+		}
+	}
+	return hashJSON(canonical)
+}
+
+func resignTransitions(transitions []ClaimTransition) {
+	previous := ""
+	for index := range transitions {
+		transitions[index].Sequence = index + 1
+		transitions[index].PreviousDigest = previous
+		transitions[index].Digest = digestTransition(transitions[index])
+		previous = transitions[index].Digest
+	}
+}
+
+func observationDigest(value Observation) string {
+	value.Digest = ""
+	value.ProvisionalDigest = ""
+	return hashJSON(value)
+}
+
 func digestTransition(value ClaimTransition) string {
 	value.Digest = ""
 	payload, _ := json.Marshal(value)
 	sum := sha256.Sum256(payload)
 	return "sha256:" + hex.EncodeToString(sum[:])
-}
-
-func SealObservation(value Observation) Observation {
-	value.Digest = ""
-	payload, _ := json.Marshal(value)
-	sum := sha256.Sum256(payload)
-	value.Digest = "sha256:" + hex.EncodeToString(sum[:])
-	return value
 }
 
 func hashJSON(value any) string {

@@ -27,15 +27,17 @@ those values.
 ## Boundary observations
 
 The producer makes four exact read-only queries from source-declared
-activities, one real mutation-capable request, one repository-net observation,
+activities, one real mutation-capable request, one net repository-status observation,
 and one unknown-target query. The mutation request calls
 `semantic.Graph.ApplyGraphPatch` against the semantic graph using field,
 payload, intent, and locality derived from the source. The baseline `id` field
 produces a typed immutable-field rejection only when that API returns it; there
 is no `DENIED` constant shortcut. The artifact captures semantic/graph digests
 immediately before the call, the original IR after the call, and the returned
-graph separately. If the API accepts the request, the attempt is `REFUTED`,
-mutation authority is true, and related claim transitions become `REFUTED`.
+graph separately. A typed rejection discharges only the scoped
+`immutable_id_patch_accepted=false` fact. A successful detached `name` patch
+proves detached graph-patch capability, not repository or global mutation
+authority; overall authority remains `UNKNOWN`.
 
 The query decision and subject resolution are separate fields. A missing
 endpoint is `UNKNOWN / LOWER_RESOLUTION / UNKNOWN_TARGET`, with stage
@@ -52,17 +54,19 @@ contradictions move it to `REFUTED`.
 
 The shell captures tracked and untracked `git status --porcelain` lines before
 and after the producer. Those raw snapshots and only their net difference are
-embedded in the observation and copied into the receipt. The baseline target
-is `net_repository_changes=[]` and `mutation_authority=false`; this does not
-claim a write count or absence of transient writes.
+embedded in the observation and copied into the receipt. The precise baseline
+observation is `net_repository_status_unchanged`; equal porcelain snapshots do
+not prove zero transient writes.
 
 ## Independent consumer
 
 The consumer binary has its own wire structs and imports no producer package.
 It directly performs `syntax.ParseFile -> bidir.Lower -> query.FromSemanticIR`
 on the raw `.gooo`, recomputes source and query digests, calls the same typed
-mutation boundary, rebuilds attempts and predicates, verifies the receipt
-material digest and full observation digest, and only then emits a receipt.
+mutation boundary, rebuilds attempts and predicates, verifies the provisional
+observation digest and complete transition chain, and only then emits a sealed
+receipt. The producer cannot seal its own material; the consumer adds a
+separate attestation digest.
 CI checks raw `go list -deps` evidence as
 `forbidden_imports_observed=0 <= maximum_allowed=0` and reports the successful
 independence coordinate as `1 / 1`.
@@ -76,13 +80,12 @@ unknown is a lower-resolution subject result, not a successful discharge.
 
 CI also publishes a JSON intervention artifact. A semantic intervention
 changes the source-declared mutation field from `id` to `name` and its payload
-to `intervened-name`. The actual API outcome changes from typed
-`REJECTED`/authority false to `ACCEPTED`/authority true; the returned graph
-digest changes while the original graph digest remains stable, and the
-mutation claim changes from `DISCHARGED` to `REFUTED`. A nonsemantic
-intervention changes only a comment; the raw source digest changes while the
-semantic/graph digests, mutation outcome, authority, and claim state are
-preserved.
+to `intervened-name`. The actual API outcome changes from typed `REJECTED` to
+`ACCEPTED`; detached graph-patch capability changes from false to true while
+overall authority remains `UNKNOWN`, and the scoped mutation claim changes
+from `DISCHARGED` to `REFUTED`. A nonsemantic intervention changes only a
+comment; the raw source digest changes while the semantic/graph digests,
+mutation outcome, scoped capability, and claim state are preserved.
 
 ## Research decisions
 
@@ -107,8 +110,9 @@ the source-declared immutable mutation is accepted without a `REFUTED` result,
 if an error is mislabeled as an exact rejection, if the original graph changes
 or the returned graph is omitted from mutation evidence, if unknown becomes
 exact/pass, if a claim discharges without its named predicate/attempt, if
-transition order or digests change, if repository before/after differs, or if
-the independent consumer cannot reconstruct the raw source.
+transition order or digests change, if repository before/after differs, if a
+missing subject SHA or repository evidence becomes PASS, or if the independent
+consumer cannot reconstruct the raw source.
 
 This does not claim general Go reflection equivalence, hostile-process safety,
 compiler/source completeness beyond the declared claims, or runtime

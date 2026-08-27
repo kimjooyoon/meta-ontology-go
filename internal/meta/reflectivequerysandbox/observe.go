@@ -1,6 +1,7 @@
 package reflectivequerysandbox
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -14,6 +15,9 @@ import (
 )
 
 func Observe(path string, subjectSHA, repositoryBeforePath, repositoryAfterPath string) (Observation, error) {
+	if path != SourcePath {
+		return Observation{}, fmt.Errorf("source path is not canonical: got %q want %q", path, SourcePath)
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return Observation{}, fmt.Errorf("read source: %w", err)
@@ -37,66 +41,87 @@ func Observe(path string, subjectSHA, repositoryBeforePath, repositoryAfterPath 
 
 	semanticDigest := ir.StableHash()
 	source := Snapshot{
-		Path: SourcePath, SourceDigest: semantic.StableHash(data), SemanticDigest: semanticDigest,
+		Path: path, SourceDigest: semantic.StableHash(data), SemanticDigest: semanticDigest,
 		GraphDigest: graph.StableHash(), NodeCount: len(graph.Nodes()), FactCount: len(graph.AllFacts()), GoooLines: countLines(data),
 	}
-	effects, err := observeEffects(repositoryBeforePath, repositoryAfterPath)
+	effects := observeEffects(repositoryBeforePath, repositoryAfterPath)
+	attempts, immutableAccepted, detachedCapability, mutationAPI, mutationOutcome, mutationError, err := buildAttempts(ir, graph, model, semanticDigest, source.GraphDigest, effects)
 	if err != nil {
 		return Observation{}, err
 	}
-	attempts, mutationAuthority, mutationAPI, mutationOutcome, mutationError, err := buildAttempts(ir, graph, model, semanticDigest, source.GraphDigest, effects)
-	if err != nil {
-		return Observation{}, err
-	}
-	effects.MutationAuthority = mutationAuthority
+	effects.ImmutableIDPatchAccepted = immutableAccepted
+	effects.DetachedGraphPatchCapability = detachedCapability
+	effects.OverallAuthority = "UNKNOWN"
 	effects.MutationAPI = mutationAPI
 	effects.MutationOutcome = mutationOutcome
 	effects.MutationError = mutationError
-	receiptMaterial := receiptMaterialDigest(source, attempts, effects)
+
+	// The producer records material but does not seal it. The receipt.seal attempt
+	// remains provisional until the independent consumer binds this digest.
 	for index := range attempts {
 		if attempts[index].ID == "receipt.seal" {
-			attempts[index].ObservedMaterialDigest = receiptMaterial
+			attempts[index].ObservedMaterialDigest = ""
 		}
 	}
-	claims := buildClaimTransitions(model.Claims, attempts, effects, receiptMaterial)
-	return Observation{
+	claims := buildClaimTransitions(model.Claims, attempts, effects, "")
+	chainDigest, err := validateTransitionChain(claims)
+	if err != nil {
+		return Observation{}, fmt.Errorf("build provisional claim chain: %w", err)
+	}
+	value := Observation{
 		Schema: Schema, SubjectSHA: subjectSHA, Contract: buildContract(model, source, attempts, claims),
-		Source: source, Attempts: attempts, Claims: claims, Effects: effects, ReceiptMaterialDigest: receiptMaterial, Producer: ProducerName,
-	}, nil
+		Source: source, Attempts: attempts, Claims: claims, Effects: effects, SubjectBinding: bindSubjectSHA(subjectSHA),
+		Provisional: true, TransitionChainDigest: chainDigest, Producer: ProducerName,
+	}
+	value.ProvisionalDigest = observationDigest(value)
+	return value, nil
 }
 
-func buildAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, semanticDigest, graphDigest string, effects Effects) ([]Attempt, bool, string, string, string, error) {
+func bindSubjectSHA(value string) SubjectBinding {
+	binding := SubjectBinding{Value: value, Stage: "SUBJECT", Step: "validate-subject-sha"}
+	if len(value) == 40 {
+		if _, err := hex.DecodeString(value); err == nil {
+			binding.Decision, binding.Resolution, binding.Reason = "PASS", "EXACT", "SUBJECT_SHA_BOUND_TO_CHECKOUT"
+			binding.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_BOUND_TO_CHECKOUT")
+			return binding
+		}
+	}
+	binding.Decision, binding.Resolution, binding.Reason = "UNKNOWN", "LOWER_RESOLUTION", "SUBJECT_SHA_UNBOUND"
+	binding.Digest = semantic.StableHashString(value + "|SUBJECT_SHA_UNBOUND")
+	return binding
+}
+
+func buildAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, semanticDigest, graphDigest string, effects Effects) ([]Attempt, bool, string, string, string, string, error) {
 	attempts := make([]Attempt, 0, len(model.Operations)+1)
-	var mutationAuthority bool
-	var mutationAPI, mutationOutcome, mutationError string
+	var immutableAccepted bool
+	detachedCapability, mutationAPI, mutationOutcome, mutationError := "UNKNOWN", "", "", ""
 	for _, operation := range model.Operations {
 		target, err := targetForOperation(ir, operation, model)
 		if err != nil {
-			return nil, false, "", "", "", err
+			return nil, false, "UNKNOWN", "", "", "", err
 		}
 		attemptID := attemptIDForProgram(operation.Program)
 		switch {
 		case strings.HasPrefix(operation.Program, "reflect.query:"):
 			attempts = append(attempts, exactAttempt(graph, operation, attemptID, target, semanticDigest, graphDigest, "QUERY", model.Claims))
-		case operation.Program == "reflect.observation:repository-net":
+		case operation.Program == "reflect.observation:net-repository-status-unchanged":
 			attempts = append(attempts, repositoryAttempt(operation, attemptID, target, semanticDigest, effects, model.Claims))
 		case strings.HasPrefix(operation.Program, "reflect.observation:"):
 			attempts = append(attempts, exactAttempt(graph, operation, attemptID, target, semanticDigest, graphDigest, "RECEIPT", model.Claims))
 		case strings.HasPrefix(operation.Program, "reflect.attempt:"):
-			attempt, authority, api, outcome, apiError, err := mutationAttempt(ir, operation, attemptID, target, semanticDigest, graphDigest, model, model.Claims)
+			attempt, accepted, capability, api, outcome, apiError, err := mutationAttempt(ir, operation, attemptID, target, semanticDigest, graphDigest, model, model.Claims)
 			if err != nil {
-				return nil, false, "", "", "", err
+				return nil, false, "UNKNOWN", "", "", "", err
 			}
 			attempts = append(attempts, attempt)
-			mutationAuthority, mutationAPI, mutationOutcome, mutationError = authority, api, outcome, apiError
+			immutableAccepted, detachedCapability, mutationAPI, mutationOutcome, mutationError = accepted, capability, api, outcome, apiError
 		}
 	}
 	metricOperation, ok := findOperation(model.Operations, "reflect.query:metrics")
 	if !ok {
-		return nil, false, "", "", "", fmt.Errorf("source declares no metrics query operation")
+		return nil, false, "UNKNOWN", "", "", "", fmt.Errorf("source declares no metrics query operation")
 	}
-	unknown := unknownAttempt(graph, metricOperation, model.UnknownTarget, semanticDigest, graphDigest, model.Claims)
-	attempts = append(attempts, unknown)
+	attempts = append(attempts, unknownAttempt(graph, metricOperation, model.UnknownTarget, semanticDigest, graphDigest, model.Claims))
 	for index := range attempts {
 		for _, claim := range model.Claims {
 			if claim.EvidenceAttempt == attempts[index].ID {
@@ -105,7 +130,7 @@ func buildAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, semant
 		}
 	}
 	sort.SliceStable(attempts, func(i, j int) bool { return attempts[i].ID < attempts[j].ID })
-	return attempts, mutationAuthority, mutationAPI, mutationOutcome, mutationError, nil
+	return attempts, immutableAccepted, detachedCapability, mutationAPI, mutationOutcome, mutationError, nil
 }
 
 func exactAttempt(graph *query.Graph, operation operationSpec, id string, target semantic.ID, semanticDigest, graphDigest, stage string, claims []claimSpec) Attempt {
@@ -133,10 +158,10 @@ func exactAttempt(graph *query.Graph, operation operationSpec, id string, target
 	return attempt
 }
 
-func mutationAttempt(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest, graphDigest string, model sourceModel, claims []claimSpec) (Attempt, bool, string, string, string, error) {
+func mutationAttempt(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest, graphDigest string, model sourceModel, claims []claimSpec) (Attempt, bool, string, string, string, string, error) {
 	node, ok := ir.Graph.Node(target)
 	if !ok {
-		return Attempt{}, false, "", "", "", fmt.Errorf("mutation target %q disappeared from semantic IR", target)
+		return Attempt{}, false, "UNKNOWN", "", "", "", fmt.Errorf("mutation target %q disappeared from semantic IR", target)
 	}
 	field := tail(model.MutationField)
 	payload := tail(model.MutationPayload)
@@ -147,7 +172,7 @@ func mutationAttempt(ir semantic.IR, operation operationSpec, id string, target 
 		var fieldErr error
 		fieldHash, fieldErr = semantic.NodeFieldHash(node, field)
 		if fieldErr != nil {
-			return Attempt{}, false, "", "", "", fmt.Errorf("derive mutation field: %w", fieldErr)
+			return Attempt{}, false, "UNKNOWN", "", "", "", fmt.Errorf("derive mutation field: %w", fieldErr)
 		}
 	}
 	beforeSemantic := ir.StableHash()
@@ -159,40 +184,42 @@ func mutationAttempt(ir semantic.IR, operation operationSpec, id string, target 
 		AllowedIntent: intent, Locality: locality,
 	}
 	base := semantic.GraphPatchBase{SourceDigest: semanticDigest, IRDigest: semanticDigest}
-	patched, err := ir.Graph.ApplyGraphPatch(base, request, semantic.GraphPatchMutation{Name: payload})
-	afterSemantic := ir.StableHash()
-	afterGraph := ir.Graph.StableHash()
+	patched, callErr := ir.Graph.ApplyGraphPatch(base, request, semantic.GraphPatchMutation{Name: payload})
+	originalSemanticAfter := ir.StableHash()
+	originalGraphAfter := ir.Graph.StableHash()
 	api := "semantic.Graph.ApplyGraphPatch"
 	attempt := Attempt{
 		ID: id, Class: classForAttempt(id, claims), Operation: "mutate", Root: operation.ID.String(), Relation: "set", Target: target.String(),
 		MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: ProducerName, Consumer: ConsumerName,
-		ProofChoice: proofForAttempt(id, claims), Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request",
-		API: api, SemanticDigestBefore: beforeSemantic, SemanticDigestAfter: afterSemantic,
-		GraphDigestBefore: beforeGraph, GraphDigestAfter: afterGraph,
-		OriginalSemanticDigestAfter: afterSemantic, OriginalGraphDigestAfter: afterGraph,
+		ProofChoice: proofForAttempt(id, claims), Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request", API: api,
+		MutationField: field, MutationPayload: payload, MutationIntent: intent, MutationLocality: locality,
+		SemanticDigestBefore: beforeSemantic, SemanticDigestAfter: originalSemanticAfter,
+		GraphDigestBefore: beforeGraph, GraphDigestAfter: originalGraphAfter,
+		OriginalSemanticDigestAfter: originalSemanticAfter, OriginalGraphDigestAfter: originalGraphAfter,
 	}
-	if err != nil {
-		attempt.APIErrorCode = mutationErrorCode(err)
-		attempt.APIOutcome, attempt.APIError = "REJECTED", err.Error()
-		if afterSemantic != beforeSemantic || afterGraph != beforeGraph {
+	if callErr != nil {
+		attempt.APIErrorCode = mutationErrorCode(callErr)
+		attempt.APIError = callErr.Error()
+		if originalSemanticAfter != beforeSemantic || originalGraphAfter != beforeGraph {
+			attempt.APIOutcome = "ERROR"
 			attempt.Decision, attempt.Resolution, attempt.Reason = "REFUTED", "EXACT", "MUTATION_API_CHANGED_OR_PARTIALLY_MUTATED"
-			return attempt, true, api, "REJECTED", err.Error(), nil
+			return attempt, false, "UNKNOWN", api, attempt.APIOutcome, attempt.APIError, nil
 		}
 		var conflict semantic.GraphPatchConflict
-		if errors.As(err, &conflict) && conflict.Code == semantic.PatchImmutableField && conflict.Detail == field {
-			attempt.Decision, attempt.Resolution, attempt.Reason = "DENIED", "EXACT_REJECTION", "IMMUTABLE_FIELD_REJECTED"
-			return attempt, false, api, "REJECTED", err.Error(), nil
+		if errors.As(callErr, &conflict) && conflict.Code == semantic.PatchImmutableField && conflict.Detail == field {
+			attempt.APIOutcome = "REJECTED"
+			attempt.Decision, attempt.Resolution, attempt.Reason = "DENIED", "EXACT_REJECTION", "IMMUTABLE_ID_PATCH_REJECTED"
+			return attempt, false, "UNKNOWN", api, attempt.APIOutcome, attempt.APIError, nil
 		}
-		attempt.Decision, attempt.Resolution, attempt.Reason = "UNKNOWN", "LOWER_RESOLUTION", "MUTATION_API_ERROR_"+strings.ToUpper(string(attempt.APIErrorCode))
-		return attempt, false, api, "ERROR", err.Error(), nil
+		attempt.APIOutcome = "ERROR"
+		attempt.Decision, attempt.Resolution, attempt.Reason = "UNKNOWN", "LOWER_RESOLUTION", "MUTATION_API_ERROR_"+strings.ToUpper(attempt.APIErrorCode)
+		return attempt, false, "UNKNOWN", api, attempt.APIOutcome, attempt.APIError, nil
 	}
 	patchedIR := ir
 	patchedIR.Graph = patched
-	attempt.SemanticDigestAfter, attempt.GraphDigestAfter = patchedIR.StableHash(), patched.StableHash()
-	attempt.ReturnedSemanticDigest, attempt.ReturnedGraphDigest = attempt.SemanticDigestAfter, attempt.GraphDigestAfter
-	attempt.Decision, attempt.Resolution, attempt.Reason = "REFUTED", "EXACT", "MUTATION_CAPABILITY_ACCEPTED"
-	attempt.APIOutcome = "ACCEPTED"
-	return attempt, true, api, "ACCEPTED", "", nil
+	attempt.ReturnedSemanticDigest, attempt.ReturnedGraphDigest = patchedIR.StableHash(), patched.StableHash()
+	attempt.Decision, attempt.Resolution, attempt.Reason, attempt.APIOutcome = "REFUTED", "EXACT", "DETACHED_GRAPH_PATCH_ACCEPTED", "ACCEPTED"
+	return attempt, field == "id", "OBSERVED", api, attempt.APIOutcome, "", nil
 }
 
 func tail(id semantic.ID) string {
@@ -274,8 +301,8 @@ func attemptIDForProgram(program string) string {
 	case strings.HasPrefix(program, "reflect.attempt:"):
 		return "mutation.attempt"
 	case strings.HasPrefix(program, "reflect.observation:"):
-		if strings.HasSuffix(program, ":repository-net") {
-			return "repository.net"
+		if strings.HasSuffix(program, ":net-repository-status-unchanged") {
+			return "repository.net-status-unchanged"
 		}
 		return "receipt.seal"
 	default:
@@ -283,38 +310,56 @@ func attemptIDForProgram(program string) string {
 	}
 }
 
-func observeEffects(beforePath, afterPath string) (Effects, error) {
+func observeEffects(beforePath, afterPath string) Effects {
+	base := Effects{RepositoryObservation: "net_repository_status_unchanged", OverallAuthority: "UNKNOWN", DetachedGraphPatchCapability: "UNKNOWN"}
+	if beforePath == "" || afterPath == "" {
+		base.RepositoryObservationStage, base.RepositoryObservationStep, base.RepositoryObservationReason = "REPOSITORY", "read-status", "REPOSITORY_EVIDENCE_MISSING"
+		return base
+	}
 	before, err := readStatusLines(beforePath)
 	if err != nil {
-		return Effects{}, err
+		base.RepositoryObservationStage, base.RepositoryObservationStep, base.RepositoryObservationReason = "REPOSITORY", "read-status", "REPOSITORY_EVIDENCE_UNAVAILABLE"
+		return base
 	}
 	after, err := readStatusLines(afterPath)
 	if err != nil {
-		return Effects{}, err
+		base.RepositoryObservationStage, base.RepositoryObservationStep, base.RepositoryObservationReason = "REPOSITORY", "read-status", "REPOSITORY_EVIDENCE_UNAVAILABLE"
+		return base
 	}
-	return Effects{RepositoryStatusBefore: before, RepositoryStatusAfter: after, NetRepositoryChanges: changedLines(before, after)}, nil
+	base.RepositoryStatusBefore, base.RepositoryStatusAfter = before, after
+	base.NetRepositoryChanges = changedLines(before, after)
+	base.RepositoryEvidenceAvailable = true
+	base.RepositoryObservationStage, base.RepositoryObservationStep, base.RepositoryObservationReason = "REPOSITORY", "compare-normalized-status", "NET_REPOSITORY_STATUS_CAPTURED"
+	return base
 }
 
 func repositoryAttempt(operation operationSpec, id string, target semantic.ID, semanticDigest string, effects Effects, claims []claimSpec) Attempt {
+	value := Attempt{ID: id, Class: classForAttempt(id, claims), Operation: "repository", Root: operation.ID.String(), Relation: "net", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: ProducerName, Consumer: ConsumerName, ProofChoice: proofForAttempt(id, claims), Stage: "REPOSITORY", Step: "compare-normalized-status", SemanticDigestBefore: semanticDigest, SemanticDigestAfter: semanticDigest}
+	if !effects.RepositoryEvidenceAvailable {
+		value.Step, value.Reason, value.Decision, value.Resolution = "read-status", effects.RepositoryObservationReason, "UNKNOWN", "LOWER_RESOLUTION"
+		return value
+	}
 	material := semantic.StableHashString(strings.Join(effects.RepositoryStatusBefore, "\n") + "\x00" + strings.Join(effects.RepositoryStatusAfter, "\n"))
-	value := Attempt{ID: id, Class: classForAttempt(id, claims), Operation: "repository", Root: operation.ID.String(), Relation: "net", Target: target.String(), MetaOperation: metaForAttempt(id, operation.Program, claims), Producer: ProducerName, Consumer: ConsumerName, ProofChoice: proofForAttempt(id, claims), Stage: "REPOSITORY", Step: "compare-status-snapshots", SemanticDigestBefore: semanticDigest, SemanticDigestAfter: semanticDigest, GraphDigestBefore: material, GraphDigestAfter: material, ObservedMaterialDigest: material}
-	if len(effects.NetRepositoryChanges) == 0 && len(effects.RepositoryStatusBefore) == len(effects.RepositoryStatusAfter) {
-		value.Decision, value.Resolution, value.Reason = "PASS", "EXACT", "NET_REPOSITORY_CHANGES_EMPTY"
+	value.GraphDigestBefore, value.GraphDigestAfter, value.ObservedMaterialDigest = material, material, material
+	if reflectRepositoryNet(effects) {
+		value.Decision, value.Resolution, value.Reason = "PASS", "EXACT", "NET_REPOSITORY_STATUS_UNCHANGED"
 	} else {
-		value.Decision, value.Resolution, value.Reason = "REFUTED", "EXACT", "NET_REPOSITORY_CHANGES_OBSERVED"
+		value.Decision, value.Resolution, value.Reason = "REFUTED", "EXACT", "NET_REPOSITORY_STATUS_CHANGED"
 	}
 	return value
 }
 
 func readStatusLines(path string) ([]string, error) {
 	if path == "" {
-		return []string{}, nil
+		return nil, errors.New("repository evidence missing")
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read repository status %q: %w", path, err)
 	}
-	text := strings.TrimSuffix(string(data), "\n")
+	text := strings.ReplaceAll(string(data), "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	text = strings.TrimSuffix(text, "\n")
 	if text == "" {
 		return []string{}, nil
 	}
@@ -348,5 +393,10 @@ func countLines(data []byte) int {
 	if len(data) == 0 {
 		return 0
 	}
-	return strings.Count(string(data), "\n")
+	text := string(data)
+	count := strings.Count(text, "\n")
+	if !strings.HasSuffix(text, "\n") {
+		count++
+	}
+	return count
 }

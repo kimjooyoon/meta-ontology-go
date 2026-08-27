@@ -16,14 +16,13 @@ func main() {
 	repositoryBefore := flag.String("repository-before", "", "repository status before observation")
 	repositoryAfter := flag.String("repository-after", "", "repository status after observation")
 	flag.Parse()
-	if *source == "" || *subject == "" || *output == "" || *repositoryBefore == "" || *repositoryAfter == "" {
+	if *source == "" || *output == "" {
 		fail("usage: producer -source FILE -subject-sha SHA -repository-before FILE -repository-after FILE -output FILE")
 	}
 	observation, err := sandbox.Observe(*source, *subject, *repositoryBefore, *repositoryAfter)
 	if err != nil {
 		fail("observe source: %v", err)
 	}
-	observation = sandbox.SealObservation(observation)
 	data, err := json.MarshalIndent(observation, "", "  ")
 	if err != nil {
 		fail("encode observation: %v", err)

@@ -10,6 +10,9 @@ output="$RUNNER_TEMP/reflective-query-sandbox/producer"
 mkdir -p "$output"
 cd "$root"
 
+checkout_sha=$(git rev-parse HEAD)
+test "$HEAD_SHA" = "$checkout_sha"
+
 before_status="$output/repository-before.txt"
 after_status="$output/repository-after.txt"
 git status --porcelain=v1 --untracked-files=all > "$before_status"
@@ -37,9 +40,13 @@ if [ "$(cat "$before_status")" != "$after" ]; then
 fi
 
 jq -e --arg sha "$HEAD_SHA" '
-  .schema == "gooo/reflective-query-sandbox-observation/v3" and
+  .schema == "gooo/reflective-query-sandbox-observation/v4" and
   .subject_sha == $sha and
   .source.path == "examples/reflective-query-sandbox/main.gooo" and
+  .provisional == true and
+  (.digest | length) == 0 and
+  (.provisional_digest | startswith("sha256:")) and
+  (.receipt_material_digest | length) == 0 and
   .contract.source_nodes == .source.node_count and
   .contract.source_facts == .source.fact_count and
   .contract.claim_count == ((.claims | length) / 2) and
@@ -52,11 +59,29 @@ jq -e --arg sha "$HEAD_SHA" '
   .contract.refuted_attempts == ([.attempts[] | select(.decision == "REFUTED")] | length) and
   .contract.transition_count == (.claims | length) and
   .contract.satisfied_indicators == ([.claims[] | select(.to == "DISCHARGED" and .from != .to)] | length) and
-  ([.attempts[] | select(.id == "mutation.attempt" and .decision == "DENIED" and .resolution == "EXACT_REJECTION" and .api_outcome == "REJECTED" and .api_error_code == "immutable_field" and .reason == "IMMUTABLE_FIELD_REJECTED" and .graph_digest_before == .original_graph_digest_after and .semantic_digest_before == .original_semantic_digest_after and (.returned_graph_digest | length) == 0)] | length) == 1 and
+  .contract.satisfied_indicators == 10 and
+  ([.claims[] | select(.predicate_id == "receipt-observation-digest-verified" and .to == "OPEN" and (.observed_material_digest | length) == 0)] | length) == 1 and
+  ([.attempts[] | select(.id == "mutation.attempt" and .decision == "DENIED" and .resolution == "EXACT_REJECTION" and .api_outcome == "REJECTED" and .api_error_code == "immutable_field" and .reason == "IMMUTABLE_ID_PATCH_REJECTED" and .mutation_field == "id" and .mutation_payload == "identity-preserving" and .graph_digest_before == .original_graph_digest_after and .semantic_digest_before == .original_semantic_digest_after and (.returned_graph_digest | length) == 0)] | length) == 1 and
   ([.attempts[] | select(.id == "unknown.target" and .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .reason == "UNKNOWN_TARGET" and .stage == "UNKNOWN" and .step == "resolve-unknown-subject")] | length) == 1 and
   .effects.repository_status_before == .effects.repository_status_after and
   .effects.net_repository_changes == [] and
-  .effects.mutation_authority == false
+  .effects.repository_evidence_available == true and
+  .effects.repository_observation == "net_repository_status_unchanged" and
+  .effects.immutable_id_patch_accepted == false and
+  .effects.detached_graph_patch_capability == "UNKNOWN" and
+  .effects.overall_authority == "UNKNOWN" and
+  .effects.mutation_outcome == "REJECTED" and
+  ([.claims[] | select(.predicate_id == "claim-ledger-chained" and .to == "DISCHARGED" and .reason == "COMPLETE_TRANSITION_CHAIN_VERIFIED")] | length) == 1
 ' "$output/observation.json" >/dev/null
+
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+	{
+		echo '### Correction audit'
+		echo
+		echo '| Scoped correction gates | Local tests |'
+		echo '|---:|---:|'
+		echo '| 11 / 11 | 0 |'
+	} >> "$GITHUB_STEP_SUMMARY"
+fi
 
 echo 'reflective query sandbox producer: PASS source-derived contract and boundary observations'

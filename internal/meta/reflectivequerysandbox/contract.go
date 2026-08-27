@@ -58,7 +58,7 @@ func deriveSourceModel(ir semantic.IR) (sourceModel, error) {
 			model.MutationIntent = node.ID
 		case node.Kind == semantic.Entity && strings.Contains(id, "/mutation/locality/"):
 			model.MutationLocality = node.ID
-		case node.Kind == semantic.Entity && strings.Contains(id, "/repository/status/net"):
+		case node.Kind == semantic.Entity && strings.Contains(id, "/repository/status/net_repository_status_unchanged"):
 			model.RepositoryTarget = node.ID
 		case node.Kind == semantic.Entity && strings.Contains(id, "/metric/relation"):
 			model.MetricTarget = node.ID
@@ -124,7 +124,7 @@ func parseClaim(node semantic.Node) (claimSpec, error) {
 
 func allowedPredicate(predicate string) bool {
 	switch predicate {
-	case "query-relation-exact", "semantic-digest-equal", "graph-digest-equal", "query-projection-stable", "receipt-observation-digest-verified", "claim-ledger-chained", "unknown-subject-preserved", "immutable-mutation-rejected", "mutation-boundary-rejected", "net-repository-changes-empty":
+	case "query-relation-exact", "semantic-digest-equal", "graph-digest-equal", "query-projection-stable", "receipt-observation-digest-verified", "claim-ledger-chained", "unknown-subject-preserved", "immutable-id-patch-rejected", "immutable-id-patch-accepted-false", "net-repository-status-unchanged":
 		return true
 	default:
 		return false
@@ -160,8 +160,8 @@ func targetForOperation(ir semantic.IR, operation operationSpec, model sourceMod
 		marker = "/mutation/request"
 	case "reflect.observation:receipt-seal":
 		marker = "/receipt/query"
-	case "reflect.observation:repository-net":
-		marker = "/repository/status/net"
+	case "reflect.observation:net-repository-status-unchanged":
+		marker = "/repository/status/net_repository_status_unchanged"
 	}
 	for _, target := range targets {
 		if marker == "" || strings.Contains(target.String(), marker) {
