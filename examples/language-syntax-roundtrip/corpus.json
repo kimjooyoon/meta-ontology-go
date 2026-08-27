@@ -138,6 +138,14 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "language-operation-catalog-unknown",
+      "path": "examples/language-operation-catalog/unknown.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "roundtrip-minimal",
       "path": "internal/detection/roundtrip/testdata/minimal.gooo",
       "kind": "VALID",

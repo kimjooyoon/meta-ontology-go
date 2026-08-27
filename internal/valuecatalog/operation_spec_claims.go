@@ -34,7 +34,7 @@ func closeOperationSpec(report Report) Report {
 		MetricID: OperationSpecMetricID, FixedAxisTotal: OperationSpecAxisTotal,
 		VerifiedTotal: verified, CoverageBasisPoints: verified * 10_000 / OperationSpecAxisTotal,
 		UnknownPathCount: boolInt(report.Decision == DecisionFailClosed),
-		OpenClaims: len(report.Claims) - discharged, DischargedClaims: discharged,
+		OpenClaims:       len(report.Claims) - discharged, DischargedClaims: discharged,
 		TransitionEventTotal: len(report.ClaimTransitions), RegistrationEventTotal: registered,
 		EvidenceAcceptedTotal: accepted, EvidenceUnavailableTotal: unavailable,
 	}

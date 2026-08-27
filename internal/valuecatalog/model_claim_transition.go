@@ -3,14 +3,14 @@ package valuecatalog
 import "strings"
 
 const (
-	ClaimStatusUnrecorded       = "UNRECORDED"
-	ClaimStatusOpen             = "OPEN"
-	ClaimStatusDischarged       = "DISCHARGED"
-	ClaimEventRegistered        = "CLAIM_REGISTERED"
-	ClaimEventEvidenceAccepted  = "EVIDENCE_ACCEPTED"
+	ClaimStatusUnrecorded         = "UNRECORDED"
+	ClaimStatusOpen               = "OPEN"
+	ClaimStatusDischarged         = "DISCHARGED"
+	ClaimEventRegistered          = "CLAIM_REGISTERED"
+	ClaimEventEvidenceAccepted    = "EVIDENCE_ACCEPTED"
 	ClaimEventEvidenceUnavailable = "EVIDENCE_UNAVAILABLE"
-	ReasonClaimDeclared         = "CLAIM_DECLARED"
-	ReasonClaimEvidenceAccepted = "CLAIM_EVIDENCE_ACCEPTED"
+	ReasonClaimDeclared           = "CLAIM_DECLARED"
+	ReasonClaimEvidenceAccepted   = "CLAIM_EVIDENCE_ACCEPTED"
 )
 
 type ClaimTransition struct {
