@@ -4,11 +4,22 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"regexp"
 )
+
+var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 
 func DigestBytes(data []byte) string {
 	digest := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(digest[:])
+}
+
+func SemanticDigest(irHash string) string {
+	return "sha256:" + irHash
+}
+
+func ValidDigest(value string) bool {
+	return digestPattern.MatchString(value)
 }
 
 func canonicalJSON(value any) ([]byte, error) {

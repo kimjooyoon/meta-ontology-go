@@ -21,6 +21,7 @@ func GenerateJudge(policy CompiledPolicy) []byte {
 import (
 	"encoding/json"
 	"os"
+	"regexp"
 )
 
 type input struct {
@@ -29,6 +30,7 @@ type input struct {
 	ConsumerAvailable bool %q
 	ObservedSourceDigest string %q
 	ObservedArtifactSourceDigest string %q
+	ObservedGeneratedJudgeDigest string %q
 	ObservedIndependentDigest string %q
 }
 
@@ -55,24 +57,30 @@ const policyDigest = %q
 const semanticDigest = %q
 const policyDenominator = %d
 const fixedDenominator = %d
+var digestPattern = regexp.MustCompile("^sha256:[0-9a-f]{64}$")
 
 var reduction = []decisionRule{%s}
 
 func matches(condition string, value input) bool {
 	available := value.ProducerAvailable && value.ConsumerAvailable
+	valid := func(value string) bool { return digestPattern.MatchString(value) }
+	empty := value.ObservedSourceDigest == "" || value.ObservedArtifactSourceDigest == "" || value.ObservedGeneratedJudgeDigest == "" || value.ObservedIndependentDigest == ""
+	malformed := !valid(value.ObservedSourceDigest) || !valid(value.ObservedArtifactSourceDigest) || !valid(value.ObservedGeneratedJudgeDigest) || !valid(value.ObservedIndependentDigest)
 	switch condition {
 	case "EVIDENCE_UNAVAILABLE":
 		return !available
 	case "DIGEST_UNAVAILABLE":
-		return available && (value.ObservedSourceDigest == "" || value.ObservedArtifactSourceDigest == "" || value.ObservedIndependentDigest == "")
+		return available && empty
+	case "MALFORMED_DIGEST":
+		return available && !empty && malformed
 	case "SOURCE_DIGEST_MISMATCH":
-		return available && value.ObservedSourceDigest != "" && value.ObservedArtifactSourceDigest != "" && value.ObservedIndependentDigest != "" && value.ObservedSourceDigest != policyDigest
+		return available && !empty && !malformed && value.ObservedSourceDigest != policyDigest
 	case "ARTIFACT_SOURCE_MISMATCH":
-		return available && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest != "" && value.ObservedArtifactSourceDigest != policyDigest
+		return available && !empty && !malformed && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest != policyDigest
 	case "INDEPENDENT_SOURCE_MISMATCH":
-		return available && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest == policyDigest && value.ObservedIndependentDigest != "" && value.ObservedIndependentDigest != policyDigest
+		return available && !empty && !malformed && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest == policyDigest && value.ObservedIndependentDigest != semanticDigest
 	case "SEMANTIC_EQUIVALENCE":
-		return available && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest == policyDigest && value.ObservedIndependentDigest == policyDigest
+		return available && !empty && !malformed && value.ObservedSourceDigest == policyDigest && value.ObservedArtifactSourceDigest == policyDigest && value.ObservedIndependentDigest == semanticDigest
 	default:
 		return false
 	}
@@ -101,7 +109,7 @@ func main() {
 	}
 	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil { os.Exit(3) }
 }
-`, `json:"id"`, `json:"producer_available"`, `json:"consumer_available"`, `json:"observed_source_digest"`, `json:"observed_artifact_source_digest"`, `json:"observed_independent_digest"`, `json:"case_id"`, `json:"decision"`, `json:"stage"`, `json:"step"`, `json:"reason"`, `json:"policy_digest"`, `json:"semantic_digest"`, `json:"fixed_denominator"`, policy.SourceDigest, policy.SemanticDigest, policy.Denominator, FixedDenominator, reduction))
+`, `json:"id"`, `json:"producer_available"`, `json:"consumer_available"`, `json:"observed_source_digest"`, `json:"observed_artifact_source_digest"`, `json:"observed_generated_judge_digest"`, `json:"observed_independent_digest"`, `json:"case_id"`, `json:"decision"`, `json:"stage"`, `json:"step"`, `json:"reason"`, `json:"policy_digest"`, `json:"semantic_digest"`, `json:"fixed_denominator"`, policy.SourceDigest, policy.SemanticDigest, policy.Denominator, FixedDenominator, reduction))
 }
 
 func makeReductionLiteral(reduction DecisionReduction) string {
@@ -128,11 +136,13 @@ func ExecuteGenerated(ctx context.Context, judgeSource []byte, input Case) (Deci
 		ConsumerAvailable            bool   `json:"consumer_available"`
 		ObservedSourceDigest         string `json:"observed_source_digest"`
 		ObservedArtifactSourceDigest string `json:"observed_artifact_source_digest"`
+		ObservedGeneratedJudgeDigest string `json:"observed_generated_judge_digest"`
 		ObservedIndependentDigest    string `json:"observed_independent_digest"`
 	}{
 		ID: input.ID, ProducerAvailable: input.ProducerAvailable, ConsumerAvailable: input.ConsumerAvailable,
 		ObservedSourceDigest:         input.ObservedSourceDigest,
 		ObservedArtifactSourceDigest: input.ObservedArtifactSourceDigest,
+		ObservedGeneratedJudgeDigest: input.ObservedGeneratedJudgeDigest,
 		ObservedIndependentDigest:    input.ObservedIndependentDigest,
 	})
 	if err != nil {

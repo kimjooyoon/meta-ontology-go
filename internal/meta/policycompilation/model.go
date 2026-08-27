@@ -52,6 +52,7 @@ type Case struct {
 	ConsumerAvailable            bool   `json:"consumer_available"`
 	ObservedSourceDigest         string `json:"observed_source_digest"`
 	ObservedArtifactSourceDigest string `json:"observed_artifact_source_digest"`
+	ObservedGeneratedJudgeDigest string `json:"observed_generated_judge_digest"`
 	ObservedIndependentDigest    string `json:"observed_independent_digest"`
 }
 
@@ -69,6 +70,7 @@ type DecisionResult struct {
 type ClaimTransition struct {
 	Event             int    `json:"event"`
 	ClaimID           string `json:"claim_id"`
+	Predicate         string `json:"predicate"`
 	From              string `json:"from"`
 	To                string `json:"to"`
 	Decision          string `json:"decision"`
@@ -77,8 +79,21 @@ type ClaimTransition struct {
 	Reason            string `json:"reason"`
 	ObservationDigest string `json:"observation_digest"`
 	Provenance        string `json:"provenance"`
+	Observed          bool   `json:"observed"`
 	PriorDigest       string `json:"prior_digest"`
 	Digest            string `json:"digest"`
+}
+
+type ClaimPredicateObservation struct {
+	ClaimID           string `json:"claim_id"`
+	Predicate         string `json:"predicate"`
+	Outcome           string `json:"outcome"`
+	Observed          bool   `json:"observed"`
+	Stage             string `json:"stage"`
+	Step              int    `json:"step"`
+	Reason            string `json:"reason"`
+	ObservationDigest string `json:"observation_digest"`
+	Provenance        string `json:"provenance"`
 }
 
 type ClaimLedger struct {
@@ -110,19 +125,20 @@ type ConsumerEvidence struct {
 }
 
 type CaseReceipt struct {
-	ID                            string         `json:"id"`
-	ValidatorExpectation          string         `json:"validator_expectation"`
-	EvidenceClass                 string         `json:"evidence_class"`
-	ObservationDigest             string         `json:"observation_digest"`
-	Provenance                    string         `json:"provenance"`
-	Source                        DecisionResult `json:"source"`
-	Generated                     DecisionResult `json:"generated"`
-	Independent                   DecisionResult `json:"independent"`
-	AllDecisionsEquivalent        bool           `json:"all_decisions_equivalent"`
-	DecisionsEquivalent           bool           `json:"decisions_equivalent"`
-	ValidatorExpectationConfirmed bool           `json:"validator_expectation_confirmed"`
-	ClaimStartDigest              string         `json:"claim_start_digest"`
-	ClaimEndDigest                string         `json:"claim_end_digest"`
+	ID                            string                      `json:"id"`
+	ValidatorExpectation          string                      `json:"validator_expectation"`
+	EvidenceClass                 string                      `json:"evidence_class"`
+	ObservationDigest             string                      `json:"observation_digest"`
+	Provenance                    string                      `json:"provenance"`
+	Source                        DecisionResult              `json:"source"`
+	Generated                     DecisionResult              `json:"generated"`
+	Independent                   DecisionResult              `json:"independent"`
+	AllDecisionsEquivalent        bool                        `json:"all_decisions_equivalent"`
+	DecisionsEquivalent           bool                        `json:"decisions_equivalent"`
+	ValidatorExpectationConfirmed bool                        `json:"validator_expectation_confirmed"`
+	ClaimPredicates               []ClaimPredicateObservation `json:"claim_predicates"`
+	ClaimStartDigest              string                      `json:"claim_start_digest"`
+	ClaimEndDigest                string                      `json:"claim_end_digest"`
 }
 
 type CaseSummary struct {
@@ -133,6 +149,9 @@ type CaseSummary struct {
 	GeneratedIndependentEqual      int `json:"generated_independent_equivalent"`
 	ValidatorExpectationsConfirmed int `json:"validator_expectations_confirmed"`
 	SourceAllEquivalent            int `json:"source_all_equivalent"`
+	ClaimPredicatesDischarged      int `json:"claim_predicates_discharged"`
+	ClaimPredicatesRefuted         int `json:"claim_predicates_refuted"`
+	ClaimPredicatesOpen            int `json:"claim_predicates_open"`
 }
 
 type Verification struct {
@@ -147,26 +166,30 @@ type Verification struct {
 }
 
 type WriteSetObservation struct {
-	RepositoryBeforeDigest string   `json:"repository_before_digest"`
-	RepositoryAfterDigest  string   `json:"repository_after_digest"`
-	RepositoryBeforeCount  int      `json:"repository_before_count"`
-	RepositoryAfterCount   int      `json:"repository_after_count"`
-	RepositoryWriteChanged bool     `json:"repository_write_changed"`
-	GeneratedRootClass     string   `json:"generated_root_class"`
-	GeneratedFiles         []string `json:"generated_files"`
-	MutationAuthority      int      `json:"mutation_authority"`
-	PromotionAuthority     int      `json:"promotion_authority"`
+	RepositoryBeforeDigest      string   `json:"repository_before_digest"`
+	RepositoryAfterDigest       string   `json:"repository_after_digest"`
+	RepositoryBeforeCount       int      `json:"repository_before_count"`
+	RepositoryAfterCount        int      `json:"repository_after_count"`
+	RepositoryNetChangeObserved bool     `json:"repository_net_change_observed"`
+	GeneratedRootClass          string   `json:"generated_root_class"`
+	GeneratedFiles              []string `json:"generated_files"`
+	MutationAuthority           int      `json:"mutation_authority"`
+	PromotionAuthority          int      `json:"promotion_authority"`
 }
 
 type EvidenceObservation struct {
-	Class             string `json:"class"`
-	CaseID            string `json:"case_id"`
-	ProducerAvailable bool   `json:"producer_available"`
-	ConsumerAvailable bool   `json:"consumer_available"`
-	SourceDigest      string `json:"source_digest"`
-	ArtifactDigest    string `json:"artifact_digest"`
-	ObservationDigest string `json:"observation_digest"`
-	Provenance        string `json:"provenance"`
+	Class                string `json:"class"`
+	CaseID               string `json:"case_id"`
+	ProducerAvailable    bool   `json:"producer_available"`
+	ConsumerAvailable    bool   `json:"consumer_available"`
+	SourceDigest         string `json:"source_digest"`
+	ArtifactSourceDigest string `json:"artifact_source_digest"`
+	ArtifactDigest       string `json:"artifact_digest"`
+	GeneratedJudgeDigest string `json:"generated_judge_digest"`
+	IndependentDigest    string `json:"independent_digest"`
+	SemanticDigest       string `json:"semantic_digest"`
+	ObservationDigest    string `json:"observation_digest"`
+	Provenance           string `json:"provenance"`
 }
 
 type Receipt struct {

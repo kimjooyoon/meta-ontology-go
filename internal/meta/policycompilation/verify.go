@@ -27,7 +27,8 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 	if !bytes.Equal(policyBytes, receiptPolicyBytes) {
 		return errors.New("receipt policy meaning differs from the compiled policy")
 	}
-	if receipt.MetaOperation != MetaOperation || receipt.ProofChoice != ProofChoice {
+	wantMetaOperation, wantProofChoice := sourceReceiptBindings(policy)
+	if receipt.MetaOperation != wantMetaOperation || receipt.ProofChoice != wantProofChoice {
 		return errors.New("receipt lost meta-operation or proof choice")
 	}
 	if receipt.Verification.Decision != VerificationPass || receipt.Verification.ConformanceDecision != VerificationPass || receipt.Verification.SubjectResolution != SubjectUnresolved {
@@ -44,7 +45,7 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 	if receipt.Producer != wantProducer || receipt.Consumer != wantConsumer {
 		return errors.New("receipt producer/consumer evidence is not bound to the artifact")
 	}
-	if receipt.GeneratedDigest != judgeHash || len(receipt.Cases) != len(cases) || len(receipt.Evidence) != len(cases) || receipt.Claims.EventCount != len(receipt.Claims.Events) || len(receipt.Claims.Events) != len(cases)*FixedDenominator*2 {
+	if receipt.GeneratedDigest != judgeHash || len(receipt.Cases) != len(cases) || len(receipt.Evidence) != len(cases) || receipt.Claims.EventCount != len(receipt.Claims.Events) || len(receipt.Claims.Events) != len(cases)*ClaimPredicateCount*2 {
 		return errors.New("receipt denominator or generated artifact binding is incomplete")
 	}
 	calculatedDigest, err := receiptDigest(receipt)
@@ -57,12 +58,16 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 	if err := verifyClaimLedger(receipt.Claims); err != nil {
 		return err
 	}
+	if err := verifyClaimPredicates(receipt, policy); err != nil {
+		return err
+	}
 	order := make([]int, len(cases))
 	for index := range cases {
 		order[index] = index
 	}
 	sort.SliceStable(order, func(i, j int) bool { return cases[order[i]].ID < cases[order[j]].ID })
 	passCount, failClosedCount, unknownCount := 0, 0, 0
+	claimDischarged, claimRefuted, claimOpen := 0, 0, 0
 	allowedObservations := make(map[string]string, len(cases))
 	for _, input := range cases {
 		allowedObservations[observationDigest(input)] = input.Provenance
@@ -84,12 +89,12 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 		if outputIndex > 0 && stored.ClaimStartDigest != receipt.Cases[outputIndex-1].ClaimEndDigest {
 			return fmt.Errorf("case %q is disconnected from the previous claim segment", input.ID)
 		}
-		claimEnd := (outputIndex+1)*FixedDenominator*2 - 1
+		claimEnd := (outputIndex+1)*ClaimPredicateCount*2 - 1
 		if claimEnd >= len(receipt.Claims.Events) || stored.ClaimEndDigest != receipt.Claims.Events[claimEnd].Digest {
 			return fmt.Errorf("case %q claim segment end is not bound to the ledger", input.ID)
 		}
 		observed := receipt.Evidence[outputIndex]
-		wantObserved := EvidenceObservation{Class: input.EvidenceClass, CaseID: input.ID, ProducerAvailable: input.ProducerAvailable, ConsumerAvailable: input.ConsumerAvailable, SourceDigest: input.ObservedSourceDigest, ArtifactDigest: artifactDigest(artifact), ObservationDigest: observationDigest(input), Provenance: input.Provenance}
+		wantObserved := evidenceForCase(input, artifact, policy)
 		if observed != wantObserved {
 			return fmt.Errorf("case %q observation provenance is not bound", input.ID)
 		}
@@ -97,6 +102,22 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 		independent := IndependentEvaluate(policy, input)
 		if !sameDecision(stored.Source, source) || !sameDecision(stored.Independent, independent) || !sameDecision(stored.Source, stored.Generated) || !sameDecision(stored.Generated, stored.Independent) || stored.ValidatorExpectation != stored.Source.Decision || !stored.AllDecisionsEquivalent || !stored.DecisionsEquivalent || !stored.ValidatorExpectationConfirmed {
 			return fmt.Errorf("case %q is not independently equivalent", input.ID)
+		}
+		if err := verifyCasePredicateValues(stored, assessClaimPredicates(policy, artifact, judgeHash, input, source, stored.Generated, independent)); err != nil {
+			return err
+		}
+		for _, predicate := range stored.ClaimPredicates {
+			switch predicate.Outcome {
+			case ClaimDischarged:
+				claimDischarged++
+			case ClaimRefuted:
+				claimRefuted++
+			case ClaimOpen:
+				claimOpen++
+			}
+		}
+		if err := verifyCaseClaimEvents(receipt.Claims, outputIndex, stored, policy); err != nil {
+			return err
 		}
 		switch stored.Generated.Decision {
 		case DecisionPass:
@@ -109,11 +130,25 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 			return fmt.Errorf("case %q has unsupported decision %q", input.ID, stored.Generated.Decision)
 		}
 	}
-	if receipt.Summary.CaseCount != len(cases) || receipt.Summary.PassCount != passCount || receipt.Summary.FailClosedCount != failClosedCount || receipt.Summary.UnknownCount != unknownCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.SourceAllEquivalent != len(cases) || receipt.Summary.ValidatorExpectationsConfirmed != len(cases) {
+	if receipt.Summary.CaseCount != len(cases) || receipt.Summary.PassCount != passCount || receipt.Summary.FailClosedCount != failClosedCount || receipt.Summary.UnknownCount != unknownCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.SourceAllEquivalent != len(cases) || receipt.Summary.ValidatorExpectationsConfirmed != len(cases) || receipt.Summary.ClaimPredicatesDischarged != claimDischarged || receipt.Summary.ClaimPredicatesRefuted != claimRefuted || receipt.Summary.ClaimPredicatesOpen != claimOpen {
 		return errors.New("case summary does not cover the fixed case denominator")
 	}
 	if receipt.Verification.Decision != VerificationPass || !receipt.Verification.IndependentReplayed || !receipt.Verification.GeneratedReplayed || !receipt.Verification.LedgerVerified || receipt.Verification.FixedDenominator != FixedDenominator || receipt.Verification.CaseDenominator != len(cases) {
 		return errors.New("verification status is not a complete pass")
+	}
+	return nil
+}
+
+func verifyCasePredicateValues(stored CaseReceipt, assessments map[string]claimAssessment) error {
+	byPredicate := make(map[string]ClaimPredicateObservation, len(stored.ClaimPredicates))
+	for _, observation := range stored.ClaimPredicates {
+		byPredicate[observation.Predicate] = observation
+	}
+	for predicate, assessment := range assessments {
+		observation, ok := byPredicate[predicate]
+		if !ok || observation.Outcome != assessment.Outcome || observation.Observed != assessment.Observed || observation.Stage != assessment.Stage || observation.Step != assessment.Step || observation.Reason != assessment.Reason {
+			return fmt.Errorf("case %q predicate %s is not bound to its observed assessment", stored.ID, predicate)
+		}
 	}
 	return nil
 }
@@ -126,7 +161,7 @@ func verifyClaimLedger(ledger ClaimLedger) error {
 	counts := make(map[string]int, len(ledger.Events)/2)
 	states := make(map[string]string, len(ledger.Events)/2)
 	for index, event := range ledger.Events {
-		if event.Event != index+1 || event.PriorDigest != prior || event.ClaimID == "" || event.ObservationDigest == "" || event.Provenance == "" || counts[event.ClaimID] >= 2 {
+		if event.Event != index+1 || event.PriorDigest != prior || event.ClaimID == "" || event.Predicate == "" || event.ObservationDigest == "" || event.Provenance == "" || counts[event.ClaimID] >= 2 {
 			return fmt.Errorf("claim ledger chain is broken at event %d", event.Event)
 		}
 		canonical := event
@@ -145,6 +180,12 @@ func verifyClaimLedger(ledger ClaimLedger) error {
 		if !exists && event.From != ClaimUnrecorded {
 			return fmt.Errorf("claim %q did not begin at UNRECORDED", event.ClaimID)
 		}
+		if event.From == ClaimUnrecorded && (event.To != ClaimOpen || event.Observed) {
+			return fmt.Errorf("claim %q has an invalid opening observation", event.ClaimID)
+		}
+		if event.From == ClaimOpen && ((event.To == ClaimDischarged || event.To == ClaimRefuted) != event.Observed) {
+			return fmt.Errorf("claim %q has an invalid outcome observation", event.ClaimID)
+		}
 		counts[event.ClaimID]++
 		states[event.ClaimID] = event.To
 		prior = event.Digest
@@ -160,9 +201,30 @@ func verifyClaimLedger(ledger ClaimLedger) error {
 	return nil
 }
 
+func verifyCaseClaimEvents(ledger ClaimLedger, caseIndex int, stored CaseReceipt, policy CompiledPolicy) error {
+	base := caseIndex * ClaimPredicateCount * 2
+	byID := make(map[string]ClaimPredicateObservation, ClaimPredicateCount)
+	for _, observation := range stored.ClaimPredicates {
+		byID[observation.ClaimID] = observation
+	}
+	for ruleIndex, rule := range policy.Rules {
+		claimID := claimID(stored.ID, rule)
+		observation, ok := byID[claimID]
+		if !ok {
+			return fmt.Errorf("case %q has no observation for claim %s", stored.ID, claimID)
+		}
+		opening := ledger.Events[base+ruleIndex]
+		outcome := ledger.Events[base+ClaimPredicateCount+ruleIndex]
+		if opening.ClaimID != claimID || opening.Predicate != rule.Claim || opening.From != ClaimUnrecorded || opening.To != ClaimOpen || opening.Decision != stored.Generated.Decision || opening.Stage != rule.Stage || opening.Step != rule.Step || opening.Reason != "CLAIM_OPENED" || outcome.ClaimID != claimID || outcome.Predicate != rule.Claim || outcome.From != ClaimOpen || outcome.To != observation.Outcome || outcome.Decision != stored.Generated.Decision || outcome.Stage != observation.Stage || outcome.Step != observation.Step || outcome.Reason != observation.Reason || outcome.Observed != observation.Observed {
+			return fmt.Errorf("case %q claim %s is not bound to its predicate observation", stored.ID, rule.Claim)
+		}
+	}
+	return nil
+}
+
 func verifyWriteSet(observation WriteSetObservation) error {
-	if observation.RepositoryBeforeDigest == "" || observation.RepositoryAfterDigest == "" || observation.RepositoryBeforeDigest != observation.RepositoryAfterDigest || observation.RepositoryWriteChanged || observation.RepositoryBeforeCount != observation.RepositoryAfterCount || observation.GeneratedRootClass != "RUNNER_TEMP_ONLY" || len(observation.GeneratedFiles) != 6 || observation.MutationAuthority != 0 || observation.PromotionAuthority != 0 {
-		return errors.New("generated output is not proven runner-temp-only with zero mutation/promotion authority")
+	if observation.RepositoryBeforeDigest == "" || observation.RepositoryAfterDigest == "" || observation.RepositoryBeforeDigest != observation.RepositoryAfterDigest || observation.RepositoryNetChangeObserved || observation.RepositoryBeforeCount != observation.RepositoryAfterCount || observation.GeneratedRootClass != "RUNNER_TEMP_ONLY" || len(observation.GeneratedFiles) != 6 || observation.MutationAuthority != 0 || observation.PromotionAuthority != 0 {
+		return errors.New("generated output has an observed repository net change or nonzero mutation/promotion authority")
 	}
 	wantFiles := []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"}
 	for index, name := range wantFiles {

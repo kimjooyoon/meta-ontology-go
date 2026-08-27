@@ -68,15 +68,44 @@ func Compile(source []byte) (CompiledPolicy, error) {
 			return CompiledPolicy{}, fmt.Errorf("policy step %d is not present exactly once", index+1)
 		}
 	}
+	if err := validateClaimPredicates(rules); err != nil {
+		return CompiledPolicy{}, err
+	}
 	if reductionCount != 1 {
 		return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
 	}
 	return CompiledPolicy{
 		Schema: SchemaVersion, PolicyID: policyID,
 		Package: ir.Package, Namespace: ir.Namespace.String(),
-		SourceDigest: DigestBytes(source), SemanticDigest: ir.StableHash(),
+		SourceDigest: DigestBytes(source), SemanticDigest: SemanticDigest(ir.StableHash()),
 		Denominator: FixedDenominator, Rules: rules, Reduction: reduction,
 	}, nil
+}
+
+func validateClaimPredicates(rules []Rule) error {
+	want := []string{
+		ClaimPredicateSourceBound,
+		ClaimPredicateArtifactBound,
+		ClaimPredicateGeneratedExecution,
+		ClaimPredicateIndependentReplay,
+		ClaimPredicateProofSelection,
+		ClaimPredicateLedgerChain,
+		ClaimPredicateDecisionReduction,
+		ClaimPredicateLineageSeal,
+	}
+	seen := make(map[string]bool, len(want))
+	for _, rule := range rules {
+		if rule.Claim == "" || seen[rule.Claim] {
+			return fmt.Errorf("claim predicate %q is empty or duplicated", rule.Claim)
+		}
+		seen[rule.Claim] = true
+	}
+	for _, predicate := range want {
+		if !seen[predicate] {
+			return fmt.Errorf("claim predicate %q is not source-bound", predicate)
+		}
+	}
+	return nil
 }
 
 type activityProgram struct {
@@ -161,7 +190,7 @@ func parseDecisionReduction(value string) (DecisionReduction, error) {
 
 func knownCondition(value string) bool {
 	switch value {
-	case ConditionEvidenceUnavailable, ConditionDigestUnavailable, ConditionSourceMismatch, ConditionArtifactMismatch, ConditionIndependentMismatch, ConditionSemanticEquivalence:
+	case ConditionEvidenceUnavailable, ConditionDigestUnavailable, ConditionMalformedDigest, ConditionSourceMismatch, ConditionArtifactMismatch, ConditionIndependentMismatch, ConditionSemanticEquivalence:
 		return true
 	default:
 		return false

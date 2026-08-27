@@ -9,28 +9,30 @@ func IndependentEvaluate(policy CompiledPolicy, input Case) DecisionResult {
 		return safetyFailure(result, "FIXED_DENOMINATOR_CHANGED")
 	}
 	for _, rule := range policy.Reduction.Rules {
-		if independentConditionMatches(rule.Condition, policy.SourceDigest, input) {
+		if independentConditionMatches(rule.Condition, policy.SourceDigest, policy.SemanticDigest, input) {
 			return applyDecisionRule(result, rule)
 		}
 	}
 	return safetyFailure(result, "NO_REDUCTION_RULE_MATCHED")
 }
 
-func independentConditionMatches(condition, sourceDigest string, input Case) bool {
+func independentConditionMatches(condition, sourceDigest, semanticDigest string, input Case) bool {
 	available := input.ProducerAvailable && input.ConsumerAvailable
 	switch condition {
 	case ConditionEvidenceUnavailable:
 		return !available
 	case ConditionDigestUnavailable:
-		return available && (input.ObservedSourceDigest == "" || input.ObservedArtifactSourceDigest == "" || input.ObservedIndependentDigest == "")
+		return available && hasEmptyDigest(input)
+	case ConditionMalformedDigest:
+		return available && !hasEmptyDigest(input) && hasMalformedDigest(input)
 	case ConditionSourceMismatch:
-		return available && input.ObservedSourceDigest != "" && input.ObservedArtifactSourceDigest != "" && input.ObservedIndependentDigest != "" && input.ObservedSourceDigest != sourceDigest
+		return available && digestsValid(input) && input.ObservedSourceDigest != sourceDigest
 	case ConditionArtifactMismatch:
-		return available && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest != "" && input.ObservedArtifactSourceDigest != sourceDigest
+		return available && digestsValid(input) && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest != sourceDigest
 	case ConditionIndependentMismatch:
-		return available && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest != "" && input.ObservedIndependentDigest != sourceDigest
+		return available && digestsValid(input) && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest != semanticDigest
 	case ConditionSemanticEquivalence:
-		return available && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest == sourceDigest
+		return available && digestsValid(input) && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest == semanticDigest
 	default:
 		return false
 	}

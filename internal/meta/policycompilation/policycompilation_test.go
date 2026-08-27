@@ -44,9 +44,10 @@ func TestIndependentEvaluatorHasPassFailClosedAndUnknownCases(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pass := Case{ID: "pass", ValidatorExpectation: DecisionPass, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest}
+	judgeHash := DigestBytes(GenerateJudge(policy))
+	pass := Case{ID: "pass", ValidatorExpectation: DecisionPass, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedGeneratedJudgeDigest: judgeHash, ObservedIndependentDigest: policy.SemanticDigest}
 	fail := pass
-	fail.ID, fail.ValidatorExpectation, fail.ObservedSourceDigest = "fail", DecisionFailClosed, "sha256:drift"
+	fail.ID, fail.ValidatorExpectation, fail.ObservedSourceDigest = "fail", DecisionFailClosed, "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 	unknown := pass
 	unknown.ID, unknown.ValidatorExpectation, unknown.ConsumerAvailable = "unknown", DecisionUnknown, false
 	for _, test := range []struct {
@@ -64,14 +65,28 @@ func TestReceiptCarriesFixedDenominatorAndAppendOnlyLedger(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cases := []Case{
-		{ID: "pass", ValidatorExpectation: DecisionPass, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
-		{ID: "fail", ValidatorExpectation: DecisionFailClosed, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: "sha256:drift", ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
-		{ID: "unknown", ValidatorExpectation: DecisionUnknown, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: false, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SourceDigest},
-	}
 	judge := GenerateJudge(policy)
 	judgeHash := DigestBytes(judge)
 	artifact := PolicyArtifact{Schema: ArtifactSchema, Policy: policy, GeneratedJudgeHash: judgeHash}
+	base := Case{ValidatorExpectation: DecisionPass, EvidenceClass: EvidenceSyntheticFixture, Provenance: "test synthetic fixture", ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest, ObservedGeneratedJudgeDigest: judgeHash, ObservedIndependentDigest: policy.SemanticDigest}
+	cases := []Case{
+		func() Case { value := base; value.ID = "pass"; return value }(),
+		func() Case {
+			value := base
+			value.ID, value.ValidatorExpectation, value.ObservedSourceDigest = "fail", DecisionFailClosed, "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+			return value
+		}(),
+		func() Case {
+			value := base
+			value.ID, value.ValidatorExpectation, value.ConsumerAvailable = "unknown", DecisionUnknown, false
+			return value
+		}(),
+		func() Case {
+			value := base
+			value.ID, value.ValidatorExpectation, value.ObservedSourceDigest = "malformed", DecisionUnknown, "sha256:not-a-valid-content-digest"
+			return value
+		}(),
+	}
 	generated := make([]DecisionResult, 0, len(cases))
 	independent := make([]DecisionResult, 0, len(cases))
 	for _, input := range cases {
@@ -83,7 +98,7 @@ func TestReceiptCarriesFixedDenominatorAndAppendOnlyLedger(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if receipt.Claims.EventCount != ExpectedCaseCount*FixedDenominator*2 || receipt.Summary.PassCount != 1 || receipt.Summary.FailClosedCount != 1 || receipt.Summary.UnknownCount != 1 {
+	if receipt.Claims.EventCount != ExpectedCaseCount*ClaimPredicateCount*2 || receipt.Summary.PassCount != 1 || receipt.Summary.FailClosedCount != 1 || receipt.Summary.UnknownCount != 2 {
 		t.Fatalf("unexpected receipt summary: %#v", receipt)
 	}
 	if receipt.Summary.SourceAllEquivalent != ExpectedCaseCount || receipt.Summary.ValidatorExpectationsConfirmed != ExpectedCaseCount || len(receipt.Cases) != ExpectedCaseCount || !receipt.Cases[0].AllDecisionsEquivalent {

@@ -9,7 +9,7 @@ func EvaluateSourcePolicy(policy CompiledPolicy, input Case) DecisionResult {
 		return safetyFailure(result, "FIXED_DENOMINATOR_CHANGED")
 	}
 	for _, rule := range policy.Reduction.Rules {
-		if sourceConditionMatches(rule.Condition, policy.SourceDigest, input) {
+		if sourceConditionMatches(rule.Condition, policy.SourceDigest, policy.SemanticDigest, input) {
 			return applyDecisionRule(result, rule)
 		}
 	}
@@ -24,23 +24,38 @@ func safePolicyShape(policy CompiledPolicy) bool {
 	return policy.Denominator == FixedDenominator && len(policy.Rules) == FixedDenominator && policy.Reduction.Schema == ReductionSchema && len(policy.Reduction.Rules) == ReductionRuleCount
 }
 
-func sourceConditionMatches(condition, sourceDigest string, input Case) bool {
+func sourceConditionMatches(condition, sourceDigest, semanticDigest string, input Case) bool {
+	available := input.ProducerAvailable && input.ConsumerAvailable
 	switch condition {
 	case ConditionEvidenceUnavailable:
-		return !input.ProducerAvailable || !input.ConsumerAvailable
+		return !available
 	case ConditionDigestUnavailable:
-		return input.ProducerAvailable && input.ConsumerAvailable && (input.ObservedSourceDigest == "" || input.ObservedArtifactSourceDigest == "" || input.ObservedIndependentDigest == "")
+		return available && hasEmptyDigest(input)
+	case ConditionMalformedDigest:
+		return available && !hasEmptyDigest(input) && hasMalformedDigest(input)
 	case ConditionSourceMismatch:
-		return input.ProducerAvailable && input.ConsumerAvailable && input.ObservedSourceDigest != "" && input.ObservedArtifactSourceDigest != "" && input.ObservedIndependentDigest != "" && input.ObservedSourceDigest != sourceDigest
+		return available && digestsValid(input) && input.ObservedSourceDigest != sourceDigest
 	case ConditionArtifactMismatch:
-		return input.ProducerAvailable && input.ConsumerAvailable && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest != "" && input.ObservedArtifactSourceDigest != sourceDigest
+		return available && digestsValid(input) && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest != sourceDigest
 	case ConditionIndependentMismatch:
-		return input.ProducerAvailable && input.ConsumerAvailable && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest != "" && input.ObservedIndependentDigest != sourceDigest
+		return available && digestsValid(input) && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest != semanticDigest
 	case ConditionSemanticEquivalence:
-		return input.ProducerAvailable && input.ConsumerAvailable && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest == sourceDigest
+		return available && digestsValid(input) && input.ObservedSourceDigest == sourceDigest && input.ObservedArtifactSourceDigest == sourceDigest && input.ObservedIndependentDigest == semanticDigest
 	default:
 		return false
 	}
+}
+
+func hasEmptyDigest(input Case) bool {
+	return input.ObservedSourceDigest == "" || input.ObservedArtifactSourceDigest == "" || input.ObservedGeneratedJudgeDigest == "" || input.ObservedIndependentDigest == ""
+}
+
+func hasMalformedDigest(input Case) bool {
+	return !ValidDigest(input.ObservedSourceDigest) || !ValidDigest(input.ObservedArtifactSourceDigest) || !ValidDigest(input.ObservedGeneratedJudgeDigest) || !ValidDigest(input.ObservedIndependentDigest)
+}
+
+func digestsValid(input Case) bool {
+	return !hasEmptyDigest(input) && !hasMalformedDigest(input)
 }
 
 func applyDecisionRule(result DecisionResult, rule DecisionRule) DecisionResult {
