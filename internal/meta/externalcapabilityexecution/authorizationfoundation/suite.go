@@ -35,8 +35,7 @@ func classify(input Input) (string, string) {
 	if _, err := Evaluate(input); err == nil {
 		return "AUTHORIZED_SHADOW", "EXACT"
 	} else {
-		var value *resolutionError
-		if errors.As(err, &value) {
+		if value, ok := errors.AsType[*resolutionError](err); ok {
 			return value.Decision, value.Resolution
 		}
 	}
