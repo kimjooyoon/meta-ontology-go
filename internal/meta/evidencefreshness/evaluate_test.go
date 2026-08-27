@@ -56,6 +56,7 @@ entity C id "gooo://evidence-freshness/test/c"
 entity D id "gooo://evidence-freshness/test/d"
 entity E id "gooo://evidence-freshness/test/e"
 entity F id "gooo://evidence-freshness/test/f"
+entity ClaimSubject id "gooo://evidence-freshness/entity/claim-subject"
 activity One(A) -> B
 activity Two(B) -> C
 activity Three(C) -> D
