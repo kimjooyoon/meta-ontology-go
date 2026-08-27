@@ -135,7 +135,7 @@ func decisionFor(spec caseSpec, budget integerSet) (string, string, string) {
 
 func observeSource(path string, raw []byte) sourceObservation {
 	observation := sourceObservation{Path: path, Digest: digestBytes(raw)}
-	for _, rawLine := range strings.Split(string(raw), "\n") {
+	for rawLine := range strings.SplitSeq(string(raw), "\n") {
 		line := strings.TrimSpace(rawLine)
 		fields := strings.Fields(line)
 		switch {
