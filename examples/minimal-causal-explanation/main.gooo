@@ -1,0 +1,16 @@
+package minimalcausalexplanation
+namespace minimalcausalexplanation
+
+entity Evidence id "gooo://meta/minimal-causal-explanation/evidence"
+entity CausalPath id "gooo://meta/minimal-causal-explanation/path"
+entity Counterfactual id "gooo://meta/minimal-causal-explanation/counterfactual"
+entity Receipt id "gooo://meta/minimal-causal-explanation/receipt"
+entity Producer id "gooo://meta/minimal-causal-explanation/producer"
+entity Consumer id "gooo://meta/minimal-causal-explanation/consumer"
+entity MetaOperation id "gooo://meta/minimal-causal-explanation/meta-operation"
+entity ProofChoice id "gooo://meta/minimal-causal-explanation/proof-choice"
+
+activity ProduceEvidence(Producer) -> Evidence
+activity SelectMinimalPath(Evidence) -> CausalPath
+activity RemoveEvidence(CausalPath) -> Counterfactual
+activity PreserveReceipt(CausalPath, Counterfactual) -> Receipt
