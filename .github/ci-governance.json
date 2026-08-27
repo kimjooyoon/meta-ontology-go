@@ -214,6 +214,19 @@
       ]
     },
     {
+      "branch": "agent/luna-meta-20-semantic-delta-receipt",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/semantic-delta-receipt.yml",
+        "cmd/semantic-delta-receipt-witness",
+        "docs/language/semantic-delta-receipt.md",
+        "examples/semantic-delta-receipt",
+        "internal/meta/languageassurance/semanticdeltareceipt",
+        "internal/verify/scope_semantic_delta_receipt.go"
+      ]
+    },
+    {
       "branch": "agent/ci-alias-refresh",
       "paths": [
         ".github/**",

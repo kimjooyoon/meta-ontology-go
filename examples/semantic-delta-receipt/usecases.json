@@ -1,0 +1,9 @@
+{
+  "schema": "gooo/semantic-delta-receipt-usecases/v1",
+  "producer": "semanticdeltareceipt.Produce",
+  "consumer": "semanticdeltareceipt.Adjudicate",
+  "meta_operation": "separate-text-structural-semantic-deltas",
+  "layers": ["textual_delta", "structural_delta", "semantic_claim_delta"],
+  "proof_choices": ["FOUNDATION", "COHERENCE", "REGRESSION"],
+  "repository_writes": 0
+}

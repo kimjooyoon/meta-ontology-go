@@ -1,0 +1,121 @@
+name: Semantic delta receipt
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/semantic-delta-receipt.yml'
+      - 'cmd/semantic-delta-receipt-witness/**'
+      - 'examples/semantic-delta-receipt/**'
+      - 'internal/detection/semanticdelta/**'
+      - 'internal/meta/languageassurance/semanticdeltareceipt/**'
+      - 'internal/verify/scope_semantic_delta_receipt.go'
+      - 'docs/language/semantic-delta-receipt.md'
+      - 'go.mod'
+      - 'go.sum'
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/semantic-delta-receipt.yml'
+      - 'cmd/semantic-delta-receipt-witness/**'
+      - 'examples/semantic-delta-receipt/**'
+      - 'internal/detection/semanticdelta/**'
+      - 'internal/meta/languageassurance/semanticdeltareceipt/**'
+      - 'internal/verify/scope_semantic_delta_receipt.go'
+      - 'docs/language/semantic-delta-receipt.md'
+      - 'go.mod'
+      - 'go.sum'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: semantic-delta-receipt-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: go1.27.0
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  receipt:
+    name: semantic-delta-receipt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+
+      - name: Require exact Go fixes and replay the independent suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./cmd/semantic-delta-receipt-witness
+          go test ./internal/meta/languageassurance/semanticdeltareceipt ./cmd/semantic-delta-receipt-witness
+          out="$RUNNER_TEMP/semantic-delta-receipt"
+          mkdir -p "$out"
+          for pass in first second; do
+            go run ./cmd/semantic-delta-receipt-witness \
+              --case suite --subject-sha "$HEAD_SHA" --output "$out/$pass.json"
+          done
+          cmp "$out/first.json" "$out/second.json"
+          jq -e '
+            .schema == "gooo/semantic-delta-receipt-conformance/v1" and
+            .decision == "FIXED_POINT" and .resolution == "EXACT" and
+            .summary.cases_total == 3 and .summary.cases_passed == 3 and
+            .coverage_bps == 10000 and .summary.textual_changes == 3 and
+            .summary.structural_observations == 3 and
+            .summary.semantic_preserved == 1 and
+            .summary.semantic_changed == 1 and .summary.indeterminate == 1 and
+            .summary.repository_writes == 0 and
+            ([.cases[] | select(.passed == true)] | length) == 3 and
+            ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceipt.Adjudicate")] | length) == 3
+          ' "$out/first.json"
+
+      - name: Replay actual Gooo source pairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/semantic-delta-receipt"
+          mkdir -p "$out"
+          root=examples/semantic-delta-receipt
+          go run ./cmd/semantic-delta-receipt-witness \
+            --before "$root/before.gooo" --after "$root/equivalent-after.gooo" \
+            --subject-sha "$HEAD_SHA" --output "$out/equivalent.json"
+          go run ./cmd/semantic-delta-receipt-witness \
+            --before "$root/before.gooo" --after "$root/semantic-after.gooo" \
+            --subject-sha "$HEAD_SHA" --output "$out/semantic-change.json"
+          go run ./cmd/semantic-delta-receipt-witness \
+            --before "$root/before.gooo" --after "$root/indeterminate-after.gooo" \
+            --subject-sha "$HEAD_SHA" --output "$out/indeterminate.json"
+          jq -e '.receipt.classification == "SEMANTIC_PRESERVED" and .receipt.textual_delta.changed == true and (.receipt.structural_delta.added_nodes | length) == 0 and .independent_verdict.passed == true' "$out/equivalent.json"
+          jq -e '.receipt.classification == "SEMANTIC_CHANGED" and (.receipt.semantic_claim_delta.changed | length) == 1 and .independent_verdict.passed == true' "$out/semantic-change.json"
+          jq -e '.receipt.classification == "INDETERMINATE" and .receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "UNKNOWN" and .independent_verdict.passed == true and .repository_writes == 0' "$out/indeterminate.json"
+          sha256sum "$out"/*.json > "$out/manifest.sha256"
+
+      - name: Check executable Gooo contract sources
+        run: |
+          set -euo pipefail
+          go run ./cmd/gooo check examples/semantic-delta-receipt/main.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/equivalent-after.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/semantic-after.gooo
+
+      - name: Upload semantic delta receipts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: semantic-delta-receipt-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/semantic-delta-receipt
+          if-no-files-found: error
+          retention-days: 30

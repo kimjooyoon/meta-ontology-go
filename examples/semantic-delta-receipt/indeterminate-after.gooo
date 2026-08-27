@@ -1,0 +1,9 @@
+package fixture
+namespace semanticdeltafixture
+
+entity Order id "gooo://semantic-delta/entity/order"
+entity Payment id "gooo://semantic-delta/entity/payment"
+
+// This declaration is outside the bounded experiment grammar.
+assert PayOrder preserves Payment
+activity PayOrder(Order) -> Payment

@@ -1,0 +1,12 @@
+package semanticdeltareceipt
+namespace semanticdeltareceipt
+
+entity TextualDelta id "gooo://semantic-delta/entity/textual-delta"
+entity StructuralDelta id "gooo://semantic-delta/entity/structural-delta"
+entity SemanticClaimDelta id "gooo://semantic-delta/entity/semantic-claim-delta"
+entity DeltaReceipt id "gooo://semantic-delta/entity/delta-receipt"
+entity IndependentVerdict id "gooo://semantic-delta/entity/independent-verdict"
+entity SourcePair id "gooo://semantic-delta/entity/source-pair"
+
+activity SeparateDeltaLayers(SourcePair) -> DeltaReceipt
+activity AdjudicateDelta(DeltaReceipt) -> IndependentVerdict

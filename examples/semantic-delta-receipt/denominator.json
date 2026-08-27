@@ -1,0 +1,12 @@
+{
+  "schema": "gooo/semantic-delta-receipt-denominator/v1",
+  "metric_id": "gooo.metric.semantic.delta-receipt-totality.v1",
+  "meta_operation": "separate-text-structural-semantic-deltas",
+  "cases_total": 3,
+  "cases": [
+    {"id":"equivalent","decision":"FIXED_POINT","resolution":"EXACT","classification":"SEMANTIC_PRESERVED"},
+    {"id":"semantic-change","decision":"DELTA_OBSERVED","resolution":"EXACT","classification":"SEMANTIC_CHANGED"},
+    {"id":"indeterminate","decision":"FAIL_CLOSED","resolution":"UNKNOWN","classification":"INDETERMINATE"}
+  ],
+  "repository_writes": 0
+}
