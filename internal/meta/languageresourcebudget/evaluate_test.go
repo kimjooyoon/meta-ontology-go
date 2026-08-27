@@ -75,7 +75,7 @@ func fixtureInput() Input {
 				ReceiptBytes: receiptBytes, GeneratedBytes: generatedBytes, OutputDigest: outputDigest})
 		}
 	}
-	return Input{Schema: InputSchema, ExpectedHead: strings.Repeat("a", 40), Contract: contract, Producer: ProducerEvidence{SourceReceiptBase64: base64.StdEncoding.EncodeToString(source), ArtifactBase64: base64.StdEncoding.EncodeToString(artifact), ReplayBase64: base64.StdEncoding.EncodeToString(artifact), SourceDigest: "sha256:source", SourceFiles: 2, GoFiles: 0, Effects: Effects{}}, Observations: observations}
+	return Input{Schema: InputSchema, ExpectedHead: strings.Repeat("a", 40), Contract: contract, Producer: ProducerEvidence{SourceReceiptBase64: base64.StdEncoding.EncodeToString(source), ArtifactBase64: base64.StdEncoding.EncodeToString(artifact), ReplayBase64: base64.StdEncoding.EncodeToString(artifact), SourceDigest: "sha256:" + strings.Repeat("d", 64), SourceFiles: 2, GoFiles: 0, Effects: Effects{}}, Observations: observations}
 }
 
 func sourceReceiptFixture(contract Contract) []byte {
@@ -84,6 +84,6 @@ func sourceReceiptFixture(contract Contract) []byte {
 }
 
 func artifactFixture() []byte {
-	value, _ := json.Marshal(map[string]any{"schema": "gooo/operation-manifest/v1", "decision": "PASS", "resolution": "EXACT", "reason": "OPERATION_MANIFEST_EMITTED", "kind": "operation-manifest", "subject_digest": "sha256:subject", "operation": map[string]string{"activity": "PayOrder"}, "effects": Effects{}, "digest": "sha256:artifact"})
+	value, _ := json.Marshal(map[string]any{"schema": "gooo/operation-manifest/v1", "decision": "PASS", "resolution": "EXACT", "reason": "OPERATION_MANIFEST_EMITTED", "kind": "operation-manifest", "subject_digest": "sha256:" + strings.Repeat("e", 64), "operation": map[string]string{"activity": "PayOrder"}, "effects": Effects{}, "digest": "sha256:" + strings.Repeat("f", 64)})
 	return value
 }

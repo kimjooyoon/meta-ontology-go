@@ -61,7 +61,7 @@ func verifyProducer(input Input) (Semantic, error) {
 		return value.Schema == "gooo/operation-manifest/v1" && value.Decision == "PASS" && value.Resolution == "EXACT" &&
 			value.Reason == "OPERATION_MANIFEST_EMITTED" && value.Kind == "operation-manifest" &&
 			value.Operation.Activity == input.Contract.Entry && value.Effects.RepositoryWrites == 0 &&
-			!value.Effects.MutationAuthority && len(value.SubjectDigest) > 0 && len(value.Digest) > 0
+			!value.Effects.MutationAuthority && contentDigest(value.SubjectDigest) && contentDigest(value.Digest)
 	}
 	if !valid(first) || !valid(replay) {
 		return Semantic{}, fmt.Errorf("ARTIFACT_SEMANTICS_INVALID")

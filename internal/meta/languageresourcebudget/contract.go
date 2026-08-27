@@ -42,6 +42,10 @@ func operation(value string, contract Contract) (Operation, bool) {
 
 func positiveSHA(value string) bool { return len(value) == 40 && isHex(value) }
 
+func contentDigest(value string) bool {
+	return len(value) == 71 && value[:7] == "sha256:" && isHex(value[7:])
+}
+
 func isHex(value string) bool {
 	for _, char := range value {
 		if !(char >= '0' && char <= '9') && !(char >= 'a' && char <= 'f') && !(char >= 'A' && char <= 'F') {
