@@ -1,0 +1,65 @@
+name: Evidence freshness
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/evidence-freshness.yml'
+      - 'cmd/evidence-freshness/**'
+      - 'cmd/evidence-freshness-decider/**'
+      - 'docs/language/evidence-freshness.md'
+      - 'examples/evidence-freshness/**'
+      - 'internal/meta/evidencefreshness/**'
+      - 'internal/verify/scope_luna_meta_11_evidence_freshness.go'
+      - 'scripts/evidence-freshness/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-freshness:
+    name: evidence-freshness
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: true
+
+      - name: Format and test the freshness packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(gofmt -l cmd/evidence-freshness cmd/evidence-freshness-decider internal/meta/evidencefreshness)"
+          go test ./cmd/evidence-freshness ./cmd/evidence-freshness-decider ./internal/meta/evidencefreshness/...
+
+      - name: Produce and independently decide the exact-head receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          HEAD_SHA="$HEAD_SHA" EVIDENCE_FRESHNESS_OUTPUT="$RUNNER_TEMP/evidence-freshness" \
+            bash scripts/evidence-freshness/main.sh
+
+      - name: Upload exact-head freshness evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: evidence-freshness-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/evidence-freshness
+          if-no-files-found: error
+          retention-days: 30

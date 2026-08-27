@@ -1,0 +1,16 @@
+package evidencefreshness
+namespace evidencefreshness
+
+entity ClaimSubject id "gooo://evidence-freshness/entity/claim-subject"
+entity ClaimMaterial id "gooo://evidence-freshness/entity/claim-material"
+entity ClaimRecipe id "gooo://evidence-freshness/entity/claim-recipe"
+entity ClaimEnvironment id "gooo://evidence-freshness/entity/claim-environment"
+entity ClaimRunner id "gooo://evidence-freshness/entity/claim-runner"
+entity ClaimVerifier id "gooo://evidence-freshness/entity/claim-verifier"
+entity FreshnessDecision id "gooo://evidence-freshness/entity/freshness-decision"
+entity PreservationTransition id "gooo://evidence-freshness/entity/preservation-transition"
+entity EvidenceFreshnessReceipt id "gooo://evidence-freshness/entity/receipt"
+
+activity BindEvidenceTuple(ClaimSubject, ClaimMaterial, ClaimRecipe, ClaimEnvironment, ClaimRunner, ClaimVerifier) -> FreshnessDecision
+activity PreserveClaimAtBoundary(FreshnessDecision) -> PreservationTransition
+activity EmitReadOnlyReceipt(PreservationTransition) -> EvidenceFreshnessReceipt

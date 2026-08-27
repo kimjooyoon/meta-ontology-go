@@ -176,6 +176,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/partition-directory-ci-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
 | `agent/zerolang-experiments` | `docs/research/zerolang.md` |
 | `agent/zerolang-research` | `docs/research/zerolang.md` |
+| `agent/luna-meta-11-evidence-freshness` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/evidence-freshness.yml`, `cmd/evidence-freshness`, `cmd/evidence-freshness-decider`, `docs/language/evidence-freshness.md`, `examples/evidence-freshness`, `internal/meta/evidencefreshness`, `internal/verify/scope_luna_meta_11_evidence_freshness.go`, `scripts/evidence-freshness` |
 | `agent/source-splitter-conformance-governance` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_source_splitter_conformance.go` |
 | `agent/source-splitter-conformance-fail-closed` | `internal/meta/transformationeffect/**` |
 | `agent/source-splitter-conformance-contract` | `docs/language/source-splitter-operation-conformance-v1.md`, `examples/language-syntax-roundtrip/corpus.json`, `examples/source-splitter-conformance/**` |
