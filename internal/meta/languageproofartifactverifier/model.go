@@ -156,7 +156,6 @@ type Artifact struct {
 	SemanticDigest  string              `json:"semantic_digest"`
 	OperationDigest string              `json:"operation_digest"`
 	Evidence        []Evidence          `json:"evidence"`
-	Claims          []ClaimStatement    `json:"claims"`
 	Recipe          Recipe              `json:"recipe"`
 	RecipeDigest    string              `json:"recipe_digest"`
 	PriorLedger     ClaimLedger         `json:"prior_ledger"`
@@ -164,6 +163,7 @@ type Artifact struct {
 	Authority       Authority           `json:"authority"`
 	Effects         Effects             `json:"effects"`
 	NotClaimed      []string            `json:"not_claimed"`
+	Claims          []ClaimStatement    `json:"claims"`
 	BundleDigest    string              `json:"bundle_digest"`
 	Digest          string              `json:"digest"`
 }
