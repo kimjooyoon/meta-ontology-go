@@ -327,6 +327,9 @@ type CheckoutEvidence struct {
 type ConsumerReceipt struct {
 	Schema            string `json:"schema"`
 	Version           int    `json:"version"`
+	PreliminaryDigest string `json:"preliminary_digest"`
+	Producer          string `json:"producer"`
+	Consumer          string `json:"consumer"`
 	TargetPath        string `json:"target_path"`
 	TargetDigest      string `json:"target_digest"`
 	OutputDigest      string `json:"output_digest"`

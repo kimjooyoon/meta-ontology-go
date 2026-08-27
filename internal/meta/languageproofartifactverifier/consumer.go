@@ -43,17 +43,31 @@ func consumerError(class ConsumerErrorClass, detail string) *ConsumerError {
 }
 
 type consumerAttestation struct {
-	Decision        string
-	Resolution      string
-	Reason          string
-	Authority       string
-	SubjectDecision string
-	BundleDigest    string
+	Decision          string `json:"decision"`
+	Resolution        string `json:"resolution"`
+	Reason            string `json:"reason"`
+	Authority         string `json:"authority"`
+	SubjectDecision   string `json:"subject_decision"`
+	BundleDigest      string `json:"bundle_digest"`
+	PreliminaryDigest string `json:"preliminary_digest"`
+	Producer          string `json:"producer"`
+	Consumer          string `json:"consumer"`
+	TargetPath        string `json:"target_path"`
+	TargetDigest      string `json:"target_digest"`
 }
 
 func attestationDigest(report Report) string {
+	return attestationDigestFor(report, report.ConsumerReceipt)
+}
+
+func attestationDigestFor(report Report, receipt ConsumerReceipt) string {
+	preliminaryDigest := receipt.PreliminaryDigest
+	if preliminaryDigest == "" {
+		preliminaryDigest = report.Digest
+	}
 	return digestValue(consumerAttestation{Decision: report.ConformanceDecision, Resolution: report.ConformanceResolution, Reason: report.ConformanceReason,
-		Authority: report.ArtifactUseAuthority, SubjectDecision: report.SubjectArtifactDecision, BundleDigest: report.BundleDigest})
+		Authority: report.ArtifactUseAuthority, SubjectDecision: report.SubjectArtifactDecision, BundleDigest: report.BundleDigest,
+		PreliminaryDigest: preliminaryDigest, Producer: report.Producer, Consumer: report.Consumer, TargetPath: receipt.TargetPath, TargetDigest: receipt.TargetDigest})
 }
 
 func consumerAttestedReport(report Report) Report {
@@ -72,8 +86,13 @@ func expectedConsumerReceipt(report Report, targetPath string, target []byte) Co
 		TargetDigest string `json:"target_digest"`
 		Authority    string `json:"authority"`
 	}{targetPath, targetDigest, "READ_ONLY_CONSUMPTION"})
-	receipt := ConsumerReceipt{Schema: ConsumerReceiptSchema, Version: 1, TargetPath: targetPath, TargetDigest: targetDigest,
-		OutputDigest: outputDigest, OutputExists: true, Authority: "READ_ONLY_CONSUMPTION", AttestationDigest: attestationDigest(report)}
+	preliminaryDigest := report.ConsumerReceipt.PreliminaryDigest
+	if preliminaryDigest == "" {
+		preliminaryDigest = report.Digest
+	}
+	receipt := ConsumerReceipt{Schema: ConsumerReceiptSchema, Version: 1, PreliminaryDigest: preliminaryDigest, Producer: report.Producer, Consumer: report.Consumer,
+		TargetPath: targetPath, TargetDigest: targetDigest, OutputDigest: outputDigest, OutputExists: true, Authority: "READ_ONLY_CONSUMPTION"}
+	receipt.AttestationDigest = attestationDigestFor(report, receipt)
 	receipt.Digest = consumerReceiptDigest(receipt)
 	return receipt
 }

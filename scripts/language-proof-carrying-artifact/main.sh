@@ -228,12 +228,39 @@ go run ./cmd/language-proof-carrying-artifact-verifier -bundle "$output/bundle.j
 go run ./cmd/language-proof-carrying-artifact-consumer -bundle "$output/bundle.json" -report "$output/bundle-preliminary-report.json" -target artifact.json -out "$output/consumer-receipt.json"
 go run ./cmd/language-proof-carrying-artifact-verifier -bundle "$output/bundle.json" -consumer-receipt "$output/consumer-receipt.json" -output "$output/bundle-report.json"
 jq -e '.conformance_decision == "FAIL_CLOSED" and .conformance_resolution == "LOWER_RESOLUTION" and .conformance_reason == "CONSUMER_RECHECK_NOT_OBSERVED" and .conformance_coordinate.stage == "CONSUME_BUNDLE" and .conformance_coordinate.step == "consumer-recheck" and .summary.bundle_only_verification == 1 and .summary.consumer_rechecks == 0 and ([.indicators[] | select(.satisfied == false)] | length) == 1' "$output/bundle-preliminary-report.json"
-jq -e '.consumer_receipt.output_exists == false and .consumer_receipt.target_digest == "" and .consumer_receipt.output_digest == ""' "$output/bundle-preliminary-report.json"
+jq -e '.consumer_receipt.output_exists == false and .consumer_receipt.target_digest == "" and .consumer_receipt.output_digest == "" and .artifact_use_authority == "" and ([.proofs[] | select(.consumer_gate_open == true)] | length) == 2' "$output/bundle-preliminary-report.json"
+
+assert_preliminary_rejected() {
+  local name="$1" filter="$2" fixture="$output/$1.json" consumer_log="$output/$1-consumer.log"
+  jq -c "$filter" "$output/bundle-preliminary-report.json" > "$fixture"
+  if go run ./cmd/language-proof-carrying-artifact-verifier -check "$fixture"; then
+    echo "$name preliminary unexpectedly validated by CLI" >&2
+    exit 1
+  fi
+  if go run ./cmd/language-proof-carrying-artifact-consumer -bundle "$output/bundle.json" -report "$fixture" -target artifact.json -out "$output/$name-consumer-receipt.json" > "$consumer_log" 2>&1; then
+    echo "$name preliminary unexpectedly lifted by consumer" >&2
+    exit 1
+  fi
+  rg -F 'ATTESTATION_MISMATCH' "$consumer_log"
+}
+
+assert_preliminary_rejected "preliminary-38-of-40" '.indicators[2].value = 38 | .indicators[2].target = 40 | .indicators[2].satisfied = false'
+assert_preliminary_rejected "preliminary-duplicate-metric" '.indicators[1].metric_id = .indicators[0].metric_id'
+assert_preliminary_rejected "preliminary-missing-metric" 'del(.indicators[1])'
+assert_preliminary_rejected "preliminary-proof-false" '.proofs[0].passed = false'
+assert_preliminary_rejected "preliminary-broken-transition" '.claim_transitions[0].digest = ""'
+assert_preliminary_rejected "preliminary-invalid-claim-ledger" '.prior_ledger.entries[0].status = "DISCHARGED"'
+
 jq '.digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' "$output/bundle.json" > "$output/corrupt-bundle.json"
-run_verifier "$output/missing-bundle-report.json" "$output/no-such-bundle.json"
-run_verifier "$output/corrupt-bundle-report.json" "$output/corrupt-bundle.json"
-jq -e '.conformance_decision == "FAIL_CLOSED" and .conformance_resolution == "LOWER_RESOLUTION" and .conformance_reason == "BUNDLE_CONSUMPTION_NOT_OBSERVED" and ([.cases[] | select(.id == "unauthorized-consumer" and .status != "SATISFIED" and .consumer_error_class == "BUNDLE_INVALID")] | length) == 1' "$output/missing-bundle-report.json"
-jq -e '.conformance_decision == "FAIL_CLOSED" and .conformance_resolution == "LOWER_RESOLUTION" and .conformance_reason == "BUNDLE_CONSUMPTION_NOT_OBSERVED" and ([.cases[] | select(.id == "unauthorized-consumer" and .status != "SATISFIED" and .consumer_error_class == "BUNDLE_INVALID")] | length) == 1' "$output/corrupt-bundle-report.json"
+if run_verifier "$output/missing-bundle-report.json" "$output/no-such-bundle.json" > "$output/missing-bundle.log" 2>&1; then
+  echo "missing bundle unexpectedly produced a liftable preliminary" >&2
+  exit 1
+fi
+if run_verifier "$output/corrupt-bundle-report.json" "$output/corrupt-bundle.json" > "$output/corrupt-bundle.log" 2>&1; then
+  echo "corrupt bundle unexpectedly produced a liftable preliminary" >&2
+  exit 1
+fi
+rg -F 'BUNDLE_CONSUMPTION_NOT_OBSERVED' "$output/missing-bundle.log" "$output/corrupt-bundle.log"
 run_verifier "$output/report.json"
 
 go run ./cmd/language-proof-carrying-artifact-verifier -check "$output/report.json"

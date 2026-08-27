@@ -102,13 +102,14 @@ type Indicator struct {
 }
 
 type Proof struct {
-	Choice          string   `json:"choice"`
-	MetaOperation   string   `json:"meta_operation"`
-	TargetDigest    string   `json:"target_digest"`
-	Dependency      string   `json:"dependency"`
-	EvidenceDigests []string `json:"evidence_digests"`
-	ReceiptDigest   string   `json:"receipt_digest"`
-	Passed          bool     `json:"passed"`
+	Choice           string   `json:"choice"`
+	MetaOperation    string   `json:"meta_operation"`
+	TargetDigest     string   `json:"target_digest"`
+	Dependency       string   `json:"dependency"`
+	EvidenceDigests  []string `json:"evidence_digests"`
+	ReceiptDigest    string   `json:"receipt_digest"`
+	Passed           bool     `json:"passed"`
+	ConsumerGateOpen bool     `json:"consumer_gate_open"`
 }
 
 type Report struct {

@@ -1,6 +1,9 @@
 package languageproofartifactverifier
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 func Validate(report Report) error {
 	canonicalContract := CanonicalContract()
@@ -24,7 +27,7 @@ func Validate(report Report) error {
 		len(report.Transitions) != TransitionTotal || len(report.Interventions) != 2 || report.NetChangedPaths != report.WriteSet.NetChangedPaths || report.CapabilityMutationGranted || report.PromotionAuthority || report.SemanticAuthority {
 		return fmt.Errorf("proof-carrying report shape mismatch")
 	}
-	if report.Checkout.HeadSHA != report.HeadSHA || !validHead(report.Checkout.HeadSHA) || !validDigest(report.Checkout.TreeDigest) ||
+	if report.Checkout.HeadSHA != report.HeadSHA || report.Checkout.ActualHeadSHA != report.HeadSHA || !validHead(report.Checkout.HeadSHA) || !validDigest(report.Checkout.TreeDigest) ||
 		!validDigest(report.Checkout.SourceDigest) || !validDigest(report.Checkout.OperationDigest) || !validDigest(report.Checkout.RecipeDigest) || !validDigest(report.Checkout.ContractDigest) ||
 		(report.BundleDigest != "" && !validDigest(report.BundleDigest)) {
 		return fmt.Errorf("proof-carrying checkout binding mismatch")
@@ -37,17 +40,12 @@ func Validate(report Report) error {
 	if bundleMetricValue != 1 || consumerMetricValue != 1 {
 		return fmt.Errorf("proof-carrying bundle metric scope mismatch")
 	}
-	want := Summary{CasesSatisfied: CaseTotal, CasesTotal: CaseTotal, ValidArtifacts: 1, EvidenceKindsCarried: EvidenceTotal, ExactEvidenceLinks: EvidenceTotal,
-		RecipeMatches: 1, PreservedTransitions: EvidenceTotal + 1, TransitionTotal: TransitionTotal, ClaimTemplates: ClaimTemplateTotal, ClaimInstances: CaseTotal * ClaimTemplateTotal,
-		AcceptedTransitions: TransitionTotal, CaseDischargedClaims: 43, CaseOpenClaims: 20, CaseRefutedClaims: 17, FinalLedgerOpenClaims: ClaimTemplateTotal, FinalLedgerDischargedClaims: ClaimTemplateTotal,
-		TamperedRejections: 1, CoherentTamperRejections: 1, CoherentClaimStructureRejections: 4, MissingEvidenceRejections: 1, ByteOnlyDenials: 1, RecipeRejections: 1, RecipeOnlyRejections: 1,
-		MissingAttachmentRejections: 1, WrongAttachmentRejections: 1, UnrelatedEvidenceRejections: 1, StaleHeadRejections: 1, UnauthorizedConsumerDenials: 1,
-		SemanticInterventions: 1, NonsemanticInterventions: 1, ReadOnlyAuthorities: 1, ProducerDependencies: 0, ProducerImportNumerator: 0,
-		ProducerImportDenominator: report.Summary.ProducerImportDenominator, CoreParserDependencies: CoreParserDependencyInventoryTotal,
-		NetRepositoryStateUnchanged: 1, UnknownAuthorityObservations: 1, BundleOnlyVerification: bundleMetricValue, ConsumerRechecks: consumerMetricValue,
-		GeneratedAuthority: 0, SemanticClaims: 0, NetChangedPaths: 0, MutationAuthorities: 0, PromotionAuthorities: 0, SemanticAuthorities: 0}
+	want := expectedSummary(report.Summary.ProducerImportDenominator, bundleMetricValue, consumerMetricValue)
 	if report.Summary != want || report.Summary.ProducerImportDenominator <= 0 || report.Summary.ProducerImportNumerator != 0 || report.Summary.CoreParserDependencies != CoreParserDependencyInventoryTotal {
 		return fmt.Errorf("proof-carrying summary mismatch")
+	}
+	if err := validateIndicatorInventory(report, 1, 1); err != nil {
+		return err
 	}
 	if !validDigest(report.UnauthorizedConsumerTargetDigest) || report.UnauthorizedConsumerOutputExists || report.UnauthorizedConsumerOutputDigest != "" || report.UnauthorizedConsumerErrorClass != string(ConsumerErrorAttestationMismatch) || !validDigest(report.UnauthorizedConsumerErrorDigest) {
 		return fmt.Errorf("proof-carrying unauthorized consumer observation mismatch")
@@ -61,52 +59,32 @@ func Validate(report Report) error {
 	if err := validateFinalLedger(report.Ledger, report.PriorLedger); err != nil {
 		return fmt.Errorf("proof-carrying final ledger mismatch: %w", err)
 	}
-	claimIDs := make([]string, 0, ClaimTemplateTotal)
-	for _, spec := range claimSpecs() {
-		claimIDs = append(claimIDs, spec.ID)
+	if err := validateCaseResults(report); err != nil {
+		return err
 	}
-	for _, item := range report.Cases {
-		if item.Status != "SATISFIED" || len(item.Claims) != ClaimTemplateTotal || item.Coordinate.Stage == "" || item.ObservedDecision != item.ExpectedDecision || item.ObservedResolution != item.ExpectedResolution || item.ObservedReason != item.ExpectedReason {
-			return fmt.Errorf("proof-carrying case mismatch")
-		}
-		seen := map[string]bool{}
-		for index, claim := range item.Claims {
-			if index >= len(claimIDs) || claim.ID != claimIDs[index] || seen[claim.ID] || claim.Provenance == "" || claim.StateDigest != claimStateDigest(claim) ||
-				(claim.Status == "DISCHARGED" && claim.Resolution != "EXACT") || (claim.Status == "OPEN" && claim.Resolution != "LOWER_RESOLUTION") ||
-				(claim.Status == "REFUTED" && claim.Resolution != "INVARIANT_ONLY") {
-				return fmt.Errorf("proof-carrying claim evaluation mismatch")
-			}
-			seen[claim.ID] = true
-		}
-		if item.ID == "valid-proof-carrying-artifact" && !validCaseClaims(item, report) {
-			return fmt.Errorf("proof-carrying valid claim binding mismatch")
-		}
+	if err := validateLedgerAgainstValidCase(report); err != nil {
+		return err
 	}
 	if err := validateTransitions(report.Transitions); err != nil {
 		return err
 	}
-	for _, intervention := range report.Interventions {
-		if intervention.Status != "SATISFIED" || !intervention.RawDigestChanged || !intervention.ConsumerDecisionPreserved {
-			return fmt.Errorf("proof-carrying intervention mismatch")
-		}
+	if err := validateTransitionsAgainstClaims(report); err != nil {
+		return err
+	}
+	if err := validateInterventions(report.Interventions); err != nil {
+		return err
 	}
 	for _, indicator := range report.Indicators {
 		if !indicator.Satisfied {
 			return fmt.Errorf("proof-carrying indicator mismatch")
 		}
 	}
-	for _, proof := range report.Proofs {
-		if !proof.Passed || !validDigest(proof.TargetDigest) || !validDigest(proof.ReceiptDigest) || len(proof.EvidenceDigests) == 0 {
-			return fmt.Errorf("proof-carrying proof mismatch")
-		}
-		for _, digest := range proof.EvidenceDigests {
-			if !validDigest(digest) {
-				return fmt.Errorf("proof-carrying proof evidence mismatch")
-			}
-		}
+	if err := validateProofInventory(report, false); err != nil {
+		return err
 	}
 	if report.BundleDigest != "" {
 		if report.ConsumerReceipt.Schema != ConsumerReceiptSchema || report.ConsumerReceipt.Version != 1 || report.ConsumerReceipt.Authority != "READ_ONLY_CONSUMPTION" ||
+			report.ConsumerReceipt.Producer != ProducerID || report.ConsumerReceipt.Consumer != ConsumerID || !validDigest(report.ConsumerReceipt.PreliminaryDigest) || report.ConsumerReceipt.TargetPath != "artifact.json" ||
 			!report.ConsumerReceipt.OutputExists || !validDigest(report.ConsumerReceipt.TargetDigest) || !validDigest(report.ConsumerReceipt.OutputDigest) || !validDigest(report.ConsumerReceipt.AttestationDigest) ||
 			report.ConsumerReceipt.AttestationDigest != attestationDigest(report) || report.ConsumerReceipt.Digest != consumerReceiptDigest(report.ConsumerReceipt) {
 			return fmt.Errorf("proof-carrying consumer receipt mismatch")
@@ -118,9 +96,10 @@ func Validate(report Report) error {
 	return nil
 }
 
-// ValidatePreliminary accepts only the intentionally incomplete checkout
-// observation. It is separate from final conformance validation so a 38/40
-// report cannot be mistaken for a PASS report.
+// ValidatePreliminary accepts only the exact pre-consumer observation. It is
+// intentionally stricter than a shape check: the report must already contain
+// every non-consumer case, claim, ledger, transition, proof, intervention, and
+// binding needed for the consumer kernel to lift it to a final report.
 func ValidatePreliminary(report Report) error {
 	bundleMode := report.BundleDigest != ""
 	wantScope := "CURRENT_CHECKOUT_OBSERVATION"
@@ -132,36 +111,259 @@ func ValidatePreliminary(report Report) error {
 		wantReason = "CONSUMER_RECHECK_NOT_OBSERVED"
 	}
 	if report.Schema != ReportSchema || report.Producer != ProducerID || report.Consumer != ConsumerID || !validHead(report.HeadSHA) ||
+		report.ContractDigest != digestValue(CanonicalContract()) || report.RecipeDigest != digestValue(CanonicalRecipe()) || report.RecipeVersion != CanonicalRecipe().Version ||
+		!validDigest(report.IndependenceDigest) || report.AuthorityObservation != "UNKNOWN_GLOBAL_TRANSIENT_SCOPE" || report.ArtifactUseAuthority != "" || report.ConsumerReceipt != (ConsumerReceipt{}) ||
 		(bundleMode && !validDigest(report.BundleDigest)) || report.CheckoutBindingScope != wantScope ||
 		report.ConformanceDecision != "FAIL_CLOSED" || report.ConformanceResolution != "LOWER_RESOLUTION" || report.ConformanceReason != wantReason ||
 		report.ConformanceCoordinate != (Coordinate{"CONSUME_BUNDLE", "consumer-recheck", report.ConformanceReason}) ||
-		report.Summary.BundleOnlyVerification != wantBundleMetric || report.Summary.ConsumerRechecks != wantConsumerMetric || len(report.Indicators) != len(MetricIDs()) ||
-		report.Digest != reportDigest(report) {
-		return fmt.Errorf("proof-carrying preliminary report mismatch")
+		report.PreliminaryDecision != "FAIL_CLOSED" || report.PreliminaryResolution != "LOWER_RESOLUTION" || report.PreliminaryReason != wantReason ||
+		report.PreliminaryCoordinate != report.ConformanceCoordinate {
+		return fmt.Errorf("proof-carrying preliminary report identity mismatch")
 	}
-	unsatisfied := 0
-	for _, indicator := range report.Indicators {
-		if indicator.MetricID == "gooo.metric.language.proof-carrying-artifact-bundle-only.v3" {
-			if indicator.Value != wantBundleMetric || indicator.Target != 1 || indicator.Satisfied != (wantBundleMetric == 1) {
-				return fmt.Errorf("proof-carrying preliminary bundle gate mismatch")
+	if report.Checkout.HeadSHA != report.HeadSHA || report.Checkout.ActualHeadSHA != report.HeadSHA || !validHead(report.Checkout.HeadSHA) || !validDigest(report.Checkout.TreeDigest) ||
+		!validDigest(report.Checkout.SourceDigest) || !validDigest(report.Checkout.OperationDigest) || !validDigest(report.Checkout.RecipeDigest) || !validDigest(report.Checkout.ContractDigest) ||
+		report.Checkout.SourceDigest == "" || report.Checkout.OperationDigest == "" {
+		return fmt.Errorf("proof-carrying preliminary checkout binding mismatch")
+	}
+	if report.SubjectArtifactDecision != "CARRIED" || report.SubjectArtifactResolution != "EVIDENCE_ATTACHED" || report.SubjectArtifactReason != "PROOF_CARRYING_ARTIFACT_EMITTED" ||
+		report.NetChangedPaths != 0 || report.NetChangedPaths != report.WriteSet.NetChangedPaths || report.CapabilityMutationGranted || report.PromotionAuthority || report.SemanticAuthority ||
+		report.NotClaimed == nil {
+		return fmt.Errorf("proof-carrying preliminary authority or subject mismatch")
+	}
+	if err := validateWriteSet(report.WriteSet); err != nil {
+		return err
+	}
+	if report.WriteSet.CapabilityMutationGranted || report.WriteSet.NetChangedPaths != 0 || report.WriteSet.NetUnchanged != true || report.WriteSet.TransientUnknown != true ||
+		report.WriteSet.ActualWritesObservation != "UNKNOWN" || report.WriteSet.GlobalMutationAuthority != "UNKNOWN" {
+		return fmt.Errorf("proof-carrying preliminary write observation mismatch")
+	}
+	if report.Summary != expectedSummary(report.Summary.ProducerImportDenominator, wantBundleMetric, wantConsumerMetric) ||
+		report.Summary.ProducerImportDenominator <= 0 || report.Summary.ProducerImportNumerator != 0 || report.Summary.CoreParserDependencies != CoreParserDependencyInventoryTotal ||
+		report.IndependenceDigest != digestValue(IndependenceEvidence{Schema: "gooo/language-proof-carrying-artifact-independence/v1", ProducerDependencies: report.Summary.ProducerDependencies, ProducerImportNumerator: report.Summary.ProducerImportNumerator, ProducerImportDenominator: report.Summary.ProducerImportDenominator, CoreParserDependencies: report.Summary.CoreParserDependencies}) {
+		return fmt.Errorf("proof-carrying preliminary summary mismatch")
+	}
+	if err := validateIndicatorInventory(report, wantBundleMetric, wantConsumerMetric); err != nil {
+		return err
+	}
+	if err := validateCaseResults(report); err != nil {
+		return err
+	}
+	if err := validateLedgerAgainstValidCase(report); err != nil {
+		return err
+	}
+	if err := validateTransitions(report.Transitions); err != nil {
+		return err
+	}
+	if err := validateTransitionsAgainstClaims(report); err != nil {
+		return err
+	}
+	if err := validateInterventions(report.Interventions); err != nil {
+		return err
+	}
+	if err := validateProofInventory(report, true); err != nil {
+		return err
+	}
+	if len(report.Counterexamples) != CounterexampleTotal || !counterexampleInventoryOK(report.Counterexamples) {
+		return fmt.Errorf("proof-carrying preliminary counterexample inventory mismatch")
+	}
+	if report.Digest != reportDigest(report) {
+		return fmt.Errorf("proof-carrying preliminary report digest mismatch")
+	}
+	return nil
+}
+
+func expectedSummary(denominator, bundleMetric, consumerMetric int) Summary {
+	return Summary{
+		CasesSatisfied: CaseTotal, CasesTotal: CaseTotal, ValidArtifacts: 1,
+		EvidenceKindsCarried: EvidenceTotal, ExactEvidenceLinks: EvidenceTotal,
+		RecipeMatches: 1, PreservedTransitions: EvidenceTotal + 1,
+		TransitionTotal: TransitionTotal, ClaimTemplates: ClaimTemplateTotal,
+		ClaimInstances: CaseTotal * ClaimTemplateTotal, AcceptedTransitions: TransitionTotal,
+		CaseDischargedClaims: 43, CaseOpenClaims: 20, CaseRefutedClaims: 17,
+		FinalLedgerOpenClaims: ClaimTemplateTotal, FinalLedgerDischargedClaims: ClaimTemplateTotal,
+		TamperedRejections: 1, CoherentTamperRejections: 1, CoherentClaimStructureRejections: 4,
+		MissingEvidenceRejections: 1, ByteOnlyDenials: 1, RecipeRejections: 1,
+		RecipeOnlyRejections: 1, MissingAttachmentRejections: 1, WrongAttachmentRejections: 1,
+		UnrelatedEvidenceRejections: 1, StaleHeadRejections: 1, UnauthorizedConsumerDenials: 1,
+		SemanticInterventions: 1, NonsemanticInterventions: 1, ReadOnlyAuthorities: 1,
+		ProducerDependencies: 0, ProducerImportNumerator: 0, ProducerImportDenominator: denominator,
+		CoreParserDependencies: CoreParserDependencyInventoryTotal, NetRepositoryStateUnchanged: 1,
+		UnknownAuthorityObservations: 1, BundleOnlyVerification: bundleMetric, ConsumerRechecks: consumerMetric,
+		GeneratedAuthority: 0, SemanticClaims: 0, NetChangedPaths: 0,
+		MutationAuthorities: 0, PromotionAuthorities: 0, SemanticAuthorities: 0,
+	}
+}
+
+func validateIndicatorInventory(report Report, bundleMetric, consumerMetric int) error {
+	if len(report.Indicators) != len(MetricIDs()) {
+		return fmt.Errorf("proof-carrying indicator inventory size mismatch")
+	}
+	want := indicators(expectedSummary(report.Summary.ProducerImportDenominator, bundleMetric, consumerMetric))
+	byID := make(map[string]Indicator, len(report.Indicators))
+	for _, item := range report.Indicators {
+		if _, exists := byID[item.MetricID]; exists {
+			return fmt.Errorf("proof-carrying indicator inventory duplicate: %s", item.MetricID)
+		}
+		byID[item.MetricID] = item
+	}
+	for index, id := range MetricIDs() {
+		item, exists := byID[id]
+		if !exists {
+			return fmt.Errorf("proof-carrying indicator inventory missing: %s", id)
+		}
+		if item != want[index] {
+			return fmt.Errorf("proof-carrying indicator mismatch: %s", id)
+		}
+	}
+	return nil
+}
+
+func validateCaseResults(report Report) error {
+	if !caseInventoryOK(report.Cases) || len(report.Cases) != CaseTotal {
+		return fmt.Errorf("proof-carrying case inventory mismatch")
+	}
+	claimIDs := make([]string, 0, ClaimTemplateTotal)
+	for _, spec := range claimSpecs() {
+		claimIDs = append(claimIDs, spec.ID)
+	}
+	for index, item := range report.Cases {
+		spec := CanonicalContract().Cases[index]
+		wantCoordinate, ok := caseCoordinates()[item.ID]
+		if !ok || item.Status != "SATISFIED" || item.ExpectedDecision != spec.ExpectedDecision || item.ExpectedResolution != spec.ExpectedResolution || item.ExpectedReason != spec.ExpectedReason ||
+			item.ObservedDecision != spec.ExpectedDecision || item.ObservedResolution != spec.ExpectedResolution || item.ObservedReason != spec.ExpectedReason || item.Coordinate != wantCoordinate {
+			return fmt.Errorf("proof-carrying case mismatch: %s", item.ID)
+		}
+		if len(item.Claims) != ClaimTemplateTotal {
+			return fmt.Errorf("proof-carrying case claim count mismatch: %s", item.ID)
+		}
+		seen := map[string]bool{}
+		for claimIndex, claim := range item.Claims {
+			if claim.ID != claimIDs[claimIndex] || seen[claim.ID] || claim.Provenance == "" || claim.StateDigest != claimStateDigest(claim) ||
+				(claim.Status == "DISCHARGED" && claim.Resolution != "EXACT") || (claim.Status == "OPEN" && claim.Resolution != "LOWER_RESOLUTION") ||
+				(claim.Status == "REFUTED" && claim.Resolution != "INVARIANT_ONLY") || (claim.Status != "DISCHARGED" && claim.Status != "OPEN" && claim.Status != "REFUTED") ||
+				(len(claim.EvidenceDigests) == 0 && claim.EvidenceDigest != "") || (len(claim.EvidenceDigests) > 0 && claim.EvidenceDigest != claim.EvidenceDigests[0]) {
+				return fmt.Errorf("proof-carrying claim evaluation mismatch: %s", item.ID)
 			}
-			if !indicator.Satisfied {
-				unsatisfied++
+			seen[claim.ID] = true
+		}
+	}
+	if valid := validCase(report.Cases); valid == nil || !validCaseClaims(*valid, report) {
+		return fmt.Errorf("proof-carrying valid claim binding mismatch")
+	}
+	return nil
+}
+
+func caseCoordinates() map[string]Coordinate {
+	return map[string]Coordinate{
+		"valid-proof-carrying-artifact":      {"CONSUME_AUTHORITY", "grant-read-only-consumption", "CONSUMER_ONLY_READ_ONLY_AUTHORITY"},
+		"tampered-evidence":                  {"CONSUME_EVIDENCE", "evidence-digest", "PROOF_EVIDENCE_DIGEST_MISMATCH"},
+		"coherent-tamper-reconstruction":     {"CONSUME_OPERATION", "receipt", "OPERATION_RECONSTRUCTION_MISMATCH"},
+		"missing-operation-evidence":         {"CONSUME_EVIDENCE", "operation-evidence", "PROOF_EVIDENCE_MISSING"},
+		"bytes-only-no-authority":            {"CONSUME_INPUT", "external-evidence", "ARTIFACT_BYTES_NOT_AUTHORITY"},
+		"independent-recipe-mismatch":        {"CONSUME_RECIPE", "recipe", "INDEPENDENT_RECIPE_MISMATCH"},
+		"recipe-only-mismatch":               {"CONSUME_RECIPE", "recipe", "INDEPENDENT_RECIPE_MISMATCH"},
+		"missing-attachment":                 {"CONSUME_INPUT", "operation-attachment", "ARTIFACT_ATTACHMENT_MISSING"},
+		"wrong-attachment-digest":            {"CONSUME_OPERATION", "attachment-digest", "OPERATION_ATTACHMENT_DIGEST_MISMATCH"},
+		"unrelated-evidence-tamper":          {"CONSUME_EVIDENCE", "invariant-evidence", "INVARIANT_EVIDENCE_NOT_PRESERVED"},
+		"stale-head":                         {"CONSUME_IDENTITY", "head", "HEAD_BINDING_MISMATCH"},
+		"unauthorized-consumer":              {"CONSUME_BUNDLE", "attestation", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED"},
+		"coherent-claim-proposition-tamper":  {"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"},
+		"coherent-claim-dependency-tamper":   {"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"},
+		"coherent-claim-proof-choice-tamper": {"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"},
+		"coherent-claim-target-tamper":       {"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"},
+	}
+}
+
+func validateLedgerAgainstValidCase(report Report) error {
+	valid := validCase(report.Cases)
+	if valid == nil || len(valid.Claims) != ClaimTemplateTotal || len(report.PriorLedger.Entries) != ClaimTemplateTotal || len(report.Ledger.Entries) != ClaimTemplateTotal*2 {
+		return fmt.Errorf("proof-carrying claim ledger subject mismatch")
+	}
+	for index, claim := range valid.Claims {
+		prior := report.PriorLedger.Entries[index]
+		if prior.ClaimID != claim.ID || prior.Proposition != claim.Proposition || prior.TargetDigest != claim.TargetDigest || !reflect.DeepEqual(prior.Dependencies, claim.Dependencies) ||
+			prior.Status != "OPEN" || prior.Resolution != "LOWER_RESOLUTION" || prior.Producer != ProducerID || prior.Consumer != ConsumerID || prior.ProofChoice != claim.ProofChoice ||
+			prior.MetaOperation != claim.MetaOperation || prior.Coordinate != claim.Coordinate || prior.Reason != "AWAITING_INDEPENDENT_RECHECK" || !reflect.DeepEqual(prior.EvidenceDigest, claim.EvidenceDigests) || prior.Provenance != "producer-carried-prior-ledger" {
+			return fmt.Errorf("proof-carrying prior ledger subject mismatch")
+		}
+		final := report.Ledger.Entries[ClaimTemplateTotal+index]
+		if final.ClaimID != claim.ID || final.Proposition != claim.Proposition || final.TargetDigest != claim.TargetDigest || !reflect.DeepEqual(final.Dependencies, claim.Dependencies) ||
+			final.Status != "DISCHARGED" || final.Resolution != "EXACT" || final.Producer != ProducerID || final.Consumer != ConsumerID || final.ProofChoice != claim.ProofChoice ||
+			final.MetaOperation != claim.MetaOperation || final.Coordinate != claim.Coordinate || final.Reason != "INDEPENDENT_SOURCE_OPERATION_RECIPE_RECHECKED" || !reflect.DeepEqual(final.EvidenceDigest, claim.EvidenceDigests) || final.Provenance != "consumer-canonical-recipe-v2" {
+			return fmt.Errorf("proof-carrying final ledger subject mismatch")
+		}
+	}
+	return nil
+}
+
+func validateTransitionsAgainstClaims(report Report) error {
+	valid := validCase(report.Cases)
+	if valid == nil {
+		return fmt.Errorf("proof-carrying transition subject missing")
+	}
+	want := claimTransitions(valid.Claims)
+	if !reflect.DeepEqual(report.Transitions, want) {
+		return fmt.Errorf("proof-carrying transition subject mismatch")
+	}
+	return nil
+}
+
+func validateInterventions(interventions []InterventionResult) error {
+	if len(interventions) != 2 {
+		return fmt.Errorf("proof-carrying intervention inventory mismatch")
+	}
+	for index, item := range interventions {
+		wantKind := "SEMANTIC"
+		wantID := "semantic-source-intervention"
+		if index == 1 {
+			wantKind = "NONSEMANTIC"
+			wantID = "comment-only-intervention"
+		}
+		if item.ID != wantID || item.Kind != wantKind || item.Status != "SATISFIED" || item.Reason == "" ||
+			!validDigest(item.RawSourceDigestBefore) || !validDigest(item.RawSourceDigestAfter) || !validDigest(item.SemanticDigestBefore) || !validDigest(item.SemanticDigestAfter) ||
+			!validDigest(item.OperationReceiptDigestBefore) || !validDigest(item.OperationReceiptDigestAfter) || !validDigest(item.EvidenceLinkDigestBefore) || !validDigest(item.EvidenceLinkDigestAfter) ||
+			!validDigest(item.ClaimTransitionDigestBefore) || !validDigest(item.ClaimTransitionDigestAfter) || item.ConsumerDecisionBefore != "PASS" || item.ConsumerDecisionAfter != "PASS" ||
+			!item.RawDigestChanged || !item.ConsumerDecisionPreserved {
+			return fmt.Errorf("proof-carrying intervention mismatch: %s", item.ID)
+		}
+		if index == 0 {
+			if !item.SemanticDigestChanged || !item.OperationReceiptChanged || !item.EvidenceLinksChanged || !item.ClaimTransitionsChanged || item.SemanticDigestPreserved {
+				return fmt.Errorf("proof-carrying semantic intervention mismatch")
+			}
+		} else if !item.SemanticDigestPreserved || item.SemanticDigestChanged {
+			return fmt.Errorf("proof-carrying nonsemantic intervention mismatch")
+		}
+	}
+	return nil
+}
+
+func validateProofInventory(report Report, preliminary bool) error {
+	if len(report.Proofs) != 3 {
+		return fmt.Errorf("proof-carrying proof inventory mismatch")
+	}
+	want := proofs(report, report.Cases)
+	if !reflect.DeepEqual(report.Proofs, want) {
+		return fmt.Errorf("proof-carrying proof projection mismatch")
+	}
+	for index, proof := range report.Proofs {
+		if !validDigest(proof.TargetDigest) || !validDigest(proof.ReceiptDigest) || len(proof.EvidenceDigests) == 0 {
+			return fmt.Errorf("proof-carrying proof binding mismatch")
+		}
+		for _, digest := range proof.EvidenceDigests {
+			if !validDigest(digest) {
+				return fmt.Errorf("proof-carrying proof evidence mismatch")
 			}
 		}
-		if indicator.MetricID == "gooo.metric.language.proof-carrying-artifact-consumer-recheck.v3" {
-			if indicator.Value != wantConsumerMetric || indicator.Target != 1 || indicator.Satisfied {
-				return fmt.Errorf("proof-carrying preliminary consumer gate mismatch")
-			}
-			unsatisfied++
+		if index == 0 && (!proof.Passed || proof.ConsumerGateOpen) {
+			return fmt.Errorf("proof-carrying foundation proof mismatch")
 		}
-	}
-	wantUnsatisfied := 2
-	if bundleMode {
-		wantUnsatisfied = 1
-	}
-	if unsatisfied != wantUnsatisfied {
-		return fmt.Errorf("proof-carrying preliminary indicator inventory mismatch")
+		if preliminary {
+			if index > 0 && (proof.Passed || !proof.ConsumerGateOpen) {
+				return fmt.Errorf("proof-carrying preliminary consumer proof gate mismatch")
+			}
+		} else if !proof.Passed || proof.ConsumerGateOpen {
+			return fmt.Errorf("proof-carrying final proof mismatch")
+		}
 	}
 	return nil
 }
@@ -194,7 +396,8 @@ func counterexampleInventoryOK(items []Counterexample) bool {
 }
 
 func validCaseClaims(item CaseResult, report Report) bool {
-	if len(item.Claims) != ClaimTemplateTotal || item.SourceDigest == "" || item.OperationDigest == "" {
+	if len(item.Claims) != ClaimTemplateTotal || !validDigest(item.SourceDigest) || !validDigest(item.OperationDigest) || !validDigest(item.SemanticDigest) || !validDigest(item.ArtifactDigest) ||
+		item.SourceDigest != report.Checkout.SourceDigest || item.OperationAttachmentDigest != report.Checkout.OperationDigest || item.RecipeAttachmentDigest != report.Checkout.RecipeDigest {
 		return false
 	}
 	for index, spec := range claimSpecs() {
