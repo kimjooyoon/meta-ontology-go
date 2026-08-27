@@ -1,16 +1,17 @@
 # Capability-scoped expansion
 
-`main.gooo` is the one source used for every case. The witness compares an
-exact allow request with an undeclared network request, then runs six bounded
-denials and one UNKNOWN case against that same source digest. CI writes the
-receipts outside the checkout and uploads them as an artifact.
+`main.gooo` is the one semantic source used for every case. Its `computes`
+value programs define policy, capability kind/operation/target, prior claim
+state, evidence class, and eight cases. Activity names and comments are not
+authority.
 
-The source makes four capability values observable through declaration
-activities: file read of `source`, logical time read of `logical-clock`, the
-`GOOO_EXPANSION_PROFILE` environment value, and a pinned network target. The
-Go witness does not contact the network, read a wall clock, or grant ambient
-authority. It only accepts the corresponding deterministic evidence values.
+The CI provider actually reads one pinned file from a temporary sandbox and
+one deterministic logical input. Environment and network are not contacted, so
+they are `UNKNOWN` or `HISTORICAL_FIXTURE`, not current evidence. The same
+provider observes denied write, mutation, and promotion requests through
+sandbox before/after snapshots.
 
-The independent judge re-derives the decision from raw receipt JSON and the
-source bytes. It is deliberately separate from the producer evaluator so that
-the producer cannot turn its own `ALLOW` into proof.
+The independent consumer parses and lowers the raw source again, consumes raw
+provider observations, and does not import the producer. CI also runs a
+semantic-policy intervention and a comment-only intervention. This is a
+bounded experiment, not a general macro sandbox.

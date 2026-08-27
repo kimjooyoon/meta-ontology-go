@@ -1,131 +1,129 @@
-# Capability-scoped expansion
+# Capability-scoped expansion correction
 
-Status: an independent, read-only philosophy experiment. This PR does not
-promote a language-readiness obligation, change the compiler kernel, or claim a
-general macro sandbox.
+This PR is an independent philosophy experiment, not a language-readiness or
+general macro-sandbox claim. It corrects the first version by making the
+semantic `.gooo` values and live provider observations authoritative.
 
-## Proposition
+## Authority boundary
 
-Compile-time and expansion-time meta code must declare four authority kinds:
-file, time, environment, and network. The default is deny. A request is
-`ALLOW` only when the exact Gooo source declaration, the capability value, and
-the matching evidence value agree. An `ALLOW` receipt is therefore a bounded
-proof about one expansion request, not a permission to mutate the repository.
+`examples/capability-scoped-expansion/main.gooo` uses the existing Gooo
+`computes "..."` value-program form. The producer and consumer both run:
 
-`examples/capability-scoped-expansion/main.gooo` is the same source for the
-positive and negative cases. The witness emits `allow-receipt.json` and
-`deny-receipt.json` with the same `source_digest`; the negative request changes
-only its capability target to an undeclared network target. This is the
-experiment's central comparison.
-
-## Gooo-specific relation
-
-This is not an ACL copied into a Go command. The `.gooo` source declares
-activities that produce typed capability values. A request carries those
-values, evidence is keyed to each value, and the expansion receipt records the
-relation between source, value, evidence, stage, and step. The independent
-judge recomputes that relation from raw JSON and source bytes.
-
-That relation is the useful Gooo-specific claim: permission is data in the
-language's semantic graph, and proof is another typed edge in the graph. The
-producer's decision field has no authority by itself. The experiment does not
-claim that the current Gooo parser has become a general macro language.
-
-## Stages and epistemic states
-
-The only exact stage in this experiment is `expand`, at step
-`authorize-before-expand`. An absent source declaration, stage, step, or
-evidence does not become a denial that looks complete. It produces:
-
-```json
-{"decision":"UNKNOWN","unknown":{"stage":"expand","step":"bind-capability-evidence","reason":"EVIDENCE_UNOBSERVED"}}
+```text
+syntax.ParseFile -> bidir.Lower -> semantic.IR -> canonical semantic digest
 ```
 
-Claims have an explicit lifecycle:
+The lowered activity value programs define, as language values:
 
-| Situation | capability-scope-exact | default-deny | effect-ceiling |
-| --- | --- | --- | --- |
-| exact allow | `DISCHARGED` | `DISCHARGED` | `DISCHARGED` |
-| known undeclared/effectful request | `REFUTED` | `DISCHARGED` | `DISCHARGED` |
-| missing stage, step, or evidence | `OPEN` | `OPEN` | `OPEN` |
+- `capability.policy`: default `DENY`, authorization mode, effect ceiling, and
+  prior claim state;
+- `capability.declare`: value id, kind, operation, target, policy id, prior
+  claim state, and evidence class;
+- `capability.operation`: expansion stage, authorization step, and prior claim
+  state;
+- `capability.case`: request values and effect probes, without an expected
+  decision field.
 
-`UNKNOWN` is never promoted to `ALLOW`, and `REFUTED` is never laundered into
-`DISCHARGED`.
+Comments, activity names, and source substrings are not inputs to the
+authority decision. The expected result is reconstructed from the lowered
+policy/case values and the raw provider wire.
 
-## Fixed denominator
+## Safe vertical slice
 
-Every receipt has exactly 12 indicators. Each row carries a producer, consumer,
-meta-operation, and proof choice so the metric cannot silently lose its
-semantic owner or proof mode.
+The provider performs only two live observations:
 
-| # | Class | Proof choice | Indicator | Producer | Consumer | Meta-operation |
-| ---: | --- | --- | --- | --- | --- | --- |
-| 1 | DRIVER | FOUNDATION | source shape | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 2 | DRIVER | FOUNDATION | Go 1.27 pin | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 3 | DRIVER | FOUNDATION | file declaration | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 4 | DRIVER | FOUNDATION | time declaration | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 5 | DRIVER | FOUNDATION | environment declaration | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 6 | DRIVER | FOUNDATION | network declaration | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 7 | OUTCOME | COHERENCE | value/evidence relation | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 8 | OUTCOME | COHERENCE | source binding | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 9 | OUTCOME | COHERENCE | stage/step order | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 10 | DRIVER | COHERENCE | receipt seal | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 11 | GUARDRAIL | REGRESSION | default deny | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
-| 12 | GUARDRAIL | REGRESSION | authority ceiling | `capabilityscopedexpansion.Evaluate` | `ci-capability-expansion-gate` | `expand-capability-scoped-meta-code` |
+1. reads a CI-created pinned file in a temporary directory and records its
+   content digest as `CURRENT_EVIDENCE`;
+2. reads a deterministic logical input `logical-clock:0` as
+   `CURRENT_EVIDENCE`.
 
-The fixed conformance denominator is eight cases: one exact allow, four
-undeclared-capability denials, two effect-ceiling denials, and one UNKNOWN
-missing-evidence case. The expected result is `8/8`, with `ALLOW=1`, `DENY=6`,
-and `UNKNOWN=1`.
+Environment and network are deliberately not contacted. Environment is
+`UNKNOWN`; the network declaration is `HISTORICAL_FIXTURE`. Thus the fixed
+capability denominator is four declarations, but only `2/4` are
+`CURRENT_EVIDENCE`.
 
-## Permission and effect boundary
+The sandbox provider exposes real request methods for repository write,
+mutation, and promotion. Each request returns `DENIED`, records the before and
+after sandbox digests, and performs no write. If an enforcement result is not
+observed, the producer and consumer emit
+`CAPABILITY_ENFORCEMENT_NOT_IMPLEMENTED / LOWER_RESOLUTION`, never a constant
+denial.
 
-The fixed suite requests 32 capability values. Exactly 4 are authorized by
-the exact allow case, 24 are denied, and 4 remain UNKNOWN because evidence is
-missing. The blocked effect probes include one repository-write request and
-one mutation-authority request. Observed repository writes remain `0`,
-mutation authority remains `false`, promotion authority remains `false`, and
-the toolchain is `go1.27.0`.
+## Fixed denominator and observed result
 
-The network capability is a pinned symbolic target and is never contacted. The
-time capability is a deterministic logical clock and is not a wall-clock
-read. These choices make the receipt reproducible; they do not demonstrate OS
-enforcement.
+The source has eight semantic cases. No case stores an expected decision; the
+producer and consumer independently derive it from policy, request values,
+and raw observations.
 
-## Research: what is adopted and rejected
+| fixed cases | ALLOW | DENY | UNKNOWN |
+| ---: | ---: | ---: | ---: |
+| 8 | 1 | 6 | 1 |
 
-The following are primary sources, used as design evidence rather than as
-claims that Gooo implements those systems.
+The expected CI artifact reports:
 
-1. [Racket Reference: Evaluation Model, Phases and Separate Compilation](https://docs.racket-lang.org/reference/eval-model.html#%28part._phases%29)
-   explains the separation of execution-time phase 0 from expansion-time
-   phase 1, and distinguishes internal effects from externally observable I/O.
-   Adopted: make expansion stage and step explicit, and keep effect evidence
-   visible. Rejected: treating a phase label or a separate-compilation
-   guarantee as permission to discard external effects; Gooo requires an
-   explicit capability and receipt instead.
-2. [Rust Reference: Procedural Macros](https://doc.rust-lang.org/reference/procedural-macros.html)
-   defines procedural macros as compile-time syntax-to-syntax functions and
-   explicitly says they have the compiler's standard I/O and file access,
-   with the same security concerns as build scripts. Adopted: keep the
-   expansion boundary separate from runtime values. Rejected: inheriting the
-   compiler's ambient resources; this experiment makes file, time,
-   environment, and network authority explicit and default-deny.
-3. [Miller, Yee, and Shapiro, Capability Myths Demolished](https://srl.cs.jhu.edu/pubs/SRL2003-02.pdf)
-   compares capability models and identifies least privilege and confused
-   deputy avoidance as practical advantages. Adopted: treat authority as a
-   narrowly scoped value that must be presented to the operation. Rejected:
-   claiming that a JSON receipt is a complete object-capability system; this
-   PR has no OS-level confinement, revocation, delegation, or cryptographic
-   authority.
+| metric | value |
+| --- | ---: |
+| capability requests | 9 |
+| authorized | 2 |
+| denied | 6 |
+| UNKNOWN | 1 |
+| CURRENT_EVIDENCE | 2/4 |
+| HISTORICAL_FIXTURE declarations | 1 |
+| enforcement observations | 3/3 |
+| blocked write probes | 1 |
+| blocked mutation probes | 1 |
+| actual repository writes | 0 |
+| actual mutation authority | false |
+| actual promotion authority | false |
 
-## What remains falsifiable
+## Claims and interventions
 
-The experiment can be refuted if an independent implementation accepts an
-undeclared target, accepts missing evidence as `ALLOW`, changes the source
-digest between the allow and deny receipts, observes a repository write, or
-disagrees with the fixed eight-case result. It can also be shown insufficient
-if the bounded source-marker reader is mistaken for a complete Gooo parser, if
-the judge is not actually independent, or if a future implementation needs
-real wall-clock, network, or OS sandbox semantics. Those are open engineering
-questions, not hidden credit in this receipt.
+Every semantic capability starts with prior state `OPEN`. Each receipt appends
+claim transitions containing stage, step, reason, evidence digest, and
+provenance:
+
+- successful live observation: `OPEN -> DISCHARGED`;
+- missing live observation: `OPEN -> OPEN`;
+- explicit target/policy violation: `OPEN -> REFUTED`.
+
+The artifact contains two interventions:
+
+- semantic policy intervention changes `authorization=exact-current` to
+  `authorization=deny-all`; the allow case changes from `ALLOW` with a
+  `DISCHARGED` scope claim to `DENY` with `REFUTED`;
+- comment-only intervention changes the raw source digest but preserves the
+  canonical semantic digest, decision, and claim transition.
+
+## Independent consumer
+
+`internal/meta/capabilityscopedexpansion/verify` imports only `syntax` and
+`bidir` from the language boundary. It receives raw `.gooo`, raw provider
+observations, and raw receipt JSON. It reconstructs the semantic policy,
+declarations, cases, evidence availability, effect enforcement, claim
+transitions, and receipt digest itself. It does not import the producer. CI
+also checks that producer-package imports are absent from the consumer source.
+
+The artifact records source reconstruction `1/1` and producer imports `0/1`.
+
+## Research basis
+
+The design adopts a phase boundary from the [Racket Reference evaluation
+model](https://docs.racket-lang.org/reference/eval-model.html#%28part._phases%29),
+but rejects treating phase separation as permission to discard observable
+effects. It adopts the explicit compile-time resource warning from the [Rust
+Reference procedural macro](https://doc.rust-lang.org/reference/procedural-macros.html)
+section, but rejects inheriting ambient compiler resources. It adopts narrow
+authority and confused-deputy avoidance from [Miller, Yee, and Shapiro,
+Capability Myths Demolished](https://srl.cs.jhu.edu/pubs/SRL2003-02.pdf), but
+rejects treating a JSON receipt as a complete object-capability system.
+
+## Remaining falsifiability
+
+An independent implementation can still refute this slice by accepting an
+undeclared target, treating missing environment evidence as current, accepting
+a missing provider observation, changing a comment-only semantic digest,
+disagreeing with the raw before/after enforcement result, or importing the
+producer into the consumer. The slice does not yet provide OS-level
+confinement, revocation, delegation, cryptographic authority, real network
+access, or wall-clock observation. Those limitations remain explicit rather
+than being counted as current evidence.

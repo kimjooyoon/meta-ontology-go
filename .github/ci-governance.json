@@ -2364,7 +2364,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        ".github/workflows/transformation-effect.yml",
+        ".github/workflows/capability-scoped-expansion.yml",
         "cmd/capability-scoped-expansion-witness",
         "docs/language/capability-scoped-expansion.md",
         "examples/capability-scoped-expansion",
