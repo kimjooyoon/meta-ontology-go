@@ -8,44 +8,34 @@ type indicatorCheck struct {
 	evidence                                      any
 }
 
-func buildIndicators(source []byte, graph CausalGraph, program MetaProgram, cases []ExplanationCase, summary Summary, preservation Preservation) ([]Indicator, error) {
-	minimal := cases[0].Paths[0]
-	overlong := cases[1].Paths[0]
-	insufficient := cases[2].Paths[0]
+func buildIndicators(model sourceModel, result assessment, boundary RepositoryBoundary, preservation Preservation, regression ClaimRegression, interventions []Intervention) ([]Indicator, error) {
+	minimal := result.Cases[0].Paths[0]
+	overlong := result.Cases[1].Paths[0]
+	insufficient := result.Cases[2].Paths[0]
 	checks := []indicatorCheck{
-		{"MCE-FOUNDATION-SOURCE-001", "FOUNDATION", "bind-source", "FOUNDATION", "gooo source bound", fmt.Sprintf("path=%s lines=%d", cases[0].ID, countLines(source)), true, []any{cases[0].ID, countLines(source)}},
-		{"MCE-FOUNDATION-GRAPH-002", "FOUNDATION", "freeze-graph", "FOUNDATION", "nodes=4 edges=2", fmt.Sprintf("nodes=%d edges=%d", len(graph.Nodes), len(graph.Edges)), len(graph.Nodes) == 4 && len(graph.Edges) == 2, graph},
-		{"MCE-FOUNDATION-PROGRAM-003", "FOUNDATION", "freeze-graph", "FOUNDATION", "operations=6 indicators=12", fmt.Sprintf("operations=%d indicators=%d", len(program.MetaOperations), program.IndicatorDenominator), len(program.MetaOperations) == 6 && program.IndicatorDenominator == IndicatorTotal, program},
-		{"MCE-COHERENCE-SUFFICIENT-004", "COHERENCE", "evaluate-sufficiency", "COHERENCE", "minimal path decision=PASS sufficient=true", fmt.Sprintf("decision=%s sufficient=%t", minimal.Decision, minimal.Sufficient), minimal.Decision == DecisionPass && minimal.Sufficient, minimal},
-		{"MCE-COHERENCE-MINIMAL-005", "COHERENCE", "minimize-path", "COHERENCE", "minimal=true evidence=3", fmt.Sprintf("minimal=%t evidence=%d", minimal.Minimal, len(minimal.EvidenceIDs)), minimal.Minimal && len(minimal.EvidenceIDs) == 3, minimal},
-		{"MCE-COHERENCE-OVERLONG-006", "COHERENCE", "evaluate-sufficiency", "COHERENCE", "sufficient=true minimal=false", fmt.Sprintf("sufficient=%t minimal=%t", overlong.Sufficient, overlong.Minimal), overlong.Sufficient && !overlong.Minimal, overlong},
-		{"MCE-COHERENCE-INSUFFICIENT-007", "COHERENCE", "evaluate-sufficiency", "COHERENCE", "sufficient=false", fmt.Sprintf("sufficient=%t decision=%s", insufficient.Sufficient, insufficient.Decision), !insufficient.Sufficient && insufficient.Decision == DecisionFailClosed, insufficient},
-		{"MCE-COHERENCE-COUNTERFACTUAL-008", "COHERENCE", "minimize-path", "COHERENCE", "minimal changed=3/3", fmt.Sprintf("changed=%d/%d", changed(minimal.Counterfactuals), len(minimal.Counterfactuals)), len(minimal.Counterfactuals) == 3 && changed(minimal.Counterfactuals) == 3, minimal.Counterfactuals},
-		{"MCE-COHERENCE-EXTRA-COUNTERFACTUAL-009", "COHERENCE", "minimize-path", "COHERENCE", "overlong changed=3/4", fmt.Sprintf("changed=%d/%d", changed(overlong.Counterfactuals), len(overlong.Counterfactuals)), len(overlong.Counterfactuals) == 4 && changed(overlong.Counterfactuals) == 3, overlong.Counterfactuals},
-		{"MCE-COHERENCE-PATH-AUTHORITY-010", "COHERENCE", "judge-receipt", "COHERENCE", "path_set=true text=INCIDENTAL", fmt.Sprintf("path_set=%t text=%s", summary.PathSetAuthoritative, summary.ExplanationTextRole), summary.PathSetAuthoritative && summary.ExplanationTextRole == ExplanationTextRole, summary},
-		{"MCE-REGRESSION-CLAIMS-011", "REGRESSION", "preserve-claims", "REGRESSION", "preserved=6 transitions=12", fmt.Sprintf("preserved=%d transitions=%d", preservation.PreservedTotal, preservation.TransitionTotal), preservation.PreservedTotal == ClaimTotal && preservation.TransitionTotal == TransitionTotal, preservation},
-		{"MCE-REGRESSION-READONLY-012", "REGRESSION", "judge-receipt", "REGRESSION", "repository_writes=0 promotion=false", fmt.Sprintf("repository_writes=%d promotion=%t", summary.RepositoryWrites, summary.PromotionAuthorized), summary.RepositoryWrites == 0 && !summary.PromotionAuthorized, summary},
+		{"MCE-FOUNDATION-SOURCE-001", "FOUNDATION", "bind-source", "FOUNDATION", "ast=true ir=true", fmt.Sprintf("ast=%t ir=%t", model.SourceReconstruct.ASTParsed, model.SourceReconstruct.IRLowered), model.SourceReconstruct.ASTParsed && model.SourceReconstruct.IRLowered, model.SourceReconstruct},
+		{"MCE-FOUNDATION-GRAPH-002", "FOUNDATION", "bind-source", "FOUNDATION", "source graph reconstructed", fmt.Sprintf("nodes=%d edges=%d", len(model.Graph.Nodes), len(model.Graph.Edges)), model.SourceReconstruct.GraphReconstructed, model.Graph},
+		{"MCE-FOUNDATION-PREDICATE-003", "FOUNDATION", "judge-predicate", "FOUNDATION", "predicate reconstructed from gooo value", model.Predicate.Value, model.SourceReconstruct.PredicateReconstructed && model.Predicate.Value != "", model.Predicate},
+		{"MCE-FOUNDATION-PROGRAM-004", "FOUNDATION", "preserve-claims", "FOUNDATION", "operations=6 indicators=12", fmt.Sprintf("operations=%d indicators=%d", len(model.Program.MetaOperations), model.Program.IndicatorDenominator), len(model.Program.MetaOperations) == 6 && model.Program.IndicatorDenominator == 12, model.Program},
+		{"MCE-COHERENCE-OBSERVED-005", "COHERENCE", "bind-compiler-receipt", "COHERENCE", "observed evidence=3", fmt.Sprintf("observed evidence=%d", result.Summary.ObservedEvidenceTotal), result.Summary.ObservedEvidenceTotal == 3, result.Observed},
+		{"MCE-COHERENCE-SUBSET-006", "COHERENCE", "judge-predicate", "COHERENCE", "subset-minimal=1/2", fmt.Sprintf("subset-minimal=%d/%d", result.Summary.SubsetMinimalNumerator, result.Summary.SubsetMinimalDenominator), result.Summary.SubsetMinimalNumerator == 1 && result.Summary.SubsetMinimalDenominator == 2, minimal},
+		{"MCE-COHERENCE-CARDINALITY-007", "COHERENCE", "judge-predicate", "COHERENCE", "cardinality-minimum=1/2", fmt.Sprintf("cardinality-minimum=%d/%d", result.Summary.CardinalityMinimumNumerator, result.Summary.CardinalityMinimumDenominator), result.Summary.CardinalityMinimumNumerator == 1 && result.Summary.CardinalityMinimumDenominator == 2 && minimal.CombinationSearch.Exhaustive, minimal.CombinationSearch},
+		{"MCE-COHERENCE-OVERLONG-008", "COHERENCE", "judge-predicate", "COHERENCE", "overlong subset/cardinality rejected", fmt.Sprintf("subset=%s cardinality=%s", overlong.SubsetMinimal, overlong.CardinalityMinimum), overlong.Sufficient && overlong.SubsetMinimal == NotSubsetMinimal && overlong.CardinalityMinimum == NotCardinalityMinimum, overlong},
+		{"MCE-COHERENCE-COUNTERFACTUAL-009", "COHERENCE", "judge-predicate", "COHERENCE", "changed=6/7 executions", fmt.Sprintf("changed=%d executions=%d", result.Summary.ChangedCounterfactuals, result.Summary.CounterfactualExecutions), result.Summary.ChangedCounterfactuals == 6 && result.Summary.CounterfactualExecutions == 7, result.Cases},
+		{"MCE-REGRESSION-CLAIMS-010", "REGRESSION", "preserve-claims", "REGRESSION", "failure regression refutes instead of discharging", fmt.Sprintf("legacy=%s correct=%s", regression.LegacyUnconditionalState, regression.CorrectState), regression.LegacyUnconditionalState == ClaimDischarged && regression.CorrectState == ClaimRefuted && hasRefutedTransition(regression.Transitions), regression},
+		{"MCE-REGRESSION-INTERVENTION-011", "REGRESSION", "judge-predicate", "REGRESSION", "2 semantic changes and 1 comment preservation", fmt.Sprintf("interventions=%d", len(interventions)), interventionContract(interventions), interventions},
+		{"MCE-REGRESSION-READONLY-012", "REGRESSION", "preserve-claims", "REGRESSION", "before/after writes=0 promotion=false", fmt.Sprintf("writes=%d promotion=%t", boundary.Writes, boundary.PromotionAuthorized), boundary.Writes == 0 && !boundary.PromotionAuthorized && preservation.PreservedTotal == preservation.ClaimTotal, boundary},
 	}
 	indicators := make([]Indicator, 0, len(checks))
 	for _, check := range checks {
-		evidenceDigest, err := digestValue(check.evidence)
+		op := operationByID(model.Program.MetaOperations, check.operation)
+		digest, err := digestValue(check.evidence)
 		if err != nil {
 			return nil, err
 		}
-		operation := operationByID(program.MetaOperations, check.operation)
-		indicators = append(indicators, Indicator{ID: check.id, Class: check.class, MetaOperation: check.operation, Producer: operation.Producer, Consumer: operation.Consumer, ProofChoice: check.proof, Expected: check.expected, Actual: check.actual, Satisfied: check.satisfied, EvidenceDigest: evidenceDigest})
+		indicators = append(indicators, Indicator{ID: check.id, Class: check.class, MetaOperation: check.operation, Producer: op.Producer, Consumer: op.Consumer, ProofChoice: check.proof, Expected: check.expected, Actual: check.actual, Satisfied: check.satisfied && op.ID != "", EvidenceDigest: digest})
 	}
 	return indicators, nil
-}
-
-func changed(counterfactuals []Counterfactual) int {
-	total := 0
-	for _, counterfactual := range counterfactuals {
-		if counterfactual.Changed {
-			total++
-		}
-	}
-	return total
 }
 
 func operationByID(operations []MetaOperation, id string) MetaOperation {
@@ -55,4 +45,22 @@ func operationByID(operations []MetaOperation, id string) MetaOperation {
 		}
 	}
 	return MetaOperation{}
+}
+
+func hasRefutedTransition(transitions []ClaimTransition) bool {
+	for _, transition := range transitions {
+		if transition.After == ClaimRefuted {
+			return true
+		}
+	}
+	return false
+}
+
+func interventionContract(interventions []Intervention) bool {
+	if len(interventions) != 3 {
+		return false
+	}
+	return interventions[0].SemanticChanged && interventions[0].AfterDecision == StatusFailClosed && interventions[0].PathSetChanged &&
+		interventions[1].SemanticChanged && interventions[1].AfterDecision == StatusFailClosed && interventions[1].PathSetChanged &&
+		!interventions[2].SemanticChanged && interventions[2].SemanticDigestPreserved && interventions[2].ResultPreserved
 }

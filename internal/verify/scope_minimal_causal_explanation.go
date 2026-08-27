@@ -5,6 +5,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/metric-counterfactual.yml",
+		".github/workflows/minimal-causal-explanation.yml",
 		"examples/minimal-causal-explanation",
 		"internal/meta/minimalcausalexplanation",
 		"internal/verify/scope_minimal_causal_explanation.go",

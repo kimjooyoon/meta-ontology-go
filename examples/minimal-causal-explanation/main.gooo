@@ -1,16 +1,17 @@
 package minimalcausalexplanation
 namespace minimalcausalexplanation
 
-entity Evidence id "gooo://meta/minimal-causal-explanation/evidence"
-entity CausalPath id "gooo://meta/minimal-causal-explanation/path"
-entity Counterfactual id "gooo://meta/minimal-causal-explanation/counterfactual"
-entity Receipt id "gooo://meta/minimal-causal-explanation/receipt"
-entity Producer id "gooo://meta/minimal-causal-explanation/producer"
-entity Consumer id "gooo://meta/minimal-causal-explanation/consumer"
-entity MetaOperation id "gooo://meta/minimal-causal-explanation/meta-operation"
-entity ProofChoice id "gooo://meta/minimal-causal-explanation/proof-choice"
+entity SourceParsedEvidence id "gooo://meta/minimal-causal-explanation/evidence/source-parsed"
+entity SemanticIRBoundEvidence id "gooo://meta/minimal-causal-explanation/evidence/semantic-ir-bound"
+entity CompilerReceiptProvenEvidence id "gooo://meta/minimal-causal-explanation/evidence/compiler-receipt-proven"
+entity AuditNoiseEvidence id "gooo://meta/minimal-causal-explanation/evidence/audit-noise"
+entity DecisionOutput id "gooo://meta/minimal-causal-explanation/output/decision"
+entity PriorClaimState id "gooo://meta/minimal-causal-explanation/claim/prior-state"
+entity PreservedClaims id "gooo://meta/minimal-causal-explanation/output/preserved-claims"
 
-activity ProduceEvidence(Producer) -> Evidence
-activity SelectMinimalPath(Evidence) -> CausalPath
-activity RemoveEvidence(CausalPath) -> Counterfactual
-activity PreserveReceipt(CausalPath, Counterfactual) -> Receipt
+activity BindSource(SourceParsedEvidence) -> SemanticIRBoundEvidence computes "mce.operation:bind-source|source-reader|causal-evaluator|FOUNDATION:v1"
+activity BindCompilerReceipt(SemanticIRBoundEvidence) -> CompilerReceiptProvenEvidence computes "mce.operation:bind-compiler-receipt|receipt-reader|causal-evaluator|FOUNDATION:v1"
+activity EvaluatePredicate(CompilerReceiptProvenEvidence) -> DecisionOutput computes "mce.operation:judge-predicate|causal-evaluator|path-checker|COHERENCE;mce.predicate:PASS_IF:source-parsed+semantic-ir-bound+compiler-receipt-proven:v1"
+activity ObserveAudit(CompilerReceiptProvenEvidence) -> AuditNoiseEvidence computes "mce.operation:observe-audit|audit-reader|audit-archive|FOUNDATION:v1"
+activity OpenClaimLedger(DecisionOutput) -> PriorClaimState computes "mce.operation:open-claims|claim-ledger|path-checker|REGRESSION;mce.claim-state:OPEN:v1"
+activity PreserveClaims(PriorClaimState) -> PreservedClaims computes "mce.operation:preserve-claims|claim-ledger|ci-judge|REGRESSION;mce.program:gooo://meta/minimal-causal-explanation/evaluator|gooo://meta/minimal-causal-explanation/ci-judge:v1;mce.indicators:12:v1;mce.decision-output:VALUE_WITNESS_PROVEN:v1;mce.claims:source-bound+graph-predicate-reconstructed+subset-minimal+cardinality-minimum+counterfactual-difference+read-only-preserved:v1"

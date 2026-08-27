@@ -14,6 +14,10 @@ import (
 func main() {
 	mode := flag.String("mode", "generate", "generate or verify")
 	sourcePath := flag.String("source", "examples/minimal-causal-explanation/main.gooo", "Gooo source")
+	compilerReceiptPath := flag.String("compiler-receipt", "", "raw Gooo compiler receipt")
+	repositoryBeforePath := flag.String("repository-before", "", "raw CI repository before observation")
+	repositoryAfterPath := flag.String("repository-after", "", "raw CI repository after observation")
+	independencePath := flag.String("independence", "", "raw producer import independence observation")
 	repository := flag.String("repository", "github.com/kimjooyoon/meta-ontology-go", "subject repository")
 	subjectSHA := flag.String("subject-sha", "", "exact 40-character subject SHA")
 	receiptPath := flag.String("receipt", "", "receipt input path for verify")
@@ -24,19 +28,24 @@ func main() {
 		fail("-output is required")
 	}
 
+	source, err := os.ReadFile(*sourcePath)
+	if err != nil {
+		fail(err.Error())
+	}
+	compilerReceipt, repositoryBefore, repositoryAfter, independence := readInputs(*compilerReceiptPath, *repositoryBeforePath, *repositoryAfterPath, *independencePath)
 	var output any
 	switch *mode {
 	case "generate":
-		source, err := os.ReadFile(*sourcePath)
-		if err != nil {
-			fail(err.Error())
-		}
-		receipt, err := explanation.Evaluate(*sourcePath, source, *repository, *subjectSHA)
+		receipt, err := explanation.Evaluate(*sourcePath, source, compilerReceipt, repositoryBefore, repositoryAfter, independence, *repository, *subjectSHA)
 		if err != nil {
 			fail(err.Error())
 		}
 		if *check {
-			if _, err := judge.Judge(receipt); err != nil {
+			encoded, err := json.Marshal(receipt)
+			if err != nil {
+				fail(err.Error())
+			}
+			if _, err := judge.Judge(encoded, *sourcePath, source, compilerReceipt, repositoryBefore, repositoryAfter, independence); err != nil {
 				fail(err.Error())
 			}
 		}
@@ -49,11 +58,7 @@ func main() {
 		if err != nil {
 			fail(err.Error())
 		}
-		var receipt explanation.Receipt
-		if err := json.Unmarshal(data, &receipt); err != nil {
-			fail(err.Error())
-		}
-		judgment, err := judge.Judge(receipt)
+		judgment, err := judge.Judge(data, *sourcePath, source, compilerReceipt, repositoryBefore, repositoryAfter, independence)
 		if err != nil {
 			fail(err.Error())
 		}
@@ -73,6 +78,20 @@ func main() {
 		fail(err.Error())
 	}
 	fmt.Printf("minimal causal explanation mode=%s output=%s\n", *mode, *outputPath)
+}
+
+func readInputs(compilerPath, beforePath, afterPath, independencePath string) ([]byte, []byte, []byte, []byte) {
+	read := func(path, name string) []byte {
+		if path == "" {
+			fail("-" + name + " is required")
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			fail(err.Error())
+		}
+		return data
+	}
+	return read(compilerPath, "compiler-receipt"), read(beforePath, "repository-before"), read(afterPath, "repository-after"), read(independencePath, "independence")
 }
 
 func fail(message string) {

@@ -1,0 +1,151 @@
+name: Minimal causal explanation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/minimal-causal-explanation.yml'
+      - 'examples/minimal-causal-explanation/**'
+      - 'internal/meta/minimalcausalexplanation/**'
+      - 'internal/verify/scope_minimal_causal_explanation.go'
+      - 'scripts/minimal-causal-explanation/**'
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  minimal-causal-explanation:
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Capture CI inputs and run the actual compiler receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/minimal-causal-explanation"
+          mkdir -p "$work/first" "$work/replay"
+          before_status="$(git status --porcelain)"
+          jq -n --arg status "$before_status" '{schema:"gooo/meta-minimal-causal-explanation-repository/v1",status:$status,workspace_writes:($status != ""),promotion_authorized:false}' > "$work/repository-before.json"
+          if rg -n 'internal/meta/minimalcausalexplanation"' internal/meta/minimalcausalexplanation/verify; then
+            echo "independent judge imports producer package"
+            exit 1
+          fi
+          jq -n '{schema:"gooo/meta-minimal-causal-explanation-independence/v1",producer_package_import_count:0,producer_package_import_total:1}' > "$work/independence.json"
+          go run ./cmd/gooo check examples/minimal-causal-explanation/main.gooo
+          go test ./internal/meta/minimalcausalexplanation/...
+          go run ./scripts/language-value-witness \
+            -source examples/language-value-witness/main.gooo \
+            -activity Increment \
+            -head-sha "$SUBJECT_SHA" \
+            -output "$work/compiler-receipt.json" \
+            -check
+          after_status="$(git status --porcelain)"
+          jq -n --arg status "$after_status" '{schema:"gooo/meta-minimal-causal-explanation-repository/v1",status:$status,workspace_writes:($status != ""),promotion_authorized:false}' > "$work/repository-after.json"
+          common=(
+            -mode generate
+            -source examples/minimal-causal-explanation/main.gooo
+            -compiler-receipt "$work/compiler-receipt.json"
+            -repository-before "$work/repository-before.json"
+            -repository-after "$work/repository-after.json"
+            -independence "$work/independence.json"
+            -repository "$GITHUB_REPOSITORY"
+            -subject-sha "$SUBJECT_SHA"
+            -check
+          )
+          go run ./scripts/minimal-causal-explanation "${common[@]}" -output "$work/first/receipt.json"
+          go run ./scripts/minimal-causal-explanation "${common[@]}" -output "$work/replay/receipt.json"
+          cmp -s "$work/first/receipt.json" "$work/replay/receipt.json"
+          go run ./scripts/minimal-causal-explanation \
+            -mode verify \
+            -source examples/minimal-causal-explanation/main.gooo \
+            -compiler-receipt "$work/compiler-receipt.json" \
+            -repository-before "$work/repository-before.json" \
+            -repository-after "$work/repository-after.json" \
+            -independence "$work/independence.json" \
+            -receipt "$work/first/receipt.json" \
+            -output "$work/judgment.json"
+          source_digest="sha256:$(sha256sum examples/minimal-causal-explanation/main.gooo | cut -d' ' -f1)"
+          jq -e --arg source_digest "$source_digest" '
+            .schema == "gooo/meta-minimal-causal-explanation/v2" and
+            .source.digest == $source_digest and
+            .reconstruction.ast_parsed == true and
+            .reconstruction.ir_lowered == true and
+            .reconstruction.graph_reconstructed == true and
+            .reconstruction.predicate_reconstructed == true and
+            .reconstruction.producer_package_import_count == 0 and
+            .reconstruction.producer_package_import_total == 1 and
+            (.graph.nodes | length) == 4 and
+            (.graph.edges | length) == 3 and
+            (.program.meta_operations | length) == 6 and
+            .program.indicator_denominator == 12 and
+            .summary.cases_total == 3 and
+            .summary.paths_observed == 3 and
+            .summary.observed_evidence_total == 3 and
+            .summary.synthetic_evidence_total == 1 and
+            .summary.candidate_evidence_total == 4 and
+            .summary.sufficient_paths == 2 and
+            .summary.subset_minimal_numerator == 1 and
+            .summary.subset_minimal_denominator == 2 and
+            .summary.cardinality_minimum_numerator == 1 and
+            .summary.cardinality_minimum_denominator == 2 and
+            .summary.cardinality_unknown_paths == 1 and
+            .summary.insufficient_paths == 1 and
+            .summary.counterfactual_executions == 7 and
+            .summary.changed_counterfactuals == 6 and
+            .summary.combination_executions == 26 and
+            .summary.claim_transition_total == 12 and
+            .summary.regression_claim_transition_total == 12 and
+            (.evidence | map(select(.origin == "OBSERVED")) | length) == 3 and
+            (.evidence | map(select(.origin == "SYNTHETIC")) | length) == 1 and
+            .cases[0].paths[0].subset_minimal == "SUBSET_MINIMAL" and
+            .cases[0].paths[0].cardinality_minimum == "CARDINALITY_MINIMUM" and
+            .cases[1].paths[0].subset_minimal == "NOT_SUBSET_MINIMAL" and
+            .cases[1].paths[0].cardinality_minimum == "NOT_CARDINALITY_MINIMUM" and
+            .cases[2].paths[0].cardinality_minimum == "UNKNOWN" and
+            ([.claim_transitions[] | select(.after == "DISCHARGED")] | length) == 6 and
+            ([.claim_regression.transitions[] | select(.after == "REFUTED")] | length) >= 1 and
+            (.interventions | length) == 3 and
+            .interventions[0].semantic_changed == true and .interventions[0].after_decision == "FAIL_CLOSED" and
+            .interventions[1].semantic_changed == true and .interventions[1].after_decision == "FAIL_CLOSED" and
+            .interventions[2].semantic_digest_preserved == true and .interventions[2].result_preserved == true and
+            .repository.writes == 0 and .repository.promotion_authorized == false and
+            .summary.path_set_authoritative == true and .summary.explanation_text_role == "INCIDENTAL" and
+            .authority.repository_workspace_writes == false and .authority.promotion_authorized == false and
+            .decision == "PASS"
+          ' "$work/first/receipt.json"
+          jq -e '
+            .schema == "gooo/meta-minimal-causal-explanation-judgment/v2" and
+            .status == "VERIFIED" and
+            .decision == "PASS" and
+            .source_reconstructed == true and
+            .path_set_verified == true and
+            .counterfactuals_verified == true and
+            .claims_preserved == true and
+            .interventions_verified == true and
+            .producer_import_count == 0 and
+            .producer_import_denominator == 1 and
+            .promotion_authorized == false
+          ' "$work/judgment.json"
+          test -z "$(git status --porcelain)"
+          jq -r '"### Minimal causal explanation\n- decision: \(.decision) / \(.resolution)\n- paths: \(.summary.subset_minimal_numerator)/\(.summary.subset_minimal_denominator) subset-minimal; \(.summary.cardinality_minimum_numerator)/\(.summary.cardinality_minimum_denominator) cardinality-minimum\n- counterfactual executions: \(.summary.changed_counterfactuals)/\(.summary.counterfactual_executions) changed\n- evidence origin: \(.summary.observed_evidence_total) observed + \(.summary.synthetic_evidence_total) synthetic\n- claims: \(.preservation.preserved_total)/\(.preservation.claim_total); transitions: \(.preservation.transition_total); regression: \(.claim_regression.correct_state)\n- repository writes: \(.repository.writes); promotion: \(.repository.promotion_authorized)\n- receipt: \(.receipt_digest)"' "$work/first/receipt.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload minimal causal explanation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: minimal-causal-explanation-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/minimal-causal-explanation
+          if-no-files-found: error
+          retention-days: 30

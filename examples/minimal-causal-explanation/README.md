@@ -1,58 +1,70 @@
 # Minimal causal explanation
 
-This is a read-only philosophy experiment for `meta-ontology-go`. Its claim is
-narrow: a decision should expose the smallest sufficient causal path that would
-change the decision when any member is removed. The path set is authoritative;
-the explanation sentence is incidental prose and is never used by the judge.
+This experiment explains the verdict of the real Gooo value-witness compiler
+receipt at `examples/language-value-witness/main.gooo`. The receipt is read as
+raw observation input; the experiment does not reproduce its prose.
+
+The authority boundary is explicit:
+
+- `main.gooo` declares evidence entity IDs, PROV activity relations, the
+  decision predicate value, the prior claim state, six meta-operation values,
+  and the fixed indicator denominator.
+- The producer and independent consumer both run
+  `syntax.ParseFile` → `bidir.Lower` → canonical semantic IR. Neither accepts
+  a Go-side canonical graph as the source of meaning.
+- The path set is authoritative. `explanation_text` is `INCIDENTAL` and is
+  ignored by the independent consumer.
+- The observed evidence is the actual compiler receipt. The audit noise added
+  to the overlong path and every removal experiment are marked `SYNTHETIC`.
 
 ## Formal choices
 
-The experiment adopts two ideas from formal literature:
+[Halpern and Pearl, *Causes and Explanations: A Structural-Model Approach,
+Part II: Explanations*](https://arxiv.org/abs/cs/0208034) motivates actual-cause
+and structural-model counterfactual reasoning. The implementation therefore
+executes one removal intervention for every evidence member of each sufficient
+path.
 
-- [Halpern and Pearl, *Causes and Explanations: A Structural-Model Approach,
-  Part II: Explanations*](https://arxiv.org/abs/cs/0208034) motivates grounding
-  an explanation in actual cause and structural-model counterfactuals. Here
-  that becomes a deterministic removal test: remove one evidence node and
-  require the decision to change from `PASS` to `FAIL_CLOSED`.
-- [Lynce and Marques-Silva, *On Computing Minimum Unsatisfiable
-  Cores*](https://www.satisfiability.org/SAT04/programme/110.pdf) distinguishes
-  a minimal core, where no member can be removed while retaining the property,
-  from a minimum core, which globally optimizes cardinality. We adopt the
-  deletion test and deliberately do not claim globally smallest paths.
+[Lynce and Marques-Silva, *On Computing Minimum Unsatisfiable
+Cores*](https://www.satisfiability.org/SAT04/programme/110.pdf) distinguishes
+minimal from minimum: deletion of every single member proves only
+`SUBSET_MINIMAL`/irredundancy; a global cardinality claim requires enumerating
+all smaller subsets in a fixed finite corpus. This experiment enumerates all
+smaller subsets, so it reports both statuses separately. An insufficient path
+reports `UNKNOWN` for cardinality minimum.
 
-For additional context, [Beckers, *Causal Explanations and
-XAI*](https://proceedings.mlr.press/v177/beckers22a.html) separates sufficient
-and counterfactual explanations. This experiment keeps that separation but
-rejects natural-language generation, probabilistic ranking, and an
-audience-dependent notion of usefulness as proof inputs.
+[Beckers, *Causal Explanations and XAI*](https://proceedings.mlr.press/v177/beckers22a.html)
+is recorded as context for sufficient versus counterfactual explanations.
+Natural-language generation, audience ranking, and probabilistic ranking are
+not proof inputs.
 
 ## Fixed contract
 
-The Go evaluator emits a sealed receipt and the `verify` package independently
-judges it. The denominator is fixed at 12 indicators, 6 preserved claims, 12
-append-only claim transitions, 3 cases, and 3 candidate paths:
+The fixed corpus has three observed evidence records and one synthetic audit
+record. It contains three paths:
 
-| case | path | expected result |
+| case | path | result |
 | --- | --- | --- |
-| `minimal` | request → policy → result | accepted: sufficient and minimal |
-| `overlong` | request → policy → result + audit noise | rejected: sufficient but not minimal |
-| `insufficient` | request → result | rejected: insufficient |
+| `minimal` | source parsed → semantic IR bound → compiler receipt proven | sufficient, `SUBSET_MINIMAL`, `CARDINALITY_MINIMUM` |
+| `overlong` | the same three plus synthetic audit noise | sufficient, `NOT_SUBSET_MINIMAL`, `NOT_CARDINALITY_MINIMUM` |
+| `insufficient` | source parsed → compiler receipt proven | `FAIL_CLOSED`, cardinality `UNKNOWN` |
 
-The receipt records 7 removal counterfactuals. Six are decision-changing: all 3
-members of the accepted path and the 3 causal members of the overlong path.
-Removing its audit noise leaves `PASS`, which is the constructive witness for
-non-minimality. The available-evidence total is 11 across the three cases, but
-the receipt does not enumerate those logs; only the authoritative path sets are
-returned.
+There are 7 single-removal counterfactual executions: 3/3 change the minimal
+path decision, and 3/4 change the overlong path decision. Removing audit noise
+does not change the decision. The finite corpus search executes 11 smaller
+subsets for the three-member path and 15 for the four-member path, for 26
+combination executions total.
 
-Every indicator records its producer, consumer, meta-operation, and proof
-choice. Every claim transition records `stage/step/reason`, and transitions
-preserve the claim (`UNRECORDED → OPEN → DISCHARGED`) instead of deleting it.
-No repository workspace write, promotion, or semantic mutation is authorized.
+The receipt contains six claims and 12 append-only transitions. A claim reaches
+`DISCHARGED` only when its bound evidence passes; an unobserved claim remains
+`OPEN`, and a counterexample becomes `REFUTED`. A regression fixture changes
+the compiler receipt to `FAIL_CLOSED` and records that the old unconditional
+discharge would be wrong.
 
-## CI-only evidence
+Two semantic interventions change the result: changing the predicate value or
+breaking the evidence relation makes the result `FAIL_CLOSED` and changes the
+path/minimality evidence. A comment-only intervention changes the source
+digest but preserves the canonical semantic digest and result.
 
-The workflow compiles this real `.gooo` source, generates two byte-identical
-receipts, runs the independent judge, and exercises the positive, overlong, and
-insufficient cases from the sealed receipt. It is intended to be verified by
-GitHub Actions; no local test command is part of this experiment.
+CI binds repository before/after observations. The experiment is read-only:
+workspace writes are 0 and promotion authority is false.
