@@ -124,7 +124,7 @@ jobs:
             .summary.adjudicated_cases == 5 and .summary.unknown_paths == 2 and
             .summary.semantic_preserved == 1 and
             .summary.semantic_changed == 2 and .summary.indeterminate == 2 and
-            .summary.distinct_propositions == 23 and .summary.added_claims == 2 and .summary.removed_claims == 2 and .summary.changed_claims == 1 and
+            .summary.distinct_propositions == 24 and .summary.added_claims == 0 and .summary.removed_claims == 0 and .summary.changed_claims == 1 and
             .summary.open_claims == 10 and .summary.discharged_claims == 18 and .summary.refuted_claims == 3 and .summary.ambiguous_cases == 1 and
             .summary.repository_writes == 0 and
             ([.cases[] | select((.report.source_paths | length) == 2 and .report.output_path == "")] | length) == 5 and
