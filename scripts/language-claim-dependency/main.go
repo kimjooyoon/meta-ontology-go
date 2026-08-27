@@ -13,62 +13,51 @@ import (
 
 func main() {
 	sourcePath := flag.String("source", "", "claim dependency Gooo source")
-	predicate := flag.String("predicate", "", "UNKNOWN, EVIDENCE_ACCEPTED, or EXPLICIT_CONTRADICTION")
-	evidence := flag.String("evidence", "", "deterministic evidence text for accepted/refuted observations")
-	priorPath := flag.String("prior-receipt", "", "prior receipt to extend with append-only recovery")
-	observationPath := flag.String("observation", "", "observation JSON output path")
-	outputPath := flag.String("output", "", "receipt output path")
-	check := flag.Bool("check", false, "run the independent raw-input judge after producing the receipt")
+	evidencePath := flag.String("evidence", "", "CI CURRENT_EVIDENCE receipt")
+	priorPath := flag.String("prior-receipt", "", "prior UNKNOWN receipt to extend")
+	outputPath := flag.String("output", "", "claim receipt output path")
+	check := flag.Bool("check", false, "run the independent raw-input judge")
 	flag.Parse()
-	if *sourcePath == "" || *predicate == "" || *outputPath == "" {
-		fail("-source, -predicate, and -output are required")
+	if *sourcePath == "" || *evidencePath == "" || *outputPath == "" {
+		fail("-source, -evidence, and -output are required")
 	}
-	source, err := os.ReadFile(*sourcePath)
-	if err != nil {
-		fail(err.Error())
-	}
-	obs, err := claimdependency.ObservationForSource(source, *sourcePath, claimdependency.ObservationPredicate(*predicate), *evidence)
-	if err != nil {
+	source := read(*sourcePath)
+	evidenceBytes := read(*evidencePath)
+	var evidence claimdependency.EvidenceReceipt
+	if err := json.Unmarshal(evidenceBytes, &evidence); err != nil {
 		fail(err.Error())
 	}
 	var prior *claimdependency.Receipt
 	var priorBytes []byte
 	if *priorPath != "" {
-		priorBytes, err = os.ReadFile(*priorPath)
-		if err != nil {
-			fail(err.Error())
-		}
+		priorBytes = read(*priorPath)
 		var value claimdependency.Receipt
 		if err := json.Unmarshal(priorBytes, &value); err != nil {
 			fail(err.Error())
 		}
 		prior = &value
 	}
-	receipt, err := claimdependency.Evaluate(source, *sourcePath, obs, prior)
+	receipt, err := claimdependency.Evaluate(source, *sourcePath, evidence, prior)
 	if err != nil {
 		fail(err.Error())
 	}
-	if *observationPath == "" {
-		*observationPath = *outputPath + ".observation.json"
-	}
-	writeJSON(*observationPath, obs)
 	writeJSON(*outputPath, receipt)
 	if *check {
-		observationBytes, err := os.ReadFile(*observationPath)
-		if err != nil {
-			fail(err.Error())
-		}
-		receiptBytes, err := os.ReadFile(*outputPath)
-		if err != nil {
-			fail(err.Error())
-		}
-		if _, err := claimdependencyjudge.Judge(source, *sourcePath, priorBytes, observationBytes, receiptBytes); err != nil {
+		receiptBytes := read(*outputPath)
+		if _, err := claimdependencyjudge.Judge(source, *sourcePath, priorBytes, evidenceBytes, receiptBytes); err != nil {
 			fail(err.Error())
 		}
 	}
-	fmt.Printf("claim dependency predicate=%s claims=%d/%d edges=%d open=%d discharged=%d refuted=%d direct_unknown=%d blocked=%d direct_refuted=%d dependency_refuted=%d recovery_edges=%d transition_total=%d read_only=%t repository_writes=%d\n", obs.Predicate, receipt.Metrics.ClassifiedClaimTotal, receipt.Metrics.FixedClaimTotal, receipt.Metrics.FixedEdgeTotal, receipt.Metrics.OpenClaimTotal, receipt.Metrics.DischargedClaimTotal, receipt.Metrics.RefutedClaimTotal, receipt.Metrics.DirectUnknownClaimTotal, receipt.Metrics.DependencyBlockedClaimTotal, receipt.Metrics.DirectRefutedClaimTotal, receipt.Metrics.DependencyRefutedClaimTotal, receipt.Metrics.ObservedRecoveryEdgeTotal, receipt.Metrics.TransitionTotal, receipt.Subject.ReadOnly, receipt.Subject.RepositoryWrites)
+	fmt.Printf("claim dependency operation=%s current=%d historical=%d unknown_evidence=%d distinct_propositions=%d/%d edges=%d/%d decision=%s direct_unknown=%d blocked=%d direct_refuted=%d dependency_refuted=%d discharged=%d refuted=%d causal_edges=%d/%d edge_depth=%d authority=%s writes=%d\n", evidence.Operation, receipt.Metrics.CurrentEvidenceTotal, receipt.Metrics.HistoricalEvidenceTotal, receipt.Metrics.UnknownEvidenceTotal, receipt.Metrics.DistinctPropositionTotal, receipt.Metrics.FixedClaimTotal, receipt.Metrics.ObservedCausalEdgeTotal, receipt.Metrics.EligibleEdgeTotal, receipt.Decision.Value, receipt.Metrics.DirectUnknownClaimTotal, receipt.Metrics.DependencyBlockedClaimTotal, receipt.Metrics.DirectRefutedClaimTotal, receipt.Metrics.DependencyRefutedClaimTotal, receipt.Metrics.DischargedClaimTotal, receipt.Metrics.RefutedClaimTotal, receipt.Metrics.MinimumCausalEdgeTotal, receipt.Metrics.ObservedCausalEdgeTotal, receipt.Metrics.MaximumCausePathDepth, receipt.Subject.AuthorityResolution, receipt.Subject.RepositoryWrites)
 }
 
+func read(path string) []byte {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fail(err.Error())
+	}
+	return data
+}
 func writeJSON(path string, value any) {
 	data, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
@@ -82,8 +71,4 @@ func writeJSON(path string, value any) {
 		fail(err.Error())
 	}
 }
-
-func fail(message string) {
-	fmt.Fprintln(os.Stderr, message)
-	os.Exit(2)
-}
+func fail(message string) { fmt.Fprintln(os.Stderr, message); os.Exit(2) }

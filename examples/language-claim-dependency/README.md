@@ -1,30 +1,25 @@
-# Claim dependency causality experiment
+# Claim dependency causality fixture
 
-This bounded experiment distinguishes a direct `UNKNOWN` observation from a
-dependent claim that is only `DEPENDENCY_BLOCKED`. It also demonstrates that a
-refuted upstream claim does not refute ordinary `SUPPORTS` or `REQUIRES`
-dependents. Only an explicitly satisfied `CONTRADICTS` or
-`FAILURE_ENTAILMENT` edge can propagate `REFUTED`.
+이 fixture는 실행 proposition 6개와 canonical IR에서 복원한 typed edge 8개를
+사용해 직접 `UNKNOWN`과 dependency-blocked `OPEN`을 분리한다.
 
-The producer and consumer both start with raw `.gooo` bytes, run
-`syntax.ParseFile -> bidir.Lower`, and reconstruct the graph from canonical IR.
-The six activity claims are joined by eight semantic relations formed from
-`prov:wasGeneratedBy + prov:used`; the downstream activity's semantic value
-program declares the typed edge. `Root` and `Derived` therefore have a real
-semantic relation through `RootState`, rather than a case-name-only graph.
+| 입력 | current evidence | 상태 결과 | 실제 causal / eligible |
+| --- | --- | --- | ---: |
+| `unknown.gooo` | availability → 6 UNKNOWN | direct 1 OPEN, blocked 5 OPEN | 5 / 8 |
+| `refuted.gooo` | contradiction → root explicit, 5 UNKNOWN | direct 1 REFUTED, dependency 2 REFUTED, 3 OPEN | 7 / 8 |
+| `main.gooo` + unknown receipt | acceptance → 6 current | direct 1 + dependency 5 DISCHARGED | 3 / 8 recovery |
 
-| source | observation predicate | direct / dependent state | edge result |
-| --- | --- | --- | --- |
-| `unknown.gooo` | `UNKNOWN` | 1 `OPEN` / 5 `DEPENDENCY_BLOCKED` | 8 blocking |
-| `refuted.gooo` | `EXPLICIT_CONTRADICTION` | 1 `REFUTED` / 3 open / 2 dependency-refuted | 5 blocking, 2 refuting |
-| `main.gooo` after `unknown.gooo` | `EVIDENCE_ACCEPTED` | 1 direct / 5 dependency `DISCHARGED` | 8 recovery edges |
+최소 cause edge 수는 각각 3, 5, 2이며 최대 edge depth는 2다. `SUPPORTS 2`,
+`REQUIRES 3`, `CONTRADICTS 2`, `FAILURE_ENTAILMENT 1`은 모두 artifact의 edge
+metric에 표시된다. truth table은 edge kind마다 positive/negative 2건, 총 8건이다.
 
-The fixed denominator is six claims, eight typed edges, and twelve initial
-transitions. Recovery is not a new ledger: it preserves the twelve unknown
-transitions and appends six recovery transitions, verifies the prior receipt
-digest, prior transition head, prior claim states, and observation digest.
+CI provider가 raw artifact bytes, operation, per-claim proposition digest,
+repository pre/post snapshot, output path, `contents:read` capability를 담은
+`CURRENT_EVIDENCE` receipt를 생성한다. HISTORICAL_FIXTURE와 임의 문자열은
+PASS 근거가 아니다. 별도 judge는 raw `.gooo`와 evidence artifact를 직접
+re-observe하여 producer receipt를 검증한다.
 
-`edge-intervention.gooo` changes a semantic edge value from `CONTRADICTS` to
-`SUPPORTS`; the CI intervention artifact compares its state propagation with
-`refuted.gooo`. The comment-only difference between `unknown.gooo` and
-`main.gooo` must preserve the canonical IR/graph digest and decision.
+`value-intervention.gooo`는 같은 evidence에서 source value만 바꾸고,
+observation-only는 같은 source에서 provider operation만 바꾸며,
+`edge-intervention.gooo`는 refuting edge kind만 바꾼다. `main.gooo`의 주석은
+semantic/graph digest와 decision을 보존해야 한다.

@@ -12,41 +12,34 @@ import (
 
 func main() {
 	sourcePath := flag.String("source", "", "raw claim dependency Gooo source")
-	priorPath := flag.String("prior-receipt", "", "raw prior receipt, required for recovery")
-	observationPath := flag.String("observation", "", "raw observation JSON")
-	receiptPath := flag.String("receipt", "", "receipt JSON")
-	outputPath := flag.String("output", "", "independent judgment output path")
+	evidencePath := flag.String("evidence", "", "raw CURRENT_EVIDENCE receipt")
+	priorPath := flag.String("prior-receipt", "", "raw prior UNKNOWN receipt")
+	receiptPath := flag.String("receipt", "", "producer receipt")
+	outputPath := flag.String("output", "", "independent judgment output")
 	flag.Parse()
-	if *sourcePath == "" || *observationPath == "" || *receiptPath == "" || *outputPath == "" {
-		fail("-source, -observation, -receipt, and -output are required")
+	if *sourcePath == "" || *evidencePath == "" || *receiptPath == "" || *outputPath == "" {
+		fail("-source, -evidence, -receipt, and -output are required")
 	}
-	source, err := os.ReadFile(*sourcePath)
-	if err != nil {
-		fail(err.Error())
-	}
-	observation, err := os.ReadFile(*observationPath)
-	if err != nil {
-		fail(err.Error())
-	}
-	receipt, err := os.ReadFile(*receiptPath)
-	if err != nil {
-		fail(err.Error())
-	}
+	source, evidence, receipt := read(*sourcePath), read(*evidencePath), read(*receiptPath)
 	var prior []byte
 	if *priorPath != "" {
-		prior, err = os.ReadFile(*priorPath)
-		if err != nil {
-			fail(err.Error())
-		}
+		prior = read(*priorPath)
 	}
-	judgment, err := claimdependencyjudge.Judge(source, *sourcePath, prior, observation, receipt)
+	judgment, err := claimdependencyjudge.Judge(source, *sourcePath, prior, evidence, receipt)
 	if err != nil {
 		fail(err.Error())
 	}
 	writeJSON(*outputPath, judgment)
-	fmt.Printf("independent claim dependency predicate=%s decision=%s resolution=%s accepted=%t source_reconstruction=%s producer_import=%d/%d recovery_chain=%d\n", judgment.Predicate, judgment.Decision, judgment.Resolution, judgment.Accepted, judgment.SourceReconstruction, judgment.ProducerPackageImportNumerator, judgment.ProducerPackageImportDenominator, judgment.AppendOnlyRecoveryChainTotal)
+	fmt.Printf("independent judge decision=%s accepted=%t source_reconstruction=%d/%d producer_import=%d/%d causal_edges=%d/%d authority=%s\n", judgment.Decision, judgment.Accepted, judgment.SourceReconstructionNumerator, judgment.SourceReconstructionDenominator, judgment.ProducerPackageImportNumerator, judgment.ProducerPackageImportDenominator, judgment.Metrics.ObservedCausalEdgeTotal, judgment.Metrics.EligibleEdgeTotal, judgment.AuthorityResolution)
 }
 
+func read(path string) []byte {
+	value, err := os.ReadFile(path)
+	if err != nil {
+		fail(err.Error())
+	}
+	return value
+}
 func writeJSON(path string, value any) {
 	data, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
@@ -60,8 +53,4 @@ func writeJSON(path string, value any) {
 		fail(err.Error())
 	}
 }
-
-func fail(message string) {
-	fmt.Fprintln(os.Stderr, message)
-	os.Exit(2)
-}
+func fail(message string) { fmt.Fprintln(os.Stderr, message); os.Exit(2) }

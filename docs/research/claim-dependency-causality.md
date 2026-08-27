@@ -1,93 +1,120 @@
 # Claim dependency causality
 
-## Question and boundary
+이 실험은 일반 dependency graph 복제가 아니다. raw `.gooo`를
+`syntax.ParseFile → bidir.Lower`로 canonical IR에 내린 뒤, 실행 activity의
+정규화된 proposition과 input/output/artifact target address를 claim으로
+복원하고, typed edge가 state propagation과 failure responsibility에 실제로
+기여하는지를 검사한다. case name이나 source substring은 결론을 선택하지
+않는다.
 
-This is a read-only Gooo meta experiment about failure responsibility. It asks
-whether a direct `UNKNOWN` observation can be separated from a dependent claim
-that is blocked by an unresolved predecessor, while preserving the minimum
-causal path. It is not a general dependency engine and it makes no claim about
-truth in the external world.
+## Source-derived contract
 
-## Source-grounded construction
+각 activity claim은 다음을 포함한다.
 
-Both producer and independent consumer begin with raw `.gooo` source and run
-`syntax.ParseFile` followed by `bidir.Lower`. They validate the resulting
-canonical semantic IR and derive the six claim nodes from its six activity
-declarations. The graph edges are not a receipt-only contract: each edge comes
-from an IR `wasGeneratedBy` output entity joined to a downstream IR `used`
-input entity. The downstream activity's semantic `computes` value is parsed as
-one of four closed edge predicates: `SUPPORTS`, `REQUIRES`, `CONTRADICTS`, or
-`FAILURE_ENTAILMENT`.
+`execute(activity, inputs, output, artifact, value-program)` proposition,
+그 proposition의 SHA-256 digest, IR에서 복원한 `wasGeneratedBy` output과
+`used` input, producer/consumer/meta-operation/proof choice, 그리고
+stage/step/reason provenance이다. fixture에는 여섯 개의 서로 다른 observed
+predicate가 있으므로 claim 분모는 정직하게 `6/6`이다. IR에서 digest가
+중복되면 고정 분모를 유지하지 않고 검사를 실패시킨다.
 
-The root activity's semantic value is either `claim.observe:recoverable` or
-`claim.observe:contradiction`. A separately digested observation must agree
-with that source predicate: `UNKNOWN` has no evidence, `EVIDENCE_ACCEPTED`
-requires evidence, and `EXPLICIT_CONTRADICTION` requires both the contradiction
-source predicate and evidence. Thus an integer operation or source substring
-does not itself mean refutation.
+현재 graph는 `SUPPORTS 2`, `REQUIRES 3`, `CONTRADICTS 2`,
+`FAILURE_ENTAILMENT 1`, 총 `8/8` eligible edge다. `CONTRADICTS`는
+“from proposition established/refuted, explicitly contradicts to proposition”
+방향이고, `FAILURE_ENTAILMENT`는 “from established failure, entails target
+failure” 방향이다. edge 이름만으로 `REFUTED`를 만들지 않는다.
 
-The fixed denominator is six claims, eight typed edges, and twelve initial
-transitions. The example graph has two `SUPPORTS`, three `REQUIRES`, two
-`CONTRADICTS`, and one `FAILURE_ENTAILMENT` edge. Root-to-derived is a real
-semantic relation through the generated/used `RootState` entity.
+## Current evidence and algebra
 
-## State algebra and responsibility
+`.gooo`에는 observation recipe/capability와 topology만 선언된다. CI provider가
+실제 artifact bytes와 operation을 읽어 `CURRENT_EVIDENCE` receipt를 만든다.
+receipt는 provider, artifact path, bytes digest, observed predicate/value,
+status, stage/step/reason, per-claim proposition digest, tracked/untracked
+repository snapshot, output path, capability evidence를 가진다. provider와
+judge는 artifact bytes를 각각 다시 읽고 parse/lower한다. `HISTORICAL_FIXTURE`나
+임의 문자열은 PASS 근거가 아니다.
 
-The propagation rule is intentionally asymmetric:
+state 대수는 다음과 같다.
 
-* A direct `UNKNOWN` observation is `OPEN` and `DIRECT_UNKNOWN`.
-* An upstream `UNKNOWN` makes a dependent `OPEN` and `DEPENDENCY_BLOCKED`.
-* An upstream `REFUTED` on `SUPPORTS` or `REQUIRES` also leaves the dependent
-  `OPEN` and blocked; those relations do not entail falsity.
-* A dependent becomes `REFUTED` only when an upstream `REFUTED` state reaches it
-  through a `CONTRADICTS` or `FAILURE_ENTAILMENT` edge.
-* `OPEN -> DISCHARGED` is legal only for a matching `EVIDENCE_ACCEPTED`
-  predicate. Every transition retains stage, step, reason, evidence digest,
-  provenance, and its predecessor digest.
+| 조건 | 결과 |
+| --- | --- |
+| 직접 observation `UNKNOWN` | root `OPEN/DIRECT_UNKNOWN` |
+| upstream `UNKNOWN` | dependent `OPEN/DEPENDENCY_BLOCKED` |
+| upstream `REFUTED` on `SUPPORTS` or `REQUIRES` | dependent `OPEN/BLOCKED` |
+| upstream `REFUTED` on explicit `CONTRADICTS` | target `REFUTED` |
+| upstream `REFUTED` on explicit `FAILURE_ENTAILMENT` | target failure `REFUTED` |
+| matching local `EVIDENCE_ACCEPTED` and all incoming `REQUIRES` discharged | `DISCHARGED` |
+| `SUPPORTS` only | standalone discharge 금지 |
 
-For `refuted.gooo`, the exact result is one direct refutation, three open
-claims, two dependency refutations, five blocking edges, and two effective
-refuting edges. The `CONTRADICTS` edge from Root to `ContradictionCheck` and the
-`FAILURE_ENTAILMENT` edge from `ContradictionCheck` to
-`FailureEntailmentCheck` are the only refuting path in that fixture.
+`OPEN → DISCHARGED`는 실제 current evidence predicate가 맞을 때만 허용한다.
+모든 transition은 before/after, stage/step/reason, local evidence digest,
+provenance, upstream edge IDs와 upstream transition digest 목록, 이전 head를
+보존한다. resolution의 cause도 root digest 하나가 아니라 경로의 transition
+digest 목록이다.
+
+UNKNOWN fixture의 관측 인과 edge는 `5/8`(최소 경로 `3/8`), REFUTED fixture는
+`7/8`(최소 경로 `5/8`), recovery는 실제 discharge에 사용된 `3/8`(최소 경로
+`2/8`)이다. recovery edge를 destination이 DISCHARGED라는 이유만으로 세지
+않는다. 최대 cause path는 node 수가 아니라 edge depth이며 이 fixture에서는
+`2`다.
+
+edge algebra의 고정 truth-table 분모는 edge kind마다 positive/negative 두 건,
+총 `8/8`이다. SUPPORTS positive/negative는 모두 target을 discharge/refute하지
+않고, REQUIRES positive만 upstream+local 충족 시 discharge한다. CONTRADICTS와
+FAILURE_ENTAILMENT는 명시된 방향의 positive case만 refute한다.
 
 ## Append-only recovery
 
-Recovery consumes the prior UNKNOWN receipt, not merely a label. It verifies
-the prior receipt digest, its transition head, its twelve-transition chain,
-its six `OPEN` claim states, and the current graph digest. The recovered receipt
-copies the prior transition prefix byte-for-byte and appends six transitions
-from the prior states to `DISCHARGED`; it records the prior receipt digest,
-previous transition digest, prior claim states, and the new observation digest.
-The resulting exact chain is twelve preserved transitions plus six appended
-transitions, with eight recovery edges.
+recovery는 이전 UNKNOWN receipt의 digest, transition head, 여섯 claim state,
+graph/proposition digest를 입력으로 검증한다. 새 ledger를 만들지 않고 기존
+12 transition을 byte-for-byte 보존한 뒤 6개 transition을 append한다.
+각 recovery transition은 해당 claim의 local evidence digest와 필요한 upstream
+transition digest chain을 결합한다. 따라서 회복 결과는 `12 preserved + 6
+appended`, append-only chain `1`, 실제 causal recovery edge `3/8`이다.
 
-## External principles and limits
+## Independent consumer and interventions
 
-The provenance boundary follows [W3C PROV-O](https://www.w3.org/TR/prov-o/):
-entities, activities, agents, and typed influence relations provide a useful
-vocabulary for source, producer, consumer, and lineage. [OpenLineage's object
-model](https://openlineage.io/docs/spec/object-model/) and [run
-cycle](https://openlineage.io/docs/spec/run-cycle/) motivate separating a
-declared graph from observed transition events; its [producer
-field](https://openlineage.io/docs/spec/producers/) motivates explicit
-producer identity. The directional minimum-path discipline is informed by
-[Stanford's causal-models overview](https://plato.stanford.edu/entries/causal-models/),
-but this artifact does not claim statistical causation or counterfactual
-identification.
+별도 judge는 producer package와 expectedClaims/expectedEdges를 import하지
+않고 raw source, raw evidence artifact, prior ledger에서 graph, truth table,
+state, transitions, metrics, decision을 재구성한다. CI에서 source
+reconstruction은 `1/1`, producer import은 `0/1`이다.
 
-The design is falsified if the consumer accepts a changed graph, edge kind,
-observation digest, predecessor digest, transition, stage/step/reason,
-provenance, cause path, or decision; if ordinary support/requirement edges
-turn an upstream refutation into a dependent refutation; if an unknown state
-is silently discharged; or if the exact CI counts change. Semantic value and
-edge-type interventions must change the relevant digest and state/propagation
-outcome. A comment-only intervention must preserve semantic digest, graph
-digest, state vector, and decision.
+네 개의 개입은 원인을 분리한다.
 
-The experiment assumes an acyclic, closed six-activity fixture and a small
-observation vocabulary. It does not establish graph completeness, external
-truth, runtime correctness, independent evidence for every downstream claim,
-or the adequacy of the four edge types outside this fixture. Read-only effects
-are part of the observation contract; repository writes and semantic promotion
-authority remain zero.
+* source-only: 같은 accepted raw evidence를 고정하고 `VALUE_PROGRAM`만 바꾼다.
+  semantic digest, claim transitions, decision이 바뀐다.
+* observation-only: source semantic digest를 고정하고 provider operation만
+  바꾼다. evidence digest, states, transitions, decision이 바뀐다.
+* edge-only: source value가 선언한 typed edge만 바꿔 refuting path를 제거한다.
+* comment-only: raw source bytes만 바꾸고 semantic/graph/evidence digest,
+  states, transitions, decision을 보존한다.
+
+각 report는 baseline/intervention의 source, semantic, graph, evidence digest와
+정확한 claim state/transition digest vector, cause path, snapshot effects,
+authority resolution을 함께 기록한다. tracked+untracked pre/post snapshot이
+같고 output path가 repository 밖이어야 `RepositoryWrites=0`이다. 무변경만으로
+권한 부재를 증명할 수 없으므로 독립 capability/permission evidence가 없으면
+authority는 `UNKNOWN`이며 stage/step/reason을 남기고 fail closed한다. 현재 CI는
+`contents:read` capability receipt를 가지고 `READ_ONLY_VERIFIED`를 판정하며,
+semantic promotion authorization은 항상 false다.
+
+## Principles and limits
+
+provenance 경계는 [W3C PROV-O](https://www.w3.org/TR/prov-o/)의 entity,
+activity, agent, influence 어휘를 참고했다. declared graph와 observed run
+event를 분리하는 방식은 [OpenLineage object model](https://openlineage.io/docs/spec/object-model/),
+[run cycle](https://openlineage.io/docs/spec/run-cycle/),
+[producer identity](https://openlineage.io/docs/spec/producers/)를 참고했다.
+방향성 있는 최소 경로와 개입 보고의 한계는
+[Stanford causal models](https://plato.stanford.edu/entries/causal-models/)의
+구조적 관점과만 연결되며, 이 실험은 통계적 인과나 외부 세계의 truth를
+주장하지 않는다.
+
+반증 조건은 명확하다. judge가 source-derived proposition/target, edge kind,
+raw evidence digest, prior head, transition provenance, state algebra, cause
+path, effect snapshot 중 하나라도 producer receipt-only 정보로 수용하면
+실패한다. SUPPORTS/REQUIRES가 upstream refutation을 dependent refutation으로
+바꾸거나, UNKNOWN이 evidence 없이 discharge되거나, comment-only가 semantic
+digest를 바꾸면 이 실험은 반증된다. 또한 graph는 이 고정된 acyclic six-node
+fixture의 closed-world reconstruction일 뿐, 외부 데이터의 진실성·완전성·실행
+정확성·네 edge type의 보편성을 보장하지 않는다.

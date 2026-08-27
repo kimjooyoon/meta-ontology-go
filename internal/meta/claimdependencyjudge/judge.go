@@ -1,10 +1,14 @@
 package claimdependencyjudge
 
+// This package intentionally repeats the small raw-input reconstruction and
+// state algebra. It must remain import-independent from the producer so a
+// producer receipt is comparison evidence, not the judge's source of truth.
 import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -14,19 +18,11 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-const JudgmentSchema = "gooo.meta.claim-dependency-judgment/v2"
-
-const (
-	claimTotal = 6
-	edgeTotal  = 8
-	producerID = "gooo://meta/claim-dependency/producer/v2"
-	consumerID = "gooo://meta/claim-dependency/independent-judge/v2"
-	operation  = "classify-claim-state-causality"
-	proof      = "COHERENCE"
-	unknown    = "UNKNOWN"
-	evidence   = "EVIDENCE_ACCEPTED"
-	contradict = "EXPLICIT_CONTRADICTION"
-)
+const judgmentSchema = "gooo.meta.claim-dependency-judgment/v3"
+const claimTotal, edgeTotal, initialTransitions = 6, 8, 12
+const producerID = "gooo://meta/claim-dependency/producer/v3"
+const consumerID = "gooo://meta/claim-dependency/independent-judge/v3"
+const operation, proof = "classify-claim-state-causality", "COHERENCE"
 
 type edgeKind string
 
@@ -37,24 +33,39 @@ const (
 	failureEntailment edgeKind = "FAILURE_ENTAILMENT"
 )
 
+type predicate string
+
+const (
+	unknown               predicate = "UNKNOWN"
+	accepted              predicate = "EVIDENCE_ACCEPTED"
+	explicitContradiction predicate = "EXPLICIT_CONTRADICTION"
+)
+
 type coordinate struct {
 	Stage  string `json:"stage"`
 	Step   string `json:"step"`
 	Reason string `json:"reason"`
 }
+type target struct {
+	Inputs   []string `json:"inputs,omitempty"`
+	Output   string   `json:"output,omitempty"`
+	Artifact string   `json:"artifact"`
+}
 type claim struct {
-	Ordinal       int        `json:"ordinal"`
-	Axis          string     `json:"axis"`
-	ClaimID       string     `json:"claim_id"`
-	ActivityID    string     `json:"activity_id"`
-	ActivityName  string     `json:"activity_name"`
-	Statement     string     `json:"statement"`
-	ValueProgram  string     `json:"value_program"`
-	Producer      string     `json:"producer"`
-	Consumer      string     `json:"consumer"`
-	MetaOperation string     `json:"meta_operation"`
-	ProofChoice   string     `json:"proof_choice"`
-	Coordinate    coordinate `json:"coordinate"`
+	Ordinal           int        `json:"ordinal"`
+	Axis              string     `json:"axis"`
+	ClaimID           string     `json:"claim_id"`
+	ActivityID        string     `json:"activity_id"`
+	ActivityName      string     `json:"activity_name"`
+	Proposition       string     `json:"proposition"`
+	PropositionDigest string     `json:"proposition_digest"`
+	Target            target     `json:"target"`
+	ValueProgram      string     `json:"value_program"`
+	Producer          string     `json:"producer"`
+	Consumer          string     `json:"consumer"`
+	MetaOperation     string     `json:"meta_operation"`
+	ProofChoice       string     `json:"proof_choice"`
+	Coordinate        coordinate `json:"coordinate"`
 }
 type edge struct {
 	EdgeID        string   `json:"edge_id"`
@@ -74,74 +85,129 @@ type graph struct {
 	Edges             []edge  `json:"edges"`
 	Digest            string  `json:"digest"`
 }
-type observation struct {
-	Schema            string `json:"schema"`
-	Predicate         string `json:"predicate"`
-	SubjectClaimID    string `json:"subject_claim_id"`
-	EvidenceDigest    string `json:"evidence_digest,omitempty"`
-	ReadOnly          bool   `json:"read_only"`
-	RepositoryWrites  int    `json:"repository_writes"`
-	MutationAuthority bool   `json:"mutation_authority"`
-	Digest            string `json:"digest"`
+type evidenceClaim struct {
+	ClaimID           string     `json:"claim_id"`
+	PropositionDigest string     `json:"proposition_digest"`
+	ObservedPredicate predicate  `json:"observed_predicate"`
+	ObservedValue     string     `json:"observed_value"`
+	Status            string     `json:"status"`
+	Coordinate        coordinate `json:"coordinate"`
+	Digest            string     `json:"digest"`
+}
+type capability struct {
+	Provider   string     `json:"provider"`
+	Permission string     `json:"permission"`
+	Status     string     `json:"status"`
+	Coordinate coordinate `json:"coordinate"`
+	Digest     string     `json:"digest"`
+}
+type snapshot struct {
+	RepositoryRoot   string     `json:"repository_root"`
+	TrackedDigest    string     `json:"tracked_digest"`
+	UntrackedDigest  string     `json:"untracked_digest"`
+	BeforeDigest     string     `json:"before_digest"`
+	AfterDigest      string     `json:"after_digest"`
+	OutputPath       string     `json:"output_path"`
+	OutputDigest     string     `json:"output_digest"`
+	RepositoryWrites int        `json:"repository_writes"`
+	Coordinate       coordinate `json:"coordinate"`
+}
+type evidenceReceipt struct {
+	Schema              string          `json:"schema"`
+	Provider            string          `json:"provider"`
+	ArtifactPath        string          `json:"artifact_path"`
+	ArtifactBytesDigest string          `json:"artifact_bytes_digest"`
+	Operation           string          `json:"operation"`
+	ObservedPredicate   predicate       `json:"observed_predicate"`
+	ObservedValue       string          `json:"observed_value"`
+	Status              string          `json:"status"`
+	Coordinate          coordinate      `json:"coordinate"`
+	Claims              []evidenceClaim `json:"claims"`
+	Capability          capability      `json:"capability"`
+	Snapshot            snapshot        `json:"snapshot"`
+	Digest              string          `json:"digest"`
 }
 type subject struct {
-	SourcePath       string `json:"source_path"`
-	SourceDigest     string `json:"source_digest"`
-	SemanticDigest   string `json:"semantic_digest"`
-	Producer         string `json:"producer"`
-	Consumer         string `json:"consumer"`
-	MetaOperation    string `json:"meta_operation"`
-	ProofChoice      string `json:"proof_choice"`
-	ReadOnly         bool   `json:"read_only"`
-	RepositoryWrites int    `json:"repository_writes"`
+	SourcePath          string     `json:"source_path"`
+	SourceDigest        string     `json:"source_digest"`
+	SemanticDigest      string     `json:"semantic_digest"`
+	Producer            string     `json:"producer"`
+	Consumer            string     `json:"consumer"`
+	MetaOperation       string     `json:"meta_operation"`
+	ProofChoice         string     `json:"proof_choice"`
+	ReadOnly            bool       `json:"read_only"`
+	RepositoryWrites    int        `json:"repository_writes"`
+	AuthorityResolution string     `json:"authority_resolution"`
+	AuthorityCoordinate coordinate `json:"authority_coordinate"`
 }
 type transition struct {
-	Sequence                 int        `json:"sequence"`
-	ClaimID                  string     `json:"claim_id"`
-	Event                    string     `json:"event"`
-	Before                   string     `json:"before"`
-	After                    string     `json:"after"`
-	Coordinate               coordinate `json:"coordinate"`
-	EvidenceDigest           string     `json:"evidence_digest,omitempty"`
-	Provenance               string     `json:"provenance"`
-	PreviousTransitionDigest string     `json:"previous_transition_digest,omitempty"`
-	TransitionDigest         string     `json:"transition_digest"`
+	Sequence                  int        `json:"sequence"`
+	ClaimID                   string     `json:"claim_id"`
+	Event                     string     `json:"event"`
+	Before                    string     `json:"before"`
+	After                     string     `json:"after"`
+	Coordinate                coordinate `json:"coordinate"`
+	EvidenceDigest            string     `json:"evidence_digest,omitempty"`
+	UpstreamEdgeIDs           []string   `json:"upstream_edge_ids,omitempty"`
+	UpstreamTransitionDigests []string   `json:"upstream_transition_digests,omitempty"`
+	Provenance                string     `json:"provenance"`
+	PreviousTransitionDigest  string     `json:"previous_transition_digest,omitempty"`
+	TransitionDigest          string     `json:"transition_digest"`
 }
 type resolution struct {
-	ClaimID               string      `json:"claim_id"`
-	Axis                  string      `json:"axis"`
-	State                 string      `json:"state"`
-	Kind                  string      `json:"kind"`
-	ObservedEvent         string      `json:"observed_event"`
-	Coordinate            coordinate  `json:"coordinate"`
-	EvidenceDigest        string      `json:"evidence_digest,omitempty"`
-	Provenance            string      `json:"provenance"`
-	FailureResponsibility string      `json:"failure_responsibility"`
-	FailureOwnerClaimID   string      `json:"failure_owner_claim_id"`
-	MissingEvidenceIDs    []string    `json:"missing_evidence_ids,omitempty"`
-	BlockedByClaimIDs     []string    `json:"blocked_by_claim_ids,omitempty"`
-	BlockedByEdgeIDs      []string    `json:"blocked_by_edge_ids,omitempty"`
-	CausePath             []string    `json:"cause_path"`
-	CauseEdgeIDs          []string    `json:"cause_edge_ids"`
-	CauseEdgeKinds        []edgeKind  `json:"cause_edge_kinds"`
-	CauseTransitionDigest string      `json:"cause_transition_digest"`
-	CauseCoordinate       *coordinate `json:"cause_coordinate"`
+	ClaimID                string      `json:"claim_id"`
+	Axis                   string      `json:"axis"`
+	PropositionDigest      string      `json:"proposition_digest"`
+	State                  string      `json:"state"`
+	Kind                   string      `json:"kind"`
+	ObservedEvent          string      `json:"observed_event"`
+	Coordinate             coordinate  `json:"coordinate"`
+	EvidenceDigest         string      `json:"evidence_digest,omitempty"`
+	Provenance             string      `json:"provenance"`
+	FailureResponsibility  string      `json:"failure_responsibility"`
+	FailureOwnerClaimID    string      `json:"failure_owner_claim_id"`
+	MissingEvidenceIDs     []string    `json:"missing_evidence_ids,omitempty"`
+	BlockedByClaimIDs      []string    `json:"blocked_by_claim_ids,omitempty"`
+	BlockedByEdgeIDs       []string    `json:"blocked_by_edge_ids,omitempty"`
+	CausePath              []string    `json:"cause_path"`
+	CauseEdgeIDs           []string    `json:"cause_edge_ids"`
+	CauseEdgeKinds         []edgeKind  `json:"cause_edge_kinds"`
+	CauseTransitionDigests []string    `json:"cause_transition_digests"`
+	CauseCoordinate        *coordinate `json:"cause_coordinate"`
+}
+type truthCase struct {
+	Schema         string   `json:"schema"`
+	CaseID         string   `json:"case_id"`
+	Kind           edgeKind `json:"kind"`
+	Direction      string   `json:"direction"`
+	UpstreamState  string   `json:"upstream_state"`
+	LocalPredicate string   `json:"local_predicate"`
+	ExpectedState  string   `json:"expected_state"`
+	Positive       bool     `json:"positive"`
+	SemanticBasis  string   `json:"semantic_basis"`
 }
 type edgeMetric struct {
-	Kind     edgeKind `json:"kind"`
-	Total    int      `json:"total"`
-	Blocking int      `json:"blocking"`
-	Refuting int      `json:"refuting"`
-	Recovery int      `json:"recovery"`
+	Kind           edgeKind `json:"kind"`
+	Eligible       int      `json:"eligible"`
+	ObservedCausal int      `json:"observed_causal"`
+	Blocking       int      `json:"blocking"`
+	Refuting       int      `json:"refuting"`
+	Discharge      int      `json:"discharge"`
 }
 type metrics struct {
 	FixedClaimTotal             int          `json:"fixed_claim_total"`
+	DistinctPropositionTotal    int          `json:"distinct_proposition_total"`
 	FixedEdgeTotal              int          `json:"fixed_edge_total"`
+	EligibleEdgeTotal           int          `json:"eligible_edge_total"`
+	ObservedCausalEdgeTotal     int          `json:"observed_causal_edge_total"`
+	MinimumCausalEdgeTotal      int          `json:"minimum_causal_edge_total"`
 	ClassifiedClaimTotal        int          `json:"classified_claim_total"`
 	OpenClaimTotal              int          `json:"open_claim_total"`
 	DischargedClaimTotal        int          `json:"discharged_claim_total"`
 	RefutedClaimTotal           int          `json:"refuted_claim_total"`
-	UnknownClaimTotal           int          `json:"unknown_claim_total"`
+	CurrentEvidenceTotal        int          `json:"current_evidence_total"`
+	HistoricalEvidenceTotal     int          `json:"historical_evidence_total"`
+	UnknownEvidenceTotal        int          `json:"unknown_evidence_total"`
 	DirectUnknownClaimTotal     int          `json:"direct_unknown_claim_total"`
 	DependencyBlockedClaimTotal int          `json:"dependency_blocked_claim_total"`
 	DirectRefutedClaimTotal     int          `json:"direct_refuted_claim_total"`
@@ -155,6 +221,7 @@ type metrics struct {
 	TransitionTotal             int          `json:"transition_total"`
 	AppendOnlyTransitionTotal   int          `json:"append_only_transition_total"`
 	ClassificationBasisPoints   int          `json:"classification_basis_points"`
+	TruthTableCaseTotal         int          `json:"truth_table_case_total"`
 	EdgeMetrics                 []edgeMetric `json:"edge_metrics"`
 }
 type decision struct {
@@ -164,21 +231,22 @@ type decision struct {
 	SemanticPromotionAuthorized bool   `json:"semantic_promotion_authorized"`
 }
 type receipt struct {
-	Schema                   string       `json:"schema"`
-	Scope                    string       `json:"scope"`
-	Subject                  subject      `json:"subject"`
-	Observation              observation  `json:"observation"`
-	Graph                    graph        `json:"graph"`
-	PriorReceiptDigest       string       `json:"prior_receipt_digest,omitempty"`
-	PreviousTransitionDigest string       `json:"previous_transition_digest,omitempty"`
-	PriorClaimStates         []string     `json:"prior_claim_states,omitempty"`
-	ObservationDigest        string       `json:"observation_digest"`
-	Transitions              []transition `json:"transitions"`
-	TransitionHeadDigest     string       `json:"transition_head_digest"`
-	Resolutions              []resolution `json:"resolutions"`
-	Metrics                  metrics      `json:"metrics"`
-	Decision                 decision     `json:"decision"`
-	Digest                   string       `json:"digest"`
+	Schema                   string          `json:"schema"`
+	Scope                    string          `json:"scope"`
+	Subject                  subject         `json:"subject"`
+	Evidence                 evidenceReceipt `json:"evidence"`
+	Graph                    graph           `json:"graph"`
+	TruthTable               []truthCase     `json:"truth_table"`
+	PriorReceiptDigest       string          `json:"prior_receipt_digest,omitempty"`
+	PreviousTransitionDigest string          `json:"previous_transition_digest,omitempty"`
+	PriorClaimStates         []string        `json:"prior_claim_states,omitempty"`
+	EvidenceDigest           string          `json:"evidence_digest"`
+	Transitions              []transition    `json:"transitions"`
+	TransitionHeadDigest     string          `json:"transition_head_digest"`
+	Resolutions              []resolution    `json:"resolutions"`
+	Metrics                  metrics         `json:"metrics"`
+	Decision                 decision        `json:"decision"`
+	Digest                   string          `json:"digest"`
 }
 
 type Judgment struct {
@@ -193,6 +261,7 @@ type Judgment struct {
 	Metrics                          metrics `json:"metrics"`
 	ReadOnly                         bool    `json:"read_only"`
 	SemanticPromotionAuthorized      bool    `json:"semantic_promotion_authorized"`
+	AuthorityResolution              string  `json:"authority_resolution"`
 	SourceReconstruction             string  `json:"source_reconstruction"`
 	SourceReconstructionNumerator    int     `json:"source_reconstruction_numerator"`
 	SourceReconstructionDenominator  int     `json:"source_reconstruction_denominator"`
@@ -201,100 +270,104 @@ type Judgment struct {
 	AppendOnlyRecoveryChainTotal     int     `json:"append_only_recovery_chain_total"`
 	Digest                           string  `json:"digest"`
 }
-
 type reconstructed struct {
 	Graph       graph
 	RootProgram string
 }
 
-// Judge is intentionally a raw-input consumer. It does not import the
-// producer package or consume producer expectations; all claims, edges,
-// states, and transitions are rebuilt from .gooo, observation, and ledger.
-func Judge(source []byte, sourcePath string, priorBytes, observationBytes, receiptBytes []byte) (Judgment, error) {
+func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptBytes []byte) (Judgment, error) {
 	current, err := reconstruct(source, sourcePath)
 	if err != nil {
+		return Judgment{}, err
+	}
+	var evidence evidenceReceipt
+	if err := json.Unmarshal(evidenceBytes, &evidence); err != nil {
+		return Judgment{}, fmt.Errorf("decode raw evidence: %w", err)
+	}
+	if err := validateEvidence(evidence); err != nil {
+		return Judgment{}, err
+	}
+	artifact, err := os.ReadFile(evidence.ArtifactPath)
+	if err != nil {
+		return Judgment{}, fmt.Errorf("judge cannot re-observe artifact: %w", err)
+	}
+	if digestBytes(artifact) != evidence.ArtifactBytesDigest {
+		return Judgment{}, fmt.Errorf("judge observed artifact bytes digest mismatch")
+	}
+	artifactGraph, err := reconstruct(artifact, evidence.ArtifactPath)
+	if err != nil {
+		return Judgment{}, err
+	}
+	if err := validateEvidenceClaims(evidence, artifactGraph.Graph); err != nil {
+		return Judgment{}, err
+	}
+	if err := validateSourceObservation(current, evidence); err != nil {
 		return Judgment{}, err
 	}
 	var got receipt
 	if err := json.Unmarshal(receiptBytes, &got); err != nil {
 		return Judgment{}, fmt.Errorf("decode receipt: %w", err)
 	}
-	var observed observation
-	if err := json.Unmarshal(observationBytes, &observed); err != nil {
-		return Judgment{}, fmt.Errorf("decode observation: %w", err)
-	}
-	if err := validateObservation(current, observed); err != nil {
-		return Judgment{}, err
-	}
-	if !reflect.DeepEqual(got.Observation, observed) || got.ObservationDigest != observed.Digest {
-		return Judgment{}, fmt.Errorf("receipt is not bound to the raw observation")
-	}
 	if got.Graph.Digest != current.Graph.Digest || !reflect.DeepEqual(got.Graph, current.Graph) {
 		return Judgment{}, fmt.Errorf("receipt graph is not reconstructed from raw source")
 	}
+	if got.EvidenceDigest != evidence.Digest || !reflect.DeepEqual(got.Evidence, evidence) {
+		return Judgment{}, fmt.Errorf("receipt is not bound to raw evidence receipt")
+	}
 	sourceDigest := digestBytes(source)
-	if got.Subject.SourceDigest != sourceDigest || got.Subject.SourcePath != sourcePath || got.Subject.SemanticDigest != current.Graph.CanonicalIRDigest || got.Subject.Producer != producerID || got.Subject.Consumer != consumerID || got.Subject.MetaOperation != operation || got.Subject.ProofChoice != proof || !got.Subject.ReadOnly || got.Subject.RepositoryWrites != 0 {
+	if got.Subject.SourceDigest != sourceDigest || got.Subject.SourcePath != sourcePath || got.Subject.SemanticDigest != current.Graph.CanonicalIRDigest || got.Subject.Producer != producerID || got.Subject.Consumer != consumerID || got.Subject.MetaOperation != operation || got.Subject.ProofChoice != proof {
 		return Judgment{}, fmt.Errorf("receipt subject provenance is invalid")
 	}
-
 	var prior *receipt
 	if len(priorBytes) > 0 {
 		var value receipt
 		if err := json.Unmarshal(priorBytes, &value); err != nil {
-			return Judgment{}, fmt.Errorf("decode prior receipt: %w", err)
+			return Judgment{}, err
 		}
-		prior = &value
 		if err := validatePrior(current, value); err != nil {
 			return Judgment{}, err
 		}
-		priorDigest := receiptDigest(value)
-		if got.PriorReceiptDigest != priorDigest || got.PreviousTransitionDigest != value.TransitionHeadDigest || !sameStrings(got.PriorClaimStates, statesOf(value.Resolutions)) {
-			return Judgment{}, fmt.Errorf("recovery does not append the prior receipt head and claim states")
+		prior = &value
+		d := receiptDigest(value)
+		if got.PriorReceiptDigest != d || got.PreviousTransitionDigest != value.TransitionHeadDigest || !sameStrings(got.PriorClaimStates, statesOf(value.Resolutions)) {
+			return Judgment{}, fmt.Errorf("recovery does not bind prior receipt head and states")
 		}
-		if len(got.Transitions) <= len(value.Transitions) || !reflect.DeepEqual(got.Transitions[:len(value.Transitions)], value.Transitions) {
-			return Judgment{}, fmt.Errorf("recovery transition prefix is not append-only")
+		if len(got.Transitions) < len(value.Transitions) || !reflect.DeepEqual(got.Transitions[:len(value.Transitions)], value.Transitions) {
+			return Judgment{}, fmt.Errorf("recovery is not append-only")
 		}
-	} else if observed.Predicate == evidence {
-		return Judgment{}, fmt.Errorf("consumer requires an UNKNOWN prior ledger for evidence recovery")
 	}
-
-	states, outcomeTemplates := classify(current.Graph, observed.Predicate, observed.EvidenceDigest)
-	provenance := fmt.Sprintf("source:%s|ir:%s|producer:%s|consumer:%s", sourceDigest, current.Graph.CanonicalIRDigest, producerID, consumerID)
-	expectedTransitions, err := expectedTransitionsFor(current.Graph, outcomeTemplates, provenance, prior)
-	if err != nil {
-		return Judgment{}, err
-	}
+	states, templates := classify(current.Graph, evidence)
+	provenance := fmt.Sprintf("source:%s|ir:%s|evidence:%s|producer:%s|consumer:%s", sourceDigest, current.Graph.CanonicalIRDigest, evidence.Digest, producerID, consumerID)
+	expectedTransitions := transitionsFor(current.Graph, templates, provenance, prior)
 	if !reflect.DeepEqual(got.Transitions, expectedTransitions) {
-		return Judgment{}, fmt.Errorf("receipt transition chain is not independently reproducible")
+		return Judgment{}, fmt.Errorf("transition chain cannot be independently reproduced")
 	}
-	currentOutcomes := expectedTransitions[claimTotal:]
+	currentOutcomes := templates
 	if prior != nil {
 		currentOutcomes = expectedTransitions[len(expectedTransitions)-claimTotal:]
 	}
-	expectedResolutions := buildResolutions(current.Graph, states, currentOutcomes, sourceDigest, current.Graph.CanonicalIRDigest, prior != nil)
+	expectedResolutions := buildResolutions(current.Graph, states, currentOutcomes, provenance)
 	if !reflect.DeepEqual(got.Resolutions, expectedResolutions) {
-		return Judgment{}, fmt.Errorf("receipt resolutions are not independently reproducible")
+		return Judgment{}, fmt.Errorf("resolutions cannot be independently reproduced")
 	}
-	expectedMetrics := deriveMetrics(current.Graph, states, expectedResolutions, prior != nil)
+	expectedMetrics := deriveMetrics(current.Graph, states, expectedResolutions, currentOutcomes, evidence, prior != nil)
+	if prior != nil {
+		expectedMetrics.AppendOnlyTransitionTotal = claimTotal
+	}
 	if !reflect.DeepEqual(got.Metrics, expectedMetrics) {
-		return Judgment{}, fmt.Errorf("receipt edge algebra metrics are not independently reproducible")
+		return Judgment{}, fmt.Errorf("metrics cannot be independently reproduced")
 	}
-	expectedDecision := decisionFor(observed.Predicate, prior != nil)
+	expectedDecision := decisionFor(states, evidence, prior != nil)
 	if !reflect.DeepEqual(got.Decision, expectedDecision) {
-		return Judgment{}, fmt.Errorf("receipt decision is not independently reproducible")
+		return Judgment{}, fmt.Errorf("decision cannot be independently reproduced")
+	}
+	if got.TruthTable == nil || !reflect.DeepEqual(got.TruthTable, truthTable()) {
+		return Judgment{}, fmt.Errorf("truth table is not independently reproduced")
 	}
 	if got.TransitionHeadDigest != got.Transitions[len(got.Transitions)-1].TransitionDigest || receiptDigest(got) != got.Digest {
 		return Judgment{}, fmt.Errorf("receipt digest or transition head is invalid")
 	}
-	judgment := Judgment{
-		Schema: JudgmentSchema, ReceiptDigest: got.Digest, Predicate: observed.Predicate,
-		Decision: expectedDecision.Value, Resolution: expectedDecision.Resolution, Reason: expectedDecision.Reason,
-		Accepted: true, IndependentReplay: "RAW_GOOO_PARSE_LOWER_GRAPH_AND_TRANSITION_REDERIVED",
-		Metrics: expectedMetrics, ReadOnly: got.Subject.ReadOnly && got.Subject.RepositoryWrites == 0,
-		SemanticPromotionAuthorized: false, SourceReconstruction: "syntax.ParseFile->bidir.Lower->semantic.IR", SourceReconstructionNumerator: 1, SourceReconstructionDenominator: 1,
-		ProducerPackageImportNumerator: 0, ProducerPackageImportDenominator: 1,
-		AppendOnlyRecoveryChainTotal: boolInt(prior != nil),
-	}
+	judgment := Judgment{Schema: judgmentSchema, ReceiptDigest: got.Digest, Predicate: string(evidence.ObservedPredicate), Decision: expectedDecision.Value, Resolution: expectedDecision.Resolution, Reason: expectedDecision.Reason, Accepted: true, IndependentReplay: "RAW_GOOO_PARSE_LOWER_ARTIFACT_REOBSERVE_AND_TRANSITION_REDERIVED", Metrics: expectedMetrics, ReadOnly: got.Subject.ReadOnly && got.Subject.RepositoryWrites == 0, SemanticPromotionAuthorized: false, AuthorityResolution: got.Subject.AuthorityResolution, SourceReconstruction: "syntax.ParseFile->bidir.Lower->semantic.IR", SourceReconstructionNumerator: 1, SourceReconstructionDenominator: 1, ProducerPackageImportNumerator: 0, ProducerPackageImportDenominator: 1, AppendOnlyRecoveryChainTotal: boolInt(prior != nil)}
 	judgment.Digest = digestJSON(judgment)
 	return judgment, nil
 }
@@ -302,11 +375,11 @@ func Judge(source []byte, sourcePath string, priorBytes, observationBytes, recei
 func reconstruct(source []byte, sourcePath string) (reconstructed, error) {
 	file, diagnostics := syntax.ParseFile(sourcePath, string(source))
 	if file == nil || diagnostics.HasErrors() {
-		return reconstructed{}, fmt.Errorf("consumer parse failed: %s", diagnostics.Error())
+		return reconstructed{}, fmt.Errorf("judge parse failed: %s", diagnostics.Error())
 	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		return reconstructed{}, fmt.Errorf("consumer lower failed: %w", err)
+		return reconstructed{}, err
 	}
 	if err := ir.Validate(); err != nil {
 		return reconstructed{}, err
@@ -317,30 +390,7 @@ func reconstruct(source []byte, sourcePath string) (reconstructed, error) {
 			activities[node.Name] = node
 		}
 	}
-	claims := []claim{}
-	activityIndex := map[string]int{}
-	for _, declaration := range file.Declarations {
-		activity, ok := declaration.(*syntax.ActivityDecl)
-		if !ok {
-			continue
-		}
-		node, ok := activities[activity.Name]
-		if !ok || node.ValueProgram == "" {
-			return reconstructed{}, fmt.Errorf("consumer cannot bind activity %q", activity.Name)
-		}
-		activityIndex[node.ID.String()] = len(claims)
-		claims = append(claims, claim{
-			Ordinal: len(claims) + 1, Axis: strings.ToLower(activity.Name), ClaimID: node.ID.String(), ActivityID: node.ID.String(),
-			ActivityName: activity.Name, Statement: fmt.Sprintf("activity %s declares value claim %q", activity.Name, node.ValueProgram), ValueProgram: node.ValueProgram,
-			Producer: producerID, Consumer: consumerID, MetaOperation: operation, ProofChoice: proof,
-			Coordinate: coordinate{Stage: "CLAIM", Step: activity.Name, Reason: "SEMANTIC_ACTIVITY_VALUE"},
-		})
-	}
-	if len(claims) != claimTotal {
-		return reconstructed{}, fmt.Errorf("consumer reconstructed %d claims, want %d", len(claims), claimTotal)
-	}
-	generatedBy := map[string]string{}
-	usedBy := map[string][]string{}
+	generatedBy, usedBy := map[string]string{}, map[string][]string{}
 	for _, fact := range ir.Graph.AllFacts() {
 		switch fact.Predicate {
 		case semantic.WasGeneratedBy:
@@ -348,6 +398,40 @@ func reconstruct(source []byte, sourcePath string) (reconstructed, error) {
 		case semantic.Used:
 			usedBy[fact.Subject.String()] = append(usedBy[fact.Subject.String()], fact.Object.String())
 		}
+	}
+	claims, activityIndex := []claim{}, map[string]int{}
+	for _, declaration := range file.Declarations {
+		activity, ok := declaration.(*syntax.ActivityDecl)
+		if !ok {
+			continue
+		}
+		node, ok := activities[activity.Name]
+		if !ok || node.ValueProgram == "" {
+			return reconstructed{}, fmt.Errorf("judge cannot bind activity")
+		}
+		inputs := append([]string(nil), usedBy[node.ID.String()]...)
+		sort.Strings(inputs)
+		output := ""
+		for entityID, activityID := range generatedBy {
+			if activityID == node.ID.String() {
+				output = entityID
+				break
+			}
+		}
+		artifact := "gooo://claim-dependency/artifact/" + strings.ToLower(activity.Name)
+		proposition := fmt.Sprintf("execute(activity=%s,inputs=[%s],output=%s,artifact=%s,value=%s)", node.ID.String(), strings.Join(inputs, ","), output, artifact, node.ValueProgram)
+		activityIndex[node.ID.String()] = len(claims)
+		claims = append(claims, claim{len(claims) + 1, strings.ToLower(activity.Name), node.ID.String(), node.ID.String(), activity.Name, proposition, digestBytes([]byte(proposition)), target{Inputs: inputs, Output: output, Artifact: artifact}, node.ValueProgram, producerID, consumerID, operation, proof, coordinate{"CLAIM", activity.Name, "NORMALIZED_EXECUTION_PROPOSITION"}})
+	}
+	if len(claims) != claimTotal {
+		return reconstructed{}, fmt.Errorf("judge reconstructed %d claims", len(claims))
+	}
+	seen := map[string]bool{}
+	for _, c := range claims {
+		seen[c.PropositionDigest] = true
+	}
+	if len(seen) != claimTotal {
+		return reconstructed{}, fmt.Errorf("judge found non-distinct propositions")
 	}
 	type candidate struct {
 		from, to int
@@ -370,9 +454,9 @@ func reconstruct(source []byte, sourcePath string) (reconstructed, error) {
 			}
 			kind, ok := edgeKind(claims[to].ValueProgram)
 			if !ok {
-				return reconstructed{}, fmt.Errorf("consumer found untyped dependency")
+				return reconstructed{}, fmt.Errorf("judge found untyped edge")
 			}
-			candidates = append(candidates, candidate{from: from, to: to, kind: kind})
+			candidates = append(candidates, candidate{from, to, kind})
 		}
 	}
 	sort.Slice(candidates, func(i, j int) bool {
@@ -385,23 +469,26 @@ func reconstruct(source []byte, sourcePath string) (reconstructed, error) {
 		return candidates[i].kind < candidates[j].kind
 	})
 	if len(candidates) != edgeTotal {
-		return reconstructed{}, fmt.Errorf("consumer reconstructed %d edges, want %d", len(candidates), edgeTotal)
+		return reconstructed{}, fmt.Errorf("judge reconstructed %d edges", len(candidates))
 	}
 	edges := make([]edge, len(candidates))
-	for index, candidate := range candidates {
-		edges[index] = edge{EdgeID: fmt.Sprintf("E%02d", index+1), FromClaimID: claims[candidate.from].ClaimID, ToClaimID: claims[candidate.to].ClaimID, Kind: candidate.kind, SemanticBasis: "prov:wasGeneratedBy + prov:used + activity.value-program"}
+	for i, c := range candidates {
+		edges[i] = edge{fmt.Sprintf("E%02d", i+1), claims[c.from].ClaimID, claims[c.to].ClaimID, c.kind, "prov:wasGeneratedBy + prov:used + source-derived value-program edge predicate"}
 	}
-	result := graph{Schema: "gooo.meta.claim-dependency-graph/v2", Authority: "CANONICAL_IR_FROM_SYNTAX_PARSE_AND_BIDIR_LOWER", Completeness: "CLOSED_WORLD_SOURCE_RECONSTRUCTED", CanonicalIRDigest: prefixedDigest(ir.StableHash()), NodeTotal: claimTotal, EdgeTotal: edgeTotal, Nodes: claims, Edges: edges}
+	result := graph{"gooo.meta.claim-dependency-graph/v3", "CANONICAL_IR_FROM_SYNTAX_PARSE_AND_BIDIR_LOWER", "CLOSED_WORLD_SOURCE_RECONSTRUCTED", prefixedDigest(ir.StableHash()), claimTotal, edgeTotal, claims, edges, ""}
 	result.Digest = graphDigest(result)
-	return reconstructed{Graph: result, RootProgram: claims[0].ValueProgram}, nil
+	return reconstructed{result, claims[0].ValueProgram}, nil
 }
 
 func edgeKind(program string) (edgeKind, bool) {
-	const prefix = "claim.edge:"
-	if !strings.HasPrefix(program, prefix) {
+	if !strings.HasPrefix(program, "claim.edge:") {
 		return "", false
 	}
-	switch strings.TrimPrefix(program, prefix) {
+	value := strings.TrimPrefix(program, "claim.edge:")
+	if i := strings.IndexByte(value, '|'); i >= 0 {
+		value = value[:i]
+	}
+	switch value {
 	case "supports":
 		return supports, true
 	case "requires":
@@ -410,129 +497,231 @@ func edgeKind(program string) (edgeKind, bool) {
 		return contradicts, true
 	case "failure-entailment":
 		return failureEntailment, true
-	default:
-		return "", false
 	}
+	return "", false
 }
-func validateObservation(current reconstructed, observed observation) error {
-	if observed.Schema != "gooo.meta.claim-dependency-observation/v1" || observed.SubjectClaimID != current.Graph.Nodes[0].ClaimID || !observed.ReadOnly || observed.RepositoryWrites != 0 || observed.MutationAuthority || observationDigest(observed) != observed.Digest {
-		return fmt.Errorf("consumer observation is invalid")
+func truthTable() []truthCase {
+	return []truthCase{{"gooo.meta.claim-dependency-truth-table/v1", "SUPPORTS-POSITIVE", supports, "established supports target", "DISCHARGED", "EVIDENCE_ACCEPTED", "OPEN", true, "support never discharges by itself"}, {"gooo.meta.claim-dependency-truth-table/v1", "SUPPORTS-NEGATIVE", supports, "refuted supports target", "REFUTED", "UNKNOWN", "OPEN", false, "support does not refute"}, {"gooo.meta.claim-dependency-truth-table/v1", "REQUIRES-POSITIVE", requires, "required proposition established", "DISCHARGED", "EVIDENCE_ACCEPTED", "DISCHARGED", true, "upstream and local requirement hold"}, {"gooo.meta.claim-dependency-truth-table/v1", "REQUIRES-NEGATIVE", requires, "required proposition established", "DISCHARGED", "UNKNOWN", "OPEN", false, "local requirement missing"}, {"gooo.meta.claim-dependency-truth-table/v1", "CONTRADICTS-POSITIVE", contradicts, "established contradiction of target", "REFUTED", "EXPLICIT_CONTRADICTION", "REFUTED", true, "direction is from established contradiction to target"}, {"gooo.meta.claim-dependency-truth-table/v1", "CONTRADICTS-NEGATIVE", contradicts, "ordinary support direction", "REFUTED", "UNKNOWN", "OPEN", false, "name alone cannot refute"}, {"gooo.meta.claim-dependency-truth-table/v1", "FAILURE_ENTAILMENT-POSITIVE", failureEntailment, "failure entails target failure", "REFUTED", "EXPLICIT_CONTRADICTION", "REFUTED", true, "failure entailment is directional"}, {"gooo.meta.claim-dependency-truth-table/v1", "FAILURE_ENTAILMENT-NEGATIVE", failureEntailment, "success or ordinary dependency", "REFUTED", "UNKNOWN", "OPEN", false, "failure evidence is absent"}}
+}
+func validateEvidence(value evidenceReceipt) error {
+	if value.Schema != "gooo.meta.claim-dependency-evidence/v2" || value.Status != "CURRENT_EVIDENCE" || value.ArtifactPath == "" || value.Digest == "" {
+		return fmt.Errorf("raw evidence identity invalid")
 	}
-	switch observed.Predicate {
-	case unknown, evidence:
-		if current.RootProgram != "claim.observe:recoverable" {
-			return fmt.Errorf("observation does not match source recoverable predicate")
-		}
-	case contradict:
-		if current.RootProgram != "claim.observe:contradiction" {
-			return fmt.Errorf("observation does not match source contradiction predicate")
-		}
-	default:
-		return fmt.Errorf("consumer predicate is unknown")
+	if evidenceDigest(value) != value.Digest {
+		return fmt.Errorf("raw evidence digest invalid")
 	}
-	if (observed.Predicate == unknown) != (observed.EvidenceDigest == "") {
-		return fmt.Errorf("observation evidence presence is inconsistent with predicate")
+	if value.Snapshot.RepositoryWrites != 0 || value.Snapshot.BeforeDigest != value.Snapshot.AfterDigest || value.Capability.Status != "CURRENT_EVIDENCE" {
+		return fmt.Errorf("raw evidence effects or capability invalid")
+	}
+	if capabilityDigest(value.Capability) != value.Capability.Digest {
+		return fmt.Errorf("capability digest invalid")
+	}
+	return nil
+}
+func validateEvidenceClaims(value evidenceReceipt, g graph) error {
+	if len(value.Claims) != g.NodeTotal {
+		return fmt.Errorf("raw evidence claim denominator mismatch")
+	}
+	for i, c := range value.Claims {
+		if c.Status == "HISTORICAL_FIXTURE" || c.ClaimID != g.Nodes[i].ClaimID || c.PropositionDigest != g.Nodes[i].PropositionDigest || c.Digest == "" || evidenceClaimDigest(c) != c.Digest {
+			return fmt.Errorf("raw evidence claim %d is invalid", i+1)
+		}
 	}
 	return nil
 }
 
-func classify(g graph, predicate, evidenceDigest string) ([]string, []transition) {
+func validateSourceObservation(current reconstructed, value evidenceReceipt) error {
+	root := unknown
+	for _, claim := range value.Claims {
+		if claim.ClaimID == current.Graph.Nodes[0].ClaimID && claim.PropositionDigest == current.Graph.Nodes[0].PropositionDigest {
+			root = claim.ObservedPredicate
+			break
+		}
+	}
+	if strings.HasPrefix(current.RootProgram, "claim.observe:recoverable") && root == explicitContradiction {
+		return fmt.Errorf("recoverable source cannot be refuted by external predicate")
+	}
+	if strings.HasPrefix(current.RootProgram, "claim.observe:contradiction") && root != explicitContradiction {
+		return fmt.Errorf("contradiction source requires explicit contradiction evidence")
+	}
+	return nil
+}
+func validatePrior(current reconstructed, value receipt) error {
+	if value.Schema != "gooo.meta.claim-dependency-receipt/v3" || value.Scope != "CLAIM_STATE_PROPAGATION_ONLY" || value.Evidence.ObservedPredicate != unknown || value.Graph.Digest != current.Graph.Digest || len(value.Resolutions) != claimTotal || len(value.PriorClaimStates) != 0 || receiptDigest(value) != value.Digest {
+		return fmt.Errorf("prior UNKNOWN ledger invalid")
+	}
+	if err := validateChain(value.Transitions, value.TransitionHeadDigest); err != nil {
+		return err
+	}
+	for i, r := range value.Resolutions {
+		if r.State != "OPEN" || r.ClaimID != current.Graph.Nodes[i].ClaimID {
+			return fmt.Errorf("prior state %d not OPEN", i+1)
+		}
+	}
+	return nil
+}
+
+type local struct {
+	predicate predicate
+	digest    string
+	available bool
+}
+
+func classify(g graph, e evidenceReceipt) ([]string, []transition) {
 	states := make([]string, len(g.Nodes))
 	outcomes := make([]transition, len(g.Nodes))
-	for index := range g.Nodes {
-		state, event, reason := "OPEN", "DEPENDENCY_BLOCKED", "UPSTREAM_UNKNOWN_OR_NON_REFUTING"
-		if index == 0 {
-			switch predicate {
-			case contradict:
-				state, event, reason = "REFUTED", "EXPLICIT_CONTRADICTION", "OBSERVATION_PREDICATE_EXPLICITLY_CONTRADICTS"
-			case evidence:
-				state, event, reason = "DISCHARGED", "EVIDENCE_ACCEPTED", "OBSERVATION_EVIDENCE_PREDICATE_SATISFIED"
-			default:
-				state, event, reason = "OPEN", "OBSERVATION_UNKNOWN", "OBSERVATION_PREDICATE_UNKNOWN"
+	locals := make([]local, len(g.Nodes))
+	for i, c := range g.Nodes {
+		for _, ec := range e.Claims {
+			if ec.ClaimID == c.ClaimID && ec.PropositionDigest == c.PropositionDigest && ec.Status == "CURRENT_EVIDENCE" {
+				locals[i] = local{ec.ObservedPredicate, ec.Digest, true}
+				break
 			}
-		} else if predicate == evidence {
-			state, event, reason = "DISCHARGED", "DEPENDENCY_DISCHARGED", "EVIDENCE_PREDICATE_SATISFIED"
-		} else if predicate == contradict && hasExplicitRefutation(index, g, states) {
-			state, event, reason = "REFUTED", "DEPENDENCY_REFUTED", "EXPLICIT_REFUTING_EDGE"
 		}
-		states[index] = state
-		outcomes[index] = transition{ClaimID: g.Nodes[index].ClaimID, Event: event, Before: "OPEN", After: state, Coordinate: coordinate{Stage: stage(index), Step: g.Nodes[index].ActivityName, Reason: reason}, EvidenceDigest: evidenceDigest}
+		state, event, reason := "OPEN", "DEPENDENCY_BLOCKED", "UPSTREAM_UNKNOWN_OR_NON_REFUTING"
+		incoming := incomingEdges(i, g)
+		refuting := []string{}
+		for _, ed := range incoming {
+			from := indexOf(ed.FromClaimID, g)
+			if from >= 0 && states[from] == "REFUTED" && (ed.Kind == contradicts || ed.Kind == failureEntailment) {
+				refuting = append(refuting, ed.EdgeID)
+			}
+		}
+		if i == 0 && locals[i].available && locals[i].predicate == explicitContradiction {
+			state, event, reason = "REFUTED", "EXPLICIT_CONTRADICTION", "CURRENT_EVIDENCE_EXPLICIT_CONTRADICTION"
+		} else if len(refuting) > 0 {
+			state, event, reason = "REFUTED", "DEPENDENCY_REFUTED", "EXPLICIT_TYPED_REFUTING_EDGE"
+		} else if locals[i].available && locals[i].predicate == accepted {
+			all := true
+			has := false
+			for _, ed := range incoming {
+				if ed.Kind == requires {
+					has = true
+					from := indexOf(ed.FromClaimID, g)
+					if from < 0 || states[from] != "DISCHARGED" {
+						all = false
+					}
+				}
+			}
+			if !has || all {
+				state, event, reason = "DISCHARGED", map[bool]string{true: "DEPENDENCY_DISCHARGED", false: "EVIDENCE_ACCEPTED"}[i != 0], map[bool]string{true: "ALL_REQUIRES_UPSTREAM_AND_LOCAL_EVIDENCE", false: "LOCAL_CLAIM_EVIDENCE_PREDICATE"}[i != 0]
+			}
+		}
+		states[i] = state
+		outcomes[i] = transition{0, g.Nodes[i].ClaimID, event, "OPEN", state, coordinate{stage(i), g.Nodes[i].ActivityName, reason}, locals[i].digest, transitionEdges(i, g, states, state, refuting), nil, "pending", "", ""}
 	}
 	return states, outcomes
 }
-func hasExplicitRefutation(index int, g graph, states []string) bool {
-	for _, e := range g.Edges {
-		from := indexOf(e.FromClaimID, g)
-		if e.ToClaimID == g.Nodes[index].ClaimID && from >= 0 && states[from] == "REFUTED" && (e.Kind == contradicts || e.Kind == failureEntailment) {
-			return true
-		}
-	}
-	return false
-}
-func stage(index int) string {
-	if index == 0 {
+func stage(i int) string {
+	if i == 0 {
 		return "OBSERVE"
 	}
 	return "PROPAGATE"
 }
-
-func expectedTransitionsFor(g graph, outcomes []transition, provenance string, prior *receipt) ([]transition, error) {
-	result := []transition{}
-	if prior != nil {
-		result = append(result, prior.Transitions...)
-		previous := result[len(result)-1].TransitionDigest
-		for index, claim := range g.Nodes {
-			reason := "EVIDENCE_PREDICATE_SATISFIED"
-			event := "DEPENDENCY_DISCHARGED"
-			if index == 0 {
-				reason, event = "RECOVERY_EVIDENCE_PREDICATE_SATISFIED", "EVIDENCE_ACCEPTED"
-			}
-			value := transition{Sequence: len(result) + 1, ClaimID: claim.ClaimID, Event: event, Before: prior.Resolutions[index].State, After: "DISCHARGED", Coordinate: coordinate{Stage: "RECOVER", Step: claim.ActivityName, Reason: reason}, EvidenceDigest: outcomes[0].EvidenceDigest, Provenance: provenance, PreviousTransitionDigest: previous}
-			value.TransitionDigest = transitionDigest(value)
-			result = append(result, value)
-			previous = value.TransitionDigest
-		}
-		return result, nil
-	}
-	previous := ""
-	for _, claim := range g.Nodes {
-		value := transition{Sequence: len(result) + 1, ClaimID: claim.ClaimID, Event: "CLAIM_REGISTERED", Before: "UNRECORDED", After: "OPEN", Coordinate: coordinate{Stage: "DECLARE", Step: claim.ActivityName, Reason: "CLAIM_REGISTERED"}, Provenance: provenance, PreviousTransitionDigest: previous}
-		value.TransitionDigest = transitionDigest(value)
-		result = append(result, value)
-		previous = value.TransitionDigest
-	}
-	for _, outcome := range outcomes {
-		outcome.Sequence = len(result) + 1
-		outcome.PreviousTransitionDigest = previous
-		outcome.Provenance = provenance
-		outcome.TransitionDigest = transitionDigest(outcome)
-		result = append(result, outcome)
-		previous = outcome.TransitionDigest
-	}
-	return result, nil
-}
-
-func buildResolutions(g graph, states []string, outcomes []transition, sourceDigest, semanticDigest string, recovered bool) []resolution {
-	root := g.Nodes[0].ClaimID
-	rootCoordinate := outcomes[0].Coordinate
-	provenance := fmt.Sprintf("source:%s|ir:%s|producer:%s|consumer:%s", sourceDigest, semanticDigest, producerID, consumerID)
-	result := make([]resolution, len(g.Nodes))
-	for index, claim := range g.Nodes {
-		path, ids, kinds := shortestPath(index, g)
-		coord := outcomes[index].Coordinate
-		result[index] = resolution{ClaimID: claim.ClaimID, Axis: claim.Axis, State: states[index], Kind: resolutionKind(index, states[index], recovered), ObservedEvent: outcomes[index].Event, Coordinate: coord, EvidenceDigest: outcomes[index].EvidenceDigest, Provenance: provenance, FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: root, CausePath: idsForPath(path, g), CauseEdgeIDs: ids, CauseEdgeKinds: kinds, CauseTransitionDigest: outcomes[0].TransitionDigest, CauseCoordinate: &rootCoordinate}
-		if index != 0 {
-			result[index].FailureResponsibility = "UPSTREAM_CLAIM"
-		}
-		if states[index] == "OPEN" {
-			result[index].MissingEvidenceIDs = []string{"evidence:" + root}
-			result[index].BlockedByClaimIDs, result[index].BlockedByEdgeIDs = blockedFrontier(index, g, states)
+func incomingEdges(i int, g graph) []edge {
+	result := []edge{}
+	for _, e := range g.Edges {
+		if e.ToClaimID == g.Nodes[i].ClaimID {
+			result = append(result, e)
 		}
 	}
 	return result
 }
-func resolutionKind(index int, state string, recovered bool) string {
-	if index == 0 {
+func transitionEdges(i int, g graph, states []string, state string, refuting []string) []string {
+	if len(refuting) > 0 {
+		return refuting
+	}
+	if state == "DISCHARGED" {
+		result := []string{}
+		for _, e := range incomingEdges(i, g) {
+			if e.Kind == requires {
+				result = append(result, e.EdgeID)
+			}
+		}
+		return result
+	}
+	if state != "OPEN" {
+		return nil
+	}
+	result := []string{}
+	for _, e := range incomingEdges(i, g) {
+		from := indexOf(e.FromClaimID, g)
+		if from >= 0 && (states[from] == "OPEN" || states[from] == "REFUTED") && (e.Kind == supports || e.Kind == requires) {
+			result = append(result, e.EdgeID)
+		}
+	}
+	return result
+}
+func transitionsFor(g graph, outcomes []transition, provenance string, prior *receipt) []transition {
+	result := []transition{}
+	previous := ""
+	if prior != nil {
+		result = append(result, prior.Transitions...)
+		previous = prior.TransitionHeadDigest
+	}
+	if prior == nil {
+		for _, c := range g.Nodes {
+			value := transition{len(result) + 1, c.ClaimID, "CLAIM_REGISTERED", "UNRECORDED", "OPEN", coordinate{"DECLARE", c.ActivityName, "CLAIM_REGISTERED"}, "", nil, nil, provenance, previous, ""}
+			value.TransitionDigest = transitionDigest(value)
+			result = append(result, value)
+			previous = value.TransitionDigest
+		}
+	}
+	for _, value := range outcomes {
+		value.Sequence = len(result) + 1
+		value.Provenance = provenance
+		value.PreviousTransitionDigest = previous
+		value.UpstreamTransitionDigests = upstreamDigests(value.UpstreamEdgeIDs, g, result)
+		value.TransitionDigest = transitionDigest(value)
+		result = append(result, value)
+		previous = value.TransitionDigest
+	}
+	return result
+}
+func upstreamDigests(ids []string, g graph, transitions []transition) []string {
+	result := []string{}
+	for _, id := range ids {
+		for _, e := range g.Edges {
+			if e.EdgeID != id {
+				continue
+			}
+			for i := len(transitions) - 1; i >= 0; i-- {
+				if transitions[i].ClaimID == e.FromClaimID && transitions[i].Event != "CLAIM_REGISTERED" {
+					result = append(result, transitions[i].TransitionDigest)
+					break
+				}
+			}
+		}
+	}
+	return result
+}
+func buildResolutions(g graph, states []string, outcomes []transition, provenance string) []resolution {
+	result := make([]resolution, len(g.Nodes))
+	root := g.Nodes[0].ClaimID
+	for i, c := range g.Nodes {
+		path, ids, kinds := shortestPath(i, g, states[i])
+		digests := []string{}
+		for _, n := range path {
+			for _, o := range outcomes {
+				if o.ClaimID == g.Nodes[n].ClaimID {
+					digests = append(digests, o.TransitionDigest)
+				}
+			}
+		}
+		value := resolution{ClaimID: c.ClaimID, Axis: c.Axis, PropositionDigest: c.PropositionDigest, State: states[i], Kind: resolutionKind(i, states[i]), ObservedEvent: outcomes[i].Event, Coordinate: outcomes[i].Coordinate, EvidenceDigest: outcomes[i].EvidenceDigest, Provenance: provenance, FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: root, CausePath: idsForPath(path, g), CauseEdgeIDs: ids, CauseEdgeKinds: kinds, CauseTransitionDigests: digests, CauseCoordinate: &outcomes[i].Coordinate}
+		if i != 0 {
+			value.FailureResponsibility = "UPSTREAM_CLAIM"
+		}
+		if states[i] == "OPEN" {
+			value.MissingEvidenceIDs = []string{"evidence:" + c.ClaimID}
+			value.BlockedByClaimIDs, value.BlockedByEdgeIDs = blockedFrontier(i, g, states)
+		}
+		result[i] = value
+	}
+	return result
+}
+func resolutionKind(i int, state string) string {
+	if i == 0 {
 		if state == "REFUTED" {
 			return "DIRECT_REFUTED"
 		}
@@ -545,55 +734,63 @@ func resolutionKind(index int, state string, recovered bool) string {
 		return "DEPENDENCY_REFUTED"
 	}
 	if state == "DISCHARGED" {
-		if recovered {
-			return "DEPENDENCY_RECOVERED"
-		}
 		return "DEPENDENCY_DISCHARGED"
 	}
 	return "DEPENDENCY_BLOCKED"
 }
-func shortestPath(index int, g graph) ([]int, []string, []edgeKind) {
+func shortestPath(index int, g graph, state string) ([]int, []string, []edgeKind) {
 	if index == 0 {
 		return []int{0}, nil, nil
 	}
+	allowed := map[edgeKind]bool{supports: state == "OPEN", requires: state == "OPEN" || state == "DISCHARGED", contradicts: state == "REFUTED", failureEntailment: state == "REFUTED"}
 	best := []int(nil)
-	for _, e := range g.Edges {
-		if e.ToClaimID != g.Nodes[index].ClaimID {
-			continue
+	bestEdges := []edge(nil)
+	var walk func(int, []int, []edge)
+	walk = func(current int, path []int, edges []edge) {
+		if current == index {
+			if best == nil || len(path) < len(best) || (len(path) == len(best) && pathKey(path, g) < pathKey(best, g)) {
+				best = append([]int(nil), path...)
+				bestEdges = append([]edge(nil), edges...)
+			}
+			return
 		}
-		from := indexOf(e.FromClaimID, g)
-		candidate, _, _ := shortestPath(from, g)
-		candidate = append(candidate, index)
-		if best == nil || len(candidate) < len(best) || (len(candidate) == len(best) && pathKey(candidate, g) < pathKey(best, g)) {
-			best = candidate
+		for _, e := range g.Edges {
+			if e.FromClaimID != g.Nodes[current].ClaimID || !allowed[e.Kind] {
+				continue
+			}
+			next := indexOf(e.ToClaimID, g)
+			seen := false
+			for _, n := range path {
+				if n == next {
+					seen = true
+				}
+			}
+			if !seen {
+				walk(next, append(path, next), append(edges, e))
+			}
 		}
 	}
+	walk(0, []int{0}, nil)
 	if best == nil {
 		return []int{index}, nil, nil
 	}
 	ids, kinds := []string{}, []edgeKind{}
-	for position := 1; position < len(best); position++ {
-		for _, e := range g.Edges {
-			if e.FromClaimID == g.Nodes[best[position-1]].ClaimID && e.ToClaimID == g.Nodes[best[position]].ClaimID {
-				ids = append(ids, e.EdgeID)
-				kinds = append(kinds, e.Kind)
-				break
-			}
-		}
+	for _, e := range bestEdges {
+		ids, kinds = append(ids, e.EdgeID), append(kinds, e.Kind)
 	}
 	return best, ids, kinds
 }
 func pathKey(path []int, g graph) string {
-	parts := make([]string, len(path))
-	for i, value := range path {
-		parts[i] = g.Nodes[value].ClaimID
+	result := make([]string, len(path))
+	for i, n := range path {
+		result[i] = g.Nodes[n].ClaimID
 	}
-	return strings.Join(parts, "\x00")
+	return strings.Join(result, "\x00")
 }
 func idsForPath(path []int, g graph) []string {
 	result := make([]string, len(path))
-	for i, value := range path {
-		result[i] = g.Nodes[value].ClaimID
+	for i, n := range path {
+		result[i] = g.Nodes[n].ClaimID
 	}
 	return result
 }
@@ -605,23 +802,31 @@ func indexOf(id string, g graph) int {
 	}
 	return -1
 }
-func blockedFrontier(index int, g graph, states []string) ([]string, []string) {
+func blockedFrontier(i int, g graph, states []string) ([]string, []string) {
 	claims, edges := []string{}, []string{}
-	for _, e := range g.Edges {
-		if e.ToClaimID != g.Nodes[index].ClaimID {
-			continue
-		}
+	for _, e := range incomingEdges(i, g) {
 		from := indexOf(e.FromClaimID, g)
-		if from >= 0 && (states[from] == "OPEN" || (states[from] == "REFUTED" && (e.Kind == supports || e.Kind == requires))) {
-			claims = append(claims, e.FromClaimID)
-			edges = append(edges, e.EdgeID)
+		if from >= 0 && (e.Kind == supports || e.Kind == requires) && (states[from] == "OPEN" || states[from] == "REFUTED") {
+			claims, edges = append(claims, e.FromClaimID), append(edges, e.EdgeID)
 		}
 	}
 	return claims, edges
 }
 
-func deriveMetrics(g graph, states []string, resolutions []resolution, recovered bool) metrics {
-	result := metrics{FixedClaimTotal: claimTotal, FixedEdgeTotal: edgeTotal, ClassifiedClaimTotal: len(resolutions), TransitionTotal: claimTotal * 2, ClassificationBasisPoints: 10000}
+func deriveMetrics(g graph, states []string, resolutions []resolution, outcomes []transition, e evidenceReceipt, recovered bool) metrics {
+	result := metrics{FixedClaimTotal: claimTotal, DistinctPropositionTotal: distinct(g), FixedEdgeTotal: edgeTotal, EligibleEdgeTotal: len(g.Edges), ClassifiedClaimTotal: len(states), ClassificationBasisPoints: 10000, TransitionTotal: initialTransitions, CurrentEvidenceTotal: len(e.Claims), TruthTableCaseTotal: len(truthTable())}
+	if recovered {
+		result.TransitionTotal += claimTotal
+	}
+	observed, minimum := map[string]bool{}, map[string]bool{}
+	for _, ec := range e.Claims {
+		if ec.Status == "HISTORICAL_FIXTURE" {
+			result.HistoricalEvidenceTotal++
+		}
+		if ec.ObservedPredicate == unknown {
+			result.UnknownEvidenceTotal++
+		}
+	}
 	for _, state := range states {
 		switch state {
 		case "OPEN":
@@ -632,10 +837,9 @@ func deriveMetrics(g graph, states []string, resolutions []resolution, recovered
 			result.RefutedClaimTotal++
 		}
 	}
-	for _, r := range resolutions {
+	for i, r := range resolutions {
 		switch r.Kind {
 		case "DIRECT_UNKNOWN":
-			result.UnknownClaimTotal++
 			result.DirectUnknownClaimTotal++
 		case "DEPENDENCY_BLOCKED":
 			result.DependencyBlockedClaimTotal++
@@ -645,125 +849,164 @@ func deriveMetrics(g graph, states []string, resolutions []resolution, recovered
 			result.DependencyRefutedClaimTotal++
 		case "DIRECT_DISCHARGED":
 			result.DirectDischargedClaimTotal++
-		case "DEPENDENCY_DISCHARGED", "DEPENDENCY_RECOVERED":
+		case "DEPENDENCY_DISCHARGED":
 			result.DependencyDischargedTotal++
 		}
-		if len(r.CausePath) > result.MaximumCausePathDepth {
-			result.MaximumCausePathDepth = len(r.CausePath)
+		for _, id := range outcomes[i].UpstreamEdgeIDs {
+			observed[id] = true
+		}
+		for _, id := range r.CauseEdgeIDs {
+			minimum[id] = true
+		}
+		if len(r.CauseEdgeIDs) > result.MaximumCausePathDepth {
+			result.MaximumCausePathDepth = len(r.CauseEdgeIDs)
 		}
 	}
-	if recovered {
-		result.TransitionTotal += claimTotal
-		result.AppendOnlyTransitionTotal = claimTotal
-	}
+	result.ObservedCausalEdgeTotal, result.MinimumCausalEdgeTotal = len(observed), len(minimum)
 	for _, kind := range []edgeKind{supports, requires, contradicts, failureEntailment} {
-		value := edgeMetric{Kind: kind}
+		m := edgeMetric{Kind: kind}
 		for _, e := range g.Edges {
 			if e.Kind != kind {
 				continue
 			}
-			value.Total++
-			from, to := indexOf(e.FromClaimID, g), indexOf(e.ToClaimID, g)
-			if recovered && states[to] == "DISCHARGED" {
-				value.Recovery++
+			m.Eligible++
+			if observed[e.EdgeID] {
+				m.ObservedCausal++
 			}
-			if states[to] == "OPEN" && (states[from] == "OPEN" || (states[from] == "REFUTED" && (e.Kind == supports || e.Kind == requires))) {
-				value.Blocking++
-			}
-			if states[to] == "REFUTED" && states[from] == "REFUTED" && (e.Kind == contradicts || e.Kind == failureEntailment) {
-				value.Refuting++
+			for _, o := range outcomes {
+				if contains(o.UpstreamEdgeIDs, e.EdgeID) {
+					if o.After == "OPEN" {
+						m.Blocking++
+					}
+					if o.After == "REFUTED" {
+						m.Refuting++
+					}
+					if recovered && o.After == "DISCHARGED" {
+						m.Discharge++
+					}
+				}
 			}
 		}
-		result.ObservedBlockingEdgeTotal += value.Blocking
-		result.ObservedRefutingEdgeTotal += value.Refuting
-		result.ObservedRecoveryEdgeTotal += value.Recovery
-		result.EdgeMetrics = append(result.EdgeMetrics, value)
+		result.ObservedBlockingEdgeTotal += m.Blocking
+		result.ObservedRefutingEdgeTotal += m.Refuting
+		result.ObservedRecoveryEdgeTotal += m.Discharge
+		result.EdgeMetrics = append(result.EdgeMetrics, m)
 	}
 	return result
 }
-func decisionFor(predicate string, recovered bool) decision {
-	if recovered {
-		return decision{Value: "PASS", Resolution: "CAUSAL_RECOVERY_DISCHARGED", Reason: "APPEND_ONLY_EVIDENCE_RECOVERY"}
+func distinct(g graph) int {
+	seen := map[string]bool{}
+	for _, c := range g.Nodes {
+		seen[c.PropositionDigest] = true
 	}
-	if predicate == contradict {
-		return decision{Value: "FAIL_CLOSED", Resolution: "CAUSAL_REFUTATION", Reason: "EXPLICIT_CONTRADICTION_EDGE_ALGEBRA"}
-	}
-	return decision{Value: "FAIL_CLOSED", Resolution: "UNRESOLVED_CLAIM", Reason: "UNKNOWN_REMAINS_OPEN"}
+	return len(seen)
 }
-func validatePrior(current reconstructed, prior receipt) error {
-	if prior.Schema != "gooo.meta.claim-dependency-receipt/v2" || prior.Scope != "CLAIM_STATE_PROPAGATION_ONLY" || prior.Observation.Predicate != unknown || prior.Graph.Digest != current.Graph.Digest || len(prior.Resolutions) != claimTotal || receiptDigest(prior) != prior.Digest || !sameStrings(prior.PriorClaimStates, nil) && len(prior.PriorClaimStates) != 0 {
-		return fmt.Errorf("prior ledger is not a valid UNKNOWN graph receipt")
-	}
-	if err := validateChain(prior.Transitions, prior.TransitionHeadDigest); err != nil {
-		return err
-	}
-	for i, r := range prior.Resolutions {
-		if r.State != "OPEN" || r.ClaimID != current.Graph.Nodes[i].ClaimID {
-			return fmt.Errorf("prior claim state %d is not OPEN", i+1)
+func contains(values []string, target string) bool {
+	for _, v := range values {
+		if v == target {
+			return true
 		}
 	}
-	return nil
+	return false
 }
-func validateChain(transitions []transition, head string) error {
-	if len(transitions) == 0 || transitions[len(transitions)-1].TransitionDigest != head {
-		return fmt.Errorf("transition head mismatch")
+func decisionFor(states []string, e evidenceReceipt, recovered bool) decision {
+	if e.Capability.Status != "CURRENT_EVIDENCE" || e.Snapshot.RepositoryWrites != 0 || e.Snapshot.BeforeDigest != e.Snapshot.AfterDigest {
+		return decision{"FAIL_CLOSED", "AUTHORITY_UNKNOWN", "AUTHORITY/WORKFLOW_PERMISSIONS/INDEPENDENT_CAPABILITY_REQUIRED", false}
 	}
-	previous := ""
-	for i, value := range transitions {
-		if value.Sequence != i+1 || value.PreviousTransitionDigest != previous || transitionDigest(value) != value.TransitionDigest {
-			return fmt.Errorf("transition %d chain mismatch", i+1)
+	if all(states, "DISCHARGED") {
+		if recovered {
+			return decision{"PASS", "CAUSAL_RECOVERY_DISCHARGED", "APPEND_ONLY_EVIDENCE_RECOVERY", false}
 		}
-		previous = value.TransitionDigest
+		return decision{"PASS", "DIRECT_EVIDENCE_DISCHARGED", "CURRENT_EVIDENCE_PREDICATES_SATISFIED", false}
 	}
-	return nil
+	if any(states, "REFUTED") {
+		if count(states, "REFUTED") == 1 {
+			return decision{"FAIL_CLOSED", "DIRECT_REFUTATION", "ONLY_DIRECT_EXPLICIT_CONTRADICTION", false}
+		}
+		return decision{"FAIL_CLOSED", "CAUSAL_REFUTATION", "EXPLICIT_CONTRADICTION_OR_FAILURE_ENTAILMENT", false}
+	}
+	return decision{"FAIL_CLOSED", "UNRESOLVED_CLAIM", "UNKNOWN_REMAINS_OPEN", false}
 }
-func statesOf(values []resolution) []string {
-	result := make([]string, len(values))
-	for i, value := range values {
-		result[i] = value.State
-	}
-	return result
-}
-func sameStrings(left, right []string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for i := range left {
-		if left[i] != right[i] {
+func all(values []string, target string) bool {
+	for _, v := range values {
+		if v != target {
 			return false
 		}
 	}
 	return true
 }
-func boolInt(value bool) int {
-	if value {
+func any(values []string, target string) bool {
+	for _, v := range values {
+		if v == target {
+			return true
+		}
+	}
+	return false
+}
+func count(values []string, target string) int {
+	total := 0
+	for _, value := range values {
+		if value == target {
+			total++
+		}
+	}
+	return total
+}
+func statesOf(values []resolution) []string {
+	result := make([]string, len(values))
+	for i, v := range values {
+		result[i] = v.State
+	}
+	return result
+}
+func validateChain(values []transition, head string) error {
+	if len(values) == 0 || values[len(values)-1].TransitionDigest != head {
+		return fmt.Errorf("transition head mismatch")
+	}
+	previous := ""
+	for i, v := range values {
+		if v.Sequence != i+1 || v.PreviousTransitionDigest != previous || transitionDigest(v) != v.TransitionDigest {
+			return fmt.Errorf("transition %d chain mismatch", i+1)
+		}
+		previous = v.TransitionDigest
+	}
+	return nil
+}
+func sameStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+func boolInt(v bool) int {
+	if v {
 		return 1
 	}
 	return 0
 }
-
-func digestJSON(value any) string {
-	data, _ := json.Marshal(value)
+func digestJSON(v any) string {
+	data, _ := json.Marshal(v)
 	sum := sha256.Sum256(data)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
-func receiptDigest(value receipt) string {
-	value.Digest = ""
-	return digestJSON(value)
-}
-func observationDigest(value observation) string {
-	value.Digest = ""
-	return digestJSON(value)
-}
-func digestBytes(value []byte) string {
-	sum := sha256.Sum256(value)
+func digestBytes(v []byte) string {
+	sum := sha256.Sum256(v)
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
-func graphDigest(value graph) string           { value.Digest = ""; return digestJSON(value) }
-func transitionDigest(value transition) string { value.TransitionDigest = ""; return digestJSON(value) }
-func prefixedDigest(value string) string {
-	if strings.HasPrefix(value, "sha256:") {
-		return value
+func prefixedDigest(v string) string {
+	if strings.HasPrefix(v, "sha256:") {
+		return v
 	}
-	return "sha256:" + value
+	return "sha256:" + v
 }
+func graphDigest(v graph) string                 { v.Digest = ""; return digestJSON(v) }
+func receiptDigest(v receipt) string             { v.Digest = ""; return digestJSON(v) }
+func evidenceDigest(v evidenceReceipt) string    { v.Digest = ""; return digestJSON(v) }
+func evidenceClaimDigest(v evidenceClaim) string { v.Digest = ""; return digestJSON(v) }
+func capabilityDigest(v capability) string       { v.Digest = ""; return digestJSON(v) }
+func transitionDigest(v transition) string       { v.TransitionDigest = ""; return digestJSON(v) }
