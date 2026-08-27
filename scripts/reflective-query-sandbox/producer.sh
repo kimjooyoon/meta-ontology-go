@@ -27,7 +27,14 @@ if ! cmp -s "$output/observation.json" "$output/replay.json"; then
 	exit 1
 fi
 after=$(git status --porcelain=v1 --untracked-files=all)
-test "$(cat "$before_status")" = "$after"
+if [ "$(cat "$before_status")" != "$after" ]; then
+	echo 'repository write-set changed during producer run:' >&2
+	echo 'before:' >&2
+	cat "$before_status" >&2
+	echo 'after:' >&2
+	echo "$after" >&2
+	exit 1
+fi
 
 jq -e --arg sha "$HEAD_SHA" '
   .schema == "gooo/reflective-query-sandbox-observation/v2" and
