@@ -77,6 +77,17 @@ func (report inputReport) transitionHead() string {
 	return report.OperationClaimTransitionHeadDigest
 }
 
+func bindingEvidence(sourceDigest, semanticIRDigest string) []string {
+	missing := make([]string, 0, 3)
+	if sourceDigest == "" {
+		missing = append(missing, "source_digest")
+	}
+	if semanticIRDigest == "" {
+		missing = append(missing, "semantic_ir_digest")
+	}
+	return append(missing, "source_ir_binding_digest")
+}
+
 func isRegisteredEvent(event string) bool {
 	return event == "CLAIM_REGISTERED" || event == "REGISTERED"
 }

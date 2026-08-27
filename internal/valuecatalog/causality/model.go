@@ -23,9 +23,11 @@ type Coordinate struct {
 
 type inputReport struct {
 	Schema                             string            `json:"schema"`
-	OperationClaimTransitions          []inputTransition `json:"operation_claim_transitions"`
+	SourceDigest                       string            `json:"source_digest"`
+	CoreIRFingerprint                  string            `json:"core_ir_fingerprint"`
+	OperationClaimTransitions          []inputTransition `json:"claim_transitions"`
 	OperationClaimTransitionHead       string            `json:"operation_claim_transition_head"`
-	OperationClaimTransitionHeadDigest string            `json:"operation_claim_transition_head_digest"`
+	OperationClaimTransitionHeadDigest string            `json:"claim_transition_head_digest"`
 }
 
 type inputTransition struct {
@@ -46,6 +48,8 @@ type Subject struct {
 	InputReportDigest      string   `json:"input_report_digest"`
 	TransitionHeadDigest   string   `json:"transition_head_digest"`
 	GraphDigest            string   `json:"graph_digest"`
+	SourceDigest           string   `json:"source_digest"`
+	SemanticIRDigest       string   `json:"semantic_ir_digest"`
 	BindingStatus          string   `json:"binding_status"`
 	MissingBindingEvidence []string `json:"missing_binding_evidence"`
 }

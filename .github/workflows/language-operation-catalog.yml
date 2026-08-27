@@ -165,6 +165,10 @@ jobs:
             .metrics.discharged_claim_total == 9 and
             .metrics.direct_missing_claim_total == 0 and
             .metrics.dependency_blocked_claim_total == 0 and
+            .subject.binding_status == "PARTIAL_UNKNOWN" and
+            .subject.source_digest != "" and
+            .subject.semantic_ir_digest != "" and
+            (.subject.missing_binding_evidence | length) == 1 and
             .decision.value == "PASS" and
             .decision.semantic_promotion_authorized == false
           ' "${RUNNER_TEMP}/claim-causality-success-a.json"
@@ -180,6 +184,10 @@ jobs:
             .metrics.dependency_blocked_claim_total == 8 and
             .metrics.observed_blocking_edge_total == 11 and
             .metrics.maximum_cause_path_depth == 4 and
+            .subject.binding_status == "PARTIAL_UNKNOWN" and
+            .subject.source_digest != "" and
+            .subject.semantic_ir_digest == "" and
+            (.subject.missing_binding_evidence | length) == 2 and
             .decision.value == "FAIL_CLOSED" and
             .decision.semantic_promotion_authorized == false
           ' "${RUNNER_TEMP}/claim-causality-unknown-a.json"
@@ -192,7 +200,7 @@ jobs:
             echo "- success: discharged 9 / direct missing 0 / dependency blocked 0"
             echo "- UNKNOWN: discharged 0 / direct missing 1 / dependency blocked 8"
             echo "- UNKNOWN blocking edges: 11 / maximum cause depth: 4"
-            echo "- source-to-IR binding: UNKNOWN"
+            echo "- source-to-IR binding: PARTIAL_UNKNOWN (success missing 1, UNKNOWN missing 2)"
             echo "- semantic promotion authority: 0"
             echo "- deterministic receipts: success 2/2, UNKNOWN 2/2"
           } >> "${GITHUB_STEP_SUMMARY}"

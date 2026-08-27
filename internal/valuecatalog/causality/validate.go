@@ -32,7 +32,7 @@ func Validate(receipt Receipt) error {
 	if receipt.Subject.InputReportDigest == "" || receipt.Subject.TransitionHeadDigest == "" {
 		return fmt.Errorf("subject digest missing")
 	}
-	if receipt.Subject.BindingStatus != "UNKNOWN" || len(receipt.Subject.MissingBindingEvidence) != 3 {
+	if receipt.Subject.BindingStatus != "PARTIAL_UNKNOWN" || !reflect.DeepEqual(receipt.Subject.MissingBindingEvidence, bindingEvidence(receipt.Subject.SourceDigest, receipt.Subject.SemanticIRDigest)) {
 		return fmt.Errorf("source/IR binding boundary mismatch")
 	}
 	expectedMetrics := deriveMetrics(receipt.Graph, receipt.Resolutions)

@@ -8,9 +8,16 @@ import (
 
 func fixtureReport(t *testing.T, mode string) []byte {
 	t.Helper()
-	report := inputReport{Schema: InputReportSchema}
+	report := inputReport{
+		Schema:            InputReportSchema,
+		SourceDigest:      fmt.Sprintf("sha256:%064x", 1),
+		CoreIRFingerprint: fmt.Sprintf("%064x", 2),
+	}
+	if mode == ModeUnknown {
+		report.CoreIRFingerprint = ""
+	}
 	for index, axis := range claimAxes {
-		claimID := "gooo.claim.operation-spec." + axis
+		claimID := "gooo.claim.operation-spec." + axis + ".v1"
 		report.OperationClaimTransitions = append(report.OperationClaimTransitions, inputTransition{
 			Sequence:          index + 1,
 			ClaimID:           claimID,
@@ -33,7 +40,7 @@ func fixtureReport(t *testing.T, mode string) []byte {
 		}
 		report.OperationClaimTransitions = append(report.OperationClaimTransitions, inputTransition{
 			Sequence:                 index + ClaimTotal + 1,
-			ClaimID:                  "gooo.claim.operation-spec." + axis,
+			ClaimID:                  "gooo.claim.operation-spec." + axis + ".v1",
 			DeclarationDigest:        fmt.Sprintf("%064x", index+1),
 			Event:                    event,
 			Before:                   "OPEN",

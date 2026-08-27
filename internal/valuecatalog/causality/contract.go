@@ -55,7 +55,7 @@ func buildGraph(claimIDs []string) (GraphContract, error) {
 		Edges:                      make([]GraphEdge, 0, EdgeTotal),
 	}
 	for index, claimID := range claimIDs {
-		if claimID == "" || !strings.HasSuffix(claimID, claimAxes[index]) {
+		if claimID == "" || !strings.HasSuffix(claimID, claimAxes[index]+".v1") {
 			return GraphContract{}, fmt.Errorf("claim %d does not bind axis %q: %q", index+1, claimAxes[index], claimID)
 		}
 		graph.Nodes = append(graph.Nodes, GraphNode{
