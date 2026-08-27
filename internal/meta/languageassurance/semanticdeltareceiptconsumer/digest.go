@@ -1,4 +1,4 @@
-package semanticdeltareceipt
+package semanticdeltareceiptconsumer
 
 import (
 	"crypto/sha256"
@@ -9,7 +9,7 @@ import (
 func digestValue(value any) string {
 	raw, err := json.Marshal(value)
 	if err != nil {
-		panic(err)
+		return ""
 	}
 	sum := sha256.Sum256(raw)
 	return "sha256:" + hex.EncodeToString(sum[:])
@@ -20,8 +20,9 @@ func digestBytes(value []byte) string {
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
-func sealReceipt(receipt *Receipt) {
-	copy := *receipt
+func receiptDigestValid(receipt Receipt) bool {
+	digest := receipt.ReceiptDigest
+	copy := receipt
 	copy.ReceiptDigest = ""
-	receipt.ReceiptDigest = digestValue(copy)
+	return digest != "" && digest == digestValue(copy)
 }

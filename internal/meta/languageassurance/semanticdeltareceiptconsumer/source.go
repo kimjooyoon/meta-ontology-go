@@ -1,4 +1,4 @@
-package semanticdeltareceipt
+package semanticdeltareceiptconsumer
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -20,11 +19,15 @@ type projectedSource struct {
 func projectSource(filename string, raw []byte) (projectedSource, error) {
 	file, diagnostics := syntax.ParseFile(filename, string(raw))
 	if diagnostics.Error() != nil || file == nil {
-		return projectedSource{}, fmt.Errorf("canonical syntax rejected source: %v", diagnostics.Error())
+		return projectedSource{}, fmt.Errorf("consumer syntax rejection: %v", diagnostics.Error())
 	}
-	ir, err := bidir.Lower(file)
+	document, err := bidir.DocumentFromSyntax(file)
 	if err != nil {
-		return projectedSource{}, fmt.Errorf("canonical lowering rejected source: %w", err)
+		return projectedSource{}, fmt.Errorf("consumer syntax adaptation: %w", err)
+	}
+	ir, err := bidir.LowerDocument(document)
+	if err != nil {
+		return projectedSource{}, fmt.Errorf("consumer lowering rejection: %w", err)
 	}
 	result := projectedSource{semanticDigest: "sha256:" + ir.StableHash()}
 	for _, node := range ir.Graph.Nodes() {
@@ -38,22 +41,6 @@ func projectSource(filename string, raw []byte) (projectedSource, error) {
 	sort.Slice(result.facts, func(i, j int) bool { return factLess(result.facts[i], result.facts[j]) })
 	sort.Slice(result.claims, func(i, j int) bool { return result.claims[i].ID < result.claims[j].ID })
 	return result, nil
-}
-
-func claimsFromFacts(facts []Fact) []Claim {
-	counts := map[string]int{}
-	claims := make([]Claim, 0, len(facts))
-	for _, fact := range facts {
-		subject, predicate, object := fact.Subject, "uses", fact.Object
-		if fact.Predicate == semantic.WasGeneratedBy.String() {
-			subject, predicate, object = fact.Object, "generates", fact.Subject
-		}
-		key := subject + "\x00" + predicate
-		index := counts[key]
-		counts[key]++
-		claims = append(claims, Claim{ID: fmt.Sprintf("%s/claim/%s/%d", subject, predicate, index), Subject: subject, Predicate: predicate, Object: object, Status: StatusOpen, Stage: "semantic-extraction", Step: "bind-canonical-fact", Reason: "CANONICAL_LOWERING_BOUND"})
-	}
-	return claims
 }
 
 func factLess(left, right Fact) bool {

@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	receipt "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"
+	producer "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"
 )
 
 func run(args []string, stdout, stderr io.Writer) int {
@@ -16,32 +16,26 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 	if options.caseID == "suite" {
-		return writeJSON(options.output, receipt.RunSuite(options.subjectSHA), stdout, stderr)
+		return writeJSON(options.output, runSuite(options.subjectSHA), stdout, stderr)
 	}
 	input, err := inputFor(options)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	return writeJSON(options.output, receipt.Evaluate(input), stdout, stderr)
+	return writeJSON(options.output, evaluate(input), stdout, stderr)
 }
 
-func inputFor(options options) (receipt.Input, error) {
+func inputFor(options options) (producer.Input, error) {
 	if options.caseID != "" {
-		if options.caseID != "equivalent" && options.caseID != "semantic-change" && options.caseID != "indeterminate" {
-			return receipt.Input{}, fmt.Errorf("unknown fixed case %q", options.caseID)
+		for _, definition := range producer.Denominator() {
+			if definition.ID == options.caseID {
+				return producer.Input{CaseID: definition.ID, SubjectSHA: options.subjectSHA, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath}, nil
+			}
 		}
-		return receipt.CaseInput(options.caseID, options.subjectSHA), nil
+		return producer.Input{}, fmt.Errorf("unknown fixed case %q", options.caseID)
 	}
-	before, err := os.ReadFile(options.before)
-	if err != nil {
-		return receipt.Input{}, fmt.Errorf("read before source: %w", err)
-	}
-	after, err := os.ReadFile(options.after)
-	if err != nil {
-		return receipt.Input{}, fmt.Errorf("read after source: %w", err)
-	}
-	return receipt.Input{CaseID: "file-pair", SubjectSHA: options.subjectSHA, Before: before, After: after}, nil
+	return producer.Input{CaseID: "file-pair", SubjectSHA: options.subjectSHA, BeforePath: options.before, AfterPath: options.after}, nil
 }
 
 func writeJSON(path string, value any, stdout, stderr io.Writer) int {

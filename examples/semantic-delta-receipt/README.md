@@ -16,10 +16,15 @@ claim; the third contains a source construct outside this experiment's grammar
 and must remain `FAIL_CLOSED / UNKNOWN`.
 
 The producer records the three layers. The consumer is an independent
-adjudicator: it reparses both raw sources and recomputes the expected layers
+adjudicator in a separate package: it rereads both raw sources and recomputes the expected layers
 before accepting the receipt. It rejects a tampered receipt and performs zero
 repository writes. The meta-operation is
 `separate-text-structural-semantic-deltas`.
+
+The raw decision and semantic decision are separate receipt fields. Claim
+transitions persist `OPEN`, `DISCHARGED`, or `REFUTED`; an unknown subject is
+reported at `LOWER_RESOLUTION` with the exact stage `bind-subject`, step
+`resolve-subject`, and reason `SEMANTIC_DELTA_SUBJECT_UNKNOWN`.
 
 ## Research decisions
 

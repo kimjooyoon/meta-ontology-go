@@ -178,6 +178,34 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-delta-receipt",
+      "kind": "SOURCE",
+      "path": "examples/semantic-delta-receipt/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-delta-before",
+      "kind": "SOURCE",
+      "path": "examples/semantic-delta-receipt/before.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-delta-equivalent-after",
+      "kind": "SOURCE",
+      "path": "examples/semantic-delta-receipt/equivalent-after.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-delta-semantic-after",
+      "kind": "SOURCE",
+      "path": "examples/semantic-delta-receipt/semantic-after.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",

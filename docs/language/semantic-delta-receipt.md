@@ -9,9 +9,9 @@ different objects:
    claim transitions.
 
 It is a Gooo meta-operation, not a second line-oriented diff. The operation is
-`separate-text-structural-semantic-deltas`. `Produce` is the producer;
-`Adjudicate` is the consumer and independent judge. Neither path writes the
-repository.
+`separate-text-structural-semantic-deltas`. `semanticdeltareceipt.ProduceFiles`
+is the producer; `semanticdeltareceiptconsumer.AdjudicateFiles` is a separate
+consumer and independent judge. Neither path writes the repository.
 
 ## Research and adopted principles
 
@@ -39,6 +39,12 @@ The experiment adopts these rules:
 | Meaning is anchored to stable identities | nodes and claims use immutable IDs, not display order |
 | Approximation is not exact proof | unsupported syntax becomes `INDETERMINATE / FAIL_CLOSED` |
 | Evidence is read-only | `repository_writes` is fixed at `0`, and no activation is performed |
+
+The raw decision is recorded independently as `RAW_CHANGED` or
+`RAW_FIXED_POINT`; the semantic decision is separately recorded as
+`SEMANTIC_PRESERVED`, `SEMANTIC_CHANGED`, or `SEMANTIC_UNKNOWN`. An unknown
+subject is `LOWER_RESOLUTION` at stage `bind-subject`, step
+`resolve-subject`, with reason `SEMANTIC_DELTA_SUBJECT_UNKNOWN`.
 
 The experiment rejects line-count equality as a semantic proof, raw text equality
 as equivalence, and a semantic-diff approximation promoted to `EXACT`. It also
@@ -87,9 +93,12 @@ Every indicator carries its `producer`, `consumer`, `meta_operation`, `stage`,
 - `REGRESSION` checks the no-write boundary.
 
 A transition records the claim ID, status before and after, object before and
-after, stage, step, and reason. Thus the semantic-change case can say exactly
-which claim moved from the payment output to the reversal output even though
-the textual edit is small.
+after, stage, step, and reason. Persistent statuses are `OPEN`, `DISCHARGED`,
+and `REFUTED`: presentation preservation discharges bounded equivalence,
+semantic change refutes it and records the changed claim, and indeterminate
+input leaves it open. Thus the semantic-change case can say exactly which
+claim moved from the payment output to the reversal output even though the
+textual edit is small.
 
 ## Falsifiability
 

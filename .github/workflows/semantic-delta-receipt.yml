@@ -9,6 +9,15 @@ on:
       - 'examples/semantic-delta-receipt/**'
       - 'internal/detection/semanticdelta/**'
       - 'internal/meta/languageassurance/semanticdeltareceipt/**'
+      - 'internal/meta/languageassurance/semanticdeltareceiptconsumer/**'
+      - 'internal/meta/languagereadiness/languagesemantic/**'
+      - 'internal/meta/languagereadiness/languagesyntax/**'
+      - 'internal/meta/languagereadiness/languagesemanticbinding/**'
+      - 'internal/meta/languagereadiness/toolchainconformance/**'
+      - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
+      - 'examples/language-syntax-roundtrip/corpus.json'
+      - 'examples/language-semantic-model/corpus.json'
+      - 'examples/toolchain-conformance/corpus.json'
       - 'internal/verify/scope_semantic_delta_receipt.go'
       - 'docs/language/semantic-delta-receipt.md'
       - 'go.mod'
@@ -21,6 +30,15 @@ on:
       - 'examples/semantic-delta-receipt/**'
       - 'internal/detection/semanticdelta/**'
       - 'internal/meta/languageassurance/semanticdeltareceipt/**'
+      - 'internal/meta/languageassurance/semanticdeltareceiptconsumer/**'
+      - 'internal/meta/languagereadiness/languagesemantic/**'
+      - 'internal/meta/languagereadiness/languagesyntax/**'
+      - 'internal/meta/languagereadiness/languagesemanticbinding/**'
+      - 'internal/meta/languagereadiness/toolchainconformance/**'
+      - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
+      - 'examples/language-syntax-roundtrip/corpus.json'
+      - 'examples/language-semantic-model/corpus.json'
+      - 'examples/toolchain-conformance/corpus.json'
       - 'internal/verify/scope_semantic_delta_receipt.go'
       - 'docs/language/semantic-delta-receipt.md'
       - 'go.mod'
@@ -60,8 +78,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./cmd/semantic-delta-receipt-witness
-          go test ./internal/meta/languageassurance/semanticdeltareceipt ./cmd/semantic-delta-receipt-witness
+          go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
+          test -z "$(rg -n 'internal/meta/languageassurance/semanticdeltareceipt\"' internal/meta/languageassurance/semanticdeltareceiptconsumer --glob '*.go' || true)"
+          go test ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
           out="$RUNNER_TEMP/semantic-delta-receipt"
           mkdir -p "$out"
           for pass in first second; do
@@ -81,7 +100,7 @@ jobs:
             .summary.semantic_changed == 1 and .summary.indeterminate == 1 and
             .summary.repository_writes == 0 and
             ([.cases[] | select(.passed == true)] | length) == 3 and
-            ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceipt.Adjudicate")] | length) == 3 and
+            ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length) == 3 and
             ([.cases[0].report.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and
             ([.cases[0].report.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and
             ([.cases[0].report.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1
@@ -103,9 +122,13 @@ jobs:
           go run ./cmd/semantic-delta-receipt-witness \
             --before "$root/before.gooo" --after "$root/indeterminate-after.gooo" \
             --subject-sha "$HEAD_SHA" --output "$out/indeterminate.json"
-          jq -e '.receipt.classification == "SEMANTIC_PRESERVED" and .receipt.textual_delta.changed == true and (.receipt.structural_delta.added_nodes | length) == 0 and .independent_verdict.passed == true' "$out/equivalent.json"
-          jq -e '.receipt.classification == "SEMANTIC_CHANGED" and (.receipt.semantic_claim_delta.changed | length) == 1 and .independent_verdict.passed == true' "$out/semantic-change.json"
-          jq -e '.receipt.classification == "INDETERMINATE" and .receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "UNKNOWN" and .independent_verdict.passed == true and .repository_writes == 0' "$out/indeterminate.json"
+          jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_PRESERVED" and .receipt.before.semantic_digest == .receipt.after.semantic_digest and .receipt.claim_transitions[0].to_status == "DISCHARGED" and .receipt.classification == "SEMANTIC_PRESERVED" and .receipt.textual_delta.changed == true and (.receipt.structural_delta.added_nodes | length) == 0 and .independent_verdict.passed == true' "$out/equivalent.json"
+          jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .receipt.before.semantic_digest != .receipt.after.semantic_digest and .receipt.classification == "SEMANTIC_CHANGED" and (.receipt.semantic_claim_delta.changed | length) == 1 and ([.receipt.claim_transitions[] | select(.to_status == "REFUTED")] | length) == 2 and .independent_verdict.passed == true' "$out/semantic-change.json"
+          jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.classification == "INDETERMINATE" and .receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "UNKNOWN" and .independent_verdict.passed == true and .repository_writes == 0' "$out/indeterminate.json"
+          go run ./cmd/semantic-delta-receipt-witness \
+            --before "$root/before.gooo" --after "$root/equivalent-after.gooo" \
+            --subject-sha UNKNOWN --output "$out/unknown-subject.json"
+          jq -e '.receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "bind-subject" and .receipt.step == "resolve-subject" and .receipt.reason == "SEMANTIC_DELTA_SUBJECT_UNKNOWN" and .independent_verdict.passed == true' "$out/unknown-subject.json"
           sha256sum "$out"/*.json > "$out/manifest.sha256"
 
       - name: Check executable Gooo contract sources

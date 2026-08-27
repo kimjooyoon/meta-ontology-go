@@ -227,6 +227,47 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-delta-receipt",
+      "path": "examples/semantic-delta-receipt/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-delta-before",
+      "path": "examples/semantic-delta-receipt/before.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-delta-equivalent-after",
+      "path": "examples/semantic-delta-receipt/equivalent-after.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-delta-semantic-after",
+      "path": "examples/semantic-delta-receipt/semantic-after.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-delta-indeterminate-fixture",
+      "path": "examples/semantic-delta-receipt/indeterminate-after.gooo",
+      "kind": "INVALID",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_diagnostic": "parse.unexpected-token",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "reject-invalid-syntax"
     }
   ],
   "package_units": [

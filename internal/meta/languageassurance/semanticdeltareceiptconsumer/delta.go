@@ -1,4 +1,4 @@
-package semanticdeltareceipt
+package semanticdeltareceiptconsumer
 
 import (
 	"bytes"
@@ -6,46 +6,45 @@ import (
 )
 
 func textualDelta(before, after []byte) TextualDelta {
-	changedBytes := 0
+	changed := !bytes.Equal(before, after)
+	decision := rawFixedPoint
+	if changed {
+		decision = rawChanged
+	}
+	changedBytes := len(after) - len(before)
+	if changedBytes < 0 {
+		changedBytes = -changedBytes
+	}
 	for index := 0; index < len(before) && index < len(after); index++ {
 		if before[index] != after[index] {
 			changedBytes++
 		}
 	}
-	if len(before) > len(after) {
-		changedBytes += len(before) - len(after)
-	} else {
-		changedBytes += len(after) - len(before)
-	}
-	decision := RawFixedPoint
-	if !bytes.Equal(before, after) {
-		decision = RawChanged
-	}
-	return TextualDelta{Changed: decision == RawChanged, Decision: decision, BeforeBytes: len(before), AfterBytes: len(after), ChangedBytes: changedBytes, BeforeDigest: digestBytes(before), AfterDigest: digestBytes(after)}
+	return TextualDelta{Changed: changed, Decision: decision, BeforeBytes: len(before), AfterBytes: len(after), ChangedBytes: changedBytes, BeforeDigest: digestBytes(before), AfterDigest: digestBytes(after)}
 }
 
 func structuralDelta(before, after projectedSource) StructuralDelta {
-	leftNodes, rightNodes := nodeMap(before.nodes), nodeMap(after.nodes)
-	leftFacts, rightFacts := factMap(before.facts), factMap(after.facts)
 	result := StructuralDelta{Status: "KNOWN"}
-	for key, node := range rightNodes {
+	leftNodes, rightNodes := keyedNodes(before.nodes), keyedNodes(after.nodes)
+	leftFacts, rightFacts := keyedFacts(before.facts), keyedFacts(after.facts)
+	for key, value := range rightNodes {
 		if _, ok := leftNodes[key]; !ok {
-			result.AddedNodes = append(result.AddedNodes, node)
+			result.AddedNodes = append(result.AddedNodes, value)
 		}
 	}
-	for key, node := range leftNodes {
+	for key, value := range leftNodes {
 		if _, ok := rightNodes[key]; !ok {
-			result.RemovedNodes = append(result.RemovedNodes, node)
+			result.RemovedNodes = append(result.RemovedNodes, value)
 		}
 	}
-	for key, fact := range rightFacts {
+	for key, value := range rightFacts {
 		if _, ok := leftFacts[key]; !ok {
-			result.AddedFacts = append(result.AddedFacts, fact)
+			result.AddedFacts = append(result.AddedFacts, value)
 		}
 	}
-	for key, fact := range leftFacts {
+	for key, value := range leftFacts {
 		if _, ok := rightFacts[key]; !ok {
-			result.RemovedFacts = append(result.RemovedFacts, fact)
+			result.RemovedFacts = append(result.RemovedFacts, value)
 		}
 	}
 	sort.Slice(result.AddedNodes, func(i, j int) bool { return result.AddedNodes[i].ID < result.AddedNodes[j].ID })
@@ -55,7 +54,7 @@ func structuralDelta(before, after projectedSource) StructuralDelta {
 	return result
 }
 
-func nodeMap(values []Node) map[string]Node {
+func keyedNodes(values []Node) map[string]Node {
 	result := make(map[string]Node, len(values))
 	for _, value := range values {
 		result[value.ID+"\x00"+value.Kind] = value
@@ -63,7 +62,7 @@ func nodeMap(values []Node) map[string]Node {
 	return result
 }
 
-func factMap(values []Fact) map[string]Fact {
+func keyedFacts(values []Fact) map[string]Fact {
 	result := make(map[string]Fact, len(values))
 	for _, value := range values {
 		result[value.Subject+"\x00"+value.Predicate+"\x00"+value.Object] = value

@@ -1,6 +1,7 @@
-package semanticdeltareceipt
+package semanticdeltareceiptconsumer
 
-// Input names checked-in sources; the producer owns reading them.
+// Input is intentionally copied from the producer wire boundary. The
+// consumer reads the source paths independently before adjudicating.
 type Input struct {
 	CaseID     string `json:"case_id"`
 	SubjectSHA string `json:"subject_sha"`
