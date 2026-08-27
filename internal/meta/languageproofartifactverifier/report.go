@@ -54,6 +54,7 @@ type Summary struct {
 	ProducerDependencies      int `json:"producer_dependencies"`
 	ProducerImportNumerator   int `json:"producer_import_numerator"`
 	ProducerImportDenominator int `json:"producer_import_denominator"`
+	CoreParserDependencies    int `json:"core_parser_dependencies"`
 	GeneratedAuthority        int `json:"generated_authority"`
 	SemanticClaims            int `json:"semantic_claims"`
 	RepositoryWrites          int `json:"repository_writes"`

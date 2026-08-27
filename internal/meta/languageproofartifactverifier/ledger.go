@@ -1,5 +1,7 @@
 package languageproofartifactverifier
 
+import "reflect"
+
 const LedgerSchema = "gooo/proof-evidence-ledger/v1"
 
 func validatePriorLedger(ledger ClaimLedger, evidence []Evidence) error {
@@ -42,7 +44,7 @@ func validateFinalLedger(ledger, prior ClaimLedger) error {
 		return err
 	}
 	for index := range prior.Entries {
-		if ledger.Entries[index] != prior.Entries[index] {
+		if !reflect.DeepEqual(ledger.Entries[index], prior.Entries[index]) {
 			return errLedger("final ledger discarded prior entries")
 		}
 	}
