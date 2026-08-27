@@ -203,7 +203,7 @@ func observePredicate(id string, model semanticSourceModel, ledger Ledger, prese
 }
 
 func executeCounterexample(input Input, model semanticSourceModel, baseline projectionRun, counterexample Counterexample) (CounterexampleResult, error) {
-	recipe := recipeFor(input.Ledger.Records, counterexample.TargetCoordinate)
+	recipe := claimRecipeFor(input.Ledger.Records, counterexample.TargetCoordinate)
 	mutated := mutateRecipeLedger(input.Ledger, counterexample)
 	mutatedBytes := canonicalJSON(mutated)
 	ledgerPath, _, err := writeArtifact(input.ArtifactRoot, "counterexamples/"+safeArtifactName(counterexample.ID)+"-ledger.json", json.RawMessage(mutatedBytes))

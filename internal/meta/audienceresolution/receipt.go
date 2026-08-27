@@ -5,7 +5,7 @@ func claimTransitions(model semanticSourceModel, recipes []EvidenceRecord, state
 	previous := digestBytes([]byte("gooo://audience-resolution/claim-event/genesis"))
 	for _, audience := range model.Audiences {
 		for _, coordinate := range sourceCoordinates(model) {
-			recipe := recipeFor(recipes, coordinate)
+			recipe := claimRecipeFor(recipes, coordinate)
 			record, visible := state.records[coordinate]
 			isVisible := visible && contains(audience.Coordinates, coordinate)
 			evidenceStatus := EvidenceUnknown
@@ -55,6 +55,19 @@ func claimTransitions(model semanticSourceModel, recipes []EvidenceRecord, state
 		}
 	}
 	return result
+}
+
+func claimRecipeFor(recipes []EvidenceRecord, coordinate string) EvidenceRecord {
+	recipe := recipeFor(recipes, coordinate)
+	if recipe.ID != "" {
+		return recipe
+	}
+	proposition := "semantic policy coordinate " + coordinate
+	return EvidenceRecord{ID: coordinate, Coordinate: coordinate, ClaimID: "claim/" + coordinate, Proposition: proposition,
+		PropositionDigest: digestBytes([]byte(proposition)), TargetAddress: "gooo://audience-resolution/claim/" + coordinate,
+		Provider: "audience-resolution.policy", Producer: "audience-resolution.policy", Consumer: "audience-resolution.policy",
+		MetaOperation: "project-audience-claim", ProofChoice: "COHERENCE", Stage: "projection", Step: "policy",
+		Reason: "formal source policy coordinate has no raw recipe", PriorClaim: "OPEN"}
 }
 
 func audienceClaimID(recipe EvidenceRecord, audience string) string {

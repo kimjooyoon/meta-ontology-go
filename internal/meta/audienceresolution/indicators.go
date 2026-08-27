@@ -152,7 +152,7 @@ func buildIndicators(recipes []EvidenceRecord, current []EvidenceRecord, state r
 	}
 	result := make([]Indicator, 0, len(indicatorSpecs()))
 	for _, spec := range indicatorSpecs() {
-		recipe := recipeFor(recipes, spec.ID)
+		recipe := indicatorRecipe(recipeFor(recipes, spec.ID), spec)
 		currentRecord := currentMap[spec.ID]
 		observed := boolToInt(values[spec.ID])
 		before, after := claimOutcome(spec.ID, state, observed == 1)
@@ -177,12 +177,18 @@ func recipeFor(recipes []EvidenceRecord, coordinate string) EvidenceRecord {
 			return recipe
 		}
 	}
-	proposition := "semantic policy coordinate " + coordinate
-	return EvidenceRecord{ID: coordinate, Coordinate: coordinate, ClaimID: "claim/" + coordinate,
-		Proposition: proposition, PropositionDigest: digestBytes([]byte(proposition)), TargetAddress: "gooo://audience-resolution/claim/" + coordinate,
-		Provider: "audience-resolution.policy", Producer: "audience-resolution.policy", Consumer: "audience-resolution.policy",
-		MetaOperation: "project-audience-claim", ProofChoice: "COHERENCE", Stage: "projection", Step: "policy",
-		Reason: "formal source policy coordinate has no raw recipe", PriorClaim: "OPEN"}
+	return EvidenceRecord{}
+}
+
+func indicatorRecipe(recipe EvidenceRecord, spec indicatorSpec) EvidenceRecord {
+	if recipe.ID != "" {
+		return recipe
+	}
+	proposition := "semantic policy coordinate " + spec.ID
+	return EvidenceRecord{ID: spec.ID, Coordinate: spec.ID, ClaimID: "claim/" + spec.ID, Proposition: proposition,
+		PropositionDigest: digestBytes([]byte(proposition)), TargetAddress: "gooo://audience-resolution/claim/" + spec.ID,
+		Provider: spec.Producer, Producer: spec.Producer, Consumer: spec.Consumer, MetaOperation: spec.MetaOperation,
+		ProofChoice: spec.ProofChoice, Stage: spec.Stage, Step: spec.Step, Reason: spec.Reason, PriorClaim: "OPEN"}
 }
 
 func claimOutcome(id string, state recordState, satisfied bool) (string, string) {

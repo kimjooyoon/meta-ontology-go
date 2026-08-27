@@ -68,7 +68,7 @@ func Check(input Input) Report {
 
 	values, contradictions, evidenceIssues := independentlyObserve(input, model)
 	report.CurrentEvidenceCounts = countEvidence(input.Ledger, input.Receipt.CurrentEvidence)
-	report.DistinctPropositions = distinctPropositions(input.Ledger.Records)
+	report.DistinctPropositions = len(sourceCoordinates(model))
 	declaredReplay := input.Receipt.Replay
 	report.Replay = verifyReplay(input)
 	if declaredReplay.RunADigest != report.Replay.RunADigest || declaredReplay.RunBDigest != report.Replay.RunBDigest ||
@@ -477,7 +477,6 @@ func verifyTransitions(input Input, model sourceModel, values, contradictions ma
 			}
 			actual := input.Receipt.ClaimTransitions[index]
 			recipe := recipes[coordinate]
-			rawRecipe := recipe
 			if recipe.Coordinate == "" {
 				recipe = fallbackRecipe(coordinate)
 			}
@@ -529,14 +528,14 @@ func verifyTransitions(input Input, model sourceModel, values, contradictions ma
 			if actual != expected {
 				issues = append(issues, "CLAIM_TRANSITION_MISMATCH:"+strconv.Itoa(index))
 			}
-			if rawRecipe.PropositionDigest != "" {
+			if recipe.PropositionDigest != "" {
 				distinct[recipe.PropositionDigest] = true
 			}
 			previous = actual.EventDigest
 			index++
 		}
 	}
-	if len(distinct) != distinctPropositions(input.Ledger.Records) {
+	if len(distinct) != len(sourceCoordinates(model)) {
 		issues = append(issues, "CLAIM_PROPOSITION_DENOMINATOR_INVALID")
 	}
 	if index != len(input.Receipt.ClaimTransitions) {
