@@ -1,0 +1,11 @@
+package counterexamplefirst
+namespace counterexamplefirst
+
+entity CompilationClaim id "gooo://counterexample-first/entity/compilation-claim"
+entity MinimalCounterexample id "gooo://counterexample-first/entity/minimal-counterexample"
+entity ResolutionEvidence id "gooo://counterexample-first/entity/resolution-evidence"
+entity CompilationDecision id "gooo://counterexample-first/entity/compilation-decision"
+
+activity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample
+activity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence
+activity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision

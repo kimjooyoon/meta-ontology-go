@@ -1,0 +1,103 @@
+{
+  "schema": "gooo/counterexample-first-scenarios/v1",
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "resolved-minimal-counterexample",
+      "candidate": {
+        "id": "claim-compile-after-proof",
+        "claim": "compile may be promoted after a success example is observed",
+        "success_example": "success://accepted-claim"
+      },
+      "counterexample": {
+        "id": "ce-unresolved-repair",
+        "stage": "COUNTEREXAMPLE",
+        "step": "shrink",
+        "reason": "MISSING_RESOLUTION_PROBE",
+        "failing": true,
+        "size": 1,
+        "minimal": true,
+        "shrink_trace": [{"from_size":2,"to_size":1,"preserves_failure":true}]
+      },
+      "resolution": {
+        "id": "resolution-ce-unresolved-repair",
+        "counterexample_id": "ce-unresolved-repair",
+        "stage": "RESOLUTION",
+        "step": "prove-repair",
+        "reason": "RESOLUTION_EVIDENCE_ACCEPTED",
+        "proof_choice": "COUNTEREXAMPLE_RESOLUTION",
+        "meta_operation": "resolve-minimal-counterexample",
+        "producer": "counterexample-resolution-witness",
+        "consumer": "counterexample-first-compiler",
+        "accepted": true
+      }
+    },
+    {
+      "id": "success-example-only",
+      "candidate": {
+        "id": "claim-success-only",
+        "claim": "a passing example is sufficient to compile",
+        "success_example": "success://accepted-claim"
+      },
+      "counterexample": null,
+      "resolution": null
+    },
+    {
+      "id": "unresolved-minimal-counterexample",
+      "candidate": {
+        "id": "claim-unresolved",
+        "claim": "compile may proceed while the failing boundary remains unresolved",
+        "success_example": "success://accepted-claim"
+      },
+      "counterexample": {
+        "id": "ce-unresolved-proof",
+        "stage": "COUNTEREXAMPLE",
+        "step": "shrink",
+        "reason": "MISSING_RESOLUTION_PROBE",
+        "failing": true,
+        "size": 1,
+        "minimal": true,
+        "shrink_trace": [{"from_size":3,"to_size":1,"preserves_failure":true}]
+      },
+      "resolution": null
+    },
+    {
+      "id": "non-minimal-counterexample",
+      "candidate": {
+        "id": "claim-not-shrunk",
+        "claim": "the first failing input is good enough for a compile decision",
+        "success_example": "success://accepted-claim"
+      },
+      "counterexample": {
+        "id": "ce-large",
+        "stage": "COUNTEREXAMPLE",
+        "step": "shrink",
+        "reason": "SHRINKING_STILL_AVAILABLE",
+        "failing": true,
+        "size": 2,
+        "minimal": false,
+        "shrink_trace": [{"from_size":3,"to_size":2,"preserves_failure":true}]
+      },
+      "resolution": null
+    },
+    {
+      "id": "unknown-counterexample-coordinate",
+      "candidate": {
+        "id": "claim-unknown-coordinate",
+        "claim": "an unknown boundary may be treated as resolved",
+        "success_example": "success://accepted-claim"
+      },
+      "counterexample": {
+        "id": "ce-unknown-coordinate",
+        "stage": "UNKNOWN",
+        "step": "UNKNOWN",
+        "reason": "UNKNOWN",
+        "failing": true,
+        "size": 1,
+        "minimal": true,
+        "shrink_trace": [{"from_size":2,"to_size":1,"preserves_failure":true}]
+      },
+      "resolution": null
+    }
+  ]
+}
